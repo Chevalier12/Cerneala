@@ -1,3 +1,4 @@
+using Cerneala.Timbre.Catalog;
 using Cerneala.Timbre.Dsp;
 using Cerneala.Timbre.Engine;
 
@@ -25,6 +26,11 @@ public sealed class SoundPlayback
     private bool releaseRequested;
     private int outstandingResources;
 
+    // Audio Motion: per-slot count of manual writes (slot 0 = Volume, slot
+    // i + 1 = parameter i) and of animated publications, guarded by Sync.
+    private readonly int[] manualWrites;
+    private long animatedPublications;
+
     // Published by the mixer.
     private long positionFrames;
     private long lengthFrames = -1;
@@ -38,8 +44,13 @@ public sealed class SoundPlayback
         Loop = options.LoopValue;
         volume = options.VolumeValue;
         values = options.Values;
+        manualWrites = new int[values.Length + 1];
         Render = new SoundVoice(volume, (float[])values.Clone(), SoundDspChain.Create(clip));
     }
+
+    // Descriptor of the intrinsic Volume of every playback, so Set and Motion
+    // address it like a declared parameter. It is never declared by a clip.
+    public static SoundParameter<float> VolumeParameter { get; } = new("Volume", 1f);
 
     public SoundClip Clip { get; }
 
@@ -70,6 +81,7 @@ public sealed class SoundPlayback
             {
                 ThrowIfTerminalLocked();
                 volume = value;
+                manualWrites[0]++;
                 controlVersion++;
                 runtime.CountParameterPublication();
             }
@@ -111,6 +123,12 @@ public sealed class SoundPlayback
     public void Set<T>(SoundParameter<T> parameter, T value)
         where T : struct
     {
+        if (ReferenceEquals(parameter, VolumeParameter))
+        {
+            Volume = SoundParameter<T>.ToFloat(value);
+            return;
+        }
+
         int index = Clip.GetParameterIndex(parameter, nameof(parameter));
         float number = SoundParameter<T>.ToFloat(value);
         lock (runtime.Sync)
@@ -118,6 +136,7 @@ public sealed class SoundPlayback
             ThrowIfTerminalLocked();
             Clip.ValidateParameterValue(index, number, nameof(value));
             values[index] = number;
+            manualWrites[index + 1]++;
             controlVersion++;
             runtime.CountParameterPublication();
         }
@@ -368,6 +387,116 @@ public sealed class SoundPlayback
         {
             Volatile.Write(ref firstQueuedTimestamp, timestamp);
         }
+    }
+
+    // ---- Audio Motion (UI adapter) ----
+
+    internal SoundScope Scope => scope;
+
+    internal int MotionSlotCount => manualWrites.Length;
+
+    // Slot of a descriptor: 0 for VolumeParameter, i + 1 for clip parameter i.
+    internal int GetMotionSlot(SoundParameter<float> parameter, string argumentName) =>
+        ReferenceEquals(parameter, VolumeParameter) ? 0 : Clip.GetParameterIndex(parameter, argumentName) + 1;
+
+    internal bool IsValidMotionValue(int slot, float value) =>
+        slot == 0 ? TimbreCatalog.Volume.Contains(value) : Clip.IsParameterValueValid(slot - 1, value);
+
+    internal void ValidateMotionValue(int slot, float value, string argumentName)
+    {
+        if (slot == 0)
+        {
+            SoundClip.ValidateVolume(value, argumentName);
+        }
+        else
+        {
+            Clip.ValidateParameterValue(slot - 1, value, argumentName);
+        }
+    }
+
+    // One snapshot under Sync: the slot's current value and manual version.
+    internal void ReadMotionSlot(int slot, out float value, out int manualVersion, out bool terminal)
+    {
+        lock (runtime.Sync)
+        {
+            value = slot == 0 ? volume : values[slot - 1];
+            manualVersion = manualWrites[slot];
+            terminal = IsTerminal;
+        }
+    }
+
+    // One snapshot under Sync for a Motion sample: animation time runs only
+    // while the playback produces PCM (started, not paused, no pending seek).
+    internal bool ReadMotionState(Span<int> manualVersions, out bool clockRunning)
+    {
+        lock (runtime.Sync)
+        {
+            manualWrites.AsSpan().CopyTo(manualVersions);
+            clockRunning = started && !paused && seekCompletion is null && !IsTerminal;
+            return IsTerminal;
+        }
+    }
+
+    // Publishes the dirty animated slots together, without counting them as
+    // manual writes. Returns false when the playback is already terminal.
+    internal bool TryPublishMotion(ReadOnlySpan<bool> dirty, ReadOnlySpan<float> samples)
+    {
+        lock (runtime.Sync)
+        {
+            if (IsTerminal)
+            {
+                return false;
+            }
+
+            for (int slot = 0; slot < dirty.Length; slot++)
+            {
+                if (!dirty[slot])
+                {
+                    continue;
+                }
+
+                if (slot == 0)
+                {
+                    volume = samples[slot];
+                }
+                else
+                {
+                    values[slot - 1] = samples[slot];
+                }
+            }
+
+            controlVersion++;
+            animatedPublications++;
+            runtime.CountAnimatedPublication();
+        }
+
+        runtime.SignalMixer();
+        return true;
+    }
+
+    internal void ReportRejectedMotionSample()
+    {
+        lock (runtime.Sync)
+        {
+            runtime.CountMotionSampleRejected();
+        }
+    }
+
+    internal long AnimatedPublications
+    {
+        get
+        {
+            lock (runtime.Sync)
+            {
+                return animatedPublications;
+            }
+        }
+    }
+
+    internal float GetMotionSlotValue(int slot)
+    {
+        ReadMotionSlot(slot, out float value, out _, out _);
+        return value;
     }
 
     // ---- Resource ownership ----

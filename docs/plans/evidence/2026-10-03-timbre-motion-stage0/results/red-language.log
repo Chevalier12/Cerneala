@@ -1,0 +1,23 @@
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:05.08]     Cerneala.Tests.Language.SoundMotionSemanticTests.SoundMotionApprovedExampleBindsWithoutDiagnostics [FAIL]
+  Failed Cerneala.Tests.Language.SoundMotionSemanticTests.SoundMotionApprovedExampleBindsWithoutDiagnostics [3 s]
+  Error Message:
+   Assert.Empty() Failure: Collection was not empty
+Collection: [HarnessDiagnostic { Id = CERNEALAUI021, Severity = Error, Message = Motion target resolution in 'SoundMotionApproved.crn' failed: Motion property 'Volume' does not exist on target type 'Button'., Path = SoundMotionApproved.crn, StartLine = 21, StartCharacter = 37, EndLine = 21, EndCharacter = 43 }, HarnessDiagnostic { Id = CERNEALAUI021, Severity = Error, Message = Motion target resolution in 'SoundMotionApproved.crn' failed: Motion property 'ToneCutoff' does not exist on target type 'Button'., Path = SoundMotionApproved.crn, StartLine = 22, StartCharacter = 37, EndLine = 22, EndCharacter = 47 }]
+  Stack Trace:
+     at Cerneala.Tests.Language.SoundMotionSemanticTests.SoundMotionApprovedExampleBindsWithoutDiagnostics() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\SoundMotionSemanticTests.cs:line 44
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:00:05.66]     Cerneala.Tests.Language.SoundMotionSemanticTests.SoundMotionTargetNeverFallsBackToAnElementProperty [FAIL]
+  Failed Cerneala.Tests.Language.SoundMotionSemanticTests.SoundMotionTargetNeverFallsBackToAnElementProperty [577 ms]
+  Error Message:
+   Assert.Contains() Failure: Filter not matched in collection
+Collection: []
+  Stack Trace:
+     at Cerneala.Tests.Language.SoundMotionSemanticTests.SoundMotionTargetNeverFallsBackToAnElementProperty() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\SoundMotionSemanticTests.cs:line 56
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+
+Failed!  - Failed:     2, Passed:     0, Skipped:     0, Total:     2, Duration: 4 s - Cerneala.Tests.Language.dll (net8.0)
+exit 1

@@ -48,6 +48,7 @@ Validation happens in the constructor:
 - `source` must not be `null`.
 - `volume` must be finite and within 0–1; `loading` must be a defined value.
 - Parameters must be non-null, distinct instances with distinct names.
+- `parameters` cannot contain [SoundPlayback.VolumeParameter](Cerneala.Timbre.SoundPlayback.md): Volume is intrinsic to every playback (`ArgumentException`).
 - Every parameter used by a modifier must be declared in `parameters`. A parameter's default must lie inside the range of every modifier input it feeds.
 - Modifier constants are validated by the modifier constructors.
 

@@ -229,9 +229,15 @@ public sealed record SoundCorpusCase(
 
 internal static class SoundCorpus
 {
-    private static readonly Lazy<IReadOnlyList<SoundCorpusCase>> cases = new(() =>
+    private static readonly Lazy<IReadOnlyList<SoundCorpusCase>> cases = new(() => Parse("sound-corpus.json"));
+
+    public static IReadOnlyList<SoundCorpusCase> Load() => cases.Value;
+
+    public static SoundCorpusCase Get(string id) => Load().Single(item => item.Id == id);
+
+    internal static IReadOnlyList<SoundCorpusCase> Parse(string fileName)
     {
-        string path = Path.Combine(AppContext.BaseDirectory, "Corpus", "sound-corpus.json");
+        string path = Path.Combine(AppContext.BaseDirectory, "Corpus", fileName);
         using JsonDocument document = JsonDocument.Parse(File.ReadAllText(path));
         return document.RootElement.EnumerateArray().Select(item => new SoundCorpusCase(
                 item.GetProperty("id").GetString()!,
@@ -247,9 +253,5 @@ internal static class SoundCorpus
                 item.TryGetProperty("path", out JsonElement documentPath) ? documentPath.GetString() : null,
                 item.TryGetProperty("companion", out JsonElement companion) ? companion.GetString() : null))
             .ToArray();
-    });
-
-    public static IReadOnlyList<SoundCorpusCase> Load() => cases.Value;
-
-    public static SoundCorpusCase Get(string id) => Load().Single(item => item.Id == id);
+    }
 }

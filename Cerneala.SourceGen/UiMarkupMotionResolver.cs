@@ -361,13 +361,15 @@ public sealed partial class UiMarkupGenerator
                 MarkupElement element,
                 string? ownerName = null,
                 string? partName = null,
-                ResolvedPrismMotionTarget? prism = null)
+                ResolvedPrismMotionTarget? prism = null,
+                ResolvedSoundMotionTarget? sound = null)
             {
                 Kind = kind;
                 Element = element;
                 OwnerName = ownerName;
                 PartName = partName;
                 Prism = prism;
+                Sound = sound;
             }
 
             public ResolvedMotionTargetKind Kind { get; }
@@ -379,6 +381,24 @@ public sealed partial class UiMarkupGenerator
             public string? PartName { get; }
 
             public ResolvedPrismMotionTarget? Prism { get; }
+
+            public ResolvedSoundMotionTarget? Sound { get; }
+        }
+
+        // `$self.sound.Handle.Parameter`: the Sound handle whose occupant the
+        // animation captures and the parameter name it resolves on that
+        // occupant's clip, both validated by the bound Language model.
+        private sealed class ResolvedSoundMotionTarget
+        {
+            public ResolvedSoundMotionTarget(string handleName, string parameterName)
+            {
+                HandleName = handleName;
+                ParameterName = parameterName;
+            }
+
+            public string HandleName { get; }
+
+            public string ParameterName { get; }
         }
 
         private sealed class ResolvedMotionKeyframesSpec
@@ -766,9 +786,10 @@ public sealed partial class UiMarkupGenerator
                     return false;
                 }
 
-                // A body with Sound actions is one handler owned by the Sound
-                // session, so its actions keep source order and survive hiding.
-                if (trigger.Actions.Any(IsSoundNode))
+                // A body with Sound actions or audio Motion is one handler owned
+                // by the Sound session, so its actions keep source order and
+                // survive hiding.
+                if (trigger.Actions.Any(IsSoundOwnedNode))
                 {
                     soundTriggers.Add((trigger, eventSymbol));
                     continue;
@@ -1522,7 +1543,7 @@ public sealed partial class UiMarkupGenerator
 
                 MotionSpecSyntax? spec = destination.Spec ?? animation.DefaultSpec;
                 string? specVariable = null;
-                if ((target.Prism is null || spec is not null) &&
+                if ((target.Prism is null && target.Sound is null || spec is not null) &&
                     !TryResolveMotionSpec(
                         applicationElement,
                         spec,
@@ -1615,6 +1636,11 @@ public sealed partial class UiMarkupGenerator
                     assignment,
                     out target,
                     out property);
+            }
+
+            if (IsSoundMotionTarget(assignment.Target))
+            {
+                return TryResolveSoundMotionTarget(applicationElement, aspect, assignment, out target, out property);
             }
 
             target = null;

@@ -1,0 +1,91 @@
+{
+  "host": "Microsoft Windows NT 10.0.26200.0 X64",
+  "passed": true,
+  "failure": null,
+  "scenarios": [
+    {
+      "scenario": "fade/fade-wav",
+      "blocks": 100,
+      "rampBlocks": 43,
+      "firstGain": 0.20000000329050316,
+      "lastGain": 0.8000000138054153,
+      "publications": 59
+    },
+    {
+      "scenario": "fade/fade-mp3",
+      "blocks": 200,
+      "rampBlocks": 39,
+      "firstGain": 0.2000000033661765,
+      "lastGain": 0.800000013478405,
+      "publications": 58
+    },
+    {
+      "scenario": "fade/fade-vorbis",
+      "blocks": 198,
+      "rampBlocks": 39,
+      "firstGain": 0.20000000342664562,
+      "lastGain": 0.8000000131299347,
+      "publications": 58
+    },
+    {
+      "scenario": "fade/fade-opus",
+      "blocks": 200,
+      "rampBlocks": 40,
+      "firstGain": 0.20000000312771996,
+      "lastGain": 0.800000014281467,
+      "publications": 58
+    },
+    {
+      "scenario": "sweep/filtered",
+      "changedBlocks": 156,
+      "finalCutoff": 200,
+      "finalEchoMix": 0.6,
+      "publications": 44
+    },
+    {
+      "scenario": "reactive/streaming-transport-fade",
+      "pausedVolume": 0.1552496,
+      "resumedVolume": 0.17551832,
+      "seekedVolume": 0.19619879,
+      "canceledVolume": 0.19985573,
+      "publications": 59,
+      "streamingBufferBytes": 65536
+    },
+    {
+      "scenario": "reactive/loop-fade-and-hover",
+      "wraps": 2,
+      "fadePublications": 87,
+      "hoverVolume": 0.3
+    },
+    {
+      "scenario": "final/baseline",
+      "activeVoices": 0,
+      "liveReaders": 0,
+      "motionTargets": 0
+    }
+  ],
+  "output": {
+    "OpenCount": 1,
+    "CloseCount": 0,
+    "DeviceFormat": "0x8120/2/48000",
+    "Requests": 1309,
+    "StarvedRequests": 179,
+    "QueueHighWaterFrames": 1920
+  },
+  "engine": {
+    "PlaybacksStarted": 7,
+    "PlaybacksCompleted": 5,
+    "PlaybacksCanceled": 2,
+    "PlaybacksFailed": 0,
+    "PausesApplied": 1,
+    "ResumesApplied": 1,
+    "SeeksCompleted": 1,
+    "LoopWraps": 2,
+    "UnderrunFrames": 0,
+    "AnimatedPublications": 452,
+    "MotionSamplesRejected": 0,
+    "ActiveVoices": 0,
+    "LiveReaders": 0
+  },
+  "tapFrames": 542400
+}

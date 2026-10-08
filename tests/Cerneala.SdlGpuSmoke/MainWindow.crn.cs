@@ -143,6 +143,11 @@ public partial class MainWindow : Window
         {
             _ = TimbreMarkupSmoke.RunAsync(options, this);
         }
+
+        if (options.Mode == "timbre-motion")
+        {
+            _ = TimbreMotionSmoke.RunAsync(options, this);
+        }
     }
 
     private void OnServoClick(UiElementId sender, RoutedEventArgs args)
@@ -231,7 +236,7 @@ public partial class MainWindow : Window
             }
             return;
         }
-        if (options.Mode is "servo" or "timbre" or "timbre-markup")
+        if (options.Mode is "servo" or "timbre" or "timbre-markup" or "timbre-motion")
         {
             return;
         }

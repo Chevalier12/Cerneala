@@ -24,7 +24,8 @@ internal sealed record SmokeOptions(
         "screenshot",
         "servo",
         "timbre",
-        "timbre-markup"
+        "timbre-markup",
+        "timbre-motion"
     };
 
     public static SmokeOptions Current { get; private set; } = new(

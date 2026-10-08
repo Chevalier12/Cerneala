@@ -1,0 +1,1 @@
+Passed!  - Failed:     0, Passed:   641, Skipped:     0, Total:   641, Duration: 1 m 22 s - Cerneala.Tests.SourceGen.dll (net8.0)

@@ -1,0 +1,3 @@
+  Failed Cerneala.Tests.Timbre.Motion.SoundMotionIntegrationTests.SoundMotionIsSampledByTheRootClockWhileTheControlIsHidden [36 s]
+  Failed Cerneala.Tests.Timbre.Engine.RealtimeAllocationTests.SteadyStateMixerBlocksDoNotAllocate(loading: Streaming) [4 s]
+Failed!  - Failed:     2, Passed:   336, Skipped:     0, Total:   338, Duration: 1 m 58 s - Cerneala.Tests.Timbre.dll (net8.0)

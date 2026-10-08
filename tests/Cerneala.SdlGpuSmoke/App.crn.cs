@@ -7,7 +7,7 @@ public partial class App : Application
     protected override void OnStartup(ApplicationStartupEventArgs args)
     {
         SmokeOptions.Initialize(args.Args);
-        if (SmokeOptions.Current.Mode is "timbre" or "timbre-markup")
+        if (SmokeOptions.Current.Mode is "timbre" or "timbre-markup" or "timbre-motion")
         {
             TimbreSmoke.Install(this);
         }

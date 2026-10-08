@@ -1222,6 +1222,11 @@ implicit button sound.
   the element does not stop or replay its sounds.
 - Each element, template part and item occurrence owns its own sound scope;
   detaching it cancels only its playbacks.
+- Motion animates a started playback through `$self.sound.Handle.Volume` or
+  `$self.sound.Handle.Parameter` in `@animate`/`@keyframes`: it captures the
+  handle's occupant when it starts, never retargets a later one, starts timing
+  at the first PCM, holds while paused or seeking and keeps running when the
+  element is hidden. An empty handle animates nothing.
 
 The [Timbre Sound Guide](timbre-guide.md) explains the runtime, the transport
 semantics, errors, tooling and Live Preview audio policy.

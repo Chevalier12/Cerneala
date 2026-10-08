@@ -5,32 +5,34 @@ Generated from `.`.
 ```text
 ./
 |-- .claude/
-|   +-- skills/
-|       |-- algorithm-market/
-|       |   |-- references/
-|       |   |   +-- license-policy.md
-|       |   +-- SKILL.md
-|       |-- cerneala-breaker/
-|       |   |-- references/
-|       |   |   |-- attack-techniques.md
-|       |   |   +-- test-evidence.md
-|       |   +-- SKILL.md
-|       |-- cerneala-checklist-plan/
-|       |   |-- references/
-|       |   |   +-- semantic-audit.md
-|       |   +-- SKILL.md
-|       |-- cerneala-fix-bug/
-|       |   +-- SKILL.md
-|       |-- cerneala-implement-plan/
-|       |   +-- SKILL.md
-|       |-- cerneala-performance-gate/
-|       |   +-- SKILL.md
-|       |-- repo-cleanup/
-|       |   +-- SKILL.md
-|       +-- writing-api-documentation/
-|           |-- references/
-|           |   +-- wpf-api-doc-formula.md
-|           +-- SKILL.md
+|   |-- skills/
+|   |   |-- algorithm-market/
+|   |   |   |-- references/
+|   |   |   |   +-- license-policy.md
+|   |   |   +-- SKILL.md
+|   |   |-- cerneala-breaker/
+|   |   |   |-- references/
+|   |   |   |   |-- attack-techniques.md
+|   |   |   |   +-- test-evidence.md
+|   |   |   +-- SKILL.md
+|   |   |-- cerneala-checklist-plan/
+|   |   |   |-- references/
+|   |   |   |   +-- semantic-audit.md
+|   |   |   +-- SKILL.md
+|   |   |-- cerneala-fix-bug/
+|   |   |   +-- SKILL.md
+|   |   |-- cerneala-implement-plan/
+|   |   |   +-- SKILL.md
+|   |   |-- cerneala-performance-gate/
+|   |   |   +-- SKILL.md
+|   |   |-- repo-cleanup/
+|   |   |   +-- SKILL.md
+|   |   +-- writing-api-documentation/
+|   |       |-- references/
+|   |       |   +-- wpf-api-doc-formula.md
+|   |       +-- SKILL.md
+|   +-- worktrees/
+|       +-- dreamy-villani-c4a2d0/
 |-- .config/
 |   +-- dotnet-tools.json
 |-- .github/
@@ -668,6 +670,7 @@ Generated from `.`.
 |   |   |-- CernealaCompletionService.Context.cs
 |   |   |-- CernealaCompletionService.cs
 |   |   |-- CernealaCompletionService.Directives.cs
+|   |   |-- CernealaCompletionService.Sound.cs
 |   |   |-- CernealaDocumentation.cs
 |   |   |-- CernealaFormattingModels.cs
 |   |   |-- CernealaFormattingService.cs
@@ -695,6 +698,7 @@ Generated from `.`.
 |   |   |-- CernealaSemanticModel.MotionPrism.Prism.cs
 |   |   |-- CernealaSemanticModel.Navigation.cs
 |   |   |-- CernealaSemanticModel.Scopes.cs
+|   |   |-- CernealaSemanticModel.Sound.cs
 |   |   |-- CernealaSemanticModel.Tiles.cs
 |   |   +-- SemanticSymbols.cs
 |   |-- Syntax/
@@ -717,6 +721,9 @@ Generated from `.`.
 |   |   |-- SourceText.cs
 |   |   |-- TextChange.cs
 |   |   +-- TextSpan.cs
+|   |-- Timbre/
+|   |   |-- SoundMarkupBinder.cs
+|   |   +-- SoundMarkupSyntax.cs
 |   |-- Cerneala.Language.csproj
 |   +-- CernealaDocumentPath.cs
 |-- Cerneala.LanguageServer/
@@ -774,6 +781,7 @@ Generated from `.`.
 |   |-- Properties/
 |   |   +-- AssemblyInfo.cs
 |   |-- Cerneala.PreviewHost.csproj
+|   |-- DisabledPreviewSoundOutput.cs
 |   |-- PreviewCompiler.cs
 |   |-- PreviewHostServer.cs
 |   |-- PreviewMarkupHotReload.cs
@@ -839,6 +847,7 @@ Generated from `.`.
 |   |-- UiMarkupDirectiveParser.MotionExecutions.cs
 |   |-- UiMarkupDirectiveParser.MotionTriggers.cs
 |   |-- UiMarkupDirectiveParser.MotionValues.cs
+|   |-- UiMarkupDirectiveParser.Sound.cs
 |   |-- UiMarkupDirectiveParser.Syntax.cs
 |   |-- UiMarkupElementEmitter.cs
 |   |-- UiMarkupGenerator.cs
@@ -852,6 +861,7 @@ Generated from `.`.
 |   |-- UiMarkupReactiveEmitter.cs
 |   |-- UiMarkupResourceEmitter.cs
 |   |-- UiMarkupSceneComponentGenerator.cs
+|   |-- UiMarkupSoundEmitter.cs
 |   |-- UiMarkupTemplateEmitter.cs
 |   |-- UiMarkupUserControlGenerator.cs
 |   |-- UiMarkupValueEmitter.cs
@@ -2742,6 +2752,43 @@ Generated from `.`.
 |   |   |   |   |-- test-allocation-driver/
 |   |   |   |   |-- trace-reader/
 |   |   |   |   +-- tree-propagation/
+|   |   |   |-- 2026-10-03-timbre-markup-stage0/
+|   |   |   |   +-- README.md
+|   |   |   |-- 2026-10-03-timbre-markup-stage1/
+|   |   |   |   +-- README.md
+|   |   |   |-- 2026-10-03-timbre-markup-stage2/
+|   |   |   |   |-- full-suite.txt
+|   |   |   |   +-- README.md
+|   |   |   |-- 2026-10-03-timbre-markup-stage3/
+|   |   |   |   +-- README.md
+|   |   |   |-- 2026-10-03-timbre-markup-stage4/
+|   |   |   |   |-- full-solution/
+|   |   |   |   |   |-- cerneala-tests-rerun/
+|   |   |   |   |   |   +-- lauri_DESKTOP-JT43V3D_2026-10-07_21_16_18_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-10-07_20_15_43_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-10-07_20_18_11_net10.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-10-07_20_27_17_net10.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-10-07_20_31_50_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-10-07_20_32_13_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-10-07_20_32_39_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-10-07_20_34_26_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-10-07_20_56_16_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-10-07_20_59_15_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-10-07_21_01_09_net10.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-10-07_21_01_24_net8.0.trx
+|   |   |   |   |   +-- lauri_DESKTOP-JT43V3D_2026-10-07_21_12_40_net8.0.trx
+|   |   |   |   |-- native/
+|   |   |   |   |   |-- csharp/
+|   |   |   |   |   |   +-- timbre-diagnostics.json
+|   |   |   |   |   +-- timbre-markup-diagnostics.json
+|   |   |   |   |-- api-compat-compatible.log
+|   |   |   |   |-- api-compat-strict.log
+|   |   |   |   |-- api-compat.proj
+|   |   |   |   |-- cerneala-tests-rerun.log
+|   |   |   |   |-- full-solution-build.log
+|   |   |   |   |-- full-solution.log
+|   |   |   |   |-- README.md
+|   |   |   |   +-- six-rid-publish.log
 |   |   |   |-- 2026-10-03-timbre-sdl3-stage0/
 |   |   |   |   |-- probe/
 |   |   |   |   |   |-- Program.cs
@@ -2930,6 +2977,7 @@ Generated from `.`.
 |   |-- prism-technical-design.md
 |   |-- sdl-desktop-backend.md
 |   |-- servo.md
+|   |-- timbre-guide.md
 |   |-- visual-studio-community-spike.md
 |   |-- visual-studio-community.md
 |   +-- wpf-event-coverage.md
@@ -5069,6 +5117,9 @@ Generated from `.`.
 |   |   |-- RenderSurface3DPreview.crn.cs
 |   |   |-- SmokeDrawingSurface.cs
 |   |   |-- SmokeOptions.cs
+|   |   |-- TimbreMarkupPanel.crn
+|   |   |-- TimbreMarkupPanel.crn.cs
+|   |   |-- TimbreMarkupSmoke.cs
 |   |   +-- TimbreSmoke.cs
 |   |-- Cerneala.Tests/
 |   |   |-- Architecture/
@@ -5658,6 +5709,7 @@ Generated from `.`.
 |   |   |   |-- constructs.json
 |   |   |   |-- crn-migration-stage0-inventory.txt
 |   |   |   |-- repository-documents.txt
+|   |   |   |-- sound-corpus.json
 |   |   |   +-- sourcegen-diagnostics.json
 |   |   |-- Cerneala.Tests.Language.csproj
 |   |   |-- CernealaDocumentPathTests.cs
@@ -5679,6 +5731,8 @@ Generated from `.`.
 |   |   |-- SEMANTIC-INVENTORY.md
 |   |   |-- SemanticScopesTests.cs
 |   |   |-- SemanticWorkspaceTests.cs
+|   |   |-- SoundSemanticTests.cs
+|   |   |-- SoundToolingTests.cs
 |   |   |-- SourceGeneratorDiagnosticBaselineTests.cs
 |   |   |-- SourceTextTests.cs
 |   |   |-- StructureTests.cs
@@ -5904,6 +5958,7 @@ Generated from `.`.
 |   |   |-- UiMarkupGeneratorSceneWorldBindingTests.cs
 |   |   |-- UiMarkupGeneratorShapeTests.cs
 |   |   |-- UiMarkupGeneratorSingleLayerTileMapTests.cs
+|   |   |-- UiMarkupGeneratorSoundTests.cs
 |   |   |-- UiMarkupGeneratorSpriteAnimationStageZeroTests.cs
 |   |   |-- UiMarkupGeneratorSpriteAuthoringTests.cs
 |   |   |-- UiMarkupGeneratorSpriteSamplingTests.cs
@@ -5991,6 +6046,13 @@ Generated from `.`.
 |   |   |   +-- TimbreRig.cs
 |   |   |-- Hosting/
 |   |   |   +-- OwnerAccessTests.cs
+|   |   |-- Markup/
+|   |   |   |-- GeneratedSoundConsumer.cs
+|   |   |   |-- MarkupSoundFixture.cs
+|   |   |   |-- SoundAspectIntegrationTests.cs
+|   |   |   |-- SoundAspectLifecycleTests.cs
+|   |   |   |-- SoundMarkupParityTests.cs
+|   |   |   +-- SoundMarkupTransportTests.cs
 |   |   +-- Cerneala.Tests.Timbre.csproj
 |   |-- Cerneala.Tests.VisualStudio/
 |   |   |-- Golden/
@@ -6761,6 +6823,7 @@ Generated from `.`.
 |   |   |-- GeneratedMarkupMotion.cs
 |   |   |-- GeneratedMarkupPrism.cs
 |   |   |-- GeneratedMarkupResources.cs
+|   |   |-- GeneratedMarkupSound.cs
 |   |   |-- GeneratedUiFactory.cs
 |   |   |-- MarkupDiagnostic.cs
 |   |   |-- MarkupLoadOptions.cs

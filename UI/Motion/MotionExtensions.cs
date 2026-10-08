@@ -1,4 +1,6 @@
+using Cerneala.Timbre;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Timbre;
 
 namespace Cerneala.UI.Motion;
 
@@ -8,6 +10,24 @@ public static class MotionExtensions
     {
         ArgumentNullException.ThrowIfNull(element);
         return new MotionElementFacade(element);
+    }
+
+    // Audio Motion of one captured playback, sampled by the UIRoot that owns
+    // its element scope. Declared here so it always outranks the generic
+    // object facade below for a SoundPlayback receiver.
+    public static SoundMotionFacade Motion(this SoundPlayback playback)
+    {
+        ArgumentNullException.ThrowIfNull(playback);
+        return new SoundMotionFacade(playback, root: null);
+    }
+
+    // Audio Motion sampled by an explicit root, for playbacks of scopes that
+    // no element owns (Application.Sounds or a standalone runtime).
+    public static SoundMotionFacade Motion(this SoundPlayback playback, UIRoot root)
+    {
+        ArgumentNullException.ThrowIfNull(playback);
+        ArgumentNullException.ThrowIfNull(root);
+        return new SoundMotionFacade(playback, root);
     }
 
     public static MotionElementFacade Motion<TElement>(this TElement element)

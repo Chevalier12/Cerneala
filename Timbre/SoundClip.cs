@@ -36,6 +36,11 @@ public sealed class SoundClip
         {
             SoundParameter parameter = this.parameters[index] ??
                 throw new ArgumentException("Sound clip parameters cannot contain null.", nameof(parameters));
+            if (ReferenceEquals(parameter, SoundPlayback.VolumeParameter))
+            {
+                throw new ArgumentException("SoundPlayback.VolumeParameter is intrinsic to every playback and cannot be declared by a clip.", nameof(parameters));
+            }
+
             if (!parameterIndexes.TryAdd(parameter, index) || !names.Add(parameter.Name))
             {
                 throw new ArgumentException($"Sound clip parameter '{parameter.Name}' is declared more than once.", nameof(parameters));
@@ -115,6 +120,9 @@ public sealed class SoundClip
             ? index
             : throw new ArgumentException($"Parameter '{parameter.Name}' is not declared by this sound clip.", argumentName);
     }
+
+    internal bool IsParameterValueValid(int index, float value) =>
+        float.IsFinite(value) && value >= minimums[index] && value <= maximums[index];
 
     internal void ValidateParameterValue(int index, float value, string argumentName)
     {

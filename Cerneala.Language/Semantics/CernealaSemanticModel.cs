@@ -136,6 +136,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         soundAspects.Clear();
         soundStatementSpans.Clear();
         boundSoundAspects.Clear();
+        pendingSoundMotion.Clear();
     }
 
     private void Bind(CancellationToken cancellationToken)

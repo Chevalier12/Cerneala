@@ -54,6 +54,12 @@ public sealed class SoundStartOptions
         where T : struct
     {
         ThrowIfSealed();
+        if (ReferenceEquals(parameter, SoundPlayback.VolumeParameter))
+        {
+            Volume = SoundParameter<T>.ToFloat(value);
+            return;
+        }
+
         int index = clip.GetParameterIndex(parameter, nameof(parameter));
         float number = SoundParameter<T>.ToFloat(value);
         clip.ValidateParameterValue(index, number, nameof(value));

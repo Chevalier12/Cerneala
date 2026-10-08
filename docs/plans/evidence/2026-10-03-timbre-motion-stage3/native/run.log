@@ -1,0 +1,2 @@
+SDL_GPU_SMOKE_OK mode=timbre-motion scenarios=8 opens=1
+exit 0

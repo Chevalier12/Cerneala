@@ -3,6 +3,9 @@ using Cerneala.UI;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Detective;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Motion;
+using Cerneala.UI.Motion.Core;
+using Cerneala.UI.Motion.Specs;
 
 namespace TimbreConsumer;
 
@@ -11,6 +14,29 @@ namespace TimbreConsumer;
 // variables a page's snippet assumes.
 public static class DocumentationExamples
 {
+    public static void SoundMotionFacadePage(SoundPlayback playback, SoundParameter<float> toneCutoff, MotionSpec<float> transition)
+    {
+        playback.Motion()
+            .Animate(SoundPlayback.VolumeParameter)
+            .To(0.8f)
+            .With(transition);
+
+        playback.Motion()
+            .Animate(toneCutoff)
+            .To(6000f)
+            .With(transition);
+    }
+
+    public static void SoundMotionAnimationBuilderPage(SoundPlayback playback)
+    {
+        MotionHandle fade = playback.Motion()
+            .Animate(SoundPlayback.VolumeParameter)
+            .From(0f)
+            .To(1f)
+            .With(new TweenSpec<float>(TimeSpan.FromMilliseconds(300), Easings.EaseOut));
+
+        fade.Cancel(); // keeps the last sampled volume
+    }
     public static void SoundClipPage()
     {
         var plainSound = new SoundClip("audio/confirm.wav");

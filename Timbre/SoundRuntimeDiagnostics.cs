@@ -19,6 +19,8 @@ internal readonly record struct SoundRuntimeDiagnostics(
     long UnderrunFrames,
     long ClippedSamples,
     long ParameterPublications,
+    long AnimatedPublications,
+    long MotionSamplesRejected,
     int ActiveVoices,
     int LiveReaders,
     int LiveSourcePumps,

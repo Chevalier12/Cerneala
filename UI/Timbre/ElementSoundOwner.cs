@@ -22,6 +22,7 @@ internal sealed class ElementSoundOwner(UIElement element) : IElementLifecycleBe
         if (scope is null || scope.IsDisposed)
         {
             scope = runtime.CreateScope();
+            SoundPlaybackMotion.RegisterScope(scope, root);
             if (!ReferenceEquals(registeredRoot, root))
             {
                 registeredRoot?.UnregisterSoundOwner(this);

@@ -1,0 +1,114 @@
+<UserControl>
+    <UserControl.Resources>
+        <SoundClip Name="Wav">Source = "timbre/motion-tone-44100.wav";</SoundClip>
+        <SoundClip Name="Mp3">Source = "timbre/mp3-mpeg1-44100-stereo-cbr128.mp3";</SoundClip>
+        <SoundClip Name="Vorbis">Source = "timbre/vorbis-48000-stereo-q2.ogg";</SoundClip>
+        <SoundClip Name="Opus">Source = "timbre/opus-stereo-48000-96k.opus";</SoundClip>
+        <SoundClip Name="LongMp3">Source = "timbre/mp3-long-22050-mono-cbr64.mp3";</SoundClip>
+        <SoundClip Name="Filtered">
+            Source = "timbre/motion-tone-44100.wav";
+            @parameter ToneCutoff: float = 4000;
+            @parameter EchoMix: float = 0.1;
+            @modifier LowPass { Cutoff = ToneCutoff; }
+            @modifier Delay { Time = 60ms; Feedback = 0.3; Mix = EchoMix; }
+        </SoundClip>
+        <Aspect Name="Fade" TargetType="Button">
+            @handle Playback;
+            @on Click
+            {
+                @sound $Wav(Volume = 0.2) as Playback;
+                @animate with Tween(400ms, Linear) { @to { $self.sound.Playback.Volume = 0.8; } }
+            }
+        </Aspect>
+    </UserControl.Resources>
+    <StackPanel Margin="12">
+        <StackPanel Orientation="Horizontal">
+            <Button Servo.Id="fade-wav" Content="WAV" Width="90" Height="36" Margin="0,0,6,6" Aspect="$Fade" />
+            <Button Servo.Id="fade-mp3" Content="MP3" Width="90" Height="36" Margin="0,0,6,6">
+                <Button.Aspect>
+                    @handle Playback;
+                    @on Click
+                    {
+                        @sound $Mp3(Volume = 0.2) as Playback;
+                        @animate with Tween(400ms, Linear) { @to { $self.sound.Playback.Volume = 0.8; } }
+                    }
+                </Button.Aspect>
+            </Button>
+            <Button Servo.Id="fade-vorbis" Content="Vorbis" Width="90" Height="36" Margin="0,0,6,6">
+                <Button.Aspect>
+                    @handle Playback;
+                    @on Click
+                    {
+                        @sound $Vorbis(Volume = 0.2) as Playback;
+                        @animate with Tween(400ms, Linear) { @to { $self.sound.Playback.Volume = 0.8; } }
+                    }
+                </Button.Aspect>
+            </Button>
+            <Button Servo.Id="fade-opus" Content="Opus" Width="90" Height="36" Margin="0,0,6,6">
+                <Button.Aspect>
+                    @handle Playback;
+                    @on Click
+                    {
+                        @sound $Opus(Volume = 0.2) as Playback;
+                        @animate with Tween(400ms, Linear) { @to { $self.sound.Playback.Volume = 0.8; } }
+                    }
+                </Button.Aspect>
+            </Button>
+            <Button Servo.Id="sweep-filtered" Content="Filtered" Width="90" Height="36" Margin="0,0,6,6">
+                <Button.Aspect>
+                    @handle Playback;
+                    @on Click
+                    {
+                        @sound $Filtered as Playback;
+                        @animate with Tween(300ms, Linear)
+                        {
+                            @to { $self.sound.Playback.ToneCutoff = 200; $self.sound.Playback.EchoMix = 0.6; }
+                        }
+                    }
+                </Button.Aspect>
+            </Button>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal">
+            <CheckBox Name="PlayBox" Servo.Id="transport-play" Content="Play" Margin="0,0,10,6" />
+            <CheckBox Name="PauseBox" Servo.Id="transport-pause" Content="Pause" Margin="0,0,10,6" />
+            <CheckBox Name="SeekBox" Servo.Id="transport-seek" Content="Seek 60s" Margin="0,0,10,6" />
+            <CheckBox Name="StopBox" Servo.Id="transport-stop" Content="Stop" Margin="0,0,10,6" />
+            <CheckBox Name="LoopBox" Servo.Id="loop-play" Content="Loop" Margin="0,0,10,6" />
+            <CheckBox Name="LoopStopBox" Servo.Id="loop-stop" Content="Loop stop" Margin="0,0,10,6" />
+        </StackPanel>
+        <Border Name="Transport" Servo.Id="transport-area" Height="40" Background="#E0E0E0">
+            <Border.Aspect>
+                @handle Music;
+                @handle Looper;
+                @when $PlayBox.IsChecked
+                {
+                    @if $PlayBox.IsChecked == true
+                    {
+                        @sound $LongMp3(Volume = 0.1) as Music;
+                        @animate with Tween(3000ms, Linear) { @to { $self.sound.Music.Volume = 0.9; } }
+                    }
+                }
+                @when $PauseBox.IsChecked
+                {
+                    @if $PauseBox.IsChecked == true { @pause Music; }
+                    @if $PauseBox.IsChecked == false { @resume Music; }
+                }
+                @when $SeekBox.IsChecked { @if $SeekBox.IsChecked == true { @seek Music to 60s; } }
+                @when $StopBox.IsChecked { @if $StopBox.IsChecked == true { @cancel Music; } }
+                @when $LoopBox.IsChecked
+                {
+                    @if $LoopBox.IsChecked == true
+                    {
+                        @sound $Wav(Loop = true, Volume = 0.2) as Looper;
+                        @animate with Tween(600ms, Linear) { @to { $self.sound.Looper.Volume = 0.8; } }
+                    }
+                }
+                @when $LoopStopBox.IsChecked { @if $LoopStopBox.IsChecked == true { @cancel Looper; } }
+                @on MouseEnter
+                {
+                    @animate with Tween(200ms, Linear) { @to { $self.sound.Looper.Volume = 0.3; } }
+                }
+            </Border.Aspect>
+        </Border>
+    </StackPanel>
+</UserControl>

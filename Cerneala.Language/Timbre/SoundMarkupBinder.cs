@@ -167,16 +167,39 @@ internal enum SoundHandleKind
     Motion
 }
 
+// A float parameter exposed by every SoundClip a Sound handle can play, with
+// the intersection of its ranges in those clips.
+internal sealed class BoundSoundHandleParameter
+{
+    public BoundSoundHandleParameter(string name, float minimum, float maximum)
+    {
+        Name = name;
+        Minimum = minimum;
+        Maximum = maximum;
+    }
+
+    public string Name { get; }
+
+    public float Minimum { get; }
+
+    public float Maximum { get; }
+
+    public bool Contains(float value) =>
+        !float.IsNaN(value) && !float.IsInfinity(value) && value >= Minimum && value <= Maximum;
+}
+
 internal sealed class BoundSoundAspect
 {
     public BoundSoundAspect(
         int elementStart,
         IReadOnlyList<BoundSoundAction> actions,
-        IReadOnlyDictionary<string, SoundHandleKind> handles)
+        IReadOnlyDictionary<string, SoundHandleKind> handles,
+        IReadOnlyDictionary<string, IReadOnlyList<BoundSoundHandleParameter>>? handleParameters = null)
     {
         ElementStart = elementStart;
         Actions = actions;
         Handles = handles;
+        HandleParameters = handleParameters ?? new Dictionary<string, IReadOnlyList<BoundSoundHandleParameter>>();
     }
 
     // Span.Start of the <Aspect> resource or <Owner.Aspect> property element.
@@ -187,6 +210,16 @@ internal sealed class BoundSoundAspect
     public IReadOnlyList<BoundSoundAction> Actions { get; }
 
     public IReadOnlyDictionary<string, SoundHandleKind> Handles { get; }
+
+    // Typed `$self.sound.Handle.Parameter` schema of each Sound handle: the
+    // custom parameters common to every clip started in it. Volume is
+    // intrinsic and not listed.
+    public IReadOnlyDictionary<string, IReadOnlyList<BoundSoundHandleParameter>> HandleParameters { get; }
+
+    public BoundSoundHandleParameter? FindHandleParameter(string handle, string name) =>
+        HandleParameters.TryGetValue(handle, out IReadOnlyList<BoundSoundHandleParameter>? parameters)
+            ? parameters.FirstOrDefault(parameter => string.Equals(parameter.Name, name, StringComparison.Ordinal))
+            : null;
 }
 
 internal sealed class SoundMarkupModel

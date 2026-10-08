@@ -1,0 +1,3 @@
+Passed!  - Failed:     0, Passed:    29, Skipped:     0, Total:    29, Duration: 30 s - Cerneala.Tests.Timbre.dll (net8.0)
+Passed!  - Failed:     0, Passed:    29, Skipped:     0, Total:    29, Duration: 24 s - Cerneala.Tests.Timbre.dll (net8.0)
+Passed!  - Failed:     0, Passed:    29, Skipped:     0, Total:    29, Duration: 26 s - Cerneala.Tests.Timbre.dll (net8.0)

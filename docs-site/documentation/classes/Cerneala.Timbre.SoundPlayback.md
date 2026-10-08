@@ -39,7 +39,7 @@ The identity exists as soon as `Play` returns, in the `Pending` state, before an
 
 Control changes are published to the mixer at the next 10 ms block boundary and affect only PCM produced afterwards; PCM already queued in the output (at most 40 ms) still plays. No change on one playback affects another playback, the clip, or the shared output.
 
-**Values.** `Volume` (0–1) and `Set` validate like [SoundStartOptions](Cerneala.Timbre.SoundStartOptions.md) and throw instead of clamping.
+**Values.** `Volume` (0–1) and `Set` validate like [SoundStartOptions](Cerneala.Timbre.SoundStartOptions.md) and throw instead of clamping. `VolumeParameter` is the shared descriptor of the intrinsic Volume (name `Volume`, default 1): `Set(SoundPlayback.VolumeParameter, v)` is equivalent to `Volume = v`, and no clip can declare it. It lets the Volume and the declared parameters be addressed uniformly, for example by audio Motion: `playback.Motion().Animate(SoundPlayback.VolumeParameter)` (see [SoundMotionFacade](Cerneala.UI.Timbre.SoundMotionFacade.md)).
 
 **Pause/Resume.** `Pause` keeps the reader, position, values, and DSP state, including a delay tail, and the playback keeps its voice slot. Pausing a pending playback lets preparation continue but holds back its first PCM until `Resume`. `Resume` continues without restarting. Repeated `Pause`, and `Resume` while not paused, are no-ops.
 
@@ -59,6 +59,7 @@ Members are thread-safe.
 
 | Name | Type | Description |
 | --- | --- | --- |
+| `VolumeParameter` (static) | `SoundParameter<float>` | Descriptor of the intrinsic Volume for `Set` and audio Motion. |
 | `Clip` | `SoundClip` | The definition captured at start. |
 | `State` | `SoundPlaybackState` | Current state. |
 | `Volume` | `float` | Linear post-chain gain, 0–1. |
@@ -81,3 +82,4 @@ Members are thread-safe.
 
 - [SoundScope](Cerneala.Timbre.SoundScope.md)
 - [SoundHandle](Cerneala.Timbre.SoundHandle.md)
+- [SoundMotionFacade](Cerneala.UI.Timbre.SoundMotionFacade.md)

@@ -176,10 +176,10 @@ internal static class TimbreCoreBenchmarkRunner
         yield return Path.GetFullPath(Path.Combine(corpus, "mp3-mpeg1-44100-stereo-cbr128.mp3"));
     }
 
-    private static double Percentile(double[] sorted, double quantile) =>
+    internal static double Percentile(double[] sorted, double quantile) =>
         sorted[Math.Clamp((int)Math.Ceiling(quantile * sorted.Length) - 1, 0, sorted.Length - 1)];
 
-    private static string ProcessorName()
+    internal static string ProcessorName()
     {
         if (!OperatingSystem.IsWindows())
         {
@@ -234,7 +234,7 @@ internal static class TimbreCoreBenchmarkRunner
         Thresholds Gate);
 
     // Preallocated per-block storage written only by the mixer thread.
-    private sealed class BlockRecorder(int warmup, int measured) : ISoundBlockObserver
+    internal sealed class BlockRecorder(int warmup, int measured) : ISoundBlockObserver
     {
         private readonly long[] ticks = new long[measured];
         private readonly long[] allocated = new long[measured];
@@ -273,7 +273,7 @@ internal static class TimbreCoreBenchmarkRunner
     // Device emulator: consumes queued PCM at 48 kHz of wall-clock time on its
     // own thread, counts frames it could not consume (device underrun), and
     // notifies the runtime after consuming. It never mixes or processes PCM.
-    private sealed class PacedDevice : ISoundOutput
+    internal sealed class PacedDevice : ISoundOutput
     {
         private readonly object gate = new();
         private ISoundOutputClient? client;
@@ -371,7 +371,7 @@ internal static class TimbreCoreBenchmarkRunner
     }
 
     // Deterministic broadband source; streaming readers generate on demand.
-    private sealed class NoiseReader(long lengthFrames, int seed) : SoundReader
+    internal sealed class NoiseReader(long lengthFrames, int seed) : SoundReader
     {
         private long position;
 

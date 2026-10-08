@@ -58,7 +58,7 @@ The sampler initializes `Current` to the starting value, sets the target to the 
 
 The integrator uses semi-implicit Euler integration. It computes displacement from `current` to `target`, applies spring force from `Stiffness`, damping force from `Damping`, acceleration from `Mass`, then updates velocity before updating current value.
 
-Completion is rest-threshold based. After advancing, the sampler snaps `Current` to the target, zeros velocity, and sets `IsComplete` when distance to target is less than or equal to `RestDelta` and velocity magnitude is less than or equal to `RestSpeed`.
+Completion is rest-threshold based. After advancing, the sampler snaps `Current` to the target, zeros velocity, and sets `IsComplete` when distance to target is less than or equal to `RestDelta` and velocity magnitude is less than or equal to `RestSpeed`. It completes the same way when an advance that integrated time left value and velocity bitwise unchanged, an integration fixed point that single-precision values reach a few representable steps short of a large target.
 
 `Retarget(T, RetargetMode)` changes only the target and marks the sampler incomplete. The `mode` argument is not inspected by this sampler. Velocity is preserved by default; when the owning spec uses `SpringVelocityMode.Reset`, retargeting zeros velocity.
 
@@ -73,7 +73,7 @@ Completion is rest-threshold based. After advancing, the sampler snaps `Current`
 | Name | Type | Description |
 | --- | --- | --- |
 | `Current` | `T` | Gets the current integrated spring value. |
-| `IsComplete` | `bool` | Gets whether the value and velocity are within the owning spec's rest thresholds. |
+| `IsComplete` | `bool` | Gets whether the spring has come to rest within the owning spec's thresholds or at an integration fixed point. |
 | `Velocity` | `MotionVelocity<T>?` | Gets the current sampled velocity wrapped in `MotionVelocity<T>`. |
 | `CurrentUntyped` | `object?` | Gets `Current` through the inherited `MotionSampler<T>` implementation. |
 
@@ -81,7 +81,7 @@ Completion is rest-threshold based. After advancing, the sampler snaps `Current`
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `Advance(TimeSpan delta)` | `void` | Advances the spring by fixed substeps, optionally clamps huge deltas through diagnostics, and completes when rest thresholds are met. |
+| `Advance(TimeSpan delta)` | `void` | Advances the spring by fixed substeps, optionally clamps huge deltas through diagnostics, and completes when rest thresholds are met or the integration reaches a fixed point. |
 | `Retarget(T to, RetargetMode mode)` | `void` | Changes the target, optionally resets velocity according to `SpringVelocityMode`, and clears completion. |
 | `RetargetUntyped(object? to, RetargetMode mode)` | `void` | Retargets through the inherited typed-value adapter from `MotionSampler<T>`. |
 

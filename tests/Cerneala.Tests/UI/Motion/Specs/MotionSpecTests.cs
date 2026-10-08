@@ -99,6 +99,27 @@ public sealed class MotionSpecTests
         Assert.Equal(100, sampler.Current, precision: 2);
     }
 
+    // At large magnitudes the float position stops changing a few spacings
+    // short of the target while the integrated velocity settles at a nonzero
+    // value above RestSpeed; the spring must still come to rest.
+    [Theory]
+    [InlineData(900f, 5000f)]
+    [InlineData(-20000f, -12000f)]
+    [InlineData(0f, 250000f)]
+    public void SpringCompletesWhenFloatPrecisionStopsTheValueNearALargeTarget(float from, float to)
+    {
+        SpringSpec<float> spec = MotionFactory.Spring<float>();
+        MotionSampler<float> sampler = spec.CreateSampler(from, to, new FloatMixer(), Context());
+
+        for (int i = 0; i < 600 && !sampler.IsComplete; i++)
+        {
+            sampler.Advance(TimeSpan.FromMilliseconds(16));
+        }
+
+        Assert.True(sampler.IsComplete);
+        Assert.Equal(to, sampler.Current);
+    }
+
     [Fact]
     public void SpringRetargetPreservesVelocityForVectorMixer()
     {

@@ -281,7 +281,7 @@ public sealed partial class UiMarkupGeneratorTests
             string.Concat(resources.Select(match => match.Groups[1].Value)) +
             "</UserControl.Resources><StackPanel>" + elements + "</StackPanel></UserControl>";
         string inputSource =
-            "using Cerneala.Timbre;\nusing Cerneala.UI.Controls;\nnamespace TestInput.Views;\n" +
+            "using System;\nusing Cerneala.Timbre;\nusing Cerneala.UI.Controls;\nusing Cerneala.UI.Motion;\nusing Cerneala.UI.Motion.Core;\nusing Cerneala.UI.Motion.Specs;\nnamespace TestInput.Views;\n" +
             "public partial class GuideView : UserControl\n{\n" +
             string.Concat(csharp.Select((block, index) => $"    private static void Example{index}(Button button)\n    {{\n{block}\n    }}\n")) +
             "}\n";

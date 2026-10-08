@@ -1,0 +1,12 @@
+win-x64 exit 0
+mp3-long-22050-mono-cbr64.mp3 mp3-mpeg1-44100-stereo-cbr128.mp3 opus-stereo-48000-96k.opus vorbis-48000-stereo-q2.ogg 
+win-arm64 exit 0
+mp3-long-22050-mono-cbr64.mp3 mp3-mpeg1-44100-stereo-cbr128.mp3 opus-stereo-48000-96k.opus vorbis-48000-stereo-q2.ogg 
+linux-x64 exit 0
+mp3-long-22050-mono-cbr64.mp3 mp3-mpeg1-44100-stereo-cbr128.mp3 opus-stereo-48000-96k.opus vorbis-48000-stereo-q2.ogg 
+linux-arm64 exit 0
+mp3-long-22050-mono-cbr64.mp3 mp3-mpeg1-44100-stereo-cbr128.mp3 opus-stereo-48000-96k.opus vorbis-48000-stereo-q2.ogg 
+osx-x64 exit 0
+mp3-long-22050-mono-cbr64.mp3 mp3-mpeg1-44100-stereo-cbr128.mp3 opus-stereo-48000-96k.opus vorbis-48000-stereo-q2.ogg 
+osx-arm64 exit 0
+mp3-long-22050-mono-cbr64.mp3 mp3-mpeg1-44100-stereo-cbr128.mp3 opus-stereo-48000-96k.opus vorbis-48000-stereo-q2.ogg 

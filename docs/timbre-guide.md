@@ -193,7 +193,90 @@ runtime) throws from the action and stops the rest of the body. Asynchronous
 failures — a missing file, a decode error, an unavailable device — end that
 playback as `Failed` and do not undo actions that already started.
 
-## 5. Tooling
+## 5. Animating sounds with Motion
+
+Motion animates the Volume and the declared float parameters of a playback that
+a `@sound … as Handle` started. The target path is
+`$self.sound.Handle.Parameter`:
+
+```xml
+<UserControl.Resources>
+    <SoundClip Name="Chime">
+        Source = "audio/chime.wav";
+        @parameter Brightness: float = 1200;
+        @modifier LowPass { Cutoff = Brightness; }
+    </SoundClip>
+</UserControl.Resources>
+
+<Button Content="Chime">
+    <Button.Aspect>
+        @handle Playback;
+        @on Click
+        {
+            @sound $Chime(Volume = 0.2, Brightness = 800) as Playback;
+            @animate with Tween(300ms, EaseOut)
+            {
+                @to
+                {
+                    $self.sound.Playback.Volume = 0.8;
+                    $self.sound.Playback.Brightness = 6000;
+                }
+            }
+        }
+    </Button.Aspect>
+</Button>
+```
+
+- `Volume` is always animatable (0–1). Another name must be a float
+  `@parameter` declared by every clip the Aspect starts in that handle; its range
+  is the intersection of their ranges. `Source`, `Loop`, the position, modifier
+  names and their inputs are not targets; seeking stays an explicit `@seek`.
+- Values are numbers within the range, or `current`. `@animate` (with `@from`
+  and `@to`), `@keyframes`, and `@parallel`/`@sequence` of such executions are
+  supported; `@set`, `@scroll`, `@stagger`, `MotionClip` bodies, bindings as
+  values and `$owner`/`$Name` sound paths are not. One execution cannot mix sound
+  targets with element or Prism targets.
+- The animation captures the handle's occupant when it starts, after a `@sound`
+  earlier in the same body. It never moves to a later occupant: replacing or
+  canceling the playback ends its animations, and the new playback starts from
+  its own values. Animating an empty handle does nothing and plays nothing.
+- Animation time starts with the playback's first PCM, not while it loads. It
+  holds while the playback is paused (also when paused before starting) and
+  while a seek is pending, then continues without restarting; a looping source
+  does not restart it. Visual Motion keeps its own clock.
+- Sound animations are owned by the sound scope: hiding or collapsing the
+  element or an ancestor does not stop them, and detaching the element, replacing
+  its Aspect or retiring a template occurrence cancels them with its playbacks.
+  A window hidden with `Window.Hide` is not pumped, so its sound animations are
+  not sampled until it is shown again (the playback itself keeps playing); the
+  first frame afterwards uses the usual Motion maximum delta of 100 ms.
+- Samples are published to the playback once per UI frame and affect only PCM
+  mixed afterwards (block granularity); they cause no layout or render work.
+  The visual Reduced Motion preference does not disable sound animations.
+- A sample that is not finite or leaves the range (for example a bouncy spring
+  overshooting Volume 1) ends only that parameter's animation on its last valid
+  value; the sound continues and `Detective.CaptureSound().MotionSamplesRejected`
+  counts it. Values are never clamped.
+
+The same animations are available from C# on any playback whose scope belongs
+to an element (`element.Sounds`):
+
+```csharp
+SoundClip chime = new("audio/chime.wav");
+SoundPlayback playback = button.Sounds.Play(chime, start => start.Volume = 0.2f);
+MotionHandle fade = playback.Motion()
+    .Animate(SoundPlayback.VolumeParameter)
+    .To(0.8f)
+    .With(new TweenSpec<float>(TimeSpan.FromMilliseconds(300), Easings.EaseOut));
+```
+
+`Animate` takes `SoundPlayback.VolumeParameter` or a `SoundParameter<float>` of
+the playback's clip; `From` is optional and `With` returns a cancelable
+`MotionHandle`. Assigning `Volume` or calling `Set` cancels only that
+parameter's animation. Playbacks of `Application.Sounds` or a standalone
+runtime name the sampling root explicitly: `playback.Motion(root)`.
+
+## 6. Tooling
 
 The language server, the Visual Studio extension and the generator use one
 binding of the sound syntax:
@@ -208,7 +291,7 @@ binding of the sound syntax:
   signature help for `$Clip(` and go-to-definition for clips, handles and
   parameters.
 
-## 6. Live Preview
+## 7. Live Preview
 
 Preview audio is **off by default**. A previewed document that starts a sound
 gets an explicit failure (`DeviceUnavailable`, "Live Preview audio is

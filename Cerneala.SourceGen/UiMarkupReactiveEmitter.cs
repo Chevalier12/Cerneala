@@ -553,10 +553,11 @@ public sealed partial class UiMarkupGenerator
             List<DirectiveElementNode> elements = body.OfType<DirectiveElementNode>().ToList();
             List<string> activations = body
                 .OfType<MotionExecutionNode>()
+                .Where(execution => !IsAudioMotionNode(execution))
                 .Where(execution => motionExecutionFactoryNames.ContainsKey(execution) || motionActionNames.ContainsKey(execution))
                 .Select(GetMotionExecutionName)
                 .ToList();
-            List<DirectiveNode> soundBody = body.Any(IsSoundNode)
+            List<DirectiveNode> soundBody = body.Any(IsSoundOwnedNode)
                 ? body.Where(node => node is SoundActionNode or MotionExecutionNode).ToList()
                 : [];
             if (assignments.Count > 0 || elements.Count > 0 || activations.Count > 0 || soundBody.Count > 0)

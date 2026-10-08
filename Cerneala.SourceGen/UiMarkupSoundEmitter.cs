@@ -139,9 +139,9 @@ public sealed partial class UiMarkupGenerator
             when.Branches.Any(branch => ContainsSoundAction(branch.Body));
 
         private bool ContainsSoundAction(IReadOnlyList<DirectiveNode> nodes) =>
-            nodes.Any(node => IsSoundNode(node) || node is DirectiveWhenNode when && ContainsSoundAction(when));
+            nodes.Any(node => IsSoundOwnedNode(node) || node is DirectiveWhenNode when && ContainsSoundAction(when));
 
-        private bool HasSoundActivation(ReactiveRule rule) => rule.SoundBody.Any(IsSoundNode);
+        private bool HasSoundActivation(ReactiveRule rule) => rule.SoundBody.Any(IsSoundOwnedNode);
 
         private static IEnumerable<DirectiveNode> EnumerateActionNodes(AspectResource aspect) =>
             aspect.EventTriggers.SelectMany(trigger => trigger.Actions)
@@ -224,6 +224,7 @@ public sealed partial class UiMarkupGenerator
                 currentPostLines.Add("global::System.Action " + name + " = " + EmitSoundAction(session, sound.Actions[index]) + ";");
             }
 
+            EmitAudioMotionExecutions(element, variable, aspect, session);
             if (!resolvedSoundTriggers.TryGetValue((aspect, element), out IReadOnlyList<(DirectiveOnNode Trigger, IEventSymbol Event)>? triggers))
             {
                 return;

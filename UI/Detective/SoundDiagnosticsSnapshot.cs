@@ -14,6 +14,10 @@ public sealed record SoundDiagnosticsSnapshot(
     long StreamingBufferBytes,
     long DspStateBytes)
 {
+    // Audio Motion samples rejected as non-finite or out of range; each one
+    // ended only the animation of its parameter.
+    public long MotionSamplesRejected { get; init; }
+
     internal static SoundDiagnosticsSnapshot Capture(SoundRuntime runtime)
     {
         SoundRuntimeDiagnostics diagnostics = runtime.GetDiagnostics();
@@ -25,6 +29,9 @@ public sealed record SoundDiagnosticsSnapshot(
             diagnostics.ClippedSamples,
             diagnostics.CacheBytes,
             diagnostics.StreamingBufferBytes,
-            diagnostics.DspStateBytes);
+            diagnostics.DspStateBytes)
+        {
+            MotionSamplesRejected = diagnostics.MotionSamplesRejected
+        };
     }
 }

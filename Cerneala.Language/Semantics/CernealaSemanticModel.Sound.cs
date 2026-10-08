@@ -157,6 +157,12 @@ internal sealed partial class CernealaSemanticModel
         (string text, int offset) = BuildDirectTextBuffer(element);
         if (!ContainsSoundSyntax(text))
         {
+            BindSoundMotionTargets(
+                element,
+                new Dictionary<string, SoundHandleKind>(),
+                new Dictionary<string, TextSpan>(),
+                Array.Empty<BoundSoundAction>(),
+                new Dictionary<string, IReadOnlyList<BoundSoundHandleParameter>>());
             return;
         }
 
@@ -308,7 +314,9 @@ internal sealed partial class CernealaSemanticModel
         }
 
         ReportEmbedded(diagnostics);
-        soundAspects[element.Span.Start] = new BoundSoundAspect(element.Span.Start, actions, handles);
+        IReadOnlyDictionary<string, IReadOnlyList<BoundSoundHandleParameter>> handleParameters = BindSoundHandleParameters(handles, actions);
+        soundAspects[element.Span.Start] = new BoundSoundAspect(element.Span.Start, actions, handles, handleParameters);
+        BindSoundMotionTargets(element, handles, declared, actions, handleParameters);
     }
 
     private BoundSoundAction? BindSoundPlay(

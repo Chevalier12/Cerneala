@@ -34,7 +34,9 @@ public sealed partial class UiMarkupGenerator
                 currentPostLines.Add(templateEmissionContexts.Peek().ContextVariable + ".RegisterLifetime(" + sessionName + ");");
             }
 
-            foreach (ResolvedMotionAnimation animation in resolved.Animations)
+            // Audio executions belong to the Aspect's Sound session; they are
+            // emitted with the Sound actions.
+            foreach (ResolvedMotionAnimation animation in resolved.Animations.Where(animation => !IsAudioMotion(animation)))
             {
                 if (animation.Stagger is not null)
                 {
@@ -42,92 +44,7 @@ public sealed partial class UiMarkupGenerator
                     continue;
                 }
 
-                List<string> starts = [];
-                foreach (ResolvedMotionProperty property in animation.Properties)
-                {
-                    string targetCode = EmitMotionTargetCode(property.Target, variable);
-                    string typeCode = GetMotionTypeCode(property.Property.ValueType);
-                    bool hasFrom = property.Source is not null && property.Source.Value is not MotionCurrentValueSyntax;
-                    string fromCode = hasFrom
-                        ? EmitMotionValue(property.Source!.Value, property.Property, targetCode, animation.Parameters)
-                        : "default(" + typeCode + ")!";
-                    bool toCurrent = property.Destination.Value is MotionCurrentValueSyntax;
-                    bool hasBinding = TryEmitMotionBinding(
-                        property.Destination.Value,
-                        property.Property,
-                        property.Target,
-                        targetCode,
-                        out string observationCode,
-                        out string bindingModeCode,
-                        out string projectionCode);
-                    string toCode = toCurrent || hasBinding
-                        ? "default(" + typeCode + ")!"
-                        : EmitMotionValue(property.Destination.Value, property.Property, targetCode, animation.Parameters);
-                    string specCode = property.SpecVariable ?? "null";
-                    if (property.Keyframes is not null)
-                    {
-                        specCode = "motionKeyframesSpec" + nextReactiveId.ToString(CultureInfo.InvariantCulture);
-                        nextReactiveId++;
-                        string framesCode = string.Join(", ", property.Keyframes.Frames.Select(frame =>
-                            "new global::Cerneala.UI.Motion.Specs.MotionKeyframe<" + typeCode + ">(" +
-                            frame.Offset.ToString("R", CultureInfo.InvariantCulture) + "f, " +
-                            EmitMotionValue(frame.Value, property.Property, targetCode, animation.Parameters) + ", " +
-                            frame.EasingCode + ", " + (frame.Hold ? "true" : "false") + ")"));
-                        currentPostLines.Add(
-                            "global::Cerneala.UI.Motion.Specs.MotionSpec<" + typeCode + "> " + specCode +
-                            " = new global::Cerneala.UI.Motion.Specs.KeyframesSpec<" + typeCode + ">(" +
-                            "new global::Cerneala.UI.Motion.Specs.MotionKeyframe<" + typeCode + ">[] { " + framesCode + " }, " +
-                            BuildDurationExpression(property.Keyframes.Duration) + ");");
-                    }
-                    string optionsCode = EmitMotionOptions(animation.Syntax.Options, animation.Parameters);
-                    if (hasBinding)
-                    {
-                        starts.Add(property.Target.Prism is null
-                            ? "global::Cerneala.UI.Markup.GeneratedMarkup.StartBoundMotionProperty(" + sessionName + ", " +
-                                targetCode + ", " + property.Property.PropertyCode + ", " +
-                                (hasFrom ? "true" : "false") + ", " + fromCode + ", " +
-                                observationCode + ", " + bindingModeCode + ", " + projectionCode + ", " +
-                                specCode + ", " + optionsCode + ")"
-                            : EmitBoundPrismMotionStart(
-                                sessionName,
-                                property,
-                                targetCode,
-                                hasFrom,
-                                fromCode,
-                                observationCode,
-                                bindingModeCode,
-                                projectionCode,
-                                specCode,
-                                optionsCode));
-                    }
-                    else
-                    {
-                        starts.Add(property.Target.Prism is null
-                            ? "global::Cerneala.UI.Markup.GeneratedMarkup.StartMotionProperty(" + sessionName + ", " +
-                                targetCode + ", " + property.Property.PropertyCode + ", " +
-                                (hasFrom ? "true" : "false") + ", " + fromCode + ", " +
-                                (toCurrent ? "true" : "false") + ", " + toCode + ", " + specCode + ", " + optionsCode + ")"
-                            : EmitPrismMotionStart(
-                                sessionName,
-                                property,
-                                targetCode,
-                                hasFrom,
-                                fromCode,
-                                toCurrent,
-                                toCode,
-                                specCode,
-                                optionsCode));
-                    }
-                }
-
-                currentPostLines.Add(
-                    "global::System.Func<global::Cerneala.UI.Markup.MarkupMotionExecution> " + animation.FactoryName +
-                    " = () => global::Cerneala.UI.Markup.MarkupMotionExecution.Parallel(" +
-                    string.Join(", ", starts.Select(start => "() => global::Cerneala.UI.Markup.MarkupMotionExecution.From(" + start + ")")) + ");");
-                currentPostLines.Add(
-                    "global::System.Action " + animation.ExecutionName +
-                    " = () => global::Cerneala.UI.Markup.GeneratedMarkup.StartMotionExecution(" + sessionName +
-                    ", " + animation.FactoryName + ");");
+                EmitMotionAnimationActivation(animation, variable, sessionName, "StartMotionExecution");
             }
 
             foreach (ResolvedMotionSet set in resolved.Sets)
@@ -161,30 +78,9 @@ public sealed partial class UiMarkupGenerator
                     ", " + set.FactoryName + ");");
             }
 
-            foreach (ResolvedMotionComposition composition in resolved.Compositions)
+            foreach (ResolvedMotionComposition composition in resolved.Compositions.Where(composition => !IsAudioMotion(composition)))
             {
-                if (composition.HandleName is null)
-                {
-                    string method = composition.Syntax!.Kind == MotionCompositionKind.Parallel ? "Parallel" : "Sequence";
-                    currentPostLines.Add(
-                        "global::System.Func<global::Cerneala.UI.Markup.MarkupMotionExecution> " + composition.FactoryName +
-                        " = () => global::Cerneala.UI.Markup.MarkupMotionExecution." + method + "(" +
-                        string.Join(", ", composition.ChildFactoryNames) + ");");
-                }
-                else
-                {
-                    currentPostLines.Add(
-                        "global::System.Func<global::Cerneala.UI.Markup.MarkupMotionExecution> " + composition.FactoryName +
-                        " = () => global::Cerneala.UI.Markup.GeneratedMarkup.StartMotionExecution(" + sessionName + ", " +
-                        Literal(composition.HandleName) + ", " + composition.ChildFactoryNames[0] + ");");
-                }
-
-                string startCall = composition.HandleName is null
-                    ? "global::Cerneala.UI.Markup.GeneratedMarkup.StartMotionExecution(" + sessionName +
-                        ", " + composition.FactoryName + ")"
-                    : composition.FactoryName + "()";
-                currentPostLines.Add(
-                    "global::System.Action " + composition.ExecutionName + " = () => " + startCall + ";");
+                EmitMotionCompositionActivation(composition, sessionName, "StartMotionExecution");
             }
 
             foreach (ResolvedMotionCancelCommand command in resolved.CancelCommands)
@@ -215,6 +111,140 @@ public sealed partial class UiMarkupGenerator
             EmitMotionScrolls(element, variable, aspect, sessionName);
             EmitMotionDrag(element, variable, aspect, sessionName);
             EmitMotionGesturePress(element, variable, aspect, sessionName);
+        }
+
+        // One @animate (or @keyframes timeline): a factory of its parallel
+        // leaves and the Action starting it through `startMethod` on the
+        // owning session (StartMotionExecution or StartSoundMotion).
+        private void EmitMotionAnimationActivation(
+            ResolvedMotionAnimation animation,
+            string variable,
+            string sessionName,
+            string startMethod)
+        {
+            List<string> starts = [];
+            foreach (ResolvedMotionProperty property in animation.Properties)
+            {
+                string targetCode = EmitMotionTargetCode(property.Target, variable);
+                string typeCode = GetMotionTypeCode(property.Property.ValueType);
+                bool hasFrom = property.Source is not null && property.Source.Value is not MotionCurrentValueSyntax;
+                string fromCode = hasFrom
+                    ? EmitMotionValue(property.Source!.Value, property.Property, targetCode, animation.Parameters)
+                    : "default(" + typeCode + ")!";
+                bool toCurrent = property.Destination.Value is MotionCurrentValueSyntax;
+                bool hasBinding = TryEmitMotionBinding(
+                    property.Destination.Value,
+                    property.Property,
+                    property.Target,
+                    targetCode,
+                    out string observationCode,
+                    out string bindingModeCode,
+                    out string projectionCode);
+                string toCode = toCurrent || hasBinding
+                    ? "default(" + typeCode + ")!"
+                    : EmitMotionValue(property.Destination.Value, property.Property, targetCode, animation.Parameters);
+                string specCode = property.SpecVariable ?? "null";
+                if (property.Keyframes is not null)
+                {
+                    specCode = "motionKeyframesSpec" + nextReactiveId.ToString(CultureInfo.InvariantCulture);
+                    nextReactiveId++;
+                    string framesCode = string.Join(", ", property.Keyframes.Frames.Select(frame =>
+                        "new global::Cerneala.UI.Motion.Specs.MotionKeyframe<" + typeCode + ">(" +
+                        frame.Offset.ToString("R", CultureInfo.InvariantCulture) + "f, " +
+                        EmitMotionValue(frame.Value, property.Property, targetCode, animation.Parameters) + ", " +
+                        frame.EasingCode + ", " + (frame.Hold ? "true" : "false") + ")"));
+                    currentPostLines.Add(
+                        "global::Cerneala.UI.Motion.Specs.MotionSpec<" + typeCode + "> " + specCode +
+                        " = new global::Cerneala.UI.Motion.Specs.KeyframesSpec<" + typeCode + ">(" +
+                        "new global::Cerneala.UI.Motion.Specs.MotionKeyframe<" + typeCode + ">[] { " + framesCode + " }, " +
+                        BuildDurationExpression(property.Keyframes.Duration) + ");");
+                }
+                string optionsCode = EmitMotionOptions(animation.Syntax.Options, animation.Parameters);
+                if (property.Target.Sound is ResolvedSoundMotionTarget sound)
+                {
+                    starts.Add(
+                        "global::Cerneala.UI.Markup.GeneratedMarkup.StartSoundMotionProperty(" + sessionName + ", " +
+                        Literal(sound.HandleName) + ", " + Literal(sound.ParameterName) + ", " +
+                        (hasFrom ? "true" : "false") + ", " + fromCode + ", " +
+                        (toCurrent ? "true" : "false") + ", " + toCode + ", " + specCode + ", " + optionsCode + ")");
+                }
+                else if (hasBinding)
+                {
+                    starts.Add(property.Target.Prism is null
+                        ? "global::Cerneala.UI.Markup.GeneratedMarkup.StartBoundMotionProperty(" + sessionName + ", " +
+                            targetCode + ", " + property.Property.PropertyCode + ", " +
+                            (hasFrom ? "true" : "false") + ", " + fromCode + ", " +
+                            observationCode + ", " + bindingModeCode + ", " + projectionCode + ", " +
+                            specCode + ", " + optionsCode + ")"
+                        : EmitBoundPrismMotionStart(
+                            sessionName,
+                            property,
+                            targetCode,
+                            hasFrom,
+                            fromCode,
+                            observationCode,
+                            bindingModeCode,
+                            projectionCode,
+                            specCode,
+                            optionsCode));
+                }
+                else
+                {
+                    starts.Add(property.Target.Prism is null
+                        ? "global::Cerneala.UI.Markup.GeneratedMarkup.StartMotionProperty(" + sessionName + ", " +
+                            targetCode + ", " + property.Property.PropertyCode + ", " +
+                            (hasFrom ? "true" : "false") + ", " + fromCode + ", " +
+                            (toCurrent ? "true" : "false") + ", " + toCode + ", " + specCode + ", " + optionsCode + ")"
+                        : EmitPrismMotionStart(
+                            sessionName,
+                            property,
+                            targetCode,
+                            hasFrom,
+                            fromCode,
+                            toCurrent,
+                            toCode,
+                            specCode,
+                            optionsCode));
+                }
+            }
+
+            currentPostLines.Add(
+                "global::System.Func<global::Cerneala.UI.Markup.MarkupMotionExecution> " + animation.FactoryName +
+                " = () => global::Cerneala.UI.Markup.MarkupMotionExecution.Parallel(" +
+                string.Join(", ", starts.Select(start => "() => global::Cerneala.UI.Markup.MarkupMotionExecution.From(" + start + ")")) + ");");
+            currentPostLines.Add(
+                "global::System.Action " + animation.ExecutionName +
+                " = () => global::Cerneala.UI.Markup.GeneratedMarkup." + startMethod + "(" + sessionName +
+                ", " + animation.FactoryName + ");");
+        }
+
+        private void EmitMotionCompositionActivation(
+            ResolvedMotionComposition composition,
+            string sessionName,
+            string startMethod)
+        {
+            if (composition.HandleName is null)
+            {
+                string method = composition.Syntax!.Kind == MotionCompositionKind.Parallel ? "Parallel" : "Sequence";
+                currentPostLines.Add(
+                    "global::System.Func<global::Cerneala.UI.Markup.MarkupMotionExecution> " + composition.FactoryName +
+                    " = () => global::Cerneala.UI.Markup.MarkupMotionExecution." + method + "(" +
+                    string.Join(", ", composition.ChildFactoryNames) + ");");
+            }
+            else
+            {
+                currentPostLines.Add(
+                    "global::System.Func<global::Cerneala.UI.Markup.MarkupMotionExecution> " + composition.FactoryName +
+                    " = () => global::Cerneala.UI.Markup.GeneratedMarkup.StartMotionExecution(" + sessionName + ", " +
+                    Literal(composition.HandleName) + ", " + composition.ChildFactoryNames[0] + ");");
+            }
+
+            string startCall = composition.HandleName is null
+                ? "global::Cerneala.UI.Markup.GeneratedMarkup." + startMethod + "(" + sessionName +
+                    ", " + composition.FactoryName + ")"
+                : composition.FactoryName + "()";
+            currentPostLines.Add(
+                "global::System.Action " + composition.ExecutionName + " = () => " + startCall + ";");
         }
 
         private void EmitMotionScrolls(MarkupElement element, string variable, AspectResource aspect, string sessionName)

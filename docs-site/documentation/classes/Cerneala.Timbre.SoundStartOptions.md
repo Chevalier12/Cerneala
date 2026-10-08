@@ -29,7 +29,7 @@ SoundPlayback playback = sounds.Play(filteredSound, start =>
 
 ## Remarks
 
-The options start from the clip's defaults. Setters validate immediately: `Volume` outside 0–1, NaN, or infinity throws `ArgumentOutOfRangeException`; `Set` with a parameter not declared by the clip throws `ArgumentException`, and an out-of-range or non-finite value throws `ArgumentOutOfRangeException`. Throwing from the delegate aborts the start without replacing the handle's occupant.
+The options start from the clip's defaults. Setters validate immediately: `Volume` outside 0–1, NaN, or infinity throws `ArgumentOutOfRangeException`; `Set` with `SoundPlayback.VolumeParameter` is equivalent to assigning `Volume`; `Set` with any other parameter not declared by the clip throws `ArgumentException`, and an out-of-range or non-finite value throws `ArgumentOutOfRangeException`. Throwing from the delegate aborts the start without replacing the handle's occupant.
 
 The configured values are snapshotted before `Play` returns, so they apply to the first PCM block. The delegate runs once and is never retained or re-run by a worker or audio thread. Using the options object after the delegate returns throws `InvalidOperationException`.
 

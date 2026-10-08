@@ -2,6 +2,9 @@ using Cerneala.Timbre;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Motion.Core;
+using Cerneala.UI.Motion.Properties;
+using Cerneala.UI.Motion.Specs;
 using Cerneala.UI.Resources;
 using Cerneala.UI.Timbre;
 
@@ -74,6 +77,33 @@ public static partial class GeneratedMarkup
         return GetSoundSession(session).Occupant(handleName)?.TrySeekAsync(position) ?? Task.CompletedTask;
     }
 
+    // Starts an audio Motion execution owned by the Sound session: it survives
+    // hiding the owner and ends with the session's scope.
+    public static MarkupMotionExecution StartSoundMotion(IDisposable session, Func<MarkupMotionExecution> start)
+    {
+        ArgumentNullException.ThrowIfNull(start);
+        return GetSoundSession(session).StartMotion(start);
+    }
+
+    // One `$self.sound.Handle.Parameter` leaf: captures the handle's current
+    // occupant and the named descriptor of its clip once, at activation.
+    public static MotionHandle StartSoundMotionProperty(
+        IDisposable session,
+        string handleName,
+        string parameterName,
+        bool hasFrom,
+        float from,
+        bool toCurrent,
+        float to,
+        MotionSpec<float>? spec,
+        MotionPropertyStartOptions options)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(handleName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(parameterName);
+        ArgumentNullException.ThrowIfNull(options);
+        return GetSoundSession(session).StartMotionProperty(handleName, parameterName, hasFrom, from, toCurrent, to, spec, options);
+    }
+
     private static IDisposable AttachSoundSessionCore(UIElement owner, ElementAspect? aspect, bool aspectScoped)
     {
         MarkupSoundSession session = new(owner, aspect, aspectScoped);
@@ -104,6 +134,7 @@ public static partial class GeneratedMarkup
         private readonly ElementSoundOwner sounds;
         private readonly List<(Action Attach, Action Detach)> triggers = [];
         private readonly Dictionary<string, SoundHandle> slots = new(StringComparer.Ordinal);
+        private readonly List<MarkupMotionExecution> motionExecutions = [];
         private ElementAspect? aspect;
         private SoundScope? slotScope;
         private bool attached;
@@ -208,6 +239,54 @@ public static partial class GeneratedMarkup
                 ? slot.Current
                 : null;
 
+        // Audio executions are owned by this session, not by the visual Motion
+        // session: renderability is ignored and Retire cancels them.
+        public MarkupMotionExecution StartMotion(Func<MarkupMotionExecution> start)
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+            if (aspectScoped && !IsOwnedByCurrentAspect)
+            {
+                return MarkupMotionExecution.Parallel();
+            }
+
+            if (!attached || !owner.IsAttached)
+            {
+                throw new InvalidOperationException("Markup sound Motion can start only while its owner is attached.");
+            }
+
+            MarkupMotionExecution execution = start() ?? throw new InvalidOperationException("A Motion execution returned null.");
+            motionExecutions.RemoveAll(candidate => candidate.IsCompleted || candidate.IsCanceled);
+            if (!execution.IsCompleted && !execution.IsCanceled)
+            {
+                motionExecutions.Add(execution);
+            }
+
+            return execution;
+        }
+
+        public MotionHandle StartMotionProperty(
+            string handleName,
+            string parameterName,
+            bool hasFrom,
+            float from,
+            bool toCurrent,
+            float to,
+            MotionSpec<float>? spec,
+            MotionPropertyStartOptions options)
+        {
+            // The occupant and descriptor are captured once, here; an empty
+            // slot is a no-op without autoplay.
+            if (Occupant(handleName) is not SoundPlayback playback || owner.Root is not UIRoot root)
+            {
+                return SoundPlaybackMotion.CompletedNoOp();
+            }
+
+            SoundParameter<float> parameter = parameterName == "Volume"
+                ? SoundPlayback.VolumeParameter
+                : GetSoundParameter(playback.Clip, parameterName);
+            return SoundPlaybackMotion.AnimateOccupant(root, playback, parameter, hasFrom, from, toCurrent, to, spec ?? SoundPlaybackMotion.DefaultSpec, options);
+        }
+
         public void OnRenderabilityChanged(bool isRenderable)
         {
         }
@@ -276,6 +355,13 @@ public static partial class GeneratedMarkup
 
         private void Retire()
         {
+            MarkupMotionExecution[] active = motionExecutions.ToArray();
+            motionExecutions.Clear();
+            foreach (MarkupMotionExecution execution in active)
+            {
+                execution.Cancel();
+            }
+
             sounds.Retire();
             slots.Clear();
             slotScope = null;

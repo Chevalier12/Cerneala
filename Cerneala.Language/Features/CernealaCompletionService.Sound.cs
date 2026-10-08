@@ -1,5 +1,6 @@
 using Cerneala.Language.Semantics;
 using Cerneala.Language.Syntax;
+using Cerneala.Language.Text;
 using Cerneala.Timbre.Catalog;
 
 namespace Cerneala.Language.Features;
@@ -24,6 +25,11 @@ internal sealed partial class CernealaCompletionService
         if (elementName == "SoundClip" || lexicalName == "SoundClip")
         {
             AddSoundClipBodyCompletions(result, site, model, elementName == "SoundClip" ? element : null, statement);
+            return true;
+        }
+
+        if (TryAddSoundMotionTargetCompletions(result, site, model, element, statement))
+        {
             return true;
         }
 
@@ -105,6 +111,42 @@ internal sealed partial class CernealaCompletionService
         }
 
         return false;
+    }
+
+    // `$self.sound.` completes the Aspect's Sound handles and
+    // `$self.sound.Handle.` the parameters Motion can animate on it.
+    private static bool TryAddSoundMotionTargetCompletions(
+        ICollection<CernealaCompletionItem> result,
+        CompletionSite site,
+        CernealaSemanticModel? model,
+        ElementSyntax? element,
+        string statement)
+    {
+        string token = statement.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? string.Empty;
+        if (!token.StartsWith("$self.sound.", StringComparison.Ordinal) || char.IsWhiteSpace(statement[statement.Length - 1]))
+        {
+            return false;
+        }
+
+        string[] segments = token.Split('.');
+        string partial = segments[segments.Length - 1];
+        TextSpan span = new(site.Offset - partial.Length, partial.Length);
+        if (segments.Length == 3)
+        {
+            foreach (string handle in model?.GetCompletionSoundMotionHandles(element) ?? Array.Empty<string>())
+            {
+                Add(result, handle, handle, span, CernealaCompletionItemKind.Variable, "Sound handle", "00");
+            }
+        }
+        else if (segments.Length == 4)
+        {
+            foreach (string parameter in model?.GetCompletionSoundMotionParameters(element, segments[2]) ?? Array.Empty<string>())
+            {
+                Add(result, parameter, parameter, span, CernealaCompletionItemKind.Property, "System.Single", "00");
+            }
+        }
+
+        return true;
     }
 
     private static void AddSoundClipBodyCompletions(

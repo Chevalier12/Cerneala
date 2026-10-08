@@ -1,0 +1,17 @@
+
+Scenario       Process MixP50 MixP95 MixP99 MixAllocated MaxQueued Underrun DeviceUnderrun UiP50
+--------       ------- ------ ------ ------ ------------ --------- -------- -------------- -----
+hidden-control 1         0.24   0.30   0.36            0      1920        0              0  0.11
+hidden-control 2         0.24   0.31   0.37            0      1920        0              0  0.11
+hidden-control 3         0.24   0.31   0.37            0      1920        0              0  0.11
+hidden-control 4         0.24   0.31   0.35            0      1920        0              0  0.11
+hidden-control 5         0.25   0.31   0.36            0      1920        0              0  0.11
+visible-root   1         0.24   0.33   0.36            0      1920        0              0  0.11
+visible-root   2         0.24   0.33   0.39            0      1920        0              0  0.11
+visible-root   3         0.25   0.32   0.36            0      1920        0              0  0.11
+visible-root   4         0.24   0.31   0.36            0      1920        0              0  0.11
+visible-root   5         0.24   0.30   0.35            0      1920        0              0  0.11
+
+
+Verdict: PASS
+exit 0

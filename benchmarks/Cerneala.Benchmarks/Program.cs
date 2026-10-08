@@ -92,6 +92,12 @@ if (args is ["--timbre-core", string timbreCorePath])
     return;
 }
 
+if (args is ["--timbre-motion", string timbreMotionPath])
+{
+    TimbreMotionBenchmarkRunner.Run(timbreMotionPath);
+    return;
+}
+
 if (args is ["--timbre-decoding", string timbreDecodingPath, string timbreCorpus])
 {
     TimbreDecodingBenchmarkRunner.Run(timbreDecodingPath, timbreCorpus);

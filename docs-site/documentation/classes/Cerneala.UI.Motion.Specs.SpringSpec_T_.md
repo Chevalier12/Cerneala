@@ -82,7 +82,7 @@ sampler.Retarget(50f, RetargetMode.Restart);
 
 `SpringSpec<T>` creates a sampler that integrates spring motion with fixed 1/120 second substeps. The sampler tracks current value, target value, and velocity, then applies a semi-implicit Euler step using spring force `-Stiffness * displacement`, damping force `-Damping * velocity`, and acceleration divided by `Mass`.
 
-Sampling completes when the distance to the target is less than or equal to `RestDelta` and the velocity magnitude is less than or equal to `RestSpeed`. On completion, the sampler snaps `Current` to the target and zeroes its velocity.
+Sampling completes when the distance to the target is less than or equal to `RestDelta` and the velocity magnitude is less than or equal to `RestSpeed`. It also completes when an advance that integrates time leaves both the value and the velocity bitwise unchanged: near a large target, single-precision values can stop a few representable steps short while the velocity settles at `-Stiffness * displacement / Damping`, too small to move the value and possibly above `RestSpeed`. That state is a fixed point the integration can never leave, so the spring ends there on its target instead of running forever. On completion, the sampler snaps `Current` to the target and zeroes its velocity.
 
 Spring sampling requires a `ValueMixer<T>` whose `SupportsVectorOperations` value is `true`, because the sampler uses vector subtraction, addition, scaling, and magnitude. Non-vector mixers are rejected when `CreateSampler` is called.
 

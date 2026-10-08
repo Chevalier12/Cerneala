@@ -130,6 +130,8 @@ public sealed partial class SoundRuntime : IDisposable
                 Interlocked.Read(ref underrunFrames),
                 Interlocked.Read(ref clippedSamples),
                 parameterPublications,
+                animatedPublications,
+                motionSamplesRejected,
                 live.Count,
                 Volatile.Read(ref liveReaders),
                 Volatile.Read(ref liveSourcePumps),

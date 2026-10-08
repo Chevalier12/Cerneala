@@ -1,0 +1,2 @@
+SDL_GPU_SMOKE_OK mode=timbre-markup scenarios=10 device=SdlAudioFormat { Format = 33056, Channels = 2, Frequency = 48000 } opens=1
+exit 0

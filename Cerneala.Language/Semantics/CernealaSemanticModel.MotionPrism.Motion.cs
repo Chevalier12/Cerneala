@@ -159,7 +159,19 @@ internal sealed partial class CernealaSemanticModel
 
         MotionProgram program = ParseMotionProgram(text, offset);
         ElementSyntax source = FindAspectApplicationElement(aspect) ?? aspect.Element;
-        BindMotionProgram(source, aspect.TargetType, program, clip: null, isAspect: true, cancellationToken);
+        collectingSoundMotion = new PendingSoundMotion(program);
+        try
+        {
+            BindMotionProgram(source, aspect.TargetType, program, clip: null, isAspect: true, cancellationToken);
+            if (collectingSoundMotion.Targets.Count > 0)
+            {
+                pendingSoundMotion[aspect.Element] = collectingSoundMotion;
+            }
+        }
+        finally
+        {
+            collectingSoundMotion = null;
+        }
     }
 
     private ElementSyntax? FindAspectApplicationElement(ResourceDefinition aspect)
@@ -716,6 +728,12 @@ internal sealed partial class CernealaSemanticModel
 
             if (owner.Keyword is not ("@from" or "@to" or "@set" or "@scroll"))
             {
+                continue;
+            }
+
+            if (IsSoundMotionPath(assignment.Name))
+            {
+                CollectSoundMotionTarget(assignment, owner);
                 continue;
             }
 

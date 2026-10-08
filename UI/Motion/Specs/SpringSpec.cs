@@ -134,6 +134,8 @@ public sealed class SpringSpec<T> : MotionSpec<T>
                 remaining = maxAdvanceSeconds;
             }
 
+            T positionBefore = current;
+            T velocityBefore = velocity;
             int iterations = 0;
             while (remaining > 0 && iterations < MaxSubsteps)
             {
@@ -143,8 +145,17 @@ public sealed class SpringSpec<T> : MotionSpec<T>
                 iterations++;
             }
 
+            // Near a large target the value can stop a few representable steps
+            // short while the velocity settles at -k*d/c, too small to move it
+            // and possibly above RestSpeed. A state the integration leaves
+            // bitwise unchanged is a fixed point it can never leave: the spring
+            // has ended, on its target.
+            bool fixedPoint = iterations > 0 &&
+                mixer.EqualsWithinTolerance(positionBefore, current, 0) &&
+                mixer.EqualsWithinTolerance(velocityBefore, velocity, 0);
             T deltaToTarget = mixer.Subtract(target, current);
-            if (mixer.Magnitude(deltaToTarget) <= spec.RestDelta && mixer.Magnitude(velocity) <= spec.RestSpeed)
+            if (fixedPoint ||
+                mixer.Magnitude(deltaToTarget) <= spec.RestDelta && mixer.Magnitude(velocity) <= spec.RestSpeed)
             {
                 current = target;
                 velocity = mixer.Scale(velocity, 0);

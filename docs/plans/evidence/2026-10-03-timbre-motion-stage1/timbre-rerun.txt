@@ -1,0 +1,2 @@
+  Failed Cerneala.Tests.Timbre.Motion.SoundMotionIntegrationTests.SoundMotionIsSampledByTheRootClockWhileTheControlIsHidden [9 s]
+Failed!  - Failed:     1, Passed:   337, Skipped:     0, Total:   338, Duration: 1 m 36 s - Cerneala.Tests.Timbre.dll (net8.0)

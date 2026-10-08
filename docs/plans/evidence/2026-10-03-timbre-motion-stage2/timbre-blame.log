@@ -1,0 +1,46 @@
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+The active test run was aborted. Reason: Test host process crashed
+Data collector 'Blame' message: The specified inactivity time of 3 minutes has elapsed. Collecting hang dumps from testhost and its child processes.
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-10-03-timbre-motion-stage2\blame\timbre-blame.trx
+
+Passed!  - Failed:     0, Passed:   178, Skipped:     0, Total:   178, Duration: 3 m - Cerneala.Tests.Timbre.dll (net8.0)
+Test Run Aborted.
+
+The active Test Run was aborted because the host process exited unexpectedly. Please inspect the call stack above, if available, to get more information about where the exception originated from.
+The test running when the crash occurred: 
+Cerneala.Tests.Timbre.Motion.SoundMotionTimelineTests.SoundMotionRetargetsFromTheCurrentSampleAndRespectsPriority
+Cerneala.Tests.Timbre.Harness.HarnessObserverTests.ReaderGateHoldsReadUntilReleasedAndHonorsCancellation
+Cerneala.Tests.Timbre.Decoding.SoundStreamingStressTests.TransportCyclesOverDecodedStreamsReturnEveryResourceToBaseline
+Cerneala.Tests.Timbre.Decoding.SoundStreamingFailureTests.ReadErrorMidStreamFailsThePlaybackAsSourceUnavailable
+Cerneala.Tests.Timbre.Motion.SoundMotionTransportTests.SoundMotionPauseFreezesTheAnimationAndResumeContinuesIt
+Cerneala.Tests.Timbre.Engine.PlainMixTests.OverlappingPlaybacksSumWithoutNormalization
+Cerneala.Tests.Timbre.Engine.ConcurrencyStressTests.ConcurrentTransportAndLifecycleReturnEveryResourceToBaseline
+Cerneala.Tests.Timbre.Engine.RealtimeAllocationTests.SteadyStateMixerBlocksDoNotAllocate
+Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.DefaultAllowanceIsAccountingOnlyWithoutANumericCap
+Cerneala.Tests.Timbre.Decoding.SoundStreamingLoopTests.StreamingLoopRepeatsTheWholeTrimmedSourceWithoutGaps
+Cerneala.Tests.Timbre.Engine.StreamingPrimingTests.AStreamDoesNotStartFromAPacketSmallerThanABlock
+Cerneala.Tests.Timbre.Motion.SoundMotionContractTests.SoundMotionManualSetterCancelsOnlyTheAnimationOfThatParameter
+Cerneala.Tests.Timbre.Decoding.SoundDecoderIntegrationTests.StreamedFileThroughLowPassAndDelayEqualsTheOracleOnTheDecodedPcm
+Cerneala.Tests.Timbre.Engine.HandleAndScopeTests.PlayWithoutHandleOverlapsAndCancelTargetsOneIdentity
+Cerneala.Tests.Timbre.Decoding.SoundStreamingTransportTests.PauseAndResumeKeepTheReaderAndContinueWithoutRestart
+Cerneala.Tests.Timbre.Hosting.OwnerAccessTests.DetectiveCapturesARootsSoundRuntimeWithoutDrivingIt
+Cerneala.Tests.Timbre.Engine.TransportTests.PauseWhilePendingHoldsTheFirstPcmUntilResume
+Cerneala.Tests.Timbre.Engine.LifecycleTests.ParameterPublicationAffectsOnlyBlocksProducedAfterIt
+Cerneala.Tests.Timbre.Motion.SoundMotionMarkupTests.SoundMotionOfAHiddenOwnerContinuesAndHideShowRestartsNothing
+Cerneala.Tests.Timbre.Contracts.ExternalConsumerTests.StandaloneConsumerRunsThePlanExampleFlow
+Cerneala.Tests.Timbre.Engine.PlaybackIdentityTests.StartOverridesApplyToTheFirstBlockWithoutChangingTheDefinition
+Cerneala.Tests.Timbre.Markup.SoundMarkupTransportTests.ReplacementCancelsOldOccupantAndItsPendingSeekDoesNotMoveTheNewOne
+Cerneala.Tests.Timbre.Decoding.SoundStreamingCancelTests.CancelWhileThePumpWaitsForSpace
+Cerneala.Tests.Timbre.Motion.SoundMotionIntegrationTests.SoundMotionIsSampledByTheRootClockWhileTheControlIsHidden
+Cerneala.Tests.Timbre.Markup.SoundMarkupParityTests.FactoryMarkupMatchesManualCSharp
+Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests.SourceReadsRunOnTheSourcePumpNotOnTheMixerOrTheCaller
+Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.PlainAndModifiedPlaybacksShareOneMix
+Cerneala.Tests.Timbre.Motion.SoundMotionLifecycleTests.SoundMotionCapturesThePlaybackInstanceNotTheSlot
+
+This test may, or may not be the source of the crash.
+
+Attachments:
+  C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-10-03-timbre-motion-stage2\blame\8a6019ac-55b5-4385-a5e0-1af7b8934419\testhost_37808_20261007T233421_hangdump.dmp
+  C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-10-03-timbre-motion-stage2\blame\8a6019ac-55b5-4385-a5e0-1af7b8934419\Sequence_07d63198f0024bfe944c8e48865b42c4.xml
+exit 1

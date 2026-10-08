@@ -1,0 +1,180 @@
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:01:43.49]     Cerneala.Tests.Language.CompletionTests.WarmCompletionP95StaysBelowBudgetAndIndependentDocumentsDoNotBlock [SKIP]
+  Skipped Cerneala.Tests.Language.CompletionTests.WarmCompletionP95StaysBelowBudgetAndIndependentDocumentsDoNotBlock [1 ms]
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-10-03-timbre-motion-stage3\full-solution\lauri_DESKTOP-JT43V3D_2026-10-08_01_04_05_net8.0.trx
+
+Passed!  - Failed:     0, Passed:   371, Skipped:     1, Total:   372, Duration: 1 m 43 s - Cerneala.Tests.Language.dll (net8.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.LanguageServer\bin\Release\net10.0\Cerneala.Tests.LanguageServer.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-10-03-timbre-motion-stage3\full-solution\lauri_DESKTOP-JT43V3D_2026-10-08_01_05_54_net10.0.trx
+
+Passed!  - Failed:     0, Passed:    45, Skipped:     0, Total:    45, Duration: 5 m 41 s - Cerneala.Tests.LanguageServer.dll (net10.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\bin\Release\net10.0-windows\Cerneala.Tests.PreviewHost.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-10-03-timbre-motion-stage3\full-solution\lauri_DESKTOP-JT43V3D_2026-10-08_01_11_41_net10.0.trx
+
+Passed!  - Failed:     0, Passed:    22, Skipped:     0, Total:    22, Duration: 2 m 42 s - Cerneala.Tests.PreviewHost.dll (net10.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Release\net8.0\Cerneala.Tests.Scene2DImporters.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-10-03-timbre-motion-stage3\full-solution\lauri_DESKTOP-JT43V3D_2026-10-08_01_14_28_net8.0.trx
+
+Passed!  - Failed:     0, Passed:   173, Skipped:     0, Total:   173, Duration: 6 s - Cerneala.Tests.Scene2DImporters.dll (net8.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-10-03-timbre-motion-stage3\full-solution\lauri_DESKTOP-JT43V3D_2026-10-08_01_14_40_net8.0.trx
+
+Passed!  - Failed:     0, Passed:   104, Skipped:     0, Total:   104, Duration: 11 s - Cerneala.Tests.Scene2DPackages.dll (net8.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:16.31]     Cerneala.Tests.SceneVillage.NativeVillageFrameRateGateTests.WalkingAndStressPresetsMeetPostSubmitCallbackCadenceGate [SKIP]
+  Skipped Cerneala.Tests.SceneVillage.NativeVillageFrameRateGateTests.WalkingAndStressPresetsMeetPostSubmitCallbackCadenceGate [1 ms]
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-10-03-timbre-motion-stage3\full-solution\lauri_DESKTOP-JT43V3D_2026-10-08_01_14_57_net8.0.trx
+
+Passed!  - Failed:     0, Passed:    43, Skipped:     1, Total:    44, Duration: 1 m 9 s - Cerneala.Tests.SceneVillage.dll (net8.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:09:00.68]     Cerneala.Tests.SdlGpu.SdlWindowsNativeContractTests.NativeOwnershipInputAndGraphicsLifetimesRemainIndependent [SKIP]
+  Skipped Cerneala.Tests.SdlGpu.SdlWindowsNativeContractTests.NativeOwnershipInputAndGraphicsLifetimesRemainIndependent [1 ms]
+[xUnit.net 00:09:07.23]     Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 1) [SKIP]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 1) [1 ms]
+[xUnit.net 00:09:08.60]     Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 7) [SKIP]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 7) [1 ms]
+[xUnit.net 00:09:10.12]     Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 6) [SKIP]
+[xUnit.net 00:09:10.92]     Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 3) [SKIP]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 6) [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 3) [1 ms]
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-10-03-timbre-motion-stage3\full-solution\lauri_DESKTOP-JT43V3D_2026-10-08_01_16_11_net8.0.trx
+
+Passed!  - Failed:     0, Passed:  1009, Skipped:     5, Total:  1014, Duration: 15 m 10 s - Cerneala.Tests.SdlGpu.dll (net8.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\bin\Release\net8.0-windows\Cerneala.Tests.SourceGen.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:24.50]     Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.DocumentedSoundExamplesCompile(guide: "timbre-guide.md") [FAIL]
+  Failed Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.DocumentedSoundExamplesCompile(guide: "timbre-guide.md") [204 ms]
+  Error Message:
+   Views/GuideView.crn.cs(28,32): error CS0103: The name 'TimeSpan' does not exist in the current context
+// <auto-generated />
+#nullable enable
+namespace TestInput.Views;
+
+partial class GuideView
+{
+    private static readonly global::Cerneala.UI.Controls.Templates.ComponentTemplate<global::TestInput.Views.GuideView> __CernealaGeneratedTemplate = new("GuideView", static context => context.Owner.__CernealaCreateContent(context));
+
+    public GuideView()
+    {
+        __CernealaInitialize();
+    }
+
+    private void __CernealaInitialize()
+    {
+        ComponentTemplate = __CernealaGeneratedTemplate;
+        ApplyTemplate();
+    }
+
+    private global::Cerneala.UI.Elements.UIElement? __CernealaCreateContent(global::Cerneala.UI.Controls.Templates.ComponentTemplateContext<global::TestInput.Views.GuideView> templateContext)
+    {
+        global::Cerneala.Timbre.SoundParameter<float> ConfirmSoundSoundClip0_ToneCutoff = new global::Cerneala.Timbre.SoundParameter<float>("ToneCutoff", 1200f);
+        global::Cerneala.Timbre.SoundParameter<float> ConfirmSoundSoundClip0_EchoMix = new global::Cerneala.Timbre.SoundParameter<float>("EchoMix", 0.15f);
+        global::Cerneala.Timbre.SoundClip ConfirmSoundSoundClip0 = new global::Cerneala.Timbre.SoundClip(global::Cerneala.Timbre.SoundSource.FromFile("audio/confirm.wav"), volume: 0.8f, loop: false, parameters: new global::Cerneala.Timbre.SoundParameter[] { ConfirmSoundSoundClip0_ToneCutoff, ConfirmSoundSoundClip0_EchoMix }, modifiers: new global::Cerneala.Timbre.SoundModifier[] { new global::Cerneala.Timbre.LowPass(cutoff: new global::Cerneala.Timbre.SoundInput<float>(ConfirmSoundSoundClip0_ToneCutoff)), new global::Cerneala.Timbre.Delay(time: new global::Cerneala.Timbre.SoundInput<float>(0.12f), feedback: new global::Cerneala.Timbre.SoundInput<float>(0.2f), mix: new global::Cerneala.Timbre.SoundInput<float>(ConfirmSoundSoundClip0_EchoMix)) });
+        global::Cerneala.Timbre.SoundClip MusicSoundClip1 = new global::Cerneala.Timbre.SoundClip(global::Cerneala.Timbre.SoundSource.FromFile("audio/music.ogg"), volume: 1f, loop: true);
+        global::Cerneala.Timbre.SoundParameter<float> ChimeSoundClip2_Brightness = new global::Cerneala.Timbre.SoundParameter<float>("Brightness", 1200f);
+        global::Cerneala.Timbre.SoundClip ChimeSoundClip2 = new global::Cerneala.Timbre.SoundClip(global::Cerneala.Timbre.SoundSource.FromFile("audio/chime.wav"), volume: 1f, loop: false, parameters: new global::Cerneala.Timbre.SoundParameter[] { ChimeSoundClip2_Brightness }, modifiers: new global::Cerneala.Timbre.SoundModifier[] { new global::Cerneala.Timbre.LowPass(cutoff: new global::Cerneala.Timbre.SoundInput<float>(ChimeSoundClip2_Brightness)) });
+        this.Resources.SetResource(new global::Cerneala.UI.Resources.ResourceId<global::Cerneala.Timbre.SoundClip>("ConfirmSound"), ConfirmSoundSoundClip0);
+        this.Resources.SetResource(new global::Cerneala.UI.Resources.ResourceId<global::Cerneala.Timbre.SoundClip>("Music"), MusicSoundClip1);
+        this.Resources.SetResource(new global::Cerneala.UI.Resources.ResourceId<global::Cerneala.Timbre.SoundClip>("Chime"), ChimeSoundClip2);
+        global::Cerneala.UI.Controls.StackPanel element0 = new();
+        global::Cerneala.UI.Controls.Button element1 = new();
+        element1.Content = "Play";
+        global::Cerneala.UI.Aspect.ElementAspect localAspect3 = new(
+            null, typeof(global::Cerneala.UI.Controls.Button), global::System.Array.Empty<global::Cerneala.UI.Aspect.ElementAspectValue>(),
+            global::System.Array.Empty<global::Cerneala.UI.Aspect.ElementAspectCondition>(),
+            element =>
+            {
+                if (element is not global::Cerneala.UI.Controls.Button target)
+                {
+                    return null;
+                }
+                return global::Cerneala.UI.Markup.GeneratedMarkup.CombineLifetimes(global::System.Array.Empty<global::System.IDisposable?>());
+            },
+            isConditional: false,
+            origin: new global::Cerneala.UI.Aspect.AspectOrigin(global::Cerneala.UI.Aspect.AspectAuthoringKind.MarkupInline, "GuideView.crn", null));
+        element1.Aspect = localAspect3;
+        element0.LogicalChildren.Add(element1);
+        element0.VisualChildren.Add(element1);
+        global::Cerneala.UI.Controls.Button element2 = new();
+        element2.Content = "Chime";
+        global::Cerneala.UI.Motion.Specs.MotionSpec<float> motionSpec0 = new global::Cerneala.UI.Motion.Specs.TweenSpec<float>(global::System.TimeSpan.FromMilliseconds(300), global::Cerneala.UI.Motion.Specs.Easings.EaseOut);
+        global::Cerneala.UI.Aspect.ElementAspect localAspect4 = new(
+            null, typeof(global::Cerneala.UI.Controls.Button), global::System.Array.Empty<global::Cerneala.UI.Aspect.ElementAspectValue>(),
+            global::System.Array.Empty<global::Cerneala.UI.Aspect.ElementAspectCondition>(),
+            element =>
+            {
+                if (element is not global::Cerneala.UI.Controls.Button target)
+                {
+                    return null;
+                }
+                return global::Cerneala.UI.Markup.GeneratedMarkup.CombineLifetimes(global::System.Array.Empty<global::System.IDisposable?>());
+            },
+            isConditional: false,
+            origin: new global::Cerneala.UI.Aspect.AspectOrigin(global::Cerneala.UI.Aspect.AspectAuthoringKind.MarkupInline, "GuideView.crn", null));
+        element2.Aspect = localAspect4;
+        element0.LogicalChildren.Add(element2);
+        element0.VisualChildren.Add(element2);
+        global::System.IDisposable motionSession0 = global::Cerneala.UI.Markup.GeneratedMarkup.AttachMotionSession(element1, element1.Aspect!);
+        global::System.IDisposable soundSession1 = global::Cerneala.UI.Markup.GeneratedMarkup.AttachSoundSession(element1, element1.Aspect!);
+        global::System.Action soundAction2 = () => global::Cerneala.UI.Markup.GeneratedMarkup.PlaySound(soundSession1, new global::Cerneala.UI.Resources.ResourceId<global::Cerneala.Timbre.SoundClip>("ConfirmSound"), (soundClip, soundStart) => { soundStart.Volume = 0.5f; soundStart.Set(global::Cerneala.UI.Markup.GeneratedMarkup.GetSoundParameter(soundClip, "ToneCutoff"), 800f); }, "Playback");
+        global::System.Action soundAction3 = () => global::Cerneala.UI.Markup.GeneratedMarkup.PauseSound(soundSession1, "Playback");
+        global::System.Action soundAction4 = () => global::Cerneala.UI.Markup.GeneratedMarkup.ResumeSound(soundSession1, "Playback");
+        global::System.Action soundAction5 = () => { _ = global::Cerneala.UI.Markup.GeneratedMarkup.SeekSound(soundSession1, "Playback", global::System.TimeSpan.FromTicks(300000000L)); };
+        global::System.Action soundAction6 = () => global::Cerneala.UI.Markup.GeneratedMarkup.CancelSound(soundSession1, "Playback");
+        global::Cerneala.UI.Input.RoutedEventHandler soundEventHandler7 = (eventArg0, eventArg1) => { soundAction2(); };
+        global::Cerneala.UI.Markup.GeneratedMarkup.AddSoundTrigger(soundSession1, () => element1.Click += soundEventHandler7, () => element1.Click -= soundEventHandler7);
+        global::Cerneala.UI.Input.RoutedEventHandler soundEventHandler8 = (eventArg0, eventArg1) => { soundAction3(); };
+        global::Cerneala.UI.Markup.GeneratedMarkup.AddSoundTrigger(soundSession1, () => element1.MouseRightButtonUp += soundEventHandler8, () => element1.MouseRightButtonUp -= soundEventHandler8);
+        global::Cerneala.UI.Input.RoutedEventHandler soundEventHandler9 = (eventArg0, eventArg1) => { soundAction4(); };
+        global::Cerneala.UI.Markup.GeneratedMarkup.AddSoundTrigger(soundSession1, () => element1.MouseLeave += soundEventHandler9, () => element1.MouseLeave -= soundEventHandler9);
+        global::Cerneala.UI.Input.RoutedEventHandler soundEventHandler10 = (eventArg0, eventArg1) => { soundAction5(); };
+        global::Cerneala.UI.Markup.GeneratedMarkup.AddSoundTrigger(soundSession1, () => element1.MouseWheel += soundEventHandler10, () => element1.MouseWheel -= soundEventHandler10);
+        global::Cerneala.UI.Input.RoutedEventHandler soundEventHandler11 = (eventArg0, eventArg1) => { soundAction6(); };
+        global::Cerneala.UI.Markup.GeneratedMarkup.AddSoundTrigger(soundSession1, () => element1.LostFocus += soundEventHandler11, () => element1.LostFocus -= soundEventHandler11);
+        global::System.IDisposable motionSession13 = global::Cerneala.UI.Markup.GeneratedMarkup.AttachMotionSession(element2, element2.Aspect!);
+        global::System.IDisposable soundSession14 = global::Cerneala.UI.Markup.GeneratedMarkup.AttachSoundSession(element2, element2.Aspect!);
+        global::System.Action soundAction15 = () => global::Cerneala.UI.Markup.GeneratedMarkup.PlaySound(soundSession14, new global::Cerneala.UI.Resources.ResourceId<global::Cerneala.Timbre.SoundClip>("Chime"), (soundClip, soundStart) => { soundStart.Volume = 0.2f; soundStart.Set(global::Cerneala.UI.Markup.GeneratedMarkup.GetSoundParameter(soundClip, "Brightness"), 800f); }, "Playback");
+        global::System.Func<global::Cerneala.UI.Markup.MarkupMotionExecution> motionExecutionFactory12 = () => global::Cerneala.UI.Markup.MarkupMotionExecution.Parallel(() => global::Cerneala.UI.Markup.MarkupMotionExecution.From(global::Cerneala.UI.Markup.GeneratedMarkup.StartSoundMotionProperty(soundSession14, "Playback", "Volume", false, default(float)!, false, 0.8f, motionSpec0, new global::Cerneala.UI.Motion.Properties.MotionPropertyStartOptions { RetargetMode = global::Cerneala.UI.Motion.Specs.RetargetMode.Restart, HoldOnComplete = true, DebugName = null })), () => global::Cerneala.UI.Markup.MarkupMotionExecution.From(global::Cerneala.UI.Markup.GeneratedMarkup.StartSoundMotionProperty(soundSession14, "Playback", "Brightness", false, default(float)!, false, 6000f, motionSpec0, new global::Cerneala.UI.Motion.Properties.MotionPropertyStartOptions { RetargetMode = global::Cerneala.UI.Motion.Specs.RetargetMode.Restart, HoldOnComplete = true, DebugName = null })));
+        global::System.Action motionExecution12 = () => global::Cerneala.UI.Markup.GeneratedMarkup.StartSoundMotion(soundSession14, motionExecutionFactory12);
+        global::Cerneala.UI.Input.RoutedEventHandler soundEventHandler16 = (eventArg0, eventArg1) => { soundAction15(); motionExecution12(); };
+        global::Cerneala.UI.Markup.GeneratedMarkup.AddSoundTrigger(soundSession14, () => element2.Click += soundEventHandler16, () => element2.Click -= soundEventHandler16);
+        return element0;
+    }
+}
+
+  Stack Trace:
+     at Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.AssertNoGeneratorOrCompilationErrors(GeneratorRunResult result, Compilation compilation) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorMotionTests.cs:line 866
+   at Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.DocumentedSoundExamplesCompile(String guide) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorSoundTests.cs:line 291
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-10-03-timbre-motion-stage3\full-solution\lauri_DESKTOP-JT43V3D_2026-10-08_01_31_25_net8.0.trx
+
+Failed!  - Failed:     1, Passed:   640, Skipped:     0, Total:   641, Duration: 1 m 17 s - Cerneala.Tests.SourceGen.dll (net8.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-10-03-timbre-motion-stage3\full-solution\lauri_DESKTOP-JT43V3D_2026-10-08_01_32_46_net8.0.trx
+
+Passed!  - Failed:     0, Passed:   368, Skipped:     0, Total:   368, Duration: 47 s - Cerneala.Tests.Timbre.dll (net8.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.VisualStudio\bin\Release\net10.0-windows\Cerneala.Tests.VisualStudio.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-10-03-timbre-motion-stage3\full-solution\lauri_DESKTOP-JT43V3D_2026-10-08_01_33_35_net10.0.trx
+
+Passed!  - Failed:     0, Passed:    48, Skipped:     0, Total:    48, Duration: 1 s - Cerneala.Tests.VisualStudio.dll (net10.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-10-03-timbre-motion-stage3\full-solution\lauri_DESKTOP-JT43V3D_2026-10-08_01_33_40_net8.0.trx
+
+Passed!  - Failed:     0, Passed:  4328, Skipped:     0, Total:  4328, Duration: 4 m 10 s - Cerneala.Tests.dll (net8.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Release\net8.0\Cerneala.Tetris.Tests.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-10-03-timbre-motion-stage3\full-solution\lauri_DESKTOP-JT43V3D_2026-10-08_01_37_54_net8.0.trx
+
+Passed!  - Failed:     0, Passed:    31, Skipped:     0, Total:    31, Duration: 1 s - Cerneala.Tetris.Tests.dll (net8.0)
+exit 1

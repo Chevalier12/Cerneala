@@ -67,6 +67,8 @@ $DataContext.Name:TwoWay      // synchronize and write target changes back
 | `PauseSound(IDisposable session, string handleName)` | `void` | Pauses the current occupant of a named slot; an empty slot or an occupant that is already terminal is a no-op. |
 | `ResumeSound(IDisposable session, string handleName)` | `void` | Resumes the current occupant of a named slot; an empty or terminal slot is a no-op. |
 | `SeekSound(IDisposable session, string handleName, TimeSpan position)` | `Task` | Requests an absolute seek on the occupant captured now and returns the seek task without waiting; an empty or terminal slot returns a completed task. |
+| `StartSoundMotion(IDisposable session, Func<MarkupMotionExecution> start)` | `MarkupMotionExecution` | Starts an audio Motion execution owned by the sound session: hiding the owner does not cancel it; detach, Aspect replacement and session disposal do. |
+| `StartSoundMotionProperty(IDisposable session, string handleName, string parameterName, bool hasFrom, float from, bool toCurrent, float to, MotionSpec<float>? spec, MotionPropertyStartOptions options)` | `MotionHandle` | Starts one `$self.sound.Handle.Parameter` leaf: captures the slot's current occupant and its `Volume` or named clip parameter once and animates it like `SoundMotionAnimationBuilder.With`; an empty or terminal slot completes immediately without starting audio. |
 | `StartMotionProperty<T>(IDisposable session, UIElement target, UiProperty<T> property, bool hasFrom, T from, bool toCurrent, T to, MotionSpec<T>? spec, MotionPropertyStartOptions options)` | `MotionHandle` | Starts one typed property animation through the target root's motion system. |
 | `StartBoundMotionProperty<T>(IDisposable session, UIElement target, UiProperty<T> property, bool hasFrom, T from, MarkupObservation observation, BindingMode mode, Func<object?, T> projection, MotionSpec<T>? spec, MotionPropertyStartOptions options)` | `MotionHandle` | Starts one typed property animation whose destination follows an explicit one-way or two-way markup binding for the lifetime of the execution. |
 | `StartPrismMotionProperty<T>(IDisposable session, UIElement target, int propertyId, Func<PrismInstance, T> getValue, Action<PrismInstance, T> setValue, bool discrete, bool hasFrom, T from, bool toCurrent, T to, MotionSpec<T>? spec, MotionPropertyStartOptions options)` | `MotionHandle` | Starts a statically resolved Prism property animation through the existing motion session and scheduler. |
@@ -237,6 +239,15 @@ failures complete the playback as `Failed` without rolling back earlier actions.
 Generated event handlers for bodies that mix Sound and Motion actions run them in
 source order and start the Motion part only when `CanStartMotionExecution` is true.
 
+An `@animate` or `@keyframes` execution whose targets are `$self.sound.Handle.Parameter`
+paths is an audio execution: it is lowered to `StartSoundMotion` on the sound
+session, runs in source order with the Sound actions of its body (no
+`CanStartMotionExecution` guard), and each leaf calls `StartSoundMotionProperty`,
+which reads the slot's occupant once at activation. The leaf animates exactly as
+[SoundMotionAnimationBuilder](Cerneala.UI.Timbre.SoundMotionAnimationBuilder.md)
+does; when `spec` is `null` it uses a 180 ms `Easings.Standard` tween, the
+default of other non-property Motion targets.
+
 ```csharp
 IDisposable sounds = GeneratedMarkup.AttachSoundSession(button, button.Aspect);
 GeneratedMarkup.PlaySound(
@@ -280,7 +291,7 @@ Prism instance.
 | Property binding factories | `InvalidOperationException` | The target property is read-only, or `TwoWay` is requested without a writable observation endpoint. |
 | Property binding factories | `ArgumentOutOfRangeException` | The binding mode is not `OneWay` or `TwoWay`. |
 | Active binding callbacks | `InvalidOperationException` | A consumed source notification or activation occurs on a thread other than the captured UI/update thread. |
-| `AddSoundTrigger`, `PlaySound`, `CancelSound`, `PauseSound`, `ResumeSound`, `SeekSound` | `ArgumentException` | The lifetime was not created by `AttachSoundSession`, or a handle name is empty or whitespace. |
+| `AddSoundTrigger`, `PlaySound`, `CancelSound`, `PauseSound`, `ResumeSound`, `SeekSound`, `StartSoundMotion`, `StartSoundMotionProperty` | `ArgumentException` | The lifetime was not created by `AttachSoundSession`, or a handle name is empty or whitespace. |
 | `AddSoundTrigger`, `PlaySound` | `ObjectDisposedException` | The sound session has been disposed. |
 | `PlaySound` | `InvalidOperationException` | The owner is detached or its root has no `SoundRuntime`. |
 | `PlaySound` | `KeyNotFoundException` | No `SoundClip` resource with the key is reachable from the owner. |
@@ -298,6 +309,7 @@ Source-generated reactive, Prism, Motion, and Sound markup.
 - [SoundScope](Cerneala.Timbre.SoundScope.md)
 - [SoundHandle](Cerneala.Timbre.SoundHandle.md)
 - [SoundPlayback](Cerneala.Timbre.SoundPlayback.md)
+- [SoundMotionFacade](Cerneala.UI.Timbre.SoundMotionFacade.md)
 - `Cerneala.UI.Prism.Runtime.PrismInstance`
 - `Cerneala.UI.Prism.Runtime.PrismFilterState`
 - `Cerneala.UI.Prism.Runtime.PrismStyleState`

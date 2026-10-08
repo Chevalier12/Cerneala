@@ -1,0 +1,5 @@
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\bin\Release\net10.0-windows\Cerneala.Tests.PreviewHost.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-10-03-timbre-motion-stage1\PreviewHost.trx
+
+Passed!  - Failed:     0, Passed:    22, Skipped:     0, Total:    22, Duration: 3 m 25 s - Cerneala.Tests.PreviewHost.dll (net10.0)

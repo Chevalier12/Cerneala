@@ -13,6 +13,8 @@ public sealed partial class SoundRuntime
     private long seeksCompleted;
     private long seeksSuperseded;
     private long parameterPublications;
+    private long animatedPublications;
+    private long motionSamplesRejected;
 
     // Written by the mixer or workers; read with Interlocked/Volatile.
     private long loopWraps;
@@ -29,6 +31,10 @@ public sealed partial class SoundRuntime
     private volatile bool outputOpen;
 
     internal void CountParameterPublication() => parameterPublications++;
+
+    internal void CountAnimatedPublication() => animatedPublications++;
+
+    internal void CountMotionSampleRejected() => motionSamplesRejected++;
 
     internal void CountPause() => pausesApplied++;
 
