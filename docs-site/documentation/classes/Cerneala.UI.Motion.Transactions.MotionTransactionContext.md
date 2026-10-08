@@ -74,6 +74,8 @@ The context ignores mutations when it is disposed, when no transaction is active
 
 For an eligible mutation, the context resolves a value mixer for the property type, creates or reuses a `MotionPropertyBinding<T>`, jumps the binding value to the old effective value, and animates it to the new effective value. Untyped specs are adapted to the property type through an internal adapter before sampling.
 
+Transactions do not change UI property precedence. The examples use `AspectBase`, which is below `Animation`. Ordinary C# property setters and the two-argument `SetValue` overload write `Local`, which outranks `Animation`: the local value takes effect immediately and masks the transaction's animation. An existing local override also masks animations of lower-source writes. `UIElement.WidthProperty` is not registered as animatable by default, so a transaction ignores it. Sample animations through the owning root's frame processing.
+
 `Begin`, `Disable`, and internal scope popping verify access through the owning root's Relay. Use the context from the UI thread that owns the `UIRoot`.
 
 ## Constructors
