@@ -160,7 +160,7 @@ internal sealed class ObservedSource
     public ObservedSource(string path, bool loop = false, TimbreLoading loading = TimbreLoading.Streaming)
     {
         Path = path;
-        Clip = new TimbreClip(
+        Clip = new TimbreSound(
             TimbreSource.FromStream(_ =>
             {
                 ObservedFileStream stream = new(path);
@@ -183,7 +183,7 @@ internal sealed class ObservedSource
     // Completes when the first playback stream has been created.
     public Task Opened => opened.Task;
 
-    public TimbreClip Clip { get; }
+    public TimbreSound Clip { get; }
 
     // Applied to each new stream before the decoder sees it.
     public Action<ObservedFileStream>? Configure { get; set; }

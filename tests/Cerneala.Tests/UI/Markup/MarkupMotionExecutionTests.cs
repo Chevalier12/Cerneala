@@ -151,27 +151,6 @@ public sealed class MarkupMotionExecutionTests
     }
 
     [Fact]
-    public void AspectScopedSessionIgnoresActivationWhileItsAspectIsUnavailable()
-    {
-        UIRoot root = new();
-        UIElement owner = new();
-        using IDisposable session = GeneratedMarkup.AttachMotionSession(owner, aspect: null);
-        ElementLifecycle.AttachSubtree(root, owner);
-        int starts = 0;
-
-        MarkupMotionExecution execution = GeneratedMarkup.StartMotionExecution(
-            session,
-            () =>
-            {
-                starts++;
-                return MarkupMotionExecution.Parallel();
-            });
-
-        Assert.True(execution.IsCompleted);
-        Assert.Equal(0, starts);
-    }
-
-    [Fact]
     public void DetachCancelsNestedChildrenAndPreventsFutureSequenceSteps()
     {
         UIRoot root = new();

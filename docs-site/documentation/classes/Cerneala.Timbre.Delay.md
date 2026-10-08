@@ -23,7 +23,7 @@ Inheritance:
 using Cerneala.Timbre;
 
 var echoMix = new TimbreParameter<float>("EchoMix", 0.15f);
-var clip = new TimbreClip(
+var clip = new TimbreSound(
     "audio/confirm.wav",
     parameters: [echoMix],
     modifiers: [new Delay(time: 0.12f, feedback: 0.20f, mix: echoMix)]);
@@ -60,4 +60,4 @@ After a non-looping source ends, the chain keeps processing silence. The tail en
 ## See also
 
 - [LowPass](Cerneala.Timbre.LowPass.md)
-- [TimbreClip](Cerneala.Timbre.TimbreClip.md)
+- [TimbreSound](Cerneala.Timbre.TimbreSound.md)

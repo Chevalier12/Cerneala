@@ -8,7 +8,7 @@ public static class StandaloneUsage
 {
     public static async Task RunPlanExampleAsync(TimbreScope sounds)
     {
-        var plainTimbre = new TimbreClip("audio/confirm.wav");
+        var plainTimbre = new TimbreSound("audio/confirm.wav");
         var first = sounds.Play(plainTimbre);
         var second = sounds.Play(plainTimbre); // Overlap: independent instances.
         first.Cancel(); // Does not cancel second.
@@ -16,7 +16,7 @@ public static class StandaloneUsage
         var toneCutoff = new TimbreParameter<float>(
             name: "ToneCutoff", defaultValue: 1200f);
 
-        var filteredTimbre = new TimbreClip(
+        var filteredTimbre = new TimbreSound(
             source: "audio/confirm.wav",
             parameters: [toneCutoff],
             modifiers: [new LowPass(cutoff: toneCutoff)]);
@@ -38,9 +38,9 @@ public static class StandaloneUsage
         _ = second;
     }
 
-    public static TimbreClip CreateConstantModifierClip() =>
+    public static TimbreSound CreateConstantModifierClip() =>
         new("audio/confirm.wav", modifiers: [new LowPass(cutoff: 1200f), new Delay(time: 0.12f, feedback: 0.2f, mix: 0.15f)]);
 
-    public static TimbrePlayback PlayLooping(TimbreScope sounds, TimbreClip clip) =>
+    public static TimbrePlayback PlayLooping(TimbreScope sounds, TimbreSound clip) =>
         sounds.Play(clip, start => start.Loop = true);
 }

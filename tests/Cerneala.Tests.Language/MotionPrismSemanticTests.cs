@@ -82,14 +82,16 @@ public sealed class MotionPrismSemanticTests
     {
         const string markup = """
             <Border DataType="Demo.BindingViewModel">
-              @prism
-              {
-                @layer Card
+              <Border.Aspect>
+                @prism
                 {
-                  Opacity = $DataContext.SnapshotValue;
-                  @filter Blur { Radius = $DataContext.LiveValue:OneWay; }
+                  @layer Card
+                  {
+                    Opacity = $DataContext.SnapshotValue;
+                    @filter Blur { Radius = $DataContext.LiveValue:OneWay; }
+                  }
                 }
-              }
+              </Border.Aspect>
             </Border>
             """;
 
@@ -157,17 +159,17 @@ public sealed class MotionPrismSemanticTests
         const string markup = """
             <StackPanel>
               <StackPanel.Resources>
-                <PrismComposition Name="CardFx">
+                <PrismClip Name="CardFx">
                   @parameter GlowRadius: float = 18;
                   @layer Foreground
                   {
                     Opacity = 0.9;
                     @filter Blur { Radius = GlowRadius; }
                   }
-                </PrismComposition>
+                </PrismClip>
               </StackPanel.Resources>
               <Border>
-                @prism $CardFx(GlowRadius = 24);
+                <Border.Aspect>@prism $CardFx(GlowRadius = 24);</Border.Aspect>
               </Border>
             </StackPanel>
             """;
@@ -175,7 +177,7 @@ public sealed class MotionPrismSemanticTests
         CernealaSemanticModel model = Model("TypedPrism.crn", markup);
 
         Assert.Empty(model.Diagnostics.Where(IsMotionOrPrism));
-        Assert.Contains(model.Symbols, symbol => symbol.Kind == CernealaSemanticSymbolKind.PrismComposition && symbol.Name == "CardFx");
+        Assert.Contains(model.Symbols, symbol => symbol.Kind == CernealaSemanticSymbolKind.PrismClip && symbol.Name == "CardFx");
         Assert.Contains(model.Symbols, symbol => symbol.Kind == CernealaSemanticSymbolKind.PrismParameter && symbol.Name == "GlowRadius" && symbol.TypeSymbol is not null);
         Assert.Contains(model.Symbols, symbol => symbol.Kind == CernealaSemanticSymbolKind.PrismNode && symbol.Name == "Foreground");
         Assert.Contains(model.Symbols, symbol => symbol.Kind == CernealaSemanticSymbolKind.PrismOperation && symbol.Name == "Blur");
@@ -195,8 +197,8 @@ public sealed class MotionPrismSemanticTests
     [InlineData("", "PRISM2013")]
     public void PrismBindingDiagnosticsMatchTheSourceGeneratorExactly(string body, string expectedId)
     {
-        string markup = "<StackPanel><StackPanel.Resources><PrismComposition Name=\"Fx\">" + body +
-            "</PrismComposition></StackPanel.Resources></StackPanel>";
+        string markup = "<StackPanel><StackPanel.Resources><PrismClip Name=\"Fx\">" + body +
+            "</PrismClip></StackPanel.Resources></StackPanel>";
         LanguagePipelineResult result = LanguagePipelineHarness.Analyze("PrismDiagnostics.crn", markup);
 
         HarnessDiagnostic semantic = Assert.Single(result.SemanticDiagnostics, diagnostic => diagnostic.Id == expectedId);
@@ -211,10 +213,10 @@ public sealed class MotionPrismSemanticTests
             <Border Aspect="$Motion">
               <Border.Resources>
                 <Aspect Name="Motion" TargetType="Border">
+                  @prism { @layer Card { Opacity = 1; } }
                   @on Loaded { @animate { @to { $self.prism.Card.Opacity = 0.5; } } }
                 </Aspect>
               </Border.Resources>
-              @prism { @layer Card { Opacity = 1; } }
             </Border>
             """;
 
@@ -243,7 +245,7 @@ public sealed class MotionPrismSemanticTests
         const string markup = """
             <StackPanel>
               <Border>
-                @prism { @layer Fx { Opacity = 1;
+                <Border.Aspect>@prism { @layer Fx { Opacity = 1;</Border.Aspect>
               </Border>
               <Button />
             </StackPanel>
@@ -275,13 +277,55 @@ public sealed class MotionPrismSemanticTests
         Assert.Contains(model.Symbols, symbol => symbol.Kind == CernealaSemanticSymbolKind.Element && symbol.Name == "Button");
     }
 
+    // docs/plans/2026-10-08-aspect-runtime-program.md, Etapa 1: `$Name` resolves
+    // in the name scope where the Aspect is written, so a sibling is reachable
+    // from an inline Aspect and from a resource Aspect alike.
+    [Theory]
+    [InlineData("""
+        <StackPanel>
+          <Border Name="Speaker" />
+          <Button Content="Pause"><Button.Aspect>@on Click { @animate { @to { $Speaker.Opacity = 0.25; } } }</Button.Aspect></Button>
+        </StackPanel>
+        """)]
+    [InlineData("""
+        <StackPanel>
+          <StackPanel.Resources>
+            <Aspect Name="PauseMusic" TargetType="Button">@on Click { @animate { @to { $Speaker.Opacity = 0.25; } } }</Aspect>
+          </StackPanel.Resources>
+          <Border Name="Speaker" />
+          <Button Content="Pause" Aspect="$PauseMusic" />
+        </StackPanel>
+        """)]
+    public void NamedMotionTargetsResolveInTheDeclaringNameScope(string markup)
+    {
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("DeclaringNameScope.crn", markup);
+
+        Assert.Empty(result.SemanticDiagnostics);
+        Assert.Empty(result.SourceGeneratorDiagnostics);
+    }
+
+    [Fact]
+    public void ApplicationAspectCannotTargetANamedElement()
+    {
+        const string markup = """
+            <Application>
+              <Application.Resources>
+                <Aspect Name="PauseMusic" TargetType="Button">@on Click { @animate { @to { $Speaker.Opacity = 0.25; } } }</Aspect>
+              </Application.Resources>
+            </Application>
+            """;
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("App.crn", markup);
+
+        Assert.Contains(result.SemanticDiagnostics, diagnostic => diagnostic.Id == "CERNEALAUI021");
+    }
+
     [Fact]
     public void ValidMotionAndPrismCorpusHasZeroHostDivergence()
     {
         string[] documents =
         [
             MotionAspectMarkup("@on Loaded { @animate with Tween(100ms) { @to { Opacity = 1; } } }"),
-            "<Border>@prism { @layer Card { Opacity = 0.8; @filter Blur { Radius = 8; } } }</Border>"
+            "<Border><Border.Aspect>@prism { @layer Card { Opacity = 0.8; @filter Blur { Radius = 8; } } }</Border.Aspect></Border>"
         ];
 
         foreach ((string document, int index) in documents.Select((document, index) => (document, index)))
@@ -333,12 +377,12 @@ public sealed class MotionPrismSemanticTests
     [InlineData("12")]
     [InlineData("null")]
     [InlineData("(1, 2)")]
-    public void PrismCompositionAttributeAndBlockValuesHaveTheSameSemanticResult(string value)
+    public void PrismClipAttributeAndBlockValuesHaveTheSameSemanticResult(string value)
     {
-        string attribute = "<Border><Border.Resources><PrismComposition Name=\"Fx\" WorkingColorProfile=\"" +
-            value + "\">@layer Card { }</PrismComposition></Border.Resources></Border>";
-        string block = "<Border><Border.Resources><PrismComposition Name=\"Fx\">WorkingColorProfile = " +
-            value + "; @layer Card { }</PrismComposition></Border.Resources></Border>";
+        string attribute = "<Border><Border.Resources><PrismClip Name=\"Fx\" WorkingColorProfile=\"" +
+            value + "\">@layer Card { }</PrismClip></Border.Resources></Border>";
+        string block = "<Border><Border.Resources><PrismClip Name=\"Fx\">WorkingColorProfile = " +
+            value + "; @layer Card { }</PrismClip></Border.Resources></Border>";
         CernealaSemanticModel attributeModel = Model("Attribute.crn", attribute);
         CernealaSemanticModel blockModel = Model("Block.crn", block);
 

@@ -381,7 +381,7 @@ internal sealed class CernealaStructureService
             "Aspect" => CernealaOutlineSymbolKind.Aspect,
             "MotionClip" or "MotionComposition" or "Tween" or "Spring" or "Decay" or
                 "Keyframes" or "Repeat" or "PingPong" => CernealaOutlineSymbolKind.Motion,
-            "PrismComposition" => CernealaOutlineSymbolKind.Prism,
+            "PrismClip" => CernealaOutlineSymbolKind.Prism,
             _ when parentIsResources => CernealaOutlineSymbolKind.Resource,
             _ => CernealaOutlineSymbolKind.Element
         };
@@ -671,7 +671,7 @@ internal sealed class CernealaStructureService
                 kind = CernealaSemanticTokenKind.Keyword;
                 priority = 140;
                 return true;
-            case CernealaSemanticSymbolKind.PrismComposition:
+            case CernealaSemanticSymbolKind.PrismClip:
             case CernealaSemanticSymbolKind.PrismNode:
                 kind = CernealaSemanticTokenKind.Variable;
                 priority = 140;
@@ -706,6 +706,10 @@ internal sealed class CernealaStructureService
                 return true;
             case CernealaSemanticSymbolKind.TimbreProperty:
                 kind = CernealaSemanticTokenKind.Property;
+                priority = 130;
+                return true;
+            case CernealaSemanticSymbolKind.TimbreSound:
+                kind = CernealaSemanticTokenKind.Variable;
                 priority = 130;
                 return true;
             case CernealaSemanticSymbolKind.AspectCondition:
@@ -751,12 +755,13 @@ internal sealed class CernealaStructureService
         CernealaSemanticSymbolKind.TemplatePart or CernealaSemanticSymbolKind.Aspect or
         CernealaSemanticSymbolKind.MotionSpec or CernealaSemanticSymbolKind.MotionComposition or
         CernealaSemanticSymbolKind.MotionParameter or CernealaSemanticSymbolKind.MotionHandle or
-        CernealaSemanticSymbolKind.PrismComposition or CernealaSemanticSymbolKind.PrismNode or
-        CernealaSemanticSymbolKind.PrismParameter or CernealaSemanticSymbolKind.TimbreParameter;
+        CernealaSemanticSymbolKind.PrismClip or CernealaSemanticSymbolKind.PrismNode or
+        CernealaSemanticSymbolKind.PrismParameter or CernealaSemanticSymbolKind.TimbreParameter or
+        CernealaSemanticSymbolKind.TimbreSound;
 
     private static bool IsDeclaration(CernealaSemanticSymbol symbol) =>
         IsDeclaration(symbol.Kind) &&
-        (symbol.Kind is not (CernealaSemanticSymbolKind.MotionHandle or CernealaSemanticSymbolKind.TimbreParameter) ||
+        (symbol.Kind is not (CernealaSemanticSymbolKind.MotionHandle or CernealaSemanticSymbolKind.TimbreParameter or CernealaSemanticSymbolKind.TimbreSound) ||
             symbol.DefinitionLocation is LanguageSourceLocation definition &&
             definition.Span.Equals(symbol.Span));
 
@@ -766,12 +771,12 @@ internal sealed class CernealaStructureService
         CernealaSemanticSymbolKind.Name or CernealaSemanticSymbolKind.Resource or
         CernealaSemanticSymbolKind.ContentTemplate or CernealaSemanticSymbolKind.TemplatePart or
         CernealaSemanticSymbolKind.Aspect or CernealaSemanticSymbolKind.MotionSpec or
-        CernealaSemanticSymbolKind.MotionComposition or CernealaSemanticSymbolKind.PrismComposition or
+        CernealaSemanticSymbolKind.MotionComposition or CernealaSemanticSymbolKind.PrismClip or
         CernealaSemanticSymbolKind.PrismNode;
 
     private static int OutlinePriority(CernealaSemanticSymbolKind kind) => kind switch
     {
-        CernealaSemanticSymbolKind.PrismComposition or CernealaSemanticSymbolKind.PrismNode => 50,
+        CernealaSemanticSymbolKind.PrismClip or CernealaSemanticSymbolKind.PrismNode => 50,
         CernealaSemanticSymbolKind.MotionSpec or CernealaSemanticSymbolKind.MotionComposition => 40,
         CernealaSemanticSymbolKind.Aspect => 30,
         CernealaSemanticSymbolKind.ContentTemplate => 25,
@@ -789,7 +794,7 @@ internal sealed class CernealaStructureService
         CernealaSemanticSymbolKind.MotionSpec or CernealaSemanticSymbolKind.MotionComposition or
             CernealaSemanticSymbolKind.MotionParameter or CernealaSemanticSymbolKind.MotionHandle =>
             CernealaOutlineSymbolKind.Motion,
-        CernealaSemanticSymbolKind.PrismComposition or CernealaSemanticSymbolKind.PrismNode or
+        CernealaSemanticSymbolKind.PrismClip or CernealaSemanticSymbolKind.PrismNode or
             CernealaSemanticSymbolKind.PrismParameter => CernealaOutlineSymbolKind.Prism,
         CernealaSemanticSymbolKind.Name or CernealaSemanticSymbolKind.TemplatePart =>
             CernealaOutlineSymbolKind.Element,

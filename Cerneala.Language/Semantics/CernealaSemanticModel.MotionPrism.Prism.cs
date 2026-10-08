@@ -10,21 +10,21 @@ namespace Cerneala.Language.Semantics;
 
 internal sealed partial class CernealaSemanticModel
 {
-    private void BindPrismCompositionResource(ResourceDefinition resource, CancellationToken cancellationToken)
+    private void BindPrismClipResource(ResourceDefinition resource, CancellationToken cancellationToken)
     {
         (string text, int offset) = BuildDirectTextBuffer(resource.Element);
-        EmbeddedParseResult<PrismCompositionModelSyntax> parsed = PrismSyntaxParser.ParseComposition(text, offset);
+        EmbeddedParseResult<PrismClipModelSyntax> parsed = PrismSyntaxParser.ParseComposition(text, offset);
         AddPrismSyntaxDiagnostics(parsed.Diagnostics);
-        PrismCompositionDefinition definition = BindPrismComposition(
-            resource.Name ?? "PrismComposition",
+        PrismClipDefinition definition = BindPrismClip(
+            resource.Name ?? "PrismClip",
             resource.Element,
             parsed.Syntax,
             cancellationToken);
-        prismCompositions[resource] = definition;
+        prismClips[resource] = definition;
         symbols.Add(new CernealaSemanticSymbol(
-            CernealaSemanticSymbolKind.PrismComposition,
-            resource.Name ?? "PrismComposition",
-            "Cerneala.UI.Prism.Definitions.PrismCompositionDefinition",
+            CernealaSemanticSymbolKind.PrismClip,
+            resource.Name ?? "PrismClip",
+            "Cerneala.UI.Prism.Definitions.PrismClipDefinition",
             resource.NameSpan,
             definitionLocation: resource.Location));
 
@@ -62,46 +62,23 @@ internal sealed partial class CernealaSemanticModel
         }
     }
 
-    private void BindPrismApplications(
+    // One `@prism` of an Aspect body; `owner` is the Aspect element (resource
+    // or inline property element), the scope for resources and bindings.
+    private PrismClipDefinition? BindPrismApplication(
         ElementSyntax owner,
-        string text,
-        int offset,
+        PrismApplicationModelSyntax application,
         CancellationToken cancellationToken)
     {
-        if (!boundPrismApplications.Add(owner))
-        {
-            return;
-        }
-
-        EmbeddedParseResult<IReadOnlyList<PrismApplicationModelSyntax>> parsed =
-            PrismSyntaxParser.ParseApplications(text, offset);
-        AddPrismSyntaxDiagnostics(parsed.Diagnostics);
-        if (parsed.Diagnostics.Count > 0)
-        {
-            return;
-        }
-        if (parsed.Syntax.Count > 1)
-        {
-            AddPrismDiagnostic("PRISM2013", parsed.Syntax[1].Span, "An element may declare only one @prism application.");
-            return;
-        }
-
-        if (parsed.Syntax.Count == 0)
-        {
-            return;
-        }
-
-        PrismApplicationModelSyntax application = parsed.Syntax[0];
         symbols.Add(new CernealaSemanticSymbol(
             CernealaSemanticSymbolKind.PrismDirective,
             "@prism",
-            "Cerneala.UI.Prism.Definitions.PrismCompositionDefinition",
+            "Cerneala.UI.Prism.Definitions.PrismClipDefinition",
             new TextSpan(application.Span.Start, Math.Min("@prism".Length, application.Span.Length))));
 
-        PrismCompositionDefinition? definition;
+        PrismClipDefinition? definition;
         if (application.Composition is not null)
         {
-            definition = BindPrismComposition(
+            definition = BindPrismClip(
                 "InlinePrism@" + application.Span.Start.ToString(CultureInfo.InvariantCulture),
                 owner,
                 application.Composition,
@@ -111,28 +88,28 @@ internal sealed partial class CernealaSemanticModel
         {
             string name = application.ResourceName ?? string.Empty;
             ResourceDefinition? resource = FindResource(owner, name);
-            if (resource is null || !prismCompositions.TryGetValue(resource, out definition))
+            if (resource is null || !prismClips.TryGetValue(resource, out definition))
             {
-                AddPrismDiagnostic("PRISM2002", application.ResourceSpan, "Unknown PrismComposition resource '$" + name + "'.");
-                return;
+                AddPrismDiagnostic("PRISM2002", application.ResourceSpan, "Unknown PrismClip resource '$" + name + "'.");
+                return null;
             }
 
             symbols.Add(new CernealaSemanticSymbol(
                 CernealaSemanticSymbolKind.ResourceReference,
                 name,
-                "Cerneala.UI.Prism.Definitions.PrismCompositionDefinition",
+                "Cerneala.UI.Prism.Definitions.PrismClipDefinition",
                 application.ResourceSpan,
                 definitionLocation: resource.Location));
             BindPrismApplicationArguments(owner, application, definition);
         }
 
-        prismApplications[owner] = definition;
+        return definition;
     }
 
     private void BindPrismApplicationArguments(
         ElementSyntax owner,
         PrismApplicationModelSyntax application,
-        PrismCompositionDefinition definition)
+        PrismClipDefinition definition)
     {
         HashSet<string> supplied = new(StringComparer.Ordinal);
         foreach (PrismAssignmentModelSyntax argument in application.Arguments)
@@ -161,13 +138,13 @@ internal sealed partial class CernealaSemanticModel
         }
     }
 
-    private PrismCompositionDefinition BindPrismComposition(
+    private PrismClipDefinition BindPrismClip(
         string name,
         ElementSyntax source,
-        PrismCompositionModelSyntax syntax,
+        PrismClipModelSyntax syntax,
         CancellationToken cancellationToken)
     {
-        PrismCompositionDefinition definition = new(name, source);
+        PrismClipDefinition definition = new(name, source);
         PrismParameterScope rootScope = new(parent: null);
         BindPrismParameters(syntax.Members, rootScope, string.Empty, definition);
         BindPrismAssignments(
@@ -205,7 +182,7 @@ internal sealed partial class CernealaSemanticModel
         PrismContainerModelSyntax syntax,
         PrismParameterScope parentScope,
         string parentPath,
-        PrismCompositionDefinition composition,
+        PrismClipDefinition composition,
         PrismContainerModelKind? parentKind,
         CancellationToken cancellationToken)
     {
@@ -314,7 +291,7 @@ internal sealed partial class CernealaSemanticModel
         IReadOnlyList<PrismMemberModelSyntax> members,
         PrismParameterScope scope,
         string path,
-        PrismCompositionDefinition composition)
+        PrismClipDefinition composition)
     {
         foreach (PrismParameterModelSyntax syntax in members.OfType<PrismParameterModelSyntax>())
         {
@@ -716,9 +693,9 @@ internal sealed partial class CernealaSemanticModel
         return true;
     }
 
-    private sealed class PrismCompositionDefinition
+    private sealed class PrismClipDefinition
     {
-        public PrismCompositionDefinition(string name, ElementSyntax source)
+        public PrismClipDefinition(string name, ElementSyntax source)
         {
             Name = name;
             Source = source;

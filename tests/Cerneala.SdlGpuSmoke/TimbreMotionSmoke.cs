@@ -116,7 +116,7 @@ internal sealed class TimbreMotionSmoke
         window.Close();
     }
 
-    // Click → @timbre (Volume 0.2) + Tween(400 ms) to 0.8 on the captured
+    // Click → @play (sound Volume 0.2) + Tween(400 ms) to 0.8 on the captured
     // playback. Every block's gain lies in [0.2, 0.8], never decreases, starts
     // at 0.2 (time starts at the first PCM) and ends at 0.8.
     private async Task FadeAsync(ServoApi servo, string id, string path)
@@ -128,7 +128,7 @@ internal sealed class TimbreMotionSmoke
         await WaitUntilAsync(() => playback.State == TimbrePlaybackState.Completed);
         var after = runtime.GetDiagnostics();
         float[] actual = tap.Copy(start, tap.SampleCount);
-        float[] reference = await RenderOfflineAsync(new TimbreClip(TimbreSource.FromFile(path), loading: TimbreLoading.Preload));
+        float[] reference = await RenderOfflineAsync(new TimbreSound(TimbreSource.FromFile(path), loading: TimbreLoading.Preload));
 
         Require(actual.Length == reference.Length, $"{id}: tapped {actual.Length} samples, static render {reference.Length}.");
         Require(after.UnderrunFrames == before.UnderrunFrames, $"{id}: underrun frames were padded.");
@@ -163,7 +163,7 @@ internal sealed class TimbreMotionSmoke
         float[] actual = tap.Copy(start, tap.SampleCount);
         TimbreParameter<float> cutoff = new("ToneCutoff", 4000f);
         TimbreParameter<float> mix = new("EchoMix", 0.1f);
-        float[] reference = await RenderOfflineAsync(new TimbreClip(
+        float[] reference = await RenderOfflineAsync(new TimbreSound(
             TimbreSource.FromFile(tone),
             loading: TimbreLoading.Preload,
             parameters: [cutoff, mix],
@@ -291,7 +291,7 @@ internal sealed class TimbreMotionSmoke
         return gains.ToArray();
     }
 
-    private static async Task<float[]> RenderOfflineAsync(TimbreClip clip)
+    private static async Task<float[]> RenderOfflineAsync(TimbreSound clip)
     {
         RecordingSink sink = new();
         using TimbreRuntime offline = new(new TimbreRuntimeOptions { Output = sink });

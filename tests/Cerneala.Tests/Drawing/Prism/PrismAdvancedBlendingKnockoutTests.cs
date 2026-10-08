@@ -72,7 +72,7 @@ public sealed class PrismAdvancedBlendingKnockoutTests
                 PrismTestData.Layer(12, "Deep")
             ],
             blendMode: PrismBlendMode.Normal);
-        PrismCompositionDefinition definition = PrismTestData.Composition(
+        PrismClipDefinition definition = PrismTestData.Composition(
             "KnockoutScopes",
             group,
             PrismTestData.BackdropLayer(20, "Backdrop"));

@@ -79,5 +79,5 @@ Sources are cache keys for preloaded payloads: file sources by their resolved fu
 
 - [TimbreReader](Cerneala.Timbre.TimbreReader.md)
 - [TimbreMemoryBudget](Cerneala.Timbre.TimbreMemoryBudget.md)
-- [TimbreClip](Cerneala.Timbre.TimbreClip.md)
+- [TimbreSound](Cerneala.Timbre.TimbreSound.md)
 - [TimbreLoading](Cerneala.Timbre.TimbreLoading.md)

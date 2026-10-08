@@ -20,7 +20,7 @@ public sealed class TimbreMotionContractTests
         using MarkupTimbreFixture fixture = new(Panel(string.Empty), "TimbreMotionSetter.crn");
         TimbrePlayback playback = Start(fixture, 0.2f);
         MotionHandle volume = playback.Motion().Animate(TimbrePlayback.VolumeParameter).To(0.8f).With(Linear(300));
-        MotionHandle tone = playback.Motion().Animate(CutOf(playback.Clip)).To(6000f).With(Linear(300));
+        MotionHandle tone = playback.Motion().Animate(CutOf(playback.Sound)).To(6000f).With(Linear(300));
         fixture.Pump();
         Advance(fixture, 1);
 
@@ -47,7 +47,7 @@ public sealed class TimbreMotionContractTests
             .Animate(TimbrePlayback.VolumeParameter)
             .To(1f)
             .With(new SpringSpec<float>(stiffness: 400f, damping: 4f, mass: 1f));
-        MotionHandle tone = playback.Motion().Animate(CutOf(playback.Clip)).To(6000f).With(Linear(600));
+        MotionHandle tone = playback.Motion().Animate(CutOf(playback.Sound)).To(6000f).With(Linear(600));
         fixture.Pump();
         for (int frame = 0; frame < 40 && volume.IsActive; frame++)
         {
@@ -90,8 +90,8 @@ public sealed class TimbreMotionContractTests
         Assert.Throws<ArgumentNullException>(() => playback.Motion().Animate(null!));
         Assert.Throws<ArgumentException>(() => playback.Motion().Animate(foreign).To(1000f).With(Linear(100)));
         Assert.Throws<ArgumentOutOfRangeException>(() => playback.Motion().Animate(TimbrePlayback.VolumeParameter).To(1.5f).With(Linear(100)));
-        Assert.Throws<ArgumentOutOfRangeException>(() => playback.Motion().Animate(CutOf(playback.Clip)).From(float.NaN).To(1000f).With(Linear(100)));
-        Assert.Throws<ArgumentOutOfRangeException>(() => playback.Motion().Animate(CutOf(playback.Clip)).To(5f).With(Linear(100)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => playback.Motion().Animate(CutOf(playback.Sound)).From(float.NaN).To(1000f).With(Linear(100)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => playback.Motion().Animate(CutOf(playback.Sound)).To(5f).With(Linear(100)));
         Assert.Equal(0.4f, playback.Volume);
         Assert.Equal(0, playback.AnimatedPublications);
 

@@ -15,8 +15,8 @@ internal sealed partial class CernealaSemanticModel
 
     private readonly Dictionary<ResourceDefinition, MotionSpecDefinition> motionSpecs = new();
     private readonly Dictionary<ResourceDefinition, MotionClipDefinition> motionClips = new();
-    private readonly Dictionary<ResourceDefinition, PrismCompositionDefinition> prismCompositions = new();
-    private readonly Dictionary<ElementSyntax, PrismCompositionDefinition> prismApplications = new();
+    private readonly Dictionary<ResourceDefinition, PrismClipDefinition> prismClips = new();
+    private readonly Dictionary<ElementSyntax, PrismClipDefinition> prismApplications = new();
     private readonly HashSet<ElementSyntax> boundEmbeddedResources = new();
     private readonly HashSet<ElementSyntax> boundPrismApplications = new();
 
@@ -24,19 +24,33 @@ internal sealed partial class CernealaSemanticModel
     {
         foreach (ResourceDefinition resource in resourceElements.Values
             .Distinct()
-            .Where(candidate => candidate.Kind is ResourceKind.MotionSpec or ResourceKind.MotionClip or ResourceKind.PrismComposition)
+            .Where(candidate => candidate.Kind is ResourceKind.MotionSpec or ResourceKind.MotionClip or ResourceKind.PrismClip)
             .OrderBy(candidate => candidate.Element.Span.Start))
         {
             BindEmbeddedResource(resource, cancellationToken);
         }
 
+        // An element's Prism is the @prism of its static Aspect; @prism written
+        // in element content is an error.
         foreach (ElementSyntax element in document.Syntax.DescendantElements().OrderBy(candidate => candidate.Span.Start))
         {
             cancellationToken.ThrowIfCancellationRequested();
-            (string text, int offset) = BuildDirectTextBuffer(element);
-            if (text.IndexOf("@prism", StringComparison.Ordinal) >= 0)
+            if (resourceElements.ContainsKey(element))
             {
-                BindPrismApplications(element, text, offset, cancellationToken);
+                continue;
+            }
+
+            (string text, int offset) = BuildDirectTextBuffer(element);
+            if (text.IndexOf("@prism", StringComparison.Ordinal) >= 0 && boundPrismApplications.Add(element))
+            {
+                ReportPrismInContent(text, offset);
+            }
+
+            if (element.Kind != SyntaxKind.PropertyElement &&
+                FindStaticAspect(element) is ResourceDefinition aspect &&
+                GetAspectAttachments(aspect).Prism is PrismClipDefinition prism)
+            {
+                prismApplications[element] = prism;
             }
         }
     }
@@ -65,8 +79,8 @@ internal sealed partial class CernealaSemanticModel
             case ResourceKind.MotionClip:
                 BindMotionClipResource(resource, cancellationToken);
                 break;
-            case ResourceKind.PrismComposition:
-                BindPrismCompositionResource(resource, cancellationToken);
+            case ResourceKind.PrismClip:
+                BindPrismClipResource(resource, cancellationToken);
                 break;
         }
     }
@@ -78,12 +92,6 @@ internal sealed partial class CernealaSemanticModel
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        (string text, int offset) = BuildDirectTextBuffer(element);
-        if (text.IndexOf("@prism", StringComparison.Ordinal) >= 0)
-        {
-            BindPrismApplications(element, text, offset, cancellationToken);
-        }
-
         AttributeSyntax? aspectAttribute = FindAttribute(element, "Aspect");
         if (aspectAttribute is null)
         {
@@ -185,7 +193,7 @@ internal sealed partial class CernealaSemanticModel
             return;
         }
 
-        if (targetElement is null || !prismApplications.TryGetValue(targetElement, out PrismCompositionDefinition? composition))
+        if (targetElement is null || !prismApplications.TryGetValue(targetElement, out PrismClipDefinition? composition))
         {
             if (reportMissingApplication)
             {

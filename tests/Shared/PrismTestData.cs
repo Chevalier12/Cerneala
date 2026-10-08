@@ -39,7 +39,7 @@ internal static class PrismTestData
     }
 
     public static PrismDrawScope Scope(
-        PrismCompositionDefinition definition,
+        PrismClipDefinition definition,
         long ownerToken = 1,
         DrawRect bounds = default,
         Matrix3x2 transform = default,
@@ -67,11 +67,11 @@ internal static class PrismTestData
             resources ?? PrismDrawResources.Empty);
     }
 
-    public static PrismCompositionDefinition Composition(
+    public static PrismClipDefinition Composition(
         string name,
         params PrismNodeDefinition[] nodes)
     {
-        return new PrismCompositionDefinition(name, nodes);
+        return new PrismClipDefinition(name, nodes);
     }
 
     public static DrawCommandList Commands(params DrawCommand[] commands)

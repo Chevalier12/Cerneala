@@ -1,0 +1,101 @@
+{
+  "host": "Microsoft Windows NT 10.0.26200.0 X64",
+  "passed": true,
+  "failure": null,
+  "scenarios": [
+    {
+      "scenario": "declaration/no-playback-or-io",
+      "started": 0,
+      "outputOpens": 0,
+      "cacheEntries": 0
+    },
+    {
+      "scenario": "click/play-wav",
+      "frames": 24000,
+      "wallMs": 864.5738,
+      "sha256": "BCDB49A043037002D7DEB510528EF29D112C9E61916D0E0666AAE0E636F4D4C1",
+      "matchesCSharpClip": true
+    },
+    {
+      "scenario": "click/play-mp3",
+      "frames": 96000,
+      "wallMs": 2161.5432,
+      "sha256": "3ED9A0488F84A64EAF46FB6515C7036604C103558485CE5F57068DF5B4F59F2A",
+      "matchesCSharpClip": true
+    },
+    {
+      "scenario": "click/play-vorbis",
+      "frames": 95040,
+      "wallMs": 2066.8359,
+      "sha256": "F13274E2B16B897A96A3DE21BB5F0F58FBFABF4C1020D0A44DC519D44ABE8718",
+      "matchesCSharpClip": true
+    },
+    {
+      "scenario": "click/play-opus",
+      "frames": 96000,
+      "wallMs": 2122.5399,
+      "sha256": "7CB502900C899169579B33A935BD019F604C665F61EB968EB479BB7A54F68F55",
+      "matchesCSharpClip": true
+    },
+    {
+      "scenario": "click/play-filtered",
+      "frames": 70080,
+      "wallMs": 1481.1147,
+      "sha256": "0869ACD69AABECE41F01C3B9ECA893089DF1321F682E0F8C4F641F564C5FB0B8",
+      "matchesCSharpClip": true
+    },
+    {
+      "scenario": "click/overlap",
+      "started": 2,
+      "completed": 2
+    },
+    {
+      "scenario": "reactive/streaming-transport",
+      "pauses": 1,
+      "resumes": 1,
+      "seeks": 1,
+      "canceled": 1,
+      "streamingBufferBytes": 65536
+    },
+    {
+      "scenario": "reactive/loop",
+      "wraps": 2,
+      "started": 2,
+      "canceled": 2
+    },
+    {
+      "scenario": "multiwindow/close-cancels-local",
+      "canceled": 1,
+      "completed": 1,
+      "outputOpens": 1
+    }
+  ],
+  "output": {
+    "OpenCount": 1,
+    "CloseCount": 0,
+    "IsOpen": true,
+    "DeviceFormat": "0x8120/2/48000",
+    "Requests": 1352,
+    "StarvedRequests": 111,
+    "FramesSubmitted": 595680,
+    "QueueHighWaterFrames": 1920,
+    "DevicesLost": 0
+  },
+  "engine": {
+    "PlaybacksStarted": 12,
+    "PlaybacksCompleted": 8,
+    "PlaybacksCanceled": 4,
+    "PlaybacksFailed": 0,
+    "PausesApplied": 1,
+    "ResumesApplied": 1,
+    "SeeksCompleted": 1,
+    "LoopWraps": 2,
+    "UnderrunFrames": 0,
+    "ActiveVoices": 0,
+    "LiveReaders": 0,
+    "LiveScopes": 0,
+    "CacheEntries": 4,
+    "OutputOpenCount": 1
+  },
+  "tapFrames": 595680
+}

@@ -1,0 +1,382 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="7b052b1c-6400-4e76-a821-2be8c68aa9dd" name="lauri@DESKTOP-JT43V3D 2026-10-08 19:44:16" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-08T19:44:16.9220848+03:00" queuing="2026-10-08T19:44:16.9220851+03:00" start="2026-10-08T19:44:14.4657904+03:00" finish="2026-10-08T19:44:18.8539814+03:00" />
+  <TestSettings name="default" id="78f55812-b54e-440a-a92a-397c65afeb5c">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-10-08_19_44_16" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="1d71b8f4-326c-423f-b807-de7b06c82a5f" testId="e75247e1-2db2-cf75-5003-8cb3a471760a" testName="Cerneala.Tests.SceneVillage.VillageScaleContractTests.StressGridRetainsItsThirtyTwoUnitPitchAndFullFieldExtent" computerName="DESKTOP-JT43V3D" duration="00:00:00.0426469" startTime="2026-10-08T19:44:18.2055046+03:00" endTime="2026-10-08T19:44:18.2055050+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1d71b8f4-326c-423f-b807-de7b06c82a5f" />
+    <UnitTestResult executionId="de1d94ba-fde4-4d14-93d4-b17a0e0e7681" testId="37653a06-3163-6b2f-bedb-b491263c7783" testName="Cerneala.Tests.SceneVillage.NativeVillageFrameRateGateTests.CadenceGateRejectsWrongRealizedActorCount" computerName="DESKTOP-JT43V3D" duration="00:00:00.0023997" startTime="2026-10-08T19:44:16.9378725+03:00" endTime="2026-10-08T19:44:16.9378726+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="de1d94ba-fde4-4d14-93d4-b17a0e0e7681" />
+    <UnitTestResult executionId="f580c5a0-daa5-449b-92e7-9e4f71e3dd3f" testId="fb05585b-2c51-b294-c981-4855723b4de0" testName="Cerneala.Tests.SceneVillage.VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(invalid: -1)" computerName="DESKTOP-JT43V3D" duration="00:00:00.1348240" startTime="2026-10-08T19:44:17.9146366+03:00" endTime="2026-10-08T19:44:17.9146369+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f580c5a0-daa5-449b-92e7-9e4f71e3dd3f" />
+    <UnitTestResult executionId="d84b7f2e-638c-4d8f-b373-a5f279ab9fad" testId="849a633b-c7bd-d799-8851-1c128544cdc7" testName="Cerneala.Tests.SceneVillage.VillageScaleContractTests.FractionalWindowScaleUsesTheSameCeiledTargetExtentAsTheSurface" computerName="DESKTOP-JT43V3D" duration="00:00:00.0003005" startTime="2026-10-08T19:44:18.1626760+03:00" endTime="2026-10-08T19:44:18.1626762+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d84b7f2e-638c-4d8f-b373-a5f279ab9fad" />
+    <UnitTestResult executionId="bae36f61-e8bb-40ec-bce9-56134008c96c" testId="a7b87745-7326-79de-8c95-77826dd8f249" testName="Cerneala.Tests.SceneVillage.VillageScaleContractTests.ZoomedCameraStillUsesUnscaledWorldCollisionGeometry" computerName="DESKTOP-JT43V3D" duration="00:00:00.1224428" startTime="2026-10-08T19:44:18.4138424+03:00" endTime="2026-10-08T19:44:18.4138427+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bae36f61-e8bb-40ec-bce9-56134008c96c" />
+    <UnitTestResult executionId="e175d814-cf19-46da-bfa2-8dc2056f03ab" testId="cae07087-36a6-fee8-4ac7-09e09c2829f3" testName="Cerneala.Tests.SceneVillage.VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(invalid: ∞)" computerName="DESKTOP-JT43V3D" duration="00:00:00.1323505" startTime="2026-10-08T19:44:18.0471565+03:00" endTime="2026-10-08T19:44:18.0471567+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e175d814-cf19-46da-bfa2-8dc2056f03ab" />
+    <UnitTestResult executionId="16092369-6ee9-48a5-9478-1a5008f75c72" testId="b5a12331-554c-b85c-2435-580f952251d7" testName="Cerneala.Tests.SceneVillage.VillageModelTests.IncludedArtMatchesInspectedCc0Source(fileName: &quot;ch003.png&quot;, expectedHash: &quot;02AC85F7A6DD90A486ED4126CC1CE80D482F6D9D17C02AD42D&quot;···)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0004273" startTime="2026-10-08T19:44:17.2129002+03:00" endTime="2026-10-08T19:44:17.2129003+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="16092369-6ee9-48a5-9478-1a5008f75c72" />
+    <UnitTestResult executionId="42283a3a-a1a7-4b07-83dc-f8501adacbe8" testId="53eae0a4-27cc-e895-354e-dd9b8db40261" testName="Cerneala.Tests.SceneVillage.NativeVillageScaleTests.VillageUsesNativeArtworkPixelsAtThreeWindowScalesWithoutDownsamplingItsSurface" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010000" startTime="2026-10-08T19:44:16.9384033+03:00" endTime="2026-10-08T19:44:16.9384034+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="42283a3a-a1a7-4b07-83dc-f8501adacbe8">
+      <Output>
+        <ErrorInfo>
+          <Message>Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured Windows SDL runner.</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="5473d77c-92e6-4270-b5c5-888dced5303b" testId="6cf3ff94-c988-96e5-a356-786a7739cd1b" testName="Cerneala.Tests.SceneVillage.VillageModelTests.EveryPresetUsesTheSameDeterministicPositionsAndExactCount(count: 100)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0002894" startTime="2026-10-08T19:44:17.1336284+03:00" endTime="2026-10-08T19:44:17.1336286+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5473d77c-92e6-4270-b5c5-888dced5303b" />
+    <UnitTestResult executionId="685e804c-3ddc-4e5d-a423-ed4fb9d6c0f3" testId="ce92d24d-015e-b0cf-9345-364f8519185d" testName="Cerneala.Tests.SceneVillage.VillageAnimationCaptureSamplingTests.SevenCaptureScheduleDetectsWalkAcrossInitialPhasesAndCaptureCosts" computerName="DESKTOP-JT43V3D" duration="00:00:00.1525709" startTime="2026-10-08T19:44:17.0965984+03:00" endTime="2026-10-08T19:44:17.0965987+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="685e804c-3ddc-4e5d-a423-ed4fb9d6c0f3" />
+    <UnitTestResult executionId="b57172de-af54-4c24-b44a-ed4ed3b8abb1" testId="5c87a119-516d-4872-cde6-c6d415d5d8d1" testName="Cerneala.Tests.SceneVillage.VillageModelTests.PixelArtAtlasesUsePointWithoutChangingTheGlobalSpriteDefault" computerName="DESKTOP-JT43V3D" duration="00:00:00.0659421" startTime="2026-10-08T19:44:17.1997923+03:00" endTime="2026-10-08T19:44:17.1997924+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b57172de-af54-4c24-b44a-ed4ed3b8abb1" />
+    <UnitTestResult executionId="56ccd6d9-2785-4971-9650-1d923b65ad45" testId="2b75e3aa-5a43-ca35-6e0c-c28146966f49" testName="Cerneala.Tests.SceneVillage.VillageModelTests.VillagerWalkClipsUseTheInspectedDirectionalCells" computerName="DESKTOP-JT43V3D" duration="00:00:00.0088865" startTime="2026-10-08T19:44:17.2088721+03:00" endTime="2026-10-08T19:44:17.2088724+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="56ccd6d9-2785-4971-9650-1d923b65ad45" />
+    <UnitTestResult executionId="26029605-aa5c-4f75-a6d5-13b15c0986d5" testId="8cc3b1a1-9d32-3f26-5774-d33a725399fc" testName="Cerneala.Tests.SceneVillage.VillageScaleContractTests.SurfaceOwnsControllableZoomAndNullableInheritedContentScale" computerName="DESKTOP-JT43V3D" duration="00:00:00.0842459" startTime="2026-10-08T19:44:18.2903653+03:00" endTime="2026-10-08T19:44:18.2903656+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="26029605-aa5c-4f75-a6d5-13b15c0986d5" />
+    <UnitTestResult executionId="d81e3432-4638-4e31-bc5c-4ea4cf8d5a38" testId="10ecc971-1554-7eab-e77c-b63ca1dc426c" testName="Cerneala.Tests.SceneVillage.VillageModelTests.FollowCameraCentersClampsAtEdgesAndRespondsToResize" computerName="DESKTOP-JT43V3D" duration="00:00:00.0003610" startTime="2026-10-08T19:44:17.6732547+03:00" endTime="2026-10-08T19:44:17.6732548+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d81e3432-4638-4e31-bc5c-4ea4cf8d5a38" />
+    <UnitTestResult executionId="1c63c6be-91ed-4be3-8c9a-bca490c552a5" testId="44b1ab68-744c-b036-59a8-702e0575e1b1" testName="Cerneala.Tests.SceneVillage.VillageModelTests.ViewBoxFollowDoesNotShiftWorldCollisionCoordinates" computerName="DESKTOP-JT43V3D" duration="00:00:00.1564515" startTime="2026-10-08T19:44:17.5279582+03:00" endTime="2026-10-08T19:44:17.5279584+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1c63c6be-91ed-4be3-8c9a-bca490c552a5" />
+    <UnitTestResult executionId="97ae2366-7f65-44a8-89cc-4959a9fe86e6" testId="625513b0-def6-dbb5-6958-d6c9364e6271" testName="Cerneala.Tests.SceneVillage.NativeVillageFrameRateGateTests.CadenceGateRejectsStationaryIdleOrNoncontinuousInput" computerName="DESKTOP-JT43V3D" duration="00:00:00.0023015" startTime="2026-10-08T19:44:16.9342522+03:00" endTime="2026-10-08T19:44:16.9342525+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="97ae2366-7f65-44a8-89cc-4959a9fe86e6" />
+    <UnitTestResult executionId="0544d37f-5fbd-4565-b009-d355df33db79" testId="5a7c7fcc-0c2b-871e-be4f-7b0a89404b58" testName="Cerneala.Tests.SceneVillage.VillageModelTests.StressPresetsUseTheSameImageAndOnlyTheApprovedBehaviorChanges" computerName="DESKTOP-JT43V3D" duration="00:00:00.0009378" startTime="2026-10-08T19:44:17.3712925+03:00" endTime="2026-10-08T19:44:17.3712929+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0544d37f-5fbd-4565-b009-d355df33db79" />
+    <UnitTestResult executionId="b37e4805-79cd-4de4-bb9b-6ee1c1ad44ec" testId="62fa3f74-7832-8b06-8684-bf4241db0706" testName="Cerneala.Tests.SceneVillage.VillageScaleContractTests.NativeTownTilesRetainTheExistingWorldArea" computerName="DESKTOP-JT43V3D" duration="00:00:00.1315364" startTime="2026-10-08T19:44:18.7925144+03:00" endTime="2026-10-08T19:44:18.7925150+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b37e4805-79cd-4de4-bb9b-6ee1c1ad44ec" />
+    <UnitTestResult executionId="cb62721d-9cee-4075-aea8-c280cdefccf5" testId="861b90fd-4e3e-cc69-42dc-84554f04b275" testName="Cerneala.Tests.SceneVillage.NativeVillageWindowTests.RealSdlWindowSupportsVillageMovementCollisionCameraAndEveryTenThousandItemPreset" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010000" startTime="2026-10-08T19:44:16.9427594+03:00" endTime="2026-10-08T19:44:16.9427596+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="cb62721d-9cee-4075-aea8-c280cdefccf5">
+      <Output>
+        <ErrorInfo>
+          <Message>Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured Windows SDL runner.</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="99ff3113-d78c-497c-ba5a-abebbf6f390a" testId="a164eef5-6574-ea57-02fd-e0cc3879451d" testName="Cerneala.Tests.SceneVillage.VillageModelTests.EveryPresetUsesTheSameDeterministicPositionsAndExactCount(count: 1000)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0123462" startTime="2026-10-08T19:44:17.1096605+03:00" endTime="2026-10-08T19:44:17.1096609+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="99ff3113-d78c-497c-ba5a-abebbf6f390a" />
+    <UnitTestResult executionId="b3e452f6-3159-49a9-895c-3680d284e44e" testId="a458bda3-8067-7191-2bd5-8aa856b6ce70" testName="Cerneala.Tests.SceneVillage.NativeVillageTileBoundaryTests.OpaquePointSampledAtlasTileJoinsOpaqueGroundAtFractionalCameraPosition" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010000" startTime="2026-10-08T19:44:16.9393539+03:00" endTime="2026-10-08T19:44:16.9393544+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b3e452f6-3159-49a9-895c-3680d284e44e">
+      <Output>
+        <ErrorInfo>
+          <Message>Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured Windows SDL runner.</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="c1790609-068d-433d-b35c-dad2dd374ad0" testId="b98fedd6-b15b-cce0-578b-0c2d28b2d006" testName="Cerneala.Tests.SceneVillage.NativeVillageFrameRateGateTests.CadencePercentilesUseNearestRankAndLiteralOverBudgetCount" computerName="DESKTOP-JT43V3D" duration="00:00:00.0042117" startTime="2026-10-08T19:44:16.9316726+03:00" endTime="2026-10-08T19:44:16.9316738+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c1790609-068d-433d-b35c-dad2dd374ad0" />
+    <UnitTestResult executionId="45467e25-1b3c-4854-9239-a42824f2539d" testId="c9e36159-acff-d0d5-06c6-7260a8f0033f" testName="Cerneala.Tests.SceneVillage.VillageScaleContractTests.CameraSeparatesWindowDpiContentScaleAndZoom(windowScale: 1.25, targetWidth: 400, targetHeight: 225)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0007286" startTime="2026-10-08T19:44:18.1612969+03:00" endTime="2026-10-08T19:44:18.1612974+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="45467e25-1b3c-4854-9239-a42824f2539d" />
+    <UnitTestResult executionId="5f9194cf-32dc-45b0-8dae-540ffd4e2b75" testId="84120bc9-0735-b930-0297-4c1213112873" testName="Cerneala.Tests.SceneVillage.NativeCharacterAtlasTests.CharacterAtlasFilteringMatrixReportsAllDirectionsAndWalkingFrames" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010000" startTime="2026-10-08T19:44:16.6944107+03:00" endTime="2026-10-08T19:44:16.6944109+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5f9194cf-32dc-45b0-8dae-540ffd4e2b75">
+      <Output>
+        <ErrorInfo>
+          <Message>Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured Windows SDL runner.</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="4f1b3ed8-5a30-4489-82f9-4d39b316c43b" testId="402da567-7fcb-b8a0-4f19-6bb95ce14c76" testName="Cerneala.Tests.SceneVillage.NativeCharacterAtlasTests.RoutedRightAndUpKeyTapsMoveAndCaptureTheResultingIdlePose" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010000" startTime="2026-10-08T19:44:16.6902940+03:00" endTime="2026-10-08T19:44:16.6903282+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4f1b3ed8-5a30-4489-82f9-4d39b316c43b">
+      <Output>
+        <ErrorInfo>
+          <Message>Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured Windows SDL runner.</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="1ff6d251-3b45-4e77-8657-da2585597422" testId="759f7147-0094-ce5f-20ec-564ebc782e93" testName="Cerneala.Tests.SceneVillage.VillageModelTests.TenThousandStressPositionsAreUniqueInBoundsAndOutsideVillageClearing" computerName="DESKTOP-JT43V3D" duration="00:00:00.0326629" startTime="2026-10-08T19:44:17.6717909+03:00" endTime="2026-10-08T19:44:17.6717912+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1ff6d251-3b45-4e77-8657-da2585597422" />
+    <UnitTestResult executionId="4675c876-f144-4592-83fe-663797169b5c" testId="5e2ca2d2-2943-9f77-4593-bcd215e9c8d4" testName="Cerneala.Tests.SceneVillage.VillageScaleContractTests.CameraSeparatesWindowDpiContentScaleAndZoom(windowScale: 2, targetWidth: 640, targetHeight: 360)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0000246" startTime="2026-10-08T19:44:18.1622311+03:00" endTime="2026-10-08T19:44:18.1622312+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4675c876-f144-4592-83fe-663797169b5c" />
+    <UnitTestResult executionId="905914f6-8e38-4fe4-9c75-7224f6790b80" testId="43503f71-9f8f-119c-1ab7-6c3e57d29aaa" testName="Cerneala.Tests.SceneVillage.NativeVillageWindowTests.RealVillageShowsTheNativeTreeCanopyAboveItsLowerCellTrunk" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010000" startTime="2026-10-08T19:44:16.9429400+03:00" endTime="2026-10-08T19:44:16.9429401+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="905914f6-8e38-4fe4-9c75-7224f6790b80">
+      <Output>
+        <ErrorInfo>
+          <Message>Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured Windows SDL runner.</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="eae50539-7e47-4e8e-9de6-886281f2090f" testId="c1db55d3-8dd1-8e74-a176-69d42861dd20" testName="Cerneala.Tests.SceneVillage.VillageModelTests.MovementUsesDeltaTimeAndStopsAfterHeldKeysAreCleared" computerName="DESKTOP-JT43V3D" duration="00:00:00.1107366" startTime="2026-10-08T19:44:17.6388816+03:00" endTime="2026-10-08T19:44:17.6388819+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="eae50539-7e47-4e8e-9de6-886281f2090f" />
+    <UnitTestResult executionId="b1e5a139-e49b-4e9e-a153-a6430c937322" testId="eb2daada-9615-d3b1-3965-146256dd5734" testName="Cerneala.Tests.SceneVillage.VillageModelTests.IncludedArtMatchesInspectedCc0Source(fileName: &quot;tiny-town.png&quot;, expectedHash: &quot;3A54D99ECDE790D4FDEA207A3644CF130FC56FA838F1BEB150&quot;···)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0019344" startTime="2026-10-08T19:44:17.2123408+03:00" endTime="2026-10-08T19:44:17.2123413+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b1e5a139-e49b-4e9e-a153-a6430c937322" />
+    <UnitTestResult executionId="7e040bac-5ee6-491e-b998-c7c1408c515e" testId="6d8bc600-5ee3-3d5f-5c44-0a549b67fb56" testName="Cerneala.Tests.SceneVillage.NativeVillageFrameRateGateTests.CadenceGateUsesLiteralEightPointThreeThreeMillisecondBudget" computerName="DESKTOP-JT43V3D" duration="00:00:00.0005922" startTime="2026-10-08T19:44:16.9269910+03:00" endTime="2026-10-08T19:44:16.9269913+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7e040bac-5ee6-491e-b998-c7c1408c515e" />
+    <UnitTestResult executionId="b4791166-79cb-4f24-ab40-7db4a725b35f" testId="d7c1d2a8-1417-c5ed-ea52-2b66a2759fd8" testName="Cerneala.Tests.SceneVillage.NativeCharacterAtlasTests.ProductionCharacterFramesHaveNoForeignMarksOnTransparentTopRows" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010000" startTime="2026-10-08T19:44:16.6950484+03:00" endTime="2026-10-08T19:44:16.6950485+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b4791166-79cb-4f24-ab40-7db4a725b35f">
+      <Output>
+        <ErrorInfo>
+          <Message>Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured Windows SDL runner.</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="adcb47f4-d757-44cb-bd45-cfda20cd7a0f" testId="bd9eecef-db7b-af99-9a3b-b989a7f2f336" testName="Cerneala.Tests.SceneVillage.NativeVillageFrameRateGateTests.CadenceGateRejectsTimeCapAndIncompleteSample" computerName="DESKTOP-JT43V3D" duration="00:00:00.2173870" startTime="2026-10-08T19:44:16.9259580+03:00" endTime="2026-10-08T19:44:16.9259585+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="adcb47f4-d757-44cb-bd45-cfda20cd7a0f" />
+    <UnitTestResult executionId="023437ce-fd02-4b11-b140-554cd6da82fe" testId="25b11ee3-2c48-b590-3cf1-c018e854a6ae" testName="Cerneala.Tests.SceneVillage.VillageScaleContractTests.TownAndCharacterArtworkUseIndependentNativeWorldSizes" computerName="DESKTOP-JT43V3D" duration="00:00:00.0007568" startTime="2026-10-08T19:44:18.2912641+03:00" endTime="2026-10-08T19:44:18.2912643+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="023437ce-fd02-4b11-b140-554cd6da82fe" />
+    <UnitTestResult executionId="2515713b-8492-41c7-8089-27e7e887c99e" testId="44fc06aa-78a0-c952-edef-7b198b9c83a5" testName="Cerneala.Tests.SceneVillage.VillageModelTests.EveryPresetUsesTheSameDeterministicPositionsAndExactCount(count: 10000)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0230404" startTime="2026-10-08T19:44:17.1329171+03:00" endTime="2026-10-08T19:44:17.1329176+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2515713b-8492-41c7-8089-27e7e887c99e" />
+    <UnitTestResult executionId="d4b1e04b-3b02-43b8-8d66-09457b794855" testId="08143550-ca64-9f88-2a67-d1009a8aee56" testName="Cerneala.Tests.SceneVillage.VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(invalid: NaN)" computerName="DESKTOP-JT43V3D" duration="00:00:00.1127653" startTime="2026-10-08T19:44:18.1601632+03:00" endTime="2026-10-08T19:44:18.1601636+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d4b1e04b-3b02-43b8-8d66-09457b794855" />
+    <UnitTestResult executionId="0a647207-b23d-499b-8d33-0d0202519b3d" testId="cdbd0e8c-0663-c1a2-f064-6cc626bec4a9" testName="Cerneala.Tests.SceneVillage.NativeVillageFrameRateGateTests.CadenceGateDoesNotTreatPostSampleSettlementAsMissedSampleDeadline" computerName="DESKTOP-JT43V3D" duration="00:00:00.0008646" startTime="2026-10-08T19:44:16.9353301+03:00" endTime="2026-10-08T19:44:16.9353305+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0a647207-b23d-499b-8d33-0d0202519b3d" />
+    <UnitTestResult executionId="d9a43921-ab61-4004-9c99-cb218074099d" testId="212bdf5f-3b8b-bdfd-c89b-19e3b18294f5" testName="Cerneala.Tests.SceneVillage.VillageModelTests.DirectionIsNormalizedAndClearingHeldKeysStopsInput" computerName="DESKTOP-JT43V3D" duration="00:00:00.0007764" startTime="2026-10-08T19:44:17.6727666+03:00" endTime="2026-10-08T19:44:17.6727668+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d9a43921-ab61-4004-9c99-cb218074099d" />
+    <UnitTestResult executionId="cfd87a36-c8ba-4f33-8eef-10e7b520c888" testId="aaab5133-a0f7-c225-2b5a-d5e21319cb34" testName="Cerneala.Tests.SceneVillage.VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(invalid: 0)" computerName="DESKTOP-JT43V3D" duration="00:00:00.1051790" startTime="2026-10-08T19:44:17.7795997+03:00" endTime="2026-10-08T19:44:17.7795999+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="cfd87a36-c8ba-4f33-8eef-10e7b520c888" />
+    <UnitTestResult executionId="c37bceef-4452-457f-a722-9c9dc1568faa" testId="5f1a50da-0514-1514-f82e-c2615a03d1c8" testName="Cerneala.Tests.SceneVillage.VillageScaleContractTests.VillageCompositionOptsIntoPhysicalScaleWithoutChangingTheSurfaceTypeDefault" computerName="DESKTOP-JT43V3D" duration="00:00:00.2467017" startTime="2026-10-08T19:44:18.6607374+03:00" endTime="2026-10-08T19:44:18.6607377+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c37bceef-4452-457f-a722-9c9dc1568faa" />
+    <UnitTestResult executionId="474cd6ed-b1f2-4c3b-b28b-5aed67825a97" testId="a0694714-34a8-2072-9132-c1a1cd40dfc0" testName="Cerneala.Tests.SceneVillage.VillageScaleContractTests.CameraSeparatesWindowDpiContentScaleAndZoom(windowScale: 1, targetWidth: 320, targetHeight: 180)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0004739" startTime="2026-10-08T19:44:18.1620293+03:00" endTime="2026-10-08T19:44:18.1620295+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="474cd6ed-b1f2-4c3b-b28b-5aed67825a97" />
+    <UnitTestResult executionId="e344a2e1-59f5-4702-b0c8-dcd99a30d4b9" testId="cc9410fb-24d0-1250-ee97-2993612d7d85" testName="Cerneala.Tests.SceneVillage.NativeVillageFrameRateGateTests.WalkingAndStressPresetsMeetPostSubmitCallbackCadenceGate" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010000" startTime="2026-10-08T19:44:16.9273084+03:00" endTime="2026-10-08T19:44:16.9273085+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e344a2e1-59f5-4702-b0c8-dcd99a30d4b9">
+      <Output>
+        <ErrorInfo>
+          <Message>Set CERNEALA_SDL_NATIVE_TESTS=1 and CERNEALA_VILLAGE_PERF_GATE=1 on the reference Windows SDL_GPU machine.</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="e1703ddf-b6c3-4026-a5d0-39b2bb3c225f" testId="9692aa49-d41d-04bb-3310-e278bd30f243" testName="Cerneala.Tests.SceneVillage.VillageModelTests.VillageTreesUseTheWholeTwoCellArtworkAndProportionalTrunkColliders" computerName="DESKTOP-JT43V3D" duration="00:00:00.1571245" startTime="2026-10-08T19:44:17.3701842+03:00" endTime="2026-10-08T19:44:17.3701845+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e1703ddf-b6c3-4026-a5d0-39b2bb3c225f" />
+    <UnitTestResult executionId="4b959122-ac4b-4cc6-b531-7341345a357a" testId="f5bcfaec-9241-d519-98dd-efdf876b8633" testName="Cerneala.Tests.SceneVillage.VillageModelTests.EveryPresetUsesTheSameDeterministicPositionsAndExactCount(count: 0)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0000445" startTime="2026-10-08T19:44:17.1331718+03:00" endTime="2026-10-08T19:44:17.1331719+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4b959122-ac4b-4cc6-b531-7341345a357a" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageModelTests.EveryPresetUsesTheSameDeterministicPositionsAndExactCount(count: 1000)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="a164eef5-6574-ea57-02fd-e0cc3879451d">
+      <Execution id="99ff3113-d78c-497c-ba5a-abebbf6f390a" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageModelTests" name="EveryPresetUsesTheSameDeterministicPositionsAndExactCount" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(invalid: -1)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="fb05585b-2c51-b294-c981-4855723b4de0">
+      <Execution id="f580c5a0-daa5-449b-92e7-9e4f71e3dd3f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageScaleContractTests" name="InvalidCameraScaleValuesAreRejectedWithoutChangingTheView" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageScaleContractTests.CameraSeparatesWindowDpiContentScaleAndZoom(windowScale: 1.25, targetWidth: 400, targetHeight: 225)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="c9e36159-acff-d0d5-06c6-7260a8f0033f">
+      <Execution id="45467e25-1b3c-4854-9239-a42824f2539d" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageScaleContractTests" name="CameraSeparatesWindowDpiContentScaleAndZoom" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageModelTests.IncludedArtMatchesInspectedCc0Source(fileName: &quot;ch003.png&quot;, expectedHash: &quot;02AC85F7A6DD90A486ED4126CC1CE80D482F6D9D17C02AD42D&quot;···)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="b5a12331-554c-b85c-2435-580f952251d7">
+      <Execution id="16092369-6ee9-48a5-9478-1a5008f75c72" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageModelTests" name="IncludedArtMatchesInspectedCc0Source" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageModelTests.VillagerWalkClipsUseTheInspectedDirectionalCells" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="2b75e3aa-5a43-ca35-6e0c-c28146966f49">
+      <Execution id="56ccd6d9-2785-4971-9650-1d923b65ad45" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageModelTests" name="VillagerWalkClipsUseTheInspectedDirectionalCells" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(invalid: NaN)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="08143550-ca64-9f88-2a67-d1009a8aee56">
+      <Execution id="d4b1e04b-3b02-43b8-8d66-09457b794855" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageScaleContractTests" name="InvalidCameraScaleValuesAreRejectedWithoutChangingTheView" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.NativeCharacterAtlasTests.ProductionCharacterFramesHaveNoForeignMarksOnTransparentTopRows" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="d7c1d2a8-1417-c5ed-ea52-2b66a2759fd8">
+      <Execution id="b4791166-79cb-4f24-ab40-7db4a725b35f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.NativeCharacterAtlasTests" name="ProductionCharacterFramesHaveNoForeignMarksOnTransparentTopRows" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageModelTests.DirectionIsNormalizedAndClearingHeldKeysStopsInput" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="212bdf5f-3b8b-bdfd-c89b-19e3b18294f5">
+      <Execution id="d9a43921-ab61-4004-9c99-cb218074099d" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageModelTests" name="DirectionIsNormalizedAndClearingHeldKeysStopsInput" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.NativeVillageScaleTests.VillageUsesNativeArtworkPixelsAtThreeWindowScalesWithoutDownsamplingItsSurface" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="53eae0a4-27cc-e895-354e-dd9b8db40261">
+      <Execution id="42283a3a-a1a7-4b07-83dc-f8501adacbe8" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.NativeVillageScaleTests" name="VillageUsesNativeArtworkPixelsAtThreeWindowScalesWithoutDownsamplingItsSurface" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageModelTests.EveryPresetUsesTheSameDeterministicPositionsAndExactCount(count: 10000)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="44fc06aa-78a0-c952-edef-7b198b9c83a5">
+      <Execution id="2515713b-8492-41c7-8089-27e7e887c99e" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageModelTests" name="EveryPresetUsesTheSameDeterministicPositionsAndExactCount" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.NativeVillageWindowTests.RealVillageShowsTheNativeTreeCanopyAboveItsLowerCellTrunk" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="43503f71-9f8f-119c-1ab7-6c3e57d29aaa">
+      <Execution id="905914f6-8e38-4fe4-9c75-7224f6790b80" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.NativeVillageWindowTests" name="RealVillageShowsTheNativeTreeCanopyAboveItsLowerCellTrunk" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.NativeVillageFrameRateGateTests.CadenceGateRejectsWrongRealizedActorCount" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="37653a06-3163-6b2f-bedb-b491263c7783">
+      <Execution id="de1d94ba-fde4-4d14-93d4-b17a0e0e7681" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.NativeVillageFrameRateGateTests" name="CadenceGateRejectsWrongRealizedActorCount" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(invalid: 0)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="aaab5133-a0f7-c225-2b5a-d5e21319cb34">
+      <Execution id="cfd87a36-c8ba-4f33-8eef-10e7b520c888" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageScaleContractTests" name="InvalidCameraScaleValuesAreRejectedWithoutChangingTheView" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageModelTests.StressPresetsUseTheSameImageAndOnlyTheApprovedBehaviorChanges" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="5a7c7fcc-0c2b-871e-be4f-7b0a89404b58">
+      <Execution id="0544d37f-5fbd-4565-b009-d355df33db79" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageModelTests" name="StressPresetsUseTheSameImageAndOnlyTheApprovedBehaviorChanges" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.NativeCharacterAtlasTests.RoutedRightAndUpKeyTapsMoveAndCaptureTheResultingIdlePose" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="402da567-7fcb-b8a0-4f19-6bb95ce14c76">
+      <Execution id="4f1b3ed8-5a30-4489-82f9-4d39b316c43b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.NativeCharacterAtlasTests" name="RoutedRightAndUpKeyTapsMoveAndCaptureTheResultingIdlePose" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageModelTests.IncludedArtMatchesInspectedCc0Source(fileName: &quot;tiny-town.png&quot;, expectedHash: &quot;3A54D99ECDE790D4FDEA207A3644CF130FC56FA838F1BEB150&quot;···)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="eb2daada-9615-d3b1-3965-146256dd5734">
+      <Execution id="b1e5a139-e49b-4e9e-a153-a6430c937322" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageModelTests" name="IncludedArtMatchesInspectedCc0Source" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageScaleContractTests.StressGridRetainsItsThirtyTwoUnitPitchAndFullFieldExtent" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="e75247e1-2db2-cf75-5003-8cb3a471760a">
+      <Execution id="1d71b8f4-326c-423f-b807-de7b06c82a5f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageScaleContractTests" name="StressGridRetainsItsThirtyTwoUnitPitchAndFullFieldExtent" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.NativeVillageFrameRateGateTests.WalkingAndStressPresetsMeetPostSubmitCallbackCadenceGate" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="cc9410fb-24d0-1250-ee97-2993612d7d85">
+      <Execution id="e344a2e1-59f5-4702-b0c8-dcd99a30d4b9" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.NativeVillageFrameRateGateTests" name="WalkingAndStressPresetsMeetPostSubmitCallbackCadenceGate" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(invalid: ∞)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="cae07087-36a6-fee8-4ac7-09e09c2829f3">
+      <Execution id="e175d814-cf19-46da-bfa2-8dc2056f03ab" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageScaleContractTests" name="InvalidCameraScaleValuesAreRejectedWithoutChangingTheView" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageModelTests.MovementUsesDeltaTimeAndStopsAfterHeldKeysAreCleared" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="c1db55d3-8dd1-8e74-a176-69d42861dd20">
+      <Execution id="eae50539-7e47-4e8e-9de6-886281f2090f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageModelTests" name="MovementUsesDeltaTimeAndStopsAfterHeldKeysAreCleared" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.NativeCharacterAtlasTests.CharacterAtlasFilteringMatrixReportsAllDirectionsAndWalkingFrames" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="84120bc9-0735-b930-0297-4c1213112873">
+      <Execution id="5f9194cf-32dc-45b0-8dae-540ffd4e2b75" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.NativeCharacterAtlasTests" name="CharacterAtlasFilteringMatrixReportsAllDirectionsAndWalkingFrames" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageAnimationCaptureSamplingTests.SevenCaptureScheduleDetectsWalkAcrossInitialPhasesAndCaptureCosts" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="ce92d24d-015e-b0cf-9345-364f8519185d">
+      <Execution id="685e804c-3ddc-4e5d-a423-ed4fb9d6c0f3" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageAnimationCaptureSamplingTests" name="SevenCaptureScheduleDetectsWalkAcrossInitialPhasesAndCaptureCosts" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.NativeVillageTileBoundaryTests.OpaquePointSampledAtlasTileJoinsOpaqueGroundAtFractionalCameraPosition" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="a458bda3-8067-7191-2bd5-8aa856b6ce70">
+      <Execution id="b3e452f6-3159-49a9-895c-3680d284e44e" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.NativeVillageTileBoundaryTests" name="OpaquePointSampledAtlasTileJoinsOpaqueGroundAtFractionalCameraPosition" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.NativeVillageFrameRateGateTests.CadencePercentilesUseNearestRankAndLiteralOverBudgetCount" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="b98fedd6-b15b-cce0-578b-0c2d28b2d006">
+      <Execution id="c1790609-068d-433d-b35c-dad2dd374ad0" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.NativeVillageFrameRateGateTests" name="CadencePercentilesUseNearestRankAndLiteralOverBudgetCount" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageModelTests.VillageTreesUseTheWholeTwoCellArtworkAndProportionalTrunkColliders" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="9692aa49-d41d-04bb-3310-e278bd30f243">
+      <Execution id="e1703ddf-b6c3-4026-a5d0-39b2bb3c225f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageModelTests" name="VillageTreesUseTheWholeTwoCellArtworkAndProportionalTrunkColliders" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.NativeVillageFrameRateGateTests.CadenceGateRejectsStationaryIdleOrNoncontinuousInput" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="625513b0-def6-dbb5-6958-d6c9364e6271">
+      <Execution id="97ae2366-7f65-44a8-89cc-4959a9fe86e6" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.NativeVillageFrameRateGateTests" name="CadenceGateRejectsStationaryIdleOrNoncontinuousInput" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.NativeVillageFrameRateGateTests.CadenceGateDoesNotTreatPostSampleSettlementAsMissedSampleDeadline" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="cdbd0e8c-0663-c1a2-f064-6cc626bec4a9">
+      <Execution id="0a647207-b23d-499b-8d33-0d0202519b3d" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.NativeVillageFrameRateGateTests" name="CadenceGateDoesNotTreatPostSampleSettlementAsMissedSampleDeadline" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageScaleContractTests.NativeTownTilesRetainTheExistingWorldArea" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="62fa3f74-7832-8b06-8684-bf4241db0706">
+      <Execution id="b37e4805-79cd-4de4-bb9b-6ee1c1ad44ec" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageScaleContractTests" name="NativeTownTilesRetainTheExistingWorldArea" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageModelTests.FollowCameraCentersClampsAtEdgesAndRespondsToResize" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="10ecc971-1554-7eab-e77c-b63ca1dc426c">
+      <Execution id="d81e3432-4638-4e31-bc5c-4ea4cf8d5a38" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageModelTests" name="FollowCameraCentersClampsAtEdgesAndRespondsToResize" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageModelTests.TenThousandStressPositionsAreUniqueInBoundsAndOutsideVillageClearing" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="759f7147-0094-ce5f-20ec-564ebc782e93">
+      <Execution id="1ff6d251-3b45-4e77-8657-da2585597422" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageModelTests" name="TenThousandStressPositionsAreUniqueInBoundsAndOutsideVillageClearing" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.NativeVillageFrameRateGateTests.CadenceGateUsesLiteralEightPointThreeThreeMillisecondBudget" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="6d8bc600-5ee3-3d5f-5c44-0a549b67fb56">
+      <Execution id="7e040bac-5ee6-491e-b998-c7c1408c515e" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.NativeVillageFrameRateGateTests" name="CadenceGateUsesLiteralEightPointThreeThreeMillisecondBudget" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageScaleContractTests.TownAndCharacterArtworkUseIndependentNativeWorldSizes" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="25b11ee3-2c48-b590-3cf1-c018e854a6ae">
+      <Execution id="023437ce-fd02-4b11-b140-554cd6da82fe" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageScaleContractTests" name="TownAndCharacterArtworkUseIndependentNativeWorldSizes" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageScaleContractTests.CameraSeparatesWindowDpiContentScaleAndZoom(windowScale: 1, targetWidth: 320, targetHeight: 180)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="a0694714-34a8-2072-9132-c1a1cd40dfc0">
+      <Execution id="474cd6ed-b1f2-4c3b-b28b-5aed67825a97" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageScaleContractTests" name="CameraSeparatesWindowDpiContentScaleAndZoom" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageScaleContractTests.CameraSeparatesWindowDpiContentScaleAndZoom(windowScale: 2, targetWidth: 640, targetHeight: 360)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="5e2ca2d2-2943-9f77-4593-bcd215e9c8d4">
+      <Execution id="4675c876-f144-4592-83fe-663797169b5c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageScaleContractTests" name="CameraSeparatesWindowDpiContentScaleAndZoom" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.NativeVillageFrameRateGateTests.CadenceGateRejectsTimeCapAndIncompleteSample" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="bd9eecef-db7b-af99-9a3b-b989a7f2f336">
+      <Execution id="adcb47f4-d757-44cb-bd45-cfda20cd7a0f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.NativeVillageFrameRateGateTests" name="CadenceGateRejectsTimeCapAndIncompleteSample" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageModelTests.PixelArtAtlasesUsePointWithoutChangingTheGlobalSpriteDefault" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="5c87a119-516d-4872-cde6-c6d415d5d8d1">
+      <Execution id="b57172de-af54-4c24-b44a-ed4ed3b8abb1" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageModelTests" name="PixelArtAtlasesUsePointWithoutChangingTheGlobalSpriteDefault" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageModelTests.EveryPresetUsesTheSameDeterministicPositionsAndExactCount(count: 0)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="f5bcfaec-9241-d519-98dd-efdf876b8633">
+      <Execution id="4b959122-ac4b-4cc6-b531-7341345a357a" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageModelTests" name="EveryPresetUsesTheSameDeterministicPositionsAndExactCount" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageScaleContractTests.ZoomedCameraStillUsesUnscaledWorldCollisionGeometry" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="a7b87745-7326-79de-8c95-77826dd8f249">
+      <Execution id="bae36f61-e8bb-40ec-bce9-56134008c96c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageScaleContractTests" name="ZoomedCameraStillUsesUnscaledWorldCollisionGeometry" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageScaleContractTests.SurfaceOwnsControllableZoomAndNullableInheritedContentScale" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="8cc3b1a1-9d32-3f26-5774-d33a725399fc">
+      <Execution id="26029605-aa5c-4f75-a6d5-13b15c0986d5" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageScaleContractTests" name="SurfaceOwnsControllableZoomAndNullableInheritedContentScale" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageScaleContractTests.FractionalWindowScaleUsesTheSameCeiledTargetExtentAsTheSurface" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="849a633b-c7bd-d799-8851-1c128544cdc7">
+      <Execution id="d84b7f2e-638c-4d8f-b373-a5f279ab9fad" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageScaleContractTests" name="FractionalWindowScaleUsesTheSameCeiledTargetExtentAsTheSurface" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.NativeVillageWindowTests.RealSdlWindowSupportsVillageMovementCollisionCameraAndEveryTenThousandItemPreset" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="861b90fd-4e3e-cc69-42dc-84554f04b275">
+      <Execution id="cb62721d-9cee-4075-aea8-c280cdefccf5" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.NativeVillageWindowTests" name="RealSdlWindowSupportsVillageMovementCollisionCameraAndEveryTenThousandItemPreset" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageScaleContractTests.VillageCompositionOptsIntoPhysicalScaleWithoutChangingTheSurfaceTypeDefault" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="5f1a50da-0514-1514-f82e-c2615a03d1c8">
+      <Execution id="c37bceef-4452-457f-a722-9c9dc1568faa" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageScaleContractTests" name="VillageCompositionOptsIntoPhysicalScaleWithoutChangingTheSurfaceTypeDefault" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageModelTests.EveryPresetUsesTheSameDeterministicPositionsAndExactCount(count: 100)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="6cf3ff94-c988-96e5-a356-786a7739cd1b">
+      <Execution id="5473d77c-92e6-4270-b5c5-888dced5303b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageModelTests" name="EveryPresetUsesTheSameDeterministicPositionsAndExactCount" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageModelTests.ViewBoxFollowDoesNotShiftWorldCollisionCoordinates" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="44b1ab68-744c-b036-59a8-702e0575e1b1">
+      <Execution id="1c63c6be-91ed-4be3-8c9a-bca490c552a5" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageModelTests" name="ViewBoxFollowDoesNotShiftWorldCollisionCoordinates" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="e75247e1-2db2-cf75-5003-8cb3a471760a" executionId="1d71b8f4-326c-423f-b807-de7b06c82a5f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="37653a06-3163-6b2f-bedb-b491263c7783" executionId="de1d94ba-fde4-4d14-93d4-b17a0e0e7681" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fb05585b-2c51-b294-c981-4855723b4de0" executionId="f580c5a0-daa5-449b-92e7-9e4f71e3dd3f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="849a633b-c7bd-d799-8851-1c128544cdc7" executionId="d84b7f2e-638c-4d8f-b373-a5f279ab9fad" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a7b87745-7326-79de-8c95-77826dd8f249" executionId="bae36f61-e8bb-40ec-bce9-56134008c96c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="cae07087-36a6-fee8-4ac7-09e09c2829f3" executionId="e175d814-cf19-46da-bfa2-8dc2056f03ab" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b5a12331-554c-b85c-2435-580f952251d7" executionId="16092369-6ee9-48a5-9478-1a5008f75c72" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="53eae0a4-27cc-e895-354e-dd9b8db40261" executionId="42283a3a-a1a7-4b07-83dc-f8501adacbe8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6cf3ff94-c988-96e5-a356-786a7739cd1b" executionId="5473d77c-92e6-4270-b5c5-888dced5303b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ce92d24d-015e-b0cf-9345-364f8519185d" executionId="685e804c-3ddc-4e5d-a423-ed4fb9d6c0f3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5c87a119-516d-4872-cde6-c6d415d5d8d1" executionId="b57172de-af54-4c24-b44a-ed4ed3b8abb1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2b75e3aa-5a43-ca35-6e0c-c28146966f49" executionId="56ccd6d9-2785-4971-9650-1d923b65ad45" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8cc3b1a1-9d32-3f26-5774-d33a725399fc" executionId="26029605-aa5c-4f75-a6d5-13b15c0986d5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="10ecc971-1554-7eab-e77c-b63ca1dc426c" executionId="d81e3432-4638-4e31-bc5c-4ea4cf8d5a38" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="44b1ab68-744c-b036-59a8-702e0575e1b1" executionId="1c63c6be-91ed-4be3-8c9a-bca490c552a5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="625513b0-def6-dbb5-6958-d6c9364e6271" executionId="97ae2366-7f65-44a8-89cc-4959a9fe86e6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5a7c7fcc-0c2b-871e-be4f-7b0a89404b58" executionId="0544d37f-5fbd-4565-b009-d355df33db79" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="62fa3f74-7832-8b06-8684-bf4241db0706" executionId="b37e4805-79cd-4de4-bb9b-6ee1c1ad44ec" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="861b90fd-4e3e-cc69-42dc-84554f04b275" executionId="cb62721d-9cee-4075-aea8-c280cdefccf5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a164eef5-6574-ea57-02fd-e0cc3879451d" executionId="99ff3113-d78c-497c-ba5a-abebbf6f390a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a458bda3-8067-7191-2bd5-8aa856b6ce70" executionId="b3e452f6-3159-49a9-895c-3680d284e44e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b98fedd6-b15b-cce0-578b-0c2d28b2d006" executionId="c1790609-068d-433d-b35c-dad2dd374ad0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c9e36159-acff-d0d5-06c6-7260a8f0033f" executionId="45467e25-1b3c-4854-9239-a42824f2539d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="84120bc9-0735-b930-0297-4c1213112873" executionId="5f9194cf-32dc-45b0-8dae-540ffd4e2b75" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="402da567-7fcb-b8a0-4f19-6bb95ce14c76" executionId="4f1b3ed8-5a30-4489-82f9-4d39b316c43b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="759f7147-0094-ce5f-20ec-564ebc782e93" executionId="1ff6d251-3b45-4e77-8657-da2585597422" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5e2ca2d2-2943-9f77-4593-bcd215e9c8d4" executionId="4675c876-f144-4592-83fe-663797169b5c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="43503f71-9f8f-119c-1ab7-6c3e57d29aaa" executionId="905914f6-8e38-4fe4-9c75-7224f6790b80" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c1db55d3-8dd1-8e74-a176-69d42861dd20" executionId="eae50539-7e47-4e8e-9de6-886281f2090f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="eb2daada-9615-d3b1-3965-146256dd5734" executionId="b1e5a139-e49b-4e9e-a153-a6430c937322" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6d8bc600-5ee3-3d5f-5c44-0a549b67fb56" executionId="7e040bac-5ee6-491e-b998-c7c1408c515e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d7c1d2a8-1417-c5ed-ea52-2b66a2759fd8" executionId="b4791166-79cb-4f24-ab40-7db4a725b35f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bd9eecef-db7b-af99-9a3b-b989a7f2f336" executionId="adcb47f4-d757-44cb-bd45-cfda20cd7a0f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="25b11ee3-2c48-b590-3cf1-c018e854a6ae" executionId="023437ce-fd02-4b11-b140-554cd6da82fe" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="44fc06aa-78a0-c952-edef-7b198b9c83a5" executionId="2515713b-8492-41c7-8089-27e7e887c99e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="08143550-ca64-9f88-2a67-d1009a8aee56" executionId="d4b1e04b-3b02-43b8-8d66-09457b794855" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="cdbd0e8c-0663-c1a2-f064-6cc626bec4a9" executionId="0a647207-b23d-499b-8d33-0d0202519b3d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="212bdf5f-3b8b-bdfd-c89b-19e3b18294f5" executionId="d9a43921-ab61-4004-9c99-cb218074099d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="aaab5133-a0f7-c225-2b5a-d5e21319cb34" executionId="cfd87a36-c8ba-4f33-8eef-10e7b520c888" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5f1a50da-0514-1514-f82e-c2615a03d1c8" executionId="c37bceef-4452-457f-a722-9c9dc1568faa" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a0694714-34a8-2072-9132-c1a1cd40dfc0" executionId="474cd6ed-b1f2-4c3b-b28b-5aed67825a97" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="cc9410fb-24d0-1250-ee97-2993612d7d85" executionId="e344a2e1-59f5-4702-b0c8-dcd99a30d4b9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9692aa49-d41d-04bb-3310-e278bd30f243" executionId="e1703ddf-b6c3-4026-a5d0-39b2bb3c225f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f5bcfaec-9241-d519-98dd-efdf876b8633" executionId="4b959122-ac4b-4cc6-b531-7341345a357a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="44" executed="36" passed="36" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.88]   Discovering: Cerneala.Tests.SceneVillage&#xD;
+[xUnit.net 00:00:00.96]   Discovered:  Cerneala.Tests.SceneVillage&#xD;
+[xUnit.net 00:00:00.97]   Starting:    Cerneala.Tests.SceneVillage&#xD;
+[xUnit.net 00:00:01.02]       Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured Windows SDL runner.&#xD;
+[xUnit.net 00:00:01.02]       Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured Windows SDL runner.&#xD;
+[xUnit.net 00:00:01.02]       Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured Windows SDL runner.&#xD;
+Test 'Cerneala.Tests.SceneVillage.NativeCharacterAtlasTests.RoutedRightAndUpKeyTapsMoveAndCaptureTheResultingIdlePose' was skipped in the test run.&#xD;
+Test 'Cerneala.Tests.SceneVillage.NativeCharacterAtlasTests.CharacterAtlasFilteringMatrixReportsAllDirectionsAndWalkingFrames' was skipped in the test run.&#xD;
+Test 'Cerneala.Tests.SceneVillage.NativeCharacterAtlasTests.ProductionCharacterFramesHaveNoForeignMarksOnTransparentTopRows' was skipped in the test run.&#xD;
+[xUnit.net 00:00:01.25]       Set CERNEALA_SDL_NATIVE_TESTS=1 and CERNEALA_VILLAGE_PERF_GATE=1 on the reference Windows SDL_GPU machine.&#xD;
+[xUnit.net 00:00:01.27]       Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured Windows SDL runner.&#xD;
+[xUnit.net 00:00:01.27]       Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured Windows SDL runner.&#xD;
+Test 'Cerneala.Tests.SceneVillage.NativeVillageFrameRateGateTests.WalkingAndStressPresetsMeetPostSubmitCallbackCadenceGate' was skipped in the test run.&#xD;
+Test 'Cerneala.Tests.SceneVillage.NativeVillageScaleTests.VillageUsesNativeArtworkPixelsAtThreeWindowScalesWithoutDownsamplingItsSurface' was skipped in the test run.&#xD;
+Test 'Cerneala.Tests.SceneVillage.NativeVillageTileBoundaryTests.OpaquePointSampledAtlasTileJoinsOpaqueGroundAtFractionalCameraPosition' was skipped in the test run.&#xD;
+[xUnit.net 00:00:01.27]       Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured Windows SDL runner.&#xD;
+[xUnit.net 00:00:01.27]       Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured Windows SDL runner.&#xD;
+Test 'Cerneala.Tests.SceneVillage.NativeVillageWindowTests.RealSdlWindowSupportsVillageMovementCollisionCameraAndEveryTenThousandItemPreset' was skipped in the test run.&#xD;
+Test 'Cerneala.Tests.SceneVillage.NativeVillageWindowTests.RealVillageShowsTheNativeTreeCanopyAboveItsLowerCellTrunk' was skipped in the test run.&#xD;
+[xUnit.net 00:00:03.12]   Finished:    Cerneala.Tests.SceneVillage&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Warning" timestamp="2026-10-08T19:44:16.6884560+03:00">
+        <Text>[xUnit.net 00:00:01.02]     Cerneala.Tests.SceneVillage.NativeCharacterAtlasTests.RoutedRightAndUpKeyTapsMoveAndCaptureTheResultingIdlePose [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Warning" timestamp="2026-10-08T19:44:16.6944910+03:00">
+        <Text>[xUnit.net 00:00:01.02]     Cerneala.Tests.SceneVillage.NativeCharacterAtlasTests.CharacterAtlasFilteringMatrixReportsAllDirectionsAndWalkingFrames [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Warning" timestamp="2026-10-08T19:44:16.6950539+03:00">
+        <Text>[xUnit.net 00:00:01.02]     Cerneala.Tests.SceneVillage.NativeCharacterAtlasTests.ProductionCharacterFramesHaveNoForeignMarksOnTransparentTopRows [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Warning" timestamp="2026-10-08T19:44:16.9287094+03:00">
+        <Text>[xUnit.net 00:00:01.25]     Cerneala.Tests.SceneVillage.NativeVillageFrameRateGateTests.WalkingAndStressPresetsMeetPostSubmitCallbackCadenceGate [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Warning" timestamp="2026-10-08T19:44:16.9386117+03:00">
+        <Text>[xUnit.net 00:00:01.27]     Cerneala.Tests.SceneVillage.NativeVillageScaleTests.VillageUsesNativeArtworkPixelsAtThreeWindowScalesWithoutDownsamplingItsSurface [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Warning" timestamp="2026-10-08T19:44:16.9392378+03:00">
+        <Text>[xUnit.net 00:00:01.27]     Cerneala.Tests.SceneVillage.NativeVillageTileBoundaryTests.OpaquePointSampledAtlasTileJoinsOpaqueGroundAtFractionalCameraPosition [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Warning" timestamp="2026-10-08T19:44:16.9461687+03:00">
+        <Text>[xUnit.net 00:00:01.27]     Cerneala.Tests.SceneVillage.NativeVillageWindowTests.RealSdlWindowSupportsVillageMovementCollisionCameraAndEveryTenThousandItemPreset [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Warning" timestamp="2026-10-08T19:44:16.9462643+03:00">
+        <Text>[xUnit.net 00:00:01.27]     Cerneala.Tests.SceneVillage.NativeVillageWindowTests.RealVillageShowsTheNativeTreeCanopyAboveItsLowerCellTrunk [SKIP]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

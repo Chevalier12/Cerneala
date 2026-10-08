@@ -14,11 +14,11 @@ public class Application
 ## Examples
 ```csharp
 // Element audio: scoped to the element's attachment lifecycle.
-TimbrePlayback click = button.Timbre.Play(new TimbreClip("audio/click.wav"));
+TimbrePlayback click = button.Timbre.Play(new TimbreSound("audio/click.wav"));
 
 // Application audio: lives until the application exits.
 TimbrePlayback music = Application.Current!.Timbre.Play(
-    new TimbreClip("audio/music.ogg", loading: TimbreLoading.Streaming),
+    new TimbreSound("audio/music.ogg", loading: TimbreLoading.Streaming),
     start => start.Loop = true);
 ```
 

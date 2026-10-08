@@ -30,7 +30,7 @@ internal sealed partial class CernealaCompletionService
             ["Tween"] = ["Name", "Duration", "Delay", "Easing", "FillMode"],
             ["Spring"] = ["Name", "Stiffness", "Damping", "Mass", "RestSpeed", "RestDelta", "VelocityMode"],
             ["MotionClip"] = ["Name", "TargetType"],
-            ["PrismComposition"] = ["Name"],
+            ["PrismClip"] = ["Name"],
             ["TimbreClip"] = ["Name"]
         };
 
@@ -311,7 +311,7 @@ internal sealed partial class CernealaCompletionService
 
         if (parent?.Name.EndsWith(".Resources", StringComparison.Ordinal) == true)
         {
-            foreach (string special in new[] { "Aspect", "SolidColorBrush", "LinearGradientBrush", "RadialGradientBrush", "ImageBrush", "DrawingBrush", "Tween", "Spring", "MotionClip", "PrismComposition", "TimbreClip" })
+            foreach (string special in new[] { "Aspect", "SolidColorBrush", "LinearGradientBrush", "RadialGradientBrush", "ImageBrush", "DrawingBrush", "Tween", "Spring", "MotionClip", "PrismClip", "TimbreClip" })
             {
                 Add(result, special, ElementInsertion(site, special), site.WordSpan,
                     CernealaCompletionItemKind.Element, "resource", "00");
@@ -515,7 +515,7 @@ internal sealed partial class CernealaCompletionService
 
         foreach (CompletionScopedSymbol source in model?.GetCompletionSources(element) ?? Array.Empty<CompletionScopedSymbol>())
         {
-            if (source.Kind is "Brush" or "MotionSpec" or "MotionClip" or "PrismComposition")
+            if (source.Kind is "Brush" or "MotionSpec" or "MotionClip" or "PrismClip")
             {
                 Add(result, "$" + source.Name, "$" + source.Name, site.ValueWordSpan,
                     CernealaCompletionItemKind.Resource, source.Kind, "20", source.Type?.MetadataName);

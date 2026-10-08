@@ -66,7 +66,7 @@ public sealed class PrismRetainedDependencyMigrationTests
     {
         using SdlDrawingFixture fixture = new(16, 16);
         PrismBackdropSourceToken sourceToken = PrismBackdropSourceToken.CreateUnique();
-        PrismCompositionDefinition definition = PrismTestData.Composition("Backdrop mutation",
+        PrismClipDefinition definition = PrismTestData.Composition("Backdrop mutation",
             PrismTestData.Layer(1, "Foreground"), PrismTestData.BackdropLayer(2, "Backdrop"));
         DrawCommandList Scene(long version)
         {

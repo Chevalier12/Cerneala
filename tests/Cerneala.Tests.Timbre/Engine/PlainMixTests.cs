@@ -41,7 +41,7 @@ public sealed class PlainMixTests
     {
         using TimbreRig rig = new();
         Func<long, int, float> constant = (_, channel) => channel == 0 ? 0.4f : -0.3f;
-        TimbreClip clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000, constant));
+        TimbreSound clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000, constant));
         TimbrePlayback first = rig.Scope.Play(clip);
         TimbrePlayback second = rig.Scope.Play(clip);
 
@@ -56,7 +56,7 @@ public sealed class PlainMixTests
     {
         using TimbreRig rig = new();
         Func<long, int, float> loud = (_, channel) => channel == 0 ? 0.75f : -0.75f;
-        TimbreClip clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000, loud));
+        TimbreSound clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000, loud));
         TimbrePlayback first = rig.Scope.Play(clip);
         TimbrePlayback second = rig.Scope.Play(clip, start => start.Volume = 0.5f);
 

@@ -36,7 +36,7 @@ internal enum CernealaSemanticSymbolKind
     MotionParameter,
     MotionHandle,
     PrismDirective,
-    PrismComposition,
+    PrismClip,
     PrismNode,
     PrismOperation,
     PrismProperty,
@@ -45,7 +45,8 @@ internal enum CernealaSemanticSymbolKind
     TimbreDirective,
     TimbreParameter,
     TimbreModifier,
-    TimbreProperty
+    TimbreProperty,
+    TimbreSound
 }
 
 internal sealed class CernealaSemanticSymbol

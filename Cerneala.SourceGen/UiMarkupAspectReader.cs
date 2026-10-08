@@ -69,13 +69,16 @@ public sealed partial class UiMarkupGenerator
 
             public MarkupElement Source { get; }
 
+            // The element of the declaring document whose name scope `$Name`
+            // targets resolve in: the owner of the Resources section or of the
+            // inline Aspect. Source itself is removed from the tree once read.
+            public MarkupElement? DeclaringElement { get; set; }
+
             public bool IsInline { get; }
 
             public string? RuntimeVariable { get; set; }
 
             public string? RuntimeResourceVariable { get; set; }
-
-            public bool BehaviorOwnedByPackage { get; set; }
 
             public ReactivePlan? ReactivePlan { get; set; }
 
@@ -91,9 +94,12 @@ public sealed partial class UiMarkupGenerator
 
             public string? TemplateVariable { get; set; }
 
-            // Bound Timbre actions and handle kinds from the Language model of
-            // the document that declares the Aspect.
+            // The @timbre attachment and Timbre commands bound by the Language
+            // model of the document that declares the Aspect.
             public BoundTimbreAspect? Timbre { get; set; }
+
+            // The @prism of the Aspect body; its binding is keyed by Source.
+            public DirectivePrismNode? Prism { get; set; }
         }
 
         private sealed class AspectPropertyAssignment
@@ -131,6 +137,7 @@ public sealed partial class UiMarkupGenerator
                 if (!allAspects.Contains(aspect))
                 {
                     allAspects.Add(aspect);
+                    importedAspects.Add(aspect);
                 }
             }
         }
@@ -162,7 +169,8 @@ public sealed partial class UiMarkupGenerator
                 out List<MotionScrollNode> scrolls,
                 out MotionDragNode? drag,
                 out MotionGesturePressNode? gesturePress,
-                out DirectiveTemplateNode? template))
+                out DirectiveTemplateNode? template,
+                out DirectivePrismNode? prism))
             {
                 return;
             }
@@ -191,7 +199,11 @@ public sealed partial class UiMarkupGenerator
                 drag,
                 gesturePress,
                 template,
-                resource);
+                resource)
+            {
+                Prism = prism,
+                DeclaringElement = scope.Owner
+            };
             BindAspectTimbre(aspect);
             allAspects.Add(aspect);
             if (aspect.Name is null)
@@ -269,6 +281,9 @@ public sealed partial class UiMarkupGenerator
                         "Element '" + owner.Name.LocalName + "' cannot combine an Aspect attribute with an inline Aspect property element.");
                 }
 
+                // A CLR-prefixed owner (`<local:Chart>`) is resolved through its
+                // namespace declaration before its local name is used below.
+                _ = ResolveElementType(owner);
                 INamedTypeSymbol? ownerType = ResolvePropertyOwnerType(owner.Name.LocalName, ReferenceEquals(owner, document.Root));
                 if (uiElementType is null || ownerType is null || !IsOrDerivesFrom(ownerType, uiElementType))
                 {
@@ -296,7 +311,8 @@ public sealed partial class UiMarkupGenerator
                     out List<MotionScrollNode> scrolls,
                     out MotionDragNode? drag,
                     out MotionGesturePressNode? gesturePress,
-                    out DirectiveTemplateNode? template))
+                    out DirectiveTemplateNode? template,
+                    out DirectivePrismNode? prism))
                 {
                     AspectResource aspect = new(
                         null,
@@ -311,7 +327,11 @@ public sealed partial class UiMarkupGenerator
                         gesturePress,
                         template,
                         inline,
-                        isInline: true);
+                        isInline: true)
+                    {
+                        Prism = prism,
+                        DeclaringElement = owner
+                    };
                     BindAspectTimbre(aspect);
                     inlineAspects.Add(owner, aspect);
                     allAspects.Add(aspect);
@@ -331,8 +351,10 @@ public sealed partial class UiMarkupGenerator
             out List<MotionScrollNode> scrolls,
             out MotionDragNode? drag,
             out MotionGesturePressNode? gesturePress,
-            out DirectiveTemplateNode? template)
+            out DirectiveTemplateNode? template,
+            out DirectivePrismNode? prism)
         {
+            prism = null;
             assignments = [];
             conditions = [];
             eventTriggers = [];
@@ -347,7 +369,8 @@ public sealed partial class UiMarkupGenerator
                 DirectiveContentKind.Assignments | DirectiveContentKind.Templates |
                 DirectiveContentKind.MotionTriggers | DirectiveContentKind.MotionHandles |
                 DirectiveContentKind.MotionPresence | DirectiveContentKind.MotionLayout | DirectiveContentKind.MotionScroll |
-                DirectiveContentKind.MotionDrag | DirectiveContentKind.MotionGesture);
+                DirectiveContentKind.MotionDrag | DirectiveContentKind.MotionGesture |
+                DirectiveContentKind.Prism | DirectiveContentKind.TimbreAttachment);
             if (parsed.Error is not null)
             {
                 ReportMotion(ClassifyMotionParseError(parsed.Error), parsed.ErrorSource ?? source, parsed.Error);
@@ -444,6 +467,14 @@ public sealed partial class UiMarkupGenerator
 
                     gesturePress = declaredGesturePress;
                 }
+                else if (node is DirectivePrismNode declaredPrism)
+                {
+                    prism ??= declaredPrism;
+                }
+                else if (node is TimbreAttachmentNode)
+                {
+                    // Bound by Cerneala.Language (BoundTimbreAspect.Attachment).
+                }
                 else if (node is DirectiveTemplateNode declaredTemplate)
                 {
                     if (template is not null)
@@ -460,7 +491,7 @@ public sealed partial class UiMarkupGenerator
                 }
                 else
                 {
-                    Report(InvalidDirective, node.Source, Path.GetFileName(file.Path), "Aspect bodies may contain only @default, @when, @on, @presence, @layout, @scroll, @drag, @gesture press and @template blocks.");
+                    Report(InvalidDirective, node.Source, Path.GetFileName(file.Path), "Aspect bodies may contain only @default, @when, @on, @presence, @layout, @scroll, @drag, @gesture press, @template, @timbre and @prism.");
                     return false;
                 }
             }

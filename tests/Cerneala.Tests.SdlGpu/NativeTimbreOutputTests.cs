@@ -224,7 +224,7 @@ public sealed class NativeTimbreOutputTests : IDisposable
         return task.Result;
     }
 
-    private static TimbreClip Tone(int frames) =>
+    private static TimbreSound Tone(int frames) =>
         new(TimbreSource.FromReader(() => new ToneReader(frames), $"tone-{frames}"));
 
     private sealed class ToneReader(int frames) : TimbreReader

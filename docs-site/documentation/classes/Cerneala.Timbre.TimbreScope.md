@@ -25,7 +25,7 @@ Implements:
 ```csharp
 using Cerneala.Timbre;
 
-var plainTimbre = new TimbreClip("audio/confirm.wav");
+var plainTimbre = new TimbreSound("audio/confirm.wav");
 TimbrePlayback first = sounds.Play(plainTimbre);
 TimbrePlayback second = sounds.Play(plainTimbre); // overlaps: independent instances
 first.Cancel();                                 // second keeps playing
@@ -66,7 +66,7 @@ Members are thread-safe.
 
 | Name | Returns | Description |
 | --- | --- | --- |
-| `Play(TimbreClip clip, Action<TimbreStartOptions>? configure = null, TimbreHandle? handle = null)` | `TimbrePlayback` | Starts a playback. |
+| `Play(TimbreSound sound, Action<TimbreStartOptions>? configure = null, TimbreHandle? handle = null)` | `TimbrePlayback` | Starts a playback. |
 | `CreateHandle()` | `TimbreHandle` | Creates a reusable slot local to this scope. |
 | `Dispose()` | `void` | Cancels the scope's playbacks. |
 

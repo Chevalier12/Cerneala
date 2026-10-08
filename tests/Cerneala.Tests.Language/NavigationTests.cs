@@ -53,12 +53,12 @@ public sealed class NavigationTests
                 <Tween Name="Quick" Duration="100ms" />
                 <MotionClip Name="Pulse" TargetType="Button"></MotionClip>
                 <Aspect Name="Primary" TargetType="Button"></Aspect>
-                <PrismComposition Name="Fx">
+                <PrismClip Name="Fx">
                   @layer Surface {
                     @parameter Strength: number = 1;
                     Opacity = Strength;
                   }
-                </PrismComposition>
+                </PrismClip>
               </Window.Resources>
             </Window>
             """;
@@ -69,7 +69,7 @@ public sealed class NavigationTests
             CernealaSemanticSymbolKind.MotionSpec,
             CernealaSemanticSymbolKind.MotionComposition,
             CernealaSemanticSymbolKind.Aspect,
-            CernealaSemanticSymbolKind.PrismComposition
+            CernealaSemanticSymbolKind.PrismClip
         ];
         foreach (CernealaSemanticSymbolKind kind in expectedKinds)
         {
@@ -100,12 +100,12 @@ public sealed class NavigationTests
                   @run $Pulse();
                   @animate with $Quick { @to { Width = 1; } }
                 </Aspect>
-                <PrismComposition Name="Fx">
+                <PrismClip Name="Fx">
                   @layer Surface {
                     @parameter Strength: number = 1;
                     Opacity = Strength;
                   }
-                </PrismComposition>
+                </PrismClip>
               </Window.Resources>
               <StackPanel>
                 <ItemsControl>
@@ -163,7 +163,7 @@ public sealed class NavigationTests
         Assert.Equal("ContentTemplate", fixture.Document.Text.Substring(templateDefinition.Span));
 
         CernealaSemanticSymbol prism = Assert.Single(fixture.Model.Symbols.Where(symbol =>
-            symbol.Kind == CernealaSemanticSymbolKind.PrismComposition));
+            symbol.Kind == CernealaSemanticSymbolKind.PrismClip));
         CernealaLocation prismDefinition = Assert.Single(service.GetDefinitions(fixture.Model, prism.Span.Start));
         Assert.Equal("Fx", fixture.Document.Text.Substring(prismDefinition.Span));
 

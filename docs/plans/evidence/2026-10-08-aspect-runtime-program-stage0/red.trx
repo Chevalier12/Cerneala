@@ -1,0 +1,189 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="303b624a-db9c-4b75-a8eb-c4c65a578fef" name="lauri@DESKTOP-JT43V3D 2026-10-08 15:05:59" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-08T15:05:59.0624398+03:00" queuing="2026-10-08T15:05:59.0624403+03:00" start="2026-10-08T15:05:53.1898831+03:00" finish="2026-10-08T15:06:01.5531963+03:00" />
+  <TestSettings name="default" id="c4117bc8-c759-45ed-abe5-bd1792ed7ab2">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-10-08_15_05_59" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="e1cf788b-1973-4fe3-a2e1-cba3aa804927" testId="b5e20ff9-4760-2d1c-e124-e4cfbdea34b3" testName="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.ReplacingBackAndForthKeepsExactlyOneProgram" computerName="DESKTOP-JT43V3D" duration="00:00:00.2900009" startTime="2026-10-08T15:06:01.4472981+03:00" endTime="2026-10-08T15:06:01.4472983+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e1cf788b-1973-4fe3-a2e1-cba3aa804927">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Collections differ&#xD;
+           ↓ (pos 0)&#xD;
+Expected: ["audio/other.wav"]&#xD;
+Actual:   []</Message>
+          <StackTrace>   at Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.ReplacingBackAndForthKeepsExactlyOneProgram() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Markup\AspectRuntimeProgramTests.cs:line 66&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="f92f7057-fe5b-4447-b398-a8a162f43e6e" testId="75b73472-ddca-3902-5fa4-96d8da8b87b3" testName="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.ReplacementAtRuntimeAppliesTheNewAspectProgram" computerName="DESKTOP-JT43V3D" duration="00:00:00.3702061" startTime="2026-10-08T15:06:00.4466628+03:00" endTime="2026-10-08T15:06:00.4466631+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f92f7057-fe5b-4447-b398-a8a162f43e6e">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Collections differ&#xD;
+           ↓ (pos 0)&#xD;
+Expected: ["audio/other.wav"]&#xD;
+Actual:   []</Message>
+          <StackTrace>   at Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.ReplacementAtRuntimeAppliesTheNewAspectProgram() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Markup\AspectRuntimeProgramTests.cs:line 46&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="94555773-89e0-47df-91f0-02f4fcee87f3" testId="a1aeae79-7ba8-d575-8249-bba7f730fc8b" testName="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.DefaultAspectBringsItsProgramToAnElementCreatedAtRuntime" computerName="DESKTOP-JT43V3D" duration="00:00:03.4600929" startTime="2026-10-08T15:05:59.0170065+03:00" endTime="2026-10-08T15:05:59.0170347+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="94555773-89e0-47df-91f0-02f4fcee87f3">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Collections differ&#xD;
+           ↓ (pos 0)&#xD;
+Expected: ["audio/tone.wav"]&#xD;
+Actual:   []</Message>
+          <StackTrace>   at Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.DefaultAspectBringsItsProgramToAnElementCreatedAtRuntime() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Markup\AspectRuntimeProgramTests.cs:line 113&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="e848db36-df8b-4aab-8fa3-0bc202a99c2a" testId="ccf6806e-3a75-07db-25ec-0f4344bf1e96" testName="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.StaticAspectRunsItsProgram" computerName="DESKTOP-JT43V3D" duration="00:00:00.4590832" startTime="2026-10-08T15:06:00.9048496+03:00" endTime="2026-10-08T15:06:00.9048500+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e848db36-df8b-4aab-8fa3-0bc202a99c2a" />
+    <UnitTestResult executionId="5b7880de-8b6d-491c-b77b-b9632400c813" testId="5003918e-26d3-029a-a9ca-06bb05568598" testName="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.DetachAndReattachKeepExactlyOneProgram" computerName="DESKTOP-JT43V3D" duration="00:00:00.3748264" startTime="2026-10-08T15:06:00.0757344+03:00" endTime="2026-10-08T15:06:00.0757350+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5b7880de-8b6d-491c-b77b-b9632400c813" />
+    <UnitTestResult executionId="8673f547-65a8-41df-8266-50dfa07b335b" testId="d8a2684d-c3a7-f9cc-5f9a-8f06f51342a9" testName="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.OneResourceAppliedAtRuntimeGivesEachElementItsOwnProgram" computerName="DESKTOP-JT43V3D" duration="00:00:00.7000947" startTime="2026-10-08T15:05:59.7015017+03:00" endTime="2026-10-08T15:05:59.7015028+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8673f547-65a8-41df-8266-50dfa07b335b">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Collections differ&#xD;
+           ↓ (pos 0)&#xD;
+Expected: ["audio/other.wav", "audio/other.wav"]&#xD;
+Actual:   []</Message>
+          <StackTrace>   at Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.OneResourceAppliedAtRuntimeGivesEachElementItsOwnProgram() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Markup\AspectRuntimeProgramTests.cs:line 83&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="90b76764-2281-465f-aa70-dfdd0a553dd4" testId="f1c4f365-e674-ed75-2c45-a84893aa7849" testName="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.InlineAspectAssignedToAnotherElementKeepsItsNamedReferences" computerName="DESKTOP-JT43V3D" duration="00:00:00.2510386" startTime="2026-10-08T15:06:01.1569488+03:00" endTime="2026-10-08T15:06:01.1569491+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="90b76764-2281-465f-aa70-dfdd0a553dd4">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : Generated consumer failed to build (harness failure, not an audio RED):&#xD;
+TimbreFixture.crn(1,154): error CERNEALAUI021: Motion target resolution in 'TimbreFixture.crn' failed: Motion target named element 'Speaker' is not available at this Aspect application site.&#xD;
+</Message>
+          <StackTrace>   at Cerneala.Tests.Timbre.Markup.GeneratedTimbreConsumer.Compile(IReadOnlyList`1 files, String companionSource, String companionPath) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Markup\GeneratedTimbreConsumer.cs:line 63&#xD;
+   at Cerneala.Tests.Timbre.Markup.MarkupTimbreFixture..ctor(String markup, String fileName, IReadOnlyList`1 sounds, Boolean hold, Boolean attach, Action`1 configure, InvalidationTrace trace, Func`2 create, String companionSource) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Markup\MarkupTimbreFixture.cs:line 60&#xD;
+   at Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.InlineAspectAssignedToAnotherElementKeepsItsNamedReferences() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Markup\AspectRuntimeProgramTests.cs:line 119&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.OneResourceAppliedAtRuntimeGivesEachElementItsOwnProgram" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="d8a2684d-c3a7-f9cc-5f9a-8f06f51342a9">
+      <Execution id="8673f547-65a8-41df-8266-50dfa07b335b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests" name="OneResourceAppliedAtRuntimeGivesEachElementItsOwnProgram" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.ReplacementAtRuntimeAppliesTheNewAspectProgram" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="75b73472-ddca-3902-5fa4-96d8da8b87b3">
+      <Execution id="f92f7057-fe5b-4447-b398-a8a162f43e6e" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests" name="ReplacementAtRuntimeAppliesTheNewAspectProgram" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.StaticAspectRunsItsProgram" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="ccf6806e-3a75-07db-25ec-0f4344bf1e96">
+      <Execution id="e848db36-df8b-4aab-8fa3-0bc202a99c2a" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests" name="StaticAspectRunsItsProgram" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.DefaultAspectBringsItsProgramToAnElementCreatedAtRuntime" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="a1aeae79-7ba8-d575-8249-bba7f730fc8b">
+      <Execution id="94555773-89e0-47df-91f0-02f4fcee87f3" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests" name="DefaultAspectBringsItsProgramToAnElementCreatedAtRuntime" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.ReplacingBackAndForthKeepsExactlyOneProgram" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="b5e20ff9-4760-2d1c-e124-e4cfbdea34b3">
+      <Execution id="e1cf788b-1973-4fe3-a2e1-cba3aa804927" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests" name="ReplacingBackAndForthKeepsExactlyOneProgram" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.InlineAspectAssignedToAnotherElementKeepsItsNamedReferences" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="f1c4f365-e674-ed75-2c45-a84893aa7849">
+      <Execution id="90b76764-2281-465f-aa70-dfdd0a553dd4" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests" name="InlineAspectAssignedToAnotherElementKeepsItsNamedReferences" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.DetachAndReattachKeepExactlyOneProgram" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="5003918e-26d3-029a-a9ca-06bb05568598">
+      <Execution id="5b7880de-8b6d-491c-b77b-b9632400c813" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests" name="DetachAndReattachKeepExactlyOneProgram" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="b5e20ff9-4760-2d1c-e124-e4cfbdea34b3" executionId="e1cf788b-1973-4fe3-a2e1-cba3aa804927" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="75b73472-ddca-3902-5fa4-96d8da8b87b3" executionId="f92f7057-fe5b-4447-b398-a8a162f43e6e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a1aeae79-7ba8-d575-8249-bba7f730fc8b" executionId="94555773-89e0-47df-91f0-02f4fcee87f3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ccf6806e-3a75-07db-25ec-0f4344bf1e96" executionId="e848db36-df8b-4aab-8fa3-0bc202a99c2a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5003918e-26d3-029a-a9ca-06bb05568598" executionId="5b7880de-8b6d-491c-b77b-b9632400c813" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d8a2684d-c3a7-f9cc-5f9a-8f06f51342a9" executionId="8673f547-65a8-41df-8266-50dfa07b335b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f1c4f365-e674-ed75-2c45-a84893aa7849" executionId="90b76764-2281-465f-aa70-dfdd0a553dd4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="7" executed="7" passed="2" failed="5" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.19]   Discovering: Cerneala.Tests.Timbre&#xD;
+[xUnit.net 00:00:00.91]   Discovered:  Cerneala.Tests.Timbre&#xD;
+[xUnit.net 00:00:00.92]   Starting:    Cerneala.Tests.Timbre&#xD;
+[xUnit.net 00:00:04.47]       Assert.Equal() Failure: Collections differ&#xD;
+[xUnit.net 00:00:04.47]                  ↓ (pos 0)&#xD;
+[xUnit.net 00:00:04.48]       Expected: ["audio/tone.wav"]&#xD;
+[xUnit.net 00:00:04.48]       Actual:   []&#xD;
+[xUnit.net 00:00:04.48]       Stack Trace:&#xD;
+[xUnit.net 00:00:04.48]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Markup\AspectRuntimeProgramTests.cs(113,0): at Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.DefaultAspectBringsItsProgramToAnElementCreatedAtRuntime()&#xD;
+[xUnit.net 00:00:04.48]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:04.48]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:05.17]       Assert.Equal() Failure: Collections differ&#xD;
+[xUnit.net 00:00:05.17]                  ↓ (pos 0)&#xD;
+[xUnit.net 00:00:05.17]       Expected: ["audio/other.wav", "audio/other.wav"]&#xD;
+[xUnit.net 00:00:05.17]       Actual:   []&#xD;
+[xUnit.net 00:00:05.17]       Stack Trace:&#xD;
+[xUnit.net 00:00:05.17]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Markup\AspectRuntimeProgramTests.cs(83,0): at Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.OneResourceAppliedAtRuntimeGivesEachElementItsOwnProgram()&#xD;
+[xUnit.net 00:00:05.17]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:05.17]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:05.91]       Assert.Equal() Failure: Collections differ&#xD;
+[xUnit.net 00:00:05.91]                  ↓ (pos 0)&#xD;
+[xUnit.net 00:00:05.91]       Expected: ["audio/other.wav"]&#xD;
+[xUnit.net 00:00:05.91]       Actual:   []&#xD;
+[xUnit.net 00:00:05.91]       Stack Trace:&#xD;
+[xUnit.net 00:00:05.91]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Markup\AspectRuntimeProgramTests.cs(46,0): at Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.ReplacementAtRuntimeAppliesTheNewAspectProgram()&#xD;
+[xUnit.net 00:00:05.91]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:05.91]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:06.62]       System.InvalidOperationException : Generated consumer failed to build (harness failure, not an audio RED):&#xD;
+[xUnit.net 00:00:06.62]       TimbreFixture.crn(1,154): error CERNEALAUI021: Motion target resolution in 'TimbreFixture.crn' failed: Motion target named element 'Speaker' is not available at this Aspect application site.&#xD;
+[xUnit.net 00:00:06.62]       &#xD;
+[xUnit.net 00:00:06.62]       Stack Trace:&#xD;
+[xUnit.net 00:00:06.62]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Markup\GeneratedTimbreConsumer.cs(63,0): at Cerneala.Tests.Timbre.Markup.GeneratedTimbreConsumer.Compile(IReadOnlyList`1 files, String companionSource, String companionPath)&#xD;
+[xUnit.net 00:00:06.62]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Markup\MarkupTimbreFixture.cs(60,0): at Cerneala.Tests.Timbre.Markup.MarkupTimbreFixture..ctor(String markup, String fileName, IReadOnlyList`1 sounds, Boolean hold, Boolean attach, Action`1 configure, InvalidationTrace trace, Func`2 create, String companionSource)&#xD;
+[xUnit.net 00:00:06.62]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Markup\AspectRuntimeProgramTests.cs(119,0): at Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.InlineAspectAssignedToAnotherElementKeepsItsNamedReferences()&#xD;
+[xUnit.net 00:00:06.62]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:06.62]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:06.91]       Assert.Equal() Failure: Collections differ&#xD;
+[xUnit.net 00:00:06.91]                  ↓ (pos 0)&#xD;
+[xUnit.net 00:00:06.91]       Expected: ["audio/other.wav"]&#xD;
+[xUnit.net 00:00:06.91]       Actual:   []&#xD;
+[xUnit.net 00:00:06.91]       Stack Trace:&#xD;
+[xUnit.net 00:00:06.91]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Markup\AspectRuntimeProgramTests.cs(66,0): at Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.ReplacingBackAndForthKeepsExactlyOneProgram()&#xD;
+[xUnit.net 00:00:06.91]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:06.91]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:06.92]   Finished:    Cerneala.Tests.Timbre&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T15:05:59.0037952+03:00">
+        <Text>[xUnit.net 00:00:04.47]     Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.DefaultAspectBringsItsProgramToAnElementCreatedAtRuntime [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T15:05:59.7002782+03:00">
+        <Text>[xUnit.net 00:00:05.17]     Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.OneResourceAppliedAtRuntimeGivesEachElementItsOwnProgram [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T15:06:00.4463682+03:00">
+        <Text>[xUnit.net 00:00:05.91]     Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.ReplacementAtRuntimeAppliesTheNewAspectProgram [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T15:06:01.1564653+03:00">
+        <Text>[xUnit.net 00:00:06.62]     Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.InlineAspectAssignedToAnotherElementKeepsItsNamedReferences [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T15:06:01.4467930+03:00">
+        <Text>[xUnit.net 00:00:06.91]     Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.ReplacingBackAndForthKeepsExactlyOneProgram [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

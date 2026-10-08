@@ -130,9 +130,9 @@ public sealed partial class UiMarkupGeneratorTests
             <TileMap2D Layer="7" xmlns:r="clr-namespace:Cerneala.UI.Resources;assembly=Cerneala">
               <TileMap2D.Resources><r:ImageResource Name="Art" Source="art.png" /></TileMap2D.Resources>
               <TileMap2D.Aspect>
+                @prism { @layer Content { @filter Blur { Radius = 1; } } }
                 @on Loaded { @animate with Tween(100ms) { @from { Opacity = 0.5; } @to { Opacity = 1; } } }
               </TileMap2D.Aspect>
-              @prism { @layer Content { @filter Blur { Radius = 1; } } }
               <Tile Image="$Art" ImageWidth="32" ImageHeight="32" X="10" Y="20" />
             </TileMap2D>
             """;

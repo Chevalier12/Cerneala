@@ -97,7 +97,7 @@
       "patterns": [
         {
           "name": "meta.element.prism.cerneala",
-          "begin": "(</?)((?:[A-Za-z_][A-Za-z0-9_-]*:)?PrismComposition)\\b",
+          "begin": "(</?)((?:[A-Za-z_][A-Za-z0-9_-]*:)?PrismClip)\\b",
           "beginCaptures": {
             "1": { "name": "punctuation.definition.tag.begin.cerneala" }
           },
@@ -322,18 +322,10 @@
     "sound-directives": {
       "patterns": [
         {
-          "match": "(@seek)\\b(?:\\s+)([A-Za-z_][A-Za-z0-9_]*)(?:\\s+(to)\\b)?",
+          "match": "(@sound)\\b(?:\\s+)([A-Za-z_][A-Za-z0-9_]*)",
           "captures": {
             "1": { "name": "keyword.control.sound.cerneala" },
-            "2": { "name": "entity.name.label.handle.cerneala" },
-            "3": { "name": "keyword.control.sound.cerneala" }
-          }
-        },
-        {
-          "match": "(@(?:pause|resume))\\b(?:\\s+)([A-Za-z_][A-Za-z0-9_]*)",
-          "captures": {
-            "1": { "name": "keyword.control.sound.cerneala" },
-            "2": { "name": "entity.name.label.handle.cerneala" }
+            "2": { "name": "entity.name.section.sound.cerneala" }
           }
         },
         {
@@ -345,7 +337,14 @@
         },
         {
           "name": "keyword.control.sound.cerneala",
-          "match": "@(?:timbre|pause|resume|seek|modifier)\\b"
+          "match": "@(?:timbre|sound|play|stop|pause|resume|seek|modifier)\\b"
+        },
+        {
+          "comment": "The 'to' of '@seek $self.timbre.Sound to 30s;', before a duration.",
+          "match": "\\b(to)\\b(?=\\s+[0-9])",
+          "captures": {
+            "1": { "name": "keyword.control.sound.cerneala" }
+          }
         }
       ]
     },

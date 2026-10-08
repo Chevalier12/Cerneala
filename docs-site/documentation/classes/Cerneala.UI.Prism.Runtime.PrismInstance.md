@@ -16,7 +16,7 @@ public sealed class PrismInstance
 ## Examples
 
 ```csharp
-PrismCompositionDefinition definition = new(
+PrismClipDefinition definition = new(
     "Blurred",
     [
         new PrismLayerDefinition(
@@ -44,14 +44,14 @@ When `ResetToDefaults()` changes values, active TwoWay Prism bindings write the 
 
 | Name | Description |
 | --- | --- |
-| `PrismInstance(PrismCompositionDefinition definition)` | Creates isolated state initialized from a shared definition and catalog defaults. |
+| `PrismInstance(PrismClipDefinition definition)` | Creates isolated state initialized from a shared definition and catalog defaults. |
 
 ## Properties
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `Definition` | `PrismCompositionDefinition` | Gets the current shared immutable definition. |
-| `Composition` | `PrismCompositionState` | Gets mutable composition-level state. |
+| `Definition` | `PrismClipDefinition` | Gets the current shared immutable definition. |
+| `Composition` | `PrismClipState` | Gets mutable composition-level state. |
 | `StructuralVersion` | `PrismStructuralVersion` | Gets the topology version. |
 | `ValueVersion` | `PrismValueVersion` | Gets the typed-value version. |
 
@@ -62,7 +62,7 @@ When `ResetToDefaults()` changes values, active TwoWay Prism bindings write the 
 | `GetNodeState(PrismNodeId id)` | `PrismNodeState` | Resolves state by numeric node ID. |
 | `GetLayerState(PrismNodeId id)` | `PrismLayerState` | Resolves layer state and verifies its type. |
 | `GetGroupState(PrismNodeId id)` | `PrismGroupState` | Resolves group state and verifies its type. |
-| `ReplaceDefinition(PrismCompositionDefinition definition)` | `void` | Replaces the definition, resets values, and versions topology and data independently. |
+| `ReplaceDefinition(PrismClipDefinition definition)` | `void` | Replaces the definition, resets values, and versions topology and data independently. |
 | `ResetToDefaults()` | `void` | Restores current definition and catalog defaults when values differ. |
 
 ## Exceptions

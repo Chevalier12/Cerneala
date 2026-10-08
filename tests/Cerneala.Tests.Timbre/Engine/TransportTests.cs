@@ -11,7 +11,7 @@ public sealed class TransportTests
     public async Task PausePreservesPositionAndResumeContinuesWithoutRestart()
     {
         using TimbreRig rig = new();
-        TimbreClip clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
+        TimbreSound clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
         TimbrePlayback paused = rig.Scope.Play(clip);
         TimbrePlayback other = rig.Scope.Play(clip, start => start.Volume = 0.5f);
         await rig.StartAsync(paused, other);
@@ -66,7 +66,7 @@ public sealed class TransportTests
     {
         using TimbreRig rig = new();
         TimbreParameter<float> unused = new("Unused", 1f);
-        TimbreClip clip = new(TimbreSource.FromReader(new DeterministicTimbreSourceFactory(48000).Open), parameters: [unused]);
+        TimbreSound clip = new(TimbreSource.FromReader(new DeterministicTimbreSourceFactory(48000).Open), parameters: [unused]);
         TimbrePlayback playback = rig.Scope.Play(clip);
         playback.Cancel();
 
@@ -257,7 +257,7 @@ public sealed class TransportTests
     public async Task StartLoopOverridesTheClipDefaultAsAnImmutableSnapshot()
     {
         using TimbreRig rig = new();
-        TimbreClip clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(300), loop: true);
+        TimbreSound clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(300), loop: true);
         TimbrePlayback once = rig.Scope.Play(clip, start => start.Loop = false);
         TimbrePlayback looping = rig.Scope.Play(clip);
 

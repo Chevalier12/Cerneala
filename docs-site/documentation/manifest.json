@@ -4634,9 +4634,9 @@
     "source": "Drawing/Prism/Filters/PrismLensProfileFitter.cs"
   },
   {
-    "name": "Cerneala.UI.Prism.Definitions.PrismCompositionDefinition",
-    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismCompositionDefinition.md",
-    "source": "UI/Prism/Definitions/PrismCompositionDefinition.cs"
+    "name": "Cerneala.UI.Prism.Definitions.PrismClipDefinition",
+    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismClipDefinition.md",
+    "source": "UI/Prism/Definitions/PrismClipDefinition.cs"
   },
   {
     "name": "Cerneala.UI.Prism.Definitions.PrismCurvePoint",
@@ -4779,8 +4779,8 @@
     "source": "UI/Prism/Runtime/PrismAdvancedBlend.cs"
   },
   {
-    "name": "Cerneala.UI.Prism.Runtime.PrismCompositionState",
-    "file": "documentation/classes/Cerneala.UI.Prism.Runtime.PrismCompositionState.md",
+    "name": "Cerneala.UI.Prism.Runtime.PrismClipState",
+    "file": "documentation/classes/Cerneala.UI.Prism.Runtime.PrismClipState.md",
     "source": "UI/Prism/Runtime/PrismStates.cs"
   },
   {
@@ -5739,9 +5739,19 @@
     "source": "UI/Controls/RenderSurface3DFrame.cs"
   },
   {
-    "name": "Cerneala.Timbre.TimbreClip",
-    "file": "documentation/classes/Cerneala.Timbre.TimbreClip.md",
-    "source": "Timbre/TimbreClip.cs"
+    "name": "Cerneala.Timbre.TimbreSound",
+    "file": "documentation/classes/Cerneala.Timbre.TimbreSound.md",
+    "source": "Timbre/TimbreSound.cs"
+  },
+  {
+    "name": "Cerneala.Timbre.TimbreClipDefinition",
+    "file": "documentation/classes/Cerneala.Timbre.TimbreClipDefinition.md",
+    "source": "Timbre/TimbreClipDefinition.cs"
+  },
+  {
+    "name": "Cerneala.Timbre.TimbreClipSound",
+    "file": "documentation/classes/Cerneala.Timbre.TimbreClipSound.md",
+    "source": "Timbre/TimbreClipSound.cs"
   },
   {
     "name": "Cerneala.Timbre.TimbreSource",

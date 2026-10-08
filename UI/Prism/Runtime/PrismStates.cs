@@ -260,11 +260,11 @@ public abstract class PrismNodeState
     public string? Name { get; }
 }
 
-public sealed class PrismCompositionState
+public sealed class PrismClipState
 {
     private readonly PrismStateAccess values;
 
-    internal PrismCompositionState(PrismStateAccess values)
+    internal PrismClipState(PrismStateAccess values)
     {
         this.values = values;
     }
@@ -272,30 +272,30 @@ public sealed class PrismCompositionState
     public PrismColorProfile WorkingColorProfile
     {
         get => (PrismColorProfile)values.Get(
-            PrismCatalogGenerated.PrismCompositionPropertyKeys.WorkingColorProfileKey);
+            PrismCatalogGenerated.PrismClipPropertyKeys.WorkingColorProfileKey);
         set => values.Set(
-            PrismCatalogGenerated.PrismCompositionPropertyKeys.WorkingColorProfileKey,
+            PrismCatalogGenerated.PrismClipPropertyKeys.WorkingColorProfileKey,
             (int)value);
     }
 
     public float GlobalLightAngle
     {
-        get => values.Get(PrismCatalogGenerated.PrismCompositionPropertyKeys.GlobalLightAngleKey);
+        get => values.Get(PrismCatalogGenerated.PrismClipPropertyKeys.GlobalLightAngleKey);
         set => values.Set(
-            PrismCatalogGenerated.PrismCompositionPropertyKeys.GlobalLightAngleKey,
+            PrismCatalogGenerated.PrismClipPropertyKeys.GlobalLightAngleKey,
             PrismRuntimeValidation.Finite(value, nameof(value)));
     }
 
     public float GlobalLightAltitude
     {
-        get => values.Get(PrismCatalogGenerated.PrismCompositionPropertyKeys.GlobalLightAltitudeKey);
+        get => values.Get(PrismCatalogGenerated.PrismClipPropertyKeys.GlobalLightAltitudeKey);
         set
         {
             if (!float.IsFinite(value) || value is < 0f or > 90f)
             {
                 throw new ArgumentOutOfRangeException(nameof(value), value, "Light altitude must be from zero through 90.");
             }
-            values.Set(PrismCatalogGenerated.PrismCompositionPropertyKeys.GlobalLightAltitudeKey, value);
+            values.Set(PrismCatalogGenerated.PrismClipPropertyKeys.GlobalLightAltitudeKey, value);
         }
     }
 }

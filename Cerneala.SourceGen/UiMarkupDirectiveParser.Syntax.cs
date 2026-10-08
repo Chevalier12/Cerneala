@@ -26,7 +26,8 @@ public sealed partial class UiMarkupGenerator
         MotionDrag = 1024,
         MotionGesture = 2048,
         Prism = 4096,
-        TimbreActions = 8192
+        TimbreActions = 8192,
+        TimbreAttachment = 16384
     }
 
     private abstract class DirectiveNode

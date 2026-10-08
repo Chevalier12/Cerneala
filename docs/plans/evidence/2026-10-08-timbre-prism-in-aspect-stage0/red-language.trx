@@ -1,0 +1,690 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="488ce11c-a95d-4769-92f2-86aee43961ea" name="lauri@DESKTOP-JT43V3D 2026-10-08 21:00:27" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-08T21:00:27.3011074+03:00" queuing="2026-10-08T21:00:27.3011078+03:00" start="2026-10-08T21:00:23.3750551+03:00" finish="2026-10-08T21:00:35.7660155+03:00" />
+  <TestSettings name="default" id="fab4d60a-dcb9-4836-a726-28bc48b324e7">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-10-08_21_00_27" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="0cf95ee4-2076-417a-9006-5080dc9488db" testId="6f94df92-ec5d-7d8f-ec11-b94313cab436" testName="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.condition.commands&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.5118441" startTime="2026-10-08T21:00:33.0943102+03:00" endTime="2026-10-08T21:00:33.0943105+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0cf95ee4-2076-417a-9006-5080dc9488db">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Empty() Failure: Collection was not empty&#xD;
+Collection: [HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.condition.commands.crn' is invalid: Unknown Motion directive '@sound'., Path = aspect.condition.commands.crn, StartLine = 0, StartCharacter = 102, EndLine = 0, EndCharacter = 108 }, HarnessDiagnostic { Id = CERNEALAUI006, Severity = Error, Message = Markup directive in 'aspect.condition.commands.crn' is invalid: Unknown markup directive '@play'., Path = aspect.condition.commands.crn, StartLine = 0, StartCharacter = 222, EndLine = 0, EndCharacter = 227 }, HarnessDiagnostic { Id = CERNEALAUI006, Severity = Error, Message = Markup directive in 'aspect.condition.commands.crn' is invalid: Unknown markup directive '@stop'., Path = aspect.condition.commands.crn, StartLine = 0, StartCharacter = 284, EndLine = 0, EndCharacter = 289 }]</Message>
+          <StackTrace>   at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs:line 45&#xD;
+   at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="c59f1e0e-255b-4827-ae82-f57a0e6a691f" testId="cda03926-888a-a7e6-67bb-d4d8a54e1362" testName="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.legacy.handle&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.1657595" startTime="2026-10-08T21:00:35.0872313+03:00" endTime="2026-10-08T21:00:35.0872315+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c59f1e0e-255b-4827-ae82-f57a0e6a691f">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Contains() Failure: Filter not matched in collection&#xD;
+Collection: [HarnessDiagnostic { Id = CERNEALAUI032, Severity = Error, Message = Timbre value in 'aspect.legacy.handle.crn' is invalid: TimbreClip requires Source., Path = aspect.legacy.handle.crn, StartLine = 0, StartCharacter = 42, EndLine = 0, EndCharacter = 52 }, HarnessDiagnostic { Id = CERNEALAUI033, Severity = Error, Message = Timbre directive context in 'aspect.legacy.handle.crn' is invalid: @sound is allowed only inside an Aspect @on, @when or @if body., Path = aspect.legacy.handle.crn, StartLine = 0, StartCharacter = 67, EndLine = 0, EndCharacter = 73 }]</Message>
+          <StackTrace>   at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs:line 52&#xD;
+   at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="2eb55a07-efb7-4633-8d1d-bc2926d1a511" testId="edca2848-765b-a4ee-0768-5db34be14d75" testName="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.timbre.twice&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.2294209" startTime="2026-10-08T21:00:33.8815789+03:00" endTime="2026-10-08T21:00:33.8815796+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2eb55a07-efb7-4633-8d1d-bc2926d1a511">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Contains() Failure: Filter not matched in collection&#xD;
+Collection: [HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.timbre.twice.crn' is invalid: Unknown Motion directive '@sound'., Path = aspect.timbre.twice.crn, StartLine = 0, StartCharacter = 48, EndLine = 0, EndCharacter = 54 }]</Message>
+          <StackTrace>   at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs:line 52&#xD;
+   at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="efa5c123-7d3f-474b-8789-aee81fbca7e7" testId="cf4677d2-67cd-71f0-fc9e-5049de0cc476" testName="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.contract.approved&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.4117237" startTime="2026-10-08T21:00:32.1494438+03:00" endTime="2026-10-08T21:00:32.1494439+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="efa5c123-7d3f-474b-8789-aee81fbca7e7">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Empty() Failure: Collection was not empty&#xD;
+Collection: [HarnessDiagnostic { Id = CERNEALAUI032, Severity = Error, Message = Timbre value in 'aspect.contract.approved.crn' is invalid: TimbreClip requires Source., Path = aspect.contract.approved.crn, StartLine = 0, StartCharacter = 37, EndLine = 0, EndCharacter = 47 }, HarnessDiagnostic { Id = CERNEALAUI033, Severity = Error, Message = Timbre directive context in 'aspect.contract.approved.crn' is invalid: @sound is allowed only inside an Aspect @on, @when or @if body., Path = aspect.contract.approved.crn, StartLine = 0, StartCharacter = 101, EndLine = 0, EndCharacter = 107 }, HarnessDiagnostic { Id = CERNEALAUI033, Severity = Error, Message = Timbre directive context in 'aspect.contract.approved.crn' is invalid: @sound is allowed only inside an Aspect @on, @when or @if body., Path = aspect.contract.approved.crn, StartLine = 0, StartCharacter = 146, EndLine = 0, EndCharacter = 152 }, HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.contract.approved.crn' is invalid: Unknown Motion directive '@prism'., Path = aspect.contract.approved.crn, StartLine = 0, StartCharacter = 474, EndLine = 0, EndCharacter = 480 }, HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.contract.approved.crn' is invalid: Unknown Motion directive '@prism'., Path = aspect.contract.approved.crn, StartLine = 0, StartCharacter = 474, EndLine = 0, EndCharacter = 480 }, ···]</Message>
+          <StackTrace>   at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs:line 45&#xD;
+   at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="81a87d07-066c-4dcd-a92c-ff6ca1ce60fb" testId="0c29e663-ccf3-64a9-6640-a6163b65f1fa" testName="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.timbre.inContent&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.1611568" startTime="2026-10-08T21:00:34.2369724+03:00" endTime="2026-10-08T21:00:34.2369725+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="81a87d07-066c-4dcd-a92c-ff6ca1ce60fb">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Contains() Failure: Filter not matched in collection&#xD;
+Collection: [HarnessDiagnostic { Id = CERNEALAUI033, Severity = Error, Message = Timbre directive context in 'aspect.timbre.inContent.crn' is invalid: @timbre is allowed only inside an Aspect @on, @when or @if body., Path = aspect.timbre.inContent.crn, StartLine = 0, StartCharacter = 23, EndLine = 0, EndCharacter = 30 }]</Message>
+          <StackTrace>   at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs:line 52&#xD;
+   at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="d6a95cca-96d7-440e-85d5-4bc56108e3a6" testId="973944db-0f0e-2922-2e1a-5e2a1fdf292a" testName="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.clip.empty&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.1936215" startTime="2026-10-08T21:00:34.0759380+03:00" endTime="2026-10-08T21:00:34.0759382+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d6a95cca-96d7-440e-85d5-4bc56108e3a6">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Contains() Failure: Filter not matched in collection&#xD;
+Collection: [HarnessDiagnostic { Id = CERNEALAUI032, Severity = Error, Message = Timbre value in 'aspect.clip.empty.crn' is invalid: TimbreClip requires Source., Path = aspect.clip.empty.crn, StartLine = 0, StartCharacter = 35, EndLine = 0, EndCharacter = 45 }]</Message>
+          <StackTrace>   at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs:line 52&#xD;
+   at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="0c0a25db-9817-40df-a28f-c934d8d8a028" testId="ae53e1a5-839b-bfc8-323f-b8c28c67d3d6" testName="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.timbre.inOn&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.4904510" startTime="2026-10-08T21:00:30.8652147+03:00" endTime="2026-10-08T21:00:30.8652150+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0c0a25db-9817-40df-a28f-c934d8d8a028">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Contains() Failure: Filter not matched in collection&#xD;
+Collection: [HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.timbre.inOn.crn' is invalid: Unknown Motion directive '@sound'., Path = aspect.timbre.inOn.crn, StartLine = 0, StartCharacter = 60, EndLine = 0, EndCharacter = 66 }]</Message>
+          <StackTrace>   at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs:line 52&#xD;
+   at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="7b840597-b6e1-45d8-b167-49f3851f4649" testId="f45ada2f-8264-792b-c990-38ab4ca6e6bc" testName="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.inline.transport&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.3877726" startTime="2026-10-08T21:00:31.2531857+03:00" endTime="2026-10-08T21:00:31.2531859+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7b840597-b6e1-45d8-b167-49f3851f4649">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Empty() Failure: Collection was not empty&#xD;
+Collection: [HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.inline.transport.crn' is invalid: Unknown Motion directive '@sound'., Path = aspect.inline.transport.crn, StartLine = 0, StartCharacter = 33, EndLine = 0, EndCharacter = 39 }]</Message>
+          <StackTrace>   at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs:line 45&#xD;
+   at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="cd59ce74-10b8-4a1a-915a-8956675447ee" testId="cc0b6f6d-2e4c-5dca-23d0-690d8ff4ca4a" testName="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.prism.twice&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.4585160" startTime="2026-10-08T21:00:28.8532795+03:00" endTime="2026-10-08T21:00:28.8532798+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="cd59ce74-10b8-4a1a-915a-8956675447ee">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Contains() Failure: Filter not matched in collection&#xD;
+Collection: [HarnessDiagnostic { Id = PRISM2013, Severity = Error, Message = Prism binding in 'aspect.prism.twice.crn' failed: An element may declare only one @prism application., Path = aspect.prism.twice.crn, StartLine = 0, StartCharacter = 65, EndLine = 0, EndCharacter = 107 }]</Message>
+          <StackTrace>   at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs:line 52&#xD;
+   at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="30679c99-861c-411b-97b1-247b01b1532e" testId="0ad14207-19a6-6fed-3d60-cdd22d56a397" testName="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.attach.unknownArgument&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.1602242" startTime="2026-10-08T21:00:35.6613621+03:00" endTime="2026-10-08T21:00:35.6613623+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="30679c99-861c-411b-97b1-247b01b1532e">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Contains() Failure: Filter not matched in collection&#xD;
+Collection: [HarnessDiagnostic { Id = CERNEALAUI032, Severity = Error, Message = Timbre value in 'aspect.attach.unknownArgument.crn' is invalid: TimbreClip requires Source., Path = aspect.attach.unknownArgument.crn, StartLine = 0, StartCharacter = 35, EndLine = 0, EndCharacter = 45 }, HarnessDiagnostic { Id = CERNEALAUI033, Severity = Error, Message = Timbre directive context in 'aspect.attach.unknownArgument.crn' is invalid: @sound is allowed only inside an Aspect @on, @when or @if body., Path = aspect.attach.unknownArgument.crn, StartLine = 0, StartCharacter = 60, EndLine = 0, EndCharacter = 66 }, HarnessDiagnostic { Id = CERNEALAUI033, Severity = Error, Message = Timbre directive context in 'aspect.attach.unknownArgument.crn' is invalid: @timbre is allowed only inside an Aspect @on, @when or @if body., Path = aspect.attach.unknownArgument.crn, StartLine = 0, StartCharacter = 157, EndLine = 0, EndCharacter = 164 }]</Message>
+          <StackTrace>   at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs:line 52&#xD;
+   at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="80bc9a7a-e028-48fe-a550-6dcf938d6ae2" testId="51b458dd-07ae-b57b-9505-67c4706e8ad5" testName="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.clip.parameterInSound&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.1825216" startTime="2026-10-08T21:00:34.4200552+03:00" endTime="2026-10-08T21:00:34.4200555+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="80bc9a7a-e028-48fe-a550-6dcf938d6ae2">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Contains() Failure: Filter not matched in collection&#xD;
+Collection: [HarnessDiagnostic { Id = CERNEALAUI032, Severity = Error, Message = Timbre value in 'aspect.clip.parameterInSound.crn' is invalid: TimbreClip requires Source., Path = aspect.clip.parameterInSound.crn, StartLine = 0, StartCharacter = 35, EndLine = 0, EndCharacter = 45 }, HarnessDiagnostic { Id = CERNEALAUI033, Severity = Error, Message = Timbre directive context in 'aspect.clip.parameterInSound.crn' is invalid: @sound is allowed only inside an Aspect @on, @when or @if body., Path = aspect.clip.parameterInSound.crn, StartLine = 0, StartCharacter = 60, EndLine = 0, EndCharacter = 66 }]</Message>
+          <StackTrace>   at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs:line 52&#xD;
+   at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="ef072192-3b97-478c-aec5-42fbf705d700" testId="226bcb50-a3c7-5121-1396-62ae7d2143b6" testName="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.motion.unusedParameter&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.1654649" startTime="2026-10-08T21:00:34.7455765+03:00" endTime="2026-10-08T21:00:34.7455768+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ef072192-3b97-478c-aec5-42fbf705d700">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Contains() Failure: Filter not matched in collection&#xD;
+Collection: [HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.motion.unusedParameter.crn' is invalid: Unknown Motion directive '@sound'., Path = aspect.motion.unusedParameter.crn, StartLine = 0, StartCharacter = 86, EndLine = 0, EndCharacter = 92 }]</Message>
+          <StackTrace>   at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs:line 52&#xD;
+   at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="c43c6781-4612-439b-898a-eeaa36d65983" testId="dd05f9ce-6670-39c4-7eac-f579cbb97cca" testName="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.command.selfMissingSound&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.2644676" startTime="2026-10-08T21:00:33.6522838+03:00" endTime="2026-10-08T21:00:33.6522840+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c43c6781-4612-439b-898a-eeaa36d65983">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Contains() Failure: Filter not matched in collection&#xD;
+Collection: [HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.command.selfMissingSound.crn' is invalid: Unknown Motion directive '@sound'., Path = aspect.command.selfMissingSound.crn, StartLine = 0, StartCharacter = 48, EndLine = 0, EndCharacter = 54 }]</Message>
+          <StackTrace>   at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs:line 52&#xD;
+   at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="be88b514-d300-4b2c-9a35-bc360877d002" testId="0d5df58c-bfca-5794-8f4c-8f4760250a4f" testName="Cerneala.Tests.Language.TimbreAspectSemanticTests.CorpusCoversEveryFrozenFamily" computerName="DESKTOP-JT43V3D" duration="00:00:00.0049252" startTime="2026-10-08T21:00:35.6667607+03:00" endTime="2026-10-08T21:00:35.6667610+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="be88b514-d300-4b2c-9a35-bc360877d002" />
+    <UnitTestResult executionId="8c20f030-c452-44d1-ab74-8bb5b7fa8d31" testId="9e6a511d-6abe-128c-7e6a-48022fab16e9" testName="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.application.self&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.8824668" startTime="2026-10-08T21:00:30.3745832+03:00" endTime="2026-10-08T21:00:30.3745835+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8c20f030-c452-44d1-ab74-8bb5b7fa8d31">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Empty() Failure: Collection was not empty&#xD;
+Collection: [HarnessDiagnostic { Id = CERNEALAUI032, Severity = Error, Message = Timbre value in 'TimbreAspectApp.crn' is invalid: TimbreClip requires Source., Path = TimbreAspectApp.crn, StartLine = 0, StartCharacter = 65, EndLine = 0, EndCharacter = 75 }, HarnessDiagnostic { Id = CERNEALAUI033, Severity = Error, Message = Timbre directive context in 'TimbreAspectApp.crn' is invalid: @sound is allowed only inside an Aspect @on, @when or @if body., Path = TimbreAspectApp.crn, StartLine = 0, StartCharacter = 89, EndLine = 0, EndCharacter = 95 }, HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'TimbreAspectApp.crn' is invalid: Unknown Motion directive '@play'., Path = TimbreAspectApp.crn, StartLine = 0, StartCharacter = 216, EndLine = 0, EndCharacter = 221 }]</Message>
+          <StackTrace>   at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs:line 45&#xD;
+   at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="dd27e50d-c58c-43ed-bca8-0e13e169b4e4" testId="8c2dd42f-7600-a6ff-8d2b-bfcb3ff04468" testName="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.resource.noArguments&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.6379224" startTime="2026-10-08T21:00:29.4916309+03:00" endTime="2026-10-08T21:00:29.4916311+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="dd27e50d-c58c-43ed-bca8-0e13e169b4e4">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Empty() Failure: Collection was not empty&#xD;
+Collection: [HarnessDiagnostic { Id = CERNEALAUI032, Severity = Error, Message = Timbre value in 'aspect.resource.noArguments.crn' is invalid: TimbreClip requires Source., Path = aspect.resource.noArguments.crn, StartLine = 0, StartCharacter = 35, EndLine = 0, EndCharacter = 45 }, HarnessDiagnostic { Id = CERNEALAUI033, Severity = Error, Message = Timbre directive context in 'aspect.resource.noArguments.crn' is invalid: @sound is allowed only inside an Aspect @on, @when or @if body., Path = aspect.resource.noArguments.crn, StartLine = 0, StartCharacter = 60, EndLine = 0, EndCharacter = 66 }, HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.resource.noArguments.crn' is invalid: Unknown Motion directive '@play'., Path = aspect.resource.noArguments.crn, StartLine = 0, StartCharacter = 188, EndLine = 0, EndCharacter = 193 }]</Message>
+          <StackTrace>   at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs:line 45&#xD;
+   at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="c23893bf-0d62-4f35-acc0-f25e94d07e8c" testId="ca182ad8-8084-eeaa-e156-550f59bd606d" testName="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.motion.parameter&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.5203617" startTime="2026-10-08T21:00:27.9639303+03:00" endTime="2026-10-08T21:00:27.9639304+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c23893bf-0d62-4f35-acc0-f25e94d07e8c">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Empty() Failure: Collection was not empty&#xD;
+Collection: [HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.motion.parameter.crn' is invalid: Unknown Motion directive '@sound'., Path = aspect.motion.parameter.crn, StartLine = 0, StartCharacter = 86, EndLine = 0, EndCharacter = 92 }]</Message>
+          <StackTrace>   at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs:line 45&#xD;
+   at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="3c3cf2e2-7fba-4fb3-a4b5-804e2e996c19" testId="6e4421b6-1103-7b00-81a9-df5c5f5aeb4c" testName="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.command.elementOnly&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.4324783" startTime="2026-10-08T21:00:32.5821918+03:00" endTime="2026-10-08T21:00:32.5821920+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3c3cf2e2-7fba-4fb3-a4b5-804e2e996c19">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Contains() Failure: Filter not matched in collection&#xD;
+Collection: [HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.command.elementOnly.crn' is invalid: Unknown Motion directive '@sound'., Path = aspect.command.elementOnly.crn, StartLine = 0, StartCharacter = 60, EndLine = 0, EndCharacter = 66 }, HarnessDiagnostic { Id = CERNEALAUI030, Severity = Error, Message = Timbre syntax in 'aspect.command.elementOnly.crn' is invalid: @pause requires one declared handle name., Path = aspect.command.elementOnly.crn, StartLine = 0, StartCharacter = 189, EndLine = 0, EndCharacter = 197 }]</Message>
+          <StackTrace>   at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs:line 52&#xD;
+   at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="8555d351-17e6-4ebd-a584-5e2de5dad6c6" testId="40854a59-199a-e584-bf0f-67362106ec5d" testName="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.command.missingSound&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.4839632" startTime="2026-10-08T21:00:31.7373789+03:00" endTime="2026-10-08T21:00:31.7373791+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8555d351-17e6-4ebd-a584-5e2de5dad6c6">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Contains() Failure: Filter not matched in collection&#xD;
+Collection: [HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.command.missingSound.crn' is invalid: Unknown Motion directive '@sound'., Path = aspect.command.missingSound.crn, StartLine = 0, StartCharacter = 60, EndLine = 0, EndCharacter = 66 }, HarnessDiagnostic { Id = CERNEALAUI030, Severity = Error, Message = Timbre syntax in 'aspect.command.missingSound.crn' is invalid: @pause requires one declared handle name., Path = aspect.command.missingSound.crn, StartLine = 0, StartCharacter = 189, EndLine = 0, EndCharacter = 210 }]</Message>
+          <StackTrace>   at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs:line 52&#xD;
+   at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="5bbf8890-7a3b-4d2b-88f8-8221a78d2839" testId="50141331-a177-5cde-0cbd-44660b33d32a" testName="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.command.applicationNamed&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.2473785" startTime="2026-10-08T21:00:35.3347087+03:00" endTime="2026-10-08T21:00:35.3347088+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5bbf8890-7a3b-4d2b-88f8-8221a78d2839">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Contains() Failure: Filter not matched in collection&#xD;
+Collection: [HarnessDiagnostic { Id = CERNEALAUI030, Severity = Error, Message = Timbre syntax in 'TimbreAspectNamedApp.crn' is invalid: @pause requires one declared handle name., Path = TimbreAspectNamedApp.crn, StartLine = 0, StartCharacter = 129, EndLine = 0, EndCharacter = 150 }]</Message>
+          <StackTrace>   at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs:line 52&#xD;
+   at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="01678dc4-0c5a-45e4-819d-3b2d118edc01" testId="062d307c-3189-4e38-78ba-a3f5def57909" testName="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.command.shortName&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.1601520" startTime="2026-10-08T21:00:34.5802190+03:00" endTime="2026-10-08T21:00:34.5802194+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="01678dc4-0c5a-45e4-819d-3b2d118edc01">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Contains() Failure: Filter not matched in collection&#xD;
+Collection: [HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.command.shortName.crn' is invalid: Unknown Motion directive '@sound'., Path = aspect.command.shortName.crn, StartLine = 0, StartCharacter = 48, EndLine = 0, EndCharacter = 54 }]</Message>
+          <StackTrace>   at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs:line 52&#xD;
+   at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="c6bb2153-e190-42a3-ad8a-442845de5a7f" testId="5ef48947-571f-24fe-9d54-b0445309c56d" testName="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.prism.inOn&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.2929602" startTime="2026-10-08T21:00:33.3874143+03:00" endTime="2026-10-08T21:00:33.3874145+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c6bb2153-e190-42a3-ad8a-442845de5a7f">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Contains() Failure: Filter not matched in collection&#xD;
+Collection: [HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.prism.inOn.crn' is invalid: Unknown Motion directive '@prism'., Path = aspect.prism.inOn.crn, StartLine = 0, StartCharacter = 40, EndLine = 0, EndCharacter = 46 }]</Message>
+          <StackTrace>   at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs:line 52&#xD;
+   at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="6055cbdd-6d91-4402-b955-5a0e9b370ad6" testId="d40c942e-58c4-f56d-1a12-3db9ad9763ee" testName="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.command.parallel&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.1753173" startTime="2026-10-08T21:00:34.9228273+03:00" endTime="2026-10-08T21:00:34.9228278+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6055cbdd-6d91-4402-b955-5a0e9b370ad6">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Contains() Failure: Filter not matched in collection&#xD;
+Collection: [HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.command.parallel.crn' is invalid: Unknown Motion directive '@sound'., Path = aspect.command.parallel.crn, StartLine = 0, StartCharacter = 48, EndLine = 0, EndCharacter = 54 }]</Message>
+          <StackTrace>   at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs:line 52&#xD;
+   at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="aa25d1c2-2989-4e1e-b90d-69dd1d399173" testId="e386bfd0-c991-e6b2-ee34-aa9bfbbf5d53" testName="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.prism.inContent&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.7148221" startTime="2026-10-08T21:00:27.4437858+03:00" endTime="2026-10-08T21:00:27.4437863+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="aa25d1c2-2989-4e1e-b90d-69dd1d399173">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Collections differ&#xD;
+Expected: []&#xD;
+Actual:   [HarnessDiagnostic { Id = PRISM2013, Severity = Error, Message = Prism binding in 'aspect.prism.inContent.crn' failed: @layer must contain at least one filter or style., Path = aspect.prism.inContent.crn, StartLine = 0, StartCharacter = 24, EndLine = 0, EndCharacter = 28 }]&#xD;
+           ↑ (pos 0)</Message>
+          <StackTrace>   at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs:line 42&#xD;
+   at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="b3392d94-df90-4075-b8c7-52cd0be76821" testId="3e5a4a3f-5e74-cfeb-9ab4-f53ddbfe5822" testName="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.clip.legacySingleSound&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:01.5212223" startTime="2026-10-08T21:00:26.7360144+03:00" endTime="2026-10-08T21:00:26.7360604+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b3392d94-df90-4075-b8c7-52cd0be76821">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Contains() Failure: Filter not matched in collection&#xD;
+Collection: []</Message>
+          <StackTrace>   at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs:line 52&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="e0b30d22-1e91-4ed7-92ad-322475924820" testId="0076ada4-6ef4-154b-5c61-4808df6e2f53" testName="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.command.shortDollar&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.4301722" startTime="2026-10-08T21:00:28.3943785+03:00" endTime="2026-10-08T21:00:28.3943787+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e0b30d22-1e91-4ed7-92ad-322475924820">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Contains() Failure: Filter not matched in collection&#xD;
+Collection: [HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.command.shortDollar.crn' is invalid: Unknown Motion directive '@sound'., Path = aspect.command.shortDollar.crn, StartLine = 0, StartCharacter = 48, EndLine = 0, EndCharacter = 54 }]</Message>
+          <StackTrace>   at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs:line 52&#xD;
+   at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="e32d274d-adaf-46d9-a742-449941fb8b11" testId="bedc6c47-eb5b-b4ac-97b0-0b92fdcc545d" testName="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.clip.duplicateSound&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.1658649" startTime="2026-10-08T21:00:35.5011722+03:00" endTime="2026-10-08T21:00:35.5011724+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e32d274d-adaf-46d9-a742-449941fb8b11">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Contains() Failure: Filter not matched in collection&#xD;
+Collection: [HarnessDiagnostic { Id = CERNEALAUI032, Severity = Error, Message = Timbre value in 'aspect.clip.duplicateSound.crn' is invalid: TimbreClip requires Source., Path = aspect.clip.duplicateSound.crn, StartLine = 0, StartCharacter = 35, EndLine = 0, EndCharacter = 45 }, HarnessDiagnostic { Id = CERNEALAUI033, Severity = Error, Message = Timbre directive context in 'aspect.clip.duplicateSound.crn' is invalid: @sound is allowed only inside an Aspect @on, @when or @if body., Path = aspect.clip.duplicateSound.crn, StartLine = 0, StartCharacter = 60, EndLine = 0, EndCharacter = 66 }, HarnessDiagnostic { Id = CERNEALAUI033, Severity = Error, Message = Timbre directive context in 'aspect.clip.duplicateSound.crn' is invalid: @sound is allowed only inside an Aspect @on, @when or @if body., Path = aspect.clip.duplicateSound.crn, StartLine = 0, StartCharacter = 105, EndLine = 0, EndCharacter = 111 }]</Message>
+          <StackTrace>   at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs:line 52&#xD;
+   at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.prism.inContent&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="e386bfd0-c991-e6b2-ee34-aa9bfbbf5d53">
+      <Execution id="aa25d1c2-2989-4e1e-b90d-69dd1d399173" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TimbreAspectSemanticTests" name="LanguageAndSourceGeneratorAgreeOnCorpus" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.command.shortDollar&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="0076ada4-6ef4-154b-5c61-4808df6e2f53">
+      <Execution id="e0b30d22-1e91-4ed7-92ad-322475924820" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TimbreAspectSemanticTests" name="LanguageAndSourceGeneratorAgreeOnCorpus" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.clip.duplicateSound&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="bedc6c47-eb5b-b4ac-97b0-0b92fdcc545d">
+      <Execution id="e32d274d-adaf-46d9-a742-449941fb8b11" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TimbreAspectSemanticTests" name="LanguageAndSourceGeneratorAgreeOnCorpus" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.motion.parameter&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="ca182ad8-8084-eeaa-e156-550f59bd606d">
+      <Execution id="c23893bf-0d62-4f35-acc0-f25e94d07e8c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TimbreAspectSemanticTests" name="LanguageAndSourceGeneratorAgreeOnCorpus" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.clip.legacySingleSound&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="3e5a4a3f-5e74-cfeb-9ab4-f53ddbfe5822">
+      <Execution id="b3392d94-df90-4075-b8c7-52cd0be76821" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TimbreAspectSemanticTests" name="LanguageAndSourceGeneratorAgreeOnCorpus" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.clip.empty&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="973944db-0f0e-2922-2e1a-5e2a1fdf292a">
+      <Execution id="d6a95cca-96d7-440e-85d5-4bc56108e3a6" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TimbreAspectSemanticTests" name="LanguageAndSourceGeneratorAgreeOnCorpus" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.condition.commands&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="6f94df92-ec5d-7d8f-ec11-b94313cab436">
+      <Execution id="0cf95ee4-2076-417a-9006-5080dc9488db" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TimbreAspectSemanticTests" name="LanguageAndSourceGeneratorAgreeOnCorpus" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.attach.unknownArgument&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="0ad14207-19a6-6fed-3d60-cdd22d56a397">
+      <Execution id="30679c99-861c-411b-97b1-247b01b1532e" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TimbreAspectSemanticTests" name="LanguageAndSourceGeneratorAgreeOnCorpus" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.clip.parameterInSound&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="51b458dd-07ae-b57b-9505-67c4706e8ad5">
+      <Execution id="80bc9a7a-e028-48fe-a550-6dcf938d6ae2" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TimbreAspectSemanticTests" name="LanguageAndSourceGeneratorAgreeOnCorpus" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.motion.unusedParameter&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="226bcb50-a3c7-5121-1396-62ae7d2143b6">
+      <Execution id="ef072192-3b97-478c-aec5-42fbf705d700" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TimbreAspectSemanticTests" name="LanguageAndSourceGeneratorAgreeOnCorpus" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.inline.transport&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="f45ada2f-8264-792b-c990-38ab4ca6e6bc">
+      <Execution id="7b840597-b6e1-45d8-b167-49f3851f4649" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TimbreAspectSemanticTests" name="LanguageAndSourceGeneratorAgreeOnCorpus" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.legacy.handle&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="cda03926-888a-a7e6-67bb-d4d8a54e1362">
+      <Execution id="c59f1e0e-255b-4827-ae82-f57a0e6a691f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TimbreAspectSemanticTests" name="LanguageAndSourceGeneratorAgreeOnCorpus" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TimbreAspectSemanticTests.CorpusCoversEveryFrozenFamily" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="0d5df58c-bfca-5794-8f4c-8f4760250a4f">
+      <Execution id="be88b514-d300-4b2c-9a35-bc360877d002" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TimbreAspectSemanticTests" name="CorpusCoversEveryFrozenFamily" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.command.elementOnly&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="6e4421b6-1103-7b00-81a9-df5c5f5aeb4c">
+      <Execution id="3c3cf2e2-7fba-4fb3-a4b5-804e2e996c19" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TimbreAspectSemanticTests" name="LanguageAndSourceGeneratorAgreeOnCorpus" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.application.self&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="9e6a511d-6abe-128c-7e6a-48022fab16e9">
+      <Execution id="8c20f030-c452-44d1-ab74-8bb5b7fa8d31" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TimbreAspectSemanticTests" name="LanguageAndSourceGeneratorAgreeOnCorpus" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.timbre.twice&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="edca2848-765b-a4ee-0768-5db34be14d75">
+      <Execution id="2eb55a07-efb7-4633-8d1d-bc2926d1a511" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TimbreAspectSemanticTests" name="LanguageAndSourceGeneratorAgreeOnCorpus" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.command.applicationNamed&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="50141331-a177-5cde-0cbd-44660b33d32a">
+      <Execution id="5bbf8890-7a3b-4d2b-88f8-8221a78d2839" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TimbreAspectSemanticTests" name="LanguageAndSourceGeneratorAgreeOnCorpus" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.contract.approved&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="cf4677d2-67cd-71f0-fc9e-5049de0cc476">
+      <Execution id="efa5c123-7d3f-474b-8789-aee81fbca7e7" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TimbreAspectSemanticTests" name="LanguageAndSourceGeneratorAgreeOnCorpus" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.timbre.inContent&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="0c29e663-ccf3-64a9-6640-a6163b65f1fa">
+      <Execution id="81a87d07-066c-4dcd-a92c-ff6ca1ce60fb" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TimbreAspectSemanticTests" name="LanguageAndSourceGeneratorAgreeOnCorpus" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.resource.noArguments&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="8c2dd42f-7600-a6ff-8d2b-bfcb3ff04468">
+      <Execution id="dd27e50d-c58c-43ed-bca8-0e13e169b4e4" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TimbreAspectSemanticTests" name="LanguageAndSourceGeneratorAgreeOnCorpus" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.timbre.inOn&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="ae53e1a5-839b-bfc8-323f-b8c28c67d3d6">
+      <Execution id="0c0a25db-9817-40df-a28f-c934d8d8a028" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TimbreAspectSemanticTests" name="LanguageAndSourceGeneratorAgreeOnCorpus" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.command.missingSound&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="40854a59-199a-e584-bf0f-67362106ec5d">
+      <Execution id="8555d351-17e6-4ebd-a584-5e2de5dad6c6" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TimbreAspectSemanticTests" name="LanguageAndSourceGeneratorAgreeOnCorpus" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.command.shortName&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="062d307c-3189-4e38-78ba-a3f5def57909">
+      <Execution id="01678dc4-0c5a-45e4-819d-3b2d118edc01" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TimbreAspectSemanticTests" name="LanguageAndSourceGeneratorAgreeOnCorpus" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.command.selfMissingSound&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="dd05f9ce-6670-39c4-7eac-f579cbb97cca">
+      <Execution id="c43c6781-4612-439b-898a-eeaa36d65983" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TimbreAspectSemanticTests" name="LanguageAndSourceGeneratorAgreeOnCorpus" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.prism.inOn&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="5ef48947-571f-24fe-9d54-b0445309c56d">
+      <Execution id="c6bb2153-e190-42a3-ad8a-442845de5a7f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TimbreAspectSemanticTests" name="LanguageAndSourceGeneratorAgreeOnCorpus" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.prism.twice&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="cc0b6f6d-2e4c-5dca-23d0-690d8ff4ca4a">
+      <Execution id="cd59ce74-10b8-4a1a-915a-8956675447ee" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TimbreAspectSemanticTests" name="LanguageAndSourceGeneratorAgreeOnCorpus" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: &quot;aspect.command.parallel&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="d40c942e-58c4-f56d-1a12-3db9ad9763ee">
+      <Execution id="6055cbdd-6d91-4402-b955-5a0e9b370ad6" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TimbreAspectSemanticTests" name="LanguageAndSourceGeneratorAgreeOnCorpus" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="6f94df92-ec5d-7d8f-ec11-b94313cab436" executionId="0cf95ee4-2076-417a-9006-5080dc9488db" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="cda03926-888a-a7e6-67bb-d4d8a54e1362" executionId="c59f1e0e-255b-4827-ae82-f57a0e6a691f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="edca2848-765b-a4ee-0768-5db34be14d75" executionId="2eb55a07-efb7-4633-8d1d-bc2926d1a511" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="cf4677d2-67cd-71f0-fc9e-5049de0cc476" executionId="efa5c123-7d3f-474b-8789-aee81fbca7e7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0c29e663-ccf3-64a9-6640-a6163b65f1fa" executionId="81a87d07-066c-4dcd-a92c-ff6ca1ce60fb" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="973944db-0f0e-2922-2e1a-5e2a1fdf292a" executionId="d6a95cca-96d7-440e-85d5-4bc56108e3a6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ae53e1a5-839b-bfc8-323f-b8c28c67d3d6" executionId="0c0a25db-9817-40df-a28f-c934d8d8a028" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f45ada2f-8264-792b-c990-38ab4ca6e6bc" executionId="7b840597-b6e1-45d8-b167-49f3851f4649" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="cc0b6f6d-2e4c-5dca-23d0-690d8ff4ca4a" executionId="cd59ce74-10b8-4a1a-915a-8956675447ee" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0ad14207-19a6-6fed-3d60-cdd22d56a397" executionId="30679c99-861c-411b-97b1-247b01b1532e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="51b458dd-07ae-b57b-9505-67c4706e8ad5" executionId="80bc9a7a-e028-48fe-a550-6dcf938d6ae2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="226bcb50-a3c7-5121-1396-62ae7d2143b6" executionId="ef072192-3b97-478c-aec5-42fbf705d700" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="dd05f9ce-6670-39c4-7eac-f579cbb97cca" executionId="c43c6781-4612-439b-898a-eeaa36d65983" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0d5df58c-bfca-5794-8f4c-8f4760250a4f" executionId="be88b514-d300-4b2c-9a35-bc360877d002" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9e6a511d-6abe-128c-7e6a-48022fab16e9" executionId="8c20f030-c452-44d1-ab74-8bb5b7fa8d31" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8c2dd42f-7600-a6ff-8d2b-bfcb3ff04468" executionId="dd27e50d-c58c-43ed-bca8-0e13e169b4e4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ca182ad8-8084-eeaa-e156-550f59bd606d" executionId="c23893bf-0d62-4f35-acc0-f25e94d07e8c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6e4421b6-1103-7b00-81a9-df5c5f5aeb4c" executionId="3c3cf2e2-7fba-4fb3-a4b5-804e2e996c19" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="40854a59-199a-e584-bf0f-67362106ec5d" executionId="8555d351-17e6-4ebd-a584-5e2de5dad6c6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="50141331-a177-5cde-0cbd-44660b33d32a" executionId="5bbf8890-7a3b-4d2b-88f8-8221a78d2839" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="062d307c-3189-4e38-78ba-a3f5def57909" executionId="01678dc4-0c5a-45e4-819d-3b2d118edc01" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5ef48947-571f-24fe-9d54-b0445309c56d" executionId="c6bb2153-e190-42a3-ad8a-442845de5a7f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d40c942e-58c4-f56d-1a12-3db9ad9763ee" executionId="6055cbdd-6d91-4402-b955-5a0e9b370ad6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e386bfd0-c991-e6b2-ee34-aa9bfbbf5d53" executionId="aa25d1c2-2989-4e1e-b90d-69dd1d399173" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3e5a4a3f-5e74-cfeb-9ab4-f53ddbfe5822" executionId="b3392d94-df90-4075-b8c7-52cd0be76821" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0076ada4-6ef4-154b-5c61-4808df6e2f53" executionId="e0b30d22-1e91-4ed7-92ad-322475924820" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bedc6c47-eb5b-b4ac-97b0-0b92fdcc545d" executionId="e32d274d-adaf-46d9-a742-449941fb8b11" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="27" executed="27" passed="1" failed="26" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.18]   Discovering: Cerneala.Tests.Language&#xD;
+[xUnit.net 00:00:00.46]   Discovered:  Cerneala.Tests.Language&#xD;
+[xUnit.net 00:00:00.47]   Starting:    Cerneala.Tests.Language&#xD;
+[xUnit.net 00:00:02.09]       Assert.Contains() Failure: Filter not matched in collection&#xD;
+[xUnit.net 00:00:02.09]       Collection: []&#xD;
+[xUnit.net 00:00:02.09]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.09]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs(52,0): at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id)&#xD;
+[xUnit.net 00:00:02.09]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:02.09]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:02.80]       Assert.Equal() Failure: Collections differ&#xD;
+[xUnit.net 00:00:02.80]       Expected: []&#xD;
+[xUnit.net 00:00:02.80]       Actual:   [HarnessDiagnostic { Id = PRISM2013, Severity = Error, Message = Prism binding in 'aspect.prism.inContent.crn' failed: @layer must contain at least one filter or style., Path = aspect.prism.inContent.crn, StartLine = 0, StartCharacter = 24, EndLine = 0, EndCharacter = 28 }]&#xD;
+[xUnit.net 00:00:02.80]                  ↑ (pos 0)&#xD;
+[xUnit.net 00:00:02.80]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.80]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs(42,0): at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id)&#xD;
+[xUnit.net 00:00:02.80]            at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+[xUnit.net 00:00:02.80]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:03.32]       Assert.Empty() Failure: Collection was not empty&#xD;
+[xUnit.net 00:00:03.32]       Collection: [HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.motion.parameter.crn' is invalid: Unknown Motion directive '@sound'., Path = aspect.motion.parameter.crn, StartLine = 0, StartCharacter = 86, EndLine = 0, EndCharacter = 92 }]&#xD;
+[xUnit.net 00:00:03.32]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.32]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs(45,0): at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id)&#xD;
+[xUnit.net 00:00:03.32]            at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+[xUnit.net 00:00:03.32]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:03.75]       Assert.Contains() Failure: Filter not matched in collection&#xD;
+[xUnit.net 00:00:03.75]       Collection: [HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.command.shortDollar.crn' is invalid: Unknown Motion directive '@sound'., Path = aspect.command.shortDollar.crn, StartLine = 0, StartCharacter = 48, EndLine = 0, EndCharacter = 54 }]&#xD;
+[xUnit.net 00:00:03.75]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.75]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs(52,0): at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id)&#xD;
+[xUnit.net 00:00:03.75]            at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+[xUnit.net 00:00:03.75]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:04.21]       Assert.Contains() Failure: Filter not matched in collection&#xD;
+[xUnit.net 00:00:04.21]       Collection: [HarnessDiagnostic { Id = PRISM2013, Severity = Error, Message = Prism binding in 'aspect.prism.twice.crn' failed: An element may declare only one @prism application., Path = aspect.prism.twice.crn, StartLine = 0, StartCharacter = 65, EndLine = 0, EndCharacter = 107 }]&#xD;
+[xUnit.net 00:00:04.21]       Stack Trace:&#xD;
+[xUnit.net 00:00:04.21]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs(52,0): at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id)&#xD;
+[xUnit.net 00:00:04.21]            at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+[xUnit.net 00:00:04.21]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:04.85]       Assert.Empty() Failure: Collection was not empty&#xD;
+[xUnit.net 00:00:04.85]       Collection: [HarnessDiagnostic { Id = CERNEALAUI032, Severity = Error, Message = Timbre value in 'aspect.resource.noArguments.crn' is invalid: TimbreClip requires Source., Path = aspect.resource.noArguments.crn, StartLine = 0, StartCharacter = 35, EndLine = 0, EndCharacter = 45 }, HarnessDiagnostic { Id = CERNEALAUI033, Severity = Error, Message = Timbre directive context in 'aspect.resource.noArguments.crn' is invalid: @sound is allowed only inside an Aspect @on, @when or @if body., Path = aspect.resource.noArguments.crn, StartLine = 0, StartCharacter = 60, EndLine = 0, EndCharacter = 66 }, HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.resource.noArguments.crn' is invalid: Unknown Motion directive '@play'., Path = aspect.resource.noArguments.crn, StartLine = 0, StartCharacter = 188, EndLine = 0, EndCharacter = 193 }]&#xD;
+[xUnit.net 00:00:04.85]       Stack Trace:&#xD;
+[xUnit.net 00:00:04.85]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs(45,0): at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id)&#xD;
+[xUnit.net 00:00:04.85]            at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+[xUnit.net 00:00:04.85]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:05.73]       Assert.Empty() Failure: Collection was not empty&#xD;
+[xUnit.net 00:00:05.73]       Collection: [HarnessDiagnostic { Id = CERNEALAUI032, Severity = Error, Message = Timbre value in 'TimbreAspectApp.crn' is invalid: TimbreClip requires Source., Path = TimbreAspectApp.crn, StartLine = 0, StartCharacter = 65, EndLine = 0, EndCharacter = 75 }, HarnessDiagnostic { Id = CERNEALAUI033, Severity = Error, Message = Timbre directive context in 'TimbreAspectApp.crn' is invalid: @sound is allowed only inside an Aspect @on, @when or @if body., Path = TimbreAspectApp.crn, StartLine = 0, StartCharacter = 89, EndLine = 0, EndCharacter = 95 }, HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'TimbreAspectApp.crn' is invalid: Unknown Motion directive '@play'., Path = TimbreAspectApp.crn, StartLine = 0, StartCharacter = 216, EndLine = 0, EndCharacter = 221 }]&#xD;
+[xUnit.net 00:00:05.73]       Stack Trace:&#xD;
+[xUnit.net 00:00:05.73]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs(45,0): at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id)&#xD;
+[xUnit.net 00:00:05.73]            at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+[xUnit.net 00:00:05.73]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:06.22]       Assert.Contains() Failure: Filter not matched in collection&#xD;
+[xUnit.net 00:00:06.22]       Collection: [HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.timbre.inOn.crn' is invalid: Unknown Motion directive '@sound'., Path = aspect.timbre.inOn.crn, StartLine = 0, StartCharacter = 60, EndLine = 0, EndCharacter = 66 }]&#xD;
+[xUnit.net 00:00:06.22]       Stack Trace:&#xD;
+[xUnit.net 00:00:06.22]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs(52,0): at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id)&#xD;
+[xUnit.net 00:00:06.22]            at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+[xUnit.net 00:00:06.22]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:06.61]       Assert.Empty() Failure: Collection was not empty&#xD;
+[xUnit.net 00:00:06.61]       Collection: [HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.inline.transport.crn' is invalid: Unknown Motion directive '@sound'., Path = aspect.inline.transport.crn, StartLine = 0, StartCharacter = 33, EndLine = 0, EndCharacter = 39 }]&#xD;
+[xUnit.net 00:00:06.61]       Stack Trace:&#xD;
+[xUnit.net 00:00:06.61]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs(45,0): at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id)&#xD;
+[xUnit.net 00:00:06.61]            at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+[xUnit.net 00:00:06.61]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:07.09]       Assert.Contains() Failure: Filter not matched in collection&#xD;
+[xUnit.net 00:00:07.09]       Collection: [HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.command.missingSound.crn' is invalid: Unknown Motion directive '@sound'., Path = aspect.command.missingSound.crn, StartLine = 0, StartCharacter = 60, EndLine = 0, EndCharacter = 66 }, HarnessDiagnostic { Id = CERNEALAUI030, Severity = Error, Message = Timbre syntax in 'aspect.command.missingSound.crn' is invalid: @pause requires one declared handle name., Path = aspect.command.missingSound.crn, StartLine = 0, StartCharacter = 189, EndLine = 0, EndCharacter = 210 }]&#xD;
+[xUnit.net 00:00:07.09]       Stack Trace:&#xD;
+[xUnit.net 00:00:07.09]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs(52,0): at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id)&#xD;
+[xUnit.net 00:00:07.09]            at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+[xUnit.net 00:00:07.09]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:07.51]       Assert.Empty() Failure: Collection was not empty&#xD;
+[xUnit.net 00:00:07.51]       Collection: [HarnessDiagnostic { Id = CERNEALAUI032, Severity = Error, Message = Timbre value in 'aspect.contract.approved.crn' is invalid: TimbreClip requires Source., Path = aspect.contract.approved.crn, StartLine = 0, StartCharacter = 37, EndLine = 0, EndCharacter = 47 }, HarnessDiagnostic { Id = CERNEALAUI033, Severity = Error, Message = Timbre directive context in 'aspect.contract.approved.crn' is invalid: @sound is allowed only inside an Aspect @on, @when or @if body., Path = aspect.contract.approved.crn, StartLine = 0, StartCharacter = 101, EndLine = 0, EndCharacter = 107 }, HarnessDiagnostic { Id = CERNEALAUI033, Severity = Error, Message = Timbre directive context in 'aspect.contract.approved.crn' is invalid: @sound is allowed only inside an Aspect @on, @when or @if body., Path = aspect.contract.approved.crn, StartLine = 0, StartCharacter = 146, EndLine = 0, EndCharacter = 152 }, HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.contract.approved.crn' is invalid: Unknown Motion directive '@prism'., Path = aspect.contract.approved.crn, StartLine = 0, StartCharacter = 474, EndLine = 0, EndCharacter = 480 }, HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.contract.approved.crn' is invalid: Unknown Motion directive '@prism'., Path = aspect.contract.approved.crn, StartLine = 0, StartCharacter = 474, EndLine = 0, EndCharacter = 480 }, ···]&#xD;
+[xUnit.net 00:00:07.51]       Stack Trace:&#xD;
+[xUnit.net 00:00:07.51]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs(45,0): at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id)&#xD;
+[xUnit.net 00:00:07.51]            at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+[xUnit.net 00:00:07.51]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:07.94]       Assert.Contains() Failure: Filter not matched in collection&#xD;
+[xUnit.net 00:00:07.94]       Collection: [HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.command.elementOnly.crn' is invalid: Unknown Motion directive '@sound'., Path = aspect.command.elementOnly.crn, StartLine = 0, StartCharacter = 60, EndLine = 0, EndCharacter = 66 }, HarnessDiagnostic { Id = CERNEALAUI030, Severity = Error, Message = Timbre syntax in 'aspect.command.elementOnly.crn' is invalid: @pause requires one declared handle name., Path = aspect.command.elementOnly.crn, StartLine = 0, StartCharacter = 189, EndLine = 0, EndCharacter = 197 }]&#xD;
+[xUnit.net 00:00:07.94]       Stack Trace:&#xD;
+[xUnit.net 00:00:07.94]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs(52,0): at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id)&#xD;
+[xUnit.net 00:00:07.94]            at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+[xUnit.net 00:00:07.94]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:08.45]       Assert.Empty() Failure: Collection was not empty&#xD;
+[xUnit.net 00:00:08.45]       Collection: [HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.condition.commands.crn' is invalid: Unknown Motion directive '@sound'., Path = aspect.condition.commands.crn, StartLine = 0, StartCharacter = 102, EndLine = 0, EndCharacter = 108 }, HarnessDiagnostic { Id = CERNEALAUI006, Severity = Error, Message = Markup directive in 'aspect.condition.commands.crn' is invalid: Unknown markup directive '@play'., Path = aspect.condition.commands.crn, StartLine = 0, StartCharacter = 222, EndLine = 0, EndCharacter = 227 }, HarnessDiagnostic { Id = CERNEALAUI006, Severity = Error, Message = Markup directive in 'aspect.condition.commands.crn' is invalid: Unknown markup directive '@stop'., Path = aspect.condition.commands.crn, StartLine = 0, StartCharacter = 284, EndLine = 0, EndCharacter = 289 }]&#xD;
+[xUnit.net 00:00:08.45]       Stack Trace:&#xD;
+[xUnit.net 00:00:08.45]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs(45,0): at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id)&#xD;
+[xUnit.net 00:00:08.45]            at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+[xUnit.net 00:00:08.45]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:08.74]       Assert.Contains() Failure: Filter not matched in collection&#xD;
+[xUnit.net 00:00:08.74]       Collection: [HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.prism.inOn.crn' is invalid: Unknown Motion directive '@prism'., Path = aspect.prism.inOn.crn, StartLine = 0, StartCharacter = 40, EndLine = 0, EndCharacter = 46 }]&#xD;
+[xUnit.net 00:00:08.74]       Stack Trace:&#xD;
+[xUnit.net 00:00:08.74]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs(52,0): at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id)&#xD;
+[xUnit.net 00:00:08.74]            at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+[xUnit.net 00:00:08.74]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:09.01]       Assert.Contains() Failure: Filter not matched in collection&#xD;
+[xUnit.net 00:00:09.01]       Collection: [HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.command.selfMissingSound.crn' is invalid: Unknown Motion directive '@sound'., Path = aspect.command.selfMissingSound.crn, StartLine = 0, StartCharacter = 48, EndLine = 0, EndCharacter = 54 }]&#xD;
+[xUnit.net 00:00:09.01]       Stack Trace:&#xD;
+[xUnit.net 00:00:09.01]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs(52,0): at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id)&#xD;
+[xUnit.net 00:00:09.01]            at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+[xUnit.net 00:00:09.01]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:09.24]       Assert.Contains() Failure: Filter not matched in collection&#xD;
+[xUnit.net 00:00:09.24]       Collection: [HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.timbre.twice.crn' is invalid: Unknown Motion directive '@sound'., Path = aspect.timbre.twice.crn, StartLine = 0, StartCharacter = 48, EndLine = 0, EndCharacter = 54 }]&#xD;
+[xUnit.net 00:00:09.24]       Stack Trace:&#xD;
+[xUnit.net 00:00:09.24]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs(52,0): at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id)&#xD;
+[xUnit.net 00:00:09.24]            at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+[xUnit.net 00:00:09.24]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:09.43]       Assert.Contains() Failure: Filter not matched in collection&#xD;
+[xUnit.net 00:00:09.43]       Collection: [HarnessDiagnostic { Id = CERNEALAUI032, Severity = Error, Message = Timbre value in 'aspect.clip.empty.crn' is invalid: TimbreClip requires Source., Path = aspect.clip.empty.crn, StartLine = 0, StartCharacter = 35, EndLine = 0, EndCharacter = 45 }]&#xD;
+[xUnit.net 00:00:09.43]       Stack Trace:&#xD;
+[xUnit.net 00:00:09.43]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs(52,0): at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id)&#xD;
+[xUnit.net 00:00:09.43]            at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+[xUnit.net 00:00:09.43]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:09.59]       Assert.Contains() Failure: Filter not matched in collection&#xD;
+[xUnit.net 00:00:09.59]       Collection: [HarnessDiagnostic { Id = CERNEALAUI033, Severity = Error, Message = Timbre directive context in 'aspect.timbre.inContent.crn' is invalid: @timbre is allowed only inside an Aspect @on, @when or @if body., Path = aspect.timbre.inContent.crn, StartLine = 0, StartCharacter = 23, EndLine = 0, EndCharacter = 30 }]&#xD;
+[xUnit.net 00:00:09.59]       Stack Trace:&#xD;
+[xUnit.net 00:00:09.59]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs(52,0): at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id)&#xD;
+[xUnit.net 00:00:09.59]            at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+[xUnit.net 00:00:09.59]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:09.78]       Assert.Contains() Failure: Filter not matched in collection&#xD;
+[xUnit.net 00:00:09.78]       Collection: [HarnessDiagnostic { Id = CERNEALAUI032, Severity = Error, Message = Timbre value in 'aspect.clip.parameterInSound.crn' is invalid: TimbreClip requires Source., Path = aspect.clip.parameterInSound.crn, StartLine = 0, StartCharacter = 35, EndLine = 0, EndCharacter = 45 }, HarnessDiagnostic { Id = CERNEALAUI033, Severity = Error, Message = Timbre directive context in 'aspect.clip.parameterInSound.crn' is invalid: @sound is allowed only inside an Aspect @on, @when or @if body., Path = aspect.clip.parameterInSound.crn, StartLine = 0, StartCharacter = 60, EndLine = 0, EndCharacter = 66 }]&#xD;
+[xUnit.net 00:00:09.78]       Stack Trace:&#xD;
+[xUnit.net 00:00:09.78]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs(52,0): at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id)&#xD;
+[xUnit.net 00:00:09.78]            at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+[xUnit.net 00:00:09.78]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:09.94]       Assert.Contains() Failure: Filter not matched in collection&#xD;
+[xUnit.net 00:00:09.94]       Collection: [HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.command.shortName.crn' is invalid: Unknown Motion directive '@sound'., Path = aspect.command.shortName.crn, StartLine = 0, StartCharacter = 48, EndLine = 0, EndCharacter = 54 }]&#xD;
+[xUnit.net 00:00:09.94]       Stack Trace:&#xD;
+[xUnit.net 00:00:09.94]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs(52,0): at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id)&#xD;
+[xUnit.net 00:00:09.94]            at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+[xUnit.net 00:00:09.94]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:10.10]       Assert.Contains() Failure: Filter not matched in collection&#xD;
+[xUnit.net 00:00:10.10]       Collection: [HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.motion.unusedParameter.crn' is invalid: Unknown Motion directive '@sound'., Path = aspect.motion.unusedParameter.crn, StartLine = 0, StartCharacter = 86, EndLine = 0, EndCharacter = 92 }]&#xD;
+[xUnit.net 00:00:10.10]       Stack Trace:&#xD;
+[xUnit.net 00:00:10.10]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs(52,0): at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id)&#xD;
+[xUnit.net 00:00:10.10]            at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+[xUnit.net 00:00:10.10]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:10.28]       Assert.Contains() Failure: Filter not matched in collection&#xD;
+[xUnit.net 00:00:10.28]       Collection: [HarnessDiagnostic { Id = CERNEALAUI020, Severity = Error, Message = Motion syntax in 'aspect.command.parallel.crn' is invalid: Unknown Motion directive '@sound'., Path = aspect.command.parallel.crn, StartLine = 0, StartCharacter = 48, EndLine = 0, EndCharacter = 54 }]&#xD;
+[xUnit.net 00:00:10.28]       Stack Trace:&#xD;
+[xUnit.net 00:00:10.28]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs(52,0): at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id)&#xD;
+[xUnit.net 00:00:10.28]            at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+[xUnit.net 00:00:10.28]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:10.44]       Assert.Contains() Failure: Filter not matched in collection&#xD;
+[xUnit.net 00:00:10.44]       Collection: [HarnessDiagnostic { Id = CERNEALAUI032, Severity = Error, Message = Timbre value in 'aspect.legacy.handle.crn' is invalid: TimbreClip requires Source., Path = aspect.legacy.handle.crn, StartLine = 0, StartCharacter = 42, EndLine = 0, EndCharacter = 52 }, HarnessDiagnostic { Id = CERNEALAUI033, Severity = Error, Message = Timbre directive context in 'aspect.legacy.handle.crn' is invalid: @sound is allowed only inside an Aspect @on, @when or @if body., Path = aspect.legacy.handle.crn, StartLine = 0, StartCharacter = 67, EndLine = 0, EndCharacter = 73 }]&#xD;
+[xUnit.net 00:00:10.44]       Stack Trace:&#xD;
+[xUnit.net 00:00:10.44]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs(52,0): at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id)&#xD;
+[xUnit.net 00:00:10.44]            at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+[xUnit.net 00:00:10.44]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:10.69]       Assert.Contains() Failure: Filter not matched in collection&#xD;
+[xUnit.net 00:00:10.69]       Collection: [HarnessDiagnostic { Id = CERNEALAUI030, Severity = Error, Message = Timbre syntax in 'TimbreAspectNamedApp.crn' is invalid: @pause requires one declared handle name., Path = TimbreAspectNamedApp.crn, StartLine = 0, StartCharacter = 129, EndLine = 0, EndCharacter = 150 }]&#xD;
+[xUnit.net 00:00:10.69]       Stack Trace:&#xD;
+[xUnit.net 00:00:10.69]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs(52,0): at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id)&#xD;
+[xUnit.net 00:00:10.69]            at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+[xUnit.net 00:00:10.69]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:10.86]       Assert.Contains() Failure: Filter not matched in collection&#xD;
+[xUnit.net 00:00:10.86]       Collection: [HarnessDiagnostic { Id = CERNEALAUI032, Severity = Error, Message = Timbre value in 'aspect.clip.duplicateSound.crn' is invalid: TimbreClip requires Source., Path = aspect.clip.duplicateSound.crn, StartLine = 0, StartCharacter = 35, EndLine = 0, EndCharacter = 45 }, HarnessDiagnostic { Id = CERNEALAUI033, Severity = Error, Message = Timbre directive context in 'aspect.clip.duplicateSound.crn' is invalid: @sound is allowed only inside an Aspect @on, @when or @if body., Path = aspect.clip.duplicateSound.crn, StartLine = 0, StartCharacter = 60, EndLine = 0, EndCharacter = 66 }, HarnessDiagnostic { Id = CERNEALAUI033, Severity = Error, Message = Timbre directive context in 'aspect.clip.duplicateSound.crn' is invalid: @sound is allowed only inside an Aspect @on, @when or @if body., Path = aspect.clip.duplicateSound.crn, StartLine = 0, StartCharacter = 105, EndLine = 0, EndCharacter = 111 }]&#xD;
+[xUnit.net 00:00:10.86]       Stack Trace:&#xD;
+[xUnit.net 00:00:10.86]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs(52,0): at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id)&#xD;
+[xUnit.net 00:00:10.86]            at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+[xUnit.net 00:00:10.86]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:11.02]       Assert.Contains() Failure: Filter not matched in collection&#xD;
+[xUnit.net 00:00:11.02]       Collection: [HarnessDiagnostic { Id = CERNEALAUI032, Severity = Error, Message = Timbre value in 'aspect.attach.unknownArgument.crn' is invalid: TimbreClip requires Source., Path = aspect.attach.unknownArgument.crn, StartLine = 0, StartCharacter = 35, EndLine = 0, EndCharacter = 45 }, HarnessDiagnostic { Id = CERNEALAUI033, Severity = Error, Message = Timbre directive context in 'aspect.attach.unknownArgument.crn' is invalid: @sound is allowed only inside an Aspect @on, @when or @if body., Path = aspect.attach.unknownArgument.crn, StartLine = 0, StartCharacter = 60, EndLine = 0, EndCharacter = 66 }, HarnessDiagnostic { Id = CERNEALAUI033, Severity = Error, Message = Timbre directive context in 'aspect.attach.unknownArgument.crn' is invalid: @timbre is allowed only inside an Aspect @on, @when or @if body., Path = aspect.attach.unknownArgument.crn, StartLine = 0, StartCharacter = 157, EndLine = 0, EndCharacter = 164 }]&#xD;
+[xUnit.net 00:00:11.02]       Stack Trace:&#xD;
+[xUnit.net 00:00:11.02]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TimbreAspectSemanticTests.cs(52,0): at Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(String id)&#xD;
+[xUnit.net 00:00:11.02]            at InvokeStub_TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(Object, Span`1)&#xD;
+[xUnit.net 00:00:11.02]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:11.03]   Finished:    Cerneala.Tests.Language&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T21:00:26.7312476+03:00">
+        <Text>[xUnit.net 00:00:02.09]     Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: "aspect.clip.legacySingleSound") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T21:00:27.4425810+03:00">
+        <Text>[xUnit.net 00:00:02.80]     Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: "aspect.prism.inContent") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T21:00:27.9634595+03:00">
+        <Text>[xUnit.net 00:00:03.32]     Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: "aspect.motion.parameter") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T21:00:28.3936208+03:00">
+        <Text>[xUnit.net 00:00:03.75]     Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: "aspect.command.shortDollar") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T21:00:28.8525277+03:00">
+        <Text>[xUnit.net 00:00:04.21]     Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: "aspect.prism.twice") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T21:00:29.4909619+03:00">
+        <Text>[xUnit.net 00:00:04.85]     Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: "aspect.resource.noArguments") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T21:00:30.3737352+03:00">
+        <Text>[xUnit.net 00:00:05.73]     Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: "aspect.application.self") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T21:00:30.8643703+03:00">
+        <Text>[xUnit.net 00:00:06.22]     Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: "aspect.timbre.inOn") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T21:00:31.2524105+03:00">
+        <Text>[xUnit.net 00:00:06.61]     Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: "aspect.inline.transport") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T21:00:31.7366508+03:00">
+        <Text>[xUnit.net 00:00:07.09]     Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: "aspect.command.missingSound") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T21:00:32.1486297+03:00">
+        <Text>[xUnit.net 00:00:07.50]     Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: "aspect.contract.approved") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T21:00:32.5814723+03:00">
+        <Text>[xUnit.net 00:00:07.94]     Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: "aspect.command.elementOnly") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T21:00:33.0935344+03:00">
+        <Text>[xUnit.net 00:00:08.45]     Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: "aspect.condition.commands") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T21:00:33.3868530+03:00">
+        <Text>[xUnit.net 00:00:08.74]     Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: "aspect.prism.inOn") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T21:00:33.6515713+03:00">
+        <Text>[xUnit.net 00:00:09.01]     Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: "aspect.command.selfMissingSound") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T21:00:33.8812476+03:00">
+        <Text>[xUnit.net 00:00:09.24]     Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: "aspect.timbre.twice") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T21:00:34.0751716+03:00">
+        <Text>[xUnit.net 00:00:09.43]     Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: "aspect.clip.empty") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T21:00:34.2364278+03:00">
+        <Text>[xUnit.net 00:00:09.59]     Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: "aspect.timbre.inContent") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T21:00:34.4193562+03:00">
+        <Text>[xUnit.net 00:00:09.78]     Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: "aspect.clip.parameterInSound") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T21:00:34.5796763+03:00">
+        <Text>[xUnit.net 00:00:09.94]     Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: "aspect.command.shortName") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T21:00:34.7453259+03:00">
+        <Text>[xUnit.net 00:00:10.10]     Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: "aspect.motion.unusedParameter") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T21:00:34.9208532+03:00">
+        <Text>[xUnit.net 00:00:10.28]     Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: "aspect.command.parallel") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T21:00:35.0867771+03:00">
+        <Text>[xUnit.net 00:00:10.44]     Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: "aspect.legacy.handle") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T21:00:35.3343371+03:00">
+        <Text>[xUnit.net 00:00:10.69]     Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: "aspect.command.applicationNamed") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T21:00:35.5006094+03:00">
+        <Text>[xUnit.net 00:00:10.86]     Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: "aspect.clip.duplicateSound") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-08T21:00:35.6609281+03:00">
+        <Text>[xUnit.net 00:00:11.02]     Cerneala.Tests.Language.TimbreAspectSemanticTests.LanguageAndSourceGeneratorAgreeOnCorpus(id: "aspect.attach.unknownArgument") [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

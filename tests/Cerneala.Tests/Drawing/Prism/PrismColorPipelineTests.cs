@@ -199,7 +199,7 @@ public sealed class PrismColorPipelineTests
             opacity: 0.4f,
             fill: 0.2f);
         PrismGraph graph = BuildGraph(
-            new PrismCompositionDefinition(
+            new PrismClipDefinition(
                 "Fill and opacity",
                 [layer]));
         PrismGraphNode fill = Assert.Single(
@@ -228,13 +228,13 @@ public sealed class PrismColorPipelineTests
     public void PrismColorNestedGraphAddsOneInputConversionPerScope()
     {
         PrismDrawScope outer = PrismTestData.Scope(
-            new PrismCompositionDefinition(
+            new PrismClipDefinition(
                 "Outer",
                 [PrismTestData.Layer(1, "Outer layer")],
                 workingColorProfile: PrismColorProfile.Srgb),
             ownerToken: 8101);
         PrismDrawScope inner = PrismTestData.Scope(
-            new PrismCompositionDefinition(
+            new PrismClipDefinition(
                 "Inner",
                 [PrismTestData.Layer(2, "Inner layer")],
                 workingColorProfile:
@@ -267,7 +267,7 @@ public sealed class PrismColorPipelineTests
     }
 
     private static PrismGraph BuildGraph(
-        PrismCompositionDefinition composition)
+        PrismClipDefinition composition)
     {
         PrismDrawScope scope =
             PrismTestData.Scope(composition);

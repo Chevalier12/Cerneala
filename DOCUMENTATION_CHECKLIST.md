@@ -908,7 +908,7 @@
 - [x] docs-site/documentation/classes/Cerneala.UI.Platform.ITextInputPlatform.md
 - [x] docs-site/documentation/classes/Cerneala.UI.Platform.PlatformServices.md
 - [x] docs-site/documentation/classes/Cerneala.UI.Prism.Definitions.PrismColorMatrixResource.md
-- [x] docs-site/documentation/classes/Cerneala.UI.Prism.Definitions.PrismCompositionDefinition.md
+- [x] docs-site/documentation/classes/Cerneala.UI.Prism.Definitions.PrismClipDefinition.md
 - [x] docs-site/documentation/classes/Cerneala.UI.Prism.Definitions.PrismCurvePoint.md
 - [x] docs-site/documentation/classes/Cerneala.UI.Prism.Definitions.PrismCurvesResource.md
 - [x] docs-site/documentation/classes/Cerneala.UI.Prism.Definitions.PrismFilterDefinition.md
@@ -936,7 +936,7 @@
 - [x] docs-site/documentation/classes/Cerneala.UI.Prism.Runtime.PrismBlendChannels.md
 - [x] docs-site/documentation/classes/Cerneala.UI.Prism.Runtime.PrismBlendIfChannel.md
 - [x] docs-site/documentation/classes/Cerneala.UI.Prism.Runtime.PrismBlendRange.md
-- [x] docs-site/documentation/classes/Cerneala.UI.Prism.Runtime.PrismCompositionState.md
+- [x] docs-site/documentation/classes/Cerneala.UI.Prism.Runtime.PrismClipState.md
 - [x] docs-site/documentation/classes/Cerneala.UI.Prism.Runtime.PrismFilterState.md
 - [x] docs-site/documentation/classes/Cerneala.UI.Prism.Runtime.PrismGroupState.md
 - [x] docs-site/documentation/classes/Cerneala.UI.Prism.Runtime.PrismInstance.md

@@ -233,15 +233,17 @@ internal sealed partial class CernealaCompletionService
         bool supportsTemplateCollection = elementType is not null &&
             (elementType.IsOrDerivesFrom("Cerneala.UI.Controls.ItemsControl") ||
              elementType.IsOrDerivesFrom("Cerneala.UI.Controls.SceneItems2D"));
+        bool aspectBody = elementName == "Aspect" || element?.Name.EndsWith(".Aspect", StringComparison.Ordinal) == true;
         IEnumerable<string> keywords;
-        if (elementName == "PrismComposition" || IsInsideDirective(site.Source, site.Offset, "@prism"))
+        if (elementName == "PrismClip" || IsInsideDirectiveBlock(site.Source, site.Offset, "@prism"))
         {
             keywords = CernealaLanguageFacts.PrismDirectiveKeywords;
         }
-        else if (elementName is "Aspect" or "MotionClip" ||
+        else if (aspectBody || elementName == "MotionClip" ||
             IsInsideAnyDirective(site.Source, site.Offset, CernealaLanguageFacts.MotionDirectiveKeywords))
         {
             keywords = CernealaLanguageFacts.MotionDirectiveKeywords.Concat(["@default", "@template"]);
+            string? innermost = FindInnermostDirectiveKeyword(site.Source, site.Offset);
             if (IsInsideDirective(site.Source, site.Offset, "@animate"))
             {
                 keywords = ["@from", "@to"];
@@ -250,17 +252,21 @@ internal sealed partial class CernealaCompletionService
             {
                 keywords = ["@animate"];
             }
-            else if (elementName != "MotionClip" &&
-                FindInnermostDirectiveKeyword(site.Source, site.Offset) is "@on" or "@when" or "@if")
+            else if (elementName != "MotionClip" && innermost is "@on" or "@when" or "@if")
             {
-                keywords = keywords.Concat(TimbreActionKeywords);
+                keywords = keywords.Concat(TimbreCommandKeywords);
+            }
+            else if (aspectBody && innermost is null)
+            {
+                // The Aspect's attachments are written at the top of its body.
+                keywords = keywords.Concat(["@timbre", "@prism"]);
             }
         }
         else
         {
             keywords = supportsTemplateCollection
-                ? ["@templates", "@prism", "@run"]
-                : ["@prism", "@run"];
+                ? ["@templates", "@run"]
+                : ["@run"];
         }
 
         foreach (string keyword in keywords.Distinct(StringComparer.Ordinal))
@@ -285,7 +291,7 @@ internal sealed partial class CernealaCompletionService
             elementName = lexicalElementName;
         }
 
-        if (context is null && elementName != "PrismComposition")
+        if (context is null && elementName != "PrismClip")
         {
             return false;
         }
@@ -470,7 +476,7 @@ internal sealed partial class CernealaCompletionService
         ElementSyntax? element)
     {
         if (IsInsideBraceBody(source, offset) || statement.IndexOf('@') >= 0 ||
-            element?.Name.Split(':').Last() is "Aspect" or "MotionClip" or "PrismComposition")
+            element?.Name.Split(':').Last() is "Aspect" or "MotionClip" or "PrismClip")
         {
             return true;
         }
@@ -488,9 +494,11 @@ internal sealed partial class CernealaCompletionService
         "@cancel" => "@cancel handle;",
         "@parameter" => "@parameter Name: float = 0;",
         "@timbre" => "@timbre $Clip;",
-        "@pause" => "@pause handle;",
-        "@resume" => "@resume handle;",
-        "@seek" => "@seek handle to 0s;",
+        "@play" => "@play $self.timbre.Sound;",
+        "@stop" => "@stop $self.timbre.Sound;",
+        "@pause" => "@pause $self.timbre.Sound;",
+        "@resume" => "@resume $self.timbre.Sound;",
+        "@seek" => "@seek $self.timbre.Sound to 0s;",
         "@from" or "@to" => keyword + " { }",
         _ => keyword + " { }"
     };

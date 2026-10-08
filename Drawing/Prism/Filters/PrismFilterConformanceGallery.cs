@@ -9,7 +9,7 @@ internal readonly record struct PrismFilterConformanceGalleryEntry(
     PrismFilterId Filter,
     string Symbol,
     string Category,
-    PrismCompositionDefinition Composition);
+    PrismClipDefinition Composition);
 
 internal static class PrismFilterConformanceGallery
 {
@@ -47,7 +47,7 @@ internal static class PrismFilterConformanceGallery
                 [
                     new PrismFilterDefinition(filter)
                 ]);
-            PrismCompositionDefinition composition = new(
+            PrismClipDefinition composition = new(
                 $"PrismFilterConformance.{entry.Symbol}",
                 [layer]);
             gallery.Add(

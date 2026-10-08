@@ -11,7 +11,7 @@ public sealed class HandleAndScopeTests
     public async Task PlayWithoutHandleOverlapsAndCancelTargetsOneIdentity()
     {
         using TimbreRig rig = new();
-        TimbreClip clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
+        TimbreSound clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
         TimbrePlayback first = rig.Scope.Play(clip);
         TimbrePlayback second = rig.Scope.Play(clip);
         await rig.StartAsync(first, second);
@@ -29,7 +29,7 @@ public sealed class HandleAndScopeTests
     public async Task PlayWithSameHandleReplacesOnlyTheOccupant()
     {
         using TimbreRig rig = new();
-        TimbreClip clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
+        TimbreSound clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
         TimbreHandle slot = rig.Scope.CreateHandle();
         TimbrePlayback old = rig.Scope.Play(clip, handle: slot);
         TimbrePlayback free = rig.Scope.Play(clip);
@@ -49,7 +49,7 @@ public sealed class HandleAndScopeTests
     public async Task CancelOnStaleReferenceDoesNotCancelTheNewOccupant()
     {
         using TimbreRig rig = new();
-        TimbreClip clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
+        TimbreSound clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
         TimbreHandle slot = rig.Scope.CreateHandle();
         TimbrePlayback old = rig.Scope.Play(clip, handle: slot);
         TimbrePlayback current = rig.Scope.Play(clip, handle: slot);
@@ -85,7 +85,7 @@ public sealed class HandleAndScopeTests
         using TimbreRig rig = new();
         TimbreParameter<float> declared = new("Declared", 1f);
         TimbreParameter<float> foreign = new("Foreign", 1f);
-        TimbreClip clip = new(TimbreSource.FromReader(new DeterministicTimbreSourceFactory(48000).Open), parameters: [declared]);
+        TimbreSound clip = new(TimbreSource.FromReader(new DeterministicTimbreSourceFactory(48000).Open), parameters: [declared]);
         TimbreHandle slot = rig.Scope.CreateHandle();
         TimbrePlayback occupant = rig.Scope.Play(clip, handle: slot);
         using TimbreScope otherScope = rig.Runtime.CreateScope();
@@ -109,8 +109,8 @@ public sealed class HandleAndScopeTests
     public void ModifiedClipStartsAndReplacesThroughTheSamePathAsAPlainClip()
     {
         using TimbreRig rig = new();
-        TimbreClip plain = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
-        TimbreClip filtered = new(plain.Source, modifiers: [new LowPass()]);
+        TimbreSound plain = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
+        TimbreSound filtered = new(plain.Source, modifiers: [new LowPass()]);
         TimbreHandle slot = rig.Scope.CreateHandle();
         TimbrePlayback occupant = rig.Scope.Play(plain, handle: slot);
 
@@ -125,7 +125,7 @@ public sealed class HandleAndScopeTests
     public async Task VoiceLimitCountsPausedPlaybacksAndRejectsWithoutStealing()
     {
         using TimbreRig rig = new(options => options.MaxVoices = 2);
-        TimbreClip clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
+        TimbreSound clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
         TimbreHandle slot = rig.Scope.CreateHandle();
         TimbrePlayback playing = rig.Scope.Play(clip);
         TimbrePlayback paused = rig.Scope.Play(clip, handle: slot);
@@ -150,7 +150,7 @@ public sealed class HandleAndScopeTests
     public async Task ScopeDisposalCancelsOnlyItsPlaybacksAndKeepsTheSharedOutput()
     {
         using TimbreRig rig = new();
-        TimbreClip clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
+        TimbreSound clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
         TimbreScope other = rig.Runtime.CreateScope();
         TimbreHandle otherSlot = other.CreateHandle();
         TimbrePlayback mine = rig.Scope.Play(clip);
@@ -177,7 +177,7 @@ public sealed class HandleAndScopeTests
     public async Task RuntimeDisposalCancelsEveryScopeAndClosesTheOutput()
     {
         TimbreRig rig = new();
-        TimbreClip clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
+        TimbreSound clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
         TimbreScope other = rig.Runtime.CreateScope();
         TimbrePlayback first = rig.Scope.Play(clip);
         TimbrePlayback second = other.Play(clip);

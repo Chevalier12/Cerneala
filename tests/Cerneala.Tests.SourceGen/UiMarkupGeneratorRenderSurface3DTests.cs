@@ -87,6 +87,10 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <RenderSurface3D Opacity="1">
               <RenderSurface3D.Aspect>
+                @prism
+                {
+                  @layer SurfaceImage { Opacity = 1; @filter Blur { Radius = 1; } }
+                }
                 @on Loaded
                 {
                   @animate with Tween(100ms)
@@ -95,10 +99,6 @@ public sealed partial class UiMarkupGeneratorTests
                   }
                 }
               </RenderSurface3D.Aspect>
-              @prism
-              {
-                @layer SurfaceImage { Opacity = 1; @filter Blur { Radius = 1; } }
-              }
               <Button Content="Overlay" />
             </RenderSurface3D>
             """;

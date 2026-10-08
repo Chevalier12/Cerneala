@@ -211,7 +211,7 @@ internal static class PrismRetainedCacheBenchmarkRunner
     private static BenchmarkScenario
         CreateStaticControlScenario(BenchmarkResolution resolution)
     {
-        PrismCompositionDefinition definition =
+        PrismClipDefinition definition =
             CreateFilteredControlDefinition("Static control");
         PrismInstance instance = new(definition);
         PrismDrawScope scope = CreateScope(
@@ -236,7 +236,7 @@ internal static class PrismRetainedCacheBenchmarkRunner
         bool animated)
     {
         BenchmarkBackdrop texture = CreateBackdropTexture(session, resolution);
-        PrismCompositionDefinition definition = new(
+        PrismClipDefinition definition = new(
             animated
                 ? "Animated game backdrop"
                 : "Static backdrop",
@@ -320,7 +320,7 @@ internal static class PrismRetainedCacheBenchmarkRunner
     private static BenchmarkScenario
         CreateMotionParameterScenario(BenchmarkResolution resolution)
     {
-        PrismCompositionDefinition definition =
+        PrismClipDefinition definition =
             CreateFilteredControlDefinition("Motion parameter");
         BenchmarkFrame[] frames =
             new BenchmarkFrame[DynamicFrameCount];
@@ -366,7 +366,7 @@ internal static class PrismRetainedCacheBenchmarkRunner
             }
         }
         SdlGpuImage image = new(resolution.Width, resolution.Height, maskPixels);        PrismResourceId maskId = new("BenchmarkMask");
-        PrismCompositionDefinition definition = new(
+        PrismClipDefinition definition = new(
             "Changed resource",
             [
                 new PrismLayerDefinition(
@@ -421,7 +421,7 @@ internal static class PrismRetainedCacheBenchmarkRunner
     private static BenchmarkScenario
         CreateManyCommonInstancesScenario(BenchmarkResolution resolution)
     {
-        PrismCompositionDefinition definition =
+        PrismClipDefinition definition =
             CreateFilteredControlDefinition("Common instances");
         DrawCommandList commands = new();
         for (int index = 0;
@@ -477,7 +477,7 @@ internal static class PrismRetainedCacheBenchmarkRunner
                 filters: [new PrismFilterDefinition(PrismFilterId.Invert)],
                 opacity: 0.45f + (index * 0.04f)))
             .ToArray();
-        PrismCompositionDefinition definition = new("Many layers", layers);
+        PrismClipDefinition definition = new("Many layers", layers);
         PrismDrawScope scope = CreateScope(
             new PrismInstance(definition),
             ownerToken: 8_001,
@@ -497,7 +497,7 @@ internal static class PrismRetainedCacheBenchmarkRunner
     private static BenchmarkScenario CreateFilterChainScenario(
         BenchmarkResolution resolution)
     {
-        PrismCompositionDefinition definition = new(
+        PrismClipDefinition definition = new(
             "Filter chain",
             [
                 new PrismLayerDefinition(
@@ -530,7 +530,7 @@ internal static class PrismRetainedCacheBenchmarkRunner
     private static BenchmarkScenario CreateStylesScenario(
         BenchmarkResolution resolution)
     {
-        PrismCompositionDefinition definition = new(
+        PrismClipDefinition definition = new(
             "Styles",
             [
                 new PrismLayerDefinition(
@@ -562,7 +562,7 @@ internal static class PrismRetainedCacheBenchmarkRunner
     private static BenchmarkScenario CreateNestedGroupsScenario(
         BenchmarkResolution resolution)
     {
-        PrismCompositionDefinition definition = new(
+        PrismClipDefinition definition = new(
             "Nested groups",
             [
                 new PrismGroupDefinition(
@@ -607,7 +607,7 @@ internal static class PrismRetainedCacheBenchmarkRunner
         BenchmarkResolution resolution)
     {
         BenchmarkBackdrop texture = CreateBackdropTexture(session, resolution);
-        PrismCompositionDefinition definition = new(
+        PrismClipDefinition definition = new(
             "Shared backdrop",
             [
                 new PrismLayerDefinition(
@@ -663,7 +663,7 @@ internal static class PrismRetainedCacheBenchmarkRunner
             texture);
     }
 
-    private static PrismCompositionDefinition
+    private static PrismClipDefinition
         CreateFilteredControlDefinition(string name) =>
         new(
             name,

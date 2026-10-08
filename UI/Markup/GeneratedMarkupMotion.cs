@@ -1,4 +1,3 @@
-using Cerneala.UI.Aspect;
 using Cerneala.UI.Core;
 using Cerneala.UI.Data;
 using Cerneala.UI.Elements;
@@ -12,24 +11,12 @@ namespace Cerneala.UI.Markup;
 
 public static partial class GeneratedMarkup
 {
+    // A Motion session of one Aspect application: a lifetime of the Aspect
+    // behavior, so replacing the Aspect or detaching the owner disposes it.
     public static IDisposable AttachMotionSession(UIElement owner)
     {
         ArgumentNullException.ThrowIfNull(owner);
-        return AttachMotionSessionCore(owner, null, aspectScoped: false);
-    }
-
-    public static IDisposable AttachMotionSession(UIElement owner, ElementAspect? aspect)
-    {
-        ArgumentNullException.ThrowIfNull(owner);
-        return AttachMotionSessionCore(owner, aspect, aspectScoped: true);
-    }
-
-    private static IDisposable AttachMotionSessionCore(
-        UIElement owner,
-        ElementAspect? aspect,
-        bool aspectScoped)
-    {
-        MarkupMotionSession session = new(owner, aspect, aspectScoped);
+        MarkupMotionSession session = new(owner);
         owner.AddLifecycleBehavior(session);
         if (owner.IsAttached)
         {
@@ -202,8 +189,6 @@ public static partial class GeneratedMarkup
     private sealed class MarkupMotionSession : IElementLifecycleBehavior, IDisposable
     {
         private readonly UIElement owner;
-        private ElementAspect? aspect;
-        private readonly bool aspectScoped;
         private readonly List<(Action Attach, Action Detach)> triggers = [];
         private readonly HashSet<MotionPropertyBinding> bindings = [];
         private readonly Dictionary<PrismMotionPropertyKey, PrismMotionBinding> prismBindings = [];
@@ -214,26 +199,17 @@ public static partial class GeneratedMarkup
         private bool renderable;
         private bool disposed;
 
-        public MarkupMotionSession(
-            UIElement owner,
-            ElementAspect? aspect,
-            bool aspectScoped)
+        public MarkupMotionSession(UIElement owner)
         {
             this.owner = owner;
-            this.aspect = aspect;
-            this.aspectScoped = aspectScoped;
         }
 
         private bool CanStart =>
             attached &&
             owner.IsAttached &&
-            IsOwnedByCurrentAspect &&
             UIElementVisibility.IsEffectivelyVisible(owner);
 
         public bool CanStartExecution => !disposed && CanStart;
-
-        private bool IsOwnedByCurrentAspect =>
-            !aspectScoped || (aspect is not null && ReferenceEquals(owner.Aspect, aspect));
 
         public void Attach()
         {
@@ -243,9 +219,7 @@ public static partial class GeneratedMarkup
             }
 
             attached = true;
-            owner.PropertyChanged += OnOwnerPropertyChanged;
-            CaptureAspectIfNeeded();
-            SetRenderable(IsOwnedByCurrentAspect && UIElementVisibility.IsEffectivelyVisible(owner));
+            SetRenderable(UIElementVisibility.IsEffectivelyVisible(owner));
         }
 
         public void Detach()
@@ -256,7 +230,6 @@ public static partial class GeneratedMarkup
             }
 
             attached = false;
-            owner.PropertyChanged -= OnOwnerPropertyChanged;
             SetRenderable(false);
         }
 
@@ -267,7 +240,7 @@ public static partial class GeneratedMarkup
                 return;
             }
 
-            SetRenderable(isRenderable && IsOwnedByCurrentAspect);
+            SetRenderable(isRenderable);
         }
 
         public void Dispose()
@@ -291,25 +264,6 @@ public static partial class GeneratedMarkup
             if (renderable)
             {
                 attach();
-            }
-        }
-
-        private void OnOwnerPropertyChanged(object? sender, UiPropertyChangedEventArgs args)
-        {
-            if (!aspectScoped || !ReferenceEquals(args.Property, UIElement.AspectProperty))
-            {
-                return;
-            }
-
-            CaptureAspectIfNeeded();
-            SetRenderable(IsOwnedByCurrentAspect && UIElementVisibility.IsEffectivelyVisible(owner));
-        }
-
-        private void CaptureAspectIfNeeded()
-        {
-            if (aspectScoped && aspect is null && owner.Aspect is ElementAspect current)
-            {
-                aspect = current;
             }
         }
 
@@ -548,11 +502,6 @@ public static partial class GeneratedMarkup
         public MarkupMotionExecution StartExecution(Func<MarkupMotionExecution> start)
         {
             ObjectDisposedException.ThrowIf(disposed, this);
-            if (aspectScoped && !IsOwnedByCurrentAspect)
-            {
-                return MarkupMotionExecution.Parallel();
-            }
-
             if (!CanStart)
             {
                 throw new InvalidOperationException(

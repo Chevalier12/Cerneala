@@ -1,0 +1,74 @@
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:01:08.59]     Cerneala.Tests.Language.CompletionTests.WarmCompletionP95StaysBelowBudgetAndIndependentDocumentsDoNotBlock [SKIP]
+  Skipped Cerneala.Tests.Language.CompletionTests.WarmCompletionP95StaysBelowBudgetAndIndependentDocumentsDoNotBlock [1 ms]
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-10-08-timbre-prism-in-aspect-stage7\full\lauri_DESKTOP-JT43V3D_2026-10-08_22_54_52_net8.0.trx
+
+Passed!  - Failed:     0, Passed:   408, Skipped:     1, Total:   409, Duration: 1 m 9 s - Cerneala.Tests.Language.dll (net8.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.LanguageServer\bin\Release\net10.0\Cerneala.Tests.LanguageServer.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-10-08-timbre-prism-in-aspect-stage7\full\lauri_DESKTOP-JT43V3D_2026-10-08_22_56_03_net10.0.trx
+
+Passed!  - Failed:     0, Passed:    45, Skipped:     0, Total:    45, Duration: 2 m 44 s - Cerneala.Tests.LanguageServer.dll (net10.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\bin\Release\net10.0-windows\Cerneala.Tests.PreviewHost.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-10-08-timbre-prism-in-aspect-stage7\full\lauri_DESKTOP-JT43V3D_2026-10-08_22_58_51_net10.0.trx
+
+Passed!  - Failed:     0, Passed:    23, Skipped:     0, Total:    23, Duration: 1 m 32 s - Cerneala.Tests.PreviewHost.dll (net10.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Release\net8.0\Cerneala.Tests.Scene2DImporters.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-10-08-timbre-prism-in-aspect-stage7\full\lauri_DESKTOP-JT43V3D_2026-10-08_23_00_25_net8.0.trx
+
+Passed!  - Failed:     0, Passed:   173, Skipped:     0, Total:   173, Duration: 3 s - Cerneala.Tests.Scene2DImporters.dll (net8.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-10-08-timbre-prism-in-aspect-stage7\full\lauri_DESKTOP-JT43V3D_2026-10-08_23_00_30_net8.0.trx
+
+Passed!  - Failed:     0, Passed:   104, Skipped:     0, Total:   104, Duration: 4 s - Cerneala.Tests.Scene2DPackages.dll (net8.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:08.60]     Cerneala.Tests.SceneVillage.NativeVillageFrameRateGateTests.WalkingAndStressPresetsMeetPostSubmitCallbackCadenceGate [SKIP]
+  Skipped Cerneala.Tests.SceneVillage.NativeVillageFrameRateGateTests.WalkingAndStressPresetsMeetPostSubmitCallbackCadenceGate [1 ms]
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-10-08-timbre-prism-in-aspect-stage7\full\lauri_DESKTOP-JT43V3D_2026-10-08_23_00_38_net8.0.trx
+
+Passed!  - Failed:     0, Passed:    43, Skipped:     1, Total:    44, Duration: 45 s - Cerneala.Tests.SceneVillage.dll (net8.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:05:05.42]     Cerneala.Tests.SdlGpu.SdlWindowsNativeContractTests.NativeOwnershipInputAndGraphicsLifetimesRemainIndependent [SKIP]
+  Skipped Cerneala.Tests.SdlGpu.SdlWindowsNativeContractTests.NativeOwnershipInputAndGraphicsLifetimesRemainIndependent [1 ms]
+[xUnit.net 00:05:11.32]     Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 1) [SKIP]
+[xUnit.net 00:05:11.88]     Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 7) [SKIP]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 1) [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 7) [1 ms]
+[xUnit.net 00:05:13.05]     Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 6) [SKIP]
+[xUnit.net 00:05:13.83]     Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 3) [SKIP]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 6) [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 3) [1 ms]
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-10-08-timbre-prism-in-aspect-stage7\full\lauri_DESKTOP-JT43V3D_2026-10-08_23_01_26_net8.0.trx
+
+Passed!  - Failed:     0, Passed:  1009, Skipped:     5, Total:  1014, Duration: 8 m 14 s - Cerneala.Tests.SdlGpu.dll (net8.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\bin\Release\net8.0-windows\Cerneala.Tests.SourceGen.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-10-08-timbre-prism-in-aspect-stage7\full\lauri_DESKTOP-JT43V3D_2026-10-08_23_09_44_net8.0.trx
+
+Passed!  - Failed:     0, Passed:   647, Skipped:     0, Total:   647, Duration: 1 m 14 s - Cerneala.Tests.SourceGen.dll (net8.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-10-08-timbre-prism-in-aspect-stage7\full\lauri_DESKTOP-JT43V3D_2026-10-08_23_11_01_net8.0.trx
+
+Passed!  - Failed:     0, Passed:   391, Skipped:     0, Total:   391, Duration: 44 s - Cerneala.Tests.Timbre.dll (net8.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.VisualStudio\bin\Release\net10.0-windows\Cerneala.Tests.VisualStudio.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-10-08-timbre-prism-in-aspect-stage7\full\lauri_DESKTOP-JT43V3D_2026-10-08_23_11_48_net10.0.trx
+
+Passed!  - Failed:     0, Passed:    48, Skipped:     0, Total:    48, Duration: 817 ms - Cerneala.Tests.VisualStudio.dll (net10.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-10-08-timbre-prism-in-aspect-stage7\full\lauri_DESKTOP-JT43V3D_2026-10-08_23_11_53_net8.0.trx
+
+Passed!  - Failed:     0, Passed:  4333, Skipped:     0, Total:  4333, Duration: 3 m 46 s - Cerneala.Tests.dll (net8.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Release\net8.0\Cerneala.Tetris.Tests.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-10-08-timbre-prism-in-aspect-stage7\full\lauri_DESKTOP-JT43V3D_2026-10-08_23_15_43_net8.0.trx
+
+Passed!  - Failed:     0, Passed:    31, Skipped:     0, Total:    31, Duration: 992 ms - Cerneala.Tetris.Tests.dll (net8.0)

@@ -10,17 +10,18 @@ public sealed class TimbreSemanticTests
         TimbreCorpus.Load().Select(item => new object[] { item.Id });
 
     [Fact]
-    public void TimbreClipAndEventTimbreActionBindWithoutDiagnostics()
+    public void TimbreClipAttachmentAndCommandBindWithoutDiagnostics()
     {
         const string markup = """
             <Button Content="Play">
               <Button.Resources>
                 <TimbreClip Name="Tone">
-                  Source = "audio/tone.wav";
+                  @sound Tone { Source = "audio/tone.wav"; }
                 </TimbreClip>
               </Button.Resources>
               <Button.Aspect>
-                @on Click { @timbre $Tone; }
+                @timbre $Tone;
+                @on Click { @play $self.timbre.Tone; }
               </Button.Aspect>
             </Button>
             """;
@@ -77,27 +78,28 @@ public sealed class TimbreSemanticTests
         }
     }
 
+
     [Fact]
     public void ApprovedClipBindsTypedCatalogValuesInDeclarationOrder()
     {
         BoundTimbreClip clip = BindClip(TimbreCorpus.Get("timbre.clip.approved").Markup, "ConfirmTimbre");
 
         Assert.True(clip.IsValid);
-        Assert.Equal("audio/confirm.wav", clip.Source);
-        Assert.Equal(0.8f, clip.Volume);
-        Assert.False(clip.Loop);
         Assert.Equal(["ToneCutoff", "EchoMix"], clip.Parameters.Select(parameter => parameter.Name));
         BoundTimbreParameter cutoff = clip.Parameters[0];
         BoundTimbreParameter mix = clip.Parameters[1];
         Assert.Equal((1200f, 20f, 20000f), (cutoff.DefaultValue, cutoff.Minimum, cutoff.Maximum));
         Assert.Equal((0.15f, 0f, 1f), (mix.DefaultValue, mix.Minimum, mix.Maximum));
-        Assert.Equal(["LowPass", "Delay"], clip.Modifiers.Select(modifier => modifier.Kind));
-        BoundTimbreModifierInput lowPassCutoff = Assert.Single(clip.Modifiers[0].Inputs);
+        BoundTimbreSound sound = Assert.Single(clip.Sounds);
+        Assert.Equal(("Confirm", "audio/confirm.wav", 0.8f, false, false), (sound.Name, sound.Source, sound.Volume, sound.Loop, sound.AutoPlay));
+        Assert.Equal([cutoff, mix], sound.Parameters);
+        Assert.Equal(["LowPass", "Delay"], sound.Modifiers.Select(modifier => modifier.Kind));
+        BoundTimbreModifierInput lowPassCutoff = Assert.Single(sound.Modifiers[0].Inputs);
         Assert.Same(cutoff, lowPassCutoff.Parameter);
-        Assert.Equal(["Time", "Feedback", "Mix"], clip.Modifiers[1].Inputs.Select(input => input.Name));
-        Assert.Equal(0.12f, clip.Modifiers[1].Inputs[0].Value);
-        Assert.Equal(0.2f, clip.Modifiers[1].Inputs[1].Value);
-        Assert.Same(mix, clip.Modifiers[1].Inputs[2].Parameter);
+        Assert.Equal(["Time", "Feedback", "Mix"], sound.Modifiers[1].Inputs.Select(input => input.Name));
+        Assert.Equal(0.12f, sound.Modifiers[1].Inputs[0].Value);
+        Assert.Equal(0.2f, sound.Modifiers[1].Inputs[1].Value);
+        Assert.Same(mix, sound.Modifiers[1].Inputs[2].Parameter);
     }
 
     [Fact]
@@ -107,27 +109,45 @@ public sealed class TimbreSemanticTests
 
         BoundTimbreParameter amount = Assert.Single(clip.Parameters);
         Assert.Equal((0.3f, 0f, 0.95f), (amount.DefaultValue, amount.Minimum, amount.Maximum));
-        Assert.Equal(["Delay", "LowPass"], clip.Modifiers.Select(modifier => modifier.Kind));
-        Assert.Empty(clip.Modifiers[1].Inputs);
+        BoundTimbreSound sound = Assert.Single(clip.Sounds);
+        Assert.Equal(["Delay", "LowPass"], sound.Modifiers.Select(modifier => modifier.Kind));
+        Assert.Empty(sound.Modifiers[1].Inputs);
     }
 
     [Fact]
-    public void StartOverridesBindPerActionWithoutMutatingTheClip()
+    public void EachSoundDeclaresOnlyTheClipParametersItsModifiersUse()
+    {
+        BoundTimbreClip clip = BindClip(TimbreCorpus.Get("timbre.clip.parameterAcrossSounds").Markup, "Pair");
+
+        BoundTimbreParameter cut = Assert.Single(clip.Parameters);
+        Assert.Equal(["Low", "High", "Plain"], clip.Sounds.Select(sound => sound.Name));
+        Assert.Same(cut, Assert.Single(clip.FindSound("Low")!.Parameters));
+        Assert.Same(cut, Assert.Single(clip.FindSound("High")!.Parameters));
+        Assert.Empty(clip.FindSound("Plain")!.Parameters);
+    }
+
+    [Fact]
+    public void AttachmentArgumentsAndCommandsBindInSourceOrder()
     {
         const string markup = """
-            <Button Content="x">
-              <Button.Resources>
-                <TimbreClip Name="Music">Source = "audio/music.ogg"; Loop = true; Volume = 0.6; @parameter Cut: float = 900; @modifier LowPass { Cutoff = Cut; }</TimbreClip>
-              </Button.Resources>
-              <Button.Aspect>
-                @handle Track;
-                @on Click { @timbre $Music(Loop = false, Volume = 0.2, Cut = 120ms) as Track; }
-                @on Loaded { @timbre $Music; @seek Track to 1500ms; @pause Track; @resume Track; @cancel Track; }
-              </Button.Aspect>
-            </Button>
+            <StackPanel>
+              <Border Name="Speaker">
+                <Border.Aspect>@timbre { @sound Music { Source = "audio/music.ogg"; Loop = true; AutoPlay = true; } }</Border.Aspect>
+              </Border>
+              <Button Content="x">
+                <Button.Resources>
+                  <TimbreClip Name="Clip">@parameter Cut: float = 900; @sound Tone { Source = "audio/tone.wav"; Volume = 0.6; @modifier LowPass { Cutoff = Cut; } }</TimbreClip>
+                </Button.Resources>
+                <Button.Aspect>
+                  @timbre $Clip(Cut = 120ms);
+                  @on Click { @play $self.timbre.Tone; @pause $Speaker.timbre.Music; }
+                  @on Loaded { @seek $self.timbre.Tone to 1500ms; @resume $Speaker.timbre.Music; @stop $self.timbre.Tone; }
+                </Button.Aspect>
+              </Button>
+            </StackPanel>
             """;
 
-        CernealaSemanticModel model = LanguagePipelineHarness.BindSemanticModel("Overrides.crn", markup, out IDisposable lifetime);
+        CernealaSemanticModel model = LanguagePipelineHarness.BindSemanticModel("Commands.crn", markup, out IDisposable lifetime);
         using (lifetime)
         {
             Assert.Contains(model.Diagnostics, diagnostic =>
@@ -135,29 +155,30 @@ public sealed class TimbreSemanticTests
         }
 
         string valid = markup.Replace("Cut = 120ms", "Cut = 400", StringComparison.Ordinal);
-        model = LanguagePipelineHarness.BindSemanticModel("Overrides.crn", valid, out lifetime);
+        model = LanguagePipelineHarness.BindSemanticModel("Commands.crn", valid, out lifetime);
         using (lifetime)
         {
             Assert.Empty(model.Diagnostics);
-            BoundTimbreAspect aspect = Assert.Single(model.Timbre.Aspects.Values);
-            Assert.Equal(TimbreHandleKind.Timbre, aspect.Handles["Track"]);
+            BoundTimbreAspect speaker = model.Timbre.Aspects.Values.Single(aspect => aspect.Commands.Count == 0);
+            BoundTimbreSound music = Assert.Single(speaker.Attachment!.Clip.Sounds);
+            Assert.Null(speaker.Attachment.ResourceName);
+            Assert.Equal(("Music", true, true), (music.Name, music.Loop, music.AutoPlay));
+
+            BoundTimbreAspect button = model.Timbre.Aspects.Values.Single(aspect => aspect.Commands.Count > 0);
+            Assert.Equal("Clip", button.Attachment!.ResourceName);
+            Assert.Equal(("Cut", 400f), (button.Attachment.Arguments.Single().Name, button.Attachment.Arguments.Single().Value));
             Assert.Equal(
-                [TimbreActionKind.Play, TimbreActionKind.Play, TimbreActionKind.Seek, TimbreActionKind.Pause, TimbreActionKind.Resume, TimbreActionKind.Cancel],
-                aspect.Actions.Select(action => action.Kind));
-            BoundTimbreAction start = aspect.Actions[0];
-            Assert.Equal(("Track", (bool?)false, (float?)0.2f), (start.HandleName, start.Loop, start.Volume));
-            Assert.Equal(("Cut", 400f), (start.Arguments.Single().Name, start.Arguments.Single().Value));
-            BoundTimbreAction plain = aspect.Actions[1];
-            Assert.Null(plain.HandleName);
-            Assert.Null(plain.Loop);
-            Assert.Null(plain.Volume);
-            Assert.Empty(plain.Arguments);
-            Assert.Same(start.Clip, plain.Clip);
-            Assert.Equal(TimeSpan.FromMilliseconds(1500).Ticks, aspect.Actions[2].SeekTicks);
+                [TimbreCommandKind.Play, TimbreCommandKind.Pause, TimbreCommandKind.Seek, TimbreCommandKind.Resume, TimbreCommandKind.Stop],
+                button.Commands.Select(command => command.Kind));
+            Assert.Equal(
+                [TimbreCommandTarget.Self, TimbreCommandTarget.Named, TimbreCommandTarget.Self, TimbreCommandTarget.Named, TimbreCommandTarget.Self],
+                button.Commands.Select(command => command.Target));
+            Assert.Equal(["Tone", "Music", "Tone", "Music", "Tone"], button.Commands.Select(command => command.Sound));
+            Assert.Equal("Speaker", button.Commands[1].TargetName);
+            Assert.Equal(TimeSpan.FromMilliseconds(1500).Ticks, button.Commands[2].SeekTicks);
 
             BoundTimbreClip clip = Assert.Single(model.Timbre.Clips.Values);
-            Assert.True(clip.Loop);
-            Assert.Equal(0.6f, clip.Volume);
+            Assert.Equal(0.6f, clip.Sounds.Single().Volume);
             Assert.Equal(900f, clip.Parameters.Single().DefaultValue);
         }
     }
@@ -172,8 +193,8 @@ public sealed class TimbreSemanticTests
         using (lifetime)
         {
             Assert.Empty(model.Diagnostics);
-            BoundTimbreAction play = Assert.Single(Assert.Single(model.Timbre.Aspects.Values).Actions);
-            Assert.Equal("audio/inner.wav", play.Clip!.Source);
+            BoundTimbreAttachment attachment = Assert.Single(model.Timbre.Aspects.Values).Attachment!;
+            Assert.Equal("audio/inner.wav", attachment.Clip.Sounds.Single().Source);
         }
     }
 

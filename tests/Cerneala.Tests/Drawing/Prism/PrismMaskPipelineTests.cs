@@ -123,7 +123,7 @@ public sealed class PrismMaskPipelineTests
     public void FeatherExpandsSamplingBoundsWithoutChangingOutputOrLayoutBounds()
     {
         const float feather = 2;
-        PrismCompositionDefinition definition =
+        PrismClipDefinition definition =
             PrismTestData.Composition(
                 "Feather",
                 PrismTestData.Layer(
@@ -190,7 +190,7 @@ public sealed class PrismMaskPipelineTests
         PrismMaskDefinition mask = new(
             new PrismResourceId("ClippedMask"),
             density: 0.8f);
-        PrismCompositionDefinition definition =
+        PrismClipDefinition definition =
             PrismTestData.Composition(
                 "Clipping chain",
                 PrismTestData.Layer(
@@ -246,7 +246,7 @@ public sealed class PrismMaskPipelineTests
     }
 
     private static BuildResult Build(
-        PrismCompositionDefinition definition,
+        PrismClipDefinition definition,
         DrawRect bounds = default,
         Matrix3x2 transform = default)
     {

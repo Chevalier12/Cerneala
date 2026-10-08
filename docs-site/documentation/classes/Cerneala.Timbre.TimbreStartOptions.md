@@ -39,8 +39,8 @@ The configured values are snapshotted before `Play` returns, so they apply to th
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `Volume` | `float` | Initial linear post-chain gain; defaults to `TimbreClip.Volume`. |
-| `Loop` | `bool` | Whether the playback repeats; defaults to `TimbreClip.Loop`. |
+| `Volume` | `float` | Initial linear post-chain gain; defaults to `TimbreSound.Volume`. |
+| `Loop` | `bool` | Whether the playback repeats; defaults to `TimbreSound.Loop`. |
 
 ## Methods
 

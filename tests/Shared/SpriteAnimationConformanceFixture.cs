@@ -98,7 +98,7 @@ internal sealed class SpriteAnimationConformanceFixture : IDisposable
         VerifyGeometry();
         foreach (UIElement target in new UIElement[] { sprite, prismGroup, tile })
             effects.Add(GeneratedMarkup.AttachPrism(target, () => new PrismInstance(
-                new PrismCompositionDefinition("Animated", [new PrismLayerDefinition(new PrismNodeId(1), "Content",
+                new PrismClipDefinition("Animated", [new PrismLayerDefinition(new PrismNodeId(1), "Content",
                     filters: [new PrismFilterDefinition(PrismFilterId.Invert)])]))));
         VerifyGeometry();
     }

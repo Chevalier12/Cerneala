@@ -1,4 +1,4 @@
-# TimbreClip Class
+# TimbreSound Class
 
 ## Definition
 
@@ -6,31 +6,31 @@ Namespace: `Cerneala.Timbre`
 
 Assembly/Project: `Cerneala`
 
-Source: `Timbre/TimbreClip.cs`
+Source: `Timbre/TimbreSound.cs`
 
 Immutable sound definition: a source, default volume and loop, a loading policy, declared parameters, and an ordered chain of modifiers.
 
 ```csharp
-public sealed class TimbreClip
+public sealed class TimbreSound
 ```
 
 Inheritance:
-`object` -> `TimbreClip`
+`object` -> `TimbreSound`
 
 ## Examples
 
 ```csharp
 using Cerneala.Timbre;
 
-var plainTimbre = new TimbreClip("audio/confirm.wav");
+var plainTimbre = new TimbreSound("audio/confirm.wav");
 
 var toneCutoff = new TimbreParameter<float>(name: "ToneCutoff", defaultValue: 1200f);
-var filteredTimbre = new TimbreClip(
+var filteredTimbre = new TimbreSound(
     source: "audio/confirm.wav",
     parameters: [toneCutoff],
     modifiers: [new LowPass(cutoff: toneCutoff)]);
 
-var echo = new TimbreClip(
+var echo = new TimbreSound(
     "audio/confirm.wav",
     modifiers: [new LowPass(cutoff: 1200f), new Delay(time: 0.12f, feedback: 0.2f, mix: 0.15f)]);
 ```
@@ -58,7 +58,7 @@ Validation happens in the constructor:
 
 | Name | Description |
 | --- | --- |
-| `TimbreClip(TimbreSource source, float volume = 1f, bool loop = false, TimbreLoading loading = TimbreLoading.Auto, IEnumerable<TimbreParameter>? parameters = null, IEnumerable<TimbreModifier>? modifiers = null)` | Creates a validated, immutable definition. A `string` converts implicitly to a file [TimbreSource](Cerneala.Timbre.TimbreSource.md). |
+| `TimbreSound(TimbreSource source, float volume = 1f, bool loop = false, TimbreLoading loading = TimbreLoading.Auto, IEnumerable<TimbreParameter>? parameters = null, IEnumerable<TimbreModifier>? modifiers = null)` | Creates a validated, immutable definition. A `string` converts implicitly to a file [TimbreSource](Cerneala.Timbre.TimbreSource.md). |
 
 ## Properties
 

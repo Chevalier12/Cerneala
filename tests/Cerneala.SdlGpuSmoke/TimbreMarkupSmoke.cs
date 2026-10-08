@@ -85,14 +85,14 @@ internal sealed class TimbreMarkupSmoke
         ];
         foreach ((string id, string path) in formats)
         {
-            await CompareClickAsync(servo, id, new TimbreClip(TimbreSource.FromFile(path), loading: TimbreLoading.Preload), null);
+            await CompareClickAsync(servo, id, new TimbreSound(TimbreSource.FromFile(path), loading: TimbreLoading.Preload), null);
         }
 
         TimbreParameter<float> cutoff = new("ToneCutoff", 1200f);
         await CompareClickAsync(
             servo,
             "play-filtered",
-            new TimbreClip(
+            new TimbreSound(
                 TimbreSource.FromFile(tone),
                 volume: 0.8f,
                 loading: TimbreLoading.Preload,
@@ -100,14 +100,14 @@ internal sealed class TimbreMarkupSmoke
                 modifiers: [new LowPass(cutoff), new Delay(time: 0.12f, feedback: 0.2f, mix: 0.15f)]),
             start => start.Set(cutoff, 800f));
 
-        await OverlapAsync(servo);
+        await RestartAsync(servo);
         await StreamingTransportAsync(servo);
         await ReactiveLoopAsync(servo);
         await TwoWindowsAsync(servo, primary);
         primary.Close();
     }
 
-    private async Task CompareClickAsync(ServoApi servo, string id, TimbreClip oracle, Action<TimbreStartOptions>? configure)
+    private async Task CompareClickAsync(ServoApi servo, string id, TimbreSound oracle, Action<TimbreStartOptions>? configure)
     {
         var before = runtime.GetDiagnostics();
         long start = tap.SampleCount;
@@ -133,16 +133,22 @@ internal sealed class TimbreMarkupSmoke
             ("matchesCSharpClip", true));
     }
 
-    private async Task OverlapAsync(ServoApi servo)
+    // `@play` on a sound that is playing restarts it: the second click cancels
+    // the first playback and only the second completes.
+    private async Task RestartAsync(ServoApi servo)
     {
         var before = runtime.GetDiagnostics();
         await servo.ClickAsync(ServoTarget.ById("play-mp3"));
         await servo.ClickAsync(ServoTarget.ById("play-mp3"));
-        await WaitUntilAsync(() => runtime.GetDiagnostics().PlaybacksCompleted >= before.PlaybacksCompleted + 2);
+        await WaitUntilAsync(() => runtime.GetDiagnostics().PlaybacksCompleted >= before.PlaybacksCompleted + 1);
         var after = runtime.GetDiagnostics();
-        Require(after.PlaybacksStarted - before.PlaybacksStarted == 2 && after.PlaybacksCanceled == before.PlaybacksCanceled,
-            "Two clicks without a handle must overlap, not replace each other.");
-        Record("click/overlap", ("started", after.PlaybacksStarted - before.PlaybacksStarted), ("completed", after.PlaybacksCompleted - before.PlaybacksCompleted));
+        Require(after.PlaybacksStarted - before.PlaybacksStarted == 2 && after.PlaybacksCanceled - before.PlaybacksCanceled == 1 &&
+            after.PlaybacksCompleted - before.PlaybacksCompleted == 1,
+            "A second click on a playing sound must restart it: one playback canceled, one completed.");
+        Record("click/restart",
+            ("started", after.PlaybacksStarted - before.PlaybacksStarted),
+            ("canceled", after.PlaybacksCanceled - before.PlaybacksCanceled),
+            ("completed", after.PlaybacksCompleted - before.PlaybacksCompleted));
     }
 
     private async Task StreamingTransportAsync(ServoApi servo)
@@ -251,7 +257,7 @@ internal sealed class TimbreMarkupSmoke
         return window;
     }
 
-    private static async Task<float[]> RenderOfflineAsync(TimbreClip clip, Action<TimbreStartOptions>? configure)
+    private static async Task<float[]> RenderOfflineAsync(TimbreSound clip, Action<TimbreStartOptions>? configure)
     {
         RecordingSink sink = new();
         using TimbreRuntime offline = new(new TimbreRuntimeOptions { Output = sink });

@@ -29,7 +29,7 @@ public sealed class PrismStyleConformanceMigrationTests
             "Outer glow continuity",
             styles: [new PrismStyleDefinition(PrismStyleId.OuterGlow)]);
         DrawRect elementBounds = new(24, 18, 48, 28);
-        PrismCompositionDefinition composition = new(
+        PrismClipDefinition composition = new(
             "Outer glow continuity",
             [layer],
             workingColorProfile: PrismColorProfile.LinearSrgb);
@@ -108,7 +108,7 @@ public sealed class PrismStyleConformanceMigrationTests
             styles: [new PrismStyleDefinition(PrismStyleId.OuterGlow)],
             blendMode: PrismBlendMode.Overlay);
         DrawRect elementBounds = new(30, 24, 30, 30);
-        PrismCompositionDefinition composition = new(
+        PrismClipDefinition composition = new(
             "Overlay outer glow",
             [layer],
             workingColorProfile: PrismColorProfile.LinearSrgb);
@@ -193,7 +193,7 @@ public sealed class PrismStyleConformanceMigrationTests
             "Outer glow isotropy",
             styles: [new PrismStyleDefinition(PrismStyleId.OuterGlow)]);
         DrawRect elementBounds = new(48, 32, 1, 1);
-        PrismCompositionDefinition composition = new(
+        PrismClipDefinition composition = new(
             "Outer glow isotropy",
             [layer],
             workingColorProfile: PrismColorProfile.LinearSrgb);
@@ -255,7 +255,7 @@ public sealed class PrismStyleConformanceMigrationTests
             new PrismNodeId(1),
             "Outer glow JFA coverage",
             styles: [new PrismStyleDefinition(PrismStyleId.OuterGlow)]);
-        PrismCompositionDefinition composition = new(
+        PrismClipDefinition composition = new(
             "Outer glow JFA coverage",
             [layer],
             workingColorProfile: PrismColorProfile.LinearSrgb);
@@ -334,7 +334,7 @@ public sealed class PrismStyleConformanceMigrationTests
             new PrismNodeId(1),
             $"{style} JFA coverage",
             styles: [new PrismStyleDefinition(PrismStyleId.BevelEmboss)]);
-        PrismCompositionDefinition composition = new(
+        PrismClipDefinition composition = new(
             $"{style} JFA coverage",
             [layer],
             workingColorProfile: PrismColorProfile.LinearSrgb);
@@ -444,7 +444,7 @@ public sealed class PrismStyleConformanceMigrationTests
             "Drop shadow isotropy",
             styles: [new PrismStyleDefinition(PrismStyleId.DropShadow)]);
         DrawRect elementBounds = new(48, 32, 1, 1);
-        PrismCompositionDefinition composition = new(
+        PrismClipDefinition composition = new(
             "Drop shadow isotropy",
             [layer],
             workingColorProfile: PrismColorProfile.LinearSrgb);
@@ -534,7 +534,7 @@ public sealed class PrismStyleConformanceMigrationTests
                 new PrismFilterDefinition(PrismFilterId.Extrude)
             ]);
         PrismDrawScope scope = PrismTestData.Scope(
-            new PrismCompositionDefinition(
+            new PrismClipDefinition(
                 "Extrude projected blocks",
                 [layer],
                 workingColorProfile: PrismColorProfile.LinearSrgb),
@@ -628,7 +628,7 @@ public sealed class PrismStyleConformanceMigrationTests
                 new PrismFilterDefinition(PrismFilterId.Fibers)
             ]);
         PrismDrawScope scope = PrismTestData.Scope(
-            new PrismCompositionDefinition(
+            new PrismClipDefinition(
                 "Fibers coherence",
                 [layer],
                 workingColorProfile: PrismColorProfile.LinearSrgb),
@@ -715,7 +715,7 @@ public sealed class PrismStyleConformanceMigrationTests
                     new PrismFilterDefinition(PrismFilterId.Mosaic)
                 ]);
             PrismDrawScope scope = PrismTestData.Scope(
-                new PrismCompositionDefinition(
+                new PrismClipDefinition(
                     name,
                     [layer],
                     workingColorProfile: PrismColorProfile.LinearSrgb),
@@ -795,7 +795,7 @@ public sealed class PrismStyleConformanceMigrationTests
                 new PrismFilterDefinition(PrismFilterId.Twirl)
             ]);
         PrismDrawScope scope = PrismTestData.Scope(
-            new PrismCompositionDefinition(
+            new PrismClipDefinition(
                 "Twirl eight tap",
                 [layer],
                 workingColorProfile: PrismColorProfile.LinearSrgb),
@@ -896,7 +896,7 @@ public sealed class PrismStyleConformanceMigrationTests
                 new PrismFilterDefinition(PrismFilterId.ColorLookup)
             ]);
         PrismDrawScope scope = PrismTestData.Scope(
-            new PrismCompositionDefinition(
+            new PrismClipDefinition(
                 "Hald lookup",
                 [layer],
                 workingColorProfile: PrismColorProfile.LinearSrgb),

@@ -85,9 +85,9 @@
     "Message": "Prism markup in \u0027prism-body.crn\u0027 is invalid: @prism is missing its closing \u0027}\u0027.",
     "Path": "prism-body.crn",
     "StartLine": 0,
-    "StartCharacter": 12,
+    "StartCharacter": 31,
     "EndLine": 0,
-    "EndCharacter": 18
+    "EndCharacter": 37
   },
   {
     "Id": "PRISM1003",
@@ -95,9 +95,9 @@
     "Message": "Prism markup in \u0027prism-body.crn\u0027 is invalid: Prism layer requires a name.",
     "Path": "prism-body.crn",
     "StartLine": 0,
-    "StartCharacter": 28,
+    "StartCharacter": 47,
     "EndLine": 0,
-    "EndCharacter": 29
+    "EndCharacter": 48
   },
   {
     "Id": "CERNEALAUI001",
@@ -105,8 +105,8 @@
     "Message": "Markup file \u0027prism-body.crn\u0027 could not be parsed: The closing tag is missing \u0027\u003E\u0027.",
     "Path": "prism-body.crn",
     "StartLine": 0,
-    "StartCharacter": 95,
+    "StartCharacter": 134,
     "EndLine": 0,
-    "EndCharacter": 95
+    "EndCharacter": 134
   }
 ]

@@ -289,7 +289,7 @@ public sealed class PrismSdlGpuPixelConformanceTests : IDisposable
                     new PrismNodeId(1),
                     operation.Symbol,
                     styles: [new PrismStyleDefinition((PrismStyleId)operation.StableId)]);
-            return new PrismInstance(new PrismCompositionDefinition(operation.Symbol, [layer]));
+            return new PrismInstance(new PrismClipDefinition(operation.Symbol, [layer]));
         }
     }
 

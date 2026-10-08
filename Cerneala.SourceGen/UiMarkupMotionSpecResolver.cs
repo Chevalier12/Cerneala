@@ -216,7 +216,8 @@ public sealed partial class UiMarkupGenerator
             string key = typeCode + "|" + expression;
             if (!specializedMotionSpecs.TryGetValue(key, out variable))
             {
-                variable = "motionSpec" + specializedMotionSpecs.Count.ToString(CultureInfo.InvariantCulture);
+                variable = "motionSpec" + nextMotionSpecId.ToString(CultureInfo.InvariantCulture);
+                nextMotionSpecId++;
                 specializedMotionSpecs.Add(key, variable);
                 currentLines.Add("global::Cerneala.UI.Motion.Specs.MotionSpec<" + typeCode + "> " + variable + " = " + expression + ";");
             }

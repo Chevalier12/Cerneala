@@ -22,7 +22,7 @@ Derived:
 
 ## Remarks
 
-The base type lets a [TimbreClip](Cerneala.Timbre.TimbreClip.md) hold parameters of different value types in one list. It cannot be derived from outside the core assembly. Identity is the descriptor instance; `Name` is used for diagnostics and markup lowering, and names must be unique within one clip.
+The base type lets a [TimbreSound](Cerneala.Timbre.TimbreSound.md) hold parameters of different value types in one list. It cannot be derived from outside the core assembly. Identity is the descriptor instance; `Name` is used for diagnostics and markup lowering, and names must be unique within one clip.
 
 ## Properties
 

@@ -5,8 +5,8 @@ using Cerneala.Language.Timbre;
 
 namespace Cerneala.Tests.Language;
 
-// `$self.timbre.Handle.Parameter` Motion targets bind to the typed schema of
-// the Timbre handle, not to a property of the Aspect's element.
+// `$X.timbre.Sound.Property` Motion targets bind to the sound and the clip
+// parameters it uses, never to a property of the element.
 public sealed class TimbreMotionSemanticTests
 {
     private const string Caret = "|caret|";
@@ -57,43 +57,43 @@ public sealed class TimbreMotionSemanticTests
     }
 
     [Fact]
-    public void TimbreMotionHandleSchemaIntersectsEveryClipTheHandlePlays()
+    public void ClipParametersBelongOnlyToTheSoundsThatUseThem()
     {
-        string markup = Corpus.Value.Single(item => item.Id == "timbreMotion.commonSchema").Markup;
+        string markup = Button("@on Click { @play $self.timbre.Tone; }");
         CernealaSemanticModel model = LanguagePipelineHarness.BindSemanticModel("Schema.crn", markup, out IDisposable lifetime);
         using (lifetime)
         {
             Assert.Empty(model.Diagnostics);
-            BoundTimbreAspect aspect = Assert.Single(model.Timbre.Aspects.Values);
-            BoundTimbreHandleParameter cut = Assert.Single(aspect.HandleParameters["Playback"]);
+            BoundTimbreClip clip = Assert.Single(model.Timbre.Clips.Values);
+            BoundTimbreParameter cut = Assert.Single(clip.FindSound("Tone")!.Parameters);
             Assert.Equal(("Cut", 20f, 20000f), (cut.Name, cut.Minimum, cut.Maximum));
-            Assert.Null(aspect.FindHandleParameter("Playback", "Extra"));
+            Assert.Empty(clip.FindSound("Plain")!.Parameters);
         }
     }
 
     [Theory]
-    [InlineData("@handle Playback; @on Click { @timbre $Tone as Playback; @animate { @to { $self.timbre.|caret| } } }", new[] { "Playback" })]
-    [InlineData("@handle Playback; @on Click { @timbre $Tone as Playback; @animate { @to { $self.timbre.Pla|caret| } } }", new[] { "Playback" })]
-    [InlineData("@handle Playback; @on Click { @timbre $Tone as Playback; @animate { @to { $self.timbre.Playback.|caret| } } }", new[] { "Cut", "Volume" })]
-    [InlineData("@handle Playback; @on Click { @timbre $Tone as Playback; @timbre $Plain as Playback; @animate { @to { $self.timbre.Playback.|caret| } } }", new[] { "Volume" })]
-    public void TimbreMotionTargetsCompleteHandlesAndParameters(string aspect, string[] expected)
+    [InlineData("@on Click { @animate { @to { $self.timbre.|caret| } } }", new[] { "Plain", "Tone" })]
+    [InlineData("@on Click { @animate { @to { $self.timbre.To|caret| } } }", new[] { "Plain", "Tone" })]
+    [InlineData("@on Click { @animate { @to { $self.timbre.Tone.|caret| } } }", new[] { "Cut", "Volume" })]
+    [InlineData("@on Click { @animate { @to { $self.timbre.Plain.|caret| } } }", new[] { "Volume" })]
+    public void TimbreMotionTargetsCompleteSoundsAndParameters(string aspect, string[] expected)
     {
         Assert.Equal(expected, Labels(Button(aspect)));
     }
 
     [Fact]
-    public void TimbreMotionTargetsNavigateToHandleAndParameterDeclarations()
+    public void TimbreMotionTargetsNavigateToSoundAndParameterDeclarations()
     {
-        string text = Button("@handle Playback; @on Click { @timbre $Tone as Playback; @animate { @to { $self.timbre.Playback.Cut = 300; $self.timbre.Playback.Volume = 0.5; } } }");
+        string text = Button("@on Click { @play $self.timbre.Tone; @animate { @to { $self.timbre.Tone.Cut = 300; $self.timbre.Tone.Volume = 0.5; } } }");
         CernealaSemanticModel model = LanguagePipelineHarness.BindSemanticModel("TimbreMotionNavigation.crn", text, out IDisposable lifetime);
         using (lifetime)
         {
             Assert.Empty(model.Diagnostics);
             CernealaNavigationService navigation = new();
-            int handle = text.IndexOf("timbre.Playback.Cut", StringComparison.Ordinal) + "timbre.".Length;
-            CernealaLocation handleDefinition = Assert.Single(navigation.GetDefinitions(model, handle));
-            Assert.Equal(text.IndexOf("Playback", StringComparison.Ordinal), handleDefinition.Span.Start);
-            int parameter = text.IndexOf("Playback.Cut", StringComparison.Ordinal) + "Playback.".Length;
+            int sound = text.IndexOf("timbre.Tone.Cut", StringComparison.Ordinal) + "timbre.".Length;
+            CernealaLocation soundDefinition = Assert.Single(navigation.GetDefinitions(model, sound));
+            Assert.Equal(text.IndexOf("@sound Tone", StringComparison.Ordinal) + "@sound ".Length, soundDefinition.Span.Start);
+            int parameter = text.IndexOf("Tone.Cut", StringComparison.Ordinal) + "Tone.".Length;
             CernealaLocation parameterDefinition = Assert.Single(navigation.GetDefinitions(model, parameter));
             Assert.Equal(text.IndexOf("Cut", StringComparison.Ordinal), parameterDefinition.Span.Start);
         }
@@ -123,34 +123,38 @@ public sealed class TimbreMotionSemanticTests
 
     private static string Button(string aspect) =>
         "<Button Content=\"Play\"><Button.Resources>" +
-        "<TimbreClip Name=\"Tone\">Source = \"audio/tone.wav\"; @parameter Cut: float = 900; @modifier LowPass { Cutoff = Cut; }</TimbreClip>" +
-        "<TimbreClip Name=\"Plain\">Source = \"audio/plain.wav\";</TimbreClip>" +
-        "</Button.Resources><Button.Aspect>" + aspect + "</Button.Aspect></Button>";
+        "<TimbreClip Name=\"Sounds\">@parameter Cut: float = 900; " +
+        "@sound Tone { Source = \"audio/tone.wav\"; @modifier LowPass { Cutoff = Cut; } } " +
+        "@sound Plain { Source = \"audio/plain.wav\"; }</TimbreClip>" +
+        "</Button.Resources><Button.Aspect>@timbre $Sounds; " + aspect + "</Button.Aspect></Button>";
 
     private const string ApprovedExample = """
         <Button Content="Confirmă">
           <Button.Resources>
             <TimbreClip Name="ConfirmTimbre">
-              Source = "audio/confirm.wav";
-              Volume = 0.8;
               @parameter ToneCutoff: float = 1200;
               @parameter EchoMix: float = 0.15;
-              @modifier LowPass { Cutoff = ToneCutoff; }
-              @modifier Delay { Time = 120ms; Feedback = 0.20; Mix = EchoMix; }
+              @sound Confirm
+              {
+                  Source = "audio/confirm.wav";
+                  Volume = 0.8;
+                  @modifier LowPass { Cutoff = ToneCutoff; }
+                  @modifier Delay { Time = 120ms; Feedback = 0.20; Mix = EchoMix; }
+              }
             </TimbreClip>
           </Button.Resources>
           <Button.Aspect>
-            @handle Playback;
+            @timbre $ConfirmTimbre(ToneCutoff = 800);
 
             @on Click
             {
-                @timbre $ConfirmTimbre(Volume = 0.2, ToneCutoff = 800) as Playback;
+                @play $self.timbre.Confirm;
                 @animate with Tween(300ms, EaseOut)
                 {
                     @to
                     {
-                        $self.timbre.Playback.Volume = 0.8;
-                        $self.timbre.Playback.ToneCutoff = 6000;
+                        $self.timbre.Confirm.Volume = 0.8;
+                        $self.timbre.Confirm.ToneCutoff = 6000;
                     }
                 }
             }
@@ -171,13 +175,13 @@ public sealed class TimbreMotionSemanticTests
     public void TimbreMotionTargetNeverFallsBackToAnElementProperty()
     {
         string markup = ApprovedExample
-            .Replace("$self.timbre.Playback.ToneCutoff = 6000;", string.Empty, StringComparison.Ordinal)
-            .Replace("$self.timbre.Playback.Volume = 0.8;", "$self.timbre.Playback.Opacity = 0.5;", StringComparison.Ordinal);
+            .Replace("$self.timbre.Confirm.ToneCutoff = 6000;", string.Empty, StringComparison.Ordinal)
+            .Replace("$self.timbre.Confirm.Volume = 0.8;", "$self.timbre.Confirm.Opacity = 0.5;", StringComparison.Ordinal);
 
         LanguagePipelineResult result = LanguagePipelineHarness.Analyze("TimbreMotionElementFallback.crn", markup);
 
         Assert.Contains(result.SemanticDiagnostics, diagnostic =>
             diagnostic.Message.Contains("Opacity", StringComparison.Ordinal) &&
-            diagnostic.Message.Contains("Playback", StringComparison.Ordinal));
+            diagnostic.Message.Contains("Confirm", StringComparison.Ordinal));
     }
 }

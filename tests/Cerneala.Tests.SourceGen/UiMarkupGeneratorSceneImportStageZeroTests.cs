@@ -14,6 +14,14 @@ public sealed partial class UiMarkupGeneratorTests
                 <Scene2D>
                   <Scene2DDebugOverlay Flags="All" LineThickness="1">
                     <Scene2DDebugOverlay.Aspect>
+                      @prism
+                      {
+                        @layer DebugPresentation
+                        {
+                          Opacity = 1;
+                          @filter Blur { Radius = 1; }
+                        }
+                      }
                       @on Loaded
                       {
                         @animate with Tween(100ms)
@@ -22,14 +30,6 @@ public sealed partial class UiMarkupGeneratorTests
                         }
                       }
                     </Scene2DDebugOverlay.Aspect>
-                    @prism
-                    {
-                      @layer DebugPresentation
-                      {
-                        Opacity = 1;
-                        @filter Blur { Radius = 1; }
-                      }
-                    }
                   </Scene2DDebugOverlay>
                 </Scene2D>
               </RenderSurface2D.Scene>
@@ -62,12 +62,12 @@ public sealed partial class UiMarkupGeneratorTests
                   </SceneItems2D>
                       <Sprite2D X="16" Y="0" Width="16" Height="16">
                         <Sprite2D.Aspect>
+                          @prism { @layer Door { @filter Blur { Radius = 1; } } }
                           @on Loaded
                           {
                             @animate with Tween(100ms) { @to { Opacity = 0.9; } }
                           }
                         </Sprite2D.Aspect>
-                        @prism { @layer Door { @filter Blur { Radius = 1; } } }
                       </Sprite2D>
                 </Scene2D>
               </RenderSurface2D.Scene>

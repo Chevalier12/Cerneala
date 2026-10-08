@@ -155,7 +155,7 @@ public sealed class NativeRenderSurface3DTests
             contentFactory: surface => new SurfaceScopeHost(surface, false),
             evidenceDirectory: Stage3EvidenceDirectory))
         using (IDisposable attachment = GeneratedMarkup.AttachPrism(reference.Content, () =>
-            new PrismInstance(new PrismCompositionDefinition("Stage3Reference",
+            new PrismInstance(new PrismClipDefinition("Stage3Reference",
                 [new PrismLayerDefinition(new PrismNodeId(1), "Invert",
                     filters: [new PrismFilterDefinition(PrismFilterId.Invert)])]))))
         {
@@ -169,7 +169,7 @@ public sealed class NativeRenderSurface3DTests
             contentFactory: surface => new SurfaceScopeHost(surface, false),
             evidenceDirectory: Stage3EvidenceDirectory);
         using IDisposable prism = GeneratedMarkup.AttachPrism(fixture.Content, () =>
-            new PrismInstance(new PrismCompositionDefinition("Stage3Recovery",
+            new PrismInstance(new PrismClipDefinition("Stage3Recovery",
                 [new PrismLayerDefinition(new PrismNodeId(1), "Invert",
                     filters: [new PrismFilterDefinition(PrismFilterId.Invert)])])));
         int callbacks = 0;
@@ -195,7 +195,7 @@ public sealed class NativeRenderSurface3DTests
         using NativeFixture fixture = new("stage3-prism-root-epoch",
             background: Color.White, evidenceDirectory: Stage3EvidenceDirectory);
         using IDisposable prism = GeneratedMarkup.AttachPrism(fixture.Surface, () =>
-            new PrismInstance(new PrismCompositionDefinition("Stage3RootEpoch",
+            new PrismInstance(new PrismClipDefinition("Stage3RootEpoch",
                 [new PrismLayerDefinition(new PrismNodeId(1), "Invert",
                     filters: [new PrismFilterDefinition(PrismFilterId.Invert)])])));
         int callbacks = 0;
@@ -800,7 +800,7 @@ public sealed class NativeRenderSurface3DTests
             filtered.Surface.Draw += (_, frame) =>
                 frame.DrawMarker(new(0, 0, -2), Color.CornflowerBlue, 40);
             using IDisposable attachment = GeneratedMarkup.AttachPrism(filtered.Content, () =>
-                new PrismInstance(new PrismCompositionDefinition("Surface3DInvert",
+                new PrismInstance(new PrismClipDefinition("Surface3DInvert",
                     [new PrismLayerDefinition(new PrismNodeId(1), "Invert",
                         filters: [new PrismFilterDefinition(PrismFilterId.Invert)])])));
             using SKBitmap result = filtered.Capture();
@@ -812,7 +812,7 @@ public sealed class NativeRenderSurface3DTests
         using (NativeFixture reference = new("prism-2d-reference",
             contentFactory: surface => new SurfaceScopeHost(surface, false, drawReference: true)))
         using (IDisposable referenceAttachment = GeneratedMarkup.AttachPrism(reference.Content, () =>
-            new PrismInstance(new PrismCompositionDefinition("Surface3DInvertReference",
+            new PrismInstance(new PrismClipDefinition("Surface3DInvertReference",
                 [new PrismLayerDefinition(new PrismNodeId(1), "Invert",
                     filters: [new PrismFilterDefinition(PrismFilterId.Invert)])]))))
         using (SKBitmap referenceBitmap = reference.Capture())

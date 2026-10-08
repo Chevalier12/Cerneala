@@ -450,6 +450,14 @@ template are needed.
                  TranslateX="32"
                  TransformOrigin="128,96">
             <Scene2D.Aspect>
+                @prism
+                {
+                    @layer GroupContent
+                    {
+                        Opacity = 1;
+                        @filter Blur { Radius = 1; }
+                    }
+                }
                 @on Loaded
                 {
                     @animate with Tween(100ms)
@@ -458,16 +466,16 @@ template are needed.
                     }
                 }
             </Scene2D.Aspect>
-            @prism
-            {
-                @layer GroupContent
-                {
-                    Opacity = 1;
-                    @filter Blur { Radius = 1; }
-                }
-            }
             <Scene2D Layer="1">
                 <Scene2D.Aspect>
+                    @prism
+                    {
+                        @layer LayerContent
+                        {
+                            Opacity = 1;
+                            @filter Blur { Radius = 1; }
+                        }
+                    }
                     @on Loaded
                     {
                         @animate with Tween(100ms)
@@ -476,20 +484,20 @@ template are needed.
                         }
                     }
                 </Scene2D.Aspect>
-                @prism
-                {
-                    @layer LayerContent
-                    {
-                        Opacity = 1;
-                        @filter Blur { Radius = 1; }
-                    }
-                }
                 <SceneItems2D>
                     @templates
                     {
                         <ContentTemplate DataType="System.String">
                             <Sprite2D SourceResourceId="$WorldAtlas">
                                 <Sprite2D.Aspect>
+                                    @prism
+                                    {
+                                        @layer SpriteContent
+                                        {
+                                            Opacity = 1;
+                                            @filter Blur { Radius = 1; }
+                                        }
+                                    }
                                     @on Loaded
                                     {
                                         @animate with Tween(100ms)
@@ -498,14 +506,6 @@ template are needed.
                                         }
                                     }
                                 </Sprite2D.Aspect>
-                                @prism
-                                {
-                                    @layer SpriteContent
-                                    {
-                                        Opacity = 1;
-                                        @filter Blur { Radius = 1; }
-                                    }
-                                }
                             </Sprite2D>
                         </ContentTemplate>
                     }
@@ -639,7 +639,7 @@ WPF resource dictionaries.
 - `Tween`
 - `Spring`
 - `MotionClip`
-- `PrismComposition`
+- `PrismClip`
 - `TimbreClip`
 
 `VisualBrush` is runtime-only because its source is a live element.
@@ -998,6 +998,99 @@ Inside a template:
 
 Do not nest arbitrary extra template roots. A template has one visual root.
 
+### Applying and replacing an aspect
+
+An aspect brings everything written in it to the element it is applied to:
+its values, `@when` conditions, `@on` handlers, Motion, `@presence`, `@layout`,
+input Motion, its sounds (`@timbre`) and its Prism effect (`@prism`). The
+element receives all of it when it is attached with the aspect, and loses all of
+it when the aspect is replaced or the element is detached.
+
+```xml
+<UserControl.Resources>
+    <TimbreClip Name="Sounds">
+        @sound Click { Source = "audio/click.wav"; }
+        @sound Pop { Source = "audio/pop.wav"; }
+    </TimbreClip>
+    <Aspect Name="Quiet" TargetType="Button">
+        @timbre $Sounds;
+        @on Click { @play $self.timbre.Click; }
+    </Aspect>
+    <Aspect Name="Loud" TargetType="Button">
+        @timbre $Sounds;
+        @on Click
+        {
+            @play $self.timbre.Pop;
+            @animate with Tween(300ms, EaseOut) { @to { Opacity = 0.6; } }
+        }
+    </Aspect>
+</UserControl.Resources>
+
+<Button Name="PlayButton" Content="Play" Aspect="$Quiet" />
+```
+
+```csharp
+PlayButton.Aspect = (ElementAspect)Resources["Loud"];
+```
+
+After the assignment:
+
+- a click plays `pop.wav` and animates the opacity — `Quiet` no longer reacts;
+- a sound `Quiet` started is canceled, a running animation of `Quiet` stops, and
+  a value its animation was writing returns to the element's own value;
+- the sounds of `Loud` that have `AutoPlay = true` start, and its `@prism`
+  effect (if any) replaces the effect of `Quiet`;
+- `@presence` and `@layout` of the old aspect are removed; those of the new one
+  apply to future exits and layout changes (an enter animation is not replayed
+  on an element that is already visible);
+- `@on Loaded` of the new aspect does not run: the element was already loaded.
+
+The same aspect applied to several elements gives each element its own copy of
+the program. An inline aspect can also be assigned to another element from C#.
+
+`$Name` inside an aspect means the element with that name **where the aspect is
+written**, not where it is applied:
+
+```xml
+<StackPanel>
+    <StackPanel.Resources>
+        <Aspect Name="PauseMusic" TargetType="Button">
+            @on Click { @animate { @to { $Speaker.Opacity = 0.3; } } }
+        </Aspect>
+    </StackPanel.Resources>
+    <Border Name="Speaker" />
+    <Button Content="Pause 1" Aspect="$PauseMusic" />
+    <Button Content="Pause 2" Aspect="$PauseMusic" />
+</StackPanel>
+```
+
+Both buttons dim the same `Speaker`. An aspect declared in `App.crn` has no
+named elements to refer to and may use only `$self` and `$owner`.
+
+A resource aspect is compiled once and can be applied anywhere, so
+`$owner.parts.$Chrome`, `$owner.prism.Glow` and `$self.prism.Glow` take their
+type from the places in the markup where the aspect is applied:
+
+```xml
+<Aspect Name="Glowy" TargetType="Border">
+    @on MouseEnter { @animate { @to { $owner.parts.$Chrome.Opacity = 0.8; } } }
+</Aspect>
+
+<Aspect Name="First" TargetType="ToggleButton">
+    @template { <Grid><Border Name="Chrome" /><Border Aspect="$Glowy" /></Grid> }
+</Aspect>
+```
+
+- If one place has a `Border` named `Chrome` and another has a `TextBlock`
+  named `Chrome`, or a place has no `Chrome`, the build fails.
+- If the aspect is not applied anywhere in the markup, the build fails because
+  the type of `Chrome` cannot be known.
+- If the aspect is applied from C# to an element whose owner has no `Chrome`, or
+  a `Chrome` of another type, or another Prism composition, an
+  `InvalidOperationException` is thrown when the program reaches it.
+- `$self.prism.Glow` in a resource aspect with its own `@prism` refers to that
+  `@prism`.
+
 ## 13. Motion
 
 Motion is typed and generated. It is not a WPF storyboard and not CSS
@@ -1178,55 +1271,67 @@ Copy a current repository example and preserve its structure.
 
 ## 14. Timbre (sound)
 
-Sounds are declared as `TimbreClip` resources and started only by explicit
-actions inside an Aspect `@on`, `@when` or `@if` body. Nothing plays, and no
-audio file is opened, because a clip is declared or referenced. There is no
+A `TimbreClip` resource is a set of named sounds. An aspect brings sounds with
+one `@timbre` at the top of its body, and plays them only with explicit
+commands inside `@on`, `@when` or `@if`. Nothing plays, and no audio file is
+opened, because a clip is declared, referenced or attached — except sounds
+marked `AutoPlay = true`, which start when the aspect is applied. There is no
 implicit button sound.
 
 ```xml
 <UserControl.Resources>
     <TimbreClip Name="ConfirmTimbre">
-        Source = "audio/confirm.wav";
-        Volume = 0.8;
         @parameter ToneCutoff: float = 1200;
-        @modifier LowPass { Cutoff = ToneCutoff; }
-        @modifier Delay { Time = 120ms; Feedback = 0.20; Mix = 0.15; }
+        @sound Confirm
+        {
+            Source = "audio/confirm.wav";
+            Volume = 0.8;
+            @modifier LowPass { Cutoff = ToneCutoff; }
+            @modifier Delay { Time = 120ms; Feedback = 0.20; Mix = 0.15; }
+        }
     </TimbreClip>
 </UserControl.Resources>
 
 <Button Content="Confirm">
     <Button.Aspect>
-        @handle Playback;
-        @on Click { @timbre $ConfirmTimbre(ToneCutoff = 800) as Playback; }
+        @timbre $ConfirmTimbre(ToneCutoff = 800);
+        @on Click { @play $self.timbre.Confirm; }
         @when IsMouseOver
         {
-            @if value == false { @pause Playback; }
-            @if value == true { @resume Playback; }
+            @if value == false { @pause $self.timbre.Confirm; }
+            @if value == true { @resume $self.timbre.Confirm; }
         }
-        @on MouseWheel { @seek Playback to 30s; }
+        @on MouseWheel { @seek $self.timbre.Confirm to 30s; }
     </Button.Aspect>
 </Button>
 ```
 
-- `Source` is required; `Volume` is 0–1 and `Loop` is `true` or `false`.
-- `@modifier LowPass` and `@modifier Delay` run in source order; their inputs
-  take constants or declared `@parameter` values.
-- `@timbre $Clip(Volume = ..., Loop = ..., Param = ...);` overrides values for one
-  start. Without `as Handle` playbacks overlap; with it the slot's occupant is
-  replaced. `@cancel`, `@pause`, `@resume` and `@seek` act on the slot's current
-  occupant and do nothing when it is empty.
-- Every sound statement ends with `;`. Timbre actions are not allowed in
-  `@parallel`, `@sequence` or at the top level of an Aspect.
-- A reactive body plays once when its condition becomes true (including
+- A clip has `@parameter Name: float = value;` declarations and `@sound Name { … }`
+  nodes. In a `@sound`, `Source` is required, `Volume` is 0–1, and `Loop` and
+  `AutoPlay` are `true` or `false`.
+- `@modifier LowPass` and `@modifier Delay` run in source order inside a
+  `@sound`; their inputs take constants or the clip's `@parameter` values.
+- `@timbre $Clip;` attaches a resource, `@timbre $Clip(Param = value);` sets clip
+  parameters for this application, and `@timbre { … }` declares the clip inline.
+  An aspect has at most one `@timbre`, and it is not allowed inside `@on`,
+  `@when` or `@if`.
+- `@play`, `@stop`, `@pause`, `@resume` and `@seek … to 30s` address a sound by
+  its full path: `$self.timbre.Sound`, `$Name.timbre.Sound` (another element,
+  named where the aspect is written) or `$owner.timbre.Sound`. `@play` on a
+  sound that is playing restarts it; the other commands do nothing when the
+  sound is not playing.
+- Every sound statement ends with `;`. Commands are not allowed in `@parallel`,
+  `@sequence` or at the top level of an aspect.
+- A reactive body runs once when its condition becomes true (including
   initially true) and is not stopped by the condition becoming false. Hiding
   the element does not stop or replay its sounds.
-- Each element, template part and item occurrence owns its own sound scope;
-  detaching it cancels only its playbacks.
-- Motion animates a started playback through `$self.timbre.Handle.Volume` or
-  `$self.timbre.Handle.Parameter` in `@animate`/`@keyframes`: it captures the
-  handle's occupant when it starts, never retargets a later one, starts timing
-  at the first PCM, holds while paused or seeking and keeps running when the
-  element is hidden. An empty handle animates nothing.
+- Each application of an aspect (element, template part, item occurrence) has
+  its own sounds; detaching it or replacing the aspect stops only those.
+- Motion animates a sound's running playback through `$self.timbre.Sound.Volume`
+  or `$self.timbre.Sound.Parameter` in `@animate`/`@keyframes`: it captures the
+  playback when it starts, never retargets a later one, starts timing at the
+  first PCM, holds while paused or seeking and keeps running when the element
+  is hidden. A sound that is not playing animates nothing.
 
 The [Timbre Guide](timbre-guide.md) explains the runtime, the transport
 semantics, errors, tooling and Live Preview audio policy.
@@ -1237,12 +1342,14 @@ Prism is Cerneala's retained local visual composition system. It owns filters,
 styles, masks, blending, and backdrop work. Prism changes presentation. It does
 not change layout, hit testing, focus, or the logical tree.
 
-Declare a `PrismComposition` as a resource, then attach it with `@prism`:
+Declare a `PrismClip` as a resource, then attach it with `@prism` at the top of
+the element's aspect. An aspect has at most one `@prism`; the effect comes and
+goes with the aspect, like its sounds:
 
 ```xml
 <UserControl xmlns:local="clr-namespace:MyApp">
     <UserControl.Resources>
-        <PrismComposition Name="GameSurfaceEffect">
+        <PrismClip Name="GameSurfaceEffect">
             @layer Game
             {
                 @style OuterGlow
@@ -1252,11 +1359,13 @@ Declare a `PrismComposition` as a resource, then attach it with `@prism`:
                     Color = #804DF0FF;
                 }
             }
-        </PrismComposition>
+        </PrismClip>
     </UserControl.Resources>
 
     <local:GameView>
-        @prism $GameSurfaceEffect;
+        <local:GameView.Aspect>
+            @prism $GameSurfaceEffect;
+        </local:GameView.Aspect>
     </local:GameView>
 </UserControl>
 ```

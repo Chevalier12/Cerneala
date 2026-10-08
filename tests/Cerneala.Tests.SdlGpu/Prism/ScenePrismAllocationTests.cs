@@ -23,7 +23,7 @@ public sealed class ScenePrismAllocationTests
     [InlineData(true)]
     public void LocalScopeTranslationAndTransformPreserveAllocationPolicy(bool strict)
     {
-        PrismInstance instance = new(new PrismCompositionDefinition("Local scope",
+        PrismInstance instance = new(new PrismClipDefinition("Local scope",
             [new PrismLayerDefinition(new(1), "Invert", filters: [new(PrismFilterId.Invert)])]));
         PrismDrawScope scope = new(instance, new(98001), new(0, 0, 48, 32),
             Matrix3x2.Identity, 1, 1, PrismDrawResources.Empty, isLocalDrawingScope: true)
@@ -178,7 +178,7 @@ public sealed class ScenePrismAllocationTests
         }
 
         private static IDisposable Attach(Scene2D owner, PrismFilterId filter = PrismFilterId.Invert) => GeneratedMarkup.AttachPrism(owner,
-            () => new PrismInstance(new PrismCompositionDefinition("Scene allocation contract",
+            () => new PrismInstance(new PrismClipDefinition("Scene allocation contract",
                 [new PrismLayerDefinition(new(1), "Filter", filters: [new(filter)])])));
 
         public void Dispose()

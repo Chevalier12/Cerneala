@@ -353,7 +353,7 @@ internal sealed class CernealaNavigationService
 
         if (symbol.Kind is CernealaSemanticSymbolKind.ContentTemplate or
             CernealaSemanticSymbolKind.MotionParameter or CernealaSemanticSymbolKind.MotionHandle or
-            CernealaSemanticSymbolKind.TimbreParameter)
+            CernealaSemanticSymbolKind.TimbreParameter or CernealaSemanticSymbolKind.TimbreSound)
         {
             definition = new CernealaLocation(model.Document.Path, symbol.Span);
             return true;
@@ -369,9 +369,9 @@ internal sealed class CernealaNavigationService
         CernealaSemanticSymbolKind.Aspect or CernealaSemanticSymbolKind.AspectApplication or
         CernealaSemanticSymbolKind.MotionSpec or CernealaSemanticSymbolKind.MotionComposition or
         CernealaSemanticSymbolKind.MotionParameter or CernealaSemanticSymbolKind.MotionHandle or
-        CernealaSemanticSymbolKind.PrismComposition or CernealaSemanticSymbolKind.PrismNode or
+        CernealaSemanticSymbolKind.PrismClip or CernealaSemanticSymbolKind.PrismNode or
         CernealaSemanticSymbolKind.PrismParameter or CernealaSemanticSymbolKind.PrismValue or
-        CernealaSemanticSymbolKind.TimbreParameter or CernealaSemanticSymbolKind.BindingSource;
+        CernealaSemanticSymbolKind.TimbreParameter or CernealaSemanticSymbolKind.TimbreSound or CernealaSemanticSymbolKind.BindingSource;
 
     private static bool IsTypeSymbol(CernealaSemanticSymbolKind kind) => kind is
         CernealaSemanticSymbolKind.RootType or CernealaSemanticSymbolKind.Element or
@@ -397,9 +397,9 @@ internal sealed class CernealaNavigationService
         CernealaSemanticSymbolKind.Resource or CernealaSemanticSymbolKind.ContentTemplate or
         CernealaSemanticSymbolKind.Aspect or CernealaSemanticSymbolKind.MotionSpec or
         CernealaSemanticSymbolKind.MotionComposition or CernealaSemanticSymbolKind.MotionParameter or
-        CernealaSemanticSymbolKind.MotionHandle or CernealaSemanticSymbolKind.PrismComposition or
+        CernealaSemanticSymbolKind.MotionHandle or CernealaSemanticSymbolKind.PrismClip or
         CernealaSemanticSymbolKind.PrismNode or CernealaSemanticSymbolKind.PrismParameter or
-        CernealaSemanticSymbolKind.TimbreParameter;
+        CernealaSemanticSymbolKind.TimbreParameter or CernealaSemanticSymbolKind.TimbreSound;
 
     private static bool IsDeclaration(
         CernealaSemanticModel model,

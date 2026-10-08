@@ -384,9 +384,9 @@ public sealed class PrismMotionIntegrationTests
         }
     }
 
-    private static PrismCompositionDefinition CreateDefinition(float opacity = 1f)
+    private static PrismClipDefinition CreateDefinition(float opacity = 1f)
     {
-        return new PrismCompositionDefinition(
+        return new PrismClipDefinition(
             "motion",
             [
                 new PrismLayerDefinition(

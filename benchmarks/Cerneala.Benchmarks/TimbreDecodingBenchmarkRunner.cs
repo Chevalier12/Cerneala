@@ -78,7 +78,7 @@ internal static class TimbreDecodingBenchmarkRunner
                 HeldOutput output = new();
                 using TimbreRuntime runtime = new(new TimbreRuntimeOptions { Output = output });
                 using TimbreScope scope = runtime.CreateScope();
-                TimbreClip clip = new(TimbreSource.FromFile(Path.GetFullPath(Path.Combine(corpus, name))), loading: TimbreLoading.Streaming);
+                TimbreSound clip = new(TimbreSource.FromFile(Path.GetFullPath(Path.Combine(corpus, name))), loading: TimbreLoading.Streaming);
                 long started = Stopwatch.GetTimestamp();
                 TimbrePlayback playback = scope.Play(clip);
                 long queued = output.FirstSubmit.GetAwaiter().GetResult();

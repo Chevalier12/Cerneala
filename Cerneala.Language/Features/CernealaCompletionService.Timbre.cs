@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Cerneala.Language.Semantics;
 using Cerneala.Language.Syntax;
 using Cerneala.Language.Text;
@@ -7,12 +8,13 @@ namespace Cerneala.Language.Features;
 
 internal sealed partial class CernealaCompletionService
 {
-    private static readonly string[] TimbreActionKeywords = ["@timbre", "@pause", "@resume", "@seek"];
+    private static readonly string[] TimbreCommandKeywords = ["@play", "@stop", "@pause", "@resume", "@seek"];
 
-    private static readonly string[] TimbreClipProperties = ["Source", "Volume", "Loop"];
+    private static readonly string[] TimbreSoundProperties = ["Source", "Volume", "Loop", "AutoPlay"];
 
-    // TimbreClip bodies and Timbre action statements. Returns true when the
-    // site belongs to the Timbre language and no other completion applies.
+    // TimbreClip bodies, inline `@timbre { … }` blocks, `@timbre $Clip(…)` and
+    // the Timbre commands. Returns true when the site belongs to the Timbre
+    // language and no other completion applies.
     private static bool TryAddTimbreCompletions(
         ICollection<CernealaCompletionItem> result,
         CompletionSite site,
@@ -20,11 +22,24 @@ internal sealed partial class CernealaCompletionService
         ElementSyntax? element,
         string statement)
     {
+        // A statement at the start of an element's content begins after its tag.
+        int markupEnd = statement.LastIndexOf('>');
+        if (markupEnd >= 0 && statement.IndexOf('<') >= 0)
+        {
+            statement = statement.Substring(markupEnd + 1);
+        }
+
         string elementName = element?.Name.Split(':').Last() ?? string.Empty;
         string lexicalName = FindUnclosedElementName(site.Source, site.Offset)?.Split(':').Last() ?? string.Empty;
         if (elementName == "TimbreClip" || lexicalName == "TimbreClip")
         {
             AddTimbreClipBodyCompletions(result, site, model, elementName == "TimbreClip" ? element : null, statement);
+            return true;
+        }
+
+        if (IsInsideDirectiveBlock(site.Source, site.Offset, "@timbre"))
+        {
+            AddTimbreClipBodyCompletions(result, site, model, clip: null, statement);
             return true;
         }
 
@@ -34,7 +49,12 @@ internal sealed partial class CernealaCompletionService
         }
 
         string trimmed = statement.TrimStart();
-        string? keyword = TimbreActionKeywords.FirstOrDefault(candidate =>
+        if (trimmed.StartsWith("@timbre", StringComparison.Ordinal) && trimmed.Length > "@timbre".Length)
+        {
+            return TryAddTimbreAttachmentCompletions(result, site, model, element, statement);
+        }
+
+        string? keyword = TimbreCommandKeywords.FirstOrDefault(candidate =>
             trimmed.StartsWith(candidate, StringComparison.Ordinal) &&
             (trimmed.Length == candidate.Length || char.IsWhiteSpace(trimmed[candidate.Length])));
         if (keyword is null || trimmed.Length == keyword.Length)
@@ -43,50 +63,47 @@ internal sealed partial class CernealaCompletionService
         }
 
         string rest = trimmed.Substring(keyword.Length).TrimStart();
-        if (keyword != "@timbre")
+        string[] words = rest.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+        bool trailingSpace = rest.Length > 0 && char.IsWhiteSpace(rest[rest.Length - 1]);
+        int editing = trailingSpace ? words.Length : Math.Max(0, words.Length - 1);
+        if (editing == 0)
         {
-            string[] words = rest.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
-            bool trailingSpace = rest.Length > 0 && char.IsWhiteSpace(rest[rest.Length - 1]);
-            int editing = trailingSpace ? words.Length : Math.Max(0, words.Length - 1);
-            if (editing == 0)
+            foreach (string sound in model?.GetCompletionTimbreMotionSounds(element) ?? Array.Empty<string>())
             {
-                AddTimbreHandles(result, site, model, element);
+                string path = "$self.timbre." + sound;
+                Add(result, path, path, site.WordSpan, CernealaCompletionItemKind.Variable, "Timbre sound", "00");
             }
-            else if (keyword == "@seek" && editing == 1)
+        }
+        else if (keyword == "@seek" && editing == 1)
+        {
+            Add(result, "to", "to ", site.WordSpan, CernealaCompletionItemKind.Keyword, "seek target", "00");
+        }
+        else if (keyword == "@seek" && editing == 2 && words[1] == "to")
+        {
+            foreach (string value in new[] { "0s", "500ms", "30s" })
             {
-                Add(result, "to", "to ", site.WordSpan, CernealaCompletionItemKind.Keyword, "seek target", "00");
+                Add(result, value, value, site.WordSpan, CernealaCompletionItemKind.Value, "duration", "00");
             }
-            else if (keyword == "@seek" && editing == 2 && words[1] == "to")
-            {
-                foreach (string value in new[] { "0s", "500ms", "30s" })
-                {
-                    Add(result, value, value, site.WordSpan, CernealaCompletionItemKind.Value, "duration", "00");
-                }
-            }
-
-            return true;
         }
 
-        int asIndex = rest.LastIndexOf(" as ", StringComparison.Ordinal);
-        if (asIndex >= 0 && rest.Substring(asIndex + 4).All(IsIdentifierCharacter))
-        {
-            AddTimbreHandles(result, site, model, element);
-            return true;
-        }
+        return true;
+    }
 
+    // `@timbre $|` completes TimbreClip resources and `@timbre $Clip(|`
+    // the clip parameters it can set.
+    private static bool TryAddTimbreAttachmentCompletions(
+        ICollection<CernealaCompletionItem> result,
+        CompletionSite site,
+        CernealaSemanticModel? model,
+        ElementSyntax? element,
+        string statement)
+    {
         FunctionCall? call = FindFunctionCall(site.Source, site.Offset);
         if (call is not null && model is not null)
         {
-            int open = statement.LastIndexOf('(');
-            string argument = statement.Substring(open + 1).Split(',').Last();
-            int equals = argument.IndexOf('=');
-            if (equals >= 0)
+            string argument = statement.Substring(statement.LastIndexOf('(') + 1).Split(',').Last();
+            if (argument.IndexOf('=') >= 0)
             {
-                if (argument.Substring(0, equals).Trim() == "Loop")
-                {
-                    AddBooleanValues(result, site);
-                }
-
                 return true;
             }
 
@@ -113,8 +130,8 @@ internal sealed partial class CernealaCompletionService
         return false;
     }
 
-    // `$self.timbre.` completes the Aspect's Timbre handles and
-    // `$self.timbre.Handle.` the parameters Motion can animate on it.
+    // `$self.timbre.` completes the sounds of the Aspect's @timbre and
+    // `$self.timbre.Sound.` the properties Motion can animate on it.
     private static bool TryAddTimbreMotionTargetCompletions(
         ICollection<CernealaCompletionItem> result,
         CompletionSite site,
@@ -133,9 +150,9 @@ internal sealed partial class CernealaCompletionService
         TextSpan span = new(site.Offset - partial.Length, partial.Length);
         if (segments.Length == 3)
         {
-            foreach (string handle in model?.GetCompletionTimbreMotionHandles(element) ?? Array.Empty<string>())
+            foreach (string sound in model?.GetCompletionTimbreMotionSounds(element) ?? Array.Empty<string>())
             {
-                Add(result, handle, handle, span, CernealaCompletionItemKind.Variable, "Timbre handle", "00");
+                Add(result, sound, sound, span, CernealaCompletionItemKind.Variable, "Timbre sound", "00");
             }
         }
         else if (segments.Length == 4)
@@ -149,6 +166,9 @@ internal sealed partial class CernealaCompletionService
         return true;
     }
 
+    // A TimbreClip body (or `@timbre { … }` block): `@parameter` and `@sound`
+    // at its top; Source, Volume, Loop, AutoPlay and `@modifier` inside a
+    // `@sound`.
     private static void AddTimbreClipBodyCompletions(
         ICollection<CernealaCompletionItem> result,
         CompletionSite site,
@@ -165,7 +185,10 @@ internal sealed partial class CernealaCompletionService
             int equals = trimmed.IndexOf('=');
             if (equals >= 0)
             {
-                foreach (string parameter in model?.GetCompletionTimbreClipParameters(clip, site.Offset) ?? Array.Empty<string>())
+                IEnumerable<string> parameters = clip is not null
+                    ? model?.GetCompletionTimbreClipParameters(clip, site.Offset) ?? Array.Empty<string>()
+                    : InlineTimbreParameters(site);
+                foreach (string parameter in parameters)
                 {
                     Add(result, parameter, parameter, site.WordSpan, CernealaCompletionItemKind.Variable, "Timbre parameter", "00");
                 }
@@ -202,17 +225,31 @@ internal sealed partial class CernealaCompletionService
             return;
         }
 
+        bool insideSound = IsInsideDirectiveBlock(site.Source, site.Offset, "@sound");
         if (site.WordPrefix.StartsWith("@", StringComparison.Ordinal))
         {
-            Add(result, "@parameter", "@parameter Name: float = 0;", site.WordSpan, CernealaCompletionItemKind.Keyword, "Timbre directive", "00");
-            Add(result, "@modifier", "@modifier LowPass { }", site.WordSpan, CernealaCompletionItemKind.Keyword, "Timbre directive", "00");
+            if (insideSound)
+            {
+                Add(result, "@modifier", "@modifier LowPass { }", site.WordSpan, CernealaCompletionItemKind.Keyword, "Timbre directive", "00");
+            }
+            else
+            {
+                Add(result, "@parameter", "@parameter Name: float = 0;", site.WordSpan, CernealaCompletionItemKind.Keyword, "Timbre directive", "00");
+                Add(result, "@sound", "@sound Name { Source = \"\"; }", site.WordSpan, CernealaCompletionItemKind.Keyword, "Timbre directive", "00");
+            }
+
+            return;
+        }
+
+        if (!insideSound)
+        {
             return;
         }
 
         int assignment = trimmed.IndexOf('=');
         if (assignment >= 0)
         {
-            if (trimmed.Substring(0, assignment).Trim() == "Loop")
+            if (trimmed.Substring(0, assignment).Trim() is "Loop" or "AutoPlay")
             {
                 AddBooleanValues(result, site);
             }
@@ -220,22 +257,24 @@ internal sealed partial class CernealaCompletionService
             return;
         }
 
-        foreach (string property in TimbreClipProperties)
+        foreach (string property in TimbreSoundProperties)
         {
-            Add(result, property, property + " = ", site.WordSpan, CernealaCompletionItemKind.Property, "TimbreClip", "00");
+            Add(result, property, property + " = ", site.WordSpan, CernealaCompletionItemKind.Property, "@sound", "00");
         }
     }
 
-    private static void AddTimbreHandles(
-        ICollection<CernealaCompletionItem> result,
-        CompletionSite site,
-        CernealaSemanticModel? model,
-        ElementSyntax? element)
+    // The parameters an inline `@timbre { … }` block declares before the
+    // caret, read lexically: the Aspect being edited is not bound yet.
+    private static IEnumerable<string> InlineTimbreParameters(CompletionSite site)
     {
-        foreach (string handle in model?.GetCompletionMotionHandles(element, site.Offset) ?? Array.Empty<string>())
-        {
-            Add(result, handle, handle, site.WordSpan, CernealaCompletionItemKind.Variable, "handle", "00");
-        }
+        int start = site.Source.LastIndexOf("@timbre", Math.Max(0, site.Offset - 1), StringComparison.Ordinal);
+        return start < 0
+            ? Array.Empty<string>()
+            : Regex.Matches(site.Source.Substring(start, site.Offset - start), @"@parameter\s+([A-Za-z_][A-Za-z0-9_]*)")
+                .Cast<Match>()
+                .Select(match => match.Groups[1].Value)
+                .Distinct(StringComparer.Ordinal)
+                .ToArray();
     }
 
     private static void AddBooleanValues(ICollection<CernealaCompletionItem> result, CompletionSite site)

@@ -10,31 +10,34 @@ namespace Cerneala.Tests.Timbre.Markup;
 public sealed class TimbreAspectIntegrationTests
 {
     private const string Clips = """
-        <TimbreClip Name="Tone">Source = "audio/tone.wav";</TimbreClip>
-        <TimbreClip Name="Other">Source = "audio/other.wav";</TimbreClip>
+        <TimbreClip Name="Sounds">
+          @sound Tone { Source = "audio/tone.wav"; }
+          @sound Other { Source = "audio/other.wav"; }
+        </TimbreClip>
         """;
 
     [Fact]
-    public async Task UnhandledEventTimbreStartOnEachUserClickAndOverlap()
+    public async Task EachUserClickRestartsTheSound()
     {
-        using MarkupTimbreFixture fixture = new(Button("@on Click { @timbre $Tone; }"));
+        using MarkupTimbreFixture fixture = new(Button("@timbre $Sounds; @on Click { @play $self.timbre.Tone; }"));
 
         await fixture.ClickAsync("Play");
         await fixture.ClickAsync("Play");
 
         Assert.Equal(2, fixture.Started.Count);
         Assert.NotSame(fixture.Started[0], fixture.Started[1]);
-        Assert.All(fixture.Started, playback => Assert.False(IsTerminal(playback)));
-        Assert.All(fixture.Started, playback => Assert.Equal(MarkupTimbreFixture.ToneSource, playback.Clip.Source.Name));
+        Assert.Equal(TimbrePlaybackState.Canceled, fixture.Started[0].State);
+        Assert.False(IsTerminal(fixture.Started[1]));
+        Assert.All(fixture.Started, playback => Assert.Equal(MarkupTimbreFixture.ToneSource, playback.Sound.Source.Name));
     }
 
     [Fact]
-    public async Task HandledTimbreReplacesItsOccupantAndCancelLeavesOtherPlaybacks()
+    public async Task PlayRestartsOnlyItsOwnSoundAndStopLeavesTheOtherSounds()
     {
         using MarkupTimbreFixture fixture = new(Button(
-            "@handle Playback; " +
-            "@on Click { @timbre $Other; @timbre $Tone as Playback; } " +
-            "@when $self.IsEnabled { @if value == false { @cancel Playback; } }"));
+            "@timbre $Sounds; " +
+            "@on Click { @play $self.timbre.Other; @play $self.timbre.Tone; } " +
+            "@when $self.IsEnabled { @if value == false { @stop $self.timbre.Tone; } }"));
         Button button = fixture.All<Button>().Single();
 
         await fixture.ClickAsync("Play");
@@ -45,15 +48,14 @@ public sealed class TimbreAspectIntegrationTests
         TimbrePlayback second = fixture.Started[3];
 
         Assert.Equal(TimbrePlaybackState.Canceled, first.State);
+        Assert.Equal(TimbrePlaybackState.Canceled, firstOther.State);
         Assert.False(IsTerminal(second));
-        Assert.False(IsTerminal(firstOther));
         Assert.False(IsTerminal(secondOther));
 
         button.IsEnabled = false;
         fixture.Pump();
 
         Assert.Equal(TimbrePlaybackState.Canceled, second.State);
-        Assert.False(IsTerminal(firstOther));
         Assert.False(IsTerminal(secondOther));
         Assert.Equal(4, fixture.Started.Count);
     }
@@ -61,7 +63,7 @@ public sealed class TimbreAspectIntegrationTests
     [Fact]
     public void InitialTrueStartsOnceAndStableReevaluationDoesNotRepeat()
     {
-        using MarkupTimbreFixture fixture = new(Border("@when $self.Opacity { @if value > 0.5 { @timbre $Tone; } }"));
+        using MarkupTimbreFixture fixture = new(Border("@timbre $Sounds; @when $self.Opacity { @if value > 0.5 { @play $self.timbre.Tone; } }"));
         Border border = fixture.All<Border>().Single();
 
         Assert.Single(fixture.Started);
@@ -77,7 +79,8 @@ public sealed class TimbreAspectIntegrationTests
         border.Opacity = 0.8f;
         fixture.Pump();
         Assert.Equal(2, fixture.Started.Count);
-        Assert.False(IsTerminal(fixture.Started[0]));
+        Assert.Equal(TimbrePlaybackState.Canceled, fixture.Started[0].State);
+        Assert.False(IsTerminal(fixture.Started[1]));
     }
 
     [Theory]
@@ -86,7 +89,7 @@ public sealed class TimbreAspectIntegrationTests
     public void HiddenControlStartsInitialTrueAndFalseToTrueWithoutReplayOnShow(string visibility)
     {
         using MarkupTimbreFixture fixture = new(Border(
-            "@when $self.Opacity { @if value > 0.5 { @timbre $Tone; } }",
+            "@timbre $Sounds; @when $self.Opacity { @if value > 0.5 { @play $self.timbre.Tone; } }",
             "Visibility=\"" + visibility + "\""));
         Border border = fixture.All<Border>().Single();
 
@@ -105,7 +108,8 @@ public sealed class TimbreAspectIntegrationTests
         fixture.Pump();
 
         Assert.Equal(2, fixture.Started.Count);
-        Assert.All(fixture.Started, playback => Assert.False(IsTerminal(playback)));
+        Assert.Equal(TimbrePlaybackState.Canceled, fixture.Started[0].State);
+        Assert.False(IsTerminal(fixture.Started[1]));
     }
 
     [Fact]
@@ -113,7 +117,7 @@ public sealed class TimbreAspectIntegrationTests
     {
         using MarkupTimbreFixture fixture = new(
             "<StackPanel><StackPanel.Resources>" + Clips + "</StackPanel.Resources>" +
-            "<Border><Border.Aspect>@when $self.Opacity { @if value > 0.5 { @timbre $Tone; } }</Border.Aspect></Border>" +
+            "<Border><Border.Aspect>@timbre $Sounds; @when $self.Opacity { @if value > 0.5 { @play $self.timbre.Tone; } }</Border.Aspect></Border>" +
             "</StackPanel>");
         UIElement panel = fixture.Element;
 
@@ -132,8 +136,8 @@ public sealed class TimbreAspectIntegrationTests
     {
         using MarkupTimbreFixture fixture = new(
             "<StackPanel><StackPanel.Resources>" + Clips + "</StackPanel.Resources>" +
-            "<Button Content=\"Play\"><Button.Aspect>@handle Playback; @on Click { @timbre $Tone as Playback; @timbre $Other; }</Button.Aspect></Button>" +
-            "<Border><Border.Aspect>@when $self.Opacity { @if value > 0.5 { @timbre $Tone; } }</Border.Aspect></Border>" +
+            "<Button Content=\"Play\"><Button.Aspect>@timbre $Sounds; @on Click { @play $self.timbre.Tone; @play $self.timbre.Other; }</Button.Aspect></Button>" +
+            "<Border><Border.Aspect>@timbre $Sounds; @when $self.Opacity { @if value > 0.5 { @play $self.timbre.Tone; } }</Border.Aspect></Border>" +
             "</StackPanel>");
         await fixture.ClickAsync("Play");
         Assert.Equal(3, fixture.Started.Count);

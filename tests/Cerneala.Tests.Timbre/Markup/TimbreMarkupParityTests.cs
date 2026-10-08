@@ -12,28 +12,31 @@ namespace Cerneala.Tests.Timbre.Markup;
 public sealed class TimbreMarkupParityTests
 {
     private const string Clips = """
-        <TimbreClip Name="Confirm">
-          Source = "audio/ramp.wav";
-          Volume = 0.8;
+        <TimbreClip Name="Sounds">
           @parameter Cut: float = 1200;
           @parameter Echo: float = 0.15;
-          @modifier LowPass { Cutoff = Cut; }
-          @modifier Delay { Time = 20ms; Feedback = 0.4; Mix = Echo; }
+          @sound Confirm
+          {
+            Source = "audio/ramp.wav";
+            Volume = 0.5;
+            @modifier LowPass { Cutoff = Cut; }
+            @modifier Delay { Time = 20ms; Feedback = 0.4; Mix = Echo; }
+          }
+          @sound Blip { Source = "audio/short.wav"; Loop = true; }
+          @sound Unused { Source = "audio/tone.wav"; }
         </TimbreClip>
-        <TimbreClip Name="Blip">Source = "audio/short.wav";</TimbreClip>
-        <TimbreClip Name="Unused">Source = "audio/tone.wav";</TimbreClip>
         """;
 
     private const string Aspect = """
-        @handle Playback;
+        @timbre $Sounds(Cut = 800);
         @when $self.Opacity
         {
-            @if value > 0.95 { @timbre $Confirm(Volume = 0.5, Cut = 800) as Playback; @timbre $Blip(Loop = true); }
-            @if value > 0.85 and value < 0.95 { @timbre $Confirm(Cut = 2000, Echo = 0.6) as Playback; }
-            @if value > 0.75 and value < 0.85 { @pause Playback; }
-            @if value > 0.65 and value < 0.75 { @resume Playback; }
-            @if value > 0.55 and value < 0.65 { @seek Playback to 100ms; }
-            @if value > 0.45 and value < 0.55 { @cancel Playback; }
+            @if value > 0.95 { @play $self.timbre.Confirm; @play $self.timbre.Blip; }
+            @if value > 0.85 and value < 0.95 { @play $self.timbre.Confirm; }
+            @if value > 0.75 and value < 0.85 { @pause $self.timbre.Confirm; }
+            @if value > 0.65 and value < 0.75 { @resume $self.timbre.Confirm; }
+            @if value > 0.55 and value < 0.65 { @seek $self.timbre.Confirm to 100ms; }
+            @if value > 0.45 and value < 0.55 { @stop $self.timbre.Confirm; }
         }
         """;
 
@@ -71,17 +74,23 @@ public sealed class TimbreMarkupParityTests
         manualRig.Runtime.PlaybackAccepted = playback => manualStarted.Add(playback);
         TimbreParameter<float> cut = new("Cut", 1200f);
         TimbreParameter<float> echo = new("Echo", 0.15f);
-        TimbreClip confirm = new(
-            "audio/ramp.wav",
-            volume: 0.8f,
-            parameters: [cut, echo],
-            modifiers: [new LowPass(cutoff: cut), new Delay(time: 0.02f, feedback: 0.4f, mix: echo)]);
-        TimbreClip blip = new("audio/short.wav");
-        _ = new TimbreClip("audio/tone.wav");
+        TimbreClipDefinition sounds = new(
+            "Sounds",
+            [
+                new TimbreClipSound("Confirm", new TimbreSound(
+                    "audio/ramp.wav",
+                    volume: 0.5f,
+                    parameters: [cut, echo],
+                    modifiers: [new LowPass(cutoff: cut), new Delay(time: 0.02f, feedback: 0.4f, mix: echo)])),
+                new TimbreClipSound("Blip", new TimbreSound("audio/short.wav", loop: true)),
+                new TimbreClipSound("Unused", new TimbreSound("audio/tone.wav"))
+            ],
+            [cut, echo]);
+        TimbreSound confirm = sounds.Sounds["Confirm"].Sound;
         TimbreScope scope = manualRig.Runtime.CreateScope();
         TimbreHandle playback = scope.CreateHandle();
-        scope.Play(confirm, start => { start.Volume = 0.5f; start.Set(cut, 800f); }, playback);
-        scope.Play(blip, start => start.Loop = true);
+        scope.Play(confirm, start => start.Set(cut, 800f), playback);
+        scope.Play(sounds.Sounds["Blip"].Sound, configure: null, scope.CreateHandle());
         Run manual = Drive(
             manualRig,
             manualStarted,
@@ -90,7 +99,7 @@ public sealed class TimbreMarkupParityTests
                 switch (band)
                 {
                     case 0.9f:
-                        scope.Play(confirm, start => { start.Set(cut, 2000f); start.Set(echo, 0.6f); }, playback);
+                        scope.Play(confirm, start => start.Set(cut, 800f), playback);
                         break;
                     case 0.8f:
                         playback.Current?.Pause();
@@ -112,7 +121,7 @@ public sealed class TimbreMarkupParityTests
         Assert.Equal(manual.Trace, markup.Trace);
         Assert.Contains(markup.Pcm, sample => sample != 0f);
         TimbreRig.AssertPcm(manual.Pcm, markup.Pcm);
-        Assert.DoesNotContain(markup.Started, started => started.Clip.Source.Name == "audio/tone.wav");
+        Assert.DoesNotContain(markup.Started, started => started.Sound.Source.Name == "audio/tone.wav");
     }
 
     // Initial starts, then one operation every two blocks, then a tail.

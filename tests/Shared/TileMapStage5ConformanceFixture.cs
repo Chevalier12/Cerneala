@@ -95,7 +95,7 @@ internal sealed class TileMapStage5ConformanceFixture : IDisposable
         IDisposable prism = GeneratedMarkup.AttachPrism(
             promoted,
             static () => new PrismInstance(
-                new PrismCompositionDefinition(
+                new PrismClipDefinition(
                     "TileMapStage5Promoted",
                     [new PrismLayerDefinition(
                         new PrismNodeId(1),

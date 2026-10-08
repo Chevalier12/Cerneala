@@ -30,10 +30,10 @@ public sealed class StructureTests
                 }
               }
             </Aspect>
-            <PrismComposition Name="CardFx">
+            <PrismClip Name="CardFx">
               @parameter Radius: float = 8;
               @layer Card { @filter Blur { Radius = 8; } }
-            </PrismComposition>
+            </PrismClip>
           </Window.Resources>
           <Canvas>
             <Button Name="Action" Canvas.Left="12" Background="$Accent" Content="$DataContext.Title" Opacity="$Accent.Opacity" />

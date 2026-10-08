@@ -8,7 +8,7 @@ public sealed class PrismInstance
     private PrismRuntimeGraph graph;
     private int generation = 1;
 
-    public PrismInstance(PrismCompositionDefinition definition)
+    public PrismInstance(PrismClipDefinition definition)
     {
         Definition = definition ?? throw new ArgumentNullException(nameof(definition));
         graph = PrismRuntimeGraph.Create(this, definition, generation);
@@ -16,9 +16,9 @@ public sealed class PrismInstance
         ValueVersion = new PrismValueVersion(0);
     }
 
-    public PrismCompositionDefinition Definition { get; private set; }
+    public PrismClipDefinition Definition { get; private set; }
 
-    public PrismCompositionState Composition => graph.Composition;
+    public PrismClipState Composition => graph.Composition;
 
     public PrismStructuralVersion StructuralVersion { get; private set; }
 
@@ -45,7 +45,7 @@ public sealed class PrismInstance
             ?? throw new InvalidOperationException($"Prism node '{id.Value}' is not a group.");
     }
 
-    public void ReplaceDefinition(PrismCompositionDefinition definition)
+    public void ReplaceDefinition(PrismClipDefinition definition)
     {
         ArgumentNullException.ThrowIfNull(definition);
         if (Definition.Equals(definition))
@@ -101,7 +101,7 @@ internal sealed class PrismRuntimeGraph
     private PrismRuntimeGraph(
         PrismParameterStore defaults,
         PrismParameterStore values,
-        PrismCompositionState composition,
+        PrismClipState composition,
         Dictionary<PrismNodeId, PrismNodeState> nodes)
     {
         Defaults = defaults;
@@ -114,13 +114,13 @@ internal sealed class PrismRuntimeGraph
 
     public PrismParameterStore Values { get; }
 
-    public PrismCompositionState Composition { get; }
+    public PrismClipState Composition { get; }
 
     public Dictionary<PrismNodeId, PrismNodeState> Nodes { get; }
 
     public static PrismRuntimeGraph Create(
         PrismInstance owner,
-        PrismCompositionDefinition definition,
+        PrismClipDefinition definition,
         int generation)
     {
         PrismValueCounts counts = Measure(definition);
@@ -132,15 +132,15 @@ internal sealed class PrismRuntimeGraph
             PrismCatalogGenerated.CommonCompositionProperties);
         defaults.Set(
             compositionSlice,
-            PrismCatalogGenerated.PrismCompositionPropertyKeys.WorkingColorProfileKey,
+            PrismCatalogGenerated.PrismClipPropertyKeys.WorkingColorProfileKey,
             (int)definition.WorkingColorProfile);
         defaults.Set(
             compositionSlice,
-            PrismCatalogGenerated.PrismCompositionPropertyKeys.GlobalLightAngleKey,
+            PrismCatalogGenerated.PrismClipPropertyKeys.GlobalLightAngleKey,
             definition.GlobalLightAngle);
         defaults.Set(
             compositionSlice,
-            PrismCatalogGenerated.PrismCompositionPropertyKeys.GlobalLightAltitudeKey,
+            PrismCatalogGenerated.PrismClipPropertyKeys.GlobalLightAltitudeKey,
             definition.GlobalLightAltitude);
 
         Dictionary<PrismNodeId, PrismNodeState> nodes = new(definition.Nodes.Length);
@@ -157,7 +157,7 @@ internal sealed class PrismRuntimeGraph
         }
 
         values.CopyFromIfDifferent(defaults);
-        PrismCompositionState composition = new(
+        PrismClipState composition = new(
             new PrismStateAccess(owner, values, compositionSlice, generation, entryStableId: 0));
         return new PrismRuntimeGraph(defaults, values, composition, nodes);
     }
@@ -320,7 +320,7 @@ internal sealed class PrismRuntimeGraph
         int generation) =>
         new(owner, values, slice, generation, entryStableId: 0);
 
-    private static PrismValueCounts Measure(PrismCompositionDefinition definition)
+    private static PrismValueCounts Measure(PrismClipDefinition definition)
     {
         PrismValueCounts counts = new();
         counts.Add(PrismCatalogGenerated.CommonCompositionProperties);
@@ -378,8 +378,8 @@ internal sealed class PrismRuntimeGraph
 internal static class PrismTopologyComparer
 {
     public static bool Equals(
-        PrismCompositionDefinition left,
-        PrismCompositionDefinition right)
+        PrismClipDefinition left,
+        PrismClipDefinition right)
     {
         if (left.Nodes.Length != right.Nodes.Length)
         {

@@ -44,6 +44,18 @@ Aspect, Motion, and Prism can still target the sprite declared from markup:
     Image="$WorldAtlas"
     Tint="#FFFFFFFF">
     <Sprite2D.Aspect>
+        @prism
+        {
+            @layer Effects
+            {
+                @parameter GlowSize: float = 4;
+                @style OuterGlow
+                {
+                    Color = $self.Tint:OneWay;
+                    Size = GlowSize;
+                }
+            }
+        }
         @when $self.IsVisible
         {
             @if $self.IsVisible == true
@@ -56,18 +68,6 @@ Aspect, Motion, and Prism can still target the sprite declared from markup:
             }
         }
     </Sprite2D.Aspect>
-    @prism
-    {
-        @layer Effects
-        {
-            @parameter GlowSize: float = 4;
-            @style OuterGlow
-            {
-                Color = $self.Tint:OneWay;
-                Size = GlowSize;
-            }
-        }
-    }
 </Sprite2D>
 ```
 

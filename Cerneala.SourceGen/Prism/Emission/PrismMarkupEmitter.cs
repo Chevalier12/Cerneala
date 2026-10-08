@@ -11,15 +11,17 @@ public sealed partial class UiMarkupGenerator
 {
     private sealed partial class GenerationScope
     {
-        private readonly Dictionary<BoundPrismComposition, string> prismDefinitionNames = new();
+        private readonly Dictionary<BoundPrismClip, string> prismDefinitionNames = new();
         private int nextPrismDefinitionId;
         private int nextPrismFactoryId;
 
         public List<string> PrismDeclarationLines { get; } = new();
 
-        private void EmitPrismApplication(MarkupElement element, string elementVariable)
+        // The @prism of an Aspect, attached by its behavior: a lifetime that
+        // removes the effect when the Aspect is replaced or the element detaches.
+        private void EmitAspectPrism(AspectResource aspect, MarkupElement element, string elementVariable)
         {
-            if (!boundPrismApplications.TryGetValue(element, out BoundPrismApplication application))
+            if (aspect.Prism is null || !boundPrismApplications.TryGetValue(aspect.Source, out BoundPrismApplication application))
             {
                 return;
             }
@@ -38,7 +40,8 @@ public sealed partial class UiMarkupGenerator
                 : ", new global::System.Func<global::Cerneala.UI.Prism.Runtime.PrismInstance, global::System.IDisposable>[] { " +
                     string.Join(", ", bindingFactories) + " }";
             currentLines.Add(
-                "_ = global::Cerneala.UI.Markup.GeneratedMarkup.AttachPrism(" +
+                "global::System.IDisposable prismAttachment" + nextPrismFactoryId.ToString(CultureInfo.InvariantCulture) +
+                " = global::Cerneala.UI.Markup.GeneratedMarkup.AttachPrism(" +
                 elementVariable + ", " + factoryName + bindings + ");");
         }
 
@@ -409,7 +412,7 @@ public sealed partial class UiMarkupGenerator
             } + "new global::Cerneala.UI.Prism.Definitions.PrismNodeId(" +
             node.Id.ToString(CultureInfo.InvariantCulture) + "))";
 
-        private string GetOrEmitPrismDefinition(BoundPrismComposition composition)
+        private string GetOrEmitPrismDefinition(BoundPrismClip composition)
         {
             if (prismDefinitionNames.TryGetValue(composition, out string? existing))
             {
@@ -421,12 +424,12 @@ public sealed partial class UiMarkupGenerator
             nextPrismDefinitionId++;
             prismDefinitionNames.Add(composition, name);
             PrismDeclarationLines.Add(
-                "private static readonly global::Cerneala.UI.Prism.Definitions.PrismCompositionDefinition " +
-                name + " = " + EmitPrismCompositionDefinition(composition) + ";");
+                "private static readonly global::Cerneala.UI.Prism.Definitions.PrismClipDefinition " +
+                name + " = " + EmitPrismClipDefinition(composition) + ";");
             return name;
         }
 
-        private string EmitPrismCompositionDefinition(BoundPrismComposition composition)
+        private string EmitPrismClipDefinition(BoundPrismClip composition)
         {
             List<string> arguments =
             [
@@ -450,7 +453,7 @@ public sealed partial class UiMarkupGenerator
                 composition.Properties,
                 "GlobalLightAltitude",
                 "globalLightAltitude");
-            return "new global::Cerneala.UI.Prism.Definitions.PrismCompositionDefinition(" +
+            return "new global::Cerneala.UI.Prism.Definitions.PrismClipDefinition(" +
                 string.Join(", ", arguments) + ")";
         }
 

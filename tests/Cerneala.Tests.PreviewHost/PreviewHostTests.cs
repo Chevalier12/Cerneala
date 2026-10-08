@@ -506,20 +506,20 @@ public sealed class PreviewHostTests
     [Fact]
     public void TimbreMarkupEditsRequireCompilationInsteadOfTheAttributeFastPath()
     {
-        const string resources = "<Button.Resources><TimbreClip Name=\"Tone\">Source = \"tone.wav\";</TimbreClip></Button.Resources>";
-        const string aspect = "<Button.Aspect>@on Click { @timbre $Tone; }</Button.Aspect>";
+        const string resources = "<Button.Resources><TimbreClip Name=\"Tone\">@sound Tone { Source = \"tone.wav\"; }</TimbreClip></Button.Resources>";
+        const string aspect = "<Button.Aspect>@timbre $Tone; @on Click { @play $self.timbre.Tone; }</Button.Aspect>";
         string Document(string opacity, string clip, string body) =>
             $"<Button Opacity=\"{opacity}\">{resources.Replace("Source = \"tone.wav\";", clip, StringComparison.Ordinal)}" +
-            aspect.Replace("@timbre $Tone;", body, StringComparison.Ordinal) + "</Button>";
-        string current = Document("0.5", "Source = \"tone.wav\";", "@timbre $Tone;");
+            aspect.Replace("@play $self.timbre.Tone;", body, StringComparison.Ordinal) + "</Button>";
+        string current = Document("0.5", "Source = \"tone.wav\";", "@play $self.timbre.Tone;");
         Button button = new() { Opacity = 0.5f };
 
         Assert.Equal(
             PreviewMarkupUpdateResult.RequiresCompilation,
-            PreviewMarkupHotReload.TryApply(button, current, Document("0.5", "Source = \"tone.wav\";", "@timbre $Tone(Volume = 0.2);")));
+            PreviewMarkupHotReload.TryApply(button, current, Document("0.5", "Source = \"tone.wav\";", "@stop $self.timbre.Tone;")));
         Assert.Equal(
             PreviewMarkupUpdateResult.RequiresCompilation,
-            PreviewMarkupHotReload.TryApply(button, current, Document("0.5", "Source = \"tone.wav\"; Loop = true;", "@timbre $Tone;")));
+            PreviewMarkupHotReload.TryApply(button, current, Document("0.5", "Source = \"tone.wav\"; Loop = true;", "@play $self.timbre.Tone;")));
         Assert.Equal(
             PreviewMarkupUpdateResult.RequiresCompilation,
             PreviewMarkupHotReload.TryApply(button, current, current.Replace("Name=\"Tone\"", "Name=\"Chime\"", StringComparison.Ordinal)));
@@ -527,7 +527,7 @@ public sealed class PreviewHostTests
 
         Assert.Equal(
             PreviewMarkupUpdateResult.Applied,
-            PreviewMarkupHotReload.TryApply(button, current, Document("0.75", "Source = \"tone.wav\";", "@timbre $Tone;")));
+            PreviewMarkupHotReload.TryApply(button, current, Document("0.75", "Source = \"tone.wav\";", "@play $self.timbre.Tone;")));
         Assert.Equal(0.75f, button.Opacity);
     }
 
@@ -589,8 +589,10 @@ public sealed class PreviewHostTests
         Assert.Contains("CERNEALAUI032", exception.Message, StringComparison.Ordinal);
     }
 
-    [Fact]
-    public async Task PreviewAudioIsDisabledByDefaultAndARecompiledSessionRetiresTheOldScopes()
+    [Theory]
+    [InlineData("Volume = 0.5;", "@when IsEnabled { @play $self.timbre.Tone; }")]
+    [InlineData("Volume = 0.5; AutoPlay = true;", "")]
+    public async Task PreviewAudioIsDisabledByDefaultAndARecompiledSessionRetiresTheOldScopes(string sound, string commands)
     {
         string root = Path.Combine(Path.GetTempPath(), "Cerneala", "PreviewTimbre", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
@@ -602,7 +604,7 @@ public sealed class PreviewHostTests
             using PreviewCompiler compiler = new(prewarmBuildOutput: false);
             PreviewCompilation compilation = await compiler.CompileAsync(
                 documentPath,
-                WithPreviewTimbre(File.ReadAllText(documentPath), tonePath, "Volume = 0.5;"));
+                WithPreviewTimbre(File.ReadAllText(documentPath), tonePath, sound, commands));
 
             (bool AudioEnabled, int FirstBlocked, bool FirstRetired, int FirstAfterRetire, int ReplacementBlocked) result =
                 RunOnStaThread(() =>
@@ -632,7 +634,7 @@ public sealed class PreviewHostTests
                 });
 
             Assert.False(result.AudioEnabled);
-            Assert.True(result.FirstBlocked == 1, $"The initially true @timbre reached the disabled preview output {result.FirstBlocked} times instead of once.");
+            Assert.True(result.FirstBlocked == 1, $"The initial sound (@play or AutoPlay) reached the disabled preview output {result.FirstBlocked} times instead of once.");
             Assert.True(result.FirstRetired);
             Assert.Equal(1, result.FirstAfterRetire);
             Assert.True(result.ReplacementBlocked == 1, $"The recompiled session activated {result.ReplacementBlocked} sounds instead of only its own initial one.");
@@ -734,13 +736,17 @@ public sealed class PreviewHostTests
         return session.BlockedAudioRequests;
     }
 
-    // An initially true reactive rule plays the clip as soon as the preview attaches.
-    private static string WithPreviewTimbre(string brandMark, string sourcePath, string volume)
+    // An initially true reactive rule (or AutoPlay) plays the sound as soon as the preview attaches.
+    private static string WithPreviewTimbre(
+        string brandMark,
+        string sourcePath,
+        string volume,
+        string commands = "@when IsEnabled { @play $self.timbre.Tone; }")
     {
         string sound =
             "<UserControl>" +
-            "<UserControl.Resources><TimbreClip Name=\"PreviewTone\">Source = \"" + sourcePath + "\"; " + volume + "</TimbreClip></UserControl.Resources>" +
-            "<UserControl.Aspect>@when IsEnabled { @timbre $PreviewTone; }</UserControl.Aspect>";
+            "<UserControl.Resources><TimbreClip Name=\"PreviewTone\">@sound Tone { Source = \"" + sourcePath + "\"; " + volume + " }</TimbreClip></UserControl.Resources>" +
+            "<UserControl.Aspect>@timbre $PreviewTone; " + commands + "</UserControl.Aspect>";
         Assert.StartsWith("<UserControl>", brandMark, StringComparison.Ordinal);
         return sound + brandMark["<UserControl>".Length..];
     }

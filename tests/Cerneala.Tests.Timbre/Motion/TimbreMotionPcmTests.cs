@@ -58,7 +58,7 @@ public sealed class TimbreMotionPcmTests
         TimbrePlayback playback = button.Timbre.Play(Resource(fixture, "Tone"), start => start.Volume = 0.2f);
         Wait(() => fixture.Rig.StartAsync(playback));
         playback.Motion().Animate(TimbrePlayback.VolumeParameter).To(0.8f).With(Linear(300));
-        playback.Motion().Animate(CutOf(playback.Clip)).To(6000f).With(Linear(300));
+        playback.Motion().Animate(CutOf(playback.Sound)).To(6000f).With(Linear(300));
         fixture.Pump();
 
         int valuesChanged = 0;
@@ -106,8 +106,8 @@ public sealed class TimbreMotionPcmTests
         if (animateA)
         {
             a!.Motion().Animate(TimbrePlayback.VolumeParameter).To(0.6f).With(Linear(300));
-            a.Motion().Animate(Parameter(a.Clip, "Cut")).To(300f).With(Linear(300));
-            a.Motion().Animate(Parameter(a.Clip, "Mix")).To(0.8f).With(Linear(300));
+            a.Motion().Animate(Parameter(a.Sound, "Cut")).To(300f).With(Linear(300));
+            a.Motion().Animate(Parameter(a.Sound, "Mix")).To(0.8f).With(Linear(300));
         }
 
         fixture.Pump();
@@ -123,17 +123,17 @@ public sealed class TimbreMotionPcmTests
         return blocks.ToArray();
     }
 
-    private static TimbreClip Chain(DeterministicTimbreSourceFactory factory, TimbreLoading loading)
+    private static TimbreSound Chain(DeterministicTimbreSourceFactory factory, TimbreLoading loading)
     {
         TimbreParameter<float> cut = new("Cut", 4000f);
         TimbreParameter<float> mix = new("Mix", 0.2f);
-        return new TimbreClip(
+        return new TimbreSound(
             TimbreSource.FromReader(factory.Open, "deterministic"),
             loading: loading,
             parameters: [cut, mix],
             modifiers: [new LowPass(cut), new Delay(time: 0.01f, feedback: 0.3f, mix: mix)]);
     }
 
-    private static TimbreParameter<float> Parameter(TimbreClip clip, string name) =>
+    private static TimbreParameter<float> Parameter(TimbreSound clip, string name) =>
         (TimbreParameter<float>)clip.Parameters.Single(parameter => parameter.Name == name);
 }

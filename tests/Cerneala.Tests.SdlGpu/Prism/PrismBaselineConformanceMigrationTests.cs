@@ -66,7 +66,7 @@ public sealed class PrismBaselineConformanceMigrationTests
     [SdlNativeFact]
     public void TransformedControlBoundsLimitCaptureBeforeFiltering()
     {
-        PrismCompositionDefinition composition = new("Capture bounds", [Layer(1, "Blur")]);
+        PrismClipDefinition composition = new("Capture bounds", [Layer(1, "Blur")]);
         PrismDrawScope scope = PrismTestData.Scope(composition, ownerToken: 1901,
             bounds: new DrawRect(0, 0, 32, 24), transform: Matrix3x2.CreateTranslation(20, 20));
         using SdlDrawingFixture fixture = new(Width, Height);
@@ -91,7 +91,7 @@ public sealed class PrismBaselineConformanceMigrationTests
         DrawRect bounds = new(0, 0, 32, 24);
         Matrix3x2 transform = Matrix3x2.CreateRotation(degrees * MathF.PI / 180, new Vector2(16, 12)) *
             Matrix3x2.CreateTranslation(30, 20);
-        PrismCompositionDefinition composition = new("Capture clip equivalence", [Layer(1, "Blur")]);
+        PrismClipDefinition composition = new("Capture clip equivalence", [Layer(1, "Blur")]);
         PrismDrawScope scope = PrismTestData.Scope(composition, ownerToken: 1902,
             bounds: bounds, transform: transform, pixelScale: scale);
         using SdlDrawingFixture fixture = new(144, 96, coordinateScale: scale);
@@ -766,7 +766,7 @@ public sealed class PrismBaselineConformanceMigrationTests
                         : new CernealaColor(244, 188, 52);
                 });
         }
-        PrismCompositionDefinition composition = new(
+        PrismClipDefinition composition = new(
             style.ToString(),
             [layer],
             workingColorProfile: PrismColorProfile.LinearSrgb);
@@ -859,7 +859,7 @@ public sealed class PrismBaselineConformanceMigrationTests
         PrismDrawResources? resources,
         params PrismNodeDefinition[] layers)
     {
-        PrismCompositionDefinition composition = new(
+        PrismClipDefinition composition = new(
             name,
             layers,
             workingColorProfile: PrismColorProfile.LinearSrgb);

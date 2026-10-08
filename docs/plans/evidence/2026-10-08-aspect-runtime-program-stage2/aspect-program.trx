@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="f2f546ec-3d48-4332-b02f-9306c4727fdd" name="lauri@DESKTOP-JT43V3D 2026-10-08 15:38:38" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-08T15:38:39.0017668+03:00" queuing="2026-10-08T15:38:39.0017673+03:00" start="2026-10-08T15:38:31.3898798+03:00" finish="2026-10-08T15:38:42.4844204+03:00" />
+  <TestSettings name="default" id="ef6d6df8-dca6-4ca2-8e61-e87ace7fabab">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-10-08_15_38_38" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="f8b4f8be-90b9-4466-af90-3734aaaea2f5" testId="ccf6806e-3a75-07db-25ec-0f4344bf1e96" testName="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.StaticAspectRunsItsProgram" computerName="DESKTOP-JT43V3D" duration="00:00:00.5275982" startTime="2026-10-08T15:38:41.3778613+03:00" endTime="2026-10-08T15:38:41.3778618+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f8b4f8be-90b9-4466-af90-3734aaaea2f5" />
+    <UnitTestResult executionId="c42aa331-ecd9-46d4-a61e-76ebf6b223c7" testId="b5e20ff9-4760-2d1c-e124-e4cfbdea34b3" testName="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.ReplacingBackAndForthKeepsExactlyOneProgram" computerName="DESKTOP-JT43V3D" duration="00:00:00.5084143" startTime="2026-10-08T15:38:42.3481957+03:00" endTime="2026-10-08T15:38:42.3481960+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c42aa331-ecd9-46d4-a61e-76ebf6b223c7" />
+    <UnitTestResult executionId="69c232f9-667a-446c-aab3-e660cda41a0c" testId="a1aeae79-7ba8-d575-8249-bba7f730fc8b" testName="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.DefaultAspectBringsItsProgramToAnElementCreatedAtRuntime" computerName="DESKTOP-JT43V3D" duration="00:00:05.0943702" startTime="2026-10-08T15:38:38.9518280+03:00" endTime="2026-10-08T15:38:38.9518661+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="69c232f9-667a-446c-aab3-e660cda41a0c" />
+    <UnitTestResult executionId="76a151f2-606a-4b66-86e5-d139fea76af2" testId="d8a2684d-c3a7-f9cc-5f9a-8f06f51342a9" testName="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.OneResourceAppliedAtRuntimeGivesEachElementItsOwnProgram" computerName="DESKTOP-JT43V3D" duration="00:00:00.8372142" startTime="2026-10-08T15:38:39.7886248+03:00" endTime="2026-10-08T15:38:39.7886250+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="76a151f2-606a-4b66-86e5-d139fea76af2" />
+    <UnitTestResult executionId="4f4e7da2-ccdb-497b-89eb-bdab0f005bb1" testId="f1c4f365-e674-ed75-2c45-a84893aa7849" testName="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.InlineAspectAssignedToAnotherElementKeepsItsNamedReferences" computerName="DESKTOP-JT43V3D" duration="00:00:00.4616345" startTime="2026-10-08T15:38:41.8396024+03:00" endTime="2026-10-08T15:38:41.8396027+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4f4e7da2-ccdb-497b-89eb-bdab0f005bb1" />
+    <UnitTestResult executionId="ed8d4b9e-02d2-4456-aab7-c383077bca8d" testId="75b73472-ddca-3902-5fa4-96d8da8b87b3" testName="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.ReplacementAtRuntimeAppliesTheNewAspectProgram" computerName="DESKTOP-JT43V3D" duration="00:00:00.5271775" startTime="2026-10-08T15:38:40.8500819+03:00" endTime="2026-10-08T15:38:40.8500824+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ed8d4b9e-02d2-4456-aab7-c383077bca8d" />
+    <UnitTestResult executionId="d807e82a-1aef-4663-9c72-ae4d1e41f9e4" testId="5003918e-26d3-029a-a9ca-06bb05568598" testName="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.DetachAndReattachKeepExactlyOneProgram" computerName="DESKTOP-JT43V3D" duration="00:00:00.5341412" startTime="2026-10-08T15:38:40.3227314+03:00" endTime="2026-10-08T15:38:40.3227318+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d807e82a-1aef-4663-9c72-ae4d1e41f9e4" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.OneResourceAppliedAtRuntimeGivesEachElementItsOwnProgram" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="d8a2684d-c3a7-f9cc-5f9a-8f06f51342a9">
+      <Execution id="76a151f2-606a-4b66-86e5-d139fea76af2" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests" name="OneResourceAppliedAtRuntimeGivesEachElementItsOwnProgram" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.ReplacementAtRuntimeAppliesTheNewAspectProgram" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="75b73472-ddca-3902-5fa4-96d8da8b87b3">
+      <Execution id="ed8d4b9e-02d2-4456-aab7-c383077bca8d" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests" name="ReplacementAtRuntimeAppliesTheNewAspectProgram" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.StaticAspectRunsItsProgram" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="ccf6806e-3a75-07db-25ec-0f4344bf1e96">
+      <Execution id="f8b4f8be-90b9-4466-af90-3734aaaea2f5" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests" name="StaticAspectRunsItsProgram" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.DefaultAspectBringsItsProgramToAnElementCreatedAtRuntime" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="a1aeae79-7ba8-d575-8249-bba7f730fc8b">
+      <Execution id="69c232f9-667a-446c-aab3-e660cda41a0c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests" name="DefaultAspectBringsItsProgramToAnElementCreatedAtRuntime" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.ReplacingBackAndForthKeepsExactlyOneProgram" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="b5e20ff9-4760-2d1c-e124-e4cfbdea34b3">
+      <Execution id="c42aa331-ecd9-46d4-a61e-76ebf6b223c7" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests" name="ReplacingBackAndForthKeepsExactlyOneProgram" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.InlineAspectAssignedToAnotherElementKeepsItsNamedReferences" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="f1c4f365-e674-ed75-2c45-a84893aa7849">
+      <Execution id="4f4e7da2-ccdb-497b-89eb-bdab0f005bb1" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests" name="InlineAspectAssignedToAnotherElementKeepsItsNamedReferences" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests.DetachAndReattachKeepExactlyOneProgram" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="5003918e-26d3-029a-a9ca-06bb05568598">
+      <Execution id="d807e82a-1aef-4663-9c72-ae4d1e41f9e4" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Markup.AspectRuntimeProgramTests" name="DetachAndReattachKeepExactlyOneProgram" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="ccf6806e-3a75-07db-25ec-0f4344bf1e96" executionId="f8b4f8be-90b9-4466-af90-3734aaaea2f5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b5e20ff9-4760-2d1c-e124-e4cfbdea34b3" executionId="c42aa331-ecd9-46d4-a61e-76ebf6b223c7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a1aeae79-7ba8-d575-8249-bba7f730fc8b" executionId="69c232f9-667a-446c-aab3-e660cda41a0c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d8a2684d-c3a7-f9cc-5f9a-8f06f51342a9" executionId="76a151f2-606a-4b66-86e5-d139fea76af2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f1c4f365-e674-ed75-2c45-a84893aa7849" executionId="4f4e7da2-ccdb-497b-89eb-bdab0f005bb1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="75b73472-ddca-3902-5fa4-96d8da8b87b3" executionId="ed8d4b9e-02d2-4456-aab7-c383077bca8d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5003918e-26d3-029a-a9ca-06bb05568598" executionId="d807e82a-1aef-4663-9c72-ae4d1e41f9e4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="7" executed="7" passed="7" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.50]   Discovering: Cerneala.Tests.Timbre&#xD;
+[xUnit.net 00:00:01.23]   Discovered:  Cerneala.Tests.Timbre&#xD;
+[xUnit.net 00:00:01.24]   Starting:    Cerneala.Tests.Timbre&#xD;
+[xUnit.net 00:00:09.80]   Finished:    Cerneala.Tests.Timbre&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

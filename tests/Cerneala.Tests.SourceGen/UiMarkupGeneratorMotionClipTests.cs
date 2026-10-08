@@ -96,6 +96,8 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.DoesNotContain("Dictionary", generated, StringComparison.Ordinal);
     }
 
+    // One factory per @run in the Aspect behavior; every application runs the
+    // behavior and so creates its own factory delegates and session.
     [Fact]
     public void MotionClipCreatesIndependentFactoriesForEveryRunAndAspectInstance()
     {
@@ -123,9 +125,9 @@ public sealed partial class UiMarkupGeneratorTests
             .Select(match => match.Value)
             .Distinct(StringComparer.Ordinal)
             .ToArray();
-        Assert.Equal(4, factories.Length);
-        Assert.Equal(2, generated.Split("AttachMotionSession", StringSplitOptions.None).Length - 1);
-        Assert.Equal(4, generated.Split("StartMotionExecution", StringSplitOptions.None).Length - 1);
+        Assert.Equal(2, factories.Length);
+        Assert.Equal(1, generated.Split("AttachMotionSession(target)", StringSplitOptions.None).Length - 1);
+        Assert.Equal(2, generated.Split("StartMotionExecution", StringSplitOptions.None).Length - 1);
     }
 
     [Fact]

@@ -198,7 +198,7 @@ public sealed class PrismGraphPlanningAllocationTests
                 new PrismStyleDefinition(PrismStyleId.OuterGlow)
             ]);
         PrismInstance instance = new(
-            new PrismCompositionDefinition("AnimatedComposite", [layer]));
+            new PrismClipDefinition("AnimatedComposite", [layer]));
         PrismDrawScope scope = new(
             instance,
             new PrismCacheOwnerToken(1),

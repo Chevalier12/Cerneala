@@ -28,26 +28,26 @@ public sealed partial class UiMarkupGeneratorTests
               <RenderSurface2D.Scene>
                 <Scene2D>
                   <Scene2D.Aspect>
+                    @prism { @layer SceneContent { @filter Blur { Radius = 1; } } }
                     @on Loaded { @animate with Tween(100ms) { @to { Opacity = 0.9; } } }
                   </Scene2D.Aspect>
-                  @prism { @layer SceneContent { @filter Blur { Radius = 1; } } }
                   <TileMap2D Name="Ground" Layer="0">
                     <Tile Image="$VillageTerrain" ImageWidth="16" ImageHeight="16" X="0" Y="0" Width="16" Height="16" />
                   </TileMap2D>
                   <TileMap2D Name="Buildings" Layer="1">
                     <TileMap2D.Aspect>
+                      @prism { @layer MapContent { @filter Blur { Radius = 1; } } }
                       @on Loaded { @animate with Tween(100ms) { @to { Opacity = 0.8; } } }
                     </TileMap2D.Aspect>
-                    @prism { @layer MapContent { @filter Blur { Radius = 1; } } }
                     <Tile Image="$VillageStructures" ImageWidth="16" ImageHeight="16" X="32" Y="0" Width="16" Height="16" />
                   </TileMap2D>
                   <Sprite2D Layer="2" Image="$VillageStructures"
                             X="288" Y="176" Width="16" Height="16"
                             SourceX="16" SourceY="0" SourceWidth="16" SourceHeight="16">
                     <Sprite2D.Aspect>
+                      @prism { @layer SpriteContent { @filter Blur { Radius = 2; } } }
                       @on Loaded { @animate with Tween(100ms) { @to { Tint = #FFFFCC; } } }
                     </Sprite2D.Aspect>
-                    @prism { @layer SpriteContent { @filter Blur { Radius = 2; } } }
                   </Sprite2D>
                 </Scene2D>
               </RenderSurface2D.Scene>

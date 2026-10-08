@@ -82,107 +82,151 @@ internal sealed class TimbreDirectiveReference
     public TextSpan Span { get; }
 }
 
-// Statements of a TimbreClip body in source order: TimbreValueSyntax
-// (property assignment), TimbreParameterSyntax and TimbreModifierSyntax.
+// One `@sound Name { … }` node: TimbreValueSyntax (Source, Volume, Loop,
+// AutoPlay) and TimbreModifierSyntax statements in source order.
+internal sealed class TimbreSoundSyntax
+{
+    public TimbreSoundSyntax(TextSpan keywordSpan, string name, TextSpan nameSpan, IReadOnlyList<object> statements)
+    {
+        KeywordSpan = keywordSpan;
+        Name = name;
+        NameSpan = nameSpan;
+        Statements = statements;
+    }
+
+    public TextSpan KeywordSpan { get; }
+
+    public string Name { get; }
+
+    public TextSpan NameSpan { get; }
+
+    public IReadOnlyList<object> Statements { get; }
+}
+
+// Statements of a TimbreClip body (or an inline `@timbre { … }` block) in
+// source order: TimbreParameterSyntax and TimbreSoundSyntax. A property or
+// @modifier written directly in the body is the removed single-sound form;
+// the first one is kept in LegacySpan.
 internal sealed class TimbreClipBodySyntax
 {
     public TimbreClipBodySyntax(
         IReadOnlyList<object> statements,
+        TextSpan? legacySpan,
         IReadOnlyList<TimbreDirectiveReference> foreignDirectives,
         IReadOnlyList<EmbeddedDiagnostic> diagnostics)
     {
         Statements = statements;
+        LegacySpan = legacySpan;
         ForeignDirectives = foreignDirectives;
         Diagnostics = diagnostics;
     }
 
     public IReadOnlyList<object> Statements { get; }
 
+    public TextSpan? LegacySpan { get; }
+
     public IReadOnlyList<TimbreDirectiveReference> ForeignDirectives { get; }
 
     public IReadOnlyList<EmbeddedDiagnostic> Diagnostics { get; }
 }
 
-internal enum TimbreActionKind
+internal enum TimbreCommandKind
 {
     Play,
-    Cancel,
+    Stop,
     Pause,
     Resume,
     Seek
 }
 
-internal sealed class TimbreActionSyntax
+// `@play $Owner.timbre.Sound;` and its siblings; Owner is "self", "owner" or
+// an element name.
+internal sealed class TimbreCommandSyntax
 {
-    public TimbreActionSyntax(
-        TimbreActionKind kind,
+    public TimbreCommandSyntax(
+        TimbreCommandKind kind,
         TextSpan keywordSpan,
-        string? clipName,
-        TextSpan clipSpan,
-        IReadOnlyList<TimbreValueSyntax> arguments,
-        string? handleName,
-        TextSpan handleSpan,
+        string owner,
+        TextSpan ownerSpan,
+        string sound,
+        TextSpan soundSpan,
         string? seekValue,
         TextSpan seekSpan)
     {
         Kind = kind;
         KeywordSpan = keywordSpan;
-        ClipName = clipName;
-        ClipSpan = clipSpan;
-        Arguments = arguments;
-        HandleName = handleName;
-        HandleSpan = handleSpan;
+        Owner = owner;
+        OwnerSpan = ownerSpan;
+        Sound = sound;
+        SoundSpan = soundSpan;
         SeekValue = seekValue;
         SeekSpan = seekSpan;
     }
 
-    public TimbreActionKind Kind { get; }
+    public TimbreCommandKind Kind { get; }
 
     public TextSpan KeywordSpan { get; }
 
-    public string? ClipName { get; }
+    public string Owner { get; }
 
-    public TextSpan ClipSpan { get; }
+    // Covers '$' and the owner name.
+    public TextSpan OwnerSpan { get; }
 
-    public IReadOnlyList<TimbreValueSyntax> Arguments { get; }
+    public string Sound { get; }
 
-    public string? HandleName { get; }
-
-    public TextSpan HandleSpan { get; }
+    public TextSpan SoundSpan { get; }
 
     public string? SeekValue { get; }
 
     public TextSpan SeekSpan { get; }
 }
 
+// `@timbre $Clip(Parameter = value, …);`
+internal sealed class TimbreClipReferenceSyntax
+{
+    public TimbreClipReferenceSyntax(string clipName, TextSpan clipSpan, IReadOnlyList<TimbreValueSyntax> arguments)
+    {
+        ClipName = clipName;
+        ClipSpan = clipSpan;
+        Arguments = arguments;
+    }
+
+    public string ClipName { get; }
+
+    // Covers '$' and the clip name.
+    public TextSpan ClipSpan { get; }
+
+    public IReadOnlyList<TimbreValueSyntax> Arguments { get; }
+}
+
 internal static class TimbreMarkupSyntax
 {
     public const string SyntaxId = "CERNEALAUI030";
 
-    public static IReadOnlyList<string> ActionKeywords { get; } = ["@timbre", "@pause", "@resume", "@seek"];
+    public static IReadOnlyList<string> CommandKeywords { get; } = ["@play", "@stop", "@pause", "@resume", "@seek"];
 
-    public static IReadOnlyList<string> ClipKeywords { get; } = ["@parameter", "@modifier"];
+    public static IReadOnlyList<string> ClipKeywords { get; } = ["@parameter", "@sound", "@modifier"];
 
-    public static bool IsActionKeyword(string keyword) => ActionKeywords.Contains(keyword, StringComparer.Ordinal);
+    public static bool IsCommandKeyword(string keyword) => CommandKeywords.Contains(keyword, StringComparer.Ordinal);
 
-    public static bool TryGetActionKind(string keyword, out TimbreActionKind kind)
+    public static bool TryGetCommandKind(string keyword, out TimbreCommandKind kind)
     {
         switch (keyword)
         {
-            case "@timbre":
-                kind = TimbreActionKind.Play;
+            case "@play":
+                kind = TimbreCommandKind.Play;
                 return true;
-            case "@cancel":
-                kind = TimbreActionKind.Cancel;
+            case "@stop":
+                kind = TimbreCommandKind.Stop;
                 return true;
             case "@pause":
-                kind = TimbreActionKind.Pause;
+                kind = TimbreCommandKind.Pause;
                 return true;
             case "@resume":
-                kind = TimbreActionKind.Resume;
+                kind = TimbreCommandKind.Resume;
                 return true;
             case "@seek":
-                kind = TimbreActionKind.Seek;
+                kind = TimbreCommandKind.Seek;
                 return true;
             default:
                 kind = default;
@@ -190,15 +234,28 @@ internal static class TimbreMarkupSyntax
         }
     }
 
-    // Parses the direct text of a <TimbreClip> element. `text` is the element
-    // content with child elements and comments blanked; `offset` is its
-    // absolute document position.
+    public static string KeywordText(TimbreCommandKind kind) => kind switch
+    {
+        TimbreCommandKind.Play => "@play",
+        TimbreCommandKind.Stop => "@stop",
+        TimbreCommandKind.Pause => "@pause",
+        TimbreCommandKind.Resume => "@resume",
+        _ => "@seek"
+    };
+
+    public static string SoundPathMessage(string keyword) =>
+        keyword + " requires a sound path: '$self.timbre.Sound', '$owner.timbre.Sound' or '$Name.timbre.Sound'.";
+
+    // Parses the content of a <TimbreClip> element or of an inline
+    // `@timbre { … }` block. `text` has child elements and comments blanked;
+    // `offset` is its absolute document position.
     public static TimbreClipBodySyntax ParseClipBody(string text, int offset)
     {
         Scanner scanner = new(text, offset);
         List<object> statements = new();
         List<TimbreDirectiveReference> foreign = new();
         List<EmbeddedDiagnostic> diagnostics = new();
+        TextSpan? legacy = null;
         while (true)
         {
             scanner.SkipWhitespace();
@@ -212,42 +269,59 @@ internal static class TimbreMarkupSyntax
             {
                 string keyword = scanner.ReadDirectiveKeyword();
                 TextSpan keywordSpan = scanner.Span(start, keyword.Length);
-                if (keyword == "@parameter")
+                switch (keyword)
                 {
-                    if (ParseParameter(scanner, keywordSpan, diagnostics) is TimbreParameterSyntax parameter)
-                    {
-                        statements.Add(parameter);
-                    }
-                }
-                else if (keyword == "@modifier")
-                {
-                    if (ParseModifier(scanner, keywordSpan, diagnostics) is TimbreModifierSyntax modifier)
-                    {
-                        statements.Add(modifier);
-                    }
-                }
-                else
-                {
-                    foreign.Add(new TimbreDirectiveReference(keyword, keywordSpan));
-                    scanner.SkipStatement();
+                    case "@parameter":
+                        if (ParseParameter(scanner, keywordSpan, diagnostics) is TimbreParameterSyntax parameter)
+                        {
+                            statements.Add(parameter);
+                        }
+
+                        break;
+                    case "@sound":
+                        if (ParseSound(scanner, keywordSpan, foreign, diagnostics) is TimbreSoundSyntax sound)
+                        {
+                            statements.Add(sound);
+                        }
+
+                        break;
+                    case "@modifier":
+                        legacy ??= keywordSpan;
+                        _ = ParseModifier(scanner, keywordSpan, new List<EmbeddedDiagnostic>());
+                        break;
+                    default:
+                        foreign.Add(new TimbreDirectiveReference(keyword, keywordSpan));
+                        scanner.SkipStatement();
+                        break;
                 }
 
                 continue;
             }
 
-            if (ParseAssignment(scanner, diagnostics, "TimbreClip property assignment") is TimbreValueSyntax assignment)
+            if (scanner.Peek == '}')
             {
-                statements.Add(assignment);
+                diagnostics.Add(new EmbeddedDiagnostic(SyntaxId, "Unexpected closing '}'.", scanner.Span(start, 1)));
+                scanner.Advance();
+                continue;
+            }
+
+            if (ParseAssignment(scanner, new List<EmbeddedDiagnostic>(), "TimbreClip property assignment") is TimbreValueSyntax assignment)
+            {
+                legacy ??= assignment.NameSpan;
+            }
+            else
+            {
+                legacy ??= scanner.Span(start, Math.Max(1, scanner.Position - start));
             }
         }
 
-        return new TimbreClipBodySyntax(statements, foreign, diagnostics);
+        return new TimbreClipBodySyntax(statements, legacy, foreign, diagnostics);
     }
 
-    // Parses one action statement. `text` starts right after the keyword and
-    // ends before the terminating ';' (which the directive parser checks).
-    public static TimbreActionSyntax? ParseAction(
-        TimbreActionKind kind,
+    // Parses one command. `text` starts right after the keyword and ends
+    // before the terminating ';' (which the directive parser checks).
+    public static TimbreCommandSyntax? ParseCommand(
+        TimbreCommandKind kind,
         TextSpan keywordSpan,
         string text,
         int offset,
@@ -255,46 +329,60 @@ internal static class TimbreMarkupSyntax
     {
         Scanner scanner = new(text, offset);
         scanner.SkipWhitespace();
-        TextSpan statementSpan = scanner.Span(scanner.Position, Math.Max(1, text.TrimEnd().Length - scanner.Position));
-        if (kind != TimbreActionKind.Play)
+        int trimmedEnd = text.TrimEnd().Length;
+        TextSpan statementSpan = trimmedEnd > scanner.Position
+            ? scanner.Span(scanner.Position, trimmedEnd - scanner.Position)
+            : keywordSpan;
+        string keyword = KeywordText(kind);
+        if (!TryReadSoundPath(scanner, out string owner, out TextSpan ownerSpan, out string sound, out TextSpan soundSpan))
         {
-            int handleStart = scanner.Position;
-            string handle = scanner.ReadIdentifier();
-            TextSpan handleSpan = scanner.Span(handleStart, handle.Length);
-            string? seekValue = null;
-            TextSpan seekSpan = default;
-            if (kind == TimbreActionKind.Seek)
-            {
-                scanner.SkipWhitespace();
-                int toStart = scanner.Position;
-                string to = scanner.ReadIdentifier();
-                scanner.SkipWhitespace();
-                int valueStart = scanner.Position;
-                seekValue = scanner.ReadToEnd().Trim();
-                seekSpan = scanner.Span(valueStart, Math.Max(1, seekValue.Length));
-                if (handle.Length == 0 || to != "to" || seekValue.Length == 0 || seekValue.IndexOf(' ') >= 0)
-                {
-                    diagnostics.Add(new EmbeddedDiagnostic(SyntaxId, "@seek requires 'Handle to <duration>'.", toStart > handleStart ? statementSpan : keywordSpan));
-                    return null;
-                }
-            }
-            else
-            {
-                scanner.SkipWhitespace();
-                if (handle.Length == 0 || !scanner.AtEnd)
-                {
-                    diagnostics.Add(new EmbeddedDiagnostic(SyntaxId, KeywordText(kind) + " requires one declared handle name.", statementSpan));
-                    return null;
-                }
-            }
-
-            return new TimbreActionSyntax(kind, keywordSpan, null, default, Array.Empty<TimbreValueSyntax>(), handle, handleSpan, seekValue, seekSpan);
+            diagnostics.Add(new EmbeddedDiagnostic(SyntaxId, SoundPathMessage(keyword), statementSpan));
+            return null;
         }
 
-        const string playShape = "@timbre requires '$TimbreClip' followed by optional named arguments and an optional 'as Handle'.";
+        scanner.SkipWhitespace();
+        string? seekValue = null;
+        TextSpan seekSpan = default;
+        if (kind == TimbreCommandKind.Seek)
+        {
+            string to = scanner.ReadIdentifier();
+            scanner.SkipWhitespace();
+            int valueStart = scanner.Position;
+            seekValue = scanner.ReadToEnd().Trim();
+            seekSpan = scanner.Span(valueStart, Math.Max(1, seekValue.Length));
+            if (to != "to" || seekValue.Length == 0 || seekValue.IndexOf(' ') >= 0)
+            {
+                diagnostics.Add(new EmbeddedDiagnostic(SyntaxId, "@seek requires '$element.timbre.Sound to <duration>'.", statementSpan));
+                return null;
+            }
+        }
+        else if (!scanner.AtEnd)
+        {
+            diagnostics.Add(new EmbeddedDiagnostic(SyntaxId, SoundPathMessage(keyword), statementSpan));
+            return null;
+        }
+
+        return new TimbreCommandSyntax(kind, keywordSpan, owner, ownerSpan, sound, soundSpan, seekValue, seekSpan);
+    }
+
+    // Parses `$Clip` with optional `(Name = value, …)`. `text` starts right
+    // after `@timbre` and ends before the terminating ';'.
+    public static TimbreClipReferenceSyntax? ParseClipReference(
+        TextSpan keywordSpan,
+        string text,
+        int offset,
+        ICollection<EmbeddedDiagnostic> diagnostics)
+    {
+        const string shape = "@timbre requires '$TimbreClip' with optional '(Parameter = value, …)', or an inline '{ … }' block.";
+        Scanner scanner = new(text, offset);
+        scanner.SkipWhitespace();
+        int trimmedEnd = text.TrimEnd().Length;
+        TextSpan statementSpan = trimmedEnd > scanner.Position
+            ? scanner.Span(scanner.Position, trimmedEnd - scanner.Position)
+            : keywordSpan;
         if (scanner.AtEnd || scanner.Peek != '$')
         {
-            diagnostics.Add(new EmbeddedDiagnostic(SyntaxId, playShape, statementSpan));
+            diagnostics.Add(new EmbeddedDiagnostic(SyntaxId, shape, statementSpan));
             return null;
         }
 
@@ -304,7 +392,7 @@ internal static class TimbreMarkupSyntax
         TextSpan clipSpan = scanner.Span(dollar, clipName.Length + 1);
         if (clipName.Length == 0)
         {
-            diagnostics.Add(new EmbeddedDiagnostic(SyntaxId, playShape, statementSpan));
+            diagnostics.Add(new EmbeddedDiagnostic(SyntaxId, shape, statementSpan));
             return null;
         }
 
@@ -318,7 +406,7 @@ internal static class TimbreMarkupSyntax
                 scanner.SkipWhitespace();
                 if (scanner.AtEnd)
                 {
-                    diagnostics.Add(new EmbeddedDiagnostic(SyntaxId, playShape, statementSpan));
+                    diagnostics.Add(new EmbeddedDiagnostic(SyntaxId, shape, statementSpan));
                     return null;
                 }
 
@@ -361,42 +449,122 @@ internal static class TimbreMarkupSyntax
                     break;
                 }
 
-                diagnostics.Add(new EmbeddedDiagnostic(SyntaxId, playShape, statementSpan));
+                diagnostics.Add(new EmbeddedDiagnostic(SyntaxId, shape, statementSpan));
                 return null;
             }
         }
 
-        string? handleName = null;
-        TextSpan handleNameSpan = default;
         scanner.SkipWhitespace();
         if (!scanner.AtEnd)
         {
-            string word = scanner.ReadIdentifier();
-            scanner.SkipWhitespace();
-            int handleStart = scanner.Position;
-            string handle = scanner.ReadIdentifier();
-            scanner.SkipWhitespace();
-            if (word != "as" || handle.Length == 0 || !scanner.AtEnd)
-            {
-                diagnostics.Add(new EmbeddedDiagnostic(SyntaxId, playShape, statementSpan));
-                return null;
-            }
-
-            handleName = handle;
-            handleNameSpan = scanner.Span(handleStart, handle.Length);
+            diagnostics.Add(new EmbeddedDiagnostic(SyntaxId, shape, statementSpan));
+            return null;
         }
 
-        return new TimbreActionSyntax(kind, keywordSpan, clipName, clipSpan, arguments, handleName, handleNameSpan, null, default);
+        return new TimbreClipReferenceSyntax(clipName, clipSpan, arguments);
     }
 
-    public static string KeywordText(TimbreActionKind kind) => kind switch
+    // `$Owner.timbre.Sound`, nothing else.
+    private static bool TryReadSoundPath(Scanner scanner, out string owner, out TextSpan ownerSpan, out string sound, out TextSpan soundSpan)
     {
-        TimbreActionKind.Play => "@timbre",
-        TimbreActionKind.Cancel => "@cancel",
-        TimbreActionKind.Pause => "@pause",
-        TimbreActionKind.Resume => "@resume",
-        _ => "@seek"
-    };
+        owner = sound = string.Empty;
+        ownerSpan = soundSpan = default;
+        if (scanner.AtEnd || scanner.Peek != '$')
+        {
+            return false;
+        }
+
+        int dollar = scanner.Position;
+        scanner.Advance();
+        owner = scanner.ReadIdentifier();
+        ownerSpan = scanner.Span(dollar, owner.Length + 1);
+        if (owner.Length == 0 || scanner.AtEnd || scanner.Peek != '.')
+        {
+            return false;
+        }
+
+        scanner.Advance();
+        if (scanner.ReadIdentifier() != "timbre" || scanner.AtEnd || scanner.Peek != '.')
+        {
+            return false;
+        }
+
+        scanner.Advance();
+        int soundStart = scanner.Position;
+        sound = scanner.ReadIdentifier();
+        soundSpan = scanner.Span(soundStart, sound.Length);
+        return sound.Length > 0 && (scanner.AtEnd || char.IsWhiteSpace(scanner.Peek));
+    }
+
+    private static TimbreSoundSyntax? ParseSound(
+        Scanner scanner,
+        TextSpan keywordSpan,
+        ICollection<TimbreDirectiveReference> foreign,
+        ICollection<EmbeddedDiagnostic> diagnostics)
+    {
+        scanner.SkipWhitespace();
+        int nameStart = scanner.Position;
+        string name = scanner.ReadIdentifier();
+        TextSpan nameSpan = scanner.Span(nameStart, name.Length);
+        scanner.SkipWhitespace();
+        if (name.Length == 0 || scanner.AtEnd || scanner.Peek != '{')
+        {
+            diagnostics.Add(new EmbeddedDiagnostic(SyntaxId, "@sound requires 'Name { … }'.", keywordSpan));
+            scanner.SkipStatement();
+            return null;
+        }
+
+        scanner.Advance();
+        List<object> statements = new();
+        while (true)
+        {
+            scanner.SkipWhitespace();
+            if (scanner.AtEnd)
+            {
+                diagnostics.Add(new EmbeddedDiagnostic(SyntaxId, "@sound block is missing its closing '}'.", keywordSpan));
+                break;
+            }
+
+            if (scanner.Peek == '}')
+            {
+                scanner.Advance();
+                break;
+            }
+
+            int start = scanner.Position;
+            if (scanner.Peek == '@')
+            {
+                string keyword = scanner.ReadDirectiveKeyword();
+                TextSpan span = scanner.Span(start, keyword.Length);
+                if (keyword == "@modifier")
+                {
+                    if (ParseModifier(scanner, span, diagnostics) is TimbreModifierSyntax modifier)
+                    {
+                        statements.Add(modifier);
+                    }
+                }
+                else if (keyword == "@parameter")
+                {
+                    diagnostics.Add(new EmbeddedDiagnostic(SyntaxId, "@parameter is declared at TimbreClip level, not inside @sound.", span));
+                    scanner.SkipStatement();
+                }
+                else
+                {
+                    foreign.Add(new TimbreDirectiveReference(keyword, span));
+                    scanner.SkipStatement();
+                }
+
+                continue;
+            }
+
+            if (ParseAssignment(scanner, diagnostics, "@sound property assignment") is TimbreValueSyntax assignment)
+            {
+                statements.Add(assignment);
+            }
+        }
+
+        return new TimbreSoundSyntax(keywordSpan, name, nameSpan, statements);
+    }
 
     private static TimbreParameterSyntax? ParseParameter(Scanner scanner, TextSpan keywordSpan, ICollection<EmbeddedDiagnostic> diagnostics)
     {

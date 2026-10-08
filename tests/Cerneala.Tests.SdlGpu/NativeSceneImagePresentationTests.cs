@@ -47,7 +47,7 @@ public sealed class NativeSceneImagePresentationTests
             Collider = new BoxCollider2D { Width = 16, Height = 16, IsSimulated = true }
         };
         using IDisposable effect = GeneratedMarkup.AttachPrism(npc,
-            () => new PrismInstance(new PrismCompositionDefinition("cold-atlas",
+            () => new PrismInstance(new PrismClipDefinition("cold-atlas",
                 [new PrismLayerDefinition(new PrismNodeId(1), "content",
                     filters: [new PrismFilterDefinition(PrismFilterId.Invert)],
                     mask: new(new PrismResourceId("Atlas")))])));

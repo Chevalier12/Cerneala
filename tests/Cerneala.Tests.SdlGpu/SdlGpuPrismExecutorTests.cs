@@ -66,7 +66,7 @@ public sealed class SdlGpuPrismExecutorTests
         DrawCommandList commands = new();
         if (nested)
         {
-            PrismInstance parent = new(new PrismCompositionDefinition("Parent of fallback",
+            PrismInstance parent = new(new PrismClipDefinition("Parent of fallback",
                 [new PrismLayerDefinition(new(1), "Parent", filters: [new(PrismFilterId.Invert)])]));
             commands.Add(DrawCommand.BeginPrism(new(parent, new(95200), new(0, 0, 48, 32),
                 Matrix3x2.Identity, 1, 1)));
@@ -467,7 +467,7 @@ public sealed class SdlGpuPrismExecutorTests
         using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
         using SdlGpuWindowGraphicsSession session = Assert.IsType<SdlGpuWindowGraphicsSession>(
             factory.Create(new SdlWindowSurface(window, api.GetWindowId(window)), 256, 256, coordinateScale: 1));
-        PrismInstance parent = new(new PrismCompositionDefinition("Parent",
+        PrismInstance parent = new(new PrismClipDefinition("Parent",
             [new PrismLayerDefinition(new(1), "Blur", filters: [new(PrismFilterId.Blur)])]));
         DrawRect parentBounds = new(0, 0, 256, 256);
         DrawCommandList commands = new();
@@ -633,7 +633,7 @@ public sealed class SdlGpuPrismExecutorTests
                 new PrismStyleDefinition(PrismStyleId.OuterGlow)
             ]);
         PrismInstance instance = new(
-            new PrismCompositionDefinition("SharedDistanceField", [layer]));
+            new PrismClipDefinition("SharedDistanceField", [layer]));
         DrawRect bounds = new(0, 0, 48, 32);
         DrawCommandList commands = new();
         commands.Add(DrawCommand.BeginPrism(new PrismDrawScope(
@@ -684,7 +684,7 @@ public sealed class SdlGpuPrismExecutorTests
             "MotionBlur",
             filters: [new PrismFilterDefinition(PrismFilterId.MotionBlur)]);
         PrismInstance instance = new(
-            new PrismCompositionDefinition("AnimatedMotionBlur", [layer]));
+            new PrismClipDefinition("AnimatedMotionBlur", [layer]));
         PrismFilterState motionBlur = instance
             .GetLayerState(new PrismNodeId(1))
             .Filters[0];
@@ -749,7 +749,7 @@ public sealed class SdlGpuPrismExecutorTests
             "MotionBlur",
             filters: [new PrismFilterDefinition(PrismFilterId.MotionBlur)]);
         PrismInstance instance = new(
-            new PrismCompositionDefinition("RetainedMotionBlur", [layer]));
+            new PrismClipDefinition("RetainedMotionBlur", [layer]));
         PrismFilterState motionBlur = instance.GetLayerState(layer.Id).Filters[0];
         PrismCatalogParameterInfo distance = PrismCatalog
             .GetFilter(PrismFilterId.MotionBlur)
@@ -891,7 +891,7 @@ public sealed class SdlGpuPrismExecutorTests
         nint window = api.CreateWindow("prism-transform-sampling", 48, 32, SdlWindowOptions.Hidden);
         using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
         using SdlGpuWindowGraphicsSession session = CreateSession(factory, api, window);
-        PrismInstance instance = new(new PrismCompositionDefinition("Minify",
+        PrismInstance instance = new(new PrismClipDefinition("Minify",
             [new PrismLayerDefinition(new(1), "Transform", filters: [new(PrismFilterId.Transform)])]));
         instance.GetLayerState(new(1)).Filters.Single().SetValue(
             PrismCatalog.GetFilter(PrismFilterId.Transform).Parameters.Single(parameter => parameter.Name == "Scale"),
@@ -1281,7 +1281,7 @@ public sealed class SdlGpuPrismExecutorTests
                 operation.Symbol,
                 styles: [new PrismStyleDefinition((PrismStyleId)operation.StableId)],
                 blendMode: blendMode);
-        PrismInstance instance = new(new PrismCompositionDefinition(operation.Symbol, [layer]));
+        PrismInstance instance = new(new PrismClipDefinition(operation.Symbol, [layer]));
         Vector2 drawOrigin = origin ?? Vector2.Zero;
         DrawRect bounds = extent is float size
             ? new DrawRect(drawOrigin.X, drawOrigin.Y, size, size)
@@ -1305,7 +1305,7 @@ public sealed class SdlGpuPrismExecutorTests
     private static DrawCommandList CreateNestedPrismCommands(Vector2 origin)
     {
         DrawRect bounds = new(origin.X, origin.Y, 48, 32);
-        PrismInstance outer = new(new PrismCompositionDefinition(
+        PrismInstance outer = new(new PrismClipDefinition(
             "MotionBlur",
             [
                 new PrismLayerDefinition(
@@ -1313,7 +1313,7 @@ public sealed class SdlGpuPrismExecutorTests
                     "MotionBlur",
                     filters: [new PrismFilterDefinition(PrismFilterId.MotionBlur)])
             ]));
-        PrismInstance inner = new(new PrismCompositionDefinition(
+        PrismInstance inner = new(new PrismClipDefinition(
             "OuterGlow",
             [
                 new PrismLayerDefinition(

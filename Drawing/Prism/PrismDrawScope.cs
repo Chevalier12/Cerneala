@@ -100,7 +100,7 @@ public readonly record struct PrismDrawScope
 
     public PrismInstance Instance { get; }
 
-    public PrismCompositionDefinition Definition => Instance.Definition;
+    public PrismClipDefinition Definition => Instance.Definition;
 
     public PrismCacheOwnerToken CacheOwnerToken { get; }
 

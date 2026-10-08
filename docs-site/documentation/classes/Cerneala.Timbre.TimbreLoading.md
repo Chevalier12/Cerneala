@@ -19,7 +19,7 @@ public enum TimbreLoading
 ```csharp
 using Cerneala.Timbre;
 
-var music = new TimbreClip("audio/music.ogg", loop: true, loading: TimbreLoading.Streaming);
+var music = new TimbreSound("audio/music.ogg", loop: true, loading: TimbreLoading.Streaming);
 ```
 
 ## Remarks

@@ -190,7 +190,7 @@ public sealed class EmbeddedSyntaxTests
     public void PrismModelValuesPreserveClassificationTextAndAbsoluteSpan(string value, int expectedKind)
     {
         const string prefix = "Value = ";
-        EmbeddedParseResult<PrismCompositionModelSyntax> parsed =
+        EmbeddedParseResult<PrismClipModelSyntax> parsed =
             PrismSyntaxParser.ParseComposition(prefix + value + ";", absoluteOffset: 17);
 
         Assert.Empty(parsed.Diagnostics);

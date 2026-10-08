@@ -35,10 +35,10 @@ public sealed class PrismRetainedCacheKeyTests
     [Fact]
     public void FingerprintsAreDeterministicAndIgnoreDiagnosticNames()
     {
-        PrismCompositionDefinition first = PrismTestData.Composition(
+        PrismClipDefinition first = PrismTestData.Composition(
             "First composition name",
             PrismTestData.Layer(1, "First layer name"));
-        PrismCompositionDefinition second = PrismTestData.Composition(
+        PrismClipDefinition second = PrismTestData.Composition(
             "Completely different composition name",
             PrismTestData.Layer(1, "Completely different layer name"));
 
@@ -307,7 +307,7 @@ public sealed class PrismRetainedCacheKeyTests
     public void ResourceIdentityAndVersionAreBothRequiredAndFingerprinted()
     {
         PrismResourceId resourceId = new(41);
-        PrismCompositionDefinition definition =
+        PrismClipDefinition definition =
             PrismTestData.Composition(
                 "ResourceIdentity",
                 PrismTestData.Layer(
@@ -389,7 +389,7 @@ public sealed class PrismRetainedCacheKeyTests
     [Fact]
     public void BackdropRequiresSourceIdentityAndTracksSourceVersionAndLowerUi()
     {
-        PrismCompositionDefinition definition =
+        PrismClipDefinition definition =
             PrismTestData.Composition(
                 "BackdropIdentity",
                 PrismTestData.Layer(1, "Content"),
@@ -565,7 +565,7 @@ public sealed class PrismRetainedCacheKeyTests
     [Fact]
     public void ProductionIdentityAllocatorsNeverReuseTokens()
     {
-        PrismCompositionDefinition definition =
+        PrismClipDefinition definition =
             PrismTestData.Composition(
                 "OwnerTokens",
                 PrismTestData.Layer(1, "Layer"));
@@ -614,7 +614,7 @@ public sealed class PrismRetainedCacheKeyTests
     }
 
     private static PrismRetainedCacheKey BackdropKey(
-        PrismCompositionDefinition definition,
+        PrismClipDefinition definition,
         PrismBackdropSourceToken sourceToken,
         BackdropFrameMetadata metadata,
         long lowerUiVersion)
@@ -645,7 +645,7 @@ public sealed class PrismRetainedCacheKeyTests
             contentVersion);
 
     private static PrismGraphExecutionPlan BuildPlan(
-        PrismCompositionDefinition definition,
+        PrismClipDefinition definition,
         long ownerToken,
         PrismDrawResources? resources = null,
         Action<PrismInstance>? configure = null)
@@ -661,7 +661,7 @@ public sealed class PrismRetainedCacheKeyTests
     }
 
     private static PrismDrawScope Scope(
-        PrismCompositionDefinition definition,
+        PrismClipDefinition definition,
         long ownerToken,
         PrismDrawResources? resources = null,
         long lowerUiVersion = 0)

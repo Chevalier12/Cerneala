@@ -8,7 +8,7 @@ Assembly/Project: `Cerneala`
 
 Source: `Timbre/TimbrePlayback.cs`
 
-One started instance of a [TimbreClip](Cerneala.Timbre.TimbreClip.md), with a stable identity, its own values, transport, and final result.
+One started instance of a [TimbreSound](Cerneala.Timbre.TimbreSound.md), with a stable identity, its own values, transport, and final result.
 
 ```csharp
 public sealed class TimbrePlayback
@@ -60,7 +60,7 @@ Members are thread-safe.
 | Name | Type | Description |
 | --- | --- | --- |
 | `VolumeParameter` (static) | `TimbreParameter<float>` | Descriptor of the intrinsic Volume for `Set` and audio Motion. |
-| `Clip` | `TimbreClip` | The definition captured at start. |
+| `Sound` | `TimbreSound` | The sound captured at start. |
 | `State` | `TimbrePlaybackState` | Current state. |
 | `Volume` | `float` | Linear post-chain gain, 0–1. |
 | `Loop` | `bool` | Loop option captured at start. |

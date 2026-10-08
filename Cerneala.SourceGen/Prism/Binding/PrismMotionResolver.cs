@@ -92,6 +92,7 @@ public sealed partial class UiMarkupGenerator
 
         private bool TryResolvePrismMotionTarget(
             MarkupElement applicationElement,
+            AspectResource aspect,
             MotionAssignmentSyntax assignment,
             out ResolvedMotionTarget? target,
             out PropertySpec? property)
@@ -111,6 +112,7 @@ public sealed partial class UiMarkupGenerator
 
             if (!TryResolvePrismMotionOwner(
                     applicationElement,
+                    aspect,
                     assignment,
                     segments[0],
                     out ResolvedMotionTargetKind targetKind,
@@ -229,6 +231,7 @@ public sealed partial class UiMarkupGenerator
 
         private bool TryResolvePrismMotionOwner(
             MarkupElement applicationElement,
+            AspectResource aspect,
             MotionAssignmentSyntax assignment,
             string ownerSegment,
             out ResolvedMotionTargetKind targetKind,
@@ -249,6 +252,34 @@ public sealed partial class UiMarkupGenerator
                     PrismMotionSegmentLocation(assignment, 0),
                     "A Prism Motion path must start with $self, $owner or a named element.");
                 return false;
+            }
+
+            // `$self.prism` of an Aspect with its own @prism: the effect its
+            // behavior attaches to `target`.
+            if (ownerName == "self" && aspect.Prism is not null && boundPrismApplications.ContainsKey(aspect.Source))
+            {
+                targetElement = aspect.Source;
+                elementCode = "target";
+                return true;
+            }
+
+            // A resource Aspect compiled once: the composition comes from its
+            // markup application sites and is checked again at runtime.
+            if ((ownerName == "self" || (ownerName == "owner" && templateEmissionContexts.Count == 0)) &&
+                IsAspectBehaviorTarget(applicationElement))
+            {
+                bool owner = ownerName == "owner";
+                if (!TryResolvePrismElementFromSites(aspect, owner, assignment, out MarkupElement? siteElement, out string? definitionName))
+                {
+                    return false;
+                }
+
+                targetKind = owner ? ResolvedMotionTargetKind.Owner : ResolvedMotionTargetKind.Self;
+                targetElement = siteElement;
+                elementCode = "global::Cerneala.UI.Markup.GeneratedMarkup.RequirePrismClip(" +
+                    (owner ? "global::Cerneala.UI.Markup.GeneratedMarkup.GetTemplateOwner(target)" : "target") + ", " +
+                    Literal(definitionName!) + ")";
+                return true;
             }
 
             if (ownerName == "self")

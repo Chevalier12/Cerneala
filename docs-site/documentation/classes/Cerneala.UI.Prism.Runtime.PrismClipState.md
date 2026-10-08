@@ -1,4 +1,4 @@
-# PrismCompositionState Class
+# PrismClipState Class
 
 ## Definition
 Namespace: `Cerneala.UI.Prism.Runtime`
@@ -10,7 +10,7 @@ Source: `UI/Prism/Runtime/PrismStates.cs`
 Exposes mutable typed composition-level values for one `PrismInstance`.
 
 ```csharp
-public sealed class PrismCompositionState
+public sealed class PrismClipState
 ```
 
 ## Properties

@@ -277,6 +277,15 @@
             }
         </MotionClip>
         <Aspect Name="Director" TargetType="Grid">
+            @prism
+            {
+                @layer Crt
+                {
+                    @parameter Split: float = 1.4;
+                    @filter ChromaticAberration { Amount = Split; }
+                    @filter Scanlines { Frequency = 450; Thickness = 1; LineOpacity = 0.14; }
+                }
+            }
             @handle Playback;
             @when $self.Visibility
             {
@@ -294,15 +303,6 @@
         Width="1600"
         Height="900"
         ClipToBounds="True">
-        @prism
-        {
-            @layer Crt
-            {
-                @parameter Split: float = 1.4;
-                @filter ChromaticAberration { Amount = Split; }
-                @filter Scanlines { Frequency = 450; Thickness = 1; LineOpacity = 0.14; }
-            }
-        }
 
         <!-- The city -->
         <Grid Name="City" Aspect="$CityLife">

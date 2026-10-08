@@ -180,7 +180,7 @@ public sealed class PrismImage : IDrawImage, IDrawImageInvalidationSource, IDisp
                 .Where(operation => !operation.IsFilter)
                 .Select(operation => operation.CreateStyleDefinition()!)
                 .ToArray();
-            PrismCompositionDefinition definition = new(
+            PrismClipDefinition definition = new(
                 "PrismImage",
                 [new PrismLayerDefinition(
                     new PrismNodeId(LayerNodeId),

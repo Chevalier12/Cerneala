@@ -20,7 +20,7 @@ public sealed class PrismGraphOptimizerTests
     public void OptimizerIsSeparateNonMutatingAndRemovesOnlyProvenNoOps()
     {
         PrismLayerDefinition layer = Layer(1, "Content");
-        PrismCompositionDefinition definition =
+        PrismClipDefinition definition =
             PrismTestData.Composition("NoOps", layer);
         (PrismGraph raw, PrismDrawScope scope) = BuildGraph(definition);
         PrismGraphNodeId[] rawIds = raw.Nodes.Select(node => node.Id).ToArray();
@@ -50,7 +50,7 @@ public sealed class PrismGraphOptimizerTests
     [Fact]
     public void InvisibleCompositionRetainsTheControlMaster()
     {
-        PrismCompositionDefinition definition = PrismTestData.Composition(
+        PrismClipDefinition definition = PrismTestData.Composition(
             "Hidden",
             Layer(1, "HiddenLayer", visible: false));
         (PrismGraph raw, _) = BuildGraph(definition);
@@ -76,7 +76,7 @@ public sealed class PrismGraphOptimizerTests
     [Fact]
     public void CacheabilityIsExplicitConservativeAndPropagated()
     {
-        PrismCompositionDefinition plainDefinition = PrismTestData.Composition(
+        PrismClipDefinition plainDefinition = PrismTestData.Composition(
             "Plain",
             Layer(1, "Content"));
         PrismGraphExecutionPlan plain = new PrismGraphOptimizer().Optimize(
@@ -109,7 +109,7 @@ public sealed class PrismGraphOptimizerTests
                 dependency => dependency.Kind == kind);
         }
 
-        PrismCompositionDefinition maskedDefinition = PrismTestData.Composition(
+        PrismClipDefinition maskedDefinition = PrismTestData.Composition(
             "Masked",
             Layer(
                 2,
@@ -135,7 +135,7 @@ public sealed class PrismGraphOptimizerTests
             maskedOutput.CacheDependencies,
             dependency => dependency.Kind == PrismGraphDependencyKind.Resource);
 
-        PrismCompositionDefinition backdropDefinition = PrismTestData.Composition(
+        PrismClipDefinition backdropDefinition = PrismTestData.Composition(
             "Backdrop",
             Layer(3, "Content"),
             new PrismLayerDefinition(
@@ -405,7 +405,7 @@ public sealed class PrismGraphOptimizerTests
             new PrismNodeId(1),
             "LogicalBlur",
             filters: [new PrismFilterDefinition(PrismFilterId.Blur)]);
-        PrismCompositionDefinition definition =
+        PrismClipDefinition definition =
             PrismTestData.Composition("LogicalBounds", layer);
         Matrix3x2 effectiveTransform = Matrix3x2.CreateScale(2);
         PrismDrawScope scope = PrismTestData.Scope(
@@ -677,7 +677,7 @@ public sealed class PrismGraphOptimizerTests
             filters: [new PrismFilterDefinition(PrismFilterId.Blur)],
             opacity: 0.5f,
             blendMode: PrismBlendMode.PassThrough);
-        PrismCompositionDefinition definition = PrismTestData.Composition(
+        PrismClipDefinition definition = PrismTestData.Composition(
             "Lifetime",
             Layer(
                 1,
@@ -742,13 +742,13 @@ public sealed class PrismGraphOptimizerTests
     [Fact]
     public void PeakSurfacesAcrossIndependentScopesIsMaximumRatherThanSum()
     {
-        PrismCompositionDefinition firstDefinition = PrismTestData.Composition(
+        PrismClipDefinition firstDefinition = PrismTestData.Composition(
             "First",
             new PrismLayerDefinition(
                 new PrismNodeId(1),
                 "FirstLayer",
                 filters: [new PrismFilterDefinition(PrismFilterId.Blur)]));
-        PrismCompositionDefinition secondDefinition = PrismTestData.Composition(
+        PrismClipDefinition secondDefinition = PrismTestData.Composition(
             "Second",
             Layer(
                 2,
@@ -772,10 +772,10 @@ public sealed class PrismGraphOptimizerTests
     [Fact]
     public void NestedScopeExecutesInnerFirstAndCountsAncestorCapture()
     {
-        PrismCompositionDefinition outerDefinition = PrismTestData.Composition(
+        PrismClipDefinition outerDefinition = PrismTestData.Composition(
             "Outer",
             Layer(1, "OuterLayer"));
-        PrismCompositionDefinition innerDefinition = PrismTestData.Composition(
+        PrismClipDefinition innerDefinition = PrismTestData.Composition(
             "Inner",
             Layer(
                 2,
@@ -857,14 +857,14 @@ public sealed class PrismGraphOptimizerTests
     [Fact]
     public void OptimizationAndLifetimeAreIndependentOfCollectionOrder()
     {
-        PrismCompositionDefinition firstDefinition = PrismTestData.Composition(
+        PrismClipDefinition firstDefinition = PrismTestData.Composition(
             "First",
             new PrismLayerDefinition(
                 new PrismNodeId(1),
                 "Masked",
                 filters: [new PrismFilterDefinition(PrismFilterId.Blur)],
                 mask: new PrismMaskDefinition(new PrismResourceId(61))));
-        PrismCompositionDefinition secondDefinition = PrismTestData.Composition(
+        PrismClipDefinition secondDefinition = PrismTestData.Composition(
             "Second",
             Layer(2, "Content"));
         PrismGraph raw = BuildGraph(
@@ -890,7 +890,7 @@ public sealed class PrismGraphOptimizerTests
     [Fact]
     public void DifferentialRawAndOptimizedGraphsPreservePhotoshopSemantics()
     {
-        PrismCompositionDefinition[] definitions =
+        PrismClipDefinition[] definitions =
         [
             PrismTestData.Composition(
                 "Alpha",
@@ -946,7 +946,7 @@ public sealed class PrismGraphOptimizerTests
                 Layer(22, "Background", opacity: 0.62f, fill: 0.82f))
         ];
 
-        foreach (PrismCompositionDefinition definition in definitions)
+        foreach (PrismClipDefinition definition in definitions)
         {
             PrismGraph raw = BuildGraph(definition).Graph;
             PrismGraph optimized =
@@ -1120,7 +1120,7 @@ public sealed class PrismGraphOptimizerTests
     }
 
     private static PrismGraphExecutionPlan OptimizeConfigured(
-        PrismCompositionDefinition definition,
+        PrismClipDefinition definition,
         Action<PrismInstance> configure,
         DrawRect bounds)
     {
@@ -1194,7 +1194,7 @@ public sealed class PrismGraphOptimizerTests
     }
 
     private static (PrismGraph Graph, PrismDrawScope Scope) BuildGraph(
-        PrismCompositionDefinition definition,
+        PrismClipDefinition definition,
         Action<PrismInstance>? configure = null,
         DrawRect bounds = default)
     {

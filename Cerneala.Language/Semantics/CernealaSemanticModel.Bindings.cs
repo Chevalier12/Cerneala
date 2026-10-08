@@ -810,7 +810,20 @@ internal sealed partial class CernealaSemanticModel
         }
     }
 
+    // Direct text of an element with child elements blanked; in an Aspect body
+    // the @timbre/@prism attachments are blanked too (see AspectAttachments).
     private (string Text, int Offset) BuildDirectTextBuffer(ElementSyntax element)
+    {
+        (string text, int offset) = BuildRawDirectTextBuffer(element);
+        if (text.Length == 0 || !IsAspectBody(element) || GetAspectAttachmentSyntax(element).Count == 0)
+        {
+            return (text, offset);
+        }
+
+        return (AspectAttachmentScanner.Blank(text, offset, GetAspectAttachmentSyntax(element)), offset);
+    }
+
+    private (string Text, int Offset) BuildRawDirectTextBuffer(ElementSyntax element)
     {
         int start = element.OpenEndToken.Span.End;
         int end = element.CloseLessThanToken.IsMissing ? element.Span.End : element.CloseLessThanToken.Span.Start;

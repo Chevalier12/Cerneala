@@ -83,6 +83,33 @@
                                     Tint="$DataContext.CurrentTint:OneWay"
                                     IsVisible="$DataContext.CurrentVisible:OneWay">
                                     <Sprite2D.Aspect>
+                                        @prism
+                                        {
+                                            @group CurrentEffects
+                                            {
+                                                BlendMode = Normal;
+
+                                                @layer StyledPiece
+                                                {
+                                                    @parameter GlowSize: float = 4;
+                                                    @style BevelEmboss { }
+                                                    @style OuterGlow
+                                                    {
+                                                        Color = $self.Tint:OneWay;
+                                                        Opacity = 0.82;
+                                                        Size = GlowSize;
+                                                    }
+                                                }
+
+                                                @filter MotionBlur
+                                                {
+                                                    Visible = $GameSurface.IsBlurActive:OneWay;
+                                                    Angle = 90;
+                                                    Distance = $GameSurface.BlurDistance:OneWay;
+                                                    Quality = Good;
+                                                }
+                                            }
+                                        }
                                         @when $self.IsVisible
                                         {
                                             @if $self.IsVisible == true
@@ -101,33 +128,6 @@
                                             }
                                         }
                                     </Sprite2D.Aspect>
-                                    @prism
-                                    {
-                                        @group CurrentEffects
-                                        {
-                                            BlendMode = Normal;
-
-                                            @layer StyledPiece
-                                            {
-                                                @parameter GlowSize: float = 4;
-                                                @style BevelEmboss { }
-                                                @style OuterGlow
-                                                {
-                                                    Color = $self.Tint:OneWay;
-                                                    Opacity = 0.82;
-                                                    Size = GlowSize;
-                                                }
-                                            }
-
-                                            @filter MotionBlur
-                                            {
-                                                Visible = $GameSurface.IsBlurActive:OneWay;
-                                                Angle = 90;
-                                                Distance = $GameSurface.BlurDistance:OneWay;
-                                                Quality = Good;
-                                            }
-                                        }
-                                    }
                                 </Sprite2D>
                             </Scene2D>
                         </local:TetrisGameSurface.Scene>

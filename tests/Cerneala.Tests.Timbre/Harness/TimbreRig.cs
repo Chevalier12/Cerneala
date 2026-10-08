@@ -29,7 +29,7 @@ internal sealed class TimbreRig : IDisposable
 
     public TimbreScope Scope { get; }
 
-    public static TimbreClip Clip(
+    public static TimbreSound Clip(
         DeterministicTimbreSourceFactory factory,
         TimbreLoading loading = TimbreLoading.Preload,
         bool loop = false,

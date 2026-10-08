@@ -79,34 +79,40 @@
                 <Grid ClipToBounds="True">
                     <Grid Name="Pieces">
                         <Ellipse Name="Disc" Width="180" Height="180" Fill="$BrBlackBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="36,36,0,0" Opacity="0">
-                            @prism
-                            {
-                                @layer Hard
+                            <Ellipse.Aspect>
+                                @prism
                                 {
-                                    @parameter Push: float = 0;
-                                    @style DropShadow { Color = #FFFF4A14; Opacity = 1; UseGlobalLight = false; Angle = 135; Distance = Push; Size = 0; }
+                                    @layer Hard
+                                    {
+                                        @parameter Push: float = 0;
+                                        @style DropShadow { Color = #FFFF4A14; Opacity = 1; UseGlobalLight = false; Angle = 135; Distance = Push; Size = 0; }
+                                    }
                                 }
-                            }
+                            </Ellipse.Aspect>
                         </Ellipse>
                         <Border Name="Slab" Width="150" Height="220" Background="$BrOrangeBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="270,40,0,0" Opacity="0">
-                            @prism
-                            {
-                                @layer Hard
+                            <Border.Aspect>
+                                @prism
                                 {
-                                    @parameter Push: float = 0;
-                                    @style DropShadow { Color = #FF0B0B0B; Opacity = 1; UseGlobalLight = false; Angle = 135; Distance = Push; Size = 0; }
+                                    @layer Hard
+                                    {
+                                        @parameter Push: float = 0;
+                                        @style DropShadow { Color = #FF0B0B0B; Opacity = 1; UseGlobalLight = false; Angle = 135; Distance = Push; Size = 0; }
+                                    }
                                 }
-                            }
+                            </Border.Aspect>
                         </Border>
                         <Border Name="Bar" Width="300" Height="52" Background="$BrBlueBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="36,300,0,0" Opacity="0">
-                            @prism
-                            {
-                                @layer Hard
+                            <Border.Aspect>
+                                @prism
                                 {
-                                    @parameter Push: float = 0;
-                                    @style DropShadow { Color = #FF0B0B0B; Opacity = 1; UseGlobalLight = false; Angle = 135; Distance = Push; Size = 0; }
+                                    @layer Hard
+                                    {
+                                        @parameter Push: float = 0;
+                                        @style DropShadow { Color = #FF0B0B0B; Opacity = 1; UseGlobalLight = false; Angle = 135; Distance = Push; Size = 0; }
+                                    }
                                 }
-                            }
+                            </Border.Aspect>
                         </Border>
                     </Grid>
                     <TextBlock Text="PRISM" FontFamily="Impact" FontSize="120" Foreground="$BrBlackBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="622,40,0,0" Width="300" Rotation="1.5708" RenderTransformOrigin="0,0" />
@@ -122,14 +128,16 @@
                 <StackPanel Margin="0,0,0,8" Opacity="0">
                     <Border Width="440" Height="100" BorderBrush="$BrBlackBrush" BorderThickness="3" ClipToBounds="True">
                         <Grid Name="DotArt">
-                            @prism
-                            {
-                                @layer Fx
+                            <Grid.Aspect>
+                                @prism
                                 {
-                                    @parameter Dot: float = 1;
-                                    @filter HalftonePattern { Size = Dot; Contrast = 6; }
+                                    @layer Fx
+                                    {
+                                        @parameter Dot: float = 1;
+                                        @filter HalftonePattern { Size = Dot; Contrast = 6; }
+                                    }
                                 }
-                            }
+                            </Grid.Aspect>
                             <Border Background="$BrWhiteBrush" />
                             <Ellipse Width="76" Height="76" Fill="$BrBlackBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="40,0,0,0" />
                             <Border Width="70" Height="90" Background="$BrOrangeBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="150,0,0,0" />
@@ -144,14 +152,16 @@
                 <StackPanel Margin="0,0,0,8" Opacity="0">
                     <Border Width="440" Height="100" BorderBrush="$BrBlackBrush" BorderThickness="3" ClipToBounds="True">
                         <Grid Name="CutArt">
-                            @prism
-                            {
-                                @layer Fx
+                            <Grid.Aspect>
+                                @prism
                                 {
-                                    @parameter Cutoff: float = 0.5;
-                                    @filter Threshold { Level = Cutoff; }
+                                    @layer Fx
+                                    {
+                                        @parameter Cutoff: float = 0.5;
+                                        @filter Threshold { Level = Cutoff; }
+                                    }
                                 }
-                            }
+                            </Grid.Aspect>
                             <Border Background="$BrWhiteBrush" />
                             <Ellipse Width="76" Height="76" Fill="$BrBlackBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="40,0,0,0" />
                             <Border Width="70" Height="90" Background="$BrOrangeBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="150,0,0,0" />
@@ -166,14 +176,16 @@
                 <StackPanel Margin="0,0,0,8" Opacity="0">
                     <Border Width="440" Height="100" BorderBrush="$BrBlackBrush" BorderThickness="3" ClipToBounds="True">
                         <Grid Name="CopyArt">
-                            @prism
-                            {
-                                @layer Fx
+                            <Grid.Aspect>
+                                @prism
                                 {
-                                    @parameter Dark: float = 8;
-                                    @filter Photocopy { Detail = 3; Darkness = Dark; }
+                                    @layer Fx
+                                    {
+                                        @parameter Dark: float = 8;
+                                        @filter Photocopy { Detail = 3; Darkness = Dark; }
+                                    }
                                 }
-                            }
+                            </Grid.Aspect>
                             <Border Background="$BrWhiteBrush" />
                             <Ellipse Width="76" Height="76" Fill="$BrBlackBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="40,0,0,0" />
                             <Border Width="70" Height="90" Background="$BrOrangeBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="150,0,0,0" />

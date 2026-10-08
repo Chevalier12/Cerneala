@@ -259,7 +259,7 @@ public sealed class PrismOperationalDiagnosticsTests
         WeakReference<PrismInstance> Instance)
         CaptureWithoutRetainingInstance()
     {
-        PrismCompositionDefinition definition =
+        PrismClipDefinition definition =
             PrismTestData.Composition(
                 "Lifetime",
                 PrismTestData.Layer(1, "Content"));

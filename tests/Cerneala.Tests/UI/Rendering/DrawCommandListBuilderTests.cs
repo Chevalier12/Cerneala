@@ -29,7 +29,7 @@ public sealed class DrawCommandListBuilderTests
             filters: [new PrismFilterDefinition(PrismFilterId.Blur)],
             styles: [new PrismStyleDefinition(PrismStyleId.OuterGlow)],
             mask: visible ? null : new PrismMaskDefinition(new PrismResourceId("Hidden")));
-        PrismInstance instance = new(new PrismCompositionDefinition(
+        PrismInstance instance = new(new PrismClipDefinition(
             "resource-free",
             [grouped
                 ? new PrismGroupDefinition(new PrismNodeId(2), "Group", [layer], visible: visible)
@@ -64,7 +64,7 @@ public sealed class DrawCommandListBuilderTests
         PrismLayerDefinition layer = new(new PrismNodeId(1), "Content",
             filters: [new PrismFilterDefinition(PrismFilterId.Blur)],
             mask: new PrismMaskDefinition(id));
-        PrismInstance instance = new(new PrismCompositionDefinition("resources",
+        PrismInstance instance = new(new PrismClipDefinition("resources",
             [new PrismGroupDefinition(new PrismNodeId(2), "Group", [layer],
                 mask: new PrismMaskDefinition(id))]));
         PrismGroupState group = (PrismGroupState)instance.GetNodeState(new PrismNodeId(2));
@@ -123,7 +123,7 @@ public sealed class DrawCommandListBuilderTests
         using IDisposable prismLifetime = GeneratedMarkup.AttachPrism(
             parent,
             () => new PrismInstance(
-                new PrismCompositionDefinition(
+                new PrismClipDefinition(
                     "visual-subtree",
                     [
                         new PrismLayerDefinition(

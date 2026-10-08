@@ -903,7 +903,7 @@ public sealed class SdlGpuDrawingBackendTests
         static void RecordNested(DrawCommandList destination)
         {
             DrawRect bounds = new(0, 0, 20, 16);
-            PrismCompositionDefinition definition = new("NestedSibling", [new PrismLayerDefinition(
+            PrismClipDefinition definition = new("NestedSibling", [new PrismLayerDefinition(
                 new PrismNodeId(1), "Invert", filters: [new PrismFilterDefinition(PrismFilterId.Invert)])]);
             destination.Add(DrawCommand.BeginPrism(new PrismDrawScope(new PrismInstance(definition),
                 new PrismCacheOwnerToken(501), bounds, System.Numerics.Matrix3x2.Identity, 1, 1)));

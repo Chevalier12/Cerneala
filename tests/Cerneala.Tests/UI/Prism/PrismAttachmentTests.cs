@@ -123,7 +123,7 @@ public sealed class PrismAttachmentTests
         UIRoot secondRoot = new();
         UIElement firstElement = new();
         UIElement secondElement = new();
-        PrismCompositionDefinition definition = CreateDefinition();
+        PrismClipDefinition definition = CreateDefinition();
         using IDisposable firstLifetime = GeneratedMarkup.AttachPrism(
             firstElement,
             () => new PrismInstance(definition));
@@ -322,7 +322,7 @@ public sealed class PrismAttachmentTests
             new UIRoot(motionClock: clock)
         ];
         UIElement element = new();
-        PrismCompositionDefinition definition = CreateFullStackDefinition();
+        PrismClipDefinition definition = CreateFullStackDefinition();
         FloatSource source = new(0.6f);
         List<WeakReference<PrismInstance>> instances = new(10_000);
         List<WeakReference<MotionHandle>> motionHandles = new(10_000);
@@ -432,9 +432,9 @@ public sealed class PrismAttachmentTests
         Assert.Equal(expected, invalidation.OwnerToken);
     }
 
-    private static PrismCompositionDefinition CreateDefinition(float opacity = 1f)
+    private static PrismClipDefinition CreateDefinition(float opacity = 1f)
     {
-        return new PrismCompositionDefinition(
+        return new PrismClipDefinition(
             "attachment",
             [
                 new PrismLayerDefinition(
@@ -447,10 +447,10 @@ public sealed class PrismAttachmentTests
 
     private static readonly PrismNodeId LifecycleLayerId = new(11);
 
-    private static PrismCompositionDefinition CreateFullStackDefinition()
+    private static PrismClipDefinition CreateFullStackDefinition()
     {
         PrismMaskDefinition mask = new(new PrismResourceId("LifecycleMask"));
-        return new PrismCompositionDefinition(
+        return new PrismClipDefinition(
             "full-stack-lifecycle",
             [
                 new PrismGroupDefinition(

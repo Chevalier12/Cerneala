@@ -197,14 +197,16 @@
                     <Ellipse Name="Streak" Width="1040" Height="10" Fill="$StreakBrush" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />
                     <Ellipse Name="SunGlow" Width="380" Height="380" Fill="$SunGlowBrush" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5" />
                     <Ellipse Name="SunDisc" Width="132" Height="132" Fill="$PhotosphereBrush" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
-                        @prism
-                        {
-                            @layer Light
+                        <Ellipse.Aspect>
+                            @prism
                             {
-                                @parameter Bloom: float = 24;
-                                @style OuterGlow { BlendMode = Normal; Color = #FFFFB347; Opacity = 0.9; Size = Bloom; }
+                                @layer Light
+                                {
+                                    @parameter Bloom: float = 24;
+                                    @style OuterGlow { BlendMode = Normal; Color = #FFFFB347; Opacity = 0.9; Size = Bloom; }
+                                }
                             }
-                        }
+                        </Ellipse.Aspect>
                     </Ellipse>
                     <Ellipse Width="150" Height="150" Stroke="$SelectBrush" StrokeThickness="1.4" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" IsHitTestVisible="False">
                         <Ellipse.Aspect>

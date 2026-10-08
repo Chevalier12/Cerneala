@@ -108,9 +108,9 @@ public sealed class LifecycleTests
             await File.WriteAllBytesAsync(Path.Combine(directory, "tone.wav"), "plain text, not audio"u8.ToArray());
             using TimbreRig rig = new(options => options.BaseDirectory = directory, hold: false);
 
-            TimbrePlaybackResult unsupported = await TimbreRig.CompletionAsync(rig.Scope.Play(new TimbreClip("tone.wav")));
-            TimbrePlaybackResult missing = await TimbreRig.CompletionAsync(rig.Scope.Play(new TimbreClip("missing.wav")));
-            TimbrePlaybackResult nonSeekable = await TimbreRig.CompletionAsync(rig.Scope.Play(new TimbreClip(TimbreSource.FromStream(() => new NonSeekableStream()))));
+            TimbrePlaybackResult unsupported = await TimbreRig.CompletionAsync(rig.Scope.Play(new TimbreSound("tone.wav")));
+            TimbrePlaybackResult missing = await TimbreRig.CompletionAsync(rig.Scope.Play(new TimbreSound("missing.wav")));
+            TimbrePlaybackResult nonSeekable = await TimbreRig.CompletionAsync(rig.Scope.Play(new TimbreSound(TimbreSource.FromStream(() => new NonSeekableStream()))));
 
             Assert.Equal(TimbreErrorKind.UnsupportedFormat, unsupported.Error!.Kind);
             Assert.Equal(TimbreErrorKind.SourceUnavailable, missing.Error!.Kind);
@@ -139,7 +139,7 @@ public sealed class LifecycleTests
     {
         using TimbreRig rig = new(hold: false);
         rig.Output.OpenFailure = new InvalidOperationException("device busy");
-        TimbreClip clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(4800));
+        TimbreSound clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(4800));
 
         TimbrePlaybackResult first = await TimbreRig.CompletionAsync(rig.Scope.Play(clip));
         await rig.SyncAsync();
@@ -158,7 +158,7 @@ public sealed class LifecycleTests
     public async Task DeviceLossFailsActivePlaybacksClosesTheOutputAndPlayReopens()
     {
         using TimbreRig rig = new();
-        TimbreClip clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
+        TimbreSound clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
         TimbrePlayback first = rig.Scope.Play(clip);
         TimbrePlayback second = rig.Scope.Play(clip);
         await rig.StartAsync(first, second);
@@ -183,7 +183,7 @@ public sealed class LifecycleTests
     public async Task CancelKeepsQueuedPcmAndDoesNotClearTheSharedOutput()
     {
         using TimbreRig rig = new();
-        TimbreClip clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
+        TimbreSound clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
         TimbrePlayback canceled = rig.Scope.Play(clip);
         TimbrePlayback other = rig.Scope.Play(clip, start => start.Volume = 0.5f);
         await rig.StartAsync(canceled, other);
@@ -204,7 +204,7 @@ public sealed class LifecycleTests
     public async Task ReplacementWithQueuedPcmIsolatesOldNewAndUnrelatedVoices()
     {
         using TimbreRig rig = new();
-        TimbreClip clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
+        TimbreSound clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
         TimbreHandle slot = rig.Scope.CreateHandle();
         TimbrePlayback old = rig.Scope.Play(clip, handle: slot);
         TimbrePlayback unrelated = rig.Scope.Play(clip, start => start.Volume = 0.25f);
@@ -245,7 +245,7 @@ public sealed class LifecycleTests
         using TimbreRig rig = new();
         TimbreParameter<float> declared = new("Declared", 1f);
         TimbreParameter<float> foreign = new("Declared", 1f);
-        TimbreClip clip = new(TimbreSource.FromReader(new DeterministicTimbreSourceFactory(48000).Open), parameters: [declared]);
+        TimbreSound clip = new(TimbreSource.FromReader(new DeterministicTimbreSourceFactory(48000).Open), parameters: [declared]);
         TimbrePlayback first = rig.Scope.Play(clip);
         TimbrePlayback second = rig.Scope.Play(clip);
         await rig.StartAsync(first, second);
@@ -341,7 +341,7 @@ public sealed class LifecycleTests
     public async Task TwoScopesShareTheRuntimeAndAreIsolated()
     {
         using TimbreRig rig = new();
-        TimbreClip clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
+        TimbreSound clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
         using TimbreScope windowA = rig.Runtime.CreateScope();
         using TimbreScope windowB = rig.Runtime.CreateScope();
         TimbrePlayback a = windowA.Play(clip);
@@ -363,7 +363,7 @@ public sealed class LifecycleTests
     {
         using TimbreRig rig = new();
         DeterministicTimbreSourceFactory factory = new(4800);
-        TimbreClip clip = TimbreRig.Clip(factory);
+        TimbreSound clip = TimbreRig.Clip(factory);
 
         await rig.Runtime.PrepareAsync(clip);
         Assert.Equal(1, factory.OpenCount);
@@ -393,7 +393,7 @@ public sealed class LifecycleTests
         await rig.Runtime.PrepareAsync(TimbreRig.Clip(small, TimbreLoading.Auto));
         TimbreException refused = await Assert.ThrowsAsync<TimbreException>(() => rig.Runtime.PrepareAsync(TimbreRig.Clip(tooLarge)));
         TimbrePlaybackResult refusedPlay = await TimbreRig.CompletionAsync(rig.Scope.Play(TimbreRig.Clip(tooLarge)));
-        TimbreClip autoLarge = TimbreRig.Clip(large, TimbreLoading.Auto);
+        TimbreSound autoLarge = TimbreRig.Clip(large, TimbreLoading.Auto);
         await rig.Runtime.PrepareAsync(autoLarge);
         await rig.ReadyAsync(rig.Scope.Play(autoLarge), rig.Scope.Play(autoLarge));
 
@@ -411,7 +411,7 @@ public sealed class LifecycleTests
         DeterministicTimbreSourceFactory first = new(2000);
         DeterministicTimbreSourceFactory second = new(2000);
         DeterministicTimbreSourceFactory third = new(2000);
-        TimbreClip firstClip = TimbreRig.Clip(first);
+        TimbreSound firstClip = TimbreRig.Clip(first);
 
         await rig.Runtime.PrepareAsync(firstClip);
         await rig.Runtime.PrepareAsync(TimbreRig.Clip(second)); // evicts the unpinned first payload

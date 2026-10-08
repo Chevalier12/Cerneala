@@ -2,7 +2,7 @@ using Cerneala.Timbre.Catalog;
 
 namespace Cerneala.Timbre;
 
-public sealed class TimbreClip
+public sealed class TimbreSound
 {
     private readonly TimbreParameter[] parameters;
     private readonly TimbreModifier[] modifiers;
@@ -11,7 +11,7 @@ public sealed class TimbreClip
     private readonly float[] minimums;
     private readonly float[] maximums;
 
-    public TimbreClip(
+    public TimbreSound(
         TimbreSource source,
         float volume = 1f,
         bool loop = false,

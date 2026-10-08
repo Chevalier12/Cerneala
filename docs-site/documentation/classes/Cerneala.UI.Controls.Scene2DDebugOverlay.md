@@ -33,6 +33,13 @@ Real Cerneala markup can attach presentation effects:
 ```xml
 <Scene2DDebugOverlay Flags="All" LineThickness="1">
   <Scene2DDebugOverlay.Aspect>
+    @prism
+    {
+      @layer DebugPresentation
+      {
+        @filter Blur { Radius = 1; }
+      }
+    }
     @on Loaded
     {
       @animate with Tween(100ms)
@@ -41,13 +48,6 @@ Real Cerneala markup can attach presentation effects:
       }
     }
   </Scene2DDebugOverlay.Aspect>
-  @prism
-  {
-    @layer DebugPresentation
-    {
-      @filter Blur { Radius = 1; }
-    }
-  }
 </Scene2DDebugOverlay>
 ```
 

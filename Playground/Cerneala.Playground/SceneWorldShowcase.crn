@@ -48,20 +48,20 @@
       <RenderSurface2D.Scene>
         <Scene2D Name="World" TranslateX="$DataContext.CameraX:OneWay" TranslateY="8">
           <Scene2D.Aspect>
+            @prism { @layer WorldInk { @filter Blur { Radius = 0.25; } } }
             @on Loaded { @animate with Tween(150ms) { @from { Opacity = 0.7; } @to { Opacity = 1; } } }
           </Scene2D.Aspect>
-          @prism { @layer WorldInk { @filter Blur { Radius = 0.25; } } }
           <Scene2D Name="MapGroup">
             <Scene2D.Aspect>
+              @prism { @layer MapInk { @filter Blur { Radius = 0.25; } } }
               @on Loaded { @animate with Tween(150ms) { @from { Opacity = 0.7; } @to { Opacity = 1; } } }
             </Scene2D.Aspect>
-            @prism { @layer MapInk { @filter Blur { Radius = 0.25; } } }
             <Scene2D Name="GroundLayer" />
             <Scene2D Name="BuildingsLayer">
               <Scene2D.Aspect>
+                @prism { @layer BuildingInk { @filter Blur { Radius = 2; } } }
                 @on Loaded { @animate with Tween(150ms) { @from { Opacity = 0.7; } @to { Opacity = 1; } } }
               </Scene2D.Aspect>
-              @prism { @layer BuildingInk { @filter Blur { Radius = 2; } } }
             </Scene2D>
             <Scene2D Name="DoorsLayer" />
               <Sprite2D Name="Door" Image="$WorldAtlas" X="$DataContext.DoorX:OneWay" Y="$DataContext.DoorY:OneWay"
@@ -77,9 +77,9 @@
                   </BoxCollider2D.Aspect>
                 </BoxCollider2D>
                 <Sprite2D.Aspect>
+                  @prism { @layer DoorGlow { @style OuterGlow { Size = 4; Opacity = 0.8; Color = #FFEAC777; } } }
                   @on MouseDown { @animate with Tween(180ms) { @from { Opacity = 0.65; } @to { Opacity = 1; } } }
                 </Sprite2D.Aspect>
-                @prism { @layer DoorGlow { @style OuterGlow { Size = 4; Opacity = 0.8; Color = #FFEAC777; } } }
               </Sprite2D>
           </Scene2D>
         <SceneItems2D Name="ImportedColliders" ItemsSource="$DataContext.Walls:OneWay">
@@ -99,9 +99,9 @@
                   <Scene2D TranslateX="$DataContext.X" TranslateY="$DataContext.Y">
                     <Sprite2D Image="$WorldAtlas" SourceX="$DataContext.SourceX" SourceY="$DataContext.SourceY" SourceWidth="$DataContext.SourceWidth" SourceHeight="$DataContext.SourceHeight" X="$DataContext.Destination.X" Y="$DataContext.Destination.Y" Width="$DataContext.Destination.Width" Height="$DataContext.Destination.Height" PrismInputDomain="$DataContext.PrismInputDomain">
                       <Sprite2D.Aspect>
+                        @prism { @layer NpcGlow { @style OuterGlow { Size = 1; Opacity = 0.2; Color = #FFFFC777; } } }
                         @on Loaded { @animate with Tween(150ms) { @from { Opacity = 0.4; } @to { Opacity = 1; } } }
                       </Sprite2D.Aspect>
-                      @prism { @layer NpcGlow { @style OuterGlow { Size = 1; Opacity = 0.2; Color = #FFFFC777; } } }
                       <BoxCollider2D Width="12" Height="14" CollisionLayer="2" CollisionMask="1" IsSimulated="true" />
                     </Sprite2D>
                   </Scene2D>
@@ -111,25 +111,25 @@
             <Scene2D Name="Player" Servo.Id="world-player" Focusable="true" MouseDown="OnSelectPlayer" KeyDown="OnPlayerKey"
                      TranslateX="$DataContext.PlayerX:OneWay" TranslateY="$DataContext.PlayerY:OneWay">
               <Scene2D.Aspect>
+                @prism { @layer PlayerInk { @filter Blur { Radius = 0.25; } } }
                 @on Loaded { @animate with Tween(150ms) { @from { Opacity = 0.5; } @to { Opacity = 1; } } }
               </Scene2D.Aspect>
-              @prism { @layer PlayerInk { @filter Blur { Radius = 0.25; } } }
               <Sprite2D Name="PlayerSprite" Image="$WorldAtlas" Width="$DataContext.PlayerWidth:OneWay" Height="$DataContext.PlayerHeight:OneWay"
                         PrismInputDomain="$DataContext.PlayerPrismInputDomain:OneWay"
                         Animations="$PlayerAnimations" AnimationState="$DataContext.PlayerState:OneWay">
                 <Sprite2D.Aspect>
+                  @prism { @layer PlayerGlow { @style OuterGlow { Size = 1; Opacity = 0.25; Color = #FF55C5D1; } } }
                   @on Loaded { @animate with Tween(150ms) { @from { Opacity = 0.5; } @to { Opacity = 1; } } }
                 </Sprite2D.Aspect>
-                @prism { @layer PlayerGlow { @style OuterGlow { Size = 1; Opacity = 0.25; Color = #FF55C5D1; } } }
                 <BoxCollider2D Name="PlayerCollider" Width="12" Height="14" CollisionLayer="1" CollisionMask="2" IsSimulated="true" />
               </Sprite2D>
             </Scene2D>
           </Scene2D>
           <Scene2DDebugOverlay Name="DebugOverlay" Flags="$DataContext.DebugFlags:OneWay" NavigationGrid="$DataContext.Navigation:OneWay" FontSize="8">
             <Scene2DDebugOverlay.Aspect>
+              @prism { @layer DebugInk { @filter Blur { Radius = 0.25; } } }
               @on Loaded { @animate with Tween(150ms) { @from { Opacity = 0.5; } @to { Opacity = 0.9; } } }
             </Scene2DDebugOverlay.Aspect>
-            @prism { @layer DebugInk { @filter Blur { Radius = 0.25; } } }
           </Scene2DDebugOverlay>
         </Scene2D>
       </RenderSurface2D.Scene>

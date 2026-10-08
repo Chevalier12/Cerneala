@@ -49,7 +49,7 @@ public partial class MainWindow : Window
             surface3DFixture = RenderSurface3DConformanceFixture.Create();
             Content = surface3DFixture.Surface;
             prismLifetime = GeneratedMarkup.AttachPrism(surface3DFixture.Surface, () =>
-                new PrismInstance(new PrismCompositionDefinition("RenderSurface3DSmoke",
+                new PrismInstance(new PrismClipDefinition("RenderSurface3DSmoke",
                     [new PrismLayerDefinition(new PrismNodeId(1), "SurfaceImage",
                         filters: [new PrismFilterDefinition(PrismFilterId.Invert)])])));
             _ = RunRenderSurface3DInputAsync(options);
@@ -102,7 +102,7 @@ public partial class MainWindow : Window
 
         if (options.Mode == "prism")
         {
-            PrismInstance prism = new(new PrismCompositionDefinition(
+            PrismInstance prism = new(new PrismClipDefinition(
                 "SdlGpuSmoke",
                 [new PrismLayerDefinition(
                     SmokeLayerId,

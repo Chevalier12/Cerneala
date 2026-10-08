@@ -24,7 +24,7 @@ public abstract class TimbreParameter
 
     public override string ToString() => Name;
 
-    private static bool IsIdentifier(string name)
+    internal static bool IsIdentifier(string name)
     {
         if (name.Length == 0 || char.IsDigit(name[0]))
         {

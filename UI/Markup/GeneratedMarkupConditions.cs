@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Relay;
@@ -228,6 +229,78 @@ public static partial class GeneratedMarkup
             1 => active[0],
             _ => new CompositeLifetime(active)
         };
+    }
+
+    // A value an Aspect program brings (@presence, @layout): set with the
+    // AspectBase source while the Aspect is applied and cleared when the
+    // returned lifetime ends, so a replacing Aspect never inherits it.
+    public static IDisposable ApplyAspectValue<T>(UiObject target, UiProperty<T> property, T value)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(property);
+        target.SetValue(property, value, UiPropertyValueSource.AspectBase);
+        return new AspectValueLifetime<T>(target, property);
+    }
+
+    private sealed class AspectValueLifetime<T>(UiObject target, UiProperty<T> property) : IDisposable
+    {
+        private bool disposed;
+
+        public void Dispose()
+        {
+            if (disposed)
+            {
+                return;
+            }
+
+            disposed = true;
+            target.ClearValue(property, UiPropertyValueSource.AspectBase);
+        }
+    }
+
+    // `$owner` of an Aspect program compiled once and applied at runtime: the
+    // component template owner of the element the Aspect is applied to.
+    public static Control GetTemplateOwner(UIElement element)
+    {
+        ArgumentNullException.ThrowIfNull(element);
+        return TemplateOwnership.TryGetOwner(element, out Control? owner)
+            ? owner!
+            : throw new InvalidOperationException("$owner is available only for an element created by a component template.");
+    }
+
+    // `$owner.parts.$Name` of an Aspect program compiled once: the named part of
+    // the owner's template, which must exist and have the type the markup
+    // sites agreed on.
+    public static T GetTemplatePart<T>(UIElement element, string name)
+        where T : UIElement
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        Control owner = GetTemplateOwner(element);
+        if (owner.ComponentTemplateInstance is not ComponentTemplateInstance instance ||
+            !instance.Parts.TryGetValue(name, out UIElement? part))
+        {
+            throw new InvalidOperationException(
+                $"The component template of '{owner.GetType().Name}' has no part named '{name}'.");
+        }
+
+        return part as T ?? throw new InvalidOperationException(
+            $"Template part '{name}' of '{owner.GetType().Name}' is a '{part!.GetType().Name}', not a '{typeof(T).Name}'.");
+    }
+
+    // `$self.prism` / `$owner.prism` of an Aspect program compiled once: the
+    // element must carry the Prism composition the markup sites agreed on.
+    public static UIElement RequirePrismClip(UIElement element, string definitionName)
+    {
+        ArgumentNullException.ThrowIfNull(element);
+        ArgumentException.ThrowIfNullOrWhiteSpace(definitionName);
+        if (!TryGetPrismInstance(element, out Cerneala.UI.Prism.Runtime.PrismInstance? instance) ||
+            !string.Equals(instance!.Definition.Name, definitionName, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException(
+                $"'{element.GetType().Name}' does not carry the Prism composition '{definitionName}' this Aspect animates.");
+        }
+
+        return element;
     }
 
     public static MarkupObservation ObserveProperty(UiObject source, UiProperty property)
@@ -776,7 +849,17 @@ internal sealed class MarkupConditionController : IElementDataLifecycleBehavior,
         hasRuleActivations = this.rules.Any(rule => rule.Activated is not null || rule.Deactivated is not null);
         hasTimbreActivations = this.rules.Any(rule => rule.TimbreActivated is not null);
         refreshDispatcher = new UiRelayRefreshDispatcher(() => owner.OwnerRelay, RefreshFromRelay, "markup condition");
-        Start();
+
+        // Created by an Aspect behavior on an attached element: take the
+        // attach path so initial activations are deferred like any attach.
+        if (owner.IsAttached)
+        {
+            Attach();
+        }
+        else
+        {
+            Start();
+        }
     }
 
     // Diagnostic counter of evaluation passes, for idle-frame regressions.

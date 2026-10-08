@@ -54,7 +54,7 @@ public partial class PrismOuterGlowLabView : UserControl
             return Instance;
         }
 
-        Instance = new PrismInstance(new PrismCompositionDefinition("PrismEffectLab", [layer]));
+        Instance = new PrismInstance(new PrismClipDefinition("PrismEffectLab", [layer]));
         prismLifetime = GeneratedMarkup.AttachPrism(GlowTarget, () => Instance);
         GlowTarget.Invalidate(InvalidationFlags.Render, "Prism effect lab attachment changed");
         LabStatus.Text = status;

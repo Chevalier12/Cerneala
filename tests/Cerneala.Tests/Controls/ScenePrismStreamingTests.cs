@@ -883,7 +883,7 @@ public sealed class ScenePrismStreamingTests
         internal UIRoot Root { get; } = new(100, 100);
 
         internal Fixture(PrismFilterId? filter, bool tileMap = false, bool declareDomain = true,
-            SceneSpatialEntry2D[]? entries = null, PrismCompositionDefinition? composition = null)
+            SceneSpatialEntry2D[]? entries = null, PrismClipDefinition? composition = null)
         {
             if (declareDomain) { Scene.PrismInputDomain = WorldBounds; }
             entries ??=
@@ -926,7 +926,7 @@ public sealed class ScenePrismStreamingTests
             if (composition is not null || filter is not null)
             {
                 effect = GeneratedMarkup.AttachPrism(Scene, () => new PrismInstance(
-                    composition ?? new PrismCompositionDefinition("Streaming input", [new PrismLayerDefinition(
+                    composition ?? new PrismClipDefinition("Streaming input", [new PrismLayerDefinition(
                         new(1), "Adjustment", filters: [new(filter!.Value)])])));
             }
             Surface.Scene = Scene;

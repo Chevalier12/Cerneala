@@ -68,7 +68,7 @@ public sealed class StreamingPrimingTests
 
     private static float Ramp(long frame, int channel) => (channel == 0 ? 1 : -1) * (frame % 65536) / 65536f;
 
-    private static TimbreClip Clip(TrickleReader reader) =>
+    private static TimbreSound Clip(TrickleReader reader) =>
         new(TimbreSource.FromReader(() => reader, "trickle"), loading: TimbreLoading.Streaming);
 
     // Serves one packet per read. While trickling, every read after the first

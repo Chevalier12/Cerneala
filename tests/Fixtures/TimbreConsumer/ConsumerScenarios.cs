@@ -15,7 +15,7 @@ public static class ConsumerScenarios
         using TimbreRuntime runtime = new(new TimbreRuntimeOptions { Output = output });
         using TimbreScope sounds = runtime.CreateScope();
 
-        var plainTimbre = new TimbreClip(TimbreSource.FromReader(() => new RampReader(48000), "ramp"), loading: TimbreLoading.Preload);
+        var plainTimbre = new TimbreSound(TimbreSource.FromReader(() => new RampReader(48000), "ramp"), loading: TimbreLoading.Preload);
         await runtime.PrepareAsync(plainTimbre);
         var first = sounds.Play(plainTimbre, start => start.Loop = true); // looping: only Cancel ends it
         var second = sounds.Play(plainTimbre, start => start.Loop = true); // looping: only Cancel ends it
@@ -23,7 +23,7 @@ public static class ConsumerScenarios
         log.Add($"overlap firstCanceled={first.State == TimbrePlaybackState.Canceled} secondActive={IsActive(second)}");
 
         var toneCutoff = new TimbreParameter<float>(name: "ToneCutoff", defaultValue: 1200f);
-        var filteredTimbre = new TimbreClip(
+        var filteredTimbre = new TimbreSound(
             source: TimbreSource.FromReader(() => new RampReader(96000), "filtered"),
             parameters: [toneCutoff],
             modifiers: [new LowPass(cutoff: toneCutoff), new Delay(time: 0.05f, feedback: 0.3f, mix: 0.2f)]);
@@ -71,7 +71,7 @@ public static class ConsumerScenarios
         surface.Scene = scene;
         root.VisualChildren.Add(button);
         root.VisualChildren.Add(surface);
-        TimbreClip clip = new(TimbreSource.FromReader(() => new RampReader(48000)));
+        TimbreSound clip = new(TimbreSource.FromReader(() => new RampReader(48000)));
 
         TimbrePlayback click = button.Timbre.Play(clip, start => start.Loop = true); // only detach ends it
         TimbrePlayback ambience = scene.Timbre.Play(clip, start => start.Loop = true);

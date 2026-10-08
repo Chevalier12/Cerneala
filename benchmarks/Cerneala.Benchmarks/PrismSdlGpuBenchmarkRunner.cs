@@ -133,7 +133,7 @@ internal static class PrismSdlGpuBenchmarkRunner
                 new PrismFilterDefinition(PrismFilterId.Emboss),
                 new PrismFilterDefinition(PrismFilterId.HueSaturation)
             ]);
-        PrismInstance instance = new(new PrismCompositionDefinition(
+        PrismInstance instance = new(new PrismClipDefinition(
             "retained-benchmark",
             [layer]));
         PrismDrawScope scope = new(

@@ -19,7 +19,7 @@ public sealed class PrismAdjustmentResourceMigrationTests
         using SdlDrawingFixture fixture = new(16, 16);
         PrismResourceId id = new("curves-cache");
         PrismCurvesResource first = new(red: [new(0, 0), new(1, .5f)]);
-        PrismInstance instance = new(new PrismCompositionDefinition("Typed curves",
+        PrismInstance instance = new(new PrismClipDefinition("Typed curves",
             [new PrismLayerDefinition(new(1), "Curves", filters: [new(PrismFilterId.Curves)])],
             workingColorProfile: PrismColorProfile.LinearSrgb));
         PrismFilterState state = Assert.Single(instance.GetLayerState(new(1)).Filters);

@@ -131,7 +131,7 @@ public sealed partial class UiMarkupGenerator
                 source);
         }
 
-        public PrismCompositionResourceSyntax ParsePrismCompositionResource(
+        public PrismClipResourceSyntax ParsePrismClipResource(
             MarkupElement resource,
             string name,
             MarkupAttribute nameAttribute)
@@ -160,7 +160,7 @@ public sealed partial class UiMarkupGenerator
                 new DirectiveExpressionLocation(nameAttribute, 0, Math.Max(1, name.Length)),
                 members,
                 resourceLocation);
-            return new PrismCompositionResourceSyntax(
+            return new PrismClipResourceSyntax(
                 name,
                 new DirectiveExpressionLocation(nameAttribute, 0, Math.Max(1, name.Length)),
                 composition,
@@ -774,7 +774,7 @@ public sealed partial class UiMarkupGenerator
             return context switch
             {
                 PrismBodyContext.InlineComposition => "@prism",
-                PrismBodyContext.ResourceComposition => "PrismComposition",
+                PrismBodyContext.ResourceComposition => "PrismClip",
                 PrismBodyContext.Layer => "@layer",
                 PrismBodyContext.Group => "@group",
                 PrismBodyContext.Filter => "@filter",
@@ -797,7 +797,7 @@ public sealed partial class UiMarkupGenerator
 
     private sealed partial class GenerationScope
     {
-        private void ReadPrismComposition(ResourceScope scope, MarkupElement resource)
+        private void ReadPrismClip(ResourceScope scope, MarkupElement resource)
         {
             string? name = RequiredName(resource);
             MarkupAttribute? nameAttribute = resource.Attribute("Name");
@@ -809,8 +809,8 @@ public sealed partial class UiMarkupGenerator
             DirectiveCursor cursor = new(resource.Nodes());
             try
             {
-                scope.PrismCompositions.Add(
-                    cursor.ParsePrismCompositionResource(resource, name, nameAttribute));
+                scope.PrismClips.Add(
+                    cursor.ParsePrismClipResource(resource, name, nameAttribute));
             }
             catch (PrismSyntaxParseException ex)
             {

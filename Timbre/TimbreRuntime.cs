@@ -67,11 +67,11 @@ public sealed partial class TimbreRuntime : IDisposable
         }
     }
 
-    public Task PrepareAsync(TimbreClip clip, CancellationToken cancellationToken = default)
+    public Task PrepareAsync(TimbreSound sound, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(clip);
+        ArgumentNullException.ThrowIfNull(sound);
         ObjectDisposedException.ThrowIf(disposed, this);
-        return Task.Run(() => PrepareCoreAsync(clip, cancellationToken), cancellationToken);
+        return Task.Run(() => PrepareCoreAsync(sound, cancellationToken), cancellationToken);
     }
 
     public void Dispose()
@@ -176,9 +176,9 @@ public sealed partial class TimbreRuntime : IDisposable
         return request.Task;
     }
 
-    internal TimbrePlayback Start(TimbreScope scope, TimbreClip clip, TimbreStartOptions options, TimbreHandle? handle)
+    internal TimbrePlayback Start(TimbreScope scope, TimbreSound sound, TimbreStartOptions options, TimbreHandle? handle)
     {
-        object? key = TryGetCacheKey(clip.Source);
+        object? key = TryGetCacheKey(sound.Source);
         TimbrePlayback playback;
         bool needsLoad = false;
         lock (Sync)
@@ -193,7 +193,7 @@ public sealed partial class TimbreRuntime : IDisposable
                     $"The sound runtime already has the maximum of {maxVoices} active playbacks.");
             }
 
-            playback = new TimbrePlayback(this, scope, clip, options);
+            playback = new TimbrePlayback(this, scope, sound, options);
             if (playback.Render.Chain is { } chain)
             {
                 Interlocked.Add(ref dspStateBytes, chain.StateBytes);
@@ -212,7 +212,7 @@ public sealed partial class TimbreRuntime : IDisposable
                 previous!.CancelLocked();
             }
 
-            if (clip.Loading != TimbreLoading.Streaming && key is not null && cache.TryAcquire(key, out TimbrePayloadCache.Entry? entry))
+            if (sound.Loading != TimbreLoading.Streaming && key is not null && cache.TryAcquire(key, out TimbrePayloadCache.Entry? entry))
             {
                 playback.TryAttachFeedLocked(new PreloadedFeed(cache, entry, playback.Loop), fromLoader: false);
             }

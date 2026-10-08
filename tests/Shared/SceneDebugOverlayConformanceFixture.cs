@@ -107,7 +107,7 @@ internal sealed class SceneDebugOverlayConformanceFixture : IDisposable
         if (sample == 8)
         {
             prism = GeneratedMarkup.AttachPrism(overlay, () => new PrismInstance(
-                new PrismCompositionDefinition("DebugOnly", [new PrismLayerDefinition(new PrismNodeId(1), "Ink",
+                new PrismClipDefinition("DebugOnly", [new PrismLayerDefinition(new PrismNodeId(1), "Ink",
                     filters: [new PrismFilterDefinition(PrismFilterId.Invert)])])));
             overlay.Motion().Animate(Scene2DDebugOverlay.LineThicknessProperty).To(1.25f)
                 .With(MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100))).Complete();

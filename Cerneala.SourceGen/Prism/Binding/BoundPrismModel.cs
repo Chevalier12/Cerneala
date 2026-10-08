@@ -167,9 +167,9 @@ public sealed partial class UiMarkupGenerator
         public PrismContainerSyntax Syntax { get; }
     }
 
-    private sealed class BoundPrismComposition
+    private sealed class BoundPrismClip
     {
-        public BoundPrismComposition(
+        public BoundPrismClip(
             string name,
             IReadOnlyList<BoundPrismProperty> properties,
             IReadOnlyList<BoundPrismParameter> parameters,
@@ -213,7 +213,7 @@ public sealed partial class UiMarkupGenerator
     private sealed class BoundPrismApplication
     {
         public BoundPrismApplication(
-            BoundPrismComposition composition,
+            BoundPrismClip composition,
             IReadOnlyDictionary<string, BoundPrismValue> arguments,
             PrismApplicationSyntax syntax,
             MarkupElement owner)
@@ -224,7 +224,7 @@ public sealed partial class UiMarkupGenerator
             Owner = owner;
         }
 
-        public BoundPrismComposition Composition { get; }
+        public BoundPrismClip Composition { get; }
 
         public IReadOnlyDictionary<string, BoundPrismValue> Arguments { get; }
 

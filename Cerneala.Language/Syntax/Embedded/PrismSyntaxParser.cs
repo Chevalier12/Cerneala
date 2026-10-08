@@ -7,7 +7,7 @@ internal static class PrismSyntaxParser
     public static EmbeddedParseResult<DirectiveDocumentSyntax> Parse(string text, int absoluteOffset = 0) =>
         DirectiveSyntaxParser.Parse(text, absoluteOffset, EmbeddedLanguageKind.Prism);
 
-    public static EmbeddedParseResult<PrismCompositionModelSyntax> ParseComposition(
+    public static EmbeddedParseResult<PrismClipModelSyntax> ParseComposition(
         string text,
         int absoluteOffset = 0) => new ModelParser(text, absoluteOffset).ParseComposition();
 
@@ -75,12 +75,12 @@ internal static class PrismSyntaxParser
             this.absoluteOffset = absoluteOffset;
         }
 
-        public EmbeddedParseResult<PrismCompositionModelSyntax> ParseComposition()
+        public EmbeddedParseResult<PrismClipModelSyntax> ParseComposition()
         {
             int start = position;
             IReadOnlyList<PrismMemberModelSyntax> members = ParseMembers(stopAtClosingBrace: false);
-            return new EmbeddedParseResult<PrismCompositionModelSyntax>(
-                new PrismCompositionModelSyntax(members, Span(start, position)),
+            return new EmbeddedParseResult<PrismClipModelSyntax>(
+                new PrismClipModelSyntax(members, Span(start, position)),
                 diagnostics);
         }
 
@@ -119,19 +119,19 @@ internal static class PrismSyntaxParser
                 ValidateApplicationRootMembers(members);
                 int end = ConsumeClosingBrace(start, "@prism");
                 TryConsume(';');
-                PrismCompositionModelSyntax composition = new(members, Span(start, end));
+                PrismClipModelSyntax composition = new(members, Span(start, end));
                 return new PrismApplicationModelSyntax(null, default, Array.Empty<PrismAssignmentModelSyntax>(), composition, Span(start, position));
             }
 
             if (!TryConsume('$'))
             {
-                Add("PRISM1003", "@prism requires an inline block or a $PrismComposition resource.", position, 1);
+                Add("PRISM1003", "@prism requires an inline block or a $PrismClip resource.", position, 1);
                 SkipStatement();
                 return new PrismApplicationModelSyntax(null, default, Array.Empty<PrismAssignmentModelSyntax>(), null, Span(start, position));
             }
 
             int referenceStart = position - 1;
-            (string name, TextSpan nameSpan) = ReadIdentifier("PrismComposition resource name");
+            (string name, TextSpan nameSpan) = ReadIdentifier("PrismClip resource name");
             TextSpan resourceSpan = Span(referenceStart, position);
             List<PrismAssignmentModelSyntax> arguments = new();
             SkipWhitespace();

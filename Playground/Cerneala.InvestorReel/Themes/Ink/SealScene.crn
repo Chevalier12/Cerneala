@@ -56,13 +56,15 @@
                 <Ellipse Width="5" Height="5" Fill="$VermilionBrush" HorizontalAlignment="Center" VerticalAlignment="Center" TranslateX="-70" TranslateY="140" Opacity="0" RenderTransformOrigin="0.5,0.5" />
             </Grid>
             <Border Name="Seal" Width="230" Height="230" Background="$VermilionBrush" Padding="12" HorizontalAlignment="Center" VerticalAlignment="Center" Rotation="-0.07" Opacity="0" RenderTransformOrigin="0.5,0.5">
-                @prism
-                {
-                    @layer Ink
+                <Border.Aspect>
+                    @prism
                     {
-                        @filter Grain { Intensity = 22; Contrast = 40; }
+                        @layer Ink
+                        {
+                            @filter Grain { Intensity = 22; Contrast = 40; }
+                        }
                     }
-                }
+                </Border.Aspect>
                 <Border BorderBrush="$PaperBrush" BorderThickness="3">
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                         <TextBlock Text="CER" FontFamily="Sitka Banner" FontSize="50" Foreground="$PaperBrush" HorizontalAlignment="Center" />

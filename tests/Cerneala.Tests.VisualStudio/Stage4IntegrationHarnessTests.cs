@@ -22,7 +22,7 @@ public sealed class Stage4IntegrationHarnessTests
             "<Aspect ",
             "<MotionClip ",
             "Tween(120ms)",
-            "<PrismComposition ",
+            "<PrismClip ",
             "@prism ",
             "<consumer:StatusCard",
             "<ItemsControl>",

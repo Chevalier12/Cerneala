@@ -31,7 +31,7 @@ public sealed class DspChainEngineTests
     public async Task ChainRunsInDeclarationOrderWithIndependentStageState()
     {
         using TimbreRig rig = new();
-        TimbreClip clip = Clip(48000, DspOracle.Noise, modifiers: [new Delay(time: 300f / 48000f, feedback: 0.6f, mix: 0.4f), new LowPass(cutoff: 2000f)]);
+        TimbreSound clip = Clip(48000, DspOracle.Noise, modifiers: [new Delay(time: 300f / 48000f, feedback: 0.6f, mix: 0.4f), new LowPass(cutoff: 2000f)]);
         TimbrePlayback playback = rig.Scope.Play(clip);
 
         float[] pcm = await rig.StartAsync(playback);
@@ -41,14 +41,14 @@ public sealed class DspChainEngineTests
         double[] l = DspOracle.LowPass(DspOracle.Delay(left, 300, 0.6, 0.4), 2000);
         double[] r = DspOracle.LowPass(DspOracle.Delay(right, 300, 0.6, 0.4), 2000);
         TimbreRig.AssertPcm(DspOracle.Interleave(l, r), pcm, Tolerance);
-        Assert.Null(TimbreDspChain.Create(new TimbreClip("plain.wav")));
+        Assert.Null(TimbreDspChain.Create(new TimbreSound("plain.wav")));
     }
 
     [Fact]
     public async Task TwoPlaybacksOfOneModifiedClipKeepIndependentDspState()
     {
         using TimbreRig rig = new();
-        TimbreClip clip = Clip(48000, Impulse, modifiers: [new Delay(time: 500f / 48000f, feedback: 0.5f, mix: 0.5f)]);
+        TimbreSound clip = Clip(48000, Impulse, modifiers: [new Delay(time: 500f / 48000f, feedback: 0.5f, mix: 0.5f)]);
         TimbrePlayback first = rig.Scope.Play(clip);
         await rig.StartAsync(first);
 
@@ -106,7 +106,7 @@ public sealed class DspChainEngineTests
         using TimbreRig rig = new();
         TimbreParameter<float> cutoff = new("ToneCutoff", 1200f);
         Func<long, int, float> sine = (frame, channel) => (float)Math.Sin(2 * Math.PI * 4000 * frame / 48000) * (channel == 0 ? 1f : 0.5f);
-        TimbreClip clip = Clip(480000, sine, parameters: [cutoff], modifiers: [new LowPass(cutoff: cutoff)]);
+        TimbreSound clip = Clip(480000, sine, parameters: [cutoff], modifiers: [new LowPass(cutoff: cutoff)]);
         TimbrePlayback playback = rig.Scope.Play(clip);
         float[] initial = await rig.StartAsync(playback);
 
@@ -209,7 +209,7 @@ public sealed class DspChainEngineTests
     public async Task CancelStopsTheTailAndPauseFreezesIt()
     {
         using TimbreRig rig = new();
-        TimbreClip clip = Clip(Block, Impulse, modifiers: [new Delay(time: 600f / 48000f, feedback: 0.5f, mix: 1f)]);
+        TimbreSound clip = Clip(Block, Impulse, modifiers: [new Delay(time: 600f / 48000f, feedback: 0.5f, mix: 1f)]);
         TimbrePlayback paused = rig.Scope.Play(clip);
         await rig.StartAsync(paused); // source block + three tail blocks
 
@@ -242,7 +242,7 @@ public sealed class DspChainEngineTests
     public async Task SuccessfulSeekResetsDspStateWhileARejectedSeekDoesNot()
     {
         using TimbreRig rig = new();
-        TimbreClip clip = Clip(48000, Impulse, modifiers: [new Delay(time: 500f / 48000f, feedback: 0.5f, mix: 0.5f)]);
+        TimbreSound clip = Clip(48000, Impulse, modifiers: [new Delay(time: 500f / 48000f, feedback: 0.5f, mix: 0.5f)]);
         TimbrePlayback playback = rig.Scope.Play(clip);
         await rig.StartAsync(playback);
 
@@ -254,7 +254,7 @@ public sealed class DspChainEngineTests
 
         using TimbreRig streamingRig = new();
         DeterministicTimbreSourceFactory unknown = new(48000, Impulse, reportLength: false, maxFramesPerRead: 512);
-        TimbrePlayback streaming = streamingRig.Scope.Play(new TimbreClip(
+        TimbrePlayback streaming = streamingRig.Scope.Play(new TimbreSound(
             TimbreSource.FromReader(unknown.Open),
             loading: TimbreLoading.Streaming,
             modifiers: [new Delay(time: 500f / 48000f, feedback: 0.5f, mix: 0.5f)]));
@@ -295,13 +295,13 @@ public sealed class DspChainEngineTests
     {
         using TimbreRig rig = new(hold: false);
         TimbrePlaybackResult result = await TimbreRig.CompletionAsync(rig.Scope.Play(
-            new TimbreClip(TimbreSource.FromReader(() => new OverReportingReader()), loading: TimbreLoading.Streaming, modifiers: [new LowPass()])));
+            new TimbreSound(TimbreSource.FromReader(() => new OverReportingReader()), loading: TimbreLoading.Streaming, modifiers: [new LowPass()])));
 
         Assert.Equal(TimbreErrorKind.InvalidData, result.Error!.Kind);
         Assert.Equal(0, rig.Output.SubmittedFrames);
     }
 
-    private static TimbreClip Clip(
+    private static TimbreSound Clip(
         long frames,
         Func<long, int, float> signal,
         bool loop = false,

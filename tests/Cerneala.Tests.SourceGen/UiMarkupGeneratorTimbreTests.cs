@@ -13,35 +13,34 @@ namespace Cerneala.Tests.SourceGen;
 public sealed partial class UiMarkupGeneratorTests
 {
     private const string TimbreClipResources = """
-        <TimbreClip Name="Tone">
-          Source = "audio/tone.wav";
-        </TimbreClip>
-        <TimbreClip Name="ConfirmTimbre">
-          Source = "audio/confirm.wav";
-          Volume = 0.8;
+        <TimbreClip Name="Sounds">
           @parameter ToneCutoff: float = 1200;
           @parameter EchoMix: float = 0.15;
-          @modifier LowPass { Cutoff = ToneCutoff; }
-          @modifier Delay { Time = 120ms; Feedback = 0.20; Mix = EchoMix; }
-        </TimbreClip>
-        <TimbreClip Name="Music">
-          Source = "audio/music.ogg";
-          Loop = true;
+          @sound Tone { Source = "audio/tone.wav"; }
+          @sound Confirm
+          {
+            Source = "audio/confirm.wav";
+            Volume = 0.8;
+            @modifier LowPass { Cutoff = ToneCutoff; }
+            @modifier Delay { Time = 120ms; Feedback = 0.20; Mix = EchoMix; }
+          }
+          @sound Music { Source = "audio/music.ogg"; Loop = true; AutoPlay = true; }
         </TimbreClip>
         """;
 
     [Fact]
-    public void TimbreClipAndEventTimbreActionGenerateWithoutDiagnostics()
+    public void TimbreClipAttachmentAndCommandGenerateWithoutDiagnostics()
     {
         const string markup = """
             <Button Content="Play">
               <Button.Resources>
                 <TimbreClip Name="Tone">
-                  Source = "audio/tone.wav";
+                  @sound Tone { Source = "audio/tone.wav"; }
                 </TimbreClip>
               </Button.Resources>
               <Button.Aspect>
-                @on Click { @timbre $Tone; }
+                @timbre $Tone;
+                @on Click { @play $self.timbre.Tone; }
               </Button.Aspect>
             </Button>
             """;
@@ -94,7 +93,7 @@ public sealed partial class UiMarkupGeneratorTests
             <Application StartupWindow="ShellWindow">
               <Application.Resources>
                 <TimbreClip Name="Chime">
-                  Source = "audio/missing-chime.wav";
+                  @sound Chime { Source = "audio/missing-chime.wav"; }
                 </TimbreClip>
               </Application.Resources>
             </Application>
@@ -104,8 +103,8 @@ public sealed partial class UiMarkupGeneratorTests
             """
             <StackPanel>
               <StackPanel.Resources>
-                <TimbreClip Name="Tone">Source = "audio/missing-tone.wav";</TimbreClip>
-                <Aspect Name="Clicky" TargetType="Button">@on Click { @timbre $Tone; @timbre $Chime; }</Aspect>
+                <TimbreClip Name="Tone">@sound Tone { Source = "audio/missing-tone.wav"; }</TimbreClip>
+                <Aspect Name="Clicky" TargetType="Button">@timbre $Tone; @on Click { @play $self.timbre.Tone; }</Aspect>
               </StackPanel.Resources>
               <Button Content="A" Aspect="$Clicky" />
               <Button Content="B" Aspect="$Clicky" />
@@ -116,7 +115,7 @@ public sealed partial class UiMarkupGeneratorTests
             """
             <Border>
               <Button Content="C">
-                <Button.Aspect>@on Click { @timbre $Chime; }</Button.Aspect>
+                <Button.Aspect>@timbre $Chime; @on Click { @play $self.timbre.Chime; }</Button.Aspect>
               </Button>
             </Border>
             """);
@@ -131,11 +130,11 @@ public sealed partial class UiMarkupGeneratorTests
         Assembly assembly = Assembly.Load(Emit(compilation).ToArray());
         UIElement panel = InvokeFactory(assembly, "Cerneala.GeneratedUi.FirstFactory");
         Assert.IsType<Border>(InvokeFactory(assembly, "Cerneala.GeneratedUi.SecondFactory"));
-        Assert.True(panel.TryFindResource(new ResourceId<TimbreClip>("Tone"), out TimbreClip tone));
-        Assert.Equal("audio/missing-tone.wav", tone.Source.Name);
+        Assert.True(panel.TryFindResource(new ResourceId<TimbreClipDefinition>("Tone"), out TimbreClipDefinition tone));
+        Assert.Equal("audio/missing-tone.wav", tone.Sounds["Tone"].Sound.Source.Name);
 
-        // Declaring and referencing a clip opens nothing: the factory ran and
-        // the missing files were never touched.
+        // Declaring a clip and attaching it without AutoPlay opens nothing: the
+        // Aspects are applied and the missing files are never touched.
         CountingTimbreOutput output = new();
         using TimbreRuntime runtime = new(new TimbreRuntimeOptions { Output = output });
         UIRoot root = new();
@@ -152,14 +151,14 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <StackPanel>
               <StackPanel.Resources>
-                <TimbreClip Name="Tone">Source = "audio/outer.wav";</TimbreClip>
+                <TimbreClip Name="Tone">@sound Tone { Source = "audio/outer.wav"; }</TimbreClip>
               </StackPanel.Resources>
               <Border>
                 <Border.Resources>
-                  <TimbreClip Name="Tone">Source = "audio/inner.wav"; @parameter Cut: float = 900; @modifier LowPass { Cutoff = Cut; }</TimbreClip>
+                  <TimbreClip Name="Tone">@parameter Cut: float = 900; @sound Tone { Source = "audio/inner.wav"; @modifier LowPass { Cutoff = Cut; } }</TimbreClip>
                 </Border.Resources>
                 <Button Content="Inner">
-                  <Button.Aspect>@on Click { @timbre $Tone(Cut = 400); }</Button.Aspect>
+                  <Button.Aspect>@timbre $Tone(Cut = 400); @on Click { @play $self.timbre.Tone; }</Button.Aspect>
                 </Button>
               </Border>
               <ItemsControl>
@@ -168,9 +167,9 @@ public sealed partial class UiMarkupGeneratorTests
                   <ContentTemplate DataType="System.String">
                     <Border>
                       <Border.Resources>
-                        <TimbreClip Name="Item">Source = "audio/item.wav";</TimbreClip>
+                        <TimbreClip Name="Item">@sound Item { Source = "audio/item.wav"; }</TimbreClip>
                       </Border.Resources>
-                      <Border.Aspect>@on Loaded { @timbre $Item; }</Border.Aspect>
+                      <Border.Aspect>@timbre $Item; @on Loaded { @play $self.timbre.Item; }</Border.Aspect>
                     </Border>
                   </ContentTemplate>
                 }
@@ -183,36 +182,36 @@ public sealed partial class UiMarkupGeneratorTests
         AssertNoGeneratorOrCompilationErrors(result, compilation);
         UIElement panel = InvokeCreate(Emit(compilation), "Cerneala.GeneratedUi.TimbreScopesFactory");
         Border inner = Assert.IsType<Border>(panel.VisualChildren[0]);
-        Assert.True(panel.TryFindResource(new ResourceId<TimbreClip>("Tone"), out TimbreClip outer));
-        Assert.True(inner.TryFindResource(new ResourceId<TimbreClip>("Tone"), out TimbreClip shadowing));
-        Assert.Equal("audio/outer.wav", outer.Source.Name);
-        Assert.Equal("audio/inner.wav", shadowing.Source.Name);
-        Assert.Single(shadowing.Parameters);
+        Assert.True(panel.TryFindResource(new ResourceId<TimbreClipDefinition>("Tone"), out TimbreClipDefinition outer));
+        Assert.True(inner.TryFindResource(new ResourceId<TimbreClipDefinition>("Tone"), out TimbreClipDefinition shadowing));
+        Assert.Equal("audio/outer.wav", outer.Sounds["Tone"].Sound.Source.Name);
+        Assert.Equal("audio/inner.wav", shadowing.Sounds["Tone"].Sound.Source.Name);
+        Assert.Single(shadowing.Sounds["Tone"].Sound.Parameters);
     }
 
     private const string TimbreActionAspect = """
-        @handle Playback;
-        @on Click { @timbre $ConfirmTimbre(Volume = 0.2, Loop = true, ToneCutoff = 800) as Playback; @animate with Tween(200ms, EaseOut) { @to { Opacity = 0.5; } } @timbre $Tone; }
-        @on MouseEnter { @pause Playback; @resume Playback; @seek Playback to 30s; @cancel Playback; }
-        @when $self.IsEnabled { @if value == false { @timbre $Music as Playback; } }
+        @timbre $Sounds(ToneCutoff = 800);
+        @on Click { @play $self.timbre.Confirm; @animate with Tween(200ms, EaseOut) { @to { Opacity = 0.5; } } @play $self.timbre.Tone; }
+        @on MouseEnter { @pause $self.timbre.Confirm; @resume $self.timbre.Confirm; @seek $self.timbre.Confirm to 30s; @stop $self.timbre.Confirm; }
+        @when $self.IsEnabled { @if value == false { @play $self.timbre.Music; } }
         """;
 
     [Fact]
-    public void TimbreActionsInFactoryBindToGeneratedMarkupHelpersAndCoreStartOptions()
+    public void TimbreCommandsInFactoryBindToGeneratedMarkupHelpers()
     {
         string markup = "<StackPanel><StackPanel.Resources>" + TimbreClipResources + "</StackPanel.Resources>" +
             "<Button Content=\"Play\"><Button.Aspect>" + TimbreActionAspect + "</Button.Aspect></Button>" +
-            "<Button Content=\"Templated\"><Button.Aspect>@template { <Border><Border.Aspect>@on Loaded { @timbre $Tone; }</Border.Aspect></Border> }</Button.Aspect></Button>" +
+            "<Button Content=\"Templated\"><Button.Aspect>@template { <Border><Border.Aspect>@timbre $Sounds; @on Loaded { @play $self.timbre.Tone; }</Border.Aspect></Border> }</Button.Aspect></Button>" +
             "</StackPanel>";
 
         GeneratorRunResult result = RunGenerator("TimbreActions.crn", markup, out Compilation compilation);
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
-        AssertTimbreActionsBindCoreOperations(compilation, result, expectTemplateLifetime: true);
+        AssertTimbreCommandsBindGeneratedMarkupHelpers(compilation, result, hasTemplateAspect: true);
     }
 
     [Fact]
-    public void TimbreActionsInPairedPartialBindToGeneratedMarkupHelpersAndCoreStartOptions()
+    public void TimbreCommandsInPairedPartialBindToGeneratedMarkupHelpers()
     {
         const string inputSource = """
             using Cerneala.UI.Controls;
@@ -225,7 +224,7 @@ public sealed partial class UiMarkupGeneratorTests
         GeneratorRunResult result = RunPairedGenerator("Views/TimbreActionsView.crn", markup, inputSource, out Compilation compilation);
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
-        AssertTimbreActionsBindCoreOperations(compilation, result, expectTemplateLifetime: false);
+        AssertTimbreCommandsBindGeneratedMarkupHelpers(compilation, result, hasTemplateAspect: false);
     }
 
     [Theory]
@@ -239,13 +238,14 @@ public sealed partial class UiMarkupGeneratorTests
             public partial class RootTimbre : {{rootType}} { }
             """;
         string markup = $"<{rootType}><{rootType}.Resources>" + TimbreClipResources + $"</{rootType}.Resources>" +
-            $"<{rootType}.Aspect>@when IsEnabled {{ @timbre $Tone; }}</{rootType}.Aspect><TextBlock Text=\"Timbre\" /></{rootType}>";
+            $"<{rootType}.Aspect>@timbre $Sounds; @when IsEnabled {{ @play $self.timbre.Tone; }}</{rootType}.Aspect><TextBlock Text=\"Timbre\" /></{rootType}>";
 
         GeneratorRunResult result = RunPairedGenerator("Views/RootTimbre.crn", markup, inputSource, out Compilation compilation);
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
         string generated = string.Concat(result.GeneratedSources.Select(source => source.SourceText.ToString()));
         Assert.Single(System.Text.RegularExpressions.Regex.Matches(generated, @"PlayTimbre\("));
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(generated, @"AttachTimbre\("));
         Assert.Single(System.Text.RegularExpressions.Regex.Matches(generated, @"visualActivation => \{ timbreAction\d+\(\);"));
     }
 
@@ -305,7 +305,7 @@ public sealed partial class UiMarkupGeneratorTests
             "docs");
     }
 
-    private static void AssertTimbreActionsBindCoreOperations(Compilation compilation, GeneratorRunResult result, bool expectTemplateLifetime)
+    private static void AssertTimbreCommandsBindGeneratedMarkupHelpers(Compilation compilation, GeneratorRunResult result, bool hasTemplateAspect)
     {
         SyntaxTree tree = compilation.SyntaxTrees.Single(candidate =>
             result.GeneratedSources.Any(source => candidate.FilePath.EndsWith(source.HintName, StringComparison.Ordinal)));
@@ -319,27 +319,33 @@ public sealed partial class UiMarkupGeneratorTests
             .Where(symbol => symbol.ContainingType.ToDisplayString() == "Cerneala.UI.Markup.GeneratedMarkup")
             .Select(symbol => symbol.Name)
             .ToArray();
-        foreach (string helper in new[] { "AttachTimbreSession", "AddTimbreTrigger", "PlayTimbre", "GetTimbreParameter", "PauseTimbre", "ResumeTimbre", "SeekTimbre", "CancelTimbre", "CanStartMotionExecution" })
+        foreach (string helper in new[] { "AttachTimbre", "AttachTimbreSession", "AddTimbreTrigger", "PlayTimbre", "StopTimbre", "PauseTimbre", "ResumeTimbre", "SeekTimbre", "CanStartMotionExecution" })
         {
             Assert.Contains(helper, helpers);
         }
 
-        Assert.Equal(expectTemplateLifetime ? 4 : 3, helpers.Count(name => name == "PlayTimbre"));
-        IMethodSymbol set = Assert.Single(calls, symbol => symbol.Name == "Set" && symbol.ContainingType.ToDisplayString() == "Cerneala.Timbre.TimbreStartOptions");
-        Assert.Equal("float", set.TypeArguments.Single().ToDisplayString());
-        IPropertySymbol[] assigned = tree.GetRoot().DescendantNodes()
-            .OfType<AssignmentExpressionSyntax>()
-            .Select(assignment => model.GetSymbolInfo(assignment.Left).Symbol)
-            .OfType<IPropertySymbol>()
-            .Where(property => property.ContainingType.ToDisplayString() == "Cerneala.Timbre.TimbreStartOptions")
-            .ToArray();
-        Assert.Equal(["Loop", "Volume"], assigned.Select(property => property.Name).OrderBy(name => name));
+        Assert.Equal(hasTemplateAspect ? 2 : 1, helpers.Count(name => name == "AttachTimbre"));
+        Assert.Equal(hasTemplateAspect ? 4 : 3, helpers.Count(name => name == "PlayTimbre"));
+        Assert.All(
+            calls.Where(symbol => symbol.ContainingType.ToDisplayString() == "Cerneala.UI.Markup.GeneratedMarkup" && symbol.Name.EndsWith("Timbre", StringComparison.Ordinal) && symbol.Name != "AttachTimbre"),
+            symbol => Assert.Equal("Cerneala.UI.Elements.UIElement", symbol.Parameters[0].Type.ToDisplayString()));
+        Assert.DoesNotContain(calls, symbol => symbol.ContainingType.ToDisplayString() == "Cerneala.Timbre.TimbreStartOptions");
+
+        // `@timbre $Sounds(ToneCutoff = 800)` passes its arguments by parameter name.
+        ObjectCreationExpressionSyntax arguments = Assert.Single(
+            tree.GetRoot().DescendantNodes().OfType<ObjectCreationExpressionSyntax>(),
+            creation => model.GetSymbolInfo(creation).Symbol is IMethodSymbol constructor &&
+                constructor.ContainingType.ToDisplayString() == "System.Collections.Generic.Dictionary<string, float>");
+        Assert.Contains("[\"ToneCutoff\"] = 800f", arguments.ToString(), StringComparison.Ordinal);
         Assert.Contains(
             tree.GetRoot().DescendantNodes().OfType<ObjectCreationExpressionSyntax>()
                 .Select(creation => model.GetSymbolInfo(creation).Symbol)
                 .OfType<IMethodSymbol>(),
             constructor => constructor.ContainingType.ToDisplayString() == "Cerneala.UI.Markup.MarkupConditionRule" && constructor.Parameters.Length == 8);
-        Assert.Equal(expectTemplateLifetime, calls.Any(symbol => symbol.Name == "RegisterLifetime"));
+        // Timbre attachments and sessions are lifetimes of the Aspect behavior,
+        // disposed when a template element detaches, never registered on the
+        // template context.
+        Assert.DoesNotContain(calls, symbol => symbol.Name == "RegisterLifetime");
 
         string generated = string.Join(Environment.NewLine, result.GeneratedSources.Select(source => source.SourceText.ToString()));
         Assert.DoesNotContain("System.Reflection", generated, StringComparison.Ordinal);
@@ -352,7 +358,7 @@ public sealed partial class UiMarkupGeneratorTests
         SyntaxTree tree = compilation.SyntaxTrees.Single(candidate =>
             result.GeneratedSources.Any(source => candidate.FilePath.EndsWith(source.HintName, StringComparison.Ordinal)));
         SemanticModel model = compilation.GetSemanticModel(tree);
-        IAssemblySymbol core = compilation.GetTypeByMetadataName("Cerneala.Timbre.TimbreClip")!.ContainingAssembly;
+        IAssemblySymbol core = compilation.GetTypeByMetadataName("Cerneala.Timbre.TimbreSound")!.ContainingAssembly;
         IMethodSymbol[] constructors = tree.GetRoot().DescendantNodes()
             .OfType<BaseObjectCreationExpressionSyntax>()
             .Select(creation => model.GetSymbolInfo(creation).Symbol)
@@ -364,13 +370,17 @@ public sealed partial class UiMarkupGeneratorTests
             [
                 "Cerneala.Timbre.Delay",
                 "Cerneala.Timbre.LowPass",
-                "Cerneala.Timbre.TimbreClip",
+                "Cerneala.Timbre.TimbreClipDefinition",
+                "Cerneala.Timbre.TimbreClipSound",
                 "Cerneala.Timbre.TimbreInput<float>",
-                "Cerneala.Timbre.TimbreParameter<float>"
+                "Cerneala.Timbre.TimbreParameter<float>",
+                "Cerneala.Timbre.TimbreSound"
             ],
             constructed);
         Assert.All(constructors, symbol => Assert.Equal(core, symbol.ContainingAssembly, SymbolEqualityComparer.Default));
-        Assert.Equal(3, constructors.Count(symbol => symbol.ContainingType.Name == "TimbreClip"));
+        Assert.Equal(1, constructors.Count(symbol => symbol.ContainingType.Name == "TimbreClipDefinition"));
+        Assert.Equal(3, constructors.Count(symbol => symbol.ContainingType.Name == "TimbreClipSound"));
+        Assert.Equal(3, constructors.Count(symbol => symbol.ContainingType.Name == "TimbreSound"));
 
         IMethodSymbol[] invocations = tree.GetRoot().DescendantNodes()
             .OfType<InvocationExpressionSyntax>()
@@ -378,9 +388,9 @@ public sealed partial class UiMarkupGeneratorTests
             .OfType<IMethodSymbol>()
             .ToArray();
         Assert.Equal(3, invocations.Count(symbol => symbol.ContainingType.ToDisplayString() == "Cerneala.Timbre.TimbreSource" && symbol.Name == "FromFile"));
-        Assert.Equal(3, invocations.Count(symbol =>
+        Assert.Equal(1, invocations.Count(symbol =>
             symbol.Name == "SetResource" &&
-            symbol.TypeArguments.SingleOrDefault()?.ToDisplayString() == "Cerneala.Timbre.TimbreClip"));
+            symbol.TypeArguments.SingleOrDefault()?.ToDisplayString() == "Cerneala.Timbre.TimbreClipDefinition"));
 
         ObjectCreationExpressionSyntax confirm = tree.GetRoot().DescendantNodes()
             .OfType<ObjectCreationExpressionSyntax>()
@@ -399,23 +409,23 @@ public sealed partial class UiMarkupGeneratorTests
     {
         TimbreParameter<float> toneCutoff = new("ToneCutoff", 1200f);
         TimbreParameter<float> echoMix = new("EchoMix", 0.15f);
-        TimbreClip manualConfirm = new(
+        TimbreSound manualConfirm = new(
             "audio/confirm.wav",
             volume: 0.8f,
             parameters: [toneCutoff, echoMix],
             modifiers: [new LowPass(cutoff: toneCutoff), new Delay(time: 0.12f, feedback: 0.20f, mix: echoMix)]);
-        AssertSameDefinition(new TimbreClip("audio/tone.wav"), Resource(owner, "Tone"));
-        AssertSameDefinition(manualConfirm, Resource(owner, "ConfirmTimbre"));
-        AssertSameDefinition(new TimbreClip("audio/music.ogg", loop: true), Resource(owner, "Music"));
+        Assert.True(owner.TryFindResource(new ResourceId<TimbreClipDefinition>("Sounds"), out TimbreClipDefinition clip));
+        Assert.Equal("Sounds", clip.Name);
+        Assert.Equal(["ToneCutoff", "EchoMix"], clip.Parameters.Select(parameter => parameter.Name));
+        Assert.Equal(["Tone", "Confirm", "Music"], clip.Sounds.Keys);
+        Assert.Equal([false, false, true], clip.Sounds.Values.Select(sound => sound.AutoPlay));
+        AssertSameDefinition(new TimbreSound("audio/tone.wav"), clip.Sounds["Tone"].Sound);
+        AssertSameDefinition(manualConfirm, clip.Sounds["Confirm"].Sound);
+        AssertSameDefinition(new TimbreSound("audio/music.ogg", loop: true), clip.Sounds["Music"].Sound);
+        Assert.Same(clip.Parameters[0], clip.Sounds["Confirm"].Sound.Parameters[0]);
     }
 
-    private static TimbreClip Resource(UIElement owner, string name)
-    {
-        Assert.True(owner.TryFindResource(new ResourceId<TimbreClip>(name), out TimbreClip clip), name);
-        return clip;
-    }
-
-    private static void AssertSameDefinition(TimbreClip expected, TimbreClip actual)
+    private static void AssertSameDefinition(TimbreSound expected, TimbreSound actual)
     {
         Assert.Equal(expected.Source.Name, actual.Source.Name);
         Assert.Equal(expected.Volume, actual.Volume);
@@ -427,7 +437,7 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Equal(DescribeModifiers(expected), DescribeModifiers(actual));
     }
 
-    private static IEnumerable<string> DescribeModifiers(TimbreClip clip) => clip.Modifiers.Select(modifier => modifier switch
+    private static IEnumerable<string> DescribeModifiers(TimbreSound sound) => sound.Modifiers.Select(modifier => modifier switch
     {
         LowPass lowPass => "LowPass(" + DescribeInput(lowPass.Cutoff) + ")",
         Delay delay => "Delay(" + DescribeInput(delay.Time) + ", " + DescribeInput(delay.Feedback) + ", " + DescribeInput(delay.Mix) + ")",

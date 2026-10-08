@@ -35,9 +35,10 @@ public sealed partial class UiMarkupGenerator
         private bool IsTimbreOwnedNode(DirectiveNode node) =>
             IsTimbreNode(node) || node is MotionExecutionNode execution && IsAudioMotionNode(execution);
 
-        // The typed audio target comes from the Aspect's bound Timbre schema;
-        // validity was decided by Cerneala.Language, so a missing schema is an
-        // internal mismatch, not a fallback to element properties.
+        // `$self|$owner|$Name.timbre.Sound.Property`: validity (the sound exists
+        // on the target, the property is Volume or a parameter the sound uses)
+        // was decided by Cerneala.Language; here only the target element is
+        // resolved, as for any Motion target.
         private bool TryResolveTimbreMotionTarget(
             MarkupElement applicationElement,
             AspectResource aspect,
@@ -48,17 +49,21 @@ public sealed partial class UiMarkupGenerator
             target = null;
             property = null;
             string[] segments = assignment.Target.Split('.');
-            if (aspect.Timbre is not BoundTimbreAspect sound ||
-                segments.Length != 4 ||
-                segments[0] != "$self" ||
-                !sound.Handles.TryGetValue(segments[2], out TimbreHandleKind kind) ||
-                kind != TimbreHandleKind.Timbre ||
-                segments[3] != "Volume" && sound.FindHandleParameter(segments[2], segments[3]) is null)
+            ResolvedMotionTargetKind kind = segments[0] switch
+            {
+                "$self" => ResolvedMotionTargetKind.Self,
+                "$owner" => ResolvedMotionTargetKind.Owner,
+                _ => ResolvedMotionTargetKind.Named
+            };
+            MarkupElement? element = kind == ResolvedMotionTargetKind.Named
+                ? FindMotionNamedElement(applicationElement, aspect, segments[0].Substring(1))
+                : applicationElement;
+            if (segments.Length != 4 || element is null)
             {
                 ReportMotion(
                     MotionDiagnosticKind.Target,
                     assignment.Location,
-                    "Timbre Motion target '" + assignment.Target + "' has no bound Timbre handle schema.");
+                    "Timbre Motion target '" + assignment.Target + "' has no bound sound.");
                 return false;
             }
 
@@ -68,8 +73,9 @@ public sealed partial class UiMarkupGenerator
                 "__sound_" + segments[2] + "_" + segments[3],
                 compilation.GetSpecialType(SpecialType.System_Single));
             target = new ResolvedMotionTarget(
-                ResolvedMotionTargetKind.Self,
-                applicationElement,
+                kind,
+                element,
+                ownerName: kind == ResolvedMotionTargetKind.Named ? segments[0].Substring(1) : null,
                 sound: new ResolvedTimbreMotionTarget(segments[2], segments[3]));
             return true;
         }

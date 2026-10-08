@@ -32,7 +32,7 @@ re-arms the rule, and hiding then showing an owner with an unchanged true rule
 does not run it again. The visual activation keeps its renderability gating.
 When both are due in the same evaluation the controller passes the visual
 activation to the sound callback, which invokes it at the Motion position so a
-mixed `@timbre`/Motion body runs in source order; otherwise it receives `null`.
+mixed Timbre command/Motion body runs in source order; otherwise it receives `null`.
 The initial activation after attach is deferred through the root Relay for both
 parts, and detach clears the audio state so reattaching activates again.
 
@@ -47,7 +47,7 @@ var rule = new MarkupConditionRule(
     conditionStateChanged: null,
     timbreActivated: visual =>
     {
-        GeneratedMarkup.PlayTimbre(timbreSession, new ResourceId<TimbreClip>("ErrorTimbre"), null, "Playback");
+        GeneratedMarkup.PlayTimbre(border, "Error");
         visual?.Invoke();
     });
 ```

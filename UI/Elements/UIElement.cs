@@ -682,14 +682,19 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         root.AdvanceImageResolutionEpoch();
         ElementId = id;
         attachmentGeneration++;
+
+        // Behaviors the Aspect behavior adds attach themselves (the element is
+        // attached by then); only the ones present before are attached here.
+        IElementLifecycleBehavior[] existingBehaviors = [.. lifecycleBehaviors];
         AttachElementAspectBehavior();
+        root.AspectProcessor.AttachBehaviors(this);
         if (!isInitialized)
         {
             isInitialized = true;
             Initialized?.Invoke(this, EventArgs.Empty);
         }
         OnAttached();
-        foreach (IElementLifecycleBehavior behavior in lifecycleBehaviors)
+        foreach (IElementLifecycleBehavior behavior in existingBehaviors)
         {
             behavior.Attach();
         }

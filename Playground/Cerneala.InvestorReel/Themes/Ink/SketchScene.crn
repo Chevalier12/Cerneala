@@ -148,14 +148,16 @@
                 </StackPanel>
             </Grid>
             <Border Name="Card" Background="$CardBrush" BorderBrush="$PaperShadeBrush" BorderThickness="1" Padding="34,30,34,30" Opacity="0">
-                @prism
-                {
-                    @layer Lift
+                <Border.Aspect>
+                    @prism
                     {
-                        @parameter ShadowDistance: float = 0;
-                        @style DropShadow { Color = #FF16181F; Opacity = 0.22; UseGlobalLight = false; Angle = 90; Distance = ShadowDistance; Size = 22; }
+                        @layer Lift
+                        {
+                            @parameter ShadowDistance: float = 0;
+                            @style DropShadow { Color = #FF16181F; Opacity = 0.22; UseGlobalLight = false; Angle = 90; Distance = ShadowDistance; Size = 22; }
+                        }
                     }
-                }
+                </Border.Aspect>
                 <StackPanel>
                     <TextBlock Text="Order 1042" FontFamily="Sitka Banner" FontSize="38" />
                     <Grid Height="30" Margin="0,18,0,0">

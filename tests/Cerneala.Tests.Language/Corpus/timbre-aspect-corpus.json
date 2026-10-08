@@ -1,0 +1,185 @@
+[
+  {
+    "id": "aspect.contract.approved",
+    "family": "Attachment",
+    "valid": true,
+    "note": "docs/plans/2026-10-08-timbre-prism-in-aspect.md §4 in a StackPanel; the sound and the Prism layer are animated in two @on MouseEnter blocks because one Motion execution cannot mix Timbre and Prism targets and an @on holds one execution.",
+    "markup": "<StackPanel><StackPanel.Resources><TimbreClip Name=\"UiSounds\">@parameter Brightness: float = 1200; @sound Click { Source = \"audio/click.wav\"; } @sound Hover { Source = \"audio/hover.wav\"; Volume = 0.3; @modifier LowPass { Cutoff = Brightness; } }</TimbreClip><PrismClip Name=\"CardFx\">@parameter GlowRadius: float = 18; @layer Foreground { @filter Blur { Radius = GlowRadius; } }</PrismClip><Aspect Name=\"MenuButton\" TargetType=\"Button\">@timbre $UiSounds(Brightness = 800); @prism $CardFx(GlowRadius = 24); @on Click { @play $self.timbre.Click; } @on MouseEnter { @play $self.timbre.Hover; @animate with Tween(300ms, EaseOut) { @to { $self.timbre.Hover.Volume = 0.8; } } } @on MouseEnter { @animate with Tween(300ms, EaseOut) { @to { $self.prism.Foreground.Opacity = 0.5; } } } @on MouseLeave { @stop $self.timbre.Hover; }</Aspect></StackPanel.Resources><Border Name=\"Speaker\"><Border.Aspect>@timbre { @sound Music { Source = \"audio/music.ogg\"; Loop = true; Volume = 0.4; AutoPlay = true; } }</Border.Aspect></Border><Button Content=\"Start\" Aspect=\"$MenuButton\" /><Button Content=\"Music\"><Button.Aspect>@on Click { @pause $Speaker.timbre.Music; }</Button.Aspect></Button></StackPanel>"
+  },
+  {
+    "id": "aspect.inline.transport",
+    "family": "Command",
+    "valid": true,
+    "markup": "<Border><Border.Aspect>@timbre { @sound Music { Source = \"audio/music.ogg\"; Loop = true; AutoPlay = true; } } @on MouseEnter { @pause $self.timbre.Music; } @on MouseLeave { @resume $self.timbre.Music; } @on MouseDown { @seek $self.timbre.Music to 30s; } @on MouseUp { @stop $self.timbre.Music; @play $self.timbre.Music; }</Border.Aspect></Border>"
+  },
+  {
+    "id": "aspect.resource.noArguments",
+    "family": "Attachment",
+    "valid": true,
+    "markup": "<StackPanel><StackPanel.Resources><TimbreClip Name=\"Sounds\">@sound Click { Source = \"audio/click.wav\"; }</TimbreClip><Aspect Name=\"Clicky\" TargetType=\"Button\">@timbre $Sounds; @on Click { @play $self.timbre.Click; }</Aspect></StackPanel.Resources><Button Content=\"A\" Aspect=\"$Clicky\" /><Button Content=\"B\" Aspect=\"$Clicky\" /></StackPanel>"
+  },
+  {
+    "id": "aspect.motion.parameter",
+    "family": "Motion",
+    "valid": true,
+    "markup": "<Button Content=\"Sweep\"><Button.Aspect>@timbre { @parameter Brightness: float = 4000; @sound Hover { Source = \"audio/hover.wav\"; @modifier LowPass { Cutoff = Brightness; } } } @on Click { @play $self.timbre.Hover; @animate with Tween(300ms, Linear) { @to { $self.timbre.Hover.Brightness = 200; } } }</Button.Aspect></Button>"
+  },
+  {
+    "id": "aspect.condition.commands",
+    "family": "Command",
+    "valid": true,
+    "markup": "<StackPanel><CheckBox Name=\"PlayBox\" Content=\"Play\" /><Border Name=\"Speaker\"><Border.Aspect>@timbre { @sound Music { Source = \"audio/music.ogg\"; Loop = true; } } @when $PlayBox.IsChecked { @if $PlayBox.IsChecked == true { @play $self.timbre.Music; } @if $PlayBox.IsChecked == false { @stop $self.timbre.Music; } }</Border.Aspect></Border></StackPanel>"
+  },
+  {
+    "id": "aspect.application.self",
+    "family": "Attachment",
+    "valid": true,
+    "note": "An Aspect in Application resources addresses only $self and $owner.",
+    "path": "TimbreAspectApp.crn",
+    "companion": "namespace CorpusInput { public partial class TimbreAspectApp : Cerneala.UI.Application { } public partial class ShellWindow : Cerneala.UI.Controls.Window { } }",
+    "markup": "<Application StartupWindow=\"ShellWindow\"><Application.Resources><TimbreClip Name=\"Chime\">@sound Ding { Source = \"audio/chime.wav\"; }</TimbreClip><Aspect Name=\"Chiming\" TargetType=\"Button\">@timbre $Chime; @on Click { @play $self.timbre.Ding; }</Aspect></Application.Resources></Application>"
+  },
+  {
+    "id": "aspect.timbre.inContent",
+    "family": "Context",
+    "valid": false,
+    "markup": "<Button Content=\"Play\">@timbre { @sound Click { Source = \"audio/click.wav\"; } }</Button>",
+    "expect": [ { "id": "CERNEALAUI033", "message": "@timbre is written only in an Aspect body." } ]
+  },
+  {
+    "id": "aspect.prism.inContent",
+    "family": "Context",
+    "valid": false,
+    "markup": "<Border>@prism { @layer Card { Opacity = 0.8; } }</Border>",
+    "expect": [ { "id": "PRISM2013", "message": "@prism is written only in an Aspect body." } ]
+  },
+  {
+    "id": "aspect.timbre.inOn",
+    "family": "Context",
+    "valid": false,
+    "markup": "<Button Content=\"Play\"><Button.Aspect>@on Click { @timbre { @sound Click { Source = \"audio/click.wav\"; } } }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI033", "message": "@timbre is written at the top of the Aspect body, not inside @on, @when or @if; use @play $self.timbre.Sound to start a sound." } ]
+  },
+  {
+    "id": "aspect.prism.inOn",
+    "family": "Context",
+    "valid": false,
+    "markup": "<Border><Border.Aspect>@on MouseEnter { @prism { @layer Card { Opacity = 0.8; } } }</Border.Aspect></Border>",
+    "expect": [ { "id": "PRISM2013", "message": "@prism is written at the top of the Aspect body, not inside @on, @when or @if." } ]
+  },
+  {
+    "id": "aspect.timbre.twice",
+    "family": "Attachment",
+    "valid": false,
+    "markup": "<Button Content=\"Play\"><Button.Aspect>@timbre { @sound Click { Source = \"audio/click.wav\"; } } @timbre { @sound Pop { Source = \"audio/pop.wav\"; } }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI033", "message": "An Aspect can declare only one @timbre." } ]
+  },
+  {
+    "id": "aspect.prism.twice",
+    "family": "Attachment",
+    "valid": false,
+    "markup": "<Border><Border.Aspect>@prism { @layer Card { Opacity = 0.8; } } @prism { @layer Other { Opacity = 0.5; } }</Border.Aspect></Border>",
+    "expect": [ { "id": "PRISM2013", "message": "An Aspect can declare only one @prism." } ]
+  },
+  {
+    "id": "aspect.clip.duplicateSound",
+    "family": "Reference",
+    "valid": false,
+    "markup": "<StackPanel><StackPanel.Resources><TimbreClip Name=\"Sounds\">@sound Click { Source = \"audio/click.wav\"; } @sound Click { Source = \"audio/pop.wav\"; }</TimbreClip></StackPanel.Resources></StackPanel>",
+    "expect": [ { "id": "CERNEALAUI031", "message": "Sound 'Click' is declared more than once." } ]
+  },
+  {
+    "id": "aspect.clip.parameterInSound",
+    "family": "Syntax",
+    "valid": false,
+    "markup": "<StackPanel><StackPanel.Resources><TimbreClip Name=\"Sounds\">@sound Hover { Source = \"audio/hover.wav\"; @parameter Brightness: float = 1200; @modifier LowPass { Cutoff = Brightness; } }</TimbreClip></StackPanel.Resources></StackPanel>",
+    "expect": [ { "id": "CERNEALAUI030", "message": "@parameter is declared at TimbreClip level, not inside @sound." } ]
+  },
+  {
+    "id": "aspect.clip.empty",
+    "family": "Syntax",
+    "valid": false,
+    "markup": "<StackPanel><StackPanel.Resources><TimbreClip Name=\"Sounds\">@parameter Brightness: float = 1200;</TimbreClip></StackPanel.Resources></StackPanel>",
+    "expect": [ { "id": "CERNEALAUI030", "message": "TimbreClip needs at least one @sound." } ]
+  },
+  {
+    "id": "aspect.clip.legacySingleSound",
+    "family": "Syntax",
+    "valid": false,
+    "markup": "<StackPanel><StackPanel.Resources><TimbreClip Name=\"Tone\">Source = \"audio/tone.wav\";</TimbreClip></StackPanel.Resources></StackPanel>",
+    "expect": [ { "id": "CERNEALAUI030", "message": "TimbreClip declares @parameter and @sound; write 'Source' inside '@sound Name { … }'." } ]
+  },
+  {
+    "id": "aspect.attach.unknownArgument",
+    "family": "Reference",
+    "valid": false,
+    "markup": "<StackPanel><StackPanel.Resources><TimbreClip Name=\"Sounds\">@sound Click { Source = \"audio/click.wav\"; }</TimbreClip><Aspect Name=\"Loud\" TargetType=\"Button\">@timbre $Sounds(Volume = 0.5);</Aspect></StackPanel.Resources></StackPanel>",
+    "expect": [ { "id": "CERNEALAUI031", "message": "'Volume' is not a @parameter of TimbreClip '$Sounds'." } ]
+  },
+  {
+    "id": "aspect.command.shortName",
+    "family": "Syntax",
+    "valid": false,
+    "markup": "<Button Content=\"Play\"><Button.Aspect>@timbre { @sound Click { Source = \"audio/click.wav\"; } } @on Click { @play Click; }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI030", "message": "@play requires a sound path: '$self.timbre.Sound', '$owner.timbre.Sound' or '$Name.timbre.Sound'." } ]
+  },
+  {
+    "id": "aspect.command.shortDollar",
+    "family": "Syntax",
+    "valid": false,
+    "markup": "<Button Content=\"Play\"><Button.Aspect>@timbre { @sound Click { Source = \"audio/click.wav\"; } } @on Click { @play $Click; }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI030", "message": "@play requires a sound path: '$self.timbre.Sound', '$owner.timbre.Sound' or '$Name.timbre.Sound'." } ]
+  },
+  {
+    "id": "aspect.command.elementOnly",
+    "family": "Syntax",
+    "valid": false,
+    "markup": "<StackPanel><Border Name=\"Speaker\"><Border.Aspect>@timbre { @sound Music { Source = \"audio/music.ogg\"; } }</Border.Aspect></Border><Button Content=\"Pause\"><Button.Aspect>@on Click { @pause $Speaker; }</Button.Aspect></Button></StackPanel>",
+    "expect": [ { "id": "CERNEALAUI030", "message": "@pause requires a sound path: '$self.timbre.Sound', '$owner.timbre.Sound' or '$Name.timbre.Sound'." } ]
+  },
+  {
+    "id": "aspect.command.missingSound",
+    "family": "Reference",
+    "valid": false,
+    "markup": "<StackPanel><Border Name=\"Speaker\"><Border.Aspect>@timbre { @sound Music { Source = \"audio/music.ogg\"; } }</Border.Aspect></Border><Button Content=\"Pause\"><Button.Aspect>@on Click { @pause $Speaker.timbre.Lipsa; }</Button.Aspect></Button></StackPanel>",
+    "expect": [ { "id": "CERNEALAUI031", "message": "'$Speaker' has no sound 'Lipsa' in its Aspect." } ]
+  },
+  {
+    "id": "aspect.command.selfMissingSound",
+    "family": "Reference",
+    "valid": false,
+    "markup": "<Button Content=\"Play\"><Button.Aspect>@timbre { @sound Click { Source = \"audio/click.wav\"; } } @on Click { @play $self.timbre.Lipsa; }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI031", "message": "'$self' has no sound 'Lipsa' in its Aspect." } ]
+  },
+  {
+    "id": "aspect.command.applicationNamed",
+    "family": "Reference",
+    "valid": false,
+    "path": "TimbreAspectNamedApp.crn",
+    "companion": "namespace CorpusInput { public partial class TimbreAspectNamedApp : Cerneala.UI.Application { } public partial class ShellWindow : Cerneala.UI.Controls.Window { } }",
+    "markup": "<Application StartupWindow=\"ShellWindow\"><Application.Resources><Aspect Name=\"PauseMusic\" TargetType=\"Button\">@on Click { @pause $Speaker.timbre.Music; }</Aspect></Application.Resources></Application>",
+    "expect": [ { "id": "CERNEALAUI031", "message": "An Aspect in Application resources can address only $self and $owner." } ]
+  },
+  {
+    "id": "aspect.command.parallel",
+    "family": "Context",
+    "valid": false,
+    "markup": "<Button Content=\"Play\"><Button.Aspect>@timbre { @sound Click { Source = \"audio/click.wav\"; } } @on Click { @parallel { @play $self.timbre.Click; } }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI033", "message": "@play cannot be orchestrated inside @parallel or @sequence." } ]
+  },
+  {
+    "id": "aspect.motion.unusedParameter",
+    "family": "Motion",
+    "valid": false,
+    "markup": "<Button Content=\"Sweep\"><Button.Aspect>@timbre { @parameter Brightness: float = 4000; @sound Click { Source = \"audio/click.wav\"; } @sound Hover { Source = \"audio/hover.wav\"; @modifier LowPass { Cutoff = Brightness; } } } @on Click { @play $self.timbre.Click; @animate with Tween(300ms, Linear) { @to { $self.timbre.Click.Brightness = 200; } } }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI031", "message": "Sound 'Click' does not use parameter 'Brightness'." } ]
+  },
+  {
+    "id": "aspect.legacy.handle",
+    "family": "Context",
+    "valid": false,
+    "note": "The old action form: @timbre with a handle inside @on.",
+    "markup": "<Button Content=\"Play\"><Button.Resources><TimbreClip Name=\"Sounds\">@sound Click { Source = \"audio/click.wav\"; }</TimbreClip></Button.Resources><Button.Aspect>@handle Playback; @on Click { @timbre $Sounds as Playback; }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI033", "message": "@timbre is written at the top of the Aspect body, not inside @on, @when or @if; use @play $self.timbre.Sound to start a sound." } ]
+  }
+]

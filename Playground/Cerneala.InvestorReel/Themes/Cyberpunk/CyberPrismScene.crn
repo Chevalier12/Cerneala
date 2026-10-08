@@ -86,34 +86,40 @@
                     <Border Height="1" Background="$CyGridBrush" VerticalAlignment="Top" Margin="0,398,0,0" />
                     <Grid Name="Pieces">
                         <Ellipse Name="Sun" Width="190" Height="190" Fill="$CyMagentaBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="60,80,0,0" Opacity="0">
-                            @prism
-                            {
-                                @layer Neon
+                            <Ellipse.Aspect>
+                                @prism
                                 {
-                                    @parameter Lift: float = 0;
-                                    @style DropShadow { Color = #FFFF2E97; Opacity = 0.85; UseGlobalLight = false; Angle = 90; Distance = Lift; Size = Lift; }
+                                    @layer Neon
+                                    {
+                                        @parameter Lift: float = 0;
+                                        @style DropShadow { Color = #FFFF2E97; Opacity = 0.85; UseGlobalLight = false; Angle = 90; Distance = Lift; Size = Lift; }
+                                    }
                                 }
-                            }
+                            </Ellipse.Aspect>
                         </Ellipse>
                         <Border Name="Core" Width="160" Height="160" Background="$CyNightBrush" BorderBrush="$CyCyanBrush" BorderThickness="4" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="330,95,0,0" Opacity="0">
-                            @prism
-                            {
-                                @layer Neon
+                            <Border.Aspect>
+                                @prism
                                 {
-                                    @parameter Lift: float = 0;
-                                    @style DropShadow { Color = #FF19F0FF; Opacity = 0.85; UseGlobalLight = false; Angle = 90; Distance = Lift; Size = Lift; }
+                                    @layer Neon
+                                    {
+                                        @parameter Lift: float = 0;
+                                        @style DropShadow { Color = #FF19F0FF; Opacity = 0.85; UseGlobalLight = false; Angle = 90; Distance = Lift; Size = Lift; }
+                                    }
                                 }
-                            }
+                            </Border.Aspect>
                         </Border>
                         <Border Name="Diamond" Width="140" Height="140" Background="$CyNightBrush" BorderBrush="$CyVioletBrush" BorderThickness="4" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="600,105,0,0" Rotation="0.785" RenderTransformOrigin="0.5,0.5" Opacity="0">
-                            @prism
-                            {
-                                @layer Neon
+                            <Border.Aspect>
+                                @prism
                                 {
-                                    @parameter Lift: float = 0;
-                                    @style DropShadow { Color = #FF7A5CFF; Opacity = 0.85; UseGlobalLight = false; Angle = 90; Distance = Lift; Size = Lift; }
+                                    @layer Neon
+                                    {
+                                        @parameter Lift: float = 0;
+                                        @style DropShadow { Color = #FF7A5CFF; Opacity = 0.85; UseGlobalLight = false; Angle = 90; Distance = Lift; Size = Lift; }
+                                    }
                                 }
-                            }
+                            </Border.Aspect>
                         </Border>
                     </Grid>
                     <Grid Name="Readings" Opacity="0">
@@ -133,14 +139,16 @@
                 <StackPanel Margin="0,0,0,10" Opacity="0">
                     <Border Width="440" Height="100" BorderBrush="$CyGridBrush" BorderThickness="1" ClipToBounds="True">
                         <Grid Name="EdgeArt">
-                            @prism
-                            {
-                                @layer Fx
+                            <Grid.Aspect>
+                                @prism
                                 {
-                                    @parameter Width: float = 1;
-                                    @filter GlowingEdges { EdgeWidth = Width; EdgeBrightness = 9; Smoothness = 4; }
+                                    @layer Fx
+                                    {
+                                        @parameter Width: float = 1;
+                                        @filter GlowingEdges { EdgeWidth = Width; EdgeBrightness = 9; Smoothness = 4; }
+                                    }
                                 }
-                            }
+                            </Grid.Aspect>
                             <Border Background="$CyNightBrush" />
                             <Ellipse Width="70" Height="70" Fill="$CyMagentaBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,8,0,0" />
                             <Border Width="120" Height="120" Background="$CyGridBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="80,60,0,0" Rotation="0.785" RenderTransformOrigin="0.5,0.5" />
@@ -156,14 +164,16 @@
                 <StackPanel Margin="0,0,0,10" Opacity="0">
                     <Border Width="440" Height="100" BorderBrush="$CyGridBrush" BorderThickness="1" ClipToBounds="True">
                         <Grid Name="ShardArt">
-                            @prism
-                            {
-                                @layer Fx
+                            <Grid.Aspect>
+                                @prism
                                 {
-                                    @parameter Cell: float = 4;
-                                    @filter Crystallize { CellSize = Cell; }
+                                    @layer Fx
+                                    {
+                                        @parameter Cell: float = 4;
+                                        @filter Crystallize { CellSize = Cell; }
+                                    }
                                 }
-                            }
+                            </Grid.Aspect>
                             <Border Background="$CyNightBrush" />
                             <Ellipse Width="70" Height="70" Fill="$CyMagentaBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,8,0,0" />
                             <Border Width="120" Height="120" Background="$CyCyanDimBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="80,60,0,0" Rotation="0.785" RenderTransformOrigin="0.5,0.5" />
@@ -179,15 +189,17 @@
                 <StackPanel Margin="0,0,0,10" Opacity="0">
                     <Border Width="440" Height="100" BorderBrush="$CyGridBrush" BorderThickness="1" ClipToBounds="True">
                         <Grid Name="SplitArt">
-                            @prism
-                            {
-                                @layer Fx
+                            <Grid.Aspect>
+                                @prism
                                 {
-                                    @parameter Split: float = 2;
-                                    @filter ChromaticAberration { Amount = Split; }
-                                    @filter Scanlines { Frequency = 60; Thickness = 1; LineOpacity = 0.4; }
+                                    @layer Fx
+                                    {
+                                        @parameter Split: float = 2;
+                                        @filter ChromaticAberration { Amount = Split; }
+                                        @filter Scanlines { Frequency = 60; Thickness = 1; LineOpacity = 0.4; }
+                                    }
                                 }
-                            }
+                            </Grid.Aspect>
                             <Border Background="$CyNightBrush" />
                             <Ellipse Width="70" Height="70" Fill="$CyMagentaBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,8,0,0" />
                             <Border Width="120" Height="120" Background="$CyCyanDimBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="80,60,0,0" Rotation="0.785" RenderTransformOrigin="0.5,0.5" />

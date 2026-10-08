@@ -15,16 +15,16 @@ public sealed class TimbreScope : IDisposable
 
     public bool IsDisposed => disposed;
 
-    public TimbrePlayback Play(TimbreClip clip, Action<TimbreStartOptions>? configure = null, TimbreHandle? handle = null)
+    public TimbrePlayback Play(TimbreSound sound, Action<TimbreStartOptions>? configure = null, TimbreHandle? handle = null)
     {
-        ArgumentNullException.ThrowIfNull(clip);
+        ArgumentNullException.ThrowIfNull(sound);
         if (handle is not null && !ReferenceEquals(handle.Scope, this))
         {
             throw new ArgumentException("The sound handle belongs to another scope.", nameof(handle));
         }
 
         ThrowIfDisposed();
-        TimbreStartOptions options = new(clip);
+        TimbreStartOptions options = new(sound);
         try
         {
             configure?.Invoke(options);
@@ -34,7 +34,7 @@ public sealed class TimbreScope : IDisposable
             options.Seal();
         }
 
-        return Runtime.Start(this, clip, options, handle);
+        return Runtime.Start(this, sound, options, handle);
     }
 
     public TimbreHandle CreateHandle()

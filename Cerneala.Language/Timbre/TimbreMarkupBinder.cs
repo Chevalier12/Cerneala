@@ -66,27 +66,34 @@ internal sealed class BoundTimbreModifier
     public IReadOnlyList<BoundTimbreModifierInput> Inputs { get; }
 }
 
-internal sealed class BoundTimbreClip
+
+// One `@sound Name { … }` node. Parameters are the clip parameters its
+// modifiers use, in clip declaration order.
+internal sealed class BoundTimbreSound
 {
-    public BoundTimbreClip(
-        string? name,
+    public BoundTimbreSound(
+        string name,
+        TextSpan nameSpan,
         string? source,
         float volume,
         bool loop,
+        bool autoPlay,
         IReadOnlyList<BoundTimbreParameter> parameters,
-        IReadOnlyList<BoundTimbreModifier> modifiers,
-        bool isValid)
+        IReadOnlyList<BoundTimbreModifier> modifiers)
     {
         Name = name;
+        NameSpan = nameSpan;
         Source = source;
         Volume = volume;
         Loop = loop;
+        AutoPlay = autoPlay;
         Parameters = parameters;
         Modifiers = modifiers;
-        IsValid = isValid;
     }
 
-    public string? Name { get; }
+    public string Name { get; }
+
+    public TextSpan NameSpan { get; }
 
     public string? Source { get; }
 
@@ -94,14 +101,44 @@ internal sealed class BoundTimbreClip
 
     public bool Loop { get; }
 
+    public bool AutoPlay { get; }
+
     public IReadOnlyList<BoundTimbreParameter> Parameters { get; }
 
     public IReadOnlyList<BoundTimbreModifier> Modifiers { get; }
+
+    public bool UsesParameter(string name) =>
+        Parameters.Any(parameter => string.Equals(parameter.Name, name, StringComparison.Ordinal));
+}
+
+// A <TimbreClip> resource or an inline `@timbre { … }` block.
+internal sealed class BoundTimbreClip
+{
+    public BoundTimbreClip(
+        string? name,
+        IReadOnlyList<BoundTimbreParameter> parameters,
+        IReadOnlyList<BoundTimbreSound> sounds,
+        bool isValid)
+    {
+        Name = name;
+        Parameters = parameters;
+        Sounds = sounds;
+        IsValid = isValid;
+    }
+
+    public string? Name { get; }
+
+    public IReadOnlyList<BoundTimbreParameter> Parameters { get; }
+
+    public IReadOnlyList<BoundTimbreSound> Sounds { get; }
 
     public bool IsValid { get; }
 
     public BoundTimbreParameter? FindParameter(string name) =>
         Parameters.FirstOrDefault(parameter => string.Equals(parameter.Name, name, StringComparison.Ordinal));
+
+    public BoundTimbreSound? FindSound(string name) =>
+        Sounds.FirstOrDefault(sound => string.Equals(sound.Name, name, StringComparison.Ordinal));
 }
 
 internal sealed class BoundTimbreArgument
@@ -117,109 +154,86 @@ internal sealed class BoundTimbreArgument
     public float Value { get; }
 }
 
-internal sealed class BoundTimbreAction
+// The `@timbre` of one Aspect: a resource reference with arguments, or an
+// inline clip (ResourceName is null).
+internal sealed class BoundTimbreAttachment
 {
-    public BoundTimbreAction(
-        TimbreActionKind kind,
+    public BoundTimbreAttachment(
         TextSpan keywordSpan,
-        string? handleName,
-        string? clipName = null,
-        BoundTimbreClip? clip = null,
-        float? volume = null,
-        bool? loop = null,
-        IReadOnlyList<BoundTimbreArgument>? arguments = null,
+        BoundTimbreClip clip,
+        string? resourceName,
+        IReadOnlyList<BoundTimbreArgument> arguments)
+    {
+        KeywordSpan = keywordSpan;
+        Clip = clip;
+        ResourceName = resourceName;
+        Arguments = arguments;
+    }
+
+    public TextSpan KeywordSpan { get; }
+
+    public BoundTimbreClip Clip { get; }
+
+    public string? ResourceName { get; }
+
+    public IReadOnlyList<BoundTimbreArgument> Arguments { get; }
+}
+
+internal enum TimbreCommandTarget
+{
+    Self,
+    Owner,
+    Named
+}
+
+internal sealed class BoundTimbreCommand
+{
+    public BoundTimbreCommand(
+        TimbreCommandKind kind,
+        TextSpan keywordSpan,
+        TimbreCommandTarget target,
+        string? targetName,
+        string sound,
         long seekTicks = 0)
     {
         Kind = kind;
         KeywordSpan = keywordSpan;
-        HandleName = handleName;
-        ClipName = clipName;
-        Clip = clip;
-        Volume = volume;
-        Loop = loop;
-        Arguments = arguments ?? Array.Empty<BoundTimbreArgument>();
+        Target = target;
+        TargetName = targetName;
+        Sound = sound;
         SeekTicks = seekTicks;
     }
 
-    public TimbreActionKind Kind { get; }
+    public TimbreCommandKind Kind { get; }
 
     public TextSpan KeywordSpan { get; }
 
-    public string? HandleName { get; }
+    public TimbreCommandTarget Target { get; }
 
-    public string? ClipName { get; }
+    // The element name when Target is Named.
+    public string? TargetName { get; }
 
-    public BoundTimbreClip? Clip { get; }
-
-    public float? Volume { get; }
-
-    public bool? Loop { get; }
-
-    public IReadOnlyList<BoundTimbreArgument> Arguments { get; }
+    public string Sound { get; }
 
     public long SeekTicks { get; }
 }
 
-internal enum TimbreHandleKind
-{
-    Unused,
-    Timbre,
-    Motion
-}
-
-// A float parameter exposed by every TimbreClip a Timbre handle can play, with
-// the intersection of its ranges in those clips.
-internal sealed class BoundTimbreHandleParameter
-{
-    public BoundTimbreHandleParameter(string name, float minimum, float maximum)
-    {
-        Name = name;
-        Minimum = minimum;
-        Maximum = maximum;
-    }
-
-    public string Name { get; }
-
-    public float Minimum { get; }
-
-    public float Maximum { get; }
-
-    public bool Contains(float value) =>
-        !float.IsNaN(value) && !float.IsInfinity(value) && value >= Minimum && value <= Maximum;
-}
-
 internal sealed class BoundTimbreAspect
 {
-    public BoundTimbreAspect(
-        int elementStart,
-        IReadOnlyList<BoundTimbreAction> actions,
-        IReadOnlyDictionary<string, TimbreHandleKind> handles,
-        IReadOnlyDictionary<string, IReadOnlyList<BoundTimbreHandleParameter>>? handleParameters = null)
+    public BoundTimbreAspect(int elementStart, BoundTimbreAttachment? attachment, IReadOnlyList<BoundTimbreCommand> commands)
     {
         ElementStart = elementStart;
-        Actions = actions;
-        Handles = handles;
-        HandleParameters = handleParameters ?? new Dictionary<string, IReadOnlyList<BoundTimbreHandleParameter>>();
+        Attachment = attachment;
+        Commands = commands;
     }
 
-    // Span.Start of the <Aspect> resource or <Owner.Aspect> property element.
+    // Start of the Aspect element (resource or inline property element).
     public int ElementStart { get; }
 
-    // Timbre actions of the Aspect in document order, including @cancel of
-    // Timbre handles; Motion @cancel is not listed.
-    public IReadOnlyList<BoundTimbreAction> Actions { get; }
+    public BoundTimbreAttachment? Attachment { get; }
 
-    public IReadOnlyDictionary<string, TimbreHandleKind> Handles { get; }
-
-    // Typed `$self.timbre.Handle.Parameter` schema of each Timbre handle: the
-    // custom parameters common to every clip started in it. Volume is
-    // intrinsic and not listed.
-    public IReadOnlyDictionary<string, IReadOnlyList<BoundTimbreHandleParameter>> HandleParameters { get; }
-
-    public BoundTimbreHandleParameter? FindHandleParameter(string handle, string name) =>
-        HandleParameters.TryGetValue(handle, out IReadOnlyList<BoundTimbreHandleParameter>? parameters)
-            ? parameters.FirstOrDefault(parameter => string.Equals(parameter.Name, name, StringComparison.Ordinal))
-            : null;
+    // In source order.
+    public IReadOnlyList<BoundTimbreCommand> Commands { get; }
 }
 
 internal sealed class TimbreMarkupModel
@@ -236,22 +250,23 @@ internal sealed class TimbreMarkupModel
         Aspects = aspects;
     }
 
-    // Bound TimbreClip resources keyed by the Span.Start of their element.
+    // TimbreClip resources of the document, keyed by element start.
     public IReadOnlyDictionary<int, BoundTimbreClip> Clips { get; }
 
+    // Aspects of the document with @timbre or Timbre commands, keyed by
+    // Aspect element start.
     public IReadOnlyDictionary<int, BoundTimbreAspect> Aspects { get; }
 }
 
-// Single build-time owner of TimbreClip/@timbre validity. Every rule comes from
-// TimbreCatalog, the file the core runtime compiles; Language and SourceGen
-// both consume the bound result instead of re-validating.
 internal static class TimbreMarkupBinder
 {
     public const string ReferenceId = "CERNEALAUI031";
     public const string ValueId = "CERNEALAUI032";
     public const string ContextId = "CERNEALAUI033";
 
-    private static readonly string[] ClipProperties = ["Source", "Volume", "Loop"];
+    public const string LegacyClipMessage = "TimbreClip declares @parameter and @sound; write 'Source' inside '@sound Name { … }'.";
+
+    private static readonly string[] SoundProperties = ["Source", "Volume", "Loop", "AutoPlay"];
 
     public static BoundTimbreClip BindClip(
         string? name,
@@ -270,20 +285,18 @@ internal static class TimbreMarkupBinder
             diagnostics.Add(new EmbeddedDiagnostic(ContextId, ContextMessage(directive.Keyword), directive.Span));
         }
 
-        string? source = null;
-        float volume = TimbreCatalog.Volume.DefaultValue;
-        bool loop = false;
-        HashSet<string> assigned = new(StringComparer.Ordinal);
+        if (body.LegacySpan is TextSpan legacy)
+        {
+            diagnostics.Add(new EmbeddedDiagnostic(TimbreMarkupSyntax.SyntaxId, LegacyClipMessage, legacy));
+        }
+
         List<BoundTimbreParameter> parameters = new();
         List<(BoundTimbreParameter Parameter, TimbreParameterSyntax Syntax)> declarations = new();
-        List<BoundTimbreModifier> modifiers = new();
+        List<BoundTimbreSound> sounds = new();
         foreach (object statement in body.Statements)
         {
             switch (statement)
             {
-                case TimbreValueSyntax property:
-                    BindClipProperty(property, assigned, diagnostics, ref source, ref volume, ref loop);
-                    break;
                 case TimbreParameterSyntax declaration:
                     if (parameters.Any(parameter => parameter.Name == declaration.Name))
                     {
@@ -301,12 +314,14 @@ internal static class TimbreMarkupBinder
                     parameters.Add(parameter);
                     declarations.Add((parameter, declaration));
                     break;
-                case TimbreModifierSyntax modifier:
-                    if (BindModifier(modifier, parameters, diagnostics) is BoundTimbreModifier bound)
+                case TimbreSoundSyntax sound:
+                    if (sounds.Any(candidate => candidate.Name == sound.Name))
                     {
-                        modifiers.Add(bound);
+                        diagnostics.Add(new EmbeddedDiagnostic(ReferenceId, "Sound '" + sound.Name + "' is declared more than once.", sound.NameSpan));
+                        break;
                     }
 
+                    sounds.Add(BindSound(sound, parameters, diagnostics));
                     break;
             }
         }
@@ -319,58 +334,37 @@ internal static class TimbreMarkupBinder
             }
         }
 
-        if (source is null && !assigned.Contains("Source"))
+        if (sounds.Count == 0 && body.LegacySpan is null)
         {
-            diagnostics.Add(new EmbeddedDiagnostic(ValueId, "TimbreClip requires Source.", clipSpan));
+            diagnostics.Add(new EmbeddedDiagnostic(TimbreMarkupSyntax.SyntaxId, "TimbreClip needs at least one @sound.", clipSpan));
         }
 
-        return new BoundTimbreClip(name, source, volume, loop, parameters, modifiers, diagnostics.Count == initialCount);
+        return new BoundTimbreClip(name, parameters, sounds, diagnostics.Count == initialCount);
     }
 
-    public static BoundTimbreAction BindPlay(
-        TimbreActionSyntax syntax,
+    // `@timbre $Clip(Name = value, …)`: every argument names a clip parameter.
+    public static IReadOnlyList<BoundTimbreArgument> BindArguments(
+        TimbreClipReferenceSyntax syntax,
         BoundTimbreClip clip,
         ICollection<EmbeddedDiagnostic> diagnostics)
     {
-        float? volume = null;
-        bool? loop = null;
         List<BoundTimbreArgument> arguments = new();
         HashSet<string> supplied = new(StringComparer.Ordinal);
         foreach (TimbreValueSyntax argument in syntax.Arguments)
         {
-            if (!supplied.Add(argument.Name))
-            {
-                diagnostics.Add(new EmbeddedDiagnostic(ReferenceId, "Duplicate @timbre argument '" + argument.Name + "'.", argument.NameSpan));
-                continue;
-            }
-
-            if (argument.Name == "Volume")
-            {
-                if (TryParseVolume(argument, diagnostics, out float parsedVolume))
-                {
-                    volume = parsedVolume;
-                }
-
-                continue;
-            }
-
-            if (argument.Name == "Loop")
-            {
-                if (TryParseLoop(argument, diagnostics, out bool parsedLoop))
-                {
-                    loop = parsedLoop;
-                }
-
-                continue;
-            }
-
             BoundTimbreParameter? parameter = clip.FindParameter(argument.Name);
             if (parameter is null)
             {
                 diagnostics.Add(new EmbeddedDiagnostic(
                     ReferenceId,
-                    "TimbreClip '" + (syntax.ClipName ?? clip.Name) + "' has no parameter '" + argument.Name + "'.",
+                    "'" + argument.Name + "' is not a @parameter of TimbreClip '$" + syntax.ClipName + "'.",
                     argument.NameSpan));
+                continue;
+            }
+
+            if (!supplied.Add(argument.Name))
+            {
+                diagnostics.Add(new EmbeddedDiagnostic(ReferenceId, "Duplicate @timbre argument '" + argument.Name + "'.", argument.NameSpan));
                 continue;
             }
 
@@ -380,18 +374,10 @@ internal static class TimbreMarkupBinder
             }
         }
 
-        return new BoundTimbreAction(
-            TimbreActionKind.Play,
-            syntax.KeywordSpan,
-            syntax.HandleName,
-            syntax.ClipName,
-            clip,
-            volume,
-            loop,
-            arguments);
+        return arguments;
     }
 
-    public static bool TryBindSeek(TimbreActionSyntax syntax, ICollection<EmbeddedDiagnostic> diagnostics, out long ticks)
+    public static bool TryBindSeek(TimbreCommandSyntax syntax, ICollection<EmbeddedDiagnostic> diagnostics, out long ticks)
     {
         if (TryParseDuration(syntax.SeekValue ?? string.Empty, out double seconds) && seconds >= 0)
         {
@@ -406,7 +392,9 @@ internal static class TimbreMarkupBinder
 
     public static string ContextMessage(string keyword) => keyword switch
     {
-        "@modifier" => "@modifier is allowed only inside TimbreClip.",
+        "@modifier" => "@modifier is allowed only inside @sound.",
+        "@sound" => "@sound is allowed only inside TimbreClip or an Aspect's @timbre block.",
+        "@timbre" => "@timbre is written only in an Aspect body.",
         _ => keyword + " is allowed only inside an Aspect @on, @when or @if body."
     };
 
@@ -429,26 +417,66 @@ internal static class TimbreMarkupBinder
 
     public static string FormatNumber(float value) => value.ToString(CultureInfo.InvariantCulture);
 
-    private static void BindClipProperty(
+    private static BoundTimbreSound BindSound(
+        TimbreSoundSyntax syntax,
+        IReadOnlyList<BoundTimbreParameter> declared,
+        ICollection<EmbeddedDiagnostic> diagnostics)
+    {
+        string? source = null;
+        float volume = TimbreCatalog.Volume.DefaultValue;
+        bool loop = false;
+        bool autoPlay = false;
+        HashSet<string> assigned = new(StringComparer.Ordinal);
+        List<BoundTimbreModifier> modifiers = new();
+        foreach (object statement in syntax.Statements)
+        {
+            switch (statement)
+            {
+                case TimbreValueSyntax property:
+                    BindSoundProperty(property, assigned, diagnostics, ref source, ref volume, ref loop, ref autoPlay);
+                    break;
+                case TimbreModifierSyntax modifier:
+                    if (BindModifier(modifier, declared, diagnostics) is BoundTimbreModifier bound)
+                    {
+                        modifiers.Add(bound);
+                    }
+
+                    break;
+            }
+        }
+
+        if (source is null && !assigned.Contains("Source"))
+        {
+            diagnostics.Add(new EmbeddedDiagnostic(ValueId, "Sound '" + syntax.Name + "' requires Source.", syntax.NameSpan));
+        }
+
+        BoundTimbreParameter[] used = declared
+            .Where(parameter => modifiers.Any(modifier => modifier.Inputs.Any(input => ReferenceEquals(input.Parameter, parameter))))
+            .ToArray();
+        return new BoundTimbreSound(syntax.Name, syntax.NameSpan, source, volume, loop, autoPlay, used, modifiers);
+    }
+
+    private static void BindSoundProperty(
         TimbreValueSyntax property,
         ISet<string> assigned,
         ICollection<EmbeddedDiagnostic> diagnostics,
         ref string? source,
         ref float volume,
-        ref bool loop)
+        ref bool loop,
+        ref bool autoPlay)
     {
-        if (!ClipProperties.Contains(property.Name, StringComparer.Ordinal))
+        if (!SoundProperties.Contains(property.Name, StringComparer.Ordinal))
         {
             diagnostics.Add(new EmbeddedDiagnostic(
                 ReferenceId,
-                "TimbreClip has no property '" + property.Name + "'; expected Source, Volume or Loop.",
+                "@sound has no property '" + property.Name + "'; expected Source, Volume, Loop or AutoPlay.",
                 property.NameSpan));
             return;
         }
 
         if (!assigned.Add(property.Name))
         {
-            diagnostics.Add(new EmbeddedDiagnostic(ReferenceId, "Duplicate TimbreClip property '" + property.Name + "'.", property.NameSpan));
+            diagnostics.Add(new EmbeddedDiagnostic(ReferenceId, "Duplicate @sound property '" + property.Name + "'.", property.NameSpan));
             return;
         }
 
@@ -477,10 +505,17 @@ internal static class TimbreMarkupBinder
                 }
 
                 return;
-            default:
-                if (TryParseLoop(property, diagnostics, out bool parsedLoop))
+            case "Loop":
+                if (TryParseBoolean(property, diagnostics, out bool parsedLoop))
                 {
                     loop = parsedLoop;
+                }
+
+                return;
+            default:
+                if (TryParseBoolean(property, diagnostics, out bool parsedAutoPlay))
+                {
+                    autoPlay = parsedAutoPlay;
                 }
 
                 return;
@@ -668,19 +703,19 @@ internal static class TimbreMarkupBinder
         return false;
     }
 
-    private static bool TryParseLoop(TimbreValueSyntax syntax, ICollection<EmbeddedDiagnostic> diagnostics, out bool loop)
+    private static bool TryParseBoolean(TimbreValueSyntax syntax, ICollection<EmbeddedDiagnostic> diagnostics, out bool value)
     {
         switch (syntax.Value.Trim())
         {
             case "true":
-                loop = true;
+                value = true;
                 return true;
             case "false":
-                loop = false;
+                value = false;
                 return true;
             default:
-                diagnostics.Add(new EmbeddedDiagnostic(ValueId, "Loop must be true or false.", syntax.ValueSpan));
-                loop = false;
+                diagnostics.Add(new EmbeddedDiagnostic(ValueId, syntax.Name + " must be true or false.", syntax.ValueSpan));
+                value = false;
                 return false;
         }
     }

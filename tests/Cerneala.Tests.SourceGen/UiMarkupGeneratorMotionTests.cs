@@ -126,6 +126,7 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <Border DataType="TestInput.MotionViewModel">
               <Border.Aspect>
+                @prism { @layer Card { Opacity = 1; @filter Blur { Radius = 1; } } }
                 @on Loaded
                 {
                   @animate with Tween(180ms)
@@ -134,7 +135,6 @@ public sealed partial class UiMarkupGeneratorTests
                   }
                 }
               </Border.Aspect>
-              @prism { @layer Card { Opacity = 1; @filter Blur { Radius = 1; } } }
             </Border>
             """;
 
@@ -183,8 +183,11 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Contains("ScaleProperty", generated, StringComparison.Ordinal);
     }
 
+    // The Aspect program is one behavior of the Aspect object; each application
+    // runs it and gets its own session (runtime independence is covered by
+    // AspectRuntimeProgramTests in Cerneala.Tests.Timbre).
     [Fact]
-    public void MotionMarkupCreatesIndependentSessionsForEachNamedAspectApplication()
+    public void MotionMarkupCompilesOneBehaviorThatEveryNamedAspectApplicationRuns()
     {
         const string markup = """
             <StackPanel>
@@ -202,9 +205,10 @@ public sealed partial class UiMarkupGeneratorTests
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
         string generated = SingleGeneratedSource(result);
-        Assert.Equal(2, generated.Split("AttachMotionSession", StringSplitOptions.None).Length - 1);
-        Assert.Equal(2, generated.Split(".Aspect!);", StringSplitOptions.None).Length - 1);
-        Assert.Equal(2, generated.Split("AddMotionTrigger", StringSplitOptions.None).Length - 1);
+        Assert.Equal(1, generated.Split("AttachMotionSession(target)", StringSplitOptions.None).Length - 1);
+        Assert.Equal(1, generated.Split("AddMotionTrigger", StringSplitOptions.None).Length - 1);
+        Assert.DoesNotContain(".Aspect!);", generated, StringComparison.Ordinal);
+        Assert.Equal(2, generated.Split(".Aspect = elementAspectResource", StringSplitOptions.None).Length - 1);
     }
 
     [Fact]
@@ -433,6 +437,36 @@ public sealed partial class UiMarkupGeneratorTests
         GeneratorRunResult result = RunGenerator("MotionForwardNamedElement.crn", markup, out Compilation compilation);
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
+    }
+
+    // A resource Aspect is compiled once, so `$owner.parts.$Chrome` takes its
+    // type from the markup places where the Aspect is applied; they must all
+    // have the part with one type (2026-10-08 decision, Etapa 2).
+    [Theory]
+    [InlineData("<Grid><Border Name=\"Chrome\" /><Border Aspect=\"$Glowy\" /></Grid>", "<Grid><TextBlock Name=\"Chrome\" /><Border Aspect=\"$Glowy\" /></Grid>", "is a 'Border' at one application site and a 'TextBlock' at another")]
+    [InlineData("<Grid><Border Name=\"Chrome\" /><Border Aspect=\"$Glowy\" /></Grid>", "<Grid><Border Aspect=\"$Glowy\" /></Grid>", "has no unique part named 'Chrome'")]
+    [InlineData("<Grid><Border Name=\"Chrome\" /></Grid>", "<Grid><Border Name=\"Chrome\" /></Grid>", "Chrome")]
+    public void ResourceAspectOwnerPartsMustAgreeAcrossApplicationSites(string firstTemplate, string secondTemplate, string expectedMessage)
+    {
+        string markup = $$"""
+            <StackPanel>
+              <StackPanel.Resources>
+                <Aspect Name="Glowy" TargetType="Border">
+                  @on Loaded { @animate { @to { $owner.parts.$Chrome.Opacity = 0.8; } } }
+                </Aspect>
+                <Aspect Name="First" TargetType="ToggleButton">@template { {{firstTemplate}} }</Aspect>
+                <Aspect Name="Second" TargetType="ToggleButton">@template { {{secondTemplate}} }</Aspect>
+              </StackPanel.Resources>
+              <ToggleButton Aspect="$First" />
+              <ToggleButton Aspect="$Second" />
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("OwnerPartSites.crn", markup, out _);
+
+        Assert.Contains(result.Diagnostics, diagnostic =>
+            diagnostic.Id == "CERNEALAUI021" &&
+            diagnostic.GetMessage().Contains(expectedMessage, StringComparison.Ordinal));
     }
 
     [Fact]

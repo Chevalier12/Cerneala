@@ -36,23 +36,23 @@ public sealed class TimbrePlayback
     private long lengthFrames = -1;
     private long firstQueuedTimestamp;
 
-    internal TimbrePlayback(TimbreRuntime runtime, TimbreScope scope, TimbreClip clip, TimbreStartOptions options)
+    internal TimbrePlayback(TimbreRuntime runtime, TimbreScope scope, TimbreSound sound, TimbreStartOptions options)
     {
         this.runtime = runtime;
         this.scope = scope;
-        Clip = clip;
+        Sound = sound;
         Loop = options.LoopValue;
         volume = options.VolumeValue;
         values = options.Values;
         manualWrites = new int[values.Length + 1];
-        Render = new TimbreVoice(volume, (float[])values.Clone(), TimbreDspChain.Create(clip));
+        Render = new TimbreVoice(volume, (float[])values.Clone(), TimbreDspChain.Create(sound));
     }
 
     // Descriptor of the intrinsic Volume of every playback, so Set and Motion
     // address it like a declared parameter. It is never declared by a clip.
     public static TimbreParameter<float> VolumeParameter { get; } = new("Volume", 1f);
 
-    public TimbreClip Clip { get; }
+    public TimbreSound Sound { get; }
 
     public TimbrePlaybackState State
     {
@@ -76,7 +76,7 @@ public sealed class TimbrePlayback
         }
         set
         {
-            TimbreClip.ValidateVolume(value, nameof(value));
+            TimbreSound.ValidateVolume(value, nameof(value));
             lock (runtime.Sync)
             {
                 ThrowIfTerminalLocked();
@@ -129,12 +129,12 @@ public sealed class TimbrePlayback
             return;
         }
 
-        int index = Clip.GetParameterIndex(parameter, nameof(parameter));
+        int index = Sound.GetParameterIndex(parameter, nameof(parameter));
         float number = TimbreParameter<T>.ToFloat(value);
         lock (runtime.Sync)
         {
             ThrowIfTerminalLocked();
-            Clip.ValidateParameterValue(index, number, nameof(value));
+            Sound.ValidateParameterValue(index, number, nameof(value));
             values[index] = number;
             manualWrites[index + 1]++;
             controlVersion++;
@@ -397,20 +397,20 @@ public sealed class TimbrePlayback
 
     // Slot of a descriptor: 0 for VolumeParameter, i + 1 for clip parameter i.
     internal int GetMotionSlot(TimbreParameter<float> parameter, string argumentName) =>
-        ReferenceEquals(parameter, VolumeParameter) ? 0 : Clip.GetParameterIndex(parameter, argumentName) + 1;
+        ReferenceEquals(parameter, VolumeParameter) ? 0 : Sound.GetParameterIndex(parameter, argumentName) + 1;
 
     internal bool IsValidMotionValue(int slot, float value) =>
-        slot == 0 ? TimbreCatalog.Volume.Contains(value) : Clip.IsParameterValueValid(slot - 1, value);
+        slot == 0 ? TimbreCatalog.Volume.Contains(value) : Sound.IsParameterValueValid(slot - 1, value);
 
     internal void ValidateMotionValue(int slot, float value, string argumentName)
     {
         if (slot == 0)
         {
-            TimbreClip.ValidateVolume(value, argumentName);
+            TimbreSound.ValidateVolume(value, argumentName);
         }
         else
         {
-            Clip.ValidateParameterValue(slot - 1, value, argumentName);
+            Sound.ValidateParameterValue(slot - 1, value, argumentName);
         }
     }
 

@@ -34,7 +34,7 @@ public sealed class OwnerAccessTests
         root.SetTimbreRuntime(rig.Runtime);
         PlainElement element = new();
         root.VisualChildren.Add(element);
-        TimbreClip clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
+        TimbreSound clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
 
         TimbreScope scope = element.Timbre;
         Assert.Same(scope, element.Timbre);
@@ -190,7 +190,7 @@ public sealed class OwnerAccessTests
         Assert.Equal(new TimbreDiagnosticsSnapshot(false, 0, 0, 0, 0, 0, 0, 0), idle);
         Assert.Equal(0, rig.Output.OpenCount);
 
-        TimbrePlayback playback = rig.Scope.Play(new TimbreClip(
+        TimbrePlayback playback = rig.Scope.Play(new TimbreSound(
             TimbreSource.FromReader(new DeterministicTimbreSourceFactory(48000).Open),
             loading: TimbreLoading.Preload,
             modifiers: [new Delay(time: 0.01f)]));

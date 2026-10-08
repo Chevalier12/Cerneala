@@ -126,7 +126,7 @@ internal static class SpriteAnimationBenchmarkRunner
                     scene.Children.Add(tile);
                     if (prism)
                         effects.Add(GeneratedMarkup.AttachPrism(tile, () => new PrismInstance(
-                            new PrismCompositionDefinition("AnimatedTile", [new PrismLayerDefinition(
+                            new PrismClipDefinition("AnimatedTile", [new PrismLayerDefinition(
                                 new PrismNodeId(1), "Content", filters: [new PrismFilterDefinition(PrismFilterId.Blur)])]))));
                 }
             }

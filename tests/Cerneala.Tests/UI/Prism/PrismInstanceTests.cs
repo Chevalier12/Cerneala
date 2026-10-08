@@ -89,7 +89,7 @@ public sealed class PrismInstanceTests
     [InlineData(2f)]
     public void InvalidCatalogNumbersLeaveValuesAndVersionsUnchanged(float value)
     {
-        PrismInstance instance = new(new PrismCompositionDefinition(
+        PrismInstance instance = new(new PrismClipDefinition(
             "ValidatedNumbers",
             [new PrismLayerDefinition(new PrismNodeId(1), "Content",
                 filters: [new PrismFilterDefinition(PrismFilterId.BrightnessContrast)])]));
@@ -109,7 +109,7 @@ public sealed class PrismInstanceTests
     [Fact]
     public void RequiredCatalogResourceRejectsDefaultWithoutReplacingTheCurrentValue()
     {
-        PrismInstance instance = new(new PrismCompositionDefinition(
+        PrismInstance instance = new(new PrismClipDefinition(
             "ValidatedResource",
             [new PrismLayerDefinition(new PrismNodeId(1), "Content",
                 filters: [new PrismFilterDefinition(PrismFilterId.Curves)])]));
@@ -131,7 +131,7 @@ public sealed class PrismInstanceTests
     [Fact]
     public void InstancesShareDefinitionWithoutSharingValues()
     {
-        PrismCompositionDefinition definition = CreateComposition();
+        PrismClipDefinition definition = CreateComposition();
         PrismInstance first = new(definition);
         PrismInstance second = new(definition);
 
@@ -235,7 +235,7 @@ public sealed class PrismInstanceTests
         Assert.Equal(0.6f, instance.GetLayerState(new PrismNodeId(1)).Opacity);
         Assert.Throws<InvalidOperationException>(() => stale.Opacity = 0.2f);
 
-        PrismCompositionDefinition replacement = new(
+        PrismClipDefinition replacement = new(
             "replacement",
             [
                 new PrismLayerDefinition(
@@ -284,9 +284,9 @@ public sealed class PrismInstanceTests
         Assert.Equal(0, allocated);
     }
 
-    private static PrismCompositionDefinition CreateComposition(float opacity = 1f)
+    private static PrismClipDefinition CreateComposition(float opacity = 1f)
     {
-        return new PrismCompositionDefinition(
+        return new PrismClipDefinition(
             "shared",
             [
                 new PrismLayerDefinition(
@@ -297,9 +297,9 @@ public sealed class PrismInstanceTests
             ]);
     }
 
-    private static PrismCompositionDefinition CreateEditorComposition()
+    private static PrismClipDefinition CreateEditorComposition()
     {
-        return new PrismCompositionDefinition(
+        return new PrismClipDefinition(
             "editor",
             [
                 new PrismLayerDefinition(

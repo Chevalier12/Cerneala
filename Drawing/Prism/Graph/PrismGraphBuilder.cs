@@ -151,7 +151,7 @@ internal sealed class PrismGraphBuilder
         }
         catch (InvalidOperationException exception)
         {
-            PrismCompositionDefinition? definition = null;
+            PrismClipDefinition? definition = null;
             if (analysis.GetStaleScopeIndex() is int scopeIndex)
             {
                 foreach (PrismAnalyzedScope analyzedScope in analysis.Scopes)
@@ -179,7 +179,7 @@ internal sealed class PrismGraphBuilder
         private const int StackCompositeOrdinal = 1;
 
         private readonly PrismAnalyzedScope analyzedScope;
-        private readonly PrismCompositionDefinition definition;
+        private readonly PrismClipDefinition definition;
         private readonly PrismInstance instance;
         private readonly PrismBackdropFrameDescriptor? backdropFrame;
         private readonly ImmutableArray<PrismGraphNode>.Builder nodes;
@@ -1336,7 +1336,7 @@ internal sealed class PrismGraphBuilder
 
         private PrismGraphCompositionSettings SnapshotCompositionSettings()
         {
-            PrismCompositionState state = instance.Composition;
+            PrismClipState state = instance.Composition;
             PrismColorProfile colorProfile = state.WorkingColorProfile;
             float globalLightAngle = state.GlobalLightAngle;
             float globalLightAltitude = state.GlobalLightAltitude;

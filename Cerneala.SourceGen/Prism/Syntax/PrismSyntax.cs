@@ -199,9 +199,9 @@ public sealed partial class UiMarkupGenerator
         public IReadOnlyList<PrismAssignmentSyntax> Arguments { get; }
     }
 
-    private sealed class PrismCompositionResourceSyntax : PrismSyntaxNode
+    private sealed class PrismClipResourceSyntax : PrismSyntaxNode
     {
-        public PrismCompositionResourceSyntax(
+        public PrismClipResourceSyntax(
             string name,
             DirectiveExpressionLocation nameLocation,
             PrismContainerSyntax composition,

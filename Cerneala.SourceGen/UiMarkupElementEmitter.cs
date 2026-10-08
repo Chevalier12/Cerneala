@@ -71,8 +71,7 @@ public sealed partial class UiMarkupGenerator
             DirectiveParseResult parsedContent = GetDirectiveContent(
                 element,
                 DirectiveContentKind.Elements |
-                DirectiveContentKind.Templates |
-                DirectiveContentKind.Prism);
+                DirectiveContentKind.Templates);
             bool isTileMap = ResolveElementTypeSymbol(element.Name.LocalName)?.ToDisplayString() == "Cerneala.UI.Controls.TileMap2D";
             string? tileMapInitializer = isTileMap ? BuildTileMapInitializer(element, parsedContent) : null;
             if (!initializeComponentRoot)
@@ -247,8 +246,6 @@ public sealed partial class UiMarkupGenerator
                         }
                     }
                 }
-
-                EmitPrismApplication(element, variable);
             }
             finally
             {

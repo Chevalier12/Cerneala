@@ -9,9 +9,12 @@ namespace Cerneala.Tests.Timbre.Motion;
 internal static class TimbreMotionTestKit
 {
     // Tone: constant PCM with a Cut parameter feeding LowPass (20–20000 Hz).
+    // Each clip has one sound with the clip's name; Quiet holds Tone at volume
+    // 0.2 for markup that starts quiet and fades up.
     public const string Clips =
-        "<TimbreClip Name=\"Tone\">Source = \"audio/tone.wav\"; @parameter Cut: float = 900; @modifier LowPass { Cutoff = Cut; }</TimbreClip>" +
-        "<TimbreClip Name=\"Ramp\">Source = \"audio/ramp.wav\";</TimbreClip>";
+        "<TimbreClip Name=\"Tone\">@parameter Cut: float = 900; @sound Tone { Source = \"audio/tone.wav\"; @modifier LowPass { Cutoff = Cut; } }</TimbreClip>" +
+        "<TimbreClip Name=\"Ramp\">@sound Ramp { Source = \"audio/ramp.wav\"; }</TimbreClip>" +
+        "<TimbreClip Name=\"Quiet\">@parameter Cut: float = 900; @sound Tone { Source = \"audio/tone.wav\"; Volume = 0.2; @modifier LowPass { Cutoff = Cut; } }</TimbreClip>";
 
     // A clickable "Play" button whose Aspect is `aspect`, under a panel that
     // declares Clips.
@@ -30,10 +33,11 @@ internal static class TimbreMotionTestKit
 
     public static Button PlayButton(MarkupTimbreFixture fixture) => fixture.All<Button>().Single();
 
-    public static TimbreClip Resource(MarkupTimbreFixture fixture, string name) =>
-        PlayButton(fixture).FindResource(new ResourceId<TimbreClip>(name));
+    // The sound named like its clip.
+    public static TimbreSound Resource(MarkupTimbreFixture fixture, string name) =>
+        PlayButton(fixture).FindResource(new ResourceId<TimbreClipDefinition>(name)).Sounds[name].Sound;
 
-    public static TimbreParameter<float> CutOf(TimbreClip clip) => (TimbreParameter<float>)clip.Parameters.Single();
+    public static TimbreParameter<float> CutOf(TimbreSound clip) => (TimbreParameter<float>)clip.Parameters.Single();
 
     public static float Cut(TimbrePlayback playback) => playback.GetMotionSlotValue(1);
 

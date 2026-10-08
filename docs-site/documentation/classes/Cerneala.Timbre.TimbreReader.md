@@ -47,7 +47,7 @@ sealed class SilenceReader(long lengthFrames) : TimbreReader
     }
 }
 
-var clip = new TimbreClip(TimbreSource.FromReader(() => new SilenceReader(48000)));
+var clip = new TimbreSound(TimbreSource.FromReader(() => new SilenceReader(48000)));
 ```
 
 ## Remarks

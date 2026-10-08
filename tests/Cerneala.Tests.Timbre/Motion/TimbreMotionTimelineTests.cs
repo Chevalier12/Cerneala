@@ -19,7 +19,7 @@ public sealed class TimbreMotionTimelineTests
     {
         using MarkupTimbreFixture fixture = new(Panel(string.Empty), "TimbreMotionTween.crn");
         TimbrePlayback playback = Start(fixture, 0.2f);
-        TimbreParameter<float> cut = CutOf(playback.Clip);
+        TimbreParameter<float> cut = CutOf(playback.Sound);
 
         MotionHandle volume = playback.Motion().Animate(TimbrePlayback.VolumeParameter).To(0.8f).With(Linear(300));
         MotionHandle tone = playback.Motion().Animate(cut).To(6000f).With(Linear(300));
@@ -106,7 +106,7 @@ public sealed class TimbreMotionTimelineTests
     {
         using MarkupTimbreFixture fixture = new(Panel(string.Empty), "TimbreMotionSpecs.crn");
         TimbrePlayback playback = Start(fixture, 0f);
-        TimbreParameter<float> cut = CutOf(playback.Clip);
+        TimbreParameter<float> cut = CutOf(playback.Sound);
 
         MotionHandle spring = playback.Motion().Animate(cut).To(5000f).With(Cerneala.UI.Motion.Specs.Motion.Spring<float>());
         MotionHandle keyframes = playback.Motion()

@@ -807,8 +807,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 .Select(element => GetDirectiveContent(
                     element,
                     DirectiveContentKind.Elements |
-                    DirectiveContentKind.Templates |
-                    DirectiveContentKind.Prism))
+                    DirectiveContentKind.Templates))
                 .ToArray();
             reactiveDocument = allAspects.Any(aspect => aspect.Conditions.Count > 0) ||
                 elementDirectiveContent.Any(content => content.HasDirectives);
@@ -849,6 +848,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         private readonly Dictionary<MarkupElement, ResourceScope> resourcePropertyScopes = new();
         private readonly Dictionary<MarkupElement, AspectResource> inlineAspects = new();
         private readonly List<AspectResource> allAspects = [];
+
+        // Aspects of Application resources, bound by the Application document.
+        private readonly HashSet<AspectResource> importedAspects = new();
         private readonly Dictionary<MarkupElement, DirectiveParseResult> directiveContent = new();
         private readonly Dictionary<string, INamedTypeSymbol> resolvedElementTypes = new(StringComparer.Ordinal);
         private readonly Dictionary<string, PropertySpec> resolvedProperties = new(StringComparer.Ordinal);

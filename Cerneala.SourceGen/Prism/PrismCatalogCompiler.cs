@@ -919,7 +919,7 @@ internal static class PrismCatalogCompiler
         AppendPropertyArray(source, "CommonMaskProperties", commonMaskProperties, 1);
         AppendPropertyArray(source, "CommonFilterProperties", commonFilterProperties, 1);
         AppendPropertyArray(source, "CommonStyleProperties", commonStyleProperties, 1);
-        AppendParameterKeys(source, "PrismCompositionPropertyKeys", 0, commonCompositionProperties, 1);
+        AppendParameterKeys(source, "PrismClipPropertyKeys", 0, commonCompositionProperties, 1);
         AppendParameterKeys(source, "PrismLayerPropertyKeys", 0, commonLayerProperties, 1);
         AppendParameterKeys(source, "PrismGroupPropertyKeys", 0, commonGroupProperties, 1);
         AppendParameterKeys(source, "PrismMaskPropertyKeys", 0, commonMaskProperties, 1);

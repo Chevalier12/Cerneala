@@ -13,7 +13,7 @@ namespace Cerneala.Tests.Timbre.Motion;
 // real Timbre engine, UIRoot Motion graph and element/markup scopes.
 public sealed class TimbreMotionLifecycleTests
 {
-    private const string Clips = "<TimbreClip Name=\"Tone\">Source = \"audio/tone.wav\";</TimbreClip>";
+    private const string Clips = "<TimbreClip Name=\"Quiet\">@sound Tone { Source = \"audio/tone.wav\"; Volume = 0.2; }</TimbreClip>";
 
     private static TweenSpec<float> Linear300 => new(TimeSpan.FromMilliseconds(300), Easings.Linear);
 
@@ -22,7 +22,7 @@ public sealed class TimbreMotionLifecycleTests
     {
         using MarkupTimbreFixture fixture = new("<Button Content=\"x\" />", "TimbreMotionIdentity.crn");
         Button button = (Button)fixture.Element;
-        TimbreClip clip = new(TimbreSource.FromFile(MarkupTimbreFixture.ToneSource), volume: 0.2f);
+        TimbreSound clip = new(TimbreSource.FromFile(MarkupTimbreFixture.ToneSource), volume: 0.2f);
         TimbreHandle slot = button.Timbre.CreateHandle();
         TimbrePlayback first = button.Timbre.Play(clip, handle: slot);
         Wait(() => fixture.Rig.StartAsync(first));
@@ -48,8 +48,8 @@ public sealed class TimbreMotionLifecycleTests
     {
         using MarkupTimbreFixture fixture = new(
             "<StackPanel><Button Content=\"Play\"><Button.Resources>" + Clips + "</Button.Resources><Button.Aspect>" +
-            "@handle Playback; @on Click { @timbre $Tone(Volume = 0.2) as Playback; " +
-            "@animate with Tween(300ms, Linear) { @to { $self.timbre.Playback.Volume = 0.8; } } }" +
+            "@timbre $Quiet; @on Click { @play $self.timbre.Tone; " +
+            "@animate with Tween(300ms, Linear) { @to { $self.timbre.Tone.Volume = 0.8; } } }" +
             "</Button.Aspect></Button></StackPanel>",
             "TimbreMotionReplace.crn");
 
@@ -81,7 +81,7 @@ public sealed class TimbreMotionLifecycleTests
         using MarkupTimbreFixture fixture = new("<StackPanel><Button Content=\"x\" /></StackPanel>", "TimbreMotionAncestor.crn");
         StackPanel panel = (StackPanel)fixture.Element;
         Button button = fixture.All<Button>().Single();
-        TimbrePlayback playback = button.Timbre.Play(new TimbreClip(TimbreSource.FromFile(MarkupTimbreFixture.ToneSource), volume: 0.2f));
+        TimbrePlayback playback = button.Timbre.Play(new TimbreSound(TimbreSource.FromFile(MarkupTimbreFixture.ToneSource), volume: 0.2f));
         Wait(() => fixture.Rig.StartAsync(playback));
         MotionHandle audio = playback.Motion().Animate(TimbrePlayback.VolumeParameter).To(0.8f).With(Linear300);
         MotionHandle visual = button.Motion().Opacity.To(0.2f, Linear300);

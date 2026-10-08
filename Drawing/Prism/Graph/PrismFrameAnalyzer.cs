@@ -257,7 +257,7 @@ internal sealed class PrismFrameAnalyzer
     }
 
     private static CapabilityEstimate EstimateCapabilities(
-        PrismCompositionDefinition definition,
+        PrismClipDefinition definition,
         bool includeBackdrop)
     {
         PrismGraphCapabilities capabilities =

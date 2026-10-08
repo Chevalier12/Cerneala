@@ -1,0 +1,96 @@
+using System.Diagnostics;
+using Cerneala.UI.Controls;
+using Cerneala.UI.Detective;
+using Cerneala.UI.Markup;
+using Xunit.Abstractions;
+
+namespace Cerneala.Tests.Timbre.Markup;
+
+// TEMPORARY cost probe for docs/plans/2026-10-08-aspect-runtime-program.md
+// Etapa 4; run identically on the baseline worktree and the current tree.
+public sealed class ZzAspectCostProbeTests(ITestOutputHelper output)
+{
+    [Theory]
+    [InlineData("resource")]
+    [InlineData("inline")]
+    [InlineData("default")]
+    public void Probe(string kind)
+    {
+        const int buttons = 200;
+        const string body =
+            "@when IsMouseOver { @if value == true { @animate with Tween(100ms, Linear) { @to { Opacity = 0.8; } } } " +
+            "@if value == false { @animate with Tween(100ms, Linear) { @to { Opacity = 1; } } } } " +
+            "@on Click { @animate with Tween(100ms, Linear) { @to { Opacity = 0.5; } } }";
+        string children = string.Concat(Enumerable.Range(0, buttons).Select(index => kind switch
+        {
+            "resource" => "<Button Content=\"B" + index + "\" Aspect=\"$Busy\" />",
+            "inline" => "<Button Content=\"B" + index + "\"><Button.Aspect>" + body + "</Button.Aspect></Button>",
+            _ => "<Button Content=\"B" + index + "\" />",
+        }));
+        string resource = kind switch
+        {
+            "resource" => "<Aspect Name=\"Busy\" TargetType=\"Button\">" + body + "</Aspect>",
+            "default" => "<Aspect TargetType=\"Button\">" + body + "</Aspect>",
+            _ => string.Empty,
+        };
+        string markup = "<StackPanel><StackPanel.Resources>" + resource + "</StackPanel.Resources>" + children + "</StackPanel>";
+
+        List<long> attachTicks = [];
+        for (int run = 0; run < 5; run++)
+        {
+            InvalidationTrace trace = new(capacity: 1 << 20);
+            long createTicks = 0;
+            using MarkupTimbreFixture fixture = new(markup, trace: trace, attach: false, create: consumer =>
+            {
+                Stopwatch createWatch = Stopwatch.StartNew();
+                Cerneala.UI.Elements.UIElement created = consumer.Create("Cerneala.GeneratedUi.TimbreFixtureFactory");
+                createTicks = createWatch.ElapsedTicks;
+                return created;
+            });
+            Stopwatch watch = Stopwatch.StartNew();
+            fixture.Attach();
+            watch.Stop();
+            attachTicks.Add(watch.ElapsedTicks + createTicks);
+            for (int frame = 0; frame < 3; frame++)
+            {
+                fixture.Pump(TimeSpan.FromMilliseconds(50));
+            }
+
+            Button[] all = fixture.All<Button>().ToArray();
+            int behaviors = all.Sum(button => button.LifecycleBehaviors.Count);
+            int evaluations = all.Sum(button => button.LifecycleBehaviors.OfType<MarkupConditionController>().Sum(controller => controller.EvaluationCount));
+            int invalidations = trace.Entries.Count(entry =>
+                entry.Kind is InvalidationTraceEventKind.Request or InvalidationTraceEventKind.Queue or InvalidationTraceEventKind.Phase);
+            for (int frame = 0; frame < 30; frame++)
+            {
+                fixture.Pump(TimeSpan.FromMilliseconds(50));
+            }
+
+            int idleEvaluations = all.Sum(button => button.LifecycleBehaviors.OfType<MarkupConditionController>().Sum(controller => controller.EvaluationCount)) - evaluations;
+            int idleInvalidations = trace.Entries.Count(entry =>
+                entry.Kind is InvalidationTraceEventKind.Request or InvalidationTraceEventKind.Queue or InvalidationTraceEventKind.Phase) - invalidations;
+            if (run == 0)
+            {
+                output.WriteLine(
+                    "COST " + kind + " buttons=" + all.Length +
+                    " behaviors=" + behaviors +
+                    " kinds=" + string.Join(",", all[0].LifecycleBehaviors.Select(behavior => behavior.GetType().Name)) +
+                    " settleEvaluations=" + evaluations +
+                    " settleInvalidations=" + invalidations +
+                    " idleEvaluations=" + idleEvaluations +
+                    " idleInvalidations=" + idleInvalidations);
+                foreach (var group in trace.Entries
+                    .Where(entry => entry.Kind is InvalidationTraceEventKind.Request or InvalidationTraceEventKind.Queue or InvalidationTraceEventKind.Phase)
+                    .GroupBy(entry => entry.Kind + "|" + entry.Reason + "|" + entry.SourcePropertyName + "|" + entry.Element?.GetType().Name)
+                    .OrderBy(group => group.Key, StringComparer.Ordinal))
+                {
+                    output.WriteLine("BREAK " + kind + " " + group.Key + " = " + group.Count());
+                }
+            }
+        }
+
+        attachTicks.Sort();
+        output.WriteLine("COST " + kind + " createPlusAttachMedianMs=" + (attachTicks[2] * 1000.0 / Stopwatch.Frequency).ToString("F2") +
+            " runsMs=" + string.Join(",", attachTicks.Select(ticks => (ticks * 1000.0 / Stopwatch.Frequency).ToString("F2"))));
+    }
+}

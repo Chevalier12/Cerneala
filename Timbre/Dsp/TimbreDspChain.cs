@@ -39,20 +39,20 @@ internal sealed class TimbreDspChain
         }
     }
 
-    internal static TimbreDspChain? Create(TimbreClip clip)
+    internal static TimbreDspChain? Create(TimbreSound sound)
     {
-        if (clip.Modifiers.Count == 0)
+        if (sound.Modifiers.Count == 0)
         {
             return null;
         }
 
-        Stage[] stages = new Stage[clip.Modifiers.Count];
+        Stage[] stages = new Stage[sound.Modifiers.Count];
         for (int index = 0; index < stages.Length; index++)
         {
-            stages[index] = clip.Modifiers[index] switch
+            stages[index] = sound.Modifiers[index] switch
             {
-                LowPass lowPass => new LowPassStage(clip, lowPass),
-                Delay delay => new DelayStage(clip, delay),
+                LowPass lowPass => new LowPassStage(sound, lowPass),
+                Delay delay => new DelayStage(sound, delay),
                 TimbreModifier other => throw new NotSupportedException($"Unknown sound modifier '{other.GetType().Name}'.")
             };
         }
@@ -87,8 +87,8 @@ internal sealed class TimbreDspChain
         internal abstract void Reset();
 
         // Constant inputs resolve to -1 and use their own value.
-        private protected static int ParameterIndex(TimbreClip clip, TimbreInput<float> input) =>
-            input.Parameter is { } parameter ? clip.GetParameterIndex(parameter, nameof(input)) : -1;
+        private protected static int ParameterIndex(TimbreSound sound, TimbreInput<float> input) =>
+            input.Parameter is { } parameter ? sound.GetParameterIndex(parameter, nameof(input)) : -1;
 
         private protected static float Value(int index, float constant, float[] values) => index < 0 ? constant : values[index];
     }
@@ -99,9 +99,9 @@ internal sealed class TimbreDspChain
         private readonly int cutoffIndex;
         private readonly float cutoff;
 
-        internal LowPassStage(TimbreClip clip, LowPass definition)
+        internal LowPassStage(TimbreSound sound, LowPass definition)
         {
-            cutoffIndex = ParameterIndex(clip, definition.Cutoff);
+            cutoffIndex = ParameterIndex(sound, definition.Cutoff);
             cutoff = definition.Cutoff.Value;
         }
 
@@ -126,11 +126,11 @@ internal sealed class TimbreDspChain
         private readonly float feedback;
         private readonly float mix;
 
-        internal DelayStage(TimbreClip clip, Delay definition)
+        internal DelayStage(TimbreSound sound, Delay definition)
         {
-            timeIndex = ParameterIndex(clip, definition.Time);
-            feedbackIndex = ParameterIndex(clip, definition.Feedback);
-            mixIndex = ParameterIndex(clip, definition.Mix);
+            timeIndex = ParameterIndex(sound, definition.Time);
+            feedbackIndex = ParameterIndex(sound, definition.Feedback);
+            mixIndex = ParameterIndex(sound, definition.Mix);
             time = definition.Time.Value;
             feedback = definition.Feedback.Value;
             mix = definition.Mix.Value;

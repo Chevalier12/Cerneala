@@ -22,7 +22,7 @@ public sealed class TimbreDecoderRuntimeTests
         }
 
         using TimbreRig rig = new();
-        TimbrePlayback playback = rig.Scope.Play(new TimbreClip(TimbreSource.FromFile(path), loading: TimbreLoading.Preload));
+        TimbrePlayback playback = rig.Scope.Play(new TimbreSound(TimbreSource.FromFile(path), loading: TimbreLoading.Preload));
         List<float> mixed = [.. await rig.StartAsync(playback)];
         for (int block = 0; block < 16; block++)
         {
@@ -38,7 +38,7 @@ public sealed class TimbreDecoderRuntimeTests
     {
         string path = WavFixture.Write("runtime.wav", 48000, 2, 16, seconds: 0.5);
         using TimbreRig rig = new();
-        TimbrePlayback playback = rig.Scope.Play(new TimbreClip(path, loading: TimbreLoading.Preload));
+        TimbrePlayback playback = rig.Scope.Play(new TimbreSound(path, loading: TimbreLoading.Preload));
 
         float[] mixed = await rig.StartAsync(playback);
 
@@ -50,8 +50,8 @@ public sealed class TimbreDecoderRuntimeTests
     public async Task AutoLoadingUsesTheDecodedLength()
     {
         using TimbreRig rig = new(hold: false);
-        TimbreClip shortClip = new(DecodingCorpus.PathOf("vorbis-48000-stereo-q2.ogg"));
-        TimbreClip longClip = new(DecodingCorpus.PathOf("opus-long-mono-32k.opus"));
+        TimbreSound shortClip = new(DecodingCorpus.PathOf("vorbis-48000-stereo-q2.ogg"));
+        TimbreSound longClip = new(DecodingCorpus.PathOf("opus-long-mono-32k.opus"));
 
         await rig.Runtime.PrepareAsync(shortClip);
         await rig.Runtime.PrepareAsync(longClip);
@@ -66,9 +66,9 @@ public sealed class TimbreDecoderRuntimeTests
     {
         using TimbreRig rig = new(options => options.StreamingMemoryLimit = 128 * 1024, hold: false);
 
-        TimbrePlaybackResult result = await TimbreRig.CompletionAsync(rig.Scope.Play(new TimbreClip(DecodingCorpus.PathOf("vorbis-44100-stereo-q4.ogg"))));
+        TimbrePlaybackResult result = await TimbreRig.CompletionAsync(rig.Scope.Play(new TimbreSound(DecodingCorpus.PathOf("vorbis-44100-stereo-q4.ogg"))));
         TimbreException prepared = await Assert.ThrowsAsync<TimbreException>(() =>
-            rig.Runtime.PrepareAsync(new TimbreClip(DecodingCorpus.PathOf("vorbis-44100-stereo-q4.ogg"))));
+            rig.Runtime.PrepareAsync(new TimbreSound(DecodingCorpus.PathOf("vorbis-44100-stereo-q4.ogg"))));
 
         Assert.Equal(TimbreErrorKind.ResourceLimitExceeded, result.Error!.Kind);
         Assert.Equal(TimbreErrorKind.ResourceLimitExceeded, prepared.Kind);

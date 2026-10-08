@@ -71,6 +71,15 @@ public sealed class AspectProcessor
         }
     }
 
+    // Package behaviors (the program of default Aspects) attach with the
+    // element, before Loaded, like an ElementAspect behavior; the next Aspect
+    // pass reuses them.
+    internal void AttachBehaviors(UIElement element)
+    {
+        root.Relay.VerifyAccess();
+        SynchronizeBehaviors(element, GetCatalog(element));
+    }
+
     public void Clear(UIElement element)
     {
         root.Relay.VerifyAccess();

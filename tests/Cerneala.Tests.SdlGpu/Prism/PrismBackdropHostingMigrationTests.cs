@@ -412,7 +412,7 @@ public sealed class PrismBackdropHostingMigrationTests
 
     private static DrawCommandList CreateBackdropCommands()
     {
-        PrismCompositionDefinition composition = new(
+        PrismClipDefinition composition = new(
             "GPU backdrop order",
             [
                 new PrismLayerDefinition(
@@ -578,7 +578,7 @@ public sealed class PrismBackdropHostingMigrationTests
         return GeneratedMarkup.AttachPrism(
             element,
             () => new PrismInstance(
-                new PrismCompositionDefinition(
+                new PrismClipDefinition(
                     name,
                     [
                         new PrismLayerDefinition(

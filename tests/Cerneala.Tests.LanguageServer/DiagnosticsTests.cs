@@ -132,19 +132,19 @@ public sealed class DiagnosticsTests
 
     [Theory]
     [InlineData(
-        "<StackPanel><StackPanel.Resources><TimbreClip Name=\"Tone\">Source = \"tone.wav\"; Volume = 2;</TimbreClip></StackPanel.Resources></StackPanel>",
+        "<StackPanel><StackPanel.Resources><TimbreClip Name=\"Tone\">@sound Tone { Source = \"tone.wav\"; Volume = 2; }</TimbreClip></StackPanel.Resources></StackPanel>",
         "CERNEALAUI032",
         "Volume must be a finite number within 0–1.")]
     [InlineData(
-        "<StackPanel><StackPanel.Resources><TimbreClip Name=\"Tone\">Source = \"tone.wav\"; @modifier Echo { }</TimbreClip></StackPanel.Resources></StackPanel>",
+        "<StackPanel><StackPanel.Resources><TimbreClip Name=\"Tone\">@sound Tone { Source = \"tone.wav\"; @modifier Echo { } }</TimbreClip></StackPanel.Resources></StackPanel>",
         "CERNEALAUI031",
         "Unknown sound modifier 'Echo'; expected LowPass or Delay.")]
     [InlineData(
-        "<StackPanel><StackPanel.Resources><TimbreClip Name=\"Tone\">Volume = 0.5;</TimbreClip></StackPanel.Resources></StackPanel>",
+        "<StackPanel><StackPanel.Resources><TimbreClip Name=\"Tone\">@sound Tone { Volume = 0.5; }</TimbreClip></StackPanel.Resources></StackPanel>",
         "CERNEALAUI032",
-        "TimbreClip requires Source.")]
+        "Sound 'Tone' requires Source.")]
     [InlineData(
-        "<Button Content=\"Play\"><Button.Resources><TimbreClip Name=\"Tone\">Source = \"tone.wav\";</TimbreClip></Button.Resources><Button.Aspect>@on Click { @timbre $Tone }</Button.Aspect></Button>",
+        "<Button Content=\"Play\"><Button.Resources><TimbreClip Name=\"Tone\">@sound Tone { Source = \"tone.wav\"; }</TimbreClip></Button.Resources><Button.Aspect>@timbre $Tone</Button.Aspect></Button>",
         "CERNEALAUI030",
         "Timbre directive '@timbre' must end with ';'.")]
     public async Task TimbreDiagnosticsAreTheSameForStandaloneAndProjectDocuments(
@@ -197,7 +197,7 @@ public sealed class DiagnosticsTests
     public async Task TimbreDiagnosticsFollowTheUnsavedOverlayAndThenTheSavedAdditionalFile()
     {
         const string valid =
-            "<StackPanel><StackPanel.Resources><TimbreClip Name=\"Tone\">Source = \"tone.wav\"; Volume = 0.5;</TimbreClip></StackPanel.Resources></StackPanel>";
+            "<StackPanel><StackPanel.Resources><TimbreClip Name=\"Tone\">@sound Tone { Source = \"tone.wav\"; Volume = 0.5; }</TimbreClip></StackPanel.Resources></StackPanel>";
         string invalid = valid.Replace("Volume = 0.5;", "Volume = 2;", StringComparison.Ordinal);
         using TemporaryDiagnosticWorkspace fixture = TemporaryDiagnosticWorkspace.Create();
         File.WriteAllText(fixture.MarkupPath, valid);

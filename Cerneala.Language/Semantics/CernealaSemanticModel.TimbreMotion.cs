@@ -7,12 +7,12 @@ using Cerneala.Language.Timbre;
 
 namespace Cerneala.Language.Semantics;
 
-// `$self.timbre.Handle.Parameter` Motion targets. The Motion program of an
-// Aspect defers them here; they are bound once the Aspect's Timbre handles
-// and the clips each handle can play are known.
+// `$Owner.timbre.Sound.Property` Motion targets. The Motion program of an
+// Aspect defers them here; they are bound once the Aspect's @timbre and the
+// sounds of its targets are known.
 internal sealed partial class CernealaSemanticModel
 {
-    private const string TimbreMotionShapeMessage = "Timbre Motion targets must be $self.timbre.Handle.Parameter.";
+    private const string TimbreMotionShapeMessage = "Timbre Motion targets must be $self.timbre.Sound.Property, $owner.timbre.Sound.Property or $Name.timbre.Sound.Property.";
 
     private readonly Dictionary<ElementSyntax, PendingTimbreMotion> pendingTimbreMotion = new();
     private PendingTimbreMotion? collectingTimbreMotion;
@@ -38,58 +38,17 @@ internal sealed partial class CernealaSemanticModel
         collectingTimbreMotion.Targets.Add((assignment, owner));
     }
 
-    private static IReadOnlyDictionary<string, IReadOnlyList<BoundTimbreHandleParameter>> BindTimbreHandleParameters(
-        IReadOnlyDictionary<string, TimbreHandleKind> handles,
-        IReadOnlyList<BoundTimbreAction> actions)
+    // Validates every deferred `.timbre.` target of one Aspect: the sound must
+    // exist on the target and the property must be Volume or a parameter the
+    // sound uses. SourceGen consumes the result and never re-validates it.
+    private void BindTimbreMotionTargets(ResourceDefinition aspect, AspectAttachmentBinding attachments)
     {
-        Dictionary<string, IReadOnlyList<BoundTimbreHandleParameter>> result = new(StringComparer.Ordinal);
-        foreach (KeyValuePair<string, TimbreHandleKind> handle in handles.Where(handle => handle.Value == TimbreHandleKind.Timbre))
-        {
-            BoundTimbreClip[] clips = actions
-                .Where(action => action.Kind == TimbreActionKind.Play && action.HandleName == handle.Key && action.Clip is not null)
-                .Select(action => action.Clip!)
-                .ToArray();
-            List<BoundTimbreHandleParameter> parameters = new();
-            if (clips.Length > 0)
-            {
-                foreach (BoundTimbreParameter first in clips[0].Parameters)
-                {
-                    BoundTimbreParameter[] matches = clips
-                        .Select(clip => clip.FindParameter(first.Name))
-                        .Where(parameter => parameter is not null)
-                        .Select(parameter => parameter!)
-                        .ToArray();
-                    float minimum = matches.Max(parameter => parameter.Minimum);
-                    float maximum = matches.Min(parameter => parameter.Maximum);
-                    if (matches.Length == clips.Length && minimum <= maximum)
-                    {
-                        parameters.Add(new BoundTimbreHandleParameter(first.Name, minimum, maximum));
-                    }
-                }
-            }
-
-            result.Add(handle.Key, parameters);
-        }
-
-        return result;
-    }
-
-    // Validates every deferred `.timbre.` target of one Aspect against its
-    // handle typing and parameter schema; reports diagnostics and editor
-    // symbols. SourceGen consumes the schema and never re-validates it.
-    private void BindTimbreMotionTargets(
-        ElementSyntax aspect,
-        IReadOnlyDictionary<string, TimbreHandleKind> handles,
-        IReadOnlyDictionary<string, TextSpan> declarations,
-        IReadOnlyList<BoundTimbreAction> actions,
-        IReadOnlyDictionary<string, IReadOnlyList<BoundTimbreHandleParameter>> handleParameters)
-    {
-        if (!pendingTimbreMotion.TryGetValue(aspect, out PendingTimbreMotion? pending))
+        if (!pendingTimbreMotion.TryGetValue(aspect.Element, out PendingTimbreMotion? pending))
         {
             return;
         }
 
-        pendingTimbreMotion.Remove(aspect);
+        pendingTimbreMotion.Remove(aspect.Element);
         HashSet<DirectiveRegion> mixedRoots = new();
         foreach ((AssignmentSyntax assignment, DirectiveRegion owner) in pending.Targets)
         {
@@ -99,47 +58,54 @@ internal sealed partial class CernealaSemanticModel
             }
 
             string[] segments = assignment.Name.Split('.');
-            if (segments.Length != 4 || segments[0] != "$self" || segments[2].Length == 0 || segments[3].Length == 0)
+            if (segments.Length != 4 || segments[0].Length < 2 || segments[0][0] != '$' || segments[2].Length == 0 || segments[3].Length == 0)
             {
                 AddMotionDiagnostic("CERNEALAUI021", assignment.NameSpan, TimbreMotionShapeMessage);
                 continue;
             }
 
-            string handle = segments[2];
-            string parameter = segments[3];
-            TextSpan handleSpan = MotionSegmentSpan(assignment.NameSpan, assignment.Name, 2);
-            TextSpan parameterSpan = MotionSegmentSpan(assignment.NameSpan, assignment.Name, 3);
-            if (!handles.TryGetValue(handle, out TimbreHandleKind kind) || kind != TimbreHandleKind.Timbre)
+            string ownerName = segments[0].Substring(1);
+            string sound = segments[2];
+            string property = segments[3];
+            TextSpan ownerSpan = MotionSegmentSpan(assignment.NameSpan, assignment.Name, 0);
+            TextSpan soundSpan = MotionSegmentSpan(assignment.NameSpan, assignment.Name, 2);
+            TextSpan propertySpan = MotionSegmentSpan(assignment.NameSpan, assignment.Name, 3);
+            List<EmbeddedDiagnostic> diagnostics = new();
+            bool resolved = TryResolveTimbreSound(aspect, attachments, ownerName, ownerSpan, sound, soundSpan, diagnostics,
+                out TimbreCommandTarget target, out BoundTimbreSound? boundSound);
+            ReportEmbedded(diagnostics);
+            if (!resolved)
             {
-                AddDiagnostic(
-                    TimbreMarkupBinder.ReferenceId,
-                    handleSpan,
-                    Path.GetFileName(document.Path),
-                    "'" + handle + "' is not a Timbre handle of this Aspect; declare it with @handle and start it with @timbre … as " + handle + ".");
                 continue;
             }
 
             float minimum = 0f;
             float maximum = 1f;
-            BoundTimbreHandleParameter? custom = null;
-            if (parameter != "Volume")
+            BoundTimbreParameter? parameter = null;
+            if (property != "Volume")
             {
-                custom = handleParameters.TryGetValue(handle, out IReadOnlyList<BoundTimbreHandleParameter>? schema)
-                    ? schema.FirstOrDefault(candidate => candidate.Name == parameter)
-                    : null;
-                if (custom is null)
+                // $owner is checked at runtime; its sounds are not known here.
+                if (target == TimbreCommandTarget.Owner)
                 {
-                    AddDiagnostic(
-                        TimbreMarkupBinder.ReferenceId,
-                        parameterSpan,
-                        Path.GetFileName(document.Path),
-                        "Timbre handle '" + handle + "' has no animatable parameter '" + parameter +
-                        "': only Volume and float parameters declared by every TimbreClip it plays can be animated.");
-                    continue;
+                    minimum = float.NegativeInfinity;
+                    maximum = float.PositiveInfinity;
                 }
+                else
+                {
+                    parameter = boundSound!.Parameters.FirstOrDefault(candidate => candidate.Name == property);
+                    if (parameter is null)
+                    {
+                        AddDiagnostic(
+                            TimbreMarkupBinder.ReferenceId,
+                            propertySpan,
+                            Path.GetFileName(document.Path),
+                            "Sound '" + sound + "' does not use parameter '" + property + "'.");
+                        continue;
+                    }
 
-                minimum = custom.Minimum;
-                maximum = custom.Maximum;
+                    minimum = parameter.Minimum;
+                    maximum = parameter.Maximum;
+                }
             }
 
             string value = document.Text.Substring(assignment.ValueSpan).Trim();
@@ -151,31 +117,23 @@ internal sealed partial class CernealaSemanticModel
                     TimbreMarkupBinder.ValueId,
                     assignment.ValueSpan,
                     Path.GetFileName(document.Path),
-                    "Timbre Motion value '" + value + "' for '" + handle + "." + parameter + "' must be current or a number within " +
+                    "Timbre Motion value '" + value + "' for '" + sound + "." + property + "' must be current or a number within " +
                     minimum.ToString(CultureInfo.InvariantCulture) + "–" + maximum.ToString(CultureInfo.InvariantCulture) + ".");
                 continue;
             }
 
-            symbols.Add(new CernealaSemanticSymbol(
-                CernealaSemanticSymbolKind.MotionHandle,
-                handle,
-                "Cerneala.Timbre.TimbreHandle",
-                handleSpan,
-                definitionLocation: declarations.TryGetValue(handle, out TextSpan declaration)
-                    ? new LanguageSourceLocation(document.Path, declaration)
-                    : null));
-            if (custom is null)
+            if (parameter is null)
             {
-                AddTimbreSymbol(CernealaSemanticSymbolKind.TimbreProperty, parameter, "System.Single", parameterSpan);
+                AddTimbreSymbol(CernealaSemanticSymbolKind.TimbreProperty, property, "System.Single", propertySpan);
             }
             else
             {
                 AddTimbreSymbol(
                     CernealaSemanticSymbolKind.TimbreParameter,
-                    parameter,
+                    property,
                     "System.Single",
-                    parameterSpan,
-                    FindTimbreParameterDefinition(actions, handle, parameter));
+                    propertySpan,
+                    FindTimbreParameterDefinition(aspect, attachments, ownerName, parameter));
             }
         }
     }
@@ -233,72 +191,48 @@ internal sealed partial class CernealaSemanticModel
         return false;
     }
 
+
     private LanguageSourceLocation? FindTimbreParameterDefinition(
-        IReadOnlyList<BoundTimbreAction> actions,
-        string handle,
-        string parameter)
+        ResourceDefinition aspect,
+        AspectAttachmentBinding attachments,
+        string ownerName,
+        BoundTimbreParameter parameter)
     {
-        BoundTimbreClip? clip = actions
-            .FirstOrDefault(action => action.Kind == TimbreActionKind.Play && action.HandleName == handle && action.Clip is not null)?
-            .Clip;
-        return clip?.FindParameter(parameter) is BoundTimbreParameter declared &&
-            timbreClipResources.TryGetValue(clip, out ResourceDefinition? resource)
-            ? new LanguageSourceLocation(resource.Path, declared.NameSpan)
+        BoundTimbreClip? clip = ownerName == "self"
+            ? attachments.Timbre?.Clip
+            : FindNamedElement(aspect.Element, ownerName) is NamedElementDefinition named &&
+                FindStaticAspect(named.Element) is ResourceDefinition targetAspect
+                ? GetAspectAttachments(targetAspect).Timbre?.Clip
+                : null;
+        return clip is not null && timbreClipPaths.TryGetValue(clip, out string? path)
+            ? new LanguageSourceLocation(path, parameter.NameSpan)
             : null;
     }
 
-    // Completion support: the Timbre handles of the Aspect around `element`
-    // and the animatable parameters of one of them. The statement being typed
-    // leaves the Aspect program unbound, so the `@timbre $Clip … as Handle`
-    // statements are read lexically and their clips bound by resource lookup.
-    internal IReadOnlyList<string> GetCompletionTimbreMotionHandles(ElementSyntax? element) =>
-        FindCompletionTimbreStarts(element)
-            .Select(start => start.Handle)
-            .Distinct(StringComparer.Ordinal)
+    // Completion support: the sounds of the @timbre of the Aspect around
+    // `element` and the animatable properties of one of them.
+    internal IReadOnlyList<string> GetCompletionTimbreMotionSounds(ElementSyntax? element) =>
+        FindCompletionTimbreClip(element)?.Sounds
+            .Select(sound => sound.Name)
             .OrderBy(name => name, StringComparer.Ordinal)
-            .ToArray();
+            .ToArray() ?? Array.Empty<string>();
 
-    internal IReadOnlyList<string> GetCompletionTimbreMotionParameters(ElementSyntax? element, string handle)
-    {
-        BoundTimbreClip[] clips = FindCompletionTimbreStarts(element)
-            .Where(start => start.Handle == handle)
-            .Select(start => FindResource(start.Aspect, start.Clip))
-            .Where(resource => resource?.Kind == ResourceKind.TimbreClip)
-            .Select(resource => GetBoundTimbreClip(resource!))
-            .ToArray();
-        if (clips.Length == 0)
-        {
-            return Array.Empty<string>();
-        }
+    internal IReadOnlyList<string> GetCompletionTimbreMotionParameters(ElementSyntax? element, string sound) =>
+        FindCompletionTimbreClip(element)?.FindSound(sound) is BoundTimbreSound bound
+            ? new[] { "Volume" }.Concat(bound.Parameters.Select(parameter => parameter.Name)).ToArray()
+            : Array.Empty<string>();
 
-        return new[] { "Volume" }
-            .Concat(clips[0].Parameters
-                .Select(parameter => parameter.Name)
-                .Where(name => clips.All(clip => clip.FindParameter(name) is not null)))
-            .ToArray();
-    }
-
-    private IEnumerable<(ElementSyntax Aspect, string Clip, string Handle)> FindCompletionTimbreStarts(ElementSyntax? element)
+    private BoundTimbreClip? FindCompletionTimbreClip(ElementSyntax? element)
     {
         ElementSyntax? scope = element;
-        while (scope is not null &&
-            !string.Equals(scope.Name.Split(':').Last(), "Aspect", StringComparison.Ordinal) &&
-            !scope.Name.EndsWith(".Aspect", StringComparison.Ordinal))
+        while (scope is not null && !IsAspectBody(scope))
         {
             scope = parents.TryGetValue(scope, out ElementSyntax? parent) ? parent : null;
         }
 
-        if (scope is null)
-        {
-            return Array.Empty<(ElementSyntax, string, string)>();
-        }
-
-        ElementSyntax aspect = scope;
-        return System.Text.RegularExpressions.Regex
-            .Matches(document.Text.Substring(scope.Span), @"@timbre\s+\$([A-Za-z_][A-Za-z0-9_]*)\s*(?:\([^)]*\))?\s+as\s+([A-Za-z_][A-Za-z0-9_]*)\s*;")
-            .Cast<System.Text.RegularExpressions.Match>()
-            .Select(match => (aspect, match.Groups[1].Value, match.Groups[2].Value))
-            .ToArray();
+        return scope is not null && resourceElements.TryGetValue(scope, out ResourceDefinition? aspect)
+            ? GetAspectAttachments(aspect).Timbre?.Clip
+            : null;
     }
 
     private sealed class PendingTimbreMotion(MotionProgram program)

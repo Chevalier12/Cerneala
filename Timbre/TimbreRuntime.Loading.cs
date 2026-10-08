@@ -9,23 +9,23 @@ public sealed partial class TimbreRuntime
 
     private async Task LoadAsync(TimbrePlayback playback, object? key)
     {
-        TimbreClip clip = playback.Clip;
+        TimbreSound sound = playback.Sound;
         try
         {
             TimbreFeed feed;
-            if (clip.Loading != TimbreLoading.Streaming && key is not null && cache.TryAcquire(key, out TimbrePayloadCache.Entry? cached))
+            if (sound.Loading != TimbreLoading.Streaming && key is not null && cache.TryAcquire(key, out TimbrePayloadCache.Entry? cached))
             {
                 feed = new PreloadedFeed(cache, cached, playback.Loop);
             }
             else
             {
-                (TimbreReader reader, TimbreMemoryBudget budget) = OpenReader(clip.Source);
+                (TimbreReader reader, TimbreMemoryBudget budget) = OpenReader(sound.Source);
                 bool readerTransferred = false;
                 try
                 {
-                    if (ShouldPreload(clip.Loading, reader.LengthFrames))
+                    if (ShouldPreload(sound.Loading, reader.LengthFrames))
                     {
-                        TimbrePayloadCache.Entry entry = await LoadPayloadAsync(reader, key, clip.Source.Name, pin: true, CancellationToken.None).ConfigureAwait(false);
+                        TimbrePayloadCache.Entry entry = await LoadPayloadAsync(reader, key, sound.Source.Name, pin: true, CancellationToken.None).ConfigureAwait(false);
                         feed = new PreloadedFeed(cache, entry, playback.Loop);
                     }
                     else
@@ -58,7 +58,7 @@ public sealed partial class TimbreRuntime
         }
         catch (Exception exception)
         {
-            TimbreException error = Classify(exception, clip.Source.Name);
+            TimbreException error = Classify(exception, sound.Source.Name);
             lock (Sync)
             {
                 playback.FailLocked(error);
@@ -73,22 +73,22 @@ public sealed partial class TimbreRuntime
         }
     }
 
-    private async Task PrepareCoreAsync(TimbreClip clip, CancellationToken cancellationToken)
+    private async Task PrepareCoreAsync(TimbreSound sound, CancellationToken cancellationToken)
     {
         try
         {
-            object? key = TryGetCacheKey(clip.Source);
-            if (clip.Loading != TimbreLoading.Streaming && key is not null && cache.Contains(key))
+            object? key = TryGetCacheKey(sound.Source);
+            if (sound.Loading != TimbreLoading.Streaming && key is not null && cache.Contains(key))
             {
                 return;
             }
 
-            (TimbreReader reader, TimbreMemoryBudget budget) = OpenReader(clip.Source);
+            (TimbreReader reader, TimbreMemoryBudget budget) = OpenReader(sound.Source);
             try
             {
-                if (ShouldPreload(clip.Loading, reader.LengthFrames))
+                if (ShouldPreload(sound.Loading, reader.LengthFrames))
                 {
-                    await LoadPayloadAsync(reader, key, clip.Source.Name, pin: false, cancellationToken).ConfigureAwait(false);
+                    await LoadPayloadAsync(reader, key, sound.Source.Name, pin: false, cancellationToken).ConfigureAwait(false);
                 }
             }
             finally
@@ -102,7 +102,7 @@ public sealed partial class TimbreRuntime
         }
         catch (Exception exception)
         {
-            throw Classify(exception, clip.Source.Name);
+            throw Classify(exception, sound.Source.Name);
         }
     }
 
@@ -153,7 +153,7 @@ public sealed partial class TimbreRuntime
         {
             throw new TimbreException(
                 TimbreErrorKind.ResourceLimitExceeded,
-                $"Streaming '{playback.Clip.Source.Name}' needs {StreamingFeed.BufferBytes} bytes of buffers; {memory.Reserved} of the {memory.Limit}-byte streaming memory limit are reserved.");
+                $"Streaming '{playback.Sound.Source.Name}' needs {StreamingFeed.BufferBytes} bytes of buffers; {memory.Reserved} of the {memory.Limit}-byte streaming memory limit are reserved.");
         }
 
         Interlocked.Add(ref streamingBytes, StreamingFeed.BufferBytes);
@@ -161,7 +161,7 @@ public sealed partial class TimbreRuntime
         Interlocked.Increment(ref liveSourcePumps);
         StreamingFeed feed = new(
             reader,
-            playback.Clip.Source.Name,
+            playback.Sound.Source.Name,
             playback.Loop,
             error => FailFromWorker(playback, error),
             SignalMixer,

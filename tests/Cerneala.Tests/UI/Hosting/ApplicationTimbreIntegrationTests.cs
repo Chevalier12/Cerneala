@@ -35,7 +35,7 @@ public sealed class ApplicationTimbreIntegrationTests : IDisposable
         Window second = new();
         first.Show();
         second.Show();
-        TimbreClip clip = new(TimbreSource.FromReader(() => new SilentReader()));
+        TimbreSound clip = new(TimbreSource.FromReader(() => new SilentReader()));
 
         Assert.Same(timbreRuntime, first.Root!.TimbreRuntime);
         Assert.Same(timbreRuntime, second.Root!.TimbreRuntime);

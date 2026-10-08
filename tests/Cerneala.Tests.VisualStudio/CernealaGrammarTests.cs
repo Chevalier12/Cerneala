@@ -107,28 +107,31 @@ public sealed class CernealaGrammarTests
         IReadOnlyList<TokenizedSpan> tokens = Tokenize(
             [
                 "<Button.Aspect>",
-                "  @on Click { @timbre $Tone as Playback",
-                "  @pause Playback @resume Playback @seek Playback to 500ms",
+                "  @timbre { @sound Tone { Source = \"tone.wav\"; } }",
+                "  @on Click { @play $self.timbre.Tone",
+                "  @pause $self.timbre.Tone @resume $self.timbre.Tone @seek $self.timbre.Tone to 500ms @stop $self.timbre.Tone",
                 "  @sou",
                 "</Button.Aspect>",
                 "<TextBlock Text=\"after\" />"
             ],
             ThemeName.VisualStudioDark);
 
-        foreach (string keyword in new[] { "@timbre", "@pause", "@resume", "@seek" })
+        foreach (string keyword in new[] { "@timbre", "@sound", "@play", "@pause", "@resume", "@seek", "@stop" })
         {
             Assert.Contains(tokens, token => token.Text == keyword &&
                 token.Scopes.Contains("keyword.control.sound.cerneala", StringComparer.Ordinal));
         }
 
-        Assert.Equal(4, tokens.Count(token => token.Text == "Playback" &&
-            token.Scopes.Contains("entity.name.label.handle.cerneala", StringComparer.Ordinal)));
-        Assert.Contains(tokens, token => token.Line == 4 && token.Text == "@sou" &&
+        Assert.Contains(tokens, token => token.Line == 2 && token.Text == "Tone" &&
+            token.Scopes.Contains("entity.name.section.sound.cerneala", StringComparer.Ordinal));
+        Assert.Contains(tokens, token => token.Text == "to" &&
+            token.Scopes.Contains("keyword.control.sound.cerneala", StringComparer.Ordinal));
+        Assert.Contains(tokens, token => token.Line == 5 && token.Text == "@sou" &&
             token.Scopes.Contains("keyword.control.directive.incomplete.cerneala", StringComparer.Ordinal));
-        Assert.Contains(tokens, token => token.Line == 6 && token.Text == "TextBlock" &&
+        Assert.Contains(tokens, token => token.Line == 7 && token.Text == "TextBlock" &&
             token.Scopes.Contains("meta.element.cerneala", StringComparer.Ordinal));
         Assert.DoesNotContain(
-            tokens.Where(token => token.Line >= 5),
+            tokens.Where(token => token.Line >= 6),
             token => token.Scopes.Any(scope =>
                 scope.Contains("sound", StringComparison.Ordinal) ||
                 scope.Contains("incomplete", StringComparison.Ordinal)));

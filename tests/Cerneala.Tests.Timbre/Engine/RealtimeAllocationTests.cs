@@ -22,7 +22,7 @@ public sealed class RealtimeAllocationTests
         AllocationRecorder recorder = new(Warmup, Measured);
         runtime.BlockObserver = recorder;
         using TimbreScope scope = runtime.CreateScope();
-        TimbreClip clip = new(
+        TimbreSound clip = new(
             TimbreSource.FromReader(new DeterministicTimbreSourceFactory(10 * 48000, maxFramesPerRead: 777).Open),
             volume: 0.1f,
             loop: true,

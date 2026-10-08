@@ -1,22 +1,22 @@
-# PrismCompositionDefinition Class
+# PrismClipDefinition Class
 
 ## Definition
 Namespace: `Cerneala.UI.Prism.Definitions`
 
 Assembly/Project: `Cerneala`
 
-Source: `UI/Prism/Definitions/PrismCompositionDefinition.cs`
+Source: `UI/Prism/Definitions/PrismClipDefinition.cs`
 
 Defines an immutable, structurally comparable Prism composition.
 
 ```csharp
-public sealed class PrismCompositionDefinition : IEquatable<PrismCompositionDefinition>
+public sealed class PrismClipDefinition : IEquatable<PrismClipDefinition>
 ```
 
 ## Examples
 
 ```csharp
-PrismCompositionDefinition composition = new(
+PrismClipDefinition composition = new(
     "GlassCard",
     [
         new PrismLayerDefinition(
@@ -42,7 +42,7 @@ Nodes are declared front-to-back and evaluated bottom-up. Every rendered layer o
 
 | Name | Description |
 | --- | --- |
-| `PrismCompositionDefinition(string name, IEnumerable<PrismNodeDefinition> nodes, PrismColorProfile workingColorProfile = LinearSrgb, float globalLightAngle = 120, float globalLightAltitude = 30, PrismSourceSpan? sourceSpan = null)` | Initializes and validates an immutable composition with optional source metadata. |
+| `PrismClipDefinition(string name, IEnumerable<PrismNodeDefinition> nodes, PrismColorProfile workingColorProfile = LinearSrgb, float globalLightAngle = 120, float globalLightAltitude = 30, PrismSourceSpan? sourceSpan = null)` | Initializes and validates an immutable composition with optional source metadata. |
 
 ## Properties
 
@@ -62,7 +62,7 @@ Nodes are declared front-to-back and evaluated bottom-up. Every rendered layer o
 | `EnumerateContentBottomUp()` | `IEnumerable<PrismNodeDefinition>` | Enumerates composition nodes from back to front. |
 | `TryGetNamedNode(string path, out PrismNodeId nodeId)` | `bool` | Resolves a validated dot-separated node address. |
 | `ToDiagnosticString()` | `string` | Serializes a deterministic human-readable snapshot. |
-| `Equals(PrismCompositionDefinition? other)` | `bool` | Tests structural equality. |
+| `Equals(PrismClipDefinition? other)` | `bool` | Tests structural equality. |
 | `GetHashCode()` | `int` | Returns the structural hash code. |
 | `ToString()` | `string` | Returns `ToDiagnosticString()`. |
 
@@ -70,8 +70,8 @@ Nodes are declared front-to-back and evaluated bottom-up. Every rendered layer o
 
 | Member | Exception | Condition |
 | --- | --- | --- |
-| `PrismCompositionDefinition(...)` | `ArgumentException` | The name or node list is empty, IDs or scoped names are duplicated, or a node kind is invalid. |
-| `PrismCompositionDefinition(...)` | `ArgumentOutOfRangeException` | A light value is non-finite. |
+| `PrismClipDefinition(...)` | `ArgumentException` | The name or node list is empty, IDs or scoped names are duplicated, or a node kind is invalid. |
+| `PrismClipDefinition(...)` | `ArgumentOutOfRangeException` | A light value is non-finite. |
 | `TryGetNamedNode(...)` | `ArgumentException` | `path` is null, empty, or whitespace. |
 
 ## Applies to

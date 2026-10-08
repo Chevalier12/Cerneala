@@ -8,14 +8,15 @@ namespace Cerneala.Language.Semantics;
 
 internal sealed partial class CernealaSemanticModel
 {
-    private const string TimbreClipTypeName = "Cerneala.Timbre.TimbreClip";
+    private const string TimbreClipDefinitionTypeName = "Cerneala.Timbre.TimbreClipDefinition";
+    private const string ApplicationTimbreTargetMessage = "An Aspect in Application resources can address only $self and $owner.";
 
     private readonly Dictionary<ElementSyntax, BoundTimbreClip> timbreClips = new();
     private readonly Dictionary<int, BoundTimbreClip> timbreClipsByElement = new();
     private readonly Dictionary<int, BoundTimbreAspect> timbreAspects = new();
     private readonly Dictionary<ElementSyntax, TextSpan[]> timbreStatementSpans = new();
     private readonly HashSet<ElementSyntax> boundTimbreAspects = new();
-    private readonly Dictionary<BoundTimbreClip, ResourceDefinition> timbreClipResources = new();
+    private readonly Dictionary<BoundTimbreClip, string> timbreClipPaths = new();
 
     internal TimbreMarkupModel Timbre => new(
         new Dictionary<int, BoundTimbreClip>(timbreClipsByElement),
@@ -26,7 +27,7 @@ internal sealed partial class CernealaSemanticModel
         symbols.Add(new CernealaSemanticSymbol(
             CernealaSemanticSymbolKind.Resource,
             resource.Name ?? resource.Element.Name,
-            TimbreClipTypeName,
+            TimbreClipDefinitionTypeName,
             resource.NameSpan,
             resource.Type,
             definitionLocation: resource.Location));
@@ -75,30 +76,28 @@ internal sealed partial class CernealaSemanticModel
         BoundTimbreClip clip = TimbreMarkupBinder.BindClip(resource.Name, body, element.NameToken.Span, diagnostics);
         if (diagnostics.Count > 0)
         {
-            clip = new BoundTimbreClip(clip.Name, clip.Source, clip.Volume, clip.Loop, clip.Parameters, clip.Modifiers, isValid: false);
+            clip = new BoundTimbreClip(clip.Name, clip.Parameters, clip.Sounds, isValid: false);
         }
 
         timbreClips[element] = clip;
-        timbreClipResources[clip] = resource;
+        timbreClipPaths[clip] = resource.Path;
         if (local)
         {
             timbreClipsByElement[element.Span.Start] = clip;
             ReportEmbedded(diagnostics);
-            AddTimbreClipSymbols(body, clip, resource);
+            AddTimbreClipSymbols(body, clip, resource.Path);
         }
 
         return clip;
     }
 
-    private void AddTimbreClipSymbols(TimbreClipBodySyntax body, BoundTimbreClip clip, ResourceDefinition resource)
+    private void AddTimbreClipSymbols(TimbreClipBodySyntax body, BoundTimbreClip clip, string path)
     {
+        timbreClipPaths[clip] = path;
         foreach (object statement in body.Statements)
         {
             switch (statement)
             {
-                case TimbreValueSyntax property:
-                    AddTimbreSymbol(CernealaSemanticSymbolKind.TimbreProperty, property.Name, TimbrePropertyType(property.Name), property.NameSpan);
-                    break;
                 case TimbreParameterSyntax parameter:
                     AddTimbreSymbol(CernealaSemanticSymbolKind.TimbreDirective, "@parameter", "Cerneala.Timbre.TimbreParameter", parameter.KeywordSpan);
                     AddTimbreSymbol(
@@ -106,7 +105,30 @@ internal sealed partial class CernealaSemanticModel
                         parameter.Name,
                         "System.Single",
                         parameter.NameSpan,
-                        new LanguageSourceLocation(resource.Path, parameter.NameSpan));
+                        new LanguageSourceLocation(path, parameter.NameSpan));
+                    break;
+                case TimbreSoundSyntax sound:
+                    AddTimbreSymbol(CernealaSemanticSymbolKind.TimbreDirective, "@sound", "Cerneala.Timbre.TimbreClipSound", sound.KeywordSpan);
+                    AddTimbreSymbol(
+                        CernealaSemanticSymbolKind.TimbreSound,
+                        sound.Name,
+                        "Cerneala.Timbre.TimbreClipSound",
+                        sound.NameSpan,
+                        new LanguageSourceLocation(path, sound.NameSpan));
+                    AddTimbreSoundSymbols(sound, clip, path);
+                    break;
+            }
+        }
+    }
+
+    private void AddTimbreSoundSymbols(TimbreSoundSyntax sound, BoundTimbreClip clip, string path)
+    {
+        foreach (object statement in sound.Statements)
+        {
+            switch (statement)
+            {
+                case TimbreValueSyntax property:
+                    AddTimbreSymbol(CernealaSemanticSymbolKind.TimbreProperty, property.Name, TimbrePropertyType(property.Name), property.NameSpan);
                     break;
                 case TimbreModifierSyntax modifier:
                     AddTimbreSymbol(CernealaSemanticSymbolKind.TimbreDirective, "@modifier", "Cerneala.Timbre.TimbreModifier", modifier.KeywordSpan);
@@ -121,7 +143,7 @@ internal sealed partial class CernealaSemanticModel
                                 parameter.Name,
                                 "System.Single",
                                 input.ValueSpan,
-                                new LanguageSourceLocation(resource.Path, parameter.NameSpan));
+                                new LanguageSourceLocation(path, parameter.NameSpan));
                         }
                     }
 
@@ -141,10 +163,12 @@ internal sealed partial class CernealaSemanticModel
     private static string TimbrePropertyType(string name) => name switch
     {
         "Source" => "Cerneala.Timbre.TimbreSource",
-        "Loop" => "System.Boolean",
+        "Loop" or "AutoPlay" => "System.Boolean",
         _ => "System.Single"
     };
 
+    // Binds the @timbre attachment and the Timbre commands of one Aspect of
+    // this document.
     private void BindTimbreAspect(ResourceDefinition aspect)
     {
         ElementSyntax element = aspect.Element;
@@ -154,219 +178,157 @@ internal sealed partial class CernealaSemanticModel
             return;
         }
 
+        AspectAttachmentBinding attachments = GetAspectAttachments(aspect);
         (string text, int offset) = BuildDirectTextBuffer(element);
-        if (!ContainsTimbreSyntax(text))
+        List<BoundTimbreCommand> commands = new();
+        if (ContainsTimbreSyntax(text))
         {
-            BindTimbreMotionTargets(
-                element,
-                new Dictionary<string, TimbreHandleKind>(),
-                new Dictionary<string, TextSpan>(),
-                Array.Empty<BoundTimbreAction>(),
-                new Dictionary<string, IReadOnlyList<BoundTimbreHandleParameter>>());
-            return;
-        }
-
-        EmbeddedParseResult<DirectiveDocumentSyntax> parsed = MotionSyntaxParser.Parse(text, offset);
-        if (parsed.Diagnostics.Count > 0)
-        {
-            // ParseMotionProgram already reported the first syntax diagnostic.
-            return;
-        }
-
-        DirectiveRegion[] regions = parsed.Syntax.Directives
-            .Select(directive => CreateDirectiveRegion(text, offset, directive))
-            .OrderBy(region => region.KeywordSpan.Start)
-            .ToArray();
-        Dictionary<string, TextSpan> declared = new(StringComparer.Ordinal);
-        foreach (DirectiveRegion region in regions.Where(region => region.Keyword == "@handle"))
-        {
-            string name = FirstWord(document.Text.Substring(region.HeaderSpan));
-            if (name.Length > 0 && !declared.ContainsKey(name))
+            EmbeddedParseResult<DirectiveDocumentSyntax> parsed = MotionSyntaxParser.Parse(text, offset);
+            if (parsed.Diagnostics.Count > 0)
             {
-                declared.Add(name, FindSubspan(region.HeaderSpan, name));
-            }
-        }
-
-        HashSet<string> motionHandles = new(StringComparer.Ordinal);
-        foreach (DirectiveRegion region in regions.Where(region => region.Keyword == "@run"))
-        {
-            string header = document.Text.Substring(region.HeaderSpan).Trim().TrimEnd(';').Trim();
-            int asIndex = header.LastIndexOf(" as ", StringComparison.Ordinal);
-            if (asIndex >= 0)
-            {
-                motionHandles.Add(header.Substring(asIndex + 4).Trim());
-            }
-        }
-
-        List<EmbeddedDiagnostic> diagnostics = new();
-        List<(DirectiveRegion Region, TimbreActionSyntax Syntax)> statements = new();
-        Dictionary<string, TimbreHandleKind> handles = declared.Keys.ToDictionary(
-            name => name,
-            name => motionHandles.Contains(name) ? TimbreHandleKind.Motion : TimbreHandleKind.Unused,
-            StringComparer.Ordinal);
-        HashSet<string> conflicts = new(StringComparer.Ordinal);
-        foreach (DirectiveRegion region in regions)
-        {
-            if (region.Keyword == "@modifier")
-            {
-                diagnostics.Add(new EmbeddedDiagnostic(TimbreMarkupBinder.ContextId, TimbreMarkupBinder.ContextMessage("@modifier"), region.KeywordSpan));
-                continue;
+                // ParseMotionProgram already reported the first syntax diagnostic.
+                return;
             }
 
-            if (!TimbreMarkupSyntax.IsActionKeyword(region.Keyword) ||
-                !TimbreMarkupSyntax.TryGetActionKind(region.Keyword, out TimbreActionKind kind))
+            DirectiveRegion[] regions = parsed.Syntax.Directives
+                .Select(directive => CreateDirectiveRegion(text, offset, directive))
+                .OrderBy(region => region.KeywordSpan.Start)
+                .ToArray();
+            List<EmbeddedDiagnostic> diagnostics = new();
+            foreach (DirectiveRegion region in regions)
             {
-                continue;
-            }
-
-            if (!ValidateTimbreActionContext(region, regions, diagnostics))
-            {
-                continue;
-            }
-
-            string header = document.Text.Substring(region.HeaderSpan);
-            int semicolon = header.LastIndexOf(';');
-            string statementText = semicolon < 0 ? header : header.Substring(0, semicolon);
-            TimbreActionSyntax? syntax = TimbreMarkupSyntax.ParseAction(kind, region.KeywordSpan, statementText, region.HeaderSpan.Start, diagnostics);
-            if (syntax is null)
-            {
-                continue;
-            }
-
-            if (syntax.HandleName is string handle)
-            {
-                if (!declared.TryGetValue(handle, out TextSpan declaration) || declaration.Start > syntax.HandleSpan.Start)
+                if (region.Keyword == "@modifier" || region.Keyword == "@sound")
                 {
-                    diagnostics.Add(new EmbeddedDiagnostic(
-                        TimbreMarkupBinder.ReferenceId,
-                        "Timbre handle '" + handle + "' is undeclared or used before its declaration.",
-                        syntax.HandleSpan));
+                    diagnostics.Add(new EmbeddedDiagnostic(TimbreMarkupBinder.ContextId, TimbreMarkupBinder.ContextMessage(region.Keyword), region.KeywordSpan));
                     continue;
                 }
 
-                if (motionHandles.Contains(handle))
+                if (!TimbreMarkupSyntax.TryGetCommandKind(region.Keyword, out TimbreCommandKind kind) ||
+                    !ValidateTimbreActionContext(region, regions, diagnostics))
                 {
-                    if (conflicts.Add(handle))
-                    {
-                        diagnostics.Add(new EmbeddedDiagnostic(
-                            TimbreMarkupBinder.ReferenceId,
-                            "Handle '" + handle + "' is used by both Timbre and Motion actions.",
-                            syntax.HandleSpan));
-                    }
-
                     continue;
                 }
 
-                handles[handle] = TimbreHandleKind.Timbre;
-                symbols.Add(new CernealaSemanticSymbol(
-                    CernealaSemanticSymbolKind.MotionHandle,
-                    handle,
-                    "Cerneala.Timbre.TimbreHandle",
-                    syntax.HandleSpan,
-                    definitionLocation: new LanguageSourceLocation(document.Path, declaration)));
-            }
-
-            AddTimbreSymbol(CernealaSemanticSymbolKind.TimbreDirective, region.Keyword, "Cerneala.Timbre.TimbrePlayback", region.KeywordSpan);
-            statements.Add((region, syntax));
-        }
-
-        List<BoundTimbreAction> actions = new();
-        foreach (DirectiveRegion region in regions)
-        {
-            if (region.Keyword == "@cancel")
-            {
-                string handle = FirstWord(document.Text.Substring(region.HeaderSpan).TrimEnd(';'));
-                if (handles.TryGetValue(handle, out TimbreHandleKind cancelKind) && cancelKind == TimbreHandleKind.Timbre)
+                string header = document.Text.Substring(region.HeaderSpan);
+                int semicolon = header.LastIndexOf(';');
+                string statementText = semicolon < 0 ? header : header.Substring(0, semicolon);
+                TimbreCommandSyntax? syntax = TimbreMarkupSyntax.ParseCommand(kind, region.KeywordSpan, statementText, region.HeaderSpan.Start, diagnostics);
+                if (syntax is null)
                 {
-                    actions.Add(new BoundTimbreAction(TimbreActionKind.Cancel, region.KeywordSpan, handle));
+                    continue;
                 }
 
-                continue;
+                long seekTicks = 0;
+                if (kind == TimbreCommandKind.Seek && !TimbreMarkupBinder.TryBindSeek(syntax, diagnostics, out seekTicks))
+                {
+                    continue;
+                }
+
+                if (!TryResolveTimbreSound(aspect, attachments, syntax.Owner, syntax.OwnerSpan, syntax.Sound, syntax.SoundSpan, diagnostics,
+                    out TimbreCommandTarget target, out _))
+                {
+                    continue;
+                }
+
+                AddTimbreSymbol(CernealaSemanticSymbolKind.TimbreDirective, region.Keyword, "Cerneala.Timbre.TimbrePlayback", region.KeywordSpan);
+                commands.Add(new BoundTimbreCommand(
+                    kind,
+                    region.KeywordSpan,
+                    target,
+                    target == TimbreCommandTarget.Named ? syntax.Owner : null,
+                    syntax.Sound,
+                    seekTicks));
             }
 
-            (DirectiveRegion Region, TimbreActionSyntax Syntax) statement = statements.FirstOrDefault(candidate => ReferenceEquals(candidate.Region, region));
-            if (statement.Syntax is null)
-            {
-                continue;
-            }
-
-            TimbreActionSyntax action = statement.Syntax;
-            switch (action.Kind)
-            {
-                case TimbreActionKind.Play:
-                    if (BindTimbrePlay(element, action, diagnostics) is BoundTimbreAction play)
-                    {
-                        actions.Add(play);
-                    }
-
-                    break;
-                case TimbreActionKind.Seek:
-                    if (TimbreMarkupBinder.TryBindSeek(action, diagnostics, out long ticks))
-                    {
-                        actions.Add(new BoundTimbreAction(TimbreActionKind.Seek, action.KeywordSpan, action.HandleName, seekTicks: ticks));
-                    }
-
-                    break;
-                default:
-                    actions.Add(new BoundTimbreAction(action.Kind, action.KeywordSpan, action.HandleName));
-                    break;
-            }
+            ReportEmbedded(diagnostics);
         }
 
-        ReportEmbedded(diagnostics);
-        IReadOnlyDictionary<string, IReadOnlyList<BoundTimbreHandleParameter>> handleParameters = BindTimbreHandleParameters(handles, actions);
-        timbreAspects[element.Span.Start] = new BoundTimbreAspect(element.Span.Start, actions, handles, handleParameters);
-        BindTimbreMotionTargets(element, handles, declared, actions, handleParameters);
+        if (attachments.Timbre is not null || commands.Count > 0)
+        {
+            timbreAspects[element.Span.Start] = new BoundTimbreAspect(element.Span.Start, attachments.Timbre, commands);
+        }
+
+        BindTimbreMotionTargets(aspect, attachments);
     }
 
-    private BoundTimbreAction? BindTimbrePlay(
-        ElementSyntax aspect,
-        TimbreActionSyntax syntax,
-        ICollection<EmbeddedDiagnostic> diagnostics)
+    // Resolves `$Owner.timbre.Sound` written in `aspect`. $self is checked
+    // against the Aspect's own @timbre; $Name against the static Aspect of the
+    // named element in the namescope where the Aspect is written; $owner is
+    // checked at runtime.
+    private bool TryResolveTimbreSound(
+        ResourceDefinition aspect,
+        AspectAttachmentBinding attachments,
+        string owner,
+        TextSpan ownerSpan,
+        string sound,
+        TextSpan soundSpan,
+        ICollection<EmbeddedDiagnostic> diagnostics,
+        out TimbreCommandTarget target,
+        out BoundTimbreSound? resolved)
     {
-        string name = syntax.ClipName!;
-        ResourceDefinition? resource = FindResource(aspect, name);
-        if (resource is null)
+        resolved = null;
+        BoundTimbreClip? clip;
+        string ownerText = "$" + owner;
+        if (owner == "self")
         {
-            diagnostics.Add(new EmbeddedDiagnostic(TimbreMarkupBinder.ReferenceId, "Unknown TimbreClip resource '$" + name + "'.", syntax.ClipSpan));
-            return null;
+            target = TimbreCommandTarget.Self;
+            clip = attachments.Timbre?.Clip;
         }
-
-        if (resource.Kind != ResourceKind.TimbreClip)
+        else if (owner == "owner")
         {
-            diagnostics.Add(new EmbeddedDiagnostic(TimbreMarkupBinder.ReferenceId, "Resource '$" + name + "' is not a TimbreClip.", syntax.ClipSpan));
-            return null;
+            target = TimbreCommandTarget.Owner;
+            return true;
         }
-
-        symbols.Add(new CernealaSemanticSymbol(
-            CernealaSemanticSymbolKind.ResourceReference,
-            name,
-            TimbreClipTypeName,
-            new TextSpan(syntax.ClipSpan.Start + 1, name.Length),
-            resource.Type,
-            definitionLocation: resource.Location));
-        BoundTimbreClip clip = GetBoundTimbreClip(resource);
-        foreach (TimbreValueSyntax argument in syntax.Arguments)
+        else
         {
-            if (argument.Name is "Volume" or "Loop")
+            target = TimbreCommandTarget.Named;
+            if (root?.Name == "Application")
             {
-                AddTimbreSymbol(CernealaSemanticSymbolKind.TimbreProperty, argument.Name, TimbrePropertyType(argument.Name), argument.NameSpan);
+                diagnostics.Add(new EmbeddedDiagnostic(TimbreMarkupBinder.ReferenceId, ApplicationTimbreTargetMessage, ownerSpan));
+                return false;
             }
-            else if (clip.FindParameter(argument.Name) is BoundTimbreParameter parameter)
+
+            if (FindNamedElement(aspect.Element, owner) is not NamedElementDefinition named)
             {
-                AddTimbreSymbol(
-                    CernealaSemanticSymbolKind.TimbreParameter,
-                    parameter.Name,
-                    "System.Single",
-                    argument.NameSpan,
-                    new LanguageSourceLocation(resource.Path, parameter.NameSpan));
+                diagnostics.Add(new EmbeddedDiagnostic(
+                    TimbreMarkupBinder.ReferenceId,
+                    "Named element '" + ownerText + "' is not available in the namescope where this Aspect is written.",
+                    ownerSpan));
+                return false;
             }
+
+            symbols.Add(new CernealaSemanticSymbol(
+                CernealaSemanticSymbolKind.MotionTarget,
+                owner,
+                named.Type?.MetadataName ?? "System.Object",
+                ownerSpan,
+                named.Type,
+                definitionLocation: new LanguageSourceLocation(document.Path, named.Span)));
+            clip = FindStaticAspect(named.Element) is ResourceDefinition targetAspect
+                ? GetAspectAttachments(targetAspect).Timbre?.Clip
+                : null;
         }
 
-        return TimbreMarkupBinder.BindPlay(syntax, clip, diagnostics);
+        resolved = clip?.FindSound(sound);
+        if (resolved is null)
+        {
+            diagnostics.Add(new EmbeddedDiagnostic(
+                TimbreMarkupBinder.ReferenceId,
+                "'" + ownerText + "' has no sound '" + sound + "' in its Aspect.",
+                soundSpan));
+            return false;
+        }
+
+        AddTimbreSymbol(
+            CernealaSemanticSymbolKind.TimbreSound,
+            sound,
+            "Cerneala.Timbre.TimbreClipSound",
+            soundSpan,
+            timbreClipPaths.TryGetValue(clip!, out string? path) ? new LanguageSourceLocation(path, resolved.NameSpan) : null);
+        return true;
     }
 
-    // Completion support: the parameters a $Clip(...) call can override.
+    // Completion support: the parameters a `@timbre $Clip(...)` can set.
     internal IReadOnlyList<CompletionParameterDefinition>? GetCompletionTimbreParameters(ElementSyntax? element, string clipName)
     {
         ResourceDefinition? resource = element is null ? null : FindResource(element, clipName);
@@ -375,18 +337,13 @@ internal sealed partial class CernealaSemanticModel
             return null;
         }
 
-        BoundTimbreClip clip = GetBoundTimbreClip(resource);
-        return new[]
-            {
-                new CompletionParameterDefinition("Volume", "System.Single", false),
-                new CompletionParameterDefinition("Loop", "System.Boolean", false)
-            }
-            .Concat(clip.Parameters.Select(parameter => new CompletionParameterDefinition(parameter.Name, "System.Single", false)))
+        return GetBoundTimbreClip(resource).Parameters
+            .Select(parameter => new CompletionParameterDefinition(parameter.Name, "System.Single", false))
             .ToArray();
     }
 
-    // Completion support: the inputs of a modifier and the parameters a
-    // TimbreClip body has declared before the offset.
+    // Completion support: the parameters a TimbreClip body has declared
+    // before the offset.
     internal IReadOnlyList<string> GetCompletionTimbreClipParameters(ElementSyntax? clipElement, int offset) =>
         clipElement is not null && timbreClips.TryGetValue(clipElement, out BoundTimbreClip? clip)
             ? clip.Parameters.Where(parameter => parameter.NameSpan.Start < offset).Select(parameter => parameter.Name).ToArray()
@@ -469,7 +426,7 @@ internal sealed partial class CernealaSemanticModel
             (string text, int offset) = BuildTimbreTextBuffer(document, element);
             EmbeddedParseResult<DirectiveDocumentSyntax> parsed = DirectiveSyntaxParser.Parse(text, offset);
             foreach (DirectiveSyntax directive in parsed.Syntax.Directives.Where(directive =>
-                TimbreMarkupSyntax.IsActionKeyword(directive.Keyword) || directive.Keyword == "@modifier"))
+                TimbreMarkupSyntax.IsCommandKeyword(directive.Keyword) || directive.Keyword is "@timbre" or "@sound" or "@modifier"))
             {
                 AddDiagnostic(
                     TimbreMarkupBinder.ContextId,
@@ -487,7 +444,7 @@ internal sealed partial class CernealaSemanticModel
             (string text, int offset) = BuildDirectTextBuffer(aspect);
             spans = ContainsTimbreSyntax(text)
                 ? DirectiveSyntaxParser.Parse(text, offset).Syntax.Directives
-                    .Where(directive => TimbreMarkupSyntax.IsActionKeyword(directive.Keyword))
+                    .Where(directive => TimbreMarkupSyntax.IsCommandKeyword(directive.Keyword))
                     .Select(directive => CreateDirectiveRegion(text, offset, directive))
                     .Select(region => new TextSpan(region.KeywordSpan.Start, Math.Max(0, region.HeaderSpan.End - region.KeywordSpan.Start)))
                     .ToArray()
@@ -499,7 +456,9 @@ internal sealed partial class CernealaSemanticModel
     }
 
     private static bool ContainsTimbreSyntax(string text) =>
-        TimbreMarkupSyntax.ActionKeywords.Any(keyword => text.IndexOf(keyword, StringComparison.Ordinal) >= 0) ||
+        TimbreMarkupSyntax.CommandKeywords.Any(keyword => text.IndexOf(keyword, StringComparison.Ordinal) >= 0) ||
+        text.IndexOf("@timbre", StringComparison.Ordinal) >= 0 ||
+        text.IndexOf("@sound", StringComparison.Ordinal) >= 0 ||
         text.IndexOf("@modifier", StringComparison.Ordinal) >= 0;
 
     // Direct text of an element in any analyzed document, with child elements

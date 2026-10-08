@@ -209,7 +209,7 @@ internal sealed partial class CernealaSemanticModel
             "ContentTemplate" => ResourceKind.ContentTemplate,
             "Tween" or "Spring" => ResourceKind.MotionSpec,
             "MotionClip" => ResourceKind.MotionClip,
-            "PrismComposition" => ResourceKind.PrismComposition,
+            "PrismClip" => ResourceKind.PrismClip,
             "TimbreClip" => ResourceKind.TimbreClip,
             _ => ResourceKind.Unsupported
         };
@@ -225,9 +225,9 @@ internal sealed partial class CernealaSemanticModel
             ResourceKind.Brush => compilation.FindType("Cerneala.UI.Media." + elementName),
             ResourceKind.ImageResource => compilation.FindType("Cerneala.UI.Resources.ImageResource"),
             ResourceKind.SpriteAnimationSet => compilation.FindType("Cerneala.UI.Controls.SpriteAnimationSet"),
-            ResourceKind.MotionSpec or ResourceKind.MotionClip or ResourceKind.PrismComposition =>
+            ResourceKind.MotionSpec or ResourceKind.MotionClip or ResourceKind.PrismClip =>
                 compilation.FindType("System.Object"),
-            ResourceKind.TimbreClip => compilation.FindType(TimbreClipTypeName),
+            ResourceKind.TimbreClip => compilation.FindType(TimbreClipDefinitionTypeName),
             _ => null
         };
         ILanguageTypeSymbol? targetType = null;
@@ -397,7 +397,7 @@ internal sealed partial class CernealaSemanticModel
                 return;
             case ResourceKind.MotionSpec:
             case ResourceKind.MotionClip:
-            case ResourceKind.PrismComposition:
+            case ResourceKind.PrismClip:
                 BindEmbeddedResource(resource, cancellationToken);
                 return;
             case ResourceKind.TimbreClip:
@@ -597,7 +597,7 @@ internal sealed partial class CernealaSemanticModel
     private bool IsSpecialElement(ElementSyntax element) =>
         LocalElementName(element.Name) is "Aspect" or "ContentTemplate" or "SolidColorBrush" or "LinearGradientBrush" or
             "RadialGradientBrush" or "ImageBrush" or "DrawingBrush" or "ImageResource" or "Tween" or "Spring" or
-            "MotionClip" or "PrismComposition" or "TimbreClip" or "SpriteAnimationSet" or "SpriteAnimationClip" or
+            "MotionClip" or "PrismClip" or "TimbreClip" or "SpriteAnimationSet" or "SpriteAnimationClip" or
             "SpriteAnimationFrame" || IsResourcePropertyElement(element);
 
     private static bool IsSpriteAnimationDefinitionElement(ElementSyntax element) =>
@@ -732,7 +732,7 @@ internal sealed partial class CernealaSemanticModel
         ContentTemplate,
         MotionSpec,
         MotionClip,
-        PrismComposition,
+        PrismClip,
         TimbreClip,
         Unsupported
     }

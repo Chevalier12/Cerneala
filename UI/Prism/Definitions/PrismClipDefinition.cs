@@ -4,11 +4,11 @@ using Cerneala.Drawing.Prism.Catalog;
 
 namespace Cerneala.UI.Prism.Definitions;
 
-public sealed class PrismCompositionDefinition : IEquatable<PrismCompositionDefinition>
+public sealed class PrismClipDefinition : IEquatable<PrismClipDefinition>
 {
     private readonly ImmutableDictionary<string, PrismNodeId> namedNodes;
 
-    public PrismCompositionDefinition(
+    public PrismClipDefinition(
         string name,
         IEnumerable<PrismNodeDefinition> nodes,
         PrismColorProfile workingColorProfile = PrismCatalogGenerated.CompositionWorkingColorProfile,
@@ -81,7 +81,7 @@ public sealed class PrismCompositionDefinition : IEquatable<PrismCompositionDefi
         return builder.ToString().TrimEnd();
     }
 
-    public bool Equals(PrismCompositionDefinition? other)
+    public bool Equals(PrismClipDefinition? other)
     {
         return other is not null &&
             string.Equals(Name, other.Name, StringComparison.Ordinal) &&
@@ -91,7 +91,7 @@ public sealed class PrismCompositionDefinition : IEquatable<PrismCompositionDefi
             GlobalLightAltitude.Equals(other.GlobalLightAltitude);
     }
 
-    public override bool Equals(object? obj) => obj is PrismCompositionDefinition other && Equals(other);
+    public override bool Equals(object? obj) => obj is PrismClipDefinition other && Equals(other);
 
     public override int GetHashCode()
     {

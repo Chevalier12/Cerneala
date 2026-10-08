@@ -34,7 +34,7 @@ The GPU capture stays lazy, so a source-only composition does not pay for it.
 
 Generic example:
 ```xml
-<PrismComposition Name="FrostedPanelPrism">
+<PrismClip Name="FrostedPanelPrism">
     @layer Highlight
     {
         Opacity = 0.18;
@@ -74,12 +74,19 @@ Generic example:
         BlendMode = Overlay;
         @filter Blur { Radius = 8; }
     }
-</PrismComposition>
+</PrismClip>
 
 <Border Name="FrostedPanel">
-    @prism $FrostedPanelPrism;
+    <Border.Aspect>
+        @prism $FrostedPanelPrism;
+    </Border.Aspect>
 </Border>
 ```
+`@prism` is written at the top of the element's Aspect (inline or a resource
+Aspect), at most once per Aspect; `@prism { … }` declares the clip inline. The
+effect lives as long as that Aspect application: replacing the Aspect or
+detaching the element removes it, and the new Aspect attaches its own.
+
 `Blur` still processes the layer source. `BlendMode = Overlay` composites that
 prepared layer result against everything accumulated behind it, including the
 host image and lower UI. Style blend modes use the same destination without

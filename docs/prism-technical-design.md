@@ -89,7 +89,7 @@ The backend can thus capture the retained visual subtree without
 
 ## Objectives
 
-- Full implementation of `PrismComposition` and `@prism` syntax.
+- Full implementation of `PrismClip` and `@prism` syntax.
 - Layer model mentally compatible with Photoshop.
 - All standard filters, styles and blend modes in the proposal.
 - Masks, clipping chains, groups, Blend If and advanced blending.
@@ -127,7 +127,7 @@ TDD implements exactly the seven directives defined by the proposal:
 | `@style` | adds a Photoshop decoration derived from content |
 | `@mask` | limits the full contribution of a scope |
 
-`PrismComposition` is the reusable resource. No additional directive is
+`PrismClip` is the reusable resource. No additional directive is
 required for the implementation described here.
 
 ## Existing constraints
@@ -170,12 +170,12 @@ from the proposal and is reflected here in the same amendment.
 
 ### The UI describes, the backend processes
 
-The UI element knows what `PrismComposition` has attached and what the current values are.
+The UI element knows what `PrismClip` has attached and what the current values are.
 It doesn't know what a `RenderTarget2D`, `Effect`, shader pass or texture pool is.
 
 ### Shared definition, state per instance
 
-`PrismCompositionDefinition` is immutable and can be shared by all
+`PrismClipDefinition` is immutable and can be shared by all
 elements that use the same resource. Each element gets its own
 `PrismInstance` and own parameter values.
 ### No recapture per layer
@@ -257,7 +257,7 @@ Prism parser + semantic binder
     v
 cod generat
     |
-    +--> PrismCompositionDefinition partajată
+    +--> PrismClipDefinition partajată
     +--> factory PrismInstance
     +--> chei Motion tipizate
     |
@@ -329,7 +329,7 @@ of the current build.
 
 ## The definitions model
 
-### PrismCompositionDefinition
+### PrismClipDefinition
 
 The reusable definition contains:
 
@@ -812,7 +812,7 @@ The AST preserves the exact location of each directive, property, and value.
 
 Binder solves:
 
-- resources `PrismComposition`;
+- resources `PrismClip`;
 - parameters and overrides;
 - filter and style types;
 - properties and their types;

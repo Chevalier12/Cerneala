@@ -15,10 +15,10 @@ namespace Cerneala.Tests.Timbre.Motion;
 public sealed class TimbreMotionMarkupTests
 {
     private const string Animated =
-        "@handle Playback; " +
-        "@on Click { @timbre $Tone(Volume = 0.2, Cut = 800) as Playback; " +
-        "@animate with Tween(300ms, Linear) { @to { $self.timbre.Playback.Volume = 0.8; $self.timbre.Playback.Cut = 6000; } } } " +
-        "@when $self.Opacity { @if value < 0.5 { @cancel Playback; } }";
+        "@timbre $Quiet(Cut = 800); " +
+        "@on Click { @play $self.timbre.Tone; " +
+        "@animate with Tween(300ms, Linear) { @to { $self.timbre.Tone.Volume = 0.8; $self.timbre.Tone.Cut = 6000; } } } " +
+        "@when $self.Opacity { @if value < 0.5 { @stop $self.timbre.Tone; } }";
 
     [Fact]
     public void TimbreMotionGeneratedConsumerMatchesTheCSharpFacadeThroughTransport()
@@ -26,8 +26,8 @@ public sealed class TimbreMotionMarkupTests
         using MarkupTimbreFixture fixture = new(Panel(Animated), "TimbreMotionParity.crn");
         Click(fixture);
         TimbrePlayback markup = Assert.Single(fixture.Started);
-        TimbreParameter<float> cut = CutOf(markup.Clip);
-        TimbrePlayback csharp = PlayButton(fixture).Timbre.Play(markup.Clip, start =>
+        TimbreParameter<float> cut = CutOf(markup.Sound);
+        TimbrePlayback csharp = PlayButton(fixture).Timbre.Play(markup.Sound, start =>
         {
             start.Volume = 0.2f;
             start.Set(cut, 800f);
@@ -66,10 +66,10 @@ public sealed class TimbreMotionMarkupTests
     }
 
     [Fact]
-    public void TimbreMotionOnAnEmptySlotIsANoOpWithoutAutoplay()
+    public void TimbreMotionOnASoundThatIsNotPlayingIsANoOp()
     {
         using MarkupTimbreFixture fixture = new(Panel(
-            "@handle Playback; @on Click { @animate { @to { $self.timbre.Playback.Volume = 0.5; } } } @when $self.Opacity { @if value < 0.1 { @timbre $Tone as Playback; } }"),
+            "@timbre $Quiet; @on Click { @animate { @to { $self.timbre.Tone.Volume = 0.5; } } } @when $self.Opacity { @if value < 0.1 { @play $self.timbre.Tone; } }"),
             "TimbreMotionEmpty.crn");
 
         Click(fixture);
@@ -83,12 +83,12 @@ public sealed class TimbreMotionMarkupTests
     public void TimbreMotionInvalidSpringSampleMatchesTheCSharpFacade()
     {
         using MarkupTimbreFixture fixture = new(Panel(
-            "@handle Playback; @on Click { @timbre $Tone(Volume = 0.5) as Playback; " +
-            "@animate with Spring(400, 4, 1) { @to { $self.timbre.Playback.Volume = 1; } } }"),
+            "@timbre $Quiet; @on Click { @play $self.timbre.Tone; " +
+            "@animate with Spring(400, 4, 1) { @to { $self.timbre.Tone.Volume = 1; } } }"),
             "TimbreMotionSpring.crn");
         Click(fixture);
         TimbrePlayback markup = Assert.Single(fixture.Started);
-        TimbrePlayback csharp = PlayButton(fixture).Timbre.Play(markup.Clip, start => start.Volume = 0.5f);
+        TimbrePlayback csharp = PlayButton(fixture).Timbre.Play(markup.Sound, start => start.Volume = 0.2f);
         MotionHandle handle = csharp.Motion().Animate(TimbrePlayback.VolumeParameter).To(1f).With(new SpringSpec<float>(400f, 4f, 1f));
         Wait(() => fixture.Rig.StartAsync(markup, csharp));
         fixture.Pump();
@@ -237,8 +237,8 @@ public sealed class TimbreMotionMarkupTests
     {
         using MarkupTimbreFixture fixture = new(
             "<ItemsControl>@templates { <ContentTemplate DataType=\"System.String\"><Border Width=\"20\" Height=\"20\"><Border.Resources>" + Clips +
-            "</Border.Resources><Border.Aspect>@handle Playback; @when $self.Opacity { @if value > 0.5 { @timbre $Tone(Volume = 0.2) as Playback; " +
-            "@animate with Tween(300ms, Linear) { @to { $self.timbre.Playback.Volume = 0.8; } } } }</Border.Aspect></Border></ContentTemplate> }</ItemsControl>",
+            "</Border.Resources><Border.Aspect>@timbre $Quiet; @when $self.Opacity { @if value > 0.5 { @play $self.timbre.Tone; " +
+            "@animate with Tween(300ms, Linear) { @to { $self.timbre.Tone.Volume = 0.8; } } } }</Border.Aspect></Border></ContentTemplate> }</ItemsControl>",
             "TimbreMotionTemplate.crn");
         ItemsControl items = fixture.All<ItemsControl>().Single();
         items.SetItems(new[] { "a" });

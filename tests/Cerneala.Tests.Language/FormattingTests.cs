@@ -26,12 +26,12 @@ public sealed class FormattingTests
             Opacity = 1;
             }
             </Aspect>
-            <PrismComposition Name="Fx">
+            <PrismClip Name="Fx">
             @layer Card
             {
             @filter Blur { Radius = 8; }
             }
-            </PrismComposition>
+            </PrismClip>
             </Window.Resources>
             <TextBlock>
               literal text keeps its authored leading whitespace
@@ -50,12 +50,12 @@ public sealed class FormattingTests
                     Opacity = 1;
                   }
                 </Aspect>
-                <PrismComposition Name="Fx">
+                <PrismClip Name="Fx">
                   @layer Card
                   {
                     @filter Blur { Radius = 8; }
                   }
-                </PrismComposition>
+                </PrismClip>
               </Window.Resources>
               <TextBlock>
               literal text keeps its authored leading whitespace

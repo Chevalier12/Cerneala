@@ -99,7 +99,19 @@ internal sealed class DiagnosticService(CernealaWorkspace workspace, BuildDiagno
 
             string elementName = LocalName(element.Name);
             IReadOnlyList<EmbeddedDiagnostic> embeddedDiagnostics;
-            if (elementName is "Aspect" or "MotionClip" || elementName.EndsWith(".Aspect", StringComparison.Ordinal))
+            if (elementName is "Aspect" || elementName.EndsWith(".Aspect", StringComparison.Ordinal))
+            {
+                // The @timbre and @prism attachments are checked on their own and
+                // blanked before the rest of the body is parsed as Motion.
+                IReadOnlyList<AspectAttachmentSyntax> attachments = AspectAttachmentScanner.Scan(text, offset);
+                List<EmbeddedDiagnostic> aspectDiagnostics = new(CreateAttachmentDiagnostics(text, offset, attachments));
+                EmbeddedParseResult<DirectiveDocumentSyntax> parsed = MotionSyntaxParser.Parse(
+                    AspectAttachmentScanner.Blank(text, offset, attachments),
+                    offset);
+                aspectDiagnostics.AddRange(parsed.Diagnostics.Take(1));
+                embeddedDiagnostics = aspectDiagnostics;
+            }
+            else if (elementName == "MotionClip")
             {
                 EmbeddedParseResult<DirectiveDocumentSyntax> parsed = MotionSyntaxParser.Parse(text, offset);
                 embeddedDiagnostics = parsed.Diagnostics.Take(1).ToArray();
@@ -116,7 +128,7 @@ internal sealed class DiagnosticService(CernealaWorkspace workspace, BuildDiagno
                     timbreDiagnostics);
                 embeddedDiagnostics = timbreDiagnostics;
             }
-            else if (elementName == "PrismComposition")
+            else if (elementName == "PrismClip")
             {
                 embeddedDiagnostics = PrismSyntaxParser.ParseComposition(text, offset).Diagnostics;
             }
@@ -137,6 +149,51 @@ internal sealed class DiagnosticService(CernealaWorkspace workspace, BuildDiagno
                     AnalysisMode.Editor,
                     Path.GetFileName(snapshot.Document.Path),
                     diagnostic.Message);
+            }
+        }
+    }
+
+    // Project-less checks of an Aspect's attachments: the statement shape and,
+    // for inline blocks, the clip body. Context and reference rules need the
+    // semantic model.
+    private static IEnumerable<EmbeddedDiagnostic> CreateAttachmentDiagnostics(
+        string text,
+        int offset,
+        IReadOnlyList<AspectAttachmentSyntax> attachments)
+    {
+        foreach (AspectAttachmentSyntax attachment in attachments.Where(candidate => candidate.Depth == 0))
+        {
+            bool timbre = attachment.Keyword == "@timbre";
+            if (!attachment.HasBlock && !attachment.Terminated)
+            {
+                yield return timbre
+                    ? new EmbeddedDiagnostic(TimbreMarkupSyntax.SyntaxId, "Timbre directive '@timbre' must end with ';'.", attachment.Extent)
+                    : new EmbeddedDiagnostic("PRISM1002", "Prism directive '@prism' must end with ';'.", attachment.Extent);
+                continue;
+            }
+
+            string extent = text.Substring(attachment.Extent.Start - offset, attachment.Extent.Length);
+            if (!timbre)
+            {
+                foreach (EmbeddedDiagnostic diagnostic in PrismSyntaxParser.ParseApplications(extent, attachment.Extent.Start).Diagnostics)
+                {
+                    yield return diagnostic;
+                }
+            }
+            else if (attachment.HasBlock)
+            {
+                List<EmbeddedDiagnostic> diagnostics = new();
+                TimbreMarkupBinder.BindClip(
+                    null,
+                    TimbreMarkupSyntax.ParseClipBody(
+                        text.Substring(attachment.BodySpan.Start - offset, attachment.BodySpan.Length),
+                        attachment.BodySpan.Start),
+                    attachment.KeywordSpan,
+                    diagnostics);
+                foreach (EmbeddedDiagnostic diagnostic in diagnostics)
+                {
+                    yield return diagnostic;
+                }
             }
         }
     }

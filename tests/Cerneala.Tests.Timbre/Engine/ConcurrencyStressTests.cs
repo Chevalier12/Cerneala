@@ -21,7 +21,7 @@ public sealed class ConcurrencyStressTests
         TimbreRuntime runtime = new(new TimbreRuntimeOptions { Output = output, MaxVoices = 24 });
         TimbreParameter<float> cutoff = new("Cutoff", 2000f);
         List<DeterministicTimbreSourceFactory> factories = [];
-        TimbreClip[] clips = CreateClips(cutoff, factories);
+        TimbreSound[] clips = CreateClips(cutoff, factories);
         List<TimbrePlayback> all = [];
         List<Task> seeks = [];
         List<string> unexpected = [];
@@ -133,7 +133,7 @@ public sealed class ConcurrencyStressTests
         ref TimbreScope scope,
         ref TimbreHandle slot,
         List<TimbrePlayback> mine,
-        TimbreClip[] clips,
+        TimbreSound[] clips,
         TimbreParameter<float> cutoff,
         TimbreRuntime runtime,
         List<TimbrePlayback> all,
@@ -146,7 +146,7 @@ public sealed class ConcurrencyStressTests
             case 0:
             case 1:
             {
-                TimbreClip clip = clips[random.Next(clips.Length)];
+                TimbreSound clip = clips[random.Next(clips.Length)];
                 bool loop = random.Next(2) == 0;
                 float volume = random.NextSingle();
                 TimbrePlayback playback = scope.Play(clip, start =>
@@ -185,7 +185,7 @@ public sealed class ConcurrencyStressTests
 
                 break;
             case 7:
-                if (target is not null && target.Clip.Parameters.Count > 0)
+                if (target is not null && target.Sound.Parameters.Count > 0)
                 {
                     target.Set(cutoff, 20f + (random.NextSingle() * 19980f));
                 }
@@ -219,7 +219,7 @@ public sealed class ConcurrencyStressTests
         }
     }
 
-    private static TimbreClip[] CreateClips(TimbreParameter<float> cutoff, List<DeterministicTimbreSourceFactory> factories)
+    private static TimbreSound[] CreateClips(TimbreParameter<float> cutoff, List<DeterministicTimbreSourceFactory> factories)
     {
         DeterministicTimbreSourceFactory Factory(long frames, int maxRead = int.MaxValue, Action<DeterministicTimbreReader>? configure = null)
         {
@@ -230,22 +230,22 @@ public sealed class ConcurrencyStressTests
 
         return
         [
-            new TimbreClip(TimbreSource.FromReader(Factory(48000).Open), loading: TimbreLoading.Preload),
-            new TimbreClip(TimbreSource.FromReader(Factory(48000, 333).Open), loading: TimbreLoading.Streaming),
-            new TimbreClip(
+            new TimbreSound(TimbreSource.FromReader(Factory(48000).Open), loading: TimbreLoading.Preload),
+            new TimbreSound(TimbreSource.FromReader(Factory(48000, 333).Open), loading: TimbreLoading.Streaming),
+            new TimbreSound(
                 TimbreSource.FromReader(Factory(24000).Open),
                 loading: TimbreLoading.Preload,
                 parameters: [cutoff],
                 modifiers: [new LowPass(cutoff: cutoff), new Delay(time: 0.05f, feedback: 0.5f, mix: 0.3f)]),
-            new TimbreClip(
+            new TimbreSound(
                 TimbreSource.FromReader(Factory(96000, 700).Open),
                 loading: TimbreLoading.Streaming,
                 parameters: [cutoff],
                 modifiers: [new Delay(time: 0.02f, feedback: 0.7f, mix: 0.5f), new LowPass(cutoff: cutoff)]),
-            new TimbreClip(
+            new TimbreSound(
                 TimbreSource.FromReader(Factory(48000, 256, reader => reader.FailAtFrame = 1).Open),
                 loading: TimbreLoading.Streaming),
-            new TimbreClip(TimbreSource.FromReader(Factory(0).Open), loop: true, loading: TimbreLoading.Preload)
+            new TimbreSound(TimbreSource.FromReader(Factory(0).Open), loop: true, loading: TimbreLoading.Preload)
         ];
     }
 

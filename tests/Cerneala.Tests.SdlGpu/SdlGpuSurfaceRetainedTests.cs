@@ -24,7 +24,7 @@ public sealed class SdlGpuSurfaceRetainedTests
         using SdlDrawingFixture fixture = new(128, 128, useMultisampling: false);
         PrismLayerDefinition layer = new(new PrismNodeId(1), "Blur",
             filters: [new PrismFilterDefinition(PrismFilterId.MotionBlur)]);
-        PrismInstance instance = new(new PrismCompositionDefinition("SurfaceBlur", [layer]));
+        PrismInstance instance = new(new PrismClipDefinition("SurfaceBlur", [layer]));
         PrismFilterState blur = instance.GetLayerState(layer.Id).Filters[0];
         PrismCatalogParameterInfo distance = PrismCatalog.GetFilter(PrismFilterId.MotionBlur)
             .Parameters.Single(parameter => parameter.Name == "Distance");
@@ -99,7 +99,7 @@ public sealed class SdlGpuSurfaceRetainedTests
         SdlGpuDrawingBackend backend = Assert.IsType<SdlGpuDrawingBackend>(session.DrawingBackend);
         PrismLayerDefinition layer = new(new PrismNodeId(1), "Blur",
             filters: [new PrismFilterDefinition(PrismFilterId.MotionBlur)]);
-        PrismInstance instance = new(new PrismCompositionDefinition("SurfaceBlur", [layer]));
+        PrismInstance instance = new(new PrismClipDefinition("SurfaceBlur", [layer]));
         PrismFilterState blur = instance.GetLayerState(layer.Id).Filters[0];
         PrismCatalogParameterInfo distance = PrismCatalog.GetFilter(PrismFilterId.MotionBlur)
             .Parameters.Single(parameter => parameter.Name == "Distance");
@@ -153,7 +153,7 @@ public sealed class SdlGpuSurfaceRetainedTests
     public void MovingPrismShapePreservesItsPixelsInsideAPixelSpaceSurface(float ownerPixelScale)
     {
         using SdlDrawingFixture fixture = new(256, 256, useMultisampling: false);
-        PrismInstance instance = new(new PrismCompositionDefinition("MovingL",
+        PrismInstance instance = new(new PrismClipDefinition("MovingL",
         [
             new PrismLayerDefinition(new PrismNodeId(1), "BevelAndGlow", styles:
             [

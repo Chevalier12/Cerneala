@@ -2,17 +2,17 @@ namespace Cerneala.Timbre;
 
 public sealed class TimbreStartOptions
 {
-    private readonly TimbreClip clip;
+    private readonly TimbreSound sound;
     private float volume;
     private bool loop;
     private bool sealed_;
 
-    internal TimbreStartOptions(TimbreClip clip)
+    internal TimbreStartOptions(TimbreSound sound)
     {
-        this.clip = clip;
-        volume = clip.Volume;
-        loop = clip.Loop;
-        Values = clip.CopyDefaults();
+        this.sound = sound;
+        volume = sound.Volume;
+        loop = sound.Loop;
+        Values = sound.CopyDefaults();
     }
 
     public float Volume
@@ -25,7 +25,7 @@ public sealed class TimbreStartOptions
         set
         {
             ThrowIfSealed();
-            TimbreClip.ValidateVolume(value, nameof(value));
+            TimbreSound.ValidateVolume(value, nameof(value));
             volume = value;
         }
     }
@@ -60,9 +60,9 @@ public sealed class TimbreStartOptions
             return;
         }
 
-        int index = clip.GetParameterIndex(parameter, nameof(parameter));
+        int index = sound.GetParameterIndex(parameter, nameof(parameter));
         float number = TimbreParameter<T>.ToFloat(value);
-        clip.ValidateParameterValue(index, number, nameof(value));
+        sound.ValidateParameterValue(index, number, nameof(value));
         Values[index] = number;
     }
 

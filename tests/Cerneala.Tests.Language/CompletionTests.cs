@@ -235,7 +235,7 @@ public sealed class CompletionTests
         using CompletionFixture motion = CompletionFixture.Create(
             "<Window><Window.Resources><Tween Name=\"Quick\" Duration=\"100ms\" /></Window.Resources><Button Tag=\"$|caret|\" /></Window>");
         using CompletionFixture prism = CompletionFixture.Create(
-            "<Window><Window.Resources><PrismComposition Name=\"Fx\">@layer Main { @filter |caret| }</PrismComposition></Window.Resources></Window>");
+            "<Window><Window.Resources><PrismClip Name=\"Fx\">@layer Main { @filter |caret| }</PrismClip></Window.Resources></Window>");
 
         IReadOnlyList<CernealaCompletionItem> sourceItems = sources.Complete();
         Assert.Contains(sourceItems, item => item.Label == "$Accent");
@@ -390,10 +390,10 @@ public sealed class CompletionTests
     }
 
     [Fact]
-    public void PrismCompositionCompletionOffersOnlyRootMembersOnExplicitInvocation()
+    public void PrismClipCompletionOffersOnlyRootMembersOnExplicitInvocation()
     {
         using CompletionFixture fixture = CompletionFixture.Create(
-            "<Window><Window.Resources><PrismComposition Name=\"Fx\">|caret|</PrismComposition></Window.Resources></Window>");
+            "<Window><Window.Resources><PrismClip Name=\"Fx\">|caret|</PrismClip></Window.Resources></Window>");
 
         IReadOnlyList<CernealaCompletionItem> items = fixture.Complete();
 
@@ -417,8 +417,8 @@ public sealed class CompletionTests
         bool allowsNestedNodes)
     {
         using CompletionFixture fixture = CompletionFixture.Create(
-            "<Window><Window.Resources><PrismComposition Name=\"Fx\">" + body +
-            "</PrismComposition></Window.Resources></Window>");
+            "<Window><Window.Resources><PrismClip Name=\"Fx\">" + body +
+            "</PrismClip></Window.Resources></Window>");
 
         IReadOnlyList<CernealaCompletionItem> items = fixture.Complete();
         CernealaCompletionItem property = Assert.Single(items.Where(item => item.Label == expectedProperty));
@@ -442,9 +442,9 @@ public sealed class CompletionTests
         string expectedSymbol)
     {
         using CompletionFixture fixture = CompletionFixture.Create(
-            "<Window><Window.Resources><PrismComposition Name=\"Fx\">" +
+            "<Window><Window.Resources><PrismClip Name=\"Fx\">" +
             "@layer Neon { @" + directive + " |caret| }" +
-            "</PrismComposition></Window.Resources></Window>");
+            "</PrismClip></Window.Resources></Window>");
 
         CernealaCompletionItem symbol = Assert.Single(
             fixture.Complete().Where(item => item.Label == expectedSymbol));
@@ -658,8 +658,8 @@ public sealed class CompletionTests
             .Select(candidate => (candidate.Symbol, candidate.Arguments[0]))
             .First();
         using CompletionFixture prism = CompletionFixture.Create(
-            "<Window><Window.Resources><PrismComposition Name=\"Fx\">@filter " +
-            prismSymbol + "(|caret|)</PrismComposition></Window.Resources></Window>");
+            "<Window><Window.Resources><PrismClip Name=\"Fx\">@filter " +
+            prismSymbol + "(|caret|)</PrismClip></Window.Resources></Window>");
         const string motionMarkup = """
             <Window>
               <Window.Resources>

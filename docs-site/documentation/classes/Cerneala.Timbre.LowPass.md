@@ -23,7 +23,7 @@ Inheritance:
 using Cerneala.Timbre;
 
 var cutoff = new TimbreParameter<float>("ToneCutoff", 1200f);
-var clip = new TimbreClip("audio/confirm.wav", parameters: [cutoff], modifiers: [new LowPass(cutoff: cutoff)]);
+var clip = new TimbreSound("audio/confirm.wav", parameters: [cutoff], modifiers: [new LowPass(cutoff: cutoff)]);
 var fixedFilter = new LowPass(cutoff: 800f);
 ```
 
@@ -48,4 +48,4 @@ The filter is a topology-preserving-transform state-variable filter with damping
 ## See also
 
 - [Delay](Cerneala.Timbre.Delay.md)
-- [TimbreClip](Cerneala.Timbre.TimbreClip.md)
+- [TimbreSound](Cerneala.Timbre.TimbreSound.md)

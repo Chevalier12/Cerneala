@@ -28,7 +28,7 @@ using Cerneala.Timbre;
 using var runtime = new TimbreRuntime(new TimbreRuntimeOptions { Output = output });
 using TimbreScope sounds = runtime.CreateScope();
 
-var confirm = new TimbreClip("audio/confirm.wav");
+var confirm = new TimbreSound("audio/confirm.wav");
 await runtime.PrepareAsync(confirm);
 TimbrePlayback playback = sounds.Play(confirm);
 TimbrePlaybackResult result = await playback.Completion;
@@ -74,7 +74,7 @@ When no output is configured, the output fails to open, or the device is lost, t
 | Name | Returns | Description |
 | --- | --- | --- |
 | `CreateScope()` | `TimbreScope` | Creates an owner of playbacks and handles. |
-| `PrepareAsync(TimbreClip clip, CancellationToken cancellationToken = default)` | `Task` | Preloads or validates a clip's source without playing it. |
+| `PrepareAsync(TimbreSound sound, CancellationToken cancellationToken = default)` | `Task` | Preloads or validates a sound's source without playing it. |
 | `Dispose()` | `void` | Cancels playbacks and releases the runtime. |
 
 ## See also

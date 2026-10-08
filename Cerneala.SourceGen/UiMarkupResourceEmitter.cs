@@ -124,7 +124,7 @@ public sealed partial class UiMarkupGenerator
 
             public Dictionary<string, AspectResource> DefaultAspectsByTarget { get; } = new(StringComparer.Ordinal);
 
-            public List<PrismCompositionResourceSyntax> PrismCompositions { get; } = [];
+            public List<PrismClipResourceSyntax> PrismClips { get; } = [];
 
             public List<object> RuntimeResources { get; } = [];
         }
@@ -136,11 +136,11 @@ public sealed partial class UiMarkupGenerator
             public ApplicationResourceCatalog(
                 IReadOnlyDictionary<string, object> namedResources,
                 IReadOnlyDictionary<string, object> defaultAspects,
-                IReadOnlyDictionary<string, object> prismCompositions)
+                IReadOnlyDictionary<string, object> prismClips)
             {
                 NamedResources = namedResources;
                 DefaultAspects = defaultAspects;
-                PrismCompositions = prismCompositions;
+                PrismClips = prismClips;
                 symbols = new HashSet<object>(namedResources.Values);
             }
 
@@ -148,7 +148,7 @@ public sealed partial class UiMarkupGenerator
 
             public IReadOnlyDictionary<string, object> DefaultAspects { get; }
 
-            public IReadOnlyDictionary<string, object> PrismCompositions { get; }
+            public IReadOnlyDictionary<string, object> PrismClips { get; }
 
             public bool Contains(object symbol) => symbols.Contains(symbol);
         }
@@ -245,8 +245,8 @@ public sealed partial class UiMarkupGenerator
                         case "MotionClip":
                             ReadMotionClip(scope, resource);
                             break;
-                        case "PrismComposition":
-                            ReadPrismComposition(scope, resource);
+                        case "PrismClip":
+                            ReadPrismClip(scope, resource);
                             break;
                         case "TimbreClip":
                             ReadTimbreClip(scope, resource);
@@ -695,7 +695,7 @@ public sealed partial class UiMarkupGenerator
                         break;
                     case TimbreClipResource sound:
                         currentLines.Add(
-                            ownerVariable + ".Resources.SetResource(new global::Cerneala.UI.Resources.ResourceId<" + TimbreClipType + ">(" +
+                            ownerVariable + ".Resources.SetResource(new global::Cerneala.UI.Resources.ResourceId<" + TimbreClipDefinitionType + ">(" +
                             Literal(sound.Name) + "), " + sound.Variable + ");");
                         break;
                     case AspectResource aspect:
@@ -724,10 +724,10 @@ public sealed partial class UiMarkupGenerator
                     new Dictionary<string, object>(StringComparer.Ordinal));
             }
 
-            IReadOnlyDictionary<string, object> prismCompositions =
+            IReadOnlyDictionary<string, object> prismClips =
                 boundPrismResources.TryGetValue(
                     scope,
-                    out Dictionary<string, BoundPrismComposition>? bound)
+                    out Dictionary<string, BoundPrismClip>? bound)
                     ? bound.ToDictionary(
                         pair => pair.Key,
                         pair => (object)pair.Value,
@@ -736,7 +736,7 @@ public sealed partial class UiMarkupGenerator
             return new ApplicationResourceCatalog(
                 scope.NamedResources.ToDictionary(pair => pair.Key, pair => (object)pair.Value, StringComparer.Ordinal),
                 scope.DefaultAspectsByTarget.ToDictionary(pair => pair.Key, pair => (object)pair.Value, StringComparer.Ordinal),
-                prismCompositions);
+                prismClips);
         }
 
         public void EmitApplicationResources()

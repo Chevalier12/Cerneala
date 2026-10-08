@@ -67,6 +67,14 @@ Declare one retained scene root, then nest as many transformed `Scene2D` groups 
                  TranslateX="32"
                  TransformOrigin="128,96">
             <Scene2D.Aspect>
+                @prism
+                {
+                    @layer GroupContent
+                    {
+                        Opacity = 1;
+                        @filter Blur { Radius = 1; }
+                    }
+                }
                 @on Loaded
                 {
                     @animate with Tween(100ms)
@@ -75,16 +83,16 @@ Declare one retained scene root, then nest as many transformed `Scene2D` groups 
                     }
                 }
             </Scene2D.Aspect>
-            @prism
-            {
-                @layer GroupContent
-                {
-                    Opacity = 1;
-                    @filter Blur { Radius = 1; }
-                }
-            }
             <Scene2D Layer="1">
                 <Scene2D.Aspect>
+                    @prism
+                    {
+                        @layer LayerContent
+                        {
+                            Opacity = 1;
+                            @filter Blur { Radius = 1; }
+                        }
+                    }
                     @on Loaded
                     {
                         @animate with Tween(100ms)
@@ -93,20 +101,20 @@ Declare one retained scene root, then nest as many transformed `Scene2D` groups 
                         }
                     }
                 </Scene2D.Aspect>
-                @prism
-                {
-                    @layer LayerContent
-                    {
-                        Opacity = 1;
-                        @filter Blur { Radius = 1; }
-                    }
-                }
                 <SceneItems2D>
                     @templates
                     {
                         <ContentTemplate DataType="System.String">
                             <Sprite2D Image="$WorldAtlas">
                                 <Sprite2D.Aspect>
+                                    @prism
+                                    {
+                                        @layer SpriteContent
+                                        {
+                                            Opacity = 1;
+                                            @filter Blur { Radius = 1; }
+                                        }
+                                    }
                                     @on Loaded
                                     {
                                         @animate with Tween(100ms)
@@ -115,14 +123,6 @@ Declare one retained scene root, then nest as many transformed `Scene2D` groups 
                                         }
                                     }
                                 </Sprite2D.Aspect>
-                                @prism
-                                {
-                                    @layer SpriteContent
-                                    {
-                                        Opacity = 1;
-                                        @filter Blur { Radius = 1; }
-                                    }
-                                }
                             </Sprite2D>
                         </ContentTemplate>
                     }

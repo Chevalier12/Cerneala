@@ -16,7 +16,7 @@ public sealed class MemoryBudgetTests
         using TimbreRig rig = new(options => options.StreamingMemoryLimit = Limit, hold: false);
         long reservedDuringDispose = -1;
         TimbreMemoryBudget? seen = null;
-        TimbreClip clip = new(TimbreSource.FromReader(budget =>
+        TimbreSound clip = new(TimbreSource.FromReader(budget =>
         {
             seen = budget;
             budget.Reserve(300_000);
@@ -40,7 +40,7 @@ public sealed class MemoryBudgetTests
     {
         using TimbreRig rig = new(options => options.StreamingMemoryLimit = Limit, hold: false);
         int allocations = 0;
-        TimbreClip clip = new(TimbreSource.FromReader(budget =>
+        TimbreSound clip = new(TimbreSource.FromReader(budget =>
         {
             budget.Reserve(Limit + 1);
             allocations++;
@@ -62,7 +62,7 @@ public sealed class MemoryBudgetTests
     {
         using TimbreRig rig = new(options => options.StreamingMemoryLimit = Limit);
         DeterministicTimbreSourceFactory pcm = new(48_000);
-        TimbreClip clip = new(TimbreSource.FromReader(budget =>
+        TimbreSound clip = new(TimbreSource.FromReader(budget =>
         {
             budget.Reserve(600_000);
             return pcm.Open();
@@ -86,7 +86,7 @@ public sealed class MemoryBudgetTests
     public async Task StreamingBuffersAndReaderReservationsUseTheSameAllowance()
     {
         using TimbreRig rig = new(options => options.StreamingMemoryLimit = Limit, hold: false);
-        TimbreClip clip = new(TimbreSource.FromReader(budget =>
+        TimbreSound clip = new(TimbreSource.FromReader(budget =>
         {
             budget.Reserve(Limit - 1024);
             return new DeterministicTimbreReader(48_000, DeterministicTimbreReader.DefaultSignal);
@@ -105,7 +105,7 @@ public sealed class MemoryBudgetTests
         using TimbreRig rig = new(options => options.StreamingMemoryLimit = Limit, hold: false);
         TimbreMemoryBudget? captured = null;
         long afterEarlyRelease = -1;
-        TimbreClip clip = new(TimbreSource.FromReader(budget =>
+        TimbreSound clip = new(TimbreSource.FromReader(budget =>
         {
             captured = budget;
             TimbreMemoryReservation scratch = budget.Reserve(400_000);
@@ -129,7 +129,7 @@ public sealed class MemoryBudgetTests
         using TimbreRig rig = new(hold: false);
         long allocatedDuringReserve = -1;
         long limit = 0;
-        TimbreClip clip = new(TimbreSource.FromReader(budget =>
+        TimbreSound clip = new(TimbreSource.FromReader(budget =>
         {
             limit = budget.Limit;
             long before = GC.GetAllocatedBytesForCurrentThread();
@@ -153,7 +153,7 @@ public sealed class MemoryBudgetTests
         using TimbreRig rig = new(options => options.StreamingMemoryLimit = Limit, hold: false);
         bool streamDisposedFirst = false;
         TimbreMemoryBudget? captured = null;
-        TimbreClip clip = new(TimbreSource.FromStream(budget =>
+        TimbreSound clip = new(TimbreSource.FromStream(budget =>
         {
             captured = budget;
             budget.Reserve(100_000);
@@ -174,8 +174,8 @@ public sealed class MemoryBudgetTests
         using TimbreRig limited = new(options => options.StreamingMemoryLimit = 1024, hold: false);
         using TimbreRig unlimited = new(hold: false);
 
-        TimbrePlaybackResult refused = await TimbreRig.CompletionAsync(limited.Scope.Play(new TimbreClip(missing)));
-        TimbrePlaybackResult unavailable = await TimbreRig.CompletionAsync(unlimited.Scope.Play(new TimbreClip(missing)));
+        TimbrePlaybackResult refused = await TimbreRig.CompletionAsync(limited.Scope.Play(new TimbreSound(missing)));
+        TimbrePlaybackResult unavailable = await TimbreRig.CompletionAsync(unlimited.Scope.Play(new TimbreSound(missing)));
 
         // The reservation precedes any I/O: the missing file is never touched.
         Assert.Equal(TimbreErrorKind.ResourceLimitExceeded, refused.Error!.Kind);

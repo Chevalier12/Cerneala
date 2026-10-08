@@ -58,4 +58,4 @@ Immutable Prism composition trees.
 ## See also
 
 - `Cerneala.UI.Prism.Definitions.PrismSourceSpan`
-- `Cerneala.UI.Prism.Definitions.PrismCompositionDefinition`
+- `Cerneala.UI.Prism.Definitions.PrismClipDefinition`

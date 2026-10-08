@@ -33,7 +33,7 @@ public sealed class PrismRetainedExecutionTests
             {
                 DrawRect canvas = new(0, 0, 256, 256);
                 DrawRect content = new(96, 100, 48, 32);
-                PrismDrawScope parent = PrismTestData.Scope(new PrismCompositionDefinition("Reference canvas",
+                PrismDrawScope parent = PrismTestData.Scope(new PrismClipDefinition("Reference canvas",
                     [new PrismLayerDefinition(new(1), "Blur", filters: [new(PrismFilterId.Blur)])]),
                     ownerToken: 94000 + scenario * 4 + (cropped ? 2 : 0), bounds: canvas);
                 PrismLayerDefinition layer = scenario switch
@@ -44,7 +44,7 @@ public sealed class PrismRetainedExecutionTests
                     _ => new(new(2), "Dissolve", filters: [new(PrismFilterId.Invert)],
                         opacity: .6f, blendMode: PrismBlendMode.Dissolve)
                 };
-                PrismDrawScope child = PrismTestData.Scope(new PrismCompositionDefinition("Cropped child", [layer]),
+                PrismDrawScope child = PrismTestData.Scope(new PrismClipDefinition("Cropped child", [layer]),
                     ownerToken: 94001 + scenario * 4 + (cropped ? 2 : 0), bounds: cropped ? content : canvas);
                 if (scenario is 0 or 1)
                 {
@@ -112,7 +112,7 @@ public sealed class PrismRetainedExecutionTests
         using SdlDrawingFixture fixture = new(16, 16);
         using SdlGpuImage mask = CreateMask();
         PrismResourceId maskId = new("ContractMask");
-        PrismCompositionDefinition definition = PrismTestData.Composition("Mutation",
+        PrismClipDefinition definition = PrismTestData.Composition("Mutation",
             new PrismLayerDefinition(new(1), "Layer", filters: [new(PrismFilterId.GaussianBlur)],
                 mask: mutation == "resource" ? new PrismMaskDefinition(maskId) : null));
         DrawCommandList baseline = Commands(false), changed = Commands(true);
@@ -133,7 +133,7 @@ public sealed class PrismRetainedExecutionTests
 
         DrawCommandList Commands(bool change)
         {
-            PrismCompositionDefinition current = change && mutation == "structure"
+            PrismClipDefinition current = change && mutation == "structure"
                 ? PrismTestData.Composition("Mutation changed", PrismTestData.Layer(1, "Layer"), PrismTestData.Layer(2, "Second"))
                 : definition;
             PrismInstance instance = new(current);

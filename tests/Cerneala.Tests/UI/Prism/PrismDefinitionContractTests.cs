@@ -12,7 +12,7 @@ public sealed class PrismDefinitionContractTests
     {
         Type[] definitionTypes =
         [
-            typeof(PrismCompositionDefinition),
+            typeof(PrismClipDefinition),
             typeof(PrismLayerDefinition),
             typeof(PrismGroupDefinition),
             typeof(PrismFilterDefinition),
@@ -38,7 +38,7 @@ public sealed class PrismDefinitionContractTests
     {
         PrismLayerDefinition front = Layer(1, "Front");
         PrismLayerDefinition back = Layer(2, "Back");
-        PrismCompositionDefinition composition = new("Card", [front, back]);
+        PrismClipDefinition composition = new("Card", [front, back]);
 
         Assert.Equal(["Front", "Back"], composition.Nodes.Select(node => node.Name));
         Assert.Equal(["Back", "Front"], composition.EnumerateContentBottomUp().Select(node => node.Name));
@@ -50,7 +50,7 @@ public sealed class PrismDefinitionContractTests
     public void NamesMustBeUniqueWithinAnAddressScope()
     {
         ArgumentException error = Assert.Throws<ArgumentException>(
-            () => new PrismCompositionDefinition(
+            () => new PrismClipDefinition(
                 "DuplicateNames",
                 [Layer(1, "Shared"), Layer(2, "Shared")]));
 
@@ -72,8 +72,8 @@ public sealed class PrismDefinitionContractTests
     [Fact]
     public void IndependentDefinitionsHaveStructuralEquality()
     {
-        PrismCompositionDefinition first = CompositionSnapshot();
-        PrismCompositionDefinition second = CompositionSnapshot();
+        PrismClipDefinition first = CompositionSnapshot();
+        PrismClipDefinition second = CompositionSnapshot();
 
         Assert.NotSame(first, second);
         Assert.Equal(first, second);
@@ -93,7 +93,7 @@ public sealed class PrismDefinitionContractTests
         List<PrismStyleDefinition> groupStyles = [style];
         PrismGroupDefinition group = new(new(2), "Effects", children, groupFilters, groupStyles);
         List<PrismNodeDefinition> nodes = [group];
-        PrismCompositionDefinition composition = new("Snapshot", nodes);
+        PrismClipDefinition composition = new("Snapshot", nodes);
 
         layerFilters.Clear();
         layerStyles.Clear();
@@ -117,8 +117,8 @@ public sealed class PrismDefinitionContractTests
     {
         PrismSourceSpan firstSpan = new(1, 2, "First.crn");
         PrismSourceSpan secondSpan = new(30, 40, "Second.crn");
-        PrismCompositionDefinition first = WithSource(firstSpan);
-        PrismCompositionDefinition second = WithSource(secondSpan);
+        PrismClipDefinition first = WithSource(firstSpan);
+        PrismClipDefinition second = WithSource(secondSpan);
         PrismGroupDefinition firstGroup = Assert.IsType<PrismGroupDefinition>(Assert.Single(first.Nodes));
         PrismGroupDefinition secondGroup = Assert.IsType<PrismGroupDefinition>(Assert.Single(second.Nodes));
         PrismNodeDefinition firstLayer = Assert.Single(firstGroup.Children);
@@ -137,7 +137,7 @@ public sealed class PrismDefinitionContractTests
         Assert.Equal(firstGroup.GetHashCode(), secondGroup.GetHashCode());
         Assert.Equal(firstLayer.GetHashCode(), secondLayer.GetHashCode());
 
-        static PrismCompositionDefinition WithSource(PrismSourceSpan sourceSpan)
+        static PrismClipDefinition WithSource(PrismSourceSpan sourceSpan)
         {
             PrismLayerDefinition layer = new(new(1), "Content",
                 filters: [new(PrismFilterId.Blur)], sourceSpan: sourceSpan);
@@ -151,16 +151,16 @@ public sealed class PrismDefinitionContractTests
     {
         PrismGroupDefinition left = new(new(10), "Left", [Layer(1, "Content")]);
         PrismGroupDefinition right = new(new(20), "Right", [Layer(2, "Content")]);
-        PrismCompositionDefinition composition = new("Addresses", [left, right]);
+        PrismClipDefinition composition = new("Addresses", [left, right]);
 
         Assert.True(composition.TryGetNamedNode("Left.Content", out PrismNodeId leftId));
         Assert.True(composition.TryGetNamedNode("Right.Content", out PrismNodeId rightId));
         Assert.Equal(new(1), leftId);
         Assert.Equal(new(2), rightId);
         Assert.False(composition.TryGetNamedNode("left.Content", out _));
-        Assert.Throws<ArgumentException>(() => new PrismCompositionDefinition("DuplicateIds",
+        Assert.Throws<ArgumentException>(() => new PrismClipDefinition("DuplicateIds",
             [left, new PrismGroupDefinition(new(20), "Right", [Layer(1, "Other")])]));
-        Assert.Throws<ArgumentException>(() => new PrismCompositionDefinition("DuplicateLocalNames",
+        Assert.Throws<ArgumentException>(() => new PrismClipDefinition("DuplicateLocalNames",
             [new PrismGroupDefinition(new(10), "Left", [Layer(1, "Content"), Layer(2, "Content")])]));
     }
 
@@ -186,7 +186,7 @@ public sealed class PrismDefinitionContractTests
     [Fact]
     public void NamedNodesResolveToTypedIdsButCannotBecomeSources()
     {
-        PrismCompositionDefinition composition = CompositionSnapshot();
+        PrismClipDefinition composition = CompositionSnapshot();
 
         Assert.True(composition.TryGetNamedNode("Effects.Front", out PrismNodeId front));
         Assert.Equal(new PrismNodeId(1), front);
@@ -238,12 +238,12 @@ public sealed class PrismDefinitionContractTests
             [new PrismFilterDefinition(PrismFilterId.Blur)]);
     }
 
-    private static PrismCompositionDefinition CompositionSnapshot()
+    private static PrismClipDefinition CompositionSnapshot()
     {
         PrismGroupDefinition group = new(
             new PrismNodeId(3),
             "Effects",
             [Layer(1, "Front"), Layer(2, "Back")]);
-        return new PrismCompositionDefinition("Snapshot", [group]);
+        return new PrismClipDefinition("Snapshot", [group]);
     }
 }

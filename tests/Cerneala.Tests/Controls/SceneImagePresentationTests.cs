@@ -337,7 +337,7 @@ public sealed class SceneImagePresentationTests
     }
 
     private static IDisposable AttachMask(SceneNode2D owner, string resource) => GeneratedMarkup.AttachPrism(owner,
-        () => new PrismInstance(new PrismCompositionDefinition("image-preparation",
+        () => new PrismInstance(new PrismClipDefinition("image-preparation",
             [new PrismLayerDefinition(new PrismNodeId(1), "content",
                 filters: [new PrismFilterDefinition(Cerneala.Drawing.Prism.Catalog.PrismFilterId.Blur)],
                 mask: new(new PrismResourceId(resource)))])));

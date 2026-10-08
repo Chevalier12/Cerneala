@@ -18,8 +18,8 @@ The audit treats generated runtime and documentation owners as concrete only bec
 
 | Contract | SHA-256 |
 | --- | --- |
-| `docs/prism-markup-syntax-proposal.md` | `cfb0b93f08fb48773fda258d28e0be23887b68146d4ea423409a49fb778c8bd3` |
-| `docs/prism-technical-design.md` | `0114977ee98e7a6784d728387dcf245b7b6422a22fda061ab4bfbbaaf9da2606` |
+| `docs/prism-markup-syntax-proposal.md` | `69143bb6688c30f661f6706aa8f114ef8474cffdc6958d4c66f4541fe579b78a` |
+| `docs/prism-technical-design.md` | `e857470920a9e3b208431f7a0fa9d3ffcde0170a5fab30dd2bc633000318dad6` |
 | `docs/prism-public-api-baseline.md` | `f6e7ee2efe610b721c91944091d5733b99a3acc0708316f5b349f7346f5e5b61` |
 | `Cerneala.SourceGen/Prism/Catalog/prism-catalog.json` | `34e0a0546cc986386e0a02752ac16e4c08c6b2073e44359f3596f7cb7fcc9d10` |
 
@@ -1880,7 +1880,7 @@ The approved surface includes the frame/backdrop host changes, the public catalo
 | `Cerneala.Drawing.Prism.PrismDependencyChange` | `WorkingColorProfile = 512` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.PrismDrawScope` | `Cerneala.Drawing.DrawRect ControlBounds { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.PrismDrawScope` | `Cerneala.Drawing.Prism.PrismCacheOwnerToken CacheOwnerToken { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
-| `Cerneala.Drawing.Prism.PrismDrawScope` | `Cerneala.UI.Prism.Definitions.PrismCompositionDefinition Definition { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PrismDrawScope` | `Cerneala.UI.Prism.Definitions.PrismClipDefinition Definition { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.PrismDrawScope` | `Cerneala.UI.Prism.Runtime.PrismInstance Instance { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.PrismDrawScope` | `Cerneala.UI.Prism.Runtime.PrismStructuralVersion StructuralVersion { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.PrismDrawScope` | `Cerneala.UI.Prism.Runtime.PrismValueVersion ValueVersion { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
@@ -2183,23 +2183,23 @@ The approved surface includes the frame/backdrop host changes, the public catalo
 | `Cerneala.UI.Detective.PrismRendererDiagnostics` | `System.Int64 SavedPassCount { get; }` | Detective-owned Prism retained-cache evidence produced by the renderer backend. |
 | `Cerneala.UI.Detective.PrismRendererDiagnostics` | `System.Int64 TotalByteCount { get; }` | Detective-owned Prism retained-cache evidence produced by the renderer backend. |
 | `Cerneala.UI.Detective.PrismRendererDiagnostics` | `System.Int64 TransientByteCount { get; }` | Detective-owned Prism retained-cache evidence produced by the renderer backend. |
+| `Cerneala.UI.Prism.Definitions.PrismClipDefinition` | `Cerneala.Drawing.Prism.Catalog.PrismColorProfile WorkingColorProfile { get; }` | Immutable generated markup definition consumed by Prism markup. |
+| `Cerneala.UI.Prism.Definitions.PrismClipDefinition` | `PrismClipDefinition(System.String name, System.Collections.Generic.IEnumerable<Cerneala.UI.Prism.Definitions.PrismNodeDefinition> nodes, Cerneala.Drawing.Prism.Catalog.PrismColorProfile workingColorProfile, System.Single globalLightAngle, System.Single globalLightAltitude, System.Nullable<Cerneala.UI.Prism.Definitions.PrismSourceSpan> sourceSpan)` | Immutable generated markup definition consumed by Prism markup. |
+| `Cerneala.UI.Prism.Definitions.PrismClipDefinition` | `System.Boolean Equals(Cerneala.UI.Prism.Definitions.PrismClipDefinition other)` | Immutable generated markup definition consumed by Prism markup. |
+| `Cerneala.UI.Prism.Definitions.PrismClipDefinition` | `System.Boolean Equals(System.Object obj)` | Immutable generated markup definition consumed by Prism markup. |
+| `Cerneala.UI.Prism.Definitions.PrismClipDefinition` | `System.Boolean TryGetNamedNode(System.String path, out Cerneala.UI.Prism.Definitions.PrismNodeId nodeId)` | Immutable generated markup definition consumed by Prism markup. |
+| `Cerneala.UI.Prism.Definitions.PrismClipDefinition` | `System.Collections.Generic.IEnumerable<Cerneala.UI.Prism.Definitions.PrismNodeDefinition> EnumerateContentBottomUp()` | Immutable generated markup definition consumed by Prism markup. |
+| `Cerneala.UI.Prism.Definitions.PrismClipDefinition` | `System.Collections.Immutable.ImmutableArray<Cerneala.UI.Prism.Definitions.PrismNodeDefinition> Nodes { get; }` | Immutable generated markup definition consumed by Prism markup. |
+| `Cerneala.UI.Prism.Definitions.PrismClipDefinition` | `System.Int32 GetHashCode()` | Immutable generated markup definition consumed by Prism markup. |
+| `Cerneala.UI.Prism.Definitions.PrismClipDefinition` | `System.Nullable<Cerneala.UI.Prism.Definitions.PrismSourceSpan> SourceSpan { get; }` | Immutable generated markup definition consumed by Prism markup. |
+| `Cerneala.UI.Prism.Definitions.PrismClipDefinition` | `System.Single GlobalLightAltitude { get; }` | Immutable generated markup definition consumed by Prism markup. |
+| `Cerneala.UI.Prism.Definitions.PrismClipDefinition` | `System.Single GlobalLightAngle { get; }` | Immutable generated markup definition consumed by Prism markup. |
+| `Cerneala.UI.Prism.Definitions.PrismClipDefinition` | `System.String Name { get; }` | Immutable generated markup definition consumed by Prism markup. |
+| `Cerneala.UI.Prism.Definitions.PrismClipDefinition` | `System.String ToDiagnosticString()` | Immutable generated markup definition consumed by Prism markup. |
+| `Cerneala.UI.Prism.Definitions.PrismClipDefinition` | `System.String ToString()` | Immutable generated markup definition consumed by Prism markup. |
 | `Cerneala.UI.Prism.Definitions.PrismColorMatrixResource` | `PrismColorMatrixResource(System.Numerics.Matrix4x4 matrix, System.Numerics.Vector4 offset)` | Immutable generated markup definition consumed by Prism markup. |
 | `Cerneala.UI.Prism.Definitions.PrismColorMatrixResource` | `System.Numerics.Matrix4x4 Matrix { get; }` | Immutable generated markup definition consumed by Prism markup. |
 | `Cerneala.UI.Prism.Definitions.PrismColorMatrixResource` | `System.Numerics.Vector4 Offset { get; }` | Immutable generated markup definition consumed by Prism markup. |
-| `Cerneala.UI.Prism.Definitions.PrismCompositionDefinition` | `Cerneala.Drawing.Prism.Catalog.PrismColorProfile WorkingColorProfile { get; }` | Immutable generated markup definition consumed by Prism markup. |
-| `Cerneala.UI.Prism.Definitions.PrismCompositionDefinition` | `PrismCompositionDefinition(System.String name, System.Collections.Generic.IEnumerable<Cerneala.UI.Prism.Definitions.PrismNodeDefinition> nodes, Cerneala.Drawing.Prism.Catalog.PrismColorProfile workingColorProfile, System.Single globalLightAngle, System.Single globalLightAltitude, System.Nullable<Cerneala.UI.Prism.Definitions.PrismSourceSpan> sourceSpan)` | Immutable generated markup definition consumed by Prism markup. |
-| `Cerneala.UI.Prism.Definitions.PrismCompositionDefinition` | `System.Boolean Equals(Cerneala.UI.Prism.Definitions.PrismCompositionDefinition other)` | Immutable generated markup definition consumed by Prism markup. |
-| `Cerneala.UI.Prism.Definitions.PrismCompositionDefinition` | `System.Boolean Equals(System.Object obj)` | Immutable generated markup definition consumed by Prism markup. |
-| `Cerneala.UI.Prism.Definitions.PrismCompositionDefinition` | `System.Boolean TryGetNamedNode(System.String path, out Cerneala.UI.Prism.Definitions.PrismNodeId nodeId)` | Immutable generated markup definition consumed by Prism markup. |
-| `Cerneala.UI.Prism.Definitions.PrismCompositionDefinition` | `System.Collections.Generic.IEnumerable<Cerneala.UI.Prism.Definitions.PrismNodeDefinition> EnumerateContentBottomUp()` | Immutable generated markup definition consumed by Prism markup. |
-| `Cerneala.UI.Prism.Definitions.PrismCompositionDefinition` | `System.Collections.Immutable.ImmutableArray<Cerneala.UI.Prism.Definitions.PrismNodeDefinition> Nodes { get; }` | Immutable generated markup definition consumed by Prism markup. |
-| `Cerneala.UI.Prism.Definitions.PrismCompositionDefinition` | `System.Int32 GetHashCode()` | Immutable generated markup definition consumed by Prism markup. |
-| `Cerneala.UI.Prism.Definitions.PrismCompositionDefinition` | `System.Nullable<Cerneala.UI.Prism.Definitions.PrismSourceSpan> SourceSpan { get; }` | Immutable generated markup definition consumed by Prism markup. |
-| `Cerneala.UI.Prism.Definitions.PrismCompositionDefinition` | `System.Single GlobalLightAltitude { get; }` | Immutable generated markup definition consumed by Prism markup. |
-| `Cerneala.UI.Prism.Definitions.PrismCompositionDefinition` | `System.Single GlobalLightAngle { get; }` | Immutable generated markup definition consumed by Prism markup. |
-| `Cerneala.UI.Prism.Definitions.PrismCompositionDefinition` | `System.String Name { get; }` | Immutable generated markup definition consumed by Prism markup. |
-| `Cerneala.UI.Prism.Definitions.PrismCompositionDefinition` | `System.String ToDiagnosticString()` | Immutable generated markup definition consumed by Prism markup. |
-| `Cerneala.UI.Prism.Definitions.PrismCompositionDefinition` | `System.String ToString()` | Immutable generated markup definition consumed by Prism markup. |
 | `Cerneala.UI.Prism.Definitions.PrismCurvePoint` | `PrismCurvePoint(System.Single input, System.Single output)` | Immutable generated markup definition consumed by Prism markup. |
 | `Cerneala.UI.Prism.Definitions.PrismCurvePoint` | `System.Boolean Equals(Cerneala.UI.Prism.Definitions.PrismCurvePoint other)` | Immutable generated markup definition consumed by Prism markup. |
 | `Cerneala.UI.Prism.Definitions.PrismCurvePoint` | `System.Boolean Equals(System.Object obj)` | Immutable generated markup definition consumed by Prism markup. |
@@ -2377,9 +2377,9 @@ The approved surface includes the frame/backdrop host changes, the public catalo
 | `Cerneala.UI.Prism.Runtime.PrismBlendRange` | `System.Single WhiteEnd { get; }` | Generated markup and typed Motion runtime ABI. |
 | `Cerneala.UI.Prism.Runtime.PrismBlendRange` | `System.Single WhiteStart { get; }` | Generated markup and typed Motion runtime ABI. |
 | `Cerneala.UI.Prism.Runtime.PrismBlendRange` | `System.String ToString()` | Generated markup and typed Motion runtime ABI. |
-| `Cerneala.UI.Prism.Runtime.PrismCompositionState` | `Cerneala.Drawing.Prism.Catalog.PrismColorProfile WorkingColorProfile { get; set; }` | Generated markup and typed Motion runtime ABI. |
-| `Cerneala.UI.Prism.Runtime.PrismCompositionState` | `System.Single GlobalLightAltitude { get; set; }` | Generated markup and typed Motion runtime ABI. |
-| `Cerneala.UI.Prism.Runtime.PrismCompositionState` | `System.Single GlobalLightAngle { get; set; }` | Generated markup and typed Motion runtime ABI. |
+| `Cerneala.UI.Prism.Runtime.PrismClipState` | `Cerneala.Drawing.Prism.Catalog.PrismColorProfile WorkingColorProfile { get; set; }` | Generated markup and typed Motion runtime ABI. |
+| `Cerneala.UI.Prism.Runtime.PrismClipState` | `System.Single GlobalLightAltitude { get; set; }` | Generated markup and typed Motion runtime ABI. |
+| `Cerneala.UI.Prism.Runtime.PrismClipState` | `System.Single GlobalLightAngle { get; set; }` | Generated markup and typed Motion runtime ABI. |
 | `Cerneala.UI.Prism.Runtime.PrismFilterState` | `Cerneala.Drawing.Prism.Catalog.PrismBlendMode BlendMode { get; set; }` | Generated markup and typed Motion runtime ABI. |
 | `Cerneala.UI.Prism.Runtime.PrismFilterState` | `Cerneala.Drawing.Prism.Catalog.PrismFilterId Filter { get; }` | Generated markup and typed Motion runtime ABI. |
 | `Cerneala.UI.Prism.Runtime.PrismFilterState` | `System.Boolean Visible { get; set; }` | Generated markup and typed Motion runtime ABI. |
@@ -2393,15 +2393,15 @@ The approved surface includes the frame/backdrop host changes, the public catalo
 | `Cerneala.UI.Prism.Runtime.PrismGroupState` | `System.Collections.Generic.IReadOnlyList<Cerneala.UI.Prism.Runtime.PrismNodeState> Children { get; }` | Generated markup and typed Motion runtime ABI. |
 | `Cerneala.UI.Prism.Runtime.PrismGroupState` | `System.Collections.Generic.IReadOnlyList<Cerneala.UI.Prism.Runtime.PrismStyleState> Styles { get; }` | Generated markup and typed Motion runtime ABI. |
 | `Cerneala.UI.Prism.Runtime.PrismGroupState` | `System.Single Opacity { get; set; }` | Generated markup and typed Motion runtime ABI. |
-| `Cerneala.UI.Prism.Runtime.PrismInstance` | `Cerneala.UI.Prism.Definitions.PrismCompositionDefinition Definition { get; set; }` | Generated markup and typed Motion runtime ABI. |
-| `Cerneala.UI.Prism.Runtime.PrismInstance` | `Cerneala.UI.Prism.Runtime.PrismCompositionState Composition { get; }` | Generated markup and typed Motion runtime ABI. |
+| `Cerneala.UI.Prism.Runtime.PrismInstance` | `Cerneala.UI.Prism.Definitions.PrismClipDefinition Definition { get; set; }` | Generated markup and typed Motion runtime ABI. |
+| `Cerneala.UI.Prism.Runtime.PrismInstance` | `Cerneala.UI.Prism.Runtime.PrismClipState Composition { get; }` | Generated markup and typed Motion runtime ABI. |
 | `Cerneala.UI.Prism.Runtime.PrismInstance` | `Cerneala.UI.Prism.Runtime.PrismGroupState GetGroupState(Cerneala.UI.Prism.Definitions.PrismNodeId id)` | Generated markup and typed Motion runtime ABI. |
 | `Cerneala.UI.Prism.Runtime.PrismInstance` | `Cerneala.UI.Prism.Runtime.PrismLayerState GetLayerState(Cerneala.UI.Prism.Definitions.PrismNodeId id)` | Generated markup and typed Motion runtime ABI. |
 | `Cerneala.UI.Prism.Runtime.PrismInstance` | `Cerneala.UI.Prism.Runtime.PrismNodeState GetNodeState(Cerneala.UI.Prism.Definitions.PrismNodeId id)` | Generated markup and typed Motion runtime ABI. |
 | `Cerneala.UI.Prism.Runtime.PrismInstance` | `Cerneala.UI.Prism.Runtime.PrismStructuralVersion StructuralVersion { get; set; }` | Generated markup and typed Motion runtime ABI. |
 | `Cerneala.UI.Prism.Runtime.PrismInstance` | `Cerneala.UI.Prism.Runtime.PrismValueVersion ValueVersion { get; set; }` | Generated markup and typed Motion runtime ABI. |
-| `Cerneala.UI.Prism.Runtime.PrismInstance` | `PrismInstance(Cerneala.UI.Prism.Definitions.PrismCompositionDefinition definition)` | Generated markup and typed Motion runtime ABI. |
-| `Cerneala.UI.Prism.Runtime.PrismInstance` | `System.Void ReplaceDefinition(Cerneala.UI.Prism.Definitions.PrismCompositionDefinition definition)` | Generated markup and typed Motion runtime ABI. |
+| `Cerneala.UI.Prism.Runtime.PrismInstance` | `PrismInstance(Cerneala.UI.Prism.Definitions.PrismClipDefinition definition)` | Generated markup and typed Motion runtime ABI. |
+| `Cerneala.UI.Prism.Runtime.PrismInstance` | `System.Void ReplaceDefinition(Cerneala.UI.Prism.Definitions.PrismClipDefinition definition)` | Generated markup and typed Motion runtime ABI. |
 | `Cerneala.UI.Prism.Runtime.PrismInstance` | `System.Void ResetToDefaults()` | Generated markup and typed Motion runtime ABI. |
 | `Cerneala.UI.Prism.Runtime.PrismKnockout` | `Deep = 2` | Generated markup and typed Motion runtime ABI. |
 | `Cerneala.UI.Prism.Runtime.PrismKnockout` | `None = 0` | Generated markup and typed Motion runtime ABI. |

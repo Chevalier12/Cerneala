@@ -19,29 +19,15 @@ public sealed partial class UiMarkupGenerator
             aspect.Layout is not null ||
             aspect.Scrolls.Count > 0 ||
             aspect.Drag is not null ||
-            aspect.GesturePress is not null;
-
-        private bool SupportsPackageBehavior(AspectResource aspect) =>
-            aspect.Presence is null &&
-            aspect.Layout is null &&
-            aspect.Scrolls.Count == 0 &&
-            aspect.Drag is null &&
-            aspect.GesturePress is null &&
-            aspect.EventTriggers.Count == 0 &&
-            !aspect.Conditions.Any(ContainsMotionExecution) &&
-            !aspect.Conditions.Any(ContainsTimbreAction);
-
-        private bool HasMotionBehavior(AspectResource aspect) =>
-            aspect.EventTriggers.Count > 0 ||
-            aspect.Presence is not null ||
-            aspect.Layout is not null ||
-            aspect.Scrolls.Count > 0 ||
-            aspect.Drag is not null ||
             aspect.GesturePress is not null ||
-            aspect.Conditions.Any(ContainsMotionExecution) ||
-            aspect.Conditions.Any(ContainsTimbreAction);
+            aspect.Prism is not null ||
+            aspect.Timbre?.Attachment is not null;
 
-        private bool PrepareAspectBehavior(string targetType, AspectResource aspect, bool includeMotion)
+        // The whole program of an Aspect (reactive values, @on, Motion,
+        // Presence, Layout, input Motion and Timbre actions) is one behavior
+        // the Aspect attaches with every application to `target`, the element
+        // it is applied to; replacing or detaching the Aspect disposes it.
+        private bool PrepareAspectBehavior(string targetType, AspectResource aspect)
         {
             if (aspect.BehaviorLines is not null)
             {
@@ -52,52 +38,29 @@ public sealed partial class UiMarkupGenerator
             List<string> behaviorPostLines = [];
             List<string> lifetimeVariables = [];
             bool resolved = true;
-            MarkupElement targetElement = new(ResolveAspectTargetTypeSymbol(aspect.TargetName, aspect.Source)!.Name);
-            WithEmissionBuffers(behaviorLines, behaviorPostLines, () =>
+            // An inline Aspect is written on its element, so that element's static
+            // facts (its @prism, layout id, descendants) resolve the program; a
+            // resource Aspect resolves against its TargetType only.
+            MarkupElement targetElement = aspect.DeclaringElement is MarkupElement declaring &&
+                inlineAspects.TryGetValue(declaring, out AspectResource? written) &&
+                ReferenceEquals(written, aspect)
+                    ? declaring
+                    : new MarkupElement(ResolveAspectTargetTypeSymbol(aspect.TargetName, aspect.Source)!.Name);
+            if (!ReferenceEquals(targetElement, aspect.DeclaringElement))
             {
-                if (includeMotion && !ResolveMotionAspect(targetElement, "target", aspect))
-                {
-                    resolved = false;
-                    return;
-                }
+                aspectBehaviorTargets.Add(targetElement);
+            }
 
-                if (includeMotion)
-                {
-                    EmitMotionPresence(targetElement, "target", aspect);
-                    EmitMotionLayout(targetElement, "target", aspect);
-                    EmitMotionActivations(targetElement, "target", aspect, bindToElementAspect: false);
-                }
-                ReactivePlan plan = BuildAspectReactivePlan(aspect, "target", targetElement.Name.LocalName);
-                if (!includeMotion)
-                {
-                    foreach (ReactiveRule rule in plan.Rules)
-                    {
-                        rule.Activations = [];
-                        rule.TimbreBody = [];
-                    }
-                }
-
-                aspect.ReactivePlan = plan;
-                while (aspect.ConditionKeyVariables.Count < plan.Rules.Count)
-                {
-                    string keyVariable = "aspectConditionKey" + nextResourceId.ToString(CultureInfo.InvariantCulture);
-                    nextResourceId++;
-                    aspect.ConditionKeyVariables.Add(keyVariable);
-                }
-
-                if (plan.Rules.Count > 0)
-                {
-                    string conditionBehavior = "aspectConditionBehavior" + nextResourceId.ToString(CultureInfo.InvariantCulture);
-                    nextResourceId++;
-                    currentLines.Add("global::System.IDisposable? " + conditionBehavior + " = null;");
-                    lifetimeVariables.Add(conditionBehavior);
-                    EmitReactivePlan(
-                        plan,
-                        controlsContent: plan.HasConditionalContent,
-                        aspect.ConditionKeyVariables,
-                        assignmentTarget: conditionBehavior);
-                }
-            });
+            Dictionary<string, string> enclosingSpecs = specializedMotionSpecs;
+            specializedMotionSpecs = new(StringComparer.Ordinal);
+            try
+            {
+                WithEmissionBuffers(behaviorLines, behaviorPostLines, () => resolved = EmitAspectBehaviorBody(aspect, targetElement, lifetimeVariables));
+            }
+            finally
+            {
+                specializedMotionSpecs = enclosingSpecs;
+            }
 
             if (!resolved)
             {
@@ -122,6 +85,43 @@ public sealed partial class UiMarkupGenerator
             aspect.BehaviorLines = behaviorLines;
             aspect.BehaviorPostLines = behaviorPostLines;
             aspect.BehaviorLifetimeVariables = lifetimeVariables.Distinct(StringComparer.Ordinal).ToArray();
+            return true;
+        }
+
+        private bool EmitAspectBehaviorBody(AspectResource aspect, MarkupElement targetElement, List<string> lifetimeVariables)
+        {
+            if (!ResolveMotionAspect(targetElement, "target", aspect))
+            {
+                return false;
+            }
+
+            EmitAspectPrism(aspect, targetElement, "target");
+            EmitMotionPresence(targetElement, "target", aspect);
+            EmitMotionLayout(targetElement, "target", aspect);
+            EmitMotionActivations(targetElement, "target", aspect);
+            EmitTimbreActivations(targetElement, "target", aspect);
+            ReactivePlan plan = BuildAspectReactivePlan(aspect, "target", targetElement.Name.LocalName);
+            aspect.ReactivePlan = plan;
+            while (aspect.ConditionKeyVariables.Count < plan.Rules.Count)
+            {
+                string keyVariable = "aspectConditionKey" + nextResourceId.ToString(CultureInfo.InvariantCulture);
+                nextResourceId++;
+                aspect.ConditionKeyVariables.Add(keyVariable);
+            }
+
+            if (plan.Rules.Count > 0)
+            {
+                string conditionBehavior = "aspectConditionBehavior" + nextResourceId.ToString(CultureInfo.InvariantCulture);
+                nextResourceId++;
+                currentLines.Add("global::System.IDisposable? " + conditionBehavior + " = null;");
+                lifetimeVariables.Add(conditionBehavior);
+                EmitReactivePlan(
+                    plan,
+                    controlsContent: plan.HasConditionalContent,
+                    aspect.ConditionKeyVariables,
+                    assignmentTarget: conditionBehavior);
+            }
+
             return true;
         }
 
@@ -159,15 +159,12 @@ public sealed partial class UiMarkupGenerator
             AspectResource aspect)
         {
             INamedTypeSymbol targetSymbol = ResolveAspectTargetTypeSymbol(aspect.TargetName, aspect.Source)!;
-            bool packageOwnsBehavior = HasRuntimeBehavior(aspect) && SupportsPackageBehavior(aspect);
-            if (HasRuntimeBehavior(aspect) && !PrepareAspectBehavior(
-                targetType,
-                aspect,
-                includeMotion: packageOwnsBehavior))
+            if (HasRuntimeBehavior(aspect) && !PrepareAspectBehavior(targetType, aspect))
             {
                 return;
             }
 
+            string? behavior = DeclareAspectBehavior(targetType, aspect);
             string resourceVariable = "aspectPackage" + nextResourceId.ToString(CultureInfo.InvariantCulture);
             nextResourceId++;
             string packageName = "Markup." + Path.GetFileNameWithoutExtension(file.Path) + "." +
@@ -227,31 +224,51 @@ public sealed partial class UiMarkupGenerator
                 }
             }
 
-            if (packageOwnsBehavior && aspect.BehaviorLines is not null)
+            if (behavior is not null)
             {
-                currentLines.Add("        components.AddBehavior(new global::Cerneala.UI.Aspect.AspectBehavior(");
-                currentLines.Add("            typeof(" + targetType + "), element =>");
-                currentLines.Add("            {");
-                currentLines.Add("                if (element is not " + targetType + " target)");
-                currentLines.Add("                {");
-                currentLines.Add("                    return null;");
-                currentLines.Add("                }");
-                foreach (string line in aspect.BehaviorLines.Concat(aspect.BehaviorPostLines!))
-                {
-                    currentLines.Add("                " + line);
-                }
-
-                string lifetimes = aspect.BehaviorLifetimeVariables.Count == 0
-                    ? "global::System.Array.Empty<global::System.IDisposable?>()"
-                    : "new global::System.IDisposable?[] { " + string.Join(", ", aspect.BehaviorLifetimeVariables) + " }";
-                currentLines.Add("                return global::Cerneala.UI.Markup.GeneratedMarkup.CombineLifetimes(" + lifetimes + ");");
-                currentLines.Add("            }));");
-                aspect.BehaviorOwnedByPackage = true;
+                currentLines.Add(
+                    "        components.AddBehavior(new global::Cerneala.UI.Aspect.AspectBehavior(typeof(" + targetType +
+                    "), element => " + behavior + "!(element)));");
             }
 
             currentLines.Add("    })");
             currentLines.Add("    .Build();");
             currentLines.Add(ownerVariable + ".Resources[" + key + "] = " + resourceVariable + ";");
+        }
+
+        // Declares the behavior delegate of an Aspect before the Aspect is
+        // constructed and assigns its body in the post lines, once every named
+        // element the program may target (also one declared after the Aspect)
+        // exists. The delegate runs only when an element is attached.
+        private string? DeclareAspectBehavior(string targetType, AspectResource aspect)
+        {
+            if (aspect.BehaviorLines is null)
+            {
+                return null;
+            }
+
+            string behavior = "aspectBehavior" + nextResourceId.ToString(CultureInfo.InvariantCulture);
+            nextResourceId++;
+            currentLines.Add(
+                "global::System.Func<global::Cerneala.UI.Elements.UIElement, global::System.IDisposable?>? " +
+                behavior + " = null;");
+            currentPostLines.Add(behavior + " = element =>");
+            currentPostLines.Add("{");
+            currentPostLines.Add("    if (element is not " + targetType + " target)");
+            currentPostLines.Add("    {");
+            currentPostLines.Add("        return null;");
+            currentPostLines.Add("    }");
+            foreach (string line in aspect.BehaviorLines.Concat(aspect.BehaviorPostLines!))
+            {
+                currentPostLines.Add("    " + line);
+            }
+
+            string lifetimes = aspect.BehaviorLifetimeVariables.Count == 0
+                ? "global::System.Array.Empty<global::System.IDisposable?>()"
+                : "new global::System.IDisposable?[] { " + string.Join(", ", aspect.BehaviorLifetimeVariables) + " }";
+            currentPostLines.Add("    return global::Cerneala.UI.Markup.GeneratedMarkup.CombineLifetimes(" + lifetimes + ");");
+            currentPostLines.Add("};");
+            return behavior;
         }
 
         private void EmitNamedElementAspectResource(
@@ -261,7 +278,7 @@ public sealed partial class UiMarkupGenerator
             AspectResource aspect)
         {
             INamedTypeSymbol targetSymbol = ResolveAspectTargetTypeSymbol(aspect.TargetName, aspect.Source)!;
-            if (HasRuntimeBehavior(aspect) && !PrepareAspectBehavior(targetType, aspect, includeMotion: false))
+            if (HasRuntimeBehavior(aspect) && !PrepareAspectBehavior(targetType, aspect))
             {
                 return;
             }
@@ -296,32 +313,13 @@ public sealed partial class UiMarkupGenerator
                 return;
             }
 
+            string? behavior = DeclareAspectBehavior(targetType, aspect);
             currentLines.Add("global::Cerneala.UI.Aspect.ElementAspect " + variable + " = new(");
             currentLines.Add("    " + (name is null ? "null" : Literal(name)) + ", typeof(" + targetType + "), " + valuesCode + ",");
             currentLines.Add("    " + conditionsCode + ",");
-            if (aspect.BehaviorLines is null)
-            {
-                currentLines.Add("    behaviorFactory: null,");
-            }
-            else
-            {
-                currentLines.Add("    element =>");
-                currentLines.Add("    {");
-                currentLines.Add("        if (element is not " + targetType + " target)");
-                currentLines.Add("        {");
-                currentLines.Add("            return null;");
-                currentLines.Add("        }");
-                foreach (string line in aspect.BehaviorLines.Concat(aspect.BehaviorPostLines!))
-                {
-                    currentLines.Add("        " + line);
-                }
-
-                string lifetimes = aspect.BehaviorLifetimeVariables.Count == 0
-                    ? "global::System.Array.Empty<global::System.IDisposable?>()"
-                    : "new global::System.IDisposable?[] { " + string.Join(", ", aspect.BehaviorLifetimeVariables) + " }";
-                currentLines.Add("        return global::Cerneala.UI.Markup.GeneratedMarkup.CombineLifetimes(" + lifetimes + ");");
-                currentLines.Add("    },");
-            }
+            currentLines.Add(behavior is null
+                ? "    behaviorFactory: null,"
+                : "    element => " + behavior + "!(element),");
 
             currentLines.Add("    isConditional: " + (aspect.Conditions.Count > 0 ? "true" : "false") + ",");
             string authoringKind = aspect.Name is null ? "MarkupInline" : "MarkupNamed";
@@ -427,70 +425,22 @@ public sealed partial class UiMarkupGenerator
                 isInline: true)
             {
                 TemplateVariable = aspect.TemplateVariable,
-                Timbre = aspect.Timbre
+                Timbre = aspect.Timbre,
+                Prism = aspect.Prism,
+                DeclaringElement = aspect.DeclaringElement
             };
         }
 
         private void ApplyAspects(MarkupElement element, string variable, IReadOnlyList<AspectResource> aspects)
         {
+            // The program of every Aspect travels with the Aspect object as its
+            // behavior; applying an Aspect is only an assignment. A default
+            // Aspect reaches the element through its package.
             foreach (AspectResource aspect in aspects)
             {
                 if (aspect.Name is null && !aspect.IsInline)
                 {
-                    if (!aspect.BehaviorOwnedByPackage && HasRuntimeBehavior(aspect))
-                    {
-                        if (!ResolveMotionAspect(element, variable, aspect))
-                        {
-                            continue;
-                        }
-
-                        EmitMotionPresence(element, variable, aspect);
-                        EmitMotionLayout(element, variable, aspect);
-                        EmitMotionActivations(element, variable, aspect, bindToElementAspect: false);
-                        EmitTimbreActivations(element, variable, aspect, bindToElementAspect: false);
-                        if (aspect.Conditions.Count > 0)
-                        {
-                            if (aspect.ConditionKeyVariables.Count > 0)
-                            {
-                                ReactivePlan signalPlan = BuildAspectReactivePlan(aspect, variable, element.Name.LocalName);
-                                foreach (ReactiveRule rule in signalPlan.Rules)
-                                {
-                                    rule.Activations = [];
-                                    rule.TimbreBody = [];
-                                }
-
-                                signalPlan.Rules.RemoveAll(rule => rule.Assignments.Count == 0 && rule.Elements.Count == 0);
-                                EmitReactivePlan(
-                                    signalPlan,
-                                    controlsContent: signalPlan.HasConditionalContent,
-                                    aspectConditionKeys: aspect.ConditionKeyVariables,
-                                    suppressValues: true);
-                            }
-
-                            ReactivePlan motionPlan = BuildAspectReactivePlan(aspect, variable, element.Name.LocalName);
-                            motionPlan.Rules.RemoveAll(rule => rule.Activations.Count == 0 && rule.Elements.Count == 0 && !HasTimbreActivation(rule));
-                            EmitReactivePlan(
-                                motionPlan,
-                                controlsContent: motionPlan.HasConditionalContent,
-                                suppressValues: true);
-                        }
-                    }
-
                     continue;
-                }
-
-                bool hasMotionBehavior = HasMotionBehavior(aspect);
-                if (hasMotionBehavior)
-                {
-                    if (!ResolveMotionAspect(element, variable, aspect))
-                    {
-                        continue;
-                    }
-
-                    EmitMotionPresence(element, variable, aspect);
-                    EmitMotionLayout(element, variable, aspect);
-                    EmitMotionActivations(element, variable, aspect, bindToElementAspect: true);
-                    EmitTimbreActivations(element, variable, aspect, bindToElementAspect: true);
                 }
 
                 if (aspect.RuntimeResourceVariable is not null)
@@ -516,17 +466,6 @@ public sealed partial class UiMarkupGenerator
                 {
                     EmitAspectAssignments(element, variable, aspect);
                 }
-
-                if (hasMotionBehavior && aspect.Conditions.Count > 0)
-                {
-                    ReactivePlan motionPlan = BuildAspectReactivePlan(aspect, variable, element.Name.LocalName);
-                    motionPlan.Rules.RemoveAll(rule => rule.Activations.Count == 0 && rule.Elements.Count == 0 && !HasTimbreActivation(rule));
-                    EmitReactivePlan(
-                        motionPlan,
-                        controlsContent: motionPlan.HasConditionalContent,
-                        suppressValues: true);
-                }
-
             }
         }
 
@@ -542,7 +481,7 @@ public sealed partial class UiMarkupGenerator
         {
             string elementName = element.Name.LocalName;
             string targetType = ResolveAspectTargetType(aspect.TargetName, aspect.Source)!;
-            if (HasRuntimeBehavior(aspect) && !PrepareAspectBehavior(targetType, aspect, includeMotion: false))
+            if (HasRuntimeBehavior(aspect) && !PrepareAspectBehavior(targetType, aspect))
             {
                 return;
             }

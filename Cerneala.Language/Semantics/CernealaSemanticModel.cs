@@ -127,7 +127,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         contentTemplateKeys.Clear();
         motionSpecs.Clear();
         motionClips.Clear();
-        prismCompositions.Clear();
+        prismClips.Clear();
         prismApplications.Clear();
         boundEmbeddedResources.Clear();
         boundPrismApplications.Clear();
@@ -934,7 +934,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         CernealaSemanticSymbolKind.MotionProperty or CernealaSemanticSymbolKind.MotionSpec or
         CernealaSemanticSymbolKind.MotionComposition or CernealaSemanticSymbolKind.MotionLifecycle or
         CernealaSemanticSymbolKind.MotionParameter or CernealaSemanticSymbolKind.MotionHandle or
-        CernealaSemanticSymbolKind.PrismDirective or CernealaSemanticSymbolKind.PrismComposition or
+        CernealaSemanticSymbolKind.PrismDirective or CernealaSemanticSymbolKind.PrismClip or
         CernealaSemanticSymbolKind.PrismNode or CernealaSemanticSymbolKind.PrismOperation or
         CernealaSemanticSymbolKind.PrismProperty or CernealaSemanticSymbolKind.PrismParameter or
         CernealaSemanticSymbolKind.PrismValue or CernealaSemanticSymbolKind.TimbreDirective or

@@ -46,6 +46,7 @@ public sealed class ComponentTemplateInstance : IDisposable
         {
             if (Root is not null)
             {
+                TemplateOwnership.Register(templateOwner, Root);
                 TemplateChildOwner.Attach(templateOwner, Root);
             }
 
@@ -96,6 +97,7 @@ public sealed class ComponentTemplateInstance : IDisposable
         if (Root is not null)
         {
             TemplateChildOwner.Detach(owner, Root);
+            TemplateOwnership.Unregister(owner, Root);
         }
 
         owner = null;

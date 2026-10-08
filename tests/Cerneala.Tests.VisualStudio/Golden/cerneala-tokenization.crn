@@ -1,13 +1,13 @@
 <!-- Cerneala grammar corpus -->
 <UserControl xmlns:ui="clr-namespace:Sample" x:DataType="ui:MainViewModel">
   <Grid.Resources>
-    <PrismComposition Name="GlowFx">
+    <PrismClip Name="GlowFx">
       @parameter Radius: float = 4;
       @layer Glow
       {
         @filter Blur { Radius = $root.BlurRadius; }
       }
-    </PrismComposition>
+    </PrismClip>
   </Grid.Resources>
   <MotionClip Name="Reveal">
     @sequence
@@ -23,19 +23,20 @@
   <Button Content="{Binding SaveLabel}" />
   <Broken Attribute="
   <Border>
-    @prism $GlowFx(Radius = 12);
+    <Border.Aspect>
+      @prism $GlowFx(Radius = 12);
+    </Border.Aspect>
   </Border>
   &lt;escaped&gt;
   <StackPanel.Resources>
     <TimbreClip Name="Tone">
-      Source = "audio/tone.wav"; Loop = false;
       @parameter Cut: float = 900;
-      @modifier LowPass { Cutoff = Cut; }
+      @sound Tone { Source = "audio/tone.wav"; Loop = false; @modifier LowPass { Cutoff = Cut; } }
     </TimbreClip>
   </StackPanel.Resources>
   <Button.Aspect>
-    @handle Playback;
-    @on Click { @timbre $Tone(Volume = 0.5) as Playback; @pause Playback; }
-    @when IsPressed { @resume Playback; @seek Playback to 30s; }
+    @timbre $Tone(Cut = 400);
+    @on Click { @play $self.timbre.Tone; @pause $self.timbre.Tone; }
+    @when IsPressed { @resume $self.timbre.Tone; @seek $self.timbre.Tone to 30s; @stop $self.timbre.Tone; }
   </Button.Aspect>
 </UserControl>

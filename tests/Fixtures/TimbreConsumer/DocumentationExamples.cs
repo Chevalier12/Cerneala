@@ -39,15 +39,15 @@ public static class DocumentationExamples
     }
     public static void TimbreClipPage()
     {
-        var plainTimbre = new TimbreClip("audio/confirm.wav");
+        var plainTimbre = new TimbreSound("audio/confirm.wav");
 
         var toneCutoff = new TimbreParameter<float>(name: "ToneCutoff", defaultValue: 1200f);
-        var filteredTimbre = new TimbreClip(
+        var filteredTimbre = new TimbreSound(
             source: "audio/confirm.wav",
             parameters: [toneCutoff],
             modifiers: [new LowPass(cutoff: toneCutoff)]);
 
-        var echo = new TimbreClip(
+        var echo = new TimbreSound(
             "audio/confirm.wav",
             modifiers: [new LowPass(cutoff: 1200f), new Delay(time: 0.12f, feedback: 0.2f, mix: 0.15f)]);
         _ = (plainTimbre, filteredTimbre, echo);
@@ -117,7 +117,7 @@ public static class DocumentationExamples
         public override ValueTask SeekAsync(long frame, CancellationToken cancellationToken) => ValueTask.CompletedTask;
     }
 
-    public static TimbreClip TimbreReaderPage() =>
+    public static TimbreSound TimbreReaderPage() =>
         new(TimbreSource.FromReader(() => new SilenceReader(48000)));
 
     public static void TimbreReadResultPage()
@@ -127,13 +127,13 @@ public static class DocumentationExamples
         _ = (last, waiting);
     }
 
-    public static TimbreClip TimbreLoadingPage() =>
+    public static TimbreSound TimbreLoadingPage() =>
         new("audio/music.ogg", loop: true, loading: TimbreLoading.Streaming);
 
     public static void TimbreParameterPage(TimbreScope sounds)
     {
         var toneCutoff = new TimbreParameter<float>(name: "ToneCutoff", defaultValue: 1200f);
-        var clip = new TimbreClip("audio/confirm.wav", parameters: [toneCutoff], modifiers: [new LowPass(cutoff: toneCutoff)]);
+        var clip = new TimbreSound("audio/confirm.wav", parameters: [toneCutoff], modifiers: [new LowPass(cutoff: toneCutoff)]);
 
         TimbrePlayback playback = sounds.Play(clip, start => start.Set(toneCutoff, 800f));
         playback.Set(toneCutoff, 6000f);
@@ -150,15 +150,15 @@ public static class DocumentationExamples
     public static void LowPassPage()
     {
         var cutoff = new TimbreParameter<float>("ToneCutoff", 1200f);
-        var clip = new TimbreClip("audio/confirm.wav", parameters: [cutoff], modifiers: [new LowPass(cutoff: cutoff)]);
+        var clip = new TimbreSound("audio/confirm.wav", parameters: [cutoff], modifiers: [new LowPass(cutoff: cutoff)]);
         var fixedFilter = new LowPass(cutoff: 800f);
         _ = (clip, fixedFilter);
     }
 
-    public static TimbreClip DelayPage()
+    public static TimbreSound DelayPage()
     {
         var echoMix = new TimbreParameter<float>("EchoMix", 0.15f);
-        return new TimbreClip(
+        return new TimbreSound(
             "audio/confirm.wav",
             parameters: [echoMix],
             modifiers: [new Delay(time: 0.12f, feedback: 0.20f, mix: echoMix)]);
@@ -169,7 +169,7 @@ public static class DocumentationExamples
         using var runtime = new TimbreRuntime(new TimbreRuntimeOptions { Output = output });
         using TimbreScope sounds = runtime.CreateScope();
 
-        var confirm = new TimbreClip("audio/confirm.wav");
+        var confirm = new TimbreSound("audio/confirm.wav");
         await runtime.PrepareAsync(confirm);
         TimbrePlayback playback = sounds.Play(confirm);
         TimbrePlaybackResult result = await playback.Completion;
@@ -186,7 +186,7 @@ public static class DocumentationExamples
 
     public static void TimbreScopePage(TimbreScope sounds)
     {
-        var plainTimbre = new TimbreClip("audio/confirm.wav");
+        var plainTimbre = new TimbreSound("audio/confirm.wav");
         TimbrePlayback first = sounds.Play(plainTimbre);
         TimbrePlayback second = sounds.Play(plainTimbre); // overlaps: independent instances
         first.Cancel();                                 // second keeps playing
@@ -197,7 +197,7 @@ public static class DocumentationExamples
         _ = second;
     }
 
-    public static void TimbreStartOptionsPage(TimbreScope sounds, TimbreClip filteredTimbre, TimbreParameter<float> toneCutoff, TimbreHandle slot)
+    public static void TimbreStartOptionsPage(TimbreScope sounds, TimbreSound filteredTimbre, TimbreParameter<float> toneCutoff, TimbreHandle slot)
     {
         TimbrePlayback playback = sounds.Play(filteredTimbre, start =>
         {
@@ -208,7 +208,7 @@ public static class DocumentationExamples
         _ = playback;
     }
 
-    public static void TimbreHandlePage(TimbreScope sounds, TimbreClip clip)
+    public static void TimbreHandlePage(TimbreScope sounds, TimbreSound clip)
     {
         TimbreHandle slot = sounds.CreateHandle();
         TimbrePlayback old = sounds.Play(clip, handle: slot);
@@ -220,7 +220,7 @@ public static class DocumentationExamples
         _ = current;
     }
 
-    public static async Task TimbrePlaybackPage(TimbreScope sounds, TimbreClip filteredTimbre, TimbreParameter<float> toneCutoff)
+    public static async Task TimbrePlaybackPage(TimbreScope sounds, TimbreSound filteredTimbre, TimbreParameter<float> toneCutoff)
     {
         TimbrePlayback playback = sounds.Play(filteredTimbre);
         playback.Volume = 0.8f;
@@ -249,7 +249,7 @@ public static class DocumentationExamples
         }
     }
 
-    public static async Task TimbreExceptionPage(TimbreRuntime runtime, TimbreClip clip)
+    public static async Task TimbreExceptionPage(TimbreRuntime runtime, TimbreSound clip)
     {
         try
         {
@@ -264,16 +264,16 @@ public static class DocumentationExamples
     public static void ApplicationPage(Button button)
     {
         // Element audio: scoped to the element's attachment lifecycle.
-        TimbrePlayback click = button.Timbre.Play(new TimbreClip("audio/click.wav"));
+        TimbrePlayback click = button.Timbre.Play(new TimbreSound("audio/click.wav"));
 
         // Application audio: lives until the application exits.
         TimbrePlayback music = Application.Current!.Timbre.Play(
-            new TimbreClip("audio/music.ogg", loading: TimbreLoading.Streaming),
+            new TimbreSound("audio/music.ogg", loading: TimbreLoading.Streaming),
             start => start.Loop = true);
         _ = (click, music);
     }
 
-    public static TimbrePlayback UIElementPage(UIElement button, TimbreClip confirmTimbre) =>
+    public static TimbrePlayback UIElementPage(UIElement button, TimbreSound confirmTimbre) =>
         button.Timbre.Play(confirmTimbre);
 
     public static void TimbreDiagnosticsSnapshotPage(UIRoot root)

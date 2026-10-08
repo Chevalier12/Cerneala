@@ -23,7 +23,7 @@ Inheritance:
 using Cerneala.Timbre;
 
 var toneCutoff = new TimbreParameter<float>(name: "ToneCutoff", defaultValue: 1200f);
-var clip = new TimbreClip("audio/confirm.wav", parameters: [toneCutoff], modifiers: [new LowPass(cutoff: toneCutoff)]);
+var clip = new TimbreSound("audio/confirm.wav", parameters: [toneCutoff], modifiers: [new LowPass(cutoff: toneCutoff)]);
 
 TimbrePlayback playback = sounds.Play(clip, start => start.Set(toneCutoff, 800f));
 playback.Set(toneCutoff, 6000f);

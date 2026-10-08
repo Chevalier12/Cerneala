@@ -103,7 +103,7 @@ public sealed class TimbreMotionTransportTests
     {
         using MarkupTimbreFixture fixture = new(Panel(string.Empty), "TimbreMotionLoop.crn");
         TimbrePlayback playback = PlayButton(fixture).Timbre.Play(
-            new TimbreClip(TimbreSource.FromFile(MarkupTimbreFixture.ShortSource), volume: 0.2f, loop: true));
+            new TimbreSound(TimbreSource.FromFile(MarkupTimbreFixture.ShortSource), volume: 0.2f, loop: true));
         Wait(() => fixture.Rig.StartAsync(playback));
         MotionHandle audio = playback.Motion().Animate(TimbrePlayback.VolumeParameter).To(0.8f).With(Linear(300));
         fixture.Pump();

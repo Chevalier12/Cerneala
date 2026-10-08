@@ -51,7 +51,7 @@ internal static class PrismColdStartWarmup
             new PrismNodeId(1),
             "ColdStart",
             filters: [new PrismFilterDefinition(PrismFilterId.Invert)]);
-        PrismCompositionDefinition definition = new(
+        PrismClipDefinition definition = new(
             "ColdStart",
             [layer]);
         return CreateWorkload(new PrismInstance(definition));
@@ -63,7 +63,7 @@ internal static class PrismColdStartWarmup
             new PrismNodeId(1),
             "ColdStart",
             styles: [new PrismStyleDefinition(PrismStyleId.OuterGlow)]);
-        PrismCompositionDefinition definition = new(
+        PrismClipDefinition definition = new(
             "ColdStart",
             [layer]);
         return new PrismInstance(definition);

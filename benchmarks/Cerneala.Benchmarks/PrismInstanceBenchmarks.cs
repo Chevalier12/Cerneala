@@ -15,7 +15,7 @@ public class PrismInstanceBenchmarks
     [GlobalSetup]
     public void Setup()
     {
-        PrismCompositionDefinition definition = new(
+        PrismClipDefinition definition = new(
             "benchmark",
             [
                 new PrismLayerDefinition(

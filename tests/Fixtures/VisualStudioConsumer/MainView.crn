@@ -15,6 +15,20 @@
                 BorderBrush = "#FFC6FF3D";
             }
         </Aspect>
+        <Aspect Name="GlowingCardAspect" TargetType="Border">
+            @prism $GlowFx(Radius = 8);
+            @default
+            {
+                Background = "#FF14181E";
+                BorderBrush = "#FF4DF0FF";
+                BorderThickness = "1";
+                Padding = "12";
+            }
+            @when IsMouseOver
+            {
+                BorderBrush = "#FFC6FF3D";
+            }
+        </Aspect>
         <MotionClip Name="Reveal" TargetType="consumer:MainView">
             @sequence
             {
@@ -25,13 +39,13 @@
                 }
             }
         </MotionClip>
-        <PrismComposition Name="GlowFx">
+        <PrismClip Name="GlowFx">
             @parameter Radius: float = 4;
             @layer Glow
             {
                 @filter Blur { Radius = 4; }
             }
-        </PrismComposition>
+        </PrismClip>
     </UserControl.Resources>
     <StackPanel>
         <consumer:StatusCard
@@ -54,8 +68,6 @@
                 </ContentTemplate>
             }
         </ItemsControl>
-        <Border Aspect="$CardAspect">
-            @prism $GlowFx(Radius = 8);
-        </Border>
+        <Border Aspect="$GlowingCardAspect" />
     </StackPanel>
 </UserControl>

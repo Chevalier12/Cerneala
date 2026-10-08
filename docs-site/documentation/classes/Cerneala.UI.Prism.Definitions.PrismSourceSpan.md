@@ -68,4 +68,4 @@ Cerneala Prism definition authoring and retained graph diagnostics.
 ## See also
 
 - `Cerneala.UI.Prism.Definitions.PrismNodeDefinition`
-- `Cerneala.UI.Prism.Definitions.PrismCompositionDefinition`
+- `Cerneala.UI.Prism.Definitions.PrismClipDefinition`

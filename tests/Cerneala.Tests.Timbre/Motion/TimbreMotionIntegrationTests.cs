@@ -21,7 +21,7 @@ public sealed class TimbreMotionIntegrationTests
         Button button = (Button)fixture.Element;
         button.Visibility = Visibility.Collapsed;
         fixture.Pump();
-        TimbrePlayback playback = button.Timbre.Play(new TimbreClip(TimbreSource.FromFile(MarkupTimbreFixture.ToneSource), volume: 0.2f));
+        TimbrePlayback playback = button.Timbre.Play(new TimbreSound(TimbreSource.FromFile(MarkupTimbreFixture.ToneSource), volume: 0.2f));
         Wait(() => fixture.Rig.StartAsync(playback));
 
         playback.Motion()

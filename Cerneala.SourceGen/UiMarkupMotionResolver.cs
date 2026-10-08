@@ -385,18 +385,18 @@ public sealed partial class UiMarkupGenerator
             public ResolvedTimbreMotionTarget? Timbre { get; }
         }
 
-        // `$self.timbre.Handle.Parameter`: the Timbre handle whose occupant the
-        // animation captures and the parameter name it resolves on that
-        // occupant's clip, both validated by the bound Language model.
+        // `$X.timbre.Sound.Parameter`: the sound whose current playback the
+        // animation captures and the parameter it animates on that playback,
+        // both validated by the bound Language model.
         private sealed class ResolvedTimbreMotionTarget
         {
-            public ResolvedTimbreMotionTarget(string handleName, string parameterName)
+            public ResolvedTimbreMotionTarget(string soundName, string parameterName)
             {
-                HandleName = handleName;
+                SoundName = soundName;
                 ParameterName = parameterName;
             }
 
-            public string HandleName { get; }
+            public string SoundName { get; }
 
             public string ParameterName { get; }
         }
@@ -442,7 +442,11 @@ public sealed partial class UiMarkupGenerator
         private readonly Dictionary<MotionAnimateNode, string> motionExecutionNames = new();
         private readonly Dictionary<MotionExecutionNode, string> motionActionNames = new();
         private readonly Dictionary<MotionExecutionNode, string> motionExecutionFactoryNames = new();
-        private readonly Dictionary<string, string> specializedMotionSpecs = new(StringComparer.Ordinal);
+        // Specs declared once per emission scope: an Aspect behavior body is a
+        // lambda, so it gets its own cache (see PrepareAspectBehavior); names
+        // stay unique across the document so a lambda never shadows a local.
+        private Dictionary<string, string> specializedMotionSpecs = new(StringComparer.Ordinal);
+        private int nextMotionSpecId;
 
         private void ReadMotionClip(ResourceScope scope, MarkupElement resource)
         {
@@ -815,7 +819,7 @@ public sealed partial class UiMarkupGenerator
             out ResolvedMotionScroll? resolved)
         {
             string sourceName = scroll.SourceReference.Substring(1);
-            MarkupElement? sourceElement = FindMotionNamedElement(applicationElement, sourceName);
+            MarkupElement? sourceElement = FindMotionNamedElement(applicationElement, aspect, sourceName);
 
             INamedTypeSymbol? sourceType = sourceElement is null
                 ? null
@@ -1054,7 +1058,7 @@ public sealed partial class UiMarkupGenerator
             out ResolvedMotionAnimation? resolved)
         {
             resolved = null;
-            MarkupElement? collectionElement = FindMotionNamedElement(applicationElement, stagger.TargetName);
+            MarkupElement? collectionElement = FindMotionNamedElement(applicationElement, aspect, stagger.TargetName);
 
             if (collectionElement is null)
             {
@@ -1633,6 +1637,7 @@ public sealed partial class UiMarkupGenerator
             {
                 return TryResolvePrismMotionTarget(
                     applicationElement,
+                    aspect,
                     assignment,
                     out target,
                     out property);
@@ -1666,20 +1671,24 @@ public sealed partial class UiMarkupGenerator
                 }
                 else if (ownerName == "owner")
                 {
-                    if (templateEmissionContexts.Count == 0)
+                    // A resource Aspect compiled outside a template resolves
+                    // $owner at runtime from the element it is applied to; its
+                    // static type is Control. Inline Aspects keep the rule.
+                    if (templateEmissionContexts.Count == 0 && aspect.IsInline)
                     {
                         ReportMotion(MotionDiagnosticKind.Target, assignment.Location, "Motion target '$owner' is available only inside a component template.");
                         property = null;
                         return false;
                     }
 
-                    TemplateEmissionContext templateContext = templateEmissionContexts.Peek();
                     targetKind = targetsPart ? ResolvedMotionTargetKind.OwnerPart : ResolvedMotionTargetKind.Owner;
-                    targetType = templateContext.OwnerType;
+                    targetType = templateEmissionContexts.Count == 0
+                        ? compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Control")
+                        : templateEmissionContexts.Peek().OwnerType;
                 }
                 else
                 {
-                    MarkupElement? namedElement = FindMotionNamedElement(applicationElement, ownerName);
+                    MarkupElement? namedElement = FindMotionNamedElement(applicationElement, aspect, ownerName);
                     if (namedElement is null)
                     {
                         ReportMotion(MotionDiagnosticKind.Target, assignment.Location, "Motion target named element '" + ownerName + "' is not available at this Aspect application site.");
@@ -1702,24 +1711,38 @@ public sealed partial class UiMarkupGenerator
                     }
 
                     partName = parts[2].Substring(1);
-                    MarkupElement? templateRoot = targetKind switch
+                    if (targetKind == ResolvedMotionTargetKind.OwnerPart && IsAspectBehaviorTarget(applicationElement))
                     {
-                        ResolvedMotionTargetKind.SelfPart => ResolveMotionTemplate(applicationElement, aspect)?.Root,
-                        ResolvedMotionTargetKind.OwnerPart => applicationElement.AncestorsAndSelf().LastOrDefault(),
-                        _ => ResolveMotionTemplate(targetElement, null)?.Root
-                    };
-                    MarkupElement[] matchingParts = templateRoot?.DescendantsAndSelf()
-                        .Where(element => string.Equals(element.Attribute("Name")?.Value?.Trim(), partName, StringComparison.Ordinal))
-                        .ToArray() ?? [];
-                    if (matchingParts.Length != 1)
-                    {
-                        ReportMotion(MotionDiagnosticKind.Target, assignment.Location, "The Motion target control template has no unique part named '" + partName + "'.");
-                        property = null;
-                        return false;
-                    }
+                        if (!TryResolveOwnerPartFromSites(aspect, partName, assignment, out MarkupElement? sitePart))
+                        {
+                            property = null;
+                            return false;
+                        }
 
-                    targetElement = matchingParts[0];
-                    targetType = ResolveElementTypeSymbol(targetElement.Name.LocalName);
+                        targetElement = sitePart!;
+                        targetType = ResolveElementTypeSymbol(targetElement.Name.LocalName);
+                    }
+                    else
+                    {
+                        MarkupElement? templateRoot = targetKind switch
+                        {
+                            ResolvedMotionTargetKind.SelfPart => ResolveMotionTemplate(applicationElement, aspect)?.Root,
+                            ResolvedMotionTargetKind.OwnerPart => applicationElement.AncestorsAndSelf().LastOrDefault(),
+                            _ => ResolveMotionTemplate(targetElement, null)?.Root
+                        };
+                        MarkupElement[] matchingParts = templateRoot?.DescendantsAndSelf()
+                            .Where(element => string.Equals(element.Attribute("Name")?.Value?.Trim(), partName, StringComparison.Ordinal))
+                            .ToArray() ?? [];
+                        if (matchingParts.Length != 1)
+                        {
+                            ReportMotion(MotionDiagnosticKind.Target, assignment.Location, "The Motion target control template has no unique part named '" + partName + "'.");
+                            property = null;
+                            return false;
+                        }
+
+                        targetElement = matchingParts[0];
+                        targetType = ResolveElementTypeSymbol(targetElement.Name.LocalName);
+                    }
                 }
             }
 
@@ -1751,14 +1774,34 @@ public sealed partial class UiMarkupGenerator
                 ResolveAspects(control).Select(candidate => candidate.Template).LastOrDefault(candidate => candidate is not null);
         }
 
-        private MarkupElement? FindMotionNamedElement(MarkupElement applicationElement, string name)
+        // `$Name` resolves to a descendant of the application element or, failing
+        // that, to an element of the name scope where the Aspect is written, so a
+        // sibling such as `$Speaker` is reachable. An Aspect declared in another
+        // document (App.crn) has no element name scope: only $self and $owner.
+        private MarkupElement? FindMotionNamedElement(MarkupElement applicationElement, AspectResource aspect, string name)
         {
-            return applicationElement.DescendantsAndSelf()
-                .FirstOrDefault(element =>
-                    string.Equals(element.Attribute("Name")?.Value?.Trim(), name, StringComparison.Ordinal) &&
-                    !IsResourceElement(element) &&
-                    !IsTemplatePartElement(element));
+            MarkupElement? declaringElement = aspect.DeclaringElement;
+            if (declaringElement is null || !document.Root.DescendantsAndSelf().Any(element => ReferenceEquals(element, declaringElement)))
+            {
+                return null;
+            }
+
+            MarkupElement? descendant = applicationElement.DescendantsAndSelf().FirstOrDefault(element => IsMotionNamedElement(element, name));
+            if (descendant is not null)
+            {
+                return descendant;
+            }
+
+            MarkupElement? declaringScope = FindContainingTemplateRoot(declaringElement);
+            return document.Root.DescendantsAndSelf().FirstOrDefault(element =>
+                IsMotionNamedElement(element, name) &&
+                ReferenceEquals(FindContainingTemplateRoot(element), declaringScope));
         }
+
+        private bool IsMotionNamedElement(MarkupElement element, string name) =>
+            string.Equals(element.Attribute("Name")?.Value?.Trim(), name, StringComparison.Ordinal) &&
+            !IsResourceElement(element) &&
+            !IsTemplatePartElement(element);
 
         private bool ValidateMotionOptions(
             IReadOnlyList<MotionOptionSyntax> options,

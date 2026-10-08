@@ -46,15 +46,15 @@ internal static class TimbreCoreBenchmarkRunner
         using TimbreScope scope = runtime.CreateScope();
 
         TimbreModifier[] chain = [new LowPass(cutoff: 2000f), new Delay(time: 0.25f, feedback: 0.4f, mix: 0.3f)];
-        TimbreClip[] preloaded = Enumerable.Range(0, 4)
-            .Select(index => new TimbreClip(
+        TimbreSound[] preloaded = Enumerable.Range(0, 4)
+            .Select(index => new TimbreSound(
                 TimbreSource.FromReader(() => new NoiseReader(2 * 48000, seed: index), $"preloaded-{index}"),
                 volume: 0.5f,
                 loop: true,
                 loading: TimbreLoading.Preload,
                 modifiers: chain))
             .ToArray();
-        TimbreClip streaming = new(
+        TimbreSound streaming = new(
             TimbreSource.FromReader(() => new NoiseReader(60 * 48000, seed: 99), "streaming"),
             volume: 0.5f,
             loop: true,
@@ -63,17 +63,17 @@ internal static class TimbreCoreBenchmarkRunner
         // Decoding plan, stage 3: the same gate with the four streaming voices
         // decoding real corpus files (MP3, Vorbis, Opus, WAV) on their pumps.
         string? decodedCorpus = Environment.GetEnvironmentVariable("TIMBRE_BENCH_DECODED_CORPUS");
-        TimbreClip[] streamingClips = decodedCorpus is null
+        TimbreSound[] streamingClips = decodedCorpus is null
             ? [streaming]
             : DecodedStreamingFiles(decodedCorpus)
-                .Select(path => new TimbreClip(TimbreSource.FromFile(path), volume: 0.5f, loop: true, loading: TimbreLoading.Streaming, modifiers: chain))
+                .Select(path => new TimbreSound(TimbreSource.FromFile(path), volume: 0.5f, loop: true, loading: TimbreLoading.Streaming, modifiers: chain))
                 .ToArray();
         // Plain prepared one-shot: completion follows the drain, so each latency
         // sample ends within ~150 ms.
-        TimbreClip shortClip = new(
+        TimbreSound shortClip = new(
             TimbreSource.FromReader(() => new NoiseReader(4800, seed: 7), "short"),
             loading: TimbreLoading.Preload);
-        foreach (TimbreClip clip in preloaded)
+        foreach (TimbreSound clip in preloaded)
         {
             await runtime.PrepareAsync(clip);
         }

@@ -198,7 +198,7 @@ public sealed class RenderSurface2DPresentationTests
             "Glow",
             styles: [new PrismStyleDefinition(PrismStyleId.OuterGlow)]);
         PrismInstance instance = new(
-            new PrismCompositionDefinition("SurfaceGlow", [layer]));
+            new PrismClipDefinition("SurfaceGlow", [layer]));
 
         (PixelColor firstBackground, PixelColor firstTransparentInterior, PixelColor firstContent) = RenderPrismPixels(
             fixture,

@@ -72,7 +72,7 @@ public sealed class TimbreDefinitionTests
         TimbreParameter<float> cutoff = new("ToneCutoff", 1200f);
         List<TimbreParameter> parameters = [cutoff];
         List<TimbreModifier> modifiers = [new LowPass(cutoff: cutoff)];
-        TimbreClip clip = new("audio/confirm.wav", volume: 0.8f, loop: true, loading: TimbreLoading.Streaming, parameters, modifiers);
+        TimbreSound clip = new("audio/confirm.wav", volume: 0.8f, loop: true, loading: TimbreLoading.Streaming, parameters, modifiers);
 
         parameters.Clear();
         modifiers.Add(new Delay());
@@ -85,13 +85,13 @@ public sealed class TimbreDefinitionTests
         Assert.IsType<LowPass>(clip.Modifiers[0]);
         Assert.Equal("audio/confirm.wav", clip.Source.Name);
 
-        Assert.Throws<ArgumentNullException>(() => new TimbreClip(null!));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new TimbreClip("a.wav", volume: 1.01f));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new TimbreClip("a.wav", volume: -0.01f));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new TimbreClip("a.wav", volume: float.NaN));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new TimbreClip("a.wav", loading: (TimbreLoading)7));
-        Assert.Throws<ArgumentException>(() => new TimbreClip("a.wav", parameters: [null!]));
-        Assert.Throws<ArgumentException>(() => new TimbreClip("a.wav", modifiers: [null!]));
+        Assert.Throws<ArgumentNullException>(() => new TimbreSound(null!));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new TimbreSound("a.wav", volume: 1.01f));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new TimbreSound("a.wav", volume: -0.01f));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new TimbreSound("a.wav", volume: float.NaN));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new TimbreSound("a.wav", loading: (TimbreLoading)7));
+        Assert.Throws<ArgumentException>(() => new TimbreSound("a.wav", parameters: [null!]));
+        Assert.Throws<ArgumentException>(() => new TimbreSound("a.wav", modifiers: [null!]));
     }
 
     [Fact]
@@ -99,25 +99,25 @@ public sealed class TimbreDefinitionTests
     {
         TimbreParameter<float> cutoff = new("ToneCutoff", 1200f);
         TimbreParameter<float> sameName = new("ToneCutoff", 800f);
-        Assert.Throws<ArgumentException>(() => new TimbreClip("a.wav", parameters: [cutoff, cutoff]));
-        Assert.Throws<ArgumentException>(() => new TimbreClip("a.wav", parameters: [cutoff, sameName]));
-        Assert.Throws<ArgumentException>(() => new TimbreClip("a.wav", modifiers: [new LowPass(cutoff: cutoff)]));
+        Assert.Throws<ArgumentException>(() => new TimbreSound("a.wav", parameters: [cutoff, cutoff]));
+        Assert.Throws<ArgumentException>(() => new TimbreSound("a.wav", parameters: [cutoff, sameName]));
+        Assert.Throws<ArgumentException>(() => new TimbreSound("a.wav", modifiers: [new LowPass(cutoff: cutoff)]));
 
         TimbreParameter<float> tooLow = new("TooLow", 10f);
-        Assert.Throws<ArgumentOutOfRangeException>(() => new TimbreClip("a.wav", parameters: [tooLow], modifiers: [new LowPass(cutoff: tooLow)]));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new TimbreSound("a.wav", parameters: [tooLow], modifiers: [new LowPass(cutoff: tooLow)]));
 
         // One parameter feeding Cutoff and Mix must satisfy both ranges.
         TimbreParameter<float> shared = new("Shared", 1200f);
-        Assert.Throws<ArgumentOutOfRangeException>(() => new TimbreClip(
+        Assert.Throws<ArgumentOutOfRangeException>(() => new TimbreSound(
             "a.wav",
             parameters: [shared],
             modifiers: [new LowPass(cutoff: shared), new Delay(mix: shared)]));
 
         TimbreParameter<float> unused = new("Unused", 1e9f);
-        Assert.Single(new TimbreClip("a.wav", parameters: [unused]).Parameters);
+        Assert.Single(new TimbreSound("a.wav", parameters: [unused]).Parameters);
 
         LowPass reused = new(cutoff: 900f);
-        Assert.Equal(2, new TimbreClip("a.wav", modifiers: [reused, reused]).Modifiers.Count);
+        Assert.Equal(2, new TimbreSound("a.wav", modifiers: [reused, reused]).Modifiers.Count);
     }
 
     [Fact]
@@ -130,8 +130,8 @@ public sealed class TimbreDefinitionTests
             throw new InvalidOperationException("must not open");
         }, "never");
 
-        TimbreClip clip = new(source);
-        _ = new TimbreClip(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "missing.wav"));
+        TimbreSound clip = new(source);
+        _ = new TimbreSound(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "missing.wav"));
         TimbreSource stream = TimbreSource.FromStream(() => throw new InvalidOperationException("must not open"));
 
         Assert.Equal(0, opened);

@@ -543,6 +543,22 @@ internal sealed partial class CernealaCompletionService
         return depth > 0;
     }
 
+    // Like IsInsideDirective, for a directive that is either a statement
+    // ending with ';' (`@timbre $Clip;`) or a block (`@timbre { … }`): a ';'
+    // before the '{' means the brace belongs to a later directive.
+    private static bool IsInsideDirectiveBlock(string source, int offset, string keyword)
+    {
+        int start = source.LastIndexOf(keyword, Math.Max(0, offset - 1), StringComparison.Ordinal);
+        if (start < 0)
+        {
+            return false;
+        }
+
+        int opening = source.IndexOf('{', start + keyword.Length);
+        int semicolon = source.IndexOf(';', start + keyword.Length);
+        return opening >= 0 && (semicolon < 0 || opening < semicolon) && IsInsideDirective(source, offset, keyword);
+    }
+
     private static bool IsMarkupNameCharacter(char character) =>
         char.IsLetterOrDigit(character) || character is '_' or ':' or '.' or '-';
 

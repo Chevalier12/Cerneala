@@ -15,18 +15,20 @@ namespace Cerneala.Tests.Timbre.Markup;
 public sealed class TimbreAspectLifecycleTests
 {
     private const string Clips = """
-        <TimbreClip Name="Tone">Source = "audio/tone.wav";</TimbreClip>
-        <TimbreClip Name="Other">Source = "audio/other.wav";</TimbreClip>
-        <TimbreClip Name="Short">Source = "audio/short.wav";</TimbreClip>
-        <TimbreClip Name="Ramp">Source = "audio/ramp.wav";</TimbreClip>
+        <TimbreClip Name="Sounds">
+          @sound Tone { Source = "audio/tone.wav"; }
+          @sound Other { Source = "audio/other.wav"; }
+          @sound Short { Source = "audio/short.wav"; }
+          @sound Ramp { Source = "audio/ramp.wav"; }
+        </TimbreClip>
         """;
 
     [Fact]
-    public void TwoOccurrencesOfANamedAspectOwnSeparateHandles()
+    public void TwoOccurrencesOfANamedAspectOwnSeparateSounds()
     {
         using MarkupTimbreFixture fixture = new(
             "<StackPanel><StackPanel.Resources>" + Clips +
-            "<Aspect Name=\"Clicky\" TargetType=\"Button\">@handle Playback; @on Click { @timbre $Tone as Playback; } @on MouseEnter { @cancel Playback; }</Aspect>" +
+            "<Aspect Name=\"Clicky\" TargetType=\"Button\">@timbre $Sounds; @on Click { @play $self.timbre.Tone; } @on MouseEnter { @stop $self.timbre.Tone; }</Aspect>" +
             "</StackPanel.Resources><Button Content=\"A\" Aspect=\"$Clicky\" /><Button Content=\"B\" Aspect=\"$Clicky\" /></StackPanel>");
 
         Click(fixture, "A");
@@ -50,7 +52,7 @@ public sealed class TimbreAspectLifecycleTests
     {
         using MarkupTimbreFixture fixture = new(
             "<ItemsControl>@templates { <ContentTemplate DataType=\"System.String\"><Border Width=\"20\" Height=\"20\"><Border.Resources>" + Clips +
-            "</Border.Resources><Border.Aspect>@handle Playback; @when $self.Opacity { @if value > 0.5 { @timbre $Tone as Playback; @timbre $Other; } @if value < 0.5 { @cancel Playback; } }</Border.Aspect></Border></ContentTemplate> }</ItemsControl>");
+            "</Border.Resources><Border.Aspect>@timbre $Sounds; @when $self.Opacity { @if value > 0.5 { @play $self.timbre.Tone; @play $self.timbre.Other; } @if value < 0.5 { @stop $self.timbre.Tone; } }</Border.Aspect></Border></ContentTemplate> }</ItemsControl>");
         ItemsControl items = fixture.All<ItemsControl>().Single();
 
         items.SetItems(new[] { "a", "b" });
@@ -86,7 +88,7 @@ public sealed class TimbreAspectLifecycleTests
     public void ComponentTemplateAudioRetiresWithTheReplacedTemplate()
     {
         using MarkupTimbreFixture fixture = new(Button(
-            "@template { <Border Width=\"30\" Height=\"30\"><Border.Aspect>@handle Playback; @on Loaded { @timbre $Tone as Playback; @timbre $Other; }</Border.Aspect></Border> }"));
+            "@template { <Border Width=\"30\" Height=\"30\"><Border.Aspect>@timbre $Sounds; @on Loaded { @play $self.timbre.Tone; @play $self.timbre.Other; }</Border.Aspect></Border> }"));
         Button button = fixture.All<Button>().Single();
         fixture.Pump();
         Assert.Equal(2, fixture.Started.Count);
@@ -102,7 +104,7 @@ public sealed class TimbreAspectLifecycleTests
     public void AspectReplacementRetiresItsAudioAndTriggers()
     {
         using MarkupTimbreFixture fixture = new(Button(
-            "@handle Playback; @on Loaded { @timbre $Tone as Playback; @timbre $Other; } @on Click { @timbre $Ramp; }"));
+            "@timbre $Sounds; @on Loaded { @play $self.timbre.Tone; @play $self.timbre.Other; } @on Click { @play $self.timbre.Ramp; }"));
         Button button = fixture.All<Button>().Single();
         Assert.Equal(2, fixture.Started.Count);
 
@@ -118,9 +120,9 @@ public sealed class TimbreAspectLifecycleTests
     public void HiddenControlKeepsAudioTransportWhileVisualMotionKeepsItsLifecycle()
     {
         using MarkupTimbreFixture fixture = new(Border(
-            "@handle Playback; @when $self.Opacity { " +
-            "@if value > 0.5 { @timbre $Tone as Playback; @animate with Tween(100ms, Linear) { @to { Width = 80; } } } " +
-            "@if value < 0.3 { @pause Playback; } }",
+            "@timbre $Sounds; @when $self.Opacity { " +
+            "@if value > 0.5 { @play $self.timbre.Tone; @animate with Tween(100ms, Linear) { @to { Width = 80; } } } " +
+            "@if value < 0.3 { @pause $self.timbre.Tone; } }",
             "Visibility=\"Collapsed\""));
         Border border = fixture.All<Border>().Single();
         TimbrePlayback playback = Assert.Single(fixture.Started);
@@ -145,7 +147,7 @@ public sealed class TimbreAspectLifecycleTests
     [Fact]
     public void HundredAttachDetachCyclesStartOncePerAttachAndReleaseEveryScope()
     {
-        using MarkupTimbreFixture fixture = new(Border("@when $self.Opacity { @if value > 0.5 { @timbre $Tone; } }"));
+        using MarkupTimbreFixture fixture = new(Border("@timbre $Sounds; @when $self.Opacity { @if value > 0.5 { @play $self.timbre.Tone; } }"));
 
         for (int cycle = 0; cycle < 100; cycle++)
         {
@@ -166,13 +168,15 @@ public sealed class TimbreAspectLifecycleTests
     [Fact]
     public void DetachCancelsAPendingPlaybackAndReleasesItsReader()
     {
-        using MarkupTimbreFixture fixture = new(Border("@on Loaded { @timbre $Ramp; }"), attach: false);
+        using MarkupTimbreFixture fixture = new(Border("@timbre $Sounds; @on Loaded { @play $self.timbre.Ramp; }"), attach: false);
         TaskCompletionSource gate = new(TaskCreationOptions.RunContinuationsAsynchronously);
         DeterministicTimbreSourceFactory factory = new(480)
         {
             Configure = reader => reader.ReadGate = token => gate.Task.WaitAsync(token)
         };
-        fixture.Element.Resources.SetResource(new ResourceId<TimbreClip>("Ramp"), TimbreRig.Clip(factory));
+        fixture.Element.Resources.SetResource(
+            new ResourceId<TimbreClipDefinition>("Sounds"),
+            new TimbreClipDefinition("Sounds", [new TimbreClipSound("Ramp", TimbreRig.Clip(factory))]));
         fixture.Attach();
         TimbrePlayback pending = Assert.Single(fixture.Started);
 
@@ -187,7 +191,7 @@ public sealed class TimbreAspectLifecycleTests
     [Fact]
     public void DeviceOpenFailureFailsAcceptedPlaybacksWithoutStoppingTheBody()
     {
-        using MarkupTimbreFixture fixture = new(Button("@on Click { @timbre $Tone; @timbre $Other; }"));
+        using MarkupTimbreFixture fixture = new(Button("@timbre $Sounds; @on Click { @play $self.timbre.Tone; @play $self.timbre.Other; }"));
         fixture.Rig.Output.OpenFailure = new InvalidOperationException("No audio device in this probe.");
 
         Click(fixture, "Play");
@@ -206,7 +210,7 @@ public sealed class TimbreAspectLifecycleTests
     public void ReentrantActivationDoesNotRepeatTheTimbre()
     {
         using MarkupTimbreFixture fixture = new(Border(
-            "@when $self.Opacity { @if value > 0.5 { @timbre $Tone; @set { Opacity = 0.7; } } }"));
+            "@timbre $Sounds; @when $self.Opacity { @if value > 0.5 { @play $self.timbre.Tone; @set { Opacity = 0.7; } } }"));
         Border border = fixture.All<Border>().Single();
 
         Assert.Single(fixture.Started);
@@ -220,9 +224,9 @@ public sealed class TimbreAspectLifecycleTests
     public void TransportRacingNaturalCompletionNeverThrowsOnTheUiThread()
     {
         using MarkupTimbreFixture fixture = new(Border(
-            "@handle Playback; @when $self.Opacity { @if value > 0.95 { @timbre $Short as Playback; } " +
-            "@if value > 0.2 and value < 0.4 { @pause Playback; } @if value > 0.4 and value < 0.6 { @resume Playback; } " +
-            "@if value > 0.6 and value < 0.8 { @seek Playback to 1ms; } }"));
+            "@timbre $Sounds; @when $self.Opacity { @if value > 0.95 { @play $self.timbre.Short; } " +
+            "@if value > 0.2 and value < 0.4 { @pause $self.timbre.Short; } @if value > 0.4 and value < 0.6 { @resume $self.timbre.Short; } " +
+            "@if value > 0.6 and value < 0.8 { @seek $self.timbre.Short to 1ms; } }"));
         Border border = fixture.All<Border>().Single();
         fixture.Rig.Output.Release();
         using CancellationTokenSource stop = new();
@@ -255,13 +259,13 @@ public sealed class TimbreAspectLifecycleTests
     {
         using MarkupTimbreFixture fixture = new(
             "<Border Width=\"120\" Height=\"60\" Background=\"Black\"><Border.Resources>" + Clips +
-            "</Border.Resources><Border.Aspect>@on MouseLeftButtonDown { @timbre $Tone; } @on MouseEnter { @timbre $Other; }</Border.Aspect>" +
+            "</Border.Resources><Border.Aspect>@timbre $Sounds; @on MouseLeftButtonDown { @play $self.timbre.Tone; } @on MouseEnter { @play $self.timbre.Other; }</Border.Aspect>" +
             "<Button Content=\"Inner\" /></Border>");
 
         fixture.HoverAsync("Inner").GetAwaiter().GetResult();
         Click(fixture, "Inner");
 
-        Assert.Equal([MarkupTimbreFixture.OtherSource, MarkupTimbreFixture.ToneSource], fixture.Started.Select(playback => playback.Clip.Source.Name));
+        Assert.Equal([MarkupTimbreFixture.OtherSource, MarkupTimbreFixture.ToneSource], fixture.Started.Select(playback => playback.Sound.Source.Name));
     }
 
     [Fact]
@@ -269,7 +273,7 @@ public sealed class TimbreAspectLifecycleTests
     {
         InvalidationTrace trace = new(capacity: 1 << 16);
         using MarkupTimbreFixture fixture = new(
-            Border("@handle Playback; @when $self.Opacity { @if value > 0.5 { @timbre $Tone as Playback; } } @on MouseEnter { @pause Playback; }"),
+            Border("@timbre $Sounds; @when $self.Opacity { @if value > 0.5 { @play $self.timbre.Tone; } } @on MouseEnter { @pause $self.timbre.Tone; }"),
             trace: trace);
         Border border = fixture.All<Border>().Single();
         Advance(fixture, 3);

@@ -13,7 +13,7 @@ namespace Cerneala.Tests.SourceGen;
 public sealed partial class UiMarkupGeneratorTests
 {
     [Fact]
-    public void MotionPresenceGeneratesTypedOptionsBeforeAttachment()
+    public void MotionPresenceGeneratesTypedOptionsInTheAspectBehavior()
     {
         GeneratorRunResult result = RunGenerator(
             "MotionPresence.crn",
@@ -24,8 +24,9 @@ public sealed partial class UiMarkupGeneratorTests
         string generated = SingleGeneratedSource(result);
         Assert.Contains("MotionSpec<float>", generated);
         Assert.Contains("PresenceOptions.FadeAndScale", generated);
-        Assert.Contains(", false);", generated);
-        Assert.Contains("@presence must be applied before the element is attached", generated);
+        Assert.Contains(", false));", generated);
+        Assert.Contains("ApplyAspectValue(target, global::Cerneala.UI.Elements.UIElement.PresenceProperty", generated);
+        Assert.DoesNotContain("must be applied before the element is attached", generated);
         Assert.DoesNotContain("SetPresenceVisual", generated);
         Assert.DoesNotContain("SetPresenceExiting", generated);
     }
@@ -38,8 +39,9 @@ public sealed partial class UiMarkupGeneratorTests
         UIRoot root = new(100, 100, motionClock: clock);
 
         Assert.False(border.IsAttached);
-        Assert.NotNull(border.Presence);
+        Assert.Null(border.Presence);
         root.VisualChildren.Add(border);
+        Assert.NotNull(border.Presence);
         Assert.Equal(PresenceState.Present, root.Motion.Presence.GetState(border));
         Assert.Equal(0, border.PresenceOpacity);
 

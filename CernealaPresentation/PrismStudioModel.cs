@@ -248,9 +248,9 @@ internal sealed class PrismStudioModel
         return true;
     }
 
-    public PrismCompositionDefinition BuildDefinition()
+    public PrismClipDefinition BuildDefinition()
     {
-        return new PrismCompositionDefinition(
+        return new PrismClipDefinition(
             "PrismStudio",
             layers.Where(layer => layer.Operations.Any()).Select(layer => new PrismLayerDefinition(
                 new PrismNodeId(layer.Id),

@@ -14,18 +14,18 @@ internal static class DirectiveSyntaxParser
         "@when", "@if", "@on", "@presence", "@layout", "@scroll", "@drag", "@gesture",
         "@set", "@animate", "@keyframes", "@stagger", "@parallel", "@sequence", "@run",
         "@cancel", "@handle", "@parameter", "@from", "@to", "@default", "@template",
-        "@timbre", "@pause", "@resume", "@seek", "@modifier"
+        "@timbre", "@play", "@stop", "@pause", "@resume", "@seek", "@modifier"
     ];
 
     private static readonly string[] semicolonTerminatedMotionKeywords =
     [
         "@layout", "@drag", "@gesture", "@run", "@cancel", "@handle", "@parameter",
-        "@timbre", "@pause", "@resume", "@seek"
+        "@play", "@stop", "@pause", "@resume", "@seek"
     ];
 
     private static readonly string[] timbreStatementKeywords =
     [
-        "@timbre", "@pause", "@resume", "@seek"
+        "@play", "@stop", "@pause", "@resume", "@seek"
     ];
 
     private static readonly string[] prismKeywords =

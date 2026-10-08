@@ -25,6 +25,8 @@ Generated from `.`.
 |   |   |   +-- SKILL.md
 |   |   |-- cerneala-performance-gate/
 |   |   |   +-- SKILL.md
+|   |   |-- git-session-commit-push/
+|   |   |   +-- SKILL.md
 |   |   |-- repo-cleanup/
 |   |   |   +-- SKILL.md
 |   |   +-- writing-api-documentation/
@@ -318,6 +320,52 @@ Generated from `.`.
 |   |   |   |   |-- Invoke-TimbreDecodingCost.ps1
 |   |   |   |   |-- README.md
 |   |   |   |   +-- stage3-timbre.trx
+|   |   |   |-- 2026-10-07-timbre-motion-stage3/
+|   |   |   |   |-- attribution/
+|   |   |   |   |   |-- audio-round-1.json
+|   |   |   |   |   |-- audio-round-2.json
+|   |   |   |   |   |-- audio-round-3.json
+|   |   |   |   |   |-- audio-round-4.json
+|   |   |   |   |   |-- audio-round-5.json
+|   |   |   |   |   |-- none-round-1.json
+|   |   |   |   |   |-- none-round-2.json
+|   |   |   |   |   |-- none-round-3.json
+|   |   |   |   |   |-- none-round-4.json
+|   |   |   |   |   |-- none-round-5.json
+|   |   |   |   |   |-- visual-round-1.json
+|   |   |   |   |   |-- visual-round-2.json
+|   |   |   |   |   |-- visual-round-3.json
+|   |   |   |   |   |-- visual-round-4.json
+|   |   |   |   |   +-- visual-round-5.json
+|   |   |   |   |-- campaign/
+|   |   |   |   |   |-- hidden-process-1.json
+|   |   |   |   |   |-- hidden-process-2.json
+|   |   |   |   |   |-- hidden-process-3.json
+|   |   |   |   |   |-- hidden-process-4.json
+|   |   |   |   |   |-- hidden-process-5.json
+|   |   |   |   |   |-- summary.json
+|   |   |   |   |   |-- visible-process-1.json
+|   |   |   |   |   |-- visible-process-2.json
+|   |   |   |   |   |-- visible-process-3.json
+|   |   |   |   |   |-- visible-process-4.json
+|   |   |   |   |   +-- visible-process-5.json
+|   |   |   |   |-- campaign-2/
+|   |   |   |   |   |-- hidden-process-1.json
+|   |   |   |   |   |-- hidden-process-2.json
+|   |   |   |   |   |-- hidden-process-3.json
+|   |   |   |   |   |-- hidden-process-4.json
+|   |   |   |   |   |-- hidden-process-5.json
+|   |   |   |   |   |-- summary.json
+|   |   |   |   |   |-- visible-process-1.json
+|   |   |   |   |   |-- visible-process-2.json
+|   |   |   |   |   |-- visible-process-3.json
+|   |   |   |   |   |-- visible-process-4.json
+|   |   |   |   |   +-- visible-process-5.json
+|   |   |   |   |-- attribution.log
+|   |   |   |   |-- campaign-2.log
+|   |   |   |   |-- campaign.log
+|   |   |   |   |-- Invoke-TimbreMotionAttribution.ps1
+|   |   |   |   +-- Invoke-TimbreMotionCost.ps1
 |   |   |   |-- 2026-10-07-timbre-sdl3-stage3/
 |   |   |   |   |-- campaign-emulator/
 |   |   |   |   |   |-- process-1.json
@@ -398,6 +446,7 @@ Generated from `.`.
 |   |   |-- TileMapStage4Benchmarks.cs
 |   |   |-- TimbreCoreBenchmarkRunner.cs
 |   |   |-- TimbreDecodingBenchmarkRunner.cs
+|   |   |-- TimbreMotionBenchmarkRunner.cs
 |   |   +-- UiRelayBenchmarks.cs
 |   |-- Cerneala.PresentationFrameBudget/
 |   |   |-- Cerneala.PresentationFrameBudget.csproj
@@ -670,7 +719,7 @@ Generated from `.`.
 |   |   |-- CernealaCompletionService.Context.cs
 |   |   |-- CernealaCompletionService.cs
 |   |   |-- CernealaCompletionService.Directives.cs
-|   |   |-- CernealaCompletionService.Sound.cs
+|   |   |-- CernealaCompletionService.Timbre.cs
 |   |   |-- CernealaDocumentation.cs
 |   |   |-- CernealaFormattingModels.cs
 |   |   |-- CernealaFormattingService.cs
@@ -698,8 +747,9 @@ Generated from `.`.
 |   |   |-- CernealaSemanticModel.MotionPrism.Prism.cs
 |   |   |-- CernealaSemanticModel.Navigation.cs
 |   |   |-- CernealaSemanticModel.Scopes.cs
-|   |   |-- CernealaSemanticModel.Sound.cs
 |   |   |-- CernealaSemanticModel.Tiles.cs
+|   |   |-- CernealaSemanticModel.Timbre.cs
+|   |   |-- CernealaSemanticModel.TimbreMotion.cs
 |   |   +-- SemanticSymbols.cs
 |   |-- Syntax/
 |   |   |-- Embedded/
@@ -722,8 +772,8 @@ Generated from `.`.
 |   |   |-- TextChange.cs
 |   |   +-- TextSpan.cs
 |   |-- Timbre/
-|   |   |-- SoundMarkupBinder.cs
-|   |   +-- SoundMarkupSyntax.cs
+|   |   |-- TimbreMarkupBinder.cs
+|   |   +-- TimbreMarkupSyntax.cs
 |   |-- Cerneala.Language.csproj
 |   +-- CernealaDocumentPath.cs
 |-- Cerneala.LanguageServer/
@@ -764,7 +814,7 @@ Generated from `.`.
 |   |-- Audio/
 |   |   |-- ISdlAudioApi.cs
 |   |   |-- NativeSdlAudioApi.cs
-|   |   +-- SdlSoundOutput.cs
+|   |   +-- SdlTimbreOutput.cs
 |   |-- Hosting/
 |   |   |-- SdlCursorService.cs
 |   |   |-- SdlPlatformLifetime.cs
@@ -781,7 +831,7 @@ Generated from `.`.
 |   |-- Properties/
 |   |   +-- AssemblyInfo.cs
 |   |-- Cerneala.PreviewHost.csproj
-|   |-- DisabledPreviewSoundOutput.cs
+|   |-- DisabledPreviewTimbreOutput.cs
 |   |-- PreviewCompiler.cs
 |   |-- PreviewHostServer.cs
 |   |-- PreviewMarkupHotReload.cs
@@ -847,8 +897,8 @@ Generated from `.`.
 |   |-- UiMarkupDirectiveParser.MotionExecutions.cs
 |   |-- UiMarkupDirectiveParser.MotionTriggers.cs
 |   |-- UiMarkupDirectiveParser.MotionValues.cs
-|   |-- UiMarkupDirectiveParser.Sound.cs
 |   |-- UiMarkupDirectiveParser.Syntax.cs
+|   |-- UiMarkupDirectiveParser.Timbre.cs
 |   |-- UiMarkupElementEmitter.cs
 |   |-- UiMarkupGenerator.cs
 |   |-- UiMarkupMotionActivationEmitter.cs
@@ -861,8 +911,9 @@ Generated from `.`.
 |   |-- UiMarkupReactiveEmitter.cs
 |   |-- UiMarkupResourceEmitter.cs
 |   |-- UiMarkupSceneComponentGenerator.cs
-|   |-- UiMarkupSoundEmitter.cs
 |   |-- UiMarkupTemplateEmitter.cs
+|   |-- UiMarkupTimbreEmitter.cs
+|   |-- UiMarkupTimbreMotionEmitter.cs
 |   |-- UiMarkupUserControlGenerator.cs
 |   |-- UiMarkupValueEmitter.cs
 |   +-- UiMarkupWindowGenerator.cs
@@ -2789,6 +2840,92 @@ Generated from `.`.
 |   |   |   |   |-- full-solution.log
 |   |   |   |   |-- README.md
 |   |   |   |   +-- six-rid-publish.log
+|   |   |   |-- 2026-10-03-timbre-motion-stage0/
+|   |   |   |   |-- results/
+|   |   |   |   |   |-- green-legacy.log
+|   |   |   |   |   |-- green-legacy.trx
+|   |   |   |   |   |-- red-language.log
+|   |   |   |   |   |-- red-runtime.log
+|   |   |   |   |   +-- red-sourcegen.log
+|   |   |   |   |-- baseline-build.log
+|   |   |   |   +-- README.md
+|   |   |   |-- 2026-10-03-timbre-motion-stage1/
+|   |   |   |   |-- consumer.txt
+|   |   |   |   |-- Language.log
+|   |   |   |   |-- Language.trx
+|   |   |   |   |-- LanguageServer.log
+|   |   |   |   |-- LanguageServer.trx
+|   |   |   |   |-- manifest.txt
+|   |   |   |   |-- PreviewHost.log
+|   |   |   |   |-- PreviewHost.trx
+|   |   |   |   |-- README.md
+|   |   |   |   |-- SourceGen.log
+|   |   |   |   |-- SourceGen.trx
+|   |   |   |   |-- summary.txt
+|   |   |   |   |-- Timbre-rerun.trx
+|   |   |   |   |-- timbre-rerun.txt
+|   |   |   |   |-- Timbre.trx
+|   |   |   |   |-- timbre.txt
+|   |   |   |   |-- VisualStudio.log
+|   |   |   |   +-- VisualStudio.trx
+|   |   |   |-- 2026-10-03-timbre-motion-stage2/
+|   |   |   |   |-- 530b5425-0c0c-4886-aee6-6f394ef4df2b/
+|   |   |   |   |-- d76f0c78-c7c4-4ede-b3f2-e38daadcebca/
+|   |   |   |   |-- build.txt
+|   |   |   |   |-- legacy-motion.trx
+|   |   |   |   |-- legacy-motion.txt
+|   |   |   |   |-- README.md
+|   |   |   |   |-- red.log
+|   |   |   |   |-- soundmotion-repeat.txt
+|   |   |   |   |-- sourcegen.txt
+|   |   |   |   |-- timbre-1.trx
+|   |   |   |   |-- timbre-2.trx
+|   |   |   |   |-- timbre-blame.log
+|   |   |   |   +-- timbre.txt
+|   |   |   |-- 2026-10-03-timbre-motion-stage3/
+|   |   |   |   |-- full-solution/
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-10-08_01_04_05_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-10-08_01_05_54_net10.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-10-08_01_11_41_net10.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-10-08_01_14_28_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-10-08_01_14_40_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-10-08_01_14_57_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-10-08_01_16_11_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-10-08_01_31_25_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-10-08_01_32_46_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-10-08_01_33_35_net10.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-10-08_01_33_40_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-10-08_01_37_54_net8.0.trx
+|   |   |   |   |   +-- sourcegen-rerun.trx
+|   |   |   |   |-- native/
+|   |   |   |   |   |-- timbre/
+|   |   |   |   |   |   |-- run.log
+|   |   |   |   |   |   |-- timbre-diagnostics.json
+|   |   |   |   |   |   |-- timbre-loop-48000.wav
+|   |   |   |   |   |   +-- timbre-tone-44100.wav
+|   |   |   |   |   |-- timbre-markup/
+|   |   |   |   |   |   |-- run.log
+|   |   |   |   |   |   +-- timbre-markup-diagnostics.json
+|   |   |   |   |   |-- timbre-motion/
+|   |   |   |   |   |   |-- run.log
+|   |   |   |   |   |   +-- timbre-motion-diagnostics.json
+|   |   |   |   |   |-- run.log
+|   |   |   |   |   +-- timbre-motion-diagnostics.json
+|   |   |   |   |-- api-compat-compatible.log
+|   |   |   |   |-- api-compat-strict.log
+|   |   |   |   |-- api-compat.proj
+|   |   |   |   |-- baseline-worktree.log
+|   |   |   |   |-- full-solution-build.log
+|   |   |   |   |-- full-solution.log
+|   |   |   |   |-- publish-linux-arm64.log
+|   |   |   |   |-- publish-linux-x64.log
+|   |   |   |   |-- publish-osx-arm64.log
+|   |   |   |   |-- publish-osx-x64.log
+|   |   |   |   |-- publish-win-arm64.log
+|   |   |   |   |-- publish-win-x64.log
+|   |   |   |   |-- README.md
+|   |   |   |   |-- six-rid-publish.log
+|   |   |   |   +-- sourcegen-rerun.txt
 |   |   |   |-- 2026-10-03-timbre-sdl3-stage0/
 |   |   |   |   |-- probe/
 |   |   |   |   |   |-- Program.cs
@@ -3273,30 +3410,30 @@ Generated from `.`.
 |   |   |   |-- Cerneala.SourceGen.UiMarkupGenerator.MarkupSource.md
 |   |   |   |-- Cerneala.SourceGen.UiMarkupGenerator.md
 |   |   |   |-- Cerneala.Timbre.Delay.md
-|   |   |   |-- Cerneala.Timbre.ISoundOutput.md
-|   |   |   |-- Cerneala.Timbre.ISoundOutputClient.md
+|   |   |   |-- Cerneala.Timbre.ITimbreOutput.md
+|   |   |   |-- Cerneala.Timbre.ITimbreOutputClient.md
 |   |   |   |-- Cerneala.Timbre.LowPass.md
-|   |   |   |-- Cerneala.Timbre.SoundClip.md
-|   |   |   |-- Cerneala.Timbre.SoundErrorKind.md
-|   |   |   |-- Cerneala.Timbre.SoundException.md
-|   |   |   |-- Cerneala.Timbre.SoundHandle.md
-|   |   |   |-- Cerneala.Timbre.SoundInput_T_.md
-|   |   |   |-- Cerneala.Timbre.SoundLoading.md
-|   |   |   |-- Cerneala.Timbre.SoundMemoryBudget.md
-|   |   |   |-- Cerneala.Timbre.SoundMemoryReservation.md
-|   |   |   |-- Cerneala.Timbre.SoundModifier.md
-|   |   |   |-- Cerneala.Timbre.SoundParameter_T_.md
-|   |   |   |-- Cerneala.Timbre.SoundParameter.md
-|   |   |   |-- Cerneala.Timbre.SoundPlayback.md
-|   |   |   |-- Cerneala.Timbre.SoundPlaybackResult.md
-|   |   |   |-- Cerneala.Timbre.SoundPlaybackState.md
-|   |   |   |-- Cerneala.Timbre.SoundReader.md
-|   |   |   |-- Cerneala.Timbre.SoundReadResult.md
-|   |   |   |-- Cerneala.Timbre.SoundRuntime.md
-|   |   |   |-- Cerneala.Timbre.SoundRuntimeOptions.md
-|   |   |   |-- Cerneala.Timbre.SoundScope.md
-|   |   |   |-- Cerneala.Timbre.SoundSource.md
-|   |   |   |-- Cerneala.Timbre.SoundStartOptions.md
+|   |   |   |-- Cerneala.Timbre.TimbreClip.md
+|   |   |   |-- Cerneala.Timbre.TimbreErrorKind.md
+|   |   |   |-- Cerneala.Timbre.TimbreException.md
+|   |   |   |-- Cerneala.Timbre.TimbreHandle.md
+|   |   |   |-- Cerneala.Timbre.TimbreInput_T_.md
+|   |   |   |-- Cerneala.Timbre.TimbreLoading.md
+|   |   |   |-- Cerneala.Timbre.TimbreMemoryBudget.md
+|   |   |   |-- Cerneala.Timbre.TimbreMemoryReservation.md
+|   |   |   |-- Cerneala.Timbre.TimbreModifier.md
+|   |   |   |-- Cerneala.Timbre.TimbreParameter_T_.md
+|   |   |   |-- Cerneala.Timbre.TimbreParameter.md
+|   |   |   |-- Cerneala.Timbre.TimbrePlayback.md
+|   |   |   |-- Cerneala.Timbre.TimbrePlaybackResult.md
+|   |   |   |-- Cerneala.Timbre.TimbrePlaybackState.md
+|   |   |   |-- Cerneala.Timbre.TimbreReader.md
+|   |   |   |-- Cerneala.Timbre.TimbreReadResult.md
+|   |   |   |-- Cerneala.Timbre.TimbreRuntime.md
+|   |   |   |-- Cerneala.Timbre.TimbreRuntimeOptions.md
+|   |   |   |-- Cerneala.Timbre.TimbreScope.md
+|   |   |   |-- Cerneala.Timbre.TimbreSource.md
+|   |   |   |-- Cerneala.Timbre.TimbreStartOptions.md
 |   |   |   |-- Cerneala.UI.Accessibility.AccessibleName.md
 |   |   |   |-- Cerneala.UI.Accessibility.AutomationPeer.md
 |   |   |   |-- Cerneala.UI.Accessibility.ButtonAutomationPeer.md
@@ -3659,8 +3796,8 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Detective.RoutedEventTrace.md
 |   |   |   |-- Cerneala.UI.Detective.RoutedEventTraceSnapshot.md
 |   |   |   |-- Cerneala.UI.Detective.RoutedEventTraceStep.md
-|   |   |   |-- Cerneala.UI.Detective.SoundDiagnosticsSnapshot.md
 |   |   |   |-- Cerneala.UI.Detective.TileMapDiagnosticsSnapshot.md
+|   |   |   |-- Cerneala.UI.Detective.TimbreDiagnosticsSnapshot.md
 |   |   |   |-- Cerneala.UI.Detective.ViewportDiagnosticsSnapshot.md
 |   |   |   |-- Cerneala.UI.Elements.ElementChildRole.md
 |   |   |   |-- Cerneala.UI.Elements.ElementHandlerStore.md
@@ -4160,6 +4297,8 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Theming.ThemePalette.md
 |   |   |   |-- Cerneala.UI.Theming.ThemeProvider.md
 |   |   |   |-- Cerneala.UI.Theming.ThemeResource_T_.md
+|   |   |   |-- Cerneala.UI.Timbre.TimbreMotionAnimationBuilder.md
+|   |   |   |-- Cerneala.UI.Timbre.TimbreMotionFacade.md
 |   |   |   +-- Cerneala.VisualStudio.CernealaPackage.md
 |   |   +-- manifest.json
 |   |-- .nojekyll
@@ -5120,6 +5259,9 @@ Generated from `.`.
 |   |   |-- TimbreMarkupPanel.crn
 |   |   |-- TimbreMarkupPanel.crn.cs
 |   |   |-- TimbreMarkupSmoke.cs
+|   |   |-- TimbreMotionPanel.crn
+|   |   |-- TimbreMotionPanel.crn.cs
+|   |   |-- TimbreMotionSmoke.cs
 |   |   +-- TimbreSmoke.cs
 |   |-- Cerneala.Tests/
 |   |   |-- Architecture/
@@ -5517,7 +5659,7 @@ Generated from `.`.
 |   |   |   |   |-- ApplicationBackendAttributeTests.cs
 |   |   |   |   |-- ApplicationBackendRegistrationTests.cs
 |   |   |   |   |-- ApplicationRuntimeTests.cs
-|   |   |   |   |-- ApplicationSoundsIntegrationTests.cs
+|   |   |   |   |-- ApplicationTimbreIntegrationTests.cs
 |   |   |   |   |-- CoreHostingBoundaryTests.cs
 |   |   |   |   |-- DrawingContentServicesLifetimeTests.cs
 |   |   |   |   |-- FakeDrawingBackend.cs
@@ -5709,8 +5851,9 @@ Generated from `.`.
 |   |   |   |-- constructs.json
 |   |   |   |-- crn-migration-stage0-inventory.txt
 |   |   |   |-- repository-documents.txt
-|   |   |   |-- sound-corpus.json
-|   |   |   +-- sourcegen-diagnostics.json
+|   |   |   |-- sourcegen-diagnostics.json
+|   |   |   |-- timbre-corpus.json
+|   |   |   +-- timbre-motion-corpus.json
 |   |   |-- Cerneala.Tests.Language.csproj
 |   |   |-- CernealaDocumentPathTests.cs
 |   |   |-- ColliderOwnershipLanguageTests.cs
@@ -5731,13 +5874,14 @@ Generated from `.`.
 |   |   |-- SEMANTIC-INVENTORY.md
 |   |   |-- SemanticScopesTests.cs
 |   |   |-- SemanticWorkspaceTests.cs
-|   |   |-- SoundSemanticTests.cs
-|   |   |-- SoundToolingTests.cs
 |   |   |-- SourceGeneratorDiagnosticBaselineTests.cs
 |   |   |-- SourceTextTests.cs
 |   |   |-- StructureTests.cs
 |   |   |-- SyntaxTraversalTests.cs
-|   |   +-- TileMapSourceSemanticTests.cs
+|   |   |-- TileMapSourceSemanticTests.cs
+|   |   |-- TimbreMotionSemanticTests.cs
+|   |   |-- TimbreSemanticTests.cs
+|   |   +-- TimbreToolingTests.cs
 |   |-- Cerneala.Tests.LanguageServer/
 |   |   |-- Diagnostics/
 |   |   |   +-- diagnostic-catalog-golden.json
@@ -5865,8 +6009,8 @@ Generated from `.`.
 |   |   |-- NativeScenePrismStreamingTests.cs
 |   |   |-- NativeSdlLifetimeTests.cs
 |   |   |-- NativeServoHeldKeyTests.cs
-|   |   |-- NativeSoundOutputTests.cs
 |   |   |-- NativeTetrisWindowTests.cs
+|   |   |-- NativeTimbreOutputTests.cs
 |   |   |-- NativeUiImagePresentationTests.cs
 |   |   |-- RectanglePixelBoundaryMigrationTests.cs
 |   |   |-- RenderSurface2DPresentationTests.cs
@@ -5912,8 +6056,8 @@ Generated from `.`.
 |   |   |-- SdlNativeFactAttribute.cs
 |   |   |-- SdlNativeTestCollection.cs
 |   |   |-- SdlPlatformLifetimeTests.cs
-|   |   |-- SdlSoundOutputRuntimeTests.cs
-|   |   |-- SdlSoundOutputTests.cs
+|   |   |-- SdlTimbreOutputRuntimeTests.cs
+|   |   |-- SdlTimbreOutputTests.cs
 |   |   |-- SdlWindowMigrationContractTests.cs
 |   |   |-- SdlWindowPlatformAudioTests.cs
 |   |   |-- SdlWindowPlatformTests.cs
@@ -5958,13 +6102,14 @@ Generated from `.`.
 |   |   |-- UiMarkupGeneratorSceneWorldBindingTests.cs
 |   |   |-- UiMarkupGeneratorShapeTests.cs
 |   |   |-- UiMarkupGeneratorSingleLayerTileMapTests.cs
-|   |   |-- UiMarkupGeneratorSoundTests.cs
 |   |   |-- UiMarkupGeneratorSpriteAnimationStageZeroTests.cs
 |   |   |-- UiMarkupGeneratorSpriteAuthoringTests.cs
 |   |   |-- UiMarkupGeneratorSpriteSamplingTests.cs
 |   |   |-- UiMarkupGeneratorTests.cs
 |   |   |-- UiMarkupGeneratorTileAuthoringTests.cs
-|   |   +-- UiMarkupGeneratorTileMap2DStageZeroTests.cs
+|   |   |-- UiMarkupGeneratorTileMap2DStageZeroTests.cs
+|   |   |-- UiMarkupGeneratorTimbreMotionTests.cs
+|   |   +-- UiMarkupGeneratorTimbreTests.cs
 |   |-- Cerneala.Tests.Timbre/
 |   |   |-- Contracts/
 |   |   |   |-- ExternalConsumerTests.cs
@@ -6007,22 +6152,22 @@ Generated from `.`.
 |   |   |   |-- DecodingCorpus.cs
 |   |   |   |-- ObservedFileStream.cs
 |   |   |   |-- PcmOracle.cs
-|   |   |   |-- SoundDecoderConformanceTests.cs
-|   |   |   |-- SoundDecoderErrorTests.cs
-|   |   |   |-- SoundDecoderIntegrationTests.cs
-|   |   |   |-- SoundDecoderPartitionTests.cs
-|   |   |   |-- SoundDecoderRuntimeTests.cs
-|   |   |   |-- SoundStreamingCancelTests.cs
-|   |   |   |-- SoundStreamingFailureTests.cs
-|   |   |   |-- SoundStreamingIncrementalTests.cs
-|   |   |   |-- SoundStreamingLoopTests.cs
-|   |   |   |-- SoundStreamingSeekTests.cs
-|   |   |   |-- SoundStreamingStressTests.cs
-|   |   |   |-- SoundStreamingTransportTests.cs
 |   |   |   |-- StreamingDrive.cs
+|   |   |   |-- TimbreDecoderConformanceTests.cs
+|   |   |   |-- TimbreDecoderErrorTests.cs
+|   |   |   |-- TimbreDecoderIntegrationTests.cs
+|   |   |   |-- TimbreDecoderPartitionTests.cs
+|   |   |   |-- TimbreDecoderRuntimeTests.cs
+|   |   |   |-- TimbreStreamingCancelTests.cs
+|   |   |   |-- TimbreStreamingFailureTests.cs
+|   |   |   |-- TimbreStreamingIncrementalTests.cs
+|   |   |   |-- TimbreStreamingLoopTests.cs
+|   |   |   |-- TimbreStreamingSeekTests.cs
+|   |   |   |-- TimbreStreamingStressTests.cs
+|   |   |   |-- TimbreStreamingTransportTests.cs
 |   |   |   +-- WavFixture.cs
 |   |   |-- Definitions/
-|   |   |   +-- SoundDefinitionTests.cs
+|   |   |   +-- TimbreDefinitionTests.cs
 |   |   |-- Dsp/
 |   |   |   |-- DelayKernelTests.cs
 |   |   |   |-- DspChainEngineTests.cs
@@ -6039,20 +6184,30 @@ Generated from `.`.
 |   |   |   |-- StreamingPrimingTests.cs
 |   |   |   +-- TransportTests.cs
 |   |   |-- Harness/
-|   |   |   |-- DeterministicSoundOutput.cs
-|   |   |   |-- DeterministicSoundReader.cs
+|   |   |   |-- DeterministicTimbreOutput.cs
+|   |   |   |-- DeterministicTimbreReader.cs
 |   |   |   |-- HarnessObserverTests.cs
 |   |   |   |-- HarnessWait.cs
 |   |   |   +-- TimbreRig.cs
 |   |   |-- Hosting/
 |   |   |   +-- OwnerAccessTests.cs
 |   |   |-- Markup/
-|   |   |   |-- GeneratedSoundConsumer.cs
-|   |   |   |-- MarkupSoundFixture.cs
-|   |   |   |-- SoundAspectIntegrationTests.cs
-|   |   |   |-- SoundAspectLifecycleTests.cs
-|   |   |   |-- SoundMarkupParityTests.cs
-|   |   |   +-- SoundMarkupTransportTests.cs
+|   |   |   |-- GeneratedTimbreConsumer.cs
+|   |   |   |-- MarkupTimbreFixture.cs
+|   |   |   |-- TimbreAspectIntegrationTests.cs
+|   |   |   |-- TimbreAspectLifecycleTests.cs
+|   |   |   |-- TimbreMarkupParityTests.cs
+|   |   |   +-- TimbreMarkupTransportTests.cs
+|   |   |-- Motion/
+|   |   |   |-- TimbreMotionApiBindingTests.cs
+|   |   |   |-- TimbreMotionContractTests.cs
+|   |   |   |-- TimbreMotionIntegrationTests.cs
+|   |   |   |-- TimbreMotionLifecycleTests.cs
+|   |   |   |-- TimbreMotionMarkupTests.cs
+|   |   |   |-- TimbreMotionPcmTests.cs
+|   |   |   |-- TimbreMotionTestKit.cs
+|   |   |   |-- TimbreMotionTimelineTests.cs
+|   |   |   +-- TimbreMotionTransportTests.cs
 |   |   +-- Cerneala.Tests.Timbre.csproj
 |   |-- Cerneala.Tests.VisualStudio/
 |   |   |-- Golden/
@@ -6206,52 +6361,52 @@ Generated from `.`.
 |   |   |   |-- IMpegFrame.cs
 |   |   |   +-- MpegFrameDecoder.cs
 |   |   |-- CanonicalConverter.cs
-|   |   |-- DecodedSoundReader.cs
 |   |   |-- DecodedSource.cs
+|   |   |-- DecodedTimbreReader.cs
 |   |   |-- Mp3Source.cs
 |   |   |-- OggStreamReader.cs
 |   |   |-- OpusSource.cs
-|   |   |-- SoundFormats.cs
 |   |   |-- THIRD-PARTY-NOTICES.txt
+|   |   |-- TimbreFormats.cs
 |   |   |-- VorbisSource.cs
 |   |   +-- WavSource.cs
 |   |-- Dsp/
 |   |   |-- DelayKernel.cs
 |   |   |-- LowPassKernel.cs
-|   |   +-- SoundDspChain.cs
+|   |   +-- TimbreDspChain.cs
 |   |-- Engine/
 |   |   |-- AsyncAutoResetSignal.cs
-|   |   |-- ISoundBlockObserver.cs
+|   |   |-- ITimbreBlockObserver.cs
 |   |   |-- PumpDispatcher.cs
-|   |   |-- SoundDecoders.cs
-|   |   |-- SoundFeed.cs
-|   |   |-- SoundMemoryPool.cs
-|   |   |-- SoundPayloadCache.cs
-|   |   |-- SoundTime.cs
-|   |   |-- SoundVoice.cs
-|   |   +-- StreamingFeed.cs
-|   |-- ISoundOutput.cs
-|   |-- SoundClip.cs
-|   |-- SoundException.cs
-|   |-- SoundHandle.cs
-|   |-- SoundInput.cs
-|   |-- SoundLoading.cs
-|   |-- SoundMemoryBudget.cs
-|   |-- SoundModifier.cs
-|   |-- SoundParameter.cs
-|   |-- SoundPlayback.cs
-|   |-- SoundPlaybackResult.cs
-|   |-- SoundPlaybackState.cs
-|   |-- SoundReader.cs
-|   |-- SoundRuntime.Counters.cs
-|   |-- SoundRuntime.cs
-|   |-- SoundRuntime.Loading.cs
-|   |-- SoundRuntime.Mixer.cs
-|   |-- SoundRuntimeDiagnostics.cs
-|   |-- SoundRuntimeOptions.cs
-|   |-- SoundScope.cs
-|   |-- SoundSource.cs
-|   +-- SoundStartOptions.cs
+|   |   |-- StreamingFeed.cs
+|   |   |-- TimbreDecoders.cs
+|   |   |-- TimbreFeed.cs
+|   |   |-- TimbreMemoryPool.cs
+|   |   |-- TimbrePayloadCache.cs
+|   |   |-- TimbreTime.cs
+|   |   +-- TimbreVoice.cs
+|   |-- ITimbreOutput.cs
+|   |-- TimbreClip.cs
+|   |-- TimbreException.cs
+|   |-- TimbreHandle.cs
+|   |-- TimbreInput.cs
+|   |-- TimbreLoading.cs
+|   |-- TimbreMemoryBudget.cs
+|   |-- TimbreModifier.cs
+|   |-- TimbreParameter.cs
+|   |-- TimbrePlayback.cs
+|   |-- TimbrePlaybackResult.cs
+|   |-- TimbrePlaybackState.cs
+|   |-- TimbreReader.cs
+|   |-- TimbreRuntime.Counters.cs
+|   |-- TimbreRuntime.cs
+|   |-- TimbreRuntime.Loading.cs
+|   |-- TimbreRuntime.Mixer.cs
+|   |-- TimbreRuntimeDiagnostics.cs
+|   |-- TimbreRuntimeOptions.cs
+|   |-- TimbreScope.cs
+|   |-- TimbreSource.cs
+|   +-- TimbreStartOptions.cs
 |-- Tools/
 |   |-- Cerneala.Scene2D.PackageCompiler/
 |   |   |-- Cerneala.Scene2D.PackageCompiler.csproj
@@ -6629,8 +6784,8 @@ Generated from `.`.
 |   |   |-- RenderCacheDumper.cs
 |   |   |-- RenderDiagnostics.cs
 |   |   |-- RoutedEventTrace.cs
-|   |   |-- SoundDiagnosticsSnapshot.cs
-|   |   +-- TileMapDiagnosticsSnapshot.cs
+|   |   |-- TileMapDiagnosticsSnapshot.cs
+|   |   +-- TimbreDiagnosticsSnapshot.cs
 |   |-- Drawing/
 |   |   +-- DrawingContentServices.cs
 |   |-- Elements/
@@ -6650,12 +6805,12 @@ Generated from `.`.
 |   |   |-- UIElement.cs
 |   |   |-- UIElement.Events.cs
 |   |   |-- UIElement.InputEvents.cs
-|   |   |-- UIElement.Sounds.cs
+|   |   |-- UIElement.Timbre.cs
 |   |   |-- UIElementCollection.cs
 |   |   |-- UIElementVisibility.cs
 |   |   |-- UIRoot.cs
-|   |   |-- UIRoot.Sounds.cs
-|   |   +-- UIRoot.Subscriptions.cs
+|   |   |-- UIRoot.Subscriptions.cs
+|   |   +-- UIRoot.Timbre.cs
 |   |-- Hosting/
 |   |   |-- Windowing/
 |   |   |   |-- ApplicationBackendAttribute.cs
@@ -6823,7 +6978,7 @@ Generated from `.`.
 |   |   |-- GeneratedMarkupMotion.cs
 |   |   |-- GeneratedMarkupPrism.cs
 |   |   |-- GeneratedMarkupResources.cs
-|   |   |-- GeneratedMarkupSound.cs
+|   |   |-- GeneratedMarkupTimbre.cs
 |   |   |-- GeneratedUiFactory.cs
 |   |   |-- MarkupDiagnostic.cs
 |   |   |-- MarkupLoadOptions.cs
@@ -7122,8 +7277,10 @@ Generated from `.`.
 |   |   |-- ThemeProvider.cs
 |   |   +-- ThemeResource.cs
 |   |-- Timbre/
-|   |   |-- ElementSoundOwner.cs
-|   |   +-- PlatformSoundOutput.cs
+|   |   |-- ElementTimbreOwner.cs
+|   |   |-- PlatformTimbreOutput.cs
+|   |   |-- TimbreMotionFacade.cs
+|   |   +-- TimbrePlaybackMotion.cs
 |   |-- Application.cs
 |   |-- ApplicationExitEventArgs.cs
 |   |-- ApplicationShutdownMode.cs

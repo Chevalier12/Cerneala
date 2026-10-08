@@ -362,7 +362,7 @@ public sealed class CompletionProtocolTests(ITestOutputHelper output)
         Assert.Contains("@when IsMouseOver {", Apply(reactiveExpressionMarkup, mouseOver.TextEdit), StringComparison.Ordinal);
 
         string prismMarkup = "<UserControl><UserControl.Resources>" +
-            "<PrismComposition Name=\"Fx\">@layer Neon { @style OuterGlow { Si } }</PrismComposition>" +
+            "<PrismClip Name=\"Fx\">@layer Neon { @style OuterGlow { Si } }</PrismClip>" +
             "</UserControl.Resources></UserControl>";
         await client.Rpc.NotifyWithParameterObjectAsync(
             "textDocument/didChange",

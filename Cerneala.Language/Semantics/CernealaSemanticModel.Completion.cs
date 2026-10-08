@@ -232,7 +232,7 @@ internal sealed partial class CernealaSemanticModel
                 .ToArray();
         }
 
-        PrismCompositionDefinition? composition = prismCompositions.Values.FirstOrDefault(candidate =>
+        PrismClipDefinition? composition = prismClips.Values.FirstOrDefault(candidate =>
             string.Equals(candidate.Name, name, StringComparison.Ordinal));
         return composition is null
             ? Array.Empty<CompletionParameterDefinition>()

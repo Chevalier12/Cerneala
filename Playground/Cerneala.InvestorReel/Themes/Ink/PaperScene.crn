@@ -76,54 +76,64 @@
             <Grid>
                 <Grid Name="Cutouts">
                     <Ellipse Name="Sun" Width="230" Height="230" Fill="$IndigoBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="70,60,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5">
-                        @prism
-                        {
-                            @layer Shadow
+                        <Ellipse.Aspect>
+                            @prism
                             {
-                                @parameter Lift: float = 0;
-                                @style DropShadow { Color = #FF16181F; Opacity = 0.28; UseGlobalLight = false; Angle = 120; Distance = Lift; Size = Lift; }
+                                @layer Shadow
+                                {
+                                    @parameter Lift: float = 0;
+                                    @style DropShadow { Color = #FF16181F; Opacity = 0.28; UseGlobalLight = false; Angle = 120; Distance = Lift; Size = Lift; }
+                                }
                             }
-                        }
+                        </Ellipse.Aspect>
                     </Ellipse>
                     <Border Name="Pillar" Width="110" Height="290" Background="$VermilionBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="330,90,0,0" Rotation="0.08" Opacity="0" RenderTransformOrigin="0.5,0.5">
-                        @prism
-                        {
-                            @layer Shadow
+                        <Border.Aspect>
+                            @prism
                             {
-                                @parameter Lift: float = 0;
-                                @style DropShadow { Color = #FF16181F; Opacity = 0.28; UseGlobalLight = false; Angle = 120; Distance = Lift; Size = Lift; }
+                                @layer Shadow
+                                {
+                                    @parameter Lift: float = 0;
+                                    @style DropShadow { Color = #FF16181F; Opacity = 0.28; UseGlobalLight = false; Angle = 120; Distance = Lift; Size = Lift; }
+                                }
                             }
-                        }
+                        </Border.Aspect>
                     </Border>
                     <Ellipse Name="Arch" Width="260" Height="130" Fill="$OchreBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="480,250,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5">
-                        @prism
-                        {
-                            @layer Shadow
+                        <Ellipse.Aspect>
+                            @prism
                             {
-                                @parameter Lift: float = 0;
-                                @style DropShadow { Color = #FF16181F; Opacity = 0.28; UseGlobalLight = false; Angle = 120; Distance = Lift; Size = Lift; }
+                                @layer Shadow
+                                {
+                                    @parameter Lift: float = 0;
+                                    @style DropShadow { Color = #FF16181F; Opacity = 0.28; UseGlobalLight = false; Angle = 120; Distance = Lift; Size = Lift; }
+                                }
                             }
-                        }
+                        </Ellipse.Aspect>
                         </Ellipse>
                     <Ellipse Name="Pebble" Width="70" Height="70" Fill="$VermilionBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="600,90,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5">
-                        @prism
-                        {
-                            @layer Shadow
+                        <Ellipse.Aspect>
+                            @prism
                             {
-                                @parameter Lift: float = 0;
-                                @style DropShadow { Color = #FF16181F; Opacity = 0.28; UseGlobalLight = false; Angle = 120; Distance = Lift; Size = Lift; }
+                                @layer Shadow
+                                {
+                                    @parameter Lift: float = 0;
+                                    @style DropShadow { Color = #FF16181F; Opacity = 0.28; UseGlobalLight = false; Angle = 120; Distance = Lift; Size = Lift; }
+                                }
                             }
-                        }
+                        </Ellipse.Aspect>
                     </Ellipse>
                     <Border Name="Blade" Width="420" Height="14" Background="$InkBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="120,330,0,0" Rotation="-0.12" Opacity="0" RenderTransformOrigin="0.5,0.5">
-                        @prism
-                        {
-                            @layer Shadow
+                        <Border.Aspect>
+                            @prism
                             {
-                                @parameter Lift: float = 0;
-                                @style DropShadow { Color = #FF16181F; Opacity = 0.28; UseGlobalLight = false; Angle = 120; Distance = Lift; Size = Lift; }
+                                @layer Shadow
+                                {
+                                    @parameter Lift: float = 0;
+                                    @style DropShadow { Color = #FF16181F; Opacity = 0.28; UseGlobalLight = false; Angle = 120; Distance = Lift; Size = Lift; }
+                                }
                             }
-                        }
+                        </Border.Aspect>
                     </Border>
                 </Grid>
                 <StackPanel Name="LiftNote" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,26,30,0" Opacity="0">
@@ -138,14 +148,16 @@
                 <StackPanel Margin="0,0,0,10" Opacity="0">
                     <Border Width="300" Height="108" BorderBrush="$PaperShadeBrush" BorderThickness="1" ClipToBounds="True">
                         <Grid Name="SumiArt">
-                            @prism
-                            {
-                                @layer Fx
+                            <Grid.Aspect>
+                                @prism
                                 {
-                                    @parameter Stroke: float = 4;
-                                    @filter SumiE { StrokeWidth = Stroke; StrokePressure = 2; Contrast = 2; }
+                                    @layer Fx
+                                    {
+                                        @parameter Stroke: float = 4;
+                                        @filter SumiE { StrokeWidth = Stroke; StrokePressure = 2; Contrast = 2; }
+                                    }
                                 }
-                            }
+                            </Grid.Aspect>
                             <Border Background="$PaperBrush" />
                             <Ellipse Width="46" Height="46" Fill="$VermilionBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,20,48,0" />
                             <Border Width="150" Height="150" Background="$IndigoBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10,0,0,-100" Rotation="0.785" RenderTransformOrigin="0.5,0.5" />
@@ -161,13 +173,15 @@
                 <StackPanel Margin="0,0,0,10" Opacity="0">
                     <Border Width="300" Height="108" BorderBrush="$PaperShadeBrush" BorderThickness="1" ClipToBounds="True">
                         <Grid Name="OutlineArt">
-                            @prism
-                            {
-                                @layer Fx
+                            <Grid.Aspect>
+                                @prism
                                 {
-                                    @filter InkOutlines { StrokeLength = 4; DarkIntensity = 20; LightIntensity = 10; }
+                                    @layer Fx
+                                    {
+                                        @filter InkOutlines { StrokeLength = 4; DarkIntensity = 20; LightIntensity = 10; }
+                                    }
                                 }
-                            }
+                            </Grid.Aspect>
                             <Border Background="$PaperBrush" />
                             <Ellipse Width="46" Height="46" Fill="$VermilionBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,20,48,0" />
                             <Border Width="150" Height="150" Background="$IndigoBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10,0,0,-100" Rotation="0.785" RenderTransformOrigin="0.5,0.5" />
@@ -183,13 +197,15 @@
                 <StackPanel Margin="0,0,0,10" Opacity="0">
                     <Border Width="300" Height="108" BorderBrush="$PaperShadeBrush" BorderThickness="1" ClipToBounds="True">
                         <Grid Name="WashArt">
-                            @prism
-                            {
-                                @layer Fx
+                            <Grid.Aspect>
+                                @prism
                                 {
-                                    @filter Watercolor { BrushDetail = 9; ShadowIntensity = 1; Texture = 3; }
+                                    @layer Fx
+                                    {
+                                        @filter Watercolor { BrushDetail = 9; ShadowIntensity = 1; Texture = 3; }
+                                    }
                                 }
-                            }
+                            </Grid.Aspect>
                             <Border Background="$PaperBrush" />
                             <Ellipse Width="46" Height="46" Fill="$VermilionBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,20,48,0" />
                             <Border Width="150" Height="150" Background="$IndigoBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10,0,0,-100" Rotation="0.785" RenderTransformOrigin="0.5,0.5" />

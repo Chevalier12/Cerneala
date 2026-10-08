@@ -61,7 +61,7 @@ enclosed draw commands.
 | Name | Type | Description |
 | --- | --- | --- |
 | `Instance` | `PrismInstance` | Gets the per-element typed Prism instance. |
-| `Definition` | `PrismCompositionDefinition` | Gets the immutable composition definition owned by `Instance`. |
+| `Definition` | `PrismClipDefinition` | Gets the immutable composition definition owned by `Instance`. |
 | `CacheOwnerToken` | `PrismCacheOwnerToken` | Gets the numeric retained cache identity. |
 | `ControlBounds` | `DrawRect` | Gets the captured control bounds in logical coordinates. |
 | `EffectiveTransform` | `System.Numerics.Matrix3x2` | Gets the effective logical transform for the scope. |

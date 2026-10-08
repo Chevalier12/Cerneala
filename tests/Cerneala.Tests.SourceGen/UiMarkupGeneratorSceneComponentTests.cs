@@ -182,12 +182,12 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <Scene2D Loaded="OnHouseLoaded">
                 <Scene2D.Aspect>
+                  @prism { @layer HouseContent { Opacity = 1; @filter Blur { Radius = 1; } } }
                     @default { DoorX = 7; }
                     @on Loaded {
                         @animate with Tween(100ms) { @to { TranslateY = 8; } }
                     }
                 </Scene2D.Aspect>
-                @prism { @layer HouseContent { Opacity = 1; @filter Blur { Radius = 1; } } }
                 <Sprite2D Name="Door" X="$root.DoorX:OneWay" Width="8" Height="8" />
                 <SceneItems2D>
                     @templates {

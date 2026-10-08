@@ -95,6 +95,10 @@ public sealed partial class UiMarkupGeneratorTests
                             IsAnimationPaused="$DataContext.IsPaused:OneWay"
                             AnimationStateChangeMode="Resume">
                     <Sprite2D.Aspect>
+                      @prism
+                      {
+                        @layer HeroContent { Opacity = 1; @filter Blur { Radius = 1; } }
+                      }
                       @when $DataContext.IsAttacking
                       {
                         @set { AnimationState = "Attack"; Tint = #FFFF8080; }
@@ -107,16 +111,16 @@ public sealed partial class UiMarkupGeneratorTests
                         }
                       }
                     </Sprite2D.Aspect>
-                    @prism
-                    {
-                      @layer HeroContent { Opacity = 1; @filter Blur { Radius = 1; } }
-                    }
                   </Sprite2D>
                       <Sprite2D Image="$HeroAtlas" X="32"
                                       Y="48" Width="16" Height="16"
                                       Animations="$HeroAnimations"
                                       AnimationState="Idle">
                         <Sprite2D.Aspect>
+                          @prism
+                          {
+                            @layer TileContent { Opacity = 1; @filter Blur { Radius = 1; } }
+                          }
                           @on Loaded
                           {
                             @animate with Tween(100ms)
@@ -125,10 +129,6 @@ public sealed partial class UiMarkupGeneratorTests
                             }
                           }
                         </Sprite2D.Aspect>
-                        @prism
-                        {
-                          @layer TileContent { Opacity = 1; @filter Blur { Radius = 1; } }
-                        }
                       </Sprite2D>
                 </Scene2D>
               </RenderSurface2D.Scene>

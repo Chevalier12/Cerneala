@@ -13,32 +13,36 @@ namespace Cerneala.Tests.Timbre.Markup;
 public sealed class TimbreMarkupTransportTests
 {
     private const string Clips = """
-        <TimbreClip Name="Tone">Source = "audio/tone.wav";</TimbreClip>
-        <TimbreClip Name="Ramp">Source = "audio/ramp.wav";</TimbreClip>
-        <TimbreClip Name="Short">Source = "audio/short.wav";</TimbreClip>
-        <TimbreClip Name="Looped">Source = "audio/tone.wav"; Loop = true;</TimbreClip>
-        <TimbreClip Name="Filtered">Source = "audio/ramp.wav"; @parameter Cut: float = 900; @modifier LowPass { Cutoff = Cut; }</TimbreClip>
+        <TimbreClip Name="Sounds">
+          @parameter Cut: float = 900;
+          @sound Music { Source = "audio/ramp.wav"; }
+          @sound Tone { Source = "audio/tone.wav"; }
+          @sound Short { Source = "audio/short.wav"; }
+          @sound Looped { Source = "audio/tone.wav"; Loop = true; }
+          @sound Filtered { Source = "audio/ramp.wav"; @modifier LowPass { Cutoff = Cut; } }
+        </TimbreClip>
         """;
 
-    // Opacity bands drive one transport statement each; 1.0 starts the occupant.
+    // Opacity bands drive one command each on the Music sound; 1.0 starts it
+    // and 0.7 restarts it.
     private const string Bands = """
-        @handle Music;
+        @timbre $Sounds;
         @when $self.Opacity
         {
-            @if value > 0.95 { @timbre $Ramp as Music; }
-            @if value > 0.85 and value < 0.95 { @seek Music to 50ms; }
-            @if value > 0.75 and value < 0.85 { @seek Music to 100ms; }
-            @if value > 0.65 and value < 0.75 { @timbre $Tone as Music; }
-            @if value > 0.45 and value < 0.55 { @resume Music; }
-            @if value > 0.25 and value < 0.35 { @cancel Music; }
-            @if value < 0.15 { @pause Music; }
+            @if value > 0.95 { @play $self.timbre.Music; }
+            @if value > 0.85 and value < 0.95 { @seek $self.timbre.Music to 50ms; }
+            @if value > 0.75 and value < 0.85 { @seek $self.timbre.Music to 100ms; }
+            @if value > 0.65 and value < 0.75 { @play $self.timbre.Music; }
+            @if value > 0.45 and value < 0.55 { @resume $self.timbre.Music; }
+            @if value > 0.25 and value < 0.35 { @stop $self.timbre.Music; }
+            @if value < 0.15 { @pause $self.timbre.Music; }
         }
         """;
 
     [Fact]
-    public void EmptySlotTransportIsANoOpWithoutAutoplay()
+    public void TransportOnASoundThatIsNotPlayingIsANoOp()
     {
-        using MarkupTimbreFixture fixture = new(Button("@handle Music; @on Click { @pause Music; @resume Music; @seek Music to 1s; @cancel Music; }"));
+        using MarkupTimbreFixture fixture = new(Button("@timbre $Sounds; @on Click { @pause $self.timbre.Tone; @resume $self.timbre.Tone; @seek $self.timbre.Tone to 1s; @stop $self.timbre.Tone; }"));
 
         fixture.ClickAsync("Play").GetAwaiter().GetResult();
 
@@ -76,7 +80,7 @@ public sealed class TimbreMarkupTransportTests
     public void LatestPendingSeekWinsAndFirstPcmStartsAtItsTarget()
     {
         using MarkupTimbreFixture fixture = new(Border(Bands), attach: false);
-        GatedSource gated = GatedSource.Replace(fixture, "Ramp");
+        GatedSource gated = GatedSource.Replace(fixture, "Music");
         fixture.Attach();
         Border border = fixture.All<Border>().Single();
         TimbrePlayback music = Assert.Single(fixture.Started);
@@ -97,7 +101,7 @@ public sealed class TimbreMarkupTransportTests
     public void CancelAlsoCancelsAPendingSeek()
     {
         using MarkupTimbreFixture fixture = new(Border(Bands), attach: false);
-        GatedSource gated = GatedSource.Replace(fixture, "Ramp");
+        GatedSource gated = GatedSource.Replace(fixture, "Music");
         fixture.Attach();
         Border border = fixture.All<Border>().Single();
         TimbrePlayback music = Assert.Single(fixture.Started);
@@ -112,33 +116,33 @@ public sealed class TimbreMarkupTransportTests
     }
 
     [Fact]
-    public void ReplacementCancelsOldOccupantAndItsPendingSeekDoesNotMoveTheNewOne()
+    public void RestartCancelsTheRunningPlaybackAndItsPendingSeekDoesNotMoveTheNewOne()
     {
         using MarkupTimbreFixture fixture = new(Border(Bands), attach: false);
-        GatedSource gated = GatedSource.Replace(fixture, "Ramp");
+        GatedSource gated = GatedSource.Replace(fixture, "Music");
         fixture.Attach();
         Border border = fixture.All<Border>().Single();
-        TimbrePlayback ramp = Assert.Single(fixture.Started);
+        TimbrePlayback first = Assert.Single(fixture.Started);
 
         SetOpacity(fixture, border, 0.8f);
         SetOpacity(fixture, border, 0.7f);
-        TimbrePlayback tone = fixture.Started[1];
-        Assert.Equal(TimbrePlaybackState.Canceled, ramp.State);
+        TimbrePlayback restarted = fixture.Started[1];
+        Assert.Equal(TimbrePlaybackState.Canceled, first.State);
         gated.Open();
 
-        float[] first = fixture.Rig.StartAsync(tone).GetAwaiter().GetResult();
-        TimbreRig.AssertPcm(MarkupTimbreFixture.Expected(MarkupTimbreFixture.Tone, TimbreRig.Budget), first);
+        float[] pcm = fixture.Rig.StartAsync(restarted).GetAwaiter().GetResult();
+        TimbreRig.AssertPcm(MarkupTimbreFixture.Expected(MarkupTimbreFixture.Ramp, TimbreRig.Budget), pcm);
         Assert.Equal(0, fixture.Rig.Runtime.GetDiagnostics().SeeksCompleted);
 
         SetOpacity(fixture, border, 0.3f);
-        Assert.Equal(TimbrePlaybackState.Canceled, tone.State);
+        Assert.Equal(TimbrePlaybackState.Canceled, restarted.State);
     }
 
     [Fact]
-    public void TransportOnATerminalOccupantIsAnEmptySlot()
+    public void TransportOnACompletedSoundIsANoOp()
     {
         using MarkupTimbreFixture fixture = new(Button(
-            "@handle Music; @on Loaded { @timbre $Short as Music; } @on Click { @pause Music; @resume Music; @seek Music to 1ms; }"));
+            "@timbre $Sounds; @on Loaded { @play $self.timbre.Short; } @on Click { @pause $self.timbre.Short; @resume $self.timbre.Short; @seek $self.timbre.Short to 1ms; }"));
         TimbrePlayback music = Assert.Single(fixture.Started);
         fixture.Rig.ReadyAsync(music).GetAwaiter().GetResult();
         fixture.Rig.Output.Release();
@@ -158,34 +162,32 @@ public sealed class TimbreMarkupTransportTests
     }
 
     [Fact]
-    public void LoopDefaultsAndStartOverridesDoNotMutateTheClip()
+    public void LoopComesFromTheSound()
     {
-        using MarkupTimbreFixture fixture = new(Button(
-            "@on Click { @timbre $Looped; @timbre $Looped(Loop = false); @timbre $Tone(Loop = true); @timbre $Tone; }"));
+        using MarkupTimbreFixture fixture = new(Button("@timbre $Sounds; @on Click { @play $self.timbre.Looped; @play $self.timbre.Tone; }"));
 
         fixture.ClickAsync("Play").GetAwaiter().GetResult();
 
-        Assert.Equal([true, false, true, false], fixture.Started.Select(playback => playback.Loop));
-        Button button = fixture.All<Button>().Single();
-        Assert.True(button.FindResource(new ResourceId<TimbreClip>("Looped")).Loop);
-        Assert.False(button.FindResource(new ResourceId<TimbreClip>("Tone")).Loop);
-        Assert.Same(fixture.Started[0].Clip, fixture.Started[1].Clip);
+        Assert.Equal([true, false], fixture.Started.Select(playback => playback.Loop));
+        TimbreClipDefinition clip = fixture.All<Button>().Single().FindResource(new ResourceId<TimbreClipDefinition>("Sounds"));
+        Assert.True(clip.Sounds["Looped"].Sound.Loop);
+        Assert.False(clip.Sounds["Tone"].Sound.Loop);
     }
 
+    // "@timbre $Sounds(Cut = 400);" sets the parameter on every playback of
+    // a sound that uses it; other sounds and the clip are unchanged.
     [Fact]
-    public void OneHandleAcceptsClipsWithDifferentParameterSchemas()
+    public void AttachmentArgumentsReachOnlyTheSoundsThatUseTheParameter()
     {
-        using MarkupTimbreFixture fixture = new(Button(
-            "@handle Music; @on Click { @timbre $Filtered(Cut = 400) as Music; @timbre $Tone(Volume = 0.3) as Music; @timbre $Filtered as Music; }"));
+        using MarkupTimbreFixture fixture = new(Button("@timbre $Sounds(Cut = 400); @on Click { @play $self.timbre.Filtered; @play $self.timbre.Tone; }"));
 
         fixture.ClickAsync("Play").GetAwaiter().GetResult();
 
-        Assert.Equal(3, fixture.Started.Count);
-        Assert.Equal(
-            [TimbrePlaybackState.Canceled, TimbrePlaybackState.Canceled, TimbrePlaybackState.Pending],
-            fixture.Started.Select(playback => playback.State));
-        Assert.Equal(0.3f, fixture.Started[1].Volume);
-        Assert.Equal(["audio/ramp.wav", "audio/tone.wav", "audio/ramp.wav"], fixture.Started.Select(playback => playback.Clip.Source.Name));
+        Assert.Equal(["audio/ramp.wav", "audio/tone.wav"], fixture.Started.Select(playback => playback.Sound.Source.Name));
+        Assert.Equal(400f, fixture.Started[0].GetMotionSlotValue(1));
+        Assert.Empty(fixture.Started[1].Sound.Parameters);
+        TimbreClipDefinition clip = fixture.All<Button>().Single().FindResource(new ResourceId<TimbreClipDefinition>("Sounds"));
+        Assert.Equal(900f, ((TimbreParameter<float>)clip.Parameters.Single()).DefaultValue);
     }
 
     [Fact]
@@ -193,10 +195,10 @@ public sealed class TimbreMarkupTransportTests
     {
         using MarkupTimbreFixture fixture = new(
             Button(
-                "@handle First; @handle Second; " +
-                "@on Loaded { @timbre $Tone as First; @timbre $Tone as Second; } " +
-                "@on MouseEnter { @pause First; @pause Second; } " +
-                "@on Click { @timbre $Ramp; @timbre $Short; }"),
+                "@timbre $Sounds; " +
+                "@on Loaded { @play $self.timbre.Tone; @play $self.timbre.Looped; } " +
+                "@on MouseEnter { @pause $self.timbre.Tone; @pause $self.timbre.Looped; } " +
+                "@on Click { @play $self.timbre.Music; @play $self.timbre.Short; }"),
             configure: options => options.MaxVoices = 2);
         fixture.HoverAsync("Play").GetAwaiter().GetResult();
         Assert.All(fixture.Started, playback => Assert.Equal(TimbrePlaybackState.Paused, playback.State));
@@ -219,8 +221,9 @@ public sealed class TimbreMarkupTransportTests
     private static string Border(string aspect) =>
         "<Border Width=\"40\" Height=\"40\"><Border.Resources>" + Clips + "</Border.Resources><Border.Aspect>" + aspect + "</Border.Aspect></Border>";
 
-    // Replaces a markup clip resource with the same signal behind a reader
-    // whose first read waits for Open, so its seeks stay genuinely pending.
+    // Replaces one sound of the markup clip (before the Aspect is applied)
+    // with the same ramp signal behind a reader whose first read waits for
+    // Open, so its seeks stay genuinely pending.
     private sealed class GatedSource
     {
         private readonly TaskCompletionSource gate = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -232,8 +235,12 @@ public sealed class TimbreMarkupTransportTests
             {
                 Configure = reader => reader.ReadGate = token => source.gate.Task.WaitAsync(token)
             };
-            TimbreClip clip = TimbreRig.Clip(factory);
-            fixture.Element.Resources.SetResource(new ResourceId<TimbreClip>(name), clip);
+            ResourceId<TimbreClipDefinition> id = new("Sounds");
+            TimbreClipDefinition markup = fixture.Element.FindResource(id);
+            fixture.Element.Resources.SetResource(id, new TimbreClipDefinition(
+                markup.Name,
+                markup.Sounds.Values.Select(sound => sound.Name == name ? new TimbreClipSound(name, TimbreRig.Clip(factory), sound.AutoPlay) : sound),
+                markup.Parameters));
             return source;
         }
 

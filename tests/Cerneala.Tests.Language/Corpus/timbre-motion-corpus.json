@@ -3,161 +3,211 @@
     "id": "timbreMotion.approved",
     "family": "Target",
     "valid": true,
-    "note": "Approved index §2 example: intrinsic Volume and a custom float parameter animated after @timbre in the same body.",
-    "markup": "<Button Content=\"Confirm\"><Button.Resources><TimbreClip Name=\"ConfirmTimbre\">Source = \"audio/confirm.wav\"; Volume = 0.8; @parameter ToneCutoff: float = 1200; @parameter EchoMix: float = 0.15; @modifier LowPass { Cutoff = ToneCutoff; } @modifier Delay { Time = 120ms; Feedback = 0.20; Mix = EchoMix; }</TimbreClip></Button.Resources><Button.Aspect>@handle Playback; @on Click { @timbre $ConfirmTimbre(Volume = 0.2, ToneCutoff = 800) as Playback; @animate with Tween(300ms, EaseOut) { @to { $self.timbre.Playback.Volume = 0.8; $self.timbre.Playback.ToneCutoff = 6000; } } }</Button.Aspect></Button>"
+    "markup": "<Button Content=\"Confirm\"><Button.Resources><TimbreClip Name=\"ConfirmTimbre\">@parameter ToneCutoff: float = 1200; @parameter EchoMix: float = 0.15; @sound Confirm { Source = \"audio/confirm.wav\"; Volume = 0.8; @modifier LowPass { Cutoff = ToneCutoff; } @modifier Delay { Time = 120ms; Feedback = 0.20; Mix = EchoMix; } }</TimbreClip></Button.Resources><Button.Aspect>@timbre $ConfirmTimbre(ToneCutoff = 800); @on Click { @play $self.timbre.Confirm; @animate with Tween(300ms, EaseOut) { @to { $self.timbre.Confirm.Volume = 0.8; $self.timbre.Confirm.ToneCutoff = 6000; } } }</Button.Aspect></Button>"
   },
   {
     "id": "timbreMotion.fromAndCurrent",
     "family": "Target",
     "valid": true,
-    "note": "@from snapshot, current destination and a Spring spec.",
-    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Tone\">Source = \"audio/tone.wav\";</TimbreClip></Button.Resources><Button.Aspect>@handle Playback; @on Click { @timbre $Tone as Playback; @animate with Spring(520, 38, 1) { @from { $self.timbre.Playback.Volume = 0; } @to { $self.timbre.Playback.Volume = 1; } } } @on MouseEnter { @animate { @to { $self.timbre.Playback.Volume = current; } } }</Button.Aspect></Button>"
+    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Sounds\">@parameter Cut: float = 900; @sound Tone { Source = \"audio/tone.wav\"; @modifier LowPass { Cutoff = Cut; } } @sound Plain { Source = \"audio/plain.wav\"; }</TimbreClip></Button.Resources><Button.Aspect>@timbre $Sounds; @on Click { @play $self.timbre.Plain; @animate with Spring(520, 38, 1) { @from { $self.timbre.Plain.Volume = 0; } @to { $self.timbre.Plain.Volume = 1; } } } @on MouseEnter { @animate { @to { $self.timbre.Plain.Volume = current; } } }</Button.Aspect></Button>"
   },
   {
     "id": "timbreMotion.sharedParameter",
     "family": "Target",
     "valid": true,
-    "note": "One parameter feeds two modifier inputs; the animated value lies in their intersected range 0–0.95.",
-    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Wash\">Source = \"audio/wash.wav\"; @parameter Amount: float = 0.3; @modifier Delay { Feedback = Amount; Mix = Amount; }</TimbreClip></Button.Resources><Button.Aspect>@handle Playback; @on Click { @timbre $Wash as Playback; @animate { @to { $self.timbre.Playback.Amount = 0.9; } } }</Button.Aspect></Button>"
-  },
-  {
-    "id": "timbreMotion.commonSchema",
-    "family": "Target",
-    "valid": true,
-    "note": "A handle plays two clips; the parameter both declare is animatable within the intersection of their ranges.",
-    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"A\">Source = \"audio/a.wav\"; @parameter Cut: float = 900; @modifier LowPass { Cutoff = Cut; }</TimbreClip><TimbreClip Name=\"B\">Source = \"audio/b.wav\"; @parameter Cut: float = 300; @parameter Extra: float = 0.1; @modifier LowPass { Cutoff = Cut; } @modifier Delay { Mix = Extra; }</TimbreClip></Button.Resources><Button.Aspect>@handle Playback; @on Click { @timbre $A as Playback; @animate { @to { $self.timbre.Playback.Cut = 4000; } } } @on MouseEnter { @timbre $B as Playback; }</Button.Aspect></Button>"
+    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Wash\">@parameter Amount: float = 0.3; @sound Wash { Source = \"audio/wash.wav\"; @modifier Delay { Feedback = Amount; Mix = Amount; } }</TimbreClip></Button.Resources><Button.Aspect>@timbre $Wash; @on Click { @play $self.timbre.Wash; @animate { @to { $self.timbre.Wash.Amount = 0.9; } } }</Button.Aspect></Button>"
   },
   {
     "id": "timbreMotion.keyframesAndComposition",
     "family": "Target",
     "valid": true,
-    "note": "Keyframes and an audio-only @sequence started through the Timbre session.",
-    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Tone\">Source = \"audio/tone.wav\"; @parameter Cut: float = 900; @modifier LowPass { Cutoff = Cut; }</TimbreClip></Button.Resources><Button.Aspect>@handle Playback; @on Click { @timbre $Tone as Playback; @sequence { @keyframes duration 400ms { @animate 0%..100% { @from { $self.timbre.Playback.Volume = 0; } @to { $self.timbre.Playback.Volume = 1; } } } @animate { @to { $self.timbre.Playback.Cut = 200; } } } }</Button.Aspect></Button>"
+    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Sounds\">@parameter Cut: float = 900; @sound Tone { Source = \"audio/tone.wav\"; @modifier LowPass { Cutoff = Cut; } } @sound Plain { Source = \"audio/plain.wav\"; }</TimbreClip></Button.Resources><Button.Aspect>@timbre $Sounds; @on Click { @play $self.timbre.Tone; @sequence { @keyframes duration 400ms { @animate 0%..100% { @from { $self.timbre.Tone.Volume = 0; } @to { $self.timbre.Tone.Volume = 1; } } } @animate { @to { $self.timbre.Tone.Cut = 200; } } } }</Button.Aspect></Button>"
   },
   {
     "id": "timbreMotion.reactiveBranch",
     "family": "Target",
     "valid": true,
-    "note": "Audio Motion in @when/@if bodies rides the Timbre sidecar of the reactive rule.",
-    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Tone\">Source = \"audio/tone.wav\";</TimbreClip></Button.Resources><Button.Aspect>@handle Playback; @when $self.Opacity { @if value > 0.5 { @timbre $Tone as Playback; @animate { @to { $self.timbre.Playback.Volume = 0.3; } } } @if value < 0.5 { @animate { @to { $self.timbre.Playback.Volume = 0; } } } }</Button.Aspect></Button>"
+    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Sounds\">@parameter Cut: float = 900; @sound Tone { Source = \"audio/tone.wav\"; @modifier LowPass { Cutoff = Cut; } } @sound Plain { Source = \"audio/plain.wav\"; }</TimbreClip></Button.Resources><Button.Aspect>@timbre $Sounds; @when $self.Opacity { @if value > 0.5 { @play $self.timbre.Tone; @animate { @to { $self.timbre.Tone.Volume = 0.3; } } } @if value < 0.5 { @animate { @to { $self.timbre.Tone.Volume = 0; } } } }</Button.Aspect></Button>"
   },
   {
-    "id": "timbreMotion.handle.undeclared",
-    "family": "Reference",
-    "valid": false,
-    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Tone\">Source = \"audio/tone.wav\";</TimbreClip></Button.Resources><Button.Aspect>@handle Playback; @on Click { @timbre $Tone as Playback; @animate { @to { $self.timbre.Missing.Volume = 0.3; } } }</Button.Aspect></Button>",
-    "expect": [ { "id": "CERNEALAUI031", "message": "'Missing' is not a Timbre handle of this Aspect" } ]
+    "id": "timbreMotion.autoPlayWithoutCommand",
+    "family": "Target",
+    "valid": true,
+    "note": "The animated sound may have been started by AutoPlay; no @play in the same Aspect is needed.",
+    "markup": "<Border><Border.Aspect>@timbre { @sound Music { Source = \"audio/music.ogg\"; Loop = true; AutoPlay = true; } } @on MouseEnter { @animate { @to { $self.timbre.Music.Volume = 0.2; } } }</Border.Aspect></Border>"
   },
   {
-    "id": "timbreMotion.handle.empty",
-    "family": "Reference",
-    "valid": false,
-    "note": "Declared but never started by @timbre: no clip, so no audio identity to animate.",
-    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Tone\">Source = \"audio/tone.wav\";</TimbreClip></Button.Resources><Button.Aspect>@handle Playback; @handle Idle; @on Click { @timbre $Tone as Playback; @animate { @to { $self.timbre.Idle.Volume = 0.3; } } }</Button.Aspect></Button>",
-    "expect": [ { "id": "CERNEALAUI031", "message": "'Idle' is not a Timbre handle of this Aspect" } ]
+    "id": "timbreMotion.namedTarget",
+    "family": "Target",
+    "valid": true,
+    "markup": "<StackPanel><Border Name=\"Speaker\"><Border.Aspect>@timbre { @sound Music { Source = \"audio/music.ogg\"; Loop = true; AutoPlay = true; } }</Border.Aspect></Border><Button Content=\"Quiet\"><Button.Aspect>@on Click { @animate with Tween(500ms, Linear) { @to { $Speaker.timbre.Music.Volume = 0.1; } } }</Button.Aspect></Button></StackPanel>"
   },
   {
-    "id": "timbreMotion.handle.motionKind",
+    "id": "timbreMotion.sound.missing",
     "family": "Reference",
     "valid": false,
-    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Tone\">Source = \"audio/tone.wav\";</TimbreClip><MotionClip Name=\"Pulse\" TargetType=\"Button\">@animate { @to { Opacity = 0.5; } }</MotionClip></Button.Resources><Button.Aspect>@handle Playback; @handle Visual; @on Click { @timbre $Tone as Playback; @run $Pulse as Visual; } @on MouseEnter { @animate { @to { $self.timbre.Visual.Volume = 0.3; } } }</Button.Aspect></Button>",
-    "expect": [ { "id": "CERNEALAUI031", "message": "'Visual' is not a Timbre handle of this Aspect" } ]
+    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Sounds\">@parameter Cut: float = 900; @sound Tone { Source = \"audio/tone.wav\"; @modifier LowPass { Cutoff = Cut; } } @sound Plain { Source = \"audio/plain.wav\"; }</TimbreClip></Button.Resources><Button.Aspect>@timbre $Sounds; @on Click { @animate { @to { $self.timbre.Missing.Volume = 0.3; } } }</Button.Aspect></Button>",
+    "expect": [
+      {
+        "id": "CERNEALAUI031",
+        "message": "'$self' has no sound 'Missing' in its Aspect."
+      }
+    ]
+  },
+  {
+    "id": "timbreMotion.sound.namedMissing",
+    "family": "Reference",
+    "valid": false,
+    "markup": "<StackPanel><Border Name=\"Speaker\"><Border.Aspect>@timbre { @sound Music { Source = \"audio/music.ogg\"; } }</Border.Aspect></Border><Button Content=\"Quiet\"><Button.Aspect>@on Click { @animate { @to { $Speaker.timbre.Missing.Volume = 0.1; } } }</Button.Aspect></Button></StackPanel>",
+    "expect": [
+      {
+        "id": "CERNEALAUI031",
+        "message": "'$Speaker' has no sound 'Missing' in its Aspect."
+      }
+    ]
+  },
+  {
+    "id": "timbreMotion.parameter.notUsed",
+    "family": "Reference",
+    "valid": false,
+    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Sounds\">@parameter Cut: float = 900; @sound Tone { Source = \"audio/tone.wav\"; @modifier LowPass { Cutoff = Cut; } } @sound Plain { Source = \"audio/plain.wav\"; }</TimbreClip></Button.Resources><Button.Aspect>@timbre $Sounds; @on Click { @play $self.timbre.Plain; @animate { @to { $self.timbre.Plain.Cut = 300; } } }</Button.Aspect></Button>",
+    "expect": [
+      {
+        "id": "CERNEALAUI031",
+        "message": "Sound 'Plain' does not use parameter 'Cut'."
+      }
+    ]
   },
   {
     "id": "timbreMotion.parameter.undeclared",
     "family": "Reference",
     "valid": false,
-    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Tone\">Source = \"audio/tone.wav\";</TimbreClip></Button.Resources><Button.Aspect>@handle Playback; @on Click { @timbre $Tone as Playback; @animate { @to { $self.timbre.Playback.Cutoff = 300; } } }</Button.Aspect></Button>",
-    "expect": [ { "id": "CERNEALAUI031", "message": "Timbre handle 'Playback' has no animatable parameter 'Cutoff'" } ]
+    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Sounds\">@parameter Cut: float = 900; @sound Tone { Source = \"audio/tone.wav\"; @modifier LowPass { Cutoff = Cut; } } @sound Plain { Source = \"audio/plain.wav\"; }</TimbreClip></Button.Resources><Button.Aspect>@timbre $Sounds; @on Click { @play $self.timbre.Tone; @animate { @to { $self.timbre.Tone.Cutoff = 300; } } }</Button.Aspect></Button>",
+    "expect": [
+      {
+        "id": "CERNEALAUI031",
+        "message": "Sound 'Tone' does not use parameter 'Cutoff'."
+      }
+    ]
   },
   {
     "id": "timbreMotion.parameter.elementProperty",
     "family": "Reference",
     "valid": false,
-    "note": "A .timbre. path never falls back to a property of the element.",
-    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Tone\">Source = \"audio/tone.wav\";</TimbreClip></Button.Resources><Button.Aspect>@handle Playback; @on Click { @timbre $Tone as Playback; @animate { @to { $self.timbre.Playback.Opacity = 0.5; } } }</Button.Aspect></Button>",
-    "expect": [ { "id": "CERNEALAUI031", "message": "Timbre handle 'Playback' has no animatable parameter 'Opacity'" } ]
+    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Sounds\">@parameter Cut: float = 900; @sound Tone { Source = \"audio/tone.wav\"; @modifier LowPass { Cutoff = Cut; } } @sound Plain { Source = \"audio/plain.wav\"; }</TimbreClip></Button.Resources><Button.Aspect>@timbre $Sounds; @on Click { @play $self.timbre.Tone; @animate { @to { $self.timbre.Tone.Opacity = 0.5; } } }</Button.Aspect></Button>",
+    "expect": [
+      {
+        "id": "CERNEALAUI031",
+        "message": "Sound 'Tone' does not use parameter 'Opacity'."
+      }
+    ]
   },
   {
     "id": "timbreMotion.parameter.notTarget",
     "family": "Reference",
     "valid": false,
-    "note": "Loop, Source and Position are not Motion targets.",
-    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Tone\">Source = \"audio/tone.wav\";</TimbreClip></Button.Resources><Button.Aspect>@handle Playback; @on Click { @timbre $Tone as Playback; @animate { @to { $self.timbre.Playback.Loop = 1; } } }</Button.Aspect></Button>",
-    "expect": [ { "id": "CERNEALAUI031", "message": "Timbre handle 'Playback' has no animatable parameter 'Loop'" } ]
-  },
-  {
-    "id": "timbreMotion.parameter.incompatibleSchema",
-    "family": "Reference",
-    "valid": false,
-    "note": "Cut is missing from one clip the handle can play.",
-    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"A\">Source = \"audio/a.wav\"; @parameter Cut: float = 900; @modifier LowPass { Cutoff = Cut; }</TimbreClip><TimbreClip Name=\"B\">Source = \"audio/b.wav\";</TimbreClip></Button.Resources><Button.Aspect>@handle Playback; @on Click { @timbre $A as Playback; @animate { @to { $self.timbre.Playback.Cut = 4000; } } } @on MouseEnter { @timbre $B as Playback; }</Button.Aspect></Button>",
-    "expect": [ { "id": "CERNEALAUI031", "message": "Timbre handle 'Playback' has no animatable parameter 'Cut'" } ]
+    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Sounds\">@parameter Cut: float = 900; @sound Tone { Source = \"audio/tone.wav\"; @modifier LowPass { Cutoff = Cut; } } @sound Plain { Source = \"audio/plain.wav\"; }</TimbreClip></Button.Resources><Button.Aspect>@timbre $Sounds; @on Click { @play $self.timbre.Tone; @animate { @to { $self.timbre.Tone.Loop = 1; } } }</Button.Aspect></Button>",
+    "expect": [
+      {
+        "id": "CERNEALAUI031",
+        "message": "Sound 'Tone' does not use parameter 'Loop'."
+      }
+    ]
   },
   {
     "id": "timbreMotion.value.type",
     "family": "Value",
     "valid": false,
-    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Tone\">Source = \"audio/tone.wav\";</TimbreClip></Button.Resources><Button.Aspect>@handle Playback; @on Click { @timbre $Tone as Playback; @animate { @to { $self.timbre.Playback.Volume = loud; } } }</Button.Aspect></Button>",
-    "expect": [ { "id": "CERNEALAUI032", "message": "Timbre Motion value 'loud' for 'Playback.Volume' must be current or a number within 0–1" } ]
+    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Sounds\">@parameter Cut: float = 900; @sound Tone { Source = \"audio/tone.wav\"; @modifier LowPass { Cutoff = Cut; } } @sound Plain { Source = \"audio/plain.wav\"; }</TimbreClip></Button.Resources><Button.Aspect>@timbre $Sounds; @on Click { @play $self.timbre.Tone; @animate { @to { $self.timbre.Tone.Volume = loud; } } }</Button.Aspect></Button>",
+    "expect": [
+      {
+        "id": "CERNEALAUI032",
+        "message": "Timbre Motion value 'loud' for 'Tone.Volume' must be current or a number within 0–1"
+      }
+    ]
   },
   {
     "id": "timbreMotion.value.volumeRange",
     "family": "Value",
     "valid": false,
-    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Tone\">Source = \"audio/tone.wav\";</TimbreClip></Button.Resources><Button.Aspect>@handle Playback; @on Click { @timbre $Tone as Playback; @animate { @from { $self.timbre.Playback.Volume = 0; } @to { $self.timbre.Playback.Volume = 1.5; } } }</Button.Aspect></Button>",
-    "expect": [ { "id": "CERNEALAUI032", "message": "Timbre Motion value '1.5' for 'Playback.Volume' must be current or a number within 0–1" } ]
+    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Sounds\">@parameter Cut: float = 900; @sound Tone { Source = \"audio/tone.wav\"; @modifier LowPass { Cutoff = Cut; } } @sound Plain { Source = \"audio/plain.wav\"; }</TimbreClip></Button.Resources><Button.Aspect>@timbre $Sounds; @on Click { @play $self.timbre.Tone; @animate { @from { $self.timbre.Tone.Volume = 0; } @to { $self.timbre.Tone.Volume = 1.5; } } }</Button.Aspect></Button>",
+    "expect": [
+      {
+        "id": "CERNEALAUI032",
+        "message": "Timbre Motion value '1.5' for 'Tone.Volume' must be current or a number within 0–1"
+      }
+    ]
   },
   {
     "id": "timbreMotion.value.parameterRange",
     "family": "Value",
     "valid": false,
-    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Tone\">Source = \"audio/tone.wav\"; @parameter Cut: float = 900; @modifier LowPass { Cutoff = Cut; }</TimbreClip></Button.Resources><Button.Aspect>@handle Playback; @on Click { @timbre $Tone as Playback; @animate { @to { $self.timbre.Playback.Cut = 5; } } }</Button.Aspect></Button>",
-    "expect": [ { "id": "CERNEALAUI032", "message": "Timbre Motion value '5' for 'Playback.Cut' must be current or a number within 20–20000" } ]
+    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Sounds\">@parameter Cut: float = 900; @sound Tone { Source = \"audio/tone.wav\"; @modifier LowPass { Cutoff = Cut; } } @sound Plain { Source = \"audio/plain.wav\"; }</TimbreClip></Button.Resources><Button.Aspect>@timbre $Sounds; @on Click { @play $self.timbre.Tone; @animate { @to { $self.timbre.Tone.Cut = 5; } } }</Button.Aspect></Button>",
+    "expect": [
+      {
+        "id": "CERNEALAUI032",
+        "message": "Timbre Motion value '5' for 'Tone.Cut' must be current or a number within 20–20000"
+      }
+    ]
   },
   {
     "id": "timbreMotion.value.binding",
     "family": "Value",
     "valid": false,
-    "note": "Bindings are not approved audio Motion values.",
-    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Tone\">Source = \"audio/tone.wav\";</TimbreClip></Button.Resources><Button.Aspect>@handle Playback; @on Click { @timbre $Tone as Playback; @animate { @to { $self.timbre.Playback.Volume = $self.Opacity; } } }</Button.Aspect></Button>",
-    "expect": [ { "id": "CERNEALAUI032", "message": "Timbre Motion value '$self.Opacity' for 'Playback.Volume' must be current or a number" } ]
+    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Sounds\">@parameter Cut: float = 900; @sound Tone { Source = \"audio/tone.wav\"; @modifier LowPass { Cutoff = Cut; } } @sound Plain { Source = \"audio/plain.wav\"; }</TimbreClip></Button.Resources><Button.Aspect>@timbre $Sounds; @on Click { @play $self.timbre.Tone; @animate { @to { $self.timbre.Tone.Volume = $self.Opacity; } } }</Button.Aspect></Button>",
+    "expect": [
+      {
+        "id": "CERNEALAUI032",
+        "message": "Timbre Motion value '$self.Opacity' for 'Tone.Volume' must be current or a number"
+      }
+    ]
   },
   {
-    "id": "timbreMotion.shape.missingParameter",
+    "id": "timbreMotion.shape.missingProperty",
     "family": "Target",
     "valid": false,
-    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Tone\">Source = \"audio/tone.wav\";</TimbreClip></Button.Resources><Button.Aspect>@handle Playback; @on Click { @timbre $Tone as Playback; @animate { @to { $self.timbre.Playback = 0.3; } } }</Button.Aspect></Button>",
-    "expect": [ { "id": "CERNEALAUI021", "message": "Timbre Motion targets must be $self.timbre.Handle.Parameter." } ]
-  },
-  {
-    "id": "timbreMotion.shape.namedOwner",
-    "family": "Target",
-    "valid": false,
-    "note": "$Name.timbre and $owner.timbre paths are not approved.",
-    "markup": "<StackPanel><StackPanel.Resources><TimbreClip Name=\"Tone\">Source = \"audio/tone.wav\";</TimbreClip></StackPanel.Resources><Button Name=\"Other\" Content=\"o\" /><Button Content=\"x\"><Button.Aspect>@handle Playback; @on Click { @timbre $Tone as Playback; @animate { @to { $Other.timbre.Playback.Volume = 0.3; } } }</Button.Aspect></Button></StackPanel>",
-    "expect": [ { "id": "CERNEALAUI021", "message": "Timbre Motion targets must be $self.timbre.Handle.Parameter." } ]
+    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Sounds\">@parameter Cut: float = 900; @sound Tone { Source = \"audio/tone.wav\"; @modifier LowPass { Cutoff = Cut; } } @sound Plain { Source = \"audio/plain.wav\"; }</TimbreClip></Button.Resources><Button.Aspect>@timbre $Sounds; @on Click { @play $self.timbre.Tone; @animate { @to { $self.timbre.Tone = 0.3; } } }</Button.Aspect></Button>",
+    "expect": [
+      {
+        "id": "CERNEALAUI021",
+        "message": "Timbre Motion targets must be $self.timbre.Sound.Property, $owner.timbre.Sound.Property or $Name.timbre.Sound.Property."
+      }
+    ]
   },
   {
     "id": "timbreMotion.context.set",
     "family": "Context",
     "valid": false,
-    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Tone\">Source = \"audio/tone.wav\";</TimbreClip></Button.Resources><Button.Aspect>@handle Playback; @on Click { @timbre $Tone as Playback; @set { $self.timbre.Playback.Volume = 0.3; } }</Button.Aspect></Button>",
-    "expect": [ { "id": "CERNEALAUI033", "message": "Timbre Motion targets are available only in @from and @to blocks of @animate." } ]
+    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Sounds\">@parameter Cut: float = 900; @sound Tone { Source = \"audio/tone.wav\"; @modifier LowPass { Cutoff = Cut; } } @sound Plain { Source = \"audio/plain.wav\"; }</TimbreClip></Button.Resources><Button.Aspect>@timbre $Sounds; @on Click { @play $self.timbre.Tone; @set { $self.timbre.Tone.Volume = 0.3; } }</Button.Aspect></Button>",
+    "expect": [
+      {
+        "id": "CERNEALAUI033",
+        "message": "Timbre Motion targets are available only in @from and @to blocks of @animate."
+      }
+    ]
   },
   {
     "id": "timbreMotion.context.motionClip",
     "family": "Context",
     "valid": false,
-    "markup": "<Button Content=\"x\"><Button.Resources><MotionClip Name=\"Fade\" TargetType=\"Button\">@animate { @to { $self.timbre.Playback.Volume = 0.3; } }</MotionClip></Button.Resources></Button>",
-    "expect": [ { "id": "CERNEALAUI033", "message": "Timbre Motion targets are available only in @animate bodies of an Aspect." } ]
+    "markup": "<Button Content=\"x\"><Button.Resources><MotionClip Name=\"Fade\" TargetType=\"Button\">@animate { @to { $self.timbre.Tone.Volume = 0.3; } }</MotionClip></Button.Resources></Button>",
+    "expect": [
+      {
+        "id": "CERNEALAUI033",
+        "message": "Timbre Motion targets are available only in @animate bodies of an Aspect."
+      }
+    ]
   },
   {
     "id": "timbreMotion.context.mixed",
     "family": "Context",
     "valid": false,
-    "note": "Audio and element targets keep separate lifecycles, so one execution cannot animate both.",
-    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Tone\">Source = \"audio/tone.wav\";</TimbreClip></Button.Resources><Button.Aspect>@handle Playback; @on Click { @timbre $Tone as Playback; @animate { @to { $self.timbre.Playback.Volume = 0.3; Opacity = 0.5; } } }</Button.Aspect></Button>",
-    "expect": [ { "id": "CERNEALAUI021", "message": "A Motion execution cannot mix Timbre targets with element, Prism or MotionClip targets" } ]
+    "markup": "<Button Content=\"x\"><Button.Resources><TimbreClip Name=\"Sounds\">@parameter Cut: float = 900; @sound Tone { Source = \"audio/tone.wav\"; @modifier LowPass { Cutoff = Cut; } } @sound Plain { Source = \"audio/plain.wav\"; }</TimbreClip></Button.Resources><Button.Aspect>@timbre $Sounds; @on Click { @play $self.timbre.Tone; @animate { @to { $self.timbre.Tone.Volume = 0.3; Opacity = 0.5; } } }</Button.Aspect></Button>",
+    "expect": [
+      {
+        "id": "CERNEALAUI021",
+        "message": "A Motion execution cannot mix Timbre targets with element, Prism or MotionClip targets"
+      }
+    ]
   }
 ]

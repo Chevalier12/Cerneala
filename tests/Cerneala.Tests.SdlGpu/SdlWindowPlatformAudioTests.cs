@@ -208,7 +208,7 @@ public sealed class SdlWindowPlatformAudioTests : IDisposable
         }
     }
 
-    private static TimbreClip Constant(int frames, float value) =>
+    private static TimbreSound Constant(int frames, float value) =>
         new(TimbreSource.FromReader(() => new ConstantReader(frames, value), $"constant-{frames}-{value}"));
 
     private sealed class ConstantReader(int frames, float value) : TimbreReader

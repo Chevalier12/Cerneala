@@ -26,7 +26,7 @@ public sealed class TimbreDecoderIntegrationTests
     {
         ObservedSource source = new(Path.IsPathRooted(name) ? name : DecodingCorpus.PathOf(name));
         float[] decoded = source.Decode();
-        TimbreClip clip = new(
+        TimbreSound clip = new(
             TimbreSource.FromStream(_ => new ObservedFileStream(source.Path), "integration"),
             volume: 0.7f,
             loop: true,

@@ -56,15 +56,15 @@ internal static class TimbreMotionBenchmarkRunner
             Update(host);
         }
 
-        List<(TimbreClip Clip, TimbreParameter<float> Cutoff)> clips = [];
+        List<(TimbreSound Clip, TimbreParameter<float> Cutoff)> clips = [];
         for (int index = 0; index < 4; index++)
         {
             int seed = index;
             clips.Add(Clip(() => new TimbreCoreBenchmarkRunner.NoiseReader(2 * 48000, seed), $"preloaded-{index}", TimbreLoading.Preload));
         }
 
-        (TimbreClip streaming, TimbreParameter<float> streamingCutoff) = Clip(() => new TimbreCoreBenchmarkRunner.NoiseReader(60 * 48000, seed: 99), "streaming", TimbreLoading.Streaming);
-        foreach ((TimbreClip clip, _) in clips)
+        (TimbreSound streaming, TimbreParameter<float> streamingCutoff) = Clip(() => new TimbreCoreBenchmarkRunner.NoiseReader(60 * 48000, seed: 99), "streaming", TimbreLoading.Streaming);
+        foreach ((TimbreSound clip, _) in clips)
         {
             runtime.PrepareAsync(clip).GetAwaiter().GetResult();
         }
@@ -73,7 +73,7 @@ internal static class TimbreMotionBenchmarkRunner
         List<TimbrePlayback> voices = [];
         for (int index = 0; index < PreloadedVoices + StreamingVoices; index++)
         {
-            (TimbreClip clip, TimbreParameter<float> cutoff) = index < PreloadedVoices ? clips[index % clips.Count] : (streaming, streamingCutoff);
+            (TimbreSound clip, TimbreParameter<float> cutoff) = index < PreloadedVoices ? clips[index % clips.Count] : (streaming, streamingCutoff);
             TimbrePlayback voice = owner.Timbre.Play(clip, start => start.Volume = 0.3f);
             if (control == "audio")
             {
@@ -201,10 +201,10 @@ internal static class TimbreMotionBenchmarkRunner
         Console.WriteLine(json);
     }
 
-    private static (TimbreClip Clip, TimbreParameter<float> Cutoff) Clip(Func<TimbreReader> open, string name, TimbreLoading loading)
+    private static (TimbreSound Clip, TimbreParameter<float> Cutoff) Clip(Func<TimbreReader> open, string name, TimbreLoading loading)
     {
         TimbreParameter<float> cutoff = new("Cutoff", 2000f);
-        TimbreClip clip = new(
+        TimbreSound clip = new(
             TimbreSource.FromReader(open, name),
             volume: 0.5f,
             loop: true,

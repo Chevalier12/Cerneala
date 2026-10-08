@@ -1,23 +1,27 @@
 <UserControl>
     <UserControl.Resources>
-        <TimbreClip Name="Wav">Source = "timbre/motion-tone-44100.wav";</TimbreClip>
-        <TimbreClip Name="Mp3">Source = "timbre/mp3-mpeg1-44100-stereo-cbr128.mp3";</TimbreClip>
-        <TimbreClip Name="Vorbis">Source = "timbre/vorbis-48000-stereo-q2.ogg";</TimbreClip>
-        <TimbreClip Name="Opus">Source = "timbre/opus-stereo-48000-96k.opus";</TimbreClip>
-        <TimbreClip Name="LongMp3">Source = "timbre/mp3-long-22050-mono-cbr64.mp3";</TimbreClip>
+        <TimbreClip Name="Fades">
+            @sound Wav { Source = "timbre/motion-tone-44100.wav"; Volume = 0.2; }
+            @sound Mp3 { Source = "timbre/mp3-mpeg1-44100-stereo-cbr128.mp3"; Volume = 0.2; }
+            @sound Vorbis { Source = "timbre/vorbis-48000-stereo-q2.ogg"; Volume = 0.2; }
+            @sound Opus { Source = "timbre/opus-stereo-48000-96k.opus"; Volume = 0.2; }
+        </TimbreClip>
         <TimbreClip Name="Filtered">
-            Source = "timbre/motion-tone-44100.wav";
             @parameter ToneCutoff: float = 4000;
             @parameter EchoMix: float = 0.1;
-            @modifier LowPass { Cutoff = ToneCutoff; }
-            @modifier Delay { Time = 60ms; Feedback = 0.3; Mix = EchoMix; }
+            @sound Filtered
+            {
+                Source = "timbre/motion-tone-44100.wav";
+                @modifier LowPass { Cutoff = ToneCutoff; }
+                @modifier Delay { Time = 60ms; Feedback = 0.3; Mix = EchoMix; }
+            }
         </TimbreClip>
         <Aspect Name="Fade" TargetType="Button">
-            @handle Playback;
+            @timbre $Fades;
             @on Click
             {
-                @timbre $Wav(Volume = 0.2) as Playback;
-                @animate with Tween(400ms, Linear) { @to { $self.timbre.Playback.Volume = 0.8; } }
+                @play $self.timbre.Wav;
+                @animate with Tween(400ms, Linear) { @to { $self.timbre.Wav.Volume = 0.8; } }
             }
         </Aspect>
     </UserControl.Resources>
@@ -26,43 +30,43 @@
             <Button Servo.Id="fade-wav" Content="WAV" Width="90" Height="36" Margin="0,0,6,6" Aspect="$Fade" />
             <Button Servo.Id="fade-mp3" Content="MP3" Width="90" Height="36" Margin="0,0,6,6">
                 <Button.Aspect>
-                    @handle Playback;
+                    @timbre $Fades;
                     @on Click
                     {
-                        @timbre $Mp3(Volume = 0.2) as Playback;
-                        @animate with Tween(400ms, Linear) { @to { $self.timbre.Playback.Volume = 0.8; } }
+                        @play $self.timbre.Mp3;
+                        @animate with Tween(400ms, Linear) { @to { $self.timbre.Mp3.Volume = 0.8; } }
                     }
                 </Button.Aspect>
             </Button>
             <Button Servo.Id="fade-vorbis" Content="Vorbis" Width="90" Height="36" Margin="0,0,6,6">
                 <Button.Aspect>
-                    @handle Playback;
+                    @timbre $Fades;
                     @on Click
                     {
-                        @timbre $Vorbis(Volume = 0.2) as Playback;
-                        @animate with Tween(400ms, Linear) { @to { $self.timbre.Playback.Volume = 0.8; } }
+                        @play $self.timbre.Vorbis;
+                        @animate with Tween(400ms, Linear) { @to { $self.timbre.Vorbis.Volume = 0.8; } }
                     }
                 </Button.Aspect>
             </Button>
             <Button Servo.Id="fade-opus" Content="Opus" Width="90" Height="36" Margin="0,0,6,6">
                 <Button.Aspect>
-                    @handle Playback;
+                    @timbre $Fades;
                     @on Click
                     {
-                        @timbre $Opus(Volume = 0.2) as Playback;
-                        @animate with Tween(400ms, Linear) { @to { $self.timbre.Playback.Volume = 0.8; } }
+                        @play $self.timbre.Opus;
+                        @animate with Tween(400ms, Linear) { @to { $self.timbre.Opus.Volume = 0.8; } }
                     }
                 </Button.Aspect>
             </Button>
             <Button Servo.Id="sweep-filtered" Content="Filtered" Width="90" Height="36" Margin="0,0,6,6">
                 <Button.Aspect>
-                    @handle Playback;
+                    @timbre $Filtered;
                     @on Click
                     {
-                        @timbre $Filtered as Playback;
+                        @play $self.timbre.Filtered;
                         @animate with Tween(300ms, Linear)
                         {
-                            @to { $self.timbre.Playback.ToneCutoff = 200; $self.timbre.Playback.EchoMix = 0.6; }
+                            @to { $self.timbre.Filtered.ToneCutoff = 200; $self.timbre.Filtered.EchoMix = 0.6; }
                         }
                     }
                 </Button.Aspect>
@@ -78,32 +82,35 @@
         </StackPanel>
         <Border Name="Transport" Servo.Id="transport-area" Height="40" Background="#E0E0E0">
             <Border.Aspect>
-                @handle Music;
-                @handle Looper;
+                @timbre
+                {
+                    @sound Music { Source = "timbre/mp3-long-22050-mono-cbr64.mp3"; Volume = 0.1; }
+                    @sound Looper { Source = "timbre/motion-tone-44100.wav"; Loop = true; Volume = 0.2; }
+                }
                 @when $PlayBox.IsChecked
                 {
                     @if $PlayBox.IsChecked == true
                     {
-                        @timbre $LongMp3(Volume = 0.1) as Music;
+                        @play $self.timbre.Music;
                         @animate with Tween(3000ms, Linear) { @to { $self.timbre.Music.Volume = 0.9; } }
                     }
                 }
                 @when $PauseBox.IsChecked
                 {
-                    @if $PauseBox.IsChecked == true { @pause Music; }
-                    @if $PauseBox.IsChecked == false { @resume Music; }
+                    @if $PauseBox.IsChecked == true { @pause $self.timbre.Music; }
+                    @if $PauseBox.IsChecked == false { @resume $self.timbre.Music; }
                 }
-                @when $SeekBox.IsChecked { @if $SeekBox.IsChecked == true { @seek Music to 60s; } }
-                @when $StopBox.IsChecked { @if $StopBox.IsChecked == true { @cancel Music; } }
+                @when $SeekBox.IsChecked { @if $SeekBox.IsChecked == true { @seek $self.timbre.Music to 60s; } }
+                @when $StopBox.IsChecked { @if $StopBox.IsChecked == true { @stop $self.timbre.Music; } }
                 @when $LoopBox.IsChecked
                 {
                     @if $LoopBox.IsChecked == true
                     {
-                        @timbre $Wav(Loop = true, Volume = 0.2) as Looper;
+                        @play $self.timbre.Looper;
                         @animate with Tween(600ms, Linear) { @to { $self.timbre.Looper.Volume = 0.8; } }
                     }
                 }
-                @when $LoopStopBox.IsChecked { @if $LoopStopBox.IsChecked == true { @cancel Looper; } }
+                @when $LoopStopBox.IsChecked { @if $LoopStopBox.IsChecked == true { @stop $self.timbre.Looper; } }
                 @on MouseEnter
                 {
                     @animate with Tween(200ms, Linear) { @to { $self.timbre.Looper.Volume = 0.3; } }

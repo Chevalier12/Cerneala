@@ -48,7 +48,7 @@ public sealed partial class UiMarkupGenerator
 
     private sealed partial class GenerationScope
     {
-        private readonly Dictionary<ResourceScope, Dictionary<string, BoundPrismComposition>>
+        private readonly Dictionary<ResourceScope, Dictionary<string, BoundPrismClip>>
             boundPrismResources = new();
         private readonly Dictionary<MarkupElement, BoundPrismApplication> boundPrismApplications = new();
         private int prismBindingDiagnosticCount;
@@ -136,39 +136,58 @@ public sealed partial class UiMarkupGenerator
                 return;
             }
 
-            foreach (KeyValuePair<MarkupElement, DirectiveParseResult> pair in directiveContent)
+            // The @prism of an Aspect is bound once, keyed by the Aspect body;
+            // every element that gets the Aspect statically shares it, so
+            // Prism Motion targets resolve against the element.
+            foreach (AspectResource aspect in allAspects
+                .Where(candidate => candidate.Prism is not null && !importedAspects.Contains(candidate))
+                .GroupBy(candidate => candidate.Source)
+                .Select(group => group.First()))
             {
-                MarkupElement owner = pair.Key;
-                DirectiveParseResult result = pair.Value;
-                if (result.PrismDiagnostics.Count > 0)
-                {
-                    continue;
-                }
+                BindPrismApplication(aspect.DeclaringElement ?? aspect.Source, aspect.Prism!.Application, aspect.Source);
+            }
 
-                DirectivePrismNode[] applications =
-                    result.Nodes.OfType<DirectivePrismNode>().ToArray();
-                if (applications.Length > 1)
+            foreach (MarkupElement element in document.Root.DescendantsAndSelf())
+            {
+                if (FindStaticPrismAspect(element) is AspectResource aspect &&
+                    boundPrismApplications.TryGetValue(aspect.Source, out BoundPrismApplication application) &&
+                    !boundPrismApplications.ContainsKey(element))
                 {
-                    ReportPrismBinding(
-                        PrismStructureDiagnostic,
-                        applications[1].Application.Location,
-                        "An element may declare only one @prism application.");
-                    continue;
-                }
-
-                if (applications.Length == 1)
-                {
-                    BindPrismApplication(owner, applications[0].Application);
+                    boundPrismApplications.Add(element, application);
                 }
             }
         }
 
+        // The Aspect an element gets statically and whose @prism it shows: its
+        // inline Aspect, its Aspect="$Name" resource, else its default Aspect.
+        private AspectResource? FindStaticPrismAspect(MarkupElement element)
+        {
+            if (inlineAspects.TryGetValue(element, out AspectResource? inline))
+            {
+                return inline;
+            }
+
+            if (element.Attribute("Aspect") is MarkupAttribute attribute)
+            {
+                string value = attribute.Value.Trim();
+                return value.Length > 1 && value[0] == '$' &&
+                    TryResolveResource(attribute, value.Substring(1), out NamedSymbol symbol) &&
+                    symbol.Source is AspectResource named
+                    ? named
+                    : null;
+            }
+
+            return TryResolveDefaultAspect(element, element.Name.LocalName, out AspectResource defaultAspect)
+                ? defaultAspect
+                : null;
+        }
+
         private void BindPrismResources(ResourceScope scope)
         {
-            Dictionary<string, BoundPrismComposition> resources =
+            Dictionary<string, BoundPrismClip> resources =
                 new(StringComparer.Ordinal);
             boundPrismResources.Add(scope, resources);
-            foreach (PrismCompositionResourceSyntax syntax in scope.PrismCompositions)
+            foreach (PrismClipResourceSyntax syntax in scope.PrismClips)
             {
                 if (resources.ContainsKey(syntax.Name) ||
                     scope.NamedResources.ContainsKey(syntax.Name))
@@ -181,7 +200,7 @@ public sealed partial class UiMarkupGenerator
                 }
 
                 int diagnosticsBefore = prismBindingDiagnosticCount;
-                BoundPrismComposition composition = BindPrismComposition(
+                BoundPrismClip composition = BindPrismClip(
                     syntax.Name,
                     syntax.Composition,
                     syntax.Source,
@@ -193,7 +212,9 @@ public sealed partial class UiMarkupGenerator
             }
         }
 
-        private void BindPrismApplication(MarkupElement owner, PrismApplicationSyntax syntax)
+        // `owner` scopes resource lookups and bindings; the application is
+        // registered under `key` (the Aspect body for an Aspect's @prism).
+        private void BindPrismApplication(MarkupElement owner, PrismApplicationSyntax syntax, MarkupElement? key = null)
         {
             int diagnosticsBefore = prismBindingDiagnosticCount;
             BoundPrismApplication? application = syntax switch
@@ -205,7 +226,7 @@ public sealed partial class UiMarkupGenerator
             if (application is not null &&
                 prismBindingDiagnosticCount == diagnosticsBefore)
             {
-                boundPrismApplications.Add(owner, application);
+                boundPrismApplications.Add(key ?? owner, application);
             }
         }
 
@@ -216,7 +237,7 @@ public sealed partial class UiMarkupGenerator
             string name = "InlinePrism" +
                 nextInlinePrismId.ToString(CultureInfo.InvariantCulture);
             nextInlinePrismId++;
-            BoundPrismComposition composition = BindPrismComposition(
+            BoundPrismClip composition = BindPrismClip(
                 name,
                 syntax.Composition,
                 owner,
@@ -232,12 +253,12 @@ public sealed partial class UiMarkupGenerator
             MarkupElement owner,
             PrismResourceApplicationSyntax syntax)
         {
-            if (!TryResolvePrismComposition(owner, syntax.ResourceName, out BoundPrismComposition composition))
+            if (!TryResolvePrismClip(owner, syntax.ResourceName, out BoundPrismClip composition))
             {
                 ReportPrismBinding(
                     PrismUnknownSymbolDiagnostic,
                     syntax.ResourceLocation,
-                    "Unknown PrismComposition resource '$" + syntax.ResourceName + "'.");
+                    "Unknown PrismClip resource '$" + syntax.ResourceName + "'.");
                 return null;
             }
 
@@ -301,7 +322,7 @@ public sealed partial class UiMarkupGenerator
             return new BoundPrismApplication(composition, arguments, syntax, owner);
         }
 
-        private BoundPrismComposition BindPrismComposition(
+        private BoundPrismClip BindPrismClip(
             string name,
             PrismContainerSyntax syntax,
             MarkupElement source,
@@ -320,7 +341,7 @@ public sealed partial class UiMarkupGenerator
                 syntax.Members,
                 PrismPropertySpecs(
                     PrismCatalog.Value.CompositionProperties,
-                    "PrismCompositionPropertyKeys",
+                    "PrismClipPropertyKeys",
                     "composition"),
                 compositionScope);
 
@@ -357,7 +378,7 @@ public sealed partial class UiMarkupGenerator
                 }
             }
 
-            return new BoundPrismComposition(
+            return new BoundPrismClip(
                 name,
                 properties,
                 parameters,
@@ -999,14 +1020,14 @@ public sealed partial class UiMarkupGenerator
             }
         }
 
-        private bool TryResolvePrismComposition(
+        private bool TryResolvePrismClip(
             MarkupObject source,
             string name,
-            out BoundPrismComposition composition)
+            out BoundPrismClip composition)
         {
             foreach (ResourceScope scope in EnumerateResourceScopes(source))
             {
-                if (boundPrismResources.TryGetValue(scope, out Dictionary<string, BoundPrismComposition>? resources) &&
+                if (boundPrismResources.TryGetValue(scope, out Dictionary<string, BoundPrismClip>? resources) &&
                     resources.TryGetValue(name, out composition))
                 {
                     return true;
@@ -1014,10 +1035,10 @@ public sealed partial class UiMarkupGenerator
             }
 
             if (applicationResources is not null &&
-                applicationResources.PrismCompositions.TryGetValue(
+                applicationResources.PrismClips.TryGetValue(
                     name,
                     out object? applicationComposition) &&
-                applicationComposition is BoundPrismComposition bound)
+                applicationComposition is BoundPrismClip bound)
             {
                 composition = bound;
                 return true;

@@ -6,7 +6,7 @@ namespace Cerneala.Tests.SourceGen;
 public sealed partial class UiMarkupGeneratorTests
 {
     [Fact]
-    public void MotionLayoutGeneratesTypedIdentityAndOptionsBeforeAttachment()
+    public void MotionLayoutGeneratesTypedIdentityAndOptionsInTheAspectBehavior()
     {
         GeneratorRunResult result = RunGenerator(
             "MotionLayout.crn",
@@ -23,10 +23,10 @@ public sealed partial class UiMarkupGeneratorTests
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
         string generated = SingleGeneratedSource(result);
-        Assert.Contains("LayoutMotionId = new global::Cerneala.UI.Motion.Layout.LayoutMotionId", generated);
+        Assert.Contains("ApplyAspectValue(target, global::Cerneala.UI.Elements.UIElement.LayoutMotionIdProperty, new global::Cerneala.UI.Motion.Layout.LayoutMotionId", generated);
         Assert.Contains("LayoutMotionOptions.Spring", generated);
         Assert.Contains("MotionSpec<global::Cerneala.UI.Media.Transform>", generated);
-        Assert.Contains("@layout must be applied before the element is attached", generated);
+        Assert.DoesNotContain("must be applied before the element is attached", generated);
         Assert.DoesNotContain("CaptureFirstSnapshots", generated);
         Assert.DoesNotContain("StartCorrection", generated);
     }

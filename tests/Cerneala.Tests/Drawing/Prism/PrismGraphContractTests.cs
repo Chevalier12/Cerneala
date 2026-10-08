@@ -13,7 +13,7 @@ public sealed class PrismGraphContractTests
     [Fact]
     public void GraphProcessesVisibleLayersBottomUpAndCapturesControlOnce()
     {
-        PrismCompositionDefinition definition = PrismTestData.Composition(
+        PrismClipDefinition definition = PrismTestData.Composition(
             "LayerStack",
             PrismTestData.Layer(1, "Front"),
             PrismTestData.Layer(2, "Hidden", visible: false),
@@ -150,7 +150,7 @@ public sealed class PrismGraphContractTests
             "PassThrough",
             [PrismTestData.Layer(21, "Front"), PrismTestData.Layer(22, "Back")],
             blendMode: PrismBlendMode.PassThrough);
-        PrismCompositionDefinition definition = PrismTestData.Composition(
+        PrismClipDefinition definition = PrismTestData.Composition(
             "Groups",
             isolated,
             passThrough);
@@ -188,7 +188,7 @@ public sealed class PrismGraphContractTests
             "PassThrough",
             [multiply],
             blendMode: PrismBlendMode.PassThrough);
-        PrismCompositionDefinition definition = PrismTestData.Composition(
+        PrismClipDefinition definition = PrismTestData.Composition(
             "PassThroughBackground",
             passThrough,
             PrismTestData.Layer(99, "Base"));
@@ -243,7 +243,7 @@ public sealed class PrismGraphContractTests
             mask: new PrismMaskDefinition(new PrismResourceId(73)),
             opacity: 0.5f,
             blendMode: PrismBlendMode.PassThrough);
-        PrismCompositionDefinition definition = PrismTestData.Composition(
+        PrismClipDefinition definition = PrismTestData.Composition(
             "PassThroughBoundary",
             PrismTestData.Layer(1, "Clipped", clipToBelow: true),
             passThrough,
@@ -296,7 +296,7 @@ public sealed class PrismGraphContractTests
     public void GraphModelsMaskAndClippingChainWithSeparateBaseAlphaEdges()
     {
         PrismMaskDefinition mask = new(new PrismResourceId(17));
-        PrismCompositionDefinition definition = PrismTestData.Composition(
+        PrismClipDefinition definition = PrismTestData.Composition(
             "Clipping",
             PrismTestData.Layer(1, "Top", clipToBelow: true, mask: mask),
             PrismTestData.Layer(2, "Middle", clipToBelow: true),
@@ -330,7 +330,7 @@ public sealed class PrismGraphContractTests
     [Fact]
     public void InvisibleClippingBaseBreaksTheChainInsteadOfReusingALowerLayer()
     {
-        PrismCompositionDefinition definition = PrismTestData.Composition(
+        PrismClipDefinition definition = PrismTestData.Composition(
             "InvisibleClippingBase",
             PrismTestData.Layer(1, "Clipped", clipToBelow: true),
             PrismTestData.Layer(2, "InvisibleBase", visible: false),
@@ -353,7 +353,7 @@ public sealed class PrismGraphContractTests
     [Fact]
     public void BackdropIsASeparateInputBranchRatherThanAnotherControlCapture()
     {
-        PrismCompositionDefinition definition = PrismTestData.Composition(
+        PrismClipDefinition definition = PrismTestData.Composition(
             "Backdrop",
             PrismTestData.Layer(1, "Content"),
             PrismTestData.BackdropLayer(2, "Glass"));
@@ -398,7 +398,7 @@ public sealed class PrismGraphContractTests
             mask: new PrismMaskDefinition(new PrismResourceId(71)),
             opacity: 0.65f,
             blendMode: PrismBlendMode.Multiply);
-        PrismCompositionDefinition definition = PrismTestData.Composition(
+        PrismClipDefinition definition = PrismTestData.Composition(
             "BackdropPipeline",
             PrismTestData.Layer(1, "Control"),
             backdropDefinition);
@@ -624,7 +624,7 @@ public sealed class PrismGraphContractTests
     [Fact]
     public void GraphRejectsCyclesAndIncompatibleBackdropTransforms()
     {
-        PrismCompositionDefinition definition = PrismTestData.Composition(
+        PrismClipDefinition definition = PrismTestData.Composition(
             "Cycle",
             PrismTestData.Layer(1, "Control"),
             PrismTestData.BackdropLayer(2, "Glass"));
@@ -854,7 +854,7 @@ public sealed class PrismGraphContractTests
             "Broken",
             filters: [new PrismFilterDefinition(PrismFilterId.Blur)],
             sourceSpan: new PrismSourceSpan(12, 6, "Card.crn"));
-        PrismCompositionDefinition definition =
+        PrismClipDefinition definition =
             PrismTestData.Composition("DiagnosticCard", layer);
         PrismDrawScope scope = PrismTestData.Scope(definition);
         scope.Instance.GetLayerState(layer.Id).BlendMode = (PrismBlendMode)int.MaxValue;
@@ -915,7 +915,7 @@ public sealed class PrismGraphContractTests
                 PrismTestData.Layer(1, "Content")),
             ownerToken: 81);
         PrismSourceSpan secondSpan = new(44, 5, "Second.crn");
-        PrismCompositionDefinition secondDefinition = new(
+        PrismClipDefinition secondDefinition = new(
             "Second",
             [PrismTestData.Layer(2, "Content")],
             sourceSpan: secondSpan);
@@ -939,7 +939,7 @@ public sealed class PrismGraphContractTests
     [Fact]
     public void GoldenSnapshotsCoverSimpleNestedMaskedAndClippedGraphs()
     {
-        PrismCompositionDefinition simple = PrismTestData.Composition(
+        PrismClipDefinition simple = PrismTestData.Composition(
             "Simple",
             PrismTestData.Layer(1, "Front"),
             PrismTestData.Layer(2, "Hidden", visible: false),
@@ -949,14 +949,14 @@ public sealed class PrismGraphContractTests
             "Group",
             [PrismTestData.Layer(11, "Front"), PrismTestData.Layer(12, "Back")],
             blendMode: PrismBlendMode.Normal);
-        PrismCompositionDefinition nested = PrismTestData.Composition("Nested", group);
-        PrismCompositionDefinition masked = PrismTestData.Composition(
+        PrismClipDefinition nested = PrismTestData.Composition("Nested", group);
+        PrismClipDefinition masked = PrismTestData.Composition(
             "Masked",
             PrismTestData.Layer(
                 1,
                 "Mask",
                 mask: new PrismMaskDefinition(new PrismResourceId(17))));
-        PrismCompositionDefinition clipped = PrismTestData.Composition(
+        PrismClipDefinition clipped = PrismTestData.Composition(
             "Clipped",
             PrismTestData.Layer(1, "Top", clipToBelow: true),
             PrismTestData.Layer(2, "Middle", clipToBelow: true),
@@ -1116,7 +1116,7 @@ public sealed class PrismGraphContractTests
             """);
     }
 
-    private static PrismGraph BuildGraph(PrismCompositionDefinition definition)
+    private static PrismGraph BuildGraph(PrismClipDefinition definition)
     {
         PrismDrawScope scope = PrismTestData.Scope(definition);
         DrawCommandList commands = PrismTestData.Commands(
@@ -1174,7 +1174,7 @@ public sealed class PrismGraphContractTests
     }
 
     private static void AssertSnapshot(
-        PrismCompositionDefinition definition,
+        PrismClipDefinition definition,
         string expected)
     {
         Assert.Equal(

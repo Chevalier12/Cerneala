@@ -12,7 +12,7 @@ public sealed class PlaybackIdentityTests
     {
         using TimbreRig rig = new();
         DeterministicTimbreSourceFactory factory = new(48000);
-        TimbreClip clip = TimbreRig.Clip(factory);
+        TimbreSound clip = TimbreRig.Clip(factory);
         TimbrePlayback first = rig.Scope.Play(clip);
 
         float[] initial = await rig.StartAsync(first);
@@ -35,7 +35,7 @@ public sealed class PlaybackIdentityTests
         Assert.Equal(1f, clip.Volume);
         Assert.Equal(TimbrePlaybackState.Playing, first.State);
         Assert.Equal(TimbrePlaybackState.Playing, second.State);
-        Assert.Same(clip, second.Clip);
+        Assert.Same(clip, second.Sound);
         Assert.Equal(TimeSpan.FromSeconds(1), first.Duration);
         Assert.Equal(1, factory.OpenCount); // one immutable preloaded payload, two playheads
     }
@@ -45,7 +45,7 @@ public sealed class PlaybackIdentityTests
     {
         using TimbreRig rig = new();
         DeterministicTimbreSourceFactory factory = new(4800, maxFramesPerRead: 333);
-        TimbreClip clip = TimbreRig.Clip(factory, TimbreLoading.Streaming);
+        TimbreSound clip = TimbreRig.Clip(factory, TimbreLoading.Streaming);
         TimbrePlayback first = rig.Scope.Play(clip);
         TimbrePlayback second = rig.Scope.Play(clip);
 
@@ -62,7 +62,7 @@ public sealed class PlaybackIdentityTests
         using TimbreRig rig = new();
         DeterministicTimbreSourceFactory factory = new(48000);
         TimbreParameter<float> unused = new("Unused", 3f);
-        TimbreClip clip = new(TimbreSource.FromReader(factory.Open), volume: 0.5f, parameters: [unused]);
+        TimbreSound clip = new(TimbreSource.FromReader(factory.Open), volume: 0.5f, parameters: [unused]);
         int invocations = 0;
         TimbreStartOptions? captured = null;
 
@@ -110,7 +110,7 @@ public sealed class PlaybackIdentityTests
     {
         using TimbreRig rig = new();
         TimbreParameter<float> unused = new("Unused", 3f);
-        TimbreClip clip = new(TimbreSource.FromReader(new DeterministicTimbreSourceFactory(48000).Open), parameters: [unused]);
+        TimbreSound clip = new(TimbreSource.FromReader(new DeterministicTimbreSourceFactory(48000).Open), parameters: [unused]);
         TimbrePlayback first = rig.Scope.Play(clip);
         TimbrePlayback second = rig.Scope.Play(clip);
         await rig.StartAsync(first, second);

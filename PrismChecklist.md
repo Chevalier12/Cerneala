@@ -344,7 +344,7 @@ incheiat cu 6546 teste Passed, 0 Failed si 7 skip-uri existente, documentate mai
 
 ## C:\Users\lauri\Desktop\Cerneala\UI\Prism\Definitions
 - [x] PrismColorMatrixResource.cs
-- [x] PrismCompositionDefinition.cs
+- [x] PrismClipDefinition.cs
 - [x] PrismCurvePoint.cs
 - [x] PrismDefinitionValidation.cs
 - [x] PrismFilterDefinition.cs

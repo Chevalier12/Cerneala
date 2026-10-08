@@ -537,8 +537,8 @@ public sealed partial class UiMarkupGenerator
                 }
             }
 
-            // ApplyAspects already emitted the root Aspect's audio activations.
-            ExcludeTimbreActivations(plan);
+            // The root Aspect behavior owns its Motion and Timbre activations.
+            ExcludeAspectProgramActivations(plan);
             EmitReactivePlan(plan, controlsContent: false);
             return directElements.Count == 0 ? null : EmitElement(directElements[0].Element);
         }

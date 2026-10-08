@@ -89,7 +89,7 @@ public sealed partial class UiMarkupGeneratorTests
             <StackPanel>
               <StackPanel.Resources>
                 <ImageBrush Name="MaskImage" Source="mask.png" />
-                <PrismComposition Name="CardFx"
+                <PrismClip Name="CardFx"
                                   WorkingColorProfile="DisplayP3"
                                   GlobalLightAngle="90"
                                   GlobalLightAltitude="45">
@@ -163,34 +163,38 @@ public sealed partial class UiMarkupGeneratorTests
                       Radius = 12;
                     }
                   }
-                </PrismComposition>
+                </PrismClip>
               </StackPanel.Resources>
 
               <Border Name="Card">
-                @prism $CardFx(
-                    GlowRadius = 24,
-                    Tint = #A060D8FF
-                );
+                <Border.Aspect>
+                  @prism $CardFx(
+                      GlowRadius = 24,
+                      Tint = #A060D8FF
+                  );
+                </Border.Aspect>
               </Border>
 
               <Border>
-                @prism
-                {
-                  WorkingColorProfile = LinearSrgb;
-                  GlobalLightAngle = 120;
-                  GlobalLightAltitude = 30;
-
-                  @layer InlineLayer
+                <Border.Aspect>
+                  @prism
                   {
-                    @style DropShadow
+                    WorkingColorProfile = LinearSrgb;
+                    GlobalLightAngle = 120;
+                    GlobalLightAltitude = 30;
+
+                    @layer InlineLayer
                     {
-                      Size = 18;
-                      Distance = 8;
-                      Angle = 90;
-                      Color = #66000000;
+                      @style DropShadow
+                      {
+                        Size = 18;
+                        Distance = 8;
+                        Angle = 90;
+                        Color = #66000000;
+                      }
                     }
                   }
-                }
+                </Border.Aspect>
               </Border>
             </StackPanel>
             """;
@@ -202,7 +206,7 @@ public sealed partial class UiMarkupGeneratorTests
 
         AssertNoGeneratorOrCompilationErrors(result, compilation);
         string generated = SingleGeneratedSource(result);
-        Assert.Contains("PrismCompositionDefinition", generated, StringComparison.Ordinal);
+        Assert.Contains("PrismClipDefinition", generated, StringComparison.Ordinal);
         Assert.Contains("PrismLayerDefinition", generated, StringComparison.Ordinal);
         Assert.Contains("PrismGroupDefinition", generated, StringComparison.Ordinal);
         Assert.Contains("PrismFilterDefinition", generated, StringComparison.Ordinal);
@@ -230,12 +234,12 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <StackPanel Aspect="$ReactiveAspect">
               <StackPanel.Resources>
-                <PrismComposition Name="CardFx">
+                <PrismClip Name="CardFx">
                   @layer Glow
                   {
                     @filter Blur { Radius = 4; }
                   }
-                </PrismComposition>
+                </PrismClip>
                 <Aspect Name="ReactiveAspect" TargetType="StackPanel">
                   @when $self.Visibility
                   {
@@ -248,7 +252,9 @@ public sealed partial class UiMarkupGeneratorTests
               </StackPanel.Resources>
 
               <Border Name="Card">
-                @prism $CardFx;
+                <Border.Aspect>
+                  @prism $CardFx;
+                </Border.Aspect>
                 <TextBlock Text="Prism dogfood" />
               </Border>
             </StackPanel>
@@ -272,17 +278,19 @@ public sealed partial class UiMarkupGeneratorTests
     {
         string markup = $$"""
             <Border DataType="TestInput.BindingViewModel">
-              @prism
-              {
-                @layer Surface
+              <Border.Aspect>
+                @prism
                 {
-                  @filter MotionBlur
+                  @layer Surface
                   {
-                    Distance = {{binding}};
-                    Angle = 90;
+                    @filter MotionBlur
+                    {
+                      Distance = {{binding}};
+                      Angle = 90;
+                    }
                   }
                 }
-              }
+              </Border.Aspect>
             </Border>
             """;
 
@@ -304,17 +312,19 @@ public sealed partial class UiMarkupGeneratorTests
     {
         const string markup = """
             <Border DataType="TestInput.BindingViewModel">
-              @prism
-              {
-                @layer Surface
+              <Border.Aspect>
+                @prism
                 {
-                  @filter MotionBlur
+                  @layer Surface
                   {
-                    Distance = $DataContext.Offset;
-                    Angle = 90;
+                    @filter MotionBlur
+                    {
+                      Distance = $DataContext.Offset;
+                      Angle = 90;
+                    }
                   }
                 }
-              }
+              </Border.Aspect>
             </Border>
             """;
 
@@ -357,14 +367,16 @@ public sealed partial class UiMarkupGeneratorTests
             """;
         string markup = $$"""
             <Border DataType="TestInput.PrismBindingViewModel">
-              @prism
-              {
-                @layer Surface
+              <Border.Aspect>
+                @prism
                 {
-                  Opacity = {{value}};
-                  @filter Blur { Radius = 4; }
+                  @layer Surface
+                  {
+                    Opacity = {{value}};
+                    @filter Blur { Radius = 4; }
+                  }
                 }
-              }
+              </Border.Aspect>
             </Border>
             """;
 
@@ -402,17 +414,19 @@ public sealed partial class UiMarkupGeneratorTests
     {
         const string markup = """
             <Border DataType="TestInput.BindingViewModel">
-              @prism
-              {
-                @layer Surface
+              <Border.Aspect>
+                @prism
                 {
-                  @filter MotionBlur
+                  @layer Surface
                   {
-                    Distance = "$DataContext.Offset";
-                    Angle = 90;
+                    @filter MotionBlur
+                    {
+                      Distance = "$DataContext.Offset";
+                      Angle = 90;
+                    }
                   }
                 }
-              }
+              </Border.Aspect>
             </Border>
             """;
 
@@ -430,14 +444,16 @@ public sealed partial class UiMarkupGeneratorTests
     {
         const string markup = """
             <Border>
-              @prism
-              {
-                @layer Surface
+              <Border.Aspect>
+                @prism
                 {
-                  @filter Blur { Radius = 4; }
-                  @sparkle { Amount = 1; }
+                  @layer Surface
+                  {
+                    @filter Blur { Radius = 4; }
+                    @sparkle { Amount = 1; }
+                  }
                 }
-              }
+              </Border.Aspect>
             </Border>
             """;
 
@@ -460,12 +476,14 @@ public sealed partial class UiMarkupGeneratorTests
     {
         const string markup = """
             <Border>
-              @prism
-              {
-                @layer Surface
+              <Border.Aspect>
+                @prism
                 {
-                  @filter Blur { Radius = 4; }
-                }
+                  @layer Surface
+                  {
+                    @filter Blur { Radius = 4; }
+                  }
+              </Border.Aspect>
             </Border>
             """;
 
@@ -488,13 +506,15 @@ public sealed partial class UiMarkupGeneratorTests
     {
         const string markup = """
             <Border>
-              @prism
-              {
-                @filter Blur
+              <Border.Aspect>
+                @prism
                 {
-                  Radius = 4;
+                  @filter Blur
+                  {
+                    Radius = 4;
+                  }
                 }
-              }
+              </Border.Aspect>
             </Border>
             """;
 
@@ -517,16 +537,18 @@ public sealed partial class UiMarkupGeneratorTests
     {
         const string markup = """
             <Border>
-              @prism
-              {
-                @layer Surface
+              <Border.Aspect>
+                @prism
                 {
-                  @filter Blur
+                  @layer Surface
                   {
-                    DoesNotExist = 4;
+                    @filter Blur
+                    {
+                      DoesNotExist = 4;
+                    }
                   }
                 }
-              }
+              </Border.Aspect>
             </Border>
             """;
 
@@ -543,13 +565,15 @@ public sealed partial class UiMarkupGeneratorTests
     {
         const string markup = """
             <Border>
-              @prism
-              {
-                @layer Surface
+              <Border.Aspect>
+                @prism
                 {
-                  @filter NotAFilter { Amount = 1; }
+                  @layer Surface
+                  {
+                    @filter NotAFilter { Amount = 1; }
+                  }
                 }
-              }
+              </Border.Aspect>
             </Border>
             """;
 
@@ -566,11 +590,13 @@ public sealed partial class UiMarkupGeneratorTests
     {
         const string markup = """
             <Border>
-              @prism
-              {
-                @layer Duplicate { @filter Blur { Radius = 2; } }
-                @layer Duplicate { @filter Blur { Radius = 4; } }
-              }
+              <Border.Aspect>
+                @prism
+                {
+                  @layer Duplicate { @filter Blur { Radius = 2; } }
+                  @layer Duplicate { @filter Blur { Radius = 4; } }
+                }
+              </Border.Aspect>
             </Border>
             """;
 
@@ -588,15 +614,17 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <Border>
               <Border.Resources>
-                <PrismComposition Name="NeedsRadius">
+                <PrismClip Name="NeedsRadius">
                   @parameter Radius: float;
                   @layer Surface
                   {
                     @filter Blur { Radius = Radius; }
                   }
-                </PrismComposition>
+                </PrismClip>
               </Border.Resources>
-              @prism $NeedsRadius;
+              <Border.Aspect>
+                @prism $NeedsRadius;
+              </Border.Aspect>
             </Border>
             """;
 
@@ -613,13 +641,15 @@ public sealed partial class UiMarkupGeneratorTests
     {
         const string markup = """
             <Border>
-              @prism
-              {
-                @layer Outer
+              <Border.Aspect>
+                @prism
                 {
-                  @layer Inner { @filter Blur { Radius = 2; } }
+                  @layer Outer
+                  {
+                    @layer Inner { @filter Blur { Radius = 2; } }
+                  }
                 }
-              }
+              </Border.Aspect>
             </Border>
             """;
 
@@ -636,10 +666,12 @@ public sealed partial class UiMarkupGeneratorTests
     {
         const string markup = """
             <Border>
-              @prism
-              {
-                @backdrop Glass { @filter Blur { Radius = 4; } }
-              }
+              <Border.Aspect>
+                @prism
+                {
+                  @backdrop Glass { @filter Blur { Radius = 4; } }
+                }
+              </Border.Aspect>
             </Border>
             """;
 
@@ -656,14 +688,16 @@ public sealed partial class UiMarkupGeneratorTests
     {
         const string markup = """
             <Border>
-              @prism
-              {
-                @layer Surface
+              <Border.Aspect>
+                @prism
                 {
-                  ClipToBelow = true;
-                  @filter Blur { Radius = 2; }
+                  @layer Surface
+                  {
+                    ClipToBelow = true;
+                    @filter Blur { Radius = 2; }
+                  }
                 }
-              }
+              </Border.Aspect>
             </Border>
             """;
 
@@ -681,18 +715,20 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <Button>
               <Button.Resources>
-                <PrismComposition Name="TemplateFx">
+                <PrismClip Name="TemplateFx">
                   @parameter Radius: float = 4;
                   @layer Glow
                   {
                     @filter Blur { Radius = Radius; }
                   }
-                </PrismComposition>
+                </PrismClip>
               </Button.Resources>
               @template
               {
                 <Border>
-                  @prism $TemplateFx(Radius = 8);
+                  <Border.Aspect>
+                    @prism $TemplateFx(Radius = 8);
+                  </Border.Aspect>
                 </Border>
               }
             </Button>
@@ -712,7 +748,7 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <StackPanel>
               <StackPanel.Resources>
-                <PrismComposition Name="ReusableGlow">
+                <PrismClip Name="ReusableGlow">
                   @group Effects
                   {
                     @parameter Radius: float = 4;
@@ -721,13 +757,17 @@ public sealed partial class UiMarkupGeneratorTests
                       @filter Blur { Radius = Radius; }
                     }
                   }
-                </PrismComposition>
+                </PrismClip>
               </StackPanel.Resources>
               <Border>
-                @prism $ReusableGlow(Effects.Radius = 8);
+                <Border.Aspect>
+                  @prism $ReusableGlow(Effects.Radius = 8);
+                </Border.Aspect>
               </Border>
               <Border>
-                @prism $ReusableGlow(Effects.Radius = 24);
+                <Border.Aspect>
+                  @prism $ReusableGlow(Effects.Radius = 24);
+                </Border.Aspect>
               </Border>
             </StackPanel>
             """;
@@ -746,7 +786,7 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <StackPanel>
               <StackPanel.Resources>
-                <PrismComposition Name="ReusableGlow">
+                <PrismClip Name="ReusableGlow">
                   @parameter LayerOpacity: float = 0.5;
                   @group Effects
                   {
@@ -757,13 +797,17 @@ public sealed partial class UiMarkupGeneratorTests
                       @filter Blur { Radius = Radius; }
                     }
                   }
-                </PrismComposition>
+                </PrismClip>
               </StackPanel.Resources>
               <Border>
-                @prism $ReusableGlow(LayerOpacity = 0.2, Effects.Radius = 8);
+                <Border.Aspect>
+                  @prism $ReusableGlow(LayerOpacity = 0.2, Effects.Radius = 8);
+                </Border.Aspect>
               </Border>
               <Border>
-                @prism $ReusableGlow(LayerOpacity = 0.8, Effects.Radius = 24);
+                <Border.Aspect>
+                  @prism $ReusableGlow(LayerOpacity = 0.8, Effects.Radius = 24);
+                </Border.Aspect>
               </Border>
             </StackPanel>
             """;
@@ -779,7 +823,7 @@ public sealed partial class UiMarkupGeneratorTests
             1,
             Count(
                 generated,
-                "PrismCompositionDefinition __CernealaPrismDefinition"));
+                "PrismClipDefinition __CernealaPrismDefinition"));
         Assert.Equal(
             2,
             Count(generated, "PrismInstance __CernealaCreatePrism"));
@@ -821,17 +865,19 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <Button>
               <Button.Resources>
-                <PrismComposition Name="TemplateFx">
+                <PrismClip Name="TemplateFx">
                   @layer Glow
                   {
                     @filter Blur { Radius = 8; }
                   }
-                </PrismComposition>
+                </PrismClip>
               </Button.Resources>
               @template
               {
                 <Border>
-                  @prism $TemplateFx;
+                  <Border.Aspect>
+                    @prism $TemplateFx;
+                  </Border.Aspect>
                 </Border>
               }
             </Button>
@@ -849,7 +895,7 @@ public sealed partial class UiMarkupGeneratorTests
             1,
             Count(
                 generated,
-                "PrismCompositionDefinition __CernealaPrismDefinition"));
+                "PrismClipDefinition __CernealaPrismDefinition"));
         Assert.Contains("PrismInstance __CernealaCreatePrism", generated, StringComparison.Ordinal);
     }
 
@@ -858,14 +904,16 @@ public sealed partial class UiMarkupGeneratorTests
     {
         const string markup = """
             <Border>
-              @prism
-              {
-                @layer Surface
+              <Border.Aspect>
+                @prism
                 {
-                  Opacity = 2;
-                  @filter Blur { Radius = 4; }
+                  @layer Surface
+                  {
+                    Opacity = 2;
+                    @filter Blur { Radius = 4; }
+                  }
                 }
-              }
+              </Border.Aspect>
             </Border>
             """;
 
@@ -882,13 +930,15 @@ public sealed partial class UiMarkupGeneratorTests
     {
         const string markup = """
             <Border>
-              @prism
-              {
-                @layer Empty
+              <Border.Aspect>
+                @prism
                 {
-                  Opacity = 0.5;
+                  @layer Empty
+                  {
+                    Opacity = 0.5;
+                  }
                 }
-              }
+              </Border.Aspect>
             </Border>
             """;
 
@@ -934,17 +984,17 @@ public sealed partial class UiMarkupGeneratorTests
     {
         const string markup = """
             <Border>
-              @prism
-              {
-                @layer Glow
-                {
-                  @parameter Radius: float = 4;
-                  @parameter Tint: color = #FF203040;
-                  @filter Blur { Radius = Radius; }
-                  @style OuterGlow { Color = Tint; }
-                }
-              }
               <Border.Aspect>
+                @prism
+                {
+                  @layer Glow
+                  {
+                    @parameter Radius: float = 4;
+                    @parameter Tint: color = #FF203040;
+                    @filter Blur { Radius = Radius; }
+                    @style OuterGlow { Color = Tint; }
+                  }
+                }
                 @on Loaded
                 {
                   @animate with Tween(120ms, Linear)
@@ -982,16 +1032,16 @@ public sealed partial class UiMarkupGeneratorTests
     {
         const string markup = """
             <Border>
-              @prism
-              {
-                @layer Glow
-                {
-                  Visible = true;
-                  BlendMode = Normal;
-                  @filter Blur { Radius = 4; }
-                }
-              }
               <Border.Aspect>
+                @prism
+                {
+                  @layer Glow
+                  {
+                    Visible = true;
+                    BlendMode = Normal;
+                    @filter Blur { Radius = 4; }
+                  }
+                }
                 @on Loaded
                 {
                   @sequence
@@ -1055,11 +1105,11 @@ public sealed partial class UiMarkupGeneratorTests
     {
         return $$"""
             <Border>
-              @prism
-              {
-                @layer Glow { @filter Blur { Radius = 4; } }
-              }
               <Border.Aspect>
+                @prism
+                {
+                  @layer Glow { @filter Blur { Radius = 4; } }
+                }
                 @on Loaded
                 {
                   @animate
@@ -1087,10 +1137,12 @@ public sealed partial class UiMarkupGeneratorTests
                   }
                 </Aspect>
               </Button.Resources>
-              @prism
-              {
-                @layer Glow { @filter Blur { Radius = 4; } }
-              }
+              <Button.Aspect>
+                @prism
+                {
+                  @layer Glow { @filter Blur { Radius = 4; } }
+                }
+              </Button.Aspect>
               @template
               {
                 <Border Aspect="$TemplateMotion" />
@@ -1104,10 +1156,12 @@ public sealed partial class UiMarkupGeneratorTests
         return $$"""
             <StackPanel>
               <Border Name="Card">
-                @prism
-                {
-                  @layer Glow { @filter Blur { Radius = 4; } }
-                }
+                <Border.Aspect>
+                  @prism
+                  {
+                    @layer Glow { @filter Blur { Radius = 4; } }
+                  }
+                </Border.Aspect>
               </Border>
               <Border>
                 <Border.Aspect>

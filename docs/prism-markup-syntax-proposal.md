@@ -126,20 +126,23 @@ The markup language exposes only seven directives:
 @mask
 ```
 
-Reusable Prism markup is declared as a `PrismComposition` resource, not through a named
+Reusable Prism markup is declared as a `PrismClip` resource, not through a named
 `@prism` directive. This mirrors the existing Motion separation:
 
 | System | Reusable resource | Directive that uses it |
 | --- | --- | --- |
 | Motion | `MotionClip` | `@run` |
-| Prism | `PrismComposition` | `@prism` |
+| Prism | `PrismClip` | `@prism` |
 
 `@prism` is therefore an application directive. It may attach a named
-`PrismComposition` resource to an element or declare an inline composition, but it does not
+`PrismClip` resource to an element or declare an inline composition, but it does not
 declare a named reusable resource.
 
-`PrismComposition` is intentionally not called `PrismClip`. `Clip` already means
-visual clipping in the rendering model. `PrismStack` is also too narrow: the
+The resource was originally named `PrismComposition` because `Clip` already
+means visual clipping in the rendering model (`ClipToBelow`, masks). On
+2026-10-08 it was renamed `PrismClip` so the reusable resources read as one
+family (`MotionClip`, `PrismClip`, `TimbreClip`); clipping keeps its own
+vocabulary (`ClipToBelow`, `@mask`). `PrismStack` remains too narrow: the
 reusable object includes composition-level settings and parameters.
 
 Pixel-processing operations such as blur, color adjustment, distortion, or
@@ -227,13 +230,13 @@ In plain language, this means:
 > Take the Border exactly as it would normally look, add a shadow to that picture,
 > and display the result.
 
-## Reusable PrismComposition Resources
+## Reusable PrismClip Resources
 
 A reusable Prism composition is declared as a resource, in the same way that
 `MotionClip` stores a reusable Motion recipe:
 
 ```xml
-<PrismComposition Name="ElevatedCard">
+<PrismClip Name="ElevatedCard">
     @parameter ShadowSize: float = 18;
     @parameter ShadowColor: color = #66000000;
 
@@ -247,7 +250,7 @@ A reusable Prism composition is declared as a resource, in the same way that
             Color = ShadowColor;
         }
     }
-</PrismComposition>
+</PrismClip>
 ```
 
 Declaring the resource does not attach it to an element and does not render
@@ -275,7 +278,7 @@ Parameters may be overridden for one application:
 Every element receives its own Prism parameter values. Changing the parameters on
 one element must not change another element using the same definition.
 
-`PrismComposition` has three composition-level properties:
+`PrismClip` has three composition-level properties:
 
 | Property | Default | Meaning |
 | --- | --- | --- |
@@ -294,7 +297,7 @@ Layers are written like they appear in a Photoshop layer panel:
 - The last layer is visually in the back.
 
 ```xml
-<PrismComposition Name="Example">
+<PrismClip Name="Example">
     @layer
     {
         Opacity = 0.85;
@@ -325,7 +328,7 @@ Layers are written like they appear in a Photoshop layer panel:
             Color = #66000000;
         }
     }
-</PrismComposition>
+</PrismClip>
 ```
 
 Prism evaluates the stack from the back toward the front:
@@ -387,7 +390,7 @@ it, including the game world, lower UI, and lower Prism nodes. No author-facing
 backdrop node or `Source` assignment is required.
 
 ```xml
-<PrismComposition Name="ActivePiecePrism">
+<PrismClip Name="ActivePiecePrism">
     @layer Neon
     {
         BlendMode = Screen;
@@ -405,7 +408,7 @@ backdrop node or `Source` assignment is required.
             Color = #B08B7CFF;
         }
     }
-</PrismComposition>
+</PrismClip>
 ```
 
 The filter transforms the captured control source. The layer's `Screen` mode then
@@ -493,7 +496,7 @@ own render targets as a workaround.
 ### Shared And Retained Backdrop Cache
 
 Backdrop work sharing belongs to the drawing backend's compositor, not to
-`PrismComposition`, the element, or the host source.
+`PrismClip`, the element, or the host source.
 
 The compositor builds a frame-local render graph and uses a fence-aware transient
 surface pool with an explicit byte budget. It samples only the screen-space region
@@ -701,11 +704,11 @@ The author may select another built-in working space per reusable or inline
 composition:
 
 ```xml
-<PrismComposition
+<PrismClip
     Name="LegacyPhotoshopLook"
     WorkingColorSpace="Srgb">
     ...
-</PrismComposition>
+</PrismClip>
 ```
 
 ```text
@@ -1078,7 +1081,7 @@ selects which one of `Color`, `Gradient`, or `Pattern` contributes pixels. A
 required pattern is validated at generation time.
 
 `UseGlobalLight=true` reads `GlobalLightAngle=120` and
-`GlobalLightAltitude=30` from the containing `PrismComposition`. A style's local
+`GlobalLightAltitude=30` from the containing `PrismClip`. A style's local
 `Angle` or `Altitude` is used when `UseGlobalLight=false`. The two global-light
 properties may be overridden on a reusable or inline composition and can be
 exposed through typed Prism parameters.
@@ -1092,7 +1095,7 @@ special collection syntax.
 Every layer processes the accumulated result beneath it:
 
 ```xml
-<PrismComposition Name="NeonControl">
+<PrismClip Name="NeonControl">
     @layer
     {
         @style DropShadow
@@ -1134,7 +1137,7 @@ Every layer processes the accumulated result beneath it:
             Tint = #3060D8FF;
         }
     }
-</PrismComposition>
+</PrismClip>
 ```
 
 The scoped parameter may also be overridden when the reusable composition is attached:
@@ -1158,7 +1161,7 @@ Read from top to bottom like a layer panel:
 `@mask` is a structural child of a layer, group, or backdrop, not a filter:
 
 ```xml
-<PrismComposition Name="MaskedControl">
+<PrismClip Name="MaskedControl">
     @layer
     {
         @filter Color
@@ -1175,7 +1178,7 @@ Read from top to bottom like a layer panel:
             Invert = false;
         }
     }
-</PrismComposition>
+</PrismClip>
 ```
 
 The captured control image is converted to grayscale, then its visibility is
@@ -1199,7 +1202,7 @@ Mask properties:
 A group is the explicit container for layers and nested groups:
 
 ```xml
-<PrismComposition Name="GroupedControl">
+<PrismClip Name="GroupedControl">
     @layer
     {
         @style DropShadow
@@ -1239,7 +1242,7 @@ A group is the explicit container for layers and nested groups:
             Channel = Luminance;
         }
     }
-</PrismComposition>
+</PrismClip>
 ```
 
 This follows the same mental model as a folder in a Photoshop layer panel. The
@@ -1274,7 +1277,7 @@ blends the prepared group result as one image.
 Built-in filter types use the same concise syntax throughout the catalog:
 
 ```xml
-<PrismComposition Name="Hologram">
+<PrismClip Name="Hologram">
     @parameter Shift: float = 0.012;
 
     @layer
@@ -1292,7 +1295,7 @@ Built-in filter types use the same concise syntax throughout the catalog:
             DirectionY = 0;
         }
     }
-</PrismComposition>
+</PrismClip>
 ```
 
 `ChromaticAberration` clearly means that the layer receives chromatic aberration.
@@ -1365,18 +1368,18 @@ animation engine. Writing the already-current value leaves `ValueVersion`
 unchanged and does not request a presentation invalidation.
 
 Animating a parameter changes only that parameter. It does not rebuild the
-`PrismComposition` or compile a new filter pipeline every frame.
+`PrismClip` or compile a new filter pipeline every frame.
 
 ## Conceptual Grammar
 
 ```text
 prism-composition-resource :=
-    <PrismComposition Name="Name" WorkingColorSpace="ColorSpace?">
+    <PrismClip Name="Name" WorkingColorSpace="ColorSpace?">
         @parameter*
         prism-assignment*
         (layer | group)*
         backdrop?
-    </PrismComposition>
+    </PrismClip>
 
 prism-inline :=
     @prism
@@ -1449,7 +1452,7 @@ directive syntax is introduced.
 
 The source generator should report build-time diagnostics for:
 
-- unknown `PrismComposition` resources;
+- unknown `PrismClip` resources;
 - unsupported working color profiles or color-space conversions;
 - invalid global-light values;
 - unknown parameters;
@@ -1536,7 +1539,7 @@ The Prism authoring model is syntax, not resource ownership.
 
 ## Resolved Design Decisions
 
-- The reusable resource is named `PrismComposition`.
+- The reusable resource is named `PrismClip`.
 - The built-in filter catalog and its canonical defaults are normative in this
   proposal and cover deterministic Photoshop adjustments, filters, and Filter
   Gallery effects.

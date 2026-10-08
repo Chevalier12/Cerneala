@@ -125,6 +125,10 @@ public sealed partial class UiMarkupGeneratorTests
                          TranslateX="32"
                          TransformOrigin="128,96">
                   <Scene2D.Aspect>
+                    @prism
+                    {
+                      @layer GroupContent { Opacity = 1; @filter Blur { Radius = 1; } }
+                    }
                     @on Loaded
                     {
                       @animate with Tween(100ms)
@@ -133,12 +137,12 @@ public sealed partial class UiMarkupGeneratorTests
                       }
                     }
                   </Scene2D.Aspect>
-                  @prism
-                  {
-                    @layer GroupContent { Opacity = 1; @filter Blur { Radius = 1; } }
-                  }
                   <Scene2D Layer="1">
                     <Scene2D.Aspect>
+                      @prism
+                      {
+                        @layer LayerContent { Opacity = 1; @filter Blur { Radius = 1; } }
+                      }
                       @on Loaded
                       {
                         @animate with Tween(100ms)
@@ -147,16 +151,16 @@ public sealed partial class UiMarkupGeneratorTests
                         }
                       }
                     </Scene2D.Aspect>
-                    @prism
-                    {
-                      @layer LayerContent { Opacity = 1; @filter Blur { Radius = 1; } }
-                    }
                     <SceneItems2D>
                       @templates
                       {
                         <ContentTemplate DataType="System.String">
                           <Sprite2D Image="$WorldAtlas">
                             <Sprite2D.Aspect>
+                              @prism
+                              {
+                                @layer SpriteContent { Opacity = 1; @filter Blur { Radius = 1; } }
+                              }
                               @on Loaded
                               {
                                 @animate with Tween(100ms)
@@ -165,10 +169,6 @@ public sealed partial class UiMarkupGeneratorTests
                                 }
                               }
                             </Sprite2D.Aspect>
-                            @prism
-                            {
-                              @layer SpriteContent { Opacity = 1; @filter Blur { Radius = 1; } }
-                            }
                           </Sprite2D>
                         </ContentTemplate>
                       }
@@ -232,20 +232,22 @@ public sealed partial class UiMarkupGeneratorTests
             <RenderSurface2D>
               <RenderSurface2D.Scene>
                 <Scene2D>
-                  @prism
-                  {
-                    @filter Blur
+                  <Scene2D.Aspect>
+                    @prism
                     {
-                      Radius = 1;
+                      @filter Blur
+                      {
+                        Radius = 1;
+                      }
                     }
-                  }
+                  </Scene2D.Aspect>
                 </Scene2D>
               </RenderSurface2D.Scene>
             </RenderSurface2D>
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "RenderSurface2DInvalidPrismComposition.crn",
+            "RenderSurface2DInvalidPrismClip.crn",
             markup,
             out _);
 

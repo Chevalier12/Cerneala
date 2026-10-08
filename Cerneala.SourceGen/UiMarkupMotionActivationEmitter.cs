@@ -14,25 +14,21 @@ public sealed partial class UiMarkupGenerator
         private void EmitMotionActivations(
             MarkupElement element,
             string variable,
-            AspectResource aspect,
-            bool bindToElementAspect)
+            AspectResource aspect)
         {
             if (!resolvedMotionAspects.TryGetValue((aspect, element), out ResolvedMotionAspect? resolved))
             {
                 return;
             }
 
+            // The session is a lifetime of the Aspect behavior: detaching or
+            // replacing the Aspect disposes it.
             string sessionName = "motionSession" + nextReactiveId.ToString(CultureInfo.InvariantCulture);
             nextReactiveId++;
             motionSessionNames[(aspect, element)] = sessionName;
             currentPostLines.Add(
                 "global::System.IDisposable " + sessionName +
-                " = global::Cerneala.UI.Markup.GeneratedMarkup.AttachMotionSession(" + variable +
-                (bindToElementAspect ? ", " + variable + ".Aspect!" : string.Empty) + ");");
-            if (templateEmissionContexts.Count > 0)
-            {
-                currentPostLines.Add(templateEmissionContexts.Peek().ContextVariable + ".RegisterLifetime(" + sessionName + ");");
-            }
+                " = global::Cerneala.UI.Markup.GeneratedMarkup.AttachMotionSession(" + variable + ");");
 
             // Audio executions belong to the Aspect's Timbre session; they are
             // emitted with the Timbre actions.
@@ -163,8 +159,8 @@ public sealed partial class UiMarkupGenerator
                 if (property.Target.Timbre is ResolvedTimbreMotionTarget sound)
                 {
                     starts.Add(
-                        "global::Cerneala.UI.Markup.GeneratedMarkup.StartTimbreMotionProperty(" + sessionName + ", " +
-                        Literal(sound.HandleName) + ", " + Literal(sound.ParameterName) + ", " +
+                        "global::Cerneala.UI.Markup.GeneratedMarkup.StartTimbreMotionProperty(" + targetCode + ", " +
+                        Literal(sound.SoundName) + ", " + Literal(sound.ParameterName) + ", " +
                         (hasFrom ? "true" : "false") + ", " + fromCode + ", " +
                         (toCurrent ? "true" : "false") + ", " + toCode + ", " + specCode + ", " + optionsCode + ")");
                 }
@@ -394,12 +390,16 @@ public sealed partial class UiMarkupGenerator
                 return;
             }
 
+            // Set by the Aspect behavior, also on an attached element (a
+            // replacing Aspect): the enter is not replayed, exits use it.
+            string lifetime = "presenceLifetime" + nextReactiveId.ToString(CultureInfo.InvariantCulture);
+            nextReactiveId++;
             currentLines.Add(
-                "if (" + variable + ".IsAttached) throw new global::System.InvalidOperationException(\"@presence must be applied before the element is attached.\");");
-            currentLines.Add(
-                variable + ".Presence = global::Cerneala.UI.Motion.Presence.PresenceOptions.FadeAndScale(" +
+                "global::System.IDisposable " + lifetime + " = global::Cerneala.UI.Markup.GeneratedMarkup.ApplyAspectValue(" +
+                variable + ", global::Cerneala.UI.Elements.UIElement.PresenceProperty, " +
+                "global::Cerneala.UI.Motion.Presence.PresenceOptions.FadeAndScale(" +
                 presence.EnterSpec + ", " + presence.ExitSpec + ", " +
-                (presence.ExcludeInputWhileExiting ? "true" : "false") + ");");
+                (presence.ExcludeInputWhileExiting ? "true" : "false") + "));");
         }
 
         private void EmitMotionLayout(MarkupElement element, string variable, AspectResource aspect)
@@ -409,11 +409,15 @@ public sealed partial class UiMarkupGenerator
                 return;
             }
 
+            string suffix = nextReactiveId.ToString(CultureInfo.InvariantCulture);
+            nextReactiveId++;
             currentLines.Add(
-                "if (" + variable + ".IsAttached) throw new global::System.InvalidOperationException(\"@layout must be applied before the element is attached.\");");
-            currentLines.Add(variable + ".LayoutMotionId = " + layout.IdExpression + ";");
+                "global::System.IDisposable layoutIdLifetime" + suffix + " = global::Cerneala.UI.Markup.GeneratedMarkup.ApplyAspectValue(" +
+                variable + ", global::Cerneala.UI.Elements.UIElement.LayoutMotionIdProperty, " + layout.IdExpression + ");");
             currentLines.Add(
-                variable + ".LayoutMotion = global::Cerneala.UI.Motion.Layout.LayoutMotionOptions.Spring(" + layout.Spec + ");");
+                "global::System.IDisposable layoutLifetime" + suffix + " = global::Cerneala.UI.Markup.GeneratedMarkup.ApplyAspectValue(" +
+                variable + ", global::Cerneala.UI.Elements.UIElement.LayoutMotionOptionsProperty, " +
+                "global::Cerneala.UI.Motion.Layout.LayoutMotionOptions.Spring(" + layout.Spec + "));");
         }
 
         private void EmitMotionStaggerActivation(ResolvedMotionAnimation animation, string sessionName)
@@ -637,7 +641,9 @@ public sealed partial class UiMarkupGenerator
             {
                 ResolvedMotionTargetKind.Self or ResolvedMotionTargetKind.SelfPart => selfVariable,
                 ResolvedMotionTargetKind.Named or ResolvedMotionTargetKind.NamedPart => CreateIdentifier(target.OwnerName!),
-                ResolvedMotionTargetKind.Owner or ResolvedMotionTargetKind.OwnerPart => templateEmissionContexts.Peek().OwnerVariable,
+                ResolvedMotionTargetKind.Owner or ResolvedMotionTargetKind.OwnerPart => templateEmissionContexts.Count == 0
+                    ? "global::Cerneala.UI.Markup.GeneratedMarkup.GetTemplateOwner(" + selfVariable + ")"
+                    : templateEmissionContexts.Peek().OwnerVariable,
                 _ => throw new InvalidOperationException("Unsupported resolved Motion target.")
             };
             if (target.Kind is not (ResolvedMotionTargetKind.SelfPart or ResolvedMotionTargetKind.NamedPart or ResolvedMotionTargetKind.OwnerPart))
@@ -647,6 +653,13 @@ public sealed partial class UiMarkupGenerator
 
             INamedTypeSymbol partType = ResolveElementTypeSymbol(target.Element.Name.LocalName)!;
             string partTypeCode = partType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            if (target.Kind == ResolvedMotionTargetKind.OwnerPart && templateEmissionContexts.Count == 0)
+            {
+                // Runtime owner: a missing part or one of another type throws.
+                return "global::Cerneala.UI.Markup.GeneratedMarkup.GetTemplatePart<" + partTypeCode + ">(" +
+                    selfVariable + ", " + Literal(target.PartName!) + ")";
+            }
+
             return "((" + partTypeCode + ")" + ownerCode + ".ComponentTemplateInstance!.Parts[" + Literal(target.PartName!) + "])";
         }
 

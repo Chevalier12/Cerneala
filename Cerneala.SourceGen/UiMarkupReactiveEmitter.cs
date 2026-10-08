@@ -1001,7 +1001,7 @@ public sealed partial class UiMarkupGenerator
                 string activationCode = rule.Activations.Count == 0
                     ? "null"
                     : "() => { " + string.Join(" ", rule.Activations.Select(name => name + "();")) + " }";
-                string conditionStateCode = aspectConditionKeys is null
+                string conditionStateCode = aspectConditionKeys is null || (rule.Assignments.Count == 0 && rule.Elements.Count == 0)
                     ? "null"
                     : "active => { " + aspectConditionKeys[ruleIndex] + ".SetActive(" + plan.OwnerVariable + ", active); }";
                 string? timbreCode = EmitTimbreActivationCode(rule);

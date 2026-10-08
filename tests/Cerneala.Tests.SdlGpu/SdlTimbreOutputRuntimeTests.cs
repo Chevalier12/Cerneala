@@ -271,10 +271,10 @@ public sealed class SdlTimbreOutputRuntimeTests
 
     private static TimeSpan TimbreTimeFrames(long frames) => TimeSpan.FromTicks(frames * TimeSpan.TicksPerSecond / 48000);
 
-    private static TimbreClip Ramp(int frames, float scale = Step) =>
+    private static TimbreSound Ramp(int frames, float scale = Step) =>
         new(TimbreSource.FromReader(() => new RampReader(frames, scale), $"ramp-{frames}"));
 
-    private static TimbreClip Constant(int frames, float value) =>
+    private static TimbreSound Constant(int frames, float value) =>
         new(TimbreSource.FromReader(() => new ConstantReader(frames, value), $"constant-{frames}-{value}"));
 
     private sealed class RampReader(int frames, float scale) : TimbreReader

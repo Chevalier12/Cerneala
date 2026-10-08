@@ -78,34 +78,40 @@
                 <Border Background="$SkCreamBrush" BorderBrush="$SkPetalPaleBrush" BorderThickness="1" />
                 <Grid Name="Cutouts" ClipToBounds="True">
                     <Ellipse Name="Sun" Width="150" Height="150" Fill="$SkPetalBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="460,40,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5">
-                        @prism
-                        {
-                            @layer Soft
+                        <Ellipse.Aspect>
+                            @prism
                             {
-                                @parameter Lift: float = 0;
-                                @style DropShadow { Color = #FF5A2742; Opacity = 0.22; UseGlobalLight = false; Angle = 120; Distance = Lift; Size = Lift; }
+                                @layer Soft
+                                {
+                                    @parameter Lift: float = 0;
+                                    @style DropShadow { Color = #FF5A2742; Opacity = 0.22; UseGlobalLight = false; Angle = 120; Distance = Lift; Size = Lift; }
+                                }
                             }
-                        }
+                        </Ellipse.Aspect>
                     </Ellipse>
                     <Border Name="Peak" Width="200" Height="200" Background="$SkPlumBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="110,100,0,0" Rotation="0.785" Opacity="0" RenderTransformOrigin="0.5,0.5">
-                        @prism
-                        {
-                            @layer Soft
+                        <Border.Aspect>
+                            @prism
                             {
-                                @parameter Lift: float = 0;
-                                @style DropShadow { Color = #FF5A2742; Opacity = 0.22; UseGlobalLight = false; Angle = 120; Distance = Lift; Size = Lift; }
+                                @layer Soft
+                                {
+                                    @parameter Lift: float = 0;
+                                    @style DropShadow { Color = #FF5A2742; Opacity = 0.22; UseGlobalLight = false; Angle = 120; Distance = Lift; Size = Lift; }
+                                }
                             }
-                        }
+                        </Border.Aspect>
                     </Border>
                     <Ellipse Name="Hill" Width="260" Height="110" Fill="$SkMossBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="400,226,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5">
-                        @prism
-                        {
-                            @layer Soft
+                        <Ellipse.Aspect>
+                            @prism
                             {
-                                @parameter Lift: float = 0;
-                                @style DropShadow { Color = #FF5A2742; Opacity = 0.22; UseGlobalLight = false; Angle = 120; Distance = Lift; Size = Lift; }
+                                @layer Soft
+                                {
+                                    @parameter Lift: float = 0;
+                                    @style DropShadow { Color = #FF5A2742; Opacity = 0.22; UseGlobalLight = false; Angle = 120; Distance = Lift; Size = Lift; }
+                                }
                             }
-                        }
+                        </Ellipse.Aspect>
                     </Ellipse>
                 </Grid>
                 <StackPanel Name="LiftNote" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="24,20,0,0" Opacity="0">
@@ -119,14 +125,16 @@
                 <StackPanel Margin="0,0,0,6" Opacity="0">
                     <Border Width="440" Height="78" BorderBrush="$SkPetalPaleBrush" BorderThickness="1" ClipToBounds="True">
                         <Grid Name="FiberArt">
-                            @prism
-                            {
-                                @layer Fx
+                            <Grid.Aspect>
+                                @prism
                                 {
-                                    @parameter Fiber: float = 6;
-                                    @filter WaterPaper { FiberLength = Fiber; Brightness = 60; Contrast = 70; }
+                                    @layer Fx
+                                    {
+                                        @parameter Fiber: float = 6;
+                                        @filter WaterPaper { FiberLength = Fiber; Brightness = 60; Contrast = 70; }
+                                    }
                                 }
-                            }
+                            </Grid.Aspect>
                             <Border Background="$SkCreamBrush" />
                             <Ellipse Width="60" Height="60" Fill="$SkPetalBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="320,8,0,0" />
                             <Border Width="90" Height="90" Background="$SkPlumBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="60,44,0,0" Rotation="0.785" RenderTransformOrigin="0.5,0.5" />
@@ -141,14 +149,16 @@
                 <StackPanel Margin="0,0,0,6" Opacity="0">
                     <Border Width="440" Height="78" BorderBrush="$SkPetalPaleBrush" BorderThickness="1" ClipToBounds="True">
                         <Grid Name="GlowArt">
-                            @prism
-                            {
-                                @layer Fx
+                            <Grid.Aspect>
+                                @prism
                                 {
-                                    @parameter Glow: float = 0.05;
-                                    @filter DiffuseGlow { GlowAmount = Glow; ClearAmount = 0.2; Grain = 2; }
+                                    @layer Fx
+                                    {
+                                        @parameter Glow: float = 0.05;
+                                        @filter DiffuseGlow { GlowAmount = Glow; ClearAmount = 0.2; Grain = 2; }
+                                    }
                                 }
-                            }
+                            </Grid.Aspect>
                             <Border Background="$SkCreamBrush" />
                             <Ellipse Width="60" Height="60" Fill="$SkPetalBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="320,8,0,0" />
                             <Border Width="90" Height="90" Background="$SkPlumBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="60,44,0,0" Rotation="0.785" RenderTransformOrigin="0.5,0.5" />
@@ -163,14 +173,16 @@
                 <StackPanel Margin="0,0,0,6" Opacity="0">
                     <Border Width="440" Height="78" BorderBrush="$SkPetalPaleBrush" BorderThickness="1" ClipToBounds="True">
                         <Grid Name="MistArt">
-                            @prism
-                            {
-                                @layer Fx
+                            <Grid.Aspect>
+                                @prism
                                 {
-                                    @parameter Mist: float = 0;
-                                    @filter GaussianBlur { Radius = Mist; }
+                                    @layer Fx
+                                    {
+                                        @parameter Mist: float = 0;
+                                        @filter GaussianBlur { Radius = Mist; }
+                                    }
                                 }
-                            }
+                            </Grid.Aspect>
                             <Border Background="$SkCreamBrush" />
                             <Ellipse Width="60" Height="60" Fill="$SkPetalBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="320,8,0,0" />
                             <Border Width="90" Height="90" Background="$SkPlumBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="60,44,0,0" Rotation="0.785" RenderTransformOrigin="0.5,0.5" />

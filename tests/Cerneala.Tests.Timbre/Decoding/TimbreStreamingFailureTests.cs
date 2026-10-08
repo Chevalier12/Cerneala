@@ -104,7 +104,7 @@ public sealed class TimbreStreamingFailureTests
     public async Task ReaderEndingBeforeItsDeclaredLengthFailsInEveryLoadingMode(TimbreLoading loading)
     {
         using TimbreRig rig = new();
-        TimbrePlayback playback = rig.Scope.Play(new TimbreClip(TimbreSource.FromReader(() => new EndsEarlyReader(), "ends-early"), loading: loading));
+        TimbrePlayback playback = rig.Scope.Play(new TimbreSound(TimbreSource.FromReader(() => new EndsEarlyReader(), "ends-early"), loading: loading));
         rig.Output.Release();
         for (int step = 0; step < 2000 && !playback.Completion.IsCompleted; step++)
         {

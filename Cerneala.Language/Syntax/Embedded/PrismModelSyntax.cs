@@ -40,9 +40,9 @@ internal abstract class PrismMemberModelSyntax
     public TextSpan Span { get; }
 }
 
-internal sealed class PrismCompositionModelSyntax
+internal sealed class PrismClipModelSyntax
 {
-    public PrismCompositionModelSyntax(IReadOnlyList<PrismMemberModelSyntax> members, TextSpan span)
+    public PrismClipModelSyntax(IReadOnlyList<PrismMemberModelSyntax> members, TextSpan span)
     {
         Members = members;
         Span = span;
@@ -168,7 +168,7 @@ internal sealed class PrismApplicationModelSyntax
         string? resourceName,
         TextSpan resourceSpan,
         IReadOnlyList<PrismAssignmentModelSyntax> arguments,
-        PrismCompositionModelSyntax? composition,
+        PrismClipModelSyntax? composition,
         TextSpan span)
     {
         ResourceName = resourceName;
@@ -184,7 +184,7 @@ internal sealed class PrismApplicationModelSyntax
 
     public IReadOnlyList<PrismAssignmentModelSyntax> Arguments { get; }
 
-    public PrismCompositionModelSyntax? Composition { get; }
+    public PrismClipModelSyntax? Composition { get; }
 
     public TextSpan Span { get; }
 }
