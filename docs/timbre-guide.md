@@ -22,10 +22,18 @@ Ogg Opus, opened lazily when a playback first needs them.
 
 ### Loading
 
-`TimbreLoading.Auto` (default) preloads files up to 1 MiB and streams larger
-ones; `Preload` decodes the whole clip (up to 16 MiB per clip, 64 MiB cache);
-`Streaming` decodes incrementally without memory proportional to duration. The
-runtime holds at most 64 voices, paused voices included.
+`TimbreLoading.Auto` (default) preloads a source when its decoded PCM size is
+known and is at most `TimbreRuntimeOptions.AutoPreloadMaxBytes` (1 MiB by
+default); it streams larger sources and sources whose decoded length is
+unknown. The comparison uses the canonical 48 kHz stereo float PCM size:
+`lengthFrames * 8` bytes, not the encoded file size. The default threshold
+therefore covers about 2.7 seconds of audio. A compressed file smaller than
+1 MiB can still stream if its decoded PCM exceeds that threshold.
+
+`Preload` decodes the whole clip (up to 16 MiB of decoded PCM per clip, 64 MiB
+cache by default); `Streaming` decodes incrementally without memory
+proportional to duration. The runtime holds at most 64 voices, paused voices
+included.
 
 ### Output and devices
 
