@@ -44,8 +44,7 @@ internal sealed partial class CernealaSemanticModel
             BindingResolution? resolution = ResolveBindingPath(
                 element,
                 direct,
-                dataType,
-                validateClrObservability: direct.ModeSpan.Length > 0);
+                dataType);
             if (resolution is null)
             {
                 return true;

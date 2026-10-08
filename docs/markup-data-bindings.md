@@ -19,10 +19,11 @@ A `$DataContext` binding requires `DataType` on the root element. Paired
 `Window<TViewModel>` and `UserControl<TViewModel>` documents infer that type
 from `TViewModel`, so they do not need to repeat `DataType`.
 
-Every CLR object that owns a property along an explicitly bound reactive path
-must implement `INotifyPropertyChanged`. This includes intermediate objects,
-not only the root view model. A direct reference without a mode is evaluated
-once and therefore does not require notification support.
+Every CLR object that owns a property along a live binding path must implement
+`INotifyPropertyChanged`. This includes intermediate objects, not only the root
+view model. Attribute paths are live `OneWay` bindings even when the mode suffix
+is omitted. A suffix-less direct reference in a directive assignment is instead
+evaluated once and does not require notification support for its value path.
 
 ```csharp
 using System.ComponentModel;
@@ -94,8 +95,9 @@ public sealed class ProfileViewModel : INotifyPropertyChanged
 }
 ```
 
-An auto-property without a notification event is valid for a direct snapshot.
-If `:OneWay` or `:TwoWay` requests a live binding, the generator reports an
+An auto-property on an owner without a notification event is valid only for a
+direct snapshot in a directive assignment. For attribute bindings (with or
+without `:OneWay`) and explicit `:TwoWay` bindings, the generator reports an
 actionable diagnostic instead of pretending that the source is observable.
 
 Named elements, `$self`, and template parts are `UiObject` sources. Their
@@ -110,8 +112,16 @@ An entire binding value has this form:
 source-path[:mode]
 ```
 
-The supported modes are `OneWay` and `TwoWay`. Omitting the suffix creates no
-binding: the path is evaluated once and its current value is assigned.
+The supported modes are `OneWay` and `TwoWay`. The default depends on context:
+
+| Context | No suffix | Explicit suffix |
+| --- | --- | --- |
+| XML property attribute, including attributes inside templates | Live `OneWay` binding. | `:OneWay` is equivalent to omission; `:TwoWay` requests write-back where supported. |
+| Direct value in a directive assignment | Reads and assigns the current value once. | A live binding requires an explicit mode in a context that supports bindings, such as a reactive `@when` assignment. |
+
+These rules apply to property paths, not resource references such as `$Accent`
+or reactive condition expressions. Aspect, Motion and Prism assignment rules
+are not changed by the attribute default.
 
 | Source | Meaning |
 | --- | --- |
@@ -134,21 +144,21 @@ attribute; they are not part of the binding expression.
 </StackPanel>
 ```
 
-The first `TextBlock` above is a snapshot; the second remains synchronized.
+The first two `TextBlock` elements above are equivalent live `OneWay` bindings.
 `TwoWay` additionally requires an accessible source setter and a writable
 target UI property.
 
 ## DataContext Scopes
 
 Assigning a reference to an element's `DataContext` creates a typed scope for
-that element and its descendants. Use an explicit mode when the scope must
-retarget after the source changes:
+that element and its descendants. An attribute path uses `OneWay` by default,
+so the scope retargets after the source changes without an explicit suffix:
 
 ```xml
 <ContentTemplate DataType="sample:PersonRow">
   <StackPanel>
     <TextBlock Text="$DataContext.Label" />
-    <Border DataContext="$DataContext.Details:OneWay">
+    <Border DataContext="$DataContext.Details">
       <TextBlock Text="$DataContext.Name:OneWay" />
     </Border>
     <TextBlock Text="$DataContext.Label" />
@@ -161,12 +171,27 @@ the border, `$DataContext` is validated against the result type of `Details`.
 The following sibling is outside that scope and therefore uses `PersonRow`
 again. This works at any depth and does not require another `DataType`.
 
-This explicit scope is reactive. If `PersonRow.Details` is replaced, the border receives
+This scope is reactive. If `PersonRow.Details` is replaced, the border receives
 the new data context and descendant bindings reconnect to it. If the visual
 root of a `ContentTemplate` declares `DataContext`, the generated template
 factory preserves that binding instead of overwriting it with the original
 item. Without an explicit root override, the item remains the template root's
 default data context.
+
+For an unpaired document factory whose root declares a `DataContext` binding,
+the root expression observes the argument passed to `Create(dataContext)`, not
+the root's resulting data context. Replacing a property on that argument can
+retarget the root and its descendants without feeding the result back into the
+source path. The factory does not overwrite an explicit root `DataContext`
+with a competing local value. Calling parameterless `Create()` supplies a null
+source, leaving such a path unresolved.
+
+For an interior element, a `DataContext` attribute reads the context inherited
+from its logical parent (or its visual parent if it has no logical parent), not
+the element's own resulting context. Parent context replacement retargets the
+scope; detach stops observation and reattach resolves the current parent again.
+Content-template paths that start directly from the template item keep that
+item as their source instead.
 
 ## String Projection
 
@@ -243,8 +268,8 @@ binding cannot reach an ordinary named element outside the current scope.
 
 ## Template Owners And Parts
 
-Inside `@template`, `$owner.Property` reads the owner's current value once.
-`$owner.Property:OneWay` uses the existing live `TemplateBinding` path.
+Inside `@template`, the attribute forms `$owner.Property` and
+`$owner.Property:OneWay` both use the existing live `TemplateBinding` path.
 `$owner.Property:TwoWay` is not supported.
 
 ```xml
@@ -336,9 +361,10 @@ branch, so a later change can still trigger reevaluation.
 
 A terminal `null` is a resolved value. It is written to a nullable target, or
 projected to an empty string for a string target. If an intermediate path owner
-is `null`, a direct reference evaluates to the target's projected null value.
-An explicit binding is temporarily unresolved: it clears only its own markup
-value and reconnects when the missing segment becomes available.
+is `null`, a snapshot reference in a directive evaluates to the target's
+projected null value. A live binding, including a suffix-less attribute, is
+temporarily unresolved: it clears only its own markup value and reconnects when
+the missing segment becomes available.
 
 `OneWay` requires a readable source and a writable target UI property.
 `TwoWay` additionally requires an accessible source setter. A read-only target,
@@ -385,6 +411,15 @@ generic or unattached targets can use the explicit-Relay overloads on
 notification fails with an actionable diagnostic.
 
 ## Limits
+
+### Compatibility
+
+Suffix-less property attributes now create live bindings rather than snapshots.
+They therefore require observable CLR path owners and a writable UI-property
+target, just like explicit `:OneWay`. Ordinary CLR target properties cannot host
+these bindings. There is no attribute `OneTime` mode; code that needs a one-time
+assignment can set the value explicitly in C#. Directive value defaults and
+resource references are unchanged.
 
 Markup bindings intentionally do not provide WPF `{Binding ...}` syntax,
 runtime reflection paths, custom converters, `FallbackValue`,

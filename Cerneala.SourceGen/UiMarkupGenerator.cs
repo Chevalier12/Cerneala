@@ -552,7 +552,10 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             source.Append("        ").AppendLine(line);
         }
 
-        source.Append("        ").Append(rootVariable).AppendLine(".DataContext = dataContext;");
+        if (document.Root.Attribute("DataContext") is null)
+        {
+            source.Append("        ").Append(rootVariable).AppendLine(".DataContext = dataContext;");
+        }
         foreach (string line in scope.PostLines)
         {
             source.Append("        ").AppendLine(line);

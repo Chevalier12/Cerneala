@@ -168,8 +168,12 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
     }
 
-    [Fact]
-    public void RenderSurfaceOwnsDeclarativeSceneWithTemplatedItems()
+    [Theory]
+    [InlineData("", false)]
+    [InlineData(":OneWay", false)]
+    [InlineData("", true)]
+    [InlineData(":OneWay", true)]
+    public void RenderSurfaceOwnsDeclarativeSceneWithTemplatedItems(string mode, bool nestedScope)
     {
         const string inputSource = """
             using System.Collections;
@@ -180,28 +184,49 @@ public sealed partial class UiMarkupGeneratorTests
 
             public sealed class RootModel : INotifyPropertyChanged
             {
+                private SceneModel scene = new();
                 public event PropertyChangedEventHandler? PropertyChanged;
-                public SceneModel Scene { get; } = new();
+                public SceneModel Scene
+                {
+                    get => scene;
+                    set { scene = value; PropertyChanged?.Invoke(this, new(nameof(Scene))); }
+                }
             }
 
-            public sealed class SceneModel
+            public sealed class SceneModel : INotifyPropertyChanged
             {
+                public event PropertyChangedEventHandler? PropertyChanged;
                 public IEnumerable? Items { get; }
                 public Cerneala.UI.Resources.ImageReference? CurrentImage { get; set; }
-                public DrawRect CurrentDestination { get; set; }
+                public DestinationModel CurrentDestination { get; } = new();
             }
 
-            public sealed class SpriteModel
+            public sealed class SpriteModel : INotifyPropertyChanged
             {
+                public event PropertyChangedEventHandler? PropertyChanged;
                 public Cerneala.UI.Resources.ImageReference? Image { get; set; }
-                public DrawRect Destination { get; set; }
+                public DestinationModel Destination { get; } = new();
+            }
+
+            public sealed class DestinationModel : INotifyPropertyChanged
+            {
+                private float x = 10;
+                public event PropertyChangedEventHandler? PropertyChanged;
+                public float X
+                {
+                    get => x;
+                    set { x = value; PropertyChanged?.Invoke(this, new(nameof(X))); }
+                }
+                public float Y { get; } = 20;
+                public float Width { get; } = 30;
+                public float Height { get; } = 40;
             }
             """;
-        const string markup = """
+        string markup = $$"""
             <RenderSurface2D
                 xmlns:models="clr-namespace:TestInput;assembly=GeneratorTests"
-                DataType="TestInput.RootModel"
-                DataContext="$DataContext.Scene"
+                {{(nestedScope ? "" : "DataType=\"TestInput.RootModel\"")}}
+                DataContext="$DataContext.Scene{{mode}}"
                 Stretch="Uniform">
               <RenderSurface2D.Scene>
                 <Scene2D>
@@ -218,6 +243,10 @@ public sealed partial class UiMarkupGeneratorTests
               </RenderSurface2D.Scene>
             </RenderSurface2D>
             """;
+        if (nestedScope)
+        {
+            markup = "<StackPanel xmlns:models=\"clr-namespace:TestInput;assembly=GeneratorTests\" DataType=\"TestInput.RootModel\">" + markup + "</StackPanel>";
+        }
 
         GeneratorRunResult result = RunGeneratorWithInput(
             "RenderSurfaceScene.crn",
@@ -237,14 +266,55 @@ public sealed partial class UiMarkupGeneratorTests
             throwOnError: true)!;
         MethodInfo create = factoryType.GetMethods(BindingFlags.Public | BindingFlags.Static)
             .Single(candidate => candidate.Name == "Create" && candidate.GetParameters().Length == 1);
-        RenderSurface2D surface = Assert.IsType<RenderSurface2D>(
-            create.Invoke(null, new[] { dataContext }));
+        UIElement factoryRoot = Assert.IsAssignableFrom<UIElement>(create.Invoke(null, new[] { dataContext }));
+        RenderSurface2D surface = nestedScope
+            ? Assert.IsType<RenderSurface2D>(Assert.IsType<StackPanel>(factoryRoot).VisualChildren[0])
+            : Assert.IsType<RenderSurface2D>(factoryRoot);
         Assert.NotNull(surface.Scene);
         Assert.Equal(2, surface.Scene.Children.Count);
         SceneItems2D items = Assert.IsType<SceneItems2D>(surface.Scene.Children[0]);
         Assert.Single(items.Templates);
         Assert.Equal("TestInput.SpriteModel", items.Templates[0].DataType?.FullName);
-        Assert.IsType<Sprite2D>(surface.Scene.Children[1]);
+        Sprite2D currentPiece = Assert.IsType<Sprite2D>(surface.Scene.Children[1]);
+        Assert.Equal(10, currentPiece.X);
+        Assert.Equal(20, currentPiece.Y);
+        Assert.Equal(30, currentPiece.Width);
+        Assert.Equal(40, currentPiece.Height);
+        object firstScene = dataContext.GetType().GetProperty("Scene")!.GetValue(dataContext)!;
+        Assert.Same(firstScene, surface.DataContext);
+        object firstDestination = firstScene.GetType().GetProperty("CurrentDestination")!.GetValue(firstScene)!;
+        firstDestination.GetType().GetProperty("X")!.SetValue(firstDestination, 15f);
+        Assert.Equal(15, currentPiece.X);
+
+        object replacement = Activator.CreateInstance(firstScene.GetType())!;
+        object replacementDestination = replacement.GetType().GetProperty("CurrentDestination")!.GetValue(replacement)!;
+        replacementDestination.GetType().GetProperty("X")!.SetValue(replacementDestination, 25f);
+        dataContext.GetType().GetProperty("Scene")!.SetValue(dataContext, replacement);
+        Assert.Same(replacement, surface.DataContext);
+        Assert.Equal(25, currentPiece.X);
+        firstDestination.GetType().GetProperty("X")!.SetValue(firstDestination, 99f);
+        Assert.Equal(25, currentPiece.X);
+        replacementDestination.GetType().GetProperty("X")!.SetValue(replacementDestination, 26f);
+        Assert.Equal(26, currentPiece.X);
+
+        UIRoot uiRoot = new();
+        uiRoot.VisualChildren.Add(factoryRoot);
+        uiRoot.VisualChildren.Remove(factoryRoot);
+        object detachedReplacement = Activator.CreateInstance(firstScene.GetType())!;
+        object detachedDestination = detachedReplacement.GetType().GetProperty("CurrentDestination")!.GetValue(detachedReplacement)!;
+        detachedDestination.GetType().GetProperty("X")!.SetValue(detachedDestination, 35f);
+        dataContext.GetType().GetProperty("Scene")!.SetValue(dataContext, detachedReplacement);
+        Assert.Same(replacement, surface.DataContext);
+        Assert.Equal(26, currentPiece.X);
+        uiRoot.VisualChildren.Add(factoryRoot);
+        Assert.Same(detachedReplacement, surface.DataContext);
+        Assert.Equal(35, currentPiece.X);
+        detachedDestination.GetType().GetProperty("X")!.SetValue(detachedDestination, 36f);
+        Assert.Equal(36, currentPiece.X);
+        uiRoot.VisualChildren.Remove(factoryRoot);
+
+        UIElement emptyRoot = Assert.IsAssignableFrom<UIElement>(factoryType.GetMethod("Create", Type.EmptyTypes)!.Invoke(null, null));
+        Assert.Equal(nestedScope ? typeof(StackPanel) : typeof(RenderSurface2D), emptyRoot.GetType());
     }
 
     [Fact]
@@ -458,8 +528,10 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Equal("bound-row", Cerneala.UI.Servo.Servo.GetId(text));
     }
 
-    [Fact]
-    public void ContentTemplateRootDataContextScopesDescendantBindingsAndRetargets()
+    [Theory]
+    [InlineData("")]
+    [InlineData(":OneWay")]
+    public void ContentTemplateRootDataContextScopesDescendantBindingsAndRetargets(string mode)
     {
         const string inputSource = """
             using System.ComponentModel;
@@ -496,12 +568,12 @@ public sealed partial class UiMarkupGeneratorTests
                 }
             }
             """;
-        const string markup = """
+        string markup = $$"""
             <ItemsControl>
               <ItemsControl.ItemTemplate>
                 <ContentTemplate DataType="TestInput.PropertyRow">
-                  <StackPanel DataContext="$DataContext.Details:OneWay">
-                    <TextBlock Text="$DataContext.Name:OneWay" />
+                  <StackPanel DataContext="$DataContext.Details{{mode}}">
+                    <TextBlock Text="$DataContext.Name{{mode}}" />
                   </StackPanel>
                 </ContentTemplate>
               </ItemsControl.ItemTemplate>

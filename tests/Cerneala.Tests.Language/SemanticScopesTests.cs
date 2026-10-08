@@ -66,6 +66,27 @@ public sealed class SemanticScopesTests
         Assert.Equal("Cerneala.UI.Controls.TextBlock", SymbolAt(model, markup, "$self").ValueType);
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData(":OneWay")]
+    public void AttributeOneWayRequiresAnObservableClrPathOwner(string mode)
+    {
+        const string source = """
+            namespace Demo;
+            public sealed class PlainViewModel
+            {
+                public string Name { get; set; } = "Initial";
+            }
+            """;
+        string markup = $$"""
+            <TextBlock DataType="Demo.PlainViewModel" Text="$DataContext.Name{{mode}}" />
+            """;
+
+        LanguageDiagnostic diagnostic = Assert.Single(Model("AttributeBinding.crn", markup, source).Diagnostics);
+        Assert.Equal("CERNEALAUI007", diagnostic.Id);
+        Assert.Contains("INotifyPropertyChanged", diagnostic.Message, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void UnknownBindingSourceProducesOneDiagnosticWithoutSegmentCascade()
     {

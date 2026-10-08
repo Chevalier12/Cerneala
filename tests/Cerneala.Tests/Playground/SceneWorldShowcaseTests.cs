@@ -21,6 +21,35 @@ using Scene2D = global::Cerneala.UI.Controls.Scene2D;
 
 public sealed class SceneWorldShowcaseTests
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void SceneWorldModelsNotifyMutableScalarPaths(bool npcModel)
+    {
+        object model = npcModel ? new SceneWorldNpc(10, 20) : new SceneWorldBox(10, 20, 30, 40, 2, 1);
+        System.ComponentModel.INotifyPropertyChanged observable =
+            Assert.IsAssignableFrom<System.ComponentModel.INotifyPropertyChanged>(model);
+        List<string?> changed = [];
+        observable.PropertyChanged += (_, args) => changed.Add(args.PropertyName);
+        model.GetType().GetProperty("X")!.SetValue(model, 15f);
+        Assert.Equal(new[] { "X" }, changed);
+        changed.Clear();
+        model.GetType().GetProperty("X")!.SetValue(model, 15f);
+        Assert.Empty(changed);
+        if (npcModel)
+        {
+            DrawRect destination = new(1, 2, 24, 32);
+            model.GetType().GetProperty("Destination")!.SetValue(model, destination);
+            Assert.Contains("DestinationX", changed);
+            Assert.Contains("DestinationY", changed);
+            Assert.Contains("DestinationWidth", changed);
+            Assert.Contains("DestinationHeight", changed);
+            Assert.Contains("PrismInputDomain", changed);
+            Assert.Equal(24f, model.GetType().GetProperty("DestinationWidth")!.GetValue(model));
+            Assert.Equal(destination, model.GetType().GetProperty("PrismInputDomain")!.GetValue(model));
+        }
+    }
+
     [Fact]
     public async Task ShowcaseNavigationSelectsSceneWorldThroughServoClick()
     {
@@ -396,6 +425,33 @@ public sealed class SceneWorldShowcaseTests
         Assert.Equal(view.State.Spawn.X, view.State.PlayerX);
         Assert.Equal(view.State.Spawn.Y, view.State.PlayerY);
         Assert.Null(view.LastMove);
+
+        // Suffix-less template attributes must follow model notifications, not
+        // just copy the values when the collection realizes an occurrence.
+        firstModel.X += 12;
+        firstModel.Y += 8;
+        firstModel.SourceX = 80;
+        firstModel.Destination = new DrawRect(1, 2, 24, 32);
+        Scene2D firstNpcGroup = Assert.IsType<Scene2D>(firstNpc);
+        Assert.Equal(firstModel.X, firstNpcGroup.TranslateX);
+        Assert.Equal(firstModel.Y, firstNpcGroup.TranslateY);
+        Assert.Equal(80, npcSprite.SourceX);
+        Assert.Equal((1f, 2f, 24f, 32f), (npcSprite.X, npcSprite.Y, npcSprite.Width, npcSprite.Height));
+        Assert.Equal(firstModel.Destination, npcSprite.PrismInputDomain);
+
+        SceneWorldBox liveWall = view.State.Walls[0];
+        Sprite2D liveWallOwner = Descendants(importedColliders).OfType<Sprite2D>()
+            .Single(owner => ReferenceEquals(owner.DataContext, liveWall));
+        BoxCollider2D liveCollider = Assert.IsType<BoxCollider2D>(liveWallOwner.Collider);
+        liveWall.X += 4;
+        liveWall.Width += 2;
+        liveWall.Layer = 4;
+        liveWall.Mask = 8;
+        Assert.Equal(liveWall.X, liveWallOwner.X);
+        Assert.Equal(liveWall.Width, liveCollider.Width);
+        Assert.Equal(4u, liveCollider.CollisionLayer);
+        Assert.Equal(8u, liveCollider.CollisionMask);
+
         root.VisualChildren.Remove(view);
         Assert.False(view.State.IsLoaded);
         Assert.Empty(view.State.TileMapIds);

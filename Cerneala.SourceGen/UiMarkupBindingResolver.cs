@@ -105,13 +105,15 @@ public sealed partial class UiMarkupGenerator
                 string elementName,
                 bool isRoot,
                 TemplateEmissionContext? templateContext,
-                bool validateClrObservability = false)
+                bool validateClrObservability = false,
+                string? dataContextSourceCode = null)
             {
                 OwnerVariable = ownerVariable;
                 ElementName = elementName;
                 IsRoot = isRoot;
                 TemplateContext = templateContext;
                 ValidateClrObservability = validateClrObservability;
+                DataContextSourceCode = dataContextSourceCode;
             }
 
             public string OwnerVariable { get; }
@@ -123,6 +125,8 @@ public sealed partial class UiMarkupGenerator
             public TemplateEmissionContext? TemplateContext { get; }
 
             public bool ValidateClrObservability { get; }
+
+            public string? DataContextSourceCode { get; }
         }
 
         private sealed class DataPathSegmentDescriptor
@@ -177,6 +181,8 @@ public sealed partial class UiMarkupGenerator
             public bool CanWrite { get; }
 
             public string? SourceProjectionCode { get; set; }
+
+            public bool UseInheritedDataContext { get; set; }
         }
 
         private sealed class ResolvedMarkupValue
@@ -858,11 +864,11 @@ public sealed partial class UiMarkupGenerator
                 expression,
                 BindingSourceKind.DataPath,
                 currentType,
-                localDataContextTypes.Count > 0
+                resolutionContext.DataContextSourceCode ?? (localDataContextTypes.Count > 0
                     ? resolutionContext.OwnerVariable
                     : contentTemplateContextVariables.Count > 0
                     ? contentTemplateContextVariables.Peek() + ".Data"
-                    : resolutionContext.OwnerVariable,
+                    : resolutionContext.OwnerVariable),
                 dataSegments: segments,
                 canWrite: canWrite);
         }
@@ -1212,14 +1218,16 @@ public sealed partial class UiMarkupGenerator
         private BindingResolutionContext CreateBindingResolutionContext(
             string ownerVariable,
             string elementName,
-            bool isRoot)
+            bool isRoot,
+            string? dataContextSourceCode = null)
         {
             return new BindingResolutionContext(
                 ownerVariable,
                 elementName,
                 isRoot,
                 templateEmissionContexts.Count == 0 ? null : templateEmissionContexts.Peek(),
-                validateClrObservability: true);
+                validateClrObservability: true,
+                dataContextSourceCode: dataContextSourceCode);
         }
     }
 }

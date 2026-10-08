@@ -29,14 +29,19 @@ using Binding binding = GeneratedMarkup.AttachPropertyBinding(
     "$self.IsVisible");
 ```
 
-Generated markup distinguishes a direct reference from an explicit binding:
+Generated XML property attributes default to a live `OneWay` binding:
 
 ```crn
-$DataContext.Name             // read once; no binding is attached
+$DataContext.Name             // keep the target synchronized with the source
 $DataContext.Name:OneWay      // keep the target synchronized with the source
 $DataContext.Name:TwoWay      // synchronize and write target changes back
-"$DataContext.Name:OneWay"    // an ordinary string literal
 ```
+
+This default also applies to property attributes inside templates. Directive
+assignments retain their separate rules: a bare property path is read once;
+live binding modes must be explicit in contexts that support them. Motion and
+Prism direct values retain their snapshot behavior. `ReadReference<T>` remains
+the read-once helper; attribute paths use binding attachment helpers instead.
 
 ## Methods
 | Signature | Return Type | Description |
@@ -50,6 +55,7 @@ $DataContext.Name:TwoWay      // synchronize and write target changes back
 | `ObserveTemplatePartProperty(Control owner, string partName, UiProperty property)` | `MarkupObservation` | Observes a property on a named component-template part and reconnects after template replacement. |
 | `ObserveObject(Func<object?> getter)` | `MarkupObservation` | Observes a getter-backed object value. |
 | `ObserveDataPath(UIElement owner, params MarkupDataPathSegment[] segments)` | `MarkupObservation` | Observes a typed `DataContext` property path and its intermediate owners. |
+| `ObserveInheritedDataPath(UIElement owner, params MarkupDataPathSegment[] segments)` | `MarkupObservation` | Observes a typed path from the owner's logical parent (or visual parent when no logical parent exists), excluding the owner's own `DataContext`. Generated interior `DataContext` attributes use this source when establishing a new scope. |
 | `ObserveDataPath(object? source, params MarkupDataPathSegment[] segments)` | `MarkupObservation` | Observes a typed property path from a fixed source object without resolving `DataContext` through an element tree. Source-generated content templates use this overload for their item. |
 | `ReadReference<T>(MarkupObservation observation, Func<object?, T> projection)` | `T` | Starts an observation long enough to read and project its current value, then stops it without attaching a binding. |
 | `AttachConditions(UIElement owner, IReadOnlyList<MarkupObservation> observations, IReadOnlyList<MarkupConditionRule> rules)` | `IDisposable` | Attaches observations and rules to an element lifecycle and gates rule activation callbacks on effective renderability; sound activations of a rule are not gated by renderability. |
@@ -132,12 +138,29 @@ Content-template paths start from the item carried by `ContentTemplateContext`,
 while ordinary `$DataContext` paths continue to follow the element's effective
 data context.
 
-A path such as `$DataContext.Name` is a direct reference, not an implicit
-one-way binding. Generated code reads its current value once when an ordinary
-property assignment, Aspect, Prism definition, or Motion execution applies it.
-A binding exists only when the expression explicitly ends in `:OneWay` or
-`:TwoWay`. Quoted directive expressions remain string literals regardless of
-their text; quotes around XML attribute values are only XML delimiters.
+An ordinary generated factory's root `DataContext` binding is a distinct case:
+its path starts from the factory argument, while descendant paths follow the
+root's resulting effective data context. The generator uses the object-source
+observation overload for that root expression to keep its input independent of
+its output.
+
+An interior element's `DataContext` attribute observes the context inherited
+from its logical parent, falling back to its visual parent. It must not read
+back its own resulting `DataContext`. `ObserveInheritedDataPath` provides this
+separate source: it tracks parent context and path-owner notifications while
+active, and resolves the current parent again when restarted. With no parent,
+a nonempty path is unresolved even if the owner has its own data context.
+Content-template paths that already use the template item as a fixed source
+continue to use the object-source overload instead.
+
+A property attribute such as `Text="$DataContext.Name"` attaches a live
+`OneWay` binding, equivalent to `Text="$DataContext.Name:OneWay"`. This includes
+attributes in component templates, where `$owner.Property` uses the live
+template-binding path. Such bindings require observable CLR path owners and a
+writable UI-property target. Suffix-less values in directive assignments, Prism
+definitions and Motion executions still read once when applied; live bindings
+there require an explicit mode in a supported context. Quotes around XML
+attribute values are only XML delimiters, not a request for snapshot behavior.
 
 Property bindings write to `MarkupBase`; conditional providers write to
 `MarkupConditional` only while active. Two-way bindings accept write-back only

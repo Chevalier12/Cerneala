@@ -97,7 +97,7 @@
               @templates {
                 <ContentTemplate DataType="local:SceneWorldNpc">
                   <Scene2D TranslateX="$DataContext.X" TranslateY="$DataContext.Y">
-                    <Sprite2D Image="$WorldAtlas" SourceX="$DataContext.SourceX" SourceY="$DataContext.SourceY" SourceWidth="$DataContext.SourceWidth" SourceHeight="$DataContext.SourceHeight" X="$DataContext.Destination.X" Y="$DataContext.Destination.Y" Width="$DataContext.Destination.Width" Height="$DataContext.Destination.Height" PrismInputDomain="$DataContext.PrismInputDomain">
+                    <Sprite2D Image="$WorldAtlas" SourceX="$DataContext.SourceX" SourceY="$DataContext.SourceY" SourceWidth="$DataContext.SourceWidth" SourceHeight="$DataContext.SourceHeight" X="$DataContext.DestinationX" Y="$DataContext.DestinationY" Width="$DataContext.DestinationWidth" Height="$DataContext.DestinationHeight" PrismInputDomain="$DataContext.PrismInputDomain">
                       <Sprite2D.Aspect>
                         @prism { @layer NpcGlow { @style OuterGlow { Size = 1; Opacity = 0.2; Color = #FFFFC777; } } }
                         @on Loaded { @animate with Tween(150ms) { @from { Opacity = 0.4; } @to { Opacity = 1; } } }

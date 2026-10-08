@@ -790,19 +790,28 @@ Declare the root data type:
 
 ### One-way binding
 
-One-way is the default:
+One-way is the default for XML property attributes, including attributes inside
+templates:
 
 ```xml
 <TextBlock
     Text="$DataContext.Status" />
 ```
 
-The explicit form is:
+The equivalent explicit form is:
 
 ```xml
 <TextBlock
     Text="$DataContext.Status:OneWay" />
 ```
+
+Both forms remain synchronized with the source. CLR property-path owners must
+implement `INotifyPropertyChanged`; the target must be a writable UI property.
+This default does not apply to directive assignments: a bare value such as
+`Text = $DataContext.Status;` reads once, while a live binding in a supported
+reactive assignment requires an explicit mode. See
+[Markup Data Bindings](markup-data-bindings.md) for context and compatibility
+rules.
 
 ### Two-way binding
 

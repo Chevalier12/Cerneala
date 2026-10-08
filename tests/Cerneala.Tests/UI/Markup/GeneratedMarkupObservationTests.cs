@@ -10,6 +10,65 @@ namespace Cerneala.Tests.UI.Markup;
 public sealed class GeneratedMarkupObservationTests
 {
     [Fact]
+    public void InheritedDataPathIgnoresTargetContextAndRebindsParentSource()
+    {
+        EndpointRoot first = new(new EndpointChild("first"));
+        StackPanel parent = new() { DataContext = first };
+        UIElement target = new() { DataContext = first.Child };
+        parent.LogicalChildren.Add(target);
+        parent.VisualChildren.Add(target);
+        MarkupObservation observation = GeneratedMarkup.ObserveInheritedDataPath(
+            target,
+            new MarkupDataPathSegment("Child", value => ((EndpointRoot)value!).Child));
+
+        observation.Start();
+        Assert.True(observation.IsResolved);
+        Assert.Same(first.Child, observation.Value);
+        Assert.Equal(1, first.SubscriberCount);
+        target.DataContext = new EndpointChild("output");
+        Assert.Same(first.Child, observation.Value);
+
+        EndpointRoot second = new(new EndpointChild("second"));
+        parent.DataContext = second;
+        Assert.Same(second.Child, observation.Value);
+        Assert.Equal(0, first.SubscriberCount);
+        Assert.Equal(1, second.SubscriberCount);
+        first.Child = new EndpointChild("stale");
+        Assert.Same(second.Child, observation.Value);
+        second.Child = new EndpointChild("updated");
+        Assert.Same(second.Child, observation.Value);
+
+        observation.Stop();
+        Assert.Equal(0, second.SubscriberCount);
+        parent.LogicalChildren.Remove(target);
+        parent.VisualChildren.Remove(target);
+        EndpointRoot third = new(new EndpointChild("third"));
+        StackPanel replacementParent = new() { DataContext = third };
+        replacementParent.LogicalChildren.Add(target);
+        replacementParent.VisualChildren.Add(target);
+        observation.Start();
+        Assert.Same(third.Child, observation.Value);
+        Assert.Equal(0, second.SubscriberCount);
+        Assert.Equal(1, third.SubscriberCount);
+        observation.Stop();
+        Assert.Equal(0, third.SubscriberCount);
+    }
+
+    [Fact]
+    public void InheritedDataPathWithoutParentDoesNotConsumeTargetContext()
+    {
+        UIElement target = new() { DataContext = new EndpointRoot(new EndpointChild("output")) };
+        MarkupObservation observation = GeneratedMarkup.ObserveInheritedDataPath(
+            target,
+            new MarkupDataPathSegment("Child", value => ((EndpointRoot)value!).Child));
+
+        observation.Start();
+        Assert.False(observation.IsResolved);
+        Assert.Null(observation.Value);
+        observation.Stop();
+    }
+
+    [Fact]
     public void DataPathSingleSegmentReadsWritesAndRebindsRoot()
     {
         EndpointChild firstChild = new("first");

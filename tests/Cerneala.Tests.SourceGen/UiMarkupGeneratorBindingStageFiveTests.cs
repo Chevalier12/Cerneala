@@ -327,14 +327,14 @@ public sealed partial class UiMarkupGeneratorTests
 
         viewModelType.GetProperty("Name")!.SetValue(viewModel, "Mara");
         viewModelType.GetProperty("Count")!.SetValue(viewModel, 7);
-        Assert.Equal("3", texts[0].Text);
+        Assert.Equal("7", texts[0].Text);
         Assert.Equal("Salut: Mara, count=[7]; repeat=Mara/Mara; pret $ 10", texts[1].Text);
         Assert.Equal("$DataContext.Name:TwoWay", texts[3].Text);
         Assert.Equal("Escaped $DataContext.Name:OneWay", texts[4].Text);
     }
 
     [Fact]
-    public void BindingStageFive_DirectAspectReferencesAreSnapshotsButExplicitModesStayReactive()
+    public void BindingStageFive_AttributeDefaultsAreReactiveWhileDirectiveReferencesRemainSnapshots()
     {
         const string markup = """
             <StackPanel DataType="TestInput.BindingViewModel">
@@ -360,9 +360,9 @@ public sealed partial class UiMarkupGeneratorTests
             out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         string generated = SingleGeneratedSource(result);
-        Assert.Equal(1, Count(generated, "AttachPropertyBinding<"));
+        Assert.Equal(2, Count(generated, "AttachPropertyBinding<"));
         Assert.Equal(1, Count(generated, "CreateConditionalPropertyBinding<"));
-        Assert.Equal(1, Count(generated, ".Bind(global::Cerneala.UI.Controls.ContentControl.ContentProperty"));
+        Assert.Equal(2, Count(generated, ".Bind(global::Cerneala.UI.Controls.ContentControl.ContentProperty"));
         Assert.True(compilation.GetDiagnostics().All(diagnostic => diagnostic.Severity != DiagnosticSeverity.Error));
 
         Assembly assembly = EmitBindingTestAssembly(compilation);

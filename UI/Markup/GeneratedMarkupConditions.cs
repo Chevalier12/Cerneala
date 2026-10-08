@@ -328,6 +328,11 @@ public static partial class GeneratedMarkup
         return new DataPathObservation(source, segments);
     }
 
+    public static MarkupObservation ObserveInheritedDataPath(UIElement owner, params MarkupDataPathSegment[] segments)
+    {
+        return new DataPathObservation(owner, segments, inheritedContext: true);
+    }
+
     public static T ReadReference<T>(MarkupObservation observation, Func<object?, T> projection)
     {
         ArgumentNullException.ThrowIfNull(observation);
@@ -591,6 +596,7 @@ public static partial class GeneratedMarkup
     {
         private readonly UIElement? owner;
         private readonly object? source;
+        private readonly bool inheritedContext;
         private readonly IReadOnlyList<MarkupDataPathSegment> segments;
         private readonly List<Action> unsubscribeContext = [];
         private readonly List<Action> unsubscribePath = [];
@@ -598,10 +604,11 @@ public static partial class GeneratedMarkup
         private MarkupDataPathSegment? terminalSegment;
         private bool started;
 
-        public DataPathObservation(UIElement owner, IReadOnlyList<MarkupDataPathSegment> segments)
+        public DataPathObservation(UIElement owner, IReadOnlyList<MarkupDataPathSegment> segments, bool inheritedContext = false)
         {
             this.owner = owner ?? throw new ArgumentNullException(nameof(owner));
             this.segments = segments?.ToArray() ?? throw new ArgumentNullException(nameof(segments));
+            this.inheritedContext = inheritedContext;
         }
 
         public DataPathObservation(object? source, IReadOnlyList<MarkupDataPathSegment> segments)
@@ -729,8 +736,8 @@ public static partial class GeneratedMarkup
                 return source;
             }
 
-            UIElement? current = owner;
-            object? inherited = owner.DataContext;
+            UIElement? current = inheritedContext ? owner.LogicalParent ?? owner.VisualParent : owner;
+            object? inherited = current?.DataContext;
             HashSet<UIElement> visited = new(ReferenceEqualityComparer.Instance);
             while (current is not null && visited.Add(current))
             {

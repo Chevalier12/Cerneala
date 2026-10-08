@@ -720,7 +720,10 @@ public sealed partial class UiMarkupGenerator
                                 ", value => ((" + ownerType + ")value!)." + segment.Property.Name + setter + ")");
                         }
 
-                        return "global::Cerneala.UI.Markup.GeneratedMarkup.ObserveDataPath(" + descriptor.OwnerCode +
+                        string method = descriptor.UseInheritedDataContext
+                            ? "ObserveInheritedDataPath"
+                            : "ObserveDataPath";
+                        return "global::Cerneala.UI.Markup.GeneratedMarkup." + method + "(" + descriptor.OwnerCode +
                             (segments.Count == 0 ? ")" : ", " + string.Join(", ", segments) + ")");
                     }
                 case BindingSourceKind.UiProperty:

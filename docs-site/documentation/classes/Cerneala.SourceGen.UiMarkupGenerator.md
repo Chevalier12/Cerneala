@@ -65,6 +65,15 @@ An ordinary markup file produces a static partial factory under the `Cerneala.Ge
 
 The generated factory class name is based on the markup file name without the `.crn` suffix, converted to a valid identifier and suffixed with `Factory`. Duplicate base names are disambiguated with the parent directory name, then with a stable FNV-1a hash if needed. Files paired with compatible `Application`, `Window`, `UserControl`, or `Scene2D` partial declarations follow their corresponding generated startup or component path instead of the ordinary standalone factory path.
 
+An ordinary factory preserves an explicit root `DataContext` instead of
+overwriting it with a local value from its argument. When the root binds
+`DataContext="$DataContext.Scene"`, that expression observes the incoming
+`Create(dataContext)` argument; descendants observe the resulting `Scene` scope.
+Replacing `Scene` on the notifying argument retargets the root and its
+descendants. This source is independent of the root's resulting data context,
+so the assignment does not feed back into its own path. Parameterless `Create()`
+supplies a null source and leaves such a path unresolved.
+
 ### Paired Scene Components
 
 A `HouseView.crn` document rooted in `<Scene2D>` can pair with a concrete
@@ -164,8 +173,9 @@ Property attributes accept a typed source path with an optional final mode:
 source-path[:OneWay|TwoWay]
 ```
 
-Omitting the mode reads the source once and assigns that initial value. A live
-binding exists only when `:OneWay` or `:TwoWay` is present. Supported sources are `$DataContext.Path`,
+Omitting the mode in a property attribute creates a live `OneWay` binding;
+`:OneWay` is an equivalent explicit spelling. `:TwoWay` additionally enables
+write-back where supported. Supported sources are `$DataContext.Path`,
 `$element.Property`, `$self.Property`, `$root.Property`,
 `$control.parts.$part.Property`, and `$owner.Property` inside a component
 template. The generator resolves every segment and endpoint through Roslyn and
@@ -183,12 +193,12 @@ at runtime.
 
 `$root.Property` reads a UI property declared by the document root. It keeps
 view dataflow in markup without requiring a `Name` on a paired `UserControl` or
-`Window` wrapper or a paired `Scene2D` root. Add `:OneWay` when subsequent root-property changes must flow
-to the target:
+`Window` wrapper or a paired `Scene2D` root. Subsequent root-property changes
+flow to the target even without `:OneWay`:
 
 ```xml
 <UserControl>
-  <ItemsControl ItemsSource="$root.Rows:OneWay" />
+  <ItemsControl ItemsSource="$root.Rows" />
 </UserControl>
 ```
 
@@ -196,8 +206,14 @@ to the target:
 `Window<TViewModel>` and `UserControl<TViewModel>` documents, which infer the
 type. Every CLR owner along a reactive path must implement
 `INotifyPropertyChanged`. UI-property sources use Cerneala property change
-notifications instead. Direct references do not require observability because
-they are evaluated only once.
+notifications instead. A suffix-less directive value is still evaluated once
+and does not require observability for its value path; the attribute default
+does not change Aspect, Motion or Prism assignment rules.
+
+This changes the former snapshot default for property attributes. Attribute
+paths now require the same observable sources and writable UI-property targets
+as explicit `:OneWay`; ordinary CLR targets cannot host bindings. No `OneTime`
+attribute mode is provided.
 
 CLR `INotifyPropertyChanged` notifications may arrive from worker threads once
 the generated target is attached. The runtime coalesces them per generated

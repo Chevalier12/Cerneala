@@ -207,15 +207,66 @@ public partial class SceneWorldShowcase : UserControl
 }
 
 // The application keeps only the gameplay fields of each authored wall.
-public sealed record SceneWorldBox(float X, float Y, float Width, float Height, uint Layer, uint Mask);
-public sealed record SceneWorldNpc(float X, float Y)
+public sealed class SceneWorldBox(float x, float y, float width, float height, uint layer, uint mask) : INotifyPropertyChanged
 {
-    public DrawRect Destination => new(0, 0, 16, 16);
+    private float x = x, y = y, width = width, height = height;
+    private uint layer = layer, mask = mask;
+    public event PropertyChangedEventHandler? PropertyChanged;
+    public float X { get => x; set => Set(ref x, value); }
+    public float Y { get => y; set => Set(ref y, value); }
+    public float Width { get => width; set => Set(ref width, value); }
+    public float Height { get => height; set => Set(ref height, value); }
+    public uint Layer { get => layer; set => Set(ref layer, value); }
+    public uint Mask { get => mask; set => Set(ref mask, value); }
+
+    private void Set<T>(ref T field, T value, [CallerMemberName] string? name = null)
+    {
+        if (EqualityComparer<T>.Default.Equals(field, value)) return;
+        field = value;
+        PropertyChanged?.Invoke(this, new(name));
+    }
+}
+
+public sealed class SceneWorldNpc(float x, float y) : INotifyPropertyChanged
+{
+    private float x = x, y = y, sourceX = 64, sourceY = 16, sourceWidth = 16, sourceHeight = 16;
+    private DrawRect destination = new(0, 0, 16, 16);
+    public event PropertyChangedEventHandler? PropertyChanged;
+    public float X { get => x; set => Set(ref x, value); }
+    public float Y { get => y; set => Set(ref y, value); }
+    public DrawRect Destination
+    {
+        get => destination;
+        set
+        {
+            if (destination == value) return;
+            destination = value;
+            Changed();
+            Changed(nameof(DestinationX));
+            Changed(nameof(DestinationY));
+            Changed(nameof(DestinationWidth));
+            Changed(nameof(DestinationHeight));
+            Changed(nameof(PrismInputDomain));
+        }
+    }
+    // Observe these scalar owners rather than traversing the immutable DrawRect value.
+    public float DestinationX => destination.X;
+    public float DestinationY => destination.Y;
+    public float DestinationWidth => destination.Width;
+    public float DestinationHeight => destination.Height;
     public DrawRect? PrismInputDomain => Destination;
-    public float SourceX => 64;
-    public float SourceY => 16;
-    public float SourceWidth => 16;
-    public float SourceHeight => 16;
+    public float SourceX { get => sourceX; set => Set(ref sourceX, value); }
+    public float SourceY { get => sourceY; set => Set(ref sourceY, value); }
+    public float SourceWidth { get => sourceWidth; set => Set(ref sourceWidth, value); }
+    public float SourceHeight { get => sourceHeight; set => Set(ref sourceHeight, value); }
+
+    private void Set<T>(ref T field, T value, [CallerMemberName] string? name = null)
+    {
+        if (EqualityComparer<T>.Default.Equals(field, value)) return;
+        field = value;
+        Changed(name);
+    }
+    private void Changed([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new(name));
 }
 
 public sealed class SceneWorldState : INotifyPropertyChanged, IDisposable, IAsyncDisposable

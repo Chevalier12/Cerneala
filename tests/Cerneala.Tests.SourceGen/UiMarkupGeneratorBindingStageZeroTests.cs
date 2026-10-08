@@ -14,8 +14,10 @@ namespace Cerneala.Tests.SourceGen;
 
 public sealed partial class UiMarkupGeneratorTests
 {
-    [Fact]
-    public void MarkupBindingStageZero_OneWaySimpleNestedAndStringProjectionAreReactive()
+    [Theory]
+    [InlineData("")]
+    [InlineData(":OneWay")]
+    public void MarkupBindingStageZero_OneWaySimpleNestedAndStringProjectionAreReactive(string mode)
     {
         const string inputSource = """
             using System.ComponentModel;
@@ -42,12 +44,12 @@ public sealed partial class UiMarkupGeneratorTests
                 public string? Name { get => name; set { name = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Name))); } }
             }
             """;
-        const string markup = """
+        string markup = $$"""
             <StackPanel DataType="TestInput.BindingRoot">
-              <TextBlock Text="$DataContext.Name:OneWay" />
-              <TextBlock Text="$DataContext.Count:OneWay" />
-              <TextBlock Text="$DataContext.OptionalCount:OneWay" />
-              <TextBlock Text="$DataContext.Type.Name:OneWay" />
+              <TextBlock Text="$DataContext.Name{{mode}}" />
+              <TextBlock Text="$DataContext.Count{{mode}}" />
+              <TextBlock Text="$DataContext.OptionalCount{{mode}}" />
+              <TextBlock Text="$DataContext.Type.Name{{mode}}" />
             </StackPanel>
             """;
 
@@ -226,8 +228,10 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Equal("Part: False", partText.Text);
     }
 
-    [Fact]
-    public void MarkupBindingStageZero_DirectReferenceAllowsAnUnobservableOwnerButExplicitBindingRejectsIt()
+    [Theory]
+    [InlineData("")]
+    [InlineData(":OneWay")]
+    public void MarkupBindingStageZero_AttributeOneWayRequiresAnObservableOwner(string mode)
     {
         const string inputSource = """
             namespace TestInput;
@@ -236,22 +240,8 @@ public sealed partial class UiMarkupGeneratorTests
                 public string Name { get; set; } = "Static";
             }
             """;
-        const string directMarkup = """
-            <TextBlock DataType="TestInput.PlainViewModel" Text="$DataContext.Name" />
-            """;
-
-        GeneratorRunResult direct = RunGeneratorWithInput(
-            "UnobservableReference.crn",
-            directMarkup,
-            inputSource,
-            out _);
-        Assert.DoesNotContain(direct.Diagnostics, candidate => candidate.Severity == DiagnosticSeverity.Error);
-        string generated = SingleGeneratedSource(direct);
-        Assert.Contains("ReadReference<string>", generated, StringComparison.Ordinal);
-        Assert.DoesNotContain("AttachPropertyBinding<string>", generated, StringComparison.Ordinal);
-
-        const string bindingMarkup = """
-            <TextBlock DataType="TestInput.PlainViewModel" Text="$DataContext.Name:OneWay" />
+        string bindingMarkup = $$"""
+            <TextBlock DataType="TestInput.PlainViewModel" Text="$DataContext.Name{{mode}}" />
             """;
         GeneratorRunResult binding = RunGeneratorWithInput(
             "UnobservableBinding.crn",
@@ -342,8 +332,10 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Equal("Initial", text.Text);
     }
 
-    [Fact]
-    public void MarkupBindingStageZero_InheritedDataContextReplacementRebindsAndUnsubscribes()
+    [Theory]
+    [InlineData("")]
+    [InlineData(":OneWay")]
+    public void MarkupBindingStageZero_InheritedDataContextReplacementRebindsAndUnsubscribes(string mode)
     {
         const string inputSource = """
             using System.ComponentModel;
@@ -356,9 +348,9 @@ public sealed partial class UiMarkupGeneratorTests
                 public string Name { get => name; set { name = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Name))); } }
             }
             """;
-        const string markup = """
+        string markup = $$"""
             <StackPanel DataType="TestInput.InheritedViewModel">
-              <TextBlock Text="$DataContext.Name:OneWay" />
+              <TextBlock Text="$DataContext.Name{{mode}}" />
             </StackPanel>
             """;
 
@@ -386,10 +378,20 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Equal("Al doilea", child.Text);
         viewModelType.GetProperty("Name")!.SetValue(second, "Curent");
         Assert.Equal("Curent", child.Text);
+
+        UIRoot root = new();
+        root.VisualChildren.Add(panel);
+        root.VisualChildren.Remove(panel);
+        viewModelType.GetProperty("Name")!.SetValue(second, "Detached");
+        Assert.Equal("Curent", child.Text);
+        root.VisualChildren.Add(panel);
+        Assert.Equal("Detached", child.Text);
+        viewModelType.GetProperty("Name")!.SetValue(second, "Reattached");
+        Assert.Equal("Reattached", child.Text);
     }
 
     [Fact]
-    public void MarkupBindingStageZero_DirectSnapshotsAndExplicitNamedBindingsSupportForwardReferences()
+    public void MarkupBindingStageZero_DefaultAndExplicitNamedBindingsSupportForwardReferences()
     {
         const string inputSource = """
             using System.ComponentModel;
@@ -429,7 +431,7 @@ public sealed partial class UiMarkupGeneratorTests
             viewModel));
         TextBox editor = Assert.IsType<TextBox>(panel.VisualChildren[0]);
         Slider before = Assert.IsType<Slider>(panel.VisualChildren[1]);
-        ProgressBar directSnapshot = Assert.IsType<ProgressBar>(panel.VisualChildren[2]);
+        ProgressBar defaultOneWay = Assert.IsType<ProgressBar>(panel.VisualChildren[2]);
         ProgressBar explicitOneWay = Assert.IsType<ProgressBar>(panel.VisualChildren[3]);
         ProgressBar twoWay = Assert.IsType<ProgressBar>(panel.VisualChildren[4]);
         ProgressBar forward = Assert.IsType<ProgressBar>(panel.VisualChildren[5]);
@@ -441,26 +443,30 @@ public sealed partial class UiMarkupGeneratorTests
         viewModelType.GetProperty("Name")!.SetValue(viewModel, "Source");
         Assert.Equal("Source", editor.Text);
 
-        Assert.Equal(40, directSnapshot.Value);
+        Assert.Equal(40, defaultOneWay.Value);
         Assert.Equal(40, explicitOneWay.Value);
         Assert.Equal(40, twoWay.Value);
         Assert.Equal(25, forward.Value);
         before.Value = 55;
-        Assert.Equal(40, directSnapshot.Value);
+        Assert.Equal(55, defaultOneWay.Value);
         Assert.Equal(55, explicitOneWay.Value);
         Assert.Equal(55, twoWay.Value);
         twoWay.Value = 61;
         Assert.Equal(61, before.Value);
-        Assert.Equal(40, directSnapshot.Value);
+        Assert.Equal(61, defaultOneWay.Value);
         after.Value = 33;
-        Assert.Equal(25, forward.Value);
+        Assert.Equal(33, forward.Value);
+        defaultOneWay.Value = 73;
+        Assert.Equal(61, before.Value);
     }
 
-    [Fact]
-    public void MarkupBindingStageZero_SelfBindingAllowsAnotherPropertyAndRejectsIdentity()
+    [Theory]
+    [InlineData("")]
+    [InlineData(":OneWay")]
+    public void MarkupBindingStageZero_SelfBindingAllowsAnotherPropertyAndRejectsIdentity(string mode)
     {
-        const string validMarkup = """
-            <TextBlock IsVisible="True" IsEnabled="$self.IsVisible:OneWay" />
+        string validMarkup = $$"""
+            <TextBlock IsVisible="True" IsEnabled="$self.IsVisible{{mode}}" />
             """;
         GeneratorRunResult valid = RunGenerator(
             "SelfBinding.crn",
@@ -494,7 +500,7 @@ public sealed partial class UiMarkupGeneratorTests
               <Button Name="Host">
                 @template { <Border Name="Chrome" IsEnabled="True" /> }
               </Button>
-              <TextBlock IsEnabled="$Host.parts.$Chrome.IsEnabled:OneWay" />
+              <TextBlock IsEnabled="$Host.parts.$Chrome.IsEnabled" />
             </StackPanel>
             """;
 
@@ -704,7 +710,7 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
-    public void MarkupBindingStageZero_DirectOwnerReferenceIsASnapshotWhileExplicitOneWayTracksChanges()
+    public void MarkupBindingStageZero_DefaultAndExplicitOwnerBindingsTrackChanges()
     {
         const string implicitMarkup = """
             <Button IsEnabled="True">
@@ -727,7 +733,7 @@ public sealed partial class UiMarkupGeneratorTests
             out Compilation explicitCompilation);
         Assert.DoesNotContain(implicitResult.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         Assert.DoesNotContain(explicitResult.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
-        Assert.Equal(0, Count(SingleGeneratedSource(implicitResult), ".Bind("));
+        Assert.Equal(1, Count(SingleGeneratedSource(implicitResult), ".Bind("));
         Assert.Equal(1, Count(SingleGeneratedSource(explicitResult), ".Bind("));
 
         Assembly implicitAssembly = EmitBindingTestAssembly(implicitCompilation);
@@ -742,7 +748,7 @@ public sealed partial class UiMarkupGeneratorTests
         Border boundBorder = Assert.IsType<Border>(explicitButton.ComponentTemplateInstance!.Root);
         implicitButton.IsEnabled = false;
         explicitButton.IsEnabled = false;
-        Assert.True(directBorder.IsEnabled);
+        Assert.False(directBorder.IsEnabled);
         Assert.False(boundBorder.IsEnabled);
     }
 
@@ -778,7 +784,7 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Equal("Owner", presenter.Content);
         Assert.Equal(0.5f, presenter.Opacity);
         button.Content = "Changed";
-        Assert.Equal("Owner", presenter.Content);
+        Assert.Equal("Changed", presenter.Content);
     }
 
     private static Assembly EmitBindingTestAssembly(Compilation compilation)
