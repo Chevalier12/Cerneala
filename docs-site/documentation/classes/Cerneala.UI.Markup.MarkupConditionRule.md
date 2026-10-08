@@ -24,7 +24,7 @@ when an attached owner enters the rule, not on unchanged reevaluation. The
 deactivation callback runs when that active rule exits or its owner detaches. The optional condition-state callback receives `true` and `false` transitions independently of render-gated Motion activation, allowing generated Aspect rules to update `AspectConditionKey` state without writing styled properties. A
 `null` predicate is invalid.
 
-The optional sound-activation callback is the audio sidecar of generated Sound
+The optional sound-activation callback is the audio sidecar of generated Timbre
 actions. It runs once per true interval of an attached owner, independently of
 renderability: an initially true rule under a hidden or collapsed owner or
 ancestor starts its sound, a true-to-false change does not stop audio and only
@@ -32,7 +32,7 @@ re-arms the rule, and hiding then showing an owner with an unchanged true rule
 does not run it again. The visual activation keeps its renderability gating.
 When both are due in the same evaluation the controller passes the visual
 activation to the sound callback, which invokes it at the Motion position so a
-mixed `@sound`/Motion body runs in source order; otherwise it receives `null`.
+mixed `@timbre`/Motion body runs in source order; otherwise it receives `null`.
 The initial activation after attach is deferred through the root Relay for both
 parts, and detach clears the audio state so reattaching activates again.
 
@@ -45,9 +45,9 @@ var rule = new MarkupConditionRule(
     activated: null,
     deactivated: null,
     conditionStateChanged: null,
-    soundActivated: visual =>
+    timbreActivated: visual =>
     {
-        GeneratedMarkup.PlaySound(soundSession, new ResourceId<SoundClip>("ErrorSound"), null, "Playback");
+        GeneratedMarkup.PlayTimbre(timbreSession, new ResourceId<TimbreClip>("ErrorTimbre"), null, "Playback");
         visual?.Invoke();
     });
 ```

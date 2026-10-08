@@ -6,24 +6,24 @@ Namespace: `Cerneala.Timbre`
 
 Assembly/Project: `Cerneala`
 
-Source: `Timbre/SoundModifier.cs`
+Source: `Timbre/TimbreModifier.cs`
 
 Two-pole Butterworth low-pass filter with a single cutoff input.
 
 ```csharp
-public sealed class LowPass : SoundModifier
+public sealed class LowPass : TimbreModifier
 ```
 
 Inheritance:
-`object` -> `SoundModifier` -> `LowPass`
+`object` -> `TimbreModifier` -> `LowPass`
 
 ## Examples
 
 ```csharp
 using Cerneala.Timbre;
 
-var cutoff = new SoundParameter<float>("ToneCutoff", 1200f);
-var clip = new SoundClip("audio/confirm.wav", parameters: [cutoff], modifiers: [new LowPass(cutoff: cutoff)]);
+var cutoff = new TimbreParameter<float>("ToneCutoff", 1200f);
+var clip = new TimbreClip("audio/confirm.wav", parameters: [cutoff], modifiers: [new LowPass(cutoff: cutoff)]);
 var fixedFilter = new LowPass(cutoff: 800f);
 ```
 
@@ -37,15 +37,15 @@ The filter is a topology-preserving-transform state-variable filter with damping
 
 | Name | Description |
 | --- | --- |
-| `LowPass(SoundInput<float>? cutoff = null)` | `null` selects the default cutoff of 1200 Hz. |
+| `LowPass(TimbreInput<float>? cutoff = null)` | `null` selects the default cutoff of 1200 Hz. |
 
 ## Properties
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `Cutoff` | `SoundInput<float>` | Cutoff frequency in Hz. |
+| `Cutoff` | `TimbreInput<float>` | Cutoff frequency in Hz. |
 
 ## See also
 
 - [Delay](Cerneala.Timbre.Delay.md)
-- [SoundClip](Cerneala.Timbre.SoundClip.md)
+- [TimbreClip](Cerneala.Timbre.TimbreClip.md)

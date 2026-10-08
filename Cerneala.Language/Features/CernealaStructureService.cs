@@ -692,19 +692,19 @@ internal sealed class CernealaStructureService
                 kind = CernealaSemanticTokenKind.EnumMember;
                 priority = 140;
                 return true;
-            case CernealaSemanticSymbolKind.SoundDirective:
+            case CernealaSemanticSymbolKind.TimbreDirective:
                 kind = CernealaSemanticTokenKind.Keyword;
                 priority = 130;
                 return true;
-            case CernealaSemanticSymbolKind.SoundParameter:
+            case CernealaSemanticSymbolKind.TimbreParameter:
                 kind = CernealaSemanticTokenKind.Parameter;
                 priority = 130;
                 return true;
-            case CernealaSemanticSymbolKind.SoundModifier:
+            case CernealaSemanticSymbolKind.TimbreModifier:
                 kind = CernealaSemanticTokenKind.Function;
                 priority = 130;
                 return true;
-            case CernealaSemanticSymbolKind.SoundProperty:
+            case CernealaSemanticSymbolKind.TimbreProperty:
                 kind = CernealaSemanticTokenKind.Property;
                 priority = 130;
                 return true;
@@ -752,11 +752,11 @@ internal sealed class CernealaStructureService
         CernealaSemanticSymbolKind.MotionSpec or CernealaSemanticSymbolKind.MotionComposition or
         CernealaSemanticSymbolKind.MotionParameter or CernealaSemanticSymbolKind.MotionHandle or
         CernealaSemanticSymbolKind.PrismComposition or CernealaSemanticSymbolKind.PrismNode or
-        CernealaSemanticSymbolKind.PrismParameter or CernealaSemanticSymbolKind.SoundParameter;
+        CernealaSemanticSymbolKind.PrismParameter or CernealaSemanticSymbolKind.TimbreParameter;
 
     private static bool IsDeclaration(CernealaSemanticSymbol symbol) =>
         IsDeclaration(symbol.Kind) &&
-        (symbol.Kind is not (CernealaSemanticSymbolKind.MotionHandle or CernealaSemanticSymbolKind.SoundParameter) ||
+        (symbol.Kind is not (CernealaSemanticSymbolKind.MotionHandle or CernealaSemanticSymbolKind.TimbreParameter) ||
             symbol.DefinitionLocation is LanguageSourceLocation definition &&
             definition.Span.Equals(symbol.Span));
 

@@ -21,7 +21,7 @@ public sealed class UiHost
     private UiViewport viewport;
     private bool needsInitialFrame = true;
     private readonly IPlatformServices? platformServices;
-    private readonly SoundRuntime? soundRuntime;
+    private readonly TimbreRuntime? timbreRuntime;
     private readonly CursorService cursorService = new();
     private readonly PrismFrameAnalyzer prismFrameAnalyzer = new();
     private readonly BackdropFrameCounters backdropFrameCounters = new();
@@ -38,13 +38,13 @@ public sealed class UiHost
         Clock = options.Clock;
         InputBridge = options.InputBridge ?? new ElementInputBridge();
         platformServices = options.PlatformServices;
-        soundRuntime = options.SoundRuntime;
+        timbreRuntime = options.TimbreRuntime;
 
         if (root is not null)
         {
             root.Relay.VerifyAccess();
             root.SetPlatformServices(platformServices);
-            ApplySoundRuntime(root);
+            ApplyTimbreRuntime(root);
             ApplyViewport(root, viewport);
         }
     }
@@ -92,17 +92,17 @@ public sealed class UiHost
         root = newRoot;
         needsInitialFrame = true;
         root.SetPlatformServices(platformServices);
-        ApplySoundRuntime(root);
+        ApplyTimbreRuntime(root);
         ApplyViewport(root, viewport);
         RootChanged?.Invoke(this, EventArgs.Empty);
     }
 
     // A hosted runtime is caller-owned; without one the root keeps its own.
-    private void ApplySoundRuntime(UIRoot target)
+    private void ApplyTimbreRuntime(UIRoot target)
     {
-        if (soundRuntime is not null)
+        if (timbreRuntime is not null)
         {
-            target.SetSoundRuntime(soundRuntime);
+            target.SetTimbreRuntime(timbreRuntime);
         }
     }
 

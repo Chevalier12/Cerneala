@@ -35,7 +35,7 @@ public sealed class SdlWindowPlatformAudioTests : IDisposable
         FakeSdlApi api = new();
         using SdlWindowPlatform platform = new(api, new RecordingGraphicsFactory());
 
-        Assert.Null(platform.SoundOutput);
+        Assert.Null(platform.TimbreOutput);
         Assert.Equal(1, api.InitializeCount);
     }
 
@@ -46,7 +46,7 @@ public sealed class SdlWindowPlatformAudioTests : IDisposable
         FakeSdlAudioApi audio = new();
         SdlWindowPlatform platform = new(api, new RecordingGraphicsFactory(), audioApi: audio);
 
-        Assert.IsType<SdlSoundOutput>(platform.SoundOutput);
+        Assert.IsType<SdlTimbreOutput>(platform.TimbreOutput);
         platform.Dispose();
 
         Assert.Empty(audio.Operations);
@@ -67,8 +67,8 @@ public sealed class SdlWindowPlatformAudioTests : IDisposable
             }
         };
         SdlWindowPlatform platform = new(api, new RecordingGraphicsFactory(), audioApi: audio);
-        SdlSoundOutputTests.RecordingClient client = new();
-        platform.SoundOutput!.Open(client);
+        SdlTimbreOutputTests.RecordingClient client = new();
+        platform.TimbreOutput!.Open(client);
 
         platform.Dispose();
 
@@ -85,8 +85,8 @@ public sealed class SdlWindowPlatformAudioTests : IDisposable
         FakeSdlApi api = new();
         FakeSdlAudioApi audio = new() { Device = 23 };
         using SdlWindowPlatform platform = new(api, new RecordingGraphicsFactory(), audioApi: audio);
-        SdlSoundOutputTests.RecordingClient client = new();
-        platform.SoundOutput!.Open(client);
+        SdlTimbreOutputTests.RecordingClient client = new();
+        platform.TimbreOutput!.Open(client);
 
         Thread sdlAudioThread = new(() =>
         {
@@ -96,13 +96,13 @@ public sealed class SdlWindowPlatformAudioTests : IDisposable
         sdlAudioThread.Start();
         Assert.True(sdlAudioThread.Join(Timeout));
 
-        SoundException lost = Assert.IsType<SoundException>(Assert.Single(client.Lost));
-        Assert.Equal(SoundErrorKind.DeviceUnavailable, lost.Kind);
-        platform.SoundOutput.Close();
+        TimbreException lost = Assert.IsType<TimbreException>(Assert.Single(client.Lost));
+        Assert.Equal(TimbreErrorKind.DeviceUnavailable, lost.Kind);
+        platform.TimbreOutput.Close();
     }
 
     [Fact]
-    public void ApplicationSoundsUseThePlatformOutputSharedByTwoWindows()
+    public void ApplicationTimbreUseThePlatformOutputSharedByTwoWindows()
     {
         FakeSdlApi api = new() { WindowPixelDensity = 1, WindowDisplayScale = 1 };
         FakeSdlAudioApi audio = new();
@@ -111,28 +111,28 @@ public sealed class SdlWindowPlatformAudioTests : IDisposable
         WindowApplicationRuntime.Install(runtime);
         Application app = new() { ShutdownMode = ApplicationShutdownMode.OnExplicitShutdown };
         // The application runtime may be created before the window runtime exists.
-        SoundRuntime soundRuntime = app.SoundRuntime;
+        TimbreRuntime timbreRuntime = app.TimbreRuntime;
         app.Install(runtime);
         Window first = new() { Width = 200, Height = 120 };
         Window second = new() { Width = 200, Height = 120 };
         first.Show();
         second.Show();
 
-        SoundPlayback fromFirst = first.Sounds.Play(Constant(96000, 0.25f));
-        SoundPlayback fromSecond = second.Sounds.Play(Constant(96000, 0.125f));
+        TimbrePlayback fromFirst = first.Timbre.Play(Constant(96000, 0.25f));
+        TimbrePlayback fromSecond = second.Timbre.Play(Constant(96000, 0.125f));
         Assert.True(Task.WhenAll(fromFirst.WhenReady, fromSecond.WhenReady).Wait(Timeout));
-        Drive(audio, soundRuntime, () => audio.Consumed.Length >= 4800 * 2);
+        Drive(audio, timbreRuntime, () => audio.Consumed.Length >= 4800 * 2);
 
-        Assert.Same(soundRuntime, first.Root!.SoundRuntime);
+        Assert.Same(timbreRuntime, first.Root!.TimbreRuntime);
         Assert.Equal(["init", "open", "resume"], audio.Operations);
         Assert.Contains(0.375f, audio.Consumed);
 
         first.Close();
-        Sync(soundRuntime);
-        Assert.Equal(SoundPlaybackState.Canceled, fromFirst.State);
-        Assert.Equal(SoundPlaybackState.Playing, fromSecond.State);
+        Sync(timbreRuntime);
+        Assert.Equal(TimbrePlaybackState.Canceled, fromFirst.State);
+        Assert.Equal(TimbrePlaybackState.Playing, fromSecond.State);
         int consumed = audio.Consumed.Length;
-        Drive(audio, soundRuntime, () => audio.Consumed.Length >= consumed + (4800 * 2));
+        Drive(audio, timbreRuntime, () => audio.Consumed.Length >= consumed + (4800 * 2));
         Assert.Equal(["init", "open", "resume"], audio.Operations);
         Assert.Equal(0.125f, audio.Consumed[^1]);
 
@@ -147,15 +147,15 @@ public sealed class SdlWindowPlatformAudioTests : IDisposable
         runtime.Dispose();
 
         Assert.True(fromSecond.Completion.IsCompleted);
-        Assert.NotEqual(SoundPlaybackState.Playing, fromSecond.State);
+        Assert.NotEqual(TimbrePlaybackState.Playing, fromSecond.State);
         Assert.Equal(["init", "open", "resume", "destroy", "quit"], audio.Operations);
         Assert.Equal(0, sdlQuitsWhenAudioQuit);
         Assert.Equal(1, api.QuitCount);
-        Assert.True(soundRuntime.IsDisposed);
+        Assert.True(timbreRuntime.IsDisposed);
     }
 
     [Fact]
-    public void PlayingAndUpdatingSoundsRequestsNoFrames()
+    public void PlayingAndUpdatingTimbreRequestsNoFrames()
     {
         FakeSdlApi api = new() { WindowPixelDensity = 1, WindowDisplayScale = 1 };
         FakeSdlAudioApi audio = new();
@@ -172,28 +172,28 @@ public sealed class SdlWindowPlatformAudioTests : IDisposable
 
         RecordingGraphicsSession session = Assert.Single(graphics.Sessions);
         int presents = session.PresentCount;
-        SoundPlayback playback = window.Sounds.Play(Constant(96000, 0.25f));
+        TimbrePlayback playback = window.Timbre.Play(Constant(96000, 0.25f));
         Assert.True(playback.WhenReady.Wait(Timeout));
         bool rendered = false;
         for (int frame = 0; frame < 20; frame++)
         {
             playback.Volume = frame % 2 == 0 ? 0.5f : 1f;
-            Drive(audio, app.SoundRuntime, () => true);
+            Drive(audio, app.TimbreRuntime, () => true);
             audio.Pull(3840);
-            Sync(app.SoundRuntime);
+            Sync(app.TimbreRuntime);
             rendered |= runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
         }
 
         Assert.False(rendered);
         Assert.Equal(presents, session.PresentCount);
         Assert.NotEmpty(audio.Consumed);
-        Assert.Equal(SoundPlaybackState.Playing, playback.State);
+        Assert.Equal(TimbrePlaybackState.Playing, playback.State);
     }
 
     // Blocking waits keep every SDL platform call on the test's UI thread.
-    private static void Sync(SoundRuntime runtime) => Assert.True(runtime.SyncAsync().Wait(Timeout));
+    private static void Sync(TimbreRuntime runtime) => Assert.True(runtime.SyncAsync().Wait(Timeout));
 
-    private static void Drive(FakeSdlAudioApi audio, SoundRuntime runtime, Func<bool> done)
+    private static void Drive(FakeSdlAudioApi audio, TimbreRuntime runtime, Func<bool> done)
     {
         for (int iteration = 0; ; iteration++)
         {
@@ -208,21 +208,21 @@ public sealed class SdlWindowPlatformAudioTests : IDisposable
         }
     }
 
-    private static SoundClip Constant(int frames, float value) =>
-        new(SoundSource.FromReader(() => new ConstantReader(frames, value), $"constant-{frames}-{value}"));
+    private static TimbreClip Constant(int frames, float value) =>
+        new(TimbreSource.FromReader(() => new ConstantReader(frames, value), $"constant-{frames}-{value}"));
 
-    private sealed class ConstantReader(int frames, float value) : SoundReader
+    private sealed class ConstantReader(int frames, float value) : TimbreReader
     {
         private long position;
 
         public override long? LengthFrames => frames;
 
-        public override ValueTask<SoundReadResult> ReadAsync(Memory<float> destination, CancellationToken cancellationToken)
+        public override ValueTask<TimbreReadResult> ReadAsync(Memory<float> destination, CancellationToken cancellationToken)
         {
             int count = (int)Math.Min(destination.Length / 2, frames - position);
             destination.Span[..(count * 2)].Fill(value);
             position += count;
-            return ValueTask.FromResult(new SoundReadResult(count, position == frames));
+            return ValueTask.FromResult(new TimbreReadResult(count, position == frames));
         }
 
         public override ValueTask SeekAsync(long frame, CancellationToken cancellationToken)

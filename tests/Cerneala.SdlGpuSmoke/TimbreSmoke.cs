@@ -24,11 +24,11 @@ internal sealed class TimbreSmoke
     private readonly SmokeOptions options;
     private readonly MainWindow main;
     private readonly PcmTapOutput tap;
-    private readonly SdlSoundOutput output;
-    private readonly SoundRuntime runtime;
+    private readonly SdlTimbreOutput output;
+    private readonly TimbreRuntime runtime;
     private readonly List<Dictionary<string, object?>> results = [];
 
-    private TimbreSmoke(SmokeOptions options, MainWindow main, PcmTapOutput tap, SdlSoundOutput output, SoundRuntime runtime)
+    private TimbreSmoke(SmokeOptions options, MainWindow main, PcmTapOutput tap, SdlTimbreOutput output, TimbreRuntime runtime)
     {
         this.options = options;
         this.main = main;
@@ -41,21 +41,21 @@ internal sealed class TimbreSmoke
 
     private string Fixtures => Path.Combine(AppContext.BaseDirectory, "timbre");
 
-    // From App.OnStartup, before any window takes Application.SoundRuntime.
+    // From App.OnStartup, before any window takes Application.TimbreRuntime.
     public static void Install(Application application)
     {
-        ISoundOutput platformOutput = WindowApplicationRuntime.Current?.SoundOutput ??
+        ITimbreOutput platformOutput = WindowApplicationRuntime.Current?.TimbreOutput ??
             throw new InvalidOperationException("The SDL window platform supplies no audio output.");
         InstalledTap = new PcmTapOutput(platformOutput);
-        application.SoundRuntime = new SoundRuntime(new SoundRuntimeOptions { Output = InstalledTap });
+        application.TimbreRuntime = new TimbreRuntime(new TimbreRuntimeOptions { Output = InstalledTap });
     }
 
     public static async Task RunAsync(SmokeOptions options, MainWindow main)
     {
         Application application = Application.Current ?? throw new InvalidOperationException("No Application.");
         PcmTapOutput tap = InstalledTap ?? throw new InvalidOperationException("The PCM tap was not installed at startup.");
-        SdlSoundOutput output = (SdlSoundOutput)tap.Inner;
-        TimbreSmoke smoke = new(options, main, tap, output, application.SoundRuntime);
+        SdlTimbreOutput output = (SdlTimbreOutput)tap.Inner;
+        TimbreSmoke smoke = new(options, main, tap, output, application.TimbreRuntime);
         string errorPath = Path.Combine(options.ArtifactDirectory, "timbre.error.txt");
         try
         {
@@ -65,7 +65,7 @@ internal sealed class TimbreSmoke
             Console.WriteLine(
                 $"SDL_GPU_SMOKE_OK mode=timbre scenarios={smoke.results.Count} " +
                 $"device={output.GetDiagnostics().DeviceFormat} opens={output.GetDiagnostics().OpenCount}");
-            application.SoundRuntime.Dispose();
+            application.TimbreRuntime.Dispose();
             main.Close();
         }
         catch (Exception exception)
@@ -73,14 +73,14 @@ internal sealed class TimbreSmoke
             smoke.WriteDiagnostics(exception);
             await File.WriteAllTextAsync(errorPath, exception.ToString());
             Console.Error.WriteLine($"SDL_GPU_SMOKE_FAIL timbre: {exception}");
-            application.SoundRuntime.Dispose();
+            application.TimbreRuntime.Dispose();
             application.Shutdown(2);
         }
     }
 
     private async Task RunScenariosAsync(Application application)
     {
-        SoundScope sounds = application.Sounds;
+        TimbreScope sounds = application.Timbre;
         string tone = WriteWav(Path.Combine(options.ArtifactDirectory, "timbre-tone-44100.wav"), 44100, 0.5, 330);
         string shortTone = WriteWav(Path.Combine(options.ArtifactDirectory, "timbre-loop-48000.wav"), 48000, 0.25, 550);
 
@@ -95,23 +95,23 @@ internal sealed class TimbreSmoke
         ];
         foreach (string path in formats)
         {
-            foreach (SoundLoading loading in new[] { SoundLoading.Auto, SoundLoading.Streaming })
+            foreach (TimbreLoading loading in new[] { TimbreLoading.Auto, TimbreLoading.Streaming })
             {
                 await CompareAsync(
                     $"{Path.GetFileName(path)}/{loading}",
                     sounds,
-                    new SoundClip(SoundSource.FromFile(path), loading: loading),
-                    new SoundClip(SoundSource.FromFile(path), loading: SoundLoading.Preload));
+                    new TimbreClip(TimbreSource.FromFile(path), loading: loading),
+                    new TimbreClip(TimbreSource.FromFile(path), loading: TimbreLoading.Preload));
             }
         }
 
-        SoundParameter<float> cutoff = new("ToneCutoff", 1200f);
-        SoundModifier[] chain = [new LowPass(cutoff), new Delay(time: 0.12f, feedback: 0.2f, mix: 0.15f)];
+        TimbreParameter<float> cutoff = new("ToneCutoff", 1200f);
+        TimbreModifier[] chain = [new LowPass(cutoff), new Delay(time: 0.12f, feedback: 0.2f, mix: 0.15f)];
         await CompareAsync(
             "modified/LowPass+Delay",
             sounds,
-            new SoundClip(SoundSource.FromFile(tone), volume: 0.8f, parameters: [cutoff], modifiers: chain),
-            new SoundClip(SoundSource.FromFile(tone), volume: 0.8f, loading: SoundLoading.Preload, parameters: [cutoff], modifiers: chain),
+            new TimbreClip(TimbreSource.FromFile(tone), volume: 0.8f, parameters: [cutoff], modifiers: chain),
+            new TimbreClip(TimbreSource.FromFile(tone), volume: 0.8f, loading: TimbreLoading.Preload, parameters: [cutoff], modifiers: chain),
             start => start.Set(cutoff, 800f));
 
         await OverlapAsync(sounds, tone);
@@ -124,26 +124,26 @@ internal sealed class TimbreSmoke
         await DeviceRemovalFailsWithoutReconnectingAsync(sounds, tone);
     }
 
-    private async Task AbsentDeviceFailsWithoutRetryAsync(SoundScope sounds, string tone)
+    private async Task AbsentDeviceFailsWithoutRetryAsync(TimbreScope sounds, string tone)
     {
         Require(SDL.SetHintWithPriority(SDL.Hints.AudioDriver, AbsentDriver, SDL.HintPriority.Override), "Could not select the absent audio driver.");
-        SoundPlaybackResult failed;
+        TimbrePlaybackResult failed;
         try
         {
-            failed = await sounds.Play(new SoundClip(SoundSource.FromFile(tone))).Completion.WaitAsync(Timeout);
+            failed = await sounds.Play(new TimbreClip(TimbreSource.FromFile(tone))).Completion.WaitAsync(Timeout);
         }
         finally
         {
             SDL.ResetHint(SDL.Hints.AudioDriver);
         }
 
-        Require(failed.State == SoundPlaybackState.Failed, $"Absent device: expected Failed, got {failed.State}.");
-        Require(failed.Error?.Kind == SoundErrorKind.DeviceUnavailable, $"Absent device: expected DeviceUnavailable, got {failed.Error?.Kind}.");
+        Require(failed.State == TimbrePlaybackState.Failed, $"Absent device: expected Failed, got {failed.State}.");
+        Require(failed.Error?.Kind == TimbreErrorKind.DeviceUnavailable, $"Absent device: expected DeviceUnavailable, got {failed.Error?.Kind}.");
         Require(output.GetDiagnostics().OpenCount == 0, "Absent device: an output was opened.");
 
         // No automatic retry: only an explicit Play opens the default device.
-        SoundPlaybackResult explicitRetry = await sounds.Play(new SoundClip(SoundSource.FromFile(tone))).Completion.WaitAsync(Timeout);
-        Require(explicitRetry.State == SoundPlaybackState.Completed, $"Explicit retry: expected Completed, got {explicitRetry.State}.");
+        TimbrePlaybackResult explicitRetry = await sounds.Play(new TimbreClip(TimbreSource.FromFile(tone))).Completion.WaitAsync(Timeout);
+        Require(explicitRetry.State == TimbrePlaybackState.Completed, $"Explicit retry: expected Completed, got {explicitRetry.State}.");
         Require(output.GetDiagnostics().OpenCount == 1, "Explicit retry did not open the device exactly once.");
         Record("device/absent-then-explicit-play",
             ("failed", failed.State), ("error", failed.Error?.InnerException?.Message), ("retry", explicitRetry.State));
@@ -151,22 +151,22 @@ internal sealed class TimbreSmoke
 
     private async Task CompareAsync(
         string name,
-        SoundScope sounds,
-        SoundClip clip,
-        SoundClip oracleClip,
-        Action<SoundStartOptions>? configure = null)
+        TimbreScope sounds,
+        TimbreClip clip,
+        TimbreClip oracleClip,
+        Action<TimbreStartOptions>? configure = null)
     {
         long underrunsBefore = runtime.GetDiagnostics().UnderrunFrames;
         long start = tap.SampleCount;
         Stopwatch watch = Stopwatch.StartNew();
-        SoundPlayback playback = sounds.Play(clip, configure);
-        SoundPlaybackResult result = await playback.Completion.WaitAsync(Timeout);
+        TimbrePlayback playback = sounds.Play(clip, configure);
+        TimbrePlaybackResult result = await playback.Completion.WaitAsync(Timeout);
         watch.Stop();
         float[] actual = tap.Copy(start, tap.SampleCount);
         float[] expected = await RenderOfflineAsync(oracleClip, configure);
         long underruns = runtime.GetDiagnostics().UnderrunFrames - underrunsBefore;
 
-        Require(result.State == SoundPlaybackState.Completed, $"{name}: expected Completed, got {result.State} ({result.Error?.Message}).");
+        Require(result.State == TimbrePlaybackState.Completed, $"{name}: expected Completed, got {result.State} ({result.Error?.Message}).");
         Require(underruns == 0, $"{name}: {underruns} underrun frames were padded.");
         int firstDifference = FirstDifference(actual, expected);
         Require(
@@ -181,60 +181,60 @@ internal sealed class TimbreSmoke
             ("tailTruncated", result.TailTruncated));
     }
 
-    private async Task OverlapAsync(SoundScope sounds, string tone)
+    private async Task OverlapAsync(TimbreScope sounds, string tone)
     {
-        SoundClip clip = new(SoundSource.FromFile(tone));
-        SoundPlayback first = sounds.Play(clip);
+        TimbreClip clip = new(TimbreSource.FromFile(tone));
+        TimbrePlayback first = sounds.Play(clip);
         await WaitForRequestsAsync(5);
-        SoundPlayback second = sounds.Play(clip);
-        SoundPlaybackResult[] done = await Task.WhenAll(first.Completion, second.Completion).WaitAsync(Timeout);
-        Require(done.All(result => result.State == SoundPlaybackState.Completed), "Overlap: both playbacks must complete.");
+        TimbrePlayback second = sounds.Play(clip);
+        TimbrePlaybackResult[] done = await Task.WhenAll(first.Completion, second.Completion).WaitAsync(Timeout);
+        Require(done.All(result => result.State == TimbrePlaybackState.Completed), "Overlap: both playbacks must complete.");
         Record("overlap", ("first", done[0].State), ("second", done[1].State));
     }
 
-    private async Task ReplacementAndCancelAsync(SoundScope sounds, string tone)
+    private async Task ReplacementAndCancelAsync(TimbreScope sounds, string tone)
     {
-        SoundHandle slot = sounds.CreateHandle();
-        SoundPlayback replaced = sounds.Play(Tone(96000, 220), handle: slot);
+        TimbreHandle slot = sounds.CreateHandle();
+        TimbrePlayback replaced = sounds.Play(Tone(96000, 220), handle: slot);
         await WaitForTapGrowthAsync(4800);
-        SoundPlayback replacement = sounds.Play(new SoundClip(SoundSource.FromFile(tone)), handle: slot);
-        Require(replaced.State == SoundPlaybackState.Canceled, "Replacement must cancel the previous occupant.");
-        Require((await replacement.Completion.WaitAsync(Timeout)).State == SoundPlaybackState.Completed, "Replacement must complete.");
+        TimbrePlayback replacement = sounds.Play(new TimbreClip(TimbreSource.FromFile(tone)), handle: slot);
+        Require(replaced.State == TimbrePlaybackState.Canceled, "Replacement must cancel the previous occupant.");
+        Require((await replacement.Completion.WaitAsync(Timeout)).State == TimbrePlaybackState.Completed, "Replacement must complete.");
 
         int opens = output.GetDiagnostics().OpenCount;
-        SoundPlayback canceled = sounds.Play(Tone(96000, 247));
+        TimbrePlayback canceled = sounds.Play(Tone(96000, 247));
         await WaitForTapGrowthAsync(4800);
         canceled.Cancel();
         canceled.Cancel();
-        Require((await canceled.Completion).State == SoundPlaybackState.Canceled, "Cancel must end Canceled.");
+        Require((await canceled.Completion).State == TimbrePlaybackState.Canceled, "Cancel must end Canceled.");
         Require(output.GetDiagnostics().OpenCount == opens && output.GetDiagnostics().IsOpen, "A local cancel closed the shared output.");
         Record("replacement+cancel", ("replaced", replaced.State), ("replacement", replacement.State), ("canceled", canceled.State));
     }
 
-    private async Task PausePendingAsync(SoundScope sounds)
+    private async Task PausePendingAsync(TimbreScope sounds)
     {
         TaskCompletionSource gate = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        SoundPlayback playback = sounds.Play(new SoundClip(
-            SoundSource.FromReader(() => new ToneReader(24000, 392, gate.Task), "gated-tone"),
-            loading: SoundLoading.Preload));
-        Require(playback.State == SoundPlaybackState.Pending, "Gated playback must start Pending.");
+        TimbrePlayback playback = sounds.Play(new TimbreClip(
+            TimbreSource.FromReader(() => new ToneReader(24000, 392, gate.Task), "gated-tone"),
+            loading: TimbreLoading.Preload));
+        Require(playback.State == TimbrePlaybackState.Pending, "Gated playback must start Pending.");
         playback.Pause();
         long tapped = tap.SampleCount;
         gate.SetResult();
         await WaitForRequestsAsync(30);
         Require(tap.SampleCount == tapped, "Pause in Pending let PCM through before Resume.");
-        Require(playback.State == SoundPlaybackState.Paused, $"Pending pause: expected Paused, got {playback.State}.");
+        Require(playback.State == TimbrePlaybackState.Paused, $"Pending pause: expected Paused, got {playback.State}.");
 
         playback.Resume();
-        SoundPlaybackResult result = await playback.Completion.WaitAsync(Timeout);
-        Require(result.State == SoundPlaybackState.Completed, "Resumed pending playback must complete.");
+        TimbrePlaybackResult result = await playback.Completion.WaitAsync(Timeout);
+        Require(result.State == TimbrePlaybackState.Completed, "Resumed pending playback must complete.");
         Require(tap.SampleCount - tapped >= 24000 * 2, "Resumed pending playback lost PCM.");
         Record("pause-pending", ("state", result.State));
     }
 
-    private async Task PauseResumeAsync(SoundScope sounds)
+    private async Task PauseResumeAsync(TimbreScope sounds)
     {
-        SoundPlayback playback = sounds.Play(Tone(48000, 294));
+        TimbrePlayback playback = sounds.Play(Tone(48000, 294));
         await WaitForTapGrowthAsync(9600);
         playback.Pause();
         await runtime.SyncAsync().WaitAsync(Timeout);
@@ -242,19 +242,19 @@ internal sealed class TimbreSmoke
         TimeSpan position = playback.Position;
         await WaitForRequestsAsync(30);
         Require(tap.SampleCount == tapped, "Paused playback still produced PCM.");
-        Require(playback.State == SoundPlaybackState.Paused && playback.Position == position, "Pause did not hold the position.");
+        Require(playback.State == TimbrePlaybackState.Paused && playback.Position == position, "Pause did not hold the position.");
         playback.Resume();
         playback.Resume();
-        SoundPlaybackResult result = await playback.Completion.WaitAsync(Timeout);
-        Require(result.State == SoundPlaybackState.Completed, "Resumed playback must complete.");
+        TimbrePlaybackResult result = await playback.Completion.WaitAsync(Timeout);
+        Require(result.State == TimbrePlaybackState.Completed, "Resumed playback must complete.");
         Record("pause-resume", ("pausedAtMs", position.TotalMilliseconds), ("state", result.State));
     }
 
-    private async Task SeekStreamingAsync(SoundScope sounds)
+    private async Task SeekStreamingAsync(TimbreScope sounds)
     {
-        SoundPlayback playback = sounds.Play(new SoundClip(
-            SoundSource.FromFile(Path.Combine(Fixtures, "mp3-long-22050-mono-cbr64.mp3")),
-            loading: SoundLoading.Streaming));
+        TimbrePlayback playback = sounds.Play(new TimbreClip(
+            TimbreSource.FromFile(Path.Combine(Fixtures, "mp3-long-22050-mono-cbr64.mp3")),
+            loading: TimbreLoading.Streaming));
         await WaitForTapGrowthAsync(9600);
         Task superseded = playback.SeekAsync(TimeSpan.FromSeconds(30));
         Task latest = playback.SeekAsync(TimeSpan.FromSeconds(60));
@@ -274,16 +274,16 @@ internal sealed class TimbreSmoke
             ("readerMemoryBytes", diagnostics.ReaderMemoryBytes));
     }
 
-    private async Task LoopAsync(SoundScope sounds, string shortTone)
+    private async Task LoopAsync(TimbreScope sounds, string shortTone)
     {
         long wrapsBefore = runtime.GetDiagnostics().LoopWraps;
-        SoundPlayback playback = sounds.Play(new SoundClip(SoundSource.FromFile(shortTone), loop: true));
+        TimbrePlayback playback = sounds.Play(new TimbreClip(TimbreSource.FromFile(shortTone), loop: true));
         await WaitForTapGrowthAsync(12000 * 3);
-        Require(playback.State == SoundPlaybackState.Playing, "A looping playback ended on its own.");
+        Require(playback.State == TimbrePlaybackState.Playing, "A looping playback ended on its own.");
         playback.Cancel();
-        SoundPlaybackResult result = await playback.Completion.WaitAsync(Timeout);
+        TimbrePlaybackResult result = await playback.Completion.WaitAsync(Timeout);
         long wraps = runtime.GetDiagnostics().LoopWraps - wrapsBefore;
-        Require(result.State == SoundPlaybackState.Canceled && wraps >= 2, $"Loop: state {result.State}, wraps {wraps}.");
+        Require(result.State == TimbrePlaybackState.Canceled && wraps >= 2, $"Loop: state {result.State}, wraps {wraps}.");
         Record("loop", ("wraps", wraps), ("state", result.State));
     }
 
@@ -291,55 +291,55 @@ internal sealed class TimbreSmoke
     {
         Window secondary = new() { Title = "Cerneala Timbre smoke secondary", Width = 360, Height = 220, Left = 60, Top = 60 };
         secondary.Show();
-        SoundPlayback fromSecondary = secondary.Sounds.Play(Tone(96000, 262));
-        SoundPlayback fromMain = main.Sounds.Play(Tone(48000, 330));
+        TimbrePlayback fromSecondary = secondary.Timbre.Play(Tone(96000, 262));
+        TimbrePlayback fromMain = main.Timbre.Play(Tone(48000, 330));
         await WaitForTapGrowthAsync(4800);
         Require(output.GetDiagnostics().QueueHighWaterFrames <= 1920, "The software queue exceeded 40 ms.");
         int opens = output.GetDiagnostics().OpenCount;
 
         secondary.Close();
-        Require(fromSecondary.State == SoundPlaybackState.Canceled, "Closing a window must cancel its playbacks.");
-        SoundPlaybackResult mainResult = await fromMain.Completion.WaitAsync(Timeout);
-        Require(mainResult.State == SoundPlaybackState.Completed, "The other window's playback must continue to completion.");
+        Require(fromSecondary.State == TimbrePlaybackState.Canceled, "Closing a window must cancel its playbacks.");
+        TimbrePlaybackResult mainResult = await fromMain.Completion.WaitAsync(Timeout);
+        Require(mainResult.State == TimbrePlaybackState.Completed, "The other window's playback must continue to completion.");
         Require(output.GetDiagnostics().OpenCount == opens && output.GetDiagnostics().CloseCount == 0, "Closing a window touched the shared output.");
 
-        SoundPlayback first = main.Sounds.Play(Tone(48000, 349));
-        SoundPlayback second = main.Sounds.Play(new SoundClip(SoundSource.FromFile(tone)));
+        TimbrePlayback first = main.Timbre.Play(Tone(48000, 349));
+        TimbrePlayback second = main.Timbre.Play(new TimbreClip(TimbreSource.FromFile(tone)));
         await WaitForTapGrowthAsync(4800);
         first.Cancel();
-        SoundPlaybackResult secondResult = await second.Completion.WaitAsync(Timeout);
-        Require(secondResult.State == SoundPlaybackState.Completed, "Canceling one queued voice cut the other.");
+        TimbrePlaybackResult secondResult = await second.Completion.WaitAsync(Timeout);
+        Require(secondResult.State == TimbrePlaybackState.Completed, "Canceling one queued voice cut the other.");
         Record("two-windows+queued-voices", ("secondary", fromSecondary.State), ("main", mainResult.State), ("survivor", secondResult.State));
     }
 
-    private async Task DeviceRemovalFailsWithoutReconnectingAsync(SoundScope sounds, string tone)
+    private async Task DeviceRemovalFailsWithoutReconnectingAsync(TimbreScope sounds, string tone)
     {
         int opens = output.GetDiagnostics().OpenCount;
-        SoundPlayback playback = sounds.Play(Tone(480000, 196));
+        TimbrePlayback playback = sounds.Play(Tone(480000, 196));
         await WaitForTapGrowthAsync(4800);
         SDL.Event removed = default;
         removed.ADevice.Type = SDL.EventType.AudioDeviceRemoved;
         removed.ADevice.Which = output.GetDiagnostics().Device;
         Require(SDL.PushEvent(ref removed), "Could not publish the device removal event.");
 
-        SoundPlaybackResult result = await playback.Completion.WaitAsync(Timeout);
-        Require(result.State == SoundPlaybackState.Failed && result.Error?.Kind == SoundErrorKind.DeviceUnavailable,
+        TimbrePlaybackResult result = await playback.Completion.WaitAsync(Timeout);
+        Require(result.State == TimbrePlaybackState.Failed && result.Error?.Kind == TimbreErrorKind.DeviceUnavailable,
             $"Device removal: expected Failed/DeviceUnavailable, got {result.State}/{result.Error?.Kind}.");
         await WaitUntilAsync(() => !output.GetDiagnostics().IsOpen);
         Require(output.GetDiagnostics().OpenCount == opens, "The output reconnected on its own.");
 
-        SoundPlaybackResult replay = await sounds.Play(new SoundClip(SoundSource.FromFile(tone))).Completion.WaitAsync(Timeout);
-        Require(replay.State == SoundPlaybackState.Completed && output.GetDiagnostics().OpenCount == opens + 1,
+        TimbrePlaybackResult replay = await sounds.Play(new TimbreClip(TimbreSource.FromFile(tone))).Completion.WaitAsync(Timeout);
+        Require(replay.State == TimbrePlaybackState.Completed && output.GetDiagnostics().OpenCount == opens + 1,
             "An explicit Play after the loss must open the device again.");
         Record("device/removed-then-explicit-play", ("failed", result.State), ("replay", replay.State));
     }
 
-    private async Task<float[]> RenderOfflineAsync(SoundClip clip, Action<SoundStartOptions>? configure)
+    private async Task<float[]> RenderOfflineAsync(TimbreClip clip, Action<TimbreStartOptions>? configure)
     {
         RecordingSink sink = new();
-        using SoundRuntime offline = new(new SoundRuntimeOptions { Output = sink });
-        SoundPlaybackResult result = await offline.CreateScope().Play(clip, configure).Completion.WaitAsync(Timeout);
-        Require(result.State == SoundPlaybackState.Completed, $"Deterministic sink: {result.State} ({result.Error?.Message}).");
+        using TimbreRuntime offline = new(new TimbreRuntimeOptions { Output = sink });
+        TimbrePlaybackResult result = await offline.CreateScope().Play(clip, configure).Completion.WaitAsync(Timeout);
+        Require(result.State == TimbrePlaybackState.Completed, $"Deterministic sink: {result.State} ({result.Error?.Message}).");
         return sink.ToArray();
     }
 
@@ -396,7 +396,7 @@ internal sealed class TimbreSmoke
 
     private void WriteDiagnostics(Exception? failure)
     {
-        SdlSoundOutputDiagnostics device = output.GetDiagnostics();
+        SdlTimbreOutputDiagnostics device = output.GetDiagnostics();
         var engine = runtime.GetDiagnostics();
         Dictionary<string, object?> report = new()
         {
@@ -470,8 +470,8 @@ internal sealed class TimbreSmoke
         return actual.Length == expected.Length ? -1 : length;
     }
 
-    private static SoundClip Tone(int frames, double frequency) =>
-        new(SoundSource.FromReader(() => new ToneReader(frames, frequency, null), $"tone-{frequency}-{frames}"));
+    private static TimbreClip Tone(int frames, double frequency) =>
+        new(TimbreSource.FromReader(() => new ToneReader(frames, frequency, null), $"tone-{frequency}-{frames}"));
 
     // Synthetic 16-bit stereo RIFF/WAVE tone written by the test application.
     internal static string WriteWav(string path, int sampleRate, double seconds, double frequency)
@@ -503,13 +503,13 @@ internal sealed class TimbreSmoke
         return path;
     }
 
-    private sealed class ToneReader(int frames, double frequency, Task? gate) : SoundReader
+    private sealed class ToneReader(int frames, double frequency, Task? gate) : TimbreReader
     {
         private long position;
 
         public override long? LengthFrames => frames;
 
-        public override async ValueTask<SoundReadResult> ReadAsync(Memory<float> destination, CancellationToken cancellationToken)
+        public override async ValueTask<TimbreReadResult> ReadAsync(Memory<float> destination, CancellationToken cancellationToken)
         {
             if (gate is not null)
             {
@@ -519,7 +519,7 @@ internal sealed class TimbreSmoke
             return Fill(destination.Span);
         }
 
-        private SoundReadResult Fill(Span<float> span)
+        private TimbreReadResult Fill(Span<float> span)
         {
             int count = (int)Math.Min(span.Length / 2, frames - position);
             for (int index = 0; index < count; index++)
@@ -530,7 +530,7 @@ internal sealed class TimbreSmoke
             }
 
             position += count;
-            return new SoundReadResult(count, position == frames);
+            return new TimbreReadResult(count, position == frames);
         }
 
         public override ValueTask SeekAsync(long frame, CancellationToken cancellationToken)
@@ -543,13 +543,13 @@ internal sealed class TimbreSmoke
 
 // Application-owned tap in front of the platform output: records exactly the
 // PCM the output accepted, in submission order.
-internal sealed class PcmTapOutput(ISoundOutput inner) : ISoundOutput
+internal sealed class PcmTapOutput(ITimbreOutput inner) : ITimbreOutput
 {
     private readonly object sync = new();
     private float[] samples = new float[48000 * 2 * 120];
     private long count;
 
-    public ISoundOutput Inner => inner;
+    public ITimbreOutput Inner => inner;
 
     public long SampleCount
     {
@@ -564,7 +564,7 @@ internal sealed class PcmTapOutput(ISoundOutput inner) : ISoundOutput
 
     public int QueuedFrames => inner.QueuedFrames;
 
-    public void Open(ISoundOutputClient client) => inner.Open(client);
+    public void Open(ITimbreOutputClient client) => inner.Open(client);
 
     public void Submit(ReadOnlySpan<float> block)
     {
@@ -593,13 +593,13 @@ internal sealed class PcmTapOutput(ISoundOutput inner) : ISoundOutput
 }
 
 // Deterministic sink: always empty, so the engine renders as fast as it can.
-internal sealed class RecordingSink : ISoundOutput
+internal sealed class RecordingSink : ITimbreOutput
 {
     private readonly List<float> samples = [];
 
     public int QueuedFrames => 0;
 
-    public void Open(ISoundOutputClient client)
+    public void Open(ITimbreOutputClient client)
     {
     }
 

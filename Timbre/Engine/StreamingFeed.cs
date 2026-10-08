@@ -7,17 +7,17 @@ namespace Cerneala.Timbre.Engine;
 // thread pool reads directly into free ring space and publishes one segment
 // per read; the mixer consumes segments in order. Capacity is bounded in
 // frames, independent of read sizes and of the source duration.
-internal sealed class StreamingFeed : SoundFeed
+internal sealed class StreamingFeed : TimbreFeed
 {
     internal const int RingFrames = 8192;
     internal const int MaxReadFrames = 2048;
     internal const int MaxSegments = 256;
     internal const long BufferBytes = RingFrames * 2L * sizeof(float);
 
-    private readonly SoundReader reader;
+    private readonly TimbreReader reader;
     private readonly string sourceName;
     private readonly bool loop;
-    private readonly Action<SoundException> fail;
+    private readonly Action<TimbreException> fail;
     private readonly Action signalMixer;
     private readonly Action onReaderReleased;
     private readonly PumpDispatcher dispatcher;
@@ -65,10 +65,10 @@ internal sealed class StreamingFeed : SoundFeed
     private readonly long declaredLength;
 
     internal StreamingFeed(
-        SoundReader reader,
+        TimbreReader reader,
         string sourceName,
         bool loop,
-        Action<SoundException> fail,
+        Action<TimbreException> fail,
         Action signalMixer,
         Action onReaderReleased,
         PumpDispatcher dispatcher)
@@ -354,16 +354,16 @@ internal sealed class StreamingFeed : SoundFeed
 
                 int ringFrame = (int)(writtenFrames % RingFrames);
                 Memory<float> destination = ring.AsMemory(ringFrame * 2, space * 2);
-                ValueTask<SoundReadResult> pending = reader.ReadAsync(destination, token);
+                ValueTask<TimbreReadResult> pending = reader.ReadAsync(destination, token);
                 bool completedSynchronously = pending.IsCompleted;
-                SoundReadResult result = await pending.ConfigureAwait(false);
+                TimbreReadResult result = await pending.ConfigureAwait(false);
                 Validate(destination.Span, space, result);
                 if (result.Frames == 0 && !result.EndOfSource)
                 {
                     if (previousWasEmpty && completedSynchronously)
                     {
-                        throw new SoundException(
-                            SoundErrorKind.InvalidData,
+                        throw new TimbreException(
+                            TimbreErrorKind.InvalidData,
                             $"Reader for '{sourceName}' returned no data again synchronously instead of waiting.");
                     }
 
@@ -378,9 +378,9 @@ internal sealed class StreamingFeed : SoundFeed
                 {
                     // Same rule as preloading: a source that ends early or runs past
                     // its declared length is invalid, not a successful end.
-                    throw new SoundException(
-                        SoundErrorKind.InvalidData,
-                        $"Sound source '{sourceName}' ended at frame {readerPosition} but declared {declaredLength} frames.");
+                    throw new TimbreException(
+                        TimbreErrorKind.InvalidData,
+                        $"Timbre source '{sourceName}' ended at frame {readerPosition} but declared {declaredLength} frames.");
                 }
 
                 if (result.EndOfSource)
@@ -414,7 +414,7 @@ internal sealed class StreamingFeed : SoundFeed
         }
         catch (Exception exception)
         {
-            fail(SoundRuntime.Classify(exception, sourceName));
+            fail(TimbreRuntime.Classify(exception, sourceName));
         }
         finally
         {
@@ -443,18 +443,18 @@ internal sealed class StreamingFeed : SoundFeed
         return (int)Math.Min(Math.Min(free, toRingEnd), MaxReadFrames);
     }
 
-    private void Validate(Span<float> destination, int requested, SoundReadResult result)
+    private void Validate(Span<float> destination, int requested, TimbreReadResult result)
     {
         if (result.Frames > requested)
         {
-            throw new SoundException(SoundErrorKind.InvalidData, $"Reader for '{sourceName}' returned more frames than requested.");
+            throw new TimbreException(TimbreErrorKind.InvalidData, $"Reader for '{sourceName}' returned more frames than requested.");
         }
 
         foreach (float sample in destination[..(result.Frames * 2)])
         {
             if (!float.IsFinite(sample))
             {
-                throw new SoundException(SoundErrorKind.InvalidData, $"Reader for '{sourceName}' produced a non-finite sample.");
+                throw new TimbreException(TimbreErrorKind.InvalidData, $"Reader for '{sourceName}' produced a non-finite sample.");
             }
         }
     }

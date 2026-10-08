@@ -14,20 +14,20 @@ public static class MotionExtensions
 
     // Audio Motion of one captured playback, sampled by the UIRoot that owns
     // its element scope. Declared here so it always outranks the generic
-    // object facade below for a SoundPlayback receiver.
-    public static SoundMotionFacade Motion(this SoundPlayback playback)
+    // object facade below for a TimbrePlayback receiver.
+    public static TimbreMotionFacade Motion(this TimbrePlayback playback)
     {
         ArgumentNullException.ThrowIfNull(playback);
-        return new SoundMotionFacade(playback, root: null);
+        return new TimbreMotionFacade(playback, root: null);
     }
 
     // Audio Motion sampled by an explicit root, for playbacks of scopes that
-    // no element owns (Application.Sounds or a standalone runtime).
-    public static SoundMotionFacade Motion(this SoundPlayback playback, UIRoot root)
+    // no element owns (Application.Timbre or a standalone runtime).
+    public static TimbreMotionFacade Motion(this TimbrePlayback playback, UIRoot root)
     {
         ArgumentNullException.ThrowIfNull(playback);
         ArgumentNullException.ThrowIfNull(root);
-        return new SoundMotionFacade(playback, root);
+        return new TimbreMotionFacade(playback, root);
     }
 
     public static MotionElementFacade Motion<TElement>(this TElement element)

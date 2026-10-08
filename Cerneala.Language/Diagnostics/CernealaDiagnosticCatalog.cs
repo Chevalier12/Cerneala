@@ -5,7 +5,7 @@ internal static class CernealaDiagnosticCatalog
     private const string UiCategory = "Cerneala.UiMarkup";
     private const string MotionCategory = "Cerneala.UiMarkup.Motion";
     private const string PrismCategory = "Cerneala.Prism.Markup";
-    private const string SoundCategory = "Cerneala.UiMarkup.Sound";
+    private const string TimbreCategory = "Cerneala.UiMarkup.Timbre";
 
     private static readonly LanguageDiagnosticDescriptor[] descriptors =
     [
@@ -33,10 +33,10 @@ internal static class CernealaDiagnosticCatalog
         Motion("CERNEALAUI024", "Invalid Motion composition", "Motion composition in '{0}' is invalid: {1}"),
         Motion("CERNEALAUI025", "Invalid Motion lifecycle directive", "Motion lifecycle directive in '{0}' is invalid: {1}"),
         Motion("CERNEALAUI026", "Unsupported Motion runtime capability", "Motion runtime capability in '{0}' is unsupported: {1}"),
-        Sound("CERNEALAUI030", "Invalid Sound markup syntax", "Sound syntax in '{0}' is invalid: {1}"),
-        Sound("CERNEALAUI031", "Invalid Sound reference", "Sound reference in '{0}' is invalid: {1}"),
-        Sound("CERNEALAUI032", "Invalid Sound value", "Sound value in '{0}' is invalid: {1}"),
-        Sound("CERNEALAUI033", "Invalid Sound directive context", "Sound directive context in '{0}' is invalid: {1}"),
+        Timbre("CERNEALAUI030", "Invalid Timbre markup syntax", "Timbre syntax in '{0}' is invalid: {1}"),
+        Timbre("CERNEALAUI031", "Invalid Timbre reference", "Timbre reference in '{0}' is invalid: {1}"),
+        Timbre("CERNEALAUI032", "Invalid Timbre value", "Timbre value in '{0}' is invalid: {1}"),
+        Timbre("CERNEALAUI033", "Invalid Timbre directive context", "Timbre directive context in '{0}' is invalid: {1}"),
         Prism("PRISM1001", "Unknown Prism directive", "Prism markup in '{0}' is invalid: {1}"),
         PrismTransient("PRISM1002", "Missing Prism delimiter", "Prism markup in '{0}' is invalid: {1}"),
         Prism("PRISM1003", "Invalid Prism syntax", "Prism markup in '{0}' is invalid: {1}"),
@@ -71,8 +71,8 @@ internal static class CernealaDiagnosticCatalog
     private static LanguageDiagnosticDescriptor Motion(string id, string title, string message) =>
         new(id, title, message, MotionCategory, LanguageDiagnosticSeverity.Error, LanguageDiagnosticSeverity.Error);
 
-    private static LanguageDiagnosticDescriptor Sound(string id, string title, string message) =>
-        new(id, title, message, SoundCategory, LanguageDiagnosticSeverity.Error, LanguageDiagnosticSeverity.Error);
+    private static LanguageDiagnosticDescriptor Timbre(string id, string title, string message) =>
+        new(id, title, message, TimbreCategory, LanguageDiagnosticSeverity.Error, LanguageDiagnosticSeverity.Error);
 
     private static LanguageDiagnosticDescriptor UiTransient(string id, string title, string message) =>
         new(id, title, message, UiCategory, LanguageDiagnosticSeverity.Error, LanguageDiagnosticSeverity.Information);

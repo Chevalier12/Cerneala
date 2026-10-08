@@ -157,11 +157,11 @@ internal sealed class ObservedSource
     private readonly List<ObservedFileStream> streams = [];
     private readonly TaskCompletionSource opened = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-    public ObservedSource(string path, bool loop = false, SoundLoading loading = SoundLoading.Streaming)
+    public ObservedSource(string path, bool loop = false, TimbreLoading loading = TimbreLoading.Streaming)
     {
         Path = path;
-        Clip = new SoundClip(
-            SoundSource.FromStream(_ =>
+        Clip = new TimbreClip(
+            TimbreSource.FromStream(_ =>
             {
                 ObservedFileStream stream = new(path);
                 Configure?.Invoke(stream);
@@ -183,7 +183,7 @@ internal sealed class ObservedSource
     // Completes when the first playback stream has been created.
     public Task Opened => opened.Task;
 
-    public SoundClip Clip { get; }
+    public TimbreClip Clip { get; }
 
     // Applied to each new stream before the decoder sees it.
     public Action<ObservedFileStream>? Configure { get; set; }
@@ -203,7 +203,7 @@ internal sealed class ObservedSource
 
     public float[] Decode()
     {
-        using SoundReader reader = DecodingCorpus.Open(Path);
+        using TimbreReader reader = DecodingCorpus.Open(Path);
         return DecodingCorpus.DecodeAll(reader);
     }
 }

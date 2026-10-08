@@ -640,7 +640,7 @@ WPF resource dictionaries.
 - `Spring`
 - `MotionClip`
 - `PrismComposition`
-- `SoundClip`
+- `TimbreClip`
 
 `VisualBrush` is runtime-only because its source is a live element.
 
@@ -1176,28 +1176,28 @@ The parser also supports directives including:
 These have strict context and grammar rules. Do not improvise their syntax.
 Copy a current repository example and preserve its structure.
 
-## 14. Sound (Timbre)
+## 14. Timbre (sound)
 
-Sounds are declared as `SoundClip` resources and started only by explicit
+Sounds are declared as `TimbreClip` resources and started only by explicit
 actions inside an Aspect `@on`, `@when` or `@if` body. Nothing plays, and no
 audio file is opened, because a clip is declared or referenced. There is no
 implicit button sound.
 
 ```xml
 <UserControl.Resources>
-    <SoundClip Name="ConfirmSound">
+    <TimbreClip Name="ConfirmTimbre">
         Source = "audio/confirm.wav";
         Volume = 0.8;
         @parameter ToneCutoff: float = 1200;
         @modifier LowPass { Cutoff = ToneCutoff; }
         @modifier Delay { Time = 120ms; Feedback = 0.20; Mix = 0.15; }
-    </SoundClip>
+    </TimbreClip>
 </UserControl.Resources>
 
 <Button Content="Confirm">
     <Button.Aspect>
         @handle Playback;
-        @on Click { @sound $ConfirmSound(ToneCutoff = 800) as Playback; }
+        @on Click { @timbre $ConfirmTimbre(ToneCutoff = 800) as Playback; }
         @when IsMouseOver
         {
             @if value == false { @pause Playback; }
@@ -1211,24 +1211,24 @@ implicit button sound.
 - `Source` is required; `Volume` is 0–1 and `Loop` is `true` or `false`.
 - `@modifier LowPass` and `@modifier Delay` run in source order; their inputs
   take constants or declared `@parameter` values.
-- `@sound $Clip(Volume = ..., Loop = ..., Param = ...);` overrides values for one
+- `@timbre $Clip(Volume = ..., Loop = ..., Param = ...);` overrides values for one
   start. Without `as Handle` playbacks overlap; with it the slot's occupant is
   replaced. `@cancel`, `@pause`, `@resume` and `@seek` act on the slot's current
   occupant and do nothing when it is empty.
-- Every sound statement ends with `;`. Sound actions are not allowed in
+- Every sound statement ends with `;`. Timbre actions are not allowed in
   `@parallel`, `@sequence` or at the top level of an Aspect.
 - A reactive body plays once when its condition becomes true (including
   initially true) and is not stopped by the condition becoming false. Hiding
   the element does not stop or replay its sounds.
 - Each element, template part and item occurrence owns its own sound scope;
   detaching it cancels only its playbacks.
-- Motion animates a started playback through `$self.sound.Handle.Volume` or
-  `$self.sound.Handle.Parameter` in `@animate`/`@keyframes`: it captures the
+- Motion animates a started playback through `$self.timbre.Handle.Volume` or
+  `$self.timbre.Handle.Parameter` in `@animate`/`@keyframes`: it captures the
   handle's occupant when it starts, never retargets a later one, starts timing
   at the first PCM, holds while paused or seeking and keeps running when the
   element is hidden. An empty handle animates nothing.
 
-The [Timbre Sound Guide](timbre-guide.md) explains the runtime, the transport
+The [Timbre Guide](timbre-guide.md) explains the runtime, the transport
 semantics, errors, tooling and Live Preview audio policy.
 
 ## 15. Prism

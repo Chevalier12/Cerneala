@@ -5,20 +5,20 @@ namespace Cerneala.Tests.Timbre.Engine;
 
 public sealed class PlainMixTests
 {
-    private static readonly Func<long, int, float> Signal = DeterministicSoundReader.DefaultSignal;
+    private static readonly Func<long, int, float> Signal = DeterministicTimbreReader.DefaultSignal;
 
     [Fact]
     public async Task SinglePreloadedPlaybackEqualsSourceTimesVolume()
     {
         using TimbreRig rig = new();
-        SoundPlayback playback = rig.Scope.Play(TimbreRig.Clip(new DeterministicSoundSourceFactory(48000), volume: 0.6f));
+        TimbrePlayback playback = rig.Scope.Play(TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000), volume: 0.6f));
 
         float[] pcm = await rig.StartAsync(playback);
         float[] next = await rig.NextBlockAsync();
 
         TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Budget, Signal, 0.6f), pcm);
         TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Block, Signal, 0.6f, TimbreRig.Budget), next);
-        SoundRuntimeDiagnostics diagnostics = rig.Runtime.GetDiagnostics();
+        TimbreRuntimeDiagnostics diagnostics = rig.Runtime.GetDiagnostics();
         Assert.Equal(5, diagnostics.BlocksMixed);
         Assert.Equal(0, diagnostics.ClippedSamples);
         Assert.Equal(0, diagnostics.UnderrunFrames);
@@ -29,7 +29,7 @@ public sealed class PlainMixTests
     public async Task StreamingWithIrregularReadsMatchesTheClosedFormSignal()
     {
         using TimbreRig rig = new();
-        SoundPlayback playback = rig.Scope.Play(TimbreRig.Clip(new DeterministicSoundSourceFactory(6000, maxFramesPerRead: 37), SoundLoading.Streaming));
+        TimbrePlayback playback = rig.Scope.Play(TimbreRig.Clip(new DeterministicTimbreSourceFactory(6000, maxFramesPerRead: 37), TimbreLoading.Streaming));
 
         float[] pcm = await rig.StartAsync(playback);
 
@@ -41,9 +41,9 @@ public sealed class PlainMixTests
     {
         using TimbreRig rig = new();
         Func<long, int, float> constant = (_, channel) => channel == 0 ? 0.4f : -0.3f;
-        SoundClip clip = TimbreRig.Clip(new DeterministicSoundSourceFactory(48000, constant));
-        SoundPlayback first = rig.Scope.Play(clip);
-        SoundPlayback second = rig.Scope.Play(clip);
+        TimbreClip clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000, constant));
+        TimbrePlayback first = rig.Scope.Play(clip);
+        TimbrePlayback second = rig.Scope.Play(clip);
 
         float[] pcm = await rig.StartAsync(first, second);
 
@@ -56,9 +56,9 @@ public sealed class PlainMixTests
     {
         using TimbreRig rig = new();
         Func<long, int, float> loud = (_, channel) => channel == 0 ? 0.75f : -0.75f;
-        SoundClip clip = TimbreRig.Clip(new DeterministicSoundSourceFactory(48000, loud));
-        SoundPlayback first = rig.Scope.Play(clip);
-        SoundPlayback second = rig.Scope.Play(clip, start => start.Volume = 0.5f);
+        TimbreClip clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000, loud));
+        TimbrePlayback first = rig.Scope.Play(clip);
+        TimbrePlayback second = rig.Scope.Play(clip, start => start.Volume = 0.5f);
 
         float[] pcm = await rig.StartAsync(first, second);
 
@@ -70,7 +70,7 @@ public sealed class PlainMixTests
     public async Task VolumeZeroProducesSilenceButKeepsAdvancing()
     {
         using TimbreRig rig = new();
-        SoundPlayback playback = rig.Scope.Play(TimbreRig.Clip(new DeterministicSoundSourceFactory(48000)), start => start.Volume = 0f);
+        TimbrePlayback playback = rig.Scope.Play(TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000)), start => start.Volume = 0f);
 
         float[] pcm = await rig.StartAsync(playback);
 

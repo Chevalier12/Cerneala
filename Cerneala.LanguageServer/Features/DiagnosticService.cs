@@ -104,17 +104,17 @@ internal sealed class DiagnosticService(CernealaWorkspace workspace, BuildDiagno
                 EmbeddedParseResult<DirectiveDocumentSyntax> parsed = MotionSyntaxParser.Parse(text, offset);
                 embeddedDiagnostics = parsed.Diagnostics.Take(1).ToArray();
             }
-            else if (elementName == "SoundClip")
+            else if (elementName == "TimbreClip")
             {
-                // SoundClip validity depends only on the shared Timbre catalog,
+                // TimbreClip validity depends only on the shared Timbre catalog,
                 // so a document without a project gets the full clip binding.
-                List<EmbeddedDiagnostic> soundDiagnostics = new();
-                SoundMarkupBinder.BindClip(
+                List<EmbeddedDiagnostic> timbreDiagnostics = new();
+                TimbreMarkupBinder.BindClip(
                     null,
-                    SoundMarkupSyntax.ParseClipBody(text, offset),
+                    TimbreMarkupSyntax.ParseClipBody(text, offset),
                     element.NameToken.Span,
-                    soundDiagnostics);
-                embeddedDiagnostics = soundDiagnostics;
+                    timbreDiagnostics);
+                embeddedDiagnostics = timbreDiagnostics;
             }
             else if (elementName == "PrismComposition")
             {

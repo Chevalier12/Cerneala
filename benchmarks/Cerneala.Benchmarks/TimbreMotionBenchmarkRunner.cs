@@ -41,12 +41,12 @@ internal static class TimbreMotionBenchmarkRunner
         string control = Environment.GetEnvironmentVariable("TIMBRE_MOTION_CONTROL") ?? "audio";
         TimbreCoreBenchmarkRunner.PacedDevice device = new();
         TimbreCoreBenchmarkRunner.BlockRecorder recorder = new(WarmupBlocks, MeasuredBlocks);
-        using SoundRuntime runtime = new(new SoundRuntimeOptions { Output = device });
+        using TimbreRuntime runtime = new(new TimbreRuntimeOptions { Output = device });
         runtime.BlockObserver = recorder;
 
         UIRoot root = new();
-        root.SetSoundRuntime(runtime);
-        UiHost host = new(new UiHostOptions { Root = root, Viewport = new UiViewport(400, 300), SoundRuntime = runtime });
+        root.SetTimbreRuntime(runtime);
+        UiHost host = new(new UiHostOptions { Root = root, Viewport = new UiViewport(400, 300), TimbreRuntime = runtime });
         Button owner = new() { Content = "voices", Width = 120, Height = 40 };
         root.VisualChildren.Add(owner);
         Update(host);
@@ -56,28 +56,28 @@ internal static class TimbreMotionBenchmarkRunner
             Update(host);
         }
 
-        List<(SoundClip Clip, SoundParameter<float> Cutoff)> clips = [];
+        List<(TimbreClip Clip, TimbreParameter<float> Cutoff)> clips = [];
         for (int index = 0; index < 4; index++)
         {
             int seed = index;
-            clips.Add(Clip(() => new TimbreCoreBenchmarkRunner.NoiseReader(2 * 48000, seed), $"preloaded-{index}", SoundLoading.Preload));
+            clips.Add(Clip(() => new TimbreCoreBenchmarkRunner.NoiseReader(2 * 48000, seed), $"preloaded-{index}", TimbreLoading.Preload));
         }
 
-        (SoundClip streaming, SoundParameter<float> streamingCutoff) = Clip(() => new TimbreCoreBenchmarkRunner.NoiseReader(60 * 48000, seed: 99), "streaming", SoundLoading.Streaming);
-        foreach ((SoundClip clip, _) in clips)
+        (TimbreClip streaming, TimbreParameter<float> streamingCutoff) = Clip(() => new TimbreCoreBenchmarkRunner.NoiseReader(60 * 48000, seed: 99), "streaming", TimbreLoading.Streaming);
+        foreach ((TimbreClip clip, _) in clips)
         {
             runtime.PrepareAsync(clip).GetAwaiter().GetResult();
         }
 
         TweenSpec<float> spec = new(AnimationLength, Easings.Linear);
-        List<SoundPlayback> voices = [];
+        List<TimbrePlayback> voices = [];
         for (int index = 0; index < PreloadedVoices + StreamingVoices; index++)
         {
-            (SoundClip clip, SoundParameter<float> cutoff) = index < PreloadedVoices ? clips[index % clips.Count] : (streaming, streamingCutoff);
-            SoundPlayback voice = owner.Sounds.Play(clip, start => start.Volume = 0.3f);
+            (TimbreClip clip, TimbreParameter<float> cutoff) = index < PreloadedVoices ? clips[index % clips.Count] : (streaming, streamingCutoff);
+            TimbrePlayback voice = owner.Timbre.Play(clip, start => start.Volume = 0.3f);
             if (control == "audio")
             {
-                voice.Motion().Animate(SoundPlayback.VolumeParameter).To(0.5f).With(spec);
+                voice.Motion().Animate(TimbrePlayback.VolumeParameter).To(0.5f).With(spec);
                 voice.Motion().Animate(cutoff).To(3000f).With(spec);
             }
             voices.Add(voice);
@@ -101,7 +101,7 @@ internal static class TimbreMotionBenchmarkRunner
         long layoutInvalidations = 0;
         long valuesChanged = 0;
         long publicationsAtWarmup = 0;
-        SoundRuntimeDiagnostics? atMixerWarmup = null;
+        TimbreRuntimeDiagnostics? atMixerWarmup = null;
         long deviceUnderrunAtWarmup = 0;
         int frame = 0;
         Stopwatch cadence = Stopwatch.StartNew();
@@ -144,9 +144,9 @@ internal static class TimbreMotionBenchmarkRunner
             }
         }
 
-        SoundRuntimeDiagnostics atEnd = runtime.GetDiagnostics();
-        int activeAnimations = voices.Count(voice => voice.State == SoundPlaybackState.Playing);
-        foreach (SoundPlayback voice in voices)
+        TimbreRuntimeDiagnostics atEnd = runtime.GetDiagnostics();
+        int activeAnimations = voices.Count(voice => voice.State == TimbrePlaybackState.Playing);
+        foreach (TimbrePlayback voice in voices)
         {
             voice.Cancel();
         }
@@ -201,11 +201,11 @@ internal static class TimbreMotionBenchmarkRunner
         Console.WriteLine(json);
     }
 
-    private static (SoundClip Clip, SoundParameter<float> Cutoff) Clip(Func<SoundReader> open, string name, SoundLoading loading)
+    private static (TimbreClip Clip, TimbreParameter<float> Cutoff) Clip(Func<TimbreReader> open, string name, TimbreLoading loading)
     {
-        SoundParameter<float> cutoff = new("Cutoff", 2000f);
-        SoundClip clip = new(
-            SoundSource.FromReader(open, name),
+        TimbreParameter<float> cutoff = new("Cutoff", 2000f);
+        TimbreClip clip = new(
+            TimbreSource.FromReader(open, name),
             volume: 0.5f,
             loop: true,
             loading: loading,

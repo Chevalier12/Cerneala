@@ -290,7 +290,7 @@ jobs:
           New-Item -ItemType Directory -Path $resultDirectory -Force | Out-Null
           $audioTrx = "native-timbre-audio-${{ matrix.nativeRid }}.trx"
           dotnet test ./tests/Cerneala.Tests.SdlGpu/Cerneala.Tests.SdlGpu.csproj -c Release --no-build --no-restore `
-            --filter "FullyQualifiedName~NativeSoundOutputTests&FullyQualifiedName!~ARealDevice" `
+            --filter "FullyQualifiedName~NativeTimbreOutputTests&FullyQualifiedName!~ARealDevice" `
             --logger "trx;LogFileName=$audioTrx" --results-directory $resultDirectory
           if ($LASTEXITCODE -ne 0) { throw "Native Timbre audio tests failed with exit code $LASTEXITCODE." }
           [xml] $document = Get-Content -LiteralPath (Join-Path $resultDirectory $audioTrx) -Raw

@@ -18,12 +18,12 @@ public class Application
     private bool shutdownRequested;
     private bool exitRaised;
     private int exitCode;
-    private SoundRuntime? soundRuntime;
-    private bool ownsSoundRuntime;
-    private SoundScope? sounds;
-    private bool soundsRetired;
+    private TimbreRuntime? timbreRuntime;
+    private bool ownsTimbreRuntime;
+    private TimbreScope? sounds;
+    private bool timbreRetired;
     // Read by the owned runtime's mixer thread when it first opens its output.
-    private ISoundOutput? platformSoundOutput;
+    private ITimbreOutput? platformTimbreOutput;
 
     public Application()
     {
@@ -77,51 +77,51 @@ public class Application
     // Shared by every window root. Created lazily without opening a device; it
     // plays through the installed window platform's output once a playback
     // needs it. A runtime assigned before first use stays caller-owned.
-    public SoundRuntime SoundRuntime
+    public TimbreRuntime TimbreRuntime
     {
         get
         {
             VerifyAccess();
-            ObjectDisposedException.ThrowIf(soundsRetired, this);
-            if (soundRuntime is null)
+            ObjectDisposedException.ThrowIf(timbreRetired, this);
+            if (timbreRuntime is null)
             {
-                soundRuntime = new SoundRuntime(new SoundRuntimeOptions
+                timbreRuntime = new TimbreRuntime(new TimbreRuntimeOptions
                 {
-                    Output = new PlatformSoundOutput(() => Volatile.Read(ref platformSoundOutput))
+                    Output = new PlatformTimbreOutput(() => Volatile.Read(ref platformTimbreOutput))
                 });
-                ownsSoundRuntime = true;
+                ownsTimbreRuntime = true;
             }
 
-            return soundRuntime;
+            return timbreRuntime;
         }
         set
         {
             VerifyAccess();
             ArgumentNullException.ThrowIfNull(value);
-            ObjectDisposedException.ThrowIf(soundsRetired, this);
-            if (soundRuntime is not null)
+            ObjectDisposedException.ThrowIf(timbreRetired, this);
+            if (timbreRuntime is not null)
             {
-                throw new InvalidOperationException("Application.SoundRuntime must be assigned before it is first used.");
+                throw new InvalidOperationException("Application.TimbreRuntime must be assigned before it is first used.");
             }
 
-            soundRuntime = value;
-            ownsSoundRuntime = false;
+            timbreRuntime = value;
+            ownsTimbreRuntime = false;
         }
     }
 
-    public SoundScope Sounds
+    public TimbreScope Timbre
     {
         get
         {
             VerifyAccess();
-            ObjectDisposedException.ThrowIf(soundsRetired, this);
-            return sounds ??= SoundRuntime.CreateScope();
+            ObjectDisposedException.ThrowIf(timbreRetired, this);
+            return sounds ??= TimbreRuntime.CreateScope();
         }
     }
 
     // The installed window platform's shared output, for a caller-owned
     // runtime that should play exactly where the owned one would.
-    internal ISoundOutput? PlatformSoundOutput => Volatile.Read(ref platformSoundOutput);
+    internal ITimbreOutput? PlatformTimbreOutput => Volatile.Read(ref platformTimbreOutput);
 
     public bool UseMultisampling { get; set; } = false;
 
@@ -190,7 +190,7 @@ public class Application
 
         current = this;
         this.runtime = runtime;
-        Volatile.Write(ref platformSoundOutput, runtime.SoundOutput);
+        Volatile.Write(ref platformTimbreOutput, runtime.TimbreOutput);
         runtime.SetApplication(this);
     }
 
@@ -260,7 +260,7 @@ public class Application
             }
 
             services = null;
-            RetireSounds();
+            RetireTimbre();
             DetachRuntime();
         }
     }
@@ -273,22 +273,22 @@ public class Application
         }
 
         services = null;
-        RetireSounds();
+        RetireTimbre();
         runtime = null;
         current = null;
     }
 
-    private void RetireSounds()
+    private void RetireTimbre()
     {
-        soundsRetired = true;
+        timbreRetired = true;
         sounds?.Dispose();
         sounds = null;
-        if (ownsSoundRuntime)
+        if (ownsTimbreRuntime)
         {
-            soundRuntime?.Dispose();
+            timbreRuntime?.Dispose();
         }
 
-        soundRuntime = null;
+        timbreRuntime = null;
     }
 
     private void DetachRuntime()

@@ -554,7 +554,7 @@ internal sealed partial class CernealaSemanticModel
         }
 
         BindMotionAspect(aspect, cancellationToken);
-        BindSoundAspect(aspect);
+        BindTimbreAspect(aspect);
 
         IReadOnlyList<DirectiveBlock> defaultBlocks = FindDirectiveBlocks(document.Text.ToString(), "@default");
         Dictionary<int, HashSet<string>> assignedByDefault = new();

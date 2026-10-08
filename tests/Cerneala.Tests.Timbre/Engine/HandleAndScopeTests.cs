@@ -5,65 +5,65 @@ namespace Cerneala.Tests.Timbre.Engine;
 
 public sealed class HandleAndScopeTests
 {
-    private static readonly Func<long, int, float> Signal = DeterministicSoundReader.DefaultSignal;
+    private static readonly Func<long, int, float> Signal = DeterministicTimbreReader.DefaultSignal;
 
     [Fact]
     public async Task PlayWithoutHandleOverlapsAndCancelTargetsOneIdentity()
     {
         using TimbreRig rig = new();
-        SoundClip clip = TimbreRig.Clip(new DeterministicSoundSourceFactory(48000));
-        SoundPlayback first = rig.Scope.Play(clip);
-        SoundPlayback second = rig.Scope.Play(clip);
+        TimbreClip clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
+        TimbrePlayback first = rig.Scope.Play(clip);
+        TimbrePlayback second = rig.Scope.Play(clip);
         await rig.StartAsync(first, second);
 
         first.Cancel();
         float[] block = await rig.NextBlockAsync();
 
-        Assert.Equal(SoundPlaybackState.Canceled, first.State);
-        Assert.Equal(SoundPlaybackState.Playing, second.State);
+        Assert.Equal(TimbrePlaybackState.Canceled, first.State);
+        Assert.Equal(TimbrePlaybackState.Playing, second.State);
         TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Block, Signal, 1f, TimbreRig.Budget), block);
-        Assert.Equal(SoundPlaybackState.Canceled, (await TimbreRig.CompletionAsync(first)).State);
+        Assert.Equal(TimbrePlaybackState.Canceled, (await TimbreRig.CompletionAsync(first)).State);
     }
 
     [Fact]
     public async Task PlayWithSameHandleReplacesOnlyTheOccupant()
     {
         using TimbreRig rig = new();
-        SoundClip clip = TimbreRig.Clip(new DeterministicSoundSourceFactory(48000));
-        SoundHandle slot = rig.Scope.CreateHandle();
-        SoundPlayback old = rig.Scope.Play(clip, handle: slot);
-        SoundPlayback free = rig.Scope.Play(clip);
+        TimbreClip clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
+        TimbreHandle slot = rig.Scope.CreateHandle();
+        TimbrePlayback old = rig.Scope.Play(clip, handle: slot);
+        TimbrePlayback free = rig.Scope.Play(clip);
         Assert.Same(old, slot.Current);
         Assert.Same(rig.Scope, slot.Scope);
 
-        SoundPlayback current = rig.Scope.Play(clip, start => start.Volume = 0.5f, handle: slot);
+        TimbrePlayback current = rig.Scope.Play(clip, start => start.Volume = 0.5f, handle: slot);
 
-        Assert.Equal(SoundPlaybackState.Canceled, old.State);
+        Assert.Equal(TimbrePlaybackState.Canceled, old.State);
         Assert.Same(current, slot.Current);
         float[] pcm = await rig.StartAsync(free, current);
         TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Budget, Signal, 1.5f), pcm);
-        Assert.Equal(SoundPlaybackState.Playing, free.State);
+        Assert.Equal(TimbrePlaybackState.Playing, free.State);
     }
 
     [Fact]
     public async Task CancelOnStaleReferenceDoesNotCancelTheNewOccupant()
     {
         using TimbreRig rig = new();
-        SoundClip clip = TimbreRig.Clip(new DeterministicSoundSourceFactory(48000));
-        SoundHandle slot = rig.Scope.CreateHandle();
-        SoundPlayback old = rig.Scope.Play(clip, handle: slot);
-        SoundPlayback current = rig.Scope.Play(clip, handle: slot);
+        TimbreClip clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
+        TimbreHandle slot = rig.Scope.CreateHandle();
+        TimbrePlayback old = rig.Scope.Play(clip, handle: slot);
+        TimbrePlayback current = rig.Scope.Play(clip, handle: slot);
 
         old.Cancel();
         old.Cancel();
 
-        Assert.Equal(SoundPlaybackState.Pending, current.State);
+        Assert.Equal(TimbrePlaybackState.Pending, current.State);
         Assert.Same(current, slot.Current);
         await rig.StartAsync(current);
-        Assert.Equal(SoundPlaybackState.Playing, current.State);
+        Assert.Equal(TimbrePlaybackState.Playing, current.State);
 
         slot.Cancel();
-        Assert.Equal(SoundPlaybackState.Canceled, current.State);
+        Assert.Equal(TimbrePlaybackState.Canceled, current.State);
         Assert.Null(slot.Current);
         slot.Cancel(); // empty slot: no-op
         Assert.Null(slot.Current);
@@ -73,7 +73,7 @@ public sealed class HandleAndScopeTests
     public void EmptySlotCancelIsNoOp()
     {
         using TimbreRig rig = new();
-        SoundHandle slot = rig.Scope.CreateHandle();
+        TimbreHandle slot = rig.Scope.CreateHandle();
         slot.Cancel();
         Assert.Null(slot.Current);
         Assert.Equal(0, rig.Runtime.GetDiagnostics().PlaybacksStarted);
@@ -83,13 +83,13 @@ public sealed class HandleAndScopeTests
     public void SynchronousStartFailuresKeepTheOccupantAndCreateNoIdentity()
     {
         using TimbreRig rig = new();
-        SoundParameter<float> declared = new("Declared", 1f);
-        SoundParameter<float> foreign = new("Foreign", 1f);
-        SoundClip clip = new(SoundSource.FromReader(new DeterministicSoundSourceFactory(48000).Open), parameters: [declared]);
-        SoundHandle slot = rig.Scope.CreateHandle();
-        SoundPlayback occupant = rig.Scope.Play(clip, handle: slot);
-        using SoundScope otherScope = rig.Runtime.CreateScope();
-        SoundHandle foreignSlot = otherScope.CreateHandle();
+        TimbreParameter<float> declared = new("Declared", 1f);
+        TimbreParameter<float> foreign = new("Foreign", 1f);
+        TimbreClip clip = new(TimbreSource.FromReader(new DeterministicTimbreSourceFactory(48000).Open), parameters: [declared]);
+        TimbreHandle slot = rig.Scope.CreateHandle();
+        TimbrePlayback occupant = rig.Scope.Play(clip, handle: slot);
+        using TimbreScope otherScope = rig.Runtime.CreateScope();
+        TimbreHandle foreignSlot = otherScope.CreateHandle();
         InvalidOperationException thrown = new("configure failed");
 
         Assert.Same(thrown, Assert.Throws<InvalidOperationException>(() => rig.Scope.Play(clip, _ => throw thrown, slot)));
@@ -101,7 +101,7 @@ public sealed class HandleAndScopeTests
         Assert.Throws<ArgumentNullException>(() => rig.Scope.Play(null!, handle: slot));
 
         Assert.Same(occupant, slot.Current);
-        Assert.Equal(SoundPlaybackState.Pending, occupant.State);
+        Assert.Equal(TimbrePlaybackState.Pending, occupant.State);
         Assert.Equal(1, rig.Runtime.GetDiagnostics().PlaybacksStarted);
     }
 
@@ -109,52 +109,52 @@ public sealed class HandleAndScopeTests
     public void ModifiedClipStartsAndReplacesThroughTheSamePathAsAPlainClip()
     {
         using TimbreRig rig = new();
-        SoundClip plain = TimbreRig.Clip(new DeterministicSoundSourceFactory(48000));
-        SoundClip filtered = new(plain.Source, modifiers: [new LowPass()]);
-        SoundHandle slot = rig.Scope.CreateHandle();
-        SoundPlayback occupant = rig.Scope.Play(plain, handle: slot);
+        TimbreClip plain = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
+        TimbreClip filtered = new(plain.Source, modifiers: [new LowPass()]);
+        TimbreHandle slot = rig.Scope.CreateHandle();
+        TimbrePlayback occupant = rig.Scope.Play(plain, handle: slot);
 
-        SoundPlayback replacement = rig.Scope.Play(filtered, handle: slot);
+        TimbrePlayback replacement = rig.Scope.Play(filtered, handle: slot);
 
-        Assert.Equal(SoundPlaybackState.Canceled, occupant.State);
+        Assert.Equal(TimbrePlaybackState.Canceled, occupant.State);
         Assert.Same(replacement, slot.Current);
-        Assert.Equal(SoundPlaybackState.Pending, replacement.State);
+        Assert.Equal(TimbrePlaybackState.Pending, replacement.State);
     }
 
     [Fact]
     public async Task VoiceLimitCountsPausedPlaybacksAndRejectsWithoutStealing()
     {
         using TimbreRig rig = new(options => options.MaxVoices = 2);
-        SoundClip clip = TimbreRig.Clip(new DeterministicSoundSourceFactory(48000));
-        SoundHandle slot = rig.Scope.CreateHandle();
-        SoundPlayback playing = rig.Scope.Play(clip);
-        SoundPlayback paused = rig.Scope.Play(clip, handle: slot);
+        TimbreClip clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
+        TimbreHandle slot = rig.Scope.CreateHandle();
+        TimbrePlayback playing = rig.Scope.Play(clip);
+        TimbrePlayback paused = rig.Scope.Play(clip, handle: slot);
         paused.Pause();
 
-        SoundException rejected = Assert.Throws<SoundException>(() => rig.Scope.Play(clip));
-        Assert.Equal(SoundErrorKind.VoiceLimitExceeded, rejected.Kind);
-        Assert.Equal(SoundPlaybackState.Pending, playing.State);
-        Assert.Equal(SoundPlaybackState.Paused, paused.State);
+        TimbreException rejected = Assert.Throws<TimbreException>(() => rig.Scope.Play(clip));
+        Assert.Equal(TimbreErrorKind.VoiceLimitExceeded, rejected.Kind);
+        Assert.Equal(TimbrePlaybackState.Pending, playing.State);
+        Assert.Equal(TimbrePlaybackState.Paused, paused.State);
 
         // Replacing an occupant frees its voice within the same transaction.
-        SoundPlayback replacement = rig.Scope.Play(clip, handle: slot);
-        Assert.Equal(SoundPlaybackState.Canceled, paused.State);
+        TimbrePlayback replacement = rig.Scope.Play(clip, handle: slot);
+        Assert.Equal(TimbrePlaybackState.Canceled, paused.State);
         Assert.Same(replacement, slot.Current);
 
         playing.Cancel();
         await TimbreRig.CompletionAsync(playing);
-        Assert.Equal(SoundPlaybackState.Pending, rig.Scope.Play(clip).State);
+        Assert.Equal(TimbrePlaybackState.Pending, rig.Scope.Play(clip).State);
     }
 
     [Fact]
     public async Task ScopeDisposalCancelsOnlyItsPlaybacksAndKeepsTheSharedOutput()
     {
         using TimbreRig rig = new();
-        SoundClip clip = TimbreRig.Clip(new DeterministicSoundSourceFactory(48000));
-        SoundScope other = rig.Runtime.CreateScope();
-        SoundHandle otherSlot = other.CreateHandle();
-        SoundPlayback mine = rig.Scope.Play(clip);
-        SoundPlayback theirs = other.Play(clip, handle: otherSlot);
+        TimbreClip clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
+        TimbreScope other = rig.Runtime.CreateScope();
+        TimbreHandle otherSlot = other.CreateHandle();
+        TimbrePlayback mine = rig.Scope.Play(clip);
+        TimbrePlayback theirs = other.Play(clip, handle: otherSlot);
         await rig.StartAsync(mine, theirs);
 
         other.Dispose();
@@ -162,9 +162,9 @@ public sealed class HandleAndScopeTests
         float[] block = await rig.NextBlockAsync();
 
         Assert.True(other.IsDisposed);
-        Assert.Equal(SoundPlaybackState.Canceled, theirs.State);
+        Assert.Equal(TimbrePlaybackState.Canceled, theirs.State);
         Assert.Null(otherSlot.Current);
-        Assert.Equal(SoundPlaybackState.Playing, mine.State);
+        Assert.Equal(TimbrePlaybackState.Playing, mine.State);
         TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Block, Signal, 1f, TimbreRig.Budget), block);
         Assert.True(rig.Output.IsOpen);
         Assert.Equal(0, rig.Output.CloseCount);
@@ -177,16 +177,16 @@ public sealed class HandleAndScopeTests
     public async Task RuntimeDisposalCancelsEveryScopeAndClosesTheOutput()
     {
         TimbreRig rig = new();
-        SoundClip clip = TimbreRig.Clip(new DeterministicSoundSourceFactory(48000));
-        SoundScope other = rig.Runtime.CreateScope();
-        SoundPlayback first = rig.Scope.Play(clip);
-        SoundPlayback second = other.Play(clip);
+        TimbreClip clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
+        TimbreScope other = rig.Runtime.CreateScope();
+        TimbrePlayback first = rig.Scope.Play(clip);
+        TimbrePlayback second = other.Play(clip);
         await rig.StartAsync(first, second);
 
         rig.Dispose();
 
-        Assert.Equal(SoundPlaybackState.Canceled, first.State);
-        Assert.Equal(SoundPlaybackState.Canceled, second.State);
+        Assert.Equal(TimbrePlaybackState.Canceled, first.State);
+        Assert.Equal(TimbrePlaybackState.Canceled, second.State);
         Assert.True(rig.Scope.IsDisposed);
         Assert.True(other.IsDisposed);
         Assert.Equal(1, rig.Output.CloseCount);

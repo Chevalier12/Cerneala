@@ -5,35 +5,35 @@ namespace Cerneala.Tests.Timbre.Engine;
 
 public sealed class TransportTests
 {
-    private static readonly Func<long, int, float> Signal = DeterministicSoundReader.DefaultSignal;
+    private static readonly Func<long, int, float> Signal = DeterministicTimbreReader.DefaultSignal;
 
     [Fact]
     public async Task PausePreservesPositionAndResumeContinuesWithoutRestart()
     {
         using TimbreRig rig = new();
-        SoundClip clip = TimbreRig.Clip(new DeterministicSoundSourceFactory(48000));
-        SoundPlayback paused = rig.Scope.Play(clip);
-        SoundPlayback other = rig.Scope.Play(clip, start => start.Volume = 0.5f);
+        TimbreClip clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
+        TimbrePlayback paused = rig.Scope.Play(clip);
+        TimbrePlayback other = rig.Scope.Play(clip, start => start.Volume = 0.5f);
         await rig.StartAsync(paused, other);
 
         paused.Pause();
         paused.Pause();
         float[] whilePaused = await rig.NextBlockAsync();
-        Assert.Equal(SoundPlaybackState.Paused, paused.State);
+        Assert.Equal(TimbrePlaybackState.Paused, paused.State);
         Assert.Equal(TimbreRig.FramesToTime(TimbreRig.Budget), paused.Position);
         TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Block, Signal, 0.5f, TimbreRig.Budget), whilePaused);
 
         paused.Resume();
         paused.Resume();
         float[] resumed = await rig.NextBlockAsync();
-        Assert.Equal(SoundPlaybackState.Playing, paused.State);
+        Assert.Equal(TimbrePlaybackState.Playing, paused.State);
         TimbreRig.AssertPcm(
             TimbreRig.Sum(
                 TimbreRig.Expected(TimbreRig.Block, Signal, 1f, TimbreRig.Budget),
                 TimbreRig.Expected(TimbreRig.Block, Signal, 0.5f, TimbreRig.Budget + TimbreRig.Block)),
             resumed);
 
-        SoundRuntimeDiagnostics diagnostics = rig.Runtime.GetDiagnostics();
+        TimbreRuntimeDiagnostics diagnostics = rig.Runtime.GetDiagnostics();
         Assert.Equal(1, diagnostics.PausesApplied);
         Assert.Equal(1, diagnostics.ResumesApplied);
     }
@@ -42,32 +42,32 @@ public sealed class TransportTests
     public async Task PauseWhilePendingHoldsTheFirstPcmUntilResume()
     {
         using TimbreRig rig = new();
-        SoundPlayback playback = rig.Scope.Play(TimbreRig.Clip(new DeterministicSoundSourceFactory(48000)));
+        TimbrePlayback playback = rig.Scope.Play(TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000)));
         playback.Pause();
-        Assert.Equal(SoundPlaybackState.Paused, playback.State);
+        Assert.Equal(TimbrePlaybackState.Paused, playback.State);
         await rig.ReadyAsync(playback);
         rig.Output.Release();
         await rig.SyncAsync();
 
         Assert.Equal(0, rig.Output.SubmittedFrames);
-        Assert.Equal(SoundPlaybackState.Paused, playback.State);
+        Assert.Equal(TimbrePlaybackState.Paused, playback.State);
 
         rig.Output.Hold(); // observe the resumed state before the mixer may run
         playback.Resume();
-        Assert.Equal(SoundPlaybackState.Pending, playback.State);
+        Assert.Equal(TimbrePlaybackState.Pending, playback.State);
         rig.Output.Release();
         await rig.Output.WaitForSubmittedFramesAsync(TimbreRig.Budget);
         TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Budget, Signal), rig.Output.Read(0, TimbreRig.Budget));
-        Assert.Equal(SoundPlaybackState.Playing, playback.State);
+        Assert.Equal(TimbrePlaybackState.Playing, playback.State);
     }
 
     [Fact]
     public async Task TerminalPlaybackRejectsTransportAndMutationsButCancelIsIdempotent()
     {
         using TimbreRig rig = new();
-        SoundParameter<float> unused = new("Unused", 1f);
-        SoundClip clip = new(SoundSource.FromReader(new DeterministicSoundSourceFactory(48000).Open), parameters: [unused]);
-        SoundPlayback playback = rig.Scope.Play(clip);
+        TimbreParameter<float> unused = new("Unused", 1f);
+        TimbreClip clip = new(TimbreSource.FromReader(new DeterministicTimbreSourceFactory(48000).Open), parameters: [unused]);
+        TimbrePlayback playback = rig.Scope.Play(clip);
         playback.Cancel();
 
         playback.Cancel();
@@ -76,15 +76,15 @@ public sealed class TransportTests
         Assert.Throws<InvalidOperationException>(() => playback.Volume = 0.5f);
         Assert.Throws<InvalidOperationException>(() => playback.Set(unused, 2f));
         await Assert.ThrowsAsync<InvalidOperationException>(() => playback.SeekAsync(TimeSpan.Zero));
-        Assert.Equal(SoundPlaybackState.Canceled, playback.State);
-        Assert.Equal(SoundPlaybackState.Canceled, (await TimbreRig.CompletionAsync(playback)).State);
+        Assert.Equal(TimbrePlaybackState.Canceled, playback.State);
+        Assert.Equal(TimbrePlaybackState.Canceled, (await TimbreRig.CompletionAsync(playback)).State);
     }
 
     [Fact]
     public async Task SeekMovesToTheExactFrameAndKeepsAnActivePlaybackActive()
     {
         using TimbreRig rig = new();
-        SoundPlayback playback = rig.Scope.Play(TimbreRig.Clip(new DeterministicSoundSourceFactory(48000)));
+        TimbrePlayback playback = rig.Scope.Play(TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000)));
         await rig.StartAsync(playback);
 
         Task seek = playback.SeekAsync(TimbreRig.FramesToTime(24000));
@@ -93,7 +93,7 @@ public sealed class TransportTests
         float[] block = await rig.NextBlockAsync();
 
         TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Block, Signal, 1f, 24000), block);
-        Assert.Equal(SoundPlaybackState.Playing, playback.State);
+        Assert.Equal(TimbrePlaybackState.Playing, playback.State);
         Assert.Equal(1, rig.Runtime.GetDiagnostics().SeeksCompleted);
     }
 
@@ -101,7 +101,7 @@ public sealed class TransportTests
     public async Task SeekWhilePausedStaysPausedAtTheTarget()
     {
         using TimbreRig rig = new();
-        SoundPlayback playback = rig.Scope.Play(TimbreRig.Clip(new DeterministicSoundSourceFactory(48000)));
+        TimbrePlayback playback = rig.Scope.Play(TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000)));
         await rig.StartAsync(playback);
         playback.Pause();
 
@@ -109,7 +109,7 @@ public sealed class TransportTests
         rig.Output.ConsumeAll();
         await rig.SyncAsync();
 
-        Assert.Equal(SoundPlaybackState.Paused, playback.State);
+        Assert.Equal(TimbrePlaybackState.Paused, playback.State);
         Assert.Equal(TimbreRig.FramesToTime(1000), playback.Position);
         Assert.Equal(TimbreRig.Budget, rig.Output.SubmittedFrames);
 
@@ -122,7 +122,7 @@ public sealed class TransportTests
     public async Task SeekRejectsNegativeAndBeyondKnownDurationSynchronously()
     {
         using TimbreRig rig = new();
-        SoundPlayback playback = rig.Scope.Play(TimbreRig.Clip(new DeterministicSoundSourceFactory(48000)));
+        TimbrePlayback playback = rig.Scope.Play(TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000)));
         await rig.StartAsync(playback);
 
         Assert.Throws<ArgumentOutOfRangeException>(() => { _ = playback.SeekAsync(TimeSpan.FromTicks(-1)); });
@@ -134,16 +134,16 @@ public sealed class TransportTests
     public async Task SeekToTheEndCompletesANonLoopingPlayback()
     {
         using TimbreRig rig = new(hold: false);
-        SoundPlayback playback = rig.Scope.Play(TimbreRig.Clip(new DeterministicSoundSourceFactory(48000)));
+        TimbrePlayback playback = rig.Scope.Play(TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000)));
         await rig.ReadyAsync(playback);
         await HarnessWait.WithTimeout(playback.SeekAsync(TimeSpan.FromSeconds(1)), null, "Seek did not complete.");
         rig.Output.ConsumeAll();
 
         await rig.SyncAsync();
         rig.Output.ConsumeAll();
-        SoundPlaybackResult result = await TimbreRig.CompletionAsync(playback);
+        TimbrePlaybackResult result = await TimbreRig.CompletionAsync(playback);
 
-        Assert.Equal(SoundPlaybackState.Completed, result.State);
+        Assert.Equal(TimbrePlaybackState.Completed, result.State);
     }
 
     [Fact]
@@ -151,10 +151,10 @@ public sealed class TransportTests
     {
         using TimbreRig rig = new();
         TaskCompletionSource gate = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        DeterministicSoundSourceFactory factory = new(48000, maxFramesPerRead: 512);
-        SoundPlayback playback = rig.Scope.Play(TimbreRig.Clip(factory, SoundLoading.Streaming));
+        DeterministicTimbreSourceFactory factory = new(48000, maxFramesPerRead: 512);
+        TimbrePlayback playback = rig.Scope.Play(TimbreRig.Clip(factory, TimbreLoading.Streaming));
         await rig.StartAsync(playback);
-        DeterministicSoundReader reader = factory.Readers.Single();
+        DeterministicTimbreReader reader = factory.Readers.Single();
         reader.ReadGate = token => gate.Task.WaitAsync(token);
         int reads = reader.ReadCount;
         rig.Output.ConsumeAll(); // the pump refills and blocks in the gate
@@ -185,10 +185,10 @@ public sealed class TransportTests
     {
         using TimbreRig rig = new();
         TaskCompletionSource gate = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        DeterministicSoundSourceFactory factory = new(48000, maxFramesPerRead: 512);
-        SoundPlayback playback = rig.Scope.Play(TimbreRig.Clip(factory, SoundLoading.Streaming));
+        DeterministicTimbreSourceFactory factory = new(48000, maxFramesPerRead: 512);
+        TimbrePlayback playback = rig.Scope.Play(TimbreRig.Clip(factory, TimbreLoading.Streaming));
         await rig.StartAsync(playback);
-        DeterministicSoundReader reader = factory.Readers.Single();
+        DeterministicTimbreReader reader = factory.Readers.Single();
         reader.ReadGate = token => gate.Task.WaitAsync(token);
         int reads = reader.ReadCount;
         rig.Output.ConsumeAll();
@@ -207,8 +207,8 @@ public sealed class TransportTests
     public async Task SeekBeyondAnUnknownDurationFaultsTheRequestAndPlaybackContinues()
     {
         using TimbreRig rig = new();
-        DeterministicSoundSourceFactory factory = new(48000, reportLength: false, maxFramesPerRead: 512);
-        SoundPlayback playback = rig.Scope.Play(TimbreRig.Clip(factory, SoundLoading.Streaming));
+        DeterministicTimbreSourceFactory factory = new(48000, reportLength: false, maxFramesPerRead: 512);
+        TimbrePlayback playback = rig.Scope.Play(TimbreRig.Clip(factory, TimbreLoading.Streaming));
         await rig.StartAsync(playback);
         Assert.Null(playback.Duration);
 
@@ -217,14 +217,14 @@ public sealed class TransportTests
 
         float[] block = await rig.NextBlockAsync();
         TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Block, Signal, 1f, TimbreRig.Budget), block);
-        Assert.Equal(SoundPlaybackState.Playing, playback.State);
+        Assert.Equal(TimbrePlaybackState.Playing, playback.State);
     }
 
     [Fact]
     public async Task PreloadedLoopRepeatsTheWholeSourceWithoutGapsOrCompletion()
     {
         using TimbreRig rig = new();
-        SoundPlayback playback = rig.Scope.Play(TimbreRig.Clip(new DeterministicSoundSourceFactory(700), loop: true));
+        TimbrePlayback playback = rig.Scope.Play(TimbreRig.Clip(new DeterministicTimbreSourceFactory(700), loop: true));
 
         float[] pcm = await rig.StartAsync(playback);
         float[] next = await rig.NextBlockAsync();
@@ -232,20 +232,20 @@ public sealed class TransportTests
         TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Budget, (frame, channel) => Signal(frame % 700, channel)), pcm);
         TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Block, (frame, channel) => Signal((frame + TimbreRig.Budget) % 700, channel)), next);
         Assert.True(playback.Loop);
-        Assert.Equal(SoundPlaybackState.Playing, playback.State);
+        Assert.Equal(TimbrePlaybackState.Playing, playback.State);
         Assert.False(playback.Completion.IsCompleted);
         Assert.Equal(3, rig.Runtime.GetDiagnostics().LoopWraps);
 
         playback.Cancel();
-        Assert.Equal(SoundPlaybackState.Canceled, (await TimbreRig.CompletionAsync(playback)).State);
+        Assert.Equal(TimbrePlaybackState.Canceled, (await TimbreRig.CompletionAsync(playback)).State);
     }
 
     [Fact]
     public async Task StreamingLoopRepeatsWithoutGapsUnderIrregularReads()
     {
         using TimbreRig rig = new();
-        SoundPlayback playback = rig.Scope.Play(
-            TimbreRig.Clip(new DeterministicSoundSourceFactory(611, maxFramesPerRead: 97), SoundLoading.Streaming, loop: true));
+        TimbrePlayback playback = rig.Scope.Play(
+            TimbreRig.Clip(new DeterministicTimbreSourceFactory(611, maxFramesPerRead: 97), TimbreLoading.Streaming, loop: true));
 
         float[] pcm = await rig.StartAsync(playback);
 
@@ -257,9 +257,9 @@ public sealed class TransportTests
     public async Task StartLoopOverridesTheClipDefaultAsAnImmutableSnapshot()
     {
         using TimbreRig rig = new();
-        SoundClip clip = TimbreRig.Clip(new DeterministicSoundSourceFactory(300), loop: true);
-        SoundPlayback once = rig.Scope.Play(clip, start => start.Loop = false);
-        SoundPlayback looping = rig.Scope.Play(clip);
+        TimbreClip clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(300), loop: true);
+        TimbrePlayback once = rig.Scope.Play(clip, start => start.Loop = false);
+        TimbrePlayback looping = rig.Scope.Play(clip);
 
         float[] pcm = await rig.StartAsync(once, looping);
 
@@ -276,10 +276,10 @@ public sealed class TransportTests
     public async Task LoopingAnEmptySourceCompletes()
     {
         using TimbreRig rig = new(hold: false);
-        SoundPlayback playback = rig.Scope.Play(TimbreRig.Clip(new DeterministicSoundSourceFactory(0), loop: true));
+        TimbrePlayback playback = rig.Scope.Play(TimbreRig.Clip(new DeterministicTimbreSourceFactory(0), loop: true));
 
-        SoundPlaybackResult result = await TimbreRig.CompletionAsync(playback);
+        TimbrePlaybackResult result = await TimbreRig.CompletionAsync(playback);
 
-        Assert.Equal(SoundPlaybackState.Completed, result.State);
+        Assert.Equal(TimbrePlaybackState.Completed, result.State);
     }
 }

@@ -42,10 +42,10 @@ internal enum CernealaSemanticSymbolKind
     PrismProperty,
     PrismParameter,
     PrismValue,
-    SoundDirective,
-    SoundParameter,
-    SoundModifier,
-    SoundProperty
+    TimbreDirective,
+    TimbreParameter,
+    TimbreModifier,
+    TimbreProperty
 }
 
 internal sealed class CernealaSemanticSymbol

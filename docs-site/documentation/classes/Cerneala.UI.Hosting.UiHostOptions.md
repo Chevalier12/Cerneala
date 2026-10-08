@@ -34,7 +34,7 @@ UiHost host = new(new UiHostOptions
 
 The options set the initial retained root, viewport, input source, drawing/input backend, clock, input bridge, and platform services for a host. `UiHost` copies these values during construction. When `InputBridge` is not supplied, `UiHost` creates a new `ElementInputBridge`.
 
-When a root is supplied at construction time, `UiHost` applies the configured platform services and viewport to that root. A non-null `SoundRuntime` is applied to that root and to every root passed to `UiHost.SetRoot`, so hosted UI without an `Application` can use `UIElement.Sounds`; the runtime stays caller-owned and is never disposed by the host. When `SoundRuntime` is `null` the host leaves the root's runtime unchanged. The default viewport is `new UiViewport(0, 0)`, which uses the `UiViewport` default scale of `1`.
+When a root is supplied at construction time, `UiHost` applies the configured platform services and viewport to that root. A non-null `TimbreRuntime` is applied to that root and to every root passed to `UiHost.SetRoot`, so hosted UI without an `Application` can use `UIElement.Timbre`; the runtime stays caller-owned and is never disposed by the host. When `TimbreRuntime` is `null` the host leaves the root's runtime unchanged. The default viewport is `new UiViewport(0, 0)`, which uses the `UiViewport` default scale of `1`.
 
 ## Constructors
 
@@ -53,7 +53,7 @@ When a root is supplied at construction time, `UiHost` applies the configured pl
 | `Clock` | `IUiClock?` | Gets or sets the optional clock used to provide elapsed frame time. |
 | `InputBridge` | `ElementInputBridge?` | Gets or sets the optional input bridge. If omitted, `UiHost` creates a new `ElementInputBridge`. |
 | `PlatformServices` | `IPlatformServices?` | Gets or sets optional platform services applied to the hosted root. |
-| `SoundRuntime` | `SoundRuntime?` | Gets or sets an optional caller-owned [SoundRuntime](Cerneala.Timbre.SoundRuntime.md) applied to hosted roots. |
+| `TimbreRuntime` | `TimbreRuntime?` | Gets or sets an optional caller-owned [TimbreRuntime](Cerneala.Timbre.TimbreRuntime.md) applied to hosted roots. |
 
 ## Applies to
 

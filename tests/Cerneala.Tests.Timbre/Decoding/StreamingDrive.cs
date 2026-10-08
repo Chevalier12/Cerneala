@@ -9,7 +9,7 @@ internal static class StreamingDrive
     // source pump actually needs new bytes and waits at the barrier. Each
     // step waits for an engine signal (pump idle or reader blocked); the
     // decoder may first serve frames from data it has already read.
-    public static async Task UntilBlockedAsync(TimbreRig rig, SoundPlayback playback, ObservedFileStream stream, long from = 0)
+    public static async Task UntilBlockedAsync(TimbreRig rig, TimbrePlayback playback, ObservedFileStream stream, long from = 0)
     {
         stream.BlockAt(from);
         for (int step = 0; step < 400 && !stream.WhenBlocked.IsCompleted; step++)
@@ -24,7 +24,7 @@ internal static class StreamingDrive
 
     // Consumes one block once the source pump has filled the ring, so a test
     // that consumes faster than real time never starves a decoding stream.
-    public static async Task<float[]> NextBlockAsync(TimbreRig rig, SoundPlayback playback)
+    public static async Task<float[]> NextBlockAsync(TimbreRig rig, TimbrePlayback playback)
     {
         await rig.SettledAsync(playback);
         return await rig.NextBlockAsync();

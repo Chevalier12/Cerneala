@@ -7,7 +7,7 @@ namespace Cerneala.Tests.Timbre.Contracts;
 
 public sealed class TimbreArchitectureTests
 {
-    private static readonly Assembly Core = typeof(SoundRuntime).Assembly;
+    private static readonly Assembly Core = typeof(TimbreRuntime).Assembly;
 
     [Fact]
     public void CoreTimbreTypesDoNotReferenceUiMarkupOrPlatformTypes()
@@ -41,7 +41,7 @@ public sealed class TimbreArchitectureTests
     [Fact]
     public void DecoderAdaptersOnlyProducePcmAndOwnNoOutputMixerOrEffects()
     {
-        // Decoder → PCM (SoundReader) → Timbre DSP/mix → output: the adapters
+        // Decoder → PCM (TimbreReader) → Timbre DSP/mix → output: the adapters
         // never hold the output, the runtime, a playback, a feed or the DSP.
         Type[] decoding = Core.GetTypes()
             .Where(type => type.Namespace?.StartsWith("Cerneala.Timbre.Decoding", StringComparison.Ordinal) == true)
@@ -49,8 +49,8 @@ public sealed class TimbreArchitectureTests
         Assert.NotEmpty(decoding);
         Type[] forbidden =
         [
-            typeof(ISoundOutput), typeof(ISoundOutputClient), typeof(SoundRuntime), typeof(SoundScope), typeof(SoundPlayback),
-            typeof(SoundModifier), Core.GetType("Cerneala.Timbre.Engine.SoundFeed")!, Core.GetType("Cerneala.Timbre.Dsp.SoundDspChain")!,
+            typeof(ITimbreOutput), typeof(ITimbreOutputClient), typeof(TimbreRuntime), typeof(TimbreScope), typeof(TimbrePlayback),
+            typeof(TimbreModifier), Core.GetType("Cerneala.Timbre.Engine.TimbreFeed")!, Core.GetType("Cerneala.Timbre.Dsp.TimbreDspChain")!,
         ];
 
         List<string> violations = [];
@@ -82,8 +82,8 @@ public sealed class TimbreArchitectureTests
     [Fact]
     public void CatalogMatchesApprovedRangesAndFormat()
     {
-        Assert.Equal(48000, SoundRuntime.SampleRate);
-        Assert.Equal(2, SoundRuntime.ChannelCount);
+        Assert.Equal(48000, TimbreRuntime.SampleRate);
+        Assert.Equal(2, TimbreRuntime.ChannelCount);
         Assert.Equal(8, TimbreCatalog.BytesPerFrame);
         Assert.Equal(TimbreCatalog.SampleRate / 100, TimbreCatalog.BlockFrames);
         Assert.Equal(TimbreCatalog.SampleRate * 40 / 1000, TimbreCatalog.OutputQueueBudgetFrames);
@@ -99,7 +99,7 @@ public sealed class TimbreArchitectureTests
         Assert.Equal(["Time", "Feedback", "Mix"], TimbreCatalog.GetModifierInputs("Delay")!.Select(input => input.Name));
         Assert.Null(TimbreCatalog.GetModifierInputs("Reverb"));
 
-        SoundRuntimeOptions defaults = new();
+        TimbreRuntimeOptions defaults = new();
         Assert.Equal(64, defaults.MaxVoices);
         Assert.Equal(1L << 20, defaults.AutoPreloadMaxBytes);
         Assert.Equal(16L << 20, defaults.MaxPreloadBytes);

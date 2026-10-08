@@ -17,12 +17,12 @@ public sealed class ConcurrencyStressTests
     [InlineData(17)]
     public async Task ConcurrentTransportAndLifecycleReturnEveryResourceToBaseline(int seed)
     {
-        DeterministicSoundOutput output = new() { AutoConsume = true, RecordSamples = false };
-        SoundRuntime runtime = new(new SoundRuntimeOptions { Output = output, MaxVoices = 24 });
-        SoundParameter<float> cutoff = new("Cutoff", 2000f);
-        List<DeterministicSoundSourceFactory> factories = [];
-        SoundClip[] clips = CreateClips(cutoff, factories);
-        List<SoundPlayback> all = [];
+        DeterministicTimbreOutput output = new() { AutoConsume = true, RecordSamples = false };
+        TimbreRuntime runtime = new(new TimbreRuntimeOptions { Output = output, MaxVoices = 24 });
+        TimbreParameter<float> cutoff = new("Cutoff", 2000f);
+        List<DeterministicTimbreSourceFactory> factories = [];
+        TimbreClip[] clips = CreateClips(cutoff, factories);
+        List<TimbrePlayback> all = [];
         List<Task> seeks = [];
         List<string> unexpected = [];
         object gate = new();
@@ -32,9 +32,9 @@ public sealed class ConcurrencyStressTests
         Thread[] workers = Enumerable.Range(0, Threads).Select(worker => new Thread(() =>
         {
             Random random = new(seed + worker);
-            SoundScope scope = runtime.CreateScope();
-            SoundHandle slot = scope.CreateHandle();
-            List<SoundPlayback> mine = [];
+            TimbreScope scope = runtime.CreateScope();
+            TimbreHandle slot = scope.CreateHandle();
+            List<TimbrePlayback> mine = [];
             for (int iteration = 0; iteration < IterationsPerThread; iteration++)
             {
                 try
@@ -73,16 +73,16 @@ public sealed class ConcurrencyStressTests
             all.ForEach(playback => playback.Cancel());
         }
 
-        using (SoundScope failureScope = runtime.CreateScope())
+        using (TimbreScope failureScope = runtime.CreateScope())
         {
-            SoundPlayback failing = failureScope.Play(clips[4]);
+            TimbrePlayback failing = failureScope.Play(clips[4]);
             Track(failing, [], all, gate);
-            Assert.Equal(SoundPlaybackState.Failed, (await TimbreRig.CompletionAsync(failing)).State);
+            Assert.Equal(TimbrePlaybackState.Failed, (await TimbreRig.CompletionAsync(failing)).State);
         }
 
         runtime.Dispose();
 
-        SoundPlayback[] playbacks;
+        TimbrePlayback[] playbacks;
         Task[] seekTasks;
         lock (gate)
         {
@@ -92,12 +92,12 @@ public sealed class ConcurrencyStressTests
 
         Assert.Empty(unexpected);
         Assert.NotEmpty(playbacks);
-        foreach (SoundPlayback playback in playbacks)
+        foreach (TimbrePlayback playback in playbacks)
         {
-            SoundPlaybackResult result = await TimbreRig.CompletionAsync(playback);
+            TimbrePlaybackResult result = await TimbreRig.CompletionAsync(playback);
             Assert.Equal(result.State, playback.State);
-            Assert.True(result.State is SoundPlaybackState.Completed or SoundPlaybackState.Canceled or SoundPlaybackState.Failed);
-            Assert.Equal(result.State == SoundPlaybackState.Failed, result.Error is not null);
+            Assert.True(result.State is TimbrePlaybackState.Completed or TimbrePlaybackState.Canceled or TimbrePlaybackState.Failed);
+            Assert.Equal(result.State == TimbrePlaybackState.Failed, result.Error is not null);
             await TimbreRig.ReleasedAsync(playback);
         }
 
@@ -106,7 +106,7 @@ public sealed class ConcurrencyStressTests
             null,
             "A seek request was left pending after shutdown.");
 
-        SoundRuntimeDiagnostics diagnostics = runtime.GetDiagnostics();
+        TimbreRuntimeDiagnostics diagnostics = runtime.GetDiagnostics();
         Assert.Equal(0, diagnostics.ActiveVoices);
         Assert.Equal(0, diagnostics.LiveReaders);
         Assert.Equal(0, diagnostics.LiveSourcePumps);
@@ -130,26 +130,26 @@ public sealed class ConcurrencyStressTests
 
     private static void Step(
         Random random,
-        ref SoundScope scope,
-        ref SoundHandle slot,
-        List<SoundPlayback> mine,
-        SoundClip[] clips,
-        SoundParameter<float> cutoff,
-        SoundRuntime runtime,
-        List<SoundPlayback> all,
+        ref TimbreScope scope,
+        ref TimbreHandle slot,
+        List<TimbrePlayback> mine,
+        TimbreClip[] clips,
+        TimbreParameter<float> cutoff,
+        TimbreRuntime runtime,
+        List<TimbrePlayback> all,
         List<Task> seeks,
         object gate)
     {
-        SoundPlayback? target = mine.Count == 0 ? null : mine[random.Next(mine.Count)];
+        TimbrePlayback? target = mine.Count == 0 ? null : mine[random.Next(mine.Count)];
         switch (random.Next(11))
         {
             case 0:
             case 1:
             {
-                SoundClip clip = clips[random.Next(clips.Length)];
+                TimbreClip clip = clips[random.Next(clips.Length)];
                 bool loop = random.Next(2) == 0;
                 float volume = random.NextSingle();
-                SoundPlayback playback = scope.Play(clip, start =>
+                TimbrePlayback playback = scope.Play(clip, start =>
                 {
                     start.Loop = loop;
                     start.Volume = volume;
@@ -210,7 +210,7 @@ public sealed class ConcurrencyStressTests
         }
     }
 
-    private static void Track(SoundPlayback playback, List<SoundPlayback> mine, List<SoundPlayback> all, object gate)
+    private static void Track(TimbrePlayback playback, List<TimbrePlayback> mine, List<TimbrePlayback> all, object gate)
     {
         mine.Add(playback);
         lock (gate)
@@ -219,33 +219,33 @@ public sealed class ConcurrencyStressTests
         }
     }
 
-    private static SoundClip[] CreateClips(SoundParameter<float> cutoff, List<DeterministicSoundSourceFactory> factories)
+    private static TimbreClip[] CreateClips(TimbreParameter<float> cutoff, List<DeterministicTimbreSourceFactory> factories)
     {
-        DeterministicSoundSourceFactory Factory(long frames, int maxRead = int.MaxValue, Action<DeterministicSoundReader>? configure = null)
+        DeterministicTimbreSourceFactory Factory(long frames, int maxRead = int.MaxValue, Action<DeterministicTimbreReader>? configure = null)
         {
-            DeterministicSoundSourceFactory factory = new(frames, maxFramesPerRead: maxRead) { Configure = configure };
+            DeterministicTimbreSourceFactory factory = new(frames, maxFramesPerRead: maxRead) { Configure = configure };
             factories.Add(factory);
             return factory;
         }
 
         return
         [
-            new SoundClip(SoundSource.FromReader(Factory(48000).Open), loading: SoundLoading.Preload),
-            new SoundClip(SoundSource.FromReader(Factory(48000, 333).Open), loading: SoundLoading.Streaming),
-            new SoundClip(
-                SoundSource.FromReader(Factory(24000).Open),
-                loading: SoundLoading.Preload,
+            new TimbreClip(TimbreSource.FromReader(Factory(48000).Open), loading: TimbreLoading.Preload),
+            new TimbreClip(TimbreSource.FromReader(Factory(48000, 333).Open), loading: TimbreLoading.Streaming),
+            new TimbreClip(
+                TimbreSource.FromReader(Factory(24000).Open),
+                loading: TimbreLoading.Preload,
                 parameters: [cutoff],
                 modifiers: [new LowPass(cutoff: cutoff), new Delay(time: 0.05f, feedback: 0.5f, mix: 0.3f)]),
-            new SoundClip(
-                SoundSource.FromReader(Factory(96000, 700).Open),
-                loading: SoundLoading.Streaming,
+            new TimbreClip(
+                TimbreSource.FromReader(Factory(96000, 700).Open),
+                loading: TimbreLoading.Streaming,
                 parameters: [cutoff],
                 modifiers: [new Delay(time: 0.02f, feedback: 0.7f, mix: 0.5f), new LowPass(cutoff: cutoff)]),
-            new SoundClip(
-                SoundSource.FromReader(Factory(48000, 256, reader => reader.FailAtFrame = 1).Open),
-                loading: SoundLoading.Streaming),
-            new SoundClip(SoundSource.FromReader(Factory(0).Open), loop: true, loading: SoundLoading.Preload)
+            new TimbreClip(
+                TimbreSource.FromReader(Factory(48000, 256, reader => reader.FailAtFrame = 1).Open),
+                loading: TimbreLoading.Streaming),
+            new TimbreClip(TimbreSource.FromReader(Factory(0).Open), loop: true, loading: TimbreLoading.Preload)
         ];
     }
 
@@ -253,7 +253,7 @@ public sealed class ConcurrencyStressTests
     {
         InvalidOperationException => true, // terminal playback or disposed scope/runtime
         ArgumentOutOfRangeException => true, // seek beyond a known duration
-        SoundException { Kind: SoundErrorKind.VoiceLimitExceeded } => true,
+        TimbreException { Kind: TimbreErrorKind.VoiceLimitExceeded } => true,
         _ => false
     };
 }

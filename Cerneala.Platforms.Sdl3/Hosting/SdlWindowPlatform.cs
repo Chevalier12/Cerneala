@@ -34,7 +34,7 @@ internal sealed class SdlWindowPlatform : IWindowPlatform
     private readonly PlatformServices platformServices;
     private readonly Dictionary<uint, SdlPlatformWindow> windows = [];
     private readonly SdlEventWatch eventWatch;
-    private readonly SdlSoundOutput? soundOutput;
+    private readonly SdlTimbreOutput? timbreOutput;
     private ExceptionDispatchInfo? pendingEventWatchFailure;
     private bool disposed;
 
@@ -54,7 +54,7 @@ internal sealed class SdlWindowPlatform : IWindowPlatform
 
         this.coordinateScaleOverride = coordinateScaleOverride;
         // Inert until the sound runtime first opens it; owns no native state yet.
-        soundOutput = audioApi is null ? null : new SdlSoundOutput(audioApi);
+        timbreOutput = audioApi is null ? null : new SdlTimbreOutput(audioApi);
         lifetime = new SdlPlatformLifetime(api);
         cursorService = new SdlCursorService(api);
         platformServices = new PlatformServices(
@@ -85,7 +85,7 @@ internal sealed class SdlWindowPlatform : IWindowPlatform
 
     public IPlatformServices PlatformServices => platformServices;
 
-    public ISoundOutput? SoundOutput => soundOutput;
+    public ITimbreOutput? TimbreOutput => timbreOutput;
 
     public IPlatformWindow CreateWindow(Window window, IWindowPlatformCallbacks callbacks)
     {
@@ -155,7 +155,7 @@ internal sealed class SdlWindowPlatform : IWindowPlatform
         disposed = true;
         // Audio callbacks and the device are drained before anything else, and
         // always before SdlPlatformLifetime quits SDL.
-        soundOutput?.Terminate();
+        timbreOutput?.Terminate();
         api.RemoveEventWatch(eventWatch);
         foreach (SdlPlatformWindow window in SnapshotWindows())
         {
@@ -192,7 +192,7 @@ internal sealed class SdlWindowPlatform : IWindowPlatform
         if (@event.Kind == SdlEventKind.AudioDeviceRemoved)
         {
             // Published on an SDL audio thread; reported without the UI pump.
-            soundOutput?.HandleDeviceRemoved(unchecked((uint)@event.Data1));
+            timbreOutput?.HandleDeviceRemoved(unchecked((uint)@event.Data1));
             return;
         }
 

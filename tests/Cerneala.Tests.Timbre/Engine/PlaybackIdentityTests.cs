@@ -5,20 +5,20 @@ namespace Cerneala.Tests.Timbre.Engine;
 
 public sealed class PlaybackIdentityTests
 {
-    private static readonly Func<long, int, float> Signal = DeterministicSoundReader.DefaultSignal;
+    private static readonly Func<long, int, float> Signal = DeterministicTimbreReader.DefaultSignal;
 
     [Fact]
     public async Task TwoPlaybacksOfOneClipHaveIndependentPlayheadsValuesAndState()
     {
         using TimbreRig rig = new();
-        DeterministicSoundSourceFactory factory = new(48000);
-        SoundClip clip = TimbreRig.Clip(factory);
-        SoundPlayback first = rig.Scope.Play(clip);
+        DeterministicTimbreSourceFactory factory = new(48000);
+        TimbreClip clip = TimbreRig.Clip(factory);
+        TimbrePlayback first = rig.Scope.Play(clip);
 
         float[] initial = await rig.StartAsync(first);
         TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Budget, Signal), initial);
 
-        SoundPlayback second = rig.Scope.Play(clip, start => start.Volume = 0.25f);
+        TimbrePlayback second = rig.Scope.Play(clip, start => start.Volume = 0.25f);
         await rig.ReadyAsync(second);
         float[] block = await rig.NextBlockAsync();
 
@@ -33,8 +33,8 @@ public sealed class PlaybackIdentityTests
         Assert.Equal(1f, first.Volume);
         Assert.Equal(0.25f, second.Volume);
         Assert.Equal(1f, clip.Volume);
-        Assert.Equal(SoundPlaybackState.Playing, first.State);
-        Assert.Equal(SoundPlaybackState.Playing, second.State);
+        Assert.Equal(TimbrePlaybackState.Playing, first.State);
+        Assert.Equal(TimbrePlaybackState.Playing, second.State);
         Assert.Same(clip, second.Clip);
         Assert.Equal(TimeSpan.FromSeconds(1), first.Duration);
         Assert.Equal(1, factory.OpenCount); // one immutable preloaded payload, two playheads
@@ -44,10 +44,10 @@ public sealed class PlaybackIdentityTests
     public async Task StreamingPlaybacksOpenIndependentReaders()
     {
         using TimbreRig rig = new();
-        DeterministicSoundSourceFactory factory = new(4800, maxFramesPerRead: 333);
-        SoundClip clip = TimbreRig.Clip(factory, SoundLoading.Streaming);
-        SoundPlayback first = rig.Scope.Play(clip);
-        SoundPlayback second = rig.Scope.Play(clip);
+        DeterministicTimbreSourceFactory factory = new(4800, maxFramesPerRead: 333);
+        TimbreClip clip = TimbreRig.Clip(factory, TimbreLoading.Streaming);
+        TimbrePlayback first = rig.Scope.Play(clip);
+        TimbrePlayback second = rig.Scope.Play(clip);
 
         float[] pcm = await rig.StartAsync(first, second);
 
@@ -60,13 +60,13 @@ public sealed class PlaybackIdentityTests
     public async Task StartOverridesApplyToTheFirstBlockWithoutChangingTheDefinition()
     {
         using TimbreRig rig = new();
-        DeterministicSoundSourceFactory factory = new(48000);
-        SoundParameter<float> unused = new("Unused", 3f);
-        SoundClip clip = new(SoundSource.FromReader(factory.Open), volume: 0.5f, parameters: [unused]);
+        DeterministicTimbreSourceFactory factory = new(48000);
+        TimbreParameter<float> unused = new("Unused", 3f);
+        TimbreClip clip = new(TimbreSource.FromReader(factory.Open), volume: 0.5f, parameters: [unused]);
         int invocations = 0;
-        SoundStartOptions? captured = null;
+        TimbreStartOptions? captured = null;
 
-        SoundPlayback playback = rig.Scope.Play(clip, start =>
+        TimbrePlayback playback = rig.Scope.Play(clip, start =>
         {
             invocations++;
             captured = start;
@@ -76,7 +76,7 @@ public sealed class PlaybackIdentityTests
             start.Set(unused, 7f);
         });
 
-        Assert.Equal(SoundPlaybackState.Pending, playback.State);
+        Assert.Equal(TimbrePlaybackState.Pending, playback.State);
         Assert.Equal(0.2f, playback.Volume);
         float[] pcm = await rig.StartAsync(playback);
 
@@ -93,26 +93,26 @@ public sealed class PlaybackIdentityTests
     public async Task PlaybackIsPendingUntilItsFirstBlockIsMixed()
     {
         using TimbreRig rig = new();
-        SoundPlayback playback = rig.Scope.Play(TimbreRig.Clip(new DeterministicSoundSourceFactory(48000)));
+        TimbrePlayback playback = rig.Scope.Play(TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000)));
         await rig.ReadyAsync(playback);
         await rig.SyncAsync();
 
-        Assert.Equal(SoundPlaybackState.Pending, playback.State);
+        Assert.Equal(TimbrePlaybackState.Pending, playback.State);
         Assert.Equal(TimeSpan.Zero, playback.Position);
         Assert.Equal(0, rig.Output.SubmittedFrames);
 
         await rig.StartAsync(playback);
-        Assert.Equal(SoundPlaybackState.Playing, playback.State);
+        Assert.Equal(TimbrePlaybackState.Playing, playback.State);
     }
 
     [Fact]
     public async Task RuntimeChangesOnOnePlaybackDoNotAffectAnother()
     {
         using TimbreRig rig = new();
-        SoundParameter<float> unused = new("Unused", 3f);
-        SoundClip clip = new(SoundSource.FromReader(new DeterministicSoundSourceFactory(48000).Open), parameters: [unused]);
-        SoundPlayback first = rig.Scope.Play(clip);
-        SoundPlayback second = rig.Scope.Play(clip);
+        TimbreParameter<float> unused = new("Unused", 3f);
+        TimbreClip clip = new(TimbreSource.FromReader(new DeterministicTimbreSourceFactory(48000).Open), parameters: [unused]);
+        TimbrePlayback first = rig.Scope.Play(clip);
+        TimbrePlayback second = rig.Scope.Play(clip);
         await rig.StartAsync(first, second);
 
         first.Volume = 0.5f;

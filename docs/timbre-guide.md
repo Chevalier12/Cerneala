@@ -1,4 +1,4 @@
-# Timbre Sound Guide
+# Timbre Guide
 
 Timbre is Cerneala's sound engine. It plays short UI sounds and longer music
 through one mixer, with the same runtime whether a sound is started from C# or
@@ -10,18 +10,18 @@ The per-type reference lives in the API pages (`Cerneala.Timbre.*`,
 
 | Concept | Type | Role |
 | --- | --- | --- |
-| Runtime | `SoundRuntime` | One mixer, voice budget, decoder cache and output. Shared by every window of an `Application`. |
-| Scope | `SoundScope` | Owner of playbacks. Disposing a scope cancels everything it started. `UIElement.Sounds` is a scope tied to the element's attachment. |
-| Clip | `SoundClip` | Immutable definition: source, volume, loop, loading policy, typed parameters and an ordered modifier chain. Creating or referencing one plays nothing and opens no file. |
-| Playback | `SoundPlayback` | One running instance: `State`, `Position`, `Duration`, `Completion`, `Pause`, `Resume`, `SeekAsync`, `Cancel`, `Set`. |
-| Handle | `SoundHandle` | A slot in a scope. Playing into a handle replaces (cancels) its previous occupant. |
+| Runtime | `TimbreRuntime` | One mixer, voice budget, decoder cache and output. Shared by every window of an `Application`. |
+| Scope | `TimbreScope` | Owner of playbacks. Disposing a scope cancels everything it started. `UIElement.Timbre` is a scope tied to the element's attachment. |
+| Clip | `TimbreClip` | Immutable definition: source, volume, loop, loading policy, typed parameters and an ordered modifier chain. Creating or referencing one plays nothing and opens no file. |
+| Playback | `TimbrePlayback` | One running instance: `State`, `Position`, `Duration`, `Completion`, `Pause`, `Resume`, `SeekAsync`, `Cancel`, `Set`. |
+| Handle | `TimbreHandle` | A slot in a scope. Playing into a handle replaces (cancels) its previous occupant. |
 
 The runtime mixes 48 kHz stereo float PCM. Sources are WAV, MP3, Ogg Vorbis and
 Ogg Opus, opened lazily when a playback first needs them.
 
 ### Loading
 
-`SoundLoading.Auto` (default) preloads files up to 1 MiB and streams larger
+`TimbreLoading.Auto` (default) preloads files up to 1 MiB and streams larger
 ones; `Preload` decodes the whole clip (up to 16 MiB per clip, 64 MiB cache);
 `Streaming` decodes incrementally without memory proportional to duration. The
 runtime holds at most 64 voices, paused voices included.
@@ -30,26 +30,26 @@ runtime holds at most 64 voices, paused voices included.
 
 Only the default device is used. The output opens lazily when a playback first
 produces PCM, never at declaration. A missing device, an open failure or a
-device loss fails the affected playbacks with `SoundErrorKind.DeviceUnavailable`;
+device loss fails the affected playbacks with `TimbreErrorKind.DeviceUnavailable`;
 nothing reconnects or retries on its own. A later explicit play may try again.
 
 ## 2. Playing from C#
 
 ```csharp
-SoundParameter<float> cutoff = new("ToneCutoff", 1200f);
-SoundClip confirm = new(
+TimbreParameter<float> cutoff = new("ToneCutoff", 1200f);
+TimbreClip confirm = new(
     "audio/confirm.wav",
     volume: 0.8f,
     parameters: [cutoff],
     modifiers: [new LowPass(cutoff), new Delay(time: 0.12f, feedback: 0.2f, mix: 0.15f)]);
 
-SoundPlayback playback = button.Sounds.Play(confirm, start => start.Set(cutoff, 800f));
+TimbrePlayback playback = button.Timbre.Play(confirm, start => start.Set(cutoff, 800f));
 ```
 
-Relative paths resolve against `SoundRuntimeOptions.BaseDirectory`, which
-defaults to the application base directory. `Application.SoundRuntime` is
+Relative paths resolve against `TimbreRuntimeOptions.BaseDirectory`, which
+defaults to the application base directory. `Application.TimbreRuntime` is
 created lazily on first use; assign your own runtime before that if you need
-other options. `UiHostOptions.SoundRuntime` and `UIRoot.SetSoundRuntime` attach
+other options. `UiHostOptions.TimbreRuntime` and `UIRoot.SetTimbreRuntime` attach
 a runtime to hosts without an `Application`.
 
 ### Overlap, replacement and cancellation
@@ -83,24 +83,24 @@ engine delivered to the output, not what a listener heard.
 
 ## 3. Declaring sounds in markup
 
-A `SoundClip` is a resource. It may live in any `Resources` collection or in
+A `<TimbreClip>` is a resource. It may live in any `Resources` collection or in
 `App.crn`, and it follows the normal resource scope and shadowing rules. It
 does not take `TargetType`.
 
 ```xml
 <UserControl.Resources>
-    <SoundClip Name="ConfirmSound">
+    <TimbreClip Name="ConfirmTimbre">
         Source = "audio/confirm.wav";
         Volume = 0.8;
         @parameter ToneCutoff: float = 1200;
         @parameter EchoMix: float = 0.15;
         @modifier LowPass { Cutoff = ToneCutoff; }
         @modifier Delay { Time = 120ms; Feedback = 0.20; Mix = EchoMix; }
-    </SoundClip>
-    <SoundClip Name="Music">
+    </TimbreClip>
+    <TimbreClip Name="Music">
         Source = "audio/music.ogg";
         Loop = true;
-    </SoundClip>
+    </TimbreClip>
 </UserControl.Resources>
 ```
 
@@ -115,12 +115,12 @@ does not take `TargetType`.
 
 Modifier inputs take a constant or a declared parameter. A parameter's default
 must fit every modifier input it feeds. Modifiers run in source order. The
-generator lowers the resource to the same `SoundClip`, `SoundParameter<float>`,
+generator lowers the resource to the same C# `TimbreClip`, `TimbreParameter<float>`,
 `LowPass` and `Delay` constructors shown in the C# example.
 
-## 4. Sound actions in an Aspect
+## 4. Timbre actions in an Aspect
 
-Sound actions are statements inside an `@on`, `@when` or `@if` body of any
+Timbre actions are statements inside an `@on`, `@when` or `@if` body of any
 `<Aspect>` or `{Control}.Aspect`, including Scene2D aspects. Every statement ends
 with `;`.
 
@@ -128,7 +128,7 @@ with `;`.
 <Button Content="Play">
     <Button.Aspect>
         @handle Playback;
-        @on Click { @sound $ConfirmSound(Volume = 0.5, ToneCutoff = 800) as Playback; }
+        @on Click { @timbre $ConfirmTimbre(Volume = 0.5, ToneCutoff = 800) as Playback; }
         @on MouseRightButtonUp { @pause Playback; }
         @on MouseLeave { @resume Playback; }
         @on MouseWheel { @seek Playback to 30s; }
@@ -139,9 +139,9 @@ with `;`.
 
 | Statement | Effect |
 | --- | --- |
-| `@sound $Clip;` | Plays the clip in the Aspect's scope. Without `as`, playbacks overlap. |
-| `@sound $Clip(args);` | Overrides `Volume`, `Loop` and the clip's parameters for this start only. |
-| `@sound $Clip as Handle;` | Plays into the handle slot, replacing its occupant. |
+| `@timbre $Clip;` | Plays the clip in the Aspect's scope. Without `as`, playbacks overlap. |
+| `@timbre $Clip(args);` | Overrides `Volume`, `Loop` and the clip's parameters for this start only. |
+| `@timbre $Clip as Handle;` | Plays into the handle slot, replacing its occupant. |
 | `@handle Handle;` | Declares a slot, at the top of the Aspect before use. |
 | `@cancel Handle;` | Cancels the slot's current occupant only, not other playbacks of the clip. |
 | `@pause Handle;` / `@resume Handle;` | Pause/resume the occupant captured when the action runs. |
@@ -151,8 +151,8 @@ An empty slot makes `@cancel`, `@pause`, `@resume` and `@seek` no-ops; they neve
 start a sound. A handle may receive different clips over time. The same name
 cannot be both a sound handle and a Motion handle in one Aspect.
 
-Sound actions cannot appear inside `@parallel` or `@sequence`. In a body that
-mixes sound and Motion, statements run in source order: a `@sound` binds its
+Timbre actions cannot appear inside `@parallel` or `@sequence`. In a body that
+mixes sound and Motion, statements run in source order: a `@timbre` binds its
 playback and overrides before the following Motion starts, and nothing waits
 for the source to load. Several Motion executions in one body still need
 explicit composition.
@@ -196,16 +196,16 @@ playback as `Failed` and do not undo actions that already started.
 ## 5. Animating sounds with Motion
 
 Motion animates the Volume and the declared float parameters of a playback that
-a `@sound … as Handle` started. The target path is
-`$self.sound.Handle.Parameter`:
+a `@timbre … as Handle` started. The target path is
+`$self.timbre.Handle.Parameter`:
 
 ```xml
 <UserControl.Resources>
-    <SoundClip Name="Chime">
+    <TimbreClip Name="Chime">
         Source = "audio/chime.wav";
         @parameter Brightness: float = 1200;
         @modifier LowPass { Cutoff = Brightness; }
-    </SoundClip>
+    </TimbreClip>
 </UserControl.Resources>
 
 <Button Content="Chime">
@@ -213,13 +213,13 @@ a `@sound … as Handle` started. The target path is
         @handle Playback;
         @on Click
         {
-            @sound $Chime(Volume = 0.2, Brightness = 800) as Playback;
+            @timbre $Chime(Volume = 0.2, Brightness = 800) as Playback;
             @animate with Tween(300ms, EaseOut)
             {
                 @to
                 {
-                    $self.sound.Playback.Volume = 0.8;
-                    $self.sound.Playback.Brightness = 6000;
+                    $self.timbre.Playback.Volume = 0.8;
+                    $self.timbre.Playback.Brightness = 6000;
                 }
             }
         }
@@ -236,7 +236,7 @@ a `@sound … as Handle` started. The target path is
   supported; `@set`, `@scroll`, `@stagger`, `MotionClip` bodies, bindings as
   values and `$owner`/`$Name` sound paths are not. One execution cannot mix sound
   targets with element or Prism targets.
-- The animation captures the handle's occupant when it starts, after a `@sound`
+- The animation captures the handle's occupant when it starts, after a `@timbre`
   earlier in the same body. It never moves to a later occupant: replacing or
   canceling the playback ends its animations, and the new playback starts from
   its own values. Animating an empty handle does nothing and plays nothing.
@@ -244,7 +244,7 @@ a `@sound … as Handle` started. The target path is
   holds while the playback is paused (also when paused before starting) and
   while a seek is pending, then continues without restarting; a looping source
   does not restart it. Visual Motion keeps its own clock.
-- Sound animations are owned by the sound scope: hiding or collapsing the
+- Timbre animations are owned by the sound scope: hiding or collapsing the
   element or an ancestor does not stop them, and detaching the element, replacing
   its Aspect or retiring a template occurrence cancels them with its playbacks.
   A window hidden with `Window.Hide` is not pumped, so its sound animations are
@@ -255,25 +255,25 @@ a `@sound … as Handle` started. The target path is
   The visual Reduced Motion preference does not disable sound animations.
 - A sample that is not finite or leaves the range (for example a bouncy spring
   overshooting Volume 1) ends only that parameter's animation on its last valid
-  value; the sound continues and `Detective.CaptureSound().MotionSamplesRejected`
+  value; the sound continues and `Detective.CaptureTimbre().MotionSamplesRejected`
   counts it. Values are never clamped.
 
 The same animations are available from C# on any playback whose scope belongs
-to an element (`element.Sounds`):
+to an element (`element.Timbre`):
 
 ```csharp
-SoundClip chime = new("audio/chime.wav");
-SoundPlayback playback = button.Sounds.Play(chime, start => start.Volume = 0.2f);
+TimbreClip chime = new("audio/chime.wav");
+TimbrePlayback playback = button.Timbre.Play(chime, start => start.Volume = 0.2f);
 MotionHandle fade = playback.Motion()
-    .Animate(SoundPlayback.VolumeParameter)
+    .Animate(TimbrePlayback.VolumeParameter)
     .To(0.8f)
     .With(new TweenSpec<float>(TimeSpan.FromMilliseconds(300), Easings.EaseOut));
 ```
 
-`Animate` takes `SoundPlayback.VolumeParameter` or a `SoundParameter<float>` of
+`Animate` takes `TimbrePlayback.VolumeParameter` or a `TimbreParameter<float>` of
 the playback's clip; `From` is optional and `With` returns a cancelable
 `MotionHandle`. Assigning `Volume` or calling `Set` cancels only that
-parameter's animation. Playbacks of `Application.Sounds` or a standalone
+parameter's animation. Playbacks of `Application.Timbre` or a standalone
 runtime name the sampling root explicitly: `playback.Motion(root)`.
 
 ## 6. Tooling
@@ -299,5 +299,5 @@ disabled…"), never a silent success, and the preview status shows
 `audio off (N blocked)`. The **Audio** button in the Live Preview bar enables
 playback for that preview; changing it recreates the preview. A recompile
 retires the previous preview and every sound it owned; nothing is restored, and
-the new document's reactive rules apply from scratch. Editing a `SoundClip` body
+the new document's reactive rules apply from scratch. Editing a `TimbreClip` body
 or an Aspect body always recompiles instead of patching the running preview.

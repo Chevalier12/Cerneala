@@ -59,7 +59,7 @@ namespace Cerneala.Timbre.Catalog
         internal const float TailSilenceThreshold = 1e-6f;
 
         internal static readonly TimbreCatalogInput Volume =
-            new TimbreCatalogInput("SoundClip", "Volume", "gain", 0f, 1f, 1f);
+            new TimbreCatalogInput("TimbreClip", "Volume", "gain", 0f, 1f, 1f);
 
         internal static readonly TimbreCatalogInput LowPassCutoff =
             new TimbreCatalogInput(LowPassName, "Cutoff", "Hz", 20f, 20000f, 1200f);

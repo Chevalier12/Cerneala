@@ -41,7 +41,7 @@ public sealed partial class UiMarkupGenerator
         // Motion executions of the body.
         public IReadOnlyList<MotionExecutionNode> Body { get; }
 
-        // Every action of the body in source order, Sound actions included.
+        // Every action of the body in source order, Timbre actions included.
         public IReadOnlyList<DirectiveNode> Actions { get; }
 
         public DirectiveExpressionLocation Location { get; }
@@ -284,8 +284,8 @@ public sealed partial class UiMarkupGenerator
 
         public string HandleName { get; }
 
-        // Source order among the Sound/@cancel statements of the body, used to
-        // dispatch @cancel of a Sound handle to the bound Sound model.
+        // Source order among the Timbre/@cancel statements of the body, used to
+        // dispatch @cancel of a Timbre handle to the bound Timbre model.
         public int Sequence { get; }
     }
 

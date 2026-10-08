@@ -3,38 +3,38 @@ using Cerneala.Timbre.Catalog;
 
 namespace Cerneala.Tests.Timbre.Harness;
 
-// A real SoundRuntime wired to the deterministic sink. The rig never mixes or
+// A real TimbreRuntime wired to the deterministic sink. The rig never mixes or
 // schedules: it only holds/releases sink capacity and waits on engine signals.
 internal sealed class TimbreRig : IDisposable
 {
     public const int Block = TimbreCatalog.BlockFrames;
     public const int Budget = TimbreCatalog.OutputQueueBudgetFrames;
 
-    public TimbreRig(Action<SoundRuntimeOptions>? configure = null, bool hold = true)
+    public TimbreRig(Action<TimbreRuntimeOptions>? configure = null, bool hold = true)
     {
         if (hold)
         {
             Output.Hold();
         }
 
-        SoundRuntimeOptions options = new() { Output = Output };
+        TimbreRuntimeOptions options = new() { Output = Output };
         configure?.Invoke(options);
-        Runtime = new SoundRuntime(options);
+        Runtime = new TimbreRuntime(options);
         Scope = Runtime.CreateScope();
     }
 
-    public DeterministicSoundOutput Output { get; } = new();
+    public DeterministicTimbreOutput Output { get; } = new();
 
-    public SoundRuntime Runtime { get; }
+    public TimbreRuntime Runtime { get; }
 
-    public SoundScope Scope { get; }
+    public TimbreScope Scope { get; }
 
-    public static SoundClip Clip(
-        DeterministicSoundSourceFactory factory,
-        SoundLoading loading = SoundLoading.Preload,
+    public static TimbreClip Clip(
+        DeterministicTimbreSourceFactory factory,
+        TimbreLoading loading = TimbreLoading.Preload,
         bool loop = false,
         float volume = 1f) =>
-        new(SoundSource.FromReader(factory.Open, "deterministic"), volume, loop, loading);
+        new(TimbreSource.FromReader(factory.Open, "deterministic"), volume, loop, loading);
 
     public static float[] Expected(long frames, Func<long, int, float> signal, float gain = 1f, long sourceStart = 0)
     {
@@ -74,17 +74,17 @@ internal sealed class TimbreRig : IDisposable
         }
     }
 
-    public async Task ReadyAsync(params SoundPlayback[] playbacks)
+    public async Task ReadyAsync(params TimbrePlayback[] playbacks)
     {
-        foreach (SoundPlayback playback in playbacks)
+        foreach (TimbrePlayback playback in playbacks)
         {
             await HarnessWait.WithTimeout(playback.WhenReady, null, "Playback did not become ready.");
         }
     }
 
-    public async Task SettledAsync(params SoundPlayback[] playbacks)
+    public async Task SettledAsync(params TimbrePlayback[] playbacks)
     {
-        foreach (SoundPlayback playback in playbacks)
+        foreach (TimbrePlayback playback in playbacks)
         {
             await HarnessWait.WithTimeout(playback.WhenSettledAsync(), null, "Streaming playback did not settle.");
         }
@@ -92,7 +92,7 @@ internal sealed class TimbreRig : IDisposable
 
     // Starts mixing: waits for readiness (and settled streaming buffers), then
     // releases the sink and waits for the first full software queue.
-    public async Task<float[]> StartAsync(params SoundPlayback[] playbacks)
+    public async Task<float[]> StartAsync(params TimbrePlayback[] playbacks)
     {
         await ReadyAsync(playbacks);
         await SettledAsync(playbacks);
@@ -113,13 +113,13 @@ internal sealed class TimbreRig : IDisposable
 
     public Task SyncAsync() => HarnessWait.WithTimeout(Runtime.SyncAsync(), null, "Mixer did not reach an idle point.");
 
-    public static Task<SoundPlaybackResult> CompletionAsync(SoundPlayback playback) =>
+    public static Task<TimbrePlaybackResult> CompletionAsync(TimbrePlayback playback) =>
         HarnessWait.WithTimeout(playback.Completion, null, "Playback did not complete.");
 
-    public static Task ReleasedAsync(SoundPlayback playback) =>
+    public static Task ReleasedAsync(TimbrePlayback playback) =>
         HarnessWait.WithTimeout(playback.WhenReleased, null, "Playback resources were not released.");
 
-    public static TimeSpan FramesToTime(long frames) => TimeSpan.FromTicks(frames * TimeSpan.TicksPerSecond / SoundRuntime.SampleRate);
+    public static TimeSpan FramesToTime(long frames) => TimeSpan.FromTicks(frames * TimeSpan.TicksPerSecond / TimbreRuntime.SampleRate);
 
     public void Dispose() => Runtime.Dispose();
 }

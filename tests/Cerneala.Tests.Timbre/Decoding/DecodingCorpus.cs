@@ -9,7 +9,7 @@ namespace Cerneala.Tests.Timbre.Decoding;
 // parameters and the container metadata, never from a decoder.
 internal static class DecodingCorpus
 {
-    public const int Rate = SoundRuntime.SampleRate;
+    public const int Rate = TimbreRuntime.SampleRate;
 
     // LAME's encoder delay and the MP3 synthesis decoder delay, kept in the
     // output of a stream that carries no gapless (Info/Xing) tag.
@@ -69,21 +69,21 @@ internal static class DecodingCorpus
     }
 
     // Opens the production decoder seam exactly as a file source does.
-    public static SoundReader Open(string path, long memoryLimit = long.MaxValue) =>
-        Open(path, new SoundMemoryBudget(new SoundMemoryPool(memoryLimit), path));
+    public static TimbreReader Open(string path, long memoryLimit = long.MaxValue) =>
+        Open(path, new TimbreMemoryBudget(new TimbreMemoryPool(memoryLimit), path));
 
-    public static SoundReader Open(string path, SoundMemoryBudget budget) =>
-        SoundDecoders.Open(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read), path, budget);
+    public static TimbreReader Open(string path, TimbreMemoryBudget budget) =>
+        TimbreDecoders.Open(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read), path, budget);
 
     // Reads to the end with the given read sizes; checks the reader contract.
-    public static float[] DecodeAll(SoundReader reader, Func<int, int>? readSize = null)
+    public static float[] DecodeAll(TimbreReader reader, Func<int, int>? readSize = null)
     {
         List<float> pcm = [];
         float[] buffer = new float[16384 * 2];
         for (int call = 0; ; call++)
         {
             int frames = readSize?.Invoke(call) ?? 8192;
-            SoundReadResult result = reader.ReadAsync(buffer.AsMemory(0, frames * 2), CancellationToken.None).AsTask().GetAwaiter().GetResult();
+            TimbreReadResult result = reader.ReadAsync(buffer.AsMemory(0, frames * 2), CancellationToken.None).AsTask().GetAwaiter().GetResult();
             Assert.InRange(result.Frames, 0, frames);
             pcm.AddRange(buffer.AsSpan(0, result.Frames * 2).ToArray());
             if (result.EndOfSource)
@@ -96,8 +96,8 @@ internal static class DecodingCorpus
 
         for (int extra = 0; extra < 3; extra++)
         {
-            SoundReadResult after = reader.ReadAsync(buffer.AsMemory(0, 2048), CancellationToken.None).AsTask().GetAwaiter().GetResult();
-            Assert.Equal(new SoundReadResult(0, endOfSource: true), after);
+            TimbreReadResult after = reader.ReadAsync(buffer.AsMemory(0, 2048), CancellationToken.None).AsTask().GetAwaiter().GetResult();
+            Assert.Equal(new TimbreReadResult(0, endOfSource: true), after);
         }
 
         return [.. pcm];

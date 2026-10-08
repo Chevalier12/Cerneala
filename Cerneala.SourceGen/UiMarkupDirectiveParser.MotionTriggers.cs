@@ -24,8 +24,8 @@ public sealed partial class UiMarkupGenerator
 
             IReadOnlyList<DirectiveNode> nodes = ParseNodes(
                 stopAtClosingBrace: true,
-                DirectiveContentKind.MotionExecutions | DirectiveContentKind.SoundActions);
-            if (nodes.Count == 0 || nodes.Any(node => node is not MotionExecutionNode and not SoundActionNode))
+                DirectiveContentKind.MotionExecutions | DirectiveContentKind.TimbreActions);
+            if (nodes.Count == 0 || nodes.Any(node => node is not MotionExecutionNode and not TimbreActionNode))
             {
                 throw new DirectiveParseException("@on requires one Motion execution body.", source);
             }

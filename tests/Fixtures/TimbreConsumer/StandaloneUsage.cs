@@ -6,23 +6,23 @@ namespace TimbreConsumer;
 // assembly against public API only.
 public static class StandaloneUsage
 {
-    public static async Task RunPlanExampleAsync(SoundScope sounds)
+    public static async Task RunPlanExampleAsync(TimbreScope sounds)
     {
-        var plainSound = new SoundClip("audio/confirm.wav");
-        var first = sounds.Play(plainSound);
-        var second = sounds.Play(plainSound); // Overlap: independent instances.
+        var plainTimbre = new TimbreClip("audio/confirm.wav");
+        var first = sounds.Play(plainTimbre);
+        var second = sounds.Play(plainTimbre); // Overlap: independent instances.
         first.Cancel(); // Does not cancel second.
 
-        var toneCutoff = new SoundParameter<float>(
+        var toneCutoff = new TimbreParameter<float>(
             name: "ToneCutoff", defaultValue: 1200f);
 
-        var filteredSound = new SoundClip(
+        var filteredTimbre = new TimbreClip(
             source: "audio/confirm.wav",
             parameters: [toneCutoff],
             modifiers: [new LowPass(cutoff: toneCutoff)]);
 
         var slot = sounds.CreateHandle();
-        var playback = sounds.Play(filteredSound, start =>
+        var playback = sounds.Play(filteredTimbre, start =>
         {
             start.Volume = 0.2f;
             start.Set(toneCutoff, 800f);
@@ -38,9 +38,9 @@ public static class StandaloneUsage
         _ = second;
     }
 
-    public static SoundClip CreateConstantModifierClip() =>
+    public static TimbreClip CreateConstantModifierClip() =>
         new("audio/confirm.wav", modifiers: [new LowPass(cutoff: 1200f), new Delay(time: 0.12f, feedback: 0.2f, mix: 0.15f)]);
 
-    public static SoundPlayback PlayLooping(SoundScope sounds, SoundClip clip) =>
+    public static TimbrePlayback PlayLooping(TimbreScope sounds, TimbreClip clip) =>
         sounds.Play(clip, start => start.Loop = true);
 }

@@ -75,7 +75,7 @@ public sealed partial class UiMarkupGenerator
 
             if (parts.Length == 4 &&
                 hasValidOwner &&
-                parts[1] == "sound" &&
+                parts[1] == "timbre" &&
                 IsIdentifier(parts[2]) &&
                 IsIdentifier(parts[3]))
             {
@@ -96,7 +96,7 @@ public sealed partial class UiMarkupGenerator
             throw Error(
                 "Motion target must be Property, $self.Property, $owner.Property, " +
                 "$Name.Property, $target.prism.Node.Property, " +
-                "$control.parts.$part.Property, or $self.sound.Handle.Parameter.");
+                "$control.parts.$part.Property, or $self.timbre.Handle.Parameter.");
         }
 
         private string ReadMotionStatement()

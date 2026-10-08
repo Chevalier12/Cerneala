@@ -70,9 +70,9 @@ internal static class CernealaLanguageFacts
         "@cancel", "@handle", "@parameter", "@from", "@to"
     ];
 
-    public static IReadOnlyList<string> SoundDirectiveKeywords { get; } =
+    public static IReadOnlyList<string> TimbreDirectiveKeywords { get; } =
     [
-        "@sound", "@pause", "@resume", "@seek", "@modifier"
+        "@timbre", "@pause", "@resume", "@seek", "@modifier"
     ];
 
     public static IReadOnlyList<string> PrismDirectiveKeywords { get; } =

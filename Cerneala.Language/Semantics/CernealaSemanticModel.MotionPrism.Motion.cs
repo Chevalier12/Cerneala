@@ -159,18 +159,18 @@ internal sealed partial class CernealaSemanticModel
 
         MotionProgram program = ParseMotionProgram(text, offset);
         ElementSyntax source = FindAspectApplicationElement(aspect) ?? aspect.Element;
-        collectingSoundMotion = new PendingSoundMotion(program);
+        collectingTimbreMotion = new PendingTimbreMotion(program);
         try
         {
             BindMotionProgram(source, aspect.TargetType, program, clip: null, isAspect: true, cancellationToken);
-            if (collectingSoundMotion.Targets.Count > 0)
+            if (collectingTimbreMotion.Targets.Count > 0)
             {
-                pendingSoundMotion[aspect.Element] = collectingSoundMotion;
+                pendingTimbreMotion[aspect.Element] = collectingTimbreMotion;
             }
         }
         finally
         {
-            collectingSoundMotion = null;
+            collectingTimbreMotion = null;
         }
     }
 
@@ -731,9 +731,9 @@ internal sealed partial class CernealaSemanticModel
                 continue;
             }
 
-            if (IsSoundMotionPath(assignment.Name))
+            if (IsTimbreMotionPath(assignment.Name))
             {
-                CollectSoundMotionTarget(assignment, owner);
+                CollectTimbreMotionTarget(assignment, owner);
                 continue;
             }
 
@@ -1146,7 +1146,7 @@ internal sealed partial class CernealaSemanticModel
         CernealaLanguageFacts.MotionDirectiveKeywords
             .Where(keyword => keyword is not "@when" and not "@if")
             .Any(keyword => text.IndexOf(keyword, StringComparison.Ordinal) >= 0) ||
-        ContainsSoundSyntax(text);
+        ContainsTimbreSyntax(text);
 
     private TextSpan FindSubspan(TextSpan container, string value, bool fromEnd = false)
     {

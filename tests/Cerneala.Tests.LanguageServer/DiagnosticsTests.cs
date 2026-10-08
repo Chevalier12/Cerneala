@@ -132,22 +132,22 @@ public sealed class DiagnosticsTests
 
     [Theory]
     [InlineData(
-        "<StackPanel><StackPanel.Resources><SoundClip Name=\"Tone\">Source = \"tone.wav\"; Volume = 2;</SoundClip></StackPanel.Resources></StackPanel>",
+        "<StackPanel><StackPanel.Resources><TimbreClip Name=\"Tone\">Source = \"tone.wav\"; Volume = 2;</TimbreClip></StackPanel.Resources></StackPanel>",
         "CERNEALAUI032",
         "Volume must be a finite number within 0–1.")]
     [InlineData(
-        "<StackPanel><StackPanel.Resources><SoundClip Name=\"Tone\">Source = \"tone.wav\"; @modifier Echo { }</SoundClip></StackPanel.Resources></StackPanel>",
+        "<StackPanel><StackPanel.Resources><TimbreClip Name=\"Tone\">Source = \"tone.wav\"; @modifier Echo { }</TimbreClip></StackPanel.Resources></StackPanel>",
         "CERNEALAUI031",
         "Unknown sound modifier 'Echo'; expected LowPass or Delay.")]
     [InlineData(
-        "<StackPanel><StackPanel.Resources><SoundClip Name=\"Tone\">Volume = 0.5;</SoundClip></StackPanel.Resources></StackPanel>",
+        "<StackPanel><StackPanel.Resources><TimbreClip Name=\"Tone\">Volume = 0.5;</TimbreClip></StackPanel.Resources></StackPanel>",
         "CERNEALAUI032",
-        "SoundClip requires Source.")]
+        "TimbreClip requires Source.")]
     [InlineData(
-        "<Button Content=\"Play\"><Button.Resources><SoundClip Name=\"Tone\">Source = \"tone.wav\";</SoundClip></Button.Resources><Button.Aspect>@on Click { @sound $Tone }</Button.Aspect></Button>",
+        "<Button Content=\"Play\"><Button.Resources><TimbreClip Name=\"Tone\">Source = \"tone.wav\";</TimbreClip></Button.Resources><Button.Aspect>@on Click { @timbre $Tone }</Button.Aspect></Button>",
         "CERNEALAUI030",
-        "Sound directive '@sound' must end with ';'.")]
-    public async Task SoundDiagnosticsAreTheSameForStandaloneAndProjectDocuments(
+        "Timbre directive '@timbre' must end with ';'.")]
+    public async Task TimbreDiagnosticsAreTheSameForStandaloneAndProjectDocuments(
         string markup,
         string expectedCode,
         string expectedMessage)
@@ -178,8 +178,8 @@ public sealed class DiagnosticsTests
 
             Assert.NotNull(standaloneResult);
             Assert.NotNull(projectResult);
-            string[] standaloneSound = SoundDiagnostics(standaloneResult.Value);
-            Assert.Equal(standaloneSound, SoundDiagnostics(projectResult.Value));
+            string[] standaloneTimbre = TimbreDiagnostics(standaloneResult.Value);
+            Assert.Equal(standaloneTimbre, TimbreDiagnostics(projectResult.Value));
             LspDiagnostic expected = Assert.Single(
                 standaloneResult.Value,
                 diagnostic => diagnostic.Code == expectedCode);
@@ -194,35 +194,35 @@ public sealed class DiagnosticsTests
     }
 
     [Fact]
-    public async Task SoundDiagnosticsFollowTheUnsavedOverlayAndThenTheSavedAdditionalFile()
+    public async Task TimbreDiagnosticsFollowTheUnsavedOverlayAndThenTheSavedAdditionalFile()
     {
         const string valid =
-            "<StackPanel><StackPanel.Resources><SoundClip Name=\"Tone\">Source = \"tone.wav\"; Volume = 0.5;</SoundClip></StackPanel.Resources></StackPanel>";
+            "<StackPanel><StackPanel.Resources><TimbreClip Name=\"Tone\">Source = \"tone.wav\"; Volume = 0.5;</TimbreClip></StackPanel.Resources></StackPanel>";
         string invalid = valid.Replace("Volume = 0.5;", "Volume = 2;", StringComparison.Ordinal);
         using TemporaryDiagnosticWorkspace fixture = TemporaryDiagnosticWorkspace.Create();
         File.WriteAllText(fixture.MarkupPath, valid);
         await using CernealaWorkspace workspace = await CreateWorkspaceAsync(fixture.ProjectPath);
         DiagnosticService service = new(workspace, new BuildDiagnosticStore());
 
-        Assert.Empty(await AnalyzeSoundAsync());
+        Assert.Empty(await AnalyzeTimbreAsync());
 
         Assert.True(workspace.OpenDocument(fixture.MarkupUri, invalid, 1));
-        Assert.Contains("Volume must be", Assert.Single(await AnalyzeSoundAsync()), StringComparison.Ordinal);
+        Assert.Contains("Volume must be", Assert.Single(await AnalyzeTimbreAsync()), StringComparison.Ordinal);
 
         workspace.CloseDocument(fixture.MarkupUri);
         await workspace.ReloadAsync(CancellationToken.None);
-        Assert.Empty(await AnalyzeSoundAsync());
+        Assert.Empty(await AnalyzeTimbreAsync());
 
         File.WriteAllText(fixture.MarkupPath, invalid);
         await workspace.ReloadAsync(CancellationToken.None);
-        Assert.Contains("Volume must be", Assert.Single(await AnalyzeSoundAsync()), StringComparison.Ordinal);
+        Assert.Contains("Volume must be", Assert.Single(await AnalyzeTimbreAsync()), StringComparison.Ordinal);
 
-        async Task<string[]> AnalyzeSoundAsync()
+        async Task<string[]> AnalyzeTimbreAsync()
         {
             VersionedDocumentResult<IReadOnlyList<LspDiagnostic>>? result =
                 await service.AnalyzeAsync(fixture.MarkupUri, CancellationToken.None);
             Assert.NotNull(result);
-            return SoundDiagnostics(result.Value);
+            return TimbreDiagnostics(result.Value);
         }
     }
 
@@ -420,7 +420,7 @@ public sealed class DiagnosticsTests
         }
     };
 
-    private static string[] SoundDiagnostics(IEnumerable<LspDiagnostic> diagnostics) => diagnostics
+    private static string[] TimbreDiagnostics(IEnumerable<LspDiagnostic> diagnostics) => diagnostics
         .Where(diagnostic => diagnostic.Code is "CERNEALAUI030" or "CERNEALAUI031" or "CERNEALAUI032" or "CERNEALAUI033")
         .Select(diagnostic =>
             $"{diagnostic.Code} {diagnostic.Severity} {diagnostic.Range.Start.Line}:{diagnostic.Range.Start.Character}-" +

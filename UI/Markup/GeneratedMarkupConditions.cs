@@ -134,7 +134,7 @@ public sealed class MarkupConditionRule
         ConditionStateChanged = conditionStateChanged;
     }
 
-    // soundActivated runs when the rule becomes active for audio, independent
+    // timbreActivated runs when the rule becomes active for audio, independent
     // of renderability. It receives the visual activation when that is due in
     // the same evaluation, so a mixed body starts in source order.
     public MarkupConditionRule(
@@ -145,10 +145,10 @@ public sealed class MarkupConditionRule
         Action? activated,
         Action? deactivated,
         Action<bool>? conditionStateChanged,
-        Action<Action?>? soundActivated)
+        Action<Action?>? timbreActivated)
         : this(order, predicate, values, content, activated, deactivated, conditionStateChanged)
     {
-        SoundActivated = soundActivated;
+        TimbreActivated = timbreActivated;
     }
 
     public int Order { get; }
@@ -165,7 +165,7 @@ public sealed class MarkupConditionRule
 
     internal Action<bool>? ConditionStateChanged { get; }
 
-    internal Action<Action?>? SoundActivated { get; }
+    internal Action<Action?>? TimbreActivated { get; }
 }
 
 public abstract class MarkupObservation
@@ -744,7 +744,7 @@ internal sealed class MarkupConditionController : IElementDataLifecycleBehavior,
     private readonly IReadOnlyList<MarkupObservation> observations;
     private readonly IReadOnlyList<MarkupConditionRule> rules;
     private readonly bool hasRuleActivations;
-    private readonly bool hasSoundActivations;
+    private readonly bool hasTimbreActivations;
     private readonly List<MarkupConditionalValue> appliedValues = [];
     private readonly List<MarkupConditionalContent> activeContent = [];
     private readonly List<MarkupConditionRule> activeRules = [];
@@ -752,16 +752,16 @@ internal sealed class MarkupConditionController : IElementDataLifecycleBehavior,
 
     // Audio sidecar: rules whose sound actions already ran for the current
     // true interval. Unlike activeRules it ignores renderability.
-    private readonly List<MarkupConditionRule> soundActiveRules = [];
+    private readonly List<MarkupConditionRule> timbreActiveRules = [];
     private bool started;
     private bool disposed;
     private bool evaluating;
     private bool reevaluate;
     private bool deferActivations;
-    private bool deferSoundActivations;
+    private bool deferTimbreActivations;
     private bool renderable;
     private int attachmentVersion;
-    private int soundAttachmentVersion;
+    private int timbreAttachmentVersion;
     private Func<bool>? callbackGuard;
     private readonly UiRelayRefreshDispatcher refreshDispatcher;
 
@@ -774,7 +774,7 @@ internal sealed class MarkupConditionController : IElementDataLifecycleBehavior,
         this.observations = observations?.ToArray() ?? throw new ArgumentNullException(nameof(observations));
         this.rules = rules?.OrderBy(rule => rule.Order).ToArray() ?? throw new ArgumentNullException(nameof(rules));
         hasRuleActivations = this.rules.Any(rule => rule.Activated is not null || rule.Deactivated is not null);
-        hasSoundActivations = this.rules.Any(rule => rule.SoundActivated is not null);
+        hasTimbreActivations = this.rules.Any(rule => rule.TimbreActivated is not null);
         refreshDispatcher = new UiRelayRefreshDispatcher(() => owner.OwnerRelay, RefreshFromRelay, "markup condition");
         Start();
     }
@@ -791,9 +791,9 @@ internal sealed class MarkupConditionController : IElementDataLifecycleBehavior,
 
         renderable = UIElementVisibility.IsEffectivelyVisible(owner);
         deferActivations = hasRuleActivations;
-        deferSoundActivations = hasSoundActivations;
+        deferTimbreActivations = hasTimbreActivations;
         Start();
-        if (!hasRuleActivations && !hasSoundActivations)
+        if (!hasRuleActivations && !hasTimbreActivations)
         {
             return;
         }
@@ -802,13 +802,13 @@ internal sealed class MarkupConditionController : IElementDataLifecycleBehavior,
         if (root is null)
         {
             deferActivations = false;
-            deferSoundActivations = false;
+            deferTimbreActivations = false;
             return;
         }
 
         int version = ++attachmentVersion;
-        int soundVersion = ++soundAttachmentVersion;
-        root.Relay.Post(() => CompleteInitialActivation(root, version, soundVersion));
+        int timbreVersion = ++timbreAttachmentVersion;
+        root.Relay.Post(() => CompleteInitialActivation(root, version, timbreVersion));
     }
 
     public void Detach()
@@ -825,7 +825,7 @@ internal sealed class MarkupConditionController : IElementDataLifecycleBehavior,
         {
             deferActivations = true;
             int version = ++attachmentVersion;
-            root.Relay.Post(() => CompleteInitialActivation(root, version, soundVersion: -1));
+            root.Relay.Post(() => CompleteInitialActivation(root, version, timbreVersion: -1));
         }
         else if (!isRenderable)
         {
@@ -887,10 +887,10 @@ internal sealed class MarkupConditionController : IElementDataLifecycleBehavior,
 
         started = false;
         deferActivations = false;
-        deferSoundActivations = false;
+        deferTimbreActivations = false;
         attachmentVersion++;
-        soundAttachmentVersion++;
-        soundActiveRules.Clear();
+        timbreAttachmentVersion++;
+        timbreActiveRules.Clear();
         refreshDispatcher.Deactivate();
         foreach (MarkupObservation observation in observations)
         {
@@ -1007,20 +1007,20 @@ internal sealed class MarkupConditionController : IElementDataLifecycleBehavior,
             activeRules.AddRange(active);
         }
 
-        bool soundReady = !deferSoundActivations;
-        if (soundReady)
+        bool timbreReady = !deferTimbreActivations;
+        if (timbreReady)
         {
             // true -> false never stops audio; it only re-arms the rule.
-            soundActiveRules.RemoveAll(rule => !active.Contains(rule));
+            timbreActiveRules.RemoveAll(rule => !active.Contains(rule));
         }
 
         foreach (MarkupConditionRule rule in active)
         {
             bool visual = visualDue.Contains(rule);
-            if (soundReady && rule.SoundActivated is not null && !soundActiveRules.Contains(rule))
+            if (timbreReady && rule.TimbreActivated is not null && !timbreActiveRules.Contains(rule))
             {
-                soundActiveRules.Add(rule);
-                rule.SoundActivated(visual ? rule.Activated : null);
+                timbreActiveRules.Add(rule);
+                rule.TimbreActivated(visual ? rule.Activated : null);
             }
             else if (visual)
             {
@@ -1065,10 +1065,10 @@ internal sealed class MarkupConditionController : IElementDataLifecycleBehavior,
         activeRules.Clear();
     }
 
-    private void CompleteInitialActivation(UIRoot root, int version, int soundVersion)
+    private void CompleteInitialActivation(UIRoot root, int version, int timbreVersion)
     {
         bool visual = version == attachmentVersion;
-        bool sound = soundVersion == soundAttachmentVersion;
+        bool sound = timbreVersion == timbreAttachmentVersion;
         if (!started || disposed || !(visual || sound) || !ReferenceEquals(owner.Root, root))
         {
             return;
@@ -1081,7 +1081,7 @@ internal sealed class MarkupConditionController : IElementDataLifecycleBehavior,
 
         if (sound)
         {
-            deferSoundActivations = false;
+            deferTimbreActivations = false;
         }
 
         Evaluate();

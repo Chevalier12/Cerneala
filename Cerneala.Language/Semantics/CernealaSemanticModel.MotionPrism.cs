@@ -133,7 +133,7 @@ internal sealed partial class CernealaSemanticModel
 
     private bool ShouldBindAspectAssignment(ElementSyntax aspect, int position)
     {
-        if (IsInsideSoundStatement(aspect, position))
+        if (IsInsideTimbreStatement(aspect, position))
         {
             return false;
         }

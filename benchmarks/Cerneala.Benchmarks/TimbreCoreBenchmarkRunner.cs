@@ -30,56 +30,56 @@ internal static class TimbreCoreBenchmarkRunner
         {
             // SDL video/events stay owned by this thread; the output owns audio.
             using SdlPlatformLifetime lifetime = new(new NativeSdlApi());
-            RunAsync(reportPath, new SdlSoundOutput(new NativeSdlAudioApi())).GetAwaiter().GetResult();
+            RunAsync(reportPath, new SdlTimbreOutput(new NativeSdlAudioApi())).GetAwaiter().GetResult();
             return;
         }
 
         RunAsync(reportPath, sdlOutput: null).GetAwaiter().GetResult();
     }
 
-    private static async Task RunAsync(string reportPath, SdlSoundOutput? sdlOutput)
+    private static async Task RunAsync(string reportPath, SdlTimbreOutput? sdlOutput)
     {
         PacedDevice device = new();
         BlockRecorder recorder = new(WarmupBlocks, MeasuredBlocks);
-        using SoundRuntime runtime = new(new SoundRuntimeOptions { Output = sdlOutput ?? (ISoundOutput)device });
+        using TimbreRuntime runtime = new(new TimbreRuntimeOptions { Output = sdlOutput ?? (ITimbreOutput)device });
         runtime.BlockObserver = recorder;
-        using SoundScope scope = runtime.CreateScope();
+        using TimbreScope scope = runtime.CreateScope();
 
-        SoundModifier[] chain = [new LowPass(cutoff: 2000f), new Delay(time: 0.25f, feedback: 0.4f, mix: 0.3f)];
-        SoundClip[] preloaded = Enumerable.Range(0, 4)
-            .Select(index => new SoundClip(
-                SoundSource.FromReader(() => new NoiseReader(2 * 48000, seed: index), $"preloaded-{index}"),
+        TimbreModifier[] chain = [new LowPass(cutoff: 2000f), new Delay(time: 0.25f, feedback: 0.4f, mix: 0.3f)];
+        TimbreClip[] preloaded = Enumerable.Range(0, 4)
+            .Select(index => new TimbreClip(
+                TimbreSource.FromReader(() => new NoiseReader(2 * 48000, seed: index), $"preloaded-{index}"),
                 volume: 0.5f,
                 loop: true,
-                loading: SoundLoading.Preload,
+                loading: TimbreLoading.Preload,
                 modifiers: chain))
             .ToArray();
-        SoundClip streaming = new(
-            SoundSource.FromReader(() => new NoiseReader(60 * 48000, seed: 99), "streaming"),
+        TimbreClip streaming = new(
+            TimbreSource.FromReader(() => new NoiseReader(60 * 48000, seed: 99), "streaming"),
             volume: 0.5f,
             loop: true,
-            loading: SoundLoading.Streaming,
+            loading: TimbreLoading.Streaming,
             modifiers: chain);
         // Decoding plan, stage 3: the same gate with the four streaming voices
         // decoding real corpus files (MP3, Vorbis, Opus, WAV) on their pumps.
         string? decodedCorpus = Environment.GetEnvironmentVariable("TIMBRE_BENCH_DECODED_CORPUS");
-        SoundClip[] streamingClips = decodedCorpus is null
+        TimbreClip[] streamingClips = decodedCorpus is null
             ? [streaming]
             : DecodedStreamingFiles(decodedCorpus)
-                .Select(path => new SoundClip(SoundSource.FromFile(path), volume: 0.5f, loop: true, loading: SoundLoading.Streaming, modifiers: chain))
+                .Select(path => new TimbreClip(TimbreSource.FromFile(path), volume: 0.5f, loop: true, loading: TimbreLoading.Streaming, modifiers: chain))
                 .ToArray();
         // Plain prepared one-shot: completion follows the drain, so each latency
         // sample ends within ~150 ms.
-        SoundClip shortClip = new(
-            SoundSource.FromReader(() => new NoiseReader(4800, seed: 7), "short"),
-            loading: SoundLoading.Preload);
-        foreach (SoundClip clip in preloaded)
+        TimbreClip shortClip = new(
+            TimbreSource.FromReader(() => new NoiseReader(4800, seed: 7), "short"),
+            loading: TimbreLoading.Preload);
+        foreach (TimbreClip clip in preloaded)
         {
             await runtime.PrepareAsync(clip);
         }
 
         await runtime.PrepareAsync(shortClip);
-        List<SoundPlayback> voices = [];
+        List<TimbrePlayback> voices = [];
         for (int index = 0; index < PreloadedVoices; index++)
         {
             voices.Add(scope.Play(preloaded[index % preloaded.Length]));
@@ -96,11 +96,11 @@ internal static class TimbreCoreBenchmarkRunner
         }
 
         await recorder.WarmedUp;
-        SoundRuntimeDiagnostics atWarmup = runtime.GetDiagnostics();
+        TimbreRuntimeDiagnostics atWarmup = runtime.GetDiagnostics();
         // With SDL the device-side underrun is SDL's estimate of missing input.
         long deviceUnderrunAtWarmup = sdlOutput is null ? device.UnderrunFrames : sdlOutput.GetDiagnostics().StarvedBytes / 8;
         await recorder.Completed;
-        SoundRuntimeDiagnostics atEnd = runtime.GetDiagnostics();
+        TimbreRuntimeDiagnostics atEnd = runtime.GetDiagnostics();
         long deviceUnderrunAtEnd = sdlOutput is null ? device.UnderrunFrames : sdlOutput.GetDiagnostics().StarvedBytes / 8;
         int maxQueuedMeasured = sdlOutput is null ? device.MaxQueuedFrames : sdlOutput.GetDiagnostics().QueueHighWaterFrames;
 
@@ -108,18 +108,18 @@ internal static class TimbreCoreBenchmarkRunner
         for (int sample = 0; sample < LatencySamples; sample++)
         {
             long started = Stopwatch.GetTimestamp();
-            SoundPlayback probe = scope.Play(shortClip);
+            TimbrePlayback probe = scope.Play(shortClip);
             await probe.Completion;
             latencies[sample] = (probe.FirstQueuedTimestamp - started) * 1000.0 / Stopwatch.Frequency;
         }
 
-        foreach (SoundPlayback voice in voices)
+        foreach (TimbrePlayback voice in voices)
         {
             voice.Cancel();
         }
 
         device.Stop();
-        SdlSoundOutputDiagnostics? sdl = sdlOutput?.GetDiagnostics();
+        SdlTimbreOutputDiagnostics? sdl = sdlOutput?.GetDiagnostics();
         string output = sdl is { } opened
             ? $"sdl {SDL3.SDL.GetCurrentAudioDriver()} 0x{opened.DeviceFormat.Format:X}/{opened.DeviceFormat.Channels}/{opened.DeviceFormat.Frequency} {opened.DeviceSampleFrames} frames"
             : "emulator";
@@ -234,7 +234,7 @@ internal static class TimbreCoreBenchmarkRunner
         Thresholds Gate);
 
     // Preallocated per-block storage written only by the mixer thread.
-    internal sealed class BlockRecorder(int warmup, int measured) : ISoundBlockObserver
+    internal sealed class BlockRecorder(int warmup, int measured) : ITimbreBlockObserver
     {
         private readonly long[] ticks = new long[measured];
         private readonly long[] allocated = new long[measured];
@@ -273,10 +273,10 @@ internal static class TimbreCoreBenchmarkRunner
     // Device emulator: consumes queued PCM at 48 kHz of wall-clock time on its
     // own thread, counts frames it could not consume (device underrun), and
     // notifies the runtime after consuming. It never mixes or processes PCM.
-    internal sealed class PacedDevice : ISoundOutput
+    internal sealed class PacedDevice : ITimbreOutput
     {
         private readonly object gate = new();
-        private ISoundOutputClient? client;
+        private ITimbreOutputClient? client;
         private Thread? thread;
         private volatile bool running;
         private long submitted;
@@ -299,7 +299,7 @@ internal static class TimbreCoreBenchmarkRunner
 
         public int MaxQueuedFrames => Volatile.Read(ref maxQueued);
 
-        public void Open(ISoundOutputClient client)
+        public void Open(ITimbreOutputClient client)
         {
             lock (gate)
             {
@@ -311,7 +311,7 @@ internal static class TimbreCoreBenchmarkRunner
         {
             lock (gate)
             {
-                submitted += samples.Length / SoundRuntime.ChannelCount;
+                submitted += samples.Length / TimbreRuntime.ChannelCount;
                 maxQueued = Math.Max(maxQueued, (int)(submitted - consumed));
             }
         }
@@ -344,13 +344,13 @@ internal static class TimbreCoreBenchmarkRunner
             while (running)
             {
                 Thread.Sleep(1);
-                long due = (long)(clock.Elapsed.TotalSeconds * SoundRuntime.SampleRate) - played;
+                long due = (long)(clock.Elapsed.TotalSeconds * TimbreRuntime.SampleRate) - played;
                 if (due <= 0)
                 {
                     continue;
                 }
 
-                ISoundOutputClient? notify;
+                ITimbreOutputClient? notify;
                 lock (gate)
                 {
                     long available = submitted - consumed;
@@ -371,18 +371,18 @@ internal static class TimbreCoreBenchmarkRunner
     }
 
     // Deterministic broadband source; streaming readers generate on demand.
-    internal sealed class NoiseReader(long lengthFrames, int seed) : SoundReader
+    internal sealed class NoiseReader(long lengthFrames, int seed) : TimbreReader
     {
         private long position;
 
         public override long? LengthFrames => lengthFrames;
 
-        public override ValueTask<SoundReadResult> ReadAsync(Memory<float> destination, CancellationToken cancellationToken)
+        public override ValueTask<TimbreReadResult> ReadAsync(Memory<float> destination, CancellationToken cancellationToken)
         {
-            int frames = (int)Math.Min(destination.Length / SoundRuntime.ChannelCount, lengthFrames - position);
+            int frames = (int)Math.Min(destination.Length / TimbreRuntime.ChannelCount, lengthFrames - position);
             Fill(destination.Span, frames);
             position += frames;
-            return ValueTask.FromResult(new SoundReadResult(frames, position == lengthFrames));
+            return ValueTask.FromResult(new TimbreReadResult(frames, position == lengthFrames));
         }
 
         public override ValueTask SeekAsync(long frame, CancellationToken cancellationToken)

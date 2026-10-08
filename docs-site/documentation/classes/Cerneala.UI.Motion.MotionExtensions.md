@@ -62,7 +62,7 @@ Motion compiles the selected property's getter and setter once and caches the re
 
 Object motion reuses the same motion graph, specs, interpolation system, and handles as retained UI motion. It is advanced by Cerneala's host frame loop, but the target does not need to be a UI element, attached to a tree, or currently drawn. Drawing code observes the target's current property values; object motion does not invalidate an on-demand render surface automatically.
 
-A [SoundPlayback](Cerneala.Timbre.SoundPlayback.md) receiver binds the `SoundPlayback` overloads, never the object facade: they are non-generic, take the playback without a parameter array, and live in the same class, so importing `Cerneala.UI.Motion` brings them into scope together. They return a [SoundMotionFacade](Cerneala.UI.Timbre.SoundMotionFacade.md) that animates the captured playback's Volume and declared float parameters on the root's Motion clock.
+A [TimbrePlayback](Cerneala.Timbre.TimbrePlayback.md) receiver binds the `TimbrePlayback` overloads, never the object facade: they are non-generic, take the playback without a parameter array, and live in the same class, so importing `Cerneala.UI.Motion` brings them into scope together. They return a [TimbreMotionFacade](Cerneala.UI.Timbre.TimbreMotionFacade.md) that animates the captured playback's Volume and declared float parameters on the root's Motion clock.
 
 The `UIElement` overloads validate `element` before constructing the facade. Later UI-element operations may require the element to be attached to a `UIRoot`, or to be a `UIRoot` itself, because those animations resolve the active `MotionSystem` from the root. The typed object overload accepts reference types. Its trailing parameter array is reserved for overload resolution and should be omitted. The non-generic object overload rejects value types because a boxed copy could not mutate the caller's original value.
 
@@ -74,8 +74,8 @@ The `UIElement` overloads validate `element` before constructing the facade. Lat
 | `Motion<TElement>(TElement element)` | `MotionElementFacade` | Keeps a derived UI-element receiver on the UI-specific Motion facade. |
 | `Motion<TTarget>(TTarget target, params object[] _)` | `ObjectMotionFacade<TTarget>` | Creates a strongly typed property-motion facade for an arbitrary reference object. |
 | `Motion(object target)` | `ObjectMotionFacade` | Creates a property-oriented motion facade for an arbitrary reference object. |
-| `Motion(SoundPlayback playback)` | `SoundMotionFacade` | Creates the audio Motion facade of a playback sampled by the root that owns its element scope. |
-| `Motion(SoundPlayback playback, UIRoot root)` | `SoundMotionFacade` | Creates the audio Motion facade of a playback sampled by an explicit root. |
+| `Motion(TimbrePlayback playback)` | `TimbreMotionFacade` | Creates the audio Motion facade of a playback sampled by the root that owns its element scope. |
+| `Motion(TimbrePlayback playback, UIRoot root)` | `TimbreMotionFacade` | Creates the audio Motion facade of a playback sampled by an explicit root. |
 
 ## Exceptions
 
@@ -85,7 +85,7 @@ The `UIElement` overloads validate `element` before constructing the facade. Lat
 | `Motion<TTarget>` | `ArgumentNullException` | `target` is `null`. |
 | `Motion(object)` | `ArgumentNullException` | `target` is `null`. |
 | `Motion(object)` | `InvalidOperationException` | `target` is a boxed value type. |
-| `Motion(SoundPlayback)`, `Motion(SoundPlayback, UIRoot)` | `ArgumentNullException` | `playback` or `root` is `null`. |
+| `Motion(TimbrePlayback)`, `Motion(TimbrePlayback, UIRoot)` | `ArgumentNullException` | `playback` or `root` is `null`. |
 
 ## Applies to
 
@@ -101,4 +101,4 @@ Cerneala retained UI motion facade APIs and object motion APIs.
 - `Cerneala.UI.Motion.MotionProperty<TTarget, TValue>`
 - `Cerneala.UI.Motion.MotionAnimationBuilder<T>`
 - `Cerneala.UI.Motion.Core.MotionSystem`
-- [SoundMotionFacade](Cerneala.UI.Timbre.SoundMotionFacade.md)
+- [TimbreMotionFacade](Cerneala.UI.Timbre.TimbreMotionFacade.md)

@@ -21,5 +21,5 @@ public sealed class UiHostOptions
 
     public IPlatformServices? PlatformServices { get; set; }
 
-    public SoundRuntime? SoundRuntime { get; set; }
+    public TimbreRuntime? TimbreRuntime { get; set; }
 }

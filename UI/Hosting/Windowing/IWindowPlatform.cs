@@ -15,7 +15,7 @@ internal interface IWindowPlatform : IDisposable
 
     // Output shared by every window of the platform; the platform terminates it
     // before shutting down its native layer. Null when the platform has no audio.
-    ISoundOutput? SoundOutput => null;
+    ITimbreOutput? TimbreOutput => null;
 
     IPlatformWindow CreateWindow(Window window, IWindowPlatformCallbacks callbacks);
 

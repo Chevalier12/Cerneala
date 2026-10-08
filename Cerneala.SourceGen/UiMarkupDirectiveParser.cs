@@ -275,9 +275,9 @@ public sealed partial class UiMarkupGenerator
                     continue;
                 }
 
-                if (TryParseSoundDirective(allowedContent, out DirectiveNode? soundAction))
+                if (TryParseTimbreDirective(allowedContent, out DirectiveNode? timbreAction))
                 {
-                    nodes.Add(soundAction!);
+                    nodes.Add(timbreAction!);
                     continue;
                 }
 
@@ -359,7 +359,7 @@ public sealed partial class UiMarkupGenerator
             if (!StartsWith("@if"))
             {
                 DirectiveContentKind booleanContent =
-                    (allowedContent | DirectiveContentKind.Assignments | DirectiveContentKind.MotionExecutions | SoundContent(allowedContent)) &
+                    (allowedContent | DirectiveContentKind.Assignments | DirectiveContentKind.MotionExecutions | TimbreContent(allowedContent)) &
                     ~(DirectiveContentKind.Templates | DirectiveContentKind.MotionTriggers | DirectiveContentKind.MotionHandles |
                         DirectiveContentKind.MotionPresence | DirectiveContentKind.MotionLayout);
                 IReadOnlyList<DirectiveNode> booleanBody = ParseNodes(stopAtClosingBrace: true, booleanContent);
@@ -396,7 +396,7 @@ public sealed partial class UiMarkupGenerator
 
 
                 DirectiveContentKind branchContent =
-                    (allowedContent | DirectiveContentKind.Assignments | DirectiveContentKind.MotionExecutions | SoundContent(allowedContent)) &
+                    (allowedContent | DirectiveContentKind.Assignments | DirectiveContentKind.MotionExecutions | TimbreContent(allowedContent)) &
                     ~(DirectiveContentKind.Templates | DirectiveContentKind.MotionTriggers | DirectiveContentKind.MotionHandles |
                         DirectiveContentKind.MotionPresence | DirectiveContentKind.MotionLayout);
                 branches.Add(ParseIf(branchContent));

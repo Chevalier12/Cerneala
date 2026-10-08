@@ -50,7 +50,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
     public Window? ActiveWindow { get; private set; }
 
-    internal ISoundOutput? SoundOutput => platform.SoundOutput;
+    internal ITimbreOutput? TimbreOutput => platform.TimbreOutput;
 
     internal static void Install(WindowApplicationRuntime runtime)
     {
@@ -271,7 +271,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
             context.Root.VisualChildren.Remove(window);
             context.Root.LogicalChildren.Remove(window);
             context.Root.ReleaseDrawingResources();
-            context.Root.SetSoundRuntime(null);
+            context.Root.SetTimbreRuntime(null);
             context.PlatformWindow.Destroy();
             context.Dispose();
         }
@@ -706,7 +706,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
         {
             // The Application runtime is shared by every window; its output
             // stays lazy until a playback starts.
-            root.SetSoundRuntime(application.SoundRuntime);
+            root.SetTimbreRuntime(application.TimbreRuntime);
         }
 
         root.SetImageResourceCache(

@@ -153,10 +153,10 @@ public sealed partial class UiMarkupGenerator
             string owner,
             MarkupObject source)
         {
-            // A body with Sound actions may also @cancel Sound handles; those
+            // A body with Timbre actions may also @cancel Timbre handles; those
             // cancels are not Motion executions.
-            bool hasSound = nodes.Any(node => node is SoundActionNode);
-            if (nodes.OfType<MotionExecutionNode>().Where(node => !hasSound || node is not MotionCancelNode).Skip(1).Any())
+            bool hasTimbre = nodes.Any(node => node is TimbreActionNode);
+            if (nodes.OfType<MotionExecutionNode>().Where(node => !hasTimbre || node is not MotionCancelNode).Skip(1).Any())
             {
                 throw new DirectiveParseException(
                     owner + " contains sibling Motion executions; wrap them in @parallel or @sequence.",

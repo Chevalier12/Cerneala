@@ -11,7 +11,7 @@ using ServoApi = Cerneala.UI.Servo.Servo;
 
 namespace Cerneala.SdlGpuSmoke;
 
-// Native audio Motion smoke: `.sound.` animations declared in
+// Native audio Motion smoke: `.timbre.` animations declared in
 // TimbreMotionPanel.crn, triggered only by Servo input routed through the real
 // SDL window. The PCM tap in front of the platform output is compared block by
 // block with the same clip rendered statically at Volume 1 in a deterministic
@@ -24,16 +24,16 @@ internal sealed class TimbreMotionSmoke
 
     private readonly SmokeOptions options;
     private readonly PcmTapOutput tap;
-    private readonly SdlSoundOutput output;
-    private readonly SoundRuntime runtime;
-    private readonly List<SoundPlayback> accepted = [];
+    private readonly SdlTimbreOutput output;
+    private readonly TimbreRuntime runtime;
+    private readonly List<TimbrePlayback> accepted = [];
     private readonly List<Dictionary<string, object?>> results = [];
 
-    private TimbreMotionSmoke(SmokeOptions options, PcmTapOutput tap, SoundRuntime runtime)
+    private TimbreMotionSmoke(SmokeOptions options, PcmTapOutput tap, TimbreRuntime runtime)
     {
         this.options = options;
         this.tap = tap;
-        output = (SdlSoundOutput)tap.Inner;
+        output = (SdlTimbreOutput)tap.Inner;
         this.runtime = runtime;
     }
 
@@ -43,8 +43,8 @@ internal sealed class TimbreMotionSmoke
     {
         Application application = Application.Current ?? throw new InvalidOperationException("No Application.");
         PcmTapOutput tap = TimbreSmoke.InstalledTap ?? throw new InvalidOperationException("The PCM tap was not installed at startup.");
-        TimbreMotionSmoke smoke = new(options, tap, application.SoundRuntime);
-        application.SoundRuntime.PlaybackAccepted = playback =>
+        TimbreMotionSmoke smoke = new(options, tap, application.TimbreRuntime);
+        application.TimbreRuntime.PlaybackAccepted = playback =>
         {
             lock (smoke.accepted)
             {
@@ -68,7 +68,7 @@ internal sealed class TimbreMotionSmoke
         }
         finally
         {
-            application.SoundRuntime.PlaybackAccepted = null;
+            application.TimbreRuntime.PlaybackAccepted = null;
         }
     }
 
@@ -108,7 +108,7 @@ internal sealed class TimbreMotionSmoke
 
         await runtime.SyncAsync().WaitAsync(Timeout);
         var final = runtime.GetDiagnostics();
-        int targets = SoundPlaybackMotion.ActiveTargets(((UIElement)window.Content!).Root!);
+        int targets = TimbrePlaybackMotion.ActiveTargets(((UIElement)window.Content!).Root!);
         Require(final.ActiveVoices == 0 && final.LiveReaders == 0 && final.PlaybacksFailed == 0 && final.MotionSamplesRejected == 0,
             "Audio Motion left voices or readers behind, failed, or rejected samples.");
         Require(targets == 0, $"{targets} audio Motion targets stayed registered.");
@@ -116,7 +116,7 @@ internal sealed class TimbreMotionSmoke
         window.Close();
     }
 
-    // Click → @sound (Volume 0.2) + Tween(400 ms) to 0.8 on the captured
+    // Click → @timbre (Volume 0.2) + Tween(400 ms) to 0.8 on the captured
     // playback. Every block's gain lies in [0.2, 0.8], never decreases, starts
     // at 0.2 (time starts at the first PCM) and ends at 0.8.
     private async Task FadeAsync(ServoApi servo, string id, string path)
@@ -124,11 +124,11 @@ internal sealed class TimbreMotionSmoke
         var before = runtime.GetDiagnostics();
         long start = tap.SampleCount;
         await servo.ClickAsync(ServoTarget.ById(id));
-        SoundPlayback playback = await LatestAcceptedAsync(before.PlaybacksStarted);
-        await WaitUntilAsync(() => playback.State == SoundPlaybackState.Completed);
+        TimbrePlayback playback = await LatestAcceptedAsync(before.PlaybacksStarted);
+        await WaitUntilAsync(() => playback.State == TimbrePlaybackState.Completed);
         var after = runtime.GetDiagnostics();
         float[] actual = tap.Copy(start, tap.SampleCount);
-        float[] reference = await RenderOfflineAsync(new SoundClip(SoundSource.FromFile(path), loading: SoundLoading.Preload));
+        float[] reference = await RenderOfflineAsync(new TimbreClip(TimbreSource.FromFile(path), loading: TimbreLoading.Preload));
 
         Require(actual.Length == reference.Length, $"{id}: tapped {actual.Length} samples, static render {reference.Length}.");
         Require(after.UnderrunFrames == before.UnderrunFrames, $"{id}: underrun frames were padded.");
@@ -158,14 +158,14 @@ internal sealed class TimbreMotionSmoke
         var before = runtime.GetDiagnostics();
         long start = tap.SampleCount;
         await servo.ClickAsync(ServoTarget.ById("sweep-filtered"));
-        SoundPlayback playback = await LatestAcceptedAsync(before.PlaybacksStarted);
-        await WaitUntilAsync(() => playback.State == SoundPlaybackState.Completed);
+        TimbrePlayback playback = await LatestAcceptedAsync(before.PlaybacksStarted);
+        await WaitUntilAsync(() => playback.State == TimbrePlaybackState.Completed);
         float[] actual = tap.Copy(start, tap.SampleCount);
-        SoundParameter<float> cutoff = new("ToneCutoff", 4000f);
-        SoundParameter<float> mix = new("EchoMix", 0.1f);
-        float[] reference = await RenderOfflineAsync(new SoundClip(
-            SoundSource.FromFile(tone),
-            loading: SoundLoading.Preload,
+        TimbreParameter<float> cutoff = new("ToneCutoff", 4000f);
+        TimbreParameter<float> mix = new("EchoMix", 0.1f);
+        float[] reference = await RenderOfflineAsync(new TimbreClip(
+            TimbreSource.FromFile(tone),
+            loading: TimbreLoading.Preload,
             parameters: [cutoff, mix],
             modifiers: [new LowPass(cutoff), new Delay(time: 0.06f, feedback: 0.3f, mix: mix)]));
 
@@ -189,13 +189,13 @@ internal sealed class TimbreMotionSmoke
     {
         var before = runtime.GetDiagnostics();
         await servo.ClickAsync(ServoTarget.ById("transport-play"));
-        SoundPlayback music = await LatestAcceptedAsync(before.PlaybacksStarted);
+        TimbrePlayback music = await LatestAcceptedAsync(before.PlaybacksStarted);
         await WaitUntilAsync(() => music.Volume > 0.15f);
         var playing = runtime.GetDiagnostics();
         Require(playing.StreamingBufferBytes > 0, "The 2.4 MB MP3 did not stream under Auto loading.");
 
         await servo.ClickAsync(ServoTarget.ById("transport-pause"));
-        await WaitUntilAsync(() => music.State == SoundPlaybackState.Paused);
+        await WaitUntilAsync(() => music.State == TimbrePlaybackState.Paused);
         await runtime.SyncAsync().WaitAsync(Timeout);
         await WaitForRequestsAsync(5);
         float pausedVolume = music.Volume;
@@ -216,7 +216,7 @@ internal sealed class TimbreMotionSmoke
         Require(seekedVolume < 0.9f, "The fade ended before the mid-flight cancel.");
 
         await servo.ClickAsync(ServoTarget.ById("transport-stop"));
-        await WaitUntilAsync(() => music.State == SoundPlaybackState.Canceled);
+        await WaitUntilAsync(() => music.State == TimbrePlaybackState.Canceled);
         long canceledPublications = music.AnimatedPublications;
         float canceledVolume = music.Volume;
         await WaitForRequestsAsync(20);
@@ -240,7 +240,7 @@ internal sealed class TimbreMotionSmoke
     {
         var before = runtime.GetDiagnostics();
         await servo.ClickAsync(ServoTarget.ById("loop-play"));
-        SoundPlayback looper = await LatestAcceptedAsync(before.PlaybacksStarted);
+        TimbrePlayback looper = await LatestAcceptedAsync(before.PlaybacksStarted);
         await WaitUntilAsync(() => looper.Volume == 0.8f);
         long completedPublications = looper.AnimatedPublications;
         await WaitUntilAsync(() => runtime.GetDiagnostics().LoopWraps >= before.LoopWraps + 2);
@@ -252,14 +252,14 @@ internal sealed class TimbreMotionSmoke
         Require(runtime.GetDiagnostics().PlaybacksStarted == before.PlaybacksStarted + 1, "Hover started a playback.");
 
         await servo.ClickAsync(ServoTarget.ById("loop-stop"));
-        await WaitUntilAsync(() => looper.State == SoundPlaybackState.Canceled);
+        await WaitUntilAsync(() => looper.State == TimbrePlaybackState.Canceled);
         Record("reactive/loop-fade-and-hover",
             ("wraps", runtime.GetDiagnostics().LoopWraps - before.LoopWraps),
             ("fadePublications", completedPublications),
             ("hoverVolume", looper.Volume));
     }
 
-    private async Task<SoundPlayback> LatestAcceptedAsync(long startedBefore)
+    private async Task<TimbrePlayback> LatestAcceptedAsync(long startedBefore)
     {
         await WaitUntilAsync(() => runtime.GetDiagnostics().PlaybacksStarted > startedBefore);
         lock (accepted)
@@ -291,12 +291,12 @@ internal sealed class TimbreMotionSmoke
         return gains.ToArray();
     }
 
-    private static async Task<float[]> RenderOfflineAsync(SoundClip clip)
+    private static async Task<float[]> RenderOfflineAsync(TimbreClip clip)
     {
         RecordingSink sink = new();
-        using SoundRuntime offline = new(new SoundRuntimeOptions { Output = sink });
-        SoundPlaybackResult result = await offline.CreateScope().Play(clip).Completion.WaitAsync(Timeout);
-        Require(result.State == SoundPlaybackState.Completed, $"Deterministic sink: {result.State} ({result.Error?.Message}).");
+        using TimbreRuntime offline = new(new TimbreRuntimeOptions { Output = sink });
+        TimbrePlaybackResult result = await offline.CreateScope().Play(clip).Completion.WaitAsync(Timeout);
+        Require(result.State == TimbrePlaybackState.Completed, $"Deterministic sink: {result.State} ({result.Error?.Message}).");
         return sink.ToArray();
     }
 
@@ -334,7 +334,7 @@ internal sealed class TimbreMotionSmoke
 
     private void WriteDiagnostics(Exception? failure)
     {
-        SdlSoundOutputDiagnostics device = output.GetDiagnostics();
+        SdlTimbreOutputDiagnostics device = output.GetDiagnostics();
         var engine = runtime.GetDiagnostics();
         Dictionary<string, object?> report = new()
         {

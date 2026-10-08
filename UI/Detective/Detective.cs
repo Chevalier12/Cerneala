@@ -109,9 +109,9 @@ public sealed class Detective
     public MotionGraphSnapshot CaptureMotion() =>
         root.Motion.Diagnostics.CreateSnapshot(root.Motion);
 
-    // Null when the root has no SoundRuntime.
-    public SoundDiagnosticsSnapshot? CaptureSound() =>
-        root.SoundRuntime is { } runtime ? SoundDiagnosticsSnapshot.Capture(runtime) : null;
+    // Null when the root has no TimbreRuntime.
+    public TimbreDiagnosticsSnapshot? CaptureTimbre() =>
+        root.TimbreRuntime is { } runtime ? TimbreDiagnosticsSnapshot.Capture(runtime) : null;
 
     public RoutedEventTraceSnapshot TraceRoutedEvent(
         UIElement target,

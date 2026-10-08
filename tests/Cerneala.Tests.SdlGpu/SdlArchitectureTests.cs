@@ -82,11 +82,11 @@ public sealed class SdlArchitectureTests
             typeof(ISdlApi).GetMethods(),
             method => method.Name.Contains("Audio", StringComparison.Ordinal));
         Assert.False(typeof(ISdlAudioApi).IsPublic);
-        Assert.False(typeof(SdlSoundOutput).IsPublic);
+        Assert.False(typeof(SdlTimbreOutput).IsPublic);
         Assert.False(typeof(NativeSdlAudioApi).IsPublic);
         Assert.DoesNotContain(
             typeof(SdlPlatformLifetime).Assembly.GetExportedTypes(),
-            type => type.Name.Contains("Sound", StringComparison.Ordinal) ||
+            type => type.Name.Contains("Timbre", StringComparison.Ordinal) ||
                 type.Name.Contains("Audio", StringComparison.Ordinal));
     }
 

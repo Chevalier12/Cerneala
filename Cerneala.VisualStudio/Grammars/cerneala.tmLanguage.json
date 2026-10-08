@@ -117,7 +117,7 @@
       "patterns": [
         {
           "name": "meta.element.sound.cerneala",
-          "begin": "(</?)((?:[A-Za-z_][A-Za-z0-9_-]*:)?SoundClip)\\b",
+          "begin": "(</?)((?:[A-Za-z_][A-Za-z0-9_-]*:)?TimbreClip)\\b",
           "beginCaptures": {
             "1": { "name": "punctuation.definition.tag.begin.cerneala" }
           },
@@ -345,7 +345,7 @@
         },
         {
           "name": "keyword.control.sound.cerneala",
-          "match": "@(?:sound|pause|resume|seek|modifier)\\b"
+          "match": "@(?:timbre|pause|resume|seek|modifier)\\b"
         }
       ]
     },

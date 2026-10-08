@@ -362,14 +362,14 @@ public sealed partial class UiMarkupGenerator
                 string? ownerName = null,
                 string? partName = null,
                 ResolvedPrismMotionTarget? prism = null,
-                ResolvedSoundMotionTarget? sound = null)
+                ResolvedTimbreMotionTarget? sound = null)
             {
                 Kind = kind;
                 Element = element;
                 OwnerName = ownerName;
                 PartName = partName;
                 Prism = prism;
-                Sound = sound;
+                Timbre = sound;
             }
 
             public ResolvedMotionTargetKind Kind { get; }
@@ -382,15 +382,15 @@ public sealed partial class UiMarkupGenerator
 
             public ResolvedPrismMotionTarget? Prism { get; }
 
-            public ResolvedSoundMotionTarget? Sound { get; }
+            public ResolvedTimbreMotionTarget? Timbre { get; }
         }
 
-        // `$self.sound.Handle.Parameter`: the Sound handle whose occupant the
+        // `$self.timbre.Handle.Parameter`: the Timbre handle whose occupant the
         // animation captures and the parameter name it resolves on that
         // occupant's clip, both validated by the bound Language model.
-        private sealed class ResolvedSoundMotionTarget
+        private sealed class ResolvedTimbreMotionTarget
         {
-            public ResolvedSoundMotionTarget(string handleName, string parameterName)
+            public ResolvedTimbreMotionTarget(string handleName, string parameterName)
             {
                 HandleName = handleName;
                 ParameterName = parameterName;
@@ -749,8 +749,8 @@ public sealed partial class UiMarkupGenerator
                 syntaxExecutions.AddRange(trigger.Body);
             }
 
-            // @cancel of a Sound handle is a Sound action, not a Motion command.
-            syntaxExecutions.RemoveAll(IsSoundNode);
+            // @cancel of a Timbre handle is a Timbre action, not a Motion command.
+            syntaxExecutions.RemoveAll(IsTimbreNode);
 
             List<ResolvedMotionAnimation> animations = [];
             List<ResolvedMotionSet> sets = [];
@@ -765,7 +765,7 @@ public sealed partial class UiMarkupGenerator
             }
 
             List<ResolvedMotionEventTrigger> eventTriggers = [];
-            List<(DirectiveOnNode Trigger, IEventSymbol Event)> soundTriggers = [];
+            List<(DirectiveOnNode Trigger, IEventSymbol Event)> timbreTriggers = [];
             foreach (DirectiveOnNode trigger in aspect.EventTriggers)
             {
                 IEventSymbol? eventSymbol = FindMotionEvent(targetType, trigger.EventName);
@@ -786,12 +786,12 @@ public sealed partial class UiMarkupGenerator
                     return false;
                 }
 
-                // A body with Sound actions or audio Motion is one handler owned
-                // by the Sound session, so its actions keep source order and
+                // A body with Timbre actions or audio Motion is one handler owned
+                // by the Timbre session, so its actions keep source order and
                 // survive hiding.
-                if (trigger.Actions.Any(IsSoundOwnedNode))
+                if (trigger.Actions.Any(IsTimbreOwnedNode))
                 {
-                    soundTriggers.Add((trigger, eventSymbol));
+                    timbreTriggers.Add((trigger, eventSymbol));
                     continue;
                 }
 
@@ -804,7 +804,7 @@ public sealed partial class UiMarkupGenerator
             resolvedMotionAspects.Add(
                 (aspect, applicationElement),
                 new ResolvedMotionAspect(animations, sets, compositions, cancelCommands, eventTriggers));
-            resolvedSoundTriggers[(aspect, applicationElement)] = soundTriggers;
+            resolvedTimbreTriggers[(aspect, applicationElement)] = timbreTriggers;
             return true;
         }
 
@@ -1543,7 +1543,7 @@ public sealed partial class UiMarkupGenerator
 
                 MotionSpecSyntax? spec = destination.Spec ?? animation.DefaultSpec;
                 string? specVariable = null;
-                if ((target.Prism is null && target.Sound is null || spec is not null) &&
+                if ((target.Prism is null && target.Timbre is null || spec is not null) &&
                     !TryResolveMotionSpec(
                         applicationElement,
                         spec,
@@ -1638,9 +1638,9 @@ public sealed partial class UiMarkupGenerator
                     out property);
             }
 
-            if (IsSoundMotionTarget(assignment.Target))
+            if (IsTimbreMotionTarget(assignment.Target))
             {
-                return TryResolveSoundMotionTarget(applicationElement, aspect, assignment, out target, out property);
+                return TryResolveTimbreMotionTarget(applicationElement, aspect, assignment, out target, out property);
             }
 
             target = null;

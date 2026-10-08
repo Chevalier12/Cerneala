@@ -41,7 +41,7 @@ public sealed class ExternalConsumerTests
     [Fact]
     public void PlanExampleCompilesInTheConsumerAssembly()
     {
-        Func<Cerneala.Timbre.SoundScope, Task> example = StandaloneUsage.RunPlanExampleAsync;
+        Func<Cerneala.Timbre.TimbreScope, Task> example = StandaloneUsage.RunPlanExampleAsync;
         Assert.NotNull(example);
         Assert.NotNull(StandaloneUsage.CreateConstantModifierClip());
     }

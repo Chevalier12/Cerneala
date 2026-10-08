@@ -76,11 +76,11 @@ internal static class TimbreDecodingBenchmarkRunner
             for (int sample = 0; sample < Samples; sample++)
             {
                 HeldOutput output = new();
-                using SoundRuntime runtime = new(new SoundRuntimeOptions { Output = output });
-                using SoundScope scope = runtime.CreateScope();
-                SoundClip clip = new(SoundSource.FromFile(Path.GetFullPath(Path.Combine(corpus, name))), loading: SoundLoading.Streaming);
+                using TimbreRuntime runtime = new(new TimbreRuntimeOptions { Output = output });
+                using TimbreScope scope = runtime.CreateScope();
+                TimbreClip clip = new(TimbreSource.FromFile(Path.GetFullPath(Path.Combine(corpus, name))), loading: TimbreLoading.Streaming);
                 long started = Stopwatch.GetTimestamp();
-                SoundPlayback playback = scope.Play(clip);
+                TimbrePlayback playback = scope.Play(clip);
                 long queued = output.FirstSubmit.GetAwaiter().GetResult();
                 milliseconds[sample] = (queued - started) * 1000.0 / Stopwatch.Frequency;
                 playback.Cancel();
@@ -93,7 +93,7 @@ internal static class TimbreDecodingBenchmarkRunner
 
     // Accepts one software queue of PCM, never consumes it, and timestamps the
     // first submission (the first PCM queued).
-    private sealed class HeldOutput : ISoundOutput
+    private sealed class HeldOutput : ITimbreOutput
     {
         private readonly TaskCompletionSource<long> firstSubmit = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -101,7 +101,7 @@ internal static class TimbreDecodingBenchmarkRunner
 
         public int QueuedFrames { get; private set; }
 
-        public void Open(ISoundOutputClient client)
+        public void Open(ITimbreOutputClient client)
         {
         }
 
@@ -121,7 +121,7 @@ internal static class TimbreDecodingBenchmarkRunner
         // Measurement buffers exist before the baseline: they are not the reader's.
         float[] block = new float[BlockFrames * 2];
         double[] samples = new double[MeasuredBlocks];
-        SoundMemoryPool pool = new(long.MaxValue);
+        TimbreMemoryPool pool = new(long.MaxValue);
         Collect();
         long baseline = GC.GetTotalMemory(forceFullCollection: true);
         (object Timing, long AfterOpen, long Peak, long Reserved) live = MeasureLive(path, pool, block, samples);
@@ -142,12 +142,12 @@ internal static class TimbreDecodingBenchmarkRunner
     // The reader lives only inside this frame, so after it returns nothing
     // the JIT kept alive can hold the reader graph.
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static (object Timing, long AfterOpen, long Peak, long Reserved) MeasureLive(string path, SoundMemoryPool pool, float[] block, double[] samples)
+    private static (object Timing, long AfterOpen, long Peak, long Reserved) MeasureLive(string path, TimbreMemoryPool pool, float[] block, double[] samples)
     {
-        SoundMemoryBudget budget = new(pool, path);
+        TimbreMemoryBudget budget = new(pool, path);
         long allocatedBefore = GC.GetAllocatedBytesForCurrentThread();
         Stopwatch clock = Stopwatch.StartNew();
-        SoundReader reader = SoundDecoders.Open(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, SoundSource.FileBufferBytes), path, budget);
+        TimbreReader reader = TimbreDecoders.Open(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, TimbreSource.FileBufferBytes), path, budget);
         double openMs = clock.Elapsed.TotalMilliseconds;
         long openAllocated = GC.GetAllocatedBytesForCurrentThread() - allocatedBefore;
         Read(reader, block);
@@ -221,9 +221,9 @@ internal static class TimbreDecodingBenchmarkRunner
         }, afterOpen, peak, reserved);
     }
 
-    private static bool Read(SoundReader reader, float[] block)
+    private static bool Read(TimbreReader reader, float[] block)
     {
-        SoundReadResult result = reader.ReadAsync(block, CancellationToken.None).AsTask().GetAwaiter().GetResult();
+        TimbreReadResult result = reader.ReadAsync(block, CancellationToken.None).AsTask().GetAwaiter().GetResult();
         return result.Frames > 0;
     }
 

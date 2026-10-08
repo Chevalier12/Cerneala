@@ -5,31 +5,31 @@ using Cerneala.UI.Elements;
 namespace TimbreConsumer;
 
 // Executable scenarios for an application assembly that sees only the public
-// Timbre and UI surface. The sink below is this consumer's own ISoundOutput.
+// Timbre and UI surface. The sink below is this consumer's own ITimbreOutput.
 public static class ConsumerScenarios
 {
     public static async Task<IReadOnlyList<string>> RunStandaloneAsync()
     {
         List<string> log = [];
         ManualOutput output = new();
-        using SoundRuntime runtime = new(new SoundRuntimeOptions { Output = output });
-        using SoundScope sounds = runtime.CreateScope();
+        using TimbreRuntime runtime = new(new TimbreRuntimeOptions { Output = output });
+        using TimbreScope sounds = runtime.CreateScope();
 
-        var plainSound = new SoundClip(SoundSource.FromReader(() => new RampReader(48000), "ramp"), loading: SoundLoading.Preload);
-        await runtime.PrepareAsync(plainSound);
-        var first = sounds.Play(plainSound, start => start.Loop = true); // looping: only Cancel ends it
-        var second = sounds.Play(plainSound, start => start.Loop = true); // looping: only Cancel ends it
+        var plainTimbre = new TimbreClip(TimbreSource.FromReader(() => new RampReader(48000), "ramp"), loading: TimbreLoading.Preload);
+        await runtime.PrepareAsync(plainTimbre);
+        var first = sounds.Play(plainTimbre, start => start.Loop = true); // looping: only Cancel ends it
+        var second = sounds.Play(plainTimbre, start => start.Loop = true); // looping: only Cancel ends it
         first.Cancel();
-        log.Add($"overlap firstCanceled={first.State == SoundPlaybackState.Canceled} secondActive={IsActive(second)}");
+        log.Add($"overlap firstCanceled={first.State == TimbrePlaybackState.Canceled} secondActive={IsActive(second)}");
 
-        var toneCutoff = new SoundParameter<float>(name: "ToneCutoff", defaultValue: 1200f);
-        var filteredSound = new SoundClip(
-            source: SoundSource.FromReader(() => new RampReader(96000), "filtered"),
+        var toneCutoff = new TimbreParameter<float>(name: "ToneCutoff", defaultValue: 1200f);
+        var filteredTimbre = new TimbreClip(
+            source: TimbreSource.FromReader(() => new RampReader(96000), "filtered"),
             parameters: [toneCutoff],
             modifiers: [new LowPass(cutoff: toneCutoff), new Delay(time: 0.05f, feedback: 0.3f, mix: 0.2f)]);
 
         var slot = sounds.CreateHandle();
-        var playback = sounds.Play(filteredSound, start =>
+        var playback = sounds.Play(filteredTimbre, start =>
         {
             start.Volume = 0.2f;
             start.Set(toneCutoff, 800f);
@@ -45,7 +45,7 @@ public static class ConsumerScenarios
         playback.Resume();
         await output.WaitForFramesAsync(1);
 
-        var replacement = sounds.Play(plainSound, start => start.Loop = true, handle: slot); // looping: a free-running output cannot finish it before the checks
+        var replacement = sounds.Play(plainTimbre, start => start.Loop = true, handle: slot); // looping: a free-running output cannot finish it before the checks
         log.Add($"slot old={playback.State} current={(ReferenceEquals(slot.Current, replacement) ? "replacement" : "other")}");
         playback.Cancel(); // already replaced: does not touch the new occupant
         log.Add($"stale cancel replacementActive={IsActive(replacement)}");
@@ -53,7 +53,7 @@ public static class ConsumerScenarios
         log.Add($"slot cancel current={replacement.State} empty={slot.Current is null}");
 
         second.Cancel();
-        SoundPlaybackResult result = await second.Completion;
+        TimbrePlaybackResult result = await second.Completion;
         log.Add($"result={result.State} error={result.Error is null}");
         return log;
     }
@@ -62,37 +62,37 @@ public static class ConsumerScenarios
     public static IReadOnlyList<string> RunElementAndSceneOwners()
     {
         List<string> log = [];
-        using SoundRuntime runtime = new(new SoundRuntimeOptions { Output = new ManualOutput() });
+        using TimbreRuntime runtime = new(new TimbreRuntimeOptions { Output = new ManualOutput() });
         UIRoot root = new();
-        root.SetSoundRuntime(runtime);
+        root.SetTimbreRuntime(runtime);
         Border button = new();
         RenderSurface2D surface = new();
         Scene2D scene = new();
         surface.Scene = scene;
         root.VisualChildren.Add(button);
         root.VisualChildren.Add(surface);
-        SoundClip clip = new(SoundSource.FromReader(() => new RampReader(48000)));
+        TimbreClip clip = new(TimbreSource.FromReader(() => new RampReader(48000)));
 
-        SoundPlayback click = button.Sounds.Play(clip, start => start.Loop = true); // only detach ends it
-        SoundPlayback ambience = scene.Sounds.Play(clip, start => start.Loop = true);
+        TimbrePlayback click = button.Timbre.Play(clip, start => start.Loop = true); // only detach ends it
+        TimbrePlayback ambience = scene.Timbre.Play(clip, start => start.Loop = true);
         root.VisualChildren.Remove(button);
         log.Add($"detached button={click.State} sceneActive={IsActive(ambience)}");
 
         root.VisualChildren.Add(button);
-        log.Add($"reattached scope fresh={!button.Sounds.IsDisposed}");
+        log.Add($"reattached scope fresh={!button.Timbre.IsDisposed}");
         runtime.Dispose();
         log.Add($"runtime disposed scene={ambience.State}");
         return log;
     }
 
-    private static bool IsActive(SoundPlayback playback) =>
-        playback.State is SoundPlaybackState.Pending or SoundPlaybackState.Playing;
+    private static bool IsActive(TimbrePlayback playback) =>
+        playback.State is TimbrePlaybackState.Pending or TimbrePlaybackState.Playing;
 
-    public sealed class ManualOutput : ISoundOutput
+    public sealed class ManualOutput : ITimbreOutput
     {
         private readonly object gate = new();
         private readonly List<(long Frames, TaskCompletionSource Signal)> waiters = [];
-        private ISoundOutputClient? client;
+        private ITimbreOutputClient? client;
         private long submitted;
         private long consumed;
 
@@ -107,7 +107,7 @@ public static class ConsumerScenarios
             }
         }
 
-        public void Open(ISoundOutputClient client)
+        public void Open(ITimbreOutputClient client)
         {
             lock (gate)
             {
@@ -118,11 +118,11 @@ public static class ConsumerScenarios
         public void Submit(ReadOnlySpan<float> samples)
         {
             List<TaskCompletionSource> ready = [];
-            ISoundOutputClient? notify;
+            ITimbreOutputClient? notify;
             lock (gate)
             {
                 // Behave like a device that plays each block immediately.
-                submitted += samples.Length / SoundRuntime.ChannelCount;
+                submitted += samples.Length / TimbreRuntime.ChannelCount;
                 consumed = submitted;
                 notify = client;
                 waiters.RemoveAll(waiter =>
@@ -166,15 +166,15 @@ public static class ConsumerScenarios
         }
     }
 
-    private sealed class RampReader(long lengthFrames) : SoundReader
+    private sealed class RampReader(long lengthFrames) : TimbreReader
     {
         private long position;
 
         public override long? LengthFrames => lengthFrames;
 
-        public override ValueTask<SoundReadResult> ReadAsync(Memory<float> destination, CancellationToken cancellationToken)
+        public override ValueTask<TimbreReadResult> ReadAsync(Memory<float> destination, CancellationToken cancellationToken)
         {
-            int frames = (int)Math.Min(destination.Length / SoundRuntime.ChannelCount, lengthFrames - position);
+            int frames = (int)Math.Min(destination.Length / TimbreRuntime.ChannelCount, lengthFrames - position);
             Span<float> span = destination.Span;
             for (int frame = 0; frame < frames; frame++)
             {
@@ -184,7 +184,7 @@ public static class ConsumerScenarios
             }
 
             position += frames;
-            return ValueTask.FromResult(new SoundReadResult(frames, position == lengthFrames));
+            return ValueTask.FromResult(new TimbreReadResult(frames, position == lengthFrames));
         }
 
         public override ValueTask SeekAsync(long frame, CancellationToken cancellationToken)

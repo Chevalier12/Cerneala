@@ -34,8 +34,8 @@ public sealed partial class UiMarkupGenerator
                 currentPostLines.Add(templateEmissionContexts.Peek().ContextVariable + ".RegisterLifetime(" + sessionName + ");");
             }
 
-            // Audio executions belong to the Aspect's Sound session; they are
-            // emitted with the Sound actions.
+            // Audio executions belong to the Aspect's Timbre session; they are
+            // emitted with the Timbre actions.
             foreach (ResolvedMotionAnimation animation in resolved.Animations.Where(animation => !IsAudioMotion(animation)))
             {
                 if (animation.Stagger is not null)
@@ -115,7 +115,7 @@ public sealed partial class UiMarkupGenerator
 
         // One @animate (or @keyframes timeline): a factory of its parallel
         // leaves and the Action starting it through `startMethod` on the
-        // owning session (StartMotionExecution or StartSoundMotion).
+        // owning session (StartMotionExecution or StartTimbreMotion).
         private void EmitMotionAnimationActivation(
             ResolvedMotionAnimation animation,
             string variable,
@@ -160,10 +160,10 @@ public sealed partial class UiMarkupGenerator
                         BuildDurationExpression(property.Keyframes.Duration) + ");");
                 }
                 string optionsCode = EmitMotionOptions(animation.Syntax.Options, animation.Parameters);
-                if (property.Target.Sound is ResolvedSoundMotionTarget sound)
+                if (property.Target.Timbre is ResolvedTimbreMotionTarget sound)
                 {
                     starts.Add(
-                        "global::Cerneala.UI.Markup.GeneratedMarkup.StartSoundMotionProperty(" + sessionName + ", " +
+                        "global::Cerneala.UI.Markup.GeneratedMarkup.StartTimbreMotionProperty(" + sessionName + ", " +
                         Literal(sound.HandleName) + ", " + Literal(sound.ParameterName) + ", " +
                         (hasFrom ? "true" : "false") + ", " + fromCode + ", " +
                         (toCurrent ? "true" : "false") + ", " + toCode + ", " + specCode + ", " + optionsCode + ")");

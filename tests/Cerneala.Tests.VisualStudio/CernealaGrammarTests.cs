@@ -102,12 +102,12 @@ public sealed class CernealaGrammarTests
     }
 
     [Fact]
-    public void SoundDirectivesKeepTheirScopesWithoutSemicolonsAndDoNotLeakIntoTheFollowingTag()
+    public void TimbreDirectivesKeepTheirScopesWithoutSemicolonsAndDoNotLeakIntoTheFollowingTag()
     {
         IReadOnlyList<TokenizedSpan> tokens = Tokenize(
             [
                 "<Button.Aspect>",
-                "  @on Click { @sound $Tone as Playback",
+                "  @on Click { @timbre $Tone as Playback",
                 "  @pause Playback @resume Playback @seek Playback to 500ms",
                 "  @sou",
                 "</Button.Aspect>",
@@ -115,7 +115,7 @@ public sealed class CernealaGrammarTests
             ],
             ThemeName.VisualStudioDark);
 
-        foreach (string keyword in new[] { "@sound", "@pause", "@resume", "@seek" })
+        foreach (string keyword in new[] { "@timbre", "@pause", "@resume", "@seek" })
         {
             Assert.Contains(tokens, token => token.Text == keyword &&
                 token.Scopes.Contains("keyword.control.sound.cerneala", StringComparer.Ordinal));

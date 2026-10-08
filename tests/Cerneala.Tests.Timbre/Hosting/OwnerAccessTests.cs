@@ -14,16 +14,16 @@ namespace Cerneala.Tests.Timbre.Hosting;
 public sealed class OwnerAccessTests
 {
     [Fact]
-    public void ElementSoundsRequiresAnAttachedElementAndARootRuntime()
+    public void ElementTimbreRequiresAnAttachedElementAndARootRuntime()
     {
         PlainElement detached = new();
-        Assert.Throws<InvalidOperationException>(() => detached.Sounds);
+        Assert.Throws<InvalidOperationException>(() => detached.Timbre);
 
         UIRoot root = new();
         PlainElement element = new();
         root.VisualChildren.Add(element);
-        Assert.Null(root.SoundRuntime);
-        Assert.Throws<InvalidOperationException>(() => element.Sounds);
+        Assert.Null(root.TimbreRuntime);
+        Assert.Throws<InvalidOperationException>(() => element.Timbre);
     }
 
     [Fact]
@@ -31,30 +31,30 @@ public sealed class OwnerAccessTests
     {
         using TimbreRig rig = new();
         UIRoot root = new();
-        root.SetSoundRuntime(rig.Runtime);
+        root.SetTimbreRuntime(rig.Runtime);
         PlainElement element = new();
         root.VisualChildren.Add(element);
-        SoundClip clip = TimbreRig.Clip(new DeterministicSoundSourceFactory(48000));
+        TimbreClip clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
 
-        SoundScope scope = element.Sounds;
-        Assert.Same(scope, element.Sounds);
+        TimbreScope scope = element.Timbre;
+        Assert.Same(scope, element.Timbre);
         Assert.Same(rig.Runtime, scope.Runtime);
-        SoundPlayback playback = scope.Play(clip);
-        SoundPlayback rootPlayback = root.Sounds.Play(clip);
+        TimbrePlayback playback = scope.Play(clip);
+        TimbrePlayback rootPlayback = root.Timbre.Play(clip);
 
         root.VisualChildren.Remove(element);
 
-        Assert.Equal(SoundPlaybackState.Canceled, playback.State);
+        Assert.Equal(TimbrePlaybackState.Canceled, playback.State);
         Assert.True(scope.IsDisposed);
         Assert.Throws<ObjectDisposedException>(() => scope.Play(clip));
-        Assert.Throws<InvalidOperationException>(() => element.Sounds);
-        Assert.Equal(SoundPlaybackState.Pending, rootPlayback.State);
+        Assert.Throws<InvalidOperationException>(() => element.Timbre);
+        Assert.Equal(TimbrePlaybackState.Pending, rootPlayback.State);
 
         root.VisualChildren.Add(element);
-        SoundScope reattached = element.Sounds;
+        TimbreScope reattached = element.Timbre;
         Assert.NotSame(scope, reattached);
         Assert.False(reattached.IsDisposed);
-        Assert.Equal(SoundPlaybackState.Canceled, playback.State); // not resurrected
+        Assert.Equal(TimbrePlaybackState.Canceled, playback.State); // not resurrected
     }
 
     [Fact]
@@ -62,18 +62,18 @@ public sealed class OwnerAccessTests
     {
         using TimbreRig rig = new();
         UIRoot root = new();
-        root.SetSoundRuntime(rig.Runtime);
+        root.SetTimbreRuntime(rig.Runtime);
         PlainElement parent = new();
         PlainElement child = new();
         parent.VisualChildren.Add(child);
         root.VisualChildren.Add(parent);
-        SoundPlayback playback = child.Sounds.Play(TimbreRig.Clip(new DeterministicSoundSourceFactory(48000)));
+        TimbrePlayback playback = child.Timbre.Play(TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000)));
 
         parent.Visibility = Visibility.Collapsed;
         child.IsVisible = false;
 
-        Assert.Equal(SoundPlaybackState.Pending, playback.State);
-        Assert.False(child.Sounds.IsDisposed);
+        Assert.Equal(TimbrePlaybackState.Pending, playback.State);
+        Assert.False(child.Timbre.IsDisposed);
     }
 
     [Fact]
@@ -82,36 +82,36 @@ public sealed class OwnerAccessTests
         using TimbreRig first = new();
         using TimbreRig second = new();
         UIRoot root = new();
-        root.SetSoundRuntime(first.Runtime);
+        root.SetTimbreRuntime(first.Runtime);
         PlainElement element = new();
         root.VisualChildren.Add(element);
-        SoundScope oldScope = element.Sounds;
-        SoundPlayback playback = oldScope.Play(TimbreRig.Clip(new DeterministicSoundSourceFactory(48000)));
+        TimbreScope oldScope = element.Timbre;
+        TimbrePlayback playback = oldScope.Play(TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000)));
 
-        root.SetSoundRuntime(first.Runtime);
+        root.SetTimbreRuntime(first.Runtime);
         Assert.False(oldScope.IsDisposed);
-        root.SetSoundRuntime(second.Runtime);
+        root.SetTimbreRuntime(second.Runtime);
 
         Assert.True(oldScope.IsDisposed);
-        Assert.Equal(SoundPlaybackState.Canceled, playback.State);
-        Assert.Same(second.Runtime, element.Sounds.Runtime);
+        Assert.Equal(TimbrePlaybackState.Canceled, playback.State);
+        Assert.Same(second.Runtime, element.Timbre.Runtime);
         Assert.False(first.Runtime.IsDisposed); // the root never owns a runtime
 
-        root.SetSoundRuntime(null);
-        Assert.Null(root.SoundRuntime);
-        Assert.Throws<InvalidOperationException>(() => element.Sounds);
+        root.SetTimbreRuntime(null);
+        Assert.Null(root.TimbreRuntime);
+        Assert.Throws<InvalidOperationException>(() => element.Timbre);
     }
 
     [Fact]
-    public async Task ElementSoundsRequiresTheOwnerThread()
+    public async Task ElementTimbreRequiresTheOwnerThread()
     {
         using TimbreRig rig = new();
         UIRoot root = new();
-        root.SetSoundRuntime(rig.Runtime);
+        root.SetTimbreRuntime(rig.Runtime);
         PlainElement element = new();
         root.VisualChildren.Add(element);
 
-        Exception? failure = await Task.Run(() => Record.Exception(() => element.Sounds));
+        Exception? failure = await Task.Run(() => Record.Exception(() => element.Timbre));
 
         Assert.IsType<InvalidOperationException>(failure);
     }
@@ -121,16 +121,16 @@ public sealed class OwnerAccessTests
     {
         using TimbreRig rig = new();
         UIRoot root = new();
-        root.SetSoundRuntime(rig.Runtime);
+        root.SetTimbreRuntime(rig.Runtime);
         RenderSurface2D surface = new();
         Scene2D scene = new();
         surface.Scene = scene;
         root.VisualChildren.Add(surface);
 
-        SoundPlayback playback = scene.Sounds.Play(TimbreRig.Clip(new DeterministicSoundSourceFactory(48000)));
+        TimbrePlayback playback = scene.Timbre.Play(TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000)));
 
-        Assert.Same(rig.Runtime, scene.Sounds.Runtime);
-        Assert.Equal(SoundPlaybackState.Pending, playback.State);
+        Assert.Same(rig.Runtime, scene.Timbre.Runtime);
+        Assert.Equal(TimbrePlaybackState.Pending, playback.State);
     }
 
     [Fact]
@@ -138,33 +138,33 @@ public sealed class OwnerAccessTests
     {
         using TimbreRig rig = new();
         UIRoot root = new();
-        UiHost host = new(new UiHostOptions { Root = root, SoundRuntime = rig.Runtime });
+        UiHost host = new(new UiHostOptions { Root = root, TimbreRuntime = rig.Runtime });
         UIRoot replacement = new();
-        replacement.SetSoundRuntime(null);
+        replacement.SetTimbreRuntime(null);
         host.SetRoot(replacement);
 
-        Assert.Same(rig.Runtime, root.SoundRuntime);
-        Assert.Same(rig.Runtime, replacement.SoundRuntime);
+        Assert.Same(rig.Runtime, root.TimbreRuntime);
+        Assert.Same(rig.Runtime, replacement.TimbreRuntime);
         Assert.Null(Application.Current);
 
         UIRoot untouched = new();
         using TimbreRig other = new();
-        untouched.SetSoundRuntime(other.Runtime);
+        untouched.SetTimbreRuntime(other.Runtime);
         _ = new UiHost(new UiHostOptions { Root = untouched });
-        Assert.Same(other.Runtime, untouched.SoundRuntime);
+        Assert.Same(other.Runtime, untouched.TimbreRuntime);
     }
 
     [Fact]
     public void ApplicationCreatesItsRuntimeLazilyAndDisposesItOnExit()
     {
         Application app = new();
-        SoundRuntime runtime = app.SoundRuntime;
-        SoundScope sounds = app.Sounds;
-        Assert.Same(runtime, app.SoundRuntime);
-        Assert.Same(sounds, app.Sounds);
+        TimbreRuntime runtime = app.TimbreRuntime;
+        TimbreScope sounds = app.Timbre;
+        Assert.Same(runtime, app.TimbreRuntime);
+        Assert.Same(sounds, app.Timbre);
         Assert.Same(runtime, sounds.Runtime);
-        Assert.Throws<InvalidOperationException>(() => app.SoundRuntime = new SoundRuntime());
-        SoundPlayback playback = sounds.Play(TimbreRig.Clip(new DeterministicSoundSourceFactory(48000)));
+        Assert.Throws<InvalidOperationException>(() => app.TimbreRuntime = new TimbreRuntime());
+        TimbrePlayback playback = sounds.Play(TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000)));
 
         app.CompleteExit();
 
@@ -173,49 +173,49 @@ public sealed class OwnerAccessTests
         // The default runtime has no output: the playback either already failed
         // with DeviceUnavailable or was canceled by the exit; it never survives it.
         Assert.True(playback.Completion.IsCompleted);
-        Assert.Contains(playback.State, new[] { SoundPlaybackState.Canceled, SoundPlaybackState.Failed });
-        Assert.Throws<ObjectDisposedException>(() => app.Sounds);
-        Assert.Throws<ObjectDisposedException>(() => app.SoundRuntime);
+        Assert.Contains(playback.State, new[] { TimbrePlaybackState.Canceled, TimbrePlaybackState.Failed });
+        Assert.Throws<ObjectDisposedException>(() => app.Timbre);
+        Assert.Throws<ObjectDisposedException>(() => app.TimbreRuntime);
     }
 
     [Fact]
-    public async Task DetectiveCapturesARootsSoundRuntimeWithoutDrivingIt()
+    public async Task DetectiveCapturesARootsTimbreRuntimeWithoutDrivingIt()
     {
         UIRoot root = new();
-        Assert.Null(root.Detective.CaptureSound());
+        Assert.Null(root.Detective.CaptureTimbre());
 
         using TimbreRig rig = new();
-        root.SetSoundRuntime(rig.Runtime);
-        SoundDiagnosticsSnapshot idle = root.Detective.CaptureSound()!;
-        Assert.Equal(new SoundDiagnosticsSnapshot(false, 0, 0, 0, 0, 0, 0, 0), idle);
+        root.SetTimbreRuntime(rig.Runtime);
+        TimbreDiagnosticsSnapshot idle = root.Detective.CaptureTimbre()!;
+        Assert.Equal(new TimbreDiagnosticsSnapshot(false, 0, 0, 0, 0, 0, 0, 0), idle);
         Assert.Equal(0, rig.Output.OpenCount);
 
-        SoundPlayback playback = rig.Scope.Play(new SoundClip(
-            SoundSource.FromReader(new DeterministicSoundSourceFactory(48000).Open),
-            loading: SoundLoading.Preload,
+        TimbrePlayback playback = rig.Scope.Play(new TimbreClip(
+            TimbreSource.FromReader(new DeterministicTimbreSourceFactory(48000).Open),
+            loading: TimbreLoading.Preload,
             modifiers: [new Delay(time: 0.01f)]));
         await rig.StartAsync(playback);
-        SoundDiagnosticsSnapshot active = root.Detective.CaptureSound()!;
+        TimbreDiagnosticsSnapshot active = root.Detective.CaptureTimbre()!;
 
         Assert.True(active.OutputOpen);
         Assert.Equal(1, active.ActivePlaybacks);
         Assert.Equal(48000L * 8, active.CacheBytes);
         Assert.Equal(2L * 480 * sizeof(float), active.DspStateBytes);
-        Assert.Equal(SoundPlaybackState.Playing, playback.State);
+        Assert.Equal(TimbrePlaybackState.Playing, playback.State);
     }
 
     [Fact]
     public void ApplicationKeepsAnAssignedRuntimeCallerOwned()
     {
         using TimbreRig rig = new();
-        Application app = new() { SoundRuntime = rig.Runtime };
-        SoundScope sounds = app.Sounds;
+        Application app = new() { TimbreRuntime = rig.Runtime };
+        TimbreScope sounds = app.Timbre;
 
         app.CompleteExit();
 
         Assert.True(sounds.IsDisposed);
         Assert.False(rig.Runtime.IsDisposed);
-        Assert.Throws<ArgumentNullException>(() => new Application().SoundRuntime = null!);
+        Assert.Throws<ArgumentNullException>(() => new Application().TimbreRuntime = null!);
     }
 
     private sealed class PlainElement : UIElement

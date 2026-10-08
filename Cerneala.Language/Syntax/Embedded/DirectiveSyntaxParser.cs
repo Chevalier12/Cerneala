@@ -14,18 +14,18 @@ internal static class DirectiveSyntaxParser
         "@when", "@if", "@on", "@presence", "@layout", "@scroll", "@drag", "@gesture",
         "@set", "@animate", "@keyframes", "@stagger", "@parallel", "@sequence", "@run",
         "@cancel", "@handle", "@parameter", "@from", "@to", "@default", "@template",
-        "@sound", "@pause", "@resume", "@seek", "@modifier"
+        "@timbre", "@pause", "@resume", "@seek", "@modifier"
     ];
 
     private static readonly string[] semicolonTerminatedMotionKeywords =
     [
         "@layout", "@drag", "@gesture", "@run", "@cancel", "@handle", "@parameter",
-        "@sound", "@pause", "@resume", "@seek"
+        "@timbre", "@pause", "@resume", "@seek"
     ];
 
-    private static readonly string[] soundStatementKeywords =
+    private static readonly string[] timbreStatementKeywords =
     [
-        "@sound", "@pause", "@resume", "@seek"
+        "@timbre", "@pause", "@resume", "@seek"
     ];
 
     private static readonly string[] prismKeywords =
@@ -122,10 +122,10 @@ internal static class DirectiveSyntaxParser
                             statementEnd--;
                         }
 
-                        bool sound = soundStatementKeywords.Contains(keyword, StringComparer.Ordinal);
+                        bool sound = timbreStatementKeywords.Contains(keyword, StringComparer.Ordinal);
                         statementDiagnostics.Add(new EmbeddedDiagnostic(
                             sound ? "CERNEALAUI030" : MissingDelimiterId(language),
-                            (sound ? "Sound" : "Motion") + " directive '" + keyword + "' must end with ';'.",
+                            (sound ? "Timbre" : "Motion") + " directive '" + keyword + "' must end with ';'.",
                             new TextSpan(absoluteOffset + start, Math.Max(1, statementEnd - start))));
                     }
                 }

@@ -31,22 +31,22 @@ internal abstract class DecodedSource : IDisposable
     {
         if (channels is < 1 or > 2)
         {
-            throw new SoundException(
-                SoundErrorKind.UnsupportedFormat,
+            throw new TimbreException(
+                TimbreErrorKind.UnsupportedFormat,
                 $"{codec} source '{sourceName}' has {channels} channels; only mono and stereo are supported.");
         }
 
         if (sampleRate is < MinSampleRate or > MaxSampleRate)
         {
-            throw new SoundException(
-                SoundErrorKind.UnsupportedFormat,
+            throw new TimbreException(
+                TimbreErrorKind.UnsupportedFormat,
                 $"{codec} source '{sourceName}' has a {sampleRate} Hz sample rate; 8–192 kHz is supported.");
         }
     }
 
-    protected static SoundException Invalid(string sourceName, string detail, Exception? inner = null) =>
-        new(SoundErrorKind.InvalidData, $"Sound source '{sourceName}' is invalid: {detail}", inner);
+    protected static TimbreException Invalid(string sourceName, string detail, Exception? inner = null) =>
+        new(TimbreErrorKind.InvalidData, $"Timbre source '{sourceName}' is invalid: {detail}", inner);
 
-    protected static SoundException Unsupported(string sourceName, string detail) =>
-        new(SoundErrorKind.UnsupportedFormat, $"Sound source '{sourceName}' is not supported: {detail}");
+    protected static TimbreException Unsupported(string sourceName, string detail) =>
+        new(TimbreErrorKind.UnsupportedFormat, $"Timbre source '{sourceName}' is not supported: {detail}");
 }

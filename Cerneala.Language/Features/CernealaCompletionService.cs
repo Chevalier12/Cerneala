@@ -31,7 +31,7 @@ internal sealed partial class CernealaCompletionService
             ["Spring"] = ["Name", "Stiffness", "Damping", "Mass", "RestSpeed", "RestDelta", "VelocityMode"],
             ["MotionClip"] = ["Name", "TargetType"],
             ["PrismComposition"] = ["Name"],
-            ["SoundClip"] = ["Name"]
+            ["TimbreClip"] = ["Name"]
         };
 
     private static readonly string[] TargetPropertyDirectiveKeywords =
@@ -136,9 +136,9 @@ internal sealed partial class CernealaCompletionService
             parameters = scopedArguments.Select(argument => argument.Name).ToArray();
         }
 
-        if (parameters is null && model?.GetCompletionSoundParameters(model.FindCompletionElement(offset), call.Name) is { } soundArguments)
+        if (parameters is null && model?.GetCompletionTimbreParameters(model.FindCompletionElement(offset), call.Name) is { } timbreArguments)
         {
-            parameters = soundArguments.Select(argument => argument.Name).ToArray();
+            parameters = timbreArguments.Select(argument => argument.Name).ToArray();
         }
 
         if (parameters is null)
@@ -311,7 +311,7 @@ internal sealed partial class CernealaCompletionService
 
         if (parent?.Name.EndsWith(".Resources", StringComparison.Ordinal) == true)
         {
-            foreach (string special in new[] { "Aspect", "SolidColorBrush", "LinearGradientBrush", "RadialGradientBrush", "ImageBrush", "DrawingBrush", "Tween", "Spring", "MotionClip", "PrismComposition", "SoundClip" })
+            foreach (string special in new[] { "Aspect", "SolidColorBrush", "LinearGradientBrush", "RadialGradientBrush", "ImageBrush", "DrawingBrush", "Tween", "Spring", "MotionClip", "PrismComposition", "TimbreClip" })
             {
                 Add(result, special, ElementInsertion(site, special), site.WordSpan,
                     CernealaCompletionItemKind.Element, "resource", "00");

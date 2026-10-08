@@ -19,8 +19,8 @@ internal sealed class PreviewRenderSession : IDisposable
     private readonly PreviewLoadContext loadContext;
     private readonly DesignPreviewSession session;
     private readonly UIElement root;
-    private readonly SoundRuntime sounds;
-    private readonly DisabledPreviewSoundOutput? disabledAudio;
+    private readonly TimbreRuntime sounds;
+    private readonly DisabledPreviewTimbreOutput? disabledAudio;
     private readonly Stopwatch clock = Stopwatch.StartNew();
     private byte[]? captureBuffer;
     private TimeSpan previousPump;
@@ -30,8 +30,8 @@ internal sealed class PreviewRenderSession : IDisposable
         PreviewLoadContext loadContext,
         DesignPreviewSession session,
         UIElement root,
-        SoundRuntime sounds,
-        DisabledPreviewSoundOutput? disabledAudio)
+        TimbreRuntime sounds,
+        DisabledPreviewTimbreOutput? disabledAudio)
     {
         this.loadContext = loadContext;
         this.session = session;
@@ -46,7 +46,7 @@ internal sealed class PreviewRenderSession : IDisposable
     // Output opens refused because preview audio is disabled.
     public int BlockedAudioRequests => disabledAudio?.BlockedOpens ?? 0;
 
-    internal SoundRuntime Sounds => sounds;
+    internal TimbreRuntime Timbre => sounds;
 
     public static PreviewRenderSession Create(
         PreviewCompilation compilation,
@@ -57,7 +57,7 @@ internal sealed class PreviewRenderSession : IDisposable
         SdlGpuApplicationBackend.EnsureRegistered();
         Environment.CurrentDirectory = compilation.ProjectDirectory;
         PreviewLoadContext loadContext = new(compilation.ReferencePaths);
-        SoundRuntime? sounds = null;
+        TimbreRuntime? sounds = null;
         try
         {
             using MemoryStream image = new(compilation.AssemblyImage, writable: false);
@@ -81,20 +81,20 @@ internal sealed class PreviewRenderSession : IDisposable
 
             // Each preview session owns its runtime, so replacing the session on
             // a recompile retires every old scope and nothing is restored.
-            DisabledPreviewSoundOutput? disabledAudio = audioEnabled ? null : new DisabledPreviewSoundOutput();
-            sounds = new SoundRuntime(new SoundRuntimeOptions
+            DisabledPreviewTimbreOutput? disabledAudio = audioEnabled ? null : new DisabledPreviewTimbreOutput();
+            sounds = new TimbreRuntime(new TimbreRuntimeOptions
             {
-                Output = disabledAudio ?? (ISoundOutput)new PlatformSoundOutput(() => application.PlatformSoundOutput),
+                Output = disabledAudio ?? (ITimbreOutput)new PlatformTimbreOutput(() => application.PlatformTimbreOutput),
                 BaseDirectory = compilation.ProjectDirectory
             });
             try
             {
-                application.SoundRuntime = sounds;
+                application.TimbreRuntime = sounds;
             }
             catch (InvalidOperationException exception)
             {
                 throw new InvalidOperationException(
-                    $"Application '{application.GetType().FullName}' used Application.SoundRuntime during construction, so Live Preview cannot control its audio.",
+                    $"Application '{application.GetType().FullName}' used Application.TimbreRuntime during construction, so Live Preview cannot control its audio.",
                     exception);
             }
 

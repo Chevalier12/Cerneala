@@ -23,7 +23,7 @@ internal sealed class VorbisSource : DecodedSource
         {
             decoder = new StreamDecoder(provider) { ClipSamples = false };
         }
-        catch (Exception exception) when (exception is not SoundException and not OperationCanceledException)
+        catch (Exception exception) when (exception is not TimbreException and not OperationCanceledException)
         {
             throw Invalid(sourceName, "the Vorbis headers could not be decoded.", exception);
         }
@@ -51,7 +51,7 @@ internal sealed class VorbisSource : DecodedSource
         {
             return decoder.Read(destination, 0, samples) / Channels;
         }
-        catch (Exception exception) when (exception is not SoundException and not OperationCanceledException)
+        catch (Exception exception) when (exception is not TimbreException and not OperationCanceledException)
         {
             throw Invalid(sourceName, "a Vorbis packet could not be decoded.", exception);
         }
@@ -66,7 +66,7 @@ internal sealed class VorbisSource : DecodedSource
         {
             decoder.SeekTo(frame);
         }
-        catch (Exception exception) when (exception is not SoundException and not OperationCanceledException)
+        catch (Exception exception) when (exception is not TimbreException and not OperationCanceledException)
         {
             throw Invalid(sourceName, $"seeking to frame {frame} failed.", exception);
         }
@@ -90,7 +90,7 @@ internal sealed class VorbisSource : DecodedSource
             if (!ogg.TryReadPacket(out ReadOnlySpan<byte> identification, out _, out _) ||
                 identification.Length < 30 || identification[0] != 1 || !identification[1..7].SequenceEqual("vorbis"u8))
             {
-                throw new SoundException(SoundErrorKind.UnsupportedFormat, $"Sound source '{sourceName}' is not supported: the Ogg stream does not carry Vorbis.");
+                throw new TimbreException(TimbreErrorKind.UnsupportedFormat, $"Timbre source '{sourceName}' is not supported: the Ogg stream does not carry Vorbis.");
             }
 
             maxPacketSamples = 1 << (identification[28] >> 4);
@@ -99,7 +99,7 @@ internal sealed class VorbisSource : DecodedSource
             {
                 if (!ogg.TryReadPacket(out ReadOnlySpan<byte> data, out long granule, out bool end))
                 {
-                    throw new SoundException(SoundErrorKind.InvalidData, $"Sound source '{sourceName}' is invalid: missing Vorbis header packets.");
+                    throw new TimbreException(TimbreErrorKind.InvalidData, $"Timbre source '{sourceName}' is invalid: missing Vorbis header packets.");
                 }
 
                 queued.Enqueue(new Packet(data, granule, end));

@@ -538,7 +538,7 @@ public sealed partial class UiMarkupGenerator
             }
 
             // ApplyAspects already emitted the root Aspect's audio activations.
-            ExcludeSoundActivations(plan);
+            ExcludeTimbreActivations(plan);
             EmitReactivePlan(plan, controlsContent: false);
             return directElements.Count == 0 ? null : EmitElement(directElements[0].Element);
         }

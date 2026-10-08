@@ -15,7 +15,7 @@ internal sealed partial class CernealaCompletionService
     {
         if (model?.GetCompletionElementType(element)?.MetadataName == "Cerneala.UI.Controls.Tile" || IsStaticTileCollider(model, element)) { return; }
         string statement = GetEmbeddedStatementPrefix(site.Source, site.Offset);
-        if (TryAddSoundCompletions(result, site, model, element, statement))
+        if (TryAddTimbreCompletions(result, site, model, element, statement))
         {
             return;
         }
@@ -253,7 +253,7 @@ internal sealed partial class CernealaCompletionService
             else if (elementName != "MotionClip" &&
                 FindInnermostDirectiveKeyword(site.Source, site.Offset) is "@on" or "@when" or "@if")
             {
-                keywords = keywords.Concat(SoundActionKeywords);
+                keywords = keywords.Concat(TimbreActionKeywords);
             }
         }
         else
@@ -487,7 +487,7 @@ internal sealed partial class CernealaCompletionService
         "@run" => "@run $Clip();",
         "@cancel" => "@cancel handle;",
         "@parameter" => "@parameter Name: float = 0;",
-        "@sound" => "@sound $Clip;",
+        "@timbre" => "@timbre $Clip;",
         "@pause" => "@pause handle;",
         "@resume" => "@resume handle;",
         "@seek" => "@seek handle to 0s;",

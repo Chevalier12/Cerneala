@@ -14,11 +14,11 @@ public class Application
 ## Examples
 ```csharp
 // Element audio: scoped to the element's attachment lifecycle.
-SoundPlayback click = button.Sounds.Play(new SoundClip("audio/click.wav"));
+TimbrePlayback click = button.Timbre.Play(new TimbreClip("audio/click.wav"));
 
 // Application audio: lives until the application exits.
-SoundPlayback music = Application.Current!.Sounds.Play(
-    new SoundClip("audio/music.ogg", loading: SoundLoading.Streaming),
+TimbrePlayback music = Application.Current!.Timbre.Play(
+    new TimbreClip("audio/music.ogg", loading: TimbreLoading.Streaming),
     start => start.Loop = true);
 ```
 
@@ -47,9 +47,9 @@ Application markup can enable multisampling before the windowing backend is crea
 
 `UseMultisampling` controls whether the windowing backend requests multisampled render targets. It defaults to `false` and is read when the default runtime is created. Changing it after runtime creation does not recreate graphics resources.
 
-`SoundRuntime` is the [SoundRuntime](Cerneala.Timbre.SoundRuntime.md) shared by every window root of the application. It is created on first use without opening an audio device. Its output is the shared audio output of the window platform the application is installed on, bound when the first playback needs it, so the runtime may be created before startup installs the application. With [SdlGpuApplicationBackend](Cerneala.UI.Hosting.Sdl.SdlGpuApplicationBackend.md) that output is the SDL3 default playback device; closing a window does not close it, and the platform releases it before SDL shuts down. A platform without audio provides no output, so playbacks fail with `DeviceUnavailable`, as does a missing or failing device. Assign a configured runtime before first use to supply another output; assigning after first use throws `InvalidOperationException`. `Sounds` is an application-scoped [SoundScope](Cerneala.Timbre.SoundScope.md) for audio that is not owned by an element; element audio uses `UIElement.Sounds`.
+`TimbreRuntime` is the [TimbreRuntime](Cerneala.Timbre.TimbreRuntime.md) shared by every window root of the application. It is created on first use without opening an audio device. Its output is the shared audio output of the window platform the application is installed on, bound when the first playback needs it, so the runtime may be created before startup installs the application. With [SdlGpuApplicationBackend](Cerneala.UI.Hosting.Sdl.SdlGpuApplicationBackend.md) that output is the SDL3 default playback device; closing a window does not close it, and the platform releases it before SDL shuts down. A platform without audio provides no output, so playbacks fail with `DeviceUnavailable`, as does a missing or failing device. Assign a configured runtime before first use to supply another output; assigning after first use throws `InvalidOperationException`. `Timbre` is an application-scoped [TimbreScope](Cerneala.Timbre.TimbreScope.md) for audio that is not owned by an element; element audio uses `UIElement.Timbre`.
 
-`Shutdown(int)` is idempotent. Its first call closes remaining windows, raises `Exit` once, disposes the published service provider when it implements `IDisposable`, disposes `Sounds` (canceling its playbacks), disposes a `SoundRuntime` the application created itself — an assigned runtime stays caller-owned — and clears `Current`. Afterwards `Sounds` and `SoundRuntime` throw `ObjectDisposedException`.
+`Shutdown(int)` is idempotent. Its first call closes remaining windows, raises `Exit` once, disposes the published service provider when it implements `IDisposable`, disposes `Timbre` (canceling its playbacks), disposes a `TimbreRuntime` the application created itself — an assigned runtime stays caller-owned — and clears `Current`. Afterwards `Timbre` and `TimbreRuntime` throw `ObjectDisposedException`.
 
 ## Constructors
 | Name | Description |
@@ -67,8 +67,8 @@ Application markup can enable multisampling before the windowing backend is crea
 | `ActiveWindow` | Currently active runtime window, if any. |
 | `UseMultisampling` | Whether the windowing backend requests multisampled render targets. The default is `false`. |
 | `ShutdownMode` | Policy evaluated after a successful window close. |
-| `SoundRuntime` | Audio runtime shared by the application's windows; lazy, assignable before first use. |
-| `Sounds` | Application-scoped sound scope, disposed on exit. |
+| `TimbreRuntime` | Audio runtime shared by the application's windows; lazy, assignable before first use. |
+| `Timbre` | Application-scoped sound scope, disposed on exit. |
 
 ## Methods
 | Name | Description |
@@ -92,4 +92,4 @@ Windows desktop standalone and hosted application lifecycles.
 - `ApplicationShutdownMode`
 - `Window`
 - `ResourceDictionary`
-- [SoundRuntime](Cerneala.Timbre.SoundRuntime.md)
+- [TimbreRuntime](Cerneala.Timbre.TimbreRuntime.md)

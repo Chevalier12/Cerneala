@@ -16,7 +16,7 @@ public sealed class StreamingPrimingTests
         using TimbreRig rig = new(hold: false);
         TrickleReader reader = new(48000);
         reader.StartTrickle();
-        SoundPlayback playback = rig.Scope.Play(Clip(reader));
+        TimbrePlayback playback = rig.Scope.Play(Clip(reader));
 
         await HarnessWait.WithTimeout(reader.WaitingAtGate, null, "The reader did not reach its gate.");
         await rig.SyncAsync();
@@ -38,7 +38,7 @@ public sealed class StreamingPrimingTests
     {
         using TimbreRig rig = new(hold: false);
         TrickleReader reader = new(480000);
-        SoundPlayback playback = rig.Scope.Play(Clip(reader));
+        TimbrePlayback playback = rig.Scope.Play(Clip(reader));
         await rig.Output.WaitForSubmittedFramesAsync(TimbreRig.Budget);
         await HarnessWait.WithTimeout(playback.WhenSettledAsync(), null, "The stream did not settle.");
         await rig.SyncAsync();
@@ -68,12 +68,12 @@ public sealed class StreamingPrimingTests
 
     private static float Ramp(long frame, int channel) => (channel == 0 ? 1 : -1) * (frame % 65536) / 65536f;
 
-    private static SoundClip Clip(TrickleReader reader) =>
-        new(SoundSource.FromReader(() => reader, "trickle"), loading: SoundLoading.Streaming);
+    private static TimbreClip Clip(TrickleReader reader) =>
+        new(TimbreSource.FromReader(() => reader, "trickle"), loading: TimbreLoading.Streaming);
 
     // Serves one packet per read. While trickling, every read after the first
     // packet (of the start or of a seek) waits at the gate.
-    private sealed class TrickleReader(long length) : SoundReader
+    private sealed class TrickleReader(long length) : TimbreReader
     {
         private readonly TaskCompletionSource open = new(TaskCreationOptions.RunContinuationsAsynchronously);
         private volatile TaskCompletionSource waiting = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -94,7 +94,7 @@ public sealed class StreamingPrimingTests
 
         public void Open() => open.TrySetResult();
 
-        public override async ValueTask<SoundReadResult> ReadAsync(Memory<float> destination, CancellationToken cancellationToken)
+        public override async ValueTask<TimbreReadResult> ReadAsync(Memory<float> destination, CancellationToken cancellationToken)
         {
             if (Trickle && servedPacket)
             {
@@ -113,7 +113,7 @@ public sealed class StreamingPrimingTests
             return ValueTask.CompletedTask;
         }
 
-        private SoundReadResult Fill(Span<float> destination)
+        private TimbreReadResult Fill(Span<float> destination)
         {
             int count = (int)Math.Min(Math.Min(Packet, destination.Length / 2), length - position);
             for (int index = 0; index < count; index++)
@@ -123,7 +123,7 @@ public sealed class StreamingPrimingTests
             }
 
             position += count;
-            return new SoundReadResult(count, position == length);
+            return new TimbreReadResult(count, position == length);
         }
     }
 }

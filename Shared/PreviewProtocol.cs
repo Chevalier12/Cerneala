@@ -81,7 +81,7 @@ internal sealed class PreviewResponse
 
     public bool AudioEnabled { get; set; }
 
-    // Sound output opens refused because preview audio is disabled.
+    // Timbre output opens refused because preview audio is disabled.
     public int BlockedAudioRequests { get; set; }
 
     public string Error { get; set; } = string.Empty;

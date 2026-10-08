@@ -13,17 +13,17 @@ public sealed class RealtimeAllocationTests
     private const int Measured = 2000;
 
     [Theory]
-    [InlineData(SoundLoading.Preload)]
-    [InlineData(SoundLoading.Streaming)]
-    public async Task SteadyStateMixerBlocksDoNotAllocate(SoundLoading loading)
+    [InlineData(TimbreLoading.Preload)]
+    [InlineData(TimbreLoading.Streaming)]
+    public async Task SteadyStateMixerBlocksDoNotAllocate(TimbreLoading loading)
     {
-        DeterministicSoundOutput output = new() { AutoConsume = true, RecordSamples = false };
-        using SoundRuntime runtime = new(new SoundRuntimeOptions { Output = output });
+        DeterministicTimbreOutput output = new() { AutoConsume = true, RecordSamples = false };
+        using TimbreRuntime runtime = new(new TimbreRuntimeOptions { Output = output });
         AllocationRecorder recorder = new(Warmup, Measured);
         runtime.BlockObserver = recorder;
-        using SoundScope scope = runtime.CreateScope();
-        SoundClip clip = new(
-            SoundSource.FromReader(new DeterministicSoundSourceFactory(10 * 48000, maxFramesPerRead: 777).Open),
+        using TimbreScope scope = runtime.CreateScope();
+        TimbreClip clip = new(
+            TimbreSource.FromReader(new DeterministicTimbreSourceFactory(10 * 48000, maxFramesPerRead: 777).Open),
             volume: 0.1f,
             loop: true,
             loading: loading,
@@ -41,7 +41,7 @@ public sealed class RealtimeAllocationTests
             $"{recorder.AllocatingBlocks} of {Measured} measured blocks allocated {recorder.AllocatedBytes} bytes on the mixer thread.");
     }
 
-    private sealed class AllocationRecorder(int warmup, int measured) : ISoundBlockObserver
+    private sealed class AllocationRecorder(int warmup, int measured) : ITimbreBlockObserver
     {
         private readonly TaskCompletionSource completed = new(TaskCreationOptions.RunContinuationsAsynchronously);
         private int seen;

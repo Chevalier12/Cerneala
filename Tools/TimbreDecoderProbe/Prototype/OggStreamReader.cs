@@ -40,7 +40,7 @@ internal sealed class OggStreamReader
         StreamLength = stream.Length;
         if (!TryLoadPage(0, requireSerial: false) || (pageFlags & 2) == 0)
         {
-            throw new SoundException(SoundErrorKind.UnsupportedFormat, $"Sound source '{sourceName}' does not start with an Ogg stream.");
+            throw new TimbreException(TimbreErrorKind.UnsupportedFormat, $"Timbre source '{sourceName}' does not start with an Ogg stream.");
         }
 
         Serial = BinaryPrimitives.ReadInt32LittleEndian(page.AsSpan(14));
@@ -405,7 +405,7 @@ internal sealed class OggStreamReader
                 {
                     valid = TryLoadPage(candidate, requireSerial: false);
                 }
-                catch (SoundException)
+                catch (TimbreException)
                 {
                     // A capture pattern inside page data, not a page boundary.
                     valid = false;
@@ -486,9 +486,9 @@ internal sealed class OggStreamReader
         return table;
     }
 
-    private SoundException Invalid(string detail) =>
-        new(SoundErrorKind.InvalidData, $"Sound source '{sourceName}' is invalid: {detail}");
+    private TimbreException Invalid(string detail) =>
+        new(TimbreErrorKind.InvalidData, $"Timbre source '{sourceName}' is invalid: {detail}");
 
-    private SoundException Unsupported(string detail) =>
-        new(SoundErrorKind.UnsupportedFormat, $"Sound source '{sourceName}' is not supported: {detail}");
+    private TimbreException Unsupported(string detail) =>
+        new(TimbreErrorKind.UnsupportedFormat, $"Timbre source '{sourceName}' is not supported: {detail}");
 }

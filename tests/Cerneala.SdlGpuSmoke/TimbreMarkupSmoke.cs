@@ -22,15 +22,15 @@ internal sealed class TimbreMarkupSmoke
 
     private readonly SmokeOptions options;
     private readonly PcmTapOutput tap;
-    private readonly SdlSoundOutput output;
-    private readonly SoundRuntime runtime;
+    private readonly SdlTimbreOutput output;
+    private readonly TimbreRuntime runtime;
     private readonly List<Dictionary<string, object?>> results = [];
 
-    private TimbreMarkupSmoke(SmokeOptions options, PcmTapOutput tap, SoundRuntime runtime)
+    private TimbreMarkupSmoke(SmokeOptions options, PcmTapOutput tap, TimbreRuntime runtime)
     {
         this.options = options;
         this.tap = tap;
-        output = (SdlSoundOutput)tap.Inner;
+        output = (SdlTimbreOutput)tap.Inner;
         this.runtime = runtime;
     }
 
@@ -40,7 +40,7 @@ internal sealed class TimbreMarkupSmoke
     {
         Application application = Application.Current ?? throw new InvalidOperationException("No Application.");
         PcmTapOutput tap = TimbreSmoke.InstalledTap ?? throw new InvalidOperationException("The PCM tap was not installed at startup.");
-        TimbreMarkupSmoke smoke = new(options, tap, application.SoundRuntime);
+        TimbreMarkupSmoke smoke = new(options, tap, application.TimbreRuntime);
         try
         {
             Directory.CreateDirectory(options.ArtifactDirectory);
@@ -72,7 +72,7 @@ internal sealed class TimbreMarkupSmoke
         _ = await servo.FindAsync(ServoTarget.ById("play-wav"));
         var declared = runtime.GetDiagnostics();
         Require(declared.PlaybacksStarted == 0 && declared.OutputOpenCount == 0 && declared.CacheEntries == 0,
-            "Declaring SoundClips and Aspects started, opened or loaded something.");
+            "Declaring TimbreClips and Aspects started, opened or loaded something.");
         Record("declaration/no-playback-or-io",
             ("started", declared.PlaybacksStarted), ("outputOpens", declared.OutputOpenCount), ("cacheEntries", declared.CacheEntries));
 
@@ -85,17 +85,17 @@ internal sealed class TimbreMarkupSmoke
         ];
         foreach ((string id, string path) in formats)
         {
-            await CompareClickAsync(servo, id, new SoundClip(SoundSource.FromFile(path), loading: SoundLoading.Preload), null);
+            await CompareClickAsync(servo, id, new TimbreClip(TimbreSource.FromFile(path), loading: TimbreLoading.Preload), null);
         }
 
-        SoundParameter<float> cutoff = new("ToneCutoff", 1200f);
+        TimbreParameter<float> cutoff = new("ToneCutoff", 1200f);
         await CompareClickAsync(
             servo,
             "play-filtered",
-            new SoundClip(
-                SoundSource.FromFile(tone),
+            new TimbreClip(
+                TimbreSource.FromFile(tone),
                 volume: 0.8f,
-                loading: SoundLoading.Preload,
+                loading: TimbreLoading.Preload,
                 parameters: [cutoff],
                 modifiers: [new LowPass(cutoff), new Delay(time: 0.12f, feedback: 0.2f, mix: 0.15f)]),
             start => start.Set(cutoff, 800f));
@@ -107,7 +107,7 @@ internal sealed class TimbreMarkupSmoke
         primary.Close();
     }
 
-    private async Task CompareClickAsync(ServoApi servo, string id, SoundClip oracle, Action<SoundStartOptions>? configure)
+    private async Task CompareClickAsync(ServoApi servo, string id, TimbreClip oracle, Action<TimbreStartOptions>? configure)
     {
         var before = runtime.GetDiagnostics();
         long start = tap.SampleCount;
@@ -251,12 +251,12 @@ internal sealed class TimbreMarkupSmoke
         return window;
     }
 
-    private static async Task<float[]> RenderOfflineAsync(SoundClip clip, Action<SoundStartOptions>? configure)
+    private static async Task<float[]> RenderOfflineAsync(TimbreClip clip, Action<TimbreStartOptions>? configure)
     {
         RecordingSink sink = new();
-        using SoundRuntime offline = new(new SoundRuntimeOptions { Output = sink });
-        SoundPlaybackResult result = await offline.CreateScope().Play(clip, configure).Completion.WaitAsync(Timeout);
-        Require(result.State == SoundPlaybackState.Completed, $"Deterministic sink: {result.State} ({result.Error?.Message}).");
+        using TimbreRuntime offline = new(new TimbreRuntimeOptions { Output = sink });
+        TimbrePlaybackResult result = await offline.CreateScope().Play(clip, configure).Completion.WaitAsync(Timeout);
+        Require(result.State == TimbrePlaybackState.Completed, $"Deterministic sink: {result.State} ({result.Error?.Message}).");
         return sink.ToArray();
     }
 
@@ -300,7 +300,7 @@ internal sealed class TimbreMarkupSmoke
 
     private void WriteDiagnostics(Exception? failure)
     {
-        SdlSoundOutputDiagnostics device = output.GetDiagnostics();
+        SdlTimbreOutputDiagnostics device = output.GetDiagnostics();
         var engine = runtime.GetDiagnostics();
         Dictionary<string, object?> report = new()
         {

@@ -14,10 +14,10 @@ namespace TimbreConsumer;
 // variables a page's snippet assumes.
 public static class DocumentationExamples
 {
-    public static void SoundMotionFacadePage(SoundPlayback playback, SoundParameter<float> toneCutoff, MotionSpec<float> transition)
+    public static void TimbreMotionFacadePage(TimbrePlayback playback, TimbreParameter<float> toneCutoff, MotionSpec<float> transition)
     {
         playback.Motion()
-            .Animate(SoundPlayback.VolumeParameter)
+            .Animate(TimbrePlayback.VolumeParameter)
             .To(0.8f)
             .With(transition);
 
@@ -27,38 +27,38 @@ public static class DocumentationExamples
             .With(transition);
     }
 
-    public static void SoundMotionAnimationBuilderPage(SoundPlayback playback)
+    public static void TimbreMotionAnimationBuilderPage(TimbrePlayback playback)
     {
         MotionHandle fade = playback.Motion()
-            .Animate(SoundPlayback.VolumeParameter)
+            .Animate(TimbrePlayback.VolumeParameter)
             .From(0f)
             .To(1f)
             .With(new TweenSpec<float>(TimeSpan.FromMilliseconds(300), Easings.EaseOut));
 
         fade.Cancel(); // keeps the last sampled volume
     }
-    public static void SoundClipPage()
+    public static void TimbreClipPage()
     {
-        var plainSound = new SoundClip("audio/confirm.wav");
+        var plainTimbre = new TimbreClip("audio/confirm.wav");
 
-        var toneCutoff = new SoundParameter<float>(name: "ToneCutoff", defaultValue: 1200f);
-        var filteredSound = new SoundClip(
+        var toneCutoff = new TimbreParameter<float>(name: "ToneCutoff", defaultValue: 1200f);
+        var filteredTimbre = new TimbreClip(
             source: "audio/confirm.wav",
             parameters: [toneCutoff],
             modifiers: [new LowPass(cutoff: toneCutoff)]);
 
-        var echo = new SoundClip(
+        var echo = new TimbreClip(
             "audio/confirm.wav",
             modifiers: [new LowPass(cutoff: 1200f), new Delay(time: 0.12f, feedback: 0.2f, mix: 0.15f)]);
-        _ = (plainSound, filteredSound, echo);
+        _ = (plainTimbre, filteredTimbre, echo);
     }
 
-    public static void SoundSourcePage()
+    public static void TimbreSourcePage()
     {
-        SoundSource file = "audio/confirm.wav";
-        SoundSource stream = SoundSource.FromStream(() => File.OpenRead("audio/music.ogg"), name: "music");
-        SoundSource generated = SoundSource.FromReader(() => new MyToneReader(), name: "tone");
-        SoundSource budgeted = SoundSource.FromReader(budget =>
+        TimbreSource file = "audio/confirm.wav";
+        TimbreSource stream = TimbreSource.FromStream(() => File.OpenRead("audio/music.ogg"), name: "music");
+        TimbreSource generated = TimbreSource.FromReader(() => new MyToneReader(), name: "tone");
+        TimbreSource budgeted = TimbreSource.FromReader(budget =>
         {
             budget.Reserve(MyToneReader.TableBytes);
             return new MyToneReader();
@@ -66,11 +66,11 @@ public static class DocumentationExamples
         _ = (file, stream, generated, budgeted);
     }
 
-    public static SoundSource SoundMemoryBudgetPage()
+    public static TimbreSource TimbreMemoryBudgetPage()
     {
         const int TableBytes = 256 * 1024;
 
-        SoundSource source = SoundSource.FromReader(budget =>
+        TimbreSource source = TimbreSource.FromReader(budget =>
         {
             // Reserve first: an oversized request fails here, before allocating.
             budget.Reserve(TableBytes);
@@ -79,9 +79,9 @@ public static class DocumentationExamples
         return source;
     }
 
-    public static SoundSource SoundMemoryReservationPage()
+    public static TimbreSource TimbreMemoryReservationPage()
     {
-        SoundSource source = SoundSource.FromReader(budget =>
+        TimbreSource source = TimbreSource.FromReader(budget =>
         {
             // Temporary scratch memory needed only while the reader is built.
             using (budget.Reserve(64 * 1024))
@@ -97,51 +97,51 @@ public static class DocumentationExamples
 
     private static void PrecomputeTable(float[] scratch) => scratch.AsSpan().Fill(0.5f);
 
-    private sealed class WavetableReader(float[] table) : SoundReader
+    private sealed class WavetableReader(float[] table) : TimbreReader
     {
-        public override long? LengthFrames => table.Length / SoundRuntime.ChannelCount;
+        public override long? LengthFrames => table.Length / TimbreRuntime.ChannelCount;
 
-        public override ValueTask<SoundReadResult> ReadAsync(Memory<float> destination, CancellationToken cancellationToken) =>
-            ValueTask.FromResult(new SoundReadResult(0, endOfSource: true));
+        public override ValueTask<TimbreReadResult> ReadAsync(Memory<float> destination, CancellationToken cancellationToken) =>
+            ValueTask.FromResult(new TimbreReadResult(0, endOfSource: true));
 
         public override ValueTask SeekAsync(long frame, CancellationToken cancellationToken) => ValueTask.CompletedTask;
     }
 
-    private sealed class TableReader : SoundReader
+    private sealed class TableReader : TimbreReader
     {
         public override long? LengthFrames => 0;
 
-        public override ValueTask<SoundReadResult> ReadAsync(Memory<float> destination, CancellationToken cancellationToken) =>
-            ValueTask.FromResult(new SoundReadResult(0, endOfSource: true));
+        public override ValueTask<TimbreReadResult> ReadAsync(Memory<float> destination, CancellationToken cancellationToken) =>
+            ValueTask.FromResult(new TimbreReadResult(0, endOfSource: true));
 
         public override ValueTask SeekAsync(long frame, CancellationToken cancellationToken) => ValueTask.CompletedTask;
     }
 
-    public static SoundClip SoundReaderPage() =>
-        new(SoundSource.FromReader(() => new SilenceReader(48000)));
+    public static TimbreClip TimbreReaderPage() =>
+        new(TimbreSource.FromReader(() => new SilenceReader(48000)));
 
-    public static void SoundReadResultPage()
+    public static void TimbreReadResultPage()
     {
-        var last = new SoundReadResult(frames: 120, endOfSource: true);
-        var waiting = new SoundReadResult(frames: 0, endOfSource: false);
+        var last = new TimbreReadResult(frames: 120, endOfSource: true);
+        var waiting = new TimbreReadResult(frames: 0, endOfSource: false);
         _ = (last, waiting);
     }
 
-    public static SoundClip SoundLoadingPage() =>
-        new("audio/music.ogg", loop: true, loading: SoundLoading.Streaming);
+    public static TimbreClip TimbreLoadingPage() =>
+        new("audio/music.ogg", loop: true, loading: TimbreLoading.Streaming);
 
-    public static void SoundParameterPage(SoundScope sounds)
+    public static void TimbreParameterPage(TimbreScope sounds)
     {
-        var toneCutoff = new SoundParameter<float>(name: "ToneCutoff", defaultValue: 1200f);
-        var clip = new SoundClip("audio/confirm.wav", parameters: [toneCutoff], modifiers: [new LowPass(cutoff: toneCutoff)]);
+        var toneCutoff = new TimbreParameter<float>(name: "ToneCutoff", defaultValue: 1200f);
+        var clip = new TimbreClip("audio/confirm.wav", parameters: [toneCutoff], modifiers: [new LowPass(cutoff: toneCutoff)]);
 
-        SoundPlayback playback = sounds.Play(clip, start => start.Set(toneCutoff, 800f));
+        TimbrePlayback playback = sounds.Play(clip, start => start.Set(toneCutoff, 800f));
         playback.Set(toneCutoff, 6000f);
     }
 
-    public static void SoundInputPage()
+    public static void TimbreInputPage()
     {
-        var toneCutoff = new SoundParameter<float>("ToneCutoff", 1200f);
+        var toneCutoff = new TimbreParameter<float>("ToneCutoff", 1200f);
         var fixedFilter = new LowPass(cutoff: 1200f);       // constant
         var driven = new LowPass(cutoff: toneCutoff);       // parameter
         _ = (fixedFilter, driven);
@@ -149,57 +149,57 @@ public static class DocumentationExamples
 
     public static void LowPassPage()
     {
-        var cutoff = new SoundParameter<float>("ToneCutoff", 1200f);
-        var clip = new SoundClip("audio/confirm.wav", parameters: [cutoff], modifiers: [new LowPass(cutoff: cutoff)]);
+        var cutoff = new TimbreParameter<float>("ToneCutoff", 1200f);
+        var clip = new TimbreClip("audio/confirm.wav", parameters: [cutoff], modifiers: [new LowPass(cutoff: cutoff)]);
         var fixedFilter = new LowPass(cutoff: 800f);
         _ = (clip, fixedFilter);
     }
 
-    public static SoundClip DelayPage()
+    public static TimbreClip DelayPage()
     {
-        var echoMix = new SoundParameter<float>("EchoMix", 0.15f);
-        return new SoundClip(
+        var echoMix = new TimbreParameter<float>("EchoMix", 0.15f);
+        return new TimbreClip(
             "audio/confirm.wav",
             parameters: [echoMix],
             modifiers: [new Delay(time: 0.12f, feedback: 0.20f, mix: echoMix)]);
     }
 
-    public static async Task SoundRuntimePage(ISoundOutput output)
+    public static async Task TimbreRuntimePage(ITimbreOutput output)
     {
-        using var runtime = new SoundRuntime(new SoundRuntimeOptions { Output = output });
-        using SoundScope sounds = runtime.CreateScope();
+        using var runtime = new TimbreRuntime(new TimbreRuntimeOptions { Output = output });
+        using TimbreScope sounds = runtime.CreateScope();
 
-        var confirm = new SoundClip("audio/confirm.wav");
+        var confirm = new TimbreClip("audio/confirm.wav");
         await runtime.PrepareAsync(confirm);
-        SoundPlayback playback = sounds.Play(confirm);
-        SoundPlaybackResult result = await playback.Completion;
+        TimbrePlayback playback = sounds.Play(confirm);
+        TimbrePlaybackResult result = await playback.Completion;
         _ = result;
     }
 
-    public static SoundRuntime SoundRuntimeOptionsPage(ISoundOutput output) =>
-        new(new SoundRuntimeOptions
+    public static TimbreRuntime TimbreRuntimeOptionsPage(ITimbreOutput output) =>
+        new(new TimbreRuntimeOptions
         {
             Output = output,
             MaxVoices = 32,
             MaxCacheBytes = 32L * 1024 * 1024
         });
 
-    public static void SoundScopePage(SoundScope sounds)
+    public static void TimbreScopePage(TimbreScope sounds)
     {
-        var plainSound = new SoundClip("audio/confirm.wav");
-        SoundPlayback first = sounds.Play(plainSound);
-        SoundPlayback second = sounds.Play(plainSound); // overlaps: independent instances
+        var plainTimbre = new TimbreClip("audio/confirm.wav");
+        TimbrePlayback first = sounds.Play(plainTimbre);
+        TimbrePlayback second = sounds.Play(plainTimbre); // overlaps: independent instances
         first.Cancel();                                 // second keeps playing
 
-        SoundHandle slot = sounds.CreateHandle();
-        sounds.Play(plainSound, handle: slot);
-        sounds.Play(plainSound, start => start.Volume = 0.5f, handle: slot); // replaces only the slot's occupant
+        TimbreHandle slot = sounds.CreateHandle();
+        sounds.Play(plainTimbre, handle: slot);
+        sounds.Play(plainTimbre, start => start.Volume = 0.5f, handle: slot); // replaces only the slot's occupant
         _ = second;
     }
 
-    public static void SoundStartOptionsPage(SoundScope sounds, SoundClip filteredSound, SoundParameter<float> toneCutoff, SoundHandle slot)
+    public static void TimbreStartOptionsPage(TimbreScope sounds, TimbreClip filteredTimbre, TimbreParameter<float> toneCutoff, TimbreHandle slot)
     {
-        SoundPlayback playback = sounds.Play(filteredSound, start =>
+        TimbrePlayback playback = sounds.Play(filteredTimbre, start =>
         {
             start.Volume = 0.2f;
             start.Loop = true;
@@ -208,11 +208,11 @@ public static class DocumentationExamples
         _ = playback;
     }
 
-    public static void SoundHandlePage(SoundScope sounds, SoundClip clip)
+    public static void TimbreHandlePage(TimbreScope sounds, TimbreClip clip)
     {
-        SoundHandle slot = sounds.CreateHandle();
-        SoundPlayback old = sounds.Play(clip, handle: slot);
-        SoundPlayback current = sounds.Play(clip, handle: slot); // cancels old
+        TimbreHandle slot = sounds.CreateHandle();
+        TimbrePlayback old = sounds.Play(clip, handle: slot);
+        TimbrePlayback current = sounds.Play(clip, handle: slot); // cancels old
 
         old.Cancel();  // no effect on current
         slot.Cancel(); // cancels current
@@ -220,42 +220,42 @@ public static class DocumentationExamples
         _ = current;
     }
 
-    public static async Task SoundPlaybackPage(SoundScope sounds, SoundClip filteredSound, SoundParameter<float> toneCutoff)
+    public static async Task TimbrePlaybackPage(TimbreScope sounds, TimbreClip filteredTimbre, TimbreParameter<float> toneCutoff)
     {
-        SoundPlayback playback = sounds.Play(filteredSound);
+        TimbrePlayback playback = sounds.Play(filteredTimbre);
         playback.Volume = 0.8f;
         playback.Set(toneCutoff, 6000f);
         playback.Pause();
         playback.Resume();
         await playback.SeekAsync(TimeSpan.FromSeconds(1));
 
-        SoundPlaybackResult result = await playback.Completion;
-        if (result.State == SoundPlaybackState.Failed)
+        TimbrePlaybackResult result = await playback.Completion;
+        if (result.State == TimbrePlaybackState.Failed)
         {
             Console.WriteLine(result.Error!.Kind);
         }
     }
 
-    public static async Task SoundPlaybackResultPage(SoundPlayback playback)
+    public static async Task TimbrePlaybackResultPage(TimbrePlayback playback)
     {
-        SoundPlaybackResult result = await playback.Completion;
+        TimbrePlaybackResult result = await playback.Completion;
         switch (result.State)
         {
-            case SoundPlaybackState.Completed when result.TailTruncated:
+            case TimbrePlaybackState.Completed when result.TailTruncated:
                 break; // the delay tail reached DelayTailCap
-            case SoundPlaybackState.Failed:
+            case TimbrePlaybackState.Failed:
                 Console.WriteLine($"{result.Error!.Kind}: {result.Error.Message}");
                 break;
         }
     }
 
-    public static async Task SoundExceptionPage(SoundRuntime runtime, SoundClip clip)
+    public static async Task TimbreExceptionPage(TimbreRuntime runtime, TimbreClip clip)
     {
         try
         {
             await runtime.PrepareAsync(clip);
         }
-        catch (SoundException failure) when (failure.Kind == SoundErrorKind.ResourceLimitExceeded)
+        catch (TimbreException failure) when (failure.Kind == TimbreErrorKind.ResourceLimitExceeded)
         {
             // The decoded payload does not fit the configured preload or cache limit.
         }
@@ -264,52 +264,52 @@ public static class DocumentationExamples
     public static void ApplicationPage(Button button)
     {
         // Element audio: scoped to the element's attachment lifecycle.
-        SoundPlayback click = button.Sounds.Play(new SoundClip("audio/click.wav"));
+        TimbrePlayback click = button.Timbre.Play(new TimbreClip("audio/click.wav"));
 
         // Application audio: lives until the application exits.
-        SoundPlayback music = Application.Current!.Sounds.Play(
-            new SoundClip("audio/music.ogg", loading: SoundLoading.Streaming),
+        TimbrePlayback music = Application.Current!.Timbre.Play(
+            new TimbreClip("audio/music.ogg", loading: TimbreLoading.Streaming),
             start => start.Loop = true);
         _ = (click, music);
     }
 
-    public static SoundPlayback UIElementPage(UIElement button, SoundClip confirmSound) =>
-        button.Sounds.Play(confirmSound);
+    public static TimbrePlayback UIElementPage(UIElement button, TimbreClip confirmTimbre) =>
+        button.Timbre.Play(confirmTimbre);
 
-    public static void SoundDiagnosticsSnapshotPage(UIRoot root)
+    public static void TimbreDiagnosticsSnapshotPage(UIRoot root)
     {
-        SoundDiagnosticsSnapshot? sound = root.Detective.CaptureSound();
+        TimbreDiagnosticsSnapshot? sound = root.Detective.CaptureTimbre();
         if (sound is { OutputOpen: false, ActivePlaybacks: > 0 })
         {
             // Playbacks are waiting for an output that is not open.
         }
     }
 
-    private sealed class MyToneReader : SoundReader
+    private sealed class MyToneReader : TimbreReader
     {
         public const int TableBytes = 64 * 1024;
 
         public override long? LengthFrames => 48000;
 
-        public override ValueTask<SoundReadResult> ReadAsync(Memory<float> destination, CancellationToken cancellationToken) =>
-            ValueTask.FromResult(new SoundReadResult(0, endOfSource: true));
+        public override ValueTask<TimbreReadResult> ReadAsync(Memory<float> destination, CancellationToken cancellationToken) =>
+            ValueTask.FromResult(new TimbreReadResult(0, endOfSource: true));
 
         public override ValueTask SeekAsync(long frame, CancellationToken cancellationToken) => ValueTask.CompletedTask;
     }
 
-    // Verbatim from the SoundReader page.
-    private sealed class SilenceReader(long lengthFrames) : SoundReader
+    // Verbatim from the TimbreReader page.
+    private sealed class SilenceReader(long lengthFrames) : TimbreReader
     {
         private long position;
 
         public override long? LengthFrames => lengthFrames;
 
-        public override ValueTask<SoundReadResult> ReadAsync(Memory<float> destination, CancellationToken cancellationToken)
+        public override ValueTask<TimbreReadResult> ReadAsync(Memory<float> destination, CancellationToken cancellationToken)
         {
-            int frames = (int)Math.Min(destination.Length / SoundRuntime.ChannelCount, lengthFrames - position);
-            destination.Span[..(frames * SoundRuntime.ChannelCount)].Clear();
+            int frames = (int)Math.Min(destination.Length / TimbreRuntime.ChannelCount, lengthFrames - position);
+            destination.Span[..(frames * TimbreRuntime.ChannelCount)].Clear();
             position += frames;
-            return ValueTask.FromResult(new SoundReadResult(frames, position == lengthFrames));
+            return ValueTask.FromResult(new TimbreReadResult(frames, position == lengthFrames));
         }
 
         public override ValueTask SeekAsync(long frame, CancellationToken cancellationToken)
