@@ -14,6 +14,8 @@ Follow `CLAUDE.md`, especially "Claude Code tooling and verification commands":
 
 After a context compaction, re-read this file (`.claude/skills/cerneala-performance-gate/SKILL.md`) and the frozen gate record before continuing. The gate is never re-derived from memory.
 
+Invoking this skill authorizes running the `git-session-commit-push` skill at the end (step 9).
+
 Measurement hygiene on this machine (8 logical cores, 16 GB RAM):
 - Close or account for other heavy processes before a gate run, such as other test hosts or `mcpRoslyn.exe` instances.
 - Never run two gate measurements at the same time.
@@ -184,7 +186,13 @@ Run, in order:
 
 Remove temporary instrumentation, harnesses, generated reports inside the repository, and application modifications. Preserve justified permanent Detective diagnostics with their tests and documentation, and run their focused, API, documentation, and overhead gates. Preserve raw evidence outside the repository only when useful and safe. Never claim human manual validation unless the user performed it.
 
-## 9. Report the Evidence
+## 9. Commit and Push (MANDATORY)
+
+After step 8 is green and the cleanup is confirmed, invoke the `git-session-commit-push` skill. Pass it `Fixes #N` when an issue exists, plus the baseline-versus-final table of the gated numbers, the owning cost, and the verification counts.
+
+If the gate is not GREEN, or a required verification in step 8 failed or could not run, do not invoke it. Report the blocker and ask the user with `AskUserQuestion` whether to commit anyway.
+
+## 10. Report the Evidence
 
 State the following in the user's language, following "The user" in `CLAUDE.md`. Lead with a plain baseline-versus-final table of the gated numbers, for example "P99 frame: 18.4 ms → 6.1 ms (gate ≤ 6.94 ms): PASS".
 
@@ -196,6 +204,7 @@ State the following in the user's language, following "The user" in `CLAUDE.md`.
 - correctness, visual, memory, focused, and full-suite verification;
 - any permanent Detective diagnostic added, the reusable evidence gap it closes, its API/documentation status, and measured collection overhead;
 - any Servo or Detective defect repaired during measurement, its independent RED-to-GREEN evidence, and the uncontaminated rerun result;
-- remaining uncertainty, environmental limits, and any user-validation step.
+- remaining uncertainty, environmental limits, and any user-validation step;
+- the branch, the commit, and the pull-request URL, or the gate that blocked them.
 
 Explicitly distinguish “the requested percentile passes” from “every frame meets budget.” If an environmental disturbance invalidates a run, rerun it rather than laundering it into the aggregate. If the gate conflicts with correctness, fidelity, architecture, or physical platform limits, stop and present the evidence instead of cheating the measurement.

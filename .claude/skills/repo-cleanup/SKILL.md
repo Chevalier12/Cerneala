@@ -11,9 +11,11 @@ Reduce unnecessary complexity and clarify responsibilities. Concision means less
 
 A cleanup request authorizes direct, small, verified refactoring batches within the requested scope; do not ask for approval of every safe batch. Skill selection alone does not authorize edits: review-only requests remain read-only. Repository instructions and narrower user requests take precedence.
 
+A cleanup request that authorizes edits also authorizes running the `git-session-commit-push` skill once at the end (see "Report"). A review-only request makes no commit.
+
 Ask before changing architectural ownership, module/project dependency boundaries, public or protected contracts, observable behavior, compatibility, dependencies, or materially ambiguous user edits. Internal extraction within an established owner can proceed when equivalence is supported. Better modularity is not permission to redesign architecture.
 
-Do not add features, fix unrelated bugs, replace algorithms, perform speculative optimization, mass-format, commit, push, publish, or delete broad directories. Report discovered defects separately; do not guess the intended contract of disputed behavior.
+Do not add features, fix unrelated bugs, replace algorithms, perform speculative optimization, mass-format, commit or push other than through `git-session-commit-push`, or delete broad directories. Report discovered defects separately; do not guess the intended contract of disputed behavior.
 
 ## Establish scope and evidence
 
@@ -61,4 +63,6 @@ When operating in Cerneala, follow its repository rules in addition to this work
 
 ## Report
 
-Write the report in the user's language, following "The user" in `CLAUDE.md`. Give each change a short before/after example. State changes and their justification, scope actually inspected, verification commands/results, and what remains unverified or blocked. Distinguish demonstrated improvements from unmeasured expectations. List material candidates deferred for approval separately. Never equate fewer lines, compilation, or passing focused tests with proof of repository-wide health.
+After the mandatory repository-wide gates pass for the final state, invoke the `git-session-commit-push` skill. Pass it the batches with their preserved contracts and the verification results. If a required gate failed or could not run, or the cleanup made no change, do not invoke it; report why.
+
+Write the report in the user's language, following "The user" in `CLAUDE.md`. Give each change a short before/after example. State changes and their justification, scope actually inspected, verification commands/results, and what remains unverified or blocked. Distinguish demonstrated improvements from unmeasured expectations. List material candidates deferred for approval separately. Give the commit, the branch, and the pull-request URL, or the gate that blocked them. Never equate fewer lines, compilation, or passing focused tests with proof of repository-wide health.

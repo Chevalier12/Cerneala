@@ -164,6 +164,39 @@ public sealed class TimbreStreamingTransportTests
         Assert.Throws<ArgumentOutOfRangeException>(() => { _ = playback.SeekAsync(TimbreRig.FramesToTime(length + 1)); });
     }
 
+    [Theory]
+    [InlineData(48000)]
+    [InlineData(44100)]
+    public async Task AFailedSeekFadesBackInAndContinuesTheSourceWithoutLosingFrames(int rate)
+    {
+        ObservedSource source = new(WavFixture.Write($"seek-failure-{rate}.wav", rate, 2, 24, seconds: 2));
+        float[] expected = source.Decode();
+        using TimbreRig rig = new();
+        TimbrePlayback playback = rig.Scope.Play(source.Clip);
+        await rig.StartAsync(playback);
+
+        source.Single.FailSeeks = true;
+        Task failed = playback.SeekAsync(TimbreRig.FramesToTime(30000));
+        await rig.NextBlockAsync();
+        await Assert.ThrowsAsync<IOException>(() => HarnessWait.WithTimeout(failed, null, "Seek did not finish."));
+        source.Single.FailSeeks = false;
+        Assert.Equal(TimbrePlaybackState.Playing, playback.State);
+
+        // The rejected seek fades back in from its post-fade position. Past the
+        // 8192 frames buffered before the seek, every frame is still the next
+        // decoded frame of the same stream.
+        int continuedAt = TimbreRig.Budget + TimbreRig.FadeFrames;
+        const int Blocks = 30;
+        List<float> played = [];
+        for (int block = 0; block < Blocks; block++)
+        {
+            played.AddRange(await StreamingDrive.NextBlockAsync(rig, playback));
+        }
+
+        float[] reference = TimbreRig.Ramp(expected[(continuedAt * 2)..((continuedAt + (Blocks * TimbreRig.Block)) * 2)]);
+        TimbreRig.AssertPcm(reference, played.ToArray(), tolerance: 0);
+    }
+
     [Fact]
     public async Task LatestSeekWinsWhileTheReaderIsBlockedAndTheSupersededRequestIsCanceled()
     {

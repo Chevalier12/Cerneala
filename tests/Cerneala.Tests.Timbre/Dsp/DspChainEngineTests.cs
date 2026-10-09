@@ -100,6 +100,22 @@ public sealed class DspChainEngineTests
             0f);
     }
 
+    // Finite source samples whose feedback overflows the delay line: the
+    // output is still hard-clipped to ±1, never NaN.
+    [Fact]
+    public async Task OverflowingDelayFeedbackStillReachesTheOutputHardClipped()
+    {
+        using TimbreRig rig = new();
+        TimbrePlayback playback = rig.Scope.Play(Clip(48000, (_, _) => 3e38f, modifiers: [new Delay(time: 0.001f, feedback: 0.95f, mix: 0f)]));
+
+        float[] pcm = await rig.StartAsync(playback);
+
+        for (int index = 0; index < pcm.Length; index++)
+        {
+            Assert.True(pcm[index] is >= -1f and <= 1f, $"Sample {index} (frame {index / 2}) is {pcm[index]}.");
+        }
+    }
+
     [Fact]
     public async Task ParameterChangesApplyFromTheNextBlockAndInvalidValuesKeepThePreviousOne()
     {
