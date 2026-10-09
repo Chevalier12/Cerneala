@@ -61,6 +61,8 @@ The handle has one active state and two terminal states. `IsActive` is `true` on
 
 `Dispose()` releases completion event subscribers and owner callbacks. When the handle is still active, disposal cancels the owning motion with `MotionCancelBehavior.KeepCurrent` without firing `Completed`; this is useful when caller code wants to stop observing the handle without keeping callback targets alive.
 
+An active handle returned by `MotionValue<T>.AnimateTo` uses its owning graph's thread affinity for `Cancel()`, `Complete()`, and `Dispose()`. A standalone graph captures its creating thread; a root-owned graph uses the UI thread that owns `UIRoot.Relay`. A call from another thread throws `InvalidOperationException` before changing the value, graph registration, handle state, completion task, or callbacks. Marshal lifecycle requests to the owning thread through the root's Relay when applicable. Terminal handles retain their no-op cancellation and completion behavior, and disposal remains idempotent.
+
 Handlers added to `Completed` after the handle is completed, canceled, or disposed are ignored. If a `Completed` handler throws, the handle still invokes the remaining handlers, clears all subscribers and callbacks, then rethrows the first captured exception.
 
 ## Properties
@@ -85,6 +87,12 @@ Handlers added to `Completed` after the handle is completed, canceled, or dispos
 | Name | Event Type | Description |
 | --- | --- | --- |
 | `Completed` | `EventHandler<MotionCompletedEventArgs>?` | Raised when an active handle completes or is canceled through normal handle operations. Subscribers are cleared after the terminal transition. |
+
+## Exceptions
+
+| Member | Exception | Condition |
+| --- | --- | --- |
+| `Cancel`, `Complete`, `Dispose` | `InvalidOperationException` | An active handle returned by `MotionValue<T>.AnimateTo` is called from a thread other than its owning graph's thread. The call is rejected without changing motion or handle state. |
 
 ## Applies to
 
