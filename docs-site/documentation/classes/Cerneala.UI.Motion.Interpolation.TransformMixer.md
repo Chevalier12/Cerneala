@@ -60,6 +60,10 @@ Progress values less than or equal to `0` return `from`, and values greater than
 
 `TransformMixer` does not support vector operations. The vector operation members inherited from `ValueMixer<Transform>` throw `InvalidOperationException`.
 
+`SpringSpec<Transform>` nevertheless supports this built-in mixer through a transform-specific component sampler. It decomposes the endpoints using `Decompose`, springs translation X/Y, scale X/Y, rotation, and skew independently, and composes the output with `Compose`. Rotation follows the same shortest angular path as component interpolation, including when retargeted. Matrix interpolation mode does not change this spring component-space contract.
+
+Spring position and per-component velocity remain in component space between frames. Intermediate scales can pass through zero without being re-decomposed. The existing endpoint decomposition restrictions still apply; this does not change `Decompose` or tween behavior for near-zero endpoint scales. A spring completes only when every component meets both rest thresholds, then returns the exact target transform.
+
 ## Constructors
 
 | Name | Description |

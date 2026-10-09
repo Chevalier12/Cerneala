@@ -199,6 +199,32 @@ public sealed class LayoutMotionCoordinatorTests
     }
 
     [Fact]
+    public void SpringLayoutCorrectionSettlesToIdentityWithoutLayoutWork()
+    {
+        ManualMotionClock clock = new();
+        (UIRoot root, UIElement child) = CreateCanvasScenario(clock);
+        child.LayoutMotion = LayoutMotionOptions.Spring(MotionFactory.Spring<Cerneala.UI.Media.Transform>());
+        root.ProcessFrame();
+        Canvas.SetLeft(child, 40);
+        root.ProcessFrame();
+        LayoutMotionBinding binding = Assert.IsType<LayoutMotionBinding>(root.Motion.Layout.GetBinding(child));
+        Assert.Equal(-40, binding.CurrentCorrection.Matrix.M31);
+
+        for (int i = 0; i < 600 && root.Motion.HasActiveMotion; i++)
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(16));
+            FrameStats stats = root.ProcessFrame();
+            Assert.Equal(0, stats.MeasuredElements);
+            Assert.Equal(0, stats.ArrangedElements);
+        }
+
+        Assert.False(root.Motion.HasActiveMotion);
+        Assert.False(binding.IsActive);
+        Assert.Equal(Cerneala.UI.Media.Transform.Identity, binding.CurrentCorrection);
+        Assert.Equal(new LayoutRect(40, 0, 20, 10), child.ArrangedBounds);
+    }
+
+    [Fact]
     public void LayoutMotionCompletesByClearingCorrection()
     {
         ManualMotionClock clock = new();

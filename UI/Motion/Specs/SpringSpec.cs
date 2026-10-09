@@ -1,4 +1,5 @@
 using Cerneala.UI.Motion.Interpolation;
+using Cerneala.UI.Media;
 
 namespace Cerneala.UI.Motion.Specs;
 
@@ -74,6 +75,12 @@ public sealed class SpringSpec<T> : MotionSpec<T>
     {
         ArgumentNullException.ThrowIfNull(mixer);
         ArgumentNullException.ThrowIfNull(context);
+        if (mixer is TransformMixer && this is SpringSpec<Transform> transformSpec)
+        {
+            return (MotionSampler<T>)(object)new TransformSpringSampler(
+                transformSpec, (Transform)(object)from!, (Transform)(object)to!, context);
+        }
+
         if (!mixer.SupportsVectorOperations)
         {
             throw new InvalidOperationException(
@@ -83,24 +90,27 @@ public sealed class SpringSpec<T> : MotionSpec<T>
         return new VectorSpringSampler(this, from, to, mixer, context);
     }
 
-    private sealed class VectorSpringSampler : MotionSampler<T>
+    internal sealed class VectorSpringSampler : MotionSampler<T>
     {
         private readonly SpringSpec<T> spec;
         private readonly ValueMixer<T> mixer;
         private readonly MotionSpecContext context;
+        private readonly bool completeAtFixedPoint;
         private T current;
         private T target;
         private T velocity;
         private bool isComplete;
 
-        public VectorSpringSampler(SpringSpec<T> spec, T from, T to, ValueMixer<T> mixer, MotionSpecContext context)
+        internal VectorSpringSampler(SpringSpec<T> spec, T from, T to, ValueMixer<T> mixer, MotionSpecContext context,
+            MotionVelocity<T>? initialVelocity = null, bool completeAtFixedPoint = true)
         {
             this.spec = spec;
             this.mixer = mixer;
             this.context = context;
+            this.completeAtFixedPoint = completeAtFixedPoint;
             current = from;
             target = to;
-            velocity = mixer.Scale(mixer.Subtract(to, from), 0);
+            velocity = initialVelocity is { } incoming ? incoming.Value : mixer.Scale(mixer.Subtract(to, from), 0);
         }
 
         public override T Current => current;
@@ -150,7 +160,7 @@ public sealed class SpringSpec<T> : MotionSpec<T>
             // and possibly above RestSpeed. A state the integration leaves
             // bitwise unchanged is a fixed point it can never leave: the spring
             // has ended, on its target.
-            bool fixedPoint = iterations > 0 &&
+            bool fixedPoint = completeAtFixedPoint && iterations > 0 &&
                 mixer.EqualsWithinTolerance(positionBefore, current, 0) &&
                 mixer.EqualsWithinTolerance(velocityBefore, velocity, 0);
             T deltaToTarget = mixer.Subtract(target, current);
