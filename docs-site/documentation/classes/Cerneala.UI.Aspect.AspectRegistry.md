@@ -53,7 +53,7 @@ Standalone registries capture their constructing thread. The registry exposed by
 
 `Packages` is a read-only live view of the registered sequence. It reflects successful registry operations but cannot be cast back to a mutable list to bypass versioning, catalog invalidation, thread access, or the change callback.
 
-`UIRoot` creates an `AspectRegistry` with a callback that invalidates aspect processing for the subtree. Its default aspect package is registered with `notify: false` during root construction so initial setup does not trigger the registry-change invalidation path.
+`UIRoot` creates an `AspectRegistry` with a callback that invalidates aspect processing for the subtree. Its default aspect package is registered through an internal framework-default path with notifications disabled during root construction so initial setup does not trigger the registry-change invalidation path. The catalog retains that registration provenance: theme projection overrides framework token defaults, but explicit packages added through public `Register` override the projection. Application-resource and scoped token packages take precedence over those explicit root registrations. Package names and `AspectPackage.Origin` do not identify framework defaults. Unregistering a package removes its registration provenance as well; a subsequent public registration is explicit even if it reuses the removed package's name or instance.
 
 ## Constructors
 

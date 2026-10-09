@@ -73,6 +73,8 @@ Put a package in `Application.Resources` or `UIElement.Resources` to make it app
 
 Tokens are typed `AspectValue` inputs:
 
+In an element's runtime token environment, precedence runs from framework built-in package defaults, through theme projection, to explicit root-registry packages, application-resource packages, and scoped packages from outermost to nearest (including the element's own resources). `ThemeTokenBridge` projects over the framework's built-in defaults, not over application or scoped overrides. The theme remains the fallback when no explicit override exists; if a projected theme key is missing, the built-in default remains available. Explicit `null` token values also override the theme. Framework defaults are identified by internal registration provenance, not package names or authoring origin. Removing an override restores the next visible source on the next Aspect pass, and template token bindings consume that same effective environment.
+
 ```csharp
 AspectToken<Color> accent = AspectToken.Color("app.accent");
 

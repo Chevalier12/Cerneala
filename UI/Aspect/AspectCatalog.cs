@@ -11,6 +11,8 @@ public sealed class AspectCatalog
         int version,
         List<AspectPackageDiagnostic> packageDiagnostics,
         Dictionary<AspectToken, AspectValue> tokenDefaults,
+        Dictionary<AspectToken, AspectValue> frameworkTokenDefaults,
+        Dictionary<AspectToken, AspectValue> explicitTokenDefaults,
         List<AspectRuleSet> rules,
         List<AspectBehavior> behaviors,
         List<ComponentTemplateDefinition> componentTemplates,
@@ -19,6 +21,8 @@ public sealed class AspectCatalog
         Version = version;
         PackageDiagnostics = packageDiagnostics.AsReadOnly();
         this.tokenDefaults = new ReadOnlyDictionary<AspectToken, AspectValue>(tokenDefaults);
+        FrameworkTokenDefaults = new ReadOnlyDictionary<AspectToken, AspectValue>(frameworkTokenDefaults);
+        ExplicitTokenDefaults = new ReadOnlyDictionary<AspectToken, AspectValue>(explicitTokenDefaults);
         Rules = rules.AsReadOnly();
         Behaviors = behaviors.AsReadOnly();
         ComponentTemplates = componentTemplates.AsReadOnly();
@@ -39,18 +43,29 @@ public sealed class AspectCatalog
 
     public IReadOnlyDictionary<AspectToken, AspectValue> TokenDefaults => tokenDefaults;
 
+    // Registration provenance, not authoring origin or package/token names,
+    // determines which defaults sit below the runtime theme projection.
+    internal IReadOnlyDictionary<AspectToken, AspectValue> FrameworkTokenDefaults { get; }
+
+    internal IReadOnlyDictionary<AspectToken, AspectValue> ExplicitTokenDefaults { get; }
+
     public bool TryGetTokenDefault(AspectToken token, out AspectValue value)
     {
         ArgumentNullException.ThrowIfNull(token);
         return tokenDefaults.TryGetValue(token, out value!);
     }
 
-    internal static AspectCatalog FromPackages(IReadOnlyList<AspectPackage> packages, int version)
+    internal static AspectCatalog FromPackages(
+        IReadOnlyList<AspectPackage> packages,
+        int version,
+        IReadOnlySet<AspectPackage>? frameworkPackages = null)
     {
         CatalogAccumulator accumulator = new();
         foreach (AspectPackage package in packages)
         {
-            accumulator.Append(new AspectPackageSource(package, SourceOrder: 0, Scope: "root"));
+            accumulator.Append(new AspectPackageSource(
+                package, SourceOrder: 0, Scope: "root",
+                IsFrameworkDefault: frameworkPackages?.Contains(package) == true));
         }
 
         return accumulator.Build(version);
@@ -75,6 +90,8 @@ public sealed class AspectCatalog
     private sealed class CatalogAccumulator
     {
         private readonly Dictionary<AspectToken, AspectValue> tokenDefaults = [];
+        private readonly Dictionary<AspectToken, AspectValue> frameworkTokenDefaults = [];
+        private readonly Dictionary<AspectToken, AspectValue> explicitTokenDefaults = [];
         private readonly Dictionary<string, AspectToken> tokensByName = new(StringComparer.Ordinal);
         private readonly List<AspectRuleSet> rules = [];
         private readonly List<AspectBehavior> behaviors = [];
@@ -92,6 +109,16 @@ public sealed class AspectCatalog
             {
                 tokenDefaults.Add(token, defaultValue);
                 tokensByName.Add(token.Name, token);
+            }
+
+            foreach ((AspectToken token, AspectValue defaultValue) in catalog.FrameworkTokenDefaults)
+            {
+                frameworkTokenDefaults.Add(token, defaultValue);
+            }
+
+            foreach ((AspectToken token, AspectValue defaultValue) in catalog.ExplicitTokenDefaults)
+            {
+                explicitTokenDefaults.Add(token, defaultValue);
             }
 
             rules.AddRange(catalog.Rules);
@@ -116,6 +143,10 @@ public sealed class AspectCatalog
 
                 tokensByName[token.Token.Name] = token.Token;
                 tokenDefaults[token.Token] = token.DefaultValue;
+                Dictionary<AspectToken, AspectValue> defaults = source.IsFrameworkDefault
+                    ? frameworkTokenDefaults
+                    : explicitTokenDefaults;
+                defaults[token.Token] = token.DefaultValue;
             }
 
             foreach (AspectRuleSet rule in package.Rules)
@@ -134,6 +165,8 @@ public sealed class AspectCatalog
                 version,
                 diagnostics,
                 tokenDefaults,
+                frameworkTokenDefaults,
+                explicitTokenDefaults,
                 rules,
                 behaviors,
                 componentTemplates,
@@ -145,6 +178,7 @@ public sealed class AspectCatalog
 internal readonly record struct AspectPackageSource(
     AspectPackage Package,
     int SourceOrder,
-    string Scope);
+    string Scope,
+    bool IsFrameworkDefault = false);
 
 public sealed record AspectPackageDiagnostic(string Name);
