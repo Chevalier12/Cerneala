@@ -1,0 +1,4 @@
+interface:
+  display_name: "GitHub Issue Raise"
+  short_description: "Prove a Cerneala bug, then file it in the issue #3 format"
+  default_prompt: "Use $github-issue-raise to prove this Cerneala bug with a faithful reproduction, check for duplicate issues, draft the issue in the format of issue #3 (What happens, Minimal reproduction, Expected behavior, Acceptance criteria) under .artifacts/issue-drafts/, and post it with the bug label only after I approve the draft."

@@ -23,6 +23,19 @@ repository context unless the request supplies one.
 - Keep research and implementation as separate phases. An implementation
   request authorizes implementation work only within its stated scope.
 
+## Claude Code Execution
+
+- In Cerneala, follow `CLAUDE.md`. Repository and external-source exploration goes to Haiku explorers (`Explore`, `model: "haiku"`, `effort: "max"`). They have web search and fetch.
+- Split the market into independent assignments and send them in one message so they run in parallel. Examples: one per evidence track (research / production) per algorithm family, plus one for the current implementation in the repository. Each explorer returns, per candidate:
+  - the name and family;
+  - direct source links (paper, standard, or a pinned release/commit and file);
+  - the license identifier and license URL;
+  - the claims it supports, each with its link;
+  - coverage limits.
+- Verify every decisive claim yourself by opening the cited URL with `WebFetch`, or the cited repository file with `Read`. Decisive claims are the ones behind a score, a hard gate, a license verdict, or a benchmark number. An explorer summary is not evidence on its own.
+- Run further explorer rounds until the two-round saturation gate below is met. Record each round's query themes.
+- Keep the candidate ledger in a scratchpad file outside the repository, so it survives context compaction. After a compaction, re-read this file (`.claude/skills/algorithm-market/SKILL.md`) and the ledger before continuing.
+
 ## Workflow
 
 ### 1. Establish the current state when one exists
@@ -122,7 +135,7 @@ every field as though it were graphics.
 
 ### 6. Return the decision report
 
-Write in the user's language unless they request another language. Use the
+Write in the user's language unless they request another language. In Cerneala, follow "The user" in `CLAUDE.md`: explain each finalist's decisive tradeoff with one concrete example, such as a specific input and what each algorithm does with it. Use the
 following section order so coverage, evidence, and the verdict remain auditable.
 
 ## Mandatory Chat Report Format

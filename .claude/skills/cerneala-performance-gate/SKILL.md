@@ -7,6 +7,18 @@ description: Reproduce, diagnose, optimize, and verify observable Cerneala perfo
 
 Turn an observable performance failure into a fixed measurement contract, find the owning bottleneck, and continue until the exact gate passes without weakening correctness, architecture, or visual fidelity.
 
+Follow `CLAUDE.md`, especially "Claude Code tooling and verification commands":
+- Delegate discovery to Haiku explorers.
+- Run long measurements and suites with `run_in_background`.
+- Filter output to the decisive numbers.
+
+After a context compaction, re-read this file (`.claude/skills/cerneala-performance-gate/SKILL.md`) and the frozen gate record before continuing. The gate is never re-derived from memory.
+
+Measurement hygiene on this machine (8 logical cores, 16 GB RAM):
+- Close or account for other heavy processes before a gate run, such as other test hosts or `mcpRoslyn.exe` instances.
+- Never run two gate measurements at the same time.
+- Record the processes that were running alongside each measured run.
+
 ## 1. Freeze the Gate
 
 Record the gate before changing production code:
@@ -16,6 +28,8 @@ Record the gate before changing production code:
 - backend, platform, hardware, display mode, build configuration, and relevant runtime settings;
 - startup versus steady-state scope, warmup, sample duration or frame count, and number of fresh-process runs;
 - correctness, visual-fidelity, latency, and memory constraints that must remain unchanged.
+
+While the user is present for this step, also get the one-time tool approval described under "Diagnostic Tool and Trace Authority".
 
 Treat these details as one measurement contract. Do not change the workload, percentile, sample window, warmup, quality, or threshold after seeing the result. If a material part is missing or admits materially different outcomes, stop and ask the user. “Make it faster” is not a gate.
 
@@ -73,7 +87,16 @@ Treat Servo and Detective as fallible parts of the measurement path. If either s
 
 ### Diagnostic Tool and Trace Authority
 
-The user authorizes collecting every relevant bounded trace and installing the diagnostic tooling required to obtain decisive evidence. A missing tool is not a reason to fall back to guesswork or shallow counters. When relevant, you may acquire, install, configure, and use:
+The user authorizes collecting every relevant bounded trace. A missing tool is not a reason to fall back to guesswork or shallow counters.
+
+Performance-gate runs are long and usually unattended, so tool approval happens once, up front:
+
+1. While freezing the gate (step 1), when the user is present anyway, decide which tools the investigation may need. Check which are already installed, including built-in Windows tools such as WPR/WPA.
+2. Ask the user once, in a single `AskUserQuestion`, to approve the download/installation list. For each tool give the name, version, publisher or source URL, and approximate size.
+3. During the run, install and use only tools on that approved list or already present on the machine. Do not stop to ask again.
+4. If evidence later requires a tool that is not on the list, do not wait for the user. Continue with the tools available, record exactly which tool is needed and why, and report it at the end as a remaining step. Downloading an unapproved tool is never allowed, even when the user is away.
+
+Relevant tools include:
 
 - CPU, sampling, instrumentation, allocation, heap, retained-object, dump, and native-memory profilers;
 - ETW collectors and analyzers, Windows Performance Recorder/Analyzer, GPUView, event providers, symbols, and stack-walking support;
@@ -83,7 +106,7 @@ The user authorizes collecting every relevant bounded trace and installing the d
 
 Prefer an official publisher, package manager, signed release, or otherwise verifiable source. Record the tool name, version, source, installation command, configuration, capture command, and produced artifact so another run can reproduce the evidence. Prefer portable, repository-external, or user-local installation when it provides the same fidelity; use machine-wide installation when the required tool cannot work otherwise and the environment permits it.
 
-Tool installation is authorized, but it does not authorize disabling platform security, accepting unrelated bundled software, changing production dependencies, replacing the user's GPU driver without evidence, or concealing a required elevation, license, reboot, network, or hardware blocker. Do not uninstall or reconfigure a tool that predated the investigation. Remove investigation-only tools, services, environment changes, and large trace artifacts when safe and practical; otherwise report exactly what remains installed and why.
+An approved installation does not authorize disabling platform security, accepting unrelated bundled software, changing production dependencies, replacing the user's GPU driver without evidence, or concealing a required elevation, license, reboot, network, or hardware blocker. Do not uninstall or reconfigure a tool that predated the investigation. Remove investigation-only tools, services, environment changes, and large trace artifacts when safe and practical; otherwise report exactly what remains installed and why.
 
 Capture traces in bounded windows around the deterministic scenario. Correlate clocks and markers across application, runtime, native, SDL, GPU submission, and presentation layers when possible. Run an uninstrumented copy of the frozen gate after diagnosis: a trace can establish ownership, but profiler or validation-layer overhead cannot be used as the final performance result.
 
@@ -109,6 +132,8 @@ Capture a baseline with the frozen gate and report:
 
 Create the smallest permanent regression test or maintained performance gate that fails for the intended reason. Confirm RED before changing production behavior. If the real backend or hardware is required and a normal test cannot express the contract, keep the deterministic runtime gate as the RED artifact and document why a weaker test would be false evidence.
 
+If the performance defect has no GitHub issue yet, invoke `github-issue-raise` once the baseline is RED. Use the same skill for any correctness defect found while measuring.
+
 ## 5. Attribute Cost Before Editing
 
 - Use existing Detective evidence first, then instrument phase boundaries and resource lifetimes until the dominant cost and its owner are evidenced.
@@ -128,7 +153,7 @@ Implement the smallest architecture-correct framework change that removes the ev
 - Do not pass by disabling an effect, reducing resolution or samples, skipping necessary work, deferring work beyond the measurement window, changing timing semantics, or weakening the gate.
 - Pool, cache, batch, or retain work only when ownership, invalidation, disposal, device loss, and bounded-growth behavior remain correct.
 - Avoid replacing measured cost with unmeasured retained memory, latency, GPU work, or startup work.
-- Follow the repository's source, test, and documentation rules. Use direct reads and `rg` for text.
+- Follow the repository's source, test, and documentation rules (`CLAUDE.md`). Delegate discovery to Haiku explorers, use Roslyn MCP for C# references when connected, and read the decisive files yourself.
 
 When the correct solution requires a nontrivial algorithm choice, use the project algorithm-market workflow before committing to one. Do not add algorithmic machinery for an ordinary lifetime or invalidation bug.
 
@@ -161,7 +186,7 @@ Remove temporary instrumentation, harnesses, generated reports inside the reposi
 
 ## 9. Report the Evidence
 
-State:
+State the following in the user's language, following "The user" in `CLAUDE.md`. Lead with a plain baseline-versus-final table of the gated numbers, for example "P99 frame: 18.4 ms → 6.1 ms (gate ≤ 6.94 ms): PASS".
 
 - observed symptom and frozen gate;
 - baseline measurements and measurement conditions;

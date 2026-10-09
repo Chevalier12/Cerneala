@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "cerneala_roslyn": {
+      "type": "stdio",
+      "command": "powershell.exe",
+      "args": [
+        "-NoLogo",
+        "-NoProfile",
+        "-NonInteractive",
+        "-File",
+        "Tools\\scripts\\Start-RoslynMcp.ps1"
+      ]
+    }
+  }
+}

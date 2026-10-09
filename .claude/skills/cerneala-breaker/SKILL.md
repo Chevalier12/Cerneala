@@ -32,7 +32,10 @@ Do not waste the attack budget on naming, formatting, aesthetics, friendly diagn
 ## Operating Rules
 
 - Follow repository instructions and preserve the dirty worktree. Existing changes and failures are not yours.
-- Generate and read `FileTree.md` before broad repository reasoning. Use direct file reads and `rg` for text. Read complete source files before editing test or harness code.
+- Follow `CLAUDE.md`, especially "Claude Code tooling and verification commands". Generate and read `FileTree.md` once before broad repository reasoning.
+- Do reconnaissance through Haiku explorers, in parallel when independent: contracts, callers, existing tests, neighboring subsystems that share an invariant. Use Roslyn MCP for C# references when it is connected. Read complete source files before editing test or harness code.
+- Run long attack runs, stress loops, and suites with `run_in_background`, each with an explicit timeout. Never leave a probe process running at handoff.
+- After a context compaction, re-read this file (`.claude/skills/cerneala-breaker/SKILL.md`) and the risk ledger before the next probe. Ledger dispositions are never reconstructed from memory.
 - Establish the documented or observable contract before calling behavior broken. Distinguish valid hostile use from invalid use that the API is allowed to reject.
 - Before adding a probe, record the baseline revision, dirty state, toolchain/runtime identity, applicable backend/platform/configuration, focused command, and broader command. Run the focused baseline when practical and capture duration, skips, retries, hangs, leaks, and known flakes instead of reducing it to pass/fail.
 - Classify every anomalous result as unclassified until evidence distinguishes a Cerneala defect, test defect, harness/environment defect, specification gap, or flake. Only Cerneala defects are indictments against the target.
@@ -85,7 +88,7 @@ Before writing probes, build a compact attack model:
 - for a stateful target, write a minimal state/action table with expected and forbidden outcomes, then derive hostile sequences from it;
 - mark unsupported assumptions and contract ambiguities instead of silently turning them into test expectations.
 
-Track the attack model as a compact risk ledger. Every behaviorally distinct row must name the contract and its source, consequence, falsifiable hypothesis, oracle, current evidence gap, selected technique, budget, priority, and disposition. Use only these dispositions:
+Track the attack model as a compact risk ledger, kept in a scratchpad file outside the repository so that it survives context compaction. Every behaviorally distinct row must name the contract and its source, consequence, falsifiable hypothesis, oracle, current evidence gap, selected technique, budget, priority, and disposition. Use only these dispositions:
 
 - `pending`: not yet exercised;
 - `covered`: the declared bounded attack ran without contradiction;
@@ -174,6 +177,8 @@ Every confirmed finding, including Material findings, must finish with the small
 
 Do not change production behavior merely to make the RED test easier to express. A Servo or Detective self-repair must fix the owning invariant so the unchanged regression becomes GREEN; the test must not smuggle in the fix.
 
+For every confirmed Critical, Major, or Material finding, invoke `github-issue-raise`, one issue per violated contract. Put the permanent regression test's name and its isolated command in the issue's reproduction section.
+
 ### 5. Grade the damage
 
 Use this severity filter:
@@ -188,6 +193,8 @@ Severity follows impact and reproducibility, not how angry the prose sounds.
 ### 6. Clean up and report
 
 Remove temporary probes, reports, generated files, instrumentation, and superseded harness projects using exact validated paths. Preserve every permanent regression test, including GREEN Servo or Detective self-repair coverage, and any justified Detective diagnostic with its focused tests and documentation. Confirm with `git status` that the retained audit changes are exactly those intended artifacts and that unrelated user changes are untouched.
+
+Write the report in the user's language, following "The user" in `CLAUDE.md`. Give every confirmed finding a literal example: the input or action sequence, what happened, and what should have happened.
 
 Lead with a blunt verdict:
 

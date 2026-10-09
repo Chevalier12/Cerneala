@@ -7,6 +7,8 @@ description: Reproduce, diagnose, fix, and verify Cerneala defects end-to-end wi
 
 Fix the reported behavior from reproduction through final verification. Treat the observed failure as the starting fact and theories as disposable until evidence supports them.
 
+Follow `CLAUDE.md`, especially "Claude Code tooling and verification commands". After a context compaction, re-read this file (`.claude/skills/cerneala-fix-bug/SKILL.md`) before continuing. Recover the reproduction, the RED test, and the current hypothesis from the repository and the summary, not from memory alone.
+
 ## 1. Capture the Contract
 
 - Restate the smallest known reproduction, expected behavior, actual behavior, environment, and frequency.
@@ -16,11 +18,14 @@ Fix the reported behavior from reproduction through final verification. Treat th
 
 ## 2. Orient in the Repository
 
-- Follow `AGENTS.md` and any narrower repository instructions.
-- Generate and read `FileTree.md` before reasoning about structure.
-- Use direct file reads and `rg` for text. Read a full C# file before editing it.
-- Locate the owning contract, callers, tests, documentation, and adjacent state transitions. Do not scan unrelated subsystems for sport.
-- Do not modify `AGENTS.md` unless the bug explicitly concerns those instructions.
+- Follow `CLAUDE.md` and any narrower repository instructions.
+- Generate and read `FileTree.md` once before reasoning about structure.
+- Locate the owning contract, callers, tests, documentation, and adjacent state transitions:
+  - Send independent questions to Haiku explorers in parallel. Examples: "where is `X` raised", "which tests cover `Y`", "who calls `Z`".
+  - Use Roslyn MCP for C# references when it is connected.
+  - Read the decisive files yourself. Read a full C# file before editing it.
+- Do not scan unrelated subsystems for sport.
+- Do not modify `CLAUDE.md` unless the bug explicitly concerns those instructions.
 
 ## 3. Reproduce Before Fixing
 
@@ -103,6 +108,8 @@ Servo and Detective are part of this workflow, not assumed-correct test equipmen
 - Prefer public behavior over implementation details unless the contract is intentionally internal.
 - If a deterministic automated test is genuinely infeasible, state why and define a diagnostic gate plus a user-validation checklist. Do not claim automated regression coverage that does not exist.
 
+If the bug has no GitHub issue yet, invoke `github-issue-raise` once the reproduction is RED, so that the fix can reference `Fixes #N`. Use the same skill for any other Cerneala defect you discover along the way, and do not fix that one here.
+
 ## 5. Diagnose the Root Cause
 
 - Trace the failing state from the public symptom to the owning implementation.
@@ -125,17 +132,17 @@ Run verification in this order:
 1. Run the RED regression test and confirm it is now green.
 2. Repeat the original CSI or runtime harness with the same inputs, cycle count, and timing pattern; compare the previously failing state and aggregate metrics.
 3. Run the affected test project or focused test group.
-4. Run the complete repository test suite. If another contract regresses, diagnose it, fix the damage, and rerun the full suite until green.
+4. Run the complete repository test suite in the background, with the command and fresh-checkout prerequisites from `CLAUDE.md`. Run the native SDL/GPU subset only when the fix touches that path. If another contract regresses, diagnose it, fix the damage, and rerun until green. Prove an "environmental" failure: for example, show the same failure on unchanged `master`.
 
 When a permanent Detective diagnostic was added, also run its focused tests, documentation/manifest checks, API compatibility gate, and any measured overhead gate required by its collection model.
 
-Do not perform or claim manual validation of the real application scenario. That gate belongs to the user. After automated verification, provide concise reproduction steps, the expected corrected result, and any diagnostics the user should inspect. Record the manual result only when the user explicitly reports it.
+Do not perform or claim manual validation of the real application scenario. That gate belongs to the user. After automated verification, provide concise reproduction steps, the expected corrected result, and any diagnostics the user should inspect. Write the steps as literal actions with literal expected results. For example: "click X, then Y; the button should turn red and stay red". Record the manual result only when the user explicitly reports it.
 
 Do not declare success because the code compiles or one assertion passes. The automated reproduction must be green and the repository must remain healthy. Until the user confirms the real scenario, report its status as awaiting user validation.
 
 ## 8. Report Evidence
 
-Summarize:
+Summarize, in the user's language and following "The user" in `CLAUDE.md`:
 
 - the reproduced failure and root cause;
 - the focused regression test and its RED-to-GREEN result;

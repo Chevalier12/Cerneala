@@ -9,6 +9,8 @@ Transform the settled discussion into executable planning artifacts. Inspect the
 
 A clean Markdown file is not evidence that a plan is correct. Mechanical validation and semantic validation are separate mandatory gates.
 
+Follow `CLAUDE.md`, especially "Claude Code tooling and verification commands". After a context compaction, re-read this file (`.claude/skills/cerneala-checklist-plan/SKILL.md`) and every plan file already drafted before continuing.
+
 ## Workflow
 
 ### 1. Recover the decision record
@@ -20,10 +22,14 @@ A clean Markdown file is not evidence that a plan is correct. Mechanical validat
 
 ### 2. Inspect Cerneala before planning
 
-- Follow the repository `AGENTS.md` instructions.
-- Run `Tools/scripts/New-FileTree.ps1`, then read `FileTree.md` before inspecting structure.
-- Use direct file reads and `rg` for text.
-- Build a current-source caller inventory with direct reads and scoped `rg` searches. Inspect each candidate use in context, record search scope and unresolved coverage, and do not treat a text match as proof of symbol identity or absence of other callers. Semantic tooling may help when available, but is not a prerequisite.
+- Follow `CLAUDE.md`.
+- Run `.\Tools\scripts\New-FileTree.ps1`, then read `FileTree.md` once before inspecting structure.
+- Split the discovery into independent evidence questions and send them to Haiku explorers in parallel. Examples: "every caller of `X`", "which tests cover `Y`", "how does the native adapter lay out `Z`". Read the decisive files they return yourself.
+- Build a current-source caller inventory:
+  - Use Roslyn MCP (`find_references`, `find_callers`, `find_implementations`) for C# symbols when it is connected.
+  - Use explorers for text, markup, shader, and non-C# uses.
+  - Inspect each candidate use in context and record the search scope and any unresolved coverage.
+  - A text match is not proof of symbol identity, and an empty search is not proof that no other callers exist.
 - Inspect the relevant production code, tests, public API docs, and at least one current plan for local conventions.
 - Identify existing extension points before proposing new abstractions.
 - Read the complete definition of the primary type being changed and trace its ownership cone: current callers and uses, factories/composers, resource owners, lifecycle/disposal paths, failure paths, platform/native adapters, and at least one consumer outside the most recently discussed subsystem when one exists.
@@ -85,7 +91,7 @@ For each stage:
 - Describe observable behavior, not vague work such as "handle edge cases".
 - Include focused tests near the implementation tasks they validate. For changed behavior, require the smallest RED test and confirmation that it fails for the intended reason before production changes. Label existing GREEN behavior as characterization, not RED.
 - Add a `Gate` subsection with conditions that must be true before continuing.
-- Include exact targeted and full-suite verification commands where useful.
+- Include exact targeted and full-suite verification commands where useful, using the real commands and prerequisites from `CLAUDE.md`. Examples: the Debug build PreviewHost needs, and the `CERNEALA_SDL_NATIVE_TESTS=1` native subset.
 - Confirm that the current or explicitly planned harness can observe every gate. If instrumentation does not exist, plan instrumentation before the baseline and do not claim unavailable metrics.
 - Distinguish deterministic gates (draw counts, binds, invalidations, resource counts, API surface) from noisy measurements. Define warmup, repetitions, variation handling, and inconclusive results for timing gates.
 - State platform policy explicitly: required and executed, required but blocked, deliberately waived by an existing decision, or compile-only. "Not run" is not GREEN.
@@ -103,7 +109,7 @@ For each stage:
 ### 8. Run a semantic audit of the draft
 
 - Reread every plan file completely after drafting.
-- Recheck the definitions and scoped call-site searches for every shared type/member the plan moves, changes, renames, or deletes. Inspect matches in context, verify that the file inventory and migration tasks cover identified callers, and record any unresolved coverage instead of claiming text search proves completeness.
+- Recheck the definitions and call sites (Roslyn MCP or a fresh explorer pass) for every shared type/member the plan moves, changes, renames, or deletes. Inspect matches in context, verify that the file inventory and migration tasks cover identified callers, and record any unresolved coverage instead of claiming text search proves completeness.
 - Compare objectives, non-goals, tasks, gates, risks, platform policy, and definition of done for contradictions.
 - Verify that every baseline claim still matches the repository and that every future capability is marked as planned or gated by discovery.
 - Verify that every RED is actually RED on the current implementation, while characterization tests remain GREEN.
@@ -187,4 +193,4 @@ After writing the plan files:
 - State any remaining unknown, waiver, or blocked gate precisely.
 - If semantic verification is incomplete, say the plan is not implementation-ready even when mechanical checks pass.
 
-Report the created file paths and note whether code tests were run. Documentation-only edits do not require rerunning unrelated suites, but a focused existing test/tool may be run when it validates a material planning assumption.
+Report the created file paths and note whether code tests were run. Write the report in the user's language, simply and with a concrete example of what the first stage changes (see "The user" in `CLAUDE.md`). Documentation-only edits do not require rerunning unrelated suites, but a focused existing test/tool may be run when it validates a material planning assumption.
