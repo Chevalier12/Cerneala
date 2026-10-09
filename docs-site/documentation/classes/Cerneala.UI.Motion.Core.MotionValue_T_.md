@@ -54,17 +54,17 @@ bool completed = handle.IsCompleted;
 
 `MotionValue<T>` instances are created by `MotionGraph.CreateValue<T>`. The constructor is internal, so callers receive values from the graph rather than constructing them directly. The value stores the current value, target value, animation start value, active sampler, optional velocity, and the active `MotionHandle`.
 
-`AnimateTo` verifies access through the owning graph, creates a sampler from the supplied `MotionSpec<T>`, records the requested target, and registers an internal motion node with the graph while the animation is active. When the sampler completes naturally, the value applies the sampler's final `Current` value, updates `Target` to that completed value, records completion diagnostics when diagnostics are configured, finishes the handle as completed, and unregisters its node. This preserves specifications whose natural endpoint can differ from the originally requested target, such as an even-cycle `PingPongSpec<T>`.
+`AnimateTo` verifies access through the owning graph, creates or continues a sampler using the supplied `MotionSpec<T>`, records the requested target, and registers an internal motion node with the graph while the animation is active. When the sampler completes naturally, the value applies the sampler's final `Current` value, updates `Target` to that completed value, records completion diagnostics when diagnostics are configured, finishes the handle as completed, and unregisters its node. This preserves specifications whose natural endpoint can differ from the originally requested target, such as an even-cycle `PingPongSpec<T>`.
 
 Starting an animation with equal or higher priority cancels the previous active handle with `MotionCancelBehavior.KeepCurrent`. A lower-priority request is rejected without changing the active animation and returns an already canceled handle. When `MotionStartOptions.RetargetMode` is `RetargetMode.PreserveProgress`, the previous elapsed animation time is reused with the new sampler when the active motion can be detached safely; otherwise the operation falls back to a restart.
 
-An active `SpringSpec<Transform>` using the built-in `TransformMixer` instead retains its decomposed component positions when retargeted to another transform spring. The incoming spec supplies the new spring parameters and determines whether per-component velocities are preserved or reset. Both retarget modes continue without elapsed-time replay. If cancellation callbacks change the current value, a new sampler starts from that value instead. Component velocity is retained internally; `Velocity` is `null` because it cannot be represented losslessly as a transform matrix.
+An active spring instead retains its current position when retargeted to another spring. The incoming spec supplies the new spring parameters and determines whether velocity is preserved or reset. Both retarget modes continue without elapsed-time replay: for a spring, `PreserveProgress` preserves motion state rather than elapsed time. If cancellation callbacks change the current value, the normal new-sampler path starts from that value instead. A built-in transform spring retains its decomposed component positions and velocities internally; `Velocity` is `null` because component velocity cannot be represented losslessly as a transform matrix.
 
 `JumpTo` cancels active motion, sets the target and animation start to the supplied value, and notifies subscribers only when the mixed value differs from `Current`. Change notifications are delivered to a snapshot of the subscription list, so listeners may cancel, complete, or start motion while a notification is being processed.
 
 The active handle returned by `AnimateTo` also verifies graph access before `Cancel`, `Complete`, or `Dispose` changes any motion or handle state. Rejected cross-thread calls leave the animation intact: the current value, target, sampled velocity, graph registration, completion task, and callbacks are preserved. Subsequent owner-thread ticks and lifecycle calls continue normally.
 
-`Velocity` is read from the active sampler after graph ticks. If the sampler does not expose velocity and throws `InvalidOperationException`, `Velocity` is reported as `null`.
+`Velocity` is read from the active sampler after graph ticks and after a successful spring-state handoff, so retargeting exposes the preserved or reset velocity immediately. If the sampler does not expose velocity and throws `InvalidOperationException`, `Velocity` is reported as `null`.
 
 If a subscriber throws while a terminal value is applied, the exception propagates to the caller. The motion still becomes terminal and unregisters its graph node before the exception escapes, so the handle is not left active.
 
@@ -75,7 +75,7 @@ If a subscriber throws while a terminal value is applied, the exception propagat
 | `Current` | `T` | Gets the currently applied value. |
 | `Target` | `T` | Gets the value the active motion is targeting. After natural completion, gets the sampler's completed value; after `JumpTo`, gets the supplied value. |
 | `IsAnimating` | `bool` | Gets whether the value has an active sampler and active handle. |
-| `Velocity` | `MotionVelocity<T>?` | Gets the most recently sampled velocity when the active sampler provides one; otherwise `null`. |
+| `Velocity` | `MotionVelocity<T>?` | Gets the velocity last read from the sampler after sampling or a successful spring-state handoff; otherwise `null`. |
 
 ## Methods
 
