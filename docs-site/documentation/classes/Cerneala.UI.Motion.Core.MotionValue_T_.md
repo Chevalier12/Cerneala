@@ -58,6 +58,8 @@ bool completed = handle.IsCompleted;
 
 Starting an animation with equal or higher priority cancels the previous active handle with `MotionCancelBehavior.KeepCurrent`. A lower-priority request is rejected without changing the active animation and returns an already canceled handle. When `MotionStartOptions.RetargetMode` is `RetargetMode.PreserveProgress`, the previous elapsed animation time is reused with the new sampler when the active motion can be detached safely; otherwise the operation falls back to a restart.
 
+An active `SpringSpec<Transform>` using the built-in `TransformMixer` instead retains its decomposed component positions when retargeted to another transform spring. The incoming spec supplies the new spring parameters and determines whether per-component velocities are preserved or reset. Both retarget modes continue without elapsed-time replay. If cancellation callbacks change the current value, a new sampler starts from that value instead. Component velocity is retained internally; `Velocity` is `null` because it cannot be represented losslessly as a transform matrix.
+
 `JumpTo` cancels active motion, sets the target and animation start to the supplied value, and notifies subscribers only when the mixed value differs from `Current`. Change notifications are delivered to a snapshot of the subscription list, so listeners may cancel, complete, or start motion while a notification is being processed.
 
 `Velocity` is read from the active sampler after graph ticks. If the sampler does not expose velocity and throws `InvalidOperationException`, `Velocity` is reported as `null`.

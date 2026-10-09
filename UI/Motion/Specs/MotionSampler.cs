@@ -29,6 +29,10 @@ public abstract class MotionSampler<T> : MotionSampler
 
     public abstract void Retarget(T to, RetargetMode mode);
 
+    // Component samplers can retain state that cannot round-trip through T (e.g. a
+    // transform matrix cannot represent component velocity or unwrapped rotation).
+    internal virtual bool TryRetargetWithSpec(T to, MotionSpec<T> spec, MotionSpecContext context) => false;
+
     public override void RetargetUntyped(object? to, RetargetMode mode)
     {
         if (to is T typed)

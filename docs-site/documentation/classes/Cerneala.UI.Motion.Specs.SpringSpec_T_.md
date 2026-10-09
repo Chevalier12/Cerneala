@@ -7,7 +7,7 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Motion/Specs/SpringSpec.cs`
 
-Represents a typed spring motion specification that moves vector-capable values toward a target using stiffness, damping, and mass parameters.
+Represents a typed spring motion specification that moves vector-capable values or decomposed transforms toward a target using stiffness, damping, and mass parameters.
 
 ```csharp
 public sealed class SpringSpec<T> : MotionSpec<T>
@@ -20,7 +20,7 @@ Inheritance:
 
 | Name | Description |
 | --- | --- |
-| `T` | The animated value type. The supplied `ValueMixer<T>` must support vector operations when a sampler is created. |
+| `T` | The animated value type. The supplied `ValueMixer<T>` must support vector operations, except that the built-in `TransformMixer` uses a component-space transform spring sampler. |
 
 ## Examples
 
@@ -86,6 +86,12 @@ Sampling completes when the distance to the target is less than or equal to `Res
 
 Spring sampling requires a `ValueMixer<T>` whose `SupportsVectorOperations` value is `true`, because the sampler uses vector subtraction, addition, scaling, and magnitude. Non-vector mixers are rejected when `CreateSampler` is called.
 
+The built-in `TransformMixer` is an exception to that requirement: `SpringSpec<Transform>` decomposes its endpoints into translation X/Y, scale X/Y, rotation radians, and skew using `TransformMixer.Decompose`. Each component is an independent one-dimensional spring with the supplied stiffness, damping, mass, and rest thresholds. Rotation takes the same shortest angular path as a transform tween. The sampler retains component positions and velocities and composes only the sampled output, so intermediate zero scales do not trigger another decomposition. Existing endpoint decomposition restrictions still apply.
+
+For this transform sampler, completion requires every component's absolute target distance and speed to meet their respective thresholds; the generic fixed-point completion shortcut does not apply. Completion returns the exact target transform. Component velocities are retained internally, but `Velocity` returns `null`: a transform matrix cannot losslessly represent those velocities.
+
+Retargeting a built-in transform spring through `MotionValue<Transform>.AnimateTo` carries current component positions and, with the incoming `VelocityMode.Preserve`, their velocities into the incoming spring parameters. `VelocityMode.Reset` resets each component velocity. Both retarget modes continue without elapsed-time replay. Other spec/mixer paths retain their existing behavior.
+
 Each call to `WithRestThresholds` or `WithVelocityMode` returns a new `SpringSpec<T>` instance. The original spec is not mutated.
 
 Retargeting always changes the sampler target and marks the sampler incomplete. When `VelocityMode` is `SpringVelocityMode.Preserve`, the current velocity is kept. When it is `SpringVelocityMode.Reset`, velocity is reset to zero. The `RetargetMode` argument is accepted by the sampler but does not otherwise change spring retargeting behavior.
@@ -115,7 +121,7 @@ Very large advances are limited to `1000` fixed substeps, or about `8.333` secon
 | --- | --- | --- |
 | `WithRestThresholds(float, float)` | `SpringSpec<T>` | Returns a copy with different rest speed and rest delta thresholds. |
 | `WithVelocityMode(SpringVelocityMode)` | `SpringSpec<T>` | Returns a copy with a different velocity retargeting mode. |
-| `CreateSampler(T, T, ValueMixer<T>, MotionSpecContext)` | `MotionSampler<T>` | Creates a spring sampler from a starting value, target value, vector-capable mixer, and motion context. |
+| `CreateSampler(T, T, ValueMixer<T>, MotionSpecContext)` | `MotionSampler<T>` | Creates a spring sampler using a vector-capable mixer or the built-in transform component path. |
 | `CreateSamplerUntyped(object?, object?, IValueMixer, MotionSpecContext)` | `MotionSampler` | Inherited from `MotionSpec<T>`. Casts untyped values and mixer instances before delegating to `CreateSampler`. |
 
 ## Exceptions
@@ -123,8 +129,8 @@ Very large advances are limited to `1000` fixed substeps, or about `8.333` secon
 | Member | Exception | Condition |
 | --- | --- | --- |
 | `SpringSpec(float, float, float, float, float, SpringVelocityMode)` | `ArgumentOutOfRangeException` | `stiffness`, `mass`, `restSpeed`, or `restDelta` is not finite; `stiffness` or `mass` is less than or equal to `0`; or `damping`, `restSpeed`, or `restDelta` is negative. |
-| `CreateSampler(T, T, ValueMixer<T>, MotionSpecContext)` | `ArgumentNullException` | `mixer` or `context` is `null`. |
-| `CreateSampler(T, T, ValueMixer<T>, MotionSpecContext)` | `InvalidOperationException` | The supplied mixer does not support vector operations. |
+| `CreateSampler(T, T, ValueMixer<T>, MotionSpecContext)` | `ArgumentNullException` | `mixer` or `context` is `null`, or a built-in transform spring endpoint is `null`. |
+| `CreateSampler(T, T, ValueMixer<T>, MotionSpecContext)` | `InvalidOperationException` | The supplied mixer does not support vector operations and is not the built-in `TransformMixer`, or a transform endpoint cannot be decomposed. |
 
 ## Applies to
 

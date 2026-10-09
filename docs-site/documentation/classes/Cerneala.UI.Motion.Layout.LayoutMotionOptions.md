@@ -29,7 +29,7 @@ Border item = new()
 {
     LayoutMotionId = "card",
     LayoutMotion = LayoutMotionOptions.Spring(
-        MotionFactory.Tween<Transform>(TimeSpan.FromMilliseconds(180)))
+        MotionFactory.Spring<Transform>())
 };
 ```
 
@@ -39,6 +39,8 @@ Border item = new()
 When the layout coordinator detects that a participating element's visual bounds changed between the first and last layout snapshots, it creates an inverse correction transform and starts a `LayoutMotionBinding`. The binding jumps the correction to that inverse transform and animates it back to `Transform.Identity` using `CorrectionSpec`.
 
 The `Spring` factory name creates a `LayoutMotionOptions` instance from the supplied `MotionSpec<Transform>`. The supplied spec can be any transform motion specification accepted by the motion system, such as a tween or spring spec from `Cerneala.UI.Motion.Specs.Motion`.
+
+With the built-in transform mixer, `Motion.Spring<Transform>()` springs the decomposed translation, scale, rotation, and skew components independently. A layout correction settles to the exact `Transform.Identity` when every component meets the supplied spring's rest speed and rest delta thresholds. No custom vector mixer is required. Tween specifications remain supported by the factory.
 
 Layout motion corrections are render-only. Tests for layout motion assert that ticking an active correction advances motion frames without enqueueing additional measure or arrange work.
 

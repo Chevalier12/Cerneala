@@ -114,6 +114,11 @@ public sealed class TransformMixer : ValueMixer<Transform>
 
     private static float LerpAngle(float from, float to, float progress)
     {
+        return from + (ShortestAngleDelta(from, to) * progress);
+    }
+
+    internal static float ShortestAngleDelta(float from, float to)
+    {
         float delta = to - from;
         while (delta > MathF.PI)
         {
@@ -125,7 +130,7 @@ public sealed class TransformMixer : ValueMixer<Transform>
             delta += MathF.Tau;
         }
 
-        return from + (delta * progress);
+        return delta;
     }
 
 }

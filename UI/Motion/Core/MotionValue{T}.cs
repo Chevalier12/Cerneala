@@ -69,6 +69,7 @@ public sealed class MotionValue<T> : MotionValue
             return CreateRejectedHandle();
         }
 
+        MotionSampler<T>? previousSampler = IsAnimating ? sampler : null;
         if (sampler is not null &&
             activeHandle?.IsActive == true &&
             effectiveOptions.RetargetMode == RetargetMode.PreserveProgress)
@@ -91,17 +92,13 @@ public sealed class MotionValue<T> : MotionValue
             CancelCallbackCreatedMotion();
             this.target = target;
             animationStart = current;
-            sampler = spec.CreateSampler(
-                current,
-                target,
-                mixer,
-                graph.CreateSpecContext(effectiveOptions.DebugName));
-            if (preservedElapsed > TimeSpan.Zero)
+            sampler = CreateNextSampler(target, spec, effectiveOptions.DebugName, expectedSampler, out bool continued);
+            if (!continued && preservedElapsed > TimeSpan.Zero)
             {
                 sampler.Advance(preservedElapsed);
             }
 
-            animationElapsed = preservedElapsed;
+            animationElapsed = continued ? TimeSpan.Zero : preservedElapsed;
 
             MotionHandle retargetedHandle = CreateHandle();
             activeHandle = retargetedHandle;
@@ -116,11 +113,7 @@ public sealed class MotionValue<T> : MotionValue
         this.target = target;
         animationStart = current;
         animationElapsed = TimeSpan.Zero;
-        sampler = spec.CreateSampler(
-            current,
-            target,
-            mixer,
-            graph.CreateSpecContext(effectiveOptions.DebugName));
+        sampler = CreateNextSampler(target, spec, effectiveOptions.DebugName, previousSampler, out _);
 
         MotionHandle handle = CreateHandle();
         activeHandle = handle;
@@ -145,6 +138,17 @@ public sealed class MotionValue<T> : MotionValue
         animationStart = value;
         animationElapsed = TimeSpan.Zero;
         ApplySample(value);
+    }
+
+    private MotionSampler<T> CreateNextSampler(T target, MotionSpec<T> spec, string? debugName,
+        MotionSampler<T>? previousSampler, out bool continued)
+    {
+        MotionSpecContext context = graph.CreateSpecContext(debugName);
+        // Cancellation callbacks may change Current; do not resurrect the old position.
+        continued = previousSampler is not null &&
+            mixer.EqualsWithinTolerance(current, previousSampler.Current, 0) &&
+            previousSampler.TryRetargetWithSpec(target, spec, context);
+        return continued ? previousSampler! : spec.CreateSampler(current, target, mixer, context);
     }
 
     public IDisposable Subscribe(Action<MotionValueChanged<T>> listener)
