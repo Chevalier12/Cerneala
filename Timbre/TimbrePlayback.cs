@@ -46,6 +46,7 @@ public sealed class TimbrePlayback
         values = options.Values;
         manualWrites = new int[values.Length + 1];
         Render = new TimbreVoice(volume, (float[])values.Clone(), TimbreDspChain.Create(sound));
+        runtime.PlaybackConstructed?.Invoke(this);
     }
 
     // Descriptor of the intrinsic Volume of every playback, so Set and Motion
@@ -109,7 +110,8 @@ public sealed class TimbrePlayback
 
     internal Task WhenReleased => released.Task;
 
-    // Mixer-owned render state; touched only on the mixer thread or under runtime.Sync.
+    // Owned by the starting thread before publication; afterward touched only
+    // on the mixer thread or under runtime.Sync.
     internal TimbreVoice Render { get; }
 
     internal bool IsTerminal => state is TimbrePlaybackState.Completed or TimbrePlaybackState.Canceled or TimbrePlaybackState.Failed;
