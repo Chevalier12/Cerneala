@@ -47,6 +47,8 @@ The builder observes the built-in element states represented by `AspectStateSet.
 
 The property's effective value at its first registration is captured as its baseline. When no registered state matches, the property animates back to that baseline using the last active state's specification. State-created motion uses `MotionPriority.Interactive`, holds its completed value, and yields to active normal- or reduced-motion-priority animation.
 
+If a higher-priority animation rejects a state target, the builder keeps that property pending. Once the blocking animation completes or is canceled (including disposal), a motion frame re-evaluates the element's current states and starts the current winning target, or restores the baseline if no registered state still matches. Changes made while blocked replace the pending intent; an obsolete state target is not replayed. A replacement higher-priority animation continues to block the state motion. Waiting stops if the element detaches or becomes effectively invisible.
+
 ## Constructors
 
 | Name | Description |
