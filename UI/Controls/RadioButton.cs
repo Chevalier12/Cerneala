@@ -14,7 +14,7 @@ public class RadioButton : Button
     public static readonly UiProperty<bool> IsCheckedProperty = UiProperty<bool>.Register(
         nameof(IsChecked),
         typeof(RadioButton),
-        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual));
+        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsAspect));
 
     public bool IsChecked
     {

@@ -90,7 +90,7 @@ public class MenuItem : ItemsControl, IInputCommandSource, ICommandStateSource, 
             false,
             UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange |
             UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsHitTest |
-            UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsSemantics));
+            UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsSemantics | UiPropertyOptions.AffectsAspect));
 
     public event RoutedEventHandler Click
     {

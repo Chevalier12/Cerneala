@@ -33,7 +33,7 @@ toggle.IsChecked = true;
 
 `ToggleButton` inherits release activation from `ButtonBase`. When `ButtonBase` receives a completed left-button mouse-up, it invokes the overridden `OnClick`; `ToggleButton` first calls `OnToggle`, raises `Checked` or `Unchecked` for the resulting state, and then lets the base implementation raise `Click`.
 
-`IsChecked` is backed by a `UiProperty<bool>` with a default value of `false`. Its metadata uses `AffectsRender` and `AffectsInputVisual`, so changing the checked state invalidates visual output relevant to rendering and input visuals.
+`IsChecked` is backed by a `UiProperty<bool>` with a default value of `false`. Its metadata uses `AffectsRender`, `AffectsInputVisual`, and `AffectsAspect`. `AspectState.Checked` is active while `IsChecked` is `true`; changing it invalidates rendering, input visuals, and aspect resolution.
 
 Derive from `ToggleButton` and override `OnToggle` when a custom toggle policy is needed. The base implementation simply assigns `IsChecked = !IsChecked`.
 
@@ -49,7 +49,7 @@ Derive from `ToggleButton` and override `OnToggle` when a custom toggle policy i
 | --- | --- |
 | `CheckedEvent` | Identifies the bubbling `Checked` event. |
 | `UncheckedEvent` | Identifies the bubbling `Unchecked` event. |
-| `IsCheckedProperty` | Identifies the `IsChecked` UI property. The default value is `false`; metadata affects render and input visuals. |
+| `IsCheckedProperty` | Identifies the `IsChecked` UI property. The default value is `false`; metadata affects render, input visuals, and aspect resolution. |
 
 ## Properties
 

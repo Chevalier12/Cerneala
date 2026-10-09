@@ -64,6 +64,8 @@ Keyboard commands include `F4`, `Alt+Down`, `Alt+Up`, `Escape`, `Enter`, `Tab`, 
 
 The template must provide `PART_SelectionPresenter`, `PART_EditableTextBox`, `PART_DropDownToggle`, `PART_DropDownOverlay`, and `PART_ItemsPresenter`.
 
+`AspectState.Expanded` is active while `IsDropDownOpen` is `true`. The property includes `AffectsAspect` metadata, so opening or closing the drop-down also queues aspect resolution for the attached control on the next processed frame.
+
 ## Constructors
 
 | Name | Description |

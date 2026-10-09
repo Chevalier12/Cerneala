@@ -78,7 +78,7 @@ public class ComboBox : Selector
     public static readonly UiProperty<bool> IsDropDownOpenProperty = UiProperty<bool>.Register(
         nameof(IsDropDownOpen),
         typeof(ComboBox),
-        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual));
+        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsAspect));
 
     public static readonly UiProperty<bool> IsEditableProperty = UiProperty<bool>.Register(
         nameof(IsEditable),

@@ -1,5 +1,6 @@
 using Cerneala.UI.Elements;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Input;
 
 namespace Cerneala.UI.Aspect;
@@ -78,6 +79,16 @@ public sealed class AspectStateSet : IEquatable<AspectStateSet>
         if (element is ISelectableItemContainer { IsSelected: true })
         {
             activeStates.Add(AspectState.Selected);
+        }
+
+        if (element is ToggleButton { IsChecked: true } or RadioButton { IsChecked: true })
+        {
+            activeStates.Add(AspectState.Checked);
+        }
+
+        if (element is MenuItem { IsSubmenuOpen: true } or ComboBox { IsDropDownOpen: true })
+        {
+            activeStates.Add(AspectState.Expanded);
         }
 
         return activeStates.Count == 0 ? Empty : new AspectStateSet(activeStates);
