@@ -7,7 +7,7 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Theming/ThemeProvider.cs`
 
-Stores the active `Theme`, raises change notifications when it is replaced, and resolves typed theme values.
+Freezes and stores the active `Theme`, raises change notifications when it is replaced, and resolves typed theme values.
 
 ```csharp
 public sealed class ThemeProvider
@@ -54,6 +54,10 @@ provider.Theme = new Theme("High contrast")
 
 `ThemeProvider` is the mutable holder for the current `Theme`. The constructor and `Theme` setter require non-null themes. Setting `Theme` to the same instance is a no-op; setting it to a different instance stores the new theme and raises `ThemeChanged` with the old and new values.
 
+Both the constructor and the `Theme` setter permanently freeze the installed theme. On replacement, the new theme is frozen before it is stored and before `ThemeChanged` is raised. The old theme remains frozen after replacement, and all installed themes stay frozen after their providers go away. Already-frozen themes can be installed in other providers.
+
+Configure values with `Theme.Set<T>` before installation. Calling `Set<T>` on an installed theme, including through `provider.Theme`, throws `InvalidOperationException`. The supported runtime update is to build a new `Theme` and assign it to `provider.Theme`, as shown above; do not mutate the installed instance.
+
 `Get<T>` and `TryGet<T>` delegate to the current `Theme`. `Get<T>` propagates the theme lookup failure when the key is missing, while `TryGet<T>` returns `false` and assigns the default value for `T`.
 
 `UIRoot.SetThemeProvider` subscribes to `ThemeChanged`. UI-thread notifications invalidate aspect state immediately. Off-thread bursts are coalesced into one pending Relay callback per root, and aspect processing reads the provider's current theme on the UI thread. Replacing the provider invalidates callbacks queued by the old subscription.
@@ -64,13 +68,13 @@ provider.Theme = new Theme("High contrast")
 
 | Name | Description |
 | --- | --- |
-| `ThemeProvider(Theme theme)` | Initializes a provider with the active theme. Throws `ArgumentNullException` when `theme` is `null`. |
+| `ThemeProvider(Theme theme)` | Permanently freezes `theme` and initializes a provider with it. Throws `ArgumentNullException` when `theme` is `null`. |
 
 ## Properties
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `Theme` | `Theme` | Gets or sets the active theme. Setting a different non-null instance raises `ThemeChanged`; setting the same instance does nothing. |
+| `Theme` | `Theme` | Gets or sets the active, frozen theme. Setting a different non-null instance permanently freezes it and raises `ThemeChanged`; setting the same instance does nothing. |
 
 ## Methods
 

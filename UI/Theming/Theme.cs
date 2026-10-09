@@ -3,6 +3,7 @@ namespace Cerneala.UI.Theming;
 public sealed class Theme
 {
     private readonly Dictionary<EntryKey, object?> values = [];
+    private bool isFrozen;
 
     public Theme(string? name = null)
     {
@@ -18,8 +19,19 @@ public sealed class Theme
 
     public Theme Set<T>(ThemeKey<T> key, T value)
     {
+        if (isFrozen)
+        {
+            throw new InvalidOperationException(
+                "This theme is installed in a ThemeProvider and cannot be changed. Build a new Theme and assign it to the provider.");
+        }
+
         values[EntryKey.From(key)] = value;
         return this;
+    }
+
+    internal void Freeze()
+    {
+        isFrozen = true;
     }
 
     public bool TryGet<T>(ThemeKey<T> key, out T value)

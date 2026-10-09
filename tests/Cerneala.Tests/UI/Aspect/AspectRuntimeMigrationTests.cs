@@ -58,6 +58,40 @@ public sealed class AspectRuntimeMigrationTests
     }
 
     [Fact]
+    public void InstalledThemeRejectsMutationAndReplacementRefreshesEnvironmentOnNextFrame()
+    {
+        Color first = new(10, 20, 30);
+        Color second = new(200, 100, 50);
+        Theme theme = DefaultTheme.Create().Set(DefaultTheme.SurfaceKey, first);
+        ThemeProvider provider = new(theme);
+        UIRoot root = new(200, 200);
+        root.SetThemeProvider(provider);
+        Border border = new();
+        root.LogicalChildren.Add(border);
+        root.VisualChildren.Add(border);
+        root.ProcessFrame();
+
+        Assert.True(root.AspectProcessor.GetEnvironment(border).TryGet(
+            DefaultAspectTokens.Color.Surface, out Color initial));
+        Assert.Equal(first, initial);
+
+        Assert.Throws<InvalidOperationException>(() => theme.Set(DefaultTheme.SurfaceKey, second));
+        root.ProcessFrame();
+
+        Assert.Equal(first, theme.Get(DefaultTheme.SurfaceKey));
+        Assert.True(root.AspectProcessor.GetEnvironment(border).TryGet(
+            DefaultAspectTokens.Color.Surface, out Color unchanged));
+        Assert.Equal(first, unchanged);
+
+        provider.Theme = DefaultTheme.Create().Set(DefaultTheme.SurfaceKey, second);
+        root.ProcessFrame();
+
+        Assert.True(root.AspectProcessor.GetEnvironment(border).TryGet(
+            DefaultAspectTokens.Color.Surface, out Color after));
+        Assert.Equal(second, after);
+    }
+
+    [Fact]
     public void AspectInvalidationReappliesTrackedElementAfterRelevantPropertyChange()
     {
         Border border = new();
