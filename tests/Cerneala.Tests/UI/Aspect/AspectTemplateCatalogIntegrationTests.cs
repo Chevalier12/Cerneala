@@ -397,6 +397,29 @@ public sealed class AspectTemplateCatalogIntegrationTests
     }
 
     [Fact]
+    public void BroadSlotRuleAppliesPropertyOwnedByRegisteredChildType()
+    {
+        AspectSlot<Button, TextBlock> slot = AspectSlot.For<Button, TextBlock>("Text");
+        TextBlock text = new();
+        ComponentTemplate<Button> template = new("App.Button", context =>
+        {
+            context.RegisterSlot(slot, text);
+            return text;
+        });
+        AspectRuleSet rule = new("slot-text", AspectLayer.App, new AspectTarget(typeof(UIElement), slot),
+            [new AspectDeclaration(TextBlock.TextProperty, AspectValue<string>.Literal("valid"))], 0);
+        Button button = new() { ComponentTemplate = template };
+        UIRoot root = RootWith(button);
+        root.AspectRegistry.Register(AspectPackage.Create("slot-text")
+            .Components(components => components.AddRule(rule)));
+
+        root.ProcessFrame();
+
+        Assert.Equal("valid", text.Text);
+        Assert.Equal(Cerneala.UI.Core.UiPropertyValueSource.AspectBase, text.GetValueSource(TextBlock.TextProperty));
+    }
+
+    [Fact]
     public void ReplacingTemplateRemovesSlotContextFromDetachedElements()
     {
         AspectSlot<Button, Border> slot = AspectSlot.For<Button, Border>("Chrome");

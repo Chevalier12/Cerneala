@@ -254,20 +254,33 @@ public sealed class AspectAuditRegressionTests
     }
 
     [Fact]
-    public void EngineRejectsDeclarationIncompatibleWithTargetElement()
+    public void InvalidRuleIsRejectedBeforeRegistrationAndDoesNotPoisonLaterFrames()
     {
-        AspectPackage package = AspectPackage.Create("invalid-property")
+        UIRoot root = new();
+        Button button = new();
+        root.VisualChildren.Add(button);
+        root.ProcessFrame();
+        int registryVersion = root.AspectRegistry.Version;
+
+        ArgumentException exception = Assert.Throws<ArgumentException>(() =>
+            root.AspectRegistry.Register(AspectPackage.Create("invalid-property")
             .Components(components => components.AddRule(new AspectRuleSet(
                 "invalid-property",
                 AspectLayer.App,
                 new AspectTarget(typeof(Button)),
                 [new AspectDeclaration(TextBlock.TextProperty, AspectValue<string>.Literal("invalid"))],
-                0)));
-        AspectCatalog catalog = new AspectRegistry().Register(package).BuildCatalog();
-        Button button = new();
+                0)))));
 
-        Assert.Throws<InvalidOperationException>(() =>
-            new AspectEngine().Apply(button, catalog, new AspectEnvironment("invalid-property")));
+        Assert.Equal("declarations", exception.ParamName);
+        Assert.Contains(TextBlock.TextProperty.DiagnosticName, exception.Message);
+        Assert.Contains(typeof(Button).FullName!, exception.Message);
+        Assert.Equal(registryVersion, root.AspectRegistry.Version);
+        Assert.DoesNotContain(root.AspectRegistry.Packages, package => package.Name == "invalid-property");
+        Assert.False(root.AspectQueue.HasWork);
+        for (int frame = 0; frame < 3; frame++)
+        {
+            Assert.False(root.ProcessFrame().HasWork);
+        }
         Assert.Equal(string.Empty, button.GetValue(TextBlock.TextProperty));
         Assert.Equal(UiPropertyValueSource.Default, button.GetValueSource(TextBlock.TextProperty));
     }

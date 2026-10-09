@@ -68,6 +68,108 @@ public sealed class AspectRuleSetTests
         Assert.Equal(2, secondRule.Declarations.Count);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void RuleSetRejectsUnownedPropertyRegardlessOfConditions(bool conditional)
+    {
+        AspectTarget target = new(typeof(Button), conditions: conditional
+            ? [AspectCondition.Predicate("never", _ => false)]
+            : []);
+
+        ArgumentException exception = Assert.Throws<ArgumentException>(() => new AspectRuleSet(
+            "invalid-text", AspectLayer.App, target,
+            [new AspectDeclaration(TextBlock.TextProperty, AspectValue<string>.Literal("invalid"))], 0));
+
+        Assert.Equal("declarations", exception.ParamName);
+        Assert.Contains("invalid-text", exception.Message);
+        Assert.Contains(TextBlock.TextProperty.DiagnosticName, exception.Message);
+        Assert.Contains(TextBlock.TextProperty.OwnerType.FullName!, exception.Message);
+        Assert.Contains(typeof(Button).FullName!, exception.Message);
+    }
+
+    [Fact]
+    public void BuilderRejectsUnownedPropertyWhenBuilt()
+    {
+        AspectRuleSetBuilder builder = new("invalid-text", AspectLayer.App, new AspectTarget(typeof(Button)), 0);
+        builder.Set(TextBlock.TextProperty, AspectValue<string>.Literal("invalid"));
+
+        ArgumentException exception = Assert.Throws<ArgumentException>(() => builder.Build());
+
+        Assert.Equal("declarations", exception.ParamName);
+    }
+
+    [Fact]
+    public void BroadTargetCannotDeclarePropertyOwnedOnlyByADerivedType()
+    {
+        Assert.Throws<ArgumentException>(() => new AspectRuleSet(
+            "invalid-broad-text", AspectLayer.App, new AspectTarget(typeof(UIElement)),
+            [new AspectDeclaration(TextBlock.TextProperty, AspectValue<string>.Literal("invalid"))], 0));
+    }
+
+    [Fact]
+    public void RuleSetRejectsAssignmentOfAspectItself()
+    {
+        Assert.Throws<ArgumentException>(() => new AspectRuleSet(
+            "invalid-aspect", AspectLayer.App, new AspectTarget(typeof(Button)),
+            [new AspectDeclaration(UIElement.AspectProperty, AspectValue<ElementAspect?>.Literal(null))], 0));
+    }
+
+    [Fact]
+    public void RuleSetAllowsInheritedPropertyOnDerivedElements()
+    {
+        AspectRuleSet rule = new("inherited", AspectLayer.App, new AspectTarget(typeof(Button)),
+            [new AspectDeclaration(UIElement.OpacityProperty, AspectValue<float>.Literal(0.5f))], 0);
+        AspectCatalog catalog = new AspectRegistry()
+            .Register(AspectPackage.Create("inherited").Components(components => components.AddRule(rule)))
+            .BuildCatalog();
+        Button button = new();
+
+        new AspectEngine().Apply(button, catalog, new AspectEnvironment("inherited"));
+
+        Assert.Equal(0.5f, button.Opacity);
+    }
+
+    [Theory]
+    [InlineData(typeof(UIElement))]
+    [InlineData(typeof(TextBlock))]
+    public void SlotRuleAllowsPropertyOwnedByDeclaredChildType(Type elementType)
+    {
+        AspectSlot slot = AspectSlot.For<Button, TextBlock>("Text");
+        AspectDeclaration declaration = new(TextBlock.TextProperty, AspectValue<string>.Literal("valid"));
+        AspectRuleSet rule = new("slot-text", AspectLayer.App, new AspectTarget(elementType, slot), [declaration], 0);
+        TextBlock text = new();
+        AspectMatchContext context = new(text, new Button(), new AspectSlotPath(slot),
+            AspectStateSet.Empty, AspectVariantSet.Empty, 0, AspectDataContext.Empty);
+
+        Assert.Same(declaration, AspectRuleSet.ResolveDeclarations([rule], context)[TextBlock.TextProperty]);
+    }
+
+    [Fact]
+    public void SlotRuleRejectsPropertyNotOwnedByDeclaredChildTypeEvenWithNarrowerElementSelector()
+    {
+        AspectSlot<Button, UIElement> slot = AspectSlot.For<Button, UIElement>("Text");
+
+        ArgumentException exception = Assert.Throws<ArgumentException>(() => new AspectRuleSet(
+            "invalid-slot-text", AspectLayer.App, new AspectTarget(typeof(TextBlock), slot),
+            [new AspectDeclaration(TextBlock.TextProperty, AspectValue<string>.Literal("invalid"))], 0));
+
+        Assert.Equal("declarations", exception.ParamName);
+        Assert.Contains(typeof(UIElement).FullName!, exception.Message);
+        Assert.Contains(TextBlock.TextProperty.DiagnosticName, exception.Message);
+        Assert.Contains(TextBlock.TextProperty.OwnerType.FullName!, exception.Message);
+    }
+
+    [Fact]
+    public void SlotRuleCannotDeclarePropertyOwnedOnlyByTemplateOwner()
+    {
+        AspectSlot<Button, TextBlock> slot = AspectSlot.For<Button, TextBlock>("Text");
+
+        Assert.Throws<ArgumentException>(() => new AspectRuleSet(
+            "invalid-slot", AspectLayer.App, new AspectTarget(typeof(UIElement), slot),
+            [new AspectDeclaration(ButtonBase.IsPressedProperty, AspectValue<bool>.Literal(true))], 0));
+    }
+
     [Fact]
     public void DataConditionMatchesTypedTemplateData()
     {

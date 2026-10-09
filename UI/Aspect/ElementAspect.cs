@@ -193,9 +193,8 @@ public sealed class ElementAspect
         {
             if (defaultValues.Count > 0)
             {
-                components.AddRule(new AspectRuleSet(
+                components.AddElementAspectProjection(AspectRuleSet.CreateElementAspectProjection(
                     (Name ?? "ElementAspect") + ".default",
-                    AspectLayer.Runtime,
                     new AspectTarget(TargetType),
                     CreateDeclarations(defaultValues),
                     declarationOrder: 0));
@@ -203,9 +202,8 @@ public sealed class ElementAspect
 
             foreach (ElementAspectCondition condition in Conditions)
             {
-                components.AddRule(new AspectRuleSet(
+                components.AddElementAspectProjection(AspectRuleSet.CreateElementAspectProjection(
                     (Name ?? "ElementAspect") + ".condition." + condition.Order,
-                    AspectLayer.Runtime,
                     new AspectTarget(
                         TargetType,
                         conditions: [AspectCondition.Signal(condition.Key)]),

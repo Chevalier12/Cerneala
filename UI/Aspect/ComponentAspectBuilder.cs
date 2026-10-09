@@ -26,6 +26,13 @@ public sealed class ComponentAspectBuilder
 
     public ComponentAspectBuilder AddRule(AspectRuleSet rule)
     {
+        rules.Add((rule ?? throw new ArgumentNullException(nameof(rule))).ForStandaloneUse());
+        return this;
+    }
+
+    // ElementAspect values are validated against the actual element at assignment.
+    internal ComponentAspectBuilder AddElementAspectProjection(AspectRuleSet rule)
+    {
         rules.Add(rule ?? throw new ArgumentNullException(nameof(rule)));
         return this;
     }

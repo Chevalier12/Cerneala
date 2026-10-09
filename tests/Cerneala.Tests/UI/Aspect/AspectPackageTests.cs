@@ -2,6 +2,8 @@ using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Templates;
+using Cerneala.UI.Elements;
+using Cerneala.UI.Media;
 
 namespace Cerneala.Tests.UI.Aspect;
 
@@ -111,6 +113,55 @@ public sealed class AspectPackageTests
         Assert.True(registry.Unregister("Second"));
         Assert.NotSame(afterRegister, registry.BuildCatalog());
         Assert.Equal(["First", "Second"], afterRegister.PackageDiagnostics.Select(package => package.Name));
+    }
+
+    [Fact]
+    public void PublicPackageCannotReuseAssignmentValidatedRuleWithUnownedStandaloneProperty()
+    {
+        SolidColorBrush brush = new(Color.White);
+        ElementAspect aspect = new([new ElementAspectValue(Control.BackgroundProperty, brush)]);
+        Button button = new() { Aspect = aspect };
+        UIRoot root = new();
+        root.VisualChildren.Add(button);
+        root.ProcessFrame();
+        AspectRuleSet projection = root.Detective.CaptureAspect(button)
+            .ResolvedAspect!.Values[Control.BackgroundProperty].SourceRule;
+        Assert.Equal(typeof(UIElement), projection.Target.ElementType);
+        Assert.Same(brush, button.Background);
+
+        ArgumentException exception = Assert.Throws<ArgumentException>(() =>
+            AspectPackage.Create("exported-local-rule").Components(components => components.AddRule(projection)));
+
+        Assert.Equal("declarations", exception.ParamName);
+        Assert.Contains(typeof(UIElement).FullName!, exception.Message);
+        Assert.Contains(Control.BackgroundProperty.DiagnosticName, exception.Message);
+        Assert.Contains(Control.BackgroundProperty.OwnerType.FullName!, exception.Message);
+        Assert.Same(aspect, button.Aspect);
+        Assert.False(root.ProcessFrame().HasWork);
+    }
+
+    [Fact]
+    public void PublicPackageRevalidatesCompatibleLocalProjectionWithoutChangingLocalDiagnostics()
+    {
+        SolidColorBrush brush = new(Color.White);
+        ElementAspect aspect = new("local", typeof(Button), [new ElementAspectValue(Control.BackgroundProperty, brush)]);
+        Button button = new() { Aspect = aspect };
+        UIRoot root = new();
+        root.VisualChildren.Add(button);
+        root.ProcessFrame();
+        AspectRuleSet projection = root.Detective.CaptureAspect(button)
+            .ResolvedAspect!.Values[Control.BackgroundProperty].SourceRule;
+
+        AspectPackage package = AspectPackage.Create("exported-local-rule")
+            .Components(components => components.AddRule(projection));
+        Assert.NotSame(projection, Assert.Single(package.Rules));
+        AspectCatalog catalog = new AspectRegistry().Register(package).BuildCatalog();
+        Button standalone = new();
+        new AspectEngine().Apply(standalone, catalog, new AspectEnvironment("exported"));
+
+        Assert.Same(brush, standalone.Background);
+        Assert.Same(projection, root.Detective.CaptureAspect(button)
+            .ResolvedAspect!.Values[Control.BackgroundProperty].SourceRule);
     }
 
     private sealed record UserCard(string Name);
