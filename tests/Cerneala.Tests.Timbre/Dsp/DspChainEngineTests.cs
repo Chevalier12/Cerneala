@@ -216,7 +216,7 @@ public sealed class DspChainEngineTests
         paused.Pause();
         rig.Output.ConsumeAll();
         await rig.SyncAsync();
-        Assert.Equal(Budget, rig.Output.SubmittedFrames);
+        Assert.Equal(Budget + Block, rig.Output.SubmittedFrames);
 
         paused.Resume();
         TimbrePlaybackResult result = await DrainAsync(rig, paused);
@@ -225,7 +225,7 @@ public sealed class DspChainEngineTests
         double[] l = DspOracle.Delay(DspOracle.Concat(left, DspOracle.Zeros(total - Block)), 600, 0.5, 1);
         double[] r = DspOracle.Delay(DspOracle.Concat(right, DspOracle.Zeros(total - Block)), 600, 0.5, 1);
         int frames = (int)rig.Output.SubmittedFrames;
-        TimbreRig.AssertPcm(DspOracle.Interleave(l, r, 1, 0, frames), rig.Output.Read(0, frames), Tolerance);
+        TimbreRig.AssertPcm(PausedSequence(DspOracle.Interleave(l, r), frames), rig.Output.Read(0, frames), Tolerance);
         Assert.Equal(TimbrePlaybackState.Completed, result.State);
 
         using TimbreRig cancelRig = new();
@@ -234,7 +234,10 @@ public sealed class DspChainEngineTests
         canceled.Cancel();
         cancelRig.Output.ConsumeAll();
         await cancelRig.SyncAsync();
-        Assert.Equal(Budget, cancelRig.Output.SubmittedFrames);
+        Assert.Equal(Budget + Block, cancelRig.Output.SubmittedFrames);
+        TimbreRig.AssertPcm(TimbreRig.Ramp(DspOracle.Interleave(l, r, start: Budget, frames: Block), 1f, 0f),
+            cancelRig.Output.Read(Budget, Block), Tolerance);
+        await TimbreRig.ReleasedAsync(canceled);
         Assert.False((await TimbreRig.CompletionAsync(canceled)).TailTruncated);
     }
 
@@ -246,11 +249,13 @@ public sealed class DspChainEngineTests
         TimbrePlayback playback = rig.Scope.Play(clip);
         await rig.StartAsync(playback);
 
-        await HarnessWait.WithTimeout(playback.SeekAsync(TimeSpan.Zero), null, "Seek did not complete.");
+        Task seek = playback.SeekAsync(TimeSpan.Zero);
+        await rig.NextBlockAsync();
+        await HarnessWait.WithTimeout(seek, null, "Seek did not complete.");
         float[] afterSeek = await rig.NextBlockAsync();
 
         (double[] left, double[] right) = DspOracle.Channels(Impulse, Block);
-        TimbreRig.AssertPcm(DspOracle.Interleave(DspOracle.Delay(left, 500, 0.5, 0.5), DspOracle.Delay(right, 500, 0.5, 0.5)), afterSeek, Tolerance);
+        TimbreRig.AssertPcm(TimbreRig.Ramp(DspOracle.Interleave(DspOracle.Delay(left, 500, 0.5, 0.5), DspOracle.Delay(right, 500, 0.5, 0.5))), afterSeek, Tolerance);
 
         using TimbreRig streamingRig = new();
         DeterministicTimbreSourceFactory unknown = new(48000, Impulse, reportLength: false, maxFramesPerRead: 512);
@@ -259,12 +264,14 @@ public sealed class DspChainEngineTests
             loading: TimbreLoading.Streaming,
             modifiers: [new Delay(time: 500f / 48000f, feedback: 0.5f, mix: 0.5f)]));
         await streamingRig.StartAsync(streaming);
-        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => HarnessWait.WithTimeout(streaming.SeekAsync(TimeSpan.FromSeconds(9)), null, "Seek did not finish."));
+        Task rejected = streaming.SeekAsync(TimeSpan.FromSeconds(9));
+        await streamingRig.NextBlockAsync();
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => HarnessWait.WithTimeout(rejected, null, "Seek did not finish."));
         float[] continued = await streamingRig.NextBlockAsync();
 
-        (double[] longLeft, double[] longRight) = DspOracle.Channels(Impulse, Budget + Block);
+        (double[] longLeft, double[] longRight) = DspOracle.Channels(Impulse, Budget + TimbreRig.FadeFrames + Block);
         float[] continuous = DspOracle.Interleave(DspOracle.Delay(longLeft, 500, 0.5, 0.5), DspOracle.Delay(longRight, 500, 0.5, 0.5));
-        TimbreRig.AssertPcm(DspOracle.Interleave(continuous, Budget, Block), continued, Tolerance);
+        TimbreRig.AssertPcm(TimbreRig.Ramp(DspOracle.Interleave(continuous, Budget + TimbreRig.FadeFrames, Block)), continued, Tolerance);
     }
 
     [Fact]
@@ -285,7 +292,7 @@ public sealed class DspChainEngineTests
         Func<long, int, float> periodic = (frame, channel) => late(frame % 1000, channel);
         (double[] left, double[] right) = DspOracle.Channels(periodic, frames);
         float[] expected = DspOracle.Interleave(DspOracle.Delay(left, 300, 0.5, 0.5), DspOracle.Delay(right, 300, 0.5, 0.5));
-        TimbreRig.AssertPcm(expected, rig.Output.Read(0, frames), Tolerance);
+        TimbreRig.AssertPcm(PausedSequence(expected, frames), rig.Output.Read(0, frames), Tolerance);
         Assert.Equal(0.5f, first[1200 * 2], 5); // Mix · w[900]: the echo lands after the loop boundary
         Assert.False(playback.Completion.IsCompleted);
     }
@@ -308,6 +315,14 @@ public sealed class DspChainEngineTests
         IEnumerable<TimbreParameter>? parameters = null,
         IEnumerable<TimbreModifier>? modifiers = null) =>
         new(TimbreSource.FromReader(new DeterministicTimbreSourceFactory(frames, signal).Open), loop: loop, loading: TimbreLoading.Preload, parameters: parameters, modifiers: modifiers);
+
+    // The oracle advances DSP for 240 fade frames, freezes for the remainder
+    // of the output block, then continues from that exact preserved state.
+    private static float[] PausedSequence(float[] continuous, int outputFrames) =>
+        continuous[..(Budget * 2)]
+            .Concat(TimbreRig.Ramp(DspOracle.Interleave(continuous, Budget, Block), 1f, 0f))
+            .Concat(TimbreRig.Ramp(DspOracle.Interleave(continuous, Budget + TimbreRig.FadeFrames, outputFrames - Budget - Block)))
+            .ToArray();
 
     private static async Task<TimbrePlaybackResult> DrainAsync(TimbreRig rig, TimbrePlayback playback, int maxBlocks = 400)
     {

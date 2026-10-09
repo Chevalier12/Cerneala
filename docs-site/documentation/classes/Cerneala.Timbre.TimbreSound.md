@@ -43,6 +43,8 @@ A clip can be shared by any number of playbacks and scopes. It holds no playhead
 
 Modifiers run in declaration order, followed by `Volume` as a linear post-chain gain. A clip without modifiers uses the same playback and mix path without a DSP chain.
 
+Ordinary starts use their configured Volume from the first frame. Live Volume changes and transport transitions use the mixer's 5 ms de-click ramps; handle replacements fade in from zero. See [TimbrePlayback](Cerneala.Timbre.TimbrePlayback.md) for timing and preserved state.
+
 Validation happens in the constructor:
 
 - `source` must not be `null`.

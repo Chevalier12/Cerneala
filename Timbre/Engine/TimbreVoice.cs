@@ -7,7 +7,54 @@ namespace Cerneala.Timbre.Engine;
 // that must drain for completion.
 internal sealed class TimbreVoice(float volume, float[] values, TimbreDspChain? chain)
 {
+    private const double DeClickSeconds = 0.005;
+    internal static readonly int DeClickFrames = (int)Math.Round(DeClickSeconds * TimbreRuntime.SampleRate);
+
     internal float Volume { get; set; } = volume;
+
+    private float gain = volume;
+    private float gainStart = volume;
+    private float gainTarget = volume;
+    internal int GainFramesRemaining { get; private set; }
+    internal bool Silent => gain == 0f && GainFramesRemaining == 0;
+    internal bool HasRendered { get; set; }
+    internal bool SuspendAfterFade { get; set; }
+
+    // Mixer-owned pending transport, distinct from a seek already sent to the feed.
+    internal int RequestedSeekGeneration { get; set; }
+    internal long SeekTarget { get; set; }
+    internal bool SeekRequested { get; set; }
+
+    internal void SetGainTarget(float target)
+    {
+        if (gainTarget == target)
+        {
+            return;
+        }
+
+        gainStart = gain;
+        gainTarget = target;
+        GainFramesRemaining = gain == target ? 0 : DeClickFrames;
+    }
+
+    // Before publication for replacement, or on the mixer for a pending pause.
+    internal void Silence()
+    {
+        gain = gainStart = gainTarget = 0f;
+        GainFramesRemaining = 0;
+    }
+
+    internal float NextGain()
+    {
+        if (GainFramesRemaining > 0)
+        {
+            GainFramesRemaining--;
+            gain = GainFramesRemaining == 0 ? gainTarget :
+                gainStart + (gainTarget - gainStart) * (DeClickFrames - GainFramesRemaining) / DeClickFrames;
+        }
+
+        return gain;
+    }
 
     internal float[] Values { get; } = values;
 

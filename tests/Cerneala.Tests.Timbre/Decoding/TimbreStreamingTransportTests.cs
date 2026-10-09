@@ -53,7 +53,7 @@ public sealed class TimbreStreamingTransportTests
         await rig.StartAsync(playback);
 
         playback.Pause();
-        await rig.SyncAsync();
+        await rig.NextBlockAsync(); // render the 5 ms release before freezing
         await HarnessWait.WithTimeout(playback.SeekAsync(TimbreRig.FramesToTime(target)), null, "Seek did not complete.");
         await rig.SyncAsync();
         Assert.Equal(TimbrePlaybackState.Paused, playback.State);
@@ -77,9 +77,9 @@ public sealed class TimbreStreamingTransportTests
         await rig.StartAsync(playback);
         await StreamingDrive.NextBlockAsync(rig, playback);
 
-        // A paused playback produces nothing: the queue drains and no block follows.
+        // After its release ramp, a paused playback produces nothing.
         playback.Pause();
-        await rig.SyncAsync();
+        await rig.NextBlockAsync();
         TimeSpan paused = playback.Position;
         rig.Output.ConsumeAll();
         await rig.SyncAsync();
@@ -91,7 +91,7 @@ public sealed class TimbreStreamingTransportTests
         float[] resumed = rig.Output.Read(submitted, TimbreRig.Block);
 
         long frame = TimbreTimeFrames(paused);
-        TimbreRig.AssertPcm(expected[(int)(frame * 2)..(int)((frame + TimbreRig.Block) * 2)], resumed, tolerance: 0);
+        TimbreRig.AssertPcm(TimbreRig.Ramp(expected[(int)(frame * 2)..(int)((frame + TimbreRig.Block) * 2)]), resumed, tolerance: 0);
         Assert.Single(source.Streams);
         Assert.False(source.Single.IsDisposed);
     }
@@ -117,7 +117,7 @@ public sealed class TimbreStreamingTransportTests
         await rig.Output.WaitForSubmittedFramesAsync(submitted + TimbreRig.Block);
 
         float[] first = rig.Output.Read(submitted, TimbreRig.Block);
-        TimbreRig.AssertPcm(expected[..first.Length], first, tolerance: 0);
+        TimbreRig.AssertPcm(TimbreRig.Ramp(expected[..first.Length]), first, tolerance: 0);
     }
 
     [Fact]
@@ -146,9 +146,11 @@ public sealed class TimbreStreamingTransportTests
         Assert.Null(playback.Duration);
 
         Task beyond = playback.SeekAsync(TimeSpan.FromSeconds(10));
+        await rig.NextBlockAsync();
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => HarnessWait.WithTimeout(beyond, null, "Seek did not finish."));
         float[] next = await StreamingDrive.NextBlockAsync(rig, playback);
-        TimbreRig.AssertPcm(expected[(TimbreRig.Budget * 2)..((TimbreRig.Budget + TimbreRig.Block) * 2)], next, tolerance: 0);
+        int continuedAt = TimbreRig.Budget + TimbreRig.FadeFrames;
+        TimbreRig.AssertPcm(TimbreRig.Ramp(expected[(continuedAt * 2)..((continuedAt + TimbreRig.Block) * 2)]), next, tolerance: 0);
 
         // Play through the end once: the wrap teaches the playback its duration.
         long blocks = (length / TimbreRig.Block) + 2;
@@ -179,13 +181,16 @@ public sealed class TimbreStreamingTransportTests
         Assert.False(second.IsCompleted);
 
         stream.Release();
+        rig.Output.Consume(TimbreRig.Block);
+        await rig.SyncAsync();
         await HarnessWait.WithTimeout(second, null, "Latest seek did not complete.");
         (float[] block, long frame) = await NextProducedBlockAsync(rig, playback);
 
         // The mixer may already have mixed whole blocks from the target.
         Assert.InRange(frame, 60000, 60000 + TimbreRig.Budget);
         Assert.Equal(0, (frame - 60000) % TimbreRig.Block);
-        TimbreRig.AssertPcm(expected[(int)(frame * 2)..(int)((frame + TimbreRig.Block) * 2)], block, tolerance: 0);
+        float[] reference = expected[(int)(frame * 2)..(int)((frame + TimbreRig.Block) * 2)];
+        TimbreRig.AssertPcm(frame == 60000 ? TimbreRig.Ramp(reference) : reference, block, tolerance: 0);
         Assert.Equal(1, rig.Runtime.GetDiagnostics().SeeksSuperseded);
     }
 
@@ -207,6 +212,7 @@ public sealed class TimbreStreamingTransportTests
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => HarnessWait.WithTimeout(seek, null, "Seek did not finish."));
         Assert.Equal(TimbrePlaybackState.Canceled, (await TimbreRig.CompletionAsync(replaced)).State);
         first.Single.Release();
+        rig.Output.Consume(TimbreRig.Block);
         await TimbreRig.ReleasedAsync(replaced);
         Assert.True(first.Single.IsDisposed);
 
@@ -221,13 +227,16 @@ public sealed class TimbreStreamingTransportTests
         float[] block = rig.Output.Read(start, TimbreRig.Block);
         // The mixer may have produced more blocks: the first one starts that many frames earlier.
         int offset = (int)(TimbreTimeFrames(replacement.Position) - (rig.Output.SubmittedFrames - start));
-        TimbreRig.AssertPcm(secondPcm[(offset * 2)..((offset + TimbreRig.Block) * 2)], block, tolerance: 0);
+        float[] replacementPcm = secondPcm[(offset * 2)..((offset + TimbreRig.Block) * 2)];
+        TimbreRig.AssertPcm(offset == 0 ? TimbreRig.Ramp(replacementPcm) : replacementPcm, block, tolerance: 0);
     }
 
     // Seeks and returns the first block mixed from the target.
     private static async Task<float[]> SeekAndReadAsync(TimbreRig rig, TimbrePlayback playback, long target)
     {
-        await HarnessWait.WithTimeout(playback.SeekAsync(TimbreRig.FramesToTime(target)), null, "Seek did not complete.");
+        Task seek = playback.SeekAsync(TimbreRig.FramesToTime(target));
+        await rig.NextBlockAsync();
+        await HarnessWait.WithTimeout(seek, null, "Seek did not complete.");
         await rig.SettledAsync(playback);
         Assert.Equal(TimbreRig.FramesToTime(target), playback.Position);
         return await DrainToNewBlockAsync(rig);
@@ -263,14 +272,15 @@ public sealed class TimbreStreamingTransportTests
     private static void AssertBlockAt(string name, float[] expected, long target, float[] block)
     {
         long frames = Math.Min(TimbreRig.Block, (expected.Length / 2) - target);
-        float[] reference = expected[(int)(target * 2)..(int)((target + frames) * 2)];
+        float[] reference = TimbreRig.Ramp(expected[(int)(target * 2)..(int)((target + frames) * 2)]);
         if (name.EndsWith(".opus", StringComparison.Ordinal))
         {
             // Restarted Opus decoder after an 80 ms pre-roll: close to, not
             // identical with, the continuous decode, and on the signal.
             TimbreRig.AssertPcm(reference, block[..reference.Length], tolerance: 0.05f);
             CorpusExpectation file = DecodingCorpus.Describe(name)!;
-            Assert.True(PcmOracle.SnrDb(file, block[..reference.Length], 0, target, target + frames, pcmOrigin: target) >= 15);
+            // The first 5 ms deliberately changes amplitude; evaluate decoder SNR after it.
+            Assert.True(PcmOracle.SnrDb(file, block[..reference.Length], 0, target + TimbreRig.FadeFrames, target + frames, pcmOrigin: target) >= 15);
         }
         else
         {

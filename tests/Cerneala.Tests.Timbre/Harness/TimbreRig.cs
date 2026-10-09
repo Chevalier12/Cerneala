@@ -9,6 +9,7 @@ internal sealed class TimbreRig : IDisposable
 {
     public const int Block = TimbreCatalog.BlockFrames;
     public const int Budget = TimbreCatalog.OutputQueueBudgetFrames;
+    public static readonly int FadeFrames = (int)Math.Round(0.005 * TimbreRuntime.SampleRate);
 
     public TimbreRig(Action<TimbreRuntimeOptions>? configure = null, bool hold = true)
     {
@@ -59,6 +60,22 @@ internal sealed class TimbreRig : IDisposable
             }
         }
 
+        return result;
+    }
+
+    public static float[] ExpectedRamp(long frames, Func<long, int, float> signal, float from, float to, long sourceStart = 0) =>
+        Expected(frames, (frame, channel) => signal(sourceStart + frame, channel) *
+            (from + (to - from) * Math.Min(1f, (frame + 1f) / FadeFrames)));
+
+    public static float[] Ramp(float[] pcm, float from = 0f, float to = 1f)
+    {
+        float[] result = (float[])pcm.Clone();
+        for (int frame = 0; frame < result.Length / 2; frame++)
+        {
+            float gain = from + (to - from) * Math.Min(1f, (frame + 1f) / FadeFrames);
+            result[frame * 2] *= gain;
+            result[frame * 2 + 1] *= gain;
+        }
         return result;
     }
 

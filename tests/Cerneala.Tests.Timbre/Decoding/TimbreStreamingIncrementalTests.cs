@@ -73,6 +73,7 @@ public sealed class TimbreStreamingIncrementalTests
 
         playback.Cancel();
         stream.Release();
+        rig.Output.Consume(TimbreRig.Block); // make room for the 5 ms release fade
         await TimbreRig.ReleasedAsync(playback);
         Assert.True(stream.IsDisposed);
         Assert.Equal(0, rig.Runtime.GetDiagnostics().ReaderMemoryBytes);

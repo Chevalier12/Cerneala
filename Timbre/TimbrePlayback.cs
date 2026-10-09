@@ -327,8 +327,8 @@ public sealed class TimbrePlayback
         }
     }
 
-    // Copies published controls into the render state; returns true for a
-    // new seek request the mixer must forward to the feed.
+    // Copies published controls and records the latest requested seek in render
+    // state. The mixer forwards it to the feed only after the release fade.
     internal void ApplyControlsLocked(out bool seekRequested, out long target, out int generation)
     {
         if (Render.ControlVersion != controlVersion)
@@ -338,13 +338,14 @@ public sealed class TimbrePlayback
             values.CopyTo(Render.Values, 0);
         }
 
-        seekRequested = feed is not null && Render.AppliedSeekGeneration != seekGeneration;
+        seekRequested = feed is not null && Render.RequestedSeekGeneration != seekGeneration;
         target = seekTarget;
         generation = seekGeneration;
         if (seekRequested)
         {
-            Render.AppliedSeekGeneration = seekGeneration;
-            Render.SeekPending = true;
+            Render.RequestedSeekGeneration = seekGeneration;
+            Render.SeekTarget = seekTarget;
+            Render.SeekRequested = true;
         }
     }
 

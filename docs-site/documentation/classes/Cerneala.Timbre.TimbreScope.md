@@ -53,6 +53,8 @@ Obtain a scope from `TimbreRuntime.CreateScope()`, from `UIElement.Timbre` (a li
 
 `Dispose` cancels every non-terminal playback started by the scope and empties its handles. It is idempotent and does not affect other scopes or close the shared output.
 
+Cancellation and replacement mark the old identity terminal synchronously, while its rendering voice fades out over 5 ms before releasing. A handle replacement fades in over 5 ms as soon as its source is ready and may briefly overlap the old voice. Scope disposal uses the cancellation fade; runtime disposal closes the output without waiting for fades. Already-queued PCM is not altered. See [TimbrePlayback](Cerneala.Timbre.TimbrePlayback.md).
+
 Members are thread-safe.
 
 ## Properties

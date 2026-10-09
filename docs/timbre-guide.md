@@ -64,22 +64,32 @@ a runtime to hosts without an `Application`.
 ### Overlap, replacement and cancellation
 
 - `scope.Play(clip)` without a handle always starts a new, overlapping playback.
-- `scope.Play(clip, handle: slot)` cancels the slot's current occupant first.
+- `scope.Play(clip, handle: slot)` marks the slot's current occupant canceled.
+  Its voice fades out over 5 ms; the replacement fades in over 5 ms as soon as
+  its source is ready, overlapping the old fade when both are ready.
 - `Cancel` stops only that playback. PCM already queued for the output (at most
   40 ms) may still be heard; the shared output is never flushed.
+  Cancellation is observable synchronously, but source/DSP processing continues
+  through the 5 ms release fade before the reader is released. Runtime disposal
+  and source/device failure do not wait for fades.
 - Disposing the scope, detaching the element or closing its window cancels every
   playback the scope owns.
 
 ### Pause, resume, seek and loop
 
-- `Pause` holds the position. Pausing a pending playback (source still loading)
+- `Pause` publishes the paused state synchronously, then freezes source position
+  and DSP state after the mixer renders a 5 ms fade-out. Source position advances
+  by at most those fade frames once the request is applied at a block boundary.
+  Pausing a pending playback (source still loading)
   guarantees no PCM is produced until `Resume`. Paused playbacks keep their
   voice.
-- `Resume` continues; DSP state (filter memory, echoes) is preserved.
+- `Resume` fades in over 5 ms from the frozen source/DSP state (filter memory,
+  echoes), without restarting.
 - `SeekAsync(position)` is absolute in the source's timeline and never blocks
   the caller. The latest request wins: an earlier pending seek completes as
-  canceled. A successful seek resets DSP state. `Cancel` also cancels a pending
-  seek.
+  canceled. The old position fades out over 5 ms before seeking; a successful
+  seek resets DSP state, with no old tail carried across, and the new position
+  fades in over 5 ms. `Cancel` also cancels a pending seek.
 - `Loop = true` repeats the whole source until cancel, replacement, detach or
   failure. A loop keeps DSP state across repetitions and never reports
   `Completed`. Loop is fixed when the playback starts.
@@ -343,7 +353,9 @@ The target path is `$self.timbre.Sound.Property` (or `$Name`/`$owner` instead of
   keeps playing); the first frame afterwards uses the usual Motion maximum
   delta of 100 ms.
 - Samples are published to the playback once per UI frame and affect only PCM
-  mixed afterwards (block granularity); they cause no layout or render work.
+  mixed afterwards. The mixer accepts them at block boundaries and ramps Volume
+  per stereo frame to the new value over 5 ms; modifier inputs still change at
+  block granularity. They cause no layout or render work.
   The visual Reduced Motion preference does not disable sound animations.
 - A sample that is not finite or leaves the range (for example a bouncy spring
   overshooting Volume 1) ends only that parameter's animation on its last valid

@@ -52,6 +52,7 @@ public sealed class TimbreStreamingStressTests
                         case 2:
                             long length = (long)Math.Round(playback.Duration!.Value.TotalSeconds * TimbreRuntime.SampleRate);
                             Task seek = playback.SeekAsync(TimeSpan.FromSeconds(random.Next((int)length) / (double)TimbreRuntime.SampleRate));
+                            output.ConsumeAll(); // dispatch follows the old-position release fade
                             if (random.Next(2) == 0)
                             {
                                 await HarnessWait.WithTimeout(seek.ContinueWith(_ => { }, TaskScheduler.Default), null, "Seek did not finish.");
@@ -78,6 +79,7 @@ public sealed class TimbreStreamingStressTests
             if (random.Next(4) == 0)
             {
                 playback.Cancel();
+                output.ConsumeAll();
                 await TimbreRig.ReleasedAsync(playback);
             }
         }
@@ -86,6 +88,8 @@ public sealed class TimbreStreamingStressTests
         {
             playback.Cancel();
         }
+
+        output.ConsumeAll(); // all remaining release fades can share one output block
 
         foreach (TimbrePlayback playback in all)
         {

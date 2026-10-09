@@ -27,9 +27,12 @@ public sealed partial class TimbreRuntime
     {
         float[] mix = new float[Block * TimbreCatalog.ChannelCount];
         float[] voiceBuffer = new float[Block * TimbreCatalog.ChannelCount];
-        List<TimbrePlayback> voices = new(maxVoices);
-        List<TimbrePlayback> blockVoices = new(maxVoices);
-        List<(TimbrePlayback Playback, TimbreFeed? Feed)> releases = new(maxVoices);
+        // Each admitted voice can overlap one previously rendering release.
+        // Reserve that space up front, not on the first replacement block.
+        int renderCapacity = checked(maxVoices * 2);
+        List<TimbrePlayback> voices = new(renderCapacity);
+        List<TimbrePlayback> blockVoices = new(renderCapacity);
+        List<(TimbrePlayback Playback, TimbreFeed? Feed)> releases = new(renderCapacity);
         List<TaskCompletionSource> syncs = [];
         long consumed = 0;
         try
@@ -49,7 +52,7 @@ public sealed partial class TimbreRuntime
                         FailLiveLocked(new TimbreException(TimbreErrorKind.DeviceUnavailable, "The audio device was lost.", Volatile.Read(ref deviceLostError)));
                     }
 
-                    ApplyControlsLocked(voices, releases);
+                    ApplyControlsLocked(voices, releases, exiting || lostDevice);
                     syncs.AddRange(syncRequests);
                     syncRequests.Clear();
                 }
@@ -160,26 +163,39 @@ public sealed partial class TimbreRuntime
     }
 
     // Caller holds Sync.
-    private void ApplyControlsLocked(List<TimbrePlayback> voices, List<(TimbrePlayback, TimbreFeed?)> releases)
+    private void ApplyControlsLocked(List<TimbrePlayback> voices, List<(TimbrePlayback, TimbreFeed?)> releases, bool abort)
     {
         for (int index = voices.Count - 1; index >= 0; index--)
         {
             TimbrePlayback playback = voices[index];
-            if (playback.IsTerminal)
+            TimbreVoice voice = playback.Render;
+            TimbreFeed? feed = playback.FeedLocked;
+            // Failure/disposal cannot depend on device capacity or source readiness.
+            // Cancellation stays publicly terminal while its render-side release fades.
+            if (playback.IsTerminal && (abort || playback.StateLocked != TimbrePlaybackState.Canceled ||
+                !voice.HasRendered || voice.Silent || voice.SeekPending || voice.ProductionEnded || feed is null ||
+                (feed is StreamingFeed && feed.Stopped.IsCompleted)))
             {
                 voices.RemoveAt(index);
                 releases.Add((playback, playback.RequestReleaseLocked()));
                 continue;
             }
 
-            playback.ApplyControlsLocked(out bool seekRequested, out long target, out int generation);
-            TimbreFeed? feed = playback.FeedLocked;
-            if (seekRequested)
+            SnapshotVoiceControlsLocked(playback);
+            if (!playback.IsTerminal && voice.SeekRequested && (voice.Silent || voice.ProductionEnded || voice.SeekPending))
             {
-                feed!.RequestSeek(target, generation);
+                if (voice.ProductionEnded)
+                {
+                    // No old PCM remains to fade, but the new position must
+                    // still start from silence rather than a stale gain.
+                    voice.Silence();
+                }
+                voice.AppliedSeekGeneration = voice.RequestedSeekGeneration;
+                voice.SeekRequested = false;
+                voice.SeekPending = true;
+                feed!.RequestSeek(voice.SeekTarget, voice.AppliedSeekGeneration);
             }
 
-            TimbreVoice voice = playback.Render;
             if (voice.SeekPending && feed!.TryTakeSeekOutcome(voice.AppliedSeekGeneration, out Exception? error))
             {
                 voice.SeekPending = false;
@@ -192,8 +208,27 @@ public sealed partial class TimbreRuntime
                 }
 
                 playback.CompleteSeekLocked(voice.AppliedSeekGeneration, error);
+                voice.SuspendAfterFade = playback.IsPausedLocked;
+                voice.SetGainTarget(voice.SuspendAfterFade ? 0f : voice.Volume);
             }
         }
+    }
+
+    // Caller holds the existing Sync boundary. Intent can arrive during the
+    // output's queue query, between the initial control pass and selection.
+    private static void SnapshotVoiceControlsLocked(TimbrePlayback playback)
+    {
+        TimbreVoice voice = playback.Render;
+        if (!playback.IsTerminal)
+        {
+            playback.ApplyControlsLocked(out _, out _, out _);
+        }
+        voice.SuspendAfterFade = playback.IsTerminal || playback.IsPausedLocked || voice.SeekRequested || voice.SeekPending;
+        if (!voice.HasRendered && voice.SuspendAfterFade)
+        {
+            voice.Silence();
+        }
+        voice.SetGainTarget(voice.SuspendAfterFade ? 0f : voice.Volume);
     }
 
     private bool CompleteDrained(List<TimbrePlayback> voices, long consumed)
@@ -203,8 +238,10 @@ public sealed partial class TimbreRuntime
         {
             foreach (TimbrePlayback playback in voices)
             {
+                SnapshotVoiceControlsLocked(playback);
                 TimbreVoice voice = playback.Render;
                 if (voice.ProductionEnded &&
+                    !voice.SeekRequested && !voice.SeekPending &&
                     playback.StateLocked == TimbrePlaybackState.Playing &&
                     voice.EndFrame <= consumed)
                 {
@@ -223,17 +260,25 @@ public sealed partial class TimbreRuntime
         {
             foreach (TimbrePlayback playback in voices)
             {
+                if (playback.IsTerminal && playback.StateLocked != TimbrePlaybackState.Canceled)
+                {
+                    continue;
+                }
+                SnapshotVoiceControlsLocked(playback);
                 TimbreVoice voice = playback.Render;
-                if (playback.IsTerminal ||
-                    playback.IsPausedLocked ||
-                    voice.SeekPending ||
+                if (voice.SeekPending ||
+                    (voice.SuspendAfterFade && voice.Silent) ||
                     voice.ProductionEnded ||
-                    playback.FeedLocked is not { HasData: true })
+                    playback.FeedLocked is not { } feed ||
+                    (!feed.HasData && !voice.SuspendAfterFade))
                 {
                     continue;
                 }
 
-                playback.MarkStartedLocked();
+                if (!playback.IsTerminal)
+                {
+                    playback.MarkStartedLocked();
+                }
                 blockVoices.Add(playback);
             }
         }
@@ -254,7 +299,7 @@ public sealed partial class TimbreRuntime
 
         foreach (TimbrePlayback playback in blockVoices)
         {
-            if (!playback.Render.InTail && !playback.FeedLocked!.HasBlock(Block))
+            if (!playback.Render.InTail && !playback.Render.SuspendAfterFade && !playback.FeedLocked!.HasBlock(Block))
             {
                 blockVoices.Clear();
                 return true;
@@ -277,7 +322,7 @@ public sealed partial class TimbreRuntime
     // Source PCM runs through the chain; after a non-looping end of source the
     // chain keeps processing silence until the tail criterion or cap. An
     // underrun pads silence without advancing the source or the DSP state.
-    private int RenderVoice(TimbreFeed feed, TimbreVoice voice, float[] buffer, out bool underrun)
+    private int RenderVoice(TimbreFeed feed, TimbreVoice voice, float[] buffer, int requestedFrames, out bool underrun)
     {
         underrun = false;
         TimbreDspChain? chain = voice.Chain;
@@ -285,7 +330,7 @@ public sealed partial class TimbreRuntime
         if (!voice.InTail)
         {
             long wrapsBefore = feed.LoopWraps;
-            sourceFrames = feed.Read(buffer, Block);
+            sourceFrames = feed.Read(buffer, requestedFrames);
             if (feed.LoopWraps != wrapsBefore)
             {
                 Interlocked.Add(ref loopWraps, feed.LoopWraps - wrapsBefore);
@@ -294,10 +339,10 @@ public sealed partial class TimbreRuntime
 
         if (!feed.Ended && !voice.InTail)
         {
-            if (sourceFrames < Block)
+            if (sourceFrames < requestedFrames)
             {
                 underrun = true;
-                Interlocked.Add(ref underrunFrames, Block - sourceFrames);
+                Interlocked.Add(ref underrunFrames, requestedFrames - sourceFrames);
             }
 
             chain?.Process(buffer, sourceFrames, voice.Values);
@@ -312,9 +357,9 @@ public sealed partial class TimbreRuntime
 
         buffer.AsSpan(sourceFrames * TimbreCatalog.ChannelCount).Clear();
         voice.InTail = true;
-        chain.Process(buffer, Block, voice.Values);
+        chain.Process(buffer, requestedFrames, voice.Values);
         int window = chain.TailWindowFrames;
-        for (int frame = sourceFrames; frame < Block; frame++)
+        for (int frame = sourceFrames; frame < requestedFrames; frame++)
         {
             float peak = Math.Max(Math.Abs(buffer[frame * 2]), Math.Abs(buffer[(frame * 2) + 1]));
             voice.SilentRun = peak < TimbreCatalog.TailSilenceThreshold ? voice.SilentRun + 1 : 0;
@@ -335,7 +380,7 @@ public sealed partial class TimbreRuntime
             }
         }
 
-        return Block;
+        return requestedFrames;
     }
 
     // Returns whether the block carries PCM or counted underrun padding.
@@ -348,13 +393,18 @@ public sealed partial class TimbreRuntime
         {
             TimbreFeed feed = playback.FeedLocked!;
             TimbreVoice voice = playback.Render;
-            int frames = RenderVoice(feed, voice, voiceBuffer, out bool underrun);
+            int requestedFrames = voice.SuspendAfterFade ? Math.Min(Block, voice.GainFramesRemaining) : Block;
+            int frames = RenderVoice(feed, voice, voiceBuffer, requestedFrames, out bool underrun);
+            voice.HasRendered |= frames > 0;
             submit |= underrun;
-            float gain = voice.Volume;
-            int samples = frames * TimbreCatalog.ChannelCount;
-            for (int index = 0; index < samples; index++)
+            for (int frame = 0; frame < requestedFrames; frame++)
             {
-                mix[index] += voiceBuffer[index] * gain;
+                float gain = voice.NextGain();
+                if (frame < frames)
+                {
+                    mix[frame * 2] += voiceBuffer[frame * 2] * gain;
+                    mix[frame * 2 + 1] += voiceBuffer[frame * 2 + 1] * gain;
+                }
             }
 
             if (frames > 0)

@@ -15,8 +15,9 @@ namespace Cerneala.SdlGpuSmoke;
 // TimbreMotionPanel.crn, triggered only by Servo input routed through the real
 // SDL window. The PCM tap in front of the platform output is compared block by
 // block with the same clip rendered statically at Volume 1 in a deterministic
-// sink: Volume is a post-chain gain published on block boundaries, so each
-// block's least-squares gain is the Volume that block was mixed with.
+// sink: Volume is published on block boundaries and ramps per frame for 5 ms.
+// Each block's least-squares gain is an energy-weighted average of that ramp,
+// not necessarily the requested Volume at the boundary.
 internal sealed class TimbreMotionSmoke
 {
     private const int Block = 480;

@@ -72,7 +72,7 @@ public sealed class TimbreMarkupTransportTests
 
         Assert.Equal(TimbrePlaybackState.Playing, music.State);
         TimbreRig.AssertPcm(
-            MarkupTimbreFixture.Expected(MarkupTimbreFixture.Ramp, TimbreRig.Budget),
+            TimbreRig.Ramp(MarkupTimbreFixture.Expected(MarkupTimbreFixture.Ramp, TimbreRig.Budget)),
             fixture.Rig.Output.Read(resumedAt, TimbreRig.Budget));
     }
 
@@ -93,7 +93,7 @@ public sealed class TimbreMarkupTransportTests
         gated.Open();
         float[] first = fixture.Rig.StartAsync(music).GetAwaiter().GetResult();
 
-        TimbreRig.AssertPcm(MarkupTimbreFixture.Expected(MarkupTimbreFixture.Ramp, TimbreRig.Budget, sourceStart: 4800), first);
+        TimbreRig.AssertPcm(TimbreRig.Ramp(MarkupTimbreFixture.Expected(MarkupTimbreFixture.Ramp, TimbreRig.Budget, sourceStart: 4800)), first);
         Assert.Equal(1, fixture.Rig.Runtime.GetDiagnostics().SeeksCompleted);
     }
 
@@ -131,7 +131,7 @@ public sealed class TimbreMarkupTransportTests
         gated.Open();
 
         float[] pcm = fixture.Rig.StartAsync(restarted).GetAwaiter().GetResult();
-        TimbreRig.AssertPcm(MarkupTimbreFixture.Expected(MarkupTimbreFixture.Ramp, TimbreRig.Budget), pcm);
+        TimbreRig.AssertPcm(TimbreRig.Ramp(MarkupTimbreFixture.Expected(MarkupTimbreFixture.Ramp, TimbreRig.Budget)), pcm);
         Assert.Equal(0, fixture.Rig.Runtime.GetDiagnostics().SeeksCompleted);
 
         SetOpacity(fixture, border, 0.3f);
