@@ -12,6 +12,8 @@ internal enum PrismRasterPassKind
     ThresholdSelection,
     ShadowSpread,
     ShadowBlur,
+    MaskDownsample,
+    MaskUpsample,
     DistanceSeed,
     DistanceFlood,
     BevelHeight,
@@ -52,6 +54,8 @@ internal sealed record PrismRasterExecutionPlan(
 // backends execute primitives, not hidden multipass algorithms.
 internal sealed class PrismRasterPlanner
 {
+    // Contract of the bounded ShadowSpread/ShadowBlur raster primitives.
+    internal const int MaximumShadowKernelRadius = 32;
     private PrismGraphExecutionPlan? previousSource;
     private PrismRasterExecutionPlan? previousResult;
     private int previousWidth;
@@ -174,15 +178,12 @@ internal sealed class PrismRasterPlanner
                     PrismStyleSamplingGeometry geometry = PrismStylePlanner.ResolveSamplingGeometry(style, scope);
                     if (geometry.Spread >= 0.5f)
                     {
-                        prepared = Add(node, prepared, PrismRasterPassKind.ShadowSpread,
-                            maskSurface, MathF.Ceiling(geometry.Spread), horizontal: true);
-                        prepared = Add(node, prepared, PrismRasterPassKind.ShadowSpread,
+                        prepared = ShadowMask(node, prepared, PrismRasterPassKind.ShadowSpread,
                             maskSurface, MathF.Ceiling(geometry.Spread));
                     }
                     float techniqueScale = style.Technique == 0 ? 1f : style.Technique == 1 ? 0.65f : 0.8f;
                     float radius = MathF.Max(MathF.Ceiling(geometry.Size * techniqueScale * 1.5f), 1f);
-                    prepared = Add(node, prepared, PrismRasterPassKind.ShadowBlur, maskSurface, radius, horizontal: true);
-                    prepared = Add(node, prepared, PrismRasterPassKind.ShadowBlur, maskSurface, radius);
+                    prepared = ShadowMask(node, prepared, PrismRasterPassKind.ShadowBlur, maskSurface, radius);
                 }
                 else if (style.Style is PrismStyleId.OuterGlow or PrismStyleId.BevelEmboss or PrismStyleId.Stroke)
                 {
@@ -233,6 +234,34 @@ internal sealed class PrismRasterPlanner
             [.. nodes.Select(node => node.Id)], [.. nodePlans], lifetimes,
             source.RemovedNodeIds, PrismGraphOptimizer.CalculatePeakLiveSurfaces(lifetimes));
         return new(plan, passes.ToImmutableDictionary(), styles.ToImmutableDictionary(), adjustments.ToImmutableDictionary());
+
+        PrismGraphNodeId ShadowMask(
+            PrismGraphNode owner,
+            PrismGraphNodeId input,
+            PrismRasterPassKind kind,
+            PrismRasterSurface fullSurface,
+            float radius)
+        {
+            // Leave the original primitives untouched at supported radii.
+            // Larger radii use a separable box reduction, the same bounded
+            // kernels in reduced device pixels, and a bilinear reconstruction.
+            float factor = MathF.Ceiling(radius / MaximumShadowKernelRadius);
+            PrismRasterSurface kernelSurface = fullSurface;
+            if (factor > 1)
+            {
+                int reducedWidth = Math.Max(1, checked((int)Math.Ceiling(fullSurface.Width / (double)factor)));
+                int reducedHeight = Math.Max(1, checked((int)Math.Ceiling(fullSurface.Height / (double)factor)));
+                input = Add(owner, input, PrismRasterPassKind.MaskDownsample,
+                    fullSurface with { Width = reducedWidth }, factor, horizontal: true);
+                kernelSurface = fullSurface with { Width = reducedWidth, Height = reducedHeight };
+                input = Add(owner, input, PrismRasterPassKind.MaskDownsample, kernelSurface, factor);
+            }
+            input = Add(owner, input, kind, kernelSurface, radius / factor, horizontal: true);
+            input = Add(owner, input, kind, kernelSurface, radius / factor);
+            return factor > 1
+                ? Add(owner, input, PrismRasterPassKind.MaskUpsample, fullSurface, factor)
+                : input;
+        }
 
         PrismGraphNodeId Input(PrismGraphNode owner, PrismGraphEdgeKind kind) =>
             incoming[owner.Id].Single(edge => edge.Kind == kind).Source;

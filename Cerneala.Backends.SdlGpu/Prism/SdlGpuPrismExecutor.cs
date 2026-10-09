@@ -19,7 +19,7 @@ internal sealed partial class SdlGpuPrismExecutor : IDisposable
 {
     private const int PresentationSamplingOutset = 1;
     private const int ExecutionSurfaceTileSize = 16;
-    private const long ShaderPackageVersion = 58;
+    private const long ShaderPackageVersion = 59;
     private static readonly PrismGraphCapabilities Capabilities =
         PrismGraphCapabilities.ControlCapture |
         PrismGraphCapabilities.FilterProcessing |

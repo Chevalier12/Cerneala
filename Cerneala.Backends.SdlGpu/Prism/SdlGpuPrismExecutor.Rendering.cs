@@ -119,10 +119,27 @@ internal sealed partial class SdlGpuPrismExecutor
         SdlGpuRenderTarget target)
     {
         PrismRasterPass pass = rasterPlan.AuxiliaryPasses[node.Id];
-        nint source = GetSurface(FindInputIndex(plan, graph, node.Id,
-            PrismGraphEdgeKind.Content)).SampleTexture;
+        SdlGpuRenderTarget sourceTarget = GetSurface(FindInputIndex(plan, graph, node.Id,
+            PrismGraphEdgeKind.Content));
+        nint source = sourceTarget.SampleTexture;
         switch (pass.Kind)
         {
+            case PrismRasterPassKind.MaskDownsample:
+                PrepareBaseUniforms(source, source, 98, 1);
+                textures[12] = source;
+                uniforms[24] = new Vector4(sourceTarget.PixelWidth, sourceTarget.PixelHeight,
+                    pass.RadiusOrJump, pass.Horizontal ? 1 : 0);
+                RenderPrepared(target, source, source);
+                return;
+            case PrismRasterPassKind.MaskUpsample:
+                // The last box cell is zero padded when the extent is not a
+                // multiple of k. Address the original extent, not that padding.
+                PrepareBaseUniforms(source, source, 0, 1);
+                uniforms[0] = new Vector4(1, 1f / sourceTarget.PixelWidth, 1f / sourceTarget.PixelHeight, 0);
+                uniforms[1] = new Vector4(target.PixelWidth / (sourceTarget.PixelWidth * pass.RadiusOrJump),
+                    target.PixelHeight / (sourceTarget.PixelHeight * pass.RadiusOrJump), 0, 0);
+                RenderPrepared(target, source, source);
+                return;
             case PrismRasterPassKind.ThresholdCdf:
                 PrepareBaseUniforms(source, source, 4, 1);
                 uniforms[23] = new Vector4(0,
