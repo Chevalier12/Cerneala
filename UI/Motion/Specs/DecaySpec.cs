@@ -4,9 +4,12 @@ namespace Cerneala.UI.Motion.Specs;
 
 public sealed class DecaySpec<T> : MotionSpec<T>
 {
+    // Convert the 0.998 per-millisecond rate to the sampler's 60 Hz frame-equivalent factor.
+    internal const float DefaultDeceleration = 0.9671838f; // 0.998 ^ 16.6666667
+
     public DecaySpec(
         MotionVelocity<T> initialVelocity,
-        float deceleration = 0.998f)
+        float deceleration = DefaultDeceleration)
         : this(initialVelocity, deceleration, default, default, hasMin: false, hasMax: false, bounce: null)
     {
     }
