@@ -214,6 +214,8 @@ public sealed partial class TimbreRuntime : IDisposable
 
             if (replacing)
             {
+                // Render state is initialized atomically before mixer adoption.
+                playback.Render.Silence();
                 previous!.CancelLocked();
             }
 

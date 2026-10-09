@@ -21,7 +21,9 @@ public sealed class HandleAndScopeTests
 
         Assert.Equal(TimbrePlaybackState.Canceled, first.State);
         Assert.Equal(TimbrePlaybackState.Playing, second.State);
-        TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Block, Signal, 1f, TimbreRig.Budget), block);
+        TimbreRig.AssertPcm(TimbreRig.Sum(
+            TimbreRig.ExpectedRamp(TimbreRig.Block, Signal, 1f, 0f, TimbreRig.Budget),
+            TimbreRig.Expected(TimbreRig.Block, Signal, 1f, TimbreRig.Budget)), block);
         Assert.Equal(TimbrePlaybackState.Canceled, (await TimbreRig.CompletionAsync(first)).State);
     }
 
@@ -41,7 +43,9 @@ public sealed class HandleAndScopeTests
         Assert.Equal(TimbrePlaybackState.Canceled, old.State);
         Assert.Same(current, slot.Current);
         float[] pcm = await rig.StartAsync(free, current);
-        TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Budget, Signal, 1.5f), pcm);
+        TimbreRig.AssertPcm(TimbreRig.Sum(
+            TimbreRig.Expected(TimbreRig.Budget, Signal),
+            TimbreRig.ExpectedRamp(TimbreRig.Budget, Signal, 0f, 0.5f)), pcm);
         Assert.Equal(TimbrePlaybackState.Playing, free.State);
     }
 
@@ -165,7 +169,9 @@ public sealed class HandleAndScopeTests
         Assert.Equal(TimbrePlaybackState.Canceled, theirs.State);
         Assert.Null(otherSlot.Current);
         Assert.Equal(TimbrePlaybackState.Playing, mine.State);
-        TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Block, Signal, 1f, TimbreRig.Budget), block);
+        TimbreRig.AssertPcm(TimbreRig.Sum(
+            TimbreRig.ExpectedRamp(TimbreRig.Block, Signal, 1f, 0f, TimbreRig.Budget),
+            TimbreRig.Expected(TimbreRig.Block, Signal, 1f, TimbreRig.Budget)), block);
         Assert.True(rig.Output.IsOpen);
         Assert.Equal(0, rig.Output.CloseCount);
         Assert.Throws<ObjectDisposedException>(() => other.Play(clip));

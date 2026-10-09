@@ -33,6 +33,8 @@ The options start from the clip's defaults. Setters validate immediately: `Volum
 
 The configured values are snapshotted before `Play` returns, so they apply to the first PCM block. The delegate runs once and is never retained or re-run by a worker or audio thread. Using the options object after the delegate returns throws `InvalidOperationException`.
 
+An ordinary start applies the configured Volume from its first frame. A handle replacement instead fades from zero to that configured gain over 5 ms, overlapping the old voice's release fade when both sources are ready.
+
 `Loop` is fixed for the playback's lifetime; there is no loop setter on [TimbrePlayback](Cerneala.Timbre.TimbrePlayback.md).
 
 ## Properties

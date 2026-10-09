@@ -8,6 +8,7 @@ namespace Cerneala.Tests.SdlGpu;
 public sealed class SdlTimbreOutputRuntimeTests
 {
     private const float Step = 1f / 65536f;
+    private static readonly int FadeFrames = (int)Math.Round(0.005 * TimbreRuntime.SampleRate);
     private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(15);
     private static readonly int[] IrregularRequests = [1000, 3840, 8, 2056, 7999, 3840];
 
@@ -106,6 +107,7 @@ public sealed class SdlTimbreOutputRuntimeTests
             await PullUntilAsync(api, runtime, () => api.Consumed.Length >= 960 * 2);
             await runtime.SyncAsync().WaitAsync(Timeout);
             int consumedBeforeCancel = api.Consumed.Length;
+            int fadeSourceStart = (int)Math.Round(canceled.Position.TotalSeconds * TimbreRuntime.SampleRate);
             float[] queuedBeforeCancel = api.QueuedSamples;
             Assert.NotEmpty(queuedBeforeCancel);
 
@@ -126,7 +128,14 @@ public sealed class SdlTimbreOutputRuntimeTests
             Assert.Contains(queuedBeforeCancel, sample => sample > 0.25f);
             float[] afterCancel = consumed[queuedEnd..];
             Assert.NotEmpty(afterCancel);
-            Assert.All(afterCancel, sample => Assert.Equal(0.25f, sample));
+            for (int frame = 0; frame < afterCancel.Length / 2; frame++)
+            {
+                float gain = 1f - Math.Min(1f, (frame + 1f) / FadeFrames);
+                float contribution = (fadeSourceStart + frame) * Step * gain;
+                Assert.Equal(0.25f + contribution, afterCancel[frame * 2], 6);
+                Assert.Equal(0.25f - contribution, afterCancel[frame * 2 + 1], 6);
+            }
+            Assert.Equal(TimbreTimeFrames(fadeSourceStart + FadeFrames), canceled.Position);
             Assert.Equal(["init", "open", "resume"], api.Operations);
             Assert.Equal(1, output.GetDiagnostics().OpenCount);
         }
@@ -217,7 +226,8 @@ public sealed class SdlTimbreOutputRuntimeTests
             const int produced = 9600 - 2000;
             for (int frame = 0; frame < produced; frame++)
             {
-                Assert.Equal((2000 + frame) * Step, consumed[frame * 2]);
+                float gain = Math.Min(1f, (frame + 1f) / FadeFrames);
+                Assert.Equal((2000 + frame) * Step * gain, consumed[frame * 2]);
             }
 
             // The mixer submits whole blocks; the tail of the last one is silence.

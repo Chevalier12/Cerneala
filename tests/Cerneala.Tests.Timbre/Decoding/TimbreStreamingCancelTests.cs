@@ -110,6 +110,7 @@ public sealed class TimbreStreamingCancelTests
         Assert.Equal(2, source.Streams.Count);
 
         first.Cancel();
+        rig.Output.Consume(TimbreRig.Block); // capacity for the release fade
         await TimbreRig.ReleasedAsync(first);
         await rig.SettledAsync(second);
         await rig.SyncAsync();
@@ -128,6 +129,7 @@ public sealed class TimbreStreamingCancelTests
 
     private static async Task AssertReleasedAsync(TimbreRig rig, TimbrePlayback playback, ObservedFileStream stream)
     {
+        rig.Output.Consume(TimbreRig.Block); // terminal state precedes rendering the release fade
         await TimbreRig.ReleasedAsync(playback);
         Assert.True(stream.IsDisposed);
         TimbreRuntimeDiagnostics diagnostics = rig.Runtime.GetDiagnostics();

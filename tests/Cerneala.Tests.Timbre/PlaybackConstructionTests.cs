@@ -24,6 +24,7 @@ public sealed class PlaybackConstructionTests
         await rig.StartAsync(playback);
         Assert.Equal(playback.Render.Chain!.StateBytes, rig.Runtime.GetDiagnostics().DspStateBytes);
         playback.Cancel();
+        rig.Output.Consume(TimbreRig.Block); // capacity for the render-side release fade
         await TimbreRig.ReleasedAsync(playback);
         await rig.SyncAsync();
         Assert.Equal(0, rig.Runtime.GetDiagnostics().DspStateBytes);

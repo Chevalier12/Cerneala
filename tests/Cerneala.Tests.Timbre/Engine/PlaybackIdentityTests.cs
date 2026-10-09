@@ -121,7 +121,7 @@ public sealed class PlaybackIdentityTests
 
         TimbreRig.AssertPcm(
             TimbreRig.Sum(
-                TimbreRig.Expected(TimbreRig.Block, Signal, 0.5f, TimbreRig.Budget),
+                TimbreRig.ExpectedRamp(TimbreRig.Block, Signal, 1f, 0.5f, TimbreRig.Budget),
                 TimbreRig.Expected(TimbreRig.Block, Signal, 1f, TimbreRig.Budget)),
             block);
         Assert.Equal(1f, second.Volume);

@@ -34,6 +34,8 @@ A handle is distinct from a [TimbrePlayback](Cerneala.Timbre.TimbrePlayback.md) 
 
 `Current` returns the occupant while it is non-terminal and `null` otherwise. A handle cannot be used with another scope's `Play`. Disposing the scope cancels the occupant.
 
+Cancellation changes identity/state synchronously, but a rendering occupant continues through a 5 ms de-click fade before release. A replacement starts with its own 5 ms fade-in as soon as its source is ready; it can overlap the old voice's fade-out without becoming a second current occupant. Already-queued PCM is unchanged. See [TimbrePlayback](Cerneala.Timbre.TimbrePlayback.md) for transport timing.
+
 ## Properties
 
 | Name | Type | Description |

@@ -92,6 +92,7 @@ public sealed class TimbreMotionTransportTests
 
         reader.ReadGate = null;
         gate.SetResult();
+        fixture.Rig.Output.Consume(TimbreRig.Block); // capacity for the old-position release fade
         Wait(() => HarnessWait.WithTimeout(second, null, "Latest seek did not complete."));
         Advance(fixture, 1);
         AssertNear(0.5f, playback.Volume);

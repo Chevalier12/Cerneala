@@ -15,6 +15,10 @@ internal sealed class DeterministicTimbreOutput : ITimbreOutput
     private long submittedFrames;
     private bool held;
 
+    // One-shot transport publication between the control pass and selection.
+    // Invoked outside the sink gate, on the real mixer's queue-read path.
+    public Action? BeforeNextQueueRead;
+
     public Exception? OpenFailure { get; set; }
 
     // Free-running stress mode: every submission is consumed at once.
@@ -39,6 +43,7 @@ internal sealed class DeterministicTimbreOutput : ITimbreOutput
     {
         get
         {
+            Interlocked.Exchange(ref BeforeNextQueueRead, null)?.Invoke();
             lock (gate)
             {
                 int queued = (int)(SubmittedFramesUnsafe - consumedFrames);

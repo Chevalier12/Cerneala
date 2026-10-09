@@ -194,7 +194,11 @@ public sealed class LifecycleTests
         Assert.Equal(TimbreRig.Budget, rig.Output.QueuedFrames);
         Assert.Equal(TimbreRig.Budget, rig.Output.SubmittedFrames);
         float[] block = await rig.NextBlockAsync();
-        TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Block, Signal, 0.5f, TimbreRig.Budget), block);
+        TimbreRig.AssertPcm(TimbreRig.Sum(
+            TimbreRig.ExpectedRamp(TimbreRig.Block, Signal, 1f, 0f, TimbreRig.Budget),
+            TimbreRig.Expected(TimbreRig.Block, Signal, 0.5f, TimbreRig.Budget)), block);
+        Assert.Equal(TimbreRig.FramesToTime(TimbreRig.Budget + TimbreRig.FadeFrames), canceled.Position);
+        TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Block, Signal, 0.5f, TimbreRig.Budget + TimbreRig.Block), await rig.NextBlockAsync());
         TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Budget, Signal, 1.5f), rig.Output.Read(0, TimbreRig.Budget));
         await TimbreRig.ReleasedAsync(canceled);
         Assert.Equal(1, rig.Runtime.GetDiagnostics().PlaybacksCanceled);
@@ -218,8 +222,11 @@ public sealed class LifecycleTests
         TimbreRig.AssertPcm(
             TimbreRig.Sum(
                 TimbreRig.Expected(TimbreRig.Block, Signal, 0.25f, TimbreRig.Budget),
-                TimbreRig.Expected(TimbreRig.Block, Signal, 0.5f, 0)),
+                TimbreRig.ExpectedRamp(TimbreRig.Block, Signal, 0f, 0.5f, 0),
+                TimbreRig.ExpectedRamp(TimbreRig.Block, Signal, 1f, 0f, TimbreRig.Budget)),
             block);
+        Assert.Equal(TimbreRig.FramesToTime(TimbreRig.Budget + TimbreRig.FadeFrames), old.Position);
+        await TimbreRig.ReleasedAsync(old);
     }
 
     [Fact]
@@ -233,7 +240,7 @@ public sealed class LifecycleTests
         float[] block = await rig.NextBlockAsync();
 
         TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Budget, Signal), rig.Output.Read(0, TimbreRig.Budget));
-        TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Block, Signal, 0.5f, TimbreRig.Budget), block);
+        TimbreRig.AssertPcm(TimbreRig.ExpectedRamp(TimbreRig.Block, Signal, 1f, 0.5f, TimbreRig.Budget), block);
         Assert.Throws<ArgumentOutOfRangeException>(() => playback.Volume = 1.5f);
         Assert.Throws<ArgumentOutOfRangeException>(() => playback.Volume = float.NaN);
         Assert.Equal(0.5f, playback.Volume);
@@ -331,7 +338,7 @@ public sealed class LifecycleTests
 
         Assert.Equal(TimbrePlaybackState.Canceled, old.State);
         Assert.True(oldReader.IsDisposed);
-        TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Budget, Signal), pcm);
+        TimbreRig.AssertPcm(TimbreRig.ExpectedRamp(TimbreRig.Budget, Signal, 0f, 1f), pcm);
         Assert.Equal(0, slow.LiveReaders);
         Assert.Equal(0, rig.Runtime.GetDiagnostics().LiveSourcePumps);
         Assert.Equal(TimeSpan.Zero, old.Position);
@@ -352,7 +359,9 @@ public sealed class LifecycleTests
         windowA.Dispose();
         float[] block = await rig.NextBlockAsync();
 
-        TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Block, Signal, 0.5f, TimbreRig.Budget), block);
+        TimbreRig.AssertPcm(TimbreRig.Sum(
+            TimbreRig.ExpectedRamp(TimbreRig.Block, Signal, 1f, 0f, TimbreRig.Budget),
+            TimbreRig.Expected(TimbreRig.Block, Signal, 0.5f, TimbreRig.Budget)), block);
         Assert.Equal(TimbrePlaybackState.Playing, b.State);
         Assert.Equal(1, rig.Output.OpenCount);
         Assert.Equal(0, rig.Output.CloseCount);

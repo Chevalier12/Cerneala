@@ -20,8 +20,13 @@ public sealed class TransportTests
         paused.Pause();
         float[] whilePaused = await rig.NextBlockAsync();
         Assert.Equal(TimbrePlaybackState.Paused, paused.State);
-        Assert.Equal(TimbreRig.FramesToTime(TimbreRig.Budget), paused.Position);
-        TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Block, Signal, 0.5f, TimbreRig.Budget), whilePaused);
+        Assert.Equal(TimbreRig.FramesToTime(TimbreRig.Budget + TimbreRig.FadeFrames), paused.Position);
+        TimbreRig.AssertPcm(TimbreRig.Sum(
+            TimbreRig.ExpectedRamp(TimbreRig.Block, Signal, 1f, 0f, TimbreRig.Budget),
+            TimbreRig.Expected(TimbreRig.Block, Signal, 0.5f, TimbreRig.Budget)), whilePaused);
+        float[] frozen = await rig.NextBlockAsync();
+        TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Block, Signal, 0.5f, TimbreRig.Budget + TimbreRig.Block), frozen);
+        Assert.Equal(TimbreRig.FramesToTime(TimbreRig.Budget + TimbreRig.FadeFrames), paused.Position);
 
         paused.Resume();
         paused.Resume();
@@ -29,8 +34,8 @@ public sealed class TransportTests
         Assert.Equal(TimbrePlaybackState.Playing, paused.State);
         TimbreRig.AssertPcm(
             TimbreRig.Sum(
-                TimbreRig.Expected(TimbreRig.Block, Signal, 1f, TimbreRig.Budget),
-                TimbreRig.Expected(TimbreRig.Block, Signal, 0.5f, TimbreRig.Budget + TimbreRig.Block)),
+                TimbreRig.ExpectedRamp(TimbreRig.Block, Signal, 0f, 1f, TimbreRig.Budget + TimbreRig.FadeFrames),
+                TimbreRig.Expected(TimbreRig.Block, Signal, 0.5f, TimbreRig.Budget + 2 * TimbreRig.Block)),
             resumed);
 
         TimbreRuntimeDiagnostics diagnostics = rig.Runtime.GetDiagnostics();
@@ -57,7 +62,7 @@ public sealed class TransportTests
         Assert.Equal(TimbrePlaybackState.Pending, playback.State);
         rig.Output.Release();
         await rig.Output.WaitForSubmittedFramesAsync(TimbreRig.Budget);
-        TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Budget, Signal), rig.Output.Read(0, TimbreRig.Budget));
+        TimbreRig.AssertPcm(TimbreRig.ExpectedRamp(TimbreRig.Budget, Signal, 0f, 1f), rig.Output.Read(0, TimbreRig.Budget));
         Assert.Equal(TimbrePlaybackState.Playing, playback.State);
     }
 
@@ -88,11 +93,12 @@ public sealed class TransportTests
         await rig.StartAsync(playback);
 
         Task seek = playback.SeekAsync(TimbreRig.FramesToTime(24000));
+        TimbreRig.AssertPcm(TimbreRig.ExpectedRamp(TimbreRig.Block, Signal, 1f, 0f, TimbreRig.Budget), await rig.NextBlockAsync());
         await HarnessWait.WithTimeout(seek, null, "Seek did not complete.");
         Assert.Equal(TimbreRig.FramesToTime(24000), playback.Position);
         float[] block = await rig.NextBlockAsync();
 
-        TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Block, Signal, 1f, 24000), block);
+        TimbreRig.AssertPcm(TimbreRig.ExpectedRamp(TimbreRig.Block, Signal, 0f, 1f, 24000), block);
         Assert.Equal(TimbrePlaybackState.Playing, playback.State);
         Assert.Equal(1, rig.Runtime.GetDiagnostics().SeeksCompleted);
     }
@@ -105,17 +111,19 @@ public sealed class TransportTests
         await rig.StartAsync(playback);
         playback.Pause();
 
-        await HarnessWait.WithTimeout(playback.SeekAsync(TimbreRig.FramesToTime(1000)), null, "Seek did not complete.");
+        Task seek = playback.SeekAsync(TimbreRig.FramesToTime(1000));
+        await rig.NextBlockAsync();
+        await HarnessWait.WithTimeout(seek, null, "Seek did not complete.");
         rig.Output.ConsumeAll();
         await rig.SyncAsync();
 
         Assert.Equal(TimbrePlaybackState.Paused, playback.State);
         Assert.Equal(TimbreRig.FramesToTime(1000), playback.Position);
-        Assert.Equal(TimbreRig.Budget, rig.Output.SubmittedFrames);
+        Assert.Equal(TimbreRig.Budget + TimbreRig.Block, rig.Output.SubmittedFrames);
 
         playback.Resume();
-        await rig.Output.WaitForSubmittedFramesAsync(TimbreRig.Budget * 2);
-        TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Budget, Signal, 1f, 1000), rig.Output.Read(TimbreRig.Budget, TimbreRig.Budget));
+        await rig.Output.WaitForSubmittedFramesAsync(TimbreRig.Budget * 2 + TimbreRig.Block);
+        TimbreRig.AssertPcm(TimbreRig.ExpectedRamp(TimbreRig.Budget, Signal, 0f, 1f, 1000), rig.Output.Read(TimbreRig.Budget + TimbreRig.Block, TimbreRig.Budget));
     }
 
     [Fact]
@@ -133,10 +141,11 @@ public sealed class TransportTests
     [Fact]
     public async Task SeekToTheEndCompletesANonLoopingPlayback()
     {
-        using TimbreRig rig = new(hold: false);
+        using TimbreRig rig = new(); // keep the initial seek independent of output capacity
         TimbrePlayback playback = rig.Scope.Play(TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000)));
         await rig.ReadyAsync(playback);
         await HarnessWait.WithTimeout(playback.SeekAsync(TimeSpan.FromSeconds(1)), null, "Seek did not complete.");
+        rig.Output.Release();
         rig.Output.ConsumeAll();
 
         await rig.SyncAsync();
@@ -168,6 +177,7 @@ public sealed class TransportTests
 
         reader.ReadGate = null;
         gate.SetResult();
+        await rig.NextBlockAsync(); // old generation fades before the seek is dispatched
         await HarnessWait.WithTimeout(second, null, "Latest seek did not complete.");
         await rig.SettledAsync(playback);
 
@@ -176,7 +186,7 @@ public sealed class TransportTests
         long submitted = rig.Output.SubmittedFrames;
         rig.Output.ConsumeAll();
         await rig.Output.WaitForSubmittedFramesAsync(submitted + TimbreRig.Block);
-        TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Block, Signal, 1f, 30000), rig.Output.Read(submitted, TimbreRig.Block));
+        TimbreRig.AssertPcm(TimbreRig.ExpectedRamp(TimbreRig.Block, Signal, 0f, 1f, 30000), rig.Output.Read(submitted, TimbreRig.Block));
         Assert.Equal(1, rig.Runtime.GetDiagnostics().SeeksSuperseded);
     }
 
@@ -198,6 +208,7 @@ public sealed class TransportTests
         playback.Cancel();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => HarnessWait.WithTimeout(seek, null, "Seek did not finish."));
+        rig.Output.ConsumeAll(); // capacity for the cancellation fade even with a stalled reader
         await TimbreRig.ReleasedAsync(playback);
         Assert.Empty(reader.SeekTargets);
         Assert.True(reader.IsDisposed);
@@ -213,10 +224,11 @@ public sealed class TransportTests
         Assert.Null(playback.Duration);
 
         Task seek = playback.SeekAsync(TimeSpan.FromSeconds(5));
+        await rig.NextBlockAsync();
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => HarnessWait.WithTimeout(seek, null, "Seek did not finish."));
 
         float[] block = await rig.NextBlockAsync();
-        TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Block, Signal, 1f, TimbreRig.Budget), block);
+        TimbreRig.AssertPcm(TimbreRig.ExpectedRamp(TimbreRig.Block, Signal, 0f, 1f, TimbreRig.Budget + TimbreRig.FadeFrames), block);
         Assert.Equal(TimbrePlaybackState.Playing, playback.State);
     }
 

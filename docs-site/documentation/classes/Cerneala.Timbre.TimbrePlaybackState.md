@@ -28,6 +28,8 @@ public enum TimbrePlaybackState
 
 `Completed`, `Canceled`, and `Failed` are terminal.
 
+`Paused` and `Canceled` are published synchronously, before the mixer's 5 ms fade-out has necessarily finished. Source/DSP state freezes at the end of the pause fade; a canceled rendering voice is released after its fade. Already-queued PCM may still play. See [TimbrePlayback](Cerneala.Timbre.TimbrePlayback.md) for the transport contract.
+
 ## Fields
 
 | Name | Value | Description |

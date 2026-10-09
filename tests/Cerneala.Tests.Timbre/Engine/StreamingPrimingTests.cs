@@ -44,23 +44,25 @@ public sealed class StreamingPrimingTests
         await rig.SyncAsync();
         long beforeSeek = rig.Output.SubmittedFrames;
 
-        reader.StartTrickle();
+        reader.TrickleOnSeek = true;
         Task seek = playback.SeekAsync(TimbreRig.FramesToTime(96000));
+        rig.Output.Consume(TimbreRig.Block); // fade-out before the reader is sought
         await HarnessWait.WithTimeout(reader.WaitingAtGate, null, "The reader did not reach its gate after the seek.");
         await HarnessWait.WithTimeout(seek, null, "The seek did not complete.");
         rig.Output.ConsumeAll();
         await rig.SyncAsync();
 
         Assert.Equal(0, rig.Runtime.GetDiagnostics().UnderrunFrames);
-        Assert.Equal(beforeSeek, rig.Output.SubmittedFrames);
+        Assert.Equal(beforeSeek + TimbreRig.Block, rig.Output.SubmittedFrames);
+        long restart = beforeSeek + TimbreRig.Block;
 
         reader.Trickle = false;
         reader.Open();
-        await rig.Output.WaitForSubmittedFramesAsync(beforeSeek + TimbreRig.Block);
+        await rig.Output.WaitForSubmittedFramesAsync(restart + TimbreRig.Block);
 
         TimbreRig.AssertPcm(
-            TimbreRig.Expected(TimbreRig.Block, Ramp, sourceStart: 96000),
-            rig.Output.Read(beforeSeek, TimbreRig.Block),
+            TimbreRig.ExpectedRamp(TimbreRig.Block, Ramp, 0f, 1f, sourceStart: 96000),
+            rig.Output.Read(restart, TimbreRig.Block),
             tolerance: 0);
         Assert.Equal(0, rig.Runtime.GetDiagnostics().UnderrunFrames);
         playback.Cancel();
@@ -81,6 +83,7 @@ public sealed class StreamingPrimingTests
         private bool servedPacket;
 
         public volatile bool Trickle;
+        public bool TrickleOnSeek;
 
         public Task WaitingAtGate => waiting.Task;
 
@@ -108,6 +111,10 @@ public sealed class StreamingPrimingTests
 
         public override ValueTask SeekAsync(long frame, CancellationToken cancellationToken)
         {
+            if (TrickleOnSeek)
+            {
+                Trickle = true;
+            }
             position = frame;
             servedPacket = false;
             return ValueTask.CompletedTask;
