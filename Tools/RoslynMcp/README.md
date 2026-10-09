@@ -58,7 +58,13 @@ Failed publish staging directories are retained for inspection.
 published executable through native PowerShell invocation with UTF-8 stdio.
 It imports the current host's utility module explicitly, so inherited PS7
 module paths cannot shadow the PS5 hash function. It performs no download, restore,
-build or stdout logging. Diagnostics go to stderr. The SDK is still needed
+build or stdout logging. Diagnostics go to stderr. It prepends the installed
+SDK host's newest `host\fxr\<version>` folder to `PATH`: the single-file
+executable bundles hostfxr, but MSBuildLocator P/Invokes `hostfxr` by name and
+otherwise fails at startup with `DllNotFoundException`. It also joins a Windows
+kill-on-close job, so a client that terminates the launcher (instead of
+closing stdio) takes `mcpRoslyn.exe` and its BuildHosts down with it rather
+than leaving a ~1 GB orphan. The SDK is still needed
 for MSBuild solution evaluation even though the executable is self-contained.
 
 ## Codex connection
