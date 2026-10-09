@@ -199,7 +199,8 @@ public sealed class MotionValue<T> : MotionValue
         handle = new MotionHandle(
             behavior => CancelHandle(handle, behavior, fireEvent: true),
             () => CompleteHandle(handle),
-            () => DisposeHandle(handle));
+            () => DisposeHandle(handle),
+            graph.VerifyAccess);
         return handle;
     }
 

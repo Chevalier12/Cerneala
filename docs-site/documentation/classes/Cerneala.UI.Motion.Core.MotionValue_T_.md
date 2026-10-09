@@ -62,6 +62,8 @@ An active `SpringSpec<Transform>` using the built-in `TransformMixer` instead re
 
 `JumpTo` cancels active motion, sets the target and animation start to the supplied value, and notifies subscribers only when the mixed value differs from `Current`. Change notifications are delivered to a snapshot of the subscription list, so listeners may cancel, complete, or start motion while a notification is being processed.
 
+The active handle returned by `AnimateTo` also verifies graph access before `Cancel`, `Complete`, or `Dispose` changes any motion or handle state. Rejected cross-thread calls leave the animation intact: the current value, target, sampled velocity, graph registration, completion task, and callbacks are preserved. Subsequent owner-thread ticks and lifecycle calls continue normally.
+
 `Velocity` is read from the active sampler after graph ticks. If the sampler does not expose velocity and throws `InvalidOperationException`, `Velocity` is reported as `null`.
 
 If a subscriber throws while a terminal value is applied, the exception propagates to the caller. The motion still becomes terminal and unregisters its graph node before the exception escapes, so the handle is not left active.

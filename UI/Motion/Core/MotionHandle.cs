@@ -8,17 +8,20 @@ public sealed class MotionHandle : IDisposable
     private Action<MotionCancelBehavior>? cancel;
     private Action? complete;
     private Action? dispose;
+    private Action? verifyAccess;
     private EventHandler<MotionCompletedEventArgs>? completed;
     private bool disposed;
 
     internal MotionHandle(
         Action<MotionCancelBehavior> cancel,
         Action complete,
-        Action dispose)
+        Action dispose,
+        Action? verifyAccess = null)
     {
         this.cancel = cancel ?? throw new ArgumentNullException(nameof(cancel));
         this.complete = complete ?? throw new ArgumentNullException(nameof(complete));
         this.dispose = dispose ?? throw new ArgumentNullException(nameof(dispose));
+        this.verifyAccess = verifyAccess;
     }
 
     public bool IsActive => !IsCompleted && !IsCanceled && !disposed;
@@ -48,6 +51,7 @@ public sealed class MotionHandle : IDisposable
             return;
         }
 
+        verifyAccess?.Invoke();
         cancel?.Invoke(behavior);
     }
 
@@ -58,6 +62,7 @@ public sealed class MotionHandle : IDisposable
             return;
         }
 
+        verifyAccess?.Invoke();
         complete?.Invoke();
     }
 
@@ -68,6 +73,8 @@ public sealed class MotionHandle : IDisposable
             return;
         }
 
+        // Rejected access must preserve both owner state and this handle's callbacks.
+        verifyAccess?.Invoke();
         disposed = true;
         try
         {
@@ -131,6 +138,7 @@ public sealed class MotionHandle : IDisposable
         cancel = null;
         complete = null;
         dispose = null;
+        verifyAccess = null;
     }
 
     private void RaiseCompleted(MotionCompletedEventArgs args)
