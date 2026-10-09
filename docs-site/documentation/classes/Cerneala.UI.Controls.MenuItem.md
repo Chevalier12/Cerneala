@@ -47,6 +47,8 @@ The default template projects `PART_ItemsPresenter` through `PART_SubmenuOverlay
 
 `IsSubmenuOpen` can be set programmatically, but an item without children or an item that is disabled is coerced closed. Detach, root changes, removal from an active item source, loss of all children, and session shutdown also close stale branches. Replacing the component template closes the old overlay, removes its event handlers, clears its dismiss scope, and attaches the new parts without duplicate subscriptions.
 
+`AspectState.Expanded` is active while `IsSubmenuOpen` is `true`. The property includes `AffectsAspect` metadata, so opening or closing a submenu also queues aspect resolution for the attached item on the next processed frame.
+
 ### Keyboard interaction
 
 | Key | Behavior |

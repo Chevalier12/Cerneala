@@ -39,7 +39,7 @@ The class adds a single selection state, `IsChecked`. Its constructor registers 
 
 The implementation does not define radio groups, mutual exclusion, or automatic unchecking of sibling controls. Set `IsChecked` to `false` directly when an application needs to clear the state.
 
-`IsCheckedProperty` is registered with `UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual`, so changing `IsChecked` participates in render and input-visual invalidation.
+`IsCheckedProperty` is registered with `UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsAspect`, so changing `IsChecked` participates in render, input-visual, and aspect invalidation. `AspectState.Checked` is active while `IsChecked` is `true`.
 
 ## Constructors
 
@@ -51,7 +51,7 @@ The implementation does not define radio groups, mutual exclusion, or automatic 
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `IsCheckedProperty` | `UiProperty<bool>` | Identifies the `IsChecked` UI property. The default value is `false`; metadata options are `AffectsRender` and `AffectsInputVisual`. |
+| `IsCheckedProperty` | `UiProperty<bool>` | Identifies the `IsChecked` UI property. The default value is `false`; metadata options are `AffectsRender`, `AffectsInputVisual`, and `AffectsAspect`. |
 
 ## Properties
 
@@ -74,7 +74,7 @@ The implementation does not define radio groups, mutual exclusion, or automatic 
 | Identifier field | `IsCheckedProperty` |
 | Property type | `bool` |
 | Default value | `false` |
-| Metadata/options | `UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual` |
+| Metadata/options | `AffectsRender`, `AffectsInputVisual`, `AffectsAspect` |
 
 ## Applies to
 

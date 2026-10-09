@@ -67,7 +67,7 @@ A custom component template must provide `PART_CheckMark` as a `UIElement`. This
 
 | Name | Declared By | Description |
 | --- | --- | --- |
-| `IsChecked` | `ToggleButton` | Gets or sets whether the checkbox is checked. Defaults to `false`; affects render and input visual state. |
+| `IsChecked` | `ToggleButton` | Gets or sets whether the checkbox is checked. Defaults to `false`; activates `AspectState.Checked` when `true` and affects render, input visuals, and aspect resolution. |
 | `IsCheckedProperty` | `ToggleButton` | Identifies the `IsChecked` UI property. |
 | `Content` | `ContentControl` | Gets or sets the content presented by the default template. |
 | `ComponentTemplate` | `Control` | Gets or sets the component template. The default template provides `PART_CheckMark`. |

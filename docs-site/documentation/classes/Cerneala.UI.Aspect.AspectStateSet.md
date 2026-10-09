@@ -56,7 +56,20 @@ bool matchesHover = states.Contains(AspectState.Hover);
 
 The set is value-like. `Add` and `Remove` return a new `AspectStateSet` when the contents change and return the same instance when the requested change is already true. Equality and hash codes are order-independent. `ToString()` joins state names in ordinal name order, so diagnostic output is stable.
 
-`FromElement(UIElement)` maps built-in element state to aspect state. It adds `Hover` from `UIElement.IsPointerOver`, `Pressed` when the element implements `IInputPressable` and `IsPressed` is true, `Focus` from `UIElement.IsKeyboardFocused`, `FocusWithin` from `UIElement.IsKeyboardFocusWithin`, `Disabled` when `UIElement.IsEnabled` is false, and `Selected` when the element implements `ISelectableItemContainer` and `IsSelected` is true. It does not infer `Checked` or `Expanded`.
+`FromElement(UIElement)` maps built-in element state to aspect state:
+
+| State | Active when |
+| --- | --- |
+| `Hover` | `UIElement.IsPointerOver` is `true`. |
+| `Pressed` | The element implements `IInputPressable` and `IsPressed` is `true`. |
+| `Focus` | `UIElement.IsKeyboardFocused` is `true`. |
+| `FocusWithin` | `UIElement.IsKeyboardFocusWithin` is `true`. |
+| `Disabled` | `UIElement.IsEnabled` is `false`. |
+| `Selected` | The element implements `ISelectableItemContainer` and `IsSelected` is `true`. |
+| `Checked` | `ToggleButton.IsChecked` is `true` (including on `CheckBox` and other derived controls), or `RadioButton.IsChecked` is `true`. |
+| `Expanded` | `MenuItem.IsSubmenuOpen` or `ComboBox.IsDropDownOpen` is `true`. |
+
+`Checked` and `Expanded` are absent when their source property is `false`, and are not inferred on unrelated element types. The four source properties carry `AffectsAspect` metadata, so changes queue attached controls for aspect resolution on the next processed frame. `FromElement` returns a snapshot; obtain a new set to observe later changes.
 
 Methods that accept an `AspectState` or `UIElement` throw `ArgumentNullException` for `null`.
 
