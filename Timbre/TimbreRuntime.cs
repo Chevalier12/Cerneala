@@ -157,6 +157,10 @@ public sealed partial class TimbreRuntime : IDisposable
     // starting thread after it is published; null in normal use.
     internal Action<TimbrePlayback>? PlaybackAccepted { get; set; }
 
+    // Optional test instrumentation: fully constructed but not yet published,
+    // on the starting thread; null in normal use.
+    internal Action<TimbrePlayback>? PlaybackConstructed { get; set; }
+
     // Completes once the mixer has applied everything published before the
     // call and reached a point where it would wait for new work.
     internal Task SyncAsync()
@@ -179,21 +183,22 @@ public sealed partial class TimbreRuntime : IDisposable
     internal TimbrePlayback Start(TimbreScope scope, TimbreSound sound, TimbreStartOptions options, TimbreHandle? handle)
     {
         object? key = TryGetCacheKey(sound.Source);
-        TimbrePlayback playback;
+        lock (Sync)
+        {
+            // Avoid allocating DSP state for an already inadmissible start.
+            ValidateStartLocked(scope, handle);
+        }
+
+        // Playback/DSP construction can allocate large delay buffers. Keep it
+        // off the lock the mixer needs every block; nothing is published yet.
+        TimbrePlayback playback = new(this, scope, sound, options);
         bool needsLoad = false;
         lock (Sync)
         {
-            scope.ThrowIfDisposed();
-            TimbrePlayback? previous = handle?.OccupantLocked;
+            // Disposal, capacity, and the handle occupant may have changed
+            // during construction. Admission and replacement are atomic here.
+            TimbrePlayback? previous = ValidateStartLocked(scope, handle);
             bool replacing = previous is { IsTerminal: false };
-            if (live.Count - (replacing ? 1 : 0) + 1 > maxVoices)
-            {
-                throw new TimbreException(
-                    TimbreErrorKind.VoiceLimitExceeded,
-                    $"The sound runtime already has the maximum of {maxVoices} active playbacks.");
-            }
-
-            playback = new TimbrePlayback(this, scope, sound, options);
             if (playback.Render.Chain is { } chain)
             {
                 Interlocked.Add(ref dspStateBytes, chain.StateBytes);
@@ -235,6 +240,22 @@ public sealed partial class TimbreRuntime : IDisposable
         SignalMixer();
         PlaybackAccepted?.Invoke(playback);
         return playback;
+    }
+
+    // Caller holds Sync. Does not reserve a voice or change the handle.
+    private TimbrePlayback? ValidateStartLocked(TimbreScope scope, TimbreHandle? handle)
+    {
+        scope.ThrowIfDisposed();
+        TimbrePlayback? previous = handle?.OccupantLocked;
+        bool replacing = previous is { IsTerminal: false };
+        if (live.Count - (replacing ? 1 : 0) + 1 > maxVoices)
+        {
+            throw new TimbreException(
+                TimbreErrorKind.VoiceLimitExceeded,
+                $"The sound runtime already has the maximum of {maxVoices} active playbacks.");
+        }
+
+        return previous;
     }
 
     internal void SignalMixer() => wake.Set();
