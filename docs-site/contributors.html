@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="How to contribute to Cerneala: ownership, support, model policy, repository Codex skills, and pull request gates.">
+<meta name="description" content="How to contribute to Cerneala: ownership, support, model policy, repository skills for Codex and Claude Code, Roslyn MCP, and pull request gates.">
 <title>Contributors - Cerneala UI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -48,7 +48,7 @@
         <a href="https://github.com/Chevalier12">Chevalier12</a>
       </div>
       <div class="hero-actions">
-        <a class="button button--solid" href="#contribute">Contribute with AI</a>
+        <a class="button button--solid" href="#skills">Contribute with AI</a>
         <a class="button button--ghost" href="#support">Support options</a>
       </div>
     </div>
@@ -148,7 +148,7 @@
         <div>
           <span class="lineage-state">Forward policy</span>
           <h3>Better models inherit the repo</h3>
-          <p>OpenAI 5.6 or newer is approved. Anthropic models evaluated through September 2, 2026, including Fable 5.1, are not approved for core engineering. Future models earn trust through observed compliance and repository evidence, not provider branding.</p>
+          <p>OpenAI 5.6 or newer is approved. Any Anthropic model with version 5.5 or higher (for example Opus 5.5, Sonnet 5.5, Haiku 5.5) is approved for core engineering and visual work. Any Anthropic model below version 5.5, including Fable 5.1, is not approved for core engineering. Future models earn trust through observed compliance and repository evidence, not provider branding.</p>
         </div>
       </article>
     </div>
@@ -156,7 +156,7 @@
     <div class="human-memory-warning">
       <span>PRIME DIRECTIVE</span>
       <strong>Do not raw-dog this repository with your unaided human brain.</strong>
-      <p>Cerneala has the surface area of a repository that would normally require 40+ developers. Its maintainer is one person. Trying to understand every subsystem at once is not diligence; it is a fast route to losing your mind. Give a capable agent the exact scenario, let it load the local context, read the repository instructions, read files directly, use rg for text search, run focused experiments, create tests, and show you evidence. Your job is intent, judgment, review, and deeply understanding the slice you are actually changing.</p>
+      <p>Cerneala has the surface area of a repository that would normally require 40+ developers. Its maintainer is one person. Trying to understand every subsystem at once is not diligence; it is a fast route to losing your mind. Give a capable agent the exact scenario, let it load the local context, read the repository instructions, read files directly, use rg for text search and Roslyn MCP for C# symbols, run focused experiments, create tests, and show you evidence. Your job is intent, judgment, review, and deeply understanding the slice you are actually changing.</p>
     </div>
 
     <div class="repo-entry-paths">
@@ -213,8 +213,9 @@
         </svg>
       </div>
       <div class="anthropic-warning__content">
-        <span>MAINTAINER WARNING / 02 SEPTEMBER 2026</span>
-        <h3 id="anthropic-warning-title">Do not use Anthropic models for Cerneala core engineering.</h3>
+        <span>MAINTAINER WARNING / 02 SEPTEMBER 2026 / UPDATED 09 OCTOBER 2026</span>
+        <h3 id="anthropic-warning-title">Do not use Anthropic models below version 5.5 for Cerneala core engineering.</h3>
+        <p><strong>Update, October 9, 2026:</strong> every Anthropic model with version 5.5 or higher (for example Opus 5.5, Sonnet 5.5, Haiku 5.5) is approved for both core engineering and visual work. This warning still applies to every Anthropic model below version 5.5, including Fable 5.1.</p>
         <p><strong>Maintainer assessment:</strong> every Anthropic model evaluated through September 2, 2026—including Fable 5.1—is unreliable and dangerous to use for Cerneala architecture, implementation, and bug fixing. The maintainer considers the observed behavior a provider-wide regression, not an Opus-only problem.</p>
         <ul>
           <li>They may ignore or only imitate the instructions in repository skills.</li>
@@ -222,156 +223,223 @@
           <li>They may disregard <code>AGENTS.md</code> and established ownership or verification rules.</li>
           <li>They may claim they performed one action while the diff, commands, or artifacts show that they performed something else.</li>
         </ul>
-        <strong class="anthropic-warning__gate">If you use Claude despite an explicit instruction not to, treat every claim as untrusted: inspect the exact diff, rerun every claimed command, and reproduce every test or runtime result yourself. Visual CSS, composition, and art direction remain a separate allowed lane; that exception does not include architecture, implementation, or bug fixes.</strong>
+        <strong class="anthropic-warning__gate">If you use an Anthropic model below version 5.5, such as Fable 5.1, despite an explicit instruction not to, treat every claim as untrusted: inspect the exact diff, rerun every claimed command, and reproduce every test or runtime result yourself. Visual CSS, composition, and art direction remain a separate allowed lane; that exception does not include architecture, implementation, or bug fixes.</strong>
       </div>
     </aside>
 
     <div class="model-matrix">
       <div class="model-row model-row--head"><span>Provider / model</span><span>Core engineering</span><span>Visual work</span><span>Maintainer verdict</span></div>
       <div class="model-row model-row--approved"><span><strong>OpenAI GPT-5.6+</strong><small>5.6 is the baseline</small></span><span><i></i>Approved</span><span><i></i>Approved</span><span>Preferred for repository work</span></div>
-      <div class="model-row model-row--rejected"><span><strong>Anthropic Claude</strong><small>All evaluated releases through 2026-09-02, including Fable 5.1</small></span><span><i></i>Rejected</span><span><i></i>Restricted</span><span>Unreliable and dangerous for Cerneala core work</span></div>
+      <div class="model-row model-row--approved"><span><strong>Anthropic, version 5.5+</strong><small>Any model with version 5.5 or higher, e.g. Opus 5.5, Sonnet 5.5, Haiku 5.5</small></span><span><i></i>Approved</span><span><i></i>Approved</span><span>Approved for repository and visual work since 2026-10-09</span></div>
+      <div class="model-row model-row--rejected"><span><strong>Anthropic, below version 5.5</strong><small>Any model with a version below 5.5, including Fable 5.1</small></span><span><i></i>Rejected</span><span><i></i>Restricted</span><span>Unreliable and dangerous for Cerneala core work</span></div>
       <div class="model-row model-row--rejected"><span><strong>Older OpenAI models</strong><small>Including historical 5.5</small></span><span><i></i>Rejected</span><span><i></i>Case by case</span><span>History, not the current quality floor</span></div>
-      <div class="model-row model-row--visual"><span><strong>Anthropic visual work</strong><small>CSS, composition, visual direction only</small></span><span><i></i>Not allowed</span><span><i></i>Allowed</span><span>Review carefully; the exception stops before engineering</span></div>
+      <div class="model-row model-row--visual"><span><strong>Anthropic visual work, below 5.5</strong><small>CSS, composition, visual direction only</small></span><span><i></i>Not allowed</span><span><i></i>Allowed</span><span>Review carefully; the exception stops before engineering</span></div>
     </div>
 
     <div class="model-policy__footer">
       <span>Verification policy</span>
-      <strong>If an Anthropic model touched architecture, implementation, or a bug fix, assume nothing. Audit the diff and reproduce its claimed evidence before the work enters Cerneala.</strong>
+      <strong>If an Anthropic model below version 5.5, such as Fable 5.1, touched architecture, implementation, or a bug fix, assume nothing. Audit the diff and reproduce its claimed evidence before the work enters Cerneala.</strong>
     </div>
   </section>
 
-  <section class="workflow-skills" id="workflow-skills">
+  <section class="repo-skills-section" id="skills">
     <header class="section-head">
       <div>
-        <span class="section-code">Codex workflow skills</span>
-        <h2>Discuss it. Plan it. Then finish the damn thing.</h2>
+        <span class="section-code">Repository skills / Codex + Claude Code</span>
+        <h2>Ten skills. Pick the narrowest one, then let it finish the job.</h2>
       </div>
-      <p>Cerneala keeps this planning pair under <code>.codex/skills/</code> for the handoff between a resolved engineering discussion and verified implementation. Codex can load the workflow directly from the repository that owns it.</p>
+      <p>Every workflow below is an executable skill versioned with Cerneala. Codex loads it from <code>.codex/skills/</code> and Claude Code loads it from <code>.claude/skills/</code>. Both copies enforce the same contract; the Claude Code copies are adapted to Claude Code's tools.</p>
     </header>
 
-    <div class="skill-pipeline" aria-label="Planning and implementation skill workflow">
-      <article class="skill-card skill-card--plan">
-        <header><span>STEP 01 / FREEZE THE PLAN</span><strong>Planning</strong></header>
-        <div class="skill-card__body">
-          <code class="skill-command">$cerneala-checklist-plan</code>
-          <h3>CernealaChecklistPlan</h3>
-          <p>Use it after the requirements, behavior, architecture, and open questions have already been discussed. It turns that context into one or more implementation-ready Markdown plans under <code>docs/plans/</code>.</p>
-          <ul>
-            <li>Creates staged <code>[ ]</code> checklists with explicit gates</li>
-            <li>Records dependencies, tests, documentation, and acceptance criteria</li>
-            <li>Plans the work without quietly starting the implementation</li>
-          </ul>
-        </div>
-      </article>
-
-      <div class="skill-connector" aria-hidden="true"><span></span><strong>HAND OFF</strong><span></span></div>
-
-      <article class="skill-card skill-card--implement">
-        <header><span>STEP 02 / EXECUTE THE PLAN</span><strong>Implementation</strong></header>
-        <div class="skill-card__body">
-          <code class="skill-command">$cerneala-implement-plan</code>
-          <h3>CernealaImplementPlan</h3>
-          <p>Give it the plan name and it creates a persistent <code>/goal</code>, audits the remaining checklist, and implements the work end to end in coherent, verifiable batches.</p>
-          <ul>
-            <li>Checks <code>[x]</code> only after a batch is implemented and verified</li>
-            <li>Keeps code, tests, API documentation, and the source plan synchronized</li>
-            <li>Completes the goal only after every applicable item and gate is done</li>
-          </ul>
-          <dl class="skill-metrics" aria-label="Observed implementation skill estimates">
-            <div><dt>GPT-5.6 Sol Medium / High</dt><dd>~45 min to ~2 hours per plan</dd></div>
-            <div><dt>Codex $100 plan</dt><dd>~10-15% of weekly usage per plan</dd></div>
-          </dl>
-        </div>
-      </article>
+    <div class="skill-location">
+      <span>HOW TO CALL ONE</span>
+      <code>Codex: $cerneala-fix-bug &lt;your request&gt;</code>
+      <code>Claude Code: /cerneala-fix-bug &lt;your request&gt;</code>
     </div>
 
     <div class="skill-location">
-      <span>DISCOVERY PATH</span>
-      <code>.codex/skills/cerneala-checklist-plan/</code>
-      <code>.codex/skills/cerneala-implement-plan/</code>
+      <span>WHERE THEY LIVE</span>
+      <code>.codex/skills/&lt;skill-name&gt;/SKILL.md</code>
+      <code>.claude/skills/&lt;skill-name&gt;/SKILL.md</code>
     </div>
 
-    <div class="skill-prompts">
-      <article class="prompt-template">
-        <header><div><span>READY-TO-USE PROMPT</span><strong>Create the plan</strong></div><button type="button" data-copy-target="plan-skill-prompt">Copy prompt</button></header>
-        <pre id="plan-skill-prompt"><code>Use $cerneala-checklist-plan to turn our completed discussion into implementation-ready Cerneala checklist plans under docs/plans/. Do not implement the code yet.</code></pre>
-      </article>
-
-      <article class="prompt-template">
-        <header><div><span>READY-TO-USE PROMPT</span><strong>Implement the plan</strong></div><button type="button" data-copy-target="implement-skill-prompt">Copy prompt</button></header>
-        <pre id="implement-skill-prompt"><code>Use $cerneala-implement-plan to implement &lt;plan-name&gt; end to end. Create a persistent /goal and check off each item only as its batch is completed and verified.</code></pre>
-      </article>
+    <div class="specialist-skill-note">
+      <span>TYPICAL FLOW</span>
+      <strong>Discuss the change → checklist-plan → implement-plan → session commit &amp; push. A regression found on the way goes to fix-bug; a frame-time problem with a number attached goes to performance-gate. Any bug discovered along the way is proven and filed through github-issue-raise.</strong>
     </div>
-  </section>
 
-  <section class="specialist-skills-section" id="specialist-skills">
-    <header class="section-head">
-      <div>
-        <span class="section-code">Specialist repository skills</span>
-        <h2>Research, attack, measure, and document with the right contract.</h2>
-      </div>
-      <p>The repository currently ships seven executable skills. The planning pair above and the bug-fix workflow below cover the common paths; these four specialist workflows handle work that needs a stricter research, adversarial, performance, or documentation protocol.</p>
-    </header>
-
-    <div class="specialist-skill-grid" aria-label="Specialist Codex skill catalog">
-      <article class="specialist-skill-card specialist-skill-card--market">
-        <header><span>RESEARCH / READ-ONLY BY DEFAULT</span><strong>Algorithm selection</strong></header>
+    <div class="specialist-skill-grid repo-skill-grid" aria-label="Cerneala repository skill catalog">
+      <article class="specialist-skill-card specialist-skill-card--build">
+        <header><span>PLAN &amp; BUILD / 01</span><strong>Planning</strong></header>
         <div class="specialist-skill-card__body">
-          <code class="skill-command">$algorithm-market</code>
+          <div class="skill-commands"><code class="skill-command" title="Codex">$cerneala-checklist-plan</code><code class="skill-command" title="Claude Code">/cerneala-checklist-plan</code></div>
+          <h3>Checklist Plan</h3>
+          <p>Use it after the behavior, architecture, and open questions have already been discussed. It turns that settled discussion into one or more implementation-ready Markdown plans under <code>docs/plans/</code>, grounded in the current code.</p>
+          <ul>
+            <li>Builds staged <code>[ ]</code> checklists with explicit, observable gates</li>
+            <li>Names the tests, documentation, dependencies, and definition of done for every stage</li>
+            <li>Runs a semantic audit that tries to falsify the plan, and never starts the implementation</li>
+          </ul>
+        </div>
+        <footer><span>USE WHEN</span><strong>The discussion is settled and you need an executable plan</strong><span class="skill-links"><a href="https://github.com/Chevalier12/Cerneala/blob/master/.codex/skills/cerneala-checklist-plan/SKILL.md">Codex</a><a href="https://github.com/Chevalier12/Cerneala/blob/master/.claude/skills/cerneala-checklist-plan/SKILL.md">Claude</a></span></footer>
+      </article>
+
+      <article class="specialist-skill-card specialist-skill-card--build">
+        <header><span>PLAN &amp; BUILD / 02</span><strong>Implementation</strong></header>
+        <div class="specialist-skill-card__body">
+          <div class="skill-commands"><code class="skill-command" title="Codex">$cerneala-implement-plan</code><code class="skill-command" title="Claude Code">/cerneala-implement-plan</code></div>
+          <h3>Implement Plan</h3>
+          <p>Give it a plan name. It executes the plan end to end, exactly one stage per batch, and checks a stage off in the plan file only after that stage is verified.</p>
+          <ul>
+            <li>Audits what is already done before touching code</li>
+            <li>Keeps code, tests, API documentation, and the source plan synchronized</li>
+            <li>Finishes with the full suite and a final audit, not with “looks done”</li>
+          </ul>
+          <dl class="skill-metrics" aria-label="Observed implementation skill estimates">
+            <div><dt>Codex, GPT-5.6 Sol Medium / High</dt><dd>~45 min to ~2 hours per plan</dd></div>
+            <div><dt>Codex $100 plan</dt><dd>~10-15% of weekly usage per plan</dd></div>
+          </dl>
+        </div>
+        <footer><span>USE WHEN</span><strong>A checklist plan exists and should be finished</strong><span class="skill-links"><a href="https://github.com/Chevalier12/Cerneala/blob/master/.codex/skills/cerneala-implement-plan/SKILL.md">Codex</a><a href="https://github.com/Chevalier12/Cerneala/blob/master/.claude/skills/cerneala-implement-plan/SKILL.md">Claude</a></span></footer>
+      </article>
+
+      <article class="specialist-skill-card specialist-skill-card--fix">
+        <header><span>FIX &amp; MEASURE / 03</span><strong>Bug repair</strong></header>
+        <div class="specialist-skill-card__body">
+          <div class="skill-commands"><code class="skill-command" title="Codex">$cerneala-fix-bug</code><code class="skill-command" title="Claude Code">/cerneala-fix-bug</code></div>
+          <h3>Fix Bug</h3>
+          <p>Give it the visible failure, the expected result, the reproduction steps, and any diagnostics. It reproduces the failure, proves it with a RED test, makes the smallest architecture-correct fix, and verifies the same scenario again.</p>
+          <ul>
+            <li>Reproduces first: unit test, CSI, Servo-driven runtime, or a native harness</li>
+            <li>Requires a RED regression test before any production change</li>
+            <li>Ends with the full green suite and exact steps for your own manual check</li>
+          </ul>
+          <dl class="skill-metrics skill-metrics--bugfix" aria-label="Observed bug-fix skill estimates">
+            <div><dt>Codex, typical duration</dt><dd>~20-30 minutes per bug fix</dd></div>
+            <div><dt>Codex $100 plan</dt><dd>~5% of weekly usage per bug fix</dd></div>
+          </dl>
+        </div>
+        <footer><span>USE WHEN</span><strong>Something is broken and should be fixed</strong><span class="skill-links"><a href="https://github.com/Chevalier12/Cerneala/blob/master/.codex/skills/cerneala-fix-bug/SKILL.md">Codex</a><a href="https://github.com/Chevalier12/Cerneala/blob/master/.claude/skills/cerneala-fix-bug/SKILL.md">Claude</a></span></footer>
+      </article>
+
+      <article class="specialist-skill-card specialist-skill-card--fix">
+        <header><span>FIX &amp; MEASURE / 04</span><strong>Performance repair</strong></header>
+        <div class="specialist-skill-card__body">
+          <div class="skill-commands"><code class="skill-command" title="Codex">$cerneala-performance-gate</code><code class="skill-command" title="Claude Code">/cerneala-performance-gate</code></div>
+          <h3>Performance Gate</h3>
+          <p>Use it for observable lag, stutter, slow startup, CPU, allocation, memory, GPU, or frame-time failures, and only with a concrete threshold. “Make it faster” is not a gate.</p>
+          <ul>
+            <li>Freezes the workload, metric, percentile, hardware, and warmup before measuring</li>
+            <li>Measures a RED baseline and attributes the cost before changing production code</li>
+            <li>Reruns the identical gate plus visual, memory, and correctness checks</li>
+          </ul>
+        </div>
+        <footer><span>USE WHEN</span><strong>An observed performance problem has a numeric gate</strong><span class="skill-links"><a href="https://github.com/Chevalier12/Cerneala/blob/master/.codex/skills/cerneala-performance-gate/SKILL.md">Codex</a><a href="https://github.com/Chevalier12/Cerneala/blob/master/.claude/skills/cerneala-performance-gate/SKILL.md">Claude</a></span></footer>
+      </article>
+
+      <article class="specialist-skill-card specialist-skill-card--fix">
+        <header><span>FIX &amp; MEASURE / 05</span><strong>Bug reporting</strong></header>
+        <div class="specialist-skill-card__body">
+          <div class="skill-commands"><code class="skill-command" title="Codex">$github-issue-raise</code><code class="skill-command" title="Claude Code">/github-issue-raise</code></div>
+          <h3>GitHub Issue Raise</h3>
+          <p>Turns a discovered Cerneala bug into a GitHub issue that meets the contribution bar. The other skills invoke it on their own when they find a defect.</p>
+          <ul>
+            <li>Proves the bug first: a faithful reproduction, an expected behavior grounded in a contract, and a duplicate check</li>
+            <li>Writes the issue in the format of <a href="https://github.com/Chevalier12/Cerneala/issues/3">issue #3</a>: What happens, Minimal reproduction, Expected behavior, Acceptance criteria</li>
+            <li>Posts only after the maintainer approves. While nobody is around, the drafts wait in <code>.artifacts/issue-drafts/</code></li>
+          </ul>
+        </div>
+        <footer><span>USE WHEN</span><strong>A real bug was found and should be tracked</strong><span class="skill-links"><a href="https://github.com/Chevalier12/Cerneala/blob/master/.codex/skills/github-issue-raise/SKILL.md">Codex</a><a href="https://github.com/Chevalier12/Cerneala/blob/master/.claude/skills/github-issue-raise/SKILL.md">Claude</a></span></footer>
+      </article>
+      <article class="specialist-skill-card specialist-skill-card--research">
+        <header><span>ATTACK &amp; RESEARCH / 06</span><strong>Red-team audit</strong></header>
+        <div class="specialist-skill-card__body">
+          <div class="skill-commands"><code class="skill-command" title="Codex">$cerneala-breaker</code><code class="skill-command" title="Claude Code">/cerneala-breaker</code></div>
+          <h3>Breaker</h3>
+          <p>Give it a concrete Cerneala API, subsystem, backend, feature, or scenario. It tries to break the documented contract with bounded hostile tests. Unsupported criticism does not count as a finding.</p>
+          <ul>
+            <li>Targets crashes, hangs, lifecycle, rendering, input, and performance failures</li>
+            <li>Classifies every anomaly before blaming Cerneala and keeps minimized evidence</li>
+            <li>Leaves each confirmed defect as an active RED regression test; it does not fix production code</li>
+          </ul>
+        </div>
+        <footer><span>USE WHEN</span><strong>You want an adversarial audit, not a routine fix</strong><span class="skill-links"><a href="https://github.com/Chevalier12/Cerneala/blob/master/.codex/skills/cerneala-breaker/SKILL.md">Codex</a><a href="https://github.com/Chevalier12/Cerneala/blob/master/.claude/skills/cerneala-breaker/SKILL.md">Claude</a></span></footer>
+      </article>
+
+      <article class="specialist-skill-card specialist-skill-card--research">
+        <header><span>ATTACK &amp; RESEARCH / 07</span><strong>Algorithm selection</strong></header>
+        <div class="specialist-skill-card__body">
+          <div class="skill-commands"><code class="skill-command" title="Codex">$algorithm-market</code><code class="skill-command" title="Claude Code">/algorithm-market</code></div>
           <h3>Algorithm Market</h3>
           <p>Use it before committing Cerneala to a nontrivial algorithm. It researches established candidates across primary research and production implementations, then separates the strongest absolute method from the best fit for the actual constraints.</p>
           <ul>
             <li>Normalizes the target contract and hard gates before scoring candidates</li>
-            <li>Requires broad family coverage, search saturation, source and license evidence</li>
-            <li>Returns a comparison and implementation outline without editing code by default</li>
+            <li>Requires broad family coverage, search saturation, and source and license evidence</li>
+            <li>Returns a comparison and an implementation outline without editing code by default</li>
           </ul>
         </div>
-        <footer><span>USE WHEN</span><strong>The algorithm is not already fixed</strong><a href="https://github.com/Chevalier12/Cerneala/blob/master/.codex/skills/algorithm-market/SKILL.md">Read SKILL.md</a></footer>
+        <footer><span>USE WHEN</span><strong>The algorithm is not already fixed</strong><span class="skill-links"><a href="https://github.com/Chevalier12/Cerneala/blob/master/.codex/skills/algorithm-market/SKILL.md">Codex</a><a href="https://github.com/Chevalier12/Cerneala/blob/master/.claude/skills/algorithm-market/SKILL.md">Claude</a></span></footer>
       </article>
 
-      <article class="specialist-skill-card specialist-skill-card--breaker">
-        <header><span>ADVERSARIAL / TEST-ONLY</span><strong>Red-team audit</strong></header>
+      <article class="specialist-skill-card specialist-skill-card--maintain">
+        <header><span>MAINTAIN / 08</span><strong>Cleanup and refactoring</strong></header>
         <div class="specialist-skill-card__body">
-          <code class="skill-command">$cerneala-breaker</code>
-          <h3>Cerneala Breaker</h3>
-          <p>Give it a concrete Cerneala API, subsystem, backend, feature, or scenario and it tries to break the documented contract with bounded hostile tests. Unsupported criticism does not count as a finding.</p>
+          <div class="skill-commands"><code class="skill-command" title="Codex">$repo-cleanup</code><code class="skill-command" title="Claude Code">/repo-cleanup</code></div>
+          <h3>Repo Cleanup</h3>
+          <p>Use it to simplify, deduplicate, or modularize a named area without changing behavior. Leaving sound code alone is a valid result.</p>
           <ul>
-            <li>Targets major correctness, stability, lifecycle, rendering, and performance failures</li>
-            <li>Classifies anomalies before blaming Cerneala and preserves minimized evidence</li>
-            <li>Adds active RED regression tests for confirmed defects but does not fix production code</li>
+            <li>Reads the full implementation, its callers, and its tests before proposing a change</li>
+            <li>Works in small verified batches, with characterization tests first when coverage is missing</li>
+            <li>Asks before touching public contracts, ownership, or dependencies, and never mass-formats</li>
           </ul>
         </div>
-        <footer><span>USE WHEN</span><strong>You want an adversarial audit, not a routine fix</strong><a href="https://github.com/Chevalier12/Cerneala/blob/master/.codex/skills/cerneala-breaker/SKILL.md">Read SKILL.md</a></footer>
+        <footer><span>USE WHEN</span><strong>The code works but carries unnecessary complexity</strong><span class="skill-links"><a href="https://github.com/Chevalier12/Cerneala/blob/master/.codex/skills/repo-cleanup/SKILL.md">Codex</a><a href="https://github.com/Chevalier12/Cerneala/blob/master/.claude/skills/repo-cleanup/SKILL.md">Claude</a></span></footer>
       </article>
 
-      <article class="specialist-skill-card specialist-skill-card--performance">
-        <header><span>MEASURE / OPTIMIZE / PROVE</span><strong>Performance repair</strong></header>
+      <article class="specialist-skill-card specialist-skill-card--maintain">
+        <header><span>MAINTAIN / 09</span><strong>API documentation</strong></header>
         <div class="specialist-skill-card__body">
-          <code class="skill-command">$cerneala-performance-gate</code>
-          <h3>Cerneala Performance Gate</h3>
-          <p>Use it for observable lag, stutter, startup, CPU, allocation, memory, GPU, or frame-time failures only when the acceptance threshold is concrete. “Make it faster” is not a gate.</p>
-          <ul>
-            <li>Freezes workload, metric, percentile, hardware, warmup, and correctness constraints</li>
-            <li>Measures a RED baseline and attributes cost before production changes</li>
-            <li>Reruns the identical gate and relevant visual, memory, and correctness checks</li>
-          </ul>
-        </div>
-        <footer><span>USE WHEN</span><strong>An observed performance defect has a numeric gate</strong><a href="https://github.com/Chevalier12/Cerneala/blob/master/.codex/skills/cerneala-performance-gate/SKILL.md">Read SKILL.md</a></footer>
-      </article>
-
-      <article class="specialist-skill-card specialist-skill-card--docs">
-        <header><span>SOURCE / TESTS / CONTRACTS</span><strong>API documentation</strong></header>
-        <div class="specialist-skill-card__body">
-          <code class="skill-command">$writing-api-documentation</code>
+          <div class="skill-commands"><code class="skill-command" title="Codex">$writing-api-documentation</code><code class="skill-command" title="Claude Code">/writing-api-documentation</code></div>
           <h3>Writing API Documentation</h3>
-          <p>Use it to create or update public API documentation from implementation, tests, established contracts, and existing canonical pages. Names alone are not evidence of behavior.</p>
+          <p>Use it to create or update public API documentation from the implementation, tests, established contracts, and existing canonical pages. Names alone are not evidence of behavior.</p>
           <ul>
             <li>Produces focused WPF-style class or member documentation with real APIs</li>
             <li>Groups public members for scanning and keeps examples minimal and factual</li>
-            <li>Verifies the canonical documentation location and manifest requirements</li>
+            <li>Writes only to <code>docs-site/documentation/classes/</code> and keeps the manifest in sync</li>
           </ul>
         </div>
-        <footer><span>USE WHEN</span><strong>A public API or documented behavior changes</strong><a href="https://github.com/Chevalier12/Cerneala/blob/master/.codex/skills/writing-api-documentation/SKILL.md">Read SKILL.md</a></footer>
+        <footer><span>USE WHEN</span><strong>A public API or documented behavior changes</strong><span class="skill-links"><a href="https://github.com/Chevalier12/Cerneala/blob/master/.codex/skills/writing-api-documentation/SKILL.md">Codex</a><a href="https://github.com/Chevalier12/Cerneala/blob/master/.claude/skills/writing-api-documentation/SKILL.md">Claude</a></span></footer>
+      </article>
+
+      <article class="specialist-skill-card specialist-skill-card--maintain">
+        <header><span>MAINTAIN / 10</span><strong>Commit and push</strong></header>
+        <div class="specialist-skill-card__body">
+          <div class="skill-commands"><code class="skill-command" title="Claude Code">/git-session-commit-push</code></div>
+          <h3>Session Commit &amp; Push</h3>
+          <p>Commits and pushes the work of the current conversation in Cerneala's structured commit style. Invoking it is the approval; it does not ask again. It ships in <code>.claude/skills/</code>; Codex users keep it as a personal skill.</p>
+          <ul>
+            <li>Stages only changes that belong to this conversation; unrelated work stays untouched</li>
+            <li>Writes a <code>type(scope): subject</code> commit with themed sections and a Verification block</li>
+            <li>Pushes normally: no force, no rebase, no hook bypass, and it stops when the upstream has diverged</li>
+          </ul>
+        </div>
+        <footer><span>USE WHEN</span><strong>The session's work is verified and ready to publish</strong><span class="skill-links"><a href="https://github.com/Chevalier12/Cerneala/blob/master/.claude/skills/git-session-commit-push/SKILL.md">Claude</a></span></footer>
+      </article>
+
+      <article class="specialist-skill-card specialist-skill-card--tool">
+        <header><span>AGENT TOOLING / READ-ONLY</span><strong>C# symbol navigation</strong></header>
+        <div class="specialist-skill-card__body">
+          <div class="skill-commands"><code class="skill-command" title="MCP server name">cerneala_roslyn</code></div>
+          <h3>Roslyn MCP (mcpRoslyn)</h3>
+          <p>Not a skill, but the tool the skills lean on. This local MCP server gives Codex and Claude Code real C# symbol navigation over the saved <code>Cerneala.slnx</code>, including members generated from markup. It answers “who calls this?” and “what implements this?” with compiler-level identity instead of text matches. It is pinned to mcpRoslyn v1.4.0 (MIT) with a Roslyn 5.9 patch.</p>
+          <ul>
+            <li>Install it once with <code>pwsh -NoProfile -File ./Tools/scripts/Install-RoslynMcp.ps1</code></li>
+            <li>It is connected for Codex in <code>.codex/config.toml</code> and for Claude Code in <code>.mcp.json</code>. Twelve navigation tools are allowed (<code>workspace_symbol</code>, <code>find_references</code>, <code>find_callers</code>, …) and <code>rename_symbol</code> is denied</li>
+            <li>The first query loads the whole solution and takes about 30–60 s. Later queries take about a second</li>
+            <li>Every connected agent session runs its own <code>mcpRoslyn.exe</code>, holding about 0.8–1.3 GB of RAM while the session is open. The launcher ends it together with its session. Close idle agent sessions and check for leftover processes</li>
+          </ul>
+        </div>
+        <footer><span>USE WHEN</span><strong>You need symbol identity, not a text match</strong><span class="skill-links"><a href="https://github.com/Chevalier12/Cerneala/blob/master/Tools/RoslynMcp/README.md">Read README</a></span></footer>
       </article>
     </div>
 
@@ -379,54 +447,22 @@
       <span>SELECTION RULE</span>
       <strong>Use the narrowest matching skill. Research is not implementation, an adversarial audit is not a bug fix, and performance work without a frozen numeric gate is guesswork.</strong>
     </div>
-  </section>
 
-  <section class="bugfix-skill-section" id="contribute">
-    <header class="section-head section-head--light">
-      <div>
-        <span class="section-code">Evidence-first bug fixing</span>
-        <h2>One bug skill. No theory-first cowboy bullshit.</h2>
-      </div>
-      <p><code>CernealaFixBug</code> carries the old bug-fix protocol as an executable Codex workflow: reproduce the actual failure, prove it red, make the smallest correct change, and verify the same scenario again.</p>
-    </header>
-
-    <div class="bugfix-skill-layout">
-      <article class="bugfix-skill-card">
-        <header><span>CODEX SKILL</span><strong>Bug investigation and repair</strong></header>
-        <div>
-          <code class="skill-command">$cerneala-fix-bug</code>
-          <h3>CernealaFixBug</h3>
-          <p>Give the skill the user-visible failure, expected result, reproduction steps, and whatever diagnostics you have. It drives the fix from evidence instead of treating the first plausible theory like holy scripture.</p>
-          <ul>
-            <li>Reads files directly and uses rg for text search</li>
-            <li>Prefers a focused CSI experiment for observable runtime state</li>
-            <li>Requires a RED regression test before production changes</li>
-            <li>Retests the automated reproduction and finishes with the full green suite</li>
-          </ul>
-          <dl class="skill-metrics skill-metrics--bugfix" aria-label="Observed bug-fix skill estimates">
-            <div><dt>Typical duration</dt><dd>~20-30 minutes per bug fix</dd></div>
-            <div><dt>Codex $100 plan</dt><dd>~5% of weekly usage per bug fix</dd></div>
-          </dl>
-        </div>
+    <div class="skill-prompts">
+      <article class="prompt-template">
+        <header><div><span>READY-TO-USE PROMPT</span><strong>Create the plan</strong></div><button type="button" data-copy-target="plan-skill-prompt">Copy prompt</button></header>
+        <pre id="plan-skill-prompt"><code>Use the cerneala-checklist-plan skill to turn our completed discussion into implementation-ready Cerneala checklist plans under docs/plans/. Do not implement the code yet.</code></pre>
       </article>
 
-      <ol class="bugfix-loop" aria-label="CernealaFixBug verification loop">
-        <li><span>01</span><div><strong>Reproduce</strong><p>Reduce the report to a deterministic failing scenario and capture the relevant state.</p></div></li>
-        <li><span>02</span><div><strong>Prove RED</strong><p>Add a focused regression test that fails for the observed contract violation.</p></div></li>
-        <li><span>03</span><div><strong>Fix narrowly</strong><p>Change the owning implementation without speculative rewrites or unrelated cleanup.</p></div></li>
-        <li><span>04</span><div><strong>Verify automatically</strong><p>Repeat the automated reproduction, then run focused tests and the complete repository suite.</p></div></li>
-      </ol>
-    </div>
-
-    <div class="bugfix-install-path">
-      <span>CODEX SKILL PATH</span>
-      <code>.codex/skills/cerneala-fix-bug/</code>
-      <strong>Repository skill, versioned with Cerneala</strong>
+      <article class="prompt-template">
+        <header><div><span>READY-TO-USE PROMPT</span><strong>Implement the plan</strong></div><button type="button" data-copy-target="implement-skill-prompt">Copy prompt</button></header>
+        <pre id="implement-skill-prompt"><code>Use the cerneala-implement-plan skill to implement &lt;plan-name&gt; end to end. Work one stage per batch and check off each stage only after it is implemented and verified.</code></pre>
+      </article>
     </div>
 
     <article class="prompt-template bugfix-prompt">
       <header><div><span>READY-TO-ADAPT PROMPT</span><strong>Fix a Cerneala bug</strong></div><button type="button" data-copy-target="bugfix-skill-prompt">Copy prompt</button></header>
-      <pre id="bugfix-skill-prompt"><code>Use $cerneala-fix-bug to investigate and fix this Cerneala bug end to end.
+      <pre id="bugfix-skill-prompt"><code>Use the cerneala-fix-bug skill to investigate and fix this Cerneala bug end to end.
 
 Location / custom view:
 [describe the affected scenario]

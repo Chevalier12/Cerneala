@@ -136,11 +136,11 @@ Using AI is optional. Human-only issues and contributions are welcome. The evide
 This is a contribution policy, not a general model leaderboard. For core engineering work:
 
 - OpenAI GPT-5.6 or newer is approved and preferred;
-- Anthropic Fable tier or a newer peer is approved;
-- Anthropic Opus is specifically rejected, although it is allowed for visual work;
+- any Anthropic model with version 5.5 or higher is approved for core engineering and visual work, for example Opus 5.5, Sonnet 5.5, and Haiku 5.5;
+- any Anthropic model with a version below 5.5, including Fable 5.1, is rejected for core engineering, although it is allowed for visual work;
 - older OpenAI models are rejected.
 
-Anthropic models are welcome for CSS, composition, and visual direction. Unapproved Claude models are not a hidden shortcut for core engineering. The maintainer expects their fingerprints to show up in the diff.
+Anthropic models below version 5.5 remain welcome for CSS, composition, and visual direction. They are not a hidden shortcut for core engineering. The maintainer expects their fingerprints to show up in the diff.
 
 The model is replaceable. The process and the contribution policy are not.
 
