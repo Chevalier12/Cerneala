@@ -33,6 +33,21 @@ Transform target = new(Matrix3x2.CreateTranslation(10, 20));
 Transform halfway = mixer.Mix(Transform.Identity, target, 0.5f);
 ```
 
+Collapse a rotated transform without losing its rotation:
+
+```csharp
+using Cerneala.UI.Motion.Interpolation;
+
+TransformMixer mixer = new();
+var visible = TransformMixer.Compose(new TransformComponents(
+    7, 11, 1, 1, MathF.PI / 6, 0, 0));
+var collapsed = TransformMixer.Compose(new TransformComponents(
+    7, 11, 0, 0, 0, 0, 0));
+
+var halfway = mixer.Mix(visible, collapsed, 0.5f);
+// Scale is 0.5 on both axes; rotation remains 30 degrees.
+```
+
 Use matrix interpolation explicitly:
 
 ```csharp
@@ -54,7 +69,15 @@ By default, the mixer uses `TransformInterpolationMode.Components`. Component in
 
 `TransformInterpolationMode.Matrix` linearly interpolates the six affine matrix fields directly. Use this mode when component decomposition is not desired.
 
-Component decomposition rejects transforms whose `ScaleX` or `ScaleY` is too close to zero. `Decompose` returns a canonical component form with `SkewY` set to `0`; `Compose` still honors both `SkewX` and `SkewY` when creating a transform from `TransformComponents`.
+The public `Decompose` method remains strict: it throws `InvalidOperationException` when `ScaleX` or the absolute value of `ScaleY` is less than or equal to `1e-6`. It returns a canonical component form with `SkewY` set to `0`; `Compose` still honors both `SkewX` and `SkewY` when creating a transform from `TransformComponents`.
+
+`Mix` handles zero and near-zero scales in `Components` mode without requiring public decomposition to succeed for both endpoints:
+
+- If exactly one endpoint fails those scale thresholds, it borrows rotation and skew from the non-degenerate endpoint. Its signed scale components are solved in that borrowed frame, and its translation is read directly. Component interpolation then proceeds normally. A rotated transform collapsing to zero scale therefore retains its rotation at interior samples.
+- The borrowed frame must reproduce every field of the degenerate endpoint's linear matrix within an absolute tolerance of `1e-6`. If it cannot, the pair uses direct matrix interpolation instead; an incompatible collapse axis is one example.
+- If both endpoints fail the scale thresholds, the pair also uses direct matrix interpolation. These unresolved degenerate pairs are the only implicit matrix-interpolation case in `Components` mode. Otherwise, direct matrix interpolation requires explicit `TransformInterpolationMode.Matrix`.
+
+Resolution depends only on the endpoint pair, not on previous samples. Matrix mode always interpolates the six fields directly and does not use component resolution.
 
 Progress values less than or equal to `0` return `from`, and values greater than or equal to `1` return `to`. `Mix`, `Decompose`, and `EqualsWithinTolerance` throw `ArgumentNullException` when passed a `null` transform. `EqualsWithinTolerance` compares each matrix component with a finite, non-negative absolute tolerance.
 
