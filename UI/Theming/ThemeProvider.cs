@@ -7,6 +7,7 @@ public sealed class ThemeProvider
     public ThemeProvider(Theme theme)
     {
         this.theme = theme ?? throw new ArgumentNullException(nameof(theme));
+        this.theme.Freeze();
     }
 
     public event EventHandler<ThemeChangedEventArgs>? ThemeChanged;
@@ -22,6 +23,7 @@ public sealed class ThemeProvider
                 return;
             }
 
+            value.Freeze();
             Theme oldTheme = theme;
             theme = value;
             ThemeChanged?.Invoke(this, new ThemeChangedEventArgs(oldTheme, value));
