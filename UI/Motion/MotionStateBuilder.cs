@@ -70,6 +70,7 @@ public sealed class MotionStateBuilder
         observedStates = AspectStateSet.FromElement(Facade.Element);
         Facade.Element.PropertyChanged += OnPropertyChanged;
         Facade.Element.Loaded += OnLoaded;
+        Facade.Element.Unloaded += OnUnloaded;
     }
 
     private void OnPropertyChanged(object? sender, UiPropertyChangedEventArgs args)
@@ -90,6 +91,14 @@ public sealed class MotionStateBuilder
         EvaluateAll(force: true);
     }
 
+    private void OnUnloaded(UiElementId sender, RoutedEventArgs args)
+    {
+        foreach (StateProperty stateProperty in properties.Values)
+        {
+            stateProperty.StopWaiting();
+        }
+    }
+
     private void EvaluateAll(bool force)
     {
         if (Facade.Element.Root is null && Facade.Element is not UIRoot)
@@ -103,9 +112,11 @@ public sealed class MotionStateBuilder
         }
     }
 
-    private abstract class StateProperty
+    private abstract class StateProperty : MotionNode
     {
         public abstract void Evaluate(AspectStateSet states, bool force);
+
+        public abstract void StopWaiting();
     }
 
     private sealed class StateProperty<T> : StateProperty
@@ -116,6 +127,8 @@ public sealed class MotionStateBuilder
         private readonly List<StateTarget> targets = [];
         private T resolvedTarget;
         private MotionSpec<T>? lastSpec;
+        private MotionPropertyBinding<T>? pendingBinding;
+        private MotionSystem? pendingMotion;
 
         public StateProperty(MotionElementFacade facade, UiProperty<T> property, T baseline)
         {
@@ -154,7 +167,8 @@ public sealed class MotionStateBuilder
             T target = winner is null ? baseline : winner.Value;
             MotionSpec<T>? spec = winner is null ? lastSpec : winner.Spec;
             if (spec is null ||
-                (!force && property.Metadata.EqualityComparer.Equals(resolvedTarget, target)))
+                (!force && pendingBinding is null &&
+                    property.Metadata.EqualityComparer.Equals(resolvedTarget, target)))
             {
                 return;
             }
@@ -164,6 +178,7 @@ public sealed class MotionStateBuilder
                 motion,
                 facade.Element,
                 property);
+            StopWaiting();
             MotionHandle handle = binding.AnimateTo(
                 target,
                 spec,
@@ -175,11 +190,49 @@ public sealed class MotionStateBuilder
                 });
             if (handle.IsCanceled)
             {
+                if (!binding.Value.CanStart(MotionPriority.Interactive))
+                {
+                    // Retain the logical state's spec even if it leaves before the
+                    // blocker ends, so the pending baseline can still be animated.
+                    lastSpec = spec;
+                    pendingBinding = binding;
+                    pendingMotion = motion;
+                    motion.Graph.Register(this);
+                }
+
                 return;
             }
 
             resolvedTarget = target;
             lastSpec = spec;
+        }
+
+        protected internal override MotionNodeTickResult Tick(MotionFrame frame)
+        {
+            UIElement element = facade.Element;
+            if (!ReferenceEquals(element.Root ?? element as UIRoot, pendingMotion?.Root) ||
+                !UIElementVisibility.IsEffectivelyVisible(element))
+            {
+                StopWaiting();
+                return new MotionNodeTickResult(Completed: true);
+            }
+
+            if (pendingBinding?.Value.CanStart(MotionPriority.Interactive) == true)
+            {
+                // Resolve the current state, not the target that was first rejected.
+                // Waiting in the graph avoids starting inside a replacement/cancel
+                // callback and also observes disposal, which suppresses Completed.
+                Evaluate(AspectStateSet.FromElement(element), force: true);
+            }
+
+            return new MotionNodeTickResult(Completed: pendingBinding is null);
+        }
+
+        public override void StopWaiting()
+        {
+            pendingMotion?.Graph.Unregister(this);
+            pendingBinding = null;
+            pendingMotion = null;
         }
 
         private sealed record StateTarget(AspectState State, T Value, MotionSpec<T> Spec);
