@@ -287,26 +287,34 @@ public sealed class AspectProcessor
         }
 
         AspectEnvironment next = new(root.Relay, "runtime.element.next");
-        foreach ((AspectToken token, AspectValue defaultValue) in catalog.TokenDefaults)
-        {
-            object? resolved = defaultValue.Resolve(new AspectResolutionContext(
-                root,
-                next,
-                AspectStateSet.Empty,
-                AspectVariantSet.Empty,
-                root.ThemeProvider));
-            next.Set(token, resolved);
-        }
-
+        ResolveTokenDefaults(catalog.FrameworkTokenDefaults, next);
         if (theme is not null)
         {
             ThemeTokenBridge.Apply(theme, next);
         }
 
+        ResolveTokenDefaults(catalog.ExplicitTokenDefaults, next);
+
         state.Environment.ReplaceWith(next);
         state.CatalogVersion = catalog.Version;
         state.Theme = theme;
         return state.Environment;
+    }
+
+    private void ResolveTokenDefaults(
+        IReadOnlyDictionary<AspectToken, AspectValue> defaults,
+        AspectEnvironment environment)
+    {
+        foreach ((AspectToken token, AspectValue defaultValue) in defaults)
+        {
+            object? resolved = defaultValue.Resolve(new AspectResolutionContext(
+                root,
+                environment,
+                AspectStateSet.Empty,
+                AspectVariantSet.Empty,
+                root.ThemeProvider));
+            environment.Set(token, resolved);
+        }
     }
 
     private AspectCatalog GetCatalog(UIElement element)

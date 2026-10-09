@@ -55,7 +55,11 @@ if (environment.TryGet(ThemeTokenBridge.ToToken(DefaultTheme.BackgroundKey), out
 
 `CreateEnvironment` creates an environment named after `Theme.Name`, or `theme` when the theme is unnamed. It projects `BackgroundKey`, `ForegroundKey`, `SurfaceKey`, `BorderKey`, and `AccentKey` into their `theme.*` tokens and the matching `DefaultAspectTokens.Color` entries. Background, foreground, surface, and border colors are also converted to `SolidColorBrush` values for the corresponding semantic brush tokens.
 
-Default button tokens are derived from the same palette: surface supplies the normal background, foreground supplies text, border supplies border and pressed background, and accent supplies hover background. Root aspect processing applies this projection over package defaults whenever the active theme changes. Controls and their template token bindings consume the processor's shared runtime environment, so both aspect declarations and templates observe the same palette.
+Default button tokens are derived from the same palette: surface supplies the normal background, foreground supplies text, border supplies border and pressed background, and accent supplies hover background. Root aspect processing applies this projection over the framework's built-in package defaults, then applies explicit package token defaults. Application and scoped package tokens therefore override the theme projection; nearer scopes override outer scopes. Explicit packages registered through `UIRoot.AspectRegistry.Register` also override the projection, below application-resource and scoped packages. This order applies to all token identities, including semantic and `theme.*` tokens; an explicit `null` value is an override, not a request for fallback.
+
+When no explicit package overrides a projected token, the active theme supplies its value. If the theme lacks a projected key, the framework's built-in default remains available. Framework defaults are identified by the root's internal registration path, not package names or authoring origin. A package placed in application or element resources is an explicit source even if it has the same name or origin as a built-in package.
+
+The processor rebuilds the environment when the composed catalog or active theme changes. Controls and their template token bindings consume the same stable element environment, so both aspect declarations and templates observe the effective overrides and fallback values. `CreateEnvironment` itself only projects the supplied theme; it does not compose package defaults.
 
 ## Methods
 

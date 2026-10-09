@@ -98,7 +98,7 @@ public sealed partial class UIRoot : UIElement, IElementHost, IInvalidationSink
         InheritedPropertyPropagator = new InheritedPropertyPropagator();
         ResourceDependencyTracker = new ResourceDependencyTracker();
         AspectRegistry = new AspectRegistry(Relay, InvalidateAspectRegistryChange);
-        AspectRegistry.Register(DefaultAspectPackage.Create(), notify: false);
+        AspectRegistry.RegisterFrameworkDefault(DefaultAspectPackage.Create(), notify: false);
         AspectProcessor = new AspectProcessor(this);
         Scheduler = new UiFrameScheduler(LayoutQueue, InheritedPropertyQueue, CommandStateQueue, AspectQueue, RenderQueue, HitTestQueue, Trace);
         beginInheritedDescendantPropagation = Scheduler.BeginInheritedDescendantPropagation;

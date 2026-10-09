@@ -66,6 +66,8 @@ The catalog itself does not apply aspects. `AspectEngine` consumes `Rules` durin
 
 `AspectProcessor` can compose a root snapshot with application, ancestor-scope, and element-local packages. Composed rules capture an internal source order used after layer order and before specificity; composed behavior, token, and template collections follow the same outer-to-inner visibility order. Composition creates another immutable catalog rather than mutating any source package or root snapshot.
 
+`TokenDefaults` is the merged package-default snapshot, not the final themed environment. Internally the catalog also preserves framework built-in defaults separately from explicit package defaults. `AspectProcessor` resolves framework defaults first, applies the theme projection over them, then resolves explicit root-registry, application, and scoped token defaults. Application and scoped tokens override the projection, with nearer scopes winning. Composition retains this registration provenance without classifying packages by name or `Origin`.
+
 ## Properties
 
 | Name | Type | Description |
