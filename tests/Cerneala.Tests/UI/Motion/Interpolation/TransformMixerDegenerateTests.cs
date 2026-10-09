@@ -186,16 +186,17 @@ public sealed class TransformMixerDegenerateTests
     [Theory]
     [InlineData(TransformInterpolationMode.Components)]
     [InlineData(TransformInterpolationMode.Matrix)]
-    public void DegenerateEndpointsRemainExact(TransformInterpolationMode mode)
+    public void DegenerateEndpointsRemainExactAndExtrapolateOutsideRange(TransformInterpolationMode mode)
     {
         TransformMixer mixer = new(mode);
         Transform from = new(Matrix3x2.CreateScale(0, 0));
         Transform to = new(Matrix3x2.CreateScale(0, 2));
 
-        Assert.Same(from, mixer.Mix(from, to, -1));
         Assert.Same(from, mixer.Mix(from, to, 0));
         Assert.Same(to, mixer.Mix(from, to, 1));
-        Assert.Same(to, mixer.Mix(from, to, 2));
+        // Both endpoints are degenerate, so both modes extrapolate the matrix fields.
+        Assert.Equal(new Transform(Matrix3x2.CreateScale(0, -2)), mixer.Mix(from, to, -1));
+        Assert.Equal(new Transform(Matrix3x2.CreateScale(0, 4)), mixer.Mix(from, to, 2));
     }
 
     [Fact]
