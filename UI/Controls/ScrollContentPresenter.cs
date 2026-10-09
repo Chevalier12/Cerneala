@@ -86,6 +86,10 @@ public class ScrollContentPresenter : ContentControl, IScrollInfo
 
     public bool CanVerticallyScroll { get; set; } = true;
 
+    // The pre-rounding displacement applied by the last arrange, not the requested offset.
+    // Layout snapshots can precede the arrange that applies a new offset.
+    internal LayoutPoint ArrangedScrollOffset { get; private set; }
+
     public void SetHorizontalOffset(float offset)
     {
         HorizontalOffset = CanHorizontallyScroll ? offset : 0;
@@ -121,13 +125,15 @@ public class ScrollContentPresenter : ContentControl, IScrollInfo
         ClipNode.SetClip(this, context.Rounding.Round(context.FinalRect));
         float contentWidth = CanHorizontallyScroll ? MathF.Max(ExtentWidth, ViewportWidth) : ViewportWidth;
         float contentHeight = CanVerticallyScroll ? MathF.Max(ExtentHeight, ViewportHeight) : ViewportHeight;
-        ContentElement?.Arrange(new ArrangeContext(
+        UIElement? content = ContentElement;
+        content?.Arrange(new ArrangeContext(
             new LayoutRect(
                 context.FinalRect.X - HorizontalOffset,
                 context.FinalRect.Y - VerticalOffset,
                 contentWidth,
                 contentHeight),
             context.Rounding));
+        ArrangedScrollOffset = content is null ? LayoutPoint.Zero : new LayoutPoint(HorizontalOffset, VerticalOffset);
         return context.FinalRect;
     }
 

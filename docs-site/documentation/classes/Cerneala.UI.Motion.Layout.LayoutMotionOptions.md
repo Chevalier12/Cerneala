@@ -44,6 +44,8 @@ With the built-in transform mixer, `Motion.Spring<Transform>()` springs the deco
 
 Layout motion corrections are render-only. Tests for layout motion assert that ticking an active correction advances motion frames without enqueueing additional measure or arrange work.
 
+Scroll-offset changes inside `ScrollContentPresenter` content are not layout-motion moves. Scrolling alone does not start or restart a correction, while genuine layout changes within the scrolling content still use `CorrectionSpec`.
+
 Reduced motion can disable layout corrections. `LayoutMotionCoordinator` skips first-snapshot capture when the motion system's reduced-motion mode is `DisableNonEssential`.
 
 ## Properties

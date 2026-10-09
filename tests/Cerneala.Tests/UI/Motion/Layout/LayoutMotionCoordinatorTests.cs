@@ -1,5 +1,8 @@
+using Border = Cerneala.UI.Controls.Border;
+using ScrollContentPresenter = Cerneala.UI.Controls.ScrollContentPresenter;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
+using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
 using Cerneala.UI.Motion.Core;
@@ -11,6 +14,248 @@ namespace Cerneala.Tests.UI.Motion.Layout;
 
 public sealed class LayoutMotionCoordinatorTests
 {
+    [Fact]
+    public void ScrollingDoesNotStartLayoutCorrection()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(100, 100, motionClock: clock);
+        StackPanel stack = new();
+        Border card = new()
+        {
+            Height = 30,
+            LayoutMotionId = "card",
+            LayoutMotion = LayoutMotionOptions.Spring(
+                MotionFactory.Tween<Cerneala.UI.Media.Transform>(TimeSpan.FromMilliseconds(100)))
+        };
+        stack.VisualChildren.Add(new Border { Height = 60 });
+        stack.VisualChildren.Add(card);
+        stack.VisualChildren.Add(new Border { Height = 300 });
+        ScrollContentPresenter presenter = new() { Width = 100, Height = 100, Content = stack };
+        root.LogicalChildren.Add(presenter);
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        root.ProcessFrame();
+        Assert.Equal(60, card.ArrangedBounds.Y);
+
+        presenter.SetVerticalOffset(20);
+        root.ProcessFrame();
+
+        Assert.Equal(40, card.ArrangedBounds.Y);
+        Assert.Equal(Cerneala.UI.Media.Transform.Identity, card.LayoutCorrectionTransform);
+        Assert.Null(root.Motion.Layout.GetBinding(card));
+        Assert.False(root.Motion.HasActiveMotion);
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public void ScrollingOnBothAxesDoesNotCorrectTransformedOrNestedContent(bool transformed, bool nested)
+    {
+        (UIRoot root, ScrollContentPresenter presenter, Canvas content, UIElement card) =
+            CreateScrollScenario(new ManualMotionClock());
+        if (transformed)
+        {
+            presenter.Scale = 2;
+            presenter.Rotation = 0.2f;
+            content.Scale = 1.5f;
+            card.Scale = 0.75f;
+        }
+
+        ScrollContentPresenter? outer = null;
+        if (nested)
+        {
+            root.VisualChildren.Remove(presenter);
+            Canvas outerContent = new() { Width = 500, Height = 500 };
+            outerContent.VisualChildren.Add(presenter);
+            outer = new ScrollContentPresenter { Width = 100, Height = 100, Content = outerContent };
+            root.VisualChildren.Add(outer);
+        }
+
+        root.ProcessFrame();
+        root.ProcessFrame();
+        foreach (float offset in new[] { 20f, 40f, 10f, 20.25f, 40.6f, 10.9f, 0f })
+        {
+            presenter.SetHorizontalOffset(offset);
+            presenter.SetVerticalOffset(offset);
+            outer?.SetHorizontalOffset(offset / 2);
+            outer?.SetVerticalOffset(offset / 2);
+            root.ProcessFrame();
+
+            Assert.Equal(Cerneala.UI.Media.Transform.Identity, card.LayoutCorrectionTransform);
+            Assert.Null(root.Motion.Layout.GetBinding(card));
+        }
+    }
+
+    [Fact]
+    public void ScrollingAndLayoutMoveCorrectOnlyTheLayoutMove()
+    {
+        (UIRoot root, ScrollContentPresenter presenter, _, UIElement card) =
+            CreateScrollScenario(new ManualMotionClock());
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        presenter.SetVerticalOffset(20);
+        Canvas.SetTop(card, 90);
+        root.ProcessFrame();
+
+        Assert.Equal(70, card.ArrangedBounds.Y);
+        Assert.Equal(-30, card.LayoutCorrectionTransform.Matrix.M32);
+    }
+
+    [Fact]
+    public void ScrollingDoesNotRestartAnActiveLayoutCorrection()
+    {
+        ManualMotionClock clock = new();
+        (UIRoot root, ScrollContentPresenter presenter, _, UIElement card) = CreateScrollScenario(clock);
+        root.ProcessFrame();
+        root.ProcessFrame();
+        Canvas.SetTop(card, 90);
+        root.ProcessFrame();
+        clock.Advance(TimeSpan.FromMilliseconds(50));
+        root.ProcessFrame();
+        float correction = card.LayoutCorrectionTransform.Matrix.M32;
+        Assert.InRange(correction, -29.99f, -0.01f);
+
+        presenter.SetVerticalOffset(20);
+        root.ProcessFrame();
+        Assert.Equal(correction, card.LayoutCorrectionTransform.Matrix.M32);
+        clock.Advance(TimeSpan.FromMilliseconds(60));
+        root.ProcessFrame();
+
+        Assert.Equal(Cerneala.UI.Media.Transform.Identity, card.LayoutCorrectionTransform);
+        Assert.False(root.Motion.HasActiveMotion);
+    }
+
+    [Fact]
+    public void MovingTheScrollViewportStillStartsLayoutCorrection()
+    {
+        (UIRoot root, ScrollContentPresenter presenter, _, UIElement card) =
+            CreateScrollScenario(new ManualMotionClock());
+        root.VisualChildren.Remove(presenter);
+        Canvas host = new();
+        host.VisualChildren.Add(presenter);
+        root.VisualChildren.Add(host);
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        presenter.SetVerticalOffset(20);
+        Canvas.SetTop(presenter, 30);
+        root.ProcessFrame();
+
+        Assert.Equal(-30, card.LayoutCorrectionTransform.Matrix.M32);
+    }
+
+    [Theory]
+    [InlineData(1f)]
+    [InlineData(2f)]
+    public void FractionalScrollingWithMarginsDoesNotStartLayoutCorrection(float scale)
+    {
+        (UIRoot root, ScrollContentPresenter presenter, Canvas content, UIElement card) =
+            CreateScrollScenario(new ManualMotionClock());
+        root.SetViewport(100, 100, scale);
+        content.Margin = new Thickness(0.25f);
+        Canvas.SetTop(card, 60.25f);
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        foreach (float offset in new[] { 0.25f, 0.6f, 0.9f, 20.25f, 0f })
+        {
+            presenter.SetVerticalOffset(offset);
+            root.ProcessFrame();
+            Assert.Equal(Cerneala.UI.Media.Transform.Identity, card.LayoutCorrectionTransform);
+            Assert.Null(root.Motion.Layout.GetBinding(card));
+        }
+    }
+
+    [Fact]
+    public void WheelScrollingDoesNotStartLayoutCorrection()
+    {
+        (UIRoot root, ScrollContentPresenter presenter, Canvas content, UIElement card) =
+            CreateScrollScenario(new ManualMotionClock());
+        root.VisualChildren.Remove(presenter);
+        presenter.Content = null;
+        Cerneala.UI.Controls.ScrollViewer viewer = new() { Content = content };
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+        root.ProcessFrame();
+        PointerSnapshot previous = PointerSnapshot.Empty.WithPosition(10, 10);
+        PointerSnapshot current = previous.WithWheelValue(-120);
+
+        new ElementInputBridge().Dispatch(root,
+            new InputFrame(previous, current, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []));
+        root.ProcessFrame();
+
+        Assert.Equal(48, viewer.Presenter.VerticalOffset);
+        Assert.Equal(Cerneala.UI.Media.Transform.Identity, card.LayoutCorrectionTransform);
+        Assert.Null(root.Motion.Layout.GetBinding(card));
+    }
+
+    [Fact]
+    public void ScrolledContentItselfDoesNotStartLayoutCorrection()
+    {
+        (UIRoot root, ScrollContentPresenter presenter, Canvas content, UIElement card) =
+            CreateScrollScenario(new ManualMotionClock());
+        card.LayoutMotion = null;
+        content.LayoutMotionId = "content";
+        content.LayoutMotion = LayoutMotionOptions.Spring(
+            MotionFactory.Tween<Cerneala.UI.Media.Transform>(TimeSpan.FromMilliseconds(100)));
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        presenter.SetHorizontalOffset(20);
+        presenter.SetVerticalOffset(30);
+        root.ProcessFrame();
+
+        Assert.Equal(Cerneala.UI.Media.Transform.Identity, content.LayoutCorrectionTransform);
+        Assert.Null(root.Motion.Layout.GetBinding(content));
+    }
+
+    [Fact]
+    public void ReparentingBetweenScrolledViewportsPreservesVisualContinuity()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(200, 200, motionClock: clock);
+        Canvas host = new();
+        Canvas firstContent = new() { Width = 500, Height = 500 };
+        Canvas secondContent = new() { Width = 500, Height = 500 };
+        ScrollContentPresenter first = new() { Width = 100, Height = 100, Content = firstContent };
+        ScrollContentPresenter second = new() { Width = 100, Height = 100, Content = secondContent };
+        Canvas.SetTop(second, 50);
+        UIElement card = CreateLayoutElement("card");
+        Canvas.SetTop(card, 60);
+        firstContent.VisualChildren.Add(card);
+        host.VisualChildren.Add(first);
+        host.VisualChildren.Add(second);
+        root.VisualChildren.Add(host);
+        root.ProcessFrame();
+        first.SetVerticalOffset(20);
+        second.SetVerticalOffset(40);
+        root.ProcessFrame();
+        Assert.Equal(40, card.ArrangedBounds.Y);
+
+        firstContent.VisualChildren.Remove(card);
+        secondContent.VisualChildren.Add(card);
+        root.ProcessFrame();
+
+        Assert.Equal(70, card.ArrangedBounds.Y);
+        Assert.Equal(-30, card.LayoutCorrectionTransform.Matrix.M32);
+    }
+
+    private static (UIRoot Root, ScrollContentPresenter Presenter, Canvas Content, UIElement Card)
+        CreateScrollScenario(ManualMotionClock clock)
+    {
+        UIRoot root = new(100, 100, motionClock: clock);
+        Canvas content = new() { Width = 500, Height = 500 };
+        FixedElement card = CreateLayoutElement("card");
+        Canvas.SetTop(card, 60);
+        content.VisualChildren.Add(card);
+        ScrollContentPresenter presenter = new() { Width = 100, Height = 100, Content = content };
+        root.VisualChildren.Add(presenter);
+        return (root, presenter, content, card);
+    }
+
     [Fact]
     public void SnapshotCaptureWithoutParticipantsDoesNotAllocateWithTreeSize()
     {

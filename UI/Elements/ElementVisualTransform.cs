@@ -8,8 +8,13 @@ internal static class ElementVisualTransform
     internal static Matrix3x2 GetElementTransform(UIElement element, bool includeLayoutCorrection = true)
     {
         ArgumentNullException.ThrowIfNull(element);
+        return GetElementTransform(element, element.ArrangedBounds, includeLayoutCorrection);
+    }
 
-        LayoutRect bounds = element.ArrangedBounds;
+    internal static Matrix3x2 GetElementTransform(UIElement element, LayoutRect bounds, bool includeLayoutCorrection = true)
+    {
+        ArgumentNullException.ThrowIfNull(element);
+
         LayoutPoint origin = element.RenderTransformOrigin;
         float pivotX = bounds.X + (bounds.Width * origin.X);
         float pivotY = bounds.Y + (bounds.Height * origin.Y);

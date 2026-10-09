@@ -253,6 +253,11 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     public LayoutRect ArrangedBounds { get; private set; }
 
+    // Layout motion removes scrolling before reproducing the original rounding.
+    internal LayoutPoint UnroundedArrangedLocation { get; private set; }
+
+    internal LayoutRounding ArrangeRounding { get; private set; }
+
     public int LayoutVersion { get; private set; }
 
     public int RenderVersion { get; private set; }
@@ -915,6 +920,8 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         LayoutRect arranged = !UIElementVisibility.ParticipatesInLayout(this)
             ? new LayoutRect(context.FinalRect.X, context.FinalRect.Y, 0, 0)
             : ArrangeCore(new ArrangeContext(finalRect, context.Rounding));
+        UnroundedArrangedLocation = arranged.Location;
+        ArrangeRounding = context.Rounding;
         arranged = context.Rounding.Round(arranged);
         SetArrangedBounds(arranged);
         LastArrangeFinalRect = context.FinalRect;

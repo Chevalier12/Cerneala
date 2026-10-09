@@ -58,6 +58,8 @@ sealed class FixedElement(LayoutSize desiredSize) : UIElement
 
 The coordinator participates only when the root layout queue has work and the reduced-motion policy is not `ReducedMotionMode.DisableNonEssential`. It walks the visual tree, records first and last root-space bounds for attached elements whose `UIElement.LayoutMotion` and `UIElement.LayoutMotionId` are both set, then starts a `LayoutMotionBinding` correction when the valid bounds changed.
 
+For participants hosted inside `ScrollContentPresenter` content, snapshot comparison excludes the scroll offsets applied by layout, including nested presenters. Offsets are removed before layout rounding and ancestor render transforms are composed, so scrolling alone neither creates a correction nor restarts an active correction. A genuine layout change in the same frame still animates in the current scrolled render space; moving the viewport itself remains a layout move. Reparenting retains the previous root-space visual snapshot for continuity between parents.
+
 Corrections are render-scope transforms, not layout mutations. A layout move starts an inverse correction from the previous visual bounds toward `Transform.Identity`, so motion frames can preserve visual continuity without enqueueing new measure or arrange work. The binding writes through `UIElement.SetLayoutCorrectionTransform`, which invalidates render scope only.
 
 The coordinator keeps previous snapshots by `LayoutMotionId` so an element moved between parents can retain continuity when the same element instance and id are observed across frames. Bounds with non-positive size or non-finite coordinates are ignored.

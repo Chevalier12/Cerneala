@@ -66,6 +66,8 @@ Offsets must be finite, non-negative values. `SetHorizontalOffset` and `SetVerti
 
 Changing `HorizontalOffset` or `VerticalOffset` affects arrange, render, and hit testing, but not measure. The presenter clears its clip when detached from the element tree.
 
+For content elements that opt into layout motion, movement caused only by a scroll-offset change does not start or restart a layout correction. Layout motion excludes the applied scroll displacement from snapshot comparison; genuine layout changes inside the content still animate.
+
 ## Constructors
 | Name | Description |
 | --- | --- |

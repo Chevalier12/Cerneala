@@ -1,4 +1,5 @@
 using Cerneala.Drawing;
+using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
@@ -11,6 +12,7 @@ public sealed class LayoutMotionCoordinator
 {
     private readonly MotionSystem motion;
     private readonly Dictionary<UIElement, LayoutSnapshot> firstSnapshots = [];
+    private readonly Dictionary<UIElement, LayoutRect> firstUncorrectedScrollBounds = [];
     private readonly Dictionary<LayoutMotionId, LayoutSnapshot> previousSnapshotsById = [];
     private readonly Dictionary<UIElement, LayoutMotionBinding> bindings = [];
     private readonly HashSet<UIElement> pendingDetached = new(ReferenceEqualityComparer.Instance);
@@ -42,6 +44,7 @@ public sealed class LayoutMotionCoordinator
     {
         motion.VerifyAccess();
         firstSnapshots.Remove(element);
+        firstUncorrectedScrollBounds.Remove(element);
         participants.Remove(element);
         pendingDetached.Add(element);
     }
@@ -75,6 +78,7 @@ public sealed class LayoutMotionCoordinator
         motion.VerifyAccess();
         CleanupDetached();
         firstSnapshots.Clear();
+        firstUncorrectedScrollBounds.Clear();
         if (participants.Count == 0 || !motion.Root.LayoutQueue.HasWork ||
             motion.ReducedMotion.Mode == ReducedMotionMode.DisableNonEssential)
         {
@@ -90,9 +94,14 @@ public sealed class LayoutMotionCoordinator
 
             firstSnapshots[element] = new LayoutSnapshot(
                 element,
-                GetRootVisualBounds(element, includeOwnLayoutCorrection: true),
+                GetRootVisualBounds(element, includeOwnLayoutCorrection: true, ignoreScrollOffsets: true),
                 element.VisualParent,
                 element.LayoutMotionId);
+            if (HasScrollAncestor(element))
+            {
+                firstUncorrectedScrollBounds[element] = GetRootVisualBounds(
+                    element, includeOwnLayoutCorrection: false, ignoreScrollOffsets: true);
+            }
         }
     }
 
@@ -125,7 +134,7 @@ public sealed class LayoutMotionCoordinator
 
         foreach (UIElement element in ElementTreeWalker.PreOrder(motion.Root))
         {
-            if (!IsParticipating(element) || !TryResolveFirstSnapshot(element, out LayoutSnapshot first))
+            if (!IsParticipating(element) || !TryResolveFirstSnapshot(element, out LayoutSnapshot first, out bool reparented))
             {
                 continue;
             }
@@ -135,7 +144,14 @@ public sealed class LayoutMotionCoordinator
                 continue;
             }
 
-            LayoutRect last = GetRootVisualBounds(element, includeOwnLayoutCorrection: false);
+            LayoutRect last = GetRootVisualBounds(element, includeOwnLayoutCorrection: false, ignoreScrollOffsets: !reparented);
+            // A scroll-only arrange must not retarget an existing correction either.
+            if (!reparented && firstUncorrectedScrollBounds.TryGetValue(element, out LayoutRect uncorrected) &&
+                uncorrected == last)
+            {
+                continue;
+            }
+
             if (!IsValidLayoutRect(first.Bounds) || !IsValidLayoutRect(last))
             {
                 continue;
@@ -146,7 +162,20 @@ public sealed class LayoutMotionCoordinator
                 continue;
             }
 
-            Transform inverse = CreateElementSpaceCorrection(element, first.Bounds, last);
+            LayoutRect firstBounds = first.Bounds;
+            if (!reparented)
+            {
+                // Convert the scroll-neutral comparison back to the current render space.
+                LayoutRect visualLast = GetRootVisualBounds(element, includeOwnLayoutCorrection: false);
+                firstBounds = firstBounds with
+                {
+                    X = firstBounds.X + (visualLast.X - last.X),
+                    Y = firstBounds.Y + (visualLast.Y - last.Y)
+                };
+                last = visualLast;
+            }
+
+            Transform inverse = CreateElementSpaceCorrection(element, firstBounds, last);
             if (inverse == Transform.Identity)
             {
                 continue;
@@ -157,6 +186,7 @@ public sealed class LayoutMotionCoordinator
 
         UpdatePreviousSnapshots();
         firstSnapshots.Clear();
+        firstUncorrectedScrollBounds.Clear();
     }
 
     private LayoutMotionBinding GetOrCreateBinding(UIElement element)
@@ -188,8 +218,9 @@ public sealed class LayoutMotionCoordinator
             float.IsFinite(rect.Height);
     }
 
-    private bool TryResolveFirstSnapshot(UIElement element, out LayoutSnapshot snapshot)
+    private bool TryResolveFirstSnapshot(UIElement element, out LayoutSnapshot snapshot, out bool reparented)
     {
+        reparented = false;
         if (!firstSnapshots.TryGetValue(element, out snapshot))
         {
             return false;
@@ -201,6 +232,7 @@ public sealed class LayoutMotionCoordinator
             !ReferenceEquals(previous.Parent, element.VisualParent))
         {
             snapshot = previous;
+            reparented = true;
         }
 
         return true;
@@ -224,7 +256,20 @@ public sealed class LayoutMotionCoordinator
         }
     }
 
-    private static LayoutRect GetRootVisualBounds(UIElement element, bool includeOwnLayoutCorrection)
+    private static bool HasScrollAncestor(UIElement element)
+    {
+        for (UIElement? current = element; current?.VisualParent is UIElement parent; current = parent)
+        {
+            if (parent is ScrollContentPresenter presenter && ReferenceEquals(presenter.Content, current))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static LayoutRect GetRootVisualBounds(UIElement element, bool includeOwnLayoutCorrection, bool ignoreScrollOffsets = false)
     {
         Matrix3x2 transform = Matrix3x2.Identity;
         Stack<UIElement> stack = new();
@@ -233,16 +278,38 @@ public sealed class LayoutMotionCoordinator
             stack.Push(current);
         }
 
+        LayoutPoint scrollOffset = LayoutPoint.Zero;
+        LayoutRect bounds = element.ArrangedBounds;
         while (stack.Count > 0)
         {
             UIElement current = stack.Pop();
+            if (ignoreScrollOffsets && current.VisualParent is ScrollContentPresenter presenter &&
+                ReferenceEquals(presenter.Content, current))
+            {
+                scrollOffset = new LayoutPoint(
+                    scrollOffset.X + presenter.ArrangedScrollOffset.X,
+                    scrollOffset.Y + presenter.ArrangedScrollOffset.Y);
+            }
+
+            bounds = current.ArrangedBounds;
+            if (scrollOffset != LayoutPoint.Zero)
+            {
+                // Scroll offsets are applied before layout rounding. Undo them in
+                // that same space, including for each ancestor's render pivot.
+                bounds = bounds with
+                {
+                    X = current.ArrangeRounding.Round(current.UnroundedArrangedLocation.X + scrollOffset.X),
+                    Y = current.ArrangeRounding.Round(current.UnroundedArrangedLocation.Y + scrollOffset.Y)
+                };
+            }
+
             bool includeLayoutCorrection = includeOwnLayoutCorrection || !ReferenceEquals(current, element);
             transform = Matrix3x2.Multiply(
-                ElementVisualTransform.GetElementTransform(current, includeLayoutCorrection),
+                ElementVisualTransform.GetElementTransform(current, bounds, includeLayoutCorrection),
                 transform);
         }
 
-        return TransformBounds(element.ArrangedBounds, transform);
+        return TransformBounds(bounds, transform);
     }
 
     private static Transform CreateElementSpaceCorrection(UIElement element, LayoutRect first, LayoutRect last)
