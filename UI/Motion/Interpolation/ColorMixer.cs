@@ -6,12 +6,12 @@ public sealed class ColorMixer : ValueMixer<Color>
 {
     public override Color Mix(Color from, Color to, float progress)
     {
-        if (progress <= 0)
+        if (progress == 0)
         {
             return from;
         }
 
-        if (progress >= 1)
+        if (progress == 1)
         {
             return to;
         }

@@ -52,7 +52,7 @@ DrawRect value = mixer.Mix(new DrawRect(0, 0, 10, 10), new DrawRect(20, 30, 40, 
 
 `DrawRectMixer` is the built-in `ValueMixer<DrawRect>` implementation used by the motion interpolation layer. `ValueMixerRegistry.RegisterBuiltIns` registers it for `DrawRect`, and the default motion system exposes it through the root mixer registry.
 
-`Mix` linearly interpolates `X`, `Y`, `Width`, and `Height` independently. Progress values less than or equal to `0` return the source rectangle, and progress values greater than or equal to `1` return the target rectangle, preserving exact endpoints.
+`Mix` linearly interpolates `X`, `Y`, `Width`, and `Height` independently. Progress exactly `0` returns the source rectangle, and progress exactly `1` returns the target rectangle, preserving exact endpoints. Progress outside `[0, 1]` extrapolates linearly; `Width` and `Height` clamp at `0`, because a `DrawRect` cannot hold a negative size.
 
 `DrawRectMixer` keeps the default `ValueMixer<DrawRect>` vector behavior. `SupportsVectorOperations` is `false`, and inherited vector methods such as `Add`, `Subtract`, `Scale`, and `Magnitude` throw `InvalidOperationException`.
 
@@ -78,7 +78,7 @@ The interpolated values are passed to the `DrawRect` constructor, so invalid rec
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `EqualsWithinTolerance(DrawRect left, DrawRect right, float tolerance)` | `bool` | Returns whether the absolute differences for `X`, `Y`, `Width`, and `Height` are all less than or equal to the tolerance. |
-| `Mix(DrawRect from, DrawRect to, float progress)` | `DrawRect` | Returns the linearly interpolated rectangle for `progress`, with exact endpoint clamping at `0` and `1`. |
+| `Mix(DrawRect from, DrawRect to, float progress)` | `DrawRect` | Returns the linearly interpolated rectangle for `progress`, with linear extrapolation outside `[0, 1]` (size clamped at `0`) and exact endpoints at progress `0` and `1`. |
 | `Add(DrawRect left, DrawRect right)` | `DrawRect` | Throws `InvalidOperationException` because vector operations are not supported. Inherited from `ValueMixer<DrawRect>`. |
 | `AddUntyped(object? left, object? right)` | `object?` | Casts the inputs to `DrawRect` and delegates to `Add`. Inherited from `ValueMixer<DrawRect>`. |
 | `EqualsWithinToleranceUntyped(object? left, object? right, float tolerance)` | `bool` | Casts the inputs to `DrawRect` and delegates to `EqualsWithinTolerance`. Inherited from `ValueMixer<DrawRect>`. |

@@ -44,6 +44,8 @@ public sealed class MotionValue<T> : MotionValue
 
     internal MotionGraph Graph => graph;
 
+    internal event Action<T>? TargetValidation;
+
     internal bool CanStart(MotionPriority priority)
     {
         graph.VerifyAccess();
@@ -60,6 +62,7 @@ public sealed class MotionValue<T> : MotionValue
     {
         graph.VerifyAccess();
         ArgumentNullException.ThrowIfNull(spec);
+        TargetValidation?.Invoke(target);
         MotionStartOptions effectiveOptions = options ?? MotionStartOptions.Default;
         MotionComposition incomingComposition = new(
             MotionChannel.Default,
@@ -133,6 +136,7 @@ public sealed class MotionValue<T> : MotionValue
     public void JumpTo(T value)
     {
         graph.VerifyAccess();
+        TargetValidation?.Invoke(value);
         CancelActiveHandle(MotionCancelBehavior.KeepCurrent, fireEvent: true);
         target = value;
         animationStart = value;

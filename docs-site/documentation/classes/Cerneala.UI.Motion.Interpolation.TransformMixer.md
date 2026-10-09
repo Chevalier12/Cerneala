@@ -79,7 +79,7 @@ The public `Decompose` method remains strict: it throws `InvalidOperationExcepti
 
 Resolution depends only on the endpoint pair, not on previous samples. Matrix mode always interpolates the six fields directly and does not use component resolution.
 
-Progress values less than or equal to `0` return `from`, and values greater than or equal to `1` return `to`. `Mix`, `Decompose`, and `EqualsWithinTolerance` throw `ArgumentNullException` when passed a `null` transform. `EqualsWithinTolerance` compares each matrix component with a finite, non-negative absolute tolerance.
+Progress exactly `0` returns `from`, and progress exactly `1` returns `to`. Outside `[0, 1]`, each mode extrapolates in its own space: Components mode extrapolates the decomposed components, continuing rotation along the shortest angular delta; Matrix mode extrapolates the six affine matrix fields directly. `Mix`, `Decompose`, and `EqualsWithinTolerance` throw `ArgumentNullException` when passed a `null` transform. `EqualsWithinTolerance` compares each matrix component with a finite, non-negative absolute tolerance.
 
 `TransformMixer` does not support vector operations. The vector operation members inherited from `ValueMixer<Transform>` throw `InvalidOperationException`.
 
@@ -106,7 +106,7 @@ Spring position and per-component velocity remain in component space between fra
 | `Compose(TransformComponents components)` | `Transform` | Creates a transform by composing scale, skew, rotation, and translation components. |
 | `Decompose(Transform transform)` | `TransformComponents` | Decomposes a transform into canonical components with `SkewY` set to `0`. |
 | `EqualsWithinTolerance(Transform left, Transform right, float tolerance)` | `bool` | Returns whether all six matrix fields differ by no more than `tolerance`. |
-| `Mix(Transform from, Transform to, float progress)` | `Transform` | Returns an interpolated transform, using the configured interpolation mode and exact endpoint clamping at `0` and `1`. |
+| `Mix(Transform from, Transform to, float progress)` | `Transform` | Interpolates or extrapolates in the configured space, returning the original endpoints at progress exactly `0` and `1`. |
 
 ## Applies To
 

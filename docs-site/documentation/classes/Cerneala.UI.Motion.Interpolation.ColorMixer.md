@@ -47,9 +47,9 @@ Color value = mixer.Mix(Color.Black, Color.White, 0.25f);
 
 ## Remarks
 
-`ColorMixer` mixes the red, green, blue, and alpha channels independently. Progress values less than or equal to `0` return the source color, and values greater than or equal to `1` return the target color.
+`ColorMixer` mixes the red, green, blue, and alpha channels independently. Progress exactly `0` returns the source color, and progress exactly `1` returns the target color.
 
-For intermediate progress values, each channel is linearly interpolated, rounded with `MidpointRounding.AwayFromZero`, and clamped to the valid byte range. Alpha is treated the same way as the color channels.
+Each channel is linearly interpolated or, for progress outside `[0, 1]`, extrapolated. The result is rounded with `MidpointRounding.AwayFromZero` and clamped to the valid byte range `[0, 255]`. Alpha is treated the same way as the color channels. For example, mixing `Color(0, 200, 20, 100)` toward `Color(200, 0, 40, 150)` at progress `1.5` returns `Color(255, 0, 50, 175)`.
 
 The built-in `ValueMixerRegistry` registers `ColorMixer` for `Color`. Brush-valued control properties such as `Control.BackgroundProperty` and `Control.BorderBrushProperty` use `BrushMixer`, which delegates solid-brush color interpolation to `ColorMixer`.
 
@@ -72,7 +72,7 @@ The built-in `ValueMixerRegistry` registers `ColorMixer` for `Color`. Brush-valu
 
 | Name | Description |
 | --- | --- |
-| `Mix(Color, Color, float)` | Returns an interpolated `Color`, preserving exact endpoints for progress outside or at the `0` to `1` range. |
+| `Mix(Color, Color, float)` | Interpolates or extrapolates each channel, rounds and clamps to the byte range, and preserves exact endpoints at progress `0` and `1`. |
 | `EqualsWithinTolerance(Color, Color, float)` | Returns `true` when every RGBA channel differs by no more than the supplied finite, non-negative tolerance. |
 | `MixUntyped(object?, object?, float)` | Casts the inputs to `Color` and delegates to `Mix`. Inherited from `ValueMixer<Color>`. |
 | `EqualsWithinToleranceUntyped(object?, object?, float)` | Casts the inputs to `Color` and delegates to `EqualsWithinTolerance`. Inherited from `ValueMixer<Color>`. |

@@ -1,5 +1,6 @@
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Detective;
 
 namespace Cerneala.UI.Motion.Properties;
 
@@ -100,7 +101,7 @@ public sealed class MotionPropertyStore
         writes[key] = PendingWrite.Clear(target, property, category);
     }
 
-    internal MotionPropertyFlushResult Flush()
+    internal MotionPropertyFlushResult Flush(MotionDiagnostics? diagnostics = null)
     {
         if (writes.Count == 0)
         {
@@ -133,7 +134,15 @@ public sealed class MotionPropertyStore
 
             if (write.Kind == PendingWriteKind.Set)
             {
-                write.Target.SetValueUntyped(write.Property, write.Value, UiPropertyValueSource.Animation);
+                if (!write.Target.TrySetAnimationValueUntyped(write.Property, write.Value))
+                {
+                    if (diagnostics?.IsEnabled == true)
+                    {
+                        diagnostics.RecordWarning($"Skipped animation sample for '{write.Property.DiagnosticName}': value failed validation.");
+                    }
+
+                    continue;
+                }
             }
             else
             {

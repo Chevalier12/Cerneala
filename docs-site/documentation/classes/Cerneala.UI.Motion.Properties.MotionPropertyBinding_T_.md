@@ -65,6 +65,10 @@ binding.AnimateTo(
 
 The constructor requires the supplied `MotionValue<T>` to come from the same `MotionSystem` graph as the binding. This prevents samples from a foreign motion graph from being written into a target owned by another motion system.
 
+While the binding is alive, `AnimateTo` and restart/preserve-progress retargets validate the requested target synchronously, before replacing active motion. Direct calls to the exposed `Value.AnimateTo` or `Value.JumpTo` also perform this validation. The property's existing coercion, metadata validation, and owner-specific mutation checks apply as for an explicit property write; read-only properties are rejected. Disposal removes the binding's target validation from the motion value.
+
+Intermediate samples are coerced and checked through the existing property metadata validator when the property store flushes. A validator returning `false`, or an owner validation hook rejecting the value with `ArgumentException`, skips the write: the property retains its last valid animated value, motion continues, and later valid samples are written normally. The motion value itself retains the raw sample and may temporarily differ from the property's value. No mixer or per-property clamp is added. Exceptions thrown by coercers, metadata validators, or property-change handlers still propagate, as do non-value errors from owner checks. With Motion diagnostics enabled, skipped samples produce a warning in `UIRoot.Detective.Motion.Warnings`.
+
 `AnimateTo` starts the underlying `MotionValue<T>` animation, stages the current value, and returns the `MotionHandle` from the motion graph. By default, natural completion clears the animation source so the target property falls back to its next available source, such as an aspect base value. When `MotionPropertyStartOptions.HoldOnComplete` is `true`, completion stages the current animated value instead.
 
 `Clear` cancels the active handle with `MotionCancelBehavior.KeepCurrent`, then either clears the animation source or stages the current value depending on `MotionClearBehavior`. `Dispose` calls `Clear`, releases the value subscription, and removes the binding from its `MotionPropertyStore`. Calling `Clear` after disposal is a no-op; calling `AnimateTo` after disposal throws `ObjectDisposedException`.
@@ -102,6 +106,8 @@ When the target is a `UIElement`, `AnimateTo` immediately cancels the new handle
 | `MotionPropertyBinding(...)` | `InvalidOperationException` | `value` was created by a different `MotionSystem` graph than `motion`. |
 | `AnimateTo(...)` | `ArgumentNullException` | `spec` is `null`. |
 | `AnimateTo(...)` | `ObjectDisposedException` | The binding has already been disposed. |
+| `AnimateTo(...)`, direct `Value.AnimateTo(...)` or `Value.JumpTo(...)` | `ArgumentException` | The target fails the property's metadata validation after coercion. Owner-specific checks may throw their existing exceptions. |
+| `AnimateTo(...)` | `InvalidOperationException` | The bound property is read-only. |
 
 ## Applies to
 

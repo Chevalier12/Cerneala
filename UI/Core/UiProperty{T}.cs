@@ -51,6 +51,14 @@ public sealed class UiProperty<T> : UiProperty
 
     internal override void ValidateUntyped(object? value)
     {
+        if (!IsValidUntyped(value))
+        {
+            throw new ArgumentException($"Value for '{DiagnosticName}' failed validation.", nameof(value));
+        }
+    }
+
+    internal override bool IsValidUntyped(object? value)
+    {
         if (value is not T typedValue)
         {
             if (value is null && default(T) is null)
@@ -65,9 +73,6 @@ public sealed class UiProperty<T> : UiProperty
             }
         }
 
-        if (Metadata.ValidateValue is not null && !Metadata.ValidateValue(typedValue))
-        {
-            throw new ArgumentException($"Value for '{DiagnosticName}' failed validation.", nameof(value));
-        }
+        return Metadata.ValidateValue is null || Metadata.ValidateValue(typedValue);
     }
 }

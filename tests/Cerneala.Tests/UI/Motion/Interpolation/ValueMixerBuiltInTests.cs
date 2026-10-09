@@ -3,6 +3,7 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Media;
 using Cerneala.UI.Motion.Interpolation;
+using Vector4 = System.Numerics.Vector4;
 
 namespace Cerneala.Tests.UI.Motion.Interpolation;
 
@@ -39,6 +40,77 @@ public sealed class ValueMixerBuiltInTests
             new DrawSizeMixer(),
             new DrawSize(1e20f, 2e20f),
             new DrawSize(1, 2));
+        AssertExactEndpoints(new Vector4Mixer(), new Vector4(1e20f), Vector4.One);
+    }
+
+    [Theory]
+    [InlineData(-0.5f)]
+    [InlineData(1.5f)]
+    public void ContinuousMixersExtrapolate(float progress)
+    {
+        float expected = 10 + (20 * progress);
+        Assert.Equal(expected, new FloatMixer().Mix(10, 30, progress));
+        Assert.Equal((double)expected, new DoubleMixer().Mix(10, 30, progress));
+        Assert.Equal(new Thickness(expected), new ThicknessMixer().Mix(new Thickness(10), new Thickness(30), progress));
+        Assert.Equal(new DrawPoint(expected, expected), new DrawPointMixer().Mix(new DrawPoint(10, 10), new DrawPoint(30, 30), progress));
+        Assert.Equal(new DrawSize(expected, expected), new DrawSizeMixer().Mix(new DrawSize(10, 10), new DrawSize(30, 30), progress));
+        Assert.Equal(new DrawRect(expected, expected, expected, expected), new DrawRectMixer().Mix(new DrawRect(10, 10, 10, 10), new DrawRect(30, 30, 30, 30), progress));
+        Assert.Equal(new Vector4(expected), new Vector4Mixer().Mix(new Vector4(10), new Vector4(30), progress));
+    }
+
+    [Theory]
+    [InlineData(-0.5f)]
+    [InlineData(1.5f)]
+    public void DrawRectExtrapolatesPositionAndClampsSizeAtZero(float progress)
+    {
+        // 0 -> 100 under-shoots (-50) at -0.5; 100 -> 0 over-shoots (-50) at 1.5.
+        (DrawRect from, DrawRect to) = progress < 0
+            ? (new DrawRect(10, 10, 0, 0), new DrawRect(30, 30, 100, 100))
+            : (new DrawRect(10, 10, 100, 100), new DrawRect(30, 30, 0, 0));
+        float position = 10 + (20 * progress);
+
+        DrawRect mixed = new DrawRectMixer().Mix(from, to, progress);
+
+        Assert.Equal(new DrawRect(position, position, 0, 0), mixed);
+    }
+
+    [Theory]
+    [InlineData(-0.5f, 0, 255, 10, 75)]
+    [InlineData(1.5f, 255, 0, 50, 175)]
+    public void ColorExtrapolatesThenClampsEachChannel(float progress, byte r, byte g, byte b, byte a)
+    {
+        Color mixed = new ColorMixer().Mix(new Color(0, 200, 20, 100), new Color(200, 0, 40, 150), progress);
+
+        Assert.Equal(new Color(r, g, b, a), mixed);
+    }
+
+    [Theory]
+    [InlineData(-0.5f)]
+    [InlineData(1.5f)]
+    public void TransformExtrapolatesInTheSelectedSpace(float progress)
+    {
+        Transform from = Transform.Identity;
+        Transform to = TransformMixer.Compose(new TransformComponents(10, 20, 2, 3, 1, 0.2f, 0));
+        TransformMixer components = new();
+        Transform expected = TransformMixer.Compose(new TransformComponents(
+            10 * progress, 20 * progress, 1 + progress, 1 + (2 * progress), progress, 0.2f * progress, 0));
+        AssertSameMatrix(expected, components.Mix(from, to, progress));
+
+        TransformMixer matrix = new(TransformInterpolationMode.Matrix);
+        Matrix3x2 left = from.Matrix;
+        Matrix3x2 right = to.Matrix;
+        Transform expectedMatrix = new(new Matrix3x2(
+            left.M11 + ((right.M11 - left.M11) * progress),
+            left.M12 + ((right.M12 - left.M12) * progress),
+            left.M21 + ((right.M21 - left.M21) * progress),
+            left.M22 + ((right.M22 - left.M22) * progress),
+            left.M31 + ((right.M31 - left.M31) * progress),
+            left.M32 + ((right.M32 - left.M32) * progress)));
+        AssertSameMatrix(expectedMatrix, matrix.Mix(from, to, progress));
+        Assert.Same(from, matrix.Mix(from, to, 0));
+        Assert.Same(to, matrix.Mix(from, to, 1));
+        Assert.Same(from, components.Mix(from, to, 0));
+        Assert.Same(to, components.Mix(from, to, 1));
     }
 
     [Fact]
@@ -268,9 +340,9 @@ public sealed class ValueMixerBuiltInTests
     private static void AssertExactEndpoints<T>(ValueMixer<T> mixer, T from, T to)
     {
         Assert.Equal(from, mixer.Mix(from, to, 0));
-        Assert.Equal(from, mixer.Mix(from, to, -0.5f));
+        Assert.Equal(mixer.Add(from, mixer.Scale(mixer.Subtract(to, from), -0.5f)), mixer.Mix(from, to, -0.5f));
         Assert.Equal(to, mixer.Mix(from, to, 1));
-        Assert.Equal(to, mixer.Mix(from, to, 1.5f));
+        Assert.Equal(mixer.Add(from, mixer.Scale(mixer.Subtract(to, from), 1.5f)), mixer.Mix(from, to, 1.5f));
     }
 
     private static void AssertSameMatrix(Transform expected, Transform actual)

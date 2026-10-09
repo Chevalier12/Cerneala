@@ -39,6 +39,8 @@ public abstract class UiProperty
 
     internal abstract void ValidateUntyped(object? value);
 
+    internal abstract bool IsValidUntyped(object? value);
+
     public override string ToString()
     {
         return DiagnosticName;

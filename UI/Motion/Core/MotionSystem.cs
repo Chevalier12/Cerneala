@@ -140,7 +140,7 @@ public sealed class MotionSystem
         MotionFrameResult sampled = Graph.HasActiveMotion
             ? Graph.Tick(frame)
             : new MotionFrameResult(frame, false, 1, 0, 0, 0, 0, 0, 0, 0);
-        MotionPropertyFlushResult propertyFlush = Properties.Flush();
+        MotionPropertyFlushResult propertyFlush = Properties.Flush(Diagnostics);
         MotionFrameResult result = new(
             sampled.Frame,
             sampled.NeedsAnotherFrame || Properties.HasPendingWrites,

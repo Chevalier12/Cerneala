@@ -66,6 +66,10 @@ The active handle returned by `AnimateTo` also verifies graph access before `Can
 
 `Velocity` is read from the active sampler after graph ticks and after a successful spring-state handoff, so retargeting exposes the preserved or reset velocity immediately. If the sampler does not expose velocity and throws `InvalidOperationException`, `Velocity` is reported as `null`.
 
+When a live `MotionPropertyBinding<T>` connects this value to a UI property, `AnimateTo` (including retargets) and `JumpTo` validate the destination through that binding before changing active motion. Invalid destinations throw synchronously, using the property's coercion, metadata validation, and owner-specific checks. An unbound motion value has no UI-property validator. Disposing a binding removes its validation; if multiple bindings share a value, each live binding validates the destination.
+
+Sampler values remain unclamped in `Current`. The property's write path skips intermediate samples whose coerced value fails its metadata validator or is rejected with `ArgumentException` by the owner validation hook, retaining the last valid animated property value without stopping motion. Thus `Current` can differ from a bound property during overshoot. Ordinary subscriber exceptions still propagate; invalid-sample skipping is not a general exception handler.
+
 If a subscriber throws while a terminal value is applied, the exception propagates to the caller. The motion still becomes terminal and unregisters its graph node before the exception escapes, so the handle is not left active.
 
 ## Properties
@@ -92,6 +96,7 @@ If a subscriber throws while a terminal value is applied, the exception propagat
 | `AnimateTo` | `ArgumentNullException` | `spec` is `null`. |
 | `AnimateTo`, `JumpTo` | `InvalidOperationException` | The current thread is not the thread that created the owning standalone graph, or the UI thread that owns its root. |
 | `Subscribe` | `ArgumentNullException` | `listener` is `null`. |
+| `AnimateTo`, `JumpTo` | `ArgumentException` | A live UI-property binding rejects the destination after coercion. Owner-specific validation can throw its existing exceptions. |
 
 ## Applies to
 

@@ -32,6 +32,7 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
         invalidationCategory = MotionPropertyInvalidationClassifier.Classify(property);
         node = new BindingNode(this);
         valueSubscription = Value.Subscribe(OnValueChanged);
+        Value.TargetValidation += ValidateTarget;
     }
 
     internal override MotionSystem Motion => motion;
@@ -125,6 +126,7 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
         Clear();
         disposed = true;
         valueSubscription.Dispose();
+        Value.TargetValidation -= ValidateTarget;
         motion.Properties.RemoveBinding(this);
     }
 
@@ -132,6 +134,18 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
     {
         pendingSample = change.NewValue;
         hasPendingSample = true;
+    }
+
+    private void ValidateTarget(T value)
+    {
+        if (Property.IsReadOnly)
+        {
+            throw new InvalidOperationException($"UI property '{Property.DiagnosticName}' is read-only.");
+        }
+
+        object? coerced = Property.CoerceUntyped(Target, value);
+        Property.ValidateUntyped(coerced);
+        Target.ValidatePropertyMutation(Property, coerced);
     }
 
     private void OnMotionCompleted(object? sender, MotionCompletedEventArgs args)
