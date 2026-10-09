@@ -1,9 +1,18 @@
 using Cerneala.UI.Core;
+using Cerneala.UI.Elements;
 
 namespace Cerneala.UI.Aspect;
 
 public sealed class AspectRuleSet
 {
+    private enum OwnershipValidation
+    {
+        AtConstruction,
+        AtElementAssignment
+    }
+
+    private readonly OwnershipValidation ownershipValidation;
+
     public AspectRuleSet(
         string name,
         AspectLayer layer,
@@ -19,7 +28,8 @@ public sealed class AspectRuleSet
             packageName: null,
             sourceOrder: 0,
             AspectOrigin.Code(),
-            scope: string.Empty)
+            scope: string.Empty,
+            OwnershipValidation.AtConstruction)
     {
     }
 
@@ -32,7 +42,8 @@ public sealed class AspectRuleSet
         string? packageName,
         int sourceOrder,
         AspectOrigin origin,
-        string scope)
+        string scope,
+        OwnershipValidation ownershipValidation)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -45,6 +56,22 @@ public sealed class AspectRuleSet
         ArgumentNullException.ThrowIfNull(declarations);
         Declarations = Array.AsReadOnly(declarations.Select(
             declaration => declaration ?? throw new ArgumentException("Aspect declarations cannot contain null.", nameof(declarations))).ToArray());
+        this.ownershipValidation = ownershipValidation;
+        if (ownershipValidation == OwnershipValidation.AtConstruction)
+        {
+            Type declarationTarget = Target.Slot?.TargetType ?? Target.ElementType;
+            foreach (AspectDeclaration declaration in Declarations)
+            {
+                UiProperty property = declaration.Property;
+                if (ReferenceEquals(property, UIElement.AspectProperty) ||
+                    !property.OwnerType.IsAssignableFrom(declarationTarget))
+                {
+                    throw new ArgumentException(
+                        $"Aspect rule '{Name}' targeting '{Target.ElementType.FullName}' (declaration target '{declarationTarget.FullName}') cannot declare UI property '{property.DiagnosticName}' owned by '{property.OwnerType.FullName}'.",
+                        nameof(declarations));
+                }
+            }
+        }
         DeclarationOrder = declarationOrder;
         PackageName = packageName;
         SourceOrder = sourceOrder;
@@ -76,6 +103,30 @@ public sealed class AspectRuleSet
         Target.Specificity,
         DeclarationOrder);
 
+    /// <summary>
+    /// Creates an ElementAspect projection whose ownership is validated at assignment
+    /// by UIElement.ValidateLocalAspect, and before incremental edits by its consumers.
+    /// This path is not for standalone rules. Catalog projections preserve this policy.
+    /// </summary>
+    internal static AspectRuleSet CreateElementAspectProjection(
+        string name,
+        AspectTarget target,
+        IReadOnlyList<AspectDeclaration> declarations,
+        int declarationOrder)
+    {
+        return new AspectRuleSet(
+            name,
+            AspectLayer.Runtime,
+            target,
+            declarations,
+            declarationOrder,
+            packageName: null,
+            sourceOrder: 0,
+            AspectOrigin.Code(),
+            scope: string.Empty,
+            OwnershipValidation.AtElementAssignment);
+    }
+
     internal AspectRuleSet WithOrigin(
         string packageName,
         int sourceOrder,
@@ -96,7 +147,27 @@ public sealed class AspectRuleSet
             packageName,
             sourceOrder,
             origin,
-            scope);
+            scope,
+            ownershipValidation);
+    }
+
+    // Diagnostics expose local projection rules. Reusing one in a public package
+    // must establish standalone ownership without changing the local snapshot.
+    internal AspectRuleSet ForStandaloneUse()
+    {
+        return ownershipValidation == OwnershipValidation.AtConstruction
+            ? this
+            : new AspectRuleSet(
+                Name,
+                Layer,
+                Target,
+                Declarations,
+                DeclarationOrder,
+                PackageName,
+                SourceOrder,
+                Origin,
+                Scope,
+                OwnershipValidation.AtConstruction);
     }
 
     public bool Matches(AspectMatchContext context)

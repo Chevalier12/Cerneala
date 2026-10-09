@@ -55,9 +55,11 @@ AspectPackage package = AspectPackage.Create("App")
 
 `ComponentAspectBuilder` is created by `AspectPackageBuilder.Components(Action<ComponentAspectBuilder>)`. Its constructor is internal, so callers normally receive it only inside the `Components` callback.
 
-The builder appends the supplied `AspectRuleSet`, `AspectBehavior`, and `ComponentTemplateDefinition` instances to the package currently being configured. It does not clone or validate those objects beyond rejecting `null`; construction-time validation belongs to the supplied objects themselves.
+The builder appends standalone `AspectRuleSet`, `AspectBehavior`, and `ComponentTemplateDefinition` instances to the package currently being configured, rejecting `null`. Rules constructed through the public constructor or `AspectRuleSetBuilder` have already passed standalone ownership validation and are retained by reference.
 
-Both public methods return the same builder instance, which allows chained calls inside the callback. When `AspectPackageBuilder.Build()` runs, the accumulated rules and component templates are copied into the resulting `AspectPackage`.
+Diagnostics can expose a rule projected internally from an `ElementAspect`, whose properties were validated against the actual assigned element rather than its declared target type. `AddRule` reconstructs such a rule with standalone construction-time validation before adding it to a public package. A compatible projection becomes a separate standalone rule; an incompatible property or `UIElement.AspectProperty` causes `ArgumentException` with parameter name `declarations`, naming the rule, target, property, and property owner. The original local diagnostic snapshot is unchanged. `ElementAspect` uses a separate internal add path to preserve its validated-at-assignment policy.
+
+The public add methods return the same builder instance, which allows chained calls inside the callback. When `AspectPackageBuilder.Build()` runs, the accumulated rules and component templates are copied into the resulting `AspectPackage`.
 
 ## Methods
 
@@ -72,6 +74,7 @@ Both public methods return the same builder instance, which allows chained calls
 | Member | Exception | Condition |
 | --- | --- | --- |
 | `AddRule(AspectRuleSet rule)` | `ArgumentNullException` | `rule` is `null`. |
+| `AddRule(AspectRuleSet rule)` | `ArgumentException` | A reused local-aspect projection cannot satisfy standalone property ownership validation against its declared element type or slot child type, or declares `UIElement.AspectProperty`. |
 | `AddBehavior(AspectBehavior behavior)` | `ArgumentNullException` | `behavior` is `null`. |
 | `AddTemplate(ComponentTemplateDefinition template)` | `ArgumentNullException` | `template` is `null`. |
 

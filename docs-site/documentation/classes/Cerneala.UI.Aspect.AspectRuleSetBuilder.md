@@ -60,7 +60,9 @@ AspectRuleSet rule = new AspectRuleSetBuilder(
 
 `Set<T>` returns the same builder instance, so multiple property declarations can be chained before `Build()` is called. `Build()` copies the current declaration list with `ToArray()` and passes it to the `AspectRuleSet` constructor together with `Name`, `Layer`, `Target`, and `DeclarationOrder`.
 
-The builder constructor does not validate its arguments directly. Validation happens through the objects it creates or receives: `Set<T>` uses `AspectDeclaration`, which rejects `null` properties, `null` values, and property/value type mismatches; `Build()` uses `AspectRuleSet`, which validates the rule name, layer, target, and declarations collection.
+The builder constructor does not validate its arguments directly. Validation happens through the objects it creates or receives: `Set<T>` uses `AspectDeclaration`, which rejects `null` properties, `null` values, and property/value type mismatches; `Build()` uses the public `AspectRuleSet` constructor, which validates the rule name, layer, target, and declarations collection. `Build()` also rejects declarations of `UIElement.AspectProperty` and properties whose owner is incompatible with `Target.ElementType` for an unslotted rule, or `Target.Slot.TargetType` for a slot rule. Conditions and narrower element selectors do not relax the slot child-type requirement. Invalid rules fail during `Build()`, before package registration or frame processing, with an exception naming the rule, target, property, and property owner.
+
+The builder always creates standalone rules. It does not expose the internal, validated-at-assignment projection path used by `ElementAspect`, whose properties are checked against the actual assigned element.
 
 ## Constructors
 
@@ -90,6 +92,7 @@ The builder constructor does not validate its arguments directly. Validation hap
 | --- | --- | --- |
 | `Set<T>(UiProperty<T>, AspectValue<T>, string?)` | `ArgumentNullException` | `property` or `value` is `null`. |
 | `Build()` | `ArgumentException` | `Name` is `null`, empty, or whitespace when the `AspectRuleSet` is created. |
+| `Build()` | `ArgumentException` | A declaration assigns `UIElement.AspectProperty` or its UI-property owner is incompatible with the target element type (unslotted) or declared slot child type (slotted). |
 | `Build()` | `ArgumentNullException` | `Layer` or `Target` is `null` when the `AspectRuleSet` is created. |
 
 ## Applies to

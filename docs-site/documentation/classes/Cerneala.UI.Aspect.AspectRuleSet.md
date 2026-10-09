@@ -77,6 +77,10 @@ Cascade resolution compares matching rules by layer order first, internal source
 
 The declaration input is copied into an immutable snapshot. Later changes to the caller-owned list do not change the rule.
 
+Public construction validates every standalone declaration before a rule can enter a package or catalog. The UI property's `OwnerType` must be assignable from `Target.ElementType` for an unslotted rule, or from `Target.Slot.TargetType` for a slot rule. Inherited properties are allowed. The slot's owner component is not the styled element and does not establish property ownership; a narrower `ElementType` selector does not relax validation against the slot's declared child type. For example, a `Button` rule cannot declare `TextBlock.TextProperty`, but a `UIElement` rule constrained to a `TextBlock` slot can. Conditions do not relax this structural type requirement. `UIElement.AspectProperty` cannot be declared by a rule. Invalid declarations throw `ArgumentException` with parameter name `declarations`; the message names the rule, target, property, and property owner. This validation also applies to `AspectRuleSetBuilder.Build()`.
+
+`ElementAspect` uses a separate internal projection path whose ownership policy is **validated at assignment**. `UIElement.ValidateLocalAspect` checks all default and conditional properties against the actual element before accepting `UIElement.Aspect`; attached consumers also validate incremental edits before mutation. Thus a `UIElement`-targeted `ElementAspect` can set `Control.Background` on a `Button`. Catalog projections preserve this assignment-time policy. This internal path is not available through the public constructor or builder. Reusing a local projection obtained from diagnostics through `ComponentAspectBuilder.AddRule` reconstructs it with standalone validation, without changing the original local rule. `AspectEngine` retains its defensive actual-element ownership check before applying resolved values.
+
 `PackageName`, `SourceOrder`, `Origin`, and `Scope` are assigned to the catalog-owned projection created while packages are merged into an `AspectCatalog`. The reusable source rule remains unchanged, and building another catalog from that rule cannot rewrite metadata reported by an existing catalog. Origin metadata is diagnostic only; source order remains the only scope coordinate in the cascade key.
 
 ## Constructors
@@ -112,6 +116,7 @@ The declaration input is copied into an immutable snapshot. Later changes to the
 | --- | --- | --- |
 | `AspectRuleSet(...)` | `ArgumentException` | `name` is `null`, empty, or whitespace. |
 | `AspectRuleSet(...)` | `ArgumentNullException` | `layer`, `target`, or `declarations` is `null`. |
+| `AspectRuleSet(...)` | `ArgumentException` | A declaration is `null`, declares `UIElement.AspectProperty`, or has a UI-property owner incompatible with the target element type (unslotted) or declared slot child type (slotted). |
 | `ResolveDeclarations(IEnumerable<AspectRuleSet>, AspectMatchContext)` | `ArgumentNullException` | `rules` or `context` is `null`. |
 
 ## Applies to
