@@ -10,6 +10,13 @@ namespace Cerneala.Tests.UI.Motion.Specs;
 
 public sealed class MotionSpecTests
 {
+    private readonly Xunit.Abstractions.ITestOutputHelper output;
+
+    public MotionSpecTests(Xunit.Abstractions.ITestOutputHelper output)
+    {
+        this.output = output;
+    }
+
     [Fact]
     public void TweenSamplesStartMidEnd()
     {
@@ -226,6 +233,61 @@ public sealed class MotionSpecTests
         diagnostics.BeginFrame();
 
         Assert.Empty(diagnostics.Warnings);
+    }
+
+    [Theory]
+    [InlineData(false, 8.3333333)]
+    [InlineData(false, 16.6666667)]
+    [InlineData(false, 33.3333333)]
+    [InlineData(true, 8.3333333)]
+    [InlineData(true, 16.6666667)]
+    [InlineData(true, 33.3333333)]
+    public void DefaultDecayPinsUnboundedFlingDistanceAndDuration(bool useFactory, double stepMilliseconds)
+    {
+        MotionVelocity<float> initialVelocity = new(1000);
+        DecaySpec<float> spec = useFactory
+            ? MotionFactory.Decay(initialVelocity)
+            : new DecaySpec<float>(initialVelocity);
+        MotionSampler<float> sampler = spec.CreateSampler(0, 0, new FloatMixer(), Context());
+        TimeSpan step = TimeSpan.FromMilliseconds(stepMilliseconds);
+        int frames = 0;
+
+        while (!sampler.IsComplete && frames < 20000)
+        {
+            sampler.Advance(step);
+            frames++;
+        }
+
+        double durationSeconds = frames * step.TotalSeconds;
+        output.WriteLine($"factory={useFactory}, step={step.TotalMilliseconds:F7}ms, frames={frames}, duration={durationSeconds:F7}s, distance={sampler.Current:F7}, velocity={sampler.Velocity!.Value.Value:F7}");
+
+        Assert.True(sampler.IsComplete);
+        Assert.InRange(durationSeconds, 5.75, 5.8);
+
+        // The intended default is equivalent to retaining 0.998 of velocity per ms.
+        // Position integration uses the velocity at the start of each step.
+        double decayPerStep = Math.Pow(0.998, step.TotalMilliseconds);
+        double expectedDistance = 1000 * step.TotalSeconds
+            * (1 - Math.Pow(decayPerStep, frames)) / (1 - decayPerStep);
+        Assert.InRange((double)sampler.Current, expectedDistance - 0.05, expectedDistance + 0.05);
+        Assert.InRange(sampler.Velocity!.Value.Value, 0, 0.01f);
+    }
+
+    [Theory]
+    [InlineData(8.3333333)]
+    [InlineData(16.6666667)]
+    [InlineData(33.3333333)]
+    public void ExplicitDecayFactorRemainsPerFrameEquivalent(double stepMilliseconds)
+    {
+        DecaySpec<float> spec = MotionFactory.Decay(new MotionVelocity<float>(1000), deceleration: 0.9f);
+        MotionSampler<float> sampler = spec.CreateSampler(0, 0, new FloatMixer(), Context());
+        TimeSpan step = TimeSpan.FromMilliseconds(stepMilliseconds);
+
+        sampler.Advance(step);
+
+        float expectedVelocity = 1000 * MathF.Pow(0.9f, (float)(step.TotalMilliseconds / 16.6666667));
+        Assert.Equal(expectedVelocity, sampler.Velocity!.Value.Value, precision: 3);
+        Assert.Equal(1000 * (float)step.TotalSeconds, sampler.Current, precision: 3);
     }
 
     [Fact]

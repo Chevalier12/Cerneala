@@ -79,6 +79,10 @@ sampler.Advance(TimeSpan.FromMilliseconds(100));
 
 The constructor requires `Deceleration` to be finite, greater than `0`, and less than `1`. Values closer to `1` decay more slowly.
 
+The optional deceleration defaults to `0.9671838f`, the frame-equivalent factor `0.998 ^ 16.6666667`. This is equivalent to retaining approximately `0.998` of the velocity per millisecond, with a time constant of about `0.5` seconds. An unbounded float sampler starting at `0` with velocity `1000` units per second travels approximately `508` units and completes in approximately `5.77` seconds when advanced in 60 Hz steps. Distance varies with step size because each step integrates its starting velocity before applying decay.
+
+Explicit deceleration values retain their per-frame-equivalent meaning. The default was retuned from `0.998f`; passing `0.998f` explicitly still selects the previous slow decay. Recompile callers that omit the optional argument to pick up the new default, because C# embeds optional argument values at the call site.
+
 Decay sampling requires a `ValueMixer<T>` whose `SupportsVectorOperations` value is `true`, because the sampler uses vector addition, subtraction, scaling, and magnitude. Bounds require values that implement `IComparable<T>` or `IComparable`; non-comparable bounded values are rejected when the sampler is created.
 
 `WithBounds` and `WithBounce` return new `DecaySpec<T>` instances. The original spec is not mutated. A bounce spec can only be used when both minimum and maximum bounds are present. When the decay overshoots a bound and `Bounce` is set, the sampler clamps to the bound, reflects the overshoot back into the bounded range, and starts the bounce sampler from the bound toward that reflected value.
@@ -89,7 +93,7 @@ The `to` argument passed to `CreateSampler` is not used by the decay calculation
 
 | Name | Description |
 | --- | --- |
-| `DecaySpec(MotionVelocity<T>, float)` | Initializes a decay specification with an initial velocity and an optional deceleration value. |
+| `DecaySpec(MotionVelocity<T>, float)` | Initializes a decay specification with an initial velocity and an optional per-frame-equivalent deceleration value, defaulting to `0.9671838f`. |
 
 ## Properties
 

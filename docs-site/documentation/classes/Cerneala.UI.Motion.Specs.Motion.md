@@ -54,6 +54,8 @@ The non-generic `Tween` and `Spring` overloads return `MotionSpec` instances. Th
 
 Generic tween, spring, keyframe, and decay specifications keep the validation and sampling behavior of their concrete specification classes. For example, tween durations must be positive, spring stiffness and mass must be positive, spring damping cannot be negative, and decay deceleration must be greater than `0` and less than `1`.
 
+`Decay<T>` defaults to a per-16.6666667 ms-frame-equivalent deceleration factor of `0.9671838f`, matching the `DecaySpec<T>` constructor. This corresponds to approximately `0.998` velocity retention per millisecond. Explicit factors keep their per-frame-equivalent meaning; recompile callers that omit the optional argument to pick up the retuned default.
+
 Untyped tween and spring specifications also validate their constructor arguments immediately. When they later create a sampler, `from`, `to`, and the mixer must match the mixer value type or sampler creation throws an `ArgumentException`.
 
 ## Methods
@@ -63,7 +65,7 @@ Untyped tween and spring specifications also validate their constructor argument
 | `Tween<T>(TimeSpan duration, IEasing? easing = null)` | `TweenSpec<T>` | Creates a typed tween specification with the specified duration and optional easing. |
 | `Spring<T>(float stiffness = 520, float damping = 38, float mass = 1)` | `SpringSpec<T>` | Creates a typed spring specification with stiffness, damping, and mass parameters. |
 | `Keyframes<T>(params MotionKeyframe<T>[] frames)` | `KeyframesSpec<T>` | Creates a typed keyframes specification from the supplied keyframes. |
-| `Decay<T>(MotionVelocity<T> initialVelocity, float deceleration = 0.998f)` | `DecaySpec<T>` | Creates a typed decay specification using the supplied initial velocity and deceleration. |
+| `Decay<T>(MotionVelocity<T> initialVelocity, float deceleration = 0.9671838f)` | `DecaySpec<T>` | Creates a typed decay specification using the supplied initial velocity and per-frame-equivalent deceleration. |
 | `Tween(TimeSpan duration, IEasing? easing = null)` | `MotionSpec` | Creates an untyped tween specification whose concrete value type is resolved from the mixer at sampler creation time. |
 | `Spring(float stiffness = 520, float damping = 38, float mass = 1)` | `MotionSpec` | Creates an untyped spring specification whose concrete value type is resolved from the mixer at sampler creation time. |
 

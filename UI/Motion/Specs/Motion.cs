@@ -19,7 +19,7 @@ public static class Motion
         return new KeyframesSpec<T>(frames);
     }
 
-    public static DecaySpec<T> Decay<T>(MotionVelocity<T> initialVelocity, float deceleration = 0.998f)
+    public static DecaySpec<T> Decay<T>(MotionVelocity<T> initialVelocity, float deceleration = DecaySpec<T>.DefaultDeceleration)
     {
         return new DecaySpec<T>(initialVelocity, deceleration);
     }
