@@ -90,7 +90,7 @@ The built-in `TransformMixer` is an exception to that requirement: `SpringSpec<T
 
 For this transform sampler, completion requires every component's absolute target distance and speed to meet their respective thresholds; the generic fixed-point completion shortcut does not apply. Completion returns the exact target transform. Component velocities are retained internally, but `Velocity` returns `null`: a transform matrix cannot losslessly represent those velocities.
 
-Retargeting a built-in transform spring through `MotionValue<Transform>.AnimateTo` carries current component positions and, with the incoming `VelocityMode.Preserve`, their velocities into the incoming spring parameters. `VelocityMode.Reset` resets each component velocity. Both retarget modes continue without elapsed-time replay. Other spec/mixer paths retain their existing behavior.
+Retargeting a built-in transform spring through `MotionValue<Transform>.AnimateTo` carries current component positions and, with the incoming `VelocityMode.Preserve`, their velocities into the incoming spring parameters. `VelocityMode.Reset` resets each component velocity. Both retarget modes continue without elapsed-time replay. A zero-scale target resolves against the current rotation and skew; see `TransformMixer` for endpoints that no component frame can represent. Other spec/mixer paths retain their existing behavior.
 
 Each call to `WithRestThresholds` or `WithVelocityMode` returns a new `SpringSpec<T>` instance. The original spec is not mutated.
 

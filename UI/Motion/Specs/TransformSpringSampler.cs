@@ -4,11 +4,17 @@ using Cerneala.UI.Motion.Interpolation;
 namespace Cerneala.UI.Motion.Specs;
 
 // Matrices are the output representation, never the spring's position/velocity state.
+// Endpoints resolve like TransformMixer.Mix: a degenerate (zero-scale) endpoint
+// borrows rotation and skew from the other endpoint or from the current state.
+// When no component frame represents both endpoints, the identity frame is
+// tried; failing that, a spring cannot run in matrix space and completes at its
+// target immediately.
 internal sealed class TransformSpringSampler : MotionSampler<Transform>
 {
     private static readonly ComponentMixer Mixer = new();
+    private static readonly TransformComponents IdentityFrame = new(0, 0, 1, 1, 0, 0, 0);
     private SpringSpec<Transform> spec;
-    private SpringSpec<TransformComponents>.VectorSpringSampler components;
+    private SpringSpec<TransformComponents>.VectorSpringSampler? components;
     private Transform current;
     private Transform target;
     private MotionSpecContext context;
@@ -21,12 +27,11 @@ internal sealed class TransformSpringSampler : MotionSampler<Transform>
         this.context = context;
         current = from;
         target = to;
-        TransformComponents start = TransformMixer.Decompose(from);
-        components = CreateComponents(start, UnwrapTarget(start, to), initialVelocity: null);
+        Start(from, to);
     }
 
     public override Transform Current => current;
-    public override bool IsComplete => components.IsComplete;
+    public override bool IsComplete => components is null || components.IsComplete;
 
     // There is no lossless Transform representation for component velocity.
     // Keep it internally rather than exposing a composed, singular "velocity matrix".
@@ -40,7 +45,7 @@ internal sealed class TransformSpringSampler : MotionSampler<Transform>
             return;
         }
 
-        components.Advance(delta);
+        components!.Advance(delta);
         if (IsComplete)
             current = target;
         else if (delta > TimeSpan.Zero)
@@ -50,9 +55,19 @@ internal sealed class TransformSpringSampler : MotionSampler<Transform>
     public override void Retarget(Transform to, RetargetMode mode)
     {
         ArgumentNullException.ThrowIfNull(to);
-        TransformComponents next = UnwrapTarget(components.Current, to);
         target = to;
-        components.Retarget(next, mode);
+        if (components is null)
+        {
+            Start(current, to);
+        }
+        else if (TryResolveTarget(components.Current, to, out TransformComponents next))
+        {
+            components.Retarget(next, mode);
+        }
+        else
+        {
+            SnapToTarget();
+        }
     }
 
     internal override bool TryRetargetWithSpec(Transform to, MotionSpec<Transform> incoming, MotionSpecContext context)
@@ -60,15 +75,43 @@ internal sealed class TransformSpringSampler : MotionSampler<Transform>
         if (incoming is not SpringSpec<Transform> spring)
             return false;
 
-        TransformComponents start = components.Current;
-        TransformComponents next = UnwrapTarget(start, to);
-        MotionVelocity<TransformComponents>? velocity = spring.VelocityMode == SpringVelocityMode.Preserve
-            ? components.Velocity : null;
         spec = spring;
         this.context = context;
         target = to;
-        components = CreateComponents(start, next, velocity);
+        if (components is null)
+        {
+            Start(current, to);
+        }
+        else if (TryResolveTarget(components.Current, to, out TransformComponents next))
+        {
+            MotionVelocity<TransformComponents>? velocity = spring.VelocityMode == SpringVelocityMode.Preserve
+                ? components.Velocity : null;
+            components = CreateComponents(components.Current, next, velocity);
+        }
+        else
+        {
+            SnapToTarget();
+        }
+
         return true;
+    }
+
+    private void Start(Transform from, Transform to)
+    {
+        if (TryResolveEndpoints(from, to, out TransformComponents start, out TransformComponents end))
+        {
+            components = CreateComponents(start, end, initialVelocity: null);
+        }
+        else
+        {
+            SnapToTarget();
+        }
+    }
+
+    private void SnapToTarget()
+    {
+        components = null;
+        current = target;
     }
 
     private SpringSpec<TransformComponents>.VectorSpringSampler CreateComponents(
@@ -81,9 +124,36 @@ internal sealed class TransformSpringSampler : MotionSampler<Transform>
         return new(componentSpec, start, to, Mixer, context, initialVelocity, completeAtFixedPoint: false);
     }
 
-    private static TransformComponents UnwrapTarget(TransformComponents start, Transform to)
+    private static bool TryResolveEndpoints(
+        Transform from, Transform to, out TransformComponents start, out TransformComponents end)
     {
-        TransformComponents end = TransformMixer.Decompose(to);
+        if (TransformMixer.TryResolveComponents(from, to, out start, out end) ||
+            (TransformMixer.TryResolveAgainst(from, IdentityFrame, out start) &&
+                TransformMixer.TryResolveAgainst(to, IdentityFrame, out end)))
+        {
+            end = Unwrap(start, end);
+            return true;
+        }
+
+        return false;
+    }
+
+    // The current state is always a valid frame, even when its scale is near 0,
+    // so a degenerate target is resolved against it rather than re-decomposed.
+    private static bool TryResolveTarget(TransformComponents reference, Transform to, out TransformComponents end)
+    {
+        if (TransformMixer.TryResolveAgainst(to, reference, out end) ||
+            TransformMixer.TryResolveAgainst(to, IdentityFrame, out end))
+        {
+            end = Unwrap(reference, end);
+            return true;
+        }
+
+        return false;
+    }
+
+    private static TransformComponents Unwrap(TransformComponents start, TransformComponents end)
+    {
         return end with
         {
             RotationRadians = start.RotationRadians + TransformMixer.ShortestAngleDelta(start.RotationRadians, end.RotationRadians)
