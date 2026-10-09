@@ -16,6 +16,7 @@ public sealed class AspectProcessor
     private readonly ConditionalWeakTable<UIElement, CatalogState> catalogStates = new();
     private readonly ConditionalWeakTable<UIElement, EnvironmentState> environmentStates = new();
     private readonly ConditionalWeakTable<UIElement, BehaviorState> behaviorStates = new();
+    private readonly ConditionalWeakTable<Control, TemplateOwnerState> templateOwnerStates = new();
     private int nextCompositeVersion = 1_000_000;
     private bool isApplying;
 
@@ -68,6 +69,43 @@ public sealed class AspectProcessor
         if (element is Control templatedControl)
         {
             templatedControl.ApplyTemplate();
+            InvalidateTemplateSlotStates(templatedControl);
+        }
+    }
+
+    private void InvalidateTemplateSlotStates(Control owner)
+    {
+        ComponentTemplateInstance? instance = owner.ComponentTemplateInstance;
+        if (instance is null || !instance.Slots.Entries.Any())
+        {
+            return;
+        }
+
+        TemplateOwnerState state = templateOwnerStates.GetOrCreateValue(owner);
+        AspectStateSet next = AspectStateSet.FromElement(owner);
+        AspectStateSet? previous = state.States;
+        if (next.Equals(previous))
+        {
+            return;
+        }
+
+        state.States = next;
+        // Slot state dependencies belong to the part, but read the template owner.
+        // An unchanged template does not reattach or otherwise queue those parts.
+        foreach ((AspectSlot _, UIElement part) in instance.Slots.Entries)
+        {
+            if (ReferenceEquals(part, owner) || !ReferenceEquals(part.Root, root) ||
+                !TemplateAspectContext.TryGet(part, out TemplateAspectContext.Registration registration) ||
+                !ReferenceEquals(registration.Owner, owner))
+            {
+                continue;
+            }
+
+            if (engine.GetDependencies(part).States.Any(dependency =>
+                previous is null || previous.Contains(dependency) != next.Contains(dependency)))
+            {
+                part.Invalidate(InvalidationFlags.Aspect, "Template owner Aspect state changed");
+            }
         }
     }
 
@@ -92,6 +130,10 @@ public sealed class AspectProcessor
         ApplyEngine(() => engine.Clear(element));
         catalogStates.Remove(element);
         environmentStates.Remove(element);
+        if (element is Control control)
+        {
+            templateOwnerStates.Remove(control);
+        }
     }
 
     internal void OnPropertyMutated(UiPropertyMutation mutation)
@@ -364,6 +406,11 @@ public sealed class AspectProcessor
     }
 
     private readonly record struct ScopeStamp(ResourceDictionary Resources, long Version);
+
+    private sealed class TemplateOwnerState
+    {
+        public AspectStateSet? States { get; set; }
+    }
 
     private sealed class CatalogState
     {
