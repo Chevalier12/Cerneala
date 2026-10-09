@@ -92,9 +92,9 @@ public sealed class SpringSpec<T> : MotionSpec<T>
 
     internal sealed class VectorSpringSampler : MotionSampler<T>
     {
-        private readonly SpringSpec<T> spec;
+        private SpringSpec<T> spec;
         private readonly ValueMixer<T> mixer;
-        private readonly MotionSpecContext context;
+        private MotionSpecContext context;
         private readonly bool completeAtFixedPoint;
         private T current;
         private T target;
@@ -182,6 +182,21 @@ public sealed class SpringSpec<T> : MotionSpec<T>
             }
 
             isComplete = false;
+        }
+
+        internal override bool TryRetargetWithSpec(T to, MotionSpec<T> incoming, MotionSpecContext context)
+        {
+            if (incoming is not SpringSpec<T> spring)
+            {
+                return false;
+            }
+
+            spec = spring;
+            this.context = context;
+            // Springs retain motion state, not elapsed progress. Retarget applies
+            // the incoming velocity mode without changing the current position.
+            Retarget(to, RetargetMode.Restart);
+            return true;
         }
 
         private void Integrate(float seconds)

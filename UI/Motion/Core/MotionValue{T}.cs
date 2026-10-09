@@ -148,6 +148,11 @@ public sealed class MotionValue<T> : MotionValue
         continued = previousSampler is not null &&
             mixer.EqualsWithinTolerance(current, previousSampler.Current, 0) &&
             previousSampler.TryRetargetWithSpec(target, spec, context);
+        if (continued)
+        {
+            velocity = TryGetVelocity(previousSampler!);
+        }
+
         return continued ? previousSampler! : spec.CreateSampler(current, target, mixer, context);
     }
 
