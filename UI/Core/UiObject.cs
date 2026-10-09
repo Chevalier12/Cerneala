@@ -141,6 +141,19 @@ public class UiObject
 
     internal object? SetValueUntyped(UiProperty property, object? value, UiPropertyValueSource source)
     {
+        return SetValueUntypedCore(property, value, source, skipInvalidSample: false, out _);
+    }
+
+    internal bool TrySetAnimationValueUntyped(UiProperty property, object? value)
+    {
+        SetValueUntypedCore(property, value, UiPropertyValueSource.Animation, skipInvalidSample: true, out bool applied);
+        return applied;
+    }
+
+    private object? SetValueUntypedCore(
+        UiProperty property, object? value, UiPropertyValueSource source, bool skipInvalidSample, out bool applied)
+    {
+        applied = false;
         ArgumentNullException.ThrowIfNull(property);
         if (property.IsReadOnly)
         {
@@ -153,9 +166,31 @@ public class UiObject
         UiPropertyValueSource oldSource = GetValueSource(property);
         object? oldSourceValue = GetSourceValue(property, source);
         object? coerced = property.CoerceUntyped(this, value);
-        property.ValidateUntyped(coerced);
-        ValidatePropertyMutation(property, coerced);
+        if (skipInvalidSample)
+        {
+            if (!property.IsValidUntyped(coerced))
+            {
+                return oldValue;
+            }
+
+            // Owner hooks also validate values (for example collider radii).
+            // Catch only their value rejection, never coercion or write callbacks.
+            try
+            {
+                ValidatePropertyMutation(property, coerced);
+            }
+            catch (ArgumentException)
+            {
+                return oldValue;
+            }
+        }
+        else
+        {
+            property.ValidateUntyped(coerced);
+            ValidatePropertyMutation(property, coerced);
+        }
         propertyStore.SetValue(property, source, coerced);
+        applied = true;
         propertyValueVersion++;
         object? newValue = GetValue(property);
         UiPropertyValueSource newSource = GetValueSource(property);

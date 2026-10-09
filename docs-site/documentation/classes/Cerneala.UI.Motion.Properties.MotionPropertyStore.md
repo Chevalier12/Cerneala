@@ -56,6 +56,8 @@ Animation samples are not written directly when bindings tick. Internal staging 
 
 `MotionSystem.Tick` calls `Flush` after sampling the motion graph and merges the returned counters into `MotionFrameResult`. `MotionSystem.HasActiveMotion` remains true while the store has pending writes, even if the graph itself is idle.
 
+For staged animation samples, coercion runs before metadata validation. If the validator returns `false`, or the owner validation hook rejects the value with `ArgumentException`, the store skips that write without changing the property, its animation source, or write/invalidation counters. The animation continues and subsequent valid samples can be written. When Motion diagnostics are enabled, the skipped sample is recorded in the existing warnings collection. This applies equally to spring and tween samples. Explicit property writes retain their throwing validation behavior; exceptions from coercers, metadata callbacks, or property-change handlers, and non-value errors from owner checks, are not swallowed.
+
 ## Constructors
 
 | Name | Description |

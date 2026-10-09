@@ -52,7 +52,7 @@ Thickness value = mixer.Mix(new Thickness(0), new Thickness(8, 12, 8, 12), 0.5f)
 
 `ThicknessMixer` is the built-in `ValueMixer<Thickness>` implementation used by the motion interpolation layer. `ValueMixerRegistry.RegisterBuiltIns` registers it for `Thickness`, and the default motion system exposes it through the root mixer registry.
 
-`Mix` linearly interpolates `Left`, `Top`, `Right`, and `Bottom` independently. Progress values less than or equal to `0` return the source component values, and progress values greater than or equal to `1` return the target component values, preserving exact endpoints for large values.
+`Mix` linearly interpolates `Left`, `Top`, `Right`, and `Bottom` independently. Progress exactly `0` returns the source component values, and progress exactly `1` returns the target component values, preserving exact endpoints for large values. Progress outside `[0, 1]` extrapolates linearly.
 
 The mixer supports vector operations. `Add`, `Subtract`, `Scale`, and `Magnitude` operate on the four thickness edges as a vector, which lets motion code compute deltas, velocities, and tolerances for animated layout spacing.
 
@@ -80,7 +80,7 @@ Built-in animatable properties use this mixer for `Control.BorderThicknessProper
 | `Add(Thickness left, Thickness right)` | `Thickness` | Returns a thickness whose edges are the sums of the matching edges from `left` and `right`. |
 | `EqualsWithinTolerance(Thickness left, Thickness right, float tolerance)` | `bool` | Returns whether the absolute differences for `Left`, `Top`, `Right`, and `Bottom` are all less than or equal to the tolerance. |
 | `Magnitude(Thickness value)` | `float` | Returns the Euclidean length of the four-edge thickness vector. |
-| `Mix(Thickness from, Thickness to, float progress)` | `Thickness` | Returns the linearly interpolated thickness for `progress`, with exact endpoint clamping at `0` and `1`. |
+| `Mix(Thickness from, Thickness to, float progress)` | `Thickness` | Returns the linearly interpolated thickness for `progress`, with linear extrapolation outside `[0, 1]` and exact endpoints at progress `0` and `1`. |
 | `Scale(Thickness value, float scalar)` | `Thickness` | Returns a thickness whose edges are multiplied by `scalar`. |
 | `Subtract(Thickness left, Thickness right)` | `Thickness` | Returns a thickness whose edges are the differences of the matching edges from `left` and `right`. |
 | `AddUntyped(object? left, object? right)` | `object?` | Casts the inputs to `Thickness` and delegates to `Add`. Inherited from `ValueMixer<Thickness>`. |

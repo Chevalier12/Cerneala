@@ -13,6 +13,43 @@ public sealed class EasingTests
         Assert.Equal(1, easing.Transform(1));
     }
 
+    [Theory]
+    [InlineData(0.34f, 1.56f, 0.64f, 1f, 0.4925f, 1.085f)]
+    [InlineData(0.36f, 0f, 0.66f, -0.56f, 0.5075f, -0.085f)]
+    public void CubicBezierPreservesOvershootAndUndershoot(
+        float x1, float y1, float x2, float y2, float progress, float expected)
+    {
+        CubicBezierEasing easing = new(x1, y1, x2, y2);
+
+        // These inputs are x(t) at t = 0.5; the expected values are y(t).
+        Assert.Equal(expected, easing.Transform(progress), precision: 5);
+        Assert.Equal(0, easing.Transform(0));
+        Assert.Equal(1, easing.Transform(1));
+    }
+
+    [Fact]
+    public void FloatTweenWithEaseOutBackOvershootsAndFinishesAtExactTarget()
+    {
+        TweenSpec<float> spec = new(TimeSpan.FromSeconds(1), new CubicBezierEasing(0.34f, 1.56f, 0.64f, 1));
+        MotionSpecContext context = new(
+            Cerneala.UI.Motion.Core.ReducedMotionPolicy.Default,
+            new Cerneala.UI.Motion.Interpolation.ValueMixerRegistry(),
+            Diagnostics: null,
+            Now: TimeSpan.Zero);
+        MotionSampler<float> sampler = spec.CreateSampler(
+            0, 100, new Cerneala.UI.Motion.Interpolation.FloatMixer(), context);
+
+        sampler.Advance(TimeSpan.FromMilliseconds(492.5));
+
+        Assert.Equal(108.5f, sampler.Current, precision: 3);
+        Assert.False(sampler.IsComplete);
+
+        sampler.Advance(TimeSpan.FromMilliseconds(507.5));
+
+        Assert.Equal(100, sampler.Current);
+        Assert.True(sampler.IsComplete);
+    }
+
     [Fact]
     public void CubicBezierIsMonotonicForValidCurve()
     {

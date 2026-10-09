@@ -14,6 +14,10 @@ Interpolates and performs vector operations on `System.Numerics.Vector4` values.
 public sealed class Vector4Mixer : ValueMixer<Vector4>
 ```
 
+## Remarks
+
+`Mix` interpolates each component independently and extrapolates linearly for progress outside `[0, 1]`. Progress exactly `0` returns the source components and progress exactly `1` returns the target components, preserving exact endpoints even for large values.
+
 ## Properties
 
 | Name | Type | Description |
@@ -24,7 +28,7 @@ public sealed class Vector4Mixer : ValueMixer<Vector4>
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `Mix(Vector4 from, Vector4 to, float progress)` | `Vector4` | Linearly interpolates the four components with clamped progress. |
+| `Mix(Vector4 from, Vector4 to, float progress)` | `Vector4` | Linearly interpolates or extrapolates the four components, preserving exact endpoints at progress `0` and `1`. |
 | `EqualsWithinTolerance(Vector4 left, Vector4 right, float tolerance)` | `bool` | Tests every component against the supplied non-negative tolerance. |
 | `Add(Vector4 left, Vector4 right)` | `Vector4` | Adds two vectors. |
 | `Subtract(Vector4 left, Vector4 right)` | `Vector4` | Subtracts one vector from another. |

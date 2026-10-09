@@ -50,7 +50,7 @@ DrawSize value = mixer.Mix(new DrawSize(0, 0), new DrawSize(100, 50), 0.25f);
 
 `DrawSizeMixer` is the built-in `ValueMixer<DrawSize>` implementation used by the motion interpolation layer. `ValueMixerRegistry.RegisterBuiltIns` registers it for `DrawSize`, and the default motion system exposes it through the root mixer registry.
 
-`Mix` linearly interpolates the `Width` and `Height` components independently. Progress values less than or equal to `0` return the source component values, and progress values greater than or equal to `1` return the target component values, preserving exact endpoints for large values.
+`Mix` linearly interpolates the `Width` and `Height` components independently. Progress exactly `0` returns the source component values, and progress exactly `1` returns the target component values, preserving exact endpoints for large values. Progress outside `[0, 1]` extrapolates linearly.
 
 The mixer supports vector operations. `Add`, `Subtract`, `Scale`, and `Magnitude` operate on the size as a two-dimensional vector, which lets motion code compute deltas, velocities, and tolerances for animated drawing sizes.
 
@@ -78,7 +78,7 @@ The mixer supports vector operations. `Add`, `Subtract`, `Scale`, and `Magnitude
 | `Add(DrawSize left, DrawSize right)` | `DrawSize` | Returns a size whose components are `left.Width + right.Width` and `left.Height + right.Height`. |
 | `EqualsWithinTolerance(DrawSize left, DrawSize right, float tolerance)` | `bool` | Returns whether both component differences are less than or equal to the tolerance. |
 | `Magnitude(DrawSize value)` | `float` | Returns the Euclidean length of the size vector. |
-| `Mix(DrawSize from, DrawSize to, float progress)` | `DrawSize` | Returns the linearly interpolated size for `progress`, with exact endpoint clamping at `0` and `1`. |
+| `Mix(DrawSize from, DrawSize to, float progress)` | `DrawSize` | Returns the linearly interpolated size for `progress`, with linear extrapolation outside `[0, 1]` and exact endpoints at progress `0` and `1`. |
 | `Scale(DrawSize value, float scalar)` | `DrawSize` | Returns a size whose components are multiplied by `scalar`. |
 | `Subtract(DrawSize left, DrawSize right)` | `DrawSize` | Returns a size whose components are `left.Width - right.Width` and `left.Height - right.Height`. |
 | `AddUntyped(object? left, object? right)` | `object?` | Casts the inputs to `DrawSize` and delegates to `Add`. Inherited from `ValueMixer<DrawSize>`. |

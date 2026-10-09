@@ -18,12 +18,12 @@ public sealed class TransformMixer : ValueMixer<Transform>
     {
         ArgumentNullException.ThrowIfNull(from);
         ArgumentNullException.ThrowIfNull(to);
-        if (progress <= 0)
+        if (progress == 0)
         {
             return from;
         }
 
-        if (progress >= 1)
+        if (progress == 1)
         {
             return to;
         }

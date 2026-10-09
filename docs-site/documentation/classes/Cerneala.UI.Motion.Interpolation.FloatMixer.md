@@ -48,7 +48,7 @@ float value = mixer.Mix(0f, 100f, 0.25f);
 
 `FloatMixer` is the built-in `ValueMixer<float>` implementation used by the motion interpolation layer. `ValueMixerRegistry.RegisterBuiltIns` registers it for `float`, and the default motion system makes it available through the root mixer registry.
 
-`Mix` linearly interpolates from `from` to `to`. Progress values less than or equal to `0` return `from`, and progress values greater than or equal to `1` return `to`, preserving exact endpoints for large values.
+`Mix` linearly interpolates from `from` to `to`. Progress exactly `0` returns `from`, and progress exactly `1` returns `to`, preserving exact endpoints for large values. Progress outside `[0, 1]` extrapolates linearly.
 
 The mixer supports vector operations. `Add`, `Subtract`, `Scale`, and `Magnitude` operate directly on the numeric value, which allows motion code to compute deltas, velocities, and tolerances for `float` animations.
 
@@ -73,7 +73,7 @@ The mixer supports vector operations. `Add`, `Subtract`, `Scale`, and `Magnitude
 | `Add(float left, float right)` | `float` | Returns `left + right`. |
 | `EqualsWithinTolerance(float left, float right, float tolerance)` | `bool` | Returns whether the absolute difference between two values is less than or equal to the tolerance. |
 | `Magnitude(float value)` | `float` | Returns the absolute value. |
-| `Mix(float from, float to, float progress)` | `float` | Returns the linearly interpolated value for `progress`, with exact endpoint clamping at `0` and `1`. |
+| `Mix(float from, float to, float progress)` | `float` | Returns the linearly interpolated value for `progress`, with linear extrapolation outside `[0, 1]` and exact endpoints at progress `0` and `1`. |
 | `Scale(float value, float scalar)` | `float` | Returns `value * scalar`. |
 | `Subtract(float left, float right)` | `float` | Returns `left - right`. |
 

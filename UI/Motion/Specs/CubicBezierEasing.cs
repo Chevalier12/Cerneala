@@ -55,7 +55,7 @@ public sealed class CubicBezierEasing : IEasing
         }
 
         float t = SolveTForX(x);
-        return Math.Clamp(SampleCurve(t, y1, y2), 0, 1);
+        return SampleCurve(t, y1, y2);
     }
 
     private float SolveTForX(float x)

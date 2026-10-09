@@ -50,7 +50,7 @@ MotionSpec exit = Motion.Tween(TimeSpan.FromMilliseconds(140), Easings.EaseIn);
 
 `Easings` is a static catalog of reusable `IEasing` instances. Each property returns the same easing object for the lifetime of the application.
 
-`Linear` clamps normalized progress to `[0, 1]` and returns `0` for `NaN` input. The other presets are `CubicBezierEasing` instances; they clamp input and output to `[0, 1]`, return exact endpoint values for `0` and `1`, and return `0` for `NaN` input.
+`Linear` clamps normalized progress to `[0, 1]` and returns `0` for `NaN` input. The other presets are `CubicBezierEasing` instances; they clamp input to `[0, 1]`, return the sampled output without clamping, return exact endpoint values for `0` and `1`, and return `0` for `NaN` input. The listed presets have Y control points in `[0, 1]`, so their outputs remain in that range; custom cubic Bezier curves can overshoot.
 
 `TweenSpec<T>` uses `Easings.Standard` when no easing is supplied. The default theme motion tokens also use these presets for instant, fast, standard, emphasized, enter, and exit motion curves.
 

@@ -7,7 +7,8 @@ public sealed class Vector4Mixer : ValueMixer<Vector4>
     public override bool SupportsVectorOperations => true;
 
     public override Vector4 Mix(Vector4 from, Vector4 to, float progress) =>
-        Vector4.Lerp(from, to, Math.Clamp(progress, 0, 1));
+        new(Lerp(from.X, to.X, progress), Lerp(from.Y, to.Y, progress),
+            Lerp(from.Z, to.Z, progress), Lerp(from.W, to.W, progress));
 
     public override bool EqualsWithinTolerance(
         Vector4 left,

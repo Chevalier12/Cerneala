@@ -33,6 +33,13 @@ float middle = easing.Transform(0.5f);
 float end = easing.Transform(1);        // 1
 ```
 
+Create an overshooting ease-out-back curve:
+
+```csharp
+CubicBezierEasing easeOutBack = new(0.34f, 1.56f, 0.64f, 1);
+float overshoot = easeOutBack.Transform(0.4925f); // approximately 1.085
+```
+
 Use a cubic Bezier easing with a tween spec:
 
 ```csharp
@@ -46,7 +53,7 @@ TweenSpec<float> spec = new(TimeSpan.FromMilliseconds(200), easing);
 
 `CubicBezierEasing` maps an input progress value to an eased output value. The input passed to `Transform` is clamped to `[0, 1]`; `NaN` input returns `0`. Exact endpoint inputs return exact endpoint outputs: `0` maps to `0`, and `1` maps to `1`.
 
-The constructor requires `x1` and `x2` to be finite values in `[0, 1]` so the curve can be solved as a function of progress. `y1` and `y2` may be outside `[0, 1]`, but they must be finite. The transformed result is clamped to `[0, 1]` after sampling the curve.
+The constructor requires `x1` and `x2` to be finite values in `[0, 1]` so the curve can be solved as a function of progress. `y1` and `y2` may be outside `[0, 1]`, but they must be finite. The sampled curve value is returned without output clamping, allowing overshoot above `1` and undershoot below `0` at interior progress values. Continuous numeric and vector mixers extrapolate these values; color mixing clamps the extrapolated channels to their valid byte range.
 
 Internally, `Transform` solves the Bezier parameter for the requested x progress with Newton iteration and falls back to bisection when the derivative is too small or the Newton step leaves the valid range.
 
@@ -62,7 +69,7 @@ The static `Easings` presets use `CubicBezierEasing` for common motion curves su
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `Transform(float progress)` | `float` | Converts normalized progress to eased progress. Clamps the input and returned value to `[0, 1]`, and returns `0` for `NaN` input. |
+| `Transform(float progress)` | `float` | Converts normalized progress to an unclamped eased value. Clamps only the input to `[0, 1]`, preserves exact endpoints, and returns `0` for `NaN` input. |
 
 ## Exceptions
 
