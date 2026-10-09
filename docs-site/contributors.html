@@ -265,7 +265,7 @@
 
     <div class="specialist-skill-note">
       <span>TYPICAL FLOW</span>
-      <strong>Discuss the change → checklist-plan → implement-plan → session commit &amp; push. A regression found on the way goes to fix-bug; a frame-time problem with a number attached goes to performance-gate. Any bug discovered along the way is proven and filed through github-issue-raise.</strong>
+      <strong>Discuss the change → checklist-plan → implement-plan → pull request. A regression found on the way goes to fix-bug; a frame-time problem with a number attached goes to performance-gate. In Claude Code, these three skills and repo-cleanup end by running session commit &amp; push, which never commits on master: it works on a branch and opens a pull request against master. Any bug discovered along the way is proven and filed through github-issue-raise.</strong>
     </div>
 
     <div class="specialist-skill-grid repo-skill-grid" aria-label="Cerneala repository skill catalog">
@@ -294,6 +294,7 @@
             <li>Audits what is already done before touching code</li>
             <li>Keeps code, tests, API documentation, and the source plan synchronized</li>
             <li>Finishes with the full suite and a final audit, not with “looks done”</li>
+            <li>In Claude Code: ends by running <code>/git-session-commit-push</code>, which commits on a branch and opens a pull request</li>
           </ul>
           <dl class="skill-metrics" aria-label="Observed implementation skill estimates">
             <div><dt>Codex, GPT-5.6 Sol Medium / High</dt><dd>~45 min to ~2 hours per plan</dd></div>
@@ -313,6 +314,7 @@
             <li>Reproduces first: unit test, CSI, Servo-driven runtime, or a native harness</li>
             <li>Requires a RED regression test before any production change</li>
             <li>Ends with the full green suite and exact steps for your own manual check</li>
+            <li>In Claude Code: ends by running <code>/git-session-commit-push</code>, which commits on a branch and opens a pull request</li>
           </ul>
           <dl class="skill-metrics skill-metrics--bugfix" aria-label="Observed bug-fix skill estimates">
             <div><dt>Codex, typical duration</dt><dd>~20-30 minutes per bug fix</dd></div>
@@ -332,6 +334,7 @@
             <li>Freezes the workload, metric, percentile, hardware, and warmup before measuring</li>
             <li>Measures a RED baseline and attributes the cost before changing production code</li>
             <li>Reruns the identical gate plus visual, memory, and correctness checks</li>
+            <li>In Claude Code: ends by running <code>/git-session-commit-push</code>, which commits on a branch and opens a pull request</li>
           </ul>
         </div>
         <footer><span>USE WHEN</span><strong>An observed performance problem has a numeric gate</strong><span class="skill-links"><a href="https://github.com/Chevalier12/Cerneala/blob/master/.codex/skills/cerneala-performance-gate/SKILL.md">Codex</a><a href="https://github.com/Chevalier12/Cerneala/blob/master/.claude/skills/cerneala-performance-gate/SKILL.md">Claude</a></span></footer>
@@ -391,6 +394,7 @@
             <li>Reads the full implementation, its callers, and its tests before proposing a change</li>
             <li>Works in small verified batches, with characterization tests first when coverage is missing</li>
             <li>Asks before touching public contracts, ownership, or dependencies, and never mass-formats</li>
+            <li>In Claude Code: ends by running <code>/git-session-commit-push</code>, which commits on a branch and opens a pull request</li>
           </ul>
         </div>
         <footer><span>USE WHEN</span><strong>The code works but carries unnecessary complexity</strong><span class="skill-links"><a href="https://github.com/Chevalier12/Cerneala/blob/master/.codex/skills/repo-cleanup/SKILL.md">Codex</a><a href="https://github.com/Chevalier12/Cerneala/blob/master/.claude/skills/repo-cleanup/SKILL.md">Claude</a></span></footer>
@@ -416,11 +420,14 @@
         <div class="specialist-skill-card__body">
           <div class="skill-commands"><code class="skill-command" title="Claude Code">/git-session-commit-push</code></div>
           <h3>Session Commit &amp; Push</h3>
-          <p>Commits and pushes the work of the current conversation in Cerneala's structured commit style. Invoking it is the approval; it does not ask again. It ships in <code>.claude/skills/</code>; Codex users keep it as a personal skill.</p>
+          <p>Commits and pushes the work of the current conversation in Cerneala's structured commit style, always on a branch, and opens a pull request against master. Invoking it is the approval; it does not ask again. It ships in <code>.claude/skills/</code>; Codex users keep it as a personal skill.</p>
           <ul>
+            <li>Never commits on master: from master it fast-forwards to <code>origin/master</code> and opens a <code>session/…</code> branch; on another branch it commits there</li>
+            <li>Checks the pull request for conflicts with master and asks before merging master in to resolve them</li>
             <li>Stages only changes that belong to this conversation; unrelated work stays untouched</li>
             <li>Writes a <code>type(scope): subject</code> commit with themed sections and a Verification block</li>
             <li>Pushes normally: no force, no rebase, no hook bypass, and it stops when the upstream has diverged</li>
+            <li>Opens the pull request, or reuses the branch's open one, and never merges it</li>
           </ul>
         </div>
         <footer><span>USE WHEN</span><strong>The session's work is verified and ready to publish</strong><span class="skill-links"><a href="https://github.com/Chevalier12/Cerneala/blob/master/.claude/skills/git-session-commit-push/SKILL.md">Claude</a></span></footer>

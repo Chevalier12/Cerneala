@@ -18,7 +18,7 @@ Follow `CLAUDE.md`, especially "Claude Code tooling and verification commands". 
    - which stage you start with
    - how many stages remain
 
-The user's invocation of this skill authorizes implementing, verifying, documenting, and checking off the whole plan. It does not authorize commits, pushes, or PRs.
+The user's invocation of this skill authorizes implementing, verifying, documenting, and checking off the whole plan. It also authorizes running the `git-session-commit-push` skill once, at the end of the final completion audit.
 
 ## Compaction Recovery (MANDATORY)
 
@@ -125,7 +125,6 @@ After the entire active stage passes, the plan update is a blocking part of the 
 - When the plan tracks status, set it to `in progres` after the first completed batch. Set `finalizat` only after the final audit.
 - Run `git diff --check` on the files touched by the batch.
 - Re-read the entire updated stage section. Confirm that completed items and gates are checked, unfinished ones are not, and no neighboring stage changed.
-
 A stage is not a completed batch until the plan file has been edited and re-read.
 
 ### 5. Report and continue
@@ -150,6 +149,7 @@ A stage is not a completed batch until the plan file has been edited and re-read
 - If the plan conflicts with current architecture, stop that batch, record the contradiction, and ask the user before changing the approved design.
 - If a user decision blocks the current stage, ask with `AskUserQuestion` (concrete example per option). Do not skip to a later stage while waiting.
 - After an interruption, read the plan, inspect unchecked items, and resume from the first incomplete stage. After a compaction, follow the mandatory recovery sequence above.
+- If a blocker stops the plan before the final audit, do not invoke `git-session-commit-push`. Report the completed stages and the blocker, and ask the user with `AskUserQuestion` whether to commit the verified work anyway.
 - The plan file and repository state are authoritative, not memory of an older turn.
 
 ## Final Completion Audit
@@ -164,10 +164,12 @@ Before declaring the plan done:
 - Run `git diff --check` across all changed files.
 - Review `git diff` for accidental scope, leftover debug code, generated churn, and unchecked required work.
 - Set the plan status to `finalizat`.
+- Invoke the `git-session-commit-push` skill (MANDATORY). Pass it the plan path, the completed stages, the final verification results with real counts, and any gate that still needs a human. If a required final gate failed or could not run, do not invoke it; report the blocker and ask the user with `AskUserQuestion` whether to commit anyway.
 - Report in the user's language:
   - the completed stages
   - the verification results, with real counts
   - the plan path
+  - the commit, the branch, and the pull-request URL, or the gate that blocked them
   - any gate that still needs a human, for example a visual check
 
 Do not declare the plan done while required work remains. A long diff or a tiring plan is not a definition of done.

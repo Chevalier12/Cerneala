@@ -9,6 +9,8 @@ Fix the reported behavior from reproduction through final verification. Treat th
 
 Follow `CLAUDE.md`, especially "Claude Code tooling and verification commands". After a context compaction, re-read this file (`.claude/skills/cerneala-fix-bug/SKILL.md`) before continuing. Recover the reproduction, the RED test, and the current hypothesis from the repository and the summary, not from memory alone.
 
+Invoking this skill authorizes running the `git-session-commit-push` skill at the end (step 8).
+
 ## 1. Capture the Contract
 
 - Restate the smallest known reproduction, expected behavior, actual behavior, environment, and frequency.
@@ -140,7 +142,13 @@ Do not perform or claim manual validation of the real application scenario. That
 
 Do not declare success because the code compiles or one assertion passes. The automated reproduction must be green and the repository must remain healthy. Until the user confirms the real scenario, report its status as awaiting user validation.
 
-## 8. Report Evidence
+## 8. Commit and Push (MANDATORY)
+
+After step 7 is green and the temporary harnesses and probes are cleaned up, invoke the `git-session-commit-push` skill. Pass it `Fixes #N` when an issue exists, plus the root cause, the regression test, the verification counts, and the pending user-validation steps.
+
+If a required gate in step 7 failed or could not run, do not invoke it. Report the blocker and ask the user with `AskUserQuestion` whether to commit anyway.
+
+## 9. Report Evidence
 
 Summarize, in the user's language and following "The user" in `CLAUDE.md`:
 
@@ -153,8 +161,9 @@ Summarize, in the user's language and following "The user" in `CLAUDE.md`:
 - documentation changes, remaining uncertainty, or limitations.
 - any permanent Detective diagnostic added, the evidence gap it closes, its tests and documentation/API result, and its measured or bounded runtime cost.
 - any Servo or Detective defect encountered while running the workflow, its independent RED-to-GREEN result, and confirmation that the original operation was rerun.
+- the branch, the commit, and the pull-request URL, or the gate that blocked them.
 
-Do not commit, push, or open a pull request unless the user asks. Never hide a failing test behind optimistic wording.
+Never hide a failing test behind optimistic wording.
 
 ## Failure Protocol
 
