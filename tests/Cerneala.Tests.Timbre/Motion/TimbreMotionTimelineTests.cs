@@ -102,6 +102,52 @@ public sealed class TimbreMotionTimelineTests
     }
 
     [Fact]
+    public void TimbreMotionRejectedLowerPriorityStartKeepsTheValueRestoredByHoldOff()
+    {
+        using MarkupTimbreFixture fixture = new(Panel(string.Empty), "TimbreMotionRejectedBase.crn");
+        TimbrePlayback playback = Start(fixture, 0.6f);
+
+        MotionHandle high = playback.Motion()
+            .Animate(TimbrePlayback.VolumeParameter)
+            .To(1f)
+            .With(Linear(300), new MotionPropertyStartOptions { HoldOnComplete = false, Priority = MotionPriority.ReducedMotion });
+        fixture.Pump();
+        Advance(fixture, 2);
+        AssertNear(0.8f, playback.Volume);
+
+        MotionHandle rejected = playback.Motion().Animate(TimbrePlayback.VolumeParameter).To(0f).With(Linear(300));
+        Assert.True(rejected.IsCanceled);
+        Assert.True(high.IsActive);
+
+        Advance(fixture, 3);
+        Assert.True(high.IsCompleted);
+        // Hold off restores the value from before the accepted animation, 0.6.
+        Assert.Equal(0.6f, playback.Volume);
+    }
+
+    [Fact]
+    public void TimbreMotionRejectedLowerPriorityStartWithFromDoesNotInterruptTheHigherPriorityAnimation()
+    {
+        using MarkupTimbreFixture fixture = new(Panel(string.Empty), "TimbreMotionRejectedFrom.crn");
+        TimbrePlayback playback = Start(fixture, 0.2f);
+
+        MotionHandle high = playback.Motion()
+            .Animate(TimbrePlayback.VolumeParameter)
+            .To(0.8f)
+            .With(Linear(300), new MotionPropertyStartOptions { HoldOnComplete = true, Priority = MotionPriority.ReducedMotion });
+        fixture.Pump();
+        Advance(fixture, 2);
+        AssertNear(0.5f, playback.Volume);
+
+        MotionHandle rejected = playback.Motion().Animate(TimbrePlayback.VolumeParameter).From(0f).To(0f).With(Linear(300));
+
+        Assert.True(rejected.IsCanceled);
+        Assert.True(high.IsActive);
+        Advance(fixture, 1);
+        AssertNear(0.65f, playback.Volume);
+    }
+
+    [Fact]
     public void TimbreMotionAcceptsSpringKeyframesAndRepeatSpecs()
     {
         using MarkupTimbreFixture fixture = new(Panel(string.Empty), "TimbreMotionSpecs.crn");

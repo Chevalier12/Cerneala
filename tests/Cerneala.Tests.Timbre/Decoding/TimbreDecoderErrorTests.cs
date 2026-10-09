@@ -71,6 +71,40 @@ public sealed class TimbreDecoderErrorTests
     [MemberData(nameof(WavNegatives))]
     public void WavVariantsOutsideTheMatrixOrDamagedFail(string path, TimbreErrorKind kind) => AssertFails(path, kind);
 
+    // An unknown chunk that claims more bytes than the file holds is damaged
+    // data, whatever bytes follow its header (here: a well-formed data chunk).
+    [Theory]
+    [InlineData(0xFFFFFFFDu)]
+    [InlineData(0xFFFFFFFFu)]
+    public void AnUnknownChunkLongerThanTheFileIsInvalidData(uint declaredSize)
+    {
+        string path = Path.Combine(Path.GetTempPath(), "cerneala-timbre-wav", $"oversized-chunk-{declaredSize:X8}.wav");
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        using (BinaryWriter writer = new(File.Create(path)))
+        {
+            writer.Write("RIFF"u8);
+            writer.Write(0u);
+            writer.Write("WAVE"u8);
+            writer.Write("fmt "u8);
+            writer.Write(16u);
+            writer.Write((ushort)1);
+            writer.Write((ushort)2);
+            writer.Write(48000u);
+            writer.Write(48000u * 4);
+            writer.Write((ushort)4);
+            writer.Write((ushort)16);
+            writer.Write("junk"u8);
+            writer.Write(declaredSize);
+            writer.Write("data"u8);
+            writer.Write(4800u * 4);
+            writer.Write(new byte[4800 * 4]);
+            writer.Seek(4, SeekOrigin.Begin);
+            writer.Write((uint)(writer.BaseStream.Length - 8));
+        }
+
+        AssertFails(path, TimbreErrorKind.InvalidData);
+    }
+
     [Theory]
     [InlineData("text.mp3")]
     [InlineData("empty.wav")]

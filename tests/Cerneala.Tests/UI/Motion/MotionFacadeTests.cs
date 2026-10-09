@@ -147,6 +147,37 @@ public sealed class MotionFacadeTests
         Assert.Equal(0.8f, binding.Value.Target);
     }
 
+    [Fact]
+    public void LowerPriorityStartWithFromIsRejectedWithoutChangingTheActiveMotion()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(motionClock: clock);
+        UIElement element = new();
+        root.VisualChildren.Add(element);
+        MotionHandle high = element.Motion()
+            .Animate(UIElement.OpacityProperty)
+            .To(0f)
+            .With(
+                MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)),
+                new MotionPropertyStartOptions { HoldOnComplete = true, Priority = MotionPriority.ReducedMotion });
+        root.ProcessFrame();
+        clock.Advance(TimeSpan.FromMilliseconds(50));
+        root.ProcessFrame();
+        float current = element.Opacity;
+
+        MotionHandle rejected = element.Motion()
+            .Animate(UIElement.OpacityProperty)
+            .From(1f)
+            .To(1f)
+            .With(MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)));
+
+        Assert.True(rejected.IsCanceled);
+        Assert.True(high.IsActive);
+        MotionPropertyBinding<float> binding = root.Motion.Properties.GetOrCreateBinding(root.Motion, element, UIElement.OpacityProperty);
+        Assert.Equal(0f, binding.Value.Target);
+        Assert.Equal(current, binding.Value.Current);
+    }
+
     [Theory]
     [InlineData("Natural")]
     [InlineData("Complete")]

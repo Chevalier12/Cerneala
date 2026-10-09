@@ -31,6 +31,9 @@ internal sealed class ObservedFileStream : Stream
 
     public long FailAtOffset { get; set; } = -1;
 
+    // While set, positioning the stream fails like a storage error.
+    public bool FailSeeks { get; set; }
+
     public bool IsDisposed => Volatile.Read(ref disposed) != 0;
 
     public List<string?> ReaderThreads { get; } = [];
@@ -48,7 +51,11 @@ internal sealed class ObservedFileStream : Stream
     public override long Position
     {
         get => inner.Position;
-        set => inner.Position = value;
+        set
+        {
+            ThrowIfSeeksFail();
+            inner.Position = value;
+        }
     }
 
     // Reads that touch bytes in [from, to), once `afterBytes` bytes have been
@@ -129,7 +136,19 @@ internal sealed class ObservedFileStream : Stream
         return read;
     }
 
-    public override long Seek(long offset, SeekOrigin origin) => inner.Seek(offset, origin);
+    public override long Seek(long offset, SeekOrigin origin)
+    {
+        ThrowIfSeeksFail();
+        return inner.Seek(offset, origin);
+    }
+
+    private void ThrowIfSeeksFail()
+    {
+        if (FailSeeks)
+        {
+            throw new IOException("Injected seek failure.");
+        }
+    }
 
     public override void Flush()
     {
