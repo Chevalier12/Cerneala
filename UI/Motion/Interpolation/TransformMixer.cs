@@ -28,9 +28,13 @@ public sealed class TransformMixer : ValueMixer<Transform>
             return to;
         }
 
-        return mode == TransformInterpolationMode.Matrix
-            ? MixMatrix(from, to, progress)
-            : Compose(MixComponents(Decompose(from), Decompose(to), progress));
+        if (mode == TransformInterpolationMode.Matrix
+            || !TryResolveComponents(from, to, out TransformComponents fromComponents, out TransformComponents toComponents))
+        {
+            return MixMatrix(from, to, progress);
+        }
+
+        return Compose(MixComponents(fromComponents, toComponents, progress));
     }
 
     public override bool EqualsWithinTolerance(Transform left, Transform right, float tolerance)
@@ -49,15 +53,47 @@ public sealed class TransformMixer : ValueMixer<Transform>
     public static TransformComponents Decompose(Transform transform)
     {
         ArgumentNullException.ThrowIfNull(transform);
+        if (!TryDecompose(transform, out TransformComponents components, out string? failureReason))
+        {
+            throw new InvalidOperationException(failureReason);
+        }
+
+        return components;
+    }
+
+    // Shared pair resolution for component-space consumers. False means that the
+    // pair requires matrix interpolation; public Decompose remains strict.
+    internal static bool TryResolveComponents(
+        Transform from,
+        Transform to,
+        out TransformComponents fromComponents,
+        out TransformComponents toComponents)
+    {
+        bool fromValid = TryDecompose(from, out fromComponents, out _);
+        bool toValid = TryDecompose(to, out toComponents, out _);
+        if (fromValid && toValid)
+        {
+            return true;
+        }
+
+        if (fromValid)
+        {
+            return TryResolveDegenerateComponents(to, fromComponents, out toComponents);
+        }
+
+        return toValid && TryResolveDegenerateComponents(from, toComponents, out fromComponents);
+    }
+
+    private static bool TryDecompose(Transform transform, out TransformComponents components, out string? failureReason)
+    {
         Matrix3x2 matrix = transform.Matrix;
-
-
-
-
+        components = default;
+        failureReason = null;
         float scaleX = MathF.Sqrt((matrix.M11 * matrix.M11) + (matrix.M12 * matrix.M12));
         if (scaleX <= DecompositionEpsilon)
         {
-            throw new InvalidOperationException("Transform matrix cannot be decomposed because ScaleX is too close to zero.");
+            failureReason = "Transform matrix cannot be decomposed because ScaleX is too close to zero.";
+            return false;
         }
 
         float rotation = MathF.Atan2(matrix.M12, matrix.M11);
@@ -65,13 +101,61 @@ public sealed class TransformMixer : ValueMixer<Transform>
         float scaleY = determinant / scaleX;
         if (MathF.Abs(scaleY) <= DecompositionEpsilon)
         {
-            throw new InvalidOperationException("Transform matrix cannot be decomposed because ScaleY is too close to zero.");
+            failureReason = "Transform matrix cannot be decomposed because ScaleY is too close to zero.";
+            return false;
         }
 
         float dot = (matrix.M11 * matrix.M21) + (matrix.M12 * matrix.M22);
         float skewX = MathF.Atan(dot / (scaleX * scaleY));
 
-        return new TransformComponents(matrix.M31, matrix.M32, scaleX, scaleY, rotation, skewX, 0);
+        components = new TransformComponents(matrix.M31, matrix.M32, scaleX, scaleY, rotation, skewX, 0);
+        return true;
+    }
+
+    private static bool TryResolveDegenerateComponents(
+        Transform transform,
+        TransformComponents reference,
+        out TransformComponents components)
+    {
+        Matrix3x2 matrix = transform.Matrix;
+        Matrix3x2 basis = Compose(reference with
+        {
+            TranslationX = 0,
+            TranslationY = 0,
+            ScaleX = 1,
+            ScaleY = 1
+        }).Matrix;
+
+        // Each scale multiplies one row of skew * rotation. Project onto those
+        // rows, retaining the sign even when a scale is below the strict threshold.
+        float scaleX = ProjectScale(matrix.M11, matrix.M12, basis.M11, basis.M12);
+        float scaleY = ProjectScale(matrix.M21, matrix.M22, basis.M21, basis.M22);
+        components = reference with
+        {
+            TranslationX = matrix.M31,
+            TranslationY = matrix.M32,
+            ScaleX = scaleX,
+            ScaleY = scaleY
+        };
+
+        if (!float.IsFinite(scaleX) || !float.IsFinite(scaleY))
+        {
+            return false;
+        }
+
+        Matrix3x2 reconstructed = Compose(components).Matrix;
+        return MathF.Abs(matrix.M11 - reconstructed.M11) <= DecompositionEpsilon
+            && MathF.Abs(matrix.M12 - reconstructed.M12) <= DecompositionEpsilon
+            && MathF.Abs(matrix.M21 - reconstructed.M21) <= DecompositionEpsilon
+            && MathF.Abs(matrix.M22 - reconstructed.M22) <= DecompositionEpsilon;
+    }
+
+    private static float ProjectScale(float x, float y, float basisX, float basisY)
+    {
+        // Double intermediates avoid losing the tiny row or overflowing the
+        // projection's dot products; the stored component remains a float.
+        return (float)((((double)x * basisX) + ((double)y * basisY))
+            / (((double)basisX * basisX) + ((double)basisY * basisY)));
     }
 
     public static Transform Compose(TransformComponents components)
