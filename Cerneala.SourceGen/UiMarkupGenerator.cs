@@ -212,29 +212,35 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         IncrementalValueProvider<ImmutableArray<MarkupSource>> applicationFiles = markupFiles
             .Where(static file => file.Document?.Root.Name.LocalName == "Application")
             .Collect();
-        IncrementalValueProvider<SemanticAnalysisContext> semanticContext = applicationFiles
-            .Combine(context.CompilationProvider)
-            .Select(static (input, _) => new SemanticAnalysisContext(input.Left, input.Right));
-        IncrementalValuesProvider<SemanticMarkupSource> semanticMarkupFiles = markupFiles
-            .Combine(semanticContext)
+        IncrementalValueProvider<CompilationDeclarationIndex> declarations = context.CompilationProvider
+            .Select(static (compilation, cancellationToken) => new CompilationDeclarationIndex(compilation, cancellationToken));
+        IncrementalValuesProvider<MarkupCompilationFacts> semanticInputs = markupFiles
+            .Combine(applicationFiles)
+            .Combine(declarations)
+            .Select(static (input, cancellationToken) => MarkupCompilationFacts.Create(
+                input.Left.Right.Add(input.Left.Left), input.Right, cancellationToken));
+        IncrementalValuesProvider<SemanticMarkupSource> semanticMarkupFiles = semanticInputs
             .Select(static (input, cancellationToken) => AnalyzeMarkupFile(
-                input.Left,
-                input.Right,
+                input.Files[input.Files.Length - 1],
+                input,
                 cancellationToken))
             .WithTrackingName("CernealaLanguageSemanticModel");
 
+        IncrementalValueProvider<MarkupCompilationFacts> emissionInputs = markupFiles.Collect()
+            .Combine(declarations)
+            .Select(static (input, cancellationToken) => MarkupCompilationFacts.Create(
+                input.Left, input.Right, cancellationToken, forEmission: true));
         context.RegisterSourceOutput(
-            semanticMarkupFiles.Collect().Combine(context.CompilationProvider),
-            static (sourceContext, input) => GenerateFiles(sourceContext, input.Left, input.Right));
+            semanticMarkupFiles.Collect().Combine(emissionInputs),
+            static (sourceContext, input) => GenerateFiles(sourceContext, input.Left, input.Right.Compilation));
     }
 
     private static SemanticMarkupSource AnalyzeMarkupFile(
         MarkupSource file,
-        SemanticAnalysisContext context,
+        MarkupCompilationFacts context,
         CancellationToken cancellationToken)
     {
-        MarkupSource[] semanticInputs = context.ApplicationFiles
-            .Append(file)
+        MarkupSource[] semanticInputs = context.Files
             .GroupBy(candidate => candidate.Path, StringComparer.OrdinalIgnoreCase)
             .Select(group => group.Last())
             .ToArray();
@@ -243,7 +249,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             .OfType<CernealaDocument>()
             .ToArray();
         using CernealaCompilation languageCompilation = new(
-            context.Symbols,
+            new RoslynCompilationSymbols(context.Compilation),
             languageDocuments,
             AnalysisMode.Build);
         SourceGeneratorSemanticModel semanticModel = SourceGeneratorSemanticModel.Create(
@@ -251,23 +257,10 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         return new SemanticMarkupSource(file, semanticModel);
     }
 
-    private sealed class SemanticAnalysisContext
-    {
-        public SemanticAnalysisContext(ImmutableArray<MarkupSource> applicationFiles, Compilation compilation)
-        {
-            ApplicationFiles = applicationFiles;
-            Symbols = new RoslynCompilationSymbols(compilation);
-        }
-
-        public ImmutableArray<MarkupSource> ApplicationFiles { get; }
-
-        public RoslynCompilationSymbols Symbols { get; }
-    }
-
     private static void GenerateFiles(SourceProductionContext context, ImmutableArray<SemanticMarkupSource> inputs, Compilation compilation)
     {
         ImmutableArray<MarkupSource> files = inputs
-            .Select(input => new MarkupSource(input.Source.Path, input.Source.Text))
+            .Select(input => new MarkupSource(input.Source.Path, input.Source.Text, input.Source.TypeNames))
             .ToImmutableArray();
         IReadOnlyDictionary<string, SourceGeneratorSemanticModel> semanticModels = inputs.ToDictionary(
             input => input.Source.Path,
@@ -718,10 +711,11 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
     private readonly struct MarkupSource
     {
-        public MarkupSource(string path, string? text)
+        public MarkupSource(string path, string? text, ImmutableArray<string> typeNames = default)
         {
             Path = path;
             Text = text;
+            TypeNames = typeNames.IsDefault ? MarkupCompilationFacts.GetTypeNames(text) : typeNames;
             if (text is null)
             {
                 LanguageDocument = null;
@@ -741,6 +735,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         public string Path { get; }
 
         public string? Text { get; }
+
+        public ImmutableArray<string> TypeNames { get; }
 
         public CernealaDocument? LanguageDocument { get; }
 
