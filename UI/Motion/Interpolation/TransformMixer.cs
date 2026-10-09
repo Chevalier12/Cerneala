@@ -84,6 +84,17 @@ public sealed class TransformMixer : ValueMixer<Transform>
         return toValid && TryResolveDegenerateComponents(from, toComponents, out fromComponents);
     }
 
+    // Resolves one transform against known components, e.g. a spring's current
+    // state, so a degenerate target keeps that frame's rotation and skew.
+    internal static bool TryResolveAgainst(
+        Transform transform,
+        TransformComponents reference,
+        out TransformComponents components)
+    {
+        return TryDecompose(transform, out components, out _)
+            || TryResolveDegenerateComponents(transform, reference, out components);
+    }
+
     private static bool TryDecompose(Transform transform, out TransformComponents components, out string? failureReason)
     {
         Matrix3x2 matrix = transform.Matrix;

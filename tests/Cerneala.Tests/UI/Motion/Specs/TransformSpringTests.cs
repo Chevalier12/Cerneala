@@ -174,6 +174,93 @@ public sealed class TransformSpringTests
         Assert.Equal(scalar.Current, value.Current.Matrix.M31, precision: 4);
     }
 
+    [Theory]
+    [InlineData(0f)]
+    [InlineData(30f)]
+    public void SpringFromZeroScaleKeepsTheTargetRotationAndSettles(float degrees)
+    {
+        float angle = degrees * MathF.PI / 180;
+        Transform from = TransformMixer.Compose(new(5, 5, 0, 0, angle, 0, 0));
+        Transform to = TransformMixer.Compose(new(0, 0, 1, 1, angle, 0, 0));
+        MotionSampler<Transform> sampler = CreateSampler(from, to);
+
+        sampler.Advance(TimeSpan.FromMilliseconds(16));
+        Assert.False(sampler.IsComplete);
+        Assert.Equal(angle, TransformMixer.Decompose(sampler.Current).RotationRadians, precision: 4);
+        AdvanceUntilComplete(sampler);
+        Assert.Equal(to, sampler.Current);
+    }
+
+    [Fact]
+    public void SpringToZeroScaleSettlesExactlyOnTheCollapsedTarget()
+    {
+        Transform to = TransformMixer.Compose(new(10, 0, 0, 0, 0, 0, 0));
+        MotionSampler<Transform> sampler = CreateSampler(Transform.Identity, to);
+
+        AdvanceUntilComplete(sampler);
+
+        Assert.Equal(to, sampler.Current);
+    }
+
+    [Fact]
+    public void RetargetToADegenerateTargetResolvesAgainstTheCurrentRotation()
+    {
+        float angle = MathF.PI / 6;
+        Transform from = TransformMixer.Compose(new(0, 0, 2, 2, angle, 0, 0));
+        // Start at rest so rotation velocity cannot move the borrowed rotation.
+        MotionSampler<Transform> sampler = CreateSampler(from, from);
+        float current = angle;
+        Transform collapsed = new(new Matrix3x2(0, 0, 0, 0, 3, 4));
+
+        sampler.Retarget(collapsed, RetargetMode.Restart);
+        sampler.Advance(TimeSpan.FromMilliseconds(16));
+
+        Assert.False(sampler.IsComplete);
+        Assert.Equal(current, TransformMixer.Decompose(sampler.Current).RotationRadians, precision: 4);
+        AdvanceUntilComplete(sampler);
+        Assert.Equal(collapsed, sampler.Current);
+    }
+
+    [Fact]
+    public void BothEndpointsCollapsedAnimateInTheIdentityFrame()
+    {
+        Transform from = new(new Matrix3x2(0, 0, 0, 0, 0, 0));
+        Transform to = new(new Matrix3x2(0, 0, 0, 0, 50, 0));
+        MotionSampler<Transform> sampler = CreateSampler(from, to);
+
+        sampler.Advance(TimeSpan.FromMilliseconds(16));
+
+        Assert.False(sampler.IsComplete);
+        Assert.InRange(sampler.Current.Matrix.M31, 0.001f, 49.999f);
+        AdvanceUntilComplete(sampler);
+        Assert.Equal(to, sampler.Current);
+    }
+
+    [Fact]
+    public void UnrepresentableDegeneratePairCompletesAtTheTargetImmediately()
+    {
+        // A rotated line has no frame shared with the identity basis or with a
+        // fully collapsed endpoint, so no component spring can represent it.
+        float diagonal = MathF.Sqrt(0.5f);
+        Transform from = new(new Matrix3x2(diagonal, diagonal, 0, 0, 0, 0));
+        Transform to = new(new Matrix3x2(0, 0, 0, 0, 20, 0));
+
+        MotionSampler<Transform> sampler = CreateSampler(from, to);
+
+        Assert.True(sampler.IsComplete);
+        Assert.Equal(to, sampler.Current);
+        sampler.Advance(TimeSpan.FromMilliseconds(16));
+        Assert.Equal(to, sampler.Current);
+    }
+
+    private static void AdvanceUntilComplete(MotionSampler<Transform> sampler)
+    {
+        for (int i = 0; i < 1000 && !sampler.IsComplete; i++)
+            sampler.Advance(TimeSpan.FromMilliseconds(16));
+
+        Assert.True(sampler.IsComplete);
+    }
+
     private static MotionSampler<Transform> CreateSampler(Transform from, Transform to) =>
         MotionFactory.Spring<Transform>().CreateSampler(from, to, new TransformMixer(), Context());
 
