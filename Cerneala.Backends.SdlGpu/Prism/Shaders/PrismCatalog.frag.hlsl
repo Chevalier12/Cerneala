@@ -292,6 +292,29 @@ float4 DeinterlaceSdl(VertexShaderOutput input)
         CatalogDeinterlace(ResolveUv(input), source, profile),
         profile);
 }
+// A separable, integer-factor box reduction of coverage. Partial trailing
+// cells include transparent padding rather than stretching the source domain.
+// Bound the loop by the actual source extent, including when k exceeds it.
+float4 StyleMaskBoxPixelShader(VertexShaderOutput input)
+{
+    float factor = FilterOptions0.z;
+    bool horizontal = FilterOptions0.w > 0.5;
+    float2 axis = horizontal ? float2(1.0, 0.0) : float2(0.0, 1.0);
+    float2 sourcePosition = floor(input.Position.xy) * (1.0 + axis * (factor - 1.0));
+    float remaining = horizontal
+        ? FilterOptions0.x - sourcePosition.x
+        : FilterOptions0.y - sourcePosition.y;
+    int count = (int)min(factor, max(remaining, 0.0));
+    float coverage = 0.0;
+    [loop]
+    for (int offset = 0; offset < count; offset++)
+    {
+        coverage += StyleMaskSourceTexture.Load(int3(sourcePosition + axis * offset, 0)).a;
+    }
+    coverage /= factor;
+    return float4(coverage, coverage, coverage, coverage);
+}
+
 float4 main(VertexShaderOutput input) : SV_Target0
 {
     switch (PrismKernelId)
@@ -394,6 +417,7 @@ float4 main(VertexShaderOutput input) : SV_Target0
         case 95: return GraphicPenSdl(input);
         case 96: return PlasterSdl(input);
         case 97: return DeinterlaceSdl(input);
+        case 98: return StyleMaskBoxPixelShader(input);
         default: return CopyCompositePixelShader(input);
     }
 }

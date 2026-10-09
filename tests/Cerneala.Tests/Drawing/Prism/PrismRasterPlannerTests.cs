@@ -3,12 +3,116 @@ using Cerneala.Drawing.Prism;
 using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.Drawing.Prism.Filters;
 using Cerneala.Drawing.Prism.Graph;
+using Cerneala.UI.Markup;
 using Cerneala.UI.Prism.Definitions;
+using Cerneala.UI.Prism.Runtime;
 
 namespace Cerneala.Tests.Drawing.Prism;
 
 public sealed class PrismRasterPlannerTests
 {
+    [Theory]
+    [InlineData(33, 2, false)]
+    [InlineData(64, 2, false)]
+    [InlineData(200, 7, false)]
+    [InlineData(33, 2, true)]
+    [InlineData(64, 2, true)]
+    [InlineData(200, 7, true)]
+    public void LargeShadowRadiiRespectKernelCapabilityWithoutChangingBounds(int radius, int factor, bool spread)
+    {
+        PrismGraphExecutionPlan semantic = ShadowPlan(spread ? 0 : (radius - 0.25f) / 1.5f,
+            spread ? radius : 0);
+        PrismRasterExecutionPlan raster = new PrismRasterPlanner().Prepare(semantic, 513, 257);
+        PrismRasterPass[] passes = OrderedPasses(raster).ToArray();
+        PrismRasterPass[] down = passes.Where(pass => pass.Kind == PrismRasterPassKind.MaskDownsample).ToArray();
+        Assert.Equal(2, down.Length);
+        Assert.All(down, pass => Assert.Equal(factor, pass.RadiusOrJump));
+        Assert.True(down[0].Horizontal);
+        Assert.False(down[1].Horizontal);
+        int reducedWidth = (513 + factor - 1) / factor;
+        int reducedHeight = (257 + factor - 1) / factor;
+        Assert.Equal(new(reducedWidth, 257, PrismRasterSurfaceFormat.Rgba16Float), down[0].Surface);
+        Assert.Equal(new(reducedWidth, reducedHeight, PrismRasterSurfaceFormat.Rgba16Float), down[1].Surface);
+        PrismRasterPassKind kind = spread ? PrismRasterPassKind.ShadowSpread : PrismRasterPassKind.ShadowBlur;
+        PrismRasterPass[] kernels = passes.Where(pass => pass.Kind == kind).ToArray();
+        Assert.Equal(2, kernels.Length);
+        Assert.All(kernels, pass =>
+        {
+            Assert.Equal(radius / (float)factor, pass.RadiusOrJump);
+            Assert.InRange(pass.RadiusOrJump, 1, 32);
+            Assert.Equal(down[1].Surface, pass.Surface);
+        });
+        PrismRasterPass up = Assert.Single(passes.Where(pass => pass.Kind == PrismRasterPassKind.MaskUpsample));
+        Assert.Equal(factor, up.RadiusOrJump);
+        Assert.Equal(new(513, 257, PrismRasterSurfaceFormat.Rgba16Float), up.Surface);
+        foreach (PrismGraphNodePlan node in semantic.NodePlans)
+            Assert.Equal(node, raster.GraphPlan.GetNodePlan(node.NodeId));
+        PrismGraphNode style = Assert.Single(semantic.OptimizedGraph.Nodes.Where(node => node.Style == PrismStyleId.DropShadow));
+        int support = radius + (spread ? 1 : 0);
+        Assert.Equal(new DrawRect(-support, -support, 48 + support * 2, 32 + support * 2),
+            semantic.GetNodePlan(style.Id).Bounds);
+        AssertCompleteDependencies(raster);
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(16)]
+    [InlineData(32)]
+    public void SmallShadowRadiiKeepTheOriginalPasses(int radius)
+    {
+        PrismRasterExecutionPlan raster = new PrismRasterPlanner().Prepare(
+            ShadowPlan((radius - 0.25f) / 1.5f, radius), 513, 257);
+        PrismRasterPass[] passes = OrderedPasses(raster).ToArray();
+        Assert.Equal(new[] { PrismRasterPassKind.ShadowSpread, PrismRasterPassKind.ShadowSpread,
+            PrismRasterPassKind.ShadowBlur, PrismRasterPassKind.ShadowBlur }, passes.Select(pass => pass.Kind));
+        Assert.All(passes, pass =>
+        {
+            Assert.Equal(radius, pass.RadiusOrJump);
+            Assert.Equal(new(513, 257, PrismRasterSurfaceFormat.Rgba16Float), pass.Surface);
+        });
+        AssertCompleteDependencies(raster);
+    }
+
+    [Fact]
+    public void DeviceScaleAndLocalExtentDetermineIndependentSpreadAndBlurReductions()
+    {
+        // 2x DPI turns these logical radii into 64px spread and 200px blur.
+        PrismGraphExecutionPlan semantic = ShadowPlan((200 - 0.25f) / 3f, 32, pixelScale: 2);
+        int scope = Assert.Single(semantic.OptimizedGraph.Scopes).AnalysisScopeIndex;
+        PrismRasterPlanner planner = new();
+        Dictionary<int, PrismRasterExtent> extents = new() { [scope] = new(96, 80, 513, 257) };
+        PrismRasterExecutionPlan raster = planner.Prepare(semantic, 1024, 1024, extents);
+        Assert.Equal(new float[] { 2, 2, 7, 7 }, OrderedPasses(raster)
+            .Where(pass => pass.Kind == PrismRasterPassKind.MaskDownsample).Select(pass => pass.RadiusOrJump));
+        Assert.Equal(2, OrderedPasses(raster).Count(pass => pass.Kind == PrismRasterPassKind.MaskUpsample));
+        Assert.All(OrderedPasses(raster).Where(pass => pass.Kind is PrismRasterPassKind.ShadowSpread or PrismRasterPassKind.ShadowBlur),
+            pass => Assert.InRange(pass.RadiusOrJump, 1, PrismRasterPlanner.MaximumShadowKernelRadius));
+        Assert.Same(raster, planner.Prepare(semantic, 1024, 1024, extents));
+        extents[scope] = new(96, 80, 1, 1);
+        PrismRasterExecutionPlan tiny = planner.Prepare(semantic, 1024, 1024, extents);
+        Assert.All(tiny.AuxiliaryPasses.Values, pass => Assert.Equal(new(1, 1, PrismRasterSurfaceFormat.Rgba16Float), pass.Surface));
+        AssertCompleteDependencies(raster);
+        AssertCompleteDependencies(tiny);
+    }
+
+    private static PrismGraphExecutionPlan ShadowPlan(float size, float spread, float pixelScale = 1)
+    {
+        DrawRect bounds = new(0, 0, 48, 32);
+        PrismLayerDefinition layer = new(new(1), "Shadow", styles: [new(PrismStyleId.DropShadow)]);
+        PrismDrawScope scope = PrismTestData.Scope(new("Shadow", [layer]), bounds: bounds, pixelScale: pixelScale);
+        var state = Assert.Single(scope.Instance.GetLayerState(layer.Id).Styles);
+        PrismCatalogEntryDescriptor entry = PrismCatalogRuntime.GetEntry((int)PrismStyleId.DropShadow);
+        Set("Size", size);
+        Set("Spread", spread);
+        Set("Distance", 0);
+        DrawCommandList commands = PrismTestData.Commands(DrawCommand.BeginPrism(scope),
+            DrawCommand.FillRectangle(bounds, Color.White), DrawCommand.EndPrism());
+        return new PrismGraphOptimizer().Optimize(new PrismGraphBuilder().Build(new PrismFrameAnalyzer().Analyze(commands)));
+
+        void Set(string name, float value) => GeneratedMarkup.SetPrismStyleNumber(state, entry.StableId,
+            entry.Properties.Single(property => property.Name == name).TypeSlot, value);
+    }
+
     [Fact]
     public void ThresholdPlansAnalysisSurfacesAndTheirConsumingDependencies()
     {
