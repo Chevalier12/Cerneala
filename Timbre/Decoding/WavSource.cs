@@ -96,7 +96,7 @@ internal sealed class WavSource : DecodedSource
             }
             else
             {
-                stream.Seek(size + (size & 1), SeekOrigin.Current);
+                stream.Seek((long)size + (size & 1), SeekOrigin.Current);
             }
         }
 
