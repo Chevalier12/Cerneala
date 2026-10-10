@@ -44,6 +44,8 @@ The runtime processes audio on its own mixer thread in blocks of 480 frames (10 
 
 All voices are summed after their own chains and volumes. The sum is hard-clipped to ±1 at the output; there is no normalization, compressor, or limiter.
 
+Every submitted sample is finite. Source samples must already be finite, but a modifier chain can still overflow `float` on finite input, for example a `Delay` with `Feedback = 0.95` on samples near `3e38`. When a playback's chain output for a block contains NaN or infinity, that playback ends `Failed` with `TimbreErrorKind.InvalidData`, contributes nothing from that block, and produces no further PCM. Other playbacks in the mix are unaffected.
+
 When no output is configured, the output fails to open, or the device is lost, the affected playbacks end `Failed` with `TimbreErrorKind.DeviceUnavailable`. The runtime does not retry; a later `Play` tries to open the output again.
 
 `PrepareAsync` decodes a preloadable clip into the cache ahead of time without playing it. For a streaming clip it verifies that the source opens: a decoded file or stream reads its headers (and, for Ogg, its final page) and decodes none of its audio. The token is observed between decoded frames or packets. It throws a [TimbreException](Cerneala.Timbre.TimbreException.md) for source, format, or resource-limit failures.
