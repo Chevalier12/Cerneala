@@ -1,11 +1,13 @@
 # Cerneala Presentation frame-budget benchmark
 
-This Windows-only benchmark launches the real WindowsDX presentation window, navigates
+This Windows-only benchmark launches the real `CernealaPresentation` window, which
+runs on the SDL3 + SDL_GPU desktop backend (`SdlGpuApplicationBackend`), navigates
 through the seven measured chapters with automation peers, including Prism Studio,
 and captures every native
 `UiFrame.ProcessingTime` sample. Welcome is navigation-only and is never measured.
-It requires Windows with a working Direct3D 11 adapter and the WindowsDX Presentation
-build; it is not a headless or cross-platform benchmark.
+It requires Windows with a GPU that SDL_GPU can use and a Release build of
+`CernealaPresentation` (`CernealaPresentation/bin/Release/net8.0-windows/CernealaPresentation.exe`);
+it is not a headless or cross-platform benchmark.
 
 Run from the repository root:
 
@@ -32,4 +34,4 @@ any cold sample exceed the cold ceiling, or lets any chapter's warm p99 exceed
 the frame target. The console summary and JSON still preserve every sample and
 print every individual frame above the warm target, including cold samples, so
 the percentile gate cannot hide outliers. Results are environment-specific and
-should be compared only on the same WindowsDX machine and Release configuration.
+should be compared only on the same machine, GPU, and Release configuration.

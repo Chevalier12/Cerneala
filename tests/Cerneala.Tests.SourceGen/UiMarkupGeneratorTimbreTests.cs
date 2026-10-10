@@ -252,8 +252,8 @@ public sealed partial class UiMarkupGeneratorTests
     // The sound examples of the conceptual guides must stay compilable: their
     // markup runs through the real generator and their C# against the core API.
     [Theory]
-    [InlineData("timbre-guide.md")]
-    [InlineData("CernealaMarkupGuide.md")]
+    [InlineData("guides/timbre-guide.md")]
+    [InlineData("guides/markup-guide.md")]
     public void DocumentedTimbreExamplesCompile(string guide)
     {
         string text = File.ReadAllText(Path.Combine(DocumentationRoot(), guide)).Replace("\r\n", "\n");

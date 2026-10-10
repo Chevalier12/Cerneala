@@ -105,4 +105,4 @@ Target framework: `net8.0`
 - `UI/Motion/Input/VelocityTracker.cs`
 - `UI/Motion/Core/MotionValue{T}.cs`
 - `UI/Motion/Specs/MotionSpec{T}.cs`
-- `docs/motion-markup-syntax-proposal.md`
+- `docs/reference/motion-markup-syntax.md`

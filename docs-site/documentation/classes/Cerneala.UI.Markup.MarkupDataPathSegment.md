@@ -51,4 +51,4 @@ Source-generated markup data paths.
 ## See Also
 - `Cerneala.UI.Markup.GeneratedMarkup`
 - `Cerneala.UI.Markup.MarkupObservation`
-- `docs/markup-data-bindings.md`
+- `docs/reference/markup-data-bindings.md`

@@ -4,6 +4,8 @@
 
 **Date:** 2026-07-10
 **Status:** Implemented and verified
+
+> Status note (2026-10-10): implemented; the checklist boxes below were never ticked; the Playground and `getting-started` demos are still missing.
 **Purpose:** Extend the Cerneala markup so that any element derived from `Control` can declare a local `@template`, and a `Aspect` can provide the same modern type of `ComponentTemplate`.
 
 ## Summary

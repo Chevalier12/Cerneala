@@ -1,0 +1,1649 @@
+# Cerneala Markup Guide
+
+This guide is for developers and AI agents authoring Cerneala `.crn` files.
+It describes the current compile-time markup language, not a compatibility
+subset inferred from WPF or Avalonia.
+
+The most important rule is simple:
+
+> Cerneala markup resembles XAML, but it is not WPF, Avalonia, WinUI, HTML, or
+> CSS. Use only syntax and types that exist in this repository.
+
+Do not invent familiar XAML features and hope the generator understands them.
+The build-time source generator validates the document and will reject unknown
+elements, properties, resources, bindings, directives, or motion targets.
+
+### Shared language model
+
+All `.crn` dialects now pass through one lossless, recovery-capable parser and
+one semantic model in `Cerneala.Language`. Bindings, resources, templates,
+Aspect, Motion, and Prism therefore use the same source spans, symbols, and
+diagnostics before `Cerneala.SourceGen` lowers the validated result to C#.
+
+Recovery keeps a partially typed document analyzable, but it does not weaken the
+build contract: saved markup is analyzed in strict `Build` mode, errors stop
+source emission, and generated code remains statically typed and reflection-free.
+The repository's Visual Studio extension ships the local language server,
+TextMate fallback, diagnostics, IntelliSense, navigation, semantic tokens,
+structure, formatting, and code actions for `.crn`. Do not register these files
+as generic XML; follow the
+[Visual Studio Community Extension](visual-studio-community.md) guide instead.
+
+## 1. Working contract
+
+When editing visual UI:
+
+1. Read the entire target `.crn` file before editing it.
+2. Read `App.crn` and one or two visually related sibling views.
+3. Preserve existing `Name`, event handler, `Aspect`, `MotionClip`, and binding
+   identifiers unless the task explicitly requires changing behavior.
+4. Prefer existing global brushes and aspects over local duplicates.
+5. Use `Grid`, `StackPanel`, `Border`, text, shapes, and existing controls before
+   inventing a custom control.
+6. Keep behavior in markup only when Cerneala already supports it. Put arbitrary
+   application logic in the companion C# partial class.
+7. Build after every meaningful markup change.
+8. Inspect a screenshot captured through `Window.SaveScreenshot` or the
+   application-owned automation path. A successful build is not visual QA.
+9. Never edit generated files under `obj/` or `bin/`.
+
+## 2. File model
+
+Cerneala build-time markup files use the `.crn` suffix.
+
+Typical file pairs:
+
+```text
+DashboardView.crn
+DashboardView.crn.cs
+```
+
+The companion class name must match the base file name:
+
+```csharp
+using Cerneala.UI.Controls;
+
+namespace MyApp;
+
+public partial class DashboardView : UserControl
+{
+}
+```
+
+Important companion-class constraints:
+
+- It must be a non-nested, non-generic `partial` class.
+- It must derive from `UserControl`, `UserControl<TViewModel>`, `Window`, or `Scene2D` as
+  appropriate.
+- Do not add a user-declared constructor. The markup generator owns
+  construction.
+- The XML root and companion base class must agree.
+
+The project must include markup as Roslyn additional files. The presentation
+project uses:
+
+```xml
+<AdditionalFiles Include="**\*.crn" Exclude="bin\**;obj\**" />
+```
+
+## 3. Root documents
+
+### UserControl
+
+Use `UserControl` for reusable views and pages:
+
+```xml
+<UserControl>
+    <Border
+        Background="$PanelBrush"
+        Padding="24">
+        <TextBlock
+            Text="Dashboard"
+            FontSize="28"
+            Foreground="$PaperBrush" />
+    </Border>
+</UserControl>
+```
+
+### Scene2D components
+
+For reusable retained scene groups, pair a `<Scene2D>` document with a
+`partial class HouseView : Scene2D` companion and import its namespace to use
+`<local:HouseView />`. The component remains in the logical scene tree, not the
+visual layout tree. See the canonical [Scene2D component documentation](../../docs-site/documentation/classes/Cerneala.UI.Controls.Scene2D.md)
+for the complete two-file example and construction constraints.
+
+### Window
+
+Use `Window` for native top-level windows:
+
+```xml
+<Window
+    Title="Cerneala"
+    Width="1280"
+    Height="800"
+    MinWidth="960"
+    MinHeight="640"
+    WindowStartupLocation="CenterScreen"
+    Background="$InkBrush">
+    <Grid />
+</Window>
+```
+
+### Application
+
+`App.crn` owns application-wide resources and startup:
+
+```xml
+<Application
+    StartupWindow="MainWindow"
+    ShutdownMode="OnMainWindowClose">
+    <Application.Resources>
+        <!-- Global resources and default aspects. -->
+    </Application.Resources>
+</Application>
+```
+
+## 4. Basic XML rules
+
+### Names
+
+Use `Name`, not `x:Name`:
+
+```xml
+<TextBlock
+    Name="StatusText"
+    Text="READY" />
+```
+
+A named element is available to:
+
+- the generated partial class;
+- direct bindings such as `$StatusText.Text`;
+- Motion targets such as `$StatusText.Opacity`.
+
+Names are contracts. Do not casually rename elements in an existing view.
+
+### Property attributes
+
+Most properties are assigned as XML attributes:
+
+```xml
+<Border
+    Width="320"
+    Height="160"
+    Margin="16,12,16,12"
+    Padding="20"
+    HorizontalAlignment="Left"
+    VerticalAlignment="Top"
+    Background="$PanelBrush"
+    BorderBrush="$LineBrush"
+    BorderThickness="1"
+    Opacity="0.9"
+    ClipToBounds="True" />
+```
+
+Safe value forms commonly used in the repository:
+
+| Type | Examples |
+| --- | --- |
+| Boolean | `True`, `False` |
+| Number | `12`, `0.75`, `-18` |
+| Thickness | `12` or `12,8,12,8` |
+| Color | `Red`, `#RRGGBB`, `#AARRGGBB` |
+| Alignment | `Left`, `Center`, `Right`, `Top`, `Bottom`, `Stretch` |
+| Visibility | `Visible`, `Hidden`, `Collapsed` |
+| Orientation | `Horizontal`, `Vertical` |
+| Grid length | `Auto`, `*`, `1.5*`, `240` |
+| Duration | `180ms`, `1.2s`, `4s` |
+
+Prefer one-value or four-value thicknesses. Do not assume CSS-style two-value
+or three-value shorthand is supported.
+
+### Property elements
+
+Use property elements for collections or structured values:
+
+```xml
+<Grid>
+    <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+        <RowDefinition Height="64" />
+    </Grid.RowDefinitions>
+    <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="240" />
+        <ColumnDefinition Width="*" />
+    </Grid.ColumnDefinitions>
+</Grid>
+```
+
+### Attached properties
+
+Attached layout properties use dotted names:
+
+```xml
+<TextBlock
+    Grid.Row="1"
+    Grid.Column="0"
+    Grid.ColumnSpan="2"
+    Text="Placed by the parent Grid" />
+```
+
+For `Canvas`, verify the exact attached property in `UI/Controls/Canvas.cs`
+before using it.
+
+### XML escaping
+
+Normal XML escaping still applies:
+
+```xml
+<TextBlock Text="PREVIOUS  &lt;-" />
+<TextBlock Text="Line one&#xA;Line two" />
+```
+
+## 5. Layout primitives
+
+### Grid
+
+Use `Grid` for page structure, stable tool layouts, and overlays.
+
+```xml
+<Grid>
+    <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="280" />
+    </Grid.ColumnDefinitions>
+
+    <Border
+        Grid.Column="0"
+        Background="$InkBrush" />
+
+    <Border
+        Grid.Column="1"
+        Background="$PanelBrush"
+        BorderBrush="$LineBrush"
+        BorderThickness="1,0,0,0" />
+</Grid>
+```
+
+Children in the same cell overlap in declaration order. This is useful for
+backgrounds, halos, decoration, and HUD overlays.
+
+### StackPanel
+
+Use `StackPanel` for simple linear groups:
+
+```xml
+<StackPanel
+    Orientation="Vertical">
+    <TextBlock Text="TITLE" />
+    <TextBlock
+        Text="Supporting copy"
+        Margin="0,8,0,0" />
+</StackPanel>
+```
+
+Do not use deeply nested `StackPanel` trees when a `Grid` would provide stable
+alignment.
+
+### Border
+
+`Border` is the standard single-child surface and divider primitive:
+
+```xml
+<Border
+    Background="$PanelBrush"
+    BorderBrush="$LineStrongBrush"
+    BorderThickness="1"
+    Padding="18">
+    <TextBlock Text="One child only" />
+</Border>
+```
+
+Use border sides for dividers:
+
+```xml
+<Border
+    BorderBrush="$LineBrush"
+    BorderThickness="0,0,0,1" />
+```
+
+### Canvas
+
+Use `Canvas` only for genuinely absolute compositions. Prefer `Grid` for
+responsive application UI.
+
+### Responsive layout
+
+- Use star-sized grid rows and columns for flexible regions.
+- Use `Auto` for intrinsic content.
+- Use fixed sizes only for stable tools, rails, artwork, or deliberate formats.
+- Always respect the containing window's minimum size.
+- Use `TextWrapping="Wrap"` for copy that can become narrow.
+- Use `ClipToBounds="True"` for animated or decorative scenes.
+- Do not rely on viewport-scaled font sizes. Cerneala markup uses explicit
+  numeric sizes.
+
+## 6. Common controls
+
+The repository currently contains these useful visual controls. This is a
+practical starting list, not the canonical API inventory.
+
+### Structure and content
+
+- `Border`
+- `Canvas`
+- `ContentControl`
+- `ContentPresenter`
+- `Grid`
+- `ItemsControl`
+- `ItemsPresenter`
+- `Panel`
+- `ScrollViewer`
+- `StackPanel`
+- `TabControl`
+- `TabItem`
+- `UserControl`
+- `Window`
+
+### Text and input
+
+- `Label`
+- `PasswordBox`
+- `TextBlock`
+- `TextBox`
+
+### Commands and selection
+
+- `Button`
+- `CheckBox`
+- `ColorPicker`
+- `ComboBox`
+- `ListBox`
+- `ListBoxItem`
+- `Menu`
+- `MenuBar`
+- `MenuItem`
+- `RadioButton`
+- `RepeatButton`
+- `ToggleButton`
+
+### Value and progress
+
+- `ProgressBar`
+- `ScrollBar`
+- `Slider`
+- `Thumb`
+
+### Visual media
+
+- `Ellipse`
+- `Image`
+- `Path`
+- `Rectangle`
+- `SvgImage`
+
+### Specialized
+
+- `InkCanvas`
+- `RenderSurface2D`
+- `ToolTip`
+
+This list describes available runtime classes, not a promise that every WPF
+property exists. Before using an unfamiliar control or property:
+
+1. Find an existing `.crn` usage.
+2. Read its class under `UI/Controls/`.
+3. Check its page under `docs-site/documentation/classes/`.
+4. Build immediately after the first small usage.
+
+Custom project controls use a CLR namespace prefix:
+
+```xml
+<UserControl xmlns:local="clr-namespace:MyApp">
+    <local:GameView />
+</UserControl>
+```
+
+Framework controls such as `SvgImage` and `RenderSurface2D` are provided by
+`Cerneala.UI.Controls`. `RenderSurface2D` is the retained content control used
+for realtime 2D drawing. Its `Content` remains an ordinary retained subtree, so
+HUD controls can be placed over the game surface.
+
+### Retained `RenderSurface2D` scenes
+
+`RenderSurface2D.Scene` accepts one `Scene2D` root. That is not a one-group
+limit: nest any number of `Scene2D` nodes to represent world groups and major
+layers. A group uses scene-space transform channels such as `TranslateX`,
+`TranslateY`, `Scale`, and `Rotation`; `TransformOrigin` is an absolute local
+scene-space point.
+
+The default `OrderMode="Source"` preserves declaration or collection order.
+`Layer` sorts by `SceneNode2D.Layer`. `LayerThenY` sorts by layer, then by the
+bottom edge of each child's transformed scene-space bounds, and finally by
+stable source order. `Sprite2D.LayerDepth` is a backend sprite value and does
+not replace `Layer`.
+
+Groups, layers, and visual nodes can each own Aspect, Motion, and Prism.
+`SceneItems2D` is only a materializer: put those declarations on the node
+created inside `@templates`, not on `SceneItems2D` as a substitute effect
+scope. Aspect can assign structural `Layer` and `OrderMode` values, but Motion
+rejects them because they have no interpolation contract. Transform and
+opacity Motion remain supported. A local UI-property value masks Motion for
+the same property, so do not set a local value on the channel an animation is
+expected to drive.
+
+The following syntax is compiled by the RenderSurface2D source-generator
+contract test. Bind or assign `SceneItems2D.ItemsSource` when instances of the
+template are needed.
+
+```xml
+<RenderSurface2D
+    xmlns:resources="clr-namespace:Cerneala.UI.Resources;assembly=Cerneala">
+    <RenderSurface2D.Resources>
+        <resources:ImageResource Name="WorldAtlas" Source="Assets/world.png" />
+    </RenderSurface2D.Resources>
+    <RenderSurface2D.Scene>
+        <Scene2D OrderMode="LayerThenY"
+                 TranslateX="32"
+                 TransformOrigin="128,96">
+            <Scene2D.Aspect>
+                @prism
+                {
+                    @layer GroupContent
+                    {
+                        Opacity = 1;
+                        @filter Blur { Radius = 1; }
+                    }
+                }
+                @on Loaded
+                {
+                    @animate with Tween(100ms)
+                    {
+                        @to { TranslateY = 8; }
+                    }
+                }
+            </Scene2D.Aspect>
+            <Scene2D Layer="1">
+                <Scene2D.Aspect>
+                    @prism
+                    {
+                        @layer LayerContent
+                        {
+                            Opacity = 1;
+                            @filter Blur { Radius = 1; }
+                        }
+                    }
+                    @on Loaded
+                    {
+                        @animate with Tween(100ms)
+                        {
+                            @to { Opacity = 0.75; }
+                        }
+                    }
+                </Scene2D.Aspect>
+                <SceneItems2D>
+                    @templates
+                    {
+                        <ContentTemplate DataType="System.String">
+                            <Sprite2D SourceResourceId="$WorldAtlas">
+                                <Sprite2D.Aspect>
+                                    @prism
+                                    {
+                                        @layer SpriteContent
+                                        {
+                                            Opacity = 1;
+                                            @filter Blur { Radius = 1; }
+                                        }
+                                    }
+                                    @on Loaded
+                                    {
+                                        @animate with Tween(100ms)
+                                        {
+                                            @to { Opacity = 0.5; }
+                                        }
+                                    }
+                                </Sprite2D.Aspect>
+                            </Sprite2D>
+                        </ContentTemplate>
+                    }
+                </SceneItems2D>
+            </Scene2D>
+        </Scene2D>
+    </RenderSurface2D.Scene>
+</RenderSurface2D>
+```
+
+Scene composition uses `Scene2D` groups, `TileMap2D` static strata, individual
+`Sprite2D` nodes, and dynamic `SceneItems2D` collections. Static `Tile` declarations
+remain data inside a map. Compose independent maps and sprites as scene peers;
+bind an imported map model or declare direct tiles, not both. See the canonical
+[TileMap2D API](../../docs-site/documentation/classes/Cerneala.UI.Controls.TileMap2D.md).
+
+### Collision and routed input in a retained scene
+
+A `Sprite2D` owns zero or one live collider, never a
+collection, and scene groups cannot own one directly. Declare at most one shape
+child inside that owner or assign its typed `Collider` property. A static `Tile`
+or imported tile definition likewise owns zero or one immutable descriptor.
+A second shape is a diagnostic, not a shape that is merged or ignored. Shape
+dimensions and offsets are managed separately from image dimensions, crop,
+origin, flip, and animation.
+
+The root scene still owns the shared collision query world, and input still
+uses Cerneala's routed UI events. The canonical contracts and compilable
+authoring examples are maintained on these API pages:
+
+- [Collider ownership, bindings, and routed input](../../docs-site/documentation/classes/Cerneala.UI.Controls.Collider2D.md)
+- [Sprite2D pose and independent collider geometry](../../docs-site/documentation/classes/Cerneala.UI.Controls.Sprite2D.md)
+- [Static Tile collision descriptor](../../docs-site/documentation/classes/Cerneala.UI.Controls.Tile.md)
+- [CollisionWorld2D queries](../../docs-site/documentation/classes/Cerneala.UI.Controls.CollisionWorld2D.md)
+
+## 7. Text
+
+Common `TextBlock` properties:
+
+```xml
+<TextBlock
+    Text="A retained interface."
+    FontFamily="Bahnschrift SemiBold"
+    FontSize="32"
+    Foreground="$PaperBrush"
+    TextWrapping="Wrap"
+    HorizontalAlignment="Left"
+    Margin="0,8,0,0" />
+```
+
+Use an installed font family name. Existing presentation-safe families include:
+
+- `Segoe UI Variable Text`
+- `Bahnschrift`
+- `Bahnschrift SemiBold`
+- `Cascadia Mono`
+- `Cascadia Mono SemiBold`
+
+Use display-sized text only for true page-level titles. Compact controls,
+sidebars, telemetry, and cards need smaller type.
+
+## 8. Shapes and visual decoration
+
+Use shapes for simple artwork and indicators:
+
+```xml
+<Grid
+    Width="80"
+    Height="80">
+    <Ellipse
+        Fill="$OrangeBrush"
+        Stroke="$PaperBrush"
+        StrokeThickness="1" />
+    <Ellipse
+        Width="24"
+        Height="24"
+        Fill="$PaperBrush"
+        Opacity="0.3"
+        HorizontalAlignment="Left"
+        VerticalAlignment="Top"
+        Margin="12,12,0,0" />
+</Grid>
+```
+
+Useful shape properties include `Fill`, `Stroke`, and `StrokeThickness`.
+
+Do not hand-write SVG markup inside a `.crn` file. Use Cerneala's `Path`,
+`Image`, an existing custom SVG control, or a raster asset according to the
+project's established pattern.
+
+## 9. Resources
+
+### Resource scope
+
+Resources can live at application, window, or user-control scope:
+
+```xml
+<UserControl>
+    <UserControl.Resources>
+        <SolidColorBrush
+            Name="LocalAccentBrush"
+            Color="#FFFFC44D" />
+    </UserControl.Resources>
+
+    <TextBlock
+        Text="LOCAL ACCENT"
+        Foreground="$LocalAccentBrush" />
+</UserControl>
+```
+
+Use `$ResourceName` to reference a resource:
+
+```xml
+Background="$PanelBrush"
+Foreground="$PaperBrush"
+Aspect="$GhostButton"
+```
+
+Do not use `{StaticResource ...}`, `{DynamicResource ...}`, `x:Key`, or merged
+WPF resource dictionaries.
+
+### Supported build-time resource kinds
+
+- `SolidColorBrush`
+- `LinearGradientBrush`
+- `RadialGradientBrush`
+- `ImageBrush`
+- `DrawingBrush`
+- `ImageResource`
+- `Aspect`
+- `Tween`
+- `Spring`
+- `MotionClip`
+- `PrismClip`
+- `TimbreClip`
+
+`VisualBrush` is runtime-only because its source is a live element.
+
+### Solid brushes
+
+```xml
+<SolidColorBrush
+    Name="AccentBrush"
+    Color="#FF4DF0FF"
+    Opacity="0.9" />
+```
+
+### Gradient brushes
+
+```xml
+<LinearGradientBrush
+    Name="HeaderBrush"
+    StartPoint="0,0"
+    EndPoint="1,1"
+    Opacity="1">
+    <GradientStop
+        Offset="0"
+        Color="#FF10282D" />
+    <GradientStop
+        Offset="1"
+        Color="#FF2C1323" />
+</LinearGradientBrush>
+```
+
+```xml
+<RadialGradientBrush
+    Name="HaloBrush"
+    Center="0.5,0.5"
+    RadiusX="0.5"
+    RadiusY="0.5">
+    <GradientStop
+        Offset="0"
+        Color="#804DF0FF" />
+    <GradientStop
+        Offset="1"
+        Color="#004DF0FF" />
+</RadialGradientBrush>
+```
+
+Gradient stop offsets must be between `0` and `1`.
+
+### Image resources for sprites
+
+Declare a path-backed atlas as a typed resource and reference it from any
+number of sprites. A non-null `SourceResourceId` takes precedence over
+`Sprite2D.Source`; all sprites under one root share the root-owned image cache.
+
+```xml
+<RenderSurface2D
+    xmlns:resources="clr-namespace:Cerneala.UI.Resources;assembly=Cerneala">
+    <RenderSurface2D.Resources>
+        <resources:ImageResource Name="WorldAtlas" Source="Assets/world.png" />
+    </RenderSurface2D.Resources>
+    <RenderSurface2D.Scene>
+        <Scene2D>
+            <Sprite2D SourceResourceId="$WorldAtlas" />
+            <Sprite2D SourceResourceId="$WorldAtlas" />
+        </Scene2D>
+    </RenderSurface2D.Scene>
+</RenderSurface2D>
+```
+
+### Current CernealaPresentation palette
+
+`CernealaPresentation/App.crn` currently defines:
+
+- Neutral: `InkBrush`, `PanelBrush`, `PanelAltBrush`, `RaisedBrush`
+- Lines: `LineBrush`, `LineStrongBrush`
+- Text: `PaperBrush`, `SlateBrush`, `SlateDimBrush`
+- Cyan: `CyanBrush`, `CyanWashBrush`
+- Pink: `PinkBrush`, `PinkWashBrush`
+- Lime: `LimeBrush`, `LimeWashBrush`
+- Orange: `OrangeBrush`, `OrangeWashBrush`
+- Utility: `TransparentBrush`
+
+It also defines reusable aspects such as `PageReveal`, `GhostButton`, and
+`LimeButton`.
+
+Reuse these before adding more colors. Add a local semantic brush only when the
+view genuinely needs one.
+
+## 10. Events and code-behind
+
+Markup events reference methods by name:
+
+```xml
+<Button
+    Name="SaveButton"
+    Content="SAVE"
+    Click="OnSave" />
+```
+
+A common routed event handler shape is:
+
+```csharp
+using Cerneala.UI.Input;
+
+private void OnSave(UiElementId sender, RoutedEventArgs args)
+{
+    // Application behavior belongs here.
+}
+```
+
+Different events can require different event argument types. Copy the signature
+from a working handler or inspect the control's event declaration. Do not guess.
+
+Use code-behind for:
+
+- navigation;
+- mutations involving multiple application objects;
+- service calls;
+- asynchronous work;
+- complex state transitions;
+- screenshot or automation helpers.
+
+Use markup for:
+
+- structure;
+- resources;
+- static property values;
+- bindings;
+- visual states;
+- supported Motion transitions.
+
+## 11. Typed bindings
+
+Cerneala bindings use `$` paths. They do not use `{Binding ...}`.
+
+### Data context
+
+Declare the root data type:
+
+```xml
+<UserControl
+    DataType="MyApp.DashboardViewModel">
+    <TextBlock
+        Text="$DataContext.Title" />
+</UserControl>
+```
+
+`DataType` is allowed only on the root UI element.
+
+### One-way binding
+
+One-way is the default for XML property attributes, including attributes inside
+templates:
+
+```xml
+<TextBlock
+    Text="$DataContext.Status" />
+```
+
+The equivalent explicit form is:
+
+```xml
+<TextBlock
+    Text="$DataContext.Status:OneWay" />
+```
+
+Both forms remain synchronized with the source. CLR property-path owners must
+implement `INotifyPropertyChanged`; the target must be a writable UI property.
+This default does not apply to directive assignments: a bare value such as
+`Text = $DataContext.Status;` reads once, while a live binding in a supported
+reactive assignment requires an explicit mode. See
+[Markup Data Bindings](../reference/markup-data-bindings.md) for context and compatibility
+rules.
+
+### Two-way binding
+
+Use the final `:TwoWay` suffix:
+
+```xml
+<TextBox
+    Text="$DataContext.Query:TwoWay" />
+```
+
+The source must be writable and observable in a way supported by the generated
+binding runtime.
+
+### Element and self bindings
+
+```xml
+<TextBlock
+    Name="SourceText"
+    Text="LIVE" />
+<TextBlock
+    Text="$SourceText.Text" />
+```
+
+Inside aspects and templates, these source forms are common:
+
+- `$self.Property`
+- `$owner.Property`
+- `$DataContext.Property`
+- `$NamedElement.Property`
+- `$self.parts.$PART_Name.Property`
+
+### String interpolation
+
+String properties can mix literals and binding paths:
+
+```xml
+<TextBlock
+    Text="STATUS / $DataContext.Status" />
+```
+
+Binding modes are not allowed inside interpolated strings.
+
+To render a literal dollar sign where interpolation is possible, escape it as
+`\$`.
+
+### Binding rules
+
+- A direct binding is unquoted in Aspect assignment syntax.
+- A binding path cannot end in a dot.
+- Binding paths are statically validated against the declared data type and
+  known elements.
+- Do not write a quoted string containing only a binding path in directive
+  assignment syntax. That is intentionally treated as ambiguous.
+
+## 12. Aspects
+
+`Aspect` is Cerneala's styling, state, template, and motion composition system.
+Do not create WPF `Style`, trigger, or storyboard markup.
+
+### Inline aspect
+
+`<Type.Aspect>` already declares an Aspect for its owning element. Put the body
+directly inside that property element:
+
+```xml
+<Button>
+    <Button.Aspect>
+        @default { Opacity = 0.5; }
+        @when IsMouseOver { Opacity = 0.8; }
+    </Button.Aspect>
+</Button>
+```
+
+A nested `<Aspect>` wrapper is illegal (`CERNEALAUI005`), including an empty
+`<Aspect />`. Remove the redundant tags and keep their body. This is a breaking
+syntax change for wrapped inline declarations only; named and default Aspects
+inside resources still use `<Aspect TargetType="...">`.
+
+### Named aspect
+
+```xml
+<UserControl.Resources>
+    <Aspect
+        Name="QuietButton"
+        TargetType="Button">
+        @default
+        {
+            Background = $TransparentBrush;
+            Foreground = $PaperBrush;
+            BorderBrush = $LineStrongBrush;
+            BorderThickness = "1";
+            Padding = "16,10,16,10";
+        }
+        @when IsMouseOver
+        {
+            @if IsMouseOver == true
+            {
+                Background = $CyanWashBrush;
+                Foreground = $CyanBrush;
+                BorderBrush = $CyanBrush;
+            }
+            @if IsMouseOver == false
+            {
+                Background = $TransparentBrush;
+                Foreground = $PaperBrush;
+                BorderBrush = $LineStrongBrush;
+            }
+        }
+    </Aspect>
+</UserControl.Resources>
+```
+
+Apply it with:
+
+```xml
+<Button
+    Aspect="$QuietButton"
+    Content="OPEN" />
+```
+
+### Default aspect
+
+An unnamed aspect targets all matching controls in its resource scope:
+
+```xml
+<Aspect TargetType="TextBlock">
+    @default
+    {
+        FontFamily = "Segoe UI Variable Text";
+        FontSize = 14;
+        Foreground = $PaperBrush;
+    }
+</Aspect>
+```
+
+### Target and TargetType
+
+Existing markup uses:
+
+- `TargetType="Button"` for a normal control target;
+- `TargetType="Fully.Qualified.CustomType"` for a specific CLR type.
+
+Follow the pattern already used in the surrounding file.
+
+### Reactive conditions
+
+Supported condition shapes include boolean sources, comparisons, groups, and
+logical expressions:
+
+```text
+@when IsMouseOver
+@when $self.Visibility
+@if value == Visible
+@if IsChecked == true
+@if ($DataContext.IsReady == true and IsEnabled == true)
+```
+
+Use `value` for the current value of the source watched by `@when`.
+
+### Templates
+
+An aspect can own one control template:
+
+```xml
+<Aspect
+    Name="CompactButton"
+    TargetType="Button">
+    @template
+    {
+    <Border
+        Background="$owner.Background"
+        BorderBrush="$owner.BorderBrush"
+        BorderThickness="$owner.BorderThickness"
+        Padding="$owner.Padding">
+        <ContentPresenter
+            Content="$owner.Content"
+            FontFamily="$owner.FontFamily"
+            FontSize="$owner.FontSize"
+            Foreground="$owner.Foreground"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center" />
+    </Border>
+    }
+</Aspect>
+```
+
+Inside a template:
+
+- `$owner` is the templated control;
+- `PART_` names are template-part contracts;
+- `$self.parts.$PART_Name.Property` can target a generated template part from
+  the applied aspect.
+
+Do not nest arbitrary extra template roots. A template has one visual root.
+
+### Applying and replacing an aspect
+
+An aspect brings everything written in it to the element it is applied to:
+its values, `@when` conditions, `@on` handlers, Motion, `@presence`, `@layout`,
+input Motion, its sounds (`@timbre`) and its Prism effect (`@prism`). The
+element receives all of it when it is attached with the aspect, and loses all of
+it when the aspect is replaced or the element is detached.
+
+```xml
+<UserControl.Resources>
+    <TimbreClip Name="Sounds">
+        @sound Click { Source = "audio/click.wav"; }
+        @sound Pop { Source = "audio/pop.wav"; }
+    </TimbreClip>
+    <Aspect Name="Quiet" TargetType="Button">
+        @timbre $Sounds;
+        @on Click { @play $self.timbre.Click; }
+    </Aspect>
+    <Aspect Name="Loud" TargetType="Button">
+        @timbre $Sounds;
+        @on Click
+        {
+            @play $self.timbre.Pop;
+            @animate with Tween(300ms, EaseOut) { @to { Opacity = 0.6; } }
+        }
+    </Aspect>
+</UserControl.Resources>
+
+<Button Name="PlayButton" Content="Play" Aspect="$Quiet" />
+```
+
+```csharp
+PlayButton.Aspect = (ElementAspect)Resources["Loud"];
+```
+
+After the assignment:
+
+- a click plays `pop.wav` and animates the opacity — `Quiet` no longer reacts;
+- a sound `Quiet` started is canceled, a running animation of `Quiet` stops, and
+  a value its animation was writing returns to the element's own value;
+- the sounds of `Loud` that have `AutoPlay = true` start, and its `@prism`
+  effect (if any) replaces the effect of `Quiet`;
+- `@presence` and `@layout` of the old aspect are removed; those of the new one
+  apply to future exits and layout changes (an enter animation is not replayed
+  on an element that is already visible);
+- `@on Loaded` of the new aspect does not run: the element was already loaded.
+
+The same aspect applied to several elements gives each element its own copy of
+the program. An inline aspect can also be assigned to another element from C#.
+
+`$Name` inside an aspect means the element with that name **where the aspect is
+written**, not where it is applied:
+
+```xml
+<StackPanel>
+    <StackPanel.Resources>
+        <Aspect Name="PauseMusic" TargetType="Button">
+            @on Click { @animate { @to { $Speaker.Opacity = 0.3; } } }
+        </Aspect>
+    </StackPanel.Resources>
+    <Border Name="Speaker" />
+    <Button Content="Pause 1" Aspect="$PauseMusic" />
+    <Button Content="Pause 2" Aspect="$PauseMusic" />
+</StackPanel>
+```
+
+Both buttons dim the same `Speaker`. An aspect declared in `App.crn` has no
+named elements to refer to and may use only `$self` and `$owner`.
+
+A resource aspect is compiled once and can be applied anywhere, so
+`$owner.parts.$Chrome`, `$owner.prism.Glow` and `$self.prism.Glow` take their
+type from the places in the markup where the aspect is applied:
+
+```xml
+<Aspect Name="Glowy" TargetType="Border">
+    @on MouseEnter { @animate { @to { $owner.parts.$Chrome.Opacity = 0.8; } } }
+</Aspect>
+
+<Aspect Name="First" TargetType="ToggleButton">
+    @template { <Grid><Border Name="Chrome" /><Border Aspect="$Glowy" /></Grid> }
+</Aspect>
+```
+
+- If one place has a `Border` named `Chrome` and another has a `TextBlock`
+  named `Chrome`, or a place has no `Chrome`, the build fails.
+- If the aspect is not applied anywhere in the markup, the build fails because
+  the type of `Chrome` cannot be known.
+- If the aspect is applied from C# to an element whose owner has no `Chrome`, or
+  a `Chrome` of another type, or another Prism composition, an
+  `InvalidOperationException` is thrown when the program reaches it.
+- `$self.prism.Glow` in a resource aspect with its own `@prism` refers to that
+  `@prism`.
+
+## 13. Motion
+
+Motion is typed and generated. It is not a WPF storyboard and not CSS
+animation.
+
+For purely visual work, start with `Tween`, `Spring`, `@animate`, `@from`,
+`@to`, `@parallel`, and `@sequence`. Use advanced directives only after reading
+an existing working example.
+
+### Motion spec resources
+
+```xml
+<Tween
+    Name="HoverIn"
+    Duration="180ms"
+    Easing="EaseOut" />
+
+<Tween
+    Name="HoverOut"
+    Duration="140ms"
+    Easing="EaseIn"
+    Delay="0ms"
+    FillMode="Both" />
+
+<Spring
+    Name="Settle"
+    Stiffness="520"
+    Damping="38"
+    Mass="1"
+    VelocityMode="Preserve" />
+```
+
+Common inline specs:
+
+```text
+Tween(180ms, EaseOut)
+Spring(520, 38)
+Repeat(Tween(4s, Linear), forever)
+```
+
+### State animation
+
+```xml
+<Aspect
+    Name="AnimatedTile"
+    TargetType="Border">
+    @when IsMouseOver
+    {
+        @if IsMouseOver == true
+        {
+            @animate with $HoverIn
+            {
+                @from
+                {
+                    Opacity = current;
+                    Scale = current;
+                }
+                @to
+                {
+                    Opacity = 1;
+                    Scale = 1.03;
+                }
+            }
+        }
+        @if IsMouseOver == false
+        {
+            @animate with $HoverOut
+            {
+                @from
+                {
+                    Opacity = current;
+                    Scale = current;
+                }
+                @to
+                {
+                    Opacity = 0.88;
+                    Scale = 1;
+                }
+            }
+        }
+    }
+</Aspect>
+```
+
+Use `current` when an animation should redirect smoothly from the element's
+current visual value.
+
+### Composition
+
+```text
+@parallel
+{
+    @animate with Tween(180ms, EaseOut) { ... }
+    @animate with Spring(420, 32) { ... }
+}
+```
+
+```text
+@sequence
+{
+    @animate with Tween(120ms, EaseOut) { ... }
+    @animate with Tween(220ms, EaseInOut) { ... }
+}
+```
+
+### MotionClip
+
+Use a named `MotionClip` for reusable or long-running sequences:
+
+```xml
+<MotionClip
+    Name="OrbitCycle"
+    TargetType="MyApp.OrbitView">
+    @animate with Repeat(Tween(8s, Linear), forever)
+    {
+        @from
+        {
+            $OrbitalLayer.Rotation = 0;
+        }
+        @to
+        {
+            $OrbitalLayer.Rotation = 6.283185;
+        }
+    }
+</MotionClip>
+```
+
+Run and cancel clips through an aspect handle:
+
+```text
+@handle Playback;
+
+@when $self.Visibility
+{
+    @if value == Visible
+    {
+        @run $OrbitCycle as Playback;
+    }
+    @if value == Collapsed
+    {
+        @cancel Playback;
+    }
+}
+```
+
+### Common visual motion properties
+
+- `Opacity`
+- `TranslateX`
+- `TranslateY`
+- `Scale`
+- `ScaleX`
+- `ScaleY`
+- `Rotation`
+
+Use `RenderTransformOrigin` when rotation or scaling needs a specific pivot.
+
+### Advanced directives
+
+The parser also supports directives including:
+
+- `@set`
+- `@keyframes`
+- `@stagger`
+- `@run`
+- `@cancel`
+- `@handle`
+- `@parameter`
+- `@on`
+- `@presence`
+- `@layout`
+- `@scroll`
+- `@drag`
+- `@gesture`
+
+These have strict context and grammar rules. Do not improvise their syntax.
+Copy a current repository example and preserve its structure.
+
+## 14. Timbre (sound)
+
+A `TimbreClip` resource is a set of named sounds. An aspect brings sounds with
+one `@timbre` at the top of its body, and plays them only with explicit
+commands inside `@on`, `@when` or `@if`. Nothing plays, and no audio file is
+opened, because a clip is declared, referenced or attached — except sounds
+marked `AutoPlay = true`, which start when the aspect is applied. There is no
+implicit button sound.
+
+```xml
+<UserControl.Resources>
+    <TimbreClip Name="ConfirmTimbre">
+        @parameter ToneCutoff: float = 1200;
+        @sound Confirm
+        {
+            Source = "audio/confirm.wav";
+            Volume = 0.8;
+            @modifier LowPass { Cutoff = ToneCutoff; }
+            @modifier Delay { Time = 120ms; Feedback = 0.20; Mix = 0.15; }
+        }
+    </TimbreClip>
+</UserControl.Resources>
+
+<Button Content="Confirm">
+    <Button.Aspect>
+        @timbre $ConfirmTimbre(ToneCutoff = 800);
+        @on Click { @play $self.timbre.Confirm; }
+        @when IsMouseOver
+        {
+            @if value == false { @pause $self.timbre.Confirm; }
+            @if value == true { @resume $self.timbre.Confirm; }
+        }
+        @on MouseWheel { @seek $self.timbre.Confirm to 30s; }
+    </Button.Aspect>
+</Button>
+```
+
+- A clip has `@parameter Name: float = value;` declarations and `@sound Name { … }`
+  nodes. In a `@sound`, `Source` is required, `Volume` is 0–1, and `Loop` and
+  `AutoPlay` are `true` or `false`.
+- `@modifier LowPass` and `@modifier Delay` run in source order inside a
+  `@sound`; their inputs take constants or the clip's `@parameter` values.
+- `@timbre $Clip;` attaches a resource, `@timbre $Clip(Param = value);` sets clip
+  parameters for this application, and `@timbre { … }` declares the clip inline.
+  An aspect has at most one `@timbre`, and it is not allowed inside `@on`,
+  `@when` or `@if`.
+- `@play`, `@stop`, `@pause`, `@resume` and `@seek … to 30s` address a sound by
+  its full path: `$self.timbre.Sound`, `$Name.timbre.Sound` (another element,
+  named where the aspect is written) or `$owner.timbre.Sound`. `@play` on a
+  sound that is playing restarts it; the other commands do nothing when the
+  sound is not playing.
+- Every sound statement ends with `;`. Commands are not allowed in `@parallel`,
+  `@sequence` or at the top level of an aspect.
+- A reactive body runs once when its condition becomes true (including
+  initially true) and is not stopped by the condition becoming false. Hiding
+  the element does not stop or replay its sounds.
+- Each application of an aspect (element, template part, item occurrence) has
+  its own sounds; detaching it or replacing the aspect stops only those.
+- Motion animates a sound's running playback through `$self.timbre.Sound.Volume`
+  or `$self.timbre.Sound.Parameter` in `@animate`/`@keyframes`: it captures the
+  playback when it starts, never retargets a later one, starts timing at the
+  first PCM, holds while paused or seeking and keeps running when the element
+  is hidden. A sound that is not playing animates nothing.
+
+The [Timbre Guide](timbre-guide.md) explains the runtime, the transport
+semantics, errors, tooling and Live Preview audio policy.
+
+## 15. Prism
+
+Prism is Cerneala's retained local visual composition system. It owns filters,
+styles, masks, blending, and backdrop work. Prism changes presentation. It does
+not change layout, hit testing, focus, or the logical tree.
+
+Declare a `PrismClip` as a resource, then attach it with `@prism` at the top of
+the element's aspect. An aspect has at most one `@prism`; the effect comes and
+goes with the aspect, like its sounds:
+
+```xml
+<UserControl xmlns:local="clr-namespace:MyApp">
+    <UserControl.Resources>
+        <PrismClip Name="GameSurfaceEffect">
+            @layer Game
+            {
+                @style OuterGlow
+                {
+                    Size = 5;
+                    Opacity = 0.34;
+                    Color = #804DF0FF;
+                }
+            }
+        </PrismClip>
+    </UserControl.Resources>
+
+    <local:GameView>
+        <local:GameView.Aspect>
+            @prism $GameSurfaceEffect;
+        </local:GameView.Aspect>
+    </local:GameView>
+</UserControl>
+```
+
+Prism has a large typed catalog and its own Motion integration. Do not guess
+operation names or parameter types. Use the [Prism Guide](prism-guide.md), the
+[generated filter reference](../reference/prism-filter-reference.generated.md), compiler
+completion, and existing `.crn` examples.
+
+## 16. What is not WPF-compatible
+
+Do not use these unless the repository later adds explicit support:
+
+- XML namespace URIs copied from WPF or Avalonia. Cerneala supports its own
+  `xmlns:prefix="clr-namespace:..."` form for CLR controls;
+- `x:Name`, `x:Key`, or `StaticResource`;
+- `{Binding ...}` markup extensions;
+- WPF `Style`, `Setter`, `Trigger`, or `Storyboard`;
+- merged resource dictionaries;
+- arbitrary nested property-element syntax;
+- converters declared with WPF markup extensions;
+- controls or properties remembered from WPF but absent from Cerneala;
+- CSS class names, selectors, flexbox, or grid syntax;
+- HTML/SVG elements embedded directly into the UI tree.
+
+The safe Cerneala equivalents are:
+
+| Familiar concept | Cerneala mechanism |
+| --- | --- |
+| `x:Name` | `Name` |
+| `StaticResource` | `$ResourceName` |
+| `Binding` | `$DataContext.Path` |
+| `Style` | `Aspect` |
+| Trigger | `@when` and `@if` |
+| ControlTemplate | `Aspect` plus `@template` |
+| Storyboard | Motion directives |
+| Visual state animation | `@animate` |
+
+## 17. Visual composition guidance
+
+For application and developer-tool UI:
+
+- Prefer quiet, structured surfaces over decorative card walls.
+- Do not put cards inside cards.
+- Use full-width regions and restrained borders for page sections.
+- Keep cards for repeated items, dialogs, or genuinely framed tools.
+- Use a clear page title, but keep headings compact inside sidebars and panels.
+- Use the existing cyan, pink, lime, and orange accents intentionally. Do not
+  tint the whole page with one hue.
+- Use icons from an existing icon solution when available. Do not draw random
+  mini-SVG icons in markup.
+- Keep button dimensions stable between states.
+- Use fixed dimensions for boards, orbital scenes, meters, and toolbars, but
+  wrap them in flexible parent layout.
+- Ensure the longest text fits at the minimum window size.
+- Avoid decorative gradients, halos, and glowing shapes unless they reinforce
+  the domain or current presentation language.
+- Preserve a visible next-section cue only on actual landing or hero pages.
+
+## 18. Repository workflow
+
+Read files directly and use `rg` / `rg --files` for text search and file discovery.
+Text matches do not establish symbol identity or complete semantic references.
+
+From the repository root:
+
+```powershell
+.\Tools\scripts\New-FileTree.ps1
+```
+
+Read `FileTree.md` before broad repository navigation. Read complete source files
+and the relevant ownership context before editing. Verify changes with the
+applicable build, test, and runtime gates.
+
+## 19. Build and native visual validation
+
+Build the relevant project:
+
+```powershell
+dotnet build .\CernealaPresentation\CernealaPresentation.csproj --no-restore
+```
+
+SDL3 + SDL_GPU is the sole maintained desktop composition. Presentation and
+Playground select it explicitly; the MonoGame and WindowsDX adapters have been
+removed without a compatibility facade.
+
+For `CernealaPresentation`, the built-in automation supports:
+
+| Environment variable | Purpose |
+| --- | --- |
+| `CERNEALA_PRESENTATION_AUTO_CONTINUE=1` | Skip the orientation window |
+| `CERNEALA_PRESENTATION_START_CHAPTER=N` | Open one-based chapter `N` |
+| `CERNEALA_PRESENTATION_TOUR_CAPTURE=path.png` | Save a native rendered frame |
+| `CERNEALA_PRESENTATION_CAPTURE_DURING_MOTION=1` | Capture while motion is active |
+
+Example setup:
+
+```powershell
+$env:CERNEALA_PRESENTATION_AUTO_CONTINUE = "1"
+$env:CERNEALA_PRESENTATION_START_CHAPTER = "5"
+$env:CERNEALA_PRESENTATION_TOUR_CAPTURE = ".\presentation.png"
+$env:CERNEALA_PRESENTATION_CAPTURE_DURING_MOTION = "1"
+```
+
+Launch the presentation through the selected backend, wait for the capture,
+inspect the PNG, then close the process and remove temporary artifacts.
+
+The capture also writes a `.metrics.txt` file with the selected chapter and
+render-cache metrics. Cerneala application screenshots must come from
+`Window.SaveScreenshot` or an application-owned automation path that calls it.
+Do not substitute an operating-system screen capture and call it renderer
+evidence.
+
+## 20. Validation checklist
+
+Before declaring visual work complete:
+
+- [ ] The target `.crn` is well-formed XML.
+- [ ] The relevant project builds with zero errors.
+- [ ] Existing element names and handlers still resolve.
+- [ ] Every `$Resource` exists in local, ancestor, or application scope.
+- [ ] Every custom control exists in the project.
+- [ ] No WPF-only syntax was introduced.
+- [ ] A native screenshot was inspected.
+- [ ] Text does not clip or overlap.
+- [ ] The minimum supported viewport remains usable.
+- [ ] Hover, checked, disabled, focus, and selected states remain readable.
+- [ ] Motion does not resize layout unexpectedly.
+- [ ] Infinite motion is canceled when its view leaves the visual stage.
+- [ ] Temporary screenshots and processes were cleaned up.
+
+## 21. Minimal complete example
+
+The following combines resources, layout, a named aspect, and Motion without
+using WPF-only syntax:
+
+```xml
+<UserControl>
+    <UserControl.Resources>
+        <SolidColorBrush
+            Name="SurfaceBrush"
+            Color="#FF14161B" />
+        <SolidColorBrush
+            Name="AccentBrush"
+            Color="#FF4DF0FF" />
+        <SolidColorBrush
+            Name="TextBrush"
+            Color="#FFEDEFF3" />
+        <SolidColorBrush
+            Name="MutedBrush"
+            Color="#FF8A93A6" />
+        <SolidColorBrush
+            Name="LineBrush"
+            Color="#FF2A2E38" />
+        <SolidColorBrush
+            Name="TransparentBrush"
+            Color="#00000000" />
+        <Tween
+            Name="HoverTween"
+            Duration="160ms"
+            Easing="EaseOut" />
+        <Aspect
+            Name="PanelButton"
+            TargetType="Button">
+            @default
+            {
+                Background = $SurfaceBrush;
+                Foreground = $TextBrush;
+                BorderBrush = $LineBrush;
+                BorderThickness = "1";
+                Padding = "16,10,16,10";
+            }
+            @when IsMouseOver
+            {
+                @if IsMouseOver == true
+                {
+                    @animate with $HoverTween
+                    {
+                        @from
+                        {
+                            BorderBrush = current;
+                            Scale = current;
+                        }
+                        @to
+                        {
+                            BorderBrush = $AccentBrush;
+                            Scale = 1.02;
+                        }
+                    }
+                }
+                @if IsMouseOver == false
+                {
+                    @animate with $HoverTween
+                    {
+                        @from
+                        {
+                            BorderBrush = current;
+                            Scale = current;
+                        }
+                        @to
+                        {
+                            BorderBrush = $LineBrush;
+                            Scale = 1;
+                        }
+                    }
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Border
+        Background="$SurfaceBrush"
+        BorderBrush="$LineBrush"
+        BorderThickness="1"
+        Padding="24">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <StackPanel
+                Grid.Row="0">
+                <TextBlock
+                    Text="SYSTEM OVERVIEW"
+                    FontFamily="Cascadia Mono SemiBold"
+                    FontSize="10"
+                    Foreground="$AccentBrush" />
+                <TextBlock
+                    Text="A stable retained surface."
+                    FontFamily="Bahnschrift SemiBold"
+                    FontSize="32"
+                    Foreground="$TextBrush"
+                    Margin="0,8,0,0" />
+                <TextBlock
+                    Text="Layout remains flexible while the visual state animates independently."
+                    FontSize="13"
+                    Foreground="$MutedBrush"
+                    TextWrapping="Wrap"
+                    Margin="0,8,0,0" />
+            </StackPanel>
+
+            <Border
+                Grid.Row="1"
+                Background="$TransparentBrush"
+                BorderBrush="$LineBrush"
+                BorderThickness="1"
+                Margin="0,20,0,20" />
+
+            <Button
+                Grid.Row="2"
+                Aspect="$PanelButton"
+                Content="OPEN VIEW"
+                HorizontalAlignment="Left" />
+        </Grid>
+    </Border>
+</UserControl>
+```
+
+If this guide conflicts with current compiler diagnostics or a working
+repository example, the current compiler and repository win. Update the guide
+instead of forcing stale syntax.
+
+## 22. References And Community
+
+- [Cerneala website](https://chevalier12.github.io/Cerneala/)
+- [API reference](https://chevalier12.github.io/Cerneala/documentation.html)
+- [Getting Started](getting-started.md)
+- [Application Markup](application-markup.md)
+- [Markup Data Bindings](../reference/markup-data-bindings.md)
+- [Prism Guide](prism-guide.md)
+- [Discord](https://discord.gg/p6SbqByd59)

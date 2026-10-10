@@ -262,7 +262,7 @@ runtime queues refresh work through the target root's Relay and does not read
 the path or write the target on the worker. Direct Cerneala UI-property
 notifications remain UI-thread-only.
 
-See `docs/markup-data-bindings.md` for the complete grammar, name-scope rules,
+See `docs/reference/markup-data-bindings.md` for the complete grammar, name-scope rules,
 null and cascade behavior, diagnostics, and unsupported features.
 
 ### Markup Shapes
@@ -348,4 +348,4 @@ Cerneala source generation project targeting `netstandard2.0`.
 - `Cerneala.UI.Markup.GeneratedUiFactory`
 - `Cerneala.UI.Markup.GeneratedMarkup`
 - `Cerneala.UI.Hosting.Windowing.ApplicationBackendAttribute`
-- `docs/markup-data-bindings.md`
+- `docs/reference/markup-data-bindings.md`

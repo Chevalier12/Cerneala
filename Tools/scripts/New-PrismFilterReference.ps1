@@ -15,6 +15,7 @@ if ([string]::IsNullOrWhiteSpace($OutputPath)) {
     $OutputPath = [IO.Path]::Combine(
         $repositoryRoot,
         'docs',
+        'reference',
         'prism-filter-reference.generated.md')
 }
 elseif (-not [IO.Path]::IsPathRooted($OutputPath)) {

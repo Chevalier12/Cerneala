@@ -79,4 +79,4 @@ Source-generated Motion markup execution trees.
 - `Cerneala.UI.Markup.GeneratedMarkup`
 - `Cerneala.UI.Motion.Core.MotionHandle`
 - `Cerneala.UI.Motion.Core.MotionGroupHandle`
-- `docs/motion-markup-syntax-proposal.md`
+- `docs/reference/motion-markup-syntax.md`

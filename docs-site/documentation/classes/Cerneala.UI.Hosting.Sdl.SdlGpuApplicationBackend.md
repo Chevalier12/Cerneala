@@ -52,5 +52,5 @@ SDL3 + SDL_GPU is the sole maintained desktop backend. The removed MonoGame and 
 ## See also
 
 - `Cerneala.UI.Hosting.Windowing.ApplicationBackendAttribute`
-- `docs/sdl-desktop-backend.md`
-- `docs/application-markup.md`
+- `docs/architecture/sdl-desktop-backend.md`
+- `docs/guides/application-markup.md`

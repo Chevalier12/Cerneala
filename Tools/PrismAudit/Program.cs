@@ -187,10 +187,10 @@ internal static class Program
         "tests/Cerneala.Tests.SourceGen/Prism/PrismCatalogCompilerTests.cs",
         "tests/Cerneala.Tests/Drawing/Prism/PrismColorBlendStyleCoverageTests.cs",
         "tests/Cerneala.Tests/Drawing/Prism/PrismSdlGpuPixelConformanceTests.cs",
-        "docs/prism-markup-syntax-proposal.md",
-        "docs/prism-technical-design.md",
-        "docs/prism-filter-reference.generated.md",
-        "docs/prism-public-api-baseline.md"
+        "docs/reference/prism-markup-syntax.md",
+        "docs/architecture/prism-technical-design.md",
+        "docs/reference/prism-filter-reference.generated.md",
+        "docs/reference/prism-public-api-baseline.md"
     ];
 
     public static int Main(string[] args)
@@ -218,7 +218,7 @@ internal static class Program
             }
 
             string report = BuildReport(audit);
-            string reportPath = Path.Combine(repositoryRoot, "docs", "prism-completeness-report.generated.md");
+            string reportPath = Path.Combine(repositoryRoot, "docs", "reference", "prism-completeness-report.generated.md");
             if (write)
             {
                 File.WriteAllText(reportPath, report, new UTF8Encoding(false));
@@ -273,14 +273,14 @@ internal static class Program
         ValidateCatalog(catalog, errors);
 
         string catalogHash = HashTextFile(catalogPath);
-        string filterReference = File.ReadAllText(Path.Combine(repositoryRoot, "docs", "prism-filter-reference.generated.md"));
+        string filterReference = File.ReadAllText(Path.Combine(repositoryRoot, "docs", "reference", "prism-filter-reference.generated.md"));
         if (!filterReference.Contains($"<!-- catalog-sha256: {catalogHash} -->", StringComparison.Ordinal))
         {
             errors.Add("Generated filter property reference does not match the current catalog hash.");
         }
 
-        string proposalPath = Path.Combine(repositoryRoot, "docs", "prism-markup-syntax-proposal.md");
-        string technicalDesignPath = Path.Combine(repositoryRoot, "docs", "prism-technical-design.md");
+        string proposalPath = Path.Combine(repositoryRoot, "docs", "reference", "prism-markup-syntax.md");
+        string technicalDesignPath = Path.Combine(repositoryRoot, "docs", "architecture", "prism-technical-design.md");
         string proposal = File.ReadAllText(proposalPath);
         string technicalDesign = File.ReadAllText(technicalDesignPath);
         RequireDesignTokens(
@@ -320,7 +320,7 @@ internal static class Program
             catalogHash,
             HashTextFile(proposalPath),
             HashTextFile(technicalDesignPath),
-            HashTextFile(Path.Combine(repositoryRoot, "docs", "prism-public-api-baseline.md")),
+            HashTextFile(Path.Combine(repositoryRoot, "docs", "reference", "prism-public-api-baseline.md")),
             publicPrismTypes,
             crossSurfaceTypes,
             errors);
@@ -565,9 +565,9 @@ internal static class Program
         report.AppendLine();
         report.AppendLine("| Contract | SHA-256 |");
         report.AppendLine("| --- | --- |");
-        report.AppendLine($"| `docs/prism-markup-syntax-proposal.md` | `{audit.ProposalHash}` |");
-        report.AppendLine($"| `docs/prism-technical-design.md` | `{audit.TechnicalDesignHash}` |");
-        report.AppendLine($"| `docs/prism-public-api-baseline.md` | `{audit.ApiBaselineHash}` |");
+        report.AppendLine($"| `docs/reference/prism-markup-syntax.md` | `{audit.ProposalHash}` |");
+        report.AppendLine($"| `docs/architecture/prism-technical-design.md` | `{audit.TechnicalDesignHash}` |");
+        report.AppendLine($"| `docs/reference/prism-public-api-baseline.md` | `{audit.ApiBaselineHash}` |");
         report.AppendLine($"| `Cerneala.SourceGen/Prism/Catalog/prism-catalog.json` | `{audit.CatalogHash}` |");
         report.AppendLine();
         report.AppendLine("## Approved matrix");
