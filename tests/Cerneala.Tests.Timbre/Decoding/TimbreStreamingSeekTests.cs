@@ -142,8 +142,9 @@ public sealed class TimbreStreamingSeekTests
         return pcm[..(filled * 2)];
     }
 
+    // The storage error itself, not a decoder error wrapping it.
     private static void AssertIOFailure(Exception error) =>
-        Assert.True(error is IOException || error.InnerException is IOException, $"Expected an I/O failure, got {error}.");
+        Assert.True(error.GetType() == typeof(IOException), $"Expected the stream's IOException, got {error}.");
 
     private static float[] Decode(string path)
     {

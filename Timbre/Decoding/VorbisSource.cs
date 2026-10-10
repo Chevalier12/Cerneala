@@ -28,7 +28,7 @@ internal sealed class VorbisSource : DecodedSource
         {
             decoder = new StreamDecoder(provider) { ClipSamples = false };
         }
-        catch (Exception exception) when (exception is not TimbreException and not OperationCanceledException)
+        catch (Exception exception) when (IsDecoderError(exception))
         {
             throw Invalid(sourceName, "the Vorbis headers could not be decoded.", exception);
         }
@@ -63,7 +63,7 @@ internal sealed class VorbisSource : DecodedSource
         {
             return decoder.Read(destination, 0, samples) / Channels;
         }
-        catch (Exception exception) when (exception is not TimbreException and not OperationCanceledException)
+        catch (Exception exception) when (IsDecoderError(exception))
         {
             throw Invalid(sourceName, "a Vorbis packet could not be decoded.", exception);
         }
@@ -95,11 +95,18 @@ internal sealed class VorbisSource : DecodedSource
         {
             decoder.SeekTo(frame);
         }
-        catch (Exception exception) when (exception is not TimbreException and not OperationCanceledException)
+        catch (Exception exception) when (IsDecoderError(exception))
         {
             throw Invalid(sourceName, $"seeking to frame {frame} failed.", exception);
         }
     }
+
+    // NVorbis pulls packets through the Ogg reader while it decodes, so the
+    // stream's storage errors pass through its calls; they are not invalid data.
+    // The Ogg reader reports damaged data as TimbreException, and NVorbis
+    // throws no IOException of its own.
+    private static bool IsDecoderError(Exception exception) =>
+        exception is not (TimbreException or OperationCanceledException or IOException);
 
     private sealed class PacketProvider : IPacketProvider
     {

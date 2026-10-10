@@ -240,6 +240,36 @@ public sealed class TimbreStreamingTransportTests
         Assert.IsType<IOException>(result.Error.InnerException);
     }
 
+    [Theory]
+    [InlineData("vorbis-44100-stereo-q4.ogg")]
+    [InlineData("vorbis-48000-stereo-q2.ogg")]
+    public async Task AFailedVorbisSeekFaultsWithTheStreamsIOExceptionAndFailsThePlaybackAsSourceUnavailable(string name)
+    {
+        ObservedSource source = new(DecodingCorpus.PathOf(name));
+        using TimbreRig rig = new();
+        TimbrePlayback playback = rig.Scope.Play(source.Clip);
+        await rig.StartAsync(playback);
+        ObservedFileStream stream = source.Single;
+
+        // Positioning fails for the seek and for the return to the old position.
+        stream.FailSeeks = true;
+        Task seek = playback.SeekAsync(TimbreRig.FramesToTime(30000));
+        await rig.NextBlockAsync();
+        await Assert.ThrowsAsync<IOException>(() => HarnessWait.WithTimeout(seek, null, "Seek did not finish."));
+        stream.FailSeeks = false;
+
+        for (int step = 0; step < 2000 && !playback.Completion.IsCompleted; step++)
+        {
+            rig.Output.ConsumeAll();
+            await rig.SyncAsync();
+        }
+
+        TimbrePlaybackResult result = await TimbreRig.CompletionAsync(playback);
+        Assert.Equal(TimbrePlaybackState.Failed, result.State);
+        Assert.Equal(TimbreErrorKind.SourceUnavailable, result.Error!.Kind);
+        Assert.IsType<IOException>(result.Error.InnerException);
+    }
+
     [Fact]
     public async Task LatestSeekWinsWhileTheReaderIsBlockedAndTheSupersededRequestIsCanceled()
     {
