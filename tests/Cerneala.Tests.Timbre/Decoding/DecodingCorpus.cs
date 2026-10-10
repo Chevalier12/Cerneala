@@ -75,6 +75,9 @@ internal static class DecodingCorpus
     public static TimbreReader Open(string path, TimbreMemoryBudget budget) =>
         TimbreDecoders.Open(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read), path, budget);
 
+    public static TimbreReader Open(Stream stream, string path) =>
+        TimbreDecoders.Open(stream, path, new TimbreMemoryBudget(new TimbreMemoryPool(long.MaxValue), path));
+
     // Reads to the end with the given read sizes; checks the reader contract.
     public static float[] DecodeAll(TimbreReader reader, Func<int, int>? readSize = null)
     {

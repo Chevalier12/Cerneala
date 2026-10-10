@@ -1,3 +1,4 @@
+using System.Runtime.ExceptionServices;
 using Concentus.Common;
 
 namespace Cerneala.Timbre.Decoding;
@@ -30,6 +31,7 @@ internal sealed class CanonicalConverter : IDisposable
     private long flushFramesFed;
     private bool sourceEnded;
     private long position;
+    private ExceptionDispatchInfo? fault;
 
     internal CanonicalConverter(DecodedSource source)
     {
@@ -61,6 +63,7 @@ internal sealed class CanonicalConverter : IDisposable
     // Reads up to destination.Length / 2 canonical frames; 0 only at the end.
     internal int Read(Span<float> destination, CancellationToken cancellationToken)
     {
+        fault?.Throw();
         int capacity = destination.Length / 2;
         int written = 0;
         while (written < capacity)
@@ -91,6 +94,7 @@ internal sealed class CanonicalConverter : IDisposable
 
     internal void Seek(long frame, CancellationToken cancellationToken)
     {
+        fault?.Throw();
         ArgumentOutOfRangeException.ThrowIfNegative(frame);
         if (LengthFrames is long length)
         {
@@ -98,13 +102,17 @@ internal sealed class CanonicalConverter : IDisposable
         }
 
         long previous = position;
+        long start = SourceStart(frame);
+        // A source seek that throws leaves the source at its old position, so
+        // the frames buffered here still continue it.
+        source.Seek(start, cancellationToken);
         try
         {
-            SeekCore(frame, cancellationToken);
+            Restart(frame, start, cancellationToken);
         }
-        catch (ArgumentOutOfRangeException)
+        catch
         {
-            SeekCore(previous, cancellationToken);
+            Return(previous, cancellationToken);
             throw;
         }
     }
@@ -115,24 +123,49 @@ internal sealed class CanonicalConverter : IDisposable
         source.Dispose();
     }
 
-    private void SeekCore(long frame, CancellationToken cancellationToken)
+    // After a restart failed part-way: seeks back to `previous`. If that fails
+    // too, the state is unknown, so every later Read and Seek throws the error
+    // that prevented the return.
+    private void Return(long previous, CancellationToken cancellationToken)
     {
-        inputStart = inputEnd = outputStart = outputEnd = 0;
-        sourceEnded = false;
-        flushFramesFed = 0;
+        try
+        {
+            long start = SourceStart(previous);
+            source.Seek(start, cancellationToken);
+            Restart(previous, start, cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            fault = ExceptionDispatchInfo.Capture(exception);
+        }
+    }
+
+    // The source frame a seek to `frame` restarts from.
+    private long SourceStart(long frame)
+    {
         if (resampler is null)
         {
-            source.Seek(frame, cancellationToken);
-            sourceFramesRead = frame;
-            position = frame;
-            return;
+            return frame;
         }
 
         long sourceTime = frame * stepIn / stepOut;
         long start = Math.Max(0, sourceTime - (2L * latency) - stepIn);
-        start -= start % stepIn;
-        source.Seek(start, cancellationToken);
+        return start - (start % stepIn);
+    }
+
+    // Restarts conversion at `frame` with the source positioned at `start`.
+    private void Restart(long frame, long start, CancellationToken cancellationToken)
+    {
+        inputStart = inputEnd = outputStart = outputEnd = 0;
+        sourceEnded = false;
+        flushFramesFed = 0;
         sourceFramesRead = start;
+        if (resampler is null)
+        {
+            position = frame;
+            return;
+        }
+
         // A new resampler, not ResetMem(): Concentus 2.2.2's ResetMem leaves
         // history behind in the second channel (stage-2 evidence).
         resampler.Dispose();

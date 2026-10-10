@@ -55,6 +55,7 @@ internal sealed class VorbisSource : DecodedSource
 
     internal override int Read(Span<float> destination, CancellationToken cancellationToken)
     {
+        ThrowIfFaulted();
         cancellationToken.ThrowIfCancellationRequested();
         provider.CancellationToken = cancellationToken;
         int samples = destination.Length - (destination.Length % Channels);
@@ -70,8 +71,25 @@ internal sealed class VorbisSource : DecodedSource
 
     internal override void Seek(long frame, CancellationToken cancellationToken)
     {
+        ThrowIfFaulted();
         ArgumentOutOfRangeException.ThrowIfNegative(frame);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(frame, LengthFrames!.Value);
+        long previous = decoder.SamplePosition;
+        try
+        {
+            SeekCore(frame, cancellationToken);
+        }
+        catch
+        {
+            Return(SeekCore, previous, cancellationToken);
+            throw;
+        }
+    }
+
+    public override void Dispose() => stream.Dispose();
+
+    private void SeekCore(long frame, CancellationToken cancellationToken)
+    {
         provider.CancellationToken = cancellationToken;
         try
         {
@@ -82,8 +100,6 @@ internal sealed class VorbisSource : DecodedSource
             throw Invalid(sourceName, $"seeking to frame {frame} failed.", exception);
         }
     }
-
-    public override void Dispose() => stream.Dispose();
 
     private sealed class PacketProvider : IPacketProvider
     {

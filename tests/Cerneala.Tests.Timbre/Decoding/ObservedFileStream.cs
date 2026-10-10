@@ -17,6 +17,7 @@ internal sealed class ObservedFileStream : Stream
     private long barrierTo = long.MaxValue;
     private long barrierAfterBytes;
     private long bytesRead;
+    private long reads;
     private long furthest;
     private int disposed;
 
@@ -30,6 +31,13 @@ internal sealed class ObservedFileStream : Stream
     public long FurthestByte => Interlocked.Read(ref furthest);
 
     public long FailAtOffset { get; set; } = -1;
+
+    // Number of Read calls so far.
+    public long Reads => Interlocked.Read(ref reads);
+
+    // Called with each read's number (from 0) and first byte; true fails that
+    // read like a storage error.
+    public Func<long, long, bool>? FailRead { get; set; }
 
     // While set, positioning the stream fails like a storage error.
     public bool FailSeeks { get; set; }
@@ -123,6 +131,12 @@ internal sealed class ObservedFileStream : Stream
         if (FailAtOffset >= 0 && start + buffer.Length > FailAtOffset)
         {
             throw new IOException($"Injected read failure at byte {FailAtOffset}.");
+        }
+
+        long ordinal = Interlocked.Increment(ref reads) - 1;
+        if (FailRead?.Invoke(ordinal, start) == true)
+        {
+            throw new IOException($"Injected failure of read {ordinal} at byte {start}.");
         }
 
         int read = inner.Read(buffer);
