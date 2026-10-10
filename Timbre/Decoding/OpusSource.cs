@@ -97,6 +97,7 @@ internal sealed class OpusSource : DecodedSource
 
     internal override int Read(Span<float> destination, CancellationToken cancellationToken)
     {
+        ThrowIfFaulted();
         int capacity = destination.Length / Channels;
         int written = 0;
         while (written < capacity)
@@ -124,8 +125,25 @@ internal sealed class OpusSource : DecodedSource
 
     internal override void Seek(long frame, CancellationToken cancellationToken)
     {
+        ThrowIfFaulted();
         ArgumentOutOfRangeException.ThrowIfNegative(frame);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(frame, LengthFrames!.Value);
+        long previous = position;
+        try
+        {
+            SeekCore(frame, cancellationToken);
+        }
+        catch
+        {
+            Return(SeekCore, previous, cancellationToken);
+            throw;
+        }
+    }
+
+    public override void Dispose() => stream.Dispose();
+
+    private void SeekCore(long frame, CancellationToken cancellationToken)
+    {
         long target = frame + origin;
         long preroll = target - SeekPrerollSamples;
         long page = preroll > startGranule ? ogg.FindPageAtOrBefore(preroll, dataStart, cancellationToken) : -1;
@@ -153,8 +171,6 @@ internal sealed class OpusSource : DecodedSource
             }
         }
     }
-
-    public override void Dispose() => stream.Dispose();
 
     private void Restart()
     {

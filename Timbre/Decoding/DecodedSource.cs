@@ -1,3 +1,5 @@
+using System.Runtime.ExceptionServices;
+
 namespace Cerneala.Timbre.Decoding;
 
 // Codec-level PCM at the source's own rate and channel count (1 or 2),
@@ -7,6 +9,8 @@ internal abstract class DecodedSource : IDisposable
 {
     internal const int MinSampleRate = 8000;
     internal const int MaxSampleRate = 192000;
+
+    private ExceptionDispatchInfo? fault;
 
     internal abstract string Codec { get; }
 
@@ -21,11 +25,29 @@ internal abstract class DecodedSource : IDisposable
     internal abstract int Read(Span<float> destination, CancellationToken cancellationToken);
 
     // Positions the next read exactly at `frame` (decoded-frame precision).
-    // Throws ArgumentOutOfRangeException when `frame` is past the end; the
-    // position is then unchanged.
+    // Throws ArgumentOutOfRangeException when `frame` is past the end. Whatever
+    // it throws, the next Read continues from the old position; a source that
+    // cannot return there throws from every later Read and Seek instead.
     internal abstract void Seek(long frame, CancellationToken cancellationToken);
 
     public abstract void Dispose();
+
+    // After a seek failed part-way: seeks back to `previous`. If that fails
+    // too, the decoder state is unknown, so every later Read and Seek throws
+    // the error that prevented the return.
+    protected void Return(Action<long, CancellationToken> seek, long previous, CancellationToken cancellationToken)
+    {
+        try
+        {
+            seek(previous, cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            fault = ExceptionDispatchInfo.Capture(exception);
+        }
+    }
+
+    protected void ThrowIfFaulted() => fault?.Throw();
 
     protected static void ValidateFormat(string codec, string sourceName, int sampleRate, int channels)
     {
