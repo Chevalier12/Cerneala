@@ -170,7 +170,7 @@ internal sealed class TimbrePlaybackMotionTarget : MotionNode
         }
 
         slot.ManualVersion = manualVersion;
-        slot.Base = slot.Value.Current;
+        float restore = slot.Value.Current;
         if (hasFrom)
         {
             slot.Value.JumpTo(from);
@@ -183,7 +183,7 @@ internal sealed class TimbrePlaybackMotionTarget : MotionNode
             return handle; // rejected by a higher-priority animation of the slot
         }
 
-        slot.Track(handle, options.HoldOnComplete);
+        slot.Track(handle, options.HoldOnComplete, restore);
         if (Flush() < 0)
         {
             return handle;
@@ -333,18 +333,20 @@ internal sealed class TimbrePlaybackMotionTarget : MotionNode
 
         public int ManualVersion { get; set; }
 
-        public float Base { get; set; }
-
         public float LastPublished { get; set; }
 
         public bool Muted { get; private set; }
 
+        // Completion behavior of the accepted animation; a rejected start
+        // never reaches Track, so it cannot change either.
         private bool hold;
+        private float restore;
 
-        public void Track(MotionHandle handle, bool holdOnComplete)
+        public void Track(MotionHandle handle, bool holdOnComplete, float restoreValue)
         {
             Active = handle;
             hold = holdOnComplete;
+            restore = restoreValue;
             if (handle.IsCompleted)
             {
                 Finish(completed: true);
@@ -409,7 +411,7 @@ internal sealed class TimbrePlaybackMotionTarget : MotionNode
             Active = null;
             if (completed && !hold)
             {
-                Value.JumpTo(Base);
+                Value.JumpTo(restore);
             }
         }
     }
