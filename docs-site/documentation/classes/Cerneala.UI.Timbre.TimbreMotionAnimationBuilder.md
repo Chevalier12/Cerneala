@@ -48,7 +48,7 @@ The builder mirrors `MotionAnimationBuilder<T>`: `From` is optional (the animati
 
 | Name | Returns | Description |
 | --- | --- | --- |
-| `From(float value)` | `TimbreMotionAnimationBuilder` | Sets the start value. |
+| `From(float value)` | `TimbreMotionAnimationBuilder` | Sets the start value. A start rejected by a higher-priority active animation does not apply it. |
 | `To(float value)` | `TimbreMotionAnimationBuilder` | Sets the destination. |
 | `With(MotionSpec<float> spec)` | `MotionHandle` | Starts the animation and holds the final value. |
 | `With(MotionSpec<float> spec, MotionPropertyStartOptions options)` | `MotionHandle` | Starts the animation with explicit retarget, priority and hold options. |

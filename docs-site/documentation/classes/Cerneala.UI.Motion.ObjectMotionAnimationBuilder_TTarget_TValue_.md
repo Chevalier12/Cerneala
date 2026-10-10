@@ -19,7 +19,7 @@ public sealed class ObjectMotionAnimationBuilder<TTarget, TValue>
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `From(TValue value)` | `ObjectMotionAnimationBuilder<TTarget, TValue>` | Sets the explicit starting value. If omitted, Motion starts from the property's current value. |
+| `From(TValue value)` | `ObjectMotionAnimationBuilder<TTarget, TValue>` | Sets the explicit starting value. If omitted, Motion starts from the property's current value. A start rejected by a higher-priority active animation does not apply it. |
 | `To(TValue value)` | `ObjectMotionAnimationBuilder<TTarget, TValue>` | Sets the destination value. |
 | `Start(MotionSpec<TValue> spec)` | `MotionHandle` | Starts the animation and holds its destination after completion. |
 | `Start(MotionSpec<TValue> spec, MotionPropertyStartOptions options)` | `MotionHandle` | Starts the animation with explicit completion and handoff options. |

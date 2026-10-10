@@ -335,7 +335,7 @@ public static partial class GeneratedMarkup
             bindings.Add(binding);
             if (hasFrom)
             {
-                binding.Value.JumpTo(from);
+                _ = binding.Value.TryJumpToFrom(from, options.Priority);
             }
 
             MotionSpec<T> effectiveSpec = spec ?? (MotionSpec<T>)motion.AnimatableProperties.Get(property).DefaultSpec;
@@ -374,7 +374,7 @@ public static partial class GeneratedMarkup
                 projection,
                 hasFrom,
                 from,
-                binding.Value.JumpTo,
+                start => binding.Value.TryJumpToFrom(start, options.Priority),
                 destination => binding.AnimateTo(destination, effectiveSpec, options),
                 listener => binding.Value.Subscribe(change => listener(change.NewValue)));
         }
@@ -402,7 +402,7 @@ public static partial class GeneratedMarkup
 
             if (hasFrom)
             {
-                binding.JumpTo(from);
+                _ = binding.TryJumpToFrom(from, options.Priority);
             }
 
             MotionSpec<T> effectiveSpec = spec ?? PrismDefaultMotionSpec<T>.Value;
@@ -438,7 +438,7 @@ public static partial class GeneratedMarkup
                 projection,
                 hasFrom,
                 from,
-                binding.JumpTo,
+                start => binding.TryJumpToFrom(start, options.Priority),
                 destination => binding.AnimateTo(destination, effectiveSpec, options),
                 binding.Subscribe);
         }
@@ -951,10 +951,10 @@ public static partial class GeneratedMarkup
             return value.Subscribe(change => listener(change.NewValue));
         }
 
-        public void JumpTo(T next)
+        public bool TryJumpToFrom(T from, MotionPriority priority)
         {
             ThrowIfDisposed();
-            value.JumpTo(next);
+            return value.TryJumpToFrom(from, priority);
         }
 
         public MotionHandle AnimateTo(

@@ -137,6 +137,26 @@ public sealed class MotionValue<T> : MotionValue
     {
         graph.VerifyAccess();
         TargetValidation?.Invoke(value);
+        JumpToValidated(value);
+    }
+
+    // The From value of a start applies only when a start at this priority is
+    // accepted; a rejected start leaves the active motion and the value unchanged.
+    internal bool TryJumpToFrom(T from, MotionPriority priority)
+    {
+        graph.VerifyAccess();
+        TargetValidation?.Invoke(from);
+        if (!CanStart(priority))
+        {
+            return false;
+        }
+
+        JumpToValidated(from);
+        return true;
+    }
+
+    private void JumpToValidated(T value)
+    {
         CancelActiveHandle(MotionCancelBehavior.KeepCurrent, fireEvent: true);
         target = value;
         animationStart = value;

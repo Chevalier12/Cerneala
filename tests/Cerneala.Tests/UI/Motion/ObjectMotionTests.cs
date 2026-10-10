@@ -151,6 +151,46 @@ public sealed class ObjectMotionTests
     }
 
     [Fact]
+    public void LowerPriorityStartWithFromIsRejectedWithoutChangingTheActiveMotion()
+    {
+        ManualMotionClock clock = new();
+        ObjectMotionRuntime.ResetForTests(clock);
+        try
+        {
+            AnimatedGauge gauge = new() { Value = 0 };
+            MotionHandle high = gauge.Motion()
+                .Animate(AnimatedGauge.ValueProperty)
+                .To(10)
+                .Start(
+                    new TweenSpec<float>(TimeSpan.FromMilliseconds(100), Easings.Linear),
+                    new MotionPropertyStartOptions { HoldOnComplete = true, Priority = MotionPriority.ReducedMotion });
+            clock.Advance(TimeSpan.FromMilliseconds(50));
+            ObjectMotionRuntime.TickCurrent();
+            Assert.InRange(gauge.Value, 4.999f, 5.001f);
+
+            MotionHandle rejected = gauge.Motion()
+                .Animate(AnimatedGauge.ValueProperty)
+                .From(0)
+                .To(0)
+                .Start(new TweenSpec<float>(TimeSpan.FromMilliseconds(100), Easings.Linear));
+
+            Assert.True(rejected.IsCanceled);
+            Assert.True(high.IsActive);
+            Assert.InRange(gauge.Value, 4.999f, 5.001f);
+
+            clock.Advance(TimeSpan.FromMilliseconds(50));
+            ObjectMotionRuntime.TickCurrent();
+
+            Assert.Equal(10, gauge.Value);
+            Assert.True(high.IsCompleted);
+        }
+        finally
+        {
+            ObjectMotionRuntime.ResetForTests();
+        }
+    }
+
+    [Fact]
     public void UiFrameLoopAdvancesAnObjectThatIsNotDrawnOrAttached()
     {
         ManualMotionClock clock = new();

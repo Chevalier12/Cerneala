@@ -173,7 +173,7 @@ internal sealed class TimbrePlaybackMotionTarget : MotionNode
         float restore = slot.Value.Current;
         if (hasFrom)
         {
-            slot.Value.JumpTo(from);
+            _ = slot.Value.TryJumpToFrom(from, options.Priority);
         }
 
         float destination = toCurrent ? slot.Value.Current : to;
