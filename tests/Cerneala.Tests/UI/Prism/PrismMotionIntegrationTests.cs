@@ -289,7 +289,88 @@ public sealed class PrismMotionIntegrationTests
         Assert.Equal(0, allocated);
     }
 
+    [Fact]
+    public void LowerPriorityStartWithFromIsRejectedWithoutChangingTheActiveMotion()
+    {
+        MotionScenario scenario = CreateScenario();
+        PrismLayerState layer = scenario.Instance.GetLayerState(LayerId);
+        MotionHandle high = StartHalfwayReducedMotionOpacity(scenario);
+        float current = layer.Opacity;
+
+        MotionHandle rejected = GeneratedMarkup.StartPrismMotionProperty(
+            scenario.Session,
+            scenario.Element,
+            propertyId: 101,
+            static instance => instance.GetLayerState(LayerId).Opacity,
+            static (instance, value) => instance.GetLayerState(LayerId).Opacity = value,
+            discrete: false,
+            hasFrom: true,
+            from: 1f,
+            toCurrent: false,
+            to: 1f,
+            spec: Tween<float>(),
+            MotionPropertyStartOptions.Default);
+        scenario.Root.Motion.Tick();
+
+        Assert.True(rejected.IsCanceled);
+        Assert.True(high.IsActive);
+        Assert.Equal(current, layer.Opacity);
+    }
+
+    [Fact]
+    public void LowerPriorityBoundStartWithFromIsRejectedWithoutChangingTheActiveMotion()
+    {
+        MotionScenario scenario = CreateScenario();
+        PrismLayerState layer = scenario.Instance.GetLayerState(LayerId);
+        MotionHandle high = StartHalfwayReducedMotionOpacity(scenario);
+        float current = layer.Opacity;
+        UIElement source = new() { Opacity = 1f };
+        MarkupObservation observation = GeneratedMarkup.ObserveProperty(source, UIElement.OpacityProperty);
+
+        MotionHandle rejected = GeneratedMarkup.StartBoundPrismMotionProperty(
+            scenario.Session,
+            scenario.Element,
+            propertyId: 101,
+            static instance => instance.GetLayerState(LayerId).Opacity,
+            static (instance, value) => instance.GetLayerState(LayerId).Opacity = value,
+            discrete: false,
+            hasFrom: true,
+            from: 1f,
+            observation,
+            Cerneala.UI.Data.BindingMode.OneWay,
+            value => (float)value!,
+            spec: Tween<float>(),
+            MotionPropertyStartOptions.Default);
+        scenario.Root.Motion.Tick();
+
+        Assert.True(rejected.IsCanceled);
+        Assert.True(high.IsActive);
+        Assert.Equal(current, layer.Opacity);
+    }
+
     private static readonly PrismNodeId LayerId = new(1);
+
+    private static MotionHandle StartHalfwayReducedMotionOpacity(MotionScenario scenario)
+    {
+        MotionHandle high = GeneratedMarkup.StartPrismMotionProperty(
+            scenario.Session,
+            scenario.Element,
+            propertyId: 101,
+            static instance => instance.GetLayerState(LayerId).Opacity,
+            static (instance, value) => instance.GetLayerState(LayerId).Opacity = value,
+            discrete: false,
+            hasFrom: false,
+            from: 0f,
+            toCurrent: false,
+            to: 0f,
+            spec: Tween<float>(),
+            new MotionPropertyStartOptions { HoldOnComplete = true, Priority = MotionPriority.ReducedMotion });
+        scenario.Root.Motion.Tick();
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(50));
+        scenario.Root.Motion.Tick();
+        Assert.InRange(scenario.Instance.GetLayerState(LayerId).Opacity, 0.499f, 0.501f);
+        return high;
+    }
 
     private static MotionHandle StartOpacityMotion(
         MotionScenario scenario,

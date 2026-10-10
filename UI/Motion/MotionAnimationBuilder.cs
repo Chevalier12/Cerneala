@@ -46,7 +46,7 @@ public sealed class MotionAnimationBuilder<T>
         MotionPropertyBinding<T> binding = motion.Properties.GetOrCreateBinding(motion, facade.Element, property);
         if (hasFrom)
         {
-            binding.Value.JumpTo(from);
+            _ = binding.Value.TryJumpToFrom(from, options.Priority);
         }
 
         return binding.AnimateTo(to, spec, options);

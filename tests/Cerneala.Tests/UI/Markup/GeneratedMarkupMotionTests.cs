@@ -2,6 +2,7 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Data;
 using Cerneala.UI.Markup;
 using Cerneala.UI.Layout.Panels;
+using Cerneala.UI.Motion;
 using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Motion.Properties;
 using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
@@ -308,6 +309,90 @@ public sealed class GeneratedMarkupMotionTests
         Assert.Equal(binding.Value.Current, source.Opacity);
         Assert.Equal(0.8f, binding.Value.Target);
         Assert.True(handle.IsActive);
+    }
+
+    [Fact]
+    public void LowerPriorityPropertyStartWithFromIsRejectedWithoutChangingTheActiveMotion()
+    {
+        TestMotionClock clock = new();
+        UIRoot root = new(motionClock: clock);
+        UIElement element = new();
+        using IDisposable session = GeneratedMarkup.AttachMotionSession(element);
+        root.VisualChildren.Add(element);
+        MotionHandle high = StartHalfwayReducedMotionOpacity(root, clock, element);
+        MotionPropertyBinding<float> binding = root.Motion.Properties.GetOrCreateBinding(
+            root.Motion,
+            element,
+            UIElement.OpacityProperty);
+        float current = binding.Value.Current;
+
+        MotionHandle rejected = GeneratedMarkup.StartMotionProperty(
+            session,
+            element,
+            UIElement.OpacityProperty,
+            true,
+            1f,
+            false,
+            1f,
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)),
+            new MotionPropertyStartOptions());
+
+        Assert.True(rejected.IsCanceled);
+        Assert.True(high.IsActive);
+        Assert.Equal(0f, binding.Value.Target);
+        Assert.Equal(current, binding.Value.Current);
+    }
+
+    [Fact]
+    public void LowerPriorityBoundStartWithFromIsRejectedWithoutChangingTheActiveMotion()
+    {
+        TestMotionClock clock = new();
+        UIRoot root = new(motionClock: clock);
+        Grid owner = new();
+        UIElement target = new();
+        UIElement source = new() { Opacity = 1f };
+        owner.VisualChildren.Add(target);
+        owner.VisualChildren.Add(source);
+        using IDisposable session = GeneratedMarkup.AttachMotionSession(owner);
+        root.VisualChildren.Add(owner);
+        MotionHandle high = StartHalfwayReducedMotionOpacity(root, clock, target);
+        MotionPropertyBinding<float> binding = root.Motion.Properties.GetOrCreateBinding(
+            root.Motion,
+            target,
+            UIElement.OpacityProperty);
+        float current = binding.Value.Current;
+        MarkupObservation observation = GeneratedMarkup.ObserveProperty(source, UIElement.OpacityProperty);
+
+        MotionHandle rejected = GeneratedMarkup.StartBoundMotionProperty(
+            session,
+            target,
+            UIElement.OpacityProperty,
+            true,
+            1f,
+            observation,
+            BindingMode.OneWay,
+            value => (float)value!,
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)),
+            new MotionPropertyStartOptions());
+
+        Assert.True(rejected.IsCanceled);
+        Assert.True(high.IsActive);
+        Assert.Equal(0f, binding.Value.Target);
+        Assert.Equal(current, binding.Value.Current);
+    }
+
+    private static MotionHandle StartHalfwayReducedMotionOpacity(UIRoot root, TestMotionClock clock, UIElement element)
+    {
+        MotionHandle high = element.Motion()
+            .Animate(UIElement.OpacityProperty)
+            .To(0f)
+            .With(
+                MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)),
+                new MotionPropertyStartOptions { HoldOnComplete = true, Priority = MotionPriority.ReducedMotion });
+        root.ProcessFrame();
+        clock.Advance(TimeSpan.FromMilliseconds(50));
+        root.ProcessFrame();
+        return high;
     }
 
     private static MotionGroupHandle StartOpacity(IDisposable session, UIElement element, float destination)

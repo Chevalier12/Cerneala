@@ -58,7 +58,7 @@ public sealed class ObjectMotionAnimationBuilder<TTarget, TValue>
                 property);
         if (hasFrom)
         {
-            binding.JumpTo(from);
+            _ = binding.TryJumpToFrom(from, options.Priority);
         }
 
         return binding.AnimateTo(to, spec, options);

@@ -233,11 +233,16 @@ internal sealed class ObjectMotionBinding<TTarget, TValue> :
 
     public override object Property => property;
 
-    public void JumpTo(TValue next)
+    public bool TryJumpToFrom(TValue from, MotionPriority priority)
     {
         ThrowIfDisposed();
-        value.JumpTo(next);
+        if (!value.TryJumpToFrom(from, priority))
+        {
+            return false;
+        }
+
         ApplyPendingSample();
+        return true;
     }
 
     public MotionHandle AnimateTo(
