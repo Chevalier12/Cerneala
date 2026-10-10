@@ -84,7 +84,12 @@ internal sealed class TimbreRig : IDisposable
         Assert.Equal(expected.Length, actual.Length);
         for (int index = 0; index < expected.Length; index++)
         {
-            if (Math.Abs(expected[index] - actual[index]) > tolerance)
+            // A non-finite sample matches only the identical non-finite value:
+            // NaN - x is NaN and NaN > tolerance is false.
+            bool matches = float.IsFinite(expected[index]) && float.IsFinite(actual[index])
+                ? Math.Abs(expected[index] - actual[index]) <= tolerance
+                : expected[index].Equals(actual[index]);
+            if (!matches)
             {
                 Assert.Fail($"PCM differs at sample {index} (frame {index / 2}, channel {index % 2}): expected {expected[index]}, actual {actual[index]}.");
             }
