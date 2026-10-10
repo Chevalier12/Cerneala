@@ -63,6 +63,32 @@ public sealed class TimbreStreamingFailureTests
         Assert.True(source.Single.IsDisposed);
     }
 
+    // A storage failure is not damaged data, whichever decoder reads the stream.
+    [Theory]
+    [InlineData("mp3-mpeg1-44100-stereo-cbr128.mp3")]
+    [InlineData("opus-stereo-48000-96k.opus")]
+    [InlineData("vorbis-44100-stereo-q4.ogg")]
+    [InlineData("vorbis-48000-stereo-q2.ogg")]
+    public async Task StorageFailureWhilePlayingFailsThePlaybackAsSourceUnavailable(string name)
+    {
+        ObservedSource source = new(DecodingCorpus.PathOf(name));
+        using TimbreRig rig = new();
+        TimbrePlayback playback = rig.Scope.Play(source.Clip);
+        await rig.StartAsync(playback);
+        source.Single.FailRead = (_, _) => true;
+
+        for (int step = 0; step < 4000 && !playback.Completion.IsCompleted; step++)
+        {
+            rig.Output.ConsumeAll();
+            await rig.SyncAsync();
+        }
+
+        TimbrePlaybackResult result = await TimbreRig.CompletionAsync(playback);
+        Assert.Equal(TimbrePlaybackState.Failed, result.State);
+        Assert.Equal(TimbreErrorKind.SourceUnavailable, result.Error!.Kind);
+        Assert.IsType<IOException>(result.Error.InnerException);
+    }
+
     [Theory]
     [InlineData("vorbis-corrupt-crc.ogg")]
     [InlineData("mp3-truncated.mp3")]
