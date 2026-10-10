@@ -85,5 +85,5 @@ Counts were taken on 2026-10-10. A new plan adds its own row here.
 | [aspect-runtime-program](2026-10-08-aspect-runtime-program.md) | 2026-10-08 | completed | 30 / 0 | |
 | [decizii-pentru-review](2026-10-08-decizii-pentru-review.md) | 2026-10-08 | no checklist | 0 / 0 | Record of decisions taken for user review. |
 | [timbre-prism-in-aspect](2026-10-08-timbre-prism-in-aspect.md) | 2026-10-08 | completed | 38 / 0 | |
-| [architecture-docs](2026-10-10-architecture-docs.md) | 2026-10-10 | proposed | 0 / 51 | Starts after stage 5 of [repo-docs-reorganization](2026-10-10-repo-docs-reorganization.md). |
+| [architecture-docs](2026-10-10-architecture-docs.md) | 2026-10-10 | completed | 51 / 0 | Depends on [repo-docs-reorganization](2026-10-10-repo-docs-reorganization.md). |
 | [repo-docs-reorganization](2026-10-10-repo-docs-reorganization.md) | 2026-10-10 | completed | 82 / 0 | |

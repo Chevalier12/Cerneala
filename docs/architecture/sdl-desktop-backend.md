@@ -1,6 +1,28 @@
 # SDL3 + SDL_GPU Desktop Backend
 
-The SDL desktop backend combines SDL3 windowing with SDL_GPU rendering and is the sole maintained desktop backend. The source generator stays backend-neutral, and each executable selects exactly one composition at assembly level.
+> Code: `Cerneala.Platforms.Sdl3/`, `Cerneala.Backends.SdlGpu/` · Verified at commit `0cb32300` (2026-10-10)
+
+## Responsibility
+
+The SDL desktop backend combines SDL3 windowing with SDL_GPU rendering and is the sole maintained desktop backend. `Cerneala.Platforms.Sdl3` implements the hosting platform contracts (`IWindowPlatform`, `IPlatformWindow`, the input source and two platform services) and the Timbre audio output. `Cerneala.Backends.SdlGpu` implements `IDrawingBackend` on SDL_GPU and registers the composition. Neither project decides when a frame runs: that is the hosting runtime's job, see [hosting-and-platform.md](hosting-and-platform.md). The source generator stays backend-neutral, and each executable selects exactly one composition at assembly level.
+
+## Components
+
+All types below are internal except `SdlGpuApplicationBackend`. `Cerneala.Platforms.Sdl3` has no public types.
+
+| Type | File | Role | Owner |
+|---|---|---|---|
+| `SdlGpuApplicationBackend` (public) | `Cerneala.Backends.SdlGpu/Hosting/SdlGpuApplicationBackend.cs` | `EnsureRegistered()`; `CreatePlatform` builds `NativeSdlApi`, the graphics session factory, `NativeSdlAudioApi` and `SdlWindowPlatform` | process |
+| `SdlPlatformLifetime` | `Cerneala.Platforms.Sdl3/Hosting/SdlPlatformLifetime.cs` | `SDL_Init(Video \| Events)` in its constructor, `SDL_Quit` in `Dispose`; remembers the UI thread | the platform |
+| `SdlWindowPlatform` | `Hosting/SdlWindowPlatform.cs` | `IWindowPlatform`: creates windows, pumps events, owns the event watch, the cursor service and the audio output | the application runtime |
+| `SdlPlatformWindow` | `Hosting/SdlWindowPlatform.cs` | One native window: geometry, state, DPI scale, event translation | its platform |
+| `SdlInputSource` | `Input/SdlInputSource.cs` | Turns SDL pointer, button, wheel, key and text events into Cerneala input | its window |
+| `SdlCursorService` | `Hosting/SdlCursorService.cs` | `ICursorService`; a hidden cursor uses a null SDL cursor | the platform |
+| `SdlTimbreOutput`, `NativeSdlAudioApi`, `ISdlAudioApi` | `Audio/` | Timbre's `ITimbreOutput` on an SDL audio stream | the platform; one per process |
+| `ISdlApi`, `NativeSdlApi` | `Interop/` | The only place that calls the `SDL3` binding; converts native events into `SdlEvent` | the platform |
+| `SdlGpuDeviceOwner` | `Cerneala.Backends.SdlGpu/Gpu/SdlGpuDeviceOwner.cs` | The shared SDL_GPU device | the graphics session factory |
+| `SdlGpuWindowGraphicsSession` | `Gpu/SdlGpuWindowGraphicsSession.cs` | Per-window swapchain, command buffer, drawing backend, upload arena | its window |
+| `SdlGpuDrawingBackend`, `Cerberus` | `Gpu/` | Translate draw commands into SDL_GPU geometry and draws | its session |
 
 ## Select the backend
 
@@ -33,11 +55,65 @@ Then add one assembly declaration:
 
 Repeating the same SDL_GPU registration is harmless. A different windowing backend cannot be registered in the same process. The retired MonoGame and WindowsDX compositions are no longer available.
 
+## SDL3 platform
+
+### Windows
+
+`SdlWindowPlatform.CreateWindow` creates the SDL window hidden and with high pixel density, plus resizable, always-on-top or utility flags from the window properties. It then creates the window's graphics session and applies the properties. If any step fails, the native window is destroyed again. Destroying a window disposes its graphics session first, then the SDL window.
+
+### Event pump and input
+
+`PumpEvents` runs on the UI thread, once per loop iteration of the hosting runtime:
+
+1. It rethrows a failure stored by the event watch (see below).
+2. It polls every pending SDL event. `NativeSdlApi.ConvertEvent` maps quit, 17 window event kinds, key, text, mouse and audio-device-removed events; every other SDL event becomes an empty `SdlEvent` and is ignored.
+3. A quit event asks every window to close (`RequestApplicationClose`).
+4. Every other event goes to the window with the event's window ID, which handles it in `SdlPlatformWindow.ProcessEvent`.
+
+| SDL event | Effect |
+|---|---|
+| close requested | the window's close request |
+| focus gained / lost | activation changes |
+| moved, resized, pixel size, display, display scale changed | geometry refresh and swapchain resize |
+| minimized / maximized / restored | the window state changes, then a geometry refresh |
+| exposed | a render request |
+| mouse leave, motion, button, wheel | pointer input, then a render request |
+| key down / up | key input, then a render request |
+| text input | text input, then a render request |
+| text editing (IME composition) | only a render request; the composition text is not passed on |
+
+Input events are ignored while the window is disabled, for example while it has an open modal child.
+
+`SdlInputSource` maps:
+
+- mouse buttons 1–5 to `Left`, `Middle`, `Right`, `XButton1`, `XButton2`;
+- wheel `y` to `round(y × 120)`, negated when SDL reports a flipped wheel;
+- these scancodes: `A`–`Z`, `D0`–`D9`, `F1`–`F12`, Enter, Escape, Backspace, Tab, Space, Insert, Delete, Home, End, Page Up, Page Down, the four arrows, and left/right Ctrl, Shift and Alt. Every other key, for example punctuation, the numeric keypad, Caps Lock or the Windows key, becomes `Unknown` and is ignored.
+
+There is no touch, pen or gamepad input.
+
+### Coordinates and DPI
+
+Each window computes `nativeCoordinateScale = displayScale / pixelDensity` from `SDL_GetWindowDisplayScale` and `SDL_GetWindowPixelDensity`; an invalid value falls back to 1. Pointer positions are divided by that scale, and logical sizes are multiplied by it and rounded up when they go to SDL. Example: with display scale 2.0 and pixel density 1.0 the scale is 2.0, so an SDL mouse position (300, 200) reaches Cerneala as (150, 100). With display scale 2.0 and pixel density 2.0 the scale is 1.0, so SDL positions are used as they are. `CreatePlatform` takes an optional `coordinateScaleOverride` that replaces the SDL display scale; the default hosting runtime passes `null`.
+
+### Threads
+
+| Code | Thread |
+|---|---|
+| `SdlPlatformLifetime` constructor, `CreateWindow`, `PumpEvents`, platform `Dispose` | the UI thread. `VerifyUiThread` throws `SDL platform access must remain on UI thread <id>.` on any other thread |
+| event watch, window exposed during a live resize | the owner thread only: it refreshes the geometry and renders at once, so the window repaints while the user drags its border. A failure is stored and rethrown by the next `PumpEvents` |
+| event watch, audio device removed | an SDL audio thread; it calls `SdlTimbreOutput.HandleDeviceRemoved` without waiting for the UI pump |
+| SDL audio request callback | an SDL audio thread; see [Audio output](#audio-output-timbre) |
+
+### Interop boundary
+
+Only `NativeSdlApi`, `NativeSdlAudioApi` and `SdlWindowsWindowFeatures` (the Windows resize grip and default icon) use the `SDL3` binding. The rest of the platform and the GPU backend see `ISdlApi`, `ISdlAudioApi` and plain records such as `SdlEvent`, so tests replace them with fakes. No SDL handle or binding type appears in a public signature.
+
 ## Rendering contract
 
 SDL3 owns windows, input, DPI, cursors, and the event pump. The renderer uses `SDL_GPU` directly: one GPU device is shared by the platform, while each window owns its swapchain and presentation session. There is no `SDL_Renderer`/`SDL_Render` path.
 
-The SDL_GPU driver is D3D12 on Windows, Vulkan on Linux, and Metal on macOS. Shader artifacts for DXIL, SPIR-V, and MSL are compiled offline from the shared HLSL sources. The published application does not compile shaders and does not carry ShaderCross as a runtime dependency.
+`SdlGpuDeviceOwner` creates the device with no preferred driver and requests the SPIR-V, DXIL, MSL and MetalLib shader formats, so SDL chooses the driver. The expected drivers are D3D12 on Windows, Vulkan on Linux, and Metal on macOS; nothing in Cerneala enforces them. Shader artifacts for DXIL, SPIR-V, and MSL are compiled offline from the shared HLSL sources; see [build-tools.md](build-tools.md). The published application does not compile shaders and does not carry ShaderCross as a runtime dependency.
 
 ### Internal drawing flow
 
@@ -49,7 +125,7 @@ Cerberus is an implementation detail of `Cerneala.Backends.SdlGpu`, not a public
 
 Retained GPU content is published against the outcome of the command buffer that records it. A newly rendered Prism target, `RenderSurface2D` target, drawing-brush capture, sampled texture, or text-atlas upload is initially **pending** under an internal token that combines the owning window session with that session's command-buffer generation. Pending content may be replayed only by the same active command buffer. It is not visible to another buffer or window merely because the underlying device or native handle is shared.
 
-`RenderSurface3D` follows that publication boundary for its isolated color/depth target. Its raster key includes the requested generation, captured command version, logical bounds, physical dimensions, DPI scale, and target format. Replay of a captured command in the same buffer uses its completed pending target, even if its callback requested a later generation; a later buffer records that new generation. A separate camera or raster mutation after the callback is not folded into that replay allowance. A partially recorded or failed pass is never a submitted hit. The control owns only its per-session acquisitions: detach, removal of its last subscriber, root resource cleanup, and session disposal retire those targets idempotently. A source acquisition epoch rejects retained commands captured before retirement, while fresh captures can reacquire after attachment or resource replacement. Each 3D target's color, resolve, and depth textures are pinned until every referencing command buffer has submitted or been cancelled; another window's retirement flush cannot release a pending target. Device-owned 3D shader and pipeline caches remain shared until device disposal; closing one window does not retire another window's target.
+`RenderSurface3D` follows that publication boundary for its isolated color/depth target. Its raster key includes the source's frame version (`FrameVersion`), captured command version, logical bounds, physical dimensions, DPI scale, and target format. Replay of a captured command in the same buffer uses its completed pending target, even if its callback requested a later generation; a later buffer records that new generation. A separate camera or raster mutation after the callback is not folded into that replay allowance. A partially recorded or failed pass is never a submitted hit. The control owns only its per-session acquisitions: detach, removal of its last subscriber, root resource cleanup, and session disposal retire those targets idempotently. A source acquisition epoch rejects retained commands captured before retirement, while fresh captures can reacquire after attachment or resource replacement. Each 3D target's color, resolve, and depth textures are pinned until every referencing command buffer has submitted or been cancelled; another window's retirement flush cannot release a pending target. Device-owned 3D shader and pipeline caches remain shared until device disposal; closing one window does not retire another window's target.
 
 A successful `SDL_SubmitGPUCommandBuffer` outcome changes eligible pending content to **submitted**, allowing later command buffers to reuse it. A failed submit, explicit cancellation, or session cleanup **abandons** that buffer's pending content: cache entries and atlas revisions that were not previously submitted must be uploaded or rendered again. Invalidation or disposal while work is pending cannot resurrect the invalidated owner during the later outcome notification. Resources referenced by pending work stay pinned until the buffer outcome is known, so pool reuse or budget eviction cannot overwrite a target or upload that an unfinished buffer still references.
 
@@ -57,7 +133,7 @@ Command-buffer submission is not presentation and is not GPU fence completion. `
 
 The backend flushes through one coordination path. Pending resource uploads, including the text atlas, are completed before Cerberus uploads and emits queued geometry. Flush barriers cover copy passes, Prism execution, layer and `RenderSurface2D` target changes, child-target composition, clip/stencil transitions, and the end of a command range or frame. Cerberus preserves painter order and merges only immediately adjacent compatible triangle lists; it never sorts commands by texture or depth.
 
-The device-level text atlas retains raster variants across frames within eight 1024 x 1024 RGBA pages. It grows lazily to that limit before reusing the least-recently-used inactive page; pages referenced by an unfinished frame cannot be evicted. Closing a frame releases its page references without compacting, copying, or relocating cached pixels. The maximum page payload is 32 MiB of CPU pixels plus 32 MiB of GPU pixels, excluding cache metadata and driver overhead. Pages are reused under budget pressure and released with their device-level resource owner. This policy trades bounded retention for fewer repeated rasterizations; it does not change text coverage, subpixel phases, or the fallback for requests that cannot fit in the atlas.
+The device-level text atlas retains raster variants across frames within at most eight 1024 x 1024 RGBA pages (4 MiB each). It adds pages lazily up to that limit. When all eight pages are full, it frees entries one by one, starting with the least recently used, skipping entries still used by an unfinished frame, until the new raster fits in the freed page space; if nothing fits, the request uses the fallback path. Closing a frame releases its entry references without compacting, copying, or relocating cached pixels. The maximum payload of all eight pages is 32 MiB of CPU pixels plus 32 MiB of GPU pixels, excluding cache metadata and driver overhead. Pages are reused under budget pressure and released with their device-level resource owner. This policy trades bounded retention for fewer repeated rasterizations; it does not change text coverage, subpixel phases, or the fallback for requests that cannot fit in the atlas.
 
 Non-solid text checks its existing brush-texture cache before generating CPU coverage. Gradient text retains its colorized texture; tile-brush text retains its alpha mask independently of the brush capture. Cached texture dimensions and raster origin preserve baseline placement when the same canonical phase is translated. Reusing a text mask does not freeze ImageBrush, DrawingBrush or VisualBrush content: the capture still checks the current brush commands and reapplies the mask when repainting. These textures follow the existing per-backend retain/release lifecycle and are retired when no backend uses them; they do not extend the solid-text atlas's page budget or retention policy.
 
@@ -77,7 +153,7 @@ The platform supplies the audio output behind `Application.TimbreRuntime`. Timbr
 
 - **Ownership.** One output per platform, shared by every window. It is created inert with the platform and opened lazily by the runtime's mixer the first time a playback needs it: `SDL_InitSubSystem(SDL_INIT_AUDIO)`, then `SDL_OpenAudioDeviceStream` on the default playback device (opened paused), then `SDL_ResumeAudioStreamDevice`. Closing runs `SDL_DestroyAudioStream`, which also closes that device, then `SDL_QuitSubSystem(SDL_INIT_AUDIO)`. Video/event initialization and the platform's `SDL_Quit` are unchanged. GPU-only consumers that construct the platform without the audio seam never initialize audio.
 - **Format and queue.** The stream's input is the Timbre mix: float32, stereo, 48 kHz, whole 480-frame blocks. The mixer keeps at most 1920 frames (40 ms) queued, measured with `SDL_GetAudioStreamQueued`. When the device runs short and the mixer has produced nothing since its previous check, the output flushes the stream so a resampling conversion releases the frames it holds back; continuous playback is never flushed.
-- **Threading.** All PCM is pushed from the Timbre mixer thread. The SDL request callback runs on an SDL audio thread with the stream lock held and only counts the request and signals the mixer; it never decodes, mixes, reads files, or touches the UI. One rooted callback serves the process; a callback that races stream destruction finds no handler and does nothing. Audio progress does not depend on redraw, the UI pump, or window visibility.
+- **Threading.** All PCM is pushed from the Timbre mixer thread. The SDL request callback runs on an SDL audio thread with the stream lock held and only counts the request and signals the mixer; it never decodes, mixes, reads files, or touches the UI. One rooted callback serves the process; a callback that races stream destruction finds no handler, increments an internal late-callback counter and returns. Audio progress does not depend on redraw, the UI pump, or window visibility.
 - **Shutdown.** The platform releases audio first when it is disposed: callbacks are drained by the stream destruction, the stream and device are freed, the audio subsystem is released, and only then does SDL quit. Afterwards the output rejects opens, and live playbacks fail with `DeviceUnavailable`.
 - **Errors.** A missing audio driver or device, an open/resume failure, a failed `SDL_PutAudioStreamData` (a `bool` result), or a removed default device (`SDL_EVENT_AUDIO_DEVICE_REMOVED` for the stream's device, observed without the UI pump) fails the affected playbacks with `TimbreErrorKind.DeviceUnavailable`. Nothing reconnects or retries automatically; a later explicit `Play` opens the device again.
 - **Transport.** Cancel, pause, seek, loop, replacement, parameter changes, and closing a window affect only PCM that Timbre has not produced yet. Audio already queued (≤ 40 ms) still plays; the shared stream is never cleared or paused for one playback. Completion requires the queued tail to be consumed by the device; it does not observe the DAC.
@@ -90,7 +166,7 @@ Physical delivery and the dummy driver are verified separately: the dummy driver
 
 The native runtime comes from [Graphix.Native 3.4.16-graphix.6](https://www.nuget.org/packages/Graphix.Native/3.4.16-graphix.6),
 an independently maintained SDL fork. The managed binding is [Graphix-CS 3.4.16.1](https://www.nuget.org/packages/Graphix-CS/3.4.16.1),
-a packaging fork of upstream `SDL3-CS v3.4.16.0`. It preserves namespace `SDL3`,
+a packaging fork of upstream SDL3-CS 3.4.16 (as its package description states). It preserves namespace `SDL3`,
 public class `SDL`, assembly name `SDL3-CS.dll`, and the upstream binding/generator source.
 Do not reference both `Graphix-CS` and `SDL3-CS` in the same application.
 The separate `SDL3-CS.*.Shadercross` packages remain build-tool dependencies,
@@ -283,15 +359,57 @@ Run the published application through the matching launch helper:
   -ArtifactDirectory artifacts\sdlgpu-smoke
 ```
 
-Available smoke modes cover single-window, multi-window, input, resize, Drawing, `RenderSurface2D`, Prism, screenshot, and Timbre audio behavior. Screenshots are captured only through `Window.SaveScreenshot`; no operating-system screen-copy API is used. The `timbre` mode records the PCM the output accepted through an application-owned tap and compares each isolated clip bit-exactly with the same engine rendered into a deterministic sink; it writes `timbre-diagnostics.json` and does not capture operating-system audio.
+Available smoke modes cover single-window, multi-window, input, resize, Drawing, `RenderSurface2D`, `RenderSurface3D`, Prism, screenshot, and Timbre audio behavior. Screenshots are captured only through `Window.SaveScreenshot`; no operating-system screen-copy API is used. The `timbre` mode records the PCM the output accepted through an application-owned tap and compares each isolated clip bit-exactly with the same engine rendered into a deterministic sink; it writes `timbre-diagnostics.json` and does not capture operating-system audio.
 
 ## CI notes
 
 The desktop workflow publishes both architectures for each operating-system family and executes native multi-window and Prism smoke tests on Windows, Linux, and macOS. Linux CI uses Xvfb and Mesa lavapipe when no physical display/GPU is available. This software Vulkan configuration is a CI fallback, not a runtime requirement for user applications.
 
-The same Windows x64, Linux x64/Vulkan, and macOS arm64/Metal matrix also builds the SDL and core test projects, enables `CERNEALA_SDL_NATIVE_TESTS=1`, and executes the real offline-artifact pipeline creation test plus the current Drawing/Prism pixel-conformance corpus. The job validates exact TRX counts (1 pipeline test and 133 conformance cases), rejects any non-executed mandatory test, and uploads the `Window.SaveScreenshot` images, references, heatmaps, and diff reports. Linux runs these tests under `xvfb-run` after selecting the lavapipe ICD. Cross-published secondary RIDs are packaging evidence only and do not substitute for those three native executions.
+The same Windows x64, Linux x64/Vulkan, and macOS arm64/Metal matrix also builds the SDL and core test projects, enables `CERNEALA_SDL_NATIVE_TESTS=1`, and executes the real offline-artifact pipeline creation test plus the current Drawing/Prism pixel-conformance corpus. The job validates exact TRX counts (1 pipeline test, 133 2D/Prism conformance cases and 27 3D conformance cases), rejects any non-executed mandatory test, and uploads the `Window.SaveScreenshot` images, references, heatmaps, and diff reports. Linux runs these tests under `xvfb-run` after selecting the lavapipe ICD. Cross-published secondary RIDs are packaging evidence only and do not substitute for those three native executions.
 
-Timbre audio runs on Windows only. Hosted runners have no playback endpoint, so the Windows job selects SDL's dummy audio driver explicitly for the native audio tests (exactly five, no skips) and the `timbre` smoke; that certifies interop, lifecycle, and the PCM pipeline, not physical delivery. Physical delivery is verified on a Windows host with a default playback device by `CERNEALA_TIMBRE_AUDIO_DEVICE=1` together with `CERNEALA_SDL_NATIVE_TESTS=1`, and by the `timbre` smoke without `SDL_AUDIO_DRIVER`. Linux and macOS jobs do not run audio; their Xvfb/Vulkan setup is not an audio environment.
+Timbre audio runs on Windows only. Hosted runners have no playback endpoint. The Windows job runs the native audio tests (exactly five, no skips) with only `CERNEALA_SDL_NATIVE_TESTS=1`; the tests set SDL's audio-driver hint themselves (`dummy`, or a nonexistent driver in the test for a missing driver). The `timbre` smoke step sets `SDL_AUDIO_DRIVER=dummy`. The workflow comment above the audio step says the job selects the dummy driver; the YAML does not. This setup certifies interop, lifecycle, and the PCM pipeline, not physical delivery. Physical delivery is verified on a Windows host with a default playback device by `CERNEALA_TIMBRE_AUDIO_DEVICE=1` together with `CERNEALA_SDL_NATIVE_TESTS=1`, and by the `timbre` smoke without `SDL_AUDIO_DRIVER`. Linux and macOS jobs do not run audio; their Xvfb/Vulkan setup is not an audio environment.
+
+## Lifecycle And Ownership
+
+| Object | Created by | Released by |
+|---|---|---|
+| SDL video and events | `SdlPlatformLifetime` constructor. On failure it calls `SDL_Quit` and throws | `SdlPlatformLifetime.Dispose` → `SDL_Quit` |
+| `SdlWindowPlatform` | `SdlGpuApplicationBackend.CreatePlatform`, called by the hosting runtime | the hosting runtime |
+| SDL_GPU device | the graphics session factory, shared by all windows | device disposal |
+| native window and its graphics session | `CreateWindow` | window `Dispose`: graphics session first, then `SDL_DestroyWindow` |
+| SDL audio subsystem and stream | `SdlTimbreOutput`, lazily, on the first playback | closing the output, or platform `Dispose` |
+
+`SdlWindowPlatform.Dispose` runs on the UI thread, once, in this order:
+
+1. terminate the audio output (destroy the stream, quit the audio subsystem);
+2. remove the event watch;
+3. dispose every window;
+4. dispose the graphics session factory;
+5. dispose the cursor service;
+6. dispose `SdlPlatformLifetime`, which calls `SDL_Quit`.
+
+## Frame Integration
+
+The backend has no `FramePhase`. The hosting runtime calls `PumpEvents` once per loop iteration. The input events it delivers are processed by the UI root in its next frame, and render requests mark the window for rendering; see [hosting-and-platform.md](hosting-and-platform.md#one-loop-iteration) and [input.md](input.md). Rendering a window uses its `SdlGpuWindowGraphicsSession`. The only exception to "events wait for the pump" is the live-resize watch above, which renders at once on the owner thread.
+
+## Invariants
+
+- `Cerneala.Backends.SdlGpu` exports only `SdlGpuApplicationBackend`. `tests/Cerneala.Tests.SdlGpu/SdlArchitectureTests.cs:SdlGpuBackendPublicApiIsLimitedToTheApplicationBootstrap`.
+- `Cerberus` is a top-level internal type and its signatures do not expose its backend owner. `SdlArchitectureTests.cs:CerberusIsTopLevelInternalAndDoesNotExposeItsBackendOwnerInSignatures`.
+- No SDL binding type appears in the public API of the adapter projects. `SdlArchitectureTests.cs:SdlBindingTypesDoNotEscapeTheAdapterPublicApis`.
+- Audio stays behind `ISdlAudioApi` and out of the GPU API. `SdlArchitectureTests.cs:AudioStaysBehindItsOwnInternalSeamAndOutOfTheGpuApi`.
+- A platform built without the audio seam has no output; creating the output touches no audio state. `tests/Cerneala.Tests.SdlGpu/SdlWindowPlatformAudioTests.cs:APlatformWithoutAnAudioSeamHasNoOutput`, `CreatingThePlatformAndItsOutputTouchesNoAudioState`.
+- Platform dispose runs the audio operations `init, open, resume, destroy, quit` and quits audio before `SDL_Quit` (SDL quit count is 0 when audio quits). `SdlWindowPlatformAudioTests.cs:DisposingThePlatformReleasesAudioBeforeSdlQuits`.
+- A device-removed event raised on another thread fails the open playback with `TimbreErrorKind.DeviceUnavailable`; an event for another device ID (22 instead of 23) does not. `SdlWindowPlatformAudioTests.cs:AudioDeviceRemovalWatchedOnAnotherThreadReachesTheOutput`.
+- The event translation table, the key map, the DPI formula and the live-resize watch: netestat in this pass (no test body read).
+
+## Known Limitations
+
+- Of the seven platform services, SDL fills only the cursor and text input; see [hosting-and-platform.md](hosting-and-platform.md#platform-services).
+- The key map covers only the keys listed above, and IME composition text is not passed on.
+- No touch, pen or gamepad input.
+- The SDL_GPU driver is SDL's choice; Cerneala does not check that it is the expected one.
+- The workflow comment about the dummy audio driver does not match the YAML (see CI notes).
 
 ## See also
 

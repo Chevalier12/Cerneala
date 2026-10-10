@@ -1,6 +1,8 @@
 # Retained Frame Loop
 
-This diagram shows how retained UI work flows through the game loop.
+This diagram shows how retained UI work flows through one host frame
+(`UiHost.UpdateCore` and `UiHost.DrawCore`). The text version with line
+references is in [Invalidation And Frame Scheduling](../invalidation-and-frame.md).
 
 ```text
 ┌───────────────────────────────────────────────────────────────┐
@@ -15,49 +17,67 @@ This diagram shows how retained UI work flows through the game loop.
         │                             │
         ▼                             ▼
 ┌───────────────────┐         ┌───────────────────┐
-│  Read InputFrame  │         │ Get cached root   │
-│  from IInputSource│         │ DrawCommandList   │
-└───────────────────┘         └───────────────────┘
-        │                             │
-        ▼                             ▼
-┌───────────────────┐         ┌───────────────────┐
-│ Hit test / focus  │         │ IDrawingBackend   │
-│ command routing   │         │ Render(commands)  │
-└───────────────────┘         └───────────────────┘
-        │
-        ▼
+│ UIRoot.BeginUpdate│         │ RetainedRenderer  │
+│ drains Relay      │         │ Render: committed │
+└───────────────────┘         │ root command list │
+        │                     └───────────────────┘
+        ▼                             │
+┌───────────────────┐                 ▼
+│ Scheduled pass    │         ┌───────────────────┐
+│ (if queued work)  │         │ IDrawingBackend   │
+└───────────────────┘         │ Render(commands,  │
+        │                     │   frameContext)   │
+        ▼                     └───────────────────┘
 ┌───────────────────┐
-│ State changes     │
-│ properties/style  │
-│ resources/input   │
+│ ElementInputBridge│
+│ Dispatch: hit test│
+│ focus, routing,   │
+│ commands          │
 └───────────────────┘
         │
         ▼
+┌───────────────────┐
+│ Input pass        │
+│ (queued work, or  │
+│ Motion not yet    │
+│ sampled)          │
+└───────────────────┘
+        │
+        ▼
+┌───────────────────┐
+│ RetainedRenderer  │
+│ Commit            │
+└───────────────────┘
+
+Any state change (properties, Aspect, resources, input handlers, tree edits):
+
 ┌───────────────────────────────────────────────────────────────┐
-│                       Invalidation                            │
-├───────────────────────────────────────────────────────────────┤
-│ Measure dirty | Arrange dirty | Render dirty | HitTest dirty  │
+│ UIRoot.Invalidate → DirtyPropagation → DirtyState flags       │
+└───────────────────────────────────────────────────────────────┘
+        │
+        ▼
+┌───────────────────────────────────────────────────────────────┐
+│ Queues owned by UIRoot                                        │
+│ InheritedPropertyQueue | CommandStateQueue | AspectQueue      │
+│ LayoutQueue (measure, arrange) | RenderQueue | HitTestQueue   │
 └───────────────────────────────────────────────────────────────┘
         │
         ▼
 ┌───────────────────┐
-│ LayoutQueue       │
-│ RenderQueue       │
-│ HitTestQueue      │
+│ UiFrameScheduler  │  (one pass = these phases, in order)
 └───────────────────┘
         │
-        ▼
-┌───────────────────┐
-│ UiFrameScheduler  │
-└───────────────────┘
+        ├──► InheritedProperties
+        ├──► CommandState
+        ├──► Aspect
+        ├──► InheritedProperties (work added by CommandState/Aspect)
+        ├──► Measure, then Arrange
+        ├──► RenderCache: rebuild invalidated element render caches
+        ├──► HitTest: rebuild the input route cache if needed
         │
-        ├──────────────► process measure/arrange if layout dirty
-        │
-        ├──────────────► rebuild subtree render caches if render dirty
-        │
-        ├──────────────► rebuild hit-test data if hit-test dirty
-        │
-        └──────────────► no-op if nothing is dirty
+        └──► no queued work: count a no-work frame and stop
+             (with active Motion: Motion hooks + Measure, Arrange,
+              RenderCache, HitTest only)
 ```
 
 ## Required Behavior
@@ -66,6 +86,6 @@ This diagram shows how retained UI work flows through the game loop.
 - An unchanged UI tree must not re-measure.
 - An unchanged UI tree must not re-arrange.
 - An unchanged UI tree must not regenerate render commands.
-- The draw step may reuse the cached root command list.
-- Dirty flags must clear only after the corresponding phase succeeds.
-- `FrameBudget` does not defer work in MVP.
+- The draw step reuses the root command list committed during update.
+- A failed phase leaves the element queued with its dirty flag set.
+- `FrameBudget` does not defer work.

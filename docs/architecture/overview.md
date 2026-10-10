@@ -9,7 +9,8 @@ The canonical public API documentation lives under
 
 The [architecture diagram](../assets/cerneala-architecture.png) summarizes
 the retained runtime and the SDL3 + SDL_GPU desktop composition. The flow and
-ownership below provide the detailed context.
+ownership below provide the detailed context. One correction: the diagram labels
+Servo "external automation", but Servo runs in-process (see [Servo](servo.md)).
 
 ## The Short Version
 
@@ -48,31 +49,51 @@ Application / presentation
 The build-time language stack and the runtime UI stack are deliberately
 separate. `Cerneala.Language` is not a runtime dependency of `Cerneala.UI`.
 
+## Systems Map
+
+Each system has one owner folder or project. The link points to the most
+detailed architecture text that exists today; a section of this file is used
+until a dedicated document exists.
+
+| System | Code | Responsibility | Architecture text |
+|---|---|---|---|
+| Property system | `UI/Core` | Typed properties, value sources, effective value, change notification. | [property-system.md](property-system.md) |
+| Invalidation and frame | `UI/Invalidation` | Dirty flags, the six work queues, and phase order in each frame. | [invalidation-and-frame.md](invalidation-and-frame.md), [frame loop diagram](diagrams/retained-frame-loop.md) |
+| Layout | `UI/Layout` | Measure and arrange with cached results and layout boundaries. | [layout.md](layout.md) |
+| Input | `UI/Input` | Hit testing, routed events, focus, capture, commands. | [input.md](input.md), [layer boundaries](diagrams/ui-layer-boundaries.md) |
+| Rendering | `UI/Rendering` | Per-element render caches and the retained root command list. | [rendering.md](rendering.md) |
+| Drawing | `Drawing` | Backend-neutral command recording and the backend interface. | [drawing.md](drawing.md) |
+| Data | `UI/Data` | Bindings between observable sources and typed properties. | [markup data bindings](../reference/markup-data-bindings.md) |
+| Markup and source generation | `UI/Markup`, `Cerneala.SourceGen` | Lowering `.crn` into typed C# and the generated-code runtime surface. | [markup-and-sourcegen.md](markup-and-sourcegen.md), [application markup](../guides/application-markup.md) |
+| Language | `Cerneala.Language` | `.crn` syntax, semantics, diagnostics, and editor services. | [language-tooling.md](language-tooling.md#cernealalanguage) |
+| Language server | `Cerneala.LanguageServer` | LSP host over `Cerneala.Language`. | [language-tooling.md](language-tooling.md#cernealalanguageserver), [language server guide](../guides/language-server.md) |
+| Preview host | `Cerneala.PreviewHost` | Out-of-process compile, hot reload, and render of a `.crn` preview. | [language-tooling.md](language-tooling.md#cernealapreviewhost) |
+| Visual Studio extension | `Cerneala.VisualStudio` | Starts the language server and the preview host inside Visual Studio. | [language-tooling.md](language-tooling.md#cernealavisualstudio), [Visual Studio guide](../guides/visual-studio-community.md) |
+| Aspect | `UI/Aspect` | Styling and control composition rules. | [aspect.md](aspect.md) |
+| Motion | `UI/Motion` | Animation under the root clock. | [motion.md](motion.md) |
+| Prism | `UI/Prism`, `Drawing/Prism` | Retained local visual composition and GPU filters. | [prism-technical-design.md](prism-technical-design.md) |
+| Relay | `UI/Relay` | Moving callbacks onto the root's UI thread. | [relay.md](relay.md) |
+| Detective | `UI/Detective` | Runtime snapshots, traces, and counters. | [detective.md](detective.md) |
+| Servo | `UI/Servo` | In-process UI automation through real input paths. | [servo.md](servo.md), [Servo guide](../guides/servo.md) |
+| Text | `UI/Text`, `Drawing/Text` | Shaping, line breaking, text layout, fonts. | [text.md](text.md) |
+| Theming | `UI/Theming` | Themes, theme keys, and the theme token bridge into Aspect. | [theming-and-resources.md](theming-and-resources.md) |
+| Resources | `UI/Resources` | Resource lookup, dependency tracking, image resources. | [theming-and-resources.md](theming-and-resources.md) (image loading not covered) |
+| Accessibility | `UI/Accessibility` | Semantics tree and automation peers; no platform adapter yet. | [accessibility.md](accessibility.md) |
+| Ink | `UI/Ink` | Stroke data for `InkCanvas`; it does not draw. | [ink.md](ink.md) |
+| Hosting and platform | `UI/Hosting`, `UI/Platform` | Application, window runtime, backend registration, platform services. | [hosting-and-platform.md](hosting-and-platform.md) |
+| Timbre | `Timbre`, `UI/Timbre` | Audio runtime, mixer, decoding, memory budget. | [timbre.md](timbre.md), [Timbre guide](../guides/timbre-guide.md) |
+| SDL backends | `Cerneala.Platforms.Sdl3`, `Cerneala.Backends.SdlGpu` | SDL3 windows, input, audio, and SDL_GPU drawing. | [sdl-desktop-backend.md](sdl-desktop-backend.md) |
+| Scene2D packages | `Cerneala.Scene2D.Importers`, `Cerneala.Scene2D.Packages` | Tiled and LDtk import and the package format. | [scene2d.md](scene2d.md) |
+| Build tools | `Tools` | Shader, SVG, and package compilers, PrismAudit, Roslyn MCP. | [build-tools.md](build-tools.md) |
+
 ## Build-Time Authoring
 
-### `.crn`
-
-`.crn` is Cerneala's constrained compile-time markup language. It resembles XML
-because UI trees are naturally hierarchical. It is not general XAML and is not
-loaded dynamically at runtime.
-
-The language layer owns:
-
-- lossless syntax and source spans;
-- recovery for incomplete editor input;
-- semantic symbols and type-aware validation;
-- diagnostics, completion, navigation, structure, and formatting;
-- the shared rules used by the source generator and language server.
-
-The source generator owns lowering validated markup into typed C#. Generated
-applications can select a startup window, initialize resources, and emit the
-process entry point. Generated `Window`, `UserControl`, and `Scene2D` types pair
-with normal C# partial classes. Paired scenes initialize the component itself
-and compose logical scene nodes through the existing `Scene2D.Children` owner;
-they introduce no visual control host or separate recording path.
-
-Code-first construction remains valid. Markup is an authoring layer over the
-same runtime controls and typed properties.
+`.crn` is compile-time markup: nothing loads it at runtime. `Cerneala.Language`
+parses and validates it once, with the same rules for the build and the editor.
+The source generator lowers it into typed C#, and the language server, preview
+host and Visual Studio extension provide editor support. Code-first
+construction remains valid. See [markup-and-sourcegen.md](markup-and-sourcegen.md)
+and [language-tooling.md](language-tooling.md).
 
 ## Application And Window Hosting
 
@@ -81,12 +102,10 @@ tracking, and shutdown policy. Generated `App.crn` declarations connect that
 application model to a concrete startup window.
 
 `WindowApplicationRuntime` owns the frame and native window lifecycle for the
-desktop application. Platform projects provide native windows, input sources,
-cursor behavior, clipboard and related services. Graphics backends provide the
-drawing session used by each presented window.
-
-Backend selection is explicit through `ApplicationBackendAttribute`. It is not
-inferred from whichever backend assembly happened to load first.
+desktop application. A platform implementation provides native windows, input
+sources and platform services; the SDL platform fills only the cursor and text
+input services. Backend selection is explicit through
+`ApplicationBackendAttribute`. See [hosting-and-platform.md](hosting-and-platform.md).
 
 ## `UIRoot` And Retained Ownership
 
@@ -109,17 +128,11 @@ running as unrelated global managers.
 
 ## Typed State
 
-`UiObject` stores values through typed `UiProperty<T>` descriptors. Property
-metadata defines validation, coercion, equality, inheritance, and the retained
-work affected by a change.
-
-The effective value model distinguishes sources such as defaults, inherited
-values, Aspect values, animation, and local values. A no-op assignment must not
-enqueue work. A render-only property change must not silently become a layout
-pass.
-
-The property system exists to drive explicit retained behavior. It is not a
-compatibility clone of WPF dependency properties.
+`UiObject` stores values through typed `UiProperty<T>` descriptors in a
+`UiPropertyStore` with nine stored value sources, from `Local` down to
+`Inherited`, plus the default. Only a change of the effective value invalidates
+retained work, and the property's `UiPropertyOptions` decide which work. Details:
+[property system](property-system.md).
 
 ## Logical And Visual Trees
 
@@ -137,114 +150,58 @@ reparenting is explicit, and attach/detach lifecycle follows root ownership.
 
 ## Relay
 
-Each root owns a `UiRelay`. Relay moves scheduled callbacks and binding refresh
-work to the UI thread owned by that root.
-
-Relay does not make arbitrary application state thread-safe. Worker code posts
-the complete UI mutation. The root drains a stable snapshot during the frame
-pipeline, so callbacks added during that drain do not create an unbounded loop.
+Each root owns a `UiRelay` that moves callbacks from any thread onto the root's
+UI thread. `UIRoot.BeginUpdate` drains one capped snapshot (1024 callbacks by
+default) before the scheduler runs any phase; the drain is not a `FramePhase`.
+Details: [Relay](relay.md).
 
 ## Input, Focus, And Commands
 
-Platform input sources produce backend-neutral frame snapshots. Cerneala maps
-those snapshots into the retained tree through hit testing and routed events.
-
-The input layer owns:
-
-- pointer, keyboard, text, touch, and stylus frame contracts where implemented;
-- hit-test filtering and retained hit-test data;
-- tunnel, direct, and bubble routes;
-- pointer capture and hover state;
-- keyboard focus and navigation;
-- gestures and manipulation primitives;
-- input bindings, commands, and command routing.
-
-The component that receives an event, the element that triggered input, and the
-element that owns a command can be different. The route is derived from the
-retained element relationships, not from a parallel application tree.
+Platform input sources produce backend-neutral frame snapshots. `UiHost`
+dispatches them between scheduler passes: hit testing finds the target, and
+routed events travel tunnel, direct and bubble routes taken from a route tree
+derived from the visual tree and rebuilt only when it is stale. Focus, capture
+and commands use the same routes. Details: [Input](input.md).
 
 ## Invalidation And Frame Scheduling
 
-State changes do not immediately recompute the whole UI. They enqueue the work
-owned by the affected invariant.
-
-The scheduler coordinates phases such as:
-
-```text
-Relay
-    -> inherited properties
-    -> Aspect
-    -> Motion and time-sensitive invalidation
-    -> measure
-    -> arrange
-    -> render-cache rebuild
-    -> hit-test refresh
-    -> cached root command publication
-```
-
-Input is integrated with this flow so that it sees current retained bounds and
-its state changes can be committed before presentation.
-
-The exact processor order is a runtime contract covered by tests. The important
-invariants are:
-
-- unchanged trees do not remeasure;
-- unchanged trees do not rearrange;
-- unchanged local visuals do not regenerate drawing commands;
-- render-only changes do not force layout;
-- failed work does not silently clear its dirty state;
-- draw submission does not mutate or rebuild retained UI state.
+State changes do not recompute the UI at once. They mark the affected work
+dirty and put the element in one of six per-root queues. Each `UiHost` update
+drains Relay, runs the scheduler around input dispatch in the fixed phase order
+`InheritedProperties`, `CommandState`, `Aspect`, `InheritedProperties` again,
+`Measure`, `Arrange`, `RenderCache`, `HitTest`, and then commits the root
+command list. Details: [Invalidation And Frame Scheduling](invalidation-and-frame.md),
+[frame loop diagram](diagrams/retained-frame-loop.md).
 
 ## Layout
 
-Layout owns measure and arrange. It uses layout-specific geometry such as
-`LayoutSize`, `LayoutPoint`, and `LayoutRect` rather than pretending drawing
-coordinates and layout constraints have identical semantics.
-
-Panels and controls cache layout results against the relevant constraints and
-versions. Layout invalidation propagates through explicit boundaries. Visibility
-policy determines whether an element participates in layout, rendering, input,
-and focus.
+Layout measures and arranges only the elements whose layout was invalidated,
+using `LayoutSize`, `LayoutPoint` and `LayoutRect`, and reuses cached results
+for the same constraint and `LayoutVersion`. Measure invalidation climbs to the
+first layout boundary; a changed rectangle schedules render and hit-test work.
+Details: [Layout](layout.md).
 
 ## Aspect
 
-Aspect owns styling and control composition.
-
-The current runtime uses one canonical model for rules originating from code,
-markup, resources, inline declarations, and `ElementAspect`. Resolution covers
-tokens, target types, variants, states, data, resources, templates, and
-sidecars. Winning values are applied through the typed property system with
-explicit source precedence.
-
-Aspect does not own time sampling or GPU filters. Those belong to Motion and
-Prism.
+Aspect owns styling and control composition. Rules from code, markup,
+resources and `ElementAspect` go through one resolver, `AspectEngine`, in
+`FramePhase.Aspect`; winners are written through `UiPropertyValueSource.AspectBase`.
+Aspect does not own time sampling or GPU filters. Details: [Aspect](aspect.md).
 
 ## Motion
 
-Motion owns animation under the root clock. It includes typed motion values,
-specifications, graphs, composition, transactions, presence, layout motion,
-scroll and gesture bindings, and property animation.
-
-Motion writes through the animated property source. The invalidation category
-of the animated property decides whether a sample affects layout, rendering, or
-another retained phase. Rendering does not get to invent animation state.
+Motion owns animation under the root clock. It samples at most once per frame
+(before layout, or before render) and writes through
+`UiPropertyValueSource.Animation`; the animated property's invalidation category
+decides whether a sample costs layout or only rendering. Details: [Motion](motion.md).
 
 ## Retained Rendering
 
-Controls record local drawing commands through `RenderContext` and
-`DrawingContext`. `ElementRenderCache` retains local work. The retained renderer
-combines valid local caches into a root command list in visual order.
-
-```text
-Control.OnRender
-    -> local DrawCommandList
-    -> ElementRenderCache
-    -> retained root command list
-    -> IDrawingBackend.Render(...)
-```
-
-The backend may present every frame. That does not authorize it to call
-`OnRender`, rerun layout, or mutate the UI tree during submission.
+Each element's `Render` records a local command list that `ElementRenderCache`
+keeps until the element's render state changes. At the end of each update,
+`RetainedRenderer.Commit` builds one root command list from the local lists in
+visual order. Draw only submits that committed list; it never calls `Render` or
+changes the tree. Details: [Retained Rendering](rendering.md).
 
 ## `RenderSurface2D`
 
@@ -281,17 +238,11 @@ collision dimensions; applications own that geometry explicitly.
 
 ## Drawing Boundary
 
-The `Drawing` layer is backend-neutral command recording, not another UI tree.
-
-- `DrawingContext` records intent.
-- `DrawCommandList` stores ordered commands.
-- `DrawCommand` carries validated command payloads.
-- `IDrawingBackend` consumes the commands.
-- text and image services prepare backend-neutral resources and descriptors.
-
-Drawing does not own layout, input, control state, Aspect, Motion, or tree
-lifecycle. Controls do not call SDL, Skia, HarfBuzz, or
-native GPU APIs directly.
+The `Drawing` layer records backend-neutral commands; it is not another UI
+tree. `DrawingContext` writes `DrawCommand` values into a flat
+`DrawCommandList`, and `IDrawingBackend.Render` receives the list with a
+`DrawingFrameContext`. Controls never call SDL or GPU APIs directly. Details:
+[Drawing](drawing.md).
 
 ## Prism
 
@@ -303,8 +254,7 @@ Prism can consume a rendered visual result or backdrop and produce composed
 pixels. It does not change layout, hit testing, focus, or the logical tree.
 
 Backend executors own GPU resources, shader execution, and retained Prism result
-caches. The shared catalog and source generator keep operation names,
-parameters, shader artifacts, runtime state, tests, and documentation aligned.
+caches. Details: [Prism technical design](prism-technical-design.md).
 
 ## Backend Boundary
 
@@ -328,12 +278,9 @@ Core UI code remains unaware of the selected native backend.
 ## Detective And Evidence
 
 Cerneala treats runtime behavior as something to measure, not something to
-guess about. `UIRoot.Detective` is the public owner for runtime snapshots,
-traces, and counters covering invalidation, layout, render caches, routed input,
-Motion, Aspect, resources, platform services, and frame work. The functional
-domains still produce the evidence; Detective exposes it without taking over
-their runtime invariants. Backend-specific Prism evidence remains produced at
-the backend boundary.
+guess about. `UIRoot.Detective` exposes the runtime snapshots, traces, and
+counters that the subsystems produce; it does not drive or invalidate anything.
+Details: [Detective](detective.md).
 
 Applicable changes are verified through combinations of:
 

@@ -19,7 +19,7 @@ The audit treats generated runtime and documentation owners as concrete only bec
 | Contract | SHA-256 |
 | --- | --- |
 | `docs/reference/prism-markup-syntax.md` | `5342449d3a9fd3edd454d16a49697be328c1a628cac18b59fe8f6d0728c3aa85` |
-| `docs/architecture/prism-technical-design.md` | `aa0d28ab92c14ad5cec8ad3735b1cf6f02e3810e1309160d7ab14a0f4bd41e85` |
+| `docs/architecture/prism-technical-design.md` | `8b18c3a87c0f6fe36b155a5dd0397b04eca9b04b15951812d6a9a7d564714fc7` |
 | `docs/reference/prism-public-api-baseline.md` | `ee29dc80bb6491b71f79d7b40a5d25ad03419cec679b30da18cc0d6798e69683` |
 | `Cerneala.SourceGen/Prism/Catalog/prism-catalog.json` | `71c56eaf8058dcdb5fde861a578d7832c74075cd86320142196dc451ed3efaae` |
 

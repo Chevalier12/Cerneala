@@ -1,5 +1,7 @@
 # Prism Technical Design Document
 
+> Code: `UI/Prism`, `Drawing/Prism`, `Cerneala.Backends.SdlGpu/Prism`, `Cerneala.SourceGen/Prism`, `Cerneala.Language/Prism` · Verified at commit `0cb32300` (2026-10-10)
+
 ## Status
 
 This document describes the technical architecture implemented for Prism in Cerneala.
@@ -255,11 +257,11 @@ for the sake of the suit and tie.
 Prism parser + semantic binder
     |
     v
-cod generat
+generated code
     |
-    +--> PrismClipDefinition partajată
-    +--> factory PrismInstance
-    +--> chei Motion tipizate
+    +--> shared PrismClipDefinition
+    +--> PrismInstance factory
+    +--> typed Motion accessors
     |
     v
 UIElement + PrismAttachment
@@ -284,40 +286,54 @@ PrismRasterPlanner (explicit passes, dependencies, formats and lifetimes)
     +--> shared diagnostics contract
     |
     v
-GraphicsDevice
+SDL_GPU device (SdlGpuDeviceOwner)
 ```
 ## Code organization
 
-The recommended structure is:
+The current structure (checked at commit `0cb32300`, 2026-10-10) is:
 ```text
 UI/Prism/
-    Definitions/
-    Runtime/
-    Motion/
-    Diagnostics/
+    Definitions/        immutable definitions (PrismClipDefinition, PrismFilterDefinition, resources)
+    Runtime/            PrismAttachment, PrismInstance, PrismParameterStore, PrismStates
 
-Drawing/Prism/
-    Commands/
-    Graph/
-    Catalog/
-    Color/
-    Hosting/
+Drawing/Prism/          backdrop contracts (IBackdropFrameSource, BackdropFrameRequest, ...)
+    Blend/              blend modes and Blend If math
+    Catalog/            PrismCatalog, PrismFallbackPolicy
+    Color/              color profiles and PrismColorPipeline
+    Execution/          PrismExecutionDiagnostics
+    Filters/            built-in filters and adjustment planning
+    Graph/              analyzed scopes, graph, dependency stamps, backdrop policy
+    Masking/            clipping and mask styles
+    Shaders/Hlsl/       shared HLSL: Blends/, Color/, Composition/, Filters/ (with Catalog/), Styles/
+    Styles/             layer styles
+    Surfaces/           PrismSurfaceAllocationException
 
 Cerneala.Backends.SdlGpu/Prism/
-    executor and device resources
-    Shaders/
+    SdlGpuPrismExecutor and device resources
+    Shaders/            Prism.vert and PrismCatalog/PrismCopy/PrismPresentation.frag (.hlsl, .spv, .dxil, .msl)
 
 Cerneala.SourceGen/Prism/
-    Syntax/
-    Parsing/
-    Binding/
-    Emission/
+    PrismCatalogGenerator, PrismCatalogCompiler, PrismOperationSourceEmitter
+    Binding/            PrismMarkupBinder, PrismMotionResolver
+    Catalog/            prism-catalog.json and its schema
+    Emission/           PrismMarkupEmitter, PrismMotionEmitter
+    Syntax/             PrismDirectiveParser, PrismSyntax
+
+Cerneala.Language/Prism/Catalog/
+    PrismLanguageCatalog
 
 tests/
-    Cerneala.Tests/Prism/
+    Cerneala.Tests/UI/Prism/
+    Cerneala.Tests/Drawing/Prism/ (with Cache/)
+    Cerneala.Tests/Golden/Prism/  reference images
     Cerneala.Tests.SourceGen/Prism/
     Cerneala.Tests.SdlGpu/Prism/
 ```
+Prism Motion and diagnostics have no folder of their own: Motion integration is
+emitted by `Cerneala.SourceGen/Prism/Emission/PrismMotionEmitter`, and execution
+diagnostics live in `Drawing/Prism/Execution`. `Drawing/Prism/Kernels/` may exist
+on disk as an empty folder; git tracks no file in it.
+
 Responsibilities should not be moved between these directories just for convenience.
 In particular, `UI/Prism` cannot reference a concrete platform or drawing backend.
 
@@ -365,20 +381,20 @@ optionally it is kept separately for Motion and diagnostics.
 
 ### Properties and parameters
 
-Each value is represented by a typed slot:
-```text
-PrismPropertyKey<T>
-PrismParameterKey<T>
-```
-Slots are dense and grouped by common types:
+Each value is addressed by a typed slot, the internal
+`PrismParameterKey<T>` (entry stable id plus slot index,
+`UI/Prism/Definitions/PrismParameterKey{T}.cs`). There is no separate property
+key type. The values live in `PrismParameterStore`
+(`UI/Prism/Runtime/PrismParameterStore.cs`), which keeps one flat array per
+value type:
 
 - `bool`;
 - `int`;
 - `float`;
-- vectors and matrices;
-- colors;
-- enums;
-- immutable references to images, gradients, patterns, LUTs or curves.
+- `Color`;
+- `Vector4`;
+- `PrismResourceId`, an immutable reference to an image, gradient, pattern, LUT
+  or curve resource.
 
 Parameters are not dictionaries by `string -> object`. Complex values are
 typed and validated references.
@@ -406,18 +422,24 @@ Does not contain:
 - filtered results;
 - references to a concrete drawing backend.
 
-### PrismRenderState
+### Render state
 
-`PrismRenderState` is the backend-neutral handle referenced by the `BeginPrism` command.
-It is stable during attachment and contains:
+There is no separate render-state type. The backend-neutral state that a
+`BeginPrism` command references is the `PrismInstance` itself:
 
-- the immutable definition;
-- the dense buffer of values;
-- `ValueVersion`;
-- `VisibilityVersion`;
-- `ResourceVersion`.
+- `Definition`, the immutable `PrismClipDefinition`;
+- the dense values in its `PrismParameterStore`;
+- `StructuralVersion` (`PrismStructuralVersion`), advanced when a replacement
+  definition changes the topology;
+- `ValueVersion` (`PrismValueVersion`), advanced by every value change.
 
-Values ​​can only be changed on the UI thread between update and draw. The backend
+`PrismAttachment.TryGetRenderState(owner, out instance, out cacheOwnerToken)`
+(`UI/Prism/Runtime/PrismAttachment.cs`) returns the instance and its
+`PrismCacheOwnerToken`, but only while the attachment is renderable. The
+retained command builder wraps them in a `PrismDrawScope` (see
+[New orders](#new-orders)).
+
+Values can only be changed on the UI thread between update and draw. The backend
 reads them synchronously in `Render`. The current implementation plans and executes on
 the draw thread; does not introduce an asynchronous CPU pipeline or mutable state
 shared between frames.
@@ -439,10 +461,12 @@ When attaching:
 4. connect binding factories only if the element is actually renderable;
 5. return clean if the instance factory or a binding factory fails.
 
-Further integration with drawing attaches the same transition
-`PrismRenderState`, allocates `PrismCacheOwnerToken` without dereference to element
-and invalidates only the root composition structure. These responsibilities
-they are not moved to `PrismAttachment`.
+On attach, `PrismAttachment.Attach` also allocates a new `PrismCacheOwnerToken`
+(`PrismCacheOwnerTokenAllocator.Next()`). The token identifies the backend's
+retained entries without referencing the element. Creating the attachment calls
+`UIElement.InvalidatePrismAttachment`, which invalidates `Render` with a
+render-scope-only change: `RenderQueueProcessor` rebuilds the root command list
+but keeps the element's local commands when its `ElementRenderCache` is not stale.
 
 ### Detachment
 
@@ -462,7 +486,7 @@ backend flushes the entire cache anyway.
 ### Visibility
 
 When the element or an ancestor becomes `Hidden`, `Collapsed` or
-ZZZINCERNEALA19ZZZ:
+`IsVisible=false`:
 
 - Motion for Prism is canceled synchronously and only once per lifecycle
   existing of the subtree;
@@ -500,18 +524,39 @@ Prism introduces a presentation override that does not rebuild local commands.
 
 | Change | Effect |
 | --- | --- |
-| Attachment, detachment or other definition | structural recompilation of root command list |
-| Numeric parameter, color, `Opacity`, `Visible` | increment `ValueVersion`, redraw |
-| Changed auxiliary resource | increment `ResourceVersion`, redraw |
+| Attachment or detachment | `UIElement.InvalidatePrismAttachment`: render-scope-only `Render` invalidation; the root command list is rebuilt, local commands are kept |
+| Numeric parameter, color, `Opacity`, `Visible` (direct write) | `PrismInstance.ValueVersion` increments; no element or root invalidation; the next drawn frame reads the new value |
+| Same, written by Motion | `ValueVersion` increments and `PrismAttachment.InvalidateRenderState` queues the owner token in `UIRoot.PrismCacheInvalidations` |
+| Auxiliary resource (image, curves, lens, lighting, color matrix) | the UI side records the resource version through `ResourceDependencyTracker` while building commands; the GPU side compares each resource entry's `Version` and rebuilds the entry when it differs |
 | Bounds or transform element | normal recomposition via layout/render scope |
 | Change control content | rebuild existing local cache |
 
-The usual `Render` invalidation for each tick of a parameter is not used
-Prism, as this would unnecessarily rebuild `ElementRenderCache`.
+A value write does not use the usual `Render` invalidation, because that would
+rebuild `ElementRenderCache`. `PrismDrawScope.StructuralVersion` and
+`ValueVersion` read the live instance, and the frame analysis is built at draw
+time, so it sees the current values. `PrismFrameAnalysis.EnsureCurrent` throws if
+a scope's versions change between analysis and execution.
 
-A `Composition` category is added to the scheduler or an equivalent signal of
-presentation-only. Hosts that draw each frame may treat it as a statistic;
-on-demand hosts use it to schedule draw.
+The owner-token queue is drained by the backend during draw
+(`SdlGpuDrawingBackend.ProcessPrismInvalidations`): an `All` entry invalidates
+every Prism device resource at once; owner tokens are invalidated at the end of
+the frame unless that owner was analyzed in the same frame. `UiHost.SetRoot`
+enqueues `All` on the new root.
+
+There is no separate "composition" scheduler category. A direct write by itself
+does not request a frame: an on-demand window draws again only for another
+reason (render request, Relay work, scheduler work, active motion or pointer
+repeat). This is read from `WindowApplicationRuntime`; no test covers it
+(netestat).
+
+Tests:
+`tests/Cerneala.Tests/Drawing/Prism/PrismRetainedCommandContractTests.cs:PrismParameterChangeReusesStructuralAndElementCommands`
+(after a direct `Opacity = 0.5f` write, `Commit` returns the same command list
+object, with the same list version, cache version and element `RenderVersion`,
+while `ValueVersion` changes) and
+`tests/Cerneala.Tests/UI/Prism/PrismMotionIntegrationTests.cs:NumericMotionChangesOnlyPrismValueStateAndPresentationStats`
+(a Motion write: one property write, one render invalidation, zero layout
+invalidations, element cache still valid, one queued owner invalidation).
 
 ## Integration into DrawCommandList
 
@@ -522,17 +567,22 @@ on-demand hosts use it to schedule draw.
 BeginPrism
 EndPrism
 ```
-`BeginPrism` contains a backend-neutral `PrismDrawScope`:
+`DrawCommand.BeginPrism(PrismDrawScope)` (`Drawing/DrawCommand.cs`) stores a
+backend-neutral `PrismDrawScope` (`Drawing/Prism/PrismDrawScope.cs`). Its public
+members are:
 ```text
-PrismRenderState
-PrismCacheOwnerToken
-ControlBounds
-EffectiveTransform
-PixelScale
-StructuralVersion
-ValueVersion
-VisualContentVersion
+Instance              PrismInstance
+Definition            PrismClipDefinition (Instance.Definition)
+CacheOwnerToken       PrismCacheOwnerToken
+ControlBounds         DrawRect
+EffectiveTransform    Matrix3x2
+PixelScale            float
+StructuralVersion     PrismStructuralVersion (Instance.StructuralVersion)
+ValueVersion          PrismValueVersion (Instance.ValueVersion)
+VisualContentVersion  long (UIElement.PrismVisualVersion)
 ```
+The command also stores a retained version: a hash of `StructuralVersion`,
+`ValueVersion`, `VisualContentVersion` and the internal `LowerUiVersion`.
 `EndPrism` has no payload. Scopes must be balanced and can be nested.
 
 ### Composing the retained visual subtree
@@ -850,9 +900,14 @@ $self.prism.Highlights.SoftGlow.GlowRadius
 is resolved at build-time in:
 ```text
 element target
-PrismNodeId path
-PrismPropertyKey<float>
+PrismNodeId of the layer or group (GetLayerState / GetGroupState)
+operation index (Filters[i], Styles[i]) or Mask
+entry stable id + slot + storage type (float)
 ```
+`PrismMotionEmitter` (`Cerneala.SourceGen/Prism/Emission/PrismMotionEmitter.cs`)
+emits these as literals, so the generated code calls a typed
+`GeneratedMarkup.SetPrism...` bridge without any lookup by name.
+
 The generator validates:
 
 - the existence of Prism on the element;

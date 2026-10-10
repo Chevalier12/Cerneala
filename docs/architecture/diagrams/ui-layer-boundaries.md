@@ -23,7 +23,7 @@ This diagram shows where each layer is allowed to depend.
 │ UI/Layout     measure / arrange                                │
 │ UI/Rendering  retained render cache                            │
 │ UI/Input      retained route bridge / focus / commands         │
-│ UI/Styling    metadata-driven visual state                     │
+│ UI/Aspect     typed rules, tokens, templates                   │
 └───────────────────────────────────────────────────────────────┘
                  │                              │
                  ▼                              ▼
@@ -57,7 +57,9 @@ This diagram shows where each layer is allowed to depend.
 - Controls consume input through retained input/focus/command services, not
   through SDL3 directly.
 - `Drawing` remains a command layer, not a scene graph.
-- `UI/Input` remains an input foundation; v2 route ownership moves to the retained tree.
+- `UI/Input` remains an input foundation. Routes come from a derived
+  `UiInputTree` that `ElementInputCache` rebuilds from the retained tree when
+  it changes; see [Input](../input.md#the-derived-route-tree).
 - SDL3 platform code and SDL_GPU rendering code stay in their adapter projects.
 
 ## Allowed Direction
