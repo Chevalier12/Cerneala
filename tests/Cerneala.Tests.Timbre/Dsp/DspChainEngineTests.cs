@@ -101,19 +101,28 @@ public sealed class DspChainEngineTests
     }
 
     // Finite source samples whose feedback overflows the delay line: the
-    // output is still hard-clipped to ±1, never NaN.
+    // output is still hard-clipped to ±1, never NaN. The overflowing playback
+    // fails with InvalidData and contributes nothing from the block in which
+    // its chain produced a non-finite sample; the other playback continues.
     [Fact]
     public async Task OverflowingDelayFeedbackStillReachesTheOutputHardClipped()
     {
         using TimbreRig rig = new();
-        TimbrePlayback playback = rig.Scope.Play(Clip(48000, (_, _) => 3e38f, modifiers: [new Delay(time: 0.001f, feedback: 0.95f, mix: 0f)]));
+        TimbrePlayback overflowing = rig.Scope.Play(Clip(48000, (_, _) => 3e38f, modifiers: [new Delay(time: 0.001f, feedback: 0.95f, mix: 0f)]));
+        TimbrePlayback steady = rig.Scope.Play(Clip(48000, (_, _) => 0.25f));
 
-        float[] pcm = await rig.StartAsync(playback);
+        float[] pcm = await rig.StartAsync(overflowing, steady);
 
         for (int index = 0; index < pcm.Length; index++)
         {
             Assert.True(pcm[index] is >= -1f and <= 1f, $"Sample {index} (frame {index / 2}) is {pcm[index]}.");
         }
+
+        TimbrePlaybackResult result = await TimbreRig.CompletionAsync(overflowing);
+        Assert.Equal(TimbrePlaybackState.Failed, result.State);
+        Assert.Equal(TimbreErrorKind.InvalidData, result.Error!.Kind);
+        TimbreRig.AssertPcm(TimbreRig.Expected(Budget, (_, _) => 0.25f), pcm, 0f);
+        Assert.Equal(TimbrePlaybackState.Playing, steady.State);
     }
 
     [Fact]

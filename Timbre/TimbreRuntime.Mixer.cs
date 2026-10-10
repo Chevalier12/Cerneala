@@ -395,6 +395,12 @@ public sealed partial class TimbreRuntime
             TimbreVoice voice = playback.Render;
             int requestedFrames = voice.SuspendAfterFade ? Math.Min(Block, voice.GainFramesRemaining) : Block;
             int frames = RenderVoice(feed, voice, voiceBuffer, requestedFrames, out bool underrun);
+            if (frames > 0 && voice.Chain is not null && !IsFinite(voiceBuffer.AsSpan(0, frames * TimbreCatalog.ChannelCount)))
+            {
+                FailNonFiniteChain(playback);
+                frames = 0;
+            }
+
             voice.HasRendered |= frames > 0;
             submit |= underrun;
             for (int frame = 0; frame < requestedFrames; frame++)
@@ -443,6 +449,34 @@ public sealed partial class TimbreRuntime
         }
 
         return submit;
+    }
+
+    // Finite source samples can still overflow a chain (a feedback line past
+    // float.MaxValue, then 0 * Inf). Like a non-finite source sample, that
+    // fails the playback with InvalidData: its PCM from this block is dropped
+    // and it produces nothing more, so NaN or infinity never reaches the mix.
+    private void FailNonFiniteChain(TimbrePlayback playback)
+    {
+        lock (Sync)
+        {
+            playback.FailLocked(new TimbreException(TimbreErrorKind.InvalidData, "The modifier chain produced a non-finite sample."));
+        }
+
+        // Also ends a release fade that is still rendering after Cancel.
+        playback.Render.ProductionEnded = true;
+    }
+
+    private static bool IsFinite(ReadOnlySpan<float> samples)
+    {
+        foreach (float sample in samples)
+        {
+            if (!float.IsFinite(sample))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private bool TryOpenOutput()
