@@ -104,6 +104,7 @@ internal sealed class Mp3Source : DecodedSource
 
     internal override int Read(Span<float> destination, CancellationToken cancellationToken)
     {
+        ThrowIfFaulted();
         int capacity = destination.Length / Channels;
         int written = 0;
         while (written < capacity)
@@ -152,6 +153,7 @@ internal sealed class Mp3Source : DecodedSource
 
     internal override void Seek(long frame, CancellationToken cancellationToken)
     {
+        ThrowIfFaulted();
         ArgumentOutOfRangeException.ThrowIfNegative(frame);
         if (totalFrames is long total)
         {
@@ -163,9 +165,9 @@ internal sealed class Mp3Source : DecodedSource
         {
             SeekCore(frame, cancellationToken);
         }
-        catch (ArgumentOutOfRangeException)
+        catch
         {
-            SeekCore(previous, cancellationToken);
+            Return(SeekCore, previous, cancellationToken);
             throw;
         }
     }

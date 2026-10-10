@@ -195,6 +195,49 @@ public sealed class TimbreStreamingTransportTests
 
         float[] reference = TimbreRig.Ramp(expected[(continuedAt * 2)..((continuedAt + (Blocks * TimbreRig.Block)) * 2)]);
         TimbreRig.AssertPcm(reference, played.ToArray(), tolerance: 0);
+        Assert.Equal(TimbreRig.FramesToTime(continuedAt + (Blocks * TimbreRig.Block)), playback.Position);
+    }
+
+    [Fact]
+    public async Task AFailedSeekThatCannotReturnToItsOldPositionFailsThePlaybackAsSourceUnavailable()
+    {
+        ObservedSource source = new(WavFixture.Write("seek-no-return.wav", 44100, 2, 24, seconds: 2));
+        using TimbreRig rig = new();
+        TimbrePlayback playback = rig.Scope.Play(source.Clip);
+        await rig.StartAsync(playback);
+        ObservedFileStream stream = source.Single;
+
+        // The resampler restart before frame 30000 reads beyond everything read
+        // so far (byte 100000 is source frame ~16 600) and fails once; seeking
+        // back to the old position then fails too.
+        bool failed = false;
+        stream.FailRead = (_, first) =>
+        {
+            if (failed || first < 100_000)
+            {
+                return false;
+            }
+
+            failed = true;
+            stream.FailSeeks = true;
+            return true;
+        };
+        Task seek = playback.SeekAsync(TimbreRig.FramesToTime(30000));
+        await rig.NextBlockAsync();
+        await Assert.ThrowsAsync<IOException>(() => HarnessWait.WithTimeout(seek, null, "Seek did not finish."));
+        stream.FailSeeks = false;
+
+        // The stream works again, but the reader no longer knows where it is.
+        for (int step = 0; step < 2000 && !playback.Completion.IsCompleted; step++)
+        {
+            rig.Output.ConsumeAll();
+            await rig.SyncAsync();
+        }
+
+        TimbrePlaybackResult result = await TimbreRig.CompletionAsync(playback);
+        Assert.Equal(TimbrePlaybackState.Failed, result.State);
+        Assert.Equal(TimbreErrorKind.SourceUnavailable, result.Error!.Kind);
+        Assert.IsType<IOException>(result.Error.InnerException);
     }
 
     [Fact]
