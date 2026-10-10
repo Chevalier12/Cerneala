@@ -76,10 +76,11 @@ This project provides `cerneala_roslyn`, a local Roslyn/MSBuild MCP over the sav
 Every Claude Code or Codex session that connects to this server runs its own `mcpRoslyn.exe`. After the solution loads, each one holds about 0.8–1.3 GB of RAM, and it stays alive for as long as that session is open, even while idle. The machine has 16 GB.
 
 - The launcher puts itself and `mcpRoslyn.exe` in a Windows kill-on-close job. When a client closes the connection or kills the launcher, `mcpRoslyn.exe` and its BuildHost children exit with it. Processes started before this launcher change, or by any other launcher, can still be orphaned.
-- After Roslyn-heavy work and before finishing a task, check for leftover processes:
-  - List each `mcpRoslyn.exe`, its parent process, and its RAM.
-  - An orphan is one whose parent no longer exists. Stop orphans and report each one: PID, RAM, and start time.
-  - Never stop an `mcpRoslyn.exe` whose parent is alive. It belongs to a live session: a Codex app thread or another Claude Code session. Report it to the user instead. Closing that session is the user's call.
+- At the end of every reply, close all `mcpRoslyn.exe` processes (user instruction, 2026-10-10):
+  - List each `mcpRoslyn.exe` with its PID, RAM, and start time.
+  - Stop every one of them, including the ones whose parent session is still alive (this session, a Codex app thread, or another Claude Code session). Stop them by their exact PIDs, after checking that each PID is still `mcpRoslyn`.
+  - Report each stopped process: PID, RAM, and start time.
+  - A session whose server was stopped loses its `mcp__cerneala_roslyn__*` tools until the server starts again. If a later step needs Roslyn MCP and the tools fail, report that and use delegated source inspection.
 - Do not start extra connections to the server (probes, test harnesses) while a session already holds one, unless the task needs it. Stop any probe you started before finishing.
 
 ## Durable repository workflow
