@@ -92,6 +92,28 @@ public sealed class UiFactoryTests
         Assert.Equal("MARKUP027", Assert.Single(result.Diagnostics).Code);
     }
 
+    [Theory]
+    [InlineData("Background")]
+    [InlineData("Foreground")]
+    [InlineData("BorderBrush")]
+    public void CreateReportsMissingBrushResourceAsDiagnostic(string property)
+    {
+        UiMarkupDocument document = Read($"<Button {property}=\"$Missing\" />");
+        UiFactory factory = new(UiMarkupSchema.CreateDefault());
+
+        MarkupResult<UIElement> strict = factory.Create(document);
+        MarkupResult<UIElement> recovered = factory.Create(document, MarkupLoadOptions.Recover);
+
+        Assert.Null(strict.Value);
+        MarkupDiagnostic diagnostic = Assert.Single(strict.Diagnostics);
+        Assert.Equal("MARKUP027", diagnostic.Code);
+        Assert.Equal(MarkupDiagnosticSeverity.Error, diagnostic.Severity);
+        Assert.Contains($"'{property}'", diagnostic.Message);
+        Assert.Contains("'Missing'", diagnostic.Message);
+        Assert.IsType<Button>(recovered.Value);
+        Assert.Equal("MARKUP027", Assert.Single(recovered.Diagnostics).Code);
+    }
+
     [Fact]
     public void CreateParsesShortAndCompositeBorderBrushValues()
     {
