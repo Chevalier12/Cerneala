@@ -111,8 +111,7 @@ internal sealed partial class CernealaSemanticModel
         PrismApplicationModelSyntax application,
         PrismClipDefinition definition)
     {
-        HashSet<string> supplied = new(StringComparer.Ordinal);
-        Dictionary<string, PrismValueModelSyntax> values = new(StringComparer.Ordinal);
+        Dictionary<string, PrismValueModelSyntax> supplied = new(StringComparer.Ordinal);
         foreach (PrismAssignmentModelSyntax argument in application.Arguments)
         {
             if (!definition.Parameters.TryGetValue(argument.Name, out PrismParameterDefinition? parameter))
@@ -121,32 +120,31 @@ internal sealed partial class CernealaSemanticModel
                 continue;
             }
 
-            if (!supplied.Add(argument.Name))
+            if (supplied.ContainsKey(argument.Name))
             {
                 AddPrismDiagnostic("PRISM2003", argument.NameSpan, "Prism parameter '" + argument.Name + "' is assigned more than once.");
                 continue;
             }
 
+            supplied.Add(argument.Name, argument.Value);
             PrismCatalogProperty schema = SyntheticPrismProperty(argument.Name, parameter.TypeName, required: true);
-            if (BindPrismValue(owner, argument.Value, schema, scope: null))
-            {
-                values.Add(argument.Name, argument.Value);
-            }
+            BindPrismValue(owner, argument.Value, schema, scope: null);
         }
 
         PrismParameterDefinition? missing = definition.Parameters.Values.FirstOrDefault(parameter =>
-            parameter.DefaultValue is null && !supplied.Contains(parameter.Path));
+            parameter.DefaultValue is null && !supplied.ContainsKey(parameter.Path));
         if (missing is not null)
         {
             AddPrismDiagnostic("PRISM2004", application.ResourceSpan, "Required Prism parameter '" + missing.Path + "' has no application value.");
         }
 
-        ValidatePrismBlendRangeParameters(definition, values);
+        ValidatePrismBlendRangeParameters(definition, supplied);
     }
 
     // A blend range that reads a parameter gets its value from the parameter
     // default (arguments null) or from an application argument. Each invalid
-    // value is reported once, where it is written.
+    // value is reported once, where it is written. A value that is not a
+    // vector already has its own error from parameter binding.
     private void ValidatePrismBlendRangeParameters(
         PrismClipDefinition definition,
         IReadOnlyDictionary<string, PrismValueModelSyntax>? arguments)
@@ -169,6 +167,7 @@ internal sealed partial class CernealaSemanticModel
             }
 
             if (value?.Kind == PrismValueModelKind.TupleLiteral &&
+                IsPrismVector(value.Text, out _, out _) &&
                 PrismBlendRangeRule.Validate(property.Schema.Name, value.Text) is string message &&
                 reported.Add((value.Span.Start, message)))
             {
@@ -496,6 +495,7 @@ internal sealed partial class CernealaSemanticModel
         }
 
         if (schema.ValueType == "vector" &&
+            schema.DomainKind != SyntheticPrismDomain &&
             PrismBlendRangeRule.Validate(schema.Name, value.Text) is string blendRangeMessage)
         {
             AddPrismDiagnostic("PRISM2009", value.Span, blendRangeMessage);
@@ -684,8 +684,12 @@ internal sealed partial class CernealaSemanticModel
     private static bool CanConvertPrismType(string source, string target) =>
         source == target || source == "integer" && target == "number";
 
+    // A parameter schema is named after the parameter, not a catalog
+    // property, so catalog rules keyed on property names must skip it.
+    private const string SyntheticPrismDomain = "none";
+
     private static PrismCatalogProperty SyntheticPrismProperty(string name, string typeName, bool required) =>
-        new(name, typeName, required, "none", null, null, Array.Empty<string>(), defaultValue: null);
+        new(name, typeName, required, SyntheticPrismDomain, null, null, Array.Empty<string>(), defaultValue: null);
 
     private static bool IsHexColor(string value)
     {

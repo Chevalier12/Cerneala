@@ -228,6 +228,34 @@ public sealed class MotionPrismSemanticTests
         Assert.Equal(semantic, Assert.Single(result.SourceGeneratorDiagnostics));
     }
 
+    [Fact]
+    public void PrismVectorParametersNamedLikeBlendRangesAreOrdinaryVectors()
+    {
+        string markup = "<StackPanel><StackPanel.Resources><PrismClip Name=\"Fx\">@parameter ThisLayerRange: vector = (2, 2); " +
+            "@layer Card { @filter AdaptiveWideAngle { FocalLength = ThisLayerRange; } }</PrismClip></StackPanel.Resources>" +
+            "<Border><Border.Aspect>@prism $Fx(ThisLayerRange = (3, 3));</Border.Aspect></Border></StackPanel>";
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("PrismDiagnostics.crn", markup);
+
+        Assert.Empty(result.SemanticDiagnostics);
+    }
+
+    // A value that is not a vector at all reports only that error, and an
+    // argument that fails to bind still hides the outer default it replaces.
+    [Theory]
+    [InlineData("@parameter Range: vector = (0, 0, 1, 1, 1); @layer Card { ThisLayerRange = Range; @filter Blur { Radius = 1; } }", "", "(0, 0, 1, 1, 1)")]
+    [InlineData("@parameter Outer: vector = (0, 0, 1, 1); @layer Card { @parameter Inner: vector = Outer; ThisLayerRange = Inner; @filter Blur { Radius = 1; } }", "Card.Inner = 3, Outer = (0, 1)", "3")]
+    public void PrismInvalidBlendRangeParameterValuesReportOnlyTheirOwnError(string body, string arguments, string invalid)
+    {
+        string markup = "<StackPanel><StackPanel.Resources><PrismClip Name=\"Fx\">" + body +
+            "</PrismClip></StackPanel.Resources><Border><Border.Aspect>@prism $Fx(" + arguments +
+            ");</Border.Aspect></Border></StackPanel>";
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("PrismDiagnostics.crn", markup);
+
+        HarnessDiagnostic semantic = Assert.Single(result.SemanticDiagnostics);
+        Assert.Equal(invalid, markup.Substring(semantic.StartCharacter, semantic.EndCharacter - semantic.StartCharacter));
+        Assert.EndsWith("Value '" + invalid + "' is not a valid vector Prism value.", semantic.Message, StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData("ThisLayerRange")]
     [InlineData("UnderlyingRange")]
