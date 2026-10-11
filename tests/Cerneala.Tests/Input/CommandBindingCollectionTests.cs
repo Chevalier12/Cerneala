@@ -96,4 +96,94 @@ public sealed class CommandBindingCollectionTests
 
         Assert.Equal(["first"], calls);
     }
+
+    [Fact]
+    public void ExecuteDispatchCallsEveryOriginalBindingWhenHandlerRemovesItself()
+    {
+        RoutedCommand command = new("Save", typeof(CommandBindingCollectionTests));
+        CommandBindingCollection bindings = new();
+        List<string> calls = [];
+        CommandBinding first = null!;
+        first = new CommandBinding(command, (_, _) =>
+        {
+            calls.Add("A");
+            bindings.Remove(first);
+        });
+        bindings.Add(first);
+        bindings.Add(new CommandBinding(command, (_, _) => calls.Add("B")));
+        bindings.Add(new CommandBinding(command, (_, _) => calls.Add("C")));
+
+        bindings.InvokeExecuted(
+            new UiElementId("target"),
+            new ExecutedRoutedEventArgs(CommandEvents.ExecutedEvent, "target", command, null));
+
+        Assert.Equal(["A", "B", "C"], calls);
+        Assert.Equal(2, bindings.Count);
+    }
+
+    [Fact]
+    public void ExecuteDispatchDoesNotThrowWhenHandlerClearsBindings()
+    {
+        RoutedCommand command = new("Save", typeof(CommandBindingCollectionTests));
+        CommandBindingCollection bindings = new();
+        List<string> calls = [];
+        bindings.Add(new CommandBinding(command, (_, _) =>
+        {
+            calls.Add("A");
+            bindings.Clear();
+        }));
+        bindings.Add(new CommandBinding(command, (_, _) => calls.Add("B")));
+
+        bindings.InvokeExecuted(
+            new UiElementId("target"),
+            new ExecutedRoutedEventArgs(CommandEvents.ExecutedEvent, "target", command, null));
+
+        Assert.Equal(["A", "B"], calls);
+        Assert.Empty(bindings);
+    }
+
+    [Fact]
+    public void CanExecuteDispatchCallsEveryOriginalBindingWhenHandlerRemovesItself()
+    {
+        RoutedCommand command = new("Save", typeof(CommandBindingCollectionTests));
+        CommandBindingCollection bindings = new();
+        List<string> calls = [];
+        CommandBinding first = null!;
+        first = new CommandBinding(command, null, (_, _) =>
+        {
+            calls.Add("A");
+            bindings.Remove(first);
+        });
+        bindings.Add(first);
+        bindings.Add(new CommandBinding(command, null, (_, _) => calls.Add("B")));
+        bindings.Add(new CommandBinding(command, null, (_, _) => calls.Add("C")));
+
+        bindings.InvokeCanExecute(
+            new UiElementId("target"),
+            new CanExecuteRoutedEventArgs(CommandEvents.CanExecuteEvent, "target", command, null));
+
+        Assert.Equal(["A", "B", "C"], calls);
+        Assert.Equal(2, bindings.Count);
+    }
+
+    [Fact]
+    public void CanExecuteDispatchDoesNotThrowWhenHandlerClearsBindings()
+    {
+        RoutedCommand command = new("Save", typeof(CommandBindingCollectionTests));
+        CommandBindingCollection bindings = new();
+        List<string> calls = [];
+        bindings.Add(new CommandBinding(command, null, (_, _) =>
+        {
+            calls.Add("A");
+            bindings.Clear();
+        }));
+        bindings.Add(new CommandBinding(command, null, (_, _) => calls.Add("B")));
+
+        bindings.InvokeCanExecute(
+            new UiElementId("target"),
+            new CanExecuteRoutedEventArgs(CommandEvents.CanExecuteEvent, "target", command, null));
+
+        Assert.Equal(["A", "B"], calls);
+        Assert.Empty(bindings);
+    }
 }
