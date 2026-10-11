@@ -168,8 +168,7 @@ Stroke factories validate `thickness` as a positive, finite pixel size. `DrawLin
 | `DrawLine` | `ArgumentOutOfRangeException` | `start` or `end` has a coordinate outside the valid pixel range, or `thickness` is invalid. |
 | `FillPath` | `ArgumentNullException` | `pathData` is `null`. |
 | `FillPath` | `ArgumentException` | `pathData` is empty or whitespace. |
-| `FillPath` | `FormatException` | `pathData` is not valid SVG path data. |
-| `FillPath` | `InvalidOperationException` | `pathData` closes a contour that has only a move command, for example `"M0 0Z"`. |
+| `FillPath` | `FormatException` | `pathData` is not valid SVG path data, including a contour closed right after its move command, for example `"M0 0Z"`. |
 | `FillPath` | `ArgumentNullException` | `brush` is null. |
 | `FillPath` | `ArgumentOutOfRangeException` | `sourceBounds` has a non-positive width or height, or `opacity` is outside `0` through `1`. |
 | Typed `FillPath` | `ArgumentNullException` | `path` or a required brush is null. |
