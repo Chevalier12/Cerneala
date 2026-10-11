@@ -162,7 +162,7 @@ A failed drawing callback or required scene recording also ends the frame lifeti
 | Stroke methods | `ArgumentOutOfRangeException` | Thickness is not positive and finite, or is above `2,000,000,000`. |
 | `FillPath` | `ArgumentNullException` | Path data or `path` is `null`. |
 | `FillPath` | `ArgumentException` | Path data is empty or whitespace. |
-| `FillPath` | `FormatException` or `InvalidOperationException` | Path data is not valid SVG path data. See `DrawPathParser` for which input throws which type. |
+| `FillPath` | `FormatException` | Path data is not valid SVG path data, including a contour with no drawable segment such as `M0 0Z`. See `DrawPathParser`. |
 | Typed `FillPath` | `ArgumentOutOfRangeException` | `sourceBounds` has a zero or negative size, or `fillRule` is not a defined enum value. |
 | `DrawTextLayout` | `ArgumentNullException` | `layout` is `null`. |
 | `DrawText` | `ArgumentNullException` | `textRun` is `null`. |
