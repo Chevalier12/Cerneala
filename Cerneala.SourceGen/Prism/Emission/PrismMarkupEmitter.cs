@@ -915,8 +915,12 @@ public sealed partial class UiMarkupGenerator
                     return ParseHexColor(value.Syntax.Text)?.ToExpression()
                         ?? throw new InvalidOperationException("A bound Prism color is invalid.");
                 case BoundPrismValueType.Vector:
+                {
+                    // Missing components are zero, as in catalog vector defaults.
+                    string[] components = ParsePrismVector(value.Syntax.Text);
                     return "new global::System.Numerics.Vector4(" +
-                        string.Join(", ", ParsePrismVector(value.Syntax.Text)) + ")";
+                        string.Join(", ", components.Concat(Enumerable.Repeat("0f", 4 - components.Length))) + ")";
+                }
                 case BoundPrismValueType.Symbol:
                     return unchecked((int)Fnv1a32(value.Syntax.Text))
                         .ToString(CultureInfo.InvariantCulture);

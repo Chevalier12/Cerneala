@@ -892,6 +892,19 @@ public sealed partial class UiMarkupGenerator
                 return false;
             }
 
+            // PrismBlendRange takes four ordered thresholds, so a shorter literal has no valid padding.
+            if (schema.ValueType == "vector" &&
+                schema.Name is "ThisLayerRange" or "UnderlyingRange" &&
+                syntax.Text.Split(',').Length != 4)
+            {
+                ReportPrismBinding(
+                    PrismValueDiagnostic,
+                    syntax.Location,
+                    "Prism property '" + schema.Name + "' value '" + syntax.Text +
+                    "' must have four components.");
+                return false;
+            }
+
             if (schema.ValueType != "symbol")
             {
                 return true;
