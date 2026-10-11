@@ -209,6 +209,26 @@ public sealed class MotionPrismSemanticTests
     }
 
     [Theory]
+    [InlineData("@parameter Range: vector = (0, 1); @layer Card { ThisLayerRange = Range; @filter Blur { Radius = 1; } }", "", "(0, 1)")]
+    [InlineData("@parameter Outer: vector = (0, 0.5, 1); @layer Card { @parameter Inner: vector = Outer; UnderlyingRange = Inner; @filter Blur { Radius = 1; } }", "", "(0, 0.5, 1)")]
+    [InlineData("@parameter Range: vector = (0, 1); @layer A { ThisLayerRange = Range; @filter Blur { Radius = 1; } } @layer B { ThisLayerRange = Range; @filter Blur { Radius = 1; } }", "", "(0, 1)")]
+    [InlineData("@parameter Range: vector = (0, 0, 1, 1); @layer Card { ThisLayerRange = Range; @filter Blur { Radius = 1; } }", "Range = (0, 1)", "(0, 1)")]
+    [InlineData("@parameter Outer: vector = (0, 0, 1, 1); @layer Card { @parameter Inner: vector = Outer; UnderlyingRange = Inner; @filter Blur { Radius = 1; } }", "Outer = (0, 0.5, 1)", "(0, 0.5, 1)")]
+    public void PrismBlendRangeParameterValuesMatchTheSourceGeneratorExactly(string body, string arguments, string invalid)
+    {
+        string markup = "<StackPanel><StackPanel.Resources><PrismClip Name=\"Fx\">" + body +
+            "</PrismClip></StackPanel.Resources><Border><Border.Aspect>@prism $Fx(" + arguments +
+            ");</Border.Aspect></Border></StackPanel>";
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("PrismDiagnostics.crn", markup);
+
+        HarnessDiagnostic semantic = Assert.Single(result.SemanticDiagnostics);
+        Assert.Equal("PRISM2009", semantic.Id);
+        Assert.Equal(invalid, markup.Substring(semantic.StartCharacter, semantic.EndCharacter - semantic.StartCharacter));
+        Assert.EndsWith("value '" + invalid + "' must have four components.", semantic.Message, StringComparison.Ordinal);
+        Assert.Equal(semantic, Assert.Single(result.SourceGeneratorDiagnostics));
+    }
+
+    [Theory]
     [InlineData("ThisLayerRange")]
     [InlineData("UnderlyingRange")]
     public void PrismBlendRangesWithFourComponentsHaveNoDiagnostics(string property)
