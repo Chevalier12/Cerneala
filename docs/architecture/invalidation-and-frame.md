@@ -63,10 +63,12 @@ run in `UiHost` and `UIRoot.BeginUpdate` (see
    enqueues an `ICommandStateSource` directly (`UIElement.cs:806-820`).
 6. **`UiFrameScheduler.ProcessFrame`** runs the phases (order below). Each phase
    takes a `Snapshot`, and for each element: removes it from the queue, calls
-   the processor, and counts it. `InheritedProperties` and `Aspect` clear their
+   the processor, and counts it. `InheritedProperties`, `Aspect`, `Measure` and
+   `Arrange` first skip an element that is no longer in their queue (see
+   **Detach** below). `InheritedProperties` and `Aspect` clear their
    flag before the call. `Measure`, `Arrange`, `RenderCache` and `HitTest`
    clear it after the call, and only when the processor did not enqueue the
-   element again (for example `UiFrameScheduler.cs:357-361`, `:481-485`).
+   element again (for example `UiFrameScheduler.cs:364-368`, `:488-492`).
    `CommandState` has no flag.
 
 Example. A `Button` inside a `StackPanel`, attached to a root. The code runs
@@ -170,10 +172,18 @@ support incremental measure; the production processors do. See
   (measure, arrange, and the five others). The call runs after
   `DetachFromRoot`, so work an `OnDetached` override enqueues is removed too.
   `Snapshot` also drops entries whose element has another root or no root.
+  A snapshot taken before the detach still holds the element.
+  `InheritedProperties`, `Aspect`, `Measure` and `Arrange` check queue
+  membership before each entry and skip it (`UiFrameScheduler.cs:202`, `:261`,
+  `:317`, `:411`). Example: the `Aspect` pass processes a `Button`, its new
+  component template detaches the old template root, and the pass then skips
+  that old root instead of resolving Aspect state for it again.
+  `CommandState`, `RenderCache` and `HitTest` have no such check and still call
+  the processor for the captured entry.
 - **Exceptions.** When a processor throws, the scheduler puts the current
   element back in its queue, restores the flags it cleared before the call
   (only `InheritedProperties` and `Aspect` clear before), and rethrows
-  (for example `UiFrameScheduler.cs:213-218`, `:266-271`, `:473-477`). Elements of the
+  (for example `UiFrameScheduler.cs:213-218`, `:272-277`, `:480-484`). Elements of the
   snapshot not yet reached stay queued. The next frame retries them.
 
 ## Frame Integration
@@ -228,6 +238,13 @@ queued work.
   The test reads through `Snapshot`, which also drops stale entries, so it
   passes with either mechanism; that `RemovePendingWork` alone clears the
   queues is netestat.
+- An element detached earlier in the same `Aspect` pass is not processed by
+  that pass. Test:
+  `tests/Cerneala.Tests/UI/Aspect/AspectTemplateCatalogIntegrationTests.cs:TemplateReplacedDuringAspectPassDoesNotReprocessItsDetachedPart`
+  (registry template),
+  `AspectTemplateCatalogIntegrationTests.cs:ScopedTemplateReplacedDuringAspectPassDoesNotReprocessItsDetachedPart`
+  (scope resource template). A captured `RenderCache` entry is still delivered
+  after detach: `QueueSchedulerContractTests.cs:DetachDuringPhaseKeepsCapturedSnapshotStableAndCleansFutureWork`.
 - Same-phase work added during `Measure` waits for the next frame. Test:
   `FrameSchedulerStabilityTests.cs:SamePhaseWorkQueuedDuringMeasureRunsOnLaterFrame`.
   Same for `Aspect`: `UiFrameSchedulerTests.cs:AspectCallbackCanRequeueTheSameElementForTheNextFrame`.
