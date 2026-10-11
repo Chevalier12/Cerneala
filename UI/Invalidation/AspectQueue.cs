@@ -15,6 +15,8 @@ public sealed class AspectQueue
 
     public bool HasWork => work.HasWork;
 
+    internal bool Contains(UIElement element) => work.Contains(element);
+
     public void Enqueue(UIElement element)
     {
         work.Enqueue(element, ElementQueueUnit.Value);

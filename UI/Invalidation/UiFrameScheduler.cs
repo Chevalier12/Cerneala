@@ -254,9 +254,15 @@ public sealed class UiFrameScheduler
     private void ProcessAspect(FramePhaseProcessors processors, FrameStats stats)
     {
         IReadOnlyList<Elements.UIElement> snapshot = aspectQueue.Snapshot();
+        int processed = 0;
         for (int index = 0; index < snapshot.Count; index++)
         {
             Elements.UIElement element = snapshot[index];
+            if (!aspectQueue.Contains(element))
+            {
+                continue;
+            }
+
             aspectQueue.Remove(element);
             InvalidationFlags cleared = ClearProcessedFlags(element, InvalidationFlags.Aspect);
             try
@@ -271,11 +277,12 @@ public sealed class UiFrameScheduler
             }
 
             stats.Count(FramePhase.Aspect);
+            processed++;
             trace.RecordPhase(FramePhase.Aspect, element, InvalidationFlags.Aspect);
             trace.RecordClear(element, cleared);
         }
 
-        trace.RecordPhaseSummary(FramePhase.Aspect, snapshot.Count);
+        trace.RecordPhaseSummary(FramePhase.Aspect, processed);
     }
 
     private void ProcessMeasure(FramePhaseProcessors processors, FrameStats stats)

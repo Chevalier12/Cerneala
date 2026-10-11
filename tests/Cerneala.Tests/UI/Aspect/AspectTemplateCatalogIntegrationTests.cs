@@ -452,11 +452,103 @@ public sealed class AspectTemplateCatalogIntegrationTests
         Assert.Null(oldChrome.LogicalParent);
     }
 
+    [Fact]
+    public void TemplateReplacedDuringAspectPassDoesNotReprocessItsDetachedPart()
+    {
+        Border oldChrome = new();
+        Border newChrome = new();
+        int oldAttached = 0;
+        int oldDisposed = 0;
+        ComponentTemplate<Button> first = new("First", _ => oldChrome);
+        ComponentTemplate<Button> second = new("Second", _ => newChrome);
+        Button button = new() { ComponentTemplateKey = "App.Button" };
+        UIRoot root = RootWith(button);
+        root.AspectRegistry.Register(AspectPackage.Create("First").Components(components =>
+        {
+            components.AddTemplate(new ComponentTemplateDefinition("App.Button", typeof(Button), first));
+            components.AddRule(new AspectRuleSet(
+                "chrome.width",
+                AspectLayer.App,
+                new AspectTarget(typeof(Border)),
+                [new AspectDeclaration(UIElement.WidthProperty, AspectValue<float>.Literal(11f))],
+                declarationOrder: 0));
+            components.AddBehavior(new AspectBehavior(typeof(Border), element =>
+            {
+                if (!ReferenceEquals(element, oldChrome))
+                {
+                    return null;
+                }
+
+                oldAttached++;
+                return new CallbackLifetime(() => oldDisposed++);
+            }));
+        }));
+        root.ProcessFrame();
+        root.ProcessFrame();
+        Assert.Same(oldChrome, button.ComponentTemplateInstance!.Root);
+        Assert.Equal(1, oldAttached);
+
+        // The registry change queues the owner and its part in one Aspect pass; the
+        // owner's new template detaches the part before the pass reaches it.
+        root.AspectRegistry.Register(AspectPackage.Create("Second").Components(components =>
+            components.AddTemplate(new ComponentTemplateDefinition("App.Button", typeof(Button), second))));
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.Same(newChrome, button.ComponentTemplateInstance!.Root);
+        Assert.Null(oldChrome.Root);
+        Assert.Equal(oldAttached, oldDisposed);
+        Assert.Equal(UiPropertyValueSource.Default, oldChrome.GetValueSource(UIElement.WidthProperty));
+        Assert.Equal(0, root.AspectProcessor.Engine.GetDependencies(oldChrome).CatalogVersion);
+    }
+
+    [Fact]
+    public void ScopedTemplateReplacedDuringAspectPassDoesNotReprocessItsDetachedPart()
+    {
+        Border oldChrome = new();
+        Border newChrome = new();
+        ComponentTemplate<Button> first = new("First", _ => oldChrome);
+        ComponentTemplate<Button> second = new("Second", _ => newChrome);
+        Border scope = new();
+        scope.Resources["Templates"] = AspectPackage.Create("First")
+            .Components(components => components.AddTemplate(
+                new ComponentTemplateDefinition("App.Button", typeof(Button), first)))
+            .Build();
+        Button button = new() { ComponentTemplateKey = "App.Button" };
+        scope.Child = button;
+        UIRoot root = RootWith(scope);
+        root.ProcessFrame();
+        root.ProcessFrame();
+        Assert.Same(oldChrome, button.ComponentTemplateInstance!.Root);
+
+        // The scope resource change queues the owner and its part in one Aspect pass.
+        scope.Resources["Templates"] = AspectPackage.Create("Second")
+            .Components(components => components.AddTemplate(
+                new ComponentTemplateDefinition("App.Button", typeof(Button), second)))
+            .Build();
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.Same(newChrome, button.ComponentTemplateInstance!.Root);
+        Assert.Null(oldChrome.Root);
+        Assert.Equal(0, root.AspectProcessor.Engine.GetDependencies(oldChrome).CatalogVersion);
+    }
+
     private static UIRoot RootWith(UIElement child)
     {
         UIRoot root = new();
         root.LogicalChildren.Add(child);
         root.VisualChildren.Add(child);
         return root;
+    }
+
+    private sealed class CallbackLifetime(Action dispose) : IDisposable
+    {
+        private Action? dispose = dispose;
+
+        public void Dispose()
+        {
+            Interlocked.Exchange(ref dispose, null)?.Invoke();
+        }
     }
 }
