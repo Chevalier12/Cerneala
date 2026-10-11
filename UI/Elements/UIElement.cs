@@ -1354,7 +1354,21 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     {
         if (elementAspectBehavior is null && Aspect is ElementAspect aspect)
         {
-            elementAspectBehavior = aspect.AttachBehavior(this);
+            int generation = attachmentGeneration;
+            IDisposable? behavior = aspect.AttachBehavior(this);
+
+            // The factory may replace or clear the aspect, or detach the element. Those
+            // nested changes find no lifetime to dispose and may store a newer one; this
+            // lifetime then belongs to an aspect or an attachment that is already gone.
+            if (elementAspectBehavior is not null ||
+                !ReferenceEquals(Aspect, aspect) ||
+                attachmentGeneration != generation)
+            {
+                behavior?.Dispose();
+                return;
+            }
+
+            elementAspectBehavior = behavior;
         }
     }
 

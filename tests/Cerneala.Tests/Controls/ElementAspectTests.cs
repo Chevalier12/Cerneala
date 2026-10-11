@@ -176,4 +176,111 @@ public sealed class ElementAspectTests
         Assert.False(aspect.SetValue(Control.BorderBrushProperty, new SolidColorBrush(Color.White)));
         Assert.False(root.ProcessFrame().HasWork);
     }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void BehaviorThatReplacesItsAspectWhileAttachingDisposesEachLifetimeWithItsAspect(bool assignBeforeAttach)
+    {
+        UIRoot root = new();
+        Border border = new();
+        List<string> disposed = [];
+        ElementAspect replacement = new(
+            "Replacement",
+            typeof(UIElement),
+            [new ElementAspectValue(UIElement.OpacityProperty, 0.25f)],
+            [],
+            _ => new CallbackLifetime(() => disposed.Add("replacement")));
+        ElementAspect original = new(
+            "Original",
+            typeof(UIElement),
+            [new ElementAspectValue(UIElement.OpacityProperty, 0.5f)],
+            [],
+            element =>
+            {
+                element.Aspect = replacement;
+                return new CallbackLifetime(() => disposed.Add("original"));
+            });
+
+        if (assignBeforeAttach)
+        {
+            border.Aspect = original;
+            root.VisualChildren.Add(border);
+        }
+        else
+        {
+            root.VisualChildren.Add(border);
+            border.Aspect = original;
+        }
+
+        root.ProcessFrame();
+
+        Assert.Same(replacement, border.Aspect);
+        Assert.Equal(0.25f, border.Opacity);
+        Assert.Equal(["original"], disposed);
+
+        border.Aspect = null;
+
+        Assert.Equal(["original", "replacement"], disposed);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void BehaviorThatDetachesItsElementWhileAttachingIsDisposedAndRecreatedOnReattach(bool assignBeforeAttach)
+    {
+        UIRoot root = new();
+        Border border = new();
+        List<string> events = [];
+        int attaches = 0;
+        ElementAspect aspect = new(
+            "Detacher",
+            typeof(UIElement),
+            [],
+            [],
+            element =>
+            {
+                int attach = ++attaches;
+                events.Add($"create {attach}");
+                if (attach == 1)
+                {
+                    root.VisualChildren.Remove(element);
+                }
+
+                return new CallbackLifetime(() => events.Add($"dispose {attach}"));
+            });
+
+        if (assignBeforeAttach)
+        {
+            border.Aspect = aspect;
+            root.VisualChildren.Add(border);
+        }
+        else
+        {
+            root.VisualChildren.Add(border);
+            border.Aspect = aspect;
+        }
+
+        Assert.False(border.IsAttached);
+        Assert.Equal(["create 1", "dispose 1"], events);
+
+        root.VisualChildren.Add(border);
+        root.ProcessFrame();
+
+        Assert.Equal(["create 1", "dispose 1", "create 2"], events);
+
+        border.Aspect = null;
+
+        Assert.Equal(["create 1", "dispose 1", "create 2", "dispose 2"], events);
+    }
+
+    private sealed class CallbackLifetime(Action dispose) : IDisposable
+    {
+        private Action? dispose = dispose;
+
+        public void Dispose()
+        {
+            Interlocked.Exchange(ref dispose, null)?.Invoke();
+        }
+    }
 }
