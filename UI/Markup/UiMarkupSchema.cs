@@ -113,7 +113,10 @@ public static class UiMarkupSchema
     {
         if (value.StartsWith('$') && value.Length > 1)
         {
-            return element.FindResource<Brush>(value[1..]);
+            string key = value[1..];
+            return element.TryFindResource(key, out Brush brush)
+                ? brush
+                : throw new FormatException($"Brush resource '{key}' was not found.");
         }
 
         return new SolidColorBrush(ParseColor(value));
