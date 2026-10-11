@@ -264,7 +264,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     public int RenderScopeVersion { get; private set; }
 
-    public RenderDependency RenderDependencies { get; private set; }
+    public RenderDependency RenderDependencies { get; private set; } = RenderDependency.None;
 
     public bool IsLayoutBoundary { get; set; }
 

@@ -42,7 +42,7 @@ bool visible = hidden.IsVisible;
 
 ## Remarks
 
-`RenderLayer` is an immutable value used by rendering contexts to carry layer opacity. `Default` is created with `new()`, which for a struct skips the primary constructor, so its `Opacity` is `0` and its `IsVisible` is `false`, not the `1` that the constructor's default parameter declares. `new RenderLayer()` is also opacity `0`; `new RenderLayer(1)` is opacity `1`. `ElementRenderCache` passes `Default` to every `UIElement.Render` call, so `RenderContext.Layer.Opacity` is `0` there.
+`RenderLayer` is an immutable value used by rendering contexts to carry layer opacity. `Default` equals `new RenderLayer(1)`: its `Opacity` is `1` and its `IsVisible` is `true`. `ElementRenderCache` passes `Default` to every `UIElement.Render` call, so `RenderContext.Layer.Opacity` is `1` there. The parameterless struct value is different: `new RenderLayer()` and `default(RenderLayer)` skip the primary constructor, so their `Opacity` is `0`.
 
 `IsVisible` returns `true` when `Opacity` is greater than `0`. The type does not clamp or validate opacity values.
 
