@@ -8,7 +8,7 @@ root.Detective.Motion.IsEnabled = true;
 
 Trace events include motion start, sample, and completion. Snapshots report active graph nodes, property bindings that are actually active, active layout motions, presence exits, the latest frame's sampled-node and property-write counts, and whether another frame is needed. Cached but idle property bindings are excluded from active counts.
 
-Frame stats include concise motion counters:
+Frame stats include concise motion counters (an excerpt; the full line also reports `motionValues`, `completed`, `reduced`, and `hasWork`):
 
 ```text
 motion=3, sampled=3, motionWrites=2, motionRender=2, motionLayout=0
@@ -16,4 +16,4 @@ motion=3, sampled=3, motionWrites=2, motionRender=2, motionLayout=0
 
 Tests should use `ManualMotionClock` or `ManualMotionTimeline` for deterministic timing. Render-only assertions should verify zero measure/arrange work during motion ticks.
 
-Reduced-motion tests should assert the final target value, not just that animation work stopped. For `ReducedMotionMode.Reduce`, tween specs complete immediately and diagnostics record `MotionSkippedReducedMotion`; for `DisableNonEssential`, layout motion should leave final layout intact without creating correction bindings.
+Reduced-motion tests should assert the final target value, not just that animation work stopped. For `ReducedMotionMode.Reduce`, tween specs without a `Delay` complete immediately (a delayed tween completes on the first frame after its delay) and diagnostics record `MotionSkippedReducedMotion`; for `DisableNonEssential`, layout motion should leave final layout intact without creating correction bindings.

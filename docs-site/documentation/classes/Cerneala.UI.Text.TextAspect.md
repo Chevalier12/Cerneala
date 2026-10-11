@@ -1,4 +1,4 @@
-# TextAspect Class
+# TextAspect Struct
 
 ## Definition
 Namespace: `Cerneala.UI.Text`
@@ -39,7 +39,7 @@ DrawTextRun run = aspect.ToDrawTextRun(font, "Hello");
 
 `TextAspect` is an immutable value passed through text measurement, layout, caret, and rendering services. `TextMeasurer` uses it when building a `TextLayoutKey`, `FontResolver` uses it to resolve either `FontResourceId` or `FontFamily` plus the effective size, and `TextRenderer` uses it when drawing each measured line.
 
-The constructor requires a non-empty font family, positive finite `fontSize`, positive finite `scale`, supported `TextWrapping` and `TextTrimming` values, and an effective text size no greater than `16384`. `Foreground` may be `null`; measurement and shaping remain independent of the brush, while `TextRenderer` skips drawing when no foreground is supplied.
+The constructor requires a non-empty font family, positive finite `fontSize` and `scale` that are each no greater than `16384`, supported `TextWrapping` and `TextTrimming` values, and an effective text size no greater than `16384`. `Foreground` may be `null`; measurement and shaping remain independent of the brush, while `TextRenderer` skips drawing when no foreground is supplied.
 
 `ToDrawTextRun` requires a non-null `ResolvedTextFont` and non-null text. The resulting `DrawTextRun` uses the resolved draw font, the supplied text, and `FontSize * Scale` as its size.
 

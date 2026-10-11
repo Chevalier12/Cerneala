@@ -36,7 +36,7 @@ The interface is marked `EditorBrowsable(Never)` because application code should
 | `CreateDescriptor()` | Creates the representation consumed by a drawing backend. |
 
 ## Applies to
-`Cerneala` on `net8.0-windows`.
+`Cerneala` on `net8.0`.
 
 ## See also
 - `Cerneala.UI.Media.Brush`

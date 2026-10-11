@@ -46,7 +46,7 @@ UiPropertyMutation mutation = new(
     UiPropertyValueSource.Local,
     null,
     "New title",
-    wasCoerced: false);
+    WasCoerced: false);
 ```
 
 ## Remarks
@@ -55,7 +55,7 @@ UiPropertyMutation mutation = new(
 
 Unlike `UiPropertyChangedEventArgs`, a mutation can be reported even when the resolved effective value remains equal. This lets internal systems observe source-level changes such as setting or clearing a lower-priority value that does not currently win property precedence.
 
-`MutatingSource` identifies the source being set or cleared. `OldEffectiveValue` and `NewEffectiveValue` describe the resolved property value before and after the operation, while `OldEffectiveSource` and `NewEffectiveSource` describe which source supplied those effective values. `OldSourceValue` and `NewSourceValue` describe the value at the mutating source itself.
+`MutatingSource` identifies the source being set or cleared. `OldEffectiveValue` and `NewEffectiveValue` describe the resolved property value before and after the operation, while `OldEffectiveSource` and `NewEffectiveSource` describe which source supplied those effective values. `OldSourceValue` and `NewSourceValue` describe the value at the mutating source itself. The exception is an internal framework-default change (mutating source `Default`): there `OldSourceValue` is the previous effective value.
 
 `WasCoerced` is `true` when a set operation supplied a value that was changed by the property's coercion callback before storage. Clear operations report `false`.
 
@@ -65,7 +65,7 @@ Motion transactions consume these records through `MotionTransactionContext`. Th
 
 | Name | Description |
 | --- | --- |
-| `UiPropertyMutation(UiObject target, UiProperty property, UiPropertyValueSource mutatingSource, object? oldEffectiveValue, UiPropertyValueSource oldEffectiveSource, object? newEffectiveValue, UiPropertyValueSource newEffectiveSource, object? oldSourceValue, object? newSourceValue, bool wasCoerced)` | Initializes an immutable mutation record with the target, property, mutating source, effective values, source values, and coercion flag. |
+| `UiPropertyMutation(UiObject target, UiProperty property, UiPropertyValueSource mutatingSource, object? oldEffectiveValue, UiPropertyValueSource oldEffectiveSource, object? newEffectiveValue, UiPropertyValueSource newEffectiveSource, object? oldSourceValue, object? newSourceValue, bool WasCoerced)` | Initializes an immutable mutation record with the target, property, mutating source, effective values, source values, and coercion flag. |
 
 ## Properties
 

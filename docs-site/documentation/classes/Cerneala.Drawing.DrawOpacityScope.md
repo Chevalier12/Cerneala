@@ -32,6 +32,13 @@ Children are isolated and opacity is applied once to the combined result. Dispos
 | --- | --- |
 | `Dispose()` | Records the matching opacity pop. |
 
+## Exceptions
+
+| Member | Exception | Condition |
+| --- | --- | --- |
+| `Dispose()` | `ObjectDisposedException` | The same scope variable is disposed a second time. |
+| `Dispose()` | `InvalidOperationException` | Another scope opened later on the same `DrawingContext` is still open, so the scopes are not disposed in last-in, first-out order. |
+
 ## Applies To
 
 Cerneala drawing state recording.

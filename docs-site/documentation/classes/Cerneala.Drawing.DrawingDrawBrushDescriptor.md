@@ -32,7 +32,7 @@ SDL_GPU rasterizes the command list with its tile fitting and clipping into a de
 | `Commands` | Immutable snapshot of commands to rasterize. |
 | `ContentBounds` | Coordinate bounds of the command snapshot. |
 | `Stretch`, `AlignmentX`, `AlignmentY`, `Viewport`, `Viewbox`, `TileMode` | Inherited tile settings. |
-| `BrushOpacity` | Source opacity. |
+| `BrushOpacity` | Source opacity; exposed as inherited `Opacity` too. |
 
 ## Applies to
 Backend-neutral drawing descriptors, implemented by SDL_GPU.

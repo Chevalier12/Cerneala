@@ -7,32 +7,42 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Data/FilterPredicate{T}.cs`
 
-Provides the `Cerneala.UI.Data.FilterPredicate<T>` API surface.
+Represents a test that decides whether a source item appears in a `CollectionView<T>`.
 
 ```csharp
-public delegate bool FilterPredicate<in T>(T item)
+public delegate bool FilterPredicate<in T>(T item);
 ```
 
-## Type Parameters
+## Examples
 
-| Name | Description |
-| --- | --- |
-| `T` | The item type being filtered. |
+```csharp
+using Cerneala.UI.Data;
 
-## Parameters
+CollectionView<int> view = new(new[] { 1, 2, 3, 4, 5 });
+view.Filter = value => value % 2 == 0;
+Console.WriteLine(string.Join(", ", view));
+// 1, 2, 3, 4, 5
 
-| Name | Type | Description |
-| --- | --- | --- |
-| `item` | `T` | The item to test. |
+view.Refresh();
+Console.WriteLine(string.Join(", ", view));
+// 2, 4
+```
 
-## Returns
-
-`true` when the item should be included; otherwise, `false`.
+Setting `Filter` does not change the view. The filter applies after `Refresh()`.
 
 ## Remarks
 
-This page is generated from the repository API index so the documentation surface stays aligned with the source tree.
+Return `true` to keep an item and `false` to leave it out. A `null` filter keeps every item.
+
+`CollectionView<T>.Refresh` rebuilds the view from the source: it applies the filter first and then the `SortDescriptions`. The view also rebuilds when an `IObservableList<T>` source raises `Changed`, so a filter set earlier applies at that moment.
+
+If the predicate throws during a rebuild, the exception propagates. The view keeps no items, and `Changed` is not raised for that rebuild.
 
 ## Applies to
 
-Cerneala UI runtime and framework API consumers.
+`CollectionView<T>.Filter`.
+
+## See also
+
+- `Cerneala.UI.Data.CollectionView<T>`
+- `Cerneala.UI.Data.SortDescription<T>`

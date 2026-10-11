@@ -48,7 +48,7 @@ Canceling the returned group handle calls `Cancel()` on each child handle and le
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `Parallel(params MotionHandle[] children)` | `MotionGroupHandle` | Creates a group handle that completes after all supplied child handles complete and cancels all children when the group is canceled. |
+| `Parallel(params MotionHandle[] children)` | `MotionGroupHandle` | Creates a group handle that completes after every supplied child handle completes or is canceled, and cancels all children when the group is canceled. |
 
 ## Applies to
 

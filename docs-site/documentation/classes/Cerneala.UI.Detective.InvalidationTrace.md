@@ -18,7 +18,7 @@ Inheritance:
 
 ## Examples
 
-The trace created by `UIRoot` records invalidation activity while the retained frame is processed.
+Pass an enabled trace to `UIRoot` to record invalidation activity while the retained frame is processed. Both values below are `true`.
 
 ```csharp
 using System.Linq;
@@ -26,18 +26,19 @@ using Cerneala.UI.Detective;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 
-UIRoot root = new();
+InvalidationTrace trace = new();
+UIRoot root = new(trace);
 UIElement child = new();
 root.VisualChildren.Add(child);
 
 child.Invalidate(InvalidationFlags.Render, "render");
 root.ProcessFrame();
 
-bool sawRequest = root.Detective.Invalidation.Entries.Any(entry =>
+bool sawRequest = trace.Entries.Any(entry =>
     entry.Kind == InvalidationTraceEventKind.Request &&
     entry.Reason == "render");
 
-bool sawRenderPhase = root.Detective.Invalidation.Entries.Any(entry =>
+bool sawRenderPhase = trace.Entries.Any(entry =>
     entry.Kind == InvalidationTraceEventKind.Phase &&
     entry.Phase == FramePhase.RenderCache);
 ```
@@ -57,9 +58,9 @@ int retainedEntryCount = trace.Entries.Count; // 0
 
 ## Remarks
 
-`InvalidationTrace` is an in-memory diagnostic collector. A normal `UIRoot` constructs an enabled trace and passes it to `UiFrameScheduler`; `UIRoot.Invalidate` records the original `InvalidationRequest`, then `DirtyPropagation` records propagation and queue events, and the scheduler records phase, phase-summary, and clear events while processing frame work.
+`InvalidationTrace` is an in-memory diagnostic collector. `UIRoot(InvalidationTrace, ...)` passes the supplied trace to `UiFrameScheduler` and exposes it as `Detective.Invalidation`. The default `UIRoot` constructor uses `InvalidationTrace.Disabled`, so it records nothing. With an enabled trace, `UIRoot.Invalidate` records the original `InvalidationRequest`, then `DirtyPropagation` records propagation and queue events, and the scheduler records phase, phase-summary, and clear events while processing frame work.
 
-Entries are exposed through `Entries` in recording order. The trace retains at most `Capacity` entries and discards the oldest quarter of the buffer when it reaches that limit, preventing long-running UI roots from accumulating an unbounded diagnostic history. The default capacity is `DefaultCapacity` (`4096`).
+Entries are exposed through `Entries` in recording order. The trace retains at most `Capacity` entries and discards the oldest `Capacity / 4` entries (at least one) when it reaches that limit, preventing long-running UI roots from accumulating an unbounded diagnostic history. The default capacity is `DefaultCapacity` (`4096`).
 
 Disabled traces keep `IsEnabled` set to `false` and ignore all record calls. `RecordRequest` still validates that its `request` argument is not null before checking `IsEnabled`.
 
@@ -76,10 +77,15 @@ Each entry stores both the `UIElement` reference and the element id string avail
 | Name | Type | Description |
 | --- | --- | --- |
 | `Disabled` | `InvalidationTrace` | Static disabled trace instance created with `isEnabled: false`. |
-| `DefaultCapacity` | `int` | Default maximum retained-entry capacity (`4096`). |
 | `IsEnabled` | `bool` | Gets whether record calls append entries. |
 | `Capacity` | `int` | Gets the configured maximum retained-entry count. |
 | `Entries` | `IReadOnlyList<InvalidationTraceEntry>` | Gets the currently retained trace entries in recording order. |
+
+## Fields
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `DefaultCapacity` | `int` | Constant. Default maximum retained-entry capacity (`4096`). |
 
 ## Methods
 

@@ -51,7 +51,7 @@ The constructor stores the supplied values. `Input` and `Stats` are required and
 
 `ElapsedTime` is the simulation delta supplied to the update. It does not measure how long the update took. `ProcessingTime` measures the native window host work from input collection through graphics-frame completion, including presentation and any backend or vertical-synchronization wait performed by that completion. It does not include `FrameRendered` or `ContentRendered` event handlers, which run after the measurement is recorded. A directly constructed frame has a zero processing time until a host records it.
 
-`Stats` references the `FrameStats` instance for the update. It records work counted during retained UI processing, input dispatch, motion, rendering cache updates, hit testing, and no-work frames.
+`Stats` references the `FrameStats` instance for the update. It records work counted during retained UI processing, Relay callbacks, motion, rendering cache updates, hit testing, and no-work frames. It has no input counter.
 
 ## Constructors
 

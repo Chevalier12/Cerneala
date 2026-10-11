@@ -33,7 +33,7 @@ BackdropFrameMetadata metadata = new(
 
 ## Remarks
 
-`CoordinateTransform` maps host logical coordinates to source pixel coordinates. A provider must publish a `ContentVersion` that never decreases and must increment it whenever scene or lower-UI pixels, or pixel-affecting metadata, change. Retained Prism dependency tracking combines it with the UI and raster state used by the composition.
+`CoordinateTransform` maps host logical coordinates to source pixel coordinates. The constructor does not check that the transform is invertible, but Prism's internal backdrop preparation does: it throws `ArgumentException` when the determinant is not finite or its absolute value is at most `0.000001`. For example, `Matrix3x2.CreateScale(0, 1)` is accepted by the constructor and rejected when Prism prepares the frame. A provider must publish a `ContentVersion` that never decreases and must increment it whenever scene or lower-UI pixels, or pixel-affecting metadata, change. Retained Prism dependency tracking combines it with the UI and raster state used by the composition.
 
 Metadata does not expose a graphics texture and does not imply ownership. It remains a value snapshot even though the corresponding `IBackdropFrameLease` is valid only for the drawing frame that acquired it.
 

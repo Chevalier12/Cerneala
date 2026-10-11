@@ -53,7 +53,7 @@ TweenSpec<float> spec = new(TimeSpan.FromMilliseconds(200), easing);
 
 `CubicBezierEasing` maps an input progress value to an eased output value. The input passed to `Transform` is clamped to `[0, 1]`; `NaN` input returns `0`. Exact endpoint inputs return exact endpoint outputs: `0` maps to `0`, and `1` maps to `1`.
 
-The constructor requires `x1` and `x2` to be finite values in `[0, 1]` so the curve can be solved as a function of progress. `y1` and `y2` may be outside `[0, 1]`, but they must be finite. The sampled curve value is returned without output clamping, allowing overshoot above `1` and undershoot below `0` at interior progress values. Continuous numeric and vector mixers extrapolate these values; color mixing clamps the extrapolated channels to their valid byte range.
+The constructor requires `x1` and `x2` to be finite values in `[0, 1]` so the curve can be solved as a function of progress. `y1` and `y2` may be outside `[0, 1]`, but they must be finite. The sampled curve value is returned without output clamping, allowing overshoot above `1` and undershoot below `0` at interior progress values. Numeric and vector mixers extrapolate these values. `ColorMixer` clamps the extrapolated channels to `0`..`255`, and `DrawRectMixer` clamps the extrapolated width and height at `0`.
 
 Internally, `Transform` solves the Bezier parameter for the requested x progress with Newton iteration and falls back to bisection when the derivative is too small or the Newton step leaves the valid range.
 

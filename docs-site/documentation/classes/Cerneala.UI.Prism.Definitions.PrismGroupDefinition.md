@@ -58,17 +58,19 @@ The optional inherited `SourceSpan` is immutable diagnostic metadata and does no
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `EnumerateChildrenBottomUp()` | `IEnumerable<PrismNodeDefinition>` | Enumerates the last declared child first. |
+| `Equals(PrismNodeDefinition? other)` | `bool` | Tests structural equality, including the children. |
+| `GetHashCode()` | `int` | Returns the structural hash code. |
 
 ## Exceptions
 
 | Member | Exception | Condition |
 | --- | --- | --- |
-| `PrismGroupDefinition(...)` | `ArgumentException` | `children` is empty, contains a backdrop or unsupported node, or `name` is whitespace. |
+| `PrismGroupDefinition(...)` | `ArgumentException` | `children` is `null` or empty, contains a `null` element, or contains a node that is neither a `PrismLayerDefinition` nor a `PrismGroupDefinition`; or `name` is whitespace. |
 | `PrismGroupDefinition(...)` | `ArgumentOutOfRangeException` | `opacity` is non-finite or outside zero through one. |
 
 ## Applies to
 
-Nested normal Prism layer stacks.
+Prism layer stacks, either as a top-level node of a `PrismClipDefinition` or nested inside another group.
 
 ## See also
 

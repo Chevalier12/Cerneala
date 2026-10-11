@@ -10,11 +10,11 @@ Source: `UI/Controls/Primitives/DragStartedEventArgs.cs`
 Provides the starting pointer coordinates for a `Thumb.DragStarted` event.
 
 ```csharp
-public sealed class DragStartedEventArgs : EventArgs
+public sealed class DragStartedEventArgs : RoutedEventArgs
 ```
 
 Inheritance:
-`Object` -> `EventArgs` -> `DragStartedEventArgs`
+`object` -> `RoutedEventArgs` -> `DragStartedEventArgs`
 
 ## Examples
 Subscribe to `Thumb.DragStarted` to read the pointer position captured when a drag begins.
@@ -31,20 +31,23 @@ thumb.DragStarted += (_, args) =>
 ```
 
 ## Remarks
-`DragStartedEventArgs` is used by `Thumb` when a left-button drag starts. `Thumb.BeginDrag` creates an instance with the current pointer coordinates, raises `DragStarted`, marks the input event as handled, and resets the thumb's last and total drag-change values.
+`DragStartedEventArgs` is used by `Thumb` when a left-button drag starts. `Thumb.BeginDrag` resets the thumb's last and total drag-change values, captures the pointer, creates an instance with the current pointer coordinates, raises the bubbling routed event `Thumb.DragStartedEvent` with the thumb as `Source`, and then marks the input event as handled.
 
 The `X` and `Y` values represent the drag start position from the input event that began the drag. They do not report movement deltas or completion state. Use `DragDeltaEventArgs` for per-update and total movement, and `DragCompletedEventArgs` for completion or cancellation information.
 
 ## Constructors
 | Name | Description |
 | --- | --- |
-| `DragStartedEventArgs(float x, float y)` | Initializes a new instance with the pointer coordinates where the drag started. |
+| `DragStartedEventArgs(float x, float y)` | Initializes a new instance with the pointer coordinates where the drag started. `RoutedEvent`, `Source` and `OriginalSource` are not set. |
+| `DragStartedEventArgs(RoutedEvent routedEvent, object source, float x, float y)` | Initializes a new instance for raising `routedEvent` from `source`. Throws `ArgumentNullException` when `routedEvent` or `source` is `null`. `Thumb` uses this constructor. |
 
 ## Properties
 | Name | Type | Description |
 | --- | --- | --- |
 | `X` | `float` | Gets the horizontal pointer coordinate at drag start. |
 | `Y` | `float` | Gets the vertical pointer coordinate at drag start. |
+
+`RoutedEvent`, `Source`, `OriginalSource` and `Handled` are inherited from `RoutedEventArgs`.
 
 ## Applies to
 `Cerneala.UI.Controls.Primitives.Thumb` drag input handling.
@@ -53,3 +56,4 @@ The `X` and `Y` values represent the drag start position from the input event th
 - `Thumb`
 - `DragDeltaEventArgs`
 - `DragCompletedEventArgs`
+- `Cerneala.UI.Input.RoutedEventArgs`

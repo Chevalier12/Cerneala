@@ -39,7 +39,7 @@ public sealed class Vector4Mixer : ValueMixer<Vector4>
 
 | Member | Exception | Condition |
 | --- | --- | --- |
-| `EqualsWithinTolerance` | `ArgumentOutOfRangeException` | `tolerance` is negative. |
+| `EqualsWithinTolerance` | `ArgumentOutOfRangeException` | `tolerance` is negative, `NaN`, or infinite. |
 
 ## See also
 

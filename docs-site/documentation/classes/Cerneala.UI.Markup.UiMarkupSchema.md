@@ -56,8 +56,8 @@ The schema also registers these shared element/control properties for every buil
 | `IsVisible` | `UIElement` | `bool.TryParse`; invalid values throw `FormatException`. |
 | `Margin` | `UIElement` | One float, or four comma-separated floats, parsed with invariant culture. |
 | `Background` | `Control` | Color shorthand converted to `SolidColorBrush`, a brush resource, or a composite brush property element. |
-| `Foreground` | `Control` | Named color or comma-separated byte color. |
-| `BorderBrush` | `Control` | Named, hexadecimal, or comma-separated color converted to `SolidColorBrush`. |
+| `Foreground` | `Control` | A color converted to `SolidColorBrush`, or `$Name` for a brush resource. |
+| `BorderBrush` | `Control` | A color converted to `SolidColorBrush`, or `$Name` for a brush resource. |
 | `BorderThickness` | `Control` | One float, or four comma-separated floats, parsed with invariant culture. |
 | `Padding` | `Control` | One float, or four comma-separated floats, parsed with invariant culture. |
 | `FontFamily` | `Control` | Raw string value. |
@@ -65,7 +65,7 @@ The schema also registers these shared element/control properties for every buil
 
 `Button.Content` and `TextBlock.Text` are registered as element-specific properties. Text content is accepted only when the element registration has a matching content property registration.
 
-Color values accept `Transparent`, `White`, or `Black`, using case-insensitive matching against `Color` names. Numeric color values must be three or four comma-separated bytes: red, green, blue, and optional alpha. When alpha is omitted, the schema uses `255`.
+Color values use `Color.TryParse`: any WPF named color, matched without regard to case (for example `Red` or `cornflowerblue`), `#RRGGBB`, `#AARRGGBB`, or three or four comma-separated bytes: red, green, blue, and optional alpha. When alpha is omitted, the schema uses `255`. A brush value that starts with `$` looks up the brush resource with the rest of the name; a missing resource throws `KeyNotFoundException` out of `UiFactory.Create`.
 
 Thickness values must use either one value, which creates uniform thickness, or four comma-separated values: left, top, right, and bottom. Floating-point values use `CultureInfo.InvariantCulture`.
 

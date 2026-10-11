@@ -22,7 +22,7 @@ PopupRoot root = toolTip.PopupRoot;
 
 ## Remarks
 
-`PopupRoot` keeps its public API for compatibility. In `ToolTip`, it is hosted inside the `UIRoot` overlay layer rather than inserted inline under the tooltip. It does not create or own a native window.
+`PopupRoot` keeps its public API for compatibility. In `ToolTip`, it is the `Content` of an `Overlay`; the tooltip adds that `Overlay` as its own logical and visual child, and the overlay content is shown in the `UIRoot` overlay layer only while the tooltip is open. It does not create or own a native window.
 
 Its measure and arrange behavior is inherited from `ContentControl`, including transactional ownership checks for `UIElement` content.
 

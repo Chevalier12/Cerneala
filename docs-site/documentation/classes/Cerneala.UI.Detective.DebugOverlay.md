@@ -17,6 +17,7 @@ public sealed class DebugOverlay
 
 ```csharp
 using Cerneala.UI.Detective;
+using Cerneala.UI.Elements;
 
 DebugOverlay overlay = new();
 overlay.Text = "Frame: 42";

@@ -64,7 +64,7 @@ if (router.CanExecute(context))
 
 Callers should use `CommandRouter.CanExecute` and `CommandRouter.Execute` with a `RoutedCommandContext`. The direct `ICommand.CanExecute` and `ICommand.Execute` members intentionally throw `InvalidOperationException` because a routed command needs a retained command context, target element, and `ElementInputRouteMap`.
 
-`ButtonBase` and routed `InputBinding` paths detect `RoutedCommand` and delegate to `CommandRouter` instead of invoking the command directly. Non-routed commands are executed through their `ICommand` members.
+`ButtonBase` and `InputBinding.TryExecute(InputFrame, CommandRouter, ElementInputRouteMap, UIElement)` detect `RoutedCommand` and delegate to `CommandRouter` instead of invoking the command directly. The single-parameter `InputBinding.TryExecute(InputFrame)` calls `ICommand.CanExecute` directly, so for a matching gesture with a `RoutedCommand` it throws `InvalidOperationException`. Non-routed commands are executed through their `ICommand` members.
 
 The constructor rejects empty or whitespace command names and a `null` owner type.
 

@@ -67,6 +67,12 @@ Because this type is a `record`, equality is value-based and uses the `Text` val
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `Deconstruct(out string Text)` | `void` | Deconstructs the record into its `Text` component. |
+| `Equals(object?)` | `bool` | Returns whether the object is a `TextInputSnapshotEvent` with equal `Text`. |
+| `Equals(TextInputSnapshotEvent?)` | `bool` | Returns whether the other record has equal `Text`. |
+| `GetHashCode()` | `int` | Returns a hash code based on `Text`. |
+| `ToString()` | `string` | Returns the record text, for example `TextInputSnapshotEvent { Text = a }`. |
+| `operator ==(TextInputSnapshotEvent?, TextInputSnapshotEvent?)` | `bool` | Returns whether both records are equal by value, or both are `null`. |
+| `operator !=(TextInputSnapshotEvent?, TextInputSnapshotEvent?)` | `bool` | Returns the negation of `==`. |
 
 ## Applies To
 

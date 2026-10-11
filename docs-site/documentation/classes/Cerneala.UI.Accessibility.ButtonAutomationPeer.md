@@ -56,7 +56,7 @@ The peer always reports `SemanticsRole.Button`. Its `Name` first uses `Accessibl
 
 Inherited `AutomationPeer` behavior still applies. `GetProperties()` returns the owner's enabled and keyboard focus state, and `CreateNode(IReadOnlyList<SemanticsNode> children)` builds a `SemanticsNode` using the owner element id, the effective role, the resolved name, peer properties, and the supplied child nodes.
 
-`Invoke()` activates the button through the same input activation contract used by pointer and keyboard input. It returns `false` without raising `Click` when the button is disabled.
+`Invoke()` calls `IInputActivatable.Activate` on the button, the same call keyboard activation uses. That runs the button's click logic, which a pointer click also reaches. It returns `false` without raising `Click` when the button is disabled.
 
 ## Constructors
 

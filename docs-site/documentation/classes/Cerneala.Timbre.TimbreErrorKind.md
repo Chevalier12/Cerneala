@@ -22,7 +22,7 @@ The kinds are distinct: a resource refusal is never reported as corrupt data or 
 
 | Name | Value | Description |
 | --- | --- | --- |
-| `SourceUnavailable` | 0 | The source could not be opened or read (missing file, I/O error, reader exception, non-seekable stream). |
+| `SourceUnavailable` | 0 | The source could not be opened or read (missing file, I/O error, an exception from an application `TimbreReader`, non-seekable stream). While the built-in Vorbis decoder decodes, a stream exception other than `IOException` is reported as `InvalidData`. |
 | `UnsupportedFormat` | 1 | No decoder accepts the content, the variant is not supported, or the decoder cannot be loaded. |
 | `InvalidData` | 2 | Corrupt or truncated data, non-finite samples from the source or from a playback's modifier chain, or a reader contract violation. |
 | `ResourceLimitExceeded` | 3 | A configured preload, cache, or streaming budget cannot admit the source. |

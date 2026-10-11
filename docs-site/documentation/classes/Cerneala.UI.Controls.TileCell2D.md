@@ -6,7 +6,7 @@ Namespace: `Cerneala.UI.Controls`
 Assembly/Project: `Cerneala`
 Source: `UI/Controls/TileMap2DModel.cs`
 
-Stores a tile ID and horizontal/vertical flip flags.
+Stores a tile ID and `TileFlip2D` flip flags (horizontal, vertical, and diagonal).
 
 ```csharp
 public readonly record struct TileCell2D
@@ -28,4 +28,4 @@ ID `0` is empty. Negative IDs and unknown flip bits are rejected.
 | Name | Description |
 | --- | --- |
 | `TileId` | Non-negative global tile ID. |
-| `Flip` | Horizontal/vertical source reflection flags. |
+| `Flip` | `TileFlip2D` source reflection flags: `Horizontal` (1), `Vertical` (2), and `Diagonal` (4), combinable. |

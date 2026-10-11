@@ -38,7 +38,7 @@ The constructor requires a non-null, non-whitespace `Name` and a non-null `Exten
 
 The class does not validate, normalize, or copy individual extension strings beyond copying the list itself. Platform dialog implementations decide how to interpret the extension values.
 
-Because this type is a record, it uses record value semantics for equality and formatting.
+The type is a record, but `Extensions` is stored as a new read-only collection, which compares by reference. Two filters created with the same name and extensions are therefore not equal, and `ToString()` prints the collection type name instead of the extensions, for example ``FileDialogFilter { Name = Images, Extensions = System.Collections.ObjectModel.ReadOnlyCollection`1[System.String] }``.
 
 ## Constructors
 | Name | Description |
@@ -54,7 +54,8 @@ Because this type is a record, it uses record value semantics for equality and f
 ## Exceptions
 | Exception | Condition |
 | --- | --- |
-| `ArgumentException` | `Name` is null, empty, or consists only of white-space characters. |
+| `ArgumentNullException` | `Name` is `null`. |
+| `ArgumentException` | `Name` is empty or consists only of white-space characters. |
 | `ArgumentNullException` | `Extensions` is null. |
 
 ## Applies to

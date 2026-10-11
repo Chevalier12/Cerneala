@@ -93,7 +93,7 @@ If the root exposes a platform cursor service, `Update` resolves the cursor at t
 | `Draw()` | `InvalidOperationException` | No retained root is attached, or no drawing backend is available from `Backend.DrawingBackend`. |
 | `Draw()` | Provider-defined exception | The configured backdrop frame source fails while acquiring a required frame. |
 | `Backend` setter | `InvalidOperationException` | A backdrop source has no drawing backend or reports that it is incompatible with that drawing backend. |
-| `Draw(IDrawingBackend)` | `ArgumentNullException` | `backend` is `null`. |
+| `Draw(IDrawingBackend)` | `ArgumentNullException` | `drawingBackend` is `null`. |
 | `Draw(IDrawingBackend)` | `InvalidOperationException` | No retained root is attached, or the call is not on its owning UI thread. |
 
 ## Applies to

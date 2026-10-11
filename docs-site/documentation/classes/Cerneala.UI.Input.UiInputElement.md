@@ -61,6 +61,17 @@ Because this is a record, instances have record value equality and can be decons
 | Name | Description |
 | --- | --- |
 | `Deconstruct(out UiElementId Id, out UiElementId? ParentId, out bool IsEnabled)` | Deconstructs the record into its positional values. |
+| `Equals(object?)` | Returns whether the object is a `UiInputElement` with equal `Id`, `ParentId`, and `IsEnabled`. |
+| `Equals(UiInputElement?)` | Returns whether the other record has equal `Id`, `ParentId`, and `IsEnabled`. |
+| `GetHashCode()` | Returns a hash code combined from the three positional values. |
+| `ToString()` | Returns the record text, for example `UiInputElement { Id = 2, ParentId = 1, IsEnabled = True }`. |
+
+## Operators
+
+| Name | Description |
+| --- | --- |
+| `operator ==(UiInputElement?, UiInputElement?)` | Returns whether both records are equal by value, or both are `null`. |
+| `operator !=(UiInputElement?, UiInputElement?)` | Returns the negation of `==`. |
 
 ## Applies to
 

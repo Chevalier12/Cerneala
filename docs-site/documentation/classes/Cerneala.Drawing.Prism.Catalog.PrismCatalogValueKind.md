@@ -36,7 +36,7 @@ if (parameter.ValueKind == PrismCatalogValueKind.Number)
 
 ## Remarks
 
-The generic type supplied to a Prism state accessor must match this mapping exactly.
+The generic type supplied to a Prism state accessor must match this mapping exactly. Otherwise `GetValue<T>` and `SetValue<T>` throw `ArgumentException`; for example, `GetValue<double>` on a `Number` parameter throws.
 
 ## Applies to
 

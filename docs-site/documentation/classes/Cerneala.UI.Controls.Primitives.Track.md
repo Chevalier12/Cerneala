@@ -69,7 +69,7 @@ The default template layout is orientation-aware. A horizontal track reports a d
 
 Dragging the thumb updates `Value` from the pointer delta, using horizontal movement for horizontal tracks and vertical movement for vertical tracks. `ValueChanged` is raised when the stored value actually changes. A left mouse down on the track outside the thumb compares the clicked position with the current value and applies `DecreaseLarge` or `IncreaseLarge`; the input event is marked handled only when this changes the value.
 
-The default template binds `Background`, `BorderBrush`, and `BorderThickness` to its border root. The constructor initializes `Background` to `new SolidColorBrush(new Color(225, 225, 225))`, `BorderBrush` to `new SolidColorBrush(new Color(120, 120, 120))`, and `BorderThickness` to `new Thickness(1)` at the `AspectBase` value source so markup aspects can replace those visual defaults. It also initializes `SmallChange` to `0.1f` and `LargeChange` to `1`.
+The default template binds `Background`, `BorderBrush`, and `BorderThickness` to its border root. The constructor initializes `Background` to `new SolidColorBrush(new Color(225, 225, 225))`, `BorderBrush` to `new SolidColorBrush(new Color(120, 120, 120))`, and `BorderThickness` to `new Thickness(1)` as framework defaults at the `Default` value source, so any Aspect, local, or other higher-source value replaces them. It also initializes `SmallChange` to `0.1f` and `LargeChange` to `1`.
 
 `Slider` and `ScrollBar` use `Track` as their owned range interaction primitive and synchronize their range state into it.
 

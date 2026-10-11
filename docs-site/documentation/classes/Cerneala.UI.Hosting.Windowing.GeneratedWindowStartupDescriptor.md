@@ -13,6 +13,9 @@ public sealed class GeneratedWindowStartupDescriptor
 
 ## Examples
 ```csharp
+using Cerneala.UI.Hosting.Windowing;
+using Microsoft.Extensions.DependencyInjection;
+
 var descriptor = new GeneratedWindowStartupDescriptor(
     () => new App(),
     services => services.AddSingleton<AppState>(),

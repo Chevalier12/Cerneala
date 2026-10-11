@@ -10,11 +10,11 @@ Source: `UI/Layout/Panels/VirtualizingStackPanel.cs`
 Stacks visual children vertically while measuring and arranging only the children inside a `RealizationWindow`.
 
 ```csharp
-public class VirtualizingStackPanel : Panel
+public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
 ```
 
 Inheritance:
-`object` -> `UIElement` -> `Panel` -> `VirtualizingStackPanel`
+`object` -> `UiObject` -> `UIElement` -> `Panel` -> `VirtualizingStackPanel`
 
 ## Examples
 
@@ -49,7 +49,7 @@ panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 300, 120)));
 
 `VirtualizingStackPanel` implements `IItemsVirtualizingPanel`. An owning `ItemsControl` receives viewport and offset updates from its `ScrollViewer` and forwards them to the panel. The panel estimates unknown row heights, records actual heights during measure, updates its average estimate, and corrects the realization window as measurements become available.
 
-`VirtualizationContext` remains available for fixed-extent hosts such as specialized controls. Automatic variable-height virtualization is used when that property is `null`.
+`VirtualizationContext` remains available for fixed-extent hosts such as specialized controls. Automatic variable-height virtualization starts with the first `UpdateViewport` call. When `VirtualizationContext` is `null` and `UpdateViewport` was never called, the panel realizes and stacks every child at its natural height. When both are set, the realization window comes from `VirtualizationContext` while arrange positions use the automatic height estimates.
 
 During measure, the panel maps each visual child to an item index by adding `FirstRealizedIndex` to the child's visual-child position. Children whose item index is outside `RealizationWindow` are not measured and receive `LayoutSize.Zero` as their desired size. Realized children are measured with the available width and an infinite available height.
 

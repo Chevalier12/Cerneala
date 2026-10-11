@@ -33,7 +33,7 @@ view.SortDescriptions.Add(new SortDescription<Person>(person => person.Name));
 view.SortDescriptions.Add(new SortDescription<Person>(person => person.Rank, descending: true));
 view.Refresh();
 
-private sealed record Person(string Name, int Rank);
+sealed record Person(string Name, int Rank);
 ```
 
 ## Remarks

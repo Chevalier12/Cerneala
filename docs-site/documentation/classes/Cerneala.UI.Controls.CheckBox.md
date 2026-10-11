@@ -39,17 +39,17 @@ CheckBox checkBox = new()
 
 `CheckBox` derives its toggle behavior from `ToggleButton`. A left mouse button release with a click count greater than zero toggles `IsChecked`.
 
-The constructor installs the default component template, a one-pixel border thickness, and a default border brush at the `AspectBase` value source. Markup and local values can override these defaults.
+The constructor installs the default component template, a one-pixel border thickness, and a default border brush as framework defaults at the `Default` value source. Any Aspect, local, or other higher-source value replaces them.
 
-The default template contains a bordered indicator, the required `PART_CheckMark` element, and a `ContentPresenter`. The presenter is separated from the indicator by a six-pixel margin. `Background` colors the complete checkbox surface, while `BorderBrush` and `BorderThickness` style the indicator box. `Padding`, `Foreground`, `FontFamily`, `FontSize`, and `Content` are bound into the content portion of the template.
+The default template contains a bordered indicator, a `PART_CheckMark` element, and a `ContentPresenter`. The presenter is separated from the indicator by a six-pixel margin. `Background` and `Padding` are bound to the outer root `Border`, so the padding surrounds both the indicator and the content. `BorderBrush` and `BorderThickness` style the indicator box. `Foreground`, `FontFamily`, `FontSize`, and `Content` are bound to the `ContentPresenter`.
 
-`PART_CheckMark` may be any `UIElement`. The control changes its visibility to `Visible` when `IsChecked` is `true` and to `Hidden` otherwise. When the part is a `Cerneala.UI.Controls.Shapes.Path`, a custom geometry assigned through `Data` is scaled uniformly to fit its arranged bounds with a 1.5-pixel inset and is centered on both axes. The default indicator measures to a square and is vertically centered beside the content.
+`PART_CheckMark` may be any `UIElement`. The control changes its visibility to `Visible` when `IsChecked` is `true` and to `Hidden` otherwise. When the part is a `Cerneala.UI.Controls.Shapes.Path` whose `Data` is set, that geometry is scaled uniformly to fit its arranged bounds with a 1.5-pixel inset and is centered on both axes. The default indicator measures to a square and is vertically centered beside the content.
 
 Custom `Path.Data` fitting uses arranged-local path coordinates and accounts for the part's inherited `RenderTransformOrigin`; relocating the checkbox does not add its position twice.
 
-The default path uses a black-filled `SvgGeometry` with a `0,0,100,100` source view box. Its `Fill` is owned by the template and is not bound to `Foreground`, so a custom template can choose the check-mark brush independently from the text color.
+The default path sets `Geometry` (not `Data`) to a black-filled `SvgGeometry` with a `0,0,100,100` source view box, so the automatic `Data` fitting does not run for the default check mark. Its `Fill` is owned by the template and is not bound to `Foreground`, so a custom template can choose the check-mark brush independently from the text color.
 
-A custom component template must provide `PART_CheckMark` as a `UIElement`. This permits path, text, border, and composed check-mark visuals. Named elements declared inside generated `@template` markup are registered as template parts.
+A custom component template may provide `PART_CheckMark` as any `UIElement`, such as a path, text, border, or composed visual. The part is optional: the control looks it up with `GetOptionalTemplatePart`, and without it the template still works but no element shows the checked state. Named elements declared inside generated `@template` markup are registered as template parts.
 
 ## Constructors
 
@@ -61,7 +61,7 @@ A custom component template must provide `PART_CheckMark` as a `UIElement`. This
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `PART_CheckMark` | `Cerneala.UI.Elements.UIElement` | Required element whose visibility reflects `IsChecked`; path parts additionally receive automatic geometry fitting. |
+| `PART_CheckMark` | `Cerneala.UI.Elements.UIElement` | Optional element whose visibility reflects `IsChecked`; path parts with `Data` set also receive automatic geometry fitting. |
 
 ## Key Inherited Members
 

@@ -54,12 +54,6 @@ Public `UiObject.SetValue` overloads that take `UiProperty<T>` reject read-only 
 
 The constructor is internal, so application code cannot create arbitrary keys. Keep the key private or otherwise limited to the owner that is allowed to mutate the read-only property.
 
-## Constructors
-
-| Name | Description |
-| --- | --- |
-| None | `UiPropertyKey<T>` has no public constructors. Use `UiProperty<T>.RegisterReadOnly` or `UiPropertyRegistry.RegisterReadOnly` to create a key. |
-
 ## Properties
 
 | Name | Type | Description |

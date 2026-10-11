@@ -25,15 +25,28 @@ layer opacity, and the source alpha as separate values. The layer blend mode is
 evaluated against the original backdrop; knockout does not silently replace the
 selected blend mode with `Normal`.
 
-`Shallow` selects the nearest pass-through or isolated group boundary.
-`Deep` selects the deepest backdrop available to the composition. At the root
-level both modes can therefore resolve to the same backdrop. Disabled blend
-channels are restored from the current backdrop after the recurrence.
+The original backdrop that the SDL_GPU renderer uses is:
 
-The CPU reference is implemented by
-`PrismBlendMath.CompositeKnockout`; the GPU implementation is in
-`Drawing/Prism/Shaders/Hlsl/Blends/AdvancedBlending.hlsl`. Both operate on
-premultiplied color and use the same shape/alpha recurrence.
+| Mode | Layer position | Original backdrop |
+| --- | --- | --- |
+| `Shallow` | Inside a `PassThrough` group | The background of that group. |
+| `Shallow` | At the top level, or inside a group that is not `PassThrough` | None: transparent black. |
+| `Deep` | Any, when the Prism scope has a host backdrop | The host backdrop. |
+| `Deep` | Any, when the Prism scope has no host backdrop | None: transparent black. |
+
+A Prism scope gets a host backdrop only when its blend modes or styles need
+backdrop input. A `Deep` knockout does not request one by itself, so a scope in
+which every layer uses `Normal` blending and no style reads the backdrop draws
+its `Deep` layers against transparent black. With a transparent original
+backdrop, the layer blend mode has no effect on the knocked-out pixels.
+Disabled blend channels are restored from the current backdrop after the
+recurrence.
+
+The GPU implementation is in
+`Drawing/Prism/Shaders/Hlsl/Blends/AdvancedBlending.hlsl`. The CPU reference
+`PrismBlendMath.CompositeKnockout` uses the same shape/alpha recurrence on
+premultiplied color, but it passes the layer's own backdrop as the original
+backdrop, and no renderer calls it.
 
 ## Examples
 
@@ -48,8 +61,8 @@ layer.Knockout = PrismKnockout.Deep;
 | Name | Description |
 | --- | --- |
 | `None` | Performs no knockout. |
-| `Shallow` | Knocks out earlier group content to the nearest group backdrop. |
-| `Deep` | Knocks out through nested groups to the deepest composition backdrop. |
+| `Shallow` | Knocks out earlier content down to the background of the enclosing `PassThrough` group, or to transparent black elsewhere (see Remarks). |
+| `Deep` | Knocks out earlier content down to the host backdrop of the Prism scope, or to transparent black when the scope has none (see Remarks). |
 
 ## Applies to
 

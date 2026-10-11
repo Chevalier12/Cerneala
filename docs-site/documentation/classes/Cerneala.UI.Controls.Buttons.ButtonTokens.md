@@ -23,13 +23,14 @@ Use a button token as an aspect declaration value source:
 ```csharp
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Buttons;
 
 AspectRuleSet buttonRule = new(
     "app.button",
     AspectLayer.App,
     new AspectTarget(typeof(Button)),
     [new AspectDeclaration(Control.BackgroundProperty, ButtonTokens.Background.Ref())],
-    priority: 0);
+    declarationOrder: 0);
 ```
 
 Read a button token value from the default environment:
@@ -37,7 +38,7 @@ Read a button token value from the default environment:
 ```csharp
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
-using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Buttons;
 using Cerneala.UI.Media;
 
 AspectEnvironment environment = DefaultAspectPackage.CreateEnvironment();
@@ -53,7 +54,7 @@ Override button tokens in an application package:
 ```csharp
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
-using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Buttons;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Media;
 
@@ -73,7 +74,7 @@ AspectPackage package = AspectPackage.Create("App")
 
 `DefaultAspectPackage.Create()` registers default values for these tokens. `DefaultAspectPackage.CreateEnvironment()` creates a matching environment named `default` and sets the same values for runtime aspect resolution.
 
-The default button aspect rule resolves `Background`, `Foreground`, `BorderBrush`, and `Padding` into `Control` properties through `AspectToken<T>.Ref()`. `HoverBackground`, `PressedBackground`, and `DisabledOpacity` are available as named button state tokens in the default token set.
+The default button aspect rule resolves `Background`, `Foreground`, `BorderBrush`, and `Padding` into `Control` properties through `AspectToken<T>.Ref()`. `HoverBackground`, `PressedBackground`, and `DisabledOpacity` have default values in the default token set, but no rule in the default package reads them. To use them, reference them from your own state rules, for example a rule with `AspectCondition.State(AspectState.Hover)` that sets `Control.BackgroundProperty` to `ButtonTokens.HoverBackground.Ref()`.
 
 The token names use the `button.*` prefix, such as `button.background`, `button.hover-background`, and `button.disabled-opacity`.
 

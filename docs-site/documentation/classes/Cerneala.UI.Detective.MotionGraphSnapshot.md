@@ -80,7 +80,11 @@ The primary constructor does not validate counter values. Direct construction is
 | --- | --- | --- |
 | `Deconstruct(...)` | `void` | Deconstructs the positional record into its public component values. |
 | `Equals(MotionGraphSnapshot)` | `bool` | Determines whether another snapshot has the same component values. |
+| `Equals(object?)` | `bool` | Returns whether the object is a `MotionGraphSnapshot` with the same component values. |
+| `GetHashCode()` | `int` | Returns a hash code based on the component values. |
 | `ToString()` | `string` | Returns the compiler-generated record string containing all component values. |
+| `operator ==(MotionGraphSnapshot, MotionGraphSnapshot)` | `bool` | Returns whether both snapshots have the same component values. |
+| `operator !=(MotionGraphSnapshot, MotionGraphSnapshot)` | `bool` | Returns the negation of `==`. |
 
 ## Applies To
 

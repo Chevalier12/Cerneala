@@ -55,6 +55,12 @@ The constructor rejects negative, infinite, or NaN thresholds.
 | --- | --- |
 | `GestureRecognizer(float)` | Initializes a recognizer with a drag threshold. The default threshold is `4`. |
 
+## Exceptions
+
+| Member | Exception | Condition |
+| --- | --- | --- |
+| `GestureRecognizer(float)` | `ArgumentOutOfRangeException` | `dragThreshold` is negative, infinite, or NaN. |
+
 ## Methods
 
 | Name | Return Type | Description |

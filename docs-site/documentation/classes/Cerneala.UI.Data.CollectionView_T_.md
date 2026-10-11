@@ -86,7 +86,7 @@ Call `Dispose()` to unsubscribe from an observable source. Calling `Refresh()` a
 
 | Name | Description |
 | --- | --- |
-| `Changed` | Raised when `Refresh()` rebuilds the view with notification enabled, including refreshes caused by an observable source change. |
+| `Changed` | Raised every time `Refresh()` rebuilds the view, including refreshes caused by an observable source change. The initial build in the constructor does not raise it. |
 
 ## Explicit Interface Implementations
 

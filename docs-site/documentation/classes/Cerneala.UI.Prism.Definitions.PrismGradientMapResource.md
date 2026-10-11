@@ -18,7 +18,7 @@ public sealed class PrismGradientMapResource
 
 | Name | Description |
 | --- | --- |
-| `PrismGradientMapResource(IEnumerable<PrismGradientMapPoint> points)` | Creates a gradient whose offsets are nondecreasing and span zero through one. |
+| `PrismGradientMapResource(IEnumerable<PrismGradientMapPoint> points)` | Creates a gradient with at least two points whose offsets are nondecreasing, start at `0`, and end at `1`. |
 
 ## Properties
 
@@ -26,7 +26,7 @@ public sealed class PrismGradientMapResource
 | --- | --- | --- |
 | `Points` | `ImmutableArray<PrismGradientMapPoint>` | Gets the validated color points. |
 
-The draw resource identity and version participate in retained dependencies. A missing required resource falls back to the unfiltered input.
+Current behavior: the SDL_GPU renderer receives no gradient-map resources, because the draw-resource set that the UI builds for it contains no gradient entries. A `GradientOverlay` style that names a gradient resource therefore draws its content unchanged; only the built-in default gradient renders. `GradientMap` resolves its reference only as an image, so a `PrismGradientMapResource` never reaches it.
 
 ## Examples
 ```csharp
@@ -43,3 +43,10 @@ PrismGradientMapResource hardStop = new(
 Equal adjacent offsets create hard stops. Colors are straight linear-sRGB;
 each point carries straight alpha independently. `GradientOverlay` converts
 the resulting premultiplied LUT into the composition working profile.
+
+## Exceptions
+
+| Member | Exception | Condition |
+| --- | --- | --- |
+| Constructor | `ArgumentNullException` | `points` is `null`. |
+| Constructor | `ArgumentException` | `points` has fewer than two elements, the first offset is not `0`, the last offset is not `1`, or an offset is smaller than the one before it. |

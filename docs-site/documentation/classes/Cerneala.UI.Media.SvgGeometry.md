@@ -33,13 +33,13 @@ PathShape check = new()
 
 ## Remarks
 
-The constructor parses `Data` once into `Path`. When assigned to `Shape.Geometry`, the cached typed path is stretched from `Bounds` into the shape's arranged bounds, avoiding per-frame SVG parsing. The shared parser supports move, line, cubic and quadratic Bezier, elliptical arc, and close commands. The SDL_GPU backend uses the shared path tessellator to submit triangles.
+The constructor parses `Data` once into `Path`. When assigned to `Shape.Geometry`, the cached typed path is stretched from `Bounds` into the shape's arranged bounds, avoiding per-frame SVG parsing. The shared parser supports move, line, horizontal and vertical line, cubic and quadratic Bezier (including the smooth forms), elliptical arc, and close commands, in absolute and relative form. An unknown command or malformed data throws `FormatException`. The SDL_GPU backend uses the shared path tessellator to submit triangles.
 
 ## Constructors
 
 | Name | Description |
 | --- | --- |
-| `SvgGeometry(string data, DrawRect viewBox)` | Creates SVG geometry from path data and a positive-size view box. |
+| `SvgGeometry(string data, DrawRect viewBox)` | Creates SVG geometry from path data and a view box. A view box whose `Width` or `Height` is zero or negative is rejected; `NaN` sizes are not. |
 
 ## Properties
 
@@ -53,7 +53,9 @@ The constructor parses `Data` once into `Path`. When assigned to `Shape.Geometry
 
 | Constructor | Exception | Condition |
 | --- | --- | --- |
-| `SvgGeometry` | `ArgumentException` | `data` is null, empty, or whitespace. |
+| `SvgGeometry` | `ArgumentNullException` | `data` is `null`. |
+| `SvgGeometry` | `ArgumentException` | `data` is empty or whitespace. |
+| `SvgGeometry` | `FormatException` | `data` contains an unknown command or malformed path data. |
 | `SvgGeometry` | `ArgumentOutOfRangeException` | `viewBox` has a non-positive width or height. |
 
 ## Applies To

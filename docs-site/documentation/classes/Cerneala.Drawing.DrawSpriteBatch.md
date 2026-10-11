@@ -33,7 +33,7 @@ One batch uses exactly one platform-neutral image. Construction copies the sprit
 
 The batch does not own or dispose `Image`. Image changes participate in frame dependency tracking, while a new batch version changes retained identity and damage bounds.
 
-Recording a retained batch reuses its immutable command options, including after garbage collection. The command options contain the shared sampling and address modes; each sprite's tint, opacity, source rectangle, and geometry are already represented by the batch mesh. Recording does not reapply those per-sprite values.
+Recording a retained batch reuses its immutable command options. The command options contain the shared sampling and address modes; each sprite's tint, opacity, source rectangle, and geometry are already represented by the batch mesh. Recording does not reapply those per-sprite values.
 
 On SDL_GPU, a batch using `Point` sampling and `Clamp` addressing applies the [image-edge behavior](Cerneala.Drawing.DrawImageOptions.md#point-and-clamp-image-edges-on-sdl-gpu) to each generated sprite quad's own outer geometry. Different atlas source rectangles remain in one batch; they do not require separate draw commands for this edge treatment. This does not turn the source rectangles into a universal nearest-texel clamp.
 
@@ -51,8 +51,15 @@ On SDL_GPU, a batch using `Point` sampling and `Clamp` addressing applies the [i
 | `Sprites` | `IReadOnlyList<DrawSprite2D>` | Gets the copied sprite descriptions. |
 | `Sampling` | `DrawSamplingMode` | Gets the common filtering mode. |
 | `AddressMode` | `DrawAddressMode` | Gets the common texture addressing mode. |
-| `Version` | `long` | Gets the stable immutable-payload version. |
+| `Version` | `long` | Gets the version of the immutable mesh. Every constructed batch gets a new process-unique value; the transformed copies that the renderer makes internally keep the same value. |
 | `Bounds` | `DrawRect` | Gets bounds for all transformed sprite corners. |
+
+## Exceptions
+
+| Exception | Condition |
+| --- | --- |
+| `ArgumentNullException` | `image` or `sprites` is `null`. |
+| `ArgumentException` | `image.Width` or `image.Height` is less than or equal to `0`; `sprites` is empty; or two sprites use different `Options.Sampling` or `Options.AddressMode` values. |
 
 ## Applies To
 

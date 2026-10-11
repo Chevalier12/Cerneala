@@ -56,7 +56,7 @@ root.TryGet(accentToken, out Color rootAccent);   // Color.White
 
 An environment captures its constructing thread, and child scopes share the same authority. `Set`, child-scope creation, and runtime replacement reject cross-thread mutation before changing values or `Version`.
 
-`AspectEnvironment` is the lookup table used when an `AspectValue<T>` references an `AspectToken<T>`. `AspectResolutionContext` exposes the active environment to declaration resolution, and `AspectProcessor` keeps a default environment that is synchronized with token defaults from the current aspect catalog.
+`AspectEnvironment` is the lookup table used when an `AspectValue<T>` references an `AspectToken<T>`. `AspectResolutionContext` exposes the active environment to declaration resolution, and `AspectProcessor` keeps one environment per element, rebuilt from the token defaults of the element's aspect catalog and the installed theme when either changes.
 
 Values are stored by `AspectToken`. Tokens compare by ordinal name and value type, so separately created tokens with the same name and type address the same environment entry.
 

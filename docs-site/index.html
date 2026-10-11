@@ -711,7 +711,7 @@ footer{
 
     <div class="hero__titlebar">
       <div class="hero__dots"><span></span><span></span><span></span></div>
-      <div class="hero__tabs" role="tablist" aria-label="Runtime inspector views">
+      <div class="hero__tabs" role="tablist" aria-label="Illustrative runtime views">
         <button class="hero__tab is-active" id="hero-tab-runtime" type="button" role="tab" aria-selected="true" aria-controls="hero-runtime" data-hero-view="runtime">Runtime</button>
         <button class="hero__tab" id="hero-tab-tree" type="button" role="tab" aria-selected="false" aria-controls="hero-tree" data-hero-view="tree" tabindex="-1">UI Tree</button>
         <button class="hero__tab" id="hero-tab-trace" type="button" role="tab" aria-selected="false" aria-controls="hero-trace" data-hero-view="trace" tabindex="-1">Frame Trace</button>
@@ -745,11 +745,11 @@ footer{
             <div class="runtime-preview__body">
               <div class="runtime-nav">
                 <strong>SHOWCASES</strong>
-                <span class="is-active">Controls</span>
+                <span class="is-active">Controale</span>
                 <span>Layout</span>
-                <span>Input</span>
+                <span>Aspect</span>
                 <span>Motion</span>
-                <span>Markup</span>
+                <span>Sisteme</span>
               </div>
               <div class="runtime-canvas">
                 <span class="runtime-canvas__eyebrow">Templated control</span>
@@ -773,12 +773,15 @@ footer{
             <span class="hero-view__state">Settled</span>
           </div>
           <div class="tree-view">
-            <div class="tree-row" style="--depth:0"><span class="tree-row__name">Window <b>#MainWindow</b></span><span class="tree-row__state">clean</span></div>
+            <div class="tree-row" style="--depth:0"><span class="tree-row__name">MainWindow</span><span class="tree-row__state">clean</span></div>
             <div class="tree-row" style="--depth:1"><span class="tree-row__name">Grid <b>#PlaygroundLayout</b></span><span class="tree-row__state">clean</span></div>
-            <div class="tree-row" style="--depth:2"><span class="tree-row__name">Border <b>#NavigationHost</b></span><span class="tree-row__state">clean</span></div>
-            <div class="tree-row" style="--depth:3"><span class="tree-row__name">ShowcaseNavigation</span><span class="tree-row__state">clean</span></div>
-            <div class="tree-row is-selected" style="--depth:2"><span class="tree-row__name">TextBlock <b>#FrameDiagnosticsText</b></span><span class="tree-row__state is-dirty">updated</span></div>
-            <div class="tree-row" style="--depth:2"><span class="tree-row__name">Grid <b>#ShowcaseHost</b></span><span class="tree-row__state">clean</span></div>
+            <div class="tree-row" style="--depth:2"><span class="tree-row__name">Border</span><span class="tree-row__state">clean</span></div>
+            <div class="tree-row" style="--depth:3"><span class="tree-row__name">Grid</span><span class="tree-row__state">clean</span></div>
+            <div class="tree-row is-selected" style="--depth:4"><span class="tree-row__name">TextBlock <b>#FrameDiagnosticsText</b></span><span class="tree-row__state is-dirty">updated</span></div>
+            <div class="tree-row" style="--depth:2"><span class="tree-row__name">Grid</span><span class="tree-row__state">clean</span></div>
+            <div class="tree-row" style="--depth:3"><span class="tree-row__name">Border</span><span class="tree-row__state">clean</span></div>
+            <div class="tree-row" style="--depth:4"><span class="tree-row__name">ShowcaseNavigation <b>#NavigationScrollViewer</b></span><span class="tree-row__state">clean</span></div>
+            <div class="tree-row" style="--depth:3"><span class="tree-row__name">Grid <b>#ShowcaseHost</b></span><span class="tree-row__state">clean</span></div>
           </div>
         </div>
 
@@ -797,7 +800,7 @@ footer{
           </div>
           <div class="trace-summary">
             <div><span>Root commands</span><strong>Reused</strong></div>
-            <div><span>Idle checks</span><strong>0 B allocated</strong></div>
+            <div><span>Idle checks</span><strong><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/Cerneala.Benchmarks/results/2026-07-13-queue-engine-2.md">0 B after warmup</a></strong></div>
           </div>
         </div>
       </div>
@@ -897,7 +900,7 @@ footer{
       </svg>
       <h3>Aspects, Resources &amp; Templates</h3>
       <p>Aspect rules cascade through defaults, states, and variants while named resources supply brushes, fonts, tokens, values, and templates. Reactive conditions update styling without rebuilding the tree.</p>
-      <div class="feature-tile__api">Aspect · $resources · control/content templates</div>
+      <div class="feature-tile__api">Aspect · $Name resources · control/content templates</div>
     </div>
 
     <div class="feature-tile feature-tile--orange">
@@ -947,7 +950,7 @@ footer{
         <circle class="icon-solid" cx="19" cy="16" r="1.7"/>
       </svg>
       <h3>Routed Input &amp; Semantics</h3>
-      <p>Pointer, keyboard, and text feed hit testing, capture, focus, commands, navigation, and tunneled/bubbled events. Touch, stylus, manipulation, and drag surfaces remain platform-gated prototypes; a semantics tree exists while native accessibility adapters remain later work.</p>
+      <p>Pointer, keyboard, and text feed hit testing, capture, focus, commands, navigation, and tunneled/bubbled events. Touch, stylus, and manipulation surfaces are prototypes with no SDL3 input mapping yet, while in-app drag and drop routes through <code>DragDropController</code>; a semantics tree exists while native accessibility adapters remain later work.</p>
       <div class="feature-tile__api">ElementInputBridge · RoutedEvent · SemanticsTree</div>
     </div>
 
@@ -983,7 +986,7 @@ footer{
         <path d="m21.5 18.5 2 2 4-4"/>
       </svg>
       <h3>Relay, Scheduler &amp; Caches</h3>
-      <p>A root-owned MPSC Relay drains bounded FIFO snapshots before retained work. Off-thread binding, command, resource, collection, and theme notifications coalesce onto the UI thread; deduplicated phase queues and idle checks stay allocation-conscious.</p>
+      <p>A root-owned MPSC Relay drains bounded FIFO snapshots before retained work. Off-thread binding, command, and theme notifications coalesce onto the UI thread, resource changes are posted to it, and off-thread collection changes on an attached <code>ItemsControl</code> throw; deduplicated phase queues and idle checks stay allocation-conscious.</p>
       <div class="feature-tile__api">UiRelay · UiFrameScheduler · RetainedRenderCache</div>
     </div>
 
@@ -1012,7 +1015,7 @@ footer{
     <div class="section-head">
       <p class="eyebrow">Frame pipeline</p>
       <h2>One host frame. Dirty work only.</h2>
-      <p>A host frame first drains one bounded Relay snapshot, can settle existing scheduled work before input, dispatches that input, then runs a second retained pass only when the tree becomes dirty. State settles before layout, caches refresh independently, and drawing submits the committed command stream.</p>
+      <p>A host frame first drains one bounded Relay snapshot, can settle existing scheduled work before input, dispatches that input, then runs another retained pass only when scheduled work remains or active motion has not run yet, and once more if cursor resolution queues new work. State settles before layout, caches refresh independently, and drawing submits the committed command stream.</p>
     </div>
 
     <div class="pipeline__motion" aria-label="Motion frame hooks">
@@ -1021,7 +1024,8 @@ footer{
         <strong>Hooks span the frame</strong>
       </div>
       <div class="pipeline__motion-hooks">
-        <span class="pipeline__motion-hook">Begin</span>
+        <span class="pipeline__motion-hook">Pre-input</span>
+        <span class="pipeline__motion-hook">After input</span>
         <span class="pipeline__motion-hook">Before layout</span>
         <span class="pipeline__motion-hook">After layout</span>
         <span class="pipeline__motion-hook">Before render</span>
@@ -1113,7 +1117,7 @@ footer{
         <div class="markup-demo__meta">
           <span>Build time</span>
           <span>Typed names</span>
-          <span>No runtime XML parser</span>
+          <span>No XML in the frame loop</span>
         </div>
       </div>
 
@@ -1259,7 +1263,7 @@ footer{
             <i style="height:20px;background:var(--pink);"></i><i style="height:8px;"></i><i style="height:11px;"></i>
             <i style="height:9px;"></i><i style="height:8px;"></i><i style="height:10px;"></i><i style="height:9px;"></i><i style="height:8px;"></i>
           </span>
-          <span class="diag__val accent-cyan">measure=1 / arrange=1</span>
+          <span class="diag__val accent-cyan">measureCalls=1, arrangeCalls=1</span>
         </div>
         <div class="diag__row">
           <span class="diag__key">Invalidation trace</span>
@@ -1267,7 +1271,7 @@ footer{
         </div>
         <div class="diag__row">
           <span class="diag__key">Relay + work queues</span>
-          <span class="diag__val accent-lime">pending=0 · Relay idle=0 B</span>
+          <span class="diag__val accent-lime">relayBacklog=0, hasWork=False</span>
         </div>
         <div class="diag__row">
           <span class="diag__key">Render cache</span>
@@ -1369,7 +1373,7 @@ footer{
     },
     trace: {
       meta: 'QUEUE SNAPSHOTS · SHARED ORDER · CACHE COMMIT',
-      status: 'dirty queues drained · shared visual order reused · idle checks 0 B'
+      status: 'dirty queues drained · shared visual order reused · idle checks 0 B after warmup'
     }
   };
 

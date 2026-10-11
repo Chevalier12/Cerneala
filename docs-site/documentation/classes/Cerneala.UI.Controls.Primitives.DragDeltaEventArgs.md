@@ -10,11 +10,11 @@ Source: `UI/Controls/Primitives/DragDeltaEventArgs.cs`
 Provides per-update and total drag movement values for the `Thumb.DragDelta` event.
 
 ```csharp
-public sealed class DragDeltaEventArgs : EventArgs
+public sealed class DragDeltaEventArgs : RoutedEventArgs
 ```
 
 Inheritance:
-`object` -> `EventArgs` -> `DragDeltaEventArgs`
+`object` -> `RoutedEventArgs` -> `DragDeltaEventArgs`
 
 ## Examples
 
@@ -41,11 +41,14 @@ thumb.DragDelta += (_, args) =>
 
 `Thumb.DragDelta` is not raised for an update where both per-update changes are zero. The `Track` primitive uses the orientation-specific change, `HorizontalChange` for horizontal tracks and `VerticalChange` for vertical tracks, to update its value.
 
+`Thumb` raises these arguments as the bubbling routed event `Thumb.DragDeltaEvent`, with the thumb as `Source`.
+
 ## Constructors
 
 | Name | Description |
 | --- | --- |
-| `DragDeltaEventArgs(float horizontalChange, float verticalChange, float totalHorizontalChange, float totalVerticalChange)` | Initializes a new drag delta event argument instance with per-update and total movement values. |
+| `DragDeltaEventArgs(float horizontalChange, float verticalChange, float totalHorizontalChange, float totalVerticalChange)` | Initializes a new drag delta event argument instance with per-update and total movement values. `RoutedEvent`, `Source` and `OriginalSource` are not set. |
+| `DragDeltaEventArgs(RoutedEvent routedEvent, object source, float horizontalChange, float verticalChange, float totalHorizontalChange, float totalVerticalChange)` | Initializes a new instance for raising `routedEvent` from `source`. Throws `ArgumentNullException` when `routedEvent` or `source` is `null`. `Thumb` uses this constructor. |
 
 ## Properties
 
@@ -55,6 +58,8 @@ thumb.DragDelta += (_, args) =>
 | `VerticalChange` | `float` | Gets the vertical movement since the previous drag update. |
 | `TotalHorizontalChange` | `float` | Gets the horizontal movement from the drag start position. |
 | `TotalVerticalChange` | `float` | Gets the vertical movement from the drag start position. |
+
+`RoutedEvent`, `Source`, `OriginalSource` and `Handled` are inherited from `RoutedEventArgs`.
 
 ## Applies to
 
@@ -66,3 +71,4 @@ thumb.DragDelta += (_, args) =>
 - `Thumb.DragDelta`
 - `DragStartedEventArgs`
 - `DragCompletedEventArgs`
+- `Cerneala.UI.Input.RoutedEventArgs`

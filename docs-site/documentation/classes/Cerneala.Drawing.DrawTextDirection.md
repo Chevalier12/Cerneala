@@ -22,7 +22,7 @@ DrawTextLayoutOptions options = new(direction: DrawTextDirection.Auto);
 
 ## Remarks
 
-`Auto` resolves the first strong Unicode direction. Direction-aware alignment and bidi visual run order use the resolved value.
+`Auto` resolves the base direction from the first text element that is a letter or a decimal digit. A letter or digit in a right-to-left Unicode block (for example Hebrew or Arabic) gives `RightToLeft`; any other letter or decimal digit gives `LeftToRight`. So `"123 שלום"` resolves to `LeftToRight`, because the ASCII digit `1` comes first. Text with no letter or digit resolves to `LeftToRight`. Direction-aware alignment and bidi visual run order use the resolved value.
 
 ## Values
 

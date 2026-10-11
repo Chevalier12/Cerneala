@@ -1,4 +1,4 @@
-# BidiTextRun Class
+# BidiTextRun Struct
 
 ## Definition
 Namespace: `Cerneala.UI.Text`

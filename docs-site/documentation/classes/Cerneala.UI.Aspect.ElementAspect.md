@@ -85,7 +85,7 @@ The full generated-code constructor accepts immutable `ElementAspectCondition` e
 | `SetValue` | `ArgumentException` | `value` is invalid for the UI property. |
 | `ElementAspect(...)` | `ArgumentNullException` | `defaultValues` or `conditions` is `null`. |
 | `ElementAspect(...)` | `ArgumentException` | `defaultValues` contains a `null` entry or assigns the same property more than once; `conditions` contains a `null` entry. |
-| `ElementAspect(string?, Type, ...)` | `ArgumentException` | `targetType` does not derive from `UIElement`. |
+| `ElementAspect(string?, Type, ...)` | `ArgumentException` | `targetType` is `null` or does not derive from `UIElement`. |
 
 An element rejects the aspect with `InvalidOperationException` when its runtime type does not satisfy `TargetType` or an assignment targets an incompatible UI property.
 

@@ -54,13 +54,13 @@ sampler.Retarget(2f, RetargetMode.Restart);
 
 `MotionSampler<T>` is the typed base class returned by `MotionSpec<T>.CreateSampler`. Concrete sampler implementations live inside motion specifications such as tween, keyframes, spring, decay, repeat, and ping-pong specs.
 
-`Current` exposes the typed sample. `CurrentUntyped` is inherited from `MotionSampler` and returns `Current` boxed as `object?`, allowing untyped motion infrastructure to observe samplers without knowing `T`.
+`Current` exposes the typed sample. `CurrentUntyped` overrides the abstract `MotionSampler` member and returns `Current` boxed as `object?`, allowing untyped motion infrastructure to observe samplers without knowing `T`.
 
 `Advance(TimeSpan)` is inherited from `MotionSampler` and moves the sampler forward by a time delta. Concrete implementations in this package reject negative deltas and stop changing their output after `IsComplete` becomes `true`.
 
 `Velocity` is optional. The base implementation returns `null`; samplers that can report velocity override it. `MotionValue<T>` reads this property after graph ticks and treats `InvalidOperationException` from a sampler as no available velocity.
 
-`Retarget(T, RetargetMode)` lets a typed caller change the sampler target. The inherited `RetargetUntyped(object?, RetargetMode)` helper casts the supplied value to `T`, accepts `null` only when `T` can be null, and throws `ArgumentException` for incompatible values.
+`Retarget(T, RetargetMode)` lets a typed caller change the sampler target. The `RetargetUntyped(object?, RetargetMode)` override casts the supplied value to `T`, accepts `null` only when `T` can be null, and throws `ArgumentException` for incompatible values.
 
 ## Properties
 

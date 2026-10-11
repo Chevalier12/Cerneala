@@ -59,7 +59,7 @@ RoutedEventTraceStep firstStep = snapshot.Steps[0];
 Each step stores the traced element id as text and the element type name captured while building the route.
 
 `RoutedEventTrace.Trace` creates each step with `element.ElementId?.ToString()` and `element.GetType().Name`.
-The route order depends on the routed event strategy: bubble traces run from target to root, tunnel traces run from root to target, and direct traces contain only the target.
+The route order depends on the routed event strategy: bubble traces run from the target up through its enabled ancestors, tunnel traces run the same steps in reverse order, and direct traces contain only the target. Disabled ancestors, including a disabled root, are not steps.
 Disabled ancestors are skipped by the trace builder.
 
 `ToString()` returns `ElementType#ElementId`. If `ElementId` is `null`, it returns `ElementType#unattached`.

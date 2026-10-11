@@ -24,7 +24,7 @@ long numericValue = token.Value;
 
 ## Remarks
 
-The token is an opaque, positive numeric identity. Rendering backends may use it as part of retained cache keys and invalidation records. It contains no reference back to the element that owns the Prism instance.
+The token is an opaque numeric identity. The constructor accepts only positive values, but `default(PrismCacheOwnerToken)` skips the constructor and has `Value == 0`. Rendering backends may use it as part of retained cache keys and invalidation records. It contains no reference back to the element that owns the Prism instance.
 
 ## Constructors
 
@@ -36,7 +36,7 @@ The token is an opaque, positive numeric identity. Rendering backends may use it
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `Value` | `long` | Gets the positive numeric identity. |
+| `Value` | `long` | Gets the numeric identity: positive for a constructed token, `0` for `default(PrismCacheOwnerToken)`. |
 
 ## Exceptions
 

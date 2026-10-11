@@ -62,7 +62,8 @@ The `Color` argument is converted directly to an `SKColor` using its red, green,
 ## Exceptions
 | Exception | Condition |
 | --- | --- |
-| `ArgumentNullException` | `textShaper` is `null` in the constructor, or `textRun` is `null` in `Rasterize` or `RasterizeMask`. |
+| `ArgumentNullException` | `textShaper` is `null` in the constructor; `textRun` is `null` in `Rasterize` or `RasterizeMask`; or the run uses a non-`SkiaFont` `IDrawFont` whose `FamilyName` is `null`. |
+| `ArgumentException` | The run uses a non-`SkiaFont` `IDrawFont` whose `FamilyName` is empty or whitespace. |
 | `InvalidOperationException` | The resolved font data cannot be shaped or the shaped text blob cannot be created. |
 
 ## Applies to

@@ -38,7 +38,22 @@ public sealed class GradientOverlayStyle : PrismStyle
 
 ## Remarks
 
-Parameter assignments are validated against the `GradientOverlay` catalog entry. Add the operation to a `PrismPipeline` or pass it directly to `Prism.Apply`.
+Parameter assignments are validated against the `GradientOverlay` catalog entry. The accepted symbols and numeric bounds of each parameter are, in that entry of `Cerneala.SourceGen/Prism/Catalog/prism-catalog.json`, the parameter's `symbols` field and the `minimum` and `maximum` fields of its `domain` object.
+
+`PrismResourceId` is `Cerneala.UI.Prism.Definitions.PrismResourceId`. `Vector4` is `System.Numerics.Vector4`. A `Vector4` default written with two numbers, such as `0, 0`, sets X and Y; Z and W are 0.
+
+Add the operation to a `PrismPipeline`, or pass it to `Prism.Apply` together with the source image: `Prism.Apply(source, new GradientOverlayStyle())`.
+
+Each property in the table also has a public static `MotionProperty<GradientOverlayStyle, T>` field named after it, for example `BlendModeProperty` of type `MotionProperty<GradientOverlayStyle, string>`. Motion uses these fields to animate the value.
+
+The class inherits `StyleId` and `Visible` from `PrismStyle`, and `CatalogInfo` and `Version` from `PrismOperation`. It also has the static field `VisibleProperty` for the inherited `Visible`.
+
+## Exceptions
+
+| Exception | Condition |
+| --- | --- |
+| `ArgumentOutOfRangeException` | A property setter: a `float` property is set to NaN, an infinity, or a value outside the catalog `minimum`/`maximum`; a `Vector4` property gets a NaN or infinite component; a `string` property is set to a value that is not one of the catalog symbols (the comparison is case-sensitive). |
+| `ArgumentNullException` | Drawing the operation: a `string` property was set to `null`. The setter does not reject `null`; the first draw that uses the operation throws. |
 
 ## See Also
 

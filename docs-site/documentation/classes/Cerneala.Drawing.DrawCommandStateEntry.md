@@ -40,7 +40,7 @@ DrawRect? worldBounds = analysis.Entries[commandIndex].Bounds;
 | `ClipBounds` | `DrawRect?` | Gets the conservative world-space clip intersection. |
 | `Opacity` | `float` | Gets the accumulated scope opacity. |
 | `BlendMode` | `DrawBlendMode` | Gets the active blend mode. |
-| `IsContextSensitive` | `bool` | Indicates that command interpretation depends on surrounding state. |
+| `IsContextSensitive` | `bool` | Gets whether the command is a state or Prism delimiter: `true` for `PushClip`, `PushPathClip`, `PopClip`, `BeginPrism`, `EndPrism`, and the push and pop commands for transform, opacity, blend, and layer; `false` for drawing commands. Context-sensitive commands are excluded from scope bounds. |
 | `MatchingCommandIndex` | `int` | Gets the matching state command index, or `-1`. |
 
 ## Applies To

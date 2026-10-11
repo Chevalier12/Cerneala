@@ -17,13 +17,13 @@ public enum BackdropAlphaMode
 
 | Name | Description |
 | --- | --- |
-| `Opaque` | The source is fully opaque and its alpha channel is ignored. |
+| `Opaque` | Declares that the source is fully opaque. Current code does not ignore or overwrite the alpha channel for this value. |
 | `Premultiplied` | Color channels are already multiplied by alpha. |
-| `Straight` | Color channels are independent of alpha. |
+| `Straight` | Declares that color channels are independent of alpha. Current code does not convert straight alpha to premultiplied alpha for this value. |
 
 ## Remarks
 
-Prism uses this value with `BackdropPixelFormat` and `PrismColorProfile` to select one observable conversion policy for the backdrop input. The value describes borrowed pixels; it does not transfer ownership of the source.
+`BackdropFrameMetadata` rejects an undefined value, but no current Prism code selects a different conversion by `AlphaMode` or by `BackdropPixelFormat`. The value describes borrowed pixels; it does not transfer ownership of the source.
 
 ## Applies to
 

@@ -40,13 +40,11 @@ states.When(AspectState.Focus).Set(
 
 Instances are created by `MotionStateBuilder.When`; there is no public constructor. `Set` captures the element's baseline the first time the property is registered and returns the owning `MotionStateBuilder`, allowing another `When` call to continue the chain.
 
-Registering the same state and property again replaces that target. Registering another state for the same property appends a candidate; the most recently registered matching state wins.
+Registering the same state and property again replaces that target in place; the state keeps its original position. Registering another state for the same property appends a candidate. When several registered states are active, the one that appears last in that order wins. For example, after `When(Hover)`, `When(Pressed)`, and then `When(Hover)` again for the same property, `Pressed` wins while both states are active.
 
 ## Constructors
 
-| Name | Description |
-| --- | --- |
-| None | Use `MotionStateBuilder.When(AspectState)`. |
+`MotionStateTargetBuilder` has no public constructor. Use `MotionStateBuilder.When(AspectState)`.
 
 ## Methods
 

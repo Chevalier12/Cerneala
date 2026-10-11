@@ -61,9 +61,9 @@
   </section>
 
   <section class="headline-strip" aria-label="Benchmark archive summary">
-    <div><span>Report families</span><strong>13</strong><small>Checked-in archives through August 27</small></div>
+    <div><span>Report families</span><strong>38</strong><small>Checked-in archives through October 7</small></div>
     <div><span>Strategic backend</span><strong>SDL3 GPU</strong><small>Compared directly with WindowsDX</small></div>
-    <div><span>Latest visual diff</span><strong>0 px</strong><small>Two 1600 x 900 Aspect scenarios</small></div>
+    <div><span>Aspect visual diff</span><strong>0 px</strong><small>Two 1600 x 900 Aspect scenarios, August 27</small></div>
     <div><span>Honest frame gate</span><strong>RED</strong><small>Latest SDL3 16.6667 ms target remains red</small></div>
   </section>
 
@@ -203,7 +203,7 @@
             <tr><th scope="row">Fixture</th><td>First completion cold</td><td>1,357.454 ms</td><td>2,500 ms</td><td class="value-good">GREEN</td></tr>
             <tr><th scope="row">Cerneala.slnx</th><td>Server ready cold</td><td>964.291 ms</td><td>2,000 ms</td><td class="value-good">GREEN</td></tr>
             <tr><th scope="row">Cerneala.slnx</th><td>First completion cold</td><td>1,922.658 ms</td><td>2,500 ms</td><td class="value-good">GREEN</td></tr>
-            <tr><th scope="row">Cerneala.slnx</th><td>Editor completion p95</td><td>228.241 ms</td><td>Observed only</td><td>RECORDED</td></tr>
+            <tr><th scope="row">Cerneala.slnx</th><td>Editor completion p95</td><td>228.241 ms</td><td>None</td><td class="value-good">GREEN</td></tr>
           </tbody>
         </table></div>
       </div>
@@ -260,12 +260,12 @@
 
   <section class="benchmark-section benchmark-section--relay" id="archive">
     <header class="section-head">
-      <div><span class="section-code">Complete recorded index</span><h2>Thirteen report families, with their raw context</h2></div>
+      <div><span class="section-code">Complete recorded index</span><h2>Thirty-eight report families, with their raw context</h2></div>
       <p>The website is a readable index. The checked-in Markdown, JSON, CSV, logs, screenshots, and BenchmarkDotNet output are the durable evidence.</p>
     </header>
 
     <div class="gate-ledger">
-      <header><span>Repository archive</span><strong>July 13 through August 27, 2026</strong></header>
+      <header><span>Repository archive</span><strong>July 13 through October 7, 2026</strong></header>
       <ul>
         <li><span>01</span><p><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/Cerneala.Benchmarks/results/2026-07-13-queue-engine-2.md">Queue Engine 2.0</a><br>Idle checks, sparse snapshots, shared order, drain, rebuild, and detach.</p></li>
         <li><span>02</span><p><a href="https://github.com/Chevalier12/Cerneala/tree/master/benchmarks/results/2026-07-14-relay">UiRelay</a><br>Scheduling, bounded drain, concurrent producers, and binding coalescing.</p></li>
@@ -280,6 +280,31 @@
         <li><span>11</span><p><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/Cerneala.Benchmarks/results/2026-08-24-rendersurface2d-drawing-api.md">RenderSurface2D drawing API</a><br>Batches, shapes, state, strokes, paths, and text-layout reuse.</p></li>
         <li><span>12</span><p><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/Cerneala.Benchmarks/results/2026-08-27-sdlgpu-prism-comparison.md">SDL_GPU Prism comparison</a><br>Same-machine WindowsDX comparison with CPU, allocation, passes, and resources.</p></li>
         <li><span>13</span><p><a href="https://github.com/Chevalier12/Cerneala/tree/master/benchmarks/results/2026-08-27-aspect-unification">Aspect unification</a><br>BenchmarkDotNet, deterministic metrics, frame budget, pixel diffs, API diff, and final verification.</p></li>
+        <li><span>14</span><p><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/results/2026-09-02-cerberus/final.md">Cerberus</a><br>Whole-frame and planner allocation microbenchmarks. Homogeneous merge and index rebasing (1,024 ops): 165.1 ns, 0 B.</p></li>
+        <li><span>15</span><p><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/results/2026-09-03-servo/api-compat.md">Servo API compatibility</a><br>Strict ApiCompat against a detached baseline: exactly 119 approved differences.</p></li>
+        <li><span>16</span><p><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/results/2026-09-04-rendersurface2d-scene-foundation/api-compat.md">RenderSurface2D scene foundation API</a><br>Strict ApiCompat: exactly the 12 additions frozen by the plan.</p></li>
+        <li><span>17</span><p><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/Cerneala.Benchmarks/results/2026-09-04-collision-stage0/stage0-contract-and-gates.md">Collision stage 0</a><br>Algorithm market and gates. Large-sparse query P95: 62,568.8 us exhaustive, 172.9 us sparse grid.</p></li>
+        <li><span>18</span><p><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/Cerneala.Benchmarks/results/2026-09-04-collision-stage2/README.md">Collision stage 2</a><br>Production spatial runner. Large-sparse update P95 107.6 us, query P95 268.6 us, PASS; all three scenarios PASS.</p></li>
+        <li><span>19</span><p><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/Cerneala.Benchmarks/results/2026-09-04-collision-stage5/README.md">Collision stage 5</a><br>Door collision captures: 5,600 changed pixels on WindowsDX, 8,775 on SDL_GPU, collision and coordinate checks PASS.</p></li>
+        <li><span>20</span><p><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/Cerneala.Benchmarks/results/2026-09-04-sprite-animation-stage0/stage0-contract-and-gates.md">Sprite animation stage 0</a><br>RED contract before the capability existed: core 7/7 and SourceGen 5/5 tests fail.</p></li>
+        <li><span>21</span><p><a href="https://github.com/Chevalier12/Cerneala/tree/master/benchmarks/Cerneala.Benchmarks/results/2026-09-04-sprite-animation-stage2">Sprite animation stage 2</a><br>Test counters only (TRX): core 11/11, SourceGen 507/507 passed.</p></li>
+        <li><span>22</span><p><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/Cerneala.Benchmarks/results/2026-09-04-sprite-animation-stage3/README.md">Sprite animation stage 3</a><br>10,000 active animations: temporal P95 7,825.3 to 5,818.1 microseconds; allocation 2,720,008.96875 to 8.96875 bytes/tick.</p></li>
+        <li><span>23</span><p><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/Cerneala.Benchmarks/results/2026-09-04-sprite-animation-stage4/README.md">Sprite animation stage 4</a><br>Visual conformance and final gate: 4,468 passed, 0 failed, 0 skipped, one test excluded by waiver. The manual visual check was not performed by a human.</p></li>
+        <li><span>24</span><p><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/Cerneala.Benchmarks/results/2026-09-04-tilemap-baseline/stage0-contract-and-gates.md">TileMap2D baseline</a><br>Before optimization: warm static P95 CPU 3495.2 us, 2,910,116 B allocated per operation.</p></li>
+        <li><span>25</span><p><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/Cerneala.Benchmarks/results/2026-09-04-tilemap-stage3/README.md">TileMap2D stage 3</a><br>Chunk cache and culling captures: 258 chunks, at most 4 candidates, exactly 1 visible chunk.</p></li>
+        <li><span>26</span><p><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/Cerneala.Benchmarks/results/2026-09-04-tilemap-stage4/README.md">TileMap2D stage 4</a><br>Optimized: warm static P95 458.8 us against a 875 us gate; all 19 archived gates pass.</p></li>
+        <li><span>27</span><p><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/Cerneala.Benchmarks/results/2026-09-04-tilemap-stage5/README.md">TileMap2D stage 5</a><br>WindowsDX vs SDL_GPU pixels: 8,525 / 8,525 / 8,235 pixels over channel tolerance, all accepted as one-pixel edge differences, 0 unresolved.</p></li>
+        <li><span>28</span><p><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/Cerneala.Benchmarks/results/2026-09-09-text-characterization/README.md">Text characterization</a><br>Raster-blob cache baseline, not a gate: 40 PASS / 1 intentional RED; a saturated cache reuses 0/255 repeat requests.</p></li>
+        <li><span>29</span><p><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/Cerneala.Benchmarks/results/2026-10-07-timbre-core-stage0/stage0-contract-and-gates.md">Timbre core stage 0</a><br>Frozen surface and baseline: characterization 103/103, new harness 15/15 passed.</p></li>
+        <li><span>30</span><p><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/Cerneala.Benchmarks/results/2026-10-07-timbre-core-stage1/README.md">Timbre core stage 1</a><br>Sink, reader, and transport: 84/84 GREEN; full Cerneala.Tests 4195 passed, 0 failed, 2 skipped.</p></li>
+        <li><span>31</span><p><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/Cerneala.Benchmarks/results/2026-10-07-timbre-core-stage2/README.md">Timbre core stage 2</a><br>DSP and tails: 117/117 passed; the full corpus ran 50 times in a row with 0 failed runs.</p></li>
+        <li><span>32</span><p><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/Cerneala.Benchmarks/results/2026-10-07-timbre-core-stage3/README.md">Timbre core stage 3</a><br>Cost campaign, five processes: verdict PASS, P99 max/min variation 1.22x.</p></li>
+        <li><span>33</span><p><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/Cerneala.Benchmarks/results/2026-10-07-timbre-decoding-stage0/README.md">Timbre decoding stage 0</a><br>Streaming heap footprint: MP3 22.05 kHz mono 177 592 B (VBR) and 181 624 B (CBR 64k); Vorbis 644 728 B.</p></li>
+        <li><span>34</span><p><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/Cerneala.Benchmarks/results/2026-10-07-timbre-decoding-stage1/README.md">Timbre decoding stage 1</a><br>Decoder selection: 250/250 passed; NLayer MP3 defect at 7.89 dB, 26.02 dB with the pinned local patch.</p></li>
+        <li><span>35</span><p><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/Cerneala.Benchmarks/results/2026-10-07-timbre-decoding-stage2/README.md">Timbre decoding stage 2</a><br>Streaming decode memory per codec: 299/299 passed three times in a row.</p></li>
+        <li><span>36</span><p><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/Cerneala.Benchmarks/results/2026-10-07-timbre-decoding-stage3/README.md">Timbre decoding stage 3</a><br>Cost campaign: verdict PASS on every process, P99 max/min 1.33. An earlier disturbed run failed on process 5 with 919 device underrun frames.</p></li>
+        <li><span>37</span><p><a href="https://github.com/Chevalier12/Cerneala/tree/master/benchmarks/Cerneala.Benchmarks/results/2026-10-07-timbre-motion-stage3">Timbre motion stage 3</a><br>Two campaign runs disagree: <code>campaign</code> FAIL (3712 underrun frames on one process), <code>campaign-2</code> PASS. No file says which run is authoritative.</p></li>
+        <li><span>38</span><p><a href="https://github.com/Chevalier12/Cerneala/blob/master/benchmarks/Cerneala.Benchmarks/results/2026-10-07-timbre-sdl3-stage3/README.md">Timbre SDL3 stage 3</a><br>SDL WASAPI cost: PASS 5/5, mixer P99 0.35-0.45 ms; full solution 6981 pass, 0 fail, 7 skip.</p></li>
       </ul>
     </div>
   </section>
@@ -291,8 +316,8 @@
     </header>
 
     <div class="environment-grid">
-      <div><span>Archive families</span><strong>13</strong><small>Each linked above</small></div>
-      <div><span>Latest recorded evidence</span><strong>August 27, 2026</strong><small>SDL_GPU and Aspect</small></div>
+      <div><span>Archive families</span><strong>38</strong><small>Each linked above</small></div>
+      <div><span>Latest recorded evidence</span><strong>October 7, 2026</strong><small>Timbre audio</small></div>
       <div><span>Primary runtime target</span><strong>.NET 8</strong><small>SDK and machine vary by report</small></div>
       <div><span>Timing harnesses</span><strong>BDN + runtime runners</strong><small>Not every workload belongs in one harness</small></div>
       <div><span>Visual capture</span><strong>Window.SaveScreenshot</strong><small>Application-owned screenshots</small></div>
@@ -307,7 +332,7 @@
     </div>
 
     <footer class="benchmark-footer">
-      <p><strong>Last archive refresh:</strong> August 27, 2026. New measured families must update this index instead of leaving the site frozen in July.</p>
+      <p><strong>Last archive refresh:</strong> October 7, 2026. New measured families must update this index instead of leaving the site frozen in July.</p>
       <div><a href="roadmap.html">Roadmap</a><a href="documentation.html">API Reference</a><a href="https://github.com/Chevalier12/Cerneala/tree/master/benchmarks">All benchmark sources</a></div>
     </footer>
   </section>

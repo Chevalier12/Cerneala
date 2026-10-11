@@ -35,7 +35,7 @@ TextSearch.SetText(item, "C Sharp");
 
 ## Remarks
 
-`Text` overrides the fallback text for an individual item. `TextPath` names a dotted public-property path evaluated for each item in an owning `ComboBox`. If neither attached property supplies text, `ComboBox` uses `DisplayMemberPath` and then `ToString()`.
+`Text` overrides the fallback text for an individual item. `TextPath` names a dotted public-property path evaluated for each item in an owning `ComboBox`. If neither attached property supplies text, `ComboBox` resolves `DisplayMemberPath` on the item (an empty path means the item itself) and calls `ToString()` on the result. A non-empty `TextPath` or `DisplayMemberPath` that resolves to `null` gives an empty string; there is no fallback to the item's own `ToString()`. For example, `TextPath = "Nickname"` on an item whose `Nickname` is `null` gives `""`.
 
 These properties define the text to search; they do not enable search by themselves. `ComboBox.IsTextSearchEnabled` controls matching, and `ComboBox.IsTextSearchCaseSensitive` controls comparison behavior.
 

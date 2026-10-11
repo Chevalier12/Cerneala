@@ -42,6 +42,7 @@ PrismFilterDefinition blur = new(
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `Equals(PrismFilterDefinition? other)` | `bool` | Tests structural equality. |
+| `Equals(object? obj)` | `bool` | Returns `true` when `obj` is a structurally equal `PrismFilterDefinition`. |
 | `GetHashCode()` | `int` | Returns the structural hash code. |
 
 ## Exceptions
@@ -53,4 +54,4 @@ PrismFilterDefinition blur = new(
 
 ## Applies to
 
-Layer, group, and backdrop filter lists.
+Layer and group filter lists.

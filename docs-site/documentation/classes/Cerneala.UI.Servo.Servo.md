@@ -15,32 +15,37 @@ public sealed class Servo
 
 ```csharp
 using Cerneala.UI.Accessibility;
+using Cerneala.UI.Controls;
 using Cerneala.UI.Input;
 using Cerneala.UI.Servo;
 
-var servo = new Servo(window);
-ServoElement save = await servo.FindAsync(ServoTarget.ById("save"));
-bool hasMenu = await servo.ExistsAsync(ServoTarget.ByRole(SemanticsRole.Menu));
-await servo.ClickAsync(ServoTarget.ById("save"));
-await servo.WaitForAsync(ServoTarget.ById("confirmation"), ServoCondition.Visible);
-await servo.WaitForIdleAsync();
-await servo.SaveScreenshotAsync("artifacts/window.png");
-await servo.SaveScreenshotAsync(
-    ServoTarget.ById("confirmation"),
-    "artifacts/confirmation.png");
-
-var walkingServo = new Servo(window, new ServoOptions
+// window is the application's open Cerneala Window.
+static async Task DriveAsync(Window window)
 {
-    DefaultTimeout = TimeSpan.FromSeconds(10)
-});
-await walkingServo.HoldKeyAsync(InputKey.D, TimeSpan.FromSeconds(2));
+    var servo = new Servo(window);
+    ServoElement save = await servo.FindAsync(ServoTarget.ById("save"));
+    bool hasMenu = await servo.ExistsAsync(ServoTarget.ByRole(SemanticsRole.Menu));
+    await servo.ClickAsync(ServoTarget.ById("save"));
+    await servo.WaitForAsync(ServoTarget.ById("confirmation"), ServoCondition.Visible);
+    await servo.WaitForIdleAsync();
+    await servo.SaveScreenshotAsync("artifacts/window.png");
+    await servo.SaveScreenshotAsync(
+        ServoTarget.ById("confirmation"),
+        "artifacts/confirmation.png");
+
+    var walkingServo = new Servo(window, new ServoOptions
+    {
+        DefaultTimeout = TimeSpan.FromSeconds(10)
+    });
+    await walkingServo.HoldKeyAsync(InputKey.D, TimeSpan.FromSeconds(2));
+}
 ```
 
 ## Remarks
 
 Every query resolves its `ServoTarget` against the current Servo semantic projection. Returned `ServoElement` instances are snapshots and do not expose or retain a live `UIElement`.
 
-The Servo projection includes the logical scene input subtree of `RenderSurface2D`, in addition to visual children. Scoped selectors follow that ownership. Scene nodes remain outside layout: their client-DIP bounds are the axis-aligned union of their picking geometry and input descendants, transformed through the scene and surface. This includes collider geometry, but not effect padding or ordinary batched tile cells. Unknown geometry has empty bounds. Querying does not arrange nodes or rebuild the collision index. The accessibility projection is unchanged.
+The Servo projection includes the logical scene input subtree of `RenderSurface2D`, in addition to visual children. Scoped selectors follow that ownership. Scene nodes remain outside layout: their client-DIP bounds are the axis-aligned union of their picking geometry and input descendants, transformed through the scene and surface. This includes the shape of every `Collider2D`, also disabled colliders and colliders with `CollisionLayer` 0, but not effect padding or ordinary batched tile cells. Unknown geometry has empty bounds. Querying does not arrange nodes or rebuild the collision index. The accessibility projection is unchanged.
 
 `Servo.IdProperty` is the attached identifier property used by `ById`. Values are trimmed; blank values become `null`.
 
@@ -52,7 +57,7 @@ The bounds center must hit the target or a descendant on the current input route
 
 Input sequences are serialized per window or host. `TypeIntoAsync` composes a click and text input. `ReplaceTextAsync` composes a click, `Control+A`, and text input rather than assigning a control property.
 
-Every operation uses `ServoOptions.DefaultTimeout`. Expiration throws `ServoTimeoutException`; caller cancellation remains `OperationCanceledException`. Waits reevaluate after retained frame boundaries and release their transient subscriptions on every completion path. Async `WaitUntilAsync` predicates may issue Servo queries and do not hold the input serialization gate. `WaitForIdleAsync` requires the relay, scheduler, input context, and Motion system to be idle; continuous Motion therefore times out.
+Every operation uses `ServoOptions.DefaultTimeout`. Expiration throws `ServoTimeoutException`; caller cancellation remains `OperationCanceledException`. Waits reevaluate after retained frame boundaries and release their transient subscriptions on every completion path. Async `WaitUntilAsync` predicates may issue Servo queries and do not hold the input serialization gate. `WaitForIdleAsync` requires the relay, scheduler, and Motion system to be idle, no active Servo pointer repeat, and no Servo input sequence in progress; continuous Motion therefore times out.
 
 `HoldKeyAsync` requires a `Window`-owned Servo; a direct `UiHost` Servo rejects it with `NotSupportedException` before sending input. The duration must be positive. The key and any requested left-side Shift, Control, or Alt modifiers follow the same focused-element routing as `PressKeyAsync`; `PressKeyAsync` remains a tap. The monotonic hold interval starts when the Window runtime completes Servo input for the key-down frame, **after** `Window.FrameRendered` callbacks have returned. It is not a physical display/scanout timestamp. Subsequent Servo-owned window frames keep the same down state without synthesizing repeated `KeyDown` events. Key-up is delivered in the first input frame begun at or after the requested minimum **monotonic wall-clock** duration, followed by modifier release; frame scheduling can make the actual interval longer.
 

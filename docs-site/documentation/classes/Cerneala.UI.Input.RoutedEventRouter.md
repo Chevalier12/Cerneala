@@ -50,7 +50,7 @@ RoutedEventRouter.Raise(tree, button, args);
 // calls is ["button", "panel", "root"].
 ```
 
-Raise a preview/bubble pair where the bubble event is skipped when preview handling marks the event as handled.
+Raise a preview/bubble pair. When a preview handler marks the event as handled, the bubble event is still raised, but with `Handled` already `true`, so only bubble handlers registered with `handledEventsToo: true` run.
 
 ```csharp
 using Cerneala.UI.Input;
@@ -80,6 +80,7 @@ MouseButtonEventArgs bubbleArgs = new(
     clickCount: 1);
 
 RoutedEventRouter.RaisePair(tree, button, previewArgs, bubbleArgs);
+// bubbleArgs.Handled is true: the bubble route was walked, but no ordinary handler ran.
 ```
 
 ## Remarks
@@ -94,18 +95,18 @@ RoutedEventRouter.RaisePair(tree, button, previewArgs, bubbleArgs);
 | `Bubble` | The target element followed by its ancestors up to the root. |
 | `Tunnel` | The root followed by descendants down to the target element. |
 
-Before invoking handlers for each element, `Raise` sets `args.Source` to the current `UiElementId`. `args.OriginalSource` is not changed by the router. Routing stops immediately when `args.Handled` is `true`, including after an individual handler sets it.
+Before invoking handlers for each element, `Raise` sets `args.Source` to the current `UiElementId`. `args.OriginalSource` is not changed by the router. When `args.Handled` is `true`, including after an individual handler sets it, the router skips handlers registered without `handledEventsToo`. Routing does not stop: it still visits every remaining route element, updates `Source`, and runs handlers registered with `handledEventsToo: true`.
 
-`UiInputTree.GetHandlers` controls which handlers are visible to the router. In the current implementation, disabled elements return no handlers, but the route can continue past them. Handler lookup returns a snapshot array, so handlers added during a dispatch do not run until a later dispatch.
+The `UiInputTree` decides which handlers the router sees. Disabled elements return no handlers, but the route continues past them. The handler list of an element is copied when routing reaches that element. A handler added during dispatch to the element being visited does not run in that same dispatch; a handler added to an element that routing has not reached yet does run.
 
-`RaisePair` raises the preview arguments first. It raises the bubble arguments only when `previewArgs.Handled` is still `false` after preview routing completes.
+`RaisePair` raises the preview arguments first. It then copies a handled preview into the bubble arguments (`bubbleArgs.Handled |= previewArgs.Handled`) and always raises the bubble arguments. A handled preview therefore skips only the ordinary bubble handlers.
 
 ## Methods
 
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `Raise(UiInputTree tree, UiElementId targetId, RoutedEventArgs args)` | `void` | Raises a single routed event through the supplied input tree using the routing strategy stored on `args.RoutedEvent`. |
-| `RaisePair(UiInputTree tree, UiElementId targetId, RoutedEventArgs previewArgs, RoutedEventArgs bubbleArgs)` | `void` | Raises a preview event, then raises the paired bubble event only if the preview event was not handled. |
+| `RaisePair(UiInputTree tree, UiElementId targetId, RoutedEventArgs previewArgs, RoutedEventArgs bubbleArgs)` | `void` | Raises a preview event, then always raises the paired bubble event, marked handled when the preview was handled. |
 
 ## Exceptions
 

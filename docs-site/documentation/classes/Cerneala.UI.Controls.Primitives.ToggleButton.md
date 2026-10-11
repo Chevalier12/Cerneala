@@ -14,7 +14,7 @@ public class ToggleButton : Button
 ```
 
 Inheritance:
-`object` -> `UiObject` -> `UIElement` -> `Control` -> `ContentControl` -> `Button` -> `ToggleButton`
+`object` -> `UiObject` -> `UIElement` -> `Control` -> `ContentControl` -> `ButtonBase` -> `Button` -> `ToggleButton`
 
 ## Examples
 

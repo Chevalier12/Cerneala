@@ -34,7 +34,7 @@ catch (TimbreException failure) when (failure.Kind == TimbreErrorKind.ResourceLi
 
 ## Remarks
 
-Asynchronous failures are reported through [TimbrePlaybackResult.Error](Cerneala.Timbre.TimbrePlaybackResult.md) and never thrown into the caller or an audio callback. Synchronous throws are limited to `PrepareAsync` failures and voice admission (`VoiceLimitExceeded`) in `TimbreScope.Play`. Invalid API usage throws standard argument and state exceptions instead. A custom [TimbreReader](Cerneala.Timbre.TimbreReader.md) may throw a `TimbreException` to report a specific kind.
+Asynchronous failures are reported through [TimbrePlaybackResult.Error](Cerneala.Timbre.TimbrePlaybackResult.md) and never thrown into the caller or an audio callback. `TimbreScope.Play` throws a `TimbreException` synchronously only for voice admission (`VoiceLimitExceeded`). `PrepareAsync` reports its source, format, and resource-limit failures as a `TimbreException` through the returned task, not by throwing synchronously. Invalid API usage throws standard argument and state exceptions instead. A custom [TimbreReader](Cerneala.Timbre.TimbreReader.md) may throw a `TimbreException` to report a specific kind.
 
 ## Constructors
 

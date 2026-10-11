@@ -58,8 +58,8 @@ The service is stateless. Use `Default` when a shared instance is enough, or cre
 ## Related Supporting Types
 | Name | Description |
 | --- | --- |
-| `BidiTextRun` | Immutable record struct declared in the same source file with `Start`, `Length`, and `Direction` values for a directional run. |
-| `TextDirection` | Enum declared in the same source file with `Neutral`, `LeftToRight`, and `RightToLeft` values. |
+| `BidiTextRun` | Immutable record struct declared in `UI/Text/BidiTextRun.cs` with `Start`, `Length`, and `Direction` values for a directional run. |
+| `TextDirection` | Enum declared in `UI/Text/TextDirection.cs` with `Neutral`, `LeftToRight`, and `RightToLeft` values. |
 
 ## Applies to
 Project: `Cerneala`

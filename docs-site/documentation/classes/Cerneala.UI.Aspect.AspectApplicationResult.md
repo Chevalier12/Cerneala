@@ -89,6 +89,10 @@ Because `AspectApplicationResult` is a record, it has value-based equality, deco
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `Deconstruct(out bool Applied, out ResolvedAspect ResolvedAspect)` | `void` | Deconstructs the record into its application flag and resolved aspect. |
+| `Equals(AspectApplicationResult? other)` | `bool` | Determines whether another result has the same `Applied` and `ResolvedAspect` values. |
+| `Equals(object? obj)` | `bool` | Determines whether an object is an `AspectApplicationResult` with the same values. |
+| `GetHashCode()` | `int` | Returns a hash code based on the record values. |
+| `ToString()` | `string` | Returns the compiler-generated record string representation. |
 
 ## Applies to
 

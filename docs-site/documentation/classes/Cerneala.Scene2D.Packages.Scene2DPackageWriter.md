@@ -153,8 +153,11 @@ Unknown tags fail explicitly rather than being interpreted as a different type.
 | --- | --- |
 | `WriteAsync(directory, document, assetRootDirectory, referencedFiles = null, cancellationToken = default)` | Validates and prepares a new package directory without modifying its input document or existing output. |
 
-Unsupported metadata throws `NotSupportedException`; invalid contracts/paths
-throw argument exceptions; filesystem failures and cancellation are propagated.
+Unsupported metadata throws `NotSupportedException`; an invalid document, path
+syntax or contract throws an argument exception. A missing destination parent
+throws `DirectoryNotFoundException`; an existing destination, or a traversed link
+or reparse point, throws `IOException`. Other filesystem failures and
+cancellation are propagated.
 
 ## See also
 

@@ -40,7 +40,7 @@ The runtime creates one budget each time it opens a source (once per playback, a
 
 All budgets of a runtime share the allowance [TimbreRuntimeOptions.StreamingMemoryLimit](Cerneala.Timbre.TimbreRuntimeOptions.md), together with the runtime's streaming buffers. `Reserve` admits the bytes or throws [TimbreException](Cerneala.Timbre.TimbreException.md) with `TimbreErrorKind.ResourceLimitExceeded`; nothing is allocated by the budget itself. A refusal while a playback opens its source fails that playback with `ResourceLimitExceeded`; `PrepareAsync` throws it. Other playbacks are unaffected.
 
-The default limit, `long.MaxValue`, is accounting headroom, not a cap: reservations always succeed unless a limit is configured explicitly.
+The default limit, `long.MaxValue`, is accounting headroom, not a practical cap: a reservation is refused only when the reserved total would exceed `long.MaxValue`.
 
 The accounting is cooperative. It covers what Timbre's decoders and cooperative factories reserve; memory that a factory or reader allocates without reserving is not intercepted or counted.
 

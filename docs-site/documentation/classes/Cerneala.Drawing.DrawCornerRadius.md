@@ -55,6 +55,12 @@ Each radius must be finite and non-negative. `Normalize` applies one proportiona
 | --- | --- | --- |
 | `Normalize(DrawRect)` | `DrawCornerRadius` | Returns proportionally scaled radii that fit every edge of the supplied bounds. |
 
+## Exceptions
+
+| Member | Exception | Condition |
+| --- | --- | --- |
+| Constructors | `ArgumentOutOfRangeException` | A radius is negative or not finite. |
+
 ## Applies To
 
 Rounded-rectangle commands and reusable rounded-rectangle paths.

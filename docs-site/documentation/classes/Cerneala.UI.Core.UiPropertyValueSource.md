@@ -25,7 +25,7 @@ The property store resolves concrete sources in increasing semantic precedence: 
 
 | Name | Value | Description |
 | --- | --- | --- |
-| `Default` | `0` | The property's metadata default value; this source is never stored in `UiPropertyStore`. |
+| `Default` | `0` | No concrete source has a value. The effective value is the framework default that Cerneala stored internally for the object, if any, or otherwise the property's metadata default value. |
 | `Inherited` | `1` | Value inherited from an ancestor in the UI property tree. |
 | `TemplateBinding` | `2` | Value supplied through a template binding. |
 | `AspectBase` | `3` | Base value supplied by an element aspect. |

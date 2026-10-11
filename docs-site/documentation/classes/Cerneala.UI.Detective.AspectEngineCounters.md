@@ -59,7 +59,7 @@ int tokenLookups = counters.TokenLookups;
 
 `AspectEngine.Resolve` increments `RulesConsidered` for every rule in the catalog, `ConditionEvaluations` once for every condition node actually evaluated after structural filtering, `RulesMatched` for rules whose target and conditions match, `DeclarationsResolved` for declarations on matched rules, and `TokenLookups` by the number of token dependencies on each resolved declaration. These counters are cumulative for the owning engine instance; applying or resolving another element keeps increasing the same object returned by `Detective.AspectCounters`.
 
-`AspectEngine.Apply` stores diagnostics with a copied counter snapshot. The copied `AspectEngineCounters` in `AspectDiagnostics.Snapshot.Counters` preserves the engine counter values at the time diagnostics were built for that element.
+`AspectEngine.Apply` stores diagnostics with a copied counter snapshot. The copied `AspectEngineCounters` in `AspectDiagnostics.Snapshot.Counters` preserves the engine counter values at the time of that `Apply` call, even when the snapshot is built later.
 
 `CacheHits` and `CacheMisses` are part of the counter shape, but the current aspect engine implementation does not increment them.
 

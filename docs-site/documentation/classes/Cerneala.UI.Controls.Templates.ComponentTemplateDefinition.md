@@ -23,6 +23,7 @@ Register a component template definition in an aspect package:
 ```csharp
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Buttons;
 using Cerneala.UI.Controls.Templates;
 
 ComponentTemplateDefinition buttonTemplate = new(

@@ -23,6 +23,7 @@ Read the dependencies recorded for an element after applying aspects:
 ```csharp
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Buttons;
 
 AspectCatalog catalog = new AspectRegistry()
     .Register(DefaultAspectPackage.Create())
@@ -43,6 +44,7 @@ Create an explicit dependency set for code that tracks aspect invalidation input
 ```csharp
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Buttons;
 
 AspectDependencySet dependencies = new(
     tokens: [ButtonTokens.Background],

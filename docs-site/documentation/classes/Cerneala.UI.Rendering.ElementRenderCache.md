@@ -21,6 +21,7 @@ Inheritance:
 Rebuild a local render cache and reuse it while the element remains unchanged:
 
 ```csharp
+using Cerneala.Drawing;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Rendering;
 

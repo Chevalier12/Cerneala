@@ -53,7 +53,7 @@ tracker.Press(child);
 
 ## Remarks
 
-`PressedStateTracker` resolves the nearest `IInputPressable` by walking from the supplied `UIElement` up through `VisualParent`. This lets a pointer press on a visual child set the pressed state on an ancestor control such as `ButtonBase`.
+The public `Press(UIElement?)` resolves the nearest `IInputPressable` by walking from the supplied `UIElement` up through `VisualParent`. The retained input bridge uses an internal overload that walks the input route of the current route map instead. This lets a pointer press on a visual child set the pressed state on an ancestor control such as `ButtonBase`.
 
 Calling `Press` with `null`, or with an element whose visual ancestor chain does not contain an `IInputPressable`, cancels any existing pressed state. Calling `Press` for the same resolved pressable again leaves the state unchanged. Calling `Press` for a different pressable first clears the previous `PressedElement`, then sets the new pressable's `IsPressed` property to `true`.
 

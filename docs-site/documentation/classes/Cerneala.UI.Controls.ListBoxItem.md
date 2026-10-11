@@ -67,6 +67,8 @@ Because `ListBoxItem` derives from `ContentControl`, it also supports the inheri
 | Name | Type | Description |
 | --- | --- | --- |
 | `IsSelectedProperty` | `UiProperty<bool>` | Identifies the `IsSelected` UI property. The default value is `false`; metadata affects render, input visuals, and aspects. |
+| `SelectedEvent` | `RoutedEvent` | Identifies the bubbling `Selected` event. Added as an owner of `Selector.SelectedEvent`, so it is the same routed event. |
+| `UnselectedEvent` | `RoutedEvent` | Identifies the bubbling `Unselected` event. Added as an owner of `Selector.UnselectedEvent`, so it is the same routed event. |
 
 ## Properties
 
@@ -88,7 +90,10 @@ This class does not declare additional public methods.
 
 ## Events
 
-This class does not declare additional public events.
+| Name | Event Type | Description |
+| --- | --- | --- |
+| `Selected` | `RoutedEventHandler` | Raised by the item (`Source` = the item) when `IsSelected` changes to `true`. Bubbles; uses `SelectedEvent`, which shares the `Selector.SelectedEvent` identity. |
+| `Unselected` | `RoutedEventHandler` | Raised by the item (`Source` = the item) when `IsSelected` changes to `false`. Bubbles; uses `UnselectedEvent`, which shares the `Selector.UnselectedEvent` identity. |
 
 ## Property Information
 

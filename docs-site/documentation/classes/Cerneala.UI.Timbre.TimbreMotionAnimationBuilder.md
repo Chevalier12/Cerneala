@@ -38,7 +38,7 @@ fade.Cancel(); // keeps the last sampled volume
 
 The builder mirrors `MotionAnimationBuilder<T>`: `From` is optional (the animation starts from the parameter's current value), `To` sets the destination, and `With` starts the animation and returns a `MotionHandle`. Any `MotionSpec<float>` works (tween, spring, decay, keyframes, repeat); `MotionPropertyStartOptions` supply the retarget mode, priority and `HoldOnComplete`. A new animation of the same parameter follows the existing Motion conflict policy; different parameters animate independently.
 
-**Clock.** Samples are taken on the root's Motion frames, with the root's clock and maximum delta. Animation time advances only while the playback produces PCM: it starts at the first mixed block (not while `Pending`), stops while the playback is paused (including a pending pause and a delay tail) and while a seek is pending, and continues afterwards without restarting. Looping does not restart an animation. Hiding or collapsing an element does not stop the samples; a hidden window whose root is not pumped is not sampled, and the transport keeps playing. Reduced Motion does not disable audio animations.
+**Clock.** Samples are taken on the root's Motion frames, with the root's clock and maximum delta. Animation time advances only while the playback has started, is not paused, has no pending seek, and has not ended: it starts when the mixer first selects the playback for a block (not while `Pending`), stops while the playback is paused and while a seek is pending, and continues afterwards without restarting. The check does not look at the mixed audio itself, so time keeps advancing while only an effect tail is still playing. Looping does not restart an animation. Hiding or collapsing an element does not stop the samples; a hidden window whose root is not pumped is not sampled, and the transport keeps playing. Reduced Motion does not disable audio animations.
 
 **Publication.** Each root frame publishes the changed values of one playback together; the mixer takes them at a block boundary and affects only PCM produced afterwards. Volume ramps linearly per stereo frame from the currently rendered gain to the new value over 5 ms; modifier parameters still publish at block granularity. Already-queued PCM is unchanged. Audio Motion causes no layout or render invalidation.
 
@@ -58,7 +58,7 @@ The builder mirrors `MotionAnimationBuilder<T>`: `From` is optional (the animati
 | Member | Exception | Condition |
 | --- | --- | --- |
 | `With` | `ArgumentNullException` | `spec` or `options` is `null`. |
-| `With` | `ArgumentException` | The parameter is neither `TimbrePlayback.VolumeParameter` nor declared by the playback's clip. |
+| `With` | `ArgumentException` | The parameter is neither `TimbrePlayback.VolumeParameter` nor declared by the playback's `Sound`. |
 | `With` | `ArgumentOutOfRangeException` | The start or destination value is not finite or is outside the parameter's range. |
 | `With` | `InvalidOperationException` | The playback is terminal, its scope has no owning root and no root was given, the playback is already animated by another root, or the call is not on the root's thread. |
 

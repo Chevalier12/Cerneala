@@ -71,22 +71,31 @@ Each data item is wrapped in a `ListBoxItem` container. If an item is already a 
 | `SelectionModel` | `SelectionModel` | Inherited from `Selector`. Gets the single-selection model used by the selector. |
 | `Items` | `ItemCollection` | Inherited from `ItemsControl`. Gets the local item collection used when `ItemsSource` is not set. |
 | `ItemsSource` | `IEnumerable?` | Inherited from `ItemsControl`. Gets or sets an external item source. |
-| `ItemCount` | `int` | Inherited from `ItemsControl`. Gets the count from the observable item source, `ItemsSource`, or `Items`. |
+| `ItemCount` | `int` | Inherited from `ItemsControl`. Gets the count of the `ItemsSource` snapshot when `ItemsSource` is set; otherwise the count of `Items`. |
 | `ItemTemplate` | `ContentTemplate?` | Inherited from `ItemsControl`. Gets or sets the template used to display non-container items. |
 | `ItemTemplateKey` | `string?` | Inherited from `ItemsControl`. Gets or sets the template key used by content presentation. |
-| `ContentTemplateRegistry` | `ContentTemplateRegistry` | Inherited from `ItemsControl`. Gets or sets the registry used to resolve content templates. |
 | `ItemsPanel` | `Panel?` | Inherited from `ItemsControl`. Gets or sets the retained panel used by the items presenter. `ListBox` initializes it to a vertical `StackPanel`. |
-| `ItemContainerGenerator` | `ItemContainerGenerator` | Inherited from `ItemsControl`. Gets the generator that realizes and tracks item containers. |
-| `ItemsPresenter` | `ItemsPresenter` | Inherited from `ItemsControl`. Gets the presenter that hosts generated item containers. |
+
+## Events
+
+| Name | Event Type | Description |
+| --- | --- | --- |
+| `SelectionChanged` | `EventHandler<SelectionChangedEventArgs>` | Inherited from `Selector`. Bubbling routed event raised after the selected index changes. |
 
 ## Methods
 
 | Name | Description |
 | --- | --- |
 | `SetItems(IEnumerable? items)` | Inherited from `ItemsControl`. Replaces the local `Items` collection. |
-| `GetItemAt(int index)` | Inherited from `ItemsControl`. Gets an item from the observable source, `ItemsSource`, or local `Items`. |
-| `SetVirtualizationContext(VirtualizationContext? context)` | Inherited from `ItemsControl`. Applies a virtualization context to the items presenter and invalidates items. |
-| `UpdateVirtualizationFromScrollInfo(IScrollInfo scrollInfo, float itemExtent, int cacheItems = 0)` | Inherited from `ItemsControl`. Updates scroll-based virtualization and invalidates items when the realization window changes. |
+| `GetItemAt(int index)` | Inherited from `ItemsControl`. Gets an item from the `ItemsSource` snapshot when `ItemsSource` is set; otherwise from `Items`. |
+
+## Protected Members
+
+| Name | Description |
+| --- | --- |
+| `DefaultContainerType` | Returns `typeof(ListBoxItem)`. |
+| `GetContainerTypeForItem(object? item)` | Returns the item's own type when the item is a `ListBoxItem`; otherwise `typeof(ListBoxItem)`. |
+| `CreateItemContainer(int index, object? item)` | Returns the item itself when it is a `ListBoxItem`; otherwise a new `ListBoxItem`. |
 
 ## Applies to
 

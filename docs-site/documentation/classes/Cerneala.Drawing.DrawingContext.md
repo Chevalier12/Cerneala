@@ -10,7 +10,7 @@ Source: `Drawing/DrawingContext.cs`, `Drawing/DrawingContext.Shapes.cs`, `Drawin
 Records high-level drawing operations into a `DrawCommandList`.
 
 ```csharp
-public sealed class DrawingContext
+public sealed partial class DrawingContext
 ```
 
 Inheritance:
@@ -192,13 +192,13 @@ surface.Draw += (_, frame) =>
 
 ## Remarks
 
-`DrawingContext` is a thin recording facade over `DrawCommandList`. Each public drawing method creates the matching `DrawCommand` and appends it to the list supplied to the constructor. The context does not render directly; backends consume the recorded commands later.
+`DrawingContext` is a thin recording facade over `DrawCommandList`. Each public drawing method creates the matching `DrawCommand` and appends it to the list supplied to the constructor. Drawing a `PrismImage` appends three commands: `BeginPrism`, the image command, and `EndPrism`. The context does not render directly; backends consume the recorded commands later.
 
 SDL_GPU fills rectangles with each logical edge converted to a physical pixel boundary using `UiCoordinateMapper.LogicalToPhysicalPixel` (`MidpointRounding.AwayFromZero`) before applying the drawing transform. This preserves deterministic rectangle coverage at fractional viewport scales; the recorded `DrawRect` itself retains its floating-point coordinates.
 
-Stroke methods delegate validation to `DrawCommand`. Invalid stroke thickness values throw `ArgumentOutOfRangeException`. `DrawLine` and `DrawText` also validate their points against the supported pixel coordinate range. `DrawText` throws `ArgumentNullException` for a null `DrawTextRun`, and `DrawImage` throws `ArgumentNullException` for a null image.
+Stroke methods validate through `DrawCommand`, or, for the polygon, polyline, arc, pie, chord, triangle, regular-polygon, and star stroke helpers that take a color and thickness, through the `DrawPen` they create first. Invalid stroke thickness values throw `ArgumentOutOfRangeException` in both cases. `DrawLine` and `DrawText` also validate their points against the supported pixel coordinate range. `DrawText` throws `ArgumentNullException` for a null `DrawTextRun`, and `DrawImage` throws `ArgumentNullException` for a null image.
 
-State commands share one LIFO stack. Rectangular clips remain on the scissor fast path when their accumulated transform is axis-aligned; typed paths provide geometric clips. Opacity and layers isolate their children before compositing, so overlapping children receive group opacity once. `System.Numerics.Matrix3x2` transforms compose by multiplying each newly pushed local matrix on the left of the accumulated parent matrix; points therefore receive the innermost local transform before their parent transforms.
+State commands share one LIFO stack. Rectangular clips stay on the scissor fast path when the accumulated transform has no rotation or skew: both `M12` and `M21` are at most `0.00001` in absolute value. Otherwise, including a 90-degree rotation, the rectangle becomes a stencil clip. Typed paths provide geometric clips. Opacity and layers isolate their children before compositing, so overlapping children receive group opacity once. `System.Numerics.Matrix3x2` transforms compose by multiplying each newly pushed local matrix on the left of the accumulated parent matrix; points therefore receive the innermost local transform before their parent transforms.
 
 The raw `Push`/`Pop` methods return `void`. `Transform`, `Clip`, `Opacity`, `Blend`, and `Layer` return stack-only `ref struct` scopes for `using` declarations. Both forms must close in reverse creation order.
 
@@ -212,7 +212,7 @@ The SDL_GPU [Point + Clamp image-edge behavior](Cerneala.Drawing.DrawImageOption
 
 Meshes and immutable point, line, and sprite batches record one logical command each. Textured meshes and sprite batches retain but do not own their `IDrawImage`. `PrismImage` inputs are recorded through the same native Prism scope used by compatibility image drawing.
 
-`DrawTextLayout` records one immutable multi-line layout command. Build and retain layouts outside repeated frame callbacks; identical content, font/brush identities, constraints, options, and scale reuse the shared layout result. Drawing transforms rotate or scale the complete layout, and drawing clips apply without a separate text clipping API.
+`DrawTextLayout` records one immutable multi-line layout command. Build and retain layouts outside repeated frame callbacks; identical content, constraints, options, scale, and font and brush identity hash codes (`RuntimeHelpers.GetHashCode`) reuse the shared layout result; see `DrawTextLayoutBuilder`. Drawing transforms rotate or scale the complete layout, and drawing clips apply without a separate text clipping API.
 
 ### Mental model
 

@@ -24,7 +24,7 @@ Implements:
 ```csharp
 using Cerneala.UI.Input;
 
-InputButtonState state = new(wasDown: false, isDown: true);
+InputButtonState state = new(WasDown: false, IsDown: true);
 
 if (state.IsPressed)
 {
@@ -64,6 +64,8 @@ Because this is a `readonly record struct`, it has value equality and record-gen
 | `Equals(object? obj)` | Determines whether an object is an equivalent `InputButtonState`. |
 | `GetHashCode()` | Returns a hash code based on the record component values. |
 | `ToString()` | Returns the record-style string representation. |
+| `operator ==(InputButtonState, InputButtonState)` | Returns whether both values have equal `WasDown` and `IsDown`. |
+| `operator !=(InputButtonState, InputButtonState)` | Returns the negation of `==`. |
 
 ## Applies to
 

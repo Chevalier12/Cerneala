@@ -17,8 +17,8 @@ public readonly record struct PrismGradientMapPoint
 
 | Name | Description |
 | --- | --- |
-| `PrismGradientMapPoint(float offset, Vector3 linearSrgb)` | Creates a point with a normalized offset and finite linear-sRGB color. |
-| `PrismGradientMapPoint(float offset, Vector3 linearSrgb, float alpha)` | Creates a point with a normalized offset, finite linear-sRGB color, and alpha in the range zero through one. |
+| `PrismGradientMapPoint(float offset, Vector3 linearSrgb)` | Creates an opaque point (`Alpha = 1`) with an offset and color channels in the range zero through one. |
+| `PrismGradientMapPoint(float offset, Vector3 linearSrgb, float alpha)` | Creates a point with an offset, color channels, and alpha in the range zero through one. |
 
 ## Properties
 
@@ -37,6 +37,14 @@ PrismGradientMapPoint transparentRed = new(
 ```
 
 ## Remarks
-Adjacent points may use the same offset to define a hard stop. Gradient
-interpolation associates the color channels with `Alpha` before blending,
-which prevents hidden RGB values in transparent points from producing halos.
+Adjacent points may use the same offset to define a hard stop. The
+`GradientOverlay` lookup table multiplies the color of each point by its `Alpha`
+before it interpolates, which prevents hidden RGB values in transparent points
+from producing halos. The CPU reference `GradientMap` transfer function interpolates only
+`LinearSrgb` and does not read `Alpha`.
+
+## Exceptions
+
+| Member | Exception | Condition |
+| --- | --- | --- |
+| Constructors | `ArgumentOutOfRangeException` | `offset` is not finite or is outside `[0, 1]`; a `linearSrgb` channel is not finite or is outside `[0, 1]`; or `alpha` is not finite or is outside `[0, 1]`. |

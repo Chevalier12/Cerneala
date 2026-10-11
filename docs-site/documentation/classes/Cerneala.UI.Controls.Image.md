@@ -84,7 +84,7 @@ Rendering skips null sources and non-positive render bounds. For a valid source,
 
 ### Resource lifetime and recovery
 
-Resource-backed images participate in resource render dependencies. If a `ResourceDependencyTracker` is available locally or through the root, the control records dependency effects; intrinsic-size mode decides whether resource changes affect both measure and render or render only.
+Resource-backed images participate in resource render dependencies. When the image comes from an explicit `ResourceProvider` or from the root provider, and a `ResourceDependencyTracker` is available locally or through the root, the control records dependency effects. An image found in an ancestor element's `Resources` records no tracker dependency; it is versioned by that dictionary's `Version` instead. Intrinsic-size mode decides whether resource changes affect both measure and render or render only.
 
 Changing the resource id/provider or detaching releases the control's acquisition. Other consumers and retained drawing commands keep their own acquisitions; only the last outstanding interest cancels a pending load or releases an owned bitmap. A late abandoned load cannot publish into a replacement source. Direct and embedded images remain caller-owned.
 

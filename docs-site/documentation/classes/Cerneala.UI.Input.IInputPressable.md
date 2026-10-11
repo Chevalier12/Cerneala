@@ -1,13 +1,67 @@
 # IInputPressable Interface
+
 ## Definition
 Namespace: `Cerneala.UI.Input`
+
 Assembly/Project: `Cerneala`
+
 Source: `UI/Input/IInputPressable.cs`
-Provides the `Cerneala.UI.Input.IInputPressable` API surface.
+
+Marks an element whose pressed state the input system sets while a pointer button or the Space key holds it down.
+
 ```csharp
 public interface IInputPressable
 ```
+
+## Examples
+
+`Button` implements this interface through `ButtonBase.IsPressed`. The root is 200 by 200, so the 80 by 30 button covers 60..140 and 85..115.
+
+```csharp
+using Cerneala.UI.Controls;
+using Cerneala.UI.Elements;
+using Cerneala.UI.Hosting;
+using Cerneala.UI.Input;
+
+UIRoot root = new(200, 200);
+Button button = new() { Width = 80, Height = 30 };
+root.VisualChildren.Add(button);
+UiHost host = new(new UiHostOptions { Root = root, Viewport = new UiViewport(200, 200) });
+
+PointerSnapshot up = PointerSnapshot.Empty.WithPosition(100, 100);
+PointerSnapshot down = up.WithButton(InputMouseButton.Left, true);
+host.Update(Frame(PointerSnapshot.Empty, up));
+host.Update(Frame(up, down));
+Console.WriteLine(button.IsPressed); // True
+host.Update(Frame(down, up));
+Console.WriteLine(button.IsPressed); // False
+
+static InputFrame Frame(PointerSnapshot previous, PointerSnapshot current) =>
+    new(previous, current, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []);
+```
+
 ## Remarks
-This page is generated from the repository API index so the documentation surface stays aligned with the source tree.
+
+The input system writes `IsPressed`; the element does not set it by itself.
+
+- **Pointer.** When any mouse button goes down, `PressedStateTracker` finds the nearest `IInputPressable` on the route from the pointer target to the root and sets its `IsPressed` to `true`. Any button release, or a press over an element with no pressable on its route, sets it back to `false`.
+- **Space.** When Space goes down and the key event is not handled, the nearest `IInputCommandSource` on the focused element's route gets `IsPressed = true` if it also implements `IInputPressable`. It goes back to `false` when Space is released, when no element has keyboard focus, or when the element is no longer a valid input target.
+- **Aspect.** `AspectState.Pressed` is active for an element that implements `IInputPressable` while `IsPressed` is `true`. Aspect rules use it for pressed visuals.
+
+`ButtonBase` is the only built-in implementation, so `Button`, `RepeatButton`, and `ToggleButton` all have it.
+
+## Properties
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `IsPressed` | `bool` | Gets or sets whether the element is pressed. Set by the input system. |
+
 ## Applies to
-Cerneala UI runtime and framework API consumers.
+
+`ButtonBase` and its derived controls.
+
+## See also
+
+- `Cerneala.UI.Input.PressedStateTracker`
+- `Cerneala.UI.Input.IInputCommandSource`
+- `Cerneala.UI.Controls.Primitives.ButtonBase`

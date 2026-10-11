@@ -42,7 +42,7 @@ ElementInputRouteMap routeMap = cache.EnsureCurrent(root);
 
 `ElementInputCache` owns an `ElementInputRouteMap` and rebuilds it with `ElementInputRouteBuilder`. A new instance starts dirty with the invalidation reason set to `Initial input cache`.
 
-`EnsureCurrent` returns the cached route map when it is clean for the same `UIRoot`. It calls `Rebuild` when the cache is dirty or when the supplied root differs from the last root used to build the cache.
+`EnsureCurrent` returns the cached route map when it is clean for the same `UIRoot`. It calls `Rebuild` when the cache is dirty, when the supplied root differs from the last root used to build the cache, or when `root.TreeVersion` changed since the last build.
 
 `Invalidate` marks the cache dirty and records a reason. Empty or whitespace reasons are normalized to `Input route changed`.
 

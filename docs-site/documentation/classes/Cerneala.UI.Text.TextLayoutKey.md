@@ -1,4 +1,4 @@
-# TextLayoutKey Class
+# TextLayoutKey Struct
 
 ## Definition
 Namespace: `Cerneala.UI.Text`

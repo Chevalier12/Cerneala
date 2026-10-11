@@ -26,7 +26,7 @@ float minimum = (float)(radius.Minimum ?? 0);
 
 Use this descriptor with `PrismFilterState.GetValue<T>` and `SetValue<T>`, or the corresponding `PrismStyleState` methods. Numeric bounds are exposed as nullable doubles because finite, one-sided, and unbounded domains all exist in the catalog.
 
-`SymbolOptions` contains the exact, case-sensitive names accepted by `PrismFilterState.SetValue<string>` and `PrismStyleState.SetValue<string>` for a symbol parameter. Numeric strings, comma-separated enum syntax, and names with added whitespace are not aliases for these options. `GetValue<string>` returns the declared name; internal numeric IDs and style-symbol hashes are not application input. A rejected symbol leaves the previous value and the owning instance's value version unchanged.
+`SymbolOptions` contains the exact, case-sensitive names accepted by `PrismFilterState.SetValue<string>` and `PrismStyleState.SetValue<string>` for a symbol parameter. Numeric strings, comma-separated enum syntax, and names with added whitespace are not aliases for these options. `GetValue<string>` returns the declared name; internal numeric IDs and style-symbol hashes are not application input. `SetValue<string>` throws `ArgumentNullException` for `null`, `ArgumentException` for an empty or whitespace name, and `ArgumentOutOfRangeException` for any other name that is not in `SymbolOptions`. A rejected symbol leaves the previous value and the owning instance's value version unchanged. Passing a descriptor that belongs to another operation, or a type argument that does not match `ValueKind`, throws `ArgumentException`.
 
 Required resource parameters cannot be satisfied by metadata alone.
 

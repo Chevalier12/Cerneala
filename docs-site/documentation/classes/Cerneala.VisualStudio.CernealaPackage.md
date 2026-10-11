@@ -30,7 +30,7 @@ Visual Studio creates the package. Applications and extensions should not instan
 
 ## Remarks
 
-The package supports background loading and is registered without an automatic solution-load rule. Visual Studio loads it when the `Cerneala: Restart Language Server` command is invoked. Initialization creates the `Cerneala` output pane and registers the command handler.
+The package supports background loading and is registered without an automatic solution-load rule. Visual Studio loads it when the `Cerneala: Restart Language Server` command is invoked. Initialization creates the `Cerneala` output pane, asks the Visual Studio component model for the `CernealaLanguageServerProvider` instance, and registers the command handler. When the component model service is unavailable, initialization throws `InvalidOperationException`.
 
 The `.crn` content type is a separate MEF registration and does not require this package to load when a Cerneala document is opened.
 
@@ -42,4 +42,4 @@ The `.crn` content type is a separate MEF registration and does not require this
 
 ## Applies to
 
-Visual Studio Community 18.x on Windows; .NET Framework 4.7.2 extension host.
+Visual Studio Community 18.x (amd64) on Windows; .NET Framework 4.7.2 extension host.

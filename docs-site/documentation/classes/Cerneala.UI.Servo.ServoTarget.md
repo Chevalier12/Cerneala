@@ -32,7 +32,7 @@ ID and semantic-name comparisons are exact and ordinal. `Within` evaluates seman
 | `ById(string)` | Creates a target requiring an exact Servo ID. |
 | `ByName(string)` | Creates a target requiring an exact semantic name. |
 | `ByRole(SemanticsRole)` | Creates a target requiring a semantic role. |
-| `WithName(string)` | Returns a new target additionally constrained by semantic name. |
+| `WithName(string)` | Returns a new target with the same ID, role, and scope, and the supplied exact semantic name. An earlier name is replaced, not combined: `ByName("A").WithName("B")` matches only the name `B`. |
 | `Within(ServoTarget)` | Returns a new target constrained to descendants of matching semantic ancestors. |
 
 ## Applies to

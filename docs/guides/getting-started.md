@@ -12,7 +12,7 @@ applications.
 ## Requirements
 
 - Git
-- PowerShell 7 (`pwsh`) for repository scripts and the native-package contract test
+- PowerShell 7 (`pwsh`) for repository scripts
 - The .NET SDK pinned by [`global.json`](../../global.json)
 - A supported native graphics stack for the backend you select
 - The .NET Framework 4.7.2 targeting pack (reference assemblies), because
@@ -43,7 +43,7 @@ Native input tests share the interactive desktop, so the full native run
 serializes test projects with `-m:1`. Keep that desktop available to the tests;
 unrelated windows or user input can invalidate their focus preconditions.
 
-That is the full Windows verification path used by CI. SDL3 GPU also has native
+These are the restore, build, and test steps of the Windows `full-regression` CI job. That job also runs `Tools/scripts/Cerneala.BuildInputs.Tests.ps1`, `PrismAudit --check`, an SDL runtime smoke, a RenderSurface3D probe-argument check, and a pixel-diff report. SDL3 GPU also has native
 smoke and contract coverage on Windows, Linux, and macOS.
 
 ## Run A Working Application

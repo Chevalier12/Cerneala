@@ -31,28 +31,23 @@ static void PrintCacheSummary(PrismRendererDiagnostics diagnostics)
 
 ## Remarks
 
-The snapshot type remains backend-neutral. The removed adapter's snapshot-access
-property is not an SDL public API; this value type does not itself obtain a live
-SDL cache snapshot or enable development diagnostics.
+No public Cerneala API currently returns a `PrismRendererDiagnostics` value, and its constructor is internal. No framework code creates one, including the SDL GPU backend. The only value application code can get is `default`:
 
-Hit, miss, lookup, promotion, rejection, eviction, peak-byte, and saved-work
-counters are cumulative for the lifetime of the underlying Prism executor.
-Entry, pinned-entry, and current-byte properties describe the instant at which
-the snapshot was obtained. A miss is counted per eligible cache candidate, not
-per application frame.
+```csharp
+PrismRendererDiagnostics diagnostics = default;
+Console.WriteLine(diagnostics.RetainedCacheEnabled);                                  // False
+Console.WriteLine(diagnostics.FinalHitCount);                                         // 0
+Console.WriteLine(diagnostics.GetMissCount(PrismCacheMissReason.DependencyChanged));  // 0
+Console.WriteLine(diagnostics.LastDependencyChange);                                  // None
+```
 
-`SavedCaptureCount` and `SavedPassCount` count work pruned by final or
-intermediate hits. `LastMissReason` and `LastEvictionReason` identify the most
-recent recorded event. Reason-specific methods return cumulative counts and
-return zero for the `None` value.
+The member tables describe what each field is meant to hold. Treat them as the data shape, not as values the renderer reports today.
 
-`LastDependencyChange` describes the most recently prepared frame only when
-`PrismRendererOptions.EnableDevelopmentDiagnostics` is enabled. Otherwise it
-remains `PrismDependencyChange.None` and the renderer skips dependency-diff
-work.
+`LastDependencyChange` is never set to anything other than `PrismDependencyChange.None`. `PrismRendererOptions.EnableDevelopmentDiagnostics` is stored but not read by any renderer code, so turning it on changes nothing here.
 
-The snapshot owns no texture, render target, UI element, delegate, or lease.
-Reading it does not pin cache entries or extend GPU resource lifetimes.
+`GetMissCount` and `GetEvictionCount` return zero for the `None` reason.
+
+The snapshot type is backend-neutral and owns no texture, render target, UI element, delegate, or lease.
 
 ## Properties
 

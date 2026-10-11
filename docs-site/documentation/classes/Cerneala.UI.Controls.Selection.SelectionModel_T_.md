@@ -21,6 +21,7 @@ Inheritance:
 
 ```csharp
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Selection;
 
 SelectionModel<string> model = new(["one", "two"]);
 
@@ -32,6 +33,7 @@ int selectedIndex = model.SelectedIndex;
 
 ```csharp
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Selection;
 
 SelectionModel<string> model = new(["draft", "review", "published"]);
 

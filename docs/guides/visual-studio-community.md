@@ -15,8 +15,8 @@ does not target Visual Studio 2022, Professional, or Enterprise.
    Studio Community normally.
 
 The VSIX contains the self-contained Windows x64 language server, Live Preview
-host, and their .NET runtimes. No separate SDK, runtime, language server, preview
-process, or PATH change is required.
+host, and their .NET runtimes. No separate SDK, .NET runtime, language server, preview
+process, or PATH change is required. The VSIX manifest declares .NET Framework 4.7.2 or later as its only prerequisite.
 The checksum can be verified before installation with:
 
 ```powershell

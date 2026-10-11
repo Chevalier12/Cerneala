@@ -11,7 +11,7 @@ Source: `UI/Controls/RenderSurface2DFrame.cs`, `UI/Controls/RenderSurface2DFrame
 Records Cerneala drawing operations for one `RenderSurface2D` frame.
 
 ```csharp
-public sealed class RenderSurface2DFrame
+public sealed partial class RenderSurface2DFrame
 ```
 
 ## Examples
@@ -78,7 +78,7 @@ An image quad is two affine 2D triangles with explicit or derived UV coordinates
 
 When the image is a `PrismImage`, `DrawImage` records a native Prism scope around the source-image command. It does not use a surface-specific effect workaround or a separate shader path.
 
-The frame is created and owned by Cerneala. It is valid only while the surface's `Draw` subscribers execute. Calling a drawing method after the recording has completed throws `ObjectDisposedException`. Custom surfaces subscribe to `Draw` explicitly; the former `RenderSurface2D.OnDraw` override API is removed.
+The frame is created and owned by Cerneala. It is valid while the surface records the frame: during the `Draw` subscribers and the scene recording that runs after them, until the recording completes. Calling a drawing method after the recording has completed throws `ObjectDisposedException`. Custom surfaces subscribe to `Draw` explicitly; the former `RenderSurface2D.OnDraw` override API is removed.
 
 A failed drawing callback or required scene recording also ends the frame lifetime. Optional grid preparation is coordinated internally only after successful required scene recording; aborting a recording cancels that pending work. Applications do not complete, retain, or resubmit a frame to resume it later.
 
@@ -159,12 +159,22 @@ A failed drawing callback or required scene recording also ends the frame lifeti
 | --- | --- | --- |
 | Drawing methods | `ObjectDisposedException` | The frame callback has already completed. |
 | Brush-based methods | `ArgumentNullException` | `brush` is `null`. |
-| Stroke methods | `ArgumentOutOfRangeException` | Thickness is not positive and finite. |
+| Stroke methods | `ArgumentOutOfRangeException` | Thickness is not positive and finite, or is above `2,000,000,000`. |
+| `FillPath` | `ArgumentNullException` | Path data or `path` is `null`. |
 | `FillPath` | `ArgumentException` | Path data is empty or whitespace. |
+| `FillPath` | `FormatException` or `InvalidOperationException` | Path data is not valid SVG path data. See `DrawPathParser` for which input throws which type. |
+| Typed `FillPath` | `ArgumentOutOfRangeException` | `sourceBounds` has a zero or negative size, or `fillRule` is not a defined enum value. |
+| `DrawTextLayout` | `ArgumentNullException` | `layout` is `null`. |
 | `DrawText` | `ArgumentNullException` | `textRun` is `null`. |
 | `DrawImage` or `DrawSprite` | `ArgumentNullException` | `image` is `null`. |
 | Transformed `DrawImage` or `DrawSprite` | `ArgumentOutOfRangeException` | Rotation is not finite, layer depth is outside `0` through `1`, or flip contains unsupported flags. |
 | Advanced image and mesh methods | `ArgumentException` or `ArgumentOutOfRangeException` | Image dimensions, source bounds, insets, topology, indices, sampling, addressing, or batch contents are invalid. |
+| Advanced image and mesh methods | `ArgumentNullException` | `options`, `mesh`, `vertices`, or `batch` is `null`. |
+| `PushTransform` or `Transform` | `ArgumentOutOfRangeException` | The matrix contains a non-finite value. |
+| `PushClip` or `Clip` with a `DrawPath` | `ArgumentNullException` or `ArgumentOutOfRangeException` | `path` is `null`, or `fillRule` is not a defined enum value. |
+| `PushOpacity` or `Opacity` | `ArgumentOutOfRangeException` | `opacity` is not finite or is outside `0` through `1`. |
+| `PushBlend` or `Blend` | `ArgumentOutOfRangeException` | `blendMode` is not a defined enum value. |
+| `PushLayer` or `Layer` | `ArgumentNullException` | `options` is `null`. |
 
 ## Applies To
 

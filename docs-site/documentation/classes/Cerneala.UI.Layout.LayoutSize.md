@@ -38,7 +38,7 @@ Clamp negative components before returning a measured size.
 ```csharp
 using Cerneala.UI.Layout;
 
-LayoutSize measured = new(-12, 24).ClampNonNegative();
+LayoutSize measured = new LayoutSize(-12, 24).ClampNonNegative();
 // measured is LayoutSize(0, 24)
 ```
 

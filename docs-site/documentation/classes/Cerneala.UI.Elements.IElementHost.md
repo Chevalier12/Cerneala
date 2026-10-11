@@ -1,13 +1,43 @@
 # IElementHost Interface
+
 ## Definition
 Namespace: `Cerneala.UI.Elements`
+
 Assembly/Project: `Cerneala`
+
 Source: `UI/Elements/IElementHost.cs`
-Provides the `Cerneala.UI.Elements.IElementHost` API surface.
+
+Represents an object that exposes the `UIRoot` of an element tree.
+
 ```csharp
 public interface IElementHost
 ```
+
+## Examples
+
+```csharp
+using Cerneala.UI.Elements;
+
+UIRoot root = new(100, 100);
+IElementHost host = root;
+Console.WriteLine(host.Root == root);
+// True
+```
+
 ## Remarks
-This page is generated from the repository API index so the documentation surface stays aligned with the source tree.
+
+`UIRoot` is the only Cerneala implementation. It implements `Root` explicitly and returns itself.
+
+## Properties
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `Root` | `UIRoot` | Gets the root of the hosted element tree. |
+
 ## Applies to
-Cerneala UI runtime and framework API consumers.
+
+`UIRoot`.
+
+## See also
+
+- `Cerneala.UI.Elements.UIRoot`

@@ -56,7 +56,7 @@ Every contour begins with `MoveTo` and requires at least one drawable segment. A
 | Member | Exception | Condition |
 | --- | --- | --- |
 | Segment methods | `InvalidOperationException` | No open contour exists. |
-| `Close` | `InvalidOperationException` | The contour has no drawable segment. |
+| `Close` | `InvalidOperationException` | No contour was started with `MoveTo`, the current contour is already closed, or the contour has no drawable segment. |
 | `ArcTo` | `ArgumentOutOfRangeException` | A radius is non-positive/non-finite or rotation is non-finite. |
 | `Build` | `InvalidOperationException` | The path or one of its contours has no drawable segment. |
 

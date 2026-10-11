@@ -34,6 +34,7 @@ Create a presented element from data with a `ContentTemplate`:
 
 ```csharp
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Templates;
 
 ContentPresenter presenter = new()
 {

@@ -38,8 +38,9 @@ public enum PrismDependencyChange
 
 ## Remarks
 
-Values can be combined. Classification is performed only when
-`PrismRendererOptions.EnableDevelopmentDiagnostics` is enabled. The renderer
+Values can be combined. No public API currently reports a classified value:
+`PrismRendererDiagnostics.LastDependencyChange` is always `None`, and the
+renderer never reads `PrismRendererOptions.EnableDevelopmentDiagnostics`. The renderer
 compares immutable numeric and value fields; it does not serialize GPU
 resources or store UI references in the diagnostic snapshot.
 

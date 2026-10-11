@@ -42,11 +42,11 @@ bool isStillPointerOver = child.IsPointerOver; // false
 
 ## Remarks
 
-`HoverTracker` is used by `ElementInputBridge` during pointer dispatch to keep `UIElement.IsPointerOver` current for the element under the pointer and its visual ancestors. It compares the previous hovered path with the next path built from `UIElement.VisualParent`.
+`HoverTracker` is used by `ElementInputBridge` during pointer dispatch to keep `UIElement.IsPointerOver` current for the element under the pointer and its visual ancestors. It compares the previous hovered path with the next path, which `ElementInputRouteMap.GetRouteToRoot` builds from the parent ids recorded in the route map.
 
 When the hover target changes, elements that leave the hover path receive `InputEvents.MouseLeaveEvent` and have `IsPointerOver` set to `false`. Elements that enter the hover path receive `InputEvents.MouseEnterEvent` and have `IsPointerOver` set to `true`. Both events are direct routed events raised through the provided `ElementInputRouteMap`.
 
-If the new target is the same `UIElement` instance as `HoveredElement`, `Update` returns `false` and does not reapply state or raise events. A `null` target clears the current hover path. Use the overload with explicit `x` and `y` coordinates when clearing hover after a pointer move, otherwise the two-parameter overload supplies `0, 0` for a `null` target.
+If the new target is the same `UIElement` instance as `HoveredElement` and its route path is unchanged, `Update` returns `false` and does not reapply state or raise events. If the instance is the same but its path changed (for example after it moved to another parent), `Update` updates `IsPointerOver`, raises leave and enter events for the ancestors that changed, and returns `true`. A `null` target clears the current hover path. Use the overload with explicit `x` and `y` coordinates when clearing hover after a pointer move, otherwise the two-parameter overload supplies `0, 0` for a `null` target.
 
 Mouse event coordinates are rounded from `float` to `int` before `MouseEventArgs` is raised. If an element is not present in the route map, its `IsPointerOver` state is still updated, but no enter or leave event is raised for that element.
 
@@ -67,7 +67,7 @@ Mouse event coordinates are rounded from `float` to `int` before `MouseEventArgs
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `Update(HitTestResult? target, ElementInputRouteMap routeMap)` | `bool` | Updates hover state from a hit-test result. Uses the hit-test coordinates when `target` is not `null`; otherwise uses `0, 0`. |
-| `Update(HitTestResult? target, ElementInputRouteMap routeMap, float x, float y)` | `bool` | Updates hover state from a hit-test result and explicit pointer coordinates. Returns `true` when the hovered element changes; otherwise `false`. |
+| `Update(HitTestResult? target, ElementInputRouteMap routeMap, float x, float y)` | `bool` | Updates hover state from a hit-test result and explicit pointer coordinates. Returns `true` when the hovered element or its route path changes; otherwise `false`. |
 
 ## Exceptions
 

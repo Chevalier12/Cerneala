@@ -19,6 +19,10 @@ Inheritance: `object` -> `UiObject` -> `UIElement` -> `SceneNode2D` -> `SceneIte
 ## Examples
 
 ```csharp
+using System.Collections.ObjectModel;
+using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Templates;
+
 var models = new ObservableCollection<Scene2DEntity>();
 var items = new SceneItems2D();
 items.Templates.Add(new ContentTemplate<Scene2DEntity>("actor", null, 0,

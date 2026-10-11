@@ -9,7 +9,7 @@ This document defines the supported Cerneala Developer Preview surface. It is a 
 - Invalidation/frame scheduler
 - Drawing command cache
 - Input/routed events/focus/commands/input bindings
-- Style/theme/default button template
+- Aspect/theme/default button template
 - Core controls used by Authoring/Runtime samples
 - Typed ObservableValue/ObservableList/BindingOperations
 - TextBlock and single-line TextBox MVP
@@ -29,7 +29,7 @@ This document defines the supported Cerneala Developer Preview surface. It is a 
 - Full IME/multiline/rich text
 - Markup/sourcegen syntax beyond the documented `.crn` grammar
 - String-path binding as core hot path
-- Advanced rendering/effects/path rendering/render targets
+- Advanced rendering/render targets beyond the shipped Prism effects (see the [Prism guide](../guides/prism-guide.md)) and the `Shape` controls such as `Path`
 - Legacy animation/storyboard expansion beyond the current root-owned Motion system
 - Advanced input categories beyond platform-backed seams
 

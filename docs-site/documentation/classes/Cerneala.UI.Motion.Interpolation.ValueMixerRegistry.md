@@ -56,7 +56,7 @@ public sealed class CustomValueMixer : ValueMixer<CustomValue>
 
 ## Remarks
 
-`ValueMixerRegistry` is the lookup table used by the motion system when a `MotionValue<T>` or motion spec needs interpolation behavior for a value type. `MotionSystem` creates a root-owned registry, registers the built-in mixers, and passes that registry to its `MotionGraph`. The one-argument `MotionGraph` constructor also creates a registry and registers the same built-ins.
+`ValueMixerRegistry` is the lookup table used by the motion system when a `MotionValue<T>` or motion spec needs interpolation behavior for a value type. `MotionSystem` creates a root-owned registry, registers the built-in mixers, and passes that registry to its `MotionGraph`. The parameterless `MotionGraph()` constructor also creates a registry and registers the same built-ins. The `MotionGraph(ValueMixerRegistry, ReducedMotionPolicy, MotionDiagnostics?)` constructor uses the registry that the caller passes.
 
 Registration is type-based. `Register<T>` stores the supplied `ValueMixer<T>` under `typeof(T)`, replacing any mixer previously registered for that exact type. Generic resolution returns `ValueMixer<T>`, while untyped resolution returns `IValueMixer`.
 

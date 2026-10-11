@@ -37,7 +37,7 @@ IReadOnlyList<UiElementId> route = map.InputTree.GetRouteToRoot(childId);
 
 ## Remarks
 
-`ElementInputRouteBuilder` traverses the visual tree below the supplied `UIRoot` and registers attached elements that participate in input. Registered elements are added to the returned `ElementInputRouteMap`, and their routed event handlers are exported to the map's `UiInputTree`.
+`ElementInputRouteBuilder` traverses the visual tree below the supplied `UIRoot`, plus input-subtree children supplied by hosts such as `RenderSurface2D` (its scene), and registers attached elements that participate in input. Registered elements are added to the returned `ElementInputRouteMap`, and their routed event handlers are exported to the map's `UiInputTree`.
 
 `Build` excludes disabled elements, invisible elements, elements whose `Visibility` is not `Visible`, and elements that are leaving through presence state. Disabled elements do not become route nodes in a normal input map, but their visible and enabled descendants can still be included under the nearest included ancestor.
 

@@ -39,7 +39,7 @@ var echo = new TimbreSound(
 
 Creating or referencing a clip does not play it, open an output device, open the source, or perform I/O. Playback starts only through [TimbreScope.Play](Cerneala.Timbre.TimbreScope.md).
 
-A clip can be shared by any number of playbacks and scopes. It holds no playhead, reader, or DSP state; each [TimbrePlayback](Cerneala.Timbre.TimbrePlayback.md) owns its own reader, position, parameter values, and modifier state. The `parameters` and `modifiers` sequences are copied at construction, so later changes to the caller's collections do not alter the clip.
+A clip can be shared by any number of playbacks and scopes. It holds no playhead, reader, or DSP state; each [TimbrePlayback](Cerneala.Timbre.TimbrePlayback.md) owns its own position, parameter values, and modifier state. A streaming playback also owns its own reader; preloaded playbacks share the decoded PCM in the runtime's cache and own no reader. The `parameters` and `modifiers` sequences are copied at construction, so later changes to the caller's collections do not alter the clip.
 
 Modifiers run in declaration order, followed by `Volume` as a linear post-chain gain. A clip without modifiers uses the same playback and mix path without a DSP chain.
 
@@ -66,7 +66,7 @@ Validation happens in the constructor:
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `Source` | `TimbreSource` | The audio source opened once per playback. |
+| `Source` | `TimbreSource` | The audio source. A streaming playback opens it once per playback; a preloaded sound opens it only to fill the runtime's PCM cache, and a cache hit opens nothing. |
 | `Volume` | `float` | Default linear gain, 0–1, applied after the modifier chain. |
 | `Loop` | `bool` | Default loop option captured by each start. |
 | `Loading` | `TimbreLoading` | Preload or streaming policy. |

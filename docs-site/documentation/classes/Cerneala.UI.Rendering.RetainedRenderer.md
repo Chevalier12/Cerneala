@@ -42,7 +42,7 @@ bool reusedCommandList = ReferenceEquals(committed, rendered);
 
 `Submit` validates the backend, calls `Render`, validates the supplied `DrawingFrameContext` against the committed list, and passes that same list and context directly to `IDrawingBackend.Render`. The command list is not copied, so backends must treat it as read-only during rendering.
 
-`RetainedRenderer` does not analyze the command list itself. `UiHost.Draw` creates and validates the frame context, acquires any required backdrop lease, and calls `Submit`. Application code normally renders through the host rather than constructing a frame context directly.
+`RetainedRenderer` does not analyze the command list itself. `UiHost.Draw` analyzes the command list, acquires any required backdrop lease, creates the frame context with that lease, and calls `Submit`; `Submit` checks that the frame context belongs to the committed command list. Application code normally renders through the host rather than constructing a frame context directly.
 
 ## Constructors
 

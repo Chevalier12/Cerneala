@@ -49,7 +49,7 @@ bool appLayerWinsLater = AspectLayer.App.CompareTo(designSystemLayer) > 0;
 
 ## Remarks
 
-`AspectLayer` is one part of the aspect cascade key used by `AspectRuleSet.ResolveDeclarations`. When multiple matching rules set the same UI property, the resolver compares layer order first, then target specificity, then declaration order. A larger `Order` value wins over a smaller one.
+`AspectLayer` is one part of the aspect cascade key used by `AspectRuleSet.ResolveDeclarations`. When multiple matching rules set the same UI property, the resolver compares layer order first, then source order, then target specificity, then declaration order. A larger `Order` value wins over a smaller one.
 
 The built-in layers are ordered as `Reset` (0), `Theme` (100), `Component` (200), `App` (300), `User` (400), and `Runtime` (500). This lets runtime state rules override application rules, and application rules override theme rules, when specificity and declaration order would otherwise be considered later.
 

@@ -45,6 +45,13 @@ region when the light angle falls outside the fitted range.
 | --- | --- | --- |
 | `Regions` | `ImmutableArray<PrismLensFlarePolynomialRegion>` | Gets the ordered fitting regions. |
 
+## Exceptions
+
+| Member | Exception | Condition |
+| --- | --- | --- |
+| Constructor | `ArgumentNullException` | `regions` is `null`. |
+| Constructor | `ArgumentException` | `regions` is empty, or two regions overlap: after sorting by `MinimumIncidenceAngleDegrees`, a region starts before the previous region ends. |
+
 ## See also
 
 - [PrismLensProfileResource](Cerneala.UI.Prism.Definitions.PrismLensProfileResource.md)

@@ -31,6 +31,7 @@ Defaults come from the canonical Prism catalog and authored definition values. A
 | --- | --- | --- |
 | `GlobalLightAngle` | `ArgumentOutOfRangeException` | The assigned value is non-finite. |
 | `GlobalLightAltitude` | `ArgumentOutOfRangeException` | The assigned value is non-finite or outside zero through 90. |
+| `WorkingColorProfile`, `GlobalLightAngle`, `GlobalLightAltitude` | `InvalidOperationException` | The state handle belongs to a replaced definition. |
 
 ## Applies to
 

@@ -39,7 +39,7 @@ Console.WriteLine(
 
 ## Remarks
 
-`AspectTokenTrace` is a diagnostics record produced by `AspectEngine.Apply`. During diagnostics creation, the engine walks each resolved aspect value and records every token dependency from the winning declaration's `AspectValue.Dependencies`.
+`AspectTokenTrace` is a diagnostics record created when the engine builds an element's diagnostics snapshot, lazily on the first diagnostics request after `AspectEngine.Apply`. During diagnostics creation, the engine walks each resolved aspect value and records every token dependency from the winning declaration's `AspectValue.Dependencies`.
 
 `ProviderName` is taken from the `AspectEnvironment.Name` used for the apply operation. The current engine stores the resolved aspect value in both `RawValue` and `ResolvedValue`; `AspectTrace.Capture` later formats these fields into `token:` trace lines.
 

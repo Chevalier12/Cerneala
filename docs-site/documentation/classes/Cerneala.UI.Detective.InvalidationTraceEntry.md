@@ -28,21 +28,22 @@ Implements:
 
 ## Examples
 
-The entry is usually created by `InvalidationTrace` rather than by application code directly. A request entry keeps the invalidated element, the element id captured at the time of invalidation, the requested flags, the textual reason, and the optional source property.
+The entry is usually created by `InvalidationTrace` rather than by application code directly. The root needs an enabled trace; adding the child already records two `Request` entries with the reason `Visual child added`, so the example takes the last one. A request entry keeps the invalidated element, the element id captured at the time of invalidation, the requested flags, the textual reason, and the optional source property.
 
 ```csharp
-UIRoot root = new();
+InvalidationTrace trace = new();
+UIRoot root = new(trace);
 UIElement child = new();
 root.VisualChildren.Add(child);
 
 child.Invalidate(InvalidationFlags.Render, "render");
 
-InvalidationTraceEntry entry = root.Detective.Invalidation.Entries.Single(
+InvalidationTraceEntry entry = trace.Entries.Last(
     candidate => candidate.Kind == InvalidationTraceEventKind.Request);
 
-Console.WriteLine(entry.ElementId);
-Console.WriteLine(entry.Flags);
-Console.WriteLine(entry.Reason);
+Console.WriteLine(entry.ElementId); // ui-2
+Console.WriteLine(entry.Flags);     // Render
+Console.WriteLine(entry.Reason);    // render
 ```
 
 ## Remarks
@@ -59,7 +60,7 @@ Because this type is a C# record, it also has synthesized value equality, decons
 
 | Name | Description |
 | --- | --- |
-| `InvalidationTraceEntry(InvalidationTraceEventKind kind, UIElement? element, string? elementId, InvalidationFlags flags, FramePhase? phase, string reason, UiProperty? sourceProperty)` | Initializes a trace entry with the event kind, optional element, captured element id, invalidation flags, optional frame phase, reason text, and optional source property. |
+| `InvalidationTraceEntry(InvalidationTraceEventKind Kind, UIElement? Element, string? ElementId, InvalidationFlags Flags, FramePhase? Phase, string Reason, UiProperty? SourceProperty)` | Initializes a trace entry with the event kind, optional element, captured element id, invalidation flags, optional frame phase, reason text, and optional source property. |
 
 ## Properties
 
@@ -83,6 +84,8 @@ Because this type is a C# record, it also has synthesized value equality, decons
 | `Equals(object? obj)` | Determines whether an object is an equivalent `InvalidationTraceEntry`. |
 | `GetHashCode()` | Returns the synthesized hash code for the record component values. |
 | `ToString()` | Returns the synthesized record string representation. |
+| `operator ==(InvalidationTraceEntry?, InvalidationTraceEntry?)` | Returns whether both entries are equal by value, or both are `null`. |
+| `operator !=(InvalidationTraceEntry?, InvalidationTraceEntry?)` | Returns the negation of `==`. |
 
 ## Applies to
 

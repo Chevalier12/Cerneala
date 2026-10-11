@@ -24,6 +24,7 @@ Create and register a package that contributes a token default and a component t
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Buttons;
 using Cerneala.UI.Controls.Templates;
 
 AspectToken<Color> accent = AspectToken.Color("app.accent");

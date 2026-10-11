@@ -54,11 +54,11 @@ Slider slider = new()
 
 `Slider` derives from `RangeBase`, so `Minimum`, `Maximum`, `Value`, `SmallChange`, and `LargeChange` use the same validation and range coercion as other range controls. `Value` is coerced into the active `Minimum..Maximum` range, and non-finite range values are rejected by the inherited UI properties.
 
-The constructor installs the default component template at the aspect-base value source. The default template supplies the required `PART_Track` part.
+The constructor installs the default component template as a framework default at the `Default` value source. The default template supplies the required `PART_Track` part.
 
 The slider keeps its track synchronized with `Minimum`, `Maximum`, `Value`, `SmallChange`, `LargeChange`, and `Orientation`. Dragging the thumb changes the value continuously, while clicking outside the thumb moves the value directly to the pointer position. When the track value changes, the slider copies `Track.Value` back into `Value`.
 
-Custom templates must register a `Track` named `PART_Track`. The `Track` property applies the current template and returns that active part. Replacing a template detaches the previous track event subscription before synchronizing the new part. Clearing a locally assigned template restores the default aspect-base template.
+Custom templates must register a `Track` named `PART_Track`. The `Track` property applies the current template and returns that active part. Replacing a template detaches the previous track event subscription before synchronizing the new part. Clearing a locally assigned template with `ClearValue(Slider.ComponentTemplateProperty)` restores the default template, because the framework default applies again.
 
 `OrientationProperty` is registered with `UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange | UiPropertyOptions.AffectsRender`, so changing `Orientation` participates in layout and render invalidation.
 

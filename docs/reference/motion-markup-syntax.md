@@ -7,8 +7,10 @@ the Deferred Surface section is explicitly not accepted.
 
 Motion syntax, target resolution, resource lookup, composition rules, and
 diagnostics are analyzed by the shared `Cerneala.Language` parser and semantic
-model. `Cerneala.SourceGen` lowers that validated result to the existing typed
-runtime calls and owns only emission and host diagnostic conversion. Recovery can
+model. `Cerneala.SourceGen` takes that model's symbols and diagnostics, but it
+still parses and resolves Motion directives itself (`UiMarkupDirectiveParser`,
+`UiMarkupMotionResolver`) when it lowers them to the existing typed runtime
+calls. Recovery can
 preserve unaffected XML and Motion facts while a construct is being typed, but
 `Build` mode remains strict. This editor-agnostic analysis layer is not an LSP or
 an editor integration.
@@ -16,8 +18,9 @@ an editor integration.
 The language includes inline and named `Aspect` behavior,
 `Tween`/`Spring` resources, `@when`, `@if`, `@on`, immediate `@set`, and parallel
 property starts inside `@animate` with optional `@from` and required `@to`. Values support typed
-literals, `current`, the existing reactive sources, conditional expressions,
-unqualified properties, and statically resolved Motion targets. The supported start
+literals, enum members, `current`, the existing reactive `$` sources, and
+conditional expressions. A bare property name such as `TranslateY` is accepted
+in a condition but not as a value. The supported start
 options are `retarget`, `holdOnComplete`, and `debugName`.
 
 Motion assignments accept these target forms:
@@ -52,7 +55,7 @@ The language is constrained to markup and generator work over the current Motion
 
 ## Resources
 
-`Tween` and `Spring` resources are generator-known spec declarations, not one polymorphic `MotionSpec` CLR instance shared across every property type. At each use, the generator specializes the declaration to the inferred `MotionSpec<T>` required by that property. This is what allows one `$Responsive` declaration to serve both `float` properties and a `Transform` layout correction without inventing an untyped property-animation adapter.
+`Tween` and `Spring` resources are generator-known spec declarations, not one polymorphic `MotionSpec` CLR instance shared across every property type. At each use, the generator specializes the declaration to the inferred `MotionSpec<T>` required by that property. This is what allows one `$Responsive` declaration to serve several property types without inventing an untyped property-animation adapter. A `Spring` still needs a value type whose mixer has vector operations, so it cannot drive the `Transform` layout correction of `@layout`; use a `Tween` there.
 
 ```xml
 <Window.Resources>
@@ -106,7 +109,7 @@ The language is constrained to markup and generator work over the current Motion
                     }
                 }
             }
-            @if !IsMouseOver
+            @if IsMouseOver == false
             {
                 @animate with $QuickOut
                 {
@@ -355,7 +358,7 @@ The example reads as three explicit timeline segments:
 - `Scale` returns to its final value from `55%` to `100%`.
 - The complete timeline lasts `700ms`; segment durations are derived from their ranges.
 
-Every child remains a normal `@animate`: its properties run in parallel, and its `@from` and `@to` blocks retain their normal meaning. `@keyframes` only controls when each animation occupies the shared timeline.
+Every child is a ranged `@animate`: its properties run in parallel, and `@keyframes` controls when each animation occupies the shared timeline. Unlike a normal `@animate`, a ranged child must have an explicit `@from` block, cannot use `current`, and accepts no start options such as `retarget`.
 
 Unlike `@parallel`, keyframe segments can begin later or overlap partially:
 
@@ -423,9 +426,9 @@ The generator enforces these rules:
 - Nested `@keyframes`, `@sequence`, and `@parallel` blocks are not allowed inside a keyframe timeline.
 - Every range must be ordered, non-empty, and contained within `0%..100%`.
 - Ranges may overlap when they animate different properties.
-- Overlapping ranges that target the same element property are rejected; ranges may share an exact boundary.
+- Overlapping ranges that target the same element property are rejected; ranges may share an exact boundary. The check compares the written target text, so `Opacity` and `$self.Opacity` in overlapping ranges are not detected as the same property.
 - Gaps are allowed, and a property retains its last sampled value through a gap.
-- Each ranged `@animate` must be deterministic in time. Tween easing is supported; Spring and Decay are rejected because the current `KeyframesSpec<T>` is a finite offset/value sampler rather than a container for nested specs.
+- Each ranged `@animate` must be deterministic in time. Tween easing and `Step(count, mode)` are supported; Spring and Decay are rejected because the current `KeyframesSpec<T>` is a finite offset/value sampler rather than a container for nested specs.
 
 ## Motion Options
 
@@ -446,7 +449,7 @@ The generator enforces these rules:
 
 These declarations lower to `MotionPropertyStartOptions`: `RetargetMode`, `HoldOnComplete`, and `DebugName`. `RetargetMode` currently accepts only `Restart` and `PreserveProgress`.
 
-`MotionChannel` and `MotionPriority` types exist, but channels are not wired into property animation start options and `MotionPriority` currently has only `Normal`. `conflict`, per-animation reduced-motion policy, and a generic `cancel` start option do not exist in the runtime and are unsupported.
+`MotionChannel` and `MotionPriority` types exist, but channels are not wired into property animation start options, and markup cannot choose a `MotionPriority` (`Interactive`, `Normal`, or `ReducedMotion`). The runtime resolves conflicts between motions by priority internally (`MotionConflictResolver`), but there is no `conflict` start option. Per-animation reduced-motion policy and a generic `cancel` start option do not exist either and are unsupported.
 
 ## Reusable Motion Clips
 
@@ -485,7 +488,7 @@ These declarations lower to `MotionPropertyStartOptions`: `RetargetMode`, `HoldO
 ```
 
 ```xml
-<Grid Aspect="$Entrance" />
+<Button Aspect="$Entrance" />
 ```
 
 A `MotionClip` must contain exactly one top-level body. That body must be one root execution node: `@set`, `@animate`, `@sequence`, `@parallel`, `@keyframes`, or the restricted `@stagger` form defined later. Two sibling execution bodies are invalid; authors must express their relationship explicitly through a single composition body. A clip cannot contain activation directives such as `@when` or `@on`, cannot invoke another clip with `@run`, and cannot be assigned directly to a control. `TargetType` gives the generator enough information to validate owner properties and targets at build time.
@@ -548,7 +551,7 @@ an additional wrapper inside the inline property element.
 </Aspect>
 
 <MotionClip>
-    exactly one of: @animate | @sequence | @parallel | @keyframes | @stagger
+    exactly one of: @set | @animate | @sequence | @parallel | @keyframes | @stagger
 </MotionClip>
 ```
 
@@ -586,11 +589,11 @@ The runtime implements repeat and ping-pong as typed spec wrappers around `Tween
 
 `Repeat(..., count)` performs exactly `count` tween cycles. `Repeat(..., forever)` maps to the runtime's null repeat count; under reduced motion it completes immediately at the destination. `PingPong(..., cycles)` accepts a positive cycle count or `forever`, and each cycle is one traversal. An infinite ping-pong also completes immediately at the destination under reduced motion.
 
-The completed value follows the sampler: an even cycle count finishes at `@from`, while an odd cycle count finishes at `@to`.
+The completed value follows the sampler: a `PingPong` with an even cycle count finishes at `@from`, and one with an odd cycle count finishes at `@to`. A finite `Repeat` always finishes at `@to`.
 
 ### Stagger
 
-The runtime's `MotionStagger` only calculates `offset * index`. It does not enumerate collections, schedule arbitrary execution graphs, or implement ordering modes. The initial markup form therefore supports a forward snapshot of targets and one Tween-based `@animate`; the generator applies `TweenSpec<T>.WithDelay(stagger.GetDelay(index))` to each item. The unqualified target inside the body is the current collection item.
+The runtime's `MotionStagger` only calculates `offset * index`. It does not enumerate collections, schedule arbitrary execution graphs, or implement ordering modes. The initial markup form therefore supports a forward snapshot of targets and one Tween-based `@animate`; the generator gives each item the tween's own `Delay` plus that item's stagger offset (`WithDelay(tween.Delay + offset)`). The unqualified target inside the body is the current collection item.
 
 ```xml
 @stagger target $NavigationItems
@@ -668,7 +671,7 @@ Layout Motion belongs to Aspect because it observes geometry before and after no
 ```xml
 <Aspect Name="AnimatedLayout" TargetType="Control">
     @layout id $DataContext.LayoutId
-            with $Responsive;
+            with $QuickOut;
 </Aspect>
 ```
 
@@ -780,7 +783,7 @@ Spec-owned options stay on their resources or inline constructors:
 
 `FillMode` is a Tween option with the runtime values `None`, `Backwards`, `Forwards`, and `Both`; it is not the property persistence switch. The current Tween sampler consults `Backwards` and `Both` while waiting through its delay. Post-completion persistence still belongs to `holdOnComplete`.
 
-`VelocityMode` is a Spring option with `Preserve` and `Reset` values. The enum exists on `SpringSpec<T>`, but the current `MotionValue<T>` retarget path recreates samplers rather than calling `SpringSpec<T>`'s sampler retarget method, so markup must not claim that this option currently preserves velocity across property-animation retargets.
+`VelocityMode` is a Spring option with `Preserve` and `Reset` values. When a running Spring is retargeted with another Spring spec, `MotionValue<T>` keeps the existing sampler (`TryRetargetWithSpec`) and applies the incoming spec's `VelocityMode`: `Preserve` keeps the current velocity and `Reset` sets it to zero. Retargeting to a non-Spring spec, such as a Tween, creates a new sampler.
 
 Decay markup is deferred in the current grammar. `<Decay>` resources and inline
 `Decay(...)` constructors are rejected because every available property execution
@@ -805,7 +808,7 @@ require a comparable value type.
 
 `MotionClearBehavior` exists only when explicitly clearing a property binding and accepts `RestoreBase` or `HoldCurrent`. The markup language has no generic `@clear` directive.
 
-`MotionChannel` exists but is not consumed by `MotionPropertyStartOptions`. `MotionPriority` is present in start options but currently has only the `Normal` value. There is no runtime `conflict` option or per-animation reduced-motion override. Those names are intentionally absent rather than exposed as decorative options with no effect.
+`MotionChannel` exists but is not consumed by `MotionPropertyStartOptions`. `MotionPriority` (`Interactive`, `Normal`, `ReducedMotion`) is present in start options, but markup has no way to choose it. There is no runtime `conflict` option or per-animation reduced-motion override. Those names are intentionally absent rather than exposed as decorative options with no effect.
 
 ### Parameterized Motion Clips
 
@@ -864,8 +867,7 @@ execution-body :=
 motion-spec :=
       Tween(...)
     | Spring(...)
-    | Keyframes(...)
-    | Decay(...)
+    | Step(count, JumpStart|JumpEnd|JumpBoth|JumpNone)
     | Repeat(Tween(...), count|forever)
     | PingPong(Tween(...), cycles)
 ```
@@ -909,6 +911,13 @@ restarts a slot by canceling its previous execution before storing the new one;
 | `CERNEALAUI025` | Lifecycle-only directive placement or ownership |
 | `CERNEALAUI026` | Runtime capability deliberately not supported |
 
+The source generator picks the category of a Motion parse error from its message
+text (`ClassifyMotionParseError` in `UiMarkupGenerator.cs`), so an error can land
+in a neighboring category. For example, "Unsupported @presence field" mentions
+`@presence` and is reported as `CERNEALAUI025`. `MotionClip` body-shape errors,
+such as two top-level bodies, `@when`/`@on`, `@run`, or `@cancel` inside a clip,
+are reported as `CERNEALAUI006` (invalid directive).
+
 Diagnostics select the exact directive, target, event, property, or resource
 token in the `.crn` source. Generated member names are deterministic. The
 shared factory does not force `#line` mappings across interleaved XML nodes,
@@ -920,7 +929,9 @@ because a false C# mapping would make generated-code debugging worse.
 table. The parser consumes that table when classifying Motion directives, and
 `MachineReadableMotionDirectiveTableIsConsumedByContextDiagnostics` exercises
 every entry. Tooling must consume this table or a generated derivative rather
-than maintain a second handwritten keyword list.
+than maintain a second handwritten keyword list. `Cerneala.Language` does not
+follow this yet: `CernealaLanguageFacts.MotionDirectiveKeywords` and the
+`DirectiveSyntaxParser` keyword list are typed by hand.
 
 Future editor tooling is not implemented by the generator. Its contract is:
 
@@ -934,7 +945,8 @@ Future editor tooling is not implemented by the generator. Its contract is:
 ## Deferred Surface
 
 The following names are designs or runtime work, not accepted Motion markup:
-Decay resources/constructors; `@else`; `$event`; Motion transactions; direct
+Decay resources/constructors; `@else`; `$event`; Motion transactions (the
+runtime `root.Motion.BeginTransaction` API exists, but markup has no form); direct
 `Motion` resources; generic `@complete`/`@clear`; selectable group cancellation;
 keyframe seek, reverse, scrubbing, or scroll drive; stagger ordering beyond the
 forward snapshot form; custom Presence endpoints/bodies; layout modes,

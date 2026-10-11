@@ -13,8 +13,9 @@ Presentation Solar System measurements are recorded in the
 
 Prism directives, catalog symbols, parameters, values, nesting, Motion interop,
 and diagnostics are analyzed by the shared `Cerneala.Language` parser and
-semantic model. `Cerneala.SourceGen` consumes the validated semantic result for
-C# emission instead of maintaining a separate Prism binder. Recovery preserves
+semantic model. `Cerneala.SourceGen` forwards those diagnostics into the build,
+but still binds Prism markup for C# emission with its own `PrismMarkupBinder`
+rather than emitting directly from the semantic result. Recovery preserves
 unaffected markup facts during partial edits, while `Build` mode still rejects
 invalid saved markup. The common layer is editor-agnostic infrastructure and does
 not claim that an LSP or editor extension is available.
@@ -81,9 +82,10 @@ every drawing backend:
 - `PassThrough` is valid only as the group blending default. It lets child blend
   operations interact with the accumulated result outside the group. Any other
   group blend mode isolates the prepared group before compositing it.
-- `Visible=false` bypasses the complete scope and its work. It is not equivalent to
-  `Opacity=0`, which preserves evaluation and multiplies the complete prepared
-  contribution before blending.
+- `Visible=false` bypasses the complete scope and its work. `Opacity=0` (or any
+  opacity at or below zero) also removes the node from the built graph, so it does
+  no work either. Any positive opacity preserves evaluation and multiplies the
+  complete prepared contribution before blending.
 - `Fill` multiplies the prepared source content before styles are composed.
   `Opacity` multiplies content and styles together. On groups, which do not expose
   layer fill semantics, `Fill` is invalid.
@@ -111,8 +113,8 @@ The authoring model is inspired by a Photoshop layer panel:
 - A layer has filters, styles, an optional mask, opacity, fill, and a blend mode.
 - A layer is always one concrete visual sheet; it cannot contain other layers or groups.
 - A group contains layers or nested groups and can process their combined result.
-- Named layers and groups are statically addressable Motion targets,
-  never arbitrary image sources.
+- Every layer and group has a name. Names are statically addressable Motion
+  targets, never arbitrary image sources.
 
 The markup language exposes only seven directives:
 
@@ -134,9 +136,12 @@ Reusable Prism markup is declared as a `PrismClip` resource, not through a named
 | Motion | `MotionClip` | `@run` |
 | Prism | `PrismClip` | `@prism` |
 
-`@prism` is therefore an application directive. It may attach a named
-`PrismClip` resource to an element or declare an inline composition, but it does not
-declare a named reusable resource.
+`@prism` is therefore an application directive. It is written in an Aspect body:
+an inline element Aspect such as `<Border.Aspect>`, or a resource `<Aspect>`. Each
+Aspect contains at most one `@prism`. It may attach a named `PrismClip` resource to
+the element or declare an inline composition, but it does not declare a named
+reusable resource. Writing `@prism` directly in an element body is an error
+(`PRISM2013`).
 
 The resource was originally named `PrismComposition` because `Clip` already
 means visual clipping in the rendering model (`ClipToBelow`, masks). On
@@ -151,7 +156,7 @@ chromatic aberration are filter types:
 ```text
 @filter Blur
 @filter Color
-@filter Distort
+@filter Displace
 @filter ChromaticAberration
 ```
 
@@ -209,19 +214,21 @@ The smallest useful Prism applies a shadow to the normal content of an element:
 
 ```xml
 <Border>
-    @prism
-    {
-        @layer
+    <Border.Aspect>
+        @prism
         {
-            @style DropShadow
+            @layer Shadow
             {
-                Size = 18;
-                Distance = 8;
-                Angle = 90;
-                Color = #66000000;
+                @style DropShadow
+                {
+                    Size = 18;
+                    Distance = 8;
+                    Angle = 90;
+                    Color = #66000000;
+                }
             }
         }
-    }
+    </Border.Aspect>
 </Border>
 ```
 
@@ -240,7 +247,7 @@ A reusable Prism composition is declared as a resource, in the same way that
     @parameter ShadowSize: float = 18;
     @parameter ShadowColor: color = #66000000;
 
-    @layer
+    @layer Shadow
     {
         @style DropShadow
         {
@@ -254,13 +261,17 @@ A reusable Prism composition is declared as a resource, in the same way that
 ```
 
 Declaring the resource does not attach it to an element and does not render
-anything by itself. It only stores a reusable, immutable composition recipe.
+anything by itself. It only stores a reusable, immutable composition recipe. It is
+declared in the resources of the element or of an ancestor (for example
+`<UserControl.Resources>`), or in the application's resources.
 
 The `@prism` directive applies that resource to an element:
 
 ```xml
 <Border>
-    @prism $ElevatedCard;
+    <Border.Aspect>
+        @prism $ElevatedCard;
+    </Border.Aspect>
 </Border>
 ```
 
@@ -268,10 +279,12 @@ Parameters may be overridden for one application:
 
 ```xml
 <Border>
-    @prism $ElevatedCard(
-        ShadowSize = 24,
-        ShadowColor = #80000000
-    );
+    <Border.Aspect>
+        @prism $ElevatedCard(
+            ShadowSize = 24,
+            ShadowColor = #80000000
+        );
+    </Border.Aspect>
 </Border>
 ```
 
@@ -282,12 +295,13 @@ one element must not change another element using the same definition.
 
 | Property | Default | Meaning |
 | --- | --- | --- |
-| `WorkingColorSpace` | `LinearSrgb` | Color profile used by filters, styles, and blending. |
+| `WorkingColorProfile` | `LinearSrgb` | Color profile used by filters, styles, and blending. |
 | `GlobalLightAngle` | `120` | Shared Photoshop-style light angle in degrees. |
-| `GlobalLightAltitude` | `30` | Shared Photoshop-style light altitude in degrees. |
+| `GlobalLightAltitude` | `30` | Shared Photoshop-style light altitude in degrees, from `0` to `90`. |
 
-They may be written as normal properties on a reusable resource or as assignments
-at the start of an inline `@prism` body.
+They may be written as attributes on a reusable resource, for example
+`<PrismClip Name="Card" GlobalLightAngle="135">`, or as assignments in an inline
+`@prism` body, for example `GlobalLightAngle = 135;`.
 
 ## Layer Order
 
@@ -298,7 +312,7 @@ Layers are written like they appear in a Photoshop layer panel:
 
 ```xml
 <PrismClip Name="Example">
-    @layer
+    @layer Tint
     {
         Opacity = 0.85;
         BlendMode = Screen;
@@ -309,7 +323,7 @@ Layers are written like they appear in a Photoshop layer panel:
         }
     }
 
-    @layer
+    @layer Glow
     {
         @style OuterGlow
         {
@@ -318,7 +332,7 @@ Layers are written like they appear in a Photoshop layer panel:
         }
     }
 
-    @layer
+    @layer Shadow
     {
         @style DropShadow
         {
@@ -340,20 +354,22 @@ Prism evaluates the stack from the back toward the front:
 ## The Control Image
 
 Prism has one implicit image source: the normal rendered output of the control that
-owns the `@prism` directive.
+owns the Aspect with the `@prism` directive.
 
 ```xml
 <Button>
-    @prism
-    {
-        @layer
+    <Button.Aspect>
+        @prism
         {
-            @filter Blur
+            @layer Soft
             {
-                Radius = 12;
+                @filter Blur
+                {
+                    Radius = 12;
+                }
             }
         }
-    }
+    </Button.Aspect>
 </Button>
 ```
 
@@ -369,7 +385,7 @@ sources.
 There is deliberately no `Source` assignment in layer markup:
 
 ```text
-@layer
+@layer Tinted
 {
     Source = $OtherLayer;
 }
@@ -449,7 +465,7 @@ The capability is wired explicitly:
 ```csharp
 public interface IUiBackend
 {
-    IBackdropFrameSource? BackdropFrameSource { get; }
+    IBackdropFrameSource? BackdropFrameSource => null;
 }
 
 public readonly struct DrawingFrameContext
@@ -462,12 +478,14 @@ public interface IDrawingBackend
 {
     void Render(
         DrawCommandList commands,
-        in DrawingFrameContext frame);
+        in DrawingFrameContext frameContext);
 }
 
 ```
 
-These members join the interfaces' existing properties. The
+These members join the interfaces' existing properties; `BackdropFrameSource` has
+a default implementation that returns `null`, so a backend without backdrop support
+does not implement it. The
 `IDrawingBackend.Render` signature replaces the context-free submission contract so
 frame inputs are explicit rather than hidden in mutable backend state. The host
 calls `AcquireFrame` at most once for one `UiHost.Draw`, even when many scopes need
@@ -541,8 +559,9 @@ composition results.
 Retained entries never own or strongly reference UI elements. They own backend GPU
 surfaces under a separate byte budget, are pinned only while used by the current
 draw, and are evicted by least-recent use after their lease is released. Detach,
-composition replacement, referenced-resource replacement, device loss, viewport or
-output-profile changes, and shader-package changes invalidate affected entries.
+composition replacement, referenced-resource replacement, viewport or
+output-profile changes, and shader-package changes invalidate affected entries
+(device loss is not handled yet; see "Lifecycle Expectations").
 Hidden or collapsed controls perform no lookup or promotion; their entries become
 immediately evictable.
 
@@ -556,12 +575,13 @@ itself, its control, or UI above it, so feedback cycles are impossible.
 
 When the active host cannot provide backdrop pixels, Prism omits only the backdrop
 plane, renders the control normally, and reports a runtime
-`BackdropUnavailable` diagnostic. It must not reuse pixels from an older frame or
+diagnostic (internal fallback reason `MissingBackdrop`, resolved to the
+`OmitBackdrop` action). It must not reuse pixels from an older frame or
 throw from the middle of rendering.
 
 ## Layer Names
 
-A layer name is an optional stable address for Motion, diagnostics, and design
+A layer name is a required stable address for Motion, diagnostics, and design
 tooling. It does not change rendering and cannot be used as an image source.
 
 ```text
@@ -589,9 +609,9 @@ $Card.prism.SoftGlow.GlowRadius
 `SoftGlow` selects the named layer, and `GlowRadius` selects the layer-scoped
 parameter.
 
-Names are required only when a layer must be addressed independently. Unnamed layers
-remain the concise default. Names must be unique among siblings because they become
-compile-time symbols.
+Every `@layer` and `@group` must have a name. `@layer { … }` without a name is a
+build error (`PRISM1003`), even when nothing addresses the layer. Names must be
+unique among siblings because they become compile-time symbols.
 
 Named groups create hierarchical scopes. A layer inside a group is addressed through
 the complete path:
@@ -609,7 +629,7 @@ $self.prism.SoftGlow.Opacity
 
 Raw filter and style properties are not automatically flattened into magic names.
 An author exposes a value to Motion by declaring a typed parameter in the containing
-layer, group, or backdrop and using that parameter in the filter or style. This
+layer or group and using that parameter in the filter or style. This
 avoids collisions when a processing body contains multiple operations with a
 property named `Radius`.
 
@@ -618,7 +638,7 @@ property named `Radius`.
 A leaf layer may declare:
 
 ```text
-@layer
+@layer Softened
 {
     Visible = true;
     Opacity = 1;
@@ -683,10 +703,12 @@ Prism supports the complete Photoshop layer blend-mode set:
 | Component | `Hue`, `Saturation`, `Color`, `Luminosity` |
 | Group-only | `PassThrough` |
 
-`LinearDodge` is the canonical markup name for Photoshop's `Linear Dodge (Add)`.
-`Add` is accepted only as a parser alias and generated code always normalizes it to
-`LinearDodge`. `PassThrough` is valid only on groups. Layers and individual filters
-or styles default to `Normal`; groups default to `PassThrough`.
+`LinearDodge` is the markup name for Photoshop's `Linear Dodge (Add)`. There is no
+`Add` alias: `BlendMode = Add;` fails with `PRISM2009` ("Unknown Prism symbol 'Add'").
+`PassThrough` is valid only on groups. Layers and individual filters default to
+`Normal`; groups default to `PassThrough`. Styles use their own catalog defaults,
+for example `DropShadow` uses `Multiply` and `OuterGlow` uses `Screen` (see the
+style table below).
 
 Photoshop's `Behind` and `Clear` modes belong to painting tools rather than the
 layer panel, so they are not Prism layer blend modes. `Dissolve` uses a stable hash
@@ -695,18 +717,18 @@ frames unless the seed or layer geometry changes.
 
 ## Color Processing
 
-Prism uses `LinearSrgb` as its canonical default working color space. Linear-light
+Prism uses `LinearSrgb` as its canonical default working color profile. Linear-light
 processing is the physically correct default for blur, resampling, lighting, glow,
 opacity, and compositing, and avoids the dark fringes produced by gamma-encoded
 blending.
 
-The author may select another built-in working space per reusable or inline
+The author may select another built-in working profile per reusable or inline
 composition:
 
 ```xml
 <PrismClip
     Name="LegacyPhotoshopLook"
-    WorkingColorSpace="Srgb">
+    WorkingColorProfile="Srgb">
     ...
 </PrismClip>
 ```
@@ -714,9 +736,9 @@ composition:
 ```text
 @prism
 {
-    WorkingColorSpace = DisplayP3;
+    WorkingColorProfile = DisplayP3;
 
-    @layer
+    @layer Vivid
     {
         @filter Vibrance
         {
@@ -736,11 +758,9 @@ Built-in values are:
 | `DisplayP3` | Display P3 | Display P3 | Wide-gamut encoded compatibility. |
 | `ScRgb` | linear floating point | extended sRGB | HDR and values outside the SDR range. |
 
-A typed custom profile resource is also valid:
-
-```text
-WorkingColorSpace = $StudioProfile;
-```
+Only these five symbols are valid. A resource reference is not:
+`WorkingColorProfile = $StudioProfile;` fails with `PRISM2009` ("Value
+'$StudioProfile' is not a valid symbol Prism value").
 
 The source control, backdrop, masks, gradients, patterns, and auxiliary images are
 converted from their declared profiles into the selected working profile before
@@ -758,7 +778,7 @@ an implementation invariant and is not author-selectable.
 A filter changes the current picture of one layer:
 
 ```text
-@layer
+@layer Graded
 {
     @filter Color
     {
@@ -773,13 +793,14 @@ A filter changes the current picture of one layer:
 }
 ```
 
-Filters are displayed like Photoshop Smart Filters and execute from the bottom of
-the list toward the top. In the example, `Blur` runs first and `Color` runs second:
+Filters execute in declaration order, from the top of the list toward the bottom.
+This is the opposite of Photoshop Smart Filters. In the example, `Color` runs first
+and `Blur` runs second:
 
 ```text
-accumulated image from below
--> Blur
+captured control image
 -> Color
+-> Blur
 -> prepared content
 
 prepared content -> Fill -> content contribution
@@ -815,11 +836,13 @@ Every built-in filter has these common properties:
 | `Opacity` | `1` | Mixes the filtered result over that filter's input. |
 | `BlendMode` | `Normal` | Blend mode used for the per-filter mix. |
 
-Lengths are device-independent pixels unless a property explicitly says `Pixels`.
-Angles are degrees clockwise. Percentages are normalized floats from `0` to `1`.
+Lengths are device-independent pixels (catalog unit `dip`). Angles are degrees
+(catalog unit `degrees`). Percentages are normalized floats from `0` to `1`.
 Normalized positions use `0,0` at the top-left and `1,1` at the bottom-right.
-Random filters always expose `Seed`; the default `0` is deterministic and never
-means "pick a random value every frame."
+Noise and randomness are deterministic: a filter with a `Seed` property uses that
+value (default `0`) and never picks a new random value every frame. Some filters
+with a `Noise` amount, such as `LensBlur`, `PathBlur`, and `SpinBlur`, have no
+`Seed` property.
 
 The machine-readable
 [`prism-catalog.json`](../../Cerneala.SourceGen/Prism/Catalog/prism-catalog.json)
@@ -842,18 +865,18 @@ These cover Photoshop's adjustment-layer surface while retaining the same Prism
 | `BrightnessContrast` | `Brightness=0`; `Contrast=0`; `UseLegacy=false` |
 | `Levels` | `Channel=Composite`; `Auto=false`; `InputBlack=0`; `InputWhite=1`; `Gamma=1`; `OutputBlack=0`; `OutputWhite=1` |
 | `Curves` | `Curves=<required PrismCurvesResource>` |
-| `Exposure` | `Exposure=0`; `Offset=0`; `Gamma=1` |
+| `Exposure` | `Style=Linear`; `Direction=Forward`; `Exposure=0`; `Contrast=1`; `Gamma=1`; `Pivot=0.18`; `LogExposureStep=0.088`; `LogMidGray=0.435` |
 | `Vibrance` | `Amount=0`; `Saturation=0`; `AvoidSaturatingSkinTones=true`; `GrayColorTransform=(0.2126,0.7152,0.0722)` |
 | `HueSaturation` | `Channel=Master`; `Hue=0`; `Saturation=0`; `Lightness=0`; `Colorize=false` |
 | `ColorBalance` | `Shadows=(0,0,0)`; `Midtones=(0,0,0)`; `Highlights=(0,0,0)`; `PreserveLuminosity=true` |
-| `BlackWhite` | `Reds=0.40`; `Yellows=0.60`; `Greens=0.40`; `Cyans=0.60`; `Blues=0.20`; `Magentas=0.80`; `Tint=false`; `TintColor=#FFFFFFFF` |
-| `PhotoFilter` | `Color=#FFFF9A30`; `Density=0.25`; `PreserveLuminosity=true` |
-| `ChannelMixer` | `Red=(1,0,0)`; `Green=(0,1,0)`; `Blue=(0,0,1)`; `Constant=(0,0,0)`; `Monochrome=false` |
-| `ColorLookup` | `Lookup=required`; `Intensity=1`; `Interpolation=Tetrahedral` |
+| `BlackWhite` | `Red=0.333`; `Green=0.333`; `Blue=0.333`; `PreserveLuminosity=false` |
+| `PhotoFilter` | `Color=#FFFF9A30`; `Density=0.25` |
+| `ChannelMixer` | `Red=(1,0,0)`; `Green=(0,1,0)`; `Blue=(0,0,1)`; `Constant=(0,0,0)` |
+| `ColorLookup` | `Lookup=required` |
 | `Invert` | no type-specific properties |
 | `Posterize` | `Levels=4` |
 | `Threshold` | `Level=0.5` |
-| `GradientMap` | `Gradient=BlackToWhite`; `Reverse=false`; `Dither=false`; `Method=Perceptual` |
+| `GradientMap` | `Gradient=required`; `Reverse=false`; `Dither=false`; `Method=Perceptual` |
 | `SelectiveColor` | `Reds=(0,0,0,0)`; `Yellows=(0,0,0,0)`; `Greens=(0,0,0,0)`; `Cyans=(0,0,0,0)`; `Blues=(0,0,0,0)`; `Magentas=(0,0,0,0)`; `Whites=(0,0,0,0)`; `Neutrals=(0,0,0,0)`; `Blacks=(0,0,0,0)`; `Method=Relative` |
 
 ### Blur And Sharpen Filters
@@ -869,11 +892,11 @@ These cover Photoshop's adjustment-layer surface while retaining the same Prism
 | `MotionBlur` | `Distance=10`; `Angle=0`; `Quality=Good`; `EdgeMode=Transparent` |
 | `RadialBlur` | `Mode=Spin`; `Amount=0.1`; `Center=(0.5,0.5)`; `Quality=Good` |
 | `ShapeBlur` | `Shape=required`; `Radius=5`; `Quality=Good`; `EdgeMode=Clamp` |
-| `SmartBlur` | `Radius=5`; `Threshold=0.1`; `Quality=Good`; `Mode=Normal` |
+| `SmartBlur` | `Radius=5`; `Threshold=0.1`; `Quality=Good`; `Mode=Normal`; `EdgeMode=Clamp` |
 | `SurfaceBlur` | `Radius=5`; `Threshold=0.1`; `Quality=Good`; `EdgeMode=Clamp` |
-| `FieldBlur` | `Pins=required`; `BokehAmount=0`; `BokehColor=0`; `LightRange=(0,1)`; `Noise=0` |
-| `IrisBlur` | `Center=(0.5,0.5)`; `Radius=(0.25,0.25)`; `Feather=0.5`; `Rotation=0`; `Blur=15`; `BokehAmount=0`; `BokehColor=0`; `LightRange=(0,1)`; `Noise=0` |
-| `TiltShift` | `Center=(0.5,0.5)`; `Angle=0`; `FocusWidth=0.25`; `Feather=0.25`; `Blur=15`; `Distortion=0`; `SymmetricDistortion=true`; `Noise=0` |
+| `FieldBlur` | `BlurField=required`; `Blur=8`; `FocalDistance=0.5`; `Invert=false`; `Quality=Best`; `Highlight=0` |
+| `IrisBlur` | `Center=(0.5,0.5)`; `Radius=(0.25,0.25)`; `Feather=0.5`; `Rotation=0`; `Blur=15` |
+| `TiltShift` | `Center=(0.5,0.5)`; `Angle=0`; `FocusWidth=0.25`; `Feather=0.25`; `Blur=15` |
 | `PathBlur` | `Path=required`; `Speed=20`; `Taper=0`; `CenteredBlur=true`; `EndSpeed=20`; `Shape=Basic`; `FlashSync=Rear`; `Noise=0` |
 | `SpinBlur` | `Center=(0.5,0.5)`; `Radius=(0.25,0.25)`; `Rotation=15`; `Feather=0.5`; `StrobeStrength=0`; `StrobeFlashes=0`; `StrobeDuration=0`; `Noise=0` |
 | `Sharpen` | `Amount=0.25` |
@@ -926,7 +949,7 @@ These cover Photoshop's adjustment-layer surface while retaining the same Prism
 | `Clouds` | `Foreground=#FF000000`; `Background=#FFFFFFFF`; `Scale=1`; `Seed=0`; `DirectionCount=20`; `SliceThickness=4`; `FrequencyRange=(0.03125,1)`; `Anisotropy=(0,1)`; `Spectrum=Brown` |
 | `DifferenceClouds` | `Foreground=#FF000000`; `Background=#FFFFFFFF`; `Scale=1`; `Seed=0`; `DirectionCount=20`; `SliceThickness=4`; `FrequencyRange=(0.03125,1)`; `Anisotropy=(0,1)`; `Spectrum=Brown` |
 | `Fibers` | `Foreground=#FF000000`; `Background=#FFFFFFFF`; `Variance=16`; `Strength=4`; `Seed=0` |
-| `LensFlare` | `Center=(0.5,0.5)`; `Brightness=1`; `Lens=50To300Zoom` |
+| `LensFlare` | `Center=(0.5,0.5)`; `Brightness=1`; `Lens=required` |
 | `LightingEffects` | `Lights=required`; `Ambient=0`; `Metallic=0`; `Gloss=0.5`; `Exposure=0`; `Texture=null`; `TextureHeight=0` |
 | `Deinterlace` | `Field=Odd`; `Replacement=Interpolation` |
 | `NtscColors` | `Standard=NTSC`; `Method=ReduceLuminance` |
@@ -1034,7 +1057,7 @@ A style decorates the filtered content without becoming another filter in the pi
 transformation chain:
 
 ```text
-@layer
+@layer Outlined
 {
     @style Stroke
     {
@@ -1053,8 +1076,11 @@ transformation chain:
 }
 ```
 
-Styles are displayed and composed from the bottom of the list toward the top, using
-the same panel-order rule as filters. Each style type owns a typed property schema.
+Styles are composed from the bottom of the list toward the top, like the
+Photoshop layer panel: the last declared style is composed first and the first
+declared style ends up in front. This is the opposite of the filter order. In the
+example, `DropShadow` is composed first and `Stroke` is drawn over it.
+Each style type owns a typed property schema.
 A style type is a bare identifier; resource-reference syntax is not valid in style
 position.
 
@@ -1071,12 +1097,13 @@ human-readable design view of the normative machine-readable catalog:
 | `BevelEmboss` | `Style=InnerBevel`; `Technique=Smooth`; `Depth=1`; `Direction=Up`; `Size=5`; `Soften=0`; `UseGlobalLight=true`; `Angle=120`; `Altitude=30`; `GlossContour=Linear`; `AntiAlias=false`; `HighlightMode=Screen`; `HighlightColor=#FFFFFFFF`; `HighlightOpacity=0.75`; `ShadowMode=Multiply`; `ShadowColor=#FF000000`; `ShadowOpacity=0.75`; `ContourEnabled=false`; `Contour=Linear`; `ContourAntiAlias=false`; `ContourRange=0.5`; `TextureEnabled=false`; `Pattern=null`; `TextureScale=1`; `TextureDepth=1`; `TextureInvert=false`; `TextureLinkWithLayer=true`; `TextureOffset=(0,0)` |
 | `Satin` | `BlendMode=Multiply`; `Color=#FF000000`; `Opacity=0.5`; `Angle=19`; `Distance=11`; `Size=14`; `Contour=Gaussian`; `AntiAlias=false`; `Invert=true` |
 | `ColorOverlay` | `BlendMode=Normal`; `Color=#FFFF0000`; `Opacity=1` |
-| `GradientOverlay` | `BlendMode=Normal`; `Opacity=1`; `Gradient=BlackToWhite`; `Method=Perceptual`; `Style=Linear`; `Angle=90`; `Scale=1`; `AlignWithLayer=true`; `Reverse=false`; `Dither=false`; `Offset=(0,0)` |
+| `GradientOverlay` | `BlendMode=Normal`; `Opacity=1`; `Gradient=null`; `Method=Perceptual`; `Style=Linear`; `Angle=90`; `Scale=1`; `AlignWithLayer=true`; `Reverse=false`; `Dither=false`; `Offset=(0,0)` |
 | `PatternOverlay` | `BlendMode=Normal`; `Opacity=1`; `Pattern=required`; `Scale=1`; `LinkWithLayer=true`; `Offset=(0,0)` |
 | `Stroke` | `Size=3`; `Position=Outside`; `BlendMode=Normal`; `Opacity=1`; `FillType=Color`; `Color=#FF000000`; `Gradient=BlackToWhite`; `GradientMethod=Perceptual`; `GradientStyle=Linear`; `GradientAngle=90`; `GradientScale=1`; `GradientAlignWithLayer=true`; `GradientReverse=false`; `GradientDither=false`; `GradientOffset=(0,0)`; `Pattern=null`; `PatternScale=1`; `PatternLinkWithLayer=true`; `PatternOffset=(0,0)` |
 
-`Color` and `Gradient` are mutually exclusive on glow styles: setting a gradient
-selects gradient fill, while `Gradient=null` uses `Color`. `Stroke.FillType`
+On glow styles, a non-null `Gradient` takes precedence over `Color`: setting a
+gradient selects gradient fill and `Color` is ignored, while `Gradient=null` uses
+`Color`. Setting both is not an error. `Stroke.FillType`
 selects which one of `Color`, `Gradient`, or `Pattern` contributes pixels. A
 required pattern is validated at generation time.
 
@@ -1096,7 +1123,7 @@ Every layer processes the accumulated result beneath it:
 
 ```xml
 <PrismClip Name="NeonControl">
-    @layer
+    @layer Shadow
     {
         @style DropShadow
         {
@@ -1121,7 +1148,7 @@ Every layer processes the accumulated result beneath it:
         }
     }
 
-    @layer
+    @layer Tinted
     {
         Opacity = 0.35;
         BlendMode = Screen;
@@ -1144,9 +1171,11 @@ The scoped parameter may also be overridden when the reusable composition is att
 
 ```xml
 <Border>
-    @prism $NeonControl(
-        SoftGlow.GlowRadius = 30
-    );
+    <Border.Aspect>
+        @prism $NeonControl(
+            SoftGlow.GlowRadius = 30
+        );
+    </Border.Aspect>
 </Border>
 ```
 
@@ -1158,11 +1187,11 @@ Read from top to bottom like a layer panel:
 
 ## Layer, Group, And Backdrop Masks
 
-`@mask` is a structural child of a layer, group, or backdrop, not a filter:
+`@mask` is a structural child of a layer or group, not a filter:
 
 ```xml
 <PrismClip Name="MaskedControl">
-    @layer
+    @layer Desaturated
     {
         @filter Color
         {
@@ -1184,7 +1213,7 @@ Read from top to bottom like a layer panel:
 The captured control image is converted to grayscale, then its visibility is
 controlled by the brightness of the auxiliary `$ControlMask` image.
 
-A layer, group, or backdrop may contain at most one `@mask`. The mask applies to the
+A layer or group may contain at most one `@mask`. The mask applies to the
 complete content-plus-styles contribution before opacity and blending.
 
 Mask properties:
@@ -1203,7 +1232,7 @@ A group is the explicit container for layers and nested groups:
 
 ```xml
 <PrismClip Name="GroupedControl">
-    @layer
+    @layer Shadow
     {
         @style DropShadow
         {
@@ -1219,7 +1248,7 @@ A group is the explicit container for layers and nested groups:
         Opacity = 0.65;
         BlendMode = Normal;
 
-        @layer
+        @layer Soft
         {
             @filter Blur
             {
@@ -1227,7 +1256,7 @@ A group is the explicit container for layers and nested groups:
             }
         }
 
-        @layer
+        @layer Tinted
         {
             @filter Color
             {
@@ -1246,8 +1275,9 @@ A group is the explicit container for layers and nested groups:
 ```
 
 This follows the same mental model as a folder in a Photoshop layer panel. The
-group receives the accumulated image beneath it, then evaluates its children from
-the bottom of the group toward the top. Filters and styles declared directly on
+group evaluates its children from the bottom of the group toward the top. Only a
+`PassThrough` group lets its children see the accumulated image beneath it; any
+other group mode starts its children on a transparent stack. Filters and styles declared directly on
 `@group` process and decorate the combined child result. The group mask, opacity,
 and blend mode are applied afterward.
 
@@ -1280,7 +1310,7 @@ Built-in filter types use the same concise syntax throughout the catalog:
 <PrismClip Name="Hologram">
     @parameter Shift: float = 0.012;
 
-    @layer
+    @layer Scanned
     {
         @filter Scanlines
         {
@@ -1291,16 +1321,14 @@ Built-in filter types use the same concise syntax throughout the catalog:
         @filter ChromaticAberration
         {
             Amount = Shift;
-            DirectionX = 1;
-            DirectionY = 0;
         }
     }
 </PrismClip>
 ```
 
-`ChromaticAberration` clearly means that the layer receives chromatic aberration.
-`Scanlines` clearly means that scanlines are added afterward. Because filter lists
-execute bottom-up, `ChromaticAberration` is written below `Scanlines`. The author
+`Scanlines` clearly means that scanlines are added. `ChromaticAberration` clearly
+means that the colors are shifted apart. Because filters run in declaration order,
+`Scanlines` runs first and `ChromaticAberration` then shifts the scanned image. The author
 does not need to know whether either filter uses a shader, a compute pass, or
 several intermediate surfaces.
 
@@ -1340,7 +1368,7 @@ $Card.prism.SoftGlow.GlowRadius
 ```
 
 The reserved `.prism.` path segment enters the Prism instance attached to the
-selected control. The next segment selects a named layer, group, or backdrop.
+selected control. The next segment selects a named layer or group.
 Additional group and layer segments walk a nested group hierarchy. The final segment
 selects an animatable property or typed scoped parameter.
 
@@ -1374,26 +1402,24 @@ Animating a parameter changes only that parameter. It does not rebuild the
 
 ```text
 prism-composition-resource :=
-    <PrismClip Name="Name" WorkingColorSpace="ColorSpace?">
+    <PrismClip Name="Name" WorkingColorProfile="Profile?">
         @parameter*
         prism-assignment*
-        (layer | group)*
-        backdrop?
+        (layer | group)+
     </PrismClip>
 
 prism-inline :=
     @prism
     {
         prism-assignment*
-        (layer | group)*
-        backdrop?
+        (layer | group)+
     }
 
 prism-reference :=
     @prism $Name(arguments?);
 
 layer :=
-    @layer Name?
+    @layer Name
     {
         @parameter*
         layer-assignment*
@@ -1403,7 +1429,7 @@ layer :=
     }
 
 group :=
-    @group Name?
+    @group Name
     {
         @parameter*
         group-assignment*
@@ -1469,7 +1495,7 @@ The source generator should report build-time diagnostics for:
 - `ClipToBelow = true` without an unclipped base sibling beneath it in the same scope;
 - duplicate layer or group names in one address scope;
 - unknown layer, group, property, or scoped parameter segments in a Prism target;
-- a Prism target that traverses an unnamed layer or group;
+- an `@layer` or `@group` without a name (`PRISM1003`);
 - incompatible filter parameters;
 - incompatible style or mask parameters;
 - a resource reference used where a filter or style type identifier is required.
@@ -1504,7 +1530,10 @@ budget. A missing required domain is a presentation error: the framework does no
 load the entire spatial catalog or approximate the effect. Pointwise-only
 compositions retain ordinary viewport selection, and supported local filters may
 continue to use their finite automatic sampling neighborhood. The exact supported
-operation and edge-mode set is documented by `Scene2D` and `SceneNode2D`.
+operation and edge-mode set is documented on the
+[`Scene2D`](../../docs-site/documentation/classes/Cerneala.UI.Controls.Scene2D.md) and
+[`SceneNode2D`](../../docs-site/documentation/classes/Cerneala.UI.Controls.SceneNode2D.md)
+API pages.
 
 ## Lifecycle Expectations
 
@@ -1530,7 +1559,8 @@ The Prism authoring model is syntax, not resource ownership.
   read access and never disposes the host's scene target.
 - Invisible, hidden, collapsed, clipped-out, or detached destination-aware scopes
   do not acquire host pixels.
-- Device loss clears backend resources without invalidating the authoring definition.
+- Device loss is not handled yet: the `PrismCacheEvictionReason.DeviceReset`
+  value exists, but no code path produces it.
 - The captured control image, backdrop references, and all temporary layer images
   are released when the Prism instance detaches.
 - Detach or composition replacement invalidates retained entries through an opaque
@@ -1547,8 +1577,9 @@ The Prism authoring model is syntax, not resource ownership.
   stable framework defaults.
 - Prism includes every Photoshop layer blend mode; painting-tool-only modes are not
   misrepresented as layer modes.
-- `LinearSrgb` is the default working color space. Built-in wide-gamut, encoded,
-  HDR, and typed custom profiles are selectable per composition.
+- `LinearSrgb` is the default working color profile. The built-in wide-gamut,
+  encoded, and HDR profiles are selectable per composition; custom profile
+  resources are not.
 - Backdrop acquisition uses one frame-scoped `IBackdropFrameSource` lease per draw.
   The drawing backend owns ordered composition, region expansion, render-graph
   sharing, transient pooling, and retained GPU result caching with complete
@@ -1556,8 +1587,9 @@ The Prism authoring model is syntax, not resource ownership.
 - Public application-provided or third-party filter/style registration is explicitly
   deferred. This scope decision does not change the approved markup grammar.
 - Historical MonoGame measurements used a 512 MiB hard surface limit, a 256 MiB
-  retained soft limit, and 256 retained entries. Those values and the associated
-  fallback behavior are not the current SDL_GPU configuration contract.
+  retained soft limit, and 256 retained entries. SDL_GPU keeps the 512 MiB hard
+  limit and the 256 entries but sets a 32 MiB retained soft limit; none of these
+  values is a public configuration contract.
 - The retired WindowsDX dogfood gate measured a 388.664 ms Solar System cold frame
   against a 500 ms ceiling and a 12.874 ms warm p99 against 16.6667 ms. This is
   historical evidence, not current SDL_GPU performance verification; the two warm

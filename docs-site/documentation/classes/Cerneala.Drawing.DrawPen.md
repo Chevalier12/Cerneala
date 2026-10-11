@@ -35,7 +35,7 @@ drawing.DrawPath(path, pen);
 
 The constructor rejects a null brush and a thickness that is zero, negative, non-finite, or outside the supported pixel-size range. Omitting `style` uses `DrawStrokeStyle.Default`.
 
-The SDL_GPU native-stroke backend supports solid, linear-gradient, and radial-gradient brushes.
+The SDL_GPU backend strokes with the same brush kinds it supports for fills: solid, linear-gradient, radial-gradient, image, drawing, and visual brushes.
 
 ## Constructors
 

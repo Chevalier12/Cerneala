@@ -44,7 +44,7 @@ Button button = new();
 AspectSlot<Button, Button> rootSlot = AspectSlot.Root<Button>();
 AspectSlotPath rootPath = new(rootSlot, "Root");
 
-AspectMatchContext context = new(button, slotPath: rootPath);
+AspectMatchContext context = new(button, ownerComponent: button, slotPath: rootPath);
 
 bool matchesRootSlot = new AspectTarget(typeof(Button), rootSlot)
     .Matches(context);

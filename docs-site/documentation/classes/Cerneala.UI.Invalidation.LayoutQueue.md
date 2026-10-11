@@ -44,7 +44,7 @@ foreach (UIElement element in arrangeSnapshot)
 ```
 
 ## Remarks
-`LayoutQueue` stores measure and arrange work in separate `ElementWorkQueue<LayoutQueueEntryKind>` instances. Each phase uses reference identity for de-duplication, so enqueueing the same `UIElement` instance more than once leaves one queued entry for that phase. Duplicate internal requests promote metadata with `Direct` above `Required` above `Propagated`; lower-priority requests cannot demote existing work.
+`LayoutQueue` stores measure and arrange work in separate `ElementWorkQueue<LayoutQueueEntryKind>` instances. Each phase uses reference identity for de-duplication, so enqueueing the same `UIElement` instance more than once leaves one queued entry for that phase. Duplicate internal requests promote metadata with `Direct` above `Required` above `Subtree` above `Propagated`; lower-priority requests cannot demote existing work.
 
 Snapshots defensively remove queued elements that no longer belong to the queue's root and return the remaining elements in visual tree pre-order. They reuse the root's `ElementQueueOrderIndex`, rebuilt only when `TreeVersion` changes, and sort only queued entries. The internal incremental-measure snapshot reverses that order for bottom-up processing.
 

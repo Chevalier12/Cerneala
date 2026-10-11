@@ -15,7 +15,7 @@ public interface IObservableCommand : ICommand
 
 ## Remarks
 
-`CanExecuteChanged` is a state notification rather than a delta. Attached `ButtonBase` controls process it immediately on the UI thread and coalesce off-thread bursts through their root Relay. The command's `CanExecute` method is not called on the producer thread.
+`CanExecuteChanged` is a state notification rather than a delta. On the UI thread, an attached `ButtonBase` queues a command-state refresh that runs in the next frame's command-state phase. Off-thread bursts are coalesced through the root Relay. The command's `CanExecute` method is not called on the producer thread.
 
 Controls unsubscribe when detached or when their command changes, and queued callbacks from an inactive subscription do not update the control.
 

@@ -29,7 +29,7 @@ var runtime = new TimbreRuntime(new TimbreRuntimeOptions
 
 ## Remarks
 
-Changing the options object after the runtime is constructed has no effect. The constructor throws `ArgumentOutOfRangeException` for non-positive counts and byte limits or a negative tail cap.
+Changing the options object after the runtime is constructed has no effect. The constructor throws `ArgumentOutOfRangeException` when `MaxVoices`, `MaxPreloadBytes`, `MaxCacheBytes`, or `StreamingMemoryLimit` is zero or negative, when `AutoPreloadMaxBytes` is negative (`0` is accepted), or when the tail cap is negative.
 
 `MaxVoices` counts every non-terminal playback, including pending, paused, and draining ones. A start beyond it is rejected synchronously with `TimbreErrorKind.VoiceLimitExceeded`; existing playbacks are never stolen.
 

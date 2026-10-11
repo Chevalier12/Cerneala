@@ -1,4 +1,4 @@
-# TextCaret Class
+# TextCaret Struct
 
 ## Definition
 Namespace: `Cerneala.UI.Text`

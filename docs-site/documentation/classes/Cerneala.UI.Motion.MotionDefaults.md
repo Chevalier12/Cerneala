@@ -44,7 +44,7 @@ MotionSpec standardSpec = MotionDefaults.Standard;
 
 ## Remarks
 
-`MotionDefaults` is a small static catalog of reusable untyped `MotionSpec` instances. It does not store mutable state and does not start animations by itself.
+`MotionDefaults` is a small static catalog of untyped `MotionSpec` presets. It does not store mutable state and does not start animations by itself.
 
 Each property creates a tween specification through `Cerneala.UI.Motion.Specs.Motion.Tween(TimeSpan, IEasing?)`. Both built-in defaults use `Easings.Standard`; `FastOut` uses a 120 ms duration, while `Standard` uses a 180 ms duration.
 

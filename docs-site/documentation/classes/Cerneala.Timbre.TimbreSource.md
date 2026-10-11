@@ -36,11 +36,11 @@ TimbreSource budgeted = TimbreSource.FromReader(budget =>
 
 ## Remarks
 
-Creating a source performs no I/O. Each playback opens its own reader on a background worker; readers and positions are never shared between playbacks.
+Creating a source performs no I/O. A streaming playback opens its own reader on a background worker. A preloaded sound opens a reader only when its decoded PCM is not yet in the runtime's cache; playbacks that hit the cache share that PCM and open nothing. Readers and positions are never shared between playbacks.
 
 `FromFile` paths that are relative resolve against [TimbreRuntimeOptions.BaseDirectory](Cerneala.Timbre.TimbreRuntimeOptions.md), or `AppContext.BaseDirectory` when that is `null` — not the process working directory or a markup file's directory. URIs such as `http://` are rejected; non-seekable and network sources are not supported.
 
-File and stream sources are decoded by content, not by extension, into the runtime's canonical PCM (stereo float32 at 48 kHz; mono is copied to both channels, other rates are resampled). `FromStream` requires a stream with `CanRead` and `CanSeek`; the factory is called once per playback and the runtime disposes the stream.
+File and stream sources are decoded by content, not by extension, into the runtime's canonical PCM (stereo float32 at 48 kHz; mono is copied to both channels, other rates are resampled). `FromStream` requires a stream with `CanRead` and `CanSeek`; the factory is called each time the runtime opens the source (once per streaming playback, or once per cache fill for a preloaded sound), and the runtime disposes the stream.
 
 | Format | Supported | Not supported |
 | --- | --- | --- |
@@ -49,7 +49,7 @@ File and stream sources are decoded by content, not by extension, into the runti
 | Ogg Vorbis | one logical stream, mono or stereo, 8–192 kHz | chained or multiplexed Ogg, more than two channels |
 | Ogg Opus | one logical stream, channel mapping family 0 (mono or stereo); pre-skip, end trimming and output gain are applied | other channel mappings (surround), chained or multiplexed Ogg |
 
-Content no decoder recognizes, and the variants in the last column, fail the playback with [TimbreErrorKind.UnsupportedFormat](Cerneala.Timbre.TimbreErrorKind.md); corrupt or truncated data fails it with `InvalidData`, never as a successful end. An MP3 without a Xing/Info tag is not trimmed (it keeps the encoder and decoder delay) and its length is known only once it has been decoded to the end; the other formats report their length when opened, which `TimbreLoading.Auto` uses. The decoders are managed (no native libraries); their licenses are in `Cerneala.Timbre.THIRD-PARTY-NOTICES.txt`, which is copied next to the Cerneala assembly.
+Content no decoder recognizes, and the variants in the last column that are detected when the source opens, fail the playback with [TimbreErrorKind.UnsupportedFormat](Cerneala.Timbre.TimbreErrorKind.md); corrupt or truncated data fails it with `InvalidData`, never as a successful end. An MP3 that changes version, layer, rate, or channels after its first two frames fails with `InvalidData`. A file cut exactly at an Ogg page boundary, or an MP3 without a Xing/Info tag cut exactly at a frame boundary, is not detected as truncated and ends normally. An MP3 without a Xing/Info tag is not trimmed (it keeps the encoder and decoder delay) and its length is known only once it has been decoded to the end; the other formats report their length when opened, which `TimbreLoading.Auto` uses. The decoders are managed (no native libraries); their licenses are in `Cerneala.Timbre.THIRD-PARTY-NOTICES.txt`, which is copied next to the Cerneala assembly.
 
 `FromReader` bypasses decoding: the factory returns a reader that already produces canonical interleaved stereo float32 PCM at 48 kHz.
 
@@ -62,10 +62,10 @@ Sources are cache keys for preloaded payloads: file sources by their resolved fu
 | Name | Returns | Description |
 | --- | --- | --- |
 | `FromFile(string path)` | `TimbreSource` | A local file source. |
-| `FromStream(Func<Stream> openStream, string? name = null)` | `TimbreSource` | A seekable stream opened per playback. |
-| `FromStream(Func<TimbreMemoryBudget, Stream> openStream, string? name = null)` | `TimbreSource` | A seekable stream opened per playback by a budget-aware factory. |
-| `FromReader(Func<TimbreReader> openReader, string? name = null)` | `TimbreSource` | A canonical PCM reader created per playback. |
-| `FromReader(Func<TimbreMemoryBudget, TimbreReader> openReader, string? name = null)` | `TimbreSource` | A canonical PCM reader created per playback by a budget-aware factory. |
+| `FromStream(Func<Stream> openStream, string? name = null)` | `TimbreSource` | A seekable stream opened each time the runtime opens the source. |
+| `FromStream(Func<TimbreMemoryBudget, Stream> openStream, string? name = null)` | `TimbreSource` | A seekable stream opened by a budget-aware factory each time the runtime opens the source. |
+| `FromReader(Func<TimbreReader> openReader, string? name = null)` | `TimbreSource` | A canonical PCM reader created each time the runtime opens the source. |
+| `FromReader(Func<TimbreMemoryBudget, TimbreReader> openReader, string? name = null)` | `TimbreSource` | A canonical PCM reader created by a budget-aware factory each time the runtime opens the source. |
 | `implicit operator TimbreSource(string path)` | `TimbreSource` | Same as `FromFile`. |
 | `ToString()` | `string` | Returns `Name`. |
 
@@ -73,7 +73,7 @@ Sources are cache keys for preloaded payloads: file sources by their resolved fu
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `Name` | `string` | Diagnostic name: the path, or the supplied/derived factory name. |
+| `Name` | `string` | Diagnostic name: the path, or the supplied name; without a supplied name, `"stream"` for stream sources and `"reader"` for reader sources. |
 
 ## See also
 

@@ -36,9 +36,9 @@ void ProcessTouch(UIRoot root, IReadOnlyList<TouchInputPoint> points)
 
 `TouchInputBridge` hit-tests each touch point and raises the preview and bubbling touch event pair for the resolved target.
 
-Capture is tracked per touch id. When a touch id is captured, later points with the same id are routed to the captured element when that element is still present in the current route map. If the captured element is no longer routable, capture for that touch id is cleared and the hit-test target is used.
+Capture is tracked per touch id. When a touch id is captured, later points with the same id are routed to the captured element when that element is still present in the current route map. If the captured element is no longer routable, capture for that touch id is cleared and the hit-test target is used. This clearing raises no `LostTouchCaptureEvent`.
 
-`Capture` and `Release` raise touch capture change events when capture changes. Calling `Capture` for the same touch id and same element does nothing.
+`Capture` and `Release` raise touch capture change events when capture changes, but only for an element present in the supplied route map. Capturing or releasing an element that is not in the route map still changes the capture, but raises no event. Calling `Capture` for the same touch id and same element does nothing.
 
 The constructor accepts an optional `HitTestService`; when no service is supplied, a default one is created.
 

@@ -106,7 +106,7 @@ Transactions do not change UI property precedence. The examples use `AspectBase`
 | `MotionTransactionContext(MotionSystem)` | `ArgumentNullException` | `motion` is `null`. |
 | `Begin(MotionSpec)` | `ArgumentNullException` | `defaultSpec` is `null`. |
 | `Begin(MotionTransactionOptions)` | `ArgumentNullException` | `options` is `null`. |
-| `Begin(MotionSpec)`, `Begin(MotionTransactionOptions)`, `Disable()` | `InvalidOperationException` | The current thread is not the thread captured by the owning `MotionSystem.ThreadGuard`. |
+| `Begin(MotionSpec)`, `Begin(MotionTransactionOptions)`, `Disable()` | `InvalidOperationException` | The call is made off the owning `UIRoot`'s UI thread; the check delegates to `UIRoot.Relay.VerifyAccess()`. |
 
 ## Applies to
 

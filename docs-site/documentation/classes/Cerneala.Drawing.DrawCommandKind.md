@@ -23,12 +23,12 @@ public enum DrawCommandKind
 | --- | --- |
 | `FillRectangle` | Fills a rectangle. |
 | `DrawRectangle` | Strokes a rectangle. |
-| `FillRoundedRectangle` | Fills a rounded rectangle through the dedicated backend fast path. |
+| `FillRoundedRectangle` | Fills a rounded rectangle. The SDL_GPU backend fills it through the same path-fill route as `FillPath` and `FillEllipse`. |
 | `DrawRoundedRectangle` | Strokes a rounded rectangle through cached native stroke geometry. |
 | `FillEllipse` | Fills an ellipse. |
 | `DrawEllipse` | Strokes an ellipse. |
 | `DrawLine` | Draws a line segment. |
-| `FillPath` | Fills SVG path data within destination bounds. |
+| `FillPath` | Fills typed or SVG path data within destination bounds. |
 | `DrawText` | Draws a text run. |
 | `DrawTextLayout` | Draws one immutable positioned multi-line layout command. |
 | `DrawImage` | Draws an image. |

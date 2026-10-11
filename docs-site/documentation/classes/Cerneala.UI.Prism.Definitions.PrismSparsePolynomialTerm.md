@@ -26,6 +26,18 @@ The exponent order is pupil X, pupil Y, radius, inverse radius, normalized
 incidence angle, and normalized wavelength. Every exponent must be in
 `[0, 2]`, and the coefficient must be finite.
 
+## Constructors
+
+| Signature | Description |
+| --- | --- |
+| `PrismSparsePolynomialTerm(float coefficient, byte pupilXExponent, byte pupilYExponent, byte radiusExponent, byte inverseRadiusExponent, byte incidenceAngleExponent, byte wavelengthExponent)` | Creates one term. |
+
+## Exceptions
+
+| Exception | Condition |
+| --- | --- |
+| `ArgumentOutOfRangeException` | `coefficient` is NaN or an infinity, or any exponent is greater than `2`. |
+
 ## Properties
 
 | Name | Type | Description |

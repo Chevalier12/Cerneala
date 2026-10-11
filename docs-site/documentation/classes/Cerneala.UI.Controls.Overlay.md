@@ -48,7 +48,7 @@ Light-dismiss examines only the topmost eligible overlay. An exterior pointer pr
 | `Content` | `object?` | `null` | Projected content. |
 | `IsOpen` | `bool` | `false` | Requested projection state. |
 | `PlacementTarget` | `UIElement?` | `null` | Anchor; the overlay itself is used when null. |
-| `Placement` | `OverlayPlacement` | `Auto` | Vertical placement policy. |
+| `Placement` | `OverlayPlacement` | `Auto` | Placement policy: `Auto`, `Bottom`, and `Top` place the overlay vertically; `AutoHorizontal` places it to the right or left of the target. |
 | `IsLightDismissEnabled` | `bool` | `false` | Enables exterior-click and focus-exit dismissal. |
 | `MatchTargetWidth` | `bool` | `false` | Measures and arranges projected content at the target width, clamped to the viewport. |
 | `Height` | `float` | `NaN` (automatic) | Exact projected height. Overrides `MaxHeight` and is clamped to available viewport space. |

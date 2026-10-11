@@ -59,7 +59,7 @@ The constructor requires a non-null `DataTransfer`. The inherited `RoutedEventAr
 ## Inherited Properties
 | Name | Type | Description |
 | --- | --- | --- |
-| `RoutedEvent` | `RoutedEvent` | Gets the routed event associated with this event data. |
+| `RoutedEvent` | `RoutedEvent` | Gets or sets the routed event associated with this event data. |
 | `OriginalSource` | `object` | Gets the original event source supplied to the constructor. |
 | `Source` | `object` | Gets or sets the current event source. It is initialized to `OriginalSource`. |
 | `Handled` | `bool` | Gets or sets whether the routed event has been handled. |

@@ -29,6 +29,7 @@ Create a typed key, store a variant value, and read it back:
 ```csharp
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Buttons;
 
 AspectVariantKey<Button, ButtonKind> key =
     AspectVariantKey.For<Button, ButtonKind>("kind");
@@ -43,6 +44,7 @@ Use the same key in a variant condition:
 ```csharp
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Buttons;
 
 AspectVariantKey<Button, ButtonKind> key =
     AspectVariantKey.For<Button, ButtonKind>("kind");
@@ -67,9 +69,7 @@ Variant keys are used by `AspectVariantSet` to store values and by `AspectCondit
 
 ## Constructors
 
-| Name | Description |
-| --- | --- |
-| `AspectVariantKey(string name, Type ownerType, Type valueType)` | Initializes the base key with a non-empty name, owner type, and value type. This constructor is `private protected`; use `For<TOwner, TValue>(string)` from public code. |
+`AspectVariantKey` has no public or protected constructor, so code outside the `Cerneala` assembly cannot derive from it. Create keys with `For<TOwner, TValue>(string)`. The name must not be `null`, empty, or whitespace, and `TOwner` must derive from `Control`; otherwise `For` throws `ArgumentException`.
 
 ## Properties
 

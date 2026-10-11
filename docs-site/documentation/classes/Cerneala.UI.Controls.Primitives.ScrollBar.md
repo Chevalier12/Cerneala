@@ -64,7 +64,7 @@ The default template requires `PART_Track` and supplies optional-contract parts 
 
 The constructor applies the default template and sets default visuals: `Background` is `new SolidColorBrush(new Color(235, 235, 235))`, `BorderBrush` is `new SolidColorBrush(new Color(130, 130, 130))`, and `BorderThickness` is `new Thickness(1)`.
 
-`Orientation` defaults to `Orientation.Vertical`. The default template uses a fixed `12` layout length for each direction button and gives the remaining axis length to the track. Changing orientation rearranges the existing template instance rather than recreating it.
+`Orientation` defaults to `Orientation.Vertical`. The default template gives each direction button a layout length of `12` and the remaining axis length to the track. On an axis shorter than `24`, each button gets half the axis length and the track gets `0`; for example, a 20-pixel-high vertical scroll bar has two 10-pixel buttons. Changing orientation rearranges the existing template instance rather than recreating it.
 
 The scroll bar keeps its active track synchronized with `Minimum`, `Maximum`, `Value`, `SmallChange`, `LargeChange`, `ViewportSize`, and `Orientation`. When the track value changes, the scroll bar copies the new value back into `Value`. Direction-button activation applies `SmallChange`; track regions apply `LargeChange`; thumb dragging maps pointer travel to the range.
 

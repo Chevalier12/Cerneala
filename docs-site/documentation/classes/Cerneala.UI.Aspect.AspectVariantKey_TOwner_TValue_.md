@@ -23,6 +23,7 @@ Define and apply a button variant key:
 ```csharp
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Buttons;
 
 AspectVariantKey<Button, ButtonKind> kind =
     AspectVariantKey.For<Button, ButtonKind>("kind");
@@ -42,6 +43,7 @@ Use a variant key in an aspect condition:
 ```csharp
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Buttons;
 
 AspectCondition primaryButton =
     AspectCondition.Variant(ButtonVariants.Kind, ButtonKind.Primary);
@@ -59,9 +61,7 @@ Equality, hash code, and string formatting are inherited from `AspectVariantKey`
 
 ## Constructors
 
-| Name | Description |
-| --- | --- |
-| None public | Create instances with `AspectVariantKey.For<TOwner, TValue>(string)`. |
+`AspectVariantKey<TOwner, TValue>` has no public constructor. Create instances with `AspectVariantKey.For<TOwner, TValue>(string)`.
 
 ## Properties
 

@@ -59,6 +59,7 @@ Use the typed context to register slots and access the owner without casting:
 
 ```csharp
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Buttons;
 using Cerneala.UI.Controls.Templates;
 
 ComponentTemplate<Button> template = new("Button.Modern", context =>

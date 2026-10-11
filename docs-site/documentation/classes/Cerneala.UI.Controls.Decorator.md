@@ -14,7 +14,7 @@ public class Decorator : Control
 ```
 
 Inheritance:
-`object` -> `UIElement` -> `Control` -> `Decorator`
+`object` -> `UiObject` -> `UIElement` -> `Control` -> `Decorator`
 
 Derived:
 `Border`, `DebugAdorner`

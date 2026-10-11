@@ -26,7 +26,7 @@ public sealed class ObjectMotionAnimationBuilder<TTarget, TValue>
 
 ## Remarks
 
-`Start` is the operation that schedules the animation. It accepts the existing `MotionSpec<TValue>` hierarchy, including tweens, springs, keyframes, sequences, repeats, and ping-pong specifications. The returned `MotionHandle` uses the same lifecycle and cancellation model as retained UI motion.
+`Start` is the operation that schedules the animation. It accepts the existing `MotionSpec<TValue>` hierarchy, including tween, spring, keyframes, repeat, ping-pong, and decay specifications. To run several animations one after another, use `MotionSequence.Start`, which works with `MotionHandle` values rather than specs. The returned `MotionHandle` uses the same lifecycle and cancellation model as retained UI motion.
 
 ## Exceptions
 

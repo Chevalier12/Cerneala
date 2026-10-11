@@ -54,7 +54,7 @@ InvalidationRequest request = new(
 
 `DirtyPropagation.GetEffectiveFlags` expands the requested flags before work is queued. Measure invalidation implies arrange and render work; arrange invalidation implies render work; text invalidation implies measure, arrange, and render work. Image invalidation depends on `AffectsIntrinsicSize`: intrinsic-size changes imply measure, arrange, and render work, while non-intrinsic image changes imply render work only.
 
-When `Flags` includes `Resource`, the resource marker is removed from the effective flags and replaced by `ResourceEffects`; if `ResourceEffects` is `null`, render work is used. When `SourceProperty` has inherited-property metadata, inherited and subtree invalidation are added. When `SourceProperty` affects aspects, aspect work is added and render work is removed unless that property also affects render.
+When `Flags` includes `Resource`, the resource marker is removed from the effective flags and replaced by `ResourceEffects`; if `ResourceEffects` is `null`, render work is used. When `SourceProperty` has inherited-property metadata, inherited and subtree invalidation are added. When `SourceProperty` affects aspects, aspect work is added and render work is removed unless that property also affects render; the measure, arrange, text, image, resource, and input-visual rules run after that removal and can add render work back.
 
 The constructor validates required inputs. `target` cannot be `null`, and `reason` cannot be `null`, empty, or whitespace.
 

@@ -53,7 +53,7 @@ string diagnosticsLine = snapshot.ToString();
 
 ## Remarks
 
-`ElementRenderDiagnosticsSnapshot` is a sealed positional record used by render diagnostics. `RenderDiagnostics.CaptureElement` builds it from an element and a `RetainedRenderCache` by reading:
+`ElementRenderDiagnosticsSnapshot` is a sealed positional record used by render diagnostics. `RenderDiagnostics.CaptureElement` builds it from an element and a `RetainedRenderCache` (creating an empty cache entry when the element has none) by reading:
 
 - the element id, CLR type name, render version, and render dependency value from the `UIElement`;
 - the matching `ElementRenderCache` validity, render version, dependencies, content bounds, command count, and stale state.

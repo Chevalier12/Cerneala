@@ -65,7 +65,7 @@
         <p><span>&gt;</span> contributor.rule</p>
         <strong class="console-lime">USE_THE_REPO_TOOLING</strong>
         <p><span>&gt;</span> forbidden.mutations</p>
-        <strong class="console-red">AGENTS_MD</strong>
+        <strong class="console-red">CLAUDE_MD</strong>
       </div>
       <footer><span>EVIDENCE</span><strong>SOURCE + TESTS</strong><span>EXPERIMENT</span><strong>CSI</strong><span>GATE</span><strong>GREEN SUITE</strong></footer>
     </div>
@@ -363,7 +363,7 @@
           <ul>
             <li>Targets crashes, hangs, lifecycle, rendering, input, and performance failures</li>
             <li>Classifies every anomaly before blaming Cerneala and keeps minimized evidence</li>
-            <li>Leaves each confirmed defect as an active RED regression test; it does not fix production code</li>
+            <li>Leaves each confirmed defect as an active RED regression test; it does not fix production code outside Servo and Detective</li>
           </ul>
         </div>
         <footer><span>USE WHEN</span><strong>You want an adversarial audit, not a routine fix</strong><span class="skill-links"><a href="https://github.com/Chevalier12/Cerneala/blob/master/.codex/skills/cerneala-breaker/SKILL.md">Codex</a><a href="https://github.com/Chevalier12/Cerneala/blob/master/.claude/skills/cerneala-breaker/SKILL.md">Claude</a></span></footer>
@@ -427,7 +427,7 @@
             <li>Stages only changes that belong to this conversation; unrelated work stays untouched</li>
             <li>Writes a <code>type(scope): subject</code> commit with themed sections and a Verification block</li>
             <li>Pushes normally: no force, no rebase, no hook bypass, and it stops when the upstream has diverged</li>
-            <li>Opens the pull request, or reuses the branch's open one, and never merges it</li>
+            <li>Opens the pull request, or reuses the branch's open one, and does not merge it unless you ask</li>
           </ul>
         </div>
         <footer><span>USE WHEN</span><strong>The session's work is verified and ready to publish</strong><span class="skill-links"><a href="https://github.com/Chevalier12/Cerneala/blob/master/.claude/skills/git-session-commit-push/SKILL.md">Claude</a></span></footer>
@@ -440,8 +440,8 @@
           <h3>Roslyn MCP (mcpRoslyn)</h3>
           <p>Not a skill, but the tool the skills lean on. This local MCP server gives Codex and Claude Code real C# symbol navigation over the saved <code>Cerneala.slnx</code>, including members generated from markup. It answers “who calls this?” and “what implements this?” with compiler-level identity instead of text matches. It is pinned to mcpRoslyn v1.4.0 (MIT) with a Roslyn 5.9 patch.</p>
           <ul>
-            <li>Install it once with <code>pwsh -NoProfile -File ./Tools/scripts/Install-RoslynMcp.ps1</code></li>
-            <li>It is connected for Codex in <code>.codex/config.toml</code> and for Claude Code in <code>.mcp.json</code>. Twelve navigation tools are allowed (<code>workspace_symbol</code>, <code>find_references</code>, <code>find_callers</code>, …) and <code>rename_symbol</code> is denied</li>
+            <li>Install it once with <code>pwsh -NoProfile -File ./Tools/scripts/Install-RoslynMcp.ps1</code>, then run <code>dotnet build ./CernealaPresentation/CernealaPresentation.csproj -c Debug</code> so the source generators have build outputs for the workspace to load</li>
+            <li>It is connected for Codex in <code>.codex/config.toml</code> and for Claude Code in <code>.mcp.json</code>. The Codex config allows twelve navigation tools (<code>workspace_symbol</code>, <code>find_references</code>, <code>find_callers</code>, …) and denies <code>rename_symbol</code>. <code>.mcp.json</code> only registers the server, so Claude Code users restrict its tools in their own local settings</li>
             <li>The first query loads the whole solution and takes about 30–60 s. Later queries take about a second</li>
             <li>Every connected agent session runs its own <code>mcpRoslyn.exe</code>, holding about 0.8–1.3 GB of RAM while the session is open. The launcher ends it together with its session. Close idle agent sessions and check for leftover processes</li>
           </ul>

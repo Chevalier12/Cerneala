@@ -29,12 +29,12 @@ using PrismImage glowImage = Prism.Apply(
 // this processed image. Draw the visible source separately when needed.
 glowImage.Fill = 0;
 
-frame.DrawSprite(glowImage, destination);
+frame.DrawSprite(glowImage, destination, Color.White);
 ```
 
 ## Remarks
 
-`PrismImage` keeps the original source and pipeline description, synchronizes a native `PrismInstance` only when needed, and uses a stable cache-owner token for repeated draws. Dispose the image when it is no longer needed to request deterministic eviction of its retained Prism cache entries. Eviction occurs at the next safe rendering boundary; an entry that is leased by an active frame is removed as soon as that lease is released.
+`PrismImage` keeps the original source and pipeline description, synchronizes a native `PrismInstance` only when needed, and uses a stable cache-owner token for repeated draws. Dispose the image when it is no longer needed to request deterministic eviction of its retained Prism cache entries. Eviction occurs at the next safe rendering boundary; an entry that is still used by an active draw lease or a submitted command buffer is released when both uses have ended.
 
 `Fill` controls only the processed layer's source content. Prism filters and styles still read the unscaled source. Setting `Fill` to `0` therefore supports effect-only images such as an outer glow mask, while the caller can draw separate visible content over the result.
 
@@ -42,7 +42,7 @@ Disposal is idempotent. Drawing a disposed image or adding a new content-change 
 
 `PrismImage` does not own or dispose its `Source`, `Pipeline`, or pipeline operations. Their lifetime remains the caller's responsibility.
 
-Operation and pipeline mutations increment the recorded visual content version. After a `PrismImage` is drawn by an on-demand `RenderSurface2D`, those mutations also mark that surface dirty automatically. The surface stops observing the image when a later frame no longer draws it.
+Operation and pipeline mutations notify observers immediately; the image increments its recorded visual content version on the next draw that sees the change. After a `PrismImage` is drawn by an on-demand `RenderSurface2D`, those mutations also mark that surface dirty automatically. The surface stops observing the image when a later frame no longer draws it.
 
 Nested `PrismImage` values are supported and compose as nested native Prism scopes. Changes from a nested source propagate through the outer image to an observing surface.
 
@@ -62,11 +62,14 @@ Nested `PrismImage` values are supported and compose as nested native Prism scop
 | --- | --- |
 | `Dispose()` | Stops source and pipeline observation and requests deterministic eviction of retained cache entries owned by this image. |
 
-## Explicit Interface Implementations
+## Exceptions
 
-| Name | Description |
-| --- | --- |
-| `IDrawImageInvalidationSource.ContentChanged` | Notifies observing surfaces when the source, pipeline, or image lifetime changes. |
+| Member | Exception | Condition |
+| --- | --- | --- |
+| `Fill` setter | `ObjectDisposedException` | The image is disposed. |
+| `Fill` setter | `ArgumentOutOfRangeException` | The value is not finite or is outside `0` through `1`. |
+| Drawing the image | `ObjectDisposedException` | The image is disposed. |
+| Drawing the image | `InvalidOperationException` | The pipeline was emptied after `Prism.Apply`. |
 
 ## Applies To
 

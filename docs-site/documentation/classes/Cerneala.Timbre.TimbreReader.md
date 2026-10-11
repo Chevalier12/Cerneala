@@ -52,7 +52,7 @@ var clip = new TimbreSound(TimbreSource.FromReader(() => new SilenceReader(48000
 
 ## Remarks
 
-The runtime creates one reader per playback and calls it from a background worker, never from an audio callback or the UI thread. Calls on one reader are sequential. The runtime disposes the reader after its playback stops, completes, fails, or is canceled.
+The runtime calls a reader from a background worker, never from an audio callback or the UI thread. Calls on one reader are sequential. A streaming playback gets its own reader, which the runtime disposes after the playback stops, completes, fails, or is canceled. A preloaded sound opens a reader only to fill the runtime's PCM cache (on a cache miss, or through `TimbreRuntime.PrepareAsync`) and disposes it as soon as the PCM is loaded; a cache hit opens no reader.
 
 Contract:
 

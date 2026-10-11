@@ -52,7 +52,7 @@ MouseButtonEventArgs args = new(
 
 `MouseButtonEventArgs` extends `MouseEventArgs` with `ChangedButton` and `ClickCount`. The inherited `X` and `Y` properties store the integer pointer coordinates supplied to the constructor.
 
-The retained input bridge creates this event data for mouse down and mouse up routed event pairs. Mouse down events are created with a click count of `1`. Mouse up events receive the value produced by `ClickTracker.Release`: `1` when the press and release resolve to the same click target, or `0` otherwise.
+The retained input bridge creates this event data for mouse down and mouse up routed event pairs. Mouse down events are created with a click count of `1`. Mouse up events receive the value produced by `ClickTracker.Release`: `0` when the press and release resolve to different targets; otherwise the click count, which is `1` for a first click and grows by one for each consecutive click on the same target (`2` for a double click).
 
 `ClickCount` is stored exactly as supplied to the constructor. The class does not validate, normalize, or recalculate it.
 
@@ -77,7 +77,7 @@ Because `MouseButtonEventArgs` derives from `RoutedEventArgs`, handlers can use 
 | --- | --- | --- |
 | `X` | `int` | Gets the mouse X coordinate associated with the event. |
 | `Y` | `int` | Gets the mouse Y coordinate associated with the event. |
-| `RoutedEvent` | `RoutedEvent` | Gets the routed event represented by this event data. |
+| `RoutedEvent` | `RoutedEvent` | Gets or sets the routed event represented by this event data. |
 | `OriginalSource` | `object` | Gets the original source object supplied when the event data was created. |
 | `Source` | `object` | Gets or sets the current routed source. It is initialized to `OriginalSource`. |
 | `Handled` | `bool` | Gets or sets whether the routed event has been handled. |

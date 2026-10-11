@@ -22,6 +22,7 @@ Create a standalone presenter that materializes string items through a data temp
 
 ```csharp
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
 
@@ -33,7 +34,9 @@ ItemsPresenter presenter = new()
 
 presenter.Measure(new MeasureContext(new LayoutSize(100, 100)));
 
-UIElement firstChild = presenter.PanelRoot!.VisualChildren[0];
+// The default panel is a Cerneala.UI.Controls.StackPanel, so read it through LayoutPanelRoot;
+// PanelRoot is null here because that panel is not a Cerneala.UI.Controls.Panel.
+UIElement firstChild = presenter.LayoutPanelRoot!.VisualChildren[0];
 
 public sealed class RowElement(string value) : UIElement
 {
@@ -45,6 +48,7 @@ Use a virtualizing panel and a fixed realization context:
 
 ```csharp
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
 using Cerneala.UI.Layout.Virtualization;
@@ -68,7 +72,7 @@ RealizationWindow window = presenter.CurrentRealizationWindow; // StartIndex: 2,
 
 ## Remarks
 
-`ItemsPresenter` is the realization surface used by `ItemsControl`, and it can also be used directly. In direct mode, it reads `Items`, creates one child per realized item, and either hosts `UIElement` items directly or asks `ItemTemplate` to create an element for non-element data items. Items that are not `UIElement` instances and do not have a matching `ItemTemplate` do not produce children.
+`ItemsPresenter` is the realization surface used by `ItemsControl`, and it can also be used directly. In direct mode, it reads `Items`, creates one child per realized item, and either hosts `UIElement` items directly or asks `ItemTemplate` to create an element for non-element data items. The single `ItemTemplate` is used for every non-element item; no data-type or key matching happens in direct mode. A non-element item produces no child when `ItemTemplate` is `null` or when the template's factory returns `null`.
 
 The presenter owns a single retained panel root. If `ItemsPanel` is set, that panel is used directly and retained across item refreshes; otherwise the presenter uses an internal vertical `Cerneala.UI.Controls.StackPanel`. `PanelRoot` returns the panel only when it is the controls-facing `Panel` type. `LayoutPanelRoot` exposes the underlying `Cerneala.UI.Layout.Panels.Panel`, including custom panels such as `VirtualizingStackPanel`.
 

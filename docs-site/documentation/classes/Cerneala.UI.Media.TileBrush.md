@@ -20,7 +20,7 @@ var brush = new ImageBrush(
 ```
 
 ## Remarks
-All tile rectangles must be finite and strictly positive. Defaults are `Fill`, centered alignment, no viewport/viewbox, `None` tile mode, and opacity `1`.
+All tile rectangles must have finite `X`, `Y`, `Width`, and `Height`, and a `Width` and `Height` greater than `0`; otherwise the constructor throws `ArgumentOutOfRangeException`. Defaults are `Fill`, centered alignment, no viewport/viewbox, `None` tile mode, and opacity `1`.
 
 ## Constructors
 | Name | Description |

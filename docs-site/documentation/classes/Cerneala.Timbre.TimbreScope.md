@@ -37,7 +37,7 @@ sounds.Play(plainTimbre, start => start.Volume = 0.5f, handle: slot); // replace
 
 ## Remarks
 
-Obtain a scope from `TimbreRuntime.CreateScope()`, from `UIElement.Timbre` (a lifecycle scope disposed on detach), or from `Application.Timbre`.
+Obtain a scope from `TimbreRuntime.CreateScope()`, from `UIElement.Timbre` (a lifecycle scope disposed on detach; reading it on a detached element, or on an element whose root has no `TimbreRuntime`, throws `InvalidOperationException`), or from `Application.Timbre`.
 
 `Play` returns a new [TimbrePlayback](Cerneala.Timbre.TimbrePlayback.md) identity immediately in the `Pending` state; it never waits for loading, the output, or the end of the sound. Without a handle, playbacks overlap. With a handle, a successful start cancels only that handle's current occupant.
 
@@ -45,8 +45,8 @@ Obtain a scope from `TimbreRuntime.CreateScope()`, from `UIElement.Timbre` (a li
 
 | Exception | Condition |
 | --- | --- |
-| `ArgumentNullException` | `clip` is `null`. |
-| `ArgumentException` | `handle` belongs to another scope, or `configure` sets a parameter not declared by `clip`. |
+| `ArgumentNullException` | `sound` is `null`. |
+| `ArgumentException` | `handle` belongs to another scope, or `configure` sets a parameter not declared by `sound`. |
 | `ArgumentOutOfRangeException` | A configured value is NaN, infinite, or out of range. |
 | `TimbreException` (`VoiceLimitExceeded`) | The runtime already has `MaxVoices` non-terminal playbacks after accounting for the replaced occupant. |
 | `ObjectDisposedException` | The scope or its runtime is disposed. |

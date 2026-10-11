@@ -19,6 +19,7 @@ public sealed class Detective
 ```csharp
 using Cerneala.UI.Detective;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Invalidation;
 
 UIRoot root = new(1280, 720, 1.25f);
 FrameStats stats = root.ProcessFrame();
@@ -29,11 +30,11 @@ string summary = root.Detective.Format(snapshot);
 
 ## Remarks
 
-Every `UIRoot` creates exactly one `Detective`. Capture methods copy current retained state; they do not rebuild caches, load resources, or invalidate the tree. Domain systems continue to produce their own evidence, but `Detective` is the public root-level owner used to inspect it.
+Every `UIRoot` creates exactly one `Detective`. Capture methods copy current retained state; they do not load resources or invalidate the tree. Two captures can add cache entries: `CaptureRendering(UIElement)` creates an empty render-cache entry for an element that has none, and `CaptureAspect` builds and caches the element's aspect diagnostics snapshot on its first request after `Apply`. Domain systems continue to produce their own evidence, but `Detective` is the public root-level owner used to inspect it.
 
 `CaptureTileMap` separates visible drawing, optional warm preparation, retained-cache estimates, and the warm admission charge through [TileMapDiagnosticsSnapshot](Cerneala.UI.Detective.TileMapDiagnosticsSnapshot.md). Its warm counters are observational; capturing does not advance preparation or enforce a budget. Byte estimates and charges are not native/GPU memory measurements.
 
-`CaptureTimbre` reports the [TimbreRuntime](Cerneala.Timbre.TimbreRuntime.md) assigned to the root through [TimbreDiagnosticsSnapshot](Cerneala.UI.Detective.TimbreDiagnosticsSnapshot.md). Counters are cumulative for the runtime, which window roots share, not per root.
+`CaptureTimbre` reports the [TimbreRuntime](Cerneala.Timbre.TimbreRuntime.md) assigned to the root through [TimbreDiagnosticsSnapshot](Cerneala.UI.Detective.TimbreDiagnosticsSnapshot.md). `OutputOpen`, `ActivePlaybacks`, and the byte values describe the live state at the moment of the capture. The other counters, such as `PlaybacksFailed`, `UnderrunFrames`, and `ClippedSamples`, only grow for the lifetime of the runtime. The values belong to the runtime, not to the root: window roots created by the same `Application` share its runtime.
 
 Invalidation tracing is disabled by the default `UIRoot` constructor. Supply an `InvalidationTrace` when constructing the root to retain invalidation entries.
 
@@ -56,7 +57,7 @@ Invalidation tracing is disabled by the default `UIRoot` constructor. Supply an 
 | `CaptureInput(UIElement? hitTarget, RoutedEvent? routedEvent = null)` | `InputDiagnosticsSnapshot` | Captures hit-target and routed-event input state. |
 | `CaptureLayout(UIElement element)` | `LayoutDiagnosticsSnapshot` | Captures current layout state for an element. |
 | `CaptureMotion()` | `MotionGraphSnapshot` | Captures current Motion graph and latest-frame activity. |
-| `CaptureTimbre()` | `TimbreDiagnosticsSnapshot?` | Copies the root sound runtime's output, playback, underrun, clipping, and memory counters; `null` when the root has no `TimbreRuntime`. Read-only: Detective never owns or drives audio. |
+| `CaptureTimbre()` | `TimbreDiagnosticsSnapshot?` | Copies the root sound runtime's output state, playback, underrun, and clipping counters, and memory use; `null` when the root has no `TimbreRuntime`. Read-only: Detective never owns or drives audio. |
 | `CaptureRendering()` | `RootRenderDiagnosticsSnapshot` | Captures retained root render-cache state. |
 | `CaptureRendering(UIElement element)` | `ElementRenderDiagnosticsSnapshot` | Captures retained render-cache state for an element. |
 | `CaptureTileMap(TileMap2D map)` | `TileMapDiagnosticsSnapshot` | Copies the latest tilemap recording counters. The map must be attached to this root; null throws `ArgumentNullException`, detached/foreign-root maps throw `ArgumentException`. Does not record, invalidate, synchronize, or reset the map. |

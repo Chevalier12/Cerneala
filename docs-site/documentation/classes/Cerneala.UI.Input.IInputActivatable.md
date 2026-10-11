@@ -25,4 +25,4 @@ if (element is IInputActivatable activatable)
 | `Activate()` | Performs the control's input activation. |
 
 ## Applies to
-Keyboard, pointer, and command-driven control activation.
+Keyboard activation, pointer repeat in `RepeatButton`, and `ButtonAutomationPeer.Invoke`.

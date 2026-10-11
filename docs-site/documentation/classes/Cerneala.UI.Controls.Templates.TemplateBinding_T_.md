@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Controls.Templates`
 
 Assembly/Project: `Cerneala`
 
-Source: [`UI/Controls/Templates/TemplateBinding{T}.cs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Controls/TemplateBinding%7BT%7D.cs)
+Source: [`UI/Controls/Templates/TemplateBinding{T}.cs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Controls/Templates/TemplateBinding%7BT%7D.cs)
 
 Represents a typed template binding that copies a property value from a template owner `Control` to a target `UIElement` property and keeps it synchronized while attached.
 
@@ -22,31 +22,49 @@ Inheritance:
 | `T` | The value type shared by the source and target UI properties. |
 
 ## Examples
-The common path is to create a binding from a template context. The binding is attached by the template instance when the control applies the template.
+The common path is to record a binding from a template context with `ComponentTemplateContext.Bind<T>`. `Bind<T>` creates a `TemplateBinding<T>` and returns `void`; the template instance attaches the recorded binding when the control applies the template.
 
 ```csharp
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Media;
 
-Button button = new() { Background = new SolidColorBrush(Color.White) };
-Border? border = null;
-
-button.ComponentTemplate = new ComponentTemplate<Button>("Button.Binding", context =>
+Button button = new()
 {
-    border = new Border();
-    TemplateBinding<Brush?> binding = context.Bind(
-        Control.BackgroundProperty,
-        border,
-        Control.BackgroundProperty);
+    Background = new SolidColorBrush(Color.White),
+    ComponentTemplate = new ComponentTemplate<Button>("Button.Binding", context =>
+    {
+        Border border = new();
+        context.Bind(Control.BackgroundProperty, border, Control.BackgroundProperty);
+        return border;
+    })
+};
+```
 
-    return border;
-});
+A binding can also be constructed and attached directly. The target follows the owner value only while the binding is attached.
 
-button.Background = new SolidColorBrush(Color.Black);
+```csharp
+using Cerneala.Drawing;
+using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Templates;
+using Cerneala.UI.Media;
 
-// The generated border follows the owner control value while attached.
-Brush? currentBackground = border!.Background;
+SolidColorBrush white = new(Color.White);
+SolidColorBrush black = new(Color.Black);
+Button owner = new() { Background = white };
+Border child = new();
+
+TemplateBinding<Brush?> binding = new(Control.BackgroundProperty, child, Control.BackgroundProperty);
+binding.Attach(owner);
+// child.Background is white.
+
+owner.Background = black;
+// child.Background is black.
+
+binding.Detach();
+owner.Background = white;
+// child.Background is still black: the binding no longer listens.
 ```
 
 ## Remarks

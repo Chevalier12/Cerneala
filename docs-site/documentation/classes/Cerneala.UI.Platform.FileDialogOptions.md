@@ -32,7 +32,7 @@ string? selectedPath = platformServices.FileDialogs?.OpenFile(options);
 
 ## Remarks
 
-`FileDialogOptions` is an immutable record for passing dialog hints to `IFileDialogService.OpenFile` and `IFileDialogService.SaveFile`. All constructor parameters are optional and default to `null`.
+`FileDialogOptions` is an immutable record for passing dialog hints to `IFileDialogService.OpenFile` and `IFileDialogService.SaveFile`. All constructor parameters are optional and default to `null`. `Filters` is copied into a new read-only collection, which compares by reference, so two options objects with equal filters are not equal.
 
 When a filters list is provided, the constructor snapshots the list into a read-only collection. Later changes to the caller-owned filter list do not change `Filters`.
 

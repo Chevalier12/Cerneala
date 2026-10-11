@@ -33,6 +33,7 @@ object? first = itemsControl.Items[0];     // "one"
 
 ```csharp
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Items;
 
 var items = new ItemCollection();
 items.Changed += (_, _) =>

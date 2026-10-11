@@ -42,7 +42,7 @@ execution.Cancel();
 ## Events
 | Name | Type | Description |
 | --- | --- | --- |
-| `Completed` | `EventHandler` | Raised exactly once when the execution reaches either terminal state. |
+| `Completed` | `EventHandler?` | Raised exactly once when the execution reaches either terminal state. |
 
 ## Remarks
 This adapter is intended for source-generated markup composition. Empty groups

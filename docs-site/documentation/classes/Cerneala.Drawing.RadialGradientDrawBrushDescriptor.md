@@ -23,7 +23,7 @@ var descriptor = new RadialGradientDrawBrushDescriptor(
 ```
 
 ## Remarks
-The radii are independent, so the gradient can be elliptical. The SDL_GPU backend caches the generated device resource per graphics device.
+The radii are independent, so the gradient can be elliptical. The SDL_GPU backend caches the generated texture per graphics device, keyed by the brush, the drawn bounds, and the texture pixel size, so one brush drawn at two sizes owns two textures.
 
 ## Properties
 | Name | Description |
@@ -32,7 +32,7 @@ The radii are independent, so the gradient can be elliptical. The SDL_GPU backen
 | `RadiusX` | Horizontal radius. |
 | `RadiusY` | Vertical radius. |
 | `Stops` | Ordered gradient stops. |
-| `BrushOpacity` | Source opacity. |
+| `BrushOpacity` | Source opacity; exposed as inherited `Opacity` too. |
 
 ## Applies to
 Backend implementation code.

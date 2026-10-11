@@ -20,6 +20,7 @@ public Brush? Background { get; set; }
 ## Examples
 
 ```csharp
+using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Media;
 

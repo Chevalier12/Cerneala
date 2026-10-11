@@ -35,15 +35,18 @@ if (environment.TryGet(DefaultAspectTokens.Color.Accent, out Color accent))
 }
 ```
 
-Use a default color token as an aspect value reference for a color-valued property:
+Reference a color token as an aspect value. For a brush property such as `Control.Foreground`, use the matching brush token:
 
 ```csharp
+using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 
+AspectValue<Color> foregroundColor = DefaultAspectTokens.Color.Foreground.Ref();
+
 AspectDeclaration declaration = new(
     Control.ForegroundProperty,
-    DefaultAspectTokens.Color.Foreground.Ref());
+    DefaultAspectTokens.Brush.Foreground.Ref());
 ```
 
 ## Remarks
@@ -62,7 +65,7 @@ The default package sets these values:
 | `Border` | `color.border` | `new Color(148, 163, 184)` |
 | `Accent` | `color.accent` | `new Color(37, 99, 235)` |
 
-The color tokens remain available for semantic color consumers. Control chrome rules use the matching tokens from `DefaultAspectTokens.Brush`, so composite brushes can flow into `Background` and `BorderBrush` without conversion.
+The color tokens are `Color` values, so they cannot be used directly for `Brush?` properties such as `Control.Background`, `Control.Foreground`, or `Control.BorderBrush`: `new AspectDeclaration(Control.ForegroundProperty, DefaultAspectTokens.Color.Foreground.Ref())` throws `ArgumentException` because the value types differ. Use the matching `DefaultAspectTokens.Brush` tokens for brush properties. In the default package, the `border.base` rule sets `Border.BorderBrush` from `DefaultAspectTokens.Brush.Border`, and the `button.base` rule takes its brushes from `ButtonTokens`.
 
 ## Fields
 

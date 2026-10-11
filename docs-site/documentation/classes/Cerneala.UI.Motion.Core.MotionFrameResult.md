@@ -103,6 +103,7 @@ Because `MotionFrameResult` is a `readonly record struct`, values are immutable 
 | `Empty(MotionFrame frame)` | `MotionFrameResult` | Creates an empty result for `frame` with `NeedsAnotherFrame` set to `false` and all numeric counters set to `0`. |
 | `Deconstruct(out MotionFrame Frame, out bool NeedsAnotherFrame, out int MotionFrames, out int MotionNodesSampled, out int MotionValuesChanged, out int MotionPropertyWrites, out int MotionCompleted, out int MotionRenderInvalidations, out int MotionLayoutInvalidations, out int MotionSkippedByReducedMotion)` | `void` | Deconstructs the result into its primary-constructor components. |
 | `Equals(MotionFrameResult other)` | `bool` | Determines whether another result has the same component values. |
+| `Equals(object? obj)` | `bool` | Determines whether an object is a `MotionFrameResult` with the same component values. |
 | `GetHashCode()` | `int` | Returns a hash code based on the result components. |
 | `ToString()` | `string` | Returns the compiler-generated record string representation. |
 

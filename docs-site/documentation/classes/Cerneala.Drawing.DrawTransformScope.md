@@ -17,7 +17,7 @@ public ref struct DrawTransformScope
 ## Examples
 
 ```csharp
-using DrawTransformScope scope = drawing.Transform(Matrix3x2.CreateTranslation(10, 20));
+using DrawTransformScope scope = drawing.Transform(System.Numerics.Matrix3x2.CreateTranslation(10, 20));
 drawing.FillRectangle(bounds, color);
 ```
 
@@ -30,6 +30,13 @@ Dispose scopes exactly once in reverse creation order. Out-of-order or copied-sc
 | Name | Description |
 | --- | --- |
 | `Dispose()` | Records the matching transform pop. |
+
+## Exceptions
+
+| Member | Exception | Condition |
+| --- | --- | --- |
+| `Dispose()` | `ObjectDisposedException` | The same scope variable is disposed a second time. |
+| `Dispose()` | `InvalidOperationException` | Another scope opened later on the same `DrawingContext` is still open, so the scopes are not disposed in last-in, first-out order. |
 
 ## Applies To
 

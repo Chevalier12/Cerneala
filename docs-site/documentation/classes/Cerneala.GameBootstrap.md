@@ -22,7 +22,7 @@ Color clearColor = GameBootstrap.CreateDefaultClearColor();
 
 ## Remarks
 
-`GameBootstrap` centralizes the default Cerneala clear color used by host bootstrap paths. The returned value is the backend-agnostic `Cerneala.Drawing.Color.CornflowerBlue`; each drawing backend is responsible for mapping it to its native color representation.
+`GameBootstrap` provides a default Cerneala clear color. The returned value is the backend-agnostic `Cerneala.Drawing.Color.CornflowerBlue`; each drawing backend is responsible for mapping it to its native color representation.
 
 ## Methods
 

@@ -24,6 +24,7 @@ Create a package with a token default, a component template, and a content templ
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Buttons;
 using Cerneala.UI.Media;
 using Cerneala.UI.Controls.Templates;
 
@@ -70,7 +71,7 @@ The builder keeps the package name supplied at creation time and appends contrib
 
 `Build()` materializes the current builder state into a new `AspectPackage` by copying the collected tokens, rules, behaviors, component templates, and content templates to arrays. The implicit conversion operator calls `Build()`, which allows a fluent builder expression to be assigned to an `AspectPackage`.
 
-The builder validates only the callback arguments it receives. Package name validation is handled when `AspectPackage.Create` creates the builder, and package-level conflicts such as duplicate registered package names or incompatible token defaults are handled later by `AspectRegistry` and `AspectCatalog`.
+The builder validates only its own arguments: the callbacks, the `Origin` value, and the builder passed to the implicit conversion must not be `null`. Package name validation is handled when `AspectPackage.Create` creates the builder, and package-level conflicts such as duplicate registered package names or incompatible token defaults are handled later by `AspectRegistry` and `AspectCatalog`.
 
 ## Properties
 

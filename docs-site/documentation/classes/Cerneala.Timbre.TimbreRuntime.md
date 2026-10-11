@@ -48,7 +48,7 @@ Every submitted sample is finite. Source samples must already be finite, but a m
 
 When no output is configured, the output fails to open, or the device is lost, the affected playbacks end `Failed` with `TimbreErrorKind.DeviceUnavailable`. The runtime does not retry; a later `Play` tries to open the output again.
 
-`PrepareAsync` decodes a preloadable clip into the cache ahead of time without playing it. For a streaming clip it verifies that the source opens: a decoded file or stream reads its headers (and, for Ogg, its final page) and decodes none of its audio. The token is observed between decoded frames or packets. It throws a [TimbreException](Cerneala.Timbre.TimbreException.md) for source, format, or resource-limit failures.
+`PrepareAsync` decodes a preloadable clip into the cache ahead of time without playing it. For a streaming clip it verifies that the source opens: a decoded file or stream reads its headers (and, for Ogg, its final page) and decodes none of its audio. The token is observed between decoded frames or packets. The returned task faults with a [TimbreException](Cerneala.Timbre.TimbreException.md) for source, format, or resource-limit failures, and is canceled when the token is canceled.
 
 `Dispose` cancels every playback of every scope, stops the mixer thread, closes the output, and releases the cache. It is idempotent. Creating scopes or preparing clips afterwards throws `ObjectDisposedException`.
 
@@ -56,7 +56,7 @@ When no output is configured, the output fails to open, or the device is lost, t
 
 | Name | Description |
 | --- | --- |
-| `TimbreRuntime(TimbreRuntimeOptions? options = null)` | Creates a runtime; the options are copied and validated. |
+| `TimbreRuntime(TimbreRuntimeOptions? options = null)` | Creates a runtime; the options are copied and validated. An invalid limit throws `ArgumentOutOfRangeException` (see [TimbreRuntimeOptions](Cerneala.Timbre.TimbreRuntimeOptions.md)). |
 
 ## Fields
 

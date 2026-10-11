@@ -37,8 +37,9 @@ style state and are exposed to generated markup accessors.
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `Equals(PrismStyleDefinition? other)` | `bool` | Tests structural equality. |
+| `Equals(object? obj)` | `bool` | Tests structural equality with another `PrismStyleDefinition`. |
 | `GetHashCode()` | `int` | Returns the structural hash code. |
 
 ## Applies to
 
-Layer, group, and backdrop style lists.
+Layer and group style lists.

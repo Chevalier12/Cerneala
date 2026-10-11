@@ -26,16 +26,17 @@ public readonly record struct PrismLensFlareRaySample(
 
 ```csharp
 using System.Numerics;
+using Cerneala.Drawing.Prism.Filters;
 
 PrismLensFlareRaySample sample = new(
-    ghostIndex: 0,
-    pupilPosition: new Vector2(0.2f, -0.1f),
-    incidenceAngleDegrees: 15,
-    wavelengthNanometers: 550,
-    aperturePosition: new Vector2(0.18f, -0.08f),
-    sensorPosition: new Vector2(-0.3f, 0.04f),
-    transmission: 0.42f,
-    relativeRadius: 0.6f);
+    GhostIndex: 0,
+    PupilPosition: new Vector2(0.2f, -0.1f),
+    IncidenceAngleDegrees: 15,
+    WavelengthNanometers: 550,
+    AperturePosition: new Vector2(0.18f, -0.08f),
+    SensorPosition: new Vector2(-0.3f, 0.04f),
+    Transmission: 0.42f,
+    RelativeRadius: 0.6f);
 ```
 
 ## Remarks
@@ -56,8 +57,8 @@ builds polynomial inputs.
 | `PupilPosition` | `System.Numerics.Vector2` | Position of the ray in the normalized pupil. |
 | `IncidenceAngleDegrees` | `float` | Ray incidence angle in degrees. |
 | `WavelengthNanometers` | `float` | Ray wavelength in nanometers. |
-| `AperturePosition` | `System.Numerics.Vector2` | Fitted aperture-plane position for the ray. |
-| `SensorPosition` | `System.Numerics.Vector2` | Fitted sensor-plane position for the ray. |
+| `AperturePosition` | `System.Numerics.Vector2` | Aperture-plane position of the ray. The fitter uses it as a target value; it does not compute it. |
+| `SensorPosition` | `System.Numerics.Vector2` | Sensor-plane position of the ray. The fitter uses it as a target value; it does not compute it. |
 | `Transmission` | `float` | Measured transmission for the ray. |
 | `RelativeRadius` | `float` | Measured relative housing radius for the ray. |
 | `IsValid` | `bool` | Indicates whether the ray reached the valid optical path; defaults to `true`. |

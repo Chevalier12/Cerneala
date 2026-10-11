@@ -26,6 +26,7 @@ using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Motion;
+using Cerneala.UI.Motion.Input;
 
 UIRoot root = new(100, 100);
 ScrollViewer scrollViewer = new()

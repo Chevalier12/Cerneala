@@ -43,6 +43,7 @@ Create a target for a named template slot:
 ```csharp
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Buttons;
 
 AspectTarget target = new(
     typeof(ContentPresenter),

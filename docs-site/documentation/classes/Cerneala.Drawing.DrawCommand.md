@@ -10,7 +10,7 @@ Source: `Drawing/DrawCommand.cs`, `Drawing/DrawCommand.Shapes.cs`, `Drawing/Draw
 Represents one immutable drawing instruction recorded by the Cerneala drawing pipeline.
 
 ```csharp
-public readonly record struct DrawCommand
+public readonly partial record struct DrawCommand
 ```
 
 Inheritance:
@@ -53,7 +53,7 @@ DrawCommand brushedFill = DrawCommand.FillRectangle(
 
 ## Remarks
 
-`DrawCommand` is a value object for retained drawing work. Each static factory method sets `Kind` and populates only the payload fields needed by that command kind. For example, rounded rectangles retain normalized `CornerRadius`, styled rounded strokes also retain their reusable `Path`, complete stroke commands retain `Pen`, typed path fills retain `Path` and `FillRule`, and advanced images retain `ImageOptions` plus an immutable mesh when required.
+`DrawCommand` is a value object for retained drawing work. Each static factory method sets `Kind` and populates only the payload fields needed by that command kind. For example, rounded rectangles retain normalized `CornerRadius`, rounded-rectangle fills and strokes also retain their reusable outline as `Path`, complete stroke commands retain `Pen`, typed path fills retain `Path` and `FillRule`, and advanced images retain `ImageOptions` plus an immutable mesh when required.
 
 `DrawImageQuad` is a strictly 2D operation lowered to exactly two affine-textured triangles. It does not provide 3D perspective or perspective-correct texture mapping. `DrawNineSlice` creates one indexed mesh for nine source regions; opposing destination borders are proportionally reduced when the destination is smaller than their sum.
 
@@ -89,7 +89,7 @@ Stroke factories validate `thickness` as a positive, finite pixel size. `DrawLin
 | `Font` | `IDrawFont?` | Font copied from the `DrawTextRun` for text commands. |
 | `PathData` | `string?` | SVG path-data payload for `FillPath` commands. |
 | `SourceRect` | `DrawRect` | Source view box used to map SVG coordinates into `Rect`. |
-| `Path` | `DrawPath?` | Immutable typed geometry for `FillPath`; legacy SVG factories populate this after parsing. |
+| `Path` | `DrawPath?` | Immutable typed geometry. `FillPath`, `DrawPath`, and `PushClip(DrawPath, DrawFillRule)` store the given path, and the SVG `FillPath` factory stores the parsed path. `FillRoundedRectangle` and `DrawRoundedRectangle` store the rounded-rectangle outline. `FillEllipse` stores a shared unit-ellipse path that is mapped from `SourceRect` into `Rect`. |
 | `FillRule` | `DrawFillRule` | Winding rule retained by typed path fill commands. |
 | `Pen` | `DrawPen?` | Complete immutable stroke payload for native line, rectangle, ellipse, and typed-path strokes. |
 | `Transform` | `System.Numerics.Matrix3x2` | Matrix payload for `PushTransform`. |
@@ -97,7 +97,7 @@ Stroke factories validate `thickness` as a positive, finite pixel size. `DrawLin
 | `BlendMode` | `DrawBlendMode` | Blend payload for `PushBlend`. |
 | `LayerOptions` | `DrawLayerOptions?` | Isolated-layer payload for `PushLayer`. |
 | `CornerRadius` | `DrawCornerRadius` | Normalized independent radii for rounded-rectangle commands. |
-| `ImageOptions` | `DrawImageOptions?` | Complete source, tint, transform, depth, sampling, and addressing state for an advanced image command. |
+| `ImageOptions` | `DrawImageOptions?` | Image options of an image command. `DrawImage` and `DrawNineSlice` store the complete options. `DrawImageQuad`, `DrawMesh`, and `DrawTriangles` store options that carry only the layer depth, sampling, and addressing; their source, tint, rotation, origin, and flip are not stored here. |
 | `Insets` | `DrawInsets` | Source-border payload for a nine-slice command. |
 | `Mesh` | `DrawMesh2D?` | Immutable indexed geometry for quad, nine-slice, mesh, and batch commands. |
 | `PointBatch` | `DrawPointBatch?` | Immutable point-batch identity retained by a batch command. |
@@ -166,7 +166,10 @@ Stroke factories validate `thickness` as a positive, finite pixel size. `DrawLin
 | Brush-based fill or stroke overloads | `ArgumentOutOfRangeException` | `opacity` is non-finite or outside `0` through `1`; stroke overloads also reject an invalid `thickness`. |
 | `DrawEllipse` | `ArgumentOutOfRangeException` | `thickness` is zero, negative, non-finite, or above the valid pixel-size range. |
 | `DrawLine` | `ArgumentOutOfRangeException` | `start` or `end` has a coordinate outside the valid pixel range, or `thickness` is invalid. |
-| `FillPath` | `ArgumentException` | `pathData` is null, empty, or whitespace. |
+| `FillPath` | `ArgumentNullException` | `pathData` is `null`. |
+| `FillPath` | `ArgumentException` | `pathData` is empty or whitespace. |
+| `FillPath` | `FormatException` | `pathData` is not valid SVG path data. |
+| `FillPath` | `InvalidOperationException` | `pathData` closes a contour that has only a move command, for example `"M0 0Z"`. |
 | `FillPath` | `ArgumentNullException` | `brush` is null. |
 | `FillPath` | `ArgumentOutOfRangeException` | `sourceBounds` has a non-positive width or height, or `opacity` is outside `0` through `1`. |
 | Typed `FillPath` | `ArgumentNullException` | `path` or a required brush is null. |
@@ -175,11 +178,25 @@ Stroke factories validate `thickness` as a positive, finite pixel size. `DrawLin
 | `DrawText` | `ArgumentNullException` | `brush` is null for the brush overload. |
 | `DrawText` | `ArgumentOutOfRangeException` | `position` has a coordinate outside the valid pixel range. |
 | `DrawText` | `ArgumentOutOfRangeException` | `opacity` is non-finite or outside `0` through `1`. |
-| `DrawImage` | `ArgumentNullException` | `image` is null. |
+| `DrawImage` | `ArgumentNullException` | `image` is null, or `options` is null for the options overload. |
+| `DrawImage` | `ArgumentException` | `image.Width` or `image.Height` is zero or negative. |
 | Transformed `DrawImage` | `ArgumentOutOfRangeException` | Rotation is non-finite, layer depth is outside `0` through `1`, or `flip` contains unsupported flags. |
 | Advanced image operations | `ArgumentOutOfRangeException` | The selected source region leaves the image, an enum is unsupported, or depth/opacity/rotation is invalid. |
 | `DrawNineSlice` | `ArgumentException` | Opposing source insets do not fit the selected source region. |
+| `DrawMesh` / `DrawTriangles` | `ArgumentNullException` | `mesh` or `vertices` is `null`. |
 | `DrawMesh` / `DrawTriangles` | `ArgumentException` or `ArgumentOutOfRangeException` | Geometry is incomplete, topology is invalid, or an index is outside the vertex range. |
+| `DrawRectangle(DrawRect, DrawPen)`, `DrawEllipse(DrawRect, DrawPen)`, `DrawLine(DrawPoint, DrawPoint, DrawPen)`, `DrawRoundedRectangle(DrawRect, DrawCornerRadius, DrawPen)` | `ArgumentNullException` | `pen` is `null`. |
+| `DrawRoundedRectangle(DrawRect, DrawCornerRadius, Color, float)` | `ArgumentOutOfRangeException` | `thickness` is zero, negative, non-finite, or above the valid pixel-size range. |
+| `DrawPath` | `ArgumentNullException` | `path` or `pen` is `null`. |
+| `DrawTextLayout` | `ArgumentNullException` | `layout` is `null`. |
+| `DrawTextLayout` | `ArgumentOutOfRangeException` | `origin` has a coordinate outside the valid pixel range, or the layout bounds moved to `origin` reach outside that range. |
+| `DrawPointBatch` / `DrawLineBatch` / `DrawSpriteBatch` | `ArgumentNullException` | `batch` is `null`. |
+| `PushTransform` | `ArgumentOutOfRangeException` | `transform` contains a non-finite value. |
+| `PushClip(DrawPath, DrawFillRule)` | `ArgumentNullException` | `path` is `null`. |
+| `PushClip(DrawPath, DrawFillRule)` | `ArgumentOutOfRangeException` | `fillRule` is not a defined enum value. |
+| `PushOpacity` | `ArgumentOutOfRangeException` | `opacity` is non-finite or outside `0` through `1`. |
+| `PushBlend` | `ArgumentOutOfRangeException` | `blendMode` is not a defined enum value. |
+| `PushLayer` | `ArgumentNullException` | `options` is `null`. |
 
 ## Applies To
 

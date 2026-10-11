@@ -37,7 +37,7 @@ Cursor outsideTarget = cursors.Resolve(root, 50, 50); // Cursor.Arrow
 
 ## Remarks
 
-`CursorService` performs hit testing against the root's current retained input route map, then walks from the hit element up through `VisualParent`. For each element in that chain, it first checks a cursor assigned through `SetCursor`, then checks the element's `UIElement.Cursor` property.
+`CursorService` performs hit testing against the root's current retained input route map, then walks from the hit element up its input route to the root. That route contains the nearest ancestors registered in the route map, so an ancestor that does not take part in input is skipped. For each element in that chain, it first checks a cursor assigned through `SetCursor`, then checks the element's `UIElement.Cursor` property.
 
 If no hit element or ancestor provides a cursor, `Resolve` returns `Cursor.Arrow`. The resolver calls `UIRoot.InputCache.EnsureCurrent(root)` before hit testing, so cursor lookup uses the current retained input cache and can rebuild it when it is dirty.
 

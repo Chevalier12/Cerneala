@@ -15,26 +15,30 @@ Inheritance:
 `object` -> `ItemContainerGenerator`
 
 ## Examples
-Realize the current items for an `ItemsControl` and read the metadata stored on the generated containers.
+Create a generator for an `ItemsControl`, realize its items, and read the metadata stored on the generated containers.
 
 ```csharp
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Items;
 using Cerneala.UI.Elements;
 
 ItemsControl itemsControl = new();
 itemsControl.SetItems(new[] { "Ink", "Brush" });
 
-IReadOnlyList<UIElement> containers = itemsControl.ItemContainerGenerator.Realize();
+ItemContainerGenerator generator = new(itemsControl);
+IReadOnlyList<UIElement> containers = generator.Realize();
 
-int firstIndex = ItemContainerGenerator.GetItemIndex(containers[0]);
-object? firstItem = ItemContainerGenerator.GetItem(containers[0]);
-bool firstIsSelected = ItemContainerGenerator.GetIsSelected(containers[0]);
+int firstIndex = ItemContainerGenerator.GetItemIndex(containers[0]);    // 0
+object? firstItem = ItemContainerGenerator.GetItem(containers[0]);      // "Ink"
+bool firstIsSelected = ItemContainerGenerator.GetIsSelected(containers[0]); // false
 ```
 
 ## Remarks
-`ItemContainerGenerator` is created by `ItemsControl` and uses the owning control to inspect items, choose container types, create containers, prepare containers, and clear containers.
+Every `ItemsControl` creates its own `ItemContainerGenerator` in its constructor and uses it to realize, prepare, recycle, and clear its containers. That instance is not exposed as public API. Code outside the framework can create another generator with the public constructor; the new generator keeps its own `RealizedContainers` and `RecyclePool`, separate from the control's own generator. The generator uses the owning control to inspect items, choose container types, create containers, prepare containers, and clear containers.
 
-`Realize` computes the requested item range from an optional `RealizationWindow`, clamps it to the current item count, recycles any realized containers outside that range, and returns containers for the requested indexes in order. `GetOrCreate` returns an already realized compatible container when possible. If the existing container is not compatible with the current item and container type, it is recycled before a replacement is obtained.
+`GetItemIndex`, `GetItem`, `GetIsSelected`, `SetInfo`, and `ClearInfo` are static. They read and write metadata attached to a container, so they work for containers produced by any generator, including the control's own one.
+
+`Realize` computes the requested item range from an optional `RealizationWindow`, clamps it to the owner's current view item count, recycles any realized containers outside that range, and returns containers for the requested indexes in order. `GetOrCreate` returns an already realized compatible container when possible. If the existing container is not compatible with the current item and container type, it is recycled before a replacement is obtained.
 
 Recycled containers are stored in `RecyclePool` by concrete container type. If the item is itself the generated `UIElement`, the generator clears and detaches it but does not push it into the recycle pool.
 
@@ -65,7 +69,7 @@ Container metadata is stored separately from the container instance. `GetItemInd
 | `ClearInfo(UIElement container)` | `void` | Resets the recorded metadata for `container` to index `-1`, item `null`, and unselected state. Throws `ArgumentNullException` when `container` is `null`. |
 
 ## Applies to
-`Cerneala.UI.Controls` item controls that use `ItemsControl.ItemContainerGenerator` for realization, recycling, and container metadata.
+`Cerneala.UI.Controls` item controls that realize, recycle, and describe item containers.
 
 ## See also
 - `ItemsControl`

@@ -33,7 +33,7 @@ Instances are immutable and owned by `PrismCatalog`. `StableId` matches the nume
 | `Symbol` | `string` | Gets the author-facing operation name. |
 | `Kind` | `PrismCatalogOperationKind` | Gets whether the operation is a filter or style. |
 | `Category` | `string` | Gets the catalog category. |
-| `Parameters` | `ImmutableArray<PrismCatalogParameterInfo>` | Gets parameters in catalog order. |
+| `Parameters` | `ImmutableArray<PrismCatalogParameterInfo>` | Gets the parameters sorted by `Id` with ordinal comparison, not in the order of the catalog file. For `Blur` the order is `EdgeMode`, `Quality`, `Radius`. |
 | `RequiresResource` | `bool` | Gets whether at least one required parameter needs a Prism resource. |
 
 ## Applies to

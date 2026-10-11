@@ -65,7 +65,7 @@ When the input is null, empty, or whitespace-only, `Read` returns a `MARKUP001` 
 ## Diagnostics
 | Code | Condition | Result |
 | --- | --- | --- |
-| `MARKUP001` | `markup` is null, empty, whitespace-only, or parses without a root element. | Returns an error diagnostic and a document with `Root` set to `null`. |
+| `MARKUP001` | `markup` is null, empty, or whitespace-only. | Returns an error diagnostic and a document with `Root` set to `null`. Input with no root element, such as `<?xml version="1.0"?>`, fails XML parsing and reports `MARKUP002` instead. |
 | `MARKUP002` | `XDocument.Parse` throws an `XmlException`. | Returns an error diagnostic. The result value is `null` unless `options.ContinueOnError` is `true`. |
 
 ## Applies to

@@ -230,8 +230,8 @@ Attached layout properties use dotted names:
     Text="Placed by the parent Grid" />
 ```
 
-For `Canvas`, verify the exact attached property in `UI/Controls/Canvas.cs`
-before using it.
+The source generator supports only `Grid.Row`, `Grid.Column`, `Grid.RowSpan`, `Grid.ColumnSpan`, and `Servo.Id` as attached properties. `Canvas.Left` and `Canvas.Top` report `CERNEALAUI003` in markup; set them in C# with `Canvas.SetLeft` and `Canvas.SetTop`
+(`UI/Layout/Panels/Canvas.cs`).
 
 ### XML escaping
 
@@ -394,7 +394,7 @@ This list describes available runtime classes, not a promise that every WPF
 property exists. Before using an unfamiliar control or property:
 
 1. Find an existing `.crn` usage.
-2. Read its class under `UI/Controls/`.
+2. Read its class under `UI/Controls/` (layout panels such as `Grid`, `StackPanel`, and `Canvas` live in `UI/Layout/Panels/`).
 3. Check its page under `docs-site/documentation/classes/`.
 4. Build immediately after the first small usage.
 
@@ -487,7 +487,7 @@ template are needed.
                     @templates
                     {
                         <ContentTemplate DataType="System.String">
-                            <Sprite2D SourceResourceId="$WorldAtlas">
+                            <Sprite2D Image="$WorldAtlas">
                                 <Sprite2D.Aspect>
                                     @prism
                                     {
@@ -518,7 +518,7 @@ template are needed.
 Scene composition uses `Scene2D` groups, `TileMap2D` static strata, individual
 `Sprite2D` nodes, and dynamic `SceneItems2D` collections. Static `Tile` declarations
 remain data inside a map. Compose independent maps and sprites as scene peers;
-bind an imported map model or declare direct tiles, not both. See the canonical
+in markup, a map declares direct `Tile` children; an imported `TileMap2DModel` is turned into a map in C# with `TileMap2D.FromModel`. See the canonical
 [TileMap2D API](../../docs-site/documentation/classes/Cerneala.UI.Controls.TileMap2D.md).
 
 ### Collision and routed input in a retained scene
@@ -688,9 +688,11 @@ Gradient stop offsets must be between `0` and `1`.
 
 ### Image resources for sprites
 
-Declare a path-backed atlas as a typed resource and reference it from any
-number of sprites. A non-null `SourceResourceId` takes precedence over
-`Sprite2D.Source`; all sprites under one root share the root-owned image cache.
+Declare a path-backed atlas as a typed resource and point any number of sprites
+at it with `Image`. Sprites that reference the same path-backed resource share
+one decoded image from the image cache their root uses; on the SDL3 + SDL_GPU
+desktop backend that cache belongs to the graphics device and is shared by every
+window.
 
 ```xml
 <RenderSurface2D
@@ -700,8 +702,8 @@ number of sprites. A non-null `SourceResourceId` takes precedence over
     </RenderSurface2D.Resources>
     <RenderSurface2D.Scene>
         <Scene2D>
-            <Sprite2D SourceResourceId="$WorldAtlas" />
-            <Sprite2D SourceResourceId="$WorldAtlas" />
+            <Sprite2D Image="$WorldAtlas" />
+            <Sprite2D Image="$WorldAtlas" />
         </Scene2D>
     </RenderSurface2D.Scene>
 </RenderSurface2D>
@@ -840,7 +842,8 @@ Inside aspects and templates, these source forms are common:
 - `$owner.Property`
 - `$DataContext.Property`
 - `$NamedElement.Property`
-- `$self.parts.$PART_Name.Property`
+- `$NamedControl.parts.$PART_Name.Property`, where `NamedControl` is the
+  `Name` of a control whose template declares `PART_Name`
 
 ### String interpolation
 
@@ -951,7 +954,10 @@ An unnamed aspect targets all matching controls in its resource scope:
 Existing markup uses:
 
 - `TargetType="Button"` for a normal control target;
-- `TargetType="Fully.Qualified.CustomType"` for a specific CLR type.
+- `TargetType="views:CustomType"` for a specific CLR type, where the element
+  declares `xmlns:views="clr-namespace:My.Namespace;assembly=MyAssembly"` (see
+  `CernealaPresentation/OpeningView.crn`). A dotted name without a prefix, such
+  as `My.Namespace.CustomType`, is not accepted.
 
 Follow the pattern already used in the surrounding file.
 
@@ -1001,8 +1007,9 @@ Inside a template:
 
 - `$owner` is the templated control;
 - `PART_` names are template-part contracts;
-- `$self.parts.$PART_Name.Property` can target a generated template part from
-  the applied aspect.
+- `$self.parts.$PART_Name.Property` is a Motion target for a generated template
+  part of the element the aspect is applied to. As a binding source, use
+  `$NamedControl.parts.$PART_Name.Property` instead.
 
 Do not nest arbitrary extra template roots. A template has one visual root.
 
@@ -1336,7 +1343,7 @@ implicit button sound.
 - Each application of an aspect (element, template part, item occurrence) has
   its own sounds; detaching it or replacing the aspect stops only those.
 - Motion animates a sound's running playback through `$self.timbre.Sound.Volume`
-  or `$self.timbre.Sound.Parameter` in `@animate`/`@keyframes`: it captures the
+  or `$self.timbre.Sound.Parameter` (a clip parameter that the sound's own modifiers use) in `@animate`/`@keyframes`: it captures the
   playback when it starts, never retargets a later one, starts timing at the
   first PCM, holds while paused or seeking and keeps running when the element
   is hidden. A sound that is not playing animates nothing.
@@ -1467,7 +1474,7 @@ For `CernealaPresentation`, the built-in automation supports:
 | `CERNEALA_PRESENTATION_AUTO_CONTINUE=1` | Skip the orientation window |
 | `CERNEALA_PRESENTATION_START_CHAPTER=N` | Open one-based chapter `N` |
 | `CERNEALA_PRESENTATION_TOUR_CAPTURE=path.png` | Save a native rendered frame |
-| `CERNEALA_PRESENTATION_CAPTURE_DURING_MOTION=1` | Capture while motion is active |
+| `CERNEALA_PRESENTATION_CAPTURE_DURING_MOTION=1` | Wait a fixed 1,350 ms instead of waiting for Servo idle before the capture, so motion may still be running |
 
 Example setup:
 

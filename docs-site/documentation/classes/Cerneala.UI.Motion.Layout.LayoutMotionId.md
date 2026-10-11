@@ -62,12 +62,15 @@ Because `LayoutMotionId` is a `readonly record struct`, values are immutable aft
 | --- | --- | --- |
 | `implicit operator LayoutMotionId(string value)` | `LayoutMotionId` | Creates a layout motion id from a string value. |
 | `implicit operator string(LayoutMotionId id)` | `string` | Returns the underlying `Value` from a layout motion id. |
+| `operator ==(LayoutMotionId left, LayoutMotionId right)` | `bool` | Returns whether two ids are equal. |
+| `operator !=(LayoutMotionId left, LayoutMotionId right)` | `bool` | Returns whether two ids are not equal. |
 
 ## Methods
 | Name | Description |
 | --- | --- |
 | `Deconstruct(out string Value)` | Deconstructs the id into its `Value` component. |
 | `Equals(LayoutMotionId other)` | Determines whether another `LayoutMotionId` has the same value. |
+| `Equals(object? obj)` | Determines whether an object is a `LayoutMotionId` with the same value. |
 | `GetHashCode()` | Returns a hash code based on `Value`. |
 | `ToString()` | Returns the compiler-generated record string representation. |
 

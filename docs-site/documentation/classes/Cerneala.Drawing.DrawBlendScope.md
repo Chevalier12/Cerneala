@@ -31,6 +31,13 @@ The selected blend applies to drawing commands until the scope is disposed. Disp
 | --- | --- |
 | `Dispose()` | Records the matching blend pop. |
 
+## Exceptions
+
+| Member | Exception | Condition |
+| --- | --- | --- |
+| `Dispose()` | `ObjectDisposedException` | The same scope variable is disposed a second time. |
+| `Dispose()` | `InvalidOperationException` | Another scope opened later on the same `DrawingContext` is still open, so the scopes are not disposed in last-in, first-out order. |
+
 ## Applies To
 
 Cerneala drawing state recording.

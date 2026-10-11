@@ -55,7 +55,7 @@ The constructor with an explicit identity throws `ArgumentException` when `ident
 | Name | Type | Description |
 | --- | --- | --- |
 | `Font` | `IDrawFont` | Gets the resolved draw font. |
-| `Identity` | `string` | Gets the identity string used to distinguish resolved font instances. |
+| `Identity` | `string` | Gets the identity string `"<FamilyName>:<Size>"` used in text layout cache keys. Two fonts with the same family name and size have the same identity. |
 
 ## Applies To
 

@@ -64,7 +64,7 @@ The `HitTest(UIElement, ElementInputRouteMap, float, float, HitTestFilter?)` ove
 
 Elements are skipped when they are presence-exiting, do not participate in hit testing through visibility state, or are disabled. Disabled elements also cause their subtree to be skipped.
 
-Clipping is honored only when a `ClipNode` is set on an element. A child outside its parent's arranged bounds can still be hit when the parent is not clipped. The root viewport is special: points outside a `UIRoot` viewport are rejected.
+Clipping is honored when a `ClipNode` is set on an element, or when `ClipToBounds` is `true` (the clip is then the element's arranged bounds). A child outside its parent's arranged bounds can still be hit when the parent is not clipped. The root viewport is special: points outside a `UIRoot` viewport are rejected.
 
 Hit testing starts from arranged layout bounds, then maps the pointer into each element's transformed coordinate space. Render and motion transforms therefore move, scale, and rotate the effective hit-test region. A non-invertible transform makes that element and its subtree un-hittable.
 

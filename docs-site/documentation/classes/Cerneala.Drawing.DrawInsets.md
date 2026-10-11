@@ -23,7 +23,7 @@ drawing.DrawNineSlice(image, destination, borders);
 
 ## Remarks
 
-Insets use source-image pixel units and must be finite and non-negative. Horizontal and vertical inset pairs must fit the selected source region. When a destination is smaller than an opposing inset pair, Cerneala scales that pair proportionally so the nine regions remain deterministic and do not cross.
+Insets use source-image pixel units and must be finite and non-negative. Horizontal and vertical inset pairs must fit the selected source region; otherwise building the nine-slice command throws `ArgumentException`. The `DrawInsets` constructor does not check this, because it does not know the source region. When a destination is smaller than an opposing inset pair, Cerneala scales that pair proportionally so the nine regions remain deterministic and do not cross.
 
 ## Constructors
 

@@ -65,7 +65,7 @@ sealed record DemoFont(string FamilyName, float Size) : IDrawFont;
 - From a `TextAspect`, using `TextAspect.FontResourceId` when present or `TextAspect.FontFamily` with `TextAspect.FontSize * TextAspect.Scale` otherwise.
 - From a `ResourceId<FontResource>`, when the resolver was constructed with an `IResourceProvider`.
 
-The parameterless constructor uses `SystemFontSource`, so family-name resolution performs the normal system-font lookup used by the drawing stack. A deterministic fallback `IDrawFont` is used only when the two-parameter constructor is given a `null` font source, for example `new FontResolver(null, null)`; it stores only the requested family name and size and does not perform global font lookup or rasterization by itself.
+The parameterless constructor uses `SystemFontSource`, so family-name resolution performs the normal system-font lookup used by the drawing stack. A deterministic fallback `IDrawFont` is used when there is no font source: with the one-parameter `FontResolver(IResourceProvider)` constructor, or when the two-parameter constructor is given a `null` font source, for example `new FontResolver(null, null)`; it stores only the requested family name and size and does not perform global font lookup or rasterization by itself.
 
 When an `IFontSource` is supplied, `Resolve(string, float)` delegates directly to `IFontSource.LoadFont`. If that source returns `null`, `ResolvedTextFont` throws `ArgumentNullException`; `FontResolver` does not silently fall back.
 
@@ -76,7 +76,7 @@ Resource-backed resolution requires an `IResourceProvider`. If the provider is a
 | --- | --- |
 | `FontResolver()` | Creates a resolver backed by the default `SystemFontSource`; it has no resource provider. |
 | `FontResolver(IFontSource fontSource)` | Creates a resolver that loads family-name requests through `fontSource`. Throws `ArgumentNullException` when `fontSource` is `null`. |
-| `FontResolver(IResourceProvider resourceProvider)` | Creates a resolver that can resolve `FontResource` values. Throws `ArgumentNullException` when `resourceProvider` is `null`. |
+| `FontResolver(IResourceProvider resourceProvider)` | Creates a resolver that can resolve `FontResource` values and has no font source, so family names resolve to the deterministic fallback font. Throws `ArgumentNullException` when `resourceProvider` is `null`. |
 | `FontResolver(IFontSource? fontSource, IResourceProvider? resourceProvider)` | Creates a resolver with optional family-name and resource-backed font services. `null` values are accepted. |
 
 ## Properties

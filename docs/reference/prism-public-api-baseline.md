@@ -6,8 +6,8 @@ Captured before the Prism foundation implementation on 2026-07-19. This baseline
 records the public host and drawing contracts that later Prism plans are expected
 to extend. It intentionally contains no proposed members and no Prism types.
 
-The MonoGame/WindowsDX signatures below are historical baseline inputs only.
-Those adapters were retired; the current audit loads the core and SDL_GPU
+The MonoGame signature below is a historical baseline input only (`SpriteBatch` and `Texture2D` were MonoGame types). The `IDrawingBackend` and `IUiBackend` blocks show those interfaces at capture time; the final compatibility table below records how they changed. The MonoGame and WindowsDX adapters were retired.
+The current audit loads the core and SDL_GPU
 delivered assemblies.
 
 The final API comparison must account for every signature added to or changed from
@@ -75,7 +75,7 @@ or diagnostics scenario and a matching API page/manifest entry.
 | --- | --- | --- |
 | `IDrawingBackend.Render(DrawCommandList)` -> `Render(DrawCommandList, in DrawingFrameContext)` | Source and binary breaking for custom drawing backends | Necessary: the host must pass one validated per-frame context, including the optional backdrop lease, without duplicate analysis or backend-specific host coupling. |
 | `IUiBackend.BackdropFrameSource` | Additive default interface member | Existing implementations inherit `null`; no backdrop provider is required. |
-| Historical `MonoGameUiHostOptions.BackdropFrameSource` and `PrismRendererOptions` | Additive optional properties when introduced; later removed with the adapter | The maintained SDL composition does not expose a replacement configuration facade. |
+| Historical `MonoGameUiHostOptions.BackdropFrameSource` and `MonoGameUiHostOptions.PrismRendererOptions` properties | Additive optional properties when introduced; later removed with the adapter (the `PrismRendererOptions` type itself remains public) | The maintained SDL composition does not expose a replacement configuration facade. |
 | `SceneNode2D.PrismInputDomain` | Additive | Declares the required finite source domain for a spatially virtualized scene composition when automatic input selection is unavailable. |
 | `BeginPrism`/`EndPrism` and the public authoring/runtime/host Prism types | Additive | Non-Prism backends ignore the delimiters and render interior commands. Exhaustive enum switches should retain a default case. |
 | `PrismImage`, `PrismPipeline`, `PrismOperation`, `PrismFilter`, `PrismStyle`, and the 144 catalog-generated filter/style types | Additive | Strongly typed image-pipeline authoring approved by the RenderSurface2D delivery; the catalog remains the source of operation names and parameter contracts. |

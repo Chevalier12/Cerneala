@@ -55,9 +55,8 @@ var rule = new MarkupConditionRule(
 ## Constructors
 | Name | Description |
 | --- | --- |
-| `MarkupConditionRule(int, Func<bool>, IReadOnlyList<MarkupConditionalValue>?, MarkupConditionalContent?)` | Creates one generated condition rule. |
-| `MarkupConditionRule(int, Func<bool>, IReadOnlyList<MarkupConditionalValue>?, MarkupConditionalContent?, Action?, Action?)` | Creates a rule with optional activation and deactivation callbacks. |
-| `MarkupConditionRule(int, Func<bool>, IReadOnlyList<MarkupConditionalValue>?, MarkupConditionalContent?, Action?, Action?, Action<bool>?)` | Creates a rule with transition callbacks and an optional condition-state notifier. |
+| `MarkupConditionRule(int, Func<bool>, IReadOnlyList<MarkupConditionalValue>?, MarkupConditionalContent?)` | Creates one generated condition rule. `values` and `content` default to `null`. |
+| `MarkupConditionRule(int, Func<bool>, IReadOnlyList<MarkupConditionalValue>?, MarkupConditionalContent?, Action?, Action?, Action<bool>?)` | Creates a rule with an activation callback. The deactivation callback and the condition-state notifier default to `null`. |
 | `MarkupConditionRule(int, Func<bool>, IReadOnlyList<MarkupConditionalValue>?, MarkupConditionalContent?, Action?, Action?, Action<bool>?, Action<Action?>?)` | Also takes the renderability-independent sound activation, which receives the visual activation when it is due in the same evaluation. |
 
 ## Properties

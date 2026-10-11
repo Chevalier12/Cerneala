@@ -56,7 +56,7 @@ When `IsReadOnly` is `true`, text can still be selected and copied, and `Text` c
 
 Pointer selection captures the mouse until the left button is released or capture is lost. Long text uses an internal horizontal viewport to keep the caret visible.
 
-The control renders its background, border, text, selection and blinking caret directly. Default chrome is supplied through `AspectBase`, so aspects and local values can override it.
+The control renders its background, border, text, selection and blinking caret directly. Default chrome is stored as framework defaults at the `Default` value source: `Padding` `4,2,4,2`, `BorderThickness` `1`, `BorderBrush` `Color(120, 130, 145)`, and a white `Background`. Any Aspect, local, or other higher-source value replaces them.
 
 Derived controls can override `NormalizeTextInput`, `OnTextChanged` and `OnSelectionChanged`. Event hooks must call the base implementation when the routed event should continue to be raised.
 

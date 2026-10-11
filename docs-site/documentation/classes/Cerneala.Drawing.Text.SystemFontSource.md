@@ -33,7 +33,7 @@ IDrawFont font = fontSource.LoadFont("Arial", 16);
 
 `LoadFont` first resolves the requested family name through `SKFontManager.Default.MatchFamily`. It also accepts common named-weight suffixes such as `SemiBold`, `ExtraBold`, and `Light`; for example, `Cascadia Mono SemiBold` resolves the `Cascadia Mono` family at weight 600. If neither the exact name nor a named-weight form resolves, the implementation falls back to `SKTypeface.Default` and still creates a `SkiaFont` with the requested family name and size.
 
-The type does not expose caching or lifetime management. Each successful `LoadFont` call creates and returns a new `SkiaFont` instance.
+The type exposes no caching or lifetime API, but it caches resolved typefaces in a process-wide static dictionary keyed by family name (case-insensitive). Entries are never removed. Each successful `LoadFont` call creates and returns a new `SkiaFont` instance over the cached typeface; for example, `LoadFont("Arial", 12)` and `LoadFont("arial", 20)` return two different `SkiaFont` objects that share one `SKTypeface`.
 
 ## Constructors
 | Name | Description |

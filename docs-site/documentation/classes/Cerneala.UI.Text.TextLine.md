@@ -1,4 +1,4 @@
-# TextLine Class
+# TextLine Struct
 
 ## Definition
 Namespace: `Cerneala.UI.Text`

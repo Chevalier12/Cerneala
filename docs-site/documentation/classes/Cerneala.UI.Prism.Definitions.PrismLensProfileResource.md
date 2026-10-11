@@ -7,8 +7,8 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Prism/Definitions/PrismLensProfileResource.cs`
 
-Stores pre-fitted sparse polynomial ray-transfer models used by the Prism
-`LensFlare` filter.
+Stores pre-fitted sparse polynomial ray-transfer models for the Prism
+`LensFlare` filter. The current SDL_GPU renderer does not read it; see Remarks.
 
 ```csharp
 public sealed class PrismLensProfileResource
@@ -34,9 +34,12 @@ PrismLensProfileResource profile = new(
 ## Remarks
 
 The profile is immutable and reusable. Each ghost describes one reflection
-path, while each angular region stores six sparse transfer polynomials. Prism
-evaluates a coarse pupil grid, rejects blocked rays, bins the resulting
-triangles into screen tiles, and caches the flare texture for rendering.
+path, while each angular region stores six sparse transfer polynomials.
+
+Current behavior: the SDL_GPU renderer resolves the resource reference of the
+`LensFlare` filter only as an image, so it never reads a `PrismLensProfileResource`.
+The pupil-grid evaluation, blocked-ray rejection, and tile binning exist only in a
+CPU reference renderer that no rendering path calls.
 
 Fitting is an offline operation performed by
 `PrismLensProfileFitter`; rendering does not analytically trace the lens.
@@ -58,6 +61,7 @@ Fitting is an offline operation performed by
 
 | Member | Exception | Condition |
 | --- | --- | --- |
+| Constructor | `ArgumentNullException` | `ghosts` is `null`. |
 | Constructor | `ArgumentException` | `ghosts` is empty. |
 | Constructor | `ArgumentOutOfRangeException` | `pupilGridSize` is outside `[2, 32]`. |
 

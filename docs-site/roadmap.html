@@ -42,10 +42,10 @@
     <div class="roadmap-hero__copy">
       <span class="section-code">Retained realtime UI</span>
       <h1>The game view<br><span>is a Control.</span></h1>
-      <p>Cerneala already combines ordinary application UI and complete 2D game rendering in one retained tree. The work ahead is about making SDL3 GPU the primary backend, evolving Cerberus without breaking retained ownership, and turning a source-first framework into something other developers can adopt without archaeology.</p>
+      <p>Cerneala already combines ordinary application UI and complete 2D game rendering in one retained tree. The work ahead is about keeping SDL3 GPU verified as the sole desktop backend, evolving Cerberus without breaking retained ownership, and turning a source-first framework into something other developers can adopt without archaeology.</p>
     </div>
     <div class="roadmap-hero__telemetry" aria-label="Roadmap status summary">
-      <div><span>Snapshot</span><strong>8/28/2026</strong></div>
+      <div><span>Snapshot</span><strong>10/11/2026</strong></div>
       <div><span>Established arcs</span><strong>04</strong></div>
       <div><span>Active arcs</span><strong>02</strong></div>
       <div><span>Planned arcs</span><strong>02</strong></div>
@@ -114,8 +114,8 @@
         <div class="roadmap-node__body">
           <span class="roadmap-node__state">Strategic direction</span>
           <h3>Verify the SDL3-only migration</h3>
-          <p>Defaults and active samples now use SDL3. MonoGame and WindowsDX APIs have been removed without a compatibility facade. Migrated shared-contract tests, native conformance, and full-suite gates remain the evidence for completion.</p>
-          <div class="node-tags"><span>SDL3 default</span><span>backend conformance</span><span>migration gates</span></div>
+          <p>Active samples select SDL3 explicitly; the framework registers no default backend. MonoGame and WindowsDX APIs have been removed without a compatibility facade. Migrated shared-contract tests, native conformance, and full-suite gates remain the evidence for completion.</p>
+          <div class="node-tags"><span>SDL3 only</span><span>backend conformance</span><span>migration gates</span></div>
         </div>
       </article>
 
@@ -134,7 +134,7 @@
         <div class="roadmap-node__body">
           <span class="roadmap-node__state">Planned renderer architecture</span>
           <h3>Cerberus V2</h3>
-          <p>The checked-in plans cover the compiler and encoder core, frame scheduling and upload arenas, retained compiled packets and GPU geometry, and multi-texture material pages. Planned does not mean delivered.</p>
+          <p>The planned work covers the compiler and encoder core with a state shadow, frame scheduling and upload arenas, retained compiled packets and GPU geometry, and multi-texture material pages. Its plan files were never checked in; only the private Cerberus batch executor ships in the SDL_GPU backend. Planned does not mean delivered.</p>
           <div class="node-tags"><span>state shadow</span><span>retained geometry</span><span>multi-texture</span></div>
         </div>
       </article>

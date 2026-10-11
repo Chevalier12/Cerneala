@@ -18,6 +18,7 @@ public static class PrismLensProfileFitter
 ```csharp
 using System.Linq;
 using System.Numerics;
+using Cerneala.Drawing.Prism.Filters;
 using Cerneala.UI.Prism.Definitions;
 
 PrismLensFlareRaySample sample = new(
@@ -67,7 +68,7 @@ least one region.
 | --- | --- |
 | `ArgumentNullException` | `samples` is `null`. |
 | `ArgumentException` | `samples` is empty, or a ghost does not contain enough samples for any fitted angular region. |
-| `ArgumentOutOfRangeException` | `options` contains an unsupported or non-finite value. |
+| `ArgumentOutOfRangeException` | `options` contains an unsupported or non-finite value; a sample has a negative `IncidenceAngleDegrees`; or a non-finite sample value (for example a NaN `AperturePosition`) produces a non-finite fitted coefficient. |
 
 ## See also
 

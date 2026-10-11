@@ -112,6 +112,11 @@ The primary constructor preserves the original frame and Motion counter contract
 | --- | --- | --- |
 | `ToString()` | `string` | Formats selected counters into a stable invariant-culture diagnostics line. |
 | `Deconstruct(...)` | `void` | Deconstructs the positional record into its original frame, render, hit-test, Motion, and `HasWork` component values. |
+| `Equals(object?)` | `bool` | Returns whether the object is a `FrameDiagnosticsSnapshot` with equal component values. |
+| `Equals(FrameDiagnosticsSnapshot?)` | `bool` | Returns whether the other snapshot has equal component values. |
+| `GetHashCode()` | `int` | Returns a hash code based on the component values. |
+| `operator ==(FrameDiagnosticsSnapshot?, FrameDiagnosticsSnapshot?)` | `bool` | Returns whether both snapshots are equal by value, or both are `null`. |
+| `operator !=(FrameDiagnosticsSnapshot?, FrameDiagnosticsSnapshot?)` | `bool` | Returns the negation of `==`. |
 
 ## Applies to
 

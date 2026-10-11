@@ -13,22 +13,24 @@ This audit maps the current retained control surface to applicable WPF event con
 ## Implemented control events
 
 - `ButtonBase`: `Click`.
-- `ToggleButton`, `CheckBox`, `RadioButton`: `Checked` and `Unchecked` inherited from the shared primitive.
+- `ToggleButton`, `CheckBox`: `Checked` and `Unchecked` inherited from the shared primitive. `RadioButton` derives from `Button`; it has `IsChecked` but no `Checked` or `Unchecked` event.
 - `RangeBase`, `Slider`, `ProgressBar`, `ScrollBar`: `ValueChanged`; `ScrollBar` also exposes `Scroll`.
 - `Selector`, `ListBox`, `ComboBox`, `TabControl`: `SelectionChanged`; selectable item containers also raise `Selected` and `Unselected`.
 - `ComboBox`: routed `DropDownOpened` and `DropDownClosed`, emitted when its in-root overlay is actually projected or withdrawn.
 - `Thumb`: routed `DragStarted`, `DragDelta`, and `DragCompleted` while retaining typed CLR handlers.
-- `TextBoxBase`, `TextBox`, `PasswordBox`: `TextChanged`, text `SelectionChanged`, and `PasswordChanged`.
+- `TextBox`: `TextChanged` and text `SelectionChanged`. `PasswordBox`: `PasswordChanged`. There is no shared `TextBoxBase`; both derive from `Control`.
 - `ScrollViewer`: `ScrollChanged`.
 - `ToolTip`: `Opened` and `Closed`.
+- `Window`: `SourceInitialized`, `Activated`, `Deactivated`, `Closing`, `Closed`, `StateChanged`, `LocationChanged`, `ContentRendered`, and `FrameRendered`.
+- `MenuItem`: routed `Click`, `SubmenuOpened`, and `SubmenuClosed`.
 - `InkCanvas`: `StrokeCollected` for completed stylus/touch strokes.
 
 ## Not applicable to the current surface
 
-- `Image.ImageFailed`: the current `Image` consumes an already resolved `ImageSource`; loading and failure live in resource services, not the control.
+- `Image.ImageFailed`: `Image` has no failure event. It resolves `Source` or `SourceResourceId` itself and reports the outcome through the read-only `LoadingState` (`Loading`, `Ready`, `Error`) and `LoadingError` properties.
 - `InkCanvas` erasing, gesture, and selection events: there is no erase mode, gesture recognition contract, or stroke selection model in `InkCanvas` yet.
-- `TextBoxBase` rich-text/clipboard command events: there is no `RichTextBox`, document formatting surface, or WPF command manager equivalent.
-- Window, navigation, menu, media, calendar, date picker, document, and data-grid events: those control families do not exist in this repository.
+- WPF `TextBoxBase` rich-text/clipboard command events: there is no `RichTextBox`, document formatting surface, or WPF command manager equivalent.
+- Navigation, media, calendar, date picker, document, and data-grid events: those control families do not exist in this repository.
 - WPF dispatcher/layout-pass `LayoutUpdated`: Cerneala exposes deterministic retained frame/layout diagnostics instead; a per-element WPF-style global layout callback would fight the retained scheduler and create misleading semantics.
 
 ## Primary references

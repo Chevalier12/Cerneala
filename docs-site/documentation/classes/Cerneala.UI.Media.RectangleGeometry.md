@@ -53,7 +53,7 @@ Rectangle rectangle = new()
 
 `RectangleGeometry` is a small immutable geometry value. The primary constructor stores the supplied `DrawRect` in the `Rect` property, and the overridden `Bounds` property returns the same rectangle.
 
-The rectangle describes the geometry bounds in drawing coordinates. Rendering code in `Shape` handles `RectangleGeometry` by transforming its bounds, then emitting fill and stroke rectangle drawing commands when the transformed width and height are both greater than zero.
+The rectangle describes the geometry bounds in drawing coordinates. Rendering code in `Shape` handles `RectangleGeometry` by emitting fill and stroke rectangle drawing commands for `Bounds` as stored, without transforming them, when its width and height are both greater than zero. A brush counts as visible when its `Opacity` is greater than zero and, for a solid color brush, its color alpha is greater than zero; gradient, image, and visual brushes count as visible.
 
 Because `RectangleGeometry` is a sealed record, instances support value equality based on their record state. Two instances with equal `Rect` values compare as equal.
 
@@ -85,9 +85,9 @@ Because `RectangleGeometry` is a sealed record, instances support value equality
 
 | Condition | Result |
 | --- | --- |
-| `Fill` resolves to a visible solid color and transformed bounds are positive | `Shape` emits a fill rectangle command. |
-| `Stroke` resolves to a visible solid color, `StrokeThickness > 0`, and transformed bounds are positive | `Shape` emits a stroke rectangle command. |
-| Transformed width or height is `0` | Fill and stroke rectangle drawing are skipped by `Shape`. |
+| `Fill` is a visible brush and the bounds are positive | `Shape` emits a fill rectangle command. |
+| `Stroke` is a visible brush, `StrokeThickness > 0`, and the bounds are positive | `Shape` emits a stroke rectangle command. |
+| Width or height is `0` or less | Fill and stroke rectangle drawing are skipped by `Shape`. |
 
 ## Applies To
 

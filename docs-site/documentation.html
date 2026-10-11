@@ -480,7 +480,7 @@ h1{
       <h1>API Reference</h1>
       <div class="sidebar__stats">
         <span><strong id="doc-count">0</strong> documented types</span>
-        <span><strong id="group-count">0</strong> namespaces</span>
+        <span><strong id="group-count">0</strong> groups</span>
       </div>
       <div class="search-box">
         <span class="search-box__icon" aria-hidden="true">⌕</span>
@@ -1074,7 +1074,7 @@ async function selectDoc(doc, updateHash) {
   state.active = doc;
   state.expanded.add(doc.category);
   renderList();
-  filenameEl.textContent = doc.name + '.md';
+  filenameEl.textContent = doc.file.split('/').pop();
   contentEl.innerHTML = '<div class="loading">Loading ' + escapeHtml(doc.name) + '...</div>';
   tocListEl.innerHTML = '';
   updateDocumentNavigation(doc);

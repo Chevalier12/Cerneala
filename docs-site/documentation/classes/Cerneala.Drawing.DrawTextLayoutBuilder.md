@@ -25,7 +25,7 @@ DrawTextLayout layout = new DrawTextLayoutBuilder()
 
 ## Remarks
 
-`Build` keys the bounded cache by content, font and brush identities, styles, constraints, direction, and scale. Rebuilding identical input returns the reusable layout rather than reshaping and reflowing it.
+`Build` looks up a static, process-wide cache of at most 256 layouts. The key contains every option value and, per span, the text, size, opacity, and the object identities (`RuntimeHelpers.GetHashCode`) of the font, brush, and fallback fonts. When the cache holds more than 256 entries, the oldest inserted entry is removed first; a cache hit does not refresh an entry. Rebuilding identical input returns the reusable layout rather than reshaping and reflowing it.
 
 ## Constructors
 
@@ -41,6 +41,13 @@ DrawTextLayout layout = new DrawTextLayoutBuilder()
 | `AddSpan(string, IDrawFont, float, IDrawBrush, float)` | `DrawTextLayoutBuilder` | Creates and appends a brush span. |
 | `AddSpan(string, IDrawFont, float, Color, float)` | `DrawTextLayoutBuilder` | Creates and appends a color span. |
 | `Build(DrawTextLayoutOptions?)` | `DrawTextLayout` | Returns a cached or newly measured immutable layout. |
+
+## Exceptions
+
+| Method | Exception | Condition |
+| --- | --- | --- |
+| `AddSpan(DrawTextSpan)` | `ArgumentNullException` | `span` is `null`. |
+| `AddSpan(string, IDrawFont, float, IDrawBrush, float)` and `AddSpan(string, IDrawFont, float, Color, float)` | Same as the `DrawTextSpan` constructor | The arguments fail the [DrawTextSpan](Cerneala.Drawing.DrawTextSpan.md) validation. |
 
 ## Applies To
 

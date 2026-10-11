@@ -30,7 +30,7 @@ TextBlock label = new()
 
 ## Remarks
 
-`CharacterEllipsis` keeps the longest prefix that fits at a Unicode text-element boundary and appends the `U+2026` ellipsis glyph. It does not split surrogate pairs or combining-character sequences.
+`CharacterEllipsis` keeps the longest prefix that fits at a Unicode text-element boundary and appends the `U+2026` ellipsis glyph. When the available width is zero, negative, or not finite, or narrower than the ellipsis itself, both ellipsis modes produce an empty line without an ellipsis. It does not split surrogate pairs or combining-character sequences.
 
 `WordEllipsis` prefers the closest complete word or line-break boundary that fits with the ellipsis. When the first word is wider than the available line, it falls back to character-boundary trimming so the line can still show useful content.
 

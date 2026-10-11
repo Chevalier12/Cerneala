@@ -41,6 +41,17 @@ open after loading or saving.
 | `Serialize(PrismLensProfileResource, bool)` | `string` | Serializes a profile, indented by default. |
 | `Save(Stream, PrismLensProfileResource, bool)` | `void` | Writes UTF-8 JSON to a stream. |
 
+## Exceptions
+
+| Member | Exception | Condition |
+| --- | --- | --- |
+| `Parse` | `ArgumentNullException` | `json` is `null`. |
+| `Parse` | `ArgumentException` | `json` is empty or whitespace. |
+| `Load` | `ArgumentNullException` | `stream` is `null`. |
+| `Serialize` | `ArgumentNullException` | `profile` is `null`. |
+| `Save` | `ArgumentNullException` | `stream` or `profile` is `null`. |
+| `Parse`, `Load` | `JsonException` | The JSON is malformed, is the literal `null`, contains a property that the profile format does not define, or describes a profile that the resource constructors reject (for example an empty ghost list). |
+
 ## See also
 
 - [PrismLensProfileResource](Cerneala.UI.Prism.Definitions.PrismLensProfileResource.md)

@@ -1,4 +1,4 @@
-# TextSelection Class
+# TextSelection Struct
 
 ## Definition
 Namespace: `Cerneala.UI.Text`
@@ -23,7 +23,7 @@ Create and clamp a selection:
 ```csharp
 using Cerneala.UI.Text;
 
-TextSelection selection = new(anchor: 8, active: 2);
+TextSelection selection = new(Anchor: 8, Active: 2);
 TextSelection clamped = selection.Clamp(documentLength: 5);
 
 int start = clamped.Start;

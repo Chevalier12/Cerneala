@@ -63,7 +63,7 @@
     </nav>
     <div class="chapter-rail__status">
       <span>Snapshot</span>
-      <strong>7/14/2026</strong>
+      <strong>10/11/2026</strong>
       <small>Staleness risk: high</small>
     </div>
   </aside>
@@ -80,12 +80,12 @@
         <p class="snapshot__lead">A dense translation manual for developers arriving with WPF instincts and needing to know exactly which instincts transfer, which names merely look familiar, and where Cerneala deliberately becomes a different machine.</p>
       </div>
       <div class="stale-warning">
-        <div class="stale-warning__flag">Updated 7/14/2026</div>
+        <div class="stale-warning__flag">Updated 10/11/2026</div>
         <p>This page may already be stale. Cerneala is under daily construction; its API surface, markup grammar, hosts, behavior, limitations, and architecture can evolve substantially. Treat this as a dated field report, not a compatibility contract. Verify claims against the current source and API reference before shipping.</p>
       </div>
       <div class="snapshot__metrics" aria-label="Repository snapshot metrics">
-        <div><strong id="api-count">859</strong><span>API documents</span></div>
-        <div><strong id="namespace-count">49</strong><span>source groups</span></div>
+        <div><strong id="api-count">1104</strong><span>API documents</span></div>
+        <div><strong id="namespace-count">58</strong><span>source groups</span></div>
         <div><strong>8 + idle</strong><span>frame phases</span></div>
         <div><strong>2</strong><span>hosting paths</span></div>
         <div><strong>0</strong><span>compatibility promises</span></div>
@@ -198,7 +198,7 @@
         <div class="translation-row"><span>XAML maps markup to CLR objects and may compile to BAML.</span><span><code>.crn</code> is an AdditionalFile consumed by a Roslyn source generator that emits typed partial C#.</span><span class="status status--different">Different</span></div>
         <div class="translation-row"><span><code>.xaml.cs</code> supplies code-behind.</span><span>A matching <code>.crn.cs</code> partial class supplies behavior and validated handlers.</span><span class="status status--close">Close</span></div>
         <div class="translation-row"><span>Markup extensions, arbitrary namespaces, runtime loading, and the broad XAML language.</span><span>Only the documented Cerneala grammar: elements, properties, events, resources, Aspects, logical <code>@when</code>/<code>@if</code>, templates, and source-generated bindings/interpolation.</span><span class="status status--partial">Constrained</span></div>
-        <div class="translation-row"><span>Visual Studio XAML designer and mature design-time metadata.</span><span>No WPF designer compatibility or general design surface is promised.</span><span class="status status--absent">Absent</span></div>
+        <div class="translation-row"><span>Visual Studio XAML designer and mature design-time metadata.</span><span>The Visual Studio extension renders a live preview through PreviewHost; no WPF designer compatibility or general design surface is promised.</span><span class="status status--different">Different</span></div>
       </div>
     </section>
 
@@ -232,7 +232,7 @@
       </div>
       <div class="precedence">
         <span>Current Cerneala value precedence</span>
-        <div><b>1</b>Local</div><i></i><div><b>2</b>Animation</div><i></i><div><b>3</b>Aspect state</div><i></i><div><b>4</b>Aspect base</div><i></i><div><b>5</b>Inherited</div><i></i><div><b>6</b>Default</div>
+        <div><b>1</b>Local</div><i></i><div><b>2</b>Animation</div><i></i><div><b>3</b>Markup conditional</div><i></i><div><b>4</b>Markup base</div><i></i><div><b>5</b>Template owner binding</div><i></i><div><b>6</b>Aspect state</div><i></i><div><b>7</b>Aspect base</div><i></i><div><b>8</b>Template binding</div><i></i><div><b>9</b>Inherited</div><i></i><div><b>10</b>Default</div>
       </div>
       <div class="delta-grid">
         <div><span class="status status--close">Close analogue</span><h3>Registration and metadata</h3><p>Typed registration, default values, equality, validation, coercion, read-only keys, inheritance, and invalidation flags cover the core retained-property job.</p></div>
@@ -371,17 +371,17 @@
         <article class="control-ledger__present">
           <header><span>Present in the documented surface</span><strong>Core retained controls</strong></header>
           <div class="control-tags">
-            <span>Window</span><span>UserControl</span><span>Control</span><span>ContentControl</span><span>ContentPresenter</span><span>Border</span><span>Button</span><span>RepeatButton</span><span>ToggleButton</span><span>CheckBox</span><span>RadioButton</span><span>TextBlock</span><span>TextBox</span><span>PasswordBox</span><span>ItemsControl</span><span>ListBox</span><span>ComboBox</span><span>TabControl</span><span>ScrollViewer</span><span>ScrollBar</span><span>Slider</span><span>ProgressBar</span><span>ToolTip</span><span>Image</span><span>InkCanvas</span><span>Grid</span><span>StackPanel</span><span>Canvas</span><span>VirtualizingStackPanel</span><span>Rectangle</span><span>Ellipse</span><span>Path</span>
+            <span>Window</span><span>UserControl</span><span>Control</span><span>ContentControl</span><span>ContentPresenter</span><span>Border</span><span>Button</span><span>RepeatButton</span><span>ToggleButton</span><span>CheckBox</span><span>RadioButton</span><span>TextBlock</span><span>TextBox</span><span>PasswordBox</span><span>ItemsControl</span><span>ListBox</span><span>ComboBox</span><span>TabControl</span><span>ScrollViewer</span><span>ScrollBar</span><span>Slider</span><span>ProgressBar</span><span>ToolTip</span><span>Menu</span><span>MenuBar</span><span>MenuItem</span><span>Image</span><span>InkCanvas</span><span>Grid</span><span>StackPanel</span><span>Canvas</span><span>VirtualizingStackPanel</span><span>Rectangle</span><span>Ellipse</span><span>Path</span>
           </div>
         </article>
         <article class="control-ledger__absent">
           <header><span>Absent or not a supported parity claim</span><strong>Major WPF families</strong></header>
           <div class="control-tags">
-            <span>DataGrid</span><span>TreeView</span><span>ListView / GridView</span><span>Menu</span><span>ContextMenu</span><span>Ribbon</span><span>Calendar</span><span>DatePicker</span><span>RichTextBox</span><span>FlowDocument</span><span>DocumentViewer</span><span>MediaElement</span><span>WebBrowser</span><span>Frame / Page navigation</span><span>3D viewport</span><span>Printing stack</span><span>DockPanel</span><span>WrapPanel</span><span>UniformGrid</span><span>WPF Adorners parity</span>
+            <span>DataGrid</span><span>TreeView</span><span>ListView / GridView</span><span>ContextMenu</span><span>Ribbon</span><span>Calendar</span><span>DatePicker</span><span>RichTextBox</span><span>FlowDocument</span><span>DocumentViewer</span><span>MediaElement</span><span>WebBrowser</span><span>Frame / Page navigation</span><span>Viewport3D scene graph</span><span>Printing stack</span><span>DockPanel</span><span>WrapPanel</span><span>UniformGrid</span><span>WPF Adorners parity</span>
           </div>
         </article>
       </div>
-      <p class="chapter-note">A public type with a familiar name is not proof of full WPF behavior. The current <code>ComboBox</code> has a retained in-root overlay, editable text mode, WPF-style prefix autocomplete, opt-in filtering with fuzzy ranking, transactional selection, adaptive placement, and drop-down events, but does not claim native-popup parity. <code>InkCanvas</code> does not imply WPF erasing, gesture, or stroke-selection parity.</p>
+      <p class="chapter-note">A public type with a familiar name is not proof of full WPF behavior. The current <code>ComboBox</code> has a retained in-root overlay, editable text mode, WPF-style prefix autocomplete, text filtering with fuzzy ranking (on by default), transactional selection, adaptive placement, and drop-down events, but does not claim native-popup parity. <code>InkCanvas</code> does not imply WPF erasing, gesture, or stroke-selection parity.</p>
     </section>
 
     <section class="chapter" id="platform">
@@ -412,7 +412,7 @@
         <li><span>05</span><div><strong>Translate bindings into compiled paths.</strong><p>Use typed <code>$DataContext</code>, named-element, self, and template-part paths in markup; use observable values, lists, adapters, converters, and <code>BindingOperations</code> for programmatic composition.</p></div></li>
         <li><span>06</span><div><strong>Re-model styles as Aspect packages.</strong><p>Extract semantic tokens, variants, states, slots, component templates, and content templates. Do not recreate selector soup.</p></div></li>
         <li><span>07</span><div><strong>Move storyboards to state-first motion.</strong><p>Define target state, then choose specs, channels, layout FLIP, presence, transactions, and reduced-motion behavior.</p></div></li>
-        <li><span>08</span><div><strong>Audit unsupported control families.</strong><p>Replace or build missing navigation, documents, menus, data grids, rich text, media, and specialized desktop controls explicitly.</p></div></li>
+        <li><span>08</span><div><strong>Audit unsupported control families.</strong><p>Replace or build missing navigation, documents, context menus, data grids, rich text, media, and specialized desktop controls explicitly.</p></div></li>
         <li><span>09</span><div><strong>Prove frame invariants.</strong><p>Test the first dirty update, the unchanged no-work update, draw purity, focus routes, command state, bindings, list mutation, and render-cache reuse.</p></div></li>
         <li><span>10</span><div><strong>Re-check this snapshot against current source.</strong><p>The framework moves daily. The only safe migration plan is one that verifies each relied-upon contract at the commit being shipped.</p></div></li>
       </ol>
@@ -450,7 +450,7 @@
         <div><span class="section-code">Sources and limits</span><h2>What this snapshot can and cannot prove.</h2></div>
       </header>
       <div class="source-grid">
-        <article><span>Repository evidence</span><h3>Cerneala source and dated documentation</h3><p>The comparison was refreshed from the public API manifest, current source tree, Developer Preview scope, event coverage audit, compiled-binding docs, Relay docs and benchmarks, Aspect docs, motion docs, scheduler plans, and architecture notes available on 7/14/2026.</p><a href="documentation.html">Open the API reference</a><a href="benchmarks.html">Inspect benchmark evidence</a></article>
+        <article><span>Repository evidence</span><h3>Cerneala source and dated documentation</h3><p>The comparison was refreshed from the public API manifest, current source tree, Developer Preview scope, event coverage audit, compiled-binding docs, Relay docs and benchmarks, Aspect docs, motion docs, scheduler plans, and architecture notes available on 10/11/2026.</p><a href="documentation.html">Open the API reference</a><a href="benchmarks.html">Inspect benchmark evidence</a></article>
         <article><span>WPF reference</span><h3>Microsoft Learn</h3><p>WPF claims are grounded in Microsoft's official overview and architecture documentation.</p><a href="https://learn.microsoft.com/dotnet/desktop/wpf/overview/">WPF overview</a><a href="https://learn.microsoft.com/dotnet/desktop/wpf/advanced/wpf-architecture">WPF architecture</a><a href="https://learn.microsoft.com/dotnet/desktop/wpf/properties/dependency-properties-overview">Dependency properties</a><a href="https://learn.microsoft.com/dotnet/desktop/wpf/events/routed-events-overview">Routed events</a></article>
         <article><span>Interpretation boundary</span><h3>Names are not contracts</h3><p>This is a conceptual and API migration map, not a conformance test. A listed type can be experimental, narrower than WPF, or intentionally governed by different invariants.</p><a href="https://github.com/Chevalier12/Cerneala">Inspect current source</a></article>
       </div>
