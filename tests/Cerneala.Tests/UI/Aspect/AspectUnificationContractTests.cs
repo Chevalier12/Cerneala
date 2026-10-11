@@ -422,6 +422,42 @@ public sealed class AspectUnificationContractTests
     }
 
     [Fact]
+    public void LongRunningSessionDoesNotExhaustCompositeCatalogVersions()
+    {
+        SolidColorBrush first = new(new Color(10, 20, 30));
+        SolidColorBrush second = new(new Color(40, 50, 60));
+        ElementAspect aspect = new(
+            [new ElementAspectValue(Control.BackgroundProperty, first)]);
+        UIRoot root = new();
+        Button[] buttons = [new() { Aspect = aspect }, new() { Aspect = aspect }, new() { Aspect = aspect }];
+        foreach (Button button in buttons)
+        {
+            root.VisualChildren.Add(button);
+        }
+
+        root.ProcessFrame();
+
+        // Each element attach and each consumer of a changed shared ElementAspect composes
+        // its catalog again. A composition must not consume a number from a finite space,
+        // or ~2^31 valid compositions in a long-running session make ProcessFrame throw:
+        // a composed catalog keeps the registry version it was built from.
+        for (int round = 0; round < 3; round++)
+        {
+            SolidColorBrush next = round % 2 == 0 ? second : first;
+            Assert.True(aspect.SetValue(Control.BackgroundProperty, next));
+            root.ProcessFrame();
+
+            Assert.All(buttons, button =>
+            {
+                Assert.Same(next, button.Background);
+                Assert.Equal(
+                    root.AspectRegistry.Version,
+                    root.AspectProcessor.Engine.GetDependencies(button).CatalogVersion);
+            });
+        }
+    }
+
+    [Fact]
     public void ScopedPackageProvidesComponentTemplateThroughCanonicalCatalog()
     {
         Border generatedRoot = new();

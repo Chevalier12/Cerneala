@@ -17,7 +17,7 @@ public class ContentPresenter : Control
     private bool generatedTextChild;
     private bool deferPresentationRefresh;
     private int contentIndex = -1;
-    private int aspectTemplateCatalogVersion = -1;
+    private AspectCatalog? aspectTemplateCatalog;
     private ContentTemplateRegistry? localTemplateRegistry;
 
     public static readonly UiProperty<object?> ContentProperty = UiProperty<object?>.Register(
@@ -124,14 +124,14 @@ public class ContentPresenter : Control
         }
     }
 
-    internal void RefreshAspectContentTemplates(int catalogVersion)
+    internal void RefreshAspectContentTemplates(AspectCatalog catalog)
     {
-        if (aspectTemplateCatalogVersion == catalogVersion)
+        if (ReferenceEquals(aspectTemplateCatalog, catalog))
         {
             return;
         }
 
-        aspectTemplateCatalogVersion = catalogVersion;
+        aspectTemplateCatalog = catalog;
         if (ContentTemplate is not null || LocalTemplateRegistry is not null)
         {
             return;

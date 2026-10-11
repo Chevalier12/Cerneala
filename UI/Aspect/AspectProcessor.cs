@@ -17,7 +17,6 @@ public sealed class AspectProcessor
     private readonly ConditionalWeakTable<UIElement, EnvironmentState> environmentStates = new();
     private readonly ConditionalWeakTable<UIElement, BehaviorState> behaviorStates = new();
     private readonly ConditionalWeakTable<Control, TemplateOwnerState> templateOwnerStates = new();
-    private int nextCompositeVersion = 1_000_000;
     private bool isApplying;
 
     public AspectProcessor(UIRoot root)
@@ -37,7 +36,7 @@ public sealed class AspectProcessor
         AspectEnvironment environment = GetEnvironment(element, catalog);
         if (element is ContentPresenter presenter)
         {
-            presenter.RefreshAspectContentTemplates(catalog.Version);
+            presenter.RefreshAspectContentTemplates(catalog);
         }
 
         if (TemplateAspectContext.TryGet(element, out TemplateAspectContext.Registration registration))
@@ -281,7 +280,7 @@ public sealed class AspectProcessor
             element,
             _ => new EnvironmentState(new AspectEnvironment(root.Relay, "runtime.element")));
         Theme? theme = root.ThemeProvider?.Theme;
-        if (state.CatalogVersion == catalog.Version && ReferenceEquals(state.Theme, theme))
+        if (ReferenceEquals(state.Catalog, catalog) && ReferenceEquals(state.Theme, theme))
         {
             return state.Environment;
         }
@@ -296,7 +295,7 @@ public sealed class AspectProcessor
         ResolveTokenDefaults(catalog.ExplicitTokenDefaults, next);
 
         state.Environment.ReplaceWith(next);
-        state.CatalogVersion = catalog.Version;
+        state.Catalog = catalog;
         state.Theme = theme;
         return state.Environment;
     }
@@ -374,7 +373,7 @@ public sealed class AspectProcessor
 
         AspectCatalog catalog = sources.Count == 0
             ? rootCatalog
-            : AspectCatalog.Compose(rootCatalog, sources, NextCompositeVersion());
+            : AspectCatalog.Compose(rootCatalog, sources);
         state.Update(
             catalog,
             rootCatalog,
@@ -401,16 +400,6 @@ public sealed class AspectProcessor
         {
             sources.Add(new AspectPackageSource(package, sourceOrder, scope));
         }
-    }
-
-    private int NextCompositeVersion()
-    {
-        if (nextCompositeVersion == int.MaxValue)
-        {
-            throw new InvalidOperationException("Aspect composite catalog version space was exhausted.");
-        }
-
-        return nextCompositeVersion++;
     }
 
     private readonly record struct ScopeStamp(ResourceDictionary Resources, long Version);
@@ -488,7 +477,7 @@ public sealed class AspectProcessor
     {
         public AspectEnvironment Environment { get; } = environment;
 
-        public int CatalogVersion { get; set; } = -1;
+        public AspectCatalog? Catalog { get; set; }
 
         public Theme? Theme { get; set; }
     }

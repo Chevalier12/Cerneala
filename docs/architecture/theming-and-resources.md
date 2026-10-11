@@ -138,7 +138,7 @@ So both `Border` elements get the new brush. An element in the same window that 
 
 ## Frame Integration
 
-- Theme changes go through the Aspect phase: `Invalidate(Aspect | Subtree)` fills the Aspect queue, and `AspectProcessor` rebuilds each element's environment when the theme instance or the catalog version changed. Otherwise it reuses the cached environment.
+- Theme changes go through the Aspect phase: `Invalidate(Aspect | Subtree)` fills the Aspect queue, and `AspectProcessor` rebuilds each element's environment when the theme instance or the element's catalog instance changed. Otherwise it reuses the cached environment.
 - Resource changes go through the queue picked by the recorded effects, which is the Render queue for the default effect.
 - Off-thread notifications become Relay callbacks. `UIRoot.BeginUpdate` runs them before the scheduler's phases, so the work they invalidate is processed in the same frame. See [relay.md](relay.md) and [invalidation-and-frame.md](invalidation-and-frame.md).
 
