@@ -55,7 +55,7 @@ bindings.InvokeExecuted(
 
 `CommandBindingCollection` is the storage and dispatch surface behind `UIElement.CommandBindings`. Add `CommandBinding` instances to connect an `ICommand` to executed and can-execute routed event handlers.
 
-Bindings are stored in insertion order. `InvokeCanExecute` and `InvokeExecuted` read `Count` once when they start, then read the live list by index. So a binding added by a handler is not called in that pass. Removing or clearing bindings from a handler shifts the list: with bindings A, B, and C, if A removes itself, the pass calls A, then C, and then throws `ArgumentOutOfRangeException`. Dispatch stops after the binding that marks the arguments as handled. Arguments that are already handled when the call starts still reach the first binding; `CommandRouter` never passes already-handled arguments.
+Bindings are stored in insertion order. `InvokeCanExecute` and `InvokeExecuted` walk the bindings that existed when the pass started, so a handler can add, remove, or clear bindings without breaking the pass. A binding added by a handler is not called in that pass. A binding removed by a handler is still called in that pass if it has not run yet: with bindings A, B, and C, if A removes itself, the pass calls A, then B, then C, and the collection then holds B and C. If A calls `Clear()`, the pass still calls B and C, and the collection is then empty. Dispatch stops after the binding that marks the arguments as handled. Arguments that are already handled when the call starts still reach the first binding; `CommandRouter` never passes already-handled arguments.
 
 Each `CommandBinding` only invokes its callbacks when its `Command` reference matches the command in the routed event arguments. Non-matching bindings are skipped by the binding.
 
@@ -81,8 +81,8 @@ When the collection is owned by a `UIElement`, `Add`, successful `Remove`, and n
 | `Add(CommandBinding)` | Adds a non-null binding and notifies the owner, when present. |
 | `Remove(CommandBinding)` | Removes a non-null binding and returns whether it was found. Owner notification occurs only when a binding is removed. |
 | `Clear()` | Removes all bindings. Owner notification occurs only when the collection was not already empty. |
-| `InvokeCanExecute(UiElementId, CanExecuteRoutedEventArgs)` | Invokes can-execute handling on bindings in insertion order until the args are handled or the initial binding count is exhausted. |
-| `InvokeExecuted(UiElementId, ExecutedRoutedEventArgs)` | Invokes executed handling on bindings in insertion order until the args are handled or the initial binding count is exhausted. |
+| `InvokeCanExecute(UiElementId, CanExecuteRoutedEventArgs)` | Invokes can-execute handling on the bindings that existed when the call started, in insertion order, until the args are handled or those bindings are exhausted. |
+| `InvokeExecuted(UiElementId, ExecutedRoutedEventArgs)` | Invokes executed handling on the bindings that existed when the call started, in insertion order, until the args are handled or those bindings are exhausted. |
 | `GetEnumerator()` | Returns an enumerator over the stored bindings. |
 
 ## Explicit Interface Implementations
@@ -100,7 +100,6 @@ When the collection is owned by a `UIElement`, `Add`, successful `Remove`, and n
 | `InvokeCanExecute(UiElementId, CanExecuteRoutedEventArgs)` | `ArgumentNullException` | `args` is `null`. |
 | `InvokeExecuted(UiElementId, ExecutedRoutedEventArgs)` | `ArgumentNullException` | `args` is `null`. |
 | `this[int index]` | `ArgumentOutOfRangeException` | `index` is negative or not less than `Count`. |
-| `InvokeCanExecute`, `InvokeExecuted` | `ArgumentOutOfRangeException` | A handler removed bindings during the pass. |
 
 ## Applies to
 
