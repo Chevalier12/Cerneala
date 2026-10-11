@@ -28,8 +28,9 @@ public sealed class RenderSurface3DPreviewTests
                 var (image, width, height, stride, _) = session.Capture();
                 Assert.Equal(stride * height, image.Length);
                 Assert.True(width > 0);
+                // Frame bytes are R, G, B, A; the cyan marker is (60, 200, 230).
                 for (int index = 0; index < image.Length; index += 4)
-                    if (image[index] > 170 && image[index + 1] > 150 && image[index + 2] < 120)
+                    if (image[index] < 120 && image[index + 1] > 150 && image[index + 2] > 170)
                         markerPixels++;
             }
             catch (Exception exception) { error = exception; }

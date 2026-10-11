@@ -299,8 +299,9 @@ Preview:
    throws, the client kills the host process. The next request starts a new
    host.
 4. `CernealaPreviewSession.ApplyResponse` handles the answer:
-   - for a `Frame`, it writes the pixels into a `WriteableBitmap` declared as
-     `PixelFormats.Bgra32`, without converting them;
+   - for a `Frame`, it swaps red and blue with
+     `CernealaPreviewPixels.ConvertRgbaToBgra`, then writes the pixels into a
+     `WriteableBitmap` declared as `PixelFormats.Bgra32`;
    - for an `Error`, it shows the message and keeps the last frame.
 5. `Dispose` sends `Shutdown`, waits 500 ms, then kills the host.
 
@@ -423,18 +424,11 @@ Netestat:
 - `CernealaPreviewHostClient` and the client side of `PreviewProtocol`, which
   have no direct test in `Cerneala.Tests.VisualStudio`;
 - `SystemCernealaServerProcess`, the real process wrapper;
-- the channel order of a decoded preview frame. The test
-  `OpeningViewCapturesThePresentedBgraFrameWithoutPngEncoding` checks only the
-  stride, the length and "not a PNG".
 
 ## Known Limitations
 
 - The preview needs the project's Debug build output. Without it, the fast path
   has nothing to reuse (`PreviewCompiler.cs`, `bin\Debug`).
-- The host writes frame pixels in R, G, B, A order. The Visual Studio client
-  writes them unconverted into a `PixelFormats.Bgra32` bitmap, which reads
-  byte 0 as blue. So the two sides name different channel orders. This is
-  pending an issue report.
 - `telemetryEnabled` is sent by Visual Studio but `CernealaInitializationOptions`
   has no such field. The LSP `processId` is only logged.
 - `SystemCernealaServerProcess` logs every stderr line of the server with
