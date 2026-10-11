@@ -39,7 +39,7 @@ TabItem? selected = tabs.SelectedTabItem;
 
 The control uses `TabItem` as its default item container. If an item is already a `TabItem`, the control reuses that item as the container. Otherwise, it creates a new `TabItem` container for the item.
 
-`SelectedTabItem` is a computed property. It returns `null` when `SelectedIndex` is outside the range of the local `Items` collection. It reads `Items`, not `ItemsSource`: when items come from `ItemsSource` and `Items` is empty, it returns `null`. When the selected container has already been realized, it returns that realized `TabItem`; otherwise, it returns the selected item only if that item is already a `TabItem`.
+`SelectedTabItem` is a computed property. It reads the same active item source as `SelectedItem`: `ItemsSource` when it is set, otherwise `Items`. It returns `null` when `SelectedIndex` is outside the range of `ItemCount`. When the selected container has already been realized, it returns that realized `TabItem`; otherwise, it returns the selected item only if that item is already a `TabItem`. For example, with `ItemsSource = new[] { first, second }` of `TabItem` values and `SelectedIndex = 1`, it returns `second`.
 
 Selection can also be changed through the inherited `Selector` input behavior: a left mouse button release on a prepared item container selects that container.
 
