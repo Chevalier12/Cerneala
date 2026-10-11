@@ -7,6 +7,7 @@ public sealed class CommandBindingCollection : IReadOnlyList<CommandBinding>
 {
     private readonly List<CommandBinding> bindings = [];
     private readonly UIElement? owner;
+    private CommandBinding[]? dispatchSnapshot;
 
     public CommandBindingCollection()
     {
@@ -53,10 +54,9 @@ public sealed class CommandBindingCollection : IReadOnlyList<CommandBinding>
     public void InvokeCanExecute(UiElementId sender, CanExecuteRoutedEventArgs args)
     {
         ArgumentNullException.ThrowIfNull(args);
-        int count = bindings.Count;
-        for (int i = 0; i < count; i++)
+        foreach (CommandBinding binding in GetDispatchSnapshot())
         {
-            bindings[i].OnCanExecute(sender, args);
+            binding.OnCanExecute(sender, args);
             if (args.Handled)
             {
                 return;
@@ -67,10 +67,9 @@ public sealed class CommandBindingCollection : IReadOnlyList<CommandBinding>
     public void InvokeExecuted(UiElementId sender, ExecutedRoutedEventArgs args)
     {
         ArgumentNullException.ThrowIfNull(args);
-        int count = bindings.Count;
-        for (int i = 0; i < count; i++)
+        foreach (CommandBinding binding in GetDispatchSnapshot())
         {
-            bindings[i].OnExecuted(sender, args);
+            binding.OnExecuted(sender, args);
             if (args.Handled)
             {
                 return;
@@ -88,8 +87,15 @@ public sealed class CommandBindingCollection : IReadOnlyList<CommandBinding>
         return GetEnumerator();
     }
 
+    // Dispatch walks the bindings that existed when the pass started, so a handler can add, remove or clear bindings.
+    private CommandBinding[] GetDispatchSnapshot()
+    {
+        return dispatchSnapshot ??= bindings.ToArray();
+    }
+
     private void NotifyChanged()
     {
+        dispatchSnapshot = null;
         owner?.QueueDescendantCommandStateRefreshes();
     }
 }
