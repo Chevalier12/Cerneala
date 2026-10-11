@@ -12,7 +12,7 @@ public class TabControl : Selector
         get
         {
             int selectedIndex = SelectedIndex;
-            if (selectedIndex < 0 || selectedIndex >= Items.Count)
+            if (selectedIndex < 0 || selectedIndex >= ItemCount)
             {
                 return null;
             }
@@ -22,7 +22,7 @@ public class TabControl : Selector
                 return container as TabItem;
             }
 
-            return Items[selectedIndex] as TabItem;
+            return GetItemAt(selectedIndex) as TabItem;
         }
     }
 

@@ -22,6 +22,31 @@ public sealed class TabControlTests
     }
 
     [Fact]
+    public void TabControlSelectedTabItemReadsItemsSourceTabItem()
+    {
+        TabItem first = new() { Header = "First" };
+        TabItem second = new() { Header = "Second" };
+        TabControl tabControl = new() { ItemsSource = new[] { first, second } };
+
+        tabControl.SelectedIndex = 1;
+
+        Assert.Same(second, tabControl.SelectedItem);
+        Assert.Same(second, tabControl.SelectedTabItem);
+    }
+
+    [Fact]
+    public void TabControlSelectedTabItemReturnsRealizedContainerForItemsSourceDataItem()
+    {
+        TabControl tabControl = new() { ItemsSource = new[] { "A", "B" } };
+        tabControl.ItemContainerGenerator.Realize();
+
+        tabControl.SelectedIndex = 1;
+
+        Assert.Same(tabControl.ItemContainerGenerator.RealizedContainers[1], tabControl.SelectedTabItem);
+        Assert.Equal("B", tabControl.SelectedItem);
+    }
+
+    [Fact]
     public void TabControlClickSelectsTabItem()
     {
         UIRoot root = new(100, 100);
