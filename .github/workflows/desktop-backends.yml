@@ -404,6 +404,11 @@ jobs:
         shell: pwsh
         run: dotnet build ./Cerneala.slnx -c Release --no-restore
 
+      # PreviewHost compiles preview documents against the Debug build outputs.
+      - name: Build Debug outputs for PreviewHost
+        shell: pwsh
+        run: dotnet build ./Cerneala.slnx -c Debug --no-restore
+
       - name: Verify Prism completeness report and public surface
         shell: pwsh
         run: dotnet run --project ./Tools/PrismAudit/PrismAudit.csproj -c Release --no-build --no-restore -- --check
