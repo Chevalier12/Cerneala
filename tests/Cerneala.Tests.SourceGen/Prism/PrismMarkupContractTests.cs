@@ -341,6 +341,61 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Theory]
+    [InlineData("IrisBlur", "Center", "(0.5, 0.5)", "new global::System.Numerics.Vector4(0.5f, 0.5f, 0f, 0f)")]
+    [InlineData("ChromaticAberration", "Direction", "(1, 0, 0)", "new global::System.Numerics.Vector4(1f, 0f, 0f, 0f)")]
+    [InlineData("ChromaticAberration", "Direction", "(1, 0, 0, 0)", "new global::System.Numerics.Vector4(1f, 0f, 0f, 0f)")]
+    public void PrismFilterVectorLiteralsEmitFourComponentVectors(
+        string filter,
+        string property,
+        string literal,
+        string expected)
+    {
+        string markup = $$"""
+            <Border>
+              <Border.Aspect>
+                @prism
+                {
+                  @layer Probe
+                  {
+                    @filter {{filter}} { {{property}} = {{literal}}; }
+                  }
+                }
+              </Border.Aspect>
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGenerator("PrismFilterVectorLiteral.crn", markup, out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        Assert.Contains(expected, SingleGeneratedSource(result), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("ThisLayerRange", "(0, 1)")]
+    [InlineData("UnderlyingRange", "(0, 0.5, 1)")]
+    public void PrismBlendRangeLiteralsRequireFourComponents(string property, string literal)
+    {
+        string markup = $$"""
+            <Border>
+              <Border.Aspect>
+                @prism
+                {
+                  @layer Probe
+                  {
+                    {{property}} = {{literal}};
+                    @filter Blur { Radius = 1; }
+                  }
+                }
+              </Border.Aspect>
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGenerator("PrismBlendRangeLiteral.crn", markup, out _);
+
+        AssertPrismDiagnostic(result, "PRISM2009", markup, literal);
+    }
+
+    [Theory]
     [InlineData("$DataContext.Opacity", false)]
     [InlineData("$DataContext.Opacity:OneWay", true)]
     [InlineData("$DataContext.Opacity:TwoWay", true)]
