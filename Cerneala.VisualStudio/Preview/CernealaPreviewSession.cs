@@ -550,6 +550,11 @@ internal sealed class CernealaPreviewSession : IDisposable
                 palette: null);
         }
 
+        CernealaPreviewPixels.ConvertRgbaToBgra(
+            response.Image,
+            response.Width,
+            response.Height,
+            response.Stride);
         frameBuffer.WritePixels(
             new Int32Rect(0, 0, response.Width, response.Height),
             response.Image,

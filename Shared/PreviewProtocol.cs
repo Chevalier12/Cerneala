@@ -67,6 +67,7 @@ internal sealed class PreviewResponse
 
     public int RequestId { get; set; }
 
+    // Frame pixels in R, G, B, A byte order, Stride bytes per row.
     public byte[] Image { get; set; } = Array.Empty<byte>();
 
     public int Width { get; set; }

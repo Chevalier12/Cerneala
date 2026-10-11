@@ -88,7 +88,7 @@ public sealed class PreviewHostTests
     }
 
     [Fact]
-    public async Task OpeningViewCapturesThePresentedBgraFrameWithoutPngEncoding()
+    public async Task OpeningViewCapturesThePresentedRgbaFrameWithoutPngEncoding()
     {
         string documentPath = OpeningViewPath();
         using PreviewCompiler compiler = new(prewarmBuildOutput: false);
@@ -107,6 +107,14 @@ public sealed class PreviewHostTests
         Assert.Equal(frame.Width * 4, frame.Stride);
         Assert.Equal(frame.Stride * frame.Height, frame.Image.Length);
         Assert.NotEqual(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 }, frame.Image.Take(8));
+
+        // Most of the view is PanelAltBrush #FF0D1014, sent as R, G, B, A.
+        string mostCommonPixel = Enumerable.Range(0, frame.Image.Length / 4)
+            .GroupBy(pixel => string.Join(",", frame.Image.Skip(pixel * 4).Take(4)))
+            .OrderByDescending(group => group.Count())
+            .First()
+            .Key;
+        Assert.Equal("13,16,20,255", mostCommonPixel);
     }
 
     [Fact]

@@ -78,7 +78,7 @@ The tested Visual Studio Community integration includes:
   incomplete literal edits keep the last valid frame, while structural markup changes
   deliberately fall back to the normal project-backed compile path;
 - a branded animated loading state while the project-backed preview is compiling;
-- allocation-stable local raw BGRA frame transport and completion-paced frame
+- allocation-stable local raw RGBA frame transport and completion-paced frame
   scheduling at render priority, with an editable per-tab refresh cap defaulting
   to 60 FPS and 15, 30, 60, and 120 FPS presets;
 - a **Cerneala: Restart Language Server** command.

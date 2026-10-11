@@ -30,6 +30,8 @@
              Link="Preview\CernealaPreviewChrome.cs" />
     <Compile Include="..\..\Cerneala.VisualStudio\Preview\CernealaPreviewInputQueue.cs"
              Link="Preview\CernealaPreviewInputQueue.cs" />
+    <Compile Include="..\..\Cerneala.VisualStudio\Preview\CernealaPreviewPixels.cs"
+             Link="Preview\CernealaPreviewPixels.cs" />
     <Compile Include="..\..\Shared\PreviewProtocol.cs"
              Link="Preview\PreviewProtocol.cs" />
   </ItemGroup>
