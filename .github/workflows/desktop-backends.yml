@@ -394,7 +394,6 @@ jobs:
         run: |
           dotnet tool restore
           dotnet restore ./Cerneala.slnx
-          dotnet restore ./tests/Fixtures/VisualStudioIntegrationHost/VisualStudioIntegrationHost.csproj
 
       - name: Verify core build input exclusions
         shell: pwsh
@@ -403,11 +402,6 @@ jobs:
       - name: Build complete solution
         shell: pwsh
         run: dotnet build ./Cerneala.slnx -c Release --no-restore
-
-      # PreviewHost compiles preview documents against the Debug build outputs.
-      - name: Build Debug outputs for PreviewHost
-        shell: pwsh
-        run: dotnet build ./Cerneala.slnx -c Debug --no-restore
 
       - name: Verify Prism completeness report and public surface
         shell: pwsh
