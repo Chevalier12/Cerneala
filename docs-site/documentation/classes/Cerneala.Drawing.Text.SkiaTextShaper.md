@@ -39,7 +39,7 @@ DrawPoint[] glyphPositions = shape.GlyphPositions;
 ## Remarks
 `SkiaTextShaper` is the low-level shaping implementation used by the Skia text pipeline. It accepts a `DrawTextRun`, requires that the run's `Font` is a `SkiaFont`, and returns a `TextShapeResult` containing the original text, glyph count, glyph IDs, glyph positions, and total advance width.
 
-The shaper builds a HarfBuzz buffer from the run text as UTF-16, lets HarfBuzz infer segment properties, creates a HarfBuzz font from the `SkiaFont` typeface data, and shapes the buffer at the requested run size. HarfBuzz values are converted from 26.6 fixed-point units to drawing pixels by dividing by `64`.
+The shaper builds a HarfBuzz buffer from the run text as UTF-16, lets HarfBuzz infer segment properties, creates a HarfBuzz font from the `SkiaFont` typeface data,, sets the HarfBuzz scale to the font's units per em, and shapes the buffer at that scale. Each HarfBuzz offset and advance is then converted to drawing pixels by multiplying it by `Size / UnitsPerEm`. For example, with 2048 units per em and a run size of 16, an advance of 1024 becomes 8 pixels.
 
 Glyph positions are accumulated in drawing coordinates. Horizontal advances increase `X`; HarfBuzz vertical offsets and advances are inverted into drawing `Y` coordinates. `AdvanceWidth` is the accumulated horizontal advance after all glyphs are processed.
 

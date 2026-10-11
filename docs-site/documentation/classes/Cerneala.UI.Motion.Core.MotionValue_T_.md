@@ -95,6 +95,7 @@ If a subscriber throws while a terminal value is applied, the exception propagat
 | --- | --- | --- |
 | `AnimateTo` | `ArgumentNullException` | `spec` is `null`. |
 | `AnimateTo`, `JumpTo` | `InvalidOperationException` | The current thread is not the thread that created the owning standalone graph, or the UI thread that owns its root. |
+| `AnimateTo`, `JumpTo` | `InvalidOperationException` | The value is bound to a read-only UI property. |
 | `Subscribe` | `ArgumentNullException` | `listener` is `null`. |
 | `AnimateTo`, `JumpTo` | `ArgumentException` | A live UI-property binding rejects the destination after coercion. Owner-specific validation can throw its existing exceptions. |
 

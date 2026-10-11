@@ -22,28 +22,34 @@ Attributes:
 
 ## Examples
 
+Register a part for a control type, then read it back:
+
 ```csharp
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Templates;
 
-[TemplatePart("PART_Content", typeof(ContentPresenter))]
-public sealed class CardControl : Control
-{
-}
+TemplatePartAttribute.Register<CardControl>("PART_Content", typeof(ContentPresenter));
 
 IReadOnlyList<TemplatePartAttribute> parts =
     TemplatePartAttribute.GetParts(typeof(CardControl));
 
 TemplatePartAttribute contentPart = parts[0];
-Console.WriteLine($"{contentPart.Name}: {contentPart.Type.Name}");
+Console.WriteLine($"{contentPart.Name}: {contentPart.Type.Name}"); // PART_Content: ContentPresenter
+
+public sealed class CardControl : Control
+{
+}
 ```
 
 ## Remarks
 
-`TemplatePartAttribute` is metadata attached to control classes. It records the expected part name and the expected element type for a control template part.
+`TemplatePartAttribute` records the expected part name and the expected element type for a control template part. It can be applied to a control class as an attribute, and it is also the entry type of a process-wide registry.
 
-The attribute is diagnostic metadata only. The class stores and retrieves metadata; it does not validate an applied `ComponentTemplate`, create template elements, or enforce that a part exists at runtime.
+`GetParts` reads only that registry. It does not read attributes applied to the class. For example, `[TemplatePart("PART_Content", typeof(ContentPresenter))]` on `CardControl` with no `Register` call makes `GetParts(typeof(CardControl))` return an empty list. Code that wants the applied attributes reads them with reflection, for example `typeof(CardControl).GetCustomAttributes(typeof(TemplatePartAttribute), inherit: true)`.
 
-Multiple template parts can be declared on the same control type. Because the attribute is inherited and `GetParts` reads with inheritance enabled, metadata declared on base control classes is available when querying derived control types.
+`Register` adds an entry for a control type. Registering the same part name again for the same control type replaces the earlier entry. `GetParts` walks from the requested type through its base types and returns the entries registered for each type, starting with the requested type, so parts registered for a base control are included when querying a derived control.
+
+The metadata is diagnostic only. The class does not validate an applied `ComponentTemplate`, create template elements, or enforce that a part exists at runtime.
 
 The constructor requires a non-empty, non-whitespace part name and a non-null part type.
 
@@ -64,7 +70,9 @@ The constructor requires a non-empty, non-whitespace part name and a non-null pa
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `GetParts(Type controlType)` | `IReadOnlyList<TemplatePartAttribute>` | Returns the `TemplatePartAttribute` metadata declared on the specified control type, including inherited attributes. |
+| `Register<TControl>(string name, Type partType)` | `void` | Registers a part for `TControl`. Same as `Register(typeof(TControl), name, partType)`. |
+| `Register(Type controlType, string name, Type partType)` | `void` | Registers a part for `controlType`, replacing an earlier entry with the same name. |
+| `GetParts(Type controlType)` | `IReadOnlyList<TemplatePartAttribute>` | Returns the parts registered with `Register` for `controlType` and its base types. Attributes applied to the class are not read. |
 
 ## Exceptions
 
@@ -72,6 +80,8 @@ The constructor requires a non-empty, non-whitespace part name and a non-null pa
 | --- | --- | --- |
 | `TemplatePartAttribute(string name, Type type)` | `ArgumentException` | `name` is `null`, empty, or whitespace. |
 | `TemplatePartAttribute(string name, Type type)` | `ArgumentNullException` | `type` is `null`. |
+| `Register(Type controlType, string name, Type partType)` | `ArgumentNullException` | `controlType` or `partType` is `null`. |
+| `Register(Type controlType, string name, Type partType)` | `ArgumentException` | `name` is `null`, empty, or whitespace. |
 | `GetParts(Type controlType)` | `ArgumentNullException` | `controlType` is `null`. |
 
 ## Applies to

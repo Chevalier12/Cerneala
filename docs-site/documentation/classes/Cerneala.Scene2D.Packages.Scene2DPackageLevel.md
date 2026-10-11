@@ -119,9 +119,9 @@ optional preparation budget. See [decoded chunk data charges](Cerneala.Scene2D.P
 | `LoadEntityAsync(id, cancellationToken = default)` | Returns one entity after checking identity, owning map, role and authored/collider bounds. |
 | `LoadPromotionAsync(cell, cancellationToken = default)` | Returns one promotion after checking its sparse address. |
 
-Unknown map/entity/promotion keys throw `KeyNotFoundException`. The package's
+Unknown map/entity/promotion keys throw `KeyNotFoundException`. An entity or promotion payload that differs from its catalog entry, or a map that cannot be reconstructed as an authored model, throws `InvalidDataException`. The package's
 read-limit, cancellation, integrity and disposal rules apply to these reads.
-`CreateTileMap` also rejects a disposed package. Keep the package open while
+`CreateTileMap` also throws `ObjectDisposedException` for a disposed package. Keep the package open while
 returned maps can request more data.
 
 ## See also

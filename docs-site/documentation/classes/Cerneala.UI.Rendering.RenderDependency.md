@@ -67,7 +67,7 @@ The `None` value is the default dependency stamp. The `With...` methods return m
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `None` | `RenderDependency` | Gets the default dependency stamp with all numeric versions set to `0` and identity strings set to empty strings. |
+| `None` | `RenderDependency` | Gets the default dependency stamp: all numeric versions `0` and both identity strings `null`. It is created with `new()`, which skips the primary constructor's `""` defaults, so it differs from `new RenderDependency(0, "", 0, "", 0, 0)`. |
 | `TextVersion` | `int` | Gets the text version component. |
 | `TextLayoutIdentity` | `string` | Gets the text layout identity component. |
 | `ImageVersion` | `int` | Gets the image version component. |

@@ -31,4 +31,4 @@ void OnScroll(object? sender, ScrollEventArgs args)
 | `NewValue` | New scroll value. |
 
 ## Applies to
-Scroll bar and scroll viewer routed events.
+`ScrollBar.ScrollEvent`, a bubbling routed event raised by `ScrollBar`; ancestors such as a `ScrollViewer` can handle it as it bubbles. `ScrollViewer` reports its own offset changes with `ScrollViewer.ScrollChangedEvent` and `ScrollChangedEventArgs`.

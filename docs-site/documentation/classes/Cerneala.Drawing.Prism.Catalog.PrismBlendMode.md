@@ -48,7 +48,7 @@ public enum PrismBlendMode
 
 ## Remarks
 
-`PassThrough` is valid only for groups. Layers, backdrops, and individual filters reject it.
+`PassThrough` is valid only for groups. Layers and individual filters reject it; for example, setting a filter's `BlendMode` to `PassThrough` throws `ArgumentException`.
 
 ## Applies to
 

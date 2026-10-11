@@ -58,7 +58,7 @@ float speed = velocity?.Value ?? 0f;
 
 ## Remarks
 
-`MotionVelocity<T>` is a small value wrapper around a velocity value of type `T`. Motion samplers expose it through `MotionSampler<T>.Velocity` when they can report current velocity. The base sampler returns `null`, while implementations such as spring and decay samplers return a `MotionVelocity<T>` for their current velocity state.
+`MotionVelocity<T>` is a small value wrapper around a velocity value of type `T`. Motion samplers expose it through `MotionSampler<T>.Velocity` when they can report current velocity. The base sampler returns `null`. Vector spring and decay samplers return a `MotionVelocity<T>` for their current velocity state. The built-in `SpringSpec<Transform>` sampler returns `null`, because a transform cannot losslessly represent its component velocities.
 
 `DecaySpec<T>` uses `MotionVelocity<T>` as its required initial velocity. During sampling, the decay sampler copies `InitialVelocity.Value` into its internal velocity, advances the current value by that velocity over elapsed seconds, and decays it over time.
 
@@ -85,6 +85,8 @@ The type is a `readonly record struct`, so equality, deconstruction, and string 
 | `Equals(object?)` | `bool` | Determines whether an object is an equivalent `MotionVelocity<T>`. |
 | `GetHashCode()` | `int` | Returns the record struct hash code for the wrapped value. |
 | `ToString()` | `string` | Returns the compiler-generated record struct string representation. |
+| `operator ==(MotionVelocity<T>, MotionVelocity<T>)` | `bool` | Returns whether two velocity wrappers are equal. |
+| `operator !=(MotionVelocity<T>, MotionVelocity<T>)` | `bool` | Returns whether two velocity wrappers are not equal. |
 
 ## Applies to
 

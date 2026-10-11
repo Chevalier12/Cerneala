@@ -45,7 +45,7 @@ foreach (UIElement element in root.AspectQueue.Snapshot())
 
 The queue deduplicates elements by reference. Calling `Enqueue` repeatedly with the same `UIElement` instance keeps one pending entry while preserving the first enqueue position used for ordering fallback.
 
-`Snapshot` defensively removes queued elements whose `Root` is no longer the owning root, then returns the remaining elements in visual tree pre-order. It uses the root's shared `ElementQueueOrderIndex`, so the visual tree is indexed once per `TreeVersion` and the snapshot sorts only queued entries. Presence-exiting elements that still belong to the root remain after traversed elements in relative enqueue order.
+`Snapshot` defensively removes queued elements whose `Root` is no longer the owning root, and elements of that root that are neither in its visual tree traversal nor presence-exiting, then returns the remaining elements in visual tree pre-order. It uses the root's shared `ElementQueueOrderIndex`, so the visual tree is indexed once per `TreeVersion` and the snapshot sorts only queued entries. Presence-exiting elements that still belong to the root remain after traversed elements in relative enqueue order.
 
 Taking a snapshot does not clear valid work. `UiFrameScheduler` consumes aspect work during the `FramePhase.Aspect` phase by taking a snapshot, then removing each element and clearing its `InvalidationFlags.Aspect` dirty flag before invoking the processor. This lets the callback invalidate the same element again: newly queued work and its dirty flag survive for a later frame. If processing throws, the scheduler restores the flags it cleared, re-enqueues the element, and rethrows the exception.
 

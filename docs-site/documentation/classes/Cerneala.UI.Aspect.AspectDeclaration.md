@@ -54,7 +54,7 @@ AspectRuleSet rule = new(
 
 ## Remarks
 
-`AspectDeclaration` stores the `UiProperty` that should receive an aspect value and the `AspectValue` used to resolve that value. `AspectEngine.Resolve` evaluates declarations from matching `AspectRuleSet` instances, resolves each declaration value, and keeps the winning declaration for each property according to layer order, target specificity, and declaration order.
+`AspectDeclaration` stores the `UiProperty` that should receive an aspect value and the `AspectValue` used to resolve that value. `AspectEngine.Resolve` evaluates declarations from matching `AspectRuleSet` instances, resolves each declaration value, and keeps the winning declaration for each property according to layer order, then source order, then target specificity, then declaration order.
 
 The constructor requires non-null `Property` and `Value` arguments. It also verifies that `property.ValueType` matches `value.ValueType`; mismatched property/value pairs throw `ArgumentException` before the declaration can enter a rule set.
 

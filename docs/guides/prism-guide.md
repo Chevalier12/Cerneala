@@ -23,14 +23,14 @@ The GPU capture stays lazy, so a source-only composition does not pay for it.
 
 ## Layer, group, mask and clipping
 
-- `@layer` is leaf and contains filters and/or styles.
-- `@group` contains nested layers or groups and can process their output.
+- `@layer` is a leaf: it contains `@filter`, `@style`, `@mask`, and `@parameter`, but no nested layers or groups.
+- `@group` contains nested layers or groups and can process their output with its own `@filter`, `@style`, `@mask`, and `@parameter`.
 - `@mask` applies to the prepared result after filters and styles, before
   opacity and blend.
-- `ClipToBelow = true` uses the alpha of the closest normal sibling
+- `ClipToBelow = true` uses the alpha of the closest sibling below that is a group or a layer without `ClipToBelow`, of any blend mode,
   unclipped below, in the same scope.
-- `Visible = false` removes its entire scope and work; `Opacity = 0` keeps
-  evaluation, then make the contribution transparent.
+- `Visible = false` and `Opacity = 0` both remove the node's entire scope
+  and work: the frame graph gets no node for it.
 
 Generic example:
 ```xml
@@ -137,7 +137,7 @@ soft limit and 256 retained entries; SDL overrides the retained soft limit to
 See the canonical [options contract](../../docs-site/documentation/classes/Cerneala.Drawing.Prism.PrismRendererOptions.md)
 and [diagnostic snapshot contract](../../docs-site/documentation/classes/Cerneala.UI.Detective.PrismRendererDiagnostics.md).
 
-Markup errors use diagnostics `PRISM1xxx`-`PRISM6xxx`; failure paths of
+Markup errors use diagnostics `PRISM1xxx` (directive syntax) and `PRISM2xxx` (binding and Motion); the catalog compiler reports `PRISM3xxx`. Failure paths of
 runtime uses accurate, deduplicated diagnostics where the contract requires it.
 
 ## Catalogue
@@ -149,7 +149,7 @@ types, defaults and capabilities. Complete lists are not copied here:
 - [adjustment filters](../reference/prism-adjustment-filters.md)
 - [distortion filters](../reference/prism-distortion-filters.md)
 - [neighborhood filters](../reference/prism-neighborhood-filters.md)
-- [](../reference/prism-catalog-filters.md) filter catalog
+- [filter catalog](../reference/prism-catalog-filters.md)
 
 The first implementation does not include the public SDK for third-party shader operations
 source at runtime, adaptive quality or async compute.

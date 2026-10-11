@@ -36,7 +36,7 @@ bool removed = root.Motion.Timelines.Remove("page-progress");
 
 ## Remarks
 
-`MotionSystem.Timelines` exposes a root-owned registry. Names use ordinal, case-sensitive comparison and must be non-empty. Registration does not replace an existing name; remove the existing entry first when replacement is intended.
+`MotionSystem.Timelines` exposes a root-owned registry. Names use ordinal, case-sensitive comparison and must not be `null`, empty, or whitespace. Registration does not replace an existing name; remove the existing entry first when replacement is intended.
 
 `Names` returns a snapshot of the registered names rather than a live dictionary view. `TryGet` returns `false` for a missing valid name, while `Get` throws `KeyNotFoundException`.
 
@@ -69,7 +69,8 @@ All properties and methods are thread-affine. A registry created by `MotionSyste
 
 | Member | Exception | Condition |
 | --- | --- | --- |
-| Name-taking methods | `ArgumentException` | `name` is `null`, empty, or whitespace. |
+| Name-taking methods | `ArgumentNullException` | `name` is `null`. |
+| Name-taking methods | `ArgumentException` | `name` is empty or whitespace. |
 | `Register` | `ArgumentNullException` | `timeline` is `null`. |
 | `Register` | `InvalidOperationException` | `name` is already registered. |
 | `Get` | `KeyNotFoundException` | No timeline is registered under `name`. |

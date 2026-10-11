@@ -48,12 +48,6 @@ Concrete UI properties are created by `UiProperty<T>`. The base constructor is i
 
 `DiagnosticName` is built from the owner type full name and property name. `ToString()` returns the same diagnostic name. `IsReadOnly` is true when `Options` contains `UiPropertyOptions.ReadOnly`.
 
-## Constructors
-
-| Name | Description |
-| --- | --- |
-| None | `UiProperty` has no public constructors. Use `UiProperty<T>.Register` or `UiProperty<T>.RegisterReadOnly` to create concrete property descriptors. |
-
 ## Properties
 
 | Name | Type | Description |

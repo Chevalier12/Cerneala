@@ -7,15 +7,15 @@ reflection or `StringPropertyPath` at runtime.
 
 Binding syntax and symbol resolution are owned by the shared
 `Cerneala.Language` parser and semantic model. The source generator consumes the
-validated path segments, source symbols, target symbols, modes, and diagnostics;
-it does not maintain a second binding grammar. In editor analysis, incomplete
+semantic model's diagnostics and symbols, but its emitter still tokenizes binding
+values itself (`UiMarkupBindingResolver`) when it produces code. In editor analysis, incomplete
 syntax is recovered locally and dependent diagnostics are suppressed. A build is
 still strict and emits no source for an invalid document. This shared
 editor-agnostic model does not itself provide or promise an LSP service.
 
 ## View Model Contract
 
-A `$DataContext` binding requires `DataType` on the root element. Paired
+A `$DataContext` binding requires `DataType` on the root element, or on the current `ContentTemplate` inside a template. Paired
 `Window<TViewModel>` and `UserControl<TViewModel>` documents infer that type
 from `TViewModel`, so they do not need to repeat `DataType`.
 
@@ -126,9 +126,10 @@ are not changed by the attribute default.
 | Source | Meaning |
 | --- | --- |
 | `$DataContext.Property` | Reads a typed CLR property path from the inherited data context. |
-| `$element.Property` | Reads a UI property from a named element in the same name scope. |
+| `$ElementName.Property` | Reads a UI property from the element whose `Name` is `ElementName`, in the same name scope. |
 | `$self.Property` | Reads another UI property on the target element. |
-| `$control.parts.$part.Property` | Reads a UI property from a named component-template part. `parts` is lowercase. |
+| `$root.Property` | Reads a UI property on the document's root element. Only one property name is allowed after `$root.`. |
+| `$ControlName.parts.$PartName.Property` | Reads a UI property from the part named `PartName` in the component template of the control named `ControlName`. `parts` is lowercase. |
 | `$owner.Property` | Reads a component-template owner property through the existing one-way template binding. |
 
 XML attribute values still require XML quotes. The quotes delimit the XML
@@ -294,7 +295,7 @@ named control:
 ```
 
 The path must have exactly the form
-`$control.parts.$part.Property`. The terminal property is mandatory, names are
+`$ControlName.parts.$PartName.Property`. The terminal property is mandatory, names are
 case-sensitive, and only one template level is traversed. The observation
 reconnects when the named control receives a new `ComponentTemplate`.
 
@@ -399,7 +400,7 @@ and disposal invalidate callbacks from older activation generations.
 This auto-marshaling applies to CLR notifications consumed by an attached
 binding; it does not make the source object thread-safe. The view model must
 publish state so it can be read coherently later on the UI thread. A direct
-mutation of an attached `UiObject` or `UIElement` has already changed UI state
+mutation of an attached `UIElement` has already changed UI state
 before its notification exists and is rejected off-thread instead of being
 marshaled after the fact.
 

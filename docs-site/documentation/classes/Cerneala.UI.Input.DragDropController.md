@@ -38,7 +38,7 @@ root.VisualChildren.Add(target);
 target.Handlers.AddHandler(InputEvents.DropEvent, (_, args) =>
 {
     DragEventArgs dragArgs = (DragEventArgs)args;
-    _ = dragArgs.Data.TryGetData("text/plain", out string? text);
+    bool hasText = dragArgs.Data.TryGetData("text/plain", out string? text);
 });
 
 DragDropController controller = new();

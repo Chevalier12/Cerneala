@@ -27,4 +27,4 @@ app.ShutdownMode = ApplicationShutdownMode.OnMainWindowClose;
 A cancelled `Window.Closing` event does not satisfy any automatic shutdown policy. Reassigning `MainWindow` changes which future close is observed by `OnMainWindowClose`.
 
 ## Applies to
-Windows desktop application hosting.
+Desktop application hosting.

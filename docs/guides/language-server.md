@@ -50,20 +50,20 @@ the selected repairs are independent and non-overlapping.
 Open buffers are overlays: they never write to disk, only increasing document
 versions are accepted, and a newer version cancels requests for the previous one.
 Project reload similarly cancels work against the old compilation. Semantic token
-history is limited to 256 documents and telemetry retains at most 2,048 samples;
-both are cleared during close/unload/shutdown.
+history is limited to 256 documents, and closing a document drops its entry;
+telemetry retains at most 2,048 samples and is released together with its workspace.
 
 Workspace reloads are debounced for 150 ms and ignore `bin` and `obj` changes.
 Requests capture a workspace revision and the active overlay versions; a result
 is returned only when both are still current. A deferred initial workspace load
 is available to hosts that need the process to become responsive before Roslyn
-project discovery completes. On the first opened project document, deferred mode
-bootstraps its semantic context from in-memory copies of the latest built project
-output and dependencies. The first semantic request waits only for that bootstrap;
+project discovery completes. On the first opened document, of any kind, deferred mode
+makes its single bootstrap attempt: it builds a semantic context from in-memory copies of the built output of the project that owns that document
+and its dependencies. The first semantic request waits only for that bootstrap;
 the complete MSBuild workspace continues loading in the background and atomically
 replaces it. Reading assembly images into memory prevents the language server from
 locking build outputs. If no compatible output exists yet, the document remains
-syntax-only until the full workspace finishes loading or the project is built.
+syntax-only until the full workspace finishes loading. A build alone does not reload the workspace; a saved document or a watched `.cs`, `.csproj`, `.props`, `.targets`, `.sln`, `.slnx`, `.dll`, or `global.json` change outside `bin` and `obj` does.
 
 Files not owned by a project receive syntax-only completion, diagnostics,
 formatting, symbols, folding, and selection support. They also receive the single
@@ -89,11 +89,11 @@ type, and stack trace, but omit exception messages and document content.
 
 ## Performance gates
 
-The checked protocol baseline runs on Windows 11 Home `10.0.26200`, an AMD EPYC
-9354 32-Core Processor, 16 GiB RAM, and .NET SDK `10.0.300`. After five warm-up
+The checked protocol baseline was recorded on Windows 11 Home `10.0.26200`, an AMD EPYC
+9354 32-Core Processor, 16 GiB RAM, and .NET SDK `10.0.300`; the repository now pins SDK `10.0.400` in `global.json`. After five warm-up
 requests, the protocol suite requires diagnostics p95 below 200 ms, completion p95
-below 100 ms, and hover/definition p95 below 100 ms. Every sampled request must
-finish or observe cancellation within 500 ms. The same suite exercises two active
+below 100 ms, and hover/definition p95 below 100 ms. Every sampled warm request must
+finish within 500 ms. The same suite exercises two active
 documents, rapid version changes, project reload, and 100 cancelled completion
 requests. A separate lifecycle test performs 1,000 open/change/close cycles and
 requires less than 32 MiB retained managed growth after a full collection.

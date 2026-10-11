@@ -39,7 +39,7 @@ if (sound is { OutputOpen: false, ActivePlaybacks: > 0 })
 
 ## Remarks
 
-The snapshot answers the usual questions about silent, starved, or distorted audio: whether the output is open, how many playbacks are non-terminal, how many failed, how many silence frames were padded because a streaming source was late, and how many output samples were clipped to ±1. The memory fields separate the preload cache, streaming buffers, and modifier state (delay lines).
+The snapshot answers the usual questions about silent, starved, or distorted audio: whether the output is open, how many playbacks are non-terminal, how many failed, how many silence frames were padded because a source that had not ended delivered fewer frames than requested (typically a late streaming source), and how many output samples were clipped to ±1. The memory fields separate the preload cache, streaming buffers, and modifier state (delay lines).
 
 `MotionSamplesRejected` counts audio Motion samples that were not finite or fell outside their parameter's range; each one ended only the animation of that parameter, which kept its last valid value (see [TimbreMotionAnimationBuilder](Cerneala.UI.Timbre.TimbreMotionAnimationBuilder.md)).
 
@@ -54,7 +54,7 @@ Values are copied at capture time and do not update. Counters belong to the runt
 | `PlaybacksFailed` | `long` | Playbacks that ended `Failed` since the runtime was created. |
 | `UnderrunFrames` | `long` | Silence frames padded because a playing source had no data yet. |
 | `ClippedSamples` | `long` | Output samples hard-clipped to ±1. |
-| `CacheBytes` | `long` | Decoded preload payload bytes in the cache. |
+| `CacheBytes` | `long` | Bytes reserved in the preload cache. A payload's bytes are reserved before it is decoded, so this includes payloads still being decoded. |
 | `StreamingBufferBytes` | `long` | Bytes of live streaming ring buffers. |
 | `DspStateBytes` | `long` | Bytes of live modifier state. |
 | `MotionSamplesRejected` | `long` | Audio Motion samples rejected as non-finite or out of range since the runtime was created. |

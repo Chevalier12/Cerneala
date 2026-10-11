@@ -53,7 +53,7 @@ strokes.Add(stroke);
 ## Remarks
 `Stroke` stores points in insertion order. The optional constructor argument seeds the stroke with the supplied `DrawPoint` values, and `AddPoint` appends additional values to the end of the same stroke.
 
-The `Points` property exposes a read-only view of the stroke's internal point list. It prevents callers from mutating the list directly, but it reflects points added later through `AddPoint`.
+The `Points` property returns the stroke's internal point list typed as `IReadOnlyList<DrawPoint>`, not a copy or a wrapper. It therefore reflects points added later through `AddPoint`.
 
 `Stroke` does not raise change notifications when points are added. Callers that own rendering or layout invalidation, such as `InkCanvas`, are responsible for reacting after mutating a stroke.
 

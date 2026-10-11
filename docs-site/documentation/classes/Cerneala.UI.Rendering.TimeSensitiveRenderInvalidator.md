@@ -41,7 +41,7 @@ _ = host.Update(elapsedTime: TimeSpan.FromMilliseconds(16));
 
 ## Remarks
 
-`TimeSensitiveRenderInvalidator` is used by the hosting update path to keep render-only time state in sync with the frame clock. It starts at the supplied root and visits each element in the retained UI tree. When an element implements `ITimeSensitiveRenderElement`, the invalidator calls `UpdateRenderTime(frameTime)`.
+`TimeSensitiveRenderInvalidator` is used by the hosting update path to keep render-only time state in sync with the frame clock. It starts at the supplied root and visits each element in the retained UI tree, except the `Scene` subtree of a `RenderSurface2D`, which the surface advances itself. When an element implements `ITimeSensitiveRenderElement`, the invalidator calls `UpdateRenderTime(frameTime)`.
 
 The invalidator does not inspect the return value from `UpdateRenderTime`. Time-sensitive elements are responsible for invalidating themselves when their time state changes. For example, `TextBox` and `PasswordBox` use this hook to update caret blink visibility and invalidate render state when the blink phase changes.
 
@@ -53,7 +53,7 @@ Traversal follows visual children when an element has any visual children. If th
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `Invalidate(UIElement root, TimeSpan frameTime)` | `void` | Traverses `root` and its descendants, calling `ITimeSensitiveRenderElement.UpdateRenderTime` on each time-sensitive render element. |
+| `Invalidate(UIElement root, TimeSpan frameTime)` | `void` | Traverses `root` and its descendants, except `RenderSurface2D.Scene` subtrees, calling `ITimeSensitiveRenderElement.UpdateRenderTime` on each time-sensitive render element. |
 
 ## Exceptions
 

@@ -26,9 +26,9 @@ bool ready = region.IsReady;
 
 Obtain instances from [CollisionWorld2D.PrepareRegionAsync](Cerneala.UI.Controls.CollisionWorld2D.md). There is no public constructor. `Bounds` is the requested rectangle in collision-world scene coordinates; it is not transformed into a source's local coordinates in this property.
 
-The region keeps collision interest alive, not an immutable snapshot of geometry. Map replacement, chunk loading and scene-items publication failures can change `IsReady`. Collision queries always check their actual envelope again and can throw even when a different or previously prepared rectangle was ready. Reading live readiness requires the simulation owner's thread, whether UI-hosted or independent. Readiness is false after disposal or loss of that context; reattachment does not revive this region.
+The region keeps collision interest alive, not an immutable snapshot of geometry. Map replacement, chunk loading and scene-items publication failures can change `IsReady`. Collision queries check their actual envelope again and can throw even when a different or previously prepared rectangle was ready. Queries with `CollisionLayer` 0, `CollisionMask` 0, or a collider whose `CollisionMask` is 0 skip this check. Reading live readiness requires the simulation owner's thread, whether UI-hosted or independent. Readiness is false after disposal or loss of that context; reattachment does not revive this region.
 
-Disposal is idempotent. Other prepared regions, marked active colliders, and camera interest can keep map chunks resident. Worker-thread disposal invalidates this region immediately and relays tree retirement to the same simulation owner; its UI frame loop or independent `Update` loop must continue draining that work. Context disposal also retires all interests, so late completion does not require pumping an already-disposed owner.
+Disposal is idempotent. Other prepared regions, marked active colliders, and camera interest can keep map chunks resident. Worker-thread disposal invalidates this region immediately and posts the release of its collision interest to the same simulation owner; its UI frame loop or independent `Update` loop must continue draining that work. Context disposal also retires all interests, so late completion does not require pumping an already-disposed owner.
 
 ## Properties
 

@@ -13,6 +13,12 @@ Controls deterministic sparse-polynomial lens-profile fitting.
 public sealed class PrismLensProfileFitOptions
 ```
 
+## Constructors
+
+| Signature | Description |
+| --- | --- |
+| `PrismLensProfileFitOptions()` | Creates options with the default values listed under Properties. |
+
 ## Examples
 
 ```csharp

@@ -22,6 +22,7 @@ Assign the built-in modern component template directly to a button:
 
 ```csharp
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Buttons;
 using Cerneala.UI.Layout;
 
 Button button = new()
@@ -37,6 +38,7 @@ Register the template in an aspect package so it can be selected with component-
 ```csharp
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Buttons;
 using Cerneala.UI.Controls.Templates;
 
 AspectPackage package = AspectPackage.Create("App")

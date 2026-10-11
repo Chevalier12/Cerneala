@@ -28,7 +28,12 @@ using Cerneala.UI.Motion;
 using Cerneala.UI.Motion.Input;
 using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
 
+UIRoot root = new(100, 100);
 UIElement element = new();
+root.VisualChildren.Add(element);
+root.ProcessFrame();
+
+// The element must be attached to a UIRoot before PointerPressed animates its scale.
 using GestureMotionController gestures = element.Motion().Gestures();
 
 gestures.PointerPressed(MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)));

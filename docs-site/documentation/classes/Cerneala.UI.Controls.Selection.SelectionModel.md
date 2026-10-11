@@ -23,6 +23,7 @@ Derived:
 
 ```csharp
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Selection;
 
 SelectionModel model = new();
 

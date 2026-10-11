@@ -41,6 +41,7 @@ Supply a diagnostic name for the generated declaration:
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Media;
 
 AspectRuleSet rule = new AspectRuleSetBuilder(
         "button.foreground",
@@ -49,7 +50,7 @@ AspectRuleSet rule = new AspectRuleSetBuilder(
         declarationOrder: 1)
     .Set(
         Control.ForegroundProperty,
-        AspectValue<Color>.Literal(Color.Black),
+        AspectValue<Brush?>.Literal(new SolidColorBrush(Color.Black)),
         diagnosticName: "Button foreground")
     .Build();
 ```
@@ -58,7 +59,7 @@ AspectRuleSet rule = new AspectRuleSetBuilder(
 
 `AspectRuleSetBuilder` stores the rule set metadata supplied to its constructor and accumulates declarations in call order. Each `Set<T>` call creates an `AspectDeclaration` for a `UiProperty<T>` and an `AspectValue<T>`, optionally carrying the supplied diagnostic name.
 
-`Set<T>` returns the same builder instance, so multiple property declarations can be chained before `Build()` is called. `Build()` copies the current declaration list with `ToArray()` and passes it to the `AspectRuleSet` constructor together with `Name`, `Layer`, `Target`, and `DeclarationOrder`.
+`Set<T>` returns the same builder instance, so multiple property declarations can be chained before `Build()` is called. `Build()` passes the current declaration list to the `AspectRuleSet` constructor together with `Name`, `Layer`, `Target`, and `DeclarationOrder`; the constructor copies the declarations, so later `Set<T>` calls on the builder do not change a rule set that was already built.
 
 The builder constructor does not validate its arguments directly. Validation happens through the objects it creates or receives: `Set<T>` uses `AspectDeclaration`, which rejects `null` properties, `null` values, and property/value type mismatches; `Build()` uses the public `AspectRuleSet` constructor, which validates the rule name, layer, target, and declarations collection. `Build()` also rejects declarations of `UIElement.AspectProperty` and properties whose owner is incompatible with `Target.ElementType` for an unslotted rule, or `Target.Slot.TargetType` for a slot rule. Conditions and narrower element selectors do not relax the slot child-type requirement. Invalid rules fail during `Build()`, before package registration or frame processing, with an exception naming the rule, target, property, and property owner.
 

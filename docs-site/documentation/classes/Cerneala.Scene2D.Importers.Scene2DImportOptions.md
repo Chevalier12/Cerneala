@@ -36,7 +36,7 @@ The default root is the input map's directory. An explicit root and a relative i
 
 The caller must provide a stable, trusted root tree for the duration of the synchronous import. Path checks reject existing links; they are not an OS-handle-based sandbox against a separate process concurrently replacing filesystem components. The root itself is caller-selected trust, not content-selected configuration. No source-provided URL is fetched or command executed.
 
-Budgets are checked before allocations derived from declared dimensions. Import additionally caps source-expanded colliders at 65,536 overall. Each tile definition and entity accepts at most one collider; a second Tiled collision object or a collider polyline with more than two points is rejected before it can expand into multiple descriptors. These checks also cover unused tile definitions. The parser retains bounded JSON documents, which are disposed after import. JSON limits do not describe atlas decoding or GPU allocation: those remain the existing resource system's responsibility.
+Budgets are checked before allocations derived from declared dimensions. Import additionally caps source-expanded colliders at 65,536 overall. Each tile definition and entity accepts at most one collider; a second Tiled collision object or a collider polyline with any number of points other than two is rejected before it can expand into multiple descriptors. These checks also cover unused tile definitions. The parser retains bounded JSON documents, which are disposed after import. JSON limits do not describe atlas decoding or GPU allocation: those remain the existing resource system's responsibility.
 
 ## Constructors
 
@@ -55,11 +55,11 @@ All properties have `get; init;` accessors.
 | `MaxTotalBytes` | `long` | 67,108,864 | Aggregate bytes in JSON reads, including external files. |
 | `MaxFiles` | `int` | 1,024 | Number of JSON file reads. |
 | `MaxJsonDepth` | `int` | 64 | Maximum JSON object/array nesting. |
-| `MaxCells` | `int` | 1,048,576 | Aggregate decoded cells; also bounds atlas definition count. |
+| `MaxCells` | `int` | 1,048,576 | Aggregate decoded cells; also bounds atlas definition count, which is capped at 1,048,576 even when this value is larger. |
 | `MaxChunks` | `int` | 65,536 | Aggregate chunk count. |
 | `MaxLayers` | `int` | 4,096 | Parsed source layer count, including Tiled groups; also supplies the final core `MaxMaps` budget. |
-| `MaxEntities` | `int` | 65,536 | Parsed objects, including tile collision objects; final core entities plus promotion references are also bounded. |
-| `MaxPoints` | `int` | 4,096 | Points per source polygon/polyline. |
+| `MaxEntities` | `int` | 65,536 | Parsed objects, including tile collision objects, and LDtk entity definitions; final core entities plus promotion references are also bounded. |
+| `MaxPoints` | `int` | 4,096 | Points per source polygon/polyline, capped at 4,096 even when this value is larger. Collider point text longer than 393,216 characters is rejected. |
 | `MaxDiagnostics` | `int` | 128 | Retained diagnostic count; truncation never turns failure into success. |
 
 ## See also

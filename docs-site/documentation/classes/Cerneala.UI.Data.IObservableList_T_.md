@@ -7,32 +7,46 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Data/IObservableList{T}.cs`
 
-Provides the `Cerneala.UI.Data.IObservableList<T>` API surface.
+Represents a read-only list of typed items that raises a notification when its contents change.
 
 ```csharp
 public interface IObservableList<T> : IReadOnlyList<T>
 ```
 
-## Type Parameters
+## Examples
 
-| Name | Description |
-| --- | --- |
-| `T` | The item type stored by the list. |
+```csharp
+using Cerneala.UI.Data;
+
+ObservableList<int> numbers = new();
+IObservableList<int> list = numbers;
+list.Changed += (_, e) => Console.WriteLine($"{e.Kind} {e.Item} {list.Count}");
+
+numbers.Add(42);
+// Add 42 1
+```
+
+## Remarks
+
+`ObservableList<T>` is the only Cerneala implementation. It raises this typed `Changed` first and then the untyped `IObservableList.Changed` for the same change.
+
+`CollectionView<T>` checks whether its source implements `IObservableList<T>`. If it does, the view subscribes to `Changed` and rebuilds itself after every change, whatever its kind. `Dispose` removes that subscription.
 
 ## Events
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `Changed` | `EventHandler<ObservableListChangedEventArgs<T>>?` | Raised when the collection changes. |
+| `Changed` | `EventHandler<ObservableListChangedEventArgs<T>>?` | Raised after the list changes. The arguments describe the change; see `ObservableListChangeKind`. |
 
-## Inherited Members
-
-`Count`, the integer indexer, and enumeration are inherited from `IReadOnlyList<T>`.
-
-## Remarks
-
-This page is generated from the repository API index so the documentation surface stays aligned with the source tree.
+Members inherited from `IReadOnlyList<T>` (`Count`, the indexer, and enumeration) are not repeated here.
 
 ## Applies to
 
-Cerneala UI runtime and framework API consumers.
+`ObservableList<T>` and `CollectionView<T>`.
+
+## See also
+
+- `Cerneala.UI.Data.IObservableList`
+- `Cerneala.UI.Data.ObservableList<T>`
+- `Cerneala.UI.Data.ObservableListChangedEventArgs<T>`
+- `Cerneala.UI.Data.CollectionView<T>`

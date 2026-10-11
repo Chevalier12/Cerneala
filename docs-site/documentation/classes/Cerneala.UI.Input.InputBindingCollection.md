@@ -56,7 +56,6 @@ The collection inherits the standard `Collection<InputBinding>` editing surface.
 | Name | Type | Description |
 | --- | --- | --- |
 | `Count` | `int` | Gets the number of input bindings in the collection. Inherited from `Collection<InputBinding>`. |
-| `Items` | `IList<InputBinding>` | Gets the underlying item list. Inherited from `Collection<InputBinding>`. |
 | `this[int index]` | `InputBinding` | Gets or sets the binding at the specified zero-based index. Setting rejects `null`. Inherited from `Collection<InputBinding>` through the overridden `SetItem` path. |
 
 ## Methods
@@ -90,4 +89,3 @@ Cerneala retained UI input and command routing.
 - `Cerneala.UI.Elements.UIElement.InputBindings`
 - `Cerneala.UI.Input.InputBinding`
 - `Cerneala.UI.Input.KeyBinding`
-- `Cerneala.UI.Input.RetainedInputBindingProcessor`

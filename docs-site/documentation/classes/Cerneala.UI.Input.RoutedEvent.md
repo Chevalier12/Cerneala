@@ -56,7 +56,7 @@ The same `RoutedEvent` instance is used when handlers are registered and when an
 | `Bubble` | Raises from the target element toward the root. |
 | `Tunnel` | Raises from the root toward the target element. |
 
-If a handler sets `RoutedEventArgs.Handled` to `true`, routing stops.
+If a handler sets `RoutedEventArgs.Handled` to `true`, later handlers registered without `handledEventsToo` are skipped. Routing does not stop: handlers registered with `handledEventsToo: true` on the remaining route elements still run.
 
 ## Properties
 
@@ -66,6 +66,14 @@ If a handler sets `RoutedEventArgs.Handled` to `true`, routing stops.
 | `OwnerType` | `Type` | Gets the type that owns or registered the routed event. |
 | `RoutingStrategy` | `RoutingStrategy` | Gets the routing strategy used when the event is raised. |
 | `ArgsType` | `Type` | Gets the expected event-argument type. |
+| `OwnerTypes` | `IReadOnlyCollection<Type>` | Gets the registering owner type and every type added with `AddOwner`. |
+
+## Methods
+
+| Name | Description |
+| --- | --- |
+| `AddOwner(Type ownerType)` | Adds an owner type and returns the same `RoutedEvent`. Adding a type twice has no effect. Throws `ArgumentNullException` when `ownerType` is `null`. |
+| `IsOwnedBy(Type ownerType)` | Returns whether `ownerType` is the registering owner or was added with `AddOwner`. Throws `ArgumentNullException` when `ownerType` is `null`. |
 
 ## Applies To
 

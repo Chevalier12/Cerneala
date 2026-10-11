@@ -50,9 +50,9 @@ If a compiled sidecar named `<source>.svg.cerneala.png` and its `.sha256` signat
 
 Raster bytes are shared through internal acquisitions, not an indefinitely resident path cache. Each loaded `SvgImage` keeps an acquisition alongside its independently owned backend image. Changing `SourcePath` or detaching the control releases both; another control still using the same raster remains valid. The final acquisition removes that raster from the cache. Backend decode failures release their acquisition as well. A changed artifact can coexist with an older acquisition until that older consumer releases it.
 
-For SVG images requested through the built-in SDL image loader, the intermediate raster acquisition ends when decoding finishes. The resulting decoded image has the normal [image-resource lease lifetime](Cerneala.UI.Resources.ImageResourceLease.md); the SVG raster cache does not independently pin its PNG bytes after decoding.
+When an `.svg` path is loaded directly through the built-in SDL image loader's path overload, the intermediate raster acquisition ends when decoding finishes. That decoded image has the normal [image-resource lease lifetime](Cerneala.UI.Resources.ImageResourceLease.md); the SVG raster cache does not pin its PNG bytes after decoding. `SvgImage` does not use that path: it passes a PNG stream to the loader and keeps its own acquisition until it releases the image, as described above.
 
-The configured image loader must support `IImageLoader.Load(Stream)`. The built-in `SdlGpuImageLoader` supports both path-backed and stream-backed images. A loader that only implements `Load(string)` uses the interface default implementation and throws `NotSupportedException` for stream-backed images. Attaching to a root without an image loader is valid and leaves `Source` empty.
+The configured image loader must support `IImageLoader.Load(Stream)`. The built-in SDL image loader (the internal `SdlGpuImageLoader` type) supports both path-backed and stream-backed images. A loader that only implements `Load(string)` uses the interface default implementation and throws `NotSupportedException` for stream-backed images. Attaching to a root without an image loader is valid and leaves `Source` empty.
 
 Changing `SourcePath` while the control is attached and effectively visible reloads the SVG immediately. When the control is not effectively visible, loading is deferred until it becomes renderable. The previous loaded image is disposed when it implements `IDisposable`. Detaching the control also releases its loaded image. An empty or `null` source path clears the image.
 
@@ -86,4 +86,3 @@ Cerneala retained UI controls with an attached image loader.
 
 - `Cerneala.UI.Controls.Image`
 - `Cerneala.UI.Resources.IImageLoader`
-- `Cerneala.Backends.SdlGpu.SdlGpuImageLoader`

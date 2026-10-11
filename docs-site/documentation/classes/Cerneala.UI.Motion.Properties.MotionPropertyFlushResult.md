@@ -83,6 +83,9 @@ Because `MotionPropertyFlushResult` is a `readonly record struct`, values are im
 | --- | --- | --- |
 | `Deconstruct(out int PropertyWrites, out int RenderInvalidations, out int LayoutInvalidations)` | `void` | Deconstructs the result into its primary-constructor counters. |
 | `Equals(MotionPropertyFlushResult other)` | `bool` | Determines whether another result has the same counter values. |
+| `Equals(object? obj)` | `bool` | Determines whether an object is a `MotionPropertyFlushResult` with the same counter values. |
+| `operator ==(MotionPropertyFlushResult left, MotionPropertyFlushResult right)` | `bool` | Returns whether two results are equal. |
+| `operator !=(MotionPropertyFlushResult left, MotionPropertyFlushResult right)` | `bool` | Returns whether two results are not equal. |
 | `GetHashCode()` | `int` | Returns a hash code based on the result counters. |
 | `ToString()` | `string` | Returns the compiler-generated record string representation. |
 

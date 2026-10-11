@@ -58,7 +58,7 @@ The tree itself returns routes from a target element to the root. Routing direct
 
 Handlers are registered per `(UiElementId, RoutedEvent)` pair. When dispatch asks for handlers on a disabled element, the tree returns no handlers for that element. Disabled elements are still part of the route, so their enabled ancestors and descendants can still receive the event when the router reaches them.
 
-Handlers returned for dispatch are copied to an array. A handler added while an event is already being dispatched does not run during that same dispatch; it can run on a later dispatch.
+The router asks the tree for an element's handlers when routing reaches that element, and gets a copy of the list at that moment. A handler added during dispatch to the element being visited does not run in that same dispatch. A handler added to an element that routing has not reached yet does run in that same dispatch. For example, during a bubble event, a child handler that adds a handler to its parent makes the new parent handler run right after the child.
 
 ## Constructors
 
@@ -71,7 +71,7 @@ Handlers returned for dispatch are copied to an array. A handler added while an 
 | Name | Description |
 | --- | --- |
 | `Add(UiElementId id, UiElementId? parentId, bool isEnabled = true)` | Registers an input element with an optional parent and enabled state. Throws `ArgumentException` when the parent id is not registered, and `InvalidOperationException` when the element id is already registered. |
-| `AddHandler(UiElementId id, RoutedEvent routedEvent, RoutedEventHandler handler)` | Registers a handler for an element and routed event. Throws `ArgumentNullException` for a null event or handler, and `ArgumentException` when the element id is not registered. |
+| `AddHandler(UiElementId id, RoutedEvent routedEvent, RoutedEventHandler handler, bool handledEventsToo = false)` | Registers a handler for an element and routed event. With `handledEventsToo` set to `true`, the handler also runs after an earlier handler set `Handled` to `true`. Throws `ArgumentNullException` for a null event or handler, and `ArgumentException` when the element id is not registered. |
 | `GetRouteToRoot(UiElementId targetId)` | Returns the registered route from `targetId` up through its ancestors. Throws `ArgumentException` when the target id is not registered. |
 
 ## Applies to

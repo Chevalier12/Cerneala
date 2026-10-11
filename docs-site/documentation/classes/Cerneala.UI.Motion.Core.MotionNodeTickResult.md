@@ -80,6 +80,7 @@ The record struct is immutable after construction and uses value-based equality.
 | --- | --- |
 | `Deconstruct(out int ValuesChanged, out int PropertyWrites, out bool Completed, out int RenderInvalidations, out int LayoutInvalidations, out int SkippedByReducedMotion)` | Deconstructs the result into its primary-constructor components. |
 | `Equals(MotionNodeTickResult other)` | Determines whether another result has the same component values. |
+| `Equals(object? obj)` | Determines whether an object is a `MotionNodeTickResult` with the same component values. |
 | `GetHashCode()` | Returns a hash code based on the result components. |
 | `ToString()` | Returns the compiler-generated record string representation. |
 

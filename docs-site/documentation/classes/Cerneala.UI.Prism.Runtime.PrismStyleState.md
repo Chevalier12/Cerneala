@@ -37,8 +37,10 @@ Style-specific values use catalog-generated dense storage. Applications can disc
 | --- | --- | --- |
 | `GetValue<T>`, `SetValue<T>` | `ArgumentException` | The descriptor belongs to another operation or `T` does not match its catalog value kind. |
 | `SetValue<T>` | `ArgumentOutOfRangeException` | The value violates the catalog domain or symbol options. |
-| `GetValue<T>`, `SetValue<T>` | `InvalidOperationException` | The state handle belongs to a replaced definition. |
+| `Visible`, `GetValue<T>`, `SetValue<T>` | `InvalidOperationException` | The state handle belongs to a replaced definition. |
+| `GetValue<T>`, `SetValue<T>` | `ArgumentNullException` | The descriptor is `null`, or `SetValue<string>` receives `null` for a symbol parameter. |
+| `SetValue<T>` | `ArgumentException` | A symbol parameter receives an empty or whitespace string. |
 
 ## Applies to
 
-Style occurrences exposed through layer, group, and backdrop state.
+Style occurrences exposed through layer and group state.

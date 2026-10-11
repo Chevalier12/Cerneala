@@ -31,6 +31,7 @@ using Cerneala.UI.Layout;
 using Cerneala.UI.Motion;
 using Cerneala.UI.Motion.Input;
 
+UIRoot root = new(100, 100);
 ScrollViewer viewer = new()
 {
     VerticalScrollBarVisibility = ScrollBarVisibility.Auto
@@ -42,6 +43,12 @@ Border progressBar = new()
     RenderTransformOrigin = new LayoutPoint(0, 0.5f)
 };
 
+root.VisualChildren.Add(viewer);
+root.VisualChildren.Add(header);
+root.VisualChildren.Add(progressBar);
+root.ProcessFrame();
+
+// The viewer must be attached to a UIRoot before ScrollTimeline() is called.
 ScrollTimeline timeline = viewer.Motion().ScrollTimeline();
 header.Motion().Opacity.Bind(timeline.Progress.Map(1f, 0.6f));
 progressBar.Motion().Animate(UIElement.ScaleXProperty).Bind(timeline.Progress.Map(0.04f, 1f));

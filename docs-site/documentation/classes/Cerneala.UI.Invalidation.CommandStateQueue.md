@@ -39,9 +39,9 @@ foreach (UIElement element in snapshot)
 ```
 
 ## Remarks
-`CommandStateQueue` stores elements that need their command-enabled state refreshed. `UIRoot` creates one queue and exposes it through `UIRoot.CommandStateQueue`; `UIElement.QueueCommandStateRefresh` enqueues command-state sources on that root.
+`CommandStateQueue` stores elements that need their command-enabled state refreshed. `UIRoot` creates one queue and exposes it through `UIRoot.CommandStateQueue`; `UIElement.QueueCommandStateRefresh` enqueues command-state sources on that root. On a detached element it only remembers the request, and the element is enqueued when it is attached.
 
-The queue de-duplicates by `UIElement` reference, so enqueueing the same element more than once keeps a single queued entry. `Snapshot` defensively prunes elements that no longer belong to the queue's root and returns the remaining elements in visual tree pre-order. It reuses the root's `ElementQueueOrderIndex`, which is rebuilt only when `TreeVersion` changes, and sorts only queued entries. Presence-exiting elements outside the current traversal keep their relative enqueue order after in-tree elements.
+The queue de-duplicates by `UIElement` reference, so enqueueing the same element more than once keeps a single queued entry. `Snapshot` defensively prunes elements that no longer belong to the queue's root, and elements of that root that are neither in its visual tree traversal nor presence-exiting, and returns the remaining elements in visual tree pre-order. It reuses the root's `ElementQueueOrderIndex`, which is rebuilt only when `TreeVersion` changes, and sorts only queued entries. Presence-exiting elements outside the current traversal keep their relative enqueue order after in-tree elements.
 
 `UiFrameScheduler` consumes this queue during the command-state phase. It snapshots the queue, removes each element before invoking the phase processor, and re-enqueues the element if command-state processing throws. Command-state processing itself does not clear `DirtyState` flags; the scheduler records the phase with `InvalidationFlags.None`.
 

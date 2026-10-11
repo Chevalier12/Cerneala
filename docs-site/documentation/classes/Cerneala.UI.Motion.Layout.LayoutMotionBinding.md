@@ -60,7 +60,7 @@ public sealed class FixedElement(LayoutSize desiredSize) : UIElement
 
 ## Remarks
 
-`LayoutMotionBinding` is created internally by `LayoutMotionCoordinator` when an attached element participates in layout motion and its measured layout position changes. Callers normally access an existing binding with `MotionSystem.Layout.GetBinding(UIElement)`.
+`LayoutMotionBinding` is created internally by `LayoutMotionCoordinator` when an attached element participates in layout motion and its arranged bounds (`ArrangedBounds`) change. Callers normally access an existing binding with `MotionSystem.Layout.GetBinding(UIElement)`.
 
 The binding owns a `MotionValue<Transform>` initialized to `Transform.Identity`. When layout motion starts, the coordinator jumps the value to an inverse correction transform and animates it back to identity with the element's `LayoutMotionOptions.CorrectionSpec`. The value subscription writes each sampled correction into the element's layout correction transform.
 

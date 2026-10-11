@@ -21,6 +21,7 @@ Inheritance:
 
 ```csharp
 using Cerneala.Timbre;
+using Cerneala.UI.Controls;
 
 var brightness = new TimbreParameter<float>("Brightness", 1200f);
 var ui = new TimbreClipDefinition(
@@ -36,6 +37,7 @@ var ui = new TimbreClipDefinition(
     parameters: [brightness]);
 
 // Plain C#: play one sound of the clip on an element.
+Button button = new();
 button.Timbre.Play(ui.Sounds["Hover"].Sound);
 ```
 
@@ -59,7 +61,7 @@ Declaring a clip does not open its sources, an output device, or perform I/O. A 
 Validation happens in the constructor:
 
 - `name` must not be `null` (`ArgumentNullException`) or whitespace (`ArgumentException`).
-- `sounds` must not be `null`, must contain at least one sound, no `null` entries and no two sounds with the same name (`ArgumentException`).
+- `sounds` must not be `null` (`ArgumentNullException`), and must contain at least one sound, no `null` entries and no two sounds with the same name (`ArgumentException`).
 - `parameters` cannot contain `null`, the same instance twice, or two parameters with the same name.
 - Every parameter declared by a sound must be one of the clip's `parameters`, by reference.
 

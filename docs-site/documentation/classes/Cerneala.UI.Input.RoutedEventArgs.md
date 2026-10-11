@@ -36,14 +36,15 @@ void OnMouseDown(object? sender, RoutedEventArgs args)
 
 `RoutedEventArgs` is the common base class for routed input event data. `RoutedEvent` identifies the event being raised. `OriginalSource` stores the object supplied when the event data was created. `Source` starts as `OriginalSource` and may be updated by routing code as the event moves through an input route.
 
-`Handled` is mutable and lets handlers stop or affect later routing behavior.
+`Handled` can be set by any handler. It does not stop routing: `RoutedEventRouter` still visits the remaining elements of the route, but on them it runs only handlers registered with `handledEventsToo: true`. Some framework code reads `Handled` after an event to decide what to do next, for example the input bridge runs a button command only when the mouse-up events were not handled.
 
-The constructor throws when `routedEvent` or `originalSource` is `null`.
+The two-parameter constructor throws when `routedEvent` or `originalSource` is `null`.
 
 ## Constructors
 
 | Name | Description |
 | --- | --- |
+| `RoutedEventArgs()` | Initializes empty routed event data. `RoutedEvent`, `OriginalSource`, and `Source` stay `null` until set; `RoutedEventRouter.Raise` needs `RoutedEvent` to be set. |
 | `RoutedEventArgs(RoutedEvent, object)` | Initializes routed event data for an event and original source. |
 
 ## Properties
@@ -52,7 +53,7 @@ The constructor throws when `routedEvent` or `originalSource` is `null`.
 | --- | --- | --- |
 | `Handled` | `bool` | Gets or sets whether the event has been handled. |
 | `OriginalSource` | `object` | Gets the original event source supplied to the constructor. |
-| `RoutedEvent` | `RoutedEvent` | Gets the routed event associated with this event data. |
+| `RoutedEvent` | `RoutedEvent` | Gets or sets the routed event associated with this event data. |
 | `Source` | `object` | Gets or sets the current source during event routing. |
 
 ## Applies to

@@ -13,7 +13,7 @@ attach generated property bindings, Prism instances, Motion executions, and
 Timbre attachments and commands.
 
 ```csharp
-public static class GeneratedMarkup
+public static partial class GeneratedMarkup
 ```
 
 ## Examples
@@ -60,7 +60,7 @@ the read-once helper; attribute paths use binding attachment helpers instead.
 | `ReadReference<T>(MarkupObservation observation, Func<object?, T> projection)` | `T` | Starts an observation long enough to read and project its current value, then stops it without attaching a binding. |
 | `AttachConditions(UIElement owner, IReadOnlyList<MarkupObservation> observations, IReadOnlyList<MarkupConditionRule> rules)` | `IDisposable` | Attaches observations and rules to an element lifecycle and gates rule activation callbacks on effective renderability; sound activations of a rule are not gated by renderability. |
 | `AttachMotionSession(UIElement owner)` | `IDisposable` | Creates the Motion session of one Aspect application for generated triggers and executions; generated code returns it as a lifetime of the Aspect behavior, so replacing the Aspect or detaching the owner disposes it. |
-| `AttachMotionTriggers(UIElement owner, Action attach, Action detach)` | `IDisposable` | Runs direct event-subscription callbacks on attach and their matching unsubscription callbacks on detach. |
+| `AttachMotionTriggers(UIElement owner, Action attach, Action detach)` | `IDisposable` | Runs direct event-subscription callbacks when the owner becomes renderable (attached and effectively visible) and their matching unsubscription callbacks when it stops being renderable or detaches. |
 | `AddMotionTrigger(IDisposable session, Action attach, Action detach)` | `void` | Adds direct subscribe/unsubscribe callbacks to a generated motion session. |
 | `StartMotion(IDisposable session, Func<IReadOnlyList<MotionHandle>> start)` | `MotionGroupHandle` | Starts one parallel generated execution and returns a group handle canceled with its session. |
 | `StartMotionExecution(IDisposable session, Func<MarkupMotionExecution> start)` | `MarkupMotionExecution` | Starts and tracks a leaf or composed generated execution in the supplied lifecycle session. |
@@ -310,7 +310,7 @@ Prism instance.
 | `RequirePrismClip` | `InvalidOperationException` | The element has no Prism instance, or its composition has another name. |
 | Motion session factories | `ArgumentNullException` | A required owner, callback, start delegate, target, property, accessor delegate, or options value is `null`. |
 | `AddMotionTrigger`, `StartMotion`, `StartMotionExecution`, `CancelMotionExecution`, `StartMotionProperty<T>`, `StartPrismMotionProperty<T>` | `ArgumentException` | The supplied lifetime was not created by `AttachMotionSession`, or a named execution slot is empty or whitespace. |
-| `AddMotionTrigger`, `StartMotion`, `StartMotionExecution`, `CancelMotionExecution`, `StartMotionProperty<T>`, `StartPrismMotionProperty<T>` | `ObjectDisposedException` | The motion session has already been disposed. |
+| `AddMotionTrigger`, `StartMotion`, `StartMotionExecution`, `CancelMotionExecution` | `ObjectDisposedException` | The motion session has already been disposed. `StartMotionProperty<T>` and `StartPrismMotionProperty<T>` do not check disposal; after disposal they throw `InvalidOperationException` because the session can no longer start motion. |
 | `StartMotion`, `StartMotionExecution`, `StartMotionProperty<T>`, `StartPrismMotionProperty<T>` | `InvalidOperationException` | The session owner is detached or non-renderable, the target is not attached to the same root, an execution returns `null`, or a Prism property ID is reused with an incompatible type. |
 | `AttachPrism(...)`, `TryGetPrismInstance(...)`, `GetPrismInstance(...)`, `SetPrismMotionProperty<T>(...)` | `ArgumentNullException` | A required owner, target, instance factory, binding-factory collection, getter, or setter is `null`. |
 | `AttachPrism(...)` | `ArgumentException` | The binding-factory collection contains a `null` entry. |
@@ -322,7 +322,7 @@ Prism instance.
 | Binding factories | `ArgumentException` | The observation collection is empty. |
 | Property binding factories | `InvalidOperationException` | The target property is read-only, or `TwoWay` is requested without a writable observation endpoint. |
 | Property binding factories | `ArgumentOutOfRangeException` | The binding mode is not `OneWay` or `TwoWay`. |
-| Active binding callbacks | `InvalidOperationException` | A consumed source notification or activation occurs on a thread other than the captured UI/update thread. |
+| Active binding callbacks | `InvalidOperationException` | A consumed source notification or activation occurs on a thread other than the captured UI/update thread and no UI `Relay` is available. With a `Relay`, off-thread notifications are marshaled to the UI thread instead. |
 | `AttachTimbre` | `InvalidOperationException` | The target is detached, or an argument names no parameter of the clip. |
 | `AttachTimbre(UIElement, ResourceId<TimbreClipDefinition>, …)` | `KeyNotFoundException` | No `TimbreClipDefinition` resource with the key is reachable from the target. |
 | `AttachTimbre`, `PlayTimbre` | `InvalidOperationException` | The target's root has no `TimbreRuntime` (raised when a sound starts, including `AutoPlay`). |

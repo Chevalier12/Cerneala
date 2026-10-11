@@ -45,11 +45,16 @@ The factory argument to `GetOrAdd` must be non-null. `Clear` removes all cached 
 | --- | --- |
 | `TextLayoutCache(int capacity = DefaultCapacity)` | Creates a bounded cache. Throws `ArgumentOutOfRangeException` when `capacity` is zero or negative. |
 
+## Fields
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `DefaultCapacity` | `int` | Constant. Default cache capacity (`512`). |
+
 ## Properties
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `DefaultCapacity` | `int` | Default cache capacity (`512`). |
 | `Capacity` | `int` | Gets the maximum number of retained layouts. |
 | `Count` | `int` | Gets the number of currently retained layouts. |
 | `Hits` | `int` | Gets the number of cache hits. |

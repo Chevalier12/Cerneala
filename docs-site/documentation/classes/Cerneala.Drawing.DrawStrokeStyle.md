@@ -54,6 +54,12 @@ The constructor copies `dashPattern`; modifying the source sequence later does n
 | `DashOffset` | `float` | Gets the phase offset into the dash cycle. |
 | `Alignment` | `DrawStrokeAlignment` | Gets the closed-contour alignment; open contours are centered. |
 
+## Exceptions
+
+| Exception | Condition |
+| --- | --- |
+| `ArgumentOutOfRangeException` | `startCap`, `endCap`, `join`, or `alignment` is not a defined enum value; `miterLimit` is not finite or is less than `1`; `dashOffset` is not finite; or `dashPattern` contains a value that is not finite or is less than or equal to `0`. |
+
 ## Applies To
 
 All native vector strokes created with `DrawPen`.

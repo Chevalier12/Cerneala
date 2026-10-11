@@ -25,6 +25,7 @@ Create a component template that registers slots, requires a named part, and bin
 ```csharp
 using Cerneala.UI.Core;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Buttons;
 using Cerneala.UI.Controls.Templates;
 
 Button button = new()
@@ -70,7 +71,7 @@ context.BindToken(paddingToken, root, Control.PaddingProperty);
 ```
 
 ## Remarks
-`ComponentTemplateContext` is the mutable build-time context used by `ComponentTemplate<TControl>`. The template factory records information on the context, and the template pipeline copies `Bindings`, `TokenBindings`, `Slots`, and `Parts` into the returned `ComponentTemplateInstance`.
+`ComponentTemplateContext` is the mutable build-time context used by `ComponentTemplate<TControl>`. The template factory records information on the context, and the template pipeline copies `Bindings` and `TokenBindings` into the returned `ComponentTemplateInstance` and passes the same `Slots` and `Parts` map instances to it, so `instance.Parts` and `context.Parts` are the same object.
 
 The context does not attach bindings, token bindings, slots, parts, or registered lifetimes by itself. `ComponentTemplateInstance.Attach(Control)` attaches the recorded template bindings to the owner, applies token bindings from the captured `AspectEnvironment`, and attaches the generated root as a template child. `ComponentTemplateInstance.Dispose()` disposes the lifetimes registered while the factory ran.
 

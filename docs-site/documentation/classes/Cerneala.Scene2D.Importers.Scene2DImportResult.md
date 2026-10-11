@@ -35,7 +35,7 @@ if (result.Success)
 
 Only a completely constructed and core-validated document can be returned. Fatal, Error or Unsupported diagnostics force `Success == false` and `Document == null`; no partial map is published. Known editor-only fields produce warnings, aggregated per source file, and do not prevent success.
 
-Diagnostics are the same backend-neutral `Scene2DDiagnostic` records used by core validation. Their retained order is deterministic. The importer stops at the first blocking failure; it is not an exhaustive repair report. If an error occurs after retained warning slots are full, failure is still recorded even though that error may not appear in `Diagnostics`; `DiagnosticsTruncated` then reports the loss. Text fields are bounded by the core collector.
+Diagnostics are the same backend-neutral `Scene2DDiagnostic` records used by core validation. Their retained order is deterministic. The importer stops at the first blocking failure; it is not an exhaustive repair report. If an error occurs after the retained diagnostic slots (shared by all severities) are full, failure is still recorded even though that error may not appear in `Diagnostics`; `DiagnosticsTruncated` then reports the loss. Text fields are bounded by the core collector.
 
 There is no public constructor. The result owns no UI element, GPU resource, collision world or live parser stream.
 

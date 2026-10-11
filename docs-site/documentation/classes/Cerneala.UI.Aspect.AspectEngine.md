@@ -69,7 +69,7 @@ Standalone `AspectRuleSet` construction validates declaration ownership, includi
 
 The engine stores state per `UIElement` in a `ConditionalWeakTable`. `Clear` removes the element's aspect-base values from the last resolved result, resets its diagnostics, and removes it from dependency tracking. `GetDependencies` returns an empty dependency set for elements that have not been applied. For a root-owned engine, use `UIRoot.Detective.CaptureAspect` to read diagnostic snapshots.
 
-The root-owned engine records cumulative rule consideration, condition-node evaluations, matches, declaration resolution, token lookups, and cache counters. Read those counters through `UIRoot.Detective.AspectCounters`.
+The root-owned engine records cumulative rule consideration, condition-node evaluations, matches, declaration resolution, and token lookups. The `CacheHits` and `CacheMisses` fields of `AspectEngineCounters` are not incremented by the engine and stay `0`. Read those counters through `UIRoot.Detective.AspectCounters`.
 
 ## Methods
 

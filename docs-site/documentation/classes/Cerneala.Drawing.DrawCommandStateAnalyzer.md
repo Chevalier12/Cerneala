@@ -36,6 +36,13 @@ The analyzer treats transform, rectangular and path clips, opacity, blend, layer
 | --- | --- | --- |
 | `Analyze(DrawCommandList)` | `DrawCommandStateAnalysis` | Validates and analyzes the current list version. |
 
+## Exceptions
+
+| Member | Exception | Condition |
+| --- | --- | --- |
+| `Analyze(DrawCommandList)` | `ArgumentNullException` | `commands` is `null`. |
+| `Analyze(DrawCommandList)` | `InvalidOperationException` | A pop command does not match the innermost open push command, or a push command is still open at the end of the list. |
+
 ## Applies To
 
 Drawing backends, retained damage, and Prism graph construction.

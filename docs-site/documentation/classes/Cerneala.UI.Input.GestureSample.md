@@ -24,7 +24,7 @@ Create a sample from pointer coordinates and the current pressed state, then pas
 using Cerneala.UI.Input;
 
 GestureRecognizer recognizer = new();
-GestureSample sample = new(pointerX, pointerY, isPressed: true);
+GestureSample sample = new(pointerX, pointerY, IsPressed: true);
 
 IReadOnlyList<GestureEvent> events = recognizer.Process(sample);
 ```

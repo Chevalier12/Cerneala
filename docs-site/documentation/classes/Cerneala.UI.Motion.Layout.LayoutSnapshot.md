@@ -76,6 +76,9 @@ Because `LayoutSnapshot` is a `readonly record struct`, values are immutable aft
 | --- | --- |
 | `Deconstruct(out UIElement Element, out LayoutRect Bounds, out UIElement? Parent, out LayoutMotionId? Id)` | Deconstructs the snapshot into its captured components. |
 | `Equals(LayoutSnapshot other)` | Determines whether another snapshot has the same component values. |
+| `Equals(object? obj)` | Determines whether an object is a `LayoutSnapshot` with the same component values. |
+| `operator ==(LayoutSnapshot left, LayoutSnapshot right)` | Returns whether two snapshots are equal. |
+| `operator !=(LayoutSnapshot left, LayoutSnapshot right)` | Returns whether two snapshots are not equal. |
 | `GetHashCode()` | Returns a hash code based on the snapshot components. |
 | `ToString()` | Returns the compiler-generated record string representation. |
 

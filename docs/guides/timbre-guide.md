@@ -30,15 +30,15 @@ unknown. The comparison uses the canonical 48 kHz stereo float PCM size:
 therefore covers about 2.7 seconds of audio. A compressed file smaller than
 1 MiB can still stream if its decoded PCM exceeds that threshold.
 
-`Preload` decodes the whole clip (up to 16 MiB of decoded PCM per clip, 64 MiB
-cache by default); `Streaming` decodes incrementally without memory
-proportional to duration. The runtime holds at most 64 voices, paused voices
+`Preload` decodes the whole source (by default up to 16 MiB of decoded PCM per source, `TimbreRuntimeOptions.MaxPreloadBytes`, and a 64 MiB
+cache, `MaxCacheBytes`); `Streaming` decodes incrementally without memory
+proportional to duration. The runtime holds at most `MaxVoices` voices (64 by default), paused voices
 included.
 
 ### Output and devices
 
-Only the default device is used. The output opens lazily when a playback first
-produces PCM, never at declaration. A missing device, an open failure or a
+Only the default device is used. The output opens lazily on the mixer's first pass after a playback is admitted, before that playback has produced PCM,
+and never at declaration. A missing device, an open failure or a
 device loss fails the affected playbacks with `TimbreErrorKind.DeviceUnavailable`;
 nothing reconnects or retries on its own. A later explicit play may try again.
 
@@ -63,8 +63,8 @@ a runtime to hosts without an `Application`.
 
 ### Overlap, replacement and cancellation
 
-- `scope.Play(clip)` without a handle always starts a new, overlapping playback.
-- `scope.Play(clip, handle: slot)` marks the slot's current occupant canceled.
+- `scope.Play(sound)` without a handle always starts a new, overlapping playback.
+- `scope.Play(sound, handle: slot)`, where `slot` comes from `scope.CreateHandle()`, marks the slot's current occupant canceled.
   Its voice fades out over 5 ms; the replacement fades in over 5 ms as soon as
   its source is ready, overlapping the old fade when both are ready.
 - `Cancel` stops only that playback. PCM already queued for the output (at most
@@ -96,8 +96,8 @@ a runtime to hosts without an `Application`.
 - A terminal playback (`Completed`, `Canceled`, `Failed`) rejects pause, resume,
   seek and parameter changes; replaying needs a new `Play`.
 
-`Completion` finishes after the source ends, the modifier tail decays (capped
-at 30 s) and the output has drained the playback's PCM. It reports what the
+`Completion` finishes after the source ends, the modifier tail decays (capped by
+`TimbreRuntimeOptions.DelayTailCap`, 30 s by default) and the output has drained the playback's PCM. It reports what the
 engine delivered to the output, not what a listener heard.
 
 ## 3. Declaring sounds in markup
@@ -359,7 +359,7 @@ The target path is `$self.timbre.Sound.Property` (or `$Name`/`$owner` instead of
   The visual Reduced Motion preference does not disable sound animations.
 - A sample that is not finite or leaves the range (for example a bouncy spring
   overshooting Volume 1) ends only that parameter's animation on its last valid
-  value; the sound continues and `Detective.CaptureTimbre().MotionSamplesRejected`
+  value; the sound continues and `CaptureTimbre().MotionSamplesRejected` on a `Detective` instance
   counts it. Values are never clamped.
 
 The same animations are available from C# on any playback whose scope belongs

@@ -23,15 +23,15 @@ public enum PrismCacheMissReason
 | `NotCacheable` | The graph or one of its dependencies did not provide a stable cacheable result. |
 | `DependencyChanged` | A pixel-affecting dependency or raster context changed from the retained result. |
 | `Invalidated` | The candidate's retained entries were invalidated before lookup. |
-| `Disabled` | Retained lookup was bypassed by the internal cache-off conformance mode. |
+| `Disabled` | Reserved for a retained lookup that was bypassed. No current code produces this value. |
 
 ## Remarks
 
-Reasons are counted per cache candidate. Use
-`PrismRendererDiagnostics.GetMissCount` for cumulative counts and
-`PrismRendererDiagnostics.LastMissReason` for the most recently recorded
-reason. `Disabled` is diagnostic output only; public renderer options do not
-expose the internal cache-off mode.
+The value descriptions name the intended meaning. No current code records a
+miss reason: `PrismRendererDiagnostics` has no public constructor and the
+renderer never creates it, so `PrismRendererDiagnostics.GetMissCount` and
+`PrismRendererDiagnostics.LastMissReason` have no populated instance to
+report from.
 
 ## Applies to
 

@@ -28,9 +28,9 @@ Console.WriteLine($"Chunks {snapshot.VisibleChunks}/{snapshot.TotalChunks}; " +
 
 `Detective.CaptureTileMap` copies already collected values. It does not request a frame, rebuild geometry, load resources, run collision queries, or reset counters. Repeated reads without another recording return the same values. A retained frame that does not record the map leaves the previous recording's counters intact; they are not measurements of work executed by the capture call or necessarily the current UI frame.
 
-The fields describe the latest map recording. `TileInvalidations` counts model replacements since the preceding recording. Retained bytes/objects describe the map's managed retained estimates, not GPU memory. Cache release can clear those retained estimates without another recording. A never-recorded map starts with zero counters.
+The fields describe the latest map recording. `TileInvalidations` counts tile-model invalidations since the preceding recording: one for each source replacement and one each time the map applies a catalog from its source. One source replacement can therefore add 2, once for the replacement and once when the new catalog is applied. Retained bytes/objects describe the map's managed retained estimates, not GPU memory. Cache release can clear those retained estimates without another recording. A never-recorded map starts with zero counters.
 
-For grid maps, `RetainedBytes` includes visible and optional warm entries; subtract `WarmRetainedBytes` to obtain the visible-entry estimate. `WarmChargedBytes` uses a different accounting basis: measured managed construction allocations (including temporary builders) plus logical RGBA image bytes exclusive to warm entries. `WarmImageBytes` is the latter portion. Shared images also required by visible entries are not charged again. Neither value is a process/RSS/native/GPU measurement or includes caller-held models and the spatial metadata index.
+For grid maps, `RetainedBytes` includes visible and optional warm entries; subtract `WarmRetainedBytes` to obtain the visible-entry estimate. `WarmChargedBytes` uses a different accounting basis: the data-residency bytes of chunks kept only for the warm cache, plus measured managed construction allocations (including temporary builders), plus logical RGBA image bytes exclusive to warm entries. `WarmImageBytes` is the image portion. Shared images also required by visible entries are not charged again. Neither value is a process/RSS/native/GPU measurement or includes caller-held models and the spatial metadata index.
 
 `BatchesBuilt` includes optional preparation; `BatchesRebuilt` and `BatchesReused` describe entries consumed by visible recording. `WarmBatchesPrepared` and `WarmTilesPrepared` expose additional work inside that same recording, including a tentative build that is rejected by final budget admission. Warm preparation emits no draw commands. Cache release clears warm residency counts/bytes, while work counters remain historical until the next recording. See [TileMap2D](Cerneala.UI.Controls.TileMap2D.md) for the spatial, cell-work and charge limits.
 
@@ -49,11 +49,11 @@ Capturing requires a map currently attached to the Detective's root. Snapshots c
 | `BatchesRebuilt`, `BatchesReused` | Constructed and reused batches used by the visible recording. |
 | `DrawCommands` | Recorded tile batch commands, not native GPU draw calls. |
 | `RetainedBytes`, `RetainedObjects` | Managed retained-cache estimates, not total process or GPU memory. |
-| `TileInvalidations` | Model replacement invalidations accumulated before that recording. |
+| `TileInvalidations` | Source replacements plus catalog applications accumulated before that recording. |
 | `WarmChunks` | Admitted optional grid entries after the latest recording; zero after cache release. |
 | `WarmBatchesPrepared`, `WarmTilesPrepared` | Additional batch/cell preparation work inside that recording, not extra drawing. |
 | `WarmRetainedBytes` | Warm-entry portion of the historical retained-cache estimate. |
-| `WarmChargedBytes` | Optional budget charge: measured managed construction allocations plus warm-only logical RGBA image bytes. |
+| `WarmChargedBytes` | Optional budget charge: warm-only chunk data bytes, plus measured managed construction allocations, plus warm-only logical RGBA image bytes. |
 | `WarmImageBytes` | Unique warm-only image portion of `WarmChargedBytes`. |
 
 ## See also

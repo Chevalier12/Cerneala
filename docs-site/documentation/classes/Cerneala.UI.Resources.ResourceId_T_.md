@@ -1,4 +1,4 @@
-# ResourceId<T> Class
+# ResourceId<T> Struct
 
 ## Definition
 Namespace: `Cerneala.UI.Resources`

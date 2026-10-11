@@ -24,6 +24,7 @@ Target the button content slot from an aspect rule:
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Buttons;
 
 AspectRuleSet focusedContentForeground = new(
     "example.button.focus-content",
@@ -40,6 +41,7 @@ Register the built-in button slots in a component template:
 
 ```csharp
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Buttons;
 using Cerneala.UI.Controls.Templates;
 
 ComponentTemplate<Button> template = new("Button.Custom", context =>
@@ -58,7 +60,7 @@ ComponentTemplate<Button> template = new("Button.Custom", context =>
 
 `ButtonSlots` centralizes the slot identifiers used by `ButtonTemplates.Modern`. The template registers `Root` for the outer `Border` and `Content` for the inner `ContentPresenter`.
 
-Aspect rules can use these slots through `AspectTarget` to address template elements without depending on local variables from the template factory. For example, the playground uses `ButtonSlots.Content` to apply a foreground declaration to the content presenter when the button is focused.
+Aspect rules can use these slots through `AspectTarget` to address template elements without depending on local variables from the template factory. For example, a rule whose target is `new AspectTarget(typeof(Button), ButtonSlots.Content)` applies its declarations to the `ContentPresenter` that the default `ButtonTemplates` registers for that slot.
 
 Each field is an `AspectSlot<Button, TTarget>`, so the slot carries both the owning control type and the expected target element type. Registration is performed through `ComponentTemplateContext.RegisterSlot`, which stores the slot and element in the template instance's `TemplateSlotMap`.
 

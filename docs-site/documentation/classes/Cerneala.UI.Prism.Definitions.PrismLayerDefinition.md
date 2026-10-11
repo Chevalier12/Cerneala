@@ -50,11 +50,18 @@ The optional inherited `SourceSpan` is immutable diagnostic metadata and does no
 | `ClipToBelow` | `bool` | Gets whether the layer joins the clipping chain below it. |
 | `SourceSpan` | `PrismSourceSpan?` | Gets the optional authoring source location (inherited). |
 
+## Methods
+
+| Name | Return Type | Description |
+| --- | --- | --- |
+| `Equals(PrismNodeDefinition? other)` | `bool` | Tests structural equality. |
+| `GetHashCode()` | `int` | Returns the structural hash code. |
+
 ## Exceptions
 
 | Member | Exception | Condition |
 | --- | --- | --- |
-| `PrismLayerDefinition(...)` | `ArgumentException` | Both operation lists are empty, `name` is whitespace, or `blendMode` is `PassThrough`. |
+| `PrismLayerDefinition(...)` | `ArgumentException` | Both operation lists are empty, an operation list contains a `null` element, `name` is whitespace, or `blendMode` is `PassThrough`. |
 | `PrismLayerDefinition(...)` | `ArgumentOutOfRangeException` | `opacity` or `fill` is non-finite or outside zero through one. |
 
 ## Applies to

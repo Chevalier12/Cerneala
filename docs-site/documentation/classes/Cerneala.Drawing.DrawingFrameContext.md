@@ -43,7 +43,7 @@ The default struct value has no backdrop lease and is not a substitute for a hos
 | Name | Type | Description |
 | --- | --- | --- |
 | `BackdropLease` | `IBackdropFrameLease?` | Gets the optional backend-neutral backdrop lease borrowed for this submission. |
-| `StateAnalysis` | `DrawCommandStateAnalysis` | Gets the common state-stack analysis for the submitted command list. |
+| `StateAnalysis` | `DrawCommandStateAnalysis` | Gets the common state-stack analysis for the submitted command list. Throws `InvalidOperationException` on a `default` instance that no host created. |
 
 ## Applies to
 

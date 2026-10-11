@@ -80,6 +80,12 @@ Render backends should treat submitted command lists as read-only while renderin
 | --- | --- |
 | `IEnumerable.GetEnumerator()` | Returns the non-generic enumerator for the command list. |
 
+## Exceptions
+
+| Member | Exception | Condition |
+| --- | --- | --- |
+| Indexer | `ArgumentOutOfRangeException` | `index` is negative or not less than `Count`. |
+
 ## Applies to
 
 Cerneala retained rendering and drawing command submission.

@@ -24,7 +24,7 @@ drawing.FillRectangle(bounds, color);
 
 ## Remarks
 
-The layer renders its children into an intermediate surface, then applies `Opacity` and `BlendMode` once to the combined result. This preserves group-opacity semantics for overlapping children. Opacity must be finite and between `0` and `1` inclusive.
+The layer renders its children into an intermediate surface, then applies `Opacity` and `BlendMode` once to the combined result. This preserves group-opacity semantics for overlapping children. Opacity must be finite and between `0` and `1` inclusive, and `BlendMode` must be a defined `DrawBlendMode` value.
 
 ## Constructors
 
@@ -38,6 +38,12 @@ The layer renders its children into an intermediate surface, then applies `Opaci
 | --- | --- | --- |
 | `Opacity` | `float` | Gets the group opacity. |
 | `BlendMode` | `DrawBlendMode` | Gets the layer compositing mode. |
+
+## Exceptions
+
+| Member | Exception | Condition |
+| --- | --- | --- |
+| Constructor | `ArgumentOutOfRangeException` | `opacity` is not finite or is outside `0` through `1`, or `blendMode` is not a defined enum value. |
 
 ## Applies To
 

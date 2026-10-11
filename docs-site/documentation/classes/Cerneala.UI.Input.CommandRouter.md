@@ -38,7 +38,8 @@ static bool ExecuteSave(UIRoot root, Button saveButton)
         EditorCommands.Save,
         (_, args) =>
         {
-            Save(args.Parameter);
+            ExecutedRoutedEventArgs executedArgs = (ExecutedRoutedEventArgs)args;
+            Save(executedArgs.Parameter);
             args.Handled = true;
         },
         (_, args) =>
@@ -83,7 +84,7 @@ During routing, `RoutedEventArgs.Source` is updated to the current `UiElementId`
 | Name | Description |
 | --- | --- |
 | `CanExecute(RoutedCommandContext)` | Returns whether the routed command can execute for the supplied retained command context. Raises preview and bubble can-execute command binding callbacks. |
-| `Execute(RoutedCommandContext)` | Executes a routed command by first checking `CanExecute`, then raising preview and bubble executed command binding callbacks when allowed. |
+| `Execute(RoutedCommandContext)` | Checks `CanExecute`, then raises `PreviewExecutedEvent`, and raises `ExecutedEvent` only when the preview was not handled. Returns `true` when `CanExecute` passed. |
 
 ## Exceptions
 

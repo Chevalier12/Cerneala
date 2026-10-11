@@ -63,6 +63,7 @@ Nodes are declared front-to-back and evaluated bottom-up. Every rendered layer o
 | `TryGetNamedNode(string path, out PrismNodeId nodeId)` | `bool` | Resolves a validated dot-separated node address. |
 | `ToDiagnosticString()` | `string` | Serializes a deterministic human-readable snapshot. |
 | `Equals(PrismClipDefinition? other)` | `bool` | Tests structural equality. |
+| `Equals(object? obj)` | `bool` | Returns `true` when `obj` is a structurally equal `PrismClipDefinition`. |
 | `GetHashCode()` | `int` | Returns the structural hash code. |
 | `ToString()` | `string` | Returns `ToDiagnosticString()`. |
 
@@ -70,7 +71,7 @@ Nodes are declared front-to-back and evaluated bottom-up. Every rendered layer o
 
 | Member | Exception | Condition |
 | --- | --- | --- |
-| `PrismClipDefinition(...)` | `ArgumentException` | The name or node list is empty, IDs or scoped names are duplicated, or a node kind is invalid. |
+| `PrismClipDefinition(...)` | `ArgumentException` | `name` is `null`, empty, or whitespace; the node list is `null`, is empty, or contains a `null` element; or node IDs or scoped names are duplicated. |
 | `PrismClipDefinition(...)` | `ArgumentOutOfRangeException` | A light value is non-finite. |
 | `TryGetNamedNode(...)` | `ArgumentException` | `path` is null, empty, or whitespace. |
 

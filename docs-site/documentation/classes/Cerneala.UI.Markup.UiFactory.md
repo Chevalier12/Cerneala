@@ -73,7 +73,7 @@ The factory depends on a `UiMarkupTypeRegistry`. For each markup node, it looks 
 
 `Create` starts with diagnostics already attached to the document and appends creation diagnostics. When `options` is `null`, `MarkupLoadOptions.Strict` is used. In strict mode, any error diagnostic causes the returned `MarkupResult<UIElement>` to have a `null` `Value`. In recovery mode, the method continues collecting diagnostics and may return the created root, including a partial tree when some child nodes could not be created or attached.
 
-The method reports markup creation failures as diagnostics rather than throwing for unknown elements, unknown properties, unsupported text content, unsupported children, failed element construction, failed child attachment, or invalid property values. It still throws `ArgumentNullException` when the `document` argument is `null`.
+The method reports markup creation failures as diagnostics rather than throwing for unknown elements, unknown properties, unsupported text content, unsupported children, failed element construction, failed child attachment, or invalid property values. It still throws `ArgumentNullException` when the `document` argument is `null`. A property setter exception other than `FormatException`, `ArgumentException`, or `InvalidOperationException` is not converted: for example, `<Button Background="$Missing" />` with no `Missing` brush resource throws `KeyNotFoundException` out of `Create`.
 
 ## Constructors
 

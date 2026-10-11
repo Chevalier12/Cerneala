@@ -21,7 +21,7 @@ The version changes only when effective instance data changes. Assigning an iden
 
 | Name | Description |
 | --- | --- |
-| `PrismValueVersion(long value)` | Initializes a version value. |
+| `PrismValueVersion(long Value)` | Initializes a version value. |
 
 ## Properties
 

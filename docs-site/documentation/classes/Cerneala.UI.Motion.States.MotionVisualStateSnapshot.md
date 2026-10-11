@@ -88,6 +88,7 @@ The primary constructor does not validate the boolean values. Direct constructio
 | --- | --- | --- |
 | `Deconstruct(out bool IsPointerOver, out bool IsKeyboardFocused, out bool IsKeyboardFocusWithin, out bool IsEnabled)` | `void` | Deconstructs the snapshot into its captured visual-state flags. |
 | `Equals(MotionVisualStateSnapshot other)` | `bool` | Determines whether another snapshot has the same flag values. |
+| `Equals(object? obj)` | `bool` | Determines whether an object is a `MotionVisualStateSnapshot` with the same flag values. |
 | `GetHashCode()` | `int` | Returns a hash code based on the snapshot flag values. |
 | `ToString()` | `string` | Returns the compiler-generated record string representation. |
 

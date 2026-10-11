@@ -15,7 +15,7 @@ public sealed class PrismMaskState
 
 ## Remarks
 
-Changing a value advances the owning instance value generation and invalidates
+Changing a value advances the owning instance's `ValueVersion` and invalidates
 its rendered Prism result. `Image` is a backend-neutral resource identifier; the
 state does not own or retain a texture.
 
@@ -35,7 +35,8 @@ state does not own or retain a texture.
 | --- | --- | --- |
 | `Feather` | `ArgumentOutOfRangeException` | The assigned value is negative or non-finite. |
 | `Density` | `ArgumentOutOfRangeException` | The assigned value is non-finite or outside zero through one. |
+| `Image`, `Channel`, `Feather`, `Density`, `Invert` | `InvalidOperationException` | The state handle belongs to a replaced definition. |
 
 ## Applies to
 
-Optional layer, group, and backdrop masks.
+Optional layer and group masks.

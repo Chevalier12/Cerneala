@@ -38,8 +38,16 @@ Construction copies the input points and builds one triangle mesh. Recording the
 | `Points` | `IReadOnlyList<DrawPoint>` | Gets the copied points. |
 | `Color` | `Color` | Gets the shared point color. |
 | `Diameter` | `float` | Gets the positive shared point diameter. |
-| `Version` | `long` | Gets the stable immutable-payload version. |
+| `Version` | `long` | Gets the version of the immutable mesh. Every constructed batch gets a new process-unique value; the transformed copies that the renderer makes internally keep the same value. |
 | `Bounds` | `DrawRect` | Gets bounds including point diameter. |
+
+## Exceptions
+
+| Exception | Condition |
+| --- | --- |
+| `ArgumentNullException` | `points` is `null`. |
+| `ArgumentOutOfRangeException` | `diameter` is not finite, is less than or equal to `0`, or is greater than `2,000,000,000`. |
+| `ArgumentException` | `points` is empty. |
 
 ## Applies To
 

@@ -68,8 +68,8 @@ Gradient brushes order their exposed stop collections by `Offset`, so callers do
 
 | Name | Description |
 | --- | --- |
-| `operator ==` | Determines whether two `GradientStop` values are equal. |
-| `operator !=` | Determines whether two `GradientStop` values are not equal. |
+| `operator ==(GradientStop, GradientStop)` | Determines whether two `GradientStop` values are equal. |
+| `operator !=(GradientStop, GradientStop)` | Determines whether two `GradientStop` values are not equal. |
 
 ## Applies to
 

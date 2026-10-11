@@ -33,7 +33,7 @@ TileDrawBrushDescriptor descriptor = ((IDrawBrush)imageBrush).CreateDescriptor()
 | `Viewport` | Optional destination tile rectangle. |
 | `Viewbox` | Optional source rectangle. |
 | `TileMode` | Repetition policy. |
-| `BrushOpacity` | Source opacity. |
+| `BrushOpacity` | Source opacity; exposed as inherited `Opacity` too. |
 
 ## Applies to
 Backend implementation code.

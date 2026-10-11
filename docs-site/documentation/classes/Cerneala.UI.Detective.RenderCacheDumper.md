@@ -34,7 +34,7 @@ Console.WriteLine(dump);
 The returned text starts with `Render cache`, then includes a root cache line and one line for each element returned by `ElementTreeWalker.PreOrder(root, role)`.
 
 ## Remarks
-`RenderCacheDumper` is a diagnostics helper. It does not rebuild render caches and does not mutate the UI tree; it formats the current retained render cache state exposed by `UIRoot.RetainedRenderCache`.
+`RenderCacheDumper` is a diagnostics helper. It does not rebuild render caches and does not mutate the UI tree; it formats the current retained render cache state exposed by `UIRoot.RetainedRenderCache`. It can add cache entries: for an element that has no cache entry yet, `RenderDiagnostics.CaptureElement` creates an empty one.
 
 `Dump` first captures root cache state with `RenderDiagnostics.CaptureRoot`, then walks the selected tree in pre-order and captures each element with `RenderDiagnostics.CaptureElement`. The default traversal role is `ElementChildRole.Visual`; pass `ElementChildRole.Logical` to inspect the logical tree instead.
 
@@ -48,7 +48,7 @@ Each element line is produced from `ElementRenderDiagnosticsSnapshot.ToString()`
 ## Methods
 | Name | Description |
 | --- | --- |
-| `Dump(UIRoot root, ElementChildRole role = ElementChildRole.Visual)` | Returns a trimmed, multi-line render cache dump for `root` and every element in pre-order traversal for `role`. Throws `ArgumentNullException` when `root` is `null`. |
+| `Dump(UIRoot root, ElementChildRole role = ElementChildRole.Visual)` | Returns a trimmed, multi-line render cache dump for `root` and every element in pre-order traversal for `role`. Throws `ArgumentNullException` when `root` is `null`, and `ObjectDisposedException` when `root.RetainedRenderCache` was disposed. |
 
 ## Applies to
 `Cerneala` UI diagnostics for retained rendering.

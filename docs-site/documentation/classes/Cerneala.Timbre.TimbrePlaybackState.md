@@ -19,9 +19,9 @@ public enum TimbrePlaybackState
 | From | Event | To |
 | --- | --- | --- |
 | — | `Play` accepted | `Pending` |
-| `Pending` | first PCM block mixed | `Playing` |
+| `Pending` | the mixer first selects it for a PCM block | `Playing` |
 | `Pending`, `Playing` | `Pause()` | `Paused` |
-| `Paused` | `Resume()` | `Playing`, or `Pending` if no PCM was produced yet |
+| `Paused` | `Resume()` | `Playing`, or `Pending` if the mixer has not selected it yet |
 | any non-terminal | `Cancel()`, handle replacement, scope or runtime disposal | `Canceled` |
 | any non-terminal | source, data, resource, or device failure | `Failed` |
 | `Playing` | end of source, end of tail, output drained | `Completed` |
@@ -35,7 +35,7 @@ public enum TimbrePlaybackState
 | Name | Value | Description |
 | --- | --- | --- |
 | `Pending` | 0 | Accepted; no PCM produced yet. |
-| `Playing` | 1 | Producing PCM. |
+| `Playing` | 1 | Started and not paused. When another playback's source is late, the mixer can defer a block, so a playback can be `Playing` shortly before its first PCM is mixed. |
 | `Paused` | 2 | Suspended; keeps reader, position, and DSP state. |
 | `Completed` | 3 | Finished naturally and drained. |
 | `Canceled` | 4 | Canceled or replaced. |

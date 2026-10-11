@@ -45,7 +45,7 @@ Call `RaiseCanExecuteChanged` when external state changes and command consumers 
 
 | Name | Description |
 | --- | --- |
-| `ActionCommand(Action<object?>, Predicate<object?>?)` | Initializes a command from an execute delegate and optional can-execute predicate. |
+| `ActionCommand(Action<object?>, Predicate<object?>?)` | Initializes a command from an execute delegate and optional can-execute predicate. Throws `ArgumentNullException` when `execute` is `null`. |
 
 ## Methods
 

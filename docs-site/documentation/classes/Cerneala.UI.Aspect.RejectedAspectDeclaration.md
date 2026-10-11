@@ -43,7 +43,7 @@ The engine creates rejected entries when cascade keys are compared. A new declar
 
 `AspectEngine.Apply` includes these entries in the `ResolvedAspect.RejectedDeclarations` collection stored in diagnostics. `AspectTrace.Capture` formats rejected declarations by using the rejected declaration's `DiagnosticName` when present, falling back to the rejected property name, and appending the rejection reason.
 
-The constructor requires non-null `rejected` and `winningDeclaration` values. A null `reason` is accepted and stored as an empty string.
+The constructor requires non-null `rejectedRule`, `rejected`, `winningRule`, and `winningDeclaration` values. A null `reason` is accepted and stored as an empty string.
 
 ## Constructors
 

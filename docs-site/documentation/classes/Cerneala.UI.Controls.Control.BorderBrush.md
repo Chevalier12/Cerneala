@@ -20,6 +20,7 @@ public Brush? BorderBrush { get; set; }
 ## Examples
 
 ```csharp
+using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Media;

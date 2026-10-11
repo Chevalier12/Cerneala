@@ -18,7 +18,12 @@ public sealed record ImageDrawBrushDescriptor(
 
 ## Examples
 ```csharp
+using Cerneala.Drawing;
+using Cerneala.UI.Media;
+
+IDrawBrush imageBrush = new ImageBrush("assets/logo.png");
 ImageDrawBrushDescriptor descriptor = (ImageDrawBrushDescriptor)imageBrush.CreateDescriptor();
+// descriptor.Image is null; descriptor.SourceIdentity is "assets/logo.png".
 ```
 
 ## Remarks
@@ -30,7 +35,7 @@ ImageDrawBrushDescriptor descriptor = (ImageDrawBrushDescriptor)imageBrush.Creat
 | `Image` | Resolved image, when available. |
 | `SourceIdentity` | Unresolved source identity, when present. |
 | `Stretch`, `AlignmentX`, `AlignmentY`, `Viewport`, `Viewbox`, `TileMode` | Inherited tile settings. |
-| `BrushOpacity` | Source opacity. |
+| `BrushOpacity` | Source opacity; exposed as inherited `Opacity` too. |
 
 ## Applies to
 Drawing backend implementation code.

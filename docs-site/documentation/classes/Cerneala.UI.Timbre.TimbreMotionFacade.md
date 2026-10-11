@@ -42,7 +42,7 @@ void AnimatePlayback(TimbrePlayback playback, TimbreParameter<float> toneCutoff,
 
 Create the facade with [MotionExtensions](Cerneala.UI.Motion.MotionExtensions.md): `Motion(this TimbrePlayback)` samples the animation with the `UIRoot` that owns the playback's element scope (`UIElement.Timbre` or a generated markup sound session); `Motion(this TimbrePlayback, UIRoot)` names the root explicitly for playbacks of `Application.Timbre` or a standalone runtime. No Aspect or markup is required.
 
-The facade captures the playback instance, not a [TimbreHandle](Cerneala.Timbre.TimbreHandle.md) slot: an animation never moves to a playback that later occupies the same slot. `Animate` accepts `TimbrePlayback.VolumeParameter` or a float parameter declared by `playback.Clip`; the descriptor is checked when the animation starts. See [TimbreMotionAnimationBuilder](Cerneala.UI.Timbre.TimbreMotionAnimationBuilder.md) for timing, cancellation and validation.
+The facade captures the playback instance, not a [TimbreHandle](Cerneala.Timbre.TimbreHandle.md) slot: an animation never moves to a playback that later occupies the same slot. `Animate` accepts `TimbrePlayback.VolumeParameter` or a float parameter declared by `playback.Sound`; the descriptor is checked when the animation starts. See [TimbreMotionAnimationBuilder](Cerneala.UI.Timbre.TimbreMotionAnimationBuilder.md) for timing, cancellation and validation.
 
 ## Properties
 

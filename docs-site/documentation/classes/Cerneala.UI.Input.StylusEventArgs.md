@@ -69,7 +69,7 @@ The constructor requires a non-null routed event, original source, and stylus po
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `RoutedEvent` | `RoutedEvent` | Gets the routed event being raised. |
+| `RoutedEvent` | `RoutedEvent` | Gets or sets the routed event being raised. |
 | `OriginalSource` | `object` | Gets the original event source supplied at construction time. |
 | `Source` | `object` | Gets or sets the current event source during routing. |
 | `Handled` | `bool` | Gets or sets whether the routed event has been handled. |

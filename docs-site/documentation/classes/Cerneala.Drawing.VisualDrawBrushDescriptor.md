@@ -33,7 +33,7 @@ var descriptor = (VisualDrawBrushDescriptor)((IDrawBrush)visualBrush).CreateDesc
 | `Commands` | Captured visual commands. |
 | `ContentBounds` | Captured coordinate bounds. |
 | `Stretch`, `AlignmentX`, `AlignmentY`, `Viewport`, `Viewbox`, `TileMode` | Inherited tile settings. |
-| `BrushOpacity` | Source opacity. |
+| `BrushOpacity` | Source opacity; exposed as inherited `Opacity` too. |
 
 ## Applies to
 Backend-neutral drawing descriptors, implemented by SDL_GPU.

@@ -64,7 +64,7 @@ Because this class derives from `RoutedEventArgs`, it also carries the routed ev
 | `RoutedEvent` | `RoutedEvent` | Gets the routed event associated with this event data. |
 | `OriginalSource` | `object` | Gets the original source supplied when the event data was created. |
 | `Source` | `object` | Gets or sets the current source while the event is routed. |
-| `Handled` | `bool` | Gets or sets whether event routing should stop. |
+| `Handled` | `bool` | Gets or sets whether the event is handled. Handlers registered without `handledEventsToo` are skipped once it is `true`; routing still visits every remaining route element. |
 
 ## Related Routed Events
 | Event | Routing strategy | Event args type |

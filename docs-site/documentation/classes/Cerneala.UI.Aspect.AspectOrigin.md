@@ -27,7 +27,7 @@ AspectPackage package = AspectPackage.Create("Shell.Buttons")
 
 `Document` and `Name` are trimmed; `null`, empty, and whitespace values normalize to `null`. The metadata is copied into catalog-owned rule projections and reported by diagnostics without mutating reusable source rules.
 
-Origin metadata explains where a rule came from. It is not part of `AspectCascadeKey` and cannot change the winner.
+Origin metadata explains where a rule came from. It is diagnostic only: the cascade compares layer order, source order, specificity, and declaration order, so `Origin` cannot change which rule wins.
 
 ## Constructors
 

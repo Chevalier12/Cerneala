@@ -44,7 +44,7 @@ processors.Arrange?.Invoke(root);
 
 `CreatePhaseProcessors` builds a `FramePhaseProcessors` for `Measure` and `Arrange` and also exposes incremental measure processing for the scheduler. The generated actions automatically choose the available size and final rectangle based on the root, the visual parent, the position in `Canvas`, and the last known arrangement slot.
 
-`Measure` avoids measurement when the element does not have the `InvalidationFlags.Measure` flag, the available size is the same as the last measurement, and `LayoutVersion` has not changed. When the measurement runs, the method calls `UIElement.Measure(new MeasureContext(availableSize))`, updates the element's internal cache, and returns a `LayoutResult`.
+`Measure` avoids measurement when the element does not have the `InvalidationFlags.Measure` flag, the available size is the same as the last measurement, and `LayoutVersion` has not changed. When the measurement runs, the method calls `UIElement.Measure(new MeasureContext(availableSize, LayoutRounding.ForScale(root.Scale)))`, updates the element's internal cache, and returns a `LayoutResult`.
 
 `Arrange` avoids arranging in the same cache conditions for `InvalidationFlags.Arrange`, the final rectangle and `LayoutVersion`. When a dirty element is arranged, the manager clears the cached arrangement slot and calls `UIElement.Arrange(new ArrangeContext(finalRect, LayoutRounding.ForScale(root.Scale)))`, then updates the internal cache and checks if `ArrangedBounds` has changed. If the limits have changed for an attached element, the element is invalidated for `Render` and `HitTest`.
 

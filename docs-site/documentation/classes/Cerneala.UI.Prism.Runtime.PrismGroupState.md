@@ -34,6 +34,7 @@ The group state does not own or mutate the shared `PrismGroupDefinition`. Each `
 | Member | Exception | Condition |
 | --- | --- | --- |
 | `Opacity` | `ArgumentOutOfRangeException` | The assigned value is non-finite or outside zero through one. |
+| `Visible`, `Opacity`, `BlendMode` | `InvalidOperationException` | The state handle belongs to a replaced definition. |
 
 ## Applies to
 

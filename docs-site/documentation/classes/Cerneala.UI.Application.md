@@ -23,6 +23,9 @@ TimbrePlayback music = Application.Current!.Timbre.Play(
 ```
 
 ```csharp
+using Cerneala.UI;
+using Microsoft.Extensions.DependencyInjection;
+
 public partial class App : Application
 {
     protected override void ConfigureServices(IServiceCollection services)
@@ -86,7 +89,7 @@ Application markup can enable multisampling before the windowing backend is crea
 | `Exit` | Raised exactly once when the installed application exits. |
 
 ## Applies to
-Windows desktop standalone and hosted application lifecycles.
+Desktop standalone and hosted application lifecycles.
 
 ## See also
 - `ApplicationShutdownMode`

@@ -58,6 +58,7 @@ Factory calls allocate new geometry. Cache the returned `DrawPath` when the shap
 | `ArgumentNullException` | The point sequence is null. |
 | `ArgumentException` | A polygon or polyline contains too few points. |
 | `ArgumentOutOfRangeException` | A radius, angle, sweep, direction, point count, or inner/outer-radius relation is invalid. |
+| `OverflowException` | `Star` receives a `pointCount` above `1,073,741,823`, so the doubled point count does not fit in an `int`. |
 
 ## Applies To
 

@@ -7,8 +7,8 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Prism/Definitions/PrismLightingResource.cs`
 
-Stores the directional and point lights evaluated by the Prism
-`LightingEffects` filter.
+Stores the directional and point lights for the Prism `LightingEffects` filter.
+The current SDL_GPU renderer does not upload them; see Remarks.
 
 ```csharp
 public sealed class PrismLightingResource
@@ -18,6 +18,7 @@ public sealed class PrismLightingResource
 
 ```csharp
 using System.Numerics;
+using Cerneala.UI.Prism.Definitions;
 
 PrismLightingResource lighting = new(
 [
@@ -33,10 +34,13 @@ PrismLightingResource lighting = new(
 
 ## Remarks
 
-The resource is immutable and retains light order. `LightingEffects` evaluates
-up to eight lights with a GGX normal-distribution function, correlated Smith
-visibility, Schlick Fresnel, and Lambert diffuse response. Optional height-map
+The resource is immutable and retains light order. The `LightingEffects` shader is
+written for up to eight lights with a GGX normal-distribution function, correlated
+Smith visibility, Schlick Fresnel, and Lambert diffuse response. Optional height-map
 samples perturb the surface normal.
+
+Current behavior: the SDL_GPU renderer never writes the lights of this resource into
+the light array of the shader, so a draw does not use them.
 
 Assign an instance to the UI resource named by the filter's required `Lights`
 resource property. Point-light XY coordinates are relative to the filtered

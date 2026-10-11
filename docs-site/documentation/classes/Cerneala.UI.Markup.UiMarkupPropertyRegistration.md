@@ -21,14 +21,15 @@ Inheritance:
 Register a property setter on an element registration.
 
 ```csharp
+using System.Globalization;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Markup;
 
 UiMarkupElementRegistration button = new("Button", () => new UIElement());
 
 button.RegisterProperty(new UiMarkupPropertyRegistration(
-    "Name",
-    (element, value) => element.Name = value));
+    "Opacity",
+    (element, value) => element.Opacity = float.Parse(value, CultureInfo.InvariantCulture)));
 ```
 
 ## Remarks

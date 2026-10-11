@@ -42,7 +42,8 @@ pupil Y, pupil radius, inverse radius, incidence angle, and wavelength.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `Terms` | `ImmutableArray<PrismSparsePolynomialTerm>` | Gets the non-zero monomial terms. |
+| `PrismSparsePolynomial(IEnumerable<PrismSparsePolynomialTerm> terms)` | constructor | Copies `terms`. Throws `ArgumentNullException` when `terms` is `null` and `ArgumentException` when it is empty. |
+| `Terms` | `ImmutableArray<PrismSparsePolynomialTerm>` | Gets the terms in the order supplied. Terms with a zero coefficient are kept. |
 | `Evaluate(PrismLensFlarePolynomialInput)` | `float` | Evaluates the polynomial for normalized inputs. |
 
 ## See also

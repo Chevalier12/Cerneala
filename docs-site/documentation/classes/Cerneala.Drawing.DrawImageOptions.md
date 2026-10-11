@@ -33,11 +33,11 @@ drawing.DrawImage(image, new DrawRect(40, 24, 64, 64), options);
 
 ## Remarks
 
-`Source` and `Origin` use source-image pixel units. A null source selects the complete image. `Rotation` is measured in radians in the drawing coordinate system. `Opacity` is multiplied into the tint alpha, while `LayerDepth` participates in image ordering.
+`Source` and `Origin` use source-image pixel units. A null source selects the complete image. `Rotation` is measured in radians in the drawing coordinate system. `Opacity` is multiplied into the tint alpha. `LayerDepth` is validated, stored, and part of retained image identity, but the SDL_GPU backend does not read it, so it does not change draw order.
 
 The source region must have positive dimensions and remain inside the image when the command is created. Sampling and addressing select cached backend states; they do not expose platform graphics types.
 
-Sampling accepts only `Point` or `Linear`, and addressing accepts only `Clamp` or `Wrap`. Other numeric enum values throw `ArgumentOutOfRangeException`. These value-domain checks do not rebuild runtime enum metadata after garbage collection; constructing options still creates the immutable options object.
+Sampling accepts only `Point` or `Linear`, and addressing accepts only `Clamp` or `Wrap`. Other numeric enum values throw `ArgumentOutOfRangeException`.
 
 ### Point and Clamp image edges on SDL GPU
 

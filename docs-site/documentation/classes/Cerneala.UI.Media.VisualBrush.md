@@ -23,7 +23,7 @@ The source visual is not made interactive and does not receive input or focus th
 ## Constructors
 | Name | Description |
 | --- | --- |
-| `VisualBrush(UIElement, DrawBrushStretch, DrawBrushAlignmentX, DrawBrushAlignmentY, DrawRect?, DrawRect?, DrawTileMode, float)` | Captures the supplied existing visual source. |
+| `VisualBrush(UIElement, DrawBrushStretch, DrawBrushAlignmentX, DrawBrushAlignmentY, DrawRect?, DrawRect?, DrawTileMode, float)` | Stores a reference to the supplied visual source. The visual is captured later, each time a backend requests the brush descriptor; the result is not cached. Throws `ArgumentNullException` when `visual` is `null`. |
 
 ## Properties
 | Name | Description |

@@ -86,8 +86,11 @@ Because this type is a readonly record struct, it has value equality, generated 
 | --- | --- | --- |
 | `Deconstruct(out float Offset, out T Value, out IEasing? Easing, out bool Hold)` | `void` | Deconstructs the keyframe into the values from its primary constructor. |
 | `Equals(MotionKeyframe<T>)` | `bool` | Determines whether another keyframe has equal record values. |
+| `Equals(object?)` | `bool` | Determines whether an object is a `MotionKeyframe<T>` with equal record values. |
 | `GetHashCode()` | `int` | Returns the generated record hash code for the keyframe values. |
 | `ToString()` | `string` | Returns the generated record string representation. |
+| `operator ==(MotionKeyframe<T>, MotionKeyframe<T>)` | `bool` | Returns whether two keyframes are equal. |
+| `operator !=(MotionKeyframe<T>, MotionKeyframe<T>)` | `bool` | Returns whether two keyframes are not equal. |
 
 ## Applies to
 

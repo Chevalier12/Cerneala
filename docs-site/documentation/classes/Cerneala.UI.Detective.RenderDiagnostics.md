@@ -58,6 +58,7 @@ Both methods throw `ArgumentNullException` for null arguments. `CaptureElement` 
 | --- | --- | --- |
 | `CaptureRoot` | `ArgumentNullException` | `cache` is `null`. |
 | `CaptureElement` | `ArgumentNullException` | `element` or `cache` is `null`. |
+| `CaptureElement` | `ObjectDisposedException` | `cache` was disposed. |
 
 ## Returned Snapshots
 | Type | Members | Description |

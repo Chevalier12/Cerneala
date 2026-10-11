@@ -125,11 +125,6 @@
     "source": "Drawing/Color.cs"
   },
   {
-    "name": "Cerneala.Drawing.DrawArgument",
-    "file": "documentation/classes/Cerneala.Drawing.DrawArgument.md",
-    "source": "Drawing/DrawArgument.cs"
-  },
-  {
     "name": "Cerneala.Drawing.DrawBrushAlignmentX",
     "file": "documentation/classes/Cerneala.Drawing.DrawBrushAlignmentX.md",
     "source": "Drawing/IDrawBrush.cs"
@@ -625,16 +620,6 @@
     "source": "Cerneala.SourceGen/UiMarkupGenerator.cs"
   },
   {
-    "name": "Cerneala.SourceGen.UiMarkupGenerator.GenerationScope",
-    "file": "documentation/classes/Cerneala.SourceGen.UiMarkupGenerator.GenerationScope.md",
-    "source": "Cerneala.SourceGen/UiMarkupGenerator.cs"
-  },
-  {
-    "name": "Cerneala.SourceGen.UiMarkupGenerator.MarkupSource",
-    "file": "documentation/classes/Cerneala.SourceGen.UiMarkupGenerator.MarkupSource.md",
-    "source": "Cerneala.SourceGen/UiMarkupGenerator.cs"
-  },
-  {
     "name": "Cerneala.UI.Accessibility.AccessibleName",
     "file": "documentation/classes/Cerneala.UI.Accessibility.AccessibleName.md",
     "source": "UI/Accessibility/AccessibleName.cs"
@@ -720,16 +705,6 @@
     "source": "UI/ApplicationStartupEventArgs.cs"
   },
   {
-    "name": "Cerneala.UI.Aspect.AllAspectCondition",
-    "file": "documentation/classes/Cerneala.UI.Aspect.AllAspectCondition.md",
-    "source": "UI/Aspect/AspectConditionNode.cs"
-  },
-  {
-    "name": "Cerneala.UI.Aspect.AnyAspectCondition",
-    "file": "documentation/classes/Cerneala.UI.Aspect.AnyAspectCondition.md",
-    "source": "UI/Aspect/AspectConditionNode.cs"
-  },
-  {
     "name": "Cerneala.UI.Aspect.AspectApplicationResult",
     "file": "documentation/classes/Cerneala.UI.Aspect.AspectApplicationResult.md",
     "source": "UI/Aspect/AspectEngine.cs"
@@ -743,11 +718,6 @@
     "name": "Cerneala.UI.Aspect.AspectBehavior",
     "file": "documentation/classes/Cerneala.UI.Aspect.AspectBehavior.md",
     "source": "UI/Aspect/AspectBehavior.cs"
-  },
-  {
-    "name": "Cerneala.UI.Aspect.AspectCascadeKey",
-    "file": "documentation/classes/Cerneala.UI.Aspect.AspectCascadeKey.md",
-    "source": "UI/Aspect/AspectRuleSet.cs"
   },
   {
     "name": "Cerneala.UI.Aspect.AspectCatalog",
@@ -773,11 +743,6 @@
     "name": "Cerneala.UI.Aspect.AspectConditionDependencyKind",
     "file": "documentation/classes/Cerneala.UI.Aspect.AspectConditionDependencyKind.md",
     "source": "UI/Aspect/AspectConditionDependency.cs"
-  },
-  {
-    "name": "Cerneala.UI.Aspect.AspectConditionNode",
-    "file": "documentation/classes/Cerneala.UI.Aspect.AspectConditionNode.md",
-    "source": "UI/Aspect/AspectConditionNode.cs"
   },
   {
     "name": "Cerneala.UI.Aspect.AspectConditionResult",
@@ -828,11 +793,6 @@
     "name": "Cerneala.UI.Detective.AspectEngineCounters",
     "file": "documentation/classes/Cerneala.UI.Detective.AspectEngineCounters.md",
     "source": "UI/Detective/AspectEngineCounters.cs"
-  },
-  {
-    "name": "Cerneala.UI.Aspect.AspectEngineElementState",
-    "file": "documentation/classes/Cerneala.UI.Aspect.AspectEngineElementState.md",
-    "source": "UI/Aspect/AspectEngineElementState.cs"
   },
   {
     "name": "Cerneala.UI.Aspect.AspectEnvironment",
@@ -1025,16 +985,6 @@
     "source": "UI/Aspect/ContentTemplateBuilder.cs"
   },
   {
-    "name": "Cerneala.UI.Aspect.DataAspectCondition_TData_",
-    "file": "documentation/classes/Cerneala.UI.Aspect.DataAspectCondition_TData_.md",
-    "source": "UI/Aspect/AspectConditionNode.cs"
-  },
-  {
-    "name": "Cerneala.UI.Aspect.DataAspectCondition_TData_TValue_",
-    "file": "documentation/classes/Cerneala.UI.Aspect.DataAspectCondition_TData_TValue_.md",
-    "source": "UI/Aspect/AspectConditionNode.cs"
-  },
-  {
     "name": "Cerneala.UI.Aspect.DefaultAspectPackage",
     "file": "documentation/classes/Cerneala.UI.Aspect.DefaultAspectPackage.md",
     "source": "UI/Aspect/DefaultAspectPackage.cs"
@@ -1090,21 +1040,6 @@
     "source": "UI/Aspect/ElementAspect.cs"
   },
   {
-    "name": "Cerneala.UI.Aspect.NotAspectCondition",
-    "file": "documentation/classes/Cerneala.UI.Aspect.NotAspectCondition.md",
-    "source": "UI/Aspect/AspectConditionNode.cs"
-  },
-  {
-    "name": "Cerneala.UI.Aspect.PredicateAspectCondition",
-    "file": "documentation/classes/Cerneala.UI.Aspect.PredicateAspectCondition.md",
-    "source": "UI/Aspect/AspectConditionNode.cs"
-  },
-  {
-    "name": "Cerneala.UI.Aspect.PropertyAspectCondition_TValue_",
-    "file": "documentation/classes/Cerneala.UI.Aspect.PropertyAspectCondition_TValue_.md",
-    "source": "UI/Aspect/AspectConditionNode.cs"
-  },
-  {
     "name": "Cerneala.UI.Aspect.RejectedAspectDeclaration",
     "file": "documentation/classes/Cerneala.UI.Aspect.RejectedAspectDeclaration.md",
     "source": "UI/Aspect/RejectedAspectDeclaration.cs"
@@ -1120,19 +1055,9 @@
     "source": "UI/Aspect/ResolvedAspectValue.cs"
   },
   {
-    "name": "Cerneala.UI.Aspect.StateAspectCondition",
-    "file": "documentation/classes/Cerneala.UI.Aspect.StateAspectCondition.md",
-    "source": "UI/Aspect/AspectConditionNode.cs"
-  },
-  {
     "name": "Cerneala.UI.Aspect.ThemeTokenBridge",
     "file": "documentation/classes/Cerneala.UI.Aspect.ThemeTokenBridge.md",
     "source": "UI/Aspect/ThemeTokenBridge.cs"
-  },
-  {
-    "name": "Cerneala.UI.Aspect.VariantAspectCondition",
-    "file": "documentation/classes/Cerneala.UI.Aspect.VariantAspectCondition.md",
-    "source": "UI/Aspect/AspectConditionNode.cs"
   },
   {
     "name": "Cerneala.UI.Servo.Servo",
@@ -1315,18 +1240,8 @@
     "source": "UI/Controls/ContentControl.cs"
   },
   {
-    "name": "Cerneala.UI.Controls.ContentControl.ContentValueEqualityComparer",
-    "file": "documentation/classes/Cerneala.UI.Controls.ContentControl.ContentValueEqualityComparer.md",
-    "source": "UI/Controls/ContentControl.cs"
-  },
-  {
     "name": "Cerneala.UI.Controls.ContentPresenter",
     "file": "documentation/classes/Cerneala.UI.Controls.ContentPresenter.md",
-    "source": "UI/Controls/ContentPresenter.cs"
-  },
-  {
-    "name": "Cerneala.UI.Controls.ContentPresenter.ReferenceContentEqualityComparer",
-    "file": "documentation/classes/Cerneala.UI.Controls.ContentPresenter.ReferenceContentEqualityComparer.md",
     "source": "UI/Controls/ContentPresenter.cs"
   },
   {
@@ -1370,28 +1285,8 @@
     "source": "UI/Controls/SvgImage.cs"
   },
   {
-    "name": "Cerneala.UI.Controls.Image.ReferenceImageComparer",
-    "file": "documentation/classes/Cerneala.UI.Controls.Image.ReferenceImageComparer.md",
-    "source": "UI/Controls/Image.cs"
-  },
-  {
     "name": "Cerneala.UI.Controls.InkCanvas",
     "file": "documentation/classes/Cerneala.UI.Controls.InkCanvas.md",
-    "source": "UI/Controls/InkCanvas.cs"
-  },
-  {
-    "name": "Cerneala.UI.Controls.InkCanvas.InkInputAction",
-    "file": "documentation/classes/Cerneala.UI.Controls.InkCanvas.InkInputAction.md",
-    "source": "UI/Controls/InkCanvas.cs"
-  },
-  {
-    "name": "Cerneala.UI.Controls.InkCanvas.InkInputKey",
-    "file": "documentation/classes/Cerneala.UI.Controls.InkCanvas.InkInputKey.md",
-    "source": "UI/Controls/InkCanvas.cs"
-  },
-  {
-    "name": "Cerneala.UI.Controls.InkCanvas.InkInputKind",
-    "file": "documentation/classes/Cerneala.UI.Controls.InkCanvas.InkInputKind.md",
     "source": "UI/Controls/InkCanvas.cs"
   },
   {
@@ -1417,11 +1312,6 @@
   {
     "name": "Cerneala.UI.Controls.Items.ItemContainerGenerator",
     "file": "documentation/classes/Cerneala.UI.Controls.Items.ItemContainerGenerator.md",
-    "source": "UI/Controls/Items/ItemContainerGenerator.cs"
-  },
-  {
-    "name": "Cerneala.UI.Controls.Items.ItemContainerGenerator.ItemContainerInfo",
-    "file": "documentation/classes/Cerneala.UI.Controls.Items.ItemContainerGenerator.ItemContainerInfo.md",
     "source": "UI/Controls/Items/ItemContainerGenerator.cs"
   },
   {
@@ -1547,11 +1437,6 @@
   {
     "name": "Cerneala.UI.Controls.Primitives.Selector",
     "file": "documentation/classes/Cerneala.UI.Controls.Primitives.Selector.md",
-    "source": "UI/Controls/Primitives/Selector.cs"
-  },
-  {
-    "name": "Cerneala.UI.Controls.Primitives.Selector.SelectorClickHandlerRegistration",
-    "file": "documentation/classes/Cerneala.UI.Controls.Primitives.Selector.SelectorClickHandlerRegistration.md",
     "source": "UI/Controls/Primitives/Selector.cs"
   },
   {
@@ -1825,16 +1710,6 @@
     "source": "UI/Controls/Templates/ContentTemplateRegistry.cs"
   },
   {
-    "name": "Cerneala.UI.Controls.Templates.ContentTemplateRegistry.CacheKey",
-    "file": "documentation/classes/Cerneala.UI.Controls.Templates.ContentTemplateRegistry.CacheKey.md",
-    "source": "UI/Controls/Templates/ContentTemplateRegistry.cs"
-  },
-  {
-    "name": "Cerneala.UI.Controls.Templates.ContentTemplateRegistry.RegisteredTemplate",
-    "file": "documentation/classes/Cerneala.UI.Controls.Templates.ContentTemplateRegistry.RegisteredTemplate.md",
-    "source": "UI/Controls/Templates/ContentTemplateRegistry.cs"
-  },
-  {
     "name": "Cerneala.UI.Controls.Templates.TemplateBinding",
     "file": "documentation/classes/Cerneala.UI.Controls.Templates.TemplateBinding.md",
     "source": "UI/Controls/Templates/TemplateBinding{T}.cs"
@@ -1843,11 +1718,6 @@
     "name": "Cerneala.UI.Controls.Templates.TemplateBinding_T_",
     "file": "documentation/classes/Cerneala.UI.Controls.Templates.TemplateBinding_T_.md",
     "source": "UI/Controls/Templates/TemplateBinding{T}.cs"
-  },
-  {
-    "name": "Cerneala.UI.Controls.Templates.TemplateChildOwner",
-    "file": "documentation/classes/Cerneala.UI.Controls.Templates.TemplateChildOwner.md",
-    "source": "UI/Controls/Templates/ComponentTemplateInstance.cs"
   },
   {
     "name": "Cerneala.UI.Controls.Templates.TemplatePartAttribute",
@@ -2085,16 +1955,6 @@
     "source": "UI/Core/UiPropertyValueSource.cs"
   },
   {
-    "name": "Cerneala.UI.Core.Unset",
-    "file": "documentation/classes/Cerneala.UI.Core.Unset.md",
-    "source": "UI/Core/Unset.cs"
-  },
-  {
-    "name": "Cerneala.UI.Core.Unset.UnsetValue",
-    "file": "documentation/classes/Cerneala.UI.Core.Unset.UnsetValue.md",
-    "source": "UI/Core/Unset.cs"
-  },
-  {
     "name": "Cerneala.UI.Core.ValidateValue_T_",
     "file": "documentation/classes/Cerneala.UI.Core.ValidateValue_T_.md",
     "source": "UI/Core/ValidateValue.cs"
@@ -2251,11 +2111,6 @@
   {
     "name": "Cerneala.UI.Detective.DirtyTreeDumper",
     "file": "documentation/classes/Cerneala.UI.Detective.DirtyTreeDumper.md",
-    "source": "UI/Detective/DirtyTreeDumper.cs"
-  },
-  {
-    "name": "Cerneala.UI.Detective.DirtyTreeDumper.DirtyTraceInfo",
-    "file": "documentation/classes/Cerneala.UI.Detective.DirtyTreeDumper.DirtyTraceInfo.md",
     "source": "UI/Detective/DirtyTreeDumper.cs"
   },
   {
@@ -2424,11 +2279,6 @@
     "source": "UI/Elements/UIRoot.cs"
   },
   {
-    "name": "Cerneala.UI.Elements.UIRoot.ThemeChangedSubscription",
-    "file": "documentation/classes/Cerneala.UI.Elements.UIRoot.ThemeChangedSubscription.md",
-    "source": "UI/Elements/UIRoot.cs"
-  },
-  {
     "name": "Cerneala.UI.Hosting.IUiBackend",
     "file": "documentation/classes/Cerneala.UI.Hosting.IUiBackend.md",
     "source": "UI/Hosting/IUiBackend.cs"
@@ -2554,11 +2404,6 @@
     "source": "UI/Input/CursorService.cs"
   },
   {
-    "name": "Cerneala.UI.Input.CursorService.CursorBox",
-    "file": "documentation/classes/Cerneala.UI.Input.CursorService.CursorBox.md",
-    "source": "UI/Input/CursorService.cs"
-  },
-  {
     "name": "Cerneala.UI.Input.DataTransfer",
     "file": "documentation/classes/Cerneala.UI.Input.DataTransfer.md",
     "source": "UI/Input/DataTransfer.cs"
@@ -2566,11 +2411,6 @@
   {
     "name": "Cerneala.UI.Input.DragDropController",
     "file": "documentation/classes/Cerneala.UI.Input.DragDropController.md",
-    "source": "UI/Input/DragDropController.cs"
-  },
-  {
-    "name": "Cerneala.UI.Input.DragDropController.DragSession",
-    "file": "documentation/classes/Cerneala.UI.Input.DragDropController.DragSession.md",
     "source": "UI/Input/DragDropController.cs"
   },
   {
@@ -2764,21 +2604,6 @@
     "source": "UI/Input/KeyBinding.cs"
   },
   {
-    "name": "Cerneala.UI.Input.KeyboardActivationController",
-    "file": "documentation/classes/Cerneala.UI.Input.KeyboardActivationController.md",
-    "source": "UI/Input/KeyboardActivationController.cs"
-  },
-  {
-    "name": "Cerneala.UI.Input.KeyboardDispatchKind",
-    "file": "documentation/classes/Cerneala.UI.Input.KeyboardDispatchKind.md",
-    "source": "UI/Input/KeyboardDispatchResult.cs"
-  },
-  {
-    "name": "Cerneala.UI.Input.KeyboardDispatchResult",
-    "file": "documentation/classes/Cerneala.UI.Input.KeyboardDispatchResult.md",
-    "source": "UI/Input/KeyboardDispatchResult.cs"
-  },
-  {
     "name": "Cerneala.UI.Input.KeyboardFocusChangedEventArgs",
     "file": "documentation/classes/Cerneala.UI.Input.KeyboardFocusChangedEventArgs.md",
     "source": "UI/Input/KeyboardFocusChangedEventArgs.cs"
@@ -2787,16 +2612,6 @@
     "name": "Cerneala.UI.Input.KeyboardNavigation",
     "file": "documentation/classes/Cerneala.UI.Input.KeyboardNavigation.md",
     "source": "UI/Input/KeyboardNavigation.cs"
-  },
-  {
-    "name": "Cerneala.UI.Input.KeyboardNavigation.NavigationCandidate",
-    "file": "documentation/classes/Cerneala.UI.Input.KeyboardNavigation.NavigationCandidate.md",
-    "source": "UI/Input/KeyboardNavigation.cs"
-  },
-  {
-    "name": "Cerneala.UI.Input.KeyboardNavigationController",
-    "file": "documentation/classes/Cerneala.UI.Input.KeyboardNavigationController.md",
-    "source": "UI/Input/KeyboardNavigationController.cs"
   },
   {
     "name": "Cerneala.UI.Input.KeyboardSnapshot",
@@ -2834,11 +2649,6 @@
     "source": "UI/Input/ManipulationProcessor.cs"
   },
   {
-    "name": "Cerneala.UI.Input.ManipulationSnapshot",
-    "file": "documentation/classes/Cerneala.UI.Input.ManipulationSnapshot.md",
-    "source": "UI/Input/ManipulationProcessor.cs"
-  },
-  {
     "name": "Cerneala.UI.Input.MouseButtonEventArgs",
     "file": "documentation/classes/Cerneala.UI.Input.MouseButtonEventArgs.md",
     "source": "UI/Input/MouseButtonEventArgs.cs"
@@ -2867,11 +2677,6 @@
     "name": "Cerneala.UI.Input.PressedStateTracker",
     "file": "documentation/classes/Cerneala.UI.Input.PressedStateTracker.md",
     "source": "UI/Input/PressedStateTracker.cs"
-  },
-  {
-    "name": "Cerneala.UI.Input.RetainedInputBindingProcessor",
-    "file": "documentation/classes/Cerneala.UI.Input.RetainedInputBindingProcessor.md",
-    "source": "UI/Input/RetainedInputBindingProcessor.cs"
   },
   {
     "name": "Cerneala.UI.Input.RoutedCommand",
@@ -3019,21 +2824,6 @@
     "source": "UI/Invalidation/DirtyState.cs"
   },
   {
-    "name": "Cerneala.UI.Invalidation.ElementQueueOrderIndex",
-    "file": "documentation/classes/Cerneala.UI.Invalidation.ElementQueueOrderIndex.md",
-    "source": "UI/Invalidation/ElementQueueOrderIndex.cs"
-  },
-  {
-    "name": "Cerneala.UI.Invalidation.ElementQueueUnit",
-    "file": "documentation/classes/Cerneala.UI.Invalidation.ElementQueueUnit.md",
-    "source": "UI/Invalidation/ElementWorkQueue.cs"
-  },
-  {
-    "name": "Cerneala.UI.Invalidation.ElementWorkQueue_TMetadata_",
-    "file": "documentation/classes/Cerneala.UI.Invalidation.ElementWorkQueue_TMetadata_.md",
-    "source": "UI/Invalidation/ElementWorkQueue.cs"
-  },
-  {
     "name": "Cerneala.UI.Invalidation.FrameBudget",
     "file": "documentation/classes/Cerneala.UI.Invalidation.FrameBudget.md",
     "source": "UI/Invalidation/FrameBudget.cs"
@@ -3159,11 +2949,6 @@
     "source": "UI/Layout/Panels/Canvas.cs"
   },
   {
-    "name": "Cerneala.UI.Layout.Panels.Canvas.CanvasPosition",
-    "file": "documentation/classes/Cerneala.UI.Layout.Panels.Canvas.CanvasPosition.md",
-    "source": "UI/Layout/Panels/Canvas.cs"
-  },
-  {
     "name": "Cerneala.UI.Layout.Panels.ColumnDefinition",
     "file": "documentation/classes/Cerneala.UI.Layout.Panels.ColumnDefinition.md",
     "source": "UI/Layout/Panels/ColumnDefinition.cs"
@@ -3171,11 +2956,6 @@
   {
     "name": "Cerneala.UI.Layout.Panels.Grid",
     "file": "documentation/classes/Cerneala.UI.Layout.Panels.Grid.md",
-    "source": "UI/Layout/Panels/Grid.cs"
-  },
-  {
-    "name": "Cerneala.UI.Layout.Panels.Grid.GridPlacement",
-    "file": "documentation/classes/Cerneala.UI.Layout.Panels.Grid.GridPlacement.md",
     "source": "UI/Layout/Panels/Grid.cs"
   },
   {
@@ -3504,11 +3284,6 @@
     "source": "UI/Motion/Core/DerivedMotionValue{T}.cs"
   },
   {
-    "name": "Cerneala.UI.Motion.Core.DerivedMotionValue_T_.Subscription",
-    "file": "documentation/classes/Cerneala.UI.Motion.Core.DerivedMotionValue_T_.Subscription.md",
-    "source": "UI/Motion/Core/DerivedMotionValue{T}.cs"
-  },
-  {
     "name": "Cerneala.UI.Motion.Core.IMotionClock",
     "file": "documentation/classes/Cerneala.UI.Motion.Core.IMotionClock.md",
     "source": "UI/Motion/Core/IMotionClock.cs"
@@ -3656,16 +3431,6 @@
   {
     "name": "Cerneala.UI.Motion.Core.MotionValue_T_",
     "file": "documentation/classes/Cerneala.UI.Motion.Core.MotionValue_T_.md",
-    "source": "UI/Motion/Core/MotionValue{T}.cs"
-  },
-  {
-    "name": "Cerneala.UI.Motion.Core.MotionValue_T_.Subscription",
-    "file": "documentation/classes/Cerneala.UI.Motion.Core.MotionValue_T_.Subscription.md",
-    "source": "UI/Motion/Core/MotionValue{T}.cs"
-  },
-  {
-    "name": "Cerneala.UI.Motion.Core.MotionValue_T_.ValueNode",
-    "file": "documentation/classes/Cerneala.UI.Motion.Core.MotionValue_T_.ValueNode.md",
     "source": "UI/Motion/Core/MotionValue{T}.cs"
   },
   {
@@ -3929,11 +3694,6 @@
     "source": "UI/Motion/Properties/MotionPropertyBinding{T}.cs"
   },
   {
-    "name": "Cerneala.UI.Motion.Properties.MotionPropertyBinding_T_.BindingNode",
-    "file": "documentation/classes/Cerneala.UI.Motion.Properties.MotionPropertyBinding_T_.BindingNode.md",
-    "source": "UI/Motion/Properties/MotionPropertyBinding{T}.cs"
-  },
-  {
     "name": "Cerneala.UI.Motion.Properties.MotionPropertyFlushResult",
     "file": "documentation/classes/Cerneala.UI.Motion.Properties.MotionPropertyFlushResult.md",
     "source": "UI/Motion/Properties/MotionPropertyStore.cs"
@@ -3969,16 +3729,6 @@
     "source": "UI/Motion/Properties/MotionPropertyStore.cs"
   },
   {
-    "name": "Cerneala.UI.Motion.Properties.MotionPropertyStore.PendingWrite",
-    "file": "documentation/classes/Cerneala.UI.Motion.Properties.MotionPropertyStore.PendingWrite.md",
-    "source": "UI/Motion/Properties/MotionPropertyStore.cs"
-  },
-  {
-    "name": "Cerneala.UI.Motion.Properties.MotionPropertyStore.PendingWriteKind",
-    "file": "documentation/classes/Cerneala.UI.Motion.Properties.MotionPropertyStore.PendingWriteKind.md",
-    "source": "UI/Motion/Properties/MotionPropertyStore.cs"
-  },
-  {
     "name": "Cerneala.UI.Motion.Specs.CubicBezierEasing",
     "file": "documentation/classes/Cerneala.UI.Motion.Specs.CubicBezierEasing.md",
     "source": "UI/Motion/Specs/CubicBezierEasing.cs"
@@ -3989,18 +3739,8 @@
     "source": "UI/Motion/Specs/DecaySpec.cs"
   },
   {
-    "name": "Cerneala.UI.Motion.Specs.DecaySpec_T_.DecaySampler",
-    "file": "documentation/classes/Cerneala.UI.Motion.Specs.DecaySpec_T_.DecaySampler.md",
-    "source": "UI/Motion/Specs/DecaySpec.cs"
-  },
-  {
     "name": "Cerneala.UI.Motion.Specs.Easings",
     "file": "documentation/classes/Cerneala.UI.Motion.Specs.Easings.md",
-    "source": "UI/Motion/Specs/Easings.cs"
-  },
-  {
-    "name": "Cerneala.UI.Motion.Specs.Easings.LinearEasing",
-    "file": "documentation/classes/Cerneala.UI.Motion.Specs.Easings.LinearEasing.md",
     "source": "UI/Motion/Specs/Easings.cs"
   },
   {
@@ -4019,23 +3759,8 @@
     "source": "UI/Motion/Specs/KeyframesSpec.cs"
   },
   {
-    "name": "Cerneala.UI.Motion.Specs.KeyframesSpec_T_.KeyframesSampler",
-    "file": "documentation/classes/Cerneala.UI.Motion.Specs.KeyframesSpec_T_.KeyframesSampler.md",
-    "source": "UI/Motion/Specs/KeyframesSpec.cs"
-  },
-  {
     "name": "Cerneala.UI.Motion.Specs.Motion",
     "file": "documentation/classes/Cerneala.UI.Motion.Specs.Motion.md",
-    "source": "UI/Motion/Specs/Motion.cs"
-  },
-  {
-    "name": "Cerneala.UI.Motion.Specs.Motion.UntypedSpringSpec",
-    "file": "documentation/classes/Cerneala.UI.Motion.Specs.Motion.UntypedSpringSpec.md",
-    "source": "UI/Motion/Specs/Motion.cs"
-  },
-  {
-    "name": "Cerneala.UI.Motion.Specs.Motion.UntypedTweenSpec",
-    "file": "documentation/classes/Cerneala.UI.Motion.Specs.Motion.UntypedTweenSpec.md",
     "source": "UI/Motion/Specs/Motion.cs"
   },
   {
@@ -4084,23 +3809,8 @@
     "source": "UI/Motion/Specs/PingPongSpec.cs"
   },
   {
-    "name": "Cerneala.UI.Motion.Specs.PingPongSpec_T_.Sampler",
-    "file": "documentation/classes/Cerneala.UI.Motion.Specs.PingPongSpec_T_.Sampler.md",
-    "source": "UI/Motion/Specs/PingPongSpec.cs"
-  },
-  {
     "name": "Cerneala.UI.Motion.Specs.RepeatSpec_T_",
     "file": "documentation/classes/Cerneala.UI.Motion.Specs.RepeatSpec_T_.md",
-    "source": "UI/Motion/Specs/RepeatSpec.cs"
-  },
-  {
-    "name": "Cerneala.UI.Motion.Specs.RepeatSpec_T_.Sampler",
-    "file": "documentation/classes/Cerneala.UI.Motion.Specs.RepeatSpec_T_.Sampler.md",
-    "source": "UI/Motion/Specs/RepeatSpec.cs"
-  },
-  {
-    "name": "Cerneala.UI.Motion.Specs.RepeatSpec_T_.StaticSampler",
-    "file": "documentation/classes/Cerneala.UI.Motion.Specs.RepeatSpec_T_.StaticSampler.md",
     "source": "UI/Motion/Specs/RepeatSpec.cs"
   },
   {
@@ -4111,11 +3821,6 @@
   {
     "name": "Cerneala.UI.Motion.Specs.SpringSpec_T_",
     "file": "documentation/classes/Cerneala.UI.Motion.Specs.SpringSpec_T_.md",
-    "source": "UI/Motion/Specs/SpringSpec.cs"
-  },
-  {
-    "name": "Cerneala.UI.Motion.Specs.SpringSpec_T_.VectorSpringSampler",
-    "file": "documentation/classes/Cerneala.UI.Motion.Specs.SpringSpec_T_.VectorSpringSampler.md",
     "source": "UI/Motion/Specs/SpringSpec.cs"
   },
   {
@@ -4136,11 +3841,6 @@
   {
     "name": "Cerneala.UI.Motion.Specs.TweenSpec_T_",
     "file": "documentation/classes/Cerneala.UI.Motion.Specs.TweenSpec_T_.md",
-    "source": "UI/Motion/Specs/TweenSpec.cs"
-  },
-  {
-    "name": "Cerneala.UI.Motion.Specs.TweenSpec_T_.TweenSampler",
-    "file": "documentation/classes/Cerneala.UI.Motion.Specs.TweenSpec_T_.TweenSampler.md",
     "source": "UI/Motion/Specs/TweenSpec.cs"
   },
   {
@@ -4176,11 +3876,6 @@
   {
     "name": "Cerneala.UI.Motion.Transactions.MotionTransactionContext",
     "file": "documentation/classes/Cerneala.UI.Motion.Transactions.MotionTransactionContext.md",
-    "source": "UI/Motion/Transactions/MotionTransactionContext.cs"
-  },
-  {
-    "name": "Cerneala.UI.Motion.Transactions.MotionTransactionContext.UntypedMotionSpecAdapter_T_",
-    "file": "documentation/classes/Cerneala.UI.Motion.Transactions.MotionTransactionContext.UntypedMotionSpecAdapter_T_.md",
     "source": "UI/Motion/Transactions/MotionTransactionContext.cs"
   },
   {
@@ -4261,11 +3956,6 @@
   {
     "name": "Cerneala.UI.Rendering.ClipNode",
     "file": "documentation/classes/Cerneala.UI.Rendering.ClipNode.md",
-    "source": "UI/Rendering/ClipNode.cs"
-  },
-  {
-    "name": "Cerneala.UI.Rendering.ClipNode.ClipBox",
-    "file": "documentation/classes/Cerneala.UI.Rendering.ClipNode.ClipBox.md",
     "source": "UI/Rendering/ClipNode.cs"
   },
   {
@@ -4379,21 +4069,6 @@
     "source": "UI/Resources/ResourceDependencyTracker.cs"
   },
   {
-    "name": "Cerneala.UI.Resources.ResourceDependencyTracker.ReferenceEqualityComparer",
-    "file": "documentation/classes/Cerneala.UI.Resources.ResourceDependencyTracker.ReferenceEqualityComparer.md",
-    "source": "UI/Resources/ResourceDependencyTracker.cs"
-  },
-  {
-    "name": "Cerneala.UI.Resources.ResourceDependencyTracker.ResourceDependency",
-    "file": "documentation/classes/Cerneala.UI.Resources.ResourceDependencyTracker.ResourceDependency.md",
-    "source": "UI/Resources/ResourceDependencyTracker.cs"
-  },
-  {
-    "name": "Cerneala.UI.Resources.ResourceDependencyTracker.ResourceKey",
-    "file": "documentation/classes/Cerneala.UI.Resources.ResourceDependencyTracker.ResourceKey.md",
-    "source": "UI/Resources/ResourceDependencyTracker.cs"
-  },
-  {
     "name": "Cerneala.UI.Resources.ResourceDictionary",
     "file": "documentation/classes/Cerneala.UI.Resources.ResourceDictionary.md",
     "source": "UI/Resources/ResourceDictionary.cs"
@@ -4409,16 +4084,6 @@
     "source": "UI/Resources/ResourceStore.cs"
   },
   {
-    "name": "Cerneala.UI.Resources.ResourceStore.Entry",
-    "file": "documentation/classes/Cerneala.UI.Resources.ResourceStore.Entry.md",
-    "source": "UI/Resources/ResourceStore.cs"
-  },
-  {
-    "name": "Cerneala.UI.Resources.ResourceStore.ResourceKey",
-    "file": "documentation/classes/Cerneala.UI.Resources.ResourceStore.ResourceKey.md",
-    "source": "UI/Resources/ResourceStore.cs"
-  },
-  {
     "name": "Cerneala.UI.Text.BidiTextRun",
     "file": "documentation/classes/Cerneala.UI.Text.BidiTextRun.md",
     "source": "UI/Text/BidiTextRun.cs"
@@ -4431,11 +4096,6 @@
   {
     "name": "Cerneala.UI.Text.FontResolver",
     "file": "documentation/classes/Cerneala.UI.Text.FontResolver.md",
-    "source": "UI/Text/FontResolver.cs"
-  },
-  {
-    "name": "Cerneala.UI.Text.FontResolver.FallbackDrawFont",
-    "file": "documentation/classes/Cerneala.UI.Text.FontResolver.FallbackDrawFont.md",
     "source": "UI/Text/FontResolver.cs"
   },
   {
@@ -4484,11 +4144,6 @@
     "source": "UI/Text/TextLine.cs"
   },
   {
-    "name": "Cerneala.UI.Text.TextLineMetrics",
-    "file": "documentation/classes/Cerneala.UI.Text.TextLineMetrics.md",
-    "source": "UI/Text/TextLineMetrics.cs"
-  },
-  {
     "name": "Cerneala.UI.Text.TextMeasurer",
     "file": "documentation/classes/Cerneala.UI.Text.TextMeasurer.md",
     "source": "UI/Text/TextMeasurer.cs"
@@ -4526,11 +4181,6 @@
   {
     "name": "Cerneala.UI.Theming.Theme",
     "file": "documentation/classes/Cerneala.UI.Theming.Theme.md",
-    "source": "UI/Theming/Theme.cs"
-  },
-  {
-    "name": "Cerneala.UI.Theming.Theme.EntryKey",
-    "file": "documentation/classes/Cerneala.UI.Theming.Theme.EntryKey.md",
     "source": "UI/Theming/Theme.cs"
   },
   {

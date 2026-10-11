@@ -37,6 +37,7 @@ TimeSpan motionTime = clock.Now;
 
 ```csharp
 using Cerneala.UI.Elements;
+using Cerneala.UI.Motion.Core;
 
 UIRoot root = new();
 MotionSystem motion = root.Motion;

@@ -35,7 +35,7 @@ UiPropertyValueSource source = store.GetValueSource(titleProperty);
 
 `UiPropertyStore` is the low-level storage used by the UI property system. It keeps one dictionary per `UiProperty`, with individual values stored by `UiPropertyValueSource`.
 
-Effective value lookup uses a fixed precedence order: `Local`, `Animation`, `AspectVisualState`, `AspectBase`, `TemplateBinding`, and `Inherited`. If none of those concrete sources has a value, the store returns the property's default value and reports `UiPropertyValueSource.Default`.
+Effective value lookup uses a fixed precedence order: `Local`, `Animation`, `MarkupConditional`, `MarkupBase`, `TemplateOwnerBinding`, `AspectVisualState`, `AspectBase`, `TemplateBinding`, and `Inherited`. If none of those concrete sources has a value, the store reports `UiPropertyValueSource.Default` and returns the framework default stored internally for that property, if any, or otherwise the property's metadata default value.
 
 The store accepts only concrete non-default sources for stored values. Passing `UiPropertyValueSource.Default` or an undefined enum value to `SetValue`, `GetSourceValue`, or `ClearValue` throws `ArgumentOutOfRangeException`.
 

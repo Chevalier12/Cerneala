@@ -94,6 +94,8 @@ All public methods throw `ArgumentNullException` when `textRun` is `null`. For n
 | `TryMeasureLineHeight(DrawTextRun, out float)` | `ArgumentNullException` | `textRun` is `null`. |
 | `TryMeasureBaseline(DrawTextRun, out float)` | `ArgumentNullException` | `textRun` is `null`. |
 | `TryMeasureCaretVerticalMetrics(DrawTextRun, out TextCaretVerticalMetrics)` | `ArgumentNullException` | `textRun` is `null`. |
+| `TryShape`, `TryMeasureLineHeight`, `TryMeasureBaseline`, `TryMeasureCaretVerticalMetrics` | `InvalidOperationException` | The run's `SkiaFont` typeface has no font data (empty stream). |
+| `TryMeasureCaretVerticalMetrics(DrawTextRun, out TextCaretVerticalMetrics)` | `ArgumentOutOfRangeException` | The measured line height is zero, negative, or not finite. |
 
 ## Applies to
 Cerneala drawing text shaping and UI text layout paths that use Skia-backed fonts.

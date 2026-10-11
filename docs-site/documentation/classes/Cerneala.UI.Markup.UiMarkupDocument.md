@@ -51,7 +51,7 @@ if (result.Value?.HasErrors == true)
 
 `UiMarkupDocument` is the container passed between markup parsing, writing, and factory creation APIs. `UiMarkupReader.Read` returns it inside `MarkupResult<UiMarkupDocument>`, `UiMarkupWriter.Write` serializes it, and `UiFactory.Create` uses it to create a `UIElement`.
 
-`Root` can be `null`. The reader uses a null root for missing or malformed markup cases where a document object is still returned, and writer/factory APIs report diagnostics when asked to process a document without a root.
+`Root` can be `null`. The reader returns a document with a null root for empty or whitespace-only input, and for malformed markup only when `MarkupLoadOptions.ContinueOnError` is `true`; with the default `Strict` options, malformed markup returns no document at all. Writer and factory APIs report diagnostics when asked to process a document without a root.
 
 The constructor copies the supplied diagnostics into a read-only list. Passing `null` for `diagnostics` creates an empty diagnostics list. `HasErrors` returns `true` when any diagnostic has `MarkupDiagnosticSeverity.Error`.
 

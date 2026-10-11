@@ -166,7 +166,7 @@ For a scene without imperative drawing callbacks, a continuous tick alone does n
 
 Prism execution inside the managed surface uses retained result caching. When a surface rasterization is required, unchanged final or intermediate Prism results can be reused instead of executing their passes again. Pipeline mutations invalidate retained results owned by the affected `PrismImage`, while disposing the image forwards deterministic owner invalidation to the surface session. Changing an animated Prism value therefore requires producing that image for its new value, but unchanged Prism images replayed in the same surface can still reuse their retained results.
 
-`ClearColor` initializes the surface and erases damaged regions before their commands are replayed. `Draw` subscribers record in subscription order, followed by `Scene`. Retained `Content` is rendered above the completed surface. The frame object is valid only while the imperative callbacks execute.
+`ClearColor` initializes the surface and erases damaged regions before their commands are replayed. `Draw` subscribers record in subscription order, followed by `Scene`. Retained `Content` is rendered above the completed surface. The frame object stays valid while the `Draw` callbacks run and while `Scene` is recorded; it becomes invalid when the surface completes the frame, so do not keep it after the callback returns.
 
 `Scene` is an optional single logical retained root. A surface cannot hold multiple sibling roots in that property, but the root can contain any number of nested `Scene2D` groups and layers. A reusable component derived from `Scene2D`, such as a paired `<local:HouseView />`, can be that root or a child group; see [Scene2D](Cerneala.UI.Controls.Scene2D.md) for the paired-file contract and example. A `UserControl` is not a scene node. Scene nodes reuse Cerneala data context, binding, UI-property, attachment, Aspect, Motion, Prism, and invalidation behavior, but they are not added to the visual layout tree. Scene child order is drawing order. Changing a scene-node UI property invalidates the owning surface, including in `OnDemand` mode.
 
@@ -275,7 +275,7 @@ Detach removes active registrations and preserves playback positions; reattach r
 ## Events
 | Name | Type | Description |
 | --- | --- | --- |
-| `Draw` | `RenderSurface2DDrawEventHandler` | Raised when the game surface needs to be redrawn. |
+| `Draw` | `RenderSurface2DDrawEventHandler?` | Raised when the game surface needs to be redrawn. |
 
 ## Property Information
 | Property | Identifier field | Default value | Metadata/options |

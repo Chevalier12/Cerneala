@@ -60,7 +60,7 @@ glow.Motion()
 
 Motion compiles the selected property's getter and setter once and caches the resulting internal descriptor by property identity. Repeating the same expression does not rebuild that access path and retargets the same object-property binding. Use an explicit `MotionProperty<TTarget, TValue>` only when the property needs a custom mixer, discrete interpolation, or custom accessors.
 
-Object motion reuses the same motion graph, specs, interpolation system, and handles as retained UI motion. It is advanced by Cerneala's host frame loop, but the target does not need to be a UI element, attached to a tree, or currently drawn. Drawing code observes the target's current property values; object motion does not invalidate an on-demand render surface automatically.
+Object motion uses the same `MotionSpec<T>` types and `MotionHandle` as retained UI motion, but runs in its own motion graph with its own built-in mixer registry; mixers registered on `UIRoot.Motion.Mixers` do not apply to object motion. It is advanced by Cerneala's host frame loop, but the target does not need to be a UI element, attached to a tree, or currently drawn. Drawing code observes the target's current property values; object motion does not invalidate an on-demand render surface automatically.
 
 A [TimbrePlayback](Cerneala.Timbre.TimbrePlayback.md) receiver binds the `TimbrePlayback` overloads, never the object facade: they are non-generic, take the playback without a parameter array, and live in the same class, so importing `Cerneala.UI.Motion` brings them into scope together. They return a [TimbreMotionFacade](Cerneala.UI.Timbre.TimbreMotionFacade.md) that animates the captured playback's Volume and declared float parameters on the root's Motion clock.
 

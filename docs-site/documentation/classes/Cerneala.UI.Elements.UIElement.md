@@ -54,16 +54,16 @@ LayoutRect arranged = element.Arrange(new ArrangeContext(new LayoutRect(0, 0, 20
 
 ## Remarks
 
-An attached element's property mutations are UI-thread-affine and use `Root.Relay` as their authority. Off-thread typed or untyped property sets and clears throw `InvalidOperationException` before changing the value, value source, dirty state, or retained queues. Detached elements remain freely configurable and adopt the root's authority when attached.
+An attached element's property mutations are UI-thread-affine and use `Root.Relay` as their authority. Off-thread typed or untyped property sets and clears throw `InvalidOperationException` before changing the value, value source, dirty state, or retained queues. Detached elements remain freely configurable and adopt the root's authority when attached. The exception is a `SceneNode2D` inside a `SceneSimulationContext2D`: it uses the context's relay even without a root, so off-thread writes to it throw `InvalidOperationException`.
 `UIElement` owns two child collections: `LogicalChildren` and `VisualChildren`. The corresponding `LogicalParent` and `VisualParent` properties are set by the element tree infrastructure. When an element is attached to a `UIRoot`, `Root`, `ElementId`, and `IsAttached` describe that retained-tree attachment.
 
-Most element settings are registered `UiProperty<T>` values. Setting properties such as `Margin`, `Visibility`, `Opacity`, focus state, or transform values flows through `UiObject.SetValue`, raises property notifications, and calls `OnPropertyInvalidated` with the metadata options from the registered property.
+Most element settings are registered `UiProperty<T>` values. Setting properties such as `Margin`, `Visibility`, `Opacity`, focus state, or transform values flows through `UiObject.SetValue`, raises property notifications, and, when the effective value changes, calls `OnPropertyInvalidated` with the metadata options from the registered property.
 
 `Aspect` holds an optional `ElementAspect`. Assignment validates the aspect target type and every default and conditional declaration against the runtime element type before committing the property-store change. Compatible aspects are composed by the attached root's `AspectProcessor`. A generated behavior lifetime exists only while the element is attached: detach disposes it, reattach creates a new lifetime, and replacement or clear also disposes the active lifetime.
 
 `IsHitTestVisible` controls direct pointer hit testing without changing layout or rendering. When it is `false`, the element and its visual subtree are skipped by hit testing; the default is `true`.
 
-`Timbre` returns the element's [TimbreScope](Cerneala.Timbre.TimbreScope.md), connected to `Root.TimbreRuntime`. It requires the owner thread and an attached element whose root has a runtime; otherwise it throws `InvalidOperationException`. The scope belongs to one attachment: detach disposes it and cancels its playbacks, and after reattachment `Timbre` returns a new scope without resurrecting old playbacks. Hiding the element or an ancestor does not affect its audio. This applies to every element, including `Scene2D` and its nodes.
+`Timbre` returns the element's [TimbreScope](Cerneala.Timbre.TimbreScope.md), connected to `Root.TimbreRuntime`. It requires the owner thread and an attached element whose root has a runtime; otherwise it throws `InvalidOperationException`. The scope belongs to one attachment: detach disposes it and cancels its playbacks, and after reattachment `Timbre` returns a new scope without resurrecting old playbacks. Hiding the element or an ancestor does not affect its audio, for every element, including `Scene2D` and its nodes. A node in a headless `SceneSimulationContext2D` has no root, so its `Timbre` getter throws `InvalidOperationException`.
 
 ```csharp
 TimbrePlayback playback = button.Timbre.Play(confirmTimbre);
@@ -100,7 +100,7 @@ Value validation is enforced by property metadata. `Width` and `Height` accept `
 | `HeightProperty` | Property identifier for `Height`; defaults to `float.NaN`, affects measure and arrange, and accepts automatic sizing or a finite non-negative value. |
 | `HorizontalAlignmentProperty` | Property identifier for `HorizontalAlignment`; defaults to `HorizontalAlignment.Stretch` and affects arrange. |
 | `VerticalAlignmentProperty` | Property identifier for `VerticalAlignment`; defaults to `VerticalAlignment.Stretch` and affects arrange. |
-| `VisibilityProperty` | Property identifier for `Visibility`; defaults to `Visibility.Visible`, affects measure, arrange, render, hit testing, and semantics, and cancels property motion for the visual subtree when changed to `Hidden` or `Collapsed`. |
+| `VisibilityProperty` | Property identifier for `Visibility`; defaults to `Visibility.Visible`, affects measure, arrange, render, hit testing, and semantics, and cancels property motion for the visual subtree when changed from `Visible` to `Hidden` or `Collapsed`. |
 | `RenderTransformProperty` | Property identifier for `RenderTransform`; defaults to `Transform.Identity`, affects render, and rejects `null`. |
 | `RenderTransformOriginProperty` | Property identifier for `RenderTransformOrigin`; defaults to `(0.5, 0.5)`, affects render, and requires normalized finite coordinates. |
 | `OpacityProperty` | Property identifier for `Opacity`; defaults to `1`, affects render, and accepts finite values from `0` through `1`. |
@@ -158,7 +158,7 @@ Value validation is enforced by property metadata. `Width` and `Height` accept `
 | `Height` | `float` | Explicit content height, or `float.NaN` for automatic sizing; defaults to `float.NaN`. |
 | `HorizontalAlignment` | `HorizontalAlignment` | Horizontal placement inside the arranged content rectangle; defaults to `Stretch`. |
 | `VerticalAlignment` | `VerticalAlignment` | Vertical placement inside the arranged content rectangle; defaults to `Stretch`. |
-| `Visibility` | `Visibility` | Layout/render/hit-test visibility mode; defaults to `Visible`. Changing it to `Hidden` or `Collapsed` cancels property motion for this element and its visual descendants. |
+| `Visibility` | `Visibility` | Layout/render/hit-test visibility mode; defaults to `Visible`. Changing it from `Visible` to `Hidden` or `Collapsed` cancels property motion for this element and its visual descendants; changing between `Hidden` and `Collapsed` does not. |
 | `RenderTransform` | `Transform` | Transform applied at render time; defaults to `Transform.Identity`. |
 | `RenderTransformOrigin` | `LayoutPoint` | Normalized transform origin; defaults to `(0.5, 0.5)`. |
 | `Opacity` | `float` | Render opacity from `0` through `1`; defaults to `1`. |

@@ -26,7 +26,7 @@ DrawLineSegment2D segment = new(
 
 ## Remarks
 
-Thickness must be positive and finite. A line batch expands each segment to shared triangle-mesh geometry once when the immutable batch is constructed.
+Thickness must be positive, finite, and at most `2,000,000,000`; otherwise the constructor throws `ArgumentOutOfRangeException`. The `default` value has a `Thickness` of `0`, and `DrawLineBatch` does not reject it. A line batch expands each segment to shared triangle-mesh geometry once when the immutable batch is constructed.
 
 ## Constructors
 

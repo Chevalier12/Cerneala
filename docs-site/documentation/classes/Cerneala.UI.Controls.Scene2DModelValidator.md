@@ -29,7 +29,7 @@ if (!result.Success)
 
 ## Remarks
 
-Model constructors enforce structural invariants before publication. They retain their argument-exception categories and attach stable diagnostic information. Importers use those same constructors and `GetDiagnostic`; they do not implement a second geometry validator. `Validate` additionally checks atlas references and source rectangles against supplied dimensions, document identities, associations, promotions, and configured aggregate budgets.
+Model constructors enforce structural invariants before publication. They retain their argument-exception categories and attach stable diagnostic information. Importers use those same constructors and `GetDiagnostic`. They add only a few import-specific checks before construction: for a collider, point text longer than 393,216 characters (`SCN2D013`), a polyline with other than two points (`SCN2D008`), or a `Point` shape (`SCN2D008`). `Validate` additionally checks atlas references and source rectangles against supplied dimensions, document identities, associations, promotions, and configured aggregate budgets.
 
 Validation is deterministic in collection order. Retention stops at `MaxDiagnostics`, but omitted errors still make `Success` false. After a known failure fills the retained budget, validation may stop inspecting remaining data and report truncation. Message, file and JSON-path strings are limited to 4,096 UTF-16 characters. Validation does not mutate a model, allocate GPU resources, install collision adapters, or inspect the filesystem.
 
@@ -54,7 +54,7 @@ These per-component construction caps are independent of the configurable aggreg
 | `SCN2D005` | Invalid dimensions, chunk size/count, or bounds. |
 | `SCN2D006` | Invalid/unresolved tile ID. |
 | `SCN2D007` | Invalid atlas dimensions or source rectangle. |
-| `SCN2D008` | Invalid collider geometry or more than one collider for an owner. |
+| `SCN2D008` | Invalid collider geometry, more than one collider for an owner, a non-positive `Box` or `Ellipse` size on any entity, or a `null` entity. |
 | `SCN2D009` | Invalid collision bitset. |
 | `SCN2D010` | Invalid/unresolved asset reference. |
 | `SCN2D011` | Chunk overlap. |

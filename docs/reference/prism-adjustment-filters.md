@@ -1,98 +1,102 @@
 # Adjustment Prism filters
 
-This document describes common mathematical conventions for filters
-adjustment. List of filters, properties, default values, domains,
-planner, kernel and conformance owners are generated from
-`Cerneala.SourceGen/Prism/Catalog/prism-catalog.json`; the document is not a a
-two sources of truth for that data.
+This document describes the shared mathematical conventions of the adjustment
+filters. The list of filters, their properties, default values, domains, and their
+planner, kernel, and conformance owners come from
+`Cerneala.SourceGen/Prism/Catalog/prism-catalog.json`; this document is not a
+second source of truth for that data.
 
-## Pipe color
+## Color pipeline
 
-A filter receives the premultiplied working surface. The kernel o
-depremultiply once, convert color via common Prism pipeline
-in linear sRGB, apply the adjustment and blend mode, then convert the result
-back into the working profile and premultiplies it with the same alpha. The pixel with
-alpha zero remains zero. Gamma conversions, profile matrices and operations
-alpha are the common ones from the Prism pipeline; filters do not have local copies of
-these formulas.
+A filter receives the premultiplied working surface. The kernel unpremultiplies
+once, converts the color to linear sRGB through the shared Prism pipeline, applies
+the adjustment and the blend mode, then converts the result back into the working
+profile and premultiplies it again with the same alpha. A pixel with zero alpha
+stays zero. Gamma conversions, profile matrices, and alpha operations come from the
+shared Prism pipeline.
 
-All adjustments use the exact source bounds. They do not change the layout,
-the hitbox or surface size.
+All adjustments use the exact source bounds. They do not change layout, hit
+testing, or surface size.
 
 ## Common primitives
 
 - **Matrix** applies a 3x3 RGB matrix and a constant per channel.
-- **Curve** compile points `Composite`, `Red`, `Green` and `Blue` with PCHIP
-  shape-preserving in a single LUT RGB `1024x1`. The channel curve is applied
-  first, then the composite curve.
-- **LUT** reads a canonical Hald CLUT 3D: a square image with side
-  `level³`, which represents a cube with side `level²`, with red varying the most
-  quickly in row-major order. Supports tetrahedral or trilinear interpolation.
-- **Channel mapping** selects the channel before the curve, level or
+- **Curve** compiles the `Composite`, `Red`, `Green`, and `Blue` points with
+  shape-preserving PCHIP into a single `1024x1` RGB LUT. The channel curve is
+  applied first, then the composite curve.
+- **LUT** reads a canonical 3D Hald CLUT: a square image with side `level³` that
+  represents a cube with side `level²`, with red varying fastest in row-major
+  order. Sampling is trilinear; there is no other interpolation mode.
+- **Channel mapping** selects the channel before the curve, level, or
   transformation.
-- **Threshold** calculates a global linear luminance histogram, chooses the Otsu threshold with maximum between-class variance, and uses the cataloged parameter only as a fallback for degenerate or fully transparent images.
-- **Levels** remaps input range, gamma and output range.
-  With `Auto=true`, build on the GPU a synchronized distribution for
-  selected channel, remove 0.1% of each tail and use limits
-  results as entry points. The analysis ignores fully transparent pixels
-  and doesn't read the texture back to the CPU.
+- **Threshold** builds a linear-luminance histogram from a fixed 32x32 sample grid
+  of the image, chooses the Otsu threshold with the maximum between-class variance,
+  and uses the catalog `Level` value only as a fallback for degenerate or fully
+  transparent images.
+- **Levels** remaps the input range, gamma, and output range. `Auto=true` is meant
+  to derive the input black and white points from the image histogram of the
+  selected channel, clipping 0.1% at each tail and ignoring fully transparent
+  pixels. That analysis exists only in the CPU reference
+  (`PrismLevelsAnalysis`); the SDL_GPU executor does not run a Levels analysis
+  pass.
 
-## Semantics of filters
+## Filter semantics
 
-| Filter | Prism Semantics |
+| Filter | Prism semantics |
 | --- | --- |
-| `BrightnessContrast` | brightness in taillights and exponential contrast around pivot 0.18; the old linear variant remains selectable via `UseLegacy` |
-| `Levels` | remap input/gamma/output on RGB or on one channel; `Auto` chooses robust thresholds from the synchronized image percentile |
-| `Curves` | PCHIP cubic C1 for composite dots and per-channel, compiled into a 1024-sample RGB LUT |
-| `Exposure` | exposure/contrast transformation with linear, video and logarithmic styles, forward/reverse directions, pivot and configurable log parameters |
-| `Vibrance` | polynomial curve in perceptual RGB for positive values, global desaturation for negative values ​​and optional mask for skin tones |
-| `HueSaturation` | point Okhsl adjustment, with hue weighted on the color range, saturation normalized to the sRGB gamut and perceptual lightness; `Colorize` also interpolates in the same space |
-| `ColorBalance` | weighted corrections for shadows, midtones and highlights, with optional luminance preserved |
-| `BlackWhite` | configurable RGB monochrome mixer (`Red·R + Green·G + Blue·B`), with optional normalization via `abs(1 / (Red + Green + Blue))`; default values ​​are `0.333` on each channel |
-| `PhotoFilter` | linear blend per channel between source and filter color, controlled by `Density`, with alpha copied unchanged |
+| `BrightnessContrast` | brightness in stops (`2^Brightness`) and exponential contrast around the pivot 0.18; the old linear variant stays available through `UseLegacy` |
+| `Levels` | remaps input/gamma/output on RGB or on one channel; see `Auto` above |
+| `Curves` | C1 PCHIP cubic for the composite and per-channel points, compiled into a 1024-sample RGB LUT |
+| `Exposure` | exposure/contrast transform with `Linear`, `Video`, and `Logarithmic` styles, forward/reverse directions, a pivot, and configurable log parameters |
+| `Vibrance` | polynomial curve in perceptual RGB for positive values, global desaturation for negative values, and an optional skin-tone mask |
+| `HueSaturation` | per-pixel Okhsl adjustment, with hue weighted by the color range, saturation normalized to the sRGB gamut, and perceptual lightness; `Colorize` also works in the same space |
+| `ColorBalance` | weighted corrections for shadows, midtones, and highlights, with optional luminance preservation |
+| `BlackWhite` | configurable RGB monochrome mixer (`Red·R + Green·G + Blue·B`), with optional normalization by `abs(1 / (Red + Green + Blue))`; the default is `0.333` on each channel |
+| `PhotoFilter` | linear per-channel blend between the source and the filter color, controlled by `Density`, with alpha copied unchanged |
 | `ChannelMixer` | RGB subset of a 4x5 matrix: three RGB rows plus constants, applied after unpremultiply and followed by clamp/premultiply |
-| `ColorLookup` | Hald CLUT 3D from the versioned resource, with canonical row-major indexing and trilinear interpolation as in `HaldClutImage` |
-| `Invert` | RGB complement in the linear space |
-| `Posterize` | uniform quantization to the cataloged number of levels |
-| `Threshold` | black/white by global Otsu threshold of linear luminance; a uniform histogram returns the only occupied level, and one with no visible pixels uses the cataloged fallback |
-| `GradientMap` | 1D linear-sRGB LUT transfer versioned by linear CIE luminance, with Bayer 4x4 deterministic interpolation, reverse and dithering |
-| `SelectiveColor` | CMYK Photoshop/FFmpeg correction on Reds, Yellows, Greens, Cyans, Blues, Magentas, Whites, Neutrals and Blacks, in Relative or Absolute mode |
+| `ColorLookup` | 3D Hald CLUT from the versioned resource, with canonical row-major indexing and trilinear interpolation (`PrismHaldLut`) |
+| `Invert` | RGB complement in linear space |
+| `Posterize` | uniform quantization to the catalog number of levels |
+| `Threshold` | black/white by the Otsu threshold of linear luminance; a histogram with one occupied level returns that level, and one with no visible pixels uses the catalog fallback |
+| `GradientMap` | maps linear CIE luminance through the gradient into linear sRGB; `Reverse` flips the gradient and `Dither` adds a deterministic 4x4 ordered (Bayer) dither offset |
+| `SelectiveColor` | Photoshop/FFmpeg CMYK correction on Reds, Yellows, Greens, Cyans, Blues, Magentas, Whites, Neutrals, and Blacks; `Method` is `Perceptual`, `Relative`, or `Absolute`, and `Perceptual` uses the same math as `Relative` |
 
-`SelectiveColor` keeps the FFmpeg formula per interval and channel: combine
-CMY component with `K` through `((-1 - adjustment) * K) - adjustment`, apply
-factor `1 - value` in Relative mode, limits the contribution to the range
-valid channel and only then weights it with the interval mask.
+`SelectiveColor` keeps the FFmpeg formula per range and channel: it combines the
+CMY component with `K` through `((-1 - adjustment) * K) - adjustment`, applies the
+factor `1 - value` in relative mode, limits the contribution to the valid channel
+range, and only then weights it with the range mask.
 
-`GradientMap` requires a valid `PrismGradientMapResource` with strictly ascending points covering `[0, 1]`. The resource is versioned and cached as a 256-sample 1D LUT; its absence produces fallback copy.
+`GradientMap` requires a valid `PrismGradientMapResource` whose points cover
+`[0, 1]` with nondecreasing offsets; two points may share an offset, but a
+decreasing offset throws `ArgumentException`. The resource is versioned, and a
+missing resource produces the fallback copy.
 
-`Curves` requires a valid `PrismCurvesResource`. Points use coordinates
-normalized, have strictly increasing input and include zero and one ends. the LUT
-is versioned along with the resource and executor cache; the shader does how much
-one sample for each channel, no additional pass.
+`Curves` requires a valid `PrismCurvesResource`. Points use normalized coordinates,
+have strictly increasing inputs, and include the zero and one end points. The LUT is
+versioned together with the resource and the executor cache; the shader reads one
+sample per channel, with no additional pass.
 
-`Vibrance` temporarily converts linear color to perceptual sRGB and preserves
-alpha. `Amount>0` applies a polynomial response that decays to zero as
-the color is already saturated; `Amount<0` uses a separate desaturation pathway.
-`AvoidSaturatingSkinTones=true` only dampens the positive momentum in the sector
-skin tones. `GrayColorTransform` configures the gray axis again
-`Saturation` remains a global adjustment applied after vibrance.
+`Vibrance` temporarily converts linear color to perceptual sRGB and preserves alpha.
+`Amount>0` applies a polynomial response that falls to zero as the color is already
+saturated; `Amount<0` uses a separate desaturation path.
+`AvoidSaturatingSkinTones=true` only damps the positive boost in the skin-tone
+sector. `GrayColorTransform` configures the gray axis, and `Saturation` stays a
+global adjustment applied after vibrance.
 
-`ColorLookup` requires a valid Hald CLUT image, encoded in linear RGB:
-its side must be exactly `level³` for a `level >= 2`. The executor
-validate this shape before the GPU, index the texel via
-`r + size * (g + size * b)` and depremultiply the LUT texel to samples.
-The default interpolation is tetrahedral; `Linear`/`Trilinear` select
-trilinear. `Intensity` mixes the LUT output with the source after converting to
-linear sRGB. The source alpha remains unchanged and a pixel with zero alpha remains zero.
-If the resource is missing, has an invalid form, or cannot be used, the executor
-apply the Prism fallback policy and publish a diagnostic; does not replace
-The LUT in stealth.
+`ColorLookup` requires a valid Hald CLUT image, encoded in linear RGB: its side must
+be exactly `level³` for some `level >= 2`. The executor validates this shape before
+the GPU pass, indexes the texel with `r + size * (g + size * b)`, and unpremultiplies
+the LUT texel when sampling. `ColorLookup` has no `Interpolation` or `Intensity`
+property; to mix the result with the source, use the filter's common `Opacity`.
+The source alpha stays unchanged and a pixel with zero alpha stays zero. If the
+resource is missing, has an invalid shape, or cannot be used, the executor applies
+the Prism fallback policy and records a diagnostic; it never silently substitutes
+another LUT.
 
-## Compliance
+## Conformance
 
-Analytical vectors check opaque and transparent pixels, associated alpha, values
-limit, individual channels and all selectable color profiles.
-Interactions in this family have sufficient analytical results, so no
-a separate golden raster is required for the adjustments stage. Semantics of
-above is the Prism contract and does not claim byte-for-byte compatibility with
-proprietary implementations.
+Analytical vectors check opaque and transparent pixels, associated alpha, limit
+values, individual channels, and all selectable color profiles. The results in this
+family are analytical, so the adjustments stage needs no separate golden raster.
+The semantics above are the Prism contract and do not claim byte-for-byte
+compatibility with proprietary implementations.

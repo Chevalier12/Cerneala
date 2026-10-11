@@ -31,7 +31,7 @@ bool isExpanded = (bool)properties[SemanticsProperty.IsExpanded]!;
 
 ## Remarks
 
-`AutomationPeer.GetProperties()` returns values keyed by `SemanticsProperty`. The base peer supplies `IsEnabled` and `IsFocused`; specialized peers add properties such as selection, value, item count, or expanded state.
+`AutomationPeer.GetProperties()` returns values keyed by `SemanticsProperty`. The base peer supplies `IsEnabled` and `IsFocused`; specialized peers add `Value` (`TextBoxAutomationPeer` and `PasswordBoxAutomationPeer`, which reports `null`), `ItemCount` (`ItemsControlAutomationPeer`, `MenuAutomationPeer`, and `MenuItemAutomationPeer`), and `IsExpanded` (`MenuItemAutomationPeer`). No built-in peer sets `IsSelected`.
 
 ## Fields
 

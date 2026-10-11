@@ -62,7 +62,7 @@ When `ResetToDefaults()` changes values, active TwoWay Prism bindings write the 
 | `GetNodeState(PrismNodeId id)` | `PrismNodeState` | Resolves state by numeric node ID. |
 | `GetLayerState(PrismNodeId id)` | `PrismLayerState` | Resolves layer state and verifies its type. |
 | `GetGroupState(PrismNodeId id)` | `PrismGroupState` | Resolves group state and verifies its type. |
-| `ReplaceDefinition(PrismClipDefinition definition)` | `void` | Replaces the definition, resets values, and versions topology and data independently. |
+| `ReplaceDefinition(PrismClipDefinition definition)` | `void` | Replaces the definition. A structurally equal definition only replaces the reference: current values, versions, and state handles stay. Any other definition rebuilds the state with the new defaults, makes every earlier state handle stale, and advances `StructuralVersion` when the topology changed or, otherwise, `ValueVersion` when a default value changed. |
 | `ResetToDefaults()` | `void` | Restores current definition and catalog defaults when values differ. |
 
 ## Exceptions
@@ -72,6 +72,7 @@ When `ResetToDefaults()` changes values, active TwoWay Prism bindings write the 
 | `PrismInstance(...)`, `ReplaceDefinition(...)` | `ArgumentNullException` | `definition` is `null`. |
 | `GetNodeState(...)` | `KeyNotFoundException` | The node ID is absent. |
 | Typed `Get...State(...)` methods | `InvalidOperationException` | The node exists but has a different node kind. |
+| `PrismInstance(...)`, `ReplaceDefinition(...)` | `ArgumentOutOfRangeException` | The definition contains a filter or style whose identifier is not defined, for example `(PrismFilterId)9999`. |
 
 ## Applies to
 

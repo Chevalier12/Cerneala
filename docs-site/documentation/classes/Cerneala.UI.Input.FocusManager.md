@@ -45,7 +45,7 @@ if (changed)
 
 For non-null targets, focus is accepted only when `FocusPolicy.CanFocus` accepts the element. The target must be attached, focusable, enabled, participate in input visibility, and exist in the supplied `ElementInputRouteMap`.
 
-When focus changes, the manager updates `IsKeyboardFocused` on the old and new focused elements and updates `IsKeyboardFocusWithin` along the visual ancestor path. Shared ancestors remain marked as containing keyboard focus when focus moves within the same branch.
+When focus changes, the manager updates `IsKeyboardFocused` on the old and new focused elements and updates `IsKeyboardFocusWithin` along the input route from the focused element to the root. Ancestors that are not in the input route map, for example disabled ones, are not marked. Shared ancestors remain marked as containing keyboard focus when focus moves within the same branch.
 
 Focus events are raised after state is updated. Preview keyboard focus events are raised before bubbling keyboard focus events. If a preview lost or got keyboard focus event is handled, the matching `LostKeyboardFocus` or `GotKeyboardFocus` event is suppressed. The non-keyboard `LostFocus` and `GotFocus` events are still raised when the old or new element has a route-map id.
 

@@ -101,7 +101,7 @@ Public construction validates every standalone declaration before a rule can ent
 | `PackageName` | `string?` | Gets the package name on a catalog-owned rule projection, or `null` on a reusable rule that has not been projected into a catalog. |
 | `SourceOrder` | `int` | Gets the composed root/application/scope/element source rank used after layer order. |
 | `Origin` | `AspectOrigin` | Gets immutable authoring-origin metadata. |
-| `Scope` | `string` | Gets the deterministic diagnostic scope label: `root`, `application`, `scope[n]`, or `element`. |
+| `Scope` | `string` | Gets the deterministic diagnostic scope label of a catalog-owned rule projection: `root`, `application`, `scope[n]`, or `element`. A reusable rule that has not been projected into a catalog returns an empty string. |
 
 ## Methods
 

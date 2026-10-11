@@ -43,7 +43,7 @@ foreach (RoutedEvent routedEvent in InputEvents.All)
 
 `InputEvents` is a static catalog of `RoutedEvent` instances for mouse, keyboard, stylus, touch, manipulation, and drag/drop input. Each event is registered with `InputEvents` as the owner type, a WPF-style event name, a `RoutingStrategy`, and the routed event argument type used when the event is raised.
 
-Preview events generally use `RoutingStrategy.Tunnel`, matching the preview-before-bubble pattern. Non-preview counterparts generally use `RoutingStrategy.Bubble`. Some mouse button and pointer boundary events are `RoutingStrategy.Direct`, so handlers are invoked only for the direct target route used by the input system.
+Preview events generally use `RoutingStrategy.Tunnel`, matching the preview-before-bubble pattern. Non-preview counterparts generally use `RoutingStrategy.Bubble`. Some mouse button and pointer boundary events are `RoutingStrategy.Direct`. The input bridge still raises the button-specific pairs, such as `PreviewMouseLeftButtonDownEvent` and `MouseLeftButtonDownEvent`, and the double-click pair on every element of the target's route: the preview event from the root down to the target, then the bubble event from the target up to the root. Each element sees the `Handled` value left by the elements before it.
 
 The `All` property exposes the complete catalog in declaration order. It is useful for diagnostics, tests, and runtime surfaces that need to enumerate known input events instead of hard-coding each identifier again.
 

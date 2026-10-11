@@ -31,7 +31,7 @@ Facet uses the generalized anisotropic Kuwahara construction with a Sobel
 structure tensor, an edge-aligned elliptical kernel, and eight polynomially
 weighted sectors. Every iteration uses a fixed three-pixel base radius; the
 edge-aligned major semiaxis can reach six pixels at maximum anisotropy. Sector
-means are combined by inverse variance, so flat regions become painterly patches
+means are weighted by `1 / (1 + (1000 * v)^4)`, where `v` is the sum of the sector's RGB variances, so flat regions become painterly patches
 without averaging directly across strong edges. Transparent samples do not
 contribute to the sector statistics, and the filtered color is associated with
 the center pixel's alpha. CPU conformance math and the dedicated GPU technique
@@ -59,7 +59,7 @@ and scales a fixed 5-by-5 sample lattice up to an eight-pixel radius.
 boundaries contribute less, while `Levels` selects between 2 and 32 final
 channel levels. The iteration count and lattice are deliberately bounded:
 there are no global labels, convergence-dependent passes, or hidden temporal
-state. Intermediate passes preserve straight linear color and center alpha;
+state. Intermediate passes store linear color premultiplied by the center alpha;
 the final pass quantizes once, then applies opacity and blend mode against the
 preserved original input. CPU conformance math and the dedicated GPU technique
 use the same bandwidth mapping, weights, sampling positions, and quantization

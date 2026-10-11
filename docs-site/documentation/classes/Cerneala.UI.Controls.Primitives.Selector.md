@@ -41,7 +41,7 @@ Selection is single-index only. The valid no-selection value is `-1`; lower valu
 
 During item container preparation, `Selector` installs a left-button `MouseUp` handler on the container. The handler selects the container's current item index by calling `SelectContainer`. Container handler registrations are stored in a `ConditionalWeakTable`, so re-preparing a container does not duplicate handlers. When a container is cleared, the handler owner is detached only if it still belongs to that `Selector`, which keeps reused containers from selecting an old owner.
 
-`SelectedItem` reads from the inherited `Items` collection when `SelectedIndex` is in range and returns `null` otherwise.
+`SelectedItem` reads the active item source when `SelectedIndex` is in range and returns `null` otherwise: the `ItemsSource` snapshot when `ItemsSource` is set, otherwise `Items`. For example, with `ItemsSource = new[] { "A", "B" }` and `SelectedIndex = 1`, `SelectedItem` is `"B"` even when `Items` is empty.
 
 ## Constructors
 
@@ -60,7 +60,7 @@ During item container preparation, `Selector` installs a left-button `MouseUp` h
 | Name | Type | Description |
 | --- | --- | --- |
 | `SelectedIndex` | `int` | Gets or sets the selected item index. Setting the property selects that index through `SelectionModel`. |
-| `SelectedItem` | `object?` | Gets the selected object from `Items` when `SelectedIndex` is valid; otherwise, `null`. |
+| `SelectedItem` | `object?` | Gets the selected object from the active item source (`ItemsSource` when set, otherwise `Items`) when `SelectedIndex` is valid; otherwise, `null`. |
 | `SelectionModel` | `SelectionModel` | Gets the selector's internal single-selection model. |
 
 ## Methods

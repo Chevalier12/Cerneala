@@ -46,7 +46,7 @@ string description = trace.ToString();            // MouseDown Bubble: UIElement
 
 `RoutedEventTraceSnapshot` is produced by `RoutedEventTrace.Trace`. The snapshot captures the routed event name, its `RoutingStrategy`, the target element id as a string, and the ordered route steps as `RoutedEventTraceStep` values.
 
-The route order depends on the routed event strategy. `Direct` traces contain only the target element. `Bubble` traces run from the target toward the root. `Tunnel` traces run from the root toward the target. When the route walks ancestors, disabled ancestors are skipped in the same way as the input route.
+The route order depends on the routed event strategy. `Direct` traces contain only the target element. `Bubble` traces run from the target toward the root. `Tunnel` traces use the reverse order: from the highest enabled ancestor down to the target. The root is the first step only when it is enabled. When the route walks ancestors, disabled ancestors are skipped in the same way as the input route.
 
 `TargetId` is read from `UIElement.ElementId` and converted with `ToString()`. It is `null` when the target has no attached element id. Each step stores its element id string and runtime element type name.
 

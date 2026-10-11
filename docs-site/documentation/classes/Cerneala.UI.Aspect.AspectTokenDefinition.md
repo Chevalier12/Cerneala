@@ -46,7 +46,7 @@ AspectPackage package = AspectPackage.Create("App")
 
 ## Remarks
 
-`AspectTokenDefinition` is the catalog input for package-level token defaults. `AspectPackage.Tokens` stores these definitions, and `AspectCatalog.FromPackages` copies each `Token` and `DefaultValue` pair into the catalog default map.
+`AspectTokenDefinition` is the catalog input for package-level token defaults. `AspectPackage.Tokens` stores these definitions. When an `AspectCatalog` is built from packages, each `Token` and `DefaultValue` pair is copied into the catalog token defaults. If two packages register the same token name with different value types, building the catalog throws `InvalidOperationException`.
 
 The constructor requires both arguments to be non-null and requires `token.ValueType` to match `defaultValue.ValueType`. This keeps a token such as `AspectToken<Color>` from being registered with an `AspectValue` whose runtime value type is something else.
 

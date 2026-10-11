@@ -60,19 +60,9 @@ Concrete node types in the motion system include private implementations used by
 
 | Name | Description |
 | --- | --- |
-| `MotionNode()` | Initializes a derived motion node instance. |
+| `MotionNode()` | Protected. Initializes a derived motion node instance. |
 
-## Public Properties
-
-| Name | Type | Description |
-| --- | --- | --- |
-| None |  | `MotionNode` exposes no public properties. |
-
-## Public Methods
-
-| Name | Return Type | Description |
-| --- | --- | --- |
-| None |  | `MotionNode` exposes no public methods. |
+`MotionNode` declares no public properties and no public methods.
 
 ## Protected Internal Methods
 
@@ -81,12 +71,6 @@ Concrete node types in the motion system include private implementations used by
 | `Tick(MotionFrame frame)` | `MotionNodeTickResult` | Advances the node for the supplied frame and reports the work performed. Derived classes must implement this method. |
 | `OnRegistered(MotionGraph graph)` | `void` | Called after the graph registers the node. The base implementation does nothing. |
 | `OnUnregistered()` | `void` | Called after the graph unregisters the node. The base implementation does nothing. |
-
-## Internal Properties
-
-| Name | Type | Description |
-| --- | --- | --- |
-| `IsRegistered` | `bool` | Tracks whether the node is currently registered with a graph. The graph uses this flag to avoid duplicate registrations and no-op removals. |
 
 ## Applies to
 

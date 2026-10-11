@@ -33,6 +33,7 @@ Inspect dependency kinds after evaluating a compound condition:
 ```csharp
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Buttons;
 using Cerneala.UI.Controls.Primitives;
 
 AspectVariantKey<Button, ButtonKind> key = AspectVariantKey.For<Button, ButtonKind>("kind");
@@ -72,7 +73,7 @@ The type is a record, so equality is value-based across `Kind` and all payload p
 
 | Name | Description |
 | --- | --- |
-| `AspectConditionDependency(AspectConditionDependencyKind kind, AspectState? state = null, AspectVariantKey? variant = null, UiProperty? property = null, AspectDataDependency? data = null, AspectToken? token = null, string? diagnosticName = null)` | Initializes a dependency record with a category and optional payload values for that category. |
+| `AspectConditionDependency(AspectConditionDependencyKind Kind, AspectState? State = null, AspectVariantKey? Variant = null, UiProperty? Property = null, AspectDataDependency? Data = null, AspectToken? Token = null, string? DiagnosticName = null)` | Initializes a dependency record with a category and optional payload values for that category. |
 
 ## Properties
 

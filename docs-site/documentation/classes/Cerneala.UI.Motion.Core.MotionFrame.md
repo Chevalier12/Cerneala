@@ -91,6 +91,7 @@ Because `MotionFrame` is a `readonly record struct`, values are immutable after 
 | --- | --- |
 | `Deconstruct(out TimeSpan Now, out TimeSpan Delta, out int FrameIndex, out MotionFrameReason Reason, out MotionFramePhase Phase)` | Deconstructs the frame into its primary-constructor components. |
 | `Equals(MotionFrame other)` | Determines whether another frame has the same component values. |
+| `Equals(object? obj)` | Determines whether an object is a `MotionFrame` with the same component values. |
 | `GetHashCode()` | Returns a hash code based on the frame components. |
 | `ToString()` | Returns the compiler-generated record string representation. |
 

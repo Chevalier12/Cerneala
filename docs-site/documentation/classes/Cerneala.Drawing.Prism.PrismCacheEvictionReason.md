@@ -30,10 +30,17 @@ public enum PrismCacheEvictionReason
 
 ## Remarks
 
-Pinned entries cannot be disposed until their final draw lease is released. If
-an eviction is requested while an entry is pinned, the cache preserves the
-original reason and records it when deferred removal completes. Use
-`PrismRendererDiagnostics.GetEvictionCount` for cumulative reason counts.
+The value descriptions name the intended meaning. No current code records an
+eviction reason: `PrismRendererDiagnostics` has no public constructor and the
+renderer never creates it, so `PrismRendererDiagnostics.GetEvictionCount` has no
+populated instance to report from. In particular, nothing produces
+`InvalidSurface`, `DeviceReset`, or `ExplicitRemoval`.
+
+In the SDL_GPU retained cache, an entry is pinned while a draw lease or a
+submitted command buffer uses it. Budget eviction skips pinned entries; it does
+not queue them for later removal. An invalidated pinned entry is marked
+invalid and released when both its draw-lease count and its command-buffer
+count reach zero.
 
 ## Applies to
 

@@ -81,7 +81,7 @@ Derived objects can enforce mutation affinity before their property store is rea
 
 `UiObject` is the base for objects that participate in Cerneala's UI property system. It stores values in a private `UiPropertyStore` and resolves an effective value from multiple `UiPropertyValueSource` layers.
 
-Effective values are resolved in this order, from highest to lowest priority: `Local`, `Animation`, `AspectVisualState`, `AspectBase`, `TemplateBinding`, and `Inherited`. When no stored value exists for a property, `GetValue` returns the property's metadata default value and `GetValueSource` returns `Default`.
+Effective values are resolved in this order, from highest to lowest priority: `Local`, `Animation`, `MarkupConditional`, `MarkupBase`, `TemplateOwnerBinding`, `AspectVisualState`, `AspectBase`, `TemplateBinding`, and `Inherited`. When no stored value exists for a property, `GetValueSource` returns `Default` and `GetValue` returns the framework default that Cerneala installed internally for that object, if any, or otherwise the property's metadata default value.
 
 `SetValue` coerces the supplied value through the property's metadata, validates the coerced value, stores it for the requested source, and returns the previous effective value. `ClearValue` removes the stored value for the requested source and also returns the previous effective value. `Default` is not a storable source; storing or clearing that source is rejected by the underlying store.
 

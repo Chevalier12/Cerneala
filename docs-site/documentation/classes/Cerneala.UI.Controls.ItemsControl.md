@@ -17,7 +17,6 @@ public class ItemsControl : Control
 
 ```csharp
 using Cerneala.UI.Controls;
-using Cerneala.UI.Layout.Panels;
 
 var people = new[] { new { Name = "Bucharest" } };
 ItemsControl control = new()
@@ -91,8 +90,7 @@ In `.crn` markup, declare the owned collection exclusively with `@templates { ..
 | `ItemCount` | `int` | Number of items in the active source. |
 | `ItemTemplate` | `ContentTemplate?` | Explicit visual template with priority over `DisplayMemberPath`. |
 | `ItemContainerAspect` | `ElementAspect?` | Aspect applied to generated or prepared item containers. |
-| `ContentTemplateRegistry` | `ContentTemplateRegistry` | Registry used when resolving generated content templates; cannot be `null`. |
-| `ItemsPanel` | `Panel?` | Retained panel used to lay out generated item containers. |
+| `ItemsPanel` | `Cerneala.UI.Layout.Panels.Panel?` | Retained panel used to lay out generated item containers. |
 | `RealizedItemCount` | `int` | Advanced diagnostic count of currently realized containers. |
 
 ## Methods
@@ -106,7 +104,14 @@ In `.crn` markup, declare the owned collection exclusively with `@templates { ..
 
 | Name | Description |
 | --- | --- |
-| `PrepareItemContent(...)` | Applies default content/template presentation and can be overridden by specialized containers. |
+| `DefaultContainerType` | Container type used for items that are not `UIElement` values, or for every item when `ItemTemplate` is set. Default `typeof(ContentPresenter)`. |
+| `GetContainerTypeForItem(object?)` | Returns `DefaultContainerType` when `ItemTemplate` is set; otherwise the item's own type for a `UIElement` item, or `DefaultContainerType`. |
+| `CreateItemContainer(int, object?)` | Returns a new `ContentPresenter` when `ItemTemplate` is set; otherwise the item itself for a `UIElement` item, or a new `ContentPresenter`. |
+| `PrepareItemContainer(UIElement, int, object?)` | Applies `ItemContainerAspect`, records index, item and selection state, updates an `ISelectableItemContainer`, and calls `PrepareItemContent` unless the container is the item itself. |
+| `PrepareItemContent(UIElement, int, object?)` | Applies default content/template presentation to a `ContentPresenter` or `ContentControl` container and can be overridden by specialized containers. |
+| `ClearItemContainer(UIElement)` | Removes the container aspect, clears the recorded item state, resets an `ISelectableItemContainer` to index `-1`, and clears presenter or content-control content. |
+| `IsItemSelected(int)` | Returns whether the item at an index is selected. The base implementation returns `false`. |
+| `OnItemContainerPrepared(UIElement, int)` | Called after a container is prepared. The base implementation does nothing. |
 | `ActivateItemsPresenter(ItemsPresenter?)` | Activates a template presenter or restores the fallback presenter. |
 
 ## Applies to

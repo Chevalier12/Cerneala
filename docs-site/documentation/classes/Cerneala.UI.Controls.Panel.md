@@ -47,7 +47,7 @@ internal sealed class FixedElement(LayoutSize size) : UIElement
 
 ## Remarks
 
-`Cerneala.UI.Controls.Panel` declares no members of its own. It is a sealed wrapper around `Cerneala.UI.Layout.Panels.Panel`, making the default panel available from the controls namespace and for APIs that require a controls-facing `Panel`, such as `ItemsPanelTemplate.CreatePanel()` and `ItemsPresenter.PanelRoot`.
+`Cerneala.UI.Controls.Panel` declares no members of its own. It is a sealed wrapper around `Cerneala.UI.Layout.Panels.Panel`, making the default panel available from the controls namespace. `ItemsPresenter.PanelRoot` returns the panel root only when it is this controls-facing `Panel` type.
 
 Layout behavior is inherited from `Cerneala.UI.Layout.Panels.Panel`. During measure, the panel measures each visible visual child with the incoming `MeasureContext` and reports the maximum child width and maximum child height. Collapsed children are measured with `LayoutSize.Zero` and do not contribute to the desired size.
 

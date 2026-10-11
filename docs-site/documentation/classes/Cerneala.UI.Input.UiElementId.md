@@ -1,4 +1,4 @@
-# Cerneala.UI.Input.UiElementId Class
+# UiElementId Struct
 
 ## Definition
 Namespace: `Cerneala.UI.Input`

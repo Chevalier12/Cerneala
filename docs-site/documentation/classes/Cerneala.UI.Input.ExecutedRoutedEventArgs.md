@@ -59,7 +59,7 @@ Set the inherited `Handled` property to stop further command binding invocation 
 | --- | --- | --- |
 | `Command` | `ICommand` | Gets the command associated with the execution event. |
 | `Parameter` | `object?` | Gets the optional command parameter associated with the execution event. |
-| `RoutedEvent` | `RoutedEvent` | Gets the routed event associated with these arguments. Inherited from `RoutedEventArgs`. |
+| `RoutedEvent` | `RoutedEvent` | Gets or sets the routed event associated with these arguments. Inherited from `RoutedEventArgs`. |
 | `OriginalSource` | `object` | Gets the original source passed to the routed event arguments. Inherited from `RoutedEventArgs`. |
 | `Source` | `object` | Gets or sets the current source while routing. Inherited from `RoutedEventArgs`. |
 | `Handled` | `bool` | Gets or sets whether routing should stop processing the event. Inherited from `RoutedEventArgs`. |

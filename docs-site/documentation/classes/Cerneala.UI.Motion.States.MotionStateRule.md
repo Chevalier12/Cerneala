@@ -46,17 +46,7 @@ The constructor rejects `null`, empty, and whitespace-only state names. It prese
 | --- | --- | --- |
 | `StateName` | `string` | Gets the state name associated with the rule. |
 
-## Methods
-
-| Name | Return Type | Description |
-| --- | --- | --- |
-| None | N/A | This class declares no public methods beyond inherited `object` members. |
-
-## Events
-
-| Name | Description |
-| --- | --- |
-| None | This class declares no public events. |
+`MotionStateRule` declares no public methods or events beyond the members inherited from `object`.
 
 ## Exceptions
 

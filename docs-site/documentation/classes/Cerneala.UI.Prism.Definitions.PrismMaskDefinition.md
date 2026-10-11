@@ -41,6 +41,7 @@ scope opacity and blend operation. Mutable per-instance values live in
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `Equals(PrismMaskDefinition? other)` | `bool` | Tests structural equality. |
+| `Equals(object? obj)` | `bool` | Returns `true` when `obj` is a structurally equal `PrismMaskDefinition`. |
 | `GetHashCode()` | `int` | Returns the structural hash code. |
 
 ## Exceptions
@@ -51,4 +52,4 @@ scope opacity and blend operation. Mutable per-instance values live in
 
 ## Applies to
 
-At most one mask on a Prism layer, group, or backdrop.
+At most one mask on a Prism layer or group.

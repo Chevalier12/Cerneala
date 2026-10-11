@@ -22,6 +22,7 @@ Reuse containers by exact container type:
 
 ```csharp
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Items;
 using Cerneala.UI.Elements;
 
 ItemContainerRecyclePool pool = new();

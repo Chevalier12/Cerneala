@@ -36,6 +36,7 @@ var assignment = new ElementAspectValue(UIElement.OpacityProperty, 0.75f);
 | `ElementAspectValue(UiProperty, object?)` | `ArgumentNullException` | `property` is `null`. |
 | `ElementAspectValue(UiProperty, object?)` | `ArgumentException` | `value` is not valid for the supplied property. |
 | `ElementAspectValue(UiProperty, AspectValue)` | `ArgumentException` | The Aspect value type does not match the UI property value type. |
+| `ElementAspectValue(UiProperty, AspectValue)` | `ArgumentNullException` | `property` or `value` is `null`. |
 
 ## Applies to
 Aspect defaults, conditions, and generated markup.

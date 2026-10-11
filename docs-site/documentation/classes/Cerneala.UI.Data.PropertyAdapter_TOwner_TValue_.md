@@ -80,7 +80,7 @@ An adapter constructed without a setter is read-only: `CanWrite` returns `false`
 ## Properties
 | Name | Type | Description |
 | --- | --- | --- |
-| `CanWrite` | `bool` | Returns `true` when the adapter has a setter delegate; otherwise `false`. |
+| `CanWrite` | `bool` | Returns `true` when the adapter has a setter delegate; otherwise `false`. Adapters from `ForUiProperty` always have one, even for a read-only property, whose `Write` then throws `InvalidOperationException`. |
 
 ## Methods
 | Name | Return Type | Description |

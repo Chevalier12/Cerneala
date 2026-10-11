@@ -34,9 +34,9 @@ string line = snapshot.ToString();
 
 ## Remarks
 
-`InputDiagnostics` is a static helper for producing `InputDiagnosticsSnapshot` values from the current input context. `Capture` reads the target element id, target runtime type name, routed event name, and routing strategy without mutating the element or event.
+`InputDiagnostics` is a static helper for producing `InputDiagnosticsSnapshot` values from the two arguments it receives. `Capture` reads the target element id, target runtime type name, routed event name, and routing strategy without mutating the element or event.
 
-The `hitTarget` and `routedEvent` arguments are optional. When no hit target is supplied, the returned snapshot has `null` target id and target type values. When no routed event is supplied, the returned snapshot has `null` routed event name and routing strategy values. `InputDiagnosticsSnapshot.ToString()` renders those missing values as `"none"`.
+The `routedEvent` argument is optional. `hitTarget` has no default value, but accepts `null`. When no hit target is supplied, the returned snapshot has `null` target id and target type values. When no routed event is supplied, the returned snapshot has `null` routed event name and routing strategy values. `InputDiagnosticsSnapshot.ToString()` renders those missing values as `"none"`.
 
 ## Methods
 

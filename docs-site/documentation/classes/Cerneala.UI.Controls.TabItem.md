@@ -48,9 +48,9 @@ TabItem tabItem = new()
 
 tabControl.SetItems(new[] { tabItem });
 tabControl.SelectedIndex = 0;
-tabControl.ItemContainerGenerator.Realize();
 
 TabItem? selected = tabControl.SelectedTabItem;
+// selected is the same instance as tabItem: a TabItem item is its own container.
 ```
 
 ## Remarks
@@ -75,6 +75,8 @@ Assigning a `UIElement` to `Header` uses the same ownership validation as `Conte
 | --- | --- | --- |
 | `HeaderProperty` | `UiProperty<object?>` | Identifies the `Header` UI property. The default value is `null`; metadata affects measure and render. |
 | `IsSelectedProperty` | `UiProperty<bool>` | Identifies the `IsSelected` UI property. The default value is `false`; metadata affects render, input visuals, and aspect. |
+| `SelectedEvent` | `RoutedEvent` | Identifies the bubbling `Selected` event. Added as an owner of `Selector.SelectedEvent`, so it is the same routed event. |
+| `UnselectedEvent` | `RoutedEvent` | Identifies the bubbling `Unselected` event. Added as an owner of `Selector.UnselectedEvent`, so it is the same routed event. |
 
 ## Properties
 
@@ -88,6 +90,13 @@ Assigning a `UIElement` to `Header` uses the same ownership validation as `Conte
 ## Methods
 
 `TabItem` does not declare public methods. It overrides protected layout and property-change members to coordinate header hosting, template changes, and direct layout.
+
+## Events
+
+| Name | Event Type | Description |
+| --- | --- | --- |
+| `Selected` | `RoutedEventHandler` | Raised by the tab item (`Source` = the tab item) when `IsSelected` changes to `true`. Bubbles. |
+| `Unselected` | `RoutedEventHandler` | Raised by the tab item (`Source` = the tab item) when `IsSelected` changes to `false`. Bubbles. |
 
 ## Applies to
 

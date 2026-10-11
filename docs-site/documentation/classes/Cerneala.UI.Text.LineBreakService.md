@@ -49,7 +49,7 @@ When wrapping is enabled, the service parses the paragraph with `StringInfo.Pars
 
 When trimming is `CharacterEllipsis` or `WordEllipsis`, finite-width overflowing lines are collapsed with a `U+2026` glyph. Character trimming uses the closest fitting Unicode text-element boundary. Word trimming uses the closest complete break boundary and falls back to character trimming when the first word cannot fit. If even the ellipsis glyph cannot fit, the service returns an empty line.
 
-The `BreakLines` overload receives a resolved font and uses `TextShaper` advances when available, with the fixed `aspect.FontSize * aspect.Scale * 0.5f` estimate as a fallback. The public `MeasureTextWidth(string, TextAspect)` convenience method uses the fixed estimate because it does not receive a resolved font.
+The `BreakLines` overload receives a resolved font and uses `TextShaper` advances when available, with the fixed `text.Length * aspect.FontSize * aspect.Scale * 0.5f` estimate as a fallback. The public `MeasureTextWidth(string, TextAspect)` convenience method uses the fixed estimate because it does not receive a resolved font.
 
 Passing `null` for `text` to `BreakLines` or `MeasureTextWidth` throws `ArgumentNullException`.
 
@@ -67,7 +67,7 @@ Passing `null` for `text` to `BreakLines` or `MeasureTextWidth` throws `Argument
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `BreakLines(string text, TextAspect aspect, ResolvedTextFont font, float availableWidth)` | `IReadOnlyList<TextLine>` | Splits and, when requested, ellipsizes `text` according to paragraphs, wrapping, trimming, and available width. |
-| `MeasureTextWidth(string text, TextAspect aspect)` | `float` | Returns the estimated width of `text` using the service's fixed character-width formula. |
+| `MeasureTextWidth(string text, TextAspect aspect)` | `float` | Returns `text.Length * aspect.FontSize * aspect.Scale * 0.5f`. Throws `ArgumentNullException` when `text` is `null`. |
 
 ## Related Supporting Types
 | Name | Description |

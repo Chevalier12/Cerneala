@@ -17,7 +17,7 @@ Inheritance:
 `object` -> `UiPropertyMutationObserver`
 
 Derived:
-`MotionTransactionContext`
+`MotionTransactionContext`, and the internal root observer that `UIElement` uses.
 
 ## Remarks
 
@@ -25,7 +25,7 @@ Derived:
 
 `UiObject` exposes a protected virtual `MutationObserver` property that returns `null` by default. When a derived object supplies an observer, `UiObject` calls that observer after each property mutation. This happens both when the mutation changes the effective value and when the requested source value changes without changing the resolved effective value.
 
-`UIElement` routes mutation observation to the current root motion transaction context through `Root?.Motion.Transactions`. `MotionTransactionContext` uses these mutation records to animate eligible property changes during active motion transactions.
+`UIElement` returns its root's observer (`Root?.PropertyMutations`), or `null` when detached. That root observer forwards each mutation to three recipients: the root's motion layout, its motion transaction context, and its aspect processor. `MotionTransactionContext` uses these mutation records to animate eligible property changes during active motion transactions.
 
 Although the class is public, its notification method is `internal abstract`. Consumers outside the `Cerneala` assembly can reference the type, but cannot implement a useful derived observer because the required override is assembly-internal.
 
@@ -38,12 +38,6 @@ Although the class is public, its notification method is `internal abstract`. Co
 ## Methods
 
 `UiPropertyMutationObserver` declares no public methods.
-
-## Internal Methods
-
-| Name | Return Type | Description |
-| --- | --- | --- |
-| `OnPropertyMutated(UiPropertyMutation mutation)` | `void` | Receives the mutation record produced by `UiObject` after a UI property source is set or cleared. |
 
 ## Applies to
 

@@ -50,7 +50,7 @@ Changes to environment tokens recompute only tracked elements whose resolved dec
 
 This class does not build catalogs, synchronize token defaults, or pass aspect variants. Root-level processing that needs the root registry, theme bridge, and control variants is handled by `AspectProcessor`.
 
-The constructor throws `ArgumentNullException` when `engine`, `catalog`, or `environment` is `null`. `Track` relies on `AspectEngine.Apply` for element validation, so a `null` element also results in `ArgumentNullException`.
+The constructor throws `ArgumentNullException` when `engine`, `catalog`, or `environment` is `null`. `Track` throws `ArgumentNullException` when `element` is `null`, before it subscribes to the element or applies its aspect.
 
 ## Constructors
 

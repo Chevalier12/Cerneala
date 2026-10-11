@@ -26,6 +26,8 @@ Bind a generated `Border` background to the templated `Button` background from i
 
 ```csharp
 using Cerneala.Drawing;
+using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Media;
 
 Button button = new()
@@ -43,9 +45,13 @@ Button button = new()
 Create and attach a typed binding directly:
 
 ```csharp
+using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Templates;
+using Cerneala.UI.Core;
+
 UiProperty<float> ownerFontSizeProperty = Control.FontSizeProperty;
 
-Button owner = new();
+Button owner = new() { FontSize = 20 };
 Border child = new();
 TemplateBinding<float> binding = new(
     ownerFontSizeProperty,
@@ -53,11 +59,17 @@ TemplateBinding<float> binding = new(
     Control.FontSizeProperty);
 
 binding.Attach(owner);
+// child.FontSize is now 20.
+owner.FontSize = 24;
+// child.FontSize is now 24.
+binding.Detach();
 ```
 
 ## Remarks
 
 `TemplateBinding` is used by the template system to keep generated children synchronized with properties on the control that owns the template. `ComponentTemplateContext.Bind` creates these bindings while a `ComponentTemplate<TControl>` builds its visual tree, and `ComponentTemplateInstance.Attach` attaches each recorded binding to the template owner.
+
+`TemplateBinding` has no public constructor; its constructor is `private protected`. There are two ways to get an instance: construct a typed `TemplateBinding<T>`, or call `TemplateBinding.Create` with untyped `UiProperty` values. `Create` returns a framework-private subclass, not a `TemplateBinding<T>`; use the returned value through the `TemplateBinding` members.
 
 When attached, a binding immediately copies the current source property value from the owner to the target property on the generated child. It also subscribes to the owner's `PropertyChanged` event and updates the target again when the same source property changes.
 
@@ -66,12 +78,6 @@ The source and target properties must have the same `ValueType`. The target prop
 The default value source written to the target is `UiPropertyValueSource.TemplateBinding`, which remains below Aspect values on the generated child. A custom `UiPropertyValueSource` can be supplied when constructing or creating the binding. `UiPropertyValueSource.TemplateOwnerBinding` is the template-owned stronger source for explicit owner palette/chrome projections that must remain above the child's Aspect value. `Detach` always removes the owner subscription; when the target source is not `TemplateBinding`, it also clears that value source from the target.
 
 `Attach` is single-use while the binding is attached. Calling it again before `Detach` throws `InvalidOperationException`. `Detach` is idempotent when the binding is not attached.
-
-## Constructors
-
-| Name | Description |
-| --- | --- |
-| `TemplateBinding<T>(UiProperty<T> sourceProperty, UIElement target, UiProperty<T> targetProperty, UiPropertyValueSource targetSource = UiPropertyValueSource.TemplateBinding)` | Initializes a typed template binding from an owner property to a target child property. |
 
 ## Properties
 
@@ -90,14 +96,14 @@ The default value source written to the target is `UiPropertyValueSource.Templat
 | --- | --- | --- |
 | `Attach(Control owner)` | `void` | Attaches the binding to a template owner, copies the current owner value to the target, and starts listening for owner property changes. |
 | `Detach()` | `void` | Detaches the binding from its owner and stops listening for owner property changes. |
-| `Create(UiProperty sourceProperty, UIElement target, UiProperty targetProperty, UiPropertyValueSource targetSource = UiPropertyValueSource.TemplateBinding)` | `TemplateBinding` | Creates a typed `TemplateBinding<T>` instance for the source property value type. |
+| `Create(UiProperty sourceProperty, UIElement target, UiProperty targetProperty, UiPropertyValueSource targetSource = UiPropertyValueSource.TemplateBinding)` | `TemplateBinding` | Creates an untyped binding that reads and writes values through the untyped `UiProperty` API. The returned object is not a `TemplateBinding<T>`. |
 
 ## Exceptions
 
 | Member | Exception | Condition |
 | --- | --- | --- |
-| Constructor | `ArgumentNullException` | `sourceProperty`, `target`, or `targetProperty` is `null`. |
-| Constructor | `ArgumentException` | Source and target property value types differ, or the target property is read-only. |
+| `TemplateBinding<T>` constructor | `ArgumentNullException` | `sourceProperty`, `target`, or `targetProperty` is `null`. |
+| `TemplateBinding<T>` constructor | `ArgumentException` | Source and target property value types differ, or the target property is read-only. |
 | `Create` | `ArgumentNullException` | `sourceProperty`, `target`, or `targetProperty` is `null`. |
 | `Create` | `ArgumentException` | Source and target property value types differ, or the target property is read-only. |
 | `Attach` | `ArgumentNullException` | `owner` is `null`. |

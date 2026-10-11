@@ -54,7 +54,7 @@ The route is based on the supplied `RoutedEvent.RoutingStrategy`:
 | --- | --- |
 | `Direct` | Contains only `target`. |
 | `Bubble` | Starts at `target`, then walks enabled ancestors toward the root. |
-| `Tunnel` | Starts at the highest enabled ancestor, then walks down to `target`. |
+| `Tunnel` | Starts at the highest enabled ancestor, then walks down to `target`. When no ancestor is enabled, the route holds only `target`. |
 
 Ancestor traversal uses `ElementTreeWalker.Ancestors(target, role)`. The default `role` is `ElementChildRole.Visual`; pass `ElementChildRole.Logical` to trace through logical parents instead. Disabled ancestors are skipped because the trace filters ancestors where `IsEnabled` is `true`. The target itself is always included after the null checks.
 

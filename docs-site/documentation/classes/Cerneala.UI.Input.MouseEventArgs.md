@@ -39,7 +39,7 @@ void OnMouseMove(UIElement sceneNode, MouseEventArgs args)
 
 `X` and `Y` are compatibility properties. Each is the corresponding raw root coordinate rounded to the nearest integer with `MathF.Round`; use `GetPosition` for geometry-sensitive work.
 
-`GetPosition` throws `ArgumentNullException` when `relativeTo` is `null`. It throws `InvalidOperationException` when the requested element is detached from the active root or when any required transform is non-invertible. The method does not fabricate coordinates for either case.
+`GetPosition` throws `ArgumentNullException` when `relativeTo` is `null`. It throws `InvalidOperationException` when the conversion fails: a required transform is non-invertible, the result is not finite, or a scene node (`IInputCoordinateSpace`) has no surface. A detached ordinary element does not throw by itself: its transform is composed through its remaining `VisualParent` chain, and the method returns the converted position when that transform inverts.
 
 Derived mouse event argument types can add more event-specific data while keeping the same coordinate properties.
 

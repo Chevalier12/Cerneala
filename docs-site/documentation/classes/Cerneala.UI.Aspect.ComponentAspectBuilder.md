@@ -59,7 +59,7 @@ The builder appends standalone `AspectRuleSet`, `AspectBehavior`, and `Component
 
 Diagnostics can expose a rule projected internally from an `ElementAspect`, whose properties were validated against the actual assigned element rather than its declared target type. `AddRule` reconstructs such a rule with standalone construction-time validation before adding it to a public package. A compatible projection becomes a separate standalone rule; an incompatible property or `UIElement.AspectProperty` causes `ArgumentException` with parameter name `declarations`, naming the rule, target, property, and property owner. The original local diagnostic snapshot is unchanged. `ElementAspect` uses a separate internal add path to preserve its validated-at-assignment policy.
 
-The public add methods return the same builder instance, which allows chained calls inside the callback. When `AspectPackageBuilder.Build()` runs, the accumulated rules and component templates are copied into the resulting `AspectPackage`.
+The public add methods return the same builder instance, which allows chained calls inside the callback. When `AspectPackageBuilder.Build()` runs, the rules and component templates added here are passed to the resulting `AspectPackage`, together with the tokens, behaviors, and content templates added through the other `AspectPackageBuilder` methods.
 
 ## Methods
 

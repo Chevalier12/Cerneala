@@ -74,6 +74,11 @@ When `InputStart` and `InputEnd` are equal, the input interval has no length. In
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `Map(float value)` | `float` | Maps `value` from the input interval to the output interval, clamping input progress before interpolation. |
+| `Deconstruct(out float InputStart, out float InputEnd, out float OutputStart, out float OutputEnd)` | `void` | Deconstructs the range into its four components. |
+| `Equals(MotionRange other)` | `bool` | Determines whether another range has the same four values. |
+| `Equals(object? obj)` | `bool` | Determines whether an object is a `MotionRange` with the same four values. |
+| `GetHashCode()` | `int` | Returns a hash code based on the four values. |
+| `ToString()` | `string` | Returns the compiler-generated record string representation. |
 
 ## Applies to
 

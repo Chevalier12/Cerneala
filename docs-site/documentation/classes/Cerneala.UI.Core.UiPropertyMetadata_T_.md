@@ -45,7 +45,7 @@ When no equality comparer is supplied, the constructor uses `EqualityComparer<T>
 
 | Name | Description |
 | --- | --- |
-| `DefaultValue` | Gets the value returned by the property system when no local or inherited value is present. |
+| `DefaultValue` | Gets the value returned by the property system when no source stores a value and no internal framework default replaces it. |
 | `Options` | Gets the invalidation and behavior flags associated with the property. |
 | `EqualityComparer` | Gets the comparer used to determine whether effective values changed. |
 | `ValidateValue` | Gets the optional validation callback used to reject invalid values. |

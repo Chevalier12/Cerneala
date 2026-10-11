@@ -109,8 +109,8 @@ public static void EnsureRegistered();
 The generator resolves the symbol at compile time, emits its fully qualified
 `EnsureRegistered` call before application startup, and contains no default
 backend. Missing, duplicate, inaccessible, generic, abstract, non-class, or
-signature-incompatible selections report `CERNEALAUI015` and produce no partial
-startup source. A class library or a project with no generated startup does not
+signature-incompatible selections report `CERNEALAUI015`, and the generator then
+emits no source for any markup file in the compilation. A class library or a project with no generated startup does not
 need a selection.
 
 To target SDL3 + SDL_GPU on Windows, Linux, and macOS, use `net8.0`, reference
@@ -144,7 +144,7 @@ RIDs, native assets, offline shader packaging, and published-output smoke script
 `StartupWindow` is required. The generator resolves it through Roslyn in the
 companion class scope. Simple imported names and fully qualified names are
 accepted. The result must be accessible, concrete, and derived from `Window`.
-There is no reserved `MainWindow` class name and no runtime URI loading.
+Outside the legacy path described under Legacy Compatibility, there is no reserved `MainWindow` class name. There is no runtime URI loading.
 
 The generated standalone entry point passes process arguments to
 `Application.OnStartup` and returns the exit code selected by
@@ -191,17 +191,17 @@ runtime to every application window.
 Resource lookup proceeds from the nearest scope outward:
 
 ```text
-element -> ancestors / control / window -> application -> theme/default
+element -> ancestors (control, window) -> root resource provider (application resources)
 ```
 
-A local resource with the same name shadows the application resource. Replacing
+Theme values are not part of this chain; they come from the separate theme provider. A local resource with the same name shadows the application resource. Replacing
 an observable application resource updates dependent consumers in every
 attached root; unrelated consumers remain idle, and windows opened later see
 the latest value.
 
 Application-scope `Tween` and `Spring` values are reusable Motion specs.
-`MotionClip` is rejected in `Application.Resources` because an application has
-no visual tree or global namescope. Keep clips that target named elements in the
+`MotionClip` is rejected in `Application.Resources` because `Application` has
+no visual namescope. Keep clips that target named elements in the
 owning Window or UserControl resources.
 
 ## Application Lifecycle
@@ -228,8 +228,8 @@ raised once for installed applications, including startup failures.
 ## Invalid Application Content
 
 `Application` does not own a visual tree. It rejects visual children, `Name`,
-`DataType`, element event handlers, and direct `@when`, `@if`, `@set`, or
-`@animate` directives. Put visual behavior in a Window, UserControl, Aspect, or
+`DataType`, element event handlers, and any directive or raw text directly inside it (for example `@when`, `@if`, `@set`, `@animate`, or `@on`).
+Put visual behavior in a Window, UserControl, Aspect, or
 local MotionClip instead.
 
 An executable may contain at most one paired Application definition.

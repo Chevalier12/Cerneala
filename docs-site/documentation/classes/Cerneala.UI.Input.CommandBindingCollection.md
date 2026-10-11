@@ -55,11 +55,11 @@ bindings.InvokeExecuted(
 
 `CommandBindingCollection` is the storage and dispatch surface behind `UIElement.CommandBindings`. Add `CommandBinding` instances to connect an `ICommand` to executed and can-execute routed event handlers.
 
-Bindings are stored in insertion order. `InvokeCanExecute` and `InvokeExecuted` walk the bindings that existed when the invocation started, so a binding added by a handler is not called during that same dispatch pass. Dispatch stops as soon as the routed event arguments are marked as handled.
+Bindings are stored in insertion order. `InvokeCanExecute` and `InvokeExecuted` read `Count` once when they start, then read the live list by index. So a binding added by a handler is not called in that pass. Removing or clearing bindings from a handler shifts the list: with bindings A, B, and C, if A removes itself, the pass calls A, then C, and then throws `ArgumentOutOfRangeException`. Dispatch stops after the binding that marks the arguments as handled. Arguments that are already handled when the call starts still reach the first binding; `CommandRouter` never passes already-handled arguments.
 
 Each `CommandBinding` only invokes its callbacks when its `Command` reference matches the command in the routed event arguments. Non-matching bindings are skipped by the binding.
 
-When the collection is owned by a `UIElement`, `Add`, successful `Remove`, and non-empty `Clear` queue command-state refreshes for the owner and its visual descendants. A standalone collection created with the public constructor does not have an owner and only updates its local list.
+When the collection is owned by a `UIElement`, `Add`, successful `Remove`, and non-empty `Clear` queue a command-state refresh for each element in the owner's visual subtree, the owner included, that implements `ICommandStateSource`, such as a `Button`. A standalone collection created with the public constructor does not have an owner and only updates its local list.
 
 ## Constructors
 
@@ -72,7 +72,7 @@ When the collection is owned by a `UIElement`, `Add`, successful `Remove`, and n
 | Name | Description |
 | --- | --- |
 | `Count` | Gets the number of command bindings in the collection. |
-| `this[int index]` | Gets the binding at the specified zero-based index. |
+| `this[int index]` | Gets the binding at the specified zero-based index. Throws `ArgumentOutOfRangeException` when `index` is negative or not less than `Count`. |
 
 ## Methods
 
@@ -99,6 +99,8 @@ When the collection is owned by a `UIElement`, `Add`, successful `Remove`, and n
 | `Remove(CommandBinding)` | `ArgumentNullException` | `binding` is `null`. |
 | `InvokeCanExecute(UiElementId, CanExecuteRoutedEventArgs)` | `ArgumentNullException` | `args` is `null`. |
 | `InvokeExecuted(UiElementId, ExecutedRoutedEventArgs)` | `ArgumentNullException` | `args` is `null`. |
+| `this[int index]` | `ArgumentOutOfRangeException` | `index` is negative or not less than `Count`. |
+| `InvokeCanExecute`, `InvokeExecuted` | `ArgumentOutOfRangeException` | A handler removed bindings during the pass. |
 
 ## Applies to
 

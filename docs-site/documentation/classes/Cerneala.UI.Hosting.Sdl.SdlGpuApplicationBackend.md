@@ -27,7 +27,7 @@ The executable must reference `Cerneala.Backends.SdlGpu`; its published output m
 
 ## Remarks
 
-Generated Cerneala startup calls `EnsureRegistered` when this type is selected through `ApplicationBackendAttribute`. The method composes `Cerneala.Platforms.Sdl3` windowing with the SDL_GPU graphics-session factory and registers the composition atomically in the shared windowing registry.
+Generated Cerneala startup calls `EnsureRegistered` when this type is selected through `ApplicationBackendAttribute`. The method registers one shared SDL_GPU windowing backend in the windowing registry. That backend composes `Cerneala.Platforms.Sdl3` windowing with the SDL_GPU graphics-session factory each time the window host creates its platform.
 
 Registration is idempotent for SDL_GPU. Registering a different windowing backend before or after this registration throws a deterministic conflict exception because one process may own only one windowing backend.
 

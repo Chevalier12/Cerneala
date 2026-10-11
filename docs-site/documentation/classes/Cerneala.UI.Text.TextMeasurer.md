@@ -59,9 +59,9 @@ int misses = cache.Misses;
 
 `TextMeasurer` is the layout-facing text measurement service used by controls such as text and button surfaces. It delegates font lookup to `FontResolver`, line creation to `LineBreakService`, and stores `TextMeasureResult` instances in a `TextLayoutCache`.
 
-`Measure` normalizes the supplied width before it builds the cache key. `TextWrapping.NoWrap` uses an infinite width only when trimming is `None`; either ellipsis mode retains a finite width so overflowing no-wrap lines can be collapsed. Positive infinity remains unconstrained, while non-positive or `NaN` widths become `0`.
+`Measure` normalizes the supplied width before it builds the cache key. `TextWrapping.NoWrap` with trimming `None` always uses an infinite width, whatever width is supplied; either ellipsis mode retains a finite width so overflowing no-wrap lines can be collapsed. Otherwise positive infinity remains unconstrained, while non-positive or `NaN` widths become `0`.
 
-The `LayoutSize` overload also applies finite height. When an ellipsis mode is active and all lines do not fit, the result retains at least the first line and collapses the final visible line. The width-only overload is equivalent to an unconstrained height.
+The `LayoutSize` overload also applies finite height, but only when an ellipsis mode is active and the text has more than one line. Then, when all lines do not fit, the result retains at least the first line and collapses the final visible line. A single line taller than the available height, or any text with trimming `None`, is returned unchanged. The width-only overload is equivalent to an unconstrained height.
 
 The cache key includes the text, resolved font identity, font size, wrapping mode, normalized wrapping width, trimming mode, scale, and the effective visible-line count. The returned result contains the measured `LayoutSize`, visible line count, cache key, resolved font identity, and the exact lines to render. Height is based on measured line height when the text shaper can provide it, otherwise on `FontSize * Scale`.
 
@@ -103,7 +103,7 @@ public virtual TextMeasureResult Measure(string text, TextAspect aspect, float a
 | Name | Type | Description |
 | --- | --- | --- |
 | `text` | `string` | The text to measure. Cannot be `null`. |
-| `aspect` | `TextAspect` | Font, wrapping, trimming, scale, color, and optional font resource information used for measurement. |
+| `aspect` | `TextAspect` | Font, wrapping, trimming, scale, and optional font resource information used for measurement. `Foreground` does not affect measurement. |
 | `availableWidth` | `float` | The available width used for wrapping or ellipsis trimming. The overload leaves height unconstrained. |
 
 #### Returns

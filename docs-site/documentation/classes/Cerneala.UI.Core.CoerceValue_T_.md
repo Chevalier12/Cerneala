@@ -7,33 +7,60 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Core/CoerceValue.cs`
 
-Provides the `Cerneala.UI.Core.CoerceValue<T>` API surface.
+Represents a callback that adjusts a value before the property system stores it.
 
 ```csharp
-public delegate T CoerceValue<T>(UiObject owner, T value)
+public delegate T CoerceValue<T>(UiObject owner, T value);
 ```
 
-## Type Parameters
+## Examples
 
-| Name | Description |
-| --- | --- |
-| `T` | The value type being coerced. |
+A property that clamps every value to the range 0 to 10:
 
-## Parameters
+```csharp
+using Cerneala.UI.Core;
 
-| Name | Type | Description |
-| --- | --- | --- |
-| `owner` | `UiObject` | The object whose property value is being coerced. |
-| `value` | `T` | The proposed value. |
+UiProperty<int> clamped = UiProperty<int>.Register(
+    "Clamped",
+    typeof(Holder),
+    new UiPropertyMetadata<int>(0, coerceValue: (owner, value) => Math.Clamp(value, 0, 10)));
 
-## Returns
+Holder holder = new();
+holder.SetValue(clamped, 25);
+Console.WriteLine(holder.GetValue(clamped));
+// 10
 
-The effective value to store.
+holder.SetValue(clamped, -5);
+Console.WriteLine(holder.GetValue(clamped));
+// 0
+
+sealed class Holder : UiObject
+{
+}
+```
 
 ## Remarks
 
-This page is generated from the repository API index so the documentation surface stays aligned with the source tree.
+Pass the callback to the `UiPropertyMetadata<T>` constructor through its `coerceValue` parameter. `UiPropertyMetadata<T>.CoerceValue` returns it.
+
+`owner` is the object whose value is being set. `value` is the value passed to the setter. The return value is the value that is validated and stored.
+
+When a value is set, the property system runs these steps in order:
+
+1. Calls `CoerceValue<T>`, if the metadata has one.
+2. Calls `ValidateValue<T>` with the coerced value, if the metadata has one.
+3. Stores the coerced value in the requested source.
+
+The stored value is the coerced one, so `GetSourceValue` also returns `10` in the example above. `UiPropertyMutation.WasCoerced` is `true` when the coerced value differs from the value passed in.
+
+The callback runs only when a value is set. It does not run for the metadata default value, for `ClearValue`, or again later when other properties change. An exception thrown by the callback propagates to the caller of `SetValue`, and nothing is stored.
 
 ## Applies to
 
-Cerneala UI runtime and framework API consumers.
+`UiPropertyMetadata<T>`.
+
+## See also
+
+- `Cerneala.UI.Core.ValidateValue<T>`
+- `Cerneala.UI.Core.UiPropertyMetadata<T>`
+- `Cerneala.UI.Core.UiObject`

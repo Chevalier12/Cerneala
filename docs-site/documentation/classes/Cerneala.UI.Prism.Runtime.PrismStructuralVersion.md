@@ -21,7 +21,7 @@ The version changes when definition replacement changes node or operation topolo
 
 | Name | Description |
 | --- | --- |
-| `PrismStructuralVersion(long value)` | Initializes a version value. |
+| `PrismStructuralVersion(long Value)` | Initializes a version value. |
 
 ## Properties
 

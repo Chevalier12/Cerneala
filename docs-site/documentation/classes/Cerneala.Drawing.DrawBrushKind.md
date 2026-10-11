@@ -33,4 +33,4 @@ The value is descriptive; rendering support is selected by the backend descripto
 | `Visual` | Captured live visual content. |
 
 ## Applies to
-`Cerneala` on `net8.0-windows`.
+`Cerneala` on `net8.0`.

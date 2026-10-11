@@ -44,6 +44,12 @@ The internal consumer validates that limits are nonnegative, the retained soft
 limit does not exceed the hard limit, and the color-profile enum value is valid.
 Assigning an init-only property does not perform that validation itself.
 
+## Constructors
+
+| Name | Description |
+| --- | --- |
+| `PrismRendererOptions()` | Creates options with the default values listed under Properties. |
+
 ## Properties
 
 | Name | Type | Default | Description |
@@ -52,7 +58,7 @@ Assigning an init-only property does not perform that validation itself.
 | `RetainedCacheSoftByteLimit` | `long` | 268,435,456 | Gets the retained-surface byte target. |
 | `RetainedCacheEntryLimit` | `int` | 256 | Gets the retained-surface entry limit. |
 | `HostColorProfile` | `PrismColorProfile` | `Srgb` | Gets the stored host color-profile value. |
-| `EnableDevelopmentDiagnostics` | `bool` | `false` | Gets the stored development-diagnostics preference. |
+| `EnableDevelopmentDiagnostics` | `bool` | `false` | Gets the stored development-diagnostics preference. The renderer never reads it. |
 
 ## Applies to
 

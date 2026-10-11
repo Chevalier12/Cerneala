@@ -37,8 +37,11 @@ drawing.FillPath(icon, brush, DrawFillRule.EvenOdd);
 
 | Exception | Condition |
 | --- | --- |
-| `ArgumentException` | Input is null, empty, or whitespace. |
-| `FormatException` | Input contains malformed or unsupported SVG path syntax. |
+| `ArgumentNullException` | Input is `null`. |
+| `ArgumentException` | Input is empty or whitespace. |
+| `FormatException` | Input contains malformed or unsupported SVG path syntax, for example `"L1 1"` without a leading move command, or `"M0 0"` with no drawable segment. |
+| `InvalidOperationException` | Input closes a contour that has only a move command, for example `"M0 0Z"`. The parser does not convert this case to `FormatException`. |
+| `ArgumentOutOfRangeException` | An arc radius or rotation number is too large for `float` and parses as infinity, for example `"M0 0 A1e39 1 0 0 1 5 5"`. |
 
 ## Applies To
 

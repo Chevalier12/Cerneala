@@ -25,7 +25,8 @@ using Cerneala.UI.Detective;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 
-UIRoot root = new();
+InvalidationTrace trace = new();
+UIRoot root = new(trace);
 UIElement child = new();
 root.VisualChildren.Add(child);
 root.ProcessFrame();
@@ -35,11 +36,11 @@ child.Invalidate(InvalidationFlags.Render, "manual render");
 string dump = new DirtyTreeDumper().Dump(root, root.Detective.Invalidation);
 ```
 
-The returned text starts with `Dirty tree` and includes one line for each dirty element, for example:
+The root is created with an enabled `InvalidationTrace`. The default `UIRoot` constructor uses `InvalidationTrace.Disabled`; with it, the line has no `reason=` part. The returned text starts with `Dirty tree` and includes one line for each dirty element. The example prints:
 
 ```text
 Dirty tree
-- UIElement#2 flags=Render version=1 reason=manual render
+- UIElement#ui-2 flags=Render version=2 reason=manual render
 ```
 
 ## Remarks

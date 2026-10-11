@@ -27,7 +27,7 @@ using Scene2DPackage package = await Scene2DPackage.OpenAsync(
 Limits are checked before allocating the corresponding encoded byte buffer.
 The catalog limit excludes its 32-byte checksum trailer. The payload limit applies
 to each requested block, not to the whole package and not to unrequested blocks.
-An oversized payload fails explicitly without preventing a smaller independent read.
+An oversized payload, or an oversized or truncated catalog, throws `InvalidDataException`; an oversized payload does not prevent a smaller independent read.
 
 These are **not** total managed-memory, native-memory, decoded-image or GPU-memory
 budgets. Decoding can allocate more than the encoded size, and concurrent reads

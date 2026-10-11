@@ -81,6 +81,7 @@ Created samplers reject negative frame deltas. Zero is accepted and leaves elaps
 | --- | --- | --- |
 | `PingPongSpec(TweenSpec<T>, int?)` | `ArgumentNullException` | `inner` is `null`. |
 | `PingPongSpec(TweenSpec<T>, int?)` | `ArgumentOutOfRangeException` | `cycles` is zero or negative. |
+| `CreateSampler(T, T, ValueMixer<T>, MotionSpecContext)` | `ArgumentNullException` | `context` is `null`. |
 | `MotionSampler<T>.Advance(TimeSpan)` on a sampler created by this specification | `ArgumentOutOfRangeException` | `delta` is negative. |
 
 ## Applies to

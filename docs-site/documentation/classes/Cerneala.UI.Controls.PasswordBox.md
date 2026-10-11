@@ -41,7 +41,7 @@ Rendering uses one `PasswordChar` for each Unicode text element in the stored pa
 
 `Password` is still a normal managed `string`. The control prevents accidental exposure through editing APIs, clipboard history, undo history and semantics; it does not provide secure-memory wiping.
 
-Default chrome is supplied through `AspectBase`. Derived controls can override `NormalizeTextInput` and `OnPasswordChanged` without receiving access to the internal editor.
+Default chrome is stored as framework defaults at the `Default` value source: `Padding` `4,2,4,2`, `BorderThickness` `1`, `BorderBrush` `Color(120, 130, 145)`, and a white `Background`. Any Aspect, local, or other higher-source value replaces them. Derived controls can override `NormalizeTextInput` and `OnPasswordChanged` without receiving access to the internal editor.
 
 ## Constructors
 

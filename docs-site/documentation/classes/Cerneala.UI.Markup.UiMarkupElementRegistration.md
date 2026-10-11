@@ -69,6 +69,6 @@ Markup element schema registration in the `Cerneala` project.
 
 ## See Also
 - [`UiMarkupTypeRegistry`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Markup/UiMarkupTypeRegistry.cs)
-- [`UiMarkupPropertyRegistration`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Markup/UiMarkupTypeRegistry.cs)
+- [`UiMarkupPropertyRegistration`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Markup/UiMarkupPropertyRegistration.cs)
 - [`UiFactory`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Markup/UiFactory.cs)
 - [`UiMarkupSchema`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Markup/UiMarkupSchema.cs)

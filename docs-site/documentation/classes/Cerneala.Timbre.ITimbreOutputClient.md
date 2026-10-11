@@ -8,7 +8,7 @@ Assembly/Project: `Cerneala`
 
 Source: `Timbre/ITimbreOutput.cs`
 
-Notification sink implemented by the [TimbreRuntime](Cerneala.Timbre.TimbreRuntime.md) and passed to [ITimbreOutput.Open](Cerneala.Timbre.ITimbreOutput.md).
+Notification sink that a [TimbreRuntime](Cerneala.Timbre.TimbreRuntime.md) creates (a private implementation; `TimbreRuntime` itself does not implement this interface) and passes to [ITimbreOutput.Open](Cerneala.Timbre.ITimbreOutput.md).
 
 ```csharp
 public interface ITimbreOutputClient

@@ -43,7 +43,7 @@ element.Motion().States()
 
 Obtain the builder through `element.Motion().States()`. Calls for the same element return the same builder, so registrations made through separate facade instances participate in one state table. The element must be attached to a `UIRoot`, or be the root itself, when `Set` registers a target.
 
-The builder observes the built-in element states represented by `AspectStateSet.FromElement`, including hover, pressed, focus, enabled/disabled, checked, selected, expanded, validation, and drag states. When more than one registered state matches the same property, the most recently registered matching state wins.
+The builder observes the built-in element states represented by `AspectStateSet.FromElement`: hover, pressed, focus, focus-within, disabled, selected, checked, and expanded. When more than one registered state matches the same property, the state that appears last in registration order wins. Registering a state again replaces its target in place and keeps its original position.
 
 The property's effective value at its first registration is captured as its baseline. When no registered state matches, the property animates back to that baseline using the last active state's specification. State-created motion uses `MotionPriority.Interactive`, holds its completed value, and yields to active normal- or reduced-motion-priority animation.
 
@@ -51,9 +51,7 @@ If a higher-priority animation rejects a state target, the builder keeps that pr
 
 ## Constructors
 
-| Name | Description |
-| --- | --- |
-| None | Use `MotionElementFacade.States()` to obtain the element-owned builder. |
+`MotionStateBuilder` has no public constructor. Use `MotionElementFacade.States()` to obtain the element-owned builder.
 
 ## Methods
 

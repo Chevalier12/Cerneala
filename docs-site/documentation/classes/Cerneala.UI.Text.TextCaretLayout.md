@@ -41,7 +41,7 @@ Horizontal caret positions are based on shaped prefix advance widths when the co
 
 Hit testing builds the same text-element caret stops and returns the nearest valid caret index. The overload that accepts `horizontalTextOffset` maps viewport coordinates into text coordinates before choosing the nearest stop.
 
-Vertical metrics are measured from the shaped/rasterized `"Ag"` sample when available. If font metrics are unavailable, line height and caret height fall back to `TextAspect.FontSize * TextAspect.Scale` with an offset of `0`.
+Vertical metrics come from the font's line metrics (ascent, descent, and line gap) when the font can be shaped; the sample text does not affect them. If font metrics are unavailable, line height and caret height fall back to `TextAspect.FontSize * TextAspect.Scale` with an offset of `0`.
 
 `text` and `resolver` parameters cannot be `null`. Font resolution can throw if the supplied `TextAspect` requires a font resource and the `FontResolver` has no resource provider.
 

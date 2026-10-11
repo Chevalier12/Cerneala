@@ -75,7 +75,11 @@ The motion graph creates this context with its configured reduced-motion policy,
 | --- | --- | --- |
 | `Deconstruct(out ReducedMotionPolicy ReducedMotion, out ValueMixerRegistry Mixers, out MotionDiagnostics? Diagnostics, out TimeSpan Now, out string? DebugName)` | `void` | Deconstructs the positional record values. |
 | `Equals(MotionSpecContext? other)` | `bool` | Compares this record with another `MotionSpecContext` by record equality. |
+| `Equals(object? obj)` | `bool` | Determines whether an object is a `MotionSpecContext` with equal record values. |
+| `GetHashCode()` | `int` | Returns the generated record hash code. |
 | `ToString()` | `string` | Returns the record-formatted string representation. |
+| `operator ==(MotionSpecContext?, MotionSpecContext?)` | `bool` | Returns whether two contexts are equal. |
+| `operator !=(MotionSpecContext?, MotionSpecContext?)` | `bool` | Returns whether two contexts are not equal. |
 
 ## Applies to
 

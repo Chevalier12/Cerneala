@@ -54,8 +54,8 @@ Layout and presence:
 
 ```csharp
 panel.LayoutMotionId = "settings-panel";
-panel.LayoutMotion = LayoutMotionOptions.Spring(Motion.Tween<Transform>(TimeSpan.FromMilliseconds(160)));
-panel.Presence = PresenceOptions.FadeAndScale(root.Motion.Tokens.Enter, root.Motion.Tokens.Exit);
+panel.LayoutMotion = LayoutMotionOptions.Spring(Motion.Spring<Transform>(stiffness: 520, damping: 38));
+panel.Presence = PresenceOptions.FadeAndScale(Motion.Tween<float>(TimeSpan.FromMilliseconds(180), Easings.EaseOut), Motion.Tween<float>(TimeSpan.FromMilliseconds(140), Easings.EaseIn));
 ```
 
 Scroll-linked motion:
@@ -66,11 +66,17 @@ header.Motion().Opacity.Bind(timeline.Progress.Map(1f, 0f));
 timeline.Update();
 ```
 
-Named timelines can be shared through the root-owned registry:
+Named timelines can be shared through the root-owned registry. It stores
+`MotionTimeline` instances such as `ManualMotionTimeline`; a `ScrollTimeline` is
+not a `MotionTimeline` and cannot be registered:
 
 ```csharp
-root.Motion.Timelines.Register("page-progress", timeline);
+ManualMotionTimeline progress = new();
+root.Motion.Timelines.Register("page-progress", progress);
 MotionTimeline shared = root.Motion.Timelines.Get("page-progress");
 ```
+
+`Register` throws `InvalidOperationException` for a name that is already
+registered, and `Get` throws `KeyNotFoundException` for an unknown name.
 
 Avoid giant storyboard trees and avoid animating layout properties every frame unless layout work is explicitly intended.

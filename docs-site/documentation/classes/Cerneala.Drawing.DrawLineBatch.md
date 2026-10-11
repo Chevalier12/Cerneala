@@ -40,6 +40,13 @@ Construction copies the input segments and expands them into one indexed triangl
 | `Version` | `long` | Gets the stable immutable-payload version. |
 | `Bounds` | `DrawRect` | Gets the mesh bounds including line thickness. |
 
+## Exceptions
+
+| Member | Exception | Condition |
+| --- | --- | --- |
+| Constructor | `ArgumentNullException` | `lines` is `null`. |
+| Constructor | `ArgumentException` | `lines` contains no segments. |
+
 ## Applies To
 
 High-volume line drawing through one command and one primitive submission.

@@ -8,7 +8,7 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Controls/CollisionWorld2D.Streaming.cs`
 
-Reports a synchronous collision query whose region contains unavailable spatial collision data.
+Reports a collision query or region preparation whose region contains spatial collision data that is not available and is not being prepared.
 
 ```csharp
 public sealed class SceneCollisionRegionNotReadyException : InvalidOperationException
@@ -20,7 +20,7 @@ public sealed class SceneCollisionRegionNotReadyException : InvalidOperationExce
 
 A required chunk may be absent, still loading, or obsolete for the map's current private index. Explicitly prepare the required region before issuing the current query and keep the root relay/frame loop running. The exception does not load resources, move the actor, synthesize a collision, drain the relay, or schedule old input for replay. Preparation can separately propagate loader failures, collection-publication failures or cancellation; not every preparation error is converted into this exception.
 
-A spatially resident `TileMap2D` grid can also report a chunk whose adapters are not currently retained. Its diagnostic entry identity includes the model ID, chunk origin, and dimensions; it is not a public per-cell entity or a promise of global uniqueness.
+A spatially resident `TileMap2D` grid can also report a chunk whose adapters are not currently retained. Its diagnostic entry identity has the form `grid:X:Y:Width:Height`, built only from the chunk origin and size (no model ID); for example, a 16 x 16 chunk at origin 32,0 reports `grid:32:0:16:16`. It is not a public per-cell entity or a promise of global uniqueness.
 
 ## Constructors
 

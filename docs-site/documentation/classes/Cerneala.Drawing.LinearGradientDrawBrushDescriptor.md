@@ -32,7 +32,7 @@ The SDL_GPU backend turns this descriptor into a cached device texture and appli
 | `StartPoint` | Gradient origin in Cerneala coordinates. |
 | `EndPoint` | Gradient destination in Cerneala coordinates. |
 | `Stops` | Ordered gradient stops. |
-| `BrushOpacity` | Source opacity. |
+| `BrushOpacity` | Source opacity; exposed as inherited `Opacity` too. |
 
 ## Applies to
 Backend implementation code.

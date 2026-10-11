@@ -31,6 +31,13 @@ Axis-aligned rectangular clips use the scissor fast path. Path clips and transfo
 | --- | --- |
 | `Dispose()` | Records the matching clip pop. |
 
+## Exceptions
+
+| Member | Exception | Condition |
+| --- | --- | --- |
+| `Dispose()` | `ObjectDisposedException` | The same scope variable is disposed a second time. |
+| `Dispose()` | `InvalidOperationException` | Another scope opened later on the same `DrawingContext` is still open, so the scopes are not disposed in last-in, first-out order. |
+
 ## Applies To
 
 Cerneala drawing state recording.

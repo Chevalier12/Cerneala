@@ -57,7 +57,7 @@ Button button = new()
 
 `Button` builds on `ButtonBase`, so it is focusable, participates in tab navigation, uses a hand cursor, exposes pressed state, and can execute `ICommand` or `RoutedCommand` instances through the retained input pipeline.
 
-The button does not declare its own content property. It uses `ContentControl.ContentProperty`, so element content follows the content-control ownership rules. While the `ComponentTemplate` property is `null`, `UIElement` content is added as logical and visual content. When no template child is present, `UIElement` content is measured and arranged inside `Padding + BorderThickness`; string content is measured by `TextMeasurer` and rendered by `TextRenderer`.
+The button does not declare its own content property. It uses `ContentControl.ContentProperty`, so element content follows the content-control ownership rules. While both `ComponentTemplate` and `ComponentTemplateKey` are `null`, `UIElement` content is added as logical and visual content. When no template child is present, `UIElement` content is measured and arranged inside `Padding + BorderThickness`; string content is measured by `TextMeasurer` and rendered by `TextRenderer`.
 
 Fallback rendering draws the resolved background brush, then the border, then non-empty string content. If `Background` has an explicit value, that brush is used. Otherwise fallback state colors are wrapped in solid brushes for disabled, pressed, pointer-over, and keyboard-focused states before falling back to the default background.
 
@@ -84,7 +84,7 @@ When `ComponentTemplate` supplies a template child, layout is delegated to the b
 
 | Name | Type | Declared by | Description |
 | --- | --- | --- | --- |
-| `Content` | `object?` | `ContentControl` | Gets or sets the button content. `UIElement` content is owned as logical and visual content while the `ComponentTemplate` property is `null`. |
+| `Content` | `object?` | `ContentControl` | Gets or sets the button content. `UIElement` content is owned as logical and visual content while both `ComponentTemplate` and `ComponentTemplateKey` are `null`. |
 | `Command` | `ICommand?` | `ButtonBase` | Gets or sets the command executed by pointer or keyboard activation. |
 | `CommandParameter` | `object?` | `ButtonBase` | Gets or sets the parameter passed to `Command`. |
 | `IsPressed` | `bool` | `ButtonBase` | Gets or sets the pressed visual/input state. |

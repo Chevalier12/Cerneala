@@ -20,7 +20,7 @@ The output receives already mixed PCM and does not create voices, run DSP, decod
 
 - **Format.** `Submit` receives interleaved stereo float32 samples at 48 kHz in complete frames (two samples). The output owns any conversion or resampling toward the device and must copy the data before returning.
 - **Producer.** Only the runtime's mixer thread calls `Open`, `Submit`, and `Close`.
-- **Lifetime.** `Open` is called lazily before the first block; throwing means the device is unavailable. `Close` is called when the runtime is disposed or after a device failure, never because one playback was canceled, paused, sought, or replaced. The runtime never asks the output to clear or pause its queue.
+- **Lifetime.** `Open` is called lazily before the first block; throwing means the device is unavailable, and every live playback fails with `TimbreErrorKind.DeviceUnavailable`. A runtime without an output fails its live playbacks the same way. `Close` is called when the runtime is disposed or after a device failure, never because one playback was canceled, paused, sought, or replaced. The runtime never asks the output to clear or pause its queue.
 - **Backpressure.** `QueuedFrames` reports frames submitted and not yet consumed by the device side. The runtime submits 480-frame blocks only while `QueuedFrames + 480 ≤ 1920` (40 ms) and treats `submitted − QueuedFrames` as consumed frames for completion.
 - **Notifications.** After consuming frames, the output calls [ITimbreOutputClient.NotifyCapacityAvailable](Cerneala.Timbre.ITimbreOutputClient.md); on device loss, `NotifyDeviceLost`. Calls may come from any thread, including a native audio callback.
 

@@ -34,7 +34,7 @@ Graph analysis remains an internal framework concern. Backdrop providers receive
 
 | Name | Description |
 | --- | --- |
-| `BackdropFrameRequest(int pixelWidth, int pixelHeight, float pixelScale)` | Creates a validated acquisition request. |
+| `BackdropFrameRequest(int PixelWidth, int PixelHeight, float PixelScale)` | Creates a validated acquisition request. |
 
 ## Properties
 

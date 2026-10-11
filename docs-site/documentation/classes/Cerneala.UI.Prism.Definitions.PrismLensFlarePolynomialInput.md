@@ -22,6 +22,7 @@ public readonly record struct PrismLensFlarePolynomialInput(
 
 ```csharp
 using System.Numerics;
+using Cerneala.UI.Prism.Definitions;
 
 PrismLensFlarePolynomialInput input = new(
     new Vector2(0.2f, -0.1f),

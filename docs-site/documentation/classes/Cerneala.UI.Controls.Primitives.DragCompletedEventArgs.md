@@ -10,11 +10,11 @@ Source: [UI/Controls/Primitives/DragCompletedEventArgs.cs](https://github.com/Ch
 Provides data for the `Thumb.DragCompleted` event.
 
 ```csharp
-public sealed class DragCompletedEventArgs : EventArgs
+public sealed class DragCompletedEventArgs : RoutedEventArgs
 ```
 
 Inheritance:
-`object` -> `EventArgs` -> `DragCompletedEventArgs`
+`object` -> `RoutedEventArgs` -> `DragCompletedEventArgs`
 
 ## Examples
 ```csharp
@@ -35,16 +35,17 @@ thumb.DragCompleted += (_, args) =>
 ```
 
 ## Remarks
-`DragCompletedEventArgs` is raised by `Thumb` when a drag operation ends or is canceled.
+`DragCompletedEventArgs` is raised by `Thumb` when a drag operation ends or is canceled. `Thumb` raises it as the bubbling routed event `Thumb.DragCompletedEvent`, with the thumb as `Source`, so a parent element can handle it too.
 
 When `Thumb.CompleteDrag` finishes a left-button drag, `Canceled` is `false` and `HorizontalChange` / `VerticalChange` contain the thumb's total movement since the drag started. When `Thumb.CancelDrag` runs, including when the thumb is detached while dragging, `Canceled` is `true` and the same total movement fields are reported with the values known at cancellation time.
 
-The constructor stores the values passed to it without additional validation or conversion.
+The constructors store the values passed to them without additional validation or conversion.
 
 ## Constructors
 | Name | Description |
 | --- | --- |
-| `DragCompletedEventArgs(float horizontalChange, float verticalChange, bool canceled)` | Initializes a new instance with the completed horizontal movement, vertical movement, and cancellation flag. |
+| `DragCompletedEventArgs(float horizontalChange, float verticalChange, bool canceled)` | Initializes a new instance with the completed horizontal movement, vertical movement, and cancellation flag. `RoutedEvent`, `Source` and `OriginalSource` are not set. |
+| `DragCompletedEventArgs(RoutedEvent routedEvent, object source, float horizontalChange, float verticalChange, bool canceled)` | Initializes a new instance for raising `routedEvent` from `source`. Throws `ArgumentNullException` when `routedEvent` or `source` is `null`. `Thumb` uses this constructor. |
 
 ## Properties
 | Name | Type | Description |
@@ -53,6 +54,8 @@ The constructor stores the values passed to it without additional validation or 
 | `VerticalChange` | `float` | Gets the vertical movement value supplied to the constructor. For `Thumb.DragCompleted`, this is the total vertical movement since the drag started. |
 | `Canceled` | `bool` | Gets whether the drag completion represents a canceled drag. |
 
+`RoutedEvent`, `Source`, `OriginalSource` and `Handled` are inherited from `RoutedEventArgs`.
+
 ## Applies to
 `Cerneala.UI.Controls.Primitives` in the `Cerneala` project.
 
@@ -60,3 +63,4 @@ The constructor stores the values passed to it without additional validation or 
 - `Thumb`
 - `DragStartedEventArgs`
 - `DragDeltaEventArgs`
+- `Cerneala.UI.Input.RoutedEventArgs`

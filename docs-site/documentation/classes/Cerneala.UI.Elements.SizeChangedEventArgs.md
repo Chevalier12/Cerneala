@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Elements`
 Assembly/Project: `Cerneala`  
 Source: `UI/Elements/UIElement.Events.cs`
 
-Routed event arguments for an element's arranged-size change.
+Routed event arguments raised when an element's arranged bounds change, including a move that keeps the same size.
 
 ```csharp
 public sealed class SizeChangedEventArgs : RoutedEventArgs

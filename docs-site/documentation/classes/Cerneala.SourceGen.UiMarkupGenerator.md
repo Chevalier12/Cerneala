@@ -117,7 +117,7 @@ An executable that receives generated `<Application>` or legacy `MainWindow` sta
 
 The selected symbol must be a public, non-generic static or concrete class with exactly one compatible `public static void EnsureRegistered()` method without parameters. The generator emits the fully qualified call before `GeneratedWindowApplication.Run` in a generated `Main`, or before `GeneratedWindowApplication.RegisterStartup` in a hosted module initializer.
 
-Selection is fail-closed. A missing, duplicate, inaccessible, generic, abstract, non-class, or signature-incompatible backend reports one `CERNEALAUI015` diagnostic at the attribute or startup markup and emits no startup source. The generator contains no concrete backend fallback. Libraries and projects without generated startup do not need a selection.
+Selection is fail-closed. A missing, duplicate, inaccessible, generic, abstract, non-class, or signature-incompatible backend reports one `CERNEALAUI015` diagnostic at the attribute or startup markup and emits no generated source for any markup file in the compilation. The generator contains no concrete backend fallback. Libraries and projects without generated startup do not need a selection.
 
 Reactive directive expressions support the lowercase `and` and `or` operators plus parentheses. Their precedence is `comparison` before `and` before `or`; parentheses override the default order.
 
@@ -176,7 +176,7 @@ source-path[:OneWay|TwoWay]
 Omitting the mode in a property attribute creates a live `OneWay` binding;
 `:OneWay` is an equivalent explicit spelling. `:TwoWay` additionally enables
 write-back where supported. Supported sources are `$DataContext.Path`,
-`$element.Property`, `$self.Property`, `$root.Property`,
+`$name.Property` for an element with `Name="name"`, `$self.Property`, `$root.Property`,
 `$control.parts.$part.Property`, and `$owner.Property` inside a component
 template. The generator resolves every segment and endpoint through Roslyn and
 emits typed access; it does not evaluate string property paths or use reflection
@@ -291,7 +291,7 @@ Supported generated value categories include:
 | Shape geometry | `DrawPoint` endpoints (`"0,0"`), `IReadOnlyList<DrawPoint>` literals (`"0,0 40,20 80,0"`), and `PathGeometry` SVG data |
 | Sprite animation | Immutable `SpriteAnimationSet` resources containing named `SpriteAnimationClip` and duration-based `SpriteAnimationFrame` declarations; references on `Sprite2D` |
 | Generated content | Direct text for content-bearing controls and `ContentTemplate` declarations |
-| Reactive values | Typed `$DataContext`, `$element`, `$self`, `$root`, `$control.parts.$part`, and `$owner` paths, including `OneWay` and `TwoWay` modes where the endpoint is writable |
+| Reactive values | Typed `$DataContext`, named-element (`$name`), `$self`, `$root`, `$control.parts.$part`, and `$owner` paths, including `OneWay` and `TwoWay` modes where the endpoint is writable |
 
 Color values accept the named colors known by the generator, ignoring case. They also accept hexadecimal colors and comma-separated byte components in `R, G, B` or `R, G, B, A` form.
 
@@ -303,7 +303,7 @@ The generator reports diagnostics instead of emitting source when markup cannot 
 
 | Diagnostic ID | Condition |
 | --- | --- |
-| `CERNEALAUI001` | The markup file is malformed XML or has no root element. |
+| `CERNEALAUI001` | The markup file is malformed, has top-level text, or does not have exactly one UI root element. |
 | `CERNEALAUI002` | The markup contains an unsupported element. |
 | `CERNEALAUI003` | The markup contains an unsupported property, text content, or child relationship. |
 | `CERNEALAUI004` | The markup contains an invalid value for a supported property. |
@@ -343,8 +343,6 @@ Cerneala source generation project targeting `netstandard2.0`.
 
 ## See Also
 
-- `Cerneala.SourceGen.UiMarkupGenerator.GenerationScope`
-- `Cerneala.SourceGen.UiMarkupGenerator.MarkupSource`
 - `Cerneala.UI.Markup.GeneratedUiFactory`
 - `Cerneala.UI.Markup.GeneratedMarkup`
 - `Cerneala.UI.Hosting.Windowing.ApplicationBackendAttribute`

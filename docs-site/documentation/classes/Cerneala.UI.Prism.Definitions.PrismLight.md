@@ -18,6 +18,7 @@ public readonly record struct PrismLight
 
 ```csharp
 using System.Numerics;
+using Cerneala.UI.Prism.Definitions;
 
 PrismLight key = PrismLight.Directional(
     new Vector3(0.4f, -0.2f, 1),

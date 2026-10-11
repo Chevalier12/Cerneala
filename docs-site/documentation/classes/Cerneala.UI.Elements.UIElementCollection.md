@@ -39,7 +39,7 @@ Owner-managed collider nodes impose an additional invariant: application code mu
 
 When the owner is attached to a root, adding a child attaches the child's subtree and increments the root tree version. Removing a child detaches the subtree when it no longer has an attached parent, releases lifecycle state through `ElementLifecycle`, removes pending queue work, and increments the root tree version.
 
-`Move` changes a child's position without detaching or reattaching it. A real move increments the attached root's tree version and invalidates visual mutation state, which refreshes cached invalidation-queue order on the next snapshot. Equal indexes are a no-op. `Move` does not raise `Changed` because no child was added or removed.
+`Move` changes a child's position without detaching or reattaching it. A real move increments the attached root's tree version, which refreshes cached invalidation-queue order on the next snapshot. In a visual collection it also invalidates the owner and the moved child like an added visual child; in a logical collection it invalidates nothing. Equal indexes are a no-op. `Move` does not raise `Changed` because no child was added or removed.
 
 For visual child mutations, the collection increments layout and render versions and invalidates measure, arrange, render, hit-test, and inherited state. Added visual children that are already rooted are also invalidated for aspect and subtree state.
 

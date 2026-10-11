@@ -73,7 +73,7 @@ While the drag owns pointer capture, `Thumb` handles mouse movement, wheel, gene
 
 Completing a left-button drag performs a final update, clears `IsDragging`, releases capture through the supplied route map, raises `DragCompleted` with `Canceled` set to `false`, and marks the mouse-up event as handled. `CancelDrag` clears the drag state and raises `DragCompleted` with `Canceled` set to `true`. The constructor also registers a lost-mouse-capture handler that cancels the active drag, and detaching the thumb cancels any active drag before base detachment runs.
 
-Without a template child, the fallback layout reports a desired size of `10 x 10`. Fallback rendering fills the arranged bounds with `Background` when it is not `null`, then draws a border using the maximum side of `BorderThickness` when `BorderBrush` is not `null`. The constructor initializes `Background` to `new SolidColorBrush(new Color(180, 180, 180))`, `BorderBrush` to `new SolidColorBrush(new Color(80, 80, 80))`, and `BorderThickness` to `new Thickness(1)` at the `AspectBase` value source so markup aspects can replace those visual defaults.
+`MeasureCore` always reports a desired size of `10 x 10`, with or without a template child. Fallback rendering fills the arranged bounds with `Background` when it is not `null`, then draws a border using the maximum side of `BorderThickness` when `BorderBrush` is not `null`. The constructor initializes `Background` to `new SolidColorBrush(new Color(180, 180, 180))`, `BorderBrush` to `new SolidColorBrush(new Color(80, 80, 80))`, and `BorderThickness` to `new Thickness(1)` as framework defaults at the `Default` value source, so any Aspect, local, or other higher-source value replaces them.
 
 `BeginDrag`, `CompleteDrag`, `BeginPointerDrag`, and `CompletePointerDrag` require non-null `PointerCaptureManager`, `ElementInputRouteMap`, and `MouseButtonEventArgs` arguments. `UpdateDrag` and `UpdatePointerDrag` require a non-null `MouseEventArgs` argument.
 
@@ -97,9 +97,9 @@ Without a template child, the fallback layout reports a desired size of `10 x 10
 
 | Name | Event Type | Description |
 | --- | --- | --- |
-| `DragStarted` | `EventHandler<DragStartedEventArgs>?` | Raised after a left-button drag starts and pointer capture is requested. |
-| `DragDelta` | `EventHandler<DragDeltaEventArgs>?` | Raised during an active drag when the latest horizontal or vertical movement is non-zero. |
-| `DragCompleted` | `EventHandler<DragCompletedEventArgs>?` | Raised when a drag completes normally or is canceled. |
+| `DragStarted` | `EventHandler<DragStartedEventArgs>` | Raised after a left-button drag starts and pointer capture is requested. |
+| `DragDelta` | `EventHandler<DragDeltaEventArgs>` | Raised during an active drag when the latest horizontal or vertical movement is non-zero. |
+| `DragCompleted` | `EventHandler<DragCompletedEventArgs>` | Raised when a drag completes normally or is canceled. |
 
 ## Methods
 

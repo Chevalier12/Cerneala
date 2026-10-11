@@ -55,7 +55,7 @@ catch (OperationCanceledException)
 
 `MotionHandle` is created by motion APIs such as `MotionValue<T>.AnimateTo`, motion property bindings, and facade animation builders. The constructor is internal, so application code receives handles from those APIs rather than creating them directly.
 
-The handle has one active state and two terminal states. `IsActive` is `true` only while the handle is not completed, not canceled, and not disposed. Natural completion or `Complete()` marks the handle as completed, resolves `Completion` successfully, raises `Completed`, and clears the stored callbacks. `Cancel()` marks the handle as canceled through the owning motion object, cancels `Completion`, raises `Completed`, and applies the selected `MotionCancelBehavior`.
+The handle is active, completed, canceled, or disposed. `IsActive` is `true` only while the handle is not completed, not canceled, and not disposed. Natural completion or `Complete()` marks the handle as completed, resolves `Completion` successfully, raises `Completed`, and clears the stored callbacks. `Cancel()` marks the handle as canceled through the owning motion object, cancels `Completion`, raises `Completed`, and applies the selected `MotionCancelBehavior`.
 
 `Complete()` asks the owner to jump the motion to its target and finish as completed. `Cancel(MotionCancelBehavior.Complete)` may also jump to the target, but it still reports the terminal state as canceled and cancels the `Completion` task.
 

@@ -60,7 +60,7 @@ Because this type is a readonly C# record struct, it has synthesized value equal
 
 | Name | Description |
 | --- | --- |
-| `MotionTraceEvent(MotionTraceEventKind kind, string? debugName = null)` | Initializes a trace event with the event kind and optional diagnostic name. |
+| `MotionTraceEvent(MotionTraceEventKind Kind, string? DebugName = null)` | Initializes a trace event with the event kind and optional diagnostic name. |
 
 ## Properties
 
@@ -78,6 +78,8 @@ Because this type is a readonly C# record struct, it has synthesized value equal
 | `Equals(object? obj)` | `bool` | Determines whether an object is an equivalent `MotionTraceEvent`. |
 | `GetHashCode()` | `int` | Returns the synthesized hash code for the record component values. |
 | `ToString()` | `string` | Returns the synthesized record string representation. |
+| `operator ==(MotionTraceEvent, MotionTraceEvent)` | `bool` | Returns whether both events have equal `Kind` and `DebugName`. |
+| `operator !=(MotionTraceEvent, MotionTraceEvent)` | `bool` | Returns the negation of `==`. |
 
 ## Applies to
 

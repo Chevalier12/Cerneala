@@ -38,7 +38,7 @@ Console.WriteLine(font.Size);
 
 The constructor rejects a null `typeface`, a null, empty, or whitespace-only `familyName`, and invalid text sizes. A valid size is positive, finite, and no greater than `16384`.
 
-`SystemFontSource.LoadFont` creates `SkiaFont` instances from operating-system fonts. `TextShaper` only shapes text runs whose font is a `SkiaFont`; lower-level Skia shaping and rasterization code expects the same concrete type.
+`SystemFontSource.LoadFont` creates `SkiaFont` instances from operating-system fonts. `TextShaper` only shapes text runs whose font is a `SkiaFont`, and `SkiaTextShaper` throws `InvalidOperationException` for any other font. `SkiaTextRasterizer` also accepts other `IDrawFont` implementations: it resolves them to a `SkiaFont` by family name before shaping.
 
 ## Constructors
 

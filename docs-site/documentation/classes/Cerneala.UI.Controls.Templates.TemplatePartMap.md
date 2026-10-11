@@ -56,9 +56,9 @@ Border sameRoot = (Border)parts["PART_Root"];
 ## Remarks
 `TemplatePartMap` is the runtime lookup table for named template parts. `ComponentTemplateContext.RequirePart<TElement>(string, TElement?)` registers required parts into the context's map, and `ComponentTemplate<TControl>` passes that same map to the resulting `ComponentTemplateInstance`.
 
-Part names are matched with `StringComparer.Ordinal`, so lookups are case-sensitive and culture-insensitive. Registering the same name again replaces the previous element for that name.
+Part names are matched with `StringComparer.Ordinal`, so lookups are case-sensitive and culture-insensitive. Registering the same name again throws `InvalidOperationException` and keeps the element registered first. For example, `Register("PART_Text", a)` followed by `Register("PART_Text", b)` throws, and `map["PART_Text"]` still returns `a`.
 
-`Register` requires a non-empty, non-whitespace name and a non-null `UIElement`. The indexer returns the element for an existing name and uses the underlying dictionary lookup, so a missing name throws `KeyNotFoundException`.
+`Register` requires a non-empty, non-whitespace name and a non-null `UIElement`. The indexer returns the element for an existing name and uses the underlying dictionary lookup, so a missing name throws `KeyNotFoundException`. `TryGetValue` returns `false` and a `null` element for a missing name instead of throwing.
 
 ## Constructors
 | Name | Description |
@@ -73,13 +73,15 @@ Part names are matched with `StringComparer.Ordinal`, so lookups are case-sensit
 ## Methods
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `Register(string name, UIElement element)` | `void` | Registers or replaces the element associated with the specified part name. |
+| `Register(string name, UIElement element)` | `void` | Registers the element for the specified part name. A name can be registered only once. |
+| `TryGetValue(string name, out UIElement? element)` | `bool` | Returns `true` and the registered element when `name` exists; otherwise `false` and `null`. |
 
 ## Exceptions
 | Member | Exception | Condition |
 | --- | --- | --- |
 | `Register(string name, UIElement element)` | `ArgumentException` | `name` is `null`, empty, or whitespace. |
 | `Register(string name, UIElement element)` | `ArgumentNullException` | `element` is `null`. |
+| `Register(string name, UIElement element)` | `InvalidOperationException` | An element is already registered for `name`. |
 | `this[string name]` | `KeyNotFoundException` | No element is registered for `name`. |
 
 ## Applies To

@@ -37,7 +37,7 @@ Positive infinity means unconstrained width or height. `MaxLines` equal to zero 
 
 | Name | Description |
 | --- | --- |
-| `DrawTextLayoutOptions(float, float, DrawTextWrapping, DrawTextAlignment, float, int, DrawTextTrimming, DrawTextDirection, float)` | Creates validated immutable layout options; every parameter has a documented default. |
+| `DrawTextLayoutOptions(float, float, DrawTextWrapping, DrawTextAlignment, float, int, DrawTextTrimming, DrawTextDirection, float)` | Creates validated immutable layout options. The defaults are `maxWidth = float.PositiveInfinity`, `maxHeight = float.PositiveInfinity`, `wrapping = NoWrap`, `alignment = Start`, `lineSpacing = 1`, `maxLines = 0` (no line limit), `trimming = None`, `direction = Auto`, and `scale = 1`. |
 
 ## Properties
 
@@ -52,6 +52,12 @@ Positive infinity means unconstrained width or height. `MaxLines` equal to zero 
 | `Trimming` | `DrawTextTrimming` | Gets ellipsis behavior. |
 | `Direction` | `DrawTextDirection` | Gets the requested base direction. |
 | `Scale` | `float` | Gets the positive layout scale. |
+
+## Exceptions
+
+| Exception | Condition |
+| --- | --- |
+| `ArgumentOutOfRangeException` | `maxWidth` or `maxHeight` is negative or `NaN` (`float.PositiveInfinity` is allowed); `wrapping`, `alignment`, `trimming`, or `direction` is not a defined enum value; `lineSpacing` is not finite or is less than or equal to `0`; `maxLines` is negative; or `scale` is not finite or is less than or equal to `0`. |
 
 ## Applies To
 
