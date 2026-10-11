@@ -167,7 +167,14 @@ public static class DrawPathParser
                         break;
                     case 'Z':
                         EnsureOpenContour();
-                        builder.Close();
+                        try
+                        {
+                            builder.Close();
+                        }
+                        catch (InvalidOperationException exception)
+                        {
+                            throw InvalidPath(exception.Message);
+                        }
                         current = start;
                         contourClosed = true;
                         previousSegment = 'Z';

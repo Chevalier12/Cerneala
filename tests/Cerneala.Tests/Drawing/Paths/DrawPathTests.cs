@@ -83,6 +83,18 @@ public sealed class DrawPathTests
         Assert.Equal(4, Assert.Single(compatibility).Length);
     }
 
+    [Theory]
+    [InlineData("M0 0", "Path offset: 4.")]
+    [InlineData("M0 0Z", "Path offset: 5.")]
+    [InlineData("M0 0 L1 1 Z M2 2 z", "Path offset: 18.")]
+    public void SvgParserReportsContourWithoutDrawableSegmentAsFormatException(string data, string offset)
+    {
+        FormatException exception = Assert.Throws<FormatException>(() => DrawPathParser.ParseSvg(data));
+
+        Assert.Contains("drawable segment", exception.Message);
+        Assert.EndsWith(offset, exception.Message);
+    }
+
     [Fact]
     public void FillRulesTessellateNestedContoursAndSelfIntersections()
     {
