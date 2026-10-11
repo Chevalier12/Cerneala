@@ -1,6 +1,6 @@
 # Plan index: authoring de lumi 2D in `RenderSurface2D`
 
-Status: propus, neinceput
+Status: în lucru: planurile copil finalizate, gate-ul final al indexului deschis (include criteriul MonoGame, retras)
 Data: 2026-09-04
 
 ## Scop

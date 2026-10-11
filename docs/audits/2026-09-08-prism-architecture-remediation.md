@@ -1,5 +1,7 @@
 # Prism architecture remediation — 2026-09-08
 
+> Earlier Prism audit: [2026-09-02-prism-audit.md](2026-09-02-prism-audit.md).
+
 ## Scope and decisions
 
 - Implement shared, explicit multipass planning, not merely additional SDL counters.

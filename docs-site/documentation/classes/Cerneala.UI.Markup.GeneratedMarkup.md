@@ -349,6 +349,6 @@ Source-generated reactive, Prism, Motion, and Timbre markup.
 - `Cerneala.UI.Prism.Runtime.PrismInstance`
 - `Cerneala.UI.Prism.Runtime.PrismFilterState`
 - `Cerneala.UI.Prism.Runtime.PrismStyleState`
-- `docs/markup-data-bindings.md`
-- `docs/motion-markup-syntax-proposal.md`
-- `docs/prism-markup-syntax-proposal.md`
+- `docs/reference/markup-data-bindings.md`
+- `docs/reference/motion-markup-syntax.md`
+- `docs/reference/prism-markup-syntax.md`

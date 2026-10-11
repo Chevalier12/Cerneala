@@ -16,10 +16,10 @@ Playground/Cerneala.Playground/MainWindow.crn
 Playground/CernealaOracle/MainWindow.crn
 
 # Documentation sources whose examples are represented in constructs.json.
-docs/CernealaMarkupGuide.md
-docs/markup-data-bindings.md
-docs/motion-markup-syntax-proposal.md
-docs/prism-markup-syntax-proposal.md
+docs/guides/markup-guide.md
+docs/reference/markup-data-bindings.md
+docs/reference/motion-markup-syntax.md
+docs/reference/prism-markup-syntax.md
 
 # SourceGen test sources whose inline valid/invalid markup is represented in constructs.json.
 tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorTests.cs

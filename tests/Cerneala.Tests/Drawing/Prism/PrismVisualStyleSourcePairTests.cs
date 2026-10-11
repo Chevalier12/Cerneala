@@ -13,7 +13,7 @@ public sealed class PrismVisualStyleSourcePairTests
             repositoryRoot,
             "docs",
             "audits",
-            "prism-visual-style-algorithm-checklist-2026-08-02.md");
+            "2026-08-02-prism-visual-style-algorithm-checklist.md");
         string shaderRoot = Path.Combine(
             repositoryRoot,
             "Drawing",

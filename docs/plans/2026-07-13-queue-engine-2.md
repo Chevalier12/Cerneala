@@ -2,6 +2,7 @@
 
 > Date: 2026-07-13
 > Status: completed
+> Status note (2026-10-10): the 16 open boxes are stop conditions and commit subjects, not unfinished work; the implementation landed in `ba27cacc` ("Queue Engine 2.0").
 > Purpose: modernization of invalidation queues and element ordering without changing public contracts or frame semantics
 
 ## 1. Executive summary

@@ -68,4 +68,4 @@ Executable Cerneala projects that use generated `<Application>` or legacy `MainW
 
 - `Cerneala.SourceGen.UiMarkupGenerator`
 - `Cerneala.UI.Hosting.Sdl.SdlGpuApplicationBackend`
-- `docs/application-markup.md`
+- `docs/guides/application-markup.md`

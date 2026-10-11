@@ -8,7 +8,7 @@ Cerneala puts traditional application UI and realtime rendering inside the same 
 
 It is currently in **Developer Preview**. The architecture is real, the repository has a large test and verification surface, and a lot of the framework already works. The public experience is still being built, contracts can change, and some areas are much more mature than others.
 
-See the [current architecture](architecture.md) and its
+See the [current architecture](docs/architecture/overview.md) and its
 [architecture diagram](docs/assets/cerneala-architecture.png).
 
 ## Why I built it
@@ -99,7 +99,7 @@ This is the current public control surface, not a promise of WPF or Avalonia par
 | Core and content | `Control`, `ContentControl`, `ContentPresenter`, `Decorator`, `UserControl`, `Window` | `Expander`, `GroupBox` |
 | Layout | `Panel`, `Canvas`, `StackPanel`, `Grid`, `VirtualizingStackPanel` | `DockPanel`, `WrapPanel`, `UniformGrid`, `GridSplitter` |
 | Display and media | `Border`, `TextBlock`, `Label`, `Image`, `SvgImage` | `MediaElement` |
-| Shapes | `Rectangle`, `Ellipse`, `Path`, `SvgPath` | `Line`, `Polyline`, `Polygon` |
+| Shapes | `Rectangle`, `Ellipse`, `Path`, `SvgPath`, `Line`, `Polyline`, `Polygon` | |
 | Buttons and choices | `Button`, `RepeatButton`, `ToggleButton`, `CheckBox`, `RadioButton` | `ToggleSwitch`, `SplitButton` |
 | Text input | `TextBox`, `PasswordBox` | `RichTextBox` |
 | Items and selection | `ItemsControl`, `ItemsPresenter`, `ListBox`, `ListBoxItem`, `ComboBox`, `ComboBoxItem` | `TreeView`, `DataGrid` |
@@ -210,9 +210,10 @@ Large changes should start with an issue or an evidence-backed checklist plan. P
 - [API reference](https://chevalier12.github.io/Cerneala/documentation.html)
 - [Roadmap](https://chevalier12.github.io/Cerneala/roadmap.html)
 - [Benchmarks](https://chevalier12.github.io/Cerneala/benchmarks.html)
-- [Getting started](docs/getting-started.md)
-- [Cerneala markup guide](docs/CernealaMarkupGuide.md)
-- [Architecture notes](architecture.md)
+- [Getting started](docs/guides/getting-started.md)
+- [Cerneala markup guide](docs/guides/markup-guide.md)
+- [Architecture notes](docs/architecture/overview.md)
+- [Documentation index](docs/README.md): guides, reference, architecture, plans, audits, and archive
 
 The canonical source for public API documentation is [`docs-site/documentation/classes/`](docs-site/documentation/classes/). Plans, audits, benchmark artifacts, tests, and generated reports are kept in the repository because they are part of the engineering record, not disposable chat history.
 

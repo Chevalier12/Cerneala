@@ -482,7 +482,7 @@
           "runtime": "UI/Prism/Runtime/PrismAdvancedBlend.cs",
           "kernel": "SdlGpuPrismKernelSelector/AdvancedBlending",
           "test": "tests:Cerneala.Tests.Drawing.Prism.PrismColorBlendStyleCoverageTests/AdvancedBlending",
-          "documentation": "docs/prism-markup-syntax-proposal.md#advanced-blending"
+          "documentation": "docs/reference/prism-markup-syntax.md#advanced-blending"
         }
       },
       {
@@ -498,7 +498,7 @@
           "runtime": "UI/Prism/Runtime/PrismAdvancedBlend.cs",
           "kernel": "SdlGpuPrismKernelSelector/BlendIf",
           "test": "tests:Cerneala.Tests.Drawing.Prism.PrismColorBlendStyleCoverageTests/BlendIf",
-          "documentation": "docs/prism-markup-syntax-proposal.md#blend-if"
+          "documentation": "docs/reference/prism-markup-syntax.md#blend-if"
         }
       },
       {
@@ -516,7 +516,7 @@
           "runtime": "UI/Prism/Definitions/PrismMaskDefinition.cs",
           "kernel": "SdlGpuPrismKernelSelector/Mask",
           "test": "tests:Cerneala.Tests.Drawing.Prism.PrismColorBlendStyleCoverageTests/Mask",
-          "documentation": "docs/prism-markup-syntax-proposal.md#mask"
+          "documentation": "docs/reference/prism-markup-syntax.md#mask"
         }
       },
       {
@@ -530,7 +530,7 @@
           "runtime": "UI/Prism/Definitions/PrismLayerDefinition.cs",
           "kernel": "SdlGpuPrismKernelSelector/Clipping",
           "test": "tests:Cerneala.Tests.Drawing.Prism.PrismColorBlendStyleCoverageTests/Clipping",
-          "documentation": "docs/prism-markup-syntax-proposal.md#clipping"
+          "documentation": "docs/reference/prism-markup-syntax.md#clipping"
         }
       }
     ]

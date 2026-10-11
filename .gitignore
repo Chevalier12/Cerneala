@@ -8,3 +8,6 @@ TestResults/
 .superpowers/
 .artifacts/
 artifacts/
+.local/
+.kilo/
+**/.claude/worktrees/

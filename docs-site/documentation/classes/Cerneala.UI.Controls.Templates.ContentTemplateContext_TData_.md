@@ -90,4 +90,4 @@ UI area: retained controls, content presenters, modern content templates, item p
 - `UI/Controls/Templates/ContentTemplate.cs`
 - `UI/Controls/Templates/ContentTemplateRegistry.cs`
 - `UI/Controls/ContentPresenter.cs`
-- `docs/documentation/Cerneala.UI.Controls.Templates.ContentTemplate_TData_.md`
+- `docs-site/documentation/classes/Cerneala.UI.Controls.Templates.ContentTemplate_TData_.md`

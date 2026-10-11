@@ -150,19 +150,19 @@ The retired adapters are not supported compatibility paths.
 ### 2. Cerberus V2
 
 Cerberus V2 is the next planned architecture for the SDL3 GPU drawing path. Its
-checked-in plans split the work into:
+planned work is split into:
 
 1. a top-level core, compiler, encoder, and state shadow;
 2. frame scheduling and upload arenas;
 3. retained compiled packets and GPU geometry;
 4. multi-texture material pages.
 
-This initiative is planned, not delivered. The plan checklists remain RED or
-unchecked until each stage passes its tests, conformance, lifecycle, and
-benchmark gates.
+This initiative is planned, not delivered.
 
-Plan index:
-[`docs/plans/2026-08-27-cerberus-v2.md`](docs/plans/2026-08-27-cerberus-v2.md)
+The Cerberus V2 plan index (`docs/plans/2026-08-27-cerberus-v2.md`) and its
+stage plans were never checked in. The private Cerberus batch executor that did
+ship inside the SDL_GPU backend is recorded in
+[`2026-09-02-private-sdlgpu-cerberus.md`](docs/plans/2026-09-02-private-sdlgpu-cerberus.md).
 
 ### 3. Preserve Retained Frame Behavior While The Renderer Changes
 
@@ -251,10 +251,10 @@ Important current records:
 - [SDL3 and SDL3 GPU backend](docs/plans/2026-08-25-sdl3-sdlgpu-backend-and-explicit-generator-selection.md)
 - [`RenderSurface2D` complete drawing API](docs/plans/2026-08-24-rendersurface2d-complete-drawing-api.md)
 - [Unified Aspect runtime](docs/plans/2026-08-27-unify-aspect-runtime.md)
-- [Cerberus V2 plan index](docs/plans/2026-08-27-cerberus-v2.md)
 
-`ROADMAPv2.md` and `ROADMAPv2_AUDIT.md` remain historical planning and audit
-records. They contain useful evidence, but stale paths and maturity statements
+[`roadmap-v2.md`](docs/archive/roadmap-v2/roadmap-v2.md) and
+[`roadmap-v2-audit.md`](docs/archive/roadmap-v2/roadmap-v2-audit.md) remain
+historical planning and audit records. They contain useful evidence, but stale paths and maturity statements
 inside them do not override this document or the current repository.
 
 ## Community And Contributions

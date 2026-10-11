@@ -3,8 +3,8 @@
 ## Purpose
 
 This index transforms decisions from
-[`docs/prism-technical-design.md`](../prism-technical-design.md) and
-[`docs/prism-markup-syntax-proposal.md`](../prism-markup-syntax-proposal.md)
+[`docs/prism-technical-design.md`](../architecture/prism-technical-design.md) and
+[`docs/prism-markup-syntax-proposal.md`](../reference/prism-markup-syntax.md)
 in a verifiable order of implementation. Prism remains visual processing:
 does not change layout, hitbox or input routing.
 

@@ -39,4 +39,4 @@ Compiled reactive markup.
 ## See Also
 - `Cerneala.UI.Markup.GeneratedMarkup`
 - `Cerneala.UI.Markup.MarkupDataPathSegment`
-- `docs/markup-data-bindings.md`
+- `docs/reference/markup-data-bindings.md`

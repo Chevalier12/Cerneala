@@ -116,4 +116,4 @@ Cerneala scroll-linked UI motion input.
 - `Cerneala.UI.Motion.Input.MotionRange`
 - `Cerneala.UI.Motion.MotionAnimationBuilder<T>`
 - `Cerneala.UI.Motion.MotionPropertyShortcut<T>`
-- `docs/motion-markup-syntax-proposal.md`
+- `docs/reference/motion-markup-syntax.md`

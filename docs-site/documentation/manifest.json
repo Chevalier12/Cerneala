@@ -4394,11 +4394,6 @@
     "source": "UI/Resources/ResourceDependencyTracker.cs"
   },
   {
-    "name": "Cerneala.UI.Resources.ResourceDependencyTracker.ResourceProviderReferenceEqualityComparer",
-    "file": "documentation/classes/Cerneala.UI.Resources.ResourceDependencyTracker.ResourceProviderReferenceEqualityComparer.md",
-    "source": "UI/Resources/ResourceDependencyTracker.cs"
-  },
-  {
     "name": "Cerneala.UI.Resources.ResourceDictionary",
     "file": "documentation/classes/Cerneala.UI.Resources.ResourceDictionary.md",
     "source": "UI/Resources/ResourceDictionary.cs"
@@ -4446,11 +4441,6 @@
   {
     "name": "Cerneala.UI.Text.LineBreakService",
     "file": "documentation/classes/Cerneala.UI.Text.LineBreakService.md",
-    "source": "UI/Text/LineBreakService.cs"
-  },
-  {
-    "name": "Cerneala.UI.Text.LineBreakService.TextElement",
-    "file": "documentation/classes/Cerneala.UI.Text.LineBreakService.TextElement.md",
     "source": "UI/Text/LineBreakService.cs"
   },
   {
