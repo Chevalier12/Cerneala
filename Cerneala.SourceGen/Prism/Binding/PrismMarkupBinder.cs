@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using Cerneala.Language.Prism.Catalog;
 using Cerneala.SourceGen.Prism;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -892,16 +893,10 @@ public sealed partial class UiMarkupGenerator
                 return false;
             }
 
-            // PrismBlendRange takes four ordered thresholds, so a shorter literal has no valid padding.
             if (schema.ValueType == "vector" &&
-                schema.Name is "ThisLayerRange" or "UnderlyingRange" &&
-                syntax.Text.Split(',').Length != 4)
+                PrismBlendRangeRule.Validate(schema.Name, syntax.Text) is string blendRangeMessage)
             {
-                ReportPrismBinding(
-                    PrismValueDiagnostic,
-                    syntax.Location,
-                    "Prism property '" + schema.Name + "' value '" + syntax.Text +
-                    "' must have four components.");
+                ReportPrismBinding(PrismValueDiagnostic, syntax.Location, blendRangeMessage);
                 return false;
             }
 

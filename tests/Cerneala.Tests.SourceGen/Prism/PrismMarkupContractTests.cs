@@ -396,6 +396,75 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Theory]
+    [InlineData("ThisLayerRange", "(0, 1)", "")]
+    [InlineData("UnderlyingRange", "(0, 0.5, 1)", "")]
+    [InlineData("ThisLayerRange", "(0, 0, 1, 1)", "Range = (0, 1)")]
+    [InlineData("UnderlyingRange", "(0, 0, 1, 1)", "Range = (0, 0.5, 1)")]
+    public void PrismBlendRangeParameterValuesRequireFourComponents(
+        string property,
+        string defaultValue,
+        string arguments)
+    {
+        string markup = PrismBlendRangeParameterMarkup(property, defaultValue, arguments);
+        string invalid = arguments.Length == 0 ? defaultValue : arguments.Substring("Range = ".Length);
+
+        GeneratorRunResult result = RunGenerator("PrismBlendRangeParameter.crn", markup, out Compilation compilation);
+
+        Diagnostic diagnostic = AssertPrismDiagnostic(result, "PRISM2009", markup, invalid);
+        Assert.Equal(
+            "Prism binding in 'PrismBlendRangeParameter.crn' failed: Prism property '" + property +
+            "' value '" + invalid + "' must have four components.",
+            diagnostic.GetMessage());
+        Assert.DoesNotContain(
+            compilation.GetDiagnostics(),
+            candidate => candidate.Severity == DiagnosticSeverity.Error);
+    }
+
+    [Theory]
+    [InlineData("ThisLayerRange", "(0, 0.1, 0.9, 1)", "", "PrismBlendRange(0f, 0.1f, 0.9f, 1f)")]
+    [InlineData("UnderlyingRange", "(0, 0, 1, 1)", "Range = (0, 0.25, 0.75, 1)", "PrismBlendRange(0f, 0.25f, 0.75f, 1f)")]
+    public void PrismBlendRangeParameterValuesWithFourComponentsEmitBlendRanges(
+        string property,
+        string defaultValue,
+        string arguments,
+        string expected)
+    {
+        string markup = PrismBlendRangeParameterMarkup(property, defaultValue, arguments);
+
+        GeneratorRunResult result = RunGenerator("PrismBlendRangeParameter.crn", markup, out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        Assert.Contains(
+            "." + property + " = new global::Cerneala.UI.Prism.Runtime." + expected + ";",
+            SingleGeneratedSource(result),
+            StringComparison.Ordinal);
+    }
+
+    private static string PrismBlendRangeParameterMarkup(
+        string property,
+        string defaultValue,
+        string arguments) =>
+        $$"""
+            <StackPanel>
+              <StackPanel.Resources>
+                <PrismClip Name="Fx">
+                  @parameter Range: vector = {{defaultValue}};
+                  @layer Probe
+                  {
+                    {{property}} = Range;
+                    @filter Blur { Radius = 1; }
+                  }
+                </PrismClip>
+              </StackPanel.Resources>
+              <Border>
+                <Border.Aspect>
+                  @prism $Fx({{arguments}});
+                </Border.Aspect>
+              </Border>
+            </StackPanel>
+            """;
+
+    [Theory]
     [InlineData("$DataContext.Opacity", false)]
     [InlineData("$DataContext.Opacity:OneWay", true)]
     [InlineData("$DataContext.Opacity:TwoWay", true)]

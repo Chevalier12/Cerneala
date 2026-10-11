@@ -111,7 +111,7 @@ internal sealed partial class CernealaSemanticModel
         PrismApplicationModelSyntax application,
         PrismClipDefinition definition)
     {
-        HashSet<string> supplied = new(StringComparer.Ordinal);
+        Dictionary<string, PrismValueModelSyntax> supplied = new(StringComparer.Ordinal);
         foreach (PrismAssignmentModelSyntax argument in application.Arguments)
         {
             if (!definition.Parameters.TryGetValue(argument.Name, out PrismParameterDefinition? parameter))
@@ -120,21 +120,59 @@ internal sealed partial class CernealaSemanticModel
                 continue;
             }
 
-            if (!supplied.Add(argument.Name))
+            if (supplied.ContainsKey(argument.Name))
             {
                 AddPrismDiagnostic("PRISM2003", argument.NameSpan, "Prism parameter '" + argument.Name + "' is assigned more than once.");
                 continue;
             }
 
+            supplied.Add(argument.Name, argument.Value);
             PrismCatalogProperty schema = SyntheticPrismProperty(argument.Name, parameter.TypeName, required: true);
             BindPrismValue(owner, argument.Value, schema, scope: null);
         }
 
         PrismParameterDefinition? missing = definition.Parameters.Values.FirstOrDefault(parameter =>
-            parameter.DefaultValue is null && !supplied.Contains(parameter.Path));
+            parameter.DefaultValue is null && !supplied.ContainsKey(parameter.Path));
         if (missing is not null)
         {
             AddPrismDiagnostic("PRISM2004", application.ResourceSpan, "Required Prism parameter '" + missing.Path + "' has no application value.");
+        }
+
+        ValidatePrismBlendRangeParameters(definition, supplied);
+    }
+
+    // A blend range that reads a parameter gets its value from the parameter
+    // default (arguments null) or from an application argument. Each invalid
+    // value is reported once, where it is written. A value that is not a
+    // vector already has its own error from parameter binding.
+    private void ValidatePrismBlendRangeParameters(
+        PrismClipDefinition definition,
+        IReadOnlyDictionary<string, PrismValueModelSyntax>? arguments)
+    {
+        HashSet<(int Start, string Message)> reported = new();
+        foreach (PrismBoundProperty property in definition.Nodes.Values.SelectMany(node => node.Properties))
+        {
+            PrismValueModelSyntax? value = null;
+            for (PrismParameterDefinition? parameter = property.Parameter; parameter is not null; parameter = parameter.DefaultParameter)
+            {
+                if (arguments is not null && arguments.TryGetValue(parameter.Path, out value))
+                {
+                    break;
+                }
+
+                if (arguments is null && parameter.DefaultParameter is null)
+                {
+                    value = parameter.DefaultValue;
+                }
+            }
+
+            if (value?.Kind == PrismValueModelKind.TupleLiteral &&
+                IsPrismVector(value.Text, out _, out _) &&
+                PrismBlendRangeRule.Validate(property.Schema.Name, value.Text) is string message &&
+                reported.Add((value.Span.Start, message)))
+            {
+                AddPrismDiagnostic("PRISM2009", value.Span, message);
+            }
         }
     }
 
@@ -174,6 +212,7 @@ internal sealed partial class CernealaSemanticModel
         }
 
         ValidatePrismClipToBelow(definition.RootNodes);
+        ValidatePrismBlendRangeParameters(definition, arguments: null);
         return definition;
     }
 
@@ -308,7 +347,10 @@ internal sealed partial class CernealaSemanticModel
             }
 
             string parameterPath = path.Length == 0 ? syntax.Name : path + "." + syntax.Name;
-            PrismParameterDefinition parameter = new(syntax.Name, parameterPath, typeName, syntax.DefaultValue, syntax.NameSpan);
+            PrismParameterDefinition? defaultParameter = syntax.DefaultValue?.Kind == PrismValueModelKind.Identifier
+                ? scope.Resolve(syntax.DefaultValue.Text)
+                : null;
+            PrismParameterDefinition parameter = new(syntax.Name, parameterPath, typeName, syntax.DefaultValue, defaultParameter, syntax.NameSpan);
             scope.Add(parameter);
             composition.Parameters[parameterPath] = parameter;
             symbols.Add(new CernealaSemanticSymbol(
@@ -354,7 +396,10 @@ internal sealed partial class CernealaSemanticModel
 
             if (BindPrismValue(source, assignment.Value, schema, scope))
             {
-                result.Add(new PrismBoundProperty(schema, assignment.NameSpan, assignment.Value));
+                PrismParameterDefinition? parameter = assignment.Value.Kind == PrismValueModelKind.Identifier
+                    ? scope?.Resolve(assignment.Value.Text)
+                    : null;
+                result.Add(new PrismBoundProperty(schema, assignment.NameSpan, assignment.Value, parameter));
                 ILanguageTypeSymbol? type = ResolvePrismType(schema.ValueType);
                 symbols.Add(new CernealaSemanticSymbol(
                     CernealaSemanticSymbolKind.PrismProperty,
@@ -446,6 +491,14 @@ internal sealed partial class CernealaSemanticModel
         {
             AddPrismDiagnostic("PRISM2009", value.Span,
                 "Prism property '" + schema.Name + "' value '" + value.Text + "' is outside catalog domain '" + CanonicalPrismDomain(schema) + "'.");
+            return false;
+        }
+
+        if (schema.ValueType == "vector" &&
+            schema.DomainKind != SyntheticPrismDomain &&
+            PrismBlendRangeRule.Validate(schema.Name, value.Text) is string blendRangeMessage)
+        {
+            AddPrismDiagnostic("PRISM2009", value.Span, blendRangeMessage);
             return false;
         }
 
@@ -631,8 +684,12 @@ internal sealed partial class CernealaSemanticModel
     private static bool CanConvertPrismType(string source, string target) =>
         source == target || source == "integer" && target == "number";
 
+    // A parameter schema is named after the parameter, not a catalog
+    // property, so catalog rules keyed on property names must skip it.
+    private const string SyntheticPrismDomain = "none";
+
     private static PrismCatalogProperty SyntheticPrismProperty(string name, string typeName, bool required) =>
-        new(name, typeName, required, "none", null, null, Array.Empty<string>(), defaultValue: null);
+        new(name, typeName, required, SyntheticPrismDomain, null, null, Array.Empty<string>(), defaultValue: null);
 
     private static bool IsHexColor(string value)
     {
@@ -737,12 +794,19 @@ internal sealed partial class CernealaSemanticModel
 
     private sealed class PrismParameterDefinition
     {
-        public PrismParameterDefinition(string name, string path, string typeName, PrismValueModelSyntax? defaultValue, TextSpan span)
+        public PrismParameterDefinition(
+            string name,
+            string path,
+            string typeName,
+            PrismValueModelSyntax? defaultValue,
+            PrismParameterDefinition? defaultParameter,
+            TextSpan span)
         {
             Name = name;
             Path = path;
             TypeName = typeName;
             DefaultValue = defaultValue;
+            DefaultParameter = defaultParameter;
             Span = span;
         }
 
@@ -753,6 +817,10 @@ internal sealed partial class CernealaSemanticModel
         public string TypeName { get; }
 
         public PrismValueModelSyntax? DefaultValue { get; }
+
+        // The outer parameter a default such as `= Outer` reads, resolved
+        // before this parameter enters scope, as the source generator does.
+        public PrismParameterDefinition? DefaultParameter { get; }
 
         public TextSpan Span { get; }
     }
@@ -788,11 +856,16 @@ internal sealed partial class CernealaSemanticModel
 
     private sealed class PrismBoundProperty
     {
-        public PrismBoundProperty(PrismCatalogProperty schema, TextSpan nameSpan, PrismValueModelSyntax value)
+        public PrismBoundProperty(
+            PrismCatalogProperty schema,
+            TextSpan nameSpan,
+            PrismValueModelSyntax value,
+            PrismParameterDefinition? parameter)
         {
             Schema = schema;
             NameSpan = nameSpan;
             Value = value;
+            Parameter = parameter;
         }
 
         public PrismCatalogProperty Schema { get; }
@@ -800,5 +873,8 @@ internal sealed partial class CernealaSemanticModel
         public TextSpan NameSpan { get; }
 
         public PrismValueModelSyntax Value { get; }
+
+        // The parameter the value reads, or null for a literal or binding.
+        public PrismParameterDefinition? Parameter { get; }
     }
 }

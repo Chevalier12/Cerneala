@@ -194,6 +194,8 @@ public sealed class MotionPrismSemanticTests
     [InlineData("@layer Card { ClipToBelow = true; @filter Blur { Radius = 2; } }", "PRISM2008")]
     [InlineData("@layer Card { Opacity = 2; }", "PRISM2009")]
     [InlineData("@layer Card { @filter AdaptiveWideAngle { FocalLength = (0, 0); } }", "PRISM2009")]
+    [InlineData("@layer Card { ThisLayerRange = (0, 1); @filter Blur { Radius = 1; } }", "PRISM2009")]
+    [InlineData("@layer Card { UnderlyingRange = (0, 0.5, 1); @filter Blur { Radius = 1; } }", "PRISM2009")]
     [InlineData("", "PRISM2013")]
     public void PrismBindingDiagnosticsMatchTheSourceGeneratorExactly(string body, string expectedId)
     {
@@ -204,6 +206,67 @@ public sealed class MotionPrismSemanticTests
         HarnessDiagnostic semantic = Assert.Single(result.SemanticDiagnostics, diagnostic => diagnostic.Id == expectedId);
         HarnessDiagnostic sourceGenerator = Assert.Single(result.SourceGeneratorDiagnostics, diagnostic => diagnostic.Id == expectedId);
         Assert.Equal(sourceGenerator, semantic);
+    }
+
+    [Theory]
+    [InlineData("@parameter Range: vector = (0, 1); @layer Card { ThisLayerRange = Range; @filter Blur { Radius = 1; } }", "", "(0, 1)")]
+    [InlineData("@parameter Outer: vector = (0, 0.5, 1); @layer Card { @parameter Inner: vector = Outer; UnderlyingRange = Inner; @filter Blur { Radius = 1; } }", "", "(0, 0.5, 1)")]
+    [InlineData("@parameter Range: vector = (0, 1); @layer A { ThisLayerRange = Range; @filter Blur { Radius = 1; } } @layer B { ThisLayerRange = Range; @filter Blur { Radius = 1; } }", "", "(0, 1)")]
+    [InlineData("@parameter Range: vector = (0, 0, 1, 1); @layer Card { ThisLayerRange = Range; @filter Blur { Radius = 1; } }", "Range = (0, 1)", "(0, 1)")]
+    [InlineData("@parameter Outer: vector = (0, 0, 1, 1); @layer Card { @parameter Inner: vector = Outer; UnderlyingRange = Inner; @filter Blur { Radius = 1; } }", "Outer = (0, 0.5, 1)", "(0, 0.5, 1)")]
+    public void PrismBlendRangeParameterValuesMatchTheSourceGeneratorExactly(string body, string arguments, string invalid)
+    {
+        string markup = "<StackPanel><StackPanel.Resources><PrismClip Name=\"Fx\">" + body +
+            "</PrismClip></StackPanel.Resources><Border><Border.Aspect>@prism $Fx(" + arguments +
+            ");</Border.Aspect></Border></StackPanel>";
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("PrismDiagnostics.crn", markup);
+
+        HarnessDiagnostic semantic = Assert.Single(result.SemanticDiagnostics);
+        Assert.Equal("PRISM2009", semantic.Id);
+        Assert.Equal(invalid, markup.Substring(semantic.StartCharacter, semantic.EndCharacter - semantic.StartCharacter));
+        Assert.EndsWith("value '" + invalid + "' must have four components.", semantic.Message, StringComparison.Ordinal);
+        Assert.Equal(semantic, Assert.Single(result.SourceGeneratorDiagnostics));
+    }
+
+    [Fact]
+    public void PrismVectorParametersNamedLikeBlendRangesAreOrdinaryVectors()
+    {
+        string markup = "<StackPanel><StackPanel.Resources><PrismClip Name=\"Fx\">@parameter ThisLayerRange: vector = (2, 2); " +
+            "@layer Card { @filter AdaptiveWideAngle { FocalLength = ThisLayerRange; } }</PrismClip></StackPanel.Resources>" +
+            "<Border><Border.Aspect>@prism $Fx(ThisLayerRange = (3, 3));</Border.Aspect></Border></StackPanel>";
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("PrismDiagnostics.crn", markup);
+
+        Assert.Empty(result.SemanticDiagnostics);
+    }
+
+    // A value that is not a vector at all reports only that error, and an
+    // argument that fails to bind still hides the outer default it replaces.
+    [Theory]
+    [InlineData("@parameter Range: vector = (0, 0, 1, 1, 1); @layer Card { ThisLayerRange = Range; @filter Blur { Radius = 1; } }", "", "(0, 0, 1, 1, 1)")]
+    [InlineData("@parameter Outer: vector = (0, 0, 1, 1); @layer Card { @parameter Inner: vector = Outer; ThisLayerRange = Inner; @filter Blur { Radius = 1; } }", "Card.Inner = 3, Outer = (0, 1)", "3")]
+    public void PrismInvalidBlendRangeParameterValuesReportOnlyTheirOwnError(string body, string arguments, string invalid)
+    {
+        string markup = "<StackPanel><StackPanel.Resources><PrismClip Name=\"Fx\">" + body +
+            "</PrismClip></StackPanel.Resources><Border><Border.Aspect>@prism $Fx(" + arguments +
+            ");</Border.Aspect></Border></StackPanel>";
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("PrismDiagnostics.crn", markup);
+
+        HarnessDiagnostic semantic = Assert.Single(result.SemanticDiagnostics);
+        Assert.Equal(invalid, markup.Substring(semantic.StartCharacter, semantic.EndCharacter - semantic.StartCharacter));
+        Assert.EndsWith("Value '" + invalid + "' is not a valid vector Prism value.", semantic.Message, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("ThisLayerRange")]
+    [InlineData("UnderlyingRange")]
+    public void PrismBlendRangesWithFourComponentsHaveNoDiagnostics(string property)
+    {
+        string markup = "<StackPanel><StackPanel.Resources><PrismClip Name=\"Fx\">@layer Card { " + property +
+            " = (0, 0, 1, 1); @filter Blur { Radius = 1; } }</PrismClip></StackPanel.Resources></StackPanel>";
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("PrismDiagnostics.crn", markup);
+
+        Assert.Empty(result.SemanticDiagnostics);
+        Assert.Empty(result.SourceGeneratorDiagnostics);
     }
 
     [Fact]
