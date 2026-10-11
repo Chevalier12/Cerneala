@@ -394,6 +394,7 @@ jobs:
         run: |
           dotnet tool restore
           dotnet restore ./Cerneala.slnx
+          dotnet restore ./tests/Fixtures/VisualStudioIntegrationHost/VisualStudioIntegrationHost.csproj
 
       - name: Verify core build input exclusions
         shell: pwsh
