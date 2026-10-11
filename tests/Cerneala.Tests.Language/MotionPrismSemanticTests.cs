@@ -194,6 +194,8 @@ public sealed class MotionPrismSemanticTests
     [InlineData("@layer Card { ClipToBelow = true; @filter Blur { Radius = 2; } }", "PRISM2008")]
     [InlineData("@layer Card { Opacity = 2; }", "PRISM2009")]
     [InlineData("@layer Card { @filter AdaptiveWideAngle { FocalLength = (0, 0); } }", "PRISM2009")]
+    [InlineData("@layer Card { ThisLayerRange = (0, 1); @filter Blur { Radius = 1; } }", "PRISM2009")]
+    [InlineData("@layer Card { UnderlyingRange = (0, 0.5, 1); @filter Blur { Radius = 1; } }", "PRISM2009")]
     [InlineData("", "PRISM2013")]
     public void PrismBindingDiagnosticsMatchTheSourceGeneratorExactly(string body, string expectedId)
     {
@@ -204,6 +206,19 @@ public sealed class MotionPrismSemanticTests
         HarnessDiagnostic semantic = Assert.Single(result.SemanticDiagnostics, diagnostic => diagnostic.Id == expectedId);
         HarnessDiagnostic sourceGenerator = Assert.Single(result.SourceGeneratorDiagnostics, diagnostic => diagnostic.Id == expectedId);
         Assert.Equal(sourceGenerator, semantic);
+    }
+
+    [Theory]
+    [InlineData("ThisLayerRange")]
+    [InlineData("UnderlyingRange")]
+    public void PrismBlendRangesWithFourComponentsHaveNoDiagnostics(string property)
+    {
+        string markup = "<StackPanel><StackPanel.Resources><PrismClip Name=\"Fx\">@layer Card { " + property +
+            " = (0, 0, 1, 1); @filter Blur { Radius = 1; } }</PrismClip></StackPanel.Resources></StackPanel>";
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("PrismDiagnostics.crn", markup);
+
+        Assert.Empty(result.SemanticDiagnostics);
+        Assert.Empty(result.SourceGeneratorDiagnostics);
     }
 
     [Fact]

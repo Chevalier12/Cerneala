@@ -449,6 +449,13 @@ internal sealed partial class CernealaSemanticModel
             return false;
         }
 
+        if (schema.ValueType == "vector" &&
+            PrismBlendRangeRule.Validate(schema.Name, value.Text) is string blendRangeMessage)
+        {
+            AddPrismDiagnostic("PRISM2009", value.Span, blendRangeMessage);
+            return false;
+        }
+
         if (schema.ValueType == "symbol" && schema.Symbols.Count > 0 && !schema.Symbols.Contains(value.Text))
         {
             AddPrismDiagnostic("PRISM2009", value.Span,
