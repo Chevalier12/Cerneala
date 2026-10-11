@@ -1,3 +1,4 @@
+using Cerneala.UI.Elements;
 using Cerneala.UI.Rendering;
 
 namespace Cerneala.Tests.UI.Rendering;
@@ -13,5 +14,19 @@ public sealed class RenderDependencyTests
 
         Assert.Equal(first, second);
         Assert.NotEqual(first, changed);
+    }
+
+    [Fact]
+    public void NoneUsesTheDeclaredEmptyIdentities()
+    {
+        Assert.Equal(string.Empty, RenderDependency.None.TextLayoutIdentity);
+        Assert.Equal(string.Empty, RenderDependency.None.ResourceIdentity);
+        Assert.Equal(new RenderDependency(0, "", 0, "", 0, 0), RenderDependency.None);
+    }
+
+    [Fact]
+    public void NewElementStartsWithNoRenderDependencies()
+    {
+        Assert.Equal(RenderDependency.None, new UIElement().RenderDependencies);
     }
 }

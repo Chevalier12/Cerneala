@@ -8,7 +8,7 @@ public readonly record struct RenderDependency(
     long ResourceVersion = 0,
     int CustomVersion = 0)
 {
-    public static RenderDependency None { get; } = new();
+    public static RenderDependency None { get; } = new(TextLayoutIdentity: "", ResourceIdentity: "");
 
     public RenderDependency WithTextVersion(int version)
     {
