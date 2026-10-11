@@ -534,6 +534,37 @@ public sealed class AspectTemplateCatalogIntegrationTests
         Assert.Equal(0, root.AspectProcessor.Engine.GetDependencies(oldChrome).CatalogVersion);
     }
 
+    [Fact]
+    public void ContentPresenterFollowsContentTemplatesAddedAndRemovedByScopedPackage()
+    {
+        ContentTemplate<string> template = new(
+            "Scoped.String",
+            key: "studio",
+            priority: 0,
+            _ => new Border());
+        ContentPresenter presenter = new()
+        {
+            Content = "Aspect",
+            ContentTemplateKey = "studio"
+        };
+        Border scope = new() { Child = presenter };
+        UIRoot root = RootWith(scope);
+        root.ProcessFrame();
+        Assert.IsType<TextBlock>(presenter.PresentedChild);
+
+        // The registry does not change: only the presenter's composed catalog does.
+        scope.Resources.Add("Templates", AspectPackage.Create("Scoped")
+            .Content(content => content.Add(
+                new ContentTemplateDefinition("Scoped.String", typeof(string), "studio", template)))
+            .Build());
+        root.ProcessFrame();
+        Assert.IsType<Border>(presenter.PresentedChild);
+
+        scope.Resources.Remove("Templates");
+        root.ProcessFrame();
+        Assert.IsType<TextBlock>(presenter.PresentedChild);
+    }
+
     private static UIRoot RootWith(UIElement child)
     {
         UIRoot root = new();

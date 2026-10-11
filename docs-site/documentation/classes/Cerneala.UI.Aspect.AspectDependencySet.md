@@ -59,7 +59,7 @@ AspectDependencySet dependencies = new(
 
 Constructor arguments are optional. Passing `null` for any dependency list stores an empty list for that category. Non-null lists are copied into read-only snapshots, so later changes to the input lists do not alter the dependency set.
 
-`CatalogVersion` and `EnvironmentVersion` identify the aspect catalog and environment versions used during resolution. They are version stamps only; this class does not compare versions or perform invalidation by itself.
+`CatalogVersion` and `EnvironmentVersion` identify the aspect catalog and environment versions used during resolution. `CatalogVersion` is the catalog's registry version; for an element whose catalog is composed with resource or `ElementAspect` packages, it is the root registry version and does not change when only the composition changes. They are version stamps only; this class does not compare versions or perform invalidation by itself.
 
 ## Constructors
 

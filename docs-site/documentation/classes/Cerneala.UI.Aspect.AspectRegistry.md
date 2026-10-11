@@ -49,7 +49,7 @@ Standalone registries capture their constructing thread. The registry exposed by
 
 `AspectRegistry` is the mutable package list that precedes `AspectCatalog`. `Register` appends an `AspectPackage`, rejects duplicate package names using ordinal string comparison, increments `Version`, and invokes the constructor callback when `notify` is `true`. `Unregister` removes a package by name, increments `Version`, and invokes the callback only when a package is actually removed.
 
-`BuildCatalog()` creates an `AspectCatalog` from the current package order and current `Version`. The registry caches that catalog and returns the same snapshot until a successful `Register` or `Unregister` invalidates it. Callers that process aspects can compare catalog versions to decide whether token defaults need to be synchronized.
+`BuildCatalog()` creates an `AspectCatalog` from the current package order and current `Version`. The registry caches that catalog and returns the same snapshot until a successful `Register` or `Unregister` invalidates it. Callers that process aspects can compare root catalog versions to decide whether token defaults need to be synchronized. Per-element catalogs composed by `AspectProcessor` keep the root version, so a composition change is visible only as a different catalog instance.
 
 `Packages` is a read-only live view of the registered sequence. It reflects successful registry operations but cannot be cast back to a mutable list to bypass versioning, catalog invalidation, thread access, or the change callback.
 

@@ -71,10 +71,11 @@ public sealed class AspectCatalog
         return accumulator.Build(version);
     }
 
+    // A composition keeps the registry version of its root catalog. Composed
+    // catalogs are compared by identity, so composing never consumes a version.
     internal static AspectCatalog Compose(
         AspectCatalog rootCatalog,
-        IReadOnlyList<AspectPackageSource> sources,
-        int version)
+        IReadOnlyList<AspectPackageSource> sources)
     {
         ArgumentNullException.ThrowIfNull(rootCatalog);
         ArgumentNullException.ThrowIfNull(sources);
@@ -84,7 +85,7 @@ public sealed class AspectCatalog
             accumulator.Append(source);
         }
 
-        return accumulator.Build(version);
+        return accumulator.Build(rootCatalog.Version);
     }
 
     private sealed class CatalogAccumulator

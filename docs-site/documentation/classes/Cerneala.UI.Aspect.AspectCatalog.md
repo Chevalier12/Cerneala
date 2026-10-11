@@ -62,9 +62,9 @@ Catalog creation preserves package registration order. Package names are exposed
 
 Token defaults are stored by `AspectToken`. If later packages register the same token identity, the later default replaces the earlier value. If two packages register the same token name with different value types, catalog creation throws `InvalidOperationException`.
 
-The catalog itself does not apply aspects. `AspectEngine` consumes `Rules` during resolution, while `AspectProcessor` synchronizes `Behaviors` and rebuilds each element's token environment when the catalog `Version` or the installed theme changes. The rebuild applies framework token defaults first, then the theme tokens, then explicitly registered token defaults, so for the same token an explicit default replaces a theme value.
+The catalog itself does not apply aspects. `AspectEngine` consumes `Rules` during resolution, while `AspectProcessor` synchronizes `Behaviors` and rebuilds each element's token environment when the element's catalog instance or the installed theme changes. The rebuild applies framework token defaults first, then the theme tokens, then explicitly registered token defaults, so for the same token an explicit default replaces a theme value.
 
-`AspectProcessor` can compose a root snapshot with application, ancestor-scope, and element-local packages. Composed rules capture an internal source order used after layer order and before specificity; composed behavior, token, and template collections follow the same outer-to-inner visibility order. Composition creates another immutable catalog rather than mutating any source package or root snapshot.
+`AspectProcessor` can compose a root snapshot with application, ancestor-scope, and element-local packages. Composed rules capture an internal source order used after layer order and before specificity; composed behavior, token, and template collections follow the same outer-to-inner visibility order. Composition creates another immutable catalog rather than mutating any source package or root snapshot. The composed catalog keeps the root snapshot's `Version`: two compositions over the same registry state report the same `Version`, so compare composed catalogs by reference to detect a change.
 
 `TokenDefaults` is the merged package-default snapshot, not the final themed environment. Internally the catalog also preserves framework built-in defaults separately from explicit package defaults. `AspectProcessor` resolves framework defaults first, applies the theme projection over them, then resolves explicit root-registry, application, and scoped token defaults. Application and scoped tokens override the projection, with nearer scopes winning. Composition retains this registration provenance without classifying packages by name or `Origin`.
 
@@ -72,7 +72,7 @@ The catalog itself does not apply aspects. `AspectEngine` consumes `Rules` durin
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `Version` | `int` | Gets the registry version captured when the catalog was built. |
+| `Version` | `int` | Gets the registry version captured when the catalog was built. A composed catalog reports its root snapshot's version. |
 | `PackageDiagnostics` | `IReadOnlyList<AspectPackageDiagnostic>` | Gets the immutable package diagnostic snapshot in registration order. |
 | `Rules` | `IReadOnlyList<AspectRuleSet>` | Gets immutable catalog-owned rule projections with stable package origins. |
 | `Behaviors` | `IReadOnlyList<AspectBehavior>` | Gets the immutable ordered snapshot of non-style behaviors contributed by visible packages. |
