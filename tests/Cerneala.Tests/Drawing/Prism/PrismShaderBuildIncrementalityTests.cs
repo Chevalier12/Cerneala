@@ -31,6 +31,23 @@ public sealed class PrismShaderBuildIncrementalityTests
         Assert.Equal("$(SdlShaderVerifyStamp)", (string?)Assert.Single(target.Elements("Touch")).Attribute("Files"));
     }
 
+    [Fact]
+    public void ShaderVerificationCreatesTheStampDirectoryBeforeTouchingTheStamp()
+    {
+        // The stamp path is derived from the default obj layout. Under an artifacts
+        // layout (the bundled PreviewHost publish) that directory does not exist.
+        XDocument project = XDocument.Load(Path.Combine(FindRepositoryRoot(),
+            "Cerneala.Backends.SdlGpu", "Cerneala.Backends.SdlGpu.csproj"));
+        XElement target = Assert.Single(project.Descendants("Target").Where(element =>
+            (string?)element.Attribute("Name") == "VerifySdlShaderArtifacts"));
+        List<XElement> tasks = target.Elements().ToList();
+        XElement makeDir = Assert.Single(target.Elements("MakeDir"));
+        Assert.Equal(
+            "$([System.IO.Path]::GetDirectoryName('$(SdlShaderVerifyStamp)'))",
+            (string?)makeDir.Attribute("Directories"));
+        Assert.True(tasks.IndexOf(makeDir) < tasks.IndexOf(Assert.Single(target.Elements("Touch"))));
+    }
+
     private static string FindRepositoryRoot()
     {
         DirectoryInfo? directory = new(AppContext.BaseDirectory);

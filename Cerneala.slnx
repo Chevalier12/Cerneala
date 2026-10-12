@@ -29,6 +29,7 @@
     <Project Path="tests/Cerneala.Tests.Timbre/Cerneala.Tests.Timbre.csproj" />
     <Project Path="tests/Fixtures/TimbreConsumer/TimbreConsumer.csproj" />
     <Project Path="tests/Fixtures/VisualStudioConsumer/VisualStudioConsumer.csproj" />
+    <Project Path="tests/Fixtures/VisualStudioIntegrationHost/VisualStudioIntegrationHost.csproj" />
   </Folder>
   <Folder Name="/Tetrisish/">
     <Project Path="Tetrisish/Tetris.csproj" />

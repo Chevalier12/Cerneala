@@ -128,6 +128,8 @@
            Text="No versioned SDL_GPU shader artifacts were found." />
     <Exec Command="dotnet run --project &quot;$(SdlShaderCompilerProject)&quot; --no-restore -- --verify --manifest &quot;$(SdlShaderManifest)&quot;"
           WorkingDirectory="$(RepositoryRoot)" />
+    <!-- Under an artifacts layout the default obj\<Configuration>\<TFM>\ folder is not created. -->
+    <MakeDir Directories="$([System.IO.Path]::GetDirectoryName('$(SdlShaderVerifyStamp)'))" />
     <Touch Files="$(SdlShaderVerifyStamp)" AlwaysCreate="true" />
   </Target>
 
