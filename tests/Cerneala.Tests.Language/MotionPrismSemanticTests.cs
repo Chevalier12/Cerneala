@@ -285,6 +285,27 @@ public sealed class MotionPrismSemanticTests
         Assert.EndsWith("Value '" + invalid + "' is not a valid vector Prism value.", semantic.Message, StringComparison.Ordinal);
     }
 
+    // A default that fails to bind reads no outer parameter, so an argument
+    // for the outer parameter never reaches the inner blend range.
+    [Fact]
+    public void PrismBlendRangeIgnoresAWrongTypeDefaultLink()
+    {
+        string markup = "<StackPanel><StackPanel.Resources><PrismClip Name=\"Fx\">" +
+            "@parameter R: color = #FF0000; @layer Card { @parameter R: vector = R; ThisLayerRange = R; @filter Blur { Radius = 1; } }" +
+            "</PrismClip></StackPanel.Resources><Border><Border.Aspect>@prism $Fx(R = (0, 1));</Border.Aspect></Border></StackPanel>";
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("PrismDiagnostics.crn", markup);
+
+        Assert.Collection(
+            result.SemanticDiagnostics,
+            diagnostic => Assert.EndsWith("Prism parameter 'R' has type color, not vector.", diagnostic.Message, StringComparison.Ordinal),
+            diagnostic =>
+            {
+                Assert.Equal("(0, 1)", markup.Substring(diagnostic.StartCharacter, diagnostic.EndCharacter - diagnostic.StartCharacter));
+                Assert.EndsWith("Value '(0, 1)' is not a valid color Prism value.", diagnostic.Message, StringComparison.Ordinal);
+            });
+        Assert.Equal(result.SemanticDiagnostics, result.SourceGeneratorDiagnostics);
+    }
+
     [Theory]
     [InlineData("ThisLayerRange")]
     [InlineData("UnderlyingRange")]

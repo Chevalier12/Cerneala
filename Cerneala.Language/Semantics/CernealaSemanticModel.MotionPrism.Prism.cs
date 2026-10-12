@@ -348,13 +348,12 @@ internal sealed partial class CernealaSemanticModel
 
             // The default is bound before this parameter enters scope, as the
             // source generator does, so `R = R` reads an outer R or nothing.
-            if (syntax.DefaultValue is not null)
-            {
+            // A default that fails to bind reads no outer parameter.
+            bool defaultBound = syntax.DefaultValue is not null &&
                 BindPrismValue(composition.Source, syntax.DefaultValue, SyntheticPrismProperty(syntax.Name, typeName, required: false), scope);
-            }
 
             string parameterPath = path.Length == 0 ? syntax.Name : path + "." + syntax.Name;
-            PrismParameterDefinition? defaultParameter = syntax.DefaultValue?.Kind == PrismValueModelKind.Identifier
+            PrismParameterDefinition? defaultParameter = defaultBound && syntax.DefaultValue!.Kind == PrismValueModelKind.Identifier
                 ? scope.Resolve(syntax.DefaultValue.Text)
                 : null;
             PrismParameterDefinition parameter = new(syntax.Name, parameterPath, typeName, syntax.DefaultValue, defaultParameter, syntax.NameSpan);
