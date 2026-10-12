@@ -233,6 +233,92 @@ public sealed class TransportTests
     }
 
     [Fact]
+    public async Task AFailedStreamingSeekStaysFaultedWhenThePlaybackFailsBeforeTheMixerTakesTheSeekOutcome()
+    {
+        using TimbreRig rig = new();
+        LostPositionReader reader = new(); // owned/disposed by the runtime
+        TimbrePlayback playback = rig.Scope.Play(new TimbreSound(TimbreSource.FromReader(() => reader), loading: TimbreLoading.Streaming));
+        await rig.StartAsync(playback);
+        reader.ArmGate();
+        rig.Output.ConsumeAll(); // the pump reads into the released ring space and parks
+        await rig.Output.WaitForSubmittedFramesAsync(TimbreRig.Budget * 2);
+        await HarnessWait.WithTimeout(reader.Parked, null, "Reader did not park.");
+
+        // Holds the mixer in the pass that sends the seek to the feed. The pump
+        // then fails the seek, reads into free ring space from a lost position,
+        // and fails the playback before the mixer can take the seek outcome.
+        void HoldMixerAfterSeekDispatch()
+        {
+            if (!playback.Render.SeekPending)
+            {
+                rig.Output.BeforeNextQueueRead = HoldMixerAfterSeekDispatch;
+                return;
+            }
+
+            reader.OpenGate();
+            playback.Completion.Wait(HarnessWait.DefaultTimeout);
+        }
+
+        rig.Output.BeforeNextQueueRead = HoldMixerAfterSeekDispatch;
+        Task seek = playback.SeekAsync(TimbreRig.FramesToTime(30000));
+        await rig.NextBlockAsync(); // old generation fades before the seek is dispatched
+
+        IOException error = await Assert.ThrowsAsync<IOException>(() => HarnessWait.WithTimeout(seek, null, "Seek did not finish."));
+        Assert.Same(reader.SeekFailure, error);
+        TimbrePlaybackResult result = await TimbreRig.CompletionAsync(playback);
+        Assert.Equal(TimbrePlaybackState.Failed, result.State);
+        Assert.Equal(TimbreErrorKind.SourceUnavailable, result.Error!.Kind);
+        Assert.IsType<IOException>(result.Error.InnerException);
+    }
+
+    // A streaming reader whose seek fails with an IOException and leaves it at an
+    // unknown position, so every later read fails. One armed read parks until the
+    // gate opens and returns no frames, so the ring keeps free space.
+    private sealed class LostPositionReader : TimbreReader
+    {
+        private readonly DeterministicTimbreReader source = new(48000, Signal);
+        private readonly TaskCompletionSource parked = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource open = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private int armed;
+        private volatile bool lost;
+
+        public IOException SeekFailure { get; } = new("Injected seek failure.");
+
+        public Task Parked => parked.Task;
+
+        public void ArmGate() => Volatile.Write(ref armed, 1);
+
+        public void OpenGate() => open.TrySetResult();
+
+        public override long? LengthFrames => source.LengthFrames;
+
+        public override async ValueTask<TimbreReadResult> ReadAsync(Memory<float> destination, CancellationToken token)
+        {
+            if (lost)
+            {
+                throw new IOException("The reader no longer knows its position.");
+            }
+
+            if (Interlocked.Exchange(ref armed, 0) != 0)
+            {
+                parked.TrySetResult();
+                await open.Task.WaitAsync(token);
+                return new TimbreReadResult(0, endOfSource: false);
+            }
+
+            return await source.ReadAsync(destination, token);
+        }
+
+        public override ValueTask SeekAsync(long frame, CancellationToken token)
+        {
+            lost = true;
+            return ValueTask.FromException(SeekFailure);
+        }
+
+        protected override void Dispose(bool disposing) => source.Dispose();
+    }
+
+    [Fact]
     public async Task PreloadedLoopRepeatsTheWholeSourceWithoutGapsOrCompletion()
     {
         using TimbreRig rig = new();
