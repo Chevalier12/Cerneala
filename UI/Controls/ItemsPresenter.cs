@@ -16,6 +16,7 @@ public class ItemsPresenter : Control
     private Layout.Panels.Panel? panelRoot;
     private bool itemsDirty = true;
     private RealizationWindow? lastRealizationWindow;
+    private ItemsVirtualizationViewport? automaticViewport;
 
     public static readonly UiProperty<IEnumerable?> ItemsProperty = UiProperty<IEnumerable?>.Register(
         nameof(Items),
@@ -116,10 +117,8 @@ public class ItemsPresenter : Control
         }
 
         RealizationWindow previous = virtualizingPanel.RealizationWindow;
-        virtualizingPanel.UpdateViewport(new ItemsVirtualizationViewport(
-            ItemsOwner?.ViewItemCount ?? Items?.Cast<object?>().Count() ?? 0,
-            viewportExtent,
-            scrollOffset));
+        automaticViewport = new ItemsVirtualizationViewport(GetItemCount(), viewportExtent, scrollOffset);
+        virtualizingPanel.UpdateViewport(automaticViewport.Value);
         RealizationWindow next = virtualizingPanel.RealizationWindow;
         bool changed = itemsDirty || previous != next;
         if (changed)
@@ -174,6 +173,11 @@ public class ItemsPresenter : Control
 
     private void RefreshItems()
     {
+        if (itemsDirty)
+        {
+            RefreshAutomaticViewportItemCount();
+        }
+
         RealizationWindow? nextWindow = GetRealizationWindow();
         if (!itemsDirty && nextWindow == lastRealizationWindow)
         {
@@ -456,6 +460,32 @@ public class ItemsPresenter : Control
 
             index++;
         }
+    }
+
+    // An item change re-measures this presenter but not necessarily the scroll presenter
+    // that pushes the viewport, so the panel must not keep realizing against a stale count.
+    private void RefreshAutomaticViewportItemCount()
+    {
+        if (automaticViewport is not ItemsVirtualizationViewport viewport ||
+            VirtualizationContext is not null ||
+            (ItemsOwner?.ItemsPanel ?? ItemsPanel) is not IItemsVirtualizingPanel virtualizingPanel)
+        {
+            return;
+        }
+
+        int itemCount = GetItemCount();
+        if (itemCount == viewport.ItemCount)
+        {
+            return;
+        }
+
+        automaticViewport = viewport with { ItemCount = itemCount };
+        virtualizingPanel.UpdateViewport(automaticViewport.Value);
+    }
+
+    private int GetItemCount()
+    {
+        return ItemsOwner?.ViewItemCount ?? Items?.Cast<object?>().Count() ?? 0;
     }
 
     private RealizationWindow? GetRealizationWindow()

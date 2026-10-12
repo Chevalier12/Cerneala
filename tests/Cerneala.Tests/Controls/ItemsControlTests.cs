@@ -108,6 +108,88 @@ public sealed class ItemsControlTests
     }
 
     [Fact]
+    public void ScrollViewerVirtualizationRealizesItemsAddedToInitiallyEmptySource()
+    {
+        ObservableCollection<FixedElement> source = [];
+        ItemsControl control = new()
+        {
+            ItemsSource = source,
+            ItemsPanel = new VirtualizingStackPanel()
+        };
+        ScrollViewer viewer = new()
+        {
+            Content = control,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        UIRoot root = new(100, 100);
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+        VirtualizingStackPanel panel = Assert.IsType<VirtualizingStackPanel>(control.ItemsPresenter.LayoutPanelRoot);
+        Assert.Empty(panel.VisualChildren);
+
+        source.Insert(0, new FixedElement("added 1", new LayoutSize(80, 10)));
+        root.ProcessFrame();
+        source.Insert(0, new FixedElement("added 2", new LayoutSize(80, 20)));
+        root.ProcessFrame();
+
+        Assert.Equal(2, panel.VisualChildren.Count);
+        Assert.Equal("added 2", Assert.IsType<FixedElement>(panel.VisualChildren[0]).Value);
+        Assert.Equal("added 1", Assert.IsType<FixedElement>(panel.VisualChildren[1]).Value);
+        Assert.Equal(30, panel.DesiredSize.Height);
+
+        source.Clear();
+        root.ProcessFrame();
+
+        Assert.Empty(panel.VisualChildren);
+        Assert.Equal(0, panel.DesiredSize.Height);
+
+        source.Add(new FixedElement("added again", new LayoutSize(80, 10)));
+        root.ProcessFrame();
+
+        Assert.Equal("added again", Assert.IsType<FixedElement>(Assert.Single(panel.VisualChildren)).Value);
+        Assert.Equal(10, panel.DesiredSize.Height);
+    }
+
+    [Fact]
+    public void ScrollViewerVirtualizationRealizesAppendedItemsOnlyInsideViewport()
+    {
+        ObservableCollection<FixedElement> source = [new FixedElement("0", new LayoutSize(80, 10))];
+        ItemsControl control = new()
+        {
+            ItemsSource = source,
+            ItemsPanel = new VirtualizingStackPanel()
+        };
+        ScrollViewer viewer = new()
+        {
+            Content = control,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        UIRoot root = new(100, 30);
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+        Assert.Equal([0], control.ItemContainerGenerator.RealizedContainers.Keys.Order());
+
+        source.Add(new FixedElement("1", new LayoutSize(80, 10)));
+        root.ProcessFrame();
+
+        Assert.Equal([0, 1], control.ItemContainerGenerator.RealizedContainers.Keys.Order());
+
+        for (int index = 2; index < 10; index++)
+        {
+            source.Add(new FixedElement(index.ToString(), new LayoutSize(80, 10)));
+        }
+
+        root.ProcessFrame();
+        int[] realizedBeforeAppend = [.. control.ItemContainerGenerator.RealizedContainers.Keys.Order()];
+        Assert.DoesNotContain(9, realizedBeforeAppend);
+
+        source.Add(new FixedElement("10", new LayoutSize(80, 10)));
+        root.ProcessFrame();
+
+        Assert.Equal(realizedBeforeAppend, control.ItemContainerGenerator.RealizedContainers.Keys.Order());
+    }
+
+    [Fact]
     public void InfrastructureMembersAreNotPublicApi()
     {
         string[] memberNames =

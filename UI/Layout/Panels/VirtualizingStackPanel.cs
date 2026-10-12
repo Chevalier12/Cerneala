@@ -36,6 +36,12 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
     public void UpdateViewport(ItemsVirtualizationViewport viewport)
     {
         int itemCount = Math.Max(0, viewport.ItemCount);
+        if (automaticViewport?.ItemCount != itemCount)
+        {
+            // The item count drives the desired extent, so a cached measure is stale.
+            IncrementLayoutVersion();
+        }
+
         automaticViewport = viewport with
         {
             ItemCount = itemCount,
