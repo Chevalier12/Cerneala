@@ -22,6 +22,9 @@ $assetReport = Assert-SdlGpuPublishedAssets `
     -PublishedDirectory $PublishedDirectory `
     -RuntimeIdentifier $RuntimeIdentifier
 $published = $assetReport.PublishedDirectory
+Assert-SkiaPublishedAssets `
+    -PublishedDirectory $published `
+    -RuntimeIdentifier $RuntimeIdentifier
 $artifacts = [IO.Path]::GetFullPath($ArtifactDirectory)
 New-Item -ItemType Directory -Path $artifacts -Force | Out-Null
 $log = Join-Path $artifacts "$RuntimeIdentifier-$Mode.log"

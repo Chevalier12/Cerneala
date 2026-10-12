@@ -43,6 +43,8 @@
     <PackageReference Include="NVorbis" Version="0.10.5" />
     <PackageReference Include="Concentus" Version="2.2.2" />
     <PackageReference Include="SkiaSharp" Version="4.148.0" />
+    <!-- SkiaSharp brings only its Win32 and macOS natives; linux-x64 and linux-arm64 need this one. -->
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="4.148.0" />
     <PackageReference Include="Svg.Skia" Version="5.2.0" />
   </ItemGroup>
 

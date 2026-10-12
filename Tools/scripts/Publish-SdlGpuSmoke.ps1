@@ -37,3 +37,6 @@ if ($LASTEXITCODE -ne 0) {
 Assert-SdlGpuPublishedAssets `
     -PublishedDirectory $output `
     -RuntimeIdentifier $RuntimeIdentifier
+Assert-SkiaPublishedAssets `
+    -PublishedDirectory $output `
+    -RuntimeIdentifier $RuntimeIdentifier
