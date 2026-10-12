@@ -12,10 +12,11 @@ internal static class ShaderCompilerProgram
     private const string ToolVersion = "2";
     private const string ShaderCrossVersion = "3.0.0";
     private const string ShaderCrossPackageVersion = "3.0.0.9";
-    private const string DxilWindowsOnlyReason =
-        "DXIL is compiled and verified only on Windows. The SDL_shadercross " +
-        ShaderCrossPackageVersion + " DXC build for Linux and macOS writes a different compiler " +
-        "identity into the DXIL bitcode, so its DXIL bytes never match the committed artifacts.";
+    private const string ArtifactBytesWindowsOnlyReason =
+        "SDL shader artifact bytes are compared only on Windows. The SDL_shadercross " +
+        ShaderCrossPackageVersion + " DXC builds for Linux and macOS differ from the Windows " +
+        "build: they write a different compiler identity into DXIL, and the macOS build is " +
+        "another DXC commit that emits different SPIR-V.";
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -81,11 +82,11 @@ internal static class ShaderCompilerProgram
             if (!verify)
             {
                 throw new PlatformNotSupportedException(
-                    $"{DxilWindowsOnlyReason} Generate the SDL shader artifacts on Windows.");
+                    $"{ArtifactBytesWindowsOnlyReason} Generate the SDL shader artifacts on Windows.");
             }
             Console.WriteLine(
-                $"{DxilWindowsOnlyReason} The committed .dxil files are checked against " +
-                $"'{manifest.Metadata}' instead.");
+                $"{ArtifactBytesWindowsOnlyReason} This host compiles and reflects the shaders " +
+                $"and checks the committed artifacts against '{manifest.Metadata}'.");
         }
 
         if (!ShaderCross.Init())
@@ -147,14 +148,6 @@ internal static class ShaderCompilerProgram
             spirvSize,
             shader,
             "SPIR-V");
-        string dxilPath = Resolve(baseDirectory, shader.Outputs.Dxil);
-        byte[] dxil = OperatingSystem.IsWindows()
-            ? CopyOwnedBytes(
-                ShaderCross.CompileDXILFromHLSL(in hlsl, out nuint dxilSize),
-                dxilSize,
-                shader,
-                "DXIL")
-            : ReadCommittedArtifact(dxilPath);
         byte[] msl = CompileMsl(spirv, shader, stage);
         ReflectedBindings reflected = Reflect(spirv, shader);
         if (reflected != shader.Bindings)
@@ -165,12 +158,30 @@ internal static class ShaderCompilerProgram
         }
         ValidatePortableLimits(shader, reflected);
 
-        VerifyOrWrite(Resolve(baseDirectory, shader.Outputs.Spirv), spirv, verify);
+        string spirvPath = Resolve(baseDirectory, shader.Outputs.Spirv);
+        string dxilPath = Resolve(baseDirectory, shader.Outputs.Dxil);
+        string mslPath = Resolve(baseDirectory, shader.Outputs.Msl);
+        OutputHashes hashes;
         if (OperatingSystem.IsWindows())
         {
+            byte[] dxil = CopyOwnedBytes(
+                ShaderCross.CompileDXILFromHLSL(in hlsl, out nuint dxilSize),
+                dxilSize,
+                shader,
+                "DXIL");
+            VerifyOrWrite(spirvPath, spirv, verify);
             VerifyOrWrite(dxilPath, dxil, verify);
+            VerifyOrWrite(mslPath, msl, verify, textArtifact: true);
+            hashes = new OutputHashes(Hash(spirv), Hash(dxil), Hash(msl));
         }
-        VerifyOrWrite(Resolve(baseDirectory, shader.Outputs.Msl), msl, verify, textArtifact: true);
+        else
+        {
+            // The committed artifacts must still be the ones artifacts.json describes.
+            hashes = new OutputHashes(
+                Hash(ReadCommittedArtifact(spirvPath)),
+                Hash(ReadCommittedArtifact(dxilPath)),
+                HashCanonicalText(ReadCommittedArtifact(mslPath)));
+        }
         return new CompiledShaderMetadata(
             shader.LogicalName,
             shader.Stage,
@@ -178,7 +189,7 @@ internal static class ShaderCompilerProgram
             shader.Variants,
             shader.Bindings,
             shader.Layout,
-            new OutputHashes(Hash(spirv), Hash(dxil), Hash(msl)));
+            hashes);
     }
 
     private static byte[] CompileMsl(

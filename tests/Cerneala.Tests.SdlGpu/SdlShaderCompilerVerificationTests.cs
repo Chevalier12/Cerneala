@@ -3,11 +3,11 @@ using System.Diagnostics;
 namespace Cerneala.Tests.SdlGpu;
 
 // Runs the real Tools/Cerneala.SdlShaderCompiler, the way VerifySdlShaderArtifacts does.
-// DXIL bytes are reproducible only on Windows: the SDL_shadercross DXC build for Linux and
-// macOS writes a different compiler identity into the DXIL bitcode.
+// Artifact bytes are reproducible only on Windows: the SDL_shadercross DXC builds for Linux
+// and macOS write a different compiler identity into DXIL, and macOS emits different SPIR-V.
 public sealed class SdlShaderCompilerVerificationTests
 {
-    private const string DxilWindowsOnlyNotice = "DXIL is compiled and verified only on Windows";
+    private const string WindowsOnlyNotice = "SDL shader artifact bytes are compared only on Windows";
     private static readonly string[] ShaderDirectories =
     [
         Path.Combine("Cerneala.Backends.SdlGpu", "Shaders"),
@@ -17,7 +17,7 @@ public sealed class SdlShaderCompilerVerificationTests
     ];
 
     [Fact]
-    public async Task Verify_accepts_the_committed_artifacts_and_states_where_dxil_is_checked()
+    public async Task Verify_accepts_the_committed_artifacts_and_states_where_bytes_are_compared()
     {
         string repository = FindRepositoryRoot();
 
@@ -30,18 +30,20 @@ public sealed class SdlShaderCompilerVerificationTests
         Assert.True(exitCode == 0, output + Environment.NewLine + error);
         Assert.Equal(
             !OperatingSystem.IsWindows(),
-            output.Contains(DxilWindowsOnlyNotice, StringComparison.Ordinal));
+            output.Contains(WindowsOnlyNotice, StringComparison.Ordinal));
     }
 
-    [Fact]
-    public async Task Verify_rejects_an_edited_dxil_artifact()
+    [Theory]
+    [InlineData("Drawing.frag.dxil")]
+    [InlineData("Drawing.frag.spv")]
+    public async Task Verify_rejects_an_edited_binary_artifact(string artifact)
     {
         string repository = FindRepositoryRoot();
         using TemporaryShaderTree tree = TemporaryShaderTree.Copy(repository);
-        string dxil = Path.Combine(tree.Root, "Cerneala.Backends.SdlGpu", "Gpu", "Shaders", "Drawing.frag.dxil");
-        byte[] bytes = File.ReadAllBytes(dxil);
+        string path = Path.Combine(tree.Root, "Cerneala.Backends.SdlGpu", "Gpu", "Shaders", artifact);
+        byte[] bytes = File.ReadAllBytes(path);
         bytes[^1] ^= 0xFF;
-        File.WriteAllBytes(dxil, bytes);
+        File.WriteAllBytes(path, bytes);
 
         (int exitCode, string output, string error) = await RunCompilerAsync(
             repository,
@@ -51,9 +53,9 @@ public sealed class SdlShaderCompilerVerificationTests
 
         Assert.True(exitCode == 1, output + Environment.NewLine + error);
         Assert.Contains("is missing or stale.", error, StringComparison.Ordinal);
-        // Windows compares the DXIL bytes; other hosts compare its hash in artifacts.json.
+        // Windows compares the artifact bytes; other hosts compare its hash in artifacts.json.
         Assert.Contains(
-            OperatingSystem.IsWindows() ? "Drawing.frag.dxil" : "artifacts.json",
+            OperatingSystem.IsWindows() ? artifact : "artifacts.json",
             error,
             StringComparison.Ordinal);
     }
@@ -77,7 +79,7 @@ public sealed class SdlShaderCompilerVerificationTests
         else
         {
             Assert.True(exitCode == 1, output + Environment.NewLine + error);
-            Assert.Contains(DxilWindowsOnlyNotice, error, StringComparison.Ordinal);
+            Assert.Contains(WindowsOnlyNotice, error, StringComparison.Ordinal);
         }
         Dictionary<string, byte[]> after = tree.ReadAllFiles();
         Assert.Equal(before.Keys.Order(StringComparer.Ordinal), after.Keys.Order(StringComparer.Ordinal));
