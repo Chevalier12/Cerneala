@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using Cerneala.Timbre.Catalog;
 
 namespace Cerneala.Timbre.Engine;
@@ -217,6 +218,13 @@ internal sealed class StreamingFeed : TimbreFeed
         }
 
         return true;
+    }
+
+    // outcomeError is published before outcomeGeneration.
+    internal override bool TryPeekSeekFailure(int generation, [NotNullWhen(true)] out Exception? error)
+    {
+        error = Volatile.Read(ref outcomeGeneration) == generation ? Volatile.Read(ref outcomeError) : null;
+        return error is not null;
     }
 
     // Mixer thread: releases the ring space of segments read before the active

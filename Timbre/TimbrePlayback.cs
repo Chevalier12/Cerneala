@@ -310,7 +310,16 @@ public sealed class TimbrePlayback
 
         state = terminal;
         paused = false;
-        seekCompletion?.TrySetCanceled();
+        // A seek the feed already failed keeps its error; any other pending seek is abandoned.
+        if (seekCompletion is not null && feed is not null && feed.TryPeekSeekFailure(seekGeneration, out Exception? seekError))
+        {
+            seekCompletion.TrySetException(seekError);
+        }
+        else
+        {
+            seekCompletion?.TrySetCanceled();
+        }
+
         seekCompletion = null;
         scope.RemoveLocked(this);
         runtime.OnTerminalLocked(this, terminal);

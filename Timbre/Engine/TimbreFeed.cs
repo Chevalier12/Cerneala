@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Cerneala.Timbre.Engine;
 
 // Source PCM for one playback. Read, RequestSeek, and TryTakeSeekOutcome run on
@@ -25,6 +27,10 @@ internal abstract class TimbreFeed
     internal abstract void RequestSeek(long frame, int generation);
 
     internal abstract bool TryTakeSeekOutcome(int generation, out Exception? error);
+
+    // Any thread under Sync: the error of a seek the feed already failed but the
+    // mixer has not taken yet.
+    internal abstract bool TryPeekSeekFailure(int generation, [NotNullWhen(true)] out Exception? error);
 
     internal abstract Task WhenSettledAsync();
 
@@ -102,6 +108,12 @@ internal sealed class PreloadedFeed : TimbreFeed
     {
         error = seekError;
         return seekGeneration == generation;
+    }
+
+    internal override bool TryPeekSeekFailure(int generation, [NotNullWhen(true)] out Exception? error)
+    {
+        error = seekGeneration == generation ? seekError : null;
+        return error is not null;
     }
 
     internal override Task WhenSettledAsync() => Task.CompletedTask;
