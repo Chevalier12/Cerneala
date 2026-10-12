@@ -110,6 +110,59 @@ public sealed class GridTests
     }
 
     [Fact]
+    public void AutoRowSizesToBorderedStarGridContent()
+    {
+        Grid outer = new();
+        outer.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        outer.RowDefinitions.Add(new RowDefinition(GridLength.Stars(1)));
+
+        Grid header = new();
+        header.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
+        header.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        FixedElement title = new(new LayoutSize(50, 16));
+        FixedElement button = new(new LayoutSize(40, 20));
+        Grid.SetColumn(button, 1);
+        header.VisualChildren.Add(title);
+        header.VisualChildren.Add(button);
+        Cerneala.UI.Controls.Border headerBorder = new() { Padding = new Thickness(24, 18, 24, 18), Child = header };
+
+        FixedElement body = new(new LayoutSize(10, 10));
+        Grid.SetRow(body, 1);
+        outer.VisualChildren.Add(headerBorder);
+        outer.VisualChildren.Add(body);
+
+        outer.Measure(new MeasureContext(new LayoutSize(200, 300)));
+        outer.Arrange(new ArrangeContext(new LayoutRect(0, 0, 200, 300)));
+
+        Assert.Equal(56, headerBorder.DesiredSize.Height);
+        Assert.Equal(new LayoutRect(0, 0, 200, 56), headerBorder.ArrangedBounds);
+        Assert.Equal(new LayoutRect(136, 18, 40, 20), button.ArrangedBounds);
+        Assert.Equal(new LayoutRect(0, 56, 200, 244), body.ArrangedBounds);
+    }
+
+    [Fact]
+    public void AutoColumnSizesToStarGridContent()
+    {
+        Grid outer = new();
+        outer.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        outer.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
+
+        Grid inner = new();
+        inner.VisualChildren.Add(new FixedElement(new LayoutSize(30, 20)));
+        FixedElement filler = new(new LayoutSize(10, 10));
+        Grid.SetColumn(filler, 1);
+        outer.VisualChildren.Add(inner);
+        outer.VisualChildren.Add(filler);
+
+        outer.Measure(new MeasureContext(new LayoutSize(200, 300)));
+        outer.Arrange(new ArrangeContext(new LayoutRect(0, 0, 200, 300)));
+
+        Assert.Equal(30, inner.DesiredSize.Width);
+        Assert.Equal(new LayoutRect(0, 0, 30, 300), inner.ArrangedBounds);
+        Assert.Equal(new LayoutRect(30, 0, 170, 300), filler.ArrangedBounds);
+    }
+
+    [Fact]
     public void ChangingAttachedGridPlacementQueuesGridLayout()
     {
         UIRoot root = new(100, 100);

@@ -54,7 +54,7 @@ The two star columns share the 300 pixels left after the 50-pixel column, in the
 | Unit type | Size |
 | --- | --- |
 | `Pixel` | `Value` pixels. |
-| `Auto` | The largest desired size of the children that span only this column or row. `Value` is ignored. |
+| `Auto` | The largest desired size of the children that span only this column or row. Those children are measured with infinite available size on this axis. `Value` is ignored. |
 | `Star` | A share of the space left after the `Pixel` and `Auto` definitions: `remaining * Value / (sum of all star values)`. When the available size is infinite, star definitions size to their content instead. |
 
 `ColumnDefinition` and `RowDefinition` default to `GridLength.Star`. A grid with no definitions behaves as one star column and one star row. `default(GridLength)` is `Pixel` with `Value` 0.

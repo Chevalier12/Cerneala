@@ -116,7 +116,11 @@ public class Grid : Panel
                 continue;
             }
 
-            child.Measure(new MeasureContext(context.AvailableSize, context.Rounding));
+            child.Measure(new MeasureContext(
+                new LayoutSize(
+                    GetChildConstraint(columns, placement.Column, placement.ColumnSpan, context.AvailableSize.Width),
+                    GetChildConstraint(rows, placement.Row, placement.RowSpan, context.AvailableSize.Height)),
+                context.Rounding));
             ExpandContentSizedDefinition(
                 columns,
                 columnSizes,
@@ -146,8 +150,8 @@ public class Grid : Panel
             GridPlacement placement = GetPlacement(child, columns.Length, rows.Length);
             child.Measure(new MeasureContext(
                 new LayoutSize(
-                    Sum(columnSizes, placement.Column, placement.ColumnSpan),
-                    Sum(rowSizes, placement.Row, placement.RowSpan)),
+                    GetChildConstraint(columns, placement.Column, placement.ColumnSpan, Sum(columnSizes, placement.Column, placement.ColumnSpan)),
+                    GetChildConstraint(rows, placement.Row, placement.RowSpan, Sum(rowSizes, placement.Row, placement.RowSpan))),
                 context.Rounding));
         }
 
@@ -200,6 +204,15 @@ public class Grid : Panel
         return span == 1 &&
             (lengths[index].IsAuto ||
              (lengths[index].IsStar && float.IsPositiveInfinity(availableSize)));
+    }
+
+    private static float GetChildConstraint(
+        GridLength[] lengths,
+        int index,
+        int span,
+        float size)
+    {
+        return span == 1 && lengths[index].IsAuto ? float.PositiveInfinity : size;
     }
 
     protected override LayoutRect ArrangeCore(ArrangeContext context)

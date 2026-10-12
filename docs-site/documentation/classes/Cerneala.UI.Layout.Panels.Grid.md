@@ -67,7 +67,9 @@ internal sealed class FixedElement(LayoutSize size) : UIElement
 
 If `ColumnDefinitions` is empty, the grid behaves as if it has one star-sized column. If `RowDefinitions` is empty, it behaves as if it has one star-sized row.
 
-During measure, pixel definitions use their fixed size. Auto definitions are sized from visible children that occupy exactly one column or exactly one row. Star definitions receive a proportional share of the remaining finite available size. When the available size for an axis is positive infinity, star sizes are not resolved during that measure pass.
+During measure, pixel definitions use their fixed size. Auto definitions are sized from visible children that occupy exactly one column or exactly one row. Star definitions receive a proportional share of the remaining finite available size. When the available size for an axis is positive infinity, star shares are not resolved; a star definition then sizes to the largest desired size of the children that occupy only that definition.
+
+A child that occupies exactly one `Auto` column is measured with positive infinity as its available width, and a child that occupies exactly one `Auto` row is measured with positive infinity as its available height, as in WPF. The `Auto` definition therefore sizes to the child's content, not to the space the grid received. On every other axis, a child is finally measured with the combined resolved size of the columns or rows it spans. For example, an `Auto` row that holds a `Border` wrapping a `Grid` with a 20-pixel-high child is 20 pixels high plus the border insets, and the `*` rows after it share the rest of the grid height.
 
 During arrange, pixel sizes are resolved again, auto sizes use the sizes captured during measure, and star sizes are resolved from the final arranged size. A child is arranged at the origin of its resolved row and column and receives the combined size of the rows and columns it spans.
 
