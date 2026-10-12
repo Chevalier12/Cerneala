@@ -8,6 +8,8 @@ namespace Cerneala.Tests.SdlGpu;
 public sealed class SdlShaderCompilerVerificationTests
 {
     private const string WindowsOnlyNotice = "SDL shader artifact bytes are compared only on Windows";
+    // Only a hang guard. One full compile of the 10 shaders took 70-270 s on the same Windows workstation.
+    private static readonly TimeSpan CompilerTimeout = TimeSpan.FromMinutes(20);
     private static readonly string[] ShaderDirectories =
     [
         Path.Combine("Cerneala.Backends.SdlGpu", "Shaders"),
@@ -125,7 +127,7 @@ public sealed class SdlShaderCompilerVerificationTests
         Task<string> standardError = process.StandardError.ReadToEndAsync();
         try
         {
-            await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(180));
+            await process.WaitForExitAsync().WaitAsync(CompilerTimeout);
             return (process.ExitCode, await standardOutput, await standardError);
         }
         finally
