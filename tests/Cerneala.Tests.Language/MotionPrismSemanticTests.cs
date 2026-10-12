@@ -228,6 +228,35 @@ public sealed class MotionPrismSemanticTests
         Assert.Equal(semantic, Assert.Single(result.SourceGeneratorDiagnostics));
     }
 
+    [Theory]
+    [InlineData("@parameter R: vector = R; @layer Card { @filter AdaptiveWideAngle { FocalLength = R; } }", "Value 'R' is not a valid vector Prism value.")]
+    [InlineData("@parameter R: color = #FF0000; @layer Card { @parameter R: vector = R; @filter AdaptiveWideAngle { FocalLength = R; } }", "Prism parameter 'R' has type color, not vector.")]
+    public void PrismParameterDefaultsResolveBeforeTheirOwnParameterLikeTheSourceGenerator(string body, string message)
+    {
+        string markup = "<StackPanel><StackPanel.Resources><PrismClip Name=\"Fx\">" + body +
+            "</PrismClip></StackPanel.Resources><Border><Border.Aspect>@prism $Fx();</Border.Aspect></Border></StackPanel>";
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("PrismDiagnostics.crn", markup);
+
+        HarnessDiagnostic semantic = Assert.Single(result.SemanticDiagnostics);
+        Assert.Equal("PRISM2009", semantic.Id);
+        Assert.Equal(markup.IndexOf("vector = R;", StringComparison.Ordinal) + "vector = ".Length, semantic.StartCharacter);
+        Assert.Equal(semantic.StartCharacter + 1, semantic.EndCharacter);
+        Assert.EndsWith(message, semantic.Message, StringComparison.Ordinal);
+        Assert.Equal(semantic, Assert.Single(result.SourceGeneratorDiagnostics));
+    }
+
+    [Fact]
+    public void PrismParameterDefaultReadsTheShadowedOuterParameter()
+    {
+        string markup = "<StackPanel><StackPanel.Resources><PrismClip Name=\"Fx\">" +
+            "@parameter R: vector = (2, 2); @layer Card { @parameter R: vector = R; @filter AdaptiveWideAngle { FocalLength = R; } }" +
+            "</PrismClip></StackPanel.Resources><Border><Border.Aspect>@prism $Fx();</Border.Aspect></Border></StackPanel>";
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("PrismDiagnostics.crn", markup);
+
+        Assert.Empty(result.SemanticDiagnostics);
+        Assert.Empty(result.SourceGeneratorDiagnostics);
+    }
+
     [Fact]
     public void PrismVectorParametersNamedLikeBlendRangesAreOrdinaryVectors()
     {
