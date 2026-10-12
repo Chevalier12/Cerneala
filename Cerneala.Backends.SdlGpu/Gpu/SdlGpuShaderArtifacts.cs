@@ -73,15 +73,24 @@ internal static class SdlGpuShaderArtifacts
         StorageBufferCount: 0,
         UniformBufferCount: 1);
 
-    public static SdlGpuShaderArtifact PrismCatalogFragment { get; } = new(
-        "prism-catalog-fragment",
-        "Prism.Shaders",
-        "PrismCatalog.frag",
-        SdlGpuShaderStage.Fragment,
-        SamplerCount: 15,
-        StorageTextureCount: 0,
-        StorageBufferCount: 0,
-        UniformBufferCount: 1);
+    // Indexed by SdlGpuPrismFragmentShader. Every kernel shader binds the same 15 sampler
+    // slots and uniform block, so one Prism draw path serves all of them.
+    public static IReadOnlyList<SdlGpuShaderArtifact> PrismKernelFragments { get; } =
+    [
+        CreatePrismKernelFragment("prism-composite-fragment", "PrismComposite.frag"),
+        CreatePrismKernelFragment("prism-neighborhood-fragment", "PrismNeighborhood.frag"),
+        CreatePrismKernelFragment("prism-resampling-fragment", "PrismResampling.frag"),
+        CreatePrismKernelFragment("prism-catalog-artistic-fragment", "PrismCatalogArtistic.frag"),
+        CreatePrismKernelFragment("prism-catalog-procedural-fragment", "PrismCatalogProcedural.frag"),
+        CreatePrismKernelFragment("prism-catalog-spatial-fragment", "PrismCatalogSpatial.frag"),
+        CreatePrismKernelFragment("prism-catalog-filters-10-14-fragment", "PrismCatalogFilters10To14.frag"),
+        CreatePrismKernelFragment("prism-catalog-filters-15-20-fragment", "PrismCatalogFilters15To20.frag"),
+        CreatePrismKernelFragment("prism-catalog-filters-21-26-fragment", "PrismCatalogFilters21To26.frag"),
+        CreatePrismKernelFragment("prism-catalog-filters-27-32-fragment", "PrismCatalogFilters27To32.frag"),
+        CreatePrismKernelFragment("prism-catalog-filters-33-39-fragment", "PrismCatalogFilters33To39.frag"),
+        CreatePrismKernelFragment("prism-style-fragment", "PrismStyle.frag"),
+        CreatePrismKernelFragment("prism-catalog-filters-89-97-fragment", "PrismCatalogFilters89To97.frag")
+    ];
 
     public static SdlGpuShaderArtifact PrismPresentationFragment { get; } = new(
         "prism-presentation-fragment",
@@ -103,9 +112,24 @@ internal static class SdlGpuShaderArtifacts
         Surface3DFragment,
         PrismVertex,
         PrismCopyFragment,
-        PrismCatalogFragment,
+        .. PrismKernelFragments,
         PrismPresentationFragment
     ];
+
+    public static SdlGpuShaderArtifact PrismKernelFragment(SdlGpuPrismFragmentShader shader) =>
+        PrismKernelFragments[(int)shader];
+
+    private static SdlGpuShaderArtifact CreatePrismKernelFragment(
+        string logicalName,
+        string fileStem) => new(
+            logicalName,
+            "Prism.Shaders",
+            fileStem,
+            SdlGpuShaderStage.Fragment,
+            SamplerCount: 15,
+            StorageTextureCount: 0,
+            StorageBufferCount: 0,
+            UniformBufferCount: 1);
 
     public static nint CreateShader(
         ISdlApi api,

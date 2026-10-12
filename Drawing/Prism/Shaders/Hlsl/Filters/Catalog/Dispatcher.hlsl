@@ -1,13 +1,14 @@
+// The primitive is a parameter so that a shader which passes a literal compiles
+// only that primitive's branch.
 float4 ApplyCatalogFilter(
     VertexShaderOutput input,
     float4 source,
-    int profile)
+    int profile,
+    int primitive)
 {
     float2 uv = ResolveUv(input);
     int filterId =
         (int)(FilterHeader.x + 0.5);
-    int primitive =
-        (int)(FilterHeader.z + 0.5);
     if (primitive == 0)
     {
         return CatalogMorphology(
@@ -138,7 +139,8 @@ float4 FinalizeCatalogFilter(
 }
 
 float4 CatalogFilterPixelShader(
-    VertexShaderOutput input) : COLOR0
+    VertexShaderOutput input,
+    int primitive) : COLOR0
 {
     int profile = (int)(FilterHeader.y + 0.5);
     float4 source = WorkingAssociatedToLinearSrgb(
@@ -150,7 +152,8 @@ float4 CatalogFilterPixelShader(
         ApplyCatalogFilter(
             input,
             source,
-            profile),
+            profile,
+            primitive),
         profile);
 }
 

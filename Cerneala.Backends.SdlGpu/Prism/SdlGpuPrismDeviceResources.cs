@@ -26,7 +26,8 @@ internal sealed class SdlGpuPrismDeviceResources :
     private readonly SdlGpuShaderFormats shaderFormats;
     private readonly SdlGpuDrawingResources drawingResources;
     private readonly PrismRendererOptions options;
-    private readonly Dictionary<(SdlGpuTextureFormat, SdlGpuSampleCount), nint> pipelines = [];
+    private readonly Dictionary<(SdlGpuTextureFormat, SdlGpuPrismFragmentShader), nint> pipelines = [];
+    private readonly nint[] fragmentShaders = new nint[SdlGpuShaderArtifacts.PrismKernelFragments.Count];
     private readonly Dictionary<SurfaceKey, SurfaceBucket> surfaceBuckets = [];
     private readonly Dictionary<PrismRetainedCacheKey, RetainedEntry> retained = [];
     private readonly Dictionary<PendingRetainedKey, RetainedEntry> pendingRetained = [];
@@ -40,7 +41,6 @@ internal sealed class SdlGpuPrismDeviceResources :
     private readonly Dictionary<GradientOverlayKey, GradientOverlayEntry> gradientOverlays = [];
     private readonly Dictionary<PrismResourceId, CurvesEntry> curves = [];
     private nint vertexShader;
-    private nint fragmentShader;
     private long freeBytes;
     private long totalBytes;
     private long peakBytes;
@@ -344,16 +344,16 @@ internal sealed class SdlGpuPrismDeviceResources :
         }
     }
 
-    public nint GetPipeline(SdlGpuTextureFormat format)
+    public nint GetPipeline(SdlGpuTextureFormat format, SdlGpuPrismFragmentShader shader)
     {
         VerifyAccess();
         ObjectDisposedException.ThrowIf(disposed, this);
-        var key = (format, SdlGpuSampleCount.One);
+        var key = (format, shader);
         if (pipelines.TryGetValue(key, out nint pipeline))
         {
             return pipeline;
         }
-        EnsureShaders();
+        nint fragmentShader = EnsureShaders(shader);
         pipeline = RequireHandle(
             api.CreateGpuGraphicsPipeline(
                 device,
@@ -584,10 +584,13 @@ internal sealed class SdlGpuPrismDeviceResources :
             api.ReleaseGpuGraphicsPipeline(device, pipeline);
         }
         pipelines.Clear();
-        if (fragmentShader != 0)
+        for (int index = 0; index < fragmentShaders.Length; index++)
         {
-            api.ReleaseGpuShader(device, fragmentShader);
-            fragmentShader = 0;
+            if (fragmentShaders[index] != 0)
+            {
+                api.ReleaseGpuShader(device, fragmentShaders[index]);
+                fragmentShaders[index] = 0;
+            }
         }
         if (vertexShader != 0)
         {
@@ -869,31 +872,26 @@ internal sealed class SdlGpuPrismDeviceResources :
             entry.Target.MipLevelCount))
         .Sum();
 
-    private void EnsureShaders()
+    private nint EnsureShaders(SdlGpuPrismFragmentShader shader)
     {
-        if (vertexShader != 0)
+        if (vertexShader == 0)
         {
-            return;
+            vertexShader = SdlGpuShaderArtifacts.CreateShader(
+                api,
+                device,
+                shaderFormats,
+                SdlGpuShaderArtifacts.PrismVertex);
         }
-        vertexShader = SdlGpuShaderArtifacts.CreateShader(
-            api,
-            device,
-            shaderFormats,
-            SdlGpuShaderArtifacts.PrismVertex);
-        try
+        ref nint fragmentShader = ref fragmentShaders[(int)shader];
+        if (fragmentShader == 0)
         {
             fragmentShader = SdlGpuShaderArtifacts.CreateShader(
                 api,
                 device,
                 shaderFormats,
-                SdlGpuShaderArtifacts.PrismCatalogFragment);
+                SdlGpuShaderArtifacts.PrismKernelFragment(shader));
         }
-        catch
-        {
-            api.ReleaseGpuShader(device, vertexShader);
-            vertexShader = 0;
-            throw;
-        }
+        return fragmentShader;
     }
 
     private nint RequireHandle(nint handle, string operation) =>

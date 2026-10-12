@@ -17,8 +17,9 @@ internal sealed class SdlPrismKernelFixture : IDisposable
     private static readonly byte[] DissolveThresholdPixels = CreateDissolveThresholdPixels();
     internal SdlGpuWindowGraphicsSession Session => fixture.Session;
 
-    public nint FloatPipeline => Session.DrawingResources.PrismResources.GetPipeline(
-        SdlGpuTextureFormat.R16G16B16A16Float);
+    public nint FloatPipeline(SdlGpuPrismFragmentShader shader) =>
+        Session.DrawingResources.PrismResources.GetPipeline(
+            SdlGpuTextureFormat.R16G16B16A16Float, shader);
 
     public Vector4[] RunCatalog(
         PrismCatalogFilterPlan plan,
@@ -162,7 +163,8 @@ internal sealed class SdlPrismKernelFixture : IDisposable
             ? resources.PrismResources.GetSpatterPointTexture(Session) : white;
         Session.BeginRenderTarget(target, Color.Transparent, SdlGpuLoadOp.Clear);
         nint pass = Session.ActiveRenderPass;
-        api.BindGpuGraphicsPipeline(pass, resources.PrismResources.GetPipeline(target.ColorFormat));
+        api.BindGpuGraphicsPipeline(pass, resources.PrismResources.GetPipeline(
+            target.ColorFormat, SdlGpuPrismKernelSelector.ForShader(uniforms)));
         Span<float> viewport = [target.PixelWidth, target.PixelHeight, 0, 0, 0, 0, target.PixelWidth, target.PixelHeight];
         api.PushGpuVertexUniformData(Session.ActiveCommandBuffer, 0, MemoryMarshal.AsBytes(viewport));
         api.PushGpuFragmentUniformData(Session.ActiveCommandBuffer, 0, uniforms.Pack());

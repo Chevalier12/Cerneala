@@ -1,6 +1,8 @@
+using System.Text.RegularExpressions;
 using Cerneala.Backends.SdlGpu;
 using Cerneala.Drawing;
 using Cerneala.Drawing.Prism.Catalog;
+using Cerneala.Drawing.Prism.Filters;
 using Cerneala.Platforms.Sdl3;
 
 namespace Cerneala.Tests.SdlGpu;
@@ -129,6 +131,93 @@ public sealed class SdlGpuShaderArtifactTests
                 api.ReleaseGpuShader(api.DeviceResult, handle);
             }
         }
+    }
+
+    // D3D12 WARP, the only adapter on GitHub windows-latest runners, crashes in its DXIL JIT
+    // (d3d10warp ShaderJIT::ParseDclsDXIL) on very large fragment shaders (issue #72).
+    // On WARP 10.0.26100.9278 a 386,064-byte DXIL Prism fragment ran and a 422,464-byte one
+    // crashed. Every artifact keeps half of the largest size observed to run.
+    private const int WarpVerifiedDxilByteCount = 386_064;
+
+    [Fact]
+    public void Every_dxil_artifact_stays_within_the_software_adapter_jit_budget()
+    {
+        FakeSdlApi api = new();
+        List<string> oversized = [];
+        foreach (SdlGpuShaderArtifact artifact in SdlGpuShaderArtifacts.All)
+        {
+            nint handle = SdlGpuShaderArtifacts.CreateShader(
+                api,
+                api.DeviceResult,
+                SdlGpuShaderFormats.Dxil,
+                artifact);
+            int byteCount = api.GpuShaders[handle].Code.Length;
+            api.ReleaseGpuShader(api.DeviceResult, handle);
+            if (byteCount > WarpVerifiedDxilByteCount / 2)
+            {
+                oversized.Add($"{artifact.LogicalName}: {byteCount} bytes");
+            }
+        }
+
+        Assert.Empty(oversized);
+    }
+
+    [Fact]
+    public void Every_prism_kernel_routes_to_the_fragment_shader_that_holds_it()
+    {
+        DirectoryInfo? directory = new(AppContext.BaseDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "Cerneala.slnx")))
+            directory = directory.Parent;
+        Assert.NotNull(directory);
+        Dictionary<SdlGpuPrismFragmentShader, string> sources = [];
+        for (int index = 0; index < SdlGpuShaderArtifacts.PrismKernelFragments.Count; index++)
+        {
+            SdlGpuShaderArtifact artifact = SdlGpuShaderArtifacts.PrismKernelFragments[index];
+            sources.Add((SdlGpuPrismFragmentShader)index, File.ReadAllText(Path.Combine(
+                directory.FullName, "Cerneala.Backends.SdlGpu", "Prism", "Shaders",
+                artifact.FileStem + ".hlsl")));
+        }
+
+        SdlGpuPrismFragmentShader[] Holders(int kernel) => sources
+            .Where(pair => Regex.IsMatch(pair.Value, $@"^\s*case {kernel}: return ", RegexOptions.Multiline))
+            .Select(static pair => pair.Key)
+            .ToArray();
+        for (int kernel = 0; kernel <= 98; kernel++)
+        {
+            if (kernel != 9)
+            {
+                Assert.Equal(
+                    SdlGpuPrismKernelSelector.ForShader(kernel, 0),
+                    Assert.Single(Holders(kernel)));
+            }
+        }
+        Assert.Equal(
+            [
+                SdlGpuPrismFragmentShader.CatalogArtistic,
+                SdlGpuPrismFragmentShader.CatalogProcedural,
+                SdlGpuPrismFragmentShader.CatalogSpatial
+            ],
+            Holders(9));
+
+        // Kernel 9 runs one catalog primitive. Each primitive the dispatcher names is compiled
+        // into exactly one shader; LineIntegralConvolution and unknown values take the Color
+        // branch of ApplyCatalogFilter, which the spatial shader compiles as its fallback.
+        for (int primitive = (int)PrismCatalogFilterPrimitive.Morphology;
+            primitive <= (int)PrismCatalogFilterPrimitive.Extrude;
+            primitive++)
+        {
+            SdlGpuPrismFragmentShader holder = Assert.Single(
+                sources.Where(pair => pair.Value.Contains(
+                    $"CatalogFilterPixelShader(input, {primitive})",
+                    StringComparison.Ordinal)).Select(static pair => pair.Key));
+            Assert.Equal(holder, SdlGpuPrismKernelSelector.ForShader(9, primitive));
+        }
+        Assert.Equal(
+            SdlGpuPrismFragmentShader.CatalogSpatial,
+            SdlGpuPrismKernelSelector.ForShader(
+                9, (int)PrismCatalogFilterPrimitive.LineIntegralConvolution));
+        Assert.Equal(SdlGpuPrismFragmentShader.CatalogSpatial, SdlGpuPrismKernelSelector.ForShader(9, -1));
+        Assert.Equal(SdlGpuPrismFragmentShader.Composite, SdlGpuPrismKernelSelector.ForShader(99, 0));
     }
 
     [Fact]

@@ -1,3 +1,7 @@
+// Shared body of the SDL_GPU Prism kernel fragment shaders. Each Prism*.frag.hlsl
+// entry point that includes this file switches over its own subset of the kernel ids,
+// because the D3D12 WARP JIT crashes on one shader holding every kernel (issue #72).
+// SdlGpuPrismKernelSelector.ForShader selects the shader that holds a kernel.
 #define PRISM_DEINTERLACE_EFFECT
 #define CERNEALA_SDL_GPU
 
@@ -313,111 +317,4 @@ float4 StyleMaskBoxPixelShader(VertexShaderOutput input)
     }
     coverage /= factor;
     return float4(coverage, coverage, coverage, coverage);
-}
-
-float4 main(VertexShaderOutput input) : SV_Target0
-{
-    switch (PrismKernelId)
-    {
-        case 0: return CopyCompositePixelShader(input);
-        case 1: return BackdropCropPixelShader(input);
-        case 2: return BackdropColorConversionPixelShader(input);
-        case 3: return AdjustmentFilterPixelShader(input);
-        case 4: return LevelsCdfPixelShader(input);
-        case 5: return LevelsRangePixelShader(input);
-        case 6: return ThresholdRangePixelShader(input);
-        case 7: return NeighborhoodFilterPixelShader(input);
-        case 8: return ResamplingFilterPixelShader(input);
-        case 9: return CatalogFilterPixelShader(input);
-        case 10: return DryBrushFilterPixelShader(input);
-        case 11: return UnderpaintingFilterPixelShader(input);
-        case 12: return WatercolorFilterPixelShader(input);
-        case 13: return WaterPaperFilterPixelShader(input);
-        case 14: return WindFilterPixelShader(input);
-        case 15: return SumiEFilterPixelShader(input);
-        case 16: return ChalkCharcoalFilterPixelShader(input);
-        case 17: return ColoredPencilFilterPixelShader(input);
-        case 18: return FrescoFilterPixelShader(input);
-        case 19: return CutoutFilterPixelShader(input);
-        case 20: return PosterEdgesFilterPixelShader(input);
-        case 21: return AccentedEdgesFilterPixelShader(input);
-        case 22: return GlowingEdgesFilterPixelShader(input);
-        case 23: return TraceContourFilterPixelShader(input);
-        case 24: return ChromeFilterPixelShader(input);
-        case 25: return NotePaperFilterPixelShader(input);
-        case 26: return PhotocopyFilterPixelShader(input);
-        case 27: return ReticulationFilterPixelShader(input);
-        case 28: return StainedGlassFilterPixelShader(input);
-        case 29: return CraquelureFilterPixelShader(input);
-        case 30: return TexturizerFilterPixelShader(input);
-        case 31: return GrainFilterPixelShader(input);
-        case 32: return MosaicTilesFilterPixelShader(input);
-        case 33: return PatchworkFilterPixelShader(input);
-        case 34: return WaveNoiseFilterPixelShader(input);
-        case 35: return SpatterFilterPixelShader(input);
-        case 36: return SprayedStrokesFilterPixelShader(input);
-        case 37: return ColorHalftoneFilterPixelShader(input);
-        case 38: return FacetFilterPixelShader(input);
-        case 39: return LightingEffectsFilterPixelShader(input);
-        case 40: return MaskAlphaPixelShader(input);
-        case 41: return MaskExtractPixelShader(input);
-        case 42: return MaskFeatherPixelShader(input);
-        case 43: return ClipAlphaPixelShader(input);
-        case 44: return NormalBlendPixelShader(input);
-        case 45: return DissolveBlendPixelShader(input);
-        case 46: return DarkenBlendPixelShader(input);
-        case 47: return MultiplyBlendPixelShader(input);
-        case 48: return ColorBurnBlendPixelShader(input);
-        case 49: return LinearBurnBlendPixelShader(input);
-        case 50: return DarkerColorBlendPixelShader(input);
-        case 51: return LightenBlendPixelShader(input);
-        case 52: return ScreenBlendPixelShader(input);
-        case 53: return ColorDodgeBlendPixelShader(input);
-        case 54: return LinearDodgeBlendPixelShader(input);
-        case 55: return LighterColorBlendPixelShader(input);
-        case 56: return OverlayBlendPixelShader(input);
-        case 57: return SoftLightBlendPixelShader(input);
-        case 58: return HardLightBlendPixelShader(input);
-        case 59: return VividLightBlendPixelShader(input);
-        case 60: return LinearLightBlendPixelShader(input);
-        case 61: return PinLightBlendPixelShader(input);
-        case 62: return HardMixBlendPixelShader(input);
-        case 63: return DifferenceBlendPixelShader(input);
-        case 64: return ExclusionBlendPixelShader(input);
-        case 65: return SubtractBlendPixelShader(input);
-        case 66: return DivideBlendPixelShader(input);
-        case 67: return HueBlendPixelShader(input);
-        case 68: return SaturationBlendPixelShader(input);
-        case 69: return ColorBlendPixelShader(input);
-        case 70: return LuminosityBlendPixelShader(input);
-        case 71: return PassThroughBlendPixelShader(input);
-        case 72: return InputToLinearSrgbPixelShader(input);
-        case 73: return InputToSrgbPixelShader(input);
-        case 74: return InputToLinearDisplayP3PixelShader(input);
-        case 75: return InputToDisplayP3PixelShader(input);
-        case 76: return InputToScRgbPixelShader(input);
-        case 77: return LinearSrgbToOutputPixelShader(input);
-        case 78: return SrgbToOutputPixelShader(input);
-        case 79: return LinearDisplayP3ToOutputPixelShader(input);
-        case 80: return DisplayP3ToOutputPixelShader(input);
-        case 81: return ScRgbToOutputPixelShader(input);
-        case 82: return LayerStylePixelShader(input);
-        case 83: return StyleDilatePixelShader(input);
-        case 84: return StyleGaussianPixelShader(input);
-        case 85: return StyleDistanceSeedPixelShader(input);
-        case 86: return StyleDistanceFloodPixelShader(input);
-        case 87: return BevelHeightPixelShader(input);
-        case 88: return BevelLightingPixelShader(input);
-        case 89: return CharcoalInitialEtfSdl(input);
-        case 90: return CharcoalRefineEtfSdl(input);
-        case 91: return CharcoalNormalDogSdl(input);
-        case 92: return CharcoalFlowDogSdl(input);
-        case 93: return CharcoalSdl(input);
-        case 94: return ConteCrayonSdl(input);
-        case 95: return GraphicPenSdl(input);
-        case 96: return PlasterSdl(input);
-        case 97: return DeinterlaceSdl(input);
-        case 98: return StyleMaskBoxPixelShader(input);
-        default: return CopyCompositePixelShader(input);
-    }
 }

@@ -9,7 +9,8 @@
     "msl"
   ],
   "commonSourceRoots": [
-    "../../Drawing/Prism/Shaders/Hlsl"
+    "../../Drawing/Prism/Shaders/Hlsl",
+    "../Prism/Shaders"
   ],
   "shaders": [
     {
@@ -286,28 +287,17 @@
       }
     },
     {
-      "logicalName": "prism-catalog-fragment",
-      "source": "../Prism/Shaders/PrismCatalog.frag.hlsl",
+      "logicalName": "prism-composite-fragment",
+      "source": "../Prism/Shaders/PrismComposite.frag.hlsl",
       "stage": "Fragment",
       "entryPoint": "main",
-      "variants": [
-        "catalog-dispatch"
-      ],
+      "variants": [ "kernel-dispatch" ],
       "bindings": {
-        "samplers": 15,
-        "storageTextures": 0,
-        "storageBuffers": 0,
-        "uniformBuffers": 1,
-        "inputs": 2,
-        "outputs": 1
+        "samplers": 15, "storageTextures": 0, "storageBuffers": 0,
+        "uniformBuffers": 1, "inputs": 2, "outputs": 1
       },
       "layout": {
-        "uniformBuffers": [
-          {
-            "name": "PrismFragmentUniforms",
-            "slot": 0
-          }
-        ],
+        "uniformBuffers": [ { "name": "PrismFragmentUniforms", "slot": 0 } ],
         "samplers": [
           { "name": "SpriteTexture/SpriteTextureState", "slot": 0 },
           { "name": "SecondaryTexture/SecondaryTextureState", "slot": 1 },
@@ -325,14 +315,456 @@
           { "name": "WaveNoiseTableTexture/WaveNoiseTableState", "slot": 13 },
           { "name": "SpatterPointTexture/SpatterPointState", "slot": 14 }
         ],
-        "storageTextures": [],
-        "storageBuffers": [],
-        "vertexInputs": []
+        "storageTextures": [], "storageBuffers": [], "vertexInputs": []
       },
       "outputs": {
-        "spirv": "../Prism/Shaders/PrismCatalog.frag.spv",
-        "dxil": "../Prism/Shaders/PrismCatalog.frag.dxil",
-        "msl": "../Prism/Shaders/PrismCatalog.frag.msl"
+        "spirv": "../Prism/Shaders/PrismComposite.frag.spv",
+        "dxil": "../Prism/Shaders/PrismComposite.frag.dxil",
+        "msl": "../Prism/Shaders/PrismComposite.frag.msl"
+      }
+    },
+    {
+      "logicalName": "prism-neighborhood-fragment",
+      "source": "../Prism/Shaders/PrismNeighborhood.frag.hlsl",
+      "stage": "Fragment",
+      "entryPoint": "main",
+      "variants": [ "kernel-dispatch" ],
+      "bindings": {
+        "samplers": 15, "storageTextures": 0, "storageBuffers": 0,
+        "uniformBuffers": 1, "inputs": 2, "outputs": 1
+      },
+      "layout": {
+        "uniformBuffers": [ { "name": "PrismFragmentUniforms", "slot": 0 } ],
+        "samplers": [
+          { "name": "SpriteTexture/SpriteTextureState", "slot": 0 },
+          { "name": "SecondaryTexture/SecondaryTextureState", "slot": 1 },
+          { "name": "KnockoutBackdropTexture/KnockoutBackdropState", "slot": 2 },
+          { "name": "KnockoutShapeTexture/KnockoutShapeState", "slot": 3 },
+          { "name": "StyleTexture/StyleTextureState", "slot": 4 },
+          { "name": "StyleMaskTexture/StyleMaskState", "slot": 5 },
+          { "name": "FilterAuxiliaryTexture/FilterAuxiliaryState", "slot": 6 },
+          { "name": "DissolveThresholdTexture/DissolveThresholdState", "slot": 7 },
+          { "name": "StyleBackdropTexture/StyleBackdropState", "slot": 8 },
+          { "name": "GradientDitherTexture/GradientDitherState", "slot": 9 },
+          { "name": "DisplacementMapTexture/DisplacementMapState", "slot": 10 },
+          { "name": "StyleDistanceTexture/StyleDistanceState", "slot": 11 },
+          { "name": "StyleMaskSourceTexture/StyleMaskSourceState", "slot": 12 },
+          { "name": "WaveNoiseTableTexture/WaveNoiseTableState", "slot": 13 },
+          { "name": "SpatterPointTexture/SpatterPointState", "slot": 14 }
+        ],
+        "storageTextures": [], "storageBuffers": [], "vertexInputs": []
+      },
+      "outputs": {
+        "spirv": "../Prism/Shaders/PrismNeighborhood.frag.spv",
+        "dxil": "../Prism/Shaders/PrismNeighborhood.frag.dxil",
+        "msl": "../Prism/Shaders/PrismNeighborhood.frag.msl"
+      }
+    },
+    {
+      "logicalName": "prism-resampling-fragment",
+      "source": "../Prism/Shaders/PrismResampling.frag.hlsl",
+      "stage": "Fragment",
+      "entryPoint": "main",
+      "variants": [ "kernel-dispatch" ],
+      "bindings": {
+        "samplers": 15, "storageTextures": 0, "storageBuffers": 0,
+        "uniformBuffers": 1, "inputs": 2, "outputs": 1
+      },
+      "layout": {
+        "uniformBuffers": [ { "name": "PrismFragmentUniforms", "slot": 0 } ],
+        "samplers": [
+          { "name": "SpriteTexture/SpriteTextureState", "slot": 0 },
+          { "name": "SecondaryTexture/SecondaryTextureState", "slot": 1 },
+          { "name": "KnockoutBackdropTexture/KnockoutBackdropState", "slot": 2 },
+          { "name": "KnockoutShapeTexture/KnockoutShapeState", "slot": 3 },
+          { "name": "StyleTexture/StyleTextureState", "slot": 4 },
+          { "name": "StyleMaskTexture/StyleMaskState", "slot": 5 },
+          { "name": "FilterAuxiliaryTexture/FilterAuxiliaryState", "slot": 6 },
+          { "name": "DissolveThresholdTexture/DissolveThresholdState", "slot": 7 },
+          { "name": "StyleBackdropTexture/StyleBackdropState", "slot": 8 },
+          { "name": "GradientDitherTexture/GradientDitherState", "slot": 9 },
+          { "name": "DisplacementMapTexture/DisplacementMapState", "slot": 10 },
+          { "name": "StyleDistanceTexture/StyleDistanceState", "slot": 11 },
+          { "name": "StyleMaskSourceTexture/StyleMaskSourceState", "slot": 12 },
+          { "name": "WaveNoiseTableTexture/WaveNoiseTableState", "slot": 13 },
+          { "name": "SpatterPointTexture/SpatterPointState", "slot": 14 }
+        ],
+        "storageTextures": [], "storageBuffers": [], "vertexInputs": []
+      },
+      "outputs": {
+        "spirv": "../Prism/Shaders/PrismResampling.frag.spv",
+        "dxil": "../Prism/Shaders/PrismResampling.frag.dxil",
+        "msl": "../Prism/Shaders/PrismResampling.frag.msl"
+      }
+    },
+    {
+      "logicalName": "prism-catalog-artistic-fragment",
+      "source": "../Prism/Shaders/PrismCatalogArtistic.frag.hlsl",
+      "stage": "Fragment",
+      "entryPoint": "main",
+      "variants": [ "kernel-dispatch" ],
+      "bindings": {
+        "samplers": 15, "storageTextures": 0, "storageBuffers": 0,
+        "uniformBuffers": 1, "inputs": 2, "outputs": 1
+      },
+      "layout": {
+        "uniformBuffers": [ { "name": "PrismFragmentUniforms", "slot": 0 } ],
+        "samplers": [
+          { "name": "SpriteTexture/SpriteTextureState", "slot": 0 },
+          { "name": "SecondaryTexture/SecondaryTextureState", "slot": 1 },
+          { "name": "KnockoutBackdropTexture/KnockoutBackdropState", "slot": 2 },
+          { "name": "KnockoutShapeTexture/KnockoutShapeState", "slot": 3 },
+          { "name": "StyleTexture/StyleTextureState", "slot": 4 },
+          { "name": "StyleMaskTexture/StyleMaskState", "slot": 5 },
+          { "name": "FilterAuxiliaryTexture/FilterAuxiliaryState", "slot": 6 },
+          { "name": "DissolveThresholdTexture/DissolveThresholdState", "slot": 7 },
+          { "name": "StyleBackdropTexture/StyleBackdropState", "slot": 8 },
+          { "name": "GradientDitherTexture/GradientDitherState", "slot": 9 },
+          { "name": "DisplacementMapTexture/DisplacementMapState", "slot": 10 },
+          { "name": "StyleDistanceTexture/StyleDistanceState", "slot": 11 },
+          { "name": "StyleMaskSourceTexture/StyleMaskSourceState", "slot": 12 },
+          { "name": "WaveNoiseTableTexture/WaveNoiseTableState", "slot": 13 },
+          { "name": "SpatterPointTexture/SpatterPointState", "slot": 14 }
+        ],
+        "storageTextures": [], "storageBuffers": [], "vertexInputs": []
+      },
+      "outputs": {
+        "spirv": "../Prism/Shaders/PrismCatalogArtistic.frag.spv",
+        "dxil": "../Prism/Shaders/PrismCatalogArtistic.frag.dxil",
+        "msl": "../Prism/Shaders/PrismCatalogArtistic.frag.msl"
+      }
+    },
+    {
+      "logicalName": "prism-catalog-procedural-fragment",
+      "source": "../Prism/Shaders/PrismCatalogProcedural.frag.hlsl",
+      "stage": "Fragment",
+      "entryPoint": "main",
+      "variants": [ "kernel-dispatch" ],
+      "bindings": {
+        "samplers": 15, "storageTextures": 0, "storageBuffers": 0,
+        "uniformBuffers": 1, "inputs": 2, "outputs": 1
+      },
+      "layout": {
+        "uniformBuffers": [ { "name": "PrismFragmentUniforms", "slot": 0 } ],
+        "samplers": [
+          { "name": "SpriteTexture/SpriteTextureState", "slot": 0 },
+          { "name": "SecondaryTexture/SecondaryTextureState", "slot": 1 },
+          { "name": "KnockoutBackdropTexture/KnockoutBackdropState", "slot": 2 },
+          { "name": "KnockoutShapeTexture/KnockoutShapeState", "slot": 3 },
+          { "name": "StyleTexture/StyleTextureState", "slot": 4 },
+          { "name": "StyleMaskTexture/StyleMaskState", "slot": 5 },
+          { "name": "FilterAuxiliaryTexture/FilterAuxiliaryState", "slot": 6 },
+          { "name": "DissolveThresholdTexture/DissolveThresholdState", "slot": 7 },
+          { "name": "StyleBackdropTexture/StyleBackdropState", "slot": 8 },
+          { "name": "GradientDitherTexture/GradientDitherState", "slot": 9 },
+          { "name": "DisplacementMapTexture/DisplacementMapState", "slot": 10 },
+          { "name": "StyleDistanceTexture/StyleDistanceState", "slot": 11 },
+          { "name": "StyleMaskSourceTexture/StyleMaskSourceState", "slot": 12 },
+          { "name": "WaveNoiseTableTexture/WaveNoiseTableState", "slot": 13 },
+          { "name": "SpatterPointTexture/SpatterPointState", "slot": 14 }
+        ],
+        "storageTextures": [], "storageBuffers": [], "vertexInputs": []
+      },
+      "outputs": {
+        "spirv": "../Prism/Shaders/PrismCatalogProcedural.frag.spv",
+        "dxil": "../Prism/Shaders/PrismCatalogProcedural.frag.dxil",
+        "msl": "../Prism/Shaders/PrismCatalogProcedural.frag.msl"
+      }
+    },
+    {
+      "logicalName": "prism-catalog-spatial-fragment",
+      "source": "../Prism/Shaders/PrismCatalogSpatial.frag.hlsl",
+      "stage": "Fragment",
+      "entryPoint": "main",
+      "variants": [ "kernel-dispatch" ],
+      "bindings": {
+        "samplers": 15, "storageTextures": 0, "storageBuffers": 0,
+        "uniformBuffers": 1, "inputs": 2, "outputs": 1
+      },
+      "layout": {
+        "uniformBuffers": [ { "name": "PrismFragmentUniforms", "slot": 0 } ],
+        "samplers": [
+          { "name": "SpriteTexture/SpriteTextureState", "slot": 0 },
+          { "name": "SecondaryTexture/SecondaryTextureState", "slot": 1 },
+          { "name": "KnockoutBackdropTexture/KnockoutBackdropState", "slot": 2 },
+          { "name": "KnockoutShapeTexture/KnockoutShapeState", "slot": 3 },
+          { "name": "StyleTexture/StyleTextureState", "slot": 4 },
+          { "name": "StyleMaskTexture/StyleMaskState", "slot": 5 },
+          { "name": "FilterAuxiliaryTexture/FilterAuxiliaryState", "slot": 6 },
+          { "name": "DissolveThresholdTexture/DissolveThresholdState", "slot": 7 },
+          { "name": "StyleBackdropTexture/StyleBackdropState", "slot": 8 },
+          { "name": "GradientDitherTexture/GradientDitherState", "slot": 9 },
+          { "name": "DisplacementMapTexture/DisplacementMapState", "slot": 10 },
+          { "name": "StyleDistanceTexture/StyleDistanceState", "slot": 11 },
+          { "name": "StyleMaskSourceTexture/StyleMaskSourceState", "slot": 12 },
+          { "name": "WaveNoiseTableTexture/WaveNoiseTableState", "slot": 13 },
+          { "name": "SpatterPointTexture/SpatterPointState", "slot": 14 }
+        ],
+        "storageTextures": [], "storageBuffers": [], "vertexInputs": []
+      },
+      "outputs": {
+        "spirv": "../Prism/Shaders/PrismCatalogSpatial.frag.spv",
+        "dxil": "../Prism/Shaders/PrismCatalogSpatial.frag.dxil",
+        "msl": "../Prism/Shaders/PrismCatalogSpatial.frag.msl"
+      }
+    },
+    {
+      "logicalName": "prism-catalog-filters-10-14-fragment",
+      "source": "../Prism/Shaders/PrismCatalogFilters10To14.frag.hlsl",
+      "stage": "Fragment",
+      "entryPoint": "main",
+      "variants": [ "kernel-dispatch" ],
+      "bindings": {
+        "samplers": 15, "storageTextures": 0, "storageBuffers": 0,
+        "uniformBuffers": 1, "inputs": 2, "outputs": 1
+      },
+      "layout": {
+        "uniformBuffers": [ { "name": "PrismFragmentUniforms", "slot": 0 } ],
+        "samplers": [
+          { "name": "SpriteTexture/SpriteTextureState", "slot": 0 },
+          { "name": "SecondaryTexture/SecondaryTextureState", "slot": 1 },
+          { "name": "KnockoutBackdropTexture/KnockoutBackdropState", "slot": 2 },
+          { "name": "KnockoutShapeTexture/KnockoutShapeState", "slot": 3 },
+          { "name": "StyleTexture/StyleTextureState", "slot": 4 },
+          { "name": "StyleMaskTexture/StyleMaskState", "slot": 5 },
+          { "name": "FilterAuxiliaryTexture/FilterAuxiliaryState", "slot": 6 },
+          { "name": "DissolveThresholdTexture/DissolveThresholdState", "slot": 7 },
+          { "name": "StyleBackdropTexture/StyleBackdropState", "slot": 8 },
+          { "name": "GradientDitherTexture/GradientDitherState", "slot": 9 },
+          { "name": "DisplacementMapTexture/DisplacementMapState", "slot": 10 },
+          { "name": "StyleDistanceTexture/StyleDistanceState", "slot": 11 },
+          { "name": "StyleMaskSourceTexture/StyleMaskSourceState", "slot": 12 },
+          { "name": "WaveNoiseTableTexture/WaveNoiseTableState", "slot": 13 },
+          { "name": "SpatterPointTexture/SpatterPointState", "slot": 14 }
+        ],
+        "storageTextures": [], "storageBuffers": [], "vertexInputs": []
+      },
+      "outputs": {
+        "spirv": "../Prism/Shaders/PrismCatalogFilters10To14.frag.spv",
+        "dxil": "../Prism/Shaders/PrismCatalogFilters10To14.frag.dxil",
+        "msl": "../Prism/Shaders/PrismCatalogFilters10To14.frag.msl"
+      }
+    },
+    {
+      "logicalName": "prism-catalog-filters-15-20-fragment",
+      "source": "../Prism/Shaders/PrismCatalogFilters15To20.frag.hlsl",
+      "stage": "Fragment",
+      "entryPoint": "main",
+      "variants": [ "kernel-dispatch" ],
+      "bindings": {
+        "samplers": 15, "storageTextures": 0, "storageBuffers": 0,
+        "uniformBuffers": 1, "inputs": 2, "outputs": 1
+      },
+      "layout": {
+        "uniformBuffers": [ { "name": "PrismFragmentUniforms", "slot": 0 } ],
+        "samplers": [
+          { "name": "SpriteTexture/SpriteTextureState", "slot": 0 },
+          { "name": "SecondaryTexture/SecondaryTextureState", "slot": 1 },
+          { "name": "KnockoutBackdropTexture/KnockoutBackdropState", "slot": 2 },
+          { "name": "KnockoutShapeTexture/KnockoutShapeState", "slot": 3 },
+          { "name": "StyleTexture/StyleTextureState", "slot": 4 },
+          { "name": "StyleMaskTexture/StyleMaskState", "slot": 5 },
+          { "name": "FilterAuxiliaryTexture/FilterAuxiliaryState", "slot": 6 },
+          { "name": "DissolveThresholdTexture/DissolveThresholdState", "slot": 7 },
+          { "name": "StyleBackdropTexture/StyleBackdropState", "slot": 8 },
+          { "name": "GradientDitherTexture/GradientDitherState", "slot": 9 },
+          { "name": "DisplacementMapTexture/DisplacementMapState", "slot": 10 },
+          { "name": "StyleDistanceTexture/StyleDistanceState", "slot": 11 },
+          { "name": "StyleMaskSourceTexture/StyleMaskSourceState", "slot": 12 },
+          { "name": "WaveNoiseTableTexture/WaveNoiseTableState", "slot": 13 },
+          { "name": "SpatterPointTexture/SpatterPointState", "slot": 14 }
+        ],
+        "storageTextures": [], "storageBuffers": [], "vertexInputs": []
+      },
+      "outputs": {
+        "spirv": "../Prism/Shaders/PrismCatalogFilters15To20.frag.spv",
+        "dxil": "../Prism/Shaders/PrismCatalogFilters15To20.frag.dxil",
+        "msl": "../Prism/Shaders/PrismCatalogFilters15To20.frag.msl"
+      }
+    },
+    {
+      "logicalName": "prism-catalog-filters-21-26-fragment",
+      "source": "../Prism/Shaders/PrismCatalogFilters21To26.frag.hlsl",
+      "stage": "Fragment",
+      "entryPoint": "main",
+      "variants": [ "kernel-dispatch" ],
+      "bindings": {
+        "samplers": 15, "storageTextures": 0, "storageBuffers": 0,
+        "uniformBuffers": 1, "inputs": 2, "outputs": 1
+      },
+      "layout": {
+        "uniformBuffers": [ { "name": "PrismFragmentUniforms", "slot": 0 } ],
+        "samplers": [
+          { "name": "SpriteTexture/SpriteTextureState", "slot": 0 },
+          { "name": "SecondaryTexture/SecondaryTextureState", "slot": 1 },
+          { "name": "KnockoutBackdropTexture/KnockoutBackdropState", "slot": 2 },
+          { "name": "KnockoutShapeTexture/KnockoutShapeState", "slot": 3 },
+          { "name": "StyleTexture/StyleTextureState", "slot": 4 },
+          { "name": "StyleMaskTexture/StyleMaskState", "slot": 5 },
+          { "name": "FilterAuxiliaryTexture/FilterAuxiliaryState", "slot": 6 },
+          { "name": "DissolveThresholdTexture/DissolveThresholdState", "slot": 7 },
+          { "name": "StyleBackdropTexture/StyleBackdropState", "slot": 8 },
+          { "name": "GradientDitherTexture/GradientDitherState", "slot": 9 },
+          { "name": "DisplacementMapTexture/DisplacementMapState", "slot": 10 },
+          { "name": "StyleDistanceTexture/StyleDistanceState", "slot": 11 },
+          { "name": "StyleMaskSourceTexture/StyleMaskSourceState", "slot": 12 },
+          { "name": "WaveNoiseTableTexture/WaveNoiseTableState", "slot": 13 },
+          { "name": "SpatterPointTexture/SpatterPointState", "slot": 14 }
+        ],
+        "storageTextures": [], "storageBuffers": [], "vertexInputs": []
+      },
+      "outputs": {
+        "spirv": "../Prism/Shaders/PrismCatalogFilters21To26.frag.spv",
+        "dxil": "../Prism/Shaders/PrismCatalogFilters21To26.frag.dxil",
+        "msl": "../Prism/Shaders/PrismCatalogFilters21To26.frag.msl"
+      }
+    },
+    {
+      "logicalName": "prism-catalog-filters-27-32-fragment",
+      "source": "../Prism/Shaders/PrismCatalogFilters27To32.frag.hlsl",
+      "stage": "Fragment",
+      "entryPoint": "main",
+      "variants": [ "kernel-dispatch" ],
+      "bindings": {
+        "samplers": 15, "storageTextures": 0, "storageBuffers": 0,
+        "uniformBuffers": 1, "inputs": 2, "outputs": 1
+      },
+      "layout": {
+        "uniformBuffers": [ { "name": "PrismFragmentUniforms", "slot": 0 } ],
+        "samplers": [
+          { "name": "SpriteTexture/SpriteTextureState", "slot": 0 },
+          { "name": "SecondaryTexture/SecondaryTextureState", "slot": 1 },
+          { "name": "KnockoutBackdropTexture/KnockoutBackdropState", "slot": 2 },
+          { "name": "KnockoutShapeTexture/KnockoutShapeState", "slot": 3 },
+          { "name": "StyleTexture/StyleTextureState", "slot": 4 },
+          { "name": "StyleMaskTexture/StyleMaskState", "slot": 5 },
+          { "name": "FilterAuxiliaryTexture/FilterAuxiliaryState", "slot": 6 },
+          { "name": "DissolveThresholdTexture/DissolveThresholdState", "slot": 7 },
+          { "name": "StyleBackdropTexture/StyleBackdropState", "slot": 8 },
+          { "name": "GradientDitherTexture/GradientDitherState", "slot": 9 },
+          { "name": "DisplacementMapTexture/DisplacementMapState", "slot": 10 },
+          { "name": "StyleDistanceTexture/StyleDistanceState", "slot": 11 },
+          { "name": "StyleMaskSourceTexture/StyleMaskSourceState", "slot": 12 },
+          { "name": "WaveNoiseTableTexture/WaveNoiseTableState", "slot": 13 },
+          { "name": "SpatterPointTexture/SpatterPointState", "slot": 14 }
+        ],
+        "storageTextures": [], "storageBuffers": [], "vertexInputs": []
+      },
+      "outputs": {
+        "spirv": "../Prism/Shaders/PrismCatalogFilters27To32.frag.spv",
+        "dxil": "../Prism/Shaders/PrismCatalogFilters27To32.frag.dxil",
+        "msl": "../Prism/Shaders/PrismCatalogFilters27To32.frag.msl"
+      }
+    },
+    {
+      "logicalName": "prism-catalog-filters-33-39-fragment",
+      "source": "../Prism/Shaders/PrismCatalogFilters33To39.frag.hlsl",
+      "stage": "Fragment",
+      "entryPoint": "main",
+      "variants": [ "kernel-dispatch" ],
+      "bindings": {
+        "samplers": 15, "storageTextures": 0, "storageBuffers": 0,
+        "uniformBuffers": 1, "inputs": 2, "outputs": 1
+      },
+      "layout": {
+        "uniformBuffers": [ { "name": "PrismFragmentUniforms", "slot": 0 } ],
+        "samplers": [
+          { "name": "SpriteTexture/SpriteTextureState", "slot": 0 },
+          { "name": "SecondaryTexture/SecondaryTextureState", "slot": 1 },
+          { "name": "KnockoutBackdropTexture/KnockoutBackdropState", "slot": 2 },
+          { "name": "KnockoutShapeTexture/KnockoutShapeState", "slot": 3 },
+          { "name": "StyleTexture/StyleTextureState", "slot": 4 },
+          { "name": "StyleMaskTexture/StyleMaskState", "slot": 5 },
+          { "name": "FilterAuxiliaryTexture/FilterAuxiliaryState", "slot": 6 },
+          { "name": "DissolveThresholdTexture/DissolveThresholdState", "slot": 7 },
+          { "name": "StyleBackdropTexture/StyleBackdropState", "slot": 8 },
+          { "name": "GradientDitherTexture/GradientDitherState", "slot": 9 },
+          { "name": "DisplacementMapTexture/DisplacementMapState", "slot": 10 },
+          { "name": "StyleDistanceTexture/StyleDistanceState", "slot": 11 },
+          { "name": "StyleMaskSourceTexture/StyleMaskSourceState", "slot": 12 },
+          { "name": "WaveNoiseTableTexture/WaveNoiseTableState", "slot": 13 },
+          { "name": "SpatterPointTexture/SpatterPointState", "slot": 14 }
+        ],
+        "storageTextures": [], "storageBuffers": [], "vertexInputs": []
+      },
+      "outputs": {
+        "spirv": "../Prism/Shaders/PrismCatalogFilters33To39.frag.spv",
+        "dxil": "../Prism/Shaders/PrismCatalogFilters33To39.frag.dxil",
+        "msl": "../Prism/Shaders/PrismCatalogFilters33To39.frag.msl"
+      }
+    },
+    {
+      "logicalName": "prism-style-fragment",
+      "source": "../Prism/Shaders/PrismStyle.frag.hlsl",
+      "stage": "Fragment",
+      "entryPoint": "main",
+      "variants": [ "kernel-dispatch" ],
+      "bindings": {
+        "samplers": 15, "storageTextures": 0, "storageBuffers": 0,
+        "uniformBuffers": 1, "inputs": 2, "outputs": 1
+      },
+      "layout": {
+        "uniformBuffers": [ { "name": "PrismFragmentUniforms", "slot": 0 } ],
+        "samplers": [
+          { "name": "SpriteTexture/SpriteTextureState", "slot": 0 },
+          { "name": "SecondaryTexture/SecondaryTextureState", "slot": 1 },
+          { "name": "KnockoutBackdropTexture/KnockoutBackdropState", "slot": 2 },
+          { "name": "KnockoutShapeTexture/KnockoutShapeState", "slot": 3 },
+          { "name": "StyleTexture/StyleTextureState", "slot": 4 },
+          { "name": "StyleMaskTexture/StyleMaskState", "slot": 5 },
+          { "name": "FilterAuxiliaryTexture/FilterAuxiliaryState", "slot": 6 },
+          { "name": "DissolveThresholdTexture/DissolveThresholdState", "slot": 7 },
+          { "name": "StyleBackdropTexture/StyleBackdropState", "slot": 8 },
+          { "name": "GradientDitherTexture/GradientDitherState", "slot": 9 },
+          { "name": "DisplacementMapTexture/DisplacementMapState", "slot": 10 },
+          { "name": "StyleDistanceTexture/StyleDistanceState", "slot": 11 },
+          { "name": "StyleMaskSourceTexture/StyleMaskSourceState", "slot": 12 },
+          { "name": "WaveNoiseTableTexture/WaveNoiseTableState", "slot": 13 },
+          { "name": "SpatterPointTexture/SpatterPointState", "slot": 14 }
+        ],
+        "storageTextures": [], "storageBuffers": [], "vertexInputs": []
+      },
+      "outputs": {
+        "spirv": "../Prism/Shaders/PrismStyle.frag.spv",
+        "dxil": "../Prism/Shaders/PrismStyle.frag.dxil",
+        "msl": "../Prism/Shaders/PrismStyle.frag.msl"
+      }
+    },
+    {
+      "logicalName": "prism-catalog-filters-89-97-fragment",
+      "source": "../Prism/Shaders/PrismCatalogFilters89To97.frag.hlsl",
+      "stage": "Fragment",
+      "entryPoint": "main",
+      "variants": [ "kernel-dispatch" ],
+      "bindings": {
+        "samplers": 15, "storageTextures": 0, "storageBuffers": 0,
+        "uniformBuffers": 1, "inputs": 2, "outputs": 1
+      },
+      "layout": {
+        "uniformBuffers": [ { "name": "PrismFragmentUniforms", "slot": 0 } ],
+        "samplers": [
+          { "name": "SpriteTexture/SpriteTextureState", "slot": 0 },
+          { "name": "SecondaryTexture/SecondaryTextureState", "slot": 1 },
+          { "name": "KnockoutBackdropTexture/KnockoutBackdropState", "slot": 2 },
+          { "name": "KnockoutShapeTexture/KnockoutShapeState", "slot": 3 },
+          { "name": "StyleTexture/StyleTextureState", "slot": 4 },
+          { "name": "StyleMaskTexture/StyleMaskState", "slot": 5 },
+          { "name": "FilterAuxiliaryTexture/FilterAuxiliaryState", "slot": 6 },
+          { "name": "DissolveThresholdTexture/DissolveThresholdState", "slot": 7 },
+          { "name": "StyleBackdropTexture/StyleBackdropState", "slot": 8 },
+          { "name": "GradientDitherTexture/GradientDitherState", "slot": 9 },
+          { "name": "DisplacementMapTexture/DisplacementMapState", "slot": 10 },
+          { "name": "StyleDistanceTexture/StyleDistanceState", "slot": 11 },
+          { "name": "StyleMaskSourceTexture/StyleMaskSourceState", "slot": 12 },
+          { "name": "WaveNoiseTableTexture/WaveNoiseTableState", "slot": 13 },
+          { "name": "SpatterPointTexture/SpatterPointState", "slot": 14 }
+        ],
+        "storageTextures": [], "storageBuffers": [], "vertexInputs": []
+      },
+      "outputs": {
+        "spirv": "../Prism/Shaders/PrismCatalogFilters89To97.frag.spv",
+        "dxil": "../Prism/Shaders/PrismCatalogFilters89To97.frag.dxil",
+        "msl": "../Prism/Shaders/PrismCatalogFilters89To97.frag.msl"
       }
     }
   ]

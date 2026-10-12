@@ -1,5 +1,6 @@
 using Cerneala.Drawing.Prism.Blending;
 using Cerneala.Drawing.Prism.Catalog;
+using Cerneala.Drawing.Prism.Filters;
 using Cerneala.Drawing.Prism.Graph;
 
 namespace Cerneala.Backends.SdlGpu;
@@ -22,6 +23,38 @@ internal static class SdlGpuPrismKernelSelector
             _ => 0
         };
     }
+
+    // Reads the kernel id (uniforms[34].Z) and the catalog primitive (uniforms[23].Z)
+    // rounded the way the Prism*.frag.hlsl entry points round them.
+    public static SdlGpuPrismFragmentShader ForShader(SdlGpuPrismUniforms uniforms) =>
+        ForShader((int)(uniforms[34].Z + 0.5f), (int)(uniforms[23].Z + 0.5f));
+
+    // Each kernel id has a case in exactly one Prism*.frag.hlsl entry point. Kernel 9 is
+    // split further by catalog primitive. Unknown ids fall back to the composite shader,
+    // whose default case copies the source like every other entry point's default case.
+    public static SdlGpuPrismFragmentShader ForShader(int kernelId, int catalogPrimitive) =>
+        kernelId switch
+        {
+            7 => SdlGpuPrismFragmentShader.Neighborhood,
+            8 => SdlGpuPrismFragmentShader.Resampling,
+            9 => catalogPrimitive switch
+            {
+                (int)PrismCatalogFilterPrimitive.Artistic => SdlGpuPrismFragmentShader.CatalogArtistic,
+                (int)PrismCatalogFilterPrimitive.Morphology or
+                    (int)PrismCatalogFilterPrimitive.Quantization or
+                    (int)PrismCatalogFilterPrimitive.Procedural or
+                    (int)PrismCatalogFilterPrimitive.Video => SdlGpuPrismFragmentShader.CatalogProcedural,
+                _ => SdlGpuPrismFragmentShader.CatalogSpatial
+            },
+            >= 10 and <= 14 => SdlGpuPrismFragmentShader.CatalogFilters10To14,
+            >= 15 and <= 20 => SdlGpuPrismFragmentShader.CatalogFilters15To20,
+            >= 21 and <= 26 => SdlGpuPrismFragmentShader.CatalogFilters21To26,
+            >= 27 and <= 32 => SdlGpuPrismFragmentShader.CatalogFilters27To32,
+            >= 33 and <= 39 => SdlGpuPrismFragmentShader.CatalogFilters33To39,
+            >= 82 and <= 88 => SdlGpuPrismFragmentShader.Style,
+            >= 89 and <= 97 => SdlGpuPrismFragmentShader.CatalogFilters89To97,
+            _ => SdlGpuPrismFragmentShader.Composite
+        };
 
     public static int ResolveBlendMode(PrismBlendMode blendMode) =>
         PrismBlendMath.ToShaderMode(blendMode);

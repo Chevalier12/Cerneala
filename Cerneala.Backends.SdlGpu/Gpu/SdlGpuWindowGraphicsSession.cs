@@ -871,8 +871,12 @@ internal sealed class SdlGpuWindowGraphicsSession :
         SdlGpuPrismExecutionColdStartWarmup.Begin();
         try
         {
-            _ = deviceLease.DrawingResources.PrismResources.GetPipeline(
-                SdlGpuTextureFormat.R16G16B16A16Float);
+            for (int shader = 0; shader < SdlGpuShaderArtifacts.PrismKernelFragments.Count; shader++)
+            {
+                _ = deviceLease.DrawingResources.PrismResources.GetPipeline(
+                    SdlGpuTextureFormat.R16G16B16A16Float,
+                    (SdlGpuPrismFragmentShader)shader);
+            }
         }
         catch
         {

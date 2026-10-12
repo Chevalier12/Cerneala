@@ -154,7 +154,6 @@ jobs:
       # other hosts check packaging below, not runtime (index section 7).
       - name: Timbre decoding corpus
         if: runner.os == 'Windows'
-        continue-on-error: true # TEMP issue #72 diagnostics; remove before merge.
         shell: pwsh
         run: dotnet test ./tests/Cerneala.Tests.Timbre/Cerneala.Tests.Timbre.csproj -c Release --logger "trx;LogFileName=timbre-${{ matrix.nativeRid }}.trx" --results-directory artifacts/ci/test-results
 
@@ -186,18 +185,6 @@ jobs:
           "VK_ICD_FILENAMES=$($lavapipe.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
           'LIBGL_ALWAYS_SOFTWARE=1' | Out-File -FilePath $env:GITHUB_ENV -Append
           'SDL_VIDEODRIVER=x11' | Out-File -FilePath $env:GITHUB_ENV -Append
-
-      - name: TEMP issue 72 graphics adapter inventory
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          Get-CimInstance Win32_VideoController | Format-List Name, DriverVersion, PNPDeviceID, AdapterCompatibility
-          Get-ChildItem C:\Windows\System32\vulkan* -ErrorAction SilentlyContinue | Select-Object Name, Length
-          foreach ($key in 'HKLM:\SOFTWARE\Khronos\Vulkan\Drivers', 'HKLM:\SOFTWARE\WOW6432Node\Khronos\Vulkan\Drivers') {
-            "$key :"
-            (Get-Item $key -ErrorAction SilentlyContinue).Property
-          }
-          Get-ChildItem C:\Windows\System32\d3d10warp.dll, C:\Windows\System32\d3d12.dll -ErrorAction SilentlyContinue | Select-Object Name, VersionInfo
 
       - name: Native pipeline and 2D/Prism conformance
         shell: pwsh
