@@ -145,7 +145,8 @@ public sealed class PrismExecutionBudgetMigrationTests(ITestOutputHelper output)
         }
         for (int frame = 0; frame < 8; frame++) Render(frame % 2 == 0);
         SdlGpuPrismDeviceResources resources = fixture.Session.DrawingResources.PrismResources;
-        nint graphPipeline = resources.GetPipeline(SdlGpuTextureFormat.R16G16B16A16Float);
+        nint graphPipeline = resources.GetPipeline(
+            SdlGpuTextureFormat.R16G16B16A16Float, SdlGpuPrismFragmentShader.Composite);
         nint PresentationPipeline() => fixture.Session.DrawingResources.GetPipeline(
             fixture.Session.WindowRenderTarget.ColorFormat,
             fixture.Session.WindowRenderTarget.SampleCount,
@@ -166,7 +167,8 @@ public sealed class PrismExecutionBudgetMigrationTests(ITestOutputHelper output)
         }
         Assert.Equal(created, resources.CreatedSurfaceCount);
         Assert.True(resources.ReusedSurfaceCount > reused);
-        Assert.Equal(graphPipeline, resources.GetPipeline(SdlGpuTextureFormat.R16G16B16A16Float));
+        Assert.Equal(graphPipeline, resources.GetPipeline(
+            SdlGpuTextureFormat.R16G16B16A16Float, SdlGpuPrismFragmentShader.Composite));
         Assert.Equal(presentationPipeline, PresentationPipeline());
         // The unchanged capture dependency is retained even as layer opacity changes.
         Assert.Equal(0, captures);

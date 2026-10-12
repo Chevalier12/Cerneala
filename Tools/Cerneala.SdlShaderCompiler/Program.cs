@@ -149,14 +149,8 @@ internal static class ShaderCompilerProgram
             shader,
             "SPIR-V");
         byte[] msl = CompileMsl(spirv, shader, stage);
-        ReflectedBindings reflected = Reflect(spirv, shader);
-        if (reflected != shader.Bindings)
-        {
-            throw new InvalidDataException(
-                $"Shader '{shader.LogicalName}' reflection mismatch. " +
-                $"Manifest={shader.Bindings}; reflected={reflected}.");
-        }
-        ValidatePortableLimits(shader, reflected);
+        ValidateBindingContract(spirv, shader, Reflect(spirv, shader));
+        ValidatePortableLimits(shader, shader.Bindings);
 
         string spirvPath = Resolve(baseDirectory, shader.Outputs.Spirv);
         string dxilPath = Resolve(baseDirectory, shader.Outputs.Dxil);
@@ -265,6 +259,104 @@ internal static class ShaderCompilerProgram
             pinned.Free();
         }
     }
+
+    // SDL_GPU binds resources by slot, so the create info must count every slot the
+    // shader declares, including slots its entry point never reads. SDL_shadercross
+    // reflection counts only the resources the entry point reads; the declared SPIR-V
+    // bindings are the slot contract. A texture the entry point only loads, without its
+    // sampler, is reflected as a storage texture, so reflection is compared with the
+    // declared slot total rather than per resource kind.
+    private static void ValidateBindingContract(
+        byte[] spirv,
+        ShaderDefinition shader,
+        ReflectedBindings reflected)
+    {
+        ReflectedBindings declared = shader.Bindings;
+        (uint resourceSet, uint uniformSet) = shader.Stage == ShaderStage.Vertex
+            ? (0u, 1u)
+            : (2u, 3u);
+        uint declaredResources =
+            declared.Samplers + declared.StorageTextures + declared.StorageBuffers;
+        Dictionary<uint, SortedSet<uint>> bindings = ReadDescriptorBindings(spirv, shader);
+        if (reflected.Samplers + reflected.StorageTextures + reflected.StorageBuffers >
+                declaredResources ||
+            reflected.UniformBuffers > declared.UniformBuffers ||
+            reflected.Inputs != declared.Inputs ||
+            reflected.Outputs != declared.Outputs ||
+            bindings.Keys.Any(set => set != resourceSet && set != uniformSet) ||
+            !IsContiguous(bindings, resourceSet, declaredResources) ||
+            !IsContiguous(bindings, uniformSet, declared.UniformBuffers))
+        {
+            throw new InvalidDataException(
+                $"Shader '{shader.LogicalName}' reflection mismatch. " +
+                $"Manifest={declared}; reflected={reflected}; SPIR-V bindings: " +
+                string.Join("; ", bindings.Select(static pair =>
+                    $"set {pair.Key}=[{string.Join(",", pair.Value)}]")) + ".");
+        }
+    }
+
+    private static Dictionary<uint, SortedSet<uint>> ReadDescriptorBindings(
+        byte[] spirv,
+        ShaderDefinition shader)
+    {
+        const uint magic = 0x07230203;
+        const uint opDecorate = 71;
+        const uint decorationBinding = 33;
+        const uint decorationDescriptorSet = 34;
+        ReadOnlySpan<uint> words = MemoryMarshal.Cast<byte, uint>(spirv);
+        if (spirv.Length % sizeof(uint) != 0 || words.Length < 5 || words[0] != magic)
+        {
+            throw new InvalidDataException($"Shader '{shader.LogicalName}' produced invalid SPIR-V.");
+        }
+
+        Dictionary<uint, uint> sets = [];
+        Dictionary<uint, uint> slots = [];
+        for (int index = 5; index < words.Length;)
+        {
+            int wordCount = (int)(words[index] >> 16);
+            if (wordCount == 0 || index + wordCount > words.Length)
+            {
+                throw new InvalidDataException($"Shader '{shader.LogicalName}' produced invalid SPIR-V.");
+            }
+            if ((words[index] & 0xFFFF) == opDecorate && wordCount == 4)
+            {
+                if (words[index + 2] == decorationDescriptorSet)
+                {
+                    sets[words[index + 1]] = words[index + 3];
+                }
+                else if (words[index + 2] == decorationBinding)
+                {
+                    slots[words[index + 1]] = words[index + 3];
+                }
+            }
+            index += wordCount;
+        }
+
+        Dictionary<uint, SortedSet<uint>> bindings = [];
+        foreach ((uint variable, uint set) in sets)
+        {
+            if (!slots.TryGetValue(variable, out uint slot))
+            {
+                throw new InvalidDataException(
+                    $"Shader '{shader.LogicalName}' declares a descriptor set without a binding.");
+            }
+            if (!bindings.TryGetValue(set, out SortedSet<uint>? setSlots))
+            {
+                setSlots = [];
+                bindings.Add(set, setSlots);
+            }
+            setSlots.Add(slot);
+        }
+        return bindings;
+    }
+
+    private static bool IsContiguous(
+        Dictionary<uint, SortedSet<uint>> bindings,
+        uint set,
+        uint count) =>
+        bindings.TryGetValue(set, out SortedSet<uint>? slots)
+            ? slots.Count == count && slots.Min == 0 && slots.Max == count - 1
+            : count == 0;
 
     private static byte[] CopyOwnedBytes(
         nint pointer,

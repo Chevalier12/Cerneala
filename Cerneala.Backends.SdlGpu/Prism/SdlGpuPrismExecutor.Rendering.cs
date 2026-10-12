@@ -625,7 +625,9 @@ internal sealed partial class SdlGpuPrismExecutor
             target.PixelHeight);
         ISdlApi api = session.Api;
         nint pass = session.ActiveRenderPass;
-        api.BindGpuGraphicsPipeline(pass, deviceResources.GetPipeline(target.ColorFormat));
+        api.BindGpuGraphicsPipeline(pass, deviceResources.GetPipeline(
+            target.ColorFormat,
+            SdlGpuPrismKernelSelector.ForShader(uniforms)));
         Span<float> viewport =
         [
             target.PixelWidth,

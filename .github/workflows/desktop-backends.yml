@@ -196,6 +196,10 @@ jobs:
           New-Item -ItemType Directory -Path $resultDirectory -Force | Out-Null
 
           function Invoke-NativeTest([string[]] $TestArguments) {
+            if ($IsWindows) {
+              # A native access violation aborts the test host; keep the dump and the test sequence.
+              $TestArguments += @('--blame-crash', '--blame-crash-dump-type', 'full')
+            }
             if ($IsLinux) {
               & xvfb-run -a dotnet @TestArguments
             }

@@ -414,7 +414,9 @@ public sealed class SdlGpuPrismExecutorTests
             32,
             SdlGpuTextureFormat.R16G16B16A16Float,
             mipmapped: true);
-        nint pipeline = resources.GetPipeline(SdlGpuTextureFormat.R16G16B16A16Float);
+        nint pipeline = resources.GetPipeline(
+            SdlGpuTextureFormat.R16G16B16A16Float,
+            SdlGpuPrismFragmentShader.Composite);
 
         Assert.Equal(0, surface.Target.DepthStencilTexture);
         Assert.Equal(16_376, resources.TotalBytes);

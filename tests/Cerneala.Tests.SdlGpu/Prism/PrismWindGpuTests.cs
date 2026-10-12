@@ -24,7 +24,10 @@ public sealed class PrismWindGpuTests
     public void ShaderPackageCreatesFloatingPointPipeline()
     {
         using SdlPrismKernelFixture fixture = new();
-        Assert.NotEqual((nint)0, fixture.FloatPipeline);
+        foreach (SdlGpuPrismFragmentShader shader in Enum.GetValues<SdlGpuPrismFragmentShader>())
+        {
+            Assert.NotEqual((nint)0, fixture.FloatPipeline(shader));
+        }
     }
     [SdlNativeFact]
     public void LicPipelineChangesImageAndHonorsDirection()

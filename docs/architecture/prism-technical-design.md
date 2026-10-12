@@ -310,7 +310,7 @@ Drawing/Prism/          backdrop contracts (IBackdropFrameSource, BackdropFrameR
 
 Cerneala.Backends.SdlGpu/Prism/
     SdlGpuPrismExecutor and device resources
-    Shaders/            Prism.vert and PrismCatalog/PrismCopy/PrismPresentation.frag (.hlsl, .spv, .dxil, .msl)
+    Shaders/            Prism.vert, PrismCopy/PrismPresentation.frag and 13 kernel .frag shaders sharing PrismKernels.hlsl (.hlsl, .spv, .dxil, .msl)
 
 Cerneala.SourceGen/Prism/
     PrismCatalogGenerator, PrismCatalogCompiler, PrismOperationSourceEmitter
