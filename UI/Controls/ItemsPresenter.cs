@@ -138,6 +138,7 @@ public class ItemsPresenter : Control
         RealizationWindow? windowBeforeMeasure = GetRealizationWindow();
         LayoutSize desired = panelRoot?.Measure(context) ?? LayoutSize.Zero;
         ProcessInheritedAndAspectForSubtree(panelRoot);
+        InvalidateMeasureCacheAboveStaleElements(panelRoot);
         desired = panelRoot?.Measure(context) ?? LayoutSize.Zero;
 
         if (windowBeforeMeasure != GetRealizationWindow())
@@ -531,6 +532,46 @@ public class ItemsPresenter : Control
             root.InheritedPropertyQueue.Remove(current);
             current.DirtyState.Clear(InvalidationFlags.Inherited);
         }
+    }
+
+    // The Inherited and Aspect pass can change measure-affecting values of elements that the
+    // first panel measure already measured. Attached invalidation does not move ancestor layout
+    // versions, and this presenter removes the queued measure work afterwards, so the path from
+    // each stale element to the panel must miss its measure cache in the second panel measure.
+    private static void InvalidateMeasureCacheAboveStaleElements(UIElement? element)
+    {
+        if (element?.Root is null)
+        {
+            return;
+        }
+
+        foreach (UIElement current in ElementTreeWalker.PreOrder(element, ElementChildRole.Visual))
+        {
+            if (ReferenceEquals(current, element) || !HasStaleMeasure(current))
+            {
+                continue;
+            }
+
+            for (UIElement? ancestor = current.VisualParent; ancestor is not null; ancestor = ancestor.VisualParent)
+            {
+                if (HasStaleMeasure(ancestor))
+                {
+                    break;
+                }
+
+                ancestor.IncrementLayoutVersion();
+                if (ReferenceEquals(ancestor, element))
+                {
+                    break;
+                }
+            }
+        }
+    }
+
+    private static bool HasStaleMeasure(UIElement element)
+    {
+        return element.LastMeasureAvailableSize is not null &&
+            element.LastMeasureLayoutVersion != element.LayoutVersion;
     }
 
     private void RemoveMeasureWorkForLayoutScope()
