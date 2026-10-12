@@ -45,7 +45,7 @@ Pinned packages in `Cerneala.SdlShaderCompiler.csproj`, all `PrivateAssets="all"
 The command line has two optional arguments:
 
 ```powershell
-# Generate or update the committed artifacts:
+# Generate or update the committed artifacts (Windows only):
 dotnet run --project Tools/Cerneala.SdlShaderCompiler -- --manifest Cerneala.Backends.SdlGpu/Shaders/manifest.json
 # Recompile in memory and compare, writing nothing:
 dotnet run --project Tools/Cerneala.SdlShaderCompiler -- --verify
@@ -57,7 +57,7 @@ dotnet run --project Tools/Cerneala.SdlShaderCompiler -- --verify
 
 For each shader in the manifest, the compiler:
 
-1. compiles HLSL to SPIR-V and to DXIL;
+1. compiles HLSL to SPIR-V and, on Windows, to DXIL;
 2. transpiles SPIR-V to MSL;
 3. reflects the SPIR-V and validates the portable limits, the interface layout and the bindings.
 
@@ -70,6 +70,31 @@ The HLSL inputs are the shader's own source plus every `*.hlsl` under the manife
 - a SHA-256 for each output.
 
 Text artifacts (`.msl` and the metadata) are compared after their line endings are changed to `\n`. `.spv` and `.dxil` are compared byte for byte. In generate mode, a file is written only when it differs. In verify mode, a missing or different file throws `SDL shader artifact '<path>' is missing or stale.`
+
+#### Which host checks which format
+
+The committed artifacts are the Windows output, and only Windows compares their bytes. Each package ships its own `dxcompiler`:
+
+| Host | `dxcompiler` in `SDL3-CS.*.Shadercross 3.0.0.9` | `llvm.ident` it writes into DXIL |
+|---|---|---|
+| Windows | official Microsoft release | `dxcoob 1.9.2602.17 (21d28f727)` |
+| Linux | private build of the same commit | `dxc(private) 1.9.0.5184 (21d28f727)` |
+| macOS | private build of another commit | `dxc(private) 1.9.0.5185 (1f679a48f)` |
+
+- That string is part of the DXIL bitcode. DXIL compiled on Linux or macOS therefore never matches the committed bytes, even when the code is the same.
+- The macOS build is another DXC commit and also emits different SPIR-V. In CI, `Prism/Shaders/PrismCatalog.frag.spv` differs on macOS.
+- SPIR-V and MSL contain no compiler identity.
+
+What `--verify` does on each host:
+
+- On Windows, it compiles all three formats and compares each byte for byte with the committed file.
+- On Linux and macOS, it first prints `SDL shader artifact bytes are compared only on Windows. ...` to standard output. Then, for each shader:
+  - it compiles HLSL to SPIR-V and MSL and checks the reflection and the portable limits;
+  - it does not compile DXIL and compares no artifact bytes;
+  - it reads the committed `.spv`, `.dxil` and `.msl` and puts their SHA-256 into the regenerated metadata. A missing file throws `missing or stale`.
+
+  Example: someone edits `Drawing.frag.spv` by hand. Its hash no longer equals the one in `artifacts.json`, so Linux and macOS fail with `SDL shader artifact '.../artifacts.json' is missing or stale.` An edited HLSL file changes the source hash, so `artifacts.json` is stale in the same way.
+- Generate mode on Linux and macOS throws `SDL shader artifact bytes are compared only on Windows. ... Generate the SDL shader artifacts on Windows.` and writes nothing.
 
 The published application loads the committed artifacts as embedded resources: 10 shaders × 3 formats = 30 `EmbeddedResource` items. It never compiles shaders. See [sdl-desktop-backend.md](sdl-desktop-backend.md).
 
@@ -154,8 +179,9 @@ None. The tools run at build or development time, not in the frame loop.
 - `VerifySdlShaderArtifacts` runs before `PrepareResources`, tracks the manifest, every HLSL root, the compiler project and its `Program.cs`, runs `--verify --manifest` and touches its stamp. `tests/Cerneala.Tests/Drawing/Prism/PrismShaderBuildIncrementalityTests.cs:ShaderVerificationTracksSharedStylesWrappersAndCompilerInputs`. This test reads the `.csproj` XML; it does not run a build.
 - The shader compiler uses `Graphix-CS 3.4.16.1` and `Graphix.Native 3.4.16-graphix.6`, and no plain `SDL3-CS` package. `tests/Cerneala.Tests/Architecture/SdlDependencyBoundaryTests.cs:ShaderCompilerUsesTheSameGraphixManagedAndNativePackages`.
 - A sidecar whose signature matches is returned byte for byte; a sidecar with a wrong signature is ignored, and the 7 × 5 SVG is rasterized instead of the 3 × 2 PNG being used. `tests/Cerneala.Tests/Controls/SvgImageTests.cs:SvgRasterizerUsesACompiledSidecarWithoutParsingTheSourceAtRuntime`, `SvgImageTests.cs:SvgRasterizerRejectsACompiledSidecarForDifferentSourceContent`.
-- The committed artifacts match the current sources: checked by CI, not by a unit test. `.github/workflows/prism-shaders.yml` and `desktop-backends.yml` run the compiler with `--verify`. `desktop-backends.yml` also runs `PrismAudit --check`.
-- No test runs the shader compiler, PrismAudit, the SVG compiler's `Program` or `New-PrismFilterReference.ps1`; their exit codes come from the source: netestat.
+- The committed artifacts match the current sources. `.github/workflows/prism-shaders.yml` and `desktop-backends.yml` run the compiler with `--verify`; `desktop-backends.yml` does so on Windows, Linux and macOS. `desktop-backends.yml` also runs `PrismAudit --check`.
+- The shader compiler accepts the committed artifacts on every host, prints the Windows-only notice only off Windows, rejects an edited `.dxil` or `.spv` on every host, and regenerates byte-identical artifacts on Windows while refusing to generate elsewhere. `tests/Cerneala.Tests.SdlGpu/SdlShaderCompilerVerificationTests.cs`. The tests run the real compiler with `dotnet run`; `desktop-backends.yml` runs them on all three hosts.
+- No test runs PrismAudit, the SVG compiler's `Program` or `New-PrismFilterReference.ps1`; their exit codes come from the source: netestat.
 
 ## Known Limitations
 
