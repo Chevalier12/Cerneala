@@ -12,6 +12,10 @@ internal static class ShaderCompilerProgram
     private const string ToolVersion = "2";
     private const string ShaderCrossVersion = "3.0.0";
     private const string ShaderCrossPackageVersion = "3.0.0.9";
+    private const string DxilWindowsOnlyReason =
+        "DXIL is compiled and verified only on Windows. The SDL_shadercross " +
+        ShaderCrossPackageVersion + " DXC build for Linux and macOS writes a different compiler " +
+        "identity into the DXIL bitcode, so its DXIL bytes never match the committed artifacts.";
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -72,6 +76,17 @@ internal static class ShaderCompilerProgram
             JsonOptions) ?? throw new InvalidDataException("SDL shader manifest is empty.");
         ValidateManifest(manifest);
         string baseDirectory = Path.GetDirectoryName(manifestPath)!;
+        if (!OperatingSystem.IsWindows())
+        {
+            if (!verify)
+            {
+                throw new PlatformNotSupportedException(
+                    $"{DxilWindowsOnlyReason} Generate the SDL shader artifacts on Windows.");
+            }
+            Console.WriteLine(
+                $"{DxilWindowsOnlyReason} The committed .dxil files are checked against " +
+                $"'{manifest.Metadata}' instead.");
+        }
 
         if (!ShaderCross.Init())
         {
@@ -132,11 +147,14 @@ internal static class ShaderCompilerProgram
             spirvSize,
             shader,
             "SPIR-V");
-        byte[] dxil = CopyOwnedBytes(
-            ShaderCross.CompileDXILFromHLSL(in hlsl, out nuint dxilSize),
-            dxilSize,
-            shader,
-            "DXIL");
+        string dxilPath = Resolve(baseDirectory, shader.Outputs.Dxil);
+        byte[] dxil = OperatingSystem.IsWindows()
+            ? CopyOwnedBytes(
+                ShaderCross.CompileDXILFromHLSL(in hlsl, out nuint dxilSize),
+                dxilSize,
+                shader,
+                "DXIL")
+            : ReadCommittedArtifact(dxilPath);
         byte[] msl = CompileMsl(spirv, shader, stage);
         ReflectedBindings reflected = Reflect(spirv, shader);
         if (reflected != shader.Bindings)
@@ -148,7 +166,10 @@ internal static class ShaderCompilerProgram
         ValidatePortableLimits(shader, reflected);
 
         VerifyOrWrite(Resolve(baseDirectory, shader.Outputs.Spirv), spirv, verify);
-        VerifyOrWrite(Resolve(baseDirectory, shader.Outputs.Dxil), dxil, verify);
+        if (OperatingSystem.IsWindows())
+        {
+            VerifyOrWrite(dxilPath, dxil, verify);
+        }
         VerifyOrWrite(Resolve(baseDirectory, shader.Outputs.Msl), msl, verify, textArtifact: true);
         return new CompiledShaderMetadata(
             shader.LogicalName,
@@ -278,8 +299,7 @@ internal static class ShaderCompilerProgram
             if (!File.Exists(path) ||
                 !ArtifactMatches(File.ReadAllBytes(path), canonicalExpected, textArtifact))
             {
-                throw new InvalidDataException(
-                    $"SDL shader artifact '{path}' is missing or stale.");
+                throw MissingOrStaleArtifact(path);
             }
             return;
         }
@@ -291,6 +311,12 @@ internal static class ShaderCompilerProgram
             File.WriteAllBytes(path, canonicalExpected);
         }
     }
+
+    private static byte[] ReadCommittedArtifact(string path) =>
+        File.Exists(path) ? File.ReadAllBytes(path) : throw MissingOrStaleArtifact(path);
+
+    private static InvalidDataException MissingOrStaleArtifact(string path) =>
+        new($"SDL shader artifact '{path}' is missing or stale.");
 
     private static bool ArtifactMatches(
         byte[] actual,
