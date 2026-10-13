@@ -189,6 +189,55 @@ public sealed class ItemsControlTests
         Assert.Equal(realizedBeforeAppend, control.ItemContainerGenerator.RealizedContainers.Keys.Order());
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ScrollViewerVirtualizationRealizesVisibleRowsAfterScrolledSourceShrinks(bool replaceItemsSource)
+    {
+        ObservableCollection<FixedElement> source =
+            [.. Enumerable.Range(0, 100).Select(index => new FixedElement(index.ToString(), new LayoutSize(80, 28)))];
+        ItemsControl control = new()
+        {
+            ItemsSource = source,
+            ItemsPanel = new VirtualizingStackPanel()
+        };
+        ScrollViewer viewer = new()
+        {
+            Content = control,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        UIRoot root = new(100, 100);
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+        viewer.ScrollInfo.SetVerticalOffset(2500);
+        root.ProcessFrame();
+        Assert.Contains(90, control.ItemContainerGenerator.RealizedContainers.Keys);
+
+        if (replaceItemsSource)
+        {
+            control.ItemsSource = source.Take(5).ToArray();
+        }
+        else
+        {
+            while (source.Count > 5)
+            {
+                source.RemoveAt(source.Count - 1);
+            }
+        }
+
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.Equal(40, viewer.ScrollInfo.VerticalOffset);
+        Assert.Superset(new HashSet<int> { 1, 2, 3, 4 }, control.ItemContainerGenerator.RealizedContainers.Keys.ToHashSet());
+        RealizationWindow shrunkWindow = control.ItemsPresenter.CurrentRealizationWindow;
+
+        viewer.ScrollInfo.SetVerticalOffset(40);
+        root.ProcessFrame();
+
+        Assert.Equal(control.ItemsPresenter.CurrentRealizationWindow, shrunkWindow);
+    }
+
     [Fact]
     public void InfrastructureMembersAreNotPublicApi()
     {
