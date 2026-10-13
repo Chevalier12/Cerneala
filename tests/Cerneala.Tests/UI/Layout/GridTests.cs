@@ -163,6 +163,98 @@ public sealed class GridTests
     }
 
     [Fact]
+    public void AutoRowChildInPixelColumnDoesNotOverflowStarRows()
+    {
+        Grid grid = new();
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Pixels(100)));
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Stars(1)));
+        WrappingElement wrapping = new(vertical: false);
+        CountingElement starChild = new(new LayoutSize(10, 10));
+        Grid.SetRow(starChild, 1);
+        grid.VisualChildren.Add(wrapping);
+        grid.VisualChildren.Add(starChild);
+
+        LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(800, 300)));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 800, 300)));
+
+        Assert.Equal(new LayoutSize(800, 300), desired);
+        Assert.Equal(new LayoutRect(0, 0, 100, 80), wrapping.ArrangedBounds);
+        Assert.Equal(new LayoutSize(100, 220), starChild.LastAvailableSize);
+        Assert.Equal(new LayoutRect(0, 80, 100, 220), starChild.ArrangedBounds);
+    }
+
+    [Fact]
+    public void AutoColumnChildInPixelRowDoesNotOverflowStarColumns()
+    {
+        Grid grid = new();
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Pixels(100)));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Stars(1)));
+        WrappingElement wrapping = new(vertical: true);
+        CountingElement starChild = new(new LayoutSize(10, 10));
+        Grid.SetColumn(starChild, 1);
+        grid.VisualChildren.Add(wrapping);
+        grid.VisualChildren.Add(starChild);
+
+        LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(300, 800)));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 300, 800)));
+
+        Assert.Equal(new LayoutSize(300, 800), desired);
+        Assert.Equal(new LayoutRect(0, 0, 80, 100), wrapping.ArrangedBounds);
+        Assert.Equal(new LayoutSize(220, 100), starChild.LastAvailableSize);
+        Assert.Equal(new LayoutRect(80, 0, 220, 100), starChild.ArrangedBounds);
+    }
+
+    [Fact]
+    public void AutoRowChildInStarColumnDoesNotOverflowStarRows()
+    {
+        Grid grid = new();
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Pixels(700)));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Stars(1)));
+        WrappingElement wrapping = new(vertical: false);
+        CountingElement starChild = new(new LayoutSize(10, 10));
+        Grid.SetRow(starChild, 1);
+        grid.VisualChildren.Add(wrapping);
+        grid.VisualChildren.Add(starChild);
+
+        LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(800, 300)));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 800, 300)));
+
+        Assert.Equal(new LayoutSize(800, 300), desired);
+        Assert.Equal(new LayoutRect(0, 0, 100, 80), wrapping.ArrangedBounds);
+        Assert.Equal(new LayoutSize(100, 220), starChild.LastAvailableSize);
+        Assert.Equal(new LayoutRect(0, 80, 100, 220), starChild.ArrangedBounds);
+    }
+
+    [Fact]
+    public void AutoColumnChildInStarRowDoesNotOverflowStarColumns()
+    {
+        Grid grid = new();
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Stars(1)));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Pixels(700)));
+        WrappingElement wrapping = new(vertical: true);
+        CountingElement starChild = new(new LayoutSize(10, 10));
+        Grid.SetColumn(starChild, 1);
+        grid.VisualChildren.Add(wrapping);
+        grid.VisualChildren.Add(starChild);
+
+        LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(300, 800)));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 300, 800)));
+
+        Assert.Equal(new LayoutSize(300, 800), desired);
+        Assert.Equal(new LayoutRect(0, 0, 80, 100), wrapping.ArrangedBounds);
+        Assert.Equal(new LayoutSize(220, 100), starChild.LastAvailableSize);
+        Assert.Equal(new LayoutRect(80, 0, 220, 100), starChild.ArrangedBounds);
+    }
+
+    [Fact]
     public void ChangingAttachedGridPlacementQueuesGridLayout()
     {
         UIRoot root = new(100, 100);
@@ -204,6 +296,17 @@ public sealed class GridTests
         {
             float height = context.AvailableSize.Width <= 100 ? 60 : 20;
             return new LayoutSize(context.AvailableSize.Width, height);
+        }
+    }
+
+    // 400 px of content in 20 px lines, wrapped to the available width, or to the available height when vertical.
+    private sealed class WrappingElement(bool vertical) : UIElement
+    {
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            float length = MathF.Min(vertical ? context.AvailableSize.Height : context.AvailableSize.Width, 400);
+            float thickness = MathF.Ceiling(400 / length) * 20;
+            return vertical ? new LayoutSize(thickness, length) : new LayoutSize(length, thickness);
         }
     }
 

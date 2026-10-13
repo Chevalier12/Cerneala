@@ -92,6 +92,8 @@ public class Grid : Panel
         float[] columnSizes = ResolveFixedSizes(columns);
         float[] rowSizes = ResolveFixedSizes(rows);
 
+        bool columnsDependOnStarRows = false;
+        bool rowsDependOnStarColumns = false;
         foreach (UIElement child in VisualChildren)
         {
             if (child.Visibility == Visibility.Collapsed)
@@ -101,44 +103,19 @@ public class Grid : Panel
             }
 
             GridPlacement placement = GetPlacement(child, columns.Length, rows.Length);
-            bool needsContentMeasure = RequiresContentMeasure(
-                columns,
-                placement.Column,
-                placement.ColumnSpan,
-                context.AvailableSize.Width) ||
-                RequiresContentMeasure(
-                    rows,
-                    placement.Row,
-                    placement.RowSpan,
-                    context.AvailableSize.Height);
-            if (!needsContentMeasure)
-            {
-                continue;
-            }
-
-            child.Measure(new MeasureContext(
-                new LayoutSize(
-                    GetChildConstraint(columns, placement.Column, placement.ColumnSpan, context.AvailableSize.Width),
-                    GetChildConstraint(rows, placement.Row, placement.RowSpan, context.AvailableSize.Height)),
-                context.Rounding));
-            ExpandContentSizedDefinition(
-                columns,
-                columnSizes,
-                placement.Column,
-                placement.ColumnSpan,
-                context.AvailableSize.Width,
-                child.DesiredSize.Width);
-            ExpandContentSizedDefinition(
-                rows,
-                rowSizes,
-                placement.Row,
-                placement.RowSpan,
-                context.AvailableSize.Height,
-                child.DesiredSize.Height);
+            columnsDependOnStarRows |=
+                RequiresContentMeasure(columns, placement.Column, placement.ColumnSpan, context.AvailableSize.Width) &&
+                SpansResolvedStar(rows, placement.Row, placement.RowSpan, context.AvailableSize.Height);
+            rowsDependOnStarColumns |=
+                RequiresContentMeasure(rows, placement.Row, placement.RowSpan, context.AvailableSize.Height) &&
+                SpansResolvedStar(columns, placement.Column, placement.ColumnSpan, context.AvailableSize.Width);
         }
 
-        ResolveStarSizes(columns, columnSizes, context.AvailableSize.Width);
-        ResolveStarSizes(rows, rowSizes, context.AvailableSize.Height);
+        // The first axis is content-sized and resolved before the second, so the second axis measures its
+        // content-sized children at final sizes. Columns go first unless only the columns depend on star rows.
+        bool rowsFirst = columnsDependOnStarRows && !rowsDependOnStarColumns;
+        MeasureContentSizedDefinitions(context, columnAxis: !rowsFirst, columns, columnSizes, rows, rowSizes, crossAxisResolved: false);
+        MeasureContentSizedDefinitions(context, columnAxis: rowsFirst, columns, columnSizes, rows, rowSizes, crossAxisResolved: true);
 
         foreach (UIElement child in VisualChildren)
         {
@@ -213,6 +190,95 @@ public class Grid : Panel
         float size)
     {
         return span == 1 && lengths[index].IsAuto ? float.PositiveInfinity : size;
+    }
+
+    private void MeasureContentSizedDefinitions(
+        MeasureContext context,
+        bool columnAxis,
+        GridLength[] columns,
+        float[] columnSizes,
+        GridLength[] rows,
+        float[] rowSizes,
+        bool crossAxisResolved)
+    {
+        GridLength[] lengths = columnAxis ? columns : rows;
+        float[] sizes = columnAxis ? columnSizes : rowSizes;
+        float availableSize = columnAxis ? context.AvailableSize.Width : context.AvailableSize.Height;
+        GridLength[] crossLengths = columnAxis ? rows : columns;
+        float[] crossSizes = columnAxis ? rowSizes : columnSizes;
+        float crossAvailableSize = columnAxis ? context.AvailableSize.Height : context.AvailableSize.Width;
+
+        foreach (UIElement child in VisualChildren)
+        {
+            if (child.Visibility == Visibility.Collapsed)
+            {
+                continue;
+            }
+
+            GridPlacement placement = GetPlacement(child, columns.Length, rows.Length);
+            int index = columnAxis ? placement.Column : placement.Row;
+            int span = columnAxis ? placement.ColumnSpan : placement.RowSpan;
+            if (!RequiresContentMeasure(lengths, index, span, availableSize))
+            {
+                continue;
+            }
+
+            int crossIndex = columnAxis ? placement.Row : placement.Column;
+            int crossSpan = columnAxis ? placement.RowSpan : placement.ColumnSpan;
+            float constraint = GetChildConstraint(lengths, index, span, availableSize);
+            float crossConstraint = crossAxisResolved
+                ? GetChildConstraint(crossLengths, crossIndex, crossSpan, Sum(crossSizes, crossIndex, crossSpan))
+                : GetUnresolvedCrossConstraint(crossLengths, crossSizes, crossIndex, crossSpan, crossAvailableSize);
+            child.Measure(new MeasureContext(
+                columnAxis ? new LayoutSize(constraint, crossConstraint) : new LayoutSize(crossConstraint, constraint),
+                context.Rounding));
+            ExpandContentSizedDefinition(
+                lengths,
+                sizes,
+                index,
+                span,
+                availableSize,
+                columnAxis ? child.DesiredSize.Width : child.DesiredSize.Height);
+        }
+
+        ResolveStarSizes(lengths, sizes, availableSize);
+    }
+
+    // Before the cross axis is resolved, only its pixel definitions already have their final size.
+    private static float GetUnresolvedCrossConstraint(
+        GridLength[] lengths,
+        float[] sizes,
+        int index,
+        int span,
+        float availableSize)
+    {
+        for (int i = index; i < index + span; i++)
+        {
+            if (!lengths[i].IsPixel)
+            {
+                return GetChildConstraint(lengths, index, span, availableSize);
+            }
+        }
+
+        return Sum(sizes, index, span);
+    }
+
+    private static bool SpansResolvedStar(GridLength[] lengths, int index, int span, float availableSize)
+    {
+        if (float.IsPositiveInfinity(availableSize))
+        {
+            return false;
+        }
+
+        for (int i = index; i < index + span; i++)
+        {
+            if (lengths[i].IsStar)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     protected override LayoutRect ArrangeCore(ArrangeContext context)
