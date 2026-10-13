@@ -358,6 +358,42 @@ public sealed class ItemsControlTests
     }
 
     [Fact]
+    public void TemplatedButtonMeasuresWithPaddingFromItsAspectInTheFirstFrame()
+    {
+        Thickness padding = new(16, 9, 16, 9);
+        ElementAspect padded = new([new ElementAspectValue(Control.PaddingProperty, padding)]);
+        (UIRoot aspectRoot, ItemsControl aspectItems) = RootWithTemplatedButton(() => new Button
+        {
+            Aspect = padded,
+            Content = new FixedElement("aspect", new LayoutSize(40, 10))
+        });
+        (UIRoot localRoot, ItemsControl localItems) = RootWithTemplatedButton(() => new Button
+        {
+            Padding = padding,
+            Content = new FixedElement("local", new LayoutSize(40, 10))
+        });
+        Button directButton = new()
+        {
+            Aspect = padded,
+            Content = new FixedElement("direct", new LayoutSize(40, 10))
+        };
+        UIRoot directRoot = new(300, 200);
+        directRoot.VisualChildren.Add(directButton);
+
+        aspectRoot.ProcessFrame();
+        localRoot.ProcessFrame();
+        directRoot.ProcessFrame();
+
+        Button aspectButton = PresentedButton(aspectItems);
+        Button localButton = PresentedButton(localItems);
+        Assert.Equal(padding, aspectButton.Padding);
+        Assert.Equal(UiPropertyValueSource.AspectBase, aspectButton.GetValueSource(Control.PaddingProperty));
+        Assert.Equal(localButton.DesiredSize, aspectButton.DesiredSize);
+        Assert.Equal(directButton.DesiredSize, aspectButton.DesiredSize);
+        Assert.Equal(localButton.ArrangedBounds.Size, aspectButton.ArrangedBounds.Size);
+    }
+
+    [Fact]
     public void ItemsControlVirtualizationRealizesOnlyWindow()
     {
         ItemsControl control = new()
@@ -427,6 +463,25 @@ public sealed class ItemsControlTests
         control.SetItems(Enumerable.Range(0, 20).Cast<object>());
 
         Assert.Empty(control.ItemContainerGenerator.RealizedContainers);
+    }
+
+    private static (UIRoot Root, ItemsControl Items) RootWithTemplatedButton(Func<Button> createButton)
+    {
+        ItemsControl control = new()
+        {
+            ItemTemplate = new ContentTemplate<string>("button", key: null, priority: 0, _ => createButton())
+        };
+        control.SetItems(new[] { "card" });
+        UIRoot root = new(300, 200);
+        root.VisualChildren.Add(control);
+        return (root, control);
+    }
+
+    private static Button PresentedButton(ItemsControl control)
+    {
+        ContentPresenter container = Assert.IsType<ContentPresenter>(
+            control.ItemsPresenter.LayoutPanelRoot!.VisualChildren[0]);
+        return Assert.IsType<Button>(container.PresentedChild);
     }
 
     private sealed class FixedElement(string value, LayoutSize size) : UIElement
