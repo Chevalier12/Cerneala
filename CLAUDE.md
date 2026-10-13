@@ -93,7 +93,7 @@ Skills are executable policy. The repository's Claude skills live in `.claude/sk
 
 For checklist plans, recover current stage/gates; execute one atomic stage without later-stage interleaving. Pass gates, parent-review, immediately check off verified completion, review that checkpoint, then reread the remaining plan before advancing. Checkmarks mean implemented or deliberately resolved AND verified: tests exist/pass, canonical docs/manifest synchronized, required full suite actually passed. Stay on blocked stages unless the user changes the plan.
 
-For isolated C# mechanics prefer `csi` via globally installed dotnet-csi when cheaper and faithful. Use a project-approved temporary `.csx` rather than stdin, a short timeout, cleanup, and check/terminate suspicious stuck processes. Never leave interactive/long-running CSI in the background. Keep all temporary experiments outside production globs/build discovery; remove them unless preservation is requested.
+For isolated C# mechanics prefer CSI when cheaper and faithful. The command is `dotnet-csi <script>.csx` (global .NET tool `dotnet-csi`, installed in `%USERPROFILE%\.dotnet\tools`, which is on the user PATH); there is no `csi` command. Use a project-approved temporary `.csx` rather than stdin, a short timeout, cleanup, and check/terminate suspicious stuck `dotnet-csi.exe` processes. Never leave interactive/long-running CSI in the background. Keep all temporary experiments outside production globs/build discovery; remove them unless preservation is requested.
 
 # Claude Code tooling and verification commands
 
