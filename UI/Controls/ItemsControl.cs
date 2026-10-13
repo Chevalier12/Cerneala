@@ -88,6 +88,9 @@ public class ItemsControl : Control
 
     internal ItemsPresenter ItemsPresenter => itemsPresenter;
 
+    private Layout.Panels.VirtualizingStackPanel? MeasuredItemsPanel =>
+        itemsPresenter.LayoutPanelRoot as Layout.Panels.VirtualizingStackPanel;
+
     public IEnumerable? ItemsSource
     {
         get => GetValue(ItemsSourceProperty);
@@ -208,6 +211,7 @@ public class ItemsControl : Control
             SubscribeItemsSource(args.OldValue as IEnumerable, args.NewValue as IEnumerable);
             OnItemsViewSourceChanged();
             ItemContainerGenerator.Clear();
+            MeasuredItemsPanel?.OnItemsReset();
             itemsPresenter.MarkItemsDirty();
             InvalidateItems("ItemsControl items source changed");
         }
@@ -224,6 +228,7 @@ public class ItemsControl : Control
         {
             RebuildItemsSourceSnapshot(ItemsSource);
             ItemContainerGenerator.Clear();
+            MeasuredItemsPanel?.OnItemsReset();
             itemsPresenter.MarkItemsDirty();
         }
 
@@ -416,6 +421,11 @@ public class ItemsControl : Control
         if (Items.IsResetNotification)
         {
             ItemContainerGenerator.Clear();
+            MeasuredItemsPanel?.OnItemsReset();
+        }
+        else
+        {
+            OnItemsPanelItemsReplaced(Items.ChangeIndex, Items.ChangeRemovedCount, Items.ChangeAddedCount);
         }
 
         OnItemsViewSourceChanged();
@@ -493,6 +503,25 @@ public class ItemsControl : Control
             ItemContainerGenerator.Clear();
         }
 
+        switch (args.Kind)
+        {
+            case ObservableListChangeKind.Add:
+                OnItemsPanelItemsReplaced(args.Index, 0, args.Items.Count);
+                break;
+            case ObservableListChangeKind.Remove:
+                OnItemsPanelItemsReplaced(args.Index, args.OldItems.Count, 0);
+                break;
+            case ObservableListChangeKind.Replace:
+                OnItemsPanelItemsReplaced(args.Index, args.OldItems.Count, args.Items.Count);
+                break;
+            case ObservableListChangeKind.Move:
+                OnItemsPanelItemsMoved(args.OldIndex, args.Index, args.Items.Count);
+                break;
+            default:
+                MeasuredItemsPanel?.OnItemsReset();
+                break;
+        }
+
         OnItemsViewSourceChanged();
         itemsPresenter.MarkItemsDirty();
         InvalidateItems("Observable items source changed");
@@ -508,9 +537,51 @@ public class ItemsControl : Control
             ItemContainerGenerator.Clear();
         }
 
+        switch (args.Action)
+        {
+            case NotifyCollectionChangedAction.Add:
+                OnItemsPanelItemsReplaced(args.NewStartingIndex, 0, args.NewItems?.Count ?? -1);
+                break;
+            case NotifyCollectionChangedAction.Remove:
+                OnItemsPanelItemsReplaced(args.OldStartingIndex, args.OldItems?.Count ?? -1, 0);
+                break;
+            case NotifyCollectionChangedAction.Replace:
+                OnItemsPanelItemsReplaced(args.NewStartingIndex, args.OldItems?.Count ?? -1, args.NewItems?.Count ?? -1);
+                break;
+            case NotifyCollectionChangedAction.Move:
+                OnItemsPanelItemsMoved(args.OldStartingIndex, args.NewStartingIndex, args.OldItems?.Count ?? -1);
+                break;
+            default:
+                MeasuredItemsPanel?.OnItemsReset();
+                break;
+        }
+
         OnItemsViewSourceChanged();
         itemsPresenter.MarkItemsDirty();
         InvalidateItems("Observable items source changed");
+    }
+
+    // The panel records row heights by item index; a change whose position is unknown resets them.
+    private void OnItemsPanelItemsReplaced(int index, int removedCount, int addedCount)
+    {
+        if (index < 0 || removedCount < 0 || addedCount < 0)
+        {
+            MeasuredItemsPanel?.OnItemsReset();
+            return;
+        }
+
+        MeasuredItemsPanel?.OnItemsReplaced(index, removedCount, addedCount);
+    }
+
+    private void OnItemsPanelItemsMoved(int oldIndex, int newIndex, int count)
+    {
+        if (oldIndex < 0 || newIndex < 0 || count <= 0)
+        {
+            MeasuredItemsPanel?.OnItemsReset();
+            return;
+        }
+
+        MeasuredItemsPanel?.OnItemsMoved(oldIndex, newIndex, count);
     }
 
     private void RebuildItemsSourceSnapshot(IEnumerable? source)

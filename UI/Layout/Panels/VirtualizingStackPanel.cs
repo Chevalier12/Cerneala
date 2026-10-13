@@ -57,6 +57,35 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
         RecalculateAutomaticWindow();
     }
 
+    // A recorded height belongs to one item, so it follows that item when the collection changes.
+    internal void OnItemsReplaced(int index, int removedCount, int addedCount)
+    {
+        RemapMeasuredItemExtents(current => current < index
+            ? current
+            : current < index + removedCount
+            ? -1
+            : current - removedCount + addedCount);
+    }
+
+    internal void OnItemsMoved(int oldIndex, int newIndex, int count)
+    {
+        RemapMeasuredItemExtents(current =>
+        {
+            if (current >= oldIndex && current < oldIndex + count)
+            {
+                return newIndex + current - oldIndex;
+            }
+
+            int remaining = current < oldIndex ? current : current - count;
+            return remaining < newIndex ? remaining : remaining + count;
+        });
+    }
+
+    internal void OnItemsReset()
+    {
+        RemapMeasuredItemExtents(_ => -1);
+    }
+
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
         RealizationWindow window = RealizationWindow;
@@ -215,6 +244,30 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
             .Where(extent => extent > 0)
             .DefaultIfEmpty(estimatedItemExtent)
             .Average();
+    }
+
+    private void RemapMeasuredItemExtents(Func<int, int> remap)
+    {
+        if (measuredItemExtents.Count == 0)
+        {
+            return;
+        }
+
+        KeyValuePair<int, float>[] entries = [.. measuredItemExtents];
+        measuredItemExtents.Clear();
+        foreach ((int index, float extent) in entries)
+        {
+            int next = remap(index);
+            if (next >= 0)
+            {
+                measuredItemExtents[next] = extent;
+            }
+        }
+
+        // The recorded heights drive the estimate, the realization window and the desired extent.
+        UpdateEstimatedItemExtent();
+        RecalculateAutomaticWindow();
+        IncrementLayoutVersion();
     }
 
     private static float SanitizeExtent(float value)

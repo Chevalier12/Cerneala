@@ -11,6 +11,12 @@ public sealed class ItemCollection : IList<object?>
 
     internal bool IsResetNotification { get; private set; }
 
+    internal int ChangeIndex { get; private set; } = -1;
+
+    internal int ChangeRemovedCount { get; private set; }
+
+    internal int ChangeAddedCount { get; private set; }
+
     public int Count => items.Count;
 
     public bool IsReadOnly => false;
@@ -27,14 +33,14 @@ public sealed class ItemCollection : IList<object?>
             }
 
             items[index] = value;
-            OnChanged();
+            OnChanged(index, removedCount: 1, addedCount: 1);
         }
     }
 
     public void Add(object? item)
     {
         items.Add(item);
-        OnChanged();
+        OnChanged(items.Count - 1, removedCount: 0, addedCount: 1);
     }
 
     public void Clear()
@@ -45,7 +51,7 @@ public sealed class ItemCollection : IList<object?>
         }
 
         items.Clear();
-        OnChanged(reset: true);
+        OnReset();
     }
 
     public bool Contains(object? item)
@@ -71,24 +77,25 @@ public sealed class ItemCollection : IList<object?>
     public void Insert(int index, object? item)
     {
         items.Insert(index, item);
-        OnChanged();
+        OnChanged(index, removedCount: 0, addedCount: 1);
     }
 
     public bool Remove(object? item)
     {
-        bool removed = items.Remove(item);
-        if (removed)
+        int index = items.IndexOf(item);
+        if (index < 0)
         {
-            OnChanged();
+            return false;
         }
 
-        return removed;
+        RemoveAt(index);
+        return true;
     }
 
     public void RemoveAt(int index)
     {
         items.RemoveAt(index);
-        OnChanged();
+        OnChanged(index, removedCount: 1, addedCount: 0);
     }
 
     public void ReplaceWith(IEnumerable? source)
@@ -103,7 +110,7 @@ public sealed class ItemCollection : IList<object?>
 
         items.Clear();
         items.AddRange(next);
-        OnChanged(reset: true);
+        OnReset();
     }
 
     IEnumerator IEnumerable.GetEnumerator()
@@ -111,9 +118,9 @@ public sealed class ItemCollection : IList<object?>
         return GetEnumerator();
     }
 
-    private void OnChanged(bool reset = false)
+    private void OnReset()
     {
-        IsResetNotification = reset;
+        IsResetNotification = true;
         try
         {
             Changed?.Invoke(this, EventArgs.Empty);
@@ -121,6 +128,23 @@ public sealed class ItemCollection : IList<object?>
         finally
         {
             IsResetNotification = false;
+        }
+    }
+
+    private void OnChanged(int index, int removedCount, int addedCount)
+    {
+        ChangeIndex = index;
+        ChangeRemovedCount = removedCount;
+        ChangeAddedCount = addedCount;
+        try
+        {
+            Changed?.Invoke(this, EventArgs.Empty);
+        }
+        finally
+        {
+            ChangeIndex = -1;
+            ChangeRemovedCount = 0;
+            ChangeAddedCount = 0;
         }
     }
 }
