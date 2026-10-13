@@ -86,6 +86,70 @@ public sealed class GridTests
     }
 
     [Fact]
+    public void InfiniteStarRowsInStackPanelKeepContentSizesAtArrange()
+    {
+        StackPanel stack = new();
+        Grid grid = CreateTwoStarRowGrid(out FixedElement small, out FixedElement large);
+        stack.VisualChildren.Add(grid);
+
+        stack.Measure(new MeasureContext(new LayoutSize(200, 100)));
+        stack.Arrange(new ArrangeContext(new LayoutRect(0, 0, 200, 100)));
+
+        Assert.Equal(40, grid.DesiredSize.Height);
+        Assert.Equal(new LayoutRect(0, 0, 200, 10), small.ArrangedBounds);
+        Assert.Equal(new LayoutRect(0, 10, 200, 30), large.ArrangedBounds);
+    }
+
+    [Fact]
+    public void InfiniteStarRowsInAutoRowKeepContentSizesAtArrange()
+    {
+        Grid outer = new();
+        outer.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        outer.RowDefinitions.Add(new RowDefinition(GridLength.Stars(1)));
+        Grid inner = CreateTwoStarRowGrid(out FixedElement small, out FixedElement large);
+        outer.VisualChildren.Add(inner);
+
+        outer.Measure(new MeasureContext(new LayoutSize(200, 300)));
+        outer.Arrange(new ArrangeContext(new LayoutRect(0, 0, 200, 300)));
+
+        Assert.Equal(40, inner.DesiredSize.Height);
+        Assert.Equal(new LayoutRect(0, 0, 200, 40), inner.ArrangedBounds);
+        Assert.Equal(new LayoutRect(0, 0, 200, 10), small.ArrangedBounds);
+        Assert.Equal(new LayoutRect(0, 10, 200, 30), large.ArrangedBounds);
+    }
+
+    [Theory]
+    [InlineData(40, 10, 30)]
+    [InlineData(50, 20, 30)]
+    [InlineData(100, 50, 50)]
+    [InlineData(30, 10, 30)]
+    public void InfiniteStarRowsShareArrangeHeightByWeightWithoutShrinkingBelowContent(
+        float finalHeight,
+        float smallRowHeight,
+        float largeRowHeight)
+    {
+        Grid grid = CreateTwoStarRowGrid(out FixedElement small, out FixedElement large);
+
+        grid.Measure(new MeasureContext(new LayoutSize(200, float.PositiveInfinity)));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 200, finalHeight)));
+
+        Assert.Equal(new LayoutRect(0, 0, 200, smallRowHeight), small.ArrangedBounds);
+        Assert.Equal(new LayoutRect(0, smallRowHeight, 200, largeRowHeight), large.ArrangedBounds);
+    }
+
+    [Fact]
+    public void FiniteStarRowsShareArrangeHeightByWeightOnly()
+    {
+        Grid grid = CreateTwoStarRowGrid(out FixedElement small, out FixedElement large);
+
+        grid.Measure(new MeasureContext(new LayoutSize(200, 40)));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 200, 40)));
+
+        Assert.Equal(new LayoutRect(0, 0, 200, 20), small.ArrangedBounds);
+        Assert.Equal(new LayoutRect(0, 20, 200, 20), large.ArrangedBounds);
+    }
+
+    [Fact]
     public void NestedStarGridsMeasureLeafOncePerConstraint()
     {
         Grid outer = new();
@@ -188,6 +252,19 @@ public sealed class GridTests
         Assert.Throws<ArgumentOutOfRangeException>(() => new GridLength(float.NaN, GridUnitType.Auto).Validate());
         Assert.Throws<ArgumentOutOfRangeException>(() => Grid.SetRow(new UIElement(), -1));
         Assert.Throws<ArgumentOutOfRangeException>(() => Grid.SetColumnSpan(new UIElement(), 0));
+    }
+
+    private static Grid CreateTwoStarRowGrid(out FixedElement small, out FixedElement large)
+    {
+        Grid grid = new();
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Stars(1)));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Stars(1)));
+        small = new FixedElement(new LayoutSize(50, 10));
+        large = new FixedElement(new LayoutSize(50, 30));
+        Grid.SetRow(large, 1);
+        grid.VisualChildren.Add(small);
+        grid.VisualChildren.Add(large);
+        return grid;
     }
 
     private sealed class FixedElement(LayoutSize size) : UIElement

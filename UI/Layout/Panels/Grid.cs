@@ -9,6 +9,8 @@ public class Grid : Panel
     private static readonly ConditionalWeakTable<UIElement, GridPlacement> placements = new();
     private float[] measuredColumnSizes = [0];
     private float[] measuredRowSizes = [0];
+    private bool measuredColumnsUnbounded;
+    private bool measuredRowsUnbounded;
 
     public Grid()
     {
@@ -192,6 +194,8 @@ public class Grid : Panel
 
         measuredColumnSizes = columnSizes;
         measuredRowSizes = rowSizes;
+        measuredColumnsUnbounded = float.IsPositiveInfinity(context.AvailableSize.Width);
+        measuredRowsUnbounded = float.IsPositiveInfinity(context.AvailableSize.Height);
         return new LayoutSize(columnSizes.Sum(), rowSizes.Sum());
     }
 
@@ -219,8 +223,8 @@ public class Grid : Panel
     {
         GridLength[] columns = GetColumnLengths();
         GridLength[] rows = GetRowLengths();
-        float[] columnSizes = ResolveArrangeSizes(columns, measuredColumnSizes, context.FinalRect.Width);
-        float[] rowSizes = ResolveArrangeSizes(rows, measuredRowSizes, context.FinalRect.Height);
+        float[] columnSizes = ResolveArrangeSizes(columns, measuredColumnSizes, measuredColumnsUnbounded, context.FinalRect.Width);
+        float[] rowSizes = ResolveArrangeSizes(rows, measuredRowSizes, measuredRowsUnbounded, context.FinalRect.Height);
 
         foreach (UIElement child in VisualChildren)
         {
@@ -288,7 +292,11 @@ public class Grid : Panel
         }
     }
 
-    private static float[] ResolveArrangeSizes(GridLength[] lengths, float[] measuredSizes, float finalSize)
+    private static float[] ResolveArrangeSizes(
+        GridLength[] lengths,
+        float[] measuredSizes,
+        bool measuredUnbounded,
+        float finalSize)
     {
         float[] sizes = ResolveFixedSizes(lengths);
         for (int i = 0; i < sizes.Length; i++)
@@ -299,11 +307,17 @@ public class Grid : Panel
             }
         }
 
-        ResolveStarSizes(lengths, sizes, finalSize);
+        // Star definitions measured against an unbounded axis were sized to their content;
+        // that content size stays a minimum when the final size is shared by weight.
+        ResolveStarSizes(lengths, sizes, finalSize, measuredUnbounded ? measuredSizes : null);
         return sizes;
     }
 
-    private static void ResolveStarSizes(GridLength[] lengths, float[] sizes, float availableSize)
+    private static void ResolveStarSizes(
+        GridLength[] lengths,
+        float[] sizes,
+        float availableSize,
+        float[]? minimumStarSizes = null)
     {
         if (float.IsPositiveInfinity(availableSize))
         {
@@ -313,6 +327,37 @@ public class Grid : Panel
         float used = sizes.Sum();
         float remaining = MathF.Max(0, availableSize - used);
         float totalStar = lengths.Where(length => length.IsStar).Sum(length => MathF.Max(0, length.Value));
+        bool[]? sizedToMinimum = null;
+        if (minimumStarSizes is not null)
+        {
+            sizedToMinimum = new bool[lengths.Length];
+            // A definition whose weighted share is below its minimum keeps the minimum and leaves
+            // the share computation; repeat until every remaining share meets its minimum.
+            bool clamped = true;
+            while (clamped)
+            {
+                clamped = false;
+                for (int i = 0; i < lengths.Length; i++)
+                {
+                    if (!lengths[i].IsStar || sizedToMinimum[i] || i >= minimumStarSizes.Length)
+                    {
+                        continue;
+                    }
+
+                    float weight = MathF.Max(0, lengths[i].Value);
+                    float share = totalStar > 0 ? remaining * (weight / totalStar) : 0;
+                    if (share < minimumStarSizes[i])
+                    {
+                        sizes[i] = minimumStarSizes[i];
+                        sizedToMinimum[i] = true;
+                        remaining = MathF.Max(0, remaining - minimumStarSizes[i]);
+                        totalStar -= weight;
+                        clamped = true;
+                    }
+                }
+            }
+        }
+
         if (totalStar <= 0)
         {
             return;
@@ -320,7 +365,7 @@ public class Grid : Panel
 
         for (int i = 0; i < lengths.Length; i++)
         {
-            if (lengths[i].IsStar)
+            if (lengths[i].IsStar && sizedToMinimum?[i] != true)
             {
                 sizes[i] = remaining * (MathF.Max(0, lengths[i].Value) / totalStar);
             }
