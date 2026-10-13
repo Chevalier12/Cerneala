@@ -4,6 +4,7 @@ using System.Reflection;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
+using Cerneala.UI.Data;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
@@ -236,6 +237,159 @@ public sealed class ItemsControlTests
         root.ProcessFrame();
 
         Assert.Equal(control.ItemsPresenter.CurrentRealizationWindow, shrunkWindow);
+    }
+
+    [Fact]
+    public void RemovingMeasuredRowBeforeViewportDropsItsHeight()
+    {
+        ObservableCollection<FixedElement> source =
+            [.. Enumerable.Range(0, 40).Select(index => new FixedElement(index.ToString(), new LayoutSize(80, index == 0 ? 200 : 10)))];
+        VirtualizingStackPanel panel = new();
+        ItemsControl control = new()
+        {
+            ItemsSource = source,
+            ItemsPanel = panel
+        };
+        ScrollViewer viewer = new()
+        {
+            Content = control,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        UIRoot root = new(100, 100);
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+        viewer.ScrollInfo.SetVerticalOffset(200);
+        root.ProcessFrame();
+        viewer.ScrollInfo.SetVerticalOffset(300);
+        root.ProcessFrame();
+
+        source.RemoveAt(0);
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.Equal(390, panel.DesiredSize.Height);
+    }
+
+    [Theory]
+    [InlineData("ObservableCollection")]
+    [InlineData("ObservableList")]
+    [InlineData("Items")]
+    public void InsertingRowBeforeMeasuredRowsMovesTheirHeights(string sourceKind)
+    {
+        FixedElement[] rows =
+            [.. Enumerable.Range(0, 40).Select(index => new FixedElement(index.ToString(), new LayoutSize(80, index == 39 ? 200 : 10)))];
+        ObservableCollection<FixedElement> observableCollection = [.. rows];
+        ObservableList<FixedElement> observableList = new(rows);
+        VirtualizingStackPanel panel = new();
+        ItemsControl control = new() { ItemsPanel = panel };
+        switch (sourceKind)
+        {
+            case "ObservableCollection":
+                control.ItemsSource = observableCollection;
+                break;
+            case "ObservableList":
+                control.ItemsSource = observableList;
+                break;
+            default:
+                control.SetItems(rows);
+                break;
+        }
+
+        ScrollViewer viewer = new()
+        {
+            Content = control,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        UIRoot root = new(100, 100);
+        root.VisualChildren.Add(viewer);
+        MeasureEveryRowAndReturnToTop(root, viewer);
+        Assert.Equal(590, panel.DesiredSize.Height);
+
+        FixedElement inserted = new("inserted", new LayoutSize(80, 10));
+        switch (sourceKind)
+        {
+            case "ObservableCollection":
+                observableCollection.Insert(0, inserted);
+                break;
+            case "ObservableList":
+                observableList.Insert(0, inserted);
+                break;
+            default:
+                control.Items.Insert(0, inserted);
+                break;
+        }
+
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.Equal(600, panel.DesiredSize.Height);
+    }
+
+    [Fact]
+    public void MovingMeasuredRowMovesItsHeight()
+    {
+        ObservableCollection<FixedElement> source =
+            [.. Enumerable.Range(0, 40).Select(index => new FixedElement(index.ToString(), new LayoutSize(80, index == 39 ? 200 : 10)))];
+        VirtualizingStackPanel panel = new();
+        ItemsControl control = new()
+        {
+            ItemsSource = source,
+            ItemsPanel = panel
+        };
+        ScrollViewer viewer = new()
+        {
+            Content = control,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        UIRoot root = new(100, 100);
+        root.VisualChildren.Add(viewer);
+        MeasureEveryRowAndReturnToTop(root, viewer);
+
+        source.Move(39, 20);
+        root.ProcessFrame();
+        viewer.ScrollInfo.SetVerticalOffset(490);
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.DoesNotContain(20, control.ItemContainerGenerator.RealizedContainers.Keys);
+        Assert.Equal(590, panel.DesiredSize.Height);
+    }
+
+    [Fact]
+    public void ReplacingMeasuredRowDropsItsHeight()
+    {
+        FixedElement[] rows =
+            [.. Enumerable.Range(0, 40).Select(index => new FixedElement(index.ToString(), new LayoutSize(80, index == 39 ? 200 : 10)))];
+        VirtualizingStackPanel panel = new();
+        ItemsControl control = new() { ItemsPanel = panel };
+        control.SetItems(rows);
+        ScrollViewer viewer = new()
+        {
+            Content = control,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        UIRoot root = new(100, 100);
+        root.VisualChildren.Add(viewer);
+        MeasureEveryRowAndReturnToTop(root, viewer);
+
+        control.Items[39] = new FixedElement("replacement", new LayoutSize(80, 10));
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.Equal(400, panel.DesiredSize.Height);
+    }
+
+    private static void MeasureEveryRowAndReturnToTop(UIRoot root, ScrollViewer viewer)
+    {
+        root.ProcessFrame();
+        for (float offset = 50; offset <= 600; offset += 50)
+        {
+            viewer.ScrollInfo.SetVerticalOffset(offset);
+            root.ProcessFrame();
+        }
+
+        viewer.ScrollInfo.SetVerticalOffset(0);
+        root.ProcessFrame();
     }
 
     [Fact]
