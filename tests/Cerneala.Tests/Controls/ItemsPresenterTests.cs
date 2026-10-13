@@ -131,6 +131,53 @@ public sealed class ItemsPresenterTests
         });
     }
 
+    [Fact]
+    public void PresenterItemsPanelOverridingOwnerPanelReceivesTheScrollViewport()
+    {
+        string[] items = [.. Enumerable.Range(0, 100).Select(index => "Item " + index)];
+        (Menu singleMenu, ScrollViewer singleViewer, UIRoot singleRoot) = CreateScrolledMenu(items);
+        singleRoot.ProcessFrame();
+        singleViewer.ScrollInfo.SetVerticalOffset(500);
+        singleRoot.ProcessFrame();
+
+        (Menu menu, ScrollViewer viewer, UIRoot root) = CreateScrolledMenu(items);
+        root.ProcessFrame();
+        ItemsPresenter presenter = (ItemsPresenter)menu.ComponentTemplateInstance!.Parts["PART_ItemsPresenter"];
+        Cerneala.UI.Layout.Panels.VirtualizingStackPanel presenterPanel = new();
+        presenter.ItemsPanel = presenterPanel;
+        root.ProcessFrame();
+        viewer.ScrollInfo.SetVerticalOffset(500);
+        root.ProcessFrame();
+
+        Assert.Same(presenterPanel, presenter.LayoutPanelRoot);
+        Assert.Equal(singleViewer.ScrollInfo.ExtentHeight, viewer.ScrollInfo.ExtentHeight);
+        Assert.Equal(500, viewer.ScrollInfo.VerticalOffset);
+        Assert.Equal(singleViewer.ScrollInfo.VerticalOffset, viewer.ScrollInfo.VerticalOffset);
+        Assert.Equal(RealizedIndices(singleMenu), RealizedIndices(menu));
+    }
+
+    private static (Menu Menu, ScrollViewer Viewer, UIRoot Root) CreateScrolledMenu(string[] items)
+    {
+        Menu menu = new()
+        {
+            ItemsSource = items,
+            ItemsPanel = new Cerneala.UI.Layout.Panels.VirtualizingStackPanel()
+        };
+        ScrollViewer viewer = new()
+        {
+            Content = menu,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        UIRoot root = new(200, 100);
+        root.VisualChildren.Add(viewer);
+        return (menu, viewer, root);
+    }
+
+    private static int[] RealizedIndices(ItemsControl control)
+    {
+        return [.. control.ItemContainerGenerator.RealizedContainers.Keys.Order()];
+    }
+
     private class ItemElement(string value) : UIElement
     {
         public string Value { get; } = value;

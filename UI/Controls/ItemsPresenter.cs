@@ -111,7 +111,7 @@ public class ItemsPresenter : Control
     internal bool UpdateAutomaticVirtualization(float viewportExtent, float scrollOffset)
     {
         if (VirtualizationContext is not null ||
-            (ItemsOwner?.ItemsPanel ?? ItemsPanel) is not IItemsVirtualizingPanel virtualizingPanel)
+            ResolveItemsPanel() is not IItemsVirtualizingPanel virtualizingPanel)
         {
             return false;
         }
@@ -193,7 +193,7 @@ public class ItemsPresenter : Control
             return;
         }
 
-        Layout.Panels.Panel nextPanel = ItemsPanel ?? defaultItemsPanel;
+        Layout.Panels.Panel nextPanel = ResolveItemsPanel();
         ApplyVirtualizationContext(nextPanel, VirtualizationContext, nextWindow);
 
         List<UIElement> nextChildren = [.. CreateItemChildren(nextWindow)];
@@ -250,7 +250,7 @@ public class ItemsPresenter : Control
 
     private void RefreshOwnerItems(RealizationWindow? nextWindow)
     {
-        Layout.Panels.Panel nextPanel = ItemsPanel ?? ItemsOwner?.ItemsPanel ?? defaultItemsPanel;
+        Layout.Panels.Panel nextPanel = ResolveItemsPanel();
         ApplyVirtualizationContext(nextPanel, VirtualizationContext, nextWindow);
 
         Layout.Panels.Panel? oldPanel = panelRoot;
@@ -469,7 +469,7 @@ public class ItemsPresenter : Control
     {
         if (automaticViewport is not ItemsVirtualizationViewport viewport ||
             VirtualizationContext is not null ||
-            (ItemsOwner?.ItemsPanel ?? ItemsPanel) is not IItemsVirtualizingPanel virtualizingPanel)
+            ResolveItemsPanel() is not IItemsVirtualizingPanel virtualizingPanel)
         {
             return;
         }
@@ -496,9 +496,16 @@ public class ItemsPresenter : Control
             return VirtualizationContext.Value.GetRealizationWindow();
         }
 
-        return (ItemsOwner?.ItemsPanel ?? ItemsPanel) is IItemsVirtualizingPanel virtualizingPanel
+        return ResolveItemsPanel() is IItemsVirtualizingPanel virtualizingPanel
             ? virtualizingPanel.RealizationWindow
             : null;
+    }
+
+    // The panel placed in the tree must be the panel that receives the viewport and supplies
+    // the realization window, so every caller resolves it here.
+    private Layout.Panels.Panel ResolveItemsPanel()
+    {
+        return ItemsPanel ?? ItemsOwner?.ItemsPanel ?? defaultItemsPanel;
     }
 
     private static void ApplyVirtualizationContext(Layout.Panels.Panel? panel, VirtualizationContext? context, RealizationWindow? window)
