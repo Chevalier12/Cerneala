@@ -333,11 +333,15 @@ Local commands, logs and TRX results are retained under `.artifacts/graphix-nati
 
 ### Published application assets
 
-| Runtime identifier | Required SDL3 asset | Expected SDL_GPU driver |
-| --- | --- | --- |
-| `win-x64`, `win-arm64` | `SDL3.dll` | D3D12 |
-| `linux-x64`, `linux-arm64` | `libSDL3.so`, with its versioned links/files | Vulkan |
-| `osx-x64`, `osx-arm64` | `libSDL3.0.dylib` and `libSDL3.dylib` | Metal |
+| Runtime identifier | Required SDL3 asset | Required text and image assets | Expected SDL_GPU driver |
+| --- | --- | --- | --- |
+| `win-x64`, `win-arm64` | `SDL3.dll` | `libSkiaSharp.dll` and `libHarfBuzzSharp.dll` | D3D12 |
+| `linux-x64`, `linux-arm64` | `libSDL3.so`, with its versioned links/files | `libSkiaSharp.so` and `libHarfBuzzSharp.so` | Vulkan |
+| `osx-x64`, `osx-arm64` | `libSDL3.0.dylib` and `libSDL3.dylib` | `libSkiaSharp.dylib` and `libHarfBuzzSharp.dylib` | Metal |
+
+The Skia and HarfBuzz natives serve text shaping, text rasterization and image decoding.
+`SkiaSharp` brings only its Windows and macOS natives, so `Cerneala.csproj` references
+`SkiaSharp.NativeAssets.Linux` explicitly.
 
 Use the repository publish helper to build and validate an output directory without deleting existing artifacts:
 
@@ -347,7 +351,7 @@ Use the repository publish helper to build and validate an output directory with
   -OutputRoot artifacts\sdlgpu-publish
 ```
 
-The script fails if the expected SDL3 asset is absent or an SDL native asset for another operating-system family leaked into the output.
+The script fails if the expected SDL3 asset is absent, an SDL native asset for another operating-system family leaked into the output, or the Skia or HarfBuzz native for the runtime identifier is absent.
 
 Run the published application through the matching launch helper:
 

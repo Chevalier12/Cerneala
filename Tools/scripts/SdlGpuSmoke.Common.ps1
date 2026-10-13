@@ -57,3 +57,40 @@ function Assert-SdlGpuPublishedAssets {
         NativeAssets = $expected
     }
 }
+
+function Get-SkiaNativeAssetContract {
+    param(
+        [Parameter(Mandatory)]
+        [ValidateSet('win-x64', 'win-arm64', 'linux-x64', 'linux-arm64', 'osx-x64', 'osx-arm64')]
+        [string] $RuntimeIdentifier
+    )
+
+    if ($RuntimeIdentifier.StartsWith('win-', [StringComparison]::Ordinal)) {
+        return @('libSkiaSharp.dll', 'libHarfBuzzSharp.dll')
+    }
+
+    if ($RuntimeIdentifier.StartsWith('linux-', [StringComparison]::Ordinal)) {
+        return @('libSkiaSharp.so', 'libHarfBuzzSharp.so')
+    }
+
+    return @('libSkiaSharp.dylib', 'libHarfBuzzSharp.dylib')
+}
+
+function Assert-SkiaPublishedAssets {
+    param(
+        [Parameter(Mandatory)]
+        [string] $PublishedDirectory,
+
+        [Parameter(Mandatory)]
+        [ValidateSet('win-x64', 'win-arm64', 'linux-x64', 'linux-arm64', 'osx-x64', 'osx-arm64')]
+        [string] $RuntimeIdentifier
+    )
+
+    $resolvedDirectory = (Resolve-Path -LiteralPath $PublishedDirectory).Path
+    $assetNames = @(Get-ChildItem -LiteralPath $resolvedDirectory -File -Recurse | ForEach-Object Name)
+    $expected = @(Get-SkiaNativeAssetContract -RuntimeIdentifier $RuntimeIdentifier)
+    $missing = @($expected | Where-Object { $_ -notin $assetNames })
+    if ($missing.Count -ne 0) {
+        throw "Published output '$resolvedDirectory' is missing Skia asset(s): $($missing -join ', ')."
+    }
+}
