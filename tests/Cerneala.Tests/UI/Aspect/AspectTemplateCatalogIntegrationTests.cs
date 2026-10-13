@@ -565,6 +565,66 @@ public sealed class AspectTemplateCatalogIntegrationTests
         Assert.IsType<TextBlock>(presenter.PresentedChild);
     }
 
+    [Fact]
+    public void TemplateBoundBorderBrushFromOwnerReachesBorderDespiteFrameworkDefaultAspect()
+    {
+        SolidColorBrush background = new(Color.FromArgb(0xFF, 1, 2, 3));
+        SolidColorBrush borderBrush = new(Color.FromArgb(0xFF, 4, 5, 6));
+        Border? templateBorder = null;
+        Control control = new()
+        {
+            ComponentTemplate = new ComponentTemplate<Control>("Probe.Default", context =>
+            {
+                templateBorder = new Border { BorderThickness = new Thickness(1) };
+                context.Bind(Control.BackgroundProperty, templateBorder, Control.BackgroundProperty);
+                context.Bind(Control.BorderBrushProperty, templateBorder, Control.BorderBrushProperty);
+                return templateBorder;
+            }),
+            Background = background,
+            BorderBrush = borderBrush
+        };
+        UIRoot root = RootWith(control);
+
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.Same(background, templateBorder!.Background);
+        Assert.Same(borderBrush, templateBorder.BorderBrush);
+    }
+
+    [Fact]
+    public void TemplateOwnerBindingWinsOverAppAspectRuleTargetingThePart()
+    {
+        SolidColorBrush ownerBrush = new(Color.FromArgb(0xFF, 4, 5, 6));
+        SolidColorBrush appBrush = new(Color.FromArgb(0xFF, 200, 0, 0));
+        Border? templateBorder = null;
+        Control control = new()
+        {
+            ComponentTemplate = new ComponentTemplate<Control>("Probe.Default", context =>
+            {
+                templateBorder = new Border();
+                context.Bind(Control.BorderBrushProperty, templateBorder, Control.BorderBrushProperty);
+                return templateBorder;
+            }),
+            BorderBrush = ownerBrush
+        };
+        UIRoot root = RootWith(control);
+        root.AspectRegistry.Register(AspectPackage.Create("App").Components(components => components.AddRule(
+            new AspectRuleSetBuilder("app.border", AspectLayer.App, new AspectTarget(typeof(Border)), declarationOrder: 0)
+                .Set(Control.BorderBrushProperty, AspectValue<Brush?>.Literal(appBrush))
+                .Set(UIElement.OpacityProperty, AspectValue<float>.Literal(0.5f))
+                .Build())));
+
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        // Like WPF TemplateBinding over the part's style setters: the owner binding wins
+        // on the bound property, while the app rule still styles the unbound one.
+        Assert.Same(ownerBrush, templateBorder!.BorderBrush);
+        Assert.Equal(UiPropertyValueSource.TemplateOwnerBinding, templateBorder.GetValueSource(Control.BorderBrushProperty));
+        Assert.Equal(0.5f, templateBorder.Opacity);
+    }
+
     private static UIRoot RootWith(UIElement child)
     {
         UIRoot root = new();

@@ -270,7 +270,9 @@ binding cannot reach an ordinary named element outside the current scope.
 ## Template Owners And Parts
 
 Inside `@template`, the attribute forms `$owner.Property` and
-`$owner.Property:OneWay` both use the existing live `TemplateBinding` path.
+`$owner.Property:OneWay` both use the existing live template binding. It writes
+`TemplateOwnerBinding` on the part, so the owner value wins over the part's
+Aspect values, including the framework default Aspect.
 `$owner.Property:TwoWay` is not supported.
 
 ```xml
@@ -372,7 +374,8 @@ the missing segment becomes available.
 or a read-only source endpoint requested with `TwoWay`, produces a generator
 diagnostic rather than a partially working runtime binding.
 
-Attribute bindings own the `MarkupBase` slot. Conditional bindings own the
+Attribute bindings own the `MarkupBase` slot, except `$owner.Property` inside
+`@template`, which writes `TemplateOwnerBinding`. Conditional bindings own the
 `MarkupConditional` slot only while their rule wins. Local values, conditional
 values, and restoration of a lower cascade slot do not cause accidental
 TwoWay write-back; only a relevant target change from the `Local` source is

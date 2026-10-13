@@ -60,7 +60,7 @@ ComponentTemplate<Button> template = new("Button.Custom", context =>
 
 `ButtonSlots` centralizes the slot identifiers used by `ButtonTemplates.Modern`. The template registers `Root` for the outer `Border` and `Content` for the inner `ContentPresenter`.
 
-Aspect rules can use these slots through `AspectTarget` to address template elements without depending on local variables from the template factory. For example, a rule whose target is `new AspectTarget(typeof(Button), ButtonSlots.Content)` applies its declarations to the `ContentPresenter` that the default `ButtonTemplates` registers for that slot.
+Aspect rules can use these slots through `AspectTarget` to address template elements without depending on local variables from the template factory. For example, a rule whose target is `new AspectTarget(typeof(Button), ButtonSlots.Content)` applies its declarations to the `ContentPresenter` that the default `ButtonTemplates` registers for that slot. Properties that the template binds from the button keep the button's value: `Content` and `Foreground` on the presenter, and `Background`, `BorderBrush`, `BorderThickness`, and `Padding` on the root border. Set those on the button instead.
 
 Each field is an `AspectSlot<Button, TTarget>`, so the slot carries both the owning control type and the expected target element type. Registration is performed through `ComponentTemplateContext.RegisterSlot`, which stores the slot and element in the template instance's `TemplateSlotMap`.
 

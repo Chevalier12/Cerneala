@@ -80,7 +80,7 @@ public class ComponentTemplateContext
         UiProperty<T> sourceProperty,
         UIElement target,
         UiProperty<T> targetProperty,
-        UiPropertyValueSource targetSource = UiPropertyValueSource.TemplateBinding)
+        UiPropertyValueSource targetSource = UiPropertyValueSource.TemplateOwnerBinding)
     {
         bindings.Add(new TemplateBinding<T>(sourceProperty, target, targetProperty, targetSource));
     }

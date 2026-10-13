@@ -37,10 +37,10 @@ source wins (`UiPropertyStore.EffectiveOrder`):
 | 2 | `Animation` | Motion (`MotionPropertyStore`) |
 | 3 | `MarkupConditional` | Generated markup conditions |
 | 4 | `MarkupBase` | Generated markup |
-| 5 | `TemplateOwnerBinding` | Template parts bound to their owner |
+| 5 | `TemplateOwnerBinding` | Template parts bound to their owner (default of `ComponentTemplateContext.Bind<T>` and markup `$owner.Property`) |
 | 6 | `AspectVisualState` | Aspect state rules |
 | 7 | `AspectBase` | Aspect base rules |
-| 8 | `TemplateBinding` | Template bindings |
+| 8 | `TemplateBinding` | Template token bindings and template bindings that request this weaker source |
 | 9 | `Inherited` | `InheritedPropertyPropagator` |
 | — | `Default` | Not stored |
 

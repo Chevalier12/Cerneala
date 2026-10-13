@@ -117,7 +117,7 @@ Use the typed context when template construction needs members on a specific con
 | `RegisterSlot(AspectSlot slot, UIElement element)` | `void` | `ComponentTemplateContext` | Registers a generated element for an aspect slot. |
 | `RequirePart<TElement>(string name, TElement? element)` | `TElement` | `ComponentTemplateContext` | Registers a required named part and returns it, or throws when `element` is `null`. |
 | `Bind(UiProperty sourceProperty, UIElement target, UiProperty targetProperty, UiPropertyValueSource targetSource)` | `void` | `ComponentTemplateContext` | Records a non-generic owner property binding to a generated target element property. |
-| `Bind<T>(UiProperty<T> sourceProperty, UIElement target, UiProperty<T> targetProperty, UiPropertyValueSource targetSource = UiPropertyValueSource.TemplateBinding)` | `void` | `ComponentTemplateContext` | Records a typed owner property binding to a generated target element property. |
+| `Bind<T>(UiProperty<T> sourceProperty, UIElement target, UiProperty<T> targetProperty, UiPropertyValueSource targetSource = UiPropertyValueSource.TemplateOwnerBinding)` | `void` | `ComponentTemplateContext` | Records a typed owner property binding to a generated target element property. |
 | `BindToken<T>(AspectToken<T> token, UIElement target, UiProperty<T> targetProperty)` | `void` | `ComponentTemplateContext` | Records an aspect token binding from the context environment to a generated target element property. |
 | `RegisterLifetime(IDisposable lifetime)` | `void` | `ComponentTemplateContext` | Transfers a disposable subscription or controller to the resulting component template instance. |
 

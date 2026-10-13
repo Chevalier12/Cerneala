@@ -46,7 +46,7 @@ public abstract class TemplateBinding
         UiProperty sourceProperty,
         UIElement target,
         UiProperty targetProperty,
-        UiPropertyValueSource targetSource = UiPropertyValueSource.TemplateBinding)
+        UiPropertyValueSource targetSource = UiPropertyValueSource.TemplateOwnerBinding)
     {
         ArgumentNullException.ThrowIfNull(sourceProperty);
         ArgumentNullException.ThrowIfNull(targetProperty);
@@ -137,7 +137,7 @@ public sealed class TemplateBinding<T> : TemplateBinding
         UiProperty<T> sourceProperty,
         UIElement target,
         UiProperty<T> targetProperty,
-        UiPropertyValueSource targetSource = UiPropertyValueSource.TemplateBinding)
+        UiPropertyValueSource targetSource = UiPropertyValueSource.TemplateOwnerBinding)
         : base(sourceProperty, target, targetProperty, targetSource)
     {
         SourceProperty = sourceProperty;

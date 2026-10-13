@@ -20,7 +20,7 @@ public sealed class TemplateBindingTests
         });
 
         Assert.Equal(new Cerneala.UI.Media.SolidColorBrush(Color.White), border!.Background);
-        Assert.Equal(UiPropertyValueSource.TemplateBinding, border.GetValueSource(Control.BackgroundProperty));
+        Assert.Equal(UiPropertyValueSource.TemplateOwnerBinding, border.GetValueSource(Control.BackgroundProperty));
     }
 
     [Fact]
@@ -72,7 +72,8 @@ public sealed class TemplateBindingTests
         button.ComponentTemplate = new ComponentTemplate<Button>("new", _ => new Border());
         button.Background = new Cerneala.UI.Media.SolidColorBrush(Color.Black);
 
-        Assert.Equal(new Cerneala.UI.Media.SolidColorBrush(Color.White), oldBorder!.Background);
+        Assert.Null(oldBorder!.Background);
+        Assert.Equal(UiPropertyValueSource.Default, oldBorder.GetValueSource(Control.BackgroundProperty));
         Assert.Null(oldBorder.LogicalParent);
         Assert.Null(oldBorder.VisualParent);
     }
