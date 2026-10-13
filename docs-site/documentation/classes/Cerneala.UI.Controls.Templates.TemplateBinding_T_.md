@@ -64,7 +64,7 @@ owner.Background = black;
 
 binding.Detach();
 owner.Background = white;
-// child.Background is still black: the binding no longer listens.
+// child.Background is null: Detach cleared the TemplateOwnerBinding value and the binding no longer listens.
 ```
 
 ## Remarks
@@ -72,12 +72,14 @@ owner.Background = white;
 
 Calling `Attach(Control)` subscribes to the owner's `PropertyChanged` event, immediately copies the current owner value to the target, and then updates the target whenever the source property changes. If the initial update fails, the binding removes its event subscription before rethrowing.
 
-Calling `Detach()` stops listening to the owner. Detach is idempotent. When the binding was created with a target source other than `UiPropertyValueSource.TemplateBinding`, detach also clears that target value source.
+The default target source is `UiPropertyValueSource.TemplateOwnerBinding`, which is above the target's own Aspect values and below its markup, animation, and local values. Pass `UiPropertyValueSource.TemplateBinding` for a weaker value that the target's Aspect values override.
+
+Calling `Detach()` stops listening to the owner. Detach is idempotent. When the binding was created with a target source other than `UiPropertyValueSource.TemplateBinding`, which includes the default source, detach also clears that target value source.
 
 ## Constructors
 | Name | Description |
 | --- | --- |
-| `TemplateBinding(UiProperty<T> sourceProperty, UIElement target, UiProperty<T> targetProperty, UiPropertyValueSource targetSource = UiPropertyValueSource.TemplateBinding)` | Creates a typed template binding. Throws when an argument required by the base binding is `null`, when the source and target property value types differ, or when the target property is read-only. |
+| `TemplateBinding(UiProperty<T> sourceProperty, UIElement target, UiProperty<T> targetProperty, UiPropertyValueSource targetSource = UiPropertyValueSource.TemplateOwnerBinding)` | Creates a typed template binding. Throws when an argument required by the base binding is `null`, when the source and target property value types differ, or when the target property is read-only. |
 
 ## Properties
 | Name | Type | Description |
@@ -91,7 +93,7 @@ Calling `Detach()` stops listening to the owner. Detach is idempotent. When the 
 | Name | Description |
 | --- | --- |
 | `Attach(Control owner)` | Attaches the binding to a control, copies the current source value to the target, and begins tracking later source property changes. Throws `ArgumentNullException` when `owner` is `null` and `InvalidOperationException` when the binding is already attached. |
-| `Detach()` | Detaches the binding from its current owner. If the binding is not attached, the method returns without error. |
+| `Detach()` | Detaches the binding from its current owner and clears the target value when `TargetSource` is not `TemplateBinding`. If the binding is not attached, the method returns without error. |
 
 ## Applies to
 Project: `Cerneala`

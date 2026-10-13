@@ -162,7 +162,9 @@ definitions and Motion executions still read once when applied; live bindings
 there require an explicit mode in a supported context. Quotes around XML
 attribute values are only XML delimiters, not a request for snapshot behavior.
 
-Property bindings write to `MarkupBase`; conditional providers write to
+Property bindings write to `MarkupBase`, except `$owner.Property` in a component
+template, which writes `TemplateOwnerBinding` through the template binding;
+conditional providers write to
 `MarkupConditional` only while active. Two-way bindings accept write-back only
 from an effective `Local` target change and remove that transient local value
 after the source is updated. Binding controllers stop observations on detach,

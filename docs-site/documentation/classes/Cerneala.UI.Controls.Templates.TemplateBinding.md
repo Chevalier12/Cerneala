@@ -75,7 +75,7 @@ When attached, a binding immediately copies the current source property value fr
 
 The source and target properties must have the same `ValueType`. The target property must not be read-only. These checks happen before the binding is used, so invalid template bindings fail before a broken template root remains attached.
 
-The default value source written to the target is `UiPropertyValueSource.TemplateBinding`, which remains below Aspect values on the generated child. A custom `UiPropertyValueSource` can be supplied when constructing or creating the binding. `UiPropertyValueSource.TemplateOwnerBinding` is the template-owned stronger source for explicit owner palette/chrome projections that must remain above the child's Aspect value. `Detach` always removes the owner subscription; when the target source is not `TemplateBinding`, it also clears that value source from the target.
+The default value source written to the target is `UiPropertyValueSource.TemplateOwnerBinding`. It remains above the generated child's own Aspect values, including the framework default Aspect, and below markup, animation, and local values on the child. A custom `UiPropertyValueSource` can be supplied when constructing or creating the binding; `UiPropertyValueSource.TemplateBinding` is the weaker source that the child's Aspect values override. `Detach` always removes the owner subscription; when the target source is not `TemplateBinding`, it also clears that value source from the target. With the default source, `Detach` therefore removes the owner value from the target.
 
 `Attach` is single-use while the binding is attached. Calling it again before `Detach` throws `InvalidOperationException`. `Detach` is idempotent when the binding is not attached.
 
@@ -95,8 +95,8 @@ The default value source written to the target is `UiPropertyValueSource.Templat
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `Attach(Control owner)` | `void` | Attaches the binding to a template owner, copies the current owner value to the target, and starts listening for owner property changes. |
-| `Detach()` | `void` | Detaches the binding from its owner and stops listening for owner property changes. |
-| `Create(UiProperty sourceProperty, UIElement target, UiProperty targetProperty, UiPropertyValueSource targetSource = UiPropertyValueSource.TemplateBinding)` | `TemplateBinding` | Creates an untyped binding that reads and writes values through the untyped `UiProperty` API. The returned object is not a `TemplateBinding<T>`. |
+| `Detach()` | `void` | Detaches the binding from its owner, stops listening for owner property changes, and clears the target value when `TargetSource` is not `TemplateBinding`. |
+| `Create(UiProperty sourceProperty, UIElement target, UiProperty targetProperty, UiPropertyValueSource targetSource = UiPropertyValueSource.TemplateOwnerBinding)` | `TemplateBinding` | Creates an untyped binding that reads and writes values through the untyped `UiProperty` API. The returned object is not a `TemplateBinding<T>`. |
 
 ## Exceptions
 

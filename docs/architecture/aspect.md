@@ -190,7 +190,7 @@ button.ComponentTemplateKey = "App.Button";
 
 Named component templates resolve from the same visible catalog. Direct `ComponentTemplate` wins over `ComponentTemplateKey`; later equal-type definitions win. Template bindings and token bindings are lifecycle-owned by `ComponentTemplateInstance`.
 
-`UiPropertyValueSource.TemplateBinding` is below child Aspect values. Framework chrome that explicitly projects an owner palette/value above a part's own Aspect uses the template-owned `TemplateOwnerBinding` source. This is not an Aspect authoring-origin band.
+Template bindings from the owner (`ComponentTemplateContext.Bind<T>`, markup `$owner.Property`) write the template-owned `TemplateOwnerBinding` source by default, which is above the part's own Aspect values, including the framework default Aspect. This follows WPF, where a `TemplateBinding` on a template part beats the part's style setters. `UiPropertyValueSource.TemplateBinding` is the weaker template source below child Aspect values. Neither is an Aspect authoring-origin band.
 
 ## Property-store precedence
 
