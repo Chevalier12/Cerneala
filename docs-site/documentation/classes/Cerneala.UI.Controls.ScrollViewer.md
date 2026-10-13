@@ -50,11 +50,36 @@ internal sealed class DocumentElement : UIElement
 }
 ```
 
+Give the viewer a background and a 1-unit border. The default template draws both and lays out the presenter and scroll bars inside the border:
+
+```csharp
+using Cerneala.Drawing;
+using Cerneala.UI.Controls;
+using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
+
+ScrollViewer viewer = new()
+{
+    Background = new SolidColorBrush(new Color(22, 28, 32)),
+    BorderBrush = new SolidColorBrush(new Color(44, 55, 62)),
+    BorderThickness = new Thickness(1),
+    VerticalScrollBarVisibility = ScrollBarVisibility.Visible
+};
+
+viewer.Measure(new MeasureContext(new LayoutSize(100, 100)));
+viewer.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+
+// viewer.Presenter.ArrangedBounds         == (1, 1, 86, 98)
+// viewer.VerticalScrollBar.ArrangedBounds == (87, 1, 12, 98)
+```
+
 ## Remarks
 
 `ScrollViewer` requires three active template parts: `PART_ScrollContentPresenter`, `PART_HorizontalScrollBar`, and `PART_VerticalScrollBar`. The presenter stores the scroll offsets, extent, and viewport values exposed through `ScrollInfo`; the active scroll bars mirror those values during layout and when offsets change. The public `Presenter`, `HorizontalScrollBar`, and `VerticalScrollBar` properties apply the current template and return those active parts.
 
 The default component template uses a two-row, two-column `Grid`: the presenter occupies the star-sized upper-left cell, the vertical scroll bar occupies the auto-sized right cell, and the horizontal scroll bar occupies the auto-sized bottom cell. Assigning `null` to `ComponentTemplate` clears the local override and restores this default template.
+
+The default template's root is a `Border` that wraps that grid. The viewer's `Background`, `BorderBrush`, and `BorderThickness` are relayed to this border with `UiPropertyValueSource.TemplateOwnerBinding`, so they win over `Aspect` rules that target `Border`. The border fills `Background` over the whole viewer, strokes `BorderBrush` with the largest side of `BorderThickness`, and arranges the grid inset by `BorderThickness` on each side. The presenter and scroll bars therefore sit inside the border, and the presenter's viewport clip stays inside it too. With the default values (`null`, `null`, `Thickness.Zero`) the template draws nothing extra and adds no inset. `Padding` is not used by the default template. A custom `ComponentTemplate` decides itself whether to use these properties.
 
 The default scroll policy disables horizontal scrolling and enables automatic vertical scrolling. `HorizontalScrollBarVisibility` defaults to `ScrollBarVisibility.Disabled`; `VerticalScrollBarVisibility` defaults to `ScrollBarVisibility.Auto`.
 
@@ -62,7 +87,7 @@ During measure and arrange, the control reevaluates whether each scroll bar is n
 
 Template replacement unsubscribes the old presenter and scroll bars, releases content ownership from the old presenter, then connects and synchronizes the new parts. Missing parts and wrong part types fail during template application with the part name and expected type. Old parts cannot continue changing viewer offsets after a swap.
 
-Visibility changes performed during convergence normally enqueue layout work along the visual ancestor chain. The viewer consumes measure and arrange entries only from the changed scroll bar through its own template boundary, because that hierarchy is laid out synchronously. Work for parents outside the viewer remains scheduled so an outer grid or panel can recompute the viewer's slot. Render, hit-test, input, and other invalidations remain intact; the next unchanged frame therefore has no stale internal layout work.
+Visibility changes performed during convergence normally enqueue layout work along the visual ancestor chain. The viewer consumes measure and arrange entries only from the changed scroll bar through its own template boundary, because that hierarchy is laid out synchronously. It also increments the layout version of every template element between the scroll bar and the viewer, so the default `Border` and its `Grid` (or any deeper custom template nesting) re-arrange the newly shown or hidden bar. Work for parents outside the viewer remains scheduled so an outer grid or panel can recompute the viewer's slot. Render, hit-test, input, and other invalidations remain intact; the next unchanged frame therefore has no stale internal layout work.
 
 Mouse wheel input scrolls vertically by `48` units per wheel event sign when vertical scrolling is not disabled. The event is marked handled only when the vertical offset actually changes.
 
@@ -74,7 +99,7 @@ Offsets are clamped by `ScrollContentPresenter` to the valid `0..(extent - viewp
 
 | Name | Description |
 | --- | --- |
-| `ScrollViewer()` | Registers mouse wheel handling and applies the default grid component template containing the three required parts. |
+| `ScrollViewer()` | Registers mouse wheel handling and applies the default component template: a `Border` around a grid containing the three required parts. |
 
 ## Fields
 
@@ -125,9 +150,10 @@ Offsets are clamped by `ScrollContentPresenter` to the valid `0..(extent - viewp
 | Direction button scroll amount | `48` layout units per click or repeat tick |
 | Horizontal scrolling default | `Disabled` |
 | Vertical scrolling default | `Auto` |
-| Presenter available size | The star-sized grid cell remaining after visible or hidden auto-sized scroll-bar cells reserve space. |
-| Desired size with finite available size | Uses the template grid's finite desired size. |
-| Desired size with unbounded available size | Star grid tracks use child desired sizes, preserving the presenter's content-driven desired size plus visible/reserved bars. |
+| Border inset | The template grid is arranged inside the viewer's `BorderThickness` on each side. |
+| Presenter available size | The star-sized grid cell remaining after the border inset and the visible or hidden auto-sized scroll-bar cells reserve space. |
+| Desired size with finite available size | Uses the template grid's finite desired size plus `BorderThickness`. |
+| Desired size with unbounded available size | Star grid tracks use child desired sizes, preserving the presenter's content-driven desired size plus visible/reserved bars and `BorderThickness`. |
 
 ## Property Information
 

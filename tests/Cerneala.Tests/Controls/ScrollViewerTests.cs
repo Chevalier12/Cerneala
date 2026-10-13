@@ -1,3 +1,4 @@
+using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Controls.Templates;
@@ -5,6 +6,7 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
 
 namespace Cerneala.Tests.Controls;
 
@@ -283,6 +285,47 @@ public sealed class ScrollViewerTests
     }
 
     [Fact]
+    public void DefaultTemplateRendersOwnerBackgroundAndBorderBrush()
+    {
+        SolidColorBrush background = new(Color.FromArgb(0xFF, 1, 2, 3));
+        SolidColorBrush borderBrush = new(Color.FromArgb(0xFF, 4, 5, 6));
+        ScrollViewer viewer = new()
+        {
+            Background = background,
+            BorderBrush = borderBrush,
+            BorderThickness = new Thickness(1),
+            Content = new FixedElement(new LayoutSize(20, 20))
+        };
+        UIRoot root = new(100, 100);
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
+
+        Assert.Contains(commands, command => command.Kind == DrawCommandKind.FillRectangle && ReferenceEquals(command.Brush, background));
+        Assert.Contains(commands, command => command.Kind == DrawCommandKind.DrawRectangle && ReferenceEquals(command.Brush, borderBrush));
+    }
+
+    [Fact]
+    public void DefaultTemplateInsetsPartsByOwnerBorderThickness()
+    {
+        ScrollViewer viewer = new()
+        {
+            BorderThickness = new Thickness(1, 2, 3, 4),
+            Content = new FixedElement(new LayoutSize(20, 20)),
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Visible
+        };
+
+        viewer.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        viewer.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+
+        Assert.Equal(new LayoutRect(1, 2, 84, 82), viewer.Presenter.ArrangedBounds);
+        Assert.Equal(new LayoutRect(85, 2, 12, 82), viewer.VerticalScrollBar.ArrangedBounds);
+        Assert.Equal(new LayoutRect(1, 84, 84, 12), viewer.HorizontalScrollBar.ArrangedBounds);
+    }
+
+    [Fact]
     public void AutoScrollbarsReevaluateWhenOneScrollbarConsumesViewportSpace()
     {
         ScrollViewer viewer = new()
@@ -428,6 +471,30 @@ public sealed class ScrollViewerTests
         Assert.Equal(120, viewer.ScrollInfo.ExtentHeight);
         Assert.Equal(100, viewer.ScrollInfo.ViewportHeight);
         Assert.True(viewer.IsVerticalScrollBarVisible);
+    }
+
+    [Fact]
+    public void AutoScrollbarRevealedAfterInitialLayoutIsArrangedInsideOwnerBorder()
+    {
+        UIRoot root = new(100, 100);
+        StackPanel content = new();
+        ScrollViewer viewer = new()
+        {
+            BorderThickness = new Thickness(1),
+            Content = content,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+        Assert.False(viewer.IsVerticalScrollBarVisible);
+
+        content.VisualChildren.Add(new FixedElement(new LayoutSize(80, 60)));
+        content.VisualChildren.Add(new FixedElement(new LayoutSize(80, 60)));
+        root.ProcessFrame();
+
+        Assert.True(viewer.IsVerticalScrollBarVisible);
+        Assert.Equal(new LayoutRect(1, 1, 86, 98), viewer.Presenter.ArrangedBounds);
+        Assert.Equal(new LayoutRect(87, 1, 12, 98), viewer.VerticalScrollBar.ArrangedBounds);
     }
 
     [Fact]

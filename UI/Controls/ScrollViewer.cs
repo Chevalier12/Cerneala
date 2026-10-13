@@ -282,7 +282,13 @@ public class ScrollViewer : Control
         }
 
         scrollBar.Visibility = visibility;
-        TemplateRoot.IncrementLayoutVersion();
+        for (UIElement? current = scrollBar.VisualParent;
+            current is not null && !ReferenceEquals(current, this);
+            current = current.VisualParent)
+        {
+            current.IncrementLayoutVersion();
+        }
+
         UIRoot? root = scrollBar.Root;
         if (root is null)
         {

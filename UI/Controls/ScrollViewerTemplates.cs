@@ -1,5 +1,6 @@
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Controls.Templates;
+using Cerneala.UI.Core;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
 
@@ -20,11 +21,11 @@ internal static class ScrollViewerTemplates
             Orientation = Orientation.Vertical,
             Visibility = Visibility.Collapsed
         };
-        Grid root = new();
-        root.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
-        root.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
-        root.RowDefinitions.Add(new RowDefinition(GridLength.Star));
-        root.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        Grid grid = new();
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Star));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 
         Grid.SetRow(presenter, 0);
         Grid.SetColumn(presenter, 0);
@@ -32,13 +33,18 @@ internal static class ScrollViewerTemplates
         Grid.SetColumn(verticalScrollBar, 1);
         Grid.SetRow(horizontalScrollBar, 1);
         Grid.SetColumn(horizontalScrollBar, 0);
-        root.VisualChildren.Add(presenter);
-        root.VisualChildren.Add(verticalScrollBar);
-        root.VisualChildren.Add(horizontalScrollBar);
+        grid.VisualChildren.Add(presenter);
+        grid.VisualChildren.Add(verticalScrollBar);
+        grid.VisualChildren.Add(horizontalScrollBar);
+        Border root = new() { Child = grid };
 
         context.RequirePart("PART_ScrollContentPresenter", presenter);
         context.RequirePart("PART_HorizontalScrollBar", horizontalScrollBar);
         context.RequirePart("PART_VerticalScrollBar", verticalScrollBar);
+        const UiPropertyValueSource OwnerBindingSource = UiPropertyValueSource.TemplateOwnerBinding;
+        context.Bind(Control.BackgroundProperty, root, Control.BackgroundProperty, OwnerBindingSource);
+        context.Bind(Control.BorderBrushProperty, root, Control.BorderBrushProperty, OwnerBindingSource);
+        context.Bind(Control.BorderThicknessProperty, root, Control.BorderThicknessProperty, OwnerBindingSource);
         return root;
     });
 }
