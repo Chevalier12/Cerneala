@@ -17,12 +17,10 @@
     <VSSDKTargetPlatformRegRootSuffix>Exp</VSSDKTargetPlatformRegRootSuffix>
     <ServerPackageVersion>$(Version)</ServerPackageVersion>
     <BundledServerOutput>$(MSBuildProjectDirectory)\obj\$(Configuration)\$(TargetFramework)\bundled-server\</BundledServerOutput>
-    <LanguageServerProjectFullPath>$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', '..\Cerneala.LanguageServer\Cerneala.LanguageServer.csproj'))</LanguageServerProjectFullPath>
-    <BundledServerExtensionsPath>$(MSBuildProjectDirectory)\obj\$(Configuration)\$(TargetFramework)\bundled-server-restore\</BundledServerExtensionsPath>
+    <BundledServerArtifacts>$(MSBuildProjectDirectory)\obj\$(Configuration)\$(TargetFramework)\bundled-server-artifacts\</BundledServerArtifacts>
     <PreviewHostPackageVersion>$(Version)</PreviewHostPackageVersion>
     <BundledPreviewHostOutput>$(MSBuildProjectDirectory)\obj\$(Configuration)\$(TargetFramework)\bundled-preview-host\</BundledPreviewHostOutput>
-    <PreviewHostProjectFullPath>$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', '..\Cerneala.PreviewHost\Cerneala.PreviewHost.csproj'))</PreviewHostProjectFullPath>
-    <BundledPreviewHostExtensionsPath>$(MSBuildProjectDirectory)\obj\$(Configuration)\$(TargetFramework)\bundled-preview-host-restore\</BundledPreviewHostExtensionsPath>
+    <BundledPreviewHostArtifacts>$(MSBuildProjectDirectory)\obj\$(Configuration)\$(TargetFramework)\bundled-preview-host-artifacts\</BundledPreviewHostArtifacts>
   </PropertyGroup>
 
   <ItemGroup>
@@ -70,12 +68,16 @@
     </VSCTCompile>
   </ItemGroup>
 
+  <!-- The bundled publishes pass global properties that flow to every referenced
+       project. Their own artifacts tree keeps that second build of Cerneala.csproj,
+       Cerneala.Backends.SdlGpu and the rest out of the solution's obj folders,
+       which the solution build writes concurrently. -->
   <Target Name="PublishBundledServer" BeforeTargets="GetVsixSourceItems" Condition="'$(DesignTimeBuild)' != 'true'">
     <MSBuild
       Projects="..\Cerneala.LanguageServer\Cerneala.LanguageServer.csproj"
       Targets="Restore;Publish"
       BuildInParallel="false"
-      Properties="Configuration=$(Configuration);RuntimeIdentifier=win-x64;SelfContained=true;PublishDir=$(BundledServerOutput);ProjectToOverrideProjectExtensionsPath=$(LanguageServerProjectFullPath);ProjectExtensionsPathForSpecifiedProject=$(BundledServerExtensionsPath)" />
+      Properties="Configuration=$(Configuration);RuntimeIdentifier=win-x64;SelfContained=true;PublishDir=$(BundledServerOutput);UseArtifactsOutput=true;ArtifactsPath=$(BundledServerArtifacts)" />
     <ItemGroup>
       <_BundledServer Include="$(BundledServerOutput)**\*" Exclude="$(BundledServerOutput)**\*.pdb" />
       <VSIXSourceItem Include="@(_BundledServer)">
@@ -89,7 +91,7 @@
       Projects="..\Cerneala.PreviewHost\Cerneala.PreviewHost.csproj"
       Targets="Restore;Publish"
       BuildInParallel="false"
-      Properties="Configuration=$(Configuration);RuntimeIdentifier=win-x64;SelfContained=true;PublishDir=$(BundledPreviewHostOutput);ProjectToOverrideProjectExtensionsPath=$(PreviewHostProjectFullPath);ProjectExtensionsPathForSpecifiedProject=$(BundledPreviewHostExtensionsPath)" />
+      Properties="Configuration=$(Configuration);RuntimeIdentifier=win-x64;SelfContained=true;PublishDir=$(BundledPreviewHostOutput);UseArtifactsOutput=true;ArtifactsPath=$(BundledPreviewHostArtifacts)" />
     <ItemGroup>
       <_BundledPreviewHost Include="$(BundledPreviewHostOutput)**\*" Exclude="$(BundledPreviewHostOutput)**\*.pdb" />
       <VSIXSourceItem Include="@(_BundledPreviewHost)">
