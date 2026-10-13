@@ -39,7 +39,11 @@ and does not draw; a changed rectangle only schedules render and hit-test work.
      `Subtree` entries, and clears `Propagated` entries without measuring them;
    - after measuring an element whose desired size changed, and which is not a
      layout boundary, enqueues its parent as a `Required` entry and marks it
-     `Measure | Arrange`, so a later pass of the same phase measures it.
+     `Measure | Arrange`, so a later pass of the same phase measures it. It
+     also invalidates the parent's arrange cache (`UIElement.InvalidateArrangeCache`)
+     and keeps its slot. An ancestor that arranges the parent with the same slot
+     then runs the parent's `ArrangeCore`, instead of reusing the stale result and
+     marking the parent as already arranged in this pass.
 3. **Constraint.** `LayoutManager.GetAvailableSize` (`LayoutManager.cs:119-145`)
    gives the root and its direct children the viewport size. Any other element
    gets the constraint it was last measured with, because its parent owns that
@@ -136,6 +140,9 @@ Test paths are under `tests/Cerneala.Tests/`.
   `UI/Layout/LayoutManagerTests.cs:DirtyMeasureBypassesParentMeasureCacheWhenChildLayoutChanges`,
   `UI/Layout/LayoutManagerTests.cs:StableChildDesiredSizeDoesNotRemeasureAncestors`,
   `UI/Layout/LayoutManagerTests.cs:DirectParentInvalidationIsNotPrunedByStableChildMeasure`.
+- That parent is arranged again in the same frame, also when a sibling's change
+  makes its own parent arrange it first with the same slot. Test:
+  `UI/Layout/SiblingLayoutSameFrameRegressionTests.cs:AutoColumnChildIsRearrangedWhenGridSiblingChangesInTheSameFrame`.
 - A failed measure keeps the element dirty and queued. Test:
   `UI/Layout/LayoutManagerTests.cs:FailedMeasureKeepsDirtyFlagsAndQueue`.
   A failed arrange: netestat.
