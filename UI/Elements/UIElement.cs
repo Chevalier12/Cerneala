@@ -903,6 +903,12 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         oldestMeasureLayoutVersion = -1;
     }
 
+    // Keeps LastArrangeFinalRect: LayoutManager.GetFinalRect reuses it as the element's slot.
+    internal void InvalidateArrangeCache()
+    {
+        LastArrangeLayoutVersion = -1;
+    }
+
     public LayoutRect Arrange(ArrangeContext context)
     {
         if (LastArrangeFinalRect == context.FinalRect &&

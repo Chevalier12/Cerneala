@@ -373,6 +373,9 @@ public sealed class UiFrameScheduler
                     element.VisualParent is Elements.UIElement parent)
                 {
                     parent.DirtyState.Mark(InvalidationFlags.Measure | InvalidationFlags.Arrange);
+                    // The parent's LayoutVersion is unchanged, so an ancestor that arranges it with the
+                    // same slot would otherwise reuse the stale arrange and mark it as already arranged.
+                    parent.InvalidateArrangeCache();
                     layoutQueue.RequireMeasure(parent);
                     layoutQueue.RequireArrange(parent);
                 }
