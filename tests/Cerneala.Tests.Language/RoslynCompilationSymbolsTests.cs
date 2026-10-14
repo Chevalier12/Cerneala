@@ -143,6 +143,37 @@ public sealed class RoslynCompilationSymbolsTests
         return [new(compilation), new(symbols), new(type)];
     }
 
+    [Theory]
+    [InlineData("Fixture.Base")]
+    [InlineData("System.String")]
+    public void ReleasedAdapterDoesNotKeepItsCompilationAliveThroughSharedMetadataTypes(string metadataName)
+    {
+        (CSharpCompilation replacement, WeakReference replaced) = CreateReplacedAdapter(metadataName);
+        for (int attempt = 0; attempt < 3 && replaced.IsAlive; attempt++)
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+        }
+
+        Assert.False(replaced.IsAlive, "A released adapter kept its replaced Compilation alive.");
+        GC.KeepAlive(replacement);
+    }
+
+    // The replacement reuses the original's metadata symbols, so they stay alive
+    // with it. The released adapter must not stay reachable through them.
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static (CSharpCompilation Replacement, WeakReference Replaced) CreateReplacedAdapter(string metadataName)
+    {
+        CSharpCompilation original = CreateCompilation();
+        RoslynCompilationSymbols symbols = new(original);
+        Assert.NotNull(symbols.FindType(metadataName));
+        CSharpCompilation replacement = original.ReplaceSyntaxTree(original.SyntaxTrees.Single(),
+            CSharpSyntaxTree.ParseText("namespace Fixture { public class Base { } }", path: "Fixture.cs"));
+        Assert.NotNull(replacement.GetTypeByMetadataName("System.String"));
+        return (replacement, new WeakReference(original));
+    }
+
     private static CSharpCompilation CreateCompilation()
     {
         CSharpCompilation compilation = CSharpCompilation.Create("SymbolAdapterFixture",

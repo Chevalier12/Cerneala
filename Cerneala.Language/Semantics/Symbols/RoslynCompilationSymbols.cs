@@ -11,8 +11,7 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
     private const int TypeNameCacheCapacity = 256;
     private readonly Compilation compilation;
     private readonly Lazy<IReadOnlyList<ILanguageTypeSymbol>> allTypes;
-    private readonly ConditionalWeakTable<ITypeSymbol, RoslynTypeSymbol> typeSymbols = new();
-    private readonly ConditionalWeakTable<ITypeSymbol, RoslynTypeSymbol>.CreateValueCallback createTypeSymbol;
+    private readonly ConditionalWeakTable<ITypeSymbol, WeakReference<RoslynTypeSymbol>> typeSymbols = new();
     private readonly Dictionary<string, RoslynTypeSymbol?> typeNames = new(StringComparer.Ordinal);
     private readonly Queue<string> typeNameOrder = new();
 
@@ -20,7 +19,6 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
     {
         this.compilation = compilation ?? throw new ArgumentNullException(nameof(compilation));
         Version = version;
-        createTypeSymbol = symbol => new RoslynTypeSymbol(this, symbol);
         allTypes = new Lazy<IReadOnlyList<ILanguageTypeSymbol>>(CreateAllTypes, LazyThreadSafetyMode.ExecutionAndPublication);
     }
 
@@ -131,7 +129,29 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
 
     // Roslyn type symbols are immutable. Reference identity keeps tuple names and
     // constructed/annotated types distinct; weak keys do not retain transient types.
-    private RoslynTypeSymbol WrapType(ITypeSymbol symbol) => typeSymbols.GetValue(symbol, createTypeSymbol);
+    // Values are weak too: a wrapper reaches this table through its owner, and a
+    // metadata key shared with a replacement compilation would otherwise keep this
+    // adapter and its replaced Compilation alive.
+    private RoslynTypeSymbol WrapType(ITypeSymbol symbol)
+    {
+        WeakReference<RoslynTypeSymbol> reference = typeSymbols.GetValue(
+            symbol, static _ => new WeakReference<RoslynTypeSymbol>(null!));
+        if (reference.TryGetTarget(out RoslynTypeSymbol? wrapper))
+        {
+            return wrapper;
+        }
+
+        lock (reference)
+        {
+            if (!reference.TryGetTarget(out wrapper))
+            {
+                wrapper = new RoslynTypeSymbol(this, symbol);
+                reference.SetTarget(wrapper);
+            }
+
+            return wrapper;
+        }
+    }
 
     private IReadOnlyList<ILanguageTypeSymbol> CreateAllTypes()
     {
