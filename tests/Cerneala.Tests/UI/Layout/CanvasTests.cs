@@ -86,6 +86,41 @@ public sealed class CanvasTests
         Assert.Equal(new LayoutRect(12, 8, 20, 10), child.ArrangedBounds);
     }
 
+    [Theory]
+    [InlineData(1f, 3f, 13f)]
+    [InlineData(2f, 1.5f, 6.5f)]
+    public void LayoutRoundingKeepsChildrenContiguousWhenTheCanvasOriginIsOnAHalfDevicePixel(float scale, float childWidth, float slotWidth)
+    {
+        // A canvas of 12 device pixels centered in a slot one device pixel wider starts half a device pixel in;
+        // its own bounds round to 0..12 device pixels. Its four children of 3 device pixels touch each other.
+        Canvas canvas = new()
+        {
+            Width = childWidth * 4,
+            Height = 10,
+            HorizontalAlignment = HorizontalAlignment.Center
+        };
+        FixedElement[] cells = new FixedElement[4];
+        for (int i = 0; i < cells.Length; i++)
+        {
+            cells[i] = new FixedElement(new LayoutSize(childWidth, 10));
+            Canvas.SetLeft(cells[i], childWidth * i);
+            canvas.VisualChildren.Add(cells[i]);
+        }
+
+        LayoutRounding rounding = LayoutRounding.ForScale(scale);
+        canvas.Measure(new MeasureContext(new LayoutSize(slotWidth, 10), rounding));
+        canvas.Arrange(new ArrangeContext(new LayoutRect(0, 0, slotWidth, 10), rounding));
+
+        Assert.Equal("0..12", GetHorizontalDeviceEdges([canvas], scale));
+        Assert.Equal("0..3, 3..6, 6..9, 9..12", GetHorizontalDeviceEdges(cells, scale));
+    }
+
+    private static string GetHorizontalDeviceEdges(IEnumerable<UIElement> elements, float scale)
+    {
+        return string.Join(", ", elements.Select(element =>
+            $"{element.ArrangedBounds.X * scale}..{(element.ArrangedBounds.X + element.ArrangedBounds.Width) * scale}"));
+    }
+
     private sealed class FixedElement(LayoutSize size) : UIElement
     {
         protected override LayoutSize MeasureCore(MeasureContext context)

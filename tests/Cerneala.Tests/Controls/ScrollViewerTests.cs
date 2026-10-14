@@ -580,6 +580,32 @@ public sealed class ScrollViewerTests
         Assert.Equal(1, second.NoWorkFrames);
     }
 
+    [Theory]
+    [InlineData(0f, 1f)]
+    [InlineData(0.5f, 2f)]
+    [InlineData(0.4f, 1f)]
+    [InlineData(0.3f, 1.5f)]
+    public void StretchedViewerWithFractionalMarginSettlesAfterLayout(float marginTop, float scale)
+    {
+        // A top margin of 0.4 at scale 1 leaves 99.6 pixels, which rounds to 100 when the viewer is arranged.
+        // Measure must see the same 100, or the viewport flips between 99.6 and 100 on every frame.
+        UIRoot root = new(100, 100, scale);
+        ScrollViewer viewer = new()
+        {
+            Margin = new Thickness(0, marginTop, 0, 0),
+            Content = new FixedElement(new LayoutSize(80, 100)),
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+
+        FrameStats second = root.ProcessFrame();
+
+        Assert.Equal(0, second.MeasuredElements);
+        Assert.Equal(0, second.ArrangedElements);
+        Assert.False(root.Scheduler.HasWork);
+    }
+
     [Fact]
     public void ScrollBarConvergenceDoesNotConsumeExternalAncestorArrangeWork()
     {
