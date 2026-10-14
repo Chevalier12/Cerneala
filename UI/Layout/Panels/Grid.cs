@@ -144,16 +144,17 @@ public class Grid : Panel
         {
             // Some first-axis children were measured before their cross size was final. Size the first axis
             // again from their measures at the resolved cross sizes, so its stars share what the final measure leaves.
-            // Its content-sized definitions keep their sizes and only grow, as in the final measure: the second
-            // axis was already measured against them. The cyclic passes above already start with a re-size of
-            // the columns, which are then the first axis.
+            // The sizes that children in one definition gave it stay minimums and only grow, as in the final
+            // measure: the second axis was already measured against them. The shares of spanning children and
+            // of stars on a bounded axis are dropped and shared again from the new sizes. The cyclic passes above
+            // already start with a re-size of the columns, which are then the first axis.
             if (rowsFirst)
             {
-                ClearStarShares(rows, rowSizes, context.AvailableSize.Height);
+                rowSizes = ResolveSingleDefinitionSizes(columnAxis: false, columns, rows, context.AvailableSize.Height);
             }
             else
             {
-                ClearStarShares(columns, columnSizes, context.AvailableSize.Width);
+                columnSizes = ResolveSingleDefinitionSizes(columnAxis: true, columns, rows, context.AvailableSize.Width);
             }
 
             MeasureContentSizedDefinitions(context, columnAxis: !rowsFirst, columns, columnSizes, rows, rowSizes, crossAxisResolved: true);
@@ -386,22 +387,12 @@ public class Grid : Panel
         return sizes;
     }
 
-    // Star definitions on a bounded axis get a share of what is left, so their shares are cleared before the
-    // axis is shared again. On an unbounded axis they are content-sized and keep their sizes.
-    private static void ClearStarShares(GridLength[] lengths, float[] sizes, float availableSize)
+    // The pixel sizes of an axis, and the sizes its children in one definition give it at their current measures.
+    private float[] ResolveSingleDefinitionSizes(bool columnAxis, GridLength[] columns, GridLength[] rows, float availableSize)
     {
-        if (float.IsPositiveInfinity(availableSize))
-        {
-            return;
-        }
-
-        for (int i = 0; i < lengths.Length; i++)
-        {
-            if (lengths[i].IsStar)
-            {
-                sizes[i] = 0;
-            }
-        }
+        float[] sizes = ResolveFixedSizes(columnAxis ? columns : rows);
+        ExpandContentSizedDefinitions(columnAxis, columns, rows, sizes, availableSize, maxSpan: 1);
+        return sizes;
     }
 
     // As in WPF, children in one definition size it first. Spanning children follow, narrowest span first,
@@ -411,11 +402,12 @@ public class Grid : Panel
         GridLength[] columns,
         GridLength[] rows,
         float[] sizes,
-        float availableSize)
+        float availableSize,
+        int maxSpan = int.MaxValue)
     {
         GridLength[] lengths = columnAxis ? columns : rows;
         int span = 1;
-        while (span <= lengths.Length)
+        while (span <= Math.Min(maxSpan, lengths.Length))
         {
             int nextSpan = int.MaxValue;
             foreach (UIElement child in VisualChildren)

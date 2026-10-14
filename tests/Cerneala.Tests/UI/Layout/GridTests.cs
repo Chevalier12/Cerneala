@@ -590,6 +590,33 @@ public sealed class GridTests
     }
 
     [Fact]
+    public void ChildSpanningAutoColumnsIsSharedAgainAfterSingleColumnChildGrowsAtResolvedHeight()
+    {
+        Grid grid = new();
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Pixels(50)));
+        WrappingElement wrapping = new(vertical: true);
+        Grid.SetRowSpan(wrapping, 2);
+        FixedElement spanning = new(new LayoutSize(100, 20));
+        Grid.SetColumnSpan(spanning, 2);
+        FixedElement marker = new(LayoutSize.Zero);
+        Grid.SetColumn(marker, 1);
+        grid.VisualChildren.Add(wrapping);
+        grid.VisualChildren.Add(spanning);
+        grid.VisualChildren.Add(marker);
+
+        LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(300, 300)));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 300, 300)));
+
+        Assert.Equal(new LayoutSize(120, 70), desired);
+        Assert.Equal(new LayoutRect(0, 0, 120, 70), wrapping.ArrangedBounds);
+        Assert.Equal(new LayoutRect(0, 0, 120, 20), spanning.ArrangedBounds);
+        Assert.Equal(new LayoutRect(120, 0, 0, 20), marker.ArrangedBounds);
+    }
+
+    [Fact]
     public void ChildSpanningAutoAndStarColumnsOnInfiniteWidthSizesOnlyTheStarColumn()
     {
         Grid grid = new();
