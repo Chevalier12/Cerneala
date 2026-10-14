@@ -952,10 +952,15 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
             ? context.FinalRect
             : ApplyMarginAndAlignment(context.FinalRect);
 
+        // ArrangeCore starts at the rounded origin, where the element's own rounded bounds start, as WPF rounds an
+        // element's offset and arranges its children relative to it. From an unrounded origin such as 0.5, each
+        // child would round on its own (ties to even) and children that should touch would leave gaps or overlap.
         LayoutRect arranged = !UIElementVisibility.ParticipatesInLayout(this)
             ? new LayoutRect(context.FinalRect.X, context.FinalRect.Y, 0, 0)
-            : ArrangeCore(new ArrangeContext(finalRect, context.Rounding));
-        UnroundedArrangedLocation = arranged.Location;
+            : ArrangeCore(new ArrangeContext(
+                finalRect with { X = context.Rounding.Round(finalRect.X), Y = context.Rounding.Round(finalRect.Y) },
+                context.Rounding));
+        UnroundedArrangedLocation = finalRect.Location;
         ArrangeRounding = context.Rounding;
         arranged = context.Rounding.Round(arranged);
         SetArrangedBounds(arranged);
