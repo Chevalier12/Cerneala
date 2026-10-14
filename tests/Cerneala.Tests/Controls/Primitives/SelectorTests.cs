@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
+using Cerneala.UI.Core;
 using Cerneala.UI.Data;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
@@ -244,6 +245,49 @@ public sealed class SelectorTests
     }
 
     [Fact]
+    public void RemovingSelectedListBoxItemKeepsEachItemContent()
+    {
+        UIRoot root = new(100, 100);
+        ListBoxItem first = new() { Content = "a" };
+        ListBoxItem second = new() { Content = "b" };
+        ListBoxItem third = new() { Content = "c" };
+        ListBox listBox = new();
+        listBox.SetItems(new[] { first, second, third });
+        root.VisualChildren.Add(listBox);
+        listBox.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        listBox.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+        listBox.SelectedIndex = 1;
+
+        listBox.Items.RemoveAt(1);
+        listBox.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        listBox.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+
+        Assert.Equal(-1, listBox.SelectedIndex);
+        Assert.Equal("a", first.Content);
+        Assert.Equal("c", third.Content);
+        Assert.False(first.IsSelected);
+        Assert.False(third.IsSelected);
+    }
+
+    [Fact]
+    public void NestedSelectionChangeReportsItemItReplaced()
+    {
+        RedirectingListBox listBox = new();
+        listBox.SetItems(new[] { "a", "b", "c" });
+        listBox.SelectedIndex = 0;
+        List<SelectionChangedEventArgs> raised = [];
+        listBox.SelectionChanged += (_, args) => raised.Add(args);
+
+        listBox.SelectedIndex = 1;
+
+        Assert.Equal(2, listBox.SelectedIndex);
+        SelectionChangedEventArgs nested = Assert.Single(raised, args => args.AddedItems.Contains("c"));
+        Assert.Equal(["b"], nested.RemovedItems);
+        SelectionChangedEventArgs outer = Assert.Single(raised, args => args.AddedItems.Contains("b"));
+        Assert.Equal(["a"], outer.RemovedItems);
+    }
+
+    [Fact]
     public void ReusedContainerClickSelectsCurrentSelectorOnly()
     {
         ListBoxItem shared = new();
@@ -296,6 +340,19 @@ public sealed class SelectorTests
         }
 
         return new InputFrame(previous, current, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []);
+    }
+
+    // Reacts to SelectedIndex 1 by selecting index 2 inside the property-change notification.
+    private sealed class RedirectingListBox : ListBox
+    {
+        protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
+        {
+            base.OnPropertyChanged(args);
+            if (ReferenceEquals(args.Property, SelectedIndexProperty) && SelectedIndex == 1)
+            {
+                SelectedIndex = 2;
+            }
+        }
     }
 
     private sealed class FixedElement(LayoutSize size) : UIElement

@@ -17,6 +17,7 @@ public class Selector : ItemsControl
     // before its item exists refers to no item, so item changes leave it unchanged.
     private object? selectedItem;
     private bool hasSelectedItem;
+    private bool changingSelectionForItems;
     private bool relocatingSelection;
 
     public Selector()
@@ -48,6 +49,9 @@ public class Selector : ItemsControl
     public object? SelectedItem => SelectedIndex >= 0 && SelectedIndex < ItemCount ? GetItemAt(SelectedIndex) : null;
 
     public SelectionModel SelectionModel => selectionModel;
+
+    // True while SelectedIndex changes because the items changed, not because a selection was made.
+    internal bool IsChangingSelectionForItems { get; private set; }
 
     protected internal override bool IsItemSelected(int index)
     {
@@ -103,7 +107,7 @@ public class Selector : ItemsControl
         {
             if (selectedIndex < index + removedCount)
             {
-                selectionModel.Clear();
+                ClearSelectionForItems();
             }
             else
             {
@@ -142,7 +146,7 @@ public class Selector : ItemsControl
             int selectedIndex = FindSelectedItem();
             if (selectedIndex < 0)
             {
-                selectionModel.Clear();
+                ClearSelectionForItems();
             }
             else
             {
@@ -172,9 +176,24 @@ public class Selector : ItemsControl
         return -1;
     }
 
+    // The selected item was removed or replaced.
+    private void ClearSelectionForItems()
+    {
+        changingSelectionForItems = true;
+        try
+        {
+            selectionModel.Clear();
+        }
+        finally
+        {
+            changingSelectionForItems = false;
+        }
+    }
+
     // The selected item moved to another index: SelectedIndex changes, but the selection does not.
     private void RelocateSelection(int index)
     {
+        changingSelectionForItems = true;
         relocatingSelection = true;
         try
         {
@@ -182,24 +201,44 @@ public class Selector : ItemsControl
         }
         finally
         {
+            changingSelectionForItems = false;
             relocatingSelection = false;
         }
     }
 
     private void CaptureSelectedItem()
     {
-        hasSelectedItem = SelectedIndex >= 0 && SelectedIndex < ItemCount;
-        selectedItem = hasSelectedItem ? GetItemAt(SelectedIndex) : null;
+        CaptureSelectedItem(SelectedIndex);
+    }
+
+    private void CaptureSelectedItem(int index)
+    {
+        hasSelectedItem = index >= 0 && index < ItemCount;
+        selectedItem = hasSelectedItem ? GetItemAt(index) : null;
     }
 
     private void OnSelectionChanged(object? sender, SelectionChangedEventArgs args)
     {
+        bool forItems = changingSelectionForItems;
         bool relocated = relocatingSelection;
+        changingSelectionForItems = false;
         relocatingSelection = false;
         object? removed = selectedItem;
         object? added = args.Change.NewIndex >= 0 && args.Change.NewIndex < ItemCount ? GetItemAt(args.Change.NewIndex) : null;
-        SetValue(SelectedIndexProperty, args.Change.NewIndex);
-        CaptureSelectedItem();
+
+        // A selection change nested in the SelectedIndex notification below replaces this new item.
+        CaptureSelectedItem(args.Change.NewIndex);
+        bool wasChangingSelectionForItems = IsChangingSelectionForItems;
+        IsChangingSelectionForItems = forItems;
+        try
+        {
+            SetValue(SelectedIndexProperty, args.Change.NewIndex);
+        }
+        finally
+        {
+            IsChangingSelectionForItems = wasChangingSelectionForItems;
+        }
+
         InvalidateContainer(args.Change.OldIndex);
         InvalidateContainer(args.Change.NewIndex);
         if (relocated)
@@ -215,7 +254,8 @@ public class Selector : ItemsControl
             added is null ? [] : [added]));
     }
 
-    // Realized containers keep their old indexes until the next layout pass, so an index past the current items has no item to prepare.
+    // Realized containers keep their old indexes until the next layout pass. A container whose item is no
+    // longer the item at its index is prepared for its new item by that pass, so only its own item is refreshed here.
     private void InvalidateContainer(int index)
     {
         if (index < 0 || index >= ItemCount || !ItemContainerGenerator.RealizedContainers.TryGetValue(index, out UIElement? container))
@@ -223,7 +263,13 @@ public class Selector : ItemsControl
             return;
         }
 
-        PrepareItemContainer(container, index, GetItemAt(index));
+        object? item = GetItemAt(index);
+        if (!ReferenceEquals(ItemContainerGenerator.GetItem(container), item))
+        {
+            return;
+        }
+
+        PrepareItemContainer(container, index, item);
         container.IncrementRenderVersion();
         container.Invalidate(InvalidationFlags.Render | InvalidationFlags.InputVisual, "Selection changed");
     }

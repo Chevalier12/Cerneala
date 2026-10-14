@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Items;
 using Cerneala.UI.Controls.Templates;
@@ -522,6 +523,32 @@ public sealed class ComboBoxTests
         Assert.True(comboBox.IsDropDownOpen);
         Assert.True(toggle.IsChecked);
         Assert.Equal([0, 1, 2, 3], RealizedSourceIndices(comboBox));
+    }
+
+    [Fact]
+    public void InsertingItemWhileDropDownIsOpenKeepsPreviewEditorText()
+    {
+        UIRoot root = new(300, 200);
+        ObservableCollection<string> items = new(["a", "b", "c", "d"]);
+        ComboBox comboBox = new() { IsEditable = true, Width = 180, ItemsSource = items };
+        root.VisualChildren.Add(comboBox);
+        root.ProcessFrame();
+        comboBox.SelectedIndex = 1;
+        TextBox editor = Assert.IsType<TextBox>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_EditableTextBox"]);
+        ElementInputBridge bridge = new();
+        bridge.FocusManager.Focus(comboBox, root.InputCache.EnsureCurrent(root));
+        DispatchKey(root, bridge, InputKey.Down, InputKey.LeftAlt);
+        DispatchKey(root, bridge, InputKey.End);
+        Assert.Equal("d", editor.Text);
+
+        items.Insert(0, "z");
+        root.ProcessFrame();
+
+        Assert.True(comboBox.IsDropDownOpen);
+        Assert.Equal(2, comboBox.SelectedIndex);
+        Assert.Equal("b", comboBox.Text);
+        Assert.Equal("d", editor.Text);
     }
 
     [Fact]

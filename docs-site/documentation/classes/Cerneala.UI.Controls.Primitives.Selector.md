@@ -50,7 +50,7 @@ The selection follows the selected item when the items change, through `Items` o
 | --- | --- |
 | Items are inserted or removed before the selected item. | `SelectedIndex` moves by the number of inserted or removed items. `SelectedItem` stays the same. |
 | Items are inserted or removed after the selected item. | Nothing changes. |
-| The selected item is removed or replaced. | The selection is cleared: `SelectedIndex` becomes `-1` and `SelectionChanged` reports the removed item in `RemovedItems`. |
+| The selected item is removed or replaced. | The selection is cleared: `SelectedIndex` becomes `-1` and `SelectionChanged` reports the removed item in `RemovedItems`. When the selected item was removed, `TabControl` then selects a neighbouring tab. |
 | The selected item, or items around it, are moved. | `SelectedIndex` becomes the selected item's new index. |
 | The items are reset (`SetItems`, `Items.Clear`, a new `ItemsSource`, or a reset notification). | If the previous selected item is still present (compared with `object.Equals`), `SelectedIndex` becomes its index, preferring the same index when that position still holds an equal item. Otherwise the selection is cleared. |
 
