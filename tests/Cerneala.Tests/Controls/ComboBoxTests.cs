@@ -1529,6 +1529,174 @@ public sealed class ComboBoxTests
             $"highlighted={highlighted} selected={comboBox.SelectedItem} text={comboBox.Text}");
     }
 
+    [Fact]
+    public void RemovingComboBoxItemBeforeHighlightedItemKeepsEachItemOnItsOwnContainer()
+    {
+        UIRoot root = new(200, 200);
+        ComboBoxItem a = new() { Content = "A" }, b = new() { Content = "B" }, c = new() { Content = "C" };
+        ComboBox comboBox = new();
+        comboBox.SetItems(new[] { a, b, c });
+        OpenAndHighlightLastContainer(root, comboBox);
+
+        comboBox.Items.RemoveAt(0);
+
+        Assert.Equal("A", a.Content);
+        Assert.NotSame(b, ItemContainerGenerator.GetItem(a));
+        Assert.False(ItemContainerGenerator.GetIsSelected(a));
+
+        root.ProcessFrame();
+
+        Assert.Same(b, comboBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Same(c, comboBox.ItemContainerGenerator.RealizedContainers[1]);
+        Assert.Equal([c], HighlightedContainers(comboBox));
+        Assert.Equal("A,B,C", $"{a.Content},{b.Content},{c.Content}");
+    }
+
+    [Fact]
+    public void RemovingStringItemBeforeHighlightedItemDoesNotPrepareRemovedItemContainer()
+    {
+        UIRoot root = new(200, 200);
+        ObservableCollection<string> items = ["a", "b", "c"];
+        ComboBox comboBox = new() { ItemsSource = items };
+        OpenAndHighlightLastContainer(root, comboBox);
+        UIElement containerOfA = comboBox.ItemContainerGenerator.RealizedContainers[0];
+
+        items.RemoveAt(0);
+
+        Assert.DoesNotContain(containerOfA, comboBox.ItemContainerGenerator.RealizedContainers.Values);
+        Assert.NotEqual("b", ItemContainerGenerator.GetItem(containerOfA));
+        Assert.False(ItemContainerGenerator.GetIsSelected(containerOfA));
+    }
+
+    [Fact]
+    public void MovingHighlightByKeyAfterRemovingComboBoxItemPreparesOnlyItsOwnContainers()
+    {
+        UIRoot root = new(200, 200);
+        ComboBoxItem a = new() { Content = "A" }, b = new() { Content = "B" }, c = new() { Content = "C" };
+        ComboBox comboBox = new();
+        comboBox.SetItems(new[] { a, b, c });
+        ElementInputBridge bridge = OpenAndHighlightLastContainer(root, comboBox);
+
+        comboBox.Items.RemoveAt(0);
+        DispatchKey(root, bridge, InputKey.Up);
+
+        Assert.Equal("A,B,C", $"{a.Content},{b.Content},{c.Content}");
+        Assert.False(ItemContainerGenerator.GetIsSelected(a));
+
+        root.ProcessFrame();
+
+        Assert.Equal([b], HighlightedContainers(comboBox));
+        Assert.Equal("A,B,C", $"{a.Content},{b.Content},{c.Content}");
+    }
+
+    [Fact]
+    public void MovingHighlightByKeyAfterInsertingComboBoxItemPreparesOnlyItsOwnContainers()
+    {
+        UIRoot root = new(200, 200);
+        ComboBoxItem a = new() { Content = "A" }, b = new() { Content = "B" }, c = new() { Content = "C" };
+        ComboBoxItem z = new() { Content = "Z" };
+        ComboBox comboBox = new();
+        comboBox.SetItems(new[] { a, b, c });
+        ElementInputBridge bridge = OpenAndHighlightLastContainer(root, comboBox);
+
+        comboBox.Items.Insert(0, z);
+        DispatchKey(root, bridge, InputKey.Up);
+
+        Assert.Equal("Z,A,B,C", $"{z.Content},{a.Content},{b.Content},{c.Content}");
+        Assert.False(ItemContainerGenerator.GetIsSelected(c));
+
+        root.ProcessFrame();
+
+        Assert.Equal([b], HighlightedContainers(comboBox));
+        Assert.Equal("Z,A,B,C", $"{z.Content},{a.Content},{b.Content},{c.Content}");
+    }
+
+    [Fact]
+    public void MovingHighlightByKeyAfterReplacingComboBoxItemDoesNotPrepareReplacedItemForNewItem()
+    {
+        UIRoot root = new(200, 200);
+        ComboBoxItem a = new() { Content = "A" }, b = new() { Content = "B" }, c = new() { Content = "C" };
+        ComboBoxItem d = new() { Content = "D" };
+        ComboBox comboBox = new();
+        comboBox.SetItems(new[] { a, b, c });
+        ElementInputBridge bridge = OpenAndHighlightLastContainer(root, comboBox);
+
+        comboBox.Items[0] = d;
+        DispatchKey(root, bridge, InputKey.Home);
+
+        Assert.Equal("A", a.Content);
+        Assert.NotSame(d, ItemContainerGenerator.GetItem(a));
+        Assert.False(ItemContainerGenerator.GetIsSelected(a));
+
+        root.ProcessFrame();
+
+        Assert.Same(d, comboBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Equal([d], HighlightedContainers(comboBox));
+        Assert.Equal("A,D", $"{a.Content},{d.Content}");
+    }
+
+    [Fact]
+    public void MovingHighlightByKeyAfterReplacingStringItemDoesNotPrepareReplacedItemContainer()
+    {
+        UIRoot root = new(200, 200);
+        ObservableCollection<string> items = ["a", "b", "c"];
+        ComboBox comboBox = new() { ItemsSource = items };
+        ElementInputBridge bridge = OpenAndHighlightLastContainer(root, comboBox);
+        UIElement containerOfA = comboBox.ItemContainerGenerator.RealizedContainers[0];
+
+        items[0] = "x";
+        DispatchKey(root, bridge, InputKey.Home);
+
+        Assert.Equal("a", ItemContainerGenerator.GetItem(containerOfA));
+        Assert.False(ItemContainerGenerator.GetIsSelected(containerOfA));
+
+        root.ProcessFrame();
+
+        Assert.Equal("x", HighlightedItems(comboBox));
+    }
+
+    [Fact]
+    public void MovingHighlightByKeyAfterReplacingItemsWithEqualValuesMovesHighlight()
+    {
+        UIRoot root = new(200, 200);
+        ComboBox comboBox = new();
+        comboBox.SetItems(new object[] { 1, 2, 3 });
+        ElementInputBridge bridge = OpenAndHighlightLastContainer(root, comboBox);
+
+        comboBox.SetItems(new object[] { 1, 2, 3 });
+        DispatchKey(root, bridge, InputKey.Up);
+        root.ProcessFrame();
+
+        UIElement second = comboBox.ItemContainerGenerator.RealizedContainers[1];
+        Assert.Equal([second], HighlightedContainers(comboBox));
+        Assert.Same(comboBox.GetItemAt(1), ItemContainerGenerator.GetItem(second));
+    }
+
+    // Opens the drop-down with F4 and highlights the last item with End.
+    private static ElementInputBridge OpenAndHighlightLastContainer(UIRoot root, ComboBox comboBox)
+    {
+        root.VisualChildren.Add(comboBox);
+        root.ProcessFrame();
+        ElementInputBridge bridge = new();
+        bridge.FocusManager.Focus(comboBox, root.InputCache.EnsureCurrent(root));
+        DispatchKey(root, bridge, InputKey.F4);
+        DispatchKey(root, bridge, InputKey.End);
+        root.ProcessFrame();
+        Assert.True(comboBox.IsDropDownOpen);
+        UIElement last = comboBox.ItemContainerGenerator.RealizedContainers[comboBox.ItemCount - 1];
+        Assert.Same(comboBox.GetItemAt(comboBox.ItemCount - 1), ItemContainerGenerator.GetItem(last));
+        Assert.Equal([last], HighlightedContainers(comboBox));
+        return bridge;
+    }
+
+    private static UIElement[] HighlightedContainers(ComboBox comboBox)
+    {
+        return [.. comboBox.ItemContainerGenerator.RealizedContainers
+            .OrderBy(pair => pair.Key)
+            .Select(pair => pair.Value)
+            .Where(ItemContainerGenerator.GetIsSelected)];
+    }
+
     private static ElementInputBridge OpenAndHighlightLastItem(UIRoot root, ComboBox comboBox)
     {
         root.VisualChildren.Add(comboBox);
