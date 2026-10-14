@@ -296,6 +296,11 @@ public class ComboBox : Selector
         ResetDropDownVirtualization();
     }
 
+    internal override void OnItemsPresenterPanelChanged()
+    {
+        ResetDropDownVirtualization();
+    }
+
     protected override void OnTemplateApplied(ComponentTemplateInstance? instance)
     {
         DetachTemplateParts();

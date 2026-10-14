@@ -180,6 +180,11 @@ public class ItemsPresenter : Control
             ReferenceEquals(args.Property, ItemTemplateProperty) ||
             ReferenceEquals(args.Property, ItemsPanelProperty))
         {
+            if (ReferenceEquals(args.Property, ItemsPanelProperty))
+            {
+                ItemsOwner?.OnItemsPresenterPanelChanged();
+            }
+
             itemsDirty = true;
             RefreshItems();
         }
