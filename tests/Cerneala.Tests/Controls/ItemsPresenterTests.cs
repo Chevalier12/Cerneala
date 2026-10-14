@@ -103,6 +103,28 @@ public sealed class ItemsPresenterTests
     }
 
     [Fact]
+    public void ClearingVirtualizationContextReleasesItFromVirtualizingStackPanel()
+    {
+        Cerneala.UI.Layout.Panels.VirtualizingStackPanel panel = new();
+        ItemsPresenter presenter = new()
+        {
+            Items = Enumerable.Range(0, 100).Select(index => new ItemElement(index.ToString())).ToArray(),
+            ItemsPanel = panel,
+            VirtualizationContext = new VirtualizationContext(100, 10, 30, 0, CacheItems: 1)
+        };
+        MeasureContext context = new(new LayoutSize(100, 30));
+        presenter.Measure(context);
+        Assert.Equal(4, panel.VisualChildren.Count);
+
+        presenter.VirtualizationContext = null;
+        Assert.Null(panel.VirtualizationContext);
+        presenter.MarkItemsDirty();
+        presenter.Measure(context);
+
+        Assert.Equal(100, panel.VisualChildren.Count);
+    }
+
+    [Fact]
     public void ChangingVirtualizationWindowKeepsOverlappingChildrenAttached()
     {
         LifecycleElement[] items = Enumerable.Range(0, 5)

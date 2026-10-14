@@ -82,6 +82,8 @@ Changing `Items`, `ItemTemplate`, or `ItemsPanel` marks the presentation dirty a
 
 Fixed-extent virtualization can be driven explicitly through `VirtualizationContext`. When owned by an `ItemsControl`, a panel implementing `IItemsVirtualizingPanel` instead receives automatic viewport updates from the surrounding `ScrollViewer`; `VirtualizingStackPanel` uses that path for variable-height items.
 
+When the presenter refreshes items with a non-null `VirtualizationContext` and its resolved panel is a `VirtualizingStackPanel`, it copies the context to that panel's `VirtualizationContext`. The panel keeps that copy only while the presenter supplies it. Setting the presenter's `VirtualizationContext` to `null` immediately sets the panel's `VirtualizationContext` to `null` too, and the panel returns to its own realization: it follows an automatic viewport when one was pushed, and otherwise realizes and stacks every item. For example, a presenter with 100 items and the context `new VirtualizationContext(100, 10, 30, 0, CacheItems: 1)` realizes 4 children in a `VirtualizingStackPanel` with no `ScrollViewer`; after `VirtualizationContext = null`, `MarkItemsDirty()`, and the next measure, the panel's `VirtualizationContext` is `null` and it realizes all 100. When the presenter copies its context to a different `VirtualizingStackPanel`, for example after `ItemsPanel` changes, the previous panel's copy is cleared in the same way. A context assigned directly to a panel that the presenter never wrote to is left unchanged.
+
 `MeasureCore` and `ArrangeCore` refresh dirty items before layout. During measure, the presenter also processes inherited properties and aspects for the realized subtree and removes completed layout work from the root queues. When the refresh in `ArrangeCore` changes the realized items, for example because a `ScrollViewer` clamps its offset during arrange after the item source shrank, the presenter first measures the panel root again with the panel's last available size, so newly realized items are arranged with their measured size instead of an empty one.
 
 ## Constructors
@@ -108,7 +110,7 @@ Fixed-extent virtualization can be driven explicitly through `VirtualizationCont
 | `PanelRoot` | `Panel?` | Gets the current panel root as `Cerneala.UI.Controls.Panel`, or `null` when the root is another layout panel type. |
 | `LayoutPanelRoot` | `Cerneala.UI.Layout.Panels.Panel?` | Gets the current underlying layout panel root, including custom panel types. |
 | `ItemsOwner` | `ItemsControl?` | Gets or sets the owning `ItemsControl`. When set, owner item container generation is used. |
-| `VirtualizationContext` | `VirtualizationContext?` | Gets or sets the context used to compute the realized item window. |
+| `VirtualizationContext` | `VirtualizationContext?` | Gets or sets the context used to compute the realized item window. Setting `null` also clears the copy this presenter wrote to its `VirtualizingStackPanel`. |
 | `CurrentRealizationWindow` | `RealizationWindow` | Gets the last computed realization window, or `RealizationWindow.Empty` before one is available. |
 
 ## Methods
