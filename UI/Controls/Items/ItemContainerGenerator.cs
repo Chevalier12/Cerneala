@@ -159,6 +159,21 @@ public sealed class ItemContainerGenerator
         }
     }
 
+    // The index this generator currently realizes the container for, or -1. Item changes re-key realized
+    // containers at once, while a moved container's recorded index changes only when it is prepared again.
+    internal int IndexFromContainer(UIElement container)
+    {
+        foreach ((int index, UIElement realizedContainer) in realized)
+        {
+            if (ReferenceEquals(realizedContainer, container))
+            {
+                return index;
+            }
+        }
+
+        return -1;
+    }
+
     public static int GetItemIndex(UIElement container)
     {
         ArgumentNullException.ThrowIfNull(container);

@@ -6,7 +6,6 @@ using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
-using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
 using Cerneala.UI.Layout.Virtualization;
@@ -271,7 +270,7 @@ public class ComboBox : Selector
 
     protected override void SelectContainer(UIElement container)
     {
-        int sourceIndex = ItemContainerGenerator.GetItemIndex(container);
+        int sourceIndex = ItemContainerGenerator.IndexFromContainer(container);
         if (sourceIndex < 0)
         {
             return;
@@ -1129,17 +1128,7 @@ public class ComboBox : Selector
 
     private void RefreshPreviewContainer(int sourceIndex)
     {
-        if (sourceIndex < 0 || sourceIndex >= ItemCount ||
-            !ItemContainerGenerator.RealizedContainers.TryGetValue(sourceIndex, out UIElement? container))
-        {
-            return;
-        }
-
-        PrepareItemContainer(container, sourceIndex, GetItemAt(sourceIndex));
-        container.IncrementRenderVersion();
-        container.Invalidate(
-            InvalidationFlags.Render | InvalidationFlags.InputVisual,
-            "ComboBox preview selection changed");
+        InvalidateContainer(sourceIndex, "ComboBox preview selection changed");
     }
 
     private void CompleteEditorText(TextBox editor, string enteredText, int matchIndex)
