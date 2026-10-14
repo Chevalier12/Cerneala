@@ -52,6 +52,18 @@ public sealed class LayoutPrimitiveTests
     }
 
     [Fact]
+    public void LayoutRoundingRoundsRectSizesToTheNearestDevicePixel()
+    {
+        Assert.Equal(
+            new LayoutRect(0, 2, 33, 10),
+            LayoutRounding.Enabled.Round(new LayoutRect(0.4f, 1.6f, 33.4f, 10.5f)));
+
+        // 57 device pixels at scale 1.75 are 32.571428 px; float noise in the product must not add a device pixel.
+        LayoutRounding rounding = LayoutRounding.ForScale(1.75f);
+        Assert.Equal(57, MathF.Round(rounding.Round(new LayoutRect(0, 0, 57 / 1.75f, 1)).Width * 1.75f));
+    }
+
+    [Fact]
     public void VisibilityHasThreeStates()
     {
         Assert.Contains(Visibility.Visible, Enum.GetValues<Visibility>());

@@ -21,7 +21,7 @@ Implements:
 
 ## Examples
 
-At scale 1, positions round to the nearest whole number, but sizes round up:
+At scale 1, positions and rectangles round to the nearest whole number, but a `LayoutSize` rounds up:
 
 ```csharp
 using Cerneala.UI.Layout;
@@ -30,9 +30,12 @@ LayoutRounding rounding = LayoutRounding.Enabled;
 
 float x = rounding.Round(1.2f);
 LayoutSize size = rounding.Round(new LayoutSize(1.2f, 3.5f));
+LayoutRect rect = rounding.Round(new LayoutRect(0.4f, 1.6f, 33.4f, 10.5f));
 
 Console.WriteLine($"{x} {size.Width} {size.Height}");
+Console.WriteLine($"{rect.X} {rect.Y} {rect.Width} {rect.Height}");
 // 1 2 4
+// 0 2 33 10
 ```
 
 At scale 2, values snap to half pixels:
@@ -72,9 +75,11 @@ When rounding is enabled, coordinates and sizes are rounded differently:
 | `Round(float)` | `MathF.Round(value * Scale) / Scale` (nearest device pixel). |
 | `Round(LayoutPoint)` | `X` and `Y` through `Round(float)`. |
 | `Round(LayoutSize)` | `Width` and `Height` rounded up: `MathF.Ceiling(value * Scale) / Scale`. |
-| `Round(LayoutRect)` | `X` and `Y` through `Round(float)`; `Width` and `Height` rounded up like `Round(LayoutSize)`. |
+| `Round(LayoutRect)` | `X`, `Y`, `Width`, and `Height` through `Round(float)` (nearest device pixel), as WPF rounds the arrange rectangle. |
 
-Sizes round up so that content is never clipped by a fraction of a pixel. `MathF.Round` uses banker's rounding, so `Round(2.5f)` at scale 1 is `2`.
+`UIElement.Measure` rounds `DesiredSize` with `Round(LayoutSize)`. It rounds up, so a measured size is never smaller than its content. `UIElement.Arrange` rounds `ArrangedBounds` with `Round(LayoutRect)`. It rounds the size to the nearest device pixel, like the position, so a rectangle whose edges already lie on device pixels stays unchanged. A size rounded up instead could gain a device pixel from float error. For example, 57 device pixels at scale 1.75 are `32.571428` pixels, and `32.571428 * 1.75` is slightly more than `57`. A panel that divides space, such as `Grid`, gives each part a whole number of device pixels before it arranges its children, so the rounded rectangles of neighbouring children meet exactly.
+
+`MathF.Round` uses banker's rounding, so `Round(2.5f)` at scale 1 is `2`.
 
 When rounding is disabled, every overload returns its input unchanged.
 
@@ -102,7 +107,7 @@ When rounding is disabled, every overload returns its input unchanged.
 | `Round(float value)` | `float` | Rounds `value` to the nearest device pixel when enabled; otherwise returns `value`. |
 | `Round(LayoutPoint point)` | `LayoutPoint` | Returns a point with `X` and `Y` passed through `Round(float)`. |
 | `Round(LayoutSize size)` | `LayoutSize` | Returns a size with `Width` and `Height` rounded up to device pixels. |
-| `Round(LayoutRect rect)` | `LayoutRect` | Returns a rectangle with a rounded position and a rounded-up size. |
+| `Round(LayoutRect rect)` | `LayoutRect` | Returns a rectangle with its position and size rounded to the nearest device pixel. |
 
 ## Applies to
 

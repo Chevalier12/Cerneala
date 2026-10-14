@@ -48,7 +48,7 @@ public readonly record struct LayoutRounding
 
     public LayoutRect Round(LayoutRect rect)
     {
-        return new LayoutRect(Round(rect.X), Round(rect.Y), RoundUp(rect.Width), RoundUp(rect.Height));
+        return new LayoutRect(Round(rect.X), Round(rect.Y), Round(rect.Width), Round(rect.Height));
     }
 
     private float RoundUp(float value)
