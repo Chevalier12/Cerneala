@@ -434,7 +434,7 @@ public sealed class GridTests
         grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Pixels(50)));
         grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
         grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
-        grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Pixels(20)));
         grid.RowDefinitions.Add(new RowDefinition(GridLength.Stars(1)));
         AspectElement aspect = new();
         Grid.SetRowSpan(aspect, 2);
@@ -448,7 +448,7 @@ public sealed class GridTests
 
         Assert.Equal(new LayoutSize(300, 300), desired);
         Assert.Equal(new LayoutRect(0, 0, 125, 80), wrapping.ArrangedBounds);
-        Assert.Equal(new LayoutRect(0, 0, 75, 80), aspect.ArrangedBounds);
+        Assert.Equal(new LayoutRect(0, 0, 75, 100), aspect.ArrangedBounds);
     }
 
     [Fact]
@@ -497,6 +497,138 @@ public sealed class GridTests
         Assert.Equal(new LayoutRect(0, 60, 60, 160), columnWrapping.ArrangedBounds);
         Assert.Equal(new LayoutSize(190, 60), rowWrapping.DesiredSize);
         Assert.Equal(new LayoutRect(60, 0, 190, 60), rowWrapping.ArrangedBounds);
+    }
+
+    [Fact]
+    public void ChildSpanningTwoAutoColumnsSizesThemEqually()
+    {
+        Grid grid = new();
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        FixedElement spanning = new(new LayoutSize(100, 20));
+        Grid.SetColumnSpan(spanning, 2);
+        FixedElement marker = new(LayoutSize.Zero);
+        Grid.SetColumn(marker, 1);
+        grid.VisualChildren.Add(spanning);
+        grid.VisualChildren.Add(marker);
+
+        LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(300, 100)));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 300, 100)));
+
+        Assert.Equal(new LayoutSize(100, 100), desired);
+        Assert.Equal(new LayoutRect(0, 0, 100, 100), spanning.ArrangedBounds);
+        Assert.Equal(new LayoutRect(50, 0, 50, 100), marker.ArrangedBounds);
+    }
+
+    [Fact]
+    public void ChildSpanningTwoAutoRowsSizesThemEqually()
+    {
+        Grid grid = new();
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        FixedElement spanning = new(new LayoutSize(20, 100));
+        Grid.SetRowSpan(spanning, 2);
+        FixedElement marker = new(LayoutSize.Zero);
+        Grid.SetRow(marker, 1);
+        grid.VisualChildren.Add(spanning);
+        grid.VisualChildren.Add(marker);
+
+        LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(100, 300)));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 300)));
+
+        Assert.Equal(new LayoutSize(100, 100), desired);
+        Assert.Equal(new LayoutRect(0, 0, 100, 100), spanning.ArrangedBounds);
+        Assert.Equal(new LayoutRect(0, 50, 100, 50), marker.ArrangedBounds);
+    }
+
+    [Fact]
+    public void ChildSpanningAutoColumnsAddsOnlyWhatSingleColumnChildrenLeave()
+    {
+        Grid grid = new();
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        FixedElement spanning = new(new LayoutSize(100, 20));
+        Grid.SetColumnSpan(spanning, 2);
+        FixedElement single = new(new LayoutSize(80, 20));
+        FixedElement marker = new(LayoutSize.Zero);
+        Grid.SetColumn(marker, 1);
+        grid.VisualChildren.Add(spanning);
+        grid.VisualChildren.Add(single);
+        grid.VisualChildren.Add(marker);
+
+        LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(300, 100)));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 300, 100)));
+
+        Assert.Equal(100, desired.Width);
+        Assert.Equal(new LayoutRect(0, 0, 90, 100), single.ArrangedBounds);
+        Assert.Equal(new LayoutRect(90, 0, 10, 100), marker.ArrangedBounds);
+    }
+
+    [Fact]
+    public void NarrowerAutoColumnSpanSizesItsColumnsBeforeWiderSpan()
+    {
+        Grid grid = new();
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        FixedElement wide = new(new LayoutSize(90, 20));
+        Grid.SetColumnSpan(wide, 3);
+        FixedElement narrow = new(new LayoutSize(100, 20));
+        Grid.SetColumnSpan(narrow, 2);
+        FixedElement marker = new(LayoutSize.Zero);
+        Grid.SetColumn(marker, 2);
+        grid.VisualChildren.Add(wide);
+        grid.VisualChildren.Add(narrow);
+        grid.VisualChildren.Add(marker);
+
+        LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(300, 100)));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 300, 100)));
+
+        Assert.Equal(100, desired.Width);
+        Assert.Equal(new LayoutRect(0, 0, 100, 100), narrow.ArrangedBounds);
+        Assert.Equal(new LayoutRect(100, 0, 0, 100), marker.ArrangedBounds);
+    }
+
+    [Fact]
+    public void ChildSpanningAutoAndStarColumnsOnInfiniteWidthSizesOnlyTheStarColumn()
+    {
+        Grid grid = new();
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
+        FixedElement spanning = new(new LayoutSize(100, 20));
+        Grid.SetColumnSpan(spanning, 2);
+        FixedElement marker = new(LayoutSize.Zero);
+        Grid.SetColumn(marker, 1);
+        grid.VisualChildren.Add(spanning);
+        grid.VisualChildren.Add(marker);
+
+        LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(float.PositiveInfinity, 100)));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+
+        Assert.Equal(100, desired.Width);
+        Assert.Equal(new LayoutRect(0, 0, 100, 100), spanning.ArrangedBounds);
+        Assert.Equal(new LayoutRect(0, 0, 100, 100), marker.ArrangedBounds);
+    }
+
+    [Fact]
+    public void ChildSpanningAutoAndPixelColumnsKeepsAutoColumnUnsized()
+    {
+        Grid grid = new();
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Pixels(100)));
+        CountingElement spanning = new(new LayoutSize(400, 20));
+        Grid.SetColumnSpan(spanning, 2);
+        FixedElement marker = new(LayoutSize.Zero);
+        Grid.SetColumn(marker, 1);
+        grid.VisualChildren.Add(spanning);
+        grid.VisualChildren.Add(marker);
+
+        LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(800, 100)));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 800, 100)));
+
+        Assert.Equal(100, desired.Width);
+        Assert.Equal(100, spanning.LastAvailableSize.Width);
+        Assert.Equal(new LayoutRect(0, 0, 100, 100), marker.ArrangedBounds);
     }
 
     [Fact]
