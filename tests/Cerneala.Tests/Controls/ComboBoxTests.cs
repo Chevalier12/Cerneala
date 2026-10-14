@@ -1606,6 +1606,74 @@ public sealed class ComboBoxTests
     }
 
     [Fact]
+    public void HighlightedItemFollowsItsItemWhenNewItemsSourceIsAssigned()
+    {
+        UIRoot root = new(100, 100);
+        ComboBox comboBox = new() { ItemsSource = new[] { "a", "b", "c" } };
+        ElementInputBridge bridge = OpenAndHighlightLastItem(root, comboBox);
+
+        comboBox.ItemsSource = new[] { "x", "c" };
+        root.ProcessFrame();
+        string highlighted = HighlightedItems(comboBox);
+        DispatchKey(root, bridge, InputKey.Enter);
+
+        Assert.Equal(
+            "highlighted=c selected=c text=c",
+            $"highlighted={highlighted} selected={comboBox.SelectedItem} text={comboBox.Text}");
+    }
+
+    [Fact]
+    public void NewItemsSourceWithoutHighlightedItemHighlightsFirstItem()
+    {
+        UIRoot root = new(100, 100);
+        ComboBox comboBox = new() { ItemsSource = new[] { "a", "b", "c" } };
+        ElementInputBridge bridge = OpenAndHighlightLastItem(root, comboBox);
+
+        comboBox.ItemsSource = new[] { "x", "y" };
+        root.ProcessFrame();
+        string highlighted = HighlightedItems(comboBox);
+        DispatchKey(root, bridge, InputKey.Enter);
+
+        Assert.Equal(
+            "highlighted=x selected=x text=x",
+            $"highlighted={highlighted} selected={comboBox.SelectedItem} text={comboBox.Text}");
+    }
+
+    [Fact]
+    public void FilteredHighlightedItemFollowsItsItemWhenNewItemsSourceIsAssigned()
+    {
+        UIRoot root = new(300, 200);
+        ComboBox comboBox = new() { IsTextFilterEnabled = true, Width = 180, ItemsSource = new[] { "Apple", "Banana", "Apricot" } };
+        ElementInputBridge bridge = OpenFilteredAndHighlightApricot(root, comboBox);
+
+        comboBox.ItemsSource = new[] { "Apple", "Apricot" };
+        root.ProcessFrame();
+        string highlighted = HighlightedItems(comboBox);
+        DispatchKey(root, bridge, InputKey.Enter);
+
+        Assert.Equal(
+            "highlighted=Apricot selected=Apricot text=Apricot",
+            $"highlighted={highlighted} selected={comboBox.SelectedItem} text={comboBox.Text}");
+    }
+
+    [Fact]
+    public void FilteredNewItemsSourceWithoutHighlightedItemHighlightsFirstVisibleItem()
+    {
+        UIRoot root = new(300, 200);
+        ComboBox comboBox = new() { IsTextFilterEnabled = true, Width = 180, ItemsSource = new[] { "Apple", "Banana", "Apricot" } };
+        ElementInputBridge bridge = OpenFilteredAndHighlightApricot(root, comboBox);
+
+        comboBox.ItemsSource = new[] { "Cherry", "Apple" };
+        root.ProcessFrame();
+        string highlighted = HighlightedItems(comboBox);
+        DispatchKey(root, bridge, InputKey.Enter);
+
+        Assert.Equal(
+            "highlighted=Apple selected=Apple text=Apple",
+            $"highlighted={highlighted} selected={comboBox.SelectedItem} text={comboBox.Text}");
+    }
+
+    [Fact]
     public void RemovingComboBoxItemBeforeHighlightedItemKeepsEachItemOnItsOwnContainer()
     {
         UIRoot root = new(200, 200);
