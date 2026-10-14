@@ -419,6 +419,74 @@ public sealed class ItemsControlTests
         Assert.Equal(400, panel.DesiredSize.Height);
     }
 
+    [Fact]
+    public void PanelSwappedBackAfterRemoveDoesNotKeepRemovedRowHeight()
+    {
+        ObservableCollection<FixedElement> source =
+            [.. Enumerable.Range(0, 40).Select(index => new FixedElement(index.ToString(), new LayoutSize(80, index == 0 ? 200 : 10)))];
+        VirtualizingStackPanel panelA = new();
+        (ItemsControl control, UIRoot root) = CreateScrolledPastTallFirstRow(source, panelA);
+
+        control.ItemsPanel = new VirtualizingStackPanel();
+        root.ProcessFrame();
+        source.RemoveAt(0);
+        root.ProcessFrame();
+        control.ItemsPanel = panelA;
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.Equal(390, panelA.TotalExtent);
+        Assert.Contains(38, control.ItemContainerGenerator.RealizedContainers.Keys);
+    }
+
+    [Fact]
+    public void PanelSwappedBackAfterInsertDoesNotGiveInsertedRowPushedRowHeight()
+    {
+        ObservableCollection<FixedElement> source =
+            [.. Enumerable.Range(0, 40).Select(index => new FixedElement(index.ToString(), new LayoutSize(80, index == 0 ? 200 : 10)))];
+        VirtualizingStackPanel panelA = new();
+        (ItemsControl control, UIRoot root) = CreateScrolledPastTallFirstRow(source, panelA);
+
+        control.ItemsPanel = new VirtualizingStackPanel();
+        root.ProcessFrame();
+        source.Insert(0, new FixedElement("inserted", new LayoutSize(80, 10)));
+        root.ProcessFrame();
+        control.ItemsPanel = panelA;
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        // Removing the 200 px row leaves 40 rows of 10 px; the inserted row must not keep its height.
+        source.RemoveAt(1);
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.Equal(400, panelA.TotalExtent);
+    }
+
+    private static (ItemsControl Control, UIRoot Root) CreateScrolledPastTallFirstRow(
+        ObservableCollection<FixedElement> source,
+        VirtualizingStackPanel panel)
+    {
+        ItemsControl control = new()
+        {
+            ItemsSource = source,
+            ItemsPanel = panel
+        };
+        ScrollViewer viewer = new()
+        {
+            Content = control,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        UIRoot root = new(100, 100);
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+        viewer.ScrollInfo.SetVerticalOffset(200);
+        root.ProcessFrame();
+        viewer.ScrollInfo.SetVerticalOffset(300);
+        root.ProcessFrame();
+        return (control, root);
+    }
+
     private static void MeasureEveryRowAndReturnToTop(UIRoot root, ScrollViewer viewer)
     {
         root.ProcessFrame();
