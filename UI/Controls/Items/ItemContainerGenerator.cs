@@ -57,7 +57,7 @@ public sealed class ItemContainerGenerator
         {
             if (IsCompatibleContainer(existing, item, containerType))
             {
-                if (!ReferenceEquals(GetItem(existing), item))
+                if (!ReferenceEquals(GetItem(existing), item) || GetItemIndex(existing) != index)
                 {
                     owner.PrepareItemContainer(existing, index, item);
                 }
@@ -95,6 +95,53 @@ public sealed class ItemContainerGenerator
         foreach (int index in realized.Keys.ToArray())
         {
             Recycle(index);
+        }
+    }
+
+    // The owner reports each item change whose position is known, so realized containers stay keyed by the
+    // current index of their item. A container for a replaced item keeps its index and is prepared for the new
+    // item by the next realization; a container that moved to another index is prepared for that index then.
+    internal void OnItemsReplaced(int index, int removedCount, int addedCount)
+    {
+        for (int removedIndex = index + Math.Min(removedCount, addedCount); removedIndex < index + removedCount; removedIndex++)
+        {
+            Recycle(removedIndex);
+        }
+
+        int firstShiftedIndex = index + removedCount;
+        int shift = addedCount - removedCount;
+        if (shift != 0)
+        {
+            Rekey(realizedIndex => realizedIndex >= firstShiftedIndex ? realizedIndex + shift : realizedIndex);
+        }
+    }
+
+    internal void OnItemsMoved(int oldIndex, int newIndex, int count)
+    {
+        Rekey(realizedIndex =>
+        {
+            if (realizedIndex >= oldIndex && realizedIndex < oldIndex + count)
+            {
+                return newIndex + realizedIndex - oldIndex;
+            }
+
+            realizedIndex -= realizedIndex >= oldIndex + count ? count : 0;
+            return realizedIndex + (realizedIndex >= newIndex ? count : 0);
+        });
+    }
+
+    private void Rekey(Func<int, int> getNewIndex)
+    {
+        if (realized.Count == 0)
+        {
+            return;
+        }
+
+        KeyValuePair<int, UIElement>[] entries = [.. realized];
+        realized.Clear();
+        foreach ((int index, UIElement container) in entries)
+        {
+            realized.Add(getNewIndex(index), container);
         }
     }
 

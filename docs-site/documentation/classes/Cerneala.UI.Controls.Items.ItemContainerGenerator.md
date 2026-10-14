@@ -38,7 +38,11 @@ Every `ItemsControl` creates its own `ItemContainerGenerator` in its constructor
 
 `GetItemIndex`, `GetItem`, `GetIsSelected`, `SetInfo`, and `ClearInfo` are static. They read and write metadata attached to a container, so they work for containers produced by any generator, including the control's own one.
 
-`Realize` computes the requested item range from an optional `RealizationWindow`, clamps it to the owner's current view item count, recycles any realized containers outside that range, and returns containers for the requested indexes in order. `GetOrCreate` returns an already realized compatible container when possible. If the existing container is not compatible with the current item and container type, it is recycled before a replacement is obtained.
+`Realize` computes the requested item range from an optional `RealizationWindow`, clamps it to the owner's current view item count, recycles any realized containers outside that range, and returns containers for the requested indexes in order. `GetOrCreate` returns an already realized compatible container when possible, and prepares it again when its recorded item or index differs from the item and index requested. If the existing container is not compatible with the current item and container type, it is recycled before a replacement is obtained.
+
+The control's own generator follows item changes whose position is known, before the control's selection follows them. When items are removed, the containers of the removed items are recycled. When items are inserted, removed, or moved, every other realized container moves to the current index of its item, so `RealizedContainers` stays keyed by the current item index. A container that moved keeps its recorded index until the next `Realize` or `GetOrCreate` prepares it for the new index. When an item is replaced, its container keeps the index and is prepared for the new item, or recycled if it is not compatible, by the next realization. A reset, or a change whose position is unknown, recycles every realized container. A generator created with the public constructor is not notified of item changes.
+
+For example, a `ListBox` holds three `UIElement` items `e0`, `e1`, and `e2`, each wrapped in a `ListBoxItem`. After `listBox.Items.RemoveAt(0)`, the container that showed `e0` is recycled and its `Content` is `null`. `RealizedContainers[0]` is the container that shows `e1`, and `RealizedContainers[1]` is the container that shows `e2`. A `TabItem` item is its own container, so removing it detaches it and clears its item state, but its `Content` is kept.
 
 Recycled containers are stored in `RecyclePool` by concrete container type. If the item is itself the generated `UIElement`, the generator clears and detaches it but does not push it into the recycle pool.
 
@@ -53,13 +57,13 @@ Container metadata is stored separately from the container instance. `GetItemInd
 | Name | Type | Description |
 | --- | --- | --- |
 | `RecyclePool` | `ItemContainerRecyclePool` | Gets the pool used to reuse detached containers by concrete container type. |
-| `RealizedContainers` | `IReadOnlyDictionary<int, UIElement>` | Gets the currently realized containers keyed by item index. |
+| `RealizedContainers` | `IReadOnlyDictionary<int, UIElement>` | Gets the currently realized containers keyed by item index. For the control's own generator, the keys follow inserted, removed, and moved items. |
 
 ## Methods
 | Name | Return type | Description |
 | --- | --- | --- |
 | `Realize(RealizationWindow? window = null)` | `IReadOnlyList<UIElement>` | Realizes containers for the requested window, or for all items when `window` is `null`, and recycles containers outside that range. |
-| `GetOrCreate(int index)` | `UIElement` | Returns the compatible realized container for `index`, reuses a recycled container when available, or asks the owner to create and prepare a new container. Throws `ArgumentOutOfRangeException` when `index` is outside the current item range. |
+| `GetOrCreate(int index)` | `UIElement` | Returns the compatible realized container for `index` (prepared again when its recorded item or index differs), reuses a recycled container when available, or asks the owner to create and prepare a new container. Throws `ArgumentOutOfRangeException` when `index` is outside the current item range. |
 | `Recycle(int index)` | `void` | Removes the realized container for `index`, detaches it from visual and logical parents, clears owner-specific container state, and stores it in `RecyclePool` when it is reusable. |
 | `Clear()` | `void` | Recycles every currently realized container. |
 | `GetItemIndex(UIElement container)` | `int` | Returns the item index recorded for `container`, or `-1` when no index is recorded. Throws `ArgumentNullException` when `container` is `null`. |

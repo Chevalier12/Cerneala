@@ -586,15 +586,19 @@ public class ItemsControl : Control
         InvalidateItems("Observable items source changed");
     }
 
-    // The panel and the selection keep state by item index; a change whose position is unknown resets them.
+    // The realized containers, the panel and the selection keep state by item index; a change whose position
+    // is unknown resets them. Containers follow first, so a selection that follows its item refreshes the
+    // container now at its index.
     private void NotifyItemsReplaced(int index, int removedCount, int addedCount)
     {
         if (index < 0 || removedCount < 0 || addedCount < 0)
         {
+            ItemContainerGenerator.Clear();
             NotifyItemsReset();
             return;
         }
 
+        ItemContainerGenerator.OnItemsReplaced(index, removedCount, addedCount);
         MeasuredItemsPanel?.OnItemsReplaced(index, removedCount, addedCount);
         OnItemsReplaced(index, removedCount, addedCount);
     }
@@ -603,10 +607,12 @@ public class ItemsControl : Control
     {
         if (oldIndex < 0 || newIndex < 0 || count <= 0)
         {
+            ItemContainerGenerator.Clear();
             NotifyItemsReset();
             return;
         }
 
+        ItemContainerGenerator.OnItemsMoved(oldIndex, newIndex, count);
         MeasuredItemsPanel?.OnItemsMoved(oldIndex, newIndex, count);
         OnItemsMoved(oldIndex, newIndex, count);
     }

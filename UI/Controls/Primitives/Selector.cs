@@ -254,8 +254,8 @@ public class Selector : ItemsControl
             added is null ? [] : [added]));
     }
 
-    // Realized containers keep their old indexes until the next layout pass. A container whose item is no
-    // longer the item at its index is prepared for its new item by that pass, so only its own item is refreshed here.
+    // A realized container whose item was replaced keeps its index until the next layout pass prepares it for
+    // the new item, so a container is refreshed here only while it holds the item at its index.
     private void InvalidateContainer(int index)
     {
         if (index < 0 || index >= ItemCount || !ItemContainerGenerator.RealizedContainers.TryGetValue(index, out UIElement? container))
