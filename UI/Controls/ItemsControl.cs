@@ -211,7 +211,7 @@ public class ItemsControl : Control
             SubscribeItemsSource(args.OldValue as IEnumerable, args.NewValue as IEnumerable);
             OnItemsViewSourceChanged();
             ItemContainerGenerator.Clear();
-            MeasuredItemsPanel?.OnItemsReset();
+            NotifyItemsReset();
             itemsPresenter.MarkItemsDirty();
             InvalidateItems("ItemsControl items source changed");
         }
@@ -228,7 +228,7 @@ public class ItemsControl : Control
         {
             RebuildItemsSourceSnapshot(ItemsSource);
             ItemContainerGenerator.Clear();
-            MeasuredItemsPanel?.OnItemsReset();
+            NotifyItemsReset();
             itemsPresenter.MarkItemsDirty();
         }
 
@@ -394,6 +394,19 @@ public class ItemsControl : Control
     {
     }
 
+    // The item view already reflects each change below when it is reported.
+    internal virtual void OnItemsReplaced(int index, int removedCount, int addedCount)
+    {
+    }
+
+    internal virtual void OnItemsMoved(int oldIndex, int newIndex, int count)
+    {
+    }
+
+    internal virtual void OnItemsReset()
+    {
+    }
+
     internal void SetVirtualizationContext(VirtualizationContext? context)
     {
         itemsPresenter.VirtualizationContext = context;
@@ -427,11 +440,11 @@ public class ItemsControl : Control
         if (Items.IsResetNotification)
         {
             ItemContainerGenerator.Clear();
-            MeasuredItemsPanel?.OnItemsReset();
+            NotifyItemsReset();
         }
         else
         {
-            OnItemsPanelItemsReplaced(Items.ChangeIndex, Items.ChangeRemovedCount, Items.ChangeAddedCount);
+            NotifyItemsReplaced(Items.ChangeIndex, Items.ChangeRemovedCount, Items.ChangeAddedCount);
         }
 
         OnItemsViewSourceChanged();
@@ -512,19 +525,19 @@ public class ItemsControl : Control
         switch (args.Kind)
         {
             case ObservableListChangeKind.Add:
-                OnItemsPanelItemsReplaced(args.Index, 0, args.Items.Count);
+                NotifyItemsReplaced(args.Index, 0, args.Items.Count);
                 break;
             case ObservableListChangeKind.Remove:
-                OnItemsPanelItemsReplaced(args.Index, args.OldItems.Count, 0);
+                NotifyItemsReplaced(args.Index, args.OldItems.Count, 0);
                 break;
             case ObservableListChangeKind.Replace:
-                OnItemsPanelItemsReplaced(args.Index, args.OldItems.Count, args.Items.Count);
+                NotifyItemsReplaced(args.Index, args.OldItems.Count, args.Items.Count);
                 break;
             case ObservableListChangeKind.Move:
-                OnItemsPanelItemsMoved(args.OldIndex, args.Index, args.Items.Count);
+                NotifyItemsMoved(args.OldIndex, args.Index, args.Items.Count);
                 break;
             default:
-                MeasuredItemsPanel?.OnItemsReset();
+                NotifyItemsReset();
                 break;
         }
 
@@ -546,19 +559,19 @@ public class ItemsControl : Control
         switch (args.Action)
         {
             case NotifyCollectionChangedAction.Add:
-                OnItemsPanelItemsReplaced(args.NewStartingIndex, 0, args.NewItems?.Count ?? -1);
+                NotifyItemsReplaced(args.NewStartingIndex, 0, args.NewItems?.Count ?? -1);
                 break;
             case NotifyCollectionChangedAction.Remove:
-                OnItemsPanelItemsReplaced(args.OldStartingIndex, args.OldItems?.Count ?? -1, 0);
+                NotifyItemsReplaced(args.OldStartingIndex, args.OldItems?.Count ?? -1, 0);
                 break;
             case NotifyCollectionChangedAction.Replace:
-                OnItemsPanelItemsReplaced(args.NewStartingIndex, args.OldItems?.Count ?? -1, args.NewItems?.Count ?? -1);
+                NotifyItemsReplaced(args.NewStartingIndex, args.OldItems?.Count ?? -1, args.NewItems?.Count ?? -1);
                 break;
             case NotifyCollectionChangedAction.Move:
-                OnItemsPanelItemsMoved(args.OldStartingIndex, args.NewStartingIndex, args.OldItems?.Count ?? -1);
+                NotifyItemsMoved(args.OldStartingIndex, args.NewStartingIndex, args.OldItems?.Count ?? -1);
                 break;
             default:
-                MeasuredItemsPanel?.OnItemsReset();
+                NotifyItemsReset();
                 break;
         }
 
@@ -567,27 +580,35 @@ public class ItemsControl : Control
         InvalidateItems("Observable items source changed");
     }
 
-    // The panel records row heights by item index; a change whose position is unknown resets them.
-    private void OnItemsPanelItemsReplaced(int index, int removedCount, int addedCount)
+    // The panel and the selection keep state by item index; a change whose position is unknown resets them.
+    private void NotifyItemsReplaced(int index, int removedCount, int addedCount)
     {
         if (index < 0 || removedCount < 0 || addedCount < 0)
         {
-            MeasuredItemsPanel?.OnItemsReset();
+            NotifyItemsReset();
             return;
         }
 
         MeasuredItemsPanel?.OnItemsReplaced(index, removedCount, addedCount);
+        OnItemsReplaced(index, removedCount, addedCount);
     }
 
-    private void OnItemsPanelItemsMoved(int oldIndex, int newIndex, int count)
+    private void NotifyItemsMoved(int oldIndex, int newIndex, int count)
     {
         if (oldIndex < 0 || newIndex < 0 || count <= 0)
         {
-            MeasuredItemsPanel?.OnItemsReset();
+            NotifyItemsReset();
             return;
         }
 
         MeasuredItemsPanel?.OnItemsMoved(oldIndex, newIndex, count);
+        OnItemsMoved(oldIndex, newIndex, count);
+    }
+
+    private void NotifyItemsReset()
+    {
+        MeasuredItemsPanel?.OnItemsReset();
+        OnItemsReset();
     }
 
     private void RebuildItemsSourceSnapshot(IEnumerable? source)

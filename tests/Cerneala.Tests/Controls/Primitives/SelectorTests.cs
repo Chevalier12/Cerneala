@@ -1,5 +1,7 @@
+using System.Collections.ObjectModel;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
+using Cerneala.UI.Data;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
@@ -63,6 +65,182 @@ public sealed class SelectorTests
         Assert.Equal("a", listBox.SelectedItem);
         ListBoxItem first = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[0]);
         Assert.True(first.IsSelected);
+    }
+
+    [Fact]
+    public void SelectionFollowsSelectedItemWhenItemIsInsertedBeforeIt()
+    {
+        ListBox listBox = new();
+        listBox.SetItems(new[] { "a", "b", "c" });
+        listBox.SelectedIndex = 1;
+
+        listBox.Items.Insert(0, "z");
+
+        Assert.Equal("b", listBox.SelectedItem);
+        Assert.Equal(2, listBox.SelectedIndex);
+    }
+
+    [Fact]
+    public void SelectionFollowsSelectedItemWhenItemIsRemovedBeforeIt()
+    {
+        ListBox listBox = new();
+        listBox.SetItems(new[] { "a", "b", "c" });
+        listBox.SelectedIndex = 2;
+
+        listBox.Items.RemoveAt(0);
+
+        Assert.Equal("c", listBox.SelectedItem);
+        Assert.Equal(1, listBox.SelectedIndex);
+    }
+
+    [Fact]
+    public void SelectionFollowsSelectedItemWhenObservableCollectionItemIsInsertedBeforeIt()
+    {
+        ObservableCollection<string> items = new(["a", "b", "c"]);
+        ListBox listBox = new() { ItemsSource = items };
+        listBox.SelectedIndex = 1;
+
+        items.Insert(0, "z");
+
+        Assert.Equal("b", listBox.SelectedItem);
+        Assert.Equal(2, listBox.SelectedIndex);
+    }
+
+    [Fact]
+    public void SelectionFollowsSelectedItemWhenObservableCollectionItemIsRemovedBeforeIt()
+    {
+        ObservableCollection<string> items = new(["a", "b", "c"]);
+        ListBox listBox = new() { ItemsSource = items };
+        listBox.SelectedIndex = 2;
+
+        items.RemoveAt(0);
+
+        Assert.Equal("c", listBox.SelectedItem);
+        Assert.Equal(1, listBox.SelectedIndex);
+    }
+
+    [Fact]
+    public void SelectionFollowsSelectedItemWhenObservableListItemIsInsertedBeforeIt()
+    {
+        ObservableList<string> items = new(["a", "b", "c"]);
+        ListBox listBox = new() { ItemsSource = items };
+        listBox.SelectedIndex = 1;
+
+        items.Insert(0, "z");
+
+        Assert.Equal("b", listBox.SelectedItem);
+        Assert.Equal(2, listBox.SelectedIndex);
+    }
+
+    [Fact]
+    public void SelectionFollowsSelectedItemWhenItIsMoved()
+    {
+        ObservableCollection<string> items = new(["a", "b", "c", "d"]);
+        ListBox listBox = new() { ItemsSource = items };
+        listBox.SelectedIndex = 1;
+
+        items.Move(1, 3);
+        Assert.Equal("b", listBox.SelectedItem);
+        Assert.Equal(3, listBox.SelectedIndex);
+
+        items.Move(0, 3);
+        Assert.Equal("b", listBox.SelectedItem);
+        Assert.Equal(2, listBox.SelectedIndex);
+    }
+
+    [Fact]
+    public void SelectionIndexShiftDoesNotRaiseSelectionChanged()
+    {
+        ListBox listBox = new();
+        listBox.SetItems(new[] { "a", "b", "c" });
+        listBox.SelectedIndex = 1;
+        int raised = 0;
+        listBox.SelectionChanged += (_, _) => raised++;
+
+        listBox.Items.Insert(0, "z");
+
+        Assert.Equal(0, raised);
+    }
+
+    [Fact]
+    public void RemovingSelectedItemClearsSelectionAndReportsRemovedItem()
+    {
+        ListBox listBox = new();
+        listBox.SetItems(new[] { "a", "b", "c" });
+        listBox.SelectedIndex = 1;
+        SelectionChangedEventArgs? raised = null;
+        listBox.SelectionChanged += (_, args) => raised = args;
+
+        listBox.Items.RemoveAt(1);
+
+        Assert.Equal(-1, listBox.SelectedIndex);
+        Assert.Null(listBox.SelectedItem);
+        Assert.NotNull(raised);
+        Assert.Equal(["b"], raised.RemovedItems);
+        Assert.Empty(raised.AddedItems);
+    }
+
+    [Fact]
+    public void ResettingItemsKeepsSelectedItemWhenItIsStillPresent()
+    {
+        ListBox listBox = new();
+        listBox.SetItems(new[] { "a", "b", "c" });
+        listBox.SelectedIndex = 1;
+
+        listBox.SetItems(new[] { "z", "y", "b" });
+
+        Assert.Equal("b", listBox.SelectedItem);
+        Assert.Equal(2, listBox.SelectedIndex);
+    }
+
+    [Fact]
+    public void ResettingItemsClearsSelectionWhenSelectedItemIsGone()
+    {
+        ListBox listBox = new();
+        listBox.SetItems(new[] { "a", "b", "c" });
+        listBox.SelectedIndex = 1;
+
+        listBox.Items.Clear();
+        listBox.SetItems(new[] { "x", "y", "z" });
+
+        Assert.Equal(-1, listBox.SelectedIndex);
+        Assert.Null(listBox.SelectedItem);
+    }
+
+    [Fact]
+    public void SelectedIndexSetBeforeItemsExistSelectsThatIndexOnceItemsArrive()
+    {
+        ListBox listBox = new();
+        listBox.SelectedIndex = 1;
+
+        listBox.Items.Add("a");
+        listBox.Items.Add("b");
+
+        Assert.Equal(1, listBox.SelectedIndex);
+        Assert.Equal("b", listBox.SelectedItem);
+    }
+
+    [Fact]
+    public void RealizedContainerOfSelectedItemStaysSelectedAfterInsertBeforeIt()
+    {
+        UIRoot root = new(100, 100);
+        ListBox listBox = new();
+        listBox.SetItems(new[] { "a", "b", "c" });
+        root.VisualChildren.Add(listBox);
+        listBox.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        listBox.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+        listBox.SelectedIndex = 1;
+
+        listBox.Items.Insert(0, "z");
+        listBox.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        listBox.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+
+        Assert.Equal(4, listBox.RealizedItemCount);
+        foreach (UIElement container in listBox.ItemContainerGenerator.RealizedContainers.Values)
+        {
+            ListBoxItem item = Assert.IsType<ListBoxItem>(container);
+            Assert.Equal(Equals(item.Item, "b"), item.IsSelected);
+        }
     }
 
     [Fact]
