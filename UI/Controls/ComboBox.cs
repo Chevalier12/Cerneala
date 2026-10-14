@@ -45,6 +45,11 @@ public class ComboBox : Selector
     private string filterText = string.Empty;
     private bool selectionTransactionActive;
     private int previewSelectedIndex = -1;
+
+    // The item the open preview highlights. An item change moves the preview with its item, as WPF moves its
+    // highlighted item. A preview index set before its item exists refers to no item.
+    private object? previewItem;
+    private bool hasPreviewItem;
     private string transactionText = string.Empty;
     private bool transactionTextMatchesPreview;
     private bool suppressAutocompleteForCurrentEdit;
@@ -290,10 +295,46 @@ public class ComboBox : Selector
         if (previewSelectedIndex >= ItemCount ||
             (previewSelectedIndex >= 0 && !IsSourceIndexVisible(previewSelectedIndex)))
         {
-            UpdatePreviewSelection(ViewItemCount > 0 ? GetSourceIndexForViewIndex(0) : -1, updateEditor: false);
+            MovePreviewToFirstVisibleItem();
         }
 
         ResetDropDownVirtualization();
+    }
+
+    // The preview follows its item before the selection does, as in WPF.
+    internal override void OnItemsReplaced(int index, int removedCount, int addedCount)
+    {
+        if (hasPreviewItem && previewSelectedIndex >= index)
+        {
+            MovePreviewForItems(previewSelectedIndex < index + removedCount
+                ? -1
+                : previewSelectedIndex - removedCount + addedCount);
+        }
+
+        CapturePreviewItem();
+        base.OnItemsReplaced(index, removedCount, addedCount);
+    }
+
+    internal override void OnItemsMoved(int oldIndex, int newIndex, int count)
+    {
+        if (hasPreviewItem)
+        {
+            MovePreviewForItems(GetIndexAfterMove(previewSelectedIndex, oldIndex, newIndex, count));
+        }
+
+        CapturePreviewItem();
+        base.OnItemsMoved(oldIndex, newIndex, count);
+    }
+
+    internal override void OnItemsReset()
+    {
+        if (hasPreviewItem)
+        {
+            MovePreviewForItems(FindItemIndex(previewItem, previewSelectedIndex));
+        }
+
+        CapturePreviewItem();
+        base.OnItemsReset();
     }
 
     internal override void OnItemsPresenterPanelChanged()
@@ -943,6 +984,7 @@ public class ComboBox : Selector
 
         selectionTransactionActive = true;
         previewSelectedIndex = SelectedIndex;
+        CapturePreviewItem();
         transactionText = Text;
         transactionTextMatchesPreview = SelectedIndex >= 0;
         RefreshPreviewContainer(previewSelectedIndex);
@@ -963,6 +1005,7 @@ public class ComboBox : Selector
         int oldPreviewIndex = previewSelectedIndex;
         selectionTransactionActive = false;
         previewSelectedIndex = -1;
+        CapturePreviewItem();
         transactionTextMatchesPreview = false;
         updatingTextSearch = true;
         try
@@ -1011,6 +1054,7 @@ public class ComboBox : Selector
         int oldPreviewIndex = previewSelectedIndex;
         selectionTransactionActive = false;
         previewSelectedIndex = -1;
+        CapturePreviewItem();
         transactionText = Text;
         transactionTextMatchesPreview = false;
         ClearFilter();
@@ -1042,6 +1086,7 @@ public class ComboBox : Selector
 
         int oldIndex = previewSelectedIndex;
         previewSelectedIndex = sourceIndex;
+        CapturePreviewItem();
         if (updateEditor && sourceIndex >= 0)
         {
             transactionText = GetItemText(GetItemAt(sourceIndex));
@@ -1052,6 +1097,34 @@ public class ComboBox : Selector
         RefreshPreviewContainer(oldIndex);
         RefreshPreviewContainer(sourceIndex);
         SynchronizeSelectionPresenter();
+    }
+
+    // The highlighted item is now at sourceIndex, or was removed when sourceIndex is -1.
+    private void MovePreviewForItems(int sourceIndex)
+    {
+        previewSelectedIndex = sourceIndex;
+        if (sourceIndex >= 0)
+        {
+            SynchronizeSelectionPresenter();
+            return;
+        }
+
+        RebuildFilteredView();
+        MovePreviewToFirstVisibleItem();
+    }
+
+    // The highlighted item was removed or the filter hides it. The editor keeps its text, which no longer
+    // names the highlighted item, so a commit takes the text of the item highlighted instead.
+    private void MovePreviewToFirstVisibleItem()
+    {
+        transactionTextMatchesPreview = false;
+        UpdatePreviewSelection(ViewItemCount > 0 ? GetSourceIndexForViewIndex(0) : -1, updateEditor: false);
+    }
+
+    private void CapturePreviewItem()
+    {
+        hasPreviewItem = selectionTransactionActive && previewSelectedIndex >= 0 && previewSelectedIndex < ItemCount;
+        previewItem = hasPreviewItem ? GetItemAt(previewSelectedIndex) : null;
     }
 
     private void RefreshPreviewContainer(int sourceIndex)
