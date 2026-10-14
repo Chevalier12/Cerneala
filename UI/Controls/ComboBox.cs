@@ -1144,7 +1144,7 @@ public class ComboBox : Selector
 
     private void OnDropDownScrollChanged(object? sender, ScrollChangedEventArgs args)
     {
-        if (dropDownScrollViewer is null || !IsDropDownOpen || !UsesDefaultDropDownPanel())
+        if (dropDownScrollViewer is null || !IsDropDownOpen || !UsesDropDownVirtualization())
         {
             return;
         }
@@ -1157,7 +1157,7 @@ public class ComboBox : Selector
 
     private void ResetDropDownVirtualization()
     {
-        if (!UsesDefaultDropDownPanel() || dropDownScrollViewer is null)
+        if (!UsesDropDownVirtualization() || dropDownScrollViewer is null)
         {
             SetVirtualizationContext(null);
             return;
@@ -1175,11 +1175,12 @@ public class ComboBox : Selector
             DefaultVirtualizationCacheItems));
     }
 
-    // The drop-down virtualization policy applies only while the presenter places ComboBox's
-    // default panel in the tree; any other panel realizes every item.
-    private bool UsesDefaultDropDownPanel()
+    // Replacing ComboBox.ItemsPanel opts out of the drop-down virtualization policy. The policy
+    // also needs a virtualizing panel in the tree, because a template's plain panel realizes every item.
+    private bool UsesDropDownVirtualization()
     {
-        return ReferenceEquals(ItemsPresenter.ResolveItemsPanel(), defaultItemsPanel);
+        return ReferenceEquals(ItemsPanel, defaultItemsPanel) &&
+            ItemsPresenter.ResolveItemsPanel() is IItemsVirtualizingPanel;
     }
 
     private int GetViewIndexForSourceIndex(int sourceIndex)

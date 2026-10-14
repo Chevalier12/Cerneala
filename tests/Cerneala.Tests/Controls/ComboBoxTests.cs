@@ -1037,7 +1037,7 @@ public sealed class ComboBoxTests
     public void CustomTemplatePresenterStackPanelRealizesEveryDropDownItem()
     {
         (ComboBox comboBox, ScrollViewer viewer, UIRoot root) = CreateLargeOpenDropDown(
-            CreatePlainPresenterPanelTemplate(),
+            CreatePresenterPanelTemplate(new LayoutStackPanel()),
             ownerPanel: null);
         Assert.IsType<LayoutStackPanel>(comboBox.ItemsPresenter.LayoutPanelRoot);
         Assert.Equal(200, comboBox.ItemContainerGenerator.RealizedContainers.Count);
@@ -1049,6 +1049,22 @@ public sealed class ComboBoxTests
         Assert.Equal(200, comboBox.ItemContainerGenerator.RealizedContainers.Count);
         Assert.Equal(6800, viewer.ScrollInfo.ExtentHeight);
         Assert.Equal(1400, viewer.ScrollInfo.VerticalOffset);
+    }
+
+    [Fact]
+    public void CustomTemplatePresenterVirtualizingStackPanelVirtualizesDropDown()
+    {
+        (ComboBox comboBox, ScrollViewer viewer, UIRoot root) = CreateLargeOpenDropDown(
+            CreatePresenterPanelTemplate(new Cerneala.UI.Layout.Panels.VirtualizingStackPanel()),
+            ownerPanel: null);
+        Assert.IsType<Cerneala.UI.Layout.Panels.VirtualizingStackPanel>(comboBox.ItemsPresenter.LayoutPanelRoot);
+        Assert.InRange(comboBox.ItemContainerGenerator.RealizedContainers.Count, 1, 20);
+
+        viewer.ScrollInfo.SetVerticalOffset(1400);
+        root.ProcessFrame();
+        root.ProcessFrame();
+        Assert.True(RealizedSourceIndices(comboBox)[0] > 0);
+        Assert.InRange(comboBox.ItemContainerGenerator.RealizedContainers.Count, 1, 20);
     }
 
     private static (ComboBox ComboBox, ScrollViewer Viewer, UIRoot Root) CreateLargeOpenDropDown(
@@ -1078,14 +1094,14 @@ public sealed class ComboBoxTests
         return (comboBox, viewer, root);
     }
 
-    private static ComponentTemplate<ComboBox> CreatePlainPresenterPanelTemplate()
+    private static ComponentTemplate<ComboBox> CreatePresenterPanelTemplate(Cerneala.UI.Layout.Panels.Panel presenterPanel)
     {
-        return new ComponentTemplate<ComboBox>("plain-presenter-panel", context =>
+        return new ComponentTemplate<ComboBox>("presenter-panel", context =>
         {
             ContentPresenter selection = new();
             TextBox editor = new() { Visibility = Visibility.Collapsed };
             ToggleButton toggle = new();
-            ItemsPresenter items = new() { ItemsPanel = new LayoutStackPanel() };
+            ItemsPresenter items = new() { ItemsPanel = presenterPanel };
             ScrollViewer scrollViewer = new()
             {
                 Content = items,
