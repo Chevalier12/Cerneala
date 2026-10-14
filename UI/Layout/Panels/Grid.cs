@@ -342,6 +342,10 @@ public class Grid : Panel
         RoundSizes(columnSizes, context.Rounding);
         RoundSizes(rowSizes, context.Rounding);
 
+        // Offsets start at the Grid's rounded origin, where its own bounds start, as WPF offsets children from
+        // the parent: from an unrounded origin such as 0.5, each child would round on its own and leave a gap.
+        float originX = context.Rounding.Round(context.FinalRect.X);
+        float originY = context.Rounding.Round(context.FinalRect.Y);
         foreach (UIElement child in VisualChildren)
         {
             if (child.Visibility == Visibility.Collapsed)
@@ -353,8 +357,8 @@ public class Grid : Panel
             GridPlacement placement = GetPlacement(child, columnSizes.Length, rowSizes.Length);
             child.Arrange(new ArrangeContext(
                 new LayoutRect(
-                    context.FinalRect.X + Sum(columnSizes, 0, placement.Column),
-                    context.FinalRect.Y + Sum(rowSizes, 0, placement.Row),
+                    originX + Sum(columnSizes, 0, placement.Column),
+                    originY + Sum(rowSizes, 0, placement.Row),
                     Sum(columnSizes, placement.Column, placement.ColumnSpan),
                     Sum(rowSizes, placement.Row, placement.RowSpan)),
                 context.Rounding));

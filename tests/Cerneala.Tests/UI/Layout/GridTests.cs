@@ -631,6 +631,38 @@ public sealed class GridTests
             GetDeviceEdges([pixel, auto, oneStar, twoStar, spanning], 1, columns: true));
     }
 
+    [Fact]
+    public void LayoutRoundingKeepsStarCellsContiguousWhenTheGridOriginIsOnAHalfPixel()
+    {
+        // A 100 px Grid centered in a 101 px slot starts at 0.5 px; its own bounds round to 0..100.
+        Grid grid = new()
+        {
+            Width = 100,
+            Height = 100,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        FixedElement[] cells = new FixedElement[3];
+        for (int i = 0; i < cells.Length; i++)
+        {
+            grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
+            grid.RowDefinitions.Add(new RowDefinition(GridLength.Stars(1)));
+            cells[i] = new FixedElement(new LayoutSize(1, 1));
+            Grid.SetColumn(cells[i], i);
+            Grid.SetRow(cells[i], i);
+            grid.VisualChildren.Add(cells[i]);
+        }
+
+        LayoutRounding rounding = LayoutRounding.Enabled;
+        grid.Measure(new MeasureContext(new LayoutSize(101, 101), rounding));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 101, 101), rounding));
+
+        Assert.Equal("0..100", GetDeviceEdges([grid], 1, columns: true));
+        Assert.Equal("0..100", GetDeviceEdges([grid], 1, columns: false));
+        Assert.Equal("0..34, 34..67, 67..100", GetDeviceEdges(cells, 1, columns: true));
+        Assert.Equal("0..34, 34..67, 67..100", GetDeviceEdges(cells, 1, columns: false));
+    }
+
     private static string GetDeviceEdges(IEnumerable<UIElement> cells, float scale, bool columns)
     {
         return string.Join(", ", cells.Select(cell =>
