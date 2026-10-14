@@ -961,10 +961,14 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         SetArrangedBounds(arranged);
         LastArrangeFinalRect = context.FinalRect;
         // An Arrange request raised during this arrange (ArrangeCore, SizeChanged) stays pending:
-        // the cache must not let a same-slot parent arrange skip it.
-        LastArrangeLayoutVersion = arrangeCacheInvalidationCount == invalidationCountBeforeArrange
-            ? LayoutVersion
-            : -1;
+        // neither the cache nor the scheduled visit may let a same-slot arrange or the queue entry skip it.
+        if (arrangeCacheInvalidationCount != invalidationCountBeforeArrange)
+        {
+            LastArrangeLayoutVersion = -1;
+            return arranged;
+        }
+
+        LastArrangeLayoutVersion = LayoutVersion;
         RecordScheduledArrangeVisit();
         return arranged;
     }
