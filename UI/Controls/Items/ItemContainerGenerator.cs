@@ -30,6 +30,7 @@ public sealed class ItemContainerGenerator
         HashSet<int> desired = [.. Enumerable.Range(start, end - start)
             .Select(owner.GetSourceIndexForViewIndex)];
 
+        MoveShiftedItemContainers(desired);
         foreach (int index in realized.Keys.Where(index => !desired.Contains(index)).ToArray())
         {
             Recycle(index);
@@ -57,7 +58,7 @@ public sealed class ItemContainerGenerator
         {
             if (IsCompatibleContainer(existing, item, containerType))
             {
-                if (!ReferenceEquals(GetItem(existing), item))
+                if (!ReferenceEquals(GetItem(existing), item) || GetItemIndex(existing) != index)
                 {
                     owner.PrepareItemContainer(existing, index, item);
                 }
@@ -132,6 +133,63 @@ public sealed class ItemContainerGenerator
         info.Index = -1;
         info.Item = null;
         info.IsSelected = false;
+    }
+
+    // A container that is its own item belongs to that item, not to an index. When the item moves to
+    // another desired index, the container moves with it instead of being recycled from its old index.
+    private void MoveShiftedItemContainers(HashSet<int> desired)
+    {
+        List<(int Index, UIElement Container)>? moves = null;
+        foreach (int index in desired)
+        {
+            if (owner.GetItemAt(index) is not UIElement element ||
+                !containerInfo.TryGetValue(element, out ItemContainerInfo? info) ||
+                !ReferenceEquals(info.Item, element) ||
+                info.Index == index ||
+                !realized.TryGetValue(info.Index, out UIElement? current) ||
+                !ReferenceEquals(current, element) ||
+                (info.Index < owner.ItemCount && ReferenceEquals(owner.GetItemAt(info.Index), element)) ||
+                ContainsMovedContainer(moves, element))
+            {
+                continue;
+            }
+
+            (moves ??= []).Add((index, element));
+        }
+
+        if (moves is null)
+        {
+            return;
+        }
+
+        foreach ((_, UIElement container) in moves)
+        {
+            realized.Remove(GetItemIndex(container));
+        }
+
+        foreach ((int index, UIElement container) in moves)
+        {
+            Recycle(index);
+            realized.Add(index, container);
+        }
+    }
+
+    private static bool ContainsMovedContainer(List<(int Index, UIElement Container)>? moves, UIElement container)
+    {
+        if (moves is null)
+        {
+            return false;
+        }
+
+        foreach ((_, UIElement moved) in moves)
+        {
+            if (ReferenceEquals(moved, container))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static bool IsCompatibleContainer(UIElement container, object? item, Type containerType)

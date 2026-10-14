@@ -125,6 +125,89 @@ public sealed class ItemContainerGeneratorTests
     }
 
     [Fact]
+    public void ListBoxRemoveAtFirstOfThreeMovesShiftedListBoxItemsToTheirNewIndexes()
+    {
+        ListBoxItem a = new() { Content = "a" };
+        ListBoxItem b = new() { Content = "b" };
+        ListBoxItem c = new() { Content = "c" };
+        ClearRecordingListBox listBox = new();
+        listBox.SetItems(new[] { a, b, c });
+        listBox.SelectedIndex = 1;
+        listBox.ItemContainerGenerator.Realize();
+
+        listBox.Items.RemoveAt(0);
+        listBox.ItemContainerGenerator.Realize();
+
+        Assert.Equal(new[] { 0, 1 }, listBox.ItemContainerGenerator.RealizedContainers.Keys.Order());
+        Assert.Same(b, listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Same(c, listBox.ItemContainerGenerator.RealizedContainers[1]);
+        AssertItemState(b, 0, isSelected: true);
+        AssertItemState(c, 1, isSelected: false);
+        Assert.Equal(new UIElement[] { a }, listBox.ClearedContainers);
+    }
+
+    [Fact]
+    public void ListBoxRemoveAtFirstOfThreeThroughMeasureKeepsShiftedListBoxItemsInThePanel()
+    {
+        ListBoxItem a = new() { Content = "a" };
+        ListBoxItem b = new() { Content = "b" };
+        ListBoxItem c = new() { Content = "c" };
+        ListBox listBox = new();
+        listBox.SetItems(new[] { a, b, c });
+        MeasureContext context = new(new LayoutSize(200, 200));
+        listBox.Measure(context);
+
+        listBox.Items.RemoveAt(0);
+        listBox.Measure(context);
+
+        Assert.Equal(new UIElement[] { b, c }, listBox.ItemsPresenter.LayoutPanelRoot!.VisualChildren.ToArray());
+        AssertItemState(b, 0, isSelected: false);
+        AssertItemState(c, 1, isSelected: false);
+        Assert.Null(a.VisualParent);
+        AssertItemState(a, -1, isSelected: false, expectedItem: null);
+    }
+
+    [Fact]
+    public void ItemsSourceMoveOfTwoMovesBothListBoxItemsToTheirNewIndexes()
+    {
+        ListBoxItem a = new() { Content = "a" };
+        ListBoxItem b = new() { Content = "b" };
+        ObservableCollection<ListBoxItem> source = [a, b];
+        ClearRecordingListBox listBox = new() { ItemsSource = source };
+        listBox.ItemContainerGenerator.Realize();
+
+        source.Move(0, 1);
+        listBox.ItemContainerGenerator.Realize();
+
+        Assert.Same(b, listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Same(a, listBox.ItemContainerGenerator.RealizedContainers[1]);
+        AssertItemState(b, 0, isSelected: false);
+        AssertItemState(a, 1, isSelected: false);
+        Assert.Empty(listBox.ClearedContainers);
+    }
+
+    [Fact]
+    public void ItemsSourceMoveOfThreeThroughMeasureKeepsEveryListBoxItemRealizedAtItsNewIndex()
+    {
+        ListBoxItem a = new() { Content = "a" };
+        ListBoxItem b = new() { Content = "b" };
+        ListBoxItem c = new() { Content = "c" };
+        ObservableCollection<ListBoxItem> source = [a, b, c];
+        ClearRecordingListBox listBox = new() { ItemsSource = source };
+        MeasureContext context = new(new LayoutSize(200, 200));
+        listBox.Measure(context);
+
+        source.Move(0, 2);
+        listBox.Measure(context);
+
+        Assert.Equal(new UIElement[] { b, c, a }, listBox.ItemsPresenter.LayoutPanelRoot!.VisualChildren.ToArray());
+        AssertItemState(b, 0, isSelected: false);
+        AssertItemState(c, 1, isSelected: false);
+        AssertItemState(a, 2, isSelected: false);
+        Assert.Empty(listBox.ClearedContainers);
+    }
+
+    [Fact]
     public void ComboBoxRemoveAtKeepsPresenterContentOfComboBoxItemThatIsItsOwnContainer()
     {
         ComboBoxItem first = new() { Content = "First" };
@@ -174,6 +257,31 @@ public sealed class ItemContainerGeneratorTests
         control.Measure(new MeasureContext(new LayoutSize(100, 30)));
 
         Assert.Same(first, control.ItemsPresenter.LayoutPanelRoot!.VisualChildren[0]);
+    }
+
+    private static void AssertItemState(ListBoxItem container, int expectedIndex, bool isSelected)
+    {
+        AssertItemState(container, expectedIndex, isSelected, container);
+    }
+
+    private static void AssertItemState(ListBoxItem container, int expectedIndex, bool isSelected, object? expectedItem)
+    {
+        Assert.Equal(expectedIndex, container.ItemIndex);
+        Assert.Same(expectedItem, container.Item);
+        Assert.Equal(isSelected, container.IsSelected);
+        Assert.Equal(expectedIndex, ItemContainerGenerator.GetItemIndex(container));
+        Assert.Same(expectedItem, ItemContainerGenerator.GetItem(container));
+    }
+
+    private sealed class ClearRecordingListBox : ListBox
+    {
+        public List<UIElement> ClearedContainers { get; } = [];
+
+        protected internal override void ClearItemContainer(UIElement container)
+        {
+            ClearedContainers.Add(container);
+            base.ClearItemContainer(container);
+        }
     }
 
     private sealed class FixedElement(string value) : UIElement
