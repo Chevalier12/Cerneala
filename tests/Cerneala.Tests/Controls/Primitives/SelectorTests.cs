@@ -48,6 +48,24 @@ public sealed class SelectorTests
     }
 
     [Fact]
+    public void SelectionChangeAfterRemovingSelectedLastItemBeforeLayoutDoesNotThrow()
+    {
+        ListBox listBox = new();
+        listBox.SetItems(new[] { "a", "b", "c" });
+        listBox.ItemContainerGenerator.Realize();
+        listBox.SelectedIndex = 2;
+
+        listBox.Items.RemoveAt(2);
+        Exception? exception = Record.Exception(() => listBox.SelectedIndex = 0);
+
+        Assert.Null(exception);
+        Assert.Equal(0, listBox.SelectedIndex);
+        Assert.Equal("a", listBox.SelectedItem);
+        ListBoxItem first = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.True(first.IsSelected);
+    }
+
+    [Fact]
     public void ReusedContainerClickSelectsCurrentSelectorOnly()
     {
         ListBoxItem shared = new();
