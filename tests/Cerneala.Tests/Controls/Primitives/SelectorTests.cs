@@ -27,6 +27,75 @@ public sealed class SelectorTests
     }
 
     [Fact]
+    public void ClickAfterRemovingEarlierItemInSameInputDispatchSelectsClickedItem()
+    {
+        UIElement[] items = CreateFixedItems(4);
+        ListBox listBox = new();
+        listBox.SetItems(items);
+        ArrangeInRoot(listBox);
+        bool removed = false;
+        listBox.Handlers.AddHandler(InputEvents.PreviewMouseUpEvent, (_, _) =>
+        {
+            if (!removed)
+            {
+                removed = true;
+                listBox.Items.RemoveAt(0);
+            }
+        });
+
+        Click(listBox, 5, 25);
+
+        Assert.True(removed);
+        Assert.Equal(1, listBox.SelectedIndex);
+        Assert.Same(items[2], listBox.SelectedItem);
+    }
+
+    [Fact]
+    public void ClickAfterRemovingEarlierItemBeforeLayoutSelectsClickedItem()
+    {
+        UIElement[] items = CreateFixedItems(4);
+        ListBox listBox = new();
+        listBox.SetItems(items);
+        ArrangeInRoot(listBox);
+
+        listBox.Items.RemoveAt(0);
+        Click(listBox, 5, 25);
+
+        Assert.Equal(1, listBox.SelectedIndex);
+        Assert.Same(items[2], listBox.SelectedItem);
+    }
+
+    [Fact]
+    public void ClickAfterInsertingEarlierItemBeforeLayoutSelectsClickedItem()
+    {
+        UIElement[] items = CreateFixedItems(4);
+        ListBox listBox = new();
+        listBox.SetItems(items);
+        ArrangeInRoot(listBox);
+
+        listBox.Items.Insert(0, new FixedElement(new LayoutSize(20, 10)));
+        Click(listBox, 5, 25);
+
+        Assert.Equal(3, listBox.SelectedIndex);
+        Assert.Same(items[2], listBox.SelectedItem);
+    }
+
+    [Fact]
+    public void ClickAfterMovingEarlierItemBeforeLayoutSelectsClickedItem()
+    {
+        UIElement[] items = CreateFixedItems(4);
+        ObservableCollection<UIElement> source = new(items);
+        ListBox listBox = new() { ItemsSource = source };
+        ArrangeInRoot(listBox);
+
+        source.Move(0, 3);
+        Click(listBox, 5, 25);
+
+        Assert.Equal(1, listBox.SelectedIndex);
+        Assert.Same(items[2], listBox.SelectedItem);
+    }
+
+    [Fact]
     public void SelectionInvalidatesAffectedContainersOnly()
     {
         ListBox listBox = CreateArrangedListBox();
@@ -449,6 +518,26 @@ public sealed class SelectorTests
         listBox.Measure(new MeasureContext(new LayoutSize(100, 100)));
         listBox.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
         return listBox;
+    }
+
+    private static UIElement[] CreateFixedItems(int count)
+    {
+        return [.. Enumerable.Range(0, count).Select(_ => (UIElement)new FixedElement(new LayoutSize(20, 10)))];
+    }
+
+    private static void ArrangeInRoot(ListBox listBox)
+    {
+        UIRoot root = new(100, 100);
+        root.VisualChildren.Add(listBox);
+        listBox.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        listBox.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+    }
+
+    private static void Click(ListBox listBox, float x, float y)
+    {
+        ElementInputBridge bridge = new();
+        bridge.Dispatch(listBox.Root!, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(listBox.Root!, PointerFrame(x, y, previousDown: true));
     }
 
     // Every item is realized exactly once, at its current index, and its container shows that item.

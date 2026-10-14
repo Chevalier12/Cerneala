@@ -84,7 +84,7 @@ public class Selector : ItemsControl
 
     protected virtual void SelectContainer(UIElement container)
     {
-        int index = global::Cerneala.UI.Controls.Items.ItemContainerGenerator.GetItemIndex(container);
+        int index = ItemContainerGenerator.IndexFromContainer(container);
         if (index >= 0)
         {
             SelectedIndex = index;
