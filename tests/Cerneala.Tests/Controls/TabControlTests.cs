@@ -97,6 +97,85 @@ public sealed class TabControlTests
         Assert.Equal(new LayoutRect(0, 0, 120, 20), wideHeader.ArrangedBounds);
     }
 
+    [Fact]
+    public void InsertingTabBeforeSelectedTabKeepsEachTabContent()
+    {
+        UIRoot root = new(100, 100);
+        TabItem first = new() { Header = "A", Content = "A content" };
+        TabItem second = new() { Header = "B", Content = "B content" };
+        TabItem third = new() { Header = "C", Content = "C content" };
+        TabControl tabControl = new() { ItemsPanel = new StackPanel() };
+        tabControl.SetItems(new[] { first, second, third });
+        root.VisualChildren.Add(tabControl);
+        Layout(tabControl);
+        tabControl.SelectedIndex = 1;
+
+        tabControl.Items.Insert(0, new TabItem { Header = "Z", Content = "Z content" });
+        Layout(tabControl);
+
+        Assert.Equal(2, tabControl.SelectedIndex);
+        Assert.Same(second, tabControl.SelectedTabItem);
+        Assert.Equal("A content", first.Content);
+        Assert.Equal("B content", second.Content);
+        Assert.Equal("C content", third.Content);
+        Assert.False(first.IsSelected);
+        Assert.True(second.IsSelected);
+    }
+
+    [Fact]
+    public void RemovingSelectedTabSelectsTabThatTakesItsPlace()
+    {
+        TabItem first = new() { Header = "A" };
+        TabItem second = new() { Header = "B" };
+        TabItem third = new() { Header = "C" };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second, third });
+        tabControl.SelectedIndex = 1;
+
+        tabControl.Items.RemoveAt(1);
+
+        Assert.Equal(1, tabControl.SelectedIndex);
+        Assert.Same(third, tabControl.SelectedItem);
+    }
+
+    [Fact]
+    public void RemovingSelectedLastTabSelectsPreviousTab()
+    {
+        TabItem first = new() { Header = "A" };
+        TabItem second = new() { Header = "B" };
+        TabItem third = new() { Header = "C" };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second, third });
+        tabControl.SelectedIndex = 2;
+
+        tabControl.Items.RemoveAt(2);
+
+        Assert.Equal(1, tabControl.SelectedIndex);
+        Assert.Same(second, tabControl.SelectedItem);
+    }
+
+    [Fact]
+    public void RemovingSelectedTabSkipsDisabledTab()
+    {
+        TabItem first = new() { Header = "A" };
+        TabItem second = new() { Header = "B" };
+        TabItem third = new() { Header = "C", IsEnabled = false };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second, third });
+        tabControl.SelectedIndex = 1;
+
+        tabControl.Items.RemoveAt(1);
+
+        Assert.Equal(0, tabControl.SelectedIndex);
+        Assert.Same(first, tabControl.SelectedItem);
+    }
+
+    private static void Layout(TabControl tabControl)
+    {
+        tabControl.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        tabControl.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+    }
+
     private static InputFrame PointerFrame(float x, float y, bool previousDown = false, bool currentDown = false)
     {
         PointerSnapshot previous = PointerSnapshot.Empty.WithPosition(x, y);

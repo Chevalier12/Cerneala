@@ -47,7 +47,7 @@ Calling `Select(index)` accepts any value greater than or equal to `-1`. The val
 
 When the selected index changes, `SelectionModel` updates `SelectedIndex`, returns a `SelectionChangeResult` with `Changed == true`, and raises `SelectionChanged`. Selecting the current index again returns a result with `Changed == false` and does not raise `SelectionChanged`.
 
-`Selector` uses this model internally to keep its `SelectedIndex` property and realized item containers in sync. `SelectionModel<T>` derives from this class to add item-based selection over an item list.
+`Selector` uses this model internally to keep its `SelectedIndex` property and realized item containers in sync. When the selector's items change and the selected item moves to another index, `Selector` selects the new index in the model, so the model raises `SelectionChanged` even though `Selector` does not raise its routed `SelectionChanged` event for that move. `SelectionModel<T>` derives from this class to add item-based selection over an item list.
 
 ## Constructors
 

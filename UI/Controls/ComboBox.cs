@@ -344,7 +344,8 @@ public class ComboBox : Selector
                 SetCurrentTextFromSelection();
             }
 
-            if (selectionTransactionActive && !updatingTextSearch)
+            // An item change moves or clears the committed selection; the open preview stays the user's choice.
+            if (selectionTransactionActive && !updatingTextSearch && !IsChangingSelectionForItems)
             {
                 transactionText = Text;
                 transactionTextMatchesPreview = SelectedIndex >= 0;
