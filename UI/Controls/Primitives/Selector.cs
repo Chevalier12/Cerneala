@@ -241,8 +241,8 @@ public class Selector : ItemsControl
             IsChangingSelectionForItems = wasChangingSelectionForItems;
         }
 
-        InvalidateContainer(args.Change.OldIndex);
-        InvalidateContainer(args.Change.NewIndex);
+        InvalidateContainer(args.Change.OldIndex, "Selection changed");
+        InvalidateContainer(args.Change.NewIndex, "Selection changed");
         if (relocated)
         {
             return;
@@ -258,7 +258,7 @@ public class Selector : ItemsControl
 
     // A realized container whose item was replaced keeps its index until the next layout pass prepares it for
     // the new item, so a container is refreshed here only while it holds the item at its index.
-    private void InvalidateContainer(int index)
+    internal void InvalidateContainer(int index, string reason)
     {
         if (index < 0 || index >= ItemCount || !ItemContainerGenerator.RealizedContainers.TryGetValue(index, out UIElement? container))
         {
@@ -273,7 +273,7 @@ public class Selector : ItemsControl
 
         PrepareItemContainer(container, index, item);
         container.IncrementRenderVersion();
-        container.Invalidate(InvalidationFlags.Render | InvalidationFlags.InputVisual, "Selection changed");
+        container.Invalidate(InvalidationFlags.Render | InvalidationFlags.InputVisual, reason);
     }
 
     private sealed class SelectorClickHandlerRegistration
