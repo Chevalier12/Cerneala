@@ -273,6 +273,35 @@ public sealed class ComboBoxTests
     }
 
     [Fact]
+    public void ClickingItemAfterRemovingEarlierItemBeforeLayoutSelectsClickedItem()
+    {
+        UIRoot root = new(100, 100);
+        ComboBox comboBox = new()
+        {
+            ItemsPanel = new LayoutStackPanel(),
+            IsDropDownOpen = true
+        };
+        UIElement[] items = [new FixedElement(), new FixedElement(), new FixedElement(), new FixedElement()];
+        comboBox.SetItems(items);
+        LayoutCanvas canvas = new();
+        canvas.VisualChildren.Add(comboBox);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        UIElement clicked = comboBox.ItemContainerGenerator.RealizedContainers[2];
+        float x = clicked.ArrangedBounds.X + 2;
+        float y = clicked.ArrangedBounds.Y + 2;
+
+        comboBox.Items.RemoveAt(0);
+        ElementInputBridge bridge = new();
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+
+        Assert.Equal(1, comboBox.SelectedIndex);
+        Assert.Same(items[2], comboBox.SelectedItem);
+        Assert.False(comboBox.IsDropDownOpen);
+    }
+
+    [Fact]
     public void EditableTextThatDiffersFromSelectionClearsSelection()
     {
         ComboBox comboBox = new()

@@ -271,7 +271,7 @@ public class ComboBox : Selector
 
     protected override void SelectContainer(UIElement container)
     {
-        int sourceIndex = ItemContainerGenerator.GetItemIndex(container);
+        int sourceIndex = ItemContainerGenerator.IndexFromContainer(container);
         if (sourceIndex < 0)
         {
             return;
