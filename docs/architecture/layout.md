@@ -99,6 +99,14 @@ The code sets `first.Visibility = Visibility.Collapsed;`.
   `MeasureCore`, is therefore not skipped: the element is measured again later
   in the same phase, or in the next frame when it is no longer in the phase's
   snapshot.
+- `UIElement.Measure` writes the measure cache stamp and the scheduled-measure
+  visit after `MeasureCore`. When the element's measure cache was invalidated
+  during that measure (its own `MeasureCore` calls `Invalidate(Measure)`), it
+  writes neither: the cache stays invalid and the visit stays cleared. The
+  element's queue entry then measures it again later in the same measure phase,
+  or in the next frame, and a parent that measures it with the same constraint
+  runs its `MeasureCore`. `LayoutManager.Measure` does not write the stamp again
+  after `UIElement.Measure` returns.
 - `UIElement.Arrange` reuses its result when the final rectangle and
   `LayoutVersion` equal the last arrange (`UIElement.cs:906-931`).
 - An attached element's `Invalidate` does not change its `LayoutVersion`. When
@@ -203,6 +211,11 @@ Test paths are under `tests/Cerneala.Tests/`.
   same measure phase, for example from a sibling's `MeasureCore`, is not
   dropped. Test:
   `UI/Layout/MeasureInvalidationAfterMeasureSameFrameRegressionTests.cs:MeasureInvalidationRaisedAfterTheElementWasMeasuredInTheSamePhaseRuns`.
+- An element that calls `Invalidate(Measure)` during its own `MeasureCore`
+  while it is queued in the measure snapshot is measured again, whether or not
+  its parent measures it again with the same constraint in that frame, and also
+  after `LayoutManager.Measure`. Tests:
+  `UI/Layout/SelfMeasureInvalidationDuringMeasureRegressionTests.cs`.
 - A failed measure keeps the element dirty and queued. Test:
   `UI/Layout/LayoutManagerTests.cs:FailedMeasureKeepsDirtyFlagsAndQueue`.
   A failed arrange: netestat.

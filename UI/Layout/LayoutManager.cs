@@ -38,9 +38,9 @@ public sealed class LayoutManager
             element.InvalidateMeasureCache();
         }
 
+        // UIElement.Measure writes the measure cache stamp. Writing it again here would undo a
+        // Measure request that the element raised during that measure.
         LayoutSize desired = element.Measure(new MeasureContext(availableSize, LayoutRounding.ForScale(root.Scale)));
-        element.LastMeasureAvailableSize = availableSize;
-        element.LastMeasureLayoutVersion = element.LayoutVersion;
         return new LayoutResult(desired, element.ArrangedBounds, false, false, false);
     }
 
