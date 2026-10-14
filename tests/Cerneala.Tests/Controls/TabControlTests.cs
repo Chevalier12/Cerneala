@@ -1,4 +1,5 @@
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Items;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
@@ -120,6 +121,92 @@ public sealed class TabControlTests
         Assert.Equal("C content", third.Content);
         Assert.False(first.IsSelected);
         Assert.True(second.IsSelected);
+    }
+
+    [Fact]
+    public void InsertingTabBeforeSelectedTabKeepsSelectedTabItemBeforeLayout()
+    {
+        TabItem first = new() { Header = "A" };
+        TabItem second = new() { Header = "B" };
+        TabItem third = new() { Header = "C" };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second, third });
+        tabControl.ItemContainerGenerator.Realize();
+        tabControl.SelectedIndex = 0;
+
+        tabControl.Items.Insert(0, new TabItem { Header = "Z" });
+
+        Assert.Same(first, tabControl.SelectedItem);
+        Assert.Same(first, tabControl.SelectedTabItem);
+    }
+
+    [Fact]
+    public void RemovingTabBeforeSelectedTabKeepsSelectedTabItemBeforeLayout()
+    {
+        TabItem first = new() { Header = "A" };
+        TabItem second = new() { Header = "B" };
+        TabItem third = new() { Header = "C" };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second, third });
+        tabControl.ItemContainerGenerator.Realize();
+        tabControl.SelectedIndex = 2;
+
+        tabControl.Items.RemoveAt(0);
+
+        Assert.Same(third, tabControl.SelectedItem);
+        Assert.Same(third, tabControl.SelectedTabItem);
+    }
+
+    [Fact]
+    public void SelectingAfterRemovingRealizedTabNeverReturnsRemovedTab()
+    {
+        TabItem first = new() { Header = "A" };
+        TabItem second = new() { Header = "B" };
+        TabItem third = new() { Header = "C" };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second, third });
+        tabControl.ItemContainerGenerator.Realize();
+
+        tabControl.Items.RemoveAt(0);
+        tabControl.SelectedIndex = 0;
+
+        Assert.Same(second, tabControl.SelectedTabItem);
+        tabControl.ItemContainerGenerator.Realize();
+        Assert.Same(second, tabControl.SelectedTabItem);
+    }
+
+    [Fact]
+    public void InsertingDataItemBeforeSelectedItemReturnsSelectedItemContainerBeforeLayout()
+    {
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { "A", "B", "C" });
+        tabControl.ItemContainerGenerator.Realize();
+        tabControl.SelectedIndex = 0;
+
+        tabControl.Items.Insert(0, "Z");
+
+        Assert.Equal("A", tabControl.SelectedItem);
+        Assert.Equal("A", ItemContainerGenerator.GetItem(tabControl.SelectedTabItem!));
+        tabControl.ItemContainerGenerator.Realize();
+        Assert.Same(tabControl.ItemContainerGenerator.RealizedContainers[1], tabControl.SelectedTabItem);
+        Assert.Equal("A", ItemContainerGenerator.GetItem(tabControl.SelectedTabItem!));
+    }
+
+    [Fact]
+    public void RemovingDataItemBeforeSelectedItemReturnsSelectedItemContainerBeforeLayout()
+    {
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { "A", "B", "C" });
+        tabControl.ItemContainerGenerator.Realize();
+        tabControl.SelectedIndex = 2;
+
+        tabControl.Items.RemoveAt(0);
+
+        Assert.Equal("C", tabControl.SelectedItem);
+        Assert.Equal("C", ItemContainerGenerator.GetItem(tabControl.SelectedTabItem!));
+        tabControl.ItemContainerGenerator.Realize();
+        Assert.Same(tabControl.ItemContainerGenerator.RealizedContainers[1], tabControl.SelectedTabItem);
+        Assert.Equal("C", ItemContainerGenerator.GetItem(tabControl.SelectedTabItem!));
     }
 
     [Fact]

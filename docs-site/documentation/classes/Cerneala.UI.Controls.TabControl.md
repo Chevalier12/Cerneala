@@ -39,7 +39,21 @@ TabItem? selected = tabs.SelectedTabItem;
 
 The control uses `TabItem` as its default item container. If an item is already a `TabItem`, the control reuses that item as the container. Otherwise, it creates a new `TabItem` container for the item.
 
-`SelectedTabItem` is a computed property. It reads the same active item source as `SelectedItem`: `ItemsSource` when it is set, otherwise `Items`. It returns `null` when `SelectedIndex` is outside the range of `ItemCount`. When the selected container has already been realized, it returns that realized `TabItem`; otherwise, it returns the selected item only if that item is already a `TabItem`. For example, with `ItemsSource = new[] { first, second }` of `TabItem` values and `SelectedIndex = 1`, it returns `second`.
+`SelectedTabItem` is a computed property. It reads the same active item source as `SelectedItem`: `ItemsSource` when it is set, otherwise `Items`. It returns `null` when `SelectedIndex` is outside the range of `ItemCount`. When the selected item is a `TabItem`, it returns that item, because a `TabItem` item is its own container. For example, with `ItemsSource = new[] { first, second }` of `TabItem` values and `SelectedIndex = 1`, it returns `second`. For any other item, it returns the realized `TabItem` container prepared for the selected item, or `null` when no container has been realized for it.
+
+Realized containers keep their previous indexes until the next layout pass, so `SelectedTabItem` matches the container by its item, not by its old index. With `TabItem` items, it is always the same instance as `SelectedItem`, before and after layout, and never a tab that was removed from `Items`. With other items, it is a container whose recorded item equals `SelectedItem`. When several items are equal, for example two `"A"` strings, the container chosen before the next layout pass can be the one prepared for the other equal item; after the layout pass it is the container realized at `SelectedIndex`.
+
+```csharp
+TabControl tabs = new();
+tabs.SetItems(new[] { "A", "B", "C" });
+// The first layout pass realizes a TabItem container for each string.
+tabs.SelectedIndex = 0;
+
+tabs.Items.Insert(0, "Z");
+// tabs.SelectedIndex is 1 and tabs.SelectedItem is "A".
+// Before the next layout pass, tabs.SelectedTabItem is still the container prepared for "A",
+// not the container that the previous layout pass realized at index 1 for "B".
+```
 
 Inserting, removing, or moving other tabs keeps the selected tab selected, as described for `Selector`. Removing the selected tab does not leave the control without a selected tab: as in WPF, `Selector` first clears the selection, and `TabControl` then selects the tab that took the removed tab's place. When the removed tab was the last one, it selects the previous tab. The search continues backwards and wraps to the last tab. It skips a `TabItem` item that is disabled (`IsEnabled == false`) or not `Visibility.Visible`. If no tab qualifies, `SelectedIndex` stays `-1`. Each step raises `SelectionChanged`: first with the removed tab in `RemovedItems`, then with the new tab in `AddedItems`. Replacing the selected tab or resetting the items does not select a neighbouring tab.
 
@@ -70,7 +84,7 @@ Selection can also be changed through the inherited `Selector` input behavior: a
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `SelectedTabItem` | `TabItem?` | Gets the selected tab item or realized tab container, or `null` when there is no valid selected tab item. |
+| `SelectedTabItem` | `TabItem?` | Gets the selected `TabItem` item, or the realized tab container prepared for the selected item, or `null` when there is no valid selected tab item. |
 
 ## Relevant Inherited Properties
 
