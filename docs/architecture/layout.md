@@ -40,7 +40,14 @@ and does not draw; a changed rectangle only schedules render and hit-test work.
    - after measuring an element whose desired size changed, and which is not a
      layout boundary, enqueues its parent as a `Required` entry and marks it
      `Measure | Arrange`, so a later pass of the same phase measures it. It
-     also invalidates the parent's arrange cache (`UIElement.InvalidateArrangeCache`)
+     also invalidates the parent's measure cache, keeping its constraint, and
+     clears its scheduled-measure visit
+     (`UIElement.InvalidateMeasureCacheKeepingConstraint`). A measure of the
+     parent that ran earlier in this phase, for example by an ancestor that
+     measured it from its cache, therefore does not make the scheduler skip the
+     parent's `Required` entry, and an ancestor that measures the parent with
+     the same constraint runs the parent's `MeasureCore`. It also invalidates
+     the parent's arrange cache (`UIElement.InvalidateArrangeCache`)
      and keeps its slot. An ancestor that arranges the parent with the same slot
      then runs the parent's `ArrangeCore`, instead of reusing the stale result and
      marking the parent as already arranged in this pass.
@@ -184,6 +191,10 @@ Test paths are under `tests/Cerneala.Tests/`.
   `UI/Layout/LayoutManagerTests.cs:DirtyMeasureBypassesParentMeasureCacheWhenChildLayoutChanges`,
   `UI/Layout/LayoutManagerTests.cs:StableChildDesiredSizeDoesNotRemeasureAncestors`,
   `UI/Layout/LayoutManagerTests.cs:DirectParentInvalidationIsNotPrunedByStableChildMeasure`.
+- That parent, and each ancestor up to the first layout boundary whose desired
+  size changes in turn, is measured again in the same frame also when an
+  ancestor already measured it earlier in the same measure phase. Test:
+  `UI/Layout/ParentRequeuedAfterAncestorMeasuredItTests.cs:ParentIsMeasuredAgainWhenChildSizeChangesAfterAnAncestorMeasuredIt`.
 - That parent is arranged again in the same frame, also when a sibling's change
   makes its own parent arrange it first with the same slot. Test:
   `UI/Layout/SiblingLayoutSameFrameRegressionTests.cs:AutoColumnChildIsRearrangedWhenGridSiblingChangesInTheSameFrame`.
