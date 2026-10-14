@@ -7,7 +7,7 @@ namespace Cerneala.UI.Layout.Panels;
 public class Grid : Panel
 {
     private const int MaxCyclicMeasurePasses = 5;
-    private static readonly ConditionalWeakTable<UIElement, GridPlacement> placements = new();
+    private static readonly ConditionalWeakTable<UIElement, StrongBox<GridPlacement>> placements = new();
     private float[] measuredColumnSizes = [0];
     private float[] measuredRowSizes = [0];
     private bool measuredColumnsUnbounded;
@@ -32,45 +32,45 @@ public class Grid : Panel
     public static int GetColumn(UIElement element)
     {
         ArgumentNullException.ThrowIfNull(element);
-        return placements.TryGetValue(element, out GridPlacement? placement) ? placement.Column : 0;
+        return placements.TryGetValue(element, out StrongBox<GridPlacement>? placement) ? placement.Value.Column : 0;
     }
 
     public static void SetColumn(UIElement element, int column)
     {
-        SetPlacement(element, placement => placement.Column = ValidateIndex(column, nameof(column)));
+        SetPlacement(element, placement => placement with { Column = ValidateIndex(column, nameof(column)) });
     }
 
     public static int GetRow(UIElement element)
     {
         ArgumentNullException.ThrowIfNull(element);
-        return placements.TryGetValue(element, out GridPlacement? placement) ? placement.Row : 0;
+        return placements.TryGetValue(element, out StrongBox<GridPlacement>? placement) ? placement.Value.Row : 0;
     }
 
     public static void SetRow(UIElement element, int row)
     {
-        SetPlacement(element, placement => placement.Row = ValidateIndex(row, nameof(row)));
+        SetPlacement(element, placement => placement with { Row = ValidateIndex(row, nameof(row)) });
     }
 
     public static int GetColumnSpan(UIElement element)
     {
         ArgumentNullException.ThrowIfNull(element);
-        return placements.TryGetValue(element, out GridPlacement? placement) ? placement.ColumnSpan : 1;
+        return placements.TryGetValue(element, out StrongBox<GridPlacement>? placement) ? placement.Value.ColumnSpan : 1;
     }
 
     public static void SetColumnSpan(UIElement element, int columnSpan)
     {
-        SetPlacement(element, placement => placement.ColumnSpan = ValidateSpan(columnSpan, nameof(columnSpan)));
+        SetPlacement(element, placement => placement with { ColumnSpan = ValidateSpan(columnSpan, nameof(columnSpan)) });
     }
 
     public static int GetRowSpan(UIElement element)
     {
         ArgumentNullException.ThrowIfNull(element);
-        return placements.TryGetValue(element, out GridPlacement? placement) ? placement.RowSpan : 1;
+        return placements.TryGetValue(element, out StrongBox<GridPlacement>? placement) ? placement.Value.RowSpan : 1;
     }
 
     public static void SetRowSpan(UIElement element, int rowSpan)
     {
-        SetPlacement(element, placement => placement.RowSpan = ValidateSpan(rowSpan, nameof(rowSpan)));
+        SetPlacement(element, placement => placement with { RowSpan = ValidateSpan(rowSpan, nameof(rowSpan)) });
     }
 
     protected override LayoutSize MeasureCore(MeasureContext context)
@@ -473,8 +473,8 @@ public class Grid : Panel
 
     private static GridPlacement GetPlacement(UIElement element)
     {
-        GridPlacement placement = placements.TryGetValue(element, out GridPlacement? existing)
-            ? existing
+        GridPlacement placement = placements.TryGetValue(element, out StrongBox<GridPlacement>? existing)
+            ? existing.Value
             : new GridPlacement();
         placement.ClampToAtLeastOneCell();
         return placement;
@@ -482,6 +482,7 @@ public class Grid : Panel
 
     private static GridPlacement GetPlacement(UIElement element, int columnCount, int rowCount)
     {
+        // GridPlacement is a value type: clamping changes this copy, not the stored placement.
         GridPlacement placement = GetPlacement(element);
         placement.ClampToGrid(columnCount, rowCount);
         return placement;
@@ -499,26 +500,20 @@ public class Grid : Panel
             reason);
     }
 
-    private static void SetPlacement(UIElement element, Action<GridPlacement> update)
+    private static void SetPlacement(UIElement element, Func<GridPlacement, GridPlacement> update)
     {
         ArgumentNullException.ThrowIfNull(element);
-        GridPlacement placement = placements.GetOrCreateValue(element);
-        int oldRow = placement.Row;
-        int oldColumn = placement.Column;
-        int oldRowSpan = placement.RowSpan;
-        int oldColumnSpan = placement.ColumnSpan;
+        StrongBox<GridPlacement> stored = placements.GetValue(element, static _ => new StrongBox<GridPlacement>(new GridPlacement()));
 
-        update(placement);
+        GridPlacement placement = update(stored.Value);
         placement.ClampToAtLeastOneCell();
 
-        if (placement.Row == oldRow &&
-            placement.Column == oldColumn &&
-            placement.RowSpan == oldRowSpan &&
-            placement.ColumnSpan == oldColumnSpan)
+        if (placement == stored.Value)
         {
             return;
         }
 
+        stored.Value = placement;
         if (element.VisualParent is Grid grid)
         {
             grid.IncrementLayoutVersion();
@@ -536,8 +531,12 @@ public class Grid : Panel
         return value > 0 ? value : throw new ArgumentOutOfRangeException(parameterName, "Grid span must be positive.");
     }
 
-    private sealed class GridPlacement
+    private record struct GridPlacement
     {
+        public GridPlacement()
+        {
+        }
+
         public int Row { get; set; }
 
         public int Column { get; set; }

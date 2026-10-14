@@ -67,6 +67,64 @@ public sealed class GridTests
     }
 
     [Fact]
+    public void LayoutKeepsStoredColumnPlacementWhenGridHasFewerColumns()
+    {
+        Grid grid = new();
+        FixedElement child = new(new LayoutSize(5, 5));
+        Grid.SetColumn(child, 2);
+        Grid.SetColumnSpan(child, 2);
+        grid.VisualChildren.Add(child);
+
+        grid.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+
+        Assert.Equal(new LayoutRect(0, 0, 100, 100), child.ArrangedBounds);
+        Assert.Equal(2, Grid.GetColumn(child));
+        Assert.Equal(2, Grid.GetColumnSpan(child));
+
+        for (int i = 0; i < 4; i++)
+        {
+            grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Pixels(10)));
+        }
+
+        grid.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+
+        Assert.Equal(new LayoutRect(20, 0, 20, 100), child.ArrangedBounds);
+        Assert.Equal(2, Grid.GetColumn(child));
+        Assert.Equal(2, Grid.GetColumnSpan(child));
+    }
+
+    [Fact]
+    public void LayoutKeepsStoredRowPlacementWhenGridHasFewerRows()
+    {
+        Grid grid = new();
+        FixedElement child = new(new LayoutSize(5, 5));
+        Grid.SetRow(child, 2);
+        Grid.SetRowSpan(child, 2);
+        grid.VisualChildren.Add(child);
+
+        grid.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+
+        Assert.Equal(new LayoutRect(0, 0, 100, 100), child.ArrangedBounds);
+        Assert.Equal(2, Grid.GetRow(child));
+        Assert.Equal(2, Grid.GetRowSpan(child));
+
+        for (int i = 0; i < 4; i++)
+        {
+            grid.RowDefinitions.Add(new RowDefinition(GridLength.Pixels(10)));
+        }
+
+        grid.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+
+        Assert.Equal(new LayoutRect(0, 20, 100, 20), child.ArrangedBounds);
+        Assert.Equal(2, Grid.GetRow(child));
+        Assert.Equal(2, Grid.GetRowSpan(child));
+    }
+
+    [Fact]
     public void GridRecomputesInfiniteStarRowAfterStarColumnsConstrainChildWidth()
     {
         StackPanel stack = new();
