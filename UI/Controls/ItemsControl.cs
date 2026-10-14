@@ -209,9 +209,9 @@ public class ItemsControl : Control
         else if (ReferenceEquals(args.Property, ItemsSourceProperty))
         {
             SubscribeItemsSource(args.OldValue as IEnumerable, args.NewValue as IEnumerable);
-            OnItemsViewSourceChanged();
             ItemContainerGenerator.Clear();
             NotifyItemsReset();
+            OnItemsViewSourceChanged();
             itemsPresenter.MarkItemsDirty();
             InvalidateItems("ItemsControl items source changed");
         }
