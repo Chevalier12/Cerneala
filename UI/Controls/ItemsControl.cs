@@ -407,6 +407,12 @@ public class ItemsControl : Control
     {
     }
 
+    // Raised before the active presenter refreshes for its new ItemsPanel, so an owner policy that
+    // depends on the resolved panel applies to that refresh.
+    internal virtual void OnItemsPresenterPanelChanged()
+    {
+    }
+
     internal void SetVirtualizationContext(VirtualizationContext? context)
     {
         itemsPresenter.VirtualizationContext = context;

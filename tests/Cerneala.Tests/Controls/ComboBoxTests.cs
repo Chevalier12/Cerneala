@@ -1094,6 +1094,52 @@ public sealed class ComboBoxTests
         Assert.InRange(comboBox.ItemContainerGenerator.RealizedContainers.Count, 1, 20);
     }
 
+    [Fact]
+    public void SwappingPresenterPanelToStackPanelWhileOpenRealizesEveryDropDownItem()
+    {
+        (ComboBox comboBox, ScrollViewer viewer, UIRoot root) = CreateLargeOpenDropDown(
+            template: null,
+            ownerPanel: null);
+        Assert.InRange(comboBox.ItemContainerGenerator.RealizedContainers.Count, 1, 20);
+
+        ItemsPresenter presenter = Assert.IsType<ItemsPresenter>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_ItemsPresenter"]);
+        presenter.ItemsPanel = new LayoutStackPanel();
+        root.ProcessFrame();
+        root.ProcessFrame();
+        Assert.IsType<LayoutStackPanel>(comboBox.ItemsPresenter.LayoutPanelRoot);
+        Assert.Equal(200, comboBox.ItemContainerGenerator.RealizedContainers.Count);
+        Assert.Equal(6800, viewer.ScrollInfo.ExtentHeight);
+
+        viewer.ScrollInfo.SetVerticalOffset(1400);
+        root.ProcessFrame();
+        root.ProcessFrame();
+        Assert.Equal(200, comboBox.ItemContainerGenerator.RealizedContainers.Count);
+        Assert.Equal(6800, viewer.ScrollInfo.ExtentHeight);
+        Assert.Equal(1400, viewer.ScrollInfo.VerticalOffset);
+    }
+
+    [Fact]
+    public void SwappingPresenterPanelToVirtualizingStackPanelWhileOpenVirtualizesDropDown()
+    {
+        (ComboBox comboBox, ScrollViewer viewer, UIRoot root) = CreateLargeOpenDropDown(
+            CreatePresenterPanelTemplate(new LayoutStackPanel()),
+            ownerPanel: null);
+        Assert.Equal(200, comboBox.ItemContainerGenerator.RealizedContainers.Count);
+
+        comboBox.ItemsPresenter.ItemsPanel = new Cerneala.UI.Layout.Panels.VirtualizingStackPanel();
+        root.ProcessFrame();
+        root.ProcessFrame();
+        Assert.IsType<Cerneala.UI.Layout.Panels.VirtualizingStackPanel>(comboBox.ItemsPresenter.LayoutPanelRoot);
+        Assert.InRange(comboBox.ItemContainerGenerator.RealizedContainers.Count, 1, 20);
+
+        viewer.ScrollInfo.SetVerticalOffset(1400);
+        root.ProcessFrame();
+        root.ProcessFrame();
+        Assert.True(RealizedSourceIndices(comboBox)[0] > 0);
+        Assert.InRange(comboBox.ItemContainerGenerator.RealizedContainers.Count, 1, 20);
+    }
+
     private static (ComboBox ComboBox, ScrollViewer Viewer, UIRoot Root) CreateLargeOpenDropDown(
         ComponentTemplate<ComboBox>? template,
         LayoutStackPanel? ownerPanel)
