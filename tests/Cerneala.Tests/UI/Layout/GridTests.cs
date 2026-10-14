@@ -426,6 +426,64 @@ public sealed class GridTests
         Assert.Equal(new LayoutRect(60, 0, 240, 40), items.ArrangedBounds);
     }
 
+    // At these heights the Auto column's child is wider at the re-sized star row than at the provisional one.
+    [Theory]
+    [InlineData(220)]
+    [InlineData(230)]
+    public void AutoRowChildSpanningAutoAndPixelColumnsDoesNotOverflowStarColumnsWhenAutoColumnGrows(float height)
+    {
+        Grid grid = new();
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Pixels(100)));
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Stars(1)));
+        ItemWrappingElement items = new(vertical: true);
+        Grid.SetRow(items, 1);
+        WrappingElement wrapping = new(vertical: false);
+        Grid.SetColumnSpan(wrapping, 2);
+        grid.VisualChildren.Add(items);
+        grid.VisualChildren.Add(wrapping);
+
+        LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(800, height)));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 800, height)));
+
+        Assert.Equal(new LayoutSize(800, height), desired);
+        Assert.Equal(new LayoutRect(0, 0, 160, 60), wrapping.ArrangedBounds);
+        Assert.Equal(160, wrapping.LastAvailableSize.Width);
+        Assert.Equal(height - 60, items.LastAvailableSize.Height);
+        Assert.Equal(new LayoutRect(0, 60, 60, height - 60), items.ArrangedBounds);
+    }
+
+    // At these widths the Auto row's child is taller at the re-sized star column than at the provisional one.
+    [Theory]
+    [InlineData(220)]
+    [InlineData(230)]
+    public void AutoColumnChildSpanningAutoAndPixelRowsDoesNotOverflowStarRowsWhenAutoRowGrows(float width)
+    {
+        Grid grid = new();
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Pixels(100)));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Stars(1)));
+        ItemWrappingElement items = new(vertical: false);
+        Grid.SetColumn(items, 1);
+        WrappingElement wrapping = new(vertical: true);
+        Grid.SetRowSpan(wrapping, 2);
+        grid.VisualChildren.Add(items);
+        grid.VisualChildren.Add(wrapping);
+
+        LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(width, 800)));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, width, 800)));
+
+        Assert.Equal(new LayoutSize(width, 800), desired);
+        Assert.Equal(new LayoutRect(0, 0, 60, 160), wrapping.ArrangedBounds);
+        Assert.Equal(160, wrapping.LastAvailableSize.Height);
+        Assert.Equal(width - 60, items.LastAvailableSize.Width);
+        Assert.Equal(new LayoutRect(60, 0, width - 60, 60), items.ArrangedBounds);
+    }
+
     [Fact]
     public void AutoColumnChildThatNarrowsAtItsResolvedHeightDoesNotOverflowStarRows()
     {
@@ -560,8 +618,11 @@ public sealed class GridTests
     // 400 px of content in 20 px lines, wrapped to the available width, or to the available height when vertical.
     private sealed class WrappingElement(bool vertical) : UIElement
     {
+        public LayoutSize LastAvailableSize { get; private set; }
+
         protected override LayoutSize MeasureCore(MeasureContext context)
         {
+            LastAvailableSize = context.AvailableSize;
             float length = MathF.Min(vertical ? context.AvailableSize.Height : context.AvailableSize.Width, 400);
             float thickness = MathF.Ceiling(400 / length) * 20;
             return vertical ? new LayoutSize(thickness, length) : new LayoutSize(length, thickness);

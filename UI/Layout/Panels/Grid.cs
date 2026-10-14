@@ -144,19 +144,30 @@ public class Grid : Panel
         {
             // Some first-axis children were measured before their cross size was final. Size the first axis
             // again from their measures at the resolved cross sizes, so its stars share what the final measure leaves.
-            // Its content-sized definitions keep their sizes and only grow, as in the final measure: the second
-            // axis was already measured against them. The cyclic passes above already start with a re-size of
-            // the columns, which are then the first axis.
-            if (rowsFirst)
+            // When that changes the first axis, the second axis was measured against stale sizes: size it again
+            // too, then the first axis against it, until the first axis stops changing. Content-sized definitions
+            // keep their sizes and only grow, as in the final measure: the other axis was already measured
+            // against them. The cyclic passes above already start with a re-size of the columns, which are then
+            // the first axis.
+            GridLength[] firstLengths = rowsFirst ? rows : columns;
+            float[] firstSizes = rowsFirst ? rowSizes : columnSizes;
+            float firstAvailableSize = rowsFirst ? context.AvailableSize.Height : context.AvailableSize.Width;
+            GridLength[] secondLengths = rowsFirst ? columns : rows;
+            float[] secondSizes = rowsFirst ? columnSizes : rowSizes;
+            float secondAvailableSize = rowsFirst ? context.AvailableSize.Width : context.AvailableSize.Height;
+            for (int pass = 0; pass < MaxCyclicMeasurePasses; pass++)
             {
-                ClearStarShares(rows, rowSizes, context.AvailableSize.Height);
-            }
-            else
-            {
-                ClearStarShares(columns, columnSizes, context.AvailableSize.Width);
-            }
+                float[] previousFirstSizes = (float[])firstSizes.Clone();
+                ClearStarShares(firstLengths, firstSizes, firstAvailableSize);
+                MeasureContentSizedDefinitions(context, columnAxis: !rowsFirst, columns, columnSizes, rows, rowSizes, crossAxisResolved: true);
+                if (firstSizes.AsSpan().SequenceEqual(previousFirstSizes))
+                {
+                    break;
+                }
 
-            MeasureContentSizedDefinitions(context, columnAxis: !rowsFirst, columns, columnSizes, rows, rowSizes, crossAxisResolved: true);
+                ClearStarShares(secondLengths, secondSizes, secondAvailableSize);
+                MeasureContentSizedDefinitions(context, columnAxis: rowsFirst, columns, columnSizes, rows, rowSizes, crossAxisResolved: true);
+            }
         }
 
         foreach (UIElement child in VisualChildren)
