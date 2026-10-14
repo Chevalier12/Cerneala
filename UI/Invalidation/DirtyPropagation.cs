@@ -62,6 +62,11 @@ public sealed class DirtyPropagation
             foreach (UIElement descendant in ElementTreeWalker.Descendants(request.Target, ElementChildRole.Visual))
             {
                 MarkAndQueue(descendant, propagated, layoutQueue, inheritedPropertyQueue, aspectQueue, renderQueue, hitTestQueue, trace, "Subtree propagation", LayoutQueueEntryKind.Subtree);
+                if (propagated.HasFlag(InvalidationFlags.Arrange))
+                {
+                    // Same reason as for the target: its parent may arrange it with the same slot.
+                    descendant.InvalidateArrangeCache();
+                }
             }
         }
     }
