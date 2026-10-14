@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
@@ -82,6 +83,62 @@ public sealed class ItemContainerGeneratorTests
 
         Assert.Same(second, updated[0]);
         Assert.Same(second, control.ItemContainerGenerator.RealizedContainers[0]);
+    }
+
+    [Fact]
+    public void ItemsSourceInsertKeepsContentOfButtonItemsThatAreTheirOwnContainers()
+    {
+        Button one = new() { Content = "One" };
+        Button two = new() { Content = "Two" };
+        ObservableCollection<Button> source = [one, two];
+        ItemsControl control = new() { ItemsSource = source };
+        MeasureContext context = new(new LayoutSize(200, 200));
+        control.Measure(context);
+
+        source.Insert(0, new Button { Content = "Zero" });
+        control.Measure(context);
+
+        Assert.Equal(3, control.ItemsPresenter.LayoutPanelRoot!.VisualChildren.Count);
+        Assert.Equal("One", one.Content);
+        Assert.Equal("Two", two.Content);
+    }
+
+    [Fact]
+    public void TabControlRemoveAtKeepsContentOfRemainingTabItemAndClearsItsItemState()
+    {
+        TabItem first = new() { Content = "First page" };
+        TabItem second = new() { Content = "Second page" };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        tabControl.ItemContainerGenerator.Realize();
+
+        tabControl.Items.RemoveAt(0);
+        tabControl.ItemContainerGenerator.Realize();
+
+        Assert.Equal("Second page", second.Content);
+        Assert.Equal("First page", first.Content);
+        Assert.Equal(-1, first.ItemIndex);
+        Assert.Null(first.Item);
+        Assert.False(first.IsSelected);
+        Assert.Equal(0, second.ItemIndex);
+        Assert.Same(second, second.Item);
+    }
+
+    [Fact]
+    public void ComboBoxRemoveAtKeepsPresenterContentOfComboBoxItemThatIsItsOwnContainer()
+    {
+        ComboBoxItem first = new() { Content = "First" };
+        ContentPresenter presenter = new() { Content = "Second" };
+        ComboBoxItem second = new() { Content = presenter };
+        ComboBox comboBox = new();
+        comboBox.SetItems(new[] { first, second });
+        comboBox.ItemContainerGenerator.Realize();
+
+        comboBox.Items.RemoveAt(0);
+        comboBox.ItemContainerGenerator.Realize();
+
+        Assert.Same(presenter, second.Content);
+        Assert.Equal("Second", presenter.Content);
     }
 
     [Fact]
