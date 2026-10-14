@@ -66,25 +66,30 @@ public sealed class UIElementMeasureArrangeTests
     }
 
     [Theory]
-    [InlineData(false, 0.75f, 0f, "2..20", "17..20")]
-    [InlineData(false, 0f, 0.75f, "0..18", "15..18")]
-    [InlineData(true, 0.75f, 0f, "2..20", "17..20")]
-    [InlineData(true, 0f, 0.75f, "0..18", "15..18")]
+    [InlineData(2f, false, 0.75f, 0f, "2..20", "17..20")]
+    [InlineData(2f, false, 0f, 0.75f, "0..18", "15..18")]
+    [InlineData(2f, true, 0.75f, 0f, "2..20", "17..20")]
+    [InlineData(2f, true, 0f, 0.75f, "0..18", "15..18")]
+    [InlineData(1f, false, 1.5f, 0f, "2..10", "7..10")]
+    [InlineData(1f, false, 0f, 1.5f, "0..8", "5..8")]
+    [InlineData(1f, true, 1.5f, 0f, "2..10", "7..10")]
+    [InlineData(1f, true, 0f, 1.5f, "0..8", "5..8")]
     public void LayoutRoundingArrangesAFarEdgeChildFlushWithTheParentsRoundedFarEdge(
+        float scale,
         bool vertical,
         float nearMargin,
         float farMargin,
         string expectedPanelEdges,
         string expectedChildEdges)
     {
-        // At scale 2 a margin of 0.75 is 1.5 device pixels, so the panel's own bounds round on both edges.
+        // Each margin is 1.5 device pixels, so the panel's own bounds round on both edges.
         // A child aligned to the far edge ends where the panel's rounded bounds end, not one device pixel past it.
-        const float scale = 2f;
+        float childLength = 3f / scale;
         Panel panel = new()
         {
             Margin = vertical ? new Thickness(0, nearMargin, 0, farMargin) : new Thickness(nearMargin, 0, farMargin, 0)
         };
-        FixedElement child = new(vertical ? new LayoutSize(10, 1.5f) : new LayoutSize(1.5f, 10))
+        FixedElement child = new(vertical ? new LayoutSize(10, childLength) : new LayoutSize(childLength, 10))
         {
             HorizontalAlignment = vertical ? HorizontalAlignment.Stretch : HorizontalAlignment.Right,
             VerticalAlignment = vertical ? VerticalAlignment.Bottom : VerticalAlignment.Stretch
