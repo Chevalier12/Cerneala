@@ -523,7 +523,9 @@ public class ItemsPresenter : Control
             return VirtualizationContext.Value.GetRealizationWindow();
         }
 
-        return ResolveItemsPanel() is IItemsVirtualizingPanel virtualizingPanel
+        // A VirtualizingStackPanel with no viewport and no fixed context realizes every child, and
+        // its children are only the items realized here, so it realizes every item like a plain panel.
+        return ResolveItemsPanel() is IItemsVirtualizingPanel virtualizingPanel and not VirtualizingStackPanel { IsVirtualizing: false }
             ? virtualizingPanel.RealizationWindow
             : null;
     }
@@ -543,9 +545,9 @@ public class ItemsPresenter : Control
             virtualizingPanel.FirstRealizedIndex = window?.StartIndex ?? 0;
         }
 
-        else if (panel is VirtualizingStackPanel automaticPanel && window is RealizationWindow automaticWindow)
+        else if (panel is VirtualizingStackPanel automaticPanel)
         {
-            automaticPanel.FirstRealizedIndex = automaticWindow.StartIndex;
+            automaticPanel.FirstRealizedIndex = window?.StartIndex ?? 0;
         }
     }
 
