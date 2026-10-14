@@ -269,6 +269,102 @@ public sealed class ItemContainerGeneratorTests
     }
 
     [Fact]
+    public void ListBoxReplacingListBoxItemWithDataItemRealizesGeneratedContainerForDataItem()
+    {
+        ListBoxItem a = new() { Content = "A" };
+        ListBoxItem c = new() { Content = "C" };
+        ListBox listBox = new();
+        listBox.SetItems(new object[] { a, "str", c });
+        listBox.ItemContainerGenerator.Realize();
+
+        listBox.Items[0] = "new";
+        listBox.ItemContainerGenerator.Realize();
+
+        AssertDataItemContainer(listBox.ItemContainerGenerator.RealizedContainers[0], a, 0, "new");
+        AssertRemovedListBoxItem(a);
+        Assert.Equal(0, listBox.ItemContainerGenerator.RecyclePool.Count);
+    }
+
+    [Fact]
+    public void ListBoxReplacingListBoxItemWithDataItemRealizesGeneratedContainerInsideWindow()
+    {
+        ListBoxItem a = new() { Content = "A" };
+        ListBoxItem c = new() { Content = "C" };
+        ListBox listBox = new();
+        listBox.SetItems(new object[] { a, "str", c });
+        listBox.ItemContainerGenerator.Realize(new RealizationWindow(0, 2));
+
+        listBox.Items[0] = "new";
+        IReadOnlyList<UIElement> containers = listBox.ItemContainerGenerator.Realize(new RealizationWindow(0, 2));
+
+        AssertDataItemContainer(containers[0], a, 0, "new");
+        AssertRemovedListBoxItem(a);
+        Assert.Equal(0, listBox.ItemContainerGenerator.RecyclePool.Count);
+    }
+
+    [Fact]
+    public void ListBoxReplacingListBoxItemWithDataItemThroughMeasureShowsGeneratedContainerInThePanel()
+    {
+        ListBoxItem a = new() { Content = "A" };
+        ListBoxItem c = new() { Content = "C" };
+        ListBox listBox = new();
+        listBox.SetItems(new object[] { a, "str", c });
+        MeasureContext context = new(new LayoutSize(200, 200));
+        listBox.Measure(context);
+
+        listBox.Items[0] = "new";
+        listBox.Measure(context);
+
+        IReadOnlyList<UIElement> children = listBox.ItemsPresenter.LayoutPanelRoot!.VisualChildren.ToArray();
+        Assert.Equal(3, children.Count);
+        AssertDataItemContainer(children[0], a, 0, "new");
+        Assert.Same(c, children[2]);
+        AssertRemovedListBoxItem(a);
+    }
+
+    [Fact]
+    public void UnnotifiedGeneratorDoesNotPrepareRemovedListBoxItemForDataItemAtItsOldIndex()
+    {
+        ListBoxItem a = new() { Content = "A" };
+        ListBoxItem c = new() { Content = "C" };
+        ClearRecordingListBox listBox = new();
+        listBox.SetItems(new object[] { a, "str", c });
+        ItemContainerGenerator generator = new(listBox);
+        generator.Realize();
+
+        listBox.Items.RemoveAt(0);
+        generator.Realize();
+
+        Assert.Equal(new[] { 0, 1 }, generator.RealizedContainers.Keys.Order());
+        AssertDataItemContainer(generator.RealizedContainers[0], a, 0, "str");
+        Assert.Same(c, generator.RealizedContainers[1]);
+        AssertRemovedListBoxItem(a);
+        Assert.Contains(a, listBox.ClearedContainers);
+        Assert.Equal(0, generator.RecyclePool.Count);
+    }
+
+    [Fact]
+    public void ItemsSourceRemovedListBoxItemIsNotReusedForLaterDataItem()
+    {
+        ListBoxItem a = new() { Content = "A" };
+        ListBoxItem c = new() { Content = "C" };
+        ObservableCollection<object> source = [a, "str", c];
+        ListBox listBox = new() { ItemsSource = source };
+        listBox.ItemContainerGenerator.Realize(new RealizationWindow(0, 3));
+
+        source.RemoveAt(0);
+        listBox.ItemContainerGenerator.Realize(new RealizationWindow(0, 2));
+        source.RemoveAt(0);
+        listBox.ItemContainerGenerator.Realize(new RealizationWindow(0, 1));
+        source.Add("x");
+        listBox.ItemContainerGenerator.Realize(new RealizationWindow(0, 2));
+
+        Assert.Same(c, listBox.ItemContainerGenerator.RealizedContainers[0]);
+        AssertDataItemContainer(listBox.ItemContainerGenerator.RealizedContainers[1], a, 1, "x");
+        AssertRemovedListBoxItem(a);
+    }
+
+    [Fact]
     public void ComboBoxRemoveAtKeepsPresenterContentOfComboBoxItemThatIsItsOwnContainer()
     {
         ComboBoxItem first = new() { Content = "First" };
@@ -324,6 +420,21 @@ public sealed class ItemContainerGeneratorTests
     {
         element.Measure(new MeasureContext(new LayoutSize(100, 100)));
         element.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+    }
+
+    private static void AssertDataItemContainer(UIElement container, ListBoxItem removed, int expectedIndex, string expectedItem)
+    {
+        ListBoxItem generated = Assert.IsType<ListBoxItem>(container);
+        Assert.NotSame(removed, generated);
+        Assert.Equal(expectedItem, generated.Content);
+        AssertItemState(generated, expectedIndex, isSelected: false, expectedItem);
+    }
+
+    private static void AssertRemovedListBoxItem(ListBoxItem removed)
+    {
+        Assert.Equal("A", removed.Content);
+        Assert.Null(removed.VisualParent);
+        AssertItemState(removed, -1, isSelected: false, expectedItem: null);
     }
 
     private static void AssertItemState(ListBoxItem container, int expectedIndex, bool isSelected)

@@ -252,11 +252,18 @@ public sealed class ItemContainerGenerator
         return false;
     }
 
+    // A container that is its own item belongs to that item and never serves another item, even when a stale
+    // index still holds it.
     private static bool IsCompatibleContainer(UIElement container, object? item, Type containerType)
     {
         if (item is UIElement element && ReferenceEquals(containerType, element.GetType()))
         {
             return ReferenceEquals(container, element);
+        }
+
+        if (!ReferenceEquals(container, item) && ReferenceEquals(GetItem(container), container))
+        {
+            return false;
         }
 
         return containerType.IsAssignableFrom(container.GetType());
