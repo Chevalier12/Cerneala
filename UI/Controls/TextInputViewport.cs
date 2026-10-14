@@ -253,11 +253,12 @@ internal sealed class TextInputViewport
     public int GetCaretIndexAtMouseX(float mouseX, LayoutRect content)
     {
         float textX = mouseX - content.X + horizontalTextOffset;
-        return caretLayout.GetCaretIndexAtX(
+        int displayIndex = caretLayout.GetCaretIndexAtX(
             host.DisplayText,
             textX,
             CreateTextAspect(),
             CreateFontResolver());
+        return host.GetTextPosition(displayIndex);
     }
 
     public void ResetCaretBlink()
@@ -350,7 +351,7 @@ internal sealed class TextInputViewport
     {
         return caretLayout.GetCaretX(
             host.DisplayText,
-            position,
+            host.GetDisplayIndex(position),
             CreateTextAspect(),
             CreateFontResolver());
     }
