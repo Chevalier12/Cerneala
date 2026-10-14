@@ -369,6 +369,31 @@ public sealed class GridTests
     }
 
     [Fact]
+    public void AutoColumnChildThatNarrowsAtItsResolvedHeightDoesNotOverflowStarRows()
+    {
+        Grid grid = new();
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Pixels(50)));
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Stars(1)));
+        AspectElement aspect = new();
+        Grid.SetRowSpan(aspect, 2);
+        WrappingElement wrapping = new(vertical: false);
+        Grid.SetColumnSpan(wrapping, 2);
+        grid.VisualChildren.Add(aspect);
+        grid.VisualChildren.Add(wrapping);
+
+        LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(300, 300)));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 300, 300)));
+
+        Assert.Equal(new LayoutSize(300, 300), desired);
+        Assert.Equal(new LayoutRect(0, 0, 125, 80), wrapping.ArrangedBounds);
+        Assert.Equal(new LayoutRect(0, 0, 75, 80), aspect.ArrangedBounds);
+    }
+
+    [Fact]
     public void CyclicAutoColumnChildInStarRowDoesNotOverflowStarColumns()
     {
         Grid grid = new();
@@ -500,6 +525,16 @@ public sealed class GridTests
             return vertical
                 ? new LayoutSize(lineCount * 20, perLine * 50)
                 : new LayoutSize(perLine * 50, lineCount * 20);
+        }
+    }
+
+    // A quarter as wide as the available height, or 100 x 400 when the height is unbounded.
+    private sealed class AspectElement : UIElement
+    {
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            float height = float.IsPositiveInfinity(context.AvailableSize.Height) ? 400 : context.AvailableSize.Height;
+            return new LayoutSize(height / 4, height);
         }
     }
 

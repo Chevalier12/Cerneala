@@ -144,14 +144,16 @@ public class Grid : Panel
         {
             // Some first-axis children were measured before their cross size was final. Size the first axis
             // again from their measures at the resolved cross sizes, so its stars share what the final measure leaves.
-            // The cyclic passes above already start with this step for the columns, which are then the first axis.
+            // Its content-sized definitions keep their sizes and only grow, as in the final measure: the second
+            // axis was already measured against them. The cyclic passes above already start with a re-size of
+            // the columns, which are then the first axis.
             if (rowsFirst)
             {
-                rowSizes = ResolveFixedSizes(rows);
+                ClearStarShares(rows, rowSizes, context.AvailableSize.Height);
             }
             else
             {
-                columnSizes = ResolveFixedSizes(columns);
+                ClearStarShares(columns, columnSizes, context.AvailableSize.Width);
             }
 
             MeasureContentSizedDefinitions(context, columnAxis: !rowsFirst, columns, columnSizes, rows, rowSizes, crossAxisResolved: true);
@@ -386,6 +388,24 @@ public class Grid : Panel
         }
 
         return sizes;
+    }
+
+    // Star definitions on a bounded axis get a share of what is left, so their shares are cleared before the
+    // axis is shared again. On an unbounded axis they are content-sized and keep their sizes.
+    private static void ClearStarShares(GridLength[] lengths, float[] sizes, float availableSize)
+    {
+        if (float.IsPositiveInfinity(availableSize))
+        {
+            return;
+        }
+
+        for (int i = 0; i < lengths.Length; i++)
+        {
+            if (lengths[i].IsStar)
+            {
+                sizes[i] = 0;
+            }
+        }
     }
 
     private static void ExpandContentSizedDefinition(
