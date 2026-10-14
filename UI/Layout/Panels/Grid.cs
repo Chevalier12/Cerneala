@@ -339,6 +339,8 @@ public class Grid : Panel
         GridLength[] rows = GetRowLengths();
         float[] columnSizes = ResolveArrangeSizes(columns, measuredColumnSizes, measuredColumnsUnbounded, context.FinalRect.Width);
         float[] rowSizes = ResolveArrangeSizes(rows, measuredRowSizes, measuredRowsUnbounded, context.FinalRect.Height);
+        RoundSizes(columnSizes, context.Rounding);
+        RoundSizes(rowSizes, context.Rounding);
 
         foreach (UIElement child in VisualChildren)
         {
@@ -501,6 +503,63 @@ public class Grid : Panel
             {
                 sizes[i] = remaining * (MathF.Max(0, lengths[i].Value) / totalStar);
             }
+        }
+    }
+
+    // With layout rounding, each definition gets a whole number of device pixels, and the rounded sizes add up to
+    // the rounded total, so neighbouring cells meet and the last one ends on the Grid's edge. As in WPF, the
+    // definitions that rounding moved furthest take up the difference, one device pixel each.
+    private static void RoundSizes(float[] sizes, LayoutRounding rounding)
+    {
+        if (!rounding.IsEnabled)
+        {
+            return;
+        }
+
+        float[] errors = new float[sizes.Length];
+        float total = 0;
+        float roundedTotal = 0;
+        for (int i = 0; i < sizes.Length; i++)
+        {
+            float scaled = sizes[i] * rounding.Scale;
+            float rounded = MathF.Round(scaled);
+            errors[i] = rounded - scaled;
+            total += scaled;
+            roundedTotal += rounded;
+            sizes[i] = rounded;
+        }
+
+        float discrepancy = float.IsFinite(total) ? MathF.Round(total) - roundedTotal : 0;
+        if (discrepancy != 0)
+        {
+            // Rounded down the most first; equal errors keep definition order, so earlier definitions grow first
+            // and later ones shrink first.
+            int[] order = Enumerable.Range(0, sizes.Length).ToArray();
+            Array.Sort(order, (left, right) =>
+            {
+                int comparison = errors[left].CompareTo(errors[right]);
+                return comparison != 0 ? comparison : left.CompareTo(right);
+            });
+
+            for (int i = 0; discrepancy > 0 && i < order.Length; i++)
+            {
+                sizes[order[i]]++;
+                discrepancy--;
+            }
+
+            for (int i = order.Length - 1; discrepancy < 0 && i >= 0; i--)
+            {
+                if (sizes[order[i]] >= 1)
+                {
+                    sizes[order[i]]--;
+                    discrepancy++;
+                }
+            }
+        }
+
+        for (int i = 0; i < sizes.Length; i++)
+        {
+            sizes[i] /= rounding.Scale;
         }
     }
 

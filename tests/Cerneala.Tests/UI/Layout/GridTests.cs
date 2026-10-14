@@ -527,6 +527,121 @@ public sealed class GridTests
         Assert.Throws<ArgumentOutOfRangeException>(() => Grid.SetColumnSpan(new UIElement(), 0));
     }
 
+    // Edges are in device pixels: 100 px is 100, 125 and 150 device pixels at scales 1, 1.25 and 1.5.
+    [Theory]
+    [InlineData(1f, "0..34, 34..67, 67..100")]
+    [InlineData(1.25f, "0..42, 42..84, 84..125")]
+    [InlineData(1.5f, "0..50, 50..100, 100..150")]
+    public void LayoutRoundingKeepsEqualStarColumnsContiguousInsideTheGrid(float scale, string expectedEdges)
+    {
+        Grid grid = new();
+        FixedElement[] cells = new FixedElement[3];
+        for (int i = 0; i < cells.Length; i++)
+        {
+            grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
+            cells[i] = new FixedElement(new LayoutSize(1, 1));
+            Grid.SetColumn(cells[i], i);
+            grid.VisualChildren.Add(cells[i]);
+        }
+
+        LayoutRounding rounding = LayoutRounding.ForScale(scale);
+        grid.Measure(new MeasureContext(new LayoutSize(100, 20), rounding));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 20), rounding));
+
+        Assert.Equal(expectedEdges, GetDeviceEdges(cells, scale, columns: true));
+    }
+
+    [Theory]
+    [InlineData(1f, "0..34, 34..67, 67..100")]
+    [InlineData(1.25f, "0..42, 42..84, 84..125")]
+    [InlineData(1.5f, "0..50, 50..100, 100..150")]
+    public void LayoutRoundingKeepsEqualStarRowsContiguousInsideTheGrid(float scale, string expectedEdges)
+    {
+        Grid grid = new();
+        FixedElement[] cells = new FixedElement[3];
+        for (int i = 0; i < cells.Length; i++)
+        {
+            grid.RowDefinitions.Add(new RowDefinition(GridLength.Stars(1)));
+            cells[i] = new FixedElement(new LayoutSize(1, 1));
+            Grid.SetRow(cells[i], i);
+            grid.VisualChildren.Add(cells[i]);
+        }
+
+        LayoutRounding rounding = LayoutRounding.ForScale(scale);
+        grid.Measure(new MeasureContext(new LayoutSize(20, 100), rounding));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 20, 100), rounding));
+
+        Assert.Equal(expectedEdges, GetDeviceEdges(cells, scale, columns: false));
+    }
+
+    [Fact]
+    public void LayoutRoundingKeepsStarColumnsContiguousWhenAColumnIsNotAWholeLogicalPixel()
+    {
+        // 113 device pixels at scale 1.75 split into 57 and 56; 57 device pixels are 32.571428 px.
+        const float scale = 1.75f;
+        Grid grid = new();
+        FixedElement[] cells = new FixedElement[2];
+        for (int i = 0; i < cells.Length; i++)
+        {
+            grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
+            cells[i] = new FixedElement(new LayoutSize(1, 1));
+            Grid.SetColumn(cells[i], i);
+            grid.VisualChildren.Add(cells[i]);
+        }
+
+        LayoutRounding rounding = LayoutRounding.ForScale(scale);
+        float width = 113 / scale;
+        grid.Measure(new MeasureContext(new LayoutSize(width, 20), rounding));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, width, 20), rounding));
+
+        Assert.Equal("0..57, 57..113", GetDeviceEdges(cells, scale, columns: true));
+    }
+
+    [Fact]
+    public void LayoutRoundingKeepsPixelAndAutoDefinitionsAndSpansOnTheRoundedEdges()
+    {
+        Grid grid = new();
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Pixels(20)));
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(2)));
+        FixedElement pixel = new(new LayoutSize(1, 1));
+        FixedElement auto = new(new LayoutSize(13, 1));
+        Grid.SetColumn(auto, 1);
+        FixedElement oneStar = new(new LayoutSize(1, 1));
+        Grid.SetColumn(oneStar, 2);
+        FixedElement twoStar = new(new LayoutSize(1, 1));
+        Grid.SetColumn(twoStar, 3);
+        FixedElement spanning = new(new LayoutSize(1, 1));
+        Grid.SetColumn(spanning, 1);
+        Grid.SetColumnSpan(spanning, 2);
+        grid.VisualChildren.Add(pixel);
+        grid.VisualChildren.Add(auto);
+        grid.VisualChildren.Add(oneStar);
+        grid.VisualChildren.Add(twoStar);
+        grid.VisualChildren.Add(spanning);
+
+        // 100 - 20 - 13 = 67 px of stars: 22.33 and 44.67 round to 22 and 45.
+        LayoutRounding rounding = LayoutRounding.Enabled;
+        grid.Measure(new MeasureContext(new LayoutSize(100, 20), rounding));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 20), rounding));
+
+        Assert.Equal(
+            "0..20, 20..33, 33..55, 55..100, 20..55",
+            GetDeviceEdges([pixel, auto, oneStar, twoStar, spanning], 1, columns: true));
+    }
+
+    private static string GetDeviceEdges(IEnumerable<UIElement> cells, float scale, bool columns)
+    {
+        return string.Join(", ", cells.Select(cell =>
+        {
+            LayoutRect bounds = cell.ArrangedBounds;
+            float start = columns ? bounds.X : bounds.Y;
+            float end = start + (columns ? bounds.Width : bounds.Height);
+            return $"{MathF.Round(start * scale)}..{MathF.Round(end * scale)}";
+        }));
+    }
+
     private static Grid CreateTwoStarRowGrid(out FixedElement small, out FixedElement large)
     {
         Grid grid = new();
