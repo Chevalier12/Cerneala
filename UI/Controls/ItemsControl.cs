@@ -351,6 +351,7 @@ public class ItemsControl : Control
 
     protected internal virtual void ClearItemContainer(UIElement container)
     {
+        object? item = ItemContainerGenerator.GetItem(container);
         container.ClearValue(UIElement.AspectProperty, UiPropertyValueSource.TemplateBinding);
         ItemContainerGenerator.ClearInfo(container);
         if (container is ISelectableItemContainer selectable)
@@ -358,6 +359,11 @@ public class ItemsControl : Control
             selectable.ItemIndex = -1;
             selectable.Item = null;
             selectable.IsSelected = false;
+        }
+
+        if (ReferenceEquals(container, item))
+        {
+            return;
         }
 
         switch (container)

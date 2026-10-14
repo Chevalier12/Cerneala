@@ -251,7 +251,8 @@ public class ComboBox : Selector
 
     protected internal override void ClearItemContainer(UIElement container)
     {
-        if (container is ComboBoxItem { Content: ContentPresenter presenter })
+        if (container is ComboBoxItem { Content: ContentPresenter presenter } &&
+            !ReferenceEquals(container, ItemContainerGenerator.GetItem(container)))
         {
             presenter.Content = null;
             presenter.ContentTemplate = null;
