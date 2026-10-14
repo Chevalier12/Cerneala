@@ -117,7 +117,8 @@ public class Grid : Panel
         // The first axis is content-sized and resolved before the second, so the second axis measures its
         // content-sized children at final sizes. Columns go first unless only the columns depend on star rows.
         bool rowsFirst = columnsDependOnStarRows && !rowsDependOnStarColumns;
-        MeasureContentSizedDefinitions(context, columnAxis: !rowsFirst, columns, columnSizes, rows, rowSizes, crossAxisResolved: false);
+        bool firstAxisMeasuredBeforeCrossFinal = MeasureContentSizedDefinitions(
+            context, columnAxis: !rowsFirst, columns, columnSizes, rows, rowSizes, crossAxisResolved: false);
         MeasureContentSizedDefinitions(context, columnAxis: rowsFirst, columns, columnSizes, rows, rowSizes, crossAxisResolved: true);
 
         // When both axes depend on each other, the columns were content-sized against unresolved star rows.
@@ -138,6 +139,24 @@ public class Grid : Panel
                 rowSizes = ResolveFixedSizes(rows);
                 MeasureContentSizedDefinitions(context, columnAxis: false, columns, columnSizes, rows, rowSizes, crossAxisResolved: true);
             }
+        }
+        else if (firstAxisMeasuredBeforeCrossFinal)
+        {
+            // Some first-axis children were measured before their cross size was final. Size the first axis
+            // again from their measures at the resolved cross sizes, so its stars share what the final measure leaves.
+            // Its content-sized definitions keep their sizes and only grow, as in the final measure: the second
+            // axis was already measured against them. The cyclic passes above already start with a re-size of
+            // the columns, which are then the first axis.
+            if (rowsFirst)
+            {
+                ClearStarShares(rows, rowSizes, context.AvailableSize.Height);
+            }
+            else
+            {
+                ClearStarShares(columns, columnSizes, context.AvailableSize.Width);
+            }
+
+            MeasureContentSizedDefinitions(context, columnAxis: !rowsFirst, columns, columnSizes, rows, rowSizes, crossAxisResolved: true);
         }
 
         foreach (UIElement child in VisualChildren)
@@ -217,7 +236,8 @@ public class Grid : Panel
         return span == 1 && lengths[index].IsAuto ? float.PositiveInfinity : size;
     }
 
-    private void MeasureContentSizedDefinitions(
+    // Returns true when a child was measured with a cross constraint that is not yet its final one.
+    private bool MeasureContentSizedDefinitions(
         MeasureContext context,
         bool columnAxis,
         GridLength[] columns,
@@ -232,6 +252,7 @@ public class Grid : Panel
         GridLength[] crossLengths = columnAxis ? rows : columns;
         float[] crossSizes = columnAxis ? rowSizes : columnSizes;
         float crossAvailableSize = columnAxis ? context.AvailableSize.Height : context.AvailableSize.Width;
+        bool measuredBeforeCrossFinal = false;
 
         foreach (UIElement child in VisualChildren)
         {
@@ -251,9 +272,13 @@ public class Grid : Panel
             int crossIndex = columnAxis ? placement.Row : placement.Column;
             int crossSpan = columnAxis ? placement.RowSpan : placement.ColumnSpan;
             float constraint = GetChildConstraint(lengths, index, span, availableSize);
-            float crossConstraint = crossAxisResolved
-                ? GetChildConstraint(crossLengths, crossIndex, crossSpan, Sum(crossSizes, crossIndex, crossSpan))
-                : GetUnresolvedCrossConstraint(crossLengths, crossSizes, crossIndex, crossSpan, crossAvailableSize);
+            bool crossFinal = crossAxisResolved || IsChildConstraintFinalBeforeResolve(crossLengths, crossIndex, crossSpan);
+            measuredBeforeCrossFinal |= !crossFinal;
+            float crossConstraint = GetChildConstraint(
+                crossLengths,
+                crossIndex,
+                crossSpan,
+                crossFinal ? Sum(crossSizes, crossIndex, crossSpan) : crossAvailableSize);
             child.Measure(new MeasureContext(
                 columnAxis ? new LayoutSize(constraint, crossConstraint) : new LayoutSize(crossConstraint, constraint),
                 context.Rounding));
@@ -267,25 +292,27 @@ public class Grid : Panel
         }
 
         ResolveStarSizes(lengths, sizes, availableSize);
+        return measuredBeforeCrossFinal;
     }
 
-    // Before the cross axis is resolved, only its pixel definitions already have their final size.
-    private static float GetUnresolvedCrossConstraint(
-        GridLength[] lengths,
-        float[] sizes,
-        int index,
-        int span,
-        float availableSize)
+    // Before an axis is resolved, only its pixel definitions already have their final size. A child in
+    // exactly one Auto definition is measured with positive infinity either way.
+    private static bool IsChildConstraintFinalBeforeResolve(GridLength[] lengths, int index, int span)
     {
+        if (span == 1 && lengths[index].IsAuto)
+        {
+            return true;
+        }
+
         for (int i = index; i < index + span; i++)
         {
             if (!lengths[i].IsPixel)
             {
-                return GetChildConstraint(lengths, index, span, availableSize);
+                return false;
             }
         }
 
-        return Sum(sizes, index, span);
+        return true;
     }
 
     private static bool SpansResolvedStar(GridLength[] lengths, int index, int span, float availableSize)
@@ -361,6 +388,24 @@ public class Grid : Panel
         }
 
         return sizes;
+    }
+
+    // Star definitions on a bounded axis get a share of what is left, so their shares are cleared before the
+    // axis is shared again. On an unbounded axis they are content-sized and keep their sizes.
+    private static void ClearStarShares(GridLength[] lengths, float[] sizes, float availableSize)
+    {
+        if (float.IsPositiveInfinity(availableSize))
+        {
+            return;
+        }
+
+        for (int i = 0; i < lengths.Length; i++)
+        {
+            if (lengths[i].IsStar)
+            {
+                sizes[i] = 0;
+            }
+        }
     }
 
     private static void ExpandContentSizedDefinition(

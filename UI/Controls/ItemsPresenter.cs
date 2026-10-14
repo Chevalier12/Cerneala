@@ -530,7 +530,7 @@ public class ItemsPresenter : Control
 
     // The panel placed in the tree must be the panel that receives the viewport and supplies
     // the realization window, so every caller resolves it here.
-    private Layout.Panels.Panel ResolveItemsPanel()
+    internal Layout.Panels.Panel ResolveItemsPanel()
     {
         return ItemsPanel ?? ItemsOwner?.ItemsPanel ?? defaultItemsPanel;
     }
