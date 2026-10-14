@@ -93,6 +93,13 @@ The code sets `first.Visibility = Visibility.Collapsed;`.
   one of these elements with the same slot in the same pass then runs its
   `ArrangeCore`, instead of reusing the stale result and marking it as already
   arranged. Ancestors queued as `Propagated` keep their arrange cache.
+- The same reset clears the element's scheduled-arrange visit
+  (`LastScheduledArrangeRoot`). The arrange phase skips a queued element that
+  was already arranged in the current pass with its current `LayoutVersion`.
+  A request raised after that arrange, for example from a sibling's
+  `SizeChanged` handler, is therefore not skipped: the element is arranged
+  again later in the same phase, or in the next frame when it is no longer in
+  the phase's snapshot.
 - An element that does not take part in layout (`Visibility.Collapsed`)
   measures to `LayoutSize.Zero` and arranges to a zero-size rectangle at the
   slot position.
@@ -156,6 +163,10 @@ Test paths are under `tests/Cerneala.Tests/`.
 - After `Invalidate(Arrange | Subtree)` on a parent, a child and a grandchild
   arranged with the same slot are arranged again in the same frame. Tests:
   `UI/Layout/SubtreeArrangeInvalidationSameFrameRegressionTests.cs`.
+- An `Arrange` request raised after the element was already arranged in the
+  same arrange phase is not dropped, whether a sibling's `SizeChanged` handler
+  or a sibling's `ArrangeCore` raises it. Test:
+  `UI/Layout/ArrangeInvalidationAfterArrangeSameFrameRegressionTests.cs:ArrangeInvalidationRaisedAfterTheElementWasArrangedInTheSamePhaseRuns`.
 - A failed measure keeps the element dirty and queued. Test:
   `UI/Layout/LayoutManagerTests.cs:FailedMeasureKeepsDirtyFlagsAndQueue`.
   A failed arrange: netestat.
