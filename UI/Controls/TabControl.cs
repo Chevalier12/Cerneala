@@ -1,3 +1,4 @@
+using Cerneala.UI.Controls.Items;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
 
@@ -7,6 +8,8 @@ public class TabControl : Selector
 {
     protected override Type DefaultContainerType => typeof(TabItem);
 
+    // Realized containers keep their old indexes until the next layout pass, so the container at the
+    // selected index can belong to another item; the container prepared for the selected item is used instead.
     public TabItem? SelectedTabItem
     {
         get
@@ -17,12 +20,28 @@ public class TabControl : Selector
                 return null;
             }
 
-            if (ItemContainerGenerator.RealizedContainers.TryGetValue(selectedIndex, out UIElement? container))
+            object? item = GetItemAt(selectedIndex);
+            if (item is TabItem tab)
+            {
+                return tab;
+            }
+
+            IReadOnlyDictionary<int, UIElement> realized = ItemContainerGenerator.RealizedContainers;
+            if (realized.TryGetValue(selectedIndex, out UIElement? container) &&
+                Equals(ItemContainerGenerator.GetItem(container), item))
             {
                 return container as TabItem;
             }
 
-            return GetItemAt(selectedIndex) as TabItem;
+            foreach (UIElement candidate in realized.Values)
+            {
+                if (Equals(ItemContainerGenerator.GetItem(candidate), item))
+                {
+                    return candidate as TabItem;
+                }
+            }
+
+            return null;
         }
     }
 
