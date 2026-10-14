@@ -144,20 +144,41 @@ public class Grid : Panel
         {
             // Some first-axis children were measured before their cross size was final. Size the first axis
             // again from their measures at the resolved cross sizes, so its stars share what the final measure leaves.
-            // The sizes that children in one definition gave it stay minimums and only grow, as in the final
-            // measure: the second axis was already measured against them. The shares of spanning children and
-            // of stars on a bounded axis are dropped and shared again from the new sizes. The cyclic passes above
-            // already start with a re-size of the columns, which are then the first axis.
-            if (rowsFirst)
+            // When that changes the first axis, the second axis was measured against stale sizes: size it again
+            // too, then the first axis against it, until the first axis stops changing. The sizes that children
+            // in one definition gave an axis stay minimums and only grow, as in the final measure: the other axis
+            // was already measured against them. The shares of spanning children and of stars on a bounded axis
+            // are dropped and shared again from the new sizes. The cyclic passes above already start with a
+            // re-size of the columns, which are then the first axis.
+            for (int pass = 0; pass < MaxCyclicMeasurePasses; pass++)
             {
-                rowSizes = ResolveSingleDefinitionSizes(columnAxis: false, columns, rows, context.AvailableSize.Height);
-            }
-            else
-            {
-                columnSizes = ResolveSingleDefinitionSizes(columnAxis: true, columns, rows, context.AvailableSize.Width);
-            }
+                float[] previousFirstSizes = rowsFirst ? rowSizes : columnSizes;
+                if (rowsFirst)
+                {
+                    rowSizes = ResolveSingleDefinitionSizes(columnAxis: false, columns, rows, context.AvailableSize.Height);
+                }
+                else
+                {
+                    columnSizes = ResolveSingleDefinitionSizes(columnAxis: true, columns, rows, context.AvailableSize.Width);
+                }
 
-            MeasureContentSizedDefinitions(context, columnAxis: !rowsFirst, columns, columnSizes, rows, rowSizes, crossAxisResolved: true);
+                MeasureContentSizedDefinitions(context, columnAxis: !rowsFirst, columns, columnSizes, rows, rowSizes, crossAxisResolved: true);
+                if ((rowsFirst ? rowSizes : columnSizes).AsSpan().SequenceEqual(previousFirstSizes))
+                {
+                    break;
+                }
+
+                if (rowsFirst)
+                {
+                    columnSizes = ResolveSingleDefinitionSizes(columnAxis: true, columns, rows, context.AvailableSize.Width);
+                }
+                else
+                {
+                    rowSizes = ResolveSingleDefinitionSizes(columnAxis: false, columns, rows, context.AvailableSize.Height);
+                }
+
+                MeasureContentSizedDefinitions(context, columnAxis: rowsFirst, columns, columnSizes, rows, rowSizes, crossAxisResolved: true);
+            }
         }
 
         foreach (UIElement child in VisualChildren)
