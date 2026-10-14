@@ -1,5 +1,8 @@
+using System.Collections;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Items;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Core;
 using Cerneala.UI.Data;
@@ -270,6 +273,129 @@ public sealed class SelectorTests
     }
 
     [Fact]
+    public void SelectingAfterRemovingWrappedElementItemBeforeLayoutKeepsEachItemInItsOwnContainer()
+    {
+        UIElement removed = new FixedElement(new LayoutSize(20, 10));
+        ListBox listBox = new();
+        listBox.SetItems(new[] { removed, new FixedElement(new LayoutSize(20, 10)), new FixedElement(new LayoutSize(20, 10)) });
+        listBox.ItemContainerGenerator.Realize();
+
+        listBox.Items.RemoveAt(0);
+        listBox.SelectedIndex = 0;
+        listBox.ItemContainerGenerator.Realize();
+
+        AssertRealizedContainersShowTheirItems(listBox);
+        Assert.Null(removed.LogicalParent);
+    }
+
+    [Fact]
+    public void SelectingAfterInsertingWrappedElementItemBeforeLayoutKeepsEachItemInItsOwnContainer()
+    {
+        ListBox listBox = new();
+        listBox.SetItems(new[] { new FixedElement(new LayoutSize(20, 10)), new FixedElement(new LayoutSize(20, 10)) });
+        listBox.ItemContainerGenerator.Realize();
+
+        listBox.Items.Insert(0, new FixedElement(new LayoutSize(20, 10)));
+        listBox.SelectedIndex = 1;
+        listBox.ItemContainerGenerator.Realize();
+
+        AssertRealizedContainersShowTheirItems(listBox);
+    }
+
+    [Fact]
+    public void SelectingAfterRemovingTabItemBeforeLayoutRealizesTheTabNowAtThatIndex()
+    {
+        TabItem removed = new() { Content = "t0" };
+        TabItem first = new() { Content = "t1" };
+        TabItem second = new() { Content = "t2" };
+        TabControl tabs = new();
+        tabs.SetItems(new[] { removed, first, second });
+        tabs.ItemContainerGenerator.Realize();
+
+        tabs.Items.RemoveAt(0);
+        tabs.SelectedIndex = 0;
+        tabs.ItemContainerGenerator.Realize();
+
+        AssertRealizedContainersShowTheirItems(tabs);
+        Assert.Same(first, tabs.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.True(first.IsSelected);
+        Assert.Equal("t0", removed.Content);
+        Assert.DoesNotContain(removed, tabs.ItemContainerGenerator.RealizedContainers.Values);
+    }
+
+    [Fact]
+    public void SelectingAfterRemovingTabItemOfMeasuredTabControlBeforeLayoutRealizesTheTabNowAtThatIndex()
+    {
+        UIRoot root = new(300, 300);
+        TabItem removed = new() { Content = "t0" };
+        TabItem first = new() { Content = "t1" };
+        TabControl tabs = new();
+        tabs.SetItems(new[] { removed, first, new TabItem { Content = "t2" } });
+        root.VisualChildren.Add(tabs);
+        tabs.Measure(new MeasureContext(new LayoutSize(300, 300)));
+
+        tabs.Items.RemoveAt(0);
+        tabs.SelectedIndex = 0;
+        Assert.Same(first, tabs.SelectedTabItem);
+        tabs.Measure(new MeasureContext(new LayoutSize(300, 300)));
+
+        AssertRealizedContainersShowTheirItems(tabs);
+        Assert.True(first.IsSelected);
+        Assert.Equal("t0", removed.Content);
+        Assert.Null(removed.VisualParent);
+    }
+
+    [Fact]
+    public void SelectingAfterInsertingTabItemBeforeLayoutKeepsEachTabItsOwnContent()
+    {
+        TabItem inserted = new() { Content = "n" };
+        TabItem first = new() { Content = "t0" };
+        TabItem second = new() { Content = "t1" };
+        TabControl tabs = new();
+        tabs.SetItems(new[] { first, second });
+        tabs.ItemContainerGenerator.Realize();
+
+        tabs.Items.Insert(0, inserted);
+        tabs.SelectedIndex = 0;
+        tabs.ItemContainerGenerator.Realize();
+
+        AssertRealizedContainersShowTheirItems(tabs);
+        Assert.Equal("n", inserted.Content);
+        Assert.Equal("t0", first.Content);
+        Assert.Equal("t1", second.Content);
+    }
+
+    [Fact]
+    public void SelectingAfterRemovingItemAtUnknownPositionBeforeLayoutKeepsEachItemInItsOwnContainer()
+    {
+        UIElement removed = new FixedElement(new LayoutSize(20, 10));
+        IndexlessNotifyingList items = new([removed, new FixedElement(new LayoutSize(20, 10)), new FixedElement(new LayoutSize(20, 10))]);
+        ListBox listBox = new() { ItemsSource = items };
+        listBox.ItemContainerGenerator.Realize();
+
+        items.RemoveWithoutIndex(removed);
+        listBox.SelectedIndex = 0;
+        listBox.ItemContainerGenerator.Realize();
+
+        AssertRealizedContainersShowTheirItems(listBox);
+    }
+
+    [Fact]
+    public void MovingSelfContainerItemsKeepsEachRealizedContainerOnItsItem()
+    {
+        ObservableCollection<ListBoxItem> items = [new() { Content = "a" }, new() { Content = "b" }, new() { Content = "c" }];
+        ListBox listBox = new() { ItemsSource = items };
+        listBox.ItemContainerGenerator.Realize();
+        listBox.SelectedIndex = 0;
+
+        items.Move(0, 2);
+        listBox.ItemContainerGenerator.Realize();
+
+        AssertRealizedContainersShowTheirItems(listBox);
+        Assert.Equal(2, listBox.SelectedIndex);
+    }
+
+    [Fact]
     public void NestedSelectionChangeReportsItemItReplaced()
     {
         RedirectingListBox listBox = new();
@@ -325,6 +451,27 @@ public sealed class SelectorTests
         return listBox;
     }
 
+    // Every item is realized exactly once, at its current index, and its container shows that item.
+    private static void AssertRealizedContainersShowTheirItems(Selector selector)
+    {
+        IReadOnlyDictionary<int, UIElement> realized = selector.ItemContainerGenerator.RealizedContainers;
+        Assert.Equal(Enumerable.Range(0, selector.ItemCount), realized.Keys.Order());
+        foreach ((int index, UIElement container) in realized)
+        {
+            object? item = selector.GetItemAt(index);
+            ISelectableItemContainer selectable = Assert.IsAssignableFrom<ISelectableItemContainer>(container);
+            Assert.Equal(index, ItemContainerGenerator.GetItemIndex(container));
+            Assert.Same(item, ItemContainerGenerator.GetItem(container));
+            Assert.Equal(index, selectable.ItemIndex);
+            Assert.Same(item, selectable.Item);
+            Assert.Equal(index == selector.SelectedIndex, selectable.IsSelected);
+            if (!ReferenceEquals(container, item))
+            {
+                Assert.Same(item, Assert.IsAssignableFrom<ContentControl>(container).Content);
+            }
+        }
+    }
+
     private static InputFrame PointerFrame(float x, float y, bool previousDown = false, bool currentDown = false)
     {
         PointerSnapshot previous = PointerSnapshot.Empty.WithPosition(x, y);
@@ -353,6 +500,22 @@ public sealed class SelectorTests
                 SelectedIndex = 2;
             }
         }
+    }
+
+    // Reports a removal without its index, as NotifyCollectionChangedEventArgs allows.
+    private sealed class IndexlessNotifyingList(IEnumerable<object> items) : IEnumerable, INotifyCollectionChanged
+    {
+        private readonly List<object> items = [.. items];
+
+        public event NotifyCollectionChangedEventHandler? CollectionChanged;
+
+        public void RemoveWithoutIndex(object item)
+        {
+            items.Remove(item);
+            CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, item));
+        }
+
+        public IEnumerator GetEnumerator() => items.GetEnumerator();
     }
 
     private sealed class FixedElement(LayoutSize size) : UIElement

@@ -147,6 +147,29 @@ public sealed class ItemContainerGeneratorTests
     }
 
     [Fact]
+    public void UnnotifiedGeneratorMovesShiftedListBoxItemsToTheirNewIndexesOnRealize()
+    {
+        ListBoxItem a = new() { Content = "a" };
+        ListBoxItem b = new() { Content = "b" };
+        ListBoxItem c = new() { Content = "c" };
+        ClearRecordingListBox listBox = new();
+        listBox.SetItems(new[] { a, b, c });
+        ItemContainerGenerator generator = new(listBox);
+        generator.Realize();
+
+        listBox.Items.RemoveAt(0);
+        Assert.Equal(new[] { 0, 1, 2 }, generator.RealizedContainers.Keys.Order());
+        generator.Realize();
+
+        Assert.Equal(new[] { 0, 1 }, generator.RealizedContainers.Keys.Order());
+        Assert.Same(b, generator.RealizedContainers[0]);
+        Assert.Same(c, generator.RealizedContainers[1]);
+        AssertItemState(b, 0, isSelected: false);
+        AssertItemState(c, 1, isSelected: false);
+        Assert.Equal(new UIElement[] { a }, listBox.ClearedContainers);
+    }
+
+    [Fact]
     public void ListBoxRemoveAtFirstOfThreeThroughMeasureKeepsShiftedListBoxItemsInThePanel()
     {
         ListBoxItem a = new() { Content = "a" };
