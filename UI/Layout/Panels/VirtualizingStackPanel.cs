@@ -33,6 +33,9 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
 
     public int FirstRealizedIndex { get; set; }
 
+    // Without either source the window is derived from the children, not from any item count.
+    internal bool IsVirtualizing => VirtualizationContext is not null || automaticViewport is not null;
+
     public void UpdateViewport(ItemsVirtualizationViewport viewport)
     {
         int itemCount = Math.Max(0, viewport.ItemCount);

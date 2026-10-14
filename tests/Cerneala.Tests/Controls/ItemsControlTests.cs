@@ -764,6 +764,37 @@ public sealed class ItemsControlTests
     }
 
     [Fact]
+    public void VirtualizingStackPanelItemsPanelWithoutScrollViewerRealizesAndStacksEveryItem()
+    {
+        UIRoot root = new(200, 200);
+        ItemsControl control = new()
+        {
+            ItemsPanel = new VirtualizingStackPanel()
+        };
+        control.SetItems(new[] { "a", "b", "c" });
+        root.VisualChildren.Add(control);
+
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        VirtualizingStackPanel panel = Assert.IsType<VirtualizingStackPanel>(control.ItemsPresenter.LayoutPanelRoot);
+        Assert.Equal(3, panel.VisualChildren.Count);
+        Assert.Equal(
+            ["a", "b", "c"],
+            panel.VisualChildren.Select(child => Assert.IsType<ContentPresenter>(child).Content));
+        for (int index = 0; index < panel.VisualChildren.Count; index++)
+        {
+            LayoutRect bounds = panel.VisualChildren[index].ArrangedBounds;
+            Assert.True(bounds.Height > 0);
+            if (index > 0)
+            {
+                LayoutRect previous = panel.VisualChildren[index - 1].ArrangedBounds;
+                Assert.Equal(previous.Y + previous.Height, bounds.Y);
+            }
+        }
+    }
+
+    [Fact]
     public void ReplacingItemsImmediatelyClearsContainersFromThePreviousCollection()
     {
         ItemsControl control = new();
