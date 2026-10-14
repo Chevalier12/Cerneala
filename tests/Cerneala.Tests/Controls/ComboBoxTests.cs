@@ -1017,6 +1017,119 @@ public sealed class ComboBoxTests
     }
 
     [Fact]
+    public void OwnerStackPanelRealizesEveryDropDownItemAfterScrolling()
+    {
+        (ComboBox comboBox, ScrollViewer viewer, UIRoot root) = CreateLargeOpenDropDown(
+            template: null,
+            ownerPanel: new LayoutStackPanel());
+        Assert.Equal(200, comboBox.ItemContainerGenerator.RealizedContainers.Count);
+        Assert.Equal(6800, viewer.ScrollInfo.ExtentHeight);
+
+        viewer.ScrollInfo.SetVerticalOffset(1400);
+        root.ProcessFrame();
+        root.ProcessFrame();
+        Assert.Equal(200, comboBox.ItemContainerGenerator.RealizedContainers.Count);
+        Assert.Equal(6800, viewer.ScrollInfo.ExtentHeight);
+        Assert.Equal(1400, viewer.ScrollInfo.VerticalOffset);
+    }
+
+    [Fact]
+    public void CustomTemplatePresenterStackPanelRealizesEveryDropDownItem()
+    {
+        (ComboBox comboBox, ScrollViewer viewer, UIRoot root) = CreateLargeOpenDropDown(
+            CreatePresenterPanelTemplate(new LayoutStackPanel()),
+            ownerPanel: null);
+        Assert.IsType<LayoutStackPanel>(comboBox.ItemsPresenter.LayoutPanelRoot);
+        Assert.Equal(200, comboBox.ItemContainerGenerator.RealizedContainers.Count);
+        Assert.Equal(6800, viewer.ScrollInfo.ExtentHeight);
+
+        viewer.ScrollInfo.SetVerticalOffset(1400);
+        root.ProcessFrame();
+        root.ProcessFrame();
+        Assert.Equal(200, comboBox.ItemContainerGenerator.RealizedContainers.Count);
+        Assert.Equal(6800, viewer.ScrollInfo.ExtentHeight);
+        Assert.Equal(1400, viewer.ScrollInfo.VerticalOffset);
+    }
+
+    [Fact]
+    public void CustomTemplatePresenterVirtualizingStackPanelVirtualizesDropDown()
+    {
+        (ComboBox comboBox, ScrollViewer viewer, UIRoot root) = CreateLargeOpenDropDown(
+            CreatePresenterPanelTemplate(new Cerneala.UI.Layout.Panels.VirtualizingStackPanel()),
+            ownerPanel: null);
+        Assert.IsType<Cerneala.UI.Layout.Panels.VirtualizingStackPanel>(comboBox.ItemsPresenter.LayoutPanelRoot);
+        Assert.InRange(comboBox.ItemContainerGenerator.RealizedContainers.Count, 1, 20);
+
+        viewer.ScrollInfo.SetVerticalOffset(1400);
+        root.ProcessFrame();
+        root.ProcessFrame();
+        Assert.True(RealizedSourceIndices(comboBox)[0] > 0);
+        Assert.InRange(comboBox.ItemContainerGenerator.RealizedContainers.Count, 1, 20);
+    }
+
+    private static (ComboBox ComboBox, ScrollViewer Viewer, UIRoot Root) CreateLargeOpenDropDown(
+        ComponentTemplate<ComboBox>? template,
+        LayoutStackPanel? ownerPanel)
+    {
+        UIRoot root = new(320, 420);
+        ComboBox comboBox = new() { Width = 180, MaxDropDownHeight = 120, IsDropDownOpen = true };
+        if (ownerPanel is not null)
+        {
+            comboBox.ItemsPanel = ownerPanel;
+        }
+
+        if (template is not null)
+        {
+            comboBox.ComponentTemplate = template;
+        }
+
+        comboBox.SetItems(Enumerable.Range(0, 200).Select(index => $"item {index}"));
+        LayoutCanvas canvas = new();
+        canvas.VisualChildren.Add(comboBox);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        root.ProcessFrame();
+        Overlay overlay = Assert.IsType<Overlay>(comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"]);
+        ScrollViewer viewer = Assert.IsType<ScrollViewer>(Assert.IsType<Border>(overlay.Content).Child);
+        return (comboBox, viewer, root);
+    }
+
+    private static ComponentTemplate<ComboBox> CreatePresenterPanelTemplate(Cerneala.UI.Layout.Panels.Panel presenterPanel)
+    {
+        return new ComponentTemplate<ComboBox>("presenter-panel", context =>
+        {
+            ContentPresenter selection = new();
+            TextBox editor = new() { Visibility = Visibility.Collapsed };
+            ToggleButton toggle = new();
+            ItemsPresenter items = new() { ItemsPanel = presenterPanel };
+            ScrollViewer scrollViewer = new()
+            {
+                Content = items,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+            };
+            Overlay overlay = new()
+            {
+                Content = new Border { Child = scrollViewer },
+                PlacementTarget = context.Owner,
+                Placement = OverlayPlacement.Auto,
+                MatchTargetWidth = true
+            };
+            LayoutGrid root = new();
+            root.VisualChildren.Add(selection);
+            root.VisualChildren.Add(editor);
+            root.VisualChildren.Add(toggle);
+            root.VisualChildren.Add(overlay);
+            context.RequirePart("PART_SelectionPresenter", selection);
+            context.RequirePart("PART_EditableTextBox", editor);
+            context.RequirePart("PART_DropDownToggle", toggle);
+            context.RequirePart("PART_DropDownOverlay", overlay);
+            context.RequirePart("PART_ItemsPresenter", items);
+            return root;
+        });
+    }
+
+    [Fact]
     public void ClickingDefaultToggleProjectsANonEmptyDropDown()
     {
         UIRoot root = new(300, 200);
