@@ -320,6 +320,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     private LayoutSize? oldestMeasureAvailableSize;
     private LayoutSize oldestMeasureDesiredSize;
     private int oldestMeasureLayoutVersion = -1;
+    private int measureCacheInvalidationCount;
 
     internal LayoutRect? LastArrangeFinalRect { get; set; }
 
@@ -839,6 +840,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         }
 
         Root?.CountMeasureCall();
+        int invalidationCountBeforeMeasure = measureCacheInvalidationCount;
         LayoutSize desired = !UIElementVisibility.ParticipatesInLayout(this)
             ? LayoutSize.Zero
             : MeasureWithMargin(context);
@@ -846,6 +848,14 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         PreserveCurrentMeasureCache();
         SetDesiredSize(desired);
         LastMeasureAvailableSize = context.AvailableSize;
+        // A Measure request raised during this measure (MeasureCore) stays pending: neither the
+        // cache nor the scheduled visit may let a same-constraint measure or the queue entry skip it.
+        if (measureCacheInvalidationCount != invalidationCountBeforeMeasure)
+        {
+            LastMeasureLayoutVersion = -1;
+            return desired;
+        }
+
         LastMeasureLayoutVersion = LayoutVersion;
         RecordScheduledMeasureVisit();
         return desired;
@@ -914,6 +924,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         previousMeasureLayoutVersion = -1;
         olderMeasureLayoutVersion = -1;
         oldestMeasureLayoutVersion = -1;
+        measureCacheInvalidationCount++;
         LastScheduledMeasureRoot = null;
     }
 
