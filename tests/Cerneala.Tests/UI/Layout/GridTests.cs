@@ -369,6 +369,54 @@ public sealed class GridTests
     }
 
     [Fact]
+    public void CyclicAutoColumnChildInStarRowDoesNotOverflowStarColumns()
+    {
+        Grid grid = new();
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Stars(1)));
+        WrappingElement wrapping = new(vertical: true);
+        Grid.SetRow(wrapping, 1);
+        CountingElement autoRowChild = new(new LayoutSize(50, 150));
+        Grid.SetColumn(autoRowChild, 1);
+        grid.VisualChildren.Add(wrapping);
+        grid.VisualChildren.Add(autoRowChild);
+
+        LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(300, 300)));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 300, 300)));
+
+        Assert.Equal(new LayoutSize(300, 300), desired);
+        Assert.Equal(new LayoutRect(0, 150, 60, 150), wrapping.ArrangedBounds);
+        Assert.Equal(240, autoRowChild.LastAvailableSize.Width);
+        Assert.Equal(new LayoutRect(60, 0, 240, 150), autoRowChild.ArrangedBounds);
+    }
+
+    [Fact]
+    public void CyclicAutoRowChildInStarColumnFollowsGrownAutoColumn()
+    {
+        Grid grid = new();
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Stars(1)));
+        WrappingElement columnWrapping = new(vertical: true);
+        Grid.SetRow(columnWrapping, 1);
+        WrappingElement rowWrapping = new(vertical: false);
+        Grid.SetColumn(rowWrapping, 1);
+        grid.VisualChildren.Add(columnWrapping);
+        grid.VisualChildren.Add(rowWrapping);
+
+        LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(250, 220)));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 250, 220)));
+
+        Assert.Equal(new LayoutSize(250, 220), desired);
+        Assert.Equal(new LayoutRect(0, 60, 60, 160), columnWrapping.ArrangedBounds);
+        Assert.Equal(new LayoutSize(190, 60), rowWrapping.DesiredSize);
+        Assert.Equal(new LayoutRect(60, 0, 190, 60), rowWrapping.ArrangedBounds);
+    }
+
+    [Fact]
     public void ChangingAttachedGridPlacementQueuesGridLayout()
     {
         UIRoot root = new(100, 100);

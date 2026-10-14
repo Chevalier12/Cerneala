@@ -6,6 +6,7 @@ namespace Cerneala.UI.Layout.Panels;
 
 public class Grid : Panel
 {
+    private const int MaxCyclicMeasurePasses = 5;
     private static readonly ConditionalWeakTable<UIElement, GridPlacement> placements = new();
     private float[] measuredColumnSizes = [0];
     private float[] measuredRowSizes = [0];
@@ -119,10 +120,31 @@ public class Grid : Panel
         bool firstAxisMeasuredBeforeCrossFinal = MeasureContentSizedDefinitions(
             context, columnAxis: !rowsFirst, columns, columnSizes, rows, rowSizes, crossAxisResolved: false);
         MeasureContentSizedDefinitions(context, columnAxis: rowsFirst, columns, columnSizes, rows, rowSizes, crossAxisResolved: true);
-        if (firstAxisMeasuredBeforeCrossFinal)
+
+        // When both axes depend on each other, the columns were content-sized against unresolved star rows.
+        // Content-size them again against the resolved rows, then the rows against the re-resolved columns,
+        // until the columns stop changing. As in WPF, the number of passes is bounded.
+        if (columnsDependOnStarRows && rowsDependOnStarColumns)
+        {
+            for (int pass = 0; pass < MaxCyclicMeasurePasses; pass++)
+            {
+                float[] previousColumnSizes = columnSizes;
+                columnSizes = ResolveFixedSizes(columns);
+                MeasureContentSizedDefinitions(context, columnAxis: true, columns, columnSizes, rows, rowSizes, crossAxisResolved: true);
+                if (columnSizes.AsSpan().SequenceEqual(previousColumnSizes))
+                {
+                    break;
+                }
+
+                rowSizes = ResolveFixedSizes(rows);
+                MeasureContentSizedDefinitions(context, columnAxis: false, columns, columnSizes, rows, rowSizes, crossAxisResolved: true);
+            }
+        }
+        else if (firstAxisMeasuredBeforeCrossFinal)
         {
             // Some first-axis children were measured before their cross size was final. Size the first axis
             // again from their measures at the resolved cross sizes, so its stars share what the final measure leaves.
+            // The cyclic passes above already start with this step for the columns, which are then the first axis.
             if (rowsFirst)
             {
                 rowSizes = ResolveFixedSizes(rows);
