@@ -906,10 +906,12 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     }
 
     // Keeps LastArrangeFinalRect: LayoutManager.GetFinalRect reuses it as the element's slot.
+    // Forgets the scheduled visit: an arrange that ran before this request does not satisfy it.
     internal void InvalidateArrangeCache()
     {
         LastArrangeLayoutVersion = -1;
         arrangeCacheInvalidationCount++;
+        LastScheduledArrangeRoot = null;
     }
 
     public LayoutRect Arrange(ArrangeContext context)
