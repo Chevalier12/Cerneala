@@ -17,11 +17,13 @@ public sealed partial class UiMarkupGenerator
     // of the value-equatable, document-specific facts.
     private sealed class CompilationDeclarationIndex
     {
+        private static long lastSequence;
         private readonly Dictionary<string, ImmutableArray<SyntaxTree>> companions = new(StringComparer.Ordinal);
         private readonly Dictionary<INamedTypeSymbol, MarkupCompilationFacts.TypeDeclarationFacts> typeFacts = new(SymbolEqualityComparer.Default);
 
         public CompilationDeclarationIndex(Compilation compilation, CancellationToken cancellationToken)
         {
+            Sequence = Interlocked.Increment(ref lastSequence);
             Compilation = compilation;
             References = compilation.References.ToImmutableArray();
             Types = compilation.GetSymbolsWithName(static _ => true, SymbolFilter.Type, cancellationToken)
@@ -32,6 +34,8 @@ public sealed partial class UiMarkupGenerator
                 .Select(directive => (Tree: tree, Directive: directive))).ToArray();
         }
 
+        // Orders indexes by creation, so equal facts can keep the newest compilation.
+        public long Sequence { get; }
         public Compilation Compilation { get; }
         public ImmutableArray<MetadataReference> References { get; }
         public ILookup<string, INamedTypeSymbol> Types { get; }
@@ -72,6 +76,9 @@ public sealed partial class UiMarkupGenerator
     // not an equality key. Only declaration facts reachable from these documents
     // may invalidate them. Include the documents themselves so newly introduced
     // markup always gets the current compilation, even after an unrelated edit.
+    // Roslyn keeps the previously cached value when a new value is equal, so
+    // equality hands the newest compilation to both values. A cached value must
+    // never keep a compilation that an unrelated edit replaced.
     private sealed class MarkupCompilationFacts : IEquatable<MarkupCompilationFacts>
     {
         private static readonly Regex Identifier = new(@"[\p{L}\p{Nl}_][\p{L}\p{Nl}\p{Nd}\p{Pc}\p{Mn}\p{Mc}\p{Cf}]*", RegexOptions.CultureInvariant);
@@ -112,18 +119,19 @@ public sealed partial class UiMarkupGenerator
 
         private readonly ImmutableArray<string> facts;
         private readonly ImmutableArray<MetadataReference> references;
+        private CompilationTransport transport;
 
         private MarkupCompilationFacts(ImmutableArray<MarkupSource> files, CompilationDeclarationIndex declarations,
             ImmutableArray<string> facts)
         {
             Files = files;
-            Compilation = declarations.Compilation;
+            transport = new CompilationTransport(declarations.Sequence, declarations.Compilation);
             this.facts = facts;
             references = declarations.References;
         }
 
         public ImmutableArray<MarkupSource> Files { get; }
-        public Compilation Compilation { get; }
+        public Compilation Compilation => Volatile.Read(ref transport).Compilation;
 
         public static ImmutableArray<string> GetTypeNames(string? text) => Identifier.Matches(text ?? string.Empty)
             .Cast<Match>().Select(match => match.Value).Distinct(StringComparer.Ordinal).ToImmutableArray();
@@ -196,15 +204,33 @@ public sealed partial class UiMarkupGenerator
             return new MarkupCompilationFacts(files, declarations, builder.Facts.ToImmutableArray());
         }
 
-        public bool Equals(MarkupCompilationFacts? other) => other is not null &&
-            Compilation.Options.Equals(other.Compilation.Options) &&
-            references.SequenceEqual(other.references) &&
-            Files.Length == other.Files.Length && Files.Select(file => (file.Path, file.Text))
-                .SequenceEqual(other.Files.Select(file => (file.Path, file.Text))) &&
-            facts.SequenceEqual(other.facts, StringComparer.Ordinal);
+        public bool Equals(MarkupCompilationFacts? other)
+        {
+            if (other is null ||
+                !Compilation.Options.Equals(other.Compilation.Options) ||
+                !references.SequenceEqual(other.references) ||
+                Files.Length != other.Files.Length || !Files.Select(file => (file.Path, file.Text))
+                    .SequenceEqual(other.Files.Select(file => (file.Path, file.Text))) ||
+                !facts.SequenceEqual(other.facts, StringComparer.Ordinal))
+                return false;
+
+            CompilationTransport own = Volatile.Read(ref transport);
+            CompilationTransport others = Volatile.Read(ref other.transport);
+            if (own.Sequence < others.Sequence)
+                Volatile.Write(ref transport, others);
+            else if (others.Sequence < own.Sequence)
+                Volatile.Write(ref other.transport, own);
+            return true;
+        }
 
         public override bool Equals(object? obj) => obj is MarkupCompilationFacts other && Equals(other);
         public override int GetHashCode() => facts.Length;
+
+        private sealed class CompilationTransport(long sequence, Compilation compilation)
+        {
+            public long Sequence { get; } = sequence;
+            public Compilation Compilation { get; } = compilation;
+        }
 
         // Each node contains only its own declaration facts plus dependency
         // edges. This avoids recursively expanding/caching constructed types and

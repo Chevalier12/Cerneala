@@ -134,6 +134,10 @@ family (for example `MARKUP030` in `GeneratedUiFactory`).
 ## Lifecycle And Ownership
 
 - The generator is stateless between runs. Roslyn caches the incremental steps.
+  When a new value equals the cached one, Roslyn keeps the cached value. So
+  equal `MarkupCompilationFacts` hand over the newest `Compilation`
+  (`UiMarkupCompilationFacts.cs`), and `SourceGeneratorSemanticModel.Create`
+  drops the Roslyn-backed `TypeSymbol`/`MemberSymbol` of each semantic symbol.
 - `GeneratedMarkup` helpers create controllers and attach them to the owner
   element. `AttachResource` registers its controller with
   `owner.AddLifecycleBehavior(controller)` and returns it as `IDisposable`
@@ -160,6 +164,11 @@ family (for example `MARKUP030` in `GeneratedUiFactory`).
   initializer that calls `RegisterStartup`.
   `UiMarkupGeneratorTests.cs:ExecutableMainWindowEmitsAutomaticEntryPointOrHostedDescriptor`,
   `UiMarkupIncrementalTests.cs:AddingEntryPointChangesGeneratedStartupToModuleInitializer`.
+- After an unrelated C# edit and a second run, the replaced `Compilation` is
+  collectable while the driver and the current `Compilation` are alive.
+  `UiMarkupCompilationRetentionTests.cs:UiMarkupGeneratorReleasesReplacedCompilationAfterUnrelatedEdit`,
+  `:CurrentCompilationAloneDoesNotKeepReplacedCompilation`; the adapter side is
+  `RoslynCompilationSymbolsTests.cs:ReleasedAdapterDoesNotKeepItsCompilationAliveThroughSharedMetadataTypes`.
 - A paired `Scene2D` component creates an independent instance at each use.
   `UiMarkupGeneratorSceneComponentTests.cs:SceneComponentPairsMarkupWithSceneClassAndCreatesIndependentLogicalInstances`.
 - The catalog holds exactly the 44 IDs listed above, each once, each with
