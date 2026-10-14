@@ -44,6 +44,8 @@ The control's own generator follows item changes whose position is known, before
 
 For example, a `ListBox` holds three `UIElement` items `e0`, `e1`, and `e2`, each wrapped in a `ListBoxItem`. After `listBox.Items.RemoveAt(0)`, the container that showed `e0` is recycled and its `Content` is `null`. `RealizedContainers[0]` is the container that shows `e1`, and `RealizedContainers[1]` is the container that shows `e2`. A `TabItem` item is its own container, so removing it detaches it and clears its item state, but its `Content` is kept.
 
+A container that is its own item, such as a `ListBoxItem` placed directly in a `ListBox`, belongs to that item rather than to an index. If such a realized container is still keyed by an index that no longer holds its item, `Realize` moves it to the current index of its item before it recycles anything, and then prepares it for that index; the container is not cleared, detached, or recycled. This happens in a generator that is not notified of item changes. For example, `ItemContainerGenerator generator = new(listBox)` realizes the `ListBoxItem`s `a`, `b`, and `c` of `listBox`. After `listBox.Items.RemoveAt(0)`, the next `generator.Realize()` recycles only `a`; `b` is realized at index `0` with `ItemIndex` `0` and `Item` `b`, and `c` at index `1`. The control's own generator already moved `b` and `c` to the keys `0` and `1` when the removal was reported, so its next `Realize` only prepares them for their new indexes.
+
 Recycled containers are stored in `RecyclePool` by concrete container type. If the item is itself the generated `UIElement`, the generator clears and detaches it but does not push it into the recycle pool.
 
 Container metadata is stored separately from the container instance. `GetItemIndex` returns `-1` when no metadata exists, `GetItem` returns `null` when no item is recorded, and `GetIsSelected` returns `false` when no selection flag is recorded.
@@ -62,7 +64,7 @@ Container metadata is stored separately from the container instance. `GetItemInd
 ## Methods
 | Name | Return type | Description |
 | --- | --- | --- |
-| `Realize(RealizationWindow? window = null)` | `IReadOnlyList<UIElement>` | Realizes containers for the requested window, or for all items when `window` is `null`, and recycles containers outside that range. |
+| `Realize(RealizationWindow? window = null)` | `IReadOnlyList<UIElement>` | Realizes containers for the requested window, or for all items when `window` is `null`, moves realized containers that are their own items from an old index to their items' current indexes, and recycles containers outside that range. |
 | `GetOrCreate(int index)` | `UIElement` | Returns the compatible realized container for `index` (prepared again when its recorded item or index differs), reuses a recycled container when available, or asks the owner to create and prepare a new container. Throws `ArgumentOutOfRangeException` when `index` is outside the current item range. |
 | `Recycle(int index)` | `void` | Removes the realized container for `index`, detaches it from visual and logical parents, clears owner-specific container state, and stores it in `RecyclePool` when it is reusable. |
 | `Clear()` | `void` | Recycles every currently realized container. |
