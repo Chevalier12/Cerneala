@@ -37,12 +37,7 @@ public sealed class DirtyPropagation
             ? LayoutQueueEntryKind.Subtree
             : LayoutQueueEntryKind.Direct;
         MarkAndQueue(request.Target, propagated, layoutQueue, inheritedPropertyQueue, aspectQueue, renderQueue, hitTestQueue, trace, request.Reason, targetLayoutKind);
-        if (propagated.HasFlag(InvalidationFlags.Arrange))
-        {
-            // The target's LayoutVersion is unchanged, so a parent that arranges it with the
-            // same slot would otherwise reuse the stale arrange and mark it as already arranged.
-            request.Target.InvalidateArrangeCache();
-        }
+        InvalidateLayoutCaches(request.Target, propagated);
 
         if (effective.HasFlag(InvalidationFlags.Measure))
         {
@@ -62,12 +57,23 @@ public sealed class DirtyPropagation
             foreach (UIElement descendant in ElementTreeWalker.Descendants(request.Target, ElementChildRole.Visual))
             {
                 MarkAndQueue(descendant, propagated, layoutQueue, inheritedPropertyQueue, aspectQueue, renderQueue, hitTestQueue, trace, "Subtree propagation", LayoutQueueEntryKind.Subtree);
-                if (propagated.HasFlag(InvalidationFlags.Arrange))
-                {
-                    // Same reason as for the target: its parent may arrange it with the same slot.
-                    descendant.InvalidateArrangeCache();
-                }
+                InvalidateLayoutCaches(descendant, propagated);
             }
+        }
+    }
+
+    // The element's LayoutVersion is unchanged, so a parent that measures it with the same constraint
+    // or arranges it with the same slot would otherwise reuse the stale result and mark it as done.
+    private static void InvalidateLayoutCaches(UIElement element, InvalidationFlags flags)
+    {
+        if (flags.HasFlag(InvalidationFlags.Measure))
+        {
+            element.InvalidateMeasureCacheKeepingConstraint();
+        }
+
+        if (flags.HasFlag(InvalidationFlags.Arrange))
+        {
+            element.InvalidateArrangeCache();
         }
     }
 

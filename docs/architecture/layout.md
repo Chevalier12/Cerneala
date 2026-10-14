@@ -84,6 +84,14 @@ The code sets `first.Visibility = Visibility.Collapsed;`.
 - `UIElement.Measure` itself does not look at `DirtyState`; the dirty check is
   in `LayoutManager.Measure`. A panel that measures a child directly gets the
   cached size when constraint and `LayoutVersion` match.
+- When a request queues `Measure` for its target, `DirtyPropagation.Propagate`
+  invalidates the target's measure cache and keeps its last constraint
+  (`LastMeasureAvailableSize`), which `LayoutManager.GetAvailableSize` and
+  `ItemsPresenter` still read. With `Subtree`, it does the same for every
+  visual descendant it queues. A parent that measures one of these
+  elements with the same constraint in the same pass then runs its
+  `MeasureCore`, instead of reusing the stale size and marking it as already
+  measured. Ancestors queued as `Propagated` keep their measure cache.
 - `UIElement.Arrange` reuses its result when the final rectangle and
   `LayoutVersion` equal the last arrange (`UIElement.cs:906-931`).
 - An attached element's `Invalidate` does not change its `LayoutVersion`. When
@@ -167,6 +175,11 @@ Test paths are under `tests/Cerneala.Tests/`.
 - An element invalidated for `Arrange` is arranged again when its parent is
   arranged in the same frame with the same slot, in both invalidation orders.
   Test: `UI/Layout/DirectArrangeInvalidationSameFrameRegressionTests.cs:DirtyChildArrangeRunsWhenParentArrangesItWithTheSameSlotInTheSameFrame`.
+- After `Invalidate(Measure | Subtree)` on a parent, a child and a grandchild
+  measured with the same constraint are measured again in the same frame. The
+  target of such a request is measured again also when its own parent measures
+  it first in the same frame. Tests:
+  `UI/Layout/SubtreeMeasureInvalidationSameFrameRegressionTests.cs`.
 - After `Invalidate(Arrange | Subtree)` on a parent, a child and a grandchild
   arranged with the same slot are arranged again in the same frame. Tests:
   `UI/Layout/SubtreeArrangeInvalidationSameFrameRegressionTests.cs`.
