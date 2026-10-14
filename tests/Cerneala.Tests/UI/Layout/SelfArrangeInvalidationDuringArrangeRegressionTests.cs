@@ -12,6 +12,53 @@ public sealed class SelfArrangeInvalidationDuringArrangeRegressionTests
         ArrangeCore
     }
 
+    public enum QueuePath
+    {
+        OwnEntry,
+        ParentFirst,
+        ChildThenParent
+    }
+
+    [Theory]
+    [InlineData(Trigger.SizeChanged, QueuePath.OwnEntry)]
+    [InlineData(Trigger.ArrangeCore, QueuePath.OwnEntry)]
+    [InlineData(Trigger.SizeChanged, QueuePath.ParentFirst)]
+    [InlineData(Trigger.ArrangeCore, QueuePath.ParentFirst)]
+    [InlineData(Trigger.SizeChanged, QueuePath.ChildThenParent)]
+    [InlineData(Trigger.ArrangeCore, QueuePath.ChildThenParent)]
+    public void ArrangeRequestFromOwnArrangeRunsWhileQueuedInSnapshot(Trigger trigger, QueuePath path)
+    {
+        UIRoot root = new(100, 100);
+        SlotPanel parent = new();
+        OffsetElement child = new();
+        parent.VisualChildren.Add(child);
+        root.VisualChildren.Add(parent);
+        Settle(root);
+        Assert.Equal(0, child.ArrangedBounds.X);
+
+        child.Offset = 5;
+        ArmSelfInvalidation(child, trigger);
+        if (path == QueuePath.ParentFirst)
+        {
+            parent.Invalidate(InvalidationFlags.Arrange, "parent");
+        }
+
+        child.Invalidate(InvalidationFlags.Arrange, "child offset 5");
+        if (path == QueuePath.ChildThenParent)
+        {
+            parent.Invalidate(InvalidationFlags.Arrange, "parent");
+        }
+
+        root.ProcessFrame();
+        Assert.True(
+            child.ArrangedBounds.X == 15 || child.DirtyState.Has(InvalidationFlags.Arrange),
+            "The Arrange request raised during the child's own arrange was dropped.");
+
+        Settle(root);
+
+        Assert.Equal(15, child.ArrangedBounds.X);
+    }
+
     [Theory]
     [InlineData(Trigger.SizeChanged)]
     [InlineData(Trigger.ArrangeCore)]
