@@ -907,12 +907,14 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     // Keeps LastMeasureAvailableSize: LayoutManager.GetAvailableSize reuses it as the element's
     // constraint, and ItemsPresenter reads it as the panel's last constraint.
+    // Forgets the scheduled visit: a measure that ran before this request does not satisfy it.
     internal void InvalidateMeasureCacheKeepingConstraint()
     {
         LastMeasureLayoutVersion = -1;
         previousMeasureLayoutVersion = -1;
         olderMeasureLayoutVersion = -1;
         oldestMeasureLayoutVersion = -1;
+        LastScheduledMeasureRoot = null;
     }
 
     // Keeps LastArrangeFinalRect: LayoutManager.GetFinalRect reuses it as the element's slot.
