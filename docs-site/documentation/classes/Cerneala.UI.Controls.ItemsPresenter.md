@@ -82,7 +82,7 @@ Changing `Items`, `ItemTemplate`, or `ItemsPanel` marks the presentation dirty a
 
 Fixed-extent virtualization can be driven explicitly through `VirtualizationContext`. When owned by an `ItemsControl`, a panel implementing `IItemsVirtualizingPanel` instead receives automatic viewport updates from the surrounding `ScrollViewer`; `VirtualizingStackPanel` uses that path for variable-height items.
 
-`MeasureCore` and `ArrangeCore` refresh dirty items before layout. During measure, the presenter also processes inherited properties and aspects for the realized subtree and removes completed layout work from the root queues.
+`MeasureCore` and `ArrangeCore` refresh dirty items before layout. During measure, the presenter also processes inherited properties and aspects for the realized subtree and removes completed layout work from the root queues. When the refresh in `ArrangeCore` changes the realized items, for example because a `ScrollViewer` clamps its offset during arrange after the item source shrank, the presenter first measures the panel root again with the panel's last available size, so newly realized items are arranged with their measured size instead of an empty one.
 
 ## Constructors
 
@@ -123,7 +123,7 @@ Fixed-extent virtualization can be driven explicitly through `VirtualizationCont
 | Name | Description |
 | --- | --- |
 | `MeasureCore(MeasureContext)` | Refreshes realized items, measures the panel root, processes inherited and aspect state for the realized subtree, and returns the desired size. |
-| `ArrangeCore(ArrangeContext)` | Refreshes realized items, arranges the panel root, removes completed arrange work for the subtree, and returns the final layout rectangle. |
+| `ArrangeCore(ArrangeContext)` | Refreshes realized items, measures the panel root again with its last available size when the refresh changed the realized items, arranges the panel root, removes completed arrange work for the subtree, and returns the final layout rectangle. |
 | `OnPropertyChanged(UiPropertyChangedEventArgs)` | Marks items dirty and refreshes presentation when `Items`, `ItemTemplate`, or `ItemsPanel` changes. |
 
 ## Applies To
