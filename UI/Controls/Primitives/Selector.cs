@@ -122,18 +122,7 @@ public class Selector : ItemsControl
     {
         if (hasSelectedItem)
         {
-            int selectedIndex = selectionModel.SelectedIndex;
-            if (selectedIndex >= oldIndex && selectedIndex < oldIndex + count)
-            {
-                selectedIndex = newIndex + selectedIndex - oldIndex;
-            }
-            else
-            {
-                selectedIndex -= selectedIndex >= oldIndex + count ? count : 0;
-                selectedIndex += selectedIndex >= newIndex ? count : 0;
-            }
-
-            RelocateSelection(selectedIndex);
+            RelocateSelection(GetIndexAfterMove(selectionModel.SelectedIndex, oldIndex, newIndex, count));
         }
 
         CaptureSelectedItem();
@@ -143,7 +132,7 @@ public class Selector : ItemsControl
     {
         if (hasSelectedItem)
         {
-            int selectedIndex = FindSelectedItem();
+            int selectedIndex = FindItemIndex(selectedItem, selectionModel.SelectedIndex);
             if (selectedIndex < 0)
             {
                 ClearSelectionForItems();
@@ -157,17 +146,30 @@ public class Selector : ItemsControl
         CaptureSelectedItem();
     }
 
-    private int FindSelectedItem()
+    // The index of the item at itemIndex after count items moved from oldIndex to newIndex.
+    internal static int GetIndexAfterMove(int itemIndex, int oldIndex, int newIndex, int count)
     {
-        int selectedIndex = selectionModel.SelectedIndex;
-        if (selectedIndex < ItemCount && Equals(GetItemAt(selectedIndex), selectedItem))
+        if (itemIndex >= oldIndex && itemIndex < oldIndex + count)
         {
-            return selectedIndex;
+            return newIndex + itemIndex - oldIndex;
+        }
+
+        itemIndex -= itemIndex >= oldIndex + count ? count : 0;
+        itemIndex += itemIndex >= newIndex ? count : 0;
+        return itemIndex;
+    }
+
+    // The index of item after a reset, checking its index before the reset first, or -1 when it is gone.
+    internal int FindItemIndex(object? item, int previousIndex)
+    {
+        if (previousIndex >= 0 && previousIndex < ItemCount && Equals(GetItemAt(previousIndex), item))
+        {
+            return previousIndex;
         }
 
         for (int index = 0; index < ItemCount; index++)
         {
-            if (Equals(GetItemAt(index), selectedItem))
+            if (Equals(GetItemAt(index), item))
             {
                 return index;
             }

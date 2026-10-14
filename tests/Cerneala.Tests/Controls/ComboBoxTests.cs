@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Items;
 using Cerneala.UI.Controls.Templates;
@@ -1335,6 +1336,229 @@ public sealed class ComboBoxTests
         DispatchKey(root, bridge, InputKey.Down, InputKey.LeftAlt);
         DispatchKey(root, bridge, InputKey.Up, InputKey.LeftAlt);
         Assert.False(comboBox.IsDropDownOpen);
+    }
+
+    [Fact]
+    public void HighlightedItemFollowsItsItemWhenItemsInsertBeforeIt()
+    {
+        UIRoot root = new(100, 100);
+        ComboBox comboBox = new();
+        comboBox.SetItems(new[] { "a", "b", "c" });
+        ElementInputBridge bridge = OpenAndHighlightLastItem(root, comboBox);
+
+        comboBox.Items.Insert(0, "z");
+        root.ProcessFrame();
+        string highlighted = HighlightedItems(comboBox);
+        DispatchKey(root, bridge, InputKey.Enter);
+
+        Assert.Equal(
+            "highlighted=c selected=c text=c",
+            $"highlighted={highlighted} selected={comboBox.SelectedItem} text={comboBox.Text}");
+    }
+
+    [Fact]
+    public void HighlightedItemFollowsItsItemWhenItemsRemoveBeforeIt()
+    {
+        UIRoot root = new(100, 100);
+        ComboBox comboBox = new();
+        comboBox.SetItems(new[] { "a", "b", "c" });
+        ElementInputBridge bridge = OpenAndHighlightLastItem(root, comboBox);
+
+        comboBox.Items.RemoveAt(0);
+        root.ProcessFrame();
+        string highlighted = HighlightedItems(comboBox);
+        DispatchKey(root, bridge, InputKey.Enter);
+
+        Assert.Equal(
+            "highlighted=c selected=c text=c",
+            $"highlighted={highlighted} selected={comboBox.SelectedItem} text={comboBox.Text}");
+    }
+
+    [Fact]
+    public void HighlightedItemFollowsItsItemWhenItemsSourceInsertsBeforeIt()
+    {
+        UIRoot root = new(100, 100);
+        ObservableCollection<string> items = ["a", "b", "c"];
+        ComboBox comboBox = new() { ItemsSource = items };
+        ElementInputBridge bridge = OpenAndHighlightLastItem(root, comboBox);
+
+        items.Insert(0, "z");
+        root.ProcessFrame();
+        string highlighted = HighlightedItems(comboBox);
+        DispatchKey(root, bridge, InputKey.Enter);
+
+        Assert.Equal(
+            "highlighted=c selected=c text=c",
+            $"highlighted={highlighted} selected={comboBox.SelectedItem} text={comboBox.Text}");
+    }
+
+    [Fact]
+    public void HighlightedItemFollowsItsItemWhenItemsSourceRemovesBeforeIt()
+    {
+        UIRoot root = new(100, 100);
+        ObservableCollection<string> items = ["a", "b", "c"];
+        ComboBox comboBox = new() { ItemsSource = items };
+        ElementInputBridge bridge = OpenAndHighlightLastItem(root, comboBox);
+
+        items.RemoveAt(0);
+        root.ProcessFrame();
+        string highlighted = HighlightedItems(comboBox);
+        DispatchKey(root, bridge, InputKey.Enter);
+
+        Assert.Equal(
+            "highlighted=c selected=c text=c",
+            $"highlighted={highlighted} selected={comboBox.SelectedItem} text={comboBox.Text}");
+    }
+
+    [Fact]
+    public void HighlightedItemFollowsItsItemWhenItemsSourceMovesIt()
+    {
+        UIRoot root = new(100, 100);
+        ObservableCollection<string> items = ["a", "b", "c"];
+        ComboBox comboBox = new() { ItemsSource = items };
+        ElementInputBridge bridge = OpenAndHighlightLastItem(root, comboBox);
+
+        items.Move(2, 0);
+        root.ProcessFrame();
+        string highlighted = HighlightedItems(comboBox);
+        DispatchKey(root, bridge, InputKey.Enter);
+
+        Assert.Equal(
+            "highlighted=c selected=c text=c",
+            $"highlighted={highlighted} selected={comboBox.SelectedItem} text={comboBox.Text}");
+    }
+
+    [Fact]
+    public void HighlightedItemFollowsItsItemWhenItemsSourceResets()
+    {
+        UIRoot root = new(100, 100);
+        ResettingList items = new(["a", "b", "c"]);
+        ComboBox comboBox = new() { ItemsSource = items };
+        ElementInputBridge bridge = OpenAndHighlightLastItem(root, comboBox);
+
+        items.ReverseAndReset();
+        root.ProcessFrame();
+        string highlighted = HighlightedItems(comboBox);
+        DispatchKey(root, bridge, InputKey.Enter);
+
+        Assert.Equal(
+            "highlighted=c selected=c text=c",
+            $"highlighted={highlighted} selected={comboBox.SelectedItem} text={comboBox.Text}");
+    }
+
+    [Fact]
+    public void RemovingHighlightedItemHighlightsFirstItemAndEnterCommitsItsText()
+    {
+        UIRoot root = new(100, 100);
+        ObservableCollection<string> items = ["a", "b", "c"];
+        ComboBox comboBox = new() { ItemsSource = items };
+        ElementInputBridge bridge = OpenAndHighlightLastItem(root, comboBox);
+
+        items.RemoveAt(2);
+        root.ProcessFrame();
+        string highlighted = HighlightedItems(comboBox);
+        DispatchKey(root, bridge, InputKey.Enter);
+
+        Assert.Equal(
+            "highlighted=a selected=a text=a",
+            $"highlighted={highlighted} selected={comboBox.SelectedItem} text={comboBox.Text}");
+    }
+
+    [Fact]
+    public void FilteredHighlightedItemFollowsItsItemWhenItemsSourceInsertsBeforeIt()
+    {
+        UIRoot root = new(300, 200);
+        ObservableCollection<string> items = ["Apple", "Banana", "Apricot"];
+        ComboBox comboBox = new() { IsTextFilterEnabled = true, Width = 180, ItemsSource = items };
+        ElementInputBridge bridge = OpenFilteredAndHighlightApricot(root, comboBox);
+
+        items.Insert(0, "Cherry");
+        root.ProcessFrame();
+        string highlighted = HighlightedItems(comboBox);
+        DispatchKey(root, bridge, InputKey.Enter);
+
+        Assert.Equal(
+            "highlighted=Apricot selected=Apricot text=Apricot",
+            $"highlighted={highlighted} selected={comboBox.SelectedItem} text={comboBox.Text}");
+    }
+
+    [Fact]
+    public void FilteredHighlightedItemReplacedByHiddenItemHighlightsFirstVisibleItem()
+    {
+        UIRoot root = new(300, 200);
+        ObservableCollection<string> items = ["Apple", "Banana", "Apricot"];
+        ComboBox comboBox = new() { IsTextFilterEnabled = true, Width = 180, ItemsSource = items };
+        ElementInputBridge bridge = OpenFilteredAndHighlightApricot(root, comboBox);
+
+        items[2] = "Blueberry";
+        root.ProcessFrame();
+        string highlighted = HighlightedItems(comboBox);
+        DispatchKey(root, bridge, InputKey.Enter);
+
+        Assert.Equal(
+            "highlighted=Apple selected=Apple text=Apple",
+            $"highlighted={highlighted} selected={comboBox.SelectedItem} text={comboBox.Text}");
+    }
+
+    private static ElementInputBridge OpenAndHighlightLastItem(UIRoot root, ComboBox comboBox)
+    {
+        root.VisualChildren.Add(comboBox);
+        root.ProcessFrame();
+        ElementInputBridge bridge = new();
+        bridge.FocusManager.Focus(comboBox, root.InputCache.EnsureCurrent(root));
+        DispatchKey(root, bridge, InputKey.F4);
+        DispatchKey(root, bridge, InputKey.End);
+        root.ProcessFrame();
+        Assert.True(comboBox.IsDropDownOpen);
+        Assert.Equal(-1, comboBox.SelectedIndex);
+        Assert.Equal("c", HighlightedItems(comboBox));
+        return bridge;
+    }
+
+    private static ElementInputBridge OpenFilteredAndHighlightApricot(UIRoot root, ComboBox comboBox)
+    {
+        root.VisualChildren.Add(comboBox);
+        root.ProcessFrame();
+        TextBox editor = Assert.IsType<TextBox>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_EditableTextBox"]);
+        ElementInputBridge bridge = new();
+        bridge.FocusManager.Focus(comboBox, root.InputCache.EnsureCurrent(root));
+        editor.ReceiveTextInput("ap");
+        root.ProcessFrame();
+        DispatchKey(root, bridge, InputKey.Down);
+        root.ProcessFrame();
+        Assert.True(comboBox.IsDropDownOpen);
+        Assert.Equal(-1, comboBox.SelectedIndex);
+        Assert.Equal("Apple,Apricot", string.Join(",", comboBox.ItemsPresenter.LayoutPanelRoot!.VisualChildren
+            .Select(ItemContainerGenerator.GetItem)));
+        Assert.Equal("Apricot", HighlightedItems(comboBox));
+        return bridge;
+    }
+
+    private static string HighlightedItems(ComboBox comboBox)
+    {
+        return string.Join(",", comboBox.ItemContainerGenerator.RealizedContainers
+            .OrderBy(pair => pair.Key)
+            .Where(pair => ItemContainerGenerator.GetIsSelected(pair.Value))
+            .Select(pair => ItemContainerGenerator.GetItem(pair.Value)));
+    }
+
+    // Reports every change as a reset, as a collection that reorders in place does.
+    private sealed class ResettingList(IEnumerable<string> items) : Collection<string>([.. items]), INotifyCollectionChanged
+    {
+        public event NotifyCollectionChangedEventHandler? CollectionChanged;
+
+        public void ReverseAndReset()
+        {
+            string[] reversed = [.. this.Reverse()];
+            Items.Clear();
+            foreach (string item in reversed)
+            {
+                Items.Add(item);
+            }
+
+            CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+        }
     }
 
     [Fact]
