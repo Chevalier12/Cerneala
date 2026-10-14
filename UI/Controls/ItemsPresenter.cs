@@ -571,13 +571,13 @@ public class ItemsPresenter : Control
 
     private void ApplyVirtualizationContext(Layout.Panels.Panel? panel, VirtualizationContext? context, RealizationWindow? window)
     {
+        if (!ReferenceEquals(contextPanel, panel))
+        {
+            ReleasePanelVirtualizationContext();
+        }
+
         if (panel is VirtualizingStackPanel virtualizingPanel && context is VirtualizationContext suppliedContext)
         {
-            if (!ReferenceEquals(contextPanel, virtualizingPanel))
-            {
-                ReleasePanelVirtualizationContext();
-            }
-
             virtualizingPanel.VirtualizationContext = suppliedContext;
             virtualizingPanel.FirstRealizedIndex = window?.StartIndex ?? 0;
             contextPanel = virtualizingPanel;

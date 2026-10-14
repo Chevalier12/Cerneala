@@ -125,6 +125,35 @@ public sealed class ItemsPresenterTests
     }
 
     [Fact]
+    public void ReplacingVirtualizingStackPanelWithStackPanelReleasesOldPanelVirtualizationContext()
+    {
+        Cerneala.UI.Layout.Panels.VirtualizingStackPanel oldPanel = new();
+        ItemsPresenter presenter = new()
+        {
+            Items = Enumerable.Range(0, 100).Select(index => new ItemElement(index.ToString())).ToArray(),
+            ItemsPanel = oldPanel,
+            VirtualizationContext = new VirtualizationContext(100, 10, 30, 0, CacheItems: 1)
+        };
+        MeasureContext context = new(new LayoutSize(100, 30));
+        presenter.Measure(context);
+        Assert.Equal(4, oldPanel.VisualChildren.Count);
+
+        presenter.ItemsPanel = new Cerneala.UI.Layout.Panels.StackPanel();
+        presenter.Measure(context);
+        Assert.Null(oldPanel.VirtualizationContext);
+
+        ItemsPresenter reuse = new()
+        {
+            Items = Enumerable.Range(0, 100).Select(index => new ItemElement(index.ToString())).ToArray(),
+            ItemsPanel = oldPanel
+        };
+        reuse.Measure(new MeasureContext(new LayoutSize(100, 2000)));
+
+        Assert.Same(oldPanel, reuse.LayoutPanelRoot);
+        Assert.Equal(100, oldPanel.VisualChildren.Count);
+    }
+
+    [Fact]
     public void ClearingItemsOwnerWithdrawsOwnerPanelAndReleasesItsVirtualizationContext()
     {
         Cerneala.UI.Layout.Panels.VirtualizingStackPanel panel = new();

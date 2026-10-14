@@ -786,6 +786,35 @@ public sealed class ItemsControlTests
     }
 
     [Fact]
+    public void VirtualizingStackPanelReplacedByStackPanelDoesNotKeepPresenterVirtualizationContext()
+    {
+        VirtualizingStackPanel oldPanel = new();
+        ItemsControl control = new()
+        {
+            ItemsPanel = oldPanel
+        };
+        control.SetItems(Enumerable.Range(0, 100).Cast<object>());
+        control.SetVirtualizationContext(new VirtualizationContext(100, 10, 30, 0, CacheItems: 1));
+        MeasureContext context = new(new LayoutSize(100, 30));
+        control.Measure(context);
+        Assert.Equal(4, oldPanel.VisualChildren.Count);
+
+        control.ItemsPanel = new Cerneala.UI.Layout.Panels.StackPanel();
+        control.Measure(context);
+        Assert.Null(oldPanel.VirtualizationContext);
+
+        ItemsControl reuse = new()
+        {
+            ItemsPanel = oldPanel
+        };
+        reuse.SetItems(Enumerable.Range(0, 100).Cast<object>());
+        reuse.Measure(new MeasureContext(new LayoutSize(100, 2000)));
+
+        Assert.Same(oldPanel, reuse.ItemsPresenter.LayoutPanelRoot);
+        Assert.Equal(100, oldPanel.VisualChildren.Count);
+    }
+
+    [Fact]
     public void UpdatingVirtualizationFromScrollInfoRefreshesPresenterWhenWindowChanges()
     {
         ItemsControl control = new()
