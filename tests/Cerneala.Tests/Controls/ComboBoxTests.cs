@@ -1626,6 +1626,23 @@ public sealed class ComboBoxTests
         Assert.Equal("x", HighlightedItems(comboBox));
     }
 
+    [Fact]
+    public void MovingHighlightByKeyAfterReplacingItemsWithEqualValuesMovesHighlight()
+    {
+        UIRoot root = new(200, 200);
+        ComboBox comboBox = new();
+        comboBox.SetItems(new object[] { 1, 2, 3 });
+        ElementInputBridge bridge = OpenAndHighlightLastContainer(root, comboBox);
+
+        comboBox.SetItems(new object[] { 1, 2, 3 });
+        DispatchKey(root, bridge, InputKey.Up);
+        root.ProcessFrame();
+
+        UIElement second = comboBox.ItemContainerGenerator.RealizedContainers[1];
+        Assert.Equal([second], HighlightedContainers(comboBox));
+        Assert.Same(comboBox.GetItemAt(1), ItemContainerGenerator.GetItem(second));
+    }
+
     // Opens the drop-down with F4 and highlights the last item with End.
     private static ElementInputBridge OpenAndHighlightLastContainer(UIRoot root, ComboBox comboBox)
     {

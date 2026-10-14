@@ -257,7 +257,8 @@ public class Selector : ItemsControl
     }
 
     // A realized container whose item was replaced keeps its index until the next layout pass prepares it for
-    // the new item, so a container is refreshed here only while it holds the item at its index.
+    // the new item, so a container is refreshed here only while it holds the item at its index. ItemCollection
+    // stores an equal item without a change, so a container holding an equal item still holds its item.
     internal void InvalidateContainer(int index, string reason)
     {
         if (index < 0 || index >= ItemCount || !ItemContainerGenerator.RealizedContainers.TryGetValue(index, out UIElement? container))
@@ -266,7 +267,7 @@ public class Selector : ItemsControl
         }
 
         object? item = GetItemAt(index);
-        if (!ReferenceEquals(ItemContainerGenerator.GetItem(container), item))
+        if (!Equals(ItemContainerGenerator.GetItem(container), item))
         {
             return;
         }
