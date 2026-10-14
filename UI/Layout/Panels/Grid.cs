@@ -116,8 +116,24 @@ public class Grid : Panel
         // The first axis is content-sized and resolved before the second, so the second axis measures its
         // content-sized children at final sizes. Columns go first unless only the columns depend on star rows.
         bool rowsFirst = columnsDependOnStarRows && !rowsDependOnStarColumns;
-        MeasureContentSizedDefinitions(context, columnAxis: !rowsFirst, columns, columnSizes, rows, rowSizes, crossAxisResolved: false);
+        bool firstAxisMeasuredBeforeCrossFinal = MeasureContentSizedDefinitions(
+            context, columnAxis: !rowsFirst, columns, columnSizes, rows, rowSizes, crossAxisResolved: false);
         MeasureContentSizedDefinitions(context, columnAxis: rowsFirst, columns, columnSizes, rows, rowSizes, crossAxisResolved: true);
+        if (firstAxisMeasuredBeforeCrossFinal)
+        {
+            // Some first-axis children were measured before their cross size was final. Size the first axis
+            // again from their measures at the resolved cross sizes, so its stars share what the final measure leaves.
+            if (rowsFirst)
+            {
+                rowSizes = ResolveFixedSizes(rows);
+            }
+            else
+            {
+                columnSizes = ResolveFixedSizes(columns);
+            }
+
+            MeasureContentSizedDefinitions(context, columnAxis: !rowsFirst, columns, columnSizes, rows, rowSizes, crossAxisResolved: true);
+        }
 
         foreach (UIElement child in VisualChildren)
         {
@@ -196,7 +212,8 @@ public class Grid : Panel
         return span == 1 && lengths[index].IsAuto ? float.PositiveInfinity : size;
     }
 
-    private void MeasureContentSizedDefinitions(
+    // Returns true when a child was measured with a cross constraint that is not yet its final one.
+    private bool MeasureContentSizedDefinitions(
         MeasureContext context,
         bool columnAxis,
         GridLength[] columns,
@@ -211,6 +228,7 @@ public class Grid : Panel
         GridLength[] crossLengths = columnAxis ? rows : columns;
         float[] crossSizes = columnAxis ? rowSizes : columnSizes;
         float crossAvailableSize = columnAxis ? context.AvailableSize.Height : context.AvailableSize.Width;
+        bool measuredBeforeCrossFinal = false;
 
         foreach (UIElement child in VisualChildren)
         {
@@ -230,9 +248,13 @@ public class Grid : Panel
             int crossIndex = columnAxis ? placement.Row : placement.Column;
             int crossSpan = columnAxis ? placement.RowSpan : placement.ColumnSpan;
             float constraint = GetChildConstraint(lengths, index, span, availableSize);
-            float crossConstraint = crossAxisResolved
-                ? GetChildConstraint(crossLengths, crossIndex, crossSpan, Sum(crossSizes, crossIndex, crossSpan))
-                : GetUnresolvedCrossConstraint(crossLengths, crossSizes, crossIndex, crossSpan, crossAvailableSize);
+            bool crossFinal = crossAxisResolved || IsChildConstraintFinalBeforeResolve(crossLengths, crossIndex, crossSpan);
+            measuredBeforeCrossFinal |= !crossFinal;
+            float crossConstraint = GetChildConstraint(
+                crossLengths,
+                crossIndex,
+                crossSpan,
+                crossFinal ? Sum(crossSizes, crossIndex, crossSpan) : crossAvailableSize);
             child.Measure(new MeasureContext(
                 columnAxis ? new LayoutSize(constraint, crossConstraint) : new LayoutSize(crossConstraint, constraint),
                 context.Rounding));
@@ -246,25 +268,27 @@ public class Grid : Panel
         }
 
         ResolveStarSizes(lengths, sizes, availableSize);
+        return measuredBeforeCrossFinal;
     }
 
-    // Before the cross axis is resolved, only its pixel definitions already have their final size.
-    private static float GetUnresolvedCrossConstraint(
-        GridLength[] lengths,
-        float[] sizes,
-        int index,
-        int span,
-        float availableSize)
+    // Before an axis is resolved, only its pixel definitions already have their final size. A child in
+    // exactly one Auto definition is measured with positive infinity either way.
+    private static bool IsChildConstraintFinalBeforeResolve(GridLength[] lengths, int index, int span)
     {
+        if (span == 1 && lengths[index].IsAuto)
+        {
+            return true;
+        }
+
         for (int i = index; i < index + span; i++)
         {
             if (!lengths[i].IsPixel)
             {
-                return GetChildConstraint(lengths, index, span, availableSize);
+                return false;
             }
         }
 
-        return Sum(sizes, index, span);
+        return true;
     }
 
     private static bool SpansResolvedStar(GridLength[] lengths, int index, int span, float availableSize)
