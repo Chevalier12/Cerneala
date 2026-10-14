@@ -61,9 +61,9 @@ public sealed class LayoutManager
         }
 
         LayoutRect previous = element.ArrangedBounds;
+        // UIElement.Arrange writes the arrange cache stamp. Writing it again here would undo an
+        // Arrange request that the element raised during that arrange.
         LayoutRect arranged = element.Arrange(new ArrangeContext(finalRect, LayoutRounding.ForScale(root.Scale)));
-        element.LastArrangeFinalRect = finalRect;
-        element.LastArrangeLayoutVersion = element.LayoutVersion;
         PruneTranslatedDescendantRenderWork(element);
 
         bool boundsChanged = previous != arranged;

@@ -100,6 +100,13 @@ The code sets `first.Visibility = Visibility.Collapsed;`.
   `SizeChanged` handler, is therefore not skipped: the element is arranged
   again later in the same phase, or in the next frame when it is no longer in
   the phase's snapshot.
+- `UIElement.Arrange` writes the arrange cache stamp after `ArrangeCore` and
+  `SizeChanged`. When the element's arrange cache was invalidated during that
+  arrange (for example, its own `SizeChanged` handler or `ArrangeCore` calls
+  `Invalidate(Arrange)`), it leaves the cache invalid. The pending request then
+  waits for the next frame, and a parent that arranges the element with the same
+  slot runs its `ArrangeCore`. `LayoutManager.Arrange` does not write the stamp
+  again after `UIElement.Arrange` returns.
 - An element that does not take part in layout (`Visibility.Collapsed`)
   measures to `LayoutSize.Zero` and arranges to a zero-size rectangle at the
   slot position.
@@ -163,6 +170,11 @@ Test paths are under `tests/Cerneala.Tests/`.
 - After `Invalidate(Arrange | Subtree)` on a parent, a child and a grandchild
   arranged with the same slot are arranged again in the same frame. Tests:
   `UI/Layout/SubtreeArrangeInvalidationSameFrameRegressionTests.cs`.
+- An element that calls `Invalidate(Arrange)` during its own arrange (from
+  `SizeChanged` or `ArrangeCore`) is arranged again later, also when its parent
+  first arranges it again with the same slot, and also after
+  `LayoutManager.Arrange`. Tests:
+  `UI/Layout/SelfArrangeInvalidationDuringArrangeRegressionTests.cs`.
 - An `Arrange` request raised after the element was already arranged in the
   same arrange phase is not dropped, whether a sibling's `SizeChanged` handler
   or a sibling's `ArrangeCore` raises it. Test:
