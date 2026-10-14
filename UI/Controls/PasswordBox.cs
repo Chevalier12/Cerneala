@@ -155,6 +155,36 @@ public class PasswordBox : Control, ITimeSensitiveRenderElement, IPointerDragSou
 
     string ITextInputHost.DisplayText => new(PasswordChar, CountTextElements(Password));
 
+    // The mask has one character per text element, while editor positions are UTF-16 offsets
+    // into Password. A position inside a text element maps to that element's start.
+    int ITextInputHost.GetDisplayIndex(int textPosition)
+    {
+        if (textPosition >= Password.Length)
+        {
+            return CountTextElements(Password);
+        }
+
+        int[] starts = StringInfo.ParseCombiningCharacters(Password);
+        int index = 0;
+        while (index + 1 < starts.Length && starts[index + 1] <= textPosition)
+        {
+            index++;
+        }
+
+        return index;
+    }
+
+    int ITextInputHost.GetTextPosition(int displayIndex)
+    {
+        int[] starts = StringInfo.ParseCombiningCharacters(Password);
+        if (displayIndex >= starts.Length)
+        {
+            return Password.Length;
+        }
+
+        return displayIndex <= 0 ? 0 : starts[displayIndex];
+    }
+
     Brush ITextInputHost.CaretBrush => CaretBrush;
 
     Color ITextInputHost.SelectionBackground => SelectionBackground;

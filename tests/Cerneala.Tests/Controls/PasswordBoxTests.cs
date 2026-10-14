@@ -3,6 +3,7 @@ using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Input;
+using Cerneala.UI.Layout;
 using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Platform;
 
@@ -80,6 +81,70 @@ public sealed class PasswordBoxTests
         Assert.Equal(0, passwordBox.UndoHistoryCount);
     }
 
+    [Theory]
+    [InlineData("abc", "abcX")]
+    [InlineData("a\U0001F600b", "a\U0001F600bX")]
+    [InlineData("e\u0301xy", "e\u0301xyX")]
+    public void PasswordBoxClickPastLastMaskCharacterThenTypingAppends(string password, string expected)
+    {
+        UIRoot root = FocusedPasswordBox(
+            password,
+            clipboard: null,
+            out PasswordBox passwordBox,
+            out ElementInputBridge bridge);
+        root.ProcessFrame();
+        bridge.Dispatch(root, KeyFrame(InputKey.Home));
+
+        LayoutRect bounds = passwordBox.ArrangedBounds;
+        float x = bounds.X + bounds.Width - 5;
+        float y = bounds.Y + (bounds.Height / 2);
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: false, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true, currentDown: false));
+        bridge.Dispatch(root, TextInputFrame("X"));
+
+        Assert.Equal(expected, passwordBox.Password);
+    }
+
+    [Theory]
+    [InlineData("abc")]
+    [InlineData("a\U0001F600b")]
+    [InlineData("e\u0301xy")]
+    public void PasswordBoxDrawnCaretMovesOneMaskCharacterPerArrowKey(string password)
+    {
+        UIRoot root = FocusedPasswordBox(
+            password,
+            clipboard: null,
+            out _,
+            out ElementInputBridge bridge);
+
+        bridge.Dispatch(root, KeyFrame(InputKey.Home));
+        float[] rightStops = new float[4];
+        rightStops[0] = DrawnCaretX(root);
+        for (int i = 1; i < rightStops.Length; i++)
+        {
+            bridge.Dispatch(root, KeyFrame(InputKey.Right));
+            rightStops[i] = DrawnCaretX(root);
+        }
+
+        bridge.Dispatch(root, KeyFrame(InputKey.End));
+        float[] leftStops = new float[4];
+        leftStops[0] = DrawnCaretX(root);
+        for (int i = 1; i < leftStops.Length; i++)
+        {
+            bridge.Dispatch(root, KeyFrame(InputKey.Left));
+            leftStops[i] = DrawnCaretX(root);
+        }
+
+        for (int i = 1; i < rightStops.Length; i++)
+        {
+            Assert.True(
+                rightStops[i] > rightStops[i - 1],
+                $"Right stops: {string.Join(", ", rightStops)}");
+        }
+
+        Assert.Equal(Enumerable.Reverse(rightStops), leftStops);
+    }
+
     [Fact]
     public void PasswordBoxDoesNotExposePlainTextEditingApi()
     {
@@ -126,6 +191,42 @@ public sealed class PasswordBoxTests
                 KeyboardSnapshot.FromDownKeys([InputKey.LeftCtrl]),
                 KeyboardSnapshot.FromDownKeys([InputKey.LeftCtrl, key]),
                 []));
+    }
+
+    private static float DrawnCaretX(UIRoot root)
+    {
+        root.ProcessFrame();
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
+        return Assert.Single(
+            commands,
+            command => command.Kind == DrawCommandKind.FillRectangle && command.Rect.Width == 1).Rect.X;
+    }
+
+    private static InputFrame KeyFrame(InputKey key)
+    {
+        return new InputFrame(
+            PointerSnapshot.Empty,
+            PointerSnapshot.Empty,
+            KeyboardSnapshot.Empty,
+            KeyboardSnapshot.FromDownKeys([key]),
+            []);
+    }
+
+    private static InputFrame PointerFrame(float x, float y, bool previousDown, bool currentDown)
+    {
+        PointerSnapshot previous = PointerSnapshot.Empty.WithPosition(x, y);
+        PointerSnapshot current = PointerSnapshot.Empty.WithPosition(x, y);
+        if (previousDown)
+        {
+            previous = previous.WithButton(InputMouseButton.Left, true);
+        }
+
+        if (currentDown)
+        {
+            current = current.WithButton(InputMouseButton.Left, true);
+        }
+
+        return new InputFrame(previous, current, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []);
     }
 
     private static InputFrame TextInputFrame(string text)

@@ -221,6 +221,10 @@ public class TextBox : Control, ITimeSensitiveRenderElement, IPointerDragSource,
 
     string ITextInputHost.DisplayText => Text;
 
+    int ITextInputHost.GetDisplayIndex(int textPosition) => textPosition;
+
+    int ITextInputHost.GetTextPosition(int displayIndex) => displayIndex;
+
     Brush ITextInputHost.CaretBrush => CaretBrush;
 
     Color ITextInputHost.SelectionBackground => SelectionBackground;

@@ -12,6 +12,10 @@ internal interface ITextInputHost
 
     string DisplayText { get; }
 
+    int GetDisplayIndex(int textPosition);
+
+    int GetTextPosition(int displayIndex);
+
     Brush CaretBrush { get; }
 
     Color SelectionBackground { get; }
