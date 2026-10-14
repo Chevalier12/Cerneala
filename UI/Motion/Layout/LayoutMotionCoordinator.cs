@@ -278,29 +278,35 @@ public sealed class LayoutMotionCoordinator
             stack.Push(current);
         }
 
-        LayoutPoint scrollOffset = LayoutPoint.Zero;
+        // The location the visual parent would have without the undone scroll offsets; null while nothing is undone.
+        LayoutPoint? unscrolledParentLocation = null;
         LayoutRect bounds = element.ArrangedBounds;
         while (stack.Count > 0)
         {
             UIElement current = stack.Pop();
+            LayoutPoint scrollOffset = LayoutPoint.Zero;
             if (ignoreScrollOffsets && current.VisualParent is ScrollContentPresenter presenter &&
                 ReferenceEquals(presenter.Content, current))
             {
-                scrollOffset = new LayoutPoint(
-                    scrollOffset.X + presenter.ArrangedScrollOffset.X,
-                    scrollOffset.Y + presenter.ArrangedScrollOffset.Y);
+                scrollOffset = presenter.ArrangedScrollOffset;
             }
 
             bounds = current.ArrangedBounds;
-            if (scrollOffset != LayoutPoint.Zero)
+            if (current.VisualParent is UIElement parent && (unscrolledParentLocation is not null || scrollOffset != LayoutPoint.Zero))
             {
-                // Scroll offsets are applied before layout rounding. Undo them in
-                // that same space, including for each ancestor's render pivot.
+                // A child is placed from its parent's rounded origin, and scroll offsets are applied before layout
+                // rounding. Undo them in that same space, from the unscrolled parent origin, including for each
+                // ancestor's render pivot.
+                LayoutPoint parentOrigin = parent.ArrangedBounds.Location;
+                LayoutPoint unscrolledParentOrigin = unscrolledParentLocation ?? parentOrigin;
                 bounds = bounds with
                 {
-                    X = current.ArrangeRounding.Round(current.UnroundedArrangedLocation.X + scrollOffset.X),
-                    Y = current.ArrangeRounding.Round(current.UnroundedArrangedLocation.Y + scrollOffset.Y)
+                    X = current.ArrangeRounding.Round(
+                        unscrolledParentOrigin.X + (current.UnroundedArrangedLocation.X - parentOrigin.X) + scrollOffset.X),
+                    Y = current.ArrangeRounding.Round(
+                        unscrolledParentOrigin.Y + (current.UnroundedArrangedLocation.Y - parentOrigin.Y) + scrollOffset.Y)
                 };
+                unscrolledParentLocation = bounds.Location;
             }
 
             bool includeLayoutCorrection = includeOwnLayoutCorrection || !ReferenceEquals(current, element);

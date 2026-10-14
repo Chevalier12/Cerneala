@@ -952,10 +952,14 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
             ? context.FinalRect
             : ApplyMarginAndAlignment(context.FinalRect);
 
+        // ArrangeCore receives the element's own rounded bounds, as WPF rounds an element's offset and arrange size
+        // and arranges its children inside them. From an unrounded origin such as 0.5, each child would round on its
+        // own (ties to even) and children that should touch would leave gaps or overlap; with the rounded origin but
+        // the unrounded size, a child aligned to the far edge would end past the element's rounded far edge.
         LayoutRect arranged = !UIElementVisibility.ParticipatesInLayout(this)
             ? new LayoutRect(context.FinalRect.X, context.FinalRect.Y, 0, 0)
-            : ArrangeCore(new ArrangeContext(finalRect, context.Rounding));
-        UnroundedArrangedLocation = arranged.Location;
+            : ArrangeCore(new ArrangeContext(context.Rounding.Round(finalRect), context.Rounding));
+        UnroundedArrangedLocation = finalRect.Location;
         ArrangeRounding = context.Rounding;
         arranged = context.Rounding.Round(arranged);
         SetArrangedBounds(arranged);
@@ -1137,7 +1141,13 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         LayoutSize constrainedSize = new(
             hasWidth ? MathF.Min(contentAvailableSize.Width, Width) : contentAvailableSize.Width,
             hasHeight ? MathF.Min(contentAvailableSize.Height, Height) : contentAvailableSize.Height);
-        LayoutSize measuredSize = MeasureCore(new MeasureContext(constrainedSize, context.Rounding)).ClampNonNegative();
+        // MeasureCore receives the size rounded to the nearest device pixel, as WPF rounds the size it passes to
+        // MeasureOverride. Arrange rounds the rectangle ArrangeCore receives the same way, so an element that fills
+        // its slot is measured at the size it is then arranged at (99.6 would be measured but 100 arranged).
+        LayoutSize roundedSize = new(
+            context.Rounding.Round(constrainedSize.Width),
+            context.Rounding.Round(constrainedSize.Height));
+        LayoutSize measuredSize = MeasureCore(new MeasureContext(roundedSize, context.Rounding)).ClampNonNegative();
         LayoutSize contentDesiredSize = new(
             hasWidth ? Width : measuredSize.Width,
             hasHeight ? Height : measuredSize.Height);

@@ -86,6 +86,44 @@ public sealed class ItemContainerGeneratorTests
     }
 
     [Fact]
+    public void ListBoxSwapOfTwoWrappedElementItemsThroughLayoutShowsEachElementInItsNewContainer()
+    {
+        UIRoot root = new(100, 100);
+        FixedElement e0 = new("e0");
+        FixedElement e1 = new("e1");
+        ListBox listBox = new();
+        listBox.SetItems(new UIElement[] { e0, e1 });
+        root.VisualChildren.Add(listBox);
+        Layout(listBox);
+
+        object? swapped = listBox.Items[0];
+        listBox.Items[0] = listBox.Items[1];
+        listBox.Items[1] = swapped;
+        Layout(listBox);
+
+        Assert.Same(e1, Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[0]).Content);
+        Assert.Same(e0, Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[1]).Content);
+    }
+
+    [Fact]
+    public void ListBoxItemsSourceSwapOfTwoWrappedElementItemsThroughLayoutShowsEachElementInItsNewContainer()
+    {
+        UIRoot root = new(100, 100);
+        FixedElement e0 = new("e0");
+        FixedElement e1 = new("e1");
+        ObservableCollection<UIElement> source = [e0, e1];
+        ListBox listBox = new() { ItemsSource = source };
+        root.VisualChildren.Add(listBox);
+        Layout(listBox);
+
+        (source[0], source[1]) = (source[1], source[0]);
+        Layout(listBox);
+
+        Assert.Same(e1, Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[0]).Content);
+        Assert.Same(e0, Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[1]).Content);
+    }
+
+    [Fact]
     public void ItemsSourceInsertKeepsContentOfButtonItemsThatAreTheirOwnContainers()
     {
         Button one = new() { Content = "One" };
@@ -376,6 +414,12 @@ public sealed class ItemContainerGeneratorTests
         control.Measure(new MeasureContext(new LayoutSize(100, 30)));
 
         Assert.Same(first, control.ItemsPresenter.LayoutPanelRoot!.VisualChildren[0]);
+    }
+
+    private static void Layout(UIElement element)
+    {
+        element.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        element.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
     }
 
     private static void AssertDataItemContainer(UIElement container, ListBoxItem removed, int expectedIndex, string expectedItem)

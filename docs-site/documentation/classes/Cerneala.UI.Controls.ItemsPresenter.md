@@ -78,6 +78,8 @@ The presenter owns a single retained panel root. If `ItemsPanel` is set, that pa
 
 When `ItemsOwner` is set, the presenter delegates item realization to the owner's container generator. In that mode, `ItemsControl` owns item source selection, container preparation, item templates, content template keys, selection state, and recycling policy. The presenter's `ItemsPanel` overrides the owner's panel; if it is not set, the owner panel is used before the default panel.
 
+Setting `ItemsOwner` to a different value, including `null`, immediately gives back what the presenter realized for the previous owner: it removes every child from its panel root, removes the panel root from the presenter, and clears the `VirtualizationContext` copy it wrote to a `VirtualizingStackPanel`. The presenter's own `VirtualizationContext` value is kept, and the next measure realizes items again for the new owner. Setting the same owner again changes nothing. This lets another presenter of the same `ItemsControl` host the owner's panel and containers. For example, a `ComboBox` uses one shared `VirtualizingStackPanel` for its template presenter and its fallback presenter; after the drop-down (`MaxDropDownHeight = 120`) realized only the visible items of 200 and `ComponentTemplate` is set to `null`, the template presenter's `ItemsOwner` becomes `null`, the panel has no parent, no children, and a `null` `VirtualizationContext`, and the next frame hosts it in the fallback presenter with all 200 items.
+
 Changing `Items`, `ItemTemplate`, or `ItemsPanel` marks the presentation dirty and refreshes the panel content. When the realization window moves, the presenter synchronizes children by reference: overlapping containers remain attached, exiting containers are removed, and entering containers are inserted or moved into order. `MarkItemsDirty()` explicitly marks the presenter dirty, increments layout and render versions, and invalidates measure, arrange, render, and hit testing.
 
 Fixed-extent virtualization can be driven explicitly through `VirtualizationContext`. When owned by an `ItemsControl`, a panel implementing `IItemsVirtualizingPanel` instead receives automatic viewport updates from the surrounding `ScrollViewer`; `VirtualizingStackPanel` uses that path for variable-height items.
@@ -109,7 +111,7 @@ When the presenter refreshes items with a non-null `VirtualizationContext` and i
 | `ItemsPanel` | `Panel?` | Gets or sets the retained panel root. Overrides the owner panel when `ItemsOwner` is set. |
 | `PanelRoot` | `Panel?` | Gets the current panel root as `Cerneala.UI.Controls.Panel`, or `null` when the root is another layout panel type. |
 | `LayoutPanelRoot` | `Cerneala.UI.Layout.Panels.Panel?` | Gets the current underlying layout panel root, including custom panel types. |
-| `ItemsOwner` | `ItemsControl?` | Gets or sets the owning `ItemsControl`. When set, owner item container generation is used. |
+| `ItemsOwner` | `ItemsControl?` | Gets or sets the owning `ItemsControl`. When set, owner item container generation is used. Changing it removes the realized children and the panel root and clears the panel's `VirtualizationContext` copy. |
 | `VirtualizationContext` | `VirtualizationContext?` | Gets or sets the context used to compute the realized item window. Setting `null` also clears the copy this presenter wrote to its `VirtualizingStackPanel`. |
 | `CurrentRealizationWindow` | `RealizationWindow` | Gets the last computed realization window, or `RealizationWindow.Empty` before one is available. |
 
