@@ -145,27 +145,38 @@ public class Grid : Panel
             // Some first-axis children were measured before their cross size was final. Size the first axis
             // again from their measures at the resolved cross sizes, so its stars share what the final measure leaves.
             // When that changes the first axis, the second axis was measured against stale sizes: size it again
-            // too, then the first axis against it, until the first axis stops changing. Content-sized definitions
-            // keep their sizes and only grow, as in the final measure: the other axis was already measured
-            // against them. The cyclic passes above already start with a re-size of the columns, which are then
-            // the first axis.
-            GridLength[] firstLengths = rowsFirst ? rows : columns;
-            float[] firstSizes = rowsFirst ? rowSizes : columnSizes;
-            float firstAvailableSize = rowsFirst ? context.AvailableSize.Height : context.AvailableSize.Width;
-            GridLength[] secondLengths = rowsFirst ? columns : rows;
-            float[] secondSizes = rowsFirst ? columnSizes : rowSizes;
-            float secondAvailableSize = rowsFirst ? context.AvailableSize.Width : context.AvailableSize.Height;
+            // too, then the first axis against it, until the first axis stops changing. The sizes that children
+            // in one definition gave an axis stay minimums and only grow, as in the final measure: the other axis
+            // was already measured against them. The shares of spanning children and of stars on a bounded axis
+            // are dropped and shared again from the new sizes. The cyclic passes above already start with a
+            // re-size of the columns, which are then the first axis.
             for (int pass = 0; pass < MaxCyclicMeasurePasses; pass++)
             {
-                float[] previousFirstSizes = (float[])firstSizes.Clone();
-                ClearStarShares(firstLengths, firstSizes, firstAvailableSize);
+                float[] previousFirstSizes = rowsFirst ? rowSizes : columnSizes;
+                if (rowsFirst)
+                {
+                    rowSizes = ResolveSingleDefinitionSizes(columnAxis: false, columns, rows, context.AvailableSize.Height);
+                }
+                else
+                {
+                    columnSizes = ResolveSingleDefinitionSizes(columnAxis: true, columns, rows, context.AvailableSize.Width);
+                }
+
                 MeasureContentSizedDefinitions(context, columnAxis: !rowsFirst, columns, columnSizes, rows, rowSizes, crossAxisResolved: true);
-                if (firstSizes.AsSpan().SequenceEqual(previousFirstSizes))
+                if ((rowsFirst ? rowSizes : columnSizes).AsSpan().SequenceEqual(previousFirstSizes))
                 {
                     break;
                 }
 
-                ClearStarShares(secondLengths, secondSizes, secondAvailableSize);
+                if (rowsFirst)
+                {
+                    columnSizes = ResolveSingleDefinitionSizes(columnAxis: true, columns, rows, context.AvailableSize.Width);
+                }
+                else
+                {
+                    rowSizes = ResolveSingleDefinitionSizes(columnAxis: false, columns, rows, context.AvailableSize.Height);
+                }
+
                 MeasureContentSizedDefinitions(context, columnAxis: rowsFirst, columns, columnSizes, rows, rowSizes, crossAxisResolved: true);
             }
         }
@@ -185,29 +196,8 @@ public class Grid : Panel
                 context.Rounding));
         }
 
-        foreach (UIElement child in VisualChildren)
-        {
-            if (child.Visibility == Visibility.Collapsed)
-            {
-                continue;
-            }
-
-            GridPlacement placement = GetPlacement(child, columns.Length, rows.Length);
-            ExpandContentSizedDefinition(
-                columns,
-                columnSizes,
-                placement.Column,
-                placement.ColumnSpan,
-                context.AvailableSize.Width,
-                child.DesiredSize.Width);
-            ExpandContentSizedDefinition(
-                rows,
-                rowSizes,
-                placement.Row,
-                placement.RowSpan,
-                context.AvailableSize.Height,
-                child.DesiredSize.Height);
-        }
+        ExpandContentSizedDefinitions(columnAxis: true, columns, rows, columnSizes, context.AvailableSize.Width);
+        ExpandContentSizedDefinitions(columnAxis: false, columns, rows, rowSizes, context.AvailableSize.Height);
 
         if (reconcileVisibilityChanges && VisualChildren.Count == initialVisibilities.Length)
         {
@@ -227,24 +217,47 @@ public class Grid : Panel
         return new LayoutSize(columnSizes.Sum(), rowSizes.Sum());
     }
 
+    // A child sizes the definitions it spans when all of them are content-sized: Auto definitions, and star
+    // definitions on an unbounded axis. A pixel definition keeps its size, and a star definition on a bounded
+    // axis gets a share of what is left, so a child that spans either of them sizes no definition.
     private static bool RequiresContentMeasure(
         GridLength[] lengths,
         int index,
         int span,
         float availableSize)
     {
-        return span == 1 &&
-            (lengths[index].IsAuto ||
-             (lengths[index].IsStar && float.IsPositiveInfinity(availableSize)));
+        for (int i = index; i < index + span; i++)
+        {
+            if (lengths[i].IsPixel || (lengths[i].IsStar && !float.IsPositiveInfinity(availableSize)))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
+    // As in WPF, a child that spans only Auto definitions is measured with positive infinity.
     private static float GetChildConstraint(
         GridLength[] lengths,
         int index,
         int span,
         float size)
     {
-        return span == 1 && lengths[index].IsAuto ? float.PositiveInfinity : size;
+        return SpansOnlyAuto(lengths, index, span) ? float.PositiveInfinity : size;
+    }
+
+    private static bool SpansOnlyAuto(GridLength[] lengths, int index, int span)
+    {
+        for (int i = index; i < index + span; i++)
+        {
+            if (!lengths[i].IsAuto)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     // Returns true when a child was measured with a cross constraint that is not yet its final one.
@@ -293,24 +306,18 @@ public class Grid : Panel
             child.Measure(new MeasureContext(
                 columnAxis ? new LayoutSize(constraint, crossConstraint) : new LayoutSize(crossConstraint, constraint),
                 context.Rounding));
-            ExpandContentSizedDefinition(
-                lengths,
-                sizes,
-                index,
-                span,
-                availableSize,
-                columnAxis ? child.DesiredSize.Width : child.DesiredSize.Height);
         }
 
+        ExpandContentSizedDefinitions(columnAxis, columns, rows, sizes, availableSize);
         ResolveStarSizes(lengths, sizes, availableSize);
         return measuredBeforeCrossFinal;
     }
 
-    // Before an axis is resolved, only its pixel definitions already have their final size. A child in
-    // exactly one Auto definition is measured with positive infinity either way.
+    // Before an axis is resolved, only its pixel definitions already have their final size. A child that
+    // spans only Auto definitions is measured with positive infinity either way.
     private static bool IsChildConstraintFinalBeforeResolve(GridLength[] lengths, int index, int span)
     {
-        if (span == 1 && lengths[index].IsAuto)
+        if (SpansOnlyAuto(lengths, index, span))
         {
             return true;
         }
@@ -401,24 +408,60 @@ public class Grid : Panel
         return sizes;
     }
 
-    // Star definitions on a bounded axis get a share of what is left, so their shares are cleared before the
-    // axis is shared again. On an unbounded axis they are content-sized and keep their sizes.
-    private static void ClearStarShares(GridLength[] lengths, float[] sizes, float availableSize)
+    // The pixel sizes of an axis, and the sizes its children in one definition give it at their current measures.
+    private float[] ResolveSingleDefinitionSizes(bool columnAxis, GridLength[] columns, GridLength[] rows, float availableSize)
     {
-        if (float.IsPositiveInfinity(availableSize))
-        {
-            return;
-        }
+        float[] sizes = ResolveFixedSizes(columnAxis ? columns : rows);
+        ExpandContentSizedDefinitions(columnAxis, columns, rows, sizes, availableSize, maxSpan: 1);
+        return sizes;
+    }
 
-        for (int i = 0; i < lengths.Length; i++)
+    // As in WPF, children in one definition size it first. Spanning children follow, narrowest span first,
+    // and each adds only the size that the definitions it spans still miss.
+    private void ExpandContentSizedDefinitions(
+        bool columnAxis,
+        GridLength[] columns,
+        GridLength[] rows,
+        float[] sizes,
+        float availableSize,
+        int maxSpan = int.MaxValue)
+    {
+        GridLength[] lengths = columnAxis ? columns : rows;
+        int span = 1;
+        while (span <= Math.Min(maxSpan, lengths.Length))
         {
-            if (lengths[i].IsStar)
+            int nextSpan = int.MaxValue;
+            foreach (UIElement child in VisualChildren)
             {
-                sizes[i] = 0;
+                if (child.Visibility == Visibility.Collapsed)
+                {
+                    continue;
+                }
+
+                GridPlacement placement = GetPlacement(child, columns.Length, rows.Length);
+                int childSpan = columnAxis ? placement.ColumnSpan : placement.RowSpan;
+                if (childSpan == span)
+                {
+                    ExpandContentSizedDefinition(
+                        lengths,
+                        sizes,
+                        columnAxis ? placement.Column : placement.Row,
+                        span,
+                        availableSize,
+                        columnAxis ? child.DesiredSize.Width : child.DesiredSize.Height);
+                }
+                else if (childSpan > span)
+                {
+                    nextSpan = Math.Min(nextSpan, childSpan);
+                }
             }
+
+            span = nextSpan;
         }
     }
 
+    // The missing size is shared equally. As in WPF, star definitions in the span take it before Auto
+    // definitions, which only grow when the span has no star definition.
     private static void ExpandContentSizedDefinition(
         GridLength[] lengths,
         float[] sizes,
@@ -427,11 +470,38 @@ public class Grid : Panel
         float availableSize,
         float desiredSize)
     {
-        if (span == 1 &&
-            (lengths[index].IsAuto ||
-             (lengths[index].IsStar && float.IsPositiveInfinity(availableSize))))
+        if (!RequiresContentMeasure(lengths, index, span, availableSize))
         {
-            sizes[index] = MathF.Max(sizes[index], desiredSize);
+            return;
+        }
+
+        float missing = desiredSize - Sum(sizes, index, span);
+        if (missing <= 0)
+        {
+            return;
+        }
+
+        bool spansStar = false;
+        for (int i = index; i < index + span; i++)
+        {
+            spansStar |= lengths[i].IsStar;
+        }
+
+        int receiverCount = 0;
+        for (int i = index; i < index + span; i++)
+        {
+            if (lengths[i].IsStar == spansStar)
+            {
+                receiverCount++;
+            }
+        }
+
+        for (int i = index; i < index + span; i++)
+        {
+            if (lengths[i].IsStar == spansStar)
+            {
+                sizes[i] += missing / receiverCount;
+            }
         }
     }
 
