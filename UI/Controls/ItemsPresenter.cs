@@ -17,6 +17,8 @@ public class ItemsPresenter : Control
     private bool itemsDirty = true;
     private RealizationWindow? lastRealizationWindow;
     private ItemsVirtualizationViewport? automaticViewport;
+    private VirtualizationContext? virtualizationContext;
+    private VirtualizingStackPanel? contextPanel;
 
     public static readonly UiProperty<IEnumerable?> ItemsProperty = UiProperty<IEnumerable?>.Register(
         nameof(Items),
@@ -63,7 +65,18 @@ public class ItemsPresenter : Control
 
     public ItemsControl? ItemsOwner { get; set; }
 
-    public VirtualizationContext? VirtualizationContext { get; set; }
+    public VirtualizationContext? VirtualizationContext
+    {
+        get => virtualizationContext;
+        set
+        {
+            virtualizationContext = value;
+            if (value is null)
+            {
+                ReleasePanelVirtualizationContext();
+            }
+        }
+    }
 
     public RealizationWindow CurrentRealizationWindow => lastRealizationWindow ?? RealizationWindow.Empty;
 
@@ -542,17 +555,34 @@ public class ItemsPresenter : Control
         return ItemsPanel ?? ItemsOwner?.ItemsPanel ?? defaultItemsPanel;
     }
 
-    private static void ApplyVirtualizationContext(Layout.Panels.Panel? panel, VirtualizationContext? context, RealizationWindow? window)
+    private void ApplyVirtualizationContext(Layout.Panels.Panel? panel, VirtualizationContext? context, RealizationWindow? window)
     {
-        if (panel is VirtualizingStackPanel virtualizingPanel && context is VirtualizationContext virtualizationContext)
+        if (panel is VirtualizingStackPanel virtualizingPanel && context is VirtualizationContext suppliedContext)
         {
-            virtualizingPanel.VirtualizationContext = virtualizationContext;
+            if (!ReferenceEquals(contextPanel, virtualizingPanel))
+            {
+                ReleasePanelVirtualizationContext();
+            }
+
+            virtualizingPanel.VirtualizationContext = suppliedContext;
             virtualizingPanel.FirstRealizedIndex = window?.StartIndex ?? 0;
+            contextPanel = virtualizingPanel;
         }
 
         else if (panel is VirtualizingStackPanel automaticPanel)
         {
             automaticPanel.FirstRealizedIndex = window?.StartIndex ?? 0;
+        }
+    }
+
+    // A panel keeps the context written here only while this presenter supplies it to that panel.
+    // A stale copy would otherwise override the panel's automatic or natural-height realization.
+    private void ReleasePanelVirtualizationContext()
+    {
+        if (contextPanel is not null)
+        {
+            contextPanel.VirtualizationContext = null;
+            contextPanel = null;
         }
     }
 

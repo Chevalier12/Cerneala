@@ -1095,6 +1095,29 @@ public sealed class ComboBoxTests
     }
 
     [Fact]
+    public void ReplacingItemsPanelReleasesDropDownContextFromPresenterVirtualizingStackPanel()
+    {
+        Cerneala.UI.Layout.Panels.VirtualizingStackPanel presenterPanel = new();
+        (ComboBox comboBox, ScrollViewer viewer, UIRoot root) = CreateLargeOpenDropDown(
+            CreatePresenterPanelTemplate(presenterPanel),
+            ownerPanel: null);
+        Assert.InRange(comboBox.ItemContainerGenerator.RealizedContainers.Count, 1, 20);
+
+        comboBox.ItemsPanel = new LayoutStackPanel();
+        root.ProcessFrame();
+        root.ProcessFrame();
+        Assert.Same(presenterPanel, comboBox.ItemsPresenter.LayoutPanelRoot);
+        Assert.Null(presenterPanel.VirtualizationContext);
+
+        viewer.ScrollInfo.SetVerticalOffset(1400);
+        root.ProcessFrame();
+        root.ProcessFrame();
+        Assert.Equal(200, comboBox.ItemContainerGenerator.RealizedContainers.Count);
+        Assert.Equal(6800, viewer.ScrollInfo.ExtentHeight);
+        Assert.Equal(1400, viewer.ScrollInfo.VerticalOffset);
+    }
+
+    [Fact]
     public void SwappingPresenterPanelToStackPanelWhileOpenRealizesEveryDropDownItem()
     {
         (ComboBox comboBox, ScrollViewer viewer, UIRoot root) = CreateLargeOpenDropDown(

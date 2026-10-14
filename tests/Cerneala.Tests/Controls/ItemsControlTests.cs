@@ -740,6 +740,52 @@ public sealed class ItemsControlTests
     }
 
     [Fact]
+    public void ClearingVirtualizationContextRealizesEveryItemInVirtualizingStackPanel()
+    {
+        VirtualizingStackPanel panel = new();
+        ItemsControl control = new()
+        {
+            ItemsPanel = panel
+        };
+        control.SetItems(Enumerable.Range(0, 100).Cast<object>());
+        control.SetVirtualizationContext(new VirtualizationContext(100, 10, 30, 0, CacheItems: 1));
+        MeasureContext context = new(new LayoutSize(100, 30));
+        control.Measure(context);
+        Assert.Equal(4, panel.VisualChildren.Count);
+
+        control.SetVirtualizationContext(null);
+        control.Measure(context);
+
+        Assert.Null(panel.VirtualizationContext);
+        Assert.Equal(100, panel.VisualChildren.Count);
+    }
+
+    [Fact]
+    public void ReplacedVirtualizingStackPanelDoesNotKeepPresenterVirtualizationContext()
+    {
+        VirtualizingStackPanel firstPanel = new();
+        ItemsControl control = new()
+        {
+            ItemsPanel = firstPanel
+        };
+        control.SetItems(Enumerable.Range(0, 100).Cast<object>());
+        control.SetVirtualizationContext(new VirtualizationContext(100, 10, 30, 0));
+        MeasureContext context = new(new LayoutSize(100, 30));
+        control.Measure(context);
+
+        control.ItemsPanel = new VirtualizingStackPanel();
+        control.Measure(context);
+        Assert.Null(firstPanel.VirtualizationContext);
+
+        control.SetVirtualizationContext(null);
+        control.ItemsPanel = firstPanel;
+        control.Measure(context);
+
+        Assert.Same(firstPanel, control.ItemsPresenter.LayoutPanelRoot);
+        Assert.Equal(100, firstPanel.VisualChildren.Count);
+    }
+
+    [Fact]
     public void UpdatingVirtualizationFromScrollInfoRefreshesPresenterWhenWindowChanges()
     {
         ItemsControl control = new()
