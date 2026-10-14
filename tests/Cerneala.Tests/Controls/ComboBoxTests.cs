@@ -1164,6 +1164,82 @@ public sealed class ComboBoxTests
         Assert.InRange(comboBox.ItemContainerGenerator.RealizedContainers.Count, 1, 20);
     }
 
+    [Theory]
+    [InlineData(3, false)]
+    [InlineData(200, false)]
+    [InlineData(3, true)]
+    [InlineData(200, true)]
+    public void RemovingTemplateAfterDropDownOpenedShowsEveryItemInFallbackPresenter(int itemCount, bool closeBeforeRemoval)
+    {
+        (ComboBox comboBox, UIRoot root) = CreateOpenedDropDown(itemCount);
+        ItemsPresenter templatePresenter = comboBox.ItemsPresenter;
+        Cerneala.UI.Layout.Panels.VirtualizingStackPanel panel =
+            Assert.IsType<Cerneala.UI.Layout.Panels.VirtualizingStackPanel>(comboBox.ItemsPanel);
+        Assert.Same(templatePresenter, panel.VisualParent);
+        Assert.NotNull(panel.VirtualizationContext);
+        if (closeBeforeRemoval)
+        {
+            comboBox.IsDropDownOpen = false;
+            root.ProcessFrame();
+        }
+
+        comboBox.ComponentTemplate = null;
+        Assert.Null(panel.VirtualizationContext);
+        Exception? error = Record.Exception(() =>
+        {
+            root.ProcessFrame();
+            root.ProcessFrame();
+        });
+
+        Assert.Null(error);
+        Assert.NotSame(templatePresenter, comboBox.ItemsPresenter);
+        Assert.Same(comboBox.ItemsPresenter, panel.VisualParent);
+        Assert.Null(panel.VirtualizationContext);
+        Assert.Equal(itemCount, panel.VisualChildren.Count);
+        Assert.Empty(templatePresenter.VisualChildren);
+    }
+
+    [Theory]
+    [InlineData(3)]
+    [InlineData(200)]
+    public void ReplacingTemplateAfterDropDownOpenedMovesItemsToNewPresenter(int itemCount)
+    {
+        (ComboBox comboBox, UIRoot root) = CreateOpenedDropDown(itemCount);
+        ItemsPresenter oldPresenter = comboBox.ItemsPresenter;
+        Cerneala.UI.Layout.Panels.VirtualizingStackPanel panel =
+            Assert.IsType<Cerneala.UI.Layout.Panels.VirtualizingStackPanel>(comboBox.ItemsPanel);
+
+        comboBox.ComponentTemplate = CreateComboBoxTemplate("replacement");
+        Exception? error = Record.Exception(() =>
+        {
+            root.ProcessFrame();
+            root.ProcessFrame();
+        });
+
+        Assert.Null(error);
+        ItemsPresenter newPresenter = Assert.IsType<ItemsPresenter>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_ItemsPresenter"]);
+        Assert.Same(newPresenter, comboBox.ItemsPresenter);
+        Assert.Same(newPresenter, panel.VisualParent);
+        Assert.Equal(newPresenter.VirtualizationContext, panel.VirtualizationContext);
+        Assert.Equal(comboBox.ItemContainerGenerator.RealizedContainers.Count, panel.VisualChildren.Count);
+        Assert.NotEmpty(panel.VisualChildren);
+        Assert.Empty(oldPresenter.VisualChildren);
+    }
+
+    private static (ComboBox ComboBox, UIRoot Root) CreateOpenedDropDown(int itemCount)
+    {
+        UIRoot root = new(320, 420);
+        ComboBox comboBox = new() { Width = 180, MaxDropDownHeight = 120, IsDropDownOpen = true };
+        comboBox.SetItems(Enumerable.Range(0, itemCount).Select(index => $"item {index}"));
+        LayoutCanvas canvas = new();
+        canvas.VisualChildren.Add(comboBox);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        root.ProcessFrame();
+        return (comboBox, root);
+    }
+
     private static (ComboBox ComboBox, ScrollViewer Viewer, UIRoot Root) CreateLargeOpenDropDown(
         ComponentTemplate<ComboBox>? template,
         LayoutStackPanel? ownerPanel)

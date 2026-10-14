@@ -19,6 +19,7 @@ public class ItemsPresenter : Control
     private ItemsVirtualizationViewport? automaticViewport;
     private VirtualizationContext? virtualizationContext;
     private VirtualizingStackPanel? contextPanel;
+    private ItemsControl? itemsOwner;
 
     public static readonly UiProperty<IEnumerable?> ItemsProperty = UiProperty<IEnumerable?>.Register(
         nameof(Items),
@@ -63,7 +64,20 @@ public class ItemsPresenter : Control
 
     public Layout.Panels.Panel? LayoutPanelRoot => panelRoot;
 
-    public ItemsControl? ItemsOwner { get; set; }
+    public ItemsControl? ItemsOwner
+    {
+        get => itemsOwner;
+        set
+        {
+            if (ReferenceEquals(itemsOwner, value))
+            {
+                return;
+            }
+
+            itemsOwner = value;
+            WithdrawRealizedItems();
+        }
+    }
 
     public VirtualizationContext? VirtualizationContext
     {
@@ -584,6 +598,23 @@ public class ItemsPresenter : Control
             contextPanel.VirtualizationContext = null;
             contextPanel = null;
         }
+    }
+
+    // Realized children belong to the owner whose generator created them, and the owner's next
+    // presenter can resolve the same panel, so a presenter that changes owner gives both back.
+    private void WithdrawRealizedItems()
+    {
+        ReleasePanelVirtualizationContext();
+        if (panelRoot is not null)
+        {
+            ClearPanelChildren(panelRoot);
+            VisualChildren.Remove(panelRoot);
+            LogicalChildren.Remove(panelRoot);
+            panelRoot = null;
+        }
+
+        itemsDirty = true;
+        lastRealizationWindow = null;
     }
 
     private static void RemoveMeasureWorkForSubtree(UIElement? element)
