@@ -99,6 +99,32 @@ public sealed class UIElementMeasureArrangeTests
         Assert.Equal(expectedChildEdges, GetDeviceEdges(child, scale, vertical));
     }
 
+    [Theory]
+    [InlineData(1f, 0.4f, float.NaN, 100f)]
+    [InlineData(1.5f, 0.3f, float.NaN, 300f / 3f)]
+    [InlineData(1f, 0f, 99.6f, 100f)]
+    [InlineData(1f, 0f, float.NaN, 33.333332f)]
+    public void LayoutRoundingMeasuresAStretchedElementAtTheSizeItIsArrangedAt(
+        float scale,
+        float marginTop,
+        float height,
+        float slotHeight)
+    {
+        // As in WPF, MeasureCore and ArrangeCore both receive sizes rounded to the nearest device pixel, so an
+        // element that fills its slot is measured at the size it is then arranged at.
+        SizeRecordingElement element = new()
+        {
+            Margin = new Thickness(0, marginTop, 0, 0),
+            Height = height
+        };
+        LayoutRounding rounding = LayoutRounding.ForScale(scale);
+
+        element.Measure(new MeasureContext(new LayoutSize(100, slotHeight), rounding));
+        element.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, slotHeight), rounding));
+
+        Assert.Equal(element.ArrangeSize, element.MeasureSize);
+    }
+
     private static string GetDeviceEdges(UIElement element, float scale, bool vertical)
     {
         LayoutRect bounds = element.ArrangedBounds;
@@ -140,6 +166,25 @@ public sealed class UIElementMeasureArrangeTests
         protected override LayoutRect ArrangeCore(ArrangeContext context)
         {
             return new LayoutRect(context.FinalRect.X, context.FinalRect.Y, size.Width, size.Height);
+        }
+    }
+
+    private sealed class SizeRecordingElement : UIElement
+    {
+        public LayoutSize? MeasureSize { get; private set; }
+
+        public LayoutSize? ArrangeSize { get; private set; }
+
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            MeasureSize = context.AvailableSize;
+            return context.AvailableSize;
+        }
+
+        protected override LayoutRect ArrangeCore(ArrangeContext context)
+        {
+            ArrangeSize = context.FinalRect.Size;
+            return context.FinalRect;
         }
     }
 }

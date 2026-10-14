@@ -1137,7 +1137,13 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         LayoutSize constrainedSize = new(
             hasWidth ? MathF.Min(contentAvailableSize.Width, Width) : contentAvailableSize.Width,
             hasHeight ? MathF.Min(contentAvailableSize.Height, Height) : contentAvailableSize.Height);
-        LayoutSize measuredSize = MeasureCore(new MeasureContext(constrainedSize, context.Rounding)).ClampNonNegative();
+        // MeasureCore receives the size rounded to the nearest device pixel, as WPF rounds the size it passes to
+        // MeasureOverride. Arrange rounds the rectangle ArrangeCore receives the same way, so an element that fills
+        // its slot is measured at the size it is then arranged at (99.6 would be measured but 100 arranged).
+        LayoutSize roundedSize = new(
+            context.Rounding.Round(constrainedSize.Width),
+            context.Rounding.Round(constrainedSize.Height));
+        LayoutSize measuredSize = MeasureCore(new MeasureContext(roundedSize, context.Rounding)).ClampNonNegative();
         LayoutSize contentDesiredSize = new(
             hasWidth ? Width : measuredSize.Width,
             hasHeight ? Height : measuredSize.Height);
