@@ -105,9 +105,10 @@ public class Selector : ItemsControl
             added is null ? [] : [added]));
     }
 
+    // Realized containers keep their old indexes until the next layout pass, so an index past the current items has no item to prepare.
     private void InvalidateContainer(int index)
     {
-        if (index < 0 || !ItemContainerGenerator.RealizedContainers.TryGetValue(index, out UIElement? container))
+        if (index < 0 || index >= ItemCount || !ItemContainerGenerator.RealizedContainers.TryGetValue(index, out UIElement? container))
         {
             return;
         }
