@@ -102,11 +102,17 @@ public sealed class ItemContainerGenerator
     // The owner reports each item change whose position is known, so realized containers stay keyed by the
     // current index of their item. A container for a replaced item keeps its index and is prepared for the new
     // item by the next realization; a container that moved to another index is prepared for that index then.
+    // A container that wraps a replaced UIElement item is recycled now instead, so that element is free to be
+    // wrapped by the container at its new index, for example when two items are swapped.
     internal void OnItemsReplaced(int index, int removedCount, int addedCount)
     {
-        for (int removedIndex = index + Math.Min(removedCount, addedCount); removedIndex < index + removedCount; removedIndex++)
+        int replacedEnd = index + Math.Min(removedCount, addedCount);
+        for (int removedIndex = index; removedIndex < index + removedCount; removedIndex++)
         {
-            Recycle(removedIndex);
+            if (removedIndex >= replacedEnd || WrapsElementItem(removedIndex))
+            {
+                Recycle(removedIndex);
+            }
         }
 
         int firstShiftedIndex = index + removedCount;
@@ -129,6 +135,13 @@ public sealed class ItemContainerGenerator
             realizedIndex -= realizedIndex >= oldIndex + count ? count : 0;
             return realizedIndex + (realizedIndex >= newIndex ? count : 0);
         });
+    }
+
+    private bool WrapsElementItem(int index)
+    {
+        return realized.TryGetValue(index, out UIElement? container) &&
+            GetItem(container) is UIElement item &&
+            !ReferenceEquals(container, item);
     }
 
     private void Rekey(Func<int, int> getNewIndex)
