@@ -325,6 +325,8 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     internal int LastArrangeLayoutVersion { get; set; } = -1;
 
+    private int arrangeCacheInvalidationCount;
+
     public object? DataContext
     {
         get => GetValue(DataContextProperty);
@@ -907,6 +909,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     internal void InvalidateArrangeCache()
     {
         LastArrangeLayoutVersion = -1;
+        arrangeCacheInvalidationCount++;
     }
 
     public LayoutRect Arrange(ArrangeContext context)
@@ -919,6 +922,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         }
 
         Root?.CountArrangeCall();
+        int invalidationCountBeforeArrange = arrangeCacheInvalidationCount;
         LayoutRect finalRect = !UIElementVisibility.ParticipatesInLayout(this)
             ? context.FinalRect
             : ApplyMarginAndAlignment(context.FinalRect);
@@ -931,7 +935,11 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         arranged = context.Rounding.Round(arranged);
         SetArrangedBounds(arranged);
         LastArrangeFinalRect = context.FinalRect;
-        LastArrangeLayoutVersion = LayoutVersion;
+        // An Arrange request raised during this arrange (ArrangeCore, SizeChanged) stays pending:
+        // the cache must not let a same-slot parent arrange skip it.
+        LastArrangeLayoutVersion = arrangeCacheInvalidationCount == invalidationCountBeforeArrange
+            ? LayoutVersion
+            : -1;
         RecordScheduledArrangeVisit();
         return arranged;
     }
