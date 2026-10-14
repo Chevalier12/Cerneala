@@ -189,6 +189,7 @@ public class ItemsPresenter : Control
     {
         if (itemsDirty)
         {
+            ResetEnteringPanelItemExtents();
             RefreshAutomaticViewportItemCount();
         }
 
@@ -497,6 +498,17 @@ public class ItemsPresenter : Control
 
         automaticViewport = viewport with { ItemCount = itemCount };
         virtualizingPanel.UpdateViewport(automaticViewport.Value);
+    }
+
+    // Collection changes reach only the current panel root, so a panel that is about to become
+    // the root has missed them and its recorded row heights may belong to other items.
+    private void ResetEnteringPanelItemExtents()
+    {
+        if (ResolveItemsPanel() is VirtualizingStackPanel enteringPanel &&
+            !ReferenceEquals(enteringPanel, panelRoot))
+        {
+            enteringPanel.OnItemsReset();
+        }
     }
 
     private int GetItemCount()
