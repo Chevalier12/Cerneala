@@ -86,6 +86,12 @@ The code sets `first.Visibility = Visibility.Collapsed;`.
   cached size when constraint and `LayoutVersion` match.
 - `UIElement.Arrange` reuses its result when the final rectangle and
   `LayoutVersion` equal the last arrange (`UIElement.cs:906-931`).
+- An attached element's `Invalidate` does not change its `LayoutVersion`. When
+  the request queues `Arrange` for its target, `DirtyPropagation.Propagate`
+  invalidates the target's arrange cache and keeps its slot. A parent that
+  arranges the target with the same slot in the same pass then runs the target's
+  `ArrangeCore`, instead of reusing the stale result and marking the target as
+  already arranged. Ancestors queued as `Propagated` keep their arrange cache.
 - An element that does not take part in layout (`Visibility.Collapsed`)
   measures to `LayoutSize.Zero` and arranges to a zero-size rectangle at the
   slot position.
@@ -143,6 +149,9 @@ Test paths are under `tests/Cerneala.Tests/`.
 - That parent is arranged again in the same frame, also when a sibling's change
   makes its own parent arrange it first with the same slot. Test:
   `UI/Layout/SiblingLayoutSameFrameRegressionTests.cs:AutoColumnChildIsRearrangedWhenGridSiblingChangesInTheSameFrame`.
+- An element invalidated for `Arrange` is arranged again when its parent is
+  arranged in the same frame with the same slot, in both invalidation orders.
+  Test: `UI/Layout/DirectArrangeInvalidationSameFrameRegressionTests.cs:DirtyChildArrangeRunsWhenParentArrangesItWithTheSameSlotInTheSameFrame`.
 - A failed measure keeps the element dirty and queued. Test:
   `UI/Layout/LayoutManagerTests.cs:FailedMeasureKeepsDirtyFlagsAndQueue`.
   A failed arrange: netestat.

@@ -37,6 +37,12 @@ public sealed class DirtyPropagation
             ? LayoutQueueEntryKind.Subtree
             : LayoutQueueEntryKind.Direct;
         MarkAndQueue(request.Target, propagated, layoutQueue, inheritedPropertyQueue, aspectQueue, renderQueue, hitTestQueue, trace, request.Reason, targetLayoutKind);
+        if (propagated.HasFlag(InvalidationFlags.Arrange))
+        {
+            // The target's LayoutVersion is unchanged, so a parent that arranges it with the
+            // same slot would otherwise reuse the stale arrange and mark it as already arranged.
+            request.Target.InvalidateArrangeCache();
+        }
 
         if (effective.HasFlag(InvalidationFlags.Measure))
         {
