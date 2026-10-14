@@ -92,6 +92,13 @@ The code sets `first.Visibility = Visibility.Collapsed;`.
   elements with the same constraint in the same pass then runs its
   `MeasureCore`, instead of reusing the stale size and marking it as already
   measured. Ancestors queued as `Propagated` keep their measure cache.
+- The same reset clears the element's scheduled-measure visit
+  (`LastScheduledMeasureRoot`). The measure phase skips a queued element that
+  was already measured in the current pass with its current `LayoutVersion`.
+  A request raised after that measure, for example from a sibling's
+  `MeasureCore`, is therefore not skipped: the element is measured again later
+  in the same phase, or in the next frame when it is no longer in the phase's
+  snapshot.
 - `UIElement.Arrange` reuses its result when the final rectangle and
   `LayoutVersion` equal the last arrange (`UIElement.cs:906-931`).
 - An attached element's `Invalidate` does not change its `LayoutVersion`. When
@@ -192,6 +199,10 @@ Test paths are under `tests/Cerneala.Tests/`.
   same arrange phase is not dropped, whether a sibling's `SizeChanged` handler
   or a sibling's `ArrangeCore` raises it. Test:
   `UI/Layout/ArrangeInvalidationAfterArrangeSameFrameRegressionTests.cs:ArrangeInvalidationRaisedAfterTheElementWasArrangedInTheSamePhaseRuns`.
+- A `Measure` request raised after the element was already measured in the
+  same measure phase, for example from a sibling's `MeasureCore`, is not
+  dropped. Test:
+  `UI/Layout/MeasureInvalidationAfterMeasureSameFrameRegressionTests.cs:MeasureInvalidationRaisedAfterTheElementWasMeasuredInTheSamePhaseRuns`.
 - A failed measure keeps the element dirty and queued. Test:
   `UI/Layout/LayoutManagerTests.cs:FailedMeasureKeepsDirtyFlagsAndQueue`.
   A failed arrange: netestat.
