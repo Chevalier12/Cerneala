@@ -26,7 +26,7 @@ Fix the reported behavior from reproduction through final verification. Treat th
 
 - Reproduce the bug with the narrowest deterministic path available.
 - For runtime C# behavior, prefer a temporary CSI `.csx` experiment when it can expose the relevant state faster than a throwaway project.
-- Run CSI with a short timeout, clean up the script, and check for a stuck `csi` process after suspicious execution.
+- Run CSI as `dotnet-csi <script>.csx` (there is no `csi` command) with a short timeout, clean up the script, and check for a stuck `dotnet-csi.exe` process after suspicious execution.
 - If CSI cannot exercise the real window, frame loop, layout, rendering, input, graphics, or Motion behavior, reproduce through the owning application with Servo and observe it through Detective when the application can host it faithfully. Otherwise use the temporary native runtime harness workflow below.
 - Record the failing observation. Do not accept a theory-only reproduction.
 
