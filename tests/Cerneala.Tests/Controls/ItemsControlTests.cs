@@ -239,6 +239,46 @@ public sealed class ItemsControlTests
         Assert.Equal(control.ItemsPresenter.CurrentRealizationWindow, shrunkWindow);
     }
 
+    [Theory]
+    [InlineData(2500, 40)]
+    [InlineData(0, 0)]
+    [InlineData(40, 40)]
+    public void ScrollViewerVirtualizationArrangesUnmeasuredRowsAfterScrolledSourceReplacement(float scrollTo, float expectedOffset)
+    {
+        ObservableCollection<FixedElement> source =
+            [.. Enumerable.Range(0, 100).Select(index => new FixedElement(index.ToString(), new LayoutSize(80, 28)))];
+        ItemsControl control = new()
+        {
+            ItemsSource = source,
+            ItemsPanel = new VirtualizingStackPanel()
+        };
+        ScrollViewer viewer = new()
+        {
+            Content = control,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        UIRoot root = new(100, 100);
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+        viewer.ScrollInfo.SetVerticalOffset(scrollTo);
+        root.ProcessFrame();
+
+        FixedElement[] rows = [.. Enumerable.Range(0, 5).Select(index => new FixedElement($"new {index}", new LayoutSize(80, 28)))];
+        control.ItemsSource = rows;
+        for (int frame = 0; frame < 20 && root.Scheduler.HasWork; frame++)
+        {
+            root.ProcessFrame();
+        }
+
+        Assert.False(root.Scheduler.HasWork);
+        Assert.Equal(expectedOffset, viewer.ScrollInfo.VerticalOffset);
+        Assert.Equal([28f, 28f, 28f, 28f, 28f], rows.Select(row => row.DesiredSize.Height));
+        Assert.Equal([28f, 28f, 28f, 28f, 28f], rows.Select(row => row.ArrangedBounds.Height));
+        Assert.Equal(
+            Enumerable.Range(0, 5).Select(index => index * 28f - expectedOffset),
+            rows.Select(row => row.ArrangedBounds.Y));
+    }
+
     [Fact]
     public void RemovingMeasuredRowBeforeViewportDropsItsHeight()
     {

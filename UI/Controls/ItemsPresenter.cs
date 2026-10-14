@@ -132,6 +132,30 @@ public class ItemsPresenter : Control
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
         RefreshItems();
+        LayoutSize desired = MeasurePanelRoot(context);
+        RemoveMeasureWorkForLayoutScope();
+        RemoveInheritedAndAspectWorkForLayoutScope();
+
+        return desired;
+    }
+
+    protected override LayoutRect ArrangeCore(ArrangeContext context)
+    {
+        // An arrange-time window change, such as a scroll offset clamped after the extent shrank,
+        // realizes items that were never measured. Measure them with the panel's last constraint
+        // so the panel does not arrange them with an empty desired size.
+        if (RefreshItems() && panelRoot?.LastMeasureAvailableSize is LayoutSize availableSize)
+        {
+            MeasurePanelRoot(new MeasureContext(availableSize, context.Rounding));
+        }
+
+        panelRoot?.Arrange(context);
+        RemoveArrangeWorkForSubtree(panelRoot);
+        return context.FinalRect;
+    }
+
+    private LayoutSize MeasurePanelRoot(MeasureContext context)
+    {
         ProcessInheritedAndAspectForSubtree(panelRoot);
 
         RealizationWindow? windowBeforeMeasure = GetRealizationWindow();
@@ -146,18 +170,7 @@ public class ItemsPresenter : Control
         }
 
         RemoveMeasureWorkForSubtree(panelRoot);
-        RemoveMeasureWorkForLayoutScope();
-        RemoveInheritedAndAspectWorkForLayoutScope();
-
         return desired;
-    }
-
-    protected override LayoutRect ArrangeCore(ArrangeContext context)
-    {
-        RefreshItems();
-        panelRoot?.Arrange(context);
-        RemoveArrangeWorkForSubtree(panelRoot);
-        return context.FinalRect;
     }
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
@@ -172,7 +185,7 @@ public class ItemsPresenter : Control
         }
     }
 
-    private void RefreshItems()
+    private bool RefreshItems()
     {
         if (itemsDirty)
         {
@@ -182,7 +195,7 @@ public class ItemsPresenter : Control
         RealizationWindow? nextWindow = GetRealizationWindow();
         if (!itemsDirty && nextWindow == lastRealizationWindow)
         {
-            return;
+            return false;
         }
 
         itemsDirty = false;
@@ -190,7 +203,7 @@ public class ItemsPresenter : Control
         if (ItemsOwner is not null)
         {
             RefreshOwnerItems(nextWindow);
-            return;
+            return true;
         }
 
         Layout.Panels.Panel nextPanel = ResolveItemsPanel();
@@ -204,7 +217,7 @@ public class ItemsPresenter : Control
         {
             SynchronizePanelChildren(nextPanel, nextChildren);
             panelRoot = nextPanel;
-            return;
+            return true;
         }
 
         if (oldPanel is not null)
@@ -246,6 +259,8 @@ public class ItemsPresenter : Control
 
             throw;
         }
+
+        return true;
     }
 
     private void RefreshOwnerItems(RealizationWindow? nextWindow)
