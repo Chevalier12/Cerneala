@@ -751,6 +751,68 @@ public sealed class ItemsPresenterTests
         Assert.Equal("children=[E,1,2b,3] pool=[unparented]", DescribePresented(control, panel));
     }
 
+    [Fact]
+    public void ItemsOwnerChangeAfterFailedRefreshDoesNotLetALaterCommitDetachADisplacedOwnContainerFromAnotherParent()
+    {
+        Cerneala.UI.Layout.Panels.StackPanel panel = new();
+        ItemElement x = new("x");
+        ObservableCollection<object> source = [x, "1"];
+        FailingPrepareItemsControl control = new() { ItemsPanel = panel, ItemsSource = source };
+        control.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        Assert.Equal("children=[x,1] pool=[]", DescribePresented(control, panel));
+
+        source[0] = "0b";
+        control.Fail = true;
+        Assert.Throws<InvalidOperationException>(() => control.Measure(new MeasureContext(new LayoutSize(100, 101))));
+        // The container created for "0b", whose prepared callback threw, goes to the pool; x stays displaced.
+        Assert.Equal("children=[x,1] pool=[unparented]", DescribePresented(control, panel));
+
+        control.ItemsPresenter!.ItemsOwner = null;
+        Assert.Null(x.VisualParent);
+        Cerneala.UI.Layout.Panels.StackPanel otherParent = new();
+        otherParent.LogicalChildren.Add(x);
+        otherParent.VisualChildren.Add(x);
+
+        control.ItemsPresenter.ItemsOwner = control;
+        control.Fail = false;
+        control.Measure(new MeasureContext(new LayoutSize(100, 102)));
+
+        Assert.Equal(
+            "xVisualParentIsOther=True xLogicalParentIsOther=True otherChildren=1",
+            $"xVisualParentIsOther={ReferenceEquals(x.VisualParent, otherParent)} " +
+            $"xLogicalParentIsOther={ReferenceEquals(x.LogicalParent, otherParent)} " +
+            $"otherChildren={otherParent.VisualChildren.Count}");
+        Assert.Equal("children=[0b,1] pool=[]", DescribePresented(control, panel));
+        Assert.Equal([0, 1], control.ItemContainerGenerator.RealizedContainers.Keys.Order());
+    }
+
+    [Fact]
+    public void ItemsOwnerChangeAfterFailedRefreshGivesBackADisplacedGeneratedContainer()
+    {
+        Cerneala.UI.Layout.Panels.StackPanel panel = new();
+        ItemElement y = new("y");
+        ObservableCollection<object> source = ["0", "1"];
+        FailingPrepareItemsControl control = new() { ItemsPanel = panel, ItemsSource = source };
+        control.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        Assert.Equal("children=[0,1] pool=[]", DescribePresented(control, panel));
+
+        source[0] = y;
+        control.Fail = true;
+        Assert.Throws<InvalidOperationException>(() => control.Measure(new MeasureContext(new LayoutSize(100, 101))));
+        Assert.Equal("children=[0,1] pool=[]", DescribePresented(control, panel));
+
+        control.ItemsPresenter!.ItemsOwner = null;
+
+        // The container that showed "0" no longer represents an index, so the owner change clears it and pools it.
+        Assert.Equal("children=[] pool=[unparented]", DescribePresented(control, panel));
+
+        control.ItemsPresenter.ItemsOwner = control;
+        control.Fail = false;
+        control.Measure(new MeasureContext(new LayoutSize(100, 102)));
+
+        Assert.Equal("children=[y,1] pool=[unparented]", DescribePresented(control, panel));
+    }
+
     // Each child is described by the item it shows and must have the panel as its visual and logical parent,
     // and each pooled container is described by its parents, so a pooled container that a panel still holds shows.
     private static string DescribePresented(ItemsControl control, Cerneala.UI.Layout.Panels.Panel panel)

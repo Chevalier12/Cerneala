@@ -75,8 +75,9 @@ public class ItemsPresenter : Control
                 return;
             }
 
+            ItemsControl? previousOwner = itemsOwner;
             itemsOwner = value;
-            WithdrawRealizedItems();
+            WithdrawRealizedItems(previousOwner);
         }
     }
 
@@ -746,7 +747,10 @@ public class ItemsPresenter : Control
 
     // Realized children belong to the owner whose generator created them, and the owner's next
     // presenter can resolve the same panel, so a presenter that changes owner gives both back.
-    private void WithdrawRealizedItems()
+    // The containers that a failed refresh kept displaced in the panel represent no item any more and leave the
+    // panel here, so the previous owner's generator releases them now, before user code can give one another parent
+    // that a later commit would detach it from.
+    private void WithdrawRealizedItems(ItemsControl? previousOwner)
     {
         ReleasePanelVirtualizationContext();
         if (panelRoot is not null)
@@ -760,6 +764,7 @@ public class ItemsPresenter : Control
         itemsDirty = true;
         lastRealizationWindow = null;
         presentedRealizationWindow = null;
+        previousOwner?.ItemContainerGenerator.ReleaseDisplaced();
     }
 
     private static void RemoveMeasureWorkForSubtree(UIElement? element)
