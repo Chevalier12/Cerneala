@@ -365,6 +365,60 @@ public sealed class ItemContainerGeneratorTests
     }
 
     [Fact]
+    public void ListBoxItemItemIsNotWrappedInPooledGeneratedContainer()
+    {
+        ListBoxItem a = new() { Content = "A" };
+        ListBox listBox = new();
+        listBox.SetItems(new object[] { "str", a });
+        UIElement generated = listBox.ItemContainerGenerator.Realize(new RealizationWindow(0, 1))[0];
+
+        UIElement second = listBox.ItemContainerGenerator.Realize(new RealizationWindow(1, 2))[0];
+        UIElement third = listBox.ItemContainerGenerator.Realize(new RealizationWindow(1, 2))[0];
+
+        Assert.Same(a, second);
+        Assert.Same(a, third);
+        Assert.Equal("A", a.Content);
+        Assert.Null(((ListBoxItem)generated).Content);
+        Assert.Equal(1, listBox.ItemContainerGenerator.RecyclePool.Count);
+    }
+
+    [Fact]
+    public void ListBoxReplacingDataItemWithListBoxItemThroughMeasureShowsListBoxItemInThePanel()
+    {
+        ListBoxItem a = new() { Content = "A" };
+        ListBox listBox = new();
+        listBox.SetItems(new object[] { "str", "b" });
+        MeasureContext context = new(new LayoutSize(200, 200));
+        listBox.Measure(context);
+
+        listBox.Items[0] = a;
+        listBox.Measure(context);
+
+        IReadOnlyList<UIElement> children = listBox.ItemsPresenter.LayoutPanelRoot!.VisualChildren.ToArray();
+        Assert.Equal(2, children.Count);
+        Assert.Same(a, children[0]);
+        Assert.Equal("A", a.Content);
+        Assert.Same(a, listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Equal(0, a.ItemIndex);
+    }
+
+    [Fact]
+    public void ElementItemIsNotWrappedInPooledGeneratedContainerOfItsType()
+    {
+        ContentPresenter element = new() { Content = "P" };
+        ItemsControl control = new();
+        control.SetItems(new object[] { "str", element });
+        UIElement generated = control.ItemContainerGenerator.Realize(new RealizationWindow(0, 1))[0];
+        Assert.IsType<ContentPresenter>(generated);
+
+        UIElement realized = control.ItemContainerGenerator.Realize(new RealizationWindow(1, 2))[0];
+
+        Assert.Same(element, realized);
+        Assert.Equal("P", element.Content);
+        Assert.Null(((ContentPresenter)generated).Content);
+    }
+
+    [Fact]
     public void ComboBoxRemoveAtKeepsPresenterContentOfComboBoxItemThatIsItsOwnContainer()
     {
         ComboBoxItem first = new() { Content = "First" };
