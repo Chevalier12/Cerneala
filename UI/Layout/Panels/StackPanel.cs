@@ -18,6 +18,11 @@ public class StackPanel : Panel
 
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
+        // With layout rounding every child desires whole device pixels, so the stacked length adds device pixels and
+        // stays on a device pixel. Adding the logical sizes 57 / 1.75f and 1 / 1.75f instead gives a float one step
+        // above 58 / 1.75f, which UIElement.Measure would round up to a 59th device pixel.
+        LayoutRounding rounding = context.Rounding;
+        float stackLength = 0;
         float width = 0;
         float height = 0;
         Orientation orientation = Orientation;
@@ -38,16 +43,22 @@ public class StackPanel : Panel
             if (orientation == Orientation.Vertical)
             {
                 width = MathF.Max(width, childSize.Width);
-                height += childSize.Height;
+                stackLength += ToStackUnits(childSize.Height, rounding);
             }
             else
             {
-                width += childSize.Width;
+                stackLength += ToStackUnits(childSize.Width, rounding);
                 height = MathF.Max(height, childSize.Height);
             }
         }
 
-        return new LayoutSize(width, height);
+        float stackSize = rounding.IsEnabled ? stackLength / rounding.Scale : stackLength;
+        return orientation == Orientation.Vertical ? new LayoutSize(width, stackSize) : new LayoutSize(stackSize, height);
+    }
+
+    private static float ToStackUnits(float length, LayoutRounding rounding)
+    {
+        return rounding.IsEnabled ? MathF.Round(length * rounding.Scale) : length;
     }
 
     protected override LayoutRect ArrangeCore(ArrangeContext context)

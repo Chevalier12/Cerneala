@@ -164,6 +164,26 @@ public sealed class StackPanelTests
                 ToDevicePixels(nextBounds, vertical, end: false)));
     }
 
+    [Fact]
+    public void LayoutRoundingArrangesAChildAtLeastAsWideAsItsMeasuredContent()
+    {
+        // A child whose content measures 100.003 pixels (for example a TextBlock) gets a slot of its desired width.
+        // That slot must hold the whole content, or the text renders into 100 pixels and wraps or trims.
+        UIRoot root = new(200, 200, 1);
+        StackPanel panel = new()
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left
+        };
+        FixedElement child = new(new LayoutSize(100.003f, 10));
+        panel.VisualChildren.Add(child);
+        root.VisualChildren.Add(panel);
+
+        root.ProcessFrame();
+
+        Assert.Equal((101f, 101f), (child.DesiredSize.Width, child.ArrangedBounds.Width));
+    }
+
     private static float ToDevicePixels(LayoutRect bounds, bool vertical, bool end)
     {
         float start = vertical ? bounds.Y : bounds.X;
