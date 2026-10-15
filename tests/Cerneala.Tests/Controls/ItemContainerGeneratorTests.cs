@@ -896,6 +896,66 @@ public sealed class ItemContainerGeneratorTests
     }
 
     [Fact]
+    public void ListBoxClearsEveryMovedListBoxItemAfterAMovePreparationThrows()
+    {
+        FailForListBox listBox = new() { ItemContainerAspect = NewMarginAspect() };
+        (ListBoxItem a, ListBoxItem b) = RealizeListBoxItemsUnderStaleKeys(listBox);
+
+        listBox.FailFor = a;
+        Assert.Throws<InvalidOperationException>(() => listBox.ItemContainerGenerator.Realize());
+        Assert.Same(a, listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Same(b, listBox.ItemContainerGenerator.RealizedContainers[1]);
+        listBox.FailFor = null;
+        listBox.Items.Clear();
+
+        AssertClearedContainer(a);
+        AssertClearedContainer(b);
+    }
+
+    [Fact]
+    public void UnnotifiedGeneratorClearsEveryMovedListBoxItemAfterAMovePreparationThrows()
+    {
+        FailForListBox listBox = new() { ItemContainerAspect = NewMarginAspect() };
+        ListBoxItem a = new() { Content = "A" };
+        ListBoxItem b = new() { Content = "B" };
+        ListBoxItem c = new() { Content = "C" };
+        listBox.SetItems(new[] { a, b, c });
+        ItemContainerGenerator generator = new(listBox);
+        generator.Realize();
+
+        listBox.Items.RemoveAt(0);
+        listBox.FailFor = b;
+        Assert.Throws<InvalidOperationException>(() => generator.Realize());
+        Assert.Same(b, generator.RealizedContainers[0]);
+        Assert.Same(c, generator.RealizedContainers[1]);
+        listBox.FailFor = null;
+        generator.Clear();
+
+        AssertClearedContainer(b);
+        AssertClearedContainer(c);
+    }
+
+    [Fact]
+    public void RealizeAfterAMovePreparationThrowsRealizesEveryItemOnceAtItsCurrentIndex()
+    {
+        FailForListBox listBox = new();
+        (ListBoxItem a, ListBoxItem b) = RealizeListBoxItemsUnderStaleKeys(listBox);
+
+        listBox.FailFor = a;
+        Assert.Throws<InvalidOperationException>(() => listBox.ItemContainerGenerator.Realize());
+        listBox.FailFor = null;
+        listBox.ItemContainerGenerator.Realize();
+
+        IReadOnlyDictionary<int, UIElement> realized = listBox.ItemContainerGenerator.RealizedContainers;
+        Assert.Equal(new[] { 0, 1, 2, 3, 4 }, realized.Keys.Order());
+        Assert.Equal(5, realized.Values.Distinct().Count());
+        Assert.Same(a, realized[0]);
+        Assert.Same(b, realized[1]);
+        AssertItemState(a, 0, isSelected: false);
+        AssertItemState(b, 1, isSelected: false);
+    }
+
+    [Fact]
     public void RealizedContainerWhoseContentPreparationThrowsIsPreparedAgainOnRetry()
     {
         FailingContentItemsControl control = new();
@@ -1010,6 +1070,30 @@ public sealed class ItemContainerGeneratorTests
         AssertDataItemContainer(realized[1], a, 1, "x");
         AssertDataItemContainer(realized[2], a, 2, "str");
         Assert.DoesNotContain(a, listBox.ClearedContainers);
+    }
+
+    // Items [a, b, "x", "y", "s"], with a still realized under key 2 and b under key 3, so the next realization
+    // moves both: a to 0 and b to 1.
+    private static (ListBoxItem A, ListBoxItem B) RealizeListBoxItemsUnderStaleKeys(ListBox listBox)
+    {
+        ListBoxItem a = new() { Content = "A" };
+        ListBoxItem b = new() { Content = "B" };
+        listBox.SetItems(new object[] { a, b, "s" });
+        listBox.ItemContainerGenerator.Realize();
+
+        listBox.Items[0] = "x";
+        listBox.Items[1] = "y";
+        listBox.Items.Insert(0, b);
+        listBox.Items.Insert(0, a);
+        Assert.Same(a, listBox.ItemContainerGenerator.RealizedContainers[2]);
+        Assert.Same(b, listBox.ItemContainerGenerator.RealizedContainers[3]);
+        return (a, b);
+    }
+
+    private static void AssertClearedContainer(ListBoxItem container)
+    {
+        Assert.Null(container.Aspect);
+        AssertItemState(container, -1, isSelected: false, expectedItem: null);
     }
 
     private static void AssertRemovedListBoxItem(ListBoxItem removed)
@@ -1144,6 +1228,21 @@ public sealed class ItemContainerGeneratorTests
             }
 
             base.PrepareItemContainer(container, index, item);
+        }
+    }
+
+    // Throws from PrepareItemContainer after the base preparation ran, for the item FailFor only.
+    private sealed class FailForListBox : ListBox
+    {
+        public object? FailFor { get; set; }
+
+        protected internal override void PrepareItemContainer(UIElement container, int index, object? item)
+        {
+            base.PrepareItemContainer(container, index, item);
+            if (FailFor is not null && ReferenceEquals(item, FailFor))
+            {
+                throw new InvalidOperationException("container preparation failed");
+            }
         }
     }
 

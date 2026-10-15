@@ -328,10 +328,16 @@ public sealed class ItemContainerGenerator
             realized.Remove(currentIndex);
         }
 
+        // Every moved container is keyed by its new index before any of them is prepared, so a preparation that
+        // throws leaves the others realized there, and a later realization prepares them like any realized container.
         foreach ((int index, _, UIElement container) in moves)
         {
             Recycle(index);
             realized.Add(index, container);
+        }
+
+        foreach ((int index, _, UIElement container) in moves)
+        {
             PrepareRealizedContainer(container, index, container);
         }
     }
