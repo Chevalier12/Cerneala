@@ -685,6 +685,47 @@ public sealed class ItemContainerGeneratorTests
     }
 
     [Fact]
+    public void SubclassItemReturnedByCreateItemContainerIsNotWrappedInPooledContainerWithItemTemplate()
+    {
+        ListBoxItem a = new() { Content = "A" };
+        OwnContainerItemsControl control = new()
+        {
+            ItemTemplate = new ContentTemplate<object>("test", key: null, priority: 0, _ => new FixedElement("templated"))
+        };
+        control.SetItems(new object[] { "str", a });
+        UIElement generated = control.ItemContainerGenerator.Realize(new RealizationWindow(0, 1))[0];
+
+        UIElement second = control.ItemContainerGenerator.Realize(new RealizationWindow(1, 2))[0];
+        UIElement third = control.ItemContainerGenerator.Realize(new RealizationWindow(1, 2))[0];
+
+        Assert.Same(a, second);
+        Assert.Same(a, third);
+        Assert.Equal("A", a.Content);
+        Assert.Null(((ListBoxItem)generated).Content);
+        Assert.Equal(1, control.ItemContainerGenerator.RecyclePool.Count);
+    }
+
+    [Fact]
+    public void SubclassReplacingDataItemWithItemReturnedByCreateItemContainerRealizesItemWithItemTemplate()
+    {
+        ListBoxItem a = new() { Content = "A" };
+        OwnContainerItemsControl control = new()
+        {
+            ItemTemplate = new ContentTemplate<object>("test", key: null, priority: 0, _ => new FixedElement("templated"))
+        };
+        control.SetItems(new object[] { "str", "b" });
+        UIElement generated = control.ItemContainerGenerator.Realize()[0];
+
+        control.Items[0] = a;
+        UIElement realized = control.ItemContainerGenerator.Realize()[0];
+
+        Assert.Same(a, realized);
+        Assert.Equal("A", a.Content);
+        Assert.Null(((ListBoxItem)generated).Content);
+        Assert.Equal(1, control.ItemContainerGenerator.RecyclePool.Count);
+    }
+
+    [Fact]
     public void ComboBoxRemoveAtKeepsPresenterContentOfComboBoxItemThatIsItsOwnContainer()
     {
         ComboBoxItem first = new() { Content = "First" };
@@ -853,6 +894,20 @@ public sealed class ItemContainerGeneratorTests
         {
             ClearCount++;
             base.ClearItemContainer(container);
+        }
+    }
+
+    // Realizes a ListBoxItem item as itself and wraps every other item, through the documented overrides only.
+    private sealed class OwnContainerItemsControl : ItemsControl
+    {
+        protected internal override Type GetContainerTypeForItem(object? item)
+        {
+            return typeof(ListBoxItem);
+        }
+
+        protected internal override UIElement CreateItemContainer(int index, object? item)
+        {
+            return item is ListBoxItem element ? element : new ListBoxItem();
         }
     }
 }

@@ -73,8 +73,9 @@ public sealed class ItemContainerGenerator
             Recycle(index);
         }
 
-        // An item that is its own container is never wrapped in a recycled container of the same type.
-        UIElement container = IsItsOwnContainer(item, containerType)
+        // An item that is its own container is never wrapped in a recycled container of the same type. Only
+        // CreateItemContainer knows whether a subclass returns such an item, so it is asked before the pool.
+        UIElement container = HasContainerType(item, containerType)
             ? CreateOwnContainer(index, item, containerType)
             : RecyclePool.Pop(containerType) ?? owner.CreateItemContainer(index, item);
         owner.PrepareItemContainer(container, index, item);
@@ -307,6 +308,15 @@ public sealed class ItemContainerGenerator
             return false;
         }
 
+        // A container that shows another item is not prepared for an item of exactly the container type, because
+        // a subclass's CreateItemContainer can return that item itself. A wrapper that already shows the item is kept.
+        if (!ReferenceEquals(container, item) &&
+            !ReferenceEquals(GetItem(container), item) &&
+            HasContainerType(item, containerType))
+        {
+            return false;
+        }
+
         return containerType.IsAssignableFrom(container.GetType());
     }
 
@@ -315,9 +325,12 @@ public sealed class ItemContainerGenerator
     // through the overridable members keeps reusing and recycling those wrappers.
     private bool IsItsOwnContainer(object? item, Type containerType)
     {
-        return item is UIElement element &&
-            ReferenceEquals(containerType, element.GetType()) &&
-            owner.IsItemItsOwnContainer(item);
+        return HasContainerType(item, containerType) && owner.IsItemItsOwnContainer(item);
+    }
+
+    private static bool HasContainerType(object? item, Type containerType)
+    {
+        return item is UIElement element && ReferenceEquals(containerType, element.GetType());
     }
 
     // Only CreateItemContainer knows whether the owner returns the item itself. A subclass that overrides it can
