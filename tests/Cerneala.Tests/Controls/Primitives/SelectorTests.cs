@@ -534,6 +534,24 @@ public sealed class SelectorTests
     }
 
     [Fact]
+    public void ClickOnReplacedListBoxItemInsertedBackAtItsIndexSelectsIt()
+    {
+        ListBoxItem a = new() { Content = new FixedElement(new LayoutSize(20, 10)) };
+        ListBox listBox = new();
+        listBox.SetItems(new object[] { a, "str" });
+        ArrangeInRoot(listBox);
+
+        listBox.Items[0] = "x";
+        listBox.Items.Insert(0, a);
+        listBox.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        listBox.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+        Click(listBox, 50, 5);
+
+        Assert.Equal(0, listBox.SelectedIndex);
+        AssertRealizedContainersShowTheirItems(listBox);
+    }
+
+    [Fact]
     public void NestedSelectionChangeReportsItemItReplaced()
     {
         RedirectingListBox listBox = new();

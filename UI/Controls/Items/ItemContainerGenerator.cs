@@ -169,11 +169,18 @@ public sealed class ItemContainerGenerator
     // still shows the item at its index.
     internal int IndexFromContainer(UIElement container)
     {
+        int index = GetRealizedKey(container);
+        return index >= 0 && Equals(GetItem(container), owner.GetItemAt(index)) ? index : -1;
+    }
+
+    // The key the container is realized under, or -1, whatever item that key holds now.
+    private int GetRealizedKey(UIElement container)
+    {
         foreach ((int index, UIElement realizedContainer) in realized)
         {
             if (ReferenceEquals(realizedContainer, container))
             {
-                return Equals(GetItem(container), owner.GetItemAt(index)) ? index : -1;
+                return index;
             }
         }
 
@@ -218,24 +225,30 @@ public sealed class ItemContainerGenerator
 
     // A container that is its own item belongs to that item, not to an index. When the item moves to
     // another desired index, the container moves with it instead of being recycled from its old index.
+    // The container is found by its realized key, because item changes re-key it without changing its
+    // recorded index. It is prepared at its new index here, because that recorded index can already equal the
+    // new index while its other prepared state, such as its selection, is stale.
     private void MoveShiftedItemContainers(HashSet<int> desired)
     {
-        List<(int Index, UIElement Container)>? moves = null;
+        List<(int Index, int CurrentIndex, UIElement Container)>? moves = null;
         foreach (int index in desired)
         {
             if (owner.GetItemAt(index) is not UIElement element ||
-                !containerInfo.TryGetValue(element, out ItemContainerInfo? info) ||
-                !ReferenceEquals(info.Item, element) ||
-                info.Index == index ||
-                !realized.TryGetValue(info.Index, out UIElement? current) ||
-                !ReferenceEquals(current, element) ||
-                (info.Index < owner.ItemCount && ReferenceEquals(owner.GetItemAt(info.Index), element)) ||
+                !ReferenceEquals(GetItem(element), element) ||
+                (realized.TryGetValue(index, out UIElement? existing) && ReferenceEquals(existing, element)))
+            {
+                continue;
+            }
+
+            int currentIndex = GetRealizedKey(element);
+            if (currentIndex < 0 ||
+                (currentIndex < owner.ItemCount && ReferenceEquals(owner.GetItemAt(currentIndex), element)) ||
                 ContainsMovedContainer(moves, element))
             {
                 continue;
             }
 
-            (moves ??= []).Add((index, element));
+            (moves ??= []).Add((index, currentIndex, element));
         }
 
         if (moves is null)
@@ -243,26 +256,27 @@ public sealed class ItemContainerGenerator
             return;
         }
 
-        foreach ((_, UIElement container) in moves)
+        foreach ((_, int currentIndex, _) in moves)
         {
-            realized.Remove(GetItemIndex(container));
+            realized.Remove(currentIndex);
         }
 
-        foreach ((int index, UIElement container) in moves)
+        foreach ((int index, _, UIElement container) in moves)
         {
             Recycle(index);
             realized.Add(index, container);
+            owner.PrepareItemContainer(container, index, container);
         }
     }
 
-    private static bool ContainsMovedContainer(List<(int Index, UIElement Container)>? moves, UIElement container)
+    private static bool ContainsMovedContainer(List<(int Index, int CurrentIndex, UIElement Container)>? moves, UIElement container)
     {
         if (moves is null)
         {
             return false;
         }
 
-        foreach ((_, UIElement moved) in moves)
+        foreach ((_, _, UIElement moved) in moves)
         {
             if (ReferenceEquals(moved, container))
             {
