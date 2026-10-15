@@ -2,8 +2,10 @@ using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
+using Cerneala.UI.Hosting.Windowing;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
 using Cerneala.UI.Servo;
 using ServoApi = Cerneala.UI.Servo.Servo;
 
@@ -255,6 +257,105 @@ public sealed class ServoInputTests
 
         Assert.Same(before, host.LastFrame);
         Assert.False(host.LastFrame!.Input.Keyboard.IsDown(InputKey.A));
+    }
+
+    [Theory]
+    [InlineData("hover")]
+    [InlineData("click")]
+    [InlineData("drag")]
+    [InlineData("scroll")]
+    public async Task TargetActionsAimWhereAScaledAncestorDrawsTheTarget(string action)
+    {
+        Thumb thumb = new() { Width = 100, Height = 40 };
+        ServoApi.SetId(thumb, "target");
+        UiHost host = CreateHost(CreateScaledPanel(thumb), width: 320, height: 240);
+        ServoApi servo = new(host);
+        MouseEventArgs? firstMove = null;
+        MouseEventArgs? down = null;
+        MouseEventArgs? wheel = null;
+        thumb.AddHandler(InputEvents.MouseMoveEvent, (_, args) => firstMove ??= (MouseEventArgs)args, handledEventsToo: true);
+        thumb.AddHandler(InputEvents.MouseDownEvent, (_, args) => down ??= (MouseEventArgs)args, handledEventsToo: true);
+        thumb.AddHandler(InputEvents.MouseWheelEvent, (_, args) => wheel ??= (MouseEventArgs)args, handledEventsToo: true);
+        Assert.Equal(new LayoutRect(0, 40, 100, 40), thumb.ArrangedBounds);
+
+        ServoTarget target = ServoTarget.ById("target");
+        if (action == "hover") await servo.HoverAsync(target);
+        else if (action == "click") await servo.ClickAsync(target);
+        else if (action == "drag") await servo.DragAsync(target, new ServoPoint(130, 130), steps: 4);
+        else await servo.ScrollAsync(target, -120);
+
+        Assert.NotNull(firstMove);
+        Assert.Equal((100, 120), (firstMove.X, firstMove.Y));
+        if (action == "click")
+        {
+            Assert.NotNull(down);
+            Assert.Equal((100, 120), (down.X, down.Y));
+        }
+        else if (action == "drag")
+        {
+            Assert.Equal(30, thumb.TotalHorizontalChange);
+            Assert.Equal(10, thumb.TotalVerticalChange);
+        }
+        else if (action == "scroll")
+        {
+            Assert.NotNull(wheel);
+            Assert.Equal((100, 120), (wheel.X, wheel.Y));
+        }
+    }
+
+    [Fact]
+    public async Task TargetActionsAimWhereATranslateRenderTransformDrawsTheTarget()
+    {
+        Button button = new()
+        {
+            Content = "Target",
+            Width = 100,
+            Height = 40,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top,
+            RenderTransform = new Transform(Matrix3x2.CreateTranslation(150, 30))
+        };
+        ServoApi.SetId(button, "target");
+        UiHost host = CreateHost(button, width: 320, height: 160);
+        ServoApi servo = new(host);
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+        Assert.Equal(new LayoutRect(0, 0, 100, 40), button.ArrangedBounds);
+
+        await servo.ClickAsync(ServoTarget.ById("target"));
+
+        Assert.Equal(1, clicks);
+        Assert.Equal(200, host.LastFrame!.Input.Pointer.X);
+        Assert.Equal(50, host.LastFrame.Input.Pointer.Y);
+    }
+
+    [Fact]
+    public async Task LayoutElementBoundsAndScreenshotRegionUseTheDrawnBounds()
+    {
+        Thumb thumb = new() { Width = 100, Height = 40 };
+        ServoApi.SetId(thumb, "target");
+        UiHost host = CreateHost(CreateScaledPanel(thumb), width: 320, height: 240);
+        ServoApi servo = new(host);
+        ServoTarget target = ServoTarget.ById("target");
+
+        Assert.Equal(new LayoutRect(0, 80, 200, 80), (await servo.FindAsync(target)).Bounds);
+        Assert.Equal(
+            new WindowScreenshotRegion(0, 80, 200, 80),
+            new ServoCaptureEngine(new ServoQueryEngine()).ResolveRegion(host.Root!, target));
+    }
+
+    private static StackPanel CreateScaledPanel(UIElement target)
+    {
+        StackPanel panel = new()
+        {
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top,
+            RenderTransform = new Transform(Matrix3x2.CreateScale(2, 2)),
+            RenderTransformOrigin = new LayoutPoint(0, 0)
+        };
+        panel.VisualChildren.Add(new Border { Height = 40 });
+        panel.VisualChildren.Add(target);
+        return panel;
     }
 
     private static UiHost CreateHost(UIElement content, float width = 320, float height = 160)

@@ -83,7 +83,9 @@ await servo.PressKeyAsync(InputKey.S, ServoModifiers.Control);
 
 `TypeIntoAsync` composes a click and text input. `ReplaceTextAsync` composes a
 click, `Control+A`, and text input. Target-based actions resolve current bounds,
-effective visibility, enabled state, and hit testing before sending input.
+effective visibility, enabled state, and hit testing before sending input. The
+bounds are where the target is drawn: render and Motion transforms of the target
+and its ancestors apply, so actions aim at the center of the drawn target.
 Their tasks complete after the final input frame is committed by the retained
 host, and after presentation when Servo owns a `Window` context.
 
@@ -137,7 +139,7 @@ await servo.SaveScreenshotAsync(
 
 Both operations use the application's `Window.SaveScreenshot` pipeline. A
 target capture crops the fully rendered framebuffer, so it includes overlays
-drawn over the target and clips effects outside its arranged bounds. The target
+drawn over the target and clips effects outside its drawn bounds. The target
 must be effectively visible and intersect the client framebuffer, but it need
 not be enabled or hit-testable.
 
