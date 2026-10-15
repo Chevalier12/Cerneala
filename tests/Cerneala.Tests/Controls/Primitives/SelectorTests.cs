@@ -96,6 +96,75 @@ public sealed class SelectorTests
     }
 
     [Fact]
+    public void ClickAfterReplacingClickedItemInSameInputDispatchSelectsNothing()
+    {
+        ListBox listBox = CreateArrangedTextListBox();
+        ListBoxItem clicked = (ListBoxItem)listBox.ItemContainerGenerator.RealizedContainers[1];
+        int selectionChanges = 0;
+        listBox.SelectionChanged += (_, _) => selectionChanges++;
+        bool replaced = false;
+        listBox.Handlers.AddHandler(InputEvents.PreviewMouseUpEvent, (_, _) =>
+        {
+            if (!replaced)
+            {
+                replaced = true;
+                listBox.Items[1] = "x";
+            }
+        });
+
+        Click(listBox, 5, 15);
+
+        Assert.True(replaced);
+        Assert.Equal("b", clicked.Content);
+        Assert.Equal(-1, listBox.SelectedIndex);
+        Assert.Null(listBox.SelectedItem);
+        Assert.Equal(0, selectionChanges);
+    }
+
+    [Fact]
+    public void ClickAfterReplacingClickedItemBeforeLayoutSelectsNothing()
+    {
+        ListBox listBox = CreateArrangedTextListBox();
+        ListBoxItem clicked = (ListBoxItem)listBox.ItemContainerGenerator.RealizedContainers[1];
+
+        listBox.Items[1] = "x";
+        Click(listBox, 5, 15);
+
+        Assert.Equal("b", clicked.Content);
+        Assert.Equal(-1, listBox.SelectedIndex);
+        Assert.Null(listBox.SelectedItem);
+    }
+
+    [Fact]
+    public void ClickAfterReplacingClickedItemsSourceItemBeforeLayoutSelectsNothing()
+    {
+        ObservableCollection<string> source = ["a", "b", "c"];
+        ListBox listBox = CreateArrangedTextListBox(source);
+        ListBoxItem clicked = (ListBoxItem)listBox.ItemContainerGenerator.RealizedContainers[1];
+
+        source[1] = "x";
+        Click(listBox, 5, 15);
+
+        Assert.Equal("b", clicked.Content);
+        Assert.Equal(-1, listBox.SelectedIndex);
+        Assert.Null(listBox.SelectedItem);
+    }
+
+    [Fact]
+    public void ClickAfterReplacingClickedItemAndLayoutSelectsNewItem()
+    {
+        ListBox listBox = CreateArrangedTextListBox();
+
+        listBox.Items[1] = "x";
+        listBox.Root!.ProcessFrame();
+        Click(listBox, 5, 15);
+
+        Assert.Equal("x", ((ListBoxItem)listBox.ItemContainerGenerator.RealizedContainers[1]).Content);
+        Assert.Equal(1, listBox.SelectedIndex);
+        Assert.Equal("x", listBox.SelectedItem);
+    }
+
+    [Fact]
     public void SelectionInvalidatesAffectedContainersOnly()
     {
         ListBox listBox = CreateArrangedListBox();
@@ -517,6 +586,32 @@ public sealed class SelectorTests
         root.VisualChildren.Add(listBox);
         listBox.Measure(new MeasureContext(new LayoutSize(100, 100)));
         listBox.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+        return listBox;
+    }
+
+    // Shows "a", "b" and "c" in rows at y = 0, 10 and 20. Text rows measure 0 px tall without a font, so
+    // each row gets a fixed height.
+    private static ListBox CreateArrangedTextListBox(IEnumerable? itemsSource = null)
+    {
+        UIRoot root = new(100, 100);
+        ListBox listBox = new();
+        if (itemsSource is null)
+        {
+            listBox.SetItems(new[] { "a", "b", "c" });
+        }
+        else
+        {
+            listBox.ItemsSource = itemsSource;
+        }
+
+        root.VisualChildren.Add(listBox);
+        root.ProcessFrame();
+        foreach (UIElement container in listBox.ItemContainerGenerator.RealizedContainers.Values)
+        {
+            container.Height = 10;
+        }
+
+        root.ProcessFrame();
         return listBox;
     }
 
