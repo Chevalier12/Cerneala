@@ -166,11 +166,18 @@ public sealed class ItemContainerGenerator
     // still shows the item at its index.
     internal int IndexFromContainer(UIElement container)
     {
+        int index = GetRealizedKey(container);
+        return index >= 0 && Equals(GetItem(container), owner.GetItemAt(index)) ? index : -1;
+    }
+
+    // The key the container is realized under, or -1, whatever item that key holds now.
+    private int GetRealizedKey(UIElement container)
+    {
         foreach ((int index, UIElement realizedContainer) in realized)
         {
             if (ReferenceEquals(realizedContainer, container))
             {
-                return Equals(GetItem(container), owner.GetItemAt(index)) ? index : -1;
+                return index;
             }
         }
 
@@ -230,7 +237,7 @@ public sealed class ItemContainerGenerator
                 continue;
             }
 
-            int currentIndex = IndexFromContainer(element);
+            int currentIndex = GetRealizedKey(element);
             if (currentIndex < 0 ||
                 (currentIndex < owner.ItemCount && ReferenceEquals(owner.GetItemAt(currentIndex), element)) ||
                 ContainsMovedContainer(moves, element))
