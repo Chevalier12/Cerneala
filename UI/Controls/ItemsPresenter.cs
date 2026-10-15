@@ -326,6 +326,7 @@ public class ItemsPresenter : Control
             SynchronizePanelChildren(nextPanel, nextChildren);
             panelRoot = nextPanel;
             ApplyVirtualizationContext(nextPanel, VirtualizationContext, nextWindow);
+            RecycleUnpresentedContainers(nextChildren);
             return;
         }
 
@@ -370,6 +371,14 @@ public class ItemsPresenter : Control
         }
 
         ApplyVirtualizationContext(nextPanel, VirtualizationContext, nextWindow);
+        RecycleUnpresentedContainers(nextChildren);
+    }
+
+    // The owner's containers outside the presented window are recycled only after the window is committed,
+    // so a refresh that throws while it prepares or presents the window keeps the previous children prepared.
+    private void RecycleUnpresentedContainers(IReadOnlyList<UIElement> presentedChildren)
+    {
+        ItemsOwner?.ItemContainerGenerator.RecycleAllExcept(presentedChildren);
     }
 
     private static void AddPanelChild(Layout.Panels.Panel panel, UIElement child)
@@ -484,7 +493,7 @@ public class ItemsPresenter : Control
     {
         if (ItemsOwner is ItemsControl owner)
         {
-            foreach (UIElement container in owner.ItemContainerGenerator.Realize(window))
+            foreach (UIElement container in owner.ItemContainerGenerator.RealizeWithoutRecycling(window))
             {
                 owner.OnItemContainerPrepared(container, ItemContainerGenerator.GetItemIndex(container));
                 yield return container;
