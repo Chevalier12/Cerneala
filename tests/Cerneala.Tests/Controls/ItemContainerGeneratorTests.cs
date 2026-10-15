@@ -2,8 +2,11 @@ using System.Collections.ObjectModel;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Templates;
+using Cerneala.UI.Data;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Layout.Panels;
 using Cerneala.UI.Layout.Virtualization;
 
 namespace Cerneala.Tests.Controls;
@@ -921,6 +924,86 @@ public sealed class ItemContainerGeneratorTests
             Assert.Equal("s", ((ListBoxItem)container).Content);
             Assert.Equal(0, control.ItemContainerGenerator.RecyclePool.Count);
         }
+    }
+
+    [Fact]
+    public void MovingWindowReusesRecycledSubclassContainersOfDataItemsOfAnotherTypeThanContainerType()
+    {
+        ListBoxItemContainerItemsControl control = new();
+        control.SetItems(Enumerable.Range(0, 100).Select(index => (object)("s" + index)).ToArray());
+        ItemContainerGenerator generator = control.ItemContainerGenerator;
+        Assert.Equal(typeof(ContentPresenter), control.GetContainerTypeForItem("s0"));
+
+        generator.Realize(new RealizationWindow(0, 3));
+        for (int step = 1; step <= 10; step++)
+        {
+            IReadOnlyList<UIElement> containers = generator.Realize(new RealizationWindow(step * 3, step * 3 + 3));
+
+            Assert.Equal(3, control.CreateCount);
+            Assert.Equal(0, generator.RecyclePool.Count);
+            Assert.Equal("s" + (step * 3), ((ListBoxItem)containers[0]).Content);
+        }
+    }
+
+    [Fact]
+    public void MovingWindowReusesRecycledSubclassWrappersOfElementItemsOfAnotherTypeThanContainerType()
+    {
+        CountingWrapperItemsControl control = new();
+        control.SetItems(Enumerable.Range(0, 30).Select(index => (object)new Button { Content = "B" + index }).ToArray());
+        ItemContainerGenerator generator = control.ItemContainerGenerator;
+        HashSet<UIElement> used = new(ReferenceEqualityComparer.Instance);
+
+        used.UnionWith(generator.Realize(new RealizationWindow(0, 3)));
+        for (int step = 1; step <= 9; step++)
+        {
+            used.UnionWith(generator.Realize(new RealizationWindow(step * 3, step * 3 + 3)));
+
+            Assert.Equal(0, generator.RecyclePool.Count);
+        }
+
+        // CreateItemContainer is asked first for an element item of the container type, so only the wrappers that the
+        // generator uses are counted.
+        Assert.Equal(3, used.Count);
+    }
+
+    [Fact]
+    public void RemovedItemContainerOfAnotherTypeThanContainerTypeServesALaterItem()
+    {
+        ListBoxItemContainerItemsControl control = new();
+        control.SetItems(new object[] { "a", "b", "c" });
+        control.ItemContainerGenerator.Realize();
+
+        control.Items.RemoveAt(0);
+        Assert.Equal(1, control.ItemContainerGenerator.RecyclePool.Count);
+        control.Items.Add("d");
+        control.ItemContainerGenerator.Realize();
+
+        Assert.Equal(3, control.CreateCount);
+        Assert.Equal(0, control.ItemContainerGenerator.RecyclePool.Count);
+    }
+
+    [Fact]
+    public void VirtualizedScrollDoesNotGrowRecyclePoolForSubclassContainersOfAnotherTypeThanContainerType()
+    {
+        ObservableList<string> items = new(Enumerable.Range(0, 500).Select(index => $"Row {index}"));
+        ListBoxItemContainerItemsControl list = new()
+        {
+            ItemsSource = items,
+            ItemsPanel = new VirtualizingStackPanel()
+        };
+        list.SetVirtualizationContext(new VirtualizationContext(items.Count, 10, 50, 0, CacheItems: 1));
+        UIRoot root = new(200, 60);
+        root.VisualChildren.Add(list);
+        root.ProcessFrame();
+
+        for (int step = 1; step <= 20; step++)
+        {
+            list.SetVirtualizationContext(new VirtualizationContext(items.Count, 10, 50, step * 100, CacheItems: 1));
+            root.ProcessFrame();
+        }
+
+        Assert.Equal(14, list.CreateCount);
+        Assert.Equal(7, list.ItemContainerGenerator.RecyclePool.Count);
     }
 
     [Fact]

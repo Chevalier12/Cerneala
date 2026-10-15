@@ -14,6 +14,11 @@ public sealed class ItemContainerGenerator
     // container. They stay attached and prepared for their previous items until the caller commits the window.
     private readonly List<UIElement> displaced = [];
 
+    // The types of the containers that CreateItemContainer returned for items of each container type, when they are
+    // not that type, such as a ListBoxItem for a data item whose container type is ContentPresenter. The pool keys a
+    // recycled container by its own type, so a recycled container of such a type is taken back through this map.
+    private readonly Dictionary<Type, List<Type>> createdContainerTypes = [];
+
     public ItemContainerGenerator(ItemsControl owner)
     {
         this.owner = owner ?? throw new ArgumentNullException(nameof(owner));
@@ -140,7 +145,7 @@ public sealed class ItemContainerGenerator
         // CreateItemContainer knows whether a subclass returns such an item, so it is asked before the pool.
         UIElement container = IsOfContainerType(item, containerType)
             ? CreateOwnContainer(index, item, containerType)
-            : RecyclePool.Pop(containerType) ?? owner.CreateItemContainer(index, item);
+            : PopRecycled(containerType) ?? CreateItemContainer(index, item, containerType);
         try
         {
             owner.PrepareItemContainer(container, index, item);
@@ -568,8 +573,52 @@ public sealed class ItemContainerGenerator
     // like any other container, so the pool does not grow on every realization.
     private UIElement CreateOwnContainer(int index, object? item, Type containerType)
     {
+        UIElement created = CreateItemContainer(index, item, containerType);
+        return ReferenceEquals(created, item) ? created : PopRecycled(containerType) ?? created;
+    }
+
+    private UIElement CreateItemContainer(int index, object? item, Type containerType)
+    {
         UIElement created = owner.CreateItemContainer(index, item);
-        return ReferenceEquals(created, item) ? created : RecyclePool.Pop(containerType) ?? created;
+        Type createdType = created.GetType();
+        if (!ReferenceEquals(created, item) && createdType != containerType)
+        {
+            if (!createdContainerTypes.TryGetValue(containerType, out List<Type>? types))
+            {
+                types = [];
+                createdContainerTypes.Add(containerType, types);
+            }
+
+            if (!types.Contains(createdType))
+            {
+                types.Add(createdType);
+            }
+        }
+
+        return created;
+    }
+
+    // A recycled container of the container type is taken first. Otherwise a recycled container of a type that
+    // CreateItemContainer returned for an item of the container type serves the item, as WPF reuses any recycled
+    // container for an item that is not its own container, so such containers do not stay in the pool for good.
+    private UIElement? PopRecycled(Type containerType)
+    {
+        UIElement? container = RecyclePool.Pop(containerType);
+        if (container is not null || !createdContainerTypes.TryGetValue(containerType, out List<Type>? types))
+        {
+            return container;
+        }
+
+        foreach (Type type in types)
+        {
+            container = RecyclePool.Pop(type);
+            if (container is not null)
+            {
+                return container;
+            }
+        }
+
+        return null;
     }
 
     private static void DetachContainer(UIElement container)
