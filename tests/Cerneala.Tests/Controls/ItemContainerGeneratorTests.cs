@@ -1064,6 +1064,54 @@ public sealed class ItemContainerGeneratorTests
     }
 
     [Fact]
+    public void ListBoxClearsMovedListBoxItemAfterTheClearOfTheContainerItDisplacesThrows()
+    {
+        FailClearForListBox listBox = new() { ItemContainerAspect = NewMarginAspect() };
+        ListBoxItem a = new() { Content = "A" };
+        ListBoxItem b = new() { Content = "B" };
+        listBox.SetItems(new object[] { a, b });
+        listBox.ItemContainerGenerator.Realize();
+        listBox.Items[0] = "x";
+        listBox.Items[1] = "y";
+        listBox.Items[0] = b;
+        Assert.Same(a, listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Same(b, listBox.ItemContainerGenerator.RealizedContainers[1]);
+
+        listBox.FailClearFor = a;
+        Assert.Throws<InvalidOperationException>(() => listBox.ItemContainerGenerator.Realize());
+        Assert.Contains(b, listBox.ItemContainerGenerator.RealizedContainers.Values);
+        listBox.FailClearFor = null;
+        listBox.Items.Clear();
+
+        AssertClearedContainer(b);
+    }
+
+    [Fact]
+    public void UnnotifiedGeneratorClearsEveryMovedListBoxItemAfterTheClearOfADisplacedContainerThrows()
+    {
+        (ItemContainerGenerator generator, ListBoxItem b, ListBoxItem c) = RealizeShiftedListBoxItemsAfterAThrowingClear();
+
+        generator.Clear();
+
+        AssertClearedContainer(b);
+        AssertClearedContainer(c);
+    }
+
+    [Fact]
+    public void RealizeAfterTheClearOfADisplacedContainerThrowsRealizesEveryItemOnceAtItsCurrentIndex()
+    {
+        (ItemContainerGenerator generator, ListBoxItem b, ListBoxItem c) = RealizeShiftedListBoxItemsAfterAThrowingClear();
+
+        generator.Realize();
+
+        Assert.Equal(new[] { 0, 1 }, generator.RealizedContainers.Keys.Order());
+        Assert.Same(b, generator.RealizedContainers[0]);
+        Assert.Same(c, generator.RealizedContainers[1]);
+        AssertItemState(b, 0, isSelected: false);
+        AssertItemState(c, 1, isSelected: false);
+    }
+
+    [Fact]
     public void RealizedContainerWhoseContentPreparationThrowsIsPreparedAgainOnRetry()
     {
         FailingContentItemsControl control = new();
@@ -1252,6 +1300,29 @@ public sealed class ItemContainerGeneratorTests
         return (a, b);
     }
 
+    // Items [a, b, c] realized by an unnotified generator, then a removed, so the next realization moves b to 0,
+    // where it displaces a, and c to 1. That realization throws from the clear of a, and both moved containers stay
+    // realized under their previous keys 1 and 2. The clear does not throw any more afterwards.
+    private static (ItemContainerGenerator Generator, ListBoxItem B, ListBoxItem C) RealizeShiftedListBoxItemsAfterAThrowingClear()
+    {
+        FailClearForListBox listBox = new() { ItemContainerAspect = NewMarginAspect() };
+        ListBoxItem a = new() { Content = "A" };
+        ListBoxItem b = new() { Content = "B" };
+        ListBoxItem c = new() { Content = "C" };
+        listBox.SetItems(new[] { a, b, c });
+        ItemContainerGenerator generator = new(listBox);
+        generator.Realize();
+
+        listBox.Items.RemoveAt(0);
+        listBox.FailClearFor = a;
+        Assert.Throws<InvalidOperationException>(() => generator.Realize());
+        Assert.Equal(new[] { 1, 2 }, generator.RealizedContainers.Keys.Order());
+        Assert.Same(b, generator.RealizedContainers[1]);
+        Assert.Same(c, generator.RealizedContainers[2]);
+        listBox.FailClearFor = null;
+        return (generator, b, c);
+    }
+
     private static void AssertClearedContainer(ListBoxItem container)
     {
         Assert.Null(container.Aspect);
@@ -1404,6 +1475,21 @@ public sealed class ItemContainerGeneratorTests
             if (FailFor is not null && ReferenceEquals(item, FailFor))
             {
                 throw new InvalidOperationException("container preparation failed");
+            }
+        }
+    }
+
+    // Throws from ClearItemContainer after the base clear ran, for the container FailClearFor only.
+    private sealed class FailClearForListBox : ListBox
+    {
+        public UIElement? FailClearFor { get; set; }
+
+        protected internal override void ClearItemContainer(UIElement container)
+        {
+            base.ClearItemContainer(container);
+            if (FailClearFor is not null && ReferenceEquals(container, FailClearFor))
+            {
+                throw new InvalidOperationException("container clear failed");
             }
         }
     }

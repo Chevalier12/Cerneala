@@ -387,6 +387,17 @@ public sealed class ItemContainerGenerator
             return;
         }
 
+        // The containers that the moves displace give up their indexes one at a time while every moved container is
+        // still realized under its previous index, so an owner's clear that throws for a displaced container leaves
+        // the moved containers realized there, and a later realization moves them.
+        foreach ((int index, _, _) in moves)
+        {
+            if (realized.TryGetValue(index, out UIElement? occupant) && !ContainsMovedContainer(moves, occupant))
+            {
+                Displace(index, recycleDisplaced);
+            }
+        }
+
         foreach ((_, int currentIndex, _) in moves)
         {
             realized.Remove(currentIndex);
@@ -396,7 +407,6 @@ public sealed class ItemContainerGenerator
         // throws leaves the others realized there, and a later realization prepares them like any realized container.
         foreach ((int index, _, UIElement container) in moves)
         {
-            Displace(index, recycleDisplaced);
             realized.Add(index, container);
         }
 
