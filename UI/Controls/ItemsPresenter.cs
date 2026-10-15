@@ -342,7 +342,7 @@ public class ItemsPresenter : Control
             }
             catch
             {
-                RestorePresentedOwnerItems(nextPanel, nextChildren);
+                RestorePresentedOwnerItems(nextPanel, nextChildren, oldChildren);
                 throw;
             }
 
@@ -387,7 +387,7 @@ public class ItemsPresenter : Control
                 AddPanelRoot(oldPanel);
 
                 panelRoot = oldPanel;
-                RestorePresentedOwnerItems(oldPanel, nextChildren);
+                RestorePresentedOwnerItems(oldPanel, nextChildren, oldChildren);
             }
             else
             {
@@ -421,8 +421,15 @@ public class ItemsPresenter : Control
     // be put back as they are. The window the panel presented is realized again instead, after the containers the
     // panel did not take are given back without detaching them. The containers outside that window, which the failed
     // realization created or kept, are then recycled like after a committed refresh. A realization of that window that
-    // throws gives back what it realized outside the panel, like the failed realization of the next window.
-    private void RestorePresentedOwnerItems(Layout.Panels.Panel panel, IReadOnlyList<UIElement> failedChildren)
+    // throws leaves no restored children to present, so the panel gets back its previous children, which are still
+    // prepared for their items, displaced or realized, and which the panel's first realized index and context still
+    // describe, because a partial move of the retained panel can have removed some of them and inserted others. What
+    // the failed realizations realized outside the panel is then given back, like after the failed realization of the
+    // next window.
+    private void RestorePresentedOwnerItems(
+        Layout.Panels.Panel panel,
+        IReadOnlyList<UIElement> failedChildren,
+        IReadOnlyList<UIElement> previousChildren)
     {
         ReleaseUnpresentedContainers(panel, failedChildren);
         List<UIElement> restoredChildren;
@@ -432,6 +439,7 @@ public class ItemsPresenter : Control
         }
         catch
         {
+            MovePanelChildrenTo(panel, previousChildren);
             ReleaseContainersOfFailedRealization(panel);
             throw;
         }

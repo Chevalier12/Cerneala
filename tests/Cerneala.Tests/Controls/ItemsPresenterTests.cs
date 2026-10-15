@@ -635,7 +635,8 @@ public sealed class ItemsPresenterTests
     }
 
     // The panel rejects item 5, and the restore of the presented window 0..3 throws for item 0 after the generator
-    // realized that window again. The failed move took item 0 out of the panel, so the generator must not keep it realized.
+    // realized that window again. The panel gets back items 0..3, so the generator must not keep the container that the
+    // failed move created for item 4 realized.
     [Fact]
     public void FailedRestoreAfterFailedOwnerInsertRealizesOnlyThePresentedChildren()
     {
@@ -655,7 +656,7 @@ public sealed class ItemsPresenterTests
         {
             Assert.Throws<InvalidOperationException>(() => control.Measure(new MeasureContext(new LayoutSize(100, 31 + attempt))));
 
-            Assert.Equal("realized=[1,2,3,4] count=4 children=[1,2,3,4] realizedOutsidePanel=[]", DescribeRealized(control, panel));
+            Assert.Equal("realized=[0,1,2,3] count=4 children=[0,1,2,3] realizedOutsidePanel=[]", DescribeRealized(control, panel));
             Assert.Equal(1, control.ItemContainerGenerator.RecyclePool.Count);
             ContentPresenter released = Assert.IsType<ContentPresenter>(control.ItemContainerGenerator.RecyclePool.Pop(typeof(ContentPresenter)));
             Assert.Null(released.Content);
@@ -704,6 +705,81 @@ public sealed class ItemsPresenterTests
 
         Assert.Same(newPanel, control.ItemsPresenter.LayoutPanelRoot);
         Assert.Equal("realized=[1,2,3,4,5] count=5 children=[1,e2,3,4,x] realizedOutsidePanel=[]", DescribeRealized(control, newPanel));
+    }
+
+    // The failed move took item 0 out of the panel and inserted item 4 before the panel rejected item 5, and the restore
+    // of the presented window 0..3 throws for item 0. The panel must get back the children of that window, which its
+    // FirstRealizedIndex and context still describe, so each child is arranged at the row of its item.
+    [Fact]
+    public void FailedRestoreAfterFailedOwnerInsertKeepsThePreviousChildrenAtTheirRows()
+    {
+        Cerneala.UI.Layout.Panels.VirtualizingStackPanel panel = new();
+        ItemElement x = new("x");
+        FailingPreparedIndexItemsControl control = new() { ItemsPanel = panel };
+        control.SetItems(Enumerable.Range(0, 100).Select(index => index == 5 ? (object)x : index));
+        control.SetVirtualizationContext(new VirtualizationContext(100, 10, 30, 0, CacheItems: 1));
+        control.Measure(new MeasureContext(new LayoutSize(100, 30)));
+        control.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 30)));
+
+        Cerneala.UI.Layout.Panels.StackPanel otherParent = new();
+        otherParent.VisualChildren.Add(x);
+        control.FailPreparedIndex = 0;
+        control.SetVirtualizationContext(new VirtualizationContext(100, 10, 30, 20, CacheItems: 1));
+        for (int attempt = 0; attempt < 2; attempt++)
+        {
+            Assert.Throws<InvalidOperationException>(() => control.Measure(new MeasureContext(new LayoutSize(100, 31 + attempt))));
+
+            Assert.Equal("children=[0,1,2,3] first=0 contextOffset=0", DescribeWindow(control, panel));
+            panel.Measure(new MeasureContext(new LayoutSize(100, 30 + attempt)));
+            panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 30)));
+            Assert.Equal(
+                "0@0,1@10,2@20,3@30",
+                string.Join(",", panel.VisualChildren.Select(child =>
+                    $"{Cerneala.UI.Controls.Items.ItemContainerGenerator.GetItem(child)}@{child.ArrangedBounds.Y}")));
+        }
+
+        otherParent.VisualChildren.Remove(x);
+        control.FailPreparedIndex = -1;
+        control.Measure(new MeasureContext(new LayoutSize(100, 33)));
+
+        Assert.Equal("realized=[1,2,3,4,5] count=5 children=[1,2,3,4,x] realizedOutsidePanel=[]", DescribeRealized(control, panel));
+        Assert.Equal(1, panel.FirstRealizedIndex);
+    }
+
+    // The same double failure, after item 2 was replaced by an element that is its own container. The container that
+    // showed "2" is displaced and the failed move took it out of the panel, so the panel must hold it again, still
+    // prepared and outside RecyclePool, until a refresh succeeds.
+    [Fact]
+    public void FailedRestoreAfterFailedOwnerInsertKeepsADisplacedContainerInThePanel()
+    {
+        Cerneala.UI.Layout.Panels.VirtualizingStackPanel panel = new();
+        ItemElement x = new("x");
+        ObservableCollection<object> source = [.. Enumerable.Range(0, 100).Select(index => index == 5 ? (object)x : $"{index}")];
+        FailingPreparedIndexItemsControl control = new() { ItemsPanel = panel, ItemsSource = source };
+        control.SetVirtualizationContext(new VirtualizationContext(100, 10, 30, 0, CacheItems: 1));
+        control.Measure(new MeasureContext(new LayoutSize(100, 30)));
+        Assert.Equal("children=[0,1,2,3] pool=[]", DescribePresented(control, panel));
+
+        Cerneala.UI.Layout.Panels.StackPanel otherParent = new();
+        otherParent.VisualChildren.Add(x);
+        source[2] = new ItemElement("e2");
+        control.FailPreparedIndex = 0;
+        control.SetVirtualizationContext(new VirtualizationContext(100, 10, 30, 20, CacheItems: 1));
+        for (int attempt = 0; attempt < 2; attempt++)
+        {
+            Assert.Throws<InvalidOperationException>(() => control.Measure(new MeasureContext(new LayoutSize(100, 31 + attempt))));
+
+            // The pooled container is the one the failed move created for item 4.
+            Assert.Equal("children=[0,1,2,3] pool=[unparented]", DescribePresented(control, panel));
+            Assert.Equal(0, panel.FirstRealizedIndex);
+        }
+
+        otherParent.VisualChildren.Remove(x);
+        control.FailPreparedIndex = -1;
+        control.Measure(new MeasureContext(new LayoutSize(100, 33)));
+
+        Assert.Equal("children=[1,e2,3,4,x] pool=[unparented,unparented]", DescribePresented(control, panel));
+        Assert.Equal(1, panel.FirstRealizedIndex);
     }
 
     // Each child is described by the item it shows, and each realized container that the panel does not present is listed.
