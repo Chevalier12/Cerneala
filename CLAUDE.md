@@ -95,6 +95,14 @@ For checklist plans, recover current stage/gates; execute one atomic stage witho
 
 For isolated C# mechanics prefer CSI when cheaper and faithful. The command is `dotnet-csi <script>.csx` (global .NET tool `dotnet-csi`, installed in `%USERPROFILE%\.dotnet\tools`, which is on the user PATH); there is no `csi` command. Use a project-approved temporary `.csx` rather than stdin, a short timeout, cleanup, and check/terminate suspicious stuck `dotnet-csi.exe` processes. Never leave interactive/long-running CSI in the background. Keep all temporary experiments outside production globs/build discovery; remove them unless preservation is requested.
 
+## Temporary worktree for skills
+
+The skills that change code or pull requests work in a temporary git worktree from their very first step (user decision, 2026-10-15): `cerneala-fix-bug`, `cerneala-implement-plan`, `cerneala-performance-gate`, `repo-cleanup`, `cerneala-breaker`, `cerneala-pr-review-merge`, `cerneala-pr-comment-fix`, and `cerneala-pr-issues-raise`. The main checkout and its dirty user files stay untouched.
+
+- **Start (step 0, before any read, search, build, or edit):** if `git rev-parse --git-dir` and `git rev-parse --git-common-dir` print different paths, the session is already in a linked worktree: stay there and create none. Otherwise call `EnterWorktree` with a short task name, for example `fix-grid-span` or `pr-76-fix`. It creates `.claude/worktrees/<name>` on a new branch from the newest `origin/master` and moves the session there. Every later step works in that folder, including the paths given to explorers.
+- **Finish (after the skill's last step):** remove only a worktree that this skill created at step 0, and only when its work is published: `git status --porcelain` prints nothing, and after `git fetch origin`, `git branch -r --contains HEAD` prints at least one branch. Then call `ExitWorktree` with `action: "remove"`. When it refuses only because of commits that the check above found on `origin`, for example a pull request checked out with `gh pr checkout`, call it again with `discard_changes: true`. In every other case call `ExitWorktree` with `action: "keep"` and report the worktree path and what is unpublished, for example uncommitted breaker regression tests.
+- **Files that must outlive the worktree:** issue drafts go to `.artifacts/issue-drafts/` of the main checkout (the parent folder of `git rev-parse --git-common-dir`), not of the worktree. A plan file that exists only in the main checkout, or differs there from the worktree's copy, is copied into the worktree at the same path before the work starts, and is committed with it.
+
 # Claude Code tooling and verification commands
 
 The Cerneala skills in `.claude/skills/` rely on this section. They are adapted from the Codex copies in `.codex/skills/`, which stay unchanged for Codex.

@@ -15,6 +15,8 @@ Require a concrete target: a public API, type, subsystem, backend, feature, scen
 
 Treat the invocation as authorization to inspect the repository, run bounded adversarial tests against that target, add permanent regression tests for confirmed findings, add a justified permanent Detective diagnostic under the policy below, and repair confirmed Servo or Detective defects encountered during the audit. Findings outside Servo and Detective remain active RED tests. It does not authorize other production fixes, other permanent public API changes, new dependencies, commits, destructive stress, or attacks on external systems.
 
+**Step 0 (MANDATORY, before any inspection or test):** start in a temporary worktree, as `CLAUDE.md` describes under "Temporary worktree for skills", and work only there. After the report, finish the worktree the same way. The audit makes no commit, so a worktree that holds new regression tests or diagnostics is kept: give its path in the report.
+
 ## Scope
 
 Hunt failures that matter to a user who does not care about polish:

@@ -13,7 +13,7 @@ This skill only raises issues. It never fixes code. Fixing is the job of `cernea
 
 - `<number>`: the pull request number.
 - `<comment>`: the id of the review comment, the number after `#issuecomment-` in its URL.
-- `<drafts>` (optional): the folder for issue drafts. The default is `.artifacts/issue-drafts/` in the repository. Pass a folder outside the worktree when the worktree will be deleted after the run, so the drafts survive.
+- `<drafts>` (optional): the folder for issue drafts. The default is `.artifacts/issue-drafts/` of the main checkout (the parent folder of `git rev-parse --git-common-dir`), so the drafts survive when the worktree is removed.
 
 When the invocation gives no `<comment>`, use the newest comment on the PR whose first line starts with `<!-- cerneala-pr-review head=` or `<!-- cerneala-pr-notes head=` and that has a "Pre-existing defects" section.
 
@@ -38,6 +38,8 @@ Other skills and tools parse the summary, so its first line is exact:
 ```
 
 ## Steps
+
+0. **Worktree.** Before anything else, start in a temporary worktree, as `CLAUDE.md` describes under "Temporary worktree for skills", and work only there. It starts on `origin/master`, which step 2 needs. After step 5, finish the worktree the same way.
 
 1. **Read the items.** Run `gh pr view <number> --json number,title,comments`, and take comment `<comment>`.
    - Take only the items of its "Pre-existing defects" section. Blocking findings and notes are not yours.

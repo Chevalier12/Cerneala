@@ -16,6 +16,8 @@ After a context compaction, re-read this file (`.claude/skills/cerneala-performa
 
 Invoking this skill authorizes running the `git-session-commit-push` skill at the end (step 9).
 
+**Step 0 (MANDATORY, before anything else):** start in a temporary worktree, as `CLAUDE.md` describes under "Temporary worktree for skills", and work only there. After the report, finish the worktree the same way.
+
 Measurement hygiene on this machine (8 logical cores, 16 GB RAM):
 - Close or account for other heavy processes before a gate run, such as other test hosts or `mcpRoslyn.exe` instances.
 - Never run two gate measurements at the same time.

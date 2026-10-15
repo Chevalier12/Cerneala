@@ -11,6 +11,7 @@ Follow `CLAUDE.md`, especially "Claude Code tooling and verification commands". 
 
 ## Start
 
+0. **Worktree (MANDATORY, before anything else):** start in a temporary worktree, as `CLAUDE.md` describes under "Temporary worktree for skills", and work only there. If the plan file is missing from the worktree, or differs from the main checkout's copy, copy the main checkout's copy into the worktree at the same path. After the final completion audit and its commit, finish the worktree the same way.
 1. Resolve the requested plan to one exact Markdown file. Resolve a bare name against `docs/plans/` first; delegate the lookup to a Haiku explorer when the path is not known.
 2. If several files match, ask the user which one (with `AskUserQuestion`). Do not pick one.
 3. Tell the user in one short message, in their language:

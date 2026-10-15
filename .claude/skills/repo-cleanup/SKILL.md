@@ -19,6 +19,7 @@ Do not add features, fix unrelated bugs, replace algorithms, perform speculative
 
 ## Establish scope and evidence
 
+0. **Worktree (MANDATORY, before anything else):** start in a temporary worktree, as `CLAUDE.md` describes under "Temporary worktree for skills", and work only there. After the report, finish the worktree the same way. A review-only request also runs in it.
 1. Read applicable repository instructions, architecture/contracts, current plans, and verification procedures. Inspect working-tree status and preserve existing changes. If scope is omitted, survey repository-owned source; exclude generated, vendored, build-output, cache, and dependency directories. Edit generators rather than their output when appropriate.
 2. Map responsibilities and dependencies with repository-preferred tooling. In Cerneala, split the survey into independent areas and send them to Haiku explorers in parallel. Ask each explorer for concrete candidates with file/line evidence, not file inventories. A broad scan is not an exhaustive audit: track inspected and uninspected areas. Prioritize concrete maintenance costs, not arbitrary complexity scores or file lengths.
 3. Read each candidate's complete implementation, relevant callers, tests, and ownership context. Look for existing capabilities before introducing helpers. Check reflection, serialization, source generation, dynamic uses, platform paths, and public extensibility before declaring code unused.

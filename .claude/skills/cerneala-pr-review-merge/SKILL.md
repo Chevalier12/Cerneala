@@ -38,6 +38,8 @@ Other skills and tools parse the comments, so these texts are exact:
 
 ## Steps
 
+0. **Worktree.** Before anything else, start in a temporary worktree, as `CLAUDE.md` describes under "Temporary worktree for skills", and work only there. After step 8, finish the worktree the same way.
+
 1. **Check the target.** Run `gh pr view <number> --json state,isDraft,baseRefName,headRefOid,title,author,files,comments`.
    - Stop with a report, without commenting or merging, if the PR is not `OPEN`, is a draft, does not target `master`, or its head is not `<sha>`.
    - Read earlier fixer replies (`<!-- cerneala-comment-fix head=`). They give evidence for findings the fixer rejected or classified as pre-existing; weigh that evidence instead of repeating the same finding blindly.

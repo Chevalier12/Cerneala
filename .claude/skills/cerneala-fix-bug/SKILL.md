@@ -11,6 +11,8 @@ Follow `CLAUDE.md`, especially "Claude Code tooling and verification commands". 
 
 Invoking this skill authorizes running the `git-session-commit-push` skill at the end (step 8).
 
+**Step 0 (MANDATORY, before anything else):** start in a temporary worktree, as `CLAUDE.md` describes under "Temporary worktree for skills", and work only there. After the report, finish the worktree the same way.
+
 ## 1. Capture the Contract
 
 - Restate the smallest known reproduction, expected behavior, actual behavior, environment, and frequency.

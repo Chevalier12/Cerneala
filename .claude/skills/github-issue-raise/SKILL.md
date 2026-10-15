@@ -59,7 +59,7 @@ Rules:
 - **No noise:** no footer like "found by an agent", and no commit permalinks as the main references. Name files and members instead.
 - **Label:** `bug`.
 
-Save the draft to `.artifacts/issue-drafts/<yyyy-MM-dd>-<short-slug>.md`. That folder is git-ignored. The file's first line is `Title: ...`, followed by a blank line and the body.
+Save the draft to `.artifacts/issue-drafts/<yyyy-MM-dd>-<short-slug>.md`. That folder is git-ignored. In a linked worktree, use the main checkout's folder (the parent folder of `git rev-parse --git-common-dir`), because the worktree may be removed. The file's first line is `Title: ...`, followed by a blank line and the body.
 
 ## 3. Get approval, then post
 
