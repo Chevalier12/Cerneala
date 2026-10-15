@@ -22,6 +22,31 @@ public sealed class ItemContainerGenerator
 
     public IReadOnlyList<UIElement> Realize(RealizationWindow? window = null)
     {
+        return Realize(window, recycleOutsideWindow: true);
+    }
+
+    // The containers outside the window stay realized, attached, and prepared for their items, so a preparation
+    // that throws, or a caller step that throws before it commits the window, leaves them as they were. The caller
+    // recycles them with RecycleAllExcept once it commits the window, so they serve a later realization.
+    internal IReadOnlyList<UIElement> RealizeWithoutRecycling(RealizationWindow? window)
+    {
+        return Realize(window, recycleOutsideWindow: false);
+    }
+
+    internal void RecycleAllExcept(IReadOnlyList<UIElement> containers)
+    {
+        HashSet<UIElement> kept = new(containers, ReferenceEqualityComparer.Instance);
+        foreach ((int index, UIElement container) in realized.ToArray())
+        {
+            if (!kept.Contains(container))
+            {
+                Recycle(index);
+            }
+        }
+    }
+
+    private IReadOnlyList<UIElement> Realize(RealizationWindow? window, bool recycleOutsideWindow)
+    {
         int count = owner.ViewItemCount;
         int start = window?.StartIndex ?? 0;
         int end = window?.EndIndexExclusive ?? count;
@@ -31,9 +56,12 @@ public sealed class ItemContainerGenerator
             .Select(owner.GetSourceIndexForViewIndex)];
 
         MoveShiftedItemContainers(desired);
-        foreach (int index in realized.Keys.Where(index => !desired.Contains(index)).ToArray())
+        if (recycleOutsideWindow)
         {
-            Recycle(index);
+            foreach (int index in realized.Keys.Where(index => !desired.Contains(index)).ToArray())
+            {
+                Recycle(index);
+            }
         }
 
         List<UIElement> containers = [];
