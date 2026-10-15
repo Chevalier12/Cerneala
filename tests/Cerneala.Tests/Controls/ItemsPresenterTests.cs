@@ -153,6 +153,78 @@ public sealed class ItemsPresenterTests
         Assert.Equal(100, oldPanel.VisualChildren.Count);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void FailedPanelSwapBeforeChildrenAreAddedKeepsVirtualizationContextOnOldPanel(bool replacementVirtualizes)
+    {
+        bool fail = false;
+        Cerneala.UI.Layout.Panels.VirtualizingStackPanel oldPanel = new();
+        Cerneala.UI.Layout.Panels.Panel replacement = replacementVirtualizes
+            ? new Cerneala.UI.Layout.Panels.VirtualizingStackPanel()
+            : new Cerneala.UI.Layout.Panels.StackPanel();
+        VirtualizationContext supplied = new(100, 10, 30, 0, CacheItems: 1);
+        ItemsPresenter presenter = new()
+        {
+            Items = Enumerable.Range(0, 100).Select(index => index.ToString()).ToArray(),
+            ItemTemplate = new ContentTemplate<string>("test", key: null, priority: 0, context =>
+                fail ? throw new InvalidOperationException("template failed") : new ItemElement(context.Data!)),
+            ItemsPanel = oldPanel,
+            VirtualizationContext = supplied
+        };
+        presenter.Measure(new MeasureContext(new LayoutSize(100, 30)));
+        Assert.Equal(1000, presenter.DesiredSize.Height);
+
+        fail = true;
+        Assert.Throws<InvalidOperationException>(() => presenter.ItemsPanel = replacement);
+
+        Assert.Same(oldPanel, presenter.LayoutPanelRoot);
+        Assert.Equal(4, oldPanel.VisualChildren.Count);
+        Assert.Equal(supplied, oldPanel.VirtualizationContext);
+        Assert.Null((replacement as Cerneala.UI.Layout.Panels.VirtualizingStackPanel)?.VirtualizationContext);
+
+        // The failed refresh stays dirty, so the next measure retries it and the same cause throws again.
+        Assert.Throws<InvalidOperationException>(() => presenter.Measure(new MeasureContext(new LayoutSize(100, 31))));
+        Assert.Same(oldPanel, presenter.LayoutPanelRoot);
+        Assert.Equal(supplied, oldPanel.VirtualizationContext);
+        oldPanel.Measure(new MeasureContext(new LayoutSize(100, 31)));
+        Assert.Equal(1000, oldPanel.DesiredSize.Height);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void FailedPanelSwapWhileAddingChildrenKeepsVirtualizationContextOnOldPanel(bool replacementVirtualizes)
+    {
+        Cerneala.UI.Layout.Panels.VirtualizingStackPanel oldPanel = new();
+        Cerneala.UI.Layout.Panels.Panel replacement = replacementVirtualizes
+            ? new Cerneala.UI.Layout.Panels.VirtualizingStackPanel()
+            : new Cerneala.UI.Layout.Panels.StackPanel();
+        ItemElement[] items = Enumerable.Range(0, 100).Select(index => new ItemElement(index.ToString())).ToArray();
+        VirtualizationContext supplied = new(100, 10, 30, 0, CacheItems: 1);
+        ItemsPresenter presenter = new()
+        {
+            Items = items,
+            ItemsPanel = oldPanel,
+            VirtualizationContext = supplied
+        };
+        presenter.Measure(new MeasureContext(new LayoutSize(100, 30)));
+        new Cerneala.UI.Layout.Panels.StackPanel().VisualChildren.Add(items[10]);
+        presenter.VirtualizationContext = new VirtualizationContext(100, 10, 30, 70, CacheItems: 1);
+
+        Assert.Throws<InvalidOperationException>(() => presenter.ItemsPanel = replacement);
+
+        Assert.Same(oldPanel, presenter.LayoutPanelRoot);
+        Assert.Equal(["0", "1", "2", "3"], oldPanel.VisualChildren.Cast<ItemElement>().Select(item => item.Value));
+        Assert.Equal(supplied, oldPanel.VirtualizationContext);
+        Assert.Equal(0, oldPanel.FirstRealizedIndex);
+        if (replacement is Cerneala.UI.Layout.Panels.VirtualizingStackPanel virtualizingReplacement)
+        {
+            Assert.Null(virtualizingReplacement.VirtualizationContext);
+            Assert.Equal(0, virtualizingReplacement.FirstRealizedIndex);
+        }
+    }
+
     [Fact]
     public void ClearingItemsOwnerWithdrawsOwnerPanelAndReleasesItsVirtualizationContext()
     {
