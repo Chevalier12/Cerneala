@@ -134,6 +134,36 @@ public sealed class VirtualizingStackPanelTests
         }
     }
 
+    [Theory]
+    [InlineData(-3, 0, 7)]
+    [InlineData(int.MaxValue - 5, int.MaxValue - 5, int.MaxValue)]
+    public void PanelWithoutContextOrViewportRealizesEveryChildForNegativeOrOverflowingFirstRealizedIndex(
+        int firstRealizedIndex,
+        int expectedStartIndex,
+        int expectedEndIndexExclusive)
+    {
+        VirtualizingStackPanel panel = new()
+        {
+            FirstRealizedIndex = firstRealizedIndex
+        };
+        for (int index = 0; index < 10; index++)
+        {
+            panel.VisualChildren.Add(new FixedHeightElement(10));
+        }
+
+        panel.Measure(new MeasureContext(new LayoutSize(100, 1000)));
+        panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, panel.DesiredSize.Height)));
+
+        Assert.Equal(new RealizationWindow(expectedStartIndex, expectedEndIndexExclusive), panel.RealizationWindow);
+        Assert.Equal(100, panel.DesiredSize.Height);
+        Assert.Equal(100, panel.TotalExtent);
+        for (int index = 0; index < 10; index++)
+        {
+            Assert.Equal(new LayoutSize(20, 10), panel.VisualChildren[index].DesiredSize);
+            Assert.Equal(new LayoutRect(0, index * 10, 100, 10), panel.VisualChildren[index].ArrangedBounds);
+        }
+    }
+
     private sealed class CountingElement : UIElement
     {
         public int MeasureCount { get; private set; }

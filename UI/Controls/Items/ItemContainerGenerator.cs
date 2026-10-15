@@ -118,8 +118,27 @@ public sealed class ItemContainerGenerator
             return;
         }
 
-        object? item = GetItem(container);
         DetachContainer(container);
+        ReleaseContainer(container);
+    }
+
+    // A container that the presenter's panel did not take is given back without detaching it, because a parent it
+    // has then is not the panel, for example another element that still holds an item that is its own container.
+    internal void ReleaseUnpresented(UIElement container)
+    {
+        int index = GetRealizedKey(container);
+        if (index < 0)
+        {
+            return;
+        }
+
+        realized.Remove(index);
+        ReleaseContainer(container);
+    }
+
+    private void ReleaseContainer(UIElement container)
+    {
+        object? item = GetItem(container);
         owner.ClearItemContainer(container);
         if (!ReferenceEquals(container, item))
         {

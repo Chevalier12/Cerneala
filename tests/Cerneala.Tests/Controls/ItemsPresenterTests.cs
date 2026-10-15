@@ -262,6 +262,78 @@ public sealed class ItemsPresenterTests
     }
 
     [Fact]
+    public void FailedInsertOnReusedPanelKeepsPreviousChildren()
+    {
+        Cerneala.UI.Layout.Panels.StackPanel panel = new();
+        ItemElement a = new("a"), b = new("b"), c = new("c"), x = new("x");
+        ItemsPresenter presenter = new() { Items = new[] { a, b }, ItemsPanel = panel };
+        presenter.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        Cerneala.UI.Layout.Panels.StackPanel otherParent = new();
+        otherParent.VisualChildren.Add(x);
+
+        Assert.Throws<InvalidOperationException>(() => presenter.Items = new[] { c, x });
+
+        Assert.Same(panel, presenter.LayoutPanelRoot);
+        Assert.Equal(["a", "b"], panel.VisualChildren.Cast<ItemElement>().Select(item => item.Value));
+        Assert.Equal(["a", "b"], panel.LogicalChildren.Cast<ItemElement>().Select(item => item.Value));
+        Assert.Same(panel, a.VisualParent);
+        Assert.Same(panel, b.VisualParent);
+        Assert.Null(c.VisualParent);
+        Assert.Null(c.LogicalParent);
+
+        // While the cause stays, each retry throws again and keeps the previous children.
+        Assert.Throws<InvalidOperationException>(() => presenter.Measure(new MeasureContext(new LayoutSize(100, 101))));
+        Assert.Equal(["a", "b"], panel.VisualChildren.Cast<ItemElement>().Select(item => item.Value));
+
+        otherParent.VisualChildren.Remove(x);
+        presenter.Measure(new MeasureContext(new LayoutSize(100, 102)));
+
+        Assert.Equal(["c", "x"], panel.VisualChildren.Cast<ItemElement>().Select(item => item.Value));
+        Assert.Null(a.VisualParent);
+        Assert.Null(b.VisualParent);
+    }
+
+    [Fact]
+    public void FailedInsertWhileWindowMovesKeepsPreviousChildrenAndIndex()
+    {
+        Cerneala.UI.Layout.Panels.VirtualizingStackPanel panel = new();
+        FixedElement[] items = Enumerable.Range(0, 100).Select(index => new FixedElement(index.ToString())).ToArray();
+        VirtualizationContext supplied = new(100, 10, 30, 0, CacheItems: 1);
+        ItemsPresenter presenter = new()
+        {
+            Items = items,
+            ItemsPanel = panel,
+            VirtualizationContext = supplied
+        };
+        presenter.Measure(new MeasureContext(new LayoutSize(100, 30)));
+        Cerneala.UI.Layout.Panels.StackPanel otherParent = new();
+        otherParent.VisualChildren.Add(items[5]);
+        presenter.VirtualizationContext = new VirtualizationContext(100, 10, 30, 20, CacheItems: 1);
+        presenter.MarkItemsDirty();
+
+        Assert.Throws<InvalidOperationException>(() => presenter.Measure(new MeasureContext(new LayoutSize(100, 31))));
+
+        Assert.Same(panel, presenter.LayoutPanelRoot);
+        Assert.Equal(["0", "1", "2", "3"], panel.VisualChildren.Cast<ItemElement>().Select(item => item.Value));
+        Assert.Equal(supplied, panel.VirtualizationContext);
+        Assert.Equal(0, panel.FirstRealizedIndex);
+        Assert.Null(items[4].VisualParent);
+        panel.Measure(new MeasureContext(new LayoutSize(100, 30)));
+        panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 30)));
+        Assert.Equal(new LayoutRect(0, 10, 100, 10), items[1].ArrangedBounds);
+
+        Assert.Throws<InvalidOperationException>(() => presenter.Measure(new MeasureContext(new LayoutSize(100, 32))));
+        Assert.Equal(["0", "1", "2", "3"], panel.VisualChildren.Cast<ItemElement>().Select(item => item.Value));
+        Assert.Equal(0, panel.FirstRealizedIndex);
+
+        otherParent.VisualChildren.Remove(items[5]);
+        presenter.Measure(new MeasureContext(new LayoutSize(100, 33)));
+
+        Assert.Equal(["1", "2", "3", "4", "5"], panel.VisualChildren.Cast<ItemElement>().Select(item => item.Value));
+        Assert.Equal(1, panel.FirstRealizedIndex);
+    }
+
+    [Fact]
     public void ClearingItemsOwnerWithdrawsOwnerPanelAndReleasesItsVirtualizationContext()
     {
         Cerneala.UI.Layout.Panels.VirtualizingStackPanel panel = new();
@@ -588,6 +660,14 @@ public sealed class ItemsPresenterTests
     private class ItemElement(string value) : UIElement
     {
         public string Value { get; } = value;
+    }
+
+    private sealed class FixedElement(string value) : ItemElement(value)
+    {
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            return new LayoutSize(100, 10);
+        }
     }
 
     private sealed class LifecycleElement(string value) : ItemElement(value)
