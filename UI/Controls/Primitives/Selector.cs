@@ -21,6 +21,12 @@ public class Selector : ItemsControl
     private bool changingSelectionForItems;
     private bool relocatingSelection;
 
+    // The number of selection changes notifying their new SelectedIndex. A selection change nested in that
+    // notification hands its first re-preparation failure to the outermost change, which rethrows it only after its
+    // own refresh and SelectionChanged.
+    private int selectedIndexNotificationDepth;
+    private ExceptionDispatchInfo? nestedPreparationFailure;
+
     public Selector()
     {
         selectionModel.SelectionChanged += OnSelectionChanged;
@@ -233,6 +239,8 @@ public class Selector : ItemsControl
         CaptureSelectedItem(args.Change.NewIndex);
         bool wasChangingSelectionForItems = IsChangingSelectionForItems;
         IsChangingSelectionForItems = forItems;
+        ExceptionDispatchInfo? preparationFailure = null;
+        selectedIndexNotificationDepth++;
         try
         {
             SetValue(SelectedIndexProperty, args.Change.NewIndex);
@@ -240,9 +248,13 @@ public class Selector : ItemsControl
         finally
         {
             IsChangingSelectionForItems = wasChangingSelectionForItems;
+            if (--selectedIndexNotificationDepth == 0)
+            {
+                preparationFailure = nestedPreparationFailure;
+                nestedPreparationFailure = null;
+            }
         }
 
-        ExceptionDispatchInfo? preparationFailure = null;
         RefreshSelectionContainer(args.Change.OldIndex, "Selection changed", ref preparationFailure);
         RefreshSelectionContainer(args.Change.NewIndex, "Selection changed", ref preparationFailure);
         if (!relocated)
@@ -253,6 +265,12 @@ public class Selector : ItemsControl
                 args.Change,
                 removed is null ? [] : [removed],
                 added is null ? [] : [added]));
+        }
+
+        if (selectedIndexNotificationDepth > 0)
+        {
+            nestedPreparationFailure ??= preparationFailure;
+            return;
         }
 
         preparationFailure?.Throw();
