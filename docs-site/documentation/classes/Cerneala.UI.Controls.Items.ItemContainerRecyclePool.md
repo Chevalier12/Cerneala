@@ -40,7 +40,7 @@ UIElement? missingPresenter = pool.Pop(typeof(ContentPresenter));
 
 ## Remarks
 
-`ItemContainerRecyclePool` is used by `ItemContainerGenerator` to keep detached item containers available for later reuse. Containers are stored in separate stacks keyed by `container.GetType()`, so lookup is based on the exact runtime type passed to `Pop(Type)`.
+`ItemContainerRecyclePool` is used by `ItemContainerGenerator` to keep detached item containers available for later reuse. Containers are stored in separate stacks keyed by `container.GetType()`, so lookup is based on the exact runtime type passed to `Pop(Type)`. The pool does not match a requested type to other types; `ItemContainerGenerator` does that. When `Pop` returns `null` for the type that `GetContainerTypeForItem` returns, the generator also calls `Pop` with each type that its owner's `CreateItemContainer` returned earlier for an item of that container type. For example, an `ItemsControl` subclass whose `CreateItemContainer` returns `new ListBoxItem()` for a string item, whose container type is `ContentPresenter`, gets its recycled `ListBoxItem`s back for later string items, so they do not stay in the pool.
 
 Within each type bucket, recycling is last-in, first-out because the implementation uses `Stack<UIElement>`. `Pop(Type)` returns `null` when no stack exists for the requested type or when that stack is empty.
 
