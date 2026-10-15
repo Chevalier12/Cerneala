@@ -42,6 +42,8 @@ selector.Items.Remove("Brush");
 
 `Selector` builds on `ItemsControl` and keeps a private `SelectionModel` as the selection source of truth. Setting `SelectedIndex` calls `SelectionModel.Select`; when the model changes, `Selector` updates `SelectedIndexProperty`, invalidates the previously selected and newly selected realized containers, and re-prepares those containers so `ISelectableItemContainer` state is refreshed.
 
+When that re-preparation throws, the exception propagates out of the `SelectedIndex` setter, and `SelectedIndex` already holds the new index. The container stays realized, `ItemContainerGenerator.GetItemIndex` returns `-1` for it, and the items stay dirty, so the next layout pass prepares it again, the same way as a failed preparation during realization. For example, a `ListBox` subclass whose `PrepareItemContent` override shows a selected item as `"a (selected)"` realizes `"a"` and `"b"`. `SelectedIndex = 0` runs while that override throws once: the setter throws, `SelectedIndex` is `0`, the row still shows `"a"`, and `GetItemIndex` returns `-1` for its container. After the next measure and arrange, with no item change, the row shows `"a (selected)"` and `GetItemIndex` returns `0`.
+
 Selection is single-index only. The valid no-selection value is `-1`; lower values are rejected by `SelectionModel.Select`.
 
 The selection follows the selected item when the items change, through `Items` or through an `ItemsSource` that raises `INotifyCollectionChanged` or `IObservableList` notifications:

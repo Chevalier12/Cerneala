@@ -345,8 +345,9 @@ public sealed class ItemContainerGenerator
     // A realized container stays realized when its preparation throws, but the preparation can have recorded the
     // new item, index, and selection before it threw. Its recorded index is reset, so the next realization prepares
     // it again instead of treating the preparation that did not finish as done. The recorded item is kept, because
-    // it tells a container that is its own item from a generated one.
-    private void PrepareRealizedContainer(UIElement container, int index, object? item)
+    // it tells a container that is its own item from a generated one. A selector prepares its realized containers
+    // through this method too when their selection changes.
+    internal void PrepareRealizedContainer(UIElement container, int index, object? item)
     {
         try
         {
