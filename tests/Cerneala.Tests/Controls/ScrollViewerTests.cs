@@ -607,6 +607,36 @@ public sealed class ScrollViewerTests
     }
 
     [Fact]
+    public void ViewerInAFractionalStarColumnSettlesAfterLayout()
+    {
+        // The first of three * columns in 100 px is 34 px wide once rounded. Measured at 33 px, the 34 px content
+        // would need the Auto bar in measure but not in arrange, so the bar state would flip on every frame.
+        UIRoot root = new(100, 100, 1);
+        Cerneala.UI.Layout.Panels.Grid host = new();
+        for (int i = 0; i < 3; i++)
+        {
+            host.ColumnDefinitions.Add(new Cerneala.UI.Layout.Panels.ColumnDefinition(
+                Cerneala.UI.Layout.Panels.GridLength.Stars(1)));
+        }
+
+        ScrollViewer viewer = new()
+        {
+            Content = new FixedElement(new LayoutSize(34, 50)),
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        host.VisualChildren.Add(viewer);
+        root.VisualChildren.Add(host);
+        root.ProcessFrame();
+
+        FrameStats second = root.ProcessFrame();
+
+        Assert.Equal(0, second.MeasuredElements);
+        Assert.Equal(0, second.ArrangedElements);
+        Assert.False(root.Scheduler.HasWork);
+        Assert.Equal(new LayoutRect(0, 0, 34, 100), viewer.ArrangedBounds);
+    }
+
+    [Fact]
     public void ScrollBarConvergenceDoesNotConsumeExternalAncestorArrangeWork()
     {
         UIRoot root = new(200, 100);

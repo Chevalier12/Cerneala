@@ -181,6 +181,8 @@ public class Grid : Panel
             }
         }
 
+        float[] columnMeasureSizes = GetMeasureSizes(columnSizes, context.Rounding);
+        float[] rowMeasureSizes = GetMeasureSizes(rowSizes, context.Rounding);
         foreach (UIElement child in VisualChildren)
         {
             if (child.Visibility == Visibility.Collapsed)
@@ -191,8 +193,8 @@ public class Grid : Panel
             GridPlacement placement = GetPlacement(child, columns.Length, rows.Length);
             child.Measure(new MeasureContext(
                 new LayoutSize(
-                    GetChildConstraint(columns, placement.Column, placement.ColumnSpan, Sum(columnSizes, placement.Column, placement.ColumnSpan)),
-                    GetChildConstraint(rows, placement.Row, placement.RowSpan, Sum(rowSizes, placement.Row, placement.RowSpan))),
+                    GetChildConstraint(columns, placement.Column, placement.ColumnSpan, Sum(columnMeasureSizes, placement.Column, placement.ColumnSpan)),
+                    GetChildConstraint(rows, placement.Row, placement.RowSpan, Sum(rowMeasureSizes, placement.Row, placement.RowSpan))),
                 context.Rounding));
         }
 
@@ -276,6 +278,7 @@ public class Grid : Panel
         GridLength[] crossLengths = columnAxis ? rows : columns;
         float[] crossSizes = columnAxis ? rowSizes : columnSizes;
         float crossAvailableSize = columnAxis ? context.AvailableSize.Height : context.AvailableSize.Width;
+        float[] crossMeasureSizes = crossAxisResolved ? GetMeasureSizes(crossSizes, context.Rounding) : crossSizes;
         bool measuredBeforeCrossFinal = false;
 
         foreach (UIElement child in VisualChildren)
@@ -302,7 +305,7 @@ public class Grid : Panel
                 crossLengths,
                 crossIndex,
                 crossSpan,
-                crossFinal ? Sum(crossSizes, crossIndex, crossSpan) : crossAvailableSize);
+                crossFinal ? Sum(crossMeasureSizes, crossIndex, crossSpan) : crossAvailableSize);
             child.Measure(new MeasureContext(
                 columnAxis ? new LayoutSize(constraint, crossConstraint) : new LayoutSize(crossConstraint, constraint),
                 context.Rounding));
@@ -585,6 +588,21 @@ public class Grid : Panel
                 sizes[i] = remaining * (MathF.Max(0, lengths[i].Value) / totalStar);
             }
         }
+    }
+
+    // The sizes a resolved axis gives the children it measures. With layout rounding they are rounded as ArrangeCore
+    // rounds them, so a child that fills its cell is measured at the size it is then arranged at: three * columns in
+    // 100 px measure their children at 34, 33 and 33 px, not at 33.33 px each, which the children would receive as 33.
+    private static float[] GetMeasureSizes(float[] sizes, LayoutRounding rounding)
+    {
+        if (!rounding.IsEnabled)
+        {
+            return sizes;
+        }
+
+        float[] rounded = (float[])sizes.Clone();
+        RoundSizes(rounded, rounding);
+        return rounded;
     }
 
     // With layout rounding, each definition gets a whole number of device pixels, and the rounded sizes add up to
