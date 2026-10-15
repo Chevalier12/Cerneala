@@ -78,7 +78,21 @@ public sealed class ItemContainerGenerator
         UIElement container = IsOfContainerType(item, containerType)
             ? CreateOwnContainer(index, item, containerType)
             : RecyclePool.Pop(containerType) ?? owner.CreateItemContainer(index, item);
-        owner.PrepareItemContainer(container, index, item);
+        try
+        {
+            owner.PrepareItemContainer(container, index, item);
+        }
+        catch
+        {
+            // A container whose preparation throws is not realized, so it is cleared here like a recycled one
+            // and a generated container goes back to the pool, where the next realization can reuse it. Preparation
+            // can throw before it records the item, and the owner's clear tells an item that is its own container,
+            // whose content it keeps, from a generated one by the recorded item, so the item is recorded first.
+            SetInfo(container, index, item, isSelected: false);
+            ReleaseContainer(container);
+            throw;
+        }
+
         realized.Add(index, container);
         return container;
     }
@@ -108,6 +122,7 @@ public sealed class ItemContainerGenerator
         ReleaseContainer(container);
     }
 
+    // A container that is its own item belongs to that item, so only a generated container goes to the pool.
     private void ReleaseContainer(UIElement container)
     {
         object? item = GetItem(container);
