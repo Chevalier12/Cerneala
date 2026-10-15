@@ -14,14 +14,9 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
     public VirtualizationContext? VirtualizationContext { get; set; }
 
     // Without a context or viewport every current child is realized, and the children represent
-    // the items from FirstRealizedIndex on, so the window covers those item indices.
+    // the items from FirstRealizedIndex on, so the window covers the valid item indices among them.
     public RealizationWindow RealizationWindow => VirtualizationContext?.GetRealizationWindow() ??
-        (automaticViewport is null
-            ? RealizationWindow.Create(
-                FirstRealizedIndex + VisualChildren.Count,
-                FirstRealizedIndex,
-                FirstRealizedIndex + VisualChildren.Count)
-            : automaticWindow);
+        (automaticViewport is null ? CreateChildrenWindow() : automaticWindow);
 
     public float TotalExtent
     {
@@ -103,7 +98,7 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
         {
             int itemIndex = FirstRealizedIndex + i;
             UIElement child = VisualChildren[i];
-            if (!window.Contains(itemIndex))
+            if (!IsRealized(window, itemIndex))
             {
                 child.SetDesiredSize(LayoutSize.Zero);
                 continue;
@@ -146,7 +141,7 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
         {
             UIElement child = VisualChildren[i];
             int itemIndex = FirstRealizedIndex + i;
-            if (!window.Contains(itemIndex))
+            if (!IsRealized(window, itemIndex))
             {
                 child.Arrange(new ArrangeContext(new LayoutRect(context.FinalRect.X, context.FinalRect.Y, 0, 0), context.Rounding));
                 continue;
@@ -163,6 +158,21 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
         }
 
         return context.FinalRect;
+    }
+
+    // Item indices start at 0 and stop at int.MaxValue, so a negative FirstRealizedIndex or an
+    // overflowing FirstRealizedIndex + VisualChildren.Count only narrows the reported window.
+    private RealizationWindow CreateChildrenWindow()
+    {
+        int end = (int)Math.Min((long)FirstRealizedIndex + VisualChildren.Count, int.MaxValue);
+        return RealizationWindow.Create(end, FirstRealizedIndex, end);
+    }
+
+    // Without a context or viewport nothing is virtualized, so every child is realized even when
+    // its item index lies outside the reported window.
+    private bool IsRealized(RealizationWindow window, int itemIndex)
+    {
+        return !IsVirtualizing || window.Contains(itemIndex);
     }
 
     private bool UsesNaturalItemHeights(RealizationWindow window)
