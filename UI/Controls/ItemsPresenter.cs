@@ -376,6 +376,11 @@ public class ItemsPresenter : Control
                 AddPanelRoot(oldPanel);
 
                 panelRoot = oldPanel;
+                RestorePresentedOwnerItems(oldPanel, nextChildren);
+            }
+            else
+            {
+                ReleaseUnpresentedContainers(panel: null, nextChildren);
             }
 
             throw;
@@ -407,18 +412,51 @@ public class ItemsPresenter : Control
     // realization created or kept, are then recycled like after a committed refresh.
     private void RestorePresentedOwnerItems(Layout.Panels.Panel panel, IReadOnlyList<UIElement> failedChildren)
     {
-        ItemContainerGenerator generator = ItemsOwner!.ItemContainerGenerator;
-        foreach (UIElement child in failedChildren)
+        ReleaseUnpresentedContainers(panel, failedChildren);
+        List<UIElement> restoredChildren = [.. CreateItemChildren(presentedRealizationWindow)];
+        PresentRestoredOwnerItems(panel, restoredChildren);
+        RecycleUnpresentedContainers(restoredChildren);
+    }
+
+    // The presented window is realized with the current items, so it can hold a container the panel cannot take
+    // either, for example an item that is its own container and that another element still holds. The first restored
+    // container the panel did not take is the one it rejected, because the panel takes the children in order. It is
+    // given back like the others, and the panel presents the rest of the window. A failure that leaves every restored
+    // container in the panel is not a rejected container, so it is rethrown.
+    private void PresentRestoredOwnerItems(Layout.Panels.Panel panel, List<UIElement> restoredChildren)
+    {
+        while (true)
         {
-            if (!ReferenceEquals(child.VisualParent, panel))
+            try
             {
-                generator.ReleaseUnpresented(child);
+                MovePanelChildrenTo(panel, restoredChildren);
+                return;
+            }
+            catch
+            {
+                int rejectedIndex = restoredChildren.FindIndex(child => !ReferenceEquals(child.VisualParent, panel));
+                if (rejectedIndex < 0)
+                {
+                    throw;
+                }
+
+                ItemsOwner!.ItemContainerGenerator.ReleaseUnpresented(restoredChildren[rejectedIndex]);
+                restoredChildren.RemoveAt(rejectedIndex);
             }
         }
+    }
 
-        List<UIElement> restoredChildren = [.. CreateItemChildren(presentedRealizationWindow)];
-        MovePanelChildrenTo(panel, restoredChildren);
-        RecycleUnpresentedContainers(restoredChildren);
+    // Without a panel nothing is presented, so every container is given back.
+    private void ReleaseUnpresentedContainers(Layout.Panels.Panel? panel, IEnumerable<UIElement> containers)
+    {
+        ItemContainerGenerator generator = ItemsOwner!.ItemContainerGenerator;
+        foreach (UIElement container in containers)
+        {
+            if (panel is null || !ReferenceEquals(container.VisualParent, panel))
+            {
+                generator.ReleaseUnpresented(container);
+            }
+        }
     }
 
     private static void AddPanelChild(Layout.Panels.Panel panel, UIElement child)
