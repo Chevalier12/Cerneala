@@ -229,6 +229,7 @@ public class ItemsControl : Control
             RebuildItemsSourceSnapshot(ItemsSource);
             ItemContainerGenerator.Clear();
             NotifyItemsReset();
+            OnItemsViewSourceChanged();
             itemsPresenter.MarkItemsDirty();
         }
 
