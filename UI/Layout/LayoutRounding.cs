@@ -53,6 +53,14 @@ public readonly record struct LayoutRounding
 
     private float RoundUp(float value)
     {
-        return IsEnabled ? MathF.Ceiling(value * Scale) / Scale : value;
+        if (!IsEnabled)
+        {
+            return value;
+        }
+
+        // A value that already lies on a device pixel keeps it. 57 device pixels at scale 1.75 are 57 / 1.75f, and
+        // (57 / 1.75f) * 1.75f is slightly more than 57, so its ceiling alone would add a 58th device pixel.
+        float scaled = value * Scale;
+        return MathF.Round(scaled) / Scale == value ? value : MathF.Ceiling(scaled) / Scale;
     }
 }
