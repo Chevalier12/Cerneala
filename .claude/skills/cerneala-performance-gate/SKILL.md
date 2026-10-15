@@ -181,7 +181,7 @@ Run, in order:
 1. the RED performance regression or runtime gate;
 2. the original observable reproduction;
 3. focused correctness and performance tests;
-4. broader affected suites and the required repository-wide gate;
+4. focused tests of the other affected test projects, each with a `--filter`; never the complete repository suite (`dotnet test Cerneala.slnx`, or a test project without `--filter`), by the user's choice;
 5. applicable visual, startup, memory-lifetime, API, and conformance gates.
 
 Remove temporary instrumentation, harnesses, generated reports inside the repository, and application modifications. Preserve justified permanent Detective diagnostics with their tests and documentation, and run their focused, API, documentation, and overhead gates. Preserve raw evidence outside the repository only when useful and safe. Never claim human manual validation unless the user performed it.
@@ -201,7 +201,7 @@ State the following in the user's language, following "The user" in `CLAUDE.md`.
 - root cause and the evidence that assigns ownership;
 - production change and why it preserves fidelity and contracts;
 - final measurements from the identical gate;
-- correctness, visual, memory, focused, and full-suite verification;
+- correctness, visual, memory, and focused-test verification, with the filters and their pass/fail counts, and a note that the complete suite was not run;
 - any permanent Detective diagnostic added, the reusable evidence gap it closes, its API/documentation status, and measured collection overhead;
 - any Servo or Detective defect repaired during measurement, its independent RED-to-GREEN evidence, and the uncontaminated rerun result;
 - remaining uncertainty, environmental limits, and any user-validation step;

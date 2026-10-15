@@ -83,7 +83,7 @@ Order stages by dependency. Prefer this general sequence when applicable:
 4. Integration with dependent controls or services.
 5. Edge cases, cancellation, detach, replacement, and failure behavior.
 6. Markup/source-generator integration.
-7. API documentation and full verification.
+7. API documentation and final focused verification.
 
 For each stage:
 
@@ -91,7 +91,7 @@ For each stage:
 - Describe observable behavior, not vague work such as "handle edge cases".
 - Include focused tests near the implementation tasks they validate. For changed behavior, require the smallest RED test and confirmation that it fails for the intended reason before production changes. Label existing GREEN behavior as characterization, not RED.
 - Add a `Gate` subsection with conditions that must be true before continuing.
-- Include exact targeted and full-suite verification commands where useful, using the real commands and prerequisites from `CLAUDE.md`. Examples: the Debug build PreviewHost needs, and the `CERNEALA_SDL_NATIVE_TESTS=1` native subset.
+- Include exact focused verification commands where useful (each test project with a `--filter`), using the real commands and prerequisites from `CLAUDE.md`. Never plan a complete-suite run (`dotnet test Cerneala.slnx`, or a test project without `--filter`): the user chose focused tests only. Examples: the Debug build PreviewHost needs, and the `CERNEALA_SDL_NATIVE_TESTS=1` native subset.
 - Confirm that the current or explicitly planned harness can observe every gate. If instrumentation does not exist, plan instrumentation before the baseline and do not claim unavailable metrics.
 - Distinguish deterministic gates (draw counts, binds, invalidations, resource counts, API surface) from noisy measurements. Define warmup, repetitions, variation handling, and inconclusive results for timing gates.
 - State platform policy explicitly: required and executed, required but blocked, deliberately waived by an existing decision, or compile-only. "Not run" is not GREEN.

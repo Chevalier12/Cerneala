@@ -7,7 +7,7 @@ description: Implement a named Cerneala Markdown checklist plan end-to-end, one 
 
 Execute the named checklist plan completely. The plan file is the only durable progress ledger: its checkmarks and status line say what is done. Keep working across stages and turns until the plan is finished or a real blocker needs the user.
 
-Follow `CLAUDE.md`, especially "Claude Code tooling and verification commands". It covers Haiku explorers for discovery, Roslyn MCP, `Edit`, background runs, and the full-suite commands.
+Follow `CLAUDE.md`, especially "Claude Code tooling and verification commands". It covers Haiku explorers for discovery, Roslyn MCP, `Edit`, background runs, and the focused-test commands.
 
 ## Start
 
@@ -75,7 +75,7 @@ Default shape per stage: one consolidated audit, one implementation pass, one ve
 - Choose the verification ladder once:
   - compile or a narrow test during development;
   - the required stage tests at the gate;
-  - the full suite only when the stage or the final audit requires it.
+  - never the complete suite: where the stage or the final audit asks for it, run the focused tests for all code the plan changed instead (see "Verify").
 - A successful verification stays valid until a later change touches code, project configuration, generated inputs, or another surface that can affect it. Documentation and checklist edits do not invalidate compiled test evidence.
 - After a successful build of the current code state, use `--no-build` for compatible follow-up test commands. Never use it after unbuilt code or project changes.
 - Do not rerun a green command for reassurance. Reuse current-state evidence and record it at the checkpoint.
@@ -106,9 +106,10 @@ Default shape per stage: one consolidated audit, one implementation pass, one ve
 ### 3. Verify
 
 - Run the narrowest tests that prove the stage behavior, then the related regression tests the plan names.
-- Run formatting, build, source-generator, API, visual, benchmark, or full-suite verification when the stage requires it. Use the commands and prerequisites in `CLAUDE.md`, and run the full suite in the background.
+- Run formatting, build, source-generator, API, visual, or benchmark verification when the stage requires it, with the commands and prerequisites in `CLAUDE.md`.
+- Tests are focused only: each test project that covers the changed code, with a `--filter`, as `CLAUDE.md` describes under "Focused tests". Never run the complete suite (`dotnet test Cerneala.slnx`, or a test project without `--filter`), even when the plan asks for it: the user chose focused tests only. A plan item that requires the full suite is satisfied by the focused tests for all code the plan changed.
 - Run each required verification once in the latest relevant code state. Reuse the result at the gate and the final audit when nothing relevant changed afterwards.
-- When a narrow test fails, fix it and rerun that failing subset first. Do not pay for the full suite while diagnosing a local failure.
+- When a narrow test fails, fix it and rerun that failing subset first, before the stage's other focused tests.
 - Investigate failures instead of checking the task and calling them "probably unrelated". An environmental cause needs evidence, for example the same failure on unchanged `master`.
 - Never mark a task complete only because code was written. It must satisfy its stated verification.
 
@@ -140,7 +141,7 @@ A stage is not a completed batch until the plan file has been edited and re-read
 - Non-goal checkboxes may be checked only after final review confirms the forbidden scope was not introduced.
 - A test task is complete only when the test exists and passes.
 - A documentation task is complete only when the canonical page and the manifest are synchronized.
-- A full-suite task is complete only after the full suite passes in the current implementation state.
+- A task that asks for the full suite is complete when the focused tests for all code the plan changed pass in the current implementation state. Check it with a short note naming the filters, such as `(Doar teste focusate: FullyQualifiedName~GridTests)`.
 
 ## Failure and Resume Rules
 
@@ -159,7 +160,7 @@ Before declaring the plan done:
 - Re-read the entire plan.
 - Confirm every applicable task and gate is `[x]`, conditional and non-goal items have explicit resolutions, and required prerequisite plans are complete.
 - Run the plan's final targeted verification once after the last relevant implementation change, or reuse an identical current-state run from the final stage.
-- Run the full suite once in the final code state, unless the plan defines a different final suite. Use the `CLAUDE.md` command and run it in the background. Do not repeat it if it already passed after the last code or project change.
+- Run the focused tests for all code the plan changed once in the final code state, each with a `--filter`. Never run the complete suite, even when the plan defines a final full suite. Do not repeat them if they already passed after the last code or project change.
 - Run final API documentation and manifest checks for public API changes, or reuse results produced after the last relevant change.
 - Run `git diff --check` across all changed files.
 - Review `git diff` for accidental scope, leftover debug code, generated churn, and unchecked required work.

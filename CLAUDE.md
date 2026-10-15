@@ -91,7 +91,7 @@ Before delegating broad repository exploration, follow the FileTree generate-the
 
 Skills are executable policy. The repository's Claude skills live in `.claude/skills/` (mirrors of `.codex/skills/`) and load through the Skill tool. Use named or clearly applicable skills; parent reads the complete `SKILL.md` and required references before task actions, never delegates interpretation. Choose minimal skills, order multiple workflows before implementation, and prefer provided scripts/harnesses/templates/assets. Do not carry skills into unrelated work. Report unavailable tooling/state and use the safest compatible fallback; announce execution changes briefly and report blocking gates in final. Prefer Cerneala algorithm-market, checklist planning, implement-plan, fix-bug, and writing-api-documentation workflows over generic intuition.
 
-For checklist plans, recover current stage/gates; execute one atomic stage without later-stage interleaving. Pass gates, parent-review, immediately check off verified completion, review that checkpoint, then reread the remaining plan before advancing. Checkmarks mean implemented or deliberately resolved AND verified: tests exist/pass, canonical docs/manifest synchronized, required full suite actually passed. Stay on blocked stages unless the user changes the plan.
+For checklist plans, recover current stage/gates; execute one atomic stage without later-stage interleaving. Pass gates, parent-review, immediately check off verified completion, review that checkpoint, then reread the remaining plan before advancing. Checkmarks mean implemented or deliberately resolved AND verified: tests exist/pass, canonical docs/manifest synchronized, focused tests for all changed and affected code actually passed. Stay on blocked stages unless the user changes the plan.
 
 For isolated C# mechanics prefer CSI when cheaper and faithful. The command is `dotnet-csi <script>.csx` (global .NET tool `dotnet-csi`, installed in `%USERPROFILE%\.dotnet\tools`, which is on the user PATH); there is no `csi` command. Use a project-approved temporary `.csx` rather than stdin, a short timeout, cleanup, and check/terminate suspicious stuck `dotnet-csi.exe` processes. Never leave interactive/long-running CSI in the background. Keep all temporary experiments outside production globs/build discovery; remove them unless preservation is requested.
 
@@ -104,7 +104,7 @@ Tool mapping:
 - **Discovery:** Haiku `Explore` agents, as defined above, plus `mcp__cerneala_roslyn__*` for C# symbol identity when it is connected. Send independent explorer assignments in one message so they run in parallel.
 - **Reading:** read known paths directly with `Read`, and read only the line ranges you need once full context is known.
 - **Editing:** use `Edit` (exact replacement in a file already read). Use `Write` only for new files or a deliberate full rewrite.
-- **Long commands:** a build, a test project, the full suite, or a harness that takes more than about 2 minutes runs with `run_in_background`. Wait for its completion notification, and use `Monitor` only for event streams. Never poll with `sleep`.
+- **Long commands:** a build, a filtered test project, or a harness that takes more than about 2 minutes runs with `run_in_background`. Wait for its completion notification, and use `Monitor` only for event streams. Never poll with `sleep`.
 - **Command output:** filter it to the decisive lines, for example `Select-String 'Passed!|Failed!|error |^\s+Failed '`. Read whole logs only when diagnosing a specific failure.
 - **Blocking decisions:** ask with `AskUserQuestion`. Every option gets a concrete example of what changes (see "The user").
 - **Context compaction:** after any compaction during skill work, re-read the active skill's complete `SKILL.md` from disk before the next action. The summary does not replace the skill.
@@ -125,20 +125,17 @@ Verification commands, as observed on this workstation on 2026-10-09:
   ```
   dotnet test <project.csproj> -c Release --filter "FullyQualifiedName~<Name>"
   ```
-- **Full suite**, about 10–15 minutes, run in the background:
-  ```
-  dotnet test Cerneala.slnx -c Release -p:NuGetAudit=false
-  ```
-  `-p:NuGetAudit=false` avoids failures when the NuGet vulnerability feed is unreachable.
-- **Before the first full suite in a fresh checkout or worktree:**
-  - Run `dotnet build Cerneala.slnx -c Debug`, because PreviewHost compiles its workspace against Debug outputs. Without them, about 12 PreviewHost tests fail with missing generated symbols.
-  - Run `dotnet restore tests/Fixtures/VisualStudioIntegrationHost/VisualStudioIntegrationHost.csproj`. Without it, the Visual Studio lane fails with `NETSDK1004`.
+  Add `-p:NuGetAudit=false` when the NuGet vulnerability feed is unreachable.
+- **Complete suite: never run it** (user decision, 2026-10-15). Do not run `dotnet test Cerneala.slnx`, `dotnet test` without a project, or any test project without `--filter`. Run the focused tests of every test project that covers the changed or affected code instead. Where a skill, plan, gate, or rule in this file asks for the full suite or full repository verification, this replaces it. Every report, commit, pull request, or comment that lists test results says that the complete suite was not run.
+- **Before focused tests in a fresh checkout or worktree:**
+  - When PreviewHost tests are in scope, run `dotnet build Cerneala.slnx -c Debug` first, because PreviewHost compiles its workspace against Debug outputs. Without them, PreviewHost tests fail with missing generated symbols.
+  - When Visual Studio lane tests are in scope, run `dotnet restore tests/Fixtures/VisualStudioIntegrationHost/VisualStudioIntegrationHost.csproj` first. Without it, the lane fails with `NETSDK1004`.
 - **Native SDL/GPU tests** are opt-in with `CERNEALA_SDL_NATIVE_TESTS=1`, and the full native SdlGpu project can run for more than an hour. Run the native subset the change touches, for example `--filter "FullyQualifiedName~Prism"` (about 6 minutes) or the pixel-conformance tests, unless the plan or gate requires the whole native lane.
 - **Locked build outputs:** a running `mcpRoslyn.exe` can lock analyzer/generator outputs. If a build fails on a locked SourceGen or analyzer file, check for and handle Roslyn processes as described in the mcpRoslyn warning before retrying.
 
 # Verification and realtime behavior
 
-After GREEN, rerun original reproduction, focused test project, broader affected suites, required full repository verification, and relevant performance/visual/API/conformance gates. Check mechanism/invariant against diagnostic evidence: a passing patch may mask a symptom. Investigate suite failures; establish environmental/unrelated causes with evidence and report blockers.
+After GREEN, rerun original reproduction, focused test project, focused tests of the other affected test projects, and relevant performance/visual/API/conformance gates. Check mechanism/invariant against diagnostic evidence: a passing patch may mask a symptom. Investigate suite failures; establish environmental/unrelated causes with evidence and report blockers.
 
 Cerneala is a retained realtime UI framework: do not optimize intuitively. When relevant, measure CPU frame cost, allocations, invalidations, measure/arrange counts, rebuilt/reused render work, passes, draw calls, cache hits/misses, resource churn, and measurable GPU time. Respect retained-cache/JIT warmup; no zero-allocation claims without warmed-up measurements. Label unmeasured claims.
 
@@ -148,7 +145,7 @@ Exercise UI through user-like input where practical. Direct property changes do 
 
 Capture Cerneala screenshots exclusively through the application-owned API; for windows, `Window.SaveScreenshot`. No computer-use or browser screenshots, PowerShell/Win32 screen copying, capture utilities, image libraries, or OS-level substitute. If unavailable/failing, report the blocker.
 
-Done requires the requested result and applicable gates: source/regression, focused/broader/full tests, original runtime reproduction, visual/performance, API diff, source generation, docs/manifest, temporary cleanup, and required human validation. Never claim manual validation without an authorized human performing it, or full verification/completion with a required gate failing/unavailable. Record explicit user waivers; distinguish automated completion from pending human validation.
+Done requires the requested result and applicable gates: source/regression, focused tests for all changed and affected code, original runtime reproduction, visual/performance, API diff, source generation, docs/manifest, temporary cleanup, and required human validation. Never claim manual validation without an authorized human performing it, or full verification/completion with a required gate failing/unavailable. Record explicit user waivers; distinguish automated completion from pending human validation.
 
 # Canonical API documentation
 

@@ -1,6 +1,6 @@
 ---
 name: cerneala-fix-bug
-description: Reproduce, diagnose, fix, and verify Cerneala defects end-to-end with evidence-first debugging, a focused RED regression test, CSI, Servo-driven runtime reproduction, Detective observability, or a native harness when needed, the smallest architecture-correct production change, and a final green test suite. Use when the user reports broken behavior, a regression, an exception, incorrect rendering, input or layout failures, performance bugs, flaky behavior, or asks to investigate and fix a Cerneala issue rather than implement a new capability.
+description: Reproduce, diagnose, fix, and verify Cerneala defects end-to-end with evidence-first debugging, a focused RED regression test, CSI, Servo-driven runtime reproduction, Detective observability, or a native harness when needed, the smallest architecture-correct production change, and green focused tests. Use when the user reports broken behavior, a regression, an exception, incorrect rendering, input or layout failures, performance bugs, flaky behavior, or asks to investigate and fix a Cerneala issue rather than implement a new capability.
 ---
 
 # Cerneala Fix Bug
@@ -133,8 +133,8 @@ Run verification in this order:
 
 1. Run the RED regression test and confirm it is now green.
 2. Repeat the original CSI or runtime harness with the same inputs, cycle count, and timing pattern; compare the previously failing state and aggregate metrics.
-3. Run the affected test project or focused test group.
-4. Run the complete repository test suite in the background, with the command and fresh-checkout prerequisites from `CLAUDE.md`. Run the native SDL/GPU subset only when the fix touches that path. If another contract regresses, diagnose it, fix the damage, and rerun until green. Prove an "environmental" failure: for example, show the same failure on unchanged `master`.
+3. Run the focused test group of the affected test project, with a `--filter`.
+4. Run the focused tests of every other test project that covers code the fix touches or depends on, each with a `--filter`, as `CLAUDE.md` describes under "Focused tests". Never run the complete repository suite (`dotnet test Cerneala.slnx`, or a test project without `--filter`): the user chose focused tests only. Run the native SDL/GPU subset only when the fix touches that path. If another contract regresses, diagnose it, fix the damage, and rerun until green. Prove an "environmental" failure: for example, show the same failure on unchanged `master`.
 
 When a permanent Detective diagnostic was added, also run its focused tests, documentation/manifest checks, API compatibility gate, and any measured overhead gate required by its collection model.
 
@@ -156,7 +156,7 @@ Summarize, in the user's language and following "The user" in `CLAUDE.md`:
 - the focused regression test and its RED-to-GREEN result;
 - the production fix;
 - CSI or equivalent reproduction results before and after;
-- focused and full-suite automated verification;
+- the focused test filters you ran with their pass/fail counts, and a note that the complete suite was not run, by the user's choice;
 - the exact user-validation steps and whether the user has confirmed them;
 - documentation changes, remaining uncertainty, or limitations.
 - any permanent Detective diagnostic added, the evidence gap it closes, its tests and documentation/API result, and its measured or bounded runtime cost.
@@ -169,5 +169,5 @@ Never hide a failing test behind optimistic wording.
 
 - If the reproduction cannot be obtained, keep investigating observable state instead of guessing at a fix.
 - If the reported expectation conflicts with an existing documented contract, stop and surface the conflict.
-- If the full suite cannot run because of an environmental blocker, report the exact command and blocker. Do not call the work fully verified.
+- If a focused test cannot run because of an environmental blocker, report the exact command and blocker. Do not call the work fully verified.
 - If the proposed fix requires a broader architectural change, explain why the narrow fix is unsafe before expanding scope.
