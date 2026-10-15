@@ -243,22 +243,19 @@ public class ItemsControl : Control
 
     protected internal virtual Type GetContainerTypeForItem(object? item)
     {
-        if (ItemTemplate is not null)
-        {
-            return DefaultContainerType;
-        }
-
-        return item is UIElement element ? element.GetType() : DefaultContainerType;
+        return IsItemItsOwnContainer(item) ? item!.GetType() : DefaultContainerType;
     }
 
     protected internal virtual UIElement CreateItemContainer(int index, object? item)
     {
-        if (ItemTemplate is not null)
-        {
-            return new ContentPresenter();
-        }
+        return IsItemItsOwnContainer(item) ? (UIElement)item! : new ContentPresenter();
+    }
 
-        return item is UIElement element ? element : new ContentPresenter();
+    // True when CreateItemContainer returns the item itself. The generator asks the owner instead of comparing
+    // types: with an ItemTemplate, a ContentPresenter item has the container type but is still wrapped.
+    internal virtual bool IsItemItsOwnContainer(object? item)
+    {
+        return ItemTemplate is null && item is UIElement;
     }
 
     protected internal virtual void PrepareItemContainer(UIElement container, int index, object? item)

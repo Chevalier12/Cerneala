@@ -21,4 +21,9 @@ public class ListBox : Selector
     {
         return item is ListBoxItem element ? element : new ListBoxItem();
     }
+
+    internal override bool IsItemItsOwnContainer(object? item)
+    {
+        return item is ListBoxItem;
+    }
 }

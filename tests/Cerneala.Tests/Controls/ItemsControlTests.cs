@@ -840,8 +840,13 @@ public sealed class ItemsControlTests
         Assert.Same(oldPanel, control.ItemsPresenter.LayoutPanelRoot);
         Assert.Equal(supplied, oldPanel.VirtualizationContext);
         Assert.Null((replacement as VirtualizingStackPanel)?.VirtualizationContext);
-        control.Measure(new MeasureContext(new LayoutSize(100, 31)));
-        Assert.Equal(1000, control.DesiredSize.Height);
+
+        // The failed refresh stays dirty, so the next measure retries it and the same cause throws again.
+        Assert.Throws<InvalidOperationException>(() => control.Measure(new MeasureContext(new LayoutSize(100, 31))));
+        Assert.Same(oldPanel, control.ItemsPresenter.LayoutPanelRoot);
+        Assert.Equal(supplied, oldPanel.VirtualizationContext);
+        oldPanel.Measure(new MeasureContext(new LayoutSize(100, 31)));
+        Assert.Equal(1000, oldPanel.DesiredSize.Height);
     }
 
     [Theory]

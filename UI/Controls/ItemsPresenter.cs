@@ -233,12 +233,31 @@ public class ItemsPresenter : Control
 
         itemsDirty = false;
         lastRealizationWindow = nextWindow;
-        if (ItemsOwner is not null)
+        try
         {
-            RefreshOwnerItems(nextWindow);
-            return true;
+            if (ItemsOwner is not null)
+            {
+                RefreshOwnerItems(nextWindow);
+            }
+            else
+            {
+                RefreshPresenterItems(nextWindow);
+            }
+        }
+        catch
+        {
+            // A refresh that throws leaves the previous items presented, so the presentation stays
+            // dirty and the next measure or arrange retries it. A setter that threw here also skipped
+            // its own measure invalidation, which this restores.
+            MarkItemsDirty();
+            throw;
         }
 
+        return true;
+    }
+
+    private void RefreshPresenterItems(RealizationWindow? nextWindow)
+    {
         Layout.Panels.Panel nextPanel = ResolveItemsPanel();
         List<UIElement> nextChildren = [.. CreateItemChildren(nextWindow)];
         Layout.Panels.Panel? oldPanel = panelRoot;
@@ -249,7 +268,7 @@ public class ItemsPresenter : Control
             SynchronizePanelChildren(nextPanel, nextChildren);
             panelRoot = nextPanel;
             ApplyVirtualizationContext(nextPanel, VirtualizationContext, nextWindow);
-            return true;
+            return;
         }
 
         if (oldPanel is not null)
@@ -293,7 +312,6 @@ public class ItemsPresenter : Control
         }
 
         ApplyVirtualizationContext(nextPanel, VirtualizationContext, nextWindow);
-        return true;
     }
 
     private void RefreshOwnerItems(RealizationWindow? nextWindow)
