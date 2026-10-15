@@ -195,7 +195,7 @@ public sealed class ItemContainerGenerator
     // A displaced container that a later realization realized again, such as an item that is its own container, is
     // not displaced any more. Each container leaves the list before it is released, so a release that throws keeps the
     // rest for a later commit.
-    private void RecycleDisplacedExcept(HashSet<UIElement> kept)
+    private void RecycleDisplacedExcept(HashSet<UIElement> kept, bool detach = true)
     {
         while (displaced.Count > 0)
         {
@@ -203,10 +203,23 @@ public sealed class ItemContainerGenerator
             displaced.RemoveAt(0);
             if (!kept.Contains(container) && GetRealizedKey(container) < 0)
             {
-                DetachContainer(container);
+                if (detach)
+                {
+                    DetachContainer(container);
+                }
+
                 ReleaseContainer(container);
             }
         }
+    }
+
+    // A presenter that stops presenting this owner's containers, because its owner changed, has already removed them
+    // from its panel, so the displaced containers are given back without detaching them, like ReleaseUnpresented gives
+    // back a container the panel did not take. A parent one has later is not the panel, for example another element
+    // that holds an element that is no longer an item.
+    internal void ReleaseDisplaced()
+    {
+        RecycleDisplacedExcept([], detach: false);
     }
 
     // A container that the presenter's panel did not take is given back without detaching it, because a parent it
