@@ -634,6 +634,93 @@ public sealed class ItemsPresenterTests
         Assert.Equal([1, 2, 3, 4, 5], control.ItemContainerGenerator.RealizedContainers.Keys.Order());
     }
 
+    // The panel rejects item 5, and the restore of the presented window 0..3 throws for item 0 after the generator
+    // realized that window again. The failed move took item 0 out of the panel, so the generator must not keep it realized.
+    [Fact]
+    public void FailedRestoreAfterFailedOwnerInsertRealizesOnlyThePresentedChildren()
+    {
+        Cerneala.UI.Layout.Panels.VirtualizingStackPanel panel = new();
+        ItemElement x = new("x");
+        FailingPreparedIndexItemsControl control = new() { ItemsPanel = panel };
+        control.SetItems(Enumerable.Range(0, 100).Select(index => index == 5 ? (object)x : index));
+        control.SetVirtualizationContext(new VirtualizationContext(100, 10, 30, 0, CacheItems: 1));
+        control.Measure(new MeasureContext(new LayoutSize(100, 30)));
+        Assert.Equal("realized=[0,1,2,3] count=4 children=[0,1,2,3] realizedOutsidePanel=[]", DescribeRealized(control, panel));
+
+        Cerneala.UI.Layout.Panels.StackPanel otherParent = new();
+        otherParent.VisualChildren.Add(x);
+        control.FailPreparedIndex = 0;
+        control.SetVirtualizationContext(new VirtualizationContext(100, 10, 30, 20, CacheItems: 1));
+        for (int attempt = 0; attempt < 2; attempt++)
+        {
+            Assert.Throws<InvalidOperationException>(() => control.Measure(new MeasureContext(new LayoutSize(100, 31 + attempt))));
+
+            Assert.Equal("realized=[1,2,3,4] count=4 children=[1,2,3,4] realizedOutsidePanel=[]", DescribeRealized(control, panel));
+            Assert.Equal(1, control.ItemContainerGenerator.RecyclePool.Count);
+            ContentPresenter released = Assert.IsType<ContentPresenter>(control.ItemContainerGenerator.RecyclePool.Pop(typeof(ContentPresenter)));
+            Assert.Null(released.Content);
+            Assert.Null(released.VisualParent);
+            control.ItemContainerGenerator.RecyclePool.Push(released);
+        }
+
+        otherParent.VisualChildren.Remove(x);
+        control.FailPreparedIndex = -1;
+        control.Measure(new MeasureContext(new LayoutSize(100, 33)));
+
+        Assert.Equal("realized=[1,2,3,4,5] count=5 children=[1,2,3,4,x] realizedOutsidePanel=[]", DescribeRealized(control, panel));
+    }
+
+    // The new panel rejects item 5, and the restore of the presented window 0..3 in the old panel throws for item 0
+    // after the generator realized e2, which is its own container, again under index 2. The old panel keeps the
+    // previous container of item 2, so the generator must not keep e2 realized.
+    [Fact]
+    public void FailedRestoreAfterFailedOwnerPanelSwapRealizesOnlyThePresentedChildren()
+    {
+        Cerneala.UI.Layout.Panels.VirtualizingStackPanel oldPanel = new();
+        Cerneala.UI.Layout.Panels.VirtualizingStackPanel newPanel = new();
+        ItemElement x = new("x");
+        ObservableCollection<object> source = [.. Enumerable.Range(0, 100).Select(index => index == 5 ? (object)x : index)];
+        FailingPreparedIndexItemsControl control = new() { ItemsPanel = oldPanel, ItemsSource = source };
+        control.SetVirtualizationContext(new VirtualizationContext(100, 10, 30, 0, CacheItems: 1));
+        control.Measure(new MeasureContext(new LayoutSize(100, 30)));
+        Assert.Equal("realized=[0,1,2,3] count=4 children=[0,1,2,3] realizedOutsidePanel=[]", DescribeRealized(control, oldPanel));
+
+        Cerneala.UI.Layout.Panels.StackPanel otherParent = new();
+        otherParent.VisualChildren.Add(x);
+        source[2] = new ItemElement("e2");
+        control.FailPreparedIndex = 0;
+        control.SetVirtualizationContext(new VirtualizationContext(100, 10, 30, 20, CacheItems: 1));
+
+        Assert.Throws<InvalidOperationException>(() => control.ItemsPresenter.ItemsPanel = newPanel);
+
+        Assert.Same(oldPanel, control.ItemsPresenter.LayoutPanelRoot);
+        Assert.Empty(newPanel.VisualChildren);
+        Assert.All(control.ItemContainerGenerator.RealizedContainers.Values, container => Assert.Same(oldPanel, container.VisualParent));
+        Assert.Equal(control.ItemContainerGenerator.RealizedContainers.Count, control.RealizedItemCount);
+
+        otherParent.VisualChildren.Remove(x);
+        control.FailPreparedIndex = -1;
+        control.Measure(new MeasureContext(new LayoutSize(100, 31)));
+
+        Assert.Same(newPanel, control.ItemsPresenter.LayoutPanelRoot);
+        Assert.Equal("realized=[1,2,3,4,5] count=5 children=[1,e2,3,4,x] realizedOutsidePanel=[]", DescribeRealized(control, newPanel));
+    }
+
+    // Each child is described by the item it shows, and each realized container that the panel does not present is listed.
+    private static string DescribeRealized(ItemsControl control, Cerneala.UI.Layout.Panels.Panel panel)
+    {
+        IReadOnlyDictionary<int, UIElement> realized = control.ItemContainerGenerator.RealizedContainers;
+        string children = string.Join(",", panel.VisualChildren.Select(child =>
+            Cerneala.UI.Controls.Items.ItemContainerGenerator.GetItem(child) is ItemElement element
+                ? element.Value
+                : $"{Cerneala.UI.Controls.Items.ItemContainerGenerator.GetItem(child)}"));
+        string outside = string.Join(",", realized
+            .Where(pair => !ReferenceEquals(pair.Value.VisualParent, panel))
+            .Select(pair => pair.Key)
+            .Order());
+        return $"realized=[{string.Join(",", realized.Keys.Order())}] count={control.RealizedItemCount} children=[{children}] realizedOutsidePanel=[{outside}]";
+    }
+
     [Fact]
     public void FailedOwnerPanelSwapAfterTheGeneratorRecycledAContainerRestoresThePresentedItems()
     {
@@ -862,6 +949,21 @@ public sealed class ItemsPresenterTests
             if (Fail)
             {
                 throw new InvalidOperationException("container preparation failed");
+            }
+
+            base.OnItemContainerPrepared(container, index);
+        }
+    }
+
+    private sealed class FailingPreparedIndexItemsControl : ItemsControl
+    {
+        public int FailPreparedIndex { get; set; } = -1;
+
+        protected internal override void OnItemContainerPrepared(UIElement container, int index)
+        {
+            if (index == FailPreparedIndex)
+            {
+                throw new InvalidOperationException("container prepared callback failed");
             }
 
             base.OnItemContainerPrepared(container, index);

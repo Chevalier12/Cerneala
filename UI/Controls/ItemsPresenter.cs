@@ -419,11 +419,22 @@ public class ItemsPresenter : Control
     // for another item, for example when its item now needs another container type, so the previous children cannot
     // be put back as they are. The window the panel presented is realized again instead, after the containers the
     // panel did not take are given back without detaching them. The containers outside that window, which the failed
-    // realization created or kept, are then recycled like after a committed refresh.
+    // realization created or kept, are then recycled like after a committed refresh. A realization of that window that
+    // throws gives back what it realized outside the panel, like the failed realization of the next window.
     private void RestorePresentedOwnerItems(Layout.Panels.Panel panel, IReadOnlyList<UIElement> failedChildren)
     {
         ReleaseUnpresentedContainers(panel, failedChildren);
-        List<UIElement> restoredChildren = [.. CreateItemChildren(presentedRealizationWindow)];
+        List<UIElement> restoredChildren;
+        try
+        {
+            restoredChildren = [.. CreateItemChildren(presentedRealizationWindow)];
+        }
+        catch
+        {
+            ReleaseContainersOfFailedRealization(panel);
+            throw;
+        }
+
         PresentRestoredOwnerItems(panel, restoredChildren);
         RecycleUnpresentedContainers(restoredChildren);
     }
