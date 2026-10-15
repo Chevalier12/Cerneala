@@ -164,6 +164,37 @@ public sealed class VirtualizingStackPanelTests
         }
     }
 
+    [Fact]
+    public void LayoutRoundingDesiresTheSumOfNaturalItemDevicePixelsWhenTheFloatSumIsOneStepAboveIt()
+    {
+        // At scale 1.75 the items desire 57 / 1.75f and 1 / 1.75f. Their float sum is one step above 58 / 1.75f,
+        // and rounding that sum up must not add a 59th device pixel that leaves a gap before the next sibling.
+        UIRoot root = new(200, 200, 1.75f);
+        StackPanel outer = new()
+        {
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top
+        };
+        VirtualizingStackPanel panel = new();
+        UIElement first = new() { Width = 10, Height = 32.5f };
+        UIElement second = new() { Width = 10, Height = 0.5f };
+        UIElement next = new() { Width = 10, Height = 10 };
+        panel.VisualChildren.Add(first);
+        panel.VisualChildren.Add(second);
+        outer.VisualChildren.Add(panel);
+        outer.VisualChildren.Add(next);
+        root.VisualChildren.Add(outer);
+
+        root.ProcessFrame();
+
+        Assert.Equal(
+            (57f, 58f, 58f, 58f),
+            (MathF.Round((first.ArrangedBounds.Y + first.ArrangedBounds.Height) * 1.75f),
+                MathF.Round((second.ArrangedBounds.Y + second.ArrangedBounds.Height) * 1.75f),
+                MathF.Round(panel.DesiredSize.Height * 1.75f),
+                MathF.Round(next.ArrangedBounds.Y * 1.75f)));
+    }
+
     private sealed class CountingElement : UIElement
     {
         public int MeasureCount { get; private set; }

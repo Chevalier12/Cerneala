@@ -50,7 +50,7 @@ protected override LayoutSize MeasureCore(MeasureContext context)
 
 `MeasureContext` is passed to `UIElement.Measure` and `UIElement.MeasureCore` to describe the constraints for desired-size calculation. `AvailableSize` contains the size available to the element during measurement. `Rounding` carries the `LayoutRounding` policy used by the layout pipeline to round measured layout values.
 
-`UIElement.Measure` skips recomputation when the last measured available size and layout version still match. When measurement runs, `UIElement` deflates `AvailableSize` by margin before calling `MeasureCore`, clamps the returned content size to non-negative values, adds margin back, and rounds the final desired size with `context.Rounding`.
+`UIElement.Measure` skips recomputation when the last measured available size and layout version still match. When measurement runs, `UIElement` deflates `AvailableSize` by margin before calling `MeasureCore`, clamps the returned content size to non-negative values, adds margin back (in device pixels when `context.Rounding` is enabled, as `LayoutRounding` describes), and rounds the final desired size with `context.Rounding`.
 
 The `MeasureContext(LayoutSize availableSize)` constructor uses `LayoutRounding.Disabled`. Use the primary constructor when the current rounding policy must be preserved across nested measure calls.
 

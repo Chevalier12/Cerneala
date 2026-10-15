@@ -216,7 +216,21 @@ public class Grid : Panel
         measuredRowSizes = rowSizes;
         measuredColumnsUnbounded = float.IsPositiveInfinity(context.AvailableSize.Width);
         measuredRowsUnbounded = float.IsPositiveInfinity(context.AvailableSize.Height);
-        return new LayoutSize(columnSizes.Sum(), rowSizes.Sum());
+        return new LayoutSize(SumDesiredSizes(columnSizes, context.Rounding), SumDesiredSizes(rowSizes, context.Rounding));
+    }
+
+    // With layout rounding, the definitions that lie on device pixels add their device pixels, as StackPanel adds its
+    // children: Auto columns of 57 / 1.75f and 1 / 1.75f desire 58 / 1.75f, while their float sum is one step above it
+    // and would be rounded up to a 59th device pixel.
+    private static float SumDesiredSizes(float[] sizes, LayoutRounding rounding)
+    {
+        double total = 0;
+        foreach (float size in sizes)
+        {
+            total += rounding.ToDevicePixels(size);
+        }
+
+        return rounding.FromDevicePixels((float)total);
     }
 
     // A child sizes the definitions it spans when all of them are content-sized: Auto definitions, and star
