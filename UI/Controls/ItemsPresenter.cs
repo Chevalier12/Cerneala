@@ -321,7 +321,17 @@ public class ItemsPresenter : Control
         Layout.Panels.Panel nextPanel = ResolveItemsPanel();
         Layout.Panels.Panel? oldPanel = panelRoot;
         List<UIElement> oldChildren = oldPanel is null ? [] : [.. oldPanel.VisualChildren];
-        List<UIElement> nextChildren = [.. CreateItemChildren(nextWindow)];
+        List<UIElement> nextChildren;
+        try
+        {
+            nextChildren = [.. CreateItemChildren(nextWindow)];
+        }
+        catch
+        {
+            ReleaseContainersOfFailedRealization(oldPanel);
+            throw;
+        }
+
         bool reusesPanel = ReferenceEquals(oldPanel, nextPanel);
         if (reusesPanel)
         {
@@ -444,6 +454,14 @@ public class ItemsPresenter : Control
                 restoredChildren.RemoveAt(rejectedIndex);
             }
         }
+    }
+
+    // A realization that throws has already realized the containers before the one that failed, and the generator
+    // finishes realizing the window before any of them is passed to OnItemContainerPrepared. The kept panel never takes
+    // them, so every realized container that panel does not present is given back like a container it did not take.
+    private void ReleaseContainersOfFailedRealization(Layout.Panels.Panel? presentingPanel)
+    {
+        ReleaseUnpresentedContainers(presentingPanel, [.. ItemsOwner!.ItemContainerGenerator.RealizedContainers.Values]);
     }
 
     // Without a panel nothing is presented, so every container is given back.
