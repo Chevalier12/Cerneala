@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Items;
 using Cerneala.UI.Controls.Templates;
@@ -210,6 +211,44 @@ public sealed class MenuItemTests
 
         Assert.Equal(1, opened);
         Assert.Equal(1, closed);
+    }
+
+    [Fact]
+    public void SourceClearedWhileDetachedCollapsesSubmenuIndicatorOnReattach()
+    {
+        ObservableCollection<object> source = new() { "a" };
+        MenuItem item = new() { Header = "File", ItemsSource = source };
+        UIRoot root = Attach(item);
+        UIElement indicator = (UIElement)item.ComponentTemplateInstance!.Parts["PART_SubmenuIndicator"];
+        Assert.Equal(Visibility.Visible, indicator.Visibility);
+
+        root.VisualChildren.Remove(item);
+        source.Clear();
+        root.VisualChildren.Add(item);
+        root.ProcessFrame();
+
+        Assert.Equal(0, item.ItemCount);
+        Assert.Same(indicator, item.ComponentTemplateInstance!.Parts["PART_SubmenuIndicator"]);
+        Assert.Equal(Visibility.Collapsed, indicator.Visibility);
+    }
+
+    [Fact]
+    public void SourceFilledWhileDetachedShowsSubmenuIndicatorOnReattach()
+    {
+        ObservableList<object> source = new();
+        MenuItem item = new() { Header = "File", ItemsSource = source };
+        UIRoot root = Attach(item);
+        UIElement indicator = (UIElement)item.ComponentTemplateInstance!.Parts["PART_SubmenuIndicator"];
+        Assert.Equal(Visibility.Collapsed, indicator.Visibility);
+
+        root.VisualChildren.Remove(item);
+        source.Add("a");
+        root.VisualChildren.Add(item);
+        root.ProcessFrame();
+
+        Assert.Equal(1, item.ItemCount);
+        Assert.Same(indicator, item.ComponentTemplateInstance!.Parts["PART_SubmenuIndicator"]);
+        Assert.Equal(Visibility.Visible, indicator.Visibility);
     }
 
     [Fact]
