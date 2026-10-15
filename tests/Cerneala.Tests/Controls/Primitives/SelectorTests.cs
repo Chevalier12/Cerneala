@@ -210,6 +210,66 @@ public sealed class SelectorTests
     }
 
     [Fact]
+    public void ClickWhoseOldRowPreparationThrowsRaisesSelectionChanged()
+    {
+        FailingContentListBox listBox = new();
+        CreateArrangedTextListBox(listBox: listBox);
+        listBox.SelectedIndex = 0;
+        listBox.Root!.ProcessFrame();
+        ListBoxItem clicked = (ListBoxItem)listBox.ItemContainerGenerator.RealizedContainers[1];
+        List<SelectionChangedEventArgs> raised = [];
+        listBox.SelectionChanged += (_, args) => raised.Add(args);
+
+        listBox.FailFor = "a";
+        Record.Exception(() => Click(listBox, 5, 15));
+
+        Assert.Equal(1, listBox.SelectedIndex);
+        Assert.Equal("b", listBox.SelectedItem);
+        Assert.True(clicked.IsSelected);
+        SelectionChangedEventArgs change = Assert.Single(raised);
+        Assert.Equal(["a"], change.RemovedItems);
+        Assert.Equal(["b"], change.AddedItems);
+    }
+
+    [Fact]
+    public void SelectedIndexChangeWhoseNewRowPreparationThrowsRaisesSelectionChangedAndPropagates()
+    {
+        FailingContentListBox listBox = new();
+        CreateArrangedTextListBox(listBox: listBox);
+        listBox.SelectedIndex = 0;
+        ListBoxItem first = (ListBoxItem)listBox.ItemContainerGenerator.RealizedContainers[0];
+        List<SelectionChangedEventArgs> raised = [];
+        listBox.SelectionChanged += (_, args) => raised.Add(args);
+
+        listBox.FailFor = "b";
+        Assert.Throws<InvalidOperationException>(() => listBox.SelectedIndex = 1);
+
+        Assert.Equal(1, listBox.SelectedIndex);
+        Assert.False(first.IsSelected);
+        SelectionChangedEventArgs change = Assert.Single(raised);
+        Assert.Equal(["a"], change.RemovedItems);
+        Assert.Equal(["b"], change.AddedItems);
+    }
+
+    [Fact]
+    public void RelocationWhosePreparationThrowsDoesNotRaiseSelectionChanged()
+    {
+        ObservableCollection<string> source = ["a", "b", "c"];
+        FailingContentListBox listBox = new();
+        CreateArrangedTextListBox(source, listBox);
+        listBox.SelectedIndex = 1;
+        int raised = 0;
+        listBox.SelectionChanged += (_, _) => raised++;
+
+        listBox.FailFor = "b";
+        Assert.Throws<InvalidOperationException>(() => source.Move(1, 0));
+
+        Assert.Equal(0, listBox.SelectedIndex);
+        Assert.Equal("b", listBox.SelectedItem);
+        Assert.Equal(0, raised);
+    }
+
+    [Fact]
     public void SelectionInvalidatesAffectedContainersOnly()
     {
         ListBox listBox = CreateArrangedListBox();
