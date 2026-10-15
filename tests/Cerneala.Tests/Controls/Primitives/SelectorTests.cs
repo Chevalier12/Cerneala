@@ -164,6 +164,51 @@ public sealed class SelectorTests
         Assert.Equal("x", listBox.SelectedItem);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ClickOnReplacedRowWhosePreparationThrewSelectsNothing(bool keepFailing)
+    {
+        FailingContentListBox listBox = new();
+        CreateArrangedTextListBox(listBox: listBox);
+        ListBoxItem clicked = (ListBoxItem)listBox.ItemContainerGenerator.RealizedContainers[1];
+        int selectionChanges = 0;
+        listBox.SelectionChanged += (_, _) => selectionChanges++;
+
+        listBox.Items[1] = "x";
+        listBox.FailFor = "x";
+        Assert.Throws<InvalidOperationException>(() => listBox.Measure(new MeasureContext(new LayoutSize(100, 100))));
+        if (!keepFailing)
+        {
+            listBox.FailFor = null;
+        }
+
+        Click(listBox, 5, 15);
+
+        Assert.Equal("b", clicked.Content);
+        Assert.Equal(-1, listBox.SelectedIndex);
+        Assert.Null(listBox.SelectedItem);
+        Assert.Equal(0, selectionChanges);
+    }
+
+    [Fact]
+    public void ClickOnReplacedRowPreparedAfterAFailedPreparationSelectsNewItem()
+    {
+        FailingContentListBox listBox = new();
+        CreateArrangedTextListBox(listBox: listBox);
+
+        listBox.Items[1] = "x";
+        listBox.FailFor = "x";
+        Assert.Throws<InvalidOperationException>(() => listBox.Measure(new MeasureContext(new LayoutSize(100, 100))));
+        listBox.FailFor = null;
+        listBox.Root!.ProcessFrame();
+        Click(listBox, 5, 15);
+
+        Assert.Equal("x", ((ListBoxItem)listBox.ItemContainerGenerator.RealizedContainers[1]).Content);
+        Assert.Equal(1, listBox.SelectedIndex);
+        Assert.Equal("x", listBox.SelectedItem);
+    }
+
     [Fact]
     public void SelectionInvalidatesAffectedContainersOnly()
     {
@@ -609,10 +654,10 @@ public sealed class SelectorTests
 
     // Shows "a", "b" and "c" in rows at y = 0, 10 and 20. Text rows measure 0 px tall without a font, so
     // each row gets a fixed height.
-    private static ListBox CreateArrangedTextListBox(IEnumerable? itemsSource = null)
+    private static ListBox CreateArrangedTextListBox(IEnumerable? itemsSource = null, ListBox? listBox = null)
     {
         UIRoot root = new(100, 100);
-        ListBox listBox = new();
+        listBox ??= new ListBox();
         if (itemsSource is null)
         {
             listBox.SetItems(new[] { "a", "b", "c" });
@@ -701,6 +746,22 @@ public sealed class SelectorTests
             {
                 SelectedIndex = 2;
             }
+        }
+    }
+
+    // Throws while it prepares the content of a container for FailFor.
+    private sealed class FailingContentListBox : ListBox
+    {
+        public object? FailFor { get; set; }
+
+        protected override void PrepareItemContent(UIElement container, int index, object? item)
+        {
+            if (FailFor is not null && Equals(item, FailFor))
+            {
+                throw new InvalidOperationException("content preparation failed");
+            }
+
+            base.PrepareItemContent(container, index, item);
         }
     }
 
