@@ -212,24 +212,29 @@ public sealed class ItemContainerGenerator
 
     // A container that is its own item belongs to that item, not to an index. When the item moves to
     // another desired index, the container moves with it instead of being recycled from its old index.
+    // The container is found by its realized key, because item changes re-key it without changing its
+    // recorded index.
     private void MoveShiftedItemContainers(HashSet<int> desired)
     {
-        List<(int Index, UIElement Container)>? moves = null;
+        List<(int Index, int CurrentIndex, UIElement Container)>? moves = null;
         foreach (int index in desired)
         {
             if (owner.GetItemAt(index) is not UIElement element ||
-                !containerInfo.TryGetValue(element, out ItemContainerInfo? info) ||
-                !ReferenceEquals(info.Item, element) ||
-                info.Index == index ||
-                !realized.TryGetValue(info.Index, out UIElement? current) ||
-                !ReferenceEquals(current, element) ||
-                (info.Index < owner.ItemCount && ReferenceEquals(owner.GetItemAt(info.Index), element)) ||
+                !ReferenceEquals(GetItem(element), element) ||
+                (realized.TryGetValue(index, out UIElement? existing) && ReferenceEquals(existing, element)))
+            {
+                continue;
+            }
+
+            int currentIndex = IndexFromContainer(element);
+            if (currentIndex < 0 ||
+                (currentIndex < owner.ItemCount && ReferenceEquals(owner.GetItemAt(currentIndex), element)) ||
                 ContainsMovedContainer(moves, element))
             {
                 continue;
             }
 
-            (moves ??= []).Add((index, element));
+            (moves ??= []).Add((index, currentIndex, element));
         }
 
         if (moves is null)
@@ -237,26 +242,26 @@ public sealed class ItemContainerGenerator
             return;
         }
 
-        foreach ((_, UIElement container) in moves)
+        foreach ((_, int currentIndex, _) in moves)
         {
-            realized.Remove(GetItemIndex(container));
+            realized.Remove(currentIndex);
         }
 
-        foreach ((int index, UIElement container) in moves)
+        foreach ((int index, _, UIElement container) in moves)
         {
             Recycle(index);
             realized.Add(index, container);
         }
     }
 
-    private static bool ContainsMovedContainer(List<(int Index, UIElement Container)>? moves, UIElement container)
+    private static bool ContainsMovedContainer(List<(int Index, int CurrentIndex, UIElement Container)>? moves, UIElement container)
     {
         if (moves is null)
         {
             return false;
         }
 
-        foreach ((_, UIElement moved) in moves)
+        foreach ((_, _, UIElement moved) in moves)
         {
             if (ReferenceEquals(moved, container))
             {

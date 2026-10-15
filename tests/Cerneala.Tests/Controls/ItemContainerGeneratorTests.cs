@@ -365,6 +365,36 @@ public sealed class ItemContainerGeneratorTests
     }
 
     [Fact]
+    public void ListBoxReplacedListBoxItemInsertedBackAtItsIndexIsRealizedOnlyThere()
+    {
+        ListBoxItem a = new() { Content = "A" };
+        ClearRecordingListBox listBox = new();
+        listBox.SetItems(new object[] { a, "str" });
+        listBox.ItemContainerGenerator.Realize();
+
+        listBox.Items[0] = "x";
+        listBox.Items.Insert(0, a);
+        listBox.ItemContainerGenerator.Realize();
+
+        AssertReplacedListBoxItemInsertedBackAtIndexZero(listBox, a);
+    }
+
+    [Fact]
+    public void ItemsSourceReplacedListBoxItemInsertedBackAtItsIndexIsRealizedOnlyThere()
+    {
+        ListBoxItem a = new() { Content = "A" };
+        ObservableCollection<object> source = [a, "str"];
+        ClearRecordingListBox listBox = new() { ItemsSource = source };
+        listBox.ItemContainerGenerator.Realize();
+
+        source[0] = "x";
+        source.Insert(0, a);
+        listBox.ItemContainerGenerator.Realize();
+
+        AssertReplacedListBoxItemInsertedBackAtIndexZero(listBox, a);
+    }
+
+    [Fact]
     public void ComboBoxRemoveAtKeepsPresenterContentOfComboBoxItemThatIsItsOwnContainer()
     {
         ComboBoxItem first = new() { Content = "First" };
@@ -428,6 +458,19 @@ public sealed class ItemContainerGeneratorTests
         Assert.NotSame(removed, generated);
         Assert.Equal(expectedItem, generated.Content);
         AssertItemState(generated, expectedIndex, isSelected: false, expectedItem);
+    }
+
+    // Items [a, "x", "str"]: a is realized only at 0 with its item state, and "x" and "str" have generated containers.
+    private static void AssertReplacedListBoxItemInsertedBackAtIndexZero(ClearRecordingListBox listBox, ListBoxItem a)
+    {
+        IReadOnlyDictionary<int, UIElement> realized = listBox.ItemContainerGenerator.RealizedContainers;
+        Assert.Equal(new[] { 0, 1, 2 }, realized.Keys.Order());
+        Assert.Equal(3, realized.Values.Distinct().Count());
+        Assert.Same(a, realized[0]);
+        AssertItemState(a, 0, isSelected: false);
+        AssertDataItemContainer(realized[1], a, 1, "x");
+        AssertDataItemContainer(realized[2], a, 2, "str");
+        Assert.DoesNotContain(a, listBox.ClearedContainers);
     }
 
     private static void AssertRemovedListBoxItem(ListBoxItem removed)
