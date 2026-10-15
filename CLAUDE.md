@@ -35,7 +35,7 @@ Every task needing repository/external-source exploration must delegate it to bo
 
 - subagent_type: "Explore"
 - model: "haiku" (Claude Haiku 5.5)
-- effort: "max"
+- effort: "high"
 - a fresh agent per assignment, never a fork of the parent conversation
 
 Split exploration when the problem justifies it. The parent identifies independent evidence questions from the request and known context, then dispatches as many Haiku explorers as needed, up to 16 concurrently and within the available runtime slots. When two or more useful questions can be investigated independently, dispatch separate explorers in parallel in one message; do not default to one broad assignment. Use one explorer for a genuinely narrow question or dependent discovery. If the relevant boundaries are unknown, first ask Haiku to discover them, then split the resulting independent questions. Reuse explorers through SendMessage or dispatch further bounded batches as new evidence questions arise. Do not fill slots with redundant or ceremonial work.
@@ -44,7 +44,7 @@ Haiku owns all file discovery and exploratory searches. The explicit orientation
 
 No other subagent models or descendants. Haiku only discovers files, searches, reads source/plans/existing artifacts, and gathers evidence. It must not edit, run mutating checks, builds, tests, harnesses, or verification, propose fixes, give root-cause verdicts, or own reviews, documentation, plans, or checklists.
 
-Explorers conserve parent-thread context: each assignment specifies a concrete question, bounded sources/scope, read-only restrictions, and expected evidence. Results are concise and contain only relevant exact file/symbol/line references or source links, facts, decisive excerpts, and coverage limits; do not dump file inventories or whole files into the parent thread. The parent reads only the relevant files needed for its work, not every file inspected by Haiku. Wait for relevant results before relying on them; parent inspection complements, never replaces, required exploration. No ceremonial dispatch for tasks needing no exploration. If Haiku/max is unavailable, report the blocker and ask; no silent model/effort substitution or parent-only search workaround.
+Explorers conserve parent-thread context: each assignment specifies a concrete question, bounded sources/scope, read-only restrictions, and expected evidence. Results are concise and contain only relevant exact file/symbol/line references or source links, facts, decisive excerpts, and coverage limits; do not dump file inventories or whole files into the parent thread. The parent reads only the relevant files needed for its work, not every file inspected by Haiku. Wait for relevant results before relying on them; parent inspection complements, never replaces, required exploration. No ceremonial dispatch for tasks needing no exploration. If Haiku/high is unavailable, report the blocker and ask; no silent model/effort substitution or parent-only search workaround.
 
 Respect runtime/resource limits. Give concurrent explorers distinct bounded scopes; serialize jobs sharing generated outputs. Before acceptance, stop all explorers/jobs and parent-review actual current source, diff, raw evidence, interactions, and plan conformity. Re-review repairs. This is parent review, not an independent audit; advance only after gates and durable checkpoint review. On stop/pause, interrupt work, preserve partial changes, and report unaccounted or unstoppable jobs.
 

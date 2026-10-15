@@ -25,7 +25,7 @@ repository context unless the request supplies one.
 
 ## Claude Code Execution
 
-- In Cerneala, follow `CLAUDE.md`. Repository and external-source exploration goes to Haiku explorers (`Explore`, `model: "haiku"`, `effort: "max"`). They have web search and fetch.
+- In Cerneala, follow `CLAUDE.md`. Repository and external-source exploration goes to Haiku explorers (`Explore`, `model: "haiku"`, `effort: "high"`). They have web search and fetch.
 - Split the market into independent assignments and send them in one message so they run in parallel. Examples: one per evidence track (research / production) per algorithm family, plus one for the current implementation in the repository. Each explorer returns, per candidate:
   - the name and family;
   - direct source links (paper, standard, or a pinned release/commit and file);
