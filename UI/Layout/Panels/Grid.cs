@@ -278,13 +278,15 @@ public class Grid : Panel
         GridLength[] crossLengths = columnAxis ? rows : columns;
         float[] crossSizes = columnAxis ? rowSizes : columnSizes;
         float crossAvailableSize = columnAxis ? context.AvailableSize.Height : context.AvailableSize.Width;
-        float[] crossMeasureSizes = GetMeasureSizes(crossSizes, context.Rounding);
         // Rounding shares the difference between all definitions of an axis, so before the cross axis is resolved,
         // the rounded sizes of its pixel definitions are final only when it has no other definitions: two 33.6 px
-        // pixel rows are 34 and 33 px, but 34, 34 and 10 px with a third, Auto row that is resolved to 10.4 px.
-        // Until then, a child that spans only pixel definitions is measured at their sizes rounded without the
-        // other definitions, and measured again once the cross axis is resolved.
-        bool crossPixelSizesFinal = crossAxisResolved || !context.Rounding.IsEnabled || crossLengths.All(length => length.IsPixel);
+        // pixel rows are 34 and 33 px, but 34, 34, 10 and 10 px with two Auto rows that are resolved to 10.5 px each.
+        // Until then, a child that spans only pixel definitions is measured at their unrounded sizes, as without layout
+        // rounding, and measured again at the rounded sizes once the cross axis is resolved. Its first measure stays a
+        // minimum of the definitions it sizes, so it is not taken at sizes rounded without the other definitions.
+        bool crossRoundedSizesFinal = crossAxisResolved || crossLengths.All(length => length.IsPixel);
+        float[] crossMeasureSizes = crossRoundedSizesFinal ? GetMeasureSizes(crossSizes, context.Rounding) : crossSizes;
+        bool crossPixelSizesFinal = crossRoundedSizesFinal || !context.Rounding.IsEnabled;
         bool measuredBeforeCrossFinal = false;
 
         foreach (UIElement child in VisualChildren)
