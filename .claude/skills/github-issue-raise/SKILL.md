@@ -59,7 +59,20 @@ Rules:
 - **No noise:** no footer like "found by an agent", and no commit permalinks as the main references. Name files and members instead.
 - **Label:** `bug`.
 
-Save the draft to `.artifacts/issue-drafts/<yyyy-MM-dd>-<short-slug>.md`. That folder is git-ignored. In a linked worktree, use the main checkout's folder (the parent folder of `git rev-parse --git-common-dir`), because the worktree may be removed. The file's first line is `Title: ...`, followed by a blank line and the body.
+Save the draft to `.artifacts/issue-drafts/<yyyy-MM-dd>-<short-slug>.md`. That folder is git-ignored. The file's first line is `Title: ...`, followed by a blank line and the body.
+
+In a linked worktree, the draft goes to the main checkout's folder, because the worktree may be removed. Claude Code refuses `Write` and `Edit` on main-checkout paths in a worktree session, so:
+
+1. Write the draft with `Write` into the session's scratchpad directory, for example `<scratchpad>\2026-10-15-track-render-transform.md`.
+2. Copy it at once with PowerShell run from the worktree:
+
+   ```powershell
+   $main = Split-Path (git rev-parse --path-format=absolute --git-common-dir)
+   New-Item -ItemType Directory -Force "$main\.artifacts\issue-drafts" | Out-Null
+   Copy-Item -LiteralPath "<scratchpad>\2026-10-15-track-render-transform.md" -Destination "$main\.artifacts\issue-drafts\"
+   ```
+
+   The draft is now at `C:\Users\lauri\Desktop\Cerneala\.artifacts\issue-drafts\2026-10-15-track-render-transform.md` and survives the worktree's removal. Later changes to that folder, such as the move to `posted/` in section 3, also use the shell.
 
 ## 3. Get approval, then post
 
@@ -71,7 +84,7 @@ Creating a GitHub issue publishes public content, so an issue needs the user's a
 In every other case, ask in a way that never stalls the work:
 
 - **If the user is present:** show a two-line summary (title, plus one sentence of what happens), mention the draft path, and ask with `AskUserQuestion` (post / edit / drop). Post only after a "post".
-- **If the user is away:** for example, during a long unattended skill run. Keep the draft in `.artifacts/issue-drafts/`, continue the current task, and list every pending draft at the end of the run so the user can approve them together.
+- **If the user is away:** for example, during a long unattended skill run. Keep the draft in `.artifacts/issue-drafts/` (of the main checkout, as section 2 says), continue the current task, and list every pending draft at the end of the run so the user can approve them together.
 - **Approval is per issue.** Approving one draft does not approve the next.
 
 To post an approved draft:
@@ -80,7 +93,7 @@ To post an approved draft:
 gh issue create --repo Chevalier12/Cerneala --title "<title>" --body-file <body-file> --label bug
 ```
 
-Use a body file that contains only the body, without the `Title:` line. Then read the issue back with `gh issue view <n> --json title,body,labels`, and confirm that the sections and the label are correct. Move the draft file to `.artifacts/issue-drafts/posted/`.
+Use a body file that contains only the body, without the `Title:` line. Then read the issue back with `gh issue view <n> --json title,body,labels`, and confirm that the sections and the label are correct. Move the draft file to `.artifacts/issue-drafts/posted/`. In a worktree, move it in the main checkout's folder with `Move-Item -LiteralPath "$main\.artifacts\issue-drafts\<draft>.md" -Destination "$main\.artifacts\issue-drafts\posted\"` (create `posted\` first with `New-Item -ItemType Directory -Force` when it is missing).
 
 ## 4. Report
 

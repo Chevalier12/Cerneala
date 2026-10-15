@@ -99,7 +99,7 @@ The skills that change code or pull requests work in a temporary git worktree fr
 
 - **Start (step 0, before any read, search, build, or edit):** if `git rev-parse --git-dir` and `git rev-parse --git-common-dir` print different paths, the session is already in a linked worktree: stay there and create none. Otherwise call `EnterWorktree` with a short task name, for example `fix-grid-span` or `pr-76-fix`. It creates `.claude/worktrees/<name>` on a new branch from the newest `origin/master` and moves the session there. Every later step works in that folder, including the paths given to explorers.
 - **Finish (after the skill's last step):** remove only a worktree that this skill created at step 0, and only when its work is published: `git status --porcelain` prints nothing, and after `git fetch origin`, `git branch -r --contains HEAD` prints at least one branch. Then call `ExitWorktree` with `action: "remove"`. When it refuses only because of commits that the check above found on `origin`, for example a pull request checked out with `gh pr checkout`, call it again with `discard_changes: true`. In every other case call `ExitWorktree` with `action: "keep"` and report the worktree path and what is unpublished, for example uncommitted breaker regression tests.
-- **Files that must outlive the worktree:** issue drafts go to `.artifacts/issue-drafts/` of the main checkout (the parent folder of `git rev-parse --git-common-dir`), not of the worktree. A plan file that exists only in the main checkout, or differs there from the worktree's copy, is copied into the worktree at the same path before the work starts, and is committed with it.
+- **Files that must outlive the worktree:** issue drafts go to `.artifacts/issue-drafts/` of the main checkout (the parent folder of `git rev-parse --git-common-dir`), not of the worktree. In a worktree session Claude Code refuses `Write` and `Edit` on main-checkout paths, and no setting lifts this; it does not check which files a shell command writes. So write the draft with `Write` into the session's scratchpad directory, then copy it at once with PowerShell run from the worktree: `$main = Split-Path (git rev-parse --path-format=absolute --git-common-dir)`, then `Copy-Item -LiteralPath <scratchpad>\<draft>.md -Destination "$main\.artifacts\issue-drafts\"`. Later changes to that folder, such as moving a posted draft to `posted/`, also use the shell (`Move-Item`). A plan file that exists only in the main checkout, or differs there from the worktree's copy, is copied into the worktree at the same path before the work starts, and is committed with it.
 
 # Claude Code tooling and verification commands
 
@@ -123,7 +123,7 @@ Discovered bugs:
   - checks for duplicate issues;
   - drafts the issue in the issue #3 format;
   - posts it only after the user approves it.
-- If the user is away, the skill leaves the draft in `.artifacts/issue-drafts/` and the task continues. Never fix an out-of-scope defect silently inside the current task.
+- If the user is away, the skill leaves the draft in `.artifacts/issue-drafts/` of the main checkout (see "Files that must outlive the worktree") and the task continues. Never fix an out-of-scope defect silently inside the current task.
 
 Verification commands, as observed on this workstation on 2026-10-09:
 
