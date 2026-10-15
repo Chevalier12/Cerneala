@@ -182,8 +182,13 @@ public sealed class ItemsPresenterTests
         Assert.Equal(4, oldPanel.VisualChildren.Count);
         Assert.Equal(supplied, oldPanel.VirtualizationContext);
         Assert.Null((replacement as Cerneala.UI.Layout.Panels.VirtualizingStackPanel)?.VirtualizationContext);
-        presenter.Measure(new MeasureContext(new LayoutSize(100, 31)));
-        Assert.Equal(1000, presenter.DesiredSize.Height);
+
+        // The failed refresh stays dirty, so the next measure retries it and the same cause throws again.
+        Assert.Throws<InvalidOperationException>(() => presenter.Measure(new MeasureContext(new LayoutSize(100, 31))));
+        Assert.Same(oldPanel, presenter.LayoutPanelRoot);
+        Assert.Equal(supplied, oldPanel.VirtualizationContext);
+        oldPanel.Measure(new MeasureContext(new LayoutSize(100, 31)));
+        Assert.Equal(1000, oldPanel.DesiredSize.Height);
     }
 
     [Theory]
@@ -296,6 +301,143 @@ public sealed class ItemsPresenterTests
         Assert.Equal(500, viewer.ScrollInfo.VerticalOffset);
         Assert.Equal(singleViewer.ScrollInfo.VerticalOffset, viewer.ScrollInfo.VerticalOffset);
         Assert.Equal(RealizedIndices(singleMenu), RealizedIndices(menu));
+    }
+
+    [Fact]
+    public void FailedItemsChangeIsRetriedOnNextFrame()
+    {
+        bool fail = false;
+        ItemsPresenter presenter = new()
+        {
+            Items = new[] { "one", "two" },
+            ItemTemplate = new ContentTemplate<string>("test", key: null, priority: 0, context =>
+                fail ? throw new InvalidOperationException("template failed") : new ItemElement(context.Data!))
+        };
+        UIRoot root = new(200, 200);
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+
+        fail = true;
+        Assert.Throws<InvalidOperationException>(() => presenter.Items = new[] { "x", "y", "z" });
+        fail = false;
+        root.ProcessFrame();
+
+        Assert.Equal(["x", "y", "z"], presenter.LayoutPanelRoot!.VisualChildren.Cast<ItemElement>().Select(item => item.Value));
+    }
+
+    [Fact]
+    public void FailedItemsPanelChangeIsRetriedOnNextFrame()
+    {
+        bool fail = false;
+        Cerneala.UI.Layout.Panels.StackPanel panelA = new();
+        Cerneala.UI.Layout.Panels.StackPanel panelB = new();
+        ItemsPresenter presenter = new()
+        {
+            Items = new[] { "one", "two" },
+            ItemTemplate = new ContentTemplate<string>("test", key: null, priority: 0, context =>
+                fail ? throw new InvalidOperationException("template failed") : new ItemElement(context.Data!)),
+            ItemsPanel = panelA
+        };
+        UIRoot root = new(200, 200);
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+
+        fail = true;
+        Assert.Throws<InvalidOperationException>(() => presenter.ItemsPanel = panelB);
+        fail = false;
+        root.ProcessFrame();
+
+        Assert.Same(panelB, presenter.LayoutPanelRoot);
+        Assert.Equal(["one", "two"], panelB.VisualChildren.Cast<ItemElement>().Select(item => item.Value));
+        Assert.Empty(panelA.VisualChildren);
+        Assert.Null(panelA.VisualParent);
+    }
+
+    [Fact]
+    public void RefreshThatKeepsFailingRethrowsEachFrameAndKeepsOldItems()
+    {
+        bool fail = false;
+        ItemsPresenter presenter = new()
+        {
+            Items = new[] { "one", "two" },
+            ItemTemplate = new ContentTemplate<string>("test", key: null, priority: 0, context =>
+                fail ? throw new InvalidOperationException("template failed") : new ItemElement(context.Data!))
+        };
+        UIRoot root = new(200, 200);
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        Cerneala.UI.Layout.Panels.Panel oldPanel = presenter.LayoutPanelRoot!;
+
+        fail = true;
+        Assert.Throws<InvalidOperationException>(() => presenter.Items = new[] { "x", "y", "z" });
+        Assert.Throws<InvalidOperationException>(() => root.ProcessFrame());
+        Assert.Throws<InvalidOperationException>(() => root.ProcessFrame());
+
+        Assert.Same(oldPanel, presenter.LayoutPanelRoot);
+        Assert.Equal(["one", "two"], oldPanel.VisualChildren.Cast<ItemElement>().Select(item => item.Value));
+    }
+
+    [Fact]
+    public void FailedOwnerItemsRefreshIsRetriedOnNextFrame()
+    {
+        FailingPrepareItemsControl owner = new();
+        owner.SetItems(new[] { "one", "two" });
+        UIRoot root = new(200, 200);
+        root.VisualChildren.Add(owner);
+        root.ProcessFrame();
+        Cerneala.UI.Layout.Panels.Panel oldPanel = owner.ItemsPresenter.LayoutPanelRoot!;
+
+        owner.Fail = true;
+        owner.SetItems(new[] { "x", "y", "z" });
+        Assert.Throws<InvalidOperationException>(() => root.ProcessFrame());
+        Assert.Throws<InvalidOperationException>(() => root.ProcessFrame());
+        Assert.Same(oldPanel, owner.ItemsPresenter.LayoutPanelRoot);
+        owner.Fail = false;
+        root.ProcessFrame();
+
+        Assert.Equal(new object?[] { "x", "y", "z" }, ContainerContents(owner.ItemsPresenter.LayoutPanelRoot!));
+    }
+
+    [Fact]
+    public void FailedOwnerItemsPanelChangeIsRetriedOnNextFrame()
+    {
+        Cerneala.UI.Layout.Panels.StackPanel panelA = new();
+        Cerneala.UI.Layout.Panels.StackPanel panelB = new();
+        FailingPrepareItemsControl owner = new() { ItemsPanel = panelA };
+        owner.SetItems(new[] { "one", "two" });
+        UIRoot root = new(200, 200);
+        root.VisualChildren.Add(owner);
+        root.ProcessFrame();
+
+        owner.Fail = true;
+        Assert.Throws<InvalidOperationException>(() => owner.ItemsPresenter.ItemsPanel = panelB);
+        Assert.Same(panelA, owner.ItemsPresenter.LayoutPanelRoot);
+        owner.Fail = false;
+        root.ProcessFrame();
+
+        Assert.Same(panelB, owner.ItemsPresenter.LayoutPanelRoot);
+        Assert.Equal(new object?[] { "one", "two" }, ContainerContents(panelB));
+        Assert.Empty(panelA.VisualChildren);
+    }
+
+    private static object?[] ContainerContents(Cerneala.UI.Layout.Panels.Panel panel)
+    {
+        return [.. panel.VisualChildren.Cast<ContentPresenter>().Select(container => container.Content)];
+    }
+
+    private sealed class FailingPrepareItemsControl : ItemsControl
+    {
+        public bool Fail { get; set; }
+
+        protected internal override void OnItemContainerPrepared(UIElement container, int index)
+        {
+            if (Fail)
+            {
+                throw new InvalidOperationException("container preparation failed");
+            }
+
+            base.OnItemContainerPrepared(container, index);
+        }
     }
 
     private static (Menu Menu, ScrollViewer Viewer, UIRoot Root) CreateScrolledMenu(string[] items)
