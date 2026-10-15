@@ -320,8 +320,11 @@ public class ItemsPresenter : Control
     {
         Layout.Panels.Panel nextPanel = ResolveItemsPanel();
         Layout.Panels.Panel? oldPanel = panelRoot;
-        List<UIElement> oldChildren = oldPanel is null ? [] : [.. oldPanel.VisualChildren];
         List<UIElement> nextChildren = [.. CreateItemChildren(nextWindow)];
+
+        // The realization can have recycled, and so detached, some of the old panel's children, so the children a
+        // failed swap puts back are taken only after it.
+        List<UIElement> oldChildren = oldPanel is null ? [] : [.. oldPanel.VisualChildren];
         bool reusesPanel = ReferenceEquals(oldPanel, nextPanel);
         if (reusesPanel)
         {
@@ -376,6 +379,9 @@ public class ItemsPresenter : Control
                 AddPanelRoot(oldPanel);
 
                 panelRoot = oldPanel;
+
+                // The old panel now holds what the retained panel of a failed sync holds, so it is restored the same way.
+                RestorePresentedOwnerItems(oldPanel, nextChildren);
             }
 
             throw;
