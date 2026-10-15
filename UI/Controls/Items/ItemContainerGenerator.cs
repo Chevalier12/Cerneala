@@ -101,6 +101,18 @@ public sealed class ItemContainerGenerator
             Recycle(index);
         }
 
+        // An item that is its own container and is still realized under an index that no longer holds it moves to
+        // this index, as Realize moves it, so one container is never realized under two indexes. It still shows its
+        // item, so it is not cleared or detached.
+        int movedFromIndex = GetMovedOwnContainerKey(index, item);
+        if (movedFromIndex >= 0)
+        {
+            realized.Remove(movedFromIndex, out UIElement? moved);
+            realized.Add(index, moved!);
+            PrepareRealizedContainer(moved!, index, item);
+            return moved!;
+        }
+
         // An item that is its own container is never wrapped in a recycled container of the container type. Only
         // CreateItemContainer knows whether a subclass returns such an item, so it is asked before the pool.
         UIElement container = IsOfContainerType(item, containerType)
@@ -292,25 +304,21 @@ public sealed class ItemContainerGenerator
 
     // A container that is its own item belongs to that item, not to an index. When the item moves to
     // another desired index, the container moves with it instead of being recycled from its old index.
-    // The container is found by its realized key, because item changes re-key it without changing its
-    // recorded index. It is prepared at its new index here, because that recorded index can already equal the
-    // new index while its other prepared state, such as its selection, is stale.
+    // It is prepared at its new index here, because its recorded index can already equal the new index while its
+    // other prepared state, such as its selection, is stale.
     private void MoveShiftedItemContainers(HashSet<int> desired)
     {
         List<(int Index, int CurrentIndex, UIElement Container)>? moves = null;
         foreach (int index in desired)
         {
-            if (owner.GetItemAt(index) is not UIElement element ||
-                !ReferenceEquals(GetItem(element), element) ||
-                (realized.TryGetValue(index, out UIElement? existing) && ReferenceEquals(existing, element)))
+            int currentIndex = GetMovedOwnContainerKey(index, owner.GetItemAt(index));
+            if (currentIndex < 0)
             {
                 continue;
             }
 
-            int currentIndex = GetRealizedKey(element);
-            if (currentIndex < 0 ||
-                (currentIndex < owner.ItemCount && ReferenceEquals(owner.GetItemAt(currentIndex), element)) ||
-                ContainsMovedContainer(moves, element))
+            UIElement element = realized[currentIndex];
+            if (ContainsMovedContainer(moves, element))
             {
                 continue;
             }
@@ -340,6 +348,24 @@ public sealed class ItemContainerGenerator
         {
             PrepareRealizedContainer(container, index, container);
         }
+    }
+
+    // The key under which the item at index, when it is its own container, is still realized although that key no
+    // longer holds the item, or -1. The container is found by its realized key, because item changes re-key it
+    // without changing its recorded index.
+    private int GetMovedOwnContainerKey(int index, object? item)
+    {
+        if (item is not UIElement element || !ReferenceEquals(GetItem(element), element))
+        {
+            return -1;
+        }
+
+        int currentIndex = GetRealizedKey(element);
+        return currentIndex == index ||
+            (currentIndex >= 0 && currentIndex < owner.ItemCount &&
+                ReferenceEquals(owner.GetItemAt(currentIndex), element))
+            ? -1
+            : currentIndex;
     }
 
     // A realized container stays realized when its preparation throws, but the preparation can have recorded the

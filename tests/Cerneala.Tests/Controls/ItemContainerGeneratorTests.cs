@@ -397,6 +397,52 @@ public sealed class ItemContainerGeneratorTests
     }
 
     [Fact]
+    public void ListBoxReplacedListBoxItemInsertedBackAtItsIndexIsRealizedOnlyThereByDirectGetOrCreate()
+    {
+        ListBoxItem a = new() { Content = "A" };
+        ClearRecordingListBox listBox = new();
+        listBox.SetItems(new object[] { a, "str" });
+        ItemContainerGenerator generator = listBox.ItemContainerGenerator;
+        generator.Realize();
+
+        listBox.Items[0] = "x";
+        listBox.Items.Insert(0, a);
+        UIElement first = generator.GetOrCreate(0);
+        UIElement second = generator.GetOrCreate(1);
+        generator.GetOrCreate(2);
+
+        Assert.Same(a, first);
+        Assert.NotSame(a, second);
+        AssertReplacedListBoxItemInsertedBackAtIndexZero(listBox, a);
+    }
+
+    [Fact]
+    public void UnnotifiedGeneratorMovesListBoxItemToItsNewIndexByDirectGetOrCreate()
+    {
+        ListBoxItem a = new() { Content = "A" };
+        ClearRecordingListBox listBox = new();
+        listBox.SetItems(new object[] { "str", a });
+        ItemContainerGenerator generator = new(listBox);
+        generator.Realize();
+        Cerneala.UI.Layout.Panels.Panel panel = new();
+        panel.VisualChildren.Add(a);
+
+        listBox.SetItems(new object[] { a, "str" });
+        UIElement first = generator.GetOrCreate(0);
+        UIElement second = generator.GetOrCreate(1);
+
+        Assert.Same(a, first);
+        Assert.Equal(new[] { 0, 1 }, generator.RealizedContainers.Keys.Order());
+        Assert.Same(a, generator.RealizedContainers[0]);
+        Assert.Same(second, generator.RealizedContainers[1]);
+        AssertItemState(a, 0, isSelected: false);
+        Assert.Same(panel, a.VisualParent);
+        Assert.DoesNotContain(a, listBox.ClearedContainers);
+        AssertDataItemContainer(second, a, 1, "str");
+        Assert.Equal(0, generator.RecyclePool.Count);
+    }
+
+    [Fact]
     public void ListBoxSelectedReplacedListBoxItemInsertedBackAtItsIndexIsNotSelected()
     {
         ListBoxItem a = new() { Content = "A" };
