@@ -127,6 +127,77 @@ public sealed class StackPanelTests
         Assert.Equal("0..3, 3..6, 6..9, 9..12", GetDeviceEdges(cells, scale, columns: false));
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void LayoutRoundingDesiresTheSumOfChildDevicePixelsWhenTheFloatSumIsOneStepAboveIt(bool vertical)
+    {
+        // At scale 1.75 the children desire 57 / 1.75f and 1 / 1.75f. Their float sum is one step above 58 / 1.75f,
+        // and rounding that sum up must not add a 59th device pixel that leaves a gap before the next sibling.
+        Orientation orientation = vertical ? Orientation.Vertical : Orientation.Horizontal;
+        UIRoot root = new(200, 200, 1.75f);
+        StackPanel outer = new()
+        {
+            Orientation = orientation,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top
+        };
+        StackPanel inner = new() { Orientation = orientation };
+        UIElement first = CreateSizedElement(32.5f, vertical);
+        UIElement second = CreateSizedElement(0.5f, vertical);
+        UIElement next = CreateSizedElement(10, vertical);
+        inner.VisualChildren.Add(first);
+        inner.VisualChildren.Add(second);
+        outer.VisualChildren.Add(inner);
+        outer.VisualChildren.Add(next);
+        root.VisualChildren.Add(outer);
+
+        root.ProcessFrame();
+
+        float desiredInner = vertical ? inner.DesiredSize.Height : inner.DesiredSize.Width;
+        LayoutRect nextBounds = next.ArrangedBounds;
+        Assert.Equal(
+            (57f, 58f, 58f, 58f),
+            (ToDevicePixels(first.ArrangedBounds, vertical, end: true),
+                ToDevicePixels(second.ArrangedBounds, vertical, end: true),
+                MathF.Round(desiredInner * 1.75f),
+                ToDevicePixels(nextBounds, vertical, end: false)));
+    }
+
+    [Fact]
+    public void LayoutRoundingArrangesAChildAtLeastAsWideAsItsMeasuredContent()
+    {
+        // A child whose content measures 100.003 pixels (for example a TextBlock) gets a slot of its desired width.
+        // That slot must hold the whole content, or the text renders into 100 pixels and wraps or trims.
+        UIRoot root = new(200, 200, 1);
+        StackPanel panel = new()
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left
+        };
+        FixedElement child = new(new LayoutSize(100.003f, 10));
+        panel.VisualChildren.Add(child);
+        root.VisualChildren.Add(panel);
+
+        root.ProcessFrame();
+
+        Assert.Equal((101f, 101f), (child.DesiredSize.Width, child.ArrangedBounds.Width));
+    }
+
+    private static float ToDevicePixels(LayoutRect bounds, bool vertical, bool end)
+    {
+        float start = vertical ? bounds.Y : bounds.X;
+        float edge = end ? start + (vertical ? bounds.Height : bounds.Width) : start;
+        return MathF.Round(edge * 1.75f);
+    }
+
+    private static UIElement CreateSizedElement(float length, bool vertical)
+    {
+        return vertical
+            ? new UIElement { Width = 10, Height = length }
+            : new UIElement { Width = length, Height = 10 };
+    }
+
     private static FixedElement[] AddCells(StackPanel panel, LayoutSize size)
     {
         FixedElement[] cells = new FixedElement[4];

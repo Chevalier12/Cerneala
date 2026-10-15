@@ -74,6 +74,23 @@ public sealed class LayoutPrimitiveTests
     }
 
     [Fact]
+    public void LayoutRoundingNeverRoundsASizeBelowItsValue()
+    {
+        // Content 100.003 pixels wide at scale 1 needs 101 device pixels; 100 would cut off its last 0.003 pixels.
+        Assert.Equal(new LayoutSize(101, 3), LayoutRounding.Enabled.Round(new LayoutSize(100.003f, 2.001f)));
+    }
+
+    [Fact]
+    public void LayoutRoundingKeepsALargeSizeThatAlreadyLiesOnDevicePixels()
+    {
+        // (114692 / 1.75f) * 1.75f is 114692.0078125: one float step above 114692 device pixels, more than 1/256 of one.
+        LayoutRounding rounding = LayoutRounding.ForScale(1.75f);
+        LayoutSize size = new(114692 / 1.75f, 114692 / 1.75f);
+
+        Assert.Equal(size, rounding.Round(size));
+    }
+
+    [Fact]
     public void VisibilityHasThreeStates()
     {
         Assert.Contains(Visibility.Visible, Enum.GetValues<Visibility>());

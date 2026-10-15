@@ -59,6 +59,8 @@ The default `Orientation` is `Orientation.Vertical`. In vertical orientation, vi
 
 In horizontal orientation, visible children are measured with an infinite width and the available height from the parent. The panel desired width is the sum of child desired widths, and the desired height is the maximum child desired height. During arrange, each child receives its own desired width and the panel final height, with each child placed after the previous one on the X axis.
 
+When the measure context's `LayoutRounding` is enabled, the sum along the stacking axis adds whole device pixels: each child desired size is converted to device pixels with `MathF.Round(size * Scale)`, and the total is divided by `Scale`. A float sum of the logical sizes can lie one float step above a device pixel, and `LayoutRounding.Round(LayoutSize)` would round it up to one more device pixel. For example, at scale 1.75 a horizontal `StackPanel` whose children desire 57 and 1 device pixels (`Width = 32.5` and `Width = 0.5`) desires `58 / 1.75f`, 58 device pixels, not 59.
+
 Collapsed children are measured with `LayoutSize.Zero` and arranged at the final rectangle origin with zero width and height.
 
 Changing `Orientation` uses `UiPropertyOptions.AffectsMeasure`, so orientation changes participate in layout invalidation through the UI property system.
