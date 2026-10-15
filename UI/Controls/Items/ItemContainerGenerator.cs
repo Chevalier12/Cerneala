@@ -58,7 +58,11 @@ public sealed class ItemContainerGenerator
         {
             if (IsCompatibleContainer(existing, item, containerType))
             {
-                if (!ReferenceEquals(GetItem(existing), item) || GetItemIndex(existing) != index)
+                // The selection can change while the container still shows a replaced item, which a selection
+                // change does not prepare, so a recorded selection that differs from the owner's is stale too.
+                if (!ReferenceEquals(GetItem(existing), item) ||
+                    GetItemIndex(existing) != index ||
+                    GetIsSelected(existing) != owner.IsItemSelected(index))
                 {
                     owner.PrepareItemContainer(existing, index, item);
                 }

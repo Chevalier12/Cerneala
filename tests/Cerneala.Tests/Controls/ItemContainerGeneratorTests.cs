@@ -432,6 +432,120 @@ public sealed class ItemContainerGeneratorTests
     }
 
     [Fact]
+    public void ListBoxSelectedReplacedListBoxItemPutBackAtItsIndexIsNotSelected()
+    {
+        ListBoxItem a = new() { Content = "A" };
+        ListBox listBox = new();
+        listBox.SetItems(new object[] { a, "str" });
+        listBox.ItemContainerGenerator.Realize();
+        listBox.SelectedIndex = 0;
+        Assert.True(a.IsSelected);
+
+        listBox.Items[0] = "x";
+        listBox.Items[0] = a;
+        listBox.ItemContainerGenerator.Realize();
+
+        Assert.Equal(-1, listBox.SelectedIndex);
+        Assert.Same(a, listBox.ItemContainerGenerator.RealizedContainers[0]);
+        AssertPreparedSelection(a, 0, a, isSelected: false);
+    }
+
+    [Fact]
+    public void ItemsSourceSelectedReplacedListBoxItemPutBackAtItsIndexIsNotSelected()
+    {
+        ListBoxItem a = new() { Content = "A" };
+        ObservableCollection<object> source = [a, "str"];
+        ListBox listBox = new() { ItemsSource = source };
+        listBox.ItemContainerGenerator.Realize();
+        listBox.SelectedIndex = 0;
+        Assert.True(a.IsSelected);
+
+        source[0] = "x";
+        source[0] = a;
+        listBox.ItemContainerGenerator.Realize();
+
+        Assert.Equal(-1, listBox.SelectedIndex);
+        AssertPreparedSelection(a, 0, a, isSelected: false);
+    }
+
+    [Fact]
+    public void ListBoxSelectedReplacedListBoxItemPutBackThroughMeasureIsNotSelected()
+    {
+        ListBoxItem a = new() { Content = "A" };
+        ListBox listBox = new();
+        listBox.SetItems(new object[] { a, "str" });
+        MeasureContext context = new(new LayoutSize(200, 200));
+        listBox.Measure(context);
+        listBox.SelectedIndex = 0;
+        Assert.True(a.IsSelected);
+
+        listBox.Items[0] = "x";
+        listBox.Items[0] = a;
+        listBox.Measure(context);
+
+        Assert.Equal(-1, listBox.SelectedIndex);
+        Assert.Same(a, listBox.ItemsPresenter.LayoutPanelRoot!.VisualChildren[0]);
+        AssertPreparedSelection(a, 0, a, isSelected: false);
+    }
+
+    [Fact]
+    public void ListBoxSelectedReplacedDataItemPutBackAtItsIndexIsNotSelected()
+    {
+        ListBox listBox = new();
+        listBox.SetItems(new object[] { "b", "c" });
+        listBox.ItemContainerGenerator.Realize();
+        listBox.SelectedIndex = 0;
+        ListBoxItem container = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.True(container.IsSelected);
+
+        listBox.Items[0] = "x";
+        listBox.Items[0] = "b";
+        listBox.ItemContainerGenerator.Realize();
+
+        Assert.Equal(-1, listBox.SelectedIndex);
+        Assert.Same(container, listBox.ItemContainerGenerator.RealizedContainers[0]);
+        AssertPreparedSelection(container, 0, "b", isSelected: false);
+    }
+
+    [Fact]
+    public void ListBoxSelectedReplacedDataItemPutBackThroughMeasureIsNotSelected()
+    {
+        ListBox listBox = new();
+        listBox.SetItems(new object[] { "b", "c" });
+        MeasureContext context = new(new LayoutSize(200, 200));
+        listBox.Measure(context);
+        listBox.SelectedIndex = 0;
+        ListBoxItem container = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.True(container.IsSelected);
+
+        listBox.Items[0] = "x";
+        listBox.Items[0] = "b";
+        listBox.Measure(context);
+
+        Assert.Equal(-1, listBox.SelectedIndex);
+        Assert.Same(container, listBox.ItemsPresenter.LayoutPanelRoot!.VisualChildren[0]);
+        AssertPreparedSelection(container, 0, "b", isSelected: false);
+    }
+
+    [Fact]
+    public void ListBoxReplacedListBoxItemPutBackAndSelectedAgainIsSelected()
+    {
+        ListBoxItem a = new() { Content = "A" };
+        ListBox listBox = new();
+        listBox.SetItems(new object[] { a, "str" });
+        listBox.ItemContainerGenerator.Realize();
+        listBox.SelectedIndex = 0;
+
+        listBox.Items[0] = "x";
+        listBox.Items[0] = a;
+        listBox.SelectedIndex = 0;
+        listBox.ItemContainerGenerator.Realize();
+
+        Assert.Equal(0, listBox.SelectedIndex);
+        AssertPreparedSelection(a, 0, a, isSelected: true);
+    }
+
+    [Fact]
     public void ListBoxItemItemIsNotWrappedInPooledGeneratedContainer()
     {
         ListBoxItem a = new() { Content = "A" };
@@ -644,6 +758,13 @@ public sealed class ItemContainerGeneratorTests
         Assert.Equal(isSelected, container.IsSelected);
         Assert.Equal(expectedIndex, ItemContainerGenerator.GetItemIndex(container));
         Assert.Same(expectedItem, ItemContainerGenerator.GetItem(container));
+    }
+
+    // Both selection records of a prepared container: the container's IsSelected and the generator's flag.
+    private static void AssertPreparedSelection(ListBoxItem container, int expectedIndex, object expectedItem, bool isSelected)
+    {
+        AssertItemState(container, expectedIndex, isSelected, expectedItem);
+        Assert.Equal(isSelected, ItemContainerGenerator.GetIsSelected(container));
     }
 
     private sealed class ClearRecordingListBox : ListBox
