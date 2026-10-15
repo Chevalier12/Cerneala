@@ -53,7 +53,9 @@ Target actions resolve the target immediately before input, after the owning fra
 
 Target resolution does not wait for global idleness or add a settling frame. The resolved coordinates define the gesture; Servo does not continuously follow a target that moves after the gesture starts.
 
-The bounds center must hit the target or a descendant on the current input route. A union with a gap at its center can therefore be queryable but not actionable; Servo does not search for a substitute point. Disabled colliders remain queryable, but cannot supply a hit. Scene target screenshots use the same geometric bounds and capture the rendered window pixels there, not a separate rendering of the node.
+Layout elements use their drawn bounds: the axis-aligned box of `ArrangedBounds` mapped through the render and Motion transforms of the element and every ancestor, the same transforms that hit testing applies. For example, a 100 x 40 `Thumb` arranged at (0, 40) inside a `StackPanel` whose `RenderTransform` scales 2x around `RenderTransformOrigin` (0, 0) has bounds (0, 80, 200, 80), and target actions aim at (100, 120). Without transforms, the bounds equal `ArrangedBounds`.
+
+The center of these bounds must hit the target or a descendant on the current input route. A union with a gap at its center can therefore be queryable but not actionable; Servo does not search for a substitute point. Disabled colliders remain queryable, but cannot supply a hit. Target screenshots of layout elements and scene nodes use the same bounds and capture the rendered window pixels there, not a separate rendering of the node.
 
 Input sequences are serialized per window or host. `TypeIntoAsync` composes a click and text input. `ReplaceTextAsync` composes a click, `Control+A`, and text input rather than assigning a control property.
 

@@ -6,10 +6,29 @@ namespace Cerneala.UI.Input;
 
 internal static class InputCoordinateConverter
 {
-    internal static LayoutRect GetRootBounds(UIElement element) =>
-        element is IInputCoordinateSpace coordinateSpace
-            ? coordinateSpace.GetRootBounds()
-            : element.ArrangedBounds;
+    internal static LayoutRect GetRootBounds(UIElement element)
+    {
+        if (element is IInputCoordinateSpace coordinateSpace)
+        {
+            return coordinateSpace.GetRootBounds();
+        }
+
+        // Hit testing applies every render transform, so input bounds are the drawn bounds.
+        LayoutRect bounds = element.ArrangedBounds;
+        Matrix3x2 elementToRoot = GetElementToRootTransform(element);
+        if (elementToRoot.IsIdentity)
+        {
+            return bounds;
+        }
+
+        Vector2 topLeft = Vector2.Transform(new Vector2(bounds.X, bounds.Y), elementToRoot);
+        Vector2 topRight = Vector2.Transform(new Vector2(bounds.X + bounds.Width, bounds.Y), elementToRoot);
+        Vector2 bottomLeft = Vector2.Transform(new Vector2(bounds.X, bounds.Y + bounds.Height), elementToRoot);
+        Vector2 bottomRight = Vector2.Transform(new Vector2(bounds.X + bounds.Width, bounds.Y + bounds.Height), elementToRoot);
+        Vector2 min = Vector2.Min(Vector2.Min(topLeft, topRight), Vector2.Min(bottomLeft, bottomRight));
+        Vector2 max = Vector2.Max(Vector2.Max(topLeft, topRight), Vector2.Max(bottomLeft, bottomRight));
+        return new LayoutRect(min.X, min.Y, max.X - min.X, max.Y - min.Y);
+    }
 
     internal static bool TryRootToElement(
         UIElement element,
