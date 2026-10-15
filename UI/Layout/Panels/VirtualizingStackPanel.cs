@@ -10,6 +10,7 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
     private ItemsVirtualizationViewport? automaticViewport;
     private RealizationWindow automaticWindow = RealizationWindow.Empty;
     private float estimatedItemExtent = InitialEstimatedItemExtent;
+    private LayoutRounding measureRounding = LayoutRounding.Disabled;
 
     public VirtualizationContext? VirtualizationContext { get; set; }
 
@@ -24,7 +25,7 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
         {
             RealizationWindow window = RealizationWindow;
             return automaticViewport is not null
-                ? EstimateTotalExtent(automaticViewport.Value.ItemCount)
+                ? EstimateTotalExtent(automaticViewport.Value.ItemCount, measureRounding)
                 : UsesNaturalItemHeights(window)
                     ? DesiredSize.Height
                     : VirtualizationContext?.TotalExtent ?? DesiredSize.Height;
@@ -93,8 +94,10 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
     {
         // With layout rounding the natural item heights add device pixels, as StackPanel adds its children, so items of
         // 57 / 1.75f and 1 / 1.75f desire 58 / 1.75f instead of a float one step above it that rounds up to 59 pixels.
+        // The estimated extent of an automatic viewport adds device pixels the same way.
         RealizationWindow window = RealizationWindow;
         LayoutRounding rounding = context.Rounding;
+        measureRounding = rounding;
         float width = 0;
         float height = 0;
         for (int i = 0; i < VisualChildren.Count; i++)
@@ -124,7 +127,7 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
 
         float naturalHeight = rounding.FromDevicePixels(height);
         float desiredHeight = automaticViewport is not null
-            ? EstimateTotalExtent(automaticViewport.Value.ItemCount)
+            ? EstimateTotalExtent(automaticViewport.Value.ItemCount, rounding)
             : UsesNaturalItemHeights(window)
             ? naturalHeight
             : VirtualizationContext?.TotalExtent ?? naturalHeight;
@@ -152,7 +155,7 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
             }
 
             float childY = automaticViewport is not null
-                ? context.FinalRect.Y + EstimateOffset(itemIndex)
+                ? context.FinalRect.Y + EstimateOffset(itemIndex, context.Rounding)
                 : itemExtent > 0
                 ? context.FinalRect.Y + (itemIndex * itemExtent)
                 : y;
@@ -224,26 +227,29 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
         automaticWindow = RealizationWindow.Create(viewport.ItemCount, start, end);
     }
 
-    private float EstimateOffset(int index)
+    // With layout rounding the item extents add device pixels: a measured height on a device pixel counts as its whole
+    // number of device pixels, and any other extent, such as the averaged estimate, counts as extent * Scale.
+    private float EstimateOffset(int index, LayoutRounding rounding)
     {
         float offset = 0;
         for (int current = 0; current < index; current++)
         {
-            offset += GetEstimatedItemExtent(current);
+            offset += rounding.ToDevicePixels(GetEstimatedItemExtent(current));
         }
 
-        return offset;
+        return rounding.FromDevicePixels(offset);
     }
 
-    private float EstimateTotalExtent(int itemCount)
+    private float EstimateTotalExtent(int itemCount, LayoutRounding rounding)
     {
-        double extent = 0;
+        double devicePixels = 0;
         for (int index = 0; index < itemCount; index++)
         {
-            extent += GetEstimatedItemExtent(index);
+            devicePixels += rounding.ToDevicePixels(GetEstimatedItemExtent(index));
         }
 
-        return extent >= float.MaxValue ? float.MaxValue : (float)extent;
+        float extent = rounding.FromDevicePixels((float)devicePixels);
+        return float.IsFinite(extent) ? extent : float.MaxValue;
     }
 
     private float GetEstimatedItemExtent(int index)

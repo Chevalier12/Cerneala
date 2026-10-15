@@ -195,6 +195,42 @@ public sealed class VirtualizingStackPanelTests
                 MathF.Round(next.ArrangedBounds.Y * 1.75f)));
     }
 
+    [Fact]
+    public void LayoutRoundingDesiresTheSumOfMeasuredItemDevicePixelsWithAnAutomaticViewport()
+    {
+        // With an automatic viewport the desired height is the estimated total extent. Its measured items add device
+        // pixels as the natural heights do, so 57 / 1.75f and 1 / 1.75f give 58 / 1.75f, not a float that rounds up to 59.
+        UIRoot root = new(200, 200, 1.75f);
+        StackPanel outer = new()
+        {
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top
+        };
+        VirtualizingStackPanel panel = new();
+        panel.UpdateViewport(new ItemsVirtualizationViewport(2, 200, 0, 0));
+        UIElement first = new() { Width = 10, Height = 32.5f };
+        UIElement second = new() { Width = 10, Height = 0.5f };
+        UIElement next = new() { Width = 10, Height = 10 };
+        panel.VisualChildren.Add(first);
+        panel.VisualChildren.Add(second);
+        outer.VisualChildren.Add(panel);
+        outer.VisualChildren.Add(next);
+        root.VisualChildren.Add(outer);
+
+        root.ProcessFrame();
+
+        Assert.Equal(new RealizationWindow(0, 2), panel.RealizationWindow);
+        Assert.Equal(58 / 1.75f, panel.TotalExtent);
+        Assert.Equal(
+            (0f, 57f, 57f, 58f, 58f, 58f),
+            (MathF.Round(first.ArrangedBounds.Y * 1.75f),
+                MathF.Round((first.ArrangedBounds.Y + first.ArrangedBounds.Height) * 1.75f),
+                MathF.Round(second.ArrangedBounds.Y * 1.75f),
+                MathF.Round((second.ArrangedBounds.Y + second.ArrangedBounds.Height) * 1.75f),
+                MathF.Round(panel.DesiredSize.Height * 1.75f),
+                MathF.Round(next.ArrangedBounds.Y * 1.75f)));
+    }
+
     private sealed class CountingElement : UIElement
     {
         public int MeasureCount { get; private set; }
