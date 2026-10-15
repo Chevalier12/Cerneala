@@ -599,6 +599,75 @@ public sealed class ItemsPresenterTests
     }
 
     [Fact]
+    public void FailedOwnerPanelSwapAfterTheGeneratorRecycledAContainerRestoresThePresentedItems()
+    {
+        Cerneala.UI.Layout.Panels.StackPanel oldPanel = new();
+        Cerneala.UI.Layout.Panels.StackPanel newPanel = new();
+        System.Collections.ObjectModel.ObservableCollection<object> source = ["0", "1", "2", "3"];
+        ItemsControl control = new() { ItemsPanel = oldPanel, ItemsSource = source };
+        control.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        Assert.Equal("children=[0,1,2,3] pool=0 pooledWithParent=0", DescribeOwnerPanel(control, oldPanel));
+
+        // The item that is its own container makes the next realization recycle the container that showed "2",
+        // and the appended element still has another parent, so placing it in the new panel throws.
+        ItemElement e2 = new("e2");
+        ItemElement x = new("x");
+        Cerneala.UI.Layout.Panels.StackPanel otherParent = new();
+        otherParent.VisualChildren.Add(x);
+        source[2] = e2;
+        source.Add(x);
+
+        Assert.Throws<InvalidOperationException>(() => control.ItemsPresenter.ItemsPanel = newPanel);
+
+        Assert.Same(oldPanel, control.ItemsPresenter.LayoutPanelRoot);
+        Assert.Equal("children=[0,1,e2,3] pool=1 pooledWithParent=0", DescribeOwnerPanel(control, oldPanel));
+
+        // While the cause stays, each retry throws again and keeps the same presentation.
+        Assert.Throws<InvalidOperationException>(() => control.Measure(new MeasureContext(new LayoutSize(100, 101))));
+        Assert.Same(oldPanel, control.ItemsPresenter.LayoutPanelRoot);
+        Assert.Equal("children=[0,1,e2,3] pool=1 pooledWithParent=0", DescribeOwnerPanel(control, oldPanel));
+
+        otherParent.VisualChildren.Remove(x);
+        control.Measure(new MeasureContext(new LayoutSize(100, 102)));
+
+        Assert.Same(newPanel, control.ItemsPresenter.LayoutPanelRoot);
+        Assert.Equal("children=[0,1,e2,3,x] pool=1 pooledWithParent=0", DescribeOwnerPanel(control, newPanel));
+        Assert.Empty(oldPanel.VisualChildren);
+    }
+
+    // Each child must be the container realized under its item's index and show that item. The pool is emptied and
+    // refilled in the same order to count pooled containers that still have a visual or logical parent.
+    private static string DescribeOwnerPanel(ItemsControl control, Cerneala.UI.Layout.Panels.Panel panel)
+    {
+        IReadOnlyDictionary<int, UIElement> realized = control.ItemContainerGenerator.RealizedContainers;
+        string children = string.Join(",", panel.VisualChildren.Select(child =>
+        {
+            int index = Cerneala.UI.Controls.Items.ItemContainerGenerator.GetItemIndex(child);
+            object? content = child is ContentPresenter presenter ? presenter.Content : (child as ItemElement)?.Value;
+            bool showsItem = index >= 0 &&
+                realized.TryGetValue(index, out UIElement? container) &&
+                ReferenceEquals(container, child) &&
+                Equals(child is ContentPresenter ? content : child, control.GetItemAt(index));
+            return showsItem ? $"{content}" : $"unrealized:{content ?? "null"}";
+        }));
+
+        Cerneala.UI.Controls.Items.ItemContainerRecyclePool pool = control.ItemContainerGenerator.RecyclePool;
+        Stack<UIElement> pooled = [];
+        while (pool.Pop(typeof(ContentPresenter)) is UIElement container)
+        {
+            pooled.Push(container);
+        }
+
+        int pooledWithParent = pooled.Count(container => container.VisualParent is not null || container.LogicalParent is not null);
+        while (pooled.TryPop(out UIElement? container))
+        {
+            pool.Push(container);
+        }
+
+        return $"children=[{children}] pool={pool.Count} pooledWithParent={pooledWithParent}";
+    }
+
+    [Fact]
     public void FailedOwnerRefreshKeepsAContainerThatAReplacedItemOfAnotherContainerTypeDisplaced()
     {
         Cerneala.UI.Layout.Panels.StackPanel panel = new();
