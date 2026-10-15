@@ -1,6 +1,6 @@
 ---
 name: cerneala-fix-bug
-description: Reproduce, diagnose, fix, and verify Cerneala defects end-to-end with evidence-first debugging, a focused RED regression test, CSI, Servo-driven runtime reproduction, Detective observability, or a native harness when needed, the smallest architecture-correct production change, and green focused tests. Use when the user reports broken behavior, a regression, an exception, incorrect rendering, input or layout failures, performance bugs, flaky behavior, or asks to investigate and fix a Cerneala issue rather than implement a new capability.
+description: Reproduce, diagnose, fix, and verify Cerneala defects end-to-end with evidence-first debugging, a focused RED regression test, CSI, Servo-driven runtime reproduction, Detective observability, or a native harness when needed, the smallest architecture-correct production change, green focused tests, and a reproduction app (an executable published with the pull request, never committed) in which the user does the triggering actions and sees a live OK or BUG verdict. Use when the user reports broken behavior, a regression, an exception, incorrect rendering, input or layout failures, performance bugs, flaky behavior, or asks to investigate and fix a Cerneala issue rather than implement a new capability.
 ---
 
 # Cerneala Fix Bug
@@ -9,7 +9,7 @@ Fix the reported behavior from reproduction through final verification. Treat th
 
 Follow `CLAUDE.md`, especially "Claude Code tooling and verification commands". After a context compaction, re-read this file (`.claude/skills/cerneala-fix-bug/SKILL.md`) before continuing. Recover the reproduction, the RED test, and the current hypothesis from the repository and the summary, not from memory alone.
 
-Invoking this skill authorizes running the `git-session-commit-push` skill at the end (step 8).
+Invoking this skill authorizes running the `git-session-commit-push` skill at the end (step 9).
 
 **Step 0 (MANDATORY, before anything else):** start in a temporary worktree, as `CLAUDE.md` describes under "Temporary worktree for skills", and work only there. After the report, finish the worktree the same way.
 
@@ -84,6 +84,7 @@ The harness supplies high-fidelity reproduction evidence; it does not replace th
 - Delete only the exact resolved harness directory and its generated report after verification. Guard the resolved path before recursive deletion.
 - Confirm with `git status` that no harness source, project, binaries, or reports remain.
 - Never commit the temporary harness unless the user explicitly asks to promote it. If its observation has lasting framework value, apply the permanent Detective policy below instead of preserving an application-specific harness.
+- The user reproduction app from step 5 is not a temporary harness. Keep its source outside the repository until step 9 has published it, and never commit it.
 
 ### Permanent Detective Diagnostics
 
@@ -114,14 +115,67 @@ Servo and Detective are part of this workflow, not assumed-correct test equipmen
 
 If the bug has no GitHub issue yet, invoke `github-issue-raise` once the reproduction is RED, so that the fix can reference `Fixes #N`. Use the same skill for any other Cerneala defect you discover along the way, and do not fix that one here.
 
-## 5. Diagnose the Root Cause
+## 5. Build the User Reproduction App (MANDATORY)
+
+Every fix ships a small executable in which the user performs the user validation of step 8 by themselves. The app sets up the real scenario from the issue, the user does the actions that trigger the bug (scroll, click, type, drag, resize), and the app checks the broken invariant live and says whether the bug happened. It is not a demo that plays a fixed script while the user watches: the actions are the user's. Example for #268, "rows of a virtualized list must touch after a scroll": a list of 200 rows that are 11 and 10 device pixels tall, the steps "drag the scrollbar thumb in big jumps, then scroll with the wheel", and a line that stays green while every neighbouring row pair touches and turns red at the first gap or overlap.
+
+Build it right after the RED test, so that it shows the bug before the fix and its absence after the fix. Only the compiled app reaches the user: its source is temporary and never goes into the repository, the commit, or the pull request. Step 9 publishes the app as a GitHub pre-release and links it from the pull request. It always goes in the pull request and never in a GitHub issue: do not attach it to an issue or describe it in one, including issues raised with `github-issue-raise`.
+
+Project:
+
+- Create it outside the repository, in `<scratchpad>/repro-<N>/Issue<N>/`, where `<N>` is the GitHub issue number, for example `<scratchpad>/repro-268/Issue268/Issue268.csproj`. Without an issue number, use a short PascalCase scenario name, for example `<scratchpad>/repro-grid-auto-row-gap/GridAutoRowGap/`. Nothing in the repository changes for the app: no project, no `Cerneala.slnx` entry, no `Cerneala.csproj` exclusion.
+- Copy the project shape of `Playground/Cerneala.ComboBoxLab`, the smallest real Cerneala window app:
+  - a `WinExe` project targeting `net8.0-windows`, with `ImplicitUsings` and `Nullable` enabled;
+  - a `CernealaRoot` property with the absolute path of the worktree root and a trailing backslash, and project references to `$(CernealaRoot)Cerneala.csproj`, to `$(CernealaRoot)Cerneala.Backends.SdlGpu\Cerneala.Backends.SdlGpu.csproj`, and to `$(CernealaRoot)Cerneala.SourceGen\Cerneala.SourceGen.csproj` with `OutputItemType="Analyzer"` and `ReferenceOutputAssembly="false"`;
+  - `<AdditionalFiles Include="**\*.crn" Exclude="bin\**;obj\**" />`;
+  - a `BackendRegistration.cs` with the `ApplicationBackend` attribute for `SdlGpuApplicationBackend`;
+  - a `MainWindow.crn` and a `MainWindow.crn.cs`. The source generator writes `Main`, so do not add a `Program.cs`.
+- Use only public Cerneala API, as an application would. Build the scenario the way an application would: for a list bug, a real `ListBox` or `ItemsControl` in a `ScrollViewer`, not a panel that the app drives by calling its methods.
+
+The scenario and the user's actions:
+
+- Start from the issue's minimal reproduction and its user-validation steps. Use the same elements, sizes, values, and conditions.
+- Find out which user actions really trigger the bug before you write the steps. Read the owning code, and confirm with check mode (below) before the fix. Example from #268: the wheel moves 48 units, less than one screen, so every row above the first visible row was already measured and the bug never appeared; a drag of the scrollbar thumb jumps past rows that were never measured, which is the condition of the bug.
+- Write the steps in the window, as numbered literal actions, for example `1. Drag the scrollbar thumb down and up in big jumps. 2. Scroll with the mouse wheel over the list.`, and say what the user should see when the bug is absent, for example `neighbouring rows must always touch`.
+- Make the symptom visible. When it is a few pixels, draw the area larger with a render-only `RenderTransform`, for example 4x with `RenderTransformOrigin` (0, 0) on the `ScrollViewer`, and give the parts strong contrasting colors. `RenderTransform` changes drawing and hit testing, not layout, so the user can still scroll and click the enlarged elements, and the check below still reads the real layout values.
+
+The live verdict:
+
+- Check the broken invariant from live framework state through public API, for example each realized row's `ArrangedBounds`, converted to device pixels with `MathF.Round(value * Root.Scale)`, and its item index from `ItemContainerGenerator.GetItemIndex`. Never hard-code the verdict.
+- Run the check in `FrameRendered`, and only when the checked state changed since the last frame, so that standing still does not add checks. Count what was checked, for example row pairs and scroll positions.
+- Show the verdict at the top of the window. It has one of these first lines:
+  - `OK: bug #<N> does not reproduce so far.` in green;
+  - `BUG: bug #<N> reproduces.` in red. It stays red after the first failure, even when the user moves on.
+- After the first line, show the values: the first failure with measured and expected values, for example `overlap of 1 px between row 84 and row 85: row 84 = 300..311, row 85 = 310..320`, the totals, for example `29 gaps and 31 overlaps in 360 row pairs at 26 scroll positions`, and the display scale (`Root.Scale`) when the values are device pixels, because they change with it. Add a line about the current state, for example `Now: rows 40..52 are realized; every neighbouring pair touches.`
+- Set a `TextBlock.Text` or brush only when its value changes, so that the window does not invalidate itself on every frame.
+- When a condition from the issue cannot be set up in a real window (for example a specific DPI scale), say so in the window and in the pull request, and reproduce as much as the real window allows.
+
+Check mode, the test in the real app:
+
+- With the arguments `--check <report-file>`, the app performs the user's steps itself with Servo (`Cerneala.UI.Servo.Servo`, created in `ContentRendered`), then writes the verdict to `<report-file>`, closes its window, and exits with code 0 for OK, 1 for BUG, 2 when the triggering condition never happened (`NOT REACHED`, for example no jump left unmeasured rows), and 3 when the check itself threw (`ERROR`, with the exception). The generated `Main` takes no parameters and returns nothing, so read the arguments with `Environment.GetCommandLineArgs()` and set `Environment.ExitCode`.
+- Use real Servo input only: `DragAsync`, `ClickAsync`, `ScrollAsync` (a delta of -120 is one wheel notch down), Servo's key and text operations, and `WaitForIdleAsync` after each action. Never set `VerticalOffset`, `SelectedIndex`, or other control state to imitate the user. Give targets an id with `Servo.SetId`, also on template parts reached through public API, for example `viewer.VerticalScrollBar.Track.Thumb`.
+- Servo acts at the center of the target's layout bounds, and that point must hit the target:
+  - It ignores `RenderTransform` (a known defect), so in check mode turn the zoom off with `new Transform(Matrix3x2.Identity)`. The zoom changes only drawing, so the verdict reads the same values; say so in the pull request.
+  - Aim the wheel at the `ScrollViewer`, not at the scrolled content: a long list's layout center lies outside the visible area.
+- Build the app with `dotnet build <csproj> -c Release` and start the built `.exe` with `Start-Process -PassThru`, then `WaitForExit` with a timeout, for example 120 seconds. Kill it on timeout and report the timeout.
+- Run it now, before the fix, with a report file outside the repository, for example `<scratchpad>/repro-before.txt`. It must exit with 1 and report a failure like the one in the issue. Exit 0 means the app or its actions do not trigger the bug, 2 means the actions never reached the condition, and 3 means the check broke: in every case fix the app, never the verdict.
+- Step 8 runs it again after the fix and expects exit 0, and step 9 runs the published `.exe` once more. Keep every verdict line for the pull request.
+- Look at the window once yourself before publishing: save a screenshot with `Window.SaveScreenshot` from temporary code, read the image, and remove that code. Check that the steps, the verdict, and the enlarged area are readable and do not overlap.
+
+When the app does not behave as expected:
+
+- A setup with several steps must wait for state, not count frames: a frame can render before your change has been measured and arranged. Move to the next step only when the previous step's state is visible on the elements, keep frames coming with `Invalidate(InvalidationFlags.Render, ...)` while waiting, and stop after a fixed cap, for example 300 frames, with the `NOT REACHED` verdict.
+- Log the state of each frame, and of each measure and arrange through a small subclass of the element that only records, to a file outside the repository. Read the log; do not guess. Remove the logging before publishing.
+- When the app runs into another Cerneala defect, raise it with `github-issue-raise`, do not fix it here, and route the app around it with a comment. Examples from #268: Servo ignores `RenderTransform`; a row that the panel had set to height 0 kept that height when it was measured again with the same width.
+
+## 6. Diagnose the Root Cause
 
 - Trace the failing state from the public symptom to the owning implementation.
 - Distinguish the root cause from collateral symptoms and stale derived state.
 - Check neighboring contracts likely to share the same invariant, but do not expand scope without evidence.
 - Surface unrelated design smells separately. Do not smuggle cleanup into the fix.
 
-## 6. Implement the Smallest Correct Fix
+## 7. Implement the Smallest Correct Fix
 
 - Respect existing ownership, architecture, and local patterns.
 - Fix the violated invariant without speculative abstractions, broad rewrites, or compatibility theater.
@@ -129,28 +183,61 @@ If the bug has no GitHub issue yet, invoke `github-issue-raise` once the reprodu
 - Preserve unrelated user changes in the working tree.
 - Keep public API documentation synchronized when the fix changes public behavior or surface area. Use the repository-mandated API documentation workflow.
 
-## 7. Verify in Layers
+## 8. Verify in Layers
 
 Run verification in this order:
 
 1. Run the RED regression test and confirm it is now green.
 2. Repeat the original CSI or runtime harness with the same inputs, cycle count, and timing pattern; compare the previously failing state and aggregate metrics.
-3. Run the focused test group of the affected test project, with a `--filter`.
-4. Run the focused tests of every other test project that covers code the fix touches or depends on, each with a `--filter`, as `CLAUDE.md` describes under "Focused tests". Never run the complete repository suite (`dotnet test Cerneala.slnx`, or a test project without `--filter`): the user chose focused tests only. Run the native SDL/GPU subset only when the fix touches that path. If another contract regresses, diagnose it, fix the damage, and rerun until green. Prove an "environmental" failure: for example, show the same failure on unchanged `master`.
+3. Test the fix in the real app: rebuild the user reproduction app against the fixed code and run it in check mode as in step 5, with a new report file, for example `<scratchpad>/repro-after.txt`. It must exit with 0 and report OK. Exit 1 means the bug still reproduces in a real window, even when the regression test is green: go back to step 6. Exit 2 or 3 means the app no longer reaches the scenario or its check broke: fix the app and run both checks again.
+4. Run the focused test group of the affected test project, with a `--filter`.
+5. Run the focused tests of every other test project that covers code the fix touches or depends on, each with a `--filter`, as `CLAUDE.md` describes under "Focused tests". Never run the complete repository suite (`dotnet test Cerneala.slnx`, or a test project without `--filter`): the user chose focused tests only. Run the native SDL/GPU subset only when the fix touches that path. If another contract regresses, diagnose it, fix the damage, and rerun until green. Prove an "environmental" failure: for example, show the same failure on unchanged `master`.
 
 When a permanent Detective diagnostic was added, also run its focused tests, documentation/manifest checks, API compatibility gate, and any measured overhead gate required by its collection model.
 
-Do not perform or claim manual validation of the real application scenario. That gate belongs to the user. After automated verification, provide concise reproduction steps, the expected corrected result, and any diagnostics the user should inspect. Write the steps as literal actions with literal expected results. For example: "click X, then Y; the button should turn red and stay red". Record the manual result only when the user explicitly reports it.
+Do not perform or claim manual validation of the real application scenario. That gate belongs to the user. After automated verification, provide concise reproduction steps, the expected corrected result, and any diagnostics the user should inspect. The user validation happens in the reproduction app from step 5: download `Issue<N>.zip` from the link in the pull request's `How to check` section, unzip it, run `Issue<N>.exe`, and do the actions written in its window; the expected result is the green verdict plus what the user should see, for example "the blue and orange rows always touch". Write the steps as literal actions with literal expected results. For example: "click X, then Y; the button should turn red and stay red". Record the manual result only when the user explicitly reports it.
 
 Do not declare success because the code compiles or one assertion passes. The automated reproduction must be green and the repository must remain healthy. Until the user confirms the real scenario, report its status as awaiting user validation.
 
-## 8. Commit and Push (MANDATORY)
+## 9. Commit and Push (MANDATORY)
 
-After step 7 is green and the temporary harnesses and probes are cleaned up, invoke the `git-session-commit-push` skill. Pass it `Fixes #N` when an issue exists, plus the root cause, the regression test, the verification counts, and the pending user-validation steps.
+After step 8 is green and the temporary harnesses and probes are cleaned up, invoke the `git-session-commit-push` skill. The commit never contains the reproduction app or any file from it. Pass it:
 
-If a required gate in step 7 failed or could not run, do not invoke it. Report the blocker and ask the user with `AskUserQuestion` whether to commit anyway.
+- `Fixes #N` when an issue exists;
+- the root cause, the regression test, and the verification counts;
+- the reproduction app's check-mode verdict lines before and after the fix;
+- the pending user-validation steps.
 
-## 9. Report Evidence
+If a required gate in step 8 failed or could not run, do not invoke it. Report the blocker and ask the user with `AskUserQuestion` whether to commit anyway.
+
+Then publish the reproduction app for the pull request `<PR>` that the skill created or updated:
+
+1. Publish it self-contained, so that it runs without .NET installed, and zip it:
+
+   ```text
+   dotnet publish <scratchpad>/repro-<N>/Issue<N>/Issue<N>.csproj -c Release -r win-x64 --self-contained true -o <scratchpad>/repro-<N>/publish/Issue<N>
+   ```
+
+   Zip the contents of that folder as `<scratchpad>/repro-<N>/Issue<N>.zip` with `Compress-Archive -Force`.
+2. Run the published `Issue<N>.exe` in check mode. It must exit with 0 and report OK. Otherwise do not publish it, and report the verdict.
+3. Create a GitHub pre-release that holds only the zip, on the pull request's head commit:
+
+   ```text
+   gh release create repro-pr-<PR> <scratchpad>/repro-<N>/Issue<N>.zip --target <head SHA> --prerelease --title "Reproduction app: PR #<PR> (bug #<N>)" --notes-file <notes file>
+   ```
+
+   The notes say which commit the app was built from, how to run it, the actions the user does, what OK and BUG look like, and the check-mode exit codes. Uploading 80 MB can take minutes, so run it in the background. When the release already exists because the pull request got new commits, upload the new zip with `gh release upload repro-pr-<PR> <zip> --clobber` instead, and update the commit in its notes and in the pull request.
+4. Add a `How to check` section to the pull-request body before its user-validation section, with `gh pr view <PR> --json body` and `gh pr edit <PR> --body-file <file>`. It contains:
+   - the download link `https://github.com/<owner>/<repo>/releases/download/repro-pr-<PR>/Issue<N>.zip`, the release link, the head commit, and a note that the app is self-contained for Windows x64;
+   - the literal steps: download, unzip, run `Issue<N>.exe`, then the actions written in its window;
+   - what the window shows when the fix works and when the bug is present, with example values and the display scale they were measured at;
+   - which actions check mode performs, and a table with its exit code and verdict line before the fix, with the fix, and from the published `.exe`;
+   - every difference between check mode and the user's run, with the reason, for example the zoom that check mode turns off.
+
+   The pull request's user-validation section then says: run `Issue<N>.exe` from the zip, do the actions in its window, and expect the green verdict.
+5. Delete the reproduction app's temporary folder, `<scratchpad>/repro-<N>/`, only after the release and the pull-request body are in place.
+
+## 10. Report Evidence
 
 Summarize, in the user's language and following "The user" in `CLAUDE.md`:
 
@@ -158,6 +245,8 @@ Summarize, in the user's language and following "The user" in `CLAUDE.md`:
 - the focused regression test and its RED-to-GREEN result;
 - the production fix;
 - CSI or equivalent reproduction results before and after;
+- the user reproduction app: its release and download links, and its check-mode verdicts before the fix, with the fix, and from the published `.exe`;
+- any other Cerneala defect the app ran into, and the issue raised for it;
 - the focused test filters you ran with their pass/fail counts, and a note that the complete suite was not run, by the user's choice;
 - the exact user-validation steps and whether the user has confirmed them;
 - documentation changes, remaining uncertainty, or limitations.

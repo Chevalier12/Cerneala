@@ -51,8 +51,8 @@ Other skills and tools parse the reply, so its first line is exact:
 
 3. **Fix only the blocking problems.** These are correctness defects that this PR introduces, failed tests, and a merge conflict (step 4).
    - Classify every finding yourself, with evidence. Older review comments may not separate the groups. Example: a defect that reproduces on `origin/master` without this PR is pre-existing, not blocking.
-   - For each blocking defect and failed test, follow `cerneala-fix-bug` sections 1 to 7: reproduce the problem, add a RED regression test, fix the owning invariant, and run the focused tests for the changed and affected code. Never run the complete suite (`dotnet test Cerneala.slnx`, or a test project without `--filter`).
-   - Do not run `cerneala-fix-bug` section 8. Instead, commit on this detached HEAD in the repository's structured commit-message style, for example `fix(grid): keep no Auto size from a pixel span's unrounded first measure`.
+   - For each blocking defect and failed test, follow `cerneala-fix-bug` sections 1 to 8: reproduce the problem, add a RED regression test, build the user reproduction app outside the repository (section 5), fix the owning invariant, check the app before and after the fix, and run the focused tests for the changed and affected code. Never run the complete suite (`dotnet test Cerneala.slnx`, or a test project without `--filter`).
+   - Do not run `cerneala-fix-bug` section 9 as a whole. Instead, commit the fix on this detached HEAD in the repository's structured commit-message style, for example `fix(grid): keep no Auto size from a pixel span's unrounded first measure`. The commit never contains the reproduction app. After the push in step 5, publish each app with the publishing steps 1 to 5 at the end of `cerneala-fix-bug` section 9, as the pre-release `repro-pr-<number>` on the pushed head; with several apps, upload each zip to that one release. Then add or update the pull request's `How to check` section, before posting the reply.
    - Leave the code alone for pre-existing defects and for design, cleanup, parity or style notes, even when the review lists them as findings.
    - If a blocking finding is not real, leave the code alone and record the evidence. Example: the test that the review says fails passes 12 of 12 at `<sha>`.
 
@@ -64,7 +64,7 @@ Other skills and tools parse the reply, so its first line is exact:
 5. **Push, then reply.** The reply is your last GitHub action.
    - **If you made commits:** run `git push origin HEAD:refs/heads/<headRefName>`, with `<headRefName>` from step 1. Confirm the push with `git ls-remote origin refs/heads/<headRefName>`: it must print your HEAD. Then post the reply.
    - **If you made no commits:** do not push. Post the reply.
-   - The reply starts with the exact first line from "Comment format". It lists each fixed finding with its commit, and each other finding with its class (rejected, pre-existing, note or unresolved) and the evidence. It lists the focused test filters you ran with their pass/fail counts and says that the complete suite was not run.
+   - The reply starts with the exact first line from "Comment format". It lists each fixed finding with its commit, and each other finding with its class (rejected, pre-existing, note or unresolved) and the evidence. It lists the focused test filters you ran with their pass/fail counts and says that the complete suite was not run. For each reproduction app, it gives the download link and the check-mode verdicts before and after the fix.
    - If the push failed, say so in the reply. Never claim a push that `git ls-remote` does not confirm.
 
 6. **Report** in the user's language: each finding with its result, the commits, the push result, the tests with their pass/fail counts, and any decision you made without the user together with the options you considered.
