@@ -1,6 +1,6 @@
 ---
 name: cerneala-pr-review-merge
-description: Review and merge one Cerneala pull request after the user has validated it with a PR comment that starts with exactly "Validated.", optionally followed by the user's extra instructions for the review, newer than the PR's head commit. The review proves every defect it finds, raises a GitHub issue for each one, lists them in one PR comment, merges into master, and then deletes the PR's reproduction-app release (repro-pr-<number>) with both apps, before and after the fix, and keeps their GIFs in the permanent repro-gifs release. Use it when the user asks to review and merge a specific Cerneala PR (for example "review and merge PR 277"), or when a Cerneala PR has a new "Validated." comment. Do not use it before that comment exists, to fix code, or to review a local diff that has no pull request.
+description: Review and merge one Cerneala pull request after the user has validated it with a PR comment that starts with exactly "Validated.", optionally followed by the user's extra instructions for the review, newer than the PR's head commit. The review proves every defect it finds, raises a GitHub issue for each one, merges into master, lists them in one PR comment that says whether the merge succeeded, and then deletes the PR's reproduction-app release (repro-pr-<number>) with both apps, before and after the fix, and keeps their GIFs in the permanent repro-gifs release. Use it when the user asks to review and merge a specific Cerneala PR (for example "review and merge PR 277"), or when a Cerneala PR has a new "Validated." comment. Do not use it before that comment exists, to fix code, or to review a local diff that has no pull request.
 ---
 
 # Cerneala PR Review and Merge
@@ -59,7 +59,7 @@ Everything else is out of scope: do not create, edit or delete repository files,
 The comment's first line is exact, so that tools can find it:
 
 - Merged: `<!-- cerneala-pr-merged head=<sha> -->`.
-- Not merged (a merge conflict, or master kept moving): `<!-- cerneala-pr-not-merged head=<sha> -->`.
+- Not merged (a merge conflict, master kept moving, or `gh pr merge` failed twice): `<!-- cerneala-pr-not-merged head=<sha> -->`.
 
 Every other section is a `###` heading.
 
@@ -98,14 +98,18 @@ Every other section is a `###` heading.
 
    Defects, failed tests and notes do not stop the merge: they are raised as issues in step 5 and listed in the comment. If master moved: run `git merge --abort`, merge `origin/master` again, record the new tested base, and rerun step 4. After at most 3 rounds, post the not-merged comment and stop without merging.
 
-7. **Comment, then merge.** Post one comment, then merge with `gh pr merge <number> --merge --match-head-commit <sha>`.
+7. **Merge, then comment.** Merge first, check the result, and only then post the one comment, so its first line says what really happened (user decision, 2026-10-16). Run every command below in its own tool call, never chained with `;` in one call: a chained call hides the exit code of each command.
+   - Run `gh pr merge <number> --merge --match-head-commit <sha>`.
+   - Then run `gh pr view <number> --json state,headRefOid,mergedAt`, whatever the merge printed. The printed output and the exit code alone do not prove the result.
+   - `MERGED`: post the merged comment.
+   - Still `OPEN`, head still `<sha>`, and `git fetch origin master` followed by `git rev-parse origin/master` still equals the tested base: run the same `gh pr merge` once more, then check again. GitHub sometimes fails a valid merge with a server error, for example `GraphQL: Something went wrong while executing your query on 2026-10-15T21:21:36Z.` (PR 285, merged by hand afterwards). If master moved instead, go back to step 6.
+   - Still not `MERGED` after the second attempt, or the head moved, or the PR was closed: do not try again. Post the not-merged comment with a `### Merge error` section that quotes the exact output of each `gh pr merge` attempt, and keep the release.
    - The comment has the first line from "Comment format", then:
      - `### Bugs found`: one item per raised issue, with the issue link, whether this PR introduced it or it already existed on master, and the reproduction in one line with its literal values. Write `None.` when there are none.
      - `### Not raised`: each finding that could not be reproduced, with the reason. Leave the section out when there are none.
      - `### Notes`: leave it out when there are none.
      - `### Extra instructions`: when the validation comment has extra instructions, each one quoted, with what you did, or that you skipped it and why. Leave the section out when there are none.
      - `### Tests`: the focused test filters you ran with their pass/fail counts, and a sentence that says the complete suite was not run.
-   - When `gh pr merge` fails, for example because the head moved, do not retry. Report it and keep the release.
 
 8. **Delete the reproduction apps.** The release `repro-pr-<number>` holds both versions of the app, before and after the fix: `Issue<N>-before.zip` and `Issue<N>-after.zip`. The GIFs that the pull-request body shows are in the separate, permanent release `repro-gifs`: never delete that release or any file in it, so the merged pull request keeps showing them (user decision, 2026-10-15). Delete `repro-pr-<number>` only after `gh pr view <number> --json state` prints `MERGED`:
    - Run `gh release view repro-pr-<number> --repo Chevalier12/Cerneala --json tagName,assets`. When it says the release does not exist, there is nothing to delete; say so in the report. This is normal for a pull request without a reproduction app.
@@ -123,7 +127,8 @@ PR 277 has head `2ce80fe7…` (40 characters), committed at 12:10. The user ran 
 1. The comment is `Validated.` with no extra instructions and is newer than the head commit, so the skill continues.
 2. Suppose the review finds one Pre-existing defect: a click on the scrollbar track pages by only 1 unit. A CSI script on `origin/master` shows `VerticalOffset` going from `0` to `1` after one track click with a 100 px viewport. The skill raises it, as #280 in this example. (The numbers in this example are illustrative, not measured.)
 3. `FullyQualifiedName~VirtualizingStackPanelTests` passes 64 of 64. Master did not move.
-4. It posts:
+4. It runs `gh pr merge 277 --merge --match-head-commit 2ce80fe7…`, and `gh pr view 277 --json state,headRefOid,mergedAt` prints `MERGED`.
+5. It posts:
 
 ```
 <!-- cerneala-pr-merged head=2ce80fe7… -->
@@ -133,7 +138,7 @@ PR 277 has head `2ce80fe7…` (40 characters), committed at 12:10. The user ran 
 - `FullyQualifiedName~VirtualizingStackPanelTests`: 64 passed, 0 failed. The complete suite was not run.
 ```
 
-5. It runs `gh pr merge 277 --merge --match-head-commit 2ce80fe7…`, sees `MERGED`, and runs `gh release delete repro-pr-277 --repo Chevalier12/Cerneala --yes --cleanup-tag`.
+6. It runs `gh release delete repro-pr-277 --repo Chevalier12/Cerneala --yes --cleanup-tag`.
 
 Suppose instead the user posted `Validated. Please raise issue for the other not raised issues if they are reproduced.`, and the PR body's `Other bugs found` section lists one entry without an issue link: `- Suspected: Escape loses the focus after a drop-down closes. Not raised: not reproduced in the reproduction app.` The skill tries to reproduce it on `origin/master` as step 5 says. If a Servo scenario shows the focus leaving the `ComboBox` after Escape, it raises the issue and lists it under `### Bugs found`; otherwise it lists it under `### Not raised` with the reason. Either way the comment adds (the issue number is illustrative):
 
