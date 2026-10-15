@@ -261,6 +261,42 @@ public sealed class VirtualizingStackPanelTests
         Assert.Equal("10..21, 21..31", GetVerticalDeviceEdges([panel.VisualChildren[1], panel.VisualChildren[2]], scale));
     }
 
+    [Fact]
+    public void RowRealizedAgainWithTheSameConstraintReportsItsMeasuredHeight()
+    {
+        // Rows 0 and 1 are measured with (100, infinity), get the zero desired size while the window is 3..4, and
+        // are measured again with (100, infinity) after the scroll back. The zero was never a measure result, so the
+        // measure cache must not return it.
+        VirtualizingStackPanel panel = new();
+        FixedHeightElement[] rows = [.. Enumerable.Range(0, 6).Select(_ => new FixedHeightElement(40))];
+        foreach (FixedHeightElement row in rows)
+        {
+            panel.VisualChildren.Add(row);
+        }
+
+        // The panel's own constraint alternates so that its measure cache does not skip the pass; its children
+        // always get (100, infinity).
+        void ScrollTo(float offset, float panelHeight)
+        {
+            panel.UpdateViewport(new ItemsVirtualizationViewport(6, 80, offset, 0));
+            panel.Measure(new MeasureContext(new LayoutSize(100, panelHeight)));
+            panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, panel.DesiredSize.Height)));
+        }
+
+        ScrollTo(0, 80);
+        ScrollTo(120, 81);
+        Assert.Equal(new RealizationWindow(3, 5), panel.RealizationWindow);
+        Assert.Equal(0, rows[0].DesiredSize.Height);
+
+        ScrollTo(0, 80);
+
+        Assert.Equal(new RealizationWindow(0, 2), panel.RealizationWindow);
+        Assert.Equal([40f, 40f], rows[..2].Select(row => row.DesiredSize.Height));
+        Assert.Equal(240, panel.TotalExtent);
+        Assert.Equal(new LayoutRect(0, 0, 100, 40), rows[0].ArrangedBounds);
+        Assert.Equal(new LayoutRect(0, 40, 100, 40), rows[1].ArrangedBounds);
+    }
+
     private static string GetVerticalDeviceEdges(IEnumerable<UIElement> elements, float scale)
     {
         return string.Join(", ", elements.Select(element =>

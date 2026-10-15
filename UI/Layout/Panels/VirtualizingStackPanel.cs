@@ -106,7 +106,7 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
             UIElement child = VisualChildren[i];
             if (!IsRealized(window, itemIndex))
             {
-                child.SetDesiredSize(LayoutSize.Zero);
+                child.SetUnmeasuredDesiredSize(LayoutSize.Zero);
                 continue;
             }
 
