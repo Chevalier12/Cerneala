@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
@@ -597,6 +598,82 @@ public sealed class ItemsPresenterTests
         Assert.Equal([1, 2, 3, 4, 5], control.ItemContainerGenerator.RealizedContainers.Keys.Order());
     }
 
+    [Fact]
+    public void FailedOwnerRefreshKeepsAContainerThatAReplacedItemOfAnotherContainerTypeDisplaced()
+    {
+        Cerneala.UI.Layout.Panels.StackPanel panel = new();
+        ObservableCollection<object> source = ["0", "1", "2", "3"];
+        FailingItemItemsControl control = new() { ItemsPanel = panel, ItemsSource = source };
+        control.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        Assert.Equal("children=[0,1,2,3] pool=[]", DescribePresented(control, panel));
+
+        source[2] = new ItemElement("e2");
+        source[3] = "3b";
+        control.FailItem = "3b";
+        Assert.Throws<InvalidOperationException>(() => control.Measure(new MeasureContext(new LayoutSize(100, 101))));
+        Assert.Equal("children=[0,1,2,3] pool=[]", DescribePresented(control, panel));
+        Assert.Throws<InvalidOperationException>(() => control.Measure(new MeasureContext(new LayoutSize(100, 102))));
+        Assert.Equal("children=[0,1,2,3] pool=[]", DescribePresented(control, panel));
+
+        control.FailItem = null;
+        control.Measure(new MeasureContext(new LayoutSize(100, 103)));
+
+        Assert.Equal("children=[0,1,e2,3b] pool=[unparented]", DescribePresented(control, panel));
+    }
+
+    [Fact]
+    public void FailedOwnerRefreshKeepsAContainerThatAMovedOwnContainerDisplaced()
+    {
+        Cerneala.UI.Layout.Panels.StackPanel panel = new();
+        ItemElement e = new("E");
+        ObservableCollection<object> source = ["0", "1", e, "3"];
+        FailingItemItemsControl control = new() { ItemsPanel = panel, ItemsSource = source };
+        control.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        Assert.Equal("children=[0,1,E,3] pool=[]", DescribePresented(control, panel));
+
+        source[2] = "2b";
+        source[0] = e;
+        control.FailItem = "2b";
+        Assert.Throws<InvalidOperationException>(() => control.Measure(new MeasureContext(new LayoutSize(100, 101))));
+        // The container created for "2b", whose preparation threw, goes to the pool cleared and unparented.
+        Assert.Equal("children=[0,1,E,3] pool=[unparented]", DescribePresented(control, panel));
+        Assert.Throws<InvalidOperationException>(() => control.Measure(new MeasureContext(new LayoutSize(100, 102))));
+        Assert.Equal("children=[0,1,E,3] pool=[unparented]", DescribePresented(control, panel));
+
+        control.FailItem = null;
+        control.Measure(new MeasureContext(new LayoutSize(100, 103)));
+
+        Assert.Equal("children=[E,1,2b,3] pool=[unparented]", DescribePresented(control, panel));
+    }
+
+    // Each child is described by the item it shows and must have the panel as its visual and logical parent,
+    // and each pooled container is described by its parents, so a pooled container that a panel still holds shows.
+    private static string DescribePresented(ItemsControl control, Cerneala.UI.Layout.Panels.Panel panel)
+    {
+        string children = string.Join(",", panel.VisualChildren.Select(child =>
+        {
+            object? shown = child is ContentPresenter presenter ? presenter.Content : child;
+            string description = shown is ItemElement element ? element.Value : $"{shown}";
+            return ReferenceEquals(child.LogicalParent, panel) ? description : $"{description}(no logical parent)";
+        }));
+        int pooledCount = control.ItemContainerGenerator.RecyclePool.Count;
+        List<UIElement> pooled = [];
+        while (control.ItemContainerGenerator.RecyclePool.Pop(typeof(ContentPresenter)) is UIElement container)
+        {
+            pooled.Add(container);
+        }
+
+        foreach (UIElement container in Enumerable.Reverse(pooled))
+        {
+            control.ItemContainerGenerator.RecyclePool.Push(container);
+        }
+
+        Assert.Equal(pooledCount, pooled.Count);
+        string pool = string.Join(",", pooled.Select(container =>
+            container.VisualParent is null && container.LogicalParent is null ? "unparented" : "parented"));
+        return $"children=[{children}] pool=[{pool}]";
+    }
+
     // Each child must be the container realized under its item's index, so a panel that kept a recycled
     // container, or a container realized under another index, does not describe as its item.
     private static string DescribeWindow(ItemsControl control, Cerneala.UI.Layout.Panels.VirtualizingStackPanel panel)
@@ -653,6 +730,21 @@ public sealed class ItemsPresenterTests
             }
 
             base.OnItemContainerPrepared(container, index);
+        }
+    }
+
+    private sealed class FailingItemItemsControl : ItemsControl
+    {
+        public object? FailItem { get; set; }
+
+        protected internal override void PrepareItemContainer(UIElement container, int index, object? item)
+        {
+            if (FailItem is not null && Equals(item, FailItem))
+            {
+                throw new InvalidOperationException("container preparation failed");
+            }
+
+            base.PrepareItemContainer(container, index, item);
         }
     }
 
