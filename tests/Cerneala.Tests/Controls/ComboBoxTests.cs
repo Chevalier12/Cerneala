@@ -2098,6 +2098,105 @@ public sealed class ComboBoxTests
         Assert.True(newOverlay.IsOpen);
     }
 
+    // "one" is selected and highlighted. Down moves the preview to "two" while re-preparing one of the two rows
+    // throws, and the other row and the selection box still show the new preview before the exception propagates.
+    [Theory]
+    [InlineData("one")]
+    [InlineData("two")]
+    public void ArrowKeyWhoseRowPreparationThrowsStillShowsNewPreview(string failingItem)
+    {
+        (UIRoot root, ElementInputBridge bridge, FailingContentComboBox comboBox) = OpenNonEditableWithFirstItemSelected();
+
+        comboBox.FailFor = failingItem;
+        Exception? exception = Record.Exception(() => DispatchKey(root, bridge, InputKey.Down));
+
+        Assert.IsType<InvalidOperationException>(exception);
+        ContentPresenter selection = Assert.IsType<ContentPresenter>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_SelectionPresenter"]);
+        Assert.Equal("two", selection.Content);
+        Assert.Equal(1, selection.ContentIndex);
+        if (failingItem == "one")
+        {
+            Assert.True(ItemContainerGenerator.GetIsSelected(comboBox.ItemContainerGenerator.RealizedContainers[1]));
+        }
+        else
+        {
+            Assert.False(ItemContainerGenerator.GetIsSelected(comboBox.ItemContainerGenerator.RealizedContainers[0]));
+        }
+    }
+
+    // Escape cancels the preview of "two" while re-preparing the row of "two" throws, and the row of "one", the
+    // editor, and the selection box still show the committed "one" before the exception propagates.
+    [Fact]
+    public void EscapeWhosePreviewRowPreparationThrowsStillRestoresCommittedSelection()
+    {
+        (UIRoot root, ElementInputBridge bridge, FailingContentComboBox comboBox) = OpenNonEditableWithFirstItemSelected();
+        DispatchKey(root, bridge, InputKey.Down);
+
+        comboBox.FailFor = "two";
+        Exception? exception = Record.Exception(() => DispatchKey(root, bridge, InputKey.Escape));
+
+        Assert.IsType<InvalidOperationException>(exception);
+        Assert.Equal(0, comboBox.SelectedIndex);
+        Assert.True(ItemContainerGenerator.GetIsSelected(comboBox.ItemContainerGenerator.RealizedContainers[0]));
+        ContentPresenter selection = Assert.IsType<ContentPresenter>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_SelectionPresenter"]);
+        Assert.Equal("one", selection.Content);
+        Assert.Equal(0, selection.ContentIndex);
+        TextBox editor = Assert.IsType<TextBox>(comboBox.ComponentTemplateInstance.Parts["PART_EditableTextBox"]);
+        Assert.Equal("one", editor.Text);
+    }
+
+    // Enter commits the highlighted "one", which is already selected, while re-preparing its row throws, and the
+    // autocomplete suffix still collapses to a caret at the end before the exception propagates.
+    [Fact]
+    public void EnterWhosePreviewRowPreparationThrowsStillCollapsesAutocompleteSuffix()
+    {
+        UIRoot root = new(300, 200);
+        FailingContentComboBox comboBox = new() { IsTextFilterEnabled = false, Width = 180 };
+        comboBox.SetItems(new[] { "one", "two", "three" });
+        root.VisualChildren.Add(comboBox);
+        root.ProcessFrame();
+        comboBox.SelectedIndex = 0;
+        root.ProcessFrame();
+        TextBox editor = Assert.IsType<TextBox>(comboBox.ComponentTemplateInstance!.Parts["PART_EditableTextBox"]);
+        ElementInputBridge bridge = new();
+        bridge.FocusManager.Focus(editor, root.InputCache.EnsureCurrent(root));
+        DispatchKey(root, bridge, InputKey.F4);
+        root.ProcessFrame();
+        editor.Select(0, editor.Text.Length);
+        editor.ReceiveTextInput("on");
+        Assert.Equal("one", editor.Text);
+        Assert.False(editor.Selection.IsEmpty);
+
+        comboBox.FailFor = "one";
+        Exception? exception = Record.Exception(() => DispatchKey(root, bridge, InputKey.Enter));
+
+        Assert.IsType<InvalidOperationException>(exception);
+        Assert.Equal(0, comboBox.SelectedIndex);
+        Assert.Equal("one", editor.Text);
+        Assert.True(editor.Selection.IsEmpty);
+        Assert.Equal(editor.Text.Length, editor.Selection.Active);
+    }
+
+    // The drop-down of a non-editable ComboBox is open with "one" selected and highlighted.
+    private static (UIRoot Root, ElementInputBridge Bridge, FailingContentComboBox ComboBox) OpenNonEditableWithFirstItemSelected()
+    {
+        UIRoot root = new(100, 100);
+        FailingContentComboBox comboBox = new() { IsEditable = false };
+        comboBox.SetItems(new[] { "one", "two", "three" });
+        root.VisualChildren.Add(comboBox);
+        root.ProcessFrame();
+        comboBox.SelectedIndex = 0;
+        root.ProcessFrame();
+        ElementInputBridge bridge = new();
+        bridge.FocusManager.Focus(comboBox, root.InputCache.EnsureCurrent(root));
+        DispatchKey(root, bridge, InputKey.F4);
+        root.ProcessFrame();
+        Assert.True(ItemContainerGenerator.GetIsSelected(comboBox.ItemContainerGenerator.RealizedContainers[0]));
+        return (root, bridge, comboBox);
+    }
+
     private static InputFrame PointerFrame(float x, float y, bool previousDown = false, bool currentDown = false)
     {
         PointerSnapshot previous = PointerSnapshot.Empty.WithPosition(x, y);

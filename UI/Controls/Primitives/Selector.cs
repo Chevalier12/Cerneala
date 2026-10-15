@@ -243,8 +243,8 @@ public class Selector : ItemsControl
         }
 
         ExceptionDispatchInfo? preparationFailure = null;
-        RefreshSelectionContainer(args.Change.OldIndex, ref preparationFailure);
-        RefreshSelectionContainer(args.Change.NewIndex, ref preparationFailure);
+        RefreshSelectionContainer(args.Change.OldIndex, "Selection changed", ref preparationFailure);
+        RefreshSelectionContainer(args.Change.NewIndex, "Selection changed", ref preparationFailure);
         if (!relocated)
         {
             RaiseEvent(new SelectionChangedEventArgs(
@@ -258,13 +258,14 @@ public class Selector : ItemsControl
         preparationFailure?.Throw();
     }
 
-    // SelectedIndex already holds the new index, so a container whose re-preparation throws does not stop the
-    // other container's refresh or the SelectionChanged event. The first failure propagates after them.
-    private void RefreshSelectionContainer(int index, ref ExceptionDispatchInfo? preparationFailure)
+    // The selection state already holds the new index, so a container whose re-preparation throws does not stop
+    // the rest of the selection change, such as the other container's refresh or the SelectionChanged event. The
+    // caller rethrows the first failure after them.
+    internal void RefreshSelectionContainer(int index, string reason, ref ExceptionDispatchInfo? preparationFailure)
     {
         try
         {
-            InvalidateContainer(index, "Selection changed");
+            InvalidateContainer(index, reason);
         }
         catch (Exception exception)
         {

@@ -11,6 +11,7 @@ using Cerneala.UI.Layout.Panels;
 using Cerneala.UI.Layout.Virtualization;
 using Cerneala.UI.Media;
 using System.Globalization;
+using System.Runtime.ExceptionServices;
 
 namespace Cerneala.UI.Controls;
 
@@ -991,8 +992,10 @@ public class ComboBox : Selector
         CapturePreviewItem();
         transactionText = Text;
         transactionTextMatchesPreview = SelectedIndex >= 0;
-        RefreshPreviewContainer(previewSelectedIndex);
+        ExceptionDispatchInfo? preparationFailure = null;
+        RefreshPreviewContainer(previewSelectedIndex, ref preparationFailure);
         SynchronizeSelectionPresenter();
+        preparationFailure?.Throw();
     }
 
     private void CommitSelectionTransaction()
@@ -1042,10 +1045,12 @@ public class ComboBox : Selector
         }
 
         ClearFilter();
-        RefreshPreviewContainer(oldPreviewIndex);
+        ExceptionDispatchInfo? preparationFailure = null;
+        RefreshPreviewContainer(oldPreviewIndex, ref preparationFailure);
         SynchronizeEditorText();
         editableTextBox?.MoveCaret(editableTextBox.Text.Length);
         SynchronizeSelectionPresenter();
+        preparationFailure?.Throw();
     }
 
     private void CancelSelectionTransaction()
@@ -1062,10 +1067,12 @@ public class ComboBox : Selector
         transactionText = Text;
         transactionTextMatchesPreview = false;
         ClearFilter();
-        RefreshPreviewContainer(oldPreviewIndex);
-        RefreshPreviewContainer(SelectedIndex);
+        ExceptionDispatchInfo? preparationFailure = null;
+        RefreshPreviewContainer(oldPreviewIndex, ref preparationFailure);
+        RefreshPreviewContainer(SelectedIndex, ref preparationFailure);
         SynchronizeEditorText();
         SynchronizeSelectionPresenter();
+        preparationFailure?.Throw();
     }
 
     private void NavigatePreview(InputKey key)
@@ -1098,9 +1105,11 @@ public class ComboBox : Selector
             SynchronizeEditorText();
         }
 
-        RefreshPreviewContainer(oldIndex);
-        RefreshPreviewContainer(sourceIndex);
+        ExceptionDispatchInfo? preparationFailure = null;
+        RefreshPreviewContainer(oldIndex, ref preparationFailure);
+        RefreshPreviewContainer(sourceIndex, ref preparationFailure);
         SynchronizeSelectionPresenter();
+        preparationFailure?.Throw();
     }
 
     // The highlighted item is now at sourceIndex, or was removed when sourceIndex is -1.
@@ -1131,9 +1140,12 @@ public class ComboBox : Selector
         previewItem = hasPreviewItem ? GetItemAt(previewSelectedIndex) : null;
     }
 
-    private void RefreshPreviewContainer(int sourceIndex)
+    // The preview state already holds its new value, so a failed re-preparation does not stop the rest of the
+    // preview change. Each caller still refreshes the other container, synchronizes the editor and the selection
+    // box, and only then rethrows the first failure, as Selector does for the committed selection.
+    private void RefreshPreviewContainer(int sourceIndex, ref ExceptionDispatchInfo? preparationFailure)
     {
-        InvalidateContainer(sourceIndex, "ComboBox preview selection changed");
+        RefreshSelectionContainer(sourceIndex, "ComboBox preview selection changed", ref preparationFailure);
     }
 
     private void CompleteEditorText(TextBox editor, string enteredText, int matchIndex)
