@@ -606,6 +606,62 @@ public sealed class ScrollViewerTests
         Assert.False(root.Scheduler.HasWork);
     }
 
+    [Theory]
+    [InlineData(99.4f, 0f, 1f, 100f)]
+    [InlineData(49.7f, 0f, 2f, 50f)]
+    [InlineData(99.4f, 0.3f, 1f, 100f)]
+    public void ViewerWithFractionalExplicitHeightSettlesAfterLayout(float height, float marginTop, float scale, float contentHeight)
+    {
+        // A Height of 99.4 at scale 1 rounds to 99. Arrange must give the viewer the same 99 that measure used,
+        // or the 100 pixel content needs the Auto bar in measure but not in arrange, on every frame.
+        UIRoot root = new(100, 100, scale);
+        ScrollViewer viewer = new()
+        {
+            Height = height,
+            Margin = new Thickness(0, marginTop, 0, 0),
+            Content = new FixedElement(new LayoutSize(80, contentHeight)),
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+
+        FrameStats second = root.ProcessFrame();
+
+        Assert.Equal(0, second.MeasuredElements);
+        Assert.Equal(0, second.ArrangedElements);
+        Assert.False(root.Scheduler.HasWork);
+    }
+
+    [Fact]
+    public void ViewerInAFractionalStarColumnSettlesAfterLayout()
+    {
+        // The first of three * columns in 100 px is 34 px wide once rounded. Measured at 33 px, the 34 px content
+        // would need the Auto bar in measure but not in arrange, so the bar state would flip on every frame.
+        UIRoot root = new(100, 100, 1);
+        Cerneala.UI.Layout.Panels.Grid host = new();
+        for (int i = 0; i < 3; i++)
+        {
+            host.ColumnDefinitions.Add(new Cerneala.UI.Layout.Panels.ColumnDefinition(
+                Cerneala.UI.Layout.Panels.GridLength.Stars(1)));
+        }
+
+        ScrollViewer viewer = new()
+        {
+            Content = new FixedElement(new LayoutSize(34, 50)),
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        host.VisualChildren.Add(viewer);
+        root.VisualChildren.Add(host);
+        root.ProcessFrame();
+
+        FrameStats second = root.ProcessFrame();
+
+        Assert.Equal(0, second.MeasuredElements);
+        Assert.Equal(0, second.ArrangedElements);
+        Assert.False(root.Scheduler.HasWork);
+        Assert.Equal(new LayoutRect(0, 0, 34, 100), viewer.ArrangedBounds);
+    }
+
     [Fact]
     public void ScrollBarConvergenceDoesNotConsumeExternalAncestorArrangeWork()
     {

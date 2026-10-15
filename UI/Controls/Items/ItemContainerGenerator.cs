@@ -159,15 +159,18 @@ public sealed class ItemContainerGenerator
         }
     }
 
-    // The index this generator currently realizes the container for, or -1. Item changes re-key realized
-    // containers at once, while a moved container's recorded index changes only when it is prepared again.
+    // The index of the item the container shows now, or -1. Item changes re-key realized containers at once,
+    // while a moved container's recorded index changes only when it is prepared again. A container whose item
+    // was replaced still shows the old item until the next realization prepares it, so it represents no index
+    // until then. ItemCollection stores an equal item without a change, so a container holding an equal item
+    // still shows the item at its index.
     internal int IndexFromContainer(UIElement container)
     {
         foreach ((int index, UIElement realizedContainer) in realized)
         {
             if (ReferenceEquals(realizedContainer, container))
             {
-                return index;
+                return Equals(GetItem(container), owner.GetItemAt(index)) ? index : -1;
             }
         }
 

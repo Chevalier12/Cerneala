@@ -880,6 +880,68 @@ public sealed class GridTests
         Assert.Equal("0..34, 34..67, 67..100", GetDeviceEdges(cells, 1, columns: false));
     }
 
+    // A cell child is measured at the rounded size it is then arranged at: three * definitions in 100 px are
+    // 34, 33 and 33 device pixels at scale 1, and 42, 42 and 41 device pixels at scale 1.25.
+    [Theory]
+    [InlineData(1f, true, "34, 33, 33")]
+    [InlineData(1f, false, "34, 33, 33")]
+    [InlineData(1.25f, true, "42, 42, 41")]
+    [InlineData(1.25f, false, "42, 42, 41")]
+    public void LayoutRoundingMeasuresStarCellChildrenAtTheirArrangedSize(float scale, bool columns, string expectedDeviceSizes)
+    {
+        Grid grid = new();
+        SizeRecordingElement[] cells = new SizeRecordingElement[3];
+        for (int i = 0; i < cells.Length; i++)
+        {
+            cells[i] = new SizeRecordingElement();
+            if (columns)
+            {
+                grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
+                Grid.SetColumn(cells[i], i);
+            }
+            else
+            {
+                grid.RowDefinitions.Add(new RowDefinition(GridLength.Stars(1)));
+                Grid.SetRow(cells[i], i);
+            }
+
+            grid.VisualChildren.Add(cells[i]);
+        }
+
+        LayoutRounding rounding = LayoutRounding.ForScale(scale);
+        LayoutSize size = columns ? new LayoutSize(100, 20) : new LayoutSize(20, 100);
+        grid.Measure(new MeasureContext(size, rounding));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, size.Width, size.Height), rounding));
+
+        Assert.Equal(cells.Select(cell => cell.ArrangeSize), cells.Select(cell => cell.MeasureSize));
+        Assert.Equal(
+            expectedDeviceSizes,
+            string.Join(", ", cells.Select(cell => MathF.Round((columns ? cell.MeasureSize.Width : cell.MeasureSize.Height) * scale))));
+    }
+
+    [Fact]
+    public void LayoutRoundingMeasuresAutoRowChildrenAtTheRoundedWidthOfTheirStarColumn()
+    {
+        // The first of three * columns in 100 px is 34 px wide once rounded. Measured at the unrounded 33.33 px,
+        // which the child receives as 33, the child would ask for 60 px and leave the Auto row 60 px high.
+        Grid grid = new();
+        for (int i = 0; i < 3; i++)
+        {
+            grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
+        }
+
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        WidthThresholdElement child = new();
+        grid.VisualChildren.Add(child);
+
+        LayoutRounding rounding = LayoutRounding.ForScale(1);
+        LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(100, 100), rounding));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100), rounding));
+
+        Assert.Equal(20, desired.Height);
+        Assert.Equal(new LayoutRect(0, 0, 34, 20), child.ArrangedBounds);
+    }
+
     private static string GetDeviceEdges(IEnumerable<UIElement> cells, float scale, bool columns)
     {
         return string.Join(", ", cells.Select(cell =>
@@ -909,6 +971,34 @@ public sealed class GridTests
         protected override LayoutSize MeasureCore(MeasureContext context)
         {
             return size;
+        }
+    }
+
+    private sealed class SizeRecordingElement : UIElement
+    {
+        public LayoutSize MeasureSize { get; private set; }
+
+        public LayoutSize ArrangeSize { get; private set; }
+
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            MeasureSize = context.AvailableSize;
+            return context.AvailableSize;
+        }
+
+        protected override LayoutRect ArrangeCore(ArrangeContext context)
+        {
+            ArrangeSize = context.FinalRect.Size;
+            return context.FinalRect;
+        }
+    }
+
+    // 20 px high when at least 34 px wide, 60 px high when narrower.
+    private sealed class WidthThresholdElement : UIElement
+    {
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            return new LayoutSize(MathF.Min(context.AvailableSize.Width, 34), context.AvailableSize.Width >= 34 ? 20 : 60);
         }
     }
 

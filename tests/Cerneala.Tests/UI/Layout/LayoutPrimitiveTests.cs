@@ -64,6 +64,16 @@ public sealed class LayoutPrimitiveTests
     }
 
     [Fact]
+    public void LayoutRoundingKeepsASizeThatAlreadyLiesOnDevicePixels()
+    {
+        // (57 / 1.75f) * 1.75f is slightly more than 57; rounding the size up must keep 57 device pixels, not make 58.
+        LayoutRounding rounding = LayoutRounding.ForScale(1.75f);
+
+        Assert.Equal(new LayoutSize(57 / 1.75f, 121 / 1.75f), rounding.Round(new LayoutSize(57 / 1.75f, 121 / 1.75f)));
+        Assert.Equal(new LayoutSize(57 / 1.75f, 115 / 1.75f), rounding.Round(new LayoutSize(32.5f, 65.2f)));
+    }
+
+    [Fact]
     public void VisibilityHasThreeStates()
     {
         Assert.Contains(Visibility.Visible, Enum.GetValues<Visibility>());
