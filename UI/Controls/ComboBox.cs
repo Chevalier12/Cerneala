@@ -222,6 +222,11 @@ public class ComboBox : Selector
         return item is ComboBoxItem element ? element : new ComboBoxItem();
     }
 
+    internal override bool IsItemItsOwnContainer(object? item)
+    {
+        return item is ComboBoxItem;
+    }
+
     protected internal override void PrepareItemContainer(UIElement container, int index, object? item)
     {
         base.PrepareItemContainer(container, index, item);

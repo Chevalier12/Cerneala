@@ -55,6 +55,11 @@ public class TabControl : Selector
         return item is TabItem element ? element : new TabItem();
     }
 
+    internal override bool IsItemItsOwnContainer(object? item)
+    {
+        return item is TabItem;
+    }
+
     // As in WPF, removing the selected tab selects the tab that takes its place, or the
     // previous tab when the removed tab was the last one.
     internal override void OnItemsReplaced(int index, int removedCount, int addedCount)

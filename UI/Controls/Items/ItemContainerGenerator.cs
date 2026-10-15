@@ -69,7 +69,10 @@ public sealed class ItemContainerGenerator
             Recycle(index);
         }
 
-        UIElement container = RecyclePool.Pop(containerType) ?? owner.CreateItemContainer(index, item);
+        // An item that is its own container is never wrapped in a recycled container of the same type.
+        UIElement container = IsItsOwnContainer(item, containerType)
+            ? CreateOwnContainer(index, item, containerType)
+            : RecyclePool.Pop(containerType) ?? owner.CreateItemContainer(index, item);
         owner.PrepareItemContainer(container, index, item);
         realized.Add(index, container);
         return container;
@@ -272,11 +275,11 @@ public sealed class ItemContainerGenerator
 
     // A container that is its own item belongs to that item and never serves another item, even when a stale
     // index still holds it.
-    private static bool IsCompatibleContainer(UIElement container, object? item, Type containerType)
+    private bool IsCompatibleContainer(UIElement container, object? item, Type containerType)
     {
-        if (item is UIElement element && ReferenceEquals(containerType, element.GetType()))
+        if (IsItsOwnContainer(item, containerType))
         {
-            return ReferenceEquals(container, element);
+            return ReferenceEquals(container, item);
         }
 
         if (!ReferenceEquals(container, item) && ReferenceEquals(GetItem(container), container))
@@ -285,6 +288,25 @@ public sealed class ItemContainerGenerator
         }
 
         return containerType.IsAssignableFrom(container.GetType());
+    }
+
+    // The item is its own container only when it has exactly the container type and the owner says its
+    // CreateItemContainer returns the item. A subclass that wraps UIElement items in another container type
+    // through the overridable members keeps reusing and recycling those wrappers.
+    private bool IsItsOwnContainer(object? item, Type containerType)
+    {
+        return item is UIElement element &&
+            ReferenceEquals(containerType, element.GetType()) &&
+            owner.IsItemItsOwnContainer(item);
+    }
+
+    // Only CreateItemContainer knows whether the owner returns the item itself. A subclass that overrides it can
+    // still wrap such an item in a container of the item's own type; that wrapper then comes from the recycle pool
+    // like any other container, so the pool does not grow on every realization.
+    private UIElement CreateOwnContainer(int index, object? item, Type containerType)
+    {
+        UIElement created = owner.CreateItemContainer(index, item);
+        return ReferenceEquals(created, item) ? created : RecyclePool.Pop(containerType) ?? created;
     }
 
     private static void DetachContainer(UIElement container)
