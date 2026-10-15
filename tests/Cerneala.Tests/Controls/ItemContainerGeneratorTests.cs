@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Elements;
@@ -800,6 +801,72 @@ public sealed class ItemContainerGeneratorTests
     }
 
     [Fact]
+    public void OwnContainerItemWhosePreparationThrowsIsClearedAfterRemoval()
+    {
+        ElementAspect aspect = NewMarginAspect();
+        FailAfterPrepareItemsControl control = new() { ItemContainerAspect = aspect, Fail = true };
+        FixedElement row = new("r");
+        control.SetItems(new[] { row });
+        Assert.Throws<InvalidOperationException>(() => control.Measure(new MeasureContext(new LayoutSize(100, 100))));
+
+        control.Fail = false;
+        control.SetItems(Array.Empty<object>());
+        control.Measure(new MeasureContext(new LayoutSize(100, 101)));
+
+        Assert.Null(row.Aspect);
+        Assert.Equal(-1, ItemContainerGenerator.GetItemIndex(row));
+        Assert.Null(ItemContainerGenerator.GetItem(row));
+    }
+
+    [Fact]
+    public void PooledContainerWhosePreparationThrowsReturnsClearedToRecyclePool()
+    {
+        ElementAspect aspect = NewMarginAspect();
+        FailAfterPrepareItemsControl control = new() { ItemContainerAspect = aspect };
+        control.SetItems(new[] { "a", "b" });
+        control.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        UIElement[] old = [.. control.ItemsPresenter.LayoutPanelRoot!.VisualChildren];
+        control.SetItems(new[] { "x", "y" });
+        Assert.Equal(2, control.ItemContainerGenerator.RecyclePool.Count);
+
+        control.Fail = true;
+        Assert.Throws<InvalidOperationException>(() => control.Measure(new MeasureContext(new LayoutSize(100, 101))));
+
+        Assert.Empty(control.ItemContainerGenerator.RealizedContainers);
+        Assert.Equal(2, control.ItemContainerGenerator.RecyclePool.Count);
+        foreach (UIElement container in old)
+        {
+            Assert.Null(container.Aspect);
+            Assert.Equal(-1, ItemContainerGenerator.GetItemIndex(container));
+            Assert.Null(ItemContainerGenerator.GetItem(container));
+        }
+    }
+
+    [Fact]
+    public void RepeatedlyThrowingPreparationDoesNotDrainRecyclePool()
+    {
+        FailAfterPrepareItemsControl control = new();
+        control.SetItems(new[] { "a", "b" });
+        control.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        UIElement[] old = [.. control.ItemsPresenter.LayoutPanelRoot!.VisualChildren];
+        control.SetItems(new[] { "x", "y" });
+
+        control.Fail = true;
+        for (int attempt = 1; attempt <= 3; attempt++)
+        {
+            Assert.Throws<InvalidOperationException>(() => control.Measure(new MeasureContext(new LayoutSize(100, 100 + attempt))));
+            Assert.Equal(2, control.ItemContainerGenerator.RecyclePool.Count);
+        }
+
+        control.Fail = false;
+        control.Measure(new MeasureContext(new LayoutSize(100, 110)));
+
+        Assert.Equal(0, control.ItemContainerGenerator.RecyclePool.Count);
+        Assert.Equal(2, control.ItemContainerGenerator.RealizedContainers.Count);
+        Assert.All(old, container => Assert.Contains(container, control.ItemContainerGenerator.RealizedContainers.Values));
+    }
+
+    [Fact]
     public void PresenterPreservesUnrelatedRealizedContainersWhenDataOutsideWindowChanges()
     {
         ItemsControl control = new();
@@ -812,6 +879,11 @@ public sealed class ItemContainerGeneratorTests
         control.Measure(new MeasureContext(new LayoutSize(100, 30)));
 
         Assert.Same(first, control.ItemsPresenter.LayoutPanelRoot!.VisualChildren[0]);
+    }
+
+    private static ElementAspect NewMarginAspect()
+    {
+        return new ElementAspect([new ElementAspectValue(UIElement.MarginProperty, new Thickness(3))]);
     }
 
     private static void Layout(UIElement element)
@@ -898,6 +970,21 @@ public sealed class ItemContainerGeneratorTests
         {
             PrepareCount++;
             base.PrepareItemContainer(container, index, item);
+        }
+    }
+
+    // Throws from PrepareItemContainer after the base preparation ran, while Fail is set.
+    private sealed class FailAfterPrepareItemsControl : ItemsControl
+    {
+        public bool Fail { get; set; }
+
+        protected internal override void PrepareItemContainer(UIElement container, int index, object? item)
+        {
+            base.PrepareItemContainer(container, index, item);
+            if (Fail)
+            {
+                throw new InvalidOperationException("container preparation failed");
+            }
         }
     }
 
