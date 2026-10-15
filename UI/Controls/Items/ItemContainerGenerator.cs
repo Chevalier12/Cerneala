@@ -10,6 +10,10 @@ public sealed class ItemContainerGenerator
     private readonly ItemsControl owner;
     private readonly Dictionary<int, UIElement> realized = [];
 
+    // Containers that a realization without recycling took off their index, because the index now needs another
+    // container. They stay attached and prepared for their previous items until the caller commits the window.
+    private readonly List<UIElement> displaced = [];
+
     public ItemContainerGenerator(ItemsControl owner)
     {
         this.owner = owner ?? throw new ArgumentNullException(nameof(owner));
@@ -26,8 +30,10 @@ public sealed class ItemContainerGenerator
     }
 
     // The containers outside the window stay realized, attached, and prepared for their items, so a preparation
-    // that throws, or a caller step that throws before it commits the window, leaves them as they were. The caller
-    // recycles them with RecycleAllExcept once it commits the window, so they serve a later realization.
+    // that throws, or a caller step that throws before it commits the window, leaves them as they were. A container
+    // that an index of the window no longer takes, because its item needs another container or an item that is its
+    // own container moves there, is not realized any more but stays attached and prepared too. The caller recycles
+    // both with RecycleAllExcept once it commits the window, so they serve a later realization.
     internal IReadOnlyList<UIElement> RealizeWithoutRecycling(RealizationWindow? window)
     {
         return Realize(window, recycleOutsideWindow: false);
@@ -36,6 +42,7 @@ public sealed class ItemContainerGenerator
     internal void RecycleAllExcept(IReadOnlyList<UIElement> containers)
     {
         HashSet<UIElement> kept = new(containers, ReferenceEqualityComparer.Instance);
+        RecycleDisplacedExcept(kept);
         foreach ((int index, UIElement container) in realized.ToArray())
         {
             if (!kept.Contains(container))
@@ -55,7 +62,7 @@ public sealed class ItemContainerGenerator
         HashSet<int> desired = [.. Enumerable.Range(start, end - start)
             .Select(owner.GetSourceIndexForViewIndex)];
 
-        MoveShiftedItemContainers(desired);
+        MoveShiftedItemContainers(desired, recycleDisplaced: recycleOutsideWindow);
         if (recycleOutsideWindow)
         {
             foreach (int index in realized.Keys.Where(index => !desired.Contains(index)).ToArray())
@@ -67,13 +74,23 @@ public sealed class ItemContainerGenerator
         List<UIElement> containers = [];
         for (int viewIndex = start; viewIndex < end; viewIndex++)
         {
-            containers.Add(GetOrCreate(owner.GetSourceIndexForViewIndex(viewIndex)));
+            containers.Add(GetOrCreate(owner.GetSourceIndexForViewIndex(viewIndex), recycleDisplaced: recycleOutsideWindow));
+        }
+
+        if (recycleOutsideWindow)
+        {
+            RecycleDisplacedExcept(new HashSet<UIElement>(containers, ReferenceEqualityComparer.Instance));
         }
 
         return containers;
     }
 
     public UIElement GetOrCreate(int index)
+    {
+        return GetOrCreate(index, recycleDisplaced: true);
+    }
+
+    private UIElement GetOrCreate(int index, bool recycleDisplaced)
     {
         if (index < 0 || index >= owner.ItemCount)
         {
@@ -98,7 +115,7 @@ public sealed class ItemContainerGenerator
                 return existing;
             }
 
-            Recycle(index);
+            Displace(index, recycleDisplaced);
         }
 
         // An item that is its own container and is still realized under an index that no longer holds it moves to
@@ -148,6 +165,39 @@ public sealed class ItemContainerGenerator
         ReleaseContainer(container);
     }
 
+    // The container realized at index gives the index to another container. Without recycling it stays attached and
+    // prepared for its item, so a realization that throws later leaves it where the panel presents it.
+    private void Displace(int index, bool recycle)
+    {
+        if (recycle)
+        {
+            Recycle(index);
+            return;
+        }
+
+        if (realized.Remove(index, out UIElement? container) && !displaced.Contains(container))
+        {
+            displaced.Add(container);
+        }
+    }
+
+    // A displaced container that a later realization realized again, such as an item that is its own container, is
+    // not displaced any more. Each container leaves the list before it is released, so a release that throws keeps the
+    // rest for a later commit.
+    private void RecycleDisplacedExcept(HashSet<UIElement> kept)
+    {
+        while (displaced.Count > 0)
+        {
+            UIElement container = displaced[0];
+            displaced.RemoveAt(0);
+            if (!kept.Contains(container) && GetRealizedKey(container) < 0)
+            {
+                DetachContainer(container);
+                ReleaseContainer(container);
+            }
+        }
+    }
+
     // A container that the presenter's panel did not take is given back without detaching it, because a parent it
     // has then is not the panel, for example another element that still holds an item that is its own container.
     internal void ReleaseUnpresented(UIElement container)
@@ -175,6 +225,7 @@ public sealed class ItemContainerGenerator
 
     public void Clear()
     {
+        RecycleDisplacedExcept([]);
         foreach (int index in realized.Keys.ToArray())
         {
             Recycle(index);
@@ -311,7 +362,7 @@ public sealed class ItemContainerGenerator
     // another desired index, the container moves with it instead of being recycled from its old index.
     // It is prepared at its new index here, because its recorded index can already equal the new index while its
     // other prepared state, such as its selection, is stale.
-    private void MoveShiftedItemContainers(HashSet<int> desired)
+    private void MoveShiftedItemContainers(HashSet<int> desired, bool recycleDisplaced)
     {
         List<(int Index, int CurrentIndex, UIElement Container)>? moves = null;
         foreach (int index in desired)
@@ -345,7 +396,7 @@ public sealed class ItemContainerGenerator
         // throws leaves the others realized there, and a later realization prepares them like any realized container.
         foreach ((int index, _, UIElement container) in moves)
         {
-            Recycle(index);
+            Displace(index, recycleDisplaced);
             realized.Add(index, container);
         }
 
