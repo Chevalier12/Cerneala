@@ -948,12 +948,17 @@ public sealed class ItemsControlTests
 
         Assert.Throws<InvalidOperationException>(() => control.Measure(new MeasureContext(new LayoutSize(100, 31))));
 
+        // The generator describes the window the panel still presents, not the window that failed.
+        Assert.Equal(-1, ItemContainerGenerator.GetItemIndex(element5));
+        Assert.Equal(4, control.RealizedItemCount);
         AssertPresentsItems(control, panel, ["0", "1", "2", "3"]);
         Assert.Equal(supplied, panel.VirtualizationContext);
         Assert.Equal(0, panel.FirstRealizedIndex);
         Assert.Same(otherParent, element5.VisualParent);
 
         Assert.Throws<InvalidOperationException>(() => control.Measure(new MeasureContext(new LayoutSize(100, 32))));
+        Assert.Equal(-1, ItemContainerGenerator.GetItemIndex(element5));
+        Assert.Equal(4, control.RealizedItemCount);
         AssertPresentsItems(control, panel, ["0", "1", "2", "3"]);
         Assert.Same(otherParent, element5.VisualParent);
 
@@ -965,6 +970,14 @@ public sealed class ItemsControlTests
             panel.VisualChildren.Take(4).Cast<ContentPresenter>().Select(container => container.Content));
         Assert.Same(element5, panel.VisualChildren[4]);
         Assert.Equal(1, panel.FirstRealizedIndex);
+        Assert.Equal(5, ItemContainerGenerator.GetItemIndex(element5));
+        Assert.Equal(5, control.RealizedItemCount);
+        Assert.Equal([1, 2, 3, 4, 5], control.ItemContainerGenerator.RealizedContainers.Keys.Order());
+        Assert.All(
+            panel.VisualChildren,
+            child => Assert.Same(
+                child,
+                control.ItemContainerGenerator.RealizedContainers[ItemContainerGenerator.GetItemIndex(child)]));
 
         static void AssertPresentsItems(ItemsControl control, VirtualizingStackPanel panel, string[] expected)
         {
