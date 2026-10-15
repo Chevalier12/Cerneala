@@ -1072,6 +1072,47 @@ public sealed class ItemContainerGeneratorTests
     }
 
     [Fact]
+    public void SelectionChangeWhosePreparationThrowsIsPreparedAgainByNextRealization()
+    {
+        (MarkingListBox listBox, ListBoxItem first) = CreateRealizedMarkingListBox();
+
+        listBox.FailContent = true;
+        Assert.Throws<InvalidOperationException>(() => listBox.SelectedIndex = 0);
+        listBox.FailContent = false;
+        Assert.Equal(-1, ItemContainerGenerator.GetItemIndex(first));
+
+        listBox.PreparedContent.Clear();
+        listBox.Items.Add("c");
+        Layout(listBox);
+
+        Assert.Same(first, listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Equal("a (selected)", first.Content);
+        Assert.Contains("a", listBox.PreparedContent);
+        AssertPreparedSelection(first, 0, "a", isSelected: true);
+    }
+
+    [Fact]
+    public void SelectionChangeWhosePreparationThrowsIsPreparedAgainByNextLayout()
+    {
+        (MarkingListBox listBox, ListBoxItem first) = CreateRealizedMarkingListBox();
+
+        listBox.FailContent = true;
+        Assert.Throws<InvalidOperationException>(() => listBox.SelectedIndex = 0);
+        listBox.FailContent = false;
+        Assert.Equal(0, listBox.SelectedIndex);
+        Assert.Equal("a", first.Content);
+        Assert.Equal(-1, ItemContainerGenerator.GetItemIndex(first));
+
+        listBox.PreparedContent.Clear();
+        Layout(listBox);
+
+        Assert.Same(first, listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Equal("a (selected)", first.Content);
+        Assert.Equal(new object?[] { "a" }, listBox.PreparedContent);
+        AssertPreparedSelection(first, 0, "a", isSelected: true);
+    }
+
+    [Fact]
     public void PresenterPreservesUnrelatedRealizedContainersWhenDataOutsideWindowChanges()
     {
         ItemsControl control = new();
@@ -1095,6 +1136,19 @@ public sealed class ItemContainerGeneratorTests
     {
         element.Measure(new MeasureContext(new LayoutSize(100, 100)));
         element.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+    }
+
+    // A MarkingListBox in a root with the items "a" and "b" laid out, and the container of "a".
+    private static (MarkingListBox ListBox, ListBoxItem First) CreateRealizedMarkingListBox()
+    {
+        UIRoot root = new(100, 100);
+        MarkingListBox listBox = new();
+        listBox.SetItems(new[] { "a", "b" });
+        root.VisualChildren.Add(listBox);
+        Layout(listBox);
+        ListBoxItem first = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Equal("a", first.Content);
+        return (listBox, first);
     }
 
     private static void AssertDataItemContainer(UIElement container, ListBoxItem removed, int expectedIndex, string expectedItem)
@@ -1288,6 +1342,29 @@ public sealed class ItemContainerGeneratorTests
             if (FailFor is not null && ReferenceEquals(item, FailFor))
             {
                 throw new InvalidOperationException("container preparation failed");
+            }
+        }
+    }
+
+    // Shows a selected item as "<item> (selected)". While FailContent is set, its content preparation throws.
+    private sealed class MarkingListBox : ListBox
+    {
+        public bool FailContent { get; set; }
+
+        public List<object?> PreparedContent { get; } = [];
+
+        protected override void PrepareItemContent(UIElement container, int index, object? item)
+        {
+            if (FailContent)
+            {
+                throw new InvalidOperationException("content preparation failed");
+            }
+
+            base.PrepareItemContent(container, index, item);
+            PreparedContent.Add(item);
+            if (container is ContentControl contentControl && IsItemSelected(index))
+            {
+                contentControl.Content = $"{item} (selected)";
             }
         }
     }
