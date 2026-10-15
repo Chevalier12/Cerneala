@@ -87,6 +87,12 @@ public sealed class ItemContainerGenerator
 
     public UIElement GetOrCreate(int index)
     {
+        if (index < 0 || index >= owner.ItemCount)
+        {
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+
+        MoveOwnContainersOffIndex(index);
         return GetOrCreate(index, recycleDisplaced: true);
     }
 
@@ -414,6 +420,47 @@ public sealed class ItemContainerGenerator
         {
             PrepareRealizedContainer(container, index, container);
         }
+    }
+
+    // A direct request for an index that still holds an item that is its own container, while that item is now at
+    // another index, first moves the container to the index of its item, as Realize moves it, so it is not cleared or
+    // detached while its item is still in the items. A container that is its own item and holds the index the move
+    // goes to moves the same way, so the moves of swapped items do not clear each other. Realize does not need this,
+    // because it moves every container whose item is in its window before it realizes any index, and recycles the
+    // others.
+    private void MoveOwnContainersOffIndex(int index)
+    {
+        HashSet<int>? itemIndexes = null;
+        while (realized.TryGetValue(index, out UIElement? container) &&
+            ReferenceEquals(GetItem(container), container) &&
+            !ReferenceEquals(owner.GetItemAt(index), container))
+        {
+            int itemIndex = IndexOfItem(container);
+            if (itemIndex < 0 || !(itemIndexes ??= []).Add(itemIndex))
+            {
+                break;
+            }
+
+            index = itemIndex;
+        }
+
+        if (itemIndexes is not null)
+        {
+            MoveShiftedItemContainers(itemIndexes, recycleDisplaced: true);
+        }
+    }
+
+    private int IndexOfItem(UIElement item)
+    {
+        for (int index = 0; index < owner.ItemCount; index++)
+        {
+            if (ReferenceEquals(owner.GetItemAt(index), item))
+            {
+                return index;
+            }
+        }
+
+        return -1;
     }
 
     // The key under which the item at index, when it is its own container, is still realized although that key no

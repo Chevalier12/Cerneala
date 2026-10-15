@@ -443,6 +443,99 @@ public sealed class ItemContainerGeneratorTests
     }
 
     [Fact]
+    public void ListBoxKeepsListBoxItemWhenItsOldIndexIsRequestedFirstByDirectGetOrCreate()
+    {
+        ListBoxItem a = new() { Content = "A" };
+        ClearRecordingListBox listBox = new();
+        listBox.SetItems(new object[] { a, "str" });
+        ItemContainerGenerator generator = listBox.ItemContainerGenerator;
+        generator.Realize();
+
+        listBox.Items[0] = "x";
+        listBox.Items.Insert(0, a);
+        UIElement second = generator.GetOrCreate(1);
+        UIElement first = generator.GetOrCreate(0);
+        generator.GetOrCreate(2);
+
+        Assert.Same(a, first);
+        Assert.NotSame(a, second);
+        AssertReplacedListBoxItemInsertedBackAtIndexZero(listBox, a);
+    }
+
+    [Fact]
+    public void UnnotifiedGeneratorKeepsListBoxItemWhenItsOldIndexIsRequestedFirstByDirectGetOrCreate()
+    {
+        ListBoxItem a = new() { Content = "A" };
+        ClearRecordingListBox listBox = new();
+        listBox.SetItems(new object[] { "str", a });
+        ItemContainerGenerator generator = new(listBox);
+        generator.Realize();
+        Cerneala.UI.Layout.Panels.Panel panel = new();
+        panel.VisualChildren.Add(a);
+
+        listBox.SetItems(new object[] { a, "str" });
+        UIElement second = generator.GetOrCreate(1);
+        UIElement first = generator.GetOrCreate(0);
+
+        Assert.Same(a, first);
+        Assert.Equal(new[] { 0, 1 }, generator.RealizedContainers.Keys.Order());
+        Assert.Same(a, generator.RealizedContainers[0]);
+        Assert.Same(second, generator.RealizedContainers[1]);
+        AssertItemState(a, 0, isSelected: false);
+        Assert.Same(panel, a.VisualParent);
+        Assert.DoesNotContain(a, listBox.ClearedContainers);
+        AssertDataItemContainer(second, a, 1, "str");
+        Assert.Equal(0, generator.RecyclePool.Count);
+    }
+
+    [Fact]
+    public void UnnotifiedGeneratorKeepsSwappedListBoxItemsByDirectGetOrCreate()
+    {
+        ListBoxItem a = new() { Content = "A" };
+        ListBoxItem b = new() { Content = "B" };
+        ClearRecordingListBox listBox = new();
+        listBox.SetItems(new object[] { b, a });
+        ItemContainerGenerator generator = new(listBox);
+        generator.Realize();
+        Cerneala.UI.Layout.Panels.Panel panel = new();
+        panel.VisualChildren.Add(a);
+        panel.VisualChildren.Add(b);
+
+        listBox.SetItems(new object[] { a, b });
+        UIElement first = generator.GetOrCreate(0);
+        Assert.Same(b, generator.RealizedContainers[1]);
+        UIElement second = generator.GetOrCreate(1);
+
+        Assert.Same(a, first);
+        Assert.Same(b, second);
+        Assert.Equal(new[] { 0, 1 }, generator.RealizedContainers.Keys.Order());
+        AssertItemState(a, 0, isSelected: false);
+        AssertItemState(b, 1, isSelected: false);
+        Assert.Same(panel, a.VisualParent);
+        Assert.Same(panel, b.VisualParent);
+        Assert.Empty(listBox.ClearedContainers);
+        Assert.Equal(0, generator.RecyclePool.Count);
+    }
+
+    [Fact]
+    public void ListBoxRecyclesReplacedListBoxItemByDirectGetOrCreate()
+    {
+        ListBoxItem a = new() { Content = "A" };
+        ClearRecordingListBox listBox = new();
+        listBox.SetItems(new object[] { a, "str" });
+        ItemContainerGenerator generator = listBox.ItemContainerGenerator;
+        generator.Realize();
+
+        listBox.Items[0] = "new";
+        UIElement first = generator.GetOrCreate(0);
+
+        AssertDataItemContainer(first, a, 0, "new");
+        Assert.Equal(new UIElement[] { a }, listBox.ClearedContainers);
+        AssertRemovedListBoxItem(a);
+        Assert.Equal(0, generator.RecyclePool.Count);
+    }
+
+    [Fact]
     public void ListBoxSelectedReplacedListBoxItemInsertedBackAtItsIndexIsNotSelected()
     {
         ListBoxItem a = new() { Content = "A" };
