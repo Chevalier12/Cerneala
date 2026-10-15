@@ -92,7 +92,7 @@ public sealed class ItemContainerGenerator
                     GetItemIndex(existing) != index ||
                     GetIsSelected(existing) != owner.IsItemSelected(index))
                 {
-                    owner.PrepareItemContainer(existing, index, item);
+                    PrepareRealizedContainer(existing, index, item);
                 }
 
                 return existing;
@@ -332,7 +332,24 @@ public sealed class ItemContainerGenerator
         {
             Recycle(index);
             realized.Add(index, container);
-            owner.PrepareItemContainer(container, index, container);
+            PrepareRealizedContainer(container, index, container);
+        }
+    }
+
+    // A realized container stays realized when its preparation throws, but the preparation can have recorded the
+    // new item, index, and selection before it threw. Its recorded index is reset, so the next realization prepares
+    // it again instead of treating the preparation that did not finish as done. The recorded item is kept, because
+    // it tells a container that is its own item from a generated one.
+    private void PrepareRealizedContainer(UIElement container, int index, object? item)
+    {
+        try
+        {
+            owner.PrepareItemContainer(container, index, item);
+        }
+        catch
+        {
+            SetInfo(container, -1, GetItem(container), GetIsSelected(container));
+            throw;
         }
     }
 
