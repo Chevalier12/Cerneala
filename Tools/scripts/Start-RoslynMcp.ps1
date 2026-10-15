@@ -90,7 +90,9 @@ public static class CernealaKillOnCloseJob
     [Console]::InputEncoding = $utf8
     [Console]::OutputEncoding = $utf8
     $OutputEncoding = $utf8
-    & $exe --solution (Join-Path $repositoryRoot 'Cerneala.slnx')
+    # The solution (~1 GB) loads at the first tool call and is unloaded after 60 s without
+    # one, so an idle session keeps only the small process; the next call loads it again.
+    & $exe --solution (Join-Path $repositoryRoot 'Cerneala.slnx') --idle-unload-seconds 60
     exit $LASTEXITCODE
 }
 catch {

@@ -11,9 +11,23 @@ language-server process or its unsaved buffers.
 The implementation is [mcpRoslyn](https://github.com/MBrekhof/mcpRoslyn), MIT
 licensed, pinned to v1.4.0 commit
 `dfccb63bfac1c82274ffc0b59a41684d5ca3b900`. `manifest.json` owns the pin,
-variant identity and Codex tool allow-list. `roslyn-5.9.patch` changes only the
-two compiler/workspace package references from 5.3.0 to 5.9.0. There are no
-Cerneala framework, generator or `.crn` language-server changes.
+variant identity and Codex tool allow-list. `roslyn-5.9.patch` makes two
+changes, and nothing else:
+
+- It moves the two compiler/workspace package references from 5.3.0 to 5.9.0.
+- It adds `--idle-unload-seconds <n>`. With it, the server loads the solution at
+  the first tool call instead of at startup. After `n` seconds without a tool
+  call, it disposes the workspace and runs a compacting garbage collection, so
+  the memory goes back to the system. The next tool call loads the solution
+  again. `reload_workspace` loads by itself. A call never sees an unload in the
+  middle: every call passes through `WorkspaceIdleUnloader.TrackAsync`. Without
+  the option the server behaves as upstream. The tests are in the existing
+  `WorkspaceServiceTests` and `McpProtocolTests` files.
+
+There are no Cerneala framework, generator or `.crn` language-server changes.
+The patch only modifies existing upstream files, because the installer's retry
+check compares the patched file list with `git diff`. It is stored with LF line
+endings (`.gitattributes`), so its hash matches the receipt in every worktree.
 
 The 5.3 host rejected Cerneala.SourceGen (compiler 5.6) and SDL3-CS.Generators
 (compiler 5.9) with `ReferencesNewerCompiler`. A permanent real-repository
@@ -66,6 +80,9 @@ kill-on-close job, so a client that terminates the launcher (instead of
 closing stdio) takes `mcpRoslyn.exe` and its BuildHosts down with it rather
 than leaving a ~1 GB orphan. The SDK is still needed
 for MSBuild solution evaluation even though the executable is self-contained.
+It passes `--idle-unload-seconds 60`: an idle session holds about 55 MB before
+its first call and about 100–240 MB once 60 s have passed after its last call,
+instead of about 1 GB for as long as the session is open.
 
 ## Codex connection
 
@@ -202,6 +219,26 @@ connections are free in RAM. GPU acceleration is not part of these operations.
   bytes are committed memory, not necessarily resident. A separate direct full
   run reached **1,238.8 MiB** main-process peak working set across reloads,
   excluding child processes. Neither measurement is a guaranteed memory cap.
+
+### Idle unload (2026-10-15)
+
+Measured with the patched executable started directly with
+`--idle-unload-seconds 20`, the Cerneala solution (43 projects) and
+`workspace_symbol` calls. These are single-run samples of the main process:
+
+| Moment | Working set | Private bytes |
+| --- | --- | --- |
+| Started, no call yet | 53.8 MiB | 16.3 MiB |
+| After the first call (50.2 s, loads the solution) | 1,003.3 MiB | 863.1 MiB |
+| 40 s idle (unloaded after 20 s) | 267.9 MiB | 99.3 MiB |
+| After the next call (25.9 s, loads it again) | 1,055.1 MiB | 883.8 MiB |
+| 40 s idle again | 296.2 MiB | 106.2 MiB |
+
+After each unload the server logged a live GC heap of 44–46 MiB. A first
+version ran the garbage collection inside the async unload method, whose own
+locals still reached the disposed workspaces: it freed only about 70 MiB, and a
+`dotnet-gcdump` taken later showed that the memory was collectible. The
+collection now runs after that method returns.
 
 Raw evidence is retained under `.artifacts/roslyn-mcp/`: `regression-red-5.3`,
 `green-5.9-full-v3`, `launcher-5.9-full-v3`, `upstream-tests`, and

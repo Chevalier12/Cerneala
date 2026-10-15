@@ -3,3 +3,4 @@
 /Cerneala.Backends.SdlGpu/Shaders/*.json text eol=lf
 /Cerneala.SourceGen/Prism/Catalog/*.json text eol=lf
 /docs/**/prism-*.md text eol=lf
+/Tools/RoslynMcp/*.patch text eol=lf

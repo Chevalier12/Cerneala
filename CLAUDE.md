@@ -73,14 +73,12 @@ This project provides `cerneala_roslyn`, a local Roslyn/MSBuild MCP over the sav
 
 ### Warning: mcpRoslyn processes and RAM
 
-Every Claude Code or Codex session that connects to this server runs its own `mcpRoslyn.exe`. After the solution loads, each one holds about 0.8–1.3 GB of RAM, and it stays alive for as long as that session is open, even while idle. The machine has 16 GB.
+Every Claude Code or Codex session that connects to this server runs its own `mcpRoslyn.exe`, for as long as that session is open. The machine has 16 GB. The launcher starts it with `--idle-unload-seconds 60`, so the solution is in memory only while tools are used:
 
-- The launcher puts itself and `mcpRoslyn.exe` in a Windows kill-on-close job. When a client closes the connection or kills the launcher, `mcpRoslyn.exe` and its BuildHost children exit with it. Processes started before this launcher change, or by any other launcher, can still be orphaned.
-- At the end of every reply, close all `mcpRoslyn.exe` processes (user instruction, 2026-10-10):
-  - List each `mcpRoslyn.exe` with its PID, RAM, and start time.
-  - Stop every one of them, including the ones whose parent session is still alive (this session, a Codex app thread, or another Claude Code session). Stop them by their exact PIDs, after checking that each PID is still `mcpRoslyn`.
-  - Report each stopped process: PID, RAM, and start time.
-  - A session whose server was stopped loses its `mcp__cerneala_roslyn__*` tools until the server starts again. If a later step needs Roslyn MCP and the tools fail, report that and use delegated source inspection.
+- Before the first tool call, the process holds about 55 MB: the solution is not loaded yet. The first call loads it, which takes about 30–60 s.
+- While the solution is loaded, the process holds about 0.9–1.1 GB.
+- 60 s after the last tool call, the server unloads the solution and gives the memory back: about 100–240 MB private memory remains. The next call loads it again, in about 25–50 s. Example, measured 2026-10-15: 863 MB after a `workspace_symbol` call, 99 MB after the idle time, 884 MB after the next call, 106 MB after the next idle time.
+- The launcher puts itself and `mcpRoslyn.exe` in a Windows kill-on-close job. When a client closes the connection or kills the launcher, `mcpRoslyn.exe` and its BuildHost children exit with it. Processes started by an older launcher or by any other launcher can still be orphaned: stop only such orphans, by exact PID, after checking that the PID is still `mcpRoslyn` and that no open session owns it. Never stop the server of a live session, including this one.
 - Do not start extra connections to the server (probes, test harnesses) while a session already holds one, unless the task needs it. Stop any probe you started before finishing.
 
 ## Durable repository workflow
@@ -139,7 +137,7 @@ Verification commands, as observed on this workstation on 2026-10-09:
   - When PreviewHost tests are in scope, run `dotnet build Cerneala.slnx -c Debug` first, because PreviewHost compiles its workspace against Debug outputs. Without them, PreviewHost tests fail with missing generated symbols.
   - When Visual Studio lane tests are in scope, run `dotnet restore tests/Fixtures/VisualStudioIntegrationHost/VisualStudioIntegrationHost.csproj` first. Without it, the lane fails with `NETSDK1004`.
 - **Native SDL/GPU tests** are opt-in with `CERNEALA_SDL_NATIVE_TESTS=1`, and the full native SdlGpu project can run for more than an hour. Run the native subset the change touches, for example `--filter "FullyQualifiedName~Prism"` (about 6 minutes) or the pixel-conformance tests, unless the plan or gate requires the whole native lane.
-- **Locked build outputs:** a running `mcpRoslyn.exe` can lock analyzer/generator outputs. If a build fails on a locked SourceGen or analyzer file, check for and handle Roslyn processes as described in the mcpRoslyn warning before retrying.
+- **Locked build outputs:** a running `mcpRoslyn.exe` can lock analyzer/generator outputs. If a build fails on a locked SourceGen or analyzer file, find the `mcpRoslyn.exe` that holds it. When it belongs to this session, wait 60 s without Roslyn tool calls, so it unloads the solution, and retry. When it is an orphan (see the mcpRoslyn warning), stop it by its exact PID. Ask the user before stopping the server of another live session.
 
 # Verification and realtime behavior
 

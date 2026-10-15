@@ -62,7 +62,13 @@ else {
     $diff = (& git -C $source diff --no-color --no-ext-diff --binary) -join "`n"
     Assert-NativeSuccess 'Read existing patch'
     $actual = Normalize-CompatibilityPatch $diff
-    if ($dirty.Count -ne 1 -or $dirty[0] -ne ' M src/mcpRoslyn/mcpRoslyn.csproj' -or $actual -ne $expected) {
+    # The patch only modifies existing files, so the checkout may differ in exactly those files.
+    $patchedFiles = @([regex]::Matches((Get-Content -Raw -LiteralPath $patch), '(?m)^diff --git a/(\S+) b/') |
+        ForEach-Object { " M $($_.Groups[1].Value)" } | Sort-Object)
+    if (Compare-Object $patchedFiles @($dirty | Sort-Object) -CaseSensitive) {
+        throw "Unexpected existing source changes at $source. Nothing overwritten."
+    }
+    if ($actual -ne $expected) {
         throw "Unexpected existing source changes at $source. Nothing overwritten."
     }
 }

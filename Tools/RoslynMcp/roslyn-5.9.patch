@@ -1,7 +1,257 @@
+diff --git a/src/mcpRoslyn/Options/McpRoslynOptions.cs b/src/mcpRoslyn/Options/McpRoslynOptions.cs
+index 44da5d5..286b82b 100644
+--- a/src/mcpRoslyn/Options/McpRoslynOptions.cs
++++ b/src/mcpRoslyn/Options/McpRoslynOptions.cs
+@@ -7,4 +7,10 @@ public sealed class McpRoslynOptions
+     public required string SolutionPath { get; init; }
+     public LogLevel LogLevel { get; init; } = LogLevel.Information;
+     public string? LogFile { get; init; }
++
++    /// <summary>
++    /// When set, the solution loads at the first tool call instead of at startup, and is unloaded
++    /// after this long without a tool call; the next call loads it again (<c>--idle-unload-seconds</c>).
++    /// </summary>
++    public TimeSpan? IdleUnload { get; init; }
+ }
+diff --git a/src/mcpRoslyn/Program.cs b/src/mcpRoslyn/Program.cs
+index f3e4aa7..4a9bf9d 100644
+--- a/src/mcpRoslyn/Program.cs
++++ b/src/mcpRoslyn/Program.cs
+@@ -25,15 +25,22 @@ if (!string.IsNullOrWhiteSpace(options.LogFile))
+ builder.Services.AddSingleton(options);
+ 
+ builder.Services.AddSingleton<IWorkspaceService, WorkspaceService>();
+-builder.Services.AddHostedService<WorkspaceLoaderHostedService>();
++if (options.IdleUnload is { } idleUnload)
++    builder.Services.AddSingleton(sp => new WorkspaceIdleUnloader(
++        (WorkspaceService)sp.GetRequiredService<IWorkspaceService>(), idleUnload, sp.GetRequiredService<ILogger<WorkspaceIdleUnloader>>()));
++else
++    builder.Services.AddHostedService<WorkspaceLoaderHostedService>();
+ 
+ builder.Services
+     .AddMcpServer()
+     .WithStdioServerTransport()
+     .WithToolsFromAssembly()
+-    // A ToolResult carrying an Error also sets the MCP isError flag (TOOL-011).
++    // A ToolResult carrying an Error also sets the MCP isError flag (TOOL-011). With --idle-unload-seconds,
++    // every call also loads the workspace when it is unloaded and restarts the idle countdown.
+     .WithRequestFilters(filters => filters.AddCallToolFilter(next =>
+-        (request, ct) => ToolCallOutcome.TrackAsync(() => next(request, ct))));
++        (request, ct) => request.Services?.GetService<WorkspaceIdleUnloader>() is { } unloader
++            ? unloader.TrackAsync(request.Params?.Name, () => ToolCallOutcome.TrackAsync(() => next(request, ct)), ct)
++            : ToolCallOutcome.TrackAsync(() => next(request, ct))));
+ 
+ await builder.Build().RunAsync();
+ 
+@@ -41,6 +48,7 @@ static McpRoslynOptions ParseArgs(string[] args)
+ {
+     string? solution = null;
+     string? logFile = null;
++    TimeSpan? idleUnload = null;
+     var logLevel = LogLevel.Information;
+ 
+     for (int i = 0; i < args.Length; i++)
+@@ -57,6 +65,10 @@ static McpRoslynOptions ParseArgs(string[] args)
+             case "--log-file" when i + 1 < args.Length:
+                 logFile = args[++i];
+                 break;
++            case "--idle-unload-seconds" when i + 1 < args.Length:
++                if (int.TryParse(args[++i], out var seconds) && seconds > 0)
++                    idleUnload = TimeSpan.FromSeconds(seconds);
++                break;
+         }
+     }
+ 
+@@ -67,7 +79,7 @@ static McpRoslynOptions ParseArgs(string[] args)
+     else if (!File.Exists(solution))
+         throw new FileNotFoundException($"Solution file not found: {solution}");
+ 
+-    return new McpRoslynOptions { SolutionPath = solution, LogLevel = logLevel, LogFile = logFile };
++    return new McpRoslynOptions { SolutionPath = solution, LogLevel = logLevel, LogFile = logFile, IdleUnload = idleUnload };
+ }
+ 
+ internal sealed class WorkspaceLoaderHostedService(IWorkspaceService ws) : IHostedService
+diff --git a/src/mcpRoslyn/Workspace/WorkspaceService.cs b/src/mcpRoslyn/Workspace/WorkspaceService.cs
+index cde405d..2be461e 100644
+--- a/src/mcpRoslyn/Workspace/WorkspaceService.cs
++++ b/src/mcpRoslyn/Workspace/WorkspaceService.cs
+@@ -1,7 +1,9 @@
+ using System.Collections.Concurrent;
++using System.Runtime;
+ using Microsoft.CodeAnalysis;
+ using Microsoft.CodeAnalysis.MSBuild;
+ using Microsoft.Extensions.Logging;
++using ModelContextProtocol.Protocol;
+ using mcpRoslyn.Contracts;
+ using mcpRoslyn.Options;
+ 
+@@ -14,6 +16,7 @@ public sealed class WorkspaceService(McpRoslynOptions options, ILogger<Workspace
+     private Generation? _current;
+     private Solution? _solution;
+     private Dictionary<DocumentId, DateTime> _mtimeCache = new();
++    private string? _unloadedSolutionPath; // what an unload left behind, so the next load serves the same solution
+     private readonly List<Generation> _retiring = new();       // lock on itself
+     private readonly CancellationTokenSource _disposeCts = new(); // ends retirement grace periods early
+ 
+@@ -309,7 +312,50 @@ public sealed class WorkspaceService(McpRoslynOptions options, ILogger<Workspace
+         finally { _gate.Release(); }
+     }
+ 
+-    public string SolutionPath => _current?.SolutionPath ?? Path.GetFullPath(options.SolutionPath);
++    public string SolutionPath => _current?.SolutionPath ?? _unloadedSolutionPath ?? Path.GetFullPath(options.SolutionPath);
++
++    /// <summary>Loads the solution being served when no generation is: at the first call, or after <see cref="UnloadAsync"/>.</summary>
++    public async Task EnsureLoadedAsync(CancellationToken ct = default)
++    {
++        if (_current is not null) return;
++        await _gate.WaitAsync(ct);
++        try
++        {
++            if (_current is null) await LoadUnsafeAsync(SolutionPath, ct);
++        }
++        finally { _gate.Release(); }
++    }
++
++    /// <summary>
++    /// Disposes every generation, so the process gives back the memory a loaded solution holds, when
++    /// <paramref name="stillIdle"/>, read under the gate, confirms no call needs it. A call that starts after
++    /// that check waits for the gate in <see cref="EnsureLoadedAsync"/> and loads the same solution again.
++    /// Returns whether it unloaded.
++    /// </summary>
++    public async Task<bool> UnloadAsync(Func<bool> stillIdle)
++    {
++        await _gate.WaitAsync();
++        try
++        {
++            if (_current is not { } current || !stillIdle()) return false;
++            List<Generation> generations;
++            lock (_retiring) { generations = [.. _retiring]; _retiring.Clear(); }
++            generations.Add(current);
++            _unloadedSolutionPath = current.SolutionPath;
++            _current = null;
++            _solution = null;
++            _mtimeCache = new();
++            foreach (var gen in generations)
++            {
++                gen.Cts.Cancel();
++                try { await gen.Warmup; }
++                catch (Exception) { /* cancelled or failed: it has stopped either way */ }
++                gen.Dispose();
++            }
++        }
++        finally { _gate.Release(); }
++        return true;
++    }
+ 
+     public async Task<Solution> GetFreshSolutionAsync(CancellationToken ct = default)
+     {
+@@ -615,3 +661,101 @@ public sealed class WorkspaceService(McpRoslynOptions options, ILogger<Workspace
+         finally { _gate.Release(); _gate.Dispose(); }
+     }
+ }
++
++/// <summary>
++/// Keeps the solution loaded only while tool calls use it (<c>--idle-unload-seconds</c>): a call loads it when
++/// nothing is loaded, and once no call has run for the idle time the workspace is unloaded so its memory goes
++/// back to the system. Every tool call passes through <see cref="TrackAsync"/>, so an unload never lands while
++/// a call is running.
++/// </summary>
++internal sealed class WorkspaceIdleUnloader(WorkspaceService workspace, TimeSpan idle, ILogger<WorkspaceIdleUnloader> log)
++    : IDisposable
++{
++    private readonly object _lock = new();
++    private int _activeCalls;
++    private long _callsStarted; // a timer armed before a later call started is stale
++    private Timer? _timer;
++
++    public async ValueTask<CallToolResult> TrackAsync(
++        string? toolName, Func<ValueTask<CallToolResult>> invoke, CancellationToken ct)
++    {
++        lock (_lock)
++        {
++            _activeCalls++;
++            _callsStarted++;
++            _timer?.Dispose();
++            _timer = null;
++        }
++        try
++        {
++            // reload_workspace loads by itself; loading first would load the solution twice.
++            if (toolName != "reload_workspace")
++            {
++                try { await workspace.EnsureLoadedAsync(ct); }
++                catch (OperationCanceledException) { throw; }
++                catch (Exception ex)
++                {
++                    log.LogWarning(ex, "Loading the workspace failed");
++                    return new CallToolResult
++                    {
++                        IsError = true,
++                        Content = [new TextContentBlock { Text = $"WORKSPACE_LOAD_FAILED: {ex.Message}" }],
++                    };
++                }
++            }
++            return await invoke();
++        }
++        finally
++        {
++            lock (_lock)
++            {
++                if (--_activeCalls == 0)
++                {
++                    var calls = _callsStarted;
++                    _timer = new Timer(_ => _ = UnloadIfIdleAsync(calls), null, idle, Timeout.InfiniteTimeSpan);
++                }
++            }
++        }
++    }
++
++    private bool IsIdleSince(long calls)
++    {
++        lock (_lock) return _activeCalls == 0 && _callsStarted == calls;
++    }
++
++    private async Task UnloadIfIdleAsync(long calls)
++    {
++        try
++        {
++            if (!await workspace.UnloadAsync(() => IsIdleSince(calls))) return;
++            ReleaseMemory();
++        }
++        catch (Exception ex)
++        {
++            log.LogWarning(ex, "Unloading the idle workspace failed");
++        }
++    }
++
++    /// <summary>
++    /// The unloaded solution stays in the GC heap until a collection; an aggressive one also gives the memory back
++    /// to the system. It runs here, after <see cref="WorkspaceService.UnloadAsync"/> returned: inside that async
++    /// method its own locals still reach the disposed generations, so a collection there frees almost nothing.
++    /// </summary>
++    private void ReleaseMemory()
++    {
++        GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
++        GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, blocking: true, compacting: true);
++        using var process = System.Diagnostics.Process.GetCurrentProcess();
++        log.LogInformation("Unloaded the workspace after {Idle} without tool calls: GC heap {Heap} MiB, private memory {Private} MiB",
++            idle, GC.GetGCMemoryInfo().HeapSizeBytes >> 20, process.PrivateMemorySize64 >> 20);
++    }
++
++    public void Dispose()
++    {
++        lock (_lock)
++        {
++            _timer?.Dispose();
++            _timer = null;
++        }
++    }
++}
 diff --git a/src/mcpRoslyn/mcpRoslyn.csproj b/src/mcpRoslyn/mcpRoslyn.csproj
+index 209da66..3648129 100644
 --- a/src/mcpRoslyn/mcpRoslyn.csproj
 +++ b/src/mcpRoslyn/mcpRoslyn.csproj
-@@ -38,8 +38,8 @@
+@@ -35,8 +35,8 @@
      <!-- Microsoft.Build.Framework is a transitive dep of MSBuild.Locator.
           Must be excluded from runtime assets to avoid assembly-load conflicts (MSBL001). -->
      <PackageReference Include="Microsoft.Build.Framework" Version="17.11.48" ExcludeAssets="runtime" PrivateAssets="all" />
@@ -12,3 +262,148 @@ diff --git a/src/mcpRoslyn/mcpRoslyn.csproj b/src/mcpRoslyn/mcpRoslyn.csproj
      <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.8" />
      <PackageReference Include="ModelContextProtocol" Version="1.3.0" />
    </ItemGroup>
+diff --git a/tests/mcpRoslyn.Tests/McpProtocolTests.cs b/tests/mcpRoslyn.Tests/McpProtocolTests.cs
+index c01c1cc..a0d95e9 100644
+--- a/tests/mcpRoslyn.Tests/McpProtocolTests.cs
++++ b/tests/mcpRoslyn.Tests/McpProtocolTests.cs
+@@ -40,4 +40,65 @@ public sealed class McpProtocolTests
+         static string Text(ModelContextProtocol.Protocol.CallToolResult r)
+             => string.Concat(r.Content.OfType<ModelContextProtocol.Protocol.TextContentBlock>().Select(c => c.Text));
+     }
++
++    [Test]
++    public async Task With_idle_unload_the_solution_loads_at_the_first_call_and_again_after_an_idle_unload()
++    {
++        var configuration = Path.GetFileName(Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory)));
++        var exe = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory,
++            "..", "..", "..", "..", "..", "src", "mcpRoslyn", "bin", configuration!, "net10.0", "win-x64", "mcpRoslyn.exe"));
++        File.Exists(exe).Should().BeTrue($"the test project references the server, so building it builds {exe}");
++        var logFile = Path.Combine(Path.GetTempPath(), $"mcpRoslyn-idle-{Guid.NewGuid():N}.log");
++
++        try
++        {
++            await using (var client = await McpClient.CreateAsync(new StdioClientTransport(new StdioClientTransportOptions
++            {
++                Name = "mcpRoslyn",
++                Command = exe,
++                Arguments = ["--solution", FixturePaths.TestSolutionPath, "--idle-unload-seconds", "1", "--log-file", logFile],
++            })))
++            {
++                Loads().Should().Be(0, "nothing loads before the first tool call");
++
++                var first = await FindReferencesAsync(client);
++                first.IsError.Should().NotBe(true, Text(first));
++                Loads().Should().Be(1);
++
++                var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(60);
++                while (!ReadLog().Contains("Unloaded the workspace"))
++                {
++                    if (DateTime.UtcNow > deadline) Assert.Fail("One idle second did not unload the workspace within 60 s");
++                    await Task.Delay(50);
++                }
++
++                var second = await FindReferencesAsync(client);
++                second.IsError.Should().NotBe(true, Text(second));
++                Loads().Should().Be(2, "the call after the unload loads the solution again");
++            }
++        }
++        finally
++        {
++            // The server may still be exiting and holding its log; a leftover temp file is harmless.
++            try { File.Delete(logFile); }
++            catch (IOException) { }
++        }
++
++        static ValueTask<ModelContextProtocol.Protocol.CallToolResult> FindReferencesAsync(McpClient client)
++            => client.CallToolAsync("find_references", new Dictionary<string, object?>
++                { ["filePath"] = null, ["line"] = null, ["column"] = null, ["symbolId"] = "T:TestLib.IGreeter" });
++
++        int Loads() => ReadLog().Split('\n').Count(line => line.Contains("Loaded ") && line.Contains(" projects in "));
++
++        string ReadLog()
++        {
++            if (!File.Exists(logFile)) return "";
++            using var stream = new FileStream(logFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
++            using var reader = new StreamReader(stream);
++            return reader.ReadToEnd();
++        }
++
++        static string Text(ModelContextProtocol.Protocol.CallToolResult r)
++            => string.Concat(r.Content.OfType<ModelContextProtocol.Protocol.TextContentBlock>().Select(c => c.Text));
++    }
+ }
+diff --git a/tests/mcpRoslyn.Tests/WorkspaceServiceTests.cs b/tests/mcpRoslyn.Tests/WorkspaceServiceTests.cs
+index 025f93f..813403d 100644
+--- a/tests/mcpRoslyn.Tests/WorkspaceServiceTests.cs
++++ b/tests/mcpRoslyn.Tests/WorkspaceServiceTests.cs
+@@ -1,6 +1,7 @@
+ using FluentAssertions;
+ using Microsoft.Build.Locator;
+ using Microsoft.Extensions.Logging.Abstractions;
++using ModelContextProtocol.Protocol;
+ using mcpRoslyn.Options;
+ using mcpRoslyn.Tests.TestHelpers;
+ using mcpRoslyn.Workspace;
+@@ -426,4 +427,62 @@ public class WorkspaceServiceTests
+             if (Directory.Exists(tempDir)) Directory.Delete(tempDir, recursive: true);
+         }
+     }
++
++    [Test]
++    public async Task UnloadAsync_releases_the_solution_only_when_idle_and_EnsureLoadedAsync_loads_it_again()
++    {
++        var options = new McpRoslynOptions { SolutionPath = FixturePaths.TestSolutionPath };
++        await using var sut = new WorkspaceService(options, NullLogger<WorkspaceService>.Instance);
++
++        await sut.EnsureLoadedAsync();
++        sut.LoadedProjectCount.Should().Be(4);
++
++        (await sut.UnloadAsync(() => false)).Should().BeFalse("a call that still needs the workspace keeps it");
++        sut.LoadedProjectCount.Should().Be(4);
++
++        (await sut.UnloadAsync(() => true)).Should().BeTrue();
++        sut.LoadedProjectCount.Should().Be(0);
++        sut.SolutionPath.Should().Be(Path.GetFullPath(FixturePaths.TestSolutionPath));
++
++        await sut.EnsureLoadedAsync();
++        sut.LoadedProjectCount.Should().Be(4);
++        sut.LoadCount.Should().Be(2);
++    }
++
++    [Test]
++    public async Task The_idle_unloader_never_unloads_during_a_call_and_unloads_after_the_idle_time()
++    {
++        var options = new McpRoslynOptions { SolutionPath = FixturePaths.TestSolutionPath };
++        await using var workspace = new WorkspaceService(options, NullLogger<WorkspaceService>.Instance);
++        using var sut = new WorkspaceIdleUnloader(
++            workspace, TimeSpan.FromMilliseconds(200), NullLogger<WorkspaceIdleUnloader>.Instance);
++
++        var release = new TaskCompletionSource();
++        var call = sut.TrackAsync("hover", async () =>
++        {
++            await release.Task;
++            return new CallToolResult();
++        }, CancellationToken.None).AsTask();
++
++        await WaitUntilAsync(() => workspace.LoadedProjectCount == 4, "the call loads the workspace");
++        await Task.Delay(TimeSpan.FromMilliseconds(800)); // four idle times while the call still runs
++        workspace.LoadedProjectCount.Should().Be(4, "a running call keeps the workspace loaded");
++
++        release.SetResult();
++        await call;
++        await WaitUntilAsync(() => workspace.LoadedProjectCount == 0, "the idle time after the last call unloads it");
++
++        await sut.TrackAsync("hover", () => ValueTask.FromResult(new CallToolResult()), CancellationToken.None);
++        workspace.LoadedProjectCount.Should().Be(4, "the next call loads it again");
++    }
++
++    private static async Task WaitUntilAsync(Func<bool> condition, string because)
++    {
++        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(60);
++        while (!condition())
++        {
++            if (DateTime.UtcNow > deadline) Assert.Fail($"Timed out after 60 s: {because}");
++            await Task.Delay(50);
++        }
++    }
+ }
