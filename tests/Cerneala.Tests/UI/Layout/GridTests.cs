@@ -1061,6 +1061,42 @@ public sealed class GridTests
         Assert.Equal(200, columns ? desired.Width : desired.Height);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void LayoutRoundingDesiresTheSumOfAutoDefinitionDevicePixelsWhenTheFloatSumIsOneStepAboveIt(bool columns)
+    {
+        // At scale 1.75 the Auto definitions are 57 / 1.75f and 1 / 1.75f. Their float sum is one step above 58 / 1.75f,
+        // and rounding that sum up must not add a 59th device pixel that leaves a gap before the next sibling.
+        UIRoot root = new(200, 200, 1.75f);
+        StackPanel outer = new()
+        {
+            Orientation = columns ? Orientation.Horizontal : Orientation.Vertical,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top
+        };
+        Grid grid = new();
+        AddDefinition(grid, columns, GridLength.Auto);
+        AddDefinition(grid, columns, GridLength.Auto);
+        UIElement first = columns ? new UIElement { Width = 32.5f, Height = 10 } : new UIElement { Width = 10, Height = 32.5f };
+        UIElement second = columns ? new UIElement { Width = 0.5f, Height = 10 } : new UIElement { Width = 10, Height = 0.5f };
+        SetCell(second, columns, 1, 0);
+        UIElement next = new() { Width = 10, Height = 10 };
+        grid.VisualChildren.Add(first);
+        grid.VisualChildren.Add(second);
+        outer.VisualChildren.Add(grid);
+        outer.VisualChildren.Add(next);
+        root.VisualChildren.Add(outer);
+
+        root.ProcessFrame();
+
+        float desired = columns ? grid.DesiredSize.Width : grid.DesiredSize.Height;
+        float nextStart = columns ? next.ArrangedBounds.X : next.ArrangedBounds.Y;
+        Assert.Equal(
+            ("0..57, 57..58", 58f, 58f),
+            (GetDeviceEdges([first, second], 1.75f, columns), MathF.Round(desired * 1.75f), MathF.Round(nextStart * 1.75f)));
+    }
+
     private static void AddDefinition(Grid grid, bool columns, GridLength length)
     {
         if (columns)

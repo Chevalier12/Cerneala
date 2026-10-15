@@ -1156,9 +1156,14 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         LayoutSize contentDesiredSize = new(
             hasWidth ? width : measuredSize.Width,
             hasHeight ? height : measuredSize.Height);
+        // With layout rounding the margin adds device pixels to the content, as a panel adds its children: at scale 1.5
+        // an explicit 2.5 is 4 device pixels (4 / 1.5f) and a margin of 2 is 3, but their float sum times 1.5 is slightly
+        // above 7, which Measure would round up to an 8th device pixel.
+        LayoutRounding rounding = context.Rounding;
         return new LayoutSize(
-            contentDesiredSize.Width + margin.Horizontal,
-            contentDesiredSize.Height + margin.Vertical).ClampNonNegative();
+            rounding.FromDevicePixels(rounding.ToDevicePixels(contentDesiredSize.Width) + rounding.ToDevicePixels(margin.Horizontal)),
+            rounding.FromDevicePixels(rounding.ToDevicePixels(contentDesiredSize.Height) + rounding.ToDevicePixels(margin.Vertical)))
+            .ClampNonNegative();
     }
 
     private void PreserveCurrentMeasureCache()

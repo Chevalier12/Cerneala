@@ -43,22 +43,17 @@ public class StackPanel : Panel
             if (orientation == Orientation.Vertical)
             {
                 width = MathF.Max(width, childSize.Width);
-                stackLength += ToStackUnits(childSize.Height, rounding);
+                stackLength += rounding.ToDevicePixels(childSize.Height);
             }
             else
             {
-                stackLength += ToStackUnits(childSize.Width, rounding);
+                stackLength += rounding.ToDevicePixels(childSize.Width);
                 height = MathF.Max(height, childSize.Height);
             }
         }
 
-        float stackSize = rounding.IsEnabled ? stackLength / rounding.Scale : stackLength;
+        float stackSize = rounding.FromDevicePixels(stackLength);
         return orientation == Orientation.Vertical ? new LayoutSize(width, stackSize) : new LayoutSize(stackSize, height);
-    }
-
-    private static float ToStackUnits(float length, LayoutRounding rounding)
-    {
-        return rounding.IsEnabled ? MathF.Round(length * rounding.Scale) : length;
     }
 
     protected override LayoutRect ArrangeCore(ArrangeContext context)

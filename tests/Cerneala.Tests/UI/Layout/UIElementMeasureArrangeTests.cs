@@ -212,6 +212,41 @@ public sealed class UIElementMeasureArrangeTests
         Assert.Equal((expected, expected), (desired, bounds));
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void LayoutRoundingDesiresTheSumOfContentAndMarginDevicePixelsWhenTheFloatSumIsAboveIt(bool vertical)
+    {
+        // At scale 1.5 an explicit 2.5 is 4 device pixels (4 / 1.5f) and a margin of 2 is 3 device pixels. Their float
+        // sum times 1.5 is slightly above 7, and rounding it up must not add an 8th device pixel that moves the element
+        // and leaves a gap before the next sibling.
+        UIRoot root = new(200, 200, 1.5f);
+        StackPanel outer = new()
+        {
+            Orientation = vertical ? Orientation.Vertical : Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top
+        };
+        UIElement element = vertical
+            ? new UIElement { Width = 10, Height = 2.5f, Margin = new Thickness(0, 2, 0, 0) }
+            : new UIElement { Width = 2.5f, Height = 10, Margin = new Thickness(2, 0, 0, 0) };
+        UIElement next = new() { Width = 10, Height = 10 };
+        outer.VisualChildren.Add(element);
+        outer.VisualChildren.Add(next);
+        root.VisualChildren.Add(outer);
+
+        root.ProcessFrame();
+
+        LayoutRect bounds = element.ArrangedBounds;
+        float start = vertical ? bounds.Y : bounds.X;
+        float end = start + (vertical ? bounds.Height : bounds.Width);
+        float desired = vertical ? element.DesiredSize.Height : element.DesiredSize.Width;
+        float nextStart = vertical ? next.ArrangedBounds.Y : next.ArrangedBounds.X;
+        Assert.Equal(
+            (3f, 7f, 7f, 7f),
+            (MathF.Round(start * 1.5f), MathF.Round(end * 1.5f), MathF.Round(desired * 1.5f), MathF.Round(nextStart * 1.5f)));
+    }
+
     private static string GetDeviceEdges(UIElement element, float scale, bool vertical)
     {
         LayoutRect bounds = element.ArrangedBounds;

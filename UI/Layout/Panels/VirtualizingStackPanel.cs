@@ -91,7 +91,10 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
 
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
+        // With layout rounding the natural item heights add device pixels, as StackPanel adds its children, so items of
+        // 57 / 1.75f and 1 / 1.75f desire 58 / 1.75f instead of a float one step above it that rounds up to 59 pixels.
         RealizationWindow window = RealizationWindow;
+        LayoutRounding rounding = context.Rounding;
         float width = 0;
         float height = 0;
         for (int i = 0; i < VisualChildren.Count; i++)
@@ -106,7 +109,7 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
 
             child.Measure(new MeasureContext(new LayoutSize(context.AvailableSize.Width, float.PositiveInfinity), context.Rounding));
             width = MathF.Max(width, child.DesiredSize.Width);
-            height += child.DesiredSize.Height;
+            height += rounding.ToDevicePixels(child.DesiredSize.Height);
             if (automaticViewport is not null && child.DesiredSize.Height >= 0 && float.IsFinite(child.DesiredSize.Height))
             {
                 measuredItemExtents[itemIndex] = child.DesiredSize.Height;
@@ -119,11 +122,12 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
             RecalculateAutomaticWindow();
         }
 
+        float naturalHeight = rounding.FromDevicePixels(height);
         float desiredHeight = automaticViewport is not null
             ? EstimateTotalExtent(automaticViewport.Value.ItemCount)
             : UsesNaturalItemHeights(window)
-            ? height
-            : VirtualizationContext?.TotalExtent ?? height;
+            ? naturalHeight
+            : VirtualizationContext?.TotalExtent ?? naturalHeight;
         return new LayoutSize(width, desiredHeight);
     }
 

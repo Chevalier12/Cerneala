@@ -53,6 +53,8 @@ panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 300, 120)));
 
 During measure, the panel maps each visual child to an item index by adding `FirstRealizedIndex` to the child's visual-child position. When `VirtualizationContext` is set or `UpdateViewport` was called, children whose item index is outside `RealizationWindow` are not measured and receive `LayoutSize.Zero` as their desired size. Otherwise every child is realized. Realized children are measured with the available width and an infinite available height.
 
+When the panel stacks its children at their natural heights (no automatic viewport, and either no `VirtualizationContext` or one whose items are all realized), its desired height is the sum of the children's desired heights. With layout rounding enabled in the `MeasureContext`, that sum adds device pixels, as in `StackPanel` (see `LayoutRounding`): at scale 1.75, children with `Height = 32.5` (57 device pixels) and `Height = 0.5` (1 device pixel) give a desired height of `58 / 1.75f`, 58 device pixels, not 59.
+
 During arrange, automatic mode positions each child using the measured or estimated prefix extent of all preceding items. Fixed mode uses `ItemExtent`. When every item is realized without virtualization, the panel stacks children using their measured heights.
 
 In automatic mode, `TotalExtent` combines measured heights with the current estimate for unknown items. Without either automatic viewport data or a fixed `VirtualizationContext`, it reports the measured desired height.
