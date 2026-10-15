@@ -573,6 +573,42 @@ public sealed class ItemsPresenterTests
         Assert.Equal("children=[1,2,3,4,5] first=1 contextOffset=20", DescribeWindow(control, panel));
     }
 
+    // The failed window realizes item 4, and with OnItemContainerPrepared item 5 too, before the preparation throws.
+    // The panel never takes them, so the generator must not keep them realized either.
+    [Theory]
+    [InlineData(false, 4)]
+    [InlineData(true, 5)]
+    public void FailedOwnerWindowMoveWhileCreatingContainersRealizesOnlyThePresentedChildren(
+        bool failInPrepareItemContainer,
+        int failFromIndex)
+    {
+        Cerneala.UI.Layout.Panels.VirtualizingStackPanel panel = new();
+        FailingWindowItemsControl control = new() { ItemsPanel = panel, FailFromIndex = failFromIndex };
+        control.SetItems(Enumerable.Range(0, 100).Cast<object>());
+        control.SetVirtualizationContext(new VirtualizationContext(100, 10, 30, 0, CacheItems: 1));
+        control.Measure(new MeasureContext(new LayoutSize(100, 30)));
+
+        control.FailInPrepareItemContainer = failInPrepareItemContainer;
+        control.FailInContainerPrepared = !failInPrepareItemContainer;
+        control.SetVirtualizationContext(new VirtualizationContext(100, 10, 30, 20, CacheItems: 1));
+        for (int attempt = 0; attempt < 2; attempt++)
+        {
+            Assert.Throws<InvalidOperationException>(() => control.Measure(new MeasureContext(new LayoutSize(100, 31 + attempt))));
+
+            Assert.Equal("children=[0,1,2,3] first=0 contextOffset=0", DescribeWindow(control, panel));
+            Assert.Equal([0, 1, 2, 3], RealizedIndices(control));
+            Assert.Equal(4, control.RealizedItemCount);
+            Assert.All(control.ItemContainerGenerator.RealizedContainers.Values, container => Assert.Same(panel, container.VisualParent));
+        }
+
+        control.FailInPrepareItemContainer = false;
+        control.FailInContainerPrepared = false;
+        control.Measure(new MeasureContext(new LayoutSize(100, 33)));
+
+        Assert.Equal("children=[1,2,3,4,5] first=1 contextOffset=20", DescribeWindow(control, panel));
+        Assert.Equal([1, 2, 3, 4, 5], RealizedIndices(control));
+    }
+
     [Fact]
     public void FailedRecycleAfterOwnerWindowMoveRestoresTheCommittedWindowOnALaterFailedInsert()
     {

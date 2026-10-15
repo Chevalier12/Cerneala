@@ -257,6 +257,35 @@ public sealed class TabControlTests
         Assert.Same(first, tabControl.SelectedItem);
     }
 
+    // The failed refresh realizes the tab of "C" before the callback throws for "D", but the panel never presents it.
+    [Fact]
+    public void SelectedTabItemIsNullForATabThatAFailedRefreshDidNotPresent()
+    {
+        FailingPreparedTabControl tabControl = new();
+        tabControl.Items.Add("A");
+        tabControl.Items.Add("B");
+        tabControl.Measure(new MeasureContext(new LayoutSize(200, 100)));
+
+        tabControl.Items.Add("C");
+        tabControl.Items.Add("D");
+        tabControl.SelectedIndex = 2;
+        tabControl.FailIndex = 3;
+        Assert.Throws<InvalidOperationException>(() => tabControl.Measure(new MeasureContext(new LayoutSize(200, 101))));
+
+        Cerneala.UI.Layout.Panels.Panel panel = tabControl.ItemsPresenter.LayoutPanelRoot!;
+        Assert.Equal(2, panel.VisualChildren.Count);
+        Assert.Equal(2, tabControl.RealizedItemCount);
+        Assert.Null(tabControl.SelectedTabItem);
+
+        tabControl.FailIndex = -1;
+        tabControl.Measure(new MeasureContext(new LayoutSize(200, 102)));
+
+        Assert.Equal(4, panel.VisualChildren.Count);
+        Assert.Equal(4, tabControl.RealizedItemCount);
+        Assert.Equal("C", tabControl.SelectedTabItem!.Content);
+        Assert.Same(panel, tabControl.SelectedTabItem.VisualParent);
+    }
+
     private static void Layout(TabControl tabControl)
     {
         tabControl.Measure(new MeasureContext(new LayoutSize(100, 100)));
@@ -278,6 +307,21 @@ public sealed class TabControlTests
         }
 
         return new InputFrame(previous, current, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []);
+    }
+
+    private sealed class FailingPreparedTabControl : TabControl
+    {
+        public int FailIndex { get; set; } = -1;
+
+        protected internal override void OnItemContainerPrepared(UIElement container, int index)
+        {
+            if (index == FailIndex)
+            {
+                throw new InvalidOperationException("container prepared callback failed");
+            }
+
+            base.OnItemContainerPrepared(container, index);
+        }
     }
 
     private sealed class FixedElement : UIElement
