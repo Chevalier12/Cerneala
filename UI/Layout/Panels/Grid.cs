@@ -147,9 +147,11 @@ public class Grid : Panel
             // When that changes the first axis, the second axis was measured against stale sizes: size it again
             // too, then the first axis against it, until the first axis stops changing. The sizes that children
             // in one definition gave an axis stay minimums and only grow, as in the final measure: the other axis
-            // was already measured against them. The shares of spanning children and of stars on a bounded axis
-            // are dropped and shared again from the new sizes. The cyclic passes above already start with a
-            // re-size of the columns, which are then the first axis.
+            // was already measured against them. Children whose cross span covers only pixel definitions are the
+            // exception: their cross size is known, and an earlier measure differs from it only by rounding, so they
+            // size the axis from their measure at the current rounded cross sizes alone. The shares of spanning
+            // children and of stars on a bounded axis are dropped and shared again from the new sizes. The cyclic
+            // passes above already start with a re-size of the columns, which are then the first axis.
             for (int pass = 0; pass < MaxCyclicMeasurePasses; pass++)
             {
                 float[] previousFirstSizes = rowsFirst ? rowSizes : columnSizes;
@@ -296,8 +298,9 @@ public class Grid : Panel
         // the rounded sizes of its pixel definitions are final only when it has no other definitions: two 33.6 px
         // pixel rows are 34 and 33 px, but 34, 34, 10 and 10 px with two Auto rows that are resolved to 10.5 px each.
         // Until then, a child that spans only pixel definitions is measured at their unrounded sizes, as without layout
-        // rounding, and measured again at the rounded sizes once the cross axis is resolved. Its first measure stays a
-        // minimum of the definitions it sizes, so it is not taken at sizes rounded without the other definitions.
+        // rounding, and measured again at the rounded sizes once the cross axis is resolved. Only that second measure
+        // sizes the definitions it spans (see ResolveSingleDefinitionSizes), so neither the unrounded sizes nor sizes
+        // rounded without the other definitions leave a minimum.
         bool crossRoundedSizesFinal = crossAxisResolved || crossLengths.All(length => length.IsPixel);
         float[] crossMeasureSizes = crossRoundedSizesFinal ? GetMeasureSizes(crossSizes, context.Rounding) : crossSizes;
         bool crossPixelSizesFinal = crossRoundedSizesFinal || !context.Rounding.IsEnabled;
@@ -343,11 +346,11 @@ public class Grid : Panel
     // spans only Auto definitions is measured with positive infinity either way.
     private static bool IsChildConstraintKnownBeforeResolve(GridLength[] lengths, int index, int span)
     {
-        if (SpansOnlyAuto(lengths, index, span))
-        {
-            return true;
-        }
+        return SpansOnlyAuto(lengths, index, span) || SpansOnlyPixel(lengths, index, span);
+    }
 
+    private static bool SpansOnlyPixel(GridLength[] lengths, int index, int span)
+    {
         for (int i = index; i < index + span; i++)
         {
             if (!lengths[i].IsPixel)
@@ -437,10 +440,13 @@ public class Grid : Panel
     }
 
     // The pixel sizes of an axis, and the sizes its children in one definition give it at their current measures.
+    // Children whose cross span covers only pixel definitions give none: their current measure can be at a cross size
+    // that is not the rounded size they are arranged at, and the caller measures them again at the current rounded
+    // cross sizes before it sizes the axis from them.
     private float[] ResolveSingleDefinitionSizes(bool columnAxis, GridLength[] columns, GridLength[] rows, float availableSize)
     {
         float[] sizes = ResolveFixedSizes(columnAxis ? columns : rows);
-        ExpandContentSizedDefinitions(columnAxis, columns, rows, sizes, availableSize, maxSpan: 1);
+        ExpandContentSizedDefinitions(columnAxis, columns, rows, sizes, availableSize, maxSpan: 1, skipPixelCrossSpans: true);
         return sizes;
     }
 
@@ -452,9 +458,11 @@ public class Grid : Panel
         GridLength[] rows,
         float[] sizes,
         float availableSize,
-        int maxSpan = int.MaxValue)
+        int maxSpan = int.MaxValue,
+        bool skipPixelCrossSpans = false)
     {
         GridLength[] lengths = columnAxis ? columns : rows;
+        GridLength[] crossLengths = columnAxis ? rows : columns;
         int span = 1;
         while (span <= Math.Min(maxSpan, lengths.Length))
         {
@@ -468,6 +476,15 @@ public class Grid : Panel
 
                 GridPlacement placement = GetPlacement(child, columns.Length, rows.Length);
                 int childSpan = columnAxis ? placement.ColumnSpan : placement.RowSpan;
+                if (skipPixelCrossSpans &&
+                    SpansOnlyPixel(
+                        crossLengths,
+                        columnAxis ? placement.Row : placement.Column,
+                        columnAxis ? placement.RowSpan : placement.ColumnSpan))
+                {
+                    continue;
+                }
+
                 if (childSpan == span)
                 {
                     ExpandContentSizedDefinition(
