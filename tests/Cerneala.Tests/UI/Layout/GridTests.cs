@@ -942,6 +942,143 @@ public sealed class GridTests
         Assert.Equal(new LayoutRect(0, 0, 34, 20), child.ArrangedBounds);
     }
 
+    // Three 33 px pixel rows at scale 1.25 are 41.25 device pixels each and are rounded to 42, 41 and 41. A child of
+    // the Auto column in the first row is measured at 42 device pixels in every pass, not at the 41 that its unrounded
+    // 41.25 device pixels round to on their own.
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void LayoutRoundingMeasuresAutoChildrenInPixelSpansAtTheirArrangedSize(bool columns)
+    {
+        Grid grid = new();
+        AddDefinition(grid, columns, GridLength.Auto);
+        AddDefinition(grid, columns, GridLength.Stars(1));
+        for (int i = 0; i < 3; i++)
+        {
+            AddDefinition(grid, !columns, GridLength.Pixels(33));
+        }
+
+        MeasureRecordingElement child = new();
+        grid.VisualChildren.Add(child);
+
+        LayoutRounding rounding = LayoutRounding.ForScale(1.25f);
+        LayoutSize size = columns ? new LayoutSize(200, 99) : new LayoutSize(99, 200);
+        grid.Measure(new MeasureContext(size, rounding));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, size.Width, size.Height), rounding));
+
+        float arranged = columns ? child.ArrangeSize.Height : child.ArrangeSize.Width;
+        Assert.Equal(42, MathF.Round(arranged * 1.25f));
+        Assert.All(child.MeasureSizes, measured => Assert.Equal(arranged, columns ? measured.Height : measured.Width));
+    }
+
+    // Two 33.6 px pixel rows are rounded to 34 and 33 px, and with a third, Auto row holding a 10.8 px child to 34, 33
+    // and 11 px. The Auto-column child in the second row asks for 70 px at 33 px but for 50 px at 34 px. Measured at
+    // 34 px first, it would leave the * column measured at 150 px and then arranged at 130 px.
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, false)]
+    [InlineData(true, true)]
+    [InlineData(false, true)]
+    public void LayoutRoundingMeasuresTheStarSiblingOfAnAutoChildInAPixelSpanAtItsArrangedSize(
+        bool columns,
+        bool autoCrossDefinition)
+    {
+        Grid grid = new();
+        AddDefinition(grid, columns, GridLength.Auto);
+        AddDefinition(grid, columns, GridLength.Stars(1));
+        AddDefinition(grid, !columns, GridLength.Pixels(33.6f));
+        AddDefinition(grid, !columns, GridLength.Pixels(33.6f));
+        CrossThresholdElement autoChild = new(columns);
+        SetCell(autoChild, columns, index: 0, crossIndex: 1);
+        MeasureRecordingElement starChild = new();
+        SetCell(starChild, columns, index: 1, crossIndex: 1);
+        grid.VisualChildren.Add(autoChild);
+        grid.VisualChildren.Add(starChild);
+        if (autoCrossDefinition)
+        {
+            AddDefinition(grid, !columns, GridLength.Auto);
+            FixedElement filler = new(columns ? new LayoutSize(1, 10.8f) : new LayoutSize(10.8f, 1));
+            SetCell(filler, columns, index: 1, crossIndex: 2);
+            grid.VisualChildren.Add(filler);
+        }
+
+        LayoutRounding rounding = LayoutRounding.ForScale(1);
+        LayoutSize size = columns ? new LayoutSize(200, 100) : new LayoutSize(100, 200);
+        LayoutSize desired = grid.Measure(new MeasureContext(size, rounding));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, size.Width, size.Height), rounding));
+
+        Assert.Equal(starChild.ArrangeSize, starChild.MeasureSizes[^1]);
+        Assert.Equal(130, columns ? starChild.ArrangeSize.Width : starChild.ArrangeSize.Height);
+        Assert.Equal(70, columns ? autoChild.ArrangedBounds.Width : autoChild.ArrangedBounds.Height);
+        Assert.Equal(200, columns ? desired.Width : desired.Height);
+    }
+
+    // Two 33.6 px pixel rows and two Auto rows that share a 21 px child (10.5 px each) are rounded to 34, 34, 10 and
+    // 10 px. Without the Auto rows' sizes, the two pixel rows alone round to 34 and 33 px. The Auto-column child in the
+    // second row asks for 70 px below 33.5 px and for 50 px at 33.5 px or more, so it is arranged in a 50 px column
+    // next to a 150 px * column, as when it is measured at the unrounded 33.6 px, which it receives as 34 px. A measure
+    // at 33 px must not leave 70 px as a minimum.
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void LayoutRoundingKeepsNoAutoSizeFromAPixelSpanMeasuredBelowItsArrangedSize(bool columns)
+    {
+        Grid grid = new();
+        AddDefinition(grid, columns, GridLength.Auto);
+        AddDefinition(grid, columns, GridLength.Stars(1));
+        AddDefinition(grid, !columns, GridLength.Pixels(33.6f));
+        AddDefinition(grid, !columns, GridLength.Pixels(33.6f));
+        AddDefinition(grid, !columns, GridLength.Auto);
+        AddDefinition(grid, !columns, GridLength.Auto);
+        CrossThresholdElement autoChild = new(columns, threshold: 33.5f);
+        SetCell(autoChild, columns, index: 0, crossIndex: 1);
+        MeasureRecordingElement starChild = new();
+        SetCell(starChild, columns, index: 1, crossIndex: 1);
+        FixedElement filler = new(columns ? new LayoutSize(1, 21) : new LayoutSize(21, 1));
+        SetCell(filler, columns, index: 1, crossIndex: 2);
+        if (columns)
+        {
+            Grid.SetRowSpan(filler, 2);
+        }
+        else
+        {
+            Grid.SetColumnSpan(filler, 2);
+        }
+
+        grid.VisualChildren.Add(autoChild);
+        grid.VisualChildren.Add(starChild);
+        grid.VisualChildren.Add(filler);
+
+        LayoutRounding rounding = LayoutRounding.ForScale(1);
+        LayoutSize size = columns ? new LayoutSize(200, 100) : new LayoutSize(100, 200);
+        LayoutSize desired = grid.Measure(new MeasureContext(size, rounding));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, size.Width, size.Height), rounding));
+
+        Assert.Equal(34, columns ? autoChild.ArrangedBounds.Height : autoChild.ArrangedBounds.Width);
+        Assert.Equal(50, columns ? autoChild.ArrangedBounds.Width : autoChild.ArrangedBounds.Height);
+        Assert.Equal(150, columns ? starChild.ArrangeSize.Width : starChild.ArrangeSize.Height);
+        Assert.Equal(starChild.ArrangeSize, starChild.MeasureSizes[^1]);
+        Assert.Equal(200, columns ? desired.Width : desired.Height);
+    }
+
+    private static void AddDefinition(Grid grid, bool columns, GridLength length)
+    {
+        if (columns)
+        {
+            grid.ColumnDefinitions.Add(new ColumnDefinition(length));
+        }
+        else
+        {
+            grid.RowDefinitions.Add(new RowDefinition(length));
+        }
+    }
+
+    private static void SetCell(UIElement element, bool columns, int index, int crossIndex)
+    {
+        Grid.SetColumn(element, columns ? index : crossIndex);
+        Grid.SetRow(element, columns ? crossIndex : index);
+    }
+
     private static string GetDeviceEdges(IEnumerable<UIElement> cells, float scale, bool columns)
     {
         return string.Join(", ", cells.Select(cell =>
@@ -990,6 +1127,36 @@ public sealed class GridTests
         {
             ArrangeSize = context.FinalRect.Size;
             return context.FinalRect;
+        }
+    }
+
+    private sealed class MeasureRecordingElement : UIElement
+    {
+        public List<LayoutSize> MeasureSizes { get; } = [];
+
+        public LayoutSize ArrangeSize { get; private set; }
+
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            MeasureSizes.Add(context.AvailableSize);
+            return new LayoutSize(10, 10);
+        }
+
+        protected override LayoutRect ArrangeCore(ArrangeContext context)
+        {
+            ArrangeSize = context.FinalRect.Size;
+            return context.FinalRect;
+        }
+    }
+
+    // 50 px along the axis when the cross size is at least the threshold (34 px by default), 70 px below that;
+    // 10 px across.
+    private sealed class CrossThresholdElement(bool columns, float threshold = 34) : UIElement
+    {
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            float size = (columns ? context.AvailableSize.Height : context.AvailableSize.Width) >= threshold ? 50 : 70;
+            return columns ? new LayoutSize(size, 10) : new LayoutSize(10, size);
         }
     }
 
