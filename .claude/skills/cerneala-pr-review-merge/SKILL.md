@@ -1,13 +1,13 @@
 ---
 name: cerneala-pr-review-merge
-description: Review and merge one Cerneala pull request after the user has validated it with a PR comment whose whole text is exactly "Validated.", newer than the PR's head commit. The review proves every defect it finds, raises a GitHub issue for each one, lists them in one PR comment, merges into master, and then deletes the PR's reproduction-app release (repro-pr-<number>). Use it when the user asks to review and merge a specific Cerneala PR (for example "review and merge PR 277"), or when a Cerneala PR has a new "Validated." comment. Do not use it before that comment exists, to fix code, or to review a local diff that has no pull request.
+description: Review and merge one Cerneala pull request after the user has validated it with a PR comment whose whole text is exactly "Validated.", newer than the PR's head commit. The review proves every defect it finds, raises a GitHub issue for each one, lists them in one PR comment, merges into master, and then deletes the PR's reproduction-app release (repro-pr-<number>) with both apps, before and after the fix, and keeps their GIFs in the permanent repro-gifs release. Use it when the user asks to review and merge a specific Cerneala PR (for example "review and merge PR 277"), or when a Cerneala PR has a new "Validated." comment. Do not use it before that comment exists, to fix code, or to review a local diff that has no pull request.
 ---
 
 # Cerneala PR Review and Merge
 
-Review one pull request in `Chevalier12/Cerneala` at one exact head commit after the user has validated it, merge it, and delete its reproduction app. Follow `CLAUDE.md`, especially "Parent ownership and mandatory Haiku exploration", "Focused tests" and "The user".
+Review one pull request in `Chevalier12/Cerneala` at one exact head commit after the user has validated it, merge it, and delete its two reproduction apps (before and after the fix). Follow `CLAUDE.md`, especially "Parent ownership and mandatory Haiku exploration", "Focused tests" and "The user".
 
-The user validates a bug fix by running the reproduction app from the pull request (see `cerneala-fix-bug`) and then posting a comment on the pull request. This skill runs only after that comment. It never fixes anything: every defect it finds becomes a GitHub issue, and the pull request is merged anyway (user decision, 2026-10-15).
+The user validates a bug fix by running the two reproduction apps from the pull request, one built without the fix and one with it (see `cerneala-fix-bug`) and then posting a comment on the pull request. This skill runs only after that comment. It never fixes anything: every defect it finds becomes a GitHub issue, and the pull request is merged anyway (user decision, 2026-10-15).
 
 ## Inputs
 
@@ -36,7 +36,7 @@ Invoking this skill for `<number>` authorizes exactly these actions, without fur
 - raise GitHub issues for the defects the review proves, with `github-issue-raise`, posted directly without asking (user decision, 2026-10-15);
 - post at most one comment on PR `<number>`, as step 7 describes;
 - merge with `gh pr merge <number> --merge --match-head-commit <sha>`, when step 6 allows it;
-- delete the release `repro-pr-<number>` and its tag after the merge, as step 8 describes.
+- delete the release `repro-pr-<number>` and its tag after the merge, as step 8 describes, never the release `repro-gifs`.
 
 Everything else is out of scope: do not create, edit or delete repository files, push, fix anything, touch other pull requests or releases, stop processes you did not start, or run `New-FileTree.ps1`. When the caller grants fewer permissions than this list, the caller's list wins.
 
@@ -91,10 +91,10 @@ Every other section is a `###` heading.
      - `### Tests`: the focused test filters you ran with their pass/fail counts, and a sentence that says the complete suite was not run.
    - When `gh pr merge` fails, for example because the head moved, do not retry. Report it and keep the release.
 
-8. **Delete the reproduction app.** Only after `gh pr view <number> --json state` prints `MERGED`:
+8. **Delete the reproduction apps.** The release `repro-pr-<number>` holds both versions of the app, before and after the fix: `Issue<N>-before.zip` and `Issue<N>-after.zip`. The GIFs that the pull-request body shows are in the separate, permanent release `repro-gifs`: never delete that release or any file in it, so the merged pull request keeps showing them (user decision, 2026-10-15). Delete `repro-pr-<number>` only after `gh pr view <number> --json state` prints `MERGED`:
    - Run `gh release view repro-pr-<number> --repo Chevalier12/Cerneala --json tagName,assets`. When it says the release does not exist, there is nothing to delete; say so in the report. This is normal for a pull request without a reproduction app.
-   - Otherwise run `gh release delete repro-pr-<number> --repo Chevalier12/Cerneala --yes --cleanup-tag`, which deletes the release, its zip, and its tag.
-   - Confirm that `gh release view repro-pr-<number> --repo Chevalier12/Cerneala` now fails with "release not found", and that `git ls-remote origin refs/tags/repro-pr-<number>` prints nothing.
+   - Otherwise run `gh release delete repro-pr-<number> --repo Chevalier12/Cerneala --yes --cleanup-tag`, which deletes the release, both zips, and its tag. An older release can also hold GIFs or a single `Issue<N>.zip`; they go with it.
+   - Confirm that `gh release view repro-pr-<number> --repo Chevalier12/Cerneala` now fails with "release not found", and that `git ls-remote origin refs/tags/repro-pr-<number>` prints nothing. Report the names of the files that the earlier `--json tagName,assets` listed, for example `Issue268-before.zip, Issue268-after.zip`. Then check with `gh release view repro-gifs --repo Chevalier12/Cerneala --json assets` that the pull request's GIFs, for example `Issue268-pr277-before.gif` and `Issue268-pr277-after.gif`, are still there.
 
 9. **Clean up.** If a merge is still in progress in the worktree, run `git merge --abort`, so the worktree is left clean. Delete the temporary reproductions you created outside the repository.
 
@@ -102,7 +102,7 @@ Every other section is a `###` heading.
 
 ## Example
 
-PR 277 has head `2ce80fe7…` (40 characters), committed at 12:10. The user ran `Issue268.exe` from the release `repro-pr-277` and posted `Validated.` at 15:40.
+PR 277 has head `2ce80fe7…` (40 characters), committed at 12:10. The user ran `Issue268.exe` from `Issue268-before.zip` (red) and from `Issue268-after.zip` (green) in the release `repro-pr-277` and posted `Validated.` at 15:40.
 
 1. The comment is exactly `Validated.` and newer than the head commit, so the skill continues.
 2. Suppose the review finds one Pre-existing defect: a click on the scrollbar track pages by only 1 unit. A CSI script on `origin/master` shows `VerticalOffset` going from `0` to `1` after one track click with a 100 px viewport. The skill raises it, as #280 in this example. (The numbers in this example are illustrative, not measured.)

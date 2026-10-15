@@ -1,6 +1,6 @@
 ---
 name: cerneala-fix-bug
-description: Reproduce, diagnose, fix, and verify Cerneala defects end-to-end with evidence-first debugging, a focused RED regression test, CSI, Servo-driven runtime reproduction, Detective observability, or a native harness when needed, the smallest architecture-correct production change, green focused tests, and a reproduction app (an executable published with the pull request, never committed) in which the user does the triggering actions and sees a live OK or BUG verdict. Use when the user reports broken behavior, a regression, an exception, incorrect rendering, input or layout failures, performance bugs, flaky behavior, or asks to investigate and fix a Cerneala issue rather than implement a new capability.
+description: Reproduce, diagnose, fix, and verify Cerneala defects end-to-end with evidence-first debugging, a focused RED regression test, CSI, Servo-driven runtime reproduction, Detective observability, or a native harness when needed, the smallest architecture-correct production change, green focused tests, and two identical reproduction apps, one built without the fix and one with it (executables published with the pull request together with a GIF of each, never committed), in which the user does the triggering actions and sees a live OK or BUG verdict. Use when the user reports broken behavior, a regression, an exception, incorrect rendering, input or layout failures, performance bugs, flaky behavior, or asks to investigate and fix a Cerneala issue rather than implement a new capability.
 ---
 
 # Cerneala Fix Bug
@@ -130,14 +130,15 @@ Step 9 lists them in the pull request. Example from #268: while building the rep
 
 Every fix ships a small executable in which the user performs the user validation of step 8 by themselves. The app sets up the real scenario from the issue, the user does the actions that trigger the bug (scroll, click, type, drag, resize), and the app checks the broken invariant live and says whether the bug happened. It is not a demo that plays a fixed script while the user watches: the actions are the user's. Example for #268, "rows of a virtualized list must touch after a scroll": a list of 200 rows that are 11 and 10 device pixels tall, the steps "drag the scrollbar thumb in big jumps, then scroll with the wheel", and a line that stays green while every neighbouring row pair touches and turns red at the first gap or overlap.
 
-Build it right after the RED test, so that it shows the bug before the fix and its absence after the fix. Only the compiled app reaches the user: its source is temporary and never goes into the repository, the commit, or the pull request. Step 9 publishes the app as a GitHub pre-release and links it from the pull request. It always goes in the pull request and never in a GitHub issue: do not attach it to an issue or describe it in one, including issues raised with `github-issue-raise`.
+Build it right after the RED test, so that it shows the bug before the fix and its absence after the fix. The user gets two identical apps, compiled from the same app source: `Issue<N>-before`, built against the base commit without the fix, where the verdict must turn red, and `Issue<N>-after`, built against the fix, where it must stay green. Both run the same scenario with the same steps; only the Cerneala code under them differs. Only the compiled apps reach the user: their source is temporary and never goes into the repository, the commit, or the pull request. Step 9 publishes both apps as a GitHub pre-release, publishes an animated GIF of each one's check mode in the permanent `repro-gifs` release, and shows them in the pull request. They always go in the pull request and never in a GitHub issue: do not attach them to an issue or describe them in one, including issues raised with `github-issue-raise`.
 
 Project:
 
 - Create it outside the repository, in `<scratchpad>/repro-<N>/Issue<N>/`, where `<N>` is the GitHub issue number, for example `<scratchpad>/repro-268/Issue268/Issue268.csproj`. Without an issue number, use a short PascalCase scenario name, for example `<scratchpad>/repro-grid-auto-row-gap/GridAutoRowGap/`. Nothing in the repository changes for the app: no project, no `Cerneala.slnx` entry, no `Cerneala.csproj` exclusion.
 - Copy the project shape of `Playground/Cerneala.ComboBoxLab`, the smallest real Cerneala window app:
   - a `WinExe` project targeting `net8.0-windows`, with `ImplicitUsings` and `Nullable` enabled;
-  - a `CernealaRoot` property with the absolute path of the worktree root and a trailing backslash, and project references to `$(CernealaRoot)Cerneala.csproj`, to `$(CernealaRoot)Cerneala.Backends.SdlGpu\Cerneala.Backends.SdlGpu.csproj`, and to `$(CernealaRoot)Cerneala.SourceGen\Cerneala.SourceGen.csproj` with `OutputItemType="Analyzer"` and `ReferenceOutputAssembly="false"`;
+  - a `CernealaRoot` property with the absolute path of the worktree root and a trailing backslash, written as `<CernealaRoot Condition="'$(CernealaRoot)' == ''">C:\...\worktrees\issue-268\</CernealaRoot>` so that the before build can point it at the base commit with `-p:CernealaRoot=...`, and project references to `$(CernealaRoot)Cerneala.csproj`, to `$(CernealaRoot)Cerneala.Backends.SdlGpu\Cerneala.Backends.SdlGpu.csproj`, and to `$(CernealaRoot)Cerneala.SourceGen\Cerneala.SourceGen.csproj` with `OutputItemType="Analyzer"` and `ReferenceOutputAssembly="false"`;
+  - a `ReproVariant` property (`<ReproVariant Condition="'$(ReproVariant)' == ''">dev</ReproVariant>`) passed to the app as `<AssemblyMetadata Include="ReproVariant" Value="$(ReproVariant)" />`. The app reads it with `Assembly.GetEntryAssembly()` and `AssemblyMetadataAttribute` and puts it in the window title, for example `Issue 268: before the fix` or `Issue 268: after the fix`, so the user can tell the two windows apart;
   - `<AdditionalFiles Include="**\*.crn" Exclude="bin\**;obj\**" />`;
   - a `BackendRegistration.cs` with the `ApplicationBackend` attribute for `SdlGpuApplicationBackend`;
   - a `MainWindow.crn` and a `MainWindow.crn.cs`. The source generator writes `Main`, so do not add a `Program.cs`.
@@ -168,9 +169,12 @@ Check mode, the test in the real app:
 - Servo acts at the center of the target's layout bounds, and that point must hit the target:
   - It ignores `RenderTransform` (a known defect), so in check mode turn the zoom off with `new Transform(Matrix3x2.Identity)`. The zoom changes only drawing, so the verdict reads the same values; say so in the pull request.
   - Aim the wheel at the `ScrollViewer`, not at the scrolled content: a long list's layout center lies outside the visible area.
+- With the extra arguments `--frames <folder>`, check mode also records the frames of the GIF that step 9 makes. It saves a PNG through Servo's `SaveScreenshotAsync` (Cerneala's own screenshot API) once before the first action, once after each action, and once after the verdict, named `frame-000.png`, `frame-001.png`, and so on. Each frame must show what happened:
+  - the window shows the action check mode just did, for example `Check mode, step 3 of 8: drag the thumb to 70 %`, and the verdict lines are up to date, so that the GIF explains itself without a cursor;
+  - the symptom is visible: when check mode turned the zoom off for Servo, turn it back on before each screenshot, wait for idle, save, and turn it off again before the next action. The zoom is render-only, so this changes no checked value.
 - Build the app with `dotnet build <csproj> -c Release` and start the built `.exe` with `Start-Process -PassThru`, then `WaitForExit` with a timeout, for example 120 seconds. Kill it on timeout and report the timeout.
 - Run it now, before the fix, with a report file outside the repository, for example `<scratchpad>/repro-before.txt`. It must exit with 1 and report a failure like the one in the issue. Exit 0 means the app or its actions do not trigger the bug, 2 means the actions never reached the condition, and 3 means the check broke: in every case fix the app, never the verdict.
-- Step 8 runs it again after the fix and expects exit 0, and step 9 runs the published `.exe` once more. Keep every verdict line for the pull request.
+- Step 8 runs it again after the fix and expects exit 0, and step 9 publishes it twice, before and after, and runs each published `.exe` once more. Keep every verdict line for the pull request.
 - Look at the window once yourself before publishing: save a screenshot with `Window.SaveScreenshot` from temporary code, read the image, and remove that code. Check that the steps, the verdict, and the enlarged area are readable and do not overlap.
 
 When the app does not behave as expected:
@@ -206,7 +210,7 @@ Run verification in this order:
 
 When a permanent Detective diagnostic was added, also run its focused tests, documentation/manifest checks, API compatibility gate, and any measured overhead gate required by its collection model.
 
-Do not perform or claim manual validation of the real application scenario. That gate belongs to the user. After automated verification, provide concise reproduction steps, the expected corrected result, and any diagnostics the user should inspect. The user validation happens in the reproduction app from step 5: download `Issue<N>.zip` from the link in the pull request's `How to check` section, unzip it, run `Issue<N>.exe`, and do the actions written in its window; the expected result is the green verdict plus what the user should see, for example "the blue and orange rows always touch". Write the steps as literal actions with literal expected results. For example: "click X, then Y; the button should turn red and stay red". Record the manual result only when the user explicitly reports it.
+Do not perform or claim manual validation of the real application scenario. That gate belongs to the user. After automated verification, provide concise reproduction steps, the expected corrected result, and any diagnostics the user should inspect. The user validation happens in the two reproduction apps from step 5: download `Issue<N>-before.zip` and `Issue<N>-after.zip` from the links in the pull request's `How to check` section, unzip them, and do the actions written in the window of each `Issue<N>.exe`. The expected result is the red verdict in the before app, which shows that the steps trigger the bug, and the green verdict in the after app plus what the user should see, for example "the blue and orange rows always touch". Write the steps as literal actions with literal expected results. For example: "click X, then Y; the button should turn red and stay red". Record the manual result only when the user explicitly reports it.
 
 Do not declare success because the code compiles or one assertion passes. The automated reproduction must be green and the repository must remain healthy. Until the user confirms the real scenario, report its status as awaiting user validation.
 
@@ -222,34 +226,58 @@ After step 8 is green and the temporary harnesses and probes are cleaned up, inv
 
 If a required gate in step 8 failed or could not run, do not invoke it. Report the blocker and ask the user with `AskUserQuestion` whether to commit anyway.
 
-Then publish the reproduction app for the pull request `<PR>` that the skill created or updated:
+Then publish the two reproduction apps for the pull request `<PR>` that the skill created or updated. The apps and the GIFs live in two different releases, because they live for different times (user decision, 2026-10-15):
 
-1. Publish it self-contained, so that it runs without .NET installed, and zip it:
+- The release `repro-pr-<PR>` holds exactly two files, `Issue<N>-before.zip` and `Issue<N>-after.zip`. `cerneala-pr-review-merge` deletes it after the merge.
+- The release `repro-gifs` is permanent and holds the GIFs of every pull request, named `Issue<N>-pr<PR>-before.gif` and `Issue<N>-pr<PR>-after.gif`, for example `Issue268-pr277-before.gif`. Nothing ever deletes it or its files, so the GIFs in a merged pull request keep showing. GitHub has no API to attach a file to a pull request, so the pull-request body shows the GIFs from this release.
 
-   ```text
-   dotnet publish <scratchpad>/repro-<N>/Issue<N>/Issue<N>.csproj -c Release -r win-x64 --self-contained true -o <scratchpad>/repro-<N>/publish/Issue<N>
-   ```
-
-   Zip the contents of that folder as `<scratchpad>/repro-<N>/Issue<N>.zip` with `Compress-Archive -Force`.
-2. Run the published `Issue<N>.exe` in check mode. It must exit with 0 and report OK. Otherwise do not publish it, and report the verdict.
-3. Create a GitHub pre-release that holds only the zip, on the pull request's head commit:
+1. Publish the after app from the fixed worktree, self-contained so that it runs without .NET installed:
 
    ```text
-   gh release create repro-pr-<PR> <scratchpad>/repro-<N>/Issue<N>.zip --target <head SHA> --prerelease --title "Reproduction app: PR #<PR> (bug #<N>)" --notes-file <notes file>
+   dotnet publish <scratchpad>/repro-<N>/Issue<N>/Issue<N>.csproj -c Release -r win-x64 --self-contained true -p:ReproVariant=after -o <scratchpad>/repro-<N>/publish/after
    ```
 
-   The notes say which commit the app was built from, how to run it, the actions the user does, what OK and BUG look like, and the check-mode exit codes. Uploading 80 MB can take minutes, so run it in the background. When the release already exists because the pull request got new commits, upload the new zip with `gh release upload repro-pr-<PR> <zip> --clobber` instead, and update the commit in its notes and in the pull request.
-4. Add a `How to check` section to the pull-request body before its user-validation section, with `gh pr view <PR> --json body` and `gh pr edit <PR> --body-file <file>`. It contains:
-   - the download link `https://github.com/<owner>/<repo>/releases/download/repro-pr-<PR>/Issue<N>.zip`, the release link, the head commit, and a note that the app is self-contained for Windows x64;
-   - the literal steps: download, unzip, run `Issue<N>.exe`, then the actions written in its window;
-   - what the window shows when the fix works and when the bug is present, with example values and the display scale they were measured at;
-   - which actions check mode performs, and a table with its exit code and verdict line before the fix, with the fix, and from the published `.exe`;
-   - every difference between check mode and the user's run, with the reason, for example the zoom that check mode turns off.
+2. Publish the before app from the same source against the base commit, the commit the pull request's branch started from, without the fix:
+   - Create a detached worktree of it outside the repository, in a short folder such as `$env:TEMP\cb<N>`: `git worktree add --detach $env:TEMP\cb<N> $(git merge-base origin/master HEAD)`. The scratchpad path is too long: Windows path limits break the checkout there (`fatal: Could not reset index file`).
+   - Copy the app folder to `<scratchpad>/repro-<N>/before/Issue<N>/` without its `bin` and `obj` folders, so the two builds never share build outputs. Change nothing else in the copy.
+   - Publish the copy with `-p:CernealaRoot=$env:TEMP\cb<N>\ -p:ReproVariant=before -o <scratchpad>/repro-<N>/publish/before`, with the other arguments of the after app.
+   - Remove the base worktree with `git worktree remove $env:TEMP\cb<N>` once the before app is published and checked.
+3. Run each published `Issue<N>.exe` in check mode with `--frames`, for example `--check <scratchpad>/repro-<N>/after.txt --frames <scratchpad>/repro-<N>/frames-after`. The before app must exit with 1 and report the bug; the after app must exit with 0 and report OK. Otherwise publish neither, and report both verdicts.
+4. Zip the contents of each publish folder with `Compress-Archive -Force` as `<scratchpad>/repro-<N>/Issue<N>-before.zip` and `Issue<N>-after.zip`. Make a GIF of each frames folder:
 
-   The pull request's user-validation section then says: run `Issue<N>.exe` from the zip, do the actions in its window, and expect the green verdict. When it stays green, post a comment on the pull request whose whole text is `Validated.`; `cerneala-pr-review-merge` then reviews, merges, and deletes the release.
+   ```text
+   pwsh -NoProfile -File Tools/scripts/New-ReproGif.ps1 -FramesDirectory <scratchpad>/repro-<N>/frames-before -OutputPath <scratchpad>/repro-<N>/Issue<N>-pr<PR>-before.gif
+   ```
+
+   Open both GIFs with `Read` and check that each frame shows the step text, the verdict, and the symptom (before) or its absence (after).
+5. Create a GitHub pre-release that holds only the two zips, on the pull request's head commit:
+
+   ```text
+   gh release create repro-pr-<PR> <before zip> <after zip> --target <head SHA> --prerelease --title "Reproduction apps: PR #<PR> (bug #<N>)" --notes-file <notes file>
+   ```
+
+   The notes say which commits the two apps were built from (the base commit and the head commit), how to run them, the actions the user does, what OK and BUG look like, and the check-mode exit codes. Uploading 160 MB can take minutes, so run it in the background. When the release already exists, for example because the pull request got new commits or it still holds an older single `Issue<N>.zip`, upload the two new zips with `gh release upload repro-pr-<PR> <files> --clobber`, delete every other asset with `gh release delete-asset repro-pr-<PR> <name> --yes`, and update the commits in its notes and in the pull request. Check with `gh release view repro-pr-<PR> --json assets` that exactly the two zips are there.
+6. Upload the two GIFs to the permanent release with `gh release upload repro-gifs <before gif> <after gif> --clobber`. When `gh release view repro-gifs` says it does not exist, create it once first: `gh release create repro-gifs --target master --prerelease --title "Reproduction GIFs" --notes "GIFs of the reproduction apps' check mode, shown in pull requests. Never delete this release."`. Never delete `repro-gifs` or a file in it.
+7. Add a `How to check` section to the pull-request body before its user-validation section, with `gh pr view <PR> --json body` and `gh pr edit <PR> --body-file <file>`. It contains:
+   - the two GIFs side by side, each with its link, so the reviewer sees the bug and the fix without running anything:
+
+     ```text
+     | Before the fix (base `<base SHA>`) | After the fix (head `<head SHA>`) |
+     | --- | --- |
+     | ![Issue <N> before the fix](https://github.com/<owner>/<repo>/releases/download/repro-gifs/Issue<N>-pr<PR>-before.gif) | ![Issue <N> after the fix](https://github.com/<owner>/<repo>/releases/download/repro-gifs/Issue<N>-pr<PR>-after.gif) |
+     ```
+
+     After the edit, open the pull request page and check that both GIFs show. When they do not, link them instead and say so in the report;
+   - the download links `https://github.com/<owner>/<repo>/releases/download/repro-pr-<PR>/Issue<N>-before.zip` and `.../Issue<N>-after.zip`, the release link, the two commits, and a note that the apps are self-contained for Windows x64;
+   - the literal steps: download both zips, unzip them, run `Issue<N>.exe` from each folder, then the actions written in its window;
+   - what the window shows in the before app (red, with example values) and in the after app (green), and the display scale the values were measured at;
+   - which actions check mode performs, and a table with its exit code and verdict line before the fix, with the fix, and from both published `.exe` files;
+   - every difference between check mode and the user's run, with the reason, for example the zoom that check mode turns off for Servo's actions.
+
+   The pull request's user-validation section then says: run both apps, do the same actions in each window, and expect the red verdict in `Issue<N>-before` and the green verdict in `Issue<N>-after`. When that holds, post a comment on the pull request whose whole text is `Validated.`; `cerneala-pr-review-merge` then reviews, merges, and deletes the release `repro-pr-<PR>` with both zips. The GIFs stay in `repro-gifs`.
 
    After `How to check`, the body has an `Other bugs found` section with one bullet per bug from step 4, for example `- #279 Servo: target actions aim at the untransformed layout center ... Found when Servo could not drag the zoomed scrollbar thumb in the reproduction app.` Add each suspected defect that was not raised, with the reason. When there are none, the section says `None.` When a later commit finds another bug, add it to this section with `gh pr edit`.
-5. Delete the reproduction app's temporary folder, `<scratchpad>/repro-<N>/`, only after the release and the pull-request body are in place.
+8. Delete the reproduction app's temporary folder, `<scratchpad>/repro-<N>/`, only after the release and the pull-request body are in place, and after the base worktree is removed.
 
 ## 10. Report Evidence
 
@@ -259,7 +287,7 @@ Summarize, in the user's language and following "The user" in `CLAUDE.md`:
 - the focused regression test and its RED-to-GREEN result;
 - the production fix;
 - CSI or equivalent reproduction results before and after;
-- the user reproduction app: its release and download links, and its check-mode verdicts before the fix, with the fix, and from the published `.exe`;
+- the user reproduction apps: the release, the download links of both zips, the links of both GIFs in `repro-gifs`, whether the GIFs show in the pull request, and the check-mode verdicts before the fix, with the fix, and from both published `.exe` files;
 - every other Cerneala defect found (step 4): its issue link, or the reason it was not raised, and confirmation that the pull request's `Other bugs found` section lists it;
 - the focused test filters you ran with their pass/fail counts, and a note that the complete suite was not run, by the user's choice;
 - the exact user-validation steps and whether the user has confirmed them;
