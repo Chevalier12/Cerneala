@@ -395,6 +395,42 @@ public sealed class ItemContainerGeneratorTests
     }
 
     [Fact]
+    public void ListBoxSelectedReplacedListBoxItemInsertedBackAtItsIndexIsNotSelected()
+    {
+        ListBoxItem a = new() { Content = "A" };
+        ClearRecordingListBox listBox = new();
+        listBox.SetItems(new object[] { a, "str" });
+        listBox.ItemContainerGenerator.Realize();
+        listBox.SelectedIndex = 0;
+        Assert.True(a.IsSelected);
+
+        listBox.Items[0] = "x";
+        listBox.Items.Insert(0, a);
+        listBox.ItemContainerGenerator.Realize();
+
+        Assert.Equal(-1, listBox.SelectedIndex);
+        AssertReplacedListBoxItemInsertedBackAtIndexZero(listBox, a);
+    }
+
+    [Fact]
+    public void ItemsSourceSelectedReplacedListBoxItemInsertedBackAtItsIndexIsNotSelected()
+    {
+        ListBoxItem a = new() { Content = "A" };
+        ObservableCollection<object> source = [a, "str"];
+        ClearRecordingListBox listBox = new() { ItemsSource = source };
+        listBox.ItemContainerGenerator.Realize();
+        listBox.SelectedIndex = 0;
+        Assert.True(a.IsSelected);
+
+        source[0] = "x";
+        source.Insert(0, a);
+        listBox.ItemContainerGenerator.Realize();
+
+        Assert.Equal(-1, listBox.SelectedIndex);
+        AssertReplacedListBoxItemInsertedBackAtIndexZero(listBox, a);
+    }
+
+    [Fact]
     public void ComboBoxRemoveAtKeepsPresenterContentOfComboBoxItemThatIsItsOwnContainer()
     {
         ComboBoxItem first = new() { Content = "First" };

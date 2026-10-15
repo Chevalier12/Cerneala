@@ -213,7 +213,8 @@ public sealed class ItemContainerGenerator
     // A container that is its own item belongs to that item, not to an index. When the item moves to
     // another desired index, the container moves with it instead of being recycled from its old index.
     // The container is found by its realized key, because item changes re-key it without changing its
-    // recorded index.
+    // recorded index. It is prepared at its new index here, because that recorded index can already equal the
+    // new index while its other prepared state, such as its selection, is stale.
     private void MoveShiftedItemContainers(HashSet<int> desired)
     {
         List<(int Index, int CurrentIndex, UIElement Container)>? moves = null;
@@ -251,6 +252,7 @@ public sealed class ItemContainerGenerator
         {
             Recycle(index);
             realized.Add(index, container);
+            owner.PrepareItemContainer(container, index, container);
         }
     }
 
