@@ -1061,6 +1061,109 @@ public sealed class GridTests
         Assert.Equal(200, columns ? desired.Width : desired.Height);
     }
 
+    // Two 33.6 px pixel rows are rounded to 34 and 33 px, with or without a third, empty Auto row (0 px). The Auto-column
+    // child in the second row asks for 70 px at 33.5 px or more and for 50 px below that, so it is arranged in a 50 px
+    // column at its 33 px height in both grids. Without the Auto row, the rows are rounded before they are resolved and
+    // the child is measured at 33 px only. With it, the child is first measured at the unrounded 33.6 px, which it
+    // receives as 34 px. A measure at 34 px must not leave 70 px as a minimum.
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, false)]
+    [InlineData(true, true)]
+    [InlineData(false, true)]
+    public void LayoutRoundingKeepsNoAutoSizeFromAPixelSpanMeasuredAboveItsArrangedSize(
+        bool columns,
+        bool emptyAutoCrossDefinition)
+    {
+        Grid grid = new();
+        AddDefinition(grid, columns, GridLength.Auto);
+        AddDefinition(grid, columns, GridLength.Stars(1));
+        AddDefinition(grid, !columns, GridLength.Pixels(33.6f));
+        AddDefinition(grid, !columns, GridLength.Pixels(33.6f));
+        if (emptyAutoCrossDefinition)
+        {
+            AddDefinition(grid, !columns, GridLength.Auto);
+        }
+
+        CrossThresholdElement autoChild = new(columns, threshold: 33.5f, atThreshold: 70, belowThreshold: 50);
+        SetCell(autoChild, columns, index: 0, crossIndex: 1);
+        MeasureRecordingElement starChild = new();
+        SetCell(starChild, columns, index: 1, crossIndex: 1);
+        grid.VisualChildren.Add(autoChild);
+        grid.VisualChildren.Add(starChild);
+
+        LayoutRounding rounding = LayoutRounding.ForScale(1);
+        LayoutSize size = columns ? new LayoutSize(200, 100) : new LayoutSize(100, 200);
+        LayoutSize desired = grid.Measure(new MeasureContext(size, rounding));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, size.Width, size.Height), rounding));
+
+        Assert.Equal(33, columns ? autoChild.ArrangedBounds.Height : autoChild.ArrangedBounds.Width);
+        Assert.Equal(50, columns ? autoChild.ArrangedBounds.Width : autoChild.ArrangedBounds.Height);
+        Assert.Equal(150, columns ? starChild.ArrangeSize.Width : starChild.ArrangeSize.Height);
+        Assert.Equal(starChild.ArrangeSize, starChild.MeasureSizes[^1]);
+        Assert.Equal(200, columns ? desired.Width : desired.Height);
+    }
+
+    // Rows 33.6, 33.6 and * in a 100 px high grid are rounded to 34, 33 and 33 px. The Auto-column child in the second
+    // row is twice as wide as its available height, so at its 33 px height it asks for 66 px: the Auto column is 66 px
+    // and the * column 134 px, not 68 and 132 px from the first measure at 34 px.
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void LayoutRoundingSizesAnAutoDefinitionFromAPixelSpanChildAtItsArrangedSize(bool columns)
+    {
+        Grid grid = new();
+        AddDefinition(grid, columns, GridLength.Auto);
+        AddDefinition(grid, columns, GridLength.Stars(1));
+        AddDefinition(grid, !columns, GridLength.Pixels(33.6f));
+        AddDefinition(grid, !columns, GridLength.Pixels(33.6f));
+        AddDefinition(grid, !columns, GridLength.Stars(1));
+        CrossRatioElement autoChild = new(columns);
+        SetCell(autoChild, columns, index: 0, crossIndex: 1);
+        MeasureRecordingElement starChild = new();
+        SetCell(starChild, columns, index: 1, crossIndex: 1);
+        grid.VisualChildren.Add(autoChild);
+        grid.VisualChildren.Add(starChild);
+
+        LayoutRounding rounding = LayoutRounding.ForScale(1);
+        LayoutSize size = columns ? new LayoutSize(200, 100) : new LayoutSize(100, 200);
+        grid.Measure(new MeasureContext(size, rounding));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, size.Width, size.Height), rounding));
+
+        Assert.Equal(
+            (33f, 66f, 66f, 134f),
+            columns
+                ? (autoChild.ArrangedBounds.Height, autoChild.ArrangedBounds.Width, autoChild.DesiredSize.Width, starChild.ArrangeSize.Width)
+                : (autoChild.ArrangedBounds.Width, autoChild.ArrangedBounds.Height, autoChild.DesiredSize.Height, starChild.ArrangeSize.Height));
+    }
+
+    // Columns 33.6, 33.6 and Auto are rounded to 34, 33 and 0 px. The 0 x 1 child of the Auto column in the * row makes
+    // the grid content-size its rows first, before its columns are resolved. The Auto-row child in the second column
+    // asks for 70 px at a width of 33.5 px or more and for 50 px below that, so at its 33 px width the row is 50 px high.
+    [Fact]
+    public void LayoutRoundingKeepsNoAutoRowSizeFromAPixelSpanMeasuredAboveItsArrangedWidthWhenRowsAreSizedFirst()
+    {
+        Grid grid = new();
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Pixels(33.6f)));
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Pixels(33.6f)));
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Stars(1)));
+        CrossThresholdElement autoChild = new(columns: false, threshold: 33.5f, atThreshold: 70, belowThreshold: 50);
+        Grid.SetColumn(autoChild, 1);
+        FixedElement marker = new(new LayoutSize(0, 1));
+        Grid.SetColumn(marker, 2);
+        Grid.SetRow(marker, 1);
+        grid.VisualChildren.Add(autoChild);
+        grid.VisualChildren.Add(marker);
+
+        LayoutRounding rounding = LayoutRounding.ForScale(1);
+        grid.Measure(new MeasureContext(new LayoutSize(200, 100), rounding));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 200, 100), rounding));
+
+        Assert.Equal(new LayoutRect(34, 0, 33, 50), autoChild.ArrangedBounds);
+    }
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
@@ -1185,14 +1288,30 @@ public sealed class GridTests
         }
     }
 
-    // 50 px along the axis when the cross size is at least the threshold (34 px by default), 70 px below that;
-    // 10 px across.
-    private sealed class CrossThresholdElement(bool columns, float threshold = 34) : UIElement
+    // Along the axis, atThreshold (50 px by default) when the cross size is at least the threshold (34 px by default),
+    // belowThreshold (70 px by default) below that; 10 px across.
+    private sealed class CrossThresholdElement(
+        bool columns,
+        float threshold = 34,
+        float atThreshold = 50,
+        float belowThreshold = 70) : UIElement
     {
         protected override LayoutSize MeasureCore(MeasureContext context)
         {
-            float size = (columns ? context.AvailableSize.Height : context.AvailableSize.Width) >= threshold ? 50 : 70;
+            float size = (columns ? context.AvailableSize.Height : context.AvailableSize.Width) >= threshold
+                ? atThreshold
+                : belowThreshold;
             return columns ? new LayoutSize(size, 10) : new LayoutSize(10, size);
+        }
+    }
+
+    // Along the axis twice the available cross size; across, the available cross size.
+    private sealed class CrossRatioElement(bool columns) : UIElement
+    {
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            float cross = columns ? context.AvailableSize.Height : context.AvailableSize.Width;
+            return columns ? new LayoutSize(cross * 2, cross) : new LayoutSize(cross, cross * 2);
         }
     }
 
