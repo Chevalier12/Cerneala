@@ -441,19 +441,22 @@ public class ItemsControl : Control
             return;
         }
 
-        if (Items.IsResetNotification)
+        try
         {
-            ItemContainerGenerator.Clear();
-            NotifyItemsReset();
+            if (Items.IsResetNotification)
+            {
+                ItemContainerGenerator.Clear();
+                NotifyItemsReset();
+            }
+            else
+            {
+                NotifyItemsReplaced(Items.ChangeIndex, Items.ChangeRemovedCount, Items.ChangeAddedCount);
+            }
         }
-        else
+        finally
         {
-            NotifyItemsReplaced(Items.ChangeIndex, Items.ChangeRemovedCount, Items.ChangeAddedCount);
+            CompleteItemsChange("Items changed");
         }
-
-        OnItemsViewSourceChanged();
-        itemsPresenter.MarkItemsDirty();
-        InvalidateItems("Items changed");
     }
 
     private void SubscribeItemsSource(IEnumerable? oldSource, IEnumerable? newSource)
@@ -526,28 +529,31 @@ public class ItemsControl : Control
             ItemContainerGenerator.Clear();
         }
 
-        switch (args.Kind)
+        try
         {
-            case ObservableListChangeKind.Add:
-                NotifyItemsReplaced(args.Index, 0, args.Items.Count);
-                break;
-            case ObservableListChangeKind.Remove:
-                NotifyItemsReplaced(args.Index, args.OldItems.Count, 0);
-                break;
-            case ObservableListChangeKind.Replace:
-                NotifyItemsReplaced(args.Index, args.OldItems.Count, args.Items.Count);
-                break;
-            case ObservableListChangeKind.Move:
-                NotifyItemsMoved(args.OldIndex, args.Index, args.Items.Count);
-                break;
-            default:
-                NotifyItemsReset();
-                break;
+            switch (args.Kind)
+            {
+                case ObservableListChangeKind.Add:
+                    NotifyItemsReplaced(args.Index, 0, args.Items.Count);
+                    break;
+                case ObservableListChangeKind.Remove:
+                    NotifyItemsReplaced(args.Index, args.OldItems.Count, 0);
+                    break;
+                case ObservableListChangeKind.Replace:
+                    NotifyItemsReplaced(args.Index, args.OldItems.Count, args.Items.Count);
+                    break;
+                case ObservableListChangeKind.Move:
+                    NotifyItemsMoved(args.OldIndex, args.Index, args.Items.Count);
+                    break;
+                default:
+                    NotifyItemsReset();
+                    break;
+            }
         }
-
-        OnItemsViewSourceChanged();
-        itemsPresenter.MarkItemsDirty();
-        InvalidateItems("Observable items source changed");
+        finally
+        {
+            CompleteItemsChange("Observable items source changed");
+        }
     }
 
     private void OnNotifyingItemsSourceChanged(object? sender, NotifyCollectionChangedEventArgs args)
@@ -560,28 +566,41 @@ public class ItemsControl : Control
             ItemContainerGenerator.Clear();
         }
 
-        switch (args.Action)
+        try
         {
-            case NotifyCollectionChangedAction.Add:
-                NotifyItemsReplaced(args.NewStartingIndex, 0, args.NewItems?.Count ?? -1);
-                break;
-            case NotifyCollectionChangedAction.Remove:
-                NotifyItemsReplaced(args.OldStartingIndex, args.OldItems?.Count ?? -1, 0);
-                break;
-            case NotifyCollectionChangedAction.Replace:
-                NotifyItemsReplaced(args.NewStartingIndex, args.OldItems?.Count ?? -1, args.NewItems?.Count ?? -1);
-                break;
-            case NotifyCollectionChangedAction.Move:
-                NotifyItemsMoved(args.OldStartingIndex, args.NewStartingIndex, args.OldItems?.Count ?? -1);
-                break;
-            default:
-                NotifyItemsReset();
-                break;
+            switch (args.Action)
+            {
+                case NotifyCollectionChangedAction.Add:
+                    NotifyItemsReplaced(args.NewStartingIndex, 0, args.NewItems?.Count ?? -1);
+                    break;
+                case NotifyCollectionChangedAction.Remove:
+                    NotifyItemsReplaced(args.OldStartingIndex, args.OldItems?.Count ?? -1, 0);
+                    break;
+                case NotifyCollectionChangedAction.Replace:
+                    NotifyItemsReplaced(args.NewStartingIndex, args.OldItems?.Count ?? -1, args.NewItems?.Count ?? -1);
+                    break;
+                case NotifyCollectionChangedAction.Move:
+                    NotifyItemsMoved(args.OldStartingIndex, args.NewStartingIndex, args.OldItems?.Count ?? -1);
+                    break;
+                default:
+                    NotifyItemsReset();
+                    break;
+            }
         }
+        finally
+        {
+            CompleteItemsChange("Observable items source changed");
+        }
+    }
 
+    // A notification above can throw, for example while a selection that follows its item prepares its
+    // container. The item view, the presenter and the layout still follow the change, so the exception reaches
+    // the caller and the next layout pass realizes the current items.
+    private void CompleteItemsChange(string reason)
+    {
         OnItemsViewSourceChanged();
         itemsPresenter.MarkItemsDirty();
-        InvalidateItems("Observable items source changed");
+        InvalidateItems(reason);
     }
 
     // The realized containers, the panel and the selection keep state by item index; a change whose position

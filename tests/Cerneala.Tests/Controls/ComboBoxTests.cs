@@ -5,6 +5,7 @@ using Cerneala.UI.Controls.Items;
 using Cerneala.UI.Controls.Templates;
 using Cerneala.Drawing;
 using Cerneala.UI.Core;
+using Cerneala.UI.Data;
 using Cerneala.UI.Media;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
@@ -874,6 +875,62 @@ public sealed class ComboBoxTests
         Assert.Equal([1], RealizedSourceIndices(comboBox));
         Assert.Equal(-1, comboBox.SelectedIndex);
         Assert.Equal(string.Empty, comboBox.Text);
+    }
+
+    // The selection follows its item from "b2" at 3 to 2 and re-prepares the container of "b2", which throws.
+    [Theory]
+    [InlineData("Items.RemoveAt")]
+    [InlineData("ObservableCollection.RemoveAt")]
+    [InlineData("ObservableCollection.Move")]
+    [InlineData("ObservableList.RemoveAt")]
+    [InlineData("ObservableList.Move")]
+    public void ActiveFilterFollowsItemChangeWhoseSelectionPreparationThrows(string change)
+    {
+        UIRoot root = new(300, 200);
+        FailingContentComboBox comboBox = new() { IsEditable = true, IsTextFilterEnabled = true, Width = 180 };
+        string[] initialItems = ["x", "b1", "c", "b2"];
+        ObservableCollection<string> collection = [.. initialItems];
+        ObservableList<string> list = new(initialItems);
+        if (change.StartsWith("Items.", StringComparison.Ordinal))
+        {
+            comboBox.SetItems(initialItems);
+        }
+        else
+        {
+            comboBox.ItemsSource = change.StartsWith("ObservableList.", StringComparison.Ordinal) ? list : collection;
+        }
+
+        root.VisualChildren.Add(comboBox);
+        root.ProcessFrame();
+        TextBox editor = Assert.IsType<TextBox>(comboBox.ComponentTemplateInstance!.Parts["PART_EditableTextBox"]);
+        editor.ReceiveTextInput("b");
+        root.ProcessFrame();
+        comboBox.SelectedIndex = 3;
+        root.ProcessFrame();
+        Assert.Equal([1, 3], RealizedSourceIndices(comboBox));
+
+        comboBox.FailFor = "b2";
+        Action applyChange = change switch
+        {
+            "Items.RemoveAt" => () => comboBox.Items.RemoveAt(0),
+            "ObservableCollection.RemoveAt" => () => collection.RemoveAt(0),
+            "ObservableCollection.Move" => () => collection.Move(0, 3),
+            "ObservableList.RemoveAt" => () => list.RemoveAt(0),
+            _ => () => list.Move(0, 3)
+        };
+        InvalidOperationException failure = Assert.Throws<InvalidOperationException>(applyChange);
+        comboBox.FailFor = null;
+        int[] viewSourceIndices = [.. Enumerable.Range(0, comboBox.ViewItemCount).Select(comboBox.GetSourceIndexForViewIndex)];
+        Exception? frame = Record.Exception(() => root.ProcessFrame());
+
+        Assert.Equal("content preparation failed", failure.Message);
+        Assert.Equal(2, comboBox.SelectedIndex);
+        Assert.Equal([0, 2], viewSourceIndices);
+        Assert.Null(frame);
+        Assert.Equal([0, 2], RealizedSourceIndices(comboBox));
+        Assert.Equal(
+            ["b1", "b2"],
+            RealizedSourceIndices(comboBox).Select(index => comboBox.GetItemAt(index)));
     }
 
     [Fact]
