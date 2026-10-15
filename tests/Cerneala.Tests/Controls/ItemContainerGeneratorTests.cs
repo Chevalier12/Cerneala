@@ -896,6 +896,76 @@ public sealed class ItemContainerGeneratorTests
     }
 
     [Fact]
+    public void RealizedContainerWhoseContentPreparationThrowsIsPreparedAgainOnRetry()
+    {
+        FailingContentItemsControl control = new();
+        control.SetItems(new[] { "a" });
+        control.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        ContentPresenter container = Assert.IsType<ContentPresenter>(control.ItemContainerGenerator.RealizedContainers[0]);
+
+        control.Items[0] = "b";
+        control.FailFor = "b";
+        for (int attempt = 1; attempt <= 2; attempt++)
+        {
+            Assert.Throws<InvalidOperationException>(() => control.Measure(new MeasureContext(new LayoutSize(100, 100 + attempt))));
+            Assert.Same(container, control.ItemContainerGenerator.RealizedContainers[0]);
+            Assert.Equal(-1, ItemContainerGenerator.GetItemIndex(container));
+            Assert.Same("b", ItemContainerGenerator.GetItem(container));
+        }
+
+        control.FailFor = null;
+        control.Measure(new MeasureContext(new LayoutSize(100, 110)));
+
+        Assert.Same(container, control.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Equal("b", container.Content);
+        Assert.Equal(new object?[] { "a", "b" }, control.PreparedContent);
+        Assert.Equal(0, ItemContainerGenerator.GetItemIndex(container));
+        Assert.Same("b", ItemContainerGenerator.GetItem(container));
+    }
+
+    [Fact]
+    public void RealizedContainerWhosePreparationThrowsAfterBaseIsPreparedAgainOnRetry()
+    {
+        FailAfterPrepareItemsControl control = new();
+        control.SetItems(new[] { "a" });
+        control.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        UIElement container = control.ItemContainerGenerator.RealizedContainers[0];
+
+        control.Items[0] = "b";
+        control.Fail = true;
+        Assert.Throws<InvalidOperationException>(() => control.Measure(new MeasureContext(new LayoutSize(100, 101))));
+
+        control.Fail = false;
+        control.Measure(new MeasureContext(new LayoutSize(100, 102)));
+
+        Assert.Same(container, control.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Equal(new object?[] { "a", "b" }, control.PreparedItems);
+    }
+
+    [Fact]
+    public void MovedOwnContainerWhosePreparationThrowsIsPreparedAgainOnRetry()
+    {
+        FailAfterPrepareListBox listBox = new();
+        ListBoxItem a = new() { Content = "A" };
+        ListBoxItem b = new() { Content = "B" };
+        listBox.SetItems(new[] { a, b });
+        ItemContainerGenerator generator = new(listBox);
+        generator.Realize();
+        listBox.PreparedItems.Clear();
+
+        listBox.Items.RemoveAt(0);
+        listBox.Fail = true;
+        Assert.Throws<InvalidOperationException>(() => generator.Realize());
+
+        listBox.Fail = false;
+        generator.Realize();
+
+        Assert.Same(b, generator.RealizedContainers[0]);
+        Assert.Equal(new object?[] { b }, listBox.PreparedItems);
+        AssertItemState(b, 0, isSelected: false);
+    }
+
+    [Fact]
     public void PresenterPreservesUnrelatedRealizedContainersWhenDataOutsideWindowChanges()
     {
         ItemsControl control = new();
@@ -1002,10 +1072,13 @@ public sealed class ItemContainerGeneratorTests
         }
     }
 
-    // Throws from PrepareItemContainer after the base preparation ran, while Fail is set.
+    // Throws from PrepareItemContainer after the base preparation ran, while Fail is set, and records each item
+    // whose preparation finished.
     private sealed class FailAfterPrepareItemsControl : ItemsControl
     {
         public bool Fail { get; set; }
+
+        public List<object?> PreparedItems { get; } = [];
 
         protected internal override void PrepareItemContainer(UIElement container, int index, object? item)
         {
@@ -1014,6 +1087,47 @@ public sealed class ItemContainerGeneratorTests
             {
                 throw new InvalidOperationException("container preparation failed");
             }
+
+            PreparedItems.Add(item);
+        }
+    }
+
+    // Throws from PrepareItemContainer after the base preparation ran, while Fail is set, and records each item
+    // whose preparation finished.
+    private sealed class FailAfterPrepareListBox : ListBox
+    {
+        public bool Fail { get; set; }
+
+        public List<object?> PreparedItems { get; } = [];
+
+        protected internal override void PrepareItemContainer(UIElement container, int index, object? item)
+        {
+            base.PrepareItemContainer(container, index, item);
+            if (Fail)
+            {
+                throw new InvalidOperationException("container preparation failed");
+            }
+
+            PreparedItems.Add(item);
+        }
+    }
+
+    // Throws from PrepareItemContent for the item FailFor, and records each item whose content it prepared.
+    private sealed class FailingContentItemsControl : ItemsControl
+    {
+        public object? FailFor { get; set; }
+
+        public List<object?> PreparedContent { get; } = [];
+
+        protected override void PrepareItemContent(UIElement container, int index, object? item)
+        {
+            if (Equals(item, FailFor))
+            {
+                throw new InvalidOperationException("item content preparation failed");
+            }
+
+            PreparedContent.Add(item);
+            base.PrepareItemContent(container, index, item);
         }
     }
 
