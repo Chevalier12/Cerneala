@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using Cerneala.UI.Core;
 using Cerneala.UI.Controls.Items;
 using Cerneala.UI.Controls.Selection;
@@ -241,19 +242,34 @@ public class Selector : ItemsControl
             IsChangingSelectionForItems = wasChangingSelectionForItems;
         }
 
-        InvalidateContainer(args.Change.OldIndex, "Selection changed");
-        InvalidateContainer(args.Change.NewIndex, "Selection changed");
-        if (relocated)
+        ExceptionDispatchInfo? preparationFailure = null;
+        RefreshSelectionContainer(args.Change.OldIndex, ref preparationFailure);
+        RefreshSelectionContainer(args.Change.NewIndex, ref preparationFailure);
+        if (!relocated)
         {
-            return;
+            RaiseEvent(new SelectionChangedEventArgs(
+                SelectionChangedEvent,
+                this,
+                args.Change,
+                removed is null ? [] : [removed],
+                added is null ? [] : [added]));
         }
 
-        RaiseEvent(new SelectionChangedEventArgs(
-            SelectionChangedEvent,
-            this,
-            args.Change,
-            removed is null ? [] : [removed],
-            added is null ? [] : [added]));
+        preparationFailure?.Throw();
+    }
+
+    // SelectedIndex already holds the new index, so a container whose re-preparation throws does not stop the
+    // other container's refresh or the SelectionChanged event. The first failure propagates after them.
+    private void RefreshSelectionContainer(int index, ref ExceptionDispatchInfo? preparationFailure)
+    {
+        try
+        {
+            InvalidateContainer(index, "Selection changed");
+        }
+        catch (Exception exception)
+        {
+            preparationFailure ??= ExceptionDispatchInfo.Capture(exception);
+        }
     }
 
     // A realized container whose item was replaced keeps its index until the next layout pass prepares it for
