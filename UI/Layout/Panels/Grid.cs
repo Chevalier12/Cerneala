@@ -278,7 +278,13 @@ public class Grid : Panel
         GridLength[] crossLengths = columnAxis ? rows : columns;
         float[] crossSizes = columnAxis ? rowSizes : columnSizes;
         float crossAvailableSize = columnAxis ? context.AvailableSize.Height : context.AvailableSize.Width;
-        float[] crossMeasureSizes = crossAxisResolved ? GetMeasureSizes(crossSizes, context.Rounding) : crossSizes;
+        float[] crossMeasureSizes = GetMeasureSizes(crossSizes, context.Rounding);
+        // Rounding shares the difference between all definitions of an axis, so before the cross axis is resolved,
+        // the rounded sizes of its pixel definitions are final only when it has no other definitions: two 33.6 px
+        // pixel rows are 34 and 33 px, but 34, 34 and 10 px with a third, Auto row that is resolved to 10.4 px.
+        // Until then, a child that spans only pixel definitions is measured at their sizes rounded without the
+        // other definitions, and measured again once the cross axis is resolved.
+        bool crossPixelSizesFinal = crossAxisResolved || !context.Rounding.IsEnabled || crossLengths.All(length => length.IsPixel);
         bool measuredBeforeCrossFinal = false;
 
         foreach (UIElement child in VisualChildren)
@@ -299,13 +305,14 @@ public class Grid : Panel
             int crossIndex = columnAxis ? placement.Row : placement.Column;
             int crossSpan = columnAxis ? placement.RowSpan : placement.ColumnSpan;
             float constraint = GetChildConstraint(lengths, index, span, availableSize);
-            bool crossFinal = crossAxisResolved || IsChildConstraintFinalBeforeResolve(crossLengths, crossIndex, crossSpan);
+            bool crossKnown = crossAxisResolved || IsChildConstraintKnownBeforeResolve(crossLengths, crossIndex, crossSpan);
+            bool crossFinal = crossKnown && (crossPixelSizesFinal || SpansOnlyAuto(crossLengths, crossIndex, crossSpan));
             measuredBeforeCrossFinal |= !crossFinal;
             float crossConstraint = GetChildConstraint(
                 crossLengths,
                 crossIndex,
                 crossSpan,
-                crossFinal ? Sum(crossMeasureSizes, crossIndex, crossSpan) : crossAvailableSize);
+                crossKnown ? Sum(crossMeasureSizes, crossIndex, crossSpan) : crossAvailableSize);
             child.Measure(new MeasureContext(
                 columnAxis ? new LayoutSize(constraint, crossConstraint) : new LayoutSize(crossConstraint, constraint),
                 context.Rounding));
@@ -316,9 +323,9 @@ public class Grid : Panel
         return measuredBeforeCrossFinal;
     }
 
-    // Before an axis is resolved, only its pixel definitions already have their final size. A child that
+    // Before an axis is resolved, only its pixel definitions already have their size. A child that
     // spans only Auto definitions is measured with positive infinity either way.
-    private static bool IsChildConstraintFinalBeforeResolve(GridLength[] lengths, int index, int span)
+    private static bool IsChildConstraintKnownBeforeResolve(GridLength[] lengths, int index, int span)
     {
         if (SpansOnlyAuto(lengths, index, span))
         {
