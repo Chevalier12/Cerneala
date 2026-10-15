@@ -336,6 +336,53 @@ public sealed class ComboBoxTests
         Assert.Null(comboBox.SelectedItem);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ClickingItemWhoseReplacedItemPreparationThrewSelectsNothing(bool keepFailing)
+    {
+        UIRoot root = new(100, 100);
+        FailingContentComboBox comboBox = new()
+        {
+            ItemsPanel = new LayoutStackPanel(),
+            IsDropDownOpen = true
+        };
+        comboBox.SetItems(new[] { "a", "b", "c" });
+        LayoutCanvas canvas = new();
+        canvas.VisualChildren.Add(comboBox);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        // Text rows measure 0 px tall without a font, so each row gets a fixed height.
+        foreach (UIElement container in comboBox.ItemContainerGenerator.RealizedContainers.Values)
+        {
+            container.Height = 10;
+        }
+
+        root.ProcessFrame();
+        UIElement clicked = comboBox.ItemContainerGenerator.RealizedContainers[1];
+        float x = clicked.ArrangedBounds.X + 2;
+        float y = clicked.ArrangedBounds.Y + 2;
+        int selectionChanges = 0;
+        comboBox.SelectionChanged += (_, _) => selectionChanges++;
+
+        comboBox.Items[1] = "x";
+        comboBox.FailFor = "x";
+        Assert.Throws<InvalidOperationException>(() => root.ProcessFrame());
+        if (!keepFailing)
+        {
+            comboBox.FailFor = null;
+        }
+
+        ElementInputBridge bridge = new();
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+
+        Assert.Same(clicked, comboBox.ItemContainerGenerator.RealizedContainers[1]);
+        Assert.Equal(-1, comboBox.SelectedIndex);
+        Assert.Null(comboBox.SelectedItem);
+        Assert.Equal(0, selectionChanges);
+    }
+
     [Fact]
     public void EditableTextThatDiffersFromSelectionClearsSelection()
     {
@@ -2096,6 +2143,22 @@ public sealed class ComboBoxTests
     }
 
     private sealed record Address(string City);
+
+    // Throws while it prepares the content of a container for FailFor.
+    private sealed class FailingContentComboBox : ComboBox
+    {
+        public object? FailFor { get; set; }
+
+        protected override void PrepareItemContent(UIElement container, int index, object? item)
+        {
+            if (FailFor is not null && Equals(item, FailFor))
+            {
+                throw new InvalidOperationException("content preparation failed");
+            }
+
+            base.PrepareItemContent(container, index, item);
+        }
+    }
 
     private sealed class FixedElement : UIElement
     {
