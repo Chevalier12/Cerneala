@@ -130,6 +130,54 @@ public sealed class UIElementMeasureArrangeTests
         Assert.Equal(element.ArrangeSize, element.MeasureSize);
     }
 
+    [Theory]
+    [InlineData(1f, true, true, 99.4f, 0f, 100f, 99f)]
+    [InlineData(1f, true, true, 99.4f, 0f, 200f, 99f)]
+    [InlineData(1f, true, false, 99.4f, 0f, 200f, 99f)]
+    [InlineData(2f, true, true, 49.7f, 0f, 100f, 49.5f)]
+    [InlineData(2f, true, false, 49.7f, 0f, 100f, 49.5f)]
+    [InlineData(1f, true, true, 99.4f, 0.3f, 100f, 99f)]
+    [InlineData(1f, false, true, 99.4f, 0f, 100f, 99f)]
+    [InlineData(1f, false, false, 99.4f, 0f, 200f, 99f)]
+    [InlineData(2f, false, true, 49.7f, 0f, 100f, 49.5f)]
+    [InlineData(2f, false, false, 49.7f, 0.2f, 100f, 49.5f)]
+    public void LayoutRoundingMeasuresAndArrangesAFractionalExplicitDimensionAtItsNearestDevicePixel(
+        float scale,
+        bool vertical,
+        bool stretch,
+        float dimension,
+        float nearMargin,
+        float slotLength,
+        float expectedLength)
+    {
+        // As in WPF, an explicit Height or Width is rounded to the nearest device pixel before it constrains
+        // measure, and arrange gives the element that same rounded size: 99.4 is measured and arranged at 99.
+        SizeRecordingElement element = new()
+        {
+            Margin = vertical ? new Thickness(0, nearMargin, 0, 0) : new Thickness(nearMargin, 0, 0, 0),
+            HorizontalAlignment = !vertical && !stretch ? HorizontalAlignment.Left : HorizontalAlignment.Stretch,
+            VerticalAlignment = vertical && !stretch ? VerticalAlignment.Top : VerticalAlignment.Stretch
+        };
+        if (vertical)
+        {
+            element.Height = dimension;
+        }
+        else
+        {
+            element.Width = dimension;
+        }
+
+        LayoutRounding rounding = LayoutRounding.ForScale(scale);
+        LayoutSize slot = vertical ? new LayoutSize(100, slotLength) : new LayoutSize(slotLength, 100);
+        element.Measure(new MeasureContext(slot, rounding));
+        element.Arrange(new ArrangeContext(new LayoutRect(0, 0, slot.Width, slot.Height), rounding));
+
+        float measured = vertical ? element.MeasureSize!.Value.Height : element.MeasureSize!.Value.Width;
+        float arranged = vertical ? element.ArrangeSize!.Value.Height : element.ArrangeSize!.Value.Width;
+        float bounds = vertical ? element.ArrangedBounds.Height : element.ArrangedBounds.Width;
+        Assert.Equal((expectedLength, expectedLength, expectedLength), (measured, arranged, bounds));
+    }
+
     private static string GetDeviceEdges(UIElement element, float scale, bool vertical)
     {
         LayoutRect bounds = element.ArrangedBounds;

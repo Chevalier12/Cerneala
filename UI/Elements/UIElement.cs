@@ -950,7 +950,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         int invalidationCountBeforeArrange = arrangeCacheInvalidationCount;
         LayoutRect finalRect = !UIElementVisibility.ParticipatesInLayout(this)
             ? context.FinalRect
-            : ApplyMarginAndAlignment(context.FinalRect);
+            : ApplyMarginAndAlignment(context.FinalRect, context.Rounding);
 
         // ArrangeCore receives the element's own rounded bounds, as WPF rounds an element's offset and arrange size
         // and arranges its children inside them. From an unrounded origin such as 0.5, each child would round on its
@@ -1136,11 +1136,16 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     {
         Thickness margin = Margin;
         LayoutSize contentAvailableSize = Deflate(context.AvailableSize, margin);
-        bool hasWidth = !float.IsNaN(Width);
-        bool hasHeight = !float.IsNaN(Height);
+        // An explicit dimension is rounded to the nearest device pixel before it constrains measure and becomes the
+        // desired size, as WPF rounds an explicit Width and Height. ApplyAlignment arranges at the same rounded value,
+        // so 99.4 is measured and arranged at 99 instead of measured at 99 and arranged at the rounded-up 100.
+        float width = context.Rounding.Round(Width);
+        float height = context.Rounding.Round(Height);
+        bool hasWidth = !float.IsNaN(width);
+        bool hasHeight = !float.IsNaN(height);
         LayoutSize constrainedSize = new(
-            hasWidth ? MathF.Min(contentAvailableSize.Width, Width) : contentAvailableSize.Width,
-            hasHeight ? MathF.Min(contentAvailableSize.Height, Height) : contentAvailableSize.Height);
+            hasWidth ? MathF.Min(contentAvailableSize.Width, width) : contentAvailableSize.Width,
+            hasHeight ? MathF.Min(contentAvailableSize.Height, height) : contentAvailableSize.Height);
         // MeasureCore receives the size rounded to the nearest device pixel, as WPF rounds the size it passes to
         // MeasureOverride. Arrange rounds the rectangle ArrangeCore receives the same way, so an element that fills
         // its slot is measured at the size it is then arranged at (99.6 would be measured but 100 arranged).
@@ -1149,8 +1154,8 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
             context.Rounding.Round(constrainedSize.Height));
         LayoutSize measuredSize = MeasureCore(new MeasureContext(roundedSize, context.Rounding)).ClampNonNegative();
         LayoutSize contentDesiredSize = new(
-            hasWidth ? Width : measuredSize.Width,
-            hasHeight ? Height : measuredSize.Height);
+            hasWidth ? width : measuredSize.Width,
+            hasHeight ? height : measuredSize.Height);
         return new LayoutSize(
             contentDesiredSize.Width + margin.Horizontal,
             contentDesiredSize.Height + margin.Vertical).ClampNonNegative();
@@ -1202,7 +1207,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         return true;
     }
 
-    private LayoutRect ApplyMarginAndAlignment(LayoutRect finalRect)
+    private LayoutRect ApplyMarginAndAlignment(LayoutRect finalRect, LayoutRounding rounding)
     {
         Thickness margin = Margin;
         LayoutRect contentRect = new(
@@ -1211,7 +1216,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
             MathF.Max(0, finalRect.Width - margin.Horizontal),
             MathF.Max(0, finalRect.Height - margin.Vertical));
         LayoutSize contentDesiredSize = Deflate(DesiredSize, margin);
-        return ApplyAlignment(contentRect, contentDesiredSize);
+        return ApplyAlignment(contentRect, contentDesiredSize, rounding);
     }
 
     private static LayoutSize Deflate(LayoutSize size, Thickness thickness)
@@ -1221,16 +1226,21 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
             MathF.Max(0, size.Height - thickness.Vertical));
     }
 
-    private LayoutRect ApplyAlignment(LayoutRect finalRect, LayoutSize desiredSize)
+    private LayoutRect ApplyAlignment(LayoutRect finalRect, LayoutSize desiredSize, LayoutRounding rounding)
     {
-        bool hasWidth = !float.IsNaN(Width);
-        bool hasHeight = !float.IsNaN(Height);
-        float width = HorizontalAlignment == HorizontalAlignment.Stretch && !hasWidth
-            ? finalRect.Width
-            : Math.Min(desiredSize.Width, finalRect.Width);
-        float height = VerticalAlignment == VerticalAlignment.Stretch && !hasHeight
-            ? finalRect.Height
-            : Math.Min(desiredSize.Height, finalRect.Height);
+        // DesiredSize is rounded up, so it can exceed the explicit dimension that measure rounded to the nearest
+        // device pixel (99.4 is measured at 99, but a 0.3 margin rounds the desired 99.3 up to 100). The arranged
+        // size is capped at that rounded explicit dimension, as WPF caps the arrange size at the rounded Height.
+        float explicitWidth = rounding.Round(Width);
+        float explicitHeight = rounding.Round(Height);
+        bool hasWidth = !float.IsNaN(explicitWidth);
+        bool hasHeight = !float.IsNaN(explicitHeight);
+        float width = !hasWidth
+            ? HorizontalAlignment == HorizontalAlignment.Stretch ? finalRect.Width : Math.Min(desiredSize.Width, finalRect.Width)
+            : Math.Min(Math.Min(desiredSize.Width, explicitWidth), finalRect.Width);
+        float height = !hasHeight
+            ? VerticalAlignment == VerticalAlignment.Stretch ? finalRect.Height : Math.Min(desiredSize.Height, finalRect.Height)
+            : Math.Min(Math.Min(desiredSize.Height, explicitHeight), finalRect.Height);
 
         float x = HorizontalAlignment switch
         {
