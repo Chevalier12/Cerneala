@@ -57,7 +57,9 @@ When the panel stacks its children at their natural heights (no automatic viewpo
 
 During arrange, automatic mode positions each child using the measured or estimated prefix extent of all preceding items. Fixed mode uses `ItemExtent`. When every item is realized without virtualization, the panel stacks children using their measured heights.
 
-In automatic mode, `TotalExtent` combines measured heights with the current estimate for unknown items. Without either automatic viewport data or a fixed `VirtualizationContext`, it reports the measured desired height.
+In automatic mode, `TotalExtent` combines measured heights with the current estimate for unknown items. The desired height in automatic mode is the same total extent. Without either automatic viewport data or a fixed `VirtualizationContext`, it reports the measured desired height.
+
+With layout rounding enabled, the automatic-mode total extent and the arrange offset of each item also add device pixels (see `LayoutRounding`): a measured height on a device pixel counts as its whole number of device pixels, and any other height, such as the average estimate used for an unknown item, counts as `height * Scale`. The sum is divided by `Scale`. `TotalExtent` uses the rounding of the panel's last measure. For example, at scale 1.75, after `UpdateViewport(new ItemsVirtualizationViewport(2, 200, 0, 0))` with children `Height = 32.5` and `Height = 0.5`, the children are arranged at device pixels 0..57 and 57..58, and both `TotalExtent` and the desired height are `58 / 1.75f` (58 device pixels), the same result as without `UpdateViewport`.
 
 A realized item's measured height of zero replaces any previously recorded positive height. This includes an item measured after `Height` becomes zero or `Visibility` becomes `Collapsed`; the item no longer contributes to `TotalExtent` or subsequent item offsets. Unknown items continue to use a positive estimate learned from positive measured heights. If no positive samples remain, the panel retains its previous estimate (initially 28) rather than treating unmeasured items as zero-height.
 
