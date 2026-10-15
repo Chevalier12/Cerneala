@@ -16,6 +16,7 @@ public class ItemsPresenter : Control
     private Layout.Panels.Panel? panelRoot;
     private bool itemsDirty = true;
     private RealizationWindow? lastRealizationWindow;
+    private RealizationWindow? presentedRealizationWindow;
     private ItemsVirtualizationViewport? automaticViewport;
     private VirtualizationContext? virtualizationContext;
     private VirtualizingStackPanel? contextPanel;
@@ -253,6 +254,7 @@ public class ItemsPresenter : Control
             throw;
         }
 
+        presentedRealizationWindow = nextWindow;
         return true;
     }
 
@@ -323,7 +325,16 @@ public class ItemsPresenter : Control
         bool reusesPanel = ReferenceEquals(oldPanel, nextPanel);
         if (reusesPanel)
         {
-            SynchronizePanelChildren(nextPanel, nextChildren, oldChildren);
+            try
+            {
+                MovePanelChildrenTo(nextPanel, nextChildren);
+            }
+            catch
+            {
+                RestorePresentedOwnerItems(nextPanel, nextChildren);
+                throw;
+            }
+
             panelRoot = nextPanel;
             ApplyVirtualizationContext(nextPanel, VirtualizationContext, nextWindow);
             return;
@@ -370,6 +381,23 @@ public class ItemsPresenter : Control
         }
 
         ApplyVirtualizationContext(nextPanel, VirtualizationContext, nextWindow);
+    }
+
+    // The generator already recycled the containers that left the window and prepared them for other items, so
+    // the previous children cannot be put back as they are. The window the panel presented is realized again
+    // instead, after the containers the panel did not take are given back without detaching them.
+    private void RestorePresentedOwnerItems(Layout.Panels.Panel panel, IReadOnlyList<UIElement> failedChildren)
+    {
+        ItemContainerGenerator generator = ItemsOwner!.ItemContainerGenerator;
+        foreach (UIElement child in failedChildren)
+        {
+            if (!ReferenceEquals(child.VisualParent, panel))
+            {
+                generator.ReleaseUnpresented(child);
+            }
+        }
+
+        MovePanelChildrenTo(panel, [.. CreateItemChildren(presentedRealizationWindow)]);
     }
 
     private static void AddPanelChild(Layout.Panels.Panel panel, UIElement child)
@@ -654,6 +682,7 @@ public class ItemsPresenter : Control
 
         itemsDirty = true;
         lastRealizationWindow = null;
+        presentedRealizationWindow = null;
     }
 
     private static void RemoveMeasureWorkForSubtree(UIElement? element)

@@ -927,6 +927,65 @@ public sealed class ItemsControlTests
     }
 
     [Fact]
+    public void FailedInsertWhileWindowMovesOnRetainedPanelKeepsGeneratedContainersOnPreviousItems()
+    {
+        VirtualizingStackPanel panel = new();
+        FixedElement element5 = new("element5", new LayoutSize(100, 10));
+        object[] items = Enumerable.Range(0, 100)
+            .Select(index => index == 5 ? (object)element5 : index.ToString())
+            .ToArray();
+        ItemsControl control = new()
+        {
+            ItemsPanel = panel
+        };
+        control.SetItems(items);
+        VirtualizationContext supplied = new(100, 10, 30, 0, CacheItems: 1);
+        control.SetVirtualizationContext(supplied);
+        control.Measure(new MeasureContext(new LayoutSize(100, 30)));
+        Cerneala.UI.Layout.Panels.StackPanel otherParent = new();
+        otherParent.VisualChildren.Add(element5);
+        control.SetVirtualizationContext(new VirtualizationContext(100, 10, 30, 20, CacheItems: 1));
+
+        Assert.Throws<InvalidOperationException>(() => control.Measure(new MeasureContext(new LayoutSize(100, 31))));
+
+        AssertPresentsItems(control, panel, ["0", "1", "2", "3"]);
+        Assert.Equal(supplied, panel.VirtualizationContext);
+        Assert.Equal(0, panel.FirstRealizedIndex);
+        Assert.Same(otherParent, element5.VisualParent);
+
+        Assert.Throws<InvalidOperationException>(() => control.Measure(new MeasureContext(new LayoutSize(100, 32))));
+        AssertPresentsItems(control, panel, ["0", "1", "2", "3"]);
+        Assert.Same(otherParent, element5.VisualParent);
+
+        otherParent.VisualChildren.Remove(element5);
+        control.Measure(new MeasureContext(new LayoutSize(100, 33)));
+
+        Assert.Equal(
+            ["1", "2", "3", "4"],
+            panel.VisualChildren.Take(4).Cast<ContentPresenter>().Select(container => container.Content));
+        Assert.Same(element5, panel.VisualChildren[4]);
+        Assert.Equal(1, panel.FirstRealizedIndex);
+
+        static void AssertPresentsItems(ItemsControl control, VirtualizingStackPanel panel, string[] expected)
+        {
+            ContentPresenter[] containers = [.. panel.VisualChildren.Cast<ContentPresenter>()];
+            Assert.Equal(expected, containers.Select(container => container.Content));
+            Assert.Equal(
+                Enumerable.Range(0, expected.Length),
+                containers.Select(Cerneala.UI.Controls.Items.ItemContainerGenerator.GetItemIndex));
+            Assert.Equal(
+                Enumerable.Range(0, expected.Length),
+                control.ItemContainerGenerator.RealizedContainers.Keys.Order());
+            Assert.All(
+                containers,
+                container => Assert.Same(
+                    container,
+                    control.ItemContainerGenerator.RealizedContainers[
+                        Cerneala.UI.Controls.Items.ItemContainerGenerator.GetItemIndex(container)]));
+        }
+    }
+
+    [Fact]
     public void UpdatingVirtualizationFromScrollInfoRefreshesPresenterWhenWindowChanges()
     {
         ItemsControl control = new()
