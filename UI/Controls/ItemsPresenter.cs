@@ -16,6 +16,7 @@ public class ItemsPresenter : Control
     private Layout.Panels.Panel? panelRoot;
     private bool itemsDirty = true;
     private RealizationWindow? lastRealizationWindow;
+    private RealizationWindow? presentedRealizationWindow;
     private ItemsVirtualizationViewport? automaticViewport;
     private VirtualizationContext? virtualizationContext;
     private VirtualizingStackPanel? contextPanel;
@@ -253,6 +254,7 @@ public class ItemsPresenter : Control
             throw;
         }
 
+        presentedRealizationWindow = nextWindow;
         return true;
     }
 
@@ -265,7 +267,7 @@ public class ItemsPresenter : Control
         bool reusesPanel = ReferenceEquals(oldPanel, nextPanel);
         if (reusesPanel)
         {
-            SynchronizePanelChildren(nextPanel, nextChildren);
+            SynchronizePanelChildren(nextPanel, nextChildren, oldChildren);
             panelRoot = nextPanel;
             ApplyVirtualizationContext(nextPanel, VirtualizationContext, nextWindow);
             return;
@@ -323,7 +325,16 @@ public class ItemsPresenter : Control
         bool reusesPanel = ReferenceEquals(oldPanel, nextPanel);
         if (reusesPanel)
         {
-            SynchronizePanelChildren(nextPanel, nextChildren);
+            try
+            {
+                MovePanelChildrenTo(nextPanel, nextChildren);
+            }
+            catch
+            {
+                RestorePresentedOwnerItems(nextPanel, nextChildren);
+                throw;
+            }
+
             panelRoot = nextPanel;
             ApplyVirtualizationContext(nextPanel, VirtualizationContext, nextWindow);
             return;
@@ -372,6 +383,23 @@ public class ItemsPresenter : Control
         ApplyVirtualizationContext(nextPanel, VirtualizationContext, nextWindow);
     }
 
+    // The generator already recycled the containers that left the window and prepared them for other items, so
+    // the previous children cannot be put back as they are. The window the panel presented is realized again
+    // instead, after the containers the panel did not take are given back without detaching them.
+    private void RestorePresentedOwnerItems(Layout.Panels.Panel panel, IReadOnlyList<UIElement> failedChildren)
+    {
+        ItemContainerGenerator generator = ItemsOwner!.ItemContainerGenerator;
+        foreach (UIElement child in failedChildren)
+        {
+            if (!ReferenceEquals(child.VisualParent, panel))
+            {
+                generator.ReleaseUnpresented(child);
+            }
+        }
+
+        MovePanelChildrenTo(panel, [.. CreateItemChildren(presentedRealizationWindow)]);
+    }
+
     private static void AddPanelChild(Layout.Panels.Panel panel, UIElement child)
     {
         panel.LogicalChildren.Add(child);
@@ -386,7 +414,25 @@ public class ItemsPresenter : Control
         }
     }
 
-    private static void SynchronizePanelChildren(Layout.Panels.Panel panel, IReadOnlyList<UIElement> desiredChildren)
+    // A sync that throws puts the previous children back in their previous order, so the retained
+    // panel keeps presenting the previous items like the old panel of a failed panel swap.
+    private static void SynchronizePanelChildren(
+        Layout.Panels.Panel panel,
+        IReadOnlyList<UIElement> desiredChildren,
+        IReadOnlyList<UIElement> previousChildren)
+    {
+        try
+        {
+            MovePanelChildrenTo(panel, desiredChildren);
+        }
+        catch
+        {
+            MovePanelChildrenTo(panel, previousChildren);
+            throw;
+        }
+    }
+
+    private static void MovePanelChildrenTo(Layout.Panels.Panel panel, IReadOnlyList<UIElement> desiredChildren)
     {
         HashSet<UIElement> desired = new(desiredChildren, ReferenceEqualityComparer.Instance);
         for (int index = panel.VisualChildren.Count - 1; index >= 0; index--)
@@ -636,6 +682,7 @@ public class ItemsPresenter : Control
 
         itemsDirty = true;
         lastRealizationWindow = null;
+        presentedRealizationWindow = null;
     }
 
     private static void RemoveMeasureWorkForSubtree(UIElement? element)

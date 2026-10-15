@@ -89,7 +89,7 @@ public sealed class ItemContainerGenerator
             // can throw before it records the item, and the owner's clear tells an item that is its own container,
             // whose content it keeps, from a generated one by the recorded item, so the item is recorded first.
             SetInfo(container, index, item, isSelected: false);
-            ClearContainer(container, item);
+            ReleaseContainer(container);
             throw;
         }
 
@@ -104,9 +104,33 @@ public sealed class ItemContainerGenerator
             return;
         }
 
-        object? item = GetItem(container);
         DetachContainer(container);
-        ClearContainer(container, item);
+        ReleaseContainer(container);
+    }
+
+    // A container that the presenter's panel did not take is given back without detaching it, because a parent it
+    // has then is not the panel, for example another element that still holds an item that is its own container.
+    internal void ReleaseUnpresented(UIElement container)
+    {
+        int index = GetRealizedKey(container);
+        if (index < 0)
+        {
+            return;
+        }
+
+        realized.Remove(index);
+        ReleaseContainer(container);
+    }
+
+    // A container that is its own item belongs to that item, so only a generated container goes to the pool.
+    private void ReleaseContainer(UIElement container)
+    {
+        object? item = GetItem(container);
+        owner.ClearItemContainer(container);
+        if (!ReferenceEquals(container, item))
+        {
+            RecyclePool.Push(container);
+        }
     }
 
     public void Clear()
@@ -352,16 +376,6 @@ public sealed class ItemContainerGenerator
     {
         UIElement created = owner.CreateItemContainer(index, item);
         return ReferenceEquals(created, item) ? created : RecyclePool.Pop(containerType) ?? created;
-    }
-
-    // A container that is its own item belongs to that item, so only a generated container goes to the pool.
-    private void ClearContainer(UIElement container, object? item)
-    {
-        owner.ClearItemContainer(container);
-        if (!ReferenceEquals(container, item))
-        {
-            RecyclePool.Push(container);
-        }
     }
 
     private static void DetachContainer(UIElement container)
