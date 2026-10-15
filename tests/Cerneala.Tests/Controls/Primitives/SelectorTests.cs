@@ -675,6 +675,34 @@ public sealed class SelectorTests
     }
 
     [Fact]
+    public void NestedSelectionChangeWhosePreparationThrowsCompletesOuterChangeBeforePropagating()
+    {
+        RedirectingListBox listBox = new();
+        CreateArrangedTextListBox(listBox: listBox);
+        listBox.SelectedIndex = 0;
+        listBox.Root!.ProcessFrame();
+        ListBoxItem first = (ListBoxItem)listBox.ItemContainerGenerator.RealizedContainers[0];
+        ListBoxItem third = (ListBoxItem)listBox.ItemContainerGenerator.RealizedContainers[2];
+        List<string> raised = [];
+        bool firstSelectedWhenOuterRaised = true;
+        listBox.SelectionChanged += (_, args) =>
+        {
+            raised.Add($"[{string.Join(",", args.RemovedItems)}]->[{string.Join(",", args.AddedItems)}]");
+            firstSelectedWhenOuterRaised = first.IsSelected;
+        };
+
+        listBox.FailFor = "b";
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => listBox.SelectedIndex = 1);
+
+        Assert.Equal("content preparation failed", exception.Message);
+        Assert.Equal(2, listBox.SelectedIndex);
+        Assert.False(first.IsSelected);
+        Assert.True(third.IsSelected);
+        Assert.Equal(["[b]->[c]", "[a]->[b]"], raised);
+        Assert.False(firstSelectedWhenOuterRaised);
+    }
+
+    [Fact]
     public void ReusedContainerClickSelectsCurrentSelectorOnly()
     {
         ListBoxItem shared = new();
@@ -796,9 +824,12 @@ public sealed class SelectorTests
         return new InputFrame(previous, current, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []);
     }
 
-    // Reacts to SelectedIndex 1 by selecting index 2 inside the property-change notification.
+    // Reacts to SelectedIndex 1 by selecting index 2 inside the property-change notification, and throws while it
+    // prepares the content of a container for FailFor.
     private sealed class RedirectingListBox : ListBox
     {
+        public object? FailFor { get; set; }
+
         protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
         {
             base.OnPropertyChanged(args);
@@ -806,6 +837,16 @@ public sealed class SelectorTests
             {
                 SelectedIndex = 2;
             }
+        }
+
+        protected override void PrepareItemContent(UIElement container, int index, object? item)
+        {
+            if (FailFor is not null && Equals(item, FailFor))
+            {
+                throw new InvalidOperationException("content preparation failed");
+            }
+
+            base.PrepareItemContent(container, index, item);
         }
     }
 
