@@ -337,7 +337,7 @@ public class ItemsPresenter : Control
 
             panelRoot = nextPanel;
             ApplyVirtualizationContext(nextPanel, VirtualizationContext, nextWindow);
-            RecycleUnpresentedContainers(nextChildren);
+            CommitPresentedOwnerWindow(nextWindow, nextChildren);
             return;
         }
 
@@ -382,19 +382,29 @@ public class ItemsPresenter : Control
         }
 
         ApplyVirtualizationContext(nextPanel, VirtualizationContext, nextWindow);
-        RecycleUnpresentedContainers(nextChildren);
+        CommitPresentedOwnerWindow(nextWindow, nextChildren);
     }
 
     // The owner's containers outside the presented window are recycled only after the window is committed,
     // so a refresh that throws while it prepares or presents the window keeps the previous children prepared.
+    // The window is recorded as presented first, so an owner's ClearItemContainer that throws while the rest
+    // are recycled leaves a later failed refresh restoring the window the panel shows.
+    private void CommitPresentedOwnerWindow(RealizationWindow? window, IReadOnlyList<UIElement> presentedChildren)
+    {
+        presentedRealizationWindow = window;
+        RecycleUnpresentedContainers(presentedChildren);
+    }
+
     private void RecycleUnpresentedContainers(IReadOnlyList<UIElement> presentedChildren)
     {
         ItemsOwner?.ItemContainerGenerator.RecycleAllExcept(presentedChildren);
     }
 
-    // The generator already recycled the containers that left the window and prepared them for other items, so
-    // the previous children cannot be put back as they are. The window the panel presented is realized again
-    // instead, after the containers the panel did not take are given back without detaching them.
+    // The previous children stay realized, but the failed realization can have recycled one of them and prepared it
+    // for another item, for example when its item now needs another container type, so the previous children cannot
+    // be put back as they are. The window the panel presented is realized again instead, after the containers the
+    // panel did not take are given back without detaching them. The containers outside that window, which the failed
+    // realization created or kept, are then recycled like after a committed refresh.
     private void RestorePresentedOwnerItems(Layout.Panels.Panel panel, IReadOnlyList<UIElement> failedChildren)
     {
         ItemContainerGenerator generator = ItemsOwner!.ItemContainerGenerator;
@@ -406,7 +416,9 @@ public class ItemsPresenter : Control
             }
         }
 
-        MovePanelChildrenTo(panel, [.. CreateItemChildren(presentedRealizationWindow)]);
+        List<UIElement> restoredChildren = [.. CreateItemChildren(presentedRealizationWindow)];
+        MovePanelChildrenTo(panel, restoredChildren);
+        RecycleUnpresentedContainers(restoredChildren);
     }
 
     private static void AddPanelChild(Layout.Panels.Panel panel, UIElement child)

@@ -572,6 +572,31 @@ public sealed class ItemsPresenterTests
         Assert.Equal("children=[1,2,3,4,5] first=1 contextOffset=20", DescribeWindow(control, panel));
     }
 
+    [Fact]
+    public void FailedRecycleAfterOwnerWindowMoveRestoresTheCommittedWindowOnALaterFailedInsert()
+    {
+        Cerneala.UI.Layout.Panels.VirtualizingStackPanel panel = new();
+        Cerneala.UI.Layout.Panels.StackPanel element6 = new();
+        FailingWindowItemsControl control = new() { ItemsPanel = panel };
+        control.SetItems(Enumerable.Range(0, 100).Select(index => index == 6 ? (object)element6 : index));
+        control.SetVirtualizationContext(new VirtualizationContext(100, 10, 30, 0, CacheItems: 1));
+        control.Measure(new MeasureContext(new LayoutSize(100, 30)));
+
+        control.FailInClearItemContainer = true;
+        control.SetVirtualizationContext(new VirtualizationContext(100, 10, 30, 20, CacheItems: 1));
+        Assert.Throws<InvalidOperationException>(() => control.Measure(new MeasureContext(new LayoutSize(100, 31))));
+        Assert.Equal("children=[1,2,3,4,5] first=1 contextOffset=20", DescribeWindow(control, panel));
+
+        control.FailInClearItemContainer = false;
+        Cerneala.UI.Layout.Panels.StackPanel otherParent = new();
+        otherParent.VisualChildren.Add(element6);
+        control.SetVirtualizationContext(new VirtualizationContext(100, 10, 30, 30, CacheItems: 1));
+        Assert.Throws<InvalidOperationException>(() => control.Measure(new MeasureContext(new LayoutSize(100, 32))));
+
+        Assert.Equal("children=[1,2,3,4,5] first=1 contextOffset=20", DescribeWindow(control, panel));
+        Assert.Equal([1, 2, 3, 4, 5], control.ItemContainerGenerator.RealizedContainers.Keys.Order());
+    }
+
     // Each child must be the container realized under its item's index, so a panel that kept a recycled
     // container, or a container realized under another index, does not describe as its item.
     private static string DescribeWindow(ItemsControl control, Cerneala.UI.Layout.Panels.VirtualizingStackPanel panel)
@@ -598,7 +623,18 @@ public sealed class ItemsPresenterTests
 
         public bool FailInContainerPrepared { get; set; }
 
+        public bool FailInClearItemContainer { get; set; }
+
         public int FailFromIndex { get; set; }
+
+        protected internal override void ClearItemContainer(UIElement container)
+        {
+            base.ClearItemContainer(container);
+            if (FailInClearItemContainer)
+            {
+                throw new InvalidOperationException("container clearing failed");
+            }
+        }
 
         protected internal override void PrepareItemContainer(UIElement container, int index, object? item)
         {
