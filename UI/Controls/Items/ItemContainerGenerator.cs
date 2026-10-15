@@ -70,7 +70,7 @@ public sealed class ItemContainerGenerator
         }
 
         // An item that is its own container is never wrapped in a recycled container of the same type.
-        UIElement container = (IsItsOwnContainer(item, containerType) ? null : RecyclePool.Pop(containerType)) ??
+        UIElement container = (owner.IsItemItsOwnContainer(item) ? null : RecyclePool.Pop(containerType)) ??
             owner.CreateItemContainer(index, item);
         owner.PrepareItemContainer(container, index, item);
         realized.Add(index, container);
@@ -271,9 +271,9 @@ public sealed class ItemContainerGenerator
 
     // A container that is its own item belongs to that item and never serves another item, even when a stale
     // index still holds it.
-    private static bool IsCompatibleContainer(UIElement container, object? item, Type containerType)
+    private bool IsCompatibleContainer(UIElement container, object? item, Type containerType)
     {
-        if (IsItsOwnContainer(item, containerType))
+        if (owner.IsItemItsOwnContainer(item))
         {
             return ReferenceEquals(container, item);
         }
@@ -284,11 +284,6 @@ public sealed class ItemContainerGenerator
         }
 
         return containerType.IsAssignableFrom(container.GetType());
-    }
-
-    private static bool IsItsOwnContainer(object? item, Type containerType)
-    {
-        return item is UIElement element && ReferenceEquals(containerType, element.GetType());
     }
 
     private static void DetachContainer(UIElement container)

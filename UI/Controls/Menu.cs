@@ -34,6 +34,11 @@ public class Menu : ItemsControl
         return item is MenuItem menuItem ? menuItem : new MenuItem();
     }
 
+    internal override bool IsItemItsOwnContainer(object? item)
+    {
+        return item is MenuItem;
+    }
+
     protected override void PrepareItemContent(UIElement container, int index, object? item)
     {
         if (container is MenuItem menuItem)

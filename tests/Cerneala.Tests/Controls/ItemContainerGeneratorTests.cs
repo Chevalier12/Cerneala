@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Virtualization;
@@ -416,6 +417,27 @@ public sealed class ItemContainerGeneratorTests
         Assert.Same(element, realized);
         Assert.Equal("P", element.Content);
         Assert.Null(((ContentPresenter)generated).Content);
+    }
+
+    [Fact]
+    public void ItemTemplateWrapperOfContentPresenterItemIsReusedOnEveryRealization()
+    {
+        ContentPresenter element = new() { Content = "P" };
+        ItemsControl control = new()
+        {
+            ItemTemplate = new ContentTemplate<UIElement>("test", key: null, priority: 0, _ => new FixedElement("templated"))
+        };
+        control.SetItems(new object[] { element });
+        UIElement wrapper = control.ItemContainerGenerator.Realize()[0];
+        Assert.NotSame(element, wrapper);
+
+        UIElement second = control.ItemContainerGenerator.Realize()[0];
+        UIElement third = control.ItemContainerGenerator.Realize()[0];
+
+        Assert.Same(wrapper, second);
+        Assert.Same(wrapper, third);
+        Assert.Same(element, ((ContentPresenter)wrapper).Content);
+        Assert.Equal(0, control.ItemContainerGenerator.RecyclePool.Count);
     }
 
     [Fact]
