@@ -302,6 +302,41 @@ public sealed class ComboBoxTests
     }
 
     [Fact]
+    public void ClickingItemAfterReplacingItsItemBeforeLayoutSelectsNothing()
+    {
+        UIRoot root = new(100, 100);
+        ComboBox comboBox = new()
+        {
+            ItemsPanel = new LayoutStackPanel(),
+            IsDropDownOpen = true
+        };
+        comboBox.SetItems(new[] { "a", "b", "c" });
+        LayoutCanvas canvas = new();
+        canvas.VisualChildren.Add(comboBox);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        // Text rows measure 0 px tall without a font, so each row gets a fixed height.
+        foreach (UIElement container in comboBox.ItemContainerGenerator.RealizedContainers.Values)
+        {
+            container.Height = 10;
+        }
+
+        root.ProcessFrame();
+        UIElement clicked = comboBox.ItemContainerGenerator.RealizedContainers[1];
+        float x = clicked.ArrangedBounds.X + 2;
+        float y = clicked.ArrangedBounds.Y + 2;
+
+        comboBox.Items[1] = "x";
+        ElementInputBridge bridge = new();
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+
+        Assert.Equal("b", ItemContainerGenerator.GetItem(clicked));
+        Assert.Equal(-1, comboBox.SelectedIndex);
+        Assert.Null(comboBox.SelectedItem);
+    }
+
+    [Fact]
     public void EditableTextThatDiffersFromSelectionClearsSelection()
     {
         ComboBox comboBox = new()
