@@ -265,7 +265,7 @@ public class ItemsPresenter : Control
         bool reusesPanel = ReferenceEquals(oldPanel, nextPanel);
         if (reusesPanel)
         {
-            SynchronizePanelChildren(nextPanel, nextChildren);
+            SynchronizePanelChildren(nextPanel, nextChildren, oldChildren);
             panelRoot = nextPanel;
             ApplyVirtualizationContext(nextPanel, VirtualizationContext, nextWindow);
             return;
@@ -323,7 +323,7 @@ public class ItemsPresenter : Control
         bool reusesPanel = ReferenceEquals(oldPanel, nextPanel);
         if (reusesPanel)
         {
-            SynchronizePanelChildren(nextPanel, nextChildren);
+            SynchronizePanelChildren(nextPanel, nextChildren, oldChildren);
             panelRoot = nextPanel;
             ApplyVirtualizationContext(nextPanel, VirtualizationContext, nextWindow);
             return;
@@ -386,7 +386,25 @@ public class ItemsPresenter : Control
         }
     }
 
-    private static void SynchronizePanelChildren(Layout.Panels.Panel panel, IReadOnlyList<UIElement> desiredChildren)
+    // A sync that throws puts the previous children back in their previous order, so the retained
+    // panel keeps presenting the previous items like the old panel of a failed panel swap.
+    private static void SynchronizePanelChildren(
+        Layout.Panels.Panel panel,
+        IReadOnlyList<UIElement> desiredChildren,
+        IReadOnlyList<UIElement> previousChildren)
+    {
+        try
+        {
+            MovePanelChildrenTo(panel, desiredChildren);
+        }
+        catch
+        {
+            MovePanelChildrenTo(panel, previousChildren);
+            throw;
+        }
+    }
+
+    private static void MovePanelChildrenTo(Layout.Panels.Panel panel, IReadOnlyList<UIElement> desiredChildren)
     {
         HashSet<UIElement> desired = new(desiredChildren, ReferenceEqualityComparer.Instance);
         for (int index = panel.VisualChildren.Count - 1; index >= 0; index--)
