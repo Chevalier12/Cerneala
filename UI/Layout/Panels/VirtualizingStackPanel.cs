@@ -143,6 +143,7 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
             ? virtualizationContext.ItemExtent
             : 0;
         float y = context.FinalRect.Y;
+        bool placedFirstAutomaticChild = false;
 
         for (int i = 0; i < VisualChildren.Count; i++)
         {
@@ -154,9 +155,17 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
                 continue;
             }
 
-            float childY = automaticViewport is not null
-                ? context.FinalRect.Y + EstimateOffset(itemIndex, context.Rounding)
-                : itemExtent > 0
+            // Automatic mode places the first realized child at its estimated prefix extent, rounded to a device pixel,
+            // and stacks the following realized children on it. An estimate is an average, so a prefix of 10.5 device
+            // pixels followed by a row of 11 would round each child's own position on its own (ties to even) to 10 and 22,
+            // leaving a gap after the first row's bottom at 21.
+            if (automaticViewport is not null && !placedFirstAutomaticChild)
+            {
+                y = context.Rounding.Round(context.FinalRect.Y + EstimateOffset(itemIndex, context.Rounding));
+                placedFirstAutomaticChild = true;
+            }
+
+            float childY = itemExtent > 0
                 ? context.FinalRect.Y + (itemIndex * itemExtent)
                 : y;
             float height = itemExtent > 0 ? itemExtent : child.DesiredSize.Height;

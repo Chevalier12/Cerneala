@@ -231,6 +231,42 @@ public sealed class VirtualizingStackPanelTests
                 MathF.Round(next.ArrangedBounds.Y * 1.75f)));
     }
 
+    [Theory]
+    [InlineData(1f)]
+    [InlineData(1.75f)]
+    public void AutomaticViewportKeepsRealizedRowsContiguousAfterAnEstimatedPrefixThatIsNotAWholeDevicePixel(float scale)
+    {
+        // Heights are in device pixels. Once items 1 (11) and 2 (10) are measured, the unrealized item 0 is
+        // estimated at 10.5 device pixels, so the realized rows start after a prefix that is not a whole device pixel.
+        LayoutRounding rounding = LayoutRounding.ForScale(scale);
+        VirtualizingStackPanel panel = new() { FirstRealizedIndex = 0 };
+        foreach (float deviceHeight in new[] { 20f, 11f, 10f, 20f, 20f })
+        {
+            panel.VisualChildren.Add(new FixedHeightElement(deviceHeight / scale));
+        }
+
+        // With the initial estimate of 28, offset 28 and viewport 29 realize items 1 and 2.
+        panel.UpdateViewport(new ItemsVirtualizationViewport(5, 29, 28, 0));
+        panel.Measure(new MeasureContext(new LayoutSize(100, 29), rounding));
+        panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, panel.DesiredSize.Height), rounding));
+
+        // Width 99 keeps the arrange cache from reusing the first pass.
+        panel.UpdateViewport(new ItemsVirtualizationViewport(5, 15 / scale, 11 / scale, 0));
+        panel.Measure(new MeasureContext(new LayoutSize(100, 15 / scale), rounding));
+        panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 99, panel.DesiredSize.Height), rounding));
+
+        Assert.Equal(new RealizationWindow(1, 3), panel.RealizationWindow);
+        Assert.Equal(52.5f, panel.TotalExtent * scale, 3);
+        // The first realized row starts at the device pixel nearest to 10.5 (ties to even), and the second touches it.
+        Assert.Equal("10..21, 21..31", GetVerticalDeviceEdges([panel.VisualChildren[1], panel.VisualChildren[2]], scale));
+    }
+
+    private static string GetVerticalDeviceEdges(IEnumerable<UIElement> elements, float scale)
+    {
+        return string.Join(", ", elements.Select(element =>
+            $"{MathF.Round(element.ArrangedBounds.Y * scale)}..{MathF.Round((element.ArrangedBounds.Y + element.ArrangedBounds.Height) * scale)}"));
+    }
+
     private sealed class CountingElement : UIElement
     {
         public int MeasureCount { get; private set; }
