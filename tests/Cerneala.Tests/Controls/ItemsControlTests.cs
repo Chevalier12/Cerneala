@@ -998,6 +998,85 @@ public sealed class ItemsControlTests
         }
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void FailedInsertOfElementWithAnotherParentDoesNotKeepItRealized(bool swapsPanel)
+    {
+        // The default panel is retained by every refresh, and a changed ItemsPanel is swapped in.
+        ItemsControl control = new();
+        control.Items.Add("a");
+        control.Items.Add("b");
+        control.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        Cerneala.UI.Layout.Panels.Panel previousPanel = control.ItemsPresenter.LayoutPanelRoot!;
+        Cerneala.UI.Layout.Panels.StackPanel otherParent = new();
+        FixedElement element = new("x", new LayoutSize(100, 10));
+        otherParent.VisualChildren.Add(element);
+        UIElement? logicalParent = element.LogicalParent;
+        control.Items.Add(element);
+        if (swapsPanel)
+        {
+            control.ItemsPanel = new Cerneala.UI.Layout.Panels.StackPanel();
+        }
+
+        Assert.Throws<InvalidOperationException>(() => control.Measure(new MeasureContext(new LayoutSize(100, 101))));
+
+        AssertPresentsOnlyPreviousItems();
+        Assert.Throws<InvalidOperationException>(() => control.Measure(new MeasureContext(new LayoutSize(100, 102))));
+        AssertPresentsOnlyPreviousItems();
+
+        control.Items.RemoveAt(2);
+
+        Assert.Same(otherParent, element.VisualParent);
+        Assert.Same(logicalParent, element.LogicalParent);
+        Assert.Same(element, Assert.Single(otherParent.VisualChildren));
+
+        control.Items.Add(element);
+        otherParent.VisualChildren.Remove(element);
+        control.Measure(new MeasureContext(new LayoutSize(100, 103)));
+
+        UIElement[] children = [.. control.ItemsPresenter.LayoutPanelRoot!.VisualChildren];
+        Assert.Equal(["a", "b"], children.Take(2).Cast<ContentPresenter>().Select(container => container.Content));
+        Assert.Same(element, children[2]);
+        Assert.Equal(2, ItemContainerGenerator.GetItemIndex(element));
+        Assert.Equal(3, control.RealizedItemCount);
+
+        // The panel that stays presents the window it presented, realized again for the current items, without the
+        // element it could not take. The ItemsPanel change cleared the containers, so a swap realizes them again too.
+        void AssertPresentsOnlyPreviousItems()
+        {
+            Assert.Same(previousPanel, control.ItemsPresenter.LayoutPanelRoot);
+            UIElement[] presented = [.. previousPanel.VisualChildren];
+            Assert.Equal(["a", "b"], presented.Cast<ContentPresenter>().Select(container => container.Content));
+            Assert.Equal(2, control.RealizedItemCount);
+            Assert.DoesNotContain(element, control.ItemContainerGenerator.RealizedContainers.Values);
+            Assert.Equal(-1, ItemContainerGenerator.GetItemIndex(element));
+            Assert.Same(otherParent, element.VisualParent);
+            Assert.Same(logicalParent, element.LogicalParent);
+        }
+    }
+
+    [Fact]
+    public void FailedFirstPresentationOfElementWithAnotherParentDoesNotKeepItRealized()
+    {
+        ItemsControl control = new();
+        Cerneala.UI.Layout.Panels.StackPanel otherParent = new();
+        FixedElement element = new("x", new LayoutSize(100, 10));
+        otherParent.VisualChildren.Add(element);
+        control.Items.Add("a");
+        control.Items.Add(element);
+
+        Assert.Throws<InvalidOperationException>(() => control.Measure(new MeasureContext(new LayoutSize(100, 100))));
+
+        Assert.Null(control.ItemsPresenter.LayoutPanelRoot);
+        Assert.Equal(0, control.RealizedItemCount);
+        Assert.Equal(-1, ItemContainerGenerator.GetItemIndex(element));
+
+        control.Items.RemoveAt(1);
+
+        Assert.Same(element, Assert.Single(otherParent.VisualChildren));
+    }
+
     [Fact]
     public void UpdatingVirtualizationFromScrollInfoRefreshesPresenterWhenWindowChanges()
     {
