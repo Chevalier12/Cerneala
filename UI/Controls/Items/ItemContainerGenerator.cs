@@ -85,7 +85,10 @@ public sealed class ItemContainerGenerator
         catch
         {
             // A container whose preparation throws is not realized, so it is cleared here like a recycled one
-            // and a generated container goes back to the pool, where the next realization can reuse it.
+            // and a generated container goes back to the pool, where the next realization can reuse it. Preparation
+            // can throw before it records the item, and the owner's clear tells an item that is its own container,
+            // whose content it keeps, from a generated one by the recorded item, so the item is recorded first.
+            SetInfo(container, index, item, isSelected: false);
             ClearContainer(container, item);
             throw;
         }

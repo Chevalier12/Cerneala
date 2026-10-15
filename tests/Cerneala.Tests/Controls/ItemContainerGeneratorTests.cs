@@ -843,6 +843,35 @@ public sealed class ItemContainerGeneratorTests
     }
 
     [Fact]
+    public void OwnContainerItemWhosePreparationThrowsBeforeBaseKeepsItsContent()
+    {
+        FailBeforePrepareItemsControl control = new() { Fail = true };
+        ListBoxItem row = new() { Content = "A" };
+        control.SetItems(new[] { row });
+
+        Assert.Throws<InvalidOperationException>(() => control.ItemContainerGenerator.Realize());
+        Assert.Equal("A", row.Content);
+
+        control.Fail = false;
+        control.ItemContainerGenerator.Realize();
+
+        Assert.Equal("A", row.Content);
+        Assert.Same(row, control.ItemContainerGenerator.RealizedContainers[0]);
+    }
+
+    [Fact]
+    public void OwnMenuItemWhosePreparationThrowsBeforeBaseKeepsItsHeader()
+    {
+        FailBeforePrepareMenu menu = new() { Fail = true };
+        MenuItem item = new() { Header = "A" };
+        menu.SetItems(new[] { item });
+
+        Assert.Throws<InvalidOperationException>(() => menu.ItemContainerGenerator.Realize());
+
+        Assert.Equal("A", item.Header);
+    }
+
+    [Fact]
     public void RepeatedlyThrowingPreparationDoesNotDrainRecyclePool()
     {
         FailAfterPrepareItemsControl control = new();
@@ -985,6 +1014,38 @@ public sealed class ItemContainerGeneratorTests
             {
                 throw new InvalidOperationException("container preparation failed");
             }
+        }
+    }
+
+    // Throws from PrepareItemContainer before the base preparation runs, while Fail is set.
+    private sealed class FailBeforePrepareItemsControl : ItemsControl
+    {
+        public bool Fail { get; set; }
+
+        protected internal override void PrepareItemContainer(UIElement container, int index, object? item)
+        {
+            if (Fail)
+            {
+                throw new InvalidOperationException("container preparation failed");
+            }
+
+            base.PrepareItemContainer(container, index, item);
+        }
+    }
+
+    // Throws from PrepareItemContainer before the base preparation runs, while Fail is set.
+    private sealed class FailBeforePrepareMenu : Menu
+    {
+        public bool Fail { get; set; }
+
+        protected internal override void PrepareItemContainer(UIElement container, int index, object? item)
+        {
+            if (Fail)
+            {
+                throw new InvalidOperationException("container preparation failed");
+            }
+
+            base.PrepareItemContainer(container, index, item);
         }
     }
 
