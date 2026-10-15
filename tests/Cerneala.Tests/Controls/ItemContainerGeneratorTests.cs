@@ -441,6 +441,46 @@ public sealed class ItemContainerGeneratorTests
     }
 
     [Fact]
+    public void SubclassWrapperOfElementItemOfAnotherTypeIsReusedOnEveryRealization()
+    {
+        ListBoxItem element = new() { Content = "A" };
+        WrappingItemsControl control = new();
+        control.SetItems(new object[] { element });
+        UIElement wrapper = control.ItemContainerGenerator.Realize()[0];
+        Assert.IsType<ContentPresenter>(wrapper);
+        int preparesAfterFirstRealization = control.PrepareCount;
+
+        UIElement second = control.ItemContainerGenerator.Realize()[0];
+        UIElement third = control.ItemContainerGenerator.Realize()[0];
+
+        Assert.Same(wrapper, second);
+        Assert.Same(wrapper, third);
+        Assert.Same(element, ((ContentPresenter)wrapper).Content);
+        Assert.Equal(preparesAfterFirstRealization, control.PrepareCount);
+        Assert.Equal(0, control.ItemContainerGenerator.RecyclePool.Count);
+    }
+
+    [Fact]
+    public void SubclassWrapperOfElementItemOfTheContainerTypeDoesNotGrowRecyclePool()
+    {
+        ContentPresenter element = new() { Content = "P" };
+        WrappingItemsControl control = new();
+        control.SetItems(new object[] { element });
+        UIElement wrapper = control.ItemContainerGenerator.Realize()[0];
+        Assert.NotSame(element, wrapper);
+
+        for (int pass = 0; pass < 3; pass++)
+        {
+            control.ItemContainerGenerator.Realize();
+        }
+
+        UIElement last = control.ItemContainerGenerator.Realize()[0];
+        Assert.Same(element, ((ContentPresenter)last).Content);
+        Assert.Equal("P", element.Content);
+        Assert.Equal(0, control.ItemContainerGenerator.RecyclePool.Count);
+    }
+
+    [Fact]
     public void ComboBoxRemoveAtKeepsPresenterContentOfComboBoxItemThatIsItsOwnContainer()
     {
         ComboBoxItem first = new() { Content = "First" };
@@ -551,6 +591,28 @@ public sealed class ItemContainerGeneratorTests
     private sealed class CountingItemsControl : ItemsControl
     {
         public int PrepareCount { get; private set; }
+
+        protected internal override void PrepareItemContainer(UIElement container, int index, object? item)
+        {
+            PrepareCount++;
+            base.PrepareItemContainer(container, index, item);
+        }
+    }
+
+    // Wraps every item, UIElement items included, in a ContentPresenter, through the documented overrides only.
+    private sealed class WrappingItemsControl : ItemsControl
+    {
+        public int PrepareCount { get; private set; }
+
+        protected internal override Type GetContainerTypeForItem(object? item)
+        {
+            return typeof(ContentPresenter);
+        }
+
+        protected internal override UIElement CreateItemContainer(int index, object? item)
+        {
+            return new ContentPresenter();
+        }
 
         protected internal override void PrepareItemContainer(UIElement container, int index, object? item)
         {
