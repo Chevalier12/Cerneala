@@ -70,9 +70,10 @@ Save the draft with `apply_patch` to `.artifacts/issue-drafts/<yyyy-MM-dd>-<shor
 
 ## 3. Get approval, then post
 
-Creating a GitHub issue publishes public content, so an issue needs the user's explicit approval before it is posted, with one exception:
+Creating a GitHub issue publishes public content, so an issue needs the user's explicit approval before it is posted, with two exceptions (user decision, 2026-10-15). In both, post the issue directly, without asking:
 
-- **Bugs found by `cerneala-fix-bug`:** when `cerneala-fix-bug` finds another defect while it fixes a bug, post the issue directly, without asking (user decision, 2026-10-15). The fix's pull request lists it in its `Other bugs found` section.
+- **Bugs found by `cerneala-fix-bug`:** another defect that `cerneala-fix-bug` finds while it fixes a bug. The fix's pull request lists it in its `Other bugs found` section.
+- **Bugs found by `cerneala-pr-review-merge`:** a defect that the review of a validated pull request proves. The skill's merge comment lists it under `Bugs found`.
 
 In every other case:
 

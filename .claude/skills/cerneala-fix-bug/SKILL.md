@@ -246,7 +246,7 @@ Then publish the reproduction app for the pull request `<PR>` that the skill cre
    - which actions check mode performs, and a table with its exit code and verdict line before the fix, with the fix, and from the published `.exe`;
    - every difference between check mode and the user's run, with the reason, for example the zoom that check mode turns off.
 
-   The pull request's user-validation section then says: run `Issue<N>.exe` from the zip, do the actions in its window, and expect the green verdict.
+   The pull request's user-validation section then says: run `Issue<N>.exe` from the zip, do the actions in its window, and expect the green verdict. When it stays green, post a comment on the pull request whose whole text is `Validated.`; `cerneala-pr-review-merge` then reviews, merges, and deletes the release.
 
    After `How to check`, the body has an `Other bugs found` section with one bullet per bug from step 4, for example `- #279 Servo: target actions aim at the untransformed layout center ... Found when Servo could not drag the zoomed scrollbar thumb in the reproduction app.` Add each suspected defect that was not raised, with the reason. When there are none, the section says `None.` When a later commit finds another bug, add it to this section with `gh pr edit`.
 5. Delete the reproduction app's temporary folder, `<scratchpad>/repro-<N>/`, only after the release and the pull-request body are in place.
