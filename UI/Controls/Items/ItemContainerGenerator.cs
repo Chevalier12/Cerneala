@@ -410,14 +410,14 @@ public sealed class ItemContainerGenerator
     }
 
     // A container that is its own item belongs to that item and never serves another item, even when a stale
-    // index still holds it. An item that could be its own container keeps the wrapper that CreateItemContainer
-    // chose for it while that wrapper still shows the item, so the wrapper is not recycled and created again.
+    // index still holds it. A container that still shows the item is the one CreateItemContainer chose for it,
+    // whatever its type, because a change of the owner's item policy clears every realized container. It is kept,
+    // so it is not recycled and created again.
     private bool IsCompatibleContainer(UIElement container, object? item, Type containerType)
     {
         if (IsItsOwnContainer(item, containerType))
         {
-            return ReferenceEquals(container, item) ||
-                (ReferenceEquals(GetItem(container), item) && containerType.IsAssignableFrom(container.GetType()));
+            return ReferenceEquals(container, item) || ReferenceEquals(GetItem(container), item);
         }
 
         if (!ReferenceEquals(container, item) && ReferenceEquals(GetItem(container), container))
@@ -425,11 +425,14 @@ public sealed class ItemContainerGenerator
             return false;
         }
 
+        if (ReferenceEquals(GetItem(container), item))
+        {
+            return true;
+        }
+
         // A container that shows another item is not prepared for an item of the container type, because a
-        // subclass's CreateItemContainer can return that item itself. A wrapper that already shows the item is kept.
-        if (!ReferenceEquals(container, item) &&
-            !ReferenceEquals(GetItem(container), item) &&
-            IsOfContainerType(item, containerType))
+        // subclass's CreateItemContainer can return that item itself.
+        if (!ReferenceEquals(container, item) && IsOfContainerType(item, containerType))
         {
             return false;
         }

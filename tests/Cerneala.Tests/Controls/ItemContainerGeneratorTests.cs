@@ -769,6 +769,68 @@ public sealed class ItemContainerGeneratorTests
     }
 
     [Fact]
+    public void SubclassWrapperOfElementItemOfAnotherTypeThanContainerTypeIsReusedOnEveryRealization()
+    {
+        Button button = new() { Content = "B" };
+        CountingWrapperItemsControl control = new();
+        control.SetItems(new object[] { button });
+        UIElement wrapper = control.ItemContainerGenerator.Realize()[0];
+        Assert.Equal(typeof(Button), control.GetContainerTypeForItem(button));
+        Assert.IsType<ContentPresenter>(wrapper);
+        Assert.Equal((1, 0, 1), (control.PrepareCount, control.ClearCount, control.CreateCount));
+
+        for (int pass = 1; pass <= 5; pass++)
+        {
+            UIElement next = control.ItemContainerGenerator.Realize()[0];
+
+            Assert.Same(wrapper, next);
+            Assert.Equal((1, 0, 1), (control.PrepareCount, control.ClearCount, control.CreateCount));
+            Assert.Same(button, ((ContentPresenter)wrapper).Content);
+            Assert.Equal(0, control.ItemContainerGenerator.RecyclePool.Count);
+        }
+    }
+
+    [Fact]
+    public void LayoutRefreshDoesNotRecreateSubclassWrappersOfElementItems()
+    {
+        ObservableCollection<object> items = [new Button { Content = "B0" }];
+        CountingWrapperItemsControl control = new() { ItemsSource = items };
+        MeasureContext context = new(new LayoutSize(200, 400));
+        control.Measure(context);
+
+        for (int pass = 1; pass <= 4; pass++)
+        {
+            items.Add(new Button { Content = "B" + pass });
+            control.Measure(context);
+        }
+
+        Assert.Equal(5, control.CreateCount);
+        Assert.Equal(0, control.ItemContainerGenerator.RecyclePool.Count);
+        Assert.Equal(5, control.ItemsPresenter.LayoutPanelRoot!.VisualChildren.Count);
+    }
+
+    [Fact]
+    public void SubclassContainerOfDataItemOfAnotherTypeThanContainerTypeIsReusedOnEveryRealization()
+    {
+        ListBoxItemContainerItemsControl control = new();
+        control.SetItems(new object[] { "s" });
+        UIElement container = control.ItemContainerGenerator.Realize()[0];
+        Assert.Equal(typeof(ContentPresenter), control.GetContainerTypeForItem("s"));
+        Assert.IsType<ListBoxItem>(container);
+        Assert.Equal((1, 0, 1), (control.PrepareCount, control.ClearCount, control.CreateCount));
+
+        for (int pass = 1; pass <= 5; pass++)
+        {
+            UIElement next = control.ItemContainerGenerator.Realize()[0];
+
+            Assert.Same(container, next);
+            Assert.Equal((1, 0, 1), (control.PrepareCount, control.ClearCount, control.CreateCount));
+            Assert.Equal("s", ((ListBoxItem)container).Content);
+            Assert.Equal(0, control.ItemContainerGenerator.RecyclePool.Count);
+        }
+    }
+
+    [Fact]
     public void SubclassItemReturnedByCreateItemContainerIsNotWrappedInPooledContainerWithItemTemplate()
     {
         ListBoxItem a = new() { Content = "A" };
@@ -1415,6 +1477,50 @@ public sealed class ItemContainerGeneratorTests
         {
             ClearCount++;
             base.ClearItemContainer(container);
+        }
+    }
+
+    // Wraps every item in a ContentPresenter through CreateItemContainer only, so GetContainerTypeForItem still
+    // returns the type of a UIElement item.
+    private class CountingWrapperItemsControl : ItemsControl
+    {
+        public int PrepareCount { get; private set; }
+
+        public int ClearCount { get; private set; }
+
+        public int CreateCount { get; private set; }
+
+        protected internal override UIElement CreateItemContainer(int index, object? item)
+        {
+            CreateCount++;
+            return CreateContainer();
+        }
+
+        protected virtual UIElement CreateContainer()
+        {
+            return new ContentPresenter();
+        }
+
+        protected internal override void PrepareItemContainer(UIElement container, int index, object? item)
+        {
+            PrepareCount++;
+            base.PrepareItemContainer(container, index, item);
+        }
+
+        protected internal override void ClearItemContainer(UIElement container)
+        {
+            ClearCount++;
+            base.ClearItemContainer(container);
+        }
+    }
+
+    // Puts every item in a ListBoxItem through CreateItemContainer only, so GetContainerTypeForItem still returns
+    // ContentPresenter for a data item.
+    private sealed class ListBoxItemContainerItemsControl : CountingWrapperItemsControl
+    {
+        protected override UIElement CreateContainer()
+        {
+            return new ListBoxItem();
         }
     }
 
