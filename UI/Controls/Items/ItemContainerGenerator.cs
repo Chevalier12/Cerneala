@@ -293,12 +293,14 @@ public sealed class ItemContainerGenerator
     }
 
     // A container that is its own item belongs to that item and never serves another item, even when a stale
-    // index still holds it.
+    // index still holds it. An item that could be its own container keeps the wrapper that CreateItemContainer
+    // chose for it while that wrapper still shows the item, so the wrapper is not recycled and created again.
     private bool IsCompatibleContainer(UIElement container, object? item, Type containerType)
     {
         if (IsItsOwnContainer(item, containerType))
         {
-            return ReferenceEquals(container, item);
+            return ReferenceEquals(container, item) ||
+                (ReferenceEquals(GetItem(container), item) && containerType.IsAssignableFrom(container.GetType()));
         }
 
         if (!ReferenceEquals(container, item) && ReferenceEquals(GetItem(container), container))

@@ -661,6 +661,30 @@ public sealed class ItemContainerGeneratorTests
     }
 
     [Fact]
+    public void SubclassWrapperOfElementItemOfTheContainerTypeIsReusedOnEveryRealization()
+    {
+        ContentPresenter element = new() { Content = "P" };
+        WrappingItemsControl control = new();
+        control.SetItems(new object[] { element });
+        UIElement wrapper = control.ItemContainerGenerator.Realize()[0];
+        Assert.NotSame(element, wrapper);
+        Cerneala.UI.Layout.Panels.Panel panel = new();
+        panel.VisualChildren.Add(wrapper);
+        Assert.Equal((1, 0, 1), (control.PrepareCount, control.ClearCount, control.CreateCount));
+
+        for (int pass = 1; pass <= 3; pass++)
+        {
+            UIElement next = control.ItemContainerGenerator.Realize()[0];
+
+            Assert.Same(wrapper, next);
+            Assert.Equal((1, 0, 1), (control.PrepareCount, control.ClearCount, control.CreateCount));
+            Assert.Same(panel, wrapper.VisualParent);
+            Assert.Same(element, ((ContentPresenter)wrapper).Content);
+            Assert.Equal(0, control.ItemContainerGenerator.RecyclePool.Count);
+        }
+    }
+
+    [Fact]
     public void SubclassItemReturnedByCreateItemContainerIsNotWrappedInPooledContainerWithItemTemplate()
     {
         ListBoxItem a = new() { Content = "A" };
@@ -845,6 +869,10 @@ public sealed class ItemContainerGeneratorTests
     {
         public int PrepareCount { get; private set; }
 
+        public int ClearCount { get; private set; }
+
+        public int CreateCount { get; private set; }
+
         protected internal override Type GetContainerTypeForItem(object? item)
         {
             return typeof(ContentPresenter);
@@ -852,6 +880,7 @@ public sealed class ItemContainerGeneratorTests
 
         protected internal override UIElement CreateItemContainer(int index, object? item)
         {
+            CreateCount++;
             return new ContentPresenter();
         }
 
@@ -859,6 +888,12 @@ public sealed class ItemContainerGeneratorTests
         {
             PrepareCount++;
             base.PrepareItemContainer(container, index, item);
+        }
+
+        protected internal override void ClearItemContainer(UIElement container)
+        {
+            ClearCount++;
+            base.ClearItemContainer(container);
         }
     }
 
