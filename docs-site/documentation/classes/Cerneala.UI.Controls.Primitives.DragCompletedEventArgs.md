@@ -37,7 +37,7 @@ thumb.DragCompleted += (_, args) =>
 ## Remarks
 `DragCompletedEventArgs` is raised by `Thumb` when a drag operation ends or is canceled. `Thumb` raises it as the bubbling routed event `Thumb.DragCompletedEvent`, with the thumb as `Source`, so a parent element can handle it too.
 
-When `Thumb.CompleteDrag` finishes a left-button drag, `Canceled` is `false` and `HorizontalChange` / `VerticalChange` contain the thumb's total movement since the drag started. When `Thumb.CancelDrag` runs, including when the thumb is detached while dragging, `Canceled` is `true` and the same total movement fields are reported with the values known at cancellation time.
+When `Thumb.CompleteDrag` finishes a left-button drag, `Canceled` is `false` and `HorizontalChange` / `VerticalChange` contain the thumb's total movement since the drag started, in the layout space where the thumb is arranged, like `DragDeltaEventArgs.TotalHorizontalChange` and `TotalVerticalChange`; under an ancestor drawn 2x larger, a drag of `30` root pixels reports `15`. When `Thumb.CancelDrag` runs, including when the thumb is detached while dragging, `Canceled` is `true` and the same total movement fields are reported with the values known at cancellation time.
 
 The constructors store the values passed to them without additional validation or conversion.
 
