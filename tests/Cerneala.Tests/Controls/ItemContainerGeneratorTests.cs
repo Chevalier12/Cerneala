@@ -564,6 +564,43 @@ public sealed class ItemContainerGeneratorTests
     }
 
     [Fact]
+    public void DerivedListBoxItemIsNotWrappedInPooledContainerWhenSubclassReturnsBaseContainerType()
+    {
+        DerivedListBoxItem a = new() { Content = "A" };
+        BaseContainerTypeListBox listBox = new();
+        listBox.SetItems(new object[] { "str", a });
+        UIElement generated = listBox.ItemContainerGenerator.Realize(new RealizationWindow(0, 1))[0];
+
+        UIElement second = listBox.ItemContainerGenerator.Realize(new RealizationWindow(1, 2))[0];
+        UIElement third = listBox.ItemContainerGenerator.Realize(new RealizationWindow(1, 2))[0];
+
+        Assert.Same(a, second);
+        Assert.Same(a, third);
+        Assert.Equal("A", a.Content);
+        Assert.Equal(1, a.ItemIndex);
+        Assert.Null(((ListBoxItem)generated).Content);
+        Assert.Equal(1, listBox.ItemContainerGenerator.RecyclePool.Count);
+    }
+
+    [Fact]
+    public void ReplacingDataItemWithDerivedListBoxItemRealizesItWhenSubclassReturnsBaseContainerType()
+    {
+        DerivedListBoxItem a = new() { Content = "A" };
+        BaseContainerTypeListBox listBox = new();
+        listBox.SetItems(new object[] { "str", "b" });
+        UIElement generated = listBox.ItemContainerGenerator.Realize()[0];
+
+        listBox.Items[0] = a;
+        UIElement realized = listBox.ItemContainerGenerator.Realize()[0];
+
+        Assert.Same(a, realized);
+        Assert.Equal("A", a.Content);
+        Assert.Equal(0, a.ItemIndex);
+        Assert.Null(((ListBoxItem)generated).Content);
+        Assert.Equal(1, listBox.ItemContainerGenerator.RecyclePool.Count);
+    }
+
+    [Fact]
     public void ListBoxReplacingDataItemWithListBoxItemThroughMeasureShowsListBoxItemInThePanel()
     {
         ListBoxItem a = new() { Content = "A" };
@@ -908,6 +945,18 @@ public sealed class ItemContainerGeneratorTests
         protected internal override UIElement CreateItemContainer(int index, object? item)
         {
             return item is ListBoxItem element ? element : new ListBoxItem();
+        }
+    }
+
+    private sealed class DerivedListBoxItem : ListBoxItem;
+
+    // Returns the base container type for every item and keeps ListBox's CreateItemContainer, which returns a
+    // ListBoxItem item, a derived one too, as itself.
+    private sealed class BaseContainerTypeListBox : ListBox
+    {
+        protected internal override Type GetContainerTypeForItem(object? item)
+        {
+            return typeof(ListBoxItem);
         }
     }
 }
