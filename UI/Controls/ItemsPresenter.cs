@@ -240,8 +240,6 @@ public class ItemsPresenter : Control
         }
 
         Layout.Panels.Panel nextPanel = ResolveItemsPanel();
-        ApplyVirtualizationContext(nextPanel, VirtualizationContext, nextWindow);
-
         List<UIElement> nextChildren = [.. CreateItemChildren(nextWindow)];
         Layout.Panels.Panel? oldPanel = panelRoot;
         List<UIElement> oldChildren = oldPanel is null ? [] : [.. oldPanel.VisualChildren];
@@ -250,6 +248,7 @@ public class ItemsPresenter : Control
         {
             SynchronizePanelChildren(nextPanel, nextChildren);
             panelRoot = nextPanel;
+            ApplyVirtualizationContext(nextPanel, VirtualizationContext, nextWindow);
             return true;
         }
 
@@ -293,14 +292,13 @@ public class ItemsPresenter : Control
             throw;
         }
 
+        ApplyVirtualizationContext(nextPanel, VirtualizationContext, nextWindow);
         return true;
     }
 
     private void RefreshOwnerItems(RealizationWindow? nextWindow)
     {
         Layout.Panels.Panel nextPanel = ResolveItemsPanel();
-        ApplyVirtualizationContext(nextPanel, VirtualizationContext, nextWindow);
-
         Layout.Panels.Panel? oldPanel = panelRoot;
         List<UIElement> oldChildren = oldPanel is null ? [] : [.. oldPanel.VisualChildren];
         List<UIElement> nextChildren = [.. CreateItemChildren(nextWindow)];
@@ -309,6 +307,7 @@ public class ItemsPresenter : Control
         {
             SynchronizePanelChildren(nextPanel, nextChildren);
             panelRoot = nextPanel;
+            ApplyVirtualizationContext(nextPanel, VirtualizationContext, nextWindow);
             return;
         }
 
@@ -351,6 +350,8 @@ public class ItemsPresenter : Control
 
             throw;
         }
+
+        ApplyVirtualizationContext(nextPanel, VirtualizationContext, nextWindow);
     }
 
     private static void AddPanelChild(Layout.Panels.Panel panel, UIElement child)
@@ -569,6 +570,8 @@ public class ItemsPresenter : Control
         return ItemsPanel ?? ItemsOwner?.ItemsPanel ?? defaultItemsPanel;
     }
 
+    // A refresh applies the context only after its panel and children are committed, so a refresh
+    // that throws leaves the context and first realized index with the panel the presenter keeps.
     private void ApplyVirtualizationContext(Layout.Panels.Panel? panel, VirtualizationContext? context, RealizationWindow? window)
     {
         if (!ReferenceEquals(contextPanel, panel))

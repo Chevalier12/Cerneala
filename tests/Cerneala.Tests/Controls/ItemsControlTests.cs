@@ -814,6 +814,72 @@ public sealed class ItemsControlTests
         Assert.Equal(100, oldPanel.VisualChildren.Count);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void FailedPanelSwapBeforeContainersAreAddedKeepsVirtualizationContextOnOldPanel(bool replacementVirtualizes)
+    {
+        VirtualizingStackPanel oldPanel = new();
+        Cerneala.UI.Layout.Panels.Panel replacement = replacementVirtualizes
+            ? new VirtualizingStackPanel()
+            : new Cerneala.UI.Layout.Panels.StackPanel();
+        FailingItemsControl control = new()
+        {
+            ItemsPanel = oldPanel
+        };
+        control.SetItems(Enumerable.Range(0, 100).Cast<object>());
+        VirtualizationContext supplied = new(100, 10, 30, 0, CacheItems: 1);
+        control.SetVirtualizationContext(supplied);
+        control.Measure(new MeasureContext(new LayoutSize(100, 30)));
+        Assert.Equal(4, oldPanel.VisualChildren.Count);
+
+        control.Fail = true;
+        control.ItemsPanel = replacement;
+        Assert.Throws<InvalidOperationException>(() => control.Measure(new MeasureContext(new LayoutSize(100, 30))));
+
+        Assert.Same(oldPanel, control.ItemsPresenter.LayoutPanelRoot);
+        Assert.Equal(supplied, oldPanel.VirtualizationContext);
+        Assert.Null((replacement as VirtualizingStackPanel)?.VirtualizationContext);
+        control.Measure(new MeasureContext(new LayoutSize(100, 31)));
+        Assert.Equal(1000, control.DesiredSize.Height);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void FailedPanelSwapWhileAddingContainersKeepsVirtualizationContextOnOldPanel(bool replacementVirtualizes)
+    {
+        VirtualizingStackPanel oldPanel = new();
+        Cerneala.UI.Layout.Panels.Panel replacement = replacementVirtualizes
+            ? new VirtualizingStackPanel()
+            : new Cerneala.UI.Layout.Panels.StackPanel();
+        FixedElement[] items = Enumerable.Range(0, 100)
+            .Select(index => new FixedElement(index.ToString(), new LayoutSize(100, 10)))
+            .ToArray();
+        ItemsControl control = new()
+        {
+            ItemsPanel = oldPanel
+        };
+        control.SetItems(items);
+        VirtualizationContext supplied = new(100, 10, 30, 0, CacheItems: 1);
+        control.SetVirtualizationContext(supplied);
+        control.Measure(new MeasureContext(new LayoutSize(100, 30)));
+        new Cerneala.UI.Layout.Panels.StackPanel().VisualChildren.Add(items[10]);
+        control.SetVirtualizationContext(new VirtualizationContext(100, 10, 30, 70, CacheItems: 1));
+
+        control.ItemsPanel = replacement;
+        Assert.Throws<InvalidOperationException>(() => control.Measure(new MeasureContext(new LayoutSize(100, 30))));
+
+        Assert.Same(oldPanel, control.ItemsPresenter.LayoutPanelRoot);
+        Assert.Equal(supplied, oldPanel.VirtualizationContext);
+        Assert.Equal(0, oldPanel.FirstRealizedIndex);
+        if (replacement is VirtualizingStackPanel virtualizingReplacement)
+        {
+            Assert.Null(virtualizingReplacement.VirtualizationContext);
+            Assert.Equal(0, virtualizingReplacement.FirstRealizedIndex);
+        }
+    }
+
     [Fact]
     public void UpdatingVirtualizationFromScrollInfoRefreshesPresenterWhenWindowChanges()
     {
@@ -908,6 +974,21 @@ public sealed class ItemsControlTests
         protected override LayoutSize MeasureCore(MeasureContext context)
         {
             return size;
+        }
+    }
+
+    private sealed class FailingItemsControl : ItemsControl
+    {
+        public bool Fail { get; set; }
+
+        protected internal override void PrepareItemContainer(UIElement container, int index, object? item)
+        {
+            if (Fail)
+            {
+                throw new InvalidOperationException("container failed");
+            }
+
+            base.PrepareItemContainer(container, index, item);
         }
     }
 
