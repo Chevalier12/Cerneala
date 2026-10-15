@@ -49,7 +49,7 @@ panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 300, 120)));
 
 `VirtualizingStackPanel` implements `IItemsVirtualizingPanel`. An owning `ItemsControl` receives viewport and offset updates from its `ScrollViewer` and forwards them to the panel. The panel estimates unknown row heights, records actual heights during measure, updates its average estimate, and corrects the realization window as measurements become available.
 
-`VirtualizationContext` remains available for fixed-extent hosts such as specialized controls. Automatic variable-height virtualization starts with the first `UpdateViewport` call. When `VirtualizationContext` is `null` and `UpdateViewport` was never called, the panel realizes and stacks every child at its natural height. When both are set, the realization window comes from `VirtualizationContext` while arrange positions use the automatic height estimates.
+`VirtualizationContext` remains available for fixed-extent hosts such as specialized controls. Automatic variable-height virtualization starts with the first `UpdateViewport` call. When `VirtualizationContext` is `null` and `UpdateViewport` was never called, the panel realizes and stacks every child at its natural height, whatever the value of `FirstRealizedIndex`: `RealizationWindow` then covers the item indices from `FirstRealizedIndex` up to, but not including, `FirstRealizedIndex + VisualChildren.Count`. For example, with `FirstRealizedIndex = 29` and 10 children, the window is items 29 to 38, and all 10 children are measured. When both are set, the realization window comes from `VirtualizationContext` while arrange positions use the automatic height estimates.
 
 During measure, the panel maps each visual child to an item index by adding `FirstRealizedIndex` to the child's visual-child position. Children whose item index is outside `RealizationWindow` are not measured and receive `LayoutSize.Zero` as their desired size. Realized children are measured with the available width and an infinite available height.
 
@@ -70,7 +70,7 @@ A realized item's measured height of zero replaces any previously recorded posit
 | Name | Type | Description |
 | --- | --- | --- |
 | `VirtualizationContext` | `VirtualizationContext?` | Gets or sets the item count, item extent, viewport extent, scroll offset, and cache size used to compute virtualization metrics. |
-| `RealizationWindow` | `RealizationWindow` | Gets the active realized item-index range from fixed context, automatic viewport state, or all current children. |
+| `RealizationWindow` | `RealizationWindow` | Gets the active realized item-index range from fixed context, automatic viewport state, or all current children (`FirstRealizedIndex` to `FirstRealizedIndex + VisualChildren.Count`). |
 | `TotalExtent` | `float` | Gets the measured, fixed, or variable-height estimated total extent. |
 | `FirstRealizedIndex` | `int` | Gets or sets the item index represented by the first visual child in `VisualChildren`. |
 

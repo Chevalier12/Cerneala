@@ -109,6 +109,31 @@ public sealed class VirtualizingStackPanelTests
         Assert.Equal(new LayoutRect(0, 75, 100, 30), panel.VisualChildren[2].ArrangedBounds);
     }
 
+    [Fact]
+    public void PanelWithoutContextOrViewportRealizesEveryChildForAnyFirstRealizedIndex()
+    {
+        VirtualizingStackPanel panel = new()
+        {
+            FirstRealizedIndex = 29
+        };
+        for (int index = 0; index < 10; index++)
+        {
+            panel.VisualChildren.Add(new FixedHeightElement(10));
+        }
+
+        panel.Measure(new MeasureContext(new LayoutSize(100, 1000)));
+        panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, panel.DesiredSize.Height)));
+
+        Assert.Equal(new RealizationWindow(29, 39), panel.RealizationWindow);
+        Assert.Equal(100, panel.DesiredSize.Height);
+        Assert.Equal(100, panel.TotalExtent);
+        for (int index = 0; index < 10; index++)
+        {
+            Assert.Equal(new LayoutSize(20, 10), panel.VisualChildren[index].DesiredSize);
+            Assert.Equal(new LayoutRect(0, index * 10, 100, 10), panel.VisualChildren[index].ArrangedBounds);
+        }
+    }
+
     private sealed class CountingElement : UIElement
     {
         public int MeasureCount { get; private set; }

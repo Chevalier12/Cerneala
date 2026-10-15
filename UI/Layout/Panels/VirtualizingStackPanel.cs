@@ -13,9 +13,14 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
 
     public VirtualizationContext? VirtualizationContext { get; set; }
 
+    // Without a context or viewport every current child is realized, and the children represent
+    // the items from FirstRealizedIndex on, so the window covers those item indices.
     public RealizationWindow RealizationWindow => VirtualizationContext?.GetRealizationWindow() ??
         (automaticViewport is null
-            ? RealizationWindow.Create(VisualChildren.Count, 0, VisualChildren.Count)
+            ? RealizationWindow.Create(
+                FirstRealizedIndex + VisualChildren.Count,
+                FirstRealizedIndex,
+                FirstRealizedIndex + VisualChildren.Count)
             : automaticWindow);
 
     public float TotalExtent

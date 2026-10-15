@@ -153,6 +153,42 @@ public sealed class ItemsPresenterTests
         Assert.Equal(100, oldPanel.VisualChildren.Count);
     }
 
+    [Fact]
+    public void ReleasedVirtualizingStackPanelUsedAloneMeasuresEveryChild()
+    {
+        Cerneala.UI.Layout.Panels.VirtualizingStackPanel panel = new();
+        ItemsPresenter presenter = new()
+        {
+            Items = Enumerable.Range(0, 100).Select(_ => new Border { Height = 10 }).ToArray(),
+            ItemsPanel = panel,
+            VirtualizationContext = new VirtualizationContext(100, 10, 30, 290)
+        };
+        MeasureContext context = new(new LayoutSize(100, 30));
+        presenter.Measure(context);
+        Assert.Equal(29, panel.FirstRealizedIndex);
+
+        presenter.ItemsPanel = new Cerneala.UI.Layout.Panels.StackPanel();
+        presenter.Measure(context);
+        Assert.Null(panel.VisualParent);
+        Assert.Null(panel.VirtualizationContext);
+        Assert.Empty(panel.VisualChildren);
+
+        for (int index = 0; index < 10; index++)
+        {
+            panel.VisualChildren.Add(new Border { Height = 10 });
+        }
+
+        panel.Measure(new MeasureContext(new LayoutSize(100, 1000)));
+        panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+
+        Assert.Equal(100f, panel.DesiredSize.Height);
+        for (int index = 0; index < 10; index++)
+        {
+            Assert.Equal(10f, panel.VisualChildren[index].DesiredSize.Height);
+            Assert.Equal(new LayoutRect(0, index * 10, 100, 10), panel.VisualChildren[index].ArrangedBounds);
+        }
+    }
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
