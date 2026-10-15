@@ -63,7 +63,11 @@ Save the draft to `.artifacts/issue-drafts/<yyyy-MM-dd>-<short-slug>.md`. That f
 
 ## 3. Get approval, then post
 
-Creating a GitHub issue publishes public content, so every issue needs the user's approval before it is posted. Ask in a way that never stalls the work:
+Creating a GitHub issue publishes public content, so an issue needs the user's approval before it is posted, with one exception:
+
+- **Bugs found by `cerneala-fix-bug`:** when `cerneala-fix-bug` finds another defect while it fixes a bug, post the issue directly, without asking (user decision, 2026-10-15). The fix's pull request lists it in its `Other bugs found` section.
+
+In every other case, ask in a way that never stalls the work:
 
 - **If the user is present:** show a two-line summary (title, plus one sentence of what happens), mention the draft path, and ask with `AskUserQuestion` (post / edit / drop). Post only after a "post".
 - **If the user is away:** for example, during a long unattended skill run. Keep the draft in `.artifacts/issue-drafts/`, continue the current task, and list every pending draft at the end of the run so the user can approve them together.

@@ -70,7 +70,11 @@ Save the draft with `apply_patch` to `.artifacts/issue-drafts/<yyyy-MM-dd>-<shor
 
 ## 3. Get approval, then post
 
-Creating a GitHub issue publishes public content, so every issue needs the user's explicit approval before it is posted.
+Creating a GitHub issue publishes public content, so an issue needs the user's explicit approval before it is posted, with one exception:
+
+- **Bugs found by `cerneala-fix-bug`:** when `cerneala-fix-bug` finds another defect while it fixes a bug, post the issue directly, without asking (user decision, 2026-10-15). The fix's pull request lists it in its `Other bugs found` section.
+
+In every other case:
 
 - **Do not post in the same turn you draft.** End the turn, or the task's final message, with the pending drafts: title, one sentence of what happens, and the draft path. Ask the user which ones to post.
 - **During a long unattended run:** keep the drafts in `.artifacts/issue-drafts/`, continue the current task, and list every pending draft in the final message so the user can approve them together.

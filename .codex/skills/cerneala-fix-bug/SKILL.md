@@ -104,6 +104,17 @@ Servo and Detective are part of this workflow, not assumed-correct test equipmen
 - Prefer public behavior over implementation details unless the contract is intentionally internal.
 - If a deterministic automated test is genuinely infeasible, state why and define a diagnostic gate plus a user-validation checklist. Do not claim automated regression coverage that does not exist.
 
+### Other Bugs Found Along the Way
+
+While you fix the bug, you can find other Cerneala defects: in the owning code, in a neighbouring contract, in the tests, or while you build the reproduction app. For each one:
+
+1. Prove it as `github-issue-raise` section 1 says: reproduce it on the current code, check that it fails for the stated reason, ground the expected behavior in a contract, and check for duplicates.
+2. Raise it with `github-issue-raise` and post the issue directly, without asking the user (user decision, 2026-10-15). When an open issue already covers it, post the new evidence as a comment on that issue instead.
+3. Do not fix it in this pull request. When it blocks the reproduction or the app, route around it with a comment. A Servo or Detective defect that blocks the workflow follows "Repair Servo and Detective When They Fail" instead.
+4. Record it for the pull request: the issue link, its title, and one sentence on how you found it. Also record each suspected defect that you did not raise, with the reason, for example "not reproduced" or "contract unclear".
+
+The pull request lists them (end of step 9). Example from #268: while building the reproduction app, the fix found #278 (a row realized again keeps the zero size it got outside the window) and #279 (Servo ignores `RenderTransform`), and PR 277 lists both under `Other bugs found`.
+
 ## 5. Build the User Reproduction App (MANDATORY)
 
 Every fix ships a small executable in which the user performs the user validation of step 8 by themselves. The app sets up the real scenario from the issue, the user does the actions that trigger the bug (scroll, click, type, drag, resize), and the app checks the broken invariant live and says whether the bug happened. It is not a demo that plays a fixed script while the user watches: the actions are the user's. Example for #268, "rows of a virtualized list must touch after a scroll": a list of 200 rows that are 11 and 10 device pixels tall, the steps "drag the scrollbar thumb in big jumps, then scroll with the wheel", and a line that stays green while every neighbouring row pair touches and turns red at the first gap or overlap.
@@ -155,7 +166,7 @@ When the app does not behave as expected:
 
 - A setup with several steps must wait for state, not count frames: a frame can render before your change has been measured and arranged. Move to the next step only when the previous step's state is visible on the elements, keep frames coming with `Invalidate(InvalidationFlags.Render, ...)` while waiting, and stop after a fixed cap, for example 300 frames, with the `NOT REACHED` verdict.
 - Log the state of each frame, and of each measure and arrange through a small subclass of the element that only records, to a file outside the repository. Read the log; do not guess. Remove the logging before publishing.
-- When the app runs into another Cerneala defect, raise it with `github-issue-raise`, do not fix it here, and route the app around it with a comment. Examples from #268: Servo ignores `RenderTransform`; a row that the panel had set to height 0 kept that height when it was measured again with the same width.
+- When the app runs into another Cerneala defect, handle it as "Other Bugs Found Along the Way" in step 4 says: raise it, do not fix it here, and route the app around it with a comment. Examples from #268: Servo ignores `RenderTransform`; a row that the panel had set to height 0 kept that height when it was measured again with the same width.
 
 ## 6. Diagnose the Root Cause
 
@@ -197,7 +208,7 @@ Summarize:
 - the production fix;
 - CSI or equivalent reproduction results before and after;
 - the user reproduction app: the path of its built `.exe` (or its release and download links when there is a pull request), and its check-mode verdicts before and after the fix;
-- any other Cerneala defect the app ran into, and the issue raised for it;
+- every other Cerneala defect found (step 4): its issue link, or the reason it was not raised, and, when there is a pull request, confirmation that its `Other bugs found` section lists it;
 - focused and full-suite automated verification;
 - the exact user-validation steps and whether the user has confirmed them;
 - documentation changes, remaining uncertainty, or limitations.
@@ -209,7 +220,7 @@ Do not commit, push, or open a pull request unless the user asks. A commit never
 1. Publish it self-contained and zip it: `dotnet publish <temp-dir>/repro-<N>/Issue<N>/Issue<N>.csproj -c Release -r win-x64 --self-contained true -o <temp-dir>/repro-<N>/publish/Issue<N>`, then zip the contents of that folder as `Issue<N>.zip`.
 2. Run the published `Issue<N>.exe` in check mode. It must exit with 0 and report OK. Otherwise do not publish it, and report the verdict.
 3. Create a GitHub pre-release that holds only the zip, on the pull request's head commit: `gh release create repro-pr-<PR> <zip> --target <head SHA> --prerelease --title "Reproduction app: PR #<PR> (bug #<N>)" --notes-file <notes file>`. The notes say which commit the app was built from, how to run it, the actions the user does, what OK and BUG look like, and the check-mode exit codes. When the release already exists, upload the new zip with `gh release upload repro-pr-<PR> <zip> --clobber`.
-4. Give the pull-request body a `How to check` section with the download link `https://github.com/<owner>/<repo>/releases/download/repro-pr-<PR>/Issue<N>.zip`, the literal steps (download, unzip, run `Issue<N>.exe`, then the actions written in its window), what the window shows when the fix works and when the bug is present, which actions check mode performs with a table of its verdicts before the fix, with the fix, and from the published `.exe`, and every difference between check mode and the user's run. Its user-validation section says: run `Issue<N>.exe` from the zip, do the actions in its window, and expect the green verdict.
+4. Give the pull-request body a `How to check` section with the download link `https://github.com/<owner>/<repo>/releases/download/repro-pr-<PR>/Issue<N>.zip`, the literal steps (download, unzip, run `Issue<N>.exe`, then the actions written in its window), what the window shows when the fix works and when the bug is present, which actions check mode performs with a table of its verdicts before the fix, with the fix, and from the published `.exe`, and every difference between check mode and the user's run. Its user-validation section says: run `Issue<N>.exe` from the zip, do the actions in its window, and expect the green verdict. After `How to check`, the body has an `Other bugs found` section with one bullet per bug from step 4 (issue link, title, how it was found), plus each suspected defect that was not raised with the reason, or `None.`; add later finds to it with `gh pr edit`.
 5. Delete `<temp-dir>/repro-<N>/` only after the release and the pull-request body are in place.
 
 Never hide a failing test behind optimistic wording.

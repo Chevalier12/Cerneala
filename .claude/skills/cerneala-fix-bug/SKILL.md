@@ -113,7 +113,18 @@ Servo and Detective are part of this workflow, not assumed-correct test equipmen
 - Prefer public behavior over implementation details unless the contract is intentionally internal.
 - If a deterministic automated test is genuinely infeasible, state why and define a diagnostic gate plus a user-validation checklist. Do not claim automated regression coverage that does not exist.
 
-If the bug has no GitHub issue yet, invoke `github-issue-raise` once the reproduction is RED, so that the fix can reference `Fixes #N`. Use the same skill for any other Cerneala defect you discover along the way, and do not fix that one here.
+If the bug has no GitHub issue yet, invoke `github-issue-raise` once the reproduction is RED, so that the fix can reference `Fixes #N`.
+
+### Other Bugs Found Along the Way
+
+While you fix the bug, you can find other Cerneala defects: in the owning code, in a neighbouring contract, in the tests, or while you build the reproduction app. For each one:
+
+1. Prove it as `github-issue-raise` section 1 says: reproduce it on the current code, check that it fails for the stated reason, ground the expected behavior in a contract, and check for duplicates.
+2. Raise it with `github-issue-raise` and post the issue directly, without asking the user (user decision, 2026-10-15). When an open issue already covers it, post the new evidence as a comment on that issue instead.
+3. Do not fix it in this pull request. When it blocks the reproduction or the app, route around it with a comment. A Servo or Detective defect that blocks the workflow follows "Repair Servo and Detective When They Fail" instead.
+4. Record it for the pull request: the issue link, its title, and one sentence on how you found it. Also record each suspected defect that you did not raise, with the reason, for example "not reproduced" or "contract unclear".
+
+Step 9 lists them in the pull request. Example from #268: while building the reproduction app, the fix found #278 (a row realized again keeps the zero size it got outside the window) and #279 (Servo ignores `RenderTransform`), and PR 277 lists both under `Other bugs found`.
 
 ## 5. Build the User Reproduction App (MANDATORY)
 
@@ -166,7 +177,7 @@ When the app does not behave as expected:
 
 - A setup with several steps must wait for state, not count frames: a frame can render before your change has been measured and arranged. Move to the next step only when the previous step's state is visible on the elements, keep frames coming with `Invalidate(InvalidationFlags.Render, ...)` while waiting, and stop after a fixed cap, for example 300 frames, with the `NOT REACHED` verdict.
 - Log the state of each frame, and of each measure and arrange through a small subclass of the element that only records, to a file outside the repository. Read the log; do not guess. Remove the logging before publishing.
-- When the app runs into another Cerneala defect, raise it with `github-issue-raise`, do not fix it here, and route the app around it with a comment. Examples from #268: Servo ignores `RenderTransform`; a row that the panel had set to height 0 kept that height when it was measured again with the same width.
+- When the app runs into another Cerneala defect, handle it as "Other Bugs Found Along the Way" in step 4 says: raise it, do not fix it here, and route the app around it with a comment. Examples from #268: Servo ignores `RenderTransform`; a row that the panel had set to height 0 kept that height when it was measured again with the same width.
 
 ## 6. Diagnose the Root Cause
 
@@ -206,6 +217,7 @@ After step 8 is green and the temporary harnesses and probes are cleaned up, inv
 - `Fixes #N` when an issue exists;
 - the root cause, the regression test, and the verification counts;
 - the reproduction app's check-mode verdict lines before and after the fix;
+- the other bugs found (step 4), for the `Other bugs found` section of the pull-request body;
 - the pending user-validation steps.
 
 If a required gate in step 8 failed or could not run, do not invoke it. Report the blocker and ask the user with `AskUserQuestion` whether to commit anyway.
@@ -235,6 +247,8 @@ Then publish the reproduction app for the pull request `<PR>` that the skill cre
    - every difference between check mode and the user's run, with the reason, for example the zoom that check mode turns off.
 
    The pull request's user-validation section then says: run `Issue<N>.exe` from the zip, do the actions in its window, and expect the green verdict.
+
+   After `How to check`, the body has an `Other bugs found` section with one bullet per bug from step 4, for example `- #279 Servo: target actions aim at the untransformed layout center ... Found when Servo could not drag the zoomed scrollbar thumb in the reproduction app.` Add each suspected defect that was not raised, with the reason. When there are none, the section says `None.` When a later commit finds another bug, add it to this section with `gh pr edit`.
 5. Delete the reproduction app's temporary folder, `<scratchpad>/repro-<N>/`, only after the release and the pull-request body are in place.
 
 ## 10. Report Evidence
@@ -246,7 +260,7 @@ Summarize, in the user's language and following "The user" in `CLAUDE.md`:
 - the production fix;
 - CSI or equivalent reproduction results before and after;
 - the user reproduction app: its release and download links, and its check-mode verdicts before the fix, with the fix, and from the published `.exe`;
-- any other Cerneala defect the app ran into, and the issue raised for it;
+- every other Cerneala defect found (step 4): its issue link, or the reason it was not raised, and confirmation that the pull request's `Other bugs found` section lists it;
 - the focused test filters you ran with their pass/fail counts, and a note that the complete suite was not run, by the user's choice;
 - the exact user-validation steps and whether the user has confirmed them;
 - documentation changes, remaining uncertainty, or limitations.
