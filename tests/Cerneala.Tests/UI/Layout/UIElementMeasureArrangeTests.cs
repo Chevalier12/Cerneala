@@ -178,6 +178,40 @@ public sealed class UIElementMeasureArrangeTests
         Assert.Equal((expectedLength, expectedLength, expectedLength), (measured, arranged, bounds));
     }
 
+    [Theory]
+    [InlineData(1.75f, false, 32.5f, 57f)]
+    [InlineData(1.75f, true, 32.5f, 57f)]
+    [InlineData(1.75f, false, 65.2f, 114f)]
+    [InlineData(1.75f, true, 69.1f, 121f)]
+    [InlineData(1.5f, true, 32.5f, 49f)]
+    public void LayoutRoundingDesiresAnExplicitDimensionAtTheDevicePixelsItIsArrangedAt(
+        float scale,
+        bool vertical,
+        float dimension,
+        float expectedDevicePixels)
+    {
+        // At scale 1.75, 57 device pixels are 57 / 1.75 = 32.571430f, and 32.571430f * 1.75f is slightly more than 57.
+        // Rounding that desired size up must not add a 58th device pixel that the element is never arranged at.
+        SizeRecordingElement element = new();
+        if (vertical)
+        {
+            element.Height = dimension;
+        }
+        else
+        {
+            element.Width = dimension;
+        }
+
+        LayoutRounding rounding = LayoutRounding.ForScale(scale);
+        element.Measure(new MeasureContext(new LayoutSize(200, 200), rounding));
+        element.Arrange(new ArrangeContext(new LayoutRect(0, 0, 200, 200), rounding));
+
+        float expected = expectedDevicePixels / scale;
+        float desired = vertical ? element.DesiredSize.Height : element.DesiredSize.Width;
+        float bounds = vertical ? element.ArrangedBounds.Height : element.ArrangedBounds.Width;
+        Assert.Equal((expected, expected), (desired, bounds));
+    }
+
     private static string GetDeviceEdges(UIElement element, float scale, bool vertical)
     {
         LayoutRect bounds = element.ArrangedBounds;
