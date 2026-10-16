@@ -31,6 +31,8 @@ spectrum.SetSelection(0.75f, 0.8f);
 
 The control paints white-to-hue horizontally and transparent-to-black vertically. Its marker represents the active saturation and value. Pointer click and drag update both channels continuously; arrow keys adjust the focused selection by `0.01`.
 
+A pointer press, move, or release selects the point drawn under the pointer. The unrounded root pointer position is converted through the render transforms of the spectrum and every ancestor, like `MouseEventArgs.GetPosition(spectrum)`, and the result is divided by the arranged size: `Saturation` is `x / Width` and `Value` is `1 - y / Height`, both clamped to `0..1`. For example, a `100` by `100` spectrum inside a panel with `RenderTransform = new Transform(Matrix3x2.CreateScale(2, 2))` and `RenderTransformOrigin = new LayoutPoint(0, 0)` is drawn at root `0..200`, so a click at root `(100, 100)` gives `Saturation == 0.5` and `Value == 0.5`. Without transforms the root and layout positions are equal. A pointer position that cannot be converted, for example through a non-invertible transform, keeps the current selection.
+
 `Hue` is coerced to `0..360`. `Saturation` and `Value` are coerced to `0..1`. `SetSelection` updates both channels as one logical operation and raises one `ValueChanged` event.
 
 ## Constructors

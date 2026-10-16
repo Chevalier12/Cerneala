@@ -1,3 +1,4 @@
+using System.Numerics;
 using Cerneala.Drawing;
 using Cerneala.UI.Core;
 using Cerneala.UI.Input;
@@ -169,7 +170,7 @@ public class ColorSpectrum : Control, IPointerDragSource
         }
 
         isDragging = true;
-        UpdateSelectionFromPoint(args.X, args.Y);
+        UpdateSelectionFromPointer(args);
         captureManager.Capture(this, routeMap);
         args.Handled = true;
         return true;
@@ -182,7 +183,7 @@ public class ColorSpectrum : Control, IPointerDragSource
             return false;
         }
 
-        UpdateSelectionFromPoint(args.X, args.Y);
+        UpdateSelectionFromPointer(args);
         args.Handled = true;
         return true;
     }
@@ -197,18 +198,25 @@ public class ColorSpectrum : Control, IPointerDragSource
             return false;
         }
 
-        UpdateSelectionFromPoint(args.X, args.Y);
+        UpdateSelectionFromPointer(args);
         isDragging = false;
         captureManager.Release(routeMap);
         args.Handled = true;
         return true;
     }
 
-    private void UpdateSelectionFromPoint(float x, float y)
+    // The root point goes back through the render transforms of the spectrum and every ancestor, so the
+    // selection is the point drawn under the pointer. A point that cannot be converted keeps the selection.
+    private void UpdateSelectionFromPointer(MouseEventArgs args)
     {
+        if (!InputCoordinateConverter.TryRootToElement(this, new Vector2(args.RootX, args.RootY), out Vector2 point))
+        {
+            return;
+        }
+
         LayoutRect bounds = ArrangedBounds;
-        float saturation = bounds.Width <= 0 ? 0 : (x - bounds.X) / bounds.Width;
-        float value = bounds.Height <= 0 ? 0 : 1 - ((y - bounds.Y) / bounds.Height);
+        float saturation = bounds.Width <= 0 ? 0 : point.X / bounds.Width;
+        float value = bounds.Height <= 0 ? 0 : 1 - (point.Y / bounds.Height);
         SetSelection(saturation, value);
     }
 

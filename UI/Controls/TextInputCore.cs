@@ -7,6 +7,7 @@ using Cerneala.UI.Platform;
 using Cerneala.UI.Rendering;
 using Cerneala.UI.Resources;
 using Cerneala.UI.Text;
+using System.Numerics;
 using System.Text;
 
 namespace Cerneala.UI.Controls;
@@ -176,8 +177,7 @@ internal sealed class TextInputCore
             return false;
         }
 
-        LayoutRect content = ContentControl.Deflate(Control.ArrangedBounds, host.Insets);
-        int index = viewport.GetCaretIndexAtMouseX(args.X, content);
+        int index = GetCaretIndexAtPointer(args);
         isMouseSelecting = true;
         mouseSelectionAnchor = index;
         MoveCaret(index);
@@ -194,8 +194,7 @@ internal sealed class TextInputCore
             return false;
         }
 
-        LayoutRect content = ContentControl.Deflate(Control.ArrangedBounds, host.Insets);
-        int index = viewport.GetCaretIndexAtMouseX(args.X, content);
+        int index = GetCaretIndexAtPointer(args);
         Select(mouseSelectionAnchor, index);
         viewport.ResetCaretBlink();
         args.Handled = true;
@@ -215,8 +214,7 @@ internal sealed class TextInputCore
             return false;
         }
 
-        LayoutRect content = ContentControl.Deflate(Control.ArrangedBounds, host.Insets);
-        int index = viewport.GetCaretIndexAtMouseX(args.X, content);
+        int index = GetCaretIndexAtPointer(args);
         Select(mouseSelectionAnchor, index);
         viewport.ResetCaretBlink();
         isMouseSelecting = false;
@@ -246,6 +244,20 @@ internal sealed class TextInputCore
         }
 
         return builder?.ToString() ?? text;
+    }
+
+    // The root point goes back through the render transforms of the control and every ancestor, so the caret
+    // lands at the character drawn under the pointer. A point that cannot be converted keeps the caret.
+    private int GetCaretIndexAtPointer(MouseEventArgs args)
+    {
+        if (!InputCoordinateConverter.TryRootToElement(Control, new Vector2(args.RootX, args.RootY), out Vector2 point))
+        {
+            return Caret.Position;
+        }
+
+        LayoutRect bounds = Control.ArrangedBounds;
+        LayoutRect content = ContentControl.Deflate(bounds, host.Insets);
+        return viewport.GetCaretIndexAtMouseX(bounds.X + point.X, content);
     }
 
     private void OnRoutedTextInput(UiElementId sender, RoutedEventArgs args)
