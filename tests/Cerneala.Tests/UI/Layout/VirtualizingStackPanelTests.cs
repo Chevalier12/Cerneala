@@ -5,6 +5,9 @@ using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
 using Cerneala.UI.Layout.Virtualization;
 using Cerneala.UI.Media;
+using Cerneala.UI.Motion.Presence;
+using Cerneala.Tests.UI.Motion.Core;
+using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
 
 namespace Cerneala.Tests.UI.Layout;
 
@@ -336,6 +339,46 @@ public sealed class VirtualizingStackPanelTests
     }
 
     [Fact]
+    public void RemovingASkippedChildWithPresenceDrawsNothingOfIt()
+    {
+        // Row 20 is skipped and arranged into zero-sized bounds at the panel origin. An exit would draw its label there,
+        // on top of the realized "Row 0"; a skipped row draws nothing, so it is detached at once instead.
+        ManualMotionClock clock = new();
+        (UIRoot root, VirtualizingStackPanel panel) = CreatePresenceRows(clock);
+        UIElement row20 = panel.VisualChildren[20];
+
+        Assert.True(panel.VisualChildren.Remove(row20));
+
+        Assert.Equal(PresenceState.Detached, root.Motion.Presence.GetState(row20));
+        Assert.False(row20.IsAttached);
+        Assert.Empty(root.Motion.Presence.GetExitingVisualChildren(panel));
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        Assert.Equal(["Row 0", "Row 1", "Row 2", "Row 3", "Row 4"], CommitTexts(root));
+    }
+
+    [Fact]
+    public void RemovingARealizedChildWithPresenceStillRunsItsExit()
+    {
+        ManualMotionClock clock = new();
+        (UIRoot root, VirtualizingStackPanel panel) = CreatePresenceRows(clock);
+        UIElement row2 = panel.VisualChildren[2];
+
+        Assert.True(panel.VisualChildren.Remove(row2));
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+
+        Assert.Equal(PresenceState.Exiting, root.Motion.Presence.GetState(row2));
+        Assert.Contains("Row 2", CommitTexts(root));
+
+        for (int frame = 0; frame < 12; frame++)
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(100));
+            root.ProcessFrame();
+        }
+
+        Assert.Equal(PresenceState.Detached, root.Motion.Presence.GetState(row2));
+    }
+
+    [Fact]
     public void AutomaticViewportMeasuresTheRowsThatItsCorrectedWindowAddsBeforeArrange()
     {
         // With the initial estimate of 28, offset 280 and viewport 400 realize items 10..25. Their measured height of 50
@@ -444,6 +487,48 @@ public sealed class VirtualizingStackPanelTests
         LayoutRect last = panel.VisualChildren[9].ArrangedBounds;
         Assert.InRange(first.Y, totalExtent - viewportExtent - 2, totalExtent - viewportExtent + 2);
         Assert.InRange(last.Y + last.Height, totalExtent - 2, totalExtent + 2);
+    }
+
+    // 30 rows of height 40 with a viewport of 200, so rows 0..4 are realized and rows 5..29 are skipped; the enter
+    // motion of every row has ended.
+    private static (UIRoot Root, VirtualizingStackPanel Panel) CreatePresenceRows(ManualMotionClock clock)
+    {
+        UIRoot root = new(320, 200, motionClock: clock);
+        VirtualizingStackPanel panel = new();
+        for (int index = 0; index < 30; index++)
+        {
+            panel.VisualChildren.Add(new Cerneala.UI.Controls.Border
+            {
+                Height = 40,
+                Presence = PresenceOptions.FadeAndScale(
+                    MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)),
+                    MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(1000))),
+                Child = new Cerneala.UI.Controls.TextBlock
+                {
+                    Text = $"Row {index}",
+                    Foreground = new SolidColorBrush(Color.White),
+                    Margin = new Thickness(10, 9, 0, 0)
+                }
+            });
+        }
+
+        root.VisualChildren.Add(panel);
+        panel.UpdateViewport(new ItemsVirtualizationViewport(30, 200, 0, 0));
+        root.ProcessFrame();
+        clock.Advance(TimeSpan.FromMilliseconds(200));
+        root.ProcessFrame();
+        Assert.Equal(["Row 0", "Row 1", "Row 2", "Row 3", "Row 4"], CommitTexts(root));
+        return (root, panel);
+    }
+
+    private static string?[] CommitTexts(UIRoot root)
+    {
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
+        return root.RetainedRenderer.Commit(root)
+            .Where(command => command.Kind == DrawCommandKind.DrawText)
+            .Select(command => command.Text)
+            .ToArray();
     }
 
     private static string GetVerticalDeviceEdges(IEnumerable<UIElement> elements, float scale)
