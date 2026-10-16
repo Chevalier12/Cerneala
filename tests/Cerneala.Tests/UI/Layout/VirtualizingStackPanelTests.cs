@@ -261,6 +261,48 @@ public sealed class VirtualizingStackPanelTests
         Assert.Equal("10..21, 21..31", GetVerticalDeviceEdges([panel.VisualChildren[1], panel.VisualChildren[2]], scale));
     }
 
+    [Theory]
+    [InlineData(1f, 33f, 1_000_000)]
+    [InlineData(1.75f, 28f, 400_000)]
+    [InlineData(1.25f, 41 / 1.25f, 100_000)]
+    public void AutomaticViewportScrolledToTheEndOfALongListRealizesAndArrangesTheLastItemsAtTheTotalExtent(
+        float scale,
+        float itemHeight,
+        int itemCount)
+    {
+        // Past 2^24 device pixels a float holds only even integers, so a float sum of odd device-pixel heights loses a
+        // pixel per item: 33 at scale 1 and 28 at scale 1.75 (49 device pixels) are odd. A height of 41 device pixels at
+        // scale 1.25 is 32.8, which a float cannot hold, so a float sum of it drifts much sooner, at a few million.
+        // The realization window and the arrange offsets must add the heights as TotalExtent does, so the end of the
+        // scroll range realizes the last items and the last item ends at TotalExtent, within the float precision at
+        // that magnitude (2 pixels here).
+        LayoutRounding rounding = LayoutRounding.ForScale(scale);
+        float viewportExtent = 10 * itemHeight;
+        VirtualizingStackPanel panel = new() { FirstRealizedIndex = 0 };
+        for (int index = 0; index < 10; index++)
+        {
+            panel.VisualChildren.Add(new FixedHeightElement(itemHeight));
+        }
+
+        panel.UpdateViewport(new ItemsVirtualizationViewport(itemCount, viewportExtent, 0, 0));
+        panel.Measure(new MeasureContext(new LayoutSize(100, viewportExtent), rounding));
+        float totalExtent = panel.TotalExtent;
+        Assert.Equal((float)((double)itemCount * itemHeight), totalExtent);
+
+        panel.UpdateViewport(new ItemsVirtualizationViewport(itemCount, viewportExtent, totalExtent - viewportExtent, 0));
+        Assert.Equal(new RealizationWindow(itemCount - 10, itemCount), panel.RealizationWindow);
+
+        // The same ten children now represent the last ten items. Width 99 keeps the layout caches from reusing the first pass.
+        panel.FirstRealizedIndex = itemCount - 10;
+        panel.Measure(new MeasureContext(new LayoutSize(99, viewportExtent), rounding));
+        panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 99, panel.DesiredSize.Height), rounding));
+
+        LayoutRect first = panel.VisualChildren[0].ArrangedBounds;
+        LayoutRect last = panel.VisualChildren[9].ArrangedBounds;
+        Assert.InRange(first.Y, totalExtent - viewportExtent - 2, totalExtent - viewportExtent + 2);
+        Assert.InRange(last.Y + last.Height, totalExtent - 2, totalExtent + 2);
+    }
+
     private static string GetVerticalDeviceEdges(IEnumerable<UIElement> elements, float scale)
     {
         return string.Join(", ", elements.Select(element =>
