@@ -139,14 +139,20 @@ public class ItemsPresenter : Control
 
     internal bool UpdateAutomaticVirtualization(float viewportExtent, float scrollOffset)
     {
-        if (VirtualizationContext is not null ||
-            ResolveItemsPanel() is not IItemsVirtualizingPanel virtualizingPanel)
+        if (VirtualizationContext is not null)
+        {
+            return false;
+        }
+
+        // The viewport is kept while a non-virtualizing panel presents the items, so a virtualizing
+        // panel that replaces it later realizes only the viewport's items in its first refresh.
+        automaticViewport = new ItemsVirtualizationViewport(GetItemCount(), viewportExtent, scrollOffset);
+        if (ResolveItemsPanel() is not IItemsVirtualizingPanel virtualizingPanel)
         {
             return false;
         }
 
         RealizationWindow previous = virtualizingPanel.RealizationWindow;
-        automaticViewport = new ItemsVirtualizationViewport(GetItemCount(), viewportExtent, scrollOffset);
         virtualizingPanel.UpdateViewport(automaticViewport.Value);
         RealizationWindow next = virtualizingPanel.RealizationWindow;
         bool changed = itemsDirty || previous != next;
@@ -224,7 +230,7 @@ public class ItemsPresenter : Control
         if (itemsDirty)
         {
             ResetEnteringPanelItemExtents();
-            RefreshAutomaticViewportItemCount();
+            RefreshAutomaticViewport();
         }
 
         RealizationWindow? nextWindow = GetRealizationWindow();
@@ -673,9 +679,11 @@ public class ItemsPresenter : Control
         }
     }
 
-    // An item change re-measures this presenter but not necessarily the scroll presenter
-    // that pushes the viewport, so the panel must not keep realizing against a stale count.
-    private void RefreshAutomaticViewportItemCount()
+    // An item or panel change re-measures this presenter but not necessarily the scroll presenter
+    // that pushes the viewport, so the panel must not keep realizing against a stale count, and a
+    // panel that is about to become the root, which has not received the viewport, must not realize
+    // every item.
+    private void RefreshAutomaticViewport()
     {
         if (automaticViewport is not ItemsVirtualizationViewport viewport ||
             VirtualizationContext is not null ||
@@ -685,7 +693,7 @@ public class ItemsPresenter : Control
         }
 
         int itemCount = GetItemCount();
-        if (itemCount == viewport.ItemCount)
+        if (itemCount == viewport.ItemCount && ReferenceEquals(virtualizingPanel, panelRoot))
         {
             return;
         }
