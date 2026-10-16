@@ -135,6 +135,7 @@ Build it right after the RED test, so that it shows the bug before the fix and i
 Project:
 
 - Create it outside the repository, in `<scratchpad>/repro-<N>/Issue<N>/`, where `<N>` is the GitHub issue number, for example `<scratchpad>/repro-268/Issue268/Issue268.csproj`. Without an issue number, use a short PascalCase scenario name, for example `<scratchpad>/repro-grid-auto-row-gap/GridAutoRowGap/`. Nothing in the repository changes for the app: no project, no `Cerneala.slnx` entry, no `Cerneala.csproj` exclusion.
+- Outside the repository means outside the folder of every checkout and worktree, also when git ignores the folder. Example: `.artifacts/repro-apps/issue-311/` in the main checkout is inside the repository; MSBuild does not read `.gitignore`, so the root `Cerneala.csproj` picked up that app's `MainWindow.crn` and every build of Cerneala in that checkout failed with `CERNEALAUI003` (2026-10-16).
 - Copy the project shape of `Playground/Cerneala.ComboBoxLab`, the smallest real Cerneala window app:
   - a `WinExe` project targeting `net8.0-windows`, with `ImplicitUsings` and `Nullable` enabled;
   - a `CernealaRoot` property with the absolute path of the worktree root and a trailing backslash, written as `<CernealaRoot Condition="'$(CernealaRoot)' == ''">C:\...\worktrees\issue-268\</CernealaRoot>` so that the before build can point it at the base commit with `-p:CernealaRoot=...`, and project references to `$(CernealaRoot)Cerneala.csproj`, to `$(CernealaRoot)Cerneala.Backends.SdlGpu\Cerneala.Backends.SdlGpu.csproj`, and to `$(CernealaRoot)Cerneala.SourceGen\Cerneala.SourceGen.csproj` with `OutputItemType="Analyzer"` and `ReferenceOutputAssembly="false"`;
@@ -278,6 +279,7 @@ Then publish the two reproduction apps for the pull request `<PR>` that the skil
 
    After `How to check`, the body has an `Other bugs found` section with one bullet per bug from step 4, for example `- #279 Servo: target actions aim at the untransformed layout center ... Found when Servo could not drag the zoomed scrollbar thumb in the reproduction app.` Add each suspected defect that was not raised, with the reason. When there are none, the section says `None.` When a later commit finds another bug, add it to this section with `gh pr edit`.
 8. Delete the reproduction app's temporary folder, `<scratchpad>/repro-<N>/`, only after the release and the pull-request body are in place, and after the base worktree is removed.
+   - When the apps cannot be published, for example because `dotnet publish` fails, keep the app source for a later run: copy the app folder without its `bin` and `obj` folders to `%LOCALAPPDATA%\CernealaTools\repro-apps\issue-<N>\`, which is outside every checkout, and name that path in the pull request's `How to check` section. Never keep it in `.artifacts/` or another folder of a checkout.
 
 ## 10. Report Evidence
 
