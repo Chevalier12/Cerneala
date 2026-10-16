@@ -2267,6 +2267,39 @@ public sealed class ComboBoxTests
         Assert.Equal(editor.Text.Length, editor.Selection.Active);
     }
 
+    // The drop-down is open with "one" selected and highlighted. SelectedIndex = 1 moves the preview to "two" while
+    // re-preparing one of the two preview rows throws, and the selection change still completes and raises
+    // SelectionChanged before the exception propagates out of the setter.
+    [Theory]
+    [InlineData("one")]
+    [InlineData("two")]
+    public void SelectedIndexChangeWhosePreviewRowPreparationThrowsRaisesSelectionChangedAndPropagates(string failingItem)
+    {
+        (_, _, FailingContentComboBox comboBox) = OpenNonEditableWithFirstItemSelected();
+        List<string> raised = [];
+        comboBox.SelectionChanged += (_, args) =>
+            raised.Add($"[{string.Join(",", args.RemovedItems)}]->[{string.Join(",", args.AddedItems)}]");
+
+        comboBox.FailFor = failingItem;
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => comboBox.SelectedIndex = 1);
+
+        Assert.Equal("content preparation failed", exception.Message);
+        Assert.Equal(1, comboBox.SelectedIndex);
+        Assert.Equal(["[one]->[two]"], raised);
+        ContentPresenter selection = Assert.IsType<ContentPresenter>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_SelectionPresenter"]);
+        Assert.Equal("two", selection.Content);
+        Assert.Equal(1, selection.ContentIndex);
+        if (failingItem == "one")
+        {
+            Assert.True(ItemContainerGenerator.GetIsSelected(comboBox.ItemContainerGenerator.RealizedContainers[1]));
+        }
+        else
+        {
+            Assert.False(ItemContainerGenerator.GetIsSelected(comboBox.ItemContainerGenerator.RealizedContainers[0]));
+        }
+    }
+
     // "one" is selected and "tw" autocompletes to the highlighted "two". Enter or Tab commits "two" while Selector's
     // re-preparation of the old or the new row throws inside the SelectedIndex setter, and the autocomplete suffix
     // still collapses to a caret at the end before the exception propagates.

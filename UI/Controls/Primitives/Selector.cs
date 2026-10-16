@@ -22,8 +22,8 @@ public class Selector : ItemsControl
     private bool relocatingSelection;
 
     // The number of selection changes notifying their new SelectedIndex. A selection change nested in that
-    // notification hands its first re-preparation failure to the outermost change, which rethrows it only after its
-    // own refresh and SelectionChanged.
+    // notification, or a subclass refreshing its own containers in it, hands its first re-preparation failure to the
+    // outermost change, which rethrows it only after its own refresh and SelectionChanged.
     private int selectedIndexNotificationDepth;
     private ExceptionDispatchInfo? nestedPreparationFailure;
 
@@ -267,6 +267,15 @@ public class Selector : ItemsControl
                 added is null ? [] : [added]));
         }
 
+        ThrowPreparationFailure(preparationFailure);
+    }
+
+    // A re-preparation failure raised while a selection change notifies its new SelectedIndex, by a nested
+    // selection change or by a subclass that refreshes its own containers in that notification, goes to the
+    // outermost change, which rethrows it only after its own refresh and SelectionChanged. Outside that
+    // notification it is rethrown at once.
+    internal void ThrowPreparationFailure(ExceptionDispatchInfo? preparationFailure)
+    {
         if (selectedIndexNotificationDepth > 0)
         {
             nestedPreparationFailure ??= preparationFailure;

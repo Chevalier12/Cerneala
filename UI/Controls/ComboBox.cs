@@ -1202,7 +1202,8 @@ public class ComboBox : Selector
         RefreshPreviewContainer(oldIndex, ref preparationFailure);
         RefreshPreviewContainer(sourceIndex, ref preparationFailure);
         SynchronizeSelectionPresenter();
-        preparationFailure?.Throw();
+        // A preview that follows a new SelectedIndex leaves the failure to that selection change.
+        ThrowPreparationFailure(preparationFailure);
     }
 
     // The highlighted item is now at sourceIndex, or was removed when sourceIndex is -1.
