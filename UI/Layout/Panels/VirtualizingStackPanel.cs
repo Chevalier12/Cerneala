@@ -7,6 +7,7 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
 {
     private const float InitialEstimatedItemExtent = 28;
     private readonly Dictionary<int, float> measuredItemExtents = [];
+    private readonly HashSet<int> measuredChildIndices = [];
     private ItemsVirtualizationViewport? automaticViewport;
     private RealizationWindow automaticWindow = RealizationWindow.Empty;
     private float estimatedItemExtent = InitialEstimatedItemExtent;
@@ -98,31 +99,43 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
         RealizationWindow window = RealizationWindow;
         LayoutRounding rounding = context.Rounding;
         measureRounding = rounding;
+        MeasureContext childContext = new(new LayoutSize(context.AvailableSize.Width, float.PositiveInfinity), rounding);
+        measuredChildIndices.Clear();
+        MeasureRealizedChildren(window, childContext);
+
+        // The measured heights correct the estimate, which can move the automatic window onto children that this measure
+        // skipped. Arrange places the children of the corrected window, so they are measured here until a round adds
+        // no child. Each further round measures at least one more child, so the rounds end.
+        if (automaticViewport is not null)
+        {
+            do
+            {
+                UpdateEstimatedItemExtent();
+                RecalculateAutomaticWindow();
+                window = RealizationWindow;
+            }
+            while (MeasureRealizedChildren(window, childContext));
+        }
+
         float width = 0;
         float height = 0;
         for (int i = 0; i < VisualChildren.Count; i++)
         {
-            int itemIndex = FirstRealizedIndex + i;
             UIElement child = VisualChildren[i];
-            if (!IsRealized(window, itemIndex))
+            if (!IsRealized(window, FirstRealizedIndex + i))
             {
-                child.SetUnmeasuredDesiredSize(LayoutSize.Zero);
+                // A child that this measure measured before the window moved past it keeps that real result, so a zero
+                // that no measure produced never replaces it.
+                if (!measuredChildIndices.Contains(i))
+                {
+                    child.SetUnmeasuredDesiredSize(LayoutSize.Zero);
+                }
+
                 continue;
             }
 
-            child.Measure(new MeasureContext(new LayoutSize(context.AvailableSize.Width, float.PositiveInfinity), context.Rounding));
             width = MathF.Max(width, child.DesiredSize.Width);
             height += rounding.ToDevicePixels(child.DesiredSize.Height);
-            if (automaticViewport is not null && child.DesiredSize.Height >= 0 && float.IsFinite(child.DesiredSize.Height))
-            {
-                measuredItemExtents[itemIndex] = child.DesiredSize.Height;
-            }
-        }
-
-        if (automaticViewport is not null)
-        {
-            UpdateEstimatedItemExtent();
-            RecalculateAutomaticWindow();
         }
 
         float naturalHeight = rounding.FromDevicePixels(height);
@@ -176,6 +189,31 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
         }
 
         return context.FinalRect;
+    }
+
+    // Measures the children inside the window that the current measure has not measured yet, and reports whether there
+    // were any.
+    private bool MeasureRealizedChildren(RealizationWindow window, MeasureContext childContext)
+    {
+        bool measuredAny = false;
+        for (int i = 0; i < VisualChildren.Count; i++)
+        {
+            int itemIndex = FirstRealizedIndex + i;
+            if (!IsRealized(window, itemIndex) || !measuredChildIndices.Add(i))
+            {
+                continue;
+            }
+
+            UIElement child = VisualChildren[i];
+            child.Measure(childContext);
+            measuredAny = true;
+            if (automaticViewport is not null && child.DesiredSize.Height >= 0 && float.IsFinite(child.DesiredSize.Height))
+            {
+                measuredItemExtents[itemIndex] = child.DesiredSize.Height;
+            }
+        }
+
+        return measuredAny;
     }
 
     // Item indices start at 0 and stop at int.MaxValue, so a negative FirstRealizedIndex or an

@@ -238,27 +238,61 @@ public sealed class VirtualizingStackPanelTests
     {
         // Heights are in device pixels. Once items 1 (11) and 2 (10) are measured, the unrealized item 0 is
         // estimated at 10.5 device pixels, so the realized rows start after a prefix that is not a whole device pixel.
+        // Item 2 is the last item, so the window that the first measure corrects contains no other unmeasured item.
         LayoutRounding rounding = LayoutRounding.ForScale(scale);
         VirtualizingStackPanel panel = new() { FirstRealizedIndex = 0 };
-        foreach (float deviceHeight in new[] { 20f, 11f, 10f, 20f, 20f })
+        foreach (float deviceHeight in new[] { 20f, 11f, 10f })
         {
             panel.VisualChildren.Add(new FixedHeightElement(deviceHeight / scale));
         }
 
         // With the initial estimate of 28, offset 28 and viewport 29 realize items 1 and 2.
-        panel.UpdateViewport(new ItemsVirtualizationViewport(5, 29, 28, 0));
+        panel.UpdateViewport(new ItemsVirtualizationViewport(3, 29, 28, 0));
         panel.Measure(new MeasureContext(new LayoutSize(100, 29), rounding));
         panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, panel.DesiredSize.Height), rounding));
 
         // Width 99 keeps the arrange cache from reusing the first pass.
-        panel.UpdateViewport(new ItemsVirtualizationViewport(5, 15 / scale, 11 / scale, 0));
+        panel.UpdateViewport(new ItemsVirtualizationViewport(3, 15 / scale, 11 / scale, 0));
         panel.Measure(new MeasureContext(new LayoutSize(100, 15 / scale), rounding));
         panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 99, panel.DesiredSize.Height), rounding));
 
         Assert.Equal(new RealizationWindow(1, 3), panel.RealizationWindow);
-        Assert.Equal(52.5f, panel.TotalExtent * scale, 3);
+        Assert.Equal(31.5f, panel.TotalExtent * scale, 3);
         // The first realized row starts at the device pixel nearest to 10.5 (ties to even), and the second touches it.
         Assert.Equal("10..21, 21..31", GetVerticalDeviceEdges([panel.VisualChildren[1], panel.VisualChildren[2]], scale));
+    }
+
+    [Fact]
+    public void AutomaticViewportMeasuresTheRowsThatItsCorrectedWindowAddsBeforeArrange()
+    {
+        // With the initial estimate of 28, offset 280 and viewport 400 realize items 10..25. Their measured height of 50
+        // corrects the estimate and moves the window back to 5..14, so items 5..9 join the window during this measure.
+        LayoutRounding rounding = LayoutRounding.ForScale(1);
+        VirtualizingStackPanel panel = new() { FirstRealizedIndex = 0 };
+        for (int i = 0; i < 30; i++)
+        {
+            panel.VisualChildren.Add(new FixedHeightElement(50));
+        }
+
+        for (int pass = 0; pass < 2; pass++)
+        {
+            panel.UpdateViewport(new ItemsVirtualizationViewport(30, 400, 280, 0));
+            panel.Measure(new MeasureContext(new LayoutSize(100, 400), rounding));
+            panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, panel.DesiredSize.Height), rounding));
+
+            Assert.Equal(new RealizationWindow(5, 14), panel.RealizationWindow);
+            Assert.Equal(
+                string.Join(", ", Enumerable.Range(5, 9).Select(index => $"{index * 50}..{(index + 1) * 50}")),
+                GetVerticalDeviceEdges(panel.VisualChildren.Skip(5).Take(9), 1));
+            Assert.All(panel.VisualChildren.Skip(5).Take(9), child => Assert.Equal(50, child.DesiredSize.Height));
+            if (pass == 0)
+            {
+                // Items 14..24 were measured before the window moved past them, so they keep that result instead of
+                // a zero that no measure produced. Items 0..4 and 25..29 were never measured.
+                Assert.All(panel.VisualChildren.Skip(14).Take(11), child => Assert.Equal(50, child.DesiredSize.Height));
+                Assert.All(panel.VisualChildren.Take(5).Concat(panel.VisualChildren.Skip(25)), child => Assert.Equal(0, child.DesiredSize.Height));
+            }
+        }
     }
 
     [Fact]
