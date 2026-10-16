@@ -8,7 +8,7 @@ description: Reproduce, diagnose, optimize, and verify observable Cerneala perfo
 Turn an observable performance failure into a fixed measurement contract, find the owning bottleneck, and continue until the exact gate passes without weakening correctness, architecture, or visual fidelity.
 
 Follow `CLAUDE.md`, especially "Claude Code tooling and verification commands":
-- Delegate discovery to Haiku explorers.
+- Search with Grep and Roslyn MCP; Haiku explorers are optional.
 - Run long measurements and suites with `run_in_background`.
 - Filter output to the decisive numbers.
 
@@ -157,7 +157,7 @@ Implement the smallest architecture-correct framework change that removes the ev
 - Do not pass by disabling an effect, reducing resolution or samples, skipping necessary work, deferring work beyond the measurement window, changing timing semantics, or weakening the gate.
 - Pool, cache, batch, or retain work only when ownership, invalidation, disposal, device loss, and bounded-growth behavior remain correct.
 - Avoid replacing measured cost with unmeasured retained memory, latency, GPU work, or startup work.
-- Follow the repository's source, test, and documentation rules (`CLAUDE.md`). Delegate discovery to Haiku explorers, use Roslyn MCP for C# references when connected, and read the decisive files yourself.
+- Follow the repository's source, test, and documentation rules (`CLAUDE.md`). Search with Grep, use Roslyn MCP for C# references when connected, and read the decisive files yourself.
 
 When the correct solution requires a nontrivial algorithm choice, use the project algorithm-market workflow before committing to one. Do not add algorithmic machinery for an ordinary lifetime or invalidation bug.
 

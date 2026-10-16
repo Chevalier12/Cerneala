@@ -7,12 +7,12 @@ description: Implement a named Cerneala Markdown checklist plan end-to-end, one 
 
 Execute the named checklist plan completely. The plan file is the only durable progress ledger: its checkmarks and status line say what is done. Keep working across stages and turns until the plan is finished or a real blocker needs the user.
 
-Follow `CLAUDE.md`, especially "Claude Code tooling and verification commands". It covers Haiku explorers for discovery, Roslyn MCP, `Edit`, background runs, and the focused-test commands.
+Follow `CLAUDE.md`, especially "Claude Code tooling and verification commands". It covers direct search with Grep and Roslyn MCP, optional subagents, `Edit`, background runs, and the focused-test commands.
 
 ## Start
 
 0. **Worktree (MANDATORY, before anything else):** start in a temporary worktree, as `CLAUDE.md` describes under "Temporary worktree for skills", and work only there. If the plan file is missing from the worktree, or differs from the main checkout's copy, copy the main checkout's copy into the worktree at the same path. After the final completion audit and its commit, finish the worktree the same way.
-1. Resolve the requested plan to one exact Markdown file. Resolve a bare name against `docs/plans/` first; delegate the lookup to a Haiku explorer when the path is not known.
+1. Resolve the requested plan to one exact Markdown file. Resolve a bare name against `docs/plans/` first; search for it with Glob when the path is not known.
 2. If several files match, ask the user which one (with `AskUserQuestion`). Do not pick one.
 3. Tell the user in one short message, in their language:
    - which plan file
@@ -35,7 +35,7 @@ A compaction summary is never a substitute for this skill or for the plan file.
 
 ## Resolve and Audit the Plan
 
-- Run `.\Tools\scripts\New-FileTree.ps1`, then read `FileTree.md` once for orientation. This is the fixed orientation exception in `CLAUDE.md`.
+- When you do not know the structure of the area the plan touches, run `.\Tools\scripts\New-FileTree.ps1`, then read `FileTree.md` once for orientation.
 - Read the complete plan and identify:
   - already checked work;
   - unchecked actionable items;
@@ -44,7 +44,7 @@ A compaction summary is never a substitute for this skill or for the plan file.
   - optional or conditional items;
   - public API and documentation obligations;
   - verification and stop conditions.
-- Do not trust old baseline descriptions; the repository may have moved on. Delegate the "where does this live now / who calls it" questions for the active stage to Haiku explorers, in parallel when independent. Then read the decisive files yourself.
+- Do not trust old baseline descriptions; the repository may have moved on. Answer the "where does this live now / who calls it" questions for the active stage with Roslyn MCP and Grep, or with Haiku explorers in parallel when there are many independent broad questions. Then read the decisive files yourself.
 - Confirm prerequisite plans are complete before starting a dependent plan. Run them first only when the requested plan explicitly makes them a dependency. Otherwise ask the user.
 
 ## Stage-Atomic Batches (MANDATORY)
@@ -69,8 +69,8 @@ Optimize elapsed time and tool round-trips after correctness, repository policy,
 Default shape per stage: one consolidated audit, one implementation pass, one verification ladder, and one mandatory checklist checkpoint.
 
 - Build one work map for the active stage, then execute it. Do not rediscover scope before every task.
-- Put independent tool calls in one message: parallel explorer assignments, independent reads, independent status checks.
-- Read the complete content only of C# files you will edit (repository policy). For already-understood supporting files, use targeted reads, Roslyn symbol queries, or explorer answers.
+- Put independent tool calls in one message: independent searches, reads, status checks, and any subagent assignments.
+- Read the complete content only of C# files you will edit (repository policy). For already-understood supporting files, use targeted reads, Roslyn symbol queries, or subagent answers.
 - Make related edits with as few `Edit` calls as stay readable. Do not rewrite whole files to change a few lines.
 - Implement the whole stage before its verification ladder, except where the plan requires RED/GREEN test-first order.
 - Choose the verification ladder once:
@@ -88,7 +88,7 @@ Default shape per stage: one consolidated audit, one implementation pass, one ve
 
 ### 1. Revalidate scope
 
-- Do one consolidated scope pass for the active stage. Delegate discovery to explorers, and use Roslyn MCP for C# references when connected.
+- Do one consolidated scope pass for the active stage. Search with Grep, and use Roslyn MCP for C# references when connected; explorers are optional.
 - Read every C# file completely before editing it. Use partial reads only after full context is known.
 - Inspect only the definitions, references, tests, and public docs plausibly affected by the stage.
 - Preserve user changes and unrelated dirty-worktree changes.

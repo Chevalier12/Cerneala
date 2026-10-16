@@ -293,8 +293,9 @@ public sealed class ServoInputTests
         }
         else if (action == "drag")
         {
-            Assert.Equal(30, thumb.TotalHorizontalChange);
-            Assert.Equal(10, thumb.TotalVerticalChange);
+            // The 30 x 10 root-pixel drag is 15 x 5 in the 2x panel that arranges the thumb.
+            Assert.Equal(15, thumb.TotalHorizontalChange);
+            Assert.Equal(5, thumb.TotalVerticalChange);
         }
         else if (action == "scroll")
         {

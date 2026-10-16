@@ -1034,6 +1034,16 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         DesiredSize = desiredSize;
     }
 
+    // A parent that skips measuring this element (VirtualizingStackPanel gives an unrealized row LayoutSize.Zero) writes
+    // a desired size that no measure produced, so the current cache entry stops matching: the next Measure with the same
+    // constraint runs MeasureCore instead of returning that size. The constraint and the older entries, which hold real
+    // measure results, stay.
+    internal void SetUnmeasuredDesiredSize(LayoutSize desiredSize)
+    {
+        DesiredSize = desiredSize;
+        LastMeasureLayoutVersion = -1;
+    }
+
     internal bool SetArrangedBounds(LayoutRect arrangedBounds)
     {
         if (ArrangedBounds == arrangedBounds)
