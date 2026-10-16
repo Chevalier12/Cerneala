@@ -303,6 +303,94 @@ public sealed class VirtualizingStackPanelTests
         Assert.InRange(last.Y + last.Height, totalExtent - 2, totalExtent + 2);
     }
 
+    [Theory]
+    [InlineData(1f, 33f, 33f, 1_000_000)]
+    [InlineData(1.25f, 41f, 41f, 1_000_000)]
+    [InlineData(1.75f, 49f, 49f, 400_000)]
+    [InlineData(1f, 33f, 34f, 1_000_000)]
+    [InlineData(1.25f, 41f, 42f, 1_000_000)]
+    public void AutomaticWindowMatchesAWalkThatConvertsEveryDevicePixelPrefixToAnExtent(
+        float scale,
+        float evenItemDevicePixels,
+        float oddItemDevicePixels,
+        int itemCount)
+    {
+        // The window must be the one found by adding each item's device pixels in a double and converting every
+        // prefix to a float extent before comparing it with the scroll offset and the viewport end, also next to
+        // item edges past 2^24 device pixels, where neighbouring float offsets are several device pixels apart.
+        // Items 0 to 9 are measured. With two heights the estimate of the other items, their average, is half a
+        // device pixel off a whole one: 33.5 at scale 1, and 32.8 and 33.6 average to 33.2 (41.5 device pixels) at 1.25.
+        LayoutRounding rounding = LayoutRounding.ForScale(scale);
+        float[] heights = [.. Enumerable.Range(0, 10).Select(index => (index % 2 == 0 ? evenItemDevicePixels : oddItemDevicePixels) / scale)];
+        float estimate = heights.Average();
+        double estimateDevicePixels = MathF.Round(estimate * scale) / scale == estimate ? MathF.Round(estimate * scale) : estimate * scale;
+        double GetItemDevicePixels(int index) => index < 10 ? MathF.Round(heights[index] * scale) : estimateDevicePixels;
+        float viewportExtent = 330 / scale;
+        VirtualizingStackPanel panel = new() { FirstRealizedIndex = 0 };
+        foreach (float height in heights)
+        {
+            panel.VisualChildren.Add(new FixedHeightElement(height));
+        }
+
+        panel.UpdateViewport(new ItemsVirtualizationViewport(itemCount, viewportExtent, 0, 0));
+        panel.Measure(new MeasureContext(new LayoutSize(100, viewportExtent), rounding));
+
+        int pastFloatIntegers = (int)Math.Ceiling(16_777_216 / estimateDevicePixels);
+        List<float> offsets = [16_000_000f, 16_000_000f - 1, panel.TotalExtent - viewportExtent, float.MaxValue];
+        foreach (int itemIndex in new[] { 0, 1, 2, 11, itemCount / 2, pastFloatIntegers, pastFloatIntegers + 1, itemCount - 10, itemCount - 1, itemCount })
+        {
+            double prefix = 0;
+            for (int index = 0; index < itemIndex; index++)
+            {
+                prefix += GetItemDevicePixels(index);
+            }
+
+            float edge = PrefixToExtent(prefix, scale);
+            offsets.AddRange([edge, MathF.BitDecrement(edge), MathF.BitIncrement(edge), edge - viewportExtent, MathF.BitIncrement(edge - viewportExtent)]);
+        }
+
+        foreach (float offset in offsets.Where(offset => offset >= 0))
+        {
+            RealizationWindow expected = GetPrefixWalkWindow(itemCount, GetItemDevicePixels, scale, offset, viewportExtent);
+            panel.UpdateViewport(new ItemsVirtualizationViewport(itemCount, viewportExtent, offset, 0));
+            Assert.True(expected == panel.RealizationWindow, $"offset {offset:R}: expected {expected}, got {panel.RealizationWindow}");
+        }
+    }
+
+    // The window of PR #292: every item adds its device pixels to a double prefix, and each prefix is converted to a
+    // float extent before it is compared.
+    private static RealizationWindow GetPrefixWalkWindow(
+        int itemCount,
+        Func<int, double> getItemDevicePixels,
+        float scale,
+        float offset,
+        float viewportExtent)
+    {
+        float viewportEnd = offset + viewportExtent;
+        int start = 0;
+        double cursor = 0;
+        while (start < itemCount && PrefixToExtent(cursor + getItemDevicePixels(start), scale) <= offset)
+        {
+            cursor += getItemDevicePixels(start);
+            start++;
+        }
+
+        int end = start;
+        while (end < itemCount && (PrefixToExtent(cursor, scale) < viewportEnd || end == start))
+        {
+            cursor += getItemDevicePixels(end);
+            end++;
+        }
+
+        return new RealizationWindow(start, end);
+    }
+
+    private static float PrefixToExtent(double devicePixels, float scale)
+    {
+        float extent = (float)devicePixels / scale;
+        return float.IsFinite(extent) ? extent : float.MaxValue;
+    }
+
     private static string GetVerticalDeviceEdges(IEnumerable<UIElement> elements, float scale)
     {
         return string.Join(", ", elements.Select(element =>
