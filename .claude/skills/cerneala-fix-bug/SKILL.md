@@ -13,6 +13,14 @@ Invoking this skill authorizes running the `git-session-commit-push` skill at th
 
 **Step 0 (MANDATORY, before anything else):** start in a temporary worktree, as `CLAUDE.md` describes under "Temporary worktree for skills", and work only there. After the report, finish the worktree the same way.
 
+**Step 0b (MANDATORY): be up to date with master.** Run `git fetch origin master`, then `git merge origin/master` in the worktree, and check that `git rev-list --count HEAD..origin/master` prints `0`. Do this right after step 0, before any read, reproduction, or edit: do not trust that the worktree's base is current, because `origin/master` is only as new as the last fetch, and an existing linked worktree can be days old. Sync again in the same way, because master moves while you work:
+
+- before you build the reproduction apps (step 5) and before you publish them (step 9), so that the before app is built against the newest master and both apps contain every fix already merged;
+- before you invoke `git-session-commit-push` (step 9), so that the pull request never starts from a stale base;
+- before you call a defect "suspected, not raised", "visible in both builds", or "not part of this bug": first check whether the newest `origin/master` already fixes it.
+
+When a sync brings new commits, resolve conflicts by keeping both sides' intent, rebuild, and rerun the regression test, the focused tests, and the reproduction app's check mode before you go on. Example: PR #329 (bug #327) started from `957e2913`, while master meanwhile merged `178feef9` (#294, "stop drawing children outside the window"). Both of its GIFs therefore showed labels piled up over "Row 0", and the pull request wrote that off as a suspected unrelated bug. With `origin/master` merged, "Row 0" is clean in the after app.
+
 ## 1. Capture the Contract
 
 - Restate the smallest known reproduction, expected behavior, actual behavior, environment, and frequency.
@@ -119,7 +127,7 @@ If the bug has no GitHub issue yet, invoke `github-issue-raise` once the reprodu
 
 While you fix the bug, you can find other Cerneala defects: in the owning code, in a neighbouring contract, in the tests, or while you build the reproduction app. For each one:
 
-1. Prove it as `github-issue-raise` section 1 says: reproduce it on the current code, check that it fails for the stated reason, ground the expected behavior in a contract, and check for duplicates.
+1. Prove it as `github-issue-raise` section 1 says: reproduce it on the current code after the sync of step 0b (the newest `origin/master`), check that it fails for the stated reason, ground the expected behavior in a contract, and check for duplicates.
 2. Raise it with `github-issue-raise` and post the issue directly, without asking the user (user decision, 2026-10-15). When an open issue already covers it, post the new evidence as a comment on that issue instead.
 3. Do not fix it in this pull request. When it blocks the reproduction or the app, route around it with a comment. A Servo or Detective defect that blocks the workflow follows "Repair Servo and Detective When They Fail" instead.
 4. Record it for the pull request: the issue link, its title, and one sentence on how you found it. Also record each suspected defect that you did not raise, with the reason, for example "not reproduced" or "contract unclear".
@@ -217,7 +225,7 @@ Do not declare success because the code compiles or one assertion passes. The au
 
 ## 9. Commit and Push (MANDATORY)
 
-After step 8 is green and the temporary harnesses and probes are cleaned up, invoke the `git-session-commit-push` skill. The commit never contains the reproduction app or any file from it. Pass it:
+After step 8 is green and the temporary harnesses and probes are cleaned up, sync with master as step 0b says (and rerun step 8 if the sync brought commits), then invoke the `git-session-commit-push` skill. The commit never contains the reproduction app or any file from it. Pass it:
 
 - `Fixes #N` when an issue exists;
 - the root cause, the regression test, and the verification counts;
@@ -238,7 +246,7 @@ Then publish the two reproduction apps for the pull request `<PR>` that the skil
    dotnet publish <scratchpad>/repro-<N>/Issue<N>/Issue<N>.csproj -c Release -r win-x64 --self-contained true -p:ReproVariant=after -o <scratchpad>/repro-<N>/publish/after
    ```
 
-2. Publish the before app from the same source against the base commit, the commit the pull request's branch started from, without the fix:
+2. Publish the before app from the same source against the base commit, without the fix. After the sync of step 0b, the base commit `git merge-base origin/master HEAD` is the newest `origin/master`; if it is not, sync first:
    - Create a detached worktree of it outside the repository, in a short folder such as `$env:TEMP\cb<N>`: `git worktree add --detach $env:TEMP\cb<N> $(git merge-base origin/master HEAD)`. The scratchpad path is too long: Windows path limits break the checkout there (`fatal: Could not reset index file`).
    - Copy the app folder to `<scratchpad>/repro-<N>/before/Issue<N>/` without its `bin` and `obj` folders, so the two builds never share build outputs. Change nothing else in the copy.
    - Publish the copy with `-p:CernealaRoot=$env:TEMP\cb<N>\ -p:ReproVariant=before -o <scratchpad>/repro-<N>/publish/before`, with the other arguments of the after app.
