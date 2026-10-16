@@ -5,6 +5,7 @@ using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
 using Cerneala.UI.Layout.Virtualization;
 using Cerneala.UI.Media;
+using Border = Cerneala.UI.Controls.Border;
 
 namespace Cerneala.Tests.UI.Layout;
 
@@ -339,6 +340,43 @@ public sealed class VirtualizingStackPanelTests
 
         Assert.Equal(new RealizationWindow(0, 15), panel.RealizationWindow);
         Assert.Equal((1, 1), (measuresBefore, moved.MeasureCount));
+    }
+
+    [Fact]
+    public void ChildRealizedAgainReportsAMeasureChangeOfADescendantMadeOutsideTheRealizationWindow()
+    {
+        // Each row is row > container > leaf, so the change is two levels below the row the panel skips.
+        UIRoot root = new(200, 100, 1);
+        VirtualizingStackPanel panel = new() { FirstRealizedIndex = 0 };
+        List<UIElement> leaves = [];
+        List<Border> rows = [];
+        for (int i = 0; i < 20; i++)
+        {
+            UIElement leaf = new() { Height = 20 };
+            Border row = new() { Child = new Border { Child = leaf } };
+            leaves.Add(leaf);
+            rows.Add(row);
+            panel.VisualChildren.Add(row);
+        }
+
+        root.VisualChildren.Add(panel);
+        panel.UpdateViewport(new ItemsVirtualizationViewport(20, 100, 0, 0));
+        root.ProcessFrame();
+        panel.UpdateViewport(new ItemsVirtualizationViewport(20, 100, 200, 0));
+        panel.Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange, "scroll");
+        root.ProcessFrame();
+        Assert.False(panel.RealizationWindow.Contains(0));
+
+        leaves[0].Height = 60;
+        root.ProcessFrame();
+        panel.UpdateViewport(new ItemsVirtualizationViewport(20, 100, 0, 0));
+        panel.Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange, "scroll back");
+        root.ProcessFrame();
+
+        Assert.True(panel.RealizationWindow.Contains(0));
+        Assert.Equal(
+            (60f, 60f, new LayoutRect(0, 0, 200, 60), 60f),
+            (leaves[0].DesiredSize.Height, rows[0].DesiredSize.Height, rows[0].ArrangedBounds, rows[1].ArrangedBounds.Y));
     }
 
     [Fact]
