@@ -2,6 +2,7 @@ using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
 
 namespace Cerneala.Tests.Controls.Primitives;
 
@@ -27,6 +28,39 @@ public sealed class ThumbTests
         DragDeltaEventArgs delta = Assert.Single(deltas);
         Assert.Equal(7, delta.HorizontalChange);
         Assert.Equal(4, delta.VerticalChange);
+    }
+
+    [Fact]
+    public void DragChangesUseTheSpaceWhereTheThumbIsArranged()
+    {
+        UIRoot root = new(100, 100);
+        UIElement scaledParent = new()
+        {
+            RenderTransform = new Transform(Matrix3x2.CreateScale(2, 2)),
+            RenderTransformOrigin = new LayoutPoint(0, 0)
+        };
+        Thumb thumb = new();
+        scaledParent.Arrange(new ArrangeContext(new LayoutRect(0, 0, 50, 50)));
+        thumb.Arrange(new ArrangeContext(new LayoutRect(0, 0, 20, 20)));
+        scaledParent.VisualChildren.Add(thumb);
+        root.VisualChildren.Add(scaledParent);
+        ElementInputBridge bridge = new();
+        List<DragDeltaEventArgs> deltas = [];
+        List<DragCompletedEventArgs> completed = [];
+        thumb.DragDelta += (_, args) => deltas.Add(args);
+        thumb.DragCompleted += (_, args) => completed.Add(args);
+
+        // The parent draws everything 2x larger, so 14 x 8 root pixels are 7 x 4 layout pixels.
+        bridge.Dispatch(root, PointerFrame(10, 10, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(10, 10, 24, 18, previousDown: true, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(24, 18, 24, 18, previousDown: true));
+
+        DragDeltaEventArgs delta = Assert.Single(deltas);
+        Assert.Equal((7f, 4f), (delta.HorizontalChange, delta.VerticalChange));
+        Assert.Equal((7f, 4f), (delta.TotalHorizontalChange, delta.TotalVerticalChange));
+        Assert.Equal((7f, 4f), (thumb.TotalHorizontalChange, thumb.TotalVerticalChange));
+        DragCompletedEventArgs done = Assert.Single(completed);
+        Assert.Equal((7f, 4f), (done.HorizontalChange, done.VerticalChange));
     }
 
     [Fact]
