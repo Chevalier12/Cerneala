@@ -9,6 +9,7 @@ internal sealed class SdlInputSource : IInputSource
     private KeyboardSnapshot previousKeyboard = KeyboardSnapshot.Empty;
     private readonly HashSet<InputKey> downKeys = [];
     private readonly List<TextInputSnapshotEvent> textInput = [];
+    private readonly List<InputKey> keyRepeats = [];
     private bool hasPointerPosition;
 
     public float CoordinateScale { get; set; } = 1;
@@ -16,10 +17,11 @@ internal sealed class SdlInputSource : IInputSource
     public InputFrame GetFrame()
     {
         KeyboardSnapshot currentKeyboard = KeyboardSnapshot.FromDownKeys(downKeys);
-        InputFrame frame = new(previousPointer, currentPointer, previousKeyboard, currentKeyboard, textInput.ToArray());
+        InputFrame frame = new(previousPointer, currentPointer, previousKeyboard, currentKeyboard, textInput.ToArray(), keyRepeats.ToArray());
         previousPointer = currentPointer;
         previousKeyboard = currentKeyboard;
         textInput.Clear();
+        keyRepeats.Clear();
         return frame;
     }
 
@@ -64,7 +66,7 @@ internal sealed class SdlInputSource : IInputSource
             checked(currentPointer.WheelValue + (flipped ? -delta : delta)));
     }
 
-    public void SetKey(int scancode, bool down)
+    public void SetKey(int scancode, bool down, bool repeat = false)
     {
         InputKey key = MapScancode(scancode);
         if (key is InputKey.None or InputKey.Unknown)
@@ -74,7 +76,10 @@ internal sealed class SdlInputSource : IInputSource
 
         if (down)
         {
-            downKeys.Add(key);
+            if (!downKeys.Add(key) && repeat)
+            {
+                keyRepeats.Add(key);
+            }
         }
         else
         {
