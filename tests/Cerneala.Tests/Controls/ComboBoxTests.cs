@@ -2179,6 +2179,115 @@ public sealed class ComboBoxTests
         Assert.Equal(editor.Text.Length, editor.Selection.Active);
     }
 
+    // Enter and Tab commit the highlighted "one" while re-preparing its row throws, and the drop-down still closes
+    // before the exception propagates. A later Down then moves the committed selection of a closed drop-down.
+    [Theory]
+    [InlineData(InputKey.Enter)]
+    [InlineData(InputKey.Tab)]
+    public void CommitKeyWhosePreviewRowPreparationThrowsStillClosesDropDown(InputKey key)
+    {
+        (UIRoot root, ElementInputBridge bridge, FailingContentComboBox comboBox) = OpenNonEditableWithFirstItemSelected();
+        Overlay overlay = Assert.IsType<Overlay>(comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"]);
+
+        comboBox.FailFor = "one";
+        Exception? exception = Record.Exception(() => DispatchKey(root, bridge, key));
+        comboBox.FailFor = null;
+        root.ProcessFrame();
+
+        Assert.IsType<InvalidOperationException>(exception);
+        Assert.False(comboBox.IsDropDownOpen);
+        Assert.False(overlay.IsOpen);
+        Assert.Equal(0, comboBox.SelectedIndex);
+    }
+
+    // Escape cancels the preview of "two" while re-preparing the row of "two" throws, and the overlay still closes
+    // with IsDropDownOpen before the exception propagates.
+    [Fact]
+    public void EscapeWhosePreviewRowPreparationThrowsStillClosesOverlay()
+    {
+        (UIRoot root, ElementInputBridge bridge, FailingContentComboBox comboBox) = OpenNonEditableWithFirstItemSelected();
+        Overlay overlay = Assert.IsType<Overlay>(comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"]);
+        DispatchKey(root, bridge, InputKey.Down);
+
+        comboBox.FailFor = "two";
+        Exception? exception = Record.Exception(() => DispatchKey(root, bridge, InputKey.Escape));
+        comboBox.FailFor = null;
+        root.ProcessFrame();
+
+        Assert.IsType<InvalidOperationException>(exception);
+        Assert.False(comboBox.IsDropDownOpen);
+        Assert.False(overlay.IsOpen);
+        Assert.Equal(0, comboBox.SelectedIndex);
+    }
+
+    // F4 reopens the drop-down while re-preparing the realized row of the selected "one" throws, and the overlay
+    // still opens with IsDropDownOpen before the exception propagates. Down then moves only the preview.
+    [Fact]
+    public void OpenWhosePreviewRowPreparationThrowsStillOpensOverlay()
+    {
+        (UIRoot root, ElementInputBridge bridge, FailingContentComboBox comboBox) = OpenNonEditableWithFirstItemSelected();
+        Overlay overlay = Assert.IsType<Overlay>(comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"]);
+        DispatchKey(root, bridge, InputKey.Escape);
+        root.ProcessFrame();
+
+        comboBox.FailFor = "one";
+        Exception? exception = Record.Exception(() => DispatchKey(root, bridge, InputKey.F4));
+        comboBox.FailFor = null;
+        root.ProcessFrame();
+
+        Assert.IsType<InvalidOperationException>(exception);
+        Assert.True(comboBox.IsDropDownOpen);
+        Assert.True(overlay.IsOpen);
+
+        DispatchKey(root, bridge, InputKey.Down);
+        root.ProcessFrame();
+
+        Assert.Equal(0, comboBox.SelectedIndex);
+    }
+
+    // A click on "two" commits it while re-preparing the row of the highlighted "one" throws, and the selection
+    // still changes and the drop-down still closes before the exception propagates.
+    [Fact]
+    public void ClickingItemWhilePreviewRowPreparationThrowsStillCommitsAndClosesDropDown()
+    {
+        UIRoot root = new(100, 100);
+        FailingContentComboBox comboBox = new() { IsEditable = false, ItemsPanel = new LayoutStackPanel() };
+        comboBox.SetItems(new[] { "one", "two", "three" });
+        LayoutCanvas canvas = new();
+        canvas.VisualChildren.Add(comboBox);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        comboBox.SelectedIndex = 0;
+        comboBox.IsDropDownOpen = true;
+        root.ProcessFrame();
+        // Text rows measure 0 px tall without a font, so each row gets a fixed height.
+        foreach (UIElement container in comboBox.ItemContainerGenerator.RealizedContainers.Values)
+        {
+            container.Height = 10;
+        }
+
+        root.ProcessFrame();
+        Overlay overlay = Assert.IsType<Overlay>(comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"]);
+        UIElement clicked = comboBox.ItemContainerGenerator.RealizedContainers[1];
+        float x = clicked.ArrangedBounds.X + 2;
+        float y = clicked.ArrangedBounds.Y + 2;
+        ElementInputBridge bridge = new();
+
+        comboBox.FailFor = "one";
+        Exception? exception = Record.Exception(() =>
+        {
+            bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+            bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        });
+        comboBox.FailFor = null;
+        root.ProcessFrame();
+
+        Assert.IsType<InvalidOperationException>(exception);
+        Assert.Equal(1, comboBox.SelectedIndex);
+        Assert.False(comboBox.IsDropDownOpen);
+        Assert.False(overlay.IsOpen);
+    }
+
     // The drop-down of a non-editable ComboBox is open with "one" selected and highlighted.
     private static (UIRoot Root, ElementInputBridge Bridge, FailingContentComboBox ComboBox) OpenNonEditableWithFirstItemSelected()
     {

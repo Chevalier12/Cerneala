@@ -289,9 +289,28 @@ public class ComboBox : Selector
             return;
         }
 
-        UpdatePreviewSelection(sourceIndex, updateEditor: true);
-        CommitSelectionTransaction();
-        IsDropDownOpen = false;
+        // A failed re-preparation of the old or the clicked row does not stop the click: it still commits the
+        // clicked item and closes the drop-down, and only then the first failure propagates.
+        ExceptionDispatchInfo? preparationFailure = null;
+        try
+        {
+            UpdatePreviewSelection(sourceIndex, updateEditor: true);
+        }
+        catch (Exception exception)
+        {
+            preparationFailure = ExceptionDispatchInfo.Capture(exception);
+        }
+
+        try
+        {
+            CommitSelectionTransactionAndCloseDropDown();
+        }
+        catch (Exception) when (preparationFailure is not null)
+        {
+            // The first failure propagates below.
+        }
+
+        preparationFailure?.Throw();
     }
 
     internal override void OnItemsViewSourceChanged()
@@ -439,17 +458,24 @@ public class ComboBox : Selector
         }
         else if (ReferenceEquals(args.Property, IsDropDownOpenProperty))
         {
-            if (IsDropDownOpen)
+            // A failed re-preparation does not stop the drop-down change: the overlay still follows
+            // IsDropDownOpen before the failure propagates.
+            try
             {
-                BeginSelectionTransaction();
+                if (IsDropDownOpen)
+                {
+                    BeginSelectionTransaction();
+                }
+                else
+                {
+                    CancelSelectionTransaction();
+                }
             }
-            else
+            finally
             {
-                CancelSelectionTransaction();
+                ApplyTemplate();
+                SynchronizeDropDownState();
             }
-
-            ApplyTemplate();
-            SynchronizeDropDownState();
         }
         else if (ReferenceEquals(args.Property, IsEditableProperty) ||
                  ReferenceEquals(args.Property, IsReadOnlyProperty))
@@ -877,16 +903,14 @@ public class ComboBox : Selector
 
         if (keyArgs.Key == InputKey.Enter && IsDropDownOpen)
         {
-            CommitSelectionTransaction();
-            IsDropDownOpen = false;
+            CommitSelectionTransactionAndCloseDropDown();
             args.Handled = true;
             return;
         }
 
         if (keyArgs.Key == InputKey.Tab && IsDropDownOpen)
         {
-            CommitSelectionTransaction();
-            IsDropDownOpen = false;
+            CommitSelectionTransactionAndCloseDropDown();
             return;
         }
 
@@ -1051,6 +1075,21 @@ public class ComboBox : Selector
         editableTextBox?.MoveCaret(editableTextBox.Text.Length);
         SynchronizeSelectionPresenter();
         preparationFailure?.Throw();
+    }
+
+    // Enter, Tab, and item clicks commit the preview and close the drop-down. A failed re-preparation during the
+    // commit does not stop the command: the drop-down still closes before the failure propagates, so an open
+    // drop-down always has a selection transaction.
+    private void CommitSelectionTransactionAndCloseDropDown()
+    {
+        try
+        {
+            CommitSelectionTransaction();
+        }
+        finally
+        {
+            IsDropDownOpen = false;
+        }
     }
 
     private void CancelSelectionTransaction()
