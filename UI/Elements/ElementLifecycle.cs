@@ -1,3 +1,5 @@
+using System.Runtime.ExceptionServices;
+
 namespace Cerneala.UI.Elements;
 
 public static class ElementLifecycle
@@ -20,7 +22,9 @@ public static class ElementLifecycle
         root.Relay.VerifyAccess();
 
         HashSet<UIElement> visited = new(ReferenceEqualityComparer.Instance);
-        DetachPostOrder(root, element, visited);
+        ExceptionDispatchInfo? failure = null;
+        DetachPostOrder(root, element, visited, ref failure);
+        failure?.Throw();
     }
 
     internal static void ValidateSubtreeAttachment(UIRoot root, UIElement element)
@@ -69,10 +73,13 @@ public static class ElementLifecycle
         }
     }
 
+    // A failing detach callback does not stop the traversal: every element is detached, then the first
+    // failure propagates.
     private static void DetachPostOrder(
         UIRoot root,
         UIElement current,
-        HashSet<UIElement> visited)
+        HashSet<UIElement> visited,
+        ref ExceptionDispatchInfo? failure)
     {
         if (!visited.Add(current)) { return; }
         for (int role = 0; role < 2; role++)
@@ -80,11 +87,18 @@ public static class ElementLifecycle
             IReadOnlyList<UIElement> children = role == 0 ? current.VisualChildren : current.LogicalChildren;
             for (int index = 0; index < children.Count; index++)
             {
-                DetachPostOrder(root, children[index], visited);
+                DetachPostOrder(root, children[index], visited, ref failure);
             }
         }
 
-        DetachSingle(root, current);
+        try
+        {
+            DetachSingle(root, current);
+        }
+        catch (Exception exception)
+        {
+            failure ??= ExceptionDispatchInfo.Capture(exception);
+        }
     }
 
     private static void AttachSingle(UIRoot root, UIElement element)
@@ -111,9 +125,15 @@ public static class ElementLifecycle
 
         root.ElementIds.Release(element);
         root.ResourceDependencyTracker.RemoveOwner(element);
-        element.DetachFromRoot();
-        root.Motion.Properties.RemoveBindings(element);
-        root.RemovePendingWork(element);
-        root.AspectProcessor.Clear(element);
+        try
+        {
+            element.DetachFromRoot();
+        }
+        finally
+        {
+            root.Motion.Properties.RemoveBindings(element);
+            root.RemovePendingWork(element);
+            root.AspectProcessor.Clear(element);
+        }
     }
 }

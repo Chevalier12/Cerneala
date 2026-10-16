@@ -722,21 +722,28 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     internal void DetachFromRoot()
     {
         attachmentGeneration++;
-        DetachElementAspectBehavior();
-        RaiseEvent(new RoutedEventArgs(UnloadedEvent, this));
-        Root?.Motion.Layout.MarkDetached(this);
-        Root?.Motion.Presence.MarkDetached(this);
-        foreach (IElementLifecycleBehavior behavior in lifecycleBehaviors)
+        try
         {
-            behavior.Detach();
+            DetachElementAspectBehavior();
+            RaiseEvent(new RoutedEventArgs(UnloadedEvent, this));
+            Root?.Motion.Layout.MarkDetached(this);
+            Root?.Motion.Presence.MarkDetached(this);
+            foreach (IElementLifecycleBehavior behavior in lifecycleBehaviors)
+            {
+                behavior.Detach();
+            }
+            OnDetached();
         }
-        OnDetached();
-        ReleaseImageResources();
-        Root?.RetainedRenderCache.ReleaseElement(this);
-        Bindings.Clear();
-        ElementId = null;
-        Root?.AdvanceImageResolutionEpoch();
-        Root = null;
+        finally
+        {
+            // A failing detach callback still leaves the element detached.
+            ReleaseImageResources();
+            Root?.RetainedRenderCache.ReleaseElement(this);
+            Bindings.Clear();
+            ElementId = null;
+            Root?.AdvanceImageResolutionEpoch();
+            Root = null;
+        }
     }
 
     protected virtual void OnAttached()
