@@ -1,7 +1,10 @@
+using Cerneala.Drawing;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
 using Cerneala.UI.Layout.Virtualization;
+using Cerneala.UI.Media;
 
 namespace Cerneala.Tests.UI.Layout;
 
@@ -238,25 +241,26 @@ public sealed class VirtualizingStackPanelTests
     {
         // Heights are in device pixels. Once items 1 (11) and 2 (10) are measured, the unrealized item 0 is
         // estimated at 10.5 device pixels, so the realized rows start after a prefix that is not a whole device pixel.
+        // Item 2 is the last item, so the window that the first measure corrects contains no other unmeasured item.
         LayoutRounding rounding = LayoutRounding.ForScale(scale);
         VirtualizingStackPanel panel = new() { FirstRealizedIndex = 0 };
-        foreach (float deviceHeight in new[] { 20f, 11f, 10f, 20f, 20f })
+        foreach (float deviceHeight in new[] { 20f, 11f, 10f })
         {
             panel.VisualChildren.Add(new FixedHeightElement(deviceHeight / scale));
         }
 
         // With the initial estimate of 28, offset 28 and viewport 29 realize items 1 and 2.
-        panel.UpdateViewport(new ItemsVirtualizationViewport(5, 29, 28, 0));
+        panel.UpdateViewport(new ItemsVirtualizationViewport(3, 29, 28, 0));
         panel.Measure(new MeasureContext(new LayoutSize(100, 29), rounding));
         panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, panel.DesiredSize.Height), rounding));
 
         // Width 99 keeps the arrange cache from reusing the first pass.
-        panel.UpdateViewport(new ItemsVirtualizationViewport(5, 15 / scale, 11 / scale, 0));
+        panel.UpdateViewport(new ItemsVirtualizationViewport(3, 15 / scale, 11 / scale, 0));
         panel.Measure(new MeasureContext(new LayoutSize(100, 15 / scale), rounding));
         panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 99, panel.DesiredSize.Height), rounding));
 
         Assert.Equal(new RealizationWindow(1, 3), panel.RealizationWindow);
-        Assert.Equal(52.5f, panel.TotalExtent * scale, 3);
+        Assert.Equal(31.5f, panel.TotalExtent * scale, 3);
         // The first realized row starts at the device pixel nearest to 10.5 (ties to even), and the second touches it.
         Assert.Equal("10..21, 21..31", GetVerticalDeviceEdges([panel.VisualChildren[1], panel.VisualChildren[2]], scale));
     }
@@ -335,6 +339,187 @@ public sealed class VirtualizingStackPanelTests
 
         Assert.Equal(new RealizationWindow(0, 15), panel.RealizationWindow);
         Assert.Equal((1, 1), (measuresBefore, moved.MeasureCount));
+    }
+
+    [Fact]
+    public void SkippedChildrenOfADirectlyUsedPanelDrawNothing()
+    {
+        // Rows 5..29 lie outside the realization window and are arranged into zero-sized bounds at the panel origin,
+        // where their labels would pile up on the realized "Row 0".
+        UIRoot root = new(320, 200);
+        VirtualizingStackPanel panel = new();
+        for (int index = 0; index < 30; index++)
+        {
+            panel.VisualChildren.Add(new Cerneala.UI.Controls.Border
+            {
+                Height = 40,
+                Child = new Cerneala.UI.Controls.TextBlock
+                {
+                    Text = $"Row {index}",
+                    Foreground = new SolidColorBrush(Color.White),
+                    Margin = new Thickness(10, 9, 0, 0)
+                }
+            });
+        }
+
+        root.VisualChildren.Add(panel);
+        panel.UpdateViewport(new ItemsVirtualizationViewport(30, 200, 0, 0));
+        root.ProcessFrame();
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
+
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
+
+        Assert.Equal(new RealizationWindow(0, 5), panel.RealizationWindow);
+        Assert.Equal(
+            ["Row 0", "Row 1", "Row 2", "Row 3", "Row 4"],
+            commands.Where(command => command.Kind == DrawCommandKind.DrawText).Select(command => command.Text).ToArray());
+    }
+
+    [Fact]
+    public void SkippedChildTakesPartInRenderingHitTestingAndInputOnlyWhileRealized()
+    {
+        UIRoot root = new(100, 100);
+        VirtualizingStackPanel panel = new();
+        for (int index = 0; index < 10; index++)
+        {
+            panel.VisualChildren.Add(new UIElement { Height = 20, Focusable = true });
+        }
+
+        root.VisualChildren.Add(panel);
+        panel.UpdateViewport(new ItemsVirtualizationViewport(10, 100, 0, 0));
+        root.ProcessFrame();
+        UIElement skipped = panel.VisualChildren[7];
+
+        Assert.Equal(new RealizationWindow(0, 5), panel.RealizationWindow);
+        Assert.Equal(
+            (false, false, false),
+            (UIElementVisibility.ParticipatesInRendering(skipped),
+                UIElementVisibility.ParticipatesInHitTest(skipped),
+                UIElementVisibility.ParticipatesInInput(skipped)));
+
+        panel.UpdateViewport(new ItemsVirtualizationViewport(10, 100, 100, 0));
+        panel.Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange, "test");
+        root.ProcessFrame();
+
+        Assert.Equal(new RealizationWindow(5, 10), panel.RealizationWindow);
+        Assert.Equal(
+            (true, true, true),
+            (UIElementVisibility.ParticipatesInRendering(skipped),
+                UIElementVisibility.ParticipatesInHitTest(skipped),
+                UIElementVisibility.ParticipatesInInput(skipped)));
+        Assert.False(UIElementVisibility.ParticipatesInRendering(panel.VisualChildren[0]));
+    }
+
+    [Fact]
+    public void AutomaticViewportMeasuresTheRowsThatItsCorrectedWindowAddsBeforeArrange()
+    {
+        // With the initial estimate of 28, offset 280 and viewport 400 realize items 10..25. Their measured height of 50
+        // corrects the estimate and moves the window back to 5..14, so items 5..9 join the window during this measure.
+        LayoutRounding rounding = LayoutRounding.ForScale(1);
+        VirtualizingStackPanel panel = new() { FirstRealizedIndex = 0 };
+        for (int i = 0; i < 30; i++)
+        {
+            panel.VisualChildren.Add(new FixedHeightElement(50));
+        }
+
+        for (int pass = 0; pass < 2; pass++)
+        {
+            panel.UpdateViewport(new ItemsVirtualizationViewport(30, 400, 280, 0));
+            panel.Measure(new MeasureContext(new LayoutSize(100, 400), rounding));
+            panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, panel.DesiredSize.Height), rounding));
+
+            Assert.Equal(new RealizationWindow(5, 14), panel.RealizationWindow);
+            Assert.Equal(
+                string.Join(", ", Enumerable.Range(5, 9).Select(index => $"{index * 50}..{(index + 1) * 50}")),
+                GetVerticalDeviceEdges(panel.VisualChildren.Skip(5).Take(9), 1));
+            Assert.All(panel.VisualChildren.Skip(5).Take(9), child => Assert.Equal(50, child.DesiredSize.Height));
+            if (pass == 0)
+            {
+                // Items 14..24 were measured before the window moved past them, so they keep that result instead of
+                // a zero that no measure produced. Items 0..4 and 25..29 were never measured.
+                Assert.All(panel.VisualChildren.Skip(14).Take(11), child => Assert.Equal(50, child.DesiredSize.Height));
+                Assert.All(panel.VisualChildren.Take(5).Concat(panel.VisualChildren.Skip(25)), child => Assert.Equal(0, child.DesiredSize.Height));
+            }
+        }
+    }
+
+    [Fact]
+    public void RowRealizedAgainWithTheSameConstraintReportsItsMeasuredHeight()
+    {
+        // Rows 0 and 1 are measured with (100, infinity), get the zero desired size while the window is 3..4, and
+        // are measured again with (100, infinity) after the scroll back. The zero was never a measure result, so the
+        // measure cache must not return it.
+        VirtualizingStackPanel panel = new();
+        FixedHeightElement[] rows = [.. Enumerable.Range(0, 6).Select(_ => new FixedHeightElement(40))];
+        foreach (FixedHeightElement row in rows)
+        {
+            panel.VisualChildren.Add(row);
+        }
+
+        // The panel's own constraint alternates so that its measure cache does not skip the pass; its children
+        // always get (100, infinity).
+        void ScrollTo(float offset, float panelHeight)
+        {
+            panel.UpdateViewport(new ItemsVirtualizationViewport(6, 80, offset, 0));
+            panel.Measure(new MeasureContext(new LayoutSize(100, panelHeight)));
+            panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, panel.DesiredSize.Height)));
+        }
+
+        ScrollTo(0, 80);
+        ScrollTo(120, 81);
+        Assert.Equal(new RealizationWindow(3, 5), panel.RealizationWindow);
+        Assert.Equal(0, rows[0].DesiredSize.Height);
+
+        ScrollTo(0, 80);
+
+        Assert.Equal(new RealizationWindow(0, 2), panel.RealizationWindow);
+        Assert.Equal([40f, 40f], rows[..2].Select(row => row.DesiredSize.Height));
+        Assert.Equal(240, panel.TotalExtent);
+        Assert.Equal(new LayoutRect(0, 0, 100, 40), rows[0].ArrangedBounds);
+        Assert.Equal(new LayoutRect(0, 40, 100, 40), rows[1].ArrangedBounds);
+    }
+
+    [Theory]
+    [InlineData(1f, 33f, 1_000_000)]
+    [InlineData(1.75f, 28f, 400_000)]
+    [InlineData(1.25f, 41 / 1.25f, 100_000)]
+    public void AutomaticViewportScrolledToTheEndOfALongListRealizesAndArrangesTheLastItemsAtTheTotalExtent(
+        float scale,
+        float itemHeight,
+        int itemCount)
+    {
+        // Past 2^24 device pixels a float holds only even integers, so a float sum of odd device-pixel heights loses a
+        // pixel per item: 33 at scale 1 and 28 at scale 1.75 (49 device pixels) are odd. A height of 41 device pixels at
+        // scale 1.25 is 32.8, which a float cannot hold, so a float sum of it drifts much sooner, at a few million.
+        // The realization window and the arrange offsets must add the heights as TotalExtent does, so the end of the
+        // scroll range realizes the last items and the last item ends at TotalExtent, within the float precision at
+        // that magnitude (2 pixels here).
+        LayoutRounding rounding = LayoutRounding.ForScale(scale);
+        float viewportExtent = 10 * itemHeight;
+        VirtualizingStackPanel panel = new() { FirstRealizedIndex = 0 };
+        for (int index = 0; index < 10; index++)
+        {
+            panel.VisualChildren.Add(new FixedHeightElement(itemHeight));
+        }
+
+        panel.UpdateViewport(new ItemsVirtualizationViewport(itemCount, viewportExtent, 0, 0));
+        panel.Measure(new MeasureContext(new LayoutSize(100, viewportExtent), rounding));
+        float totalExtent = panel.TotalExtent;
+        Assert.Equal((float)((double)itemCount * itemHeight), totalExtent);
+
+        panel.UpdateViewport(new ItemsVirtualizationViewport(itemCount, viewportExtent, totalExtent - viewportExtent, 0));
+        Assert.Equal(new RealizationWindow(itemCount - 10, itemCount), panel.RealizationWindow);
+
+        // The same ten children now represent the last ten items. Width 99 keeps the layout caches from reusing the first pass.
+        panel.FirstRealizedIndex = itemCount - 10;
+        panel.Measure(new MeasureContext(new LayoutSize(99, viewportExtent), rounding));
+        panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 99, panel.DesiredSize.Height), rounding));
+
+        LayoutRect first = panel.VisualChildren[0].ArrangedBounds;
+        LayoutRect last = panel.VisualChildren[9].ArrangedBounds;
+        Assert.InRange(first.Y, totalExtent - viewportExtent - 2, totalExtent - viewportExtent + 2);
+        Assert.InRange(last.Y + last.Height, totalExtent - 2, totalExtent + 2);
     }
 
     private static string GetVerticalDeviceEdges(IEnumerable<UIElement> elements, float scale)

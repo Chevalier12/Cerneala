@@ -34,8 +34,8 @@ Do not waste the attack budget on naming, formatting, aesthetics, friendly diagn
 ## Operating Rules
 
 - Follow repository instructions and preserve the dirty worktree. Existing changes and failures are not yours.
-- Follow `CLAUDE.md`, especially "Claude Code tooling and verification commands". Generate and read `FileTree.md` once before broad repository reasoning.
-- Do reconnaissance through Haiku explorers, in parallel when independent: contracts, callers, existing tests, neighboring subsystems that share an invariant. Use Roslyn MCP for C# references when it is connected. Read complete source files before editing test or harness code.
+- Follow `CLAUDE.md`, especially "Claude Code tooling and verification commands". When you do not know the structure of the target area, generate and read `FileTree.md` once.
+- Do reconnaissance of contracts, callers, existing tests, and neighboring subsystems that share an invariant with Grep and Roslyn MCP (when connected), or with Haiku explorers in parallel when the questions are broad and independent. Read complete source files before editing test or harness code.
 - Run long attack runs, stress loops, and suites with `run_in_background`, each with an explicit timeout. Never leave a probe process running at handoff.
 - After a context compaction, re-read this file (`.claude/skills/cerneala-breaker/SKILL.md`) and the risk ledger before the next probe. Ledger dispositions are never reconstructed from memory.
 - Establish the documented or observable contract before calling behavior broken. Distinguish valid hostile use from invalid use that the API is allowed to reject.

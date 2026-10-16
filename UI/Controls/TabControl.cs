@@ -1,3 +1,4 @@
+using System.Runtime.ExceptionServices;
 using Cerneala.UI.Controls.Items;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
@@ -61,19 +62,39 @@ public class TabControl : Selector
     }
 
     // As in WPF, removing the selected tab selects the tab that takes its place, or the
-    // previous tab when the removed tab was the last one.
+    // previous tab when the removed tab was the last one. Clearing the selection can throw after the items
+    // changed, for example when a container's re-preparation fails; the next tab is still selected, and the
+    // first failure propagates after it.
     internal override void OnItemsReplaced(int index, int removedCount, int addedCount)
     {
         int selectedIndex = SelectedIndex;
-        base.OnItemsReplaced(index, removedCount, addedCount);
+        ExceptionDispatchInfo? failure = null;
+        try
+        {
+            base.OnItemsReplaced(index, removedCount, addedCount);
+        }
+        catch (Exception exception)
+        {
+            failure = ExceptionDispatchInfo.Capture(exception);
+        }
+
         if (addedCount == 0 && selectedIndex >= index && selectedIndex < index + removedCount && SelectedIndex < 0)
         {
             int nextIndex = FindSelectableTab(Math.Min(index, ItemCount - 1));
             if (nextIndex >= 0)
             {
-                SelectedIndex = nextIndex;
+                try
+                {
+                    SelectedIndex = nextIndex;
+                }
+                catch (Exception exception)
+                {
+                    failure ??= ExceptionDispatchInfo.Capture(exception);
+                }
             }
         }
+
+        failure?.Throw();
     }
 
     // Searches backwards from startIndex and wraps to the last tab; a disabled or hidden tab is skipped.

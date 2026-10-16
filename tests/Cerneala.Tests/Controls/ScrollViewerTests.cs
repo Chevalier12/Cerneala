@@ -808,6 +808,76 @@ public sealed class ScrollViewerTests
     }
 
     [Fact]
+    public void VerticalTrackClickPagesByViewportHeight()
+    {
+        UIRoot root = new(200, 120);
+        ScrollViewer viewer = new()
+        {
+            Width = 160,
+            Height = 100,
+            Content = new FixedElement(new LayoutSize(120, 1000))
+        };
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+        ElementInputBridge bridge = new();
+
+        ClickTrackAfterThumb(root, bridge, viewer.VerticalScrollBar.Track);
+
+        Assert.Equal(100, viewer.Presenter.VerticalOffset);
+
+        ClickTrackBeforeThumb(root, bridge, viewer.VerticalScrollBar.Track);
+
+        Assert.Equal(0, viewer.Presenter.VerticalOffset);
+    }
+
+    [Fact]
+    public void HorizontalTrackClickPagesByViewportWidth()
+    {
+        UIRoot root = new(200, 120);
+        ScrollViewer viewer = new()
+        {
+            Width = 160,
+            Height = 100,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+            Content = new FixedElement(new LayoutSize(1000, 60))
+        };
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+        ElementInputBridge bridge = new();
+        Assert.False(viewer.IsVerticalScrollBarVisible);
+
+        ClickTrackAfterThumb(root, bridge, viewer.HorizontalScrollBar.Track);
+
+        Assert.Equal(160, viewer.Presenter.HorizontalOffset);
+
+        ClickTrackBeforeThumb(root, bridge, viewer.HorizontalScrollBar.Track);
+
+        Assert.Equal(0, viewer.Presenter.HorizontalOffset);
+    }
+
+    [Fact]
+    public void TrackClickPageFollowsViewportResize()
+    {
+        UIRoot root = new(200, 120);
+        ScrollViewer viewer = new()
+        {
+            Width = 160,
+            Height = 100,
+            Content = new FixedElement(new LayoutSize(120, 1000))
+        };
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+        ElementInputBridge bridge = new();
+
+        viewer.Height = 60;
+        root.ProcessFrame();
+        ClickTrackAfterThumb(root, bridge, viewer.VerticalScrollBar.Track);
+
+        Assert.Equal(60, viewer.Presenter.ViewportHeight);
+        Assert.Equal(60, viewer.Presenter.VerticalOffset);
+    }
+
+    [Fact]
     public void ViewerCanReattachToAnotherRootAfterTemplateLayout()
     {
         UIRoot first = new(100, 100);
@@ -827,6 +897,43 @@ public sealed class ScrollViewerTests
         Assert.Same(second, viewer.Root);
         Assert.Same(second, viewer.Presenter.Root);
         Assert.Equal(new LayoutRect(0, 0, 108, 80), viewer.Presenter.ArrangedBounds);
+    }
+
+    private static void ClickTrackAfterThumb(UIRoot root, ElementInputBridge bridge, Track track)
+    {
+        LayoutRect thumb = track.Thumb.ArrangedBounds;
+        LayoutRect bounds = track.ArrangedBounds;
+        if (track.Orientation == Orientation.Horizontal)
+        {
+            float thumbEnd = thumb.X + thumb.Width;
+            ClickAt(root, bridge, (thumbEnd + bounds.X + bounds.Width) / 2, bounds.Y + (bounds.Height / 2));
+        }
+        else
+        {
+            float thumbEnd = thumb.Y + thumb.Height;
+            ClickAt(root, bridge, bounds.X + (bounds.Width / 2), (thumbEnd + bounds.Y + bounds.Height) / 2);
+        }
+    }
+
+    private static void ClickTrackBeforeThumb(UIRoot root, ElementInputBridge bridge, Track track)
+    {
+        LayoutRect thumb = track.Thumb.ArrangedBounds;
+        LayoutRect bounds = track.ArrangedBounds;
+        if (track.Orientation == Orientation.Horizontal)
+        {
+            ClickAt(root, bridge, (bounds.X + thumb.X) / 2, bounds.Y + (bounds.Height / 2));
+        }
+        else
+        {
+            ClickAt(root, bridge, bounds.X + (bounds.Width / 2), (bounds.Y + thumb.Y) / 2);
+        }
+    }
+
+    private static void ClickAt(UIRoot root, ElementInputBridge bridge, float x, float y)
+    {
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, x, y, previousDown: true));
+        root.ProcessFrame();
     }
 
     private static InputFrame PointerWheelFrame(float x, float y, int delta)

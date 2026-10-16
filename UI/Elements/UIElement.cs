@@ -280,6 +280,10 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     internal bool IsPresenceExiting { get; private set; }
 
+    // A virtualizing panel keeps a child outside its realization window in VisualChildren but does not realize it,
+    // so the child is not rendered, hit tested or routed input until the panel realizes it again.
+    internal bool IsSkippedByVirtualization { get; private set; }
+
     internal virtual bool ActivatesOnPointerRelease => true;
 
     internal virtual TimeSpan? PointerRepeatDelay => null;
@@ -660,6 +664,8 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     internal void SetVisualParent(UIElement? parent)
     {
         VisualParent = parent;
+        // Being skipped belongs to the panel that skipped the child, not to a new parent.
+        IsSkippedByVirtualization = false;
         Root?.AdvanceImageResolutionEpoch();
         if (parent is not null)
         {
@@ -1041,6 +1047,16 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         DesiredSize = desiredSize;
     }
 
+    // A parent that skips measuring this element (VirtualizingStackPanel gives an unrealized row LayoutSize.Zero) writes
+    // a desired size that no measure produced, so the current cache entry stops matching: the next Measure with the same
+    // constraint runs MeasureCore instead of returning that size. The constraint and the older entries, which hold real
+    // measure results, stay.
+    internal void SetUnmeasuredDesiredSize(LayoutSize desiredSize)
+    {
+        DesiredSize = desiredSize;
+        LastMeasureLayoutVersion = -1;
+    }
+
     internal bool SetArrangedBounds(LayoutRect arrangedBounds)
     {
         if (ArrangedBounds == arrangedBounds)
@@ -1105,6 +1121,33 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
         IsPresenceExiting = isExiting;
         Invalidate(InvalidationFlags.HitTest, "Presence state changed");
+    }
+
+    internal void SetSkippedByVirtualization(bool isSkipped)
+    {
+        if (IsSkippedByVirtualization == isSkipped)
+        {
+            return;
+        }
+
+        // Rendering, hit testing and input stop or resume as when IsVisible changes.
+        IsSkippedByVirtualization = isSkipped;
+        IncrementRenderVersion();
+        hasPendingRenderContentInvalidation = true;
+        if (isSkipped && Root is UIRoot motionRoot)
+        {
+            motionRoot.Motion.CancelMotionForSubtree(this);
+        }
+
+        if (IsAttached)
+        {
+            foreach (UIElement element in ElementTreeWalker.PreOrderRenderability(this))
+            {
+                element.NotifyLifecycleRenderabilityChanged();
+            }
+        }
+
+        Invalidate(InvalidationFlags.Render | InvalidationFlags.HitTest | InvalidationFlags.Semantics, "Virtualization realization changed");
     }
 
     internal void SetPresenceVisual(float opacity, float scale)
