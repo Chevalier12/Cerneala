@@ -2179,6 +2179,70 @@ public sealed class ComboBoxTests
         Assert.Equal(editor.Text.Length, editor.Selection.Active);
     }
 
+    // "two" is highlighted. A click outside light-dismisses the drop-down while re-preparing the row of "two"
+    // throws, and DropDownClosed is still raised once before the exception propagates.
+    [Fact]
+    public void LightDismissWhoseCancelRowPreparationThrowsStillRaisesDropDownClosed()
+    {
+        UIRoot root = new(300, 300);
+        FailingContentComboBox comboBox = new() { IsEditable = false, Width = 100 };
+        comboBox.SetItems(new[] { "one", "two", "three" });
+        LayoutCanvas canvas = new();
+        canvas.VisualChildren.Add(comboBox);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        comboBox.SelectedIndex = 0;
+        root.ProcessFrame();
+        ElementInputBridge bridge = new();
+        bridge.FocusManager.Focus(comboBox, root.InputCache.EnsureCurrent(root));
+        DispatchKey(root, bridge, InputKey.F4);
+        root.ProcessFrame();
+        DispatchKey(root, bridge, InputKey.Down);
+        root.ProcessFrame();
+        Overlay overlay = Assert.IsType<Overlay>(comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"]);
+        int closed = 0;
+        comboBox.DropDownClosed += (_, _) => closed++;
+
+        comboBox.FailFor = "two";
+        Exception? exception = Record.Exception(() =>
+        {
+            bridge.Dispatch(root, PointerFrame(290, 290, currentDown: true));
+            bridge.Dispatch(root, PointerFrame(290, 290, previousDown: true));
+        });
+        comboBox.FailFor = null;
+        root.ProcessFrame();
+
+        Assert.IsType<InvalidOperationException>(exception);
+        Assert.False(comboBox.IsDropDownOpen);
+        Assert.False(overlay.IsOpen);
+        Assert.Equal(0, comboBox.SelectedIndex);
+        Assert.Equal(1, closed);
+    }
+
+    // The overlay part opens the drop-down while re-preparing the row of the selected "one" throws, and
+    // DropDownOpened is still raised once before the exception propagates.
+    [Fact]
+    public void OverlayOpenWhoseTransactionRowPreparationThrowsStillRaisesDropDownOpened()
+    {
+        (UIRoot root, ElementInputBridge bridge, FailingContentComboBox comboBox) = OpenNonEditableWithFirstItemSelected();
+        DispatchKey(root, bridge, InputKey.F4);
+        root.ProcessFrame();
+        Overlay overlay = Assert.IsType<Overlay>(comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"]);
+        Assert.False(overlay.IsOpen);
+        int opened = 0;
+        comboBox.DropDownOpened += (_, _) => opened++;
+
+        comboBox.FailFor = "one";
+        Exception? exception = Record.Exception(() => overlay.IsOpen = true);
+        comboBox.FailFor = null;
+        root.ProcessFrame();
+
+        Assert.IsType<InvalidOperationException>(exception);
+        Assert.True(comboBox.IsDropDownOpen);
+        Assert.True(overlay.IsOpen);
+        Assert.Equal(1, opened);
+    }
+
     // The drop-down of a non-editable ComboBox is open with "one" selected and highlighted.
     private static (UIRoot Root, ElementInputBridge Bridge, FailingContentComboBox ComboBox) OpenNonEditableWithFirstItemSelected()
     {
