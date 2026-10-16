@@ -245,6 +245,38 @@ public sealed class WindowRuntimeTests : IDisposable
         Assert.False(button.IsMouseOver);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void DesignPreviewTextReachesTheFocusedTextBoxWithoutAPump(bool startAsPreview)
+    {
+        (string? afterInput, string? afterPump) = RunPreviewTextBoxInput(
+            startAsPreview,
+            initialText: "",
+            (runtime, window) => runtime.SendPreviewText(window, "ab"));
+
+        Assert.Equal("ab", afterInput);
+        Assert.Equal("ab", afterPump);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void DesignPreviewKeyPressReachesTheFocusedTextBoxWithoutAPump(bool startAsPreview)
+    {
+        (string? afterInput, string? afterPump) = RunPreviewTextBoxInput(
+            startAsPreview,
+            initialText: "ab",
+            (runtime, window) =>
+            {
+                runtime.PressPreviewKey(window, InputKey.End, ServoModifiers.None);
+                runtime.PressPreviewKey(window, InputKey.Back, ServoModifiers.None);
+            });
+
+        Assert.Equal("a", afterInput);
+        Assert.Equal("a", afterPump);
+    }
+
     [Fact]
     public void FrameProcessingTimeIncludesThePresentationWait()
     {
@@ -1576,6 +1608,63 @@ public sealed class WindowRuntimeTests : IDisposable
     private static void CompleteSynchronously(Task operation)
     {
         operation.GetAwaiter().GetResult();
+    }
+
+    private static (string? AfterInput, string? AfterPump) RunPreviewTextBoxInput(
+        bool startAsPreview,
+        string initialText,
+        Action<WindowApplicationRuntime, Window> input)
+    {
+        // The runtime runs on its own thread so that a preview call that never returns fails the test instead of hanging it.
+        string stage = "setup";
+        string? afterInput = null;
+        string? afterPump = null;
+        Exception? failure = null;
+        Thread uiThread = new(() =>
+        {
+            try
+            {
+                FakeWindowPlatform platform = new();
+                WindowApplicationRuntime runtime = Install(platform);
+                TextBox editor = new() { Text = initialText, Width = 200, Height = 40 };
+                Window window = new() { Content = editor };
+                if (startAsPreview)
+                {
+                    runtime.StartPreviewWindow(window);
+                }
+                else
+                {
+                    window.Show();
+                    runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+                }
+
+                LayoutRect bounds = editor.ArrangedBounds;
+                runtime.ClickPreview(window, bounds.X + (bounds.Width / 2), bounds.Y + (bounds.Height / 2));
+
+                Volatile.Write(ref stage, "the preview input call");
+                input(runtime, window);
+                afterInput = editor.Text;
+
+                Volatile.Write(ref stage, "PumpOnce");
+                runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+                afterPump = editor.Text;
+                Volatile.Write(ref stage, "done");
+            }
+            catch (Exception exception)
+            {
+                failure = exception;
+            }
+        })
+        {
+            IsBackground = true
+        };
+
+        uiThread.Start();
+        bool returned = uiThread.Join(TimeSpan.FromSeconds(10));
+
+        Assert.True(returned, $"Preview input did not return within 10 s; blocked in {Volatile.Read(ref stage)}.");
+        Assert.Null(failure);
+        return (afterInput, afterPump);
     }
 
     private static UiHost GetRuntimeHost(WindowApplicationRuntime runtime, Window window)
