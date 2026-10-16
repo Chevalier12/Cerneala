@@ -55,6 +55,8 @@ During measure, the panel maps each visual child to an item index by adding `Fir
 
 When the panel stacks its children at their natural heights (no automatic viewport, and either no `VirtualizationContext` or one whose items are all realized), its desired height is the sum of the children's desired heights. With layout rounding enabled in the `MeasureContext`, that sum adds device pixels, as in `StackPanel` (see `LayoutRounding`): at scale 1.75, children with `Height = 32.5` (57 device pixels) and `Height = 0.5` (1 device pixel) give a desired height of `58 / 1.75f`, 58 device pixels, not 59.
 
+During arrange, a skipped child (outside `RealizationWindow` while `VirtualizationContext` is set or `UpdateViewport` was called) is arranged into zero-sized bounds at the panel's origin. Zero-sized bounds do not clip the child's content, so the panel also stops the skipped child from taking part in rendering, input, and hit testing (see `UIElementVisibility`) until an arrange realizes it again. For example, with 30 children `Border { Height = 40, Child = new TextBlock { Text = "Row N" } }` and `UpdateViewport(new ItemsVirtualizationViewport(30, 200, 0, 0))`, `RealizationWindow` is `(0, 5)`: the panel draws `Row 0` to `Row 4`, and nothing of `Row 5` to `Row 29`. An owning `ItemsPresenter` keeps only realized containers as children, so it is not affected.
+
 During arrange, automatic mode positions each child using the measured or estimated prefix extent of all preceding items. Fixed mode uses `ItemExtent`. When every item is realized without virtualization, the panel stacks children using their measured heights.
 
 In automatic mode, `TotalExtent` combines measured heights with the current estimate for unknown items. The desired height in automatic mode is the same total extent. Without either automatic viewport data or a fixed `VirtualizationContext`, it reports the measured desired height.
@@ -83,7 +85,7 @@ A realized item's measured height of zero replaces any previously recorded posit
 | Phase | Behavior |
 | --- | --- |
 | Measure | With a `VirtualizationContext` or an automatic viewport, measures only children whose computed item index is inside `RealizationWindow`; skipped children receive `LayoutSize.Zero`. Without either, measures every child. |
-| Arrange | Arranges skipped children into zero-sized bounds and arranges realized children vertically. |
+| Arrange | Arranges skipped children into zero-sized bounds, excludes them from rendering, input, and hit testing until they are realized again, and arranges realized children vertically. |
 | Partially realized extent | Uses `VirtualizationContext.ItemExtent` for child height and content-coordinate Y placement when it is finite and greater than zero. |
 | Fully realized extent | Uses each child's `DesiredSize.Height`, allowing an auto-sized host to fit all realized content up to its external size constraint. |
 | Variable item extent | Learns realized heights and estimates unknown items, then corrects offsets and the realization window. |
@@ -99,3 +101,4 @@ A realized item's measured height of zero replaces any previously recorded posit
 - `IItemsVirtualizingPanel`
 - `VirtualizationContext`
 - `RealizationWindow`
+- `UIElementVisibility`

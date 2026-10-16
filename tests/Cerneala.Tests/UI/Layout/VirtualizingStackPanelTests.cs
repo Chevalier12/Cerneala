@@ -1,7 +1,10 @@
+using Cerneala.Drawing;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
 using Cerneala.UI.Layout.Virtualization;
+using Cerneala.UI.Media;
 
 namespace Cerneala.Tests.UI.Layout;
 
@@ -259,6 +262,76 @@ public sealed class VirtualizingStackPanelTests
         Assert.Equal(52.5f, panel.TotalExtent * scale, 3);
         // The first realized row starts at the device pixel nearest to 10.5 (ties to even), and the second touches it.
         Assert.Equal("10..21, 21..31", GetVerticalDeviceEdges([panel.VisualChildren[1], panel.VisualChildren[2]], scale));
+    }
+
+    [Fact]
+    public void SkippedChildrenOfADirectlyUsedPanelDrawNothing()
+    {
+        // Rows 5..29 lie outside the realization window and are arranged into zero-sized bounds at the panel origin,
+        // where their labels would pile up on the realized "Row 0".
+        UIRoot root = new(320, 200);
+        VirtualizingStackPanel panel = new();
+        for (int index = 0; index < 30; index++)
+        {
+            panel.VisualChildren.Add(new Cerneala.UI.Controls.Border
+            {
+                Height = 40,
+                Child = new Cerneala.UI.Controls.TextBlock
+                {
+                    Text = $"Row {index}",
+                    Foreground = new SolidColorBrush(Color.White),
+                    Margin = new Thickness(10, 9, 0, 0)
+                }
+            });
+        }
+
+        root.VisualChildren.Add(panel);
+        panel.UpdateViewport(new ItemsVirtualizationViewport(30, 200, 0, 0));
+        root.ProcessFrame();
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
+
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
+
+        Assert.Equal(new RealizationWindow(0, 5), panel.RealizationWindow);
+        Assert.Equal(
+            ["Row 0", "Row 1", "Row 2", "Row 3", "Row 4"],
+            commands.Where(command => command.Kind == DrawCommandKind.DrawText).Select(command => command.Text).ToArray());
+    }
+
+    [Fact]
+    public void SkippedChildTakesPartInRenderingHitTestingAndInputOnlyWhileRealized()
+    {
+        UIRoot root = new(100, 100);
+        VirtualizingStackPanel panel = new();
+        for (int index = 0; index < 10; index++)
+        {
+            panel.VisualChildren.Add(new UIElement { Height = 20, Focusable = true });
+        }
+
+        root.VisualChildren.Add(panel);
+        panel.UpdateViewport(new ItemsVirtualizationViewport(10, 100, 0, 0));
+        root.ProcessFrame();
+        UIElement skipped = panel.VisualChildren[7];
+
+        Assert.Equal(new RealizationWindow(0, 5), panel.RealizationWindow);
+        Assert.Equal(
+            (false, false, false),
+            (UIElementVisibility.ParticipatesInRendering(skipped),
+                UIElementVisibility.ParticipatesInHitTest(skipped),
+                UIElementVisibility.ParticipatesInInput(skipped)));
+
+        panel.UpdateViewport(new ItemsVirtualizationViewport(10, 100, 100, 0));
+        panel.Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange, "test");
+        root.ProcessFrame();
+
+        Assert.Equal(new RealizationWindow(5, 10), panel.RealizationWindow);
+        Assert.Equal(
+            (true, true, true),
+            (UIElementVisibility.ParticipatesInRendering(skipped),
+                UIElementVisibility.ParticipatesInHitTest(skipped),
+                UIElementVisibility.ParticipatesInInput(skipped)));
+        Assert.False(UIElementVisibility.ParticipatesInRendering(panel.VisualChildren[0]));
     }
 
     private static string GetVerticalDeviceEdges(IEnumerable<UIElement> elements, float scale)
