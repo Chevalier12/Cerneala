@@ -23,10 +23,10 @@ Invoking this skill authorizes running the `git-session-commit-push` skill at th
 ## 2. Orient in the Repository
 
 - Follow `CLAUDE.md` and any narrower repository instructions.
-- Generate and read `FileTree.md` once before reasoning about structure.
+- When you do not know the structure of the area, generate and read `FileTree.md` once.
 - Locate the owning contract, callers, tests, documentation, and adjacent state transitions:
-  - Send independent questions to Haiku explorers in parallel. Examples: "where is `X` raised", "which tests cover `Y`", "who calls `Z`".
-  - Use Roslyn MCP for C# references when it is connected.
+  - Use Roslyn MCP for C# references when it is connected, and Grep for text, markup, and non-C# uses.
+  - Optional: send broad independent questions to Haiku explorers in parallel. Examples: "where is `X` raised", "which tests cover `Y`", "who calls `Z`".
   - Read the decisive files yourself. Read a full C# file before editing it.
 - Do not scan unrelated subsystems for sport.
 - Do not modify `CLAUDE.md` unless the bug explicitly concerns those instructions.

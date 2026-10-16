@@ -25,15 +25,15 @@ repository context unless the request supplies one.
 
 ## Claude Code Execution
 
-- In Cerneala, follow `CLAUDE.md`. Repository and external-source exploration goes to Haiku explorers (`Explore`, `model: "haiku"`, `effort: "high"`). They have web search and fetch.
-- Split the market into independent assignments and send them in one message so they run in parallel. Examples: one per evidence track (research / production) per algorithm family, plus one for the current implementation in the repository. Each explorer returns, per candidate:
+- In Cerneala, follow `CLAUDE.md`. For a broad market, send the exploration to Haiku explorers (`Explore`, `model: "haiku"`, `effort: "high"`); they have web search and fetch. For a narrow market (few candidate families), search directly with `WebSearch`, `WebFetch`, Grep, and Roslyn MCP.
+- When you use explorers, split the market into independent assignments and send them in one message so they run in parallel. Examples: one per evidence track (research / production) per algorithm family, plus one for the current implementation in the repository. Each explorer returns, per candidate:
   - the name and family;
   - direct source links (paper, standard, or a pinned release/commit and file);
   - the license identifier and license URL;
   - the claims it supports, each with its link;
   - coverage limits.
 - Verify every decisive claim yourself by opening the cited URL with `WebFetch`, or the cited repository file with `Read`. Decisive claims are the ones behind a score, a hard gate, a license verdict, or a benchmark number. An explorer summary is not evidence on its own.
-- Run further explorer rounds until the two-round saturation gate below is met. Record each round's query themes.
+- Run further search rounds until the two-round saturation gate below is met. Record each round's query themes.
 - Keep the candidate ledger in a scratchpad file outside the repository, so it survives context compaction. After a compaction, re-read this file (`.claude/skills/algorithm-market/SKILL.md`) and the ledger before continuing.
 
 ## Workflow
