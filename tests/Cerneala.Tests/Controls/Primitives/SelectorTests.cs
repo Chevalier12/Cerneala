@@ -740,8 +740,8 @@ public sealed class SelectorTests
         return listBox;
     }
 
-    // Shows "a", "b" and "c" in rows at y = 0, 10 and 20. Text rows measure 0 px tall without a font, so
-    // each row gets a fixed height.
+    // Shows "a", "b" and "c" in rows at y = 0, 10 and 20. Each row gets a fixed height, so the row positions do
+    // not depend on the height of the text font.
     private static ListBox CreateArrangedTextListBox(IEnumerable? itemsSource = null, ListBox? listBox = null)
     {
         UIRoot root = new(100, 100);
