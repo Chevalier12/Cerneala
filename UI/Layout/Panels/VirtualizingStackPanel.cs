@@ -164,7 +164,10 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
         {
             UIElement child = VisualChildren[i];
             int itemIndex = FirstRealizedIndex + i;
-            if (!IsRealized(window, itemIndex))
+            bool isRealized = IsRealized(window, itemIndex);
+            // A skipped child's zero-sized bounds do not clip its content, so it must not be drawn at the panel origin.
+            child.SetSkippedByVirtualization(!isRealized);
+            if (!isRealized)
             {
                 child.Arrange(new ArrangeContext(new LayoutRect(context.FinalRect.X, context.FinalRect.Y, 0, 0), context.Rounding));
                 continue;

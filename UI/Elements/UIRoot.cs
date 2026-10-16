@@ -382,6 +382,7 @@ public sealed partial class UIRoot : UIElement, IElementHost, IInvalidationSink
         ReferenceEquals(request.SourceProperty, UIElement.IsVisibleProperty) ||
         ReferenceEquals(request.SourceProperty, UIElement.VisibilityProperty) ||
         string.Equals(request.Reason, "Presence state changed", StringComparison.Ordinal) ||
+        string.Equals(request.Reason, "Virtualization realization changed", StringComparison.Ordinal) ||
         string.Equals(request.Reason, "Input handler added", StringComparison.Ordinal) ||
         string.Equals(request.Reason, "Input handler removed", StringComparison.Ordinal);
 

@@ -13,13 +13,13 @@ public static class UIElementVisibility
     public static bool ParticipatesInRendering(UIElement element)
     {
         ArgumentNullException.ThrowIfNull(element);
-        return element.IsVisible && element.Visibility == Visibility.Visible;
+        return element.IsVisible && element.Visibility == Visibility.Visible && !element.IsSkippedByVirtualization;
     }
 
     public static bool ParticipatesInInput(UIElement element)
     {
         ArgumentNullException.ThrowIfNull(element);
-        return !element.IsPresenceExiting && element.IsVisible && element.Visibility == Visibility.Visible;
+        return !element.IsPresenceExiting && ParticipatesInRendering(element);
     }
 
     public static bool ParticipatesInHitTest(UIElement element)
@@ -27,8 +27,7 @@ public static class UIElementVisibility
         ArgumentNullException.ThrowIfNull(element);
         return !element.IsPresenceExiting &&
             element.IsHitTestVisible &&
-            element.IsVisible &&
-            element.Visibility == Visibility.Visible;
+            ParticipatesInRendering(element);
     }
 
     internal static bool IsEffectivelyVisible(UIElement element)
