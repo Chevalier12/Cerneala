@@ -1022,23 +1022,11 @@ public class ComboBox : Selector
         preparationFailure?.Throw();
     }
 
-    private void CommitSelectionTransaction()
+    // Selector rethrows a failed re-preparation of the old or the new row from the SelectedIndex setter, when
+    // SelectedIndex already holds the committed index. The commit then still finishes: the caller clears the filter
+    // and synchronizes the editor, the caret, and the selection box, and only then rethrows the first failure.
+    private void CommitSelectedIndex(int committedIndex, ref ExceptionDispatchInfo? preparationFailure)
     {
-        if (!selectionTransactionActive)
-        {
-            return;
-        }
-
-        int committedIndex = previewSelectedIndex;
-        string committedText = previewSelectedIndex >= 0 && !transactionTextMatchesPreview
-            ? GetItemText(GetItemAt(previewSelectedIndex))
-            : transactionText;
-        int oldPreviewIndex = previewSelectedIndex;
-        selectionTransactionActive = false;
-        previewSelectedIndex = -1;
-        CapturePreviewItem();
-        transactionTextMatchesPreview = false;
-        updatingTextSearch = true;
         try
         {
             if (committedIndex >= 0)
@@ -1057,7 +1045,34 @@ public class ComboBox : Selector
                     preserveTextWhileDeselecting = false;
                 }
             }
+        }
+        catch (Exception exception) when (SelectedIndex == committedIndex)
+        {
+            preparationFailure ??= ExceptionDispatchInfo.Capture(exception);
+        }
+    }
 
+    private void CommitSelectionTransaction()
+    {
+        if (!selectionTransactionActive)
+        {
+            return;
+        }
+
+        int committedIndex = previewSelectedIndex;
+        string committedText = previewSelectedIndex >= 0 && !transactionTextMatchesPreview
+            ? GetItemText(GetItemAt(previewSelectedIndex))
+            : transactionText;
+        int oldPreviewIndex = previewSelectedIndex;
+        selectionTransactionActive = false;
+        previewSelectedIndex = -1;
+        CapturePreviewItem();
+        transactionTextMatchesPreview = false;
+        ExceptionDispatchInfo? preparationFailure = null;
+        updatingTextSearch = true;
+        try
+        {
+            CommitSelectedIndex(committedIndex, ref preparationFailure);
             if (IsEditable)
             {
                 Text = committedText;
@@ -1069,7 +1084,6 @@ public class ComboBox : Selector
         }
 
         ClearFilter();
-        ExceptionDispatchInfo? preparationFailure = null;
         RefreshPreviewContainer(oldPreviewIndex, ref preparationFailure);
         SynchronizeEditorText();
         editableTextBox?.MoveCaret(editableTextBox.Text.Length);
