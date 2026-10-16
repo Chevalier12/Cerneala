@@ -1,8 +1,12 @@
+using Cerneala.Drawing;
+using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Virtualization;
+using Cerneala.UI.Media;
 
 namespace Cerneala.Tests.Controls;
 
@@ -53,6 +57,120 @@ public sealed class ListBoxTests
     }
 
     [Fact]
+    public void ListBoxStringItemShowsItsText()
+    {
+        UIRoot root = new(200, 200);
+        ListBox listBox = new();
+        listBox.SetItems(new[] { "Apple", "Banana" });
+        TextBlock reference = new() { Text = "Apple" };
+        root.VisualChildren.Add(listBox);
+        root.VisualChildren.Add(reference);
+        root.ProcessFrame();
+
+        ListBoxItem row = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[0]);
+
+        Assert.Equal("Apple", row.Content);
+        Assert.Equal("Apple", Assert.Single(FindTextBlocks(row)).Text);
+        Assert.True(reference.DesiredSize.Height > 0);
+        Assert.Equal(reference.DesiredSize.Height, row.DesiredSize.Height);
+    }
+
+    [Fact]
+    public void ListBoxRowShowsTextOfReplacedStringItem()
+    {
+        UIRoot root = new(200, 200);
+        ListBox listBox = new();
+        listBox.SetItems(new[] { "Apple", "Banana" });
+        root.VisualChildren.Add(listBox);
+        root.ProcessFrame();
+
+        listBox.Items[0] = "Cherry";
+        root.ProcessFrame();
+
+        ListBoxItem row = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Equal("Cherry", Assert.Single(FindTextBlocks(row)).Text);
+    }
+
+    [Fact]
+    public void ListBoxRowTextUsesRowFontAndForeground()
+    {
+        UIRoot root = new(300, 200);
+        SolidColorBrush foreground = new(Color.White);
+        ListBox listBox = new()
+        {
+            ItemContainerAspect = new ElementAspect(
+            [
+                new ElementAspectValue(Control.FontSizeProperty, 30f),
+                new ElementAspectValue(Control.ForegroundProperty, foreground)
+            ])
+        };
+        listBox.SetItems(new[] { "Apple" });
+        root.VisualChildren.Add(listBox);
+        root.ProcessFrame();
+
+        TextBlock text = Assert.Single(FindTextBlocks(listBox.ItemContainerGenerator.RealizedContainers[0]));
+
+        Assert.Equal(30, text.FontSize);
+        Assert.Same(foreground, text.Foreground);
+    }
+
+    [Fact]
+    public void ListBoxItemTemplateCreatesRowContent()
+    {
+        UIRoot root = new(300, 200);
+        List<string?> templated = [];
+        ListBox listBox = new()
+        {
+            ItemsSource = new List<string> { "Alpha", "Beta" },
+            ItemTemplate = new ContentTemplate<string>("Text", key: null, priority: 0, context =>
+            {
+                templated.Add(context.Data);
+                return new TextBlock { Text = "[" + context.Data + "]" };
+            })
+        };
+        root.VisualChildren.Add(listBox);
+        root.ProcessFrame();
+
+        Assert.Equal(["Alpha", "Beta"], templated);
+        ListBoxItem row = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[1]);
+        Assert.Equal("Beta", row.Content);
+        Assert.Equal("[Beta]", Assert.Single(FindTextBlocks(row)).Text);
+        Assert.True(row.DesiredSize.Height > 0);
+    }
+
+    [Fact]
+    public void ListBoxElementItemStaysTheOnlyChildOfItsRow()
+    {
+        UIRoot root = new(200, 200);
+        FixedElement element = new();
+        ListBox listBox = new();
+        listBox.SetItems(new UIElement[] { element });
+        root.VisualChildren.Add(listBox);
+        root.ProcessFrame();
+
+        ListBoxItem row = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[0]);
+
+        Assert.Same(element, row.Content);
+        Assert.Same(element, Assert.Single(row.VisualChildren));
+        Assert.Equal(new LayoutSize(20, 10), element.DesiredSize);
+        Assert.Equal(10, row.DesiredSize.Height);
+    }
+
+    [Fact]
+    public void ListBoxItemWithStringContentShowsItsTextInsidePadding()
+    {
+        UIRoot root = new(200, 200);
+        ListBoxItem item = new() { Content = "Ink", Padding = new Thickness(4) };
+        TextBlock reference = new() { Text = "Ink" };
+        root.VisualChildren.Add(item);
+        root.VisualChildren.Add(reference);
+        root.ProcessFrame();
+
+        Assert.Equal("Ink", Assert.Single(FindTextBlocks(item)).Text);
+        Assert.Equal(reference.DesiredSize.Height + 8, item.DesiredSize.Height);
+    }
+
+    [Fact]
     public void TabControlSelectedTabItemReturnsUnrealizedTabItem()
     {
         TabControl tabControl = new();
@@ -92,6 +210,22 @@ public sealed class ListBoxTests
         }
 
         return new InputFrame(previous, current, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []);
+    }
+
+    private static List<TextBlock> FindTextBlocks(UIElement element)
+    {
+        List<TextBlock> found = [];
+        foreach (UIElement child in element.VisualChildren)
+        {
+            if (child is TextBlock textBlock)
+            {
+                found.Add(textBlock);
+            }
+
+            found.AddRange(FindTextBlocks(child));
+        }
+
+        return found;
     }
 
     private sealed class FixedElement : UIElement

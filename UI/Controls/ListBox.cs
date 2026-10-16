@@ -26,4 +26,24 @@ public class ListBox : Selector
     {
         return item is ListBoxItem;
     }
+
+    // The template goes to the row before its content, so the row presents the new content with it once.
+    protected override void PrepareItemContent(UIElement container, int index, object? item)
+    {
+        if (container is ListBoxItem listBoxItem)
+        {
+            listBoxItem.SetItemPresentation(ItemTemplate, ItemTemplateKey, ContentTemplateRegistry, index);
+        }
+
+        base.PrepareItemContent(container, index, item);
+    }
+
+    protected internal override void ClearItemContainer(UIElement container)
+    {
+        base.ClearItemContainer(container);
+        if (container is ListBoxItem listBoxItem)
+        {
+            listBoxItem.SetItemPresentation(null, null, null, -1);
+        }
+    }
 }
