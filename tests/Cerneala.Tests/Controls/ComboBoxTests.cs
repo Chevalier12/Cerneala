@@ -575,6 +575,63 @@ public sealed class ComboBoxTests
         Assert.False(comboBox.IsDropDownOpen);
     }
 
+    // As in the WPF default template, the selection box is not hit-testable, so a click on a button that the
+    // ItemTemplate shows in the closed field only toggles the drop-down.
+    [Fact]
+    public void NonEditableFieldClickOnTemplateButtonTogglesDropDownWithoutClickingButton()
+    {
+        (UIRoot root, ComboBox comboBox) = CreateNonEditableField();
+        comboBox.ItemTemplate = new ContentTemplate<string>(
+            "check",
+            key: null,
+            priority: 0,
+            context => new CheckBox { Content = context.Data });
+        root.ProcessFrame();
+        CheckBox check = Assert.IsType<CheckBox>(FindDescendant<CheckBox>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_SelectionPresenter"]));
+        int clicks = 0;
+        check.Click += (_, _) => clicks++;
+        LayoutRect bounds = check.ArrangedBounds;
+        float x = bounds.X + 6;
+        float y = bounds.Y + bounds.Height / 2;
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.Equal(0, clicks);
+        Assert.False(check.IsChecked);
+        Assert.True(comboBox.IsDropDownOpen);
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.Equal(0, clicks);
+        Assert.False(check.IsChecked);
+        Assert.False(comboBox.IsDropDownOpen);
+        Assert.Equal(0, comboBox.SelectedIndex);
+    }
+
+    private static T? FindDescendant<T>(UIElement element) where T : UIElement
+    {
+        if (element is T match)
+        {
+            return match;
+        }
+
+        for (int i = 0; i < element.VisualChildren.Count; i++)
+        {
+            if (FindDescendant<T>(element.VisualChildren[i]) is T found)
+            {
+                return found;
+            }
+        }
+
+        return null;
+    }
+
     private static (UIRoot Root, ComboBox ComboBox) CreateNonEditableField()
     {
         UIRoot root = new(300, 200);
