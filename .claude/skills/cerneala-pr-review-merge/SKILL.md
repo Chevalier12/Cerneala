@@ -5,7 +5,7 @@ description: Review and merge one Cerneala pull request after the user has valid
 
 # Cerneala PR Review and Merge
 
-Review one pull request in `Chevalier12/Cerneala` at one exact head commit after the user has validated it, merge it, and delete its two reproduction apps (before and after the fix). Follow `CLAUDE.md`, especially "Parent ownership and optional subagents", "Focused tests" and "The user".
+Review one pull request in `Chevalier12/Cerneala` at one exact head commit after the user has validated it, merge it, and delete its two reproduction apps (before and after the fix). Follow `CLAUDE.md`, especially "Orchestrator mode (mandatory)", "Focused tests" and "The user". The parent runs only git/gh commands and focused-test reruns and reads only subagent results, `git diff`, and filtered command output: Explorers do all searching and reading, Implementers do all file changes, builds, tests and reproductions, Reviewers review the diff. Every file, source, diff, test or reproduction step below that is not a git/gh command is work that the parent delegates this way.
 
 The user validates a bug fix by running the two reproduction apps from the pull request, one built without the fix and one with it (see `cerneala-fix-bug`) and then posting a comment on the pull request. This skill runs only after that comment. It never fixes anything: every defect it finds becomes a GitHub issue, and the pull request is merged anyway (user decision, 2026-10-15).
 
@@ -47,7 +47,7 @@ Apart from that conflict resolution, the instructions never add permissions, and
 Invoking this skill for `<number>` authorizes exactly these actions, without further confirmation:
 
 - check out the PR in the current worktree and merge `origin/master` into it locally, without pushing;
-- run builds, focused tests, and temporary reproductions outside the repository;
+- have Implementers run builds, focused tests, and temporary reproductions outside the repository;
 - raise GitHub issues for the defects the review proves, with `github-issue-raise`, posted directly without asking (user decision, 2026-10-15);
 - post at most one comment on PR `<number>`, as step 7 describes;
 - only when the validation comment's extra instructions ask to resolve the merge conflict with master: commit the resolution as one merge commit and push it with exactly `git push origin HEAD:refs/heads/<headRefName>`, never with force, as step 2 describes;
@@ -78,26 +78,26 @@ Every other section is a `###` heading.
 2. **Prepare the merge result.** Run `gh pr checkout <number> --detach`, then `git fetch origin master`, record `git rev-parse origin/master` as the tested base, then `git merge --no-commit --no-ff origin/master`.
    - If the merge conflicts and the extra instructions do not ask to resolve it: run `git merge --abort`, post the not-merged comment of step 7 with the conflicting files, and stop without merging. Keep the release.
    - If the merge conflicts and the extra instructions ask to resolve it, for example `Validated. Resolve.`:
-     - Resolve only the conflicting hunks, and keep the intent of both sides. Change no other line. Example from PR 289: master added an argument, `RefreshSelectionContainer(index, "Selection changed", ref preparationFailure)`, and the PR kept its own `preparationFailure` variable on the same lines; the resolution keeps the PR's variable and adds master's argument.
+     - An Implementer resolves the conflicting hunks (the parent does not edit files), with a brief that carries the conflicting files and the extra instruction. It resolves only the conflicting hunks, and keeps the intent of both sides. Change no other line. Example from PR 289: master added an argument, `RefreshSelectionContainer(index, "Selection changed", ref preparationFailure)`, and the PR kept its own `preparationFailure` variable on the same lines; the resolution keeps the PR's variable and adds master's argument.
      - When a hunk cannot keep both intents, because both sides change the same behavior in different ways, do not choose one: run `git merge --abort`, post the not-merged comment with that hunk described, and stop.
-     - Commit with the message `Merge origin/master into <headRefName> (PR #<number>)` and a body that lists each resolved hunk and how it was resolved. Call this commit `<resolved>`. Do not push it yet.
-     - Steps 3 to 6 run on `<resolved>`. A focused test that fails on `<resolved>` but passes on both `<sha>` and `origin/master` means the resolution is wrong: do not push, post the not-merged comment with the failing test, and stop.
+     - The parent reads the resolution with `git diff`, then commits with the message `Merge origin/master into <headRefName> (PR #<number>)` and a body that lists each resolved hunk and how it was resolved. Call this commit `<resolved>`. Do not push it yet.
+     - Steps 3 to 6 run on `<resolved>`. A focused test (run by an Implementer, rerun by the parent) that fails on `<resolved>` but passes on both `<sha>` and `origin/master` means the resolution is wrong: do not push, post the not-merged comment with the failing test, and stop.
      - If step 6 finds that master moved, run `git checkout --detach <sha>` and redo this step with the new `origin/master`.
 
-3. **Review.** Invoke the `code-review` skill with args `high <number>`. Put every finding into one group:
+3. **Review.** A Reviewer (Opus) invokes the `code-review` skill with args `high <number>` on the merge result and reports its findings with file and line evidence; the parent does not read the diff or the source. The parent puts every finding into one group:
    - **Introduced**: a correctness defect that this PR introduces.
    - **Pre-existing**: a correctness defect that already exists on master without this PR.
    - **Notes**: design, cleanup, parity or style suggestions. Notes are not defects and get no issue.
 
-4. **Test.** Run the focused tests for the changed code, as `CLAUDE.md` describes under "Focused tests": `dotnet test <project.csproj> -c Release --filter "FullyQualifiedName~<Name>"`. Never run the complete suite (`dotnet test Cerneala.slnx`, or a test project without `--filter`).
-   - Find the relevant test projects and filters with Grep and Roslyn MCP.
+4. **Test.** An Implementer runs the focused tests for the changed code, as `CLAUDE.md` describes under "Focused tests": `dotnet test <project.csproj> -c Release --filter "FullyQualifiedName~<Name>"`, and the parent reruns them, reading only the filtered result lines. Never run the complete suite (`dotnet test Cerneala.slnx`, or a test project without `--filter`).
+   - An Explorer finds the relevant test projects and filters with Grep and Roslyn MCP.
    - If the PR changes no code (only docs or plans), no tests are required; say so.
-   - If a needed project fails to build in a fresh worktree because Debug outputs are missing, run `dotnet build Cerneala.slnx -c Debug` first.
+   - If a needed project fails to build in a fresh worktree because Debug outputs are missing, the Implementer runs `dotnet build Cerneala.slnx -c Debug` first.
    - A failed test is a finding: put it into Introduced, or into Pre-existing when it also fails on `origin/master`.
 
 5. **Prove and raise every defect.** For each Introduced and Pre-existing finding:
-   - Reproduce it concretely, as `github-issue-raise` section 1 says: a focused test, a CSI script, or a Servo scenario, run on the PR's merge result for Introduced and on `origin/master` for Pre-existing. Record the code or steps and the literal observed values.
-   - Raise it with `github-issue-raise` and post the issue directly. When an open issue already covers it, post the new evidence as a comment on that issue instead.
+   - An Implementer reproduces it concretely, as `github-issue-raise` section 1 says: a focused test, a CSI script, or a Servo scenario, run on the PR's merge result for Introduced and on `origin/master` for Pre-existing. It records the code or steps and the literal observed values. The parent rechecks a reproduction that is a focused test by rerunning it; for any other reproduction it asks a second, independent Implementer to rerun it.
+   - Raise it with `github-issue-raise` (an Implementer writes the draft; the parent posts the issue with `gh`) and post the issue directly. When an open issue already covers it, post the new evidence as a comment on that issue instead.
    - A finding that you cannot reproduce gets no issue. Keep it for the comment with the reason, for example "not reproduced: the test passes 12 of 12 at `<sha>`".
 
 6. **Decide.** Merge when both hold:
@@ -113,6 +113,7 @@ Every other section is a `###` heading.
    - `MERGED`: post the merged comment.
    - Still `OPEN`, head still `<head>`, and `git fetch origin master` followed by `git rev-parse origin/master` still equals the tested base: run the same `gh pr merge` once more, then check again. GitHub sometimes fails a valid merge with a server error, for example `GraphQL: Something went wrong while executing your query on 2026-10-15T21:21:36Z.` (PR 285, merged by hand afterwards). If master moved instead, go back to step 6.
    - Still not `MERGED` after the second attempt, or the head moved, or the PR was closed: do not try again. Post the not-merged comment with a `### Merge error` section that quotes the exact output of each `gh pr merge` attempt, and keep the release.
+   - The parent posts the comment with `gh pr comment`, passing the body inline or on standard input, never through a file it writes.
    - The comment has the first line from "Comment format", then:
      - `### Conflict resolution`: with a resolution from step 2, the hash of `<resolved>`, and each resolved hunk with its file and how it was resolved. Leave the section out otherwise.
      - `### Bugs found`: one item per raised issue, with the issue link, whether this PR introduced it or it already existed on master, and the reproduction in one line with its literal values. Write `None.` when there are none.
@@ -126,7 +127,7 @@ Every other section is a `###` heading.
    - Otherwise run `gh release delete repro-pr-<number> --repo Chevalier12/Cerneala --yes --cleanup-tag`, which deletes the release, both zips, and its tag. An older release can also hold GIFs or a single `Issue<N>.zip`; they go with it.
    - Confirm that `gh release view repro-pr-<number> --repo Chevalier12/Cerneala` now fails with "release not found", and that `git ls-remote origin refs/tags/repro-pr-<number>` prints nothing. Report the names of the files that the earlier `--json tagName,assets` listed, for example `Issue268-before.zip, Issue268-after.zip`. Then check with `gh release view repro-gifs --repo Chevalier12/Cerneala --json assets` that the pull request's GIFs, for example `Issue268-pr277-before.gif` and `Issue268-pr277-after.gif`, are still there.
 
-9. **Clean up.** If a merge is still in progress in the worktree, run `git merge --abort`, so the worktree is left clean. Delete the temporary reproductions you created outside the repository.
+9. **Clean up.** If a merge is still in progress in the worktree, run `git merge --abort`, so the worktree is left clean. An Implementer deletes the temporary reproductions it created outside the repository.
 
 10. **Report** in the user's language: merged or not merged and why, the validation comment you relied on (its time and the head it validated), each of its extra instructions with what you did or why you skipped it, each raised issue with its link, the findings that were not raised and why, the notes, the tests with their pass/fail counts, the release deletion result, and any decision you made without the user together with the options you considered.
 
