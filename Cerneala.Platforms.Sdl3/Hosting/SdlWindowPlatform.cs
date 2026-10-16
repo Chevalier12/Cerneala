@@ -308,6 +308,8 @@ internal sealed class SdlPlatformWindow : IPlatformWindow
 
         try
         {
+            // SDL3 starts with text input off; without this, typed characters never arrive.
+            Require(api.StartTextInput(Handle), "SDL text input start");
             UpdateCoordinateScales();
             ApplyLogicalSize(window);
             Surface = new SdlWindowSurface(Handle, WindowId);
