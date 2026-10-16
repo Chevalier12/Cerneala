@@ -1,3 +1,4 @@
+using System.Numerics;
 using Cerneala.Drawing;
 using Cerneala.UI.Core;
 using Cerneala.UI.Input;
@@ -12,10 +13,8 @@ public class Thumb : Control, IPointerDragSource
     public static readonly RoutedEvent DragDeltaEvent = RoutedEventRegistry.Register(nameof(DragDelta), typeof(Thumb), RoutingStrategy.Bubble, typeof(DragDeltaEventArgs));
     public static readonly RoutedEvent DragCompletedEvent = RoutedEventRegistry.Register(nameof(DragCompleted), typeof(Thumb), RoutingStrategy.Bubble, typeof(DragCompletedEventArgs));
     private bool isDragging;
-    private int lastX;
-    private int lastY;
-    private int startX;
-    private int startY;
+    private Vector2 lastPoint;
+    private Vector2 startPoint;
 
     public Thumb()
     {
@@ -65,8 +64,7 @@ public class Thumb : Control, IPointerDragSource
         }
 
         isDragging = true;
-        startX = lastX = args.X;
-        startY = lastY = args.Y;
+        startPoint = lastPoint = GetDragPoint(args);
         LastHorizontalChange = 0;
         LastVerticalChange = 0;
         TotalHorizontalChange = 0;
@@ -90,12 +88,12 @@ public class Thumb : Control, IPointerDragSource
             return false;
         }
 
-        LastHorizontalChange = args.X - lastX;
-        LastVerticalChange = args.Y - lastY;
-        TotalHorizontalChange = args.X - startX;
-        TotalVerticalChange = args.Y - startY;
-        lastX = args.X;
-        lastY = args.Y;
+        Vector2 point = GetDragPoint(args);
+        LastHorizontalChange = point.X - lastPoint.X;
+        LastVerticalChange = point.Y - lastPoint.Y;
+        TotalHorizontalChange = point.X - startPoint.X;
+        TotalVerticalChange = point.Y - startPoint.Y;
+        lastPoint = point;
         if (LastHorizontalChange != 0 || LastVerticalChange != 0)
         {
             RaiseEvent(new DragDeltaEventArgs(DragDeltaEvent, this, LastHorizontalChange, LastVerticalChange, TotalHorizontalChange, TotalVerticalChange));
@@ -168,6 +166,25 @@ public class Thumb : Control, IPointerDragSource
         {
             context.DrawingContext.DrawRectangle(rect, borderBrush, thickness);
         }
+    }
+
+    // Drag changes are measured in the layout space where the thumb is arranged: the root point goes
+    // back through the render transforms of every ancestor, so moving the thumb by a change keeps the
+    // drawn thumb under the pointer. A point that cannot be converted reports no movement.
+    private Vector2 GetDragPoint(MouseEventArgs args)
+    {
+        Vector2 rootPoint = new(args.RootX, args.RootY);
+        if (VisualParent is not { } parent)
+        {
+            return rootPoint;
+        }
+
+        if (!InputCoordinateConverter.TryRootToElement(parent, rootPoint, out Vector2 parentPoint))
+        {
+            return lastPoint;
+        }
+
+        return new Vector2(parentPoint.X + parent.ArrangedBounds.X, parentPoint.Y + parent.ArrangedBounds.Y);
     }
 
     private void OnCapturedPointerInput(UiElementId source, RoutedEventArgs args)

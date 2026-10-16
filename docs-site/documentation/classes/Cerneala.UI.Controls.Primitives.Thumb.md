@@ -69,6 +69,8 @@ thumb.Arrange(new ArrangeContext(new LayoutRect(0, 0, 20, 20)));
 
 During an active drag, `UpdateDrag` computes `LastHorizontalChange` and `LastVerticalChange` from the previous drag point, and `TotalHorizontalChange` and `TotalVerticalChange` from the drag start point. `DragDelta` is raised only when the latest horizontal or vertical change is non-zero. The update event is marked handled while dragging.
 
+Drag points are measured in the layout space where the thumb is arranged, the space of its `ArrangedBounds`, not in root pixels. `Thumb` converts the unrounded root pointer position through the render transforms of its visual parent and every ancestor, so moving the thumb's arranged position by a change keeps the drawn thumb under the pointer. The thumb's own render transform is not applied, because it moves with the thumb. Without ancestor transforms the changes equal root-pixel movement. With a parent drawn 2x larger, a drag of `30` by `10` root pixels reports `TotalHorizontalChange == 15` and `TotalVerticalChange == 5`. A drag point that cannot be converted, for example through a non-invertible transform, reports no movement. `DragStartedEventArgs.X` and `Y` are still the rounded root coordinates of the press.
+
 While the drag owns pointer capture, `Thumb` handles mouse movement, wheel, generic button transitions, and left/right button-specific events. This prevents ancestor controls such as `ScrollViewer` from acting on pointer input until the left button is released. Hover tracking also remains on the captured thumb rather than moving to the element physically under the cursor.
 
 Completing a left-button drag performs a final update, clears `IsDragging`, releases capture through the supplied route map, raises `DragCompleted` with `Canceled` set to `false`, and marks the mouse-up event as handled. `CancelDrag` clears the drag state and raises `DragCompleted` with `Canceled` set to `true`. The constructor also registers a lost-mouse-capture handler that cancels the active drag, and detaching the thumb cancels any active drag before base detachment runs.
@@ -88,10 +90,10 @@ Completing a left-button drag performs a final update, clears `IsDragging`, rele
 | Name | Type | Description |
 | --- | --- | --- |
 | `IsDragging` | `bool` | Gets whether a drag is currently active. |
-| `LastHorizontalChange` | `float` | Gets the horizontal movement reported by the most recent active drag update. |
-| `LastVerticalChange` | `float` | Gets the vertical movement reported by the most recent active drag update. |
-| `TotalHorizontalChange` | `float` | Gets the horizontal movement from the drag start point to the most recent active drag position. |
-| `TotalVerticalChange` | `float` | Gets the vertical movement from the drag start point to the most recent active drag position. |
+| `LastHorizontalChange` | `float` | Gets the horizontal movement reported by the most recent active drag update, in the layout space where the thumb is arranged. |
+| `LastVerticalChange` | `float` | Gets the vertical movement reported by the most recent active drag update, in the layout space where the thumb is arranged. |
+| `TotalHorizontalChange` | `float` | Gets the horizontal movement from the drag start point to the most recent active drag position, in the layout space where the thumb is arranged. |
+| `TotalVerticalChange` | `float` | Gets the vertical movement from the drag start point to the most recent active drag position, in the layout space where the thumb is arranged. |
 
 ## Events
 

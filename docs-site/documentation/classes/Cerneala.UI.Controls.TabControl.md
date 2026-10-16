@@ -72,6 +72,8 @@ tabs.Items.RemoveAt(1);
 // c was the last tab: tabs.SelectedIndex is 0 and tabs.SelectedItem is a.
 ```
 
+This also holds when a container re-preparation throws during the removal. Clearing the selection re-prepares the realized container at the removed tab's old index, and that container can already hold the tab that took its place. When that re-preparation throws, `TabControl` still selects the next tab, and the first exception propagates out of the item change only after that, for example out of `Items.RemoveAt` or out of the `ItemsSource` collection's `Remove`. When selecting the next tab throws too, `SelectedIndex` still holds the next tab's index, as described for `Selector`, and the first exception is the one that propagates. For example, a `TabControl` subclass whose `PrepareItemContent` throws for `"C"` shows `"A"`, `"B"`, and `"C"`, with `SelectedIndex == 1`. `Items.RemoveAt(1)` throws `InvalidOperationException`, and before it throws, `SelectionChanged` is raised twice: first with `RemovedItems == ["B"]` and `AddedItems == []`, then with `RemovedItems == []` and `AddedItems == ["C"]`. Afterwards `SelectedIndex` is `1` and `SelectedItem` is `"C"`, and the next layout pass prepares the tab of `"C"` again.
+
 Selection can also be changed through the inherited `Selector` input behavior: a left mouse button release on a prepared item container selects that container.
 
 ## Constructors

@@ -39,6 +39,8 @@ thumb.DragDelta += (_, args) =>
 
 `DragDeltaEventArgs` is created by `Thumb.UpdateDrag` when a drag is active and the pointer position changes. `HorizontalChange` and `VerticalChange` describe the movement since the previous drag update. `TotalHorizontalChange` and `TotalVerticalChange` describe the movement from the point where the drag started.
 
+All four values are in the layout space where the thumb is arranged, the space of `Thumb.ArrangedBounds`, not in root pixels: `Thumb` converts the pointer through the render transforms of its ancestors. Adding a change to the thumb's arranged position keeps the drawn thumb under the pointer. Without ancestor transforms the values equal root-pixel movement. Inside a panel with `RenderTransform = new Transform(Matrix3x2.CreateScale(2, 2))`, a pointer move of `14` by `8` root pixels gives `HorizontalChange == 7` and `VerticalChange == 4`.
+
 `Thumb.DragDelta` is not raised for an update where both per-update changes are zero. The `Track` primitive uses the orientation-specific change, `HorizontalChange` for horizontal tracks and `VerticalChange` for vertical tracks, to update its value.
 
 `Thumb` raises these arguments as the bubbling routed event `Thumb.DragDeltaEvent`, with the thumb as `Source`.
@@ -54,10 +56,10 @@ thumb.DragDelta += (_, args) =>
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `HorizontalChange` | `float` | Gets the horizontal movement since the previous drag update. |
-| `VerticalChange` | `float` | Gets the vertical movement since the previous drag update. |
-| `TotalHorizontalChange` | `float` | Gets the horizontal movement from the drag start position. |
-| `TotalVerticalChange` | `float` | Gets the vertical movement from the drag start position. |
+| `HorizontalChange` | `float` | Gets the horizontal movement since the previous drag update, in the thumb's arrangement layout space. |
+| `VerticalChange` | `float` | Gets the vertical movement since the previous drag update, in the thumb's arrangement layout space. |
+| `TotalHorizontalChange` | `float` | Gets the horizontal movement from the drag start position, in the thumb's arrangement layout space. |
+| `TotalVerticalChange` | `float` | Gets the vertical movement from the drag start position, in the thumb's arrangement layout space. |
 
 `RoutedEvent`, `Source`, `OriginalSource` and `Handled` are inherited from `RoutedEventArgs`.
 

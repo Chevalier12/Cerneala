@@ -1,3 +1,4 @@
+using System.Numerics;
 using Cerneala.Drawing;
 using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Core;
@@ -285,14 +286,21 @@ public class Track : Control
     {
         if (args is not MouseButtonEventArgs mouseArgs ||
             mouseArgs.ChangedButton != InputMouseButton.Left ||
-            thumb is null ||
-            Contains(thumb.ArrangedBounds, mouseArgs.X, mouseArgs.Y))
+            thumb is null)
+        {
+            return;
+        }
+
+        // Hit testing applies render transforms, so the press is compared where the track and thumb are drawn.
+        Vector2 rootPoint = new(mouseArgs.RootX, mouseArgs.RootY);
+        if (!InputCoordinateConverter.TryRootToElement(this, rootPoint, out Vector2 trackPoint) ||
+            IsInside(thumb, rootPoint))
         {
             return;
         }
 
         float oldValue = Value;
-        float pointValue = ValueFromPoint(mouseArgs.X, mouseArgs.Y);
+        float pointValue = ValueFromPoint(ArrangedBounds.X + trackPoint.X, ArrangedBounds.Y + trackPoint.Y);
         if (MoveToPointOnClick)
         {
             ChangeValue(pointValue, TrackValueChangeReason.ThumbTrack);
@@ -334,12 +342,13 @@ public class Track : Control
         return value >= 0 && float.IsFinite(value);
     }
 
-    private static bool Contains(LayoutRect rect, float x, float y)
+    private static bool IsInside(UIElement element, Vector2 rootPoint)
     {
-        return x >= rect.X &&
-            y >= rect.Y &&
-            x < rect.X + rect.Width &&
-            y < rect.Y + rect.Height;
+        return InputCoordinateConverter.TryRootToElement(element, rootPoint, out Vector2 point) &&
+            point.X >= 0 &&
+            point.Y >= 0 &&
+            point.X < element.ArrangedBounds.Width &&
+            point.Y < element.ArrangedBounds.Height;
     }
 }
 
