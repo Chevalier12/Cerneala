@@ -443,6 +443,7 @@ public class ScrollViewer : Control
             horizontalScrollBar.Maximum = MathF.Max(0, presenter.ExtentWidth - presenter.ViewportWidth);
             horizontalScrollBar.ViewportSize = presenter.ViewportWidth;
             horizontalScrollBar.SmallChange = LineScrollAmount;
+            horizontalScrollBar.LargeChange = presenter.ViewportWidth;
             horizontalScrollBar.Value = presenter.HorizontalOffset;
 
             verticalScrollBar.Orientation = Orientation.Vertical;
@@ -450,6 +451,7 @@ public class ScrollViewer : Control
             verticalScrollBar.Maximum = MathF.Max(0, presenter.ExtentHeight - presenter.ViewportHeight);
             verticalScrollBar.ViewportSize = presenter.ViewportHeight;
             verticalScrollBar.SmallChange = LineScrollAmount;
+            verticalScrollBar.LargeChange = presenter.ViewportHeight;
             verticalScrollBar.Value = presenter.VerticalOffset;
         }
         finally

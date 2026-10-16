@@ -93,6 +93,8 @@ Mouse wheel input scrolls vertically by `48` units per wheel event sign when ver
 
 The active scroll bars use a `SmallChange` of `48` units. Pressing or holding either direction `RepeatButton` therefore scrolls by one visible line step per click or repeat tick.
 
+The active scroll bars use a `LargeChange` equal to the presenter's viewport on their axis: `ViewportHeight` for the vertical bar and `ViewportWidth` for the horizontal bar. A click on the track before or after the thumb therefore scrolls by one page, the visible viewport size, and the offset stops at `0` or at `extent - viewport`. The viewer updates `LargeChange` with `ViewportSize` during layout, so the page follows the viewport when the viewer is resized. For example, a viewer with `Height = 100` around 1000-unit-high content moves from vertical offset `0` to `100` on one click below the thumb, and back to `0` on one click above it.
+
 Offsets are clamped by `ScrollContentPresenter` to the valid `0..(extent - viewport)` range. Disabling an axis forces that axis offset back to `0`.
 
 ## Constructors
@@ -148,6 +150,7 @@ Offsets are clamped by `ScrollContentPresenter` to the valid `0..(extent - viewp
 | Scroll bar thickness | `12` layout units |
 | Mouse wheel scroll amount | `48` layout units per wheel sign |
 | Direction button scroll amount | `48` layout units per click or repeat tick |
+| Track click scroll amount | One viewport per click: `ViewportHeight` on the vertical bar, `ViewportWidth` on the horizontal bar |
 | Horizontal scrolling default | `Disabled` |
 | Vertical scrolling default | `Auto` |
 | Border inset | The template grid is arranged inside the viewer's `BorderThickness` on each side. |
