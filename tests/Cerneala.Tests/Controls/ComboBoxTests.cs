@@ -2179,6 +2179,115 @@ public sealed class ComboBoxTests
         Assert.Equal(editor.Text.Length, editor.Selection.Active);
     }
 
+    // "one" is selected and "tw" autocompletes to the highlighted "two". Enter or Tab commits "two" while Selector's
+    // re-preparation of the old or the new row throws inside the SelectedIndex setter, and the autocomplete suffix
+    // still collapses to a caret at the end before the exception propagates.
+    [Theory]
+    [InlineData(InputKey.Enter, "one")]
+    [InlineData(InputKey.Enter, "two")]
+    [InlineData(InputKey.Tab, "one")]
+    [InlineData(InputKey.Tab, "two")]
+    public void CommitOfAnotherItemWhoseRowPreparationThrowsStillCollapsesAutocompleteSuffix(InputKey key, string failingItem)
+    {
+        (UIRoot root, ElementInputBridge bridge, FailingContentComboBox comboBox, TextBox editor) =
+            OpenEditableWithAutocompletedSecondItem(isTextFilterEnabled: false);
+
+        comboBox.FailFor = failingItem;
+        Exception? exception = Record.Exception(() => DispatchKey(root, bridge, key));
+
+        Assert.IsType<InvalidOperationException>(exception);
+        Assert.Equal(1, comboBox.SelectedIndex);
+        Assert.Equal("two", comboBox.Text);
+        Assert.Equal("two", editor.Text);
+        Assert.True(editor.Selection.IsEmpty);
+        Assert.Equal(editor.Text.Length, editor.Selection.Active);
+    }
+
+    // "tw" filters the drop-down to "two". Enter commits "two" while re-preparing its row throws inside the
+    // SelectedIndex setter, and the filter is still cleared, so the list shows every item again.
+    [Fact]
+    public void CommitOfAnotherItemWhoseRowPreparationThrowsStillClearsFilter()
+    {
+        (UIRoot root, ElementInputBridge bridge, FailingContentComboBox comboBox, TextBox editor) =
+            OpenEditableWithAutocompletedSecondItem(isTextFilterEnabled: true);
+        Assert.Equal(1, comboBox.ViewItemCount);
+
+        comboBox.FailFor = "two";
+        Exception? exception = Record.Exception(() => DispatchKey(root, bridge, InputKey.Enter));
+
+        Assert.IsType<InvalidOperationException>(exception);
+        Assert.Equal(1, comboBox.SelectedIndex);
+        Assert.Equal(3, comboBox.ViewItemCount);
+        Assert.True(editor.Selection.IsEmpty);
+        Assert.Equal(editor.Text.Length, editor.Selection.Active);
+    }
+
+    // A click on the highlighted "two" commits it while Selector's re-preparation of the old row of "one" throws
+    // inside the SelectedIndex setter, and the autocomplete suffix still collapses before the exception propagates.
+    [Fact]
+    public void ClickCommitOfAnotherItemWhoseOldRowPreparationThrowsStillCollapsesAutocompleteSuffix()
+    {
+        (UIRoot root, ElementInputBridge bridge, FailingContentComboBox comboBox, TextBox editor) =
+            OpenEditableWithAutocompletedSecondItem(isTextFilterEnabled: false);
+        UIElement clicked = comboBox.ItemContainerGenerator.RealizedContainers[1];
+        float x = clicked.ArrangedBounds.X + 2;
+        float y = clicked.ArrangedBounds.Y + 2;
+
+        comboBox.FailFor = "one";
+        Exception? exception = Record.Exception(() =>
+        {
+            bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+            bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        });
+
+        Assert.IsType<InvalidOperationException>(exception);
+        Assert.Equal(1, comboBox.SelectedIndex);
+        Assert.Equal("two", editor.Text);
+        Assert.True(editor.Selection.IsEmpty);
+        Assert.Equal(editor.Text.Length, editor.Selection.Active);
+    }
+
+    // An editable ComboBox with "one" selected and its drop-down open, where "tw" autocompletes to the highlighted
+    // "two" with the suffix "o" selected. Every row is 10 px tall, so a click can reach it.
+    private static (UIRoot Root, ElementInputBridge Bridge, FailingContentComboBox ComboBox, TextBox Editor)
+        OpenEditableWithAutocompletedSecondItem(bool isTextFilterEnabled)
+    {
+        UIRoot root = new(300, 200);
+        FailingContentComboBox comboBox = new()
+        {
+            IsTextFilterEnabled = isTextFilterEnabled,
+            Width = 180,
+            ItemsPanel = new LayoutStackPanel()
+        };
+        comboBox.SetItems(new[] { "one", "two", "three" });
+        LayoutCanvas canvas = new();
+        canvas.VisualChildren.Add(comboBox);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        comboBox.SelectedIndex = 0;
+        root.ProcessFrame();
+        TextBox editor = Assert.IsType<TextBox>(comboBox.ComponentTemplateInstance!.Parts["PART_EditableTextBox"]);
+        ElementInputBridge bridge = new();
+        bridge.FocusManager.Focus(editor, root.InputCache.EnsureCurrent(root));
+        DispatchKey(root, bridge, InputKey.F4);
+        root.ProcessFrame();
+        foreach (UIElement container in comboBox.ItemContainerGenerator.RealizedContainers.Values)
+        {
+            container.Height = 10;
+        }
+
+        root.ProcessFrame();
+        editor.Select(0, editor.Text.Length);
+        editor.ReceiveTextInput("tw");
+        root.ProcessFrame();
+        Assert.True(comboBox.IsDropDownOpen);
+        Assert.Equal("two", editor.Text);
+        Assert.Equal(2, editor.Selection.Start);
+        Assert.Equal(3, editor.Selection.End);
+        Assert.Equal(0, comboBox.SelectedIndex);
+        return (root, bridge, comboBox, editor);
+    }
+
     // The drop-down of a non-editable ComboBox is open with "one" selected and highlighted.
     private static (UIRoot Root, ElementInputBridge Bridge, FailingContentComboBox ComboBox) OpenNonEditableWithFirstItemSelected()
     {
