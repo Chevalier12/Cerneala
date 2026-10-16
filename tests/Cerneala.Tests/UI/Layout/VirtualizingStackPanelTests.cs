@@ -265,6 +265,82 @@ public sealed class VirtualizingStackPanelTests
         Assert.Equal("10..21, 21..31", GetVerticalDeviceEdges([panel.VisualChildren[1], panel.VisualChildren[2]], scale));
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void FrameDoesNotMeasureChildrenOutsideTheRealizationWindowOfADirectlyUsedPanel(bool rowsAddedBeforePanelJoinsTree)
+    {
+        // Rows of 28 match the initial estimate, so viewport 400 realizes items 0..14 and keeps that window after measure.
+        UIRoot root = new(200, 400, 1);
+        VirtualizingStackPanel panel = new() { FirstRealizedIndex = 0 };
+        List<ConstraintRecordingElement> rows = [.. Enumerable.Range(0, 30).Select(_ => new ConstraintRecordingElement(28))];
+        if (!rowsAddedBeforePanelJoinsTree)
+        {
+            root.VisualChildren.Add(panel);
+            root.ProcessFrame();
+        }
+
+        panel.UpdateViewport(new ItemsVirtualizationViewport(30, 400, 0, 0));
+        rows.ForEach(panel.VisualChildren.Add);
+        if (rowsAddedBeforePanelJoinsTree)
+        {
+            root.VisualChildren.Add(panel);
+        }
+
+        root.ProcessFrame();
+
+        Assert.Equal(new RealizationWindow(0, 15), panel.RealizationWindow);
+        Assert.Equal("", string.Join(", ", rows.Skip(15).Select((row, offset) => (row, index: offset + 15))
+            .Where(entry => entry.row.MeasureCount > 0)
+            .Select(entry => $"row {entry.index} measured {entry.row.MeasureCount}x at {entry.row.LastAvailableSize}")));
+        Assert.All(rows.Take(15), row =>
+        {
+            Assert.True(row.MeasureCount > 0);
+            Assert.Equal(new LayoutSize(200, float.PositiveInfinity), row.LastAvailableSize);
+        });
+    }
+
+    [Fact]
+    public void FrameDoesNotMeasureAChildOutsideTheRealizationWindowWhenOnlyThatChildIsInvalidated()
+    {
+        UIRoot root = new(200, 400, 1);
+        VirtualizingStackPanel panel = new() { FirstRealizedIndex = 0 };
+        root.VisualChildren.Add(panel);
+        panel.UpdateViewport(new ItemsVirtualizationViewport(30, 400, 0, 0));
+        List<ConstraintRecordingElement> rows = [.. Enumerable.Range(0, 30).Select(_ => new ConstraintRecordingElement(28))];
+        rows.ForEach(panel.VisualChildren.Add);
+        root.ProcessFrame();
+        ConstraintRecordingElement outside = rows[20];
+        int measuresBefore = outside.MeasureCount;
+
+        outside.Width = 30;
+        root.ProcessFrame();
+
+        Assert.Equal(new RealizationWindow(0, 15), panel.RealizationWindow);
+        Assert.Equal((0, 0), (measuresBefore, outside.MeasureCount));
+    }
+
+    [Fact]
+    public void FrameDoesNotMeasureAChildMovedOutsideTheRealizationWindow()
+    {
+        UIRoot root = new(200, 400, 1);
+        VirtualizingStackPanel panel = new() { FirstRealizedIndex = 0 };
+        root.VisualChildren.Add(panel);
+        panel.UpdateViewport(new ItemsVirtualizationViewport(30, 400, 0, 0));
+        List<ConstraintRecordingElement> rows = [.. Enumerable.Range(0, 30).Select(_ => new ConstraintRecordingElement(28))];
+        rows.ForEach(panel.VisualChildren.Add);
+        root.ProcessFrame();
+        ConstraintRecordingElement moved = rows[0];
+        int measuresBefore = moved.MeasureCount;
+
+        panel.VisualChildren.Move(0, 20);
+        moved.Width = 30;
+        root.ProcessFrame();
+
+        Assert.Equal(new RealizationWindow(0, 15), panel.RealizationWindow);
+        Assert.Equal((1, 1), (measuresBefore, moved.MeasureCount));
+    }
+
     [Fact]
     public void SkippedChildrenOfADirectlyUsedPanelDrawNothing()
     {
@@ -460,6 +536,20 @@ public sealed class VirtualizingStackPanelTests
         {
             MeasureCount++;
             return new LayoutSize(20, 10);
+        }
+    }
+
+    private sealed class ConstraintRecordingElement(float height) : UIElement
+    {
+        public int MeasureCount { get; private set; }
+
+        public LayoutSize? LastAvailableSize { get; private set; }
+
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            MeasureCount++;
+            LastAvailableSize = context.AvailableSize;
+            return new LayoutSize(20, height);
         }
     }
 

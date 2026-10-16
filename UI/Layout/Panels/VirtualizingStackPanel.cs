@@ -8,10 +8,17 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
     private const float InitialEstimatedItemExtent = 28;
     private readonly Dictionary<int, float> measuredItemExtents = [];
     private readonly HashSet<int> measuredChildIndices = [];
+    private readonly Dictionary<UIElement, int> childPositions = new(ReferenceEqualityComparer.Instance);
     private ItemsVirtualizationViewport? automaticViewport;
     private RealizationWindow automaticWindow = RealizationWindow.Empty;
     private float estimatedItemExtent = InitialEstimatedItemExtent;
     private LayoutRounding measureRounding = LayoutRounding.Disabled;
+
+    public VirtualizingStackPanel()
+    {
+        // Clearing also releases removed children; the positions are rebuilt on the next lookup.
+        VisualChildren.Changed += (_, _) => childPositions.Clear();
+    }
 
     public VirtualizationContext? VirtualizationContext { get; set; }
 
@@ -192,6 +199,39 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
         }
 
         return context.FinalRect;
+    }
+
+    // A child outside the window keeps the zero size MeasureCore gives it; measured by the frame on its own, it
+    // would get a guessed constraint (its last one, the panel's size or the root viewport) instead of none.
+    internal override bool SkipsChildMeasure(UIElement child)
+    {
+        if (!IsVirtualizing)
+        {
+            return false;
+        }
+
+        int position = GetChildPosition(child);
+        return position >= 0 && !IsRealized(RealizationWindow, FirstRealizedIndex + position);
+    }
+
+    // The frame asks once per queued child, so a linear search would make adding n children quadratic.
+    // A stored position is checked before use, because Move does not raise Changed.
+    private int GetChildPosition(UIElement child)
+    {
+        if (childPositions.TryGetValue(child, out int position) &&
+            position < VisualChildren.Count &&
+            ReferenceEquals(VisualChildren[position], child))
+        {
+            return position;
+        }
+
+        childPositions.Clear();
+        for (int i = 0; i < VisualChildren.Count; i++)
+        {
+            childPositions[VisualChildren[i]] = i;
+        }
+
+        return childPositions.TryGetValue(child, out position) ? position : -1;
     }
 
     // Measures the children inside the window that the current measure has not measured yet, and reports whether there
