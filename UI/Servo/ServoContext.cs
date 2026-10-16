@@ -151,9 +151,22 @@ internal sealed class ServoContext
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(operation);
-        await ExecuteSerializedAsync(
-            (root, state, token) => operation(root, state.Driver, token),
-            cancellationToken).ConfigureAwait(false);
+        await ExecuteInputAsync([operation], cancellationToken).ConfigureAwait(false);
+    }
+
+    internal async Task ExecuteInputAsync(
+        IReadOnlyList<Func<UIRoot, IServoInputDriver, CancellationToken, Task>> steps,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(steps);
+        Func<UIRoot, ServoInputState, CancellationToken, Task>[] serializedSteps = new Func<UIRoot, ServoInputState, CancellationToken, Task>[steps.Count];
+        for (int index = 0; index < steps.Count; index++)
+        {
+            Func<UIRoot, IServoInputDriver, CancellationToken, Task> step = steps[index];
+            serializedSteps[index] = (root, state, token) => step(root, state.Driver, token);
+        }
+
+        await ExecuteSerializedAsync(serializedSteps, cancellationToken).ConfigureAwait(false);
     }
 
     internal async Task ExecuteSerializedAsync(
@@ -161,24 +174,36 @@ internal sealed class ServoContext
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(operation);
+        await ExecuteSerializedAsync([operation], cancellationToken).ConfigureAwait(false);
+    }
+
+    // Every step starts on the owning UI thread. A Window step completes from a frame continuation
+    // that can resume on another thread, so each later step is marshaled through the Relay again.
+    private async Task ExecuteSerializedAsync(
+        IReadOnlyList<Func<UIRoot, ServoInputState, CancellationToken, Task>> steps,
+        CancellationToken cancellationToken)
+    {
         ServoInputState state = await InvokeAsync(
             _ => RequireInputState(),
             cancellationToken).ConfigureAwait(false);
         await state.Gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            await InvokeAsync(
-                root =>
-                {
-                    ServoInputState currentState = RequireInputState();
-                    if (!ReferenceEquals(state, currentState))
+            foreach (Func<UIRoot, ServoInputState, CancellationToken, Task> step in steps)
+            {
+                await InvokeAsync(
+                    root =>
                     {
-                        throw new ServoException("The Servo input context changed before the operation could run.");
-                    }
+                        ServoInputState currentState = RequireInputState();
+                        if (!ReferenceEquals(state, currentState))
+                        {
+                            throw new ServoException("The Servo input context changed before the operation could run.");
+                        }
 
-                    return operation(root, currentState, cancellationToken);
-                },
-                cancellationToken).ConfigureAwait(false);
+                        return step(root, currentState, cancellationToken);
+                    },
+                    cancellationToken).ConfigureAwait(false);
+            }
         }
         finally
         {

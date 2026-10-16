@@ -23,11 +23,11 @@ Follow `CLAUDE.md`, especially "Claude Code tooling and verification commands". 
 ### 2. Inspect Cerneala before planning
 
 - Follow `CLAUDE.md`.
-- Run `.\Tools\scripts\New-FileTree.ps1`, then read `FileTree.md` once before inspecting structure.
-- Split the discovery into independent evidence questions and send them to Haiku explorers in parallel. Examples: "every caller of `X`", "which tests cover `Y`", "how does the native adapter lay out `Z`". Read the decisive files they return yourself.
+- When you do not know the structure of the area, run `.\Tools\scripts\New-FileTree.ps1`, then read `FileTree.md` once before inspecting structure.
+- Split the discovery into independent evidence questions. Examples: "every caller of `X`", "which tests cover `Y`", "how does the native adapter lay out `Z`". Answer them with Grep and Roslyn MCP, or send broad ones to Haiku explorers in parallel. Read the decisive files yourself.
 - Build a current-source caller inventory:
   - Use Roslyn MCP (`find_references`, `find_callers`, `find_implementations`) for C# symbols when it is connected.
-  - Use explorers for text, markup, shader, and non-C# uses.
+  - Use Grep for text, markup, shader, and non-C# uses.
   - Inspect each candidate use in context and record the search scope and any unresolved coverage.
   - A text match is not proof of symbol identity, and an empty search is not proof that no other callers exist.
 - Inspect the relevant production code, tests, public API docs, and at least one current plan for local conventions.
@@ -109,7 +109,7 @@ For each stage:
 ### 8. Run a semantic audit of the draft
 
 - Reread every plan file completely after drafting.
-- Recheck the definitions and call sites (Roslyn MCP or a fresh explorer pass) for every shared type/member the plan moves, changes, renames, or deletes. Inspect matches in context, verify that the file inventory and migration tasks cover identified callers, and record any unresolved coverage instead of claiming text search proves completeness.
+- Recheck the definitions and call sites (Roslyn MCP and Grep) for every shared type/member the plan moves, changes, renames, or deletes. Inspect matches in context, verify that the file inventory and migration tasks cover identified callers, and record any unresolved coverage instead of claiming text search proves completeness.
 - Compare objectives, non-goals, tasks, gates, risks, platform policy, and definition of done for contradictions.
 - Verify that every baseline claim still matches the repository and that every future capability is marked as planned or gated by discovery.
 - Verify that every RED is actually RED on the current implementation, while characterization tests remain GREEN.

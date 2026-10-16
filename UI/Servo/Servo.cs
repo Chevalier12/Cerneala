@@ -200,12 +200,11 @@ public sealed class Servo
         ArgumentNullException.ThrowIfNull(target);
         ArgumentNullException.ThrowIfNull(text);
         return RunAsync(token => context.ExecuteInputAsync(
-            async (_, input, operationToken) =>
-            {
-                await input.ClickAsync(
-                    root => actionEngine.ResolveActionable(root, target), operationToken).ConfigureAwait(false);
-                await input.SendTextAsync(text, operationToken).ConfigureAwait(false);
-            },
+            [
+                (_, input, operationToken) => input.ClickAsync(
+                    root => actionEngine.ResolveActionable(root, target), operationToken),
+                (_, input, operationToken) => input.SendTextAsync(text, operationToken)
+            ],
             token), cancellationToken);
     }
 
@@ -217,13 +216,12 @@ public sealed class Servo
         ArgumentNullException.ThrowIfNull(target);
         ArgumentNullException.ThrowIfNull(text);
         return RunAsync(token => context.ExecuteInputAsync(
-            async (_, input, operationToken) =>
-            {
-                await input.ClickAsync(
-                    root => actionEngine.ResolveActionable(root, target), operationToken).ConfigureAwait(false);
-                await input.PressKeyAsync(InputKey.A, ServoModifiers.Control, operationToken).ConfigureAwait(false);
-                await input.SendTextAsync(text, operationToken).ConfigureAwait(false);
-            },
+            [
+                (_, input, operationToken) => input.ClickAsync(
+                    root => actionEngine.ResolveActionable(root, target), operationToken),
+                (_, input, operationToken) => input.PressKeyAsync(InputKey.A, ServoModifiers.Control, operationToken),
+                (_, input, operationToken) => input.SendTextAsync(text, operationToken)
+            ],
             token), cancellationToken);
     }
 

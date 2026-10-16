@@ -107,15 +107,7 @@ internal sealed class RetainedServoInputDriver : IServoInputDriver
         ServoModifiers modifiers,
         CancellationToken cancellationToken)
     {
-        ValidateKey(key);
-        ValidateModifiers(modifiers);
-        InputKey[] modifierKeys = ModifierKeys(modifiers);
-        List<ServoInputStep> steps = [];
-        AppendKeyboard(steps, modifierKeys);
-        AppendKeyboard(steps, [.. modifierKeys, key]);
-        AppendKeyboard(steps, modifierKeys);
-        AppendKeyboard(steps, []);
-        return DispatchAsync(steps, cancellationToken);
+        return DispatchAsync(CreateKeyPressSteps(key, modifiers), cancellationToken);
     }
 
     public Task HoldKeyAsync(
@@ -152,19 +144,7 @@ internal sealed class RetainedServoInputDriver : IServoInputDriver
 
     public Task SendTextAsync(string text, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(text);
-        List<ServoInputStep> steps = [];
-        TextElementEnumerator enumerator = StringInfo.GetTextElementEnumerator(text);
-        while (enumerator.MoveNext())
-        {
-            AppendStep(
-                steps,
-                pointer,
-                keyboard,
-                [new TextInputSnapshotEvent(enumerator.GetTextElement())]);
-        }
-
-        return DispatchAsync(steps, cancellationToken);
+        return DispatchAsync(CreateTextSteps(text), cancellationToken);
     }
 
     internal void ClickAt(float x, float y)
@@ -242,12 +222,12 @@ internal sealed class RetainedServoInputDriver : IServoInputDriver
 
     internal void PressKey(InputKey key, ServoModifiers modifiers)
     {
-        PressKeyAsync(key, modifiers, CancellationToken.None).GetAwaiter().GetResult();
+        DispatchImmediately(CreateKeyPressSteps(key, modifiers));
     }
 
     internal void SendText(string text)
     {
-        SendTextAsync(text, CancellationToken.None).GetAwaiter().GetResult();
+        DispatchImmediately(CreateTextSteps(text));
     }
 
     internal void ResetInput()
@@ -345,6 +325,36 @@ internal sealed class RetainedServoInputDriver : IServoInputDriver
 
             throw;
         }
+    }
+
+    private List<ServoInputStep> CreateKeyPressSteps(InputKey key, ServoModifiers modifiers)
+    {
+        ValidateKey(key);
+        ValidateModifiers(modifiers);
+        InputKey[] modifierKeys = ModifierKeys(modifiers);
+        List<ServoInputStep> steps = [];
+        AppendKeyboard(steps, modifierKeys);
+        AppendKeyboard(steps, [.. modifierKeys, key]);
+        AppendKeyboard(steps, modifierKeys);
+        AppendKeyboard(steps, []);
+        return steps;
+    }
+
+    private List<ServoInputStep> CreateTextSteps(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        List<ServoInputStep> steps = [];
+        TextElementEnumerator enumerator = StringInfo.GetTextElementEnumerator(text);
+        while (enumerator.MoveNext())
+        {
+            AppendStep(
+                steps,
+                pointer,
+                keyboard,
+                [new TextInputSnapshotEvent(enumerator.GetTextElement())]);
+        }
+
+        return steps;
     }
 
     private ServoActionTarget ResolveTarget(Func<UIRoot, ServoActionTarget> resolveTarget)

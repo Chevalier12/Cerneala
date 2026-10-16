@@ -7,6 +7,7 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
 {
     private const float InitialEstimatedItemExtent = 28;
     private readonly Dictionary<int, float> measuredItemExtents = [];
+    private readonly HashSet<int> measuredChildIndices = [];
     private ItemsVirtualizationViewport? automaticViewport;
     private RealizationWindow automaticWindow = RealizationWindow.Empty;
     private float estimatedItemExtent = InitialEstimatedItemExtent;
@@ -98,31 +99,43 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
         RealizationWindow window = RealizationWindow;
         LayoutRounding rounding = context.Rounding;
         measureRounding = rounding;
+        MeasureContext childContext = new(new LayoutSize(context.AvailableSize.Width, float.PositiveInfinity), rounding);
+        measuredChildIndices.Clear();
+        MeasureRealizedChildren(window, childContext);
+
+        // The measured heights correct the estimate, which can move the automatic window onto children that this measure
+        // skipped. Arrange places the children of the corrected window, so they are measured here until a round adds
+        // no child. Each further round measures at least one more child, so the rounds end.
+        if (automaticViewport is not null)
+        {
+            do
+            {
+                UpdateEstimatedItemExtent();
+                RecalculateAutomaticWindow();
+                window = RealizationWindow;
+            }
+            while (MeasureRealizedChildren(window, childContext));
+        }
+
         float width = 0;
         float height = 0;
         for (int i = 0; i < VisualChildren.Count; i++)
         {
-            int itemIndex = FirstRealizedIndex + i;
             UIElement child = VisualChildren[i];
-            if (!IsRealized(window, itemIndex))
+            if (!IsRealized(window, FirstRealizedIndex + i))
             {
-                child.SetDesiredSize(LayoutSize.Zero);
+                // A child that this measure measured before the window moved past it keeps that real result, so a zero
+                // that no measure produced never replaces it.
+                if (!measuredChildIndices.Contains(i))
+                {
+                    child.SetUnmeasuredDesiredSize(LayoutSize.Zero);
+                }
+
                 continue;
             }
 
-            child.Measure(new MeasureContext(new LayoutSize(context.AvailableSize.Width, float.PositiveInfinity), context.Rounding));
             width = MathF.Max(width, child.DesiredSize.Width);
             height += rounding.ToDevicePixels(child.DesiredSize.Height);
-            if (automaticViewport is not null && child.DesiredSize.Height >= 0 && float.IsFinite(child.DesiredSize.Height))
-            {
-                measuredItemExtents[itemIndex] = child.DesiredSize.Height;
-            }
-        }
-
-        if (automaticViewport is not null)
-        {
-            UpdateEstimatedItemExtent();
-            RecalculateAutomaticWindow();
         }
 
         float naturalHeight = rounding.FromDevicePixels(height);
@@ -142,7 +155,9 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
             float.IsFinite(virtualizationContext.ItemExtent)
             ? virtualizationContext.ItemExtent
             : 0;
-        float y = context.FinalRect.Y;
+        // The stacking cursor is a double for the reason given at FromDevicePixels: in a float, ten rows of 33 pixels
+        // stacked at 32,999,670 would each add 32 and the last row would end 8 pixels before TotalExtent.
+        double y = context.FinalRect.Y;
         bool placedFirstAutomaticChild = false;
 
         for (int i = 0; i < VisualChildren.Count; i++)
@@ -170,13 +185,38 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
 
             float childY = itemExtent > 0
                 ? context.FinalRect.Y + (itemIndex * itemExtent)
-                : y;
+                : (float)y;
             float height = itemExtent > 0 ? itemExtent : child.DesiredSize.Height;
             child.Arrange(new ArrangeContext(new LayoutRect(context.FinalRect.X, childY, context.FinalRect.Width, height), context.Rounding));
             y += height;
         }
 
         return context.FinalRect;
+    }
+
+    // Measures the children inside the window that the current measure has not measured yet, and reports whether there
+    // were any.
+    private bool MeasureRealizedChildren(RealizationWindow window, MeasureContext childContext)
+    {
+        bool measuredAny = false;
+        for (int i = 0; i < VisualChildren.Count; i++)
+        {
+            int itemIndex = FirstRealizedIndex + i;
+            if (!IsRealized(window, itemIndex) || !measuredChildIndices.Add(i))
+            {
+                continue;
+            }
+
+            UIElement child = VisualChildren[i];
+            child.Measure(childContext);
+            measuredAny = true;
+            if (automaticViewport is not null && child.DesiredSize.Height >= 0 && float.IsFinite(child.DesiredSize.Height))
+            {
+                measuredItemExtents[itemIndex] = child.DesiredSize.Height;
+            }
+        }
+
+        return measuredAny;
     }
 
     // Item indices start at 0 and stop at int.MaxValue, so a negative FirstRealizedIndex or an
@@ -211,14 +251,17 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
             return;
         }
 
+        // The window adds the item extents as EstimateOffset and EstimateTotalExtent do, so the scroll offset
+        // TotalExtent - ViewportExtent finds the last items, the ones that arrange places there.
+        LayoutRounding rounding = measureRounding;
         float offset = viewport.ScrollOffset;
         float viewportEnd = offset + viewport.ViewportExtent;
         int start = 0;
-        float cursor = 0;
+        double cursor = 0;
         while (start < viewport.ItemCount)
         {
-            float next = cursor + GetEstimatedItemExtent(start);
-            if (next > offset)
+            double next = cursor + GetItemDevicePixels(start, rounding);
+            if (FromDevicePixels(next, rounding) > offset)
             {
                 break;
             }
@@ -228,9 +271,9 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
         }
 
         int end = start;
-        while (end < viewport.ItemCount && (cursor < viewportEnd || end == start))
+        while (end < viewport.ItemCount && (FromDevicePixels(cursor, rounding) < viewportEnd || end == start))
         {
-            cursor += GetEstimatedItemExtent(end);
+            cursor += GetItemDevicePixels(end, rounding);
             end++;
         }
 
@@ -239,27 +282,35 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
         automaticWindow = RealizationWindow.Create(viewport.ItemCount, start, end);
     }
 
-    // With layout rounding the item extents add device pixels: a measured height on a device pixel counts as its whole
-    // number of device pixels, and any other extent, such as the averaged estimate, counts as extent * Scale.
+    // The extent of the items before index. The arrange offsets, the realization window and TotalExtent all add the
+    // item extents this way, so they agree.
     private float EstimateOffset(int index, LayoutRounding rounding)
     {
-        float offset = 0;
+        double devicePixels = 0;
         for (int current = 0; current < index; current++)
         {
-            offset += rounding.ToDevicePixels(GetEstimatedItemExtent(current));
+            devicePixels += GetItemDevicePixels(current, rounding);
         }
 
-        return rounding.FromDevicePixels(offset);
+        return FromDevicePixels(devicePixels, rounding);
     }
 
     private float EstimateTotalExtent(int itemCount, LayoutRounding rounding)
     {
-        double devicePixels = 0;
-        for (int index = 0; index < itemCount; index++)
-        {
-            devicePixels += rounding.ToDevicePixels(GetEstimatedItemExtent(index));
-        }
+        return EstimateOffset(itemCount, rounding);
+    }
 
+    // With layout rounding the item extents add device pixels: a measured height on a device pixel counts as its whole
+    // number of device pixels, and any other extent, such as the averaged estimate, counts as extent * Scale.
+    private double GetItemDevicePixels(int index, LayoutRounding rounding)
+    {
+        return rounding.ToDevicePixels(GetEstimatedItemExtent(index));
+    }
+
+    // The sum stays a double until here. Past 2^24 a float holds only even integers, so a float sum of items that are
+    // 33 device pixels tall would add 32 per item: after 1,000,000 items it would end at 32,508,400 instead of 33,000,000.
+    private static float FromDevicePixels(double devicePixels, LayoutRounding rounding)
+    {
         float extent = rounding.FromDevicePixels((float)devicePixels);
         return float.IsFinite(extent) ? extent : float.MaxValue;
     }
