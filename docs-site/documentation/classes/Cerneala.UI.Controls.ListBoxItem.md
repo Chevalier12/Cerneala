@@ -7,7 +7,7 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Controls/ListBoxItem.cs`
 
-Represents the default item container used by `ListBox`, with content hosting, selection metadata, and selected-state rendering.
+Represents the default item container used by `ListBox`, with content presentation, selection metadata, and selected-state rendering.
 
 ```csharp
 public class ListBoxItem : ContentControl, ISelectableItemContainer
@@ -56,6 +56,23 @@ The class implements `ISelectableItemContainer` through the public `ItemIndex`, 
 
 Because `ListBoxItem` derives from `ContentControl`, it also supports the inherited `Content` property and content-hosting behavior.
 
+### Content presentation
+
+`ListBoxItem` shows every kind of `Content`, as the `ContentPresenter` in the template of a WPF `ListBoxItem` does:
+
+| Content | Result |
+| --- | --- |
+| `UIElement` | Hosted directly as the item's logical and visual child, as `ContentControl` hosts it. |
+| `string` | Shown by an internal `ContentPresenter` child, which creates a `TextBlock` with the text. The `TextBlock` uses the item's `FontFamily`, `FontSize`, and `Foreground`. |
+| Another value | Given to the same internal `ContentPresenter`. It shows a child only when a content template matches the value; otherwise the item shows only its background. |
+| `null` | No content child. |
+
+For example, `new ListBoxItem { Content = "Ink" }` has one `ContentPresenter` child, and that presenter has one `TextBlock` child whose `Text` is `"Ink"`. The item measures at least the size of that text plus `Padding` and `BorderThickness`. `Content` stays the string `"Ink"`.
+
+When the item is a row of a `ListBox`, the `ListBox` passes its `ItemTemplate`, `ItemTemplateKey`, and `Templates` to the internal presenter, so the template creates the row's visual from the item. A `ListBoxItem` that is its own container (an item of the list that is already a `ListBoxItem`) does not use the `ListBox` item template, as in WPF. Without a `ListBox`, the presenter resolves content templates through the aspects of the item's root.
+
+When the item has a `ComponentTemplate` or a `ComponentTemplateKey`, the template presents `Content`, and the item creates no internal presenter.
+
 ## Constructors
 
 | Name | Description |
@@ -86,7 +103,9 @@ This class does not declare additional public methods.
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `OnRender(RenderContext context)` | `void` | Renders the selected highlight or inherited background inside the current render bounds. |
+| `MeasureCore(MeasureContext context)` | `LayoutSize` | Measures the internal content presenter inside `Padding + BorderThickness` when the item presents non-element `Content`; otherwise uses `ContentControl` measurement. |
+| `ArrangeCore(ArrangeContext context)` | `LayoutRect` | Arranges the internal content presenter inside `Padding + BorderThickness` when the item presents non-element `Content`; otherwise uses `ContentControl` arrangement. |
+| `OnRender(RenderContext context)` | `void` | Renders the selected highlight or inherited background inside the current render bounds. The content child renders on top of it. |
 
 ## Events
 
@@ -112,4 +131,5 @@ UI area: retained controls, item containers, content presentation, and selector 
 - `ListBox`
 - `ItemsControl`
 - `ContentControl`
+- `ContentPresenter`
 - `ISelectableItemContainer`
