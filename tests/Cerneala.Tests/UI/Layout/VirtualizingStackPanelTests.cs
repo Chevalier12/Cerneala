@@ -296,6 +296,56 @@ public sealed class VirtualizingStackPanelTests
     }
 
     [Fact]
+    public void AutomaticViewportScrolledWithTheSameConstraintMeasuresTheRowsThatEnterTheWindow()
+    {
+        // Only the scroll offset changes between the passes: the available size and the item count stay the same. The
+        // window moves from 5..14 to 0..8, so the measure with the same constraint must not reuse the cached measure,
+        // which never measured items 0..4.
+        LayoutRounding rounding = LayoutRounding.ForScale(1);
+        VirtualizingStackPanel panel = new() { FirstRealizedIndex = 0 };
+        for (int i = 0; i < 30; i++)
+        {
+            panel.VisualChildren.Add(new FixedHeightElement(50));
+        }
+
+        foreach (float offset in new[] { 280f, 0f })
+        {
+            panel.UpdateViewport(new ItemsVirtualizationViewport(30, 400, offset, 0));
+            panel.Measure(new MeasureContext(new LayoutSize(100, 400), rounding));
+            panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, panel.DesiredSize.Height), rounding));
+        }
+
+        Assert.Equal(new RealizationWindow(0, 8), panel.RealizationWindow);
+        Assert.All(panel.VisualChildren.Take(8), child => Assert.Equal(50, child.DesiredSize.Height));
+        Assert.Equal(
+            string.Join(", ", Enumerable.Range(0, 8).Select(index => $"{index * 50}..{(index + 1) * 50}")),
+            GetVerticalDeviceEdges(panel.VisualChildren.Take(8), 1));
+    }
+
+    [Fact]
+    public void AutomaticViewportScrolledWithinTheSameWindowReusesThePanelMeasure()
+    {
+        // Offsets 10 and 20 with a viewport of 400 both realize items 0..8 of rows that are 50 tall, so the second
+        // scroll changes nothing that the panel measures or arranges.
+        LayoutRounding rounding = LayoutRounding.ForScale(1);
+        MeasureCountingVirtualizingStackPanel panel = new() { FirstRealizedIndex = 0 };
+        for (int i = 0; i < 30; i++)
+        {
+            panel.VisualChildren.Add(new FixedHeightElement(50));
+        }
+
+        foreach (float offset in new[] { 10f, 20f })
+        {
+            panel.UpdateViewport(new ItemsVirtualizationViewport(30, 400, offset, 0));
+            panel.Measure(new MeasureContext(new LayoutSize(100, 400), rounding));
+            panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, panel.DesiredSize.Height), rounding));
+        }
+
+        Assert.Equal(new RealizationWindow(0, 9), panel.RealizationWindow);
+        Assert.Equal(1, panel.MeasureCount);
+    }
+
+    [Fact]
     public void RowRealizedAgainWithTheSameConstraintReportsItsMeasuredHeight()
     {
         // Rows 0 and 1 are measured with (100, infinity), get the zero desired size while the window is 3..4, and
@@ -387,6 +437,17 @@ public sealed class VirtualizingStackPanelTests
         {
             MeasureCount++;
             return new LayoutSize(20, 10);
+        }
+    }
+
+    private sealed class MeasureCountingVirtualizingStackPanel : VirtualizingStackPanel
+    {
+        public int MeasureCount { get; private set; }
+
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            MeasureCount++;
+            return base.MeasureCore(context);
         }
     }
 
