@@ -1014,6 +1014,13 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         return LayoutSize.Zero;
     }
 
+    // True when this element's measure leaves the visual child unmeasured on purpose, as a virtualizing panel
+    // does outside its realization window. The frame then does not measure that child or its subtree on its own.
+    internal virtual bool SkipsChildMeasure(UIElement child)
+    {
+        return false;
+    }
+
     protected virtual LayoutRect ArrangeCore(ArrangeContext context)
     {
         return context.FinalRect;
