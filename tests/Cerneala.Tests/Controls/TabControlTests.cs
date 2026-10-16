@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Items;
 using Cerneala.UI.Elements;
@@ -257,6 +258,62 @@ public sealed class TabControlTests
         Assert.Same(first, tabControl.SelectedItem);
     }
 
+    // Clearing the selection re-prepares the container at index 1, which already holds "C", so the removal throws.
+    // The tab that took the removed tab's place is still selected, and the first failure propagates after it.
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public void RemovingSelectedTabWhosePreparationOfNextTabThrowsStillSelectsNextTab(bool useItemsSource, bool keepFailing)
+    {
+        UIRoot root = new(200, 100);
+        ObservableCollection<string> source = ["A", "B", "C"];
+        FailingContentTabControl tabControl = new();
+        if (useItemsSource)
+        {
+            tabControl.ItemsSource = source;
+        }
+        else
+        {
+            tabControl.SetItems(new[] { "A", "B", "C" });
+        }
+
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+        tabControl.SelectedIndex = 1;
+        root.ProcessFrame();
+        List<string> events = [];
+        tabControl.SelectionChanged += (_, args) => events.Add(
+            $"[{string.Join(",", args.RemovedItems.Cast<object>())}] -> [{string.Join(",", args.AddedItems.Cast<object>())}]");
+        tabControl.FailFor = "C";
+        tabControl.RemainingFailures = keepFailing ? int.MaxValue : 1;
+
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
+        {
+            if (useItemsSource)
+            {
+                source.RemoveAt(1);
+            }
+            else
+            {
+                tabControl.Items.RemoveAt(1);
+            }
+        });
+
+        Assert.Equal("content preparation failed", exception.Message);
+        Assert.Equal(1, tabControl.SelectedIndex);
+        Assert.Equal("C", tabControl.SelectedItem);
+        Assert.Equal(["[B] -> []", "[] -> [C]"], events);
+
+        tabControl.FailFor = null;
+        root.ProcessFrame();
+
+        Assert.Equal(1, tabControl.SelectedIndex);
+        Assert.Equal("C", ItemContainerGenerator.GetItem(tabControl.SelectedTabItem!));
+        Assert.True(tabControl.SelectedTabItem!.IsSelected);
+    }
+
     // The failed refresh realizes the tab of "C" before the callback throws for "D", but the panel never presents it.
     [Fact]
     public void SelectedTabItemIsNullForATabThatAFailedRefreshDidNotPresent()
@@ -321,6 +378,24 @@ public sealed class TabControlTests
             }
 
             base.OnItemContainerPrepared(container, index);
+        }
+    }
+
+    private sealed class FailingContentTabControl : TabControl
+    {
+        public object? FailFor { get; set; }
+
+        public int RemainingFailures { get; set; }
+
+        protected override void PrepareItemContent(UIElement container, int index, object? item)
+        {
+            if (FailFor is not null && Equals(item, FailFor) && RemainingFailures > 0)
+            {
+                RemainingFailures--;
+                throw new InvalidOperationException("content preparation failed");
+            }
+
+            base.PrepareItemContent(container, index, item);
         }
     }
 

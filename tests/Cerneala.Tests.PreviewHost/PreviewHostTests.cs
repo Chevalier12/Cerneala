@@ -5,6 +5,7 @@ using System.Reflection;
 using Cerneala.Preview;
 using Cerneala.PreviewHost;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Input;
 
 [CollectionDefinition(Name, DisableParallelization = true)]
 public sealed class PreviewHostCollection
@@ -222,6 +223,80 @@ public sealed class PreviewHostTests
                 PreviewProtocol.WriteRequest(process.StandardInput.BaseStream, new PreviewRequest
                 {
                     RequestId = 19,
+                    Kind = PreviewRequestKind.Shutdown
+                });
+                process.StandardInput.Close();
+                if (!process.WaitForExit(2_000))
+                {
+                    process.Kill();
+                }
+            }
+        }
+    }
+
+    [Fact]
+    public async Task HostProcessAnswersTextAndKeyInputAndKeepsRendering()
+    {
+        string executable = Path.Combine(AppContext.BaseDirectory, "Cerneala.PreviewHost.exe");
+        Assert.True(File.Exists(executable), $"Preview host executable '{executable}' is missing.");
+        using Process process = new()
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = executable,
+                WorkingDirectory = AppContext.BaseDirectory,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardInput = true,
+                RedirectStandardOutput = true
+            }
+        };
+        Assert.True(process.Start());
+
+        try
+        {
+            string documentPath = OpeningViewPath();
+            string source = File.ReadAllText(documentPath);
+            PreviewResponse opened = await RenderAsync(process, 31, documentPath, source, audioEnabled: false);
+            Assert.True(opened.Kind == PreviewResponseKind.Frame, opened.Error);
+
+            PreviewProtocol.WriteRequest(process.StandardInput.BaseStream, new PreviewRequest
+            {
+                RequestId = 32,
+                Kind = PreviewRequestKind.Text,
+                Text = "a"
+            });
+            PreviewResponse textResponse = await Task.Run(() =>
+                    PreviewProtocol.ReadResponse(process.StandardOutput.BaseStream))
+                .WaitAsync(TimeSpan.FromSeconds(5))
+                ?? throw new EndOfStreamException("The preview host did not answer text input.");
+            Assert.Equal(32, textResponse.RequestId);
+            Assert.True(textResponse.Kind == PreviewResponseKind.Frame, textResponse.Error);
+
+            PreviewProtocol.WriteRequest(process.StandardInput.BaseStream, new PreviewRequest
+            {
+                RequestId = 33,
+                Kind = PreviewRequestKind.Key,
+                Key = nameof(InputKey.Back)
+            });
+            PreviewResponse keyResponse = await Task.Run(() =>
+                    PreviewProtocol.ReadResponse(process.StandardOutput.BaseStream))
+                .WaitAsync(TimeSpan.FromSeconds(5))
+                ?? throw new EndOfStreamException("The preview host did not answer key input.");
+            Assert.Equal(33, keyResponse.RequestId);
+            Assert.True(keyResponse.Kind == PreviewResponseKind.Frame, keyResponse.Error);
+
+            PreviewResponse rendered = await RenderAsync(process, 34, documentPath, source, audioEnabled: false);
+            Assert.Equal(34, rendered.RequestId);
+            Assert.True(rendered.Kind == PreviewResponseKind.Frame, rendered.Error);
+        }
+        finally
+        {
+            if (!process.HasExited)
+            {
+                PreviewProtocol.WriteRequest(process.StandardInput.BaseStream, new PreviewRequest
+                {
+                    RequestId = 35,
                     Kind = PreviewRequestKind.Shutdown
                 });
                 process.StandardInput.Close();

@@ -38,6 +38,20 @@ ListBox listBox = new()
 };
 ```
 
+Each row shows its item through `ItemTemplate`. Here the rows read `[Alpha]` and `[Beta]`, and each row's `Content` stays the item string.
+
+```csharp
+using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Templates;
+
+ListBox listBox = new()
+{
+    ItemsSource = new List<string> { "Alpha", "Beta" },
+    ItemTemplate = new ContentTemplate<string>("Bracketed", key: null, priority: 0, context =>
+        new TextBlock { Text = "[" + context.Data + "]" })
+};
+```
+
 ## Remarks
 
 `ListBox` is a concrete `Selector` that configures item presentation for a vertical list. Its constructor assigns a retained vertical `StackPanel` directly to `ItemsPanel`.
@@ -45,6 +59,8 @@ ListBox listBox = new()
 Each data item is wrapped in a `ListBoxItem` container. If an item is already a `ListBoxItem`, that same element is used as its own container. Selection is inherited from `Selector`: setting `SelectedIndex` updates the selection model, and a left mouse button release on a prepared item container selects that item.
 
 `ListBoxItem` receives `ItemIndex`, `Item`, and `IsSelected` during container preparation. When a selected realized container is invalidated, the container render and input visual state are refreshed.
+
+Row content follows `ItemsControl`: without `ItemTemplate`, a row's `Content` is the item's `DisplayMemberPath` value (the item itself when the path is empty); with `ItemTemplate`, it is the item. The row shows a `string` value as text, and `ListBox` passes `ItemTemplate`, `ItemTemplateKey`, and `Templates` to the row, so a template creates the row's visual. For example, `SetItems(new[] { "Apple" })` creates a row whose `Content` is `"Apple"` and whose text reads `Apple`; the row is as tall as that text. See [`ListBoxItem`](Cerneala.UI.Controls.ListBoxItem.md#content-presentation) for every content kind. An item that is already a `ListBoxItem` is its own row and does not use the item template.
 
 ## Constructors
 
@@ -72,7 +88,7 @@ Each data item is wrapped in a `ListBoxItem` container. If an item is already a 
 | `Items` | `ItemCollection` | Inherited from `ItemsControl`. Gets the local item collection used when `ItemsSource` is not set. |
 | `ItemsSource` | `IEnumerable?` | Inherited from `ItemsControl`. Gets or sets an external item source. |
 | `ItemCount` | `int` | Inherited from `ItemsControl`. Gets the count of the `ItemsSource` snapshot when `ItemsSource` is set; otherwise the count of `Items`. |
-| `ItemTemplate` | `ContentTemplate?` | Inherited from `ItemsControl`. Gets or sets the template used to display non-container items. |
+| `ItemTemplate` | `ContentTemplate?` | Inherited from `ItemsControl`. Gets or sets the template used to display non-container items. `ListBox` applies it inside each `ListBoxItem` row. |
 | `ItemTemplateKey` | `string?` | Inherited from `ItemsControl`. Gets or sets the template key used by content presentation. |
 | `ItemsPanel` | `Panel?` | Inherited from `ItemsControl`. Gets or sets the retained panel used by the items presenter. `ListBox` initializes it to a vertical `StackPanel`. |
 
@@ -96,6 +112,8 @@ Each data item is wrapped in a `ListBoxItem` container. If an item is already a 
 | `DefaultContainerType` | Returns `typeof(ListBoxItem)`. |
 | `GetContainerTypeForItem(object? item)` | Returns the item's own type when the item is a `ListBoxItem`; otherwise `typeof(ListBoxItem)`. |
 | `CreateItemContainer(int index, object? item)` | Returns the item itself when it is a `ListBoxItem`; otherwise a new `ListBoxItem`. |
+| `PrepareItemContent(UIElement container, int index, object? item)` | Passes `ItemTemplate`, `ItemTemplateKey`, `Templates`, and the item index to a `ListBoxItem` row, then sets its `Content` as `ItemsControl` does. |
+| `ClearItemContainer(UIElement container)` | Clears the container as `ItemsControl` does, then removes the item template from a `ListBoxItem` row. |
 
 ## Applies to
 

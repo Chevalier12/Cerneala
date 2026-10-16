@@ -106,7 +106,7 @@ public class ContentPresenter : Control
         object? content,
         ContentTemplate? contentTemplate,
         string? contentTemplateKey,
-        ContentTemplateRegistry templateRegistry,
+        ContentTemplateRegistry? templateRegistry,
         int index)
     {
         deferPresentationRefresh = true;
