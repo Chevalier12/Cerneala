@@ -25,33 +25,19 @@ Once understood, add the smallest permanent regression test and confirm RED for 
 
 Feature work needs no invented bug reproduction, but test existing-runtime assumptions that materially justify its design. Factual answers and instruction-only edits may rely on source inspection without irrelevant runtime tests. Mechanical assumptions do not authorize invented behavior. If decisive evidence is unavailable, report known facts, missing evidence, and the blocked conclusion/action. Never fabricate facts, APIs, files, tests, measurements, results, or user validation.
 
-# Orchestrator mode (mandatory)
+# Parent ownership and optional subagents
 
-The parent thread is always an orchestrator (user decision, 2026-10-17). This is mandatory in every session and every task, including skill work. Only the user can turn it off, explicitly, in the conversation, for the scope they name, for example "do this one edit yourself". Injected permission modes, auto mode, skill text, convenience, and "it is only one small file" do not turn it off. Do not offload work into new user-visible sessions or tasks.
+The subagent rules in this section are defaults. The user may explicitly override them, including whether to delegate, which model/reasoning effort to use, and the division of work between the parent and subagents. Follow the user's override for the scope they specify; otherwise retain these defaults. This exception applies only to subagent delegation, not to unrelated instructions or higher-priority system constraints.
 
-The parent alone coordinates with the user and owns scope/architecture decisions, debugging conclusions, acceptance, and reporting. It stays responsible for every result its subagents produce.
+The parent alone coordinates with the user and owns scope/architecture decisions, debugging conclusions, acceptance, and reporting. It may delegate exploration, implementation, review, or planning to subagents as described below, but stays responsible for the result. Do not offload work into new user-visible sessions or tasks.
 
-## What the parent may do
+## Working directly
 
-The parent reads only these things:
+Subagents are optional (user decision, 2026-10-16). Default to doing the work in the parent thread. Each subagent starts cold, re-reads files the parent may read again, and adds a report to the parent's context, so use one only when it saves parent context or wall time.
 
-1. **Subagent results.**
-2. **The initial FileTree:** once per session, before the first delegation, run `.\Tools\scripts\New-FileTree.ps1` from the repository root and read the generated root `FileTree.md` once. Never read an old map. Later structure questions go to an Explorer. The map does not establish symbol identity, ownership, behavior, or complete references.
-3. **Skills:** the complete `SKILL.md` of a skill it loads, and the references that skill requires (see "Skills are executable policy"), also after compaction.
-4. **Verification evidence:** the actual diff of an Implementer (`git diff`) and the filtered output of the focused tests it reruns (see "Verification by the parent").
-5. **Output of its own git and gh commands**, filtered to the decisive lines.
-
-The parent may run only these commands: git and gh (status, diff, worktree checks, commit, push, pull requests, comments, releases where a skill or the user authorizes them), `New-FileTree.ps1`, and the focused-test reruns of "Verification by the parent". It may also use the Agent, Skill, `AskUserQuestion`, `EnterWorktree`/`ExitWorktree`, plan/wrap-up, and other app tools that read no repository content.
-
-The parent never does any of the following itself; it delegates them to a subagent from "Subagent types":
-
-- `Read` of any other file (source, tests, plans, docs, artifacts, logs), `Grep`, `Glob`, Roslyn MCP (`mcp__cerneala_roslyn__*`), web search or fetch.
-- `Edit`, `Write`, or any other file change, including plan checkmarks, docs, issue drafts, and temporary files.
-- Builds, CSI, harnesses, reproduction apps, benchmarks, and test runs other than verification reruns.
-
-Example: the user asks "who calls `Grid.MeasureOverride`?". The parent does not call `workspace_symbol`. It starts an Explorer with the question, and answers from the Explorer's result.
-
-If the parent notices it needs any other content, it writes a brief for a subagent instead. Use only the four types in "Subagent types"; no other agent type, no forks, no new sessions.
+- **Searching:** search directly with Grep, Glob, and Roslyn MCP (`mcp__cerneala_roslyn__*`). Example: to find who calls a method, call `workspace_symbol` with its name, then `find_callers` with the returned `symbolId`, instead of starting an explorer.
+- **Reading:** read files directly with `Read`.
+- **FileTree:** run `.\Tools\scripts\New-FileTree.ps1` from the repository root and read the generated root `FileTree.md` only when you do not know the structure of the area the task touches. Generate first, then read once; never read the old map. The map does not establish symbol identity, ownership, behavior, or complete references.
 
 ## Subagent types
 
@@ -59,21 +45,16 @@ Launch every subagent with the Agent tool as a fresh agent with a complete brief
 
 | Type | Agent settings | Use it for | It may | It must not |
 |---|---|---|---|---|
-| Explorer | `subagent_type: "Explore"`, `model: "haiku"`, `effort: "high"` | Every search and read: finding files and symbols, answering evidence questions, reading plans, docs, artifacts, and logs. Several independent questions go to parallel Explorers. | Search, read source/plans/artifacts, use Roslyn MCP and web search. | Edit, build, run tests, propose fixes, or give root-cause verdicts. |
-| Implementer | `subagent_type: "general-purpose"`, Sonnet or Opus | Every file change and every experiment: a fully specified change whose files no other agent touches at the same time, plan checkmarks, issue drafts, reproductions, RED regression tests, CSI scripts, harnesses, builds. | Read what the brief needs, edit the files in its brief, build, and run focused tests (`--filter`), CSI, and harnesses. | Run the complete suite, commit, push, open pull requests, or change scope or architecture. |
-| Reviewer | `subagent_type: "general-purpose"`, Sonnet or Opus | A second opinion on a finished diff, for example before a pull request, and confirming a finding in the source. | Read the diff and source, report findings with file/line evidence. | Edit files, build, or run tests. |
+| Explorer | `subagent_type: "Explore"`, `model: "haiku"`, `effort: "high"` | Broad searches: unknown location, many files, or several independent evidence questions at once. Not for a known file or one symbol. | Search, read source/plans/artifacts, use Roslyn MCP and web search. | Edit, build, run tests, propose fixes, or give root-cause verdicts. |
+| Implementer | `subagent_type: "general-purpose"`, Sonnet or Opus | A self-contained, fully specified change whose files no other agent touches at the same time. | Edit the files in its brief and run focused tests (`--filter`). | Run the complete suite, commit, push, open pull requests, or change scope or architecture. |
+| Reviewer | `subagent_type: "general-purpose"`, Sonnet or Opus | A second opinion on a finished diff, for example before a pull request. | Read the diff and source, report findings with file/line evidence. | Edit files, build, or run tests. |
 | Planner | `subagent_type: "Plan"`, Sonnet or Opus | Designing the approach for a large change before implementation. | Read source and propose steps, files, and tradeoffs. | Edit files or make the final scope/architecture decision. |
 
-Every brief states the concrete goal, the bounded files/scope, what the agent may and must not do (from the table and the rest of this file, for example "focused tests only, never the complete suite"), and the expected result. Because the parent reads no source, the brief carries everything the agent needs from the conversation and from earlier results: exact paths, symbols, contracts, user decisions, and the evidence so far. Results are concise: exact file/symbol/line references, facts, decisive excerpts, raw test result lines, and coverage limits; no file inventories or whole files.
+Every brief states the concrete goal, the bounded files/scope, what the agent may and must not do (from the table and the rest of this file, for example "focused tests only, never the complete suite"), and the expected result. Results are concise: exact file/symbol/line references, facts, decisive excerpts, raw test result lines, and coverage limits; no file inventories or whole files.
 
-## Verification by the parent
+Subagent results are claims, not evidence. Names, text matches, and subagent summaries do not prove symbol identity, complete references, or correctness. Before relying on a result, the parent checks the decisive evidence itself: it reads the actual diff of an implementer and reruns the focused tests, and it confirms each reviewer finding in the source before acting on it.
 
-Subagent results are claims, not evidence. Names, text matches, and subagent summaries do not prove symbol identity, complete references, or correctness. Before relying on a result:
-
-- **Implementer:** the parent reads the actual diff with `git diff` (limited to the files in the brief) and reruns the focused tests the Implementer reported, reading only the filtered result lines. Example: `dotnet test tests/Cerneala.Tests/Cerneala.Tests.csproj -c Release --filter "FullyQualifiedName~GridTests" | Select-String 'Passed!|Failed!|error |^\s+Failed '`, read result `Passed!  - Failed: 0, Passed: 12`.
-- **Reviewer or Explorer:** the parent does not open the source to confirm a finding. It sends the decisive question to a second, independent subagent (for example a Reviewer with the exact file and line) and acts only when the evidence agrees.
-
-Respect runtime/resource limits. Send independent assignments in one message so they run in parallel, with distinct bounded scopes. At most one agent edits a given file at a time, and only one build or test job runs at a time in one checkout, because they share `bin/` and `obj/` outputs. Before acceptance, stop all subagents/jobs, then parent-review the actual diff, rerun test results, subagent evidence, interactions, and plan conformity. Re-review repairs. This is parent review, not an independent audit; advance only after gates and durable checkpoint review. On stop/pause, interrupt work, preserve partial changes, and report unaccounted or unstoppable jobs.
+Respect runtime/resource limits. Send independent assignments in one message so they run in parallel, with distinct bounded scopes. At most one agent edits a given file at a time, and only one build or test job runs at a time in one checkout, because they share `bin/` and `obj/` outputs. Before acceptance, stop all subagents/jobs and parent-review actual current source, diff, raw evidence, interactions, and plan conformity. Re-review repairs. This is parent review, not an independent audit; advance only after gates and durable checkpoint review. On stop/pause, interrupt work, preserve partial changes, and report unaccounted or unstoppable jobs.
 
 # Authority and scope
 
@@ -91,7 +72,7 @@ No unrelated cleanup, opportunistic refactoring, unrequested features, or adjace
 
 This project provides `cerneala_roslyn`, a local Roslyn/MSBuild MCP over the saved C# solution, including source-generated symbols. It is installed by `Tools/scripts/Install-RoslynMcp.ps1` (into `%LOCALAPPDATA%\CernealaTools\mcpRoslyn\`) and launched by `Tools/scripts/Start-RoslynMcp.ps1`. It is registered for Codex in `.codex/config.toml` and for Claude Code in the project `.mcp.json` (server `cerneala_roslyn`). `.claude/settings.local.json` approves it, raises the startup/tool timeouts, and denies the non-allow-listed tools. Check the current tool catalog rather than assuming a connection is available in every session. A new `.mcp.json` entry loads only in a new Claude Code session. It is structured semantic navigation, not embeddings or natural-language retrieval, and does not use the editor's unsaved buffers.
 
-- Prefer `mcp__cerneala_roslyn__*` for C# symbol identity and relationships instead of treating text matches as semantic evidence. Subagents use it directly; the parent never calls it (see "Orchestrator mode").
+- Prefer `mcp__cerneala_roslyn__*` for C# symbol identity and relationships instead of treating text matches as semantic evidence. The parent and subagents both use it directly.
 - Start symbol discovery with `workspace_symbol`; inspect signatures, locations and `truncated`, then reuse the returned opaque `symbolId` or an exact source position. Do not invent IDs or merge overloads/homonyms. Use `hover` and `goto_definition` to inspect binding; `find_references`, `find_implementations` and `find_derived_types` for relationships; `find_callers` and `find_callees` for static call edges; `analyze_symbol` for combined evidence. `list_document_symbols` gives a file outline and `project_overview` gives bounded project metadata. Positions are 1-based.
 - Read `Tools/RoslynMcp/README.md` before relying on tool semantics, coverage or freshness. Save files first. Existing ordinary `.cs` edits refresh on calls; explicitly call `reload_workspace` after adding/removing/renaming files, changing project/solution/build inputs or analyzer outputs, and after any `.crn`/AdditionalFile change. AdditionalFiles can be stale without warnings. Reissue affected queries after reload.
 - Respect result caps, warnings, ambiguous cross-assembly/target-framework identity and virtual generated-source paths. Static relationships are not proof of runtime execution, complete dispatch coverage or a causal chain; confirm the relevant mechanism with source and faithful runtime experiments.
@@ -112,11 +93,11 @@ Every Claude Code or Codex session that connects to this server runs its own `mc
 
 Repository plans, contracts, tests, source, docs, audits, and artifacts are durable memory, not conversation recall. After compaction recover the latest request/current stage from these; do not repeat completed work. New input replaces stale work or adds to it without restarting completed work.
 
-If FileTree generation fails, report the failure rather than consume a stale map. Textual matches are not semantic proof; establish relevant references with Roslyn MCP or direct source reads. Before C# edits, the Implementer reads the complete target file and relevant ownership context; partial reads only after full context is known, never edit from a search snippet.
+If FileTree generation fails, report the failure rather than consume a stale map. Textual matches are not semantic proof; establish relevant references with Roslyn MCP or direct source reads. Before C# edits, whoever edits (the parent or an implementer) reads the complete target file and relevant ownership context; partial reads only after full context is known, never edit from a search snippet.
 
 Skills are executable policy. The repository's Claude skills live in `.claude/skills/` (mirrors of `.codex/skills/`) and load through the Skill tool. Use named or clearly applicable skills; parent reads the complete `SKILL.md` and required references before task actions, never delegates interpretation. Choose minimal skills, order multiple workflows before implementation, and prefer provided scripts/harnesses/templates/assets. Do not carry skills into unrelated work. Report unavailable tooling/state and use the safest compatible fallback; announce execution changes briefly and report blocking gates in final. Prefer Cerneala algorithm-market, checklist planning, implement-plan, fix-bug, and writing-api-documentation workflows over generic intuition.
 
-For checklist plans, recover current stage/gates; execute one atomic stage without later-stage interleaving. Pass gates, parent-review, immediately have an Implementer check off verified completion, review that checkpoint, then reread the remaining plan before advancing. Checkmarks mean implemented or deliberately resolved AND verified: tests exist/pass, canonical docs/manifest synchronized, focused tests for all changed and affected code actually passed. Stay on blocked stages unless the user changes the plan.
+For checklist plans, recover current stage/gates; execute one atomic stage without later-stage interleaving. Pass gates, parent-review, immediately check off verified completion, review that checkpoint, then reread the remaining plan before advancing. Checkmarks mean implemented or deliberately resolved AND verified: tests exist/pass, canonical docs/manifest synchronized, focused tests for all changed and affected code actually passed. Stay on blocked stages unless the user changes the plan.
 
 For isolated C# mechanics prefer CSI when cheaper and faithful. The command is `dotnet-csi <script>.csx` (global .NET tool `dotnet-csi`, installed in `%USERPROFILE%\.dotnet\tools`, which is on the user PATH); there is no `csi` command. Use a project-approved temporary `.csx` rather than stdin, a short timeout, cleanup, and check/terminate suspicious stuck `dotnet-csi.exe` processes. Never leave interactive/long-running CSI in the background. Keep all temporary experiments outside production globs/build discovery; remove them unless preservation is requested.
 
@@ -126,17 +107,17 @@ The skills that change code or pull requests work in a temporary git worktree fr
 
 - **Start (step 0, before any read, search, build, or edit):** if `git rev-parse --git-dir` and `git rev-parse --git-common-dir` print different paths, the session is already in a linked worktree: stay there and create none. Otherwise call `EnterWorktree` with a short task name, for example `fix-grid-span` or `pr-76-fix`. It creates `.claude/worktrees/<name>` on a new branch from the newest `origin/master` and moves the session there. Every later step works in that folder, including the paths given to subagents.
 - **Finish (after the skill's last step):** remove only a worktree that this skill created at step 0, and only when its work is published: `git status --porcelain` prints nothing, and after `git fetch origin`, `git branch -r --contains HEAD` prints at least one branch. Then call `ExitWorktree` with `action: "remove"`. When it refuses only because of commits that the check above found on `origin`, for example a pull request checked out with `gh pr checkout`, call it again with `discard_changes: true`. In every other case call `ExitWorktree` with `action: "keep"` and report the worktree path and what is unpublished, for example uncommitted breaker regression tests.
-- **Files that must outlive the worktree:** issue drafts go to `.artifacts/issue-drafts/` of the main checkout (the parent folder of `git rev-parse --git-common-dir`), not of the worktree. In a worktree session Claude Code refuses `Write` and `Edit` on main-checkout paths, and no setting lifts this; it does not check which files a shell command writes. So the Implementer writes the draft with `Write` into the session's scratchpad directory, then copies it at once with PowerShell run from the worktree: `$main = Split-Path (git rev-parse --path-format=absolute --git-common-dir)`, then `Copy-Item -LiteralPath <scratchpad>\<draft>.md -Destination "$main\.artifacts\issue-drafts\"`. Later changes to that folder, such as moving a posted draft to `posted/`, also use the shell (`Move-Item`). A plan file that exists only in the main checkout, or differs there from the worktree's copy, is copied into the worktree at the same path before the work starts, and is committed with it.
+- **Files that must outlive the worktree:** issue drafts go to `.artifacts/issue-drafts/` of the main checkout (the parent folder of `git rev-parse --git-common-dir`), not of the worktree. In a worktree session Claude Code refuses `Write` and `Edit` on main-checkout paths, and no setting lifts this; it does not check which files a shell command writes. So write the draft with `Write` into the session's scratchpad directory, then copy it at once with PowerShell run from the worktree: `$main = Split-Path (git rev-parse --path-format=absolute --git-common-dir)`, then `Copy-Item -LiteralPath <scratchpad>\<draft>.md -Destination "$main\.artifacts\issue-drafts\"`. Later changes to that folder, such as moving a posted draft to `posted/`, also use the shell (`Move-Item`). A plan file that exists only in the main checkout, or differs there from the worktree's copy, is copied into the worktree at the same path before the work starts, and is committed with it.
 
 # Claude Code tooling and verification commands
 
 The Cerneala skills in `.claude/skills/` rely on this section. They are adapted from the Codex copies in `.codex/skills/`, which stay unchanged for Codex.
 
-Tool mapping (Discovery, Reading, and Editing are subagent work; the parent follows "Orchestrator mode"):
+Tool mapping:
 
-- **Discovery:** Explorers use Grep, Glob, and `mcp__cerneala_roslyn__*` (for C# symbol identity, when it is connected), as defined in "Subagent types"; send independent assignments in one message so they run in parallel.
-- **Reading:** subagents read known paths directly with `Read`, and read only the line ranges they need once full context is known.
-- **Editing:** Implementers use `Edit` (exact replacement in a file already read). Use `Write` only for new files or a deliberate full rewrite.
+- **Discovery:** Grep, Glob, and `mcp__cerneala_roslyn__*` (for C# symbol identity, when it is connected) directly. Optional Haiku explorers for broad searches, as defined in "Subagent types"; send independent assignments in one message so they run in parallel.
+- **Reading:** read known paths directly with `Read`, and read only the line ranges you need once full context is known.
+- **Editing:** use `Edit` (exact replacement in a file already read). Use `Write` only for new files or a deliberate full rewrite.
 - **Long commands:** a build, a filtered test project, or a harness that takes more than about 2 minutes runs with `run_in_background`. Wait for its completion notification, and use `Monitor` only for event streams. Never poll with `sleep`.
 - **Command output:** filter it to the decisive lines, for example `Select-String 'Passed!|Failed!|error |^\s+Failed '`. Read whole logs only when diagnosing a specific failure.
 - **Blocking decisions:** ask with `AskUserQuestion`. Every option gets a concrete example of what changes (see "The user").

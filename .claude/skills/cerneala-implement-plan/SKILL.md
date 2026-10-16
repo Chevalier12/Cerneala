@@ -7,12 +7,12 @@ description: Implement a named Cerneala Markdown checklist plan end-to-end, one 
 
 Execute the named checklist plan completely. The plan file is the only durable progress ledger: its checkmarks and status line say what is done. Keep working across stages and turns until the plan is finished or a real blocker needs the user.
 
-Follow `CLAUDE.md`, especially "Orchestrator mode (mandatory)" and "Claude Code tooling and verification commands". The first says the parent only coordinates: it reads subagent results, the `SKILL.md` files it loads, the initial `FileTree.md`, `git diff` and filtered test reruns, and runs only git/gh commands, `New-FileTree.ps1`, and focused-test reruns. All search and reading goes to Explorers, all edits, builds, experiments and focused tests to Implementers, diff review to Reviewers, and design to Planners. The second covers background runs and the focused-test commands. Every "search", "read", "edit", "build" and "test" below is work that the parent delegates this way, unless the step says the parent does it itself.
+Follow `CLAUDE.md`, especially "Claude Code tooling and verification commands". It covers direct search with Grep and Roslyn MCP, optional subagents, `Edit`, background runs, and the focused-test commands.
 
 ## Start
 
-0. **Worktree (MANDATORY, before anything else):** start in a temporary worktree, as `CLAUDE.md` describes under "Temporary worktree for skills", and work only there. If the plan file is missing from the worktree, or differs from the main checkout's copy, an Implementer copies the main checkout's copy into the worktree at the same path. After the final completion audit and its commit, finish the worktree the same way.
-1. Resolve the requested plan to one exact Markdown file. Resolve a bare name against `docs/plans/` first; when the path is not known, an Explorer searches for it.
+0. **Worktree (MANDATORY, before anything else):** start in a temporary worktree, as `CLAUDE.md` describes under "Temporary worktree for skills", and work only there. If the plan file is missing from the worktree, or differs from the main checkout's copy, copy the main checkout's copy into the worktree at the same path. After the final completion audit and its commit, finish the worktree the same way.
+1. Resolve the requested plan to one exact Markdown file. Resolve a bare name against `docs/plans/` first; search for it with Glob when the path is not known.
 2. If several files match, ask the user which one (with `AskUserQuestion`). Do not pick one.
 3. Tell the user in one short message, in their language:
    - which plan file
@@ -25,18 +25,18 @@ The user's invocation of this skill authorizes implementing, verifying, document
 
 After every context compaction, before any search, edit, test, checklist update, or stage-completion claim:
 
-1. The parent reads this complete file from disk: `.claude/skills/cerneala-implement-plan/SKILL.md`.
+1. Read this complete file from disk: `.claude/skills/cerneala-implement-plan/SKILL.md`.
 2. Recover the plan path from the compaction summary.
-3. An Explorer re-reads the complete plan and reports its checkmarks, unchecked items and gates.
-4. Rebuild the current stage from that report and the repository state (git status/diff by the parent, deeper questions by an Explorer), not from memory.
+3. Re-read the complete plan.
+4. Rebuild the current stage from the plan's checkmarks and the repository state, not from memory.
 5. Continue from "Resolve and Audit the Plan".
 
 A compaction summary is never a substitute for this skill or for the plan file.
 
 ## Resolve and Audit the Plan
 
-- Once per session, before the first delegation and when you do not know the structure of the area the plan touches, the parent runs `.\Tools\scripts\New-FileTree.ps1`, then reads `FileTree.md` once for orientation. Later structure questions go to an Explorer.
-- An Explorer reads the complete plan, and the parent works from its report. The report identifies:
+- When you do not know the structure of the area the plan touches, run `.\Tools\scripts\New-FileTree.ps1`, then read `FileTree.md` once for orientation.
+- Read the complete plan and identify:
   - already checked work;
   - unchecked actionable items;
   - unchecked gates;
@@ -44,7 +44,7 @@ A compaction summary is never a substitute for this skill or for the plan file.
   - optional or conditional items;
   - public API and documentation obligations;
   - verification and stop conditions.
-- Do not trust old baseline descriptions; the repository may have moved on. Answer the "where does this live now / who calls it" questions for the active stage with Explorers (Roslyn MCP and Grep), in parallel when there are many independent questions. The decisive files are read by the Implementer that edits them, not by the parent.
+- Do not trust old baseline descriptions; the repository may have moved on. Answer the "where does this live now / who calls it" questions for the active stage with Roslyn MCP and Grep, or with Haiku explorers in parallel when there are many independent broad questions. Then read the decisive files yourself.
 - Confirm prerequisite plans are complete before starting a dependent plan. Run them first only when the requested plan explicitly makes them a dependency. Otherwise ask the user.
 
 ## Stage-Atomic Batches (MANDATORY)
@@ -69,18 +69,18 @@ Optimize elapsed time and tool round-trips after correctness, repository policy,
 Default shape per stage: one consolidated audit, one implementation pass, one verification ladder, and one mandatory checklist checkpoint.
 
 - Build one work map for the active stage, then execute it. Do not rediscover scope before every task.
-- Put independent tool calls in one message: independent Explorer questions, git status checks, and other subagent assignments.
-- Implementers read the complete content only of C# files they will edit (repository policy). For already-understood supporting files, they use targeted reads, Roslyn symbol queries, or Explorer answers.
-- Implementers make related edits with as few `Edit` calls as stay readable. They do not rewrite whole files to change a few lines.
-- An Implementer implements the whole stage before its verification ladder, except where the plan requires RED/GREEN test-first order. Only one Implementer edits a given file at a time.
-- Choose the verification ladder once, run by the Implementer, with the parent rerunning the focused tests it reports (see "Verify"):
+- Put independent tool calls in one message: independent searches, reads, status checks, and any subagent assignments.
+- Read the complete content only of C# files you will edit (repository policy). For already-understood supporting files, use targeted reads, Roslyn symbol queries, or subagent answers.
+- Make related edits with as few `Edit` calls as stay readable. Do not rewrite whole files to change a few lines.
+- Implement the whole stage before its verification ladder, except where the plan requires RED/GREEN test-first order.
+- Choose the verification ladder once:
   - compile or a narrow test during development;
   - the required stage tests at the gate;
   - never the complete suite: where the stage or the final audit asks for it, run the focused tests for all code the plan changed instead (see "Verify").
 - A successful verification stays valid until a later change touches code, project configuration, generated inputs, or another surface that can affect it. Documentation and checklist edits do not invalidate compiled test evidence.
 - After a successful build of the current code state, use `--no-build` for compatible follow-up test commands. Never use it after unbuilt code or project changes.
 - Do not rerun a green command for reassurance. Reuse current-state evidence and record it at the checkpoint.
-- Run anything longer than about 2 minutes in the background (the Implementer, or the parent for a verification rerun) and keep working on non-dependent steps while it runs.
+- Run anything longer than about 2 minutes in the background and keep working on non-dependent steps while it runs.
 - Message the user only at stage start, stage completion, or when a real failure or blocker changes the plan. Do not narrate searches, edits, or passing micro-tests.
 - Do not add speculative tests, experiments, abstractions, or documentation audits beyond what closes a real checklist item or gate.
 
@@ -88,16 +88,14 @@ Default shape per stage: one consolidated audit, one implementation pass, one ve
 
 ### 1. Revalidate scope
 
-- Explorers do one consolidated scope pass for the active stage, with Grep and, for C# references, Roslyn MCP when connected. The parent does not search.
-- The Implementer reads every C# file completely before editing it. Partial reads only after full context is known.
-- Explorers and Implementers inspect only the definitions, references, tests, and public docs plausibly affected by the stage.
+- Do one consolidated scope pass for the active stage. Search with Grep, and use Roslyn MCP for C# references when connected; explorers are optional.
+- Read every C# file completely before editing it. Use partial reads only after full context is known.
+- Inspect only the definitions, references, tests, and public docs plausibly affected by the stage.
 - Preserve user changes and unrelated dirty-worktree changes.
 - Do not expand into non-goals or unrelated cleanup. Report unrelated smells separately, without fixing them.
 - If you find a real Cerneala defect outside the plan, invoke `github-issue-raise` for it and continue the stage. Do not fix it inside the plan.
 
 ### 2. Implement
-
-The parent starts one Implementer per bounded set of files, with a complete brief (stage items, exact paths, symbols, Explorer findings, rules below). The Implementer does the work below.
 
 - Follow the plan's test-first order when specified. A RED test must fail for the intended reason before the production change.
 - Prefer current Cerneala patterns, simple ownership, and explicit lifecycle handling.
@@ -107,8 +105,6 @@ The parent starts one Implementer per bounded set of files, with a complete brie
 - Complete every implementation and test task of the active stage before its gate.
 
 ### 3. Verify
-
-The Implementer runs the verification below. The parent then reads the Implementer's `git diff` (limited to the files in the brief) and reruns the focused tests it reported, reading only the filtered result lines, as `CLAUDE.md` describes under "Verification by the parent". The parent runs no other tests, builds, or harnesses.
 
 - Run the narrowest tests that prove the stage behavior, then the related regression tests the plan names.
 - Run formatting, build, source-generator, API, visual, or benchmark verification when the stage requires it, with the commands and prerequisites in `CLAUDE.md`.
@@ -122,15 +118,15 @@ The Implementer runs the verification below. The parent then reads the Implement
 
 After the entire active stage passes, the plan update is a blocking part of the batch. Do not run any implementation command for the next stage until every step below is done:
 
-- An Implementer edits the source plan (the parent does not edit it), and the brief names the stage and the exact items and gates to check.
+- Edit the source plan with `Edit`.
 - Change `[ ]` to `[x]` for every active-stage item implemented and verified in this batch.
 - Mark an active-stage gate `[x]` only when all its conditions are proven.
 - A conditional task that was evaluated and found unnecessary gets `[x]` plus a short reason, such as `(Nu a fost necesar: ...)`.
 - Leave blocked or unfinished work unchecked.
 - Never check tasks from another stage. Preserve checkmarks that already existed, and do not rewrite historical checked items unless repository evidence proves them false.
 - When the plan tracks status, set it to `in progres` after the first completed batch. Set `finalizat` only after the final audit.
-- The parent runs `git diff --check` on the files touched by the batch and reads `git diff` of the plan file.
-- An Explorer re-reads the entire updated stage section. Confirm from its report and the plan diff that completed items and gates are checked, unfinished ones are not, and no neighboring stage changed.
+- Run `git diff --check` on the files touched by the batch.
+- Re-read the entire updated stage section. Confirm that completed items and gates are checked, unfinished ones are not, and no neighboring stage changed.
 A stage is not a completed batch until the plan file has been edited and re-read.
 
 ### 5. Report and continue
@@ -151,10 +147,10 @@ A stage is not a completed batch until the plan file has been edited and re-read
 ## Failure and Resume Rules
 
 - If a test fails, keep the affected tasks unchecked and fix the failure inside the current stage before moving on.
-- The Implementer retries a transient tooling failure once with the narrowest corrective action. If it repeats, an Implementer diagnoses that tool directly instead of restarting unrelated verification.
+- Retry a transient tooling failure once with the narrowest corrective action. If it repeats, diagnose that tool directly instead of restarting unrelated verification.
 - If the plan conflicts with current architecture, stop that batch, record the contradiction, and ask the user before changing the approved design.
 - If a user decision blocks the current stage, ask with `AskUserQuestion` (concrete example per option). Do not skip to a later stage while waiting.
-- After an interruption, an Explorer reads the plan and reports the unchecked items, and the parent resumes from the first incomplete stage. After a compaction, follow the mandatory recovery sequence above.
+- After an interruption, read the plan, inspect unchecked items, and resume from the first incomplete stage. After a compaction, follow the mandatory recovery sequence above.
 - If a blocker stops the plan before the final audit, do not invoke `git-session-commit-push`. Report the completed stages and the blocker, and ask the user with `AskUserQuestion` whether to commit the verified work anyway.
 - The plan file and repository state are authoritative, not memory of an older turn.
 
@@ -162,14 +158,14 @@ A stage is not a completed batch until the plan file has been edited and re-read
 
 Before declaring the plan done:
 
-- An Explorer re-reads the entire plan.
-- Confirm from its report that every applicable task and gate is `[x]`, conditional and non-goal items have explicit resolutions, and required prerequisite plans are complete.
-- An Implementer runs the plan's final targeted verification once after the last relevant implementation change, or the parent reuses an identical current-state run from the final stage.
-- An Implementer runs the focused tests for all code the plan changed once in the final code state, each with a `--filter`, and the parent reruns them (filtered result lines only). Never run the complete suite, even when the plan defines a final full suite. Do not repeat them if they already passed after the last code or project change.
-- An Implementer runs the final API documentation and manifest checks for public API changes, or the parent reuses results produced after the last relevant change.
-- The parent runs `git diff --check` across all changed files.
-- A Reviewer reviews `git diff` for accidental scope, leftover debug code, generated churn, and unchecked required work, and the parent reads `git diff` itself.
-- An Implementer sets the plan status to `finalizat`.
+- Re-read the entire plan.
+- Confirm every applicable task and gate is `[x]`, conditional and non-goal items have explicit resolutions, and required prerequisite plans are complete.
+- Run the plan's final targeted verification once after the last relevant implementation change, or reuse an identical current-state run from the final stage.
+- Run the focused tests for all code the plan changed once in the final code state, each with a `--filter`. Never run the complete suite, even when the plan defines a final full suite. Do not repeat them if they already passed after the last code or project change.
+- Run final API documentation and manifest checks for public API changes, or reuse results produced after the last relevant change.
+- Run `git diff --check` across all changed files.
+- Review `git diff` for accidental scope, leftover debug code, generated churn, and unchecked required work.
+- Set the plan status to `finalizat`.
 - Invoke the `git-session-commit-push` skill (MANDATORY). Pass it the plan path, the completed stages, the final verification results with real counts, and any gate that still needs a human. If a required final gate failed or could not run, do not invoke it; report the blocker and ask the user with `AskUserQuestion` whether to commit anyway.
 - Report in the user's language:
   - the completed stages
