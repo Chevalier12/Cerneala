@@ -504,6 +504,94 @@ public sealed class ComboBoxTests
         Assert.Same(editor, bridge.FocusManager.FocusedElement);
         Assert.Equal(0, editor.Selection.Start);
         Assert.Equal(editor.Text.Length, editor.Selection.End);
+        Assert.False(comboBox.IsDropDownOpen);
+    }
+
+    [Theory]
+    [InlineData("middle")]
+    [InlineData("left")]
+    [InlineData("toggle")]
+    public void NonEditableFieldClickTogglesDropDown(string where)
+    {
+        (UIRoot root, ComboBox comboBox) = CreateNonEditableField();
+        ToggleButton toggle = Assert.IsType<ToggleButton>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_DropDownToggle"]);
+        Overlay overlay = Assert.IsType<Overlay>(
+            comboBox.ComponentTemplateInstance.Parts["PART_DropDownOverlay"]);
+        LayoutRect bounds = comboBox.ArrangedBounds;
+        float y = bounds.Y + bounds.Height / 2;
+        float x = where switch
+        {
+            "middle" => bounds.X + bounds.Width / 2,
+            "left" => bounds.X + 8,
+            _ => toggle.ArrangedBounds.X + toggle.ArrangedBounds.Width / 2
+        };
+        UIElement? hit = new HitTestService().HitTest(root, x, y)?.Element;
+        Assert.Equal(where == "toggle", ReferenceEquals(hit, toggle));
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.True(comboBox.IsDropDownOpen);
+        Assert.True(overlay.IsOpen);
+        Assert.True(overlay.IsProjected);
+        Assert.True(toggle.IsChecked);
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.False(comboBox.IsDropDownOpen);
+        Assert.False(overlay.IsOpen);
+        Assert.False(overlay.IsProjected);
+        Assert.False(toggle.IsChecked);
+        Assert.Equal(0, comboBox.SelectedIndex);
+    }
+
+    [Fact]
+    public void NonEditableItemClickSelectsItemAndClosesDropDown()
+    {
+        (UIRoot root, ComboBox comboBox) = CreateNonEditableField();
+        LayoutRect bounds = comboBox.ArrangedBounds;
+        float fieldX = bounds.X + bounds.Width / 2;
+        float fieldY = bounds.Y + bounds.Height / 2;
+        ElementInputBridge bridge = new();
+        bridge.Dispatch(root, PointerFrame(fieldX, fieldY, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(fieldX, fieldY, previousDown: true));
+        root.ProcessFrame();
+        Assert.True(comboBox.IsDropDownOpen);
+        UIElement second = comboBox.ItemContainerGenerator.RealizedContainers[1];
+        float itemX = second.ArrangedBounds.X + second.ArrangedBounds.Width / 2;
+        float itemY = second.ArrangedBounds.Y + second.ArrangedBounds.Height / 2;
+
+        bridge.Dispatch(root, PointerFrame(itemX, itemY, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(itemX, itemY, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.Equal(1, comboBox.SelectedIndex);
+        Assert.Equal("two", comboBox.Text);
+        Assert.False(comboBox.IsDropDownOpen);
+    }
+
+    private static (UIRoot Root, ComboBox ComboBox) CreateNonEditableField()
+    {
+        UIRoot root = new(300, 200);
+        ComboBox comboBox = new()
+        {
+            IsEditable = false,
+            Width = 180,
+            Height = 32
+        };
+        comboBox.SetItems(new[] { "one", "two", "three" });
+        comboBox.SelectedIndex = 0;
+        LayoutCanvas canvas = new();
+        LayoutCanvas.SetLeft(comboBox, 60);
+        canvas.VisualChildren.Add(comboBox);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        return (root, comboBox);
     }
 
     [Fact]
