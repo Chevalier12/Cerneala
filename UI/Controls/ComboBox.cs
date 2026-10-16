@@ -61,6 +61,7 @@ public class ComboBox : Selector
         ItemsPanel = defaultItemsPanel;
         Handlers.AddHandler(InputEvents.KeyDownEvent, OnKeyDown);
         Handlers.AddHandler(InputEvents.TextInputEvent, OnTextInput);
+        Handlers.AddHandler(InputEvents.MouseUpEvent, OnMouseUp);
         SetFrameworkDefault(BackgroundProperty, new SolidColorBrush(Color.White));
         SetFrameworkDefault(ForegroundProperty, new SolidColorBrush(Color.Black));
         SetFrameworkDefault(BorderBrushProperty, new SolidColorBrush(new Color(120, 130, 145)));
@@ -936,6 +937,45 @@ public class ComboBox : Selector
             _ => Math.Min(ItemCount - 1, SelectedIndex + 1)
         };
         args.Handled = true;
+    }
+
+    // A non-editable field acts as one drop-down button, as the WPF default template's ToggleButton covers the
+    // whole field. The toggle clicks by itself, and the projected list is not in the field's visual subtree.
+    private void OnMouseUp(UiElementId _, RoutedEventArgs args)
+    {
+        if (IsEditable || !IsEnabled ||
+            args is not MouseButtonEventArgs { ChangedButton: InputMouseButton.Left, ClickCount: > 0 } ||
+            !IsFieldSource(args.OriginalSource))
+        {
+            return;
+        }
+
+        IsDropDownOpen = !IsDropDownOpen;
+    }
+
+    private bool IsFieldSource(object? source)
+    {
+        UIElement? element = source switch
+        {
+            UIElement candidate => candidate,
+            UiElementId id when Root?.ElementIds.TryGetElement(id, out UIElement? resolved) == true => resolved,
+            _ => null
+        };
+
+        for (UIElement? current = element; current is not null; current = current.VisualParent)
+        {
+            if (ReferenceEquals(current, dropDownToggle))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(current, this))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void ApplyExactTextMatch(int matchIndex)
