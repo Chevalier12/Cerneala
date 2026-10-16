@@ -246,7 +246,7 @@ internal sealed class SdlPlatformWindow : IPlatformWindow
     private readonly IWindowPlatformCallbacks callbacks;
     private readonly Action<uint> removeWindow;
     private readonly float? coordinateScaleOverride;
-    private readonly SdlInputSource inputSource = new();
+    private readonly SdlInputSource inputSource;
     private readonly IWindowGraphicsSession graphicsSession;
     private bool destroyed;
     private bool enabled = true;
@@ -272,6 +272,8 @@ internal sealed class SdlPlatformWindow : IPlatformWindow
         this.callbacks = callbacks;
         this.coordinateScaleOverride = coordinateScaleOverride;
         this.removeWindow = removeWindow;
+        // Input deferred to a later frame asks the runtime for that frame.
+        inputSource = new SdlInputSource(callbacks.RenderRequested);
         desiredState = window.WindowState;
         SdlWindowOptions options = SdlWindowOptions.Hidden | SdlWindowOptions.HighPixelDensity;
         if (window.ResizeMode is ResizeMode.CanResize or ResizeMode.CanResizeWithGrip)

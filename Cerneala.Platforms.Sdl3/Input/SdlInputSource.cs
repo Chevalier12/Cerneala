@@ -2,14 +2,30 @@ using Cerneala.UI.Input;
 
 namespace Cerneala.Platforms.Sdl3;
 
+// Turns the ordered SDL event stream into level-sampled input frames. An InputFrame
+// reports a press or release as the difference between two snapshots, so a frame may
+// hold at most one transition of each key or button, and only events whose arrival
+// order matches the order ElementInputBridge dispatches them in (position, wheel and
+// buttons, keys, text). An event that breaks either rule closes the frame; it and every
+// later event wait in arrival order for the next frames, and the source asks for them.
 internal sealed class SdlInputSource : IInputSource
 {
+    private readonly Action? frameRequested;
     private PointerSnapshot previousPointer = PointerSnapshot.Empty;
     private PointerSnapshot currentPointer = PointerSnapshot.Empty;
     private KeyboardSnapshot previousKeyboard = KeyboardSnapshot.Empty;
     private readonly HashSet<InputKey> downKeys = [];
     private readonly List<TextInputSnapshotEvent> textInput = [];
+    private readonly HashSet<InputKey> changedKeys = [];
+    private readonly HashSet<InputMouseButton> changedButtons = [];
+    private readonly List<PendingInput> deferred = [];
+    private FramePhase framePhase;
     private bool hasPointerPosition;
+
+    public SdlInputSource(Action? frameRequested = null)
+    {
+        this.frameRequested = frameRequested;
+    }
 
     public float CoordinateScale { get; set; } = 1;
 
@@ -20,28 +36,28 @@ internal sealed class SdlInputSource : IInputSource
         previousPointer = currentPointer;
         previousKeyboard = currentKeyboard;
         textInput.Clear();
+        changedKeys.Clear();
+        changedButtons.Clear();
+        framePhase = FramePhase.Empty;
+        if (deferred.Count > 0)
+        {
+            int applied = 0;
+            while (applied < deferred.Count && TryApply(deferred[applied], out _))
+            {
+                applied++;
+            }
+
+            deferred.RemoveRange(0, applied);
+            frameRequested?.Invoke();
+        }
+
         return frame;
     }
 
-    public bool MovePointer(float x, float y)
-    {
-        float logicalX = x / CoordinateScale;
-        float logicalY = y / CoordinateScale;
-        if (hasPointerPosition && currentPointer.X == logicalX && currentPointer.Y == logicalY)
-        {
-            return false;
-        }
+    public bool MovePointer(float x, float y) =>
+        Accept(new PendingInput(PendingKind.Move, X: x / CoordinateScale, Y: y / CoordinateScale));
 
-        hasPointerPosition = true;
-        currentPointer = currentPointer.WithPosition(logicalX, logicalY);
-        return true;
-    }
-
-    public void LeavePointer()
-    {
-        hasPointerPosition = false;
-        currentPointer = currentPointer.WithPosition(-1, -1);
-    }
+    public void LeavePointer() => Accept(new PendingInput(PendingKind.Leave));
 
     public void SetButton(byte button, bool down)
     {
@@ -54,14 +70,13 @@ internal sealed class SdlInputSource : IInputSource
             5 => InputMouseButton.XButton2,
             _ => InputMouseButton.None
         };
-        currentPointer = currentPointer.WithButton(mapped, down);
+        Accept(new PendingInput(PendingKind.Button, Value: (int)mapped, Down: down));
     }
 
     public void AddWheel(float y, bool flipped)
     {
         int delta = checked((int)MathF.Round(y * 120));
-        currentPointer = currentPointer.WithWheelValue(
-            checked(currentPointer.WheelValue + (flipped ? -delta : delta)));
+        Accept(new PendingInput(PendingKind.Wheel, Value: flipped ? -delta : delta));
     }
 
     public void SetKey(int scancode, bool down)
@@ -72,23 +87,109 @@ internal sealed class SdlInputSource : IInputSource
             return;
         }
 
-        if (down)
-        {
-            downKeys.Add(key);
-        }
-        else
-        {
-            downKeys.Remove(key);
-        }
+        Accept(new PendingInput(PendingKind.Key, Value: (int)key, Down: down));
     }
 
     public void AddText(string? text)
     {
         if (!string.IsNullOrEmpty(text))
         {
-            textInput.Add(new TextInputSnapshotEvent(text));
+            Accept(new PendingInput(PendingKind.Text, Text: text));
         }
     }
+
+    // Returns whether the input changed state the next frame must show.
+    private bool Accept(PendingInput input)
+    {
+        if (deferred.Count == 0 && TryApply(input, out bool changed))
+        {
+            return changed;
+        }
+
+        if (input.Kind == PendingKind.Move && deferred.Count > 0 && deferred[^1].Kind == PendingKind.Move)
+        {
+            // Only the last of consecutive moves matters; keep a stalled queue small.
+            deferred[^1] = input;
+        }
+        else
+        {
+            deferred.Add(input);
+        }
+
+        return true;
+    }
+
+    // Applies the input to the frame under construction, or returns false when it
+    // must wait for the next frame. Input that changes nothing never closes a frame.
+    private bool TryApply(in PendingInput input, out bool changed)
+    {
+        changed = Changes(input);
+        if (!changed)
+        {
+            return true;
+        }
+
+        FramePhase phase = input.Kind switch
+        {
+            PendingKind.Move or PendingKind.Leave => FramePhase.Position,
+            PendingKind.Wheel or PendingKind.Button => FramePhase.WheelAndButtons,
+            PendingKind.Key => FramePhase.Key,
+            _ => FramePhase.Text
+        };
+        if (phase < framePhase ||
+            (input.Kind == PendingKind.Button && changedButtons.Contains((InputMouseButton)input.Value)) ||
+            (input.Kind == PendingKind.Key && changedKeys.Contains((InputKey)input.Value)))
+        {
+            return false;
+        }
+
+        framePhase = phase;
+        switch (input.Kind)
+        {
+            case PendingKind.Move:
+                hasPointerPosition = true;
+                currentPointer = currentPointer.WithPosition(input.X, input.Y);
+                break;
+            case PendingKind.Leave:
+                hasPointerPosition = false;
+                currentPointer = currentPointer.WithPosition(-1, -1);
+                break;
+            case PendingKind.Button:
+                changedButtons.Add((InputMouseButton)input.Value);
+                currentPointer = currentPointer.WithButton((InputMouseButton)input.Value, input.Down);
+                break;
+            case PendingKind.Wheel:
+                currentPointer = currentPointer.WithWheelValue(checked(currentPointer.WheelValue + input.Value));
+                break;
+            case PendingKind.Key:
+                changedKeys.Add((InputKey)input.Value);
+                if (input.Down)
+                {
+                    downKeys.Add((InputKey)input.Value);
+                }
+                else
+                {
+                    downKeys.Remove((InputKey)input.Value);
+                }
+                break;
+            case PendingKind.Text:
+                textInput.Add(new TextInputSnapshotEvent(input.Text!));
+                break;
+        }
+
+        return true;
+    }
+
+    private bool Changes(in PendingInput input) => input.Kind switch
+    {
+        PendingKind.Move => !hasPointerPosition || currentPointer.X != input.X || currentPointer.Y != input.Y,
+        PendingKind.Leave => hasPointerPosition || currentPointer.X != -1 || currentPointer.Y != -1,
+        PendingKind.Button => (InputMouseButton)input.Value != InputMouseButton.None &&
+            currentPointer.IsDown((InputMouseButton)input.Value) != input.Down,
+        PendingKind.Wheel => input.Value != 0,
+        PendingKind.Key => downKeys.Contains((InputKey)input.Value) != input.Down,
+        _ => true
+    };
 
     private static InputKey MapScancode(int scancode)
     {
@@ -134,4 +235,33 @@ internal sealed class SdlInputSource : IInputSource
             _ => InputKey.Unknown
         };
     }
+
+    private enum PendingKind : byte
+    {
+        Move,
+        Leave,
+        Button,
+        Wheel,
+        Key,
+        Text
+    }
+
+    // The order ElementInputBridge dispatches one frame's input in. The wheel shares the
+    // buttons' rank: it is not a transition, and one frame routes both to the same target.
+    private enum FramePhase : byte
+    {
+        Empty,
+        Position,
+        WheelAndButtons,
+        Key,
+        Text
+    }
+
+    private readonly record struct PendingInput(
+        PendingKind Kind,
+        float X = 0,
+        float Y = 0,
+        int Value = 0,
+        bool Down = false,
+        string? Text = null);
 }
