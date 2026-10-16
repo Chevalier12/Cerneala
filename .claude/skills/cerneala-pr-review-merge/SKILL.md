@@ -5,7 +5,7 @@ description: Review and merge one Cerneala pull request after the user has valid
 
 # Cerneala PR Review and Merge
 
-Review one pull request in `Chevalier12/Cerneala` at one exact head commit after the user has validated it, merge it, and delete its two reproduction apps (before and after the fix). Follow `CLAUDE.md`, especially "Parent ownership and mandatory Haiku exploration", "Focused tests" and "The user".
+Review one pull request in `Chevalier12/Cerneala` at one exact head commit after the user has validated it, merge it, and delete its two reproduction apps (before and after the fix). Follow `CLAUDE.md`, especially "Parent ownership and optional subagents", "Focused tests" and "The user".
 
 The user validates a bug fix by running the two reproduction apps from the pull request, one built without the fix and one with it (see `cerneala-fix-bug`) and then posting a comment on the pull request. This skill runs only after that comment. It never fixes anything: every defect it finds becomes a GitHub issue, and the pull request is merged anyway (user decision, 2026-10-15).
 
@@ -90,7 +90,7 @@ Every other section is a `###` heading.
    - **Notes**: design, cleanup, parity or style suggestions. Notes are not defects and get no issue.
 
 4. **Test.** Run the focused tests for the changed code, as `CLAUDE.md` describes under "Focused tests": `dotnet test <project.csproj> -c Release --filter "FullyQualifiedName~<Name>"`. Never run the complete suite (`dotnet test Cerneala.slnx`, or a test project without `--filter`).
-   - Find the relevant test projects and filters through Haiku explorers.
+   - Find the relevant test projects and filters with Grep and Roslyn MCP.
    - If the PR changes no code (only docs or plans), no tests are required; say so.
    - If a needed project fails to build in a fresh worktree because Debug outputs are missing, run `dotnet build Cerneala.slnx -c Debug` first.
    - A failed test is a finding: put it into Introduced, or into Pre-existing when it also fails on `origin/master`.

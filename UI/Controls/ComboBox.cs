@@ -61,6 +61,7 @@ public class ComboBox : Selector
         ItemsPanel = defaultItemsPanel;
         Handlers.AddHandler(InputEvents.KeyDownEvent, OnKeyDown);
         Handlers.AddHandler(InputEvents.TextInputEvent, OnTextInput);
+        Handlers.AddHandler(InputEvents.MouseUpEvent, OnMouseUp);
         SetFrameworkDefault(BackgroundProperty, new SolidColorBrush(Color.White));
         SetFrameworkDefault(ForegroundProperty, new SolidColorBrush(Color.Black));
         SetFrameworkDefault(BorderBrushProperty, new SolidColorBrush(new Color(120, 130, 145)));
@@ -289,9 +290,28 @@ public class ComboBox : Selector
             return;
         }
 
-        UpdatePreviewSelection(sourceIndex, updateEditor: true);
-        CommitSelectionTransaction();
-        IsDropDownOpen = false;
+        // A failed re-preparation of the old or the clicked row does not stop the click: it still commits the
+        // clicked item and closes the drop-down, and only then the first failure propagates.
+        ExceptionDispatchInfo? preparationFailure = null;
+        try
+        {
+            UpdatePreviewSelection(sourceIndex, updateEditor: true);
+        }
+        catch (Exception exception)
+        {
+            preparationFailure = ExceptionDispatchInfo.Capture(exception);
+        }
+
+        try
+        {
+            CommitSelectionTransactionAndCloseDropDown();
+        }
+        catch (Exception) when (preparationFailure is not null)
+        {
+            // The first failure propagates below.
+        }
+
+        preparationFailure?.Throw();
     }
 
     internal override void OnItemsViewSourceChanged()
@@ -439,17 +459,24 @@ public class ComboBox : Selector
         }
         else if (ReferenceEquals(args.Property, IsDropDownOpenProperty))
         {
-            if (IsDropDownOpen)
+            // A failed re-preparation does not stop the drop-down change: the overlay still follows
+            // IsDropDownOpen before the failure propagates.
+            try
             {
-                BeginSelectionTransaction();
+                if (IsDropDownOpen)
+                {
+                    BeginSelectionTransaction();
+                }
+                else
+                {
+                    CancelSelectionTransaction();
+                }
             }
-            else
+            finally
             {
-                CancelSelectionTransaction();
+                ApplyTemplate();
+                SynchronizeDropDownState();
             }
-
-            ApplyTemplate();
-            SynchronizeDropDownState();
         }
         else if (ReferenceEquals(args.Property, IsEditableProperty) ||
                  ReferenceEquals(args.Property, IsReadOnlyProperty))
@@ -877,16 +904,14 @@ public class ComboBox : Selector
 
         if (keyArgs.Key == InputKey.Enter && IsDropDownOpen)
         {
-            CommitSelectionTransaction();
-            IsDropDownOpen = false;
+            CommitSelectionTransactionAndCloseDropDown();
             args.Handled = true;
             return;
         }
 
         if (keyArgs.Key == InputKey.Tab && IsDropDownOpen)
         {
-            CommitSelectionTransaction();
-            IsDropDownOpen = false;
+            CommitSelectionTransactionAndCloseDropDown();
             return;
         }
 
@@ -912,6 +937,45 @@ public class ComboBox : Selector
             _ => Math.Min(ItemCount - 1, SelectedIndex + 1)
         };
         args.Handled = true;
+    }
+
+    // A non-editable field acts as one drop-down button, as the WPF default template's ToggleButton covers the
+    // whole field. The toggle clicks by itself, and the projected list is not in the field's visual subtree.
+    private void OnMouseUp(UiElementId _, RoutedEventArgs args)
+    {
+        if (IsEditable || !IsEnabled ||
+            args is not MouseButtonEventArgs { ChangedButton: InputMouseButton.Left, ClickCount: > 0 } ||
+            !IsFieldSource(args.OriginalSource))
+        {
+            return;
+        }
+
+        IsDropDownOpen = !IsDropDownOpen;
+    }
+
+    private bool IsFieldSource(object? source)
+    {
+        UIElement? element = source switch
+        {
+            UIElement candidate => candidate,
+            UiElementId id when Root?.ElementIds.TryGetElement(id, out UIElement? resolved) == true => resolved,
+            _ => null
+        };
+
+        for (UIElement? current = element; current is not null; current = current.VisualParent)
+        {
+            if (ReferenceEquals(current, dropDownToggle))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(current, this))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void ApplyExactTextMatch(int matchIndex)
@@ -998,23 +1062,11 @@ public class ComboBox : Selector
         preparationFailure?.Throw();
     }
 
-    private void CommitSelectionTransaction()
+    // Selector rethrows a failed re-preparation of the old or the new row from the SelectedIndex setter, when
+    // SelectedIndex already holds the committed index. The commit then still finishes: the caller clears the filter
+    // and synchronizes the editor, the caret, and the selection box, and only then rethrows the first failure.
+    private void CommitSelectedIndex(int committedIndex, ref ExceptionDispatchInfo? preparationFailure)
     {
-        if (!selectionTransactionActive)
-        {
-            return;
-        }
-
-        int committedIndex = previewSelectedIndex;
-        string committedText = previewSelectedIndex >= 0 && !transactionTextMatchesPreview
-            ? GetItemText(GetItemAt(previewSelectedIndex))
-            : transactionText;
-        int oldPreviewIndex = previewSelectedIndex;
-        selectionTransactionActive = false;
-        previewSelectedIndex = -1;
-        CapturePreviewItem();
-        transactionTextMatchesPreview = false;
-        updatingTextSearch = true;
         try
         {
             if (committedIndex >= 0)
@@ -1033,7 +1085,34 @@ public class ComboBox : Selector
                     preserveTextWhileDeselecting = false;
                 }
             }
+        }
+        catch (Exception exception) when (SelectedIndex == committedIndex)
+        {
+            preparationFailure ??= ExceptionDispatchInfo.Capture(exception);
+        }
+    }
 
+    private void CommitSelectionTransaction()
+    {
+        if (!selectionTransactionActive)
+        {
+            return;
+        }
+
+        int committedIndex = previewSelectedIndex;
+        string committedText = previewSelectedIndex >= 0 && !transactionTextMatchesPreview
+            ? GetItemText(GetItemAt(previewSelectedIndex))
+            : transactionText;
+        int oldPreviewIndex = previewSelectedIndex;
+        selectionTransactionActive = false;
+        previewSelectedIndex = -1;
+        CapturePreviewItem();
+        transactionTextMatchesPreview = false;
+        ExceptionDispatchInfo? preparationFailure = null;
+        updatingTextSearch = true;
+        try
+        {
+            CommitSelectedIndex(committedIndex, ref preparationFailure);
             if (IsEditable)
             {
                 Text = committedText;
@@ -1045,12 +1124,26 @@ public class ComboBox : Selector
         }
 
         ClearFilter();
-        ExceptionDispatchInfo? preparationFailure = null;
         RefreshPreviewContainer(oldPreviewIndex, ref preparationFailure);
         SynchronizeEditorText();
         editableTextBox?.MoveCaret(editableTextBox.Text.Length);
         SynchronizeSelectionPresenter();
         preparationFailure?.Throw();
+    }
+
+    // Enter, Tab, and item clicks commit the preview and close the drop-down. A failed re-preparation during the
+    // commit does not stop the command: the drop-down still closes before the failure propagates, so an open
+    // drop-down always has a selection transaction.
+    private void CommitSelectionTransactionAndCloseDropDown()
+    {
+        try
+        {
+            CommitSelectionTransaction();
+        }
+        finally
+        {
+            IsDropDownOpen = false;
+        }
     }
 
     private void CancelSelectionTransaction()
