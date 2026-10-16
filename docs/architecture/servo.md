@@ -48,7 +48,7 @@ Example: `await servo.ClickAsync(ServoTarget.ById("save"))` on a `Window`.
 6. `UiHost.UpdateCore` handles the frame like platform input: Relay drain, scheduled layout, then `ElementInputBridge.Dispatch`, which hit-tests, focuses on press, raises the preview and bubble mouse events, and runs the button command on click.
 7. The task completes only after the frame that carried the input has been presented. In the window test, `Click` fires at present `before + 2` and the task completes at `before + 3`.
 
-`TypeIntoAsync` is a click followed by text input. `ReplaceTextAsync` is a click, Ctrl+A, then text input. Neither writes `Text` directly.
+`TypeIntoAsync` is a click followed by text input. `ReplaceTextAsync` is a click, Ctrl+A, then text input. Neither writes `Text` directly. `ServoContext.ExecuteInputAsync` runs these steps one after the other under the same gate and starts each step on the UI thread through the Relay: a window step completes from a frame continuation that can resume on another thread, and `EnqueueServoInputAsync` accepts input only on the window's UI thread.
 
 ## Queries
 
@@ -91,6 +91,7 @@ Servo adds no frame phase. Its frames enter through `UiHost.Update` at the same 
 
 - Click and hover go through hit testing and routed input; a click focuses and releases the button. `tests/Cerneala.Tests/UI/Servo/ServoInputTests.cs:HoverAndClickUseHitTestingRoutedInputAndRetainedCommit`.
 - Text actions compose focus, keys and text input, without direct assignment (`"DEFAULT"` + `"!"` → `"DEFAULT!"`). `ServoInputTests.cs:TextActionsComposeFocusKeyAndTextInputWithoutDirectAssignment`.
+- On a window, every step of a composed text action dispatches on the window's UI thread. `WindowRuntimeTests.cs:ServoWindowComposedTextActionsDispatchEveryStepOnTheOwningThread`.
 - Hidden, disabled, zero-size and not-hit-testable targets throw `ServoTargetNotActionableException`. `ServoInputTests.cs:TargetActionsRejectNonActionableElements`.
 - Zero, one and many matches are handled differently. `tests/Cerneala.Tests/UI/Servo/ServoQueryTests.cs:CardinalityContractsDistinguishMissingSingleAndAmbiguousTargets`.
 - Idle waits for scheduler work and finite motion, and times out on continuous motion. `tests/Cerneala.Tests/UI/Servo/ServoSynchronizationTests.cs:WaitForIdleObservesSchedulerFiniteMotionAndContinuousMotion`.

@@ -521,6 +521,29 @@ public sealed class WindowRuntimeTests : IDisposable
     }
 
     [Fact]
+    public async Task ServoWindowComposedTextActionsDispatchEveryStepOnTheOwningThread()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        TextBox editor = new() { Text = "DEFAULT", Width = 200, Height = 40 };
+        ServoApi.SetId(editor, "editor");
+        Window window = new() { Content = editor };
+        window.Show();
+        ServoApi servo = new(window);
+
+        Task typed = servo.TypeIntoAsync(ServoTarget.ById("editor"), "!");
+        PumpUntilCompleted(runtime, typed);
+        await typed;
+        Assert.True(editor.IsKeyboardFocused);
+        Assert.Equal("DEFAULT!", editor.Text);
+
+        Task replaced = servo.ReplaceTextAsync(ServoTarget.ById("editor"), "replacement");
+        PumpUntilCompleted(runtime, replaced);
+        await replaced;
+        Assert.Equal("replacement", editor.Text);
+    }
+
+    [Fact]
     public void ServoHoldCancellationBetweenDrainCheckAndFirstModifierStepCannotDispatchInput()
     {
         using CancellationTokenSource cancellation = new();
