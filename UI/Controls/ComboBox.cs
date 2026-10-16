@@ -853,25 +853,37 @@ public class ComboBox : Selector
         }
     }
 
+    // The overlay is already projected or withdrawn, so the event is raised even when starting or canceling the
+    // selection transaction rethrows a re-preparation failure. The failure propagates after the event.
     private void OnOverlayOpened(UiElementId _, RoutedEventArgs args)
     {
         ResetDropDownVirtualization();
-        if (!IsDropDownOpen)
+        try
         {
-            SetValue(IsDropDownOpenProperty, true);
+            if (!IsDropDownOpen)
+            {
+                SetValue(IsDropDownOpenProperty, true);
+            }
         }
-
-        RaiseEvent(new RoutedEventArgs(DropDownOpenedEvent, this));
+        finally
+        {
+            RaiseEvent(new RoutedEventArgs(DropDownOpenedEvent, this));
+        }
     }
 
     private void OnOverlayClosed(UiElementId _, RoutedEventArgs args)
     {
-        if (IsDropDownOpen)
+        try
         {
-            SetValue(IsDropDownOpenProperty, false);
+            if (IsDropDownOpen)
+            {
+                SetValue(IsDropDownOpenProperty, false);
+            }
         }
-
-        RaiseEvent(new RoutedEventArgs(DropDownClosedEvent, this));
+        finally
+        {
+            RaiseEvent(new RoutedEventArgs(DropDownClosedEvent, this));
+        }
     }
 
     private void OnKeyDown(UiElementId _, RoutedEventArgs args)
