@@ -139,14 +139,20 @@ public class ItemsPresenter : Control
 
     internal bool UpdateAutomaticVirtualization(float viewportExtent, float scrollOffset)
     {
-        if (VirtualizationContext is not null ||
-            ResolveItemsPanel() is not IItemsVirtualizingPanel virtualizingPanel)
+        if (VirtualizationContext is not null)
+        {
+            return false;
+        }
+
+        // The viewport is kept while a non-virtualizing panel presents the items, so a virtualizing
+        // panel that replaces it later realizes only the viewport's items in its first refresh.
+        automaticViewport = new ItemsVirtualizationViewport(GetItemCount(), viewportExtent, scrollOffset);
+        if (ResolveItemsPanel() is not IItemsVirtualizingPanel virtualizingPanel)
         {
             return false;
         }
 
         RealizationWindow previous = virtualizingPanel.RealizationWindow;
-        automaticViewport = new ItemsVirtualizationViewport(GetItemCount(), viewportExtent, scrollOffset);
         virtualizingPanel.UpdateViewport(automaticViewport.Value);
         RealizationWindow next = virtualizingPanel.RealizationWindow;
         bool changed = itemsDirty || previous != next;
@@ -163,7 +169,7 @@ public class ItemsPresenter : Control
         RefreshItems();
         LayoutSize desired = MeasurePanelRoot(context);
         RemoveMeasureWorkForLayoutScope();
-        RemoveInheritedAndAspectWorkForLayoutScope();
+        RemoveInheritedWorkOfThisPresenter();
 
         return desired;
     }
@@ -224,7 +230,7 @@ public class ItemsPresenter : Control
         if (itemsDirty)
         {
             ResetEnteringPanelItemExtents();
-            RefreshAutomaticViewportItemCount();
+            RefreshAutomaticViewport();
         }
 
         RealizationWindow? nextWindow = GetRealizationWindow();
@@ -673,9 +679,11 @@ public class ItemsPresenter : Control
         }
     }
 
-    // An item change re-measures this presenter but not necessarily the scroll presenter
-    // that pushes the viewport, so the panel must not keep realizing against a stale count.
-    private void RefreshAutomaticViewportItemCount()
+    // An item or panel change re-measures this presenter but not necessarily the scroll presenter
+    // that pushes the viewport, so the panel must not keep realizing against a stale count, and a
+    // panel that is about to become the root, which has not received the viewport, must not realize
+    // every item.
+    private void RefreshAutomaticViewport()
     {
         if (automaticViewport is not ItemsVirtualizationViewport viewport ||
             VirtualizationContext is not null ||
@@ -685,7 +693,7 @@ public class ItemsPresenter : Control
         }
 
         int itemCount = GetItemCount();
-        if (itemCount == viewport.ItemCount)
+        if (itemCount == viewport.ItemCount && ReferenceEquals(virtualizingPanel, panelRoot))
         {
             return;
         }
@@ -812,14 +820,17 @@ public class ItemsPresenter : Control
         }
     }
 
-    private static void ProcessInheritedAndAspectForSubtree(UIElement? element)
+    // The panel inherits from this presenter, and adding it queued this presenter for that work, which this
+    // measure removes from the queue. So the propagation starts at this presenter, whose only visual child is
+    // the panel, and also writes the panel's own inherited values.
+    private void ProcessInheritedAndAspectForSubtree(UIElement? element)
     {
         if (element?.Root is not UIRoot root)
         {
             return;
         }
 
-        root.InheritedPropertyPropagator.PropagateFrom(element);
+        root.InheritedPropertyPropagator.PropagateFrom(this);
         foreach (UIElement current in ElementTreeWalker.PreOrder(element, ElementChildRole.Visual))
         {
             root.AspectProcessor.Process(current);
@@ -827,7 +838,7 @@ public class ItemsPresenter : Control
             current.DirtyState.Clear(InvalidationFlags.Aspect);
         }
 
-        root.InheritedPropertyPropagator.PropagateFrom(element);
+        root.InheritedPropertyPropagator.PropagateFrom(this);
         foreach (UIElement current in ElementTreeWalker.PreOrder(element, ElementChildRole.Visual))
         {
             root.InheritedPropertyQueue.Remove(current);
@@ -888,18 +899,17 @@ public class ItemsPresenter : Control
         }
     }
 
-    private void RemoveInheritedAndAspectWorkForLayoutScope()
+    // The measure propagated from this presenter, which is the work its queued Inherited entry stands for. It did
+    // not process this presenter's Aspect or the work queued on its ancestors, for example by a ContentPresenter
+    // that created this subtree during the same measure, so that work stays queued for the next frame.
+    private void RemoveInheritedWorkOfThisPresenter()
     {
         if (Root is not UIRoot root)
         {
             return;
         }
 
-        for (UIElement? current = this; current is not null; current = current.VisualParent)
-        {
-            root.InheritedPropertyQueue.Remove(current);
-            root.AspectQueue.Remove(current);
-            current.DirtyState.Clear(InvalidationFlags.Inherited | InvalidationFlags.Aspect);
-        }
+        root.InheritedPropertyQueue.Remove(this);
+        DirtyState.Clear(InvalidationFlags.Inherited);
     }
 }

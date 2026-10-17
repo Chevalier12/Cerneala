@@ -286,6 +286,7 @@ Supported generated value categories include:
 | Category | Examples |
 | --- | --- |
 | Scalar literals | `bool`, integer, `float`, `double`, `decimal`, enum, and finite positive values where the target property requires them |
+| String literals | `string` and `object` targets receive the attribute value exactly as written, without trimming: `Text=""` assigns `""` and `Text=" "` assigns `" "`. The target property's own validation runs when the generated factory creates the element, so `FontFamily=""` compiles and `Control.FontFamily` throws `ArgumentException` at creation |
 | Layout values | `Thickness` and `LayoutPoint`, including comma-separated forms |
 | Drawing values | Named or hexadecimal colors, byte color components, and brush resources/property elements |
 | Shape geometry | `DrawPoint` endpoints (`"0,0"`), `IReadOnlyList<DrawPoint>` literals (`"0,0 40,20 80,0"`), and `PathGeometry` SVG data |

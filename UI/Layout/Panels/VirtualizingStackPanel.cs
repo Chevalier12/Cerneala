@@ -48,12 +48,8 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
     public void UpdateViewport(ItemsVirtualizationViewport viewport)
     {
         int itemCount = Math.Max(0, viewport.ItemCount);
-        if (automaticViewport?.ItemCount != itemCount)
-        {
-            // The item count drives the desired extent, so a cached measure is stale.
-            IncrementLayoutVersion();
-        }
-
+        bool itemCountChanged = automaticViewport?.ItemCount != itemCount;
+        RealizationWindow previousWindow = automaticWindow;
         automaticViewport = viewport with
         {
             ItemCount = itemCount,
@@ -67,6 +63,15 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
         }
 
         RecalculateAutomaticWindow();
+
+        // The item count drives the desired extent, and the window decides which children the measure measures, so a
+        // cached measure is stale when either changes: a direct caller's next Measure with the same size must measure
+        // the children that entered the window. A new scroll offset inside the same window changes neither, so the
+        // cached measure stays.
+        if (itemCountChanged || automaticWindow != previousWindow)
+        {
+            IncrementLayoutVersion();
+        }
     }
 
     // A recorded height belongs to one item, so it follows that item when the collection changes.
@@ -292,16 +297,21 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
         }
 
         // The window adds the item extents as EstimateOffset and EstimateTotalExtent do, so the scroll offset
-        // TotalExtent - ViewportExtent finds the last items, the ones that arrange places there.
+        // TotalExtent - ViewportExtent finds the last items, the ones that arrange places there. Each prefix stays in device
+        // pixels and is compared with the first device pixels past the offset and the viewport end, found once, which gives
+        // the window that converting every prefix to an extent gives, without a conversion per item.
         LayoutRounding rounding = measureRounding;
         float offset = viewport.ScrollOffset;
         float viewportEnd = offset + viewport.ViewportExtent;
+        float offsetDevicePixels = GetFirstDevicePixelsPast(offset, inclusive: false, rounding);
+        float viewportEndDevicePixels = GetFirstDevicePixelsPast(viewportEnd, inclusive: true, rounding);
+        double estimatedDevicePixels = rounding.ToDevicePixels(estimatedItemExtent);
         int start = 0;
         double cursor = 0;
         while (start < viewport.ItemCount)
         {
-            double next = cursor + GetItemDevicePixels(start, rounding);
-            if (FromDevicePixels(next, rounding) > offset)
+            double next = cursor + GetItemDevicePixels(start, rounding, estimatedDevicePixels);
+            if ((float)next >= offsetDevicePixels)
             {
                 break;
             }
@@ -311,9 +321,9 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
         }
 
         int end = start;
-        while (end < viewport.ItemCount && (FromDevicePixels(cursor, rounding) < viewportEnd || end == start))
+        while (end < viewport.ItemCount && (!((float)cursor >= viewportEndDevicePixels) || end == start))
         {
-            cursor += GetItemDevicePixels(end, rounding);
+            cursor += GetItemDevicePixels(end, rounding, estimatedDevicePixels);
             end++;
         }
 
@@ -327,9 +337,10 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
     private float EstimateOffset(int index, LayoutRounding rounding)
     {
         double devicePixels = 0;
+        double estimatedDevicePixels = rounding.ToDevicePixels(estimatedItemExtent);
         for (int current = 0; current < index; current++)
         {
-            devicePixels += GetItemDevicePixels(current, rounding);
+            devicePixels += GetItemDevicePixels(current, rounding, estimatedDevicePixels);
         }
 
         return FromDevicePixels(devicePixels, rounding);
@@ -341,10 +352,13 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
     }
 
     // With layout rounding the item extents add device pixels: a measured height on a device pixel counts as its whole
-    // number of device pixels, and any other extent, such as the averaged estimate, counts as extent * Scale.
-    private double GetItemDevicePixels(int index, LayoutRounding rounding)
+    // number of device pixels, and any other extent, such as the averaged estimate, counts as extent * Scale. Every item
+    // without a measured height has the estimate, so a walk converts the estimate once and passes its device pixels.
+    private double GetItemDevicePixels(int index, LayoutRounding rounding, double estimatedDevicePixels)
     {
-        return rounding.ToDevicePixels(GetEstimatedItemExtent(index));
+        return measuredItemExtents.TryGetValue(index, out float extent)
+            ? rounding.ToDevicePixels(extent)
+            : estimatedDevicePixels;
     }
 
     // The sum stays a double until here. Past 2^24 a float holds only even integers, so a float sum of items that are
@@ -355,11 +369,40 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
         return float.IsFinite(extent) ? extent : float.MaxValue;
     }
 
-    private float GetEstimatedItemExtent(int index)
+    // The smallest device pixels whose FromDevicePixels extent is above extent, or reaches it when inclusive; NaN when
+    // no device pixels do. That extent never decreases as the device pixels grow, so a prefix p lies past extent exactly
+    // when (float)p >= the result, and never when it is NaN. Floats from 0 to infinity are ordered as their bits, so a
+    // binary search over the bits finds it with at most 32 conversions. At scale 1.25 the device pixels past offset
+    // 16,000,000 start at 20,000,002: 20,000,000 converts to exactly 16,000,000, and floats there are 2 apart.
+    private static float GetFirstDevicePixelsPast(float extent, bool inclusive, LayoutRounding rounding)
     {
-        return measuredItemExtents.TryGetValue(index, out float extent)
-            ? extent
-            : estimatedItemExtent;
+        int low = 0;
+        int high = BitConverter.SingleToInt32Bits(float.PositiveInfinity);
+        if (!IsPast(high))
+        {
+            return float.NaN;
+        }
+
+        while (low < high)
+        {
+            int middle = low + ((high - low) / 2);
+            if (IsPast(middle))
+            {
+                high = middle;
+            }
+            else
+            {
+                low = middle + 1;
+            }
+        }
+
+        return BitConverter.Int32BitsToSingle(low);
+
+        bool IsPast(int bits)
+        {
+            float devicePixelsExtent = FromDevicePixels(BitConverter.Int32BitsToSingle(bits), rounding);
+            return inclusive ? devicePixelsExtent >= extent : devicePixelsExtent > extent;
+        }
     }
 
     private void UpdateEstimatedItemExtent()

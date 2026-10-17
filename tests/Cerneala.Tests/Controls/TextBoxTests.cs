@@ -213,6 +213,38 @@ public sealed class TextBoxTests
         Assert.Equal(selectionAfterRelease, textBox.Selection);
     }
 
+    [Theory]
+    [InlineData(1f)]
+    [InlineData(2f)]
+    public void MouseDownPlacesCaretAtCharacterDrawnUnderPointer(float scale)
+    {
+        UIRoot root = RootWithScaledTextBox("iiiiWWWW", 180, scale, out TextBox textBox);
+        float stop2 = CaretX(textBox, 2);
+        float stop3 = CaretX(textBox, 3);
+        float layoutX = ContentX(textBox) + stop2 + ((stop3 - stop2) * 0.75f);
+
+        Click(root, layoutX * scale, (textBox.ArrangedBounds.Y + 10) * scale);
+
+        Assert.True(textBox.IsKeyboardFocused);
+        Assert.Equal(3, textBox.Caret.Position);
+    }
+
+    [Theory]
+    [InlineData(1f)]
+    [InlineData(2f)]
+    public void MouseDragSelectsCharactersDrawnUnderPointer(float scale)
+    {
+        UIRoot root = RootWithScaledTextBox("iiiiWWWW", 180, scale, out TextBox textBox);
+        float startX = ContentX(textBox) + CaretX(textBox, 1);
+        float endX = ContentX(textBox) + CaretX(textBox, 6);
+
+        Drag(root, startX * scale, endX * scale, (textBox.ArrangedBounds.Y + 10) * scale);
+
+        Assert.Equal(1, textBox.Selection.Anchor);
+        Assert.Equal(6, textBox.Selection.Active);
+        Assert.Equal(6, textBox.Caret.Position);
+    }
+
     [Fact]
     public void ShiftRightExtendsSelectionFromCaret()
     {
@@ -255,6 +287,34 @@ public sealed class TextBoxTests
         textBox.Measure(new MeasureContext(new LayoutSize(width, 40)));
         textBox.Arrange(new ArrangeContext(new LayoutRect(0, 0, width, 32)));
         root.VisualChildren.Add(textBox);
+        return root;
+    }
+
+    // The text box is arranged at a non-zero origin inside a parent that draws its content `scale` times
+    // larger from the root origin, so a layout point (x, y) is drawn at root (x, y) * scale.
+    private static UIRoot RootWithScaledTextBox(string text, float width, float scale, out TextBox textBox)
+    {
+        ResourceStore store = new();
+        ResourceId<FontResource> fontId = new("Input");
+        store.SetResource(fontId, new FontResource(new SystemFontSource().LoadFont("Arial", 20)));
+        UIRoot root = new(500, 200);
+        UIElement parent = new()
+        {
+            RenderTransform = new Cerneala.UI.Media.Transform(Cerneala.UI.Media.Matrix3x2.CreateScale(scale, scale)),
+            RenderTransformOrigin = new LayoutPoint(0, 0)
+        };
+        textBox = new()
+        {
+            Text = text,
+            FontSize = 20,
+            FontResourceId = fontId,
+            ResourceProvider = store
+        };
+        parent.Arrange(new ArrangeContext(new LayoutRect(0, 0, 240, 80)));
+        textBox.Measure(new MeasureContext(new LayoutSize(width, 40)));
+        textBox.Arrange(new ArrangeContext(new LayoutRect(30, 12, width, 32)));
+        parent.VisualChildren.Add(textBox);
+        root.VisualChildren.Add(parent);
         return root;
     }
 

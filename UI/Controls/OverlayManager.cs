@@ -49,12 +49,14 @@ internal sealed class OverlayManager
         }
 
         layer.Remove(overlay);
-        overlay.SetProjected(false);
         if (openOverlays.Count == 0)
         {
             layerAttached = false;
             root.VisualChildren.Remove(layer);
         }
+
+        // Closed handlers run after the layer bookkeeping, so a failing handler cannot leave an empty layer attached.
+        overlay.SetProjected(false);
     }
 
     public void InvalidatePlacement(Overlay overlay)

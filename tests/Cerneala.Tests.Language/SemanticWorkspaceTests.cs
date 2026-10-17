@@ -167,6 +167,28 @@ public sealed class SemanticWorkspaceTests
     }
 
     [Fact]
+    public void EmptyAndWhitespaceStringLiteralsProduceNoDiagnostics()
+    {
+        CSharpCompilation project = CreateCompilation([]);
+        CernealaDocument document = Document("BlankStrings.crn", """
+            <StackPanel>
+              <TextBlock Text="" />
+              <TextBlock Text=" " />
+              <Button Content="" />
+              <Button Content="  " />
+            </StackPanel>
+            """);
+        using CernealaCompilation compilation = new(new RoslynCompilationSymbols(project), [document], AnalysisMode.Build);
+
+        CernealaSemanticModel model = compilation.GetSemanticModel(document.Path);
+
+        Assert.Empty(model.Diagnostics);
+        Assert.Contains(model.Symbols, symbol => symbol.Name == "Text" && Equals(symbol.Value, string.Empty));
+        Assert.Contains(model.Symbols, symbol => symbol.Name == "Text" && Equals(symbol.Value, " "));
+        Assert.Contains(model.Symbols, symbol => symbol.Name == "Content" && Equals(symbol.Value, "  "));
+    }
+
+    [Fact]
     public void IndependentCSharpErrorsDoNotPreventValidMarkupBinding()
     {
         CSharpCompilation project = CreateCompilation(
