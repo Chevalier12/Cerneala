@@ -674,8 +674,11 @@ public sealed class SelectorTests
         Assert.Equal(["a"], outer.RemovedItems);
     }
 
-    [Fact]
-    public void NestedSelectionChangeWhosePreparationThrowsCompletesOuterChangeBeforePropagating()
+    // SetValue(SelectedIndexProperty, 1), the path of a binding, an aspect, or application code, behaves like the setter.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void NestedSelectionChangeWhosePreparationThrowsCompletesOuterChangeBeforePropagating(bool setValue)
     {
         RedirectingListBox listBox = new();
         CreateArrangedTextListBox(listBox: listBox);
@@ -692,7 +695,17 @@ public sealed class SelectorTests
         };
 
         listBox.FailFor = "b";
-        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => listBox.SelectedIndex = 1);
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
+        {
+            if (setValue)
+            {
+                listBox.SetValue(Selector.SelectedIndexProperty, 1);
+            }
+            else
+            {
+                listBox.SelectedIndex = 1;
+            }
+        });
 
         Assert.Equal("content preparation failed", exception.Message);
         Assert.Equal(2, listBox.SelectedIndex);

@@ -86,6 +86,29 @@ public sealed class SdlInputSourceTests
     }
 
     [Fact]
+    public void EventsOfDifferentKeysAreReportedInSeparateFramesInArrivalOrder()
+    {
+        SdlInputSource source = new();
+        source.SetKey(225, true);
+        _ = source.GetFrame();
+        source.SetKey(80, true);
+        source.SetKey(225, false);
+        source.SetKey(81, true);
+
+        InputFrame left = source.GetFrame();
+        InputFrame shiftUp = source.GetFrame();
+        InputFrame down = source.GetFrame();
+
+        Assert.True(left.Keyboard.IsPressed(InputKey.Left));
+        Assert.True(left.Keyboard.IsDown(InputKey.LeftShift));
+        Assert.False(left.Keyboard.IsPressed(InputKey.Down));
+        Assert.True(shiftUp.Keyboard.IsReleased(InputKey.LeftShift));
+        Assert.False(shiftUp.Keyboard.IsPressed(InputKey.Down));
+        Assert.True(down.Keyboard.IsPressed(InputKey.Down));
+        Assert.False(down.Keyboard.IsDown(InputKey.LeftShift));
+    }
+
+    [Fact]
     public void DefaultCoordinateScaleIsOne() => Assert.Equal(1, new SdlInputSource().CoordinateScale);
 
     [Fact]

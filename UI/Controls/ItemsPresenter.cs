@@ -803,7 +803,7 @@ public class ItemsPresenter : Control
 
         foreach (UIElement current in ElementTreeWalker.PreOrder(element, ElementChildRole.Visual))
         {
-            root.LayoutQueue.RemoveMeasure(current);
+            root.Scheduler.CompleteQueuedMeasure(current);
         }
     }
 
@@ -816,7 +816,7 @@ public class ItemsPresenter : Control
 
         foreach (UIElement current in ElementTreeWalker.PreOrder(element, ElementChildRole.Visual))
         {
-            root.LayoutQueue.RemoveArrange(current);
+            root.Scheduler.CompleteQueuedArrange(current);
         }
     }
 
@@ -895,7 +895,7 @@ public class ItemsPresenter : Control
 
         for (UIElement? current = this; current is not null; current = current.VisualParent)
         {
-            root.LayoutQueue.RemoveMeasure(current);
+            root.Scheduler.CompleteQueuedMeasure(current);
         }
     }
 
@@ -909,7 +909,6 @@ public class ItemsPresenter : Control
             return;
         }
 
-        root.InheritedPropertyQueue.Remove(this);
-        DirtyState.Clear(InvalidationFlags.Inherited);
+        root.Scheduler.BeginInheritedDescendantPropagation(this);
     }
 }

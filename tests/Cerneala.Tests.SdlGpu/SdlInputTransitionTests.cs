@@ -10,6 +10,8 @@ public sealed class SdlInputTransitionTests
     private const int BackspaceScancode = 42;
     private const int EndScancode = 77;
     private const int XScancode = 27;
+    private const int AScancode = 4;
+    private const int LeftCtrlScancode = 224;
 
     [Fact]
     public void KeyPressedAndReleasedInOnePumpIsReportedAsPressThenRelease()
@@ -200,6 +202,138 @@ public sealed class SdlInputTransitionTests
         }
 
         Assert.Equal(1, clicks);
+    }
+
+    [Fact]
+    public void AlternatingMoveAndWheelDoNotLagBehindTheInput()
+    {
+        SdlInputSource source = new();
+        int pair = 0;
+        // 60 frames; before each, 3 or 4 (move, wheel notch) pairs arrive: 200 pairs in 1 s.
+        for (int frame = 0; frame < 60; frame++)
+        {
+            int target = (frame + 1) * 200 / 60;
+            for (; pair < target; pair++)
+            {
+                source.MovePointer(pair, 10);
+                source.AddWheel(1, flipped: false);
+            }
+
+            _ = source.GetFrame();
+        }
+
+        InputFrame next = source.GetFrame();
+        Assert.Equal(200 * 120, next.Pointer.WheelValue);
+        Assert.Equal(199, next.Pointer.X);
+        Assert.Equal(0, source.GetFrame().Pointer.WheelDelta);
+    }
+
+    [Fact]
+    public void HeldKeyRepeatsDoNotLagBehindTheInput()
+    {
+        SdlInputSource source = new();
+        source.SetKey(AScancode, true);
+        source.AddText("a");
+        _ = source.GetFrame();
+        // 15 frames (1 s at 15 fps); before each, 2 auto-repeats with their text (30 repeats/s).
+        for (int frame = 0; frame < 15; frame++)
+        {
+            for (int i = 0; i < 2; i++)
+            {
+                source.SetKey(AScancode, true, repeat: true);
+                source.AddText("a");
+            }
+
+            InputFrame input = source.GetFrame();
+            Assert.Equal(2, input.Keyboard.GetRepeatCount(InputKey.A));
+            Assert.Equal(2, input.TextInputEvents.Count);
+        }
+
+        source.SetKey(AScancode, false);
+        Assert.True(source.GetFrame().Keyboard.IsReleased(InputKey.A));
+    }
+
+    [Fact]
+    public void HeldKeyPressAndItsRepeatsInOnePumpNeedOnlyOneMoreFrame()
+    {
+        SdlInputSource source = new();
+        source.SetKey(AScancode, true);
+        source.AddText("a");
+        for (int i = 0; i < 5; i++)
+        {
+            source.SetKey(AScancode, true, repeat: true);
+            source.AddText("a");
+        }
+
+        InputFrame pressed = source.GetFrame();
+        Assert.True(pressed.Keyboard.IsPressed(InputKey.A));
+        Assert.Equal(["a"], pressed.TextInputEvents.Select(text => text.Text));
+        InputFrame repeated = source.GetFrame();
+        Assert.Equal(5, repeated.Keyboard.GetRepeatCount(InputKey.A));
+        Assert.Equal(5, repeated.TextInputEvents.Count);
+        Assert.Empty(source.GetFrame().TextInputEvents);
+    }
+
+    [Fact]
+    public void HeldModifierRepeatsAndWheelDoNotLagBehindTheInput()
+    {
+        SdlInputSource source = new();
+        source.MovePointer(50, 50);
+        source.SetKey(LeftCtrlScancode, true);
+        _ = source.GetFrame();
+        // Ctrl is held for zooming; its auto-repeats alternate with wheel notches, 4 pairs before each frame.
+        for (int frame = 0; frame < 30; frame++)
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                source.SetKey(LeftCtrlScancode, true, repeat: true);
+                source.AddWheel(-1, flipped: false);
+            }
+
+            InputFrame input = source.GetFrame();
+            Assert.Equal(-4 * 120, input.Pointer.WheelDelta);
+            Assert.Equal(4, input.Keyboard.GetRepeatCount(InputKey.LeftCtrl));
+        }
+
+        source.SetKey(LeftCtrlScancode, false);
+        InputFrame released = source.GetFrame();
+        Assert.True(released.Keyboard.IsReleased(InputKey.LeftCtrl));
+        Assert.Equal(-30 * 4 * 120, released.Pointer.WheelValue);
+    }
+
+    [Fact]
+    public void RepeatOfAnotherKeyAfterTextWaitsForTheNextFrame()
+    {
+        SdlInputSource source = new();
+        source.SetKey(BackspaceScancode, true);
+        _ = source.GetFrame();
+        // X types "x" while Backspace is held; the next Backspace repeat must delete it.
+        source.SetKey(XScancode, true);
+        source.AddText("x");
+        source.SetKey(BackspaceScancode, true, repeat: true);
+
+        InputFrame typed = source.GetFrame();
+        Assert.True(typed.Keyboard.IsPressed(InputKey.X));
+        Assert.Equal(["x"], typed.TextInputEvents.Select(text => text.Text));
+        Assert.Equal(0, typed.Keyboard.GetRepeatCount(InputKey.Back));
+        Assert.Equal(1, source.GetFrame().Keyboard.GetRepeatCount(InputKey.Back));
+    }
+
+    [Fact]
+    public void MoveAfterWheelAndButtonPressWaitsForTheNextFrame()
+    {
+        SdlInputSource source = new();
+        source.MovePointer(10, 20);
+        _ = source.GetFrame();
+        source.AddWheel(1, flipped: false);
+        source.SetButton(1, true);
+        source.MovePointer(30, 40);
+
+        InputFrame pressed = source.GetFrame();
+        Assert.True(pressed.Pointer.IsPressed(InputMouseButton.Left));
+        Assert.Equal(10, pressed.Pointer.X);
+        Assert.Equal(120, pressed.Pointer.WheelDelta);
+        Assert.Equal(30, source.GetFrame().Pointer.X);
     }
 
     private static void Pump(WindowApplicationRuntime runtime, FakeSdlApi api, params SdlEvent[] events)

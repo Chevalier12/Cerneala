@@ -27,6 +27,10 @@ public class Selector : ItemsControl
     private int selectedIndexNotificationDepth;
     private ExceptionDispatchInfo? nestedPreparationFailure;
 
+    // A SelectedIndex change made through SetValue, a binding, or an aspect, which the selection change that follows
+    // it notifies.
+    private UiPropertyChange? pendingSelectedIndexChange;
+
     public Selector()
     {
         selectionModel.SelectionChanged += OnSelectionChanged;
@@ -98,13 +102,20 @@ public class Selector : ItemsControl
         }
     }
 
-    protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
+    // SetValue, a binding, or an aspect changed SelectedIndex without a selection. The selection model follows first,
+    // and that selection change notifies the new SelectedIndex in place of its own SetValue. So the change behaves like
+    // the SelectedIndex setter: every PropertyChanged handler and override runs inside the selection change, which
+    // then re-prepares its containers, raises SelectionChanged, and only then rethrows a failed re-preparation.
+    internal override void NotifyPropertyChange(in UiPropertyChange change)
     {
-        base.OnPropertyChanged(args);
-        if (ReferenceEquals(args.Property, SelectedIndexProperty) && selectionModel.SelectedIndex != SelectedIndex)
+        if (!ReferenceEquals(change.Args.Property, SelectedIndexProperty) || selectionModel.SelectedIndex == SelectedIndex)
         {
-            selectionModel.Select(SelectedIndex);
+            base.NotifyPropertyChange(change);
+            return;
         }
+
+        pendingSelectedIndexChange = change;
+        selectionModel.Select(SelectedIndex);
     }
 
     internal override void OnItemsReplaced(int index, int removedCount, int addedCount)
@@ -243,7 +254,15 @@ public class Selector : ItemsControl
         selectedIndexNotificationDepth++;
         try
         {
-            SetValue(SelectedIndexProperty, args.Change.NewIndex);
+            if (pendingSelectedIndexChange is { } change)
+            {
+                pendingSelectedIndexChange = null;
+                RaisePropertyChange(change);
+            }
+            else
+            {
+                SetValue(SelectedIndexProperty, args.Change.NewIndex);
+            }
         }
         finally
         {

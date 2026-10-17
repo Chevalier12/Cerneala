@@ -205,7 +205,10 @@ public class ContentPresenter : Control
         }
 
         presentationDirty = false;
-        UIElement? next = CreatePresentedChild();
+        object? content = Content;
+        ContentTemplate? template = ResolveContentTemplate(content);
+        ReleaseElementContent(content, template is not null);
+        UIElement? next = CreatePresentedChild(content, template);
         if (ReferenceEquals(presentedChild, next))
         {
             return;
@@ -225,22 +228,47 @@ public class ContentPresenter : Control
         }
     }
 
-    private UIElement? CreatePresentedChild()
+    private ContentTemplate? ResolveContentTemplate(object? content)
     {
-        object? content = Content;
-        ContentTemplate? template = ContentTemplate;
+        if (ContentTemplate is { } template)
+        {
+            return template;
+        }
+
+        ContentTemplateRegistry? registry = LocalTemplateRegistry ?? Root?.AspectProcessor.GetContentTemplates(this);
+        return registry is not null &&
+            registry.TryResolve(new ContentTemplateMatchContext(content, ContentTemplateKey, this), out ContentTemplate? resolved)
+                ? resolved
+                : null;
+    }
+
+    // A template can place element content inside the element it creates. Before the next child is built, the element
+    // content leaves the current presented child, or the presenter when a template will wrap it, so the next template
+    // or the presenter itself can take it.
+    private void ReleaseElementContent(object? content, bool templated)
+    {
+        if (content is not UIElement element || presentedChild is null)
+        {
+            return;
+        }
+
+        if (!ReferenceEquals(presentedChild, element))
+        {
+            ContentControl.DetachChildFromOwnedSubtree(this, element);
+        }
+        else if (templated)
+        {
+            RemovePresentedChild(element);
+            presentedChild = null;
+        }
+    }
+
+    private UIElement? CreatePresentedChild(object? content, ContentTemplate? template)
+    {
         if (template is not null)
         {
             generatedTextChild = false;
             return template.Create(CreateTemplateContext(content));
-        }
-
-        ContentTemplateRegistry? registry = LocalTemplateRegistry ?? Root?.AspectProcessor.GetContentTemplates(this);
-        if (registry is not null &&
-            registry.TryResolve(new ContentTemplateMatchContext(content, ContentTemplateKey, this), out ContentTemplate? resolved))
-        {
-            generatedTextChild = false;
-            return resolved.Create(CreateTemplateContext(content));
         }
 
         if (content is UIElement element)
