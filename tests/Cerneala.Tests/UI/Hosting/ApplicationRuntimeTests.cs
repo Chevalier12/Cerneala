@@ -244,12 +244,12 @@ public sealed class ApplicationRuntimeTests : IDisposable
     }
 
     [Fact]
-    public async Task LifecycleOperationsRejectAnotherThread()
+    public void LifecycleOperationsRejectAnotherThread()
     {
         (Application app, _) = Install(ApplicationShutdownMode.OnExplicitShutdown);
 
-        InvalidOperationException exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => Task.Run(app.Shutdown));
+        InvalidOperationException exception = Assert.IsType<InvalidOperationException>(
+            RecordOnAnotherThread(app.Shutdown));
 
         Assert.Contains("owning UI thread", exception.Message, StringComparison.Ordinal);
     }
@@ -506,6 +506,16 @@ public sealed class ApplicationRuntimeTests : IDisposable
         Application app = new() { ShutdownMode = mode };
         app.Install(runtime);
         return (app, runtime);
+    }
+
+    // Task.Run can run its work on the calling thread, so an owner-thread check needs a dedicated thread.
+    private static Exception? RecordOnAnotherThread(Action action)
+    {
+        Exception? exception = null;
+        Thread thread = new(() => exception = Record.Exception(action));
+        thread.Start();
+        Assert.True(thread.Join(TimeSpan.FromSeconds(10)), "Worker thread did not finish.");
+        return exception;
     }
 
     private sealed class TrackingApplication : Application
