@@ -246,7 +246,7 @@ internal sealed class SdlPlatformWindow : IPlatformWindow
     private readonly IWindowPlatformCallbacks callbacks;
     private readonly Action<uint> removeWindow;
     private readonly float? coordinateScaleOverride;
-    private readonly SdlInputSource inputSource = new();
+    private readonly SdlInputSource inputSource;
     private readonly IWindowGraphicsSession graphicsSession;
     private bool destroyed;
     private bool enabled = true;
@@ -272,6 +272,8 @@ internal sealed class SdlPlatformWindow : IPlatformWindow
         this.callbacks = callbacks;
         this.coordinateScaleOverride = coordinateScaleOverride;
         this.removeWindow = removeWindow;
+        // Input deferred to a later frame asks the runtime for that frame.
+        inputSource = new SdlInputSource(callbacks.RenderRequested);
         desiredState = window.WindowState;
         SdlWindowOptions options = SdlWindowOptions.Hidden | SdlWindowOptions.HighPixelDensity;
         if (window.ResizeMode is ResizeMode.CanResize or ResizeMode.CanResizeWithGrip)
@@ -308,6 +310,8 @@ internal sealed class SdlPlatformWindow : IPlatformWindow
 
         try
         {
+            // SDL3 starts with text input off; without this, typed characters never arrive.
+            Require(api.StartTextInput(Handle), "SDL text input start");
             UpdateCoordinateScales();
             ApplyLogicalSize(window);
             Surface = new SdlWindowSurface(Handle, WindowId);
@@ -493,7 +497,7 @@ internal sealed class SdlPlatformWindow : IPlatformWindow
                 break;
             case SdlEventKind.KeyDown when enabled:
             case SdlEventKind.KeyUp when enabled:
-                inputSource.SetKey(@event.Scancode, @event.Kind == SdlEventKind.KeyDown);
+                inputSource.SetKey(@event.Scancode, @event.Kind == SdlEventKind.KeyDown, @event.Repeat);
                 callbacks.RenderRequested();
                 break;
             case SdlEventKind.TextInput when enabled:

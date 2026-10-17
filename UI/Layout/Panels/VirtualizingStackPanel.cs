@@ -48,12 +48,8 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
     public void UpdateViewport(ItemsVirtualizationViewport viewport)
     {
         int itemCount = Math.Max(0, viewport.ItemCount);
-        if (automaticViewport?.ItemCount != itemCount)
-        {
-            // The item count drives the desired extent, so a cached measure is stale.
-            IncrementLayoutVersion();
-        }
-
+        bool itemCountChanged = automaticViewport?.ItemCount != itemCount;
+        RealizationWindow previousWindow = automaticWindow;
         automaticViewport = viewport with
         {
             ItemCount = itemCount,
@@ -67,6 +63,15 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
         }
 
         RecalculateAutomaticWindow();
+
+        // The item count drives the desired extent, and the window decides which children the measure measures, so a
+        // cached measure is stale when either changes: a direct caller's next Measure with the same size must measure
+        // the children that entered the window. A new scroll offset inside the same window changes neither, so the
+        // cached measure stays.
+        if (itemCountChanged || automaticWindow != previousWindow)
+        {
+            IncrementLayoutVersion();
+        }
     }
 
     // A recorded height belongs to one item, so it follows that item when the collection changes.

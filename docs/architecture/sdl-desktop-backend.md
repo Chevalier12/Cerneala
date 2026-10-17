@@ -92,6 +92,8 @@ Input events are ignored while the window is disabled, for example while it has 
 
 There is no touch, pen or gamepad input.
 
+An `InputFrame` reports a press or release as the difference between two snapshots, so `SdlInputSource` keeps at most one change of each key or mouse button in one frame. It also keeps only events whose arrival order matches the order the input bridge dispatches them in: position, then wheel and buttons, then keys, then text. An event that breaks either rule waits, with every later event, for the next frames, and `GetFrame` then calls the window's render request so those frames run. Example: Backspace down and Backspace up arrive in one `PumpEvents`. The first frame reports `IsPressed(InputKey.Back)`, the next frame `IsReleased(InputKey.Back)`, so the focused element gets one `KeyDown` and one `KeyUp`. A mouse down at (10, 20), a move to (30, 40) and a mouse up in one pump give a press at (10, 20) and a release at (30, 40) in the next frame. Repeated key-downs of a held key and moves to the same position change nothing and never end a frame.
+
 ### Coordinates and DPI
 
 Each window computes `nativeCoordinateScale = displayScale / pixelDensity` from `SDL_GetWindowDisplayScale` and `SDL_GetWindowPixelDensity`; an invalid value falls back to 1. Pointer positions are divided by that scale, and logical sizes are multiplied by it and rounded up when they go to SDL. Example: with display scale 2.0 and pixel density 1.0 the scale is 2.0, so an SDL mouse position (300, 200) reaches Cerneala as (150, 100). With display scale 2.0 and pixel density 2.0 the scale is 1.0, so SDL positions are used as they are. `CreatePlatform` takes an optional `coordinateScaleOverride` that replaces the SDL display scale; the default hosting runtime passes `null`.
@@ -405,6 +407,7 @@ The backend has no `FramePhase`. The hosting runtime calls `PumpEvents` once per
 - A platform built without the audio seam has no output; creating the output touches no audio state. `tests/Cerneala.Tests.SdlGpu/SdlWindowPlatformAudioTests.cs:APlatformWithoutAnAudioSeamHasNoOutput`, `CreatingThePlatformAndItsOutputTouchesNoAudioState`.
 - Platform dispose runs the audio operations `init, open, resume, destroy, quit` and quits audio before `SDL_Quit` (SDL quit count is 0 when audio quits). `SdlWindowPlatformAudioTests.cs:DisposingThePlatformReleasesAudioBeforeSdlQuits`.
 - A device-removed event raised on another thread fails the open playback with `TimbreErrorKind.DeviceUnavailable`; an event for another device ID (22 instead of 23) does not. `SdlWindowPlatformAudioTests.cs:AudioDeviceRemovalWatchedOnAnotherThreadReachesTheOutput`.
+- A key or mouse button that goes down and up within one pump is reported as a press and, one frame later, a release; down, up, down gives two presses; text typed before a Backspace is inserted before it. `tests/Cerneala.Tests.SdlGpu/SdlInputTransitionTests.cs`.
 - The event translation table, the key map, the DPI formula and the live-resize watch: netestat in this pass (no test body read).
 
 ## Known Limitations

@@ -51,6 +51,16 @@ and does not draw; a changed rectangle only schedules render and hit-test work.
      and keeps its slot. An ancestor that arranges the parent with the same slot
      then runs the parent's `ArrangeCore`, instead of reusing the stale result and
      marking the parent as already arranged in this pass.
+   - does not measure an element when an ancestor's measure leaves the child on
+     the path to it unmeasured on purpose (`UIElement.SkipsChildMeasure`), as a
+     `VirtualizingStackPanel` does with a child outside its realization window.
+     The scheduler clears the element's entry and invalidates the measure
+     caches, keeping their constraints, of the element and of its ancestors up
+     to that skipped child. When the panel later measures the child, the
+     measure therefore reaches the element, as the desired-size step above
+     would have made it do. For example, a leaf two levels below a row outside
+     the window that changes `Height` from 20 to 60 makes the row desire 60
+     once the panel realizes it again.
 3. **Constraint.** `LayoutManager.GetAvailableSize` (`LayoutManager.cs:119-145`)
    gives the root and its direct children the viewport size. Any other element
    gets the constraint it was last measured with, because its parent owns that

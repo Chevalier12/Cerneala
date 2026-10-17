@@ -37,6 +37,7 @@ The text after `Validated.` in the validation comment that this run relies on is
 
 - an extra check, test, or reproduction, for example `Also check that Escape keeps the focus.`, runs in steps 3 to 5, and a defect it proves is handled like any other finding;
 - a request to reproduce defects listed elsewhere, for example `Please raise issue for the other not raised issues if they are reproduced.`, means: take each entry of the PR body's `Other bugs found` section that has no issue link, reproduce it as step 5 says, and raise it when it reproduces; an entry that does not reproduce goes to `### Not raised` with the reason;
+- a request to raise a question instead of a bug, for example `Write an issue about this not raised issue not as a bug, but as a question.`, means: raise that entry as a question issue, as `github-issue-raise` "Question issues" says, with the label `question`. This is the only way a question issue is raised;
 - something to write in the comment of step 7;
 - a request to resolve the merge conflict with master, for example `Validated. Resolve.`, which allows the conflict resolution of step 2 (user decision, 2026-10-16).
 
@@ -48,7 +49,7 @@ Invoking this skill for `<number>` authorizes exactly these actions, without fur
 
 - check out the PR in the current worktree and merge `origin/master` into it locally, without pushing;
 - run builds, focused tests, and temporary reproductions outside the repository;
-- raise GitHub issues for the defects the review proves, with `github-issue-raise`, posted directly without asking (user decision, 2026-10-15);
+- raise GitHub issues for the defects the review proves, with `github-issue-raise`, posted directly without asking (user decision, 2026-10-15), and the question issues that the extra instructions ask for;
 - post at most one comment on PR `<number>`, as step 7 describes;
 - only when the validation comment's extra instructions ask to resolve the merge conflict with master: commit the resolution as one merge commit and push it with exactly `git push origin HEAD:refs/heads/<headRefName>`, never with force, as step 2 describes;
 - merge with `gh pr merge <number> --merge --match-head-commit <sha>`, or with the pushed resolution commit in place of `<sha>`, when step 6 allows it;

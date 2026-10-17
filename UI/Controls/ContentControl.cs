@@ -59,7 +59,7 @@ public class ContentControl : Control
 
     protected UIElement? ContentElement => Content as UIElement;
 
-    private bool HostsContentDirectly => ComponentTemplate is null && ComponentTemplateKey is null;
+    internal virtual bool HostsContentDirectly => ComponentTemplate is null && ComponentTemplateKey is null;
 
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
@@ -101,6 +101,25 @@ public class ContentControl : Control
         if (HostsContentDirectly)
         {
             AddContentElement(Content);
+        }
+    }
+
+    // A subclass calls this after its own state changed what HostsContentDirectly returns.
+    internal void UpdateContentHosting(bool hostedContentDirectly)
+    {
+        bool hostsContentDirectly = HostsContentDirectly;
+        if (hostedContentDirectly == hostsContentDirectly)
+        {
+            return;
+        }
+
+        if (hostsContentDirectly)
+        {
+            AddContentElement(Content);
+        }
+        else
+        {
+            RemoveContentElement(Content);
         }
     }
 
