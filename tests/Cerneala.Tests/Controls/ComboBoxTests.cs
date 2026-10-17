@@ -723,6 +723,69 @@ public sealed class ComboBoxTests
         Assert.False(comboBox.IsDropDownOpen);
     }
 
+    // As in WPF, where the template's ToggleButton handles the field's click, one click on the field of a
+    // non-editable ComboBox inside a Button only toggles the drop-down: the outer Button raises no Click and runs
+    // no Command. A click on the outer Button outside the ComboBox still clicks it once.
+    [Fact]
+    public void NonEditableFieldClickInsideButtonTogglesDropDownWithoutClickingButton()
+    {
+        UIRoot root = new(300, 200);
+        ComboBox comboBox = new() { IsEditable = false, Width = 180, Height = 32 };
+        comboBox.SetItems(new[] { "one", "two", "three" });
+        comboBox.SelectedIndex = 0;
+        CountingCommand command = new();
+        Button outer = new() { Content = comboBox, Command = command };
+        LayoutCanvas canvas = new();
+        LayoutCanvas.SetLeft(outer, 60);
+        canvas.VisualChildren.Add(outer);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        int outerClicks = 0;
+        outer.Click += (_, _) => outerClicks++;
+        LayoutRect fieldBounds = comboBox.ArrangedBounds;
+        float fieldX = fieldBounds.X + fieldBounds.Width / 2;
+        float fieldY = fieldBounds.Y + fieldBounds.Height / 2;
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(fieldX, fieldY, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(fieldX, fieldY, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.True(comboBox.IsDropDownOpen);
+        Assert.Equal(0, outerClicks);
+        Assert.Equal(0, command.Executions);
+
+        bridge.Dispatch(root, PointerFrame(fieldX, fieldY, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(fieldX, fieldY, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.False(comboBox.IsDropDownOpen);
+        Assert.Equal(0, outerClicks);
+        Assert.Equal(0, command.Executions);
+
+        LayoutRect outerBounds = outer.ArrangedBounds;
+        float outerX = outerBounds.X + 2;
+        Assert.True(outerX < fieldBounds.X);
+        Assert.Same(outer, new HitTestService().HitTest(root, outerX, fieldY)?.Element);
+
+        bridge.Dispatch(root, PointerFrame(outerX, fieldY, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(outerX, fieldY, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.False(comboBox.IsDropDownOpen);
+        Assert.Equal(1, outerClicks);
+        Assert.Equal(1, command.Executions);
+    }
+
+    private sealed class CountingCommand : ICommand
+    {
+        public int Executions { get; private set; }
+
+        public bool CanExecute(object? parameter) => true;
+
+        public void Execute(object? parameter) => Executions++;
+    }
+
     private static bool IsDescendantOf(UIElement element, UIElement ancestor)
     {
         for (UIElement? current = element.VisualParent; current is not null; current = current.VisualParent)
