@@ -177,6 +177,63 @@ public sealed class FocusManagerTests
     }
 
     [Fact]
+    public void KeyRepeatGoesToElementFocusedByPreviousRepeatOfSameFrame()
+    {
+        UIRoot root = new();
+        UIElement[] chain = [new() { Focusable = true }, new() { Focusable = true }, new() { Focusable = true }];
+        foreach (UIElement element in chain)
+        {
+            root.VisualChildren.Add(element);
+        }
+
+        FocusManager manager = new();
+        ElementInputRouteMap map = null!;
+        List<string> receivers = [];
+        for (int i = 0; i < chain.Length; i++)
+        {
+            UIElement next = chain[(i + 1) % chain.Length];
+            string name = ((char)('A' + i)).ToString();
+            chain[i].Handlers.AddHandler(InputEvents.KeyDownEvent, (_, _) =>
+            {
+                receivers.Add(name);
+                manager.Focus(next, map);
+            });
+        }
+
+        map = new ElementInputRouteBuilder().Build(root);
+        manager.Focus(chain[0], map);
+        KeyboardSnapshot down = KeyboardSnapshot.FromDownKeys([InputKey.Down]);
+
+        manager.DispatchKeyboard(new InputFrame(PointerSnapshot.Empty, PointerSnapshot.Empty, down, down, [], [InputKey.Down, InputKey.Down]), map);
+
+        Assert.Equal(["A", "B"], receivers);
+        Assert.True(chain[2].IsKeyboardFocused);
+    }
+
+    [Fact]
+    public void KeyRepeatIsNotRaisedOnFocusedElementDetachedByPreviousRepeat()
+    {
+        UIRoot root = new();
+        UIElement target = new() { Focusable = true };
+        root.VisualChildren.Add(target);
+        int keyDownCount = 0;
+        target.Handlers.AddHandler(InputEvents.KeyDownEvent, (_, _) =>
+        {
+            keyDownCount++;
+            root.VisualChildren.Remove(target);
+        });
+        ElementInputRouteMap map = new ElementInputRouteBuilder().Build(root);
+        FocusManager manager = new();
+        manager.Focus(target, map);
+        KeyboardSnapshot down = KeyboardSnapshot.FromDownKeys([InputKey.Down]);
+
+        manager.DispatchKeyboard(new InputFrame(PointerSnapshot.Empty, PointerSnapshot.Empty, down, down, [], [InputKey.Down, InputKey.Down]), map);
+
+        Assert.False(target.IsAttached);
+        Assert.Equal(1, keyDownCount);
+    }
+
+    [Fact]
     public void KeyRepeatForKeyThatIsNeitherDownNorReleasedRaisesNothing()
     {
         UIRoot root = new();

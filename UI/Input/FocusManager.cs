@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Cerneala.UI.Elements;
 
 namespace Cerneala.UI.Input;
@@ -63,11 +64,8 @@ public sealed class FocusManager
             return [];
         }
 
-        if (!routeMap.TryGetId(FocusedElement, out UiElementId focusedId))
-        {
-            return [];
-        }
-
+        // Handlers can move focus or detach the focused element, so every key event
+        // resolves its target from the focus at the moment it is raised.
         List<KeyboardDispatchResult> results = [];
         foreach (InputKey key in Enum.GetValues<InputKey>())
         {
@@ -76,10 +74,11 @@ public sealed class FocusManager
                 continue;
             }
 
-            if (inputFrame.Keyboard.IsPressed(key))
+            if (inputFrame.Keyboard.IsPressed(key) &&
+                TryGetKeyboardTarget(routeMap, out UIElement? pressedTarget, out UiElementId pressedId))
             {
-                bool handled = RaiseKeyPair(routeMap, focusedId, key, inputFrame.Keyboard, InputEvents.PreviewKeyDownEvent, InputEvents.KeyDownEvent);
-                results.Add(new KeyboardDispatchResult(FocusedElement, focusedId, key, KeyboardDispatchKind.Pressed, handled));
+                bool handled = RaiseKeyPair(routeMap, pressedId, key, inputFrame.Keyboard, InputEvents.PreviewKeyDownEvent, InputEvents.KeyDownEvent);
+                results.Add(new KeyboardDispatchResult(pressedTarget, pressedId, key, KeyboardDispatchKind.Pressed, handled));
             }
 
             if (inputFrame.Keyboard.IsDown(key) || inputFrame.Keyboard.IsReleased(key))
@@ -87,18 +86,38 @@ public sealed class FocusManager
                 int repeatCount = inputFrame.Keyboard.GetRepeatCount(key);
                 for (int i = 0; i < repeatCount; i++)
                 {
-                    RaiseKeyPair(routeMap, focusedId, key, inputFrame.Keyboard, InputEvents.PreviewKeyDownEvent, InputEvents.KeyDownEvent, isRepeat: true);
+                    if (TryGetKeyboardTarget(routeMap, out _, out UiElementId repeatId))
+                    {
+                        RaiseKeyPair(routeMap, repeatId, key, inputFrame.Keyboard, InputEvents.PreviewKeyDownEvent, InputEvents.KeyDownEvent, isRepeat: true);
+                    }
                 }
             }
 
-            if (inputFrame.Keyboard.IsReleased(key))
+            if (inputFrame.Keyboard.IsReleased(key) &&
+                TryGetKeyboardTarget(routeMap, out UIElement? releasedTarget, out UiElementId releasedId))
             {
-                bool handled = RaiseKeyPair(routeMap, focusedId, key, inputFrame.Keyboard, InputEvents.PreviewKeyUpEvent, InputEvents.KeyUpEvent);
-                results.Add(new KeyboardDispatchResult(FocusedElement, focusedId, key, KeyboardDispatchKind.Released, handled));
+                bool handled = RaiseKeyPair(routeMap, releasedId, key, inputFrame.Keyboard, InputEvents.PreviewKeyUpEvent, InputEvents.KeyUpEvent);
+                results.Add(new KeyboardDispatchResult(releasedTarget, releasedId, key, KeyboardDispatchKind.Released, handled));
             }
         }
 
         return results;
+    }
+
+    private bool TryGetKeyboardTarget(
+        ElementInputRouteMap routeMap,
+        [NotNullWhen(true)] out UIElement? target,
+        out UiElementId targetId)
+    {
+        target = FocusedElement;
+        if (target is not null && FocusPolicy.CanFocus(target, routeMap) && routeMap.TryGetId(target, out targetId))
+        {
+            return true;
+        }
+
+        target = null;
+        targetId = default;
+        return false;
     }
 
     private static bool RaiseKeyPair(
