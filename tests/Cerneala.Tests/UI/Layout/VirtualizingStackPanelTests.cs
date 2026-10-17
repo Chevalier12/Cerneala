@@ -5,6 +5,10 @@ using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
 using Cerneala.UI.Layout.Virtualization;
 using Cerneala.UI.Media;
+using Cerneala.UI.Motion.Presence;
+using Cerneala.Tests.UI.Motion.Core;
+using Border = Cerneala.UI.Controls.Border;
+using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
 
 namespace Cerneala.Tests.UI.Layout;
 
@@ -342,6 +346,43 @@ public sealed class VirtualizingStackPanelTests
     }
 
     [Fact]
+    public void ChildRealizedAgainReportsAMeasureChangeOfADescendantMadeOutsideTheRealizationWindow()
+    {
+        // Each row is row > container > leaf, so the change is two levels below the row the panel skips.
+        UIRoot root = new(200, 100, 1);
+        VirtualizingStackPanel panel = new() { FirstRealizedIndex = 0 };
+        List<UIElement> leaves = [];
+        List<Border> rows = [];
+        for (int i = 0; i < 20; i++)
+        {
+            UIElement leaf = new() { Height = 20 };
+            Border row = new() { Child = new Border { Child = leaf } };
+            leaves.Add(leaf);
+            rows.Add(row);
+            panel.VisualChildren.Add(row);
+        }
+
+        root.VisualChildren.Add(panel);
+        panel.UpdateViewport(new ItemsVirtualizationViewport(20, 100, 0, 0));
+        root.ProcessFrame();
+        panel.UpdateViewport(new ItemsVirtualizationViewport(20, 100, 200, 0));
+        panel.Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange, "scroll");
+        root.ProcessFrame();
+        Assert.False(panel.RealizationWindow.Contains(0));
+
+        leaves[0].Height = 60;
+        root.ProcessFrame();
+        panel.UpdateViewport(new ItemsVirtualizationViewport(20, 100, 0, 0));
+        panel.Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange, "scroll back");
+        root.ProcessFrame();
+
+        Assert.True(panel.RealizationWindow.Contains(0));
+        Assert.Equal(
+            (60f, 60f, new LayoutRect(0, 0, 200, 60), 60f),
+            (leaves[0].DesiredSize.Height, rows[0].DesiredSize.Height, rows[0].ArrangedBounds, rows[1].ArrangedBounds.Y));
+    }
+
+    [Fact]
     public void SkippedChildrenOfADirectlyUsedPanelDrawNothing()
     {
         // Rows 5..29 lie outside the realization window and are arranged into zero-sized bounds at the panel origin,
@@ -409,6 +450,46 @@ public sealed class VirtualizingStackPanelTests
                 UIElementVisibility.ParticipatesInHitTest(skipped),
                 UIElementVisibility.ParticipatesInInput(skipped)));
         Assert.False(UIElementVisibility.ParticipatesInRendering(panel.VisualChildren[0]));
+    }
+
+    [Fact]
+    public void RemovingASkippedChildWithPresenceDrawsNothingOfIt()
+    {
+        // Row 20 is skipped and arranged into zero-sized bounds at the panel origin. An exit would draw its label there,
+        // on top of the realized "Row 0"; a skipped row draws nothing, so it is detached at once instead.
+        ManualMotionClock clock = new();
+        (UIRoot root, VirtualizingStackPanel panel) = CreatePresenceRows(clock);
+        UIElement row20 = panel.VisualChildren[20];
+
+        Assert.True(panel.VisualChildren.Remove(row20));
+
+        Assert.Equal(PresenceState.Detached, root.Motion.Presence.GetState(row20));
+        Assert.False(row20.IsAttached);
+        Assert.Empty(root.Motion.Presence.GetExitingVisualChildren(panel));
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        Assert.Equal(["Row 0", "Row 1", "Row 2", "Row 3", "Row 4"], CommitTexts(root));
+    }
+
+    [Fact]
+    public void RemovingARealizedChildWithPresenceStillRunsItsExit()
+    {
+        ManualMotionClock clock = new();
+        (UIRoot root, VirtualizingStackPanel panel) = CreatePresenceRows(clock);
+        UIElement row2 = panel.VisualChildren[2];
+
+        Assert.True(panel.VisualChildren.Remove(row2));
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+
+        Assert.Equal(PresenceState.Exiting, root.Motion.Presence.GetState(row2));
+        Assert.Contains("Row 2", CommitTexts(root));
+
+        for (int frame = 0; frame < 12; frame++)
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(100));
+            root.ProcessFrame();
+        }
+
+        Assert.Equal(PresenceState.Detached, root.Motion.Presence.GetState(row2));
     }
 
     [Fact]
@@ -570,6 +651,48 @@ public sealed class VirtualizingStackPanelTests
         LayoutRect last = panel.VisualChildren[9].ArrangedBounds;
         Assert.InRange(first.Y, totalExtent - viewportExtent - 2, totalExtent - viewportExtent + 2);
         Assert.InRange(last.Y + last.Height, totalExtent - 2, totalExtent + 2);
+    }
+
+    // 30 rows of height 40 with a viewport of 200, so rows 0..4 are realized and rows 5..29 are skipped; the enter
+    // motion of every row has ended.
+    private static (UIRoot Root, VirtualizingStackPanel Panel) CreatePresenceRows(ManualMotionClock clock)
+    {
+        UIRoot root = new(320, 200, motionClock: clock);
+        VirtualizingStackPanel panel = new();
+        for (int index = 0; index < 30; index++)
+        {
+            panel.VisualChildren.Add(new Cerneala.UI.Controls.Border
+            {
+                Height = 40,
+                Presence = PresenceOptions.FadeAndScale(
+                    MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)),
+                    MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(1000))),
+                Child = new Cerneala.UI.Controls.TextBlock
+                {
+                    Text = $"Row {index}",
+                    Foreground = new SolidColorBrush(Color.White),
+                    Margin = new Thickness(10, 9, 0, 0)
+                }
+            });
+        }
+
+        root.VisualChildren.Add(panel);
+        panel.UpdateViewport(new ItemsVirtualizationViewport(30, 200, 0, 0));
+        root.ProcessFrame();
+        clock.Advance(TimeSpan.FromMilliseconds(200));
+        root.ProcessFrame();
+        Assert.Equal(["Row 0", "Row 1", "Row 2", "Row 3", "Row 4"], CommitTexts(root));
+        return (root, panel);
+    }
+
+    private static string?[] CommitTexts(UIRoot root)
+    {
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
+        return root.RetainedRenderer.Commit(root)
+            .Where(command => command.Kind == DrawCommandKind.DrawText)
+            .Select(command => command.Text)
+            .ToArray();
     }
 
     [Theory]

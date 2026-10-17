@@ -232,6 +232,48 @@ public sealed class ListBoxTests
     }
 
     [Fact]
+    public void ListBoxRowHostsElementItemWhenItemTemplateThatWrappedItIsRemoved()
+    {
+        UIRoot root = new(300, 200);
+        Marker element = new("raw");
+        ListBox listBox = new() { ItemTemplate = WrapElementTemplate() };
+        listBox.SetItems(new object[] { element });
+        root.VisualChildren.Add(listBox);
+        root.ProcessFrame();
+        Border wrapper = Assert.IsType<Border>(element.VisualParent);
+
+        listBox.ItemTemplate = null;
+        root.ProcessFrame();
+
+        ListBoxItem row = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Same(row, element.VisualParent);
+        Assert.Same(element, Assert.Single(row.VisualChildren));
+        Assert.Empty(wrapper.VisualChildren);
+    }
+
+    [Fact]
+    public void ListBoxRowWrapsElementItemInReplacedItemTemplate()
+    {
+        UIRoot root = new(300, 200);
+        Marker element = new("raw");
+        ListBox listBox = new() { ItemTemplate = WrapElementTemplate() };
+        listBox.SetItems(new object[] { element });
+        root.VisualChildren.Add(listBox);
+        root.ProcessFrame();
+        Border first = Assert.IsType<Border>(element.VisualParent);
+
+        listBox.ItemTemplate = WrapElementTemplate();
+        root.ProcessFrame();
+
+        Border second = Assert.IsType<Border>(element.VisualParent);
+        Assert.NotSame(first, second);
+        Assert.Same(element, second.Child);
+        Assert.Empty(first.VisualChildren);
+        ListBoxItem row = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Same(row, second.VisualParent!.VisualParent);
+    }
+
+    [Fact]
     public void ListBoxItemWithStringContentShowsItsTextInsidePadding()
     {
         UIRoot root = new(200, 200);
@@ -310,6 +352,12 @@ public sealed class ListBoxTests
             templated.Add((context.Data, context.Index));
             return new Marker("T" + context.Index + ":" + context.Data!.GetType().Name);
         });
+    }
+
+    private static ContentTemplate WrapElementTemplate()
+    {
+        return new ContentTemplate("wrap", typeof(object), key: null, priority: 0,
+            context => new Border { Child = (UIElement?)context.Data });
     }
 
     private static List<string> MarkerLabels(UIElement element)

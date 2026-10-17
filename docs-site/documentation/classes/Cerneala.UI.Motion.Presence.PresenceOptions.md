@@ -38,7 +38,7 @@ Border item = new()
 ## Remarks
 `PresenceOptions` is assigned through `UIElement.Presence`. When an attached element with presence options is added to the tree, `PresenceCoordinator` initializes its presence visual state to opacity `0` and scale `0.95`, then animates both values to `1` using `Enter`.
 
-When an attached element with presence options is removed from a visual child collection, the coordinator keeps it attached as an exiting visual child until its exit opacity animation completes. During that exit, opacity animates to `0` and scale animates to `0.95` using `Exit`.
+When an attached element with presence options is removed from a visual child collection, the coordinator keeps it attached as an exiting visual child until its exit opacity animation completes. During that exit, opacity animates to `0` and scale animates to `0.95` using `Exit`. A child that a `VirtualizingStackPanel` skips draws nothing, so removing it detaches it at once and `Exit` is not used.
 
 `ExcludeInputWhileExiting` defaults to `true`. The three-parameter `FadeAndScale` overload can opt an exiting element back into hit testing while preserving the same coordinator-owned enter and exit lifecycle.
 

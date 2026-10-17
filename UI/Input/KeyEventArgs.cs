@@ -14,12 +14,25 @@ public sealed class KeyEventArgs : RoutedEventArgs
         bool isControlDown,
         bool isShiftDown,
         bool isAltDown)
+        : this(routedEvent, originalSource, key, isControlDown, isShiftDown, isAltDown, isRepeat: false)
+    {
+    }
+
+    public KeyEventArgs(
+        RoutedEvent routedEvent,
+        object originalSource,
+        InputKey key,
+        bool isControlDown,
+        bool isShiftDown,
+        bool isAltDown,
+        bool isRepeat)
         : base(routedEvent, originalSource)
     {
         Key = key;
         IsControlDown = isControlDown;
         IsShiftDown = isShiftDown;
         IsAltDown = isAltDown;
+        IsRepeat = isRepeat;
     }
 
     public InputKey Key { get; }
@@ -29,4 +42,6 @@ public sealed class KeyEventArgs : RoutedEventArgs
     public bool IsShiftDown { get; }
 
     public bool IsAltDown { get; }
+
+    public bool IsRepeat { get; }
 }

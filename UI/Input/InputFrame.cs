@@ -8,15 +8,30 @@ public sealed class InputFrame
         KeyboardSnapshot previousKeyboard,
         KeyboardSnapshot currentKeyboard,
         IReadOnlyList<TextInputSnapshotEvent> textInputEvents)
+        : this(previousPointer, currentPointer, previousKeyboard, currentKeyboard, textInputEvents, [])
+    {
+    }
+
+    public InputFrame(
+        PointerSnapshot previousPointer,
+        PointerSnapshot currentPointer,
+        KeyboardSnapshot previousKeyboard,
+        KeyboardSnapshot currentKeyboard,
+        IReadOnlyList<TextInputSnapshotEvent> textInputEvents,
+        IReadOnlyList<InputKey> keyRepeatEvents)
     {
         ArgumentNullException.ThrowIfNull(previousPointer);
         ArgumentNullException.ThrowIfNull(currentPointer);
         ArgumentNullException.ThrowIfNull(previousKeyboard);
         ArgumentNullException.ThrowIfNull(currentKeyboard);
         ArgumentNullException.ThrowIfNull(textInputEvents);
+        ArgumentNullException.ThrowIfNull(keyRepeatEvents);
 
         Pointer = new PointerFrame(previousPointer, currentPointer);
-        Keyboard = new KeyboardFrame(previousKeyboard, currentKeyboard);
+        Keyboard = new KeyboardFrame(
+            previousKeyboard,
+            currentKeyboard,
+            keyRepeatEvents.Where(key => key is not InputKey.None and not InputKey.Unknown).ToArray());
         TextInputEvents = Array.AsReadOnly(textInputEvents.ToArray());
     }
 
@@ -65,11 +80,13 @@ public sealed class InputFrame
     {
         private readonly KeyboardSnapshot previous;
         private readonly KeyboardSnapshot current;
+        private readonly InputKey[] repeatEvents;
 
-        internal KeyboardFrame(KeyboardSnapshot previous, KeyboardSnapshot current)
+        internal KeyboardFrame(KeyboardSnapshot previous, KeyboardSnapshot current, InputKey[] repeatEvents)
         {
             this.previous = previous;
             this.current = current;
+            this.repeatEvents = repeatEvents;
         }
 
         public bool IsDown(InputKey key)
@@ -85,6 +102,20 @@ public sealed class InputFrame
         public bool IsReleased(InputKey key)
         {
             return !current.IsDown(key) && previous.IsDown(key);
+        }
+
+        public int GetRepeatCount(InputKey key)
+        {
+            int count = 0;
+            foreach (InputKey repeated in repeatEvents)
+            {
+                if (repeated == key)
+                {
+                    count++;
+                }
+            }
+
+            return count;
         }
     }
 }

@@ -155,7 +155,7 @@ The runtime takes the services passed to its constructor, or else `platform.Plat
 | Slot | SDL value |
 |---|---|
 | `Cursor` | `SdlCursorService` |
-| `TextInput` | `SdlTextInputPlatform`, which only reports `SupportsIme => true` |
+| `TextInput` | `SdlTextInputPlatform`, which only reports `SupportsIme => true`. Each `SdlPlatformWindow` starts SDL text input when it is created, because SDL3 sends no `SDL_EVENT_TEXT_INPUT` until it is started |
 | `Clipboard`, `FileDialogs`, `Dpi`, `Accessibility`, `ReducedMotion` | `null` |
 
 ## Lifecycle And Ownership
@@ -215,6 +215,7 @@ Hosting adds no `FramePhase`. It owns the loop that decides whether a window ren
 - The order is `Startup`, then `Exit` with the exit code, then service disposal, exactly once. `ApplicationRuntimeTests.cs:LifecyclePublishesServicesBeforeStartupAndDisposesAfterExit`.
 - `Application` members throw from another thread. `ApplicationRuntimeTests.cs:LifecycleOperationsRejectAnotherThread`.
 - Each window has its own graphics session. Showing renders one frame (one `BeginFrame`, one `Present`). Closing disposes only that window's session, and the other window keeps presenting. `tests/Cerneala.Tests/UI/Hosting/WindowRuntimeTests.cs:EachWindowUsesAndDisposesItsOwnGraphicsSession`.
+- Every SDL window starts SDL text input, so `TextInput` events reach its input source; a failed start destroys the new window and throws. `tests/Cerneala.Tests.SdlGpu/SdlWindowPlatformTests.cs:EveryWindowStartsSdlTextInputSoTypedTextReachesItsInputSource`, `SdlWindowPlatformTests.cs:TextInputStartFailureDestroysTheNewWindow`.
 - `Cerneala.Backends.SdlGpu` exports one public type, `SdlGpuApplicationBackend`, with one public method, `void EnsureRegistered()`. `tests/Cerneala.Tests.SdlGpu/SdlArchitectureTests.cs:SdlGpuBackendPublicApiIsLimitedToTheApplicationBootstrap`.
 - The "No windowing backend is registered" exception: netestat.
 - The SDL platform terminates audio before `SDL_Quit`: netestat at this level.

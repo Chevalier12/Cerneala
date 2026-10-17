@@ -37,7 +37,10 @@ handlers do that through normal property writes and invalidation.
    `WindowApplicationRuntime.CollectPlatformInput`
    (`UI/Hosting/Windowing/WindowApplicationRuntime.cs:910-913`) calls
    `InputSource.GetFrame()`, or the preview input driver in preview mode.
-   `GetFrame` consumes the accumulated state (`SdlInputSource.cs:16-24`).
+   `GetFrame` consumes the accumulated state. One frame holds at most one
+   change of each key or button, in dispatch order; later events wait for the
+   next frames, which `GetFrame` requests (see
+   [sdl-desktop-backend.md](sdl-desktop-backend.md#sdl3-platform)).
 2. **Host ordering.** `UiHost.UpdateCore` runs the scheduled frame pass first,
    then `ElementInputBridge.Dispatch` (`UiHost.cs:174-186`). Hit testing
    therefore sees layout committed by queued work of the same update.

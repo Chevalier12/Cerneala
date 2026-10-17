@@ -1,8 +1,10 @@
 using System.Collections.ObjectModel;
 using Cerneala.Drawing;
+using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Media;
 using Cerneala.UI.Layout.Virtualization;
@@ -824,6 +826,88 @@ public sealed class ItemsPresenterTests
 
         Assert.Equal(31, container.GetValue(Control.FontSizeProperty));
         Assert.Equal(31, text?.FontSize ?? 31);
+    }
+
+    // The ContentPresenter re-creates its template child during its measure, after the inherited phase of that
+    // frame, which queues the ContentPresenter for that phase. An ItemsPresenter measured in the same measure must
+    // leave that work queued, so the new subtree inherits the ContentPresenter's values in the next frame.
+    [Fact]
+    public void InheritedWorkThatAnAncestorQueuesDuringTheSameMeasureReachesItsNewSubtree()
+    {
+        TextBlock? label = null;
+        ItemsControl? inner = null;
+        ContentPresenter presenter = new()
+        {
+            FontSize = 30,
+            Content = "data",
+            ContentTemplate = new ContentTemplate("t", typeof(string), null, 0, _ =>
+            {
+                label = new TextBlock { Text = "label" };
+                inner = new ItemsControl();
+                inner.SetItems(new[] { "x" });
+                Cerneala.UI.Layout.Panels.StackPanel stack = new();
+                stack.VisualChildren.Add(label);
+                stack.VisualChildren.Add(inner);
+                return stack;
+            })
+        };
+        UIRoot root = new(300, 200);
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+
+        presenter.ContentIndex = 1;
+        presenter.Invalidate(InvalidationFlags.Measure, "test");
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Cerneala.UI.Layout.Panels.Panel panel = inner!.ItemsPresenter.LayoutPanelRoot!;
+        UIElement container = inner.ItemContainerGenerator.RealizedContainers[0];
+        Assert.Equal(
+            "label=30/Inherited inner=30/Inherited presenter=30/Inherited panel=30/Inherited container=30/Inherited",
+            $"label={DescribeFontSize(label!)} inner={DescribeFontSize(inner)} " +
+            $"presenter={DescribeFontSize(inner.ItemsPresenter)} panel={DescribeFontSize(panel)} " +
+            $"container={DescribeFontSize(container)}");
+    }
+
+    // Adding the template child during the ContentPresenter's measure also queues the new Border for the Aspect
+    // phase. The ItemsPresenter below it performs only its panel's Aspect work, so it must leave the Border's queued.
+    [Fact]
+    public void AspectWorkThatAnAncestorQueuesDuringTheSameMeasureIsApplied()
+    {
+        Border? border = null;
+        ContentPresenter presenter = new()
+        {
+            Content = "data",
+            ContentTemplate = new ContentTemplate("t", typeof(string), null, 0, _ =>
+            {
+                ItemsControl inner = new();
+                inner.SetItems(new[] { "x" });
+                border = new Border { Child = inner };
+                return border;
+            })
+        };
+        UIRoot root = new(300, 200);
+        root.AspectRegistry.Register(AspectPackage.Create("App").Components(components => components.AddRule(
+            new AspectRuleSet(
+                "border",
+                AspectLayer.App,
+                new AspectTarget(typeof(Border)),
+                [new AspectDeclaration(Control.BackgroundProperty, AspectValue<Brush?>.Literal(new SolidColorBrush(Color.White)))],
+                0))));
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+
+        presenter.ContentIndex = 1;
+        presenter.Invalidate(InvalidationFlags.Measure, "test");
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.Equal(UiPropertyValueSource.AspectBase, border!.GetValueSource(Control.BackgroundProperty));
+    }
+
+    private static string DescribeFontSize(UIElement element)
+    {
+        return $"{element.GetValue(Control.FontSizeProperty)}/{element.GetValueSource(Control.FontSizeProperty)}";
     }
 
     private static string DescribeInherited(UIElement element, SolidColorBrush foreground)

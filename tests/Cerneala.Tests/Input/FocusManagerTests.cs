@@ -147,6 +147,54 @@ public sealed class FocusManagerTests
         Assert.False(called);
     }
 
+    [Fact]
+    public void KeyRepeatsRaiseRepeatedKeyDownPairsBetweenPressAndRelease()
+    {
+        UIRoot root = new();
+        UIElement target = new() { Focusable = true };
+        root.VisualChildren.Add(target);
+        List<string> calls = [];
+        target.Handlers.AddHandler(InputEvents.PreviewKeyDownEvent, (_, args) => calls.Add($"preview-down:{((KeyEventArgs)args).IsRepeat}"));
+        target.Handlers.AddHandler(InputEvents.KeyDownEvent, (_, args) => calls.Add($"down:{((KeyEventArgs)args).IsRepeat}"));
+        target.Handlers.AddHandler(InputEvents.PreviewKeyUpEvent, (_, args) => calls.Add($"preview-up:{((KeyEventArgs)args).IsRepeat}"));
+        target.Handlers.AddHandler(InputEvents.KeyUpEvent, (_, args) => calls.Add($"up:{((KeyEventArgs)args).IsRepeat}"));
+        ElementInputRouteMap map = new ElementInputRouteBuilder().Build(root);
+        FocusManager manager = new();
+        manager.Focus(target, map);
+        KeyboardSnapshot up = KeyboardSnapshot.Empty;
+        KeyboardSnapshot down = KeyboardSnapshot.FromDownKeys([InputKey.Back]);
+
+        manager.DispatchKeyboard(new InputFrame(PointerSnapshot.Empty, PointerSnapshot.Empty, up, down, [], [InputKey.Back]), map);
+        manager.DispatchKeyboard(new InputFrame(PointerSnapshot.Empty, PointerSnapshot.Empty, down, down, [], [InputKey.Back, InputKey.Back]), map);
+        manager.DispatchKeyboard(new InputFrame(PointerSnapshot.Empty, PointerSnapshot.Empty, down, up, [], [InputKey.Back]), map);
+
+        Assert.Equal(
+        [
+            "preview-down:False", "down:False", "preview-down:True", "down:True",
+            "preview-down:True", "down:True", "preview-down:True", "down:True",
+            "preview-down:True", "down:True", "preview-up:False", "up:False"
+        ], calls);
+    }
+
+    [Fact]
+    public void KeyRepeatForKeyThatIsNeitherDownNorReleasedRaisesNothing()
+    {
+        UIRoot root = new();
+        UIElement target = new() { Focusable = true };
+        root.VisualChildren.Add(target);
+        bool called = false;
+        target.Handlers.AddHandler(InputEvents.PreviewKeyDownEvent, (_, _) => called = true);
+        ElementInputRouteMap map = new ElementInputRouteBuilder().Build(root);
+        FocusManager manager = new();
+        manager.Focus(target, map);
+
+        manager.DispatchKeyboard(
+            new InputFrame(PointerSnapshot.Empty, PointerSnapshot.Empty, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, [], [InputKey.Back]),
+            map);
+
+        Assert.False(called);
+    }
+
     internal static InputFrame FrameWithKey(InputKey key)
     {
         return new InputFrame(
