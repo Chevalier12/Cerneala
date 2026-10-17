@@ -106,6 +106,37 @@ public sealed class PasswordBoxTests
     }
 
     [Theory]
+    [InlineData(1f)]
+    [InlineData(2f)]
+    public void PasswordBoxClickPlacesCaretAtMaskCharacterDrawnUnderPointer(float scale)
+    {
+        // The box is arranged at a non-zero origin inside a parent that draws its content `scale` times
+        // larger from the root origin, so a layout point (x, y) is drawn at root (x, y) * scale.
+        UIRoot root = new(500, 200);
+        root.SetPlatformServices(new FakePlatformServices(clipboard: null));
+        UIElement parent = new()
+        {
+            RenderTransform = new Cerneala.UI.Media.Transform(Cerneala.UI.Media.Matrix3x2.CreateScale(scale, scale)),
+            RenderTransformOrigin = new LayoutPoint(0, 0)
+        };
+        PasswordBox passwordBox = new() { Password = "abcdef" };
+        parent.VisualChildren.Add(passwordBox);
+        root.VisualChildren.Add(parent);
+        parent.Arrange(new ArrangeContext(new LayoutRect(0, 0, 240, 80)));
+        passwordBox.Measure(new MeasureContext(new LayoutSize(160, 40)));
+        passwordBox.Arrange(new ArrangeContext(new LayoutRect(40, 10, 160, 32)));
+        ElementInputBridge bridge = new();
+        float x = (passwordBox.ArrangedBounds.X + passwordBox.BorderThickness.Left + passwordBox.Padding.Left + 1) * scale;
+        float y = (passwordBox.ArrangedBounds.Y + 10) * scale;
+
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: false, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true, currentDown: false));
+        bridge.Dispatch(root, TextInputFrame("X"));
+
+        Assert.Equal("Xabcdef", passwordBox.Password);
+    }
+
+    [Theory]
     [InlineData("abc")]
     [InlineData("a\U0001F600b")]
     [InlineData("e\u0301xy")]

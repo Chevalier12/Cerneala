@@ -55,6 +55,7 @@ The state of an element with presence options changes like this:
 | The element is removed through `VisualChildren.Remove`. It stays attached and plays its exit animation. | `Exiting` |
 | The element is added back while it is still exiting. The exit is canceled. | `Present` |
 | The exit animation completes and the element is detached. | `Detached` |
+| A child that a `VirtualizingStackPanel` skips is removed. It draws nothing, so it is detached at once, without an exit animation. | `Detached` |
 
 While the state is `Exiting` and `PresenceOptions.ExcludeInputWhileExiting` is `true` (the default), the element takes no input and is skipped by hit testing. It is still rendered, so the exit animation stays visible.
 

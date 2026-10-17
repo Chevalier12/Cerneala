@@ -14,10 +14,14 @@ internal static class ComboBoxTemplates
     public static readonly ComponentTemplate<ComboBox> Default = new("ComboBox.Default", context =>
     {
         const UiPropertyValueSource OwnerBindingSource = UiPropertyValueSource.TemplateOwnerBinding;
+
+        // As in the WPF default template, the selection box is not hit-testable: a click on it, including on
+        // ItemTemplate content such as a CheckBox, reaches the field, which opens or closes the drop-down.
         ContentPresenter selectionPresenter = new()
         {
             HorizontalAlignment = HorizontalAlignment.Left,
-            VerticalAlignment = VerticalAlignment.Center
+            VerticalAlignment = VerticalAlignment.Center,
+            IsHitTestVisible = false
         };
         TextBox editableTextBox = new()
         {

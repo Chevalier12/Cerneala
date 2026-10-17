@@ -167,18 +167,21 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
         UIRoot? oldRoot = child.Root;
         SetParent(child, null);
 
-        if (oldRoot is not null && !child.HasAttachedParent)
+        // A failing detach callback propagates only after the removal is fully published.
+        try
         {
-            ElementLifecycle.DetachSubtree(oldRoot, child);
-            oldRoot.IncrementTreeVersion();
+            if (oldRoot is not null && !child.HasAttachedParent)
+            {
+                ElementLifecycle.DetachSubtree(oldRoot, child);
+            }
         }
-        else
+        finally
         {
             oldRoot?.IncrementTreeVersion();
+            InvalidateForVisualChildMutation(child, ElementTreeChangeKind.Removed);
+            Changed?.Invoke(this, new ElementTreeChange(owner, child, role, ElementTreeChangeKind.Removed));
         }
 
-        InvalidateForVisualChildMutation(child, ElementTreeChangeKind.Removed);
-        Changed?.Invoke(this, new ElementTreeChange(owner, child, role, ElementTreeChangeKind.Removed));
         return true;
     }
 

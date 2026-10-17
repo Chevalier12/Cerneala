@@ -7,7 +7,7 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Input/InputFrame.cs`
 
-Represents one retained UI input frame by comparing previous and current pointer and keyboard snapshots, and by carrying text input events for the frame.
+Represents one retained UI input frame by comparing previous and current pointer and keyboard snapshots, and by carrying text input events and key auto-repeat events for the frame.
 
 ```csharp
 public sealed class InputFrame
@@ -45,6 +45,25 @@ int wheelDelta = frame.Pointer.WheelDelta;
 string text = frame.TextInputEvents[0].Text;
 ```
 
+Create a frame in which a held Backspace key auto-repeated twice since the previous frame.
+
+```csharp
+using Cerneala.UI.Input;
+
+KeyboardSnapshot held = KeyboardSnapshot.FromDownKeys(new[] { InputKey.Back });
+
+InputFrame frame = new(
+    PointerSnapshot.Empty,
+    PointerSnapshot.Empty,
+    held,
+    held,
+    Array.Empty<TextInputSnapshotEvent>(),
+    new[] { InputKey.Back, InputKey.Back });
+
+bool pressedThisFrame = frame.Keyboard.IsPressed(InputKey.Back); // false: it was already down
+int repeats = frame.Keyboard.GetRepeatCount(InputKey.Back);      // 2
+```
+
 ## Remarks
 
 `InputFrame` is a snapshot-delta object for one update pass. It stores a `PointerFrame` built from the previous and current `PointerSnapshot`, a `KeyboardFrame` built from the previous and current `KeyboardSnapshot`, and a read-only copy of the provided text input events.
@@ -53,13 +72,16 @@ Pointer and keyboard transition methods compare the current snapshot against the
 
 `TextInputEvents` is copied from the constructor argument with `ToArray()` and exposed as a read-only list. Later changes to the caller's source list are not reflected by the frame. The event objects themselves are not cloned.
 
+Key auto-repeat events are not visible in snapshots, because a held key is down in both the previous and the current snapshot. The six-parameter constructor takes them as `keyRepeatEvents`: one `InputKey` entry for each operating-system auto-repeat received since the previous frame. The frame copies the list and drops `InputKey.None` and `InputKey.Unknown` entries. `Keyboard.GetRepeatCount` reads the copied entries. The five-parameter constructor creates a frame without repeat events. The focus manager raises one repeated `KeyDown` pair per entry, with `KeyEventArgs.IsRepeat` set to `true`, but only for a key that is down in the current snapshot or released in this frame.
+
 The nested `PointerFrame` and `KeyboardFrame` classes are created by `InputFrame`; their constructors are internal, so callers normally access them through the `Pointer` and `Keyboard` properties.
 
 ## Constructors
 
 | Name | Description |
 | --- | --- |
-| `InputFrame(PointerSnapshot, PointerSnapshot, KeyboardSnapshot, KeyboardSnapshot, IReadOnlyList<TextInputSnapshotEvent>)` | Initializes an input frame from previous/current pointer snapshots, previous/current keyboard snapshots, and text input events. |
+| `InputFrame(PointerSnapshot, PointerSnapshot, KeyboardSnapshot, KeyboardSnapshot, IReadOnlyList<TextInputSnapshotEvent>)` | Initializes an input frame from previous/current pointer snapshots, previous/current keyboard snapshots, and text input events, without key repeat events. |
+| `InputFrame(PointerSnapshot, PointerSnapshot, KeyboardSnapshot, KeyboardSnapshot, IReadOnlyList<TextInputSnapshotEvent>, IReadOnlyList<InputKey>)` | Initializes an input frame like the five-parameter constructor and also records one key auto-repeat event per `InputKey` entry. |
 
 ## Properties
 
@@ -100,12 +122,13 @@ The nested `PointerFrame` and `KeyboardFrame` classes are created by `InputFrame
 | `IsDown(InputKey)` | `bool` | Returns whether the key is down in the current keyboard snapshot. |
 | `IsPressed(InputKey)` | `bool` | Returns whether the key is down in the current keyboard snapshot and was not down in the previous snapshot. |
 | `IsReleased(InputKey)` | `bool` | Returns whether the key is not down in the current keyboard snapshot and was down in the previous snapshot. |
+| `GetRepeatCount(InputKey)` | `int` | Returns how many key auto-repeat events the frame carries for the key. |
 
 ## Exceptions
 
 | Member | Exception | Condition |
 | --- | --- | --- |
-| `InputFrame(...)` | `ArgumentNullException` | `previousPointer`, `currentPointer`, `previousKeyboard`, `currentKeyboard`, or `textInputEvents` is `null`. |
+| `InputFrame(...)` | `ArgumentNullException` | `previousPointer`, `currentPointer`, `previousKeyboard`, `currentKeyboard`, `textInputEvents`, or `keyRepeatEvents` is `null`. |
 
 ## Applies to
 

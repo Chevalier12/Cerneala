@@ -41,8 +41,10 @@ public sealed class PresenceCoordinator
         ArgumentNullException.ThrowIfNull(owner);
         ArgumentNullException.ThrowIfNull(element);
 
+        // A child that a virtualizing panel skips draws nothing, so it has nothing to animate out and is detached at once.
+        // Removal also ends the skipped state, so an exit would draw it at the zero-sized bounds the panel gave it.
         PresenceOptions? options = element.Presence;
-        if (options is null || !element.IsAttached)
+        if (options is null || !element.IsAttached || element.IsSkippedByVirtualization)
         {
             return false;
         }

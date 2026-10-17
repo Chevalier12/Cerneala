@@ -62,14 +62,14 @@ Because `ListBoxItem` derives from `ContentControl`, it also supports the inheri
 
 | Content | Result |
 | --- | --- |
-| `UIElement` | Hosted directly as the item's logical and visual child, as `ContentControl` hosts it. |
+| `UIElement` | Hosted directly as the item's logical and visual child, as `ContentControl` hosts it. In a `ListBox` row whose `ListBox` has an `ItemTemplate`, the internal `ContentPresenter` shows the template's element instead, and the `UIElement` is only the template's data. |
 | `string` | Shown by an internal `ContentPresenter` child, which creates a `TextBlock` with the text. The `TextBlock` uses the item's `FontFamily`, `FontSize`, and `Foreground`. |
 | Another value | Given to the same internal `ContentPresenter`. It shows a child only when a content template matches the value; otherwise the item shows only its background. |
-| `null` | No content child. |
+| `null` | Given to the same internal `ContentPresenter`. It shows a child only when a content template creates one for `null`, for example the `ItemTemplate` of the owning `ListBox`; otherwise the item shows only its background. |
 
 For example, `new ListBoxItem { Content = "Ink" }` has one `ContentPresenter` child, and that presenter has one `TextBlock` child whose `Text` is `"Ink"`. The item measures at least the size of that text plus `Padding` and `BorderThickness`. `Content` stays the string `"Ink"`.
 
-When the item is a row of a `ListBox`, the `ListBox` passes its `ItemTemplate`, `ItemTemplateKey`, and `Templates` to the internal presenter, so the template creates the row's visual from the item. A `ListBoxItem` that is its own container (an item of the list that is already a `ListBoxItem`) does not use the `ListBox` item template, as in WPF. Without a `ListBox`, the presenter resolves content templates through the aspects of the item's root.
+When the item is a row of a `ListBox`, the `ListBox` passes its `ItemTemplate`, `ItemTemplateKey`, and `Templates` to the internal presenter, so the template creates the row's visual from the item. This includes an item that is a `UIElement` but not a `ListBoxItem`, as in WPF, where the `ContentPresenter` of the row tries its `ContentTemplate` before `UIElement` content. For example, with `ItemTemplate = new ContentTemplate("Row", typeof(object), key: null, priority: 0, context => new TextBlock { Text = "Row " + context.Index })` and `SetItems(new object[] { new Border() })`, the row's `Content` is the `Border`, the row shows a `TextBlock` that reads `Row 0`, and the `Border` has no visual parent. Only `ItemTemplate` changes this: with an `ItemTemplateKey` and no `ItemTemplate`, a `UIElement` item stays the row's direct child, as a `UIElement` item of `ItemsControl` stays its own container. The `ItemTemplate` runs for a `null` item too, as a WPF `ContentPresenter` applies its `ContentTemplate` to `null` content, and as `ItemsControl` rows do. For example, a `ListBox` with `ItemsSource = new string?[] { null }` and an `ItemTemplate` that returns an element of 80 x 10 has one row whose template element is 80 x 10, whether the row is new or recycled from an earlier item. A `ListBoxItem` that is its own container (an item of the list that is already a `ListBoxItem`) does not use the `ListBox` item template, as in WPF. Without a `ListBox`, the presenter resolves content templates through the aspects of the item's root.
 
 When the item has a `ComponentTemplate` or a `ComponentTemplateKey`, the template presents `Content`, and the item creates no internal presenter.
 
@@ -77,7 +77,7 @@ When the item has a `ComponentTemplate` or a `ComponentTemplateKey`, the templat
 
 | Name | Description |
 | --- | --- |
-| `ListBoxItem()` | Initializes a new `ListBoxItem` with `ItemIndex` set to `-1`, `Item` set to `null`, and `IsSelected` set to `false`. |
+| `ListBoxItem()` | Initializes a new `ListBoxItem` with `ItemIndex` set to `-1`, `Item` set to `null`, and `IsSelected` set to `false`. The new item already has its internal `ContentPresenter`, which presents the `null` content. |
 
 ## Fields
 
@@ -103,8 +103,8 @@ This class does not declare additional public methods.
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `MeasureCore(MeasureContext context)` | `LayoutSize` | Measures the internal content presenter inside `Padding + BorderThickness` when the item presents non-element `Content`; otherwise uses `ContentControl` measurement. |
-| `ArrangeCore(ArrangeContext context)` | `LayoutRect` | Arranges the internal content presenter inside `Padding + BorderThickness` when the item presents non-element `Content`; otherwise uses `ContentControl` arrangement. |
+| `MeasureCore(MeasureContext context)` | `LayoutSize` | Measures the internal content presenter inside `Padding + BorderThickness` when the item presents non-element `Content` or applies the `ListBox` item template; otherwise uses `ContentControl` measurement. |
+| `ArrangeCore(ArrangeContext context)` | `LayoutRect` | Arranges the internal content presenter inside `Padding + BorderThickness` when the item presents non-element `Content` or applies the `ListBox` item template; otherwise uses `ContentControl` arrangement. |
 | `OnRender(RenderContext context)` | `void` | Renders the selected highlight or inherited background inside the current render bounds. The content child renders on top of it. |
 
 ## Events

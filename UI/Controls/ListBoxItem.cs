@@ -13,7 +13,9 @@ namespace Cerneala.UI.Controls;
 public class ListBoxItem : ContentControl, ISelectableItemContainer
 {
     // Presents Content that is not a UIElement, as the ContentPresenter in the template of a WPF ListBoxItem does.
-    // UIElement content stays the direct child that ContentControl hosts.
+    // UIElement content stays the direct child that ContentControl hosts, unless the owning ListBox passed an item
+    // template: then the presenter shows the template's element for it, as a WPF ContentPresenter tries its
+    // ContentTemplate before UIElement content.
     private ContentPresenter? contentPresenter;
     private ContentTemplate? itemTemplate;
     private string? itemTemplateKey;
@@ -29,6 +31,11 @@ public class ListBoxItem : ContentControl, ISelectableItemContainer
         nameof(IsSelected),
         typeof(ListBoxItem),
         new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsAspect));
+
+    public ListBoxItem()
+    {
+        UpdateContentPresenter();
+    }
 
     public int ItemIndex { get; set; } = -1;
 
@@ -47,12 +54,16 @@ public class ListBoxItem : ContentControl, ISelectableItemContainer
         ContentTemplateRegistry? templateRegistry,
         int index)
     {
+        bool hostedContentDirectly = HostsContentDirectly;
         itemTemplate = template;
         itemTemplateKey = templateKey;
         itemTemplateRegistry = templateRegistry;
         itemContentIndex = index;
+        UpdateContentHosting(hostedContentDirectly);
         UpdateContentPresenter();
     }
+
+    internal override bool HostsContentDirectly => base.HostsContentDirectly && itemTemplate is null;
 
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
@@ -94,11 +105,12 @@ public class ListBoxItem : ContentControl, ISelectableItemContainer
     }
 
     // The presenter refreshes its child on its next measure, so a recycled row whose content goes to null and
-    // then to the next string reuses its generated TextBlock.
+    // then to the next string reuses its generated TextBlock. It also exists for null content, as the
+    // ContentPresenter in WPF's ListBoxItem template always does.
     private void UpdateContentPresenter()
     {
         object? content = Content;
-        if (content is UIElement || ComponentTemplate is not null || ComponentTemplateKey is not null)
+        if ((content is UIElement && itemTemplate is null) || ComponentTemplate is not null || ComponentTemplateKey is not null)
         {
             RemoveContentPresenter();
             return;
@@ -106,11 +118,6 @@ public class ListBoxItem : ContentControl, ISelectableItemContainer
 
         if (contentPresenter is null)
         {
-            if (content is null)
-            {
-                return;
-            }
-
             ContentPresenter presenter = new();
             LogicalChildren.Add(presenter);
             VisualChildren.Add(presenter);
