@@ -39,6 +39,41 @@ if (changed)
 }
 ```
 
+The following example moves focus to the next element on every `KeyDown`. One frame holds Down with 2 auto-repeats. The first repeat goes to `first` and moves focus to `second`; the second repeat goes to `second`.
+
+```csharp
+using Cerneala.UI.Elements;
+using Cerneala.UI.Input;
+
+UIRoot root = new();
+UIElement first = new() { Focusable = true };
+UIElement second = new() { Focusable = true };
+root.VisualChildren.Add(first);
+root.VisualChildren.Add(second);
+
+FocusManager focusManager = new();
+ElementInputRouteMap routeMap = null!;
+List<string> receivers = [];
+first.Handlers.AddHandler(InputEvents.KeyDownEvent, (_, _) =>
+{
+    receivers.Add("first");
+    focusManager.Focus(second, routeMap);
+});
+second.Handlers.AddHandler(InputEvents.KeyDownEvent, (_, _) => receivers.Add("second"));
+
+routeMap = new ElementInputRouteBuilder().Build(root);
+focusManager.Focus(first, routeMap);
+
+KeyboardSnapshot held = KeyboardSnapshot.FromDownKeys([InputKey.Down]);
+focusManager.DispatchKeyboard(
+    new InputFrame(PointerSnapshot.Empty, PointerSnapshot.Empty, held, held, [], [InputKey.Down, InputKey.Down]),
+    routeMap);
+
+// receivers is ["first", "second"].
+```
+
+Handlers are copied into the route map when `ElementInputRouteBuilder.Build` runs, so the example adds them before building it.
+
 ## Remarks
 
 `FocusManager` stores the current keyboard-focused `UIElement` in `FocusedElement`. Calling `Focus` with the same element returns `false` and does not raise focus events. Calling `Focus(null, routeMap)` clears focus when an element is currently focused.
@@ -49,7 +84,9 @@ When focus changes, the manager updates `IsKeyboardFocused` on the old and new f
 
 Focus events are raised after state is updated. Preview keyboard focus events are raised before bubbling keyboard focus events. If a preview lost or got keyboard focus event is handled, the matching `LostKeyboardFocus` or `GotKeyboardFocus` event is suppressed. The non-keyboard `LostFocus` and `GotFocus` events are still raised when the old or new element has a route-map id.
 
-`DispatchKeyboard` sends pressed and released keyboard transitions from an `InputFrame` to the current focused element. It raises preview and bubbling key events through the routed event system, skips `InputKey.None` and `InputKey.Unknown`, and includes current Ctrl, Shift, and Alt modifier state in `KeyEventArgs`. If the focused element can no longer receive focus under the supplied route map, dispatch clears focus and does not route the keyboard input.
+`DispatchKeyboard` sends the key events of an `InputFrame` to the focused element: for each key, the press, then one `PreviewKeyDown`/`KeyDown` pair with `IsRepeat == true` for each auto-repeat in `InputFrame.KeyboardFrame.GetRepeatCount`, then the release. It raises preview and bubbling key events through the routed event system, skips `InputKey.None` and `InputKey.Unknown`, and includes current Ctrl, Shift, and Alt modifier state in `KeyEventArgs`. If the focused element can no longer receive focus under the supplied route map when dispatch starts, dispatch clears focus and does not route the keyboard input.
+
+Each key event goes to the element that has keyboard focus at the moment the event is raised, not to the element that had focus when dispatch started. A handler that moves focus during one key event therefore changes the target of the next key event of the same frame, including the next repeat of the same key. When a handler clears focus or makes the focused element unable to receive focus, for example by detaching it, the remaining key events of the frame are not raised.
 
 ## Constructors
 
@@ -68,7 +105,7 @@ Focus events are raised after state is updated. Preview keyboard focus events ar
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `Focus(UIElement? element, ElementInputRouteMap routeMap)` | `bool` | Moves keyboard focus to `element`, clears focus when `element` is `null`, updates focus state, and raises focus events. Returns `true` only when focus changes. Throws `ArgumentNullException` when `routeMap` is `null`. |
-| `DispatchKeyboard(InputFrame inputFrame, ElementInputRouteMap routeMap)` | `void` | Dispatches pressed and released keyboard input from `inputFrame` to the focused element. Throws `ArgumentNullException` when `inputFrame` or `routeMap` is `null`. |
+| `DispatchKeyboard(InputFrame inputFrame, ElementInputRouteMap routeMap)` | `void` | Dispatches pressed, repeated, and released keyboard input from `inputFrame`; each key event goes to the element focused when that event is raised. Throws `ArgumentNullException` when `inputFrame` or `routeMap` is `null`. |
 
 ## Applies to
 
