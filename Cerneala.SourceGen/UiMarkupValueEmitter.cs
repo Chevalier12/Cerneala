@@ -108,7 +108,7 @@ public sealed partial class UiMarkupGenerator
             MarkupValueKind kind = spec.ValueKind;
             string? code = kind switch
             {
-                MarkupValueKind.String when !string.IsNullOrWhiteSpace(value) => Literal(value),
+                MarkupValueKind.String => Literal(value),
                 MarkupValueKind.Bool => Bool(elementName, propertyName, attribute),
                 MarkupValueKind.Float => Float(elementName, propertyName, attribute),
                 MarkupValueKind.Integer => Integer(elementName, propertyName, attribute, spec.LiteralType.SpecialType),
@@ -130,7 +130,7 @@ public sealed partial class UiMarkupGenerator
 
             if (code is null)
             {
-                if (kind is MarkupValueKind.String or MarkupValueKind.Unsupported)
+                if (kind == MarkupValueKind.Unsupported)
                 {
                     Report(InvalidPropertyValue, attribute, elementName, propertyName, value);
                 }

@@ -44,6 +44,8 @@ internal sealed class FakeSdlApi : ISdlApi
 
     public bool GetWindowSizeInPixelsResult { get; set; } = true;
 
+    public bool StartTextInputResult { get; set; } = true;
+
     public string Error { get; set; } = "fake SDL error";
 
     public nint DeviceResult { get; set; } = (nint)0x1234;
@@ -989,6 +991,17 @@ internal sealed class FakeSdlApi : ISdlApi
         return true;
     }
 
+    public bool StartTextInput(nint window)
+    {
+        if (!StartTextInputResult)
+        {
+            return false;
+        }
+
+        Windows[window].TextInputActive = true;
+        return true;
+    }
+
     public float GetWindowPixelDensity(nint window) => WindowPixelDensity;
 
     public float GetWindowDisplayScale(nint window) => WindowDisplayScale;
@@ -1031,8 +1044,16 @@ internal sealed class FakeSdlApi : ISdlApi
 
     public bool PollEvent(out SdlEvent @event)
     {
-        if (events.TryDequeue(out @event))
+        while (events.TryDequeue(out SdlEvent next))
         {
+            // Like SDL3, text events reach only windows whose text input was started.
+            if (next.Kind is SdlEventKind.TextInput or SdlEventKind.TextEditing &&
+                !Windows.Values.Any(window => window.Id == next.WindowId && window.TextInputActive))
+            {
+                continue;
+            }
+
+            @event = next;
             return true;
         }
 
@@ -1129,6 +1150,7 @@ internal sealed class FakeSdlApi : ISdlApi
         public bool Visible { get; set; }
         public bool Raised { get; set; }
         public nint Parent { get; set; }
+        public bool TextInputActive { get; set; }
         public SdlEventKind State { get; set; }
     }
 

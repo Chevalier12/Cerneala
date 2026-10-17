@@ -56,7 +56,7 @@ When operating in Cerneala, follow its repository rules in addition to this work
 
 - Follow `CLAUDE.md`, especially "Claude Code tooling and verification commands".
 - When you do not know the structure of the scope, run `.\Tools\scripts\New-FileTree.ps1` from the root and read `FileTree.md` once.
-- Search directly with Grep and Roslyn MCP; explorers are optional (see "Subagent types" in `CLAUDE.md`). Before declaring code unused, check references with Roslyn MCP (`find_references`, `find_implementations`) when it is connected, and with a text search for reflection, markup, generator, and string uses. Read complete files before editing, plus the relevant caller and ownership context.
+- Give searches to Explorer subagents and edits to Implementer subagents (see "Orchestrator" in `CLAUDE.md`). Before declaring code unused, check references with Roslyn MCP (`find_references`, `find_implementations`) when it is connected, and with a text search for reflection, markup, generator, and string uses. Read complete files before editing, plus the relevant caller and ownership context.
 - Make edits with `Edit`. Run tests with the "Focused tests" command in `CLAUDE.md` (each affected test project with a `--filter`), never `dotnet test Cerneala.slnx` or a test project without `--filter`. Run long ones in the background.
 - After a context compaction, re-read this file (`.claude/skills/repo-cleanup/SKILL.md`) and the work ledger before the next batch.
 - Preserve retained-frame, layout, input, rendering, and lifetime contracts. Use existing harnesses and conformance matrices for affected paths. Capture application screenshots only through `Window.SaveScreenshot`, never OS capture.

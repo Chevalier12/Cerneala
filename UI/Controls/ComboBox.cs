@@ -1071,7 +1071,8 @@ public class ComboBox : Selector
         ExceptionDispatchInfo? preparationFailure = null;
         RefreshPreviewContainer(previewSelectedIndex, ref preparationFailure);
         SynchronizeSelectionPresenter();
-        preparationFailure?.Throw();
+        // A drop-down opened while SelectedIndex changes leaves the failure to that selection change.
+        ThrowPreparationFailure(preparationFailure);
     }
 
     // Selector rethrows a failed re-preparation of the old or the new row from the SelectedIndex setter, when
@@ -1140,7 +1141,8 @@ public class ComboBox : Selector
         SynchronizeEditorText();
         editableTextBox?.MoveCaret(editableTextBox.Text.Length);
         SynchronizeSelectionPresenter();
-        preparationFailure?.Throw();
+        // A commit made while SelectedIndex changes leaves the failure to that selection change.
+        ThrowPreparationFailure(preparationFailure);
     }
 
     // Enter, Tab, and item clicks commit the preview and close the drop-down. A failed re-preparation during the
@@ -1177,7 +1179,8 @@ public class ComboBox : Selector
         RefreshPreviewContainer(SelectedIndex, ref preparationFailure);
         SynchronizeEditorText();
         SynchronizeSelectionPresenter();
-        preparationFailure?.Throw();
+        // A drop-down closed while SelectedIndex changes leaves the failure to that selection change.
+        ThrowPreparationFailure(preparationFailure);
     }
 
     private void NavigatePreview(InputKey key)

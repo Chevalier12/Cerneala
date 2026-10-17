@@ -758,6 +758,9 @@ internal interface ISdlApi
 
     bool SetWindowParent(nint window, nint parent);
 
+    // SDL3 sends no text input events for a window until text input is started for it.
+    bool StartTextInput(nint window);
+
     float GetWindowPixelDensity(nint window);
 
     float GetWindowDisplayScale(nint window);

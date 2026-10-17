@@ -728,21 +728,28 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     internal void DetachFromRoot()
     {
         attachmentGeneration++;
-        DetachElementAspectBehavior();
-        RaiseEvent(new RoutedEventArgs(UnloadedEvent, this));
-        Root?.Motion.Layout.MarkDetached(this);
-        Root?.Motion.Presence.MarkDetached(this);
-        foreach (IElementLifecycleBehavior behavior in lifecycleBehaviors)
+        try
         {
-            behavior.Detach();
+            DetachElementAspectBehavior();
+            RaiseEvent(new RoutedEventArgs(UnloadedEvent, this));
+            Root?.Motion.Layout.MarkDetached(this);
+            Root?.Motion.Presence.MarkDetached(this);
+            foreach (IElementLifecycleBehavior behavior in lifecycleBehaviors)
+            {
+                behavior.Detach();
+            }
+            OnDetached();
         }
-        OnDetached();
-        ReleaseImageResources();
-        Root?.RetainedRenderCache.ReleaseElement(this);
-        Bindings.Clear();
-        ElementId = null;
-        Root?.AdvanceImageResolutionEpoch();
-        Root = null;
+        finally
+        {
+            // A failing detach callback still leaves the element detached.
+            ReleaseImageResources();
+            Root?.RetainedRenderCache.ReleaseElement(this);
+            Bindings.Clear();
+            ElementId = null;
+            Root?.AdvanceImageResolutionEpoch();
+            Root = null;
+        }
     }
 
     protected virtual void OnAttached()
@@ -1018,6 +1025,13 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     protected virtual LayoutSize MeasureCore(MeasureContext context)
     {
         return LayoutSize.Zero;
+    }
+
+    // True when this element's measure leaves the visual child unmeasured on purpose, as a virtualizing panel
+    // does outside its realization window. The frame then does not measure that child or its subtree on its own.
+    internal virtual bool SkipsChildMeasure(UIElement child)
+    {
+        return false;
     }
 
     protected virtual LayoutRect ArrangeCore(ArrangeContext context)
