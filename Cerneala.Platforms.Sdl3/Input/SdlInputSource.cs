@@ -92,6 +92,11 @@ internal sealed class SdlInputSource : IInputSource
         Accept(new PendingInput(PendingKind.Key, Value: (int)key, Down: down, Repeat: repeat));
     }
 
+    // The window stops receiving key events (disabled, or the keyboard focus moved), so
+    // the release of a key held now goes elsewhere. The held keys are dropped without a
+    // release, like a window that gets no key-up message, so their next press is a press.
+    public void ForgetKeys() => Accept(new PendingInput(PendingKind.ForgetKeys));
+
     public void AddText(string? text)
     {
         if (!string.IsNullOrEmpty(text))
@@ -128,6 +133,21 @@ internal sealed class SdlInputSource : IInputSource
         changed = Changes(input);
         if (!changed)
         {
+            return true;
+        }
+
+        if (input.Kind == PendingKind.ForgetKeys)
+        {
+            // A key transition or repeat in this frame happened before the window lost the
+            // keys; it is published first. Without one, previousKeyboard holds exactly the
+            // down keys, so dropping both leaves no release edge.
+            if (changedKeys.Count > 0 || keyRepeats.Count > 0)
+            {
+                return false;
+            }
+
+            downKeys.Clear();
+            previousKeyboard = KeyboardSnapshot.Empty;
             return true;
         }
 
@@ -197,6 +217,7 @@ internal sealed class SdlInputSource : IInputSource
             currentPointer.IsDown((InputMouseButton)input.Value) != input.Down,
         PendingKind.Wheel => input.Value != 0,
         PendingKind.Key => (input.Repeat && input.Down) || downKeys.Contains((InputKey)input.Value) != input.Down,
+        PendingKind.ForgetKeys => downKeys.Count > 0,
         _ => true
     };
 
@@ -252,7 +273,8 @@ internal sealed class SdlInputSource : IInputSource
         Button,
         Wheel,
         Key,
-        Text
+        Text,
+        ForgetKeys
     }
 
     // The order ElementInputBridge dispatches one frame's input in. The wheel shares the

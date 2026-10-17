@@ -246,6 +246,67 @@ public sealed class SdlWindowPlatformTests
     }
 
     [Fact]
+    public void KeyReleasedWhileTheWindowIsDisabledDoesNotStayDown()
+    {
+        FakeSdlApi api = new();
+        using SdlWindowPlatform platform = new(api, new RecordingGraphicsFactory());
+        SdlPlatformWindow window = Assert.IsType<SdlPlatformWindow>(
+            platform.CreateWindow(new Window(), new RecordingWindowCallbacks()));
+        api.Enqueue(new SdlEvent(SdlEventKind.KeyDown, window.WindowId, Scancode: 40));
+        platform.PumpEvents();
+        Assert.True(window.InputSource.GetFrame().Keyboard.IsPressed(InputKey.Enter));
+
+        window.SetEnabled(false);
+        api.Enqueue(new SdlEvent(SdlEventKind.KeyUp, window.WindowId, Scancode: 40));
+        platform.PumpEvents();
+        InputFrame disabled = window.InputSource.GetFrame();
+        window.SetEnabled(true);
+        InputFrame enabled = window.InputSource.GetFrame();
+        api.Enqueue(new SdlEvent(SdlEventKind.KeyDown, window.WindowId, Scancode: 40));
+        platform.PumpEvents();
+        InputFrame pressedAgain = window.InputSource.GetFrame();
+
+        // A disabled window gets no key messages, so the release raises no KeyUp there.
+        Assert.False(disabled.Keyboard.IsDown(InputKey.Enter));
+        Assert.False(disabled.Keyboard.IsReleased(InputKey.Enter));
+        Assert.False(enabled.Keyboard.IsDown(InputKey.Enter));
+        Assert.True(pressedAgain.Keyboard.IsPressed(InputKey.Enter));
+    }
+
+    [Fact]
+    public void KeyReleasedInTheDialogThatTookFocusIsPressedAgainInTheOwner()
+    {
+        FakeSdlApi api = new();
+        using SdlWindowPlatform platform = new(api, new RecordingGraphicsFactory());
+        SdlPlatformWindow owner = Assert.IsType<SdlPlatformWindow>(
+            platform.CreateWindow(new Window(), new RecordingWindowCallbacks()));
+        SdlPlatformWindow dialog = Assert.IsType<SdlPlatformWindow>(
+            platform.CreateWindow(new Window(), new RecordingWindowCallbacks()));
+        api.Enqueue(new SdlEvent(SdlEventKind.KeyDown, owner.WindowId, Scancode: 40));
+        platform.PumpEvents();
+        Assert.True(owner.InputSource.GetFrame().Keyboard.IsPressed(InputKey.Enter));
+
+        // SDL sends the release to the window that has the keyboard focus.
+        api.Enqueue(
+            new SdlEvent(SdlEventKind.WindowFocusLost, owner.WindowId),
+            new SdlEvent(SdlEventKind.WindowFocusGained, dialog.WindowId),
+            new SdlEvent(SdlEventKind.KeyUp, dialog.WindowId, Scancode: 40));
+        platform.PumpEvents();
+        InputFrame unfocused = owner.InputSource.GetFrame();
+        _ = dialog.InputSource.GetFrame();
+        api.Enqueue(
+            new SdlEvent(SdlEventKind.WindowFocusLost, dialog.WindowId),
+            new SdlEvent(SdlEventKind.WindowFocusGained, owner.WindowId),
+            new SdlEvent(SdlEventKind.KeyDown, owner.WindowId, Scancode: 40));
+        platform.PumpEvents();
+        InputFrame pressedAgain = owner.InputSource.GetFrame();
+
+        Assert.False(unfocused.Keyboard.IsDown(InputKey.Enter));
+        Assert.False(unfocused.Keyboard.IsReleased(InputKey.Enter));
+        Assert.True(pressedAgain.Keyboard.IsPressed(InputKey.Enter));
+    }
+
+    [Fact]
     public void LiveResizeExposeRefreshesGeometryAndRendersImmediatelyFromEventWatch()
     {
         FakeSdlApi api = new()

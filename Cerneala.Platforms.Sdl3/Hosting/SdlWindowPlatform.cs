@@ -382,7 +382,16 @@ internal sealed class SdlPlatformWindow : IPlatformWindow
         }
     }
 
-    public void SetEnabled(bool value) => enabled = value;
+    public void SetEnabled(bool value)
+    {
+        if (enabled && !value)
+        {
+            // Key events are dropped while disabled, so a held key's release is never seen.
+            inputSource.ForgetKeys();
+        }
+
+        enabled = value;
+    }
 
     public void Show() => Require(api.ShowWindow(Handle), "SDL window show");
 
@@ -450,6 +459,8 @@ internal sealed class SdlPlatformWindow : IPlatformWindow
                 ReportActivation(true);
                 break;
             case SdlEventKind.WindowFocusLost:
+                // SDL sends key events to the focused window, so a held key's release goes elsewhere.
+                inputSource.ForgetKeys();
                 ReportActivation(false);
                 break;
             case SdlEventKind.WindowMoved:

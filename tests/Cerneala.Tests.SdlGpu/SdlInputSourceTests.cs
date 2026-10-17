@@ -51,6 +51,30 @@ public sealed class SdlInputSourceTests
     }
 
     [Fact]
+    public void ForgottenKeysArePublishedInArrivalOrderAndDroppedWithoutARelease()
+    {
+        SdlInputSource source = new();
+        source.SetKey(4, true);
+        InputFrame held = source.GetFrame();
+        source.SetKey(40, true);
+        source.ForgetKeys();
+        source.SetKey(40, true);
+        InputFrame pressed = source.GetFrame();
+        InputFrame forgotten = source.GetFrame();
+        InputFrame pressedAgain = source.GetFrame();
+
+        Assert.True(held.Keyboard.IsPressed(InputKey.A));
+        Assert.True(pressed.Keyboard.IsPressed(InputKey.Enter));
+        Assert.True(pressed.Keyboard.IsDown(InputKey.A));
+        Assert.False(forgotten.Keyboard.IsDown(InputKey.A));
+        Assert.False(forgotten.Keyboard.IsReleased(InputKey.A));
+        Assert.False(forgotten.Keyboard.IsReleased(InputKey.Enter));
+        Assert.True(forgotten.Keyboard.IsPressed(InputKey.Enter));
+        Assert.False(pressedAgain.Keyboard.IsPressed(InputKey.Enter));
+        Assert.True(pressedAgain.Keyboard.IsDown(InputKey.Enter));
+    }
+
+    [Fact]
     public void RepeatOfKeyThatIsNotDownIsAPressNotARepeat()
     {
         SdlInputSource source = new();
