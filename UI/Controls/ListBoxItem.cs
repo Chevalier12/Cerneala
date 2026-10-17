@@ -13,9 +13,10 @@ namespace Cerneala.UI.Controls;
 public class ListBoxItem : ContentControl, ISelectableItemContainer
 {
     // Presents Content that is not a UIElement, as the ContentPresenter in the template of a WPF ListBoxItem does.
-    // UIElement content stays the direct child that ContentControl hosts, unless the owning ListBox passed an item
-    // template: then the presenter shows the template's element for it, as a WPF ContentPresenter tries its
-    // ContentTemplate before UIElement content.
+    // UIElement content stays the direct child that ContentControl hosts, unless a template applies to it: the item
+    // template of the owning ListBox, or a template of its registry for the content and the item template key. Then
+    // the presenter shows the template's element for it, as a WPF ContentPresenter tries its ContentTemplate and a
+    // DataTemplate for the content before UIElement content.
     private ContentPresenter? contentPresenter;
     private ContentTemplate? itemTemplate;
     private string? itemTemplateKey;
@@ -54,7 +55,7 @@ public class ListBoxItem : ContentControl, ISelectableItemContainer
         ContentTemplateRegistry? templateRegistry,
         int index)
     {
-        bool hostedContentDirectly = HostsContentDirectly;
+        bool hostedContentDirectly = HostsContentDirectly(Content);
         itemTemplate = template;
         itemTemplateKey = templateKey;
         itemTemplateRegistry = templateRegistry;
@@ -63,7 +64,18 @@ public class ListBoxItem : ContentControl, ISelectableItemContainer
         UpdateContentPresenter();
     }
 
-    internal override bool HostsContentDirectly => base.HostsContentDirectly && itemTemplate is null;
+    // Only UIElement content is ever a direct child, so other content skips the template lookup.
+    internal override bool HostsContentDirectly(object? content) =>
+        base.HostsContentDirectly(content) && !(content is UIElement && HasItemTemplateFor(content));
+
+    // The same order as ContentPresenter.ResolveContentTemplate: the item template, then the registry for the content
+    // and the key.
+    private bool HasItemTemplateFor(object? content) =>
+        itemTemplate is not null ||
+        (itemTemplateRegistry is not null &&
+            itemTemplateRegistry.TryResolve(
+                new ContentTemplateMatchContext(content, itemTemplateKey, contentPresenter),
+                out _));
 
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
@@ -110,7 +122,7 @@ public class ListBoxItem : ContentControl, ISelectableItemContainer
     private void UpdateContentPresenter()
     {
         object? content = Content;
-        if ((content is UIElement && itemTemplate is null) || ComponentTemplate is not null || ComponentTemplateKey is not null)
+        if ((content is UIElement && !HasItemTemplateFor(content)) || ComponentTemplate is not null || ComponentTemplateKey is not null)
         {
             RemoveContentPresenter();
             return;
