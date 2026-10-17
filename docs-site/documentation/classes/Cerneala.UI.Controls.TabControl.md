@@ -82,12 +82,37 @@ For an item that is not a `TabItem`, the control generates a `TabItem` and prepa
 
 | Member of the generated `TabItem` | Value |
 | --- | --- |
-| `HeaderTemplate` | `ItemTemplate` |
-| `HeaderTemplateKey` | `ItemTemplateKey` |
+| `HeaderTemplate` | `ItemTemplate`, as a local value, only when `ItemTemplate` is not `null`. Otherwise it is not set. |
+| `HeaderTemplateKey` | `ItemTemplateKey`, as a local value, only when `ItemTemplateKey` is not `null`. Otherwise it is not set. |
 | `Header` | the item when `ItemTemplate` is set; otherwise the item's `DisplayMemberPath` value. `null` when the item is a `UIElement`, because an element cannot be both header and content. |
 | `Content` | the item |
 
-The header of a generated tab resolves `HeaderTemplateKey` and data-type templates from the control's `Templates` collection, as other item containers do. When the container is cleared, these members are reset to `null`.
+As in WPF, where `ItemContainerStyle` can set the header template of a generated container when the `ItemsControl` has no `ItemTemplate`, a `HeaderTemplate` or `HeaderTemplateKey` that `ItemContainerAspect` sets on the generated tabs applies when `ItemTemplate` (or `ItemTemplateKey`) is `null`. When `ItemTemplate` is set, it wins over the aspect value, because the local value has the higher source.
+
+```csharp
+using Cerneala.UI.Aspect;
+using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Templates;
+using Cerneala.UI.Layout;
+
+ContentTemplate<string> header = new("aspect-header", null, 0, context =>
+    new Border { Padding = new Thickness(8, 4, 8, 4), Child = new TextBlock { Text = "Tab " + context.Data } });
+
+TabControl tabs = new()
+{
+    ItemsSource = new[] { "A", "B" },
+    ItemContainerAspect = new ElementAspect(new[]
+    {
+        new ElementAspectValue(TabItem.HeaderTemplateProperty, header),
+        new ElementAspectValue(Control.PaddingProperty, new Thickness(6))
+    })
+};
+// After the next layout pass: each generated TabItem has Padding == Thickness(6) and HeaderTemplate == header,
+// header is called 2 times, and the header row shows "Tab A" and "Tab B".
+// With tabs.ItemTemplate = itemTemplate as well, each generated TabItem has HeaderTemplate == itemTemplate instead.
+```
+
+The header of a generated tab resolves `HeaderTemplateKey` and data-type templates from the control's `Templates` collection, as other item containers do. When the container is cleared, for example when it is recycled or when `ItemTemplate` changes, `Header` is reset to `null`, and the local `HeaderTemplate` and `HeaderTemplateKey` values are removed (`ClearValue`), so a recycled tab prepared again without `ItemTemplate` uses the aspect's `HeaderTemplate` again.
 
 A `TabItem` item is its own container: it keeps its own `Header`, `HeaderTemplate`, `HeaderTemplateKey`, and `Content`, and `ItemTemplate` is not applied to it. For example, `new TabItem { Header = "H1", Content = "C1" }` in a `TabControl` with an `ItemTemplate` shows the text `H1` in its header and never calls the item template.
 
@@ -165,8 +190,8 @@ Selection can also be changed through the inherited `Selector` input behavior: a
 | `Items` | `ItemsControl` | `ItemCollection` | Gets the local item collection used when `ItemsSource` is not the active source. |
 | `ItemsSource` | `ItemsControl` | `IEnumerable?` | Gets or sets an enumerable source for items. |
 | `ItemsPanel` | `ItemsControl` | `Panel?` | Gets or sets the retained panel used to lay out the tab headers. `TabControl` sets it to a horizontal `StackPanel`. |
-| `ItemTemplate` | `ItemsControl` | `ContentTemplate?` | Gets or sets the template that becomes the `HeaderTemplate` of each generated tab. |
-| `ItemTemplateKey` | `ItemsControl` | `string?` | Gets or sets the key that becomes the `HeaderTemplateKey` of each generated tab. |
+| `ItemTemplate` | `ItemsControl` | `ContentTemplate?` | Gets or sets the template that becomes the `HeaderTemplate` of each generated tab. When it is `null`, the generated tab's `HeaderTemplate` is not set, so a value from `ItemContainerAspect` applies. |
+| `ItemTemplateKey` | `ItemsControl` | `string?` | Gets or sets the key that becomes the `HeaderTemplateKey` of each generated tab. When it is `null`, the generated tab's `HeaderTemplateKey` is not set, so a value from `ItemContainerAspect` applies. |
 | `Templates` | `ItemsControl` | `Collection<ContentTemplate>` | Gets the templates the headers of generated tabs resolve against. |
 
 ## Relevant Inherited Methods
