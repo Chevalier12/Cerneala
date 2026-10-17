@@ -139,15 +139,11 @@ public class ItemsPresenter : Control
 
     internal bool UpdateAutomaticVirtualization(float viewportExtent, float scrollOffset)
     {
-        if (VirtualizationContext is not null)
-        {
-            return false;
-        }
-
-        // The viewport is kept while a non-virtualizing panel presents the items, so a virtualizing
-        // panel that replaces it later realizes only the viewport's items in its first refresh.
+        // The viewport is kept while a non-virtualizing panel or a fixed context presents the items, so a
+        // virtualizing panel that replaces them later realizes only the current viewport's items in its first refresh.
         automaticViewport = new ItemsVirtualizationViewport(GetItemCount(), viewportExtent, scrollOffset);
-        if (ResolveItemsPanel() is not IItemsVirtualizingPanel virtualizingPanel)
+        if (VirtualizationContext is not null ||
+            ResolveItemsPanel() is not IItemsVirtualizingPanel virtualizingPanel)
         {
             return false;
         }
@@ -162,6 +158,13 @@ public class ItemsPresenter : Control
         }
 
         return changed;
+    }
+
+    // The scroll presenter that pushed the viewport no longer drives these items, so a virtualizing
+    // panel that enters later must not realize against that viewport.
+    internal void ClearAutomaticViewport()
+    {
+        automaticViewport = null;
     }
 
     protected override LayoutSize MeasureCore(MeasureContext context)
@@ -777,9 +780,12 @@ public class ItemsPresenter : Control
     // The containers that a failed refresh kept displaced in the panel represent no item any more and leave the
     // panel here, so the previous owner's generator releases them now, before user code can give one another parent
     // that a later commit would detach it from.
+    // The scroll presenter pushes the viewport only to the owner's active presenter, so the viewport kept here
+    // describes the previous owner's scrolling and is dropped too.
     private void WithdrawRealizedItems(ItemsControl? previousOwner)
     {
         ReleasePanelVirtualizationContext();
+        automaticViewport = null;
         if (panelRoot is not null)
         {
             ClearPanelChildren(panelRoot);
