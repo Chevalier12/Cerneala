@@ -32,6 +32,11 @@ public class ListBoxItem : ContentControl, ISelectableItemContainer
         typeof(ListBoxItem),
         new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsAspect));
 
+    public ListBoxItem()
+    {
+        UpdateContentPresenter();
+    }
+
     public int ItemIndex { get; set; } = -1;
 
     public object? Item { get; set; }
@@ -100,7 +105,8 @@ public class ListBoxItem : ContentControl, ISelectableItemContainer
     }
 
     // The presenter refreshes its child on its next measure, so a recycled row whose content goes to null and
-    // then to the next string reuses its generated TextBlock.
+    // then to the next string reuses its generated TextBlock. It also exists for null content, as the
+    // ContentPresenter in WPF's ListBoxItem template always does.
     private void UpdateContentPresenter()
     {
         object? content = Content;
@@ -112,11 +118,6 @@ public class ListBoxItem : ContentControl, ISelectableItemContainer
 
         if (contentPresenter is null)
         {
-            if (content is null)
-            {
-                return;
-            }
-
             ContentPresenter presenter = new();
             LogicalChildren.Add(presenter);
             VisualChildren.Add(presenter);
