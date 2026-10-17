@@ -2422,6 +2422,110 @@ public sealed class ComboBoxTests
         }
     }
 
+    // The drop-down is open with "one" selected and highlighted, and a handler closes it when SelectedIndex changes.
+    // SelectedIndex = 1 cancels the preview while re-preparing one of the rows throws, and the selection change still
+    // raises SelectionChanged and the overlay still closes before the exception propagates out of the setter.
+    [Theory]
+    [InlineData("one")]
+    [InlineData("two")]
+    public void SelectedIndexChangeThatClosesDropDownWhoseRowPreparationThrowsRaisesSelectionChangedAndPropagates(
+        string failingItem)
+    {
+        (UIRoot root, _, FailingContentComboBox comboBox) = OpenNonEditableWithFirstItemSelected();
+        Overlay overlay = Assert.IsType<Overlay>(comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"]);
+        comboBox.PropertyChanged += (_, args) =>
+        {
+            if (ReferenceEquals(args.Property, ComboBox.SelectedIndexProperty))
+            {
+                comboBox.IsDropDownOpen = false;
+            }
+        };
+        List<string> raised = [];
+        comboBox.SelectionChanged += (_, args) =>
+            raised.Add($"[{string.Join(",", args.RemovedItems)}]->[{string.Join(",", args.AddedItems)}]");
+
+        comboBox.FailFor = failingItem;
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => comboBox.SelectedIndex = 1);
+        comboBox.FailFor = null;
+        root.ProcessFrame();
+
+        Assert.Equal("content preparation failed", exception.Message);
+        Assert.Equal(1, comboBox.SelectedIndex);
+        Assert.Equal(["[one]->[two]"], raised);
+        Assert.False(comboBox.IsDropDownOpen);
+        Assert.False(overlay.IsOpen);
+    }
+
+    // The drop-down was opened and closed with "one" selected, so the rows stay realized, and a handler opens it
+    // when SelectedIndex changes. SelectedIndex = 1 begins the preview of "two" while re-preparing its row throws,
+    // and the selection change still raises SelectionChanged and the overlay still opens before the exception
+    // propagates out of the setter.
+    [Fact]
+    public void SelectedIndexChangeThatOpensDropDownWhoseRowPreparationThrowsRaisesSelectionChangedAndPropagates()
+    {
+        (UIRoot root, ElementInputBridge bridge, FailingContentComboBox comboBox) = OpenNonEditableWithFirstItemSelected();
+        Overlay overlay = Assert.IsType<Overlay>(comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"]);
+        DispatchKey(root, bridge, InputKey.Escape);
+        root.ProcessFrame();
+        Assert.True(comboBox.ItemContainerGenerator.RealizedContainers.ContainsKey(1));
+        comboBox.PropertyChanged += (_, args) =>
+        {
+            if (ReferenceEquals(args.Property, ComboBox.SelectedIndexProperty))
+            {
+                comboBox.IsDropDownOpen = true;
+            }
+        };
+        List<string> raised = [];
+        comboBox.SelectionChanged += (_, args) =>
+            raised.Add($"[{string.Join(",", args.RemovedItems)}]->[{string.Join(",", args.AddedItems)}]");
+
+        comboBox.FailFor = "two";
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => comboBox.SelectedIndex = 1);
+        comboBox.FailFor = null;
+        root.ProcessFrame();
+
+        Assert.Equal("content preparation failed", exception.Message);
+        Assert.Equal(1, comboBox.SelectedIndex);
+        Assert.Equal(["[one]->[two]"], raised);
+        Assert.True(comboBox.IsDropDownOpen);
+        Assert.True(overlay.IsOpen);
+    }
+
+    // The drop-down is open with "one" selected and highlighted, and a handler presses Enter when SelectedIndex
+    // changes. SelectedIndex = 1 runs the Enter commit of the highlighted "one" inside the change, which selects
+    // "one" again while re-preparing the row of "one" throws. Both selection changes still raise SelectionChanged and
+    // the drop-down still closes before the exception propagates out of the setter.
+    [Fact]
+    public void SelectedIndexChangeThatCommitsDropDownWhoseRowPreparationThrowsRaisesSelectionChangedAndPropagates()
+    {
+        (UIRoot root, ElementInputBridge bridge, FailingContentComboBox comboBox) = OpenNonEditableWithFirstItemSelected();
+        Overlay overlay = Assert.IsType<Overlay>(comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"]);
+        bool pressed = false;
+        comboBox.PropertyChanged += (_, args) =>
+        {
+            if (ReferenceEquals(args.Property, ComboBox.SelectedIndexProperty) && !pressed)
+            {
+                pressed = true;
+                DispatchKey(root, bridge, InputKey.Enter);
+            }
+        };
+        List<string> raised = [];
+        comboBox.SelectionChanged += (_, args) =>
+            raised.Add($"[{string.Join(",", args.RemovedItems)}]->[{string.Join(",", args.AddedItems)}]");
+
+        comboBox.FailFor = "one";
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => comboBox.SelectedIndex = 1);
+        comboBox.FailFor = null;
+        root.ProcessFrame();
+
+        Assert.Equal("content preparation failed", exception.Message);
+        Assert.True(pressed);
+        Assert.Equal(0, comboBox.SelectedIndex);
+        Assert.Equal(["[two]->[one]", "[one]->[two]"], raised);
+        Assert.False(comboBox.IsDropDownOpen);
+        Assert.False(overlay.IsOpen);
+    }
+
     // "one" is selected and "tw" autocompletes to the highlighted "two". Enter or Tab commits "two" while Selector's
     // re-preparation of the old or the new row throws inside the SelectedIndex setter, and the autocomplete suffix
     // still collapses to a caret at the end before the exception propagates.
