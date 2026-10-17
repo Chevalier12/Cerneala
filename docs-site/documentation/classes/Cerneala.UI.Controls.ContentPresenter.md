@@ -84,6 +84,8 @@ Content is resolved in this order:
 
 Changing `Content`, `ContentTemplate`, or `ContentTemplateKey` marks the presentation dirty and refreshes the child. `Content` uses reference equality for change detection, so two different object instances that compare equal still rematerialize the presented child. Generated text content is special: when the presenter already owns a generated `TextBlock`, string changes update and reuse that `TextBlock`.
 
+A template can place `UIElement` content inside the element it creates, for example `context => new Border { Child = (UIElement?)context.Data }`. When a refresh builds a new child for the same element content, for example after `ContentTemplate`, `ContentTemplateKey`, or `LocalTemplateRegistry` changes, the presenter first removes the element from its current child: from the old template's element, or from the presenter itself when it hosted the element directly and a template now applies. The next template, or the presenter when no template applies any more, then receives an element without a parent. An element whose parent is outside the presenter is not removed, and the refresh throws `InvalidOperationException`.
+
 `LocalTemplateRegistry` is not a UI property. Assigning it refreshes the presented child and invalidates measure, arrange, and render. `ContentIndex` marks the presentation dirty and is supplied to modern template creation contexts; it does not itself perform layout invalidation.
 
 ## Constructors
