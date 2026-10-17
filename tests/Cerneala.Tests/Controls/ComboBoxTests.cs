@@ -654,6 +654,88 @@ public sealed class ComboBoxTests
         Assert.Equal(0, comboBox.SelectedIndex);
     }
 
+    // A custom template can leave the selection box hit-testable. A button that the ItemTemplate shows there
+    // then owns the click, as the bridge resolves the click to that command source, and the field stays closed.
+    [Fact]
+    public void NonEditableFieldClickOnHitTestableTemplateButtonClicksButtonWithoutTogglingDropDown()
+    {
+        (UIRoot root, ComboBox comboBox) = CreateNonEditableField();
+        comboBox.ItemTemplate = new ContentTemplate<string>(
+            "check",
+            key: null,
+            priority: 0,
+            context => new CheckBox { Content = context.Data });
+        root.ProcessFrame();
+        UIElement presenter = comboBox.ComponentTemplateInstance!.Parts["PART_SelectionPresenter"];
+        presenter.IsHitTestVisible = true;
+        root.ProcessFrame();
+        CheckBox check = Assert.IsType<CheckBox>(FindDescendant<CheckBox>(presenter));
+        int clicks = 0;
+        check.Click += (_, _) => clicks++;
+        LayoutRect bounds = check.ArrangedBounds;
+        float x = bounds.X + 6;
+        float y = bounds.Y + bounds.Height / 2;
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.Equal(1, clicks);
+        Assert.True(check.IsChecked);
+        Assert.False(comboBox.IsDropDownOpen);
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.Equal(2, clicks);
+        Assert.False(check.IsChecked);
+        Assert.False(comboBox.IsDropDownOpen);
+        Assert.Equal(0, comboBox.SelectedIndex);
+    }
+
+    [Fact]
+    public void NonEditableFieldClickOnHitTestableTemplateTextTogglesDropDown()
+    {
+        (UIRoot root, ComboBox comboBox) = CreateNonEditableField();
+        UIElement presenter = comboBox.ComponentTemplateInstance!.Parts["PART_SelectionPresenter"];
+        presenter.IsHitTestVisible = true;
+        root.ProcessFrame();
+        LayoutRect bounds = comboBox.ArrangedBounds;
+        float x = bounds.X + 8;
+        float y = bounds.Y + bounds.Height / 2;
+        UIElement? hit = new HitTestService().HitTest(root, x, y)?.Element;
+        Assert.NotNull(hit);
+        Assert.True(ReferenceEquals(hit, presenter) || IsDescendantOf(hit!, presenter));
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.True(comboBox.IsDropDownOpen);
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.False(comboBox.IsDropDownOpen);
+    }
+
+    private static bool IsDescendantOf(UIElement element, UIElement ancestor)
+    {
+        for (UIElement? current = element.VisualParent; current is not null; current = current.VisualParent)
+        {
+            if (ReferenceEquals(current, ancestor))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static T? FindDescendant<T>(UIElement element) where T : UIElement
     {
         if (element is T match)
