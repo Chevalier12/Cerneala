@@ -186,12 +186,23 @@ public class ContentPresenter : Control
         }
     }
 
-    // A template can place an element content inside the element it creates. When that element stops being the
-    // content, the template's element lets go of it at once, even when the presented child is rebuilt only on the
-    // next measure, so the element can be presented elsewhere before that, for example by a recycled item container.
+    // A template can place an element content inside the element it creates, or return the element itself. When that
+    // element stops being the content, the presenter lets go of it at once, even when the presented child is rebuilt
+    // only on the next measure, so the element can be presented elsewhere before that, for example by a recycled item
+    // container.
     private void ReleaseFromPresentedChild(UIElement? previousContent)
     {
-        if (previousContent is not null && presentedChild is not null && !ReferenceEquals(presentedChild, previousContent))
+        if (previousContent is null || presentedChild is null)
+        {
+            return;
+        }
+
+        if (ReferenceEquals(presentedChild, previousContent))
+        {
+            RemovePresentedChild(previousContent);
+            presentedChild = null;
+        }
+        else
         {
             ContentControl.DetachChildFromOwnedSubtree(this, previousContent);
         }
