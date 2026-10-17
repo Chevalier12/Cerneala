@@ -185,6 +185,32 @@ public sealed class UiFrameScheduler
         trace.RecordClear(element, cleared);
     }
 
+    // An element that measures or arranges queued elements itself takes over their queued work, so the work is
+    // completed like the phase completes it: the queued entry is removed and its dirty flag cleared.
+    internal void CompleteQueuedMeasure(Elements.UIElement element)
+    {
+        if (!layoutQueue.ContainsMeasure(element))
+        {
+            return;
+        }
+
+        layoutQueue.RemoveMeasure(element);
+        InvalidationFlags cleared = ClearProcessedFlags(element, InvalidationFlags.Measure);
+        trace.RecordClear(element, cleared);
+    }
+
+    internal void CompleteQueuedArrange(Elements.UIElement element)
+    {
+        if (!layoutQueue.ContainsArrange(element))
+        {
+            return;
+        }
+
+        layoutQueue.RemoveArrange(element);
+        InvalidationFlags cleared = ClearProcessedFlags(element, InvalidationFlags.Arrange);
+        trace.RecordClear(element, cleared);
+    }
+
     private void ProcessInheritedProperties(FramePhaseProcessors processors, FrameStats stats)
     {
         int processed = 0;
