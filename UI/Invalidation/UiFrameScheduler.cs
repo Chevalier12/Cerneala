@@ -334,7 +334,7 @@ public sealed class UiFrameScheduler
                     element.LastScheduledMeasureLayoutVersion == element.LayoutVersion;
                 if (!Elements.UIElementVisibility.IsEffectivelyParticipatingInLayout(element) ||
                     wasMeasuredRecursively ||
-                    IsMeasureSkippedByAncestor(element))
+                    DeferMeasureToSkippingAncestor(element))
                 {
                     InvalidationFlags skipped = ClearProcessedFlags(element, InvalidationFlags.Measure);
                     trace.RecordClear(element, skipped);
@@ -532,12 +532,23 @@ public sealed class UiFrameScheduler
 
     // An element that an ancestor's measure leaves unmeasured on purpose, such as a row outside the realization
     // window of a VirtualizingStackPanel, is measured by that ancestor once it realizes it, never by the frame alone.
-    private static bool IsMeasureSkippedByAncestor(Elements.UIElement element)
+    // A frame measure would have reset the caches of the element's ancestors when its desired size changed; without
+    // it they stay valid, so they are reset here up to the skipped child, whose measure then reaches the element.
+    private static bool DeferMeasureToSkippingAncestor(Elements.UIElement element)
     {
         for (Elements.UIElement current = element; current.VisualParent is Elements.UIElement parent; current = parent)
         {
             if (parent.SkipsChildMeasure(current))
             {
+                for (Elements.UIElement path = element; ; path = (Elements.UIElement)path.VisualParent!)
+                {
+                    path.InvalidateMeasureCacheKeepingConstraint();
+                    if (ReferenceEquals(path, current))
+                    {
+                        break;
+                    }
+                }
+
                 return true;
             }
         }
