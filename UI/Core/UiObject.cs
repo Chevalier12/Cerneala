@@ -277,23 +277,13 @@ public class UiObject
         object? newSourceValue,
         bool wasCoerced)
     {
-        UiPropertyChangedEventArgs<T> args = new(this, property, oldValue, newValue, valueSource);
-        OnPropertyChanged(args);
-        NotifyPropertyMutated(property, mutatingSource, oldValue, oldEffectiveSource, newValue, valueSource, oldSourceValue, newSourceValue, wasCoerced);
-
-        UiPropertyOptions invalidationOptions = property.Options & (
-            UiPropertyOptions.AffectsMeasure |
-            UiPropertyOptions.AffectsArrange |
-            UiPropertyOptions.AffectsRender |
-            UiPropertyOptions.AffectsHitTest |
-            UiPropertyOptions.AffectsAspect |
-            UiPropertyOptions.AffectsInputVisual |
-            UiPropertyOptions.AffectsSemantics |
-            UiPropertyOptions.Inherits);
-        if (invalidationOptions != UiPropertyOptions.None && this is IUiPropertyOwner owner)
-        {
-            owner.OnPropertyInvalidated(args, invalidationOptions);
-        }
+        NotifyPropertyChange(new UiPropertyChange(
+            new UiPropertyChangedEventArgs<T>(this, property, oldValue, newValue, valueSource),
+            mutatingSource,
+            oldEffectiveSource,
+            oldSourceValue,
+            newSourceValue,
+            wasCoerced));
     }
 
     private void NotifyPropertyChangedUntyped(
@@ -307,9 +297,38 @@ public class UiObject
         object? newSourceValue,
         bool wasCoerced)
     {
-        UiPropertyChangedEventArgs args = new(this, property, oldValue, newValue, valueSource);
+        NotifyPropertyChange(new UiPropertyChange(
+            new UiPropertyChangedEventArgs(this, property, oldValue, newValue, valueSource),
+            mutatingSource,
+            oldEffectiveSource,
+            oldSourceValue,
+            newSourceValue,
+            wasCoerced));
+    }
+
+    // Notifies a changed effective value. Selector overrides it to notify a SelectedIndex set through SetValue inside
+    // the selection change that follows it, as the SelectedIndex setter does.
+    internal virtual void NotifyPropertyChange(in UiPropertyChange change)
+    {
+        RaisePropertyChange(change);
+    }
+
+    // Raises OnPropertyChanged, then reports the mutation, then invalidates what the property affects.
+    internal void RaisePropertyChange(in UiPropertyChange change)
+    {
+        UiPropertyChangedEventArgs args = change.Args;
+        UiProperty property = args.Property;
         OnPropertyChanged(args);
-        NotifyPropertyMutated(property, mutatingSource, oldValue, oldEffectiveSource, newValue, valueSource, oldSourceValue, newSourceValue, wasCoerced);
+        NotifyPropertyMutated(
+            property,
+            change.MutatingSource,
+            args.OldValue,
+            change.OldEffectiveSource,
+            args.NewValue,
+            args.ValueSource,
+            change.OldSourceValue,
+            change.NewSourceValue,
+            change.WasCoerced);
 
         UiPropertyOptions invalidationOptions = property.Options & (
             UiPropertyOptions.AffectsMeasure |
