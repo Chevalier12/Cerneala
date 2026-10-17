@@ -4,10 +4,13 @@ namespace Cerneala.Platforms.Sdl3;
 
 // Turns the ordered SDL event stream into level-sampled input frames. An InputFrame
 // reports a press or release as the difference between two snapshots, so a frame may
-// hold at most one transition of each key or button, and only events whose arrival
-// order matches the order ElementInputBridge dispatches them in (position, wheel and
-// buttons, keys, text). An event that breaks either rule closes the frame; it and every
-// later event wait in arrival order for the next frames, and the source asks for them.
+// hold at most one transition of each button, and only events whose arrival order
+// matches the order ElementInputBridge dispatches them in (position, wheel and buttons,
+// keys, text). Key events read Ctrl, Shift and Alt from the frame's final snapshot and
+// are dispatched in InputKey order, so a frame also holds the events of one key only:
+// at most one transition, as the frame's first key event, then repeats of that key.
+// An event that breaks a rule closes the frame; it and every later event wait in
+// arrival order for the next frames, and the source asks for them.
 internal sealed class SdlInputSource : IInputSource
 {
     private readonly Action? frameRequested;
@@ -17,10 +20,10 @@ internal sealed class SdlInputSource : IInputSource
     private readonly HashSet<InputKey> downKeys = [];
     private readonly List<TextInputSnapshotEvent> textInput = [];
     private readonly List<InputKey> keyRepeats = [];
-    private readonly HashSet<InputKey> changedKeys = [];
     private readonly HashSet<InputMouseButton> changedButtons = [];
     private readonly List<PendingInput> deferred = [];
     private FramePhase framePhase;
+    private InputKey frameKey = InputKey.None;
     private bool hasPointerPosition;
 
     public SdlInputSource(Action? frameRequested = null)
@@ -38,7 +41,7 @@ internal sealed class SdlInputSource : IInputSource
         previousKeyboard = currentKeyboard;
         textInput.Clear();
         keyRepeats.Clear();
-        changedKeys.Clear();
+        frameKey = InputKey.None;
         changedButtons.Clear();
         framePhase = FramePhase.Empty;
         if (deferred.Count > 0)
@@ -140,7 +143,7 @@ internal sealed class SdlInputSource : IInputSource
         };
         if (phase < framePhase ||
             (input.Kind == PendingKind.Button && changedButtons.Contains((InputMouseButton)input.Value)) ||
-            (input.Kind == PendingKind.Key && changedKeys.Contains((InputKey)input.Value)))
+            (input.Kind == PendingKind.Key && !CanJoinFrameKey(input)))
         {
             return false;
         }
@@ -164,14 +167,14 @@ internal sealed class SdlInputSource : IInputSource
                 currentPointer = currentPointer.WithWheelValue(checked(currentPointer.WheelValue + input.Value));
                 break;
             case PendingKind.Key:
-                if (input.Repeat && input.Down && downKeys.Contains((InputKey)input.Value))
+                frameKey = (InputKey)input.Value;
+                if (IsRepeatOfHeldKey(input))
                 {
                     // An auto-repeat of a held key is an event, not a transition.
                     keyRepeats.Add((InputKey)input.Value);
                     break;
                 }
 
-                changedKeys.Add((InputKey)input.Value);
                 if (input.Down)
                 {
                     downKeys.Add((InputKey)input.Value);
@@ -188,6 +191,15 @@ internal sealed class SdlInputSource : IInputSource
 
         return true;
     }
+
+    // A transition must be the frame's first key event: a later one would change the
+    // modifier state that the frame's earlier key events are raised with.
+    private bool CanJoinFrameKey(in PendingInput input) =>
+        frameKey == InputKey.None ||
+        (frameKey == (InputKey)input.Value && IsRepeatOfHeldKey(input));
+
+    private bool IsRepeatOfHeldKey(in PendingInput input) =>
+        input.Repeat && input.Down && downKeys.Contains((InputKey)input.Value);
 
     private bool Changes(in PendingInput input) => input.Kind switch
     {
