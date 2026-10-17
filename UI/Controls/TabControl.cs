@@ -149,7 +149,10 @@ public class TabControl : Selector
         }
     }
 
-    // As in WPF, ItemTemplate is the template of the header of a generated tab, and the item is its Content.
+    // As in WPF, ItemTemplate is the template of the header of a generated tab, and the item is its Content. Like
+    // WPF's PrepareHeaderedContentControl, a null ItemTemplate or ItemTemplateKey is not written, so a HeaderTemplate or
+    // HeaderTemplateKey from ItemContainerAspect applies. Changing either clears every container first, and clearing
+    // removes the value written here, so a tab is never prepared over a value from an older ItemTemplate.
     protected override void PrepareItemContent(UIElement container, int index, object? item)
     {
         if (container is not TabItem tab)
@@ -158,8 +161,16 @@ public class TabControl : Selector
             return;
         }
 
-        tab.HeaderTemplate = ItemTemplate;
-        tab.HeaderTemplateKey = ItemTemplateKey;
+        if (ItemTemplate is { } itemTemplate)
+        {
+            tab.HeaderTemplate = itemTemplate;
+        }
+
+        if (ItemTemplateKey is { } itemTemplateKey)
+        {
+            tab.HeaderTemplateKey = itemTemplateKey;
+        }
+
         tab.SetHeaderPresentation(ContentTemplateRegistry, index);
         tab.Header = item is UIElement ? null : ItemTemplate is null ? GetItemDisplayValue(item) : item;
         tab.Content = item;
@@ -182,8 +193,8 @@ public class TabControl : Selector
         if (generated)
         {
             tab.Header = null;
-            tab.HeaderTemplate = null;
-            tab.HeaderTemplateKey = null;
+            tab.ClearValue(TabItem.HeaderTemplateProperty);
+            tab.ClearValue(TabItem.HeaderTemplateKeyProperty);
             tab.SetHeaderPresentation(null, -1);
         }
     }
