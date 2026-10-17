@@ -136,7 +136,7 @@ If the bug has no GitHub issue yet, invoke `github-issue-raise` once the reprodu
 While you fix the bug, you can find other Cerneala defects: in the owning code, in a neighbouring contract, in the tests, or while you build the reproduction app. For each one:
 
 1. Prove it as `github-issue-raise` section 1 says: reproduce it on the current code after the sync of step 0b (the newest `origin/master`), check that it fails for the stated reason, ground the expected behavior in a contract, and check for duplicates.
-2. Raise it with `github-issue-raise` and post the issue directly, without asking the user (user decision, 2026-10-15). When an open issue already covers it, post the new evidence as a comment on that issue instead.
+2. Raise it with `github-issue-raise` and post the issue directly, without asking the user (user decision, 2026-10-15). It goes to the repository that owns the code, as `github-issue-raise` says under "Target repository": `Chevalier12/Cerneala`, or the SDL fork `Chevalier12/Graphix` (native SDL) or `Chevalier12/Graphix-CS` (its C# bindings) when it reproduces without Cerneala code. When an open issue already covers it, post the new evidence as a comment on that issue instead.
 3. Do not fix it in this pull request. When it blocks the reproduction or the app, route around it with a comment. A Servo or Detective defect that blocks the workflow follows "Repair Servo and Detective When They Fail" instead.
 4. Record it for the pull request: the issue link, its title, and one sentence on how you found it. Also record each suspected defect that you did not raise, with the reason, for example "not reproduced" or "contract unclear". Never raise a question issue: when the contract is unclear, the entry stays "contract unclear" and is not raised. Only `cerneala-pr-review-merge` raises a question issue, when the user's validation comment asks for one.
 
@@ -211,6 +211,16 @@ When the app does not behave as expected:
 - Distinguish the root cause from collateral symptoms and stale derived state.
 - Check neighboring contracts likely to share the same invariant, but do not expand scope without evidence.
 - Surface unrelated design smells separately. Do not smuggle cleanup into the fix.
+
+### When the Root Cause Is in Graphix or Graphix-CS
+
+Cerneala gets SDL from two forks of ours: `Chevalier12/Graphix` (native SDL, `SDL3.dll`) and `Chevalier12/Graphix-CS` (the C# bindings, `SDL3-CS.dll`). `github-issue-raise` under "Target repository" says which fork owns what, and when a defect is proven to be in a fork: it must reproduce without Cerneala code. When the root cause of the bug you are fixing is proven to be in a fork (user decision, 2026-10-17):
+
+1. Raise the defect in that fork with `github-issue-raise`, and post it directly, without asking.
+2. Fix the Cerneala issue with a workaround in the Cerneala code that consumes SDL, usually `Cerneala.Platforms.Sdl3`. The workaround keeps the user-visible behavior of the Cerneala issue correct while the fork still has the defect. Never edit a fork, its package, or its package version from this session.
+3. Put a comment at the workaround that names the fork issue and says when to remove it, for example `// Works around Chevalier12/Graphix#162 (SDL reports xrel/yrel as absolute values in relative mode). Remove when Graphix.Native ships the fix.`
+4. The rest of the workflow is unchanged: the RED regression test checks the Cerneala behavior that the issue describes, the reproduction app turns red before and green after, and the commit says `Fixes #N` for the Cerneala issue.
+5. The pull request says `Workaround for Chevalier12/Graphix#162` (or `Chevalier12/Graphix-CS#<n>`) in its summary, and its `Other bugs found` section lists the fork issue.
 
 ## 7. Implement the Smallest Correct Fix
 
