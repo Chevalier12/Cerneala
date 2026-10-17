@@ -516,6 +516,39 @@ public sealed class OverlayTests
         AssertLayer(root, otherCanvas, otherOverlayOpen ? otherContent : null);
     }
 
+    // An Unloaded handler throws while removing the overlay's parent. The overlay is still closed and its
+    // projection withdrawn, then the handler's exception reaches the caller; the layer stays only for another
+    // open overlay.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void UnloadedHandlerFailureOnDetachStillClosesAndDetachesTheOverlay(bool otherOverlayOpen)
+    {
+        UIRoot root = new(100, 100);
+        LayoutCanvas canvas = new();
+        Overlay overlay = new() { Content = new FixedElement(new LayoutSize(30, 15)), IsOpen = true };
+        canvas.VisualChildren.Add(overlay);
+        LayoutCanvas otherCanvas = new();
+        FixedElement otherContent = new(new LayoutSize(20, 10));
+        otherCanvas.VisualChildren.Add(new Overlay { Content = otherContent, IsOpen = otherOverlayOpen });
+        root.VisualChildren.Add(canvas);
+        root.VisualChildren.Add(otherCanvas);
+        root.ProcessFrame();
+        int closed = 0;
+        overlay.Closed += (_, _) => closed++;
+        overlay.Unloaded += (_, _) => throw new InvalidOperationException("Unloaded handler failed");
+
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+            () => root.VisualChildren.Remove(canvas));
+        root.ProcessFrame();
+
+        Assert.Equal("Unloaded handler failed", exception.Message);
+        Assert.False(overlay.IsOpen);
+        Assert.Equal(1, closed);
+        Assert.Null(overlay.Root);
+        AssertLayer(root, otherCanvas, otherOverlayOpen ? otherContent : null);
+    }
+
     private static InputFrame PointerFrame(float x, float y, bool previousDown = false, bool currentDown = false)
     {
         PointerSnapshot previous = PointerSnapshot.Empty.WithPosition(x, y);
