@@ -1,7 +1,10 @@
 using System.Collections.ObjectModel;
+using Cerneala.Drawing;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
 using Cerneala.UI.Layout.Virtualization;
 
 namespace Cerneala.Tests.Controls;
@@ -780,6 +783,54 @@ public sealed class ItemsPresenterTests
 
         Assert.Equal("children=[1,e2,3,4,x] pool=[unparented,unparented]", DescribePresented(control, panel));
         Assert.Equal(1, panel.FirstRealizedIndex);
+    }
+
+    // The presenter creates its items panel during the first measure, after the inherited phase of that frame.
+    // The panel and the containers must still inherit the owner's values in that frame.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void InheritedValuesSetBeforeTheFirstLayoutReachThePanelCreatedDuringMeasure(bool listBox)
+    {
+        SolidColorBrush foreground = new(Color.White);
+        ItemsControl control = listBox ? new ListBox() : new ItemsControl();
+        control.FontSize = 30;
+        control.FontFamily = "Body";
+        control.Foreground = foreground;
+        control.SetItems(new[] { "a" });
+        UIRoot root = new(300, 200);
+        root.VisualChildren.Add(control);
+
+        root.ProcessFrame();
+
+        Cerneala.UI.Layout.Panels.Panel panel = control.ItemsPresenter.LayoutPanelRoot!;
+        UIElement container = control.ItemContainerGenerator.RealizedContainers[0];
+        Assert.Same(panel, container.VisualParent);
+        Assert.Equal(
+            "panel=30/Body/True/Inherited container=30/Body/True/Inherited",
+            $"panel={DescribeInherited(panel, foreground)} container={DescribeInherited(container, foreground)}");
+        // A ListBoxItem holds a string item without a visual child, so only the ContentPresenter row has text.
+        TextBlock? text = listBox ? null : Assert.IsType<TextBlock>(((ContentPresenter)container).PresentedChild);
+        if (text is not null)
+        {
+            Assert.Equal("a", text.Text);
+            Assert.Equal(30, text.FontSize);
+            Assert.Equal("Body", text.FontFamily);
+            Assert.Same(foreground, text.Foreground);
+        }
+
+        control.FontSize = 31;
+        root.ProcessFrame();
+
+        Assert.Equal(31, container.GetValue(Control.FontSizeProperty));
+        Assert.Equal(31, text?.FontSize ?? 31);
+    }
+
+    private static string DescribeInherited(UIElement element, SolidColorBrush foreground)
+    {
+        return $"{element.GetValue(Control.FontSizeProperty)}/{element.GetValue(Control.FontFamilyProperty)}/" +
+            $"{ReferenceEquals(foreground, element.GetValue(Control.ForegroundProperty))}/" +
+            $"{element.GetValueSource(Control.FontSizeProperty)}";
     }
 
     // Each child is described by the item it shows, and each realized container that the panel does not present is listed.

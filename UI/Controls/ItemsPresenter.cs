@@ -812,14 +812,17 @@ public class ItemsPresenter : Control
         }
     }
 
-    private static void ProcessInheritedAndAspectForSubtree(UIElement? element)
+    // The panel inherits from this presenter, and adding it queued this presenter for that work, which this
+    // measure removes from the queue. So the propagation starts at this presenter, whose only visual child is
+    // the panel, and also writes the panel's own inherited values.
+    private void ProcessInheritedAndAspectForSubtree(UIElement? element)
     {
         if (element?.Root is not UIRoot root)
         {
             return;
         }
 
-        root.InheritedPropertyPropagator.PropagateFrom(element);
+        root.InheritedPropertyPropagator.PropagateFrom(this);
         foreach (UIElement current in ElementTreeWalker.PreOrder(element, ElementChildRole.Visual))
         {
             root.AspectProcessor.Process(current);
@@ -827,7 +830,7 @@ public class ItemsPresenter : Control
             current.DirtyState.Clear(InvalidationFlags.Aspect);
         }
 
-        root.InheritedPropertyPropagator.PropagateFrom(element);
+        root.InheritedPropertyPropagator.PropagateFrom(this);
         foreach (UIElement current in ElementTreeWalker.PreOrder(element, ElementChildRole.Visual))
         {
             root.InheritedPropertyQueue.Remove(current);

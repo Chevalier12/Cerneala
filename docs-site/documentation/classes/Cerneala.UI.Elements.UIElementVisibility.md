@@ -39,9 +39,11 @@ For the element above, `inLayout` is `true`, while `inRendering`, `inInput`, and
 
 Layout participation depends only on `UIElement.Visibility`. Elements with `Visibility.Collapsed` do not participate in layout; elements with `Visibility.Visible` or `Visibility.Hidden` do.
 
-Rendering participation requires both `UIElement.IsVisible` and `UIElement.Visibility == Visibility.Visible`. A hidden element still takes layout space, but it is not rendered.
+Rendering participation requires both `UIElement.IsVisible` and `UIElement.Visibility == Visibility.Visible`, and that no `VirtualizingStackPanel` currently skips the element. A hidden element still takes layout space, but it is not rendered.
 
-Input participation uses the same public visibility checks as rendering and also requires that the element is not in the internal presence-exiting state. Hit-test participation additionally requires `IsHitTestVisible`. Disabled elements are not filtered by this class; callers such as hit testing and focus policy apply `IsEnabled` separately when that matters.
+A `VirtualizingStackPanel` with a `VirtualizationContext` or an automatic viewport skips each child whose item index lies outside its `RealizationWindow`. The skipped child stays in `VisualChildren` and is arranged into zero-sized bounds, but it does not participate in rendering, input, or hit testing until an arrange of the panel realizes it again. For example, after `panel.UpdateViewport(new ItemsVirtualizationViewport(10, 100, 0, 0))` with ten children of `Height = 20`, `ParticipatesInRendering(panel.VisualChildren[7])` returns `false`; after the viewport moves to offset 100 and the panel is arranged again, it returns `true`, and `panel.VisualChildren[0]` returns `false`. Removing the child from the panel ends the skipped state.
+
+Input participation uses the same visibility checks as rendering and also requires that the element is not in the internal presence-exiting state. Hit-test participation additionally requires `IsHitTestVisible`. Disabled elements are not filtered by this class; callers such as hit testing and focus policy apply `IsEnabled` separately when that matters.
 
 All methods validate the `element` argument with `ArgumentNullException.ThrowIfNull`.
 
@@ -49,9 +51,9 @@ All methods validate the `element` argument with `ArgumentNullException.ThrowIfN
 | Name | Description |
 | --- | --- |
 | `ParticipatesInLayout(UIElement)` | Returns `true` when `element.Visibility` is not `Visibility.Collapsed`. |
-| `ParticipatesInRendering(UIElement)` | Returns `true` when `element.IsVisible` is `true` and `element.Visibility` is `Visibility.Visible`. |
-| `ParticipatesInInput(UIElement)` | Returns `true` when the element is not presence-exiting, `IsVisible` is `true`, and `Visibility` is `Visible`. |
-| `ParticipatesInHitTest(UIElement)` | Returns `true` when the element is not presence-exiting, `IsHitTestVisible` is `true`, `IsVisible` is `true`, and `Visibility` is `Visible`. |
+| `ParticipatesInRendering(UIElement)` | Returns `true` when `element.IsVisible` is `true`, `element.Visibility` is `Visibility.Visible`, and no `VirtualizingStackPanel` skips the element. |
+| `ParticipatesInInput(UIElement)` | Returns `true` when the element is not presence-exiting and `ParticipatesInRendering` returns `true`. |
+| `ParticipatesInHitTest(UIElement)` | Returns `true` when the element is not presence-exiting, `IsHitTestVisible` is `true`, and `ParticipatesInRendering` returns `true`. |
 
 ## Participation Rules
 | Element state | Layout | Rendering | Input route | Hit testing |
@@ -62,6 +64,7 @@ All methods validate the `element` argument with `ArgumentNullException.ThrowIfN
 | `IsVisible = false`, `Visibility = Visible` | Yes | No | No | No |
 | `IsHitTestVisible = false`, otherwise visible | Yes | Yes | Yes | No |
 | Presence-exiting element | Based on `Visibility` | Based on `IsVisible` and `Visibility` | No | No |
+| Child skipped by a `VirtualizingStackPanel`, otherwise visible | Yes, arranged into zero-sized bounds | No | No | No |
 
 ## Exceptions
 | Method | Exception | Condition |
@@ -79,4 +82,6 @@ Cerneala retained UI elements in the `Cerneala` project.
 - `UI/Layout/Visibility.cs`
 - `UI/Rendering/DrawCommandListBuilder.cs`
 - `UI/Input/HitTestService.cs`
+- `UI/Layout/Panels/VirtualizingStackPanel.cs`
 - `tests/Cerneala.Tests/UI/Layout/VisibilityCombinationTests.cs`
+- `tests/Cerneala.Tests/UI/Layout/VirtualizingStackPanelTests.cs`

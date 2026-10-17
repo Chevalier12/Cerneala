@@ -333,7 +333,8 @@ public sealed class UiFrameScheduler
                     element.LastScheduledMeasurePass == CurrentMeasurePass &&
                     element.LastScheduledMeasureLayoutVersion == element.LayoutVersion;
                 if (!Elements.UIElementVisibility.IsEffectivelyParticipatingInLayout(element) ||
-                    wasMeasuredRecursively)
+                    wasMeasuredRecursively ||
+                    IsMeasureSkippedByAncestor(element))
                 {
                     InvalidationFlags skipped = ClearProcessedFlags(element, InvalidationFlags.Measure);
                     trace.RecordClear(element, skipped);
@@ -527,6 +528,21 @@ public sealed class UiFrameScheduler
         }
 
         trace.RecordPhaseSummary(FramePhase.HitTest, snapshot.Count);
+    }
+
+    // An element that an ancestor's measure leaves unmeasured on purpose, such as a row outside the realization
+    // window of a VirtualizingStackPanel, is measured by that ancestor once it realizes it, never by the frame alone.
+    private static bool IsMeasureSkippedByAncestor(Elements.UIElement element)
+    {
+        for (Elements.UIElement current = element; current.VisualParent is Elements.UIElement parent; current = parent)
+        {
+            if (parent.SkipsChildMeasure(current))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static InvalidationFlags ClearProcessedFlags(Elements.UIElement element, InvalidationFlags phaseFlag)
