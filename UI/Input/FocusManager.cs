@@ -82,6 +82,15 @@ public sealed class FocusManager
                 results.Add(new KeyboardDispatchResult(FocusedElement, focusedId, key, KeyboardDispatchKind.Pressed, handled));
             }
 
+            if (inputFrame.Keyboard.IsDown(key) || inputFrame.Keyboard.IsReleased(key))
+            {
+                int repeatCount = inputFrame.Keyboard.GetRepeatCount(key);
+                for (int i = 0; i < repeatCount; i++)
+                {
+                    RaiseKeyPair(routeMap, focusedId, key, inputFrame.Keyboard, InputEvents.PreviewKeyDownEvent, InputEvents.KeyDownEvent, isRepeat: true);
+                }
+            }
+
             if (inputFrame.Keyboard.IsReleased(key))
             {
                 bool handled = RaiseKeyPair(routeMap, focusedId, key, inputFrame.Keyboard, InputEvents.PreviewKeyUpEvent, InputEvents.KeyUpEvent);
@@ -98,13 +107,14 @@ public sealed class FocusManager
         InputKey key,
         InputFrame.KeyboardFrame keyboard,
         RoutedEvent previewEvent,
-        RoutedEvent bubbleEvent)
+        RoutedEvent bubbleEvent,
+        bool isRepeat = false)
     {
         bool isControlDown = keyboard.IsDown(InputKey.LeftCtrl) || keyboard.IsDown(InputKey.RightCtrl);
         bool isShiftDown = keyboard.IsDown(InputKey.LeftShift) || keyboard.IsDown(InputKey.RightShift);
         bool isAltDown = keyboard.IsDown(InputKey.LeftAlt) || keyboard.IsDown(InputKey.RightAlt);
-        KeyEventArgs previewArgs = new(previewEvent, targetId, key, isControlDown, isShiftDown, isAltDown);
-        KeyEventArgs bubbleArgs = new(bubbleEvent, targetId, key, isControlDown, isShiftDown, isAltDown);
+        KeyEventArgs previewArgs = new(previewEvent, targetId, key, isControlDown, isShiftDown, isAltDown, isRepeat);
+        KeyEventArgs bubbleArgs = new(bubbleEvent, targetId, key, isControlDown, isShiftDown, isAltDown, isRepeat);
         RoutedEventRouter.RaisePair(
             routeMap.InputTree,
             targetId,

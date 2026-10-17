@@ -172,7 +172,7 @@ public class ItemsPresenter : Control
         RefreshItems();
         LayoutSize desired = MeasurePanelRoot(context);
         RemoveMeasureWorkForLayoutScope();
-        RemoveInheritedAndAspectWorkForLayoutScope();
+        RemoveInheritedWorkOfThisPresenter();
 
         return desired;
     }
@@ -905,18 +905,17 @@ public class ItemsPresenter : Control
         }
     }
 
-    private void RemoveInheritedAndAspectWorkForLayoutScope()
+    // The measure propagated from this presenter, which is the work its queued Inherited entry stands for. It did
+    // not process this presenter's Aspect or the work queued on its ancestors, for example by a ContentPresenter
+    // that created this subtree during the same measure, so that work stays queued for the next frame.
+    private void RemoveInheritedWorkOfThisPresenter()
     {
         if (Root is not UIRoot root)
         {
             return;
         }
 
-        for (UIElement? current = this; current is not null; current = current.VisualParent)
-        {
-            root.InheritedPropertyQueue.Remove(current);
-            root.AspectQueue.Remove(current);
-            current.DirtyState.Clear(InvalidationFlags.Inherited | InvalidationFlags.Aspect);
-        }
+        root.InheritedPropertyQueue.Remove(this);
+        DirtyState.Clear(InvalidationFlags.Inherited);
     }
 }

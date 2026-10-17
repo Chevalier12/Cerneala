@@ -184,6 +184,42 @@ public sealed class SdlWindowPlatformTests
     }
 
     [Fact]
+    public void EveryWindowStartsSdlTextInputSoTypedTextReachesItsInputSource()
+    {
+        FakeSdlApi api = new();
+        using SdlWindowPlatform platform = new(api, new RecordingGraphicsFactory());
+        SdlPlatformWindow first = Assert.IsType<SdlPlatformWindow>(
+            platform.CreateWindow(new Window { Title = "First" }, new RecordingWindowCallbacks()));
+        SdlPlatformWindow second = Assert.IsType<SdlPlatformWindow>(
+            platform.CreateWindow(new Window { Title = "Second" }, new RecordingWindowCallbacks()));
+        api.Enqueue(
+            new SdlEvent(SdlEventKind.TextInput, first.WindowId, Text: "a"),
+            new SdlEvent(SdlEventKind.TextInput, second.WindowId, Text: "b"));
+
+        platform.PumpEvents();
+
+        Assert.True(api.Windows[first.Handle].TextInputActive);
+        Assert.True(api.Windows[second.Handle].TextInputActive);
+        Assert.Equal("a", Assert.Single(first.InputSource.GetFrame().TextInputEvents).Text);
+        Assert.Equal("b", Assert.Single(second.InputSource.GetFrame().TextInputEvents).Text);
+        Assert.True(Assert.IsAssignableFrom<ITextInputPlatform>(
+            platform.PlatformServices.TextInput).SupportsIme);
+    }
+
+    [Fact]
+    public void TextInputStartFailureDestroysTheNewWindow()
+    {
+        FakeSdlApi api = new() { StartTextInputResult = false };
+        using SdlWindowPlatform platform = new(api, new RecordingGraphicsFactory());
+
+        InvalidOperationException failure = Assert.Throws<InvalidOperationException>(() =>
+            platform.CreateWindow(new Window(), new RecordingWindowCallbacks()));
+
+        Assert.Contains("SDL text input start", failure.Message, StringComparison.Ordinal);
+        Assert.Equal(api.Windows.Keys, api.DestroyedWindows);
+    }
+
+    [Fact]
     public void DisabledAndDestroyedWindowsDoNotReceiveInputOrLateEvents()
     {
         FakeSdlApi api = new();

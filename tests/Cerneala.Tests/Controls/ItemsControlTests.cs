@@ -1303,6 +1303,53 @@ public sealed class ItemsControlTests
         Assert.Empty(control.ItemContainerGenerator.RealizedContainers);
     }
 
+    [Fact]
+    public void RemovingItemTemplateHostsElementItemThatTheTemplateWrapped()
+    {
+        UIRoot root = new(200, 200);
+        FixedElement item = new("item", new LayoutSize(40, 10));
+        ItemsControl control = new() { ItemTemplate = WrapElementTemplate() };
+        control.SetItems(new object[] { item });
+        root.VisualChildren.Add(control);
+        root.ProcessFrame();
+        Border wrapper = Assert.IsType<Border>(item.VisualParent);
+
+        control.ItemTemplate = null;
+        root.ProcessFrame();
+
+        Assert.Same(item, control.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Same(control.ItemsPresenter.LayoutPanelRoot, item.VisualParent);
+        Assert.Empty(wrapper.VisualChildren);
+    }
+
+    [Fact]
+    public void ReplacingItemTemplateWrapsElementItemInTheNewTemplate()
+    {
+        UIRoot root = new(200, 200);
+        FixedElement item = new("item", new LayoutSize(40, 10));
+        ItemsControl control = new() { ItemTemplate = WrapElementTemplate() };
+        control.SetItems(new object[] { item });
+        root.VisualChildren.Add(control);
+        root.ProcessFrame();
+        Border first = Assert.IsType<Border>(item.VisualParent);
+
+        control.ItemTemplate = WrapElementTemplate();
+        root.ProcessFrame();
+
+        Border second = Assert.IsType<Border>(item.VisualParent);
+        Assert.NotSame(first, second);
+        Assert.Same(item, second.Child);
+        Assert.Empty(first.VisualChildren);
+        ContentPresenter container = Assert.IsType<ContentPresenter>(control.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Same(second, container.PresentedChild);
+    }
+
+    private static ContentTemplate WrapElementTemplate()
+    {
+        return new ContentTemplate("wrap", typeof(object), key: null, priority: 0,
+            context => new Border { Child = (UIElement?)context.Data });
+    }
+
     private static (UIRoot Root, ItemsControl Items) RootWithTemplatedButton(Func<Button> createButton)
     {
         ItemsControl control = new()

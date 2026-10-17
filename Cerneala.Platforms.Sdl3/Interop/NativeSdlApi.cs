@@ -637,6 +637,8 @@ internal sealed class NativeSdlApi : ISdlApi
 
     public bool SetWindowParent(nint window, nint parent) => SDL.SetWindowParent(window, parent);
 
+    public bool StartTextInput(nint window) => SDL.StartTextInput(window);
+
     public float GetWindowPixelDensity(nint window) => SDL.GetWindowPixelDensity(window);
 
     public float GetWindowDisplayScale(nint window) => SDL.GetWindowDisplayScale(window);

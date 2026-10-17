@@ -212,15 +212,16 @@ public sealed class RelayStageZeroTests
     }
 
     [Fact]
-    public async Task AttachedPropertyMutationOffThreadThrowsBeforeChangingState()
+    public void AttachedPropertyMutationOffThreadThrowsBeforeChangingState()
     {
         UIRoot root = new();
         DrainScheduler(root);
         float opacity = root.Opacity;
         int treeVersion = root.TreeVersion;
         bool hadWork = root.Scheduler.HasWork;
+        Exception? exception = null;
 
-        Exception? exception = await Record.ExceptionAsync(() => Task.Run(() => root.Opacity = 0.25f));
+        RunOffThread(() => exception = Record.Exception(() => root.Opacity = 0.25f));
 
         Assert.IsType<InvalidOperationException>(exception);
         Assert.Equal(opacity, root.Opacity);
@@ -229,15 +230,16 @@ public sealed class RelayStageZeroTests
     }
 
     [Fact]
-    public async Task AttachedTreeMutationOffThreadThrowsBeforeChangingTree()
+    public void AttachedTreeMutationOffThreadThrowsBeforeChangingTree()
     {
         UIRoot root = new();
         DrainScheduler(root);
         UIElement child = new();
         int visualCount = root.VisualChildren.Count;
         int treeVersion = root.TreeVersion;
+        Exception? exception = null;
 
-        Exception? exception = await Record.ExceptionAsync(() => Task.Run(() => root.VisualChildren.Add(child)));
+        RunOffThread(() => exception = Record.Exception(() => root.VisualChildren.Add(child)));
 
         Assert.IsType<InvalidOperationException>(exception);
         Assert.Equal(visualCount, root.VisualChildren.Count);
@@ -246,19 +248,21 @@ public sealed class RelayStageZeroTests
     }
 
     [Fact]
-    public async Task MotionAndAspectUseRootRelayAuthority()
+    public void MotionAndAspectUseRootRelayAuthority()
     {
         UIRoot root = new();
         RelayApi relay = RelayApi.For(root);
         AspectPackage package = AspectPackage.Create("relay-stage-zero");
         int registryVersion = root.AspectRegistry.Version;
+        bool relayAccess = true;
+        Exception? motionFault = null;
+        Exception? aspectFault = null;
 
-        (bool relayAccess, Exception? motionFault, Exception? aspectFault) = await Task.Run(() =>
+        RunOffThread(() =>
         {
-            bool access = relay.CheckAccess();
-            Exception? motion = Record.Exception(() => root.Motion.Graph.CreateValue(0f));
-            Exception? aspect = Record.Exception(() => root.AspectRegistry.Register(package));
-            return (access, motion, aspect);
+            relayAccess = relay.CheckAccess();
+            motionFault = Record.Exception(() => root.Motion.Graph.CreateValue(0f));
+            aspectFault = Record.Exception(() => root.AspectRegistry.Register(package));
         });
 
         Assert.False(relayAccess);
@@ -268,14 +272,14 @@ public sealed class RelayStageZeroTests
     }
 
     [Fact]
-    public async Task RootOwnedAspectMutationOffThreadThrowsBeforeChangingRegistry()
+    public void RootOwnedAspectMutationOffThreadThrowsBeforeChangingRegistry()
     {
         UIRoot root = new();
         AspectPackage package = AspectPackage.Create("relay-stage-zero-aspect");
         int registryVersion = root.AspectRegistry.Version;
+        Exception? exception = null;
 
-        Exception? exception = await Record.ExceptionAsync(
-            () => Task.Run(() => root.AspectRegistry.Register(package)));
+        RunOffThread(() => exception = Record.Exception(() => root.AspectRegistry.Register(package)));
 
         Assert.IsType<InvalidOperationException>(exception);
         Assert.Equal(registryVersion, root.AspectRegistry.Version);

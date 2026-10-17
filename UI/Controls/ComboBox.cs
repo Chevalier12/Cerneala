@@ -952,7 +952,9 @@ public class ComboBox : Selector
     }
 
     // A non-editable field acts as one drop-down button, as the WPF default template's ToggleButton covers the
-    // whole field. The toggle clicks by itself, and the projected list is not in the field's visual subtree.
+    // whole field. A command source in the field, such as PART_DropDownToggle or a button that a hit-testable
+    // selection box shows, owns its click, as the input bridge resolves the click to it. The projected list is
+    // not in the field's visual subtree.
     private void OnMouseUp(UiElementId _, RoutedEventArgs args)
     {
         if (IsEditable || !IsEnabled ||
@@ -976,14 +978,14 @@ public class ComboBox : Selector
 
         for (UIElement? current = element; current is not null; current = current.VisualParent)
         {
-            if (ReferenceEquals(current, dropDownToggle))
-            {
-                return false;
-            }
-
             if (ReferenceEquals(current, this))
             {
                 return true;
+            }
+
+            if (current is IInputCommandSource)
+            {
+                return false;
             }
         }
 
@@ -1071,7 +1073,8 @@ public class ComboBox : Selector
         ExceptionDispatchInfo? preparationFailure = null;
         RefreshPreviewContainer(previewSelectedIndex, ref preparationFailure);
         SynchronizeSelectionPresenter();
-        preparationFailure?.Throw();
+        // A drop-down opened while SelectedIndex changes leaves the failure to that selection change.
+        ThrowPreparationFailure(preparationFailure);
     }
 
     // Selector rethrows a failed re-preparation of the old or the new row from the SelectedIndex setter, when
@@ -1140,7 +1143,8 @@ public class ComboBox : Selector
         SynchronizeEditorText();
         editableTextBox?.MoveCaret(editableTextBox.Text.Length);
         SynchronizeSelectionPresenter();
-        preparationFailure?.Throw();
+        // A commit made while SelectedIndex changes leaves the failure to that selection change.
+        ThrowPreparationFailure(preparationFailure);
     }
 
     // Enter, Tab, and item clicks commit the preview and close the drop-down. A failed re-preparation during the
@@ -1177,7 +1181,8 @@ public class ComboBox : Selector
         RefreshPreviewContainer(SelectedIndex, ref preparationFailure);
         SynchronizeEditorText();
         SynchronizeSelectionPresenter();
-        preparationFailure?.Throw();
+        // A drop-down closed while SelectedIndex changes leaves the failure to that selection change.
+        ThrowPreparationFailure(preparationFailure);
     }
 
     private void NavigatePreview(InputKey key)

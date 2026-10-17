@@ -550,6 +550,46 @@ public sealed class ComboBoxTests
         Assert.Equal(0, comboBox.SelectedIndex);
     }
 
+    // The non-hit-testable selection box lets a press on the selected text hit the field itself, so a press there
+    // and a release on the empty part of the field make one click. A press on the field and a release on
+    // PART_DropDownToggle hit different elements and make no click.
+    [Theory]
+    [InlineData("text", "empty", true)]
+    [InlineData("empty", "toggle", false)]
+    [InlineData("toggle", "empty", false)]
+    public void NonEditableFieldPressAndReleaseOnDifferentPointsTogglesOnlyOnSameHitElement(
+        string pressAt,
+        string releaseAt,
+        bool expectedOpen)
+    {
+        (UIRoot root, ComboBox comboBox) = CreateNonEditableField();
+        ToggleButton toggle = Assert.IsType<ToggleButton>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_DropDownToggle"]);
+        TextBlock text = Assert.IsType<TextBlock>(FindDescendant<TextBlock>(
+            comboBox.ComponentTemplateInstance.Parts["PART_SelectionPresenter"]));
+        Assert.Equal("one", text.Text);
+        LayoutRect bounds = comboBox.ArrangedBounds;
+        float y = bounds.Y + bounds.Height / 2;
+        float PointX(string where) => where switch
+        {
+            "text" => text.ArrangedBounds.X + text.ArrangedBounds.Width / 2,
+            "empty" => bounds.X + bounds.Width * 0.6f,
+            _ => toggle.ArrangedBounds.X + toggle.ArrangedBounds.Width / 2
+        };
+        float pressX = PointX(pressAt);
+        float releaseX = PointX(releaseAt);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(pressX, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(releaseX, y, previousDown: true, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(releaseX, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.Equal(expectedOpen, comboBox.IsDropDownOpen);
+        Assert.Equal(expectedOpen, toggle.IsChecked);
+        Assert.Equal(0, comboBox.SelectedIndex);
+    }
+
     [Fact]
     public void NonEditableItemClickSelectsItemAndClosesDropDown()
     {
@@ -573,6 +613,145 @@ public sealed class ComboBoxTests
         Assert.Equal(1, comboBox.SelectedIndex);
         Assert.Equal("two", comboBox.Text);
         Assert.False(comboBox.IsDropDownOpen);
+    }
+
+    // As in the WPF default template, the selection box is not hit-testable, so a click on a button that the
+    // ItemTemplate shows in the closed field only toggles the drop-down.
+    [Fact]
+    public void NonEditableFieldClickOnTemplateButtonTogglesDropDownWithoutClickingButton()
+    {
+        (UIRoot root, ComboBox comboBox) = CreateNonEditableField();
+        comboBox.ItemTemplate = new ContentTemplate<string>(
+            "check",
+            key: null,
+            priority: 0,
+            context => new CheckBox { Content = context.Data });
+        root.ProcessFrame();
+        CheckBox check = Assert.IsType<CheckBox>(FindDescendant<CheckBox>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_SelectionPresenter"]));
+        int clicks = 0;
+        check.Click += (_, _) => clicks++;
+        LayoutRect bounds = check.ArrangedBounds;
+        float x = bounds.X + 6;
+        float y = bounds.Y + bounds.Height / 2;
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.Equal(0, clicks);
+        Assert.False(check.IsChecked);
+        Assert.True(comboBox.IsDropDownOpen);
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.Equal(0, clicks);
+        Assert.False(check.IsChecked);
+        Assert.False(comboBox.IsDropDownOpen);
+        Assert.Equal(0, comboBox.SelectedIndex);
+    }
+
+    // A custom template can leave the selection box hit-testable. A button that the ItemTemplate shows there
+    // then owns the click, as the bridge resolves the click to that command source, and the field stays closed.
+    [Fact]
+    public void NonEditableFieldClickOnHitTestableTemplateButtonClicksButtonWithoutTogglingDropDown()
+    {
+        (UIRoot root, ComboBox comboBox) = CreateNonEditableField();
+        comboBox.ItemTemplate = new ContentTemplate<string>(
+            "check",
+            key: null,
+            priority: 0,
+            context => new CheckBox { Content = context.Data });
+        root.ProcessFrame();
+        UIElement presenter = comboBox.ComponentTemplateInstance!.Parts["PART_SelectionPresenter"];
+        presenter.IsHitTestVisible = true;
+        root.ProcessFrame();
+        CheckBox check = Assert.IsType<CheckBox>(FindDescendant<CheckBox>(presenter));
+        int clicks = 0;
+        check.Click += (_, _) => clicks++;
+        LayoutRect bounds = check.ArrangedBounds;
+        float x = bounds.X + 6;
+        float y = bounds.Y + bounds.Height / 2;
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.Equal(1, clicks);
+        Assert.True(check.IsChecked);
+        Assert.False(comboBox.IsDropDownOpen);
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.Equal(2, clicks);
+        Assert.False(check.IsChecked);
+        Assert.False(comboBox.IsDropDownOpen);
+        Assert.Equal(0, comboBox.SelectedIndex);
+    }
+
+    [Fact]
+    public void NonEditableFieldClickOnHitTestableTemplateTextTogglesDropDown()
+    {
+        (UIRoot root, ComboBox comboBox) = CreateNonEditableField();
+        UIElement presenter = comboBox.ComponentTemplateInstance!.Parts["PART_SelectionPresenter"];
+        presenter.IsHitTestVisible = true;
+        root.ProcessFrame();
+        LayoutRect bounds = comboBox.ArrangedBounds;
+        float x = bounds.X + 8;
+        float y = bounds.Y + bounds.Height / 2;
+        UIElement? hit = new HitTestService().HitTest(root, x, y)?.Element;
+        Assert.NotNull(hit);
+        Assert.True(ReferenceEquals(hit, presenter) || IsDescendantOf(hit!, presenter));
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.True(comboBox.IsDropDownOpen);
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.False(comboBox.IsDropDownOpen);
+    }
+
+    private static bool IsDescendantOf(UIElement element, UIElement ancestor)
+    {
+        for (UIElement? current = element.VisualParent; current is not null; current = current.VisualParent)
+        {
+            if (ReferenceEquals(current, ancestor))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static T? FindDescendant<T>(UIElement element) where T : UIElement
+    {
+        if (element is T match)
+        {
+            return match;
+        }
+
+        for (int i = 0; i < element.VisualChildren.Count; i++)
+        {
+            if (FindDescendant<T>(element.VisualChildren[i]) is T found)
+            {
+                return found;
+            }
+        }
+
+        return null;
     }
 
     private static (UIRoot Root, ComboBox ComboBox) CreateNonEditableField()
@@ -2305,6 +2484,7 @@ public sealed class ComboBoxTests
         Assert.False(overlay.IsOpen);
         Assert.Equal(0, comboBox.SelectedIndex);
         Assert.Equal(1, closed);
+        Assert.Same(canvas, Assert.Single(root.VisualChildren));
     }
 
     // The overlay part opens the drop-down while re-preparing the row of the selected "one" throws, and
@@ -2362,6 +2542,221 @@ public sealed class ComboBoxTests
         {
             Assert.False(ItemContainerGenerator.GetIsSelected(comboBox.ItemContainerGenerator.RealizedContainers[0]));
         }
+    }
+
+    // The drop-down is open with "one" selected and highlighted, and a handler closes it when SelectedIndex changes.
+    // SelectedIndex = 1 cancels the preview while re-preparing one of the rows throws, and the selection change still
+    // raises SelectionChanged and the overlay still closes before the exception propagates out of the setter.
+    [Theory]
+    [InlineData("one")]
+    [InlineData("two")]
+    public void SelectedIndexChangeThatClosesDropDownWhoseRowPreparationThrowsRaisesSelectionChangedAndPropagates(
+        string failingItem)
+    {
+        (UIRoot root, _, FailingContentComboBox comboBox) = OpenNonEditableWithFirstItemSelected();
+        Overlay overlay = Assert.IsType<Overlay>(comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"]);
+        comboBox.PropertyChanged += (_, args) =>
+        {
+            if (ReferenceEquals(args.Property, ComboBox.SelectedIndexProperty))
+            {
+                comboBox.IsDropDownOpen = false;
+            }
+        };
+        List<string> raised = [];
+        comboBox.SelectionChanged += (_, args) =>
+            raised.Add($"[{string.Join(",", args.RemovedItems)}]->[{string.Join(",", args.AddedItems)}]");
+
+        comboBox.FailFor = failingItem;
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => comboBox.SelectedIndex = 1);
+        comboBox.FailFor = null;
+        root.ProcessFrame();
+
+        Assert.Equal("content preparation failed", exception.Message);
+        Assert.Equal(1, comboBox.SelectedIndex);
+        Assert.Equal(["[one]->[two]"], raised);
+        Assert.False(comboBox.IsDropDownOpen);
+        Assert.False(overlay.IsOpen);
+    }
+
+    // "one" is selected and the rows are realized, with the drop-down open or closed. SetValue(SelectedIndexProperty,
+    // 1), the path of a binding, an aspect, or application code, re-prepares the row of "two", which throws. As with
+    // the setter, the selection change still raises SelectionChanged and the selection box shows "two" before the
+    // exception propagates.
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void SelectedIndexSetValueWhoseRowPreparationThrowsShowsNewItemAndPropagates(bool dropDownOpen)
+    {
+        (UIRoot root, ElementInputBridge bridge, FailingContentComboBox comboBox) = OpenNonEditableWithFirstItemSelected();
+        if (!dropDownOpen)
+        {
+            DispatchKey(root, bridge, InputKey.Escape);
+            root.ProcessFrame();
+            Assert.True(comboBox.ItemContainerGenerator.RealizedContainers.ContainsKey(1));
+        }
+
+        List<string> raised = [];
+        comboBox.SelectionChanged += (_, args) =>
+            raised.Add($"[{string.Join(",", args.RemovedItems)}]->[{string.Join(",", args.AddedItems)}]");
+
+        comboBox.FailFor = "two";
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+            () => comboBox.SetValue(ComboBox.SelectedIndexProperty, 1));
+        comboBox.FailFor = null;
+        root.ProcessFrame();
+
+        Assert.Equal("content preparation failed", exception.Message);
+        Assert.Equal(1, comboBox.SelectedIndex);
+        Assert.Equal(1, comboBox.SelectionModel.SelectedIndex);
+        Assert.Equal(["[one]->[two]"], raised);
+        Assert.Equal("two", comboBox.Text);
+        ContentPresenter selection = Assert.IsType<ContentPresenter>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_SelectionPresenter"]);
+        Assert.Equal("two", selection.Content);
+        Assert.Equal(1, selection.ContentIndex);
+        Assert.Equal(dropDownOpen, comboBox.IsDropDownOpen);
+    }
+
+    // The drop-down is open with "one" selected, and a handler closes it when SelectedIndex changes.
+    // SetValue(SelectedIndexProperty, 1) cancels the preview while re-preparing the row of "two" throws. As with the
+    // setter, the selection model still follows, SelectionChanged is still raised, and the overlay still closes
+    // before the exception propagates.
+    [Fact]
+    public void SelectedIndexSetValueThatClosesDropDownWhoseRowPreparationThrowsRaisesSelectionChangedAndPropagates()
+    {
+        (UIRoot root, _, FailingContentComboBox comboBox) = OpenNonEditableWithFirstItemSelected();
+        Overlay overlay = Assert.IsType<Overlay>(comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"]);
+        comboBox.PropertyChanged += (_, args) =>
+        {
+            if (ReferenceEquals(args.Property, ComboBox.SelectedIndexProperty))
+            {
+                comboBox.IsDropDownOpen = false;
+            }
+        };
+        List<string> raised = [];
+        comboBox.SelectionChanged += (_, args) =>
+            raised.Add($"[{string.Join(",", args.RemovedItems)}]->[{string.Join(",", args.AddedItems)}]");
+
+        comboBox.FailFor = "two";
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+            () => comboBox.SetValue(ComboBox.SelectedIndexProperty, 1));
+        comboBox.FailFor = null;
+        root.ProcessFrame();
+
+        Assert.Equal("content preparation failed", exception.Message);
+        Assert.Equal(1, comboBox.SelectedIndex);
+        Assert.Equal(1, comboBox.SelectionModel.SelectedIndex);
+        Assert.Equal(["[one]->[two]"], raised);
+        Assert.Equal("two", comboBox.Text);
+        Assert.False(comboBox.IsDropDownOpen);
+        Assert.False(overlay.IsOpen);
+    }
+
+    // SetValue(SelectedIndexProperty, 1) and SelectedIndex = 1 raise the change in the same order: the selection model
+    // already holds 1 when PropertyChanged is raised, and Text already shows "two" when SelectionChanged is raised.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void SelectedIndexChangeRaisesPropertyChangedAfterModelAndSelectionChangedAfterText(bool setValue)
+    {
+        UIRoot root = new(100, 100);
+        ComboBox comboBox = new() { IsEditable = false };
+        comboBox.SetItems(new[] { "one", "two", "three" });
+        root.VisualChildren.Add(comboBox);
+        comboBox.SelectedIndex = 0;
+        root.ProcessFrame();
+        int modelIndexInPropertyChanged = -2;
+        string? textInSelectionChanged = null;
+        comboBox.PropertyChanged += (_, args) =>
+        {
+            if (ReferenceEquals(args.Property, ComboBox.SelectedIndexProperty))
+            {
+                modelIndexInPropertyChanged = comboBox.SelectionModel.SelectedIndex;
+            }
+        };
+        comboBox.SelectionChanged += (_, _) => textInSelectionChanged = comboBox.Text;
+
+        if (setValue)
+        {
+            comboBox.SetValue(ComboBox.SelectedIndexProperty, 1);
+        }
+        else
+        {
+            comboBox.SelectedIndex = 1;
+        }
+
+        Assert.Equal(1, modelIndexInPropertyChanged);
+        Assert.Equal("two", textInSelectionChanged);
+    }
+
+    // The drop-down was opened and closed with "one" selected, so the rows stay realized, and a handler opens it
+    // when SelectedIndex changes. SelectedIndex = 1 begins the preview of "two" while re-preparing its row throws,
+    // and the selection change still raises SelectionChanged and the overlay still opens before the exception
+    // propagates out of the setter.
+    [Fact]
+    public void SelectedIndexChangeThatOpensDropDownWhoseRowPreparationThrowsRaisesSelectionChangedAndPropagates()
+    {
+        (UIRoot root, ElementInputBridge bridge, FailingContentComboBox comboBox) = OpenNonEditableWithFirstItemSelected();
+        Overlay overlay = Assert.IsType<Overlay>(comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"]);
+        DispatchKey(root, bridge, InputKey.Escape);
+        root.ProcessFrame();
+        Assert.True(comboBox.ItemContainerGenerator.RealizedContainers.ContainsKey(1));
+        comboBox.PropertyChanged += (_, args) =>
+        {
+            if (ReferenceEquals(args.Property, ComboBox.SelectedIndexProperty))
+            {
+                comboBox.IsDropDownOpen = true;
+            }
+        };
+        List<string> raised = [];
+        comboBox.SelectionChanged += (_, args) =>
+            raised.Add($"[{string.Join(",", args.RemovedItems)}]->[{string.Join(",", args.AddedItems)}]");
+
+        comboBox.FailFor = "two";
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => comboBox.SelectedIndex = 1);
+        comboBox.FailFor = null;
+        root.ProcessFrame();
+
+        Assert.Equal("content preparation failed", exception.Message);
+        Assert.Equal(1, comboBox.SelectedIndex);
+        Assert.Equal(["[one]->[two]"], raised);
+        Assert.True(comboBox.IsDropDownOpen);
+        Assert.True(overlay.IsOpen);
+    }
+
+    // The drop-down is open with "one" selected and highlighted, and a handler presses Enter when SelectedIndex
+    // changes. SelectedIndex = 1 runs the Enter commit of the highlighted "one" inside the change, which selects
+    // "one" again while re-preparing the row of "one" throws. Both selection changes still raise SelectionChanged and
+    // the drop-down still closes before the exception propagates out of the setter.
+    [Fact]
+    public void SelectedIndexChangeThatCommitsDropDownWhoseRowPreparationThrowsRaisesSelectionChangedAndPropagates()
+    {
+        (UIRoot root, ElementInputBridge bridge, FailingContentComboBox comboBox) = OpenNonEditableWithFirstItemSelected();
+        Overlay overlay = Assert.IsType<Overlay>(comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"]);
+        bool pressed = false;
+        comboBox.PropertyChanged += (_, args) =>
+        {
+            if (ReferenceEquals(args.Property, ComboBox.SelectedIndexProperty) && !pressed)
+            {
+                pressed = true;
+                DispatchKey(root, bridge, InputKey.Enter);
+            }
+        };
+        List<string> raised = [];
+        comboBox.SelectionChanged += (_, args) =>
+            raised.Add($"[{string.Join(",", args.RemovedItems)}]->[{string.Join(",", args.AddedItems)}]");
+
+        comboBox.FailFor = "one";
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => comboBox.SelectedIndex = 1);
+        comboBox.FailFor = null;
+        root.ProcessFrame();
+
+        Assert.Equal("content preparation failed", exception.Message);
+        Assert.True(pressed);
+        Assert.Equal(0, comboBox.SelectedIndex);
+        Assert.Equal(["[two]->[one]", "[one]->[two]"], raised);
+        Assert.False(comboBox.IsDropDownOpen);
+        Assert.False(overlay.IsOpen);
     }
 
     // "one" is selected and "tw" autocompletes to the highlighted "two". Enter or Tab commits "two" while Selector's

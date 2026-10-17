@@ -1,3 +1,4 @@
+using System.Runtime.ExceptionServices;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Core;
 using Cerneala.UI.Data;
@@ -728,21 +729,39 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     internal void DetachFromRoot()
     {
         attachmentGeneration++;
-        DetachElementAspectBehavior();
-        RaiseEvent(new RoutedEventArgs(UnloadedEvent, this));
-        Root?.Motion.Layout.MarkDetached(this);
-        Root?.Motion.Presence.MarkDetached(this);
-        foreach (IElementLifecycleBehavior behavior in lifecycleBehaviors)
+        // A failing detach callback does not skip the element's later callbacks: each one runs, the element is
+        // detached, then the first failure propagates.
+        ExceptionDispatchInfo? failure = null;
+        try
         {
-            behavior.Detach();
+            try { DetachElementAspectBehavior(); }
+            catch (Exception exception) { failure ??= ExceptionDispatchInfo.Capture(exception); }
+            try { RaiseEvent(new RoutedEventArgs(UnloadedEvent, this)); }
+            catch (Exception exception) { failure ??= ExceptionDispatchInfo.Capture(exception); }
+            try { Root?.Motion.Layout.MarkDetached(this); }
+            catch (Exception exception) { failure ??= ExceptionDispatchInfo.Capture(exception); }
+            try { Root?.Motion.Presence.MarkDetached(this); }
+            catch (Exception exception) { failure ??= ExceptionDispatchInfo.Capture(exception); }
+            foreach (IElementLifecycleBehavior behavior in lifecycleBehaviors)
+            {
+                try { behavior.Detach(); }
+                catch (Exception exception) { failure ??= ExceptionDispatchInfo.Capture(exception); }
+            }
+            try { OnDetached(); }
+            catch (Exception exception) { failure ??= ExceptionDispatchInfo.Capture(exception); }
         }
-        OnDetached();
-        ReleaseImageResources();
-        Root?.RetainedRenderCache.ReleaseElement(this);
-        Bindings.Clear();
-        ElementId = null;
-        Root?.AdvanceImageResolutionEpoch();
-        Root = null;
+        finally
+        {
+            // A failing detach callback still leaves the element detached.
+            ReleaseImageResources();
+            Root?.RetainedRenderCache.ReleaseElement(this);
+            Bindings.Clear();
+            ElementId = null;
+            Root?.AdvanceImageResolutionEpoch();
+            Root = null;
+        }
+
+        failure?.Throw();
     }
 
     protected virtual void OnAttached()

@@ -96,4 +96,41 @@ public sealed class InputFrameTests
 
         Assert.Same(original, frame.TextInputEvents.Single());
     }
+
+    [Fact]
+    public void InputFrameCountsKeyRepeatEventsPerKeyAndIgnoresSentinels()
+    {
+        KeyboardSnapshot held = KeyboardSnapshot.FromDownKeys([InputKey.Back]);
+        List<InputKey> repeats = [InputKey.Back, InputKey.None, InputKey.Back, InputKey.Unknown];
+
+        InputFrame frame = new(PointerSnapshot.Empty, PointerSnapshot.Empty, held, held, [], repeats);
+        repeats.Add(InputKey.Back);
+
+        Assert.Equal(2, frame.Keyboard.GetRepeatCount(InputKey.Back));
+        Assert.Equal(0, frame.Keyboard.GetRepeatCount(InputKey.Delete));
+        Assert.Equal(0, frame.Keyboard.GetRepeatCount(InputKey.None));
+        Assert.Equal(0, frame.Keyboard.GetRepeatCount(InputKey.Unknown));
+    }
+
+    [Fact]
+    public void InputFrameWithoutKeyRepeatEventsReportsNoRepeats()
+    {
+        KeyboardSnapshot held = KeyboardSnapshot.FromDownKeys([InputKey.Back]);
+
+        InputFrame frame = new(PointerSnapshot.Empty, PointerSnapshot.Empty, held, held, []);
+
+        Assert.Equal(0, frame.Keyboard.GetRepeatCount(InputKey.Back));
+    }
+
+    [Fact]
+    public void InputFrameRejectsNullKeyRepeatEvents()
+    {
+        Assert.Throws<ArgumentNullException>(() => new InputFrame(
+            PointerSnapshot.Empty,
+            PointerSnapshot.Empty,
+            KeyboardSnapshot.Empty,
+            KeyboardSnapshot.Empty,
+            [],
+            null!));
+    }
 }

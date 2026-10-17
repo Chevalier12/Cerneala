@@ -1563,12 +1563,12 @@ public sealed class WindowRuntimeTests : IDisposable
     }
 
     [Fact]
-    public async Task WindowOperationsRejectAnotherThread()
+    public void WindowOperationsRejectAnotherThread()
     {
         Install(new FakeWindowPlatform());
         Window window = new();
 
-        InvalidOperationException exception = await Assert.ThrowsAsync<InvalidOperationException>(() => Task.Run(window.Show));
+        InvalidOperationException exception = Assert.IsType<InvalidOperationException>(RecordOnAnotherThread(window.Show));
 
         Assert.Contains("owning UI thread", exception.Message, StringComparison.Ordinal);
     }
@@ -1631,6 +1631,16 @@ public sealed class WindowRuntimeTests : IDisposable
     private static void CompleteSynchronously(Task operation)
     {
         operation.GetAwaiter().GetResult();
+    }
+
+    // Task.Run can run its work on the calling thread, so an owner-thread check needs a dedicated thread.
+    private static Exception? RecordOnAnotherThread(Action action)
+    {
+        Exception? exception = null;
+        Thread thread = new(() => exception = Record.Exception(action));
+        thread.Start();
+        Assert.True(thread.Join(TimeSpan.FromSeconds(10)), "Worker thread did not finish.");
+        return exception;
     }
 
     private static (string? AfterInput, string? AfterPump) RunPreviewTextBoxInput(
