@@ -7,7 +7,7 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Controls/TabControl.cs`
 
-Represents an item selector that uses `TabItem` containers and exposes the currently selected tab item.
+Represents an item selector that shows one `TabItem` header per item in a header row and the content of the selected tab in a content area below it.
 
 ```csharp
 public class TabControl : Selector
@@ -21,8 +21,8 @@ Inheritance:
 ```csharp
 using Cerneala.UI.Controls;
 
-TabItem first = new() { Header = "First" };
-TabItem second = new() { Header = "Second" };
+TabItem first = new() { Header = "First", Content = "First page" };
+TabItem second = new() { Header = "Second", Content = "Second page" };
 
 TabControl tabs = new();
 tabs.SetItems(new[] { first, second });
@@ -31,9 +31,67 @@ tabs.SelectedIndex = 1;
 
 TabItem? selected = tabs.SelectedTabItem;
 // selected is the same instance as second.
+// tabs.SelectedContent is "Second page". After the next layout pass the header row shows
+// "First" and "Second" from left to right, and the content area below it shows "Second page".
+```
+
+Data items with an item template. As in WPF, `ItemTemplate` is the template of each generated tab's header, and `ContentTemplate` is the template of the content area.
+
+```csharp
+using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Templates;
+using Cerneala.UI.Layout;
+
+ContentTemplate<string> header = new("tab-header", null, 0, context =>
+    new Border { Padding = new Thickness(8, 4, 8, 4), Child = new TextBlock { Text = context.Data ?? string.Empty } });
+ContentTemplate<string> page = new("tab-page", null, 0, context =>
+    new TextBlock { Text = "Page of " + context.Data });
+
+TabControl tabs = new()
+{
+    ItemTemplate = header,
+    ContentTemplate = page,
+    ItemsSource = new[] { "One", "Two" },
+    SelectedIndex = 0
+};
+// After the next layout pass: two headers built by header (header is called 2 times),
+// each generated TabItem has Header == item, Content == item, and HeaderTemplate == header.
+// The content area holds the TextBlock "Page of One". SelectedIndex = 1 changes it to "Page of Two".
 ```
 
 ## Remarks
+
+### Header row and content area
+
+Without a `ComponentTemplate`, `TabControl` lays out two parts:
+
+- The header row at the top: the item containers (`TabItem`) in the `ItemsPanel`. The default `ItemsPanel` is a `StackPanel` with `Orientation.Horizontal`, so headers go from left to right. Setting `ItemsPanel` replaces it. The header row gets its desired height (at most the available height) and the full width.
+- The content area below it: a `ContentPresenter` owned by the `TabControl`. It gets the full width and the remaining height. It shows `SelectedContent` with `SelectedContentTemplate`. A `TabItem` never shows its own `Content`; only the selected tab's content is shown, here.
+
+The desired size is the wider of the two parts, and the header row height plus the content area height. Neither part applies `Padding` or `BorderThickness`, and `TabControl` draws no background itself. When the control has a `ComponentTemplate`, layout goes to the template, and the built-in header row and content area are not laid out.
+
+The content area is refreshed during measure, after the tabs are realized. Changing `SelectedIndex`, `ContentTemplate`, or the `Content` or `ContentTemplate` of the selected tab invalidates measure, so the next layout pass shows the change. `SelectedContent` and `SelectedContentTemplate` are computed from the selected tab, so they return the new values at once.
+
+When `Content` is a `UIElement`, that element is a child of the content area while its tab is selected. When another tab is selected, the next layout pass removes it from the content area, and it has no parent until its tab is selected again. For example, with `first.Content = button` and `SelectedIndex = 0`, `button` is under the `TabControl` after layout; after `SelectedIndex = 1` and the next layout pass, `button.VisualParent` is `null`.
+
+The content area resolves templates like a `ContentPresenter` with no local registry: `SelectedContentTemplate` first, then the aspect content templates for the content. A string without a template is shown as a `TextBlock`. Other content without a template, for example an `int`, shows nothing.
+
+### Generated tabs
+
+For an item that is not a `TabItem`, the control generates a `TabItem` and prepares it as WPF prepares a headered container:
+
+| Member of the generated `TabItem` | Value |
+| --- | --- |
+| `HeaderTemplate` | `ItemTemplate` |
+| `HeaderTemplateKey` | `ItemTemplateKey` |
+| `Header` | the item when `ItemTemplate` is set; otherwise the item's `DisplayMemberPath` value. `null` when the item is a `UIElement`, because an element cannot be both header and content. |
+| `Content` | the item |
+
+The header of a generated tab resolves `HeaderTemplateKey` and data-type templates from the control's `Templates` collection, as other item containers do. When the container is cleared, these members are reset to `null`.
+
+A `TabItem` item is its own container: it keeps its own `Header`, `HeaderTemplate`, `HeaderTemplateKey`, and `Content`, and `ItemTemplate` is not applied to it. For example, `new TabItem { Header = "H1", Content = "C1" }` in a `TabControl` with an `ItemTemplate` shows the text `H1` in its header and never calls the item template.
+
+### Selection
 
 `TabControl` derives from `Selector`, so selection is driven by the inherited `SelectedIndex`, `SelectedItem`, and `SelectionModel` APIs. The selected index defaults to `-1`, meaning no item is selected.
 
@@ -80,12 +138,21 @@ Selection can also be changed through the inherited `Selector` input behavior: a
 
 | Name | Description |
 | --- | --- |
-| `TabControl()` | Initializes a new instance of the `TabControl` class. |
+| `TabControl()` | Initializes a new instance of the `TabControl` class with a horizontal `StackPanel` as its `ItemsPanel` and an empty content area. |
+
+## Fields
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `ContentTemplateProperty` | `UiProperty<ContentTemplate?>` | Identifies the `ContentTemplate` UI property. The default value is `null`; metadata affects measure and render. |
 
 ## Properties
 
 | Name | Type | Description |
 | --- | --- | --- |
+| `ContentTemplate` | `ContentTemplate?` | Gets or sets the template of the content area for a selected tab whose `TabItem.ContentTemplate` is `null`. The default value is `null`. |
+| `SelectedContent` | `object?` | Gets the `Content` of `SelectedTabItem`, or `null` when `SelectedTabItem` is `null`. For a data item whose tab has not been realized yet, this is `null` until the next layout pass. |
+| `SelectedContentTemplate` | `ContentTemplate?` | Gets the template the content area uses: `SelectedTabItem.ContentTemplate` when it is not `null`, otherwise `ContentTemplate`; `null` when `SelectedTabItem` is `null`. |
 | `SelectedTabItem` | `TabItem?` | Gets the selected `TabItem` item, or the realized tab container prepared for the selected item, or `null` when there is no valid selected tab item. |
 
 ## Relevant Inherited Properties
@@ -97,7 +164,10 @@ Selection can also be changed through the inherited `Selector` input behavior: a
 | `SelectionModel` | `Selector` | `SelectionModel` | Gets the selection model used by the selector. |
 | `Items` | `ItemsControl` | `ItemCollection` | Gets the local item collection used when `ItemsSource` is not the active source. |
 | `ItemsSource` | `ItemsControl` | `IEnumerable?` | Gets or sets an enumerable source for items. |
-| `ItemsPanel` | `ItemsControl` | `Panel?` | Gets or sets the retained panel used to lay out item containers. |
+| `ItemsPanel` | `ItemsControl` | `Panel?` | Gets or sets the retained panel used to lay out the tab headers. `TabControl` sets it to a horizontal `StackPanel`. |
+| `ItemTemplate` | `ItemsControl` | `ContentTemplate?` | Gets or sets the template that becomes the `HeaderTemplate` of each generated tab. |
+| `ItemTemplateKey` | `ItemsControl` | `string?` | Gets or sets the key that becomes the `HeaderTemplateKey` of each generated tab. |
+| `Templates` | `ItemsControl` | `Collection<ContentTemplate>` | Gets the templates the headers of generated tabs resolve against. |
 
 ## Relevant Inherited Methods
 

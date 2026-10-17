@@ -7,6 +7,7 @@ using Cerneala.UI.Layout.Virtualization;
 using Cerneala.UI.Media;
 using Cerneala.UI.Motion.Presence;
 using Cerneala.Tests.UI.Motion.Core;
+using Border = Cerneala.UI.Controls.Border;
 using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
 
 namespace Cerneala.Tests.UI.Layout;
@@ -345,6 +346,43 @@ public sealed class VirtualizingStackPanelTests
     }
 
     [Fact]
+    public void ChildRealizedAgainReportsAMeasureChangeOfADescendantMadeOutsideTheRealizationWindow()
+    {
+        // Each row is row > container > leaf, so the change is two levels below the row the panel skips.
+        UIRoot root = new(200, 100, 1);
+        VirtualizingStackPanel panel = new() { FirstRealizedIndex = 0 };
+        List<UIElement> leaves = [];
+        List<Border> rows = [];
+        for (int i = 0; i < 20; i++)
+        {
+            UIElement leaf = new() { Height = 20 };
+            Border row = new() { Child = new Border { Child = leaf } };
+            leaves.Add(leaf);
+            rows.Add(row);
+            panel.VisualChildren.Add(row);
+        }
+
+        root.VisualChildren.Add(panel);
+        panel.UpdateViewport(new ItemsVirtualizationViewport(20, 100, 0, 0));
+        root.ProcessFrame();
+        panel.UpdateViewport(new ItemsVirtualizationViewport(20, 100, 200, 0));
+        panel.Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange, "scroll");
+        root.ProcessFrame();
+        Assert.False(panel.RealizationWindow.Contains(0));
+
+        leaves[0].Height = 60;
+        root.ProcessFrame();
+        panel.UpdateViewport(new ItemsVirtualizationViewport(20, 100, 0, 0));
+        panel.Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange, "scroll back");
+        root.ProcessFrame();
+
+        Assert.True(panel.RealizationWindow.Contains(0));
+        Assert.Equal(
+            (60f, 60f, new LayoutRect(0, 0, 200, 60), 60f),
+            (leaves[0].DesiredSize.Height, rows[0].DesiredSize.Height, rows[0].ArrangedBounds, rows[1].ArrangedBounds.Y));
+    }
+
+    [Fact]
     public void SkippedChildrenOfADirectlyUsedPanelDrawNothing()
     {
         // Rows 5..29 lie outside the realization window and are arranged into zero-sized bounds at the panel origin,
@@ -534,6 +572,111 @@ public sealed class VirtualizingStackPanelTests
         }
 
         Assert.Equal(new RealizationWindow(0, 9), panel.RealizationWindow);
+        Assert.Equal(1, panel.MeasureCount);
+    }
+
+    [Fact]
+    public void AutomaticViewportWithAContextScrolledWithinTheSameContextWindowReusesThePanelMeasure()
+    {
+        // With a context set, the context supplies RealizationWindow: item extent 50 and viewport 410 give items 0..8 at
+        // offsets 0 and 20. The automatic window of the 10 tall rows moves from 0..14 to 2..29, but the panel neither
+        // measures nor arranges by it, so the second scroll changes nothing that the panel measures or arranges.
+        LayoutRounding rounding = LayoutRounding.ForScale(1);
+        MeasureCountingVirtualizingStackPanel panel = new() { FirstRealizedIndex = 0 };
+        for (int i = 0; i < 30; i++)
+        {
+            panel.VisualChildren.Add(new FixedHeightElement(10));
+        }
+
+        int? layoutVersion = null;
+        foreach (float offset in new[] { 0f, 20f })
+        {
+            panel.VirtualizationContext = new VirtualizationContext(30, 50, 410, offset);
+            panel.UpdateViewport(new ItemsVirtualizationViewport(30, 410, offset, 0));
+            Assert.Equal(new RealizationWindow(0, 9), panel.RealizationWindow);
+            layoutVersion ??= panel.LayoutVersion;
+            Assert.Equal(layoutVersion, panel.LayoutVersion);
+            panel.Measure(new MeasureContext(new LayoutSize(100, 410), rounding));
+            panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, panel.DesiredSize.Height), rounding));
+        }
+
+        Assert.Equal(1, panel.MeasureCount);
+    }
+
+    [Fact]
+    public void AutomaticViewportWithAContextScrolledIntoTheNextContextWindowMeasuresTheRowThatEntersIt()
+    {
+        // The context is set before UpdateViewport, as in the scroll above. Offsets 40 and 60 move the context window from
+        // 0..8 to 1..9, so the measure with the same constraint must not reuse the cached measure, which never measured
+        // item 9.
+        LayoutRounding rounding = LayoutRounding.ForScale(1);
+        VirtualizingStackPanel panel = new() { FirstRealizedIndex = 0 };
+        for (int i = 0; i < 30; i++)
+        {
+            panel.VisualChildren.Add(new FixedHeightElement(10));
+        }
+
+        foreach (float offset in new[] { 40f, 60f })
+        {
+            panel.VirtualizationContext = new VirtualizationContext(30, 50, 410, offset);
+            panel.UpdateViewport(new ItemsVirtualizationViewport(30, 410, offset, 0));
+            panel.Measure(new MeasureContext(new LayoutSize(100, 410), rounding));
+            panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, panel.DesiredSize.Height), rounding));
+        }
+
+        Assert.Equal(new RealizationWindow(1, 10), panel.RealizationWindow);
+        Assert.All(panel.VisualChildren.Skip(1).Take(9), child => Assert.Equal(10, child.DesiredSize.Height));
+        Assert.Equal(
+            string.Join(", ", Enumerable.Range(1, 9).Select(index => $"{index * 10}..{(index + 1) * 10}")),
+            GetVerticalDeviceEdges(panel.VisualChildren.Skip(1).Take(9), 1));
+    }
+
+    [Fact]
+    public void ContextScrolledWithTheSameConstraintMeasuresTheRowsThatEnterTheWindow()
+    {
+        // Without UpdateViewport the context alone supplies the window: offsets 0 and 100 with item extent 10 and
+        // viewport 50 realize items 0..4 and then 10..14, so the measure with the same constraint must measure 10..14.
+        LayoutRounding rounding = LayoutRounding.ForScale(1);
+        VirtualizingStackPanel panel = new() { FirstRealizedIndex = 0 };
+        for (int i = 0; i < 30; i++)
+        {
+            panel.VisualChildren.Add(new FixedHeightElement(10));
+        }
+
+        foreach (float offset in new[] { 0f, 100f })
+        {
+            panel.VirtualizationContext = new VirtualizationContext(30, 10, 50, offset);
+            panel.Measure(new MeasureContext(new LayoutSize(100, 50), rounding));
+            panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, panel.DesiredSize.Height), rounding));
+        }
+
+        Assert.Equal(new RealizationWindow(10, 15), panel.RealizationWindow);
+        Assert.All(panel.VisualChildren.Skip(10).Take(5), child => Assert.Equal(10, child.DesiredSize.Height));
+    }
+
+    [Fact]
+    public void ContextScrolledWithinTheSameWindowReusesThePanelMeasure()
+    {
+        // Offsets 1 and 5 with item extent 10 and viewport 50 both realize items 0..5: the new context changes only the
+        // scroll offset, which reaches measure and arrange only through the window.
+        LayoutRounding rounding = LayoutRounding.ForScale(1);
+        MeasureCountingVirtualizingStackPanel panel = new() { FirstRealizedIndex = 0 };
+        for (int i = 0; i < 30; i++)
+        {
+            panel.VisualChildren.Add(new FixedHeightElement(10));
+        }
+
+        int? layoutVersion = null;
+        foreach (float offset in new[] { 1f, 5f })
+        {
+            panel.VirtualizationContext = new VirtualizationContext(30, 10, 50, offset);
+            Assert.Equal(new RealizationWindow(0, 6), panel.RealizationWindow);
+            layoutVersion ??= panel.LayoutVersion;
+            Assert.Equal(layoutVersion, panel.LayoutVersion);
+            panel.Measure(new MeasureContext(new LayoutSize(100, 50), rounding));
+            panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, panel.DesiredSize.Height), rounding));
+        }
+
         Assert.Equal(1, panel.MeasureCount);
     }
 
