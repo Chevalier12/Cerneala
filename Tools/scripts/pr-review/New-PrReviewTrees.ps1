@@ -27,7 +27,7 @@ masterCommits (git rev-list --count <merge-base sha base>..<base>). Errors: JSON
 .PARAMETER Number
 Pull request number.
 .PARAMETER Sha
-PR head commit (40 hex characters), from Get-PrReviewTarget.ps1.
+PR head commit (40 hex characters), from Get-PrReviewTarget.ps1. Required, except with -Remove.
 .PARAMETER Root
 Short parent folder for the trees (long scratchpad paths cause "Filename too long"). Default $env:TEMP\crn.
 .PARAMETER Refresh
@@ -37,21 +37,26 @@ Remove the merge and master trees.
 
 .EXAMPLE
 pwsh -NoProfile -File Tools/scripts/pr-review/New-PrReviewTrees.ps1 -Number 402 -Sha 73de8e08664c6094b17b6f4e9042e6302aefab3b
+.EXAMPLE
+pwsh -NoProfile -File Tools/scripts/pr-review/New-PrReviewTrees.ps1 -Number 402 -Remove
 #>
-[CmdletBinding()]
+[CmdletBinding(DefaultParameterSetName = 'Create')]
 param(
     [Parameter(Mandatory)][int] $Number,
-    [Parameter(Mandatory)][ValidatePattern('^[0-9a-fA-F]{40}$')][string] $Sha,
+    [Parameter(Mandatory, ParameterSetName = 'Create')]
+    [Parameter(Mandatory, ParameterSetName = 'Refresh')]
+    [Parameter(ParameterSetName = 'Remove')]
+    [ValidatePattern('^[0-9a-fA-F]{40}$')][string] $Sha,
     [string] $Root = (Join-Path $env:TEMP 'crn'),
-    [switch] $Refresh,
-    [switch] $Remove
+    [Parameter(Mandatory, ParameterSetName = 'Refresh')][switch] $Refresh,
+    [Parameter(Mandatory, ParameterSetName = 'Remove')][switch] $Remove
 )
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 . (Join-Path $PSScriptRoot 'PrReview.Common.ps1')
 
-$Sha = $Sha.ToLowerInvariant()
+if ($Sha) { $Sha = $Sha.ToLowerInvariant() }
 $Root = [IO.Path]::GetFullPath($Root).TrimEnd('\', '/')
 $prRoot = Join-Path $Root "pr$Number"
 $masterTree = Join-Path $prRoot 'master'
