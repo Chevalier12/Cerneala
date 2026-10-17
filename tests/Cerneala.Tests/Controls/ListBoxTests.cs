@@ -42,6 +42,66 @@ public sealed class ListBoxTests
         Assert.True(item.IsSelected);
     }
 
+    // As in WPF, where ButtonBase marks the mouse button events handled, a button in a row owns its click and does
+    // not select the row.
+    [Fact]
+    public void ListBoxClickOnTemplateCheckBoxChecksItWithoutSelectingRow()
+    {
+        (UIRoot root, ListBox listBox) = CreateListBox(context => new CheckBox { Content = context.Data });
+        CheckBox check = Assert.IsType<CheckBox>(FindDescendant<CheckBox>(listBox.ItemContainerGenerator.RealizedContainers[1]));
+        int clicks = 0;
+        check.Click += (_, _) => clicks++;
+        LayoutRect bounds = check.ArrangedBounds;
+        ElementInputBridge bridge = new();
+
+        Click(root, bridge, bounds.X + 6, bounds.Y + bounds.Height / 2);
+
+        Assert.Equal(1, clicks);
+        Assert.True(check.IsChecked);
+        Assert.Equal(-1, listBox.SelectedIndex);
+        Assert.False(Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[1]).IsSelected);
+
+        Click(root, bridge, bounds.X + 6, bounds.Y + bounds.Height / 2);
+
+        Assert.Equal(2, clicks);
+        Assert.False(check.IsChecked);
+        Assert.Equal(-1, listBox.SelectedIndex);
+    }
+
+    [Fact]
+    public void ListBoxClickOnTemplateTextSelectsRow()
+    {
+        (UIRoot root, ListBox listBox) = CreateListBox(context => new TextBlock { Text = context.Data });
+        TextBlock text = Assert.Single(FindTextBlocks(listBox.ItemContainerGenerator.RealizedContainers[1]));
+        LayoutRect bounds = text.ArrangedBounds;
+        ElementInputBridge bridge = new();
+
+        Click(root, bridge, bounds.X + 2, bounds.Y + bounds.Height / 2);
+
+        Assert.Equal(1, listBox.SelectedIndex);
+        Assert.True(Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[1]).IsSelected);
+    }
+
+    [Fact]
+    public void ListBoxClickOnEmptyPartOfTemplateRowSelectsRow()
+    {
+        (UIRoot root, ListBox listBox) = CreateListBox(context => new CheckBox { Content = context.Data, Width = 60 });
+        ListBoxItem row = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[1]);
+        CheckBox check = Assert.IsType<CheckBox>(FindDescendant<CheckBox>(row));
+        int clicks = 0;
+        check.Click += (_, _) => clicks++;
+        float x = row.ArrangedBounds.X + row.ArrangedBounds.Width - 10;
+        Assert.True(x > check.ArrangedBounds.X + check.ArrangedBounds.Width);
+        ElementInputBridge bridge = new();
+
+        Click(root, bridge, x, row.ArrangedBounds.Y + row.ArrangedBounds.Height / 2);
+
+        Assert.Equal(0, clicks);
+        Assert.False(check.IsChecked);
+        Assert.Equal(1, listBox.SelectedIndex);
+        Assert.True(row.IsSelected);
+    }
+
     [Fact]
     public void ListBoxSelectionSurvivesContainerRecycling()
     {
@@ -327,6 +387,41 @@ public sealed class ListBoxTests
         }
 
         return new InputFrame(previous, current, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []);
+    }
+
+    private static (UIRoot Root, ListBox ListBox) CreateListBox(Func<ContentTemplateContext<string>, UIElement> build)
+    {
+        UIRoot root = new(200, 200);
+        ListBox listBox = new() { ItemTemplate = new ContentTemplate<string>("row", key: null, priority: 0, build) };
+        listBox.SetItems(new[] { "one", "two" });
+        root.VisualChildren.Add(listBox);
+        root.ProcessFrame();
+        return (root, listBox);
+    }
+
+    private static void Click(UIRoot root, ElementInputBridge bridge, float x, float y)
+    {
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+    }
+
+    private static T? FindDescendant<T>(UIElement element) where T : UIElement
+    {
+        if (element is T match)
+        {
+            return match;
+        }
+
+        foreach (UIElement child in element.VisualChildren)
+        {
+            if (FindDescendant<T>(child) is T found)
+            {
+                return found;
+            }
+        }
+
+        return null;
     }
 
     private static List<TextBlock> FindTextBlocks(UIElement element)

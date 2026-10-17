@@ -959,37 +959,12 @@ public class ComboBox : Selector
     {
         if (IsEditable || !IsEnabled ||
             args is not MouseButtonEventArgs { ChangedButton: InputMouseButton.Left, ClickCount: > 0 } ||
-            !IsFieldSource(args.OriginalSource))
+            !ReferenceEquals(FindClickOwner(this, args.OriginalSource), this))
         {
             return;
         }
 
         IsDropDownOpen = !IsDropDownOpen;
-    }
-
-    private bool IsFieldSource(object? source)
-    {
-        UIElement? element = source switch
-        {
-            UIElement candidate => candidate,
-            UiElementId id when Root?.ElementIds.TryGetElement(id, out UIElement? resolved) == true => resolved,
-            _ => null
-        };
-
-        for (UIElement? current = element; current is not null; current = current.VisualParent)
-        {
-            if (ReferenceEquals(current, this))
-            {
-                return true;
-            }
-
-            if (current is IInputCommandSource)
-            {
-                return false;
-            }
-        }
-
-        return false;
     }
 
     private void ApplyExactTextMatch(int matchIndex)

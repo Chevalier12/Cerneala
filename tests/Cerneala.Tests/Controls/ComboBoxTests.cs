@@ -615,6 +615,42 @@ public sealed class ComboBoxTests
         Assert.False(comboBox.IsDropDownOpen);
     }
 
+    // As in WPF, where ButtonBase marks the mouse button events handled, a button in a drop-down item owns its click:
+    // it neither selects the item nor closes the drop-down.
+    [Fact]
+    public void NonEditableItemClickOnTemplateCheckBoxChecksItWithoutSelectingItemOrClosingDropDown()
+    {
+        (UIRoot root, ComboBox comboBox) = CreateNonEditableField();
+        comboBox.ItemTemplate = new ContentTemplate<string>(
+            "check",
+            key: null,
+            priority: 0,
+            context => new CheckBox { Content = context.Data });
+        root.ProcessFrame();
+        LayoutRect field = comboBox.ArrangedBounds;
+        ElementInputBridge bridge = new();
+        bridge.Dispatch(root, PointerFrame(field.X + field.Width / 2, field.Y + field.Height / 2, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(field.X + field.Width / 2, field.Y + field.Height / 2, previousDown: true));
+        root.ProcessFrame();
+        Assert.True(comboBox.IsDropDownOpen);
+        UIElement second = comboBox.ItemContainerGenerator.RealizedContainers[1];
+        CheckBox check = Assert.IsType<CheckBox>(FindDescendant<CheckBox>(second));
+        int clicks = 0;
+        check.Click += (_, _) => clicks++;
+        LayoutRect bounds = check.ArrangedBounds;
+        float x = bounds.X + 6;
+        float y = bounds.Y + bounds.Height / 2;
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.Equal(1, clicks);
+        Assert.True(check.IsChecked);
+        Assert.Equal(0, comboBox.SelectedIndex);
+        Assert.True(comboBox.IsDropDownOpen);
+    }
+
     // As in the WPF default template, the selection box is not hit-testable, so a click on a button that the
     // ItemTemplate shows in the closed field only toggles the drop-down.
     [Fact]
