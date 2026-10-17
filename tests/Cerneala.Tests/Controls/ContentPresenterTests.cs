@@ -113,6 +113,103 @@ public sealed class ContentPresenterTests
         Assert.Null(oldChild.VisualParent);
     }
 
+    [Fact]
+    public void ReplacingContentTemplateWrapsElementContentInTheNewTemplate()
+    {
+        UIRoot root = new(200, 200);
+        FixedElement content = new(new LayoutSize(10, 10));
+        ContentPresenter presenter = new() { ContentTemplate = WrapTemplate("wrap", key: null), Content = content };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        Border oldBorder = Assert.IsType<Border>(content.VisualParent);
+
+        presenter.ContentTemplate = WrapTemplate("wrap", key: null);
+        root.ProcessFrame();
+
+        Border newBorder = Assert.IsType<Border>(presenter.PresentedChild);
+        Assert.NotSame(oldBorder, newBorder);
+        Assert.Same(newBorder, content.VisualParent);
+        Assert.Same(newBorder, content.LogicalParent);
+        Assert.DoesNotContain(content, oldBorder.VisualChildren);
+        Assert.DoesNotContain(content, oldBorder.LogicalChildren);
+    }
+
+    [Fact]
+    public void ChangingContentTemplateKeyWrapsElementContentInTheResolvedTemplate()
+    {
+        ContentTemplateRegistry registry = new();
+        registry.Register(WrapTemplate("first", "first"));
+        registry.Register(WrapTemplate("second", "second"));
+        FixedElement content = new(new LayoutSize(10, 10));
+        ContentPresenter presenter = new()
+        {
+            LocalTemplateRegistry = registry,
+            ContentTemplateKey = "first",
+            Content = content
+        };
+        Border oldBorder = Assert.IsType<Border>(presenter.PresentedChild);
+        Assert.Same(oldBorder, content.VisualParent);
+
+        presenter.ContentTemplateKey = "second";
+
+        Border newBorder = Assert.IsType<Border>(presenter.PresentedChild);
+        Assert.NotSame(oldBorder, newBorder);
+        Assert.Same(newBorder, content.VisualParent);
+        Assert.DoesNotContain(content, oldBorder.VisualChildren);
+    }
+
+    [Fact]
+    public void ReplacingLocalTemplateRegistryWrapsElementContentInTheNewTemplate()
+    {
+        ContentTemplateRegistry oldRegistry = new();
+        oldRegistry.Register(WrapTemplate("old", key: null));
+        ContentTemplateRegistry newRegistry = new();
+        newRegistry.Register(WrapTemplate("new", key: null));
+        FixedElement content = new(new LayoutSize(10, 10));
+        ContentPresenter presenter = new() { LocalTemplateRegistry = oldRegistry, Content = content };
+        Border oldBorder = Assert.IsType<Border>(presenter.PresentedChild);
+
+        presenter.LocalTemplateRegistry = newRegistry;
+
+        Border newBorder = Assert.IsType<Border>(presenter.PresentedChild);
+        Assert.NotSame(oldBorder, newBorder);
+        Assert.Same(newBorder, content.VisualParent);
+        Assert.DoesNotContain(content, oldBorder.VisualChildren);
+    }
+
+    [Fact]
+    public void RemovingContentTemplateHostsElementContentThatTheTemplateWrapped()
+    {
+        FixedElement content = new(new LayoutSize(10, 10));
+        ContentPresenter presenter = new() { ContentTemplate = WrapTemplate("wrap", key: null), Content = content };
+        Border oldBorder = Assert.IsType<Border>(presenter.PresentedChild);
+
+        presenter.ContentTemplate = null;
+
+        Assert.Same(content, presenter.PresentedChild);
+        Assert.Same(presenter, content.VisualParent);
+        Assert.Same(presenter, content.LogicalParent);
+        Assert.DoesNotContain(content, oldBorder.VisualChildren);
+    }
+
+    [Fact]
+    public void AddingContentTemplateWrapsElementContentThatWasHostedDirectly()
+    {
+        FixedElement content = new(new LayoutSize(10, 10));
+        ContentPresenter presenter = new() { Content = content };
+        Assert.Same(content, presenter.PresentedChild);
+
+        presenter.ContentTemplate = WrapTemplate("wrap", key: null);
+
+        Border border = Assert.IsType<Border>(presenter.PresentedChild);
+        Assert.Same(border, content.VisualParent);
+    }
+
+    private static ContentTemplate WrapTemplate(string name, string? key)
+    {
+        return new ContentTemplate(name, typeof(object), key, priority: 0, context => new Border { Child = (UIElement?)context.Data });
+    }
+
     private sealed record EqualContent(string Value);
 
     private sealed class ContentElement(object value) : UIElement
