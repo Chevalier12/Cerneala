@@ -156,6 +156,81 @@ public sealed class ListBoxTests
         Assert.Equal(10, row.DesiredSize.Height);
     }
 
+    // WPF copies ItemTemplate to the row's ContentTemplate, and its ContentPresenter tries that template before UIElement content.
+    [Fact]
+    public void ListBoxItemTemplatePresentsElementItem()
+    {
+        UIRoot root = new(300, 200);
+        Marker item = new("raw");
+        List<(object? Data, int Index)> templated = [];
+        ListBox listBox = new() { ItemTemplate = MarkerTemplate(templated) };
+        listBox.SetItems(new object[] { "first", item });
+        root.VisualChildren.Add(listBox);
+        root.ProcessFrame();
+
+        ListBoxItem row = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[1]);
+
+        Assert.Same(item, row.Content);
+        Assert.Equal(["T1:Marker"], MarkerLabels(row));
+        Assert.Contains(templated, entry => ReferenceEquals(entry.Data, item) && entry.Index == 1);
+        Assert.Null(item.VisualParent);
+        Assert.Equal(new LayoutSize(40, 10), row.DesiredSize);
+    }
+
+    [Fact]
+    public void ListBoxItemIsItsOwnRowWithoutItemTemplate()
+    {
+        UIRoot root = new(300, 200);
+        ListBoxItem item = new() { Content = new Marker("own") };
+        ListBox listBox = new() { ItemTemplate = MarkerTemplate([]) };
+        listBox.SetItems(new object[] { item });
+        root.VisualChildren.Add(listBox);
+        root.ProcessFrame();
+
+        Assert.Same(item, listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Equal(["own"], MarkerLabels(item));
+    }
+
+    [Fact]
+    public void ListBoxRowPresentsItemTemplateWhenItsItemChangesBetweenElementAndData()
+    {
+        UIRoot root = new(300, 200);
+        Marker element = new("raw");
+        ListBox listBox = new() { ItemTemplate = MarkerTemplate([]) };
+        listBox.SetItems(new object[] { "data" });
+        root.VisualChildren.Add(listBox);
+        root.ProcessFrame();
+        Assert.Equal(["T0:String"], MarkerLabels(listBox));
+
+        listBox.Items[0] = element;
+        root.ProcessFrame();
+        Assert.Equal(["T0:Marker"], MarkerLabels(listBox));
+        Assert.Null(element.VisualParent);
+
+        listBox.Items[0] = "data";
+        root.ProcessFrame();
+        Assert.Equal(["T0:String"], MarkerLabels(listBox));
+    }
+
+    [Fact]
+    public void ListBoxRowHostsElementItemAgainWhenItemTemplateIsRemoved()
+    {
+        UIRoot root = new(300, 200);
+        Marker element = new("raw");
+        ListBox listBox = new() { ItemTemplate = MarkerTemplate([]) };
+        listBox.SetItems(new object[] { element });
+        root.VisualChildren.Add(listBox);
+        root.ProcessFrame();
+        Assert.Equal(["T0:Marker"], MarkerLabels(listBox));
+
+        listBox.ItemTemplate = null;
+        root.ProcessFrame();
+
+        ListBoxItem row = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Same(element, Assert.Single(row.VisualChildren));
+        Assert.Equal(["raw"], MarkerLabels(listBox));
+    }
+
     [Fact]
     public void ListBoxItemWithStringContentShowsItsTextInsidePadding()
     {
@@ -226,6 +301,41 @@ public sealed class ListBoxTests
         }
 
         return found;
+    }
+
+    private static ContentTemplate MarkerTemplate(List<(object? Data, int Index)> templated)
+    {
+        return new ContentTemplate("Row", typeof(object), key: null, priority: 0, context =>
+        {
+            templated.Add((context.Data, context.Index));
+            return new Marker("T" + context.Index + ":" + context.Data!.GetType().Name);
+        });
+    }
+
+    private static List<string> MarkerLabels(UIElement element)
+    {
+        List<string> labels = [];
+        foreach (UIElement child in element.VisualChildren)
+        {
+            if (child is Marker marker)
+            {
+                labels.Add(marker.Label);
+            }
+
+            labels.AddRange(MarkerLabels(child));
+        }
+
+        return labels;
+    }
+
+    private sealed class Marker(string label) : UIElement
+    {
+        public string Label { get; } = label;
+
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            return new LayoutSize(40, 10);
+        }
     }
 
     private sealed class FixedElement : UIElement
