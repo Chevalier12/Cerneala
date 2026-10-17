@@ -3,6 +3,7 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Input;
 using Cerneala.UI.Controls.Primitives;
+using Cerneala.UI.Controls.Templates;
 
 namespace Cerneala.UI.Controls;
 
@@ -23,9 +24,35 @@ public class TabItem : ContentControl, ISelectableItemContainer
         typeof(TabItem),
         new UiPropertyMetadata<object?>(null, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
 
+    public static readonly UiProperty<ContentTemplate?> HeaderTemplateProperty = UiProperty<ContentTemplate?>.Register(
+        nameof(HeaderTemplate),
+        typeof(TabItem),
+        new UiPropertyMetadata<ContentTemplate?>(null, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
+
+    public static readonly UiProperty<string?> HeaderTemplateKeyProperty = UiProperty<string?>.Register(
+        nameof(HeaderTemplateKey),
+        typeof(TabItem),
+        new UiPropertyMetadata<string?>(null, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
+
+    public static readonly UiProperty<ContentTemplate?> ContentTemplateProperty = UiProperty<ContentTemplate?>.Register(
+        nameof(ContentTemplate),
+        typeof(TabItem),
+        new UiPropertyMetadata<ContentTemplate?>(null, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
+
+    // The header element this TabItem hosts as its own child, when Header is a UIElement that has no template.
+    private UIElement? hostedHeader;
+
+    // Presents every other header: text, and any header with a HeaderTemplate or HeaderTemplateKey.
+    private ContentPresenter? headerPresenter;
+    private ContentTemplateRegistry? headerTemplateRegistry;
+    private int headerIndex = -1;
+
     public int ItemIndex { get; set; } = -1;
 
     public object? Item { get; set; }
+
+    // The TabControl that shows this tab's Content; it is told when the Content or ContentTemplate changes.
+    internal TabControl? Owner { get; set; }
 
     public bool IsSelected
     {
@@ -46,7 +73,7 @@ public class TabItem : ContentControl, ISelectableItemContainer
             }
 
             ValidateCanOwnChild(this, value as UIElement);
-            if (HostsHeaderDirectly)
+            if (HostsHeaderElement)
             {
                 RemoveHeaderElement(oldHeader);
                 try
@@ -69,34 +96,62 @@ public class TabItem : ContentControl, ISelectableItemContainer
         }
     }
 
-    private UIElement? HeaderElement => Header as UIElement;
+    public ContentTemplate? HeaderTemplate
+    {
+        get => GetValue(HeaderTemplateProperty);
+        set => SetValue(HeaderTemplateProperty, value);
+    }
 
-    private bool HostsHeaderDirectly => ComponentTemplate is null && ComponentTemplateKey is null;
+    public string? HeaderTemplateKey
+    {
+        get => GetValue(HeaderTemplateKeyProperty);
+        set => SetValue(HeaderTemplateKeyProperty, value);
+    }
+
+    public ContentTemplate? ContentTemplate
+    {
+        get => GetValue(ContentTemplateProperty);
+        set => SetValue(ContentTemplateProperty, value);
+    }
+
+    // A TabItem never hosts its Content: the TabControl shows the Content of its selected tab in its content area.
+    internal override bool HostsContentDirectly => false;
+
+    private bool IsComponentTemplated => ComponentTemplate is not null || ComponentTemplateKey is not null;
+
+    private bool HostsHeaderElement => !IsComponentTemplated && HeaderTemplate is null && HeaderTemplateKey is null;
+
+    // The owning TabControl passes the registry of its Templates and the item index for a generated tab.
+    internal void SetHeaderPresentation(ContentTemplateRegistry? registry, int index)
+    {
+        headerTemplateRegistry = registry;
+        headerIndex = index;
+        UpdateHeaderHosting();
+    }
 
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
-        if (TemplateChild is not null || HeaderElement is null)
+        if (TemplateChild is not null)
         {
             return base.MeasureCore(context);
         }
 
         Thickness insets = Insets;
         LayoutSize available = Deflate(context.AvailableSize, insets);
-        LayoutSize headerSize = HeaderElement.Measure(new MeasureContext(available, context.Rounding));
-        ContentElement?.Measure(new MeasureContext(LayoutSize.Zero, context.Rounding));
+        UIElement? header = hostedHeader ?? headerPresenter;
+        LayoutSize headerSize = header?.Measure(new MeasureContext(available, context.Rounding)) ?? LayoutSize.Zero;
         return Inflate(headerSize, insets);
     }
 
     protected override LayoutRect ArrangeCore(ArrangeContext context)
     {
-        if (TemplateChild is not null || HeaderElement is null)
+        if (TemplateChild is not null)
         {
             return base.ArrangeCore(context);
         }
 
-        LayoutRect inner = Deflate(context.FinalRect, Insets);
-        HeaderElement.Arrange(new ArrangeContext(inner, context.Rounding));
-        ContentElement?.Arrange(new ArrangeContext(new LayoutRect(inner.X, inner.Y, 0, 0), context.Rounding));
+        UIElement? header = hostedHeader ?? headerPresenter;
+        header?.Arrange(new ArrangeContext(Deflate(context.FinalRect, Insets), context.Rounding));
         return context.FinalRect;
     }
 
@@ -109,19 +164,85 @@ public class TabItem : ContentControl, ISelectableItemContainer
             return;
         }
 
-        if (!ReferenceEquals(args.Property, ComponentTemplateProperty) &&
-            !ReferenceEquals(args.Property, ComponentTemplateKeyProperty))
+        if (ReferenceEquals(args.Property, ComponentTemplateProperty) ||
+            ReferenceEquals(args.Property, ComponentTemplateKeyProperty))
         {
+            RemoveHeaderPresenter();
+            ReleaseHeaderElementFromOwnedSubtree();
+            hostedHeader = null;
             base.OnPropertyChanged(args);
+            UpdateHeaderHosting();
             return;
         }
 
-        ReleaseHeaderElementFromOwnedSubtree();
         base.OnPropertyChanged(args);
-        if (HostsHeaderDirectly)
+        if (ReferenceEquals(args.Property, HeaderProperty) ||
+            ReferenceEquals(args.Property, HeaderTemplateProperty) ||
+            ReferenceEquals(args.Property, HeaderTemplateKeyProperty))
         {
-            AddHeaderElement(Header);
+            UpdateHeaderHosting();
         }
+        else if (ReferenceEquals(args.Property, ContentProperty) ||
+                 ReferenceEquals(args.Property, ContentTemplateProperty))
+        {
+            Owner?.OnTabContentChanged(this);
+        }
+    }
+
+    // The header is hosted directly only when it is a UIElement without a template; any other header is presented
+    // by the header presenter. The element leaves one host before it joins the other.
+    private void UpdateHeaderHosting()
+    {
+        UIElement? wanted = HostsHeaderElement ? Header as UIElement : null;
+        if (hostedHeader is not null && !ReferenceEquals(hostedHeader, wanted))
+        {
+            RemoveHeaderElement(hostedHeader);
+        }
+
+        object? header = Header;
+        bool needsPresenter = !IsComponentTemplated && header is not null && wanted is null;
+        if (!needsPresenter)
+        {
+            RemoveHeaderPresenter();
+        }
+
+        if (wanted is not null && hostedHeader is null)
+        {
+            AddHeaderElement(wanted);
+        }
+
+        if (!needsPresenter)
+        {
+            return;
+        }
+
+        if (headerPresenter is null)
+        {
+            ContentPresenter presenter = new();
+            LogicalChildren.Add(presenter);
+            VisualChildren.Add(presenter);
+            headerPresenter = presenter;
+        }
+
+        headerPresenter.PrepareItemPresentation(header, HeaderTemplate, HeaderTemplateKey, headerTemplateRegistry, headerIndex);
+    }
+
+    private void RemoveHeaderPresenter()
+    {
+        if (headerPresenter is not { } presenter)
+        {
+            return;
+        }
+
+        // Clearing the content lets the presenter release its child, which can be the header element itself.
+        presenter.Content = null;
+        presenter.ContentTemplate = null;
+        presenter.ContentTemplateKey = null;
+        presenter.LocalTemplateRegistry = null;
+        presenter.ContentIndex = -1;
+        VisualChildren.Remove(presenter);
+        LogicalChildren.Remove(presenter);
+        headerPresenter = null;
     }
 
     private void AddHeaderElement(object? header)
@@ -133,6 +254,7 @@ public class TabItem : ContentControl, ISelectableItemContainer
 
         LogicalChildren.Add(element);
         VisualChildren.Add(element);
+        hostedHeader = element;
     }
 
     private void RemoveHeaderElement(object? header)
@@ -144,6 +266,10 @@ public class TabItem : ContentControl, ISelectableItemContainer
 
         VisualChildren.Remove(element);
         LogicalChildren.Remove(element);
+        if (ReferenceEquals(hostedHeader, element))
+        {
+            hostedHeader = null;
+        }
     }
 
     private void ReleaseHeaderElementFromOwnedSubtree()

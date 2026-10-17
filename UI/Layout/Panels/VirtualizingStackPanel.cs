@@ -11,6 +11,7 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
     private readonly Dictionary<UIElement, int> childPositions = new(ReferenceEqualityComparer.Instance);
     private ItemsVirtualizationViewport? automaticViewport;
     private RealizationWindow automaticWindow = RealizationWindow.Empty;
+    private VirtualizationContext? virtualizationContext;
     private float estimatedItemExtent = InitialEstimatedItemExtent;
     private LayoutRounding measureRounding = LayoutRounding.Disabled;
 
@@ -20,7 +21,26 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
         VisualChildren.Changed += (_, _) => childPositions.Clear();
     }
 
-    public VirtualizationContext? VirtualizationContext { get; set; }
+    public VirtualizationContext? VirtualizationContext
+    {
+        get => virtualizationContext;
+        set
+        {
+            RealizationWindow previousWindow = RealizationWindow;
+            VirtualizationContext? previous = virtualizationContext;
+            virtualizationContext = value;
+
+            // Measure and arrange read the context's window, item count and item extent (TotalExtent is their product);
+            // its scroll offset, viewport and cache items reach them only through the window. A cached measure is stale
+            // when any of these changes, as for UpdateViewport, and a new scroll offset inside the same window keeps it.
+            if (previous?.ItemCount != value?.ItemCount ||
+                !Nullable.Equals(previous?.ItemExtent, value?.ItemExtent) ||
+                RealizationWindow != previousWindow)
+            {
+                IncrementLayoutVersion();
+            }
+        }
+    }
 
     // Without a context or viewport every current child is realized, and the children represent
     // the items from FirstRealizedIndex on, so the window covers the valid item indices among them.
@@ -49,7 +69,7 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
     {
         int itemCount = Math.Max(0, viewport.ItemCount);
         bool itemCountChanged = automaticViewport?.ItemCount != itemCount;
-        RealizationWindow previousWindow = automaticWindow;
+        RealizationWindow previousWindow = RealizationWindow;
         automaticViewport = viewport with
         {
             ItemCount = itemCount,
@@ -67,8 +87,9 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
         // The item count drives the desired extent, and the window decides which children the measure measures, so a
         // cached measure is stale when either changes: a direct caller's next Measure with the same size must measure
         // the children that entered the window. A new scroll offset inside the same window changes neither, so the
-        // cached measure stays.
-        if (itemCountChanged || automaticWindow != previousWindow)
+        // cached measure stays. The window is RealizationWindow, not the automatic one: with a VirtualizationContext the
+        // context supplies it, and a moved automatic window changes nothing that the measure uses.
+        if (itemCountChanged || RealizationWindow != previousWindow)
         {
             IncrementLayoutVersion();
         }

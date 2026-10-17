@@ -550,6 +550,46 @@ public sealed class ComboBoxTests
         Assert.Equal(0, comboBox.SelectedIndex);
     }
 
+    // The non-hit-testable selection box lets a press on the selected text hit the field itself, so a press there
+    // and a release on the empty part of the field make one click. A press on the field and a release on
+    // PART_DropDownToggle hit different elements and make no click.
+    [Theory]
+    [InlineData("text", "empty", true)]
+    [InlineData("empty", "toggle", false)]
+    [InlineData("toggle", "empty", false)]
+    public void NonEditableFieldPressAndReleaseOnDifferentPointsTogglesOnlyOnSameHitElement(
+        string pressAt,
+        string releaseAt,
+        bool expectedOpen)
+    {
+        (UIRoot root, ComboBox comboBox) = CreateNonEditableField();
+        ToggleButton toggle = Assert.IsType<ToggleButton>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_DropDownToggle"]);
+        TextBlock text = Assert.IsType<TextBlock>(FindDescendant<TextBlock>(
+            comboBox.ComponentTemplateInstance.Parts["PART_SelectionPresenter"]));
+        Assert.Equal("one", text.Text);
+        LayoutRect bounds = comboBox.ArrangedBounds;
+        float y = bounds.Y + bounds.Height / 2;
+        float PointX(string where) => where switch
+        {
+            "text" => text.ArrangedBounds.X + text.ArrangedBounds.Width / 2,
+            "empty" => bounds.X + bounds.Width * 0.6f,
+            _ => toggle.ArrangedBounds.X + toggle.ArrangedBounds.Width / 2
+        };
+        float pressX = PointX(pressAt);
+        float releaseX = PointX(releaseAt);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(pressX, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(releaseX, y, previousDown: true, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(releaseX, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.Equal(expectedOpen, comboBox.IsDropDownOpen);
+        Assert.Equal(expectedOpen, toggle.IsChecked);
+        Assert.Equal(0, comboBox.SelectedIndex);
+    }
+
     [Fact]
     public void NonEditableItemClickSelectsItemAndClosesDropDown()
     {
@@ -612,6 +652,88 @@ public sealed class ComboBoxTests
         Assert.False(check.IsChecked);
         Assert.False(comboBox.IsDropDownOpen);
         Assert.Equal(0, comboBox.SelectedIndex);
+    }
+
+    // A custom template can leave the selection box hit-testable. A button that the ItemTemplate shows there
+    // then owns the click, as the bridge resolves the click to that command source, and the field stays closed.
+    [Fact]
+    public void NonEditableFieldClickOnHitTestableTemplateButtonClicksButtonWithoutTogglingDropDown()
+    {
+        (UIRoot root, ComboBox comboBox) = CreateNonEditableField();
+        comboBox.ItemTemplate = new ContentTemplate<string>(
+            "check",
+            key: null,
+            priority: 0,
+            context => new CheckBox { Content = context.Data });
+        root.ProcessFrame();
+        UIElement presenter = comboBox.ComponentTemplateInstance!.Parts["PART_SelectionPresenter"];
+        presenter.IsHitTestVisible = true;
+        root.ProcessFrame();
+        CheckBox check = Assert.IsType<CheckBox>(FindDescendant<CheckBox>(presenter));
+        int clicks = 0;
+        check.Click += (_, _) => clicks++;
+        LayoutRect bounds = check.ArrangedBounds;
+        float x = bounds.X + 6;
+        float y = bounds.Y + bounds.Height / 2;
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.Equal(1, clicks);
+        Assert.True(check.IsChecked);
+        Assert.False(comboBox.IsDropDownOpen);
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.Equal(2, clicks);
+        Assert.False(check.IsChecked);
+        Assert.False(comboBox.IsDropDownOpen);
+        Assert.Equal(0, comboBox.SelectedIndex);
+    }
+
+    [Fact]
+    public void NonEditableFieldClickOnHitTestableTemplateTextTogglesDropDown()
+    {
+        (UIRoot root, ComboBox comboBox) = CreateNonEditableField();
+        UIElement presenter = comboBox.ComponentTemplateInstance!.Parts["PART_SelectionPresenter"];
+        presenter.IsHitTestVisible = true;
+        root.ProcessFrame();
+        LayoutRect bounds = comboBox.ArrangedBounds;
+        float x = bounds.X + 8;
+        float y = bounds.Y + bounds.Height / 2;
+        UIElement? hit = new HitTestService().HitTest(root, x, y)?.Element;
+        Assert.NotNull(hit);
+        Assert.True(ReferenceEquals(hit, presenter) || IsDescendantOf(hit!, presenter));
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.True(comboBox.IsDropDownOpen);
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.False(comboBox.IsDropDownOpen);
+    }
+
+    private static bool IsDescendantOf(UIElement element, UIElement ancestor)
+    {
+        for (UIElement? current = element.VisualParent; current is not null; current = current.VisualParent)
+        {
+            if (ReferenceEquals(current, ancestor))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static T? FindDescendant<T>(UIElement element) where T : UIElement

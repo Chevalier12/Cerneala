@@ -160,6 +160,11 @@ public class ContentPresenter : Control
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
         base.OnPropertyChanged(args);
+        if (ReferenceEquals(args.Property, ContentProperty))
+        {
+            ReleaseFromPresentedChild(args.OldValue as UIElement);
+        }
+
         if (ReferenceEquals(args.Property, ContentProperty) ||
             ReferenceEquals(args.Property, ContentTemplateProperty) ||
             ReferenceEquals(args.Property, ContentTemplateKeyProperty))
@@ -178,6 +183,17 @@ public class ContentPresenter : Control
              ReferenceEquals(args.Property, FontSizeProperty)))
         {
             ApplyGeneratedTextAspect(textBlock);
+        }
+    }
+
+    // A template can place an element content inside the element it creates. When that element stops being the
+    // content, the template's element lets go of it at once, even when the presented child is rebuilt only on the
+    // next measure, so the element can be presented elsewhere before that, for example by a recycled item container.
+    private void ReleaseFromPresentedChild(UIElement? previousContent)
+    {
+        if (previousContent is not null && presentedChild is not null && !ReferenceEquals(presentedChild, previousContent))
+        {
+            ContentControl.DetachChildFromOwnedSubtree(this, previousContent);
         }
     }
 

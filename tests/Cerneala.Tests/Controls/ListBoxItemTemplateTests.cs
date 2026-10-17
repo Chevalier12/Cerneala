@@ -162,14 +162,14 @@ public sealed class ListBoxItemTemplateTests
         Assert.Equal(recycled.DesiredSize, fresh.DesiredSize);
     }
 
-    // WPF applies ItemTemplate only to items that are not visuals; a UIElement item is the row's own content.
+    // As in WPF, the row's presenter tries ItemTemplate before UIElement content, so a UIElement item is only the template's data.
     [Fact]
-    public void UIElementItemIsHostedDirectlyByItsListBoxItemWhenItemTemplateIsSet()
+    public void UIElementItemIsPresentedThroughItemTemplateByItsListBoxItem()
     {
         Fixed item = new(new LayoutSize(30, 7), data: null);
         ListBox listBox = new()
         {
-            ItemTemplate = new ContentTemplate<string>("row", key: null, priority: 0,
+            ItemTemplate = new ContentTemplate<UIElement>("row", key: null, priority: 0,
                 context => new Fixed(new LayoutSize(80, 10), context.Data))
         };
         listBox.SetItems(new UIElement[] { item });
@@ -180,9 +180,15 @@ public sealed class ListBoxItemTemplateTests
 
         ListBoxItem row = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[0]);
         Assert.Same(item, row.Content);
-        Assert.Same(row, item.VisualParent);
-        Assert.Same(item, Assert.Single(Descendants(row).OfType<Fixed>()));
-        Assert.Equal(new LayoutSize(30, 7), row.DesiredSize);
+        Assert.Null(item.VisualParent);
+        Fixed element = Assert.Single(Descendants(row).OfType<Fixed>());
+        Assert.NotSame(item, element);
+        Assert.Same(item, element.Data);
+        Assert.Equal(
+            new LayoutSize(
+                80 + row.Padding.Horizontal + row.BorderThickness.Horizontal,
+                10 + row.Padding.Vertical + row.BorderThickness.Vertical),
+            row.DesiredSize);
     }
 
     private static IEnumerable<UIElement> Descendants(UIElement element)
