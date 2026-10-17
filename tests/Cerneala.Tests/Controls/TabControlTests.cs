@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Items;
+using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
@@ -56,18 +57,22 @@ public sealed class TabControlTests
         {
             ItemsPanel = new StackPanel()
         };
+        TabItem second = new() { Header = "Two", Content = new FixedElement() };
         tabControl.SetItems(new[]
         {
             new TabItem { Header = "One", Content = new FixedElement() },
-            new TabItem { Header = "Two", Content = new FixedElement() }
+            second
         });
         root.VisualChildren.Add(tabControl);
         tabControl.Measure(new MeasureContext(new LayoutSize(100, 100)));
         tabControl.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
 
+        // The header row is as tall as its text now and the Content is shown below it, so aim at the second tab.
+        float x = second.ArrangedBounds.X + second.ArrangedBounds.Width / 2;
+        float y = second.ArrangedBounds.Y + second.ArrangedBounds.Height / 2;
         ElementInputBridge bridge = new();
-        bridge.Dispatch(root, PointerFrame(5, 15, currentDown: true));
-        bridge.Dispatch(root, PointerFrame(5, 15, previousDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
 
         Assert.Equal(1, tabControl.SelectedIndex);
         Assert.True(tabControl.SelectedTabItem!.IsSelected);
@@ -96,7 +101,7 @@ public sealed class TabControlTests
         bridge.Dispatch(root, PointerFrame(110, 5, previousDown: true));
 
         Assert.Equal(0, tabControl.SelectedIndex);
-        Assert.Equal(new LayoutRect(0, 0, 120, 20), wideHeader.ArrangedBounds);
+        Assert.Equal(new LayoutRect(0, 0, 120, 10), wideHeader.ArrangedBounds);
     }
 
     [Fact]
@@ -341,6 +346,381 @@ public sealed class TabControlTests
         Assert.Equal(4, tabControl.RealizedItemCount);
         Assert.Equal("C", tabControl.SelectedTabItem!.Content);
         Assert.Same(panel, tabControl.SelectedTabItem.VisualParent);
+    }
+
+    [Fact]
+    public void DataItemTabGetsHeaderFromItemAndItemTemplateBuildsTheHeader()
+    {
+        UIRoot root = new(300, 200);
+        int calls = 0;
+        ContentTemplate<string> template = new("tab", key: null, priority: 0, context =>
+        {
+            calls++;
+            return new FixedElement(new LayoutSize(40, 20));
+        });
+        TabControl tabControl = new() { ItemTemplate = template, ItemsSource = new[] { "One", "Two" } };
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+
+        Assert.Equal(2, calls);
+        IReadOnlyDictionary<int, UIElement> realized = tabControl.ItemContainerGenerator.RealizedContainers;
+        TabItem first = Assert.IsType<TabItem>(realized[0]);
+        TabItem second = Assert.IsType<TabItem>(realized[1]);
+        Assert.Equal("One", first.Header);
+        Assert.Equal("Two", second.Header);
+        Assert.True(first.DesiredSize.Width > 0 && first.DesiredSize.Height > 0, $"first desired {first.DesiredSize}");
+        Assert.True(second.DesiredSize.Width > 0 && second.DesiredSize.Height > 0, $"second desired {second.DesiredSize}");
+        Assert.True(tabControl.DesiredSize.Width > 0 && tabControl.DesiredSize.Height > 0, $"tab control desired {tabControl.DesiredSize}");
+    }
+
+    [Fact]
+    public void StringDataItemTabShowsItsTextAsHeaderWithoutItemTemplate()
+    {
+        UIRoot root = new(300, 200);
+        TabControl tabControl = new() { ItemsSource = new[] { "One", "Two" } };
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+
+        IReadOnlyDictionary<int, UIElement> realized = tabControl.ItemContainerGenerator.RealizedContainers;
+        TabItem first = Assert.IsType<TabItem>(realized[0]);
+        TabItem second = Assert.IsType<TabItem>(realized[1]);
+        Assert.Equal(["One"], FindTextBlocks(first).Select(text => text.Text));
+        Assert.Equal(["Two"], FindTextBlocks(second).Select(text => text.Text));
+        Assert.True(first.DesiredSize.Width > 0 && first.DesiredSize.Height > 0, $"first desired {first.DesiredSize}");
+        Assert.True(second.DesiredSize.Width > 0 && second.DesiredSize.Height > 0, $"second desired {second.DesiredSize}");
+    }
+
+    [Fact]
+    public void ExplicitTabItemsShowTheirStringHeaderAndNeverGetTheItemTemplate()
+    {
+        UIRoot root = new(300, 200);
+        int calls = 0;
+        ContentTemplate<string> template = new("tab", key: null, priority: 0, context =>
+        {
+            calls++;
+            return new FixedElement(new LayoutSize(40, 20));
+        });
+        TabItem first = new() { Header = "H1", Content = "C1" };
+        TabItem second = new() { Header = "H2", Content = "C2" };
+        TabControl tabControl = new() { ItemTemplate = template };
+        tabControl.SetItems(new[] { first, second });
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+
+        Assert.Equal(["H1"], FindTextBlocks(first).Select(text => text.Text));
+        Assert.Equal(["H2"], FindTextBlocks(second).Select(text => text.Text));
+        Assert.Equal(0, calls);
+    }
+
+    [Fact]
+    public void ContentAreaShowsSelectedExplicitTabContentBelowTheHeaderRow()
+    {
+        UIRoot root = new(300, 200);
+        TabItem first = new() { Header = "H1", Content = "C1" };
+        TabItem second = new() { Header = "H2", Content = "C2" };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        root.VisualChildren.Add(tabControl);
+        tabControl.SelectedIndex = 0;
+        root.ProcessFrame();
+
+        AssertContentAreaShows(tabControl, new[] { first, second }, "C1", "C2");
+
+        tabControl.SelectedIndex = 1;
+        root.ProcessFrame();
+
+        AssertContentAreaShows(tabControl, new[] { first, second }, "C2", "C1");
+    }
+
+    [Fact]
+    public void ContentAreaShowsSelectedDataItemBelowTheHeaderRow()
+    {
+        UIRoot root = new(300, 200);
+        TabControl tabControl = new() { ItemsSource = new[] { "One", "Two" } };
+        root.VisualChildren.Add(tabControl);
+        tabControl.SelectedIndex = 0;
+        root.ProcessFrame();
+        UIElement[] tabs = tabControl.ItemContainerGenerator.RealizedContainers.OrderBy(pair => pair.Key).Select(pair => pair.Value).ToArray();
+
+        AssertContentAreaShows(tabControl, tabs, "One", "Two");
+
+        tabControl.SelectedIndex = 1;
+        root.ProcessFrame();
+
+        AssertContentAreaShows(tabControl, tabs, "Two", "One");
+    }
+
+    [Fact]
+    public void ElementContentLivesInTheContentAreaOnlyWhileItsTabIsSelected()
+    {
+        UIRoot root = new(300, 200);
+        FixedElement a = new();
+        FixedElement b = new();
+        TabItem first = new() { Header = "H1", Content = a };
+        TabItem second = new() { Header = "H2", Content = b };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        root.VisualChildren.Add(tabControl);
+        tabControl.SelectedIndex = 0;
+        root.ProcessFrame();
+
+        Assert.NotNull(a.VisualParent);
+        Assert.True(HasVisualAncestor(a, tabControl), "a is not under the TabControl while tab 0 is selected");
+        Assert.False(HasVisualAncestor(a, first), "a is still hosted inside its TabItem");
+        Assert.True(a.ArrangedBounds.Width > 0 && a.ArrangedBounds.Height > 0, $"a arranged {a.ArrangedBounds}");
+        Assert.Null(b.VisualParent);
+
+        tabControl.SelectedIndex = 1;
+        root.ProcessFrame();
+
+        Assert.Null(a.VisualParent);
+        Assert.NotNull(b.VisualParent);
+        Assert.True(HasVisualAncestor(b, tabControl), "b is not under the TabControl while tab 1 is selected");
+        Assert.False(HasVisualAncestor(b, second), "b is hosted inside its TabItem");
+        Assert.True(b.ArrangedBounds.Width > 0 && b.ArrangedBounds.Height > 0, $"b arranged {b.ArrangedBounds}");
+    }
+
+    [Fact]
+    public void DefaultTabControlLaysHeadersOutHorizontally()
+    {
+        UIRoot root = new(200, 100);
+        TabItem first = new() { Header = new FixedElement(new LayoutSize(30, 10)) };
+        TabItem second = new() { Header = new FixedElement(new LayoutSize(30, 10)) };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+
+        Assert.True(
+            second.ArrangedBounds.X > first.ArrangedBounds.X,
+            $"first {first.ArrangedBounds}, second {second.ArrangedBounds}");
+        Assert.Equal(first.ArrangedBounds.Y, second.ArrangedBounds.Y);
+    }
+
+    [Fact]
+    public void TabControlContentTemplateBuildsTheContentAreaForTheSelectedDataItem()
+    {
+        UIRoot root = new(300, 200);
+        int calls = 0;
+        FixedElement? made = null;
+        ContentTemplate<string> template = new("content", key: null, priority: 0, context =>
+        {
+            calls++;
+            made = new FixedElement(new LayoutSize(50, 20));
+            return made;
+        });
+        TabControl tabControl = new() { ContentTemplate = template, ItemsSource = new[] { "One", "Two" } };
+        root.VisualChildren.Add(tabControl);
+        tabControl.SelectedIndex = 0;
+        root.ProcessFrame();
+
+        Assert.Equal(1, calls);
+        Assert.NotNull(made);
+        Assert.True(HasVisualAncestor(made, tabControl), "the template element is not under the TabControl");
+        Assert.False(HasTabItemAncestor(made), "the template element is inside a TabItem");
+        Assert.True(made.ArrangedBounds.Width > 0 && made.ArrangedBounds.Height > 0, $"made arranged {made.ArrangedBounds}");
+    }
+
+    [Fact]
+    public void TabItemContentTemplateWinsOverTabControlContentTemplate()
+    {
+        UIRoot root = new(300, 200);
+        int tabCalls = 0;
+        int controlCalls = 0;
+        ContentTemplate<string> tabTemplate = new("tab", key: null, priority: 0, context =>
+        {
+            tabCalls++;
+            return new FixedElement(new LayoutSize(50, 20));
+        });
+        ContentTemplate<string> controlTemplate = new("control", key: null, priority: 0, context =>
+        {
+            controlCalls++;
+            return new FixedElement(new LayoutSize(60, 30));
+        });
+        TabItem first = new() { Header = "H1", Content = "C1", ContentTemplate = tabTemplate };
+        TabItem second = new() { Header = "H2", Content = "C2" };
+        TabControl tabControl = new() { ContentTemplate = controlTemplate };
+        tabControl.SetItems(new[] { first, second });
+        root.VisualChildren.Add(tabControl);
+        tabControl.SelectedIndex = 0;
+        root.ProcessFrame();
+
+        Assert.Equal((1, 0), (tabCalls, controlCalls));
+
+        tabControl.SelectedIndex = 1;
+        root.ProcessFrame();
+
+        Assert.Equal((1, 1), (tabCalls, controlCalls));
+    }
+
+    [Fact]
+    public void SelectedContentAndSelectedContentTemplateFollowTheSelectedTab()
+    {
+        ContentTemplate<string> tabTemplate = new("tab", key: null, priority: 0, context => new FixedElement());
+        ContentTemplate<string> controlTemplate = new("control", key: null, priority: 0, context => new FixedElement());
+        TabItem first = new() { Header = "H1", Content = "C1", ContentTemplate = tabTemplate };
+        TabItem second = new() { Header = "H2", Content = "C2" };
+        TabControl tabControl = new() { ContentTemplate = controlTemplate };
+        tabControl.SetItems(new[] { first, second });
+
+        tabControl.SelectedIndex = 0;
+
+        Assert.Equal("C1", tabControl.SelectedContent);
+        Assert.Same(tabTemplate, tabControl.SelectedContentTemplate);
+
+        tabControl.SelectedIndex = 1;
+
+        Assert.Equal("C2", tabControl.SelectedContent);
+        Assert.Same(controlTemplate, tabControl.SelectedContentTemplate);
+
+        tabControl.SelectedIndex = -1;
+
+        Assert.Null(tabControl.SelectedContent);
+        Assert.Null(tabControl.SelectedContentTemplate);
+    }
+
+    [Fact]
+    public void ItemTemplateKeyBuildsTheHeaderOfEachDataItemTab()
+    {
+        UIRoot root = new(300, 200);
+        List<string?> built = [];
+        ContentTemplate<string> keyed = new("keyed", key: "k", priority: 0, context =>
+        {
+            built.Add(context.Data);
+            return new FixedElement(new LayoutSize(40, 20));
+        });
+        TabControl tabControl = new() { ItemTemplateKey = "k", ItemsSource = new[] { "One", "Two" } };
+        tabControl.Templates.Add(keyed);
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+
+        Assert.Equal(["One", "Two"], built);
+        IReadOnlyDictionary<int, UIElement> realized = tabControl.ItemContainerGenerator.RealizedContainers;
+        foreach (TabItem tab in new[] { (TabItem)realized[0], (TabItem)realized[1] })
+        {
+            Assert.Equal("k", tab.HeaderTemplateKey);
+            Assert.Null(tab.HeaderTemplate);
+            Assert.True(tab.DesiredSize.Width > 0 && tab.DesiredSize.Height > 0, $"desired {tab.DesiredSize}");
+        }
+    }
+
+    [Fact]
+    public void HeaderTemplateReplacesAHeaderElementAndClearingItHostsTheElementAgain()
+    {
+        UIRoot root = new(300, 200);
+        int calls = 0;
+        FixedElement header = new(new LayoutSize(30, 10));
+        ContentTemplate<UIElement> template = new("header", key: null, priority: 0, context =>
+        {
+            calls++;
+            return new FixedElement(new LayoutSize(40, 12));
+        });
+        TabItem tab = new() { Header = header, HeaderTemplate = template };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { tab });
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+
+        Assert.Equal(1, calls);
+        Assert.Null(header.VisualParent);
+
+        tab.HeaderTemplate = null;
+        root.ProcessFrame();
+
+        Assert.Same(tab, header.VisualParent);
+        Assert.True(header.ArrangedBounds.Width > 0 && header.ArrangedBounds.Height > 0, $"header arranged {header.ArrangedBounds}");
+    }
+
+    [Fact]
+    public void ChangingTheSelectedTabContentUpdatesTheContentArea()
+    {
+        UIRoot root = new(300, 200);
+        TabItem first = new() { Header = "H1", Content = "C1" };
+        TabItem second = new() { Header = "H2", Content = "C2" };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        root.VisualChildren.Add(tabControl);
+        tabControl.SelectedIndex = 0;
+        root.ProcessFrame();
+
+        first.Content = "C1b";
+        root.ProcessFrame();
+
+        AssertContentAreaShows(tabControl, new[] { first, second }, "C1b", "C1");
+    }
+
+    private static bool HasTabItemAncestor(UIElement element)
+    {
+        for (UIElement? current = element.VisualParent; current is not null; current = current.VisualParent)
+        {
+            if (current is TabItem)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // The shown content is a TextBlock outside every tab, below the tabs; the previous content is gone.
+    private static void AssertContentAreaShows(TabControl tabControl, IReadOnlyList<UIElement> tabs, string expected, string absent)
+    {
+        List<TextBlock> outside = FindTextBlocksOutsideTabItems(tabControl);
+        TextBlock shown = Assert.Single(outside, text => text.Text == expected);
+        Assert.DoesNotContain(outside, text => text.Text == absent);
+        Assert.True(shown.ArrangedBounds.Width > 0 && shown.ArrangedBounds.Height > 0, $"'{expected}' arranged {shown.ArrangedBounds}");
+        float headerBottom = tabs.Max(tab => tab.ArrangedBounds.Y + tab.ArrangedBounds.Height);
+        Assert.True(shown.ArrangedBounds.Y >= headerBottom, $"'{expected}' at {shown.ArrangedBounds} is not below the header row bottom {headerBottom}");
+    }
+
+    private static bool HasVisualAncestor(UIElement element, UIElement ancestor)
+    {
+        for (UIElement? current = element.VisualParent; current is not null; current = current.VisualParent)
+        {
+            if (ReferenceEquals(current, ancestor))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static List<TextBlock> FindTextBlocks(UIElement element)
+    {
+        List<TextBlock> found = [];
+        foreach (UIElement child in element.VisualChildren)
+        {
+            if (child is TextBlock textBlock)
+            {
+                found.Add(textBlock);
+            }
+
+            found.AddRange(FindTextBlocks(child));
+        }
+
+        return found;
+    }
+
+    private static List<TextBlock> FindTextBlocksOutsideTabItems(UIElement element)
+    {
+        List<TextBlock> found = [];
+        foreach (UIElement child in element.VisualChildren)
+        {
+            if (child is TabItem)
+            {
+                continue;
+            }
+
+            if (child is TextBlock textBlock)
+            {
+                found.Add(textBlock);
+            }
+
+            found.AddRange(FindTextBlocksOutsideTabItems(child));
+        }
+
+        return found;
     }
 
     private static void Layout(TabControl tabControl)

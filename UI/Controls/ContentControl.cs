@@ -59,7 +59,7 @@ public class ContentControl : Control
 
     protected UIElement? ContentElement => Content as UIElement;
 
-    private bool HostsContentDirectly => ComponentTemplate is null && ComponentTemplateKey is null;
+    private protected virtual bool HostsContentDirectly => ComponentTemplate is null && ComponentTemplateKey is null;
 
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
