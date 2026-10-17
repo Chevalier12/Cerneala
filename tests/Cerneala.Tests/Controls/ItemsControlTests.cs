@@ -155,6 +155,117 @@ public sealed class ItemsControlTests
         Assert.Contains(0, control.ItemContainerGenerator.RealizedContainers.Keys);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void VirtualizingStackPanelSetAfterScrollViewerStopsDrivingTheItemsRealizesEveryItem(bool moveOutOfScrollViewer)
+    {
+        string[] items = Enumerable.Range(0, 2000).Select(index => index.ToString()).ToArray();
+        ItemsControl control = new()
+        {
+            ItemTemplate = CreateRowTemplate(),
+            ItemsSource = items
+        };
+        ScrollViewer viewer = new()
+        {
+            Content = control,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Visible
+        };
+        UIRoot root = new(100, 200);
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+
+        if (moveOutOfScrollViewer)
+        {
+            viewer.Content = null;
+            root.VisualChildren.Remove(viewer);
+            root.VisualChildren.Add(control);
+        }
+        else
+        {
+            viewer.VerticalScrollBarVisibility = ScrollBarVisibility.Disabled;
+        }
+
+        root.ProcessFrame();
+        Assert.Equal(items.Length, control.ItemContainerGenerator.RealizedContainers.Count);
+
+        control.ItemsPanel = new VirtualizingStackPanel();
+        root.ProcessFrame();
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.IsType<VirtualizingStackPanel>(control.ItemsPresenter.LayoutPanelRoot);
+        Assert.Equal(items.Length, control.ItemContainerGenerator.RealizedContainers.Count);
+    }
+
+    [Fact]
+    public void VirtualizingStackPanelSetAfterVirtualizationContextIsClearedRealizesTheScrolledViewport()
+    {
+        string[] items = Enumerable.Range(0, 2000).Select(index => index.ToString()).ToArray();
+        ItemsControl control = new()
+        {
+            ItemTemplate = CreateRowTemplate(),
+            ItemsSource = items
+        };
+        ScrollViewer viewer = new()
+        {
+            Content = control,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Visible
+        };
+        UIRoot root = new(100, 200);
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+
+        control.ItemsPresenter.VirtualizationContext = new VirtualizationContext(items.Length, 20, 200, 0, 0);
+        root.ProcessFrame();
+        viewer.ScrollInfo.SetVerticalOffset(20000);
+        root.ProcessFrame();
+        control.ItemsPresenter.VirtualizationContext = null;
+        control.ItemsPanel = new VirtualizingStackPanel();
+        root.ProcessFrame();
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.Equal(20000, viewer.ScrollInfo.VerticalOffset);
+        Assert.IsType<VirtualizingStackPanel>(control.ItemsPresenter.LayoutPanelRoot);
+        Assert.Contains(1000, control.ItemContainerGenerator.RealizedContainers.Keys);
+        Assert.InRange(control.ItemContainerGenerator.RealizedContainers.Count, 1, 20);
+    }
+
+    [Fact]
+    public void VirtualizingStackPanelSetAfterItemsPresenterIsActivatedAgainRealizesTheScrolledItems()
+    {
+        string[] items = Enumerable.Range(0, 2000).Select(index => index.ToString()).ToArray();
+        PresenterSwappingItemsControl control = new()
+        {
+            ItemTemplate = CreateRowTemplate(),
+            ItemsSource = items
+        };
+        ScrollViewer viewer = new()
+        {
+            Content = control,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Visible
+        };
+        UIRoot root = new(100, 200);
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+
+        control.UsePresenter(new ItemsPresenter());
+        root.ProcessFrame();
+        viewer.ScrollInfo.SetVerticalOffset(20000);
+        root.ProcessFrame();
+        control.UsePresenter(null);
+        root.ProcessFrame();
+        control.ItemsPanel = new VirtualizingStackPanel();
+        root.ProcessFrame();
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.Equal(20000, viewer.ScrollInfo.VerticalOffset);
+        Assert.IsType<VirtualizingStackPanel>(control.ItemsPresenter.LayoutPanelRoot);
+        Assert.Contains(1000, control.ItemContainerGenerator.RealizedContainers.Keys);
+    }
+
     [Fact]
     public void ScrollViewerVirtualizationRealizesItemsAddedToInitiallyEmptySource()
     {
@@ -1256,6 +1367,26 @@ public sealed class ItemsControlTests
         ContentPresenter container = Assert.IsType<ContentPresenter>(
             control.ItemsPresenter.LayoutPanelRoot!.VisualChildren[0]);
         return Assert.IsType<Button>(container.PresentedChild);
+    }
+
+    private static ContentTemplate<string> CreateRowTemplate()
+    {
+        return new ContentTemplate<string>("row", key: null, priority: 0, _ => new FixedElement("row", new LayoutSize(80, 20)));
+    }
+
+    private sealed class PresenterSwappingItemsControl : ItemsControl
+    {
+        // A template part presenter is a child of the control before the control activates it.
+        public void UsePresenter(ItemsPresenter? presenter)
+        {
+            if (presenter is not null)
+            {
+                LogicalChildren.Add(presenter);
+                VisualChildren.Add(presenter);
+            }
+
+            ActivateItemsPresenter(presenter);
+        }
     }
 
     private sealed class FixedElement(string value, LayoutSize size) : UIElement

@@ -46,6 +46,8 @@ public class ScrollContentPresenter : ContentControl, IScrollInfo
         typeof(ScrollContentPresenter),
         new UiPropertyMetadata<float>(0, UiPropertyOptions.None, validateValue: IsValidExtent));
 
+    private bool canVerticallyScroll = true;
+
     public float HorizontalOffset
     {
         get => GetValue(HorizontalOffsetProperty);
@@ -84,7 +86,18 @@ public class ScrollContentPresenter : ContentControl, IScrollInfo
 
     public bool CanHorizontallyScroll { get; set; } = true;
 
-    public bool CanVerticallyScroll { get; set; } = true;
+    public bool CanVerticallyScroll
+    {
+        get => canVerticallyScroll;
+        set
+        {
+            canVerticallyScroll = value;
+            if (!value)
+            {
+                StopItemsVirtualization(ContentElement);
+            }
+        }
+    }
 
     // The pre-rounding displacement applied by the last arrange, not the requested offset.
     // Layout snapshots can precede the arrange that applies a new offset.
@@ -148,6 +161,25 @@ public class ScrollContentPresenter : ContentControl, IScrollInfo
     {
         ClipNode.ClearClip(this);
         base.OnDetached();
+    }
+
+    protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
+    {
+        base.OnPropertyChanged(args);
+        if (ReferenceEquals(args.Property, ContentProperty) && !ReferenceEquals(args.OldValue, args.NewValue))
+        {
+            StopItemsVirtualization(args.OldValue as UIElement);
+        }
+    }
+
+    // Only this presenter knows when it stops pushing the viewport to an items control, which keeps the last
+    // viewport for a virtualizing panel that enters later, so the control drops that viewport here.
+    private static void StopItemsVirtualization(UIElement? content)
+    {
+        if (content is ItemsControl itemsControl)
+        {
+            itemsControl.ClearAutomaticVirtualization();
+        }
     }
 
     private void CoerceOffsets()

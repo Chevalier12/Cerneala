@@ -500,6 +500,11 @@ public class ItemsControl : Control
         }
     }
 
+    internal void ClearAutomaticVirtualization()
+    {
+        itemsPresenter.ClearAutomaticViewport();
+    }
+
     private void UnsubscribeItemsSource()
     {
         if (!isItemsSourceSubscribed)
