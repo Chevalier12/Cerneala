@@ -2456,6 +2456,117 @@ public sealed class ComboBoxTests
         Assert.False(overlay.IsOpen);
     }
 
+    // "one" is selected and the rows are realized, with the drop-down open or closed. SetValue(SelectedIndexProperty,
+    // 1), the path of a binding, an aspect, or application code, re-prepares the row of "two", which throws. As with
+    // the setter, the selection change still raises SelectionChanged and the selection box shows "two" before the
+    // exception propagates.
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void SelectedIndexSetValueWhoseRowPreparationThrowsShowsNewItemAndPropagates(bool dropDownOpen)
+    {
+        (UIRoot root, ElementInputBridge bridge, FailingContentComboBox comboBox) = OpenNonEditableWithFirstItemSelected();
+        if (!dropDownOpen)
+        {
+            DispatchKey(root, bridge, InputKey.Escape);
+            root.ProcessFrame();
+            Assert.True(comboBox.ItemContainerGenerator.RealizedContainers.ContainsKey(1));
+        }
+
+        List<string> raised = [];
+        comboBox.SelectionChanged += (_, args) =>
+            raised.Add($"[{string.Join(",", args.RemovedItems)}]->[{string.Join(",", args.AddedItems)}]");
+
+        comboBox.FailFor = "two";
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+            () => comboBox.SetValue(ComboBox.SelectedIndexProperty, 1));
+        comboBox.FailFor = null;
+        root.ProcessFrame();
+
+        Assert.Equal("content preparation failed", exception.Message);
+        Assert.Equal(1, comboBox.SelectedIndex);
+        Assert.Equal(1, comboBox.SelectionModel.SelectedIndex);
+        Assert.Equal(["[one]->[two]"], raised);
+        Assert.Equal("two", comboBox.Text);
+        ContentPresenter selection = Assert.IsType<ContentPresenter>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_SelectionPresenter"]);
+        Assert.Equal("two", selection.Content);
+        Assert.Equal(1, selection.ContentIndex);
+        Assert.Equal(dropDownOpen, comboBox.IsDropDownOpen);
+    }
+
+    // The drop-down is open with "one" selected, and a handler closes it when SelectedIndex changes.
+    // SetValue(SelectedIndexProperty, 1) cancels the preview while re-preparing the row of "two" throws. As with the
+    // setter, the selection model still follows, SelectionChanged is still raised, and the overlay still closes
+    // before the exception propagates.
+    [Fact]
+    public void SelectedIndexSetValueThatClosesDropDownWhoseRowPreparationThrowsRaisesSelectionChangedAndPropagates()
+    {
+        (UIRoot root, _, FailingContentComboBox comboBox) = OpenNonEditableWithFirstItemSelected();
+        Overlay overlay = Assert.IsType<Overlay>(comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"]);
+        comboBox.PropertyChanged += (_, args) =>
+        {
+            if (ReferenceEquals(args.Property, ComboBox.SelectedIndexProperty))
+            {
+                comboBox.IsDropDownOpen = false;
+            }
+        };
+        List<string> raised = [];
+        comboBox.SelectionChanged += (_, args) =>
+            raised.Add($"[{string.Join(",", args.RemovedItems)}]->[{string.Join(",", args.AddedItems)}]");
+
+        comboBox.FailFor = "two";
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+            () => comboBox.SetValue(ComboBox.SelectedIndexProperty, 1));
+        comboBox.FailFor = null;
+        root.ProcessFrame();
+
+        Assert.Equal("content preparation failed", exception.Message);
+        Assert.Equal(1, comboBox.SelectedIndex);
+        Assert.Equal(1, comboBox.SelectionModel.SelectedIndex);
+        Assert.Equal(["[one]->[two]"], raised);
+        Assert.Equal("two", comboBox.Text);
+        Assert.False(comboBox.IsDropDownOpen);
+        Assert.False(overlay.IsOpen);
+    }
+
+    // SetValue(SelectedIndexProperty, 1) and SelectedIndex = 1 raise the change in the same order: the selection model
+    // already holds 1 when PropertyChanged is raised, and Text already shows "two" when SelectionChanged is raised.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void SelectedIndexChangeRaisesPropertyChangedAfterModelAndSelectionChangedAfterText(bool setValue)
+    {
+        UIRoot root = new(100, 100);
+        ComboBox comboBox = new() { IsEditable = false };
+        comboBox.SetItems(new[] { "one", "two", "three" });
+        root.VisualChildren.Add(comboBox);
+        comboBox.SelectedIndex = 0;
+        root.ProcessFrame();
+        int modelIndexInPropertyChanged = -2;
+        string? textInSelectionChanged = null;
+        comboBox.PropertyChanged += (_, args) =>
+        {
+            if (ReferenceEquals(args.Property, ComboBox.SelectedIndexProperty))
+            {
+                modelIndexInPropertyChanged = comboBox.SelectionModel.SelectedIndex;
+            }
+        };
+        comboBox.SelectionChanged += (_, _) => textInSelectionChanged = comboBox.Text;
+
+        if (setValue)
+        {
+            comboBox.SetValue(ComboBox.SelectedIndexProperty, 1);
+        }
+        else
+        {
+            comboBox.SelectedIndex = 1;
+        }
+
+        Assert.Equal(1, modelIndexInPropertyChanged);
+        Assert.Equal("two", textInSelectionChanged);
+    }
+
     // The drop-down was opened and closed with "one" selected, so the rows stay realized, and a handler opens it
     // when SelectedIndex changes. SelectedIndex = 1 begins the preview of "two" while re-preparing its row throws,
     // and the selection change still raises SelectionChanged and the overlay still opens before the exception
