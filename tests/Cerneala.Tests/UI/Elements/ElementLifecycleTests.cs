@@ -150,6 +150,29 @@ public sealed class ElementLifecycleTests
         Assert.Equal(1, removals);
     }
 
+    // An Unloaded handler throws while an element with a lifecycle behavior is removed. The element's later
+    // detach callbacks still run, then the handler's exception reaches the caller.
+    [Fact]
+    public void ThrowingUnloadedHandlerStillRunsTheElementsRemainingDetachCallbacks()
+    {
+        List<string> calls = [];
+        TrackingElement element = new("element", calls);
+        RecordingLifecycleBehavior behavior = new(calls);
+        element.AddLifecycleBehavior(behavior);
+        element.Unloaded += (_, _) => throw new InvalidOperationException("Unloaded handler failed");
+        UIRoot root = new();
+        root.VisualChildren.Add(element);
+        calls.Clear();
+
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+            () => root.VisualChildren.Remove(element));
+
+        Assert.Equal("Unloaded handler failed", exception.Message);
+        Assert.Equal(["behavior detached", "detached:element"], calls);
+        Assert.Null(element.Root);
+        Assert.Null(element.ElementId);
+    }
+
     private static void Connect(UIElement parent, UIElement middle, UIElement leaf, bool logicalFirst)
     {
         (logicalFirst ? parent.LogicalChildren : parent.VisualChildren).Add(middle);
@@ -166,6 +189,19 @@ public sealed class ElementLifecycleTests
         protected override void OnDetached()
         {
             calls.Add($"detached:{name}");
+        }
+    }
+
+    private sealed class RecordingLifecycleBehavior(List<string> calls) : IElementLifecycleBehavior
+    {
+        public void Attach()
+        {
+            calls.Add("behavior attached");
+        }
+
+        public void Detach()
+        {
+            calls.Add("behavior detached");
         }
     }
 
