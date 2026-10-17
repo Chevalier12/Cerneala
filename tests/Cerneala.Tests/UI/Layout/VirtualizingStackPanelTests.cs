@@ -382,6 +382,57 @@ public sealed class VirtualizingStackPanelTests
             (leaves[0].DesiredSize.Height, rows[0].DesiredSize.Height, rows[0].ArrangedBounds, rows[1].ArrangedBounds.Y));
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ChildRealizedAgainArrangesADescendantBelowACanvasThatChangedOutsideTheRealizationWindow(bool arrangesPanelWhileRowIsSkipped)
+    {
+        // A Canvas arranges its child at the child's desired size, so the stack below it gets the slot 0, 0, 0, 60
+        // both while the row is skipped and after it is realized again: only its children's desired heights change.
+        UIRoot root = new(200, 100, 1);
+        VirtualizingStackPanel panel = new() { FirstRealizedIndex = 0 };
+        UIElement first = new() { Height = 20 };
+        UIElement second = new() { Height = 40 };
+        Cerneala.UI.Controls.StackPanel stack = new();
+        stack.VisualChildren.Add(first);
+        stack.VisualChildren.Add(second);
+        Cerneala.UI.Controls.Canvas canvas = new() { Height = 60 };
+        canvas.VisualChildren.Add(stack);
+        panel.VisualChildren.Add(new Border { Child = canvas });
+        for (int i = 1; i < 20; i++)
+        {
+            panel.VisualChildren.Add(new Border { Child = new UIElement { Height = 20 } });
+        }
+
+        root.VisualChildren.Add(panel);
+        panel.UpdateViewport(new ItemsVirtualizationViewport(20, 100, 0, 0));
+        root.ProcessFrame();
+        panel.UpdateViewport(new ItemsVirtualizationViewport(20, 100, 200, 0));
+        panel.Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange, "scroll");
+        root.ProcessFrame();
+        Assert.False(panel.RealizationWindow.Contains(0));
+
+        first.Height = 40;
+        second.Height = 20;
+        root.ProcessFrame();
+        if (arrangesPanelWhileRowIsSkipped)
+        {
+            panel.UpdateViewport(new ItemsVirtualizationViewport(20, 100, 220, 0));
+            panel.Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange, "scroll inside the skipped range");
+            root.ProcessFrame();
+            Assert.False(panel.RealizationWindow.Contains(0));
+        }
+
+        panel.UpdateViewport(new ItemsVirtualizationViewport(20, 100, 0, 0));
+        panel.Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange, "scroll back");
+        root.ProcessFrame();
+
+        Assert.True(panel.RealizationWindow.Contains(0));
+        Assert.Equal(
+            (40f, new LayoutRect(0, 0, 0, 40), 20f, new LayoutRect(0, 40, 0, 20)),
+            (first.DesiredSize.Height, first.ArrangedBounds, second.DesiredSize.Height, second.ArrangedBounds));
+    }
+
     [Fact]
     public void SkippedChildrenOfADirectlyUsedPanelDrawNothing()
     {
