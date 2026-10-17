@@ -32,6 +32,36 @@ public sealed class SdlInputSourceTests
     }
 
     [Fact]
+    public void RepeatOfHeldKeyIsPublishedOnceForTheNextFrameOnly()
+    {
+        SdlInputSource source = new();
+        source.SetKey(42, true);
+        InputFrame pressed = source.GetFrame();
+        source.SetKey(42, true, repeat: true);
+        source.SetKey(42, true, repeat: true);
+        InputFrame repeated = source.GetFrame();
+        InputFrame idle = source.GetFrame();
+
+        Assert.True(pressed.Keyboard.IsPressed(InputKey.Back));
+        Assert.Equal(0, pressed.Keyboard.GetRepeatCount(InputKey.Back));
+        Assert.False(repeated.Keyboard.IsPressed(InputKey.Back));
+        Assert.True(repeated.Keyboard.IsDown(InputKey.Back));
+        Assert.Equal(2, repeated.Keyboard.GetRepeatCount(InputKey.Back));
+        Assert.Equal(0, idle.Keyboard.GetRepeatCount(InputKey.Back));
+    }
+
+    [Fact]
+    public void RepeatOfKeyThatIsNotDownIsAPressNotARepeat()
+    {
+        SdlInputSource source = new();
+        source.SetKey(42, true, repeat: true);
+        InputFrame frame = source.GetFrame();
+
+        Assert.True(frame.Keyboard.IsPressed(InputKey.Back));
+        Assert.Equal(0, frame.Keyboard.GetRepeatCount(InputKey.Back));
+    }
+
+    [Fact]
     public void DefaultCoordinateScaleIsOne() => Assert.Equal(1, new SdlInputSource().CoordinateScale);
 
     [Fact]
