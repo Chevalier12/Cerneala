@@ -42,6 +42,8 @@ The window renders its configured background and border before its content. `Las
 
 `SaveScreenshot` redraws the current retained command tree into a complete client framebuffer before encoding the PNG. This keeps captures complete even when the displayed frame is changing continuously under Motion. Call it from `FrameRendered` when the capture must correspond to a specific frame boundary.
 
+`Activate()` brings a shown, open window to the foreground and activates it; on any other window it throws `InvalidOperationException`. On the SDL3 host this also works when a window of another process owns the foreground: the host sets SDL's `SDL_FORCE_RAISEWINDOW` hint, so Windows does not keep the window behind, and the window also takes the keyboard input from that process. While the foreground application does not respond, the call can wait about 5 seconds before it returns. `IsActive` changes when the platform reports the activation, during a later event pump, not inside the call. For example, after `window.Activate()` the next `PumpOnce` calls set `IsActive` to `true` and raise `Activated`.
+
 When the native platform activates a window and no retained element already has keyboard focus, a window with `Focusable` set to `true` receives keyboard focus automatically. Activation preserves an existing focused child instead of replacing it with the window.
 
 ## Properties
@@ -55,6 +57,7 @@ When the native platform activates a window and no retained element already has 
 | `ResizeMode` | Native resize policy. |
 | `WindowStartupLocation` | Initial placement policy. |
 | `LastFrame` | Most recently presented `UiFrame`, or `null` before the first frame. |
+| `IsActive` | `true` while the native platform reports the window as the active window. |
 
 ## Events
 | Name | Description |
@@ -65,6 +68,7 @@ When the native platform activates a window and no retained element already has 
 ## Methods
 | Name | Description |
 | --- | --- |
+| `Activate()` | Brings the shown window to the foreground and activates it, also when another process owns the foreground. |
 | `SaveScreenshot(string path)` | Draws the current retained client frame and saves it as a PNG. |
 
 ## Applies to

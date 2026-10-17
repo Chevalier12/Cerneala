@@ -14,13 +14,25 @@ internal static class SdlWindowsWindowFeatures
     public static bool SetResizeGrip(nint window, bool enabled) =>
         SDL.SetWindowHitTest(window, enabled ? resizeGripHitTest : null!, 0);
 
+    // SDL's forced raise attaches to the input of the foreground thread and makes
+    // the window the foreground window. When the window is already the focused
+    // window of its own thread, as in an application started behind another
+    // one, Windows sends it no activation or focus message. SDL sets keyboard
+    // focus only from those messages, so it never reports the window focused.
+    // Without the thread's focus, the raise ends with SetFocus, and SDL handles
+    // that WM_SETFOCUS after the window became the foreground window.
+    public static void PrepareForcedRaise(nint window)
+    {
+        nint handle = GetHandle(window);
+        if (GetForegroundWindow() != handle && GetFocus() == handle)
+        {
+            SetFocus(0);
+        }
+    }
+
     public static void EnsureDefaultIcon(nint window)
     {
-        nint handle = SDL.GetPointerProperty(SDL.GetWindowProperties(window), "SDL.window.win32.hwnd", 0);
-        if (handle == 0)
-        {
-            throw new InvalidOperationException("SDL did not expose its Windows window handle.");
-        }
+        nint handle = GetHandle(window);
 
         // Preserve SDL's executable/resource icon. Only supply the historical
         // system default when neither the window nor its class has an icon.
@@ -38,6 +50,12 @@ internal static class SdlWindowsWindowFeatures
 
         SendMessage(handle, 0x0080, 1, icon); // WM_SETICON / ICON_BIG
         SendMessage(handle, 0x0080, 0, icon); // WM_SETICON / ICON_SMALL
+    }
+
+    private static nint GetHandle(nint window)
+    {
+        nint handle = SDL.GetPointerProperty(SDL.GetWindowProperties(window), "SDL.window.win32.hwnd", 0);
+        return handle != 0 ? handle : throw new InvalidOperationException("SDL did not expose its Windows window handle.");
     }
 
     private static SDL.HitTestResult HitTestResizeGrip(nint window, in SDL.Point point, nint data)
@@ -75,4 +93,13 @@ internal static class SdlWindowsWindowFeatures
 
     [DllImport("user32.dll")]
     private static extern int GetSystemMetrics(int index);
+
+    [DllImport("user32.dll")]
+    private static extern nint GetForegroundWindow();
+
+    [DllImport("user32.dll")]
+    private static extern nint GetFocus();
+
+    [DllImport("user32.dll")]
+    private static extern nint SetFocus(nint window);
 }

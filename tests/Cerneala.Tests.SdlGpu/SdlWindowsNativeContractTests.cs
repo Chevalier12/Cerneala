@@ -133,7 +133,89 @@ public sealed class SdlWindowsNativeContractTests
         AssertWithinClientLimits(handle, model);
     }
 
-    [WindowsNativeFact(Skip = "Always skipped at maintainer request (2026-09-21): native foreground-focus setup fails; ownership/input/lifetime coverage is disabled.")]
+    [WindowsNativeFact]
+    public void ActivateTakesTheForegroundFromAnotherProcess()
+    {
+        using WindowApplicationRuntime runtime = CreateRuntime();
+        Window model = CreateModel("activate");
+        runtime.StartMainWindow(model);
+        nint handle = FindHandle(model);
+        using Process foregroundOwner = StartForegroundOwner($"Foreground owner {Guid.NewGuid():N}");
+        try
+        {
+            Assert.True(SpinWait.SpinUntil(() =>
+            {
+                runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+                return ForegroundProcessId() == (uint)foregroundOwner.Id && !model.IsActive;
+            }, TimeSpan.FromSeconds(30)),
+                $"Setup: process {foregroundOwner.Id} did not take the foreground; " +
+                $"foreground process={ForegroundProcessId()}, IsActive={model.IsActive}.");
+
+            model.Activate();
+
+            Assert.True(SpinWait.SpinUntil(() =>
+            {
+                runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+                return model.IsActive && GetForegroundWindow() == handle;
+            }, TimeSpan.FromSeconds(2)),
+                $"Activate did not take the foreground: IsActive={model.IsActive}, " +
+                $"expected window={handle}, foreground window={GetForegroundWindow()}, " +
+                $"foreground process={ForegroundProcessId()}.");
+        }
+        finally
+        {
+            if (!foregroundOwner.HasExited)
+                foregroundOwner.Kill();
+        }
+    }
+
+    private static uint ForegroundProcessId()
+    {
+        GetWindowThreadProcessId(GetForegroundWindow(), out uint processId);
+        return processId;
+    }
+
+    // A window of another process that takes the foreground when shown, so it
+    // owns the foreground while the test window tries to take it back. It
+    // attaches to the input of the current foreground thread, because Windows
+    // otherwise keeps the foreground with whichever application owns it.
+    private static Process StartForegroundOwner(string title)
+    {
+        ProcessStartInfo start = new("pwsh")
+        {
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+        foreach (string argument in new[]
+        {
+            "-NoProfile", "-NonInteractive", "-Command",
+            "Add-Type -AssemblyName System.Windows.Forms; " +
+            "Add-Type -Namespace Native -Name Foreground -MemberDefinition '" +
+            "[DllImport(\"user32.dll\")] public static extern IntPtr GetForegroundWindow(); " +
+            "[DllImport(\"user32.dll\")] public static extern uint GetWindowThreadProcessId(IntPtr window, IntPtr process); " +
+            "[DllImport(\"kernel32.dll\")] public static extern uint GetCurrentThreadId(); " +
+            "[DllImport(\"user32.dll\")] public static extern bool AttachThreadInput(uint attach, uint attachTo, bool doAttach); " +
+            "[DllImport(\"user32.dll\")] public static extern bool SetForegroundWindow(IntPtr window);'; " +
+            "$form = [System.Windows.Forms.Form]::new(); " +
+            $"$form.Text = '{title}'; " +
+            "$form.Add_Shown({ " +
+            "$thread = [Native.Foreground]::GetWindowThreadProcessId([Native.Foreground]::GetForegroundWindow(), [IntPtr]::Zero); " +
+            "$me = [Native.Foreground]::GetCurrentThreadId(); " +
+            "$attached = $thread -ne 0 -and $thread -ne $me -and [Native.Foreground]::AttachThreadInput($thread, $me, $true); " +
+            "[void][Native.Foreground]::SetForegroundWindow($form.Handle); " +
+            "if ($attached) { [void][Native.Foreground]::AttachThreadInput($thread, $me, $false) } }); " +
+            "$timer = [System.Windows.Forms.Timer]::new(); $timer.Interval = 60000; " +
+            "$timer.Add_Tick({ $form.Close() }); $timer.Start(); " +
+            "[System.Windows.Forms.Application]::Run($form)"
+        })
+        {
+            start.ArgumentList.Add(argument);
+        }
+
+        return Process.Start(start) ?? throw new InvalidOperationException("Could not start the foreground owner process.");
+    }
+
+    [WindowsNativeFact]
     public void NativeOwnershipInputAndGraphicsLifetimesRemainIndependent()
     {
         NativeSdlApi api = new();
@@ -224,7 +306,13 @@ public sealed class SdlWindowsNativeContractTests
                 platform.PumpEvents();
                 return SDL.GetKeyboardState(out _)[(int)SDL.Scancode.A];
             }, TimeSpan.FromSeconds(2)), "The native keyboard did not receive the A key-down.");
+            // A frame holds one transition of each button or key, so the click's
+            // release and then the key-down reach the owner in the next frames.
             InputFrame ownerInput = owner.InputSource.GetFrame();
+            for (int frame = 0; frame < 2 && !ownerInput.Keyboard.IsDown(InputKey.A); frame++)
+            {
+                ownerInput = owner.InputSource.GetFrame();
+            }
             InputFrame childInput = child.InputSource.GetFrame();
             SDL.GetMouseState(out float localX, out float localY);
             SDL.GetGlobalMouseState(out float globalX, out float globalY);

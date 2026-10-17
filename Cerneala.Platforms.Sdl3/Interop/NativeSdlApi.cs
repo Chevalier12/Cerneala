@@ -7,8 +7,14 @@ internal sealed class NativeSdlApi : ISdlApi
 {
     private readonly Dictionary<SdlEventWatch, SDL.EventFilter> eventWatches = [];
 
-    public bool InitializeVideo() =>
-        SDL.Init(SDL.InitFlags.Video | SDL.InitFlags.Events);
+    public bool InitializeVideo()
+    {
+        // Window.Activate must take the foreground from another process. By
+        // default SDL honors the Windows foreground lock, so the window stays
+        // behind the other process's window.
+        SDL.SetHint(SDL.Hints.ForceRaiseWindow, "1");
+        return SDL.Init(SDL.InitFlags.Video | SDL.InitFlags.Events);
+    }
 
     public void Quit() => SDL.Quit();
 
@@ -627,7 +633,15 @@ internal sealed class NativeSdlApi : ISdlApi
 
     public bool HideWindow(nint window) => SDL.HideWindow(window);
 
-    public bool RaiseWindow(nint window) => SDL.RaiseWindow(window);
+    public bool RaiseWindow(nint window)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            SdlWindowsWindowFeatures.PrepareForcedRaise(window);
+        }
+
+        return SDL.RaiseWindow(window);
+    }
 
     public bool MinimizeWindow(nint window) => SDL.MinimizeWindow(window);
 
