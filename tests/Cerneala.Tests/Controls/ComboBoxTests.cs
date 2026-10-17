@@ -550,6 +550,46 @@ public sealed class ComboBoxTests
         Assert.Equal(0, comboBox.SelectedIndex);
     }
 
+    // The non-hit-testable selection box lets a press on the selected text hit the field itself, so a press there
+    // and a release on the empty part of the field make one click. A press on the field and a release on
+    // PART_DropDownToggle hit different elements and make no click.
+    [Theory]
+    [InlineData("text", "empty", true)]
+    [InlineData("empty", "toggle", false)]
+    [InlineData("toggle", "empty", false)]
+    public void NonEditableFieldPressAndReleaseOnDifferentPointsTogglesOnlyOnSameHitElement(
+        string pressAt,
+        string releaseAt,
+        bool expectedOpen)
+    {
+        (UIRoot root, ComboBox comboBox) = CreateNonEditableField();
+        ToggleButton toggle = Assert.IsType<ToggleButton>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_DropDownToggle"]);
+        TextBlock text = Assert.IsType<TextBlock>(FindDescendant<TextBlock>(
+            comboBox.ComponentTemplateInstance.Parts["PART_SelectionPresenter"]));
+        Assert.Equal("one", text.Text);
+        LayoutRect bounds = comboBox.ArrangedBounds;
+        float y = bounds.Y + bounds.Height / 2;
+        float PointX(string where) => where switch
+        {
+            "text" => text.ArrangedBounds.X + text.ArrangedBounds.Width / 2,
+            "empty" => bounds.X + bounds.Width * 0.6f,
+            _ => toggle.ArrangedBounds.X + toggle.ArrangedBounds.Width / 2
+        };
+        float pressX = PointX(pressAt);
+        float releaseX = PointX(releaseAt);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(pressX, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(releaseX, y, previousDown: true, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(releaseX, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.Equal(expectedOpen, comboBox.IsDropDownOpen);
+        Assert.Equal(expectedOpen, toggle.IsChecked);
+        Assert.Equal(0, comboBox.SelectedIndex);
+    }
+
     [Fact]
     public void NonEditableItemClickSelectsItemAndClosesDropDown()
     {
