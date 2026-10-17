@@ -460,6 +460,62 @@ public sealed class OverlayTests
         Assert.Equal(1, closed);
     }
 
+    // A Closed handler throws while the overlay closes. The exception reaches the caller, and the root-owned
+    // layer stays attached only while another overlay is still open.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ClosedHandlerFailureOnCloseStillDetachesTheEmptyLayer(bool otherOverlayOpen)
+    {
+        UIRoot root = new(100, 100);
+        LayoutCanvas canvas = new();
+        Overlay overlay = new() { Content = new FixedElement(new LayoutSize(30, 15)), IsOpen = true };
+        FixedElement otherContent = new(new LayoutSize(20, 10));
+        Overlay other = new() { Content = otherContent, IsOpen = otherOverlayOpen };
+        canvas.VisualChildren.Add(overlay);
+        canvas.VisualChildren.Add(other);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        overlay.Closed += (_, _) => throw new InvalidOperationException("Closed handler failed");
+
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => overlay.IsOpen = false);
+        root.ProcessFrame();
+
+        Assert.Equal("Closed handler failed", exception.Message);
+        Assert.False(overlay.IsOpen);
+        AssertLayer(root, canvas, otherOverlayOpen ? otherContent : null);
+    }
+
+    // A Closed handler throws while removing the overlay's parent closes it. The exception reaches the caller
+    // after the overlay is closed and detached, and the layer stays only for another open overlay.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ClosedHandlerFailureOnDetachStillClosesAndDetachesTheOverlay(bool otherOverlayOpen)
+    {
+        UIRoot root = new(100, 100);
+        LayoutCanvas canvas = new();
+        Overlay overlay = new() { Content = new FixedElement(new LayoutSize(30, 15)), IsOpen = true };
+        canvas.VisualChildren.Add(overlay);
+        LayoutCanvas otherCanvas = new();
+        FixedElement otherContent = new(new LayoutSize(20, 10));
+        otherCanvas.VisualChildren.Add(new Overlay { Content = otherContent, IsOpen = otherOverlayOpen });
+        root.VisualChildren.Add(canvas);
+        root.VisualChildren.Add(otherCanvas);
+        root.ProcessFrame();
+        overlay.Closed += (_, _) => throw new InvalidOperationException("Closed handler failed");
+
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+            () => root.VisualChildren.Remove(canvas));
+        root.ProcessFrame();
+
+        Assert.Equal("Closed handler failed", exception.Message);
+        Assert.False(overlay.IsOpen);
+        Assert.Null(overlay.Root);
+        Assert.Null(canvas.Root);
+        AssertLayer(root, otherCanvas, otherOverlayOpen ? otherContent : null);
+    }
+
     private static InputFrame PointerFrame(float x, float y, bool previousDown = false, bool currentDown = false)
     {
         PointerSnapshot previous = PointerSnapshot.Empty.WithPosition(x, y);
@@ -481,6 +537,20 @@ public sealed class OverlayTests
     {
         bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
         bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+    }
+
+    // The root holds the content element and, only while projected content remains, the overlay layer last.
+    private static void AssertLayer(UIRoot root, UIElement content, UIElement? projectedContent)
+    {
+        if (projectedContent is null)
+        {
+            Assert.Same(content, Assert.Single(root.VisualChildren));
+            return;
+        }
+
+        Assert.Equal(2, root.VisualChildren.Count);
+        Assert.Same(content, root.VisualChildren[0]);
+        Assert.Same(projectedContent.VisualParent, Assert.Single(root.VisualChildren[1].VisualChildren));
     }
 
     private sealed class FixedElement(LayoutSize size) : UIElement

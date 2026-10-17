@@ -115,6 +115,41 @@ public sealed class ElementLifecycleTests
         Assert.Equal(["attached:parent", "attached:child", "detached:child", "detached:parent"], calls);
     }
 
+    // Two children throw from OnDetached while their parent is removed. Every element is still detached and the
+    // removal is still published, then the first child's exception reaches the caller.
+    [Fact]
+    public void ThrowingDetachCallbacksStillDetachTheWholeSubtreeBeforeTheFirstFailurePropagates()
+    {
+        List<string> calls = [];
+        TrackingElement parent = new("parent", calls), sibling = new("sibling", calls);
+        ThrowingDetachElement first = new("first"), second = new("second");
+        parent.VisualChildren.Add(first);
+        parent.VisualChildren.Add(sibling);
+        parent.VisualChildren.Add(second);
+        UIRoot root = new();
+        root.VisualChildren.Add(parent);
+        int removals = 0;
+        root.VisualChildren.Changed += (_, change) =>
+        {
+            if (change.Kind == ElementTreeChangeKind.Removed) { removals++; }
+        };
+        calls.Clear();
+
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+            () => root.VisualChildren.Remove(parent));
+
+        Assert.Equal("detach failed: first", exception.Message);
+        Assert.Equal(["detached:sibling", "detached:parent"], calls);
+        foreach (UIElement element in new UIElement[] { first, sibling, second, parent })
+        {
+            Assert.Null(element.Root);
+            Assert.Null(element.ElementId);
+        }
+
+        Assert.Empty(root.VisualChildren);
+        Assert.Equal(1, removals);
+    }
+
     private static void Connect(UIElement parent, UIElement middle, UIElement leaf, bool logicalFirst)
     {
         (logicalFirst ? parent.LogicalChildren : parent.VisualChildren).Add(middle);
@@ -131,6 +166,14 @@ public sealed class ElementLifecycleTests
         protected override void OnDetached()
         {
             calls.Add($"detached:{name}");
+        }
+    }
+
+    private sealed class ThrowingDetachElement(string name) : UIElement
+    {
+        protected override void OnDetached()
+        {
+            throw new InvalidOperationException($"detach failed: {name}");
         }
     }
 }

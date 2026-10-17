@@ -229,17 +229,23 @@ public class Overlay : Control
 
     protected override void OnDetached()
     {
-        if (isProjected)
+        try
         {
-            Root?.OverlayManager.Hide(this);
+            if (isProjected)
+            {
+                Root?.OverlayManager.Hide(this);
+            }
         }
-
-        if (IsOpen)
+        finally
         {
-            SetValue(IsOpenProperty, false);
-        }
+            // A failing Closed handler still leaves the detached overlay closed.
+            if (IsOpen)
+            {
+                SetValue(IsOpenProperty, false);
+            }
 
-        base.OnDetached();
+            base.OnDetached();
+        }
     }
 
     private void SynchronizeProjection()

@@ -2362,6 +2362,7 @@ public sealed class ComboBoxTests
         Assert.False(overlay.IsOpen);
         Assert.Equal(0, comboBox.SelectedIndex);
         Assert.Equal(1, closed);
+        Assert.Same(canvas, Assert.Single(root.VisualChildren));
     }
 
     // The overlay part opens the drop-down while re-preparing the row of the selected "one" throws, and
