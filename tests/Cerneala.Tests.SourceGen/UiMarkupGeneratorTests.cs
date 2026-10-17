@@ -1036,6 +1036,47 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
+    public void EmptyAndWhitespaceStringAttributesKeepTheirValue()
+    {
+        const string markup = """
+            <StackPanel>
+              <TextBlock Text="" />
+              <TextBlock Text=" " />
+              <Button Content="" />
+              <Button Content="  " />
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("BlankStrings.crn", markup, out Compilation compilation);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        StackPanel panel = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.BlankStringsFactory"));
+        Assert.Equal(string.Empty, Assert.IsType<TextBlock>(panel.VisualChildren[0]).Text);
+        Assert.Equal(" ", Assert.IsType<TextBlock>(panel.VisualChildren[1]).Text);
+        Assert.Equal(string.Empty, Assert.IsType<Button>(panel.VisualChildren[2]).Content);
+        Assert.Equal("  ", Assert.IsType<Button>(panel.VisualChildren[3]).Content);
+    }
+
+    [Fact]
+    public void BlankStringAttributeIsValidatedByTheTargetPropertyAtCreation()
+    {
+        GeneratorRunResult result = RunGenerator("BlankFont.crn", "<TextBlock FontFamily=\"\" />", out Compilation compilation);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        TargetInvocationException exception = Assert.Throws<TargetInvocationException>(
+            () => InvokeCreate(stream, "Cerneala.GeneratedUi.BlankFontFactory"));
+        Assert.IsType<ArgumentException>(exception.InnerException);
+    }
+
+    [Fact]
     public void ExplicitElementSizeMarkupEmitsAndRuns()
     {
         const string markup = "<TextBlock Width=\"40\" Height=\"20\" />";

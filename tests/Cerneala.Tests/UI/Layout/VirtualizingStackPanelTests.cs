@@ -1,7 +1,10 @@
+using Cerneala.Drawing;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
 using Cerneala.UI.Layout.Virtualization;
+using Cerneala.UI.Media;
 
 namespace Cerneala.Tests.UI.Layout;
 
@@ -262,6 +265,152 @@ public sealed class VirtualizingStackPanelTests
         Assert.Equal("10..21, 21..31", GetVerticalDeviceEdges([panel.VisualChildren[1], panel.VisualChildren[2]], scale));
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void FrameDoesNotMeasureChildrenOutsideTheRealizationWindowOfADirectlyUsedPanel(bool rowsAddedBeforePanelJoinsTree)
+    {
+        // Rows of 28 match the initial estimate, so viewport 400 realizes items 0..14 and keeps that window after measure.
+        UIRoot root = new(200, 400, 1);
+        VirtualizingStackPanel panel = new() { FirstRealizedIndex = 0 };
+        List<ConstraintRecordingElement> rows = [.. Enumerable.Range(0, 30).Select(_ => new ConstraintRecordingElement(28))];
+        if (!rowsAddedBeforePanelJoinsTree)
+        {
+            root.VisualChildren.Add(panel);
+            root.ProcessFrame();
+        }
+
+        panel.UpdateViewport(new ItemsVirtualizationViewport(30, 400, 0, 0));
+        rows.ForEach(panel.VisualChildren.Add);
+        if (rowsAddedBeforePanelJoinsTree)
+        {
+            root.VisualChildren.Add(panel);
+        }
+
+        root.ProcessFrame();
+
+        Assert.Equal(new RealizationWindow(0, 15), panel.RealizationWindow);
+        Assert.Equal("", string.Join(", ", rows.Skip(15).Select((row, offset) => (row, index: offset + 15))
+            .Where(entry => entry.row.MeasureCount > 0)
+            .Select(entry => $"row {entry.index} measured {entry.row.MeasureCount}x at {entry.row.LastAvailableSize}")));
+        Assert.All(rows.Take(15), row =>
+        {
+            Assert.True(row.MeasureCount > 0);
+            Assert.Equal(new LayoutSize(200, float.PositiveInfinity), row.LastAvailableSize);
+        });
+    }
+
+    [Fact]
+    public void FrameDoesNotMeasureAChildOutsideTheRealizationWindowWhenOnlyThatChildIsInvalidated()
+    {
+        UIRoot root = new(200, 400, 1);
+        VirtualizingStackPanel panel = new() { FirstRealizedIndex = 0 };
+        root.VisualChildren.Add(panel);
+        panel.UpdateViewport(new ItemsVirtualizationViewport(30, 400, 0, 0));
+        List<ConstraintRecordingElement> rows = [.. Enumerable.Range(0, 30).Select(_ => new ConstraintRecordingElement(28))];
+        rows.ForEach(panel.VisualChildren.Add);
+        root.ProcessFrame();
+        ConstraintRecordingElement outside = rows[20];
+        int measuresBefore = outside.MeasureCount;
+
+        outside.Width = 30;
+        root.ProcessFrame();
+
+        Assert.Equal(new RealizationWindow(0, 15), panel.RealizationWindow);
+        Assert.Equal((0, 0), (measuresBefore, outside.MeasureCount));
+    }
+
+    [Fact]
+    public void FrameDoesNotMeasureAChildMovedOutsideTheRealizationWindow()
+    {
+        UIRoot root = new(200, 400, 1);
+        VirtualizingStackPanel panel = new() { FirstRealizedIndex = 0 };
+        root.VisualChildren.Add(panel);
+        panel.UpdateViewport(new ItemsVirtualizationViewport(30, 400, 0, 0));
+        List<ConstraintRecordingElement> rows = [.. Enumerable.Range(0, 30).Select(_ => new ConstraintRecordingElement(28))];
+        rows.ForEach(panel.VisualChildren.Add);
+        root.ProcessFrame();
+        ConstraintRecordingElement moved = rows[0];
+        int measuresBefore = moved.MeasureCount;
+
+        panel.VisualChildren.Move(0, 20);
+        moved.Width = 30;
+        root.ProcessFrame();
+
+        Assert.Equal(new RealizationWindow(0, 15), panel.RealizationWindow);
+        Assert.Equal((1, 1), (measuresBefore, moved.MeasureCount));
+    }
+
+    [Fact]
+    public void SkippedChildrenOfADirectlyUsedPanelDrawNothing()
+    {
+        // Rows 5..29 lie outside the realization window and are arranged into zero-sized bounds at the panel origin,
+        // where their labels would pile up on the realized "Row 0".
+        UIRoot root = new(320, 200);
+        VirtualizingStackPanel panel = new();
+        for (int index = 0; index < 30; index++)
+        {
+            panel.VisualChildren.Add(new Cerneala.UI.Controls.Border
+            {
+                Height = 40,
+                Child = new Cerneala.UI.Controls.TextBlock
+                {
+                    Text = $"Row {index}",
+                    Foreground = new SolidColorBrush(Color.White),
+                    Margin = new Thickness(10, 9, 0, 0)
+                }
+            });
+        }
+
+        root.VisualChildren.Add(panel);
+        panel.UpdateViewport(new ItemsVirtualizationViewport(30, 200, 0, 0));
+        root.ProcessFrame();
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
+
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
+
+        Assert.Equal(new RealizationWindow(0, 5), panel.RealizationWindow);
+        Assert.Equal(
+            ["Row 0", "Row 1", "Row 2", "Row 3", "Row 4"],
+            commands.Where(command => command.Kind == DrawCommandKind.DrawText).Select(command => command.Text).ToArray());
+    }
+
+    [Fact]
+    public void SkippedChildTakesPartInRenderingHitTestingAndInputOnlyWhileRealized()
+    {
+        UIRoot root = new(100, 100);
+        VirtualizingStackPanel panel = new();
+        for (int index = 0; index < 10; index++)
+        {
+            panel.VisualChildren.Add(new UIElement { Height = 20, Focusable = true });
+        }
+
+        root.VisualChildren.Add(panel);
+        panel.UpdateViewport(new ItemsVirtualizationViewport(10, 100, 0, 0));
+        root.ProcessFrame();
+        UIElement skipped = panel.VisualChildren[7];
+
+        Assert.Equal(new RealizationWindow(0, 5), panel.RealizationWindow);
+        Assert.Equal(
+            (false, false, false),
+            (UIElementVisibility.ParticipatesInRendering(skipped),
+                UIElementVisibility.ParticipatesInHitTest(skipped),
+                UIElementVisibility.ParticipatesInInput(skipped)));
+
+        panel.UpdateViewport(new ItemsVirtualizationViewport(10, 100, 100, 0));
+        panel.Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange, "test");
+        root.ProcessFrame();
+
+        Assert.Equal(new RealizationWindow(5, 10), panel.RealizationWindow);
+        Assert.Equal(
+            (true, true, true),
+            (UIElementVisibility.ParticipatesInRendering(skipped),
+                UIElementVisibility.ParticipatesInHitTest(skipped),
+                UIElementVisibility.ParticipatesInInput(skipped)));
+        Assert.False(UIElementVisibility.ParticipatesInRendering(panel.VisualChildren[0]));
+    }
+
     [Fact]
     public void AutomaticViewportMeasuresTheRowsThatItsCorrectedWindowAddsBeforeArrange()
     {
@@ -423,6 +572,94 @@ public sealed class VirtualizingStackPanelTests
         Assert.InRange(last.Y + last.Height, totalExtent - 2, totalExtent + 2);
     }
 
+    [Theory]
+    [InlineData(1f, 33f, 33f, 1_000_000)]
+    [InlineData(1.25f, 41f, 41f, 1_000_000)]
+    [InlineData(1.75f, 49f, 49f, 400_000)]
+    [InlineData(1f, 33f, 34f, 1_000_000)]
+    [InlineData(1.25f, 41f, 42f, 1_000_000)]
+    public void AutomaticWindowMatchesAWalkThatConvertsEveryDevicePixelPrefixToAnExtent(
+        float scale,
+        float evenItemDevicePixels,
+        float oddItemDevicePixels,
+        int itemCount)
+    {
+        // The window must be the one found by adding each item's device pixels in a double and converting every
+        // prefix to a float extent before comparing it with the scroll offset and the viewport end, also next to
+        // item edges past 2^24 device pixels, where neighbouring float offsets are several device pixels apart.
+        // Items 0 to 9 are measured. With two heights the estimate of the other items, their average, is half a
+        // device pixel off a whole one: 33.5 at scale 1, and 32.8 and 33.6 average to 33.2 (41.5 device pixels) at 1.25.
+        LayoutRounding rounding = LayoutRounding.ForScale(scale);
+        float[] heights = [.. Enumerable.Range(0, 10).Select(index => (index % 2 == 0 ? evenItemDevicePixels : oddItemDevicePixels) / scale)];
+        float estimate = heights.Average();
+        double estimateDevicePixels = MathF.Round(estimate * scale) / scale == estimate ? MathF.Round(estimate * scale) : estimate * scale;
+        double GetItemDevicePixels(int index) => index < 10 ? MathF.Round(heights[index] * scale) : estimateDevicePixels;
+        float viewportExtent = 330 / scale;
+        VirtualizingStackPanel panel = new() { FirstRealizedIndex = 0 };
+        foreach (float height in heights)
+        {
+            panel.VisualChildren.Add(new FixedHeightElement(height));
+        }
+
+        panel.UpdateViewport(new ItemsVirtualizationViewport(itemCount, viewportExtent, 0, 0));
+        panel.Measure(new MeasureContext(new LayoutSize(100, viewportExtent), rounding));
+
+        int pastFloatIntegers = (int)Math.Ceiling(16_777_216 / estimateDevicePixels);
+        List<float> offsets = [16_000_000f, 16_000_000f - 1, panel.TotalExtent - viewportExtent, float.MaxValue];
+        foreach (int itemIndex in new[] { 0, 1, 2, 11, itemCount / 2, pastFloatIntegers, pastFloatIntegers + 1, itemCount - 10, itemCount - 1, itemCount })
+        {
+            double prefix = 0;
+            for (int index = 0; index < itemIndex; index++)
+            {
+                prefix += GetItemDevicePixels(index);
+            }
+
+            float edge = PrefixToExtent(prefix, scale);
+            offsets.AddRange([edge, MathF.BitDecrement(edge), MathF.BitIncrement(edge), edge - viewportExtent, MathF.BitIncrement(edge - viewportExtent)]);
+        }
+
+        foreach (float offset in offsets.Where(offset => offset >= 0))
+        {
+            RealizationWindow expected = GetPrefixWalkWindow(itemCount, GetItemDevicePixels, scale, offset, viewportExtent);
+            panel.UpdateViewport(new ItemsVirtualizationViewport(itemCount, viewportExtent, offset, 0));
+            Assert.True(expected == panel.RealizationWindow, $"offset {offset:R}: expected {expected}, got {panel.RealizationWindow}");
+        }
+    }
+
+    // The window of PR #292: every item adds its device pixels to a double prefix, and each prefix is converted to a
+    // float extent before it is compared.
+    private static RealizationWindow GetPrefixWalkWindow(
+        int itemCount,
+        Func<int, double> getItemDevicePixels,
+        float scale,
+        float offset,
+        float viewportExtent)
+    {
+        float viewportEnd = offset + viewportExtent;
+        int start = 0;
+        double cursor = 0;
+        while (start < itemCount && PrefixToExtent(cursor + getItemDevicePixels(start), scale) <= offset)
+        {
+            cursor += getItemDevicePixels(start);
+            start++;
+        }
+
+        int end = start;
+        while (end < itemCount && (PrefixToExtent(cursor, scale) < viewportEnd || end == start))
+        {
+            cursor += getItemDevicePixels(end);
+            end++;
+        }
+
+        return new RealizationWindow(start, end);
+    }
+
+    private static float PrefixToExtent(double devicePixels, float scale)
+    {
+        float extent = (float)devicePixels / scale;
+        return float.IsFinite(extent) ? extent : float.MaxValue;
+    }
+
     private static string GetVerticalDeviceEdges(IEnumerable<UIElement> elements, float scale)
     {
         return string.Join(", ", elements.Select(element =>
@@ -448,6 +685,20 @@ public sealed class VirtualizingStackPanelTests
         {
             MeasureCount++;
             return base.MeasureCore(context);
+        }
+    }
+
+    private sealed class ConstraintRecordingElement(float height) : UIElement
+    {
+        public int MeasureCount { get; private set; }
+
+        public LayoutSize? LastAvailableSize { get; private set; }
+
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            MeasureCount++;
+            LastAvailableSize = context.AvailableSize;
+            return new LayoutSize(20, height);
         }
     }
 
