@@ -197,7 +197,7 @@ Value validation is enforced by property metadata. `Width` and `Height` accept `
 | Name | Description |
 | --- | --- |
 | `OnAttached()` | Called when the element attaches to a root; queues any pending command-state refresh. |
-| `OnDetached()` | Called before the element clears binding/root attachment state. |
+| `OnDetached()` | Called before the element clears binding/root attachment state. When it throws, that state is still cleared before the exception propagates. |
 | `MeasureCore(MeasureContext)` | Override point for derived element measurement; receives the available size after margin and explicit dimensions, rounded to device pixels when layout rounding is enabled. The base implementation returns `LayoutSize.Zero`. |
 | `ArrangeCore(ArrangeContext)` | Override point for derived element arrangement; receives the rectangle after margin and alignment, with its position and size rounded to device pixels when layout rounding is enabled. The base implementation returns `context.FinalRect`. |
 | `OnRender(RenderContext)` | Override point for derived element rendering; the base implementation does nothing. |

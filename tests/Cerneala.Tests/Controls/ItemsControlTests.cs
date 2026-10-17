@@ -108,6 +108,53 @@ public sealed class ItemsControlTests
         Assert.Contains(3, control.ItemContainerGenerator.RealizedContainers.Keys);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void VirtualizingStackPanelSetAfterFirstLayoutRealizesOnlyTheViewport(bool itemsBeforeFirstLayout)
+    {
+        string[] items = Enumerable.Range(0, 2000).Select(index => index.ToString()).ToArray();
+        int measures = 0;
+        ItemsControl control = new()
+        {
+            ItemTemplate = new ContentTemplate<string>(
+                "row",
+                key: null,
+                priority: 0,
+                _ => new CountingElement(new LayoutSize(80, 10), () => measures++))
+        };
+        if (itemsBeforeFirstLayout)
+        {
+            control.ItemsSource = items;
+        }
+
+        ScrollViewer viewer = new()
+        {
+            Content = control,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Visible
+        };
+        UIRoot root = new(100, 30);
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+
+        measures = 0;
+        control.ItemsPanel = new VirtualizingStackPanel();
+        control.ItemsSource = items;
+        root.ProcessFrame();
+
+        Assert.IsType<VirtualizingStackPanel>(control.ItemsPresenter.LayoutPanelRoot);
+        Assert.InRange(measures, 1, 20);
+        Assert.InRange(control.ItemContainerGenerator.RealizedContainers.Count, 1, 20);
+        Assert.Contains(0, control.ItemContainerGenerator.RealizedContainers.Keys);
+
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.InRange(measures, 1, 20);
+        Assert.InRange(control.ItemContainerGenerator.RealizedContainers.Count, 1, 20);
+        Assert.Contains(0, control.ItemContainerGenerator.RealizedContainers.Keys);
+    }
+
     [Fact]
     public void ScrollViewerVirtualizationRealizesItemsAddedToInitiallyEmptySource()
     {
@@ -1170,6 +1217,15 @@ public sealed class ItemsControlTests
 
         protected override LayoutSize MeasureCore(MeasureContext context)
         {
+            return size;
+        }
+    }
+
+    private sealed class CountingElement(LayoutSize size, Action measured) : UIElement
+    {
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            measured();
             return size;
         }
     }

@@ -56,6 +56,8 @@ When `IsReadOnly` is `true`, text can still be selected and copied, and `Text` c
 
 Pointer selection captures the mouse until the left button is released or capture is lost. Long text uses an internal horizontal viewport to keep the caret visible.
 
+A pointer press places the caret, and a drag extends the selection, at the character drawn under the pointer. The unrounded root pointer position is converted through the render transforms of the text box and every ancestor, like `MouseEventArgs.GetPosition(textBox)`, before it is compared with the caret stops of the text. For example, for a text box at the left edge of a panel at the root origin with `RenderTransform = new Transform(Matrix3x2.CreateScale(2, 2))` and `RenderTransformOrigin = new LayoutPoint(0, 0)`, a click at root x `60` gives the same caret as a click at root x `30` when the panel has no transform. A pointer position that cannot be converted, for example through a non-invertible transform, keeps the current caret.
+
 The control renders its background, border, text, selection and blinking caret directly. Default chrome is stored as framework defaults at the `Default` value source: `Padding` `4,2,4,2`, `BorderThickness` `1`, `BorderBrush` `Color(120, 130, 145)`, and a white `Background`. Any Aspect, local, or other higher-source value replaces them.
 
 Derived controls can override `NormalizeTextInput`, `OnTextChanged` and `OnSelectionChanged`. Event hooks must call the base implementation when the routed event should continue to be raised.

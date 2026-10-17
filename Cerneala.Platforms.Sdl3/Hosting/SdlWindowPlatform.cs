@@ -310,6 +310,8 @@ internal sealed class SdlPlatformWindow : IPlatformWindow
 
         try
         {
+            // SDL3 starts with text input off; without this, typed characters never arrive.
+            Require(api.StartTextInput(Handle), "SDL text input start");
             UpdateCoordinateScales();
             ApplyLogicalSize(window);
             Surface = new SdlWindowSurface(Handle, WindowId);
@@ -495,7 +497,7 @@ internal sealed class SdlPlatformWindow : IPlatformWindow
                 break;
             case SdlEventKind.KeyDown when enabled:
             case SdlEventKind.KeyUp when enabled:
-                inputSource.SetKey(@event.Scancode, @event.Kind == SdlEventKind.KeyDown);
+                inputSource.SetKey(@event.Scancode, @event.Kind == SdlEventKind.KeyDown, @event.Repeat);
                 callbacks.RenderRequested();
                 break;
             case SdlEventKind.TextInput when enabled:

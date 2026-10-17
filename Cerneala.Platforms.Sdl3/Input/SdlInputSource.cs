@@ -16,6 +16,7 @@ internal sealed class SdlInputSource : IInputSource
     private KeyboardSnapshot previousKeyboard = KeyboardSnapshot.Empty;
     private readonly HashSet<InputKey> downKeys = [];
     private readonly List<TextInputSnapshotEvent> textInput = [];
+    private readonly List<InputKey> keyRepeats = [];
     private readonly HashSet<InputKey> changedKeys = [];
     private readonly HashSet<InputMouseButton> changedButtons = [];
     private readonly List<PendingInput> deferred = [];
@@ -32,10 +33,11 @@ internal sealed class SdlInputSource : IInputSource
     public InputFrame GetFrame()
     {
         KeyboardSnapshot currentKeyboard = KeyboardSnapshot.FromDownKeys(downKeys);
-        InputFrame frame = new(previousPointer, currentPointer, previousKeyboard, currentKeyboard, textInput.ToArray());
+        InputFrame frame = new(previousPointer, currentPointer, previousKeyboard, currentKeyboard, textInput.ToArray(), keyRepeats.ToArray());
         previousPointer = currentPointer;
         previousKeyboard = currentKeyboard;
         textInput.Clear();
+        keyRepeats.Clear();
         changedKeys.Clear();
         changedButtons.Clear();
         framePhase = FramePhase.Empty;
@@ -79,7 +81,7 @@ internal sealed class SdlInputSource : IInputSource
         Accept(new PendingInput(PendingKind.Wheel, Value: flipped ? -delta : delta));
     }
 
-    public void SetKey(int scancode, bool down)
+    public void SetKey(int scancode, bool down, bool repeat = false)
     {
         InputKey key = MapScancode(scancode);
         if (key is InputKey.None or InputKey.Unknown)
@@ -87,7 +89,7 @@ internal sealed class SdlInputSource : IInputSource
             return;
         }
 
-        Accept(new PendingInput(PendingKind.Key, Value: (int)key, Down: down));
+        Accept(new PendingInput(PendingKind.Key, Value: (int)key, Down: down, Repeat: repeat));
     }
 
     public void AddText(string? text)
@@ -162,6 +164,13 @@ internal sealed class SdlInputSource : IInputSource
                 currentPointer = currentPointer.WithWheelValue(checked(currentPointer.WheelValue + input.Value));
                 break;
             case PendingKind.Key:
+                if (input.Repeat && input.Down && downKeys.Contains((InputKey)input.Value))
+                {
+                    // An auto-repeat of a held key is an event, not a transition.
+                    keyRepeats.Add((InputKey)input.Value);
+                    break;
+                }
+
                 changedKeys.Add((InputKey)input.Value);
                 if (input.Down)
                 {
@@ -187,7 +196,7 @@ internal sealed class SdlInputSource : IInputSource
         PendingKind.Button => (InputMouseButton)input.Value != InputMouseButton.None &&
             currentPointer.IsDown((InputMouseButton)input.Value) != input.Down,
         PendingKind.Wheel => input.Value != 0,
-        PendingKind.Key => downKeys.Contains((InputKey)input.Value) != input.Down,
+        PendingKind.Key => (input.Repeat && input.Down) || downKeys.Contains((InputKey)input.Value) != input.Down,
         _ => true
     };
 
@@ -263,5 +272,6 @@ internal sealed class SdlInputSource : IInputSource
         float Y = 0,
         int Value = 0,
         bool Down = false,
+        bool Repeat = false,
         string? Text = null);
 }

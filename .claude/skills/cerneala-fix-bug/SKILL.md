@@ -130,7 +130,7 @@ While you fix the bug, you can find other Cerneala defects: in the owning code, 
 1. Prove it as `github-issue-raise` section 1 says: reproduce it on the current code after the sync of step 0b (the newest `origin/master`), check that it fails for the stated reason, ground the expected behavior in a contract, and check for duplicates.
 2. Raise it with `github-issue-raise` and post the issue directly, without asking the user (user decision, 2026-10-15). When an open issue already covers it, post the new evidence as a comment on that issue instead.
 3. Do not fix it in this pull request. When it blocks the reproduction or the app, route around it with a comment. A Servo or Detective defect that blocks the workflow follows "Repair Servo and Detective When They Fail" instead.
-4. Record it for the pull request: the issue link, its title, and one sentence on how you found it. Also record each suspected defect that you did not raise, with the reason, for example "not reproduced" or "contract unclear".
+4. Record it for the pull request: the issue link, its title, and one sentence on how you found it. Also record each suspected defect that you did not raise, with the reason, for example "not reproduced" or "contract unclear". Never raise a question issue: when the contract is unclear, the entry stays "contract unclear" and is not raised. Only `cerneala-pr-review-merge` raises a question issue, when the user's validation comment asks for one.
 
 Step 9 lists them in the pull request. Example from #268: while building the reproduction app, the fix found #278 (a row realized again keeps the zero size it got outside the window) and #279 (Servo ignores `RenderTransform`), and PR 277 lists both under `Other bugs found`.
 
