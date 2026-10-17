@@ -225,6 +225,36 @@ public sealed class Servo
             token), cancellationToken);
     }
 
+    public Task SendPlatformInputAsync(params ServoPlatformInput[] events) =>
+        SendPlatformInputAsync(events, CancellationToken.None);
+
+    public Task SendPlatformInputAsync(
+        IReadOnlyList<ServoPlatformInput> events,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(events);
+        ServoPlatformInput[] snapshot = [.. events];
+        if (snapshot.Length == 0)
+        {
+            throw new ArgumentException("At least one platform input event is required.", nameof(events));
+        }
+
+        if (Array.IndexOf(snapshot, null) >= 0)
+        {
+            throw new ArgumentException("A platform input event cannot be null.", nameof(events));
+        }
+
+        if (context.Window is null)
+        {
+            return Task.FromException(new NotSupportedException(
+                "Servo platform input requires a Window-owned frame runtime."));
+        }
+
+        return RunAsync(
+            token => context.SendPlatformInputAsync(snapshot, token),
+            cancellationToken);
+    }
+
     public Task WaitForAsync(
         ServoTarget target,
         ServoCondition condition,

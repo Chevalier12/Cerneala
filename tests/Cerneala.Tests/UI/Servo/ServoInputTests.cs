@@ -259,6 +259,47 @@ public sealed class ServoInputTests
         Assert.False(host.LastFrame!.Input.Keyboard.IsDown(InputKey.A));
     }
 
+    [Fact]
+    public async Task PlatformInputRejectsDirectHostBeforeProducingInput()
+    {
+        UiHost host = CreateHost(new TextBox { Width = 200, Height = 40 });
+        ServoApi servo = new(host);
+        UiFrame before = host.LastFrame!;
+
+        await Assert.ThrowsAsync<NotSupportedException>(() =>
+            servo.SendPlatformInputAsync(ServoPlatformInput.KeyDown(InputKey.A)));
+
+        Assert.Same(before, host.LastFrame);
+    }
+
+    [Fact]
+    public void PlatformInputValidatesItsEventsBeforeTouchingAnyPlatform()
+    {
+        UiHost host = CreateHost(new TextBox { Width = 200, Height = 40 });
+        ServoApi servo = new(host);
+
+        Assert.ThrowsAny<ArgumentException>(() => { _ = servo.SendPlatformInputAsync(); });
+        Assert.ThrowsAny<ArgumentException>(() => { _ = servo.SendPlatformInputAsync([]); });
+        Assert.ThrowsAny<ArgumentException>(() =>
+        {
+            _ = servo.SendPlatformInputAsync([ServoPlatformInput.KeyDown(InputKey.A), null!]);
+        });
+        Assert.Throws<ArgumentNullException>(() =>
+        {
+            _ = servo.SendPlatformInputAsync((IReadOnlyList<ServoPlatformInput>)null!);
+        });
+        Assert.ThrowsAny<ArgumentException>(() => ServoPlatformInput.KeyDown(InputKey.None));
+        Assert.ThrowsAny<ArgumentException>(() => ServoPlatformInput.KeyDown(InputKey.Unknown));
+        Assert.ThrowsAny<ArgumentException>(() => ServoPlatformInput.KeyUp((InputKey)int.MaxValue));
+        Assert.ThrowsAny<ArgumentException>(() => ServoPlatformInput.Text(""));
+        Assert.ThrowsAny<ArgumentException>(() => ServoPlatformInput.Text(null!));
+        Assert.ThrowsAny<ArgumentException>(() => ServoPlatformInput.PointerDown(
+            new ServoPoint(1, 1), InputMouseButton.None));
+        Assert.ThrowsAny<ArgumentException>(() => ServoPlatformInput.PointerUp(
+            new ServoPoint(1, 1), InputMouseButton.None));
+        Assert.ThrowsAny<ArgumentException>(() => ServoPlatformInput.Wheel(new ServoPoint(1, 1), 0));
+    }
+
     [Theory]
     [InlineData("hover")]
     [InlineData("click")]

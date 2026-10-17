@@ -777,6 +777,9 @@ internal interface ISdlApi
 
     bool PollEvent(out SdlEvent @event);
 
+    // Appends an event to the queue PollEvent reads. Returns false when SDL rejects it.
+    bool PushEvent(in SdlEvent @event);
+
     bool AddEventWatch(SdlEventWatch watch);
 
     void RemoveEventWatch(SdlEventWatch watch);

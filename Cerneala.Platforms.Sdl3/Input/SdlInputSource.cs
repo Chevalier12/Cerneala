@@ -39,6 +39,12 @@ internal sealed class SdlInputSource : IInputSource
 
     public float CoordinateScale { get; set; } = 1;
 
+    // True while input is waiting to reach an app: deferred to a later frame, or already
+    // moved into the frame under construction that no GetFrame has returned yet. GetFrame
+    // applies the deferred input to the next frame as soon as it fits, so the deferred list
+    // alone is empty while that frame still holds input.
+    internal bool HasUndeliveredInput => deferred.Count > 0 || framePhase != FramePhase.Empty;
+
     public InputFrame GetFrame()
     {
         KeyboardSnapshot currentKeyboard = KeyboardSnapshot.FromDownKeys(downKeys);
@@ -274,7 +280,7 @@ internal sealed class SdlInputSource : IInputSource
         _ => true
     };
 
-    private static InputKey MapScancode(int scancode)
+    internal static InputKey MapScancode(int scancode)
     {
         if (scancode is >= 4 and <= 29)
         {
@@ -316,6 +322,53 @@ internal sealed class SdlInputSource : IInputSource
             229 => InputKey.RightShift,
             230 => InputKey.RightAlt,
             _ => InputKey.Unknown
+        };
+    }
+
+    // The inverse of MapScancode: the scancode SDL reports for the key, or -1 when no
+    // scancode that MapScancode maps back to this key exists.
+    internal static int MapInputKey(InputKey key)
+    {
+        if (key is >= InputKey.A and <= InputKey.Z)
+        {
+            return 4 + (key - InputKey.A);
+        }
+
+        if (key is >= InputKey.D1 and <= InputKey.D9)
+        {
+            return 30 + (key - InputKey.D1);
+        }
+
+        if (key is >= InputKey.F1 and <= InputKey.F12)
+        {
+            return 58 + (key - InputKey.F1);
+        }
+
+        return key switch
+        {
+            InputKey.D0 => 39,
+            InputKey.Enter => 40,
+            InputKey.Escape => 41,
+            InputKey.Back => 42,
+            InputKey.Tab => 43,
+            InputKey.Space => 44,
+            InputKey.Insert => 73,
+            InputKey.Home => 74,
+            InputKey.PageUp => 75,
+            InputKey.Delete => 76,
+            InputKey.End => 77,
+            InputKey.PageDown => 78,
+            InputKey.Right => 79,
+            InputKey.Left => 80,
+            InputKey.Down => 81,
+            InputKey.Up => 82,
+            InputKey.LeftCtrl => 224,
+            InputKey.LeftShift => 225,
+            InputKey.LeftAlt => 226,
+            InputKey.RightCtrl => 228,
+            InputKey.RightShift => 229,
+            InputKey.RightAlt => 230,
+            _ => -1
         };
     }
 

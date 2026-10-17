@@ -4,6 +4,7 @@ using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.Windowing;
 using Cerneala.UI.Input;
 using Cerneala.UI.Platform;
+using Cerneala.UI.Servo;
 using System.Runtime.ExceptionServices;
 
 namespace Cerneala.Platforms.Sdl3;
@@ -239,8 +240,11 @@ internal sealed class SdlWindowPlatform : IWindowPlatform
     }
 }
 
-internal sealed class SdlPlatformWindow : IPlatformWindow
+internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjector
 {
+    // The unit of an SDL wheel notch in the input source and in Servo's wheel delta.
+    private const int WheelNotchDelta = 120;
+
     private readonly ISdlApi api;
     private readonly Window window;
     private readonly IWindowPlatformCallbacks callbacks;
@@ -434,6 +438,89 @@ internal sealed class SdlPlatformWindow : IPlatformWindow
     }
 
     public void Dispose() => Destroy();
+
+    public bool HasPendingInput => inputSource.HasUndeliveredInput;
+
+    public void Inject(ReadOnlySpan<ServoPlatformInput> events)
+    {
+        ObjectDisposedException.ThrowIf(destroyed, this);
+        SdlEvent[] mapped = new SdlEvent[events.Length];
+        for (int index = 0; index < mapped.Length; index++)
+        {
+            mapped[index] = ToSdlEvent(events[index]);
+        }
+
+        foreach (SdlEvent @event in mapped)
+        {
+            Require(api.PushEvent(@event), "SDL event push");
+        }
+    }
+
+    private SdlEvent ToSdlEvent(ServoPlatformInput input)
+    {
+        switch (input.Kind)
+        {
+            case ServoPlatformInputKind.KeyDown:
+            case ServoPlatformInputKind.KeyUp:
+                int scancode = SdlInputSource.MapInputKey(input.Key);
+                if (scancode < 0)
+                {
+                    throw new ArgumentException(
+                        $"The key {input.Key} has no SDL scancode, so it cannot be sent as platform input.",
+                        "events");
+                }
+
+                bool down = input.Kind == ServoPlatformInputKind.KeyDown;
+                return new SdlEvent(
+                    down ? SdlEventKind.KeyDown : SdlEventKind.KeyUp,
+                    WindowId,
+                    Scancode: scancode,
+                    Repeat: down && input.Repeat);
+            case ServoPlatformInputKind.Text:
+                return new SdlEvent(SdlEventKind.TextInput, WindowId, Text: input.CommittedText);
+            case ServoPlatformInputKind.PointerMove:
+                return new SdlEvent(
+                    SdlEventKind.MouseMotion,
+                    WindowId,
+                    X: input.Position.X * nativeCoordinateScale,
+                    Y: input.Position.Y * nativeCoordinateScale);
+            case ServoPlatformInputKind.PointerDown:
+            case ServoPlatformInputKind.PointerUp:
+                return new SdlEvent(
+                    input.Kind == ServoPlatformInputKind.PointerDown
+                        ? SdlEventKind.MouseButtonDown
+                        : SdlEventKind.MouseButtonUp,
+                    WindowId,
+                    X: input.Position.X * nativeCoordinateScale,
+                    Y: input.Position.Y * nativeCoordinateScale,
+                    MouseButton: input.Button switch
+                    {
+                        InputMouseButton.Left => 1,
+                        InputMouseButton.Middle => 2,
+                        InputMouseButton.Right => 3,
+                        InputMouseButton.XButton1 => 4,
+                        InputMouseButton.XButton2 => 5,
+                        _ => throw new ArgumentException(
+                            $"The button {input.Button} has no SDL button number.", "events")
+                    });
+            default:
+                // SDL reports a wheel in whole notches; the input source turns each into 120 units.
+                if (input.WheelDelta % WheelNotchDelta != 0)
+                {
+                    throw new ArgumentException(
+                        $"SDL reports the wheel in whole notches of {WheelNotchDelta}; " +
+                        $"a wheel delta of {input.WheelDelta} cannot be sent as platform input.",
+                        "events");
+                }
+
+                return new SdlEvent(
+                    SdlEventKind.MouseWheel,
+                    WindowId,
+                    Data2: input.WheelDelta / WheelNotchDelta,
+                    X: input.Position.X * nativeCoordinateScale,
+                    Y: input.Position.Y * nativeCoordinateScale);
+        }
+    }
 
     public void RequestApplicationClose()
     {

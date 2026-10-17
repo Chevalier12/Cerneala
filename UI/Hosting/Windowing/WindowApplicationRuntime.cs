@@ -24,6 +24,10 @@ internal sealed class WindowApplicationRuntime : IDisposable
     private readonly ThemeProvider themeProvider;
     private readonly IPlatformServices? platformServices;
     private bool disposed;
+    // Platform event pumps that have started and that have returned. A pump that starts
+    // while Servo injects input is not guaranteed to see the injected events.
+    private int pumpsStarted;
+    private int pumpsCompleted;
     private Window? legacyMainWindow;
     private Application? application;
 
@@ -451,6 +455,39 @@ internal sealed class WindowApplicationRuntime : IDisposable
         return RequireContext(window).ServoInput;
     }
 
+    // Pushes the events into the window's platform queue and completes once every one of
+    // them reached the app: a pump that started after the push has run, and a presented
+    // frame collected from the platform input source after that pump left no input
+    // deferred. The events stay in the platform queue when the caller cancels or times out.
+    internal Task SendServoPlatformInputAsync(
+        Window window,
+        ServoPlatformInput[] events,
+        CancellationToken cancellationToken)
+    {
+        VerifyAccess();
+        ArgumentNullException.ThrowIfNull(window);
+        ArgumentNullException.ThrowIfNull(events);
+        cancellationToken.ThrowIfCancellationRequested();
+        WindowContext context = RequireContext(window);
+        if (context.IsPreview || context.PlatformWindow is not IPlatformInputInjector injector)
+        {
+            throw new NotSupportedException(
+                "Servo platform input requires a Window whose platform can inject input events.");
+        }
+
+        if (!IsLiveContext(context))
+        {
+            throw new ServoException("Servo platform input requires an open Window.");
+        }
+
+        int requiredPump = pumpsStarted + 1;
+        injector.Inject(events);
+        ServoPlatformInputOperation operation = new(requiredPump, cancellationToken);
+        context.ServoPlatformInputOperations.Add(operation);
+        context.RenderRequested = true;
+        return operation.Task;
+    }
+
     internal void ClickPreview(Window window, float x, float y)
     {
         VerifyAccess();
@@ -566,7 +603,9 @@ internal sealed class WindowApplicationRuntime : IDisposable
     public bool PumpOnce(TimeSpan elapsedTime)
     {
         VerifyAccess();
+        pumpsStarted++;
         platform.PumpEvents();
+        pumpsCompleted = pumpsStarted;
         bool frameRendered = false;
         foreach (WindowContext context in contexts.Values.ToArray())
         {
@@ -749,6 +788,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
         context.IsRendering = true;
         context.RenderRequested = false;
+        context.BeginPlatformInputCollection();
         ServoInputFrameRequest? servoRequest = null;
         try
         {
@@ -838,6 +878,8 @@ internal sealed class WindowApplicationRuntime : IDisposable
                     context.CompleteServoInputFrame(servoRequest);
                 }
 
+                context.CompleteServoPlatformInput();
+
                 if (!context.ContentRendered)
                 {
                     context.ContentRendered = true;
@@ -867,7 +909,8 @@ internal sealed class WindowApplicationRuntime : IDisposable
             }
             if (IsLiveContext(context) &&
                 (context.ServoInputOperations.Count > 0 ||
-                 context.ServoScreenshotRequests.Count > 0))
+                 context.ServoScreenshotRequests.Count > 0 ||
+                 context.HasPendingServoPlatformInput))
             {
                 context.RenderRequested = true;
             }
@@ -907,10 +950,17 @@ internal sealed class WindowApplicationRuntime : IDisposable
         }
     }
 
-    private static InputFrame CollectPlatformInput(WindowContext context) =>
-        context.IsPreview
-            ? context.PreviewInputDriver.GetCurrentFrame()
-            : context.PlatformWindow.InputSource.GetFrame();
+    private static InputFrame CollectPlatformInput(WindowContext context)
+    {
+        if (context.IsPreview)
+        {
+            return context.PreviewInputDriver.GetCurrentFrame();
+        }
+
+        InputFrame frame = context.PlatformWindow.InputSource.GetFrame();
+        context.NotePlatformInputCollected();
+        return frame;
+    }
 
     private WindowContext RequireContext(Window window)
     {
@@ -1117,6 +1167,58 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
         public Queue<ServoScreenshotRequest> ServoScreenshotRequests { get; } = new();
 
+        public List<ServoPlatformInputOperation> ServoPlatformInputOperations { get; } = [];
+
+        // What the frame under construction read from the platform input source: the pump
+        // count when it was read (-1 when it read nothing) and whether the source then held
+        // no input that a later frame still has to deliver.
+        private int platformInputCollectedPump = -1;
+        private bool platformInputDrained;
+
+        public bool HasPendingServoPlatformInput
+        {
+            get
+            {
+                ServoPlatformInputOperations.RemoveAll(static operation => operation.Task.IsCompleted);
+                return ServoPlatformInputOperations.Count > 0;
+            }
+        }
+
+        public void BeginPlatformInputCollection()
+        {
+            platformInputCollectedPump = -1;
+            platformInputDrained = false;
+        }
+
+        public void NotePlatformInputCollected()
+        {
+            platformInputCollectedPump = runtime.pumpsCompleted;
+            platformInputDrained = PlatformWindow is not IPlatformInputInjector { HasPendingInput: true };
+        }
+
+        // Called once the frame is presented. Input injected before a pump that completed
+        // before this frame's collection has been mapped and delivered, unless the source
+        // still defers some of it to a later frame.
+        public void CompleteServoPlatformInput()
+        {
+            bool delivered = platformInputCollectedPump >= 0 && platformInputDrained;
+            ServoPlatformInputOperations.RemoveAll(operation =>
+            {
+                if (operation.Task.IsCompleted)
+                {
+                    return true;
+                }
+
+                if (!delivered || operation.RequiredPump > platformInputCollectedPump)
+                {
+                    return false;
+                }
+
+                operation.Complete();
+                return true;
+            });
+        }
+
         public void DeferShow()
         {
             if (!IsCloseDeferred) deferredLifecycleAction = DeferredLifecycleAction.Show;
@@ -1227,6 +1329,12 @@ internal sealed class WindowApplicationRuntime : IDisposable
                     "The Servo Window closed before the screenshot operation completed."));
             }
             ServoScreenshotRequests.Clear();
+            foreach (ServoPlatformInputOperation operation in ServoPlatformInputOperations)
+            {
+                operation.Fail(new ServoException(
+                    "The Servo Window closed before the platform input completed."));
+            }
+            ServoPlatformInputOperations.Clear();
             PlatformWindow.Dispose();
         }
 
@@ -1466,6 +1574,46 @@ internal sealed class WindowApplicationRuntime : IDisposable
         {
             await Task.Delay(sequence.CleanupTimeout).ConfigureAwait(false);
             if (!IsDrained) Complete();
+        }
+    }
+
+    private sealed class ServoPlatformInputOperation
+    {
+        private readonly CancellationToken cancellationToken;
+        private readonly TaskCompletionSource completion =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly CancellationTokenRegistration cancellationRegistration;
+
+        public ServoPlatformInputOperation(int requiredPump, CancellationToken cancellationToken)
+        {
+            RequiredPump = requiredPump;
+            this.cancellationToken = cancellationToken;
+            cancellationRegistration = cancellationToken.Register(
+                static state => ((ServoPlatformInputOperation)state!).Cancel(),
+                this);
+        }
+
+        // The number of the first event pump that started after the events were pushed.
+        public int RequiredPump { get; }
+
+        public Task Task => completion.Task;
+
+        public void Complete()
+        {
+            cancellationRegistration.Dispose();
+            completion.TrySetResult();
+        }
+
+        public void Fail(Exception exception)
+        {
+            ArgumentNullException.ThrowIfNull(exception);
+            cancellationRegistration.Dispose();
+            completion.TrySetException(exception);
+        }
+
+        private void Cancel()
+        {
+            completion.TrySetCanceled(cancellationToken);
         }
     }
 

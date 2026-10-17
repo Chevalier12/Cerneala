@@ -6,11 +6,19 @@ namespace Cerneala.Platforms.Sdl3;
 internal sealed class NativeSdlApi : ISdlApi
 {
     private readonly Dictionary<SdlEventWatch, SDL.EventFilter> eventWatches = [];
+    // SDL does not own the text of a TextInput event that the app pushes. The buffers live
+    // here from the push until PollEvent hands the event out, or until SDL quits.
+    private readonly object pushedTextSync = new();
+    private readonly HashSet<nint> pushedText = [];
 
     public bool InitializeVideo() =>
         SDL.Init(SDL.InitFlags.Video | SDL.InitFlags.Events);
 
-    public void Quit() => SDL.Quit();
+    public void Quit()
+    {
+        SDL.Quit();
+        ReleaseAllPushedText();
+    }
 
     public string GetError() => SDL.GetError();
 
@@ -670,7 +678,142 @@ internal sealed class NativeSdlApi : ISdlApi
         }
 
         @event = ConvertEvent(native);
+        if ((SDL.EventType)native.Type == SDL.EventType.TextInput)
+        {
+            ReleasePushedText(native.Text.Text);
+        }
+
         return true;
+    }
+
+    public bool PushEvent(in SdlEvent @event)
+    {
+        nint text = 0;
+        SDL.Event native = default;
+        switch (@event.Kind)
+        {
+            case SdlEventKind.KeyDown:
+            case SdlEventKind.KeyUp:
+                SDL.Scancode scancode = (SDL.Scancode)@event.Scancode;
+                native.Key = new SDL.KeyboardEvent
+                {
+                    Type = @event.Kind == SdlEventKind.KeyDown ? SDL.EventType.KeyDown : SDL.EventType.KeyUp,
+                    WindowID = @event.WindowId,
+                    Scancode = scancode,
+                    Key = SDL.GetKeyFromScancode(scancode, SDL.Keymod.None, false),
+                    Down = @event.Kind == SdlEventKind.KeyDown,
+                    Repeat = @event.Repeat
+                };
+                break;
+            case SdlEventKind.TextInput:
+                text = Marshal.StringToCoTaskMemUTF8(@event.Text ?? string.Empty);
+                lock (pushedTextSync)
+                {
+                    pushedText.Add(text);
+                }
+
+                native.Text = new SDL.TextInputEvent
+                {
+                    Type = SDL.EventType.TextInput,
+                    WindowID = @event.WindowId,
+                    Text = text
+                };
+                break;
+            case SdlEventKind.MouseMotion:
+                native.Motion = new SDL.MouseMotionEvent
+                {
+                    Type = SDL.EventType.MouseMotion,
+                    WindowID = @event.WindowId,
+                    X = @event.X,
+                    Y = @event.Y
+                };
+                break;
+            case SdlEventKind.MouseButtonDown:
+            case SdlEventKind.MouseButtonUp:
+                native.Button = new SDL.MouseButtonEvent
+                {
+                    Type = @event.Kind == SdlEventKind.MouseButtonDown
+                        ? SDL.EventType.MouseButtonDown
+                        : SDL.EventType.MouseButtonUp,
+                    WindowID = @event.WindowId,
+                    Button = @event.MouseButton,
+                    Down = @event.Kind == SdlEventKind.MouseButtonDown,
+                    Clicks = 1,
+                    X = @event.X,
+                    Y = @event.Y
+                };
+                break;
+            case SdlEventKind.MouseWheel:
+                native.Wheel = new SDL.MouseWheelEvent
+                {
+                    Type = SDL.EventType.MouseWheel,
+                    WindowID = @event.WindowId,
+                    X = @event.Data1,
+                    Y = @event.Data2,
+                    Direction = @event.WheelFlipped
+                        ? SDL.MouseWheelDirection.Flipped
+                        : SDL.MouseWheelDirection.Normal,
+                    MouseX = @event.X,
+                    MouseY = @event.Y,
+                    IntegerX = @event.Data1,
+                    IntegerY = @event.Data2
+                };
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(
+                    nameof(@event),
+                    @event.Kind,
+                    "Only key, text, pointer and wheel events can be pushed.");
+        }
+
+        bool pushed = false;
+        try
+        {
+            pushed = SDL.PushEvent(ref native);
+        }
+        finally
+        {
+            if (!pushed)
+            {
+                ReleasePushedText(text);
+            }
+        }
+
+        return pushed;
+    }
+
+    private void ReleasePushedText(nint text)
+    {
+        if (text == 0)
+        {
+            return;
+        }
+
+        bool owned;
+        lock (pushedTextSync)
+        {
+            owned = pushedText.Remove(text);
+        }
+
+        if (owned)
+        {
+            Marshal.FreeCoTaskMem(text);
+        }
+    }
+
+    private void ReleaseAllPushedText()
+    {
+        nint[] leftovers;
+        lock (pushedTextSync)
+        {
+            leftovers = [.. pushedText];
+            pushedText.Clear();
+        }
+
+        foreach (nint text in leftovers)
+        {
+            Marshal.FreeCoTaskMem(text);
+        }
     }
 
     public bool AddEventWatch(SdlEventWatch watch)

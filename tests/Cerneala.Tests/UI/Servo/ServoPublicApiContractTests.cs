@@ -64,6 +64,20 @@ public sealed class ServoPublicApiContractTests
         Assert.NotNull(servo.GetMethod("HoldKeyAsync", [
             typeof(Cerneala.UI.Input.InputKey), typeof(TimeSpan), modifiers, typeof(CancellationToken)]));
 
+        // The params overload cannot take a CancellationToken last; the list overload does.
+        Type platformInput = RequirePublicType("Cerneala.UI.Servo.ServoPlatformInput");
+        Assert.NotNull(servo.GetMethod("SendPlatformInputAsync", [
+            typeof(IReadOnlyList<>).MakeGenericType(platformInput), typeof(CancellationToken)]));
+        MethodInfo paramsOverload = servo.GetMethod("SendPlatformInputAsync", [platformInput.MakeArrayType()])!;
+        Assert.NotNull(paramsOverload);
+        Assert.True(paramsOverload.GetParameters()[0].IsDefined(typeof(ParamArrayAttribute), inherit: false));
+        Assert.Equal(typeof(Task), paramsOverload.ReturnType);
+        Assert.True(platformInput.IsSealed);
+        Assert.Empty(platformInput.GetConstructors(BindingFlags.Public | BindingFlags.Instance));
+        Assert.All(
+            new[] { "KeyDown", "KeyUp", "Text", "PointerMove", "PointerDown", "PointerUp", "Wheel" },
+            factory => Assert.NotNull(platformInput.GetMethod(factory, BindingFlags.Public | BindingFlags.Static)));
+
         Assert.NotNull(target.GetMethod("ById", BindingFlags.Public | BindingFlags.Static));
         Assert.NotNull(target.GetMethod("ByName", BindingFlags.Public | BindingFlags.Static));
         Assert.NotNull(target.GetMethod("ByRole", BindingFlags.Public | BindingFlags.Static));

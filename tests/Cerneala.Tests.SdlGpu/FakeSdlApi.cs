@@ -1061,6 +1061,22 @@ internal sealed class FakeSdlApi : ISdlApi
         return false;
     }
 
+    public List<SdlEvent> PushedEvents { get; } = [];
+
+    public bool PushEventResult { get; set; } = true;
+
+    public bool PushEvent(in SdlEvent @event)
+    {
+        if (!PushEventResult)
+        {
+            return false;
+        }
+
+        PushedEvents.Add(@event);
+        events.Enqueue(@event);
+        return true;
+    }
+
     public bool AddEventWatch(SdlEventWatch watch)
     {
         AddEventWatchCount++;

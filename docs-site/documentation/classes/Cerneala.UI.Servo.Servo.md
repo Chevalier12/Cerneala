@@ -39,6 +39,18 @@ static async Task DriveAsync(Window window)
     });
     await walkingServo.HoldKeyAsync(InputKey.D, TimeSpan.FromSeconds(2));
 }
+
+// A window on the SDL platform: send raw platform events, including auto-repeat.
+static async Task RepeatBackspaceAsync(Window window)
+{
+    var servo = new Servo(window);
+    await servo.SendPlatformInputAsync(
+        ServoPlatformInput.KeyDown(InputKey.Back),
+        ServoPlatformInput.KeyDown(InputKey.Back, repeat: true),
+        ServoPlatformInput.KeyDown(InputKey.Back, repeat: true),
+        ServoPlatformInput.KeyUp(InputKey.Back),
+        ServoPlatformInput.Text("abc"));
+}
 ```
 
 ## Remarks
@@ -61,9 +73,29 @@ Input sequences are serialized per window or host. `TypeIntoAsync` composes a cl
 
 Every operation uses `ServoOptions.DefaultTimeout`. Expiration throws `ServoTimeoutException`; caller cancellation remains `OperationCanceledException`. Waits reevaluate after retained frame boundaries and release their transient subscriptions on every completion path. Async `WaitUntilAsync` predicates may issue Servo queries and do not hold the input serialization gate. `WaitForIdleAsync` requires the relay, scheduler, and Motion system to be idle, no active Servo pointer repeat, and no Servo input sequence in progress; continuous Motion therefore times out.
 
-`HoldKeyAsync` requires a `Window`-owned Servo; a direct `UiHost` Servo rejects it with `NotSupportedException` before sending input. The duration must be positive. The key and any requested left-side Shift, Control, or Alt modifiers follow the same focused-element routing as `PressKeyAsync`; `PressKeyAsync` remains a tap. The monotonic hold interval starts when the Window runtime completes Servo input for the key-down frame, **after** `Window.FrameRendered` callbacks have returned. It is not a physical display/scanout timestamp. Subsequent Servo-owned window frames keep the same down state without synthesizing repeated `KeyDown` events. Key-up is delivered in the first input frame begun at or after the requested minimum **monotonic wall-clock** duration, followed by modifier release; frame scheduling can make the actual interval longer.
+`HoldKeyAsync` requires a `Window`-owned Servo; a direct `UiHost` Servo rejects it with `NotSupportedException` before sending input. The duration must be positive. The key and any requested left-side Shift, Control, or Alt modifiers follow the same focused-element routing as `PressKeyAsync`; `PressKeyAsync` remains a tap. The monotonic hold interval starts when the Window runtime completes Servo input for the key-down frame, **after** `Window.FrameRendered` callbacks have returned. It is not a physical display/scanout timestamp. Subsequent Servo-owned window frames keep the same down state without synthesizing repeated `KeyDown` events; to send auto-repeat `KeyDown` events, use `SendPlatformInputAsync` (see "Input paths"). Key-up is delivered in the first input frame begun at or after the requested minimum **monotonic wall-clock** duration, followed by modifier release; frame scheduling can make the actual interval longer.
 
 `DefaultTimeout` applies to the whole operation, including serialization wait, key-down delivery, hold interval, and ordinary release. Configure it longer than the requested duration with margin for frame scheduling. Cancellation or timeout can shorten the hold. If the owner processes cleanup before the additional `DefaultTimeout` cleanup deadline, Servo routes the release before the task settles. If the Window is hidden or its viewport becomes non-renderable during a hold, Servo faults the hold and routes a release through the retained input host without presenting another frame; an already requested cancellation or timeout keeps its result. During that offscreen release, reentrant Show or Close requests from input callbacks are deferred until the retained update finishes. If the owner pump stops or is delayed beyond that deadline after input started, cancellation, timeout, or failure initiates cleanup but cannot dispatch it from a background thread. The task settles after at most one additional `DefaultTimeout` cleanup interval, with the reset left ahead of subsequent Servo input for the next owner update. A closed/destroyed or persistently faulted owner cannot promise delivery of a release; close discards its pending Servo input. Servo does not reserve or alter input supplied independently to a direct `UiHost`.
+
+### Input paths
+
+Servo has two input paths. Pick by what the test needs to prove.
+
+| Operation | Path | What it exercises |
+| --- | --- | --- |
+| `ClickAsync`, `HoverAsync`, `DragAsync`, `ScrollAsync`, `PressKeyAsync`, `HoldKeyAsync`, `SendTextAsync`, `TypeIntoAsync`, `ReplaceTextAsync` | Servo-built `InputFrame` | Hit testing, routing, focus, commands. Works for `Window` and `UiHost`. Never goes through the platform. |
+| `SendPlatformInputAsync` | The platform's own event queue | Everything above, plus the platform layer: for SDL, `SdlWindowPlatform` event pumping and `SdlInputSource` frame building. |
+
+Use `SendPlatformInputAsync` when the bug or behavior lives below the `InputFrame`: key auto-repeat (`KeyDown` with `repeat: true`), a key press and release that arrive in one event pump, or text that arrives with the key events. Use the other operations for everything else; they also work without a platform.
+
+`SendPlatformInputAsync` limits:
+
+- It needs a `Window` whose platform can inject events. Today that is the SDL platform. A `UiHost` Servo, a preview window, or a platform without injection throws `NotSupportedException`.
+- Positions are client DIPs, like `ServoPoint` everywhere else. They are not hit-tested against a target.
+- A wheel delta must be a non-zero multiple of 120, the unit of `ScrollAsync`. SDL reports whole wheel notches, so `Wheel(position, 240)` is two notches and `Wheel(position, 100)` throws `ArgumentException` without pushing anything.
+- Events are pushed all at once, before the next event pump. The task completes on the UI thread after a pump that started after the push has run, the resulting frame was presented, and the input source holds no undelivered input. It also completes when the platform drops the events, for example `Text` while text input is inactive.
+- Cancellation and timeout do not recall events that were already pushed.
+- It does not move or release anything for you: a `KeyDown` without a later `KeyUp` leaves the key down.
 
 Screenshots are supported only by the `Window` constructor and use the application-owned `Window.SaveScreenshot` pipeline. A target screenshot resolves the target fresh, requires effective visibility and a non-empty framebuffer intersection, and crops the fully rendered window after drawing. Disabled and non-hit-testable targets remain capturable. A `UiHost`-only Servo throws `NotSupportedException` for both screenshot overloads.
 
@@ -96,6 +128,7 @@ Screenshots are supported only by the `Window` constructor and use the applicati
 | `PressKeyAsync(InputKey, ServoModifiers, CancellationToken)` | Sends a key chord to the currently focused element. |
 | `HoldKeyAsync(InputKey, TimeSpan, ServoModifiers, CancellationToken)` | Holds a key chord across Window frames for at least the specified wall-clock duration, then releases it. |
 | `SendTextAsync(string, CancellationToken)` | Sends Unicode text elements to the currently focused element. |
+| `SendPlatformInputAsync(IReadOnlyList<ServoPlatformInput>, CancellationToken)` | Pushes the events through the Window platform's own event queue (also available as `SendPlatformInputAsync(params ServoPlatformInput[])`), so they go through the real platform input source. |
 | `TypeIntoAsync(ServoTarget, string, CancellationToken)` | Clicks a target and sends text to it. |
 | `ReplaceTextAsync(ServoTarget, string, CancellationToken)` | Clicks a target, selects all with `Control+A`, and sends replacement text. |
 | `WaitForAsync(ServoTarget, ServoCondition, CancellationToken)` | Waits for a target cardinality or unique-target state condition at frame boundaries. |
@@ -111,5 +144,6 @@ In-process automation of Cerneala applications.
 ## See also
 
 - `ServoTarget`
+- `ServoPlatformInput`
 - `ServoElement`
 - `ServoOptions`

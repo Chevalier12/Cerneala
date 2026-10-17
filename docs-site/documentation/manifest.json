@@ -1090,6 +1090,11 @@
     "source": "UI/Servo/ServoOptions.cs"
   },
   {
+    "name": "Cerneala.UI.Servo.ServoPlatformInput",
+    "file": "documentation/classes/Cerneala.UI.Servo.ServoPlatformInput.md",
+    "source": "UI/Servo/ServoPlatformInput.cs"
+  },
+  {
     "name": "Cerneala.UI.Servo.ServoPoint",
     "file": "documentation/classes/Cerneala.UI.Servo.ServoPoint.md",
     "source": "UI/Servo/ServoPoint.cs"

@@ -146,6 +146,27 @@ internal sealed class ServoContext
             cancellationToken);
     }
 
+    internal Task SendPlatformInputAsync(
+        ServoPlatformInput[] events,
+        CancellationToken cancellationToken)
+    {
+        if (Window is not Window window)
+        {
+            return Task.FromException(new NotSupportedException(
+                "Servo platform input requires a Window-owned frame runtime."));
+        }
+
+        return ExecuteSerializedAsync(
+            (_, _, token) =>
+            {
+                token.ThrowIfCancellationRequested();
+                WindowApplicationRuntime runtime = window.RuntimeOwner ?? throw new ServoException(
+                    "The Servo Window is not attached to a live runtime context.");
+                return runtime.SendServoPlatformInputAsync(window, events, token);
+            },
+            cancellationToken);
+    }
+
     internal async Task ExecuteInputAsync(
         Func<UIRoot, IServoInputDriver, CancellationToken, Task> operation,
         CancellationToken cancellationToken)

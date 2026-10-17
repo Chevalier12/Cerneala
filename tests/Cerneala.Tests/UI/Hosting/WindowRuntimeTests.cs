@@ -1610,6 +1610,29 @@ public sealed class WindowRuntimeTests : IDisposable
         Assert.Empty(runtime.Windows);
     }
 
+    [Fact]
+    public async Task ServoPlatformInputIsRejectedByAPlatformWithoutInputInjection()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        TextBox editor = new() { Width = 200, Height = 40 };
+        ServoApi.SetId(editor, "editor");
+        Window window = new() { Content = editor };
+        window.Show();
+        ServoApi servo = new(window);
+        int presentsBefore = Assert.Single(platform.Windows).Session.PresentCount;
+
+        NotSupportedException failure = await Assert.ThrowsAsync<NotSupportedException>(() =>
+            servo.SendPlatformInputAsync(ServoPlatformInput.KeyDown(InputKey.A)));
+
+        Assert.Contains("inject", failure.Message);
+        Assert.Equal(presentsBefore, platform.Windows[0].Session.PresentCount);
+        Task click = servo.ClickAsync(ServoTarget.ById("editor"));
+        PumpUntilCompleted(runtime, click);
+        await click;
+        Assert.True(editor.IsKeyboardFocused);
+    }
+
     private static WindowApplicationRuntime Install(FakeWindowPlatform platform)
     {
         WindowApplicationRuntime runtime = new(platform);

@@ -50,6 +50,12 @@ Example: `await servo.ClickAsync(ServoTarget.ById("save"))` on a `Window`.
 
 `TypeIntoAsync` is a click followed by text input. `ReplaceTextAsync` is a click, Ctrl+A, then text input. Neither writes `Text` directly. `ServoContext.ExecuteInputAsync` runs these steps one after the other under the same gate and starts each step on the UI thread through the Relay: a window step completes from a frame continuation that can resume on another thread, and `EnqueueServoInputAsync` accepts input only on the window's UI thread.
 
+### Platform input path
+
+`Servo.SendPlatformInputAsync` is the second input path. It does not build `InputFrame` values. `ServoContext.SendPlatformInputAsync` takes the same per-window gate, then `WindowApplicationRuntime.SendServoPlatformInputAsync` asks the platform window (`IPlatformInputInjector`) to push the events into the platform's own event queue. For SDL, `SdlPlatformWindow.Inject` maps every event first, then calls `ISdlApi.PushEvent` per event; nothing is pushed if one event cannot be mapped. The events then travel the normal route: `SdlWindowPlatform.PumpEvents`, `SdlInputSource`, `InputSource.GetFrame`, `UiHost.Update`.
+
+The operation completes on the UI thread after all of these happened: the events were pushed; a `PumpEvents` that started after the push has finished; a frame collected from the input source after that pump was presented; and the input source holds no deferred or half-built input (`SdlInputSource.HasUndeliveredInput`). The runtime requests a render for the operation, so it also completes when the platform drops the events (for example `Text` while text input is inactive). Cancellation and timeout do not recall pushed events. Closing the Window fails the pending operations with `ServoException`. A platform without `IPlatformInputInjector`, a preview window, or a host-owned Servo throws `NotSupportedException`.
+
 ## Queries
 
 - `Servo.Id` is an attached `UiProperty<string?>` with `AffectsSemantics`; whitespace is trimmed, and a blank value becomes `null`. In markup, the `Servo.Id="save"` attribute is emitted as this property.
