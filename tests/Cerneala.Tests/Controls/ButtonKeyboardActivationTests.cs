@@ -1,7 +1,9 @@
+using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
+using Canvas = Cerneala.UI.Layout.Panels.Canvas;
 
 namespace Cerneala.Tests.Controls;
 
@@ -116,6 +118,95 @@ public sealed class ButtonKeyboardActivationTests
         bridge.Dispatch(root, KeyPressFrame(InputKey.Enter));
 
         Assert.Equal(0, executions);
+    }
+
+    [Fact]
+    public void EnterOnFocusedComboBoxInsideButtonDoesNotClickButton()
+    {
+        UIRoot root = RootWithComboBoxInsideButton(out ComboBox comboBox, out Button outer);
+        ElementInputBridge bridge = BridgeWithComboBoxFocusedByClicks(root, comboBox);
+        int clicks = 0;
+        int executions = 0;
+        outer.Click += (_, _) => clicks++;
+        outer.Command = new ActionCommand(_ => executions++);
+
+        bridge.Dispatch(root, KeyPressFrame(InputKey.Enter));
+        bridge.Dispatch(root, KeyReleaseFrame(InputKey.Enter));
+
+        Assert.True(comboBox.IsKeyboardFocused);
+        Assert.Equal(0, clicks);
+        Assert.Equal(0, executions);
+    }
+
+    [Fact]
+    public void SpaceOnFocusedComboBoxInsideButtonDoesNotPressOrClickButton()
+    {
+        UIRoot root = RootWithComboBoxInsideButton(out ComboBox comboBox, out Button outer);
+        ElementInputBridge bridge = BridgeWithComboBoxFocusedByClicks(root, comboBox);
+        int clicks = 0;
+        int executions = 0;
+        outer.Click += (_, _) => clicks++;
+        outer.Command = new ActionCommand(_ => executions++);
+
+        bridge.Dispatch(root, KeyPressFrame(InputKey.Space));
+        bool pressedWhileSpaceHeld = outer.IsPressed;
+        bridge.Dispatch(root, KeyReleaseFrame(InputKey.Space));
+
+        Assert.True(comboBox.IsKeyboardFocused);
+        Assert.False(pressedWhileSpaceHeld);
+        Assert.Equal(0, clicks);
+        Assert.Equal(0, executions);
+    }
+
+    private static UIRoot RootWithComboBoxInsideButton(out ComboBox comboBox, out Button outer)
+    {
+        UIRoot root = new(300, 200);
+        comboBox = new ComboBox { IsEditable = false, Width = 180, Height = 32 };
+        comboBox.SetItems(new[] { "one", "two", "three" });
+        comboBox.SelectedIndex = 0;
+        outer = new Button { Content = comboBox };
+        Canvas canvas = new();
+        Canvas.SetLeft(outer, 60);
+        canvas.VisualChildren.Add(outer);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        return root;
+    }
+
+    // Two clicks on the field: the first opens the drop-down, the second closes it. The ComboBox keeps the focus.
+    private static ElementInputBridge BridgeWithComboBoxFocusedByClicks(UIRoot root, ComboBox comboBox)
+    {
+        ElementInputBridge bridge = new();
+        LayoutRect field = comboBox.ArrangedBounds;
+        float x = field.X + (field.Width / 2);
+        float y = field.Y + (field.Height / 2);
+        for (int i = 0; i < 2; i++)
+        {
+            bridge.Dispatch(root, PointerFrame(x, y, previousDown: false, currentDown: true));
+            bridge.Dispatch(root, PointerFrame(x, y, previousDown: true, currentDown: false));
+            root.ProcessFrame();
+        }
+
+        Assert.True(comboBox.IsKeyboardFocused);
+        Assert.False(comboBox.IsDropDownOpen);
+        return bridge;
+    }
+
+    private static InputFrame PointerFrame(float x, float y, bool previousDown, bool currentDown)
+    {
+        PointerSnapshot previous = PointerSnapshot.Empty.WithPosition(x, y);
+        PointerSnapshot current = PointerSnapshot.Empty.WithPosition(x, y);
+        if (previousDown)
+        {
+            previous = previous.WithButton(InputMouseButton.Left, true);
+        }
+
+        if (currentDown)
+        {
+            current = current.WithButton(InputMouseButton.Left, true);
+        }
+
+        return new InputFrame(previous, current, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []);
     }
 
     private static ElementInputBridge FocusedBridge(UIRoot root, ButtonBase button)
