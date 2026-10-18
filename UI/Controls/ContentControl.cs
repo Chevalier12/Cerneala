@@ -29,45 +29,27 @@ public class ContentControl : Control
                 return;
             }
 
-            ValidateCanOwnChild(this, value as UIElement);
-            bool hostedOldContent = HostsContentDirectly(oldContent);
-            bool hostsNewContent = HostsContentDirectly(value);
-            if (hostedOldContent || hostsNewContent)
+            // SetValue validates content that this control hosts itself (ValidatePropertyMutation); content that
+            // another owner takes later is validated here.
+            if (!HostsContentDirectly(value))
             {
-                if (hostedOldContent)
-                {
-                    RemoveContentElement(oldContent);
-                }
-
-                try
-                {
-                    if (hostsNewContent)
-                    {
-                        AddContentElement(value);
-                    }
-
-                    SetValue(ContentProperty, value);
-                }
-                catch
-                {
-                    if (hostsNewContent)
-                    {
-                        RemoveContentElement(value);
-                    }
-
-                    if (hostedOldContent)
-                    {
-                        AddContentElement(oldContent);
-                    }
-
-                    SetValue(ContentProperty, oldContent);
-                    throw;
-                }
-
-                return;
+                ValidateCanOwnChild(this, value as UIElement);
             }
 
-            SetValue(ContentProperty, value);
+            try
+            {
+                SetValue(ContentProperty, value);
+            }
+            catch
+            {
+                // Hosting failed after the new value was stored: storing the old value again hosts the old content.
+                if (!ContentEqualityComparer.Equals(Content, oldContent))
+                {
+                    SetValue(ContentProperty, oldContent);
+                }
+
+                throw;
+            }
         }
     }
 
@@ -79,6 +61,20 @@ public class ContentControl : Control
 
     // True when this control is the direct parent of the given content when that content is a UIElement.
     internal virtual bool HostsContentDirectly(object? content) => ComponentTemplate is null && ComponentTemplateKey is null;
+
+    // Every write of Content, the setter and SetValue with any value source, validates a UIElement that this control
+    // will host before the store changes, so a rejected element leaves Content as it was.
+    internal override void ValidatePropertyMutation(UiProperty property, object? value)
+    {
+        base.ValidatePropertyMutation(property, value);
+        if (ReferenceEquals(property, ContentProperty) &&
+            value is UIElement element &&
+            !ReferenceEquals(element, Content) &&
+            HostsContentDirectly(element))
+        {
+            ValidateCanOwnChild(this, element);
+        }
+    }
 
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
@@ -108,6 +104,24 @@ public class ContentControl : Control
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
+        // The effective Content changed through any path (the setter, SetValue or ClearValue with any value source),
+        // so the hosted element follows it, as WPF's ContentControl.OnContentChanged moves the logical child.
+        if (ReferenceEquals(args.Property, ContentProperty))
+        {
+            if (HostsContentDirectly(args.OldValue))
+            {
+                RemoveContentElement(args.OldValue);
+            }
+
+            if (HostsContentDirectly(args.NewValue))
+            {
+                AddContentElement(args.NewValue);
+            }
+
+            base.OnPropertyChanged(args);
+            return;
+        }
+
         if (!ReferenceEquals(args.Property, ComponentTemplateProperty) &&
             !ReferenceEquals(args.Property, ComponentTemplateKeyProperty))
         {

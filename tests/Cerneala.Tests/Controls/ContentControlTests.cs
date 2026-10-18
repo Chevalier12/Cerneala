@@ -1,4 +1,5 @@
 using Cerneala.UI.Controls;
+using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
 
@@ -122,6 +123,80 @@ public sealed class ContentControlTests
         Assert.Same(control, oldChild.VisualParent);
         Assert.Equal(attachedCount, oldChild.AttachedCount);
         Assert.Equal(detachedCount, oldChild.DetachedCount);
+    }
+
+    [Fact]
+    public void SetValueHostsUntemplatedElementContentLikeTheContentSetter()
+    {
+        ContentControl control = new();
+        UIElement first = new();
+        UIElement second = new();
+
+        control.SetValue(ContentControl.ContentProperty, (object?)first);
+
+        Assert.Same(control, first.LogicalParent);
+        Assert.Same(control, first.VisualParent);
+
+        control.SetValue(ContentControl.ContentProperty, (object?)second);
+
+        Assert.Null(first.LogicalParent);
+        Assert.Null(first.VisualParent);
+        Assert.Same(control, second.LogicalParent);
+        Assert.Same(control, second.VisualParent);
+
+        control.ClearValue(ContentControl.ContentProperty);
+
+        Assert.Null(control.Content);
+        Assert.Null(second.LogicalParent);
+        Assert.Null(second.VisualParent);
+        Assert.Empty(control.LogicalChildren);
+        Assert.Empty(control.VisualChildren);
+    }
+
+    [Fact]
+    public void ClearingAValueSourceHostsTheElementContentOfTheNextSource()
+    {
+        ContentControl control = new();
+        UIElement conditional = new();
+        UIElement local = new();
+        control.SetValue(ContentControl.ContentProperty, (object?)conditional, UiPropertyValueSource.MarkupConditional);
+
+        control.SetValue(ContentControl.ContentProperty, (object?)local);
+
+        Assert.Same(local, control.Content);
+        Assert.Same(control, local.VisualParent);
+        Assert.Null(conditional.LogicalParent);
+        Assert.Null(conditional.VisualParent);
+
+        control.ClearValue(ContentControl.ContentProperty);
+
+        Assert.Same(conditional, control.Content);
+        Assert.Same(control, conditional.LogicalParent);
+        Assert.Same(control, conditional.VisualParent);
+        Assert.Null(local.LogicalParent);
+        Assert.Null(local.VisualParent);
+    }
+
+    [Fact]
+    public void SetValueRejectsUntemplatedElementContentThatHasAnotherParentLikeTheContentSetter()
+    {
+        ContentControl control = new();
+        UIElement oldChild = new();
+        UIElement parented = new();
+        UIElement parent = new();
+        control.Content = oldChild;
+        parent.LogicalChildren.Add(parented);
+
+        Assert.Throws<InvalidOperationException>(() => control.Content = parented);
+        InvalidOperationException rejected = Assert.Throws<InvalidOperationException>(
+            () => control.SetValue(ContentControl.ContentProperty, (object?)parented));
+
+        Assert.Equal("Element must be removed from its current parent before reparenting.", rejected.Message);
+        Assert.Same(oldChild, control.Content);
+        Assert.Same(control, oldChild.LogicalParent);
+        Assert.Same(control, oldChild.VisualParent);
+        Assert.Same(parent, parented.LogicalParent);
+        Assert.DoesNotContain(parented, control.LogicalChildren);
     }
 
     [Fact]
