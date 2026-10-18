@@ -9,6 +9,10 @@ public sealed class FocusManager
 
     public UIElement? FocusedElement { get; private set; }
 
+    // Raised after FocusedElement changes and before the focus routed events, so input
+    // state tied to the old focus (a held Space press) is gone when handlers run.
+    internal event Action? FocusedElementChanged;
+
     public bool Focus(UIElement? element, ElementInputRouteMap routeMap)
     {
         ArgumentNullException.ThrowIfNull(routeMap);
@@ -33,9 +37,10 @@ public sealed class FocusManager
 
         IReadOnlyList<UIElement> nextPath = element is null
             ? []
-            : routeMap.GetRouteToRoot(element);
+            : routeMap.GetVisualRouteToRoot(element);
         UpdateFocusState(oldFocus, element, focusedPath, nextPath);
         focusedPath = nextPath;
+        FocusedElementChanged?.Invoke();
         KeyboardFocusChangedEventArgs? previewLostArgs = RaisePreviewFocusLost(routeMap, oldFocus, element);
         KeyboardFocusChangedEventArgs? previewGotArgs = RaisePreviewFocusGot(routeMap, oldFocus, element);
         RaiseFocusLost(routeMap, oldFocus, element, previewLostArgs);
@@ -104,7 +109,7 @@ public sealed class FocusManager
         return results;
     }
 
-    private bool TryGetKeyboardTarget(
+    internal bool TryGetKeyboardTarget(
         ElementInputRouteMap routeMap,
         [NotNullWhen(true)] out UIElement? target,
         out UiElementId targetId)

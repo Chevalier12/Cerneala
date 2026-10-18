@@ -671,6 +671,23 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     {
     }
 
+    internal virtual void ValidateChildInsertion(UIElement child, ElementChildRole role, bool ownerManaged)
+    {
+    }
+
+    // A parent can let a new owner take one of its children without removing it first. ContentPresenter does so for
+    // the element content it hosts directly while its template runs, so the element leaves the presenter only when
+    // the template adds it to another element.
+    internal virtual void ReleaseChildForNewOwner(UIElement child)
+    {
+    }
+
+    internal void ReleaseFromParentForNewOwner()
+    {
+        VisualParent?.ReleaseChildForNewOwner(this);
+        LogicalParent?.ReleaseChildForNewOwner(this);
+    }
+
     internal void SetVisualParent(UIElement? parent)
     {
         if (!ReferenceEquals(VisualParent, parent))
@@ -1106,6 +1123,21 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         }
 
         WriteDesiredSize(desiredSize);
+        RequireArrangeForDesiredSizeChange();
+        if (VisualParent is UIElement parent)
+        {
+            parent.RequireArrangeForDesiredSizeChange();
+        }
+    }
+
+    // A stale arrange cache (ArrangeDesiredSizesAreCurrent) takes effect only when an ancestor arranges this element
+    // again. An ancestor whose slot and desired size did not change returns its cached result without arranging its
+    // children (a Border between a Canvas and a StackPanel whose children swapped heights, #450), so the frame arranges
+    // this element itself with its last slot, as WPF's InvalidateArrange puts the element in the arrange queue. The
+    // queued arrange still reuses the cache when the desired sizes it read have come back (HasValidArrangeCache).
+    private void RequireArrangeForDesiredSizeChange()
+    {
+        Root?.LayoutQueue.RequireArrange(this);
     }
 
     // A parent that skips measuring this element (VirtualizingStackPanel gives an unrealized row LayoutSize.Zero) writes
@@ -1584,8 +1616,11 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     private void DetachElementAspectBehavior()
     {
-        elementAspectBehavior?.Dispose();
+        // The lifetime is finished once its disposal starts, also when Dispose throws: the next
+        // attach creates a new one, and the failed one is never disposed a second time.
+        IDisposable? behavior = elementAspectBehavior;
         elementAspectBehavior = null;
+        behavior?.Dispose();
     }
 
     private void ValidateIncrementalAspectValue(UiProperty property)

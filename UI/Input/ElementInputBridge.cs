@@ -42,6 +42,8 @@ public sealed class ElementInputBridge
         keyboardActivationController = new KeyboardActivationController();
         repeatButtonController = new RepeatButtonController();
         this.textInputBridge = textInputBridge ?? new TextInputBridge();
+        this.focusManager.FocusedElementChanged += () =>
+            keyboardActivationController.OnFocusChanged(this.pressedStateTracker.PressedElement);
     }
 
     public PointerCaptureManager PointerCaptureManager => pointerCaptureManager;
@@ -106,9 +108,10 @@ public sealed class ElementInputBridge
             }
         }
 
-        if (inputFrame.Pointer.WheelDelta != 0)
+        // One MouseWheel pair per platform wheel event, as WPF raises one per WM_MOUSEWHEEL.
+        foreach (int wheelDelta in inputFrame.Pointer.WheelDeltas)
         {
-            RaiseWheelPair(routeMap, pointerTarget, inputFrame.Pointer.WheelDelta);
+            RaiseWheelPair(routeMap, pointerTarget, wheelDelta);
         }
 
         foreach (InputMouseButton button in Enum.GetValues<InputMouseButton>())
@@ -285,11 +288,13 @@ public sealed class ElementInputBridge
         dragSource.CompletePointerDrag(pointerCaptureManager, routeMap, new MouseButtonEventArgs(InputEvents.MouseUpEvent, target.ElementId, button, target.X, target.Y, clickCount));
     }
 
+    // Click, drag and focus owners are visual ancestors: content projected by an Overlay does not make the overlay's
+    // owner the target of a click or of the focus.
     private static UIElement? FindAncestor<TContract>(
         UIElement element,
         ElementInputRouteMap routeMap)
     {
-        foreach (UIElement current in routeMap.GetRouteToRoot(element))
+        foreach (UIElement current in routeMap.GetVisualRouteToRoot(element))
         {
             if (current is TContract)
             {
@@ -314,7 +319,7 @@ public sealed class ElementInputBridge
 
     private static UIElement? ResolveFocusTarget(UIElement element, ElementInputRouteMap routeMap)
     {
-        foreach (UIElement current in routeMap.GetRouteToRoot(element))
+        foreach (UIElement current in routeMap.GetVisualRouteToRoot(element))
         {
             if (FocusPolicy.CanFocus(current, routeMap))
             {

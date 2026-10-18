@@ -2984,6 +2984,11 @@
     "source": "UI/Layout/Panels/Panel.cs"
   },
   {
+    "name": "Cerneala.UI.Layout.Panels.PanelChildCollection",
+    "file": "documentation/classes/Cerneala.UI.Layout.Panels.PanelChildCollection.md",
+    "source": "UI/Layout/Panels/PanelChildCollection.cs"
+  },
+  {
     "name": "Cerneala.UI.Layout.Panels.RowDefinition",
     "file": "documentation/classes/Cerneala.UI.Layout.Panels.RowDefinition.md",
     "source": "UI/Layout/Panels/RowDefinition.cs"

@@ -51,6 +51,8 @@ ElementInputBridge inputBridge = new(
 
 Pointer dispatch updates hover state when the pointer moves, raises preview and bubbling mouse move, wheel, down, and up event pairs, tracks pressed visual state, tracks click counts, starts and completes pointer drags for `IPointerDragSource` ancestors, and executes `IInputCommandSource` commands after unhandled left-button clicks. While pointer capture is active, both routed pointer events and hover state target the captured element. When capture is released during dispatch, hover state is immediately reconciled with the element physically under the cursor.
 
+The bridge raises one `PreviewMouseWheel` and `MouseWheel` pair for each entry of `InputFrame.Pointer.WheelDeltas`, in list order, with that entry as `MouseWheelEventArgs.Delta`, after the frame's mouse move and before its button events. Like WPF, which raises one `MouseWheel` event per `WM_MOUSEWHEEL` message, three platform wheel notches that reach one frame raise three pairs with `Delta = -120`, not one pair with `Delta = -360`.
+
 The `frameTime` overload treats its `TimeSpan` argument as the elapsed delta for the current input frame. The value must be non-negative. Time-dependent input behavior such as `RepeatButton` consumes that same delta once per host update. The compatibility overload without `frameTime` delegates with `TimeSpan.Zero`.
 
 Keyboard dispatch is delegated to `FocusManager`, `RetainedInputBindingProcessor`, `KeyboardNavigationController`, and `KeyboardActivationController`. Text input events are delegated to `TextInputBridge`.

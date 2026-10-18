@@ -70,7 +70,7 @@ public sealed class HoverTracker
             return [];
         }
 
-        return routeMap.GetRouteToRoot(element);
+        return routeMap.GetVisualRouteToRoot(element);
     }
 
     private static bool ContainsReference(IReadOnlyList<UIElement> elements, UIElement target)

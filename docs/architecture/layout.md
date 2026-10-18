@@ -60,15 +60,20 @@ and does not draw; a changed rectangle only schedules render and hit-test work.
      measure therefore reaches the element, as the desired-size step above
      would have made it do. For example, a leaf two levels below a row outside
      the window that changes `Height` from 20 to 60 makes the row desire 60
-     once the panel realizes it again. The arrange caches on the path are
-     reset by that later measure, not here: each element whose `DesiredSize`
-     it changes makes its own and its parent's arrange cache invalid (see
-     "Measure And Arrange Caches"). Until then an arrange of the skipped row,
-     which reads the old desired sizes, can make those caches valid again. For example, in
-     a row `Border > Canvas > StackPanel > A, B`, A and B swap heights 20 and
-     40 outside the window; the `StackPanel` gets the slot `0, 0, 0, 60` both
-     while the row is skipped and after it is realized, and it still arranges
-     A at Y 0 with height 40 and B at Y 40.
+     once the panel realizes it again. The arrange work is scheduled by that
+     later measure, not here: each element whose `DesiredSize` it changes
+     makes its own and its parent's arrange cache invalid and queues both as
+     `Required` arrange work (see "Measure And Arrange Caches"). Until then an
+     arrange of the skipped row, which reads the old desired sizes, can make
+     those caches valid again. Elements between the row and that parent whose
+     desired size and slot did not change keep their arrange caches; the queue
+     entries arrange the element and its parent even when such an ancestor
+     returns its cached result. For example, in a row
+     `Border > Canvas > Border > StackPanel > A, B`, A and B swap heights 20
+     and 40 outside the window. The inner `Border` and the `StackPanel` get the
+     slot `0, 0, 0, 60` both while the row is skipped and after it is realized,
+     so the inner `Border` reuses its arrange; the `StackPanel`'s queue entry
+     still arranges A at Y 0 with height 40 and B at Y 40.
 3. **Constraint.** `LayoutManager.GetAvailableSize` (`LayoutManager.cs:119-145`)
    gives the root and its direct children the viewport size. Any other element
    gets the constraint it was last measured with, because its parent owns that
@@ -151,6 +156,19 @@ The code sets `first.Visibility = Visibility.Collapsed;`.
   beside its target: content that desires 50 x 300 with 80 px below the target
   desires 50 x 300 and then 50 x 80 again, in the layer's measure and in its
   arrange, and is not arranged again when its slot stays `20, 120, 50, 80`.
+- `UIElement.SetDesiredSize` also queues the element and its visual parent as
+  `Required` arrange work when the element is attached and its `DesiredSize`
+  changes. Only these two caches depend on the changed value; the ancestors
+  above the parent keep theirs. An ancestor whose slot and desired sizes did
+  not change therefore returns its cached arrange without arranging its
+  children, and the queue entry is what arranges the parent: the arrange phase
+  arranges it with its last slot (`LayoutManager.GetFinalRect`), as WPF's
+  `InvalidateArrange` puts an element in the layout manager's arrange queue.
+  The queued arrange goes through `LayoutManager.Arrange`, so it still reuses
+  the cache when the desired sizes it read have come back. When the measure
+  runs during the arrange phase, the entry is not in that phase's snapshot and
+  the next frame processes it. A measure that gives the same desired size
+  queues nothing.
 - An attached element's `Invalidate` does not change its `LayoutVersion`. When
   the request queues `Arrange` for its target, `DirtyPropagation.Propagate`
   invalidates the target's arrange cache and keeps its slot. With `Subtree`, it

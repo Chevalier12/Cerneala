@@ -77,8 +77,9 @@ public sealed class MenuInvalidationTests
         root.ProcessFrame();
         root.ProcessFrame();
 
+        // The second content is measured at its natural size, which the smaller viewport still holds beside its target.
         Assert.True(firstContent.ArrangeCount > 0);
-        Assert.True(secondContent.MeasureCount > 0);
+        Assert.Equal(0, secondContent.MeasureCount);
         Assert.Equal(0, secondContent.ArrangeCount);
 
         secondContent.ResetCounts();
