@@ -143,7 +143,7 @@ internal sealed class RepeatButtonController
     {
         IReadOnlyList<UIElement> route = element is null
             ? []
-            : routeMap.GetRouteToRoot(element);
+            : routeMap.GetVisualRouteToRoot(element);
         foreach (UIElement current in route)
         {
             if (current.PointerRepeatDelay is not null)

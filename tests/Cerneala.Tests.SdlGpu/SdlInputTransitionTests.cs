@@ -1,9 +1,11 @@
+using Cerneala.Drawing;
 using Cerneala.Platforms.Sdl3;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting.Windowing;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
 
 namespace Cerneala.Tests.SdlGpu;
 
@@ -14,6 +16,10 @@ public sealed class SdlInputTransitionTests
     private const int XScancode = 27;
     private const int AScancode = 4;
     private const int LeftCtrlScancode = 224;
+    private const int DeleteScancode = 76;
+    private const int LeftScancode = 80;
+    private const int PeriodScancode = 55;
+    private const int Keypad5Scancode = 93;
 
     [Fact]
     public void KeyPressedAndReleasedInOnePumpIsReportedAsPressThenRelease()
@@ -332,6 +338,7 @@ public sealed class SdlInputTransitionTests
 
             InputFrame input = source.GetFrame();
             Assert.Equal(-4 * 120, input.Pointer.WheelDelta);
+            Assert.Equal([-120, -120, -120, -120], input.Pointer.WheelDeltas);
             Assert.Equal(4, input.Keyboard.GetRepeatCount(InputKey.LeftCtrl));
         }
 
@@ -359,6 +366,65 @@ public sealed class SdlInputTransitionTests
         Assert.Equal(1, source.GetFrame().Keyboard.GetRepeatCount(InputKey.Back));
     }
 
+    [Theory]
+    [InlineData(BackspaceScancode, InputKey.Back, Keypad5Scancode, "5")]
+    [InlineData(BackspaceScancode, InputKey.Back, PeriodScancode, ".")]
+    [InlineData(DeleteScancode, InputKey.Delete, Keypad5Scancode, "5")]
+    [InlineData(LeftScancode, InputKey.Left, Keypad5Scancode, "5")]
+    public void RepeatAfterTextOfAnUnmappedKeyWaitsForTheNextFrame(int heldScancode, InputKey heldKey, int unmappedScancode, string text)
+    {
+        SdlInputSource source = new();
+        source.SetKey(heldScancode, true);
+        _ = source.GetFrame();
+        // The unmapped key cannot be reported, but it, not the held key, typed the text.
+        source.SetKey(heldScancode, true, repeat: true);
+        source.SetKey(unmappedScancode, true);
+        source.AddText(text);
+        source.SetKey(unmappedScancode, false);
+        source.SetKey(heldScancode, true, repeat: true);
+
+        InputFrame typed = source.GetFrame();
+        Assert.Equal(1, typed.Keyboard.GetRepeatCount(heldKey));
+        Assert.Equal([text], typed.TextInputEvents.Select(textInput => textInput.Text));
+        InputFrame repeated = source.GetFrame();
+        Assert.Equal(1, repeated.Keyboard.GetRepeatCount(heldKey));
+        Assert.Empty(repeated.TextInputEvents);
+    }
+
+    [Fact]
+    public void FocusedTextBoxDeletesKeypadDigitTypedWhileBackspaceIsHeld()
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1, WindowDisplayScale = 1 };
+        RecordingGraphicsFactory graphics = new();
+        using WindowApplicationRuntime runtime = new(new SdlWindowPlatform(api, graphics));
+        TextBox box = new() { Text = "abcd" };
+        runtime.StartMainWindow(new Window { Content = box, Width = 320, Height = 200 });
+        uint windowId = Assert.IsType<SdlWindowSurface>(Assert.Single(graphics.Surfaces)).WindowId;
+        var bounds = box.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        Pump(runtime, api, new SdlEvent(SdlEventKind.MouseButtonDown, windowId, X: x, Y: y, MouseButton: 1));
+        Pump(runtime, api, new SdlEvent(SdlEventKind.MouseButtonUp, windowId, X: x, Y: y, MouseButton: 1));
+        Pump(runtime, api, new SdlEvent(SdlEventKind.KeyDown, windowId, Scancode: EndScancode));
+        Pump(runtime, api, new SdlEvent(SdlEventKind.KeyUp, windowId, Scancode: EndScancode));
+        Pump(runtime, api, new SdlEvent(SdlEventKind.KeyDown, windowId, Scancode: BackspaceScancode));
+        Assert.Equal("abc", box.Text);
+
+        // In arrival order: "ab", "ab5", "ab".
+        Pump(runtime, api,
+            new SdlEvent(SdlEventKind.KeyDown, windowId, Scancode: BackspaceScancode, Repeat: true),
+            new SdlEvent(SdlEventKind.KeyDown, windowId, Scancode: Keypad5Scancode),
+            new SdlEvent(SdlEventKind.TextInput, windowId, Text: "5"),
+            new SdlEvent(SdlEventKind.KeyUp, windowId, Scancode: Keypad5Scancode),
+            new SdlEvent(SdlEventKind.KeyDown, windowId, Scancode: BackspaceScancode, Repeat: true));
+        for (int frame = 0; frame < 4; frame++)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+
+        Assert.Equal("ab", box.Text);
+    }
+
     [Fact]
     public void MoveAfterWheelAndButtonPressWaitsForTheNextFrame()
     {
@@ -374,6 +440,86 @@ public sealed class SdlInputTransitionTests
         Assert.Equal(10, pressed.Pointer.X);
         Assert.Equal(120, pressed.Pointer.WheelDelta);
         Assert.Equal(30, source.GetFrame().Pointer.X);
+    }
+
+    [Fact]
+    public void ButtonsAndWheelInOnePumpAreRaisedInArrivalOrder()
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1, WindowDisplayScale = 1 };
+        RecordingGraphicsFactory graphics = new();
+        using WindowApplicationRuntime runtime = new(new SdlWindowPlatform(api, graphics));
+        Border target = new() { Width = 200, Height = 100, Background = new SolidColorBrush(new Color(1, 2, 3)) };
+        Window window = new() { Content = target, Width = 320, Height = 200 };
+        List<string> log = [];
+        window.AddHandler(UIElement.PreviewMouseDownEvent, (_, args) => log.Add("down " + ((MouseButtonEventArgs)args).ChangedButton), handledEventsToo: true);
+        window.AddHandler(UIElement.PreviewMouseWheelEvent, (_, _) => log.Add("wheel"), handledEventsToo: true);
+        runtime.StartMainWindow(window);
+        uint windowId = Assert.IsType<SdlWindowSurface>(Assert.Single(graphics.Surfaces)).WindowId;
+        var bounds = target.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        Pump(runtime, api, new SdlEvent(SdlEventKind.MouseMotion, windowId, X: x, Y: y));
+
+        // Right goes down, then Left, then the wheel turns one notch.
+        Pump(runtime, api,
+            new SdlEvent(SdlEventKind.MouseButtonDown, windowId, X: x, Y: y, MouseButton: 3),
+            new SdlEvent(SdlEventKind.MouseButtonDown, windowId, X: x, Y: y, MouseButton: 1),
+            new SdlEvent(SdlEventKind.MouseWheel, windowId, X: x, Y: y, Data2: 1));
+        for (int frame = 0; frame < 5; frame++)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+
+        Assert.Equal(["down Right", "down Left", "wheel"], log);
+    }
+
+    [Theory]
+    [InlineData("nothing")]
+    [InlineData("a Ctrl auto-repeat")]
+    [InlineData("a pointer move")]
+    public void EveryWheelNotchOfOnePumpScrollsAScrollViewerOneStep(string beforeEachNotch)
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1, WindowDisplayScale = 1 };
+        RecordingGraphicsFactory graphics = new();
+        using WindowApplicationRuntime runtime = new(new SdlWindowPlatform(api, graphics));
+        ScrollViewer viewer = new() { Content = new Border { Height = 1000 } };
+        Window window = new() { Content = viewer, Width = 320, Height = 200 };
+        List<int> deltas = [];
+        window.AddHandler(InputEvents.MouseWheelEvent, (_, args) => deltas.Add(((MouseWheelEventArgs)args).Delta), handledEventsToo: true);
+        runtime.StartMainWindow(window);
+        uint windowId = Assert.IsType<SdlWindowSurface>(Assert.Single(graphics.Surfaces)).WindowId;
+        var bounds = viewer.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        Pump(runtime, api, new SdlEvent(SdlEventKind.MouseMotion, windowId, X: x, Y: y));
+        if (beforeEachNotch == "a Ctrl auto-repeat")
+        {
+            Pump(runtime, api, new SdlEvent(SdlEventKind.KeyDown, windowId, Scancode: LeftCtrlScancode));
+        }
+
+        List<SdlEvent> pump = [];
+        for (int notch = 0; notch < 3; notch++)
+        {
+            if (beforeEachNotch == "a Ctrl auto-repeat")
+            {
+                pump.Add(new SdlEvent(SdlEventKind.KeyDown, windowId, Scancode: LeftCtrlScancode, Repeat: true));
+            }
+            else if (beforeEachNotch == "a pointer move")
+            {
+                pump.Add(new SdlEvent(SdlEventKind.MouseMotion, windowId, X: x, Y: y + notch + 1));
+            }
+
+            pump.Add(new SdlEvent(SdlEventKind.MouseWheel, windowId, X: x, Y: y + notch + 1, Data2: -1));
+        }
+
+        Pump(runtime, api, [.. pump]);
+        for (int frame = 0; frame < 4; frame++)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+
+        Assert.Equal([-120, -120, -120], deltas);
+        Assert.Equal(3 * 48, viewer.Presenter.VerticalOffset);
     }
 
     [Theory]

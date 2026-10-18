@@ -8,7 +8,8 @@ using StackPanel = Cerneala.UI.Layout.Panels.StackPanel;
 namespace Cerneala.Tests.Controls;
 
 // The presenter measures and arranges its panel subtree itself and removes the queued layout work of that subtree
-// and of its ancestors, so it must also clear the dirty flags that the scheduler clears for completed work.
+// and the measure work propagated to its ancestors, so it must also clear the dirty flags that the scheduler clears
+// for completed work. An ancestor's own queued measure is not covered and stays queued.
 public sealed class ItemsPresenterDirtyStateRegressionTests
 {
     [Fact]
@@ -63,6 +64,48 @@ public sealed class ItemsPresenterDirtyStateRegressionTests
         Settle(root);
 
         Assert.Equal(measureCount, outer.MeasureCount);
+    }
+
+    // Issue #400: the ItemsControl is measured first because it is deeper, and its presenter must not drop the
+    // measure that the ancestor queued for itself in the same frame.
+    [Fact]
+    public void AncestorWithItsOwnQueuedMeasureIsMeasuredAgainWhenTheItemsKeepTheirSize()
+    {
+        (UIRoot root, CountingPanel outer, UIElement items) = CreateTree(CreateSizedItemsControl());
+        outer.VisualChildren.Add(new Border { Width = 50, Height = 20 });
+        Settle(root);
+        Assert.Equal(new LayoutSize(50, 42), outer.DesiredSize);
+        int measureCount = outer.MeasureCount;
+
+        outer.Orientation = Orientation.Horizontal;
+        items.Invalidate(InvalidationFlags.Measure, "test");
+        Settle(root);
+
+        Assert.Equal(measureCount + 1, outer.MeasureCount);
+        Assert.Equal(new LayoutSize(59, 22), outer.DesiredSize);
+        Assert.Empty(DirtyElements(root));
+    }
+
+    [Fact]
+    public void AncestorMeasureInvalidatedInTheSameFrameAsItsItemsControlRunsOnce()
+    {
+        (UIRoot root, CountingPanel outer, UIElement items) = CreateTree(CreateSizedItemsControl());
+        Settle(root);
+        int measureCount = outer.MeasureCount;
+
+        outer.Invalidate(InvalidationFlags.Measure, "test");
+        items.Invalidate(InvalidationFlags.Measure, "test");
+        Settle(root);
+
+        Assert.Equal(measureCount + 1, outer.MeasureCount);
+        Assert.Empty(DirtyElements(root));
+    }
+
+    private static ItemsControl CreateSizedItemsControl()
+    {
+        ItemsControl items = new();
+        items.SetItems(new object[] { new Border { Width = 9, Height = 22 } });
+        return items;
     }
 
     private static ItemsControl CreateItemsControl()

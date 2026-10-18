@@ -363,12 +363,42 @@ public class Selector : ItemsControl
 
         public Selector? Owner { get; set; }
 
+        // As in WPF, where ButtonBase marks the mouse button events handled, a command source in the container, such as
+        // a CheckBox from the ItemTemplate, owns its click, as the input bridge resolves the click to it.
         public void OnMouseUp(UiElementId _, RoutedEventArgs args)
         {
-            if (Owner is not null && args is MouseButtonEventArgs { ChangedButton: InputMouseButton.Left })
+            if (Owner is null || args is not MouseButtonEventArgs { ChangedButton: InputMouseButton.Left })
+            {
+                return;
+            }
+
+            UIElement? clickOwner = FindClickOwner(container, args.OriginalSource);
+            if (clickOwner is not IInputCommandSource || ReferenceEquals(clickOwner, container))
             {
                 Owner.SelectContainer(container);
             }
         }
+    }
+
+    // The element that owns a click whose source is source, walking the visual parents from source up to owner:
+    // owner itself, the first IInputCommandSource below owner, or null when source is not in owner's visual subtree.
+    internal static UIElement? FindClickOwner(UIElement owner, object? source)
+    {
+        UIElement? element = source switch
+        {
+            UIElement candidate => candidate,
+            UiElementId id when owner.Root?.ElementIds.TryGetElement(id, out UIElement? resolved) == true => resolved,
+            _ => null
+        };
+
+        for (UIElement? current = element; current is not null; current = current.VisualParent)
+        {
+            if (ReferenceEquals(current, owner) || current is IInputCommandSource)
+            {
+                return current;
+            }
+        }
+
+        return null;
     }
 }

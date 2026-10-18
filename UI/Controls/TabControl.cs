@@ -19,6 +19,9 @@ public class TabControl : Selector
     // Shows the content of the selected tab below the header row; a TabItem never hosts its own Content.
     private readonly ContentPresenter selectedContentPresenter = new();
 
+    // The tab whose Content the content area was last prepared to show.
+    private TabItem? presentedTab;
+
     public TabControl()
     {
         ItemsPanel = new StackPanel { Orientation = Layout.Orientation.Horizontal };
@@ -93,13 +96,19 @@ public class TabControl : Selector
         }
 
         LayoutSize headerSize = ItemsPresenter.Measure(context);
-        UpdateSelectedContent();
+        TabItem? previousTab = UpdateSelectedContent();
         LayoutSize available = context.AvailableSize;
         float contentHeight = available.IsHeightUnconstrained
             ? float.PositiveInfinity
             : MathF.Max(0, available.Height - headerSize.Height);
         LayoutSize contentSize = selectedContentPresenter.Measure(
             new MeasureContext(new LayoutSize(available.Width, contentHeight), context.Rounding));
+        // Measuring the content area removed the content of the tab shown before; that tab owns it again.
+        if (!ReferenceEquals(previousTab, presentedTab))
+        {
+            previousTab?.HoldContent();
+        }
+
         return new LayoutSize(MathF.Max(headerSize.Width, contentSize.Width), headerSize.Height + contentSize.Height);
     }
 
@@ -129,10 +138,16 @@ public class TabControl : Selector
     }
 
     // The only place the content area changes: it runs in measure, after the tabs are realized, so a UIElement
-    // content joins the content area while its tab is selected and leaves it when another tab is selected.
-    private void UpdateSelectedContent()
+    // content joins the content area while its tab is selected and leaves it when another tab is selected. The
+    // selected tab lets go of its content first, so the content area can take it; returns the tab shown before.
+    private TabItem? UpdateSelectedContent()
     {
-        selectedContentPresenter.PrepareItemPresentation(SelectedContent, SelectedContentTemplate, null, null, -1);
+        TabItem? previousTab = presentedTab;
+        TabItem? tab = SelectedTabItem;
+        presentedTab = tab;
+        tab?.ReleaseContentForContentArea();
+        selectedContentPresenter.PrepareItemPresentation(tab?.Content, SelectedContentTemplate, null, null, -1);
+        return previousTab;
     }
 
     private void InvalidateSelectedContent(string reason)
@@ -149,7 +164,10 @@ public class TabControl : Selector
         }
     }
 
-    // As in WPF, ItemTemplate is the template of the header of a generated tab, and the item is its Content.
+    // As in WPF, ItemTemplate is the template of the header of a generated tab, and the item is its Content. Like
+    // WPF's PrepareHeaderedContentControl, a null ItemTemplate or ItemTemplateKey is not written, so a HeaderTemplate or
+    // HeaderTemplateKey from ItemContainerAspect applies. Changing either clears every container first, and clearing
+    // removes the value written here, so a tab is never prepared over a value from an older ItemTemplate.
     protected override void PrepareItemContent(UIElement container, int index, object? item)
     {
         if (container is not TabItem tab)
@@ -158,8 +176,16 @@ public class TabControl : Selector
             return;
         }
 
-        tab.HeaderTemplate = ItemTemplate;
-        tab.HeaderTemplateKey = ItemTemplateKey;
+        if (ItemTemplate is { } itemTemplate)
+        {
+            tab.HeaderTemplate = itemTemplate;
+        }
+
+        if (ItemTemplateKey is { } itemTemplateKey)
+        {
+            tab.HeaderTemplateKey = itemTemplateKey;
+        }
+
         tab.SetHeaderPresentation(ContentTemplateRegistry, index);
         tab.Header = item is UIElement ? null : ItemTemplate is null ? GetItemDisplayValue(item) : item;
         tab.Content = item;
@@ -182,8 +208,8 @@ public class TabControl : Selector
         if (generated)
         {
             tab.Header = null;
-            tab.HeaderTemplate = null;
-            tab.HeaderTemplateKey = null;
+            tab.ClearValue(TabItem.HeaderTemplateProperty);
+            tab.ClearValue(TabItem.HeaderTemplateKeyProperty);
             tab.SetHeaderPresentation(null, -1);
         }
     }

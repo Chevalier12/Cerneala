@@ -16,11 +16,11 @@ public static class UiMarkupSchema
             .Register(WithControlProperties(new UiMarkupElementRegistration(
                 "Panel",
                 () => new Panel(),
-                AddLogicalAndVisualChild)))
+                AddPanelChild)))
             .Register(WithControlProperties(new UiMarkupElementRegistration(
                 "StackPanel",
                 () => new StackPanel(),
-                AddLogicalAndVisualChild)))
+                AddPanelChild)))
             .Register(WithControlProperties(new UiMarkupElementRegistration(
                 "Border",
                 () => new Border(),
@@ -64,10 +64,9 @@ public static class UiMarkupSchema
             .RegisterProperty(new UiMarkupPropertyRegistration(nameof(Control.FontSize), (element, value) => ((Control)element).FontSize = ParseFloat(value)));
     }
 
-    private static void AddLogicalAndVisualChild(UIElement parent, UIElement child)
+    private static void AddPanelChild(UIElement parent, UIElement child)
     {
-        parent.LogicalChildren.Add(child);
-        parent.VisualChildren.Add(child);
+        ((Layout.Panels.Panel)parent).Children.Add(child);
     }
 
     private static bool ParseBool(string value)

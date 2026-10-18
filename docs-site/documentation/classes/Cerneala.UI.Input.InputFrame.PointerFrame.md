@@ -30,9 +30,9 @@ if (frame.Pointer.IsPressed(InputMouseButton.Left))
     BeginSelection(frame.Pointer.X, frame.Pointer.Y);
 }
 
-if (frame.Pointer.WheelDelta != 0)
+foreach (int wheelDelta in frame.Pointer.WheelDeltas)
 {
-    ZoomBy(frame.Pointer.WheelDelta);
+    ZoomBy(wheelDelta); // once per wheel notch, also when several notches reach one frame
 }
 ```
 
@@ -44,11 +44,14 @@ The constructor is internal. Instances are created by `InputFrame`.
 
 `WheelDelta` is computed as current wheel value minus previous wheel value.
 
+`WheelDeltas` holds the delta of each wheel event of the frame, in arrival order, and its entries add up to `WheelDelta`. Example: the SDL3 backend delivers three notches down before one frame; then `WheelDelta` is `-360` and `WheelDeltas` is `[-120, -120, -120]`. A frame created by a five- or six-parameter `InputFrame` constructor holds `WheelDelta` as its only entry, or no entry when `WheelDelta` is `0`. `ElementInputBridge` raises one `MouseWheel` event per entry.
+
 ## Properties
 
 | Name | Type | Description |
 | --- | --- | --- |
 | `WheelDelta` | `int` | Gets the wheel movement between the previous and current pointer snapshots. |
+| `WheelDeltas` | `IReadOnlyList<int>` | Gets the delta of each wheel event of the frame, in arrival order. |
 | `WheelValue` | `int` | Gets the current accumulated wheel value. |
 | `X` | `float` | Gets the current pointer X coordinate. |
 | `Y` | `float` | Gets the current pointer Y coordinate. |
