@@ -125,6 +125,33 @@ public sealed class ContentControlTests
     }
 
     [Fact]
+    public void SetValueRejectsTemplatedElementContentThatHasAnotherParentLikeTheContentSetter()
+    {
+        ContentControl control = new()
+        {
+            ComponentTemplate = new ComponentTemplate<ContentControl>("test", context =>
+                new ContentPresenter { Content = context.Owner.Content })
+        };
+        UIElement oldChild = new();
+        UIElement parented = new();
+        UIElement parent = new();
+        control.Content = oldChild;
+        parent.LogicalChildren.Add(parented);
+
+        Assert.Throws<InvalidOperationException>(() => control.Content = parented);
+        InvalidOperationException rejected = Assert.Throws<InvalidOperationException>(
+            () => control.SetValue(ContentControl.ContentProperty, (object?)parented));
+
+        Assert.Equal("Element must be removed from its current parent before reparenting.", rejected.Message);
+        Assert.Same(oldChild, control.Content);
+        Assert.Same(parent, parented.LogicalParent);
+
+        UIElement loose = new();
+        control.SetValue(ContentControl.ContentProperty, (object?)loose);
+        Assert.Same(loose, control.Content);
+    }
+
+    [Fact]
     public void MeasuresAndArrangesContentInsideInsets()
     {
         ContentControl control = new()
