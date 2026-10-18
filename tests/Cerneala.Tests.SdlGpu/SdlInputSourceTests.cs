@@ -135,8 +135,12 @@ public sealed class SdlInputSourceTests
         Assert.Equal(240, frame.Pointer.WheelValue);
         Assert.Equal(240, frame.Pointer.WheelDelta);
         Assert.True(frame.Pointer.IsDown(InputMouseButton.Left));
-        Assert.True(frame.Pointer.IsDown(InputMouseButton.Right));
         Assert.True(frame.Pointer.IsPressed(InputMouseButton.Left));
         Assert.False(frame.Pointer.IsDown(InputMouseButton.Middle));
+        // A frame holds one button transition; the Right press follows in the next frame.
+        InputFrame next = source.GetFrame();
+        Assert.True(next.Pointer.IsPressed(InputMouseButton.Right));
+        Assert.True(next.Pointer.IsDown(InputMouseButton.Left));
+        Assert.Equal(20, next.Pointer.X);
     }
 }
