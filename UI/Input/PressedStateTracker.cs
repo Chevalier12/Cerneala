@@ -58,7 +58,7 @@ public sealed class PressedStateTracker
     {
         IEnumerable<UIElement> route = routeMap is null
             ? VisualRoute(target)
-            : target is null ? [] : routeMap.GetRouteToRoot(target);
+            : target is null ? [] : routeMap.GetVisualRouteToRoot(target);
         foreach (UIElement current in route)
         {
             if (current is IInputPressable pressable)

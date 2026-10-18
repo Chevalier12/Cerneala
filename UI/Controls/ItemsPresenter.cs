@@ -869,6 +869,9 @@ public class ItemsPresenter : Control
             element.LastMeasureLayoutVersion != element.LayoutVersion;
     }
 
+    // This measure covers the presenter's own queued measure and the measure work that only propagated to its
+    // ancestors. An ancestor's own queued measure, for example from a property of that ancestor that changed in the
+    // same frame, is not covered by this measure, so it stays queued for the scheduler.
     private void RemoveMeasureWorkForLayoutScope()
     {
         if (Root is not UIRoot root)
@@ -876,9 +879,10 @@ public class ItemsPresenter : Control
             return;
         }
 
-        for (UIElement? current = this; current is not null; current = current.VisualParent)
+        root.Scheduler.CompleteQueuedMeasure(this);
+        for (UIElement? current = VisualParent; current is not null; current = current.VisualParent)
         {
-            root.Scheduler.CompleteQueuedMeasure(current);
+            root.Scheduler.CompletePropagatedQueuedMeasure(current);
         }
     }
 

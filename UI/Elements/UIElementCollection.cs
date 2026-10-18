@@ -80,6 +80,7 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
             throw new InvalidOperationException("Element is already a child of this collection.");
         }
 
+        child.ReleaseFromParentForNewOwner();
         UIElement? currentParent = GetParent(child);
         if (currentParent is not null)
         {
@@ -184,6 +185,11 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
         }
 
         return true;
+    }
+
+    internal int IndexOf(UIElement child)
+    {
+        return IndexOfReference(child);
     }
 
     public IEnumerator<UIElement> GetEnumerator()

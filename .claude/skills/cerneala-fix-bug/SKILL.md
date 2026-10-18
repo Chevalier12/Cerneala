@@ -312,7 +312,7 @@ Then publish the two reproduction apps for the pull request `<PR>` that the skil
    - creates the pre-release `repro-pr-<PR>` on the head commit, with release notes that name both commits, how to run the apps, and the exit codes. When the release already exists, for example because the pull request got new commits, it uploads the zips with `--clobber`, updates the notes, and deletes every other asset. Then it checks that the release holds exactly the expected zips;
    - uploads the GIFs to `repro-gifs` with `--clobber`, and creates that release first when it does not exist. Never delete `repro-gifs` or a file in it;
    - puts your `How to check` text, with the tokens replaced, in the pull-request body between `<!-- repro-how-to-check:start -->` and `<!-- repro-how-to-check:end -->`. It replaces the block of an earlier run, or else inserts it before the `## User validation` line, or else appends it. It reads the body back to check it;
-   - checks every download and GIF URL with a HEAD request.
+   - checks every download URL with a HEAD request, and every GIF URL with a ranged GET whose first bytes must be `GIF87a` or `GIF89a` (GitHub serves release GIFs as `application/octet-stream`, #413).
 
    When the GitHub part fails, read the error, fix the cause, and run the same command again: each GitHub step can run again and gives the same result. `-DryRun` with `-Publish` prints every `gh` write and writes the would-be body to `pr-body.preview.md` without writing to GitHub. Do not open the GIFs or the pull-request page with `Read` or a browser to check them: the script's URL check and body read-back do that, and each image stays in the context until the session ends.
 

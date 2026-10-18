@@ -8,13 +8,15 @@ public sealed class TextInputBridge
         ArgumentNullException.ThrowIfNull(focusManager);
         ArgumentNullException.ThrowIfNull(routeMap);
 
-        if (focusManager.FocusedElement is null || !routeMap.TryGetId(focusManager.FocusedElement, out UiElementId focusedId))
-        {
-            return;
-        }
-
+        // Handlers can move focus or detach the focused element, so every text event
+        // resolves its target from the focus at the moment it is raised.
         foreach (TextInputSnapshotEvent textInputEvent in textInputEvents)
         {
+            if (!focusManager.TryGetKeyboardTarget(routeMap, out _, out UiElementId focusedId))
+            {
+                continue;
+            }
+
             RoutedEventRouter.RaisePair(
                 routeMap.InputTree,
                 focusedId,
