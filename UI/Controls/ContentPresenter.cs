@@ -125,6 +125,39 @@ public class ContentPresenter : Control
         }
     }
 
+    // Prepares this presenter as the generated container of an item. As in WPF's ContentPresenter.PrepareContentPresenter,
+    // a null item template or key is not written, so a ContentTemplate or ContentTemplateKey from ItemContainerAspect
+    // applies. The owner clears the values written here before it prepares the container again.
+    internal void PrepareItemContainerPresentation(
+        object? content,
+        ContentTemplate? itemTemplate,
+        string? itemTemplateKey,
+        ContentTemplateRegistry? templateRegistry,
+        int index)
+    {
+        deferPresentationRefresh = true;
+        try
+        {
+            Content = content;
+            if (itemTemplate is not null)
+            {
+                ContentTemplate = itemTemplate;
+            }
+
+            if (itemTemplateKey is not null)
+            {
+                ContentTemplateKey = itemTemplateKey;
+            }
+
+            LocalTemplateRegistry = templateRegistry;
+            ContentIndex = index;
+        }
+        finally
+        {
+            deferPresentationRefresh = false;
+        }
+    }
+
     internal void RefreshAspectContentTemplates(AspectCatalog catalog)
     {
         if (ReferenceEquals(aspectTemplateCatalog, catalog))
