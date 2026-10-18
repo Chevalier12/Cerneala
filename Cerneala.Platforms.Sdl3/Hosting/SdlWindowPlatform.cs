@@ -390,8 +390,10 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
     {
         if (enabled && !value)
         {
-            // Key events are dropped while disabled, so a held key's release is never seen.
+            // Key and button events are dropped while disabled, so a held key's or button's
+            // release is never seen.
             inputSource.ForgetKeys();
+            inputSource.ForgetButtons();
         }
 
         enabled = value;

@@ -115,6 +115,11 @@ internal sealed class SdlInputSource : IInputSource
     // release, like a window that gets no key-up message, so their next press is a press.
     public void ForgetKeys() => Accept(new PendingInput(PendingKind.ForgetKeys));
 
+    // The window stops receiving mouse button events (disabled), so the release of a button
+    // held now is never seen. The held buttons are dropped without a release, like a window
+    // that gets no button-up message, so their next press is a press.
+    public void ForgetButtons() => Accept(new PendingInput(PendingKind.ForgetButtons));
+
     public void AddText(string? text)
     {
         if (!string.IsNullOrEmpty(text))
@@ -166,6 +171,28 @@ internal sealed class SdlInputSource : IInputSource
 
             downKeys.Clear();
             previousKeyboard = KeyboardSnapshot.Empty;
+            return true;
+        }
+
+        if (input.Kind == PendingKind.ForgetButtons)
+        {
+            // A button transition in this frame happened before the window lost the buttons;
+            // it is published first. Without one, previousPointer holds exactly the down
+            // buttons, so dropping them from both leaves no release edge.
+            if (changedButtons.Count > 0)
+            {
+                return false;
+            }
+
+            foreach (InputMouseButton button in Enum.GetValues<InputMouseButton>())
+            {
+                if (currentPointer.IsDown(button))
+                {
+                    currentPointer = currentPointer.WithButton(button, false);
+                    previousPointer = previousPointer.WithButton(button, false);
+                }
+            }
+
             return true;
         }
 
@@ -277,8 +304,22 @@ internal sealed class SdlInputSource : IInputSource
         PendingKind.Wheel => input.Value != 0,
         PendingKind.Key => (input.Repeat && input.Down) || downKeys.Contains((InputKey)input.Value) != input.Down,
         PendingKind.ForgetKeys => downKeys.Count > 0,
+        PendingKind.ForgetButtons => HasDownButton(),
         _ => true
     };
+
+    private bool HasDownButton()
+    {
+        foreach (InputMouseButton button in Enum.GetValues<InputMouseButton>())
+        {
+            if (currentPointer.IsDown(button))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     internal static InputKey MapScancode(int scancode)
     {
@@ -380,7 +421,8 @@ internal sealed class SdlInputSource : IInputSource
         Wheel,
         Key,
         Text,
-        ForgetKeys
+        ForgetKeys,
+        ForgetButtons
     }
 
     // The order ElementInputBridge dispatches one frame's input in. The wheel shares the
