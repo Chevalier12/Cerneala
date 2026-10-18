@@ -60,6 +60,30 @@ A `VirtualizingStackPanel` assigned to `ItemsPanel` later receives the viewer's 
 
 `ItemContainerAspect` is assigned to every prepared container through `UIElement.AspectProperty` at the framework `TemplateBinding` source and removed when the container is cleared or recycled. This keeps the engine-owned `AspectBase` source exclusive to resolved declarations. The assigned `ElementAspect` is then resolved by the root `AspectProcessor`; it does not write container properties directly. An aspect assigned directly on the item at a higher UI-property source wins. Changing the policy refreshes realized containers, and containers created during measure are resolved in the following Aspect phase.
 
+As in WPF, where `ContentPresenter.PrepareContentPresenter` sets `ContentTemplate` only when the `ItemsControl` has an `ItemTemplate`, preparing a generated `ContentPresenter` sets its `ContentTemplate` only when `ItemTemplate` is not `null`, and its `ContentTemplateKey` only when `ItemTemplateKey` is not `null`. So a `ContentTemplate` or `ContentTemplateKey` that `ItemContainerAspect` sets on the generated presenters applies when the matching item property is `null`. When `ItemTemplate` is set, it wins over the aspect value, because the local value has the higher source. When the container is cleared, for example when it is recycled or when `ItemTemplate` changes, the local `ContentTemplate` and `ContentTemplateKey` values are removed (`ClearValue`), so a recycled presenter prepared again without `ItemTemplate` uses the aspect's template again.
+
+```csharp
+using Cerneala.UI.Aspect;
+using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Templates;
+using Cerneala.UI.Layout;
+
+ContentTemplate<string> row = new("aspect-row", null, 0, context =>
+    new Border { Padding = new Thickness(8, 4, 8, 4), Child = new TextBlock { Text = "Row " + context.Data } });
+
+ItemsControl list = new()
+{
+    ItemsSource = new[] { "A", "B" },
+    ItemContainerAspect = new ElementAspect(new[]
+    {
+        new ElementAspectValue(ContentPresenter.ContentTemplateProperty, row)
+    })
+};
+// After the next layout pass: each generated ContentPresenter has ContentTemplate == row, row is called 2 times,
+// and the list shows "Row A" and "Row B".
+// With list.ItemTemplate = itemTemplate as well, each generated ContentPresenter has ContentTemplate == itemTemplate instead.
+```
+
 `ItemsControl` does not discover `ContentTemplate` values from resource collections. Assign one template explicitly through `ItemTemplate`, or add several owned templates to `Templates` for heterogeneous item sources. `ItemTemplate` has priority when both paths are configured.
 
 In `.crn` markup, declare the owned collection exclusively with `@templates { ... }`. The legacy `ItemsControl.Templates` property-element wrapper is rejected by the source generator.
@@ -110,8 +134,8 @@ In `.crn` markup, declare the owned collection exclusively with `@templates { ..
 | `GetContainerTypeForItem(object?)` | Returns `DefaultContainerType` when `ItemTemplate` is set; otherwise the item's own type for a `UIElement` item, or `DefaultContainerType`. |
 | `CreateItemContainer(int, object?)` | Returns a new `ContentPresenter` when `ItemTemplate` is set; otherwise the item itself for a `UIElement` item, or a new `ContentPresenter`. |
 | `PrepareItemContainer(UIElement, int, object?)` | Applies `ItemContainerAspect`, records index, item and selection state, updates an `ISelectableItemContainer`, and calls `PrepareItemContent` unless the container is the item itself. |
-| `PrepareItemContent(UIElement, int, object?)` | Applies default content/template presentation to a `ContentPresenter` or `ContentControl` container and can be overridden by specialized containers. |
-| `ClearItemContainer(UIElement)` | Removes the container aspect, clears the recorded item state, resets an `ISelectableItemContainer` to index `-1`, and clears presenter or content-control content unless the container is the item itself. A `UIElement` item that is its own container, such as a `Button` or `TabItem` item, keeps its `Content` when it is recycled or when other items are inserted, removed or moved. |
+| `PrepareItemContent(UIElement, int, object?)` | Applies default content/template presentation to a `ContentPresenter` or `ContentControl` container and can be overridden by specialized containers. A `ContentPresenter` gets `ContentTemplate` and `ContentTemplateKey` only when `ItemTemplate` and `ItemTemplateKey` are not `null`, so values from `ItemContainerAspect` apply otherwise. |
+| `ClearItemContainer(UIElement)` | Removes the container aspect, clears the recorded item state, resets an `ISelectableItemContainer` to index `-1`, and clears presenter or content-control content unless the container is the item itself. A `ContentPresenter` container also loses its local `ContentTemplate` and `ContentTemplateKey` values (`ClearValue`). A `UIElement` item that is its own container, such as a `Button` or `TabItem` item, keeps its `Content` when it is recycled or when other items are inserted, removed or moved. |
 | `IsItemSelected(int)` | Returns whether the item at an index is selected. The base implementation returns `false`. |
 | `OnItemContainerPrepared(UIElement, int)` | Called after a container is prepared. The base implementation does nothing. |
 | `ActivateItemsPresenter(ItemsPresenter?)` | Activates a template presenter or restores the fallback presenter. |
