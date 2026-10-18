@@ -42,7 +42,7 @@ internal sealed class ServoActionEngine
         float x = bounds.X + (bounds.Width / 2);
         float y = bounds.Y + (bounds.Height / 2);
         HitTestResult? hit = root.InputCache.HitTest(root, x, y);
-        if (hit is null || !root.InputCache.EnsureCurrent(root).GetRouteToRoot(hit.Element).Contains(element))
+        if (hit is null || !root.InputCache.EnsureCurrent(root).GetVisualRouteToRoot(hit.Element).Contains(element))
         {
             throw new ServoTargetNotActionableException(
                 "The Servo target center is not hit-testable in the current tree.");
