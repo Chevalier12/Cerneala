@@ -137,6 +137,125 @@ public sealed class ButtonTests
         Assert.True(Executed);
     }
 
+    // One click does one thing (#421): the click on the inner button is the inner button's, and its MouseUp bubbles to
+    // the outer button without making a Click of the outer button. The inner Click still bubbles to outer.Click.
+    [Fact]
+    public void ClickOnButtonInsideButtonRaisesOnlyTheInnerButtonClick()
+    {
+        int innerCommands = 0;
+        int outerCommands = 0;
+        Button inner = new() { Content = "inner", Width = 80, Height = 30, Command = new ActionCommand(_ => innerCommands++) };
+        Button outer = new() { Content = inner, Command = new ActionCommand(_ => outerCommands++) };
+        UIRoot root = CreateCanvasRoot(outer);
+        int innerClicks = 0;
+        int outerOwnClicks = 0;
+        int outerBubbledClicks = 0;
+        inner.Click += (_, _) => innerClicks++;
+        outer.Click += (_, args) =>
+        {
+            if (IsSource(args.OriginalSource, outer))
+            {
+                outerOwnClicks++;
+            }
+            else if (IsSource(args.OriginalSource, inner))
+            {
+                outerBubbledClicks++;
+            }
+        };
+        LayoutRect bounds = inner.ArrangedBounds;
+
+        Click(root, bounds.X + bounds.Width / 2, bounds.Y + bounds.Height / 2);
+
+        Assert.Equal(1, innerClicks);
+        Assert.Equal(1, outerBubbledClicks);
+        Assert.Equal(0, outerOwnClicks);
+        Assert.Equal(1, innerCommands);
+        Assert.Equal(0, outerCommands);
+    }
+
+    [Fact]
+    public void ClickOnOuterButtonOutsideInnerButtonRaisesOuterClickAndCommandOnce()
+    {
+        int innerCommands = 0;
+        int outerCommands = 0;
+        Button inner = new() { Content = "inner", Width = 80, Height = 30, Command = new ActionCommand(_ => innerCommands++) };
+        Button outer = new() { Content = inner, Padding = new Thickness(12), Command = new ActionCommand(_ => outerCommands++) };
+        UIRoot root = CreateCanvasRoot(outer);
+        int innerClicks = 0;
+        int outerOwnClicks = 0;
+        inner.Click += (_, _) => innerClicks++;
+        outer.Click += (_, args) =>
+        {
+            if (IsSource(args.OriginalSource, outer))
+            {
+                outerOwnClicks++;
+            }
+        };
+        LayoutRect bounds = outer.ArrangedBounds;
+        float x = bounds.X + 5;
+        float y = bounds.Y + bounds.Height / 2;
+        Assert.Same(outer, new HitTestService().HitTest(root, x, y)?.Element);
+
+        Click(root, x, y);
+
+        Assert.Equal(1, outerOwnClicks);
+        Assert.Equal(1, outerCommands);
+        Assert.Equal(0, innerClicks);
+        Assert.Equal(0, innerCommands);
+    }
+
+    [Fact]
+    public void ClickOnDropDownToggleOfComboBoxInsideButtonOpensDropDownWithoutButtonClick()
+    {
+        ComboBox comboBox = new() { IsEditable = false, Width = 180, Height = 32 };
+        comboBox.SetItems(new[] { "one", "two", "three" });
+        comboBox.SelectedIndex = 0;
+        Button outer = new() { Content = comboBox };
+        UIRoot root = CreateCanvasRoot(outer);
+        Cerneala.UI.Controls.Primitives.ToggleButton toggle = Assert.IsType<Cerneala.UI.Controls.Primitives.ToggleButton>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_DropDownToggle"]);
+        int outerOwnClicks = 0;
+        outer.Click += (_, args) =>
+        {
+            if (IsSource(args.OriginalSource, outer))
+            {
+                outerOwnClicks++;
+            }
+        };
+        LayoutRect bounds = toggle.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        Assert.Same(toggle, new HitTestService().HitTest(root, x, y)?.Element);
+
+        Click(root, x, y);
+
+        Assert.True(comboBox.IsDropDownOpen);
+        Assert.Equal(0, outerOwnClicks);
+    }
+
+    private static UIRoot CreateCanvasRoot(UIElement child)
+    {
+        UIRoot root = new(300, 200);
+        Cerneala.UI.Layout.Panels.Canvas canvas = new();
+        canvas.VisualChildren.Add(child);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        return root;
+    }
+
+    private static void Click(UIRoot root, float x, float y)
+    {
+        ElementInputBridge bridge = new();
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+    }
+
+    private static bool IsSource(object? source, UIElement element)
+    {
+        return ReferenceEquals(source, element) || Equals(source, element.ElementId);
+    }
+
     private static bool Executed { get; set; }
 
     private static InputFrame PointerFrame(float x, float y, bool previousDown = false, bool currentDown = false)
