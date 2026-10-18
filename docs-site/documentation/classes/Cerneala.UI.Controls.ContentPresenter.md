@@ -88,6 +88,8 @@ A template can place `UIElement` content inside the element it creates, for exam
 
 A template can place `UIElement` content inside the element it creates, for example `context => new Border { Child = (UIElement)context.Data! }`. When `Content` changes away from that element, the presenter removes the element from the template's element at once, before the presented child is rebuilt. The element then has no parent, so it can be added elsewhere right away, for example to the items panel after an `ItemsControl` loses its `ItemTemplate`.
 
+In both cases, when the element's parent is a `ContentControl` inside the presented child that hosts the element directly (it has no `ComponentTemplate` or `ComponentTemplateKey`) and whose `Content` is the element, the presenter removes it by setting that control's `Content` to `null`, so `Content` never names an element that the control no longer holds. A template that reuses one container, for example `context => { cached.Content = context.Data; return cached; }`, therefore puts the element back into `cached` on every refresh: after `ContentTemplate` is replaced by another template with the same factory, `PresentedChild` is `cached`, `cached.Content` is the element, and the element's `VisualParent` is `cached`. The write goes through the `Content` setter, so it is the same local value write as `cached.Content = null` in code.
+
 `LocalTemplateRegistry` is not a UI property. Assigning it refreshes the presented child and invalidates measure, arrange, and render. `ContentIndex` marks the presentation dirty and is supplied to modern template creation contexts; it does not itself perform layout invalidation.
 
 ## Constructors
