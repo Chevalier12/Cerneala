@@ -1090,11 +1090,21 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         // by it (a Canvas or StackPanel child gets its desired height). A same-slot arrange of either must run again. A
         // measure from inside the parent's MeasureCore changes it without the frame step that resets the parent's arrange
         // cache, for example in a row that a VirtualizingStackPanel realizes again after skipping it.
-        InvalidateArrangeCache();
+        RequireArrangeForDesiredSizeChange();
         if (VisualParent is UIElement parent)
         {
-            parent.InvalidateArrangeCache();
+            parent.RequireArrangeForDesiredSizeChange();
         }
+    }
+
+    // A reset cache alone takes effect only when an ancestor arranges this element again. An ancestor whose slot and
+    // desired size did not change returns its cached result without arranging its children (a Border between a Canvas
+    // and a StackPanel whose children swapped heights, #450), so the frame arranges this element itself with its last
+    // slot, as WPF's InvalidateArrange puts the element in the arrange queue.
+    private void RequireArrangeForDesiredSizeChange()
+    {
+        InvalidateArrangeCache();
+        Root?.LayoutQueue.RequireArrange(this);
     }
 
     // A parent that skips measuring this element (VirtualizingStackPanel gives an unrealized row LayoutSize.Zero) writes
