@@ -578,6 +578,44 @@ public sealed class TabControlTests
     }
 
     [Fact]
+    public void SetValueRejectsElementContentThatHasAnotherParentLikeTheContentSetter()
+    {
+        UIRoot root = new(300, 200);
+        Border holder = new();
+        FixedElement parented = new();
+        holder.Child = parented;
+        root.VisualChildren.Add(holder);
+        FixedElement firstContent = new();
+        FixedElement secondContent = new();
+        TabItem first = new() { Header = "H1", Content = firstContent };
+        TabItem second = new() { Header = "H2", Content = secondContent };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        tabControl.SelectedIndex = 0;
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+
+        InvalidOperationException rejected = Assert.Throws<InvalidOperationException>(
+            () => second.SetValue(ContentControl.ContentProperty, (object?)parented));
+        Assert.Equal("Element must be removed from its current parent before reparenting.", rejected.Message);
+        Assert.Same(secondContent, second.Content);
+        Assert.Same(holder, parented.LogicalParent);
+        Assert.Same(second, secondContent.LogicalParent);
+
+        FixedElement loose = new();
+        second.SetValue(ContentControl.ContentProperty, (object?)loose);
+        Assert.Same(loose, second.Content);
+        Assert.Same(second, loose.LogicalParent);
+        Assert.Null(secondContent.LogicalParent);
+
+        tabControl.SelectedIndex = 1;
+        root.ProcessFrame();
+
+        Assert.True(HasVisualAncestor(loose, tabControl), "loose is not under the TabControl while tab 1 is selected");
+        Assert.Same(holder, parented.VisualParent);
+    }
+
+    [Fact]
     public void ElementContentOfATabThatIsNotSelectedStaysOwnedWhenTheTabGetsAComponentTemplate()
     {
         UIRoot root = new(300, 200);

@@ -80,6 +80,20 @@ public class ContentControl : Control
     // True when this control is the direct parent of the given content when that content is a UIElement.
     internal virtual bool HostsContentDirectly(object? content) => ComponentTemplate is null && ComponentTemplateKey is null;
 
+    // Content that this control does not host is taken later by its other owner (a ContentPresenter, or the TabItem
+    // that holds it), so SetValue checks it here, before the store changes, as the Content setter does.
+    internal override void ValidatePropertyMutation(UiProperty property, object? value)
+    {
+        base.ValidatePropertyMutation(property, value);
+        if (ReferenceEquals(property, ContentProperty) &&
+            value is UIElement element &&
+            !ReferenceEquals(element, Content) &&
+            !HostsContentDirectly(element))
+        {
+            ValidateCanOwnChild(this, element);
+        }
+    }
+
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
         if (TemplateChild is not null)
