@@ -19,6 +19,25 @@ public sealed class InputFrame
         KeyboardSnapshot currentKeyboard,
         IReadOnlyList<TextInputSnapshotEvent> textInputEvents,
         IReadOnlyList<InputKey> keyRepeatEvents)
+        : this(
+            previousPointer,
+            currentPointer,
+            previousKeyboard,
+            currentKeyboard,
+            textInputEvents,
+            keyRepeatEvents,
+            SingleWheelEvent(previousPointer, currentPointer))
+    {
+    }
+
+    public InputFrame(
+        PointerSnapshot previousPointer,
+        PointerSnapshot currentPointer,
+        KeyboardSnapshot previousKeyboard,
+        KeyboardSnapshot currentKeyboard,
+        IReadOnlyList<TextInputSnapshotEvent> textInputEvents,
+        IReadOnlyList<InputKey> keyRepeatEvents,
+        IReadOnlyList<int> wheelDeltas)
     {
         ArgumentNullException.ThrowIfNull(previousPointer);
         ArgumentNullException.ThrowIfNull(currentPointer);
@@ -26,8 +45,23 @@ public sealed class InputFrame
         ArgumentNullException.ThrowIfNull(currentKeyboard);
         ArgumentNullException.ThrowIfNull(textInputEvents);
         ArgumentNullException.ThrowIfNull(keyRepeatEvents);
+        ArgumentNullException.ThrowIfNull(wheelDeltas);
 
-        Pointer = new PointerFrame(previousPointer, currentPointer);
+        int[] wheelEvents = wheelDeltas.Where(delta => delta != 0).ToArray();
+        int total = 0;
+        foreach (int delta in wheelEvents)
+        {
+            total = unchecked(total + delta);
+        }
+
+        if (total != unchecked(currentPointer.WheelValue - previousPointer.WheelValue))
+        {
+            throw new ArgumentException(
+                "The wheel deltas must add up to the wheel change between the previous and current pointer snapshots.",
+                nameof(wheelDeltas));
+        }
+
+        Pointer = new PointerFrame(previousPointer, currentPointer, wheelEvents);
         Keyboard = new KeyboardFrame(
             previousKeyboard,
             currentKeyboard,
@@ -41,15 +75,22 @@ public sealed class InputFrame
 
     public IReadOnlyList<TextInputSnapshotEvent> TextInputEvents { get; }
 
+    // A frame built without wheel events reports the snapshots' wheel change as one event.
+    private static int[] SingleWheelEvent(PointerSnapshot? previous, PointerSnapshot? current) =>
+        previous is null || current is null || current.WheelValue == previous.WheelValue
+            ? []
+            : [unchecked(current.WheelValue - previous.WheelValue)];
+
     public sealed class PointerFrame
     {
         private readonly PointerSnapshot previous;
         private readonly PointerSnapshot current;
 
-        internal PointerFrame(PointerSnapshot previous, PointerSnapshot current)
+        internal PointerFrame(PointerSnapshot previous, PointerSnapshot current, int[] wheelDeltas)
         {
             this.previous = previous;
             this.current = current;
+            WheelDeltas = Array.AsReadOnly(wheelDeltas);
         }
 
         public float X => current.X;
@@ -59,6 +100,8 @@ public sealed class InputFrame
         public int WheelValue => current.WheelValue;
 
         public int WheelDelta => current.WheelValue - previous.WheelValue;
+
+        public IReadOnlyList<int> WheelDeltas { get; }
 
         public bool IsDown(InputMouseButton button)
         {

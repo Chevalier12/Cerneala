@@ -105,6 +105,36 @@ public sealed class ScrollViewerTests
     }
 
     [Fact]
+    public void ScrollViewerScrollsOneStepForEachWheelEventOfOneFrame()
+    {
+        UIRoot root = new(100, 100);
+        ScrollViewer viewer = new()
+        {
+            Content = new FixedElement(new LayoutSize(80, 1000)),
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        viewer.Measure(new MeasureContext(new LayoutSize(80, 80)));
+        viewer.Arrange(new ArrangeContext(new LayoutRect(0, 0, 80, 80)));
+        root.VisualChildren.Add(viewer);
+        List<int> deltas = [];
+        root.AddHandler(InputEvents.MouseWheelEvent, (_, args) => deltas.Add(((MouseWheelEventArgs)args).Delta), handledEventsToo: true);
+        PointerSnapshot previous = PointerSnapshot.Empty.WithPosition(10, 10);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, new InputFrame(
+            previous,
+            previous.WithWheelValue(-360),
+            KeyboardSnapshot.Empty,
+            KeyboardSnapshot.Empty,
+            [],
+            [],
+            [-120, -120, -120]));
+
+        Assert.Equal([-120, -120, -120], deltas);
+        Assert.Equal(144, viewer.Presenter.VerticalOffset);
+    }
+
+    [Fact]
     public void TemplatePartsBecomeTheActiveScrollViewerParts()
     {
         ScrollContentPresenter presenter = new();

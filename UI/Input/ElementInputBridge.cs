@@ -106,9 +106,10 @@ public sealed class ElementInputBridge
             }
         }
 
-        if (inputFrame.Pointer.WheelDelta != 0)
+        // One MouseWheel pair per platform wheel event, as WPF raises one per WM_MOUSEWHEEL.
+        foreach (int wheelDelta in inputFrame.Pointer.WheelDeltas)
         {
-            RaiseWheelPair(routeMap, pointerTarget, inputFrame.Pointer.WheelDelta);
+            RaiseWheelPair(routeMap, pointerTarget, wheelDelta);
         }
 
         foreach (InputMouseButton button in Enum.GetValues<InputMouseButton>())

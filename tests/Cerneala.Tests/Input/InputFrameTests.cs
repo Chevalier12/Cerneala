@@ -38,6 +38,43 @@ public sealed class InputFrameTests
     }
 
     [Fact]
+    public void InputFrameWithoutWheelDeltasReportsTheWheelChangeAsOneEvent()
+    {
+        PointerSnapshot previous = PointerSnapshot.Empty.WithWheelValue(120);
+
+        InputFrame scrolled = new(previous, previous.WithWheelValue(360), KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []);
+        InputFrame still = new(previous, previous, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, [], []);
+
+        Assert.Equal([240], scrolled.Pointer.WheelDeltas);
+        Assert.Empty(still.Pointer.WheelDeltas);
+    }
+
+    [Fact]
+    public void InputFrameCopiesWheelDeltasInOrderAndIgnoresZeroDeltas()
+    {
+        PointerSnapshot previous = PointerSnapshot.Empty.WithWheelValue(120);
+        PointerSnapshot current = previous.WithWheelValue(-120);
+        List<int> deltas = [-120, 0, 120, -240];
+
+        InputFrame frame = new(previous, current, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, [], [], deltas);
+        deltas.Add(-120);
+
+        Assert.Equal([-120, 120, -240], frame.Pointer.WheelDeltas);
+        Assert.Equal(-240, frame.Pointer.WheelDelta);
+    }
+
+    [Fact]
+    public void InputFrameRejectsWheelDeltasThatDoNotAddUpToTheWheelChange()
+    {
+        PointerSnapshot current = PointerSnapshot.Empty.WithWheelValue(-360);
+
+        Assert.Throws<ArgumentException>(() => new InputFrame(
+            PointerSnapshot.Empty, current, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, [], [], [-120, -120]));
+        Assert.Throws<ArgumentNullException>(() => new InputFrame(
+            PointerSnapshot.Empty, current, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, [], [], null!));
+    }
+
+    [Fact]
     public void InputFrameReportsKeyTransitions()
     {
         KeyboardSnapshot previous = KeyboardSnapshot.Empty;
