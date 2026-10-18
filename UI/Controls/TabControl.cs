@@ -96,19 +96,13 @@ public class TabControl : Selector
         }
 
         LayoutSize headerSize = ItemsPresenter.Measure(context);
-        TabItem? previousTab = UpdateSelectedContent();
+        UpdateSelectedContent();
         LayoutSize available = context.AvailableSize;
         float contentHeight = available.IsHeightUnconstrained
             ? float.PositiveInfinity
             : MathF.Max(0, available.Height - headerSize.Height);
         LayoutSize contentSize = selectedContentPresenter.Measure(
             new MeasureContext(new LayoutSize(available.Width, contentHeight), context.Rounding));
-        // Measuring the content area removed the content of the tab shown before; that tab owns it again.
-        if (!ReferenceEquals(previousTab, presentedTab))
-        {
-            previousTab?.HoldContent();
-        }
-
         return new LayoutSize(MathF.Max(headerSize.Width, contentSize.Width), headerSize.Height + contentSize.Height);
     }
 
@@ -139,15 +133,21 @@ public class TabControl : Selector
 
     // The only place the content area changes: it runs in measure, after the tabs are realized, so a UIElement
     // content joins the content area while its tab is selected and leaves it when another tab is selected. The
-    // selected tab lets go of its content first, so the content area can take it; returns the tab shown before.
-    private TabItem? UpdateSelectedContent()
+    // selected tab lets go of its content first, so the content area can take it.
+    private void UpdateSelectedContent()
     {
         TabItem? previousTab = presentedTab;
         TabItem? tab = SelectedTabItem;
         presentedTab = tab;
         tab?.ReleaseContentForContentArea();
         selectedContentPresenter.PrepareItemPresentation(tab?.Content, SelectedContentTemplate, null, null, -1);
-        return previousTab;
+        // Changing the Content of the content area let go of the content of the tab shown before at once; that tab
+        // owns it again before the content area is measured, so a template that throws while it is measured cannot
+        // leave that content without an owner.
+        if (!ReferenceEquals(previousTab, tab))
+        {
+            previousTab?.HoldContent();
+        }
     }
 
     private void InvalidateSelectedContent(string reason)
