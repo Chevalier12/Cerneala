@@ -662,6 +662,10 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     {
     }
 
+    internal virtual void ValidateChildInsertion(UIElement child, ElementChildRole role, bool ownerManaged)
+    {
+    }
+
     internal void SetVisualParent(UIElement? parent)
     {
         VisualParent = parent;
