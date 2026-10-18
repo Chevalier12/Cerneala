@@ -826,6 +826,126 @@ public sealed class ItemsControlTests
             UiPropertyValueSource.TemplateBinding));
     }
 
+    // As in WPF's ContentPresenter.PrepareContentPresenter, preparing a generated ContentPresenter sets ContentTemplate
+    // only when ItemTemplate is set, so a ContentTemplate from ItemContainerAspect applies otherwise.
+    [Fact]
+    public void ItemContainerAspectContentTemplateBuildsGeneratedContainersWithoutItemTemplate()
+    {
+        UIRoot root = new(300, 200);
+        int calls = 0;
+        ContentTemplate<string> template = new("aspect-content", key: null, priority: 0, context =>
+        {
+            calls++;
+            return new FixedElement(context.Data!, new LayoutSize(20, 10));
+        });
+        ItemsControl control = new()
+        {
+            ItemsSource = new[] { "A", "B" },
+            ItemContainerAspect = new ElementAspect([new ElementAspectValue(ContentPresenter.ContentTemplateProperty, template)])
+        };
+        root.VisualChildren.Add(control);
+        root.ProcessFrame();
+
+        Assert.Equal(2, calls);
+        IReadOnlyDictionary<int, UIElement> realized = control.ItemContainerGenerator.RealizedContainers;
+        foreach (ContentPresenter presenter in new[] { (ContentPresenter)realized[0], (ContentPresenter)realized[1] })
+        {
+            Assert.Same(template, presenter.ContentTemplate);
+            Assert.Null(presenter.ContentTemplateKey);
+            Assert.Equal(presenter.Content, Assert.IsType<FixedElement>(presenter.PresentedChild).Value);
+        }
+    }
+
+    [Fact]
+    public void ItemContainerAspectContentTemplateKeyBuildsGeneratedContainersWithoutItemTemplateKey()
+    {
+        UIRoot root = new(300, 200);
+        List<string?> built = [];
+        ContentTemplate<string> keyed = new("keyed", key: "k", priority: 0, context =>
+        {
+            built.Add(context.Data);
+            return new FixedElement(context.Data!, new LayoutSize(40, 20));
+        });
+        ItemsControl control = new()
+        {
+            ItemsSource = new[] { "One", "Two" },
+            ItemContainerAspect = new ElementAspect([new ElementAspectValue(ContentPresenter.ContentTemplateKeyProperty, "k")])
+        };
+        control.Templates.Add(keyed);
+        root.VisualChildren.Add(control);
+        root.ProcessFrame();
+
+        Assert.Equal(["One", "Two"], built);
+        IReadOnlyDictionary<int, UIElement> realized = control.ItemContainerGenerator.RealizedContainers;
+        foreach (ContentPresenter presenter in new[] { (ContentPresenter)realized[0], (ContentPresenter)realized[1] })
+        {
+            Assert.Equal("k", presenter.ContentTemplateKey);
+            Assert.Null(presenter.ContentTemplate);
+        }
+    }
+
+    [Fact]
+    public void ItemTemplateWinsOverItemContainerAspectContentTemplate()
+    {
+        UIRoot root = new(300, 200);
+        int itemCalls = 0;
+        int aspectCalls = 0;
+        ContentTemplate<string> itemTemplate = new("item", key: null, priority: 0, context =>
+        {
+            itemCalls++;
+            return new FixedElement(context.Data!, new LayoutSize(20, 10));
+        });
+        ContentTemplate<string> aspectTemplate = new("aspect-content", key: null, priority: 0, context =>
+        {
+            aspectCalls++;
+            return new FixedElement(context.Data!, new LayoutSize(20, 10));
+        });
+        ItemsControl control = new()
+        {
+            ItemTemplate = itemTemplate,
+            ItemsSource = new[] { "A", "B" },
+            ItemContainerAspect = new ElementAspect([new ElementAspectValue(ContentPresenter.ContentTemplateProperty, aspectTemplate)])
+        };
+        root.VisualChildren.Add(control);
+        root.ProcessFrame();
+
+        Assert.Equal((2, 0), (itemCalls, aspectCalls));
+        Assert.Same(itemTemplate, ((ContentPresenter)control.ItemContainerGenerator.RealizedContainers[0]).ContentTemplate);
+    }
+
+    // Clearing ItemTemplate clears and recycles the generated presenters; the recycled presenters are prepared again
+    // without an ItemTemplate, so the value the previous preparation set is gone and the aspect's ContentTemplate applies.
+    [Fact]
+    public void RecycledGeneratedContainerUsesItemContainerAspectContentTemplateAfterItemTemplateIsCleared()
+    {
+        UIRoot root = new(300, 200);
+        int aspectCalls = 0;
+        ContentTemplate<string> itemTemplate = new("item", key: null, priority: 0, context => new FixedElement(context.Data!, new LayoutSize(20, 10)));
+        ContentTemplate<string> aspectTemplate = new("aspect-content", key: null, priority: 0, context =>
+        {
+            aspectCalls++;
+            return new FixedElement(context.Data!, new LayoutSize(20, 10));
+        });
+        ItemsControl control = new()
+        {
+            ItemTemplate = itemTemplate,
+            ItemsSource = new[] { "A", "B" },
+            ItemContainerAspect = new ElementAspect([new ElementAspectValue(ContentPresenter.ContentTemplateProperty, aspectTemplate)])
+        };
+        root.VisualChildren.Add(control);
+        root.ProcessFrame();
+        UIElement[] before = [control.ItemContainerGenerator.RealizedContainers[0], control.ItemContainerGenerator.RealizedContainers[1]];
+
+        control.ItemTemplate = null;
+        root.ProcessFrame();
+
+        IReadOnlyDictionary<int, UIElement> realized = control.ItemContainerGenerator.RealizedContainers;
+        UIElement[] after = [realized[0], realized[1]];
+        Assert.All(after, presenter => Assert.Contains(presenter, before));
+        Assert.All(after, presenter => Assert.Same(aspectTemplate, ((ContentPresenter)presenter).ContentTemplate));
+        Assert.Equal(2, aspectCalls);
+    }
+
     [Fact]
     public void TemplatedButtonMeasuresWithPaddingFromItsAspectInTheFirstFrame()
     {

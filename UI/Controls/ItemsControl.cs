@@ -284,7 +284,7 @@ public class ItemsControl : Control
         switch (container)
         {
             case ContentPresenter presenter:
-                presenter.PrepareItemPresentation(
+                presenter.PrepareItemContainerPresentation(
                     ItemTemplate is null ? GetItemDisplayValue(item) : item,
                     ItemTemplate,
                     ItemTemplateKey,
@@ -368,8 +368,8 @@ public class ItemsControl : Control
         {
             case ContentPresenter presenter:
                 presenter.Content = null;
-                presenter.ContentTemplate = null;
-                presenter.ContentTemplateKey = null;
+                presenter.ClearValue(ContentPresenter.ContentTemplateProperty);
+                presenter.ClearValue(ContentPresenter.ContentTemplateKeyProperty);
                 presenter.LocalTemplateRegistry = null;
                 presenter.ContentIndex = -1;
                 break;
