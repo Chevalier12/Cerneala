@@ -383,12 +383,19 @@ public sealed class VirtualizingStackPanelTests
     }
 
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void ChildRealizedAgainArrangesADescendantBelowACanvasThatChangedOutsideTheRealizationWindow(bool arrangesPanelWhileRowIsSkipped)
+    [InlineData(false, 0)]
+    [InlineData(true, 0)]
+    [InlineData(false, 1)]
+    [InlineData(true, 1)]
+    [InlineData(false, 2)]
+    [InlineData(true, 2)]
+    public void ChildRealizedAgainArrangesADescendantBelowACanvasThatChangedOutsideTheRealizationWindow(
+        bool arrangesPanelWhileRowIsSkipped,
+        int wrappersBelowCanvas)
     {
         // A Canvas arranges its child at the child's desired size, so the stack below it gets the slot 0, 0, 0, 60
         // both while the row is skipped and after it is realized again: only its children's desired heights change.
+        // A Border between the Canvas and the stack gets that same slot too, and its desired size stays 60 (#450).
         UIRoot root = new(200, 100, 1);
         VirtualizingStackPanel panel = new() { FirstRealizedIndex = 0 };
         UIElement first = new() { Height = 20 };
@@ -396,8 +403,14 @@ public sealed class VirtualizingStackPanelTests
         Cerneala.UI.Controls.StackPanel stack = new();
         stack.VisualChildren.Add(first);
         stack.VisualChildren.Add(second);
+        UIElement canvasChild = stack;
+        for (int i = 0; i < wrappersBelowCanvas; i++)
+        {
+            canvasChild = new Border { Child = canvasChild };
+        }
+
         Cerneala.UI.Controls.Canvas canvas = new() { Height = 60 };
-        canvas.VisualChildren.Add(stack);
+        canvas.VisualChildren.Add(canvasChild);
         panel.VisualChildren.Add(new Border { Child = canvas });
         for (int i = 1; i < 20; i++)
         {
@@ -411,6 +424,7 @@ public sealed class VirtualizingStackPanelTests
         panel.Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange, "scroll");
         root.ProcessFrame();
         Assert.False(panel.RealizationWindow.Contains(0));
+        Assert.Equal(new LayoutRect(0, 0, 0, 60), canvasChild.ArrangedBounds);
 
         first.Height = 40;
         second.Height = 20;
