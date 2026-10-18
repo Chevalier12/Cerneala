@@ -224,9 +224,10 @@ public class ItemsControl : Control
         base.OnAttached();
         bool isReattaching = hasEverAttached;
         hasEverAttached = true;
-        if (isReattaching && ItemsSource is not null)
+        // The source is not observed while detached, so read it again; the realized containers stay when it
+        // still holds the same items.
+        if (isReattaching && ItemsSource is not null && RefreshItemsSourceSnapshot(ItemsSource))
         {
-            RebuildItemsSourceSnapshot(ItemsSource);
             ItemContainerGenerator.Clear();
             NotifyItemsReset();
             OnItemsViewSourceChanged();
@@ -648,6 +649,30 @@ public class ItemsControl : Control
     private void RebuildItemsSourceSnapshot(IEnumerable? source)
     {
         itemsSourceSnapshot = source is null ? [] : [.. source.Cast<object?>()];
+    }
+
+    // Rebuilds the snapshot and returns true when its items or their order changed. A value-type item is boxed
+    // again on every read, so it is compared by value; any other item by reference.
+    private bool RefreshItemsSourceSnapshot(IEnumerable source)
+    {
+        IReadOnlyList<object?> previous = itemsSourceSnapshot;
+        RebuildItemsSourceSnapshot(source);
+        if (previous.Count != itemsSourceSnapshot.Count)
+        {
+            return true;
+        }
+
+        for (int index = 0; index < previous.Count; index++)
+        {
+            object? oldItem = previous[index];
+            object? newItem = itemsSourceSnapshot[index];
+            if (!ReferenceEquals(oldItem, newItem) && !(oldItem is ValueType && oldItem.Equals(newItem)))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void VerifyCollectionNotificationAccess(string collectionName)
