@@ -184,6 +184,7 @@ public class ContentControl : Control
             throw new InvalidOperationException("An ancestor cannot be added as a child.");
         }
 
+        child.ReleaseFromParentForNewOwner();
         if (child.LogicalParent is not null || child.VisualParent is not null)
         {
             throw new InvalidOperationException("Element must be removed from its current parent before reparenting.");

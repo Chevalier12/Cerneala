@@ -13,6 +13,7 @@ public class ContentPresenter : Control
 {
     private static readonly IEqualityComparer<object?> ContentReferenceEqualityComparer = new ReferenceContentEqualityComparer();
     private UIElement? presentedChild;
+    private UIElement? contentReleasableByTemplate;
     private bool presentationDirty = true;
     private bool generatedTextChild;
     private bool deferPresentationRefresh;
@@ -218,7 +219,7 @@ public class ContentPresenter : Control
         presentationDirty = false;
         object? content = Content;
         ContentTemplate? template = ResolveContentTemplate(content);
-        ReleaseElementContent(content, template is not null);
+        ReleaseElementContent(content);
         UIElement? next = CreatePresentedChild(content, template);
         if (ReferenceEquals(presentedChild, next))
         {
@@ -254,23 +255,13 @@ public class ContentPresenter : Control
     }
 
     // A template can place element content inside the element it creates. Before the next child is built, the element
-    // content leaves the current presented child, or the presenter when a template will wrap it, so the next template
-    // or the presenter itself can take it.
-    private void ReleaseElementContent(object? content, bool templated)
+    // content leaves the current presented child that wraps it, so the next template or the presenter itself can take
+    // it. Element content that the presenter hosts directly stays in place until a template adds it to another element.
+    private void ReleaseElementContent(object? content)
     {
-        if (content is not UIElement element || presentedChild is null)
-        {
-            return;
-        }
-
-        if (!ReferenceEquals(presentedChild, element))
+        if (content is UIElement element && presentedChild is not null && !ReferenceEquals(presentedChild, element))
         {
             ContentControl.DetachChildFromOwnedSubtree(this, element);
-        }
-        else if (templated)
-        {
-            RemovePresentedChild(element);
-            presentedChild = null;
         }
     }
 
@@ -279,7 +270,17 @@ public class ContentPresenter : Control
         if (template is not null)
         {
             generatedTextChild = false;
-            return template.Create(CreateTemplateContext(content));
+            // A template that returns the hosted element itself keeps it in place; one that adds it to the element it
+            // creates takes it from the presenter through ReleaseChildForNewOwner.
+            contentReleasableByTemplate = ReferenceEquals(presentedChild, content) ? presentedChild : null;
+            try
+            {
+                return template.Create(CreateTemplateContext(content));
+            }
+            finally
+            {
+                contentReleasableByTemplate = null;
+            }
         }
 
         if (content is UIElement element)
@@ -353,6 +354,18 @@ public class ContentPresenter : Control
             LogicalChildren.Remove(child);
             throw;
         }
+    }
+
+    internal override void ReleaseChildForNewOwner(UIElement child)
+    {
+        if (!ReferenceEquals(child, contentReleasableByTemplate))
+        {
+            return;
+        }
+
+        contentReleasableByTemplate = null;
+        RemovePresentedChild(child);
+        presentedChild = null;
     }
 
     private void RemovePresentedChild(UIElement? child)
