@@ -9,9 +9,16 @@ Run it from the fixed worktree, after the fix is committed and merged with the n
 Local phase (always, nothing is written to GitHub):
   1. dotnet build-server shutdown, then publishes the app self-contained for win-x64 as variant "after"
      (-p:ReproVariant=after) into <WorkDir>\publish\after. Both publishes use -nodeReuse:false.
-  2. Creates a detached worktree of the base commit in $env:TEMP\cb<Issue>, copies the app to
-     <WorkDir>\before\Issue<Issue> (without bin and obj), and publishes it against that worktree
-     (-p:CernealaRoot=...) as variant "before". The base worktree is always removed again.
+  2. Uses a detached worktree of the base commit as base tree, copies the app to
+     <WorkDir>\before\Issue<Issue> (without bin and obj), and publishes it against that tree
+     (-p:CernealaRoot=...) as variant "before". Which base tree depends on the folder the script runs from:
+       - Normal case: a new tree in $env:TEMP\cb<Issue>, removed again at the end (cold build every time).
+       - Warm case: the repository folder is named fix-slot-<n> (the issue watcher's reused fix windows under
+         .claude\worktrees). The base tree is $env:TEMP\cbw-fix-slot-<n>. It is created once, never removed, and
+         reused: the script runs "git checkout --detach --force <BaseCommit>" and "git clean -fd" in it (never -x,
+         so bin and obj stay). Example: run from .claude\worktrees\fix-slot-1, the base tree is
+         $env:TEMP\cbw-fix-slot-1; it is kept and reused, so the next fix window's before build is incremental.
+         If that folder exists but is not a worktree of this repository, the script stops with an error.
   3. Runs each published Issue<Issue>.exe -Runs times with --check <report> [--frames <folder>] (frames only on the
      last run). Expected exit code: before = 1 (BUG), after = 0 (OK), on every run.
   4. Only when every run matches: zips each publish folder to <WorkDir>\Issue<Issue>-before.zip / -after.zip and,
@@ -19,7 +26,7 @@ Local phase (always, nothing is written to GitHub):
   5. Writes <WorkDir>\summary.json and <WorkDir>\verdicts.md, prints a summary, and exits with 1 (and publishes
      nothing) when a run did not match.
 
-With -AfterOnly (fixes that change only tests, so a before build would run identical Cerneala code) the base worktree
+With -AfterOnly (fixes that change only tests, so a before build would run identical Cerneala code) the base tree
 and the before app are skipped; only the after app is published and run, and only the after zip and GIF exist.
 
 GitHub phase (only with -Publish, which requires -Pr and -HowToCheckFile; -DryRun prints every gh write command
@@ -208,17 +215,44 @@ Clear-OwnFolder $publishAfter 'after'
 Invoke-DotnetPublish $csproj @("-p:CernealaRoot=$repo\", '-p:ReproVariant=after', '-o', $publishAfter) $logAfter
 
 if (-not $AfterOnly) {
-    $baseTree = Join-Path $env:TEMP "cb$Issue"
+    # Warm base tree: when the script runs from a reused fix-slot-<n> worktree, the base tree is $env:TEMP\cbw-fix-slot-<n>.
+    # It is kept after the run, so its bin and obj folders stay and the next before build is incremental.
+    $slot = Split-Path $repo -Leaf
+    $warm = $slot -match '^fix-slot-\d+$'
+    $baseTree = if ($warm) { Join-Path $env:TEMP "cbw-$slot" } else { Join-Path $env:TEMP "cb$Issue" }
     $beforeApp = Join-Path $WorkDir "before\Issue$Issue"
     try {
         $listed = (& git -C $repo worktree list --porcelain | Where-Object { $_ -like 'worktree *' }) -replace '^worktree ', ''
-        if ($listed | Where-Object { ([IO.Path]::GetFullPath($_)).TrimEnd('\', '/') -ieq $baseTree }) {
-            & git -C $repo worktree remove --force $baseTree
-            & git -C $repo worktree prune
+        $registered = [bool]($listed | Where-Object { ([IO.Path]::GetFullPath($_)).TrimEnd('\', '/') -ieq $baseTree })
+        if ($warm) {
+            if ($registered -and -not (Test-Path -LiteralPath $baseTree)) {
+                # registered, but the folder is gone: forget it, then create it again below
+                & git -C $repo worktree prune
+                $registered = $false
+            }
+            if ($registered) {
+                Write-Host "Reusing warm base tree $baseTree (keeps bin and obj)."
+                & git -C $baseTree checkout --detach --force $BaseCommit *> $null
+                if ($LASTEXITCODE -ne 0) { throw "git checkout --detach --force $BaseCommit in $baseTree failed." }
+                & git -C $baseTree clean -fd *> $null
+                if ($LASTEXITCODE -ne 0) { throw "git clean -fd in $baseTree failed." }
+            }
+            else {
+                if (Test-Path -LiteralPath $baseTree) { throw "$baseTree exists and is not a worktree of this repository; remove it by hand." }
+                Write-Host "Creating warm base tree $baseTree (cold build this time)."
+                & git -C $repo worktree add --detach $baseTree $BaseCommit *> $null
+                if ($LASTEXITCODE -ne 0) { throw "git worktree add $baseTree $BaseCommit failed." }
+            }
         }
-        if (Test-Path -LiteralPath $baseTree) { throw "$baseTree exists and is not a worktree of this repository; remove it by hand." }
-        & git -C $repo worktree add --detach $baseTree $BaseCommit *> $null
-        if ($LASTEXITCODE -ne 0) { throw "git worktree add $baseTree $BaseCommit failed." }
+        else {
+            if ($registered) {
+                & git -C $repo worktree remove --force $baseTree
+                & git -C $repo worktree prune
+            }
+            if (Test-Path -LiteralPath $baseTree) { throw "$baseTree exists and is not a worktree of this repository; remove it by hand." }
+            & git -C $repo worktree add --detach $baseTree $BaseCommit *> $null
+            if ($LASTEXITCODE -ne 0) { throw "git worktree add $baseTree $BaseCommit failed." }
+        }
 
         New-Item -ItemType Directory -Force -Path $beforeApp | Out-Null
         & robocopy $App $beforeApp /E /XD bin obj /NFL /NDL /NJH /NJS /NP | Out-Null
@@ -229,8 +263,10 @@ if (-not $AfterOnly) {
         Invoke-DotnetPublish (Join-Path $beforeApp "Issue$Issue.csproj") @("-p:CernealaRoot=$baseTree\", '-p:ReproVariant=before', '-o', $publishBefore) $logBefore
     }
     finally {
-        & git -C $repo worktree remove --force $baseTree 2>$null
-        & git -C $repo worktree prune
+        if (-not $warm) {
+            & git -C $repo worktree remove --force $baseTree 2>$null
+            & git -C $repo worktree prune
+        }
         $global:LASTEXITCODE = 0
     }
 }
