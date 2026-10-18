@@ -3,11 +3,12 @@ using Cerneala.UI.Input;
 namespace Cerneala.Platforms.Sdl3;
 
 // Turns the ordered SDL event stream into level-sampled input frames. An InputFrame
-// reports a press or release as the difference between two snapshots, so a frame may
-// hold at most one transition of each button, and only events whose arrival order
-// matches the order ElementInputBridge dispatches them in (position, wheel and buttons,
-// keys, text). Key events read Ctrl, Shift and Alt from the frame's final snapshot and
-// are dispatched in InputKey order, so a frame also holds the events of one key only:
+// reports a press or release as the difference between two snapshots, and a frame may
+// hold only events whose arrival order matches the order ElementInputBridge dispatches
+// them in (position, wheel, buttons, keys, text). Buttons are dispatched in
+// InputMouseButton order, so a frame holds at most one button transition, and a wheel
+// notch only before it. Key events read Ctrl, Shift and Alt from the frame's final
+// snapshot and are dispatched in InputKey order, so a frame also holds the events of one key only:
 // at most one transition, as the frame's first key event, then repeats of that key.
 // An event that breaks a rule closes the frame; it and every later event wait in
 // arrival order for the next frames, and the source asks for them.
@@ -23,10 +24,10 @@ internal sealed class SdlInputSource : IInputSource
     private readonly HashSet<InputKey> downKeys = [];
     private readonly List<TextInputSnapshotEvent> textInput = [];
     private readonly List<InputKey> keyRepeats = [];
-    private readonly HashSet<InputMouseButton> changedButtons = [];
     private readonly List<PendingInput> deferred = [];
     private FramePhase framePhase;
     private bool hasTransition;
+    private bool hasButtonTransition;
     private InputKey frameKey = InputKey.None;
     private InputKey lastKeyDown = InputKey.None;
     private InputKey textKey = InputKey.None;
@@ -54,9 +55,9 @@ internal sealed class SdlInputSource : IInputSource
         textInput.Clear();
         keyRepeats.Clear();
         frameKey = InputKey.None;
-        changedButtons.Clear();
         framePhase = FramePhase.Empty;
         hasTransition = false;
+        hasButtonTransition = false;
         lastKeyDown = InputKey.None;
         textKey = InputKey.None;
         if (deferred.Count > 0)
@@ -179,7 +180,7 @@ internal sealed class SdlInputSource : IInputSource
             // A button transition in this frame happened before the window lost the buttons;
             // it is published first. Without one, previousPointer holds exactly the down
             // buttons, so dropping them from both leaves no release edge.
-            if (changedButtons.Count > 0)
+            if (hasButtonTransition)
             {
                 return false;
             }
@@ -206,7 +207,7 @@ internal sealed class SdlInputSource : IInputSource
         // An auto-repeat of a held key is an event, not a transition.
         bool repeat = input.Kind == PendingKind.Key && input.Repeat && input.Down && downKeys.Contains((InputKey)input.Value);
         if ((phase < framePhase && !CanJoinOutOfOrder(input, repeat)) ||
-            (input.Kind == PendingKind.Button && changedButtons.Contains((InputMouseButton)input.Value)) ||
+            (hasButtonTransition && input.Kind is PendingKind.Button or PendingKind.Wheel) ||
             (input.Kind == PendingKind.Key && !CanJoinFrameKey(input)))
         {
             return false;
@@ -229,7 +230,7 @@ internal sealed class SdlInputSource : IInputSource
                 currentPointer = currentPointer.WithPosition(-1, -1);
                 break;
             case PendingKind.Button:
-                changedButtons.Add((InputMouseButton)input.Value);
+                hasButtonTransition = true;
                 currentPointer = currentPointer.WithButton((InputMouseButton)input.Value, input.Down);
                 break;
             case PendingKind.Wheel:
@@ -427,6 +428,8 @@ internal sealed class SdlInputSource : IInputSource
 
     // The order ElementInputBridge dispatches one frame's input in. The wheel shares the
     // buttons' rank: it is not a transition, and one frame routes both to the same target.
+    // It is raised before the buttons, so TryApply keeps a wheel notch out of a frame
+    // after that frame's button transition.
     private enum FramePhase : byte
     {
         Empty,

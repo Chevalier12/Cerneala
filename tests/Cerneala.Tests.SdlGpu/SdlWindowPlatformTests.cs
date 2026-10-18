@@ -175,7 +175,9 @@ public sealed class SdlWindowPlatformTests
         Assert.Equal([true], firstCallbacks.Activations);
         Assert.Equal(56, secondFrame.Pointer.X);
         Assert.True(secondFrame.Pointer.IsPressed(InputMouseButton.Left));
-        Assert.Equal(240, secondFrame.Pointer.WheelDelta);
+        // The wheel turned after the press, so it is raised in the next frame.
+        Assert.Equal(0, secondFrame.Pointer.WheelDelta);
+        Assert.Equal(240, second.InputSource.GetFrame().Pointer.WheelDelta);
         Assert.NotEmpty(secondCallbacks.Bounds);
         Assert.Equal(1, secondCallbacks.CloseRequests);
         Assert.Equal(1, graphics.Sessions[1].ResizeCount);
