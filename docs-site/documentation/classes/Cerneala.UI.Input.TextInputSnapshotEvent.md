@@ -44,7 +44,7 @@ string text = frame.TextInputEvents[0].Text;
 
 `TextInputSnapshotEvent` stores the text value produced by platform text input. The SDL input source wraps queued text in this record, and `InputFrame` exposes those records through `TextInputEvents`.
 
-`TextInputBridge` dispatches each record to the currently focused element by raising `InputEvents.PreviewTextInputEvent` followed by `InputEvents.TextInputEvent`, both with `TextCompositionEventArgs.Text` set to this record's `Text` value.
+`TextInputBridge` dispatches each record to the element that has keyboard focus when that record is raised, by raising `InputEvents.PreviewTextInputEvent` followed by `InputEvents.TextInputEvent`, both with `TextCompositionEventArgs.Text` set to this record's `Text` value.
 
 The constructor rejects `null` text with `ArgumentNullException` and rejects an empty string with `ArgumentException`. Non-empty strings are stored unchanged.
 

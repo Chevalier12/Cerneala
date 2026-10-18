@@ -274,6 +274,51 @@ public sealed class ElementAspectTests
         Assert.Equal(["create 1", "dispose 1", "create 2", "dispose 2"], events);
     }
 
+    [Fact]
+    public void BehaviorWhoseDisposeThrowsOnDetachIsReplacedOnReattachAndNotDisposedAgain()
+    {
+        UIRoot root = new();
+        Border border = new();
+        List<string> events = [];
+        int attaches = 0;
+        ElementAspect aspect = new(
+            "ThrowingLifetime",
+            typeof(UIElement),
+            [],
+            [],
+            _ =>
+            {
+                int attach = ++attaches;
+                events.Add($"create {attach}");
+                // Records every Dispose call, so a second dispose of a lifetime shows up.
+                return new EveryCallLifetime(() =>
+                {
+                    events.Add($"dispose {attach}");
+                    if (attach == 1)
+                    {
+                        throw new InvalidOperationException("Dispose failed");
+                    }
+                });
+            });
+        border.Aspect = aspect;
+        root.VisualChildren.Add(border);
+
+        InvalidOperationException failure = Assert.Throws<InvalidOperationException>(
+            () => root.VisualChildren.Remove(border));
+
+        Assert.Equal("Dispose failed", failure.Message);
+        Assert.Null(border.Root);
+        Assert.Equal(["create 1", "dispose 1"], events);
+
+        root.VisualChildren.Add(border);
+
+        Assert.Equal(["create 1", "dispose 1", "create 2"], events);
+
+        root.VisualChildren.Remove(border);
+
+        Assert.Equal(["create 1", "dispose 1", "create 2", "dispose 2"], events);
+    }
+
     private sealed class CallbackLifetime(Action dispose) : IDisposable
     {
         private Action? dispose = dispose;
@@ -281,6 +326,14 @@ public sealed class ElementAspectTests
         public void Dispose()
         {
             Interlocked.Exchange(ref dispose, null)?.Invoke();
+        }
+    }
+
+    private sealed class EveryCallLifetime(Action dispose) : IDisposable
+    {
+        public void Dispose()
+        {
+            dispose();
         }
     }
 }

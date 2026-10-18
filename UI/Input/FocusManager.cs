@@ -104,7 +104,7 @@ public sealed class FocusManager
         return results;
     }
 
-    private bool TryGetKeyboardTarget(
+    internal bool TryGetKeyboardTarget(
         ElementInputRouteMap routeMap,
         [NotNullWhen(true)] out UIElement? target,
         out UiElementId targetId)

@@ -175,7 +175,9 @@ public sealed class SdlWindowPlatformTests
         Assert.Equal([true], firstCallbacks.Activations);
         Assert.Equal(56, secondFrame.Pointer.X);
         Assert.True(secondFrame.Pointer.IsPressed(InputMouseButton.Left));
-        Assert.Equal(240, secondFrame.Pointer.WheelDelta);
+        // The wheel turned after the press, so it is raised in the next frame.
+        Assert.Equal(0, secondFrame.Pointer.WheelDelta);
+        Assert.Equal(240, second.InputSource.GetFrame().Pointer.WheelDelta);
         Assert.NotEmpty(secondCallbacks.Bounds);
         Assert.Equal(1, secondCallbacks.CloseRequests);
         Assert.Equal(1, graphics.Sessions[1].ResizeCount);
@@ -271,6 +273,38 @@ public sealed class SdlWindowPlatformTests
         Assert.False(disabled.Keyboard.IsReleased(InputKey.Enter));
         Assert.False(enabled.Keyboard.IsDown(InputKey.Enter));
         Assert.True(pressedAgain.Keyboard.IsPressed(InputKey.Enter));
+    }
+
+    [Fact]
+    public void MouseButtonReleasedWhileTheWindowIsDisabledDoesNotStayDown()
+    {
+        FakeSdlApi api = new();
+        using SdlWindowPlatform platform = new(api, new RecordingGraphicsFactory());
+        SdlPlatformWindow window = Assert.IsType<SdlPlatformWindow>(
+            platform.CreateWindow(new Window(), new RecordingWindowCallbacks()));
+        api.Enqueue(new SdlEvent(SdlEventKind.MouseButtonDown, window.WindowId, X: 5, Y: 5, MouseButton: 1));
+        platform.PumpEvents();
+        Assert.True(window.InputSource.GetFrame().Pointer.IsPressed(InputMouseButton.Left));
+
+        window.SetEnabled(false);
+        api.Enqueue(new SdlEvent(SdlEventKind.MouseButtonUp, window.WindowId, X: 5, Y: 5, MouseButton: 1));
+        platform.PumpEvents();
+        InputFrame disabled = window.InputSource.GetFrame();
+        window.SetEnabled(true);
+        InputFrame enabled = window.InputSource.GetFrame();
+        api.Enqueue(new SdlEvent(SdlEventKind.MouseButtonDown, window.WindowId, X: 5, Y: 5, MouseButton: 1));
+        platform.PumpEvents();
+        InputFrame pressedAgain = window.InputSource.GetFrame();
+        api.Enqueue(new SdlEvent(SdlEventKind.MouseButtonUp, window.WindowId, X: 5, Y: 5, MouseButton: 1));
+        platform.PumpEvents();
+        InputFrame releasedAgain = window.InputSource.GetFrame();
+
+        // A disabled window gets no mouse messages, so the release raises no MouseUp there.
+        Assert.False(disabled.Pointer.IsDown(InputMouseButton.Left));
+        Assert.False(disabled.Pointer.IsReleased(InputMouseButton.Left));
+        Assert.False(enabled.Pointer.IsDown(InputMouseButton.Left));
+        Assert.True(pressedAgain.Pointer.IsPressed(InputMouseButton.Left));
+        Assert.True(releasedAgain.Pointer.IsReleased(InputMouseButton.Left));
     }
 
     [Fact]

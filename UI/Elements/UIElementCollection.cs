@@ -79,6 +79,7 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
             throw new InvalidOperationException("Element is already a child of this collection.");
         }
 
+        child.ReleaseFromParentForNewOwner();
         UIElement? currentParent = GetParent(child);
         if (currentParent is not null)
         {

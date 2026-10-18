@@ -959,7 +959,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
         InputFrame frame = context.PlatformWindow.InputSource.GetFrame();
         context.NotePlatformInputCollected();
-        return frame;
+        return context.KeepServoPointer(frame);
     }
 
     private WindowContext RequireContext(Window window)
@@ -1175,6 +1175,16 @@ internal sealed class WindowApplicationRuntime : IDisposable
         private int platformInputCollectedPump = -1;
         private bool platformInputDrained;
 
+        // Servo frames and platform frames each carry a whole pointer snapshot, and the input
+        // bridge treats a different position as a pointer move. So the pointer stays where the
+        // last Servo input frame put it until the platform reports a position of its own.
+        // Both input sources start at PointerSnapshot.Empty.
+        private float platformPointerX = PointerSnapshot.Empty.X;
+        private float platformPointerY = PointerSnapshot.Empty.Y;
+        private bool hasServoPointer;
+        private float servoPointerX;
+        private float servoPointerY;
+
         public bool HasPendingServoPlatformInput
         {
             get
@@ -1219,6 +1229,32 @@ internal sealed class WindowApplicationRuntime : IDisposable
             });
         }
 
+        // Example: Servo hovers a button at (80, 56) while the mouse rests at (5, 5). The next
+        // platform frames still report (5, 5), so they are routed at (80, 56) and the button
+        // stays hovered. A platform frame at (6, 5) is a real move and takes the pointer back.
+        public InputFrame KeepServoPointer(InputFrame platformFrame)
+        {
+            float x = platformFrame.Pointer.X;
+            float y = platformFrame.Pointer.Y;
+            if (x != platformPointerX || y != platformPointerY)
+            {
+                platformPointerX = x;
+                platformPointerY = y;
+                hasServoPointer = false;
+            }
+
+            return hasServoPointer && (x != servoPointerX || y != servoPointerY)
+                ? platformFrame.WithPointerPosition(servoPointerX, servoPointerY)
+                : platformFrame;
+        }
+
+        private void NoteServoPointer(ServoInputStep step)
+        {
+            hasServoPointer = true;
+            servoPointerX = step.Pointer.X;
+            servoPointerY = step.Pointer.Y;
+        }
+
         public void DeferShow()
         {
             if (!IsCloseDeferred) deferredLifecycleAction = DeferredLifecycleAction.Show;
@@ -1252,6 +1288,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
             {
                 ServoInputFrameRequest? request = operation.GetNextFrame();
                 if (request is null || !request.IsCleanup) return;
+                NoteServoPointer(request.Step);
                 try
                 {
                     // Visibility and a renderable surface are gone, but the owner can
@@ -1294,6 +1331,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
                 }
                 if (request is not null)
                 {
+                    NoteServoPointer(request.Step);
                     return request;
                 }
 
