@@ -109,6 +109,20 @@ internal sealed class KeyboardActivationController
         commandSource.ExecuteCommand(commandRouter, routeMap);
     }
 
+    // Like WPF ButtonBase.OnLostKeyboardFocus: the Space press belongs to the focus it
+    // started on, so a focus change forgets it and the later release clicks nothing.
+    // The pressed look stays while the pointer still presses the same element.
+    public void OnFocusChanged(IInputPressable? pointerPressedElement)
+    {
+        if (ReferenceEquals(spacePressedElement, pointerPressedElement))
+        {
+            spacePressedElement = null;
+            return;
+        }
+
+        ClearPressed();
+    }
+
     private void ClearPressedIfInvalid(ElementInputRouteMap routeMap)
     {
         if (spacePressedElement is not null && !IsValidInputElement(spacePressedElement, routeMap))
@@ -129,7 +143,7 @@ internal sealed class KeyboardActivationController
 
     private static UIElement? FindValidAncestor<TContract>(UIElement element, ElementInputRouteMap routeMap)
     {
-        foreach (UIElement current in routeMap.GetRouteToRoot(element))
+        foreach (UIElement current in routeMap.GetVisualRouteToRoot(element))
         {
             if (current is TContract && IsValidInputElement(current, routeMap))
             {

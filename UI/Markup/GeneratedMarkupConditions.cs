@@ -1263,8 +1263,9 @@ internal sealed class MarkupConditionController : IElementDataLifecycleBehavior,
 
                 break;
             case global::Cerneala.UI.Layout.Panels.Panel:
-                Reconcile(owner.LogicalChildren, desired);
+                // Visual first: a panel accepts a logical child only when it is already one of its visual children.
                 Reconcile(owner.VisualChildren, desired);
+                Reconcile(owner.LogicalChildren, desired);
                 break;
             default:
                 throw new InvalidOperationException($"Element '{owner.GetType().Name}' does not accept conditional child content.");

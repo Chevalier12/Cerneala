@@ -6,7 +6,7 @@ using Cerneala.UI.Layout;
 
 namespace Cerneala.UI.Controls;
 
-public class Overlay : Control
+public class Overlay : Control, IInputProjectionOwner
 {
     private readonly ContentPresenter presenter = new();
     private bool isProjected;
@@ -174,6 +174,8 @@ public class Overlay : Control
     internal OverlayDismissScope? DismissScope { get; set; }
 
     internal bool IsProjected => isProjected;
+
+    UIElement? IInputProjectionOwner.ProjectedInputRoot => isProjected ? presenter : null;
 
     internal void SetProjected(bool value)
     {

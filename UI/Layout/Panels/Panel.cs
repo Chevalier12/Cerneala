@@ -4,6 +4,26 @@ namespace Cerneala.UI.Layout.Panels;
 
 public class Panel : UIElement
 {
+    public Panel()
+    {
+        Children = new PanelChildCollection(this);
+    }
+
+    public PanelChildCollection Children { get; }
+
+    // The panel measures, arranges and draws only its visual children, so a child that is only a
+    // logical child would be ignored without any error.
+    internal override void ValidateChildInsertion(UIElement child, ElementChildRole role, bool ownerManaged)
+    {
+        base.ValidateChildInsertion(child, role, ownerManaged);
+        if (role == ElementChildRole.Logical && !ownerManaged && !ReferenceEquals(child.VisualParent, this))
+        {
+            throw new InvalidOperationException(
+                "A panel lays out and draws only its visual children, so a child added only to LogicalChildren would never be shown. " +
+                "Add it with Panel.Children.Add, which adds it to LogicalChildren and VisualChildren together.");
+        }
+    }
+
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
         float width = 0;

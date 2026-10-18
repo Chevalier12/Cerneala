@@ -77,8 +77,9 @@ public sealed class MenuInvalidationTests
         root.ProcessFrame();
         root.ProcessFrame();
 
+        // The second content is measured at its natural size, which the smaller viewport still holds beside its target.
         Assert.True(firstContent.ArrangeCount > 0);
-        Assert.True(secondContent.MeasureCount > 0);
+        Assert.Equal(0, secondContent.MeasureCount);
         Assert.Equal(0, secondContent.ArrangeCount);
 
         secondContent.ResetCounts();
@@ -89,6 +90,58 @@ public sealed class MenuInvalidationTests
         Assert.True(secondOverlay.IsOpen);
         Assert.Equal(0, secondContent.MeasureCount);
         Assert.Equal(0, secondContent.ArrangeCount);
+    }
+
+    [Theory]
+    [InlineData(OverlayPlacement.Bottom, 120, 80)]
+    [InlineData(OverlayPlacement.Auto, 0, 100)]
+    public void PlacementThatKeepsTheSlotDoesNotArrangeAgainOverlayContentClampedBesideItsTarget(
+        OverlayPlacement placement,
+        float expectedY,
+        float expectedHeight)
+    {
+        // The content wants 50 x 300 and gets the 80 px below the target (Bottom) or the 100 px above it (Auto). The
+        // layer measures it unbounded (300 high) before it measures it clamped, in its measure and in its arrange, so
+        // its desired height goes 80 -> 300 -> 80 (Auto: 100 -> 300 -> 100) although its slot and final desired size
+        // never change.
+        UIRoot root = new(300, 200);
+        UIElement target = new() { Width = 20, Height = 20 };
+        ConstraintFollowingElement content = new(new LayoutSize(50, 300));
+        Overlay overlay = new()
+        {
+            Placement = placement,
+            PlacementTarget = target,
+            Content = content,
+            IsOpen = true
+        };
+        LayoutCanvas canvas = new();
+        LayoutCanvas.SetLeft(target, 20);
+        LayoutCanvas.SetTop(target, 100);
+        canvas.VisualChildren.Add(target);
+        canvas.VisualChildren.Add(overlay);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        content.ArrangeCount = 0;
+        root.SetViewport(300, 200, 1);
+        FrameStats unchangedViewport = root.ProcessFrame();
+        int arrangesForUnchangedViewport = content.ArrangeCount;
+        content.ArrangeCount = 0;
+        root.SetViewport(290, 200, 1);
+        root.ProcessFrame();
+        int arrangesForNarrowerViewport = content.ArrangeCount;
+        // A wider target keeps the overlay's left edge, its side and the space on that side. The target's arrange
+        // invalidates the placement, which the next frame computes.
+        content.ArrangeCount = 0;
+        target.Width = 40;
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.Equal(new LayoutRect(20, expectedY, 50, expectedHeight), content.ArrangedBounds);
+        Assert.Equal(
+            (0, 1, 0, 0),
+            (arrangesForUnchangedViewport, unchangedViewport.ArrangeCalls, arrangesForNarrowerViewport, content.ArrangeCount));
     }
 
     private static Overlay CreateOverlay(UIElement target, UIElement content)
@@ -126,6 +179,25 @@ public sealed class MenuInvalidationTests
         protected override LayoutSize MeasureCore(MeasureContext context)
         {
             return size;
+        }
+    }
+
+    // Desires its natural size, or less when the constraint is smaller, as a ScrollViewer or wrapping text does.
+    private sealed class ConstraintFollowingElement(LayoutSize size) : UIElement
+    {
+        public int ArrangeCount { get; set; }
+
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            return new LayoutSize(
+                MathF.Min(size.Width, context.AvailableSize.Width),
+                MathF.Min(size.Height, context.AvailableSize.Height));
+        }
+
+        protected override LayoutRect ArrangeCore(ArrangeContext context)
+        {
+            ArrangeCount++;
+            return context.FinalRect;
         }
     }
 

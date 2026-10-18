@@ -98,7 +98,7 @@ root.SetResourceProvider(host);
 StackPanel parent = new();
 Border child = new();
 root.LogicalChildren.Add(parent);
-parent.LogicalChildren.Add(child);
+parent.Children.Add(child);
 parent.Resources["Accent"] = "parent";
 
 child.FindResource<string>("Accent");                      // "parent"

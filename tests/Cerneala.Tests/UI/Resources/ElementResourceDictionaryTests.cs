@@ -19,7 +19,7 @@ public sealed class ElementResourceDictionaryTests
         StackPanel parent = new();
         Border child = new();
         root.LogicalChildren.Add(parent);
-        parent.LogicalChildren.Add(child);
+        parent.Children.Add(child);
         parent.Resources["Accent"] = "parent";
 
         Assert.Equal("parent", child.FindResource<string>("Accent"));
@@ -34,7 +34,7 @@ public sealed class ElementResourceDictionaryTests
     {
         StackPanel parent = new();
         Border child = new();
-        parent.LogicalChildren.Add(child);
+        parent.Children.Add(child);
         parent.Resources["Value"] = "parent";
         child.Resources["Value"] = 42;
 

@@ -1,5 +1,6 @@
 using Cerneala.UI.Core;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 
 namespace Cerneala.UI.Controls.Primitives;
@@ -111,9 +112,43 @@ public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource, 
     private void OnMouseUp(UiElementId _, RoutedEventArgs args)
     {
         if (ShouldClickOnMouseUp &&
-            args is MouseButtonEventArgs { ChangedButton: InputMouseButton.Left, ClickCount: > 0 })
+            args is MouseButtonEventArgs { ChangedButton: InputMouseButton.Left, ClickCount: > 0 } &&
+            OwnsClick(args.OriginalSource))
         {
             OnClick();
         }
+    }
+
+    // The input bridge resolves a click to the nearest command source on the route of the clicked element and runs
+    // only that source's command. A click that a command source in this button's content owns, such as a Button or
+    // a ComboBox's PART_DropDownToggle, bubbles its MouseUp here but is not this button's click (#421).
+    private bool OwnsClick(object? originalSource)
+    {
+        if (Root is not UIRoot root)
+        {
+            return true;
+        }
+
+        ElementInputRouteMap routeMap = root.InputCache.EnsureCurrent(root);
+        UIElement? source = originalSource switch
+        {
+            UIElement element => element,
+            UiElementId id when routeMap.TryGetElement(id, out UIElement? resolved) => resolved,
+            _ => null
+        };
+        if (source is null)
+        {
+            return true;
+        }
+
+        foreach (UIElement current in routeMap.GetRouteToRoot(source))
+        {
+            if (current is IInputCommandSource)
+            {
+                return ReferenceEquals(current, this);
+            }
+        }
+
+        return true;
     }
 }

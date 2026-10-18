@@ -39,6 +39,8 @@ IReadOnlyList<UiElementId> route = map.InputTree.GetRouteToRoot(childId);
 
 `ElementInputRouteBuilder` traverses the visual tree below the supplied `UIRoot`, plus input-subtree children supplied by hosts such as `RenderSurface2D` (its scene), and registers attached elements that participate in input. Registered elements are added to the returned `ElementInputRouteMap`, and their routed event handlers are exported to the map's `UiInputTree`.
 
+Each registered element's route parent in `UiInputTree` is its nearest registered visual ancestor, with one exception: the projected presenter of an open `Overlay` gets the overlay (or, when the overlay is not registered, the overlay's nearest registered ancestor) as its route parent, although its visual parent is the root-owned overlay layer. Routed events from projected content therefore reach the overlay and its ancestors, as WPF routes `Popup` content. Traversal order is unchanged, so `ElementsInRouteOrder` keeps the projected content after the rest of the tree. When the overlay is outside the input route, for example under a collapsed ancestor, the projected content keeps its visual route parent.
+
 `Build` excludes disabled elements, invisible elements, elements whose `Visibility` is not `Visible`, and elements that are leaving through presence state. Disabled elements do not become route nodes in a normal input map, but their visible and enabled descendants can still be included under the nearest included ancestor.
 
 Elements that fail `UIElementVisibility.ParticipatesInInput` stop traversal for their whole visual subtree. In practice, elements with `IsVisible == false`, `Visibility.Hidden`, `Visibility.Collapsed`, or an exiting presence state are excluded together with their descendants.
