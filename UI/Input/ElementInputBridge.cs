@@ -42,6 +42,8 @@ public sealed class ElementInputBridge
         keyboardActivationController = new KeyboardActivationController();
         repeatButtonController = new RepeatButtonController();
         this.textInputBridge = textInputBridge ?? new TextInputBridge();
+        this.focusManager.FocusedElementChanged += () =>
+            keyboardActivationController.OnFocusChanged(this.pressedStateTracker.PressedElement);
     }
 
     public PointerCaptureManager PointerCaptureManager => pointerCaptureManager;
