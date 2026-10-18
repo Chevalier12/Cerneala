@@ -55,12 +55,11 @@ public class ListBoxItem : ContentControl, ISelectableItemContainer
         ContentTemplateRegistry? templateRegistry,
         int index)
     {
-        bool hostedContentDirectly = HostsContentDirectly(Content);
         itemTemplate = template;
         itemTemplateKey = templateKey;
         itemTemplateRegistry = templateRegistry;
         itemContentIndex = index;
-        UpdateContentHosting(hostedContentDirectly);
+        UpdateContentHosting();
         UpdateContentPresenter();
     }
 

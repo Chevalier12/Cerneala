@@ -9,6 +9,11 @@ public class ContentControl : Control
 {
     internal static readonly IEqualityComparer<object?> ContentEqualityComparer = new ContentValueEqualityComparer();
 
+    // The UIElement Content this control added as its direct child. The element leaves because this control added it,
+    // not because HostsContentDirectly answers true again: a subclass's answer can change, for example when a template
+    // predicate reads state that changed.
+    private UIElement? hostedContentElement;
+
     public static readonly UiProperty<object?> ContentProperty = UiProperty<object?>.Register(
         nameof(Content),
         typeof(ContentControl),
@@ -30,13 +35,13 @@ public class ContentControl : Control
             }
 
             ValidateCanOwnChild(this, value as UIElement);
-            bool hostedOldContent = HostsContentDirectly(oldContent);
+            UIElement? hostedOldContent = hostedContentElement;
             bool hostsNewContent = HostsContentDirectly(value);
-            if (hostedOldContent || hostsNewContent)
+            if (hostedOldContent is not null || hostsNewContent)
             {
-                if (hostedOldContent)
+                if (hostedOldContent is not null)
                 {
-                    RemoveContentElement(oldContent);
+                    RemoveContentElement(hostedOldContent);
                 }
 
                 try
@@ -55,9 +60,9 @@ public class ContentControl : Control
                         RemoveContentElement(value);
                     }
 
-                    if (hostedOldContent)
+                    if (hostedOldContent is not null)
                     {
-                        AddContentElement(oldContent);
+                        AddContentElement(hostedOldContent);
                     }
 
                     SetValue(ContentProperty, oldContent);
@@ -138,22 +143,16 @@ public class ContentControl : Control
     }
 
     // A subclass calls this after its own state changed what HostsContentDirectly returns for Content.
-    internal void UpdateContentHosting(bool hostedContentDirectly)
+    internal void UpdateContentHosting()
     {
-        bool hostsContentDirectly = HostsContentDirectly(Content);
-        if (hostedContentDirectly == hostsContentDirectly)
+        UIElement? wanted = HostsContentDirectly(Content) ? Content as UIElement : null;
+        if (ReferenceEquals(hostedContentElement, wanted))
         {
             return;
         }
 
-        if (hostsContentDirectly)
-        {
-            AddContentElement(Content);
-        }
-        else
-        {
-            RemoveContentElement(Content);
-        }
+        RemoveContentElement(hostedContentElement);
+        AddContentElement(wanted);
     }
 
     internal static LayoutSize Deflate(LayoutSize size, Thickness thickness)
@@ -259,6 +258,7 @@ public class ContentControl : Control
 
         LogicalChildren.Add(element);
         VisualChildren.Add(element);
+        hostedContentElement = element;
     }
 
     private void RemoveContentElement(object? content)
@@ -270,10 +270,15 @@ public class ContentControl : Control
 
         VisualChildren.Remove(element);
         LogicalChildren.Remove(element);
+        if (ReferenceEquals(hostedContentElement, element))
+        {
+            hostedContentElement = null;
+        }
     }
 
     private void ReleaseContentElementFromOwnedSubtree()
     {
+        hostedContentElement = null;
         if (Content is UIElement element)
         {
             DetachChildFromOwnedSubtree(this, element);
