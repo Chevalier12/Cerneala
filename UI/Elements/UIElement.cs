@@ -662,6 +662,19 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     {
     }
 
+    // A parent can let a new owner take one of its children without removing it first. ContentPresenter does so for
+    // the element content it hosts directly while its template runs, so the element leaves the presenter only when
+    // the template adds it to another element.
+    internal virtual void ReleaseChildForNewOwner(UIElement child)
+    {
+    }
+
+    internal void ReleaseFromParentForNewOwner()
+    {
+        VisualParent?.ReleaseChildForNewOwner(this);
+        LogicalParent?.ReleaseChildForNewOwner(this);
+    }
+
     internal void SetVisualParent(UIElement? parent)
     {
         VisualParent = parent;

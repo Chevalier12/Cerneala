@@ -205,6 +205,60 @@ public sealed class ContentPresenterTests
         Assert.Same(border, content.VisualParent);
     }
 
+    [Fact]
+    public void ReplacingPassThroughContentTemplateKeepsElementContentInPlace()
+    {
+        UIRoot root = new(200, 200);
+        FixedElement content = new(new LayoutSize(10, 10));
+        int loaded = 0;
+        int unloaded = 0;
+        content.Loaded += (_, _) => loaded++;
+        content.Unloaded += (_, _) => unloaded++;
+        ContentPresenter presenter = new() { ContentTemplate = PassThroughTemplate("first"), Content = content };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        Assert.Same(content, presenter.PresentedChild);
+
+        presenter.ContentTemplate = PassThroughTemplate("second");
+        root.ProcessFrame();
+
+        Assert.Same(content, presenter.PresentedChild);
+        Assert.Same(presenter, content.VisualParent);
+        Assert.Same(presenter, content.LogicalParent);
+        Assert.Equal(1, loaded);
+        Assert.Equal(0, unloaded);
+    }
+
+    [Fact]
+    public void ReplacingPassThroughContentTemplateWithPanelTemplateMovesElementContentIntoThePanel()
+    {
+        UIRoot root = new(200, 200);
+        FixedElement content = new(new LayoutSize(10, 10));
+        ContentPresenter presenter = new() { ContentTemplate = PassThroughTemplate("first"), Content = content };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+
+        presenter.ContentTemplate = new ContentTemplate("panel", typeof(object), key: null, priority: 0, context =>
+        {
+            StackPanel panel = new();
+            panel.VisualChildren.Add((UIElement)context.Data!);
+            return panel;
+        });
+        root.ProcessFrame();
+
+        StackPanel panel = Assert.IsType<StackPanel>(presenter.PresentedChild);
+        Assert.Same(panel, content.VisualParent);
+        Assert.Null(content.LogicalParent);
+        Assert.DoesNotContain(content, presenter.VisualChildren);
+        Assert.DoesNotContain(content, presenter.LogicalChildren);
+        Assert.Same(root, content.Root);
+    }
+
+    private static ContentTemplate PassThroughTemplate(string name)
+    {
+        return new ContentTemplate(name, typeof(object), key: null, priority: 0, context => context.Data as UIElement);
+    }
+
     private static ContentTemplate WrapTemplate(string name, string? key)
     {
         return new ContentTemplate(name, typeof(object), key, priority: 0, context => new Border { Child = (UIElement?)context.Data });
