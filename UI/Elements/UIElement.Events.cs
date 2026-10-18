@@ -1,3 +1,4 @@
+using System.Runtime.ExceptionServices;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Core;
 using Cerneala.UI.Input;
@@ -178,9 +179,13 @@ public partial class UIElement
         base.OnPropertyChanged(args);
         if (ReferenceEquals(args.Property, AspectProperty))
         {
+            // A failing behavior lifetime does not skip the later steps: the old aspect is detached and the new one
+            // attached, then the first failure propagates.
+            ExceptionDispatchInfo? failure = null;
             if (args.OldValue is ElementAspect oldAspect)
             {
-                DetachElementAspectBehavior();
+                try { DetachElementAspectBehavior(); }
+                catch (Exception exception) { failure = ExceptionDispatchInfo.Capture(exception); }
                 oldAspect.Detach(aspectConsumer);
             }
 
@@ -193,13 +198,15 @@ public partial class UIElement
                     {
                         AttachElementAspectBehavior();
                     }
-                    catch
+                    catch (Exception exception)
                     {
                         newAspect.Detach(aspectConsumer);
-                        throw;
+                        failure ??= ExceptionDispatchInfo.Capture(exception);
                     }
                 }
             }
+
+            failure?.Throw();
         }
         else if (ReferenceEquals(args.Property, DataContextProperty)) DataContextChanged?.Invoke(this, args);
         else if (ReferenceEquals(args.Property, IsEnabledProperty)) IsEnabledChanged?.Invoke(this, args);
