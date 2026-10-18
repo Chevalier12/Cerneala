@@ -115,7 +115,9 @@ public class TabItem : ContentControl, ISelectableItemContainer
     }
 
     // A TabItem never hosts its Content: the TabControl shows the Content of its selected tab in its content area.
-    internal override bool HostsContentDirectly => false;
+    // A UIElement Content is still owned: it is the logical child of this TabItem whenever the content area does not
+    // show it, so it cannot be added to another parent or become the Content of another tab.
+    internal override bool HostsContentDirectly(object? content) => false;
 
     private bool IsComponentTemplated => ComponentTemplate is not null || ComponentTemplateKey is not null;
 
@@ -172,6 +174,8 @@ public class TabItem : ContentControl, ISelectableItemContainer
             hostedHeader = null;
             base.OnPropertyChanged(args);
             UpdateHeaderHosting();
+            // ContentControl releases the content from this control's subtree when the template changes.
+            HoldContent();
             return;
         }
 
@@ -185,7 +189,37 @@ public class TabItem : ContentControl, ISelectableItemContainer
         else if (ReferenceEquals(args.Property, ContentProperty) ||
                  ReferenceEquals(args.Property, ContentTemplateProperty))
         {
+            if (ReferenceEquals(args.Property, ContentProperty))
+            {
+                ReleaseHeldContent(args.OldValue as UIElement);
+                HoldContent();
+            }
+
             Owner?.OnTabContentChanged(this);
+        }
+    }
+
+    // Takes a UIElement Content as a logical child when nothing else owns it. The content area of the TabControl
+    // owns it while it shows it, and the TabControl calls this after the content area let go of it.
+    internal void HoldContent()
+    {
+        if (Content is UIElement element && element.LogicalParent is null && element.VisualParent is null)
+        {
+            LogicalChildren.Add(element);
+        }
+    }
+
+    // The TabControl calls this right before its content area shows the Content of this tab.
+    internal void ReleaseContentForContentArea()
+    {
+        ReleaseHeldContent(Content as UIElement);
+    }
+
+    private void ReleaseHeldContent(UIElement? element)
+    {
+        if (element is not null && ReferenceEquals(element.LogicalParent, this))
+        {
+            LogicalChildren.Remove(element);
         }
     }
 

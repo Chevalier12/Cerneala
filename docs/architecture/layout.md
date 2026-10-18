@@ -60,7 +60,15 @@ and does not draw; a changed rectangle only schedules render and hit-test work.
      measure therefore reaches the element, as the desired-size step above
      would have made it do. For example, a leaf two levels below a row outside
      the window that changes `Height` from 20 to 60 makes the row desire 60
-     once the panel realizes it again.
+     once the panel realizes it again. The arrange caches on the path are
+     reset by that later measure, not here: each element whose `DesiredSize`
+     it changes clears its own and its parent's arrange cache (see "Measure And
+     Arrange Caches"). Until then an arrange of the skipped row, which reads
+     the old desired sizes, can make those caches valid again. For example, in
+     a row `Border > Canvas > StackPanel > A, B`, A and B swap heights 20 and
+     40 outside the window; the `StackPanel` gets the slot `0, 0, 0, 60` both
+     while the row is skipped and after it is realized, and it still arranges
+     A at Y 0 with height 40 and B at Y 40.
 3. **Constraint.** `LayoutManager.GetAvailableSize` (`LayoutManager.cs:119-145`)
    gives the root and its direct children the viewport size. Any other element
    gets the constraint it was last measured with, because its parent owns that
@@ -126,6 +134,13 @@ The code sets `first.Visibility = Visibility.Collapsed;`.
   after `UIElement.Measure` returns.
 - `UIElement.Arrange` reuses its result when the final rectangle and
   `LayoutVersion` equal the last arrange (`UIElement.cs:906-931`).
+- A measure that changes an element's `DesiredSize` (`UIElement.SetDesiredSize`)
+  invalidates the arrange cache of the element and of its visual parent: the
+  element aligns itself in its slot by its desired size, and the parent places
+  it by it. This also covers a measure from inside the parent's `MeasureCore`,
+  which the frame's desired-size step does not see. A measure that gives the
+  same desired size keeps both caches, so an element that is measured again
+  with an unchanged result is not arranged again.
 - An attached element's `Invalidate` does not change its `LayoutVersion`. When
   the request queues `Arrange` for its target, `DirtyPropagation.Propagate`
   invalidates the target's arrange cache and keeps its slot. With `Subtree`, it

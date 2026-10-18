@@ -75,6 +75,30 @@ public sealed class SdlInputSourceTests
     }
 
     [Fact]
+    public void ForgottenButtonsArePublishedInArrivalOrderAndDroppedWithoutARelease()
+    {
+        SdlInputSource source = new();
+        source.SetButton(3, true);
+        InputFrame held = source.GetFrame();
+        source.SetButton(1, true);
+        source.ForgetButtons();
+        source.SetButton(1, true);
+        InputFrame pressed = source.GetFrame();
+        InputFrame forgotten = source.GetFrame();
+        InputFrame pressedAgain = source.GetFrame();
+
+        Assert.True(held.Pointer.IsPressed(InputMouseButton.Right));
+        Assert.True(pressed.Pointer.IsPressed(InputMouseButton.Left));
+        Assert.True(pressed.Pointer.IsDown(InputMouseButton.Right));
+        Assert.False(forgotten.Pointer.IsDown(InputMouseButton.Right));
+        Assert.False(forgotten.Pointer.IsReleased(InputMouseButton.Right));
+        Assert.False(forgotten.Pointer.IsReleased(InputMouseButton.Left));
+        Assert.True(forgotten.Pointer.IsPressed(InputMouseButton.Left));
+        Assert.False(pressedAgain.Pointer.IsPressed(InputMouseButton.Left));
+        Assert.True(pressedAgain.Pointer.IsDown(InputMouseButton.Left));
+    }
+
+    [Fact]
     public void RepeatOfKeyThatIsNotDownIsAPressNotARepeat()
     {
         SdlInputSource source = new();
@@ -135,8 +159,12 @@ public sealed class SdlInputSourceTests
         Assert.Equal(240, frame.Pointer.WheelValue);
         Assert.Equal(240, frame.Pointer.WheelDelta);
         Assert.True(frame.Pointer.IsDown(InputMouseButton.Left));
-        Assert.True(frame.Pointer.IsDown(InputMouseButton.Right));
         Assert.True(frame.Pointer.IsPressed(InputMouseButton.Left));
         Assert.False(frame.Pointer.IsDown(InputMouseButton.Middle));
+        // A frame holds one button transition; the Right press follows in the next frame.
+        InputFrame next = source.GetFrame();
+        Assert.True(next.Pointer.IsPressed(InputMouseButton.Right));
+        Assert.True(next.Pointer.IsDown(InputMouseButton.Left));
+        Assert.Equal(20, next.Pointer.X);
     }
 }

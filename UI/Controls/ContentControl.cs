@@ -30,18 +30,36 @@ public class ContentControl : Control
             }
 
             ValidateCanOwnChild(this, value as UIElement);
-            if (HostsContentDirectly)
+            bool hostedOldContent = HostsContentDirectly(oldContent);
+            bool hostsNewContent = HostsContentDirectly(value);
+            if (hostedOldContent || hostsNewContent)
             {
-                RemoveContentElement(oldContent);
+                if (hostedOldContent)
+                {
+                    RemoveContentElement(oldContent);
+                }
+
                 try
                 {
-                    AddContentElement(value);
+                    if (hostsNewContent)
+                    {
+                        AddContentElement(value);
+                    }
+
                     SetValue(ContentProperty, value);
                 }
                 catch
                 {
-                    RemoveContentElement(value);
-                    AddContentElement(oldContent);
+                    if (hostsNewContent)
+                    {
+                        RemoveContentElement(value);
+                    }
+
+                    if (hostedOldContent)
+                    {
+                        AddContentElement(oldContent);
+                    }
+
                     SetValue(ContentProperty, oldContent);
                     throw;
                 }
@@ -59,7 +77,8 @@ public class ContentControl : Control
 
     protected UIElement? ContentElement => Content as UIElement;
 
-    internal virtual bool HostsContentDirectly => ComponentTemplate is null && ComponentTemplateKey is null;
+    // True when this control is the direct parent of the given content when that content is a UIElement.
+    internal virtual bool HostsContentDirectly(object? content) => ComponentTemplate is null && ComponentTemplateKey is null;
 
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
@@ -98,16 +117,16 @@ public class ContentControl : Control
 
         ReleaseContentElementFromOwnedSubtree();
         base.OnPropertyChanged(args);
-        if (HostsContentDirectly)
+        if (HostsContentDirectly(Content))
         {
             AddContentElement(Content);
         }
     }
 
-    // A subclass calls this after its own state changed what HostsContentDirectly returns.
+    // A subclass calls this after its own state changed what HostsContentDirectly returns for Content.
     internal void UpdateContentHosting(bool hostedContentDirectly)
     {
-        bool hostsContentDirectly = HostsContentDirectly;
+        bool hostsContentDirectly = HostsContentDirectly(Content);
         if (hostedContentDirectly == hostsContentDirectly)
         {
             return;
@@ -165,6 +184,7 @@ public class ContentControl : Control
             throw new InvalidOperationException("An ancestor cannot be added as a child.");
         }
 
+        child.ReleaseFromParentForNewOwner();
         if (child.LogicalParent is not null || child.VisualParent is not null)
         {
             throw new InvalidOperationException("Element must be removed from its current parent before reparenting.");
