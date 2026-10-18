@@ -274,6 +274,51 @@ public sealed class ListBoxTests
     }
 
     [Fact]
+    public void ListBoxRowHostsElementItemWhenItemTemplateThatReturnedItIsRemoved()
+    {
+        UIRoot root = new(300, 200);
+        Marker element = new("raw");
+        ListBox listBox = new() { ItemTemplate = IdentityElementTemplate() };
+        listBox.SetItems(new object[] { element });
+        root.VisualChildren.Add(listBox);
+        root.ProcessFrame();
+        ContentPresenter presenter = Assert.IsType<ContentPresenter>(element.VisualParent);
+
+        listBox.ItemTemplate = null;
+        root.ProcessFrame();
+
+        ListBoxItem row = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Same(row, element.VisualParent);
+        Assert.Same(row, element.LogicalParent);
+        Assert.Same(element, Assert.Single(row.VisualChildren));
+        Assert.DoesNotContain(element, presenter.VisualChildren);
+        Assert.DoesNotContain(element, presenter.LogicalChildren);
+    }
+
+    [Fact]
+    public void ListBoxRowWrapsElementItemWhenItemTemplateThatReturnedItIsReplaced()
+    {
+        UIRoot root = new(300, 200);
+        Marker element = new("raw");
+        ListBox listBox = new() { ItemTemplate = IdentityElementTemplate() };
+        listBox.SetItems(new object[] { element });
+        root.VisualChildren.Add(listBox);
+        root.ProcessFrame();
+        ContentPresenter presenter = Assert.IsType<ContentPresenter>(element.VisualParent);
+
+        listBox.ItemTemplate = WrapElementTemplate();
+        root.ProcessFrame();
+
+        Border wrapper = Assert.IsType<Border>(element.VisualParent);
+        Assert.Same(element, wrapper.Child);
+        ListBoxItem row = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Same(row, wrapper.VisualParent!.VisualParent);
+        Assert.NotSame(presenter.PresentedChild, element);
+        Assert.DoesNotContain(element, presenter.VisualChildren);
+        Assert.DoesNotContain(element, presenter.LogicalChildren);
+    }
+
+    [Fact]
     public void ListBoxItemWithStringContentShowsItsTextInsidePadding()
     {
         UIRoot root = new(200, 200);
@@ -358,6 +403,12 @@ public sealed class ListBoxTests
     {
         return new ContentTemplate("wrap", typeof(object), key: null, priority: 0,
             context => new Border { Child = (UIElement?)context.Data });
+    }
+
+    private static ContentTemplate IdentityElementTemplate()
+    {
+        return new ContentTemplate("identity", typeof(object), key: null, priority: 0,
+            context => (UIElement?)context.Data);
     }
 
     private static List<string> MarkerLabels(UIElement element)
