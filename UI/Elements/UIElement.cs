@@ -1525,8 +1525,11 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     private void DetachElementAspectBehavior()
     {
-        elementAspectBehavior?.Dispose();
+        // The lifetime is finished once its disposal starts, also when Dispose throws: the next
+        // attach creates a new one, and the failed one is never disposed a second time.
+        IDisposable? behavior = elementAspectBehavior;
         elementAspectBehavior = null;
+        behavior?.Dispose();
     }
 
     private void ValidateIncrementalAspectValue(UiProperty property)
