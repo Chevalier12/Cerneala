@@ -30,8 +30,8 @@ internal static class ColorPickerTemplates
             Height = 16,
             Margin = new Thickness(0, 0, 0, 8)
         };
-        Add(alphaRamp, alphaCheckerboard);
-        Add(alphaRamp, alphaSlider);
+        alphaRamp.Children.Add(alphaCheckerboard);
+        alphaRamp.Children.Add(alphaSlider);
         Border preview = new()
         {
             Height = 22,
@@ -40,10 +40,10 @@ internal static class ColorPickerTemplates
         };
 
         StackPanel stack = new();
-        Add(stack, spectrum);
-        Add(stack, hueSlider);
-        Add(stack, alphaRamp);
-        Add(stack, preview);
+        stack.Children.Add(spectrum);
+        stack.Children.Add(hueSlider);
+        stack.Children.Add(alphaRamp);
+        stack.Children.Add(preview);
 
         Border root = new() { Child = stack };
         const UiPropertyValueSource OwnerBindingSource = UiPropertyValueSource.TemplateOwnerBinding;
@@ -112,17 +112,5 @@ internal static class ColorPickerTemplates
                 }
             }
         }
-    }
-
-    private static void Add(StackPanel panel, UIElement child)
-    {
-        panel.LogicalChildren.Add(child);
-        panel.VisualChildren.Add(child);
-    }
-
-    private static void Add(Grid panel, UIElement child)
-    {
-        panel.LogicalChildren.Add(child);
-        panel.VisualChildren.Add(child);
     }
 }

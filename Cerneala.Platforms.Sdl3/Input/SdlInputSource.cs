@@ -14,7 +14,8 @@ namespace Cerneala.Platforms.Sdl3;
 // arrival order for the next frames, and the source asks for them.
 // Input that is not a transition (a move, a wheel notch, an auto-repeat of a held key)
 // may join a frame without transitions out of order, so input that alternates between
-// kinds does not need one frame per alternation and never falls further behind.
+// kinds does not need one frame per alternation and never falls further behind. A move
+// never joins after a wheel notch, which is raised at the frame's final position.
 internal sealed class SdlInputSource : IInputSource
 {
     private readonly Action? frameRequested;
@@ -24,10 +25,12 @@ internal sealed class SdlInputSource : IInputSource
     private readonly HashSet<InputKey> downKeys = [];
     private readonly List<TextInputSnapshotEvent> textInput = [];
     private readonly List<InputKey> keyRepeats = [];
+    private readonly List<int> wheelDeltas = [];
     private readonly List<PendingInput> deferred = [];
     private FramePhase framePhase;
     private bool hasTransition;
     private bool hasButtonTransition;
+    private bool hasWheel;
     private InputKey frameKey = InputKey.None;
     private InputKey lastKeyDown = InputKey.None;
     private InputKey textKey = InputKey.None;
@@ -49,15 +52,17 @@ internal sealed class SdlInputSource : IInputSource
     public InputFrame GetFrame()
     {
         KeyboardSnapshot currentKeyboard = KeyboardSnapshot.FromDownKeys(downKeys);
-        InputFrame frame = new(previousPointer, currentPointer, previousKeyboard, currentKeyboard, textInput.ToArray(), keyRepeats.ToArray());
+        InputFrame frame = new(previousPointer, currentPointer, previousKeyboard, currentKeyboard, textInput.ToArray(), keyRepeats.ToArray(), wheelDeltas.ToArray());
         previousPointer = currentPointer;
         previousKeyboard = currentKeyboard;
         textInput.Clear();
         keyRepeats.Clear();
+        wheelDeltas.Clear();
         frameKey = InputKey.None;
         framePhase = FramePhase.Empty;
         hasTransition = false;
         hasButtonTransition = false;
+        hasWheel = false;
         lastKeyDown = InputKey.None;
         textKey = InputKey.None;
         if (deferred.Count > 0)
@@ -105,6 +110,13 @@ internal sealed class SdlInputSource : IInputSource
         InputKey key = MapScancode(scancode);
         if (key is InputKey.None or InputKey.Unknown)
         {
+            // A frame cannot report this key, but the text it types must not be credited
+            // to the key pressed before it.
+            if (down)
+            {
+                Accept(new PendingInput(PendingKind.UnmappedKeyDown));
+            }
+
             return;
         }
 
@@ -175,6 +187,13 @@ internal sealed class SdlInputSource : IInputSource
             return true;
         }
 
+        if (input.Kind == PendingKind.UnmappedKeyDown)
+        {
+            // The frame gets nothing, but text that arrives next was typed by this key.
+            lastKeyDown = InputKey.Unknown;
+            return true;
+        }
+
         if (input.Kind == PendingKind.ForgetButtons)
         {
             // A button transition in this frame happened before the window lost the buttons;
@@ -234,7 +253,11 @@ internal sealed class SdlInputSource : IInputSource
                 currentPointer = currentPointer.WithButton((InputMouseButton)input.Value, input.Down);
                 break;
             case PendingKind.Wheel:
+                hasWheel = true;
+                // Each SDL wheel event stays one wheel event of the frame, so notches that share a
+                // frame are raised one by one instead of as their sum.
                 currentPointer = currentPointer.WithWheelValue(checked(currentPointer.WheelValue + input.Value));
+                wheelDeltas.Add(input.Value);
                 break;
             case PendingKind.Key:
                 frameKey = (InputKey)input.Value;
@@ -270,8 +293,10 @@ internal sealed class SdlInputSource : IInputSource
     // A frame dispatches its input by kind, so input that joins it out of order is raised
     // before the input of later kinds that arrived first. That is allowed for a move or a
     // wheel notch, and for an auto-repeat after the text its own key typed, while the frame
-    // holds no key or button transition. Example: Ctrl auto-repeats and wheel notches that
-    // alternate share one frame; a move after a button press waits for the next frame.
+    // holds no key or button transition. A move never joins after a wheel notch: the frame
+    // raises the wheel at its final position, so the move would raise the notch elsewhere.
+    // Example: Ctrl auto-repeats and wheel notches that alternate at one position share one
+    // frame; a move after a button press or a wheel notch waits for the next frame.
     private bool CanJoinOutOfOrder(in PendingInput input, bool repeat)
     {
         if (hasTransition)
@@ -281,7 +306,8 @@ internal sealed class SdlInputSource : IInputSource
 
         return input.Kind switch
         {
-            PendingKind.Move or PendingKind.Wheel => true,
+            PendingKind.Move => !hasWheel,
+            PendingKind.Wheel => true,
             PendingKind.Key => repeat && textKey == (InputKey)input.Value,
             _ => false
         };
@@ -423,6 +449,7 @@ internal sealed class SdlInputSource : IInputSource
         Key,
         Text,
         ForgetKeys,
+        UnmappedKeyDown,
         ForgetButtons
     }
 

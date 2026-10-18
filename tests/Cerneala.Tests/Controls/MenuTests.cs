@@ -164,6 +164,78 @@ public sealed class MenuTests
     }
 
     [Fact]
+    public void ClickingANestedHeaderWhoseSubmenuIsOpenKeepsTheSubmenuOpen()
+    {
+        MenuItem recent = new() { Header = "Recent", Width = 90, Height = 60 };
+        recent.Items.Add(Leaf("a.txt"));
+        MenuItem file = Branch("File", Leaf("Open"), recent);
+        MenuBar menuBar = new();
+        menuBar.Items.Add(file);
+        UIRoot root = Attach(menuBar, 400, 300);
+        ElementInputBridge bridge = new();
+
+        Click(bridge, root, file);
+        root.ProcessFrame();
+        MovePointer(bridge, root, recent);
+        root.ProcessFrame();
+        Assert.True(recent.IsSubmenuOpen);
+
+        LayoutRect header = recent.ArrangedBounds;
+        float x = header.X + header.Width / 2;
+        float y = header.Y + header.Height - 8;
+        LayoutRect submenu = Assert.IsAssignableFrom<UIElement>(recent.SubmenuOverlay!.Content).ArrangedBounds;
+        Assert.False(Contains(submenu, x, y));
+        ClickAt(bridge, root, x, y);
+        root.ProcessFrame();
+
+        Assert.True(file.IsSubmenuOpen);
+        Assert.True(recent.IsSubmenuOpen);
+        Assert.Equal([file, recent], menuBar.Session.OpenPath);
+    }
+
+    [Fact]
+    public void ClickingANestedHeaderWhoseSubmenuIsClosedOpensTheSubmenu()
+    {
+        MenuItem recent = Branch("Recent", Leaf("a.txt"));
+        MenuItem file = Branch("File", Leaf("Open"), recent);
+        MenuBar menuBar = new();
+        menuBar.Items.Add(file);
+        UIRoot root = Attach(menuBar, 400, 300);
+        ElementInputBridge bridge = new();
+
+        Click(bridge, root, file);
+        root.ProcessFrame();
+        MovePointer(bridge, root, recent);
+        root.ProcessFrame();
+        recent.IsSubmenuOpen = false;
+        root.ProcessFrame();
+        Click(bridge, root, recent);
+        root.ProcessFrame();
+
+        Assert.True(file.IsSubmenuOpen);
+        Assert.True(recent.IsSubmenuOpen);
+    }
+
+    [Fact]
+    public void ClickingAMenuBarHeaderWhoseSubmenuIsOpenClosesTheMenu()
+    {
+        MenuItem file = Branch("File", Leaf("Open"));
+        MenuBar menuBar = new();
+        menuBar.Items.Add(file);
+        UIRoot root = Attach(menuBar, 320, 180);
+        ElementInputBridge bridge = new();
+
+        Click(bridge, root, file);
+        root.ProcessFrame();
+        Assert.True(file.IsSubmenuOpen);
+        Click(bridge, root, file);
+        root.ProcessFrame();
+
+        Assert.False(file.IsSubmenuOpen);
+        Assert.Empty(menuBar.Session.OpenPath);
+    }
+
+    [Fact]
     public void VerticalKeyboardNavigationSkipsDisabledAndCollapsedItemsWithoutWrapping()
     {
         MenuItem first = Leaf("First");
@@ -532,8 +604,18 @@ public sealed class MenuTests
     private static void Click(ElementInputBridge bridge, UIRoot root, UIElement element)
     {
         (float x, float y) = PointInside(element);
+        ClickAt(bridge, root, x, y);
+    }
+
+    private static void ClickAt(ElementInputBridge bridge, UIRoot root, float x, float y)
+    {
         bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
         bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+    }
+
+    private static bool Contains(LayoutRect bounds, float x, float y)
+    {
+        return x >= bounds.X && x < bounds.X + bounds.Width && y >= bounds.Y && y < bounds.Y + bounds.Height;
     }
 
     private static void MovePointer(ElementInputBridge bridge, UIRoot root, UIElement element)

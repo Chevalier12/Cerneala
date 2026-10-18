@@ -534,6 +534,36 @@ public sealed class WindowRuntimeTests : IDisposable
         Assert.Equal(6, window.LastFrame!.Input.Pointer.X);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task KeyboardOnlyServoInputBeforeAnyServoPointerActionLeavesThePhysicalPointerInPlace(bool text)
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        (Window window, Button button) = CreateHeaderAndTargetWindow();
+        window.Show();
+        FakePlatformWindow nativeWindow = Assert.Single(platform.Windows);
+        // The physical mouse rests on the target (x 320..480, y 40..72) and never moves.
+        nativeWindow.Input.MovePointer(400, 56);
+        PumpFrames(runtime, nativeWindow, 3);
+        Assert.True(button.IsPointerOver);
+        int enters = 0;
+        int leaves = 0;
+        button.AddHandler(UIElement.MouseEnterEvent, (_, _) => enters++, handledEventsToo: true);
+        button.AddHandler(UIElement.MouseLeaveEvent, (_, _) => leaves++, handledEventsToo: true);
+        ServoApi servo = new(window);
+
+        Task input = text ? servo.SendTextAsync("ab") : servo.PressKeyAsync(InputKey.F2);
+        PumpUntilCompleted(runtime, input);
+        await input;
+        PumpFrames(runtime, nativeWindow, 10);
+
+        Assert.True(button.IsPointerOver);
+        Assert.Equal((0, 0), (enters, leaves));
+        Assert.Equal((400f, 56f), (window.LastFrame!.Input.Pointer.X, window.LastFrame.Input.Pointer.Y));
+    }
+
     private static (Window Window, Button Button) CreateHeaderAndTargetWindow()
     {
         Border header = new() { Height = 40 };
@@ -669,7 +699,7 @@ public sealed class WindowRuntimeTests : IDisposable
         KeyboardSnapshot control = KeyboardSnapshot.FromDownKeys([InputKey.LeftCtrl]);
         KeyboardSnapshot chord = KeyboardSnapshot.FromDownKeys([InputKey.LeftCtrl, InputKey.A]);
         static ServoInputStep Step(PointerSnapshot pointer, KeyboardSnapshot before, KeyboardSnapshot after) =>
-            new(new InputFrame(pointer, pointer, before, after, []), pointer, after);
+            new(new InputFrame(pointer, pointer, before, after, []), pointer, after, HasPointerPosition: false);
         InterruptingServoSteps steps = new([
             Step(pointer, empty, control),
             Step(pointer, control, chord),

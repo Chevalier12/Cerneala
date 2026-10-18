@@ -200,16 +200,19 @@ public class TabItem : ContentControl, ISelectableItemContainer
     }
 
     // Takes a UIElement Content as a logical child when nothing else owns it. The content area of the TabControl
-    // owns it while it shows it, and the TabControl calls this after the content area let go of it.
+    // owns it while it shows it, and the TabControl calls this after the content area let go of it. As in WPF, only
+    // the shown content is loaded: the held element gets this tab as its LogicalParent, so no other parent can take
+    // it, but it does not join LogicalChildren, so it is not attached to the root and raises no Loaded while hidden.
     internal void HoldContent()
     {
         if (Content is UIElement element && element.LogicalParent is null && element.VisualParent is null)
         {
-            LogicalChildren.Add(element);
+            LogicalChildren.ValidateInsertion(LogicalChildren.Count, element);
+            element.SetLogicalParent(this);
         }
     }
 
-    // The TabControl calls this right before its content area shows the Content of this tab.
+    // The TabControl calls this right before its content area builds the presentation of the Content of this tab.
     internal void ReleaseContentForContentArea()
     {
         ReleaseHeldContent(Content as UIElement);
@@ -219,7 +222,8 @@ public class TabItem : ContentControl, ISelectableItemContainer
     {
         if (element is not null && ReferenceEquals(element.LogicalParent, this))
         {
-            LogicalChildren.Remove(element);
+            element.ValidateParentChange(null, ElementChildRole.Logical, ownerManaged: false);
+            element.SetLogicalParent(null);
         }
     }
 

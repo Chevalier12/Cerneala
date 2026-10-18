@@ -152,7 +152,12 @@ internal sealed class MenuSession
         activeItem = item;
         if (item.IsSubmenuOpen && !focusFirstChild)
         {
-            CloseFrom(item);
+            // Like WPF MenuItem.ClickHeader: a click on an open top-level header closes it; a nested header stays open.
+            if (item.ParentMenuItem is null)
+            {
+                CloseFrom(item);
+            }
+
             return;
         }
 

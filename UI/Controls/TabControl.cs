@@ -17,13 +17,14 @@ public class TabControl : Selector
         new UiPropertyMetadata<ContentTemplate?>(null, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
 
     // Shows the content of the selected tab below the header row; a TabItem never hosts its own Content.
-    private readonly ContentPresenter selectedContentPresenter = new();
+    private readonly ContentPresenter selectedContentPresenter;
 
     // The tab whose Content the content area was last prepared to show.
     private TabItem? presentedTab;
 
     public TabControl()
     {
+        selectedContentPresenter = new SelectedContentPresenter(this);
         ItemsPanel = new StackPanel { Orientation = Layout.Orientation.Horizontal };
         LogicalChildren.Add(selectedContentPresenter);
         VisualChildren.Add(selectedContentPresenter);
@@ -80,10 +81,17 @@ public class TabControl : Selector
         }
     }
 
+    private bool IsComponentTemplated => ComponentTemplate is not null || ComponentTemplateKey is not null;
+
     internal void OnTabContentChanged(TabItem tab)
     {
         if (ReferenceEquals(tab, SelectedTabItem))
         {
+            if (IsComponentTemplated)
+            {
+                tab.ReleaseContentForContentArea();
+            }
+
             InvalidateSelectedContent("Selected tab content changed");
         }
     }
@@ -92,23 +100,20 @@ public class TabControl : Selector
     {
         if (TemplateChild is not null)
         {
-            return base.MeasureCore(context);
+            LayoutSize size = base.MeasureCore(context);
+            // The template may have let go of the content of a tab shown before; that tab owns it again.
+            UpdateTemplatedContentOwnership();
+            return size;
         }
 
         LayoutSize headerSize = ItemsPresenter.Measure(context);
-        TabItem? previousTab = UpdateSelectedContent();
+        UpdateSelectedContent();
         LayoutSize available = context.AvailableSize;
         float contentHeight = available.IsHeightUnconstrained
             ? float.PositiveInfinity
             : MathF.Max(0, available.Height - headerSize.Height);
         LayoutSize contentSize = selectedContentPresenter.Measure(
             new MeasureContext(new LayoutSize(available.Width, contentHeight), context.Rounding));
-        // Measuring the content area removed the content of the tab shown before; that tab owns it again.
-        if (!ReferenceEquals(previousTab, presentedTab))
-        {
-            previousTab?.HoldContent();
-        }
-
         return new LayoutSize(MathF.Max(headerSize.Width, contentSize.Width), headerSize.Height + contentSize.Height);
     }
 
@@ -130,24 +135,123 @@ public class TabControl : Selector
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
+        bool templateChanged = ReferenceEquals(args.Property, ComponentTemplateProperty) ||
+            ReferenceEquals(args.Property, ComponentTemplateKeyProperty);
+        if (templateChanged && IsComponentTemplated)
+        {
+            // From now on the template shows SelectedContent: the content area and the selected tab let go of a
+            // UIElement content before the template is built, so a ContentPresenter in the template can take it.
+            presentedTab = null;
+            selectedContentPresenter.PrepareItemPresentation(null, null, null, null, -1);
+            SelectedTabItem?.ReleaseContentForContentArea();
+        }
+
         base.OnPropertyChanged(args);
         if (ReferenceEquals(args.Property, SelectedIndexProperty))
         {
             InvalidateSelectedContent("Selected tab changed");
         }
+
+        if (templateChanged || (ReferenceEquals(args.Property, SelectedIndexProperty) && IsComponentTemplated))
+        {
+            UpdateTemplatedContentOwnership();
+        }
+    }
+
+    // The template that goes away lets go of the element content of the tabs it showed, so the next template or the
+    // content area can show it, and its tab can own it again.
+    protected override void OnTemplateApplied(ComponentTemplateInstance? instance)
+    {
+        base.OnTemplateApplied(instance);
+        if (instance is not null)
+        {
+            return;
+        }
+
+        foreach (TabItem tab in GetTabs())
+        {
+            if (tab.Content is UIElement element && element.LogicalParent is not null && !ReferenceEquals(element.LogicalParent, tab))
+            {
+                ContentControl.DetachChildFromOwnedSubtree(this, element);
+            }
+        }
+    }
+
+    // With a ComponentTemplate, the template shows SelectedContent, so the selected tab lets go of a UIElement content
+    // and every other tab owns its content again once nothing shows it. Without one, every tab owns a content that
+    // nothing shows, and the content area takes the selected tab's content in measure.
+    private void UpdateTemplatedContentOwnership()
+    {
+        TabItem? selected = IsComponentTemplated ? SelectedTabItem : null;
+        foreach (TabItem tab in GetTabs())
+        {
+            if (!ReferenceEquals(tab, selected))
+            {
+                tab.HoldContent();
+            }
+        }
+
+        selected?.ReleaseContentForContentArea();
+    }
+
+    // TabItem items, which a templated control may never realize, and the realized generated tabs.
+    private IEnumerable<TabItem> GetTabs()
+    {
+        for (int index = 0; index < ItemCount; index++)
+        {
+            if (GetItemAt(index) is TabItem tab)
+            {
+                yield return tab;
+            }
+        }
+
+        foreach (UIElement container in ItemContainerGenerator.RealizedContainers.Values)
+        {
+            if (container is TabItem tab && !ReferenceEquals(ItemContainerGenerator.GetItem(container), container))
+            {
+                yield return tab;
+            }
+        }
     }
 
     // The only place the content area changes: it runs in measure, after the tabs are realized, so a UIElement
-    // content joins the content area while its tab is selected and leaves it when another tab is selected. The
-    // selected tab lets go of its content first, so the content area can take it; returns the tab shown before.
-    private TabItem? UpdateSelectedContent()
+    // content joins the content area while its tab is selected and leaves it when another tab is selected.
+    private void UpdateSelectedContent()
     {
         TabItem? previousTab = presentedTab;
         TabItem? tab = SelectedTabItem;
         presentedTab = tab;
-        tab?.ReleaseContentForContentArea();
         selectedContentPresenter.PrepareItemPresentation(tab?.Content, SelectedContentTemplate, null, null, -1);
-        return previousTab;
+        // Changing the Content of the content area let go of the content of the tab shown before at once; that tab
+        // owns it again before the content area is measured, so a template that throws while it is measured cannot
+        // leave that content without an owner.
+        if (!ReferenceEquals(previousTab, tab))
+        {
+            previousTab?.HoldContent();
+        }
+    }
+
+    // The content area. Whenever it builds its presentation again, in measure or when its aspect content templates
+    // change, the selected tab lets go of its UIElement content first, so the content area or its template can take
+    // it, and owns it again when the new presentation did not take it, for example when a ContentTemplate builds an
+    // element that does not contain the content.
+    private sealed class SelectedContentPresenter(TabControl owner) : ContentPresenter
+    {
+        internal override void OnPresentationRefreshing(object? content)
+        {
+            if (owner.presentedTab is { } tab && content is UIElement && ReferenceEquals(tab.Content, content))
+            {
+                tab.ReleaseContentForContentArea();
+            }
+        }
+
+        internal override void OnPresentationRefreshed(object? content)
+        {
+            if (owner.presentedTab is { } tab && content is UIElement && ReferenceEquals(tab.Content, content))
+            {
+                tab.HoldContent();
+            }
+        }
     }
 
     private void InvalidateSelectedContent(string reason)

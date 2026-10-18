@@ -63,6 +63,8 @@ host.ComponentTemplate = new ComponentTemplate<ContentControl>("ContentHost", co
 
 When `ComponentTemplate` or `ComponentTemplateKey` is set, `ContentControl` releases any directly owned content element from its subtree. A template can then decide how to present the content, commonly by binding or assigning it to a `ContentPresenter`.
 
+A `ContentControl` can itself be the element that a `ContentPresenter`'s content template creates around `UIElement` content. When the control hosts that element directly and the presenter releases it, for example because its `ContentTemplate` changes, it sets the control's `Content` to `null` instead of only removing the child, so `Content` and the control's children stay in step. See `ContentPresenter` for details.
+
 Changing `Content` affects measure, render, and semantics. For `UIElement` content, replacement uses reference-oriented equality so two distinct elements are treated as different even if their `Equals` implementations return `true`. For non-element content, the default object equality comparer is used.
 
 `ContentControl` validates `UIElement` content before ownership changes. It rejects self-parenting, adding an ancestor as a child, reparenting an element that already has a logical or visual parent, and attaching an element from another root. If a replacement fails, the previous content ownership is restored. When the control does not host the element itself, for example when a `ComponentTemplate` or `ComponentTemplateKey` is set or the control is a `TabItem`, the same validation also runs for `SetValue(ContentControl.ContentProperty, value)` with any value source, before `Content` changes: the call throws `InvalidOperationException` and `Content` keeps its previous value.

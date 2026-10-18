@@ -27,7 +27,7 @@ public sealed class CursorService
         HitTestResult? hit = hitTestService.HitTest(root, routeMap, x, y);
         IReadOnlyList<UIElement> route = hit is null
             ? []
-            : routeMap.GetRouteToRoot(hit.Element);
+            : routeMap.GetVisualRouteToRoot(hit.Element);
         foreach (UIElement current in route)
         {
             if (cursors.TryGetValue(current, out CursorBox? box))

@@ -199,6 +199,17 @@ public sealed class UiFrameScheduler
         trace.RecordClear(element, cleared);
     }
 
+    // A propagated entry only stands for the measure of a descendant, which the phase skips, so a descendant that
+    // measured itself completes it. The element's own queued measure stays queued.
+    internal void CompletePropagatedQueuedMeasure(Elements.UIElement element)
+    {
+        if (layoutQueue.ContainsMeasure(element) &&
+            layoutQueue.GetMeasureKind(element) == LayoutQueueEntryKind.Propagated)
+        {
+            CompleteQueuedMeasure(element);
+        }
+    }
+
     internal void CompleteQueuedArrange(Elements.UIElement element)
     {
         if (!layoutQueue.ContainsArrange(element))
@@ -458,7 +469,8 @@ public sealed class UiFrameScheduler
                 bool wasArrangedRecursively = processors.SupportsIncrementalMeasure &&
                     ReferenceEquals(element.LastScheduledArrangeRoot, element.Root) &&
                     element.LastScheduledArrangePass == CurrentArrangePass &&
-                    element.LastScheduledArrangeLayoutVersion == element.LayoutVersion;
+                    element.LastScheduledArrangeLayoutVersion == element.LayoutVersion &&
+                    element.ArrangeDesiredSizesAreCurrent;
                 if (!Elements.UIElementVisibility.IsEffectivelyParticipatingInLayout(element) ||
                     wasArrangedRecursively)
                 {

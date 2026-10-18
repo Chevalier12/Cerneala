@@ -52,6 +52,8 @@ When attached, `ButtonBase` subscribes to `IObservableCommand.CanExecuteChanged`
 
 The protected `ShouldClickOnMouseUp` property defaults to `true`, preserving release activation for normal buttons. Derived controls can override it when pointer activation occurs earlier; `RepeatButton` returns `false` so release does not add a final click.
 
+A left mouse-up raises the button's own `Click` only when the click belongs to this button: the nearest `IInputCommandSource` on the input route from the mouse-up's `OriginalSource` is this button. This is the same element whose `Command` the input system runs for the click. A click on a command source in the button's content, such as a `Button` or the `PART_DropDownToggle` of a non-editable `ComboBox`, raises that control's `Click` and not one of the outer button. The inner `Click` still bubbles, so handlers on the outer button's `Click` receive it with the inner control as `OriginalSource`. For example, with `Button outer = new() { Content = new Button { Content = "inner" } };`, one click on `inner` raises one `Click` whose `OriginalSource` is `inner`, and `outer.Command` does not run; one click on `outer` outside `inner` raises one `Click` whose `OriginalSource` is `outer` and runs `outer.Command`.
+
 ## Constructors
 
 | Name | Description |
@@ -94,7 +96,7 @@ The protected `ShouldClickOnMouseUp` property defaults to `true`, preserving rel
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `ShouldClickOnMouseUp` | `bool` | Gets whether a valid left mouse-up raises `Click`. The default is `true`. |
+| `ShouldClickOnMouseUp` | `bool` | Gets whether a valid left mouse-up that belongs to this button raises `Click`. The default is `true`. |
 
 ## Property Information
 
