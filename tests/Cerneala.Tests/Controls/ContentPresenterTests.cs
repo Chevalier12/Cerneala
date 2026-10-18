@@ -369,6 +369,84 @@ public sealed class ContentPresenterTests
     }
 
     [Fact]
+    public void ReplacingContentTemplateKeepsElementContentInTheContentPresenterThatTheTemplateReuses()
+    {
+        UIRoot root = new(200, 200);
+        FixedElement content = new(new LayoutSize(10, 10));
+        ContentPresenter cached = new();
+        Func<ContentTemplateContext, UIElement?> factory = context =>
+        {
+            cached.Content = context.Data;
+            return cached;
+        };
+        ContentPresenter presenter = new()
+        {
+            ContentTemplate = new ContentTemplate("cache1", typeof(object), key: null, priority: 0, factory),
+            Content = content
+        };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        Assert.Same(cached, content.VisualParent);
+
+        presenter.ContentTemplate = new ContentTemplate("cache2", typeof(object), key: null, priority: 0, factory);
+        root.ProcessFrame();
+
+        Assert.Same(cached, presenter.PresentedChild);
+        Assert.Same(content, cached.Content);
+        Assert.Same(content, cached.PresentedChild);
+        Assert.Same(cached, content.VisualParent);
+        Assert.Same(cached, content.LogicalParent);
+        Assert.Single(cached.VisualChildren);
+        Assert.Contains(content, cached.VisualChildren);
+        Assert.Contains(content, cached.LogicalChildren);
+    }
+
+    [Fact]
+    public void ReplacingContentTemplateReleasesElementContentThroughTheOldContentPresenterContent()
+    {
+        FixedElement content = new(new LayoutSize(10, 10));
+        ContentPresenter presenter = new()
+        {
+            ContentTemplate = ContentPresenterTemplate("first"),
+            Content = content
+        };
+        ContentPresenter oldContainer = Assert.IsType<ContentPresenter>(presenter.PresentedChild);
+        Assert.Same(content, oldContainer.PresentedChild);
+
+        presenter.ContentTemplate = ContentPresenterTemplate("second");
+
+        ContentPresenter newContainer = Assert.IsType<ContentPresenter>(presenter.PresentedChild);
+        Assert.NotSame(oldContainer, newContainer);
+        Assert.Same(newContainer, content.VisualParent);
+        Assert.Same(content, newContainer.PresentedChild);
+        Assert.Null(oldContainer.Content);
+        Assert.Null(oldContainer.PresentedChild);
+        Assert.DoesNotContain(content, oldContainer.VisualChildren);
+        Assert.DoesNotContain(content, oldContainer.LogicalChildren);
+    }
+
+    [Fact]
+    public void ThrowingContentTemplateKeepsElementContentInsideThePreviousContentPresenter()
+    {
+        UIRoot root = new(200, 200);
+        FixedElement content = new(new LayoutSize(10, 10));
+        ContentPresenter presenter = new() { ContentTemplate = ContentPresenterTemplate("first"), Content = content };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        ContentPresenter oldContainer = Assert.IsType<ContentPresenter>(presenter.PresentedChild);
+
+        Assert.Throws<InvalidOperationException>(() => presenter.ContentTemplate = ThrowingTemplate(takeContent: true));
+
+        Assert.Same(oldContainer, presenter.PresentedChild);
+        Assert.Same(content, oldContainer.Content);
+        Assert.Same(content, oldContainer.PresentedChild);
+        Assert.Same(oldContainer, content.VisualParent);
+        Assert.Same(oldContainer, content.LogicalParent);
+        Assert.Single(oldContainer.VisualChildren);
+        Assert.Same(root, content.Root);
+    }
+
+    [Fact]
     public void ReplacingPassThroughContentTemplateKeepsElementContentInPlace()
     {
         UIRoot root = new(200, 200);
@@ -430,6 +508,11 @@ public sealed class ContentPresenterTests
     private static ContentTemplate ContentControlTemplate(string name)
     {
         return new ContentTemplate(name, typeof(object), key: null, priority: 0, context => new ContentControl { Content = context.Data });
+    }
+
+    private static ContentTemplate ContentPresenterTemplate(string name)
+    {
+        return new ContentTemplate(name, typeof(object), key: null, priority: 0, context => new ContentPresenter { Content = context.Data });
     }
 
     private static ContentTemplate ThrowingTemplate(bool takeContent)

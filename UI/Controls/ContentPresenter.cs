@@ -466,24 +466,32 @@ public class ContentPresenter : Control
         LogicalChildren.Remove(child);
     }
 
-    // Where element content was in the tree before a refresh released it.
+    // Where element content was in the tree before a refresh released it. A ContentPresenter that presented the element
+    // directly let go of it through its Content, so it takes it back through its Content.
     private readonly record struct ElementContentPlacement(
         UIElement Element,
         UIElement? VisualParent,
         int VisualIndex,
         UIElement? LogicalParent,
-        int LogicalIndex)
+        int LogicalIndex,
+        ContentPresenter? Presenter)
     {
         public static ElementContentPlacement Capture(UIElement element)
         {
             UIElement? visualParent = element.VisualParent;
             UIElement? logicalParent = element.LogicalParent;
+            ContentPresenter? presenter = visualParent is ContentPresenter candidate &&
+                ReferenceEquals(candidate.PresentedChild, element) &&
+                ReferenceEquals(candidate.Content, element)
+                    ? candidate
+                    : null;
             return new ElementContentPlacement(
                 element,
                 visualParent,
                 visualParent?.VisualChildren.IndexOf(element) ?? -1,
                 logicalParent,
-                logicalParent?.LogicalChildren.IndexOf(element) ?? -1);
+                logicalParent?.LogicalChildren.IndexOf(element) ?? -1,
+                presenter);
         }
 
         // A template that failed after it took the element still holds it, so the element leaves that template's
@@ -500,6 +508,16 @@ public class ContentPresenter : Control
             if (restoreLogical)
             {
                 Element.LogicalParent?.LogicalChildren.Remove(Element);
+            }
+
+            if (Presenter is not null && Presenter.Content is null)
+            {
+                Presenter.Content = Element;
+                return;
+            }
+
+            if (restoreLogical)
+            {
                 LogicalParent?.LogicalChildren.Insert(LogicalIndex, Element);
             }
 
