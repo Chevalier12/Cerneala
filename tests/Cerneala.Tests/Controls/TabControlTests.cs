@@ -516,6 +516,46 @@ public sealed class TabControlTests
     }
 
     [Fact]
+    public void ElementContentOfTheTabShownBeforeIsOwnedAgainAfterPresentingTheSelectedTabThrewOnce()
+    {
+        UIRoot root = new(300, 200);
+        FixedElement a = new();
+        FixedElement b = new();
+        FixedElement other = new();
+        bool fail = true;
+        ContentTemplate throwing = new(
+            "boom",
+            typeof(FixedElement),
+            null,
+            0,
+            _ => fail ? throw new InvalidOperationException("boom") : new FixedElement());
+        TabItem first = new() { Header = "H1", Content = a };
+        TabItem second = new() { Header = "H2", Content = b, ContentTemplate = throwing };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        root.VisualChildren.Add(tabControl);
+        root.VisualChildren.Add(other);
+        tabControl.SelectedIndex = 0;
+        root.ProcessFrame();
+
+        tabControl.SelectedIndex = 1;
+        InvalidOperationException thrown = Assert.Throws<InvalidOperationException>(() => root.ProcessFrame());
+        Assert.Equal("boom", thrown.Message);
+        Assert.Same(first, a.LogicalParent);
+        Assert.Null(a.VisualParent);
+
+        fail = false;
+        second.ContentTemplate = null;
+        root.ProcessFrame();
+
+        Assert.True(HasVisualAncestor(b, tabControl), "b is not under the TabControl while tab 1 is selected");
+        Assert.Same(first, a.LogicalParent);
+        Assert.Null(a.VisualParent);
+        Assert.Throws<InvalidOperationException>(() => other.LogicalChildren.Add(a));
+        Assert.Empty(other.LogicalChildren);
+    }
+
+    [Fact]
     public void ElementItemOfARemovedGeneratedTabCanBeAddedToAnotherParent()
     {
         UIRoot root = new(300, 200);
