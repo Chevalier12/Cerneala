@@ -217,26 +217,45 @@ public class ContentPresenter : Control
 
         presentationDirty = false;
         object? content = Content;
-        ContentTemplate? template = ResolveContentTemplate(content);
-        ReleaseElementContent(content, template is not null);
-        UIElement? next = CreatePresentedChild(content, template);
-        if (ReferenceEquals(presentedChild, next))
-        {
-            return;
-        }
-
-        RemovePresentedChild(presentedChild);
+        OnPresentationRefreshing(content);
         try
         {
-            AddPresentedChild(next);
-            presentedChild = next;
+            ContentTemplate? template = ResolveContentTemplate(content);
+            ReleaseElementContent(content, template is not null);
+            UIElement? next = CreatePresentedChild(content, template);
+            if (ReferenceEquals(presentedChild, next))
+            {
+                return;
+            }
+
+            RemovePresentedChild(presentedChild);
+            try
+            {
+                AddPresentedChild(next);
+                presentedChild = next;
+            }
+            catch
+            {
+                RemovePresentedChild(next);
+                AddPresentedChild(presentedChild);
+                throw;
+            }
         }
-        catch
+        finally
         {
-            RemovePresentedChild(next);
-            AddPresentedChild(presentedChild);
-            throw;
+            OnPresentationRefreshed(content);
         }
+    }
+
+    // A presenter whose element content is owned elsewhere while it is not shown, for example the content area of a
+    // TabControl, lets that owner release the content before the presentation is rebuilt, so the presenter or its
+    // template can take it, and take it back afterwards when the new presentation did not take it.
+    internal virtual void OnPresentationRefreshing(object? content)
+    {
+    }
+
+    internal virtual void OnPresentationRefreshed(object? content)
+    {
     }
 
     private ContentTemplate? ResolveContentTemplate(object? content)

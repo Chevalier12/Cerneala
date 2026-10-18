@@ -17,13 +17,14 @@ public class TabControl : Selector
         new UiPropertyMetadata<ContentTemplate?>(null, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
 
     // Shows the content of the selected tab below the header row; a TabItem never hosts its own Content.
-    private readonly ContentPresenter selectedContentPresenter = new();
+    private readonly ContentPresenter selectedContentPresenter;
 
     // The tab whose Content the content area was last prepared to show.
     private TabItem? presentedTab;
 
     public TabControl()
     {
+        selectedContentPresenter = new SelectedContentPresenter(this);
         ItemsPanel = new StackPanel { Orientation = Layout.Orientation.Horizontal };
         LogicalChildren.Add(selectedContentPresenter);
         VisualChildren.Add(selectedContentPresenter);
@@ -138,16 +139,38 @@ public class TabControl : Selector
     }
 
     // The only place the content area changes: it runs in measure, after the tabs are realized, so a UIElement
-    // content joins the content area while its tab is selected and leaves it when another tab is selected. The
-    // selected tab lets go of its content first, so the content area can take it; returns the tab shown before.
+    // content joins the content area while its tab is selected and leaves it when another tab is selected. Returns
+    // the tab shown before.
     private TabItem? UpdateSelectedContent()
     {
         TabItem? previousTab = presentedTab;
         TabItem? tab = SelectedTabItem;
         presentedTab = tab;
-        tab?.ReleaseContentForContentArea();
         selectedContentPresenter.PrepareItemPresentation(tab?.Content, SelectedContentTemplate, null, null, -1);
         return previousTab;
+    }
+
+    // The content area. Whenever it builds its presentation again, in measure or when its aspect content templates
+    // change, the selected tab lets go of its UIElement content first, so the content area or its template can take
+    // it, and owns it again when the new presentation did not take it, for example when a ContentTemplate builds an
+    // element that does not contain the content.
+    private sealed class SelectedContentPresenter(TabControl owner) : ContentPresenter
+    {
+        internal override void OnPresentationRefreshing(object? content)
+        {
+            if (owner.presentedTab is { } tab && content is UIElement && ReferenceEquals(tab.Content, content))
+            {
+                tab.ReleaseContentForContentArea();
+            }
+        }
+
+        internal override void OnPresentationRefreshed(object? content)
+        {
+            if (owner.presentedTab is { } tab && content is UIElement && ReferenceEquals(tab.Content, content))
+            {
+                tab.HoldContent();
+            }
+        }
     }
 
     private void InvalidateSelectedContent(string reason)

@@ -209,7 +209,7 @@ public class TabItem : ContentControl, ISelectableItemContainer
         }
     }
 
-    // The TabControl calls this right before its content area shows the Content of this tab.
+    // The TabControl calls this right before its content area builds the presentation of the Content of this tab.
     internal void ReleaseContentForContentArea()
     {
         ReleaseHeldContent(Content as UIElement);
