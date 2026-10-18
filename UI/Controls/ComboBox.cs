@@ -952,9 +952,10 @@ public class ComboBox : Selector
     }
 
     // A non-editable field acts as one drop-down button, as the WPF default template's ToggleButton covers the
-    // whole field. A command source in the field, such as PART_DropDownToggle or a button that a hit-testable
-    // selection box shows, owns its click, as the input bridge resolves the click to it. The projected list is
-    // not in the field's visual subtree.
+    // whole field. Content in the field that the input bridge gives its own pointer input owns its click: a
+    // command source, such as PART_DropDownToggle or a button that a hit-testable selection box shows, and a
+    // pointer drag source, such as a TextBox or a Thumb there. The projected list is not in the field's visual
+    // subtree.
     private void OnMouseUp(UiElementId _, RoutedEventArgs args)
     {
         if (IsEditable || !IsEnabled ||
@@ -983,7 +984,7 @@ public class ComboBox : Selector
                 return true;
             }
 
-            if (current is IInputCommandSource)
+            if (current is IInputCommandSource or IPointerDragSource)
             {
                 return false;
             }

@@ -695,6 +695,46 @@ public sealed class ComboBoxTests
         Assert.Equal(0, comboBox.SelectedIndex);
     }
 
+    // A text box that the ItemTemplate shows in a hit-testable selection box owns its press as a pointer drag
+    // source, as the bridge resolves it, so the click focuses the text box and the field stays closed (#393).
+    [Fact]
+    public void NonEditableFieldClickOnHitTestableTemplateTextBoxFocusesTextBoxWithoutTogglingDropDown()
+    {
+        (UIRoot root, ComboBox comboBox) = CreateNonEditableField();
+        comboBox.ItemTemplate = new ContentTemplate<string>(
+            "text",
+            key: null,
+            priority: 0,
+            context => new TextBox { Text = context.Data });
+        root.ProcessFrame();
+        UIElement presenter = comboBox.ComponentTemplateInstance!.Parts["PART_SelectionPresenter"];
+        presenter.IsHitTestVisible = true;
+        root.ProcessFrame();
+        TextBox box = Assert.IsType<TextBox>(FindDescendant<TextBox>(presenter));
+        LayoutRect bounds = box.ArrangedBounds;
+        float x = bounds.X + 6;
+        float y = bounds.Y + bounds.Height / 2;
+        UIElement? hit = new HitTestService().HitTest(root, x, y)?.Element;
+        Assert.NotNull(hit);
+        Assert.True(ReferenceEquals(hit, box) || IsDescendantOf(hit!, box));
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.Same(box, bridge.FocusManager.FocusedElement);
+        Assert.False(comboBox.IsDropDownOpen);
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.Same(box, bridge.FocusManager.FocusedElement);
+        Assert.False(comboBox.IsDropDownOpen);
+        Assert.Equal(0, comboBox.SelectedIndex);
+    }
+
     [Fact]
     public void NonEditableFieldClickOnHitTestableTemplateTextTogglesDropDown()
     {
