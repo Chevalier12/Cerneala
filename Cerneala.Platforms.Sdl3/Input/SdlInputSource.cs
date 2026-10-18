@@ -107,6 +107,13 @@ internal sealed class SdlInputSource : IInputSource
         InputKey key = MapScancode(scancode);
         if (key is InputKey.None or InputKey.Unknown)
         {
+            // A frame cannot report this key, but the text it types must not be credited
+            // to the key pressed before it.
+            if (down)
+            {
+                Accept(new PendingInput(PendingKind.UnmappedKeyDown));
+            }
+
             return;
         }
 
@@ -174,6 +181,13 @@ internal sealed class SdlInputSource : IInputSource
 
             downKeys.Clear();
             previousKeyboard = KeyboardSnapshot.Empty;
+            return true;
+        }
+
+        if (input.Kind == PendingKind.UnmappedKeyDown)
+        {
+            // The frame gets nothing, but text that arrives next was typed by this key.
+            lastKeyDown = InputKey.Unknown;
             return true;
         }
 
@@ -428,6 +442,7 @@ internal sealed class SdlInputSource : IInputSource
         Key,
         Text,
         ForgetKeys,
+        UnmappedKeyDown,
         ForgetButtons
     }
 
