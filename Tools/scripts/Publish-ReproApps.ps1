@@ -31,7 +31,8 @@ instead of running it, and writes the would-be PR body to <WorkDir>\pr-body.prev
     {{VerdictTable}} replaced, goes between <!-- repro-how-to-check:start --> and <!-- repro-how-to-check:end -->.
     An existing block is replaced; otherwise the block is inserted before the first "## User validation" line, or
     appended. The file should start with its own "## How to check" heading. Running twice gives the same body;
-  - the public download and GIF URLs are checked with HEAD requests (a ranged GET when HEAD is refused).
+  - the public download URLs are checked with HEAD requests (a ranged GET when HEAD is refused), and each GIF URL
+    with a ranged GET whose bytes must start with GIF87a or GIF89a (Test-ReproPublicUrl in ReproApps.Common.ps1).
 
 .PARAMETER App
 The app folder that contains Issue<Issue>.csproj, for example <scratchpad>\repro-369\Issue369.
@@ -80,6 +81,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'ReproApps.Common.ps1')
 $startMarker = '<!-- repro-how-to-check:start -->'
 $endMarker = '<!-- repro-how-to-check:end -->'
 
@@ -439,27 +441,8 @@ if ($DryRun) {
 }
 $urlProblems = @()
 foreach ($v in $variants) {
-    foreach ($item in @(@{ Url = $zipUrl[$v]; Type = $null }, @{ Url = $gifUrl[$v]; Type = 'image/gif' })) {
-        try {
-            $via = 'HEAD'
-            try {
-                $response = Invoke-WebRequest -Uri $item.Url -Method Head -MaximumRedirection 5
-            }
-            catch {
-                $via = 'GET bytes=0-0'
-                $response = Invoke-WebRequest -Uri $item.Url -Method Get -MaximumRedirection 5 -Headers @{ Range = 'bytes=0-0' }
-            }
-            $contentType = "$($response.Headers['Content-Type'])"
-            $okStatus = $response.StatusCode -in 200, 206
-            $okType = (-not $item.Type) -or $contentType.StartsWith($item.Type)
-            Write-Host ("{0} {1} [{2}] {3}" -f $response.StatusCode, $item.Url, $via, $contentType)
-            if (-not ($okStatus -and $okType)) { $urlProblems += $item.Url }
-        }
-        catch {
-            Write-Host "FAILED $($item.Url): $($_.Exception.Message)"
-            $urlProblems += $item.Url
-        }
-    }
+    if (-not (Test-ReproPublicUrl -Url $zipUrl[$v])) { $urlProblems += $zipUrl[$v] }
+    if (-not (Test-ReproPublicUrl -Url $gifUrl[$v] -Gif)) { $urlProblems += $gifUrl[$v] }
 }
 if ($urlProblems.Count -gt 0) { Write-Host "URL check failed for: $($urlProblems -join ', ')"; exit 1 }
 Write-Host 'All public URLs answered.'
