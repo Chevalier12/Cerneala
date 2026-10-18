@@ -153,11 +153,14 @@ public sealed class SdlInputSourceTests
         source.AddWheel(2, flipped: false);
         source.SetButton(1, true);
         source.SetButton(3, true);
+        InputFrame wheeled = source.GetFrame();
+        Assert.Equal(20, wheeled.Pointer.X);
+        Assert.Equal(40, wheeled.Pointer.Y);
+        Assert.Equal(240, wheeled.Pointer.WheelValue);
+        Assert.Equal(240, wheeled.Pointer.WheelDelta);
+        // A press after a wheel notch waits for the next frame, which hit-tests the scrolled layout.
+        Assert.False(wheeled.Pointer.IsDown(InputMouseButton.Left));
         InputFrame frame = source.GetFrame();
-        Assert.Equal(20, frame.Pointer.X);
-        Assert.Equal(40, frame.Pointer.Y);
-        Assert.Equal(240, frame.Pointer.WheelValue);
-        Assert.Equal(240, frame.Pointer.WheelDelta);
         Assert.True(frame.Pointer.IsDown(InputMouseButton.Left));
         Assert.True(frame.Pointer.IsPressed(InputMouseButton.Left));
         Assert.False(frame.Pointer.IsDown(InputMouseButton.Middle));
