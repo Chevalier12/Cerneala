@@ -287,6 +287,12 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     internal virtual bool ActivatesOnPointerRelease => true;
 
+    // True for an element that is not a command source but owns the pointer presses on it as its own click, as a WPF
+    // ButtonBase in its template handles MouseLeftButtonDown, such as the field of a non-editable ComboBox. The input
+    // bridge resolves such a press to this element, so an enclosing command source is not pressed, does not repeat,
+    // and does not click for it.
+    internal virtual bool OwnsPointerClick => false;
+
     internal virtual TimeSpan? PointerRepeatDelay => null;
 
     internal virtual TimeSpan PointerRepeatInterval => TimeSpan.Zero;

@@ -176,7 +176,8 @@ public sealed class ElementInputBridge
                     repeatButtonController.Cancel(pressedStateTracker);
                 }
 
-                int clickCount = clickTracker.Release(ResolveClickTarget(hitTarget?.Element, routeMap));
+                int clickCount = clickTracker.Release(
+                    ResolveReleaseClickTarget(hitTarget?.Element, clickTracker.PressedTarget, routeMap));
                 bool handled = RaiseMousePair(routeMap, pointerTarget, InputEvents.PreviewMouseUpEvent, InputEvents.MouseUpEvent, button, clickCount);
                 handled |= RaiseMouseButtonSpecificPair(routeMap, pointerTarget, button, isDown: false, clickCount);
                 if (button == InputMouseButton.Left && clickCount == 2)
@@ -303,6 +304,9 @@ public sealed class ElementInputBridge
         return null;
     }
 
+    // A press belongs to the nearest command source or element that owns its clicks, such as a non-editable
+    // ComboBox field, as in WPF the nearest ButtonBase handles MouseLeftButtonDown. An enclosing command source then
+    // does not get the click.
     private static UIElement? ResolveClickTarget(
         UIElement? element,
         ElementInputRouteMap routeMap)
@@ -312,7 +316,40 @@ public sealed class ElementInputBridge
             return null;
         }
 
-        return FindAncestor<IInputCommandSource>(element, routeMap) ?? element;
+        foreach (UIElement current in routeMap.GetVisualRouteToRoot(element))
+        {
+            if (current is IInputCommandSource || current.OwnsPointerClick)
+            {
+                return current;
+            }
+        }
+
+        return element;
+    }
+
+    // An element that owns its clicks without being a command source completes only a click whose press it took. A
+    // release on it after a press on an enclosing command source belongs to that command source, as a WPF Button
+    // that took the press clicks for a release over its content.
+    private static UIElement? ResolveReleaseClickTarget(
+        UIElement? element,
+        UIElement? pressedTarget,
+        ElementInputRouteMap routeMap)
+    {
+        if (element is null)
+        {
+            return null;
+        }
+
+        foreach (UIElement current in routeMap.GetVisualRouteToRoot(element))
+        {
+            if (current is IInputCommandSource ||
+                (current.OwnsPointerClick && ReferenceEquals(current, pressedTarget)))
+            {
+                return current;
+            }
+        }
+
+        return element;
     }
 
     private static UIElement? ResolveFocusTarget(UIElement element, ElementInputRouteMap routeMap)

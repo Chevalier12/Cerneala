@@ -853,6 +853,178 @@ public sealed class ComboBoxTests
         Assert.Equal(1, command.Executions);
     }
 
+    // As in WPF, where the template's ToggleButton handles the field's press, a press held on the field of a
+    // non-editable ComboBox inside a RepeatButton does not start the RepeatButton: it raises no Click and runs no
+    // Command, and the release only opens the drop-down. The same holds for a press on PART_DropDownToggle. A press
+    // held on the RepeatButton outside the ComboBox still clicks and repeats.
+    [Theory]
+    [InlineData("middle")]
+    [InlineData("toggle")]
+    public void NonEditableFieldPressInsideRepeatButtonDoesNotClickOrRepeatIt(string where)
+    {
+        UIRoot root = new(300, 200);
+        ComboBox comboBox = new() { IsEditable = false, Width = 180, Height = 32 };
+        comboBox.SetItems(new[] { "one", "two", "three" });
+        comboBox.SelectedIndex = 0;
+        CountingCommand command = new();
+        Cerneala.UI.Controls.Primitives.RepeatButton outer = new()
+        {
+            Content = comboBox,
+            Command = command,
+            Delay = 500,
+            Interval = 100
+        };
+        LayoutCanvas canvas = new();
+        LayoutCanvas.SetLeft(outer, 60);
+        canvas.VisualChildren.Add(outer);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        int outerClicks = 0;
+        // Click bubbles, so the Click of PART_DropDownToggle also reaches this handler; count only the outer one.
+        outer.Click += (_, args) =>
+        {
+            if (ReferenceEquals(args.OriginalSource, outer))
+            {
+                outerClicks++;
+            }
+        };
+        ToggleButton toggle = Assert.IsType<ToggleButton>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_DropDownToggle"]);
+        LayoutRect fieldBounds = comboBox.ArrangedBounds;
+        float fieldX = where == "toggle"
+            ? toggle.ArrangedBounds.X + toggle.ArrangedBounds.Width / 2
+            : fieldBounds.X + fieldBounds.Width / 2;
+        float fieldY = fieldBounds.Y + fieldBounds.Height / 2;
+        Assert.Equal(where == "toggle", ReferenceEquals(new HitTestService().HitTest(root, fieldX, fieldY)?.Element, toggle));
+        TimeSpan frame = TimeSpan.FromMilliseconds(100);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(fieldX, fieldY, currentDown: true), frame);
+        for (int index = 0; index < 10; index++)
+        {
+            bridge.Dispatch(root, PointerFrame(fieldX, fieldY, previousDown: true, currentDown: true), frame);
+        }
+
+        Assert.Equal(0, outerClicks);
+        Assert.Equal(0, command.Executions);
+
+        bridge.Dispatch(root, PointerFrame(fieldX, fieldY, previousDown: true), frame);
+        root.ProcessFrame();
+
+        Assert.True(comboBox.IsDropDownOpen);
+        Assert.Equal(0, outerClicks);
+        Assert.Equal(0, command.Executions);
+
+        comboBox.IsDropDownOpen = false;
+        root.ProcessFrame();
+        LayoutRect outerBounds = outer.ArrangedBounds;
+        float outerX = outerBounds.X + 2;
+        Assert.True(outerX < fieldBounds.X);
+        Assert.Same(outer, new HitTestService().HitTest(root, outerX, fieldY)?.Element);
+
+        bridge.Dispatch(root, PointerFrame(outerX, fieldY, currentDown: true), frame);
+        for (int index = 0; index < 10; index++)
+        {
+            bridge.Dispatch(root, PointerFrame(outerX, fieldY, previousDown: true, currentDown: true), frame);
+        }
+
+        bridge.Dispatch(root, PointerFrame(outerX, fieldY, previousDown: true), frame);
+        root.ProcessFrame();
+
+        Assert.False(comboBox.IsDropDownOpen);
+        Assert.True(outerClicks > 1, $"The RepeatButton clicked {outerClicks} times.");
+        Assert.Equal(outerClicks, command.Executions);
+    }
+
+    // As in WPF, where the template's ToggleButton takes the field's press, an outer Button is not pressed while
+    // the field of a non-editable ComboBox inside it is held. A press on the Button outside the ComboBox presses it.
+    [Fact]
+    public void NonEditableFieldHeldInsideButtonDoesNotPressButton()
+    {
+        UIRoot root = new(300, 200);
+        ComboBox comboBox = new() { IsEditable = false, Width = 180, Height = 32 };
+        comboBox.SetItems(new[] { "one", "two", "three" });
+        comboBox.SelectedIndex = 0;
+        Button outer = new() { Content = comboBox };
+        LayoutCanvas canvas = new();
+        LayoutCanvas.SetLeft(outer, 60);
+        canvas.VisualChildren.Add(outer);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        LayoutRect fieldBounds = comboBox.ArrangedBounds;
+        float fieldX = fieldBounds.X + fieldBounds.Width / 2;
+        float fieldY = fieldBounds.Y + fieldBounds.Height / 2;
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(fieldX, fieldY, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(fieldX, fieldY, previousDown: true, currentDown: true));
+
+        Assert.False(outer.IsPressed);
+        Assert.Null(bridge.PressedStateTracker.PressedElement);
+
+        bridge.Dispatch(root, PointerFrame(fieldX, fieldY, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.True(comboBox.IsDropDownOpen);
+        Assert.False(outer.IsPressed);
+
+        comboBox.IsDropDownOpen = false;
+        root.ProcessFrame();
+        float outerX = outer.ArrangedBounds.X + 2;
+        Assert.Same(outer, new HitTestService().HitTest(root, outerX, fieldY)?.Element);
+
+        bridge.Dispatch(root, PointerFrame(outerX, fieldY, currentDown: true));
+
+        Assert.True(outer.IsPressed);
+
+        bridge.Dispatch(root, PointerFrame(outerX, fieldY, previousDown: true));
+
+        Assert.False(outer.IsPressed);
+    }
+
+    // As in WPF, where the template's ToggleButton takes the field's press and captures the mouse, a press on the
+    // field of a non-editable ComboBox inside a Button followed by a release on the Button outside the ComboBox
+    // clicks nothing: the Button was never pressed, and the release is not over the field.
+    [Fact]
+    public void NonEditableFieldPressReleasedOnOuterButtonDoesNotClickButton()
+    {
+        UIRoot root = new(300, 200);
+        ComboBox comboBox = new() { IsEditable = false, Width = 180, Height = 32 };
+        comboBox.SetItems(new[] { "one", "two", "three" });
+        comboBox.SelectedIndex = 0;
+        CountingCommand command = new();
+        Button outer = new() { Content = comboBox, Command = command };
+        LayoutCanvas canvas = new();
+        LayoutCanvas.SetLeft(outer, 60);
+        canvas.VisualChildren.Add(outer);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        int outerClicks = 0;
+        outer.Click += (_, _) => outerClicks++;
+        LayoutRect fieldBounds = comboBox.ArrangedBounds;
+        float fieldX = fieldBounds.X + fieldBounds.Width / 2;
+        float fieldY = fieldBounds.Y + fieldBounds.Height / 2;
+        float outerX = outer.ArrangedBounds.X + 2;
+        Assert.Same(outer, new HitTestService().HitTest(root, outerX, fieldY)?.Element);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(fieldX, fieldY, currentDown: true));
+        bridge.Dispatch(
+            root,
+            new InputFrame(
+                PointerSnapshot.Empty.WithPosition(fieldX, fieldY).WithButton(InputMouseButton.Left, true),
+                PointerSnapshot.Empty.WithPosition(outerX, fieldY).WithButton(InputMouseButton.Left, true),
+                KeyboardSnapshot.Empty,
+                KeyboardSnapshot.Empty,
+                []));
+        bridge.Dispatch(root, PointerFrame(outerX, fieldY, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.False(comboBox.IsDropDownOpen);
+        Assert.Equal(0, outerClicks);
+        Assert.Equal(0, command.Executions);
+    }
+
     private sealed class CountingCommand : ICommand
     {
         public int Executions { get; private set; }
