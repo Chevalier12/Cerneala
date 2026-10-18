@@ -19,6 +19,8 @@ public sealed class ElementInputBridge
     private bool hasLastPointerPosition;
     private float lastPointerX;
     private float lastPointerY;
+    private bool isDispatching;
+    private bool pointerModeCancelPending;
 
     public ElementInputBridge(
         HitTestService? hitTestService = null,
@@ -77,12 +79,50 @@ public sealed class ElementInputBridge
         HitTestResult? hitTarget = hitTestService.HitTest(root, routeMap, inputFrame.Pointer.X, inputFrame.Pointer.Y);
         HitTestResult? pointerTarget = pointerCaptureManager.OverrideTarget(hitTarget, routeMap, inputFrame.Pointer.X, inputFrame.Pointer.Y);
 
-        DispatchPointer(root, inputFrame, frameTime, routeMap, hitTarget, pointerTarget);
-        IReadOnlyList<KeyboardDispatchResult> keyboardResults = focusManager.DispatchKeyboardWithResults(inputFrame, routeMap);
-        IReadOnlyList<KeyboardDispatchResult> activationResults = retainedInputBindingProcessor.Process(keyboardResults, inputFrame, commandRouter, routeMap);
-        keyboardNavigationController.Process(activationResults, inputFrame, root, focusManager, routeMap);
-        keyboardActivationController.Process(activationResults, focusManager, commandRouter, routeMap);
-        textInputBridge.Dispatch(inputFrame.TextInputEvents, focusManager, routeMap);
+        isDispatching = true;
+        try
+        {
+            DispatchPointer(root, inputFrame, frameTime, routeMap, hitTarget, pointerTarget);
+            IReadOnlyList<KeyboardDispatchResult> keyboardResults = focusManager.DispatchKeyboardWithResults(inputFrame, routeMap);
+            IReadOnlyList<KeyboardDispatchResult> activationResults = retainedInputBindingProcessor.Process(keyboardResults, inputFrame, commandRouter, routeMap);
+            keyboardNavigationController.Process(activationResults, inputFrame, root, focusManager, routeMap);
+            keyboardActivationController.Process(activationResults, focusManager, commandRouter, routeMap);
+            textInputBridge.Dispatch(inputFrame.TextInputEvents, focusManager, routeMap);
+        }
+        finally
+        {
+            isDispatching = false;
+        }
+
+        if (pointerModeCancelPending)
+        {
+            pointerModeCancelPending = false;
+            CancelPointerModeCore(root.InputCache.EnsureCurrent(root));
+        }
+    }
+
+    // The WM_CANCELMODE that Win32 sends to a window when EnableWindow disables it: the pointer capture is released, so
+    // the captured element gets LostMouseCapture and ends its drag, and the pressed, click and repeat state of the
+    // interrupted press is dropped. A cancel requested by an input handler, for example a PreviewMouseDown handler that
+    // shows a modal dialog, runs when the dispatch ends, after the press has begun its drag and taken the capture.
+    internal void CancelPointerMode(UIRoot root)
+    {
+        ArgumentNullException.ThrowIfNull(root);
+        if (isDispatching)
+        {
+            pointerModeCancelPending = true;
+            return;
+        }
+
+        CancelPointerModeCore(root.InputCache.EnsureCurrent(root));
+    }
+
+    private void CancelPointerModeCore(ElementInputRouteMap routeMap)
+    {
+        pointerCaptureManager.Release(routeMap);
+        repeatButtonController.Cancel(pressedStateTracker);
+        pressedStateTracker.Cancel();
+        clickTracker.Cancel();
     }
 
     private void DispatchPointer(
