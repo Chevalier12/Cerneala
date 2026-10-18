@@ -198,6 +198,70 @@ public sealed class OverlayTests
         Assert.Equal(2, content.MeasureConstraints.Count);
     }
 
+    // The content fills any finite width it gets (as a ScrollViewer does), so only a natural-size measure
+    // lets it open beside the target instead of across the whole viewport.
+    [Theory]
+    [InlineData(15, 20, 30, 35)]
+    [InlineData(95, 10, 40, 55)]
+    public void AutoHorizontalMeasuresContentThatFillsAFiniteWidthAtItsNaturalWidth(
+        float targetX,
+        float targetWidth,
+        float naturalWidth,
+        float expectedX)
+    {
+        UIRoot root = new(120, 80);
+        FixedElement target = new(new LayoutSize(targetWidth, 10));
+        FillingElement content = new(new LayoutSize(naturalWidth, 15));
+        Overlay overlay = new()
+        {
+            Placement = OverlayPlacement.AutoHorizontal,
+            PlacementTarget = target,
+            Content = content,
+            IsOpen = true
+        };
+        LayoutCanvas canvas = new();
+        LayoutCanvas.SetLeft(target, targetX);
+        LayoutCanvas.SetTop(target, 20);
+        canvas.VisualChildren.Add(target);
+        canvas.VisualChildren.Add(overlay);
+        root.VisualChildren.Add(canvas);
+
+        root.ProcessFrame();
+
+        Assert.Equal(new LayoutRect(expectedX, 20, naturalWidth, 15), content.VisualParent!.ArrangedBounds);
+    }
+
+    [Fact]
+    public void NestedMenuItemSubmenuOpensBesideItsParentItemAtItsNaturalWidth()
+    {
+        UIRoot root = new(1100, 820);
+        MenuItem recent = new() { Header = "Recent", Width = 140, Height = 34 };
+        recent.Items.Add(new MenuItem { Header = "a.txt", Width = 140, Height = 34 });
+        recent.Items.Add(new MenuItem { Header = "b.txt", Width = 140, Height = 34 });
+        MenuItem file = new() { Header = "File", Width = 140, Height = 34 };
+        file.Items.Add(new MenuItem { Header = "Open", Width = 140, Height = 34 });
+        file.Items.Add(new MenuItem { Header = "Save", Width = 140, Height = 34 });
+        file.Items.Add(recent);
+        MenuBar menuBar = new() { HorizontalAlignment = HorizontalAlignment.Left };
+        menuBar.Items.Add(file);
+        root.VisualChildren.Add(menuBar);
+        root.ProcessFrame();
+        file.IsSubmenuOpen = true;
+        root.ProcessFrame();
+        recent.IsSubmenuOpen = true;
+        root.ProcessFrame();
+
+        LayoutRect fileSubmenu = file.SubmenuOverlay!.ProjectedPresenter.ArrangedBounds;
+        LayoutRect recentBounds = recent.ArrangedBounds;
+        LayoutRect recentSubmenu = recent.SubmenuOverlay!.ProjectedPresenter.ArrangedBounds;
+        Assert.Equal(file.ArrangedBounds.X, fileSubmenu.X);
+        Assert.Equal(file.ArrangedBounds.Y + file.ArrangedBounds.Height, fileSubmenu.Y);
+        Assert.Equal(142, fileSubmenu.Width);
+        Assert.Equal(
+            new LayoutRect(recentBounds.X + recentBounds.Width, recentBounds.Y, 142, recentSubmenu.Height),
+            recentSubmenu);
+    }
+
     [Fact]
     public void MultipleOverlaysKeepLastOpenedContentTopmost()
     {
@@ -591,6 +655,15 @@ public sealed class OverlayTests
         protected override LayoutSize MeasureCore(MeasureContext context)
         {
             return size;
+        }
+    }
+
+    private sealed class FillingElement(LayoutSize naturalSize) : UIElement
+    {
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            float width = float.IsFinite(context.AvailableSize.Width) ? context.AvailableSize.Width : naturalSize.Width;
+            return new LayoutSize(width, naturalSize.Height);
         }
     }
 

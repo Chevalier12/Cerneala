@@ -56,7 +56,7 @@ ListBox listBox = new()
 
 `ListBox` is a concrete `Selector` that configures item presentation for a vertical list. Its constructor assigns a retained vertical `StackPanel` directly to `ItemsPanel`.
 
-Each data item is wrapped in a `ListBoxItem` container. If an item is already a `ListBoxItem`, that same element is used as its own container. Selection is inherited from `Selector`: setting `SelectedIndex` updates the selection model, and a left mouse button release on a prepared item container selects that item.
+Each data item is wrapped in a `ListBoxItem` container. If an item is already a `ListBoxItem`, that same element is used as its own container. Selection is inherited from `Selector`: setting `SelectedIndex` updates the selection model, and a left mouse button release on a prepared item container selects that item. A release on a button in the row, such as a `CheckBox` from the `ItemTemplate`, only clicks that button and does not select the row (see `Selector`).
 
 `ListBoxItem` receives `ItemIndex`, `Item`, and `IsSelected` during container preparation. When a selected realized container is invalidated, the container render and input visual state are refreshed.
 

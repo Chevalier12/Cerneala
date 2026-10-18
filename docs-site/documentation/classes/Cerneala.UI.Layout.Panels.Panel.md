@@ -21,7 +21,7 @@ Derived:
 
 ## Examples
 
-Measure and arrange a layout panel with one visual child:
+Add a child with `Children`, then measure and arrange the panel:
 
 ```csharp
 using Cerneala.UI.Elements;
@@ -31,7 +31,9 @@ using Cerneala.UI.Layout.Panels;
 Panel panel = new();
 FixedElement child = new(new LayoutSize(20, 10));
 
-panel.VisualChildren.Add(child);
+panel.Children.Add(child);
+// child.LogicalParent is panel
+// child.VisualParent is panel
 
 LayoutSize desired = panel.Measure(new MeasureContext(new LayoutSize(100, 100)));
 LayoutRect arranged = panel.Arrange(new ArrangeContext(new LayoutRect(1, 2, 30, 40)));
@@ -51,7 +53,9 @@ internal sealed class FixedElement(LayoutSize desiredSize) : UIElement
 
 ## Remarks
 
-`Panel` is the default base implementation for layout containers in `Cerneala.UI.Layout.Panels`. It does not expose panel-specific public properties, fields, methods, or events; child management comes from `UIElement.VisualChildren`.
+`Panel` is the default base implementation for layout containers in `Cerneala.UI.Layout.Panels`. Application code adds and removes children with `Children`, like WPF `Panel.Children`. `panel.Children.Add(child)` makes the child a visual child of the panel, so the panel measures, arranges, and draws it, and a logical child of the panel, so resource lookup and logical-tree walks reach it. `panel.Children.Remove(child)` clears both parents.
+
+The panel measures, arranges, and draws only `VisualChildren`. A child that is only a logical child would be ignored without any error, so `panel.LogicalChildren.Add(child)` throws `InvalidOperationException` when `child` is not already a visual child of the panel; the message names `Panel.Children.Add`. `panel.VisualChildren.Add(child)` still adds a visual-only child, which the panel lays out and draws.
 
 During measure, the panel iterates over `VisualChildren`. Non-collapsed children are measured with the incoming `MeasureContext`; the panel reports the maximum measured child width and the maximum measured child height. If there are no non-collapsed children, the result is `LayoutSize.Zero`.
 
@@ -63,14 +67,20 @@ Collapsed children are still measured, but with `LayoutSize.Zero`, and they do n
 
 | Name | Description |
 | --- | --- |
-| `Panel()` | Initializes a new `Panel`. The constructor is implicit and uses the inherited `UIElement` initialization path. |
+| `Panel()` | Initializes a new `Panel` with an empty `Children` collection. |
+
+## Properties
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `Children` | `PanelChildCollection` | Gets the children of the panel. `Add`, `Insert`, and `Remove` change the visual tree and the logical tree together. Enumeration, `Count`, and the indexer read `VisualChildren`. |
 
 ## Declared Public Members
 
 | Member Type | Members |
 | --- | --- |
 | Fields | None. |
-| Properties | None. |
+| Properties | `Children` |
 | Methods | None. |
 | Events | None. |
 
@@ -86,6 +96,7 @@ Collapsed children are still measured, but with `LayoutSize.Zero`, and they do n
 | Name | Member Type | Declared By | Description |
 | --- | --- | --- | --- |
 | `VisualChildren` | Property | `UIElement` | Gets the visual child collection measured and arranged by the panel. |
+| `LogicalChildren` | Property | `UIElement` | Gets the logical child collection. On a panel, inserting a child that is not already a visual child of the panel throws `InvalidOperationException`; use `Children`. |
 | `DesiredSize` | Property | `UIElement` | Gets the size produced by the most recent measure pass. For this panel, that size is based on the maximum desired width and height of non-collapsed children. |
 | `ArrangedBounds` | Property | `UIElement` | Gets the bounds produced by the most recent arrange pass. |
 | `Visibility` | Property | `UIElement` | Controls layout participation. When a child is collapsed, the panel measures and arranges it with zero size. |
@@ -109,6 +120,7 @@ Cerneala retained UI layout containers that need a basic overlapping panel or a 
 ## See Also
 
 - `Cerneala.UI.Elements.UIElement`
+- `Cerneala.UI.Layout.Panels.PanelChildCollection`
 - `Cerneala.UI.Elements.UIElementCollection`
 - `Cerneala.UI.Layout.Panels.Canvas`
 - `Cerneala.UI.Layout.Panels.Grid`

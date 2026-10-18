@@ -13,6 +13,7 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
     private RealizationWindow automaticWindow = RealizationWindow.Empty;
     private VirtualizationContext? virtualizationContext;
     private float estimatedItemExtent = InitialEstimatedItemExtent;
+    private int firstRealizedIndex;
     private LayoutRounding measureRounding = LayoutRounding.Disabled;
 
     public VirtualizingStackPanel()
@@ -60,7 +61,22 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
         }
     }
 
-    public int FirstRealizedIndex { get; set; }
+    // Measure and arrange map each child to the item FirstRealizedIndex + its position, so a new value makes a cached
+    // measure stale, as a new window does for UpdateViewport and the VirtualizationContext setter.
+    public int FirstRealizedIndex
+    {
+        get => firstRealizedIndex;
+        set
+        {
+            if (firstRealizedIndex == value)
+            {
+                return;
+            }
+
+            firstRealizedIndex = value;
+            IncrementLayoutVersion();
+        }
+    }
 
     // Without either source the window is derived from the children, not from any item count.
     internal bool IsVirtualizing => VirtualizationContext is not null || automaticViewport is not null;

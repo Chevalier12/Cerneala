@@ -383,12 +383,19 @@ public sealed class VirtualizingStackPanelTests
     }
 
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void ChildRealizedAgainArrangesADescendantBelowACanvasThatChangedOutsideTheRealizationWindow(bool arrangesPanelWhileRowIsSkipped)
+    [InlineData(false, 0)]
+    [InlineData(true, 0)]
+    [InlineData(false, 1)]
+    [InlineData(true, 1)]
+    [InlineData(false, 2)]
+    [InlineData(true, 2)]
+    public void ChildRealizedAgainArrangesADescendantBelowACanvasThatChangedOutsideTheRealizationWindow(
+        bool arrangesPanelWhileRowIsSkipped,
+        int wrappersBelowCanvas)
     {
         // A Canvas arranges its child at the child's desired size, so the stack below it gets the slot 0, 0, 0, 60
         // both while the row is skipped and after it is realized again: only its children's desired heights change.
+        // A Border between the Canvas and the stack gets that same slot too, and its desired size stays 60 (#450).
         UIRoot root = new(200, 100, 1);
         VirtualizingStackPanel panel = new() { FirstRealizedIndex = 0 };
         UIElement first = new() { Height = 20 };
@@ -396,8 +403,14 @@ public sealed class VirtualizingStackPanelTests
         Cerneala.UI.Controls.StackPanel stack = new();
         stack.VisualChildren.Add(first);
         stack.VisualChildren.Add(second);
+        UIElement canvasChild = stack;
+        for (int i = 0; i < wrappersBelowCanvas; i++)
+        {
+            canvasChild = new Border { Child = canvasChild };
+        }
+
         Cerneala.UI.Controls.Canvas canvas = new() { Height = 60 };
-        canvas.VisualChildren.Add(stack);
+        canvas.VisualChildren.Add(canvasChild);
         panel.VisualChildren.Add(new Border { Child = canvas });
         for (int i = 1; i < 20; i++)
         {
@@ -411,6 +424,7 @@ public sealed class VirtualizingStackPanelTests
         panel.Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange, "scroll");
         root.ProcessFrame();
         Assert.False(panel.RealizationWindow.Contains(0));
+        Assert.Equal(new LayoutRect(0, 0, 0, 60), canvasChild.ArrangedBounds);
 
         first.Height = 40;
         second.Height = 20;
@@ -729,6 +743,67 @@ public sealed class VirtualizingStackPanelTests
         }
 
         Assert.Equal(1, panel.MeasureCount);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void NewFirstRealizedIndexWithTheSameConstraintMapsTheChildrenToTheNewItems(bool automaticViewport)
+    {
+        // The window is items 0..4: from the context, or in automatic mode from the measured heights of 10. After
+        // FirstRealizedIndex = 3 child 0 stands for item 3 and child 1 for item 4, and children 2..29 stand for items
+        // outside the window, so the measure and arrange with the same size and rectangle must not reuse the results of
+        // FirstRealizedIndex = 0.
+        LayoutRounding rounding = LayoutRounding.ForScale(1);
+        VirtualizingStackPanel panel = new() { FirstRealizedIndex = 0 };
+        for (int i = 0; i < 30; i++)
+        {
+            panel.VisualChildren.Add(new FixedHeightElement(10));
+        }
+
+        if (automaticViewport)
+        {
+            panel.UpdateViewport(new ItemsVirtualizationViewport(30, 50, 0, 0));
+        }
+        else
+        {
+            panel.VirtualizationContext = new VirtualizationContext(30, 10, 50, 0);
+        }
+
+        void Layout()
+        {
+            panel.Measure(new MeasureContext(new LayoutSize(100, 50), rounding));
+            panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, panel.DesiredSize.Height), rounding));
+        }
+
+        Layout();
+        Assert.Equal(new RealizationWindow(0, 5), panel.RealizationWindow);
+        panel.FirstRealizedIndex = 3;
+        Layout();
+
+        Assert.Equal(new RealizationWindow(0, 5), panel.RealizationWindow);
+        Assert.Equal(new LayoutRect(0, 30, 100, 10), panel.VisualChildren[0].ArrangedBounds);
+        Assert.Equal(new LayoutRect(0, 40, 100, 10), panel.VisualChildren[1].ArrangedBounds);
+        Assert.All(panel.VisualChildren.Skip(2).Take(3), child =>
+        {
+            Assert.Equal(0, child.DesiredSize.Height);
+            Assert.Equal(LayoutRect.Empty, child.ArrangedBounds);
+        });
+    }
+
+    [Fact]
+    public void SameFirstRealizedIndexKeepsTheLayoutVersion()
+    {
+        VirtualizingStackPanel panel = new()
+        {
+            VirtualizationContext = new VirtualizationContext(30, 10, 50, 0),
+            FirstRealizedIndex = 3
+        };
+        int layoutVersion = panel.LayoutVersion;
+
+        panel.FirstRealizedIndex = 3;
+
+        Assert.Equal(layoutVersion, panel.LayoutVersion);
     }
 
     [Fact]

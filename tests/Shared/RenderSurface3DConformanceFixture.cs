@@ -260,8 +260,7 @@ internal sealed class RenderSurface3DConformanceFixture
         Button button = new() { Content = label, Margin = new Thickness(4), Width = 94, Height = 30 };
         Servo.SetId(button, id);
         button.Click += (_, _) => action();
-        panel.LogicalChildren.Add(button);
-        panel.VisualChildren.Add(button);
+        panel.Children.Add(button);
     }
 
     private sealed class FixtureSurface : RenderSurface3D, IPointerDragSource

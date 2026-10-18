@@ -1,3 +1,5 @@
+using System.Runtime.ExceptionServices;
+
 namespace Cerneala.UI.Core;
 
 public class UiObject
@@ -314,35 +316,46 @@ public class UiObject
     }
 
     // Raises OnPropertyChanged, then reports the mutation, then invalidates what the property affects.
+    // The new value is already stored, so a throwing OnPropertyChanged does not skip the report or the
+    // invalidation: they still run, then the first failure propagates.
     internal void RaisePropertyChange(in UiPropertyChange change)
     {
         UiPropertyChangedEventArgs args = change.Args;
         UiProperty property = args.Property;
-        OnPropertyChanged(args);
-        NotifyPropertyMutated(
-            property,
-            change.MutatingSource,
-            args.OldValue,
-            change.OldEffectiveSource,
-            args.NewValue,
-            args.ValueSource,
-            change.OldSourceValue,
-            change.NewSourceValue,
-            change.WasCoerced);
+        ExceptionDispatchInfo? failure = null;
+        try { OnPropertyChanged(args); }
+        catch (Exception exception) { failure = ExceptionDispatchInfo.Capture(exception); }
 
-        UiPropertyOptions invalidationOptions = property.Options & (
-            UiPropertyOptions.AffectsMeasure |
-            UiPropertyOptions.AffectsArrange |
-            UiPropertyOptions.AffectsRender |
-            UiPropertyOptions.AffectsHitTest |
-            UiPropertyOptions.AffectsAspect |
-            UiPropertyOptions.AffectsInputVisual |
-            UiPropertyOptions.AffectsSemantics |
-            UiPropertyOptions.Inherits);
-        if (invalidationOptions != UiPropertyOptions.None && this is IUiPropertyOwner owner)
+        try
         {
-            owner.OnPropertyInvalidated(args, invalidationOptions);
+            NotifyPropertyMutated(
+                property,
+                change.MutatingSource,
+                args.OldValue,
+                change.OldEffectiveSource,
+                args.NewValue,
+                args.ValueSource,
+                change.OldSourceValue,
+                change.NewSourceValue,
+                change.WasCoerced);
+
+            UiPropertyOptions invalidationOptions = property.Options & (
+                UiPropertyOptions.AffectsMeasure |
+                UiPropertyOptions.AffectsArrange |
+                UiPropertyOptions.AffectsRender |
+                UiPropertyOptions.AffectsHitTest |
+                UiPropertyOptions.AffectsAspect |
+                UiPropertyOptions.AffectsInputVisual |
+                UiPropertyOptions.AffectsSemantics |
+                UiPropertyOptions.Inherits);
+            if (invalidationOptions != UiPropertyOptions.None && this is IUiPropertyOwner owner)
+            {
+                owner.OnPropertyInvalidated(args, invalidationOptions);
+            }
         }
+        catch (Exception exception) { failure ??= ExceptionDispatchInfo.Capture(exception); }
+
+        failure?.Throw();
     }
 
     private void NotifyPropertyMutated(

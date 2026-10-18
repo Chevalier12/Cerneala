@@ -184,6 +184,7 @@ public class ContentControl : Control
             throw new InvalidOperationException("An ancestor cannot be added as a child.");
         }
 
+        child.ReleaseFromParentForNewOwner();
         if (child.LogicalParent is not null || child.VisualParent is not null)
         {
             throw new InvalidOperationException("Element must be removed from its current parent before reparenting.");
@@ -199,6 +200,28 @@ public class ContentControl : Control
     {
         ArgumentNullException.ThrowIfNull(owner);
         ArgumentNullException.ThrowIfNull(child);
+
+        // A Decorator also names its child in Child. Releasing the element through Child keeps that property in step
+        // with the Decorator's children, so the Decorator can take the element again, for example when a template
+        // reuses it as its container.
+        if (child.VisualParent is Decorator decorator &&
+            ReferenceEquals(decorator.Child, child) &&
+            IsOwnedBy(decorator, owner, ElementChildRole.Visual))
+        {
+            decorator.Child = null;
+        }
+
+        // A ContentControl that hosts its content directly also names that element in Content. Releasing the element
+        // through Content keeps the property in step with the control's children, so the control can take the
+        // element again, for example when a template reuses it as its container.
+        if (child.VisualParent is ContentControl contentControl &&
+            !ReferenceEquals(contentControl, owner) &&
+            contentControl.HostsContentDirectly(child) &&
+            ReferenceEquals(contentControl.Content, child) &&
+            IsOwnedBy(contentControl, owner, ElementChildRole.Visual))
+        {
+            contentControl.Content = null;
+        }
 
         UIElement? visualParent = child.VisualParent;
         if (IsOwnedBy(visualParent, owner, ElementChildRole.Visual))
