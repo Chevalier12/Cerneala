@@ -185,8 +185,7 @@ public sealed class ShowcaseNavigation : ScrollViewer
 
     private void AddNavigationChild(Cerneala.UI.Elements.UIElement child)
     {
-        NavigationPanel.LogicalChildren.Add(child);
-        NavigationPanel.VisualChildren.Add(child);
+        NavigationPanel.Children.Add(child);
     }
 
     private static TextBlock CreateSectionLabel(string text)

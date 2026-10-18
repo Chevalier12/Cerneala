@@ -1,7 +1,10 @@
+using Cerneala.Drawing;
 using Cerneala.Platforms.Sdl3;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting.Windowing;
 using Cerneala.UI.Input;
+using Cerneala.UI.Media;
 
 namespace Cerneala.Tests.SdlGpu;
 
@@ -335,6 +338,37 @@ public sealed class SdlInputTransitionTests
         Assert.Equal(10, pressed.Pointer.X);
         Assert.Equal(120, pressed.Pointer.WheelDelta);
         Assert.Equal(30, source.GetFrame().Pointer.X);
+    }
+
+    [Fact]
+    public void ButtonsAndWheelInOnePumpAreRaisedInArrivalOrder()
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1, WindowDisplayScale = 1 };
+        RecordingGraphicsFactory graphics = new();
+        using WindowApplicationRuntime runtime = new(new SdlWindowPlatform(api, graphics));
+        Border target = new() { Width = 200, Height = 100, Background = new SolidColorBrush(new Color(1, 2, 3)) };
+        Window window = new() { Content = target, Width = 320, Height = 200 };
+        List<string> log = [];
+        window.AddHandler(UIElement.PreviewMouseDownEvent, (_, args) => log.Add("down " + ((MouseButtonEventArgs)args).ChangedButton), handledEventsToo: true);
+        window.AddHandler(UIElement.PreviewMouseWheelEvent, (_, _) => log.Add("wheel"), handledEventsToo: true);
+        runtime.StartMainWindow(window);
+        uint windowId = Assert.IsType<SdlWindowSurface>(Assert.Single(graphics.Surfaces)).WindowId;
+        var bounds = target.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        Pump(runtime, api, new SdlEvent(SdlEventKind.MouseMotion, windowId, X: x, Y: y));
+
+        // Right goes down, then Left, then the wheel turns one notch.
+        Pump(runtime, api,
+            new SdlEvent(SdlEventKind.MouseButtonDown, windowId, X: x, Y: y, MouseButton: 3),
+            new SdlEvent(SdlEventKind.MouseButtonDown, windowId, X: x, Y: y, MouseButton: 1),
+            new SdlEvent(SdlEventKind.MouseWheel, windowId, X: x, Y: y, Data2: 1));
+        for (int frame = 0; frame < 5; frame++)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+
+        Assert.Equal(["down Right", "down Left", "wheel"], log);
     }
 
     [Theory]

@@ -30,9 +30,11 @@ bridge.Dispatch(inputFrame.TextInputEvents, focusManager, routeMap);
 
 ## Remarks
 
-`TextInputBridge` raises preview and bubbling text input routed events for each `TextInputSnapshotEvent`.
+`TextInputBridge` raises a `PreviewTextInput`/`TextInput` pair for each `TextInputSnapshotEvent`, in list order.
 
-If there is no focused element, or if the focused element is no longer present in the supplied `ElementInputRouteMap`, `Dispatch` returns without raising events.
+Each event goes to the element that has keyboard focus at the moment that event is raised, the same target rule that key events use. A handler of one text event can move focus or detach the focused element, and the next text event of the same call sees that change. For example, a handler on box `a` that calls `focusManager.Focus(b, routeMap)` after it receives `"x"` makes the next event `"y"` go to `b`.
+
+An event is skipped, without raising anything, when the focused element is `null` or can no longer hold keyboard focus: it is detached, not focusable, disabled, does not take part in input, or is not in the supplied `ElementInputRouteMap`. The remaining events are still resolved one by one.
 
 The method throws when `textInputEvents`, `focusManager`, or `routeMap` is `null`.
 
@@ -40,7 +42,7 @@ The method throws when `textInputEvents`, `focusManager`, or `routeMap` is `null
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `Dispatch(IReadOnlyList<TextInputSnapshotEvent>, FocusManager, ElementInputRouteMap)` | `void` | Raises text input event pairs for the focused element in the route map. |
+| `Dispatch(IReadOnlyList<TextInputSnapshotEvent>, FocusManager, ElementInputRouteMap)` | `void` | Raises a text input event pair for each event on the element focused when that event is raised. |
 
 ## Applies to
 

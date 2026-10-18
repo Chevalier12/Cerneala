@@ -286,11 +286,13 @@ public sealed class ElementInputBridge
         dragSource.CompletePointerDrag(pointerCaptureManager, routeMap, new MouseButtonEventArgs(InputEvents.MouseUpEvent, target.ElementId, button, target.X, target.Y, clickCount));
     }
 
+    // Click, drag and focus owners are visual ancestors: content projected by an Overlay does not make the overlay's
+    // owner the target of a click or of the focus.
     private static UIElement? FindAncestor<TContract>(
         UIElement element,
         ElementInputRouteMap routeMap)
     {
-        foreach (UIElement current in routeMap.GetRouteToRoot(element))
+        foreach (UIElement current in routeMap.GetVisualRouteToRoot(element))
         {
             if (current is TContract)
             {
@@ -315,7 +317,7 @@ public sealed class ElementInputBridge
 
     private static UIElement? ResolveFocusTarget(UIElement element, ElementInputRouteMap routeMap)
     {
-        foreach (UIElement current in routeMap.GetRouteToRoot(element))
+        foreach (UIElement current in routeMap.GetVisualRouteToRoot(element))
         {
             if (FocusPolicy.CanFocus(current, routeMap))
             {

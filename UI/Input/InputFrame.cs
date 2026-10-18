@@ -69,6 +69,13 @@ public sealed class InputFrame
         TextInputEvents = Array.AsReadOnly(textInputEvents.ToArray());
     }
 
+    private InputFrame(PointerFrame pointer, KeyboardFrame keyboard, IReadOnlyList<TextInputSnapshotEvent> textInputEvents)
+    {
+        Pointer = pointer;
+        Keyboard = keyboard;
+        TextInputEvents = textInputEvents;
+    }
+
     public PointerFrame Pointer { get; }
 
     public KeyboardFrame Keyboard { get; }
@@ -81,6 +88,14 @@ public sealed class InputFrame
             ? []
             : [unchecked(current.WheelValue - previous.WheelValue)];
 
+    // The same frame with the pointer at (x, y) before and after it: buttons, wheel,
+    // keys and text are unchanged, and the frame itself moves nothing.
+    internal InputFrame WithPointerPosition(float x, float y) =>
+        new(
+            new PointerFrame(Pointer.Previous.WithPosition(x, y), Pointer.Current.WithPosition(x, y), [.. Pointer.WheelDeltas]),
+            Keyboard,
+            TextInputEvents);
+
     public sealed class PointerFrame
     {
         private readonly PointerSnapshot previous;
@@ -92,6 +107,10 @@ public sealed class InputFrame
             this.current = current;
             WheelDeltas = Array.AsReadOnly(wheelDeltas);
         }
+
+        internal PointerSnapshot Previous => previous;
+
+        internal PointerSnapshot Current => current;
 
         public float X => current.X;
 

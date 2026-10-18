@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Elements;
@@ -191,6 +192,169 @@ public sealed class ListBoxItemTemplateTests
             row.DesiredSize);
     }
 
+    // The row presents a UIElement item in ContentPresenter's order: ItemTemplate, then the registry with
+    // ItemTemplateKey, then the element itself, as WPF's DefaultSelector finds a DataTemplate before UIElementContentTemplate.
+    [Fact]
+    public void ItemTemplateKeySelectsTheKeyedTemplateOfTemplatesForAUIElementItem()
+    {
+        int calls = 0;
+        Fixed item = new(new LayoutSize(30, 7), data: null);
+        ListBox listBox = new() { ItemTemplateKey = "wide" };
+        listBox.Templates.Add(new ContentTemplate<UIElement>("wide", key: "wide", priority: 0, context =>
+        {
+            calls++;
+            return new Fixed(new LayoutSize(90, 12), context.Data);
+        }));
+        listBox.SetItems(new UIElement[] { item });
+        UIRoot root = new(100, 100);
+        root.VisualChildren.Add(listBox);
+
+        root.ProcessFrame();
+
+        Assert.Equal(1, calls);
+        ListBoxItem row = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Same(item, row.Content);
+        Assert.Null(item.VisualParent);
+        Fixed element = Assert.Single(Descendants(row).OfType<Fixed>());
+        Assert.Same(item, element.Data);
+        Assert.Equal(
+            new LayoutSize(
+                90 + row.Padding.Horizontal + row.BorderThickness.Horizontal,
+                12 + row.Padding.Vertical + row.BorderThickness.Vertical),
+            row.DesiredSize);
+    }
+
+    [Fact]
+    public void UnkeyedTemplateOfTemplatesMatchingTheItemTypePresentsAUIElementItem()
+    {
+        int calls = 0;
+        Fixed item = new(new LayoutSize(30, 7), data: null);
+        ListBox listBox = new();
+        listBox.Templates.Add(new ContentTemplate<Fixed>("byType", key: null, priority: 0, context =>
+        {
+            calls++;
+            return new Fixed(new LayoutSize(80, 10), context.Data);
+        }));
+        listBox.SetItems(new UIElement[] { item });
+        UIRoot root = new(100, 100);
+        root.VisualChildren.Add(listBox);
+
+        root.ProcessFrame();
+
+        Assert.Equal(1, calls);
+        ListBoxItem row = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Null(item.VisualParent);
+        Fixed element = Assert.Single(Descendants(row).OfType<Fixed>());
+        Assert.Same(item, element.Data);
+    }
+
+    [Fact]
+    public void UIElementItemWithoutAMatchingTemplateIsHostedDirectlyByItsListBoxItem()
+    {
+        int calls = 0;
+        Fixed keyedItem = new(new LayoutSize(30, 7), data: null);
+        ListBox keyed = new() { ItemTemplateKey = "wide" };
+        keyed.Templates.Add(new ContentTemplate<UIElement>("unkeyed", key: null, priority: 0, context =>
+        {
+            calls++;
+            return new Fixed(new LayoutSize(90, 12), context.Data);
+        }));
+        keyed.SetItems(new UIElement[] { keyedItem });
+        Fixed typedItem = new(new LayoutSize(30, 7), data: null);
+        ListBox typed = new();
+        typed.Templates.Add(new ContentTemplate<string>("text", key: null, priority: 0, context =>
+        {
+            calls++;
+            return new Fixed(new LayoutSize(90, 12), context.Data);
+        }));
+        typed.SetItems(new UIElement[] { typedItem });
+        UIRoot keyedRoot = new(100, 100);
+        keyedRoot.VisualChildren.Add(keyed);
+        UIRoot typedRoot = new(100, 100);
+        typedRoot.VisualChildren.Add(typed);
+
+        keyedRoot.ProcessFrame();
+        typedRoot.ProcessFrame();
+
+        Assert.Equal(0, calls);
+        Assert.Same(keyed.ItemContainerGenerator.RealizedContainers[0], keyedItem.VisualParent);
+        Assert.Same(typed.ItemContainerGenerator.RealizedContainers[0], typedItem.VisualParent);
+    }
+
+    [Fact]
+    public void RecycledListBoxItemMovesBetweenATemplatedAndADirectlyHostedUIElementItem()
+    {
+        Fixed templated = new(new LayoutSize(30, 7), data: null);
+        Plain direct = new();
+        ListBox listBox = new();
+        listBox.Templates.Add(new ContentTemplate<Fixed>("wrap", key: null, priority: 0,
+            context => new Wrapper(context.Data)));
+        listBox.ItemsSource = new UIElement[] { templated };
+        UIRoot root = new(100, 100);
+        root.VisualChildren.Add(listBox);
+        root.ProcessFrame();
+        ListBoxItem row = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Wrapper wrapper = Assert.Single(Descendants(row).OfType<Wrapper>());
+        Assert.Same(wrapper, templated.VisualParent);
+
+        listBox.ItemsSource = new UIElement[] { direct };
+        root.ProcessFrame();
+
+        Assert.Same(row, listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Same(row, direct.VisualParent);
+        Assert.Null(templated.VisualParent);
+        Assert.Empty(Descendants(row).OfType<Wrapper>());
+
+        listBox.ItemsSource = new UIElement[] { templated };
+        root.ProcessFrame();
+
+        Assert.Same(row, listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Null(direct.VisualParent);
+        Assert.IsType<Wrapper>(templated.VisualParent);
+        Assert.Same(row, Ancestors(templated).OfType<ListBoxItem>().First());
+    }
+
+    // A replaced item is prepared into its realized row without clearing the row first.
+    [Fact]
+    public void ReplacingATemplatedUIElementItemWithADirectlyHostedOneReleasesTheTemplatedItem()
+    {
+        Fixed templated = new(new LayoutSize(30, 7), data: null);
+        Plain direct = new();
+        ObservableCollection<UIElement> items = [templated];
+        ListBox listBox = new();
+        listBox.Templates.Add(new ContentTemplate<Fixed>("wrap", key: null, priority: 0,
+            context => new Wrapper(context.Data)));
+        listBox.ItemsSource = items;
+        UIRoot root = new(100, 100);
+        root.VisualChildren.Add(listBox);
+        root.ProcessFrame();
+        ListBoxItem row = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.IsType<Wrapper>(templated.VisualParent);
+
+        items[0] = direct;
+        root.ProcessFrame();
+
+        Assert.Same(row, listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Same(row, direct.VisualParent);
+        Assert.Null(templated.VisualParent);
+
+        items[0] = templated;
+        root.ProcessFrame();
+
+        Assert.Same(row, listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Null(direct.VisualParent);
+        Assert.IsType<Wrapper>(templated.VisualParent);
+        Assert.Same(row, Ancestors(templated).OfType<ListBoxItem>().First());
+    }
+
+    private static IEnumerable<UIElement> Ancestors(UIElement element)
+    {
+        for (UIElement? current = element.VisualParent; current is not null; current = current.VisualParent)
+        {
+            yield return current;
+        }
+    }
+
     private static IEnumerable<UIElement> Descendants(UIElement element)
     {
         foreach (UIElement child in element.VisualChildren)
@@ -208,5 +372,24 @@ public sealed class ListBoxItemTemplateTests
         public object? Data { get; } = data;
 
         protected override LayoutSize MeasureCore(MeasureContext context) => size;
+    }
+
+    private sealed class Plain : UIElement
+    {
+        protected override LayoutSize MeasureCore(MeasureContext context) => new(20, 6);
+    }
+
+    // A template element that places its content inside itself.
+    private sealed class Wrapper : UIElement
+    {
+        public Wrapper(object? content)
+        {
+            if (content is UIElement element)
+            {
+                VisualChildren.Add(element);
+            }
+        }
+
+        protected override LayoutSize MeasureCore(MeasureContext context) => new(80, 10);
     }
 }

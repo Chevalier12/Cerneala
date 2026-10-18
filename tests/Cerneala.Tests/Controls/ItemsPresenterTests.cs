@@ -1068,8 +1068,7 @@ public sealed class ItemsPresenterTests
         control.ItemsPresenter!.ItemsOwner = null;
         Assert.Null(x.VisualParent);
         Cerneala.UI.Layout.Panels.StackPanel otherParent = new();
-        otherParent.LogicalChildren.Add(x);
-        otherParent.VisualChildren.Add(x);
+        otherParent.Children.Add(x);
 
         control.ItemsPresenter.ItemsOwner = control;
         control.Fail = false;
