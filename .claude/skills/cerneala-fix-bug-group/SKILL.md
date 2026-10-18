@@ -1,6 +1,6 @@
 ---
 name: cerneala-fix-bug-group
-description: Fix one Cerneala bug issue together with every open bug issue whose fix changes the same code files, in one worktree and one pull request, with the complete cerneala-fix-bug workflow for each issue and one group reproduction app. Takes over the code of the older pull requests of those issues and closes them after the group pull request exists. Use when the issue watcher starts a fix window, or when the user asks to fix an issue together with its related issues. Do not use for one isolated bug the user wants fixed alone (use cerneala-fix-bug), for feature work, or for reviewing pull requests.
+description: Fix one Cerneala bug issue together with every open bug issue whose fix changes the same code files, in one worktree and one pull request, with the complete cerneala-fix-bug workflow for each issue and one group reproduction app. Takes over the code of the older pull requests of those issues and closes them after the group pull request exists. Use when the issue watcher gives a group of open pull requests that change the same code files (args `<N> --group <PRs>`, for example `479 --group 528,534`), or when the user asks to fix an issue together with its related issues. Do not use for one isolated bug the user wants fixed alone (use cerneala-fix-bug), for feature work, or for reviewing pull requests.
 ---
 
 # Cerneala Fix Bug Group
@@ -21,9 +21,28 @@ Invoking this skill authorizes the `git-session-commit-push` skill at the end, c
 
 ## 0. Worktree and Master
 
-Do `cerneala-fix-bug` steps 0 and 0b. The issue watcher starts this skill in its own worktree on branch `worktree-issue-<N>`; stay there.
+Do `cerneala-fix-bug` steps 0 and 0b. The issue watcher starts this skill in its own worktree on branch `worktree-issue-<N>` or, for a given group, `worktree-group-<N>`; stay there.
 
 ## 1. Build the Group
+
+**Given group.** When the args contain `--group <PRs>` (or the prompt says `Target: group #<N>`), the issue watcher already built the group: it is exactly the pull requests of the prompt and their issues. Skip items 1, 2, 5 and 6 (no candidate search, no diagnosis to predict files), and do this instead:
+
+- Do item 3 (list the watcher windows). Leave out every pull request `<P>` of the prompt for which a `kind=review number=<P>` line exists, and record `not grouped: PR #<P> is under review`.
+- Do item 7 with the prompt's lines: one row per issue that a remaining pull request fixes, with that pull request. The reason is the shared code files the prompt lists.
+- When fewer than 2 pull requests remain, stop. Write the report (step 8) saying so, and change nothing.
+- Go to step 2. Every issue of the group has a pull request, so step 2 takes over all of them, including the pull request of the target issue `#<N>`. Step 3 has nothing to do, and step 7 closes all of them, including the target's.
+
+Example. The prompt says:
+
+```text
+Target: group #479: ...
+- PR #528 (branch worktree-issue-479) fixes #479; code files: UI/Controls/ContentPresenter.cs
+- PR #534 (branch worktree-issue-482) fixes #482, #483; code files: UI/Controls/ContentPresenter.cs, UI/Controls/ItemsControl.cs, UI/Controls/ItemsPresenter.cs
+```
+
+No `kind=review` line exists, so the group is #479, #482 and #483 with PR #528 and PR #534. Step 2 squashes both branches, and step 7 closes both pull requests. Had `kind=review number=534` existed, only PR #528 would remain: the report says so and nothing changes.
+
+Otherwise (no given group):
 
 1. Diagnose `#<N>` far enough to name the code files its fix will change: `cerneala-fix-bug` steps 1 to 3 and the start of step 6. Write them down, for example `#480: UI/Controls/ContentPresenter.cs`.
 2. List the candidates in one call each:
@@ -43,7 +62,6 @@ Do `cerneala-fix-bug` steps 0 and 0b. The issue watcher starts this skill in its
 4. Leave a candidate out when:
    - its open pull request is under review: a `kind=review number=<that PR>` line exists;
    - another fix window works on it: a `kind=issue-fix number=<that issue>` line other than `#<N>` exists;
-   - another fix window claimed it for its group (item 8): the claims folder holds `issue-<that issue>.claim` with `owner=<M>`, `<M>` is not `<N>`, and a `kind=issue-fix number=<M>` line exists;
    - it has more than one open pull request, or its pull request also closes an issue that is not a candidate. Record it as `not grouped: <reason>`.
 5. For each remaining candidate, find the files its fix changes:
    - with an open pull request: the pull request's `files` that are not tests or docs; this is exact evidence;
@@ -58,11 +76,6 @@ Do `cerneala-fix-bug` steps 0 and 0b. The issue watcher starts this skill in its
    #479 UI/Controls/ContentPresenter.cs, PR #493 (worktree-issue-479), takes over its code
    not grouped: #486 owning file unclear
    ```
-
-8. Claim the group, when the prompt names a claims folder (the issue watcher runs up to two fix windows at the same time, and the folder is how they avoid fixing the same issue twice; without a claims folder, skip this item):
-   - For each issue of the group other than `#<N>`, write `<claims folder>\issue-<n>.claim` with the single line `owner=<N>`, with a PowerShell command (create the folder first when it is missing). Do not overwrite a claim whose owner is another open fix window (item 4); leave that issue out instead.
-   - Then list the windows again (item 3). When a `kind=issue-fix number=<n>` line now exists for an issue of the group, another window started on it meanwhile: remove that issue from the group, delete its claim file, and record `not grouped: #<n> another fix window started on it`.
-   - The watcher deletes the claims of a window once that window has closed. Delete no claim of another owner.
 
 When the group is only `#<N>`, follow `cerneala-fix-bug` alone from here on, and stop reading this file.
 
@@ -92,7 +105,7 @@ Do `cerneala-fix-bug` step 5 once, for all issues of the group, with these diffe
   pwsh -NoProfile -File Tools/scripts/New-ReproApp.ps1 -Issue <N> -AlsoIssues <a>,<b> -Destination <scratchpad>/repro-<N>/Issue<N>
   ```
 
-  `ReproHarness.Issues` holds `<N>`, `<a>`, `<b>`. The harness calls `ReproCheckInvariant(issue)` once per issue and shows one line per issue.
+  `ReproHarness.Issues` holds `<N>`, `<a>`, `<b>`. In a given group, `-AlsoIssues` lists every issue of all the group's pull requests other than `<N>` (for the example in step 1: `-Issue 479 -AlsoIssues 482,483`). The harness calls `ReproCheckInvariant(issue)` once per issue and shows one line per issue.
 - Put one scenario per issue in the window, each in its own area with a heading such as `#484: ...`, and give each its own user steps under that heading. `ReproCheckInvariant(issue)` checks only that issue's invariant. The check-mode steps trigger every issue, one issue after the other.
 - The verdicts of a group app: `OK: bugs #480, #484, #485 do not reproduce so far.` (exit 0), `BUG: bugs #480, #484, #485 reproduce.` (exit 1), and `PARTIAL: bugs #480, #485 reproduce; #484 does not reproduce so far.` (exit 4). Before the fix every issue must reproduce (exit 1); after the fix none may (exit 0). `PARTIAL` before the fix means an issue's scenario does not trigger its bug: fix that scenario, never the verdict. When the newest `origin/master` already fixes that issue, remove it from the group, and record it in the pull request.
 - An issue whose fix changes only tests has no check in a group app with a before app, because the before app runs the same code for it; the pull request says so for that issue. When every issue of the group is test-only, publish with `-AfterOnly`.
@@ -122,7 +135,7 @@ Do `cerneala-fix-bug` step 9 with these differences:
 Only after the group pull request `#<G>` exists and its push succeeded, for each taken-over pull request `#<P>`:
 
 1. Check again, right before closing: `gh pr view <P> --json state` prints `OPEN`, and the window list of step 1 item 3 has no `kind=review number=<P>` line. When it was merged meanwhile, do not close it: say so in the group pull request with `gh pr edit`. When a review window works on it now, do not close it: record `PR #<P> stays open: it is under review`, and remove its issue's `Fixes` line from the group pull request with `gh pr edit`.
-2. Close it: `gh pr close <P> --comment "Superseded by #<G>, which takes over this fix together with #<a>, #<b>. The branch stays."` Never pass `--delete-branch`.
+2. Close it, also the pull request of the target issue `#<N>` in a given group: `gh pr close <P> --comment "Superseded by #<G>, which takes over this fix together with #<a>, #<b>. The branch stays."` Never pass `--delete-branch`.
 3. Delete its release when it exists: `gh release delete repro-pr-<P> --repo Chevalier12/Cerneala --yes --cleanup-tag`. The GIFs in `repro-gifs` stay; never touch that release.
 
 When the group pull request could not be created, close nothing: the older pull requests stay as they are.
