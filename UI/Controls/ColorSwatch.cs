@@ -122,14 +122,8 @@ public class ColorSwatch : Control
         }
     }
 
-    // Opened and Closed of an overlay inside the picker bubble through the picker overlay; only its own projection counts.
     private void OnOverlayOpened(UiElementId _, RoutedEventArgs args)
     {
-        if (!ReferenceEquals(args.OriginalSource, pickerOverlay))
-        {
-            return;
-        }
-
         EnsurePicker();
         if (!IsPickerOpen)
         {
@@ -139,11 +133,6 @@ public class ColorSwatch : Control
 
     private void OnOverlayClosed(UiElementId _, RoutedEventArgs args)
     {
-        if (!ReferenceEquals(args.OriginalSource, pickerOverlay))
-        {
-            return;
-        }
-
         if (IsPickerOpen)
         {
             IsPickerOpen = false;

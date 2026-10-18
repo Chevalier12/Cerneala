@@ -17,16 +17,18 @@ public class Overlay : Control, IInputProjectionOwner
         LogicalChildren.Add(presenter);
     }
 
+    // Opened and Closed describe this overlay only, like the CLR events Popup.Opened and Popup.Closed in WPF: they do not
+    // bubble from a nested overlay through the projected content to an enclosing overlay (#491).
     public static readonly RoutedEvent OpenedEvent = RoutedEventRegistry.Register(
         nameof(Opened),
         typeof(Overlay),
-        RoutingStrategy.Bubble,
+        RoutingStrategy.Direct,
         typeof(RoutedEventArgs));
 
     public static readonly RoutedEvent ClosedEvent = RoutedEventRegistry.Register(
         nameof(Closed),
         typeof(Overlay),
-        RoutingStrategy.Bubble,
+        RoutingStrategy.Direct,
         typeof(RoutedEventArgs));
 
     public static readonly UiProperty<object?> ContentProperty = UiProperty<object?>.Register(
