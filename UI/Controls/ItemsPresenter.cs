@@ -295,7 +295,7 @@ public class ItemsPresenter : Control
         {
             foreach (UIElement child in nextChildren)
             {
-                AddPanelChild(nextPanel, child);
+                nextPanel.Children.Add(child);
             }
 
             AddPanelRoot(nextPanel);
@@ -312,7 +312,7 @@ public class ItemsPresenter : Control
             {
                 foreach (UIElement child in oldChildren)
                 {
-                    AddPanelChild(oldPanel, child);
+                    oldPanel.Children.Add(child);
                 }
 
                 AddPanelRoot(oldPanel);
@@ -373,7 +373,7 @@ public class ItemsPresenter : Control
         {
             foreach (UIElement child in nextChildren)
             {
-                AddPanelChild(nextPanel, child);
+                nextPanel.Children.Add(child);
             }
 
             AddPanelRoot(nextPanel);
@@ -390,7 +390,7 @@ public class ItemsPresenter : Control
             {
                 foreach (UIElement child in oldChildren)
                 {
-                    AddPanelChild(oldPanel, child);
+                    oldPanel.Children.Add(child);
                 }
 
                 AddPanelRoot(oldPanel);
@@ -506,20 +506,6 @@ public class ItemsPresenter : Control
         }
     }
 
-    private static void AddPanelChild(Layout.Panels.Panel panel, UIElement child)
-    {
-        panel.LogicalChildren.Add(child);
-        try
-        {
-            panel.VisualChildren.Add(child);
-        }
-        catch
-        {
-            panel.LogicalChildren.Remove(child);
-            throw;
-        }
-    }
-
     // A sync that throws puts the previous children back in their previous order, so the retained
     // panel keeps presenting the previous items like the old panel of a failed panel swap.
     private static void SynchronizePanelChildren(
@@ -570,16 +556,7 @@ public class ItemsPresenter : Control
                 continue;
             }
 
-            panel.LogicalChildren.Insert(desiredIndex, desiredChild);
-            try
-            {
-                panel.VisualChildren.Insert(desiredIndex, desiredChild);
-            }
-            catch
-            {
-                panel.LogicalChildren.Remove(desiredChild);
-                throw;
-            }
+            panel.Children.Insert(desiredIndex, desiredChild);
         }
     }
 
@@ -892,6 +869,9 @@ public class ItemsPresenter : Control
             element.LastMeasureLayoutVersion != element.LayoutVersion;
     }
 
+    // This measure covers the presenter's own queued measure and the measure work that only propagated to its
+    // ancestors. An ancestor's own queued measure, for example from a property of that ancestor that changed in the
+    // same frame, is not covered by this measure, so it stays queued for the scheduler.
     private void RemoveMeasureWorkForLayoutScope()
     {
         if (Root is not UIRoot root)
@@ -899,9 +879,10 @@ public class ItemsPresenter : Control
             return;
         }
 
-        for (UIElement? current = this; current is not null; current = current.VisualParent)
+        root.Scheduler.CompleteQueuedMeasure(this);
+        for (UIElement? current = VisualParent; current is not null; current = current.VisualParent)
         {
-            root.Scheduler.CompleteQueuedMeasure(current);
+            root.Scheduler.CompletePropagatedQueuedMeasure(current);
         }
     }
 

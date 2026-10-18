@@ -35,6 +35,8 @@ When the owner or child is attached, `Add`, `Insert`, `Move`, and `Remove` verif
 
 `UIElementCollection` is used for logical and visual child roles. It validates tree invariants before adding a child: an element cannot be added to itself, ancestors cannot be re-added as children, duplicate children are rejected, and reparenting requires explicit removal from the current parent first.
 
+A `Panel` owner imposes a layout invariant: the panel measures, arranges, and draws only its visual children, so `Add` and `Insert` on a panel's `LogicalChildren` throw `InvalidOperationException` when the child is not already a visual child of that panel. The message names `Panel.Children.Add`, which adds the child to both collections with one call. `VisualChildren` insertion on a panel is unchanged.
+
 Owner-managed collider nodes impose an additional invariant: application code must use the singular `Sprite2D.Collider` property to attach, replace, or clear a live collider. Each owner accepts at most one. Generic logical/visual collection mutation throws `InvalidOperationException` rather than desynchronizing that slot. Internal static tile adapters likewise cannot be detached or reparented through this API.
 
 When the owner is attached to a root, adding a child attaches the child's subtree and increments the root tree version. Removing a child detaches the subtree when it no longer has an attached parent, releases lifecycle state through `ElementLifecycle`, removes pending queue work, and increments the root tree version. When a detach callback of the removed subtree throws, the child is still removed and detached, the root tree version is incremented, the owner is invalidated, and `Changed` is raised before the exception propagates from `Remove`.

@@ -76,6 +76,24 @@ public sealed class UiPropertyInvalidationTests
         Assert.Equal(UiPropertyOptions.Inherits, owner.Invalidations[0].Options);
     }
 
+    [Fact]
+    public void ThrowingChangeHandlerStillInvalidatesAndThenPropagates()
+    {
+        UiProperty<int> property = UiProperty<int>.Register(
+            UniqueName(),
+            typeof(UiPropertyInvalidationTests),
+            new UiPropertyMetadata<int>(0, UiPropertyOptions.AffectsMeasure));
+        InvalidatingObject owner = new();
+        owner.PropertyChanged += (_, _) => throw new InvalidOperationException("Handler failed");
+
+        InvalidOperationException failure = Assert.Throws<InvalidOperationException>(() => owner.SetValue(property, 1));
+
+        Assert.Equal("Handler failed", failure.Message);
+        Assert.Equal(1, owner.GetValue(property));
+        Assert.Single(owner.Invalidations);
+        Assert.Same(property, owner.Invalidations[0].Property);
+    }
+
     private static string UniqueName()
     {
         return $"{nameof(UiPropertyInvalidationTests)}_{Guid.NewGuid():N}";

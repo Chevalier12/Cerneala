@@ -51,6 +51,8 @@ Scene-node lookup also checks the live preparation state of its owning [RenderSu
 
 `Add` registers the element in all internal structures and immediately adds the same id to `InputTree`. The supplied `parentId`, when present, must already exist in the `InputTree`; `UiInputTree.Add` throws if a child is registered before its parent. The enabled state stored in the `InputTree` is copied from `element.IsEnabled` at the time of `Add`.
 
+For a map built by `ElementInputRouteBuilder`, the `InputTree` route of content projected by an `Overlay` continues from the projected presenter to the overlay and its ancestors. Retained input services that ask where the pointer or the focus is visually (pointer-over and focus-within state, cursor resolution, and the focus, pressed, click, and drag owner of a pointer press) use the element's visual ancestors instead, which stop at the root-owned overlay layer. A map filled through the public `Add` uses the same parent for both.
+
 `ElementsInRouteOrder` reflects insertion order. When the map is produced by `ElementInputRouteBuilder`, that order comes from the builder's traversal of attached, input-participating visual elements.
 
 ## Constructors

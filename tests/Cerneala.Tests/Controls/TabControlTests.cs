@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Items;
 using Cerneala.UI.Controls.Templates;
@@ -481,6 +482,126 @@ public sealed class TabControlTests
     }
 
     [Fact]
+    public void ElementContentOfATabThatIsNotSelectedCannotBeAddedToAnotherParent()
+    {
+        UIRoot root = new(300, 200);
+        FixedElement a = new();
+        FixedElement b = new();
+        FixedElement other = new();
+        TabItem first = new() { Header = "H1", Content = a };
+        TabItem second = new() { Header = "H2", Content = b };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        root.VisualChildren.Add(tabControl);
+        root.VisualChildren.Add(other);
+        tabControl.SelectedIndex = 0;
+        root.ProcessFrame();
+
+        Assert.Same(second, b.LogicalParent);
+        Assert.Null(b.VisualParent);
+        InvalidOperationException rejected =Assert.Throws<InvalidOperationException>(() => other.LogicalChildren.Add(b));
+        Assert.Equal("Element must be removed from its current parent before reparenting.", rejected.Message);
+        Assert.Empty(other.LogicalChildren);
+
+        tabControl.SelectedIndex = 1;
+        root.ProcessFrame();
+
+        Assert.True(HasVisualAncestor(b, tabControl), "b is not under the TabControl while tab 1 is selected");
+        Assert.False(HasVisualAncestor(b, second), "b is hosted inside its TabItem");
+        Assert.True(b.ArrangedBounds.Width > 0 && b.ArrangedBounds.Height > 0, $"b arranged {b.ArrangedBounds}");
+        Assert.Same(first, a.LogicalParent);
+        Assert.Null(a.VisualParent);
+        Assert.Throws<InvalidOperationException>(() => other.LogicalChildren.Add(a));
+        Assert.Empty(other.LogicalChildren);
+    }
+
+    [Fact]
+    public void ElementItemOfARemovedGeneratedTabCanBeAddedToAnotherParent()
+    {
+        UIRoot root = new(300, 200);
+        FixedElement a = new();
+        FixedElement b = new();
+        FixedElement other = new();
+        ObservableCollection<UIElement> items = [a, b];
+        TabControl tabControl = new() { ItemsSource = items };
+        root.VisualChildren.Add(tabControl);
+        root.VisualChildren.Add(other);
+        tabControl.SelectedIndex = 0;
+        root.ProcessFrame();
+
+        Assert.IsType<TabItem>(b.LogicalParent);
+        Assert.Throws<InvalidOperationException>(() => other.LogicalChildren.Add(b));
+
+        items.Remove(b);
+        root.ProcessFrame();
+
+        Assert.Null(b.LogicalParent);
+        other.LogicalChildren.Add(b);
+        other.VisualChildren.Add(b);
+        root.ProcessFrame();
+        Assert.Same(other, b.VisualParent);
+    }
+
+    [Fact]
+    public void ElementContentOfATabCannotBeTheContentOfAnotherTab()
+    {
+        UIRoot root = new(300, 200);
+        FixedElement a = new();
+        FixedElement b = new();
+        TabItem first = new() { Header = "H1", Content = a };
+        TabItem second = new() { Header = "H2", Content = b };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        root.VisualChildren.Add(tabControl);
+        tabControl.SelectedIndex = 0;
+        root.ProcessFrame();
+        TabItem third = new() { Header = "H3" };
+
+        Assert.Throws<InvalidOperationException>(() => third.Content = a);
+        Assert.Throws<InvalidOperationException>(() => third.Content = b);
+        Assert.Null(third.Content);
+
+        FixedElement loose = new();
+        TabItem outside = new() { Content = loose };
+        Assert.Throws<InvalidOperationException>(() => third.Content = loose);
+
+        second.Content = null;
+        third.Content = b;
+        Assert.Same(b, third.Content);
+
+        tabControl.SelectedIndex = 1;
+        root.ProcessFrame();
+
+        Assert.Null(a.VisualParent);
+        Assert.Throws<InvalidOperationException>(() => outside.Content = a);
+        Assert.Same(loose, outside.Content);
+    }
+
+    [Fact]
+    public void ElementContentOfATabThatIsNotSelectedStaysOwnedWhenTheTabGetsAComponentTemplate()
+    {
+        UIRoot root = new(300, 200);
+        FixedElement b = new();
+        TabItem first = new() { Header = "H1", Content = new FixedElement() };
+        TabItem second = new() { Header = "H2", Content = b };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        root.VisualChildren.Add(tabControl);
+        tabControl.SelectedIndex = 0;
+        root.ProcessFrame();
+
+        second.ComponentTemplate = new ComponentTemplate<TabItem>("tab", _ => new FixedElement());
+        root.ProcessFrame();
+
+        Assert.Throws<InvalidOperationException>(() => new TabItem().Content = b);
+
+        tabControl.SelectedIndex = 1;
+        root.ProcessFrame();
+
+        Assert.True(HasVisualAncestor(b, tabControl), "b is not under the TabControl while tab 1 is selected");
+    }
+
+    [Fact]
     public void DefaultTabControlLaysHeadersOutHorizontally()
     {
         UIRoot root = new(200, 100);
@@ -602,6 +723,129 @@ public sealed class TabControlTests
             Assert.Null(tab.HeaderTemplate);
             Assert.True(tab.DesiredSize.Width > 0 && tab.DesiredSize.Height > 0, $"desired {tab.DesiredSize}");
         }
+    }
+
+    // As in WPF, preparing a generated tab sets HeaderTemplate only when ItemTemplate is set, so a HeaderTemplate from
+    // ItemContainerAspect applies otherwise.
+    [Fact]
+    public void ItemContainerAspectHeaderTemplateBuildsTheHeaderOfGeneratedTabsWithoutItemTemplate()
+    {
+        UIRoot root = new(300, 200);
+        int calls = 0;
+        ContentTemplate<string> header = new("aspect-header", key: null, priority: 0, context =>
+        {
+            calls++;
+            return new FixedElement(new LayoutSize(20, 10));
+        });
+        TabControl tabControl = new()
+        {
+            ItemsSource = new[] { "A", "B" },
+            ItemContainerAspect = new ElementAspect([
+                new ElementAspectValue(TabItem.HeaderTemplateProperty, header),
+                new ElementAspectValue(Control.PaddingProperty, new Thickness(6))
+            ])
+        };
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+
+        Assert.Equal(2, calls);
+        IReadOnlyDictionary<int, UIElement> realized = tabControl.ItemContainerGenerator.RealizedContainers;
+        foreach (TabItem tab in new[] { (TabItem)realized[0], (TabItem)realized[1] })
+        {
+            Assert.Equal(new Thickness(6), tab.Padding);
+            Assert.Same(header, tab.HeaderTemplate);
+            Assert.Null(tab.HeaderTemplateKey);
+        }
+    }
+
+    [Fact]
+    public void ItemContainerAspectHeaderTemplateKeyBuildsTheHeaderOfGeneratedTabsWithoutItemTemplateKey()
+    {
+        UIRoot root = new(300, 200);
+        List<string?> built = [];
+        ContentTemplate<string> keyed = new("keyed", key: "k", priority: 0, context =>
+        {
+            built.Add(context.Data);
+            return new FixedElement(new LayoutSize(40, 20));
+        });
+        TabControl tabControl = new()
+        {
+            ItemsSource = new[] { "One", "Two" },
+            ItemContainerAspect = new ElementAspect([new ElementAspectValue(TabItem.HeaderTemplateKeyProperty, "k")])
+        };
+        tabControl.Templates.Add(keyed);
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+
+        Assert.Equal(["One", "Two"], built);
+        IReadOnlyDictionary<int, UIElement> realized = tabControl.ItemContainerGenerator.RealizedContainers;
+        foreach (TabItem tab in new[] { (TabItem)realized[0], (TabItem)realized[1] })
+        {
+            Assert.Equal("k", tab.HeaderTemplateKey);
+            Assert.Null(tab.HeaderTemplate);
+        }
+    }
+
+    [Fact]
+    public void ItemTemplateWinsOverItemContainerAspectHeaderTemplate()
+    {
+        UIRoot root = new(300, 200);
+        int itemCalls = 0;
+        int aspectCalls = 0;
+        ContentTemplate<string> itemTemplate = new("item", key: null, priority: 0, context =>
+        {
+            itemCalls++;
+            return new FixedElement(new LayoutSize(20, 10));
+        });
+        ContentTemplate<string> aspectHeader = new("aspect-header", key: null, priority: 0, context =>
+        {
+            aspectCalls++;
+            return new FixedElement(new LayoutSize(20, 10));
+        });
+        TabControl tabControl = new()
+        {
+            ItemTemplate = itemTemplate,
+            ItemsSource = new[] { "A", "B" },
+            ItemContainerAspect = new ElementAspect([new ElementAspectValue(TabItem.HeaderTemplateProperty, aspectHeader)])
+        };
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+
+        Assert.Equal((2, 0), (itemCalls, aspectCalls));
+        Assert.Same(itemTemplate, ((TabItem)tabControl.ItemContainerGenerator.RealizedContainers[0]).HeaderTemplate);
+    }
+
+    // Clearing ItemTemplate clears and recycles the generated tabs; the recycled tabs are prepared again without an
+    // ItemTemplate, so the value the previous preparation set is gone and the aspect's HeaderTemplate applies.
+    [Fact]
+    public void RecycledGeneratedTabUsesItemContainerAspectHeaderTemplateAfterItemTemplateIsCleared()
+    {
+        UIRoot root = new(300, 200);
+        int aspectCalls = 0;
+        ContentTemplate<string> itemTemplate = new("item", key: null, priority: 0, context => new FixedElement(new LayoutSize(20, 10)));
+        ContentTemplate<string> aspectHeader = new("aspect-header", key: null, priority: 0, context =>
+        {
+            aspectCalls++;
+            return new FixedElement(new LayoutSize(20, 10));
+        });
+        TabControl tabControl = new()
+        {
+            ItemTemplate = itemTemplate,
+            ItemsSource = new[] { "A", "B" },
+            ItemContainerAspect = new ElementAspect([new ElementAspectValue(TabItem.HeaderTemplateProperty, aspectHeader)])
+        };
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+        UIElement[] before = [tabControl.ItemContainerGenerator.RealizedContainers[0], tabControl.ItemContainerGenerator.RealizedContainers[1]];
+
+        tabControl.ItemTemplate = null;
+        root.ProcessFrame();
+
+        IReadOnlyDictionary<int, UIElement> realized = tabControl.ItemContainerGenerator.RealizedContainers;
+        UIElement[] after = [realized[0], realized[1]];
+        Assert.All(after, tab => Assert.Contains(tab, before));
+        Assert.All(after, tab => Assert.Same(aspectHeader, ((TabItem)tab).HeaderTemplate));
+        Assert.Equal(2, aspectCalls);
     }
 
     [Fact]

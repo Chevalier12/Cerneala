@@ -469,6 +469,91 @@ public sealed class WindowRuntimeTests : IDisposable
         Assert.Equal(presentsBefore + 3, session.PresentCount);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ServoPointerStaysOnItsTargetAcrossFramesWithoutAServoStep(bool click)
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        (Window window, Button button) = CreateHeaderAndTargetWindow();
+        window.Show();
+        FakePlatformWindow nativeWindow = Assert.Single(platform.Windows);
+        // The physical mouse rests on the header, away from the target, and never moves.
+        nativeWindow.Input.MovePointer(5, 5);
+        PumpFrames(runtime, nativeWindow, 1);
+        int enters = 0;
+        int leaves = 0;
+        button.AddHandler(UIElement.MouseEnterEvent, (_, _) => enters++, handledEventsToo: true);
+        button.AddHandler(UIElement.MouseLeaveEvent, (_, _) => leaves++, handledEventsToo: true);
+        ServoApi servo = new(window);
+
+        Task action = click
+            ? servo.ClickAsync(ServoTarget.ById("target"))
+            : servo.HoverAsync(ServoTarget.ById("target"));
+        PumpUntilCompleted(runtime, action);
+        await action;
+        PumpFrames(runtime, nativeWindow, 10);
+
+        Assert.True(button.IsPointerOver);
+        Assert.Equal((1, 0), (enters, leaves));
+
+        for (int press = 0; press < 3; press++)
+        {
+            Task key = servo.PressKeyAsync(InputKey.F2);
+            PumpUntilCompleted(runtime, key);
+            await key;
+            PumpFrames(runtime, nativeWindow, 2);
+        }
+
+        Assert.True(button.IsPointerOver);
+        Assert.Equal((1, 0), (enters, leaves));
+    }
+
+    [Fact]
+    public async Task PhysicalPointerMoveAfterAServoHoverTakesThePointerBack()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        (Window window, Button button) = CreateHeaderAndTargetWindow();
+        window.Show();
+        FakePlatformWindow nativeWindow = Assert.Single(platform.Windows);
+        nativeWindow.Input.MovePointer(5, 5);
+        PumpFrames(runtime, nativeWindow, 1);
+        ServoApi servo = new(window);
+        Task hover = servo.HoverAsync(ServoTarget.ById("target"));
+        PumpUntilCompleted(runtime, hover);
+        await hover;
+        PumpFrames(runtime, nativeWindow, 2);
+        Assert.True(button.IsPointerOver);
+
+        nativeWindow.Input.MovePointer(6, 5);
+        PumpFrames(runtime, nativeWindow, 1);
+
+        Assert.False(button.IsPointerOver);
+        Assert.Equal(6, window.LastFrame!.Input.Pointer.X);
+    }
+
+    private static (Window Window, Button Button) CreateHeaderAndTargetWindow()
+    {
+        Border header = new() { Height = 40 };
+        Button button = new() { Content = "Target", Width = 160, Height = 32 };
+        ServoApi.SetId(button, "target");
+        StackPanel panel = new();
+        panel.VisualChildren.Add(header);
+        panel.VisualChildren.Add(button);
+        return (new Window { Content = panel }, button);
+    }
+
+    private static void PumpFrames(WindowApplicationRuntime runtime, FakePlatformWindow nativeWindow, int frames)
+    {
+        for (int frame = 0; frame < frames; frame++)
+        {
+            nativeWindow.RequestRender();
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+    }
+
     [Fact]
     public async Task ServoSerializesInstancesPerWindowAndKeepsWindowsIndependent()
     {

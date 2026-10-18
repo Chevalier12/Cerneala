@@ -485,8 +485,7 @@ public sealed partial class UiMarkupGenerator
 
             if (parentType is not null && panelType is not null && IsOrDerivesFrom(parentType, panelType))
             {
-                currentLines.Add(parentVariable + ".LogicalChildren.Add(" + childVariable + ");");
-                currentLines.Add(parentVariable + ".VisualChildren.Add(" + childVariable + ");");
+                currentLines.Add(parentVariable + ".Children.Add(" + childVariable + ");");
                 return;
             }
 
