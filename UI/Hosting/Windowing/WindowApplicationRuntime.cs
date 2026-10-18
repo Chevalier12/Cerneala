@@ -935,7 +935,9 @@ internal sealed class WindowApplicationRuntime : IDisposable
                     try
                     {
                         resolvedRequest = context.TryBeginServoInputFrame();
-                        return resolvedRequest?.Step.Frame ?? CollectPlatformInput(context);
+                        return resolvedRequest is not null
+                            ? context.RouteServoStep(resolvedRequest.Step)
+                            : CollectPlatformInput(context);
                     }
                     finally { collectionTime = Stopwatch.GetElapsedTime(started); }
                 },
@@ -1248,11 +1250,23 @@ internal sealed class WindowApplicationRuntime : IDisposable
                 : platformFrame;
         }
 
-        private void NoteServoPointer(ServoInputStep step)
+        // The frame to route for a Servo step. A step of a Servo that has run no pointer action yet
+        // carries no position of its own, so it is routed where the pointer is now and moves nothing.
+        // Example: the mouse rests on a button at (400, 56) and Servo, before any pointer action,
+        // presses F2. The key frames are routed at (400, 56), not (0, 0), so the button stays hovered.
+        public InputFrame RouteServoStep(ServoInputStep step)
         {
+            if (!step.HasPointerPosition)
+            {
+                return hasServoPointer
+                    ? step.Frame.WithPointerPosition(servoPointerX, servoPointerY)
+                    : step.Frame.WithPointerPosition(platformPointerX, platformPointerY);
+            }
+
             hasServoPointer = true;
             servoPointerX = step.Pointer.X;
             servoPointerY = step.Pointer.Y;
+            return step.Frame;
         }
 
         public void DeferShow()
@@ -1288,12 +1302,11 @@ internal sealed class WindowApplicationRuntime : IDisposable
             {
                 ServoInputFrameRequest? request = operation.GetNextFrame();
                 if (request is null || !request.IsCleanup) return;
-                NoteServoPointer(request.Step);
                 try
                 {
                     // Visibility and a renderable surface are gone, but the owner can
                     // still route the release through the retained input host.
-                    Host.Update(request.Step.Frame, Host.Viewport, TimeSpan.Zero);
+                    Host.Update(RouteServoStep(request.Step), Host.Viewport, TimeSpan.Zero);
                     request.InputApplied = true;
                     CompleteServoInputFrame(request);
                 }
@@ -1331,7 +1344,6 @@ internal sealed class WindowApplicationRuntime : IDisposable
                 }
                 if (request is not null)
                 {
-                    NoteServoPointer(request.Step);
                     return request;
                 }
 
@@ -1448,7 +1460,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
             nextIndex = sequence.Steps.Count;
             ServoInputStep last = lastAttempted ?? sequence.Steps[0];
-            cleanupStep ??= ServoInputSequence.CreateResetStep(last.Pointer, last.Keyboard);
+            cleanupStep ??= ServoInputSequence.CreateResetStep(last.Pointer, last.Keyboard, last.HasPointerPosition);
             StartCleanupDeadline();
             return true;
         }
@@ -1464,7 +1476,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
             {
                 nextIndex = sequence.Steps.Count;
                 ServoInputStep last = lastAttempted ?? sequence.Steps[0];
-                cleanupStep ??= ServoInputSequence.CreateResetStep(last.Pointer, last.Keyboard);
+                cleanupStep ??= ServoInputSequence.CreateResetStep(last.Pointer, last.Keyboard, last.HasPointerPosition);
             }
 
             if (cleanupStep is ServoInputStep cleanup)
@@ -1504,7 +1516,8 @@ internal sealed class WindowApplicationRuntime : IDisposable
                 nextIndex = sequence.Steps.Count;
                 cleanupStep = ServoInputSequence.CreateResetStep(
                     request.Step.Pointer,
-                    request.Step.Keyboard);
+                    request.Step.Keyboard,
+                    request.Step.HasPointerPosition);
                 StartCleanupDeadline();
                 return;
             }
@@ -1554,7 +1567,8 @@ internal sealed class WindowApplicationRuntime : IDisposable
             nextIndex = sequence.Steps.Count;
             cleanupStep = ServoInputSequence.CreateResetStep(
                 request.Step.Pointer,
-                request.Step.Keyboard);
+                request.Step.Keyboard,
+                request.Step.HasPointerPosition);
             StartCleanupDeadline();
         }
 
