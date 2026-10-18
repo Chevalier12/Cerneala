@@ -13,7 +13,8 @@ fix. This script writes the mechanical part of that app, so that the agent only 
   ReproHarness.cs      Fixed infrastructure, not meant to be edited: window title from ReproVariant, verdict lines,
                        sticky BUG state, invariant check from FrameRendered, check mode (--check <report>
                        [--frames <folder>]) with Servo, screenshots, report file, exit codes
-                       0 = OK, 1 = BUG, 2 = NOT REACHED, 3 = ERROR.
+                       0 = OK, 1 = BUG, 2 = NOT REACHED, 3 = ERROR, 4 = PARTIAL (group app: only some bugs reproduce).
+                       With -AlsoIssues the app is a group app: one app checks several issues, one verdict per issue.
   MainWindow.crn       Verdict area, numbered user steps, "what you should see", scenario host.
   MainWindow.crn.cs    The scenario. It starts as a tiny working sample (a button that check mode clicks), so the
                        generated app builds and exits with 0 unmodified. Members marked "FILL IN" are the ones to change.
@@ -24,6 +25,11 @@ text lives in this script for the same reason: no .crn or .cs template file may 
 
 .PARAMETER Issue
 GitHub issue number of the bug. It names the project (Issue<N>), the namespace and the window title.
+
+.PARAMETER AlsoIssues
+The other issues of a group app (one app that checks several related bugs). The app stays named after -Issue.
+ReproHarness.Issues lists -Issue first, then these in the given order; the scenario returns one result per issue.
+Every number must be greater than 0, with no duplicates and none equal to -Issue. Comma-separated, for example 484,485.
 
 .PARAMETER Destination
 The app folder, for example <scratchpad>\repro-369\Issue369. It is created when missing.
@@ -36,16 +42,28 @@ Overwrite files that already exist in the destination.
 
 .EXAMPLE
 pwsh -NoProfile -File Tools/scripts/New-ReproApp.ps1 -Issue 369 -Destination $env:TEMP/repro-369/Issue369
+.EXAMPLE
+pwsh -NoProfile -File Tools/scripts/New-ReproApp.ps1 -Issue 480 -AlsoIssues 484,485 -Destination $env:TEMP/repro-480/Issue480
 #>
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][int] $Issue,
+    [string[]] $AlsoIssues = @(),
     [Parameter(Mandatory)][string] $Destination,
     [string] $CernealaRoot,
     [switch] $Force
 )
 
 $ErrorActionPreference = 'Stop'
+
+# -AlsoIssues is a string[] on purpose: with "pwsh -File", "-AlsoIssues 484,485" arrives as the single text "484,485",
+# and an int[] parameter would turn it into the number 484485. Splitting on commas here makes both call styles work.
+$otherIssues = [int[]]@($AlsoIssues | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ } | ForEach-Object {
+    if ($_ -notmatch '^[0-9]+$' -or [int]$_ -le 0) { throw "-AlsoIssues: every issue number must be a whole number greater than 0 (got '$_')." }
+    [int]$_
+})
+if ($otherIssues -contains $Issue) { throw "-AlsoIssues must not contain -Issue ($Issue)." }
+if (@($otherIssues | Select-Object -Unique).Count -ne $otherIssues.Count) { throw "-AlsoIssues must not contain duplicates ($($otherIssues -join ', '))." }
 
 if (-not $CernealaRoot) {
     $CernealaRoot = (& git rev-parse --show-toplevel 2>$null)
@@ -141,8 +159,12 @@ public interface IReproScenario
     /// <summary>True when the checked state changed since the last invariant check (must be true before the first check).</summary>
     bool ReproCheckedStateChanged();
 
-    /// <summary>Reads live framework state through public API and checks the broken invariant.</summary>
-    ReproCheckResult ReproCheckInvariant();
+    /// <summary>
+    /// Reads live framework state through public API and checks the broken invariant of one issue. Called once per issue
+    /// of <see cref="ReproHarness.Issues"/> on every check, and returns that issue's result. A single-issue app is called
+    /// with <see cref="ReproHarness.Issue"/> only.
+    /// </summary>
+    ReproCheckResult ReproCheckInvariant(int issue);
 
     /// <summary>The actions check mode performs with Servo, in order.</summary>
     IReadOnlyList<ReproStep> ReproCheckSteps(ReproHarness harness);
@@ -154,6 +176,10 @@ public interface IReproScenario
 public sealed class ReproHarness
 {
     public const int Issue = @@N@@;
+
+    /// <summary>Every bug the app checks; more than one for a group app (New-ReproApp.ps1 -AlsoIssues).</summary>
+    public static readonly IReadOnlyList<int> Issues = [@@ISSUES@@];
+
     public const int FrameCap = 300;
 
     private static readonly SolidColorBrush OkBrush = new(Color.FromRgb(0x48, 0xD6, 0x78));
@@ -163,9 +189,9 @@ public sealed class ReproHarness
     private readonly Window window;
     private readonly IReproScenario scenario;
     private readonly ReproView view;
-    private string? firstFailure;
-    private string totals = "Nothing checked yet.";
-    private string now = "";
+    private readonly Dictionary<int, string> firstFailures = [];
+    private readonly Dictionary<int, string> totals = [];
+    private readonly Dictionary<int, string> nows = [];
     private string? notReachedText;
     private bool started;
 
@@ -181,9 +207,57 @@ public sealed class ReproHarness
             .GetCustomAttributes<AssemblyMetadataAttribute>()
             .FirstOrDefault(attribute => attribute.Key == "ReproVariant")?.Value ?? "dev";
 
-    private string VerdictFirstLine => firstFailure is null
-        ? $"OK: bug #{Issue} does not reproduce so far."
-        : $"BUG: bug #{Issue} reproduces.";
+    private static bool IsGroup => Issues.Count > 1;
+
+    private static string Hashes(IEnumerable<int> issues) => string.Join(", ", issues.Select(issue => $"#{issue}"));
+
+    private string VerdictFirstLine
+    {
+        get
+        {
+            if (!IsGroup)
+            {
+                return firstFailures.Count == 0
+                    ? $"OK: bug #{Issue} does not reproduce so far."
+                    : $"BUG: bug #{Issue} reproduces.";
+            }
+
+            int[] failed = Issues.Where(firstFailures.ContainsKey).ToArray();
+            int[] passing = Issues.Where(issue => !firstFailures.ContainsKey(issue)).ToArray();
+            if (failed.Length == 0)
+            {
+                return $"OK: bugs {Hashes(Issues)} do not reproduce so far.";
+            }
+
+            if (passing.Length == 0)
+            {
+                return $"BUG: bugs {Hashes(Issues)} reproduce.";
+            }
+
+            string reproduce = failed.Length == 1 ? $"bug {Hashes(failed)} reproduces" : $"bugs {Hashes(failed)} reproduce";
+            string notReproduce = passing.Length == 1 ? "does" : "do";
+            return $"PARTIAL: {reproduce}; {Hashes(passing)} {notReproduce} not reproduce so far.";
+        }
+    }
+
+    private string TotalsOf(int issue) => totals.GetValueOrDefault(issue, "Nothing checked yet.");
+
+    private string NowOf(int issue) => nows.GetValueOrDefault(issue, "");
+
+    // One line per issue in a group app; the single text of the only issue otherwise.
+    private string[] FirstFailureLines => IsGroup
+        ? Issues.Select(issue => firstFailures.TryGetValue(issue, out string? failure)
+            ? $"#{issue} BUG: {failure}"
+            : $"#{issue} OK: no failure so far.").ToArray()
+        : [firstFailures.GetValueOrDefault(Issue) ?? "No failure so far."];
+
+    private string[] TotalsLines => IsGroup
+        ? Issues.Select(issue => $"#{issue}: {TotalsOf(issue)}").ToArray()
+        : [TotalsOf(Issue)];
+
+    private string[] NowLines => IsGroup
+        ? Issues.Select(issue => $"#{issue}: {NowOf(issue)}").ToArray()
+        : [NowOf(Issue)];
 
     /// <summary>Call once from ContentRendered.</summary>
     public void Start()
@@ -194,11 +268,12 @@ public sealed class ReproHarness
         }
 
         started = true;
+        string name = IsGroup ? $"Issues {string.Join(", ", Issues)}" : $"Issue {Issue}";
         window.Title = Variant switch
         {
-            "before" => $"Issue {Issue}: before the fix",
-            "after" => $"Issue {Issue}: after the fix",
-            _ => $"Issue {Issue}: dev build"
+            "before" => $"{name}: before the fix",
+            "after" => $"{name}: after the fix",
+            _ => $"{name}: dev build"
         };
         scenario.ReproSetUp();
         SetText(view.UserSteps, scenario.ReproUserSteps);
@@ -246,29 +321,33 @@ public sealed class ReproHarness
             return;
         }
 
-        ReproCheckResult result = scenario.ReproCheckInvariant();
-        if (!result.Passed)
+        foreach (int issue in Issues)
         {
-            firstFailure ??= result.Failure ?? "The invariant failed.";
+            ReproCheckResult result = scenario.ReproCheckInvariant(issue);
+            if (!result.Passed)
+            {
+                firstFailures.TryAdd(issue, result.Failure ?? "The invariant failed.");
+            }
+
+            totals[issue] = result.Totals;
+            nows[issue] = result.Now;
         }
 
-        totals = result.Totals;
-        now = result.Now;
         UpdateView();
     }
 
     private void UpdateView()
     {
         SetText(view.Verdict, notReachedText ?? VerdictFirstLine);
-        Brush brush = firstFailure is not null ? BugBrush : notReachedText is not null ? WaitBrush : OkBrush;
+        Brush brush = firstFailures.Count > 0 ? BugBrush : notReachedText is not null ? WaitBrush : OkBrush;
         if (!ReferenceEquals(view.Verdict.Foreground, brush))
         {
             view.Verdict.Foreground = brush;
         }
 
-        SetText(view.FirstFailure, firstFailure ?? "No failure so far.");
-        SetText(view.Totals, totals);
-        SetText(view.Now, now);
+        SetText(view.FirstFailure, string.Join("\n", FirstFailureLines));
+        SetText(view.Totals, string.Join("\n", TotalsLines));
+        SetText(view.Now, string.Join("\n", NowLines));
         SetText(view.Scale, $"Display scale: {window.Root?.Scale ?? 1:0.##}");
     }
 
@@ -327,7 +406,7 @@ public sealed class ReproHarness
                     await Shot();
                 }
 
-                notReachedText = firstFailure is null && scenario.ReproNotReached() is { } reason
+                notReachedText = firstFailures.Count == 0 && scenario.ReproNotReached() is { } reason
                     ? "NOT REACHED: " + reason
                     : null;
             }
@@ -337,18 +416,17 @@ public sealed class ReproHarness
             }
 
             Evaluate(force: true);
-            exitCode = firstFailure is not null ? 1 : notReachedText is not null ? 2 : 0;
+            exitCode = firstFailures.Count == Issues.Count ? 1
+                : firstFailures.Count > 0 ? 4
+                : notReachedText is not null ? 2
+                : 0;
             string verdict = notReachedText ?? VerdictFirstLine;
             SetText(view.Step, $"Check mode finished: {verdict}");
             UpdateView();
             await Settle();
             await Shot();
-            report = string.Join(Environment.NewLine,
-                verdict,
-                firstFailure ?? "No failure so far.",
-                totals,
-                now,
-                view.Scale.Text);
+            string[] reportLines = [verdict, .. FirstFailureLines, .. TotalsLines, .. NowLines, view.Scale.Text];
+            report = string.Join(Environment.NewLine, reportLines);
         }
         catch (Exception exception)
         {
@@ -512,7 +590,9 @@ public partial class MainWindow : Window, IReproScenario
 
     // FILL IN 5/6, invariant: read live state through public API (ArrangedBounds, Root.Scale ...), return pass or fail,
     // the first-failure text with measured and expected values, and the totals. Never hard-code the verdict.
-    public ReproCheckResult ReproCheckInvariant()
+    // In a group app (ReproHarness.Issues has more than one issue) return the result of the given issue: one scenario per
+    // issue of ReproHarness.Issues. A single-issue app can ignore the parameter.
+    public ReproCheckResult ReproCheckInvariant(int issue)
     {
         checks++;
         bool passed = clicks >= 0; // the sample invariant is trivially true
@@ -547,7 +627,7 @@ public partial class MainWindow : Window, IReproScenario
 $files = [ordered]@{
     "Issue$Issue.csproj"    = $csprojTemplate.Replace('@@ROOT@@', $CernealaRoot)
     'BackendRegistration.cs' = $backendTemplate
-    'ReproHarness.cs'       = $harnessTemplate.Replace('@@N@@', "$Issue")
+    'ReproHarness.cs'       = $harnessTemplate.Replace('@@N@@', "$Issue").Replace('@@ISSUES@@', ((@($Issue) + $otherIssues) -join ', '))
     'MainWindow.crn'        = $crnTemplate.Replace('@@N@@', "$Issue")
     'MainWindow.crn.cs'     = $scenarioTemplate.Replace('@@N@@', "$Issue")
 }
@@ -572,5 +652,5 @@ Next:
   dotnet build "$csproj" -c Release
   `$p = Start-Process -PassThru "$destinationFull\bin\Release\net8.0-windows\Issue$Issue.exe" -ArgumentList '--check','<report>.txt','--frames','<frames-folder>'; `$p.WaitForExit(120000)
   Fill in the 6 marked members of MainWindow.crn.cs; ReproHarness.cs normally stays as generated.
-  Exit codes: 0 OK, 1 BUG, 2 NOT REACHED, 3 ERROR.
+  Exit codes: 0 OK, 1 BUG, 2 NOT REACHED, 3 ERROR, 4 PARTIAL (group app: only some bugs reproduce).
 "@

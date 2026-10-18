@@ -38,6 +38,8 @@ instead of running it, and writes the would-be PR body to <WorkDir>\pr-body.prev
 The app folder that contains Issue<Issue>.csproj, for example <scratchpad>\repro-369\Issue369.
 .PARAMETER Issue
 GitHub issue number (names Issue<Issue>.csproj, the zips and the GIFs).
+.PARAMETER AlsoIssues
+The other issues the group app checks (see New-ReproApp.ps1 -AlsoIssues). It only changes texts (release notes, release title, verdict lines, exit-code line); the app, the zips and the GIFs keep the name of -Issue. Expected exit codes stay before = 1 (every bug of the group reproduces) and after = 0; exit 4 (PARTIAL) is a mismatch like any other. Every number must be greater than 0, with no duplicates and none equal to -Issue.
 .PARAMETER WorkDir
 Folder for publish outputs, reports, frames, zips, GIFs and summaries. Default: the parent folder of -App.
 .PARAMETER BaseCommit
@@ -68,6 +70,7 @@ pwsh -NoProfile -File Tools/scripts/Publish-ReproApps.ps1 -App $env:TEMP/repro-3
 param(
     [Parameter(Mandatory)][string] $App,
     [Parameter(Mandatory)][int] $Issue,
+    [string[]] $AlsoIssues = @(),
     [string] $WorkDir,
     [string] $BaseCommit,
     [int] $Runs = 1,
@@ -86,6 +89,14 @@ $startMarker = '<!-- repro-how-to-check:start -->'
 $endMarker = '<!-- repro-how-to-check:end -->'
 
 # ---------- inputs ----------
+# -AlsoIssues is a string[] on purpose: with "pwsh -File", "-AlsoIssues 484,485" arrives as the single text "484,485",
+# and an int[] parameter would turn it into the number 484485. Splitting on commas here makes both call styles work.
+$otherIssues = [int[]]@($AlsoIssues | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ } | ForEach-Object {
+    if ($_ -notmatch '^[0-9]+$' -or [int]$_ -le 0) { throw "-AlsoIssues: every issue number must be a whole number greater than 0 (got '$_')." }
+    [int]$_
+})
+if ($otherIssues -contains $Issue) { throw "-AlsoIssues must not contain -Issue ($Issue)." }
+if (@($otherIssues | Select-Object -Unique).Count -ne $otherIssues.Count) { throw "-AlsoIssues must not contain duplicates ($($otherIssues -join ', '))." }
 $App = [IO.Path]::GetFullPath($App).TrimEnd('\', '/')
 $csproj = Join-Path $App "Issue$Issue.csproj"
 if (-not (Test-Path -LiteralPath $csproj)) { throw "No Issue$Issue.csproj in $App." }
@@ -326,9 +337,15 @@ function Test-GhRelease([string] $Name) {
 }
 
 # 7. release repro-pr-<PR>
+# Texts that name the bug: "bug #480", or for a group app "bugs #480, #484, #485" (wording of the app's verdict lines).
+$isGroup = $otherIssues.Count -gt 0
+$bugText = if ($isGroup) { 'bugs ' + (((@($Issue) + $otherIssues) | ForEach-Object { "#$_" }) -join ', ') } else { "bug #$Issue" }
+$okText = if ($isGroup) { "$bugText do not reproduce so far." } else { "$bugText does not reproduce so far." }
+$bugVerdictText = if ($isGroup) { "$bugText reproduce." } else { "$bugText reproduces." }
+$exitCodeText = if ($isGroup) { '0 OK, 1 BUG, 2 NOT REACHED, 3 ERROR, 4 PARTIAL (group app).' } else { '0 OK, 1 BUG, 2 NOT REACHED, 3 ERROR.' }
 $notesPath = Join-Path $WorkDir 'release-notes.md'
 $notes = @"
-Reproduction apps for pull request #$Pr (bug #$Issue).
+Reproduction apps for pull request #$Pr ($bugText).
 
 Commits
 - base commit (before app): $(if ($AfterOnly) { 'none, test-only fix: there is no before app' } else { $BaseCommit })
@@ -340,9 +357,9 @@ How to run
 3. Do the numbered actions written in the window. The top line shows the live verdict.
 
 Verdicts
-- OK (green): bug #$Issue does not reproduce so far.$(if (-not $AfterOnly) { "`n- BUG (red): bug #$Issue reproduces. Expected in the before app." })
+- OK (green): $okText$(if (-not $AfterOnly) { "`n- BUG (red): $bugVerdictText Expected in the before app." })
 
-Check mode: Issue$Issue.exe --check <report-file> [--frames <folder>]. Exit codes: 0 OK, 1 BUG, 2 NOT REACHED, 3 ERROR.
+Check mode: Issue$Issue.exe --check <report-file> [--frames <folder>]. Exit codes: $exitCodeText
 "@
 [IO.File]::WriteAllText($notesPath, $notes + "`n", [Text.UTF8Encoding]::new($false))
 
@@ -358,7 +375,7 @@ if (Test-GhRelease $tag) {
     }
 }
 else {
-    Invoke-Gh (@('release', 'create', $tag) + $zipFiles + @('--repo', $Repository, '--target', $head, '--prerelease', '--title', "Reproduction apps: PR #$Pr (bug #$Issue)", '--notes-file', $notesPath)) -Write | Out-Null
+    Invoke-Gh (@('release', 'create', $tag) + $zipFiles + @('--repo', $Repository, '--target', $head, '--prerelease', '--title', "Reproduction apps: PR #$Pr ($bugText)", '--notes-file', $notesPath)) -Write | Out-Null
 }
 if ($DryRun) {
     Write-Host "[dry-run] would verify with: gh release view $tag --json assets that exactly $($wantedAssets -join ', ') exist."
