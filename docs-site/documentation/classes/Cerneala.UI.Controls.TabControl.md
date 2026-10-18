@@ -74,6 +74,34 @@ The content area is refreshed during measure, after the tabs are realized. Chang
 
 When `Content` is a `UIElement`, that element is a child of the content area while its tab is selected. When another tab is selected, the next layout pass removes it from the content area and gives it back to its `TabItem`, which keeps it as a logical child until its tab is selected again. For example, with `first.Content = button` and `SelectedIndex = 0`, `button` is under the `TabControl` after layout; after `SelectedIndex = 1` and the next layout pass, `button.VisualParent` is `null` and `button.LogicalParent` is `first`, so adding `button` to another parent throws `InvalidOperationException`.
 
+### Element content with a ComponentTemplate
+
+When the control has a `ComponentTemplate` (or a `ComponentTemplateKey`), the template shows the selected tab's content, for example with a `ContentPresenter` whose `Content` is `SelectedContent`. Then the selected tab lets go of a `UIElement` content, so a `ContentPresenter` in the template can take it as its logical and visual child. The built-in content area is emptied when the template is set, and the selected tab lets go of its content before the template is built. When another tab is selected, the newly selected tab lets go of its content at once, and every other tab owns its `UIElement` content again (as its `LogicalParent`) as soon as nothing shows it: at the selection change, or at the next layout pass when the template still showed it then. When the template is replaced or removed, the old template lets go of the tabs' content, and without a template the content area shows the selected tab's content again on the next layout pass.
+
+```csharp
+using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Templates;
+
+Border page1 = new() { Width = 50, Height = 20 };
+Border page2 = new() { Width = 50, Height = 20 };
+TabItem first = new() { Header = "1", Content = page1 };
+TabItem second = new() { Header = "2", Content = page2 };
+TabControl tabs = new();
+tabs.SetItems(new[] { first, second });
+tabs.SelectedIndex = 0;
+
+ContentPresenter? presenter = null;
+tabs.ComponentTemplate = new ComponentTemplate<TabControl>("tabs", context =>
+    presenter = new ContentPresenter { Content = context.Owner.SelectedContent });
+tabs.SelectionChanged += (_, _) => presenter!.Content = tabs.SelectedContent;
+// After the next layout pass: page1.LogicalParent and page1.VisualParent are presenter,
+// page2.LogicalParent is second and page2.VisualParent is null.
+
+tabs.SelectedIndex = 1;
+// After the next layout pass: page2 is under presenter, page1.LogicalParent is first and
+// page1.VisualParent is null, so adding page1 to another parent throws InvalidOperationException.
+```
+
 The content area resolves templates like a `ContentPresenter` with no local registry: `SelectedContentTemplate` first, then the aspect content templates for the content. A string without a template is shown as a `TextBlock`. Other content without a template, for example an `int`, shows nothing.
 
 ### Generated tabs
