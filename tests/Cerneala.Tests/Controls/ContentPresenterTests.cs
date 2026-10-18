@@ -207,6 +207,84 @@ public sealed class ContentPresenterTests
     }
 
     [Fact]
+    public void ThrowingContentTemplateKeepsElementContentHostedDirectly()
+    {
+        UIRoot root = new(200, 200);
+        FixedElement content = new(new LayoutSize(10, 10));
+        ContentPresenter presenter = new() { Content = content };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+
+        Assert.Throws<InvalidOperationException>(() => presenter.ContentTemplate = ThrowingTemplate(takeContent: false));
+
+        Assert.Same(content, presenter.PresentedChild);
+        Assert.Same(presenter, content.VisualParent);
+        Assert.Same(presenter, content.LogicalParent);
+        Assert.Same(root, content.Root);
+    }
+
+    [Fact]
+    public void ThrowingContentTemplateKeepsElementContentInsideThePreviousTemplate()
+    {
+        UIRoot root = new(200, 200);
+        FixedElement content = new(new LayoutSize(10, 10));
+        ContentPresenter presenter = new() { ContentTemplate = WrapTemplate("wrap", key: null), Content = content };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        Border oldBorder = Assert.IsType<Border>(presenter.PresentedChild);
+
+        Assert.Throws<InvalidOperationException>(() => presenter.ContentTemplate = ThrowingTemplate(takeContent: false));
+
+        Assert.Same(oldBorder, presenter.PresentedChild);
+        Assert.Same(oldBorder, content.VisualParent);
+        Assert.Same(oldBorder, content.LogicalParent);
+        Assert.Contains(content, oldBorder.VisualChildren);
+        Assert.Same(root, content.Root);
+    }
+
+    [Fact]
+    public void ContentTemplateThatTakesElementContentAndThrowsKeepsThePreviousTemplate()
+    {
+        UIRoot root = new(200, 200);
+        FixedElement content = new(new LayoutSize(10, 10));
+        ContentPresenter presenter = new() { ContentTemplate = WrapTemplate("wrap", key: null), Content = content };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        Border oldBorder = Assert.IsType<Border>(presenter.PresentedChild);
+
+        Assert.Throws<InvalidOperationException>(() => presenter.ContentTemplate = ThrowingTemplate(takeContent: true));
+
+        Assert.Same(oldBorder, presenter.PresentedChild);
+        Assert.Same(oldBorder, content.VisualParent);
+        Assert.Same(oldBorder, content.LogicalParent);
+        Assert.Same(root, content.Root);
+    }
+
+    [Fact]
+    public void TemplateChildThatCannotBePresentedKeepsElementContentHostedDirectly()
+    {
+        UIRoot root = new(200, 200);
+        FixedElement content = new(new LayoutSize(10, 10));
+        ContentPresenter presenter = new() { Content = content };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        Border otherOwner = new();
+        ContentTemplate parentedTemplate = new("parented", typeof(object), key: null, priority: 0, context =>
+        {
+            Border wrapper = new() { Child = (UIElement?)context.Data };
+            otherOwner.Child = wrapper;
+            return wrapper;
+        });
+
+        Assert.Throws<InvalidOperationException>(() => presenter.ContentTemplate = parentedTemplate);
+
+        Assert.Same(content, presenter.PresentedChild);
+        Assert.Same(presenter, content.VisualParent);
+        Assert.Same(presenter, content.LogicalParent);
+        Assert.Same(root, content.Root);
+    }
+
+    [Fact]
     public void ReplacingContentTemplateKeepsElementContentInTheContainerThatTheTemplateReuses()
     {
         UIRoot root = new(200, 200);
@@ -294,6 +372,19 @@ public sealed class ContentPresenterTests
     private static ContentTemplate WrapTemplate(string name, string? key)
     {
         return new ContentTemplate(name, typeof(object), key, priority: 0, context => new Border { Child = (UIElement?)context.Data });
+    }
+
+    private static ContentTemplate ThrowingTemplate(bool takeContent)
+    {
+        return new ContentTemplate("throws", typeof(object), key: null, priority: 0, context =>
+        {
+            if (takeContent)
+            {
+                _ = new Border { Child = (UIElement?)context.Data };
+            }
+
+            throw new InvalidOperationException("factory failed");
+        });
     }
 
     private sealed record EqualContent(string Value);
