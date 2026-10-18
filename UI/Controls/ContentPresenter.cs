@@ -18,6 +18,8 @@ public class ContentPresenter : Control
     private bool generatedTextChild;
     private bool deferPresentationRefresh;
     private int contentIndex = -1;
+    // Counts refreshes, so a refresh can tell that a nested refresh replaced the presentation while it ran.
+    private int presentationRefresh;
     private AspectCatalog? aspectTemplateCatalog;
     private ContentTemplateRegistry? localTemplateRegistry;
 
@@ -198,10 +200,11 @@ public class ContentPresenter : Control
             return;
         }
 
+        // The field is cleared first: the removal raises Unloaded, and a handler can present other content at once.
         if (ReferenceEquals(presentedChild, previousContent))
         {
-            RemovePresentedChild(previousContent);
             presentedChild = null;
+            RemovePresentedChild(previousContent);
         }
         else
         {
@@ -217,6 +220,7 @@ public class ContentPresenter : Control
         }
 
         presentationDirty = false;
+        int refresh = ++presentationRefresh;
         object? content = Content;
         OnPresentationRefreshing(content);
         try
@@ -224,6 +228,11 @@ public class ContentPresenter : Control
             ContentTemplate? template = ResolveContentTemplate(content);
             UIElement? previousChild = presentedChild;
             ElementContentPlacement? releasedContent = ReleaseElementContent(content, template is not null);
+            if (refresh != presentationRefresh)
+            {
+                return;
+            }
+
             UIElement? next;
             try
             {
@@ -231,8 +240,18 @@ public class ContentPresenter : Control
             }
             catch
             {
-                RestorePresentation(previousChild, releasedContent);
+                if (refresh == presentationRefresh)
+                {
+                    RestorePresentation(previousChild, releasedContent);
+                }
+
                 throw;
+            }
+
+            if (refresh != presentationRefresh)
+            {
+                DiscardSupersededChild(next, content);
+                return;
             }
 
             if (ReferenceEquals(presentedChild, next))
@@ -240,7 +259,15 @@ public class ContentPresenter : Control
                 return;
             }
 
-            RemovePresentedChild(presentedChild);
+            UIElement? replacedChild = presentedChild;
+            presentedChild = null;
+            RemovePresentedChild(replacedChild);
+            if (refresh != presentationRefresh)
+            {
+                DiscardSupersededChild(next, content);
+                return;
+            }
+
             try
             {
                 AddPresentedChild(next);
@@ -256,6 +283,21 @@ public class ContentPresenter : Control
         finally
         {
             OnPresentationRefreshed(content);
+        }
+    }
+
+    // Removing an element from the presenter raises its Unloaded event at once, and a handler can change Content,
+    // ContentTemplate, or ContentTemplateKey. That change runs a nested refresh, which presents the current content.
+    // The outer refresh then holds a child built for content that is no longer current: it does not present that
+    // child, and it takes the element content back out of it, so the element is free to be presented elsewhere.
+    private void DiscardSupersededChild(UIElement? child, object? content)
+    {
+        if (child is not null &&
+            content is UIElement element &&
+            !ReferenceEquals(child, element) &&
+            !ReferenceEquals(child, presentedChild))
+        {
+            ContentControl.DetachChildFromOwnedSubtree(child, element);
         }
     }
 
@@ -418,8 +460,8 @@ public class ContentPresenter : Control
         }
 
         contentReleasableByTemplate = null;
-        RemovePresentedChild(child);
         presentedChild = null;
+        RemovePresentedChild(child);
     }
 
     private void RemovePresentedChild(UIElement? child)
