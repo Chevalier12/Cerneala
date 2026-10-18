@@ -496,6 +496,309 @@ public sealed class ContentPresenterTests
         Assert.False(content.IsAttached);
     }
 
+    [Fact]
+    public void ThrowingContentTemplateGivesElementContentBackThroughThePreviousBorderChild()
+    {
+        UIRoot root = new(200, 200);
+        Border content = new() { Width = 40, Height = 30 };
+        ContentPresenter presenter = new() { ContentTemplate = WrapTemplate("wrap", key: null), Content = content };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        Border oldBorder = Assert.IsType<Border>(presenter.PresentedChild);
+
+        Assert.Throws<InvalidOperationException>(() => presenter.ContentTemplate = ThrowingTemplate(takeContent: false));
+
+        Assert.Same(oldBorder, presenter.PresentedChild);
+        Assert.Same(content, oldBorder.Child);
+        Assert.Same(content, Assert.Single(oldBorder.VisualChildren));
+        content.Width = 80;
+        oldBorder.Measure(new MeasureContext(new LayoutSize(200, 200)));
+        Assert.Equal(new LayoutSize(80, 30), oldBorder.DesiredSize);
+    }
+
+    [Fact]
+    public void ContentTemplateThatTakesElementContentAndThrowsGivesItBackThroughThePreviousBorderChild()
+    {
+        UIRoot root = new(200, 200);
+        Border content = new() { Width = 40, Height = 30 };
+        ContentPresenter presenter = new() { ContentTemplate = WrapTemplate("wrap", key: null), Content = content };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        Border oldBorder = Assert.IsType<Border>(presenter.PresentedChild);
+        Border? failedBorder = null;
+        ContentTemplate throwing = new("throws", typeof(object), key: null, priority: 0, context =>
+        {
+            failedBorder = new Border { Child = (UIElement?)context.Data };
+            throw new InvalidOperationException("factory failed");
+        });
+
+        Assert.Throws<InvalidOperationException>(() => presenter.ContentTemplate = throwing);
+
+        Assert.Same(content, oldBorder.Child);
+        Assert.Same(oldBorder, content.VisualParent);
+        Assert.Null(failedBorder!.Child);
+        Assert.Empty(failedBorder.VisualChildren);
+    }
+
+    [Fact]
+    public void TemplateChildThatCannotBePresentedNoLongerNamesElementContentAsChild()
+    {
+        UIRoot root = new(200, 200);
+        Border content = new() { Width = 40, Height = 30 };
+        ContentPresenter presenter = new() { Content = content };
+        Border otherOwner = new();
+        root.VisualChildren.Add(presenter);
+        root.VisualChildren.Add(otherOwner);
+        root.ProcessFrame();
+        Border? wrapper = null;
+        ContentTemplate parentedTemplate = new("parented", typeof(object), key: null, priority: 0, context =>
+        {
+            wrapper = new Border { Child = (UIElement?)context.Data };
+            otherOwner.Child = wrapper;
+            return wrapper;
+        });
+
+        Assert.Throws<InvalidOperationException>(() => presenter.ContentTemplate = parentedTemplate);
+
+        Assert.Same(content, presenter.PresentedChild);
+        Assert.Same(presenter, content.VisualParent);
+        Assert.Null(wrapper!.Child);
+        Assert.Empty(wrapper.VisualChildren);
+        content.Width = 80;
+        wrapper.Measure(new MeasureContext(new LayoutSize(200, 200)));
+        Assert.Equal(LayoutSize.Zero, wrapper.DesiredSize);
+    }
+
+    [Fact]
+    public void ThrowingContentTemplateGivesElementContentBackThroughThePreviousContentControlContent()
+    {
+        UIRoot root = new(200, 200);
+        Border content = new() { Width = 40, Height = 30 };
+        ContentPresenter presenter = new() { ContentTemplate = ContentControlTemplate("cc"), Content = content };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        ContentControl oldContainer = Assert.IsType<ContentControl>(presenter.PresentedChild);
+
+        Assert.Throws<InvalidOperationException>(() => presenter.ContentTemplate = ThrowingTemplate(takeContent: false));
+
+        Assert.Same(oldContainer, presenter.PresentedChild);
+        Assert.Same(content, oldContainer.Content);
+        Assert.Same(content, Assert.Single(oldContainer.VisualChildren));
+        content.Width = 80;
+        oldContainer.Measure(new MeasureContext(new LayoutSize(200, 200)));
+        Assert.Equal(new LayoutSize(80, 30), oldContainer.DesiredSize);
+
+        Border replacement = new() { Width = 5, Height = 5 };
+        oldContainer.Content = replacement;
+        Assert.Same(replacement, Assert.Single(oldContainer.VisualChildren));
+        Assert.Null(content.VisualParent);
+    }
+
+    [Fact]
+    public void ContentTemplateThatChangesThePreviousPanelAndThrowsGivesElementContentBackToThePanel()
+    {
+        UIRoot root = new(200, 200);
+        Border content = new() { Width = 40, Height = 30 };
+        Border sibling = new();
+        StackPanel? oldPanel = null;
+        ContentPresenter presenter = new()
+        {
+            ContentTemplate = new ContentTemplate("panel", typeof(object), key: null, priority: 0, context =>
+            {
+                if (context.Data is not UIElement element)
+                {
+                    return null;
+                }
+
+                oldPanel = new StackPanel();
+                oldPanel.VisualChildren.Add(sibling);
+                oldPanel.VisualChildren.Add(element);
+                return oldPanel;
+            }),
+            Content = content
+        };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        ContentTemplate throwing = new("throws", typeof(object), key: null, priority: 0, _ =>
+        {
+            oldPanel!.VisualChildren.Remove(sibling);
+            throw new InvalidOperationException("factory failed");
+        });
+
+        InvalidOperationException thrown = Assert.Throws<InvalidOperationException>(() => presenter.ContentTemplate = throwing);
+
+        Assert.Equal("factory failed", thrown.Message);
+        Assert.Same(oldPanel, presenter.PresentedChild);
+        Assert.Same(oldPanel, content.VisualParent);
+        Assert.Same(content, Assert.Single(oldPanel!.VisualChildren));
+        Assert.Same(root, content.Root);
+    }
+
+    [Fact]
+    public void ThrowingContentTemplateGivesElementContentBackToThePreviousPanelInBothTrees()
+    {
+        UIRoot root = new(200, 200);
+        Border content = new() { Width = 10, Height = 10 };
+        Border sibling = new();
+        ContentTemplate panelTemplate = new("panel", typeof(object), key: null, priority: 0, context =>
+        {
+            if (context.Data is not UIElement element)
+            {
+                return null;
+            }
+
+            StackPanel panel = new();
+            panel.Children.Add(sibling);
+            panel.VisualChildren.Add(element);
+            panel.LogicalChildren.Add(element);
+            return panel;
+        });
+        ContentPresenter presenter = new() { ContentTemplate = panelTemplate, Content = content };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        StackPanel oldPanel = Assert.IsType<StackPanel>(presenter.PresentedChild);
+
+        InvalidOperationException thrown = Assert.Throws<InvalidOperationException>(
+            () => presenter.ContentTemplate = ThrowingTemplate(takeContent: false));
+
+        Assert.Equal("factory failed", thrown.Message);
+        Assert.Same(oldPanel, presenter.PresentedChild);
+        Assert.Same(oldPanel, content.VisualParent);
+        Assert.Same(oldPanel, content.LogicalParent);
+        Assert.Equal(1, oldPanel.VisualChildren.IndexOf(content));
+        Assert.Equal(1, oldPanel.LogicalChildren.IndexOf(content));
+        Assert.Same(root, content.Root);
+    }
+
+    [Fact]
+    public void ThrowingContentTemplateKeepsTheGeneratedTextBlockGenerated()
+    {
+        UIRoot root = new(200, 200);
+        ContentPresenter presenter = new() { Content = "hi" };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        TextBlock text = Assert.IsType<TextBlock>(presenter.PresentedChild);
+
+        Assert.Throws<InvalidOperationException>(() => presenter.ContentTemplate = ThrowingTemplate(takeContent: false));
+        Assert.Same(text, presenter.PresentedChild);
+
+        Cerneala.UI.Media.SolidColorBrush foreground = new(Cerneala.Drawing.Color.White);
+        presenter.FontSize = 37;
+        presenter.FontFamily = "Mono";
+        presenter.Foreground = foreground;
+        Assert.Equal(37, text.FontSize);
+        Assert.Equal("Mono", text.FontFamily);
+        Assert.Same(foreground, text.Foreground);
+
+        presenter.ContentTemplate = null;
+        Assert.Same(text, presenter.PresentedChild);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void RefreshWhoseContentTemplateThrewIsRetriedOnTheNextFrame(bool invalidate)
+    {
+        UIRoot root = new(300, 200);
+        bool fail = true;
+        Border shown = new() { Width = 10, Height = 10 };
+        ContentTemplate once = new("once", typeof(string), key: null, priority: 0,
+            _ => fail ? throw new InvalidOperationException("boom") : shown);
+        ContentPresenter presenter = new() { Content = "first" };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        TextBlock previous = Assert.IsType<TextBlock>(presenter.PresentedChild);
+
+        Assert.Throws<InvalidOperationException>(() => presenter.ContentTemplate = once);
+        Assert.Same(previous, presenter.PresentedChild);
+
+        fail = false;
+        if (invalidate)
+        {
+            presenter.Invalidate(
+                Cerneala.UI.Invalidation.InvalidationFlags.Measure | Cerneala.UI.Invalidation.InvalidationFlags.Arrange,
+                "test");
+        }
+
+        root.ProcessFrame();
+
+        Assert.Same(shown, presenter.PresentedChild);
+        Assert.Same(presenter, shown.VisualParent);
+        Assert.Same(shown, Assert.Single(presenter.VisualChildren));
+    }
+
+    [Fact]
+    public void RefreshWhoseContentTemplateKeepsThrowingThrowsAgainAndKeepsThePreviousPresentation()
+    {
+        UIRoot root = new(300, 200);
+        ContentPresenter presenter = new() { Content = "first" };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        TextBlock previous = Assert.IsType<TextBlock>(presenter.PresentedChild);
+
+        Assert.Throws<InvalidOperationException>(() => presenter.ContentTemplate = ThrowingTemplate(takeContent: false));
+
+        for (int frame = 0; frame < 2; frame++)
+        {
+            InvalidOperationException thrown = Assert.Throws<InvalidOperationException>(() => root.ProcessFrame());
+            Assert.Equal("factory failed", thrown.Message);
+            Assert.Same(previous, presenter.PresentedChild);
+            Assert.Same(previous, Assert.Single(presenter.VisualChildren));
+        }
+    }
+
+    [Fact]
+    public void ContentChangedByLoadedWhileAddingElementContentPresentsTheNewContent()
+    {
+        UIRoot root = new(200, 200);
+        ContentPresenter presenter = new() { Content = "first" };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        FixedElement content = new(new LayoutSize(10, 10));
+        SetContentOnFirstLoaded(content, presenter, "other");
+
+        presenter.Content = content;
+        root.ProcessFrame();
+
+        Assert.Equal("other", presenter.Content);
+        AssertPresentsOnlyText(presenter, "other");
+        Assert.False(content.IsAttached);
+        Assert.Null(content.VisualParent);
+    }
+
+    [Fact]
+    public void ContentChangedByLoadedWhileAddingATemplateChildPresentsTheNewContent()
+    {
+        UIRoot root = new(200, 200);
+        ContentPresenter presenter = new() { ContentTemplate = WrapOrTextTemplate("wrap"), Content = "first" };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        FixedElement content = new(new LayoutSize(10, 10));
+        SetContentOnFirstLoaded(content, presenter, "other");
+
+        presenter.Content = content;
+        root.ProcessFrame();
+
+        Assert.Equal("other", presenter.Content);
+        AssertPresentsOnlyText(presenter, "other");
+        Assert.False(content.IsAttached);
+        Assert.Null(content.VisualParent);
+        Assert.Null(content.LogicalParent);
+    }
+
+    private static void SetContentOnFirstLoaded(UIElement element, ContentPresenter presenter, object newContent)
+    {
+        bool changed = false;
+        element.Loaded += (_, _) =>
+        {
+            if (!changed)
+            {
+                changed = true;
+                presenter.Content = newContent;
+            }
+        };
+    }
+
     private static void SetContentOnFirstUnloaded(UIElement element, ContentPresenter presenter, object newContent)
     {
         bool changed = false;

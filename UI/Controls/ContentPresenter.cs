@@ -227,6 +227,7 @@ public class ContentPresenter : Control
         {
             ContentTemplate? template = ResolveContentTemplate(content);
             UIElement? previousChild = presentedChild;
+            bool previousChildIsGeneratedText = generatedTextChild;
             ElementContentPlacement? releasedContent = ReleaseElementContent(content, template is not null);
             if (refresh != presentationRefresh)
             {
@@ -242,7 +243,7 @@ public class ContentPresenter : Control
             {
                 if (refresh == presentationRefresh)
                 {
-                    RestorePresentation(previousChild, releasedContent);
+                    RestorePresentation(previousChild, previousChildIsGeneratedText, releasedContent);
                 }
 
                 throw;
@@ -271,14 +272,31 @@ public class ContentPresenter : Control
             try
             {
                 AddPresentedChild(next);
-                presentedChild = next;
             }
             catch
             {
-                RemovePresentedChild(next);
-                RestorePresentation(previousChild, releasedContent);
+                if (refresh == presentationRefresh)
+                {
+                    RemovePresentedChild(next);
+                    RestorePresentation(previousChild, previousChildIsGeneratedText, releasedContent);
+                }
+
                 throw;
             }
+
+            // Adding the child raises Loaded at once, and a handler can change the content in the same way.
+            if (refresh != presentationRefresh)
+            {
+                if (!ReferenceEquals(next, presentedChild))
+                {
+                    RemovePresentedChild(next);
+                }
+
+                DiscardSupersededChild(next, content);
+                return;
+            }
+
+            presentedChild = next;
         }
         finally
         {
@@ -302,9 +320,14 @@ public class ContentPresenter : Control
     }
 
     // A refresh that fails keeps the previous presentation: the element content goes back to the place the refresh
-    // took it from, and the previous presented child goes back into the presenter.
-    private void RestorePresentation(UIElement? previousChild, ElementContentPlacement? releasedContent)
+    // took it from, and the previous presented child goes back into the presenter. The presentation stays dirty, so
+    // the next measure or arrange tries the refresh again.
+    private void RestorePresentation(
+        UIElement? previousChild,
+        bool previousChildIsGeneratedText,
+        ElementContentPlacement? releasedContent)
     {
+        presentationDirty = true;
         releasedContent?.Restore();
         if (previousChild is not null && !ReferenceEquals(previousChild.VisualParent, this))
         {
@@ -312,6 +335,7 @@ public class ContentPresenter : Control
         }
 
         presentedChild = previousChild;
+        generatedTextChild = previousChildIsGeneratedText;
     }
 
     // A presenter whose element content is owned elsewhere while it is not shown, for example the content area of a
@@ -475,13 +499,17 @@ public class ContentPresenter : Control
         LogicalChildren.Remove(child);
     }
 
-    // Where element content was in the tree before a refresh released it.
+    // Where element content was in the tree before a refresh released it. A Decorator names its child in Child, and a
+    // ContentControl that hosts its content directly names it in Content; the release goes through that property
+    // (ContentControl.DetachChildFromOwnedSubtree), so the rollback goes through it too, and each Decorator or
+    // ContentControl involved keeps the property in step with its children.
     private readonly record struct ElementContentPlacement(
         UIElement Element,
         UIElement? VisualParent,
         int VisualIndex,
         UIElement? LogicalParent,
-        int LogicalIndex)
+        int LogicalIndex,
+        bool NamedByParent)
     {
         public static ElementContentPlacement Capture(UIElement element)
         {
@@ -492,15 +520,23 @@ public class ContentPresenter : Control
                 visualParent,
                 visualParent?.VisualChildren.IndexOf(element) ?? -1,
                 logicalParent,
-                logicalParent?.LogicalChildren.IndexOf(element) ?? -1);
+                logicalParent?.LogicalChildren.IndexOf(element) ?? -1,
+                IsNamedByParent(visualParent, element));
         }
 
         // A template that failed after it took the element still holds it, so the element leaves that template's
-        // element first.
+        // element first. The template can also have changed the previous parent's children, so the old index is
+        // limited to the current count. The visual tree comes first, because a Panel takes a logical child only
+        // when it is already its visual child.
         public void Restore()
         {
             bool restoreVisual = !ReferenceEquals(Element.VisualParent, VisualParent);
             bool restoreLogical = !ReferenceEquals(Element.LogicalParent, LogicalParent);
+            if (restoreVisual && IsNamedByParent(Element.VisualParent, Element))
+            {
+                SetNamedChild(Element.VisualParent!, null);
+            }
+
             if (restoreVisual)
             {
                 Element.VisualParent?.VisualChildren.Remove(Element);
@@ -509,12 +545,45 @@ public class ContentPresenter : Control
             if (restoreLogical)
             {
                 Element.LogicalParent?.LogicalChildren.Remove(Element);
-                LogicalParent?.LogicalChildren.Insert(LogicalIndex, Element);
             }
 
-            if (restoreVisual)
+            if (NamedByParent && restoreVisual && restoreLogical && ReferenceEquals(VisualParent, LogicalParent))
             {
-                VisualParent?.VisualChildren.Insert(VisualIndex, Element);
+                SetNamedChild(VisualParent!, Element);
+                return;
+            }
+
+            if (restoreVisual && VisualParent is not null)
+            {
+                VisualParent.VisualChildren.Insert(Math.Min(VisualIndex, VisualParent.VisualChildren.Count), Element);
+            }
+
+            if (restoreLogical && LogicalParent is not null)
+            {
+                LogicalParent.LogicalChildren.Insert(Math.Min(LogicalIndex, LogicalParent.LogicalChildren.Count), Element);
+            }
+        }
+
+        private static bool IsNamedByParent(UIElement? parent, UIElement element)
+        {
+            return parent switch
+            {
+                Decorator decorator => ReferenceEquals(decorator.Child, element),
+                ContentControl contentControl => contentControl.HostsContentDirectly(element) &&
+                    ReferenceEquals(contentControl.Content, element),
+                _ => false
+            };
+        }
+
+        private static void SetNamedChild(UIElement parent, UIElement? element)
+        {
+            if (parent is Decorator decorator)
+            {
+                decorator.Child = element;
+            }
+            else
+            {
+                ((ContentControl)parent).Content = element;
             }
         }
     }

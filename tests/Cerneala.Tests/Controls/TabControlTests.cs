@@ -556,6 +556,37 @@ public sealed class TabControlTests
     }
 
     [Fact]
+    public void ContentAreaShowsTheTemplateElementOnTheNextFrameAfterTheSelectedTabTemplateThrewOnce()
+    {
+        UIRoot root = new(300, 200);
+        FixedElement a = new();
+        FixedElement b = new();
+        FixedElement shown = new();
+        bool fail = true;
+        ContentTemplate throwing = new(
+            "boom",
+            typeof(FixedElement),
+            null,
+            0,
+            _ => fail ? throw new InvalidOperationException("boom") : shown);
+        TabItem first = new() { Header = "H1", Content = a };
+        TabItem second = new() { Header = "H2", Content = b, ContentTemplate = throwing };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        root.VisualChildren.Add(tabControl);
+        tabControl.SelectedIndex = 0;
+        root.ProcessFrame();
+
+        tabControl.SelectedIndex = 1;
+        Assert.Throws<InvalidOperationException>(() => root.ProcessFrame());
+
+        fail = false;
+        root.ProcessFrame();
+
+        Assert.True(HasVisualAncestor(shown, tabControl), "the template's element is not under the TabControl");
+    }
+
+    [Fact]
     public void ElementItemOfARemovedGeneratedTabCanBeAddedToAnotherParent()
     {
         UIRoot root = new(300, 200);
