@@ -649,6 +649,97 @@ public sealed class TabControlTests
     }
 
     [Fact]
+    public void ComponentTemplatePresenterCanShowTheSelectedElementContent()
+    {
+        UIRoot root = new(300, 200);
+        FixedElement a = new();
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { new TabItem { Header = "1", Content = a }, new TabItem { Header = "2" } });
+        tabControl.SelectedIndex = 0;
+        ContentPresenter? presenter = null;
+
+        tabControl.ComponentTemplate = new ComponentTemplate<TabControl>("tabs", context =>
+            presenter = new ContentPresenter { Content = context.Owner.SelectedContent });
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+
+        Assert.NotNull(presenter);
+        Assert.Same(presenter, a.LogicalParent);
+        Assert.Same(presenter, a.VisualParent);
+    }
+
+    [Fact]
+    public void ComponentTemplatePresenterFollowsTheSelectedTabWhileOtherTabsKeepTheirElementContent()
+    {
+        UIRoot root = new(300, 200);
+        FixedElement a = new();
+        FixedElement b = new();
+        FixedElement other = new();
+        TabItem first = new() { Header = "1", Content = a };
+        TabItem second = new() { Header = "2", Content = b };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        tabControl.SelectedIndex = 0;
+        ContentPresenter? presenter = null;
+        tabControl.ComponentTemplate = new ComponentTemplate<TabControl>("tabs", context =>
+            presenter = new ContentPresenter { Content = context.Owner.SelectedContent });
+        tabControl.SelectionChanged += (_, _) => presenter!.Content = tabControl.SelectedContent;
+        root.VisualChildren.Add(tabControl);
+        root.VisualChildren.Add(other);
+        root.ProcessFrame();
+
+        Assert.Same(presenter, a.VisualParent);
+        Assert.Same(second, b.LogicalParent);
+        Assert.Throws<InvalidOperationException>(() => other.LogicalChildren.Add(b));
+
+        tabControl.SelectedIndex = 1;
+        root.ProcessFrame();
+
+        Assert.Same(presenter, b.LogicalParent);
+        Assert.Same(presenter, b.VisualParent);
+        Assert.Same(first, a.LogicalParent);
+        Assert.Null(a.VisualParent);
+        Assert.Throws<InvalidOperationException>(() => other.LogicalChildren.Add(a));
+        Assert.Empty(other.LogicalChildren);
+
+        tabControl.SelectedIndex = 0;
+        root.ProcessFrame();
+
+        Assert.Same(presenter, a.VisualParent);
+        Assert.Same(second, b.LogicalParent);
+        Assert.Null(b.VisualParent);
+    }
+
+    [Fact]
+    public void ElementContentMovesBetweenTheContentAreaAndTheComponentTemplate()
+    {
+        UIRoot root = new(300, 200);
+        FixedElement a = new();
+        TabItem first = new() { Header = "1", Content = a };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, new TabItem { Header = "2" } });
+        root.VisualChildren.Add(tabControl);
+        tabControl.SelectedIndex = 0;
+        root.ProcessFrame();
+        Assert.True(HasVisualAncestor(a, tabControl), "a is not in the content area before the template");
+        ContentPresenter? presenter = null;
+
+        tabControl.ComponentTemplate = new ComponentTemplate<TabControl>("tabs", context =>
+            presenter = new ContentPresenter { Content = context.Owner.SelectedContent });
+        root.ProcessFrame();
+
+        Assert.Same(presenter, a.VisualParent);
+
+        tabControl.ComponentTemplate = null;
+        root.ProcessFrame();
+
+        Assert.True(HasVisualAncestor(a, tabControl), "a is not under the TabControl after the template was removed");
+        Assert.NotSame(presenter, a.VisualParent);
+        Assert.False(HasVisualAncestor(a, first), "a is hosted inside its TabItem");
+        Assert.True(a.ArrangedBounds.Width > 0 && a.ArrangedBounds.Height > 0, $"a arranged {a.ArrangedBounds}");
+    }
+
+    [Fact]
     public void DefaultTabControlLaysHeadersOutHorizontally()
     {
         UIRoot root = new(200, 100);
