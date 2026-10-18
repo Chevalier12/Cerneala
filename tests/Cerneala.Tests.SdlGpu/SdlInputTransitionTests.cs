@@ -1,7 +1,9 @@
 using Cerneala.Platforms.Sdl3;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting.Windowing;
 using Cerneala.UI.Input;
+using Cerneala.UI.Layout;
 
 namespace Cerneala.Tests.SdlGpu;
 
@@ -205,27 +207,65 @@ public sealed class SdlInputTransitionTests
     }
 
     [Fact]
-    public void AlternatingMoveAndWheelDoNotLagBehindTheInput()
+    public void AlternatingMoveAndWheelRaiseEachNotchWhereItTurned()
     {
         SdlInputSource source = new();
-        int pair = 0;
-        // 60 frames; before each, 3 or 4 (move, wheel notch) pairs arrive: 200 pairs in 1 s.
+        // One pump, in the order SdlWindowPlatform makes the calls for three wheel events.
+        for (int x = 0; x < 3; x++)
+        {
+            source.MovePointer(x, 10);
+            source.AddWheel(1, flipped: false);
+        }
+
+        for (int x = 0; x < 3; x++)
+        {
+            InputFrame frame = source.GetFrame();
+            Assert.Equal(x, frame.Pointer.X);
+            Assert.Equal(120, frame.Pointer.WheelDelta);
+        }
+
+        Assert.Equal(0, source.GetFrame().Pointer.WheelDelta);
+    }
+
+    [Fact]
+    public void WheelNotchesAtOnePositionDoNotLagBehindTheInput()
+    {
+        SdlInputSource source = new();
+        source.MovePointer(50, 10);
+        _ = source.GetFrame();
+        // 60 frames; before each, 3 or 4 wheel events at one position arrive: 200 notches in 1 s.
+        int notch = 0;
         for (int frame = 0; frame < 60; frame++)
         {
             int target = (frame + 1) * 200 / 60;
-            for (; pair < target; pair++)
+            for (; notch < target; notch++)
             {
-                source.MovePointer(pair, 10);
+                source.MovePointer(50, 10);
                 source.AddWheel(1, flipped: false);
             }
 
             _ = source.GetFrame();
         }
 
-        InputFrame next = source.GetFrame();
-        Assert.Equal(200 * 120, next.Pointer.WheelValue);
-        Assert.Equal(199, next.Pointer.X);
-        Assert.Equal(0, source.GetFrame().Pointer.WheelDelta);
+        Assert.Equal(200 * 120, source.GetFrame().Pointer.WheelValue);
+    }
+
+    [Fact]
+    public void MoveAfterWheelAndKeyRepeatWaitsForTheNextFrame()
+    {
+        SdlInputSource source = new();
+        source.MovePointer(10, 20);
+        source.SetKey(LeftCtrlScancode, true);
+        _ = source.GetFrame();
+        source.AddWheel(1, flipped: false);
+        source.SetKey(LeftCtrlScancode, true, repeat: true);
+        source.MovePointer(30, 40);
+
+        InputFrame zoomed = source.GetFrame();
+        Assert.Equal(10, zoomed.Pointer.X);
+        Assert.Equal(120, zoomed.Pointer.WheelDelta);
+        Assert.Equal(1, zoomed.Keyboard.GetRepeatCount(InputKey.LeftCtrl));
+        Assert.Equal(30, source.GetFrame().Pointer.X);
     }
 
     [Fact]
@@ -334,6 +374,48 @@ public sealed class SdlInputTransitionTests
         Assert.Equal(10, pressed.Pointer.X);
         Assert.Equal(120, pressed.Pointer.WheelDelta);
         Assert.Equal(30, source.GetFrame().Pointer.X);
+    }
+
+    [Theory]
+    [InlineData(1, InputMouseButton.Left)]
+    [InlineData(2, InputMouseButton.Middle)]
+    [InlineData(3, InputMouseButton.Right)]
+    public void WheelNotchBeforeAMoveAndPressElsewhereInOnePumpIsRaisedWhereTheWheelTurned(byte sdlButton, InputMouseButton button)
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1, WindowDisplayScale = 1 };
+        RecordingGraphicsFactory graphics = new();
+        using WindowApplicationRuntime runtime = new(new SdlWindowPlatform(api, graphics));
+        Border a = new() { Width = 100, Height = 50 };
+        Border b = new() { Width = 100, Height = 50, Margin = new Thickness(100, 0, 0, 0) };
+        StackPanel panel = new()
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top
+        };
+        panel.VisualChildren.Add(a);
+        panel.VisualChildren.Add(b);
+        List<string> log = [];
+        a.AddHandler(UIElement.MouseWheelEvent, (_, _) => log.Add("wheel on A"), handledEventsToo: true);
+        b.AddHandler(UIElement.MouseWheelEvent, (_, _) => log.Add("wheel on B"), handledEventsToo: true);
+        a.AddHandler(UIElement.MouseDownEvent, (_, args) => log.Add($"{((MouseButtonEventArgs)args).ChangedButton} down on A"), handledEventsToo: true);
+        b.AddHandler(UIElement.MouseDownEvent, (_, args) => log.Add($"{((MouseButtonEventArgs)args).ChangedButton} down on B"), handledEventsToo: true);
+        runtime.StartMainWindow(new Window { Content = panel, Width = 320, Height = 200 });
+        uint windowId = Assert.IsType<SdlWindowSurface>(Assert.Single(graphics.Surfaces)).WindowId;
+        Assert.Equal(200, b.ArrangedBounds.X);
+        Pump(runtime, api, new SdlEvent(SdlEventKind.MouseMotion, windowId, X: 20, Y: 20));
+
+        // The wheel turns over A; then the pointer moves to B and presses, all in one pump.
+        Pump(runtime, api,
+            new SdlEvent(SdlEventKind.MouseWheel, windowId, Data2: -1, X: 20, Y: 20),
+            new SdlEvent(SdlEventKind.MouseMotion, windowId, X: 220, Y: 20),
+            new SdlEvent(SdlEventKind.MouseButtonDown, windowId, X: 220, Y: 20, MouseButton: sdlButton));
+        for (int frame = 0; frame < 4; frame++)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+
+        Assert.Equal(["wheel on A", $"{button} down on B"], log);
     }
 
     private static void Pump(WindowApplicationRuntime runtime, FakeSdlApi api, params SdlEvent[] events)
