@@ -481,6 +481,126 @@ public sealed class TabControlTests
     }
 
     [Fact]
+    public void ElementContentOfATabThatIsNotSelectedCannotBeAddedToAnotherParent()
+    {
+        UIRoot root = new(300, 200);
+        FixedElement a = new();
+        FixedElement b = new();
+        FixedElement other = new();
+        TabItem first = new() { Header = "H1", Content = a };
+        TabItem second = new() { Header = "H2", Content = b };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        root.VisualChildren.Add(tabControl);
+        root.VisualChildren.Add(other);
+        tabControl.SelectedIndex = 0;
+        root.ProcessFrame();
+
+        Assert.Same(second, b.LogicalParent);
+        Assert.Null(b.VisualParent);
+        InvalidOperationException rejected =Assert.Throws<InvalidOperationException>(() => other.LogicalChildren.Add(b));
+        Assert.Equal("Element must be removed from its current parent before reparenting.", rejected.Message);
+        Assert.Empty(other.LogicalChildren);
+
+        tabControl.SelectedIndex = 1;
+        root.ProcessFrame();
+
+        Assert.True(HasVisualAncestor(b, tabControl), "b is not under the TabControl while tab 1 is selected");
+        Assert.False(HasVisualAncestor(b, second), "b is hosted inside its TabItem");
+        Assert.True(b.ArrangedBounds.Width > 0 && b.ArrangedBounds.Height > 0, $"b arranged {b.ArrangedBounds}");
+        Assert.Same(first, a.LogicalParent);
+        Assert.Null(a.VisualParent);
+        Assert.Throws<InvalidOperationException>(() => other.LogicalChildren.Add(a));
+        Assert.Empty(other.LogicalChildren);
+    }
+
+    [Fact]
+    public void ElementItemOfARemovedGeneratedTabCanBeAddedToAnotherParent()
+    {
+        UIRoot root = new(300, 200);
+        FixedElement a = new();
+        FixedElement b = new();
+        FixedElement other = new();
+        ObservableCollection<UIElement> items = [a, b];
+        TabControl tabControl = new() { ItemsSource = items };
+        root.VisualChildren.Add(tabControl);
+        root.VisualChildren.Add(other);
+        tabControl.SelectedIndex = 0;
+        root.ProcessFrame();
+
+        Assert.IsType<TabItem>(b.LogicalParent);
+        Assert.Throws<InvalidOperationException>(() => other.LogicalChildren.Add(b));
+
+        items.Remove(b);
+        root.ProcessFrame();
+
+        Assert.Null(b.LogicalParent);
+        other.LogicalChildren.Add(b);
+        other.VisualChildren.Add(b);
+        root.ProcessFrame();
+        Assert.Same(other, b.VisualParent);
+    }
+
+    [Fact]
+    public void ElementContentOfATabCannotBeTheContentOfAnotherTab()
+    {
+        UIRoot root = new(300, 200);
+        FixedElement a = new();
+        FixedElement b = new();
+        TabItem first = new() { Header = "H1", Content = a };
+        TabItem second = new() { Header = "H2", Content = b };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        root.VisualChildren.Add(tabControl);
+        tabControl.SelectedIndex = 0;
+        root.ProcessFrame();
+        TabItem third = new() { Header = "H3" };
+
+        Assert.Throws<InvalidOperationException>(() => third.Content = a);
+        Assert.Throws<InvalidOperationException>(() => third.Content = b);
+        Assert.Null(third.Content);
+
+        FixedElement loose = new();
+        TabItem outside = new() { Content = loose };
+        Assert.Throws<InvalidOperationException>(() => third.Content = loose);
+
+        second.Content = null;
+        third.Content = b;
+        Assert.Same(b, third.Content);
+
+        tabControl.SelectedIndex = 1;
+        root.ProcessFrame();
+
+        Assert.Null(a.VisualParent);
+        Assert.Throws<InvalidOperationException>(() => outside.Content = a);
+        Assert.Same(loose, outside.Content);
+    }
+
+    [Fact]
+    public void ElementContentOfATabThatIsNotSelectedStaysOwnedWhenTheTabGetsAComponentTemplate()
+    {
+        UIRoot root = new(300, 200);
+        FixedElement b = new();
+        TabItem first = new() { Header = "H1", Content = new FixedElement() };
+        TabItem second = new() { Header = "H2", Content = b };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        root.VisualChildren.Add(tabControl);
+        tabControl.SelectedIndex = 0;
+        root.ProcessFrame();
+
+        second.ComponentTemplate = new ComponentTemplate<TabItem>("tab", _ => new FixedElement());
+        root.ProcessFrame();
+
+        Assert.Throws<InvalidOperationException>(() => new TabItem().Content = b);
+
+        tabControl.SelectedIndex = 1;
+        root.ProcessFrame();
+
+        Assert.True(HasVisualAncestor(b, tabControl), "b is not under the TabControl while tab 1 is selected");
+    }
+
+    [Fact]
     public void DefaultTabControlLaysHeadersOutHorizontally()
     {
         UIRoot root = new(200, 100);
