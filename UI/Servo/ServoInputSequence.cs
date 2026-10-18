@@ -30,7 +30,8 @@ internal sealed class ServoInputSequence
             HoldContinuationStep = new ServoInputStep(
                 new InputFrame(held.Pointer, held.Pointer, held.Keyboard, held.Keyboard, []),
                 held.Pointer,
-                held.Keyboard);
+                held.Keyboard,
+                held.HasPointerPosition);
         }
     }
 
@@ -53,7 +54,8 @@ internal sealed class ServoInputSequence
 
     internal static ServoInputStep CreateResetStep(
         PointerSnapshot pointer,
-        KeyboardSnapshot keyboard)
+        KeyboardSnapshot keyboard,
+        bool hasPointerPosition)
     {
         ArgumentNullException.ThrowIfNull(pointer);
         ArgumentNullException.ThrowIfNull(keyboard);
@@ -70,11 +72,15 @@ internal sealed class ServoInputSequence
         return new ServoInputStep(
             new InputFrame(pointer, released, keyboard, emptyKeyboard, []),
             released,
-            emptyKeyboard);
+            emptyKeyboard,
+            hasPointerPosition);
     }
 }
 
+// HasPointerPosition is false while Servo has run no pointer action: Pointer then still has the
+// initial PointerSnapshot.Empty position (0, 0), which no Servo action chose.
 internal readonly record struct ServoInputStep(
     InputFrame Frame,
     PointerSnapshot Pointer,
-    KeyboardSnapshot Keyboard);
+    KeyboardSnapshot Keyboard,
+    bool HasPointerPosition);

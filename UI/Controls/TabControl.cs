@@ -81,10 +81,17 @@ public class TabControl : Selector
         }
     }
 
+    private bool IsComponentTemplated => ComponentTemplate is not null || ComponentTemplateKey is not null;
+
     internal void OnTabContentChanged(TabItem tab)
     {
         if (ReferenceEquals(tab, SelectedTabItem))
         {
+            if (IsComponentTemplated)
+            {
+                tab.ReleaseContentForContentArea();
+            }
+
             InvalidateSelectedContent("Selected tab content changed");
         }
     }
@@ -93,7 +100,10 @@ public class TabControl : Selector
     {
         if (TemplateChild is not null)
         {
-            return base.MeasureCore(context);
+            LayoutSize size = base.MeasureCore(context);
+            // The template may have let go of the content of a tab shown before; that tab owns it again.
+            UpdateTemplatedContentOwnership();
+            return size;
         }
 
         LayoutSize headerSize = ItemsPresenter.Measure(context);
@@ -131,10 +141,82 @@ public class TabControl : Selector
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
+        bool templateChanged = ReferenceEquals(args.Property, ComponentTemplateProperty) ||
+            ReferenceEquals(args.Property, ComponentTemplateKeyProperty);
+        if (templateChanged && IsComponentTemplated)
+        {
+            // From now on the template shows SelectedContent: the content area and the selected tab let go of a
+            // UIElement content before the template is built, so a ContentPresenter in the template can take it.
+            presentedTab = null;
+            selectedContentPresenter.PrepareItemPresentation(null, null, null, null, -1);
+            SelectedTabItem?.ReleaseContentForContentArea();
+        }
+
         base.OnPropertyChanged(args);
         if (ReferenceEquals(args.Property, SelectedIndexProperty))
         {
             InvalidateSelectedContent("Selected tab changed");
+        }
+
+        if (templateChanged || (ReferenceEquals(args.Property, SelectedIndexProperty) && IsComponentTemplated))
+        {
+            UpdateTemplatedContentOwnership();
+        }
+    }
+
+    // The template that goes away lets go of the element content of the tabs it showed, so the next template or the
+    // content area can show it, and its tab can own it again.
+    protected override void OnTemplateApplied(ComponentTemplateInstance? instance)
+    {
+        base.OnTemplateApplied(instance);
+        if (instance is not null)
+        {
+            return;
+        }
+
+        foreach (TabItem tab in GetTabs())
+        {
+            if (tab.Content is UIElement element && element.LogicalParent is not null && !ReferenceEquals(element.LogicalParent, tab))
+            {
+                ContentControl.DetachChildFromOwnedSubtree(this, element);
+            }
+        }
+    }
+
+    // With a ComponentTemplate, the template shows SelectedContent, so the selected tab lets go of a UIElement content
+    // and every other tab owns its content again once nothing shows it. Without one, every tab owns a content that
+    // nothing shows, and the content area takes the selected tab's content in measure.
+    private void UpdateTemplatedContentOwnership()
+    {
+        TabItem? selected = IsComponentTemplated ? SelectedTabItem : null;
+        foreach (TabItem tab in GetTabs())
+        {
+            if (!ReferenceEquals(tab, selected))
+            {
+                tab.HoldContent();
+            }
+        }
+
+        selected?.ReleaseContentForContentArea();
+    }
+
+    // TabItem items, which a templated control may never realize, and the realized generated tabs.
+    private IEnumerable<TabItem> GetTabs()
+    {
+        for (int index = 0; index < ItemCount; index++)
+        {
+            if (GetItemAt(index) is TabItem tab)
+            {
+                yield return tab;
+            }
+        }
+
+        foreach (UIElement container in ItemContainerGenerator.RealizedContainers.Values)
+        {
+            if (container is TabItem tab && !ReferenceEquals(ItemContainerGenerator.GetItem(container), container))
+            {
+                yield return tab;
+            }
         }
     }
 

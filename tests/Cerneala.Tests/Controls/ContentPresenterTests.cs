@@ -132,6 +132,7 @@ public sealed class ContentPresenterTests
         Assert.Same(newBorder, content.LogicalParent);
         Assert.DoesNotContain(content, oldBorder.VisualChildren);
         Assert.DoesNotContain(content, oldBorder.LogicalChildren);
+        Assert.Null(oldBorder.Child);
     }
 
     [Fact]
@@ -205,9 +206,243 @@ public sealed class ContentPresenterTests
         Assert.Same(border, content.VisualParent);
     }
 
+    [Fact]
+    public void ThrowingContentTemplateKeepsElementContentHostedDirectly()
+    {
+        UIRoot root = new(200, 200);
+        FixedElement content = new(new LayoutSize(10, 10));
+        ContentPresenter presenter = new() { Content = content };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+
+        Assert.Throws<InvalidOperationException>(() => presenter.ContentTemplate = ThrowingTemplate(takeContent: false));
+
+        Assert.Same(content, presenter.PresentedChild);
+        Assert.Same(presenter, content.VisualParent);
+        Assert.Same(presenter, content.LogicalParent);
+        Assert.Same(root, content.Root);
+    }
+
+    [Fact]
+    public void ThrowingContentTemplateKeepsElementContentInsideThePreviousTemplate()
+    {
+        UIRoot root = new(200, 200);
+        FixedElement content = new(new LayoutSize(10, 10));
+        ContentPresenter presenter = new() { ContentTemplate = WrapTemplate("wrap", key: null), Content = content };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        Border oldBorder = Assert.IsType<Border>(presenter.PresentedChild);
+
+        Assert.Throws<InvalidOperationException>(() => presenter.ContentTemplate = ThrowingTemplate(takeContent: false));
+
+        Assert.Same(oldBorder, presenter.PresentedChild);
+        Assert.Same(oldBorder, content.VisualParent);
+        Assert.Same(oldBorder, content.LogicalParent);
+        Assert.Contains(content, oldBorder.VisualChildren);
+        Assert.Same(root, content.Root);
+    }
+
+    [Fact]
+    public void ContentTemplateThatTakesElementContentAndThrowsKeepsThePreviousTemplate()
+    {
+        UIRoot root = new(200, 200);
+        FixedElement content = new(new LayoutSize(10, 10));
+        ContentPresenter presenter = new() { ContentTemplate = WrapTemplate("wrap", key: null), Content = content };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        Border oldBorder = Assert.IsType<Border>(presenter.PresentedChild);
+
+        Assert.Throws<InvalidOperationException>(() => presenter.ContentTemplate = ThrowingTemplate(takeContent: true));
+
+        Assert.Same(oldBorder, presenter.PresentedChild);
+        Assert.Same(oldBorder, content.VisualParent);
+        Assert.Same(oldBorder, content.LogicalParent);
+        Assert.Same(root, content.Root);
+    }
+
+    [Fact]
+    public void TemplateChildThatCannotBePresentedKeepsElementContentHostedDirectly()
+    {
+        UIRoot root = new(200, 200);
+        FixedElement content = new(new LayoutSize(10, 10));
+        ContentPresenter presenter = new() { Content = content };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        Border otherOwner = new();
+        ContentTemplate parentedTemplate = new("parented", typeof(object), key: null, priority: 0, context =>
+        {
+            Border wrapper = new() { Child = (UIElement?)context.Data };
+            otherOwner.Child = wrapper;
+            return wrapper;
+        });
+
+        Assert.Throws<InvalidOperationException>(() => presenter.ContentTemplate = parentedTemplate);
+
+        Assert.Same(content, presenter.PresentedChild);
+        Assert.Same(presenter, content.VisualParent);
+        Assert.Same(presenter, content.LogicalParent);
+        Assert.Same(root, content.Root);
+    }
+
+    [Fact]
+    public void ReplacingContentTemplateKeepsElementContentInTheContainerThatTheTemplateReuses()
+    {
+        UIRoot root = new(200, 200);
+        FixedElement content = new(new LayoutSize(10, 10));
+        Border cached = new();
+        Func<ContentTemplateContext, UIElement?> factory = context =>
+        {
+            cached.Child = (UIElement?)context.Data;
+            return cached;
+        };
+        ContentPresenter presenter = new()
+        {
+            ContentTemplate = new ContentTemplate("cache1", typeof(object), key: null, priority: 0, factory),
+            Content = content
+        };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        Assert.Same(cached, content.VisualParent);
+
+        presenter.ContentTemplate = new ContentTemplate("cache2", typeof(object), key: null, priority: 0, factory);
+        root.ProcessFrame();
+
+        Assert.Same(cached, presenter.PresentedChild);
+        Assert.Same(content, cached.Child);
+        Assert.Same(cached, content.VisualParent);
+        Assert.Same(cached, content.LogicalParent);
+        Assert.Contains(content, cached.VisualChildren);
+        Assert.Contains(content, cached.LogicalChildren);
+    }
+
+    [Fact]
+    public void ReplacingContentTemplateKeepsElementContentInTheContentControlThatTheTemplateReuses()
+    {
+        UIRoot root = new(200, 200);
+        FixedElement content = new(new LayoutSize(10, 10));
+        ContentControl cached = new();
+        Func<ContentTemplateContext, UIElement?> factory = context =>
+        {
+            cached.Content = context.Data;
+            return cached;
+        };
+        ContentPresenter presenter = new()
+        {
+            ContentTemplate = new ContentTemplate("cache1", typeof(object), key: null, priority: 0, factory),
+            Content = content
+        };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        Assert.Same(cached, content.VisualParent);
+
+        presenter.ContentTemplate = new ContentTemplate("cache2", typeof(object), key: null, priority: 0, factory);
+        root.ProcessFrame();
+
+        Assert.Same(cached, presenter.PresentedChild);
+        Assert.Same(content, cached.Content);
+        Assert.Same(cached, content.VisualParent);
+        Assert.Same(cached, content.LogicalParent);
+        Assert.Contains(content, cached.VisualChildren);
+        Assert.Contains(content, cached.LogicalChildren);
+    }
+
+    [Fact]
+    public void ReplacingContentTemplateReleasesElementContentThroughTheOldContentControlContent()
+    {
+        FixedElement content = new(new LayoutSize(10, 10));
+        ContentPresenter presenter = new()
+        {
+            ContentTemplate = ContentControlTemplate("first"),
+            Content = content
+        };
+        ContentControl oldContainer = Assert.IsType<ContentControl>(presenter.PresentedChild);
+        Assert.Same(oldContainer, content.VisualParent);
+
+        presenter.ContentTemplate = ContentControlTemplate("second");
+
+        ContentControl newContainer = Assert.IsType<ContentControl>(presenter.PresentedChild);
+        Assert.NotSame(oldContainer, newContainer);
+        Assert.Same(newContainer, content.VisualParent);
+        Assert.Null(oldContainer.Content);
+        Assert.DoesNotContain(content, oldContainer.VisualChildren);
+        Assert.DoesNotContain(content, oldContainer.LogicalChildren);
+    }
+
+    [Fact]
+    public void ReplacingPassThroughContentTemplateKeepsElementContentInPlace()
+    {
+        UIRoot root = new(200, 200);
+        FixedElement content = new(new LayoutSize(10, 10));
+        int loaded = 0;
+        int unloaded = 0;
+        content.Loaded += (_, _) => loaded++;
+        content.Unloaded += (_, _) => unloaded++;
+        ContentPresenter presenter = new() { ContentTemplate = PassThroughTemplate("first"), Content = content };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        Assert.Same(content, presenter.PresentedChild);
+
+        presenter.ContentTemplate = PassThroughTemplate("second");
+        root.ProcessFrame();
+
+        Assert.Same(content, presenter.PresentedChild);
+        Assert.Same(presenter, content.VisualParent);
+        Assert.Same(presenter, content.LogicalParent);
+        Assert.Equal(1, loaded);
+        Assert.Equal(0, unloaded);
+    }
+
+    [Fact]
+    public void ReplacingPassThroughContentTemplateWithPanelTemplateMovesElementContentIntoThePanel()
+    {
+        UIRoot root = new(200, 200);
+        FixedElement content = new(new LayoutSize(10, 10));
+        ContentPresenter presenter = new() { ContentTemplate = PassThroughTemplate("first"), Content = content };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+
+        presenter.ContentTemplate = new ContentTemplate("panel", typeof(object), key: null, priority: 0, context =>
+        {
+            StackPanel panel = new();
+            panel.VisualChildren.Add((UIElement)context.Data!);
+            return panel;
+        });
+        root.ProcessFrame();
+
+        StackPanel panel = Assert.IsType<StackPanel>(presenter.PresentedChild);
+        Assert.Same(panel, content.VisualParent);
+        Assert.Null(content.LogicalParent);
+        Assert.DoesNotContain(content, presenter.VisualChildren);
+        Assert.DoesNotContain(content, presenter.LogicalChildren);
+        Assert.Same(root, content.Root);
+    }
+
+    private static ContentTemplate PassThroughTemplate(string name)
+    {
+        return new ContentTemplate(name, typeof(object), key: null, priority: 0, context => context.Data as UIElement);
+    }
+
     private static ContentTemplate WrapTemplate(string name, string? key)
     {
         return new ContentTemplate(name, typeof(object), key, priority: 0, context => new Border { Child = (UIElement?)context.Data });
+    }
+
+    private static ContentTemplate ContentControlTemplate(string name)
+    {
+        return new ContentTemplate(name, typeof(object), key: null, priority: 0, context => new ContentControl { Content = context.Data });
+    }
+
+    private static ContentTemplate ThrowingTemplate(bool takeContent)
+    {
+        return new ContentTemplate("throws", typeof(object), key: null, priority: 0, context =>
+        {
+            if (takeContent)
+            {
+                _ = new Border { Child = (UIElement?)context.Data };
+            }
+
+            throw new InvalidOperationException("factory failed");
+        });
     }
 
     private sealed record EqualContent(string Value);

@@ -855,8 +855,15 @@ public class ComboBox : Selector
 
     // The overlay is already projected or withdrawn, so the event is raised even when starting or canceling the
     // selection transaction rethrows a re-preparation failure. The failure propagates after the event.
+    // Opened and Closed of an overlay inside the drop-down bubble through the drop-down overlay; only its own
+    // projection counts.
     private void OnOverlayOpened(UiElementId _, RoutedEventArgs args)
     {
+        if (!ReferenceEquals(args.OriginalSource, dropDownOverlay))
+        {
+            return;
+        }
+
         ResetDropDownVirtualization();
         try
         {
@@ -873,6 +880,11 @@ public class ComboBox : Selector
 
     private void OnOverlayClosed(UiElementId _, RoutedEventArgs args)
     {
+        if (!ReferenceEquals(args.OriginalSource, dropDownOverlay))
+        {
+            return;
+        }
+
         try
         {
             if (IsDropDownOpen)
@@ -952,19 +964,44 @@ public class ComboBox : Selector
     }
 
     // A non-editable field acts as one drop-down button, as the WPF default template's ToggleButton covers the
-    // whole field. A command source in the field, such as PART_DropDownToggle or a button that a hit-testable
-    // selection box shows, owns its click, as the input bridge resolves the click to it. The projected list is
-    // not in the field's visual subtree.
+    // whole field. Content in the field that the input bridge gives its own pointer input owns its click: a
+    // command source, such as PART_DropDownToggle or a button that a hit-testable selection box shows, as the
+    // input bridge resolves the click to it, and a pointer drag source, such as a TextBox or a Thumb there. The
+    // projected list is not in the field's visual subtree. As the WPF ToggleButton handles the field's click, the
+    // toggle marks the MouseUp handled, so an ancestor command source, such as a Button whose Content is this
+    // ComboBox, does not also click or run its command.
     private void OnMouseUp(UiElementId _, RoutedEventArgs args)
     {
         if (IsEditable || !IsEnabled ||
             args is not MouseButtonEventArgs { ChangedButton: InputMouseButton.Left, ClickCount: > 0 } ||
-            !ReferenceEquals(FindClickOwner(this, args.OriginalSource), this))
+            !ReferenceEquals(FindClickOwner(this, args.OriginalSource), this) ||
+            IsInPointerDragSource(args.OriginalSource))
         {
             return;
         }
 
         IsDropDownOpen = !IsDropDownOpen;
+        args.Handled = true;
+    }
+
+    private bool IsInPointerDragSource(object? source)
+    {
+        UIElement? element = source switch
+        {
+            UIElement candidate => candidate,
+            UiElementId id when Root?.ElementIds.TryGetElement(id, out UIElement? resolved) == true => resolved,
+            _ => null
+        };
+
+        for (UIElement? current = element; current is not null && !ReferenceEquals(current, this); current = current.VisualParent)
+        {
+            if (current is IPointerDragSource)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void ApplyExactTextMatch(int matchIndex)

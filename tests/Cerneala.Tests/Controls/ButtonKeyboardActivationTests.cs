@@ -50,6 +50,77 @@ public sealed class ButtonKeyboardActivationTests
     }
 
     [Fact]
+    public void SpacePressedButtonIsReleasedWithoutClickWhenFocusMovesAway()
+    {
+        UIRoot root = RootWithTwoButtons(out ButtonBase first, out ButtonBase second);
+        ElementInputBridge bridge = FocusedBridge(root, first);
+        int firstClicks = 0;
+        int secondClicks = 0;
+        first.Click += (_, _) => firstClicks++;
+        second.Click += (_, _) => secondClicks++;
+
+        bridge.Dispatch(root, KeyPressFrame(InputKey.Space));
+        Assert.True(first.IsPressed);
+
+        Assert.True(bridge.FocusManager.Focus(second, root.InputCache.EnsureCurrent(root)));
+        Assert.False(first.IsPressed);
+
+        bridge.Dispatch(root, KeyHeldFrame(InputKey.Space));
+        Assert.False(first.IsPressed);
+        Assert.False(second.IsPressed);
+
+        bridge.Dispatch(root, KeyReleaseFrame(InputKey.Space));
+        Assert.False(first.IsPressed);
+        Assert.False(second.IsPressed);
+        Assert.Equal(0, firstClicks);
+        Assert.Equal(0, secondClicks);
+    }
+
+    [Fact]
+    public void SpacePressedButtonIsNotClickedWhenFocusLeavesAndReturnsBeforeRelease()
+    {
+        UIRoot root = RootWithTwoButtons(out ButtonBase first, out ButtonBase second);
+        ElementInputBridge bridge = FocusedBridge(root, first);
+        int firstClicks = 0;
+        first.Click += (_, _) => firstClicks++;
+
+        bridge.Dispatch(root, KeyPressFrame(InputKey.Space));
+        Assert.True(bridge.FocusManager.Focus(second, root.InputCache.EnsureCurrent(root)));
+        Assert.True(bridge.FocusManager.Focus(first, root.InputCache.EnsureCurrent(root)));
+        bridge.Dispatch(root, KeyHeldFrame(InputKey.Space));
+        Assert.False(first.IsPressed);
+
+        bridge.Dispatch(root, KeyReleaseFrame(InputKey.Space));
+        Assert.False(first.IsPressed);
+        Assert.Equal(0, firstClicks);
+    }
+
+    [Fact]
+    public void SpacePressedButtonStaysPressedWhileThePointerHoldsItAfterFocusMovesAway()
+    {
+        UIRoot root = RootWithTwoButtons(out ButtonBase first, out ButtonBase second);
+        ElementInputBridge bridge = FocusedBridge(root, first);
+        int firstClicks = 0;
+        first.Click += (_, _) => firstClicks++;
+        PointerSnapshot pointerUp = PointerSnapshot.Empty.WithPosition(20, 20);
+        PointerSnapshot pointerDown = pointerUp.WithButton(InputMouseButton.Left, isDown: true);
+        KeyboardSnapshot noKeys = KeyboardSnapshot.FromDownKeys([]);
+        KeyboardSnapshot space = KeyboardSnapshot.FromDownKeys([InputKey.Space]);
+
+        bridge.Dispatch(root, new InputFrame(pointerUp, pointerUp, noKeys, space, []));
+        bridge.Dispatch(root, new InputFrame(pointerUp, pointerDown, space, space, []));
+        Assert.True(bridge.FocusManager.Focus(second, root.InputCache.EnsureCurrent(root)));
+        Assert.True(first.IsPressed);
+
+        bridge.Dispatch(root, new InputFrame(pointerDown, pointerUp, space, space, []));
+        Assert.False(first.IsPressed);
+        Assert.Equal(1, firstClicks);
+
+        bridge.Dispatch(root, new InputFrame(pointerUp, pointerUp, space, noKeys, []));
+        Assert.Equal(1, firstClicks);
+    }
+
+    [Fact]
     public void DisabledFocusedButtonDoesNotExecuteKeyboardCommand()
     {
         UIRoot root = RootWithButton(out ButtonBase button);
@@ -137,9 +208,23 @@ public sealed class ButtonKeyboardActivationTests
         return root;
     }
 
+    private static UIRoot RootWithTwoButtons(out ButtonBase first, out ButtonBase second)
+    {
+        UIRoot root = RootWithButton(out first);
+        second = new ButtonBase();
+        second.Arrange(new ArrangeContext(new LayoutRect(50, 0, 40, 40)));
+        root.VisualChildren.Add(second);
+        return root;
+    }
+
     private static InputFrame KeyPressFrame(InputKey key)
     {
         return KeyboardFrame(previousKeys: [], currentKeys: [key]);
+    }
+
+    private static InputFrame KeyHeldFrame(InputKey key)
+    {
+        return KeyboardFrame(previousKeys: [key], currentKeys: [key]);
     }
 
     private static InputFrame KeyReleaseFrame(InputKey key)

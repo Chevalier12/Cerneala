@@ -276,6 +276,38 @@ public sealed class SdlWindowPlatformTests
     }
 
     [Fact]
+    public void MouseButtonReleasedWhileTheWindowIsDisabledDoesNotStayDown()
+    {
+        FakeSdlApi api = new();
+        using SdlWindowPlatform platform = new(api, new RecordingGraphicsFactory());
+        SdlPlatformWindow window = Assert.IsType<SdlPlatformWindow>(
+            platform.CreateWindow(new Window(), new RecordingWindowCallbacks()));
+        api.Enqueue(new SdlEvent(SdlEventKind.MouseButtonDown, window.WindowId, X: 5, Y: 5, MouseButton: 1));
+        platform.PumpEvents();
+        Assert.True(window.InputSource.GetFrame().Pointer.IsPressed(InputMouseButton.Left));
+
+        window.SetEnabled(false);
+        api.Enqueue(new SdlEvent(SdlEventKind.MouseButtonUp, window.WindowId, X: 5, Y: 5, MouseButton: 1));
+        platform.PumpEvents();
+        InputFrame disabled = window.InputSource.GetFrame();
+        window.SetEnabled(true);
+        InputFrame enabled = window.InputSource.GetFrame();
+        api.Enqueue(new SdlEvent(SdlEventKind.MouseButtonDown, window.WindowId, X: 5, Y: 5, MouseButton: 1));
+        platform.PumpEvents();
+        InputFrame pressedAgain = window.InputSource.GetFrame();
+        api.Enqueue(new SdlEvent(SdlEventKind.MouseButtonUp, window.WindowId, X: 5, Y: 5, MouseButton: 1));
+        platform.PumpEvents();
+        InputFrame releasedAgain = window.InputSource.GetFrame();
+
+        // A disabled window gets no mouse messages, so the release raises no MouseUp there.
+        Assert.False(disabled.Pointer.IsDown(InputMouseButton.Left));
+        Assert.False(disabled.Pointer.IsReleased(InputMouseButton.Left));
+        Assert.False(enabled.Pointer.IsDown(InputMouseButton.Left));
+        Assert.True(pressedAgain.Pointer.IsPressed(InputMouseButton.Left));
+        Assert.True(releasedAgain.Pointer.IsReleased(InputMouseButton.Left));
+    }
+
+    [Fact]
     public void KeyReleasedInTheDialogThatTookFocusIsPressedAgainInTheOwner()
     {
         FakeSdlApi api = new();

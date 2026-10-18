@@ -72,7 +72,35 @@ The desired size is the wider of the two parts, and the header row height plus t
 
 The content area is refreshed during measure, after the tabs are realized. Changing `SelectedIndex`, `ContentTemplate`, or the `Content` or `ContentTemplate` of the selected tab invalidates measure, so the next layout pass shows the change. `SelectedContent` and `SelectedContentTemplate` are computed from the selected tab, so they return the new values at once.
 
-When `Content` is a `UIElement`, that element is a child of the content area while its tab is selected. When another tab is selected, the next layout pass removes it from the content area and gives it back to its `TabItem`, which keeps it as a logical child until its tab is selected again. For example, with `first.Content = button` and `SelectedIndex = 0`, `button` is under the `TabControl` after layout; after `SelectedIndex = 1` and the next layout pass, `button.VisualParent` is `null` and `button.LogicalParent` is `first`, so adding `button` to another parent throws `InvalidOperationException`.
+When `Content` is a `UIElement`, that element is a child of the content area while its tab is selected. When another tab is selected, the next layout pass removes it from the content area and gives it back to its `TabItem`, which owns it as its `LogicalParent` until its tab is selected again. As in WPF, only the content of the selected tab is loaded: the element raises `Loaded` when its tab is shown and `Unloaded` once when another tab is selected, and the content of a tab that is not selected raises neither. For example, with `first.Content = button` and `SelectedIndex = 0`, `button` is under the `TabControl` after layout and has raised `Loaded` once; after `SelectedIndex = 1` and the next layout pass, `button` has raised `Unloaded` once, `button.IsLoaded` is `false`, `button.VisualParent` is `null` and `button.LogicalParent` is `first`, so adding `button` to another parent throws `InvalidOperationException`.
+
+### Element content with a ComponentTemplate
+
+When the control has a `ComponentTemplate` (or a `ComponentTemplateKey`), the template shows the selected tab's content, for example with a `ContentPresenter` whose `Content` is `SelectedContent`. Then the selected tab lets go of a `UIElement` content, so a `ContentPresenter` in the template can take it as its logical and visual child. The built-in content area is emptied when the template is set, and the selected tab lets go of its content before the template is built. When another tab is selected, the newly selected tab lets go of its content at once, and every other tab owns its `UIElement` content again (as its `LogicalParent`) as soon as nothing shows it: at the selection change, or at the next layout pass when the template still showed it then. When the template is replaced or removed, the old template lets go of the tabs' content, and without a template the content area shows the selected tab's content again on the next layout pass.
+
+```csharp
+using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Templates;
+
+Border page1 = new() { Width = 50, Height = 20 };
+Border page2 = new() { Width = 50, Height = 20 };
+TabItem first = new() { Header = "1", Content = page1 };
+TabItem second = new() { Header = "2", Content = page2 };
+TabControl tabs = new();
+tabs.SetItems(new[] { first, second });
+tabs.SelectedIndex = 0;
+
+ContentPresenter? presenter = null;
+tabs.ComponentTemplate = new ComponentTemplate<TabControl>("tabs", context =>
+    presenter = new ContentPresenter { Content = context.Owner.SelectedContent });
+tabs.SelectionChanged += (_, _) => presenter!.Content = tabs.SelectedContent;
+// After the next layout pass: page1.LogicalParent and page1.VisualParent are presenter,
+// page2.LogicalParent is second and page2.VisualParent is null.
+
+tabs.SelectedIndex = 1;
+// After the next layout pass: page2 is under presenter, page1.LogicalParent is first and
+// page1.VisualParent is null, so adding page1 to another parent throws InvalidOperationException.
+```
 
 The content area owns the element only when it shows it. When the template of the content area (`SelectedContentTemplate`, or an aspect content template for the content) builds an element that does not contain the selected tab's `UIElement` content, the selected `TabItem` keeps that content as its logical child after layout. For example, with `tabs.ContentTemplate = new ContentTemplate("page", typeof(Border), null, 0, _ => new Border { Width = 10, Height = 10 })`, `first.Content = border` and `SelectedIndex = 0`, the content area shows the new 10 x 10 `Border`; `border.LogicalParent` is `first` and `border.VisualParent` is `null`, so adding `border` to another parent, or making it the `Content` of another tab, throws `InvalidOperationException`. After `tabs.ContentTemplate = null` and the next layout pass, the content area shows `border` itself.
 

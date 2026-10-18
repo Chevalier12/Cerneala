@@ -13,6 +13,8 @@ internal sealed class RetainedServoInputDriver : IServoInputDriver
     private readonly UiHost host;
     private readonly Func<ServoInputSequence, CancellationToken, Task>? dispatchSequence;
     private PointerSnapshot pointer = PointerSnapshot.Empty;
+    // True after the first pointer move; until then the position of pointer was chosen by no action.
+    private bool hasPointerPosition;
     private KeyboardSnapshot keyboard = KeyboardSnapshot.Empty;
 
     internal RetainedServoInputDriver(UiHost host)
@@ -232,7 +234,7 @@ internal sealed class RetainedServoInputDriver : IServoInputDriver
 
     internal void ResetInput()
     {
-        ServoInputStep reset = ServoInputSequence.CreateResetStep(pointer, keyboard);
+        ServoInputStep reset = ServoInputSequence.CreateResetStep(pointer, keyboard, hasPointerPosition);
         pointer = reset.Pointer;
         keyboard = reset.Keyboard;
         DispatchImmediately([reset]);
@@ -310,7 +312,8 @@ internal sealed class RetainedServoInputDriver : IServoInputDriver
             {
                 ServoInputStep reset = ServoInputSequence.CreateResetStep(
                     current.Pointer,
-                    current.Keyboard);
+                    current.Keyboard,
+                    current.HasPointerPosition);
                 pointer = reset.Pointer;
                 keyboard = reset.Keyboard;
                 try
@@ -367,6 +370,7 @@ internal sealed class RetainedServoInputDriver : IServoInputDriver
 
     private void AppendPointerMove(List<ServoInputStep> steps, float x, float y)
     {
+        hasPointerPosition = true;
         AppendStep(steps, pointer.WithPosition(x, y), keyboard, []);
     }
 
@@ -394,7 +398,7 @@ internal sealed class RetainedServoInputDriver : IServoInputDriver
         InputFrame frame = new(pointer, nextPointer, keyboard, nextKeyboard, textInputEvents);
         pointer = nextPointer;
         keyboard = nextKeyboard;
-        steps.Add(new ServoInputStep(frame, pointer, keyboard));
+        steps.Add(new ServoInputStep(frame, pointer, keyboard, hasPointerPosition));
     }
 
     private static InputKey[] ModifierKeys(ServoModifiers modifiers)

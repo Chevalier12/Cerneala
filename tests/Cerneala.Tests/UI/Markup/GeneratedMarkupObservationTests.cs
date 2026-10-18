@@ -15,8 +15,7 @@ public sealed class GeneratedMarkupObservationTests
         EndpointRoot first = new(new EndpointChild("first"));
         StackPanel parent = new() { DataContext = first };
         UIElement target = new() { DataContext = first.Child };
-        parent.LogicalChildren.Add(target);
-        parent.VisualChildren.Add(target);
+        parent.Children.Add(target);
         MarkupObservation observation = GeneratedMarkup.ObserveInheritedDataPath(
             target,
             new MarkupDataPathSegment("Child", value => ((EndpointRoot)value!).Child));
@@ -44,8 +43,7 @@ public sealed class GeneratedMarkupObservationTests
         parent.VisualChildren.Remove(target);
         EndpointRoot third = new(new EndpointChild("third"));
         StackPanel replacementParent = new() { DataContext = third };
-        replacementParent.LogicalChildren.Add(target);
-        replacementParent.VisualChildren.Add(target);
+        replacementParent.Children.Add(target);
         observation.Start();
         Assert.Same(third.Child, observation.Value);
         Assert.Equal(0, second.SubscriberCount);
@@ -108,8 +106,7 @@ public sealed class GeneratedMarkupObservationTests
         EndpointRoot firstRoot = new(firstChild);
         StackPanel parent = new() { DataContext = firstRoot };
         UIElement target = new();
-        parent.LogicalChildren.Add(target);
-        parent.VisualChildren.Add(target);
+        parent.Children.Add(target);
         MarkupObservation observation = GeneratedMarkup.ObserveDataPath(
             target,
             new MarkupDataPathSegment("Child", owner => ((EndpointRoot)owner!).Child),
