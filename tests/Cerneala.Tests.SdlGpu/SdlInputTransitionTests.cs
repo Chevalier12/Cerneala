@@ -12,6 +12,10 @@ public sealed class SdlInputTransitionTests
     private const int XScancode = 27;
     private const int AScancode = 4;
     private const int LeftCtrlScancode = 224;
+    private const int DeleteScancode = 76;
+    private const int LeftScancode = 80;
+    private const int PeriodScancode = 55;
+    private const int Keypad5Scancode = 93;
 
     [Fact]
     public void KeyPressedAndReleasedInOnePumpIsReportedAsPressThenRelease()
@@ -317,6 +321,65 @@ public sealed class SdlInputTransitionTests
         Assert.Equal(["x"], typed.TextInputEvents.Select(text => text.Text));
         Assert.Equal(0, typed.Keyboard.GetRepeatCount(InputKey.Back));
         Assert.Equal(1, source.GetFrame().Keyboard.GetRepeatCount(InputKey.Back));
+    }
+
+    [Theory]
+    [InlineData(BackspaceScancode, InputKey.Back, Keypad5Scancode, "5")]
+    [InlineData(BackspaceScancode, InputKey.Back, PeriodScancode, ".")]
+    [InlineData(DeleteScancode, InputKey.Delete, Keypad5Scancode, "5")]
+    [InlineData(LeftScancode, InputKey.Left, Keypad5Scancode, "5")]
+    public void RepeatAfterTextOfAnUnmappedKeyWaitsForTheNextFrame(int heldScancode, InputKey heldKey, int unmappedScancode, string text)
+    {
+        SdlInputSource source = new();
+        source.SetKey(heldScancode, true);
+        _ = source.GetFrame();
+        // The unmapped key cannot be reported, but it, not the held key, typed the text.
+        source.SetKey(heldScancode, true, repeat: true);
+        source.SetKey(unmappedScancode, true);
+        source.AddText(text);
+        source.SetKey(unmappedScancode, false);
+        source.SetKey(heldScancode, true, repeat: true);
+
+        InputFrame typed = source.GetFrame();
+        Assert.Equal(1, typed.Keyboard.GetRepeatCount(heldKey));
+        Assert.Equal([text], typed.TextInputEvents.Select(textInput => textInput.Text));
+        InputFrame repeated = source.GetFrame();
+        Assert.Equal(1, repeated.Keyboard.GetRepeatCount(heldKey));
+        Assert.Empty(repeated.TextInputEvents);
+    }
+
+    [Fact]
+    public void FocusedTextBoxDeletesKeypadDigitTypedWhileBackspaceIsHeld()
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1, WindowDisplayScale = 1 };
+        RecordingGraphicsFactory graphics = new();
+        using WindowApplicationRuntime runtime = new(new SdlWindowPlatform(api, graphics));
+        TextBox box = new() { Text = "abcd" };
+        runtime.StartMainWindow(new Window { Content = box, Width = 320, Height = 200 });
+        uint windowId = Assert.IsType<SdlWindowSurface>(Assert.Single(graphics.Surfaces)).WindowId;
+        var bounds = box.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        Pump(runtime, api, new SdlEvent(SdlEventKind.MouseButtonDown, windowId, X: x, Y: y, MouseButton: 1));
+        Pump(runtime, api, new SdlEvent(SdlEventKind.MouseButtonUp, windowId, X: x, Y: y, MouseButton: 1));
+        Pump(runtime, api, new SdlEvent(SdlEventKind.KeyDown, windowId, Scancode: EndScancode));
+        Pump(runtime, api, new SdlEvent(SdlEventKind.KeyUp, windowId, Scancode: EndScancode));
+        Pump(runtime, api, new SdlEvent(SdlEventKind.KeyDown, windowId, Scancode: BackspaceScancode));
+        Assert.Equal("abc", box.Text);
+
+        // In arrival order: "ab", "ab5", "ab".
+        Pump(runtime, api,
+            new SdlEvent(SdlEventKind.KeyDown, windowId, Scancode: BackspaceScancode, Repeat: true),
+            new SdlEvent(SdlEventKind.KeyDown, windowId, Scancode: Keypad5Scancode),
+            new SdlEvent(SdlEventKind.TextInput, windowId, Text: "5"),
+            new SdlEvent(SdlEventKind.KeyUp, windowId, Scancode: Keypad5Scancode),
+            new SdlEvent(SdlEventKind.KeyDown, windowId, Scancode: BackspaceScancode, Repeat: true));
+        for (int frame = 0; frame < 4; frame++)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+
+        Assert.Equal("ab", box.Text);
     }
 
     [Fact]
