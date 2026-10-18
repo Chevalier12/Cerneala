@@ -43,6 +43,7 @@ Do `cerneala-fix-bug` steps 0 and 0b. The issue watcher starts this skill in its
 4. Leave a candidate out when:
    - its open pull request is under review: a `kind=review number=<that PR>` line exists;
    - another fix window works on it: a `kind=issue-fix number=<that issue>` line other than `#<N>` exists;
+   - another fix window claimed it for its group (item 8): the claims folder holds `issue-<that issue>.claim` with `owner=<M>`, `<M>` is not `<N>`, and a `kind=issue-fix number=<M>` line exists;
    - it has more than one open pull request, or its pull request also closes an issue that is not a candidate. Record it as `not grouped: <reason>`.
 5. For each remaining candidate, find the files its fix changes:
    - with an open pull request: the pull request's `files` that are not tests or docs; this is exact evidence;
@@ -57,6 +58,11 @@ Do `cerneala-fix-bug` steps 0 and 0b. The issue watcher starts this skill in its
    #479 UI/Controls/ContentPresenter.cs, PR #493 (worktree-issue-479), takes over its code
    not grouped: #486 owning file unclear
    ```
+
+8. Claim the group, when the prompt names a claims folder (the issue watcher runs up to two fix windows at the same time, and the folder is how they avoid fixing the same issue twice; without a claims folder, skip this item):
+   - For each issue of the group other than `#<N>`, write `<claims folder>\issue-<n>.claim` with the single line `owner=<N>`, with a PowerShell command (create the folder first when it is missing). Do not overwrite a claim whose owner is another open fix window (item 4); leave that issue out instead.
+   - Then list the windows again (item 3). When a `kind=issue-fix number=<n>` line now exists for an issue of the group, another window started on it meanwhile: remove that issue from the group, delete its claim file, and record `not grouped: #<n> another fix window started on it`.
+   - The watcher deletes the claims of a window once that window has closed. Delete no claim of another owner.
 
 When the group is only `#<N>`, follow `cerneala-fix-bug` alone from here on, and stop reading this file.
 
