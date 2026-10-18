@@ -103,6 +103,7 @@ Servo adds no frame phase. Its frames enter through `UiHost.Update` at the same 
 - Idle waits for scheduler work and finite motion, and times out on continuous motion. `tests/Cerneala.Tests/UI/Servo/ServoSynchronizationTests.cs:WaitForIdleObservesSchedulerFiniteMotionAndContinuousMotion`.
 - A window action completes only after its input frame was presented. `tests/Cerneala.Tests/UI/Hosting/WindowRuntimeTests.cs:ServoWindowActionCompletesOnlyAfterItsInputFrameWasPresented`.
 - Servo instances on one window are serialized; separate windows are independent. `WindowRuntimeTests.cs:ServoSerializesInstancesPerWindowAndKeepsWindowsIndependent`.
+- On a window, frames without a Servo step keep the Servo pointer position until the platform pointer moves (`WindowContext.KeepServoPointer`). `WindowRuntimeTests.cs:ServoPointerStaysOnItsTargetAcrossFramesWithoutAServoStep`, `PhysicalPointerMoveAfterAServoHoverTakesThePointerBack`.
 - Host screenshots are unsupported, with no OS fallback. `WindowRuntimeTests.cs:ServoHostScreenshotsAreUnsupportedWithoutAnOsFallback`.
 
 ## Known Limitations

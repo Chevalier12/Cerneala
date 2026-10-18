@@ -953,22 +953,26 @@ public class ComboBox : Selector
 
     // A non-editable field acts as one drop-down button, as the WPF default template's ToggleButton covers the
     // whole field. Content in the field that the input bridge gives its own pointer input owns its click: a
-    // command source, such as PART_DropDownToggle or a button that a hit-testable selection box shows, and a
-    // pointer drag source, such as a TextBox or a Thumb there. The projected list is not in the field's visual
-    // subtree.
+    // command source, such as PART_DropDownToggle or a button that a hit-testable selection box shows, as the
+    // input bridge resolves the click to it, and a pointer drag source, such as a TextBox or a Thumb there. The
+    // projected list is not in the field's visual subtree. As the WPF ToggleButton handles the field's click, the
+    // toggle marks the MouseUp handled, so an ancestor command source, such as a Button whose Content is this
+    // ComboBox, does not also click or run its command.
     private void OnMouseUp(UiElementId _, RoutedEventArgs args)
     {
         if (IsEditable || !IsEnabled ||
             args is not MouseButtonEventArgs { ChangedButton: InputMouseButton.Left, ClickCount: > 0 } ||
-            !IsFieldSource(args.OriginalSource))
+            !ReferenceEquals(FindClickOwner(this, args.OriginalSource), this) ||
+            IsInPointerDragSource(args.OriginalSource))
         {
             return;
         }
 
         IsDropDownOpen = !IsDropDownOpen;
+        args.Handled = true;
     }
 
-    private bool IsFieldSource(object? source)
+    private bool IsInPointerDragSource(object? source)
     {
         UIElement? element = source switch
         {
@@ -977,16 +981,11 @@ public class ComboBox : Selector
             _ => null
         };
 
-        for (UIElement? current = element; current is not null; current = current.VisualParent)
+        for (UIElement? current = element; current is not null && !ReferenceEquals(current, this); current = current.VisualParent)
         {
-            if (ReferenceEquals(current, this))
+            if (current is IPointerDragSource)
             {
                 return true;
-            }
-
-            if (current is IInputCommandSource or IPointerDragSource)
-            {
-                return false;
             }
         }
 
