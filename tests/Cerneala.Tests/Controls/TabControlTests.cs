@@ -602,6 +602,213 @@ public sealed class TabControlTests
     }
 
     [Fact]
+    public void OnlyTheElementContentOfTheSelectedTabIsLoaded()
+    {
+        UIRoot root = new(300, 200);
+        int[] loaded = new int[3];
+        int[] unloaded = new int[3];
+        Border[] contents = new Border[3];
+        for (int index = 0; index < contents.Length; index++)
+        {
+            int slot = index;
+            contents[index] = new Border { Width = 50, Height = 20 };
+            contents[index].Loaded += (_, _) => loaded[slot]++;
+            contents[index].Unloaded += (_, _) => unloaded[slot]++;
+        }
+
+        TabControl tabControl = new();
+        tabControl.SetItems(new[]
+        {
+            new TabItem { Header = "1", Content = contents[0] },
+            new TabItem { Header = "2", Content = contents[1] },
+            new TabItem { Header = "3", Content = contents[2] },
+        });
+        tabControl.SelectedIndex = 0;
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+
+        Assert.Equal([1, 0, 0], loaded);
+        Assert.Equal([0, 0, 0], unloaded);
+        Assert.True(contents[0].IsLoaded);
+        Assert.False(contents[1].IsLoaded);
+        Assert.False(contents[2].IsLoaded);
+
+        tabControl.SelectedIndex = 1;
+        root.ProcessFrame();
+
+        Assert.Equal([1, 1, 0], loaded);
+        Assert.Equal([1, 0, 0], unloaded);
+        Assert.False(contents[0].IsLoaded);
+        Assert.True(contents[1].IsLoaded);
+
+        tabControl.SelectedIndex = 0;
+        root.ProcessFrame();
+
+        Assert.Equal([2, 1, 0], loaded);
+        Assert.Equal([1, 1, 0], unloaded);
+    }
+
+    [Fact]
+    public void ComponentTemplatePresenterCanShowTheSelectedElementContent()
+    {
+        UIRoot root = new(300, 200);
+        FixedElement a = new();
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { new TabItem { Header = "1", Content = a }, new TabItem { Header = "2" } });
+        tabControl.SelectedIndex = 0;
+        ContentPresenter? presenter = null;
+
+        tabControl.ComponentTemplate = new ComponentTemplate<TabControl>("tabs", context =>
+            presenter = new ContentPresenter { Content = context.Owner.SelectedContent });
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+
+        Assert.NotNull(presenter);
+        Assert.Same(presenter, a.LogicalParent);
+        Assert.Same(presenter, a.VisualParent);
+    }
+
+    [Fact]
+    public void ComponentTemplatePresenterFollowsTheSelectedTabWhileOtherTabsKeepTheirElementContent()
+    {
+        UIRoot root = new(300, 200);
+        FixedElement a = new();
+        FixedElement b = new();
+        FixedElement other = new();
+        TabItem first = new() { Header = "1", Content = a };
+        TabItem second = new() { Header = "2", Content = b };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        tabControl.SelectedIndex = 0;
+        ContentPresenter? presenter = null;
+        tabControl.ComponentTemplate = new ComponentTemplate<TabControl>("tabs", context =>
+            presenter = new ContentPresenter { Content = context.Owner.SelectedContent });
+        tabControl.SelectionChanged += (_, _) => presenter!.Content = tabControl.SelectedContent;
+        root.VisualChildren.Add(tabControl);
+        root.VisualChildren.Add(other);
+        root.ProcessFrame();
+
+        Assert.Same(presenter, a.VisualParent);
+        Assert.Same(second, b.LogicalParent);
+        Assert.Throws<InvalidOperationException>(() => other.LogicalChildren.Add(b));
+
+        tabControl.SelectedIndex = 1;
+        root.ProcessFrame();
+
+        Assert.Same(presenter, b.LogicalParent);
+        Assert.Same(presenter, b.VisualParent);
+        Assert.Same(first, a.LogicalParent);
+        Assert.Null(a.VisualParent);
+        Assert.Throws<InvalidOperationException>(() => other.LogicalChildren.Add(a));
+        Assert.Empty(other.LogicalChildren);
+
+        tabControl.SelectedIndex = 0;
+        root.ProcessFrame();
+
+        Assert.Same(presenter, a.VisualParent);
+        Assert.Same(second, b.LogicalParent);
+        Assert.Null(b.VisualParent);
+    }
+
+    [Fact]
+    public void ElementContentMovesBetweenTheContentAreaAndTheComponentTemplate()
+    {
+        UIRoot root = new(300, 200);
+        FixedElement a = new();
+        TabItem first = new() { Header = "1", Content = a };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, new TabItem { Header = "2" } });
+        root.VisualChildren.Add(tabControl);
+        tabControl.SelectedIndex = 0;
+        root.ProcessFrame();
+        Assert.True(HasVisualAncestor(a, tabControl), "a is not in the content area before the template");
+        ContentPresenter? presenter = null;
+
+        tabControl.ComponentTemplate = new ComponentTemplate<TabControl>("tabs", context =>
+            presenter = new ContentPresenter { Content = context.Owner.SelectedContent });
+        root.ProcessFrame();
+
+        Assert.Same(presenter, a.VisualParent);
+
+        tabControl.ComponentTemplate = null;
+        root.ProcessFrame();
+
+        Assert.True(HasVisualAncestor(a, tabControl), "a is not under the TabControl after the template was removed");
+        Assert.NotSame(presenter, a.VisualParent);
+        Assert.False(HasVisualAncestor(a, first), "a is hosted inside its TabItem");
+        Assert.True(a.ArrangedBounds.Width > 0 && a.ArrangedBounds.Height > 0, $"a arranged {a.ArrangedBounds}");
+    }
+
+    [Fact]
+    public void ElementContentOfTheSelectedTabStaysOwnedWhenTheContentTemplateDoesNotShowIt()
+    {
+        UIRoot root = new(300, 200);
+        FixedElement a = new();
+        FixedElement other = new();
+        FixedElement? made = null;
+        ContentTemplate<FixedElement> template = new("content", key: null, priority: 0, _ => made = new FixedElement());
+        TabItem first = new() { Header = "H1", Content = a };
+        TabControl tabControl = new() { ContentTemplate = template };
+        tabControl.SetItems(new[] { first, new TabItem { Header = "H2" } });
+        root.VisualChildren.Add(tabControl);
+        root.VisualChildren.Add(other);
+        tabControl.SelectedIndex = 0;
+        root.ProcessFrame();
+
+        Assert.True(made is not null && HasVisualAncestor(made, tabControl), "the template element is not in the content area");
+        Assert.Same(first, a.LogicalParent);
+        Assert.Null(a.VisualParent);
+        InvalidOperationException rejected = Assert.Throws<InvalidOperationException>(() => other.LogicalChildren.Add(a));
+        Assert.Equal("Element must be removed from its current parent before reparenting.", rejected.Message);
+        Assert.Empty(other.LogicalChildren);
+        Assert.Throws<InvalidOperationException>(() => new TabItem().Content = a);
+
+        tabControl.Invalidate(Cerneala.UI.Invalidation.InvalidationFlags.Measure, "Measure the content area again");
+        root.ProcessFrame();
+
+        Assert.Same(first, a.LogicalParent);
+        Assert.Throws<InvalidOperationException>(() => other.LogicalChildren.Add(a));
+
+        tabControl.ContentTemplate = null;
+        root.ProcessFrame();
+
+        Assert.True(HasVisualAncestor(a, tabControl), "a is not in the content area after the ContentTemplate was removed");
+        Assert.False(HasVisualAncestor(a, first), "a is hosted inside its TabItem");
+        Assert.True(a.ArrangedBounds.Width > 0 && a.ArrangedBounds.Height > 0, $"a arranged {a.ArrangedBounds}");
+    }
+
+    [Fact]
+    public void ElementContentOfTheSelectedTabStaysOwnedWhenAnAspectContentTemplateDoesNotShowIt()
+    {
+        UIRoot root = new(300, 200);
+        FixedElement a = new();
+        FixedElement other = new();
+        ContentTemplate<FixedElement> template = new("Scoped.Fixed", key: null, priority: 0, _ => new FixedElement());
+        TabItem first = new() { Header = "H1", Content = a };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, new TabItem { Header = "H2" } });
+        Border scope = new() { Child = tabControl };
+        scope.Resources.Add("Templates", AspectPackage.Create("Scoped")
+            .Content(content => content.Add(new ContentTemplateDefinition("Scoped.Fixed", typeof(FixedElement), null, template)))
+            .Build());
+        root.VisualChildren.Add(scope);
+        root.VisualChildren.Add(other);
+        tabControl.SelectedIndex = 0;
+        root.ProcessFrame();
+
+        Assert.Same(first, a.LogicalParent);
+        Assert.Null(a.VisualParent);
+        Assert.Throws<InvalidOperationException>(() => other.LogicalChildren.Add(a));
+
+        scope.Resources.Remove("Templates");
+        root.ProcessFrame();
+
+        Assert.True(HasVisualAncestor(a, tabControl), "a is not in the content area after the aspect content template was removed");
+        Assert.False(HasVisualAncestor(a, first), "a is hosted inside its TabItem");
+        Assert.True(a.ArrangedBounds.Width > 0 && a.ArrangedBounds.Height > 0, $"a arranged {a.ArrangedBounds}");
+    }
+
+    [Fact]
     public void DefaultTabControlLaysHeadersOutHorizontally()
     {
         UIRoot root = new(200, 100);

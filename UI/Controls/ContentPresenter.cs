@@ -218,36 +218,44 @@ public class ContentPresenter : Control
 
         presentationDirty = false;
         object? content = Content;
-        ContentTemplate? template = ResolveContentTemplate(content);
-        UIElement? previousChild = presentedChild;
-        ElementContentPlacement? releasedContent = ReleaseElementContent(content, template is not null);
-        UIElement? next;
+        OnPresentationRefreshing(content);
         try
         {
-            next = CreatePresentedChild(content, template);
-        }
-        catch
-        {
-            RestorePresentation(previousChild, releasedContent);
-            throw;
-        }
+            ContentTemplate? template = ResolveContentTemplate(content);
+            UIElement? previousChild = presentedChild;
+            ElementContentPlacement? releasedContent = ReleaseElementContent(content, template is not null);
+            UIElement? next;
+            try
+            {
+                next = CreatePresentedChild(content, template);
+            }
+            catch
+            {
+                RestorePresentation(previousChild, releasedContent);
+                throw;
+            }
 
-        if (ReferenceEquals(presentedChild, next))
-        {
-            return;
-        }
+            if (ReferenceEquals(presentedChild, next))
+            {
+                return;
+            }
 
-        RemovePresentedChild(presentedChild);
-        try
-        {
-            AddPresentedChild(next);
-            presentedChild = next;
+            RemovePresentedChild(presentedChild);
+            try
+            {
+                AddPresentedChild(next);
+                presentedChild = next;
+            }
+            catch
+            {
+                RemovePresentedChild(next);
+                RestorePresentation(previousChild, releasedContent);
+                throw;
+            }
         }
-        catch
+        finally
         {
-            RemovePresentedChild(next);
-            RestorePresentation(previousChild, releasedContent);
-            throw;
+            OnPresentationRefreshed(content);
         }
     }
 
@@ -262,6 +270,17 @@ public class ContentPresenter : Control
         }
 
         presentedChild = previousChild;
+    }
+
+    // A presenter whose element content is owned elsewhere while it is not shown, for example the content area of a
+    // TabControl, lets that owner release the content before the presentation is rebuilt, so the presenter or its
+    // template can take it, and take it back afterwards when the new presentation did not take it.
+    internal virtual void OnPresentationRefreshing(object? content)
+    {
+    }
+
+    internal virtual void OnPresentationRefreshed(object? content)
+    {
     }
 
     private ContentTemplate? ResolveContentTemplate(object? content)

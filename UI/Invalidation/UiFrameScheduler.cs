@@ -469,7 +469,8 @@ public sealed class UiFrameScheduler
                 bool wasArrangedRecursively = processors.SupportsIncrementalMeasure &&
                     ReferenceEquals(element.LastScheduledArrangeRoot, element.Root) &&
                     element.LastScheduledArrangePass == CurrentArrangePass &&
-                    element.LastScheduledArrangeLayoutVersion == element.LayoutVersion;
+                    element.LastScheduledArrangeLayoutVersion == element.LayoutVersion &&
+                    element.ArrangeDesiredSizesAreCurrent;
                 if (!Elements.UIElementVisibility.IsEffectivelyParticipatingInLayout(element) ||
                     wasArrangedRecursively)
                 {
