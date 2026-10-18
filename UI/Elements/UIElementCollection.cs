@@ -185,6 +185,11 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
         return true;
     }
 
+    internal int IndexOf(UIElement child)
+    {
+        return IndexOfReference(child);
+    }
+
     public IEnumerator<UIElement> GetEnumerator()
     {
         return children.GetEnumerator();

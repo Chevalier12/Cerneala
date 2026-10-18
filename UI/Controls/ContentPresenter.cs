@@ -207,8 +207,19 @@ public class ContentPresenter : Control
         presentationDirty = false;
         object? content = Content;
         ContentTemplate? template = ResolveContentTemplate(content);
-        ReleaseElementContent(content, template is not null);
-        UIElement? next = CreatePresentedChild(content, template);
+        UIElement? previousChild = presentedChild;
+        ElementContentPlacement? releasedContent = ReleaseElementContent(content, template is not null);
+        UIElement? next;
+        try
+        {
+            next = CreatePresentedChild(content, template);
+        }
+        catch
+        {
+            RestorePresentation(previousChild, releasedContent);
+            throw;
+        }
+
         if (ReferenceEquals(presentedChild, next))
         {
             return;
@@ -223,9 +234,22 @@ public class ContentPresenter : Control
         catch
         {
             RemovePresentedChild(next);
-            AddPresentedChild(presentedChild);
+            RestorePresentation(previousChild, releasedContent);
             throw;
         }
+    }
+
+    // A refresh that fails keeps the previous presentation: the element content goes back to the place the refresh
+    // took it from, and the previous presented child goes back into the presenter.
+    private void RestorePresentation(UIElement? previousChild, ElementContentPlacement? releasedContent)
+    {
+        releasedContent?.Restore();
+        if (previousChild is not null && !ReferenceEquals(previousChild.VisualParent, this))
+        {
+            AddPresentedChild(previousChild);
+        }
+
+        presentedChild = previousChild;
     }
 
     private ContentTemplate? ResolveContentTemplate(object? content)
@@ -244,23 +268,30 @@ public class ContentPresenter : Control
 
     // A template can place element content inside the element it creates. Before the next child is built, the element
     // content leaves the current presented child, or the presenter when a template will wrap it, so the next template
-    // or the presenter itself can take it.
-    private void ReleaseElementContent(object? content, bool templated)
+    // or the presenter itself can take it. The returned placement lets a failed refresh give the element back.
+    private ElementContentPlacement? ReleaseElementContent(object? content, bool templated)
     {
         if (content is not UIElement element || presentedChild is null)
         {
-            return;
+            return null;
         }
 
         if (!ReferenceEquals(presentedChild, element))
         {
+            ElementContentPlacement placement = ElementContentPlacement.Capture(element);
             ContentControl.DetachChildFromOwnedSubtree(this, element);
+            return placement;
         }
-        else if (templated)
+
+        if (templated)
         {
+            ElementContentPlacement placement = ElementContentPlacement.Capture(element);
             RemovePresentedChild(element);
             presentedChild = null;
+            return placement;
         }
+
+        return null;
     }
 
     private UIElement? CreatePresentedChild(object? content, ContentTemplate? template)
@@ -353,6 +384,50 @@ public class ContentPresenter : Control
 
         VisualChildren.Remove(child);
         LogicalChildren.Remove(child);
+    }
+
+    // Where element content was in the tree before a refresh released it.
+    private readonly record struct ElementContentPlacement(
+        UIElement Element,
+        UIElement? VisualParent,
+        int VisualIndex,
+        UIElement? LogicalParent,
+        int LogicalIndex)
+    {
+        public static ElementContentPlacement Capture(UIElement element)
+        {
+            UIElement? visualParent = element.VisualParent;
+            UIElement? logicalParent = element.LogicalParent;
+            return new ElementContentPlacement(
+                element,
+                visualParent,
+                visualParent?.VisualChildren.IndexOf(element) ?? -1,
+                logicalParent,
+                logicalParent?.LogicalChildren.IndexOf(element) ?? -1);
+        }
+
+        // A template that failed after it took the element still holds it, so the element leaves that template's
+        // element first.
+        public void Restore()
+        {
+            bool restoreVisual = !ReferenceEquals(Element.VisualParent, VisualParent);
+            bool restoreLogical = !ReferenceEquals(Element.LogicalParent, LogicalParent);
+            if (restoreVisual)
+            {
+                Element.VisualParent?.VisualChildren.Remove(Element);
+            }
+
+            if (restoreLogical)
+            {
+                Element.LogicalParent?.LogicalChildren.Remove(Element);
+                LogicalParent?.LogicalChildren.Insert(LogicalIndex, Element);
+            }
+
+            if (restoreVisual)
+            {
+                VisualParent?.VisualChildren.Insert(VisualIndex, Element);
+            }
+        }
     }
 
     private sealed class ReferenceContentEqualityComparer : IEqualityComparer<object?>
