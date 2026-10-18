@@ -1063,7 +1063,21 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     internal void SetDesiredSize(LayoutSize desiredSize)
     {
+        if (DesiredSize == desiredSize)
+        {
+            return;
+        }
+
         DesiredSize = desiredSize;
+        // An arrange reads the desired sizes: the element aligns itself in its slot by its own, and its parent places it
+        // by it (a Canvas or StackPanel child gets its desired height). A same-slot arrange of either must run again. A
+        // measure from inside the parent's MeasureCore changes it without the frame step that resets the parent's arrange
+        // cache, for example in a row that a VirtualizingStackPanel realizes again after skipping it.
+        InvalidateArrangeCache();
+        if (VisualParent is UIElement parent)
+        {
+            parent.InvalidateArrangeCache();
+        }
     }
 
     // A parent that skips measuring this element (VirtualizingStackPanel gives an unrealized row LayoutSize.Zero) writes
