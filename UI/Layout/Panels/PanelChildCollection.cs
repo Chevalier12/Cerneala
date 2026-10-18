@@ -27,13 +27,16 @@ public sealed class PanelChildCollection : IReadOnlyList<UIElement>
     {
         // Validate the visual insertion first, so a rejected child never becomes a logical-only child.
         owner.VisualChildren.ValidateInsertion(index, child);
-        owner.LogicalChildren.InsertOwned(GetLogicalIndex(index), child);
+        bool wasLogicalChild = ReferenceEquals(child.LogicalParent, owner);
         try
         {
+            owner.LogicalChildren.InsertOwned(GetLogicalIndex(index), child);
             owner.VisualChildren.Insert(index, child);
         }
-        catch
+        catch when (!wasLogicalChild && ReferenceEquals(child.LogicalParent, owner))
         {
+            // The logical insertion can throw after it published the child (from a LogicalChildren.Changed handler),
+            // and the visual insertion can throw after it; either way the child must not stay a logical-only child.
             owner.LogicalChildren.Remove(child);
             throw;
         }
