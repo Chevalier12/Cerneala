@@ -853,6 +853,50 @@ public sealed class ComboBoxTests
         Assert.Equal(1, command.Executions);
     }
 
+    // As in WPF, where the outer Button takes a press outside the ComboBox and the template's ToggleButton never sees
+    // it, a press on the outer Button followed by a release on the field is not a field click: the drop-down stays
+    // closed and the outer Button clicks once (#468). A press and a release on the field still only toggle (#392).
+    [Fact]
+    public void NonEditableFieldInsideButtonTogglesOnlyWhenThePressAlsoHitsTheField()
+    {
+        UIRoot root = new(300, 200);
+        ComboBox comboBox = new() { IsEditable = false, Width = 180, Height = 32 };
+        comboBox.SetItems(new[] { "one", "two", "three" });
+        comboBox.SelectedIndex = 0;
+        CountingCommand command = new();
+        Button outer = new() { Content = comboBox, Command = command };
+        LayoutCanvas canvas = new();
+        LayoutCanvas.SetLeft(outer, 60);
+        canvas.VisualChildren.Add(outer);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        int outerClicks = 0;
+        outer.Click += (_, _) => outerClicks++;
+        LayoutRect fieldBounds = comboBox.ArrangedBounds;
+        float fieldX = fieldBounds.X + fieldBounds.Width / 2;
+        float fieldY = fieldBounds.Y + fieldBounds.Height / 2;
+        float outerX = outer.ArrangedBounds.X + 2;
+        Assert.Same(outer, new HitTestService().HitTest(root, outerX, fieldY)?.Element);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(outerX, fieldY, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(fieldX, fieldY, previousDown: true, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(fieldX, fieldY, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.False(comboBox.IsDropDownOpen);
+        Assert.Equal(1, outerClicks);
+        Assert.Equal(1, command.Executions);
+
+        bridge.Dispatch(root, PointerFrame(fieldX, fieldY, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(fieldX, fieldY, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.True(comboBox.IsDropDownOpen);
+        Assert.Equal(1, outerClicks);
+        Assert.Equal(1, command.Executions);
+    }
+
     private sealed class CountingCommand : ICommand
     {
         public int Executions { get; private set; }
