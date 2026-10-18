@@ -117,7 +117,7 @@ public class TabItem : ContentControl, ISelectableItemContainer
     // A TabItem never hosts its Content: the TabControl shows the Content of its selected tab in its content area.
     // A UIElement Content is still owned: it is the logical child of this TabItem whenever the content area does not
     // show it, so it cannot be added to another parent or become the Content of another tab.
-    internal override bool HostsContentDirectly => false;
+    internal override bool HostsContentDirectly(object? content) => false;
 
     private bool IsComponentTemplated => ComponentTemplate is not null || ComponentTemplateKey is not null;
 
