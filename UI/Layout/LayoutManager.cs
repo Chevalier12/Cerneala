@@ -48,9 +48,7 @@ public sealed class LayoutManager
     {
         ArgumentNullException.ThrowIfNull(element);
         bool isDirtyArrange = element.DirtyState.Has(InvalidationFlags.Arrange);
-        if (!isDirtyArrange &&
-            element.LastArrangeFinalRect == finalRect &&
-            element.LastArrangeLayoutVersion == element.LayoutVersion)
+        if (!isDirtyArrange && element.HasValidArrangeCache(finalRect))
         {
             return new LayoutResult(element.DesiredSize, element.ArrangedBounds, false, true, false);
         }
