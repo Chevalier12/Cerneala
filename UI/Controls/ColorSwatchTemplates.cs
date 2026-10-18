@@ -24,8 +24,8 @@ internal static class ColorSwatchTemplates
             MatchTargetWidth = false
         };
         Grid root = new();
-        Add(root, button);
-        Add(root, overlay);
+        root.Children.Add(button);
+        root.Children.Add(overlay);
 
         const UiPropertyValueSource OwnerBindingSource = UiPropertyValueSource.TemplateOwnerBinding;
         context.Bind(Control.BorderBrushProperty, button, Control.BorderBrushProperty, OwnerBindingSource);
@@ -34,10 +34,4 @@ internal static class ColorSwatchTemplates
         context.RequirePart("PART_PickerOverlay", overlay);
         return root;
     });
-
-    private static void Add(Grid panel, UIElement child)
-    {
-        panel.LogicalChildren.Add(child);
-        panel.VisualChildren.Add(child);
-    }
 }

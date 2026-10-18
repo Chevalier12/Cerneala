@@ -662,6 +662,10 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     {
     }
 
+    internal virtual void ValidateChildInsertion(UIElement child, ElementChildRole role, bool ownerManaged)
+    {
+    }
+
     // A parent can let a new owner take one of its children without removing it first. ContentPresenter does so for
     // the element content it hosts directly while its template runs, so the element leaves the presenter only when
     // the template adds it to another element.

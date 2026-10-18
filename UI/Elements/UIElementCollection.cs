@@ -63,6 +63,7 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
         }
 
         child.ValidateParentChange(owner, role, ownerManaged);
+        owner.ValidateChildInsertion(child, role, ownerManaged);
 
         if (ReferenceEquals(owner, child))
         {
