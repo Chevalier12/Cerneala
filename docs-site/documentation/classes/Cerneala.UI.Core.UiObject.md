@@ -89,6 +89,8 @@ Public `SetValue` and `ClearValue` overloads that take `UiProperty<T>` reject re
 
 `PropertyChanged` is raised only when a set or clear operation changes the effective value according to the property's equality comparer. Derived classes can override `OnPropertyChanged` to add behavior around that event. After an effective change, if the property has invalidation options such as `AffectsMeasure`, `AffectsArrange`, `AffectsRender`, `AffectsHitTest`, `AffectsAspect`, `AffectsInputVisual`, `AffectsSemantics`, or `Inherits`, and the object implements `IUiPropertyOwner`, `OnPropertyInvalidated` is called with those options.
 
+The new value is stored before `OnPropertyChanged` runs. When `OnPropertyChanged` or a `PropertyChanged` handler throws, the value stays stored, the `MutationObserver` report and the `OnPropertyInvalidated` call still run, and then the first exception propagates from `SetValue` or `ClearValue`. For example, a `PropertyChanged` handler that throws on a change of an `AffectsMeasure` property leaves the new value in place and the element still measures again on the next frame.
+
 `MutationObserver` is `null` by default. When a derived object supplies an observer, `UiObject` reports each set or clear mutation, including mutations that do not change the effective value.
 
 ## Constructors
@@ -138,6 +140,7 @@ Public `SetValue` and `ClearValue` overloads that take `UiProperty<T>` reject re
 | `SetValue`, `ClearValue` | `InvalidOperationException` | The overload takes `UiProperty<T>` and the property is read-only. |
 | `SetValue` | `ArgumentException` | The value is not assignable to the property's value type, or the coerced value fails validation. |
 | `SetValue`, `ClearValue`, `GetSourceValue` | `ArgumentOutOfRangeException` | The supplied source is not a defined concrete source, or is `UiPropertyValueSource.Default`. |
+| `SetValue`, `ClearValue` | Any exception | `OnPropertyChanged` or a `PropertyChanged` handler threw. The new value stays stored, and the mutation report and invalidation already ran. |
 
 ## Applies to
 

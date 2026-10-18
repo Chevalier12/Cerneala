@@ -177,6 +177,75 @@ public sealed class ElementAspectTests
         Assert.False(root.ProcessFrame().HasWork);
     }
 
+    [Fact]
+    public void ReplacingAnAspectWhoseLifetimeThrowsOnDisposeAppliesTheNewAspectAndThenThrows()
+    {
+        UIRoot root = new();
+        Border border = new();
+        int created = 0;
+        ElementAspect oldAspect = new(
+            "Old",
+            typeof(UIElement),
+            [],
+            [],
+            _ => new CallbackLifetime(() => throw new InvalidOperationException("Dispose failed")));
+        ElementAspect newAspect = new(
+            "New",
+            typeof(UIElement),
+            [new ElementAspectValue(UIElement.OpacityProperty, 0.5f)],
+            [],
+            _ =>
+            {
+                created++;
+                return new CallbackLifetime(() => { });
+            });
+        border.Aspect = oldAspect;
+        root.VisualChildren.Add(border);
+        root.ProcessFrame();
+
+        InvalidOperationException failure = Assert.Throws<InvalidOperationException>(() => border.Aspect = newAspect);
+        root.ProcessFrame();
+
+        Assert.Equal("Dispose failed", failure.Message);
+        Assert.Same(newAspect, border.Aspect);
+        Assert.Equal(1, created);
+        Assert.Equal(0.5f, border.Opacity);
+
+        Assert.True(oldAspect.SetValue(UIElement.OpacityProperty, 0.9f));
+        Assert.False(border.DirtyState.Has(InvalidationFlags.Aspect));
+
+        Assert.True(newAspect.SetValue(UIElement.OpacityProperty, 0.25f));
+        root.ProcessFrame();
+        Assert.Equal(0.25f, border.Opacity);
+    }
+
+    [Fact]
+    public void ClearingAnAspectWhoseLifetimeThrowsOnDisposeRemovesItsValuesAndThenThrows()
+    {
+        UIRoot root = new();
+        Border border = new();
+        ElementAspect aspect = new(
+            "Old",
+            typeof(UIElement),
+            [new ElementAspectValue(UIElement.OpacityProperty, 0.5f)],
+            [],
+            _ => new CallbackLifetime(() => throw new InvalidOperationException("Dispose failed")));
+        border.Aspect = aspect;
+        root.VisualChildren.Add(border);
+        root.ProcessFrame();
+        Assert.Equal(0.5f, border.Opacity);
+
+        InvalidOperationException failure = Assert.Throws<InvalidOperationException>(() => border.Aspect = null);
+        root.ProcessFrame();
+
+        Assert.Equal("Dispose failed", failure.Message);
+        Assert.Null(border.Aspect);
+        Assert.Equal(1f, border.Opacity);
+
+        Assert.True(aspect.SetValue(UIElement.OpacityProperty, 0.25f));
+        Assert.False(border.DirtyState.Has(InvalidationFlags.Aspect));
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
