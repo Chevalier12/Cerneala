@@ -132,6 +132,7 @@ public sealed class ContentPresenterTests
         Assert.Same(newBorder, content.LogicalParent);
         Assert.DoesNotContain(content, oldBorder.VisualChildren);
         Assert.DoesNotContain(content, oldBorder.LogicalChildren);
+        Assert.Null(oldBorder.Child);
     }
 
     [Fact]
@@ -203,6 +204,37 @@ public sealed class ContentPresenterTests
 
         Border border = Assert.IsType<Border>(presenter.PresentedChild);
         Assert.Same(border, content.VisualParent);
+    }
+
+    [Fact]
+    public void ReplacingContentTemplateKeepsElementContentInTheContainerThatTheTemplateReuses()
+    {
+        UIRoot root = new(200, 200);
+        FixedElement content = new(new LayoutSize(10, 10));
+        Border cached = new();
+        Func<ContentTemplateContext, UIElement?> factory = context =>
+        {
+            cached.Child = (UIElement?)context.Data;
+            return cached;
+        };
+        ContentPresenter presenter = new()
+        {
+            ContentTemplate = new ContentTemplate("cache1", typeof(object), key: null, priority: 0, factory),
+            Content = content
+        };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        Assert.Same(cached, content.VisualParent);
+
+        presenter.ContentTemplate = new ContentTemplate("cache2", typeof(object), key: null, priority: 0, factory);
+        root.ProcessFrame();
+
+        Assert.Same(cached, presenter.PresentedChild);
+        Assert.Same(content, cached.Child);
+        Assert.Same(cached, content.VisualParent);
+        Assert.Same(cached, content.LogicalParent);
+        Assert.Contains(content, cached.VisualChildren);
+        Assert.Contains(content, cached.LogicalChildren);
     }
 
     [Fact]
