@@ -118,6 +118,37 @@ public sealed class ButtonKeyboardActivationTests
         Assert.Equal(0, executions);
     }
 
+    [Fact]
+    public void SpaceReleaseGoesToButtonCreatedAndFocusedByRepeatOfSameFrame()
+    {
+        UIRoot root = RootWithButton(out ButtonBase first);
+        ElementInputBridge bridge = FocusedBridge(root, first);
+        int executions = 0;
+        first.Command = new ActionCommand(_ => executions++);
+        ButtonBase? second = null;
+        List<string> log = [];
+        first.Handlers.AddHandler(InputEvents.KeyDownEvent, (_, args) =>
+        {
+            if (args is KeyEventArgs { Key: InputKey.Space, IsRepeat: true } && second is null)
+            {
+                second = new ButtonBase();
+                second.Handlers.AddHandler(InputEvents.KeyUpEvent, (_, _) => log.Add("second.KeyUp"), handledEventsToo: true);
+                root.VisualChildren.Add(second);
+                Assert.True(bridge.FocusManager.Focus(second, root.InputCache.EnsureCurrent(root)));
+            }
+        }, handledEventsToo: true);
+        first.Handlers.AddHandler(InputEvents.KeyUpEvent, (_, _) => log.Add("first.KeyUp"), handledEventsToo: true);
+        KeyboardSnapshot none = KeyboardSnapshot.FromDownKeys([]);
+        KeyboardSnapshot space = KeyboardSnapshot.FromDownKeys([InputKey.Space]);
+
+        bridge.Dispatch(root, KeyPressFrame(InputKey.Space));
+        bridge.Dispatch(root, new InputFrame(PointerSnapshot.Empty, PointerSnapshot.Empty, space, none, [], [InputKey.Space]));
+
+        Assert.Equal(["second.KeyUp"], log);
+        Assert.False(first.IsPressed);
+        Assert.Equal(0, executions);
+    }
+
     private static ElementInputBridge FocusedBridge(UIRoot root, ButtonBase button)
     {
         ElementInputBridge bridge = new();
