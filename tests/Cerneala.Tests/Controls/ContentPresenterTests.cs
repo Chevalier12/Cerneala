@@ -417,6 +417,113 @@ public sealed class ContentPresenterTests
         Assert.Same(root, content.Root);
     }
 
+    [Fact]
+    public void ContentChangedByUnloadedWhileTemplateTakesDirectlyHostedElementPresentsTheNewContent()
+    {
+        UIRoot root = new(200, 200);
+        FixedElement content = new(new LayoutSize(10, 10));
+        ContentPresenter presenter = new() { Content = content };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        SetContentOnFirstUnloaded(content, presenter, "other");
+
+        presenter.ContentTemplate = WrapOrTextTemplate("wrap");
+        root.ProcessFrame();
+
+        AssertPresentsOnlyText(presenter, "other");
+        Assert.False(content.IsAttached);
+        Assert.Null(content.VisualParent);
+        Assert.Null(content.LogicalParent);
+    }
+
+    [Fact]
+    public void ContentChangedByUnloadedWhileReleasingTemplateWrappedElementPresentsTheNewContent()
+    {
+        UIRoot root = new(200, 200);
+        FixedElement content = new(new LayoutSize(10, 10));
+        ContentPresenter presenter = new() { ContentTemplate = WrapOrTextTemplate("first"), Content = content };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        Assert.IsType<Border>(presenter.PresentedChild);
+        SetContentOnFirstUnloaded(content, presenter, "other");
+
+        presenter.ContentTemplate = WrapOrTextTemplate("second");
+        root.ProcessFrame();
+
+        AssertPresentsOnlyText(presenter, "other");
+        Assert.False(content.IsAttached);
+        Assert.Null(content.VisualParent);
+        Assert.Null(content.LogicalParent);
+    }
+
+    [Fact]
+    public void ContentChangedByUnloadedOfThePreviousPresentedChildPresentsTheNewContent()
+    {
+        UIRoot root = new(200, 200);
+        FixedElement previous = new(new LayoutSize(10, 10));
+        ContentPresenter presenter = new()
+        {
+            ContentTemplate = new ContentTemplate("first", typeof(object), key: null, priority: 0, _ => previous),
+            Content = "first"
+        };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        Assert.Same(previous, presenter.PresentedChild);
+        SetContentOnFirstUnloaded(previous, presenter, "other");
+
+        presenter.ContentTemplate = WrapOrTextTemplate("second");
+        root.ProcessFrame();
+
+        AssertPresentsOnlyText(presenter, "other");
+        Assert.False(previous.IsAttached);
+    }
+
+    [Fact]
+    public void ContentChangedByUnloadedWhileContentReplacesDirectlyHostedElementPresentsTheLastContent()
+    {
+        UIRoot root = new(200, 200);
+        FixedElement content = new(new LayoutSize(10, 10));
+        ContentPresenter presenter = new() { Content = content };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        SetContentOnFirstUnloaded(content, presenter, "other");
+
+        presenter.Content = "first";
+        root.ProcessFrame();
+
+        Assert.Equal("other", presenter.Content);
+        AssertPresentsOnlyText(presenter, "other");
+        Assert.False(content.IsAttached);
+    }
+
+    private static void SetContentOnFirstUnloaded(UIElement element, ContentPresenter presenter, object newContent)
+    {
+        bool changed = false;
+        element.Unloaded += (_, _) =>
+        {
+            if (!changed)
+            {
+                changed = true;
+                presenter.Content = newContent;
+            }
+        };
+    }
+
+    private static void AssertPresentsOnlyText(ContentPresenter presenter, string text)
+    {
+        TextBlock textBlock = Assert.IsType<TextBlock>(presenter.PresentedChild);
+        Assert.Equal(text, textBlock.Text);
+        Assert.Same(textBlock, Assert.Single(presenter.VisualChildren));
+        Assert.Same(textBlock, Assert.Single(presenter.LogicalChildren));
+        Assert.True(textBlock.IsAttached);
+    }
+
+    private static ContentTemplate WrapOrTextTemplate(string name)
+    {
+        return new ContentTemplate(name, typeof(object), key: null, priority: 0, context =>
+            context.Data is UIElement element ? new Border { Child = element } : new TextBlock { Text = context.Data?.ToString() });
+    }
+
     private static ContentTemplate PassThroughTemplate(string name)
     {
         return new ContentTemplate(name, typeof(object), key: null, priority: 0, context => context.Data as UIElement);
