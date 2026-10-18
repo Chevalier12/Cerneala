@@ -82,7 +82,7 @@ Repeating the same SDL_GPU registration is harmless. A different windowing backe
 | text input | text input, then a render request |
 | text editing (IME composition) | only a render request; the composition text is not passed on |
 
-Input events are ignored while the window is disabled, for example while it has an open modal child.
+Input events are ignored while the window is disabled, for example while it has an open modal child. Because the window never sees the release of a key or mouse button held at that moment, disabling it drops the held keys and buttons without a release: the app gets no `KeyUp` or `MouseUp` for them, and their next press raises `KeyDown` or `MouseDown` again. Example: a `MouseDown` handler opens a dialog with `ShowDialogAsync` while the left button is still down; after the dialog closes, the next left click in the owner raises one `MouseDown` and one `MouseUp`. Losing the keyboard focus drops the held keys in the same way.
 
 `SdlInputSource` maps:
 
