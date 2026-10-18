@@ -24,6 +24,7 @@ internal sealed class SdlInputSource : IInputSource
     private readonly HashSet<InputKey> downKeys = [];
     private readonly List<TextInputSnapshotEvent> textInput = [];
     private readonly List<InputKey> keyRepeats = [];
+    private readonly List<int> wheelDeltas = [];
     private readonly List<PendingInput> deferred = [];
     private FramePhase framePhase;
     private bool hasTransition;
@@ -49,11 +50,12 @@ internal sealed class SdlInputSource : IInputSource
     public InputFrame GetFrame()
     {
         KeyboardSnapshot currentKeyboard = KeyboardSnapshot.FromDownKeys(downKeys);
-        InputFrame frame = new(previousPointer, currentPointer, previousKeyboard, currentKeyboard, textInput.ToArray(), keyRepeats.ToArray());
+        InputFrame frame = new(previousPointer, currentPointer, previousKeyboard, currentKeyboard, textInput.ToArray(), keyRepeats.ToArray(), wheelDeltas.ToArray());
         previousPointer = currentPointer;
         previousKeyboard = currentKeyboard;
         textInput.Clear();
         keyRepeats.Clear();
+        wheelDeltas.Clear();
         frameKey = InputKey.None;
         framePhase = FramePhase.Empty;
         hasTransition = false;
@@ -234,7 +236,10 @@ internal sealed class SdlInputSource : IInputSource
                 currentPointer = currentPointer.WithButton((InputMouseButton)input.Value, input.Down);
                 break;
             case PendingKind.Wheel:
+                // Each SDL wheel event stays one wheel event of the frame, so notches that share a
+                // frame are raised one by one instead of as their sum.
                 currentPointer = currentPointer.WithWheelValue(checked(currentPointer.WheelValue + input.Value));
+                wheelDeltas.Add(input.Value);
                 break;
             case PendingKind.Key:
                 frameKey = (InputKey)input.Value;
