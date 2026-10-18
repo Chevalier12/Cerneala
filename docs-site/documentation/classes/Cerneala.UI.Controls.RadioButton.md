@@ -35,7 +35,7 @@ option.IsChecked = true;
 
 `RadioButton` derives from `Button`, so it keeps the button content, text rendering, focus, command, and input behavior inherited through `ButtonBase` and `ContentControl`.
 
-The class adds a single selection state, `IsChecked`. Its constructor registers an input handler for `InputEvents.MouseUpEvent`; when that routed event is a `MouseButtonEventArgs` with `ChangedButton` equal to `InputMouseButton.Left`, the handler sets `IsChecked` to `true`.
+The class adds a single selection state, `IsChecked`. Its constructor registers an input handler for `InputEvents.MouseUpEvent`; when that routed event is a `MouseButtonEventArgs` with `ChangedButton` equal to `InputMouseButton.Left`, the handler sets `IsChecked` to `true`. The handler does not run for a `MouseUp` event that is already handled. For example, when a `ComboBox` is the `Content` of a `RadioButton`, a click on an item in the open drop-down selects that item, and `IsChecked` stays `false`, because the item marks that release handled (see `Selector`).
 
 The implementation does not define radio groups, mutual exclusion, or automatic unchecking of sibling controls. Set `IsChecked` to `false` directly when an application needs to clear the state.
 

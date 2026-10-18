@@ -364,7 +364,9 @@ public class Selector : ItemsControl
         public Selector? Owner { get; set; }
 
         // As in WPF, where ButtonBase marks the mouse button events handled, a command source in the container, such as
-        // a CheckBox from the ItemTemplate, owns its click, as the input bridge resolves the click to it.
+        // a CheckBox from the ItemTemplate, owns its click, as the input bridge resolves the click to it. Any other
+        // release is the container's click, and it is handled as WPF's ListBoxItem handles the press, so an enclosing
+        // Button or RadioButton is not clicked, checked, or commanded by it (#490).
         public void OnMouseUp(UiElementId _, RoutedEventArgs args)
         {
             if (Owner is null || args is not MouseButtonEventArgs { ChangedButton: InputMouseButton.Left })
@@ -376,6 +378,7 @@ public class Selector : ItemsControl
             if (clickOwner is not IInputCommandSource || ReferenceEquals(clickOwner, container))
             {
                 Owner.SelectContainer(container);
+                args.Handled = true;
             }
         }
     }
