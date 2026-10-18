@@ -316,6 +316,59 @@ public sealed class ContentPresenterTests
     }
 
     [Fact]
+    public void ReplacingContentTemplateKeepsElementContentInTheContentControlThatTheTemplateReuses()
+    {
+        UIRoot root = new(200, 200);
+        FixedElement content = new(new LayoutSize(10, 10));
+        ContentControl cached = new();
+        Func<ContentTemplateContext, UIElement?> factory = context =>
+        {
+            cached.Content = context.Data;
+            return cached;
+        };
+        ContentPresenter presenter = new()
+        {
+            ContentTemplate = new ContentTemplate("cache1", typeof(object), key: null, priority: 0, factory),
+            Content = content
+        };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        Assert.Same(cached, content.VisualParent);
+
+        presenter.ContentTemplate = new ContentTemplate("cache2", typeof(object), key: null, priority: 0, factory);
+        root.ProcessFrame();
+
+        Assert.Same(cached, presenter.PresentedChild);
+        Assert.Same(content, cached.Content);
+        Assert.Same(cached, content.VisualParent);
+        Assert.Same(cached, content.LogicalParent);
+        Assert.Contains(content, cached.VisualChildren);
+        Assert.Contains(content, cached.LogicalChildren);
+    }
+
+    [Fact]
+    public void ReplacingContentTemplateReleasesElementContentThroughTheOldContentControlContent()
+    {
+        FixedElement content = new(new LayoutSize(10, 10));
+        ContentPresenter presenter = new()
+        {
+            ContentTemplate = ContentControlTemplate("first"),
+            Content = content
+        };
+        ContentControl oldContainer = Assert.IsType<ContentControl>(presenter.PresentedChild);
+        Assert.Same(oldContainer, content.VisualParent);
+
+        presenter.ContentTemplate = ContentControlTemplate("second");
+
+        ContentControl newContainer = Assert.IsType<ContentControl>(presenter.PresentedChild);
+        Assert.NotSame(oldContainer, newContainer);
+        Assert.Same(newContainer, content.VisualParent);
+        Assert.Null(oldContainer.Content);
+        Assert.DoesNotContain(content, oldContainer.VisualChildren);
+        Assert.DoesNotContain(content, oldContainer.LogicalChildren);
+    }
+
+    [Fact]
     public void ReplacingPassThroughContentTemplateKeepsElementContentInPlace()
     {
         UIRoot root = new(200, 200);
@@ -372,6 +425,11 @@ public sealed class ContentPresenterTests
     private static ContentTemplate WrapTemplate(string name, string? key)
     {
         return new ContentTemplate(name, typeof(object), key, priority: 0, context => new Border { Child = (UIElement?)context.Data });
+    }
+
+    private static ContentTemplate ContentControlTemplate(string name)
+    {
+        return new ContentTemplate(name, typeof(object), key: null, priority: 0, context => new ContentControl { Content = context.Data });
     }
 
     private static ContentTemplate ThrowingTemplate(bool takeContent)

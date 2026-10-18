@@ -211,6 +211,18 @@ public class ContentControl : Control
             decorator.Child = null;
         }
 
+        // A ContentControl that hosts its content directly also names that element in Content. Releasing the element
+        // through Content keeps the property in step with the control's children, so the control can take the
+        // element again, for example when a template reuses it as its container.
+        if (child.VisualParent is ContentControl contentControl &&
+            !ReferenceEquals(contentControl, owner) &&
+            contentControl.HostsContentDirectly(child) &&
+            ReferenceEquals(contentControl.Content, child) &&
+            IsOwnedBy(contentControl, owner, ElementChildRole.Visual))
+        {
+            contentControl.Content = null;
+        }
+
         UIElement? visualParent = child.VisualParent;
         if (IsOwnedBy(visualParent, owner, ElementChildRole.Visual))
         {
