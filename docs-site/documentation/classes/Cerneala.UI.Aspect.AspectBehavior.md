@@ -50,7 +50,7 @@ sealed class EventSubscription(Action unsubscribe) : IDisposable
 
 The constructor requires a `TargetType` derived from `UIElement` and a non-null attach factory. `AspectProcessor` filters behaviors by `TargetType`, invokes the factory once for each matching visible behavior occurrence, and retains the returned lifetime. A `null` lifetime is allowed and still counts as an attached behavior.
 
-When a package is replaced, becomes invisible, or its element detaches, the processor disposes the associated lifetime. Reprocessing an unchanged catalog does not attach the same behavior occurrence again. The attach operation is processor-owned; this class intentionally exposes no public `Attach` method.
+When a package is replaced, becomes invisible, or its element detaches, the processor disposes the associated lifetime. A lifetime whose `Dispose` throws counts as disposed: it is never disposed again, the element's other lifetimes are still disposed, a replacement keeps its new lifetime, a reattach attaches new lifetimes, and the first exception propagates to the caller. Reprocessing an unchanged catalog does not attach the same behavior occurrence again. The attach operation is processor-owned; this class intentionally exposes no public `Attach` method.
 
 ## Constructors
 
