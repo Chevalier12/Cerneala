@@ -1071,8 +1071,7 @@ public sealed class ItemContainerGeneratorTests
         control.SetItems(new[] { "a", "b" });
         UIElement container = control.ItemContainerGenerator.GetOrCreate(0);
         Cerneala.UI.Layout.Panels.Panel oldPanel = new();
-        oldPanel.LogicalChildren.Add(container);
-        oldPanel.VisualChildren.Add(container);
+        oldPanel.Children.Add(container);
 
         IReadOnlyList<UIElement> nextWindow = control.ItemContainerGenerator.Realize(new RealizationWindow(1, 2));
 
@@ -1080,8 +1079,7 @@ public sealed class ItemContainerGeneratorTests
         Assert.Null(container.LogicalParent);
         Assert.Null(container.VisualParent);
         Cerneala.UI.Layout.Panels.Panel nextPanel = new();
-        nextPanel.LogicalChildren.Add(container);
-        nextPanel.VisualChildren.Add(container);
+        nextPanel.Children.Add(container);
     }
 
     [Fact]

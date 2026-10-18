@@ -505,8 +505,14 @@ public class MenuItem : ItemsControl, IInputCommandSource, ICommandStateSource, 
         }
     }
 
+    // Opened and Closed of a nested submenu bubble through this item's overlay; only its own projection counts.
     private void OnOverlayOpened(UiElementId _, RoutedEventArgs args)
     {
+        if (!ReferenceEquals(args.OriginalSource, submenuOverlay))
+        {
+            return;
+        }
+
         if (!IsEnabled || !HasSubmenu)
         {
             if (submenuOverlay is not null)
@@ -527,6 +533,11 @@ public class MenuItem : ItemsControl, IInputCommandSource, ICommandStateSource, 
 
     private void OnOverlayClosed(UiElementId _, RoutedEventArgs args)
     {
+        if (!ReferenceEquals(args.OriginalSource, submenuOverlay))
+        {
+            return;
+        }
+
         if (IsSubmenuOpen)
         {
             SetValue(IsSubmenuOpenProperty, false);
@@ -565,9 +576,10 @@ public class MenuItem : ItemsControl, IInputCommandSource, ICommandStateSource, 
         menuSession?.OnPointerEntered(this);
     }
 
+    // Keys of submenu items bubble through this item (#404); the session handles them on the item that has focus.
     private void OnKeyDown(UiElementId _, RoutedEventArgs args)
     {
-        if (args is KeyEventArgs keyArgs && menuSession?.HandleKey(this, keyArgs) == true)
+        if (args is KeyEventArgs keyArgs && IsHeaderSource(args.OriginalSource) && menuSession?.HandleKey(this, keyArgs) == true)
         {
             args.Handled = true;
         }

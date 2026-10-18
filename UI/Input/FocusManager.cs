@@ -33,7 +33,7 @@ public sealed class FocusManager
 
         IReadOnlyList<UIElement> nextPath = element is null
             ? []
-            : routeMap.GetRouteToRoot(element);
+            : routeMap.GetVisualRouteToRoot(element);
         UpdateFocusState(oldFocus, element, focusedPath, nextPath);
         focusedPath = nextPath;
         KeyboardFocusChangedEventArgs? previewLostArgs = RaisePreviewFocusLost(routeMap, oldFocus, element);
@@ -104,7 +104,7 @@ public sealed class FocusManager
         return results;
     }
 
-    private bool TryGetKeyboardTarget(
+    internal bool TryGetKeyboardTarget(
         ElementInputRouteMap routeMap,
         [NotNullWhen(true)] out UIElement? target,
         out UiElementId targetId)
