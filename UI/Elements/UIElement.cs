@@ -333,6 +333,15 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     private int arrangeCacheInvalidationCount;
 
+    // An arrange reads desired sizes: its own, by which the element aligns itself in its slot, and its visual
+    // children's, by which it places them. Its cache stays valid while these equal the values from when the arrange
+    // started, so a measure that changes one and a later measure that gives the old value back keep the cache.
+    private LayoutSize arrangeDesiredSize;
+    private int arrangeGeneration;
+    private int changedChildDesiredSizeCount;
+    private int parentArrangeGeneration = -1;
+    private LayoutSize parentArrangeDesiredSize;
+
     public object? DataContext
     {
         get => GetValue(DataContextProperty);
@@ -664,6 +673,19 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     internal void SetVisualParent(UIElement? parent)
     {
+        if (!ReferenceEquals(VisualParent, parent))
+        {
+            // A changed desired size counts against the arrange of the parent that read the old value, not a new parent.
+            if (VisualParent is UIElement previousParent &&
+                parentArrangeGeneration == previousParent.arrangeGeneration &&
+                DesiredSize != parentArrangeDesiredSize)
+            {
+                previousParent.changedChildDesiredSizeCount--;
+            }
+
+            parentArrangeGeneration = -1;
+        }
+
         VisualParent = parent;
         // Being skipped belongs to the panel that skipped the child, not to a new parent.
         IsSkippedByVirtualization = false;
@@ -962,10 +984,19 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         LastScheduledArrangeRoot = null;
     }
 
+    internal bool ArrangeDesiredSizesAreCurrent =>
+        DesiredSize == arrangeDesiredSize && changedChildDesiredSizeCount == 0;
+
+    internal bool HasValidArrangeCache(LayoutRect finalRect)
+    {
+        return LastArrangeFinalRect == finalRect &&
+            LastArrangeLayoutVersion == LayoutVersion &&
+            ArrangeDesiredSizesAreCurrent;
+    }
+
     public LayoutRect Arrange(ArrangeContext context)
     {
-        if (LastArrangeFinalRect == context.FinalRect &&
-            LastArrangeLayoutVersion == LayoutVersion)
+        if (HasValidArrangeCache(context.FinalRect))
         {
             RecordScheduledArrangeVisit();
             return ArrangedBounds;
@@ -973,6 +1004,12 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
         Root?.CountArrangeCall();
         int invalidationCountBeforeArrange = arrangeCacheInvalidationCount;
+        // The desired sizes this arrange reads, the element's own and its visual children's, are the current ones.
+        // An arrange that does not finish leaves no valid cache with them.
+        LastArrangeLayoutVersion = -1;
+        arrangeDesiredSize = DesiredSize;
+        arrangeGeneration++;
+        changedChildDesiredSizeCount = 0;
         LayoutRect finalRect = !UIElementVisibility.ParticipatesInLayout(this)
             ? context.FinalRect
             : ApplyMarginAndAlignment(context.FinalRect, context.Rounding);
@@ -1068,16 +1105,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
             return;
         }
 
-        DesiredSize = desiredSize;
-        // An arrange reads the desired sizes: the element aligns itself in its slot by its own, and its parent places it
-        // by it (a Canvas or StackPanel child gets its desired height). A same-slot arrange of either must run again. A
-        // measure from inside the parent's MeasureCore changes it without the frame step that resets the parent's arrange
-        // cache, for example in a row that a VirtualizingStackPanel realizes again after skipping it.
-        InvalidateArrangeCache();
-        if (VisualParent is UIElement parent)
-        {
-            parent.InvalidateArrangeCache();
-        }
+        WriteDesiredSize(desiredSize);
     }
 
     // A parent that skips measuring this element (VirtualizingStackPanel gives an unrealized row LayoutSize.Zero) writes
@@ -1086,8 +1114,39 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     // measure results, stay.
     internal void SetUnmeasuredDesiredSize(LayoutSize desiredSize)
     {
-        DesiredSize = desiredSize;
+        WriteDesiredSize(desiredSize);
         LastMeasureLayoutVersion = -1;
+    }
+
+    // An arrange reads the desired sizes: the element aligns itself in its slot by its own, and its parent places it by
+    // it (a Canvas or StackPanel child gets its desired height). While one differs from the value it had when the
+    // arrange started, a same-slot arrange of the element or of its parent runs again (ArrangeDesiredSizesAreCurrent).
+    // This covers a measure from inside the parent's MeasureCore, which the frame step that resets the parent's arrange
+    // cache does not see, for example in a row that a VirtualizingStackPanel realizes again after skipping it. A measure
+    // that gives the old value back keeps both caches, as when an overlay layer measures its content unbounded and then
+    // clamped to the space beside the target.
+    private void WriteDesiredSize(LayoutSize desiredSize)
+    {
+        LayoutSize previousDesiredSize = DesiredSize;
+        DesiredSize = desiredSize;
+        if (VisualParent is not UIElement parent)
+        {
+            return;
+        }
+
+        if (parentArrangeGeneration != parent.arrangeGeneration)
+        {
+            // The first change since the parent's arrange started: that arrange read the previous value.
+            parentArrangeGeneration = parent.arrangeGeneration;
+            parentArrangeDesiredSize = previousDesiredSize;
+        }
+
+        bool wasChanged = previousDesiredSize != parentArrangeDesiredSize;
+        bool isChanged = desiredSize != parentArrangeDesiredSize;
+        if (wasChanged != isChanged)
+        {
+            parent.changedChildDesiredSizeCount += isChanged ? 1 : -1;
+        }
     }
 
     internal bool SetArrangedBounds(LayoutRect arrangedBounds)
