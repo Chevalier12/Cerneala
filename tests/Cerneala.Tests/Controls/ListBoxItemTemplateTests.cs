@@ -347,6 +347,66 @@ public sealed class ListBoxItemTemplateTests
         Assert.Same(row, Ancestors(templated).OfType<ListBoxItem>().First());
     }
 
+    // The row releases the item it really hosted, whatever a template predicate answers when the item leaves.
+    [Fact]
+    public void RecycledListBoxItemReleasesADirectlyHostedItemThatATemplatePredicateStartedToMatch()
+    {
+        HashSet<UIElement> wrapped = [];
+        Plain item = new();
+        Plain other = new();
+        ListBox listBox = new();
+        listBox.Templates.Add(new ContentTemplate<Plain>("wrap", key: null, priority: 0,
+            context => new Wrapper(context.Data),
+            predicate: context => context.Data is Plain plain && wrapped.Contains(plain)));
+        listBox.ItemsSource = new UIElement[] { item };
+        UIRoot root = new(100, 100);
+        root.VisualChildren.Add(listBox);
+        root.ProcessFrame();
+        ListBoxItem row = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Same(row, item.VisualParent);
+
+        wrapped.Add(item);
+        listBox.ItemsSource = new UIElement[] { other };
+        root.ProcessFrame();
+
+        Assert.Same(row, listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Same(row, other.VisualParent);
+        Assert.Null(item.VisualParent);
+        Assert.Null(item.LogicalParent);
+        Assert.DoesNotContain(item, row.VisualChildren);
+        new ContentControl().Content = item;
+    }
+
+    [Fact]
+    public void RecycledListBoxItemReleasesATemplatedItemThatATemplatePredicateStoppedMatching()
+    {
+        HashSet<UIElement> wrapped = [];
+        Plain item = new();
+        Plain other = new();
+        wrapped.Add(item);
+        ListBox listBox = new();
+        listBox.Templates.Add(new ContentTemplate<Plain>("wrap", key: null, priority: 0,
+            context => new Wrapper(context.Data),
+            predicate: context => context.Data is Plain plain && wrapped.Contains(plain)));
+        listBox.ItemsSource = new UIElement[] { item };
+        UIRoot root = new(100, 100);
+        root.VisualChildren.Add(listBox);
+        root.ProcessFrame();
+        ListBoxItem row = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.IsType<Wrapper>(item.VisualParent);
+
+        wrapped.Remove(item);
+        listBox.ItemsSource = new UIElement[] { other };
+        root.ProcessFrame();
+
+        Assert.Same(row, listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Same(row, other.VisualParent);
+        Assert.Null(item.VisualParent);
+        Assert.Null(item.LogicalParent);
+        Assert.DoesNotContain(item, Descendants(row));
+        new ContentControl().Content = item;
+    }
+
     private static IEnumerable<UIElement> Ancestors(UIElement element)
     {
         for (UIElement? current = element.VisualParent; current is not null; current = current.VisualParent)
