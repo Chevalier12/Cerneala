@@ -78,7 +78,7 @@ TabItem tabItem = new()
 
 `TabItem` derives from `ContentControl`, so its page content is stored in the inherited `Content` property. The class adds a `Header` property for the tab header, `HeaderTemplate` and `HeaderTemplateKey` for presenting the header, `ContentTemplate` for presenting the content, and an `IsSelected` property used by selection controls.
 
-`TabControl` uses `TabItem` as its default item container. When containers are prepared through `ItemsControl`, the `ISelectableItemContainer` members are updated with the realized item index, source item, and selection state. Clearing the container resets `ItemIndex` to `-1`, `Item` to `null`, and `IsSelected` to `false`. For a tab that `TabControl` generates for a data item, it also sets `Header`, `HeaderTemplate`, `HeaderTemplateKey`, and `Content` from the item and its `ItemTemplate`, as described on `TabControl`, and clears them when the container is cleared.
+`TabControl` uses `TabItem` as its default item container. When containers are prepared through `ItemsControl`, the `ISelectableItemContainer` members are updated with the realized item index, source item, and selection state. Clearing the container resets `ItemIndex` to `-1`, `Item` to `null`, and `IsSelected` to `false`. For a tab that `TabControl` generates for a data item, it also sets `Header` and `Content` from the item, `HeaderTemplate` to `ItemTemplate` only when `ItemTemplate` is not `null`, and `HeaderTemplateKey` to `ItemTemplateKey` only when `ItemTemplateKey` is not `null`, as described on `TabControl`. When `ItemTemplate` is `null`, a `HeaderTemplate` from the control's `ItemContainerAspect` applies. Clearing the container sets `Header` to `null` and removes the local `HeaderTemplate` and `HeaderTemplateKey` values (`ClearValue`), so it never writes a local `null` that would hide the aspect value.
 
 ### Header
 
@@ -119,8 +119,8 @@ Assigning a `UIElement` to `Header` uses the same ownership validation as `Conte
 | --- | --- | --- | --- |
 | `ContentTemplate` | `ContentTemplate?` | `null` | Gets or sets the template the owning `TabControl` uses for this tab's `Content` while the tab is selected. It wins over `TabControl.ContentTemplate`. |
 | `Header` | `object?` | `null` | Gets or sets the tab header content. A `UIElement` header without a header template is hosted directly; any other header is presented by a `ContentPresenter`. |
-| `HeaderTemplate` | `ContentTemplate?` | `null` | Gets or sets the template that builds the header from `Header`. `TabControl` sets it to `ItemTemplate` on a generated tab. |
-| `HeaderTemplateKey` | `string?` | `null` | Gets or sets the key of the template that presents `Header` when `HeaderTemplate` is `null`. `TabControl` sets it to `ItemTemplateKey` on a generated tab. |
+| `HeaderTemplate` | `ContentTemplate?` | `null` | Gets or sets the template that builds the header from `Header`. `TabControl` sets it to `ItemTemplate` on a generated tab when `ItemTemplate` is not `null`; otherwise it leaves it unset, so a value from `ItemContainerAspect` applies. |
+| `HeaderTemplateKey` | `string?` | `null` | Gets or sets the key of the template that presents `Header` when `HeaderTemplate` is `null`. `TabControl` sets it to `ItemTemplateKey` on a generated tab when `ItemTemplateKey` is not `null`; otherwise it leaves it unset, so a value from `ItemContainerAspect` applies. |
 | `IsSelected` | `bool` | `false` | Gets or sets whether the tab item is selected. |
 | `Item` | `object?` | `null` | Gets or sets the item associated with this generated or prepared container. |
 | `ItemIndex` | `int` | `-1` | Gets or sets the item index associated with this generated or prepared container. |

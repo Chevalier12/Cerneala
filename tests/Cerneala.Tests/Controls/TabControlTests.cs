@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Items;
 using Cerneala.UI.Controls.Templates;
@@ -722,6 +723,129 @@ public sealed class TabControlTests
             Assert.Null(tab.HeaderTemplate);
             Assert.True(tab.DesiredSize.Width > 0 && tab.DesiredSize.Height > 0, $"desired {tab.DesiredSize}");
         }
+    }
+
+    // As in WPF, preparing a generated tab sets HeaderTemplate only when ItemTemplate is set, so a HeaderTemplate from
+    // ItemContainerAspect applies otherwise.
+    [Fact]
+    public void ItemContainerAspectHeaderTemplateBuildsTheHeaderOfGeneratedTabsWithoutItemTemplate()
+    {
+        UIRoot root = new(300, 200);
+        int calls = 0;
+        ContentTemplate<string> header = new("aspect-header", key: null, priority: 0, context =>
+        {
+            calls++;
+            return new FixedElement(new LayoutSize(20, 10));
+        });
+        TabControl tabControl = new()
+        {
+            ItemsSource = new[] { "A", "B" },
+            ItemContainerAspect = new ElementAspect([
+                new ElementAspectValue(TabItem.HeaderTemplateProperty, header),
+                new ElementAspectValue(Control.PaddingProperty, new Thickness(6))
+            ])
+        };
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+
+        Assert.Equal(2, calls);
+        IReadOnlyDictionary<int, UIElement> realized = tabControl.ItemContainerGenerator.RealizedContainers;
+        foreach (TabItem tab in new[] { (TabItem)realized[0], (TabItem)realized[1] })
+        {
+            Assert.Equal(new Thickness(6), tab.Padding);
+            Assert.Same(header, tab.HeaderTemplate);
+            Assert.Null(tab.HeaderTemplateKey);
+        }
+    }
+
+    [Fact]
+    public void ItemContainerAspectHeaderTemplateKeyBuildsTheHeaderOfGeneratedTabsWithoutItemTemplateKey()
+    {
+        UIRoot root = new(300, 200);
+        List<string?> built = [];
+        ContentTemplate<string> keyed = new("keyed", key: "k", priority: 0, context =>
+        {
+            built.Add(context.Data);
+            return new FixedElement(new LayoutSize(40, 20));
+        });
+        TabControl tabControl = new()
+        {
+            ItemsSource = new[] { "One", "Two" },
+            ItemContainerAspect = new ElementAspect([new ElementAspectValue(TabItem.HeaderTemplateKeyProperty, "k")])
+        };
+        tabControl.Templates.Add(keyed);
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+
+        Assert.Equal(["One", "Two"], built);
+        IReadOnlyDictionary<int, UIElement> realized = tabControl.ItemContainerGenerator.RealizedContainers;
+        foreach (TabItem tab in new[] { (TabItem)realized[0], (TabItem)realized[1] })
+        {
+            Assert.Equal("k", tab.HeaderTemplateKey);
+            Assert.Null(tab.HeaderTemplate);
+        }
+    }
+
+    [Fact]
+    public void ItemTemplateWinsOverItemContainerAspectHeaderTemplate()
+    {
+        UIRoot root = new(300, 200);
+        int itemCalls = 0;
+        int aspectCalls = 0;
+        ContentTemplate<string> itemTemplate = new("item", key: null, priority: 0, context =>
+        {
+            itemCalls++;
+            return new FixedElement(new LayoutSize(20, 10));
+        });
+        ContentTemplate<string> aspectHeader = new("aspect-header", key: null, priority: 0, context =>
+        {
+            aspectCalls++;
+            return new FixedElement(new LayoutSize(20, 10));
+        });
+        TabControl tabControl = new()
+        {
+            ItemTemplate = itemTemplate,
+            ItemsSource = new[] { "A", "B" },
+            ItemContainerAspect = new ElementAspect([new ElementAspectValue(TabItem.HeaderTemplateProperty, aspectHeader)])
+        };
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+
+        Assert.Equal((2, 0), (itemCalls, aspectCalls));
+        Assert.Same(itemTemplate, ((TabItem)tabControl.ItemContainerGenerator.RealizedContainers[0]).HeaderTemplate);
+    }
+
+    // Clearing ItemTemplate clears and recycles the generated tabs; the recycled tabs are prepared again without an
+    // ItemTemplate, so the value the previous preparation set is gone and the aspect's HeaderTemplate applies.
+    [Fact]
+    public void RecycledGeneratedTabUsesItemContainerAspectHeaderTemplateAfterItemTemplateIsCleared()
+    {
+        UIRoot root = new(300, 200);
+        int aspectCalls = 0;
+        ContentTemplate<string> itemTemplate = new("item", key: null, priority: 0, context => new FixedElement(new LayoutSize(20, 10)));
+        ContentTemplate<string> aspectHeader = new("aspect-header", key: null, priority: 0, context =>
+        {
+            aspectCalls++;
+            return new FixedElement(new LayoutSize(20, 10));
+        });
+        TabControl tabControl = new()
+        {
+            ItemTemplate = itemTemplate,
+            ItemsSource = new[] { "A", "B" },
+            ItemContainerAspect = new ElementAspect([new ElementAspectValue(TabItem.HeaderTemplateProperty, aspectHeader)])
+        };
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+        UIElement[] before = [tabControl.ItemContainerGenerator.RealizedContainers[0], tabControl.ItemContainerGenerator.RealizedContainers[1]];
+
+        tabControl.ItemTemplate = null;
+        root.ProcessFrame();
+
+        IReadOnlyDictionary<int, UIElement> realized = tabControl.ItemContainerGenerator.RealizedContainers;
+        UIElement[] after = [realized[0], realized[1]];
+        Assert.All(after, tab => Assert.Contains(tab, before));
+        Assert.All(after, tab => Assert.Same(aspectHeader, ((TabItem)tab).HeaderTemplate));
+        Assert.Equal(2, aspectCalls);
     }
 
     [Fact]
