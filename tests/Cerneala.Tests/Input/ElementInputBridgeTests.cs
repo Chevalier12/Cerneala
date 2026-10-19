@@ -227,6 +227,74 @@ public sealed class ElementInputBridgeTests
         Assert.False(button.IsKeyboardFocused);
     }
 
+    // A press on an element that owns its clicks keeps only an enclosing command source from taking focus (#640). A
+    // focusable host around it still takes focus, as a WPF ListBoxItem or TabItem focuses itself on MouseLeftButtonDown
+    // and a WPF Slider focuses itself on the MouseDown that its Thumb handled.
+    [Theory]
+    [InlineData("ListBox")]
+    [InlineData("TabControl")]
+    [InlineData("Slider")]
+    public void PointerPressOnElementThatOwnsItsClicksFocusesEnclosingFocusableHost(string hostKind)
+    {
+        Button other = new() { Content = "other", Width = 100, Height = 30 };
+        UIElement host;
+        if (hostKind == "ListBox")
+        {
+            ListBox listBox = new() { Focusable = true, Width = 200, Height = 120 };
+            listBox.Items.Add("alpha");
+            listBox.Items.Add("beta");
+            host = listBox;
+        }
+        else if (hostKind == "TabControl")
+        {
+            TabControl tabControl = new() { Focusable = true, Width = 300, Height = 150 };
+            tabControl.Items.Add(new TabItem { Header = "one", Content = "1" });
+            tabControl.Items.Add(new TabItem { Header = "two", Content = "2" });
+            host = tabControl;
+        }
+        else
+        {
+            host = new Slider { Focusable = true, Minimum = 0, Maximum = 100, Value = 50, Width = 200, Height = 30 };
+        }
+
+        StackPanel panel = new();
+        panel.Children.Add(other);
+        panel.Children.Add(host);
+        UIRoot root = new(400, 400);
+        root.VisualChildren.Add(new Window { Content = panel, Width = 400, Height = 400 });
+        root.ProcessFrame();
+        UIElement? pressed = hostKind switch
+        {
+            "ListBox" => FindVisual<ListBoxItem>(host),
+            "TabControl" => FindVisual<TabItem>(host),
+            _ => ((Slider)host).Track.Thumb
+        };
+        Assert.NotNull(pressed);
+        Assert.False(pressed.Focusable);
+        Assert.True(pressed.OwnsPointerClick);
+        ElementInputBridge bridge = new();
+        LayoutRect otherBounds = other.ArrangedBounds;
+        float otherX = otherBounds.X + otherBounds.Width / 2;
+        float otherY = otherBounds.Y + otherBounds.Height / 2;
+        bridge.Dispatch(root, PointerFrame(otherX, otherY, pressed: true));
+        bridge.Dispatch(root, PointerFrame(otherX, otherY, otherX, otherY, previousDown: true));
+        root.ProcessFrame();
+        Assert.True(other.IsKeyboardFocused);
+        LayoutRect bounds = pressed.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+
+        bridge.Dispatch(root, PointerFrame(x, y, pressed: true));
+        root.ProcessFrame();
+        bool hostFocusedWhileHeld = host.IsKeyboardFocused;
+        bridge.Dispatch(root, PointerFrame(x, y, x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.True(hostFocusedWhileHeld);
+        Assert.True(host.IsKeyboardFocused);
+        Assert.False(other.IsKeyboardFocused);
+    }
+
     [Fact]
     public void CapturedButtonReleaseOutsideDoesNotExecuteCommand()
     {
@@ -569,6 +637,25 @@ public sealed class ElementInputBridgeTests
         root.VisualChildren.Add(back);
         root.VisualChildren.Add(front);
         return root;
+    }
+
+    private static T? FindVisual<T>(UIElement element)
+        where T : UIElement
+    {
+        if (element is T match)
+        {
+            return match;
+        }
+
+        foreach (UIElement child in element.VisualChildren)
+        {
+            if (FindVisual<T>(child) is T found)
+            {
+                return found;
+            }
+        }
+
+        return null;
     }
 
     private static ButtonBase ArrangedButton(float x, float y, float width, float height)

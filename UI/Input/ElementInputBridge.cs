@@ -433,22 +433,21 @@ public sealed class ElementInputBridge
         return element;
     }
 
-    // A press focuses the nearest focusable element. An element that owns its clicks takes the press for itself, as a
-    // WPF Thumb marks MouseLeftButtonDown handled before an enclosing ButtonBase focuses itself, so when it cannot take
-    // focus, the focus stays where it was (#640).
+    // A press focuses the nearest focusable element. An element that owns its clicks takes the press from an enclosing
+    // command source, as a WPF Thumb marks MouseLeftButtonDown handled before an enclosing ButtonBase focuses itself, so
+    // that command source does not take focus and the focus stays where it was (#640). Any other focusable host still
+    // takes focus, as a WPF ListBoxItem or TabItem focuses itself and a WPF Slider focuses on a MouseDown its Thumb handled.
     private static UIElement? ResolveFocusTarget(UIElement element, ElementInputRouteMap routeMap)
     {
+        bool pressOwnerPassed = false;
         foreach (UIElement current in routeMap.GetVisualRouteToRoot(element))
         {
             if (FocusPolicy.CanFocus(current, routeMap))
             {
-                return current;
+                return pressOwnerPassed && current is IInputCommandSource ? null : current;
             }
 
-            if (current.OwnsPointerClick)
-            {
-                return null;
-            }
+            pressOwnerPassed |= current.OwnsPointerClick;
         }
 
         return null;
