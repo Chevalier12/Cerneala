@@ -53,6 +53,24 @@ public sealed class ButtonKeyboardActivationTests
     }
 
     [Fact]
+    public void FocusedRadioButtonSpaceReleaseChecksIt()
+    {
+        UIRoot root = new(100, 100);
+        RadioButton radio = new();
+        radio.Arrange(new ArrangeContext(new LayoutRect(0, 0, 40, 40)));
+        root.VisualChildren.Add(radio);
+        ElementInputBridge bridge = FocusedBridge(root, radio);
+
+        bridge.Dispatch(root, KeyPressFrame(InputKey.Space));
+
+        Assert.False(radio.IsChecked);
+
+        bridge.Dispatch(root, KeyReleaseFrame(InputKey.Space));
+
+        Assert.True(radio.IsChecked);
+    }
+
+    [Fact]
     public void SpacePressedButtonIsReleasedWithoutClickWhenFocusMovesAway()
     {
         UIRoot root = RootWithTwoButtons(out ButtonBase first, out ButtonBase second);

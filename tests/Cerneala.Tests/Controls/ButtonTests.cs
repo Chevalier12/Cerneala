@@ -479,6 +479,54 @@ public sealed class ButtonTests
         Assert.False(radio.IsChecked);
     }
 
+    [Fact]
+    public void ClickingButtonInsideRadioButtonClicksOnlyTheInnerButton()
+    {
+        Button inner = new() { Content = "Inner", Width = 100, Height = 30 };
+        RadioButton radio = new() { Content = inner, Width = 200, Height = 80 };
+        int innerClicks = 0;
+        int radioClicks = 0;
+        inner.Click += (_, _) => innerClicks++;
+        radio.Click += (_, args) =>
+        {
+            if (IsSource(args.OriginalSource, radio))
+            {
+                radioClicks++;
+            }
+        };
+        UIRoot root = CreateWindowRoot(radio);
+
+        ClickCenter(root, inner);
+
+        Assert.Equal(1, innerClicks);
+        Assert.Equal(0, radioClicks);
+        Assert.False(radio.IsChecked);
+
+        LayoutRect radioBounds = radio.ArrangedBounds;
+        Click(root, radioBounds.X + 5, radioBounds.Y + 5);
+
+        Assert.Equal(1, innerClicks);
+        Assert.Equal(1, radioClicks);
+        Assert.True(radio.IsChecked);
+    }
+
+    [Fact]
+    public void ReleaseOnRadioButtonAfterPressOutsideLeavesItUnchecked()
+    {
+        RadioButton radio = new() { Content = "R", Width = 100, Height = 50 };
+        UIRoot root = CreateCanvasRoot(radio);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(250, 150, currentDown: true));
+        root.ProcessFrame();
+        bridge.Dispatch(root, PointerFrame(50, 25, previousDown: true, currentDown: true));
+        root.ProcessFrame();
+        bridge.Dispatch(root, PointerFrame(50, 25, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.False(radio.IsChecked);
+    }
+
     private static UIRoot CreateWindowRoot(UIElement child)
     {
         Cerneala.UI.Layout.Panels.Canvas canvas = new();
