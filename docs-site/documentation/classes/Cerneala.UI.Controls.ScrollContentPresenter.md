@@ -60,6 +60,8 @@ ScrollContentPresenter presenter = new()
 
 During measure, scroll-enabled axes are measured with an infinite available size so content can report its natural extent. Disabled axes are measured with the available viewport dimension. The measured content size becomes `ExtentWidth` and `ExtentHeight`; the finite available size becomes `ViewportWidth` and `ViewportHeight`.
 
+Changing `CanHorizontallyScroll` or `CanVerticallyScroll` invalidates the presenter's measure, as in WPF, also when the presenter's own available size stays the same. For example, a `ScrollViewer` 200 x 320 whose content desires 200 x 320 measures that content with height `320` while `VerticalScrollBarVisibility` is `Disabled`. After `VerticalScrollBarVisibility = ScrollBarVisibility.Auto`, the content is measured with height `float.PositiveInfinity`, although the scroll bar stays collapsed in both modes. `ScrollViewer` sets the capability during its own measure, and measure work queued during the measure phase runs on a later frame: after the first `UIRoot.ProcessFrame` the content's last measure constraint is still `320`, after the second it is `float.PositiveInfinity`. Setting the current value again does not invalidate anything.
+
 During arrange, the presenter coerces offsets into the valid range, clips rendering and hit testing to the rounded final rectangle, and arranges the content at `FinalRect.X - HorizontalOffset` and `FinalRect.Y - VerticalOffset`. For enabled axes, content is arranged at least as large as the greater of extent and viewport; for disabled axes, content is arranged to the viewport size.
 
 Offsets must be finite, non-negative values. `SetHorizontalOffset` and `SetVerticalOffset` coerce requested values to the valid scroll range. When an axis is disabled, its offset is forced to `0`.
@@ -92,8 +94,8 @@ For content elements that opt into layout motion, movement caused only by a scro
 | `ExtentHeight` | `float` | Gets the measured content extent height. The setter is private and updated during layout. |
 | `ViewportWidth` | `float` | Gets the current viewport width. The setter is private and updated during layout. |
 | `ViewportHeight` | `float` | Gets the current viewport height. The setter is private and updated during layout. |
-| `CanHorizontallyScroll` | `bool` | Gets or sets whether horizontal scrolling is enabled. The default value is `true`; when disabled, the horizontal offset is coerced to `0`. |
-| `CanVerticallyScroll` | `bool` | Gets or sets whether vertical scrolling is enabled. The default value is `true`; when disabled, the vertical offset is coerced to `0`. |
+| `CanHorizontallyScroll` | `bool` | Gets or sets whether horizontal scrolling is enabled. The default value is `true`; when disabled, the horizontal offset is coerced to `0`. A change invalidates the presenter's measure. |
+| `CanVerticallyScroll` | `bool` | Gets or sets whether vertical scrolling is enabled. The default value is `true`; when disabled, the vertical offset is coerced to `0`. A change invalidates the presenter's measure. |
 
 ## Methods
 | Name | Return Type | Description |

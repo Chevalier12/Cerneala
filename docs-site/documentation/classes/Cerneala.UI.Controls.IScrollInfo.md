@@ -40,6 +40,7 @@ In `ScrollContentPresenter`:
 - Otherwise the offset is clamped to the range `0` to `max(0, extent - viewport)`. For example, with `ExtentHeight = 500` and `ViewportHeight = 200`, `SetVerticalOffset(1000)` stores `300` and `SetVerticalOffset(-10)` stores `0`.
 - Before the first layout pass the extent and viewport are `0`, so every offset is clamped to `0`.
 - `NaN` is rejected with `ArgumentException`.
+- Changing `CanHorizontallyScroll` or `CanVerticallyScroll` invalidates the presenter's measure, so the presenter's next measure measures the content with the constraint of the new value. When `ScrollViewer` changes the value during its own measure, that measure runs on the next frame. Setting the current value again does nothing.
 - Content is measured with infinite size in each direction that can scroll.
 
 Other framework code reads this interface too: `ItemsPresenter.UpdateVirtualizationFromScrollInfo` reads `ViewportHeight` and `VerticalOffset`, and `ScrollTimeline` reads the offset, extent, and viewport of a `ScrollViewer`.
