@@ -49,7 +49,10 @@ handlers do that through normal property writes and invalidation.
    2. `UIRoot.InputCache.EnsureCurrent(root)`;
    3. hit test, then `PointerCaptureManager.OverrideTarget`;
    4. pointer: hover, wheel, press (left press focuses the target), release,
-      click, drag, repeat buttons;
+      click, drag, repeat buttons. Before each wheel event, each button press
+      and each release, and before the move when hover changed, it repeats
+      steps 2 and 3, so an element that an earlier handler of the frame
+      removed gets no later pointer event of the frame (#497);
    5. keyboard events to the focused element (`FocusManager`);
    6. input bindings;
    7. keyboard navigation (Tab);

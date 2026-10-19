@@ -323,6 +323,121 @@ public sealed class ElementInputBridgeTests
     }
 
     [Fact]
+    public void WheelEventsAfterAWheelHandlerRemovedTheTargetGoToTheElementNowUnderThePointer()
+    {
+        UIRoot root = RootWithFrontAndBack(out UIElement front, out UIElement back);
+        List<string> calls = [];
+        front.Handlers.AddHandler(InputEvents.MouseWheelEvent, (_, _) =>
+        {
+            calls.Add("front");
+            root.VisualChildren.Remove(front);
+        });
+        back.Handlers.AddHandler(InputEvents.MouseWheelEvent, (_, _) => calls.Add("back"));
+        PointerSnapshot pointer = PointerSnapshot.Empty.WithPosition(10, 10);
+
+        new ElementInputBridge().Dispatch(root, new InputFrame(
+            pointer,
+            pointer.WithWheelValue(-360),
+            KeyboardSnapshot.Empty,
+            KeyboardSnapshot.Empty,
+            [],
+            [],
+            [-120, -120, -120]));
+
+        Assert.Equal(["front", "back", "back"], calls);
+    }
+
+    [Fact]
+    public void WheelAfterAMouseMoveHandlerRemovedTheTargetGoesToTheElementNowUnderThePointer()
+    {
+        UIRoot root = RootWithFrontAndBack(out UIElement front, out UIElement back);
+        List<string> calls = [];
+        front.Handlers.AddHandler(InputEvents.MouseMoveEvent, (_, _) =>
+        {
+            calls.Add("front move");
+            root.VisualChildren.Remove(front);
+        });
+        front.Handlers.AddHandler(InputEvents.MouseWheelEvent, (_, _) => calls.Add("front wheel"));
+        back.Handlers.AddHandler(InputEvents.MouseWheelEvent, (_, _) => calls.Add("back wheel"));
+        ElementInputBridge bridge = new();
+        PointerSnapshot first = PointerSnapshot.Empty.WithPosition(10, 10);
+
+        bridge.Dispatch(root, new InputFrame(first, first, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []));
+        bridge.Dispatch(root, new InputFrame(
+            first,
+            first.WithPosition(20, 20).WithWheelValue(-120),
+            KeyboardSnapshot.Empty,
+            KeyboardSnapshot.Empty,
+            []));
+
+        Assert.Equal(["front move", "back wheel"], calls);
+    }
+
+    [Fact]
+    public void ButtonPressAfterAWheelHandlerRemovedTheTargetGoesToTheElementNowUnderThePointer()
+    {
+        UIRoot root = RootWithFrontAndBack(out UIElement front, out UIElement back);
+        List<string> calls = [];
+        front.Handlers.AddHandler(InputEvents.MouseWheelEvent, (_, _) =>
+        {
+            calls.Add("front wheel");
+            root.VisualChildren.Remove(front);
+        });
+        front.Handlers.AddHandler(InputEvents.MouseDownEvent, (_, _) => calls.Add("front down"));
+        back.Handlers.AddHandler(InputEvents.MouseDownEvent, (_, _) => calls.Add("back down"));
+        PointerSnapshot pointer = PointerSnapshot.Empty.WithPosition(10, 10);
+
+        new ElementInputBridge().Dispatch(root, new InputFrame(
+            pointer,
+            pointer.WithWheelValue(-120).WithButton(InputMouseButton.Left, true),
+            KeyboardSnapshot.Empty,
+            KeyboardSnapshot.Empty,
+            []));
+
+        Assert.Equal(["front wheel", "back down"], calls);
+    }
+
+    [Fact]
+    public void ButtonReleaseAfterAMouseMoveHandlerRemovedTheTargetGoesToTheElementNowUnderThePointer()
+    {
+        UIRoot root = RootWithFrontAndBack(out UIElement front, out UIElement back);
+        ElementInputBridge bridge = new();
+        bridge.Dispatch(root, PointerFrame(10, 10, pressed: true));
+        List<string> calls = [];
+        front.Handlers.AddHandler(InputEvents.MouseMoveEvent, (_, _) =>
+        {
+            calls.Add("front move");
+            root.VisualChildren.Remove(front);
+        });
+        front.Handlers.AddHandler(InputEvents.MouseUpEvent, (_, _) => calls.Add("front up"));
+        back.Handlers.AddHandler(InputEvents.MouseUpEvent, (_, _) => calls.Add("back up"));
+
+        bridge.Dispatch(root, PointerFrame(10, 10, 20, 20, previousDown: true));
+
+        Assert.Equal(["front move", "back up"], calls);
+    }
+
+    [Fact]
+    public void MouseMoveAfterAMouseEnterHandlerRemovedTheTargetGoesToTheElementNowUnderThePointer()
+    {
+        UIRoot root = RootWithFrontAndBack(out UIElement front, out UIElement back);
+        List<string> calls = [];
+        front.Handlers.AddHandler(InputEvents.MouseEnterEvent, (_, _) =>
+        {
+            calls.Add("front enter");
+            root.VisualChildren.Remove(front);
+        });
+        front.Handlers.AddHandler(InputEvents.MouseMoveEvent, (_, _) => calls.Add("front move"));
+        back.Handlers.AddHandler(InputEvents.MouseMoveEvent, (_, _) => calls.Add("back move"));
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(60, 60));
+        bridge.Dispatch(root, PointerFrame(60, 60, 10, 10));
+
+        Assert.Equal(["front enter", "back move"], calls);
+    }
+
+    [Fact]
     public void HostUpdateDispatchesInputBeforeScheduler()
     {
         UIRoot root = RootWithChild(out UIElement child);
@@ -339,6 +454,16 @@ public sealed class ElementInputBridgeTests
         UIRoot root = new(100, 100);
         child = HitTestServiceTests.Arranged(0, 0, 40, 40);
         root.VisualChildren.Add(child);
+        return root;
+    }
+
+    private static UIRoot RootWithFrontAndBack(out UIElement front, out UIElement back)
+    {
+        UIRoot root = new(100, 100);
+        back = HitTestServiceTests.Arranged(0, 0, 40, 40);
+        front = HitTestServiceTests.Arranged(0, 0, 40, 40);
+        root.VisualChildren.Add(back);
+        root.VisualChildren.Add(front);
         return root;
     }
 
