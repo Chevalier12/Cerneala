@@ -57,7 +57,7 @@ The public `Press(UIElement?)` resolves the nearest `IInputPressable` by walking
 
 Calling `Press` with `null`, or with an element whose visual ancestor chain does not contain an `IInputPressable`, cancels any existing pressed state. Calling `Press` for the same resolved pressable again leaves the state unchanged. Calling `Press` for a different pressable first clears the previous `PressedElement`, then sets the new pressable's `IsPressed` property to `true`.
 
-`Release` delegates to `Cancel`; both clear the current `PressedElement` and set its `IsPressed` property to `false`. `ElementInputBridge` uses this tracker during pointer button dispatch to set pressed visuals on pointer down and clear them on pointer up.
+`Release` delegates to `Cancel`; both clear the current `PressedElement` and set its `IsPressed` property to `false`. `ElementInputBridge` uses this tracker during pointer button dispatch to set pressed visuals on a left-button press and clear them on the left-button release. As a WPF `ButtonBase` sets `IsPressed` on `MouseLeftButtonDown` only, the right, middle, and extra buttons do not change the pressed state: a right press on a `Button` leaves `IsPressed == false`, and a right press and release while the left button holds a `Button` keep its `IsPressed == true`.
 
 ## Constructors
 
