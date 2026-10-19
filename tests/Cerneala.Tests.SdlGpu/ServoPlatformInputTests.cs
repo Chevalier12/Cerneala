@@ -12,6 +12,8 @@ public sealed class ServoPlatformInputTests
 {
     private const int BackspaceScancode = 42;
     private const int EndScancode = 77;
+    private const int Keypad5Scancode = 93;
+    private const int KeypadEnterScancode = 88;
 
     [Fact]
     public void AutoRepeatReachesTheAppThroughTheSdlEventQueue()
@@ -255,6 +257,55 @@ public sealed class ServoPlatformInputTests
     }
 
     [Fact]
+    public void KeypadKeyReachesTheAppAsItsSdlScancode()
+    {
+        TextBox textBox = new() { Width = 200, Height = 40 };
+        using Harness harness = new(textBox, "editor");
+        harness.Focus("editor");
+        List<string> keyEvents = [];
+        harness.Window.AddHandler(UIElement.KeyDownEvent, (_, args) =>
+            keyEvents.Add("Down:" + ((KeyEventArgs)args).Key), handledEventsToo: true);
+        harness.Window.AddHandler(UIElement.KeyUpEvent, (_, args) =>
+            keyEvents.Add("Up:" + ((KeyEventArgs)args).Key), handledEventsToo: true);
+
+        harness.Send(
+            ServoPlatformInput.KeyDown(InputKey.NumPad5),
+            ServoPlatformInput.Text("5"),
+            ServoPlatformInput.KeyUp(InputKey.NumPad5),
+            ServoPlatformInput.KeyDown(InputKey.OemPeriod),
+            ServoPlatformInput.Text("."),
+            ServoPlatformInput.KeyUp(InputKey.OemPeriod));
+
+        Assert.Equal([Keypad5Scancode, 0, Keypad5Scancode, 55, 0, 55], harness.Api.PushedEvents.Select(pushed => pushed.Scancode));
+        Assert.Equal(["Down:NumPad5", "Up:NumPad5", "Down:OemPeriod", "Up:OemPeriod"], keyEvents);
+        Assert.Equal("5.", textBox.Text);
+    }
+
+    // The scenario of #408: a keypad digit typed while Backspace auto-repeats is deleted by
+    // the next repeat.
+    [Fact]
+    public void KeypadDigitTypedWhileBackspaceRepeatsIsDeletedByTheNextRepeat()
+    {
+        TextBox textBox = new() { Text = "abcd", Width = 200, Height = 40 };
+        using Harness harness = new(textBox, "editor");
+        harness.Focus("editor");
+        harness.Send(ServoPlatformInput.KeyDown(InputKey.End), ServoPlatformInput.KeyUp(InputKey.End));
+        harness.Send(ServoPlatformInput.KeyDown(InputKey.Back));
+        Assert.Equal("abc", textBox.Text);
+
+        // In arrival order: "ab", "ab5", "ab".
+        harness.Send(
+            ServoPlatformInput.KeyDown(InputKey.Back, repeat: true),
+            ServoPlatformInput.KeyDown(InputKey.NumPad5),
+            ServoPlatformInput.Text("5"),
+            ServoPlatformInput.KeyUp(InputKey.NumPad5),
+            ServoPlatformInput.KeyDown(InputKey.Back, repeat: true));
+        harness.Send(ServoPlatformInput.KeyUp(InputKey.Back));
+
+        Assert.Equal("ab", textBox.Text);
+    }
+
+    [Fact]
     public void EveryKeyTheInputSourceMapsRoundTripsThroughMapInputKey()
     {
         int mapped = 0;
@@ -267,6 +318,13 @@ public sealed class ServoPlatformInputTests
             }
 
             mapped++;
+            if (scancode == KeypadEnterScancode)
+            {
+                // WPF reports keypad Enter as Enter, so Enter maps back to the main Enter key.
+                Assert.Equal(InputKey.Enter, key);
+                continue;
+            }
+
             Assert.Equal(scancode, SdlInputSource.MapInputKey(key));
             Assert.Equal(key, SdlInputSource.MapScancode(SdlInputSource.MapInputKey(key)));
         }

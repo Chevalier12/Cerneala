@@ -20,6 +20,8 @@ public sealed class SdlInputTransitionTests
     private const int LeftScancode = 80;
     private const int PeriodScancode = 55;
     private const int Keypad5Scancode = 93;
+    private const int NonUsHashScancode = 50;
+    private const int KeypadEqualsScancode = 103;
 
     [Fact]
     public void KeyPressedAndReleasedInOnePumpIsReportedAsPressThenRelease()
@@ -367,10 +369,10 @@ public sealed class SdlInputTransitionTests
     }
 
     [Theory]
-    [InlineData(BackspaceScancode, InputKey.Back, Keypad5Scancode, "5")]
-    [InlineData(BackspaceScancode, InputKey.Back, PeriodScancode, ".")]
-    [InlineData(DeleteScancode, InputKey.Delete, Keypad5Scancode, "5")]
-    [InlineData(LeftScancode, InputKey.Left, Keypad5Scancode, "5")]
+    [InlineData(BackspaceScancode, InputKey.Back, KeypadEqualsScancode, "=")]
+    [InlineData(BackspaceScancode, InputKey.Back, NonUsHashScancode, "#")]
+    [InlineData(DeleteScancode, InputKey.Delete, KeypadEqualsScancode, "=")]
+    [InlineData(LeftScancode, InputKey.Left, KeypadEqualsScancode, "=")]
     public void RepeatAfterTextOfAnUnmappedKeyWaitsForTheNextFrame(int heldScancode, InputKey heldKey, int unmappedScancode, string text)
     {
         SdlInputSource source = new();
@@ -423,6 +425,37 @@ public sealed class SdlInputTransitionTests
         }
 
         Assert.Equal("ab", box.Text);
+    }
+
+    [Fact]
+    public void FocusedTextBoxRaisesKeyEventsForKeypadAndPunctuationKeys()
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1, WindowDisplayScale = 1 };
+        RecordingGraphicsFactory graphics = new();
+        using WindowApplicationRuntime runtime = new(new SdlWindowPlatform(api, graphics));
+        TextBox box = new();
+        List<string> log = [];
+        box.AddHandler(UIElement.KeyDownEvent, (_, args) => log.Add("down " + ((KeyEventArgs)args).Key), handledEventsToo: true);
+        box.AddHandler(UIElement.KeyUpEvent, (_, args) => log.Add("up " + ((KeyEventArgs)args).Key), handledEventsToo: true);
+        runtime.StartMainWindow(new Window { Content = box, Width = 320, Height = 200 });
+        uint windowId = Assert.IsType<SdlWindowSurface>(Assert.Single(graphics.Surfaces)).WindowId;
+        var bounds = box.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        Pump(runtime, api, new SdlEvent(SdlEventKind.MouseButtonDown, windowId, X: x, Y: y, MouseButton: 1));
+        Pump(runtime, api, new SdlEvent(SdlEventKind.MouseButtonUp, windowId, X: x, Y: y, MouseButton: 1));
+
+        Pump(runtime, api,
+            new SdlEvent(SdlEventKind.KeyDown, windowId, Scancode: Keypad5Scancode),
+            new SdlEvent(SdlEventKind.TextInput, windowId, Text: "5"));
+        Pump(runtime, api, new SdlEvent(SdlEventKind.KeyUp, windowId, Scancode: Keypad5Scancode));
+        Pump(runtime, api,
+            new SdlEvent(SdlEventKind.KeyDown, windowId, Scancode: PeriodScancode),
+            new SdlEvent(SdlEventKind.TextInput, windowId, Text: "."));
+        Pump(runtime, api, new SdlEvent(SdlEventKind.KeyUp, windowId, Scancode: PeriodScancode));
+
+        Assert.Equal(["down NumPad5", "up NumPad5", "down OemPeriod", "up OemPeriod"], log);
+        Assert.Equal("5.", box.Text);
     }
 
     [Fact]
