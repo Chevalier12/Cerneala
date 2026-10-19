@@ -969,11 +969,15 @@ public class ComboBox : Selector
     // input bridge resolves the click to it, and a pointer drag source, such as a TextBox or a Thumb there. The
     // projected list is not in the field's visual subtree. As the WPF ToggleButton handles the field's click, the
     // toggle marks the MouseUp handled, so an ancestor command source, such as a Button whose Content is this
-    // ComboBox, does not also click or run its command.
+    // ComboBox, does not also click or run its command. Inside such a command source the input bridge resolves the
+    // press and the release to that command source, so the field also checks that the press hit the same element as
+    // the release: a press on the outer Button followed by a release on the field clicks only the outer Button, as
+    // the WPF ToggleButton never sees that press (#468).
     private void OnMouseUp(UiElementId _, RoutedEventArgs args)
     {
         if (IsEditable || !IsEnabled ||
-            args is not MouseButtonEventArgs { ChangedButton: InputMouseButton.Left, ClickCount: > 0 } ||
+            args is not MouseButtonEventArgs { ChangedButton: InputMouseButton.Left, ClickCount: > 0 } mouseArgs ||
+            !Equals(mouseArgs.PressOriginalSource, args.OriginalSource) ||
             !ReferenceEquals(FindClickOwner(this, args.OriginalSource), this) ||
             IsInPointerDragSource(args.OriginalSource))
         {
