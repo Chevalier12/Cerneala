@@ -356,8 +356,8 @@ public sealed class ElementInputBridge
             return false;
         }
 
-        MouseButtonEventArgs previewArgs = new(previewEvent, target.ElementId, button, target.X, target.Y, clickCount);
-        MouseButtonEventArgs bubbleArgs = new(bubbleEvent, target.ElementId, button, target.X, target.Y, clickCount);
+        MouseButtonEventArgs previewArgs = new(previewEvent, target.ElementId, button, target.X, target.Y, clickCount) { RouteMap = routeMap };
+        MouseButtonEventArgs bubbleArgs = new(bubbleEvent, target.ElementId, button, target.X, target.Y, clickCount) { RouteMap = routeMap };
         RoutedEventRouter.RaisePair(
             routeMap.InputTree,
             target.ElementId,

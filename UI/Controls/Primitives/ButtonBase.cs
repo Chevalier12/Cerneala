@@ -112,8 +112,8 @@ public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource, 
     private void OnMouseUp(UiElementId _, RoutedEventArgs args)
     {
         if (ShouldClickOnMouseUp &&
-            args is MouseButtonEventArgs { ChangedButton: InputMouseButton.Left, ClickCount: > 0 } &&
-            OwnsClick(args.OriginalSource))
+            args is MouseButtonEventArgs { ChangedButton: InputMouseButton.Left, ClickCount: > 0 } mouseArgs &&
+            OwnsClick(mouseArgs))
         {
             OnClick();
         }
@@ -121,16 +121,23 @@ public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource, 
 
     // The input bridge resolves a click to the nearest command source on the route of the clicked element and runs
     // only that source's command. A click that a command source in this button's content owns, such as a Button or
-    // a ComboBox's PART_DropDownToggle, bubbles its MouseUp here but is not this button's click (#421).
-    private bool OwnsClick(object? originalSource)
+    // a ComboBox's PART_DropDownToggle, bubbles its MouseUp here but is not this button's click (#421). The decision
+    // uses the route map the bridge routed the MouseUp with, so it stays the same when an earlier handler, such as
+    // the inner button's Click, removes or collapses the clicked element or detaches this button (#501).
+    private bool OwnsClick(MouseButtonEventArgs args)
     {
-        if (Root is not UIRoot root)
+        ElementInputRouteMap? routeMap = args.RouteMap;
+        if (routeMap is null)
         {
-            return true;
+            if (Root is not UIRoot root)
+            {
+                return true;
+            }
+
+            routeMap = root.InputCache.EnsureCurrent(root);
         }
 
-        ElementInputRouteMap routeMap = root.InputCache.EnsureCurrent(root);
-        UIElement? source = originalSource switch
+        UIElement? source = args.OriginalSource switch
         {
             UIElement element => element,
             UiElementId id when routeMap.TryGetElement(id, out UIElement? resolved) => resolved,

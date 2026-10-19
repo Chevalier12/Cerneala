@@ -233,10 +233,73 @@ public sealed class ButtonTests
         Assert.Equal(0, outerOwnClicks);
     }
 
+    // The click stays the inner button's when its Click handler changes the tree before the MouseUp reaches the outer
+    // button (#501): the outer button decides with the route the input system resolved the click with.
+    [Theory]
+    [InlineData("removeInner")]
+    [InlineData("collapseInnerAncestor")]
+    [InlineData("detachOuter")]
+    public void ClickOnButtonInsideButtonRaisesNoOuterClickWhenInnerClickChangesTheTree(string treeChange)
+    {
+        int outerCommands = 0;
+        Button inner = new() { Content = "inner", Width = 80, Height = 30 };
+        StackPanel panel = new();
+        panel.Children.Add(new TextBlock { Text = "label" });
+        panel.Children.Add(inner);
+        Button outer = new() { Content = panel, Command = new ActionCommand(_ => outerCommands++) };
+        Cerneala.UI.Layout.Panels.Canvas canvas = new();
+        UIRoot root = CreateCanvasRoot(canvas, outer);
+        int innerClicks = 0;
+        int outerOwnClicks = 0;
+        int outerBubbledClicks = 0;
+        inner.Click += (_, _) =>
+        {
+            innerClicks++;
+            switch (treeChange)
+            {
+                case "removeInner":
+                    panel.Children.Remove(inner);
+                    break;
+                case "collapseInnerAncestor":
+                    panel.Visibility = Visibility.Collapsed;
+                    break;
+                case "detachOuter":
+                    canvas.VisualChildren.Remove(outer);
+                    break;
+            }
+        };
+        outer.Click += (_, args) =>
+        {
+            if (IsSource(args.OriginalSource, outer))
+            {
+                outerOwnClicks++;
+            }
+            else if (IsSource(args.OriginalSource, inner))
+            {
+                outerBubbledClicks++;
+            }
+        };
+        LayoutRect bounds = inner.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        Assert.Same(inner, new HitTestService().HitTest(root, x, y)?.Element);
+
+        Click(root, x, y);
+
+        Assert.Equal(1, innerClicks);
+        Assert.Equal(1, outerBubbledClicks);
+        Assert.Equal(0, outerOwnClicks);
+        Assert.Equal(0, outerCommands);
+    }
+
     private static UIRoot CreateCanvasRoot(UIElement child)
     {
+        return CreateCanvasRoot(new Cerneala.UI.Layout.Panels.Canvas(), child);
+    }
+
+    private static UIRoot CreateCanvasRoot(Cerneala.UI.Layout.Panels.Canvas canvas, UIElement child)
+    {
         UIRoot root = new(300, 200);
-        Cerneala.UI.Layout.Panels.Canvas canvas = new();
         canvas.VisualChildren.Add(child);
         root.VisualChildren.Add(canvas);
         root.ProcessFrame();
