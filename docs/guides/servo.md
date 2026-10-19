@@ -128,6 +128,13 @@ await servo.WaitUntilAsync(async cancellationToken =>
 });
 ```
 
+`Visible`, `Hidden`, `Enabled`, `Disabled`, and `Focused` need exactly one match.
+While several elements match, for example an outgoing and an incoming copy of a
+button during a page transition, the wait keeps going as it does while none
+match. If several still match at the timeout, the `ServoTimeoutException`
+message ends with `The Servo target still matched 2 elements; exactly one was
+required.` (with the real count).
+
 Use `WaitForIdleAsync` only when global quiescence is the contract. It considers
 relay work, scheduled work, input state, and Motion; continuous Motion therefore
 causes the wait to time out rather than reporting false idle.
@@ -178,7 +185,7 @@ peers.
 Servo-specific failures derive from `ServoException`:
 
 - `ServoTargetNotFoundException` — an operation requiring one target found none;
-- `ServoTargetAmbiguousException` — an operation requiring one target found several;
+- `ServoTargetAmbiguousException` — a query or action requiring one target found several (`WaitForAsync` keeps waiting instead);
 - `ServoTargetNotActionableException` — a resolved target cannot perform the requested input or capture;
 - `ServoTimeoutException` — the configured operation deadline expired.
 

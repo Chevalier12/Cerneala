@@ -22,6 +22,8 @@ await Assert.ThrowsAsync<ServoTargetAmbiguousException>(
 
 Use a more specific target or `FindAllAsync` when multiple matches are expected.
 
+`WaitForAsync` does not throw this exception: it treats multiple matches as a condition that is not yet satisfied and keeps waiting. A wait that is still ambiguous at its timeout throws `ServoTimeoutException` with the match count in the message.
+
 ## Constructors
 
 | Name | Description |
