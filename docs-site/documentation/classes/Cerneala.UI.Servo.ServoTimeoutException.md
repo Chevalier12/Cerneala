@@ -37,6 +37,8 @@ External cancellation remains an `OperationCanceledException` and is distinct fr
 
 Target actions (`ClickAsync`, `HoverAsync`, `DragAsync`, `ScrollAsync`, `TypeIntoAsync`, `ReplaceTextAsync`) wait for their target to exist and be actionable. When the timeout ends that wait, the message ends with `Last failure: ` and the message of the last failed attempt, and `InnerException` is that failure: a `ServoTargetNotFoundException` or a `ServoTargetNotActionableException`. A timeout that ended no such wait has a `null` `InnerException`.
 
+When a `WaitForAsync` with `Visible`, `Hidden`, `Enabled`, `Disabled`, or `Focused` times out and its last evaluation still found multiple matches, the message appends the match count, for example `The Servo operation exceeded its 00:00:05 timeout. The Servo target still matched 2 elements; exactly one was required.` Its `InnerException` is `null`.
+
 ## Constructors
 
 | Name | Description |

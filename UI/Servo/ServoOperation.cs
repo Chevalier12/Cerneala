@@ -33,18 +33,35 @@ internal static class ServoOperation
         {
             return await operation(linked.Token).ConfigureAwait(false);
         }
-        catch (OperationCanceledException canceled) when (
+        catch (OperationCanceledException exception) when (
             !cancellationToken.IsCancellationRequested && timeoutSource.IsCancellationRequested)
         {
             string message = $"The Servo operation exceeded its {timeout} timeout.";
-            // A retried action carries the failure it was retrying as the InnerException of its
-            // cancellation (ServoActionEngine.DispatchWhenActionableAsync).
-            if (canceled.InnerException is ServoException lastFailure)
+            if (exception is ServoTimeoutDiagnosticException diagnostic)
             {
-                throw new ServoTimeoutException($"{message} Last failure: {lastFailure.Message}", lastFailure);
+                throw new ServoTimeoutException(
+                    $"{message} {diagnostic.Message}",
+                    diagnostic.InnerException as ServoException);
             }
 
             throw new ServoTimeoutException(message);
         }
+    }
+}
+
+/// <summary>
+/// Cancellation raised by a wait whose last evaluation explains why it was still unsatisfied.
+/// <see cref="ServoOperation"/> appends the message to the timeout failure. When the inner exception
+/// is a <see cref="ServoException"/>, the last failure of a retried target action, it also becomes
+/// the timeout's inner exception.
+/// </summary>
+internal sealed class ServoTimeoutDiagnosticException : OperationCanceledException
+{
+    internal ServoTimeoutDiagnosticException(
+        string diagnostic,
+        Exception innerException,
+        CancellationToken cancellationToken)
+        : base(diagnostic, innerException, cancellationToken)
+    {
     }
 }

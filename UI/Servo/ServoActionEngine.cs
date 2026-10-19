@@ -22,8 +22,9 @@ internal sealed class ServoActionEngine
     // other failure, including an ambiguous target, ends the action at once.
     // Example: a "Save" button that becomes enabled two frames after ClickAsync gets one click, in the
     // frame after it became enabled. A button that stays disabled ends with the operation's
-    // cancellation; its InnerException is the last ServoTargetNotActionableException, which
-    // ServoOperation turns into ServoTimeoutException when the timeout caused the cancellation.
+    // cancellation as a ServoTimeoutDiagnosticException ("Last failure: The Servo target is
+    // disabled.", inner: the last ServoTargetNotActionableException), which ServoOperation turns into
+    // ServoTimeoutException when the timeout caused the cancellation.
     internal async Task DispatchWhenActionableAsync(
         ServoTarget target,
         Func<Func<UIRoot, ServoActionTarget>, Task> dispatch,
@@ -51,7 +52,7 @@ internal sealed class ServoActionEngine
             }
             catch (OperationCanceledException canceled) when (lastFailure is not null)
             {
-                throw new OperationCanceledException(canceled.Message, lastFailure, canceled.CancellationToken);
+                throw WithLastFailure(canceled, lastFailure);
             }
 
             try
@@ -60,10 +61,15 @@ internal sealed class ServoActionEngine
             }
             catch (OperationCanceledException canceled)
             {
-                throw new OperationCanceledException(canceled.Message, lastFailure, canceled.CancellationToken);
+                throw WithLastFailure(canceled, lastFailure);
             }
         }
     }
+
+    private static ServoTimeoutDiagnosticException WithLastFailure(
+        OperationCanceledException canceled,
+        ServoException lastFailure) =>
+        new($"Last failure: {lastFailure.Message}", lastFailure, canceled.CancellationToken);
 
     private ServoActionTarget ResolveActionable(UIRoot root, ServoTarget target)
     {
