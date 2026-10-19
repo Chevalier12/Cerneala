@@ -38,6 +38,31 @@ LayoutSize desired = button.Measure(new MeasureContext(new LayoutSize(120, 40)))
 button.Arrange(new ArrangeContext(new LayoutRect(0, 0, desired.Width, desired.Height)));
 ```
 
+Place the content at the top-left corner instead of in the middle, or stretch an element content over the whole inner area:
+
+```csharp
+using Cerneala.UI.Controls;
+using Cerneala.UI.Layout;
+
+Button topLeft = new()
+{
+    Width = 300,
+    Height = 70,
+    Content = "Hold me",
+    HorizontalContentAlignment = HorizontalAlignment.Left,
+    VerticalContentAlignment = VerticalAlignment.Top
+};
+
+Button stretched = new()
+{
+    Width = 300,
+    Height = 70,
+    Content = new TextBlock { Text = "Hold me" },
+    HorizontalContentAlignment = HorizontalAlignment.Stretch,
+    VerticalContentAlignment = VerticalAlignment.Stretch
+};
+```
+
 Bind a command to the button:
 
 ```csharp
@@ -57,7 +82,9 @@ Button button = new()
 
 `Button` builds on `ButtonBase`, so it is focusable, participates in tab navigation, uses a hand cursor, exposes pressed state, and can execute `ICommand` or `RoutedCommand` instances through the retained input pipeline.
 
-The button does not declare its own content property. It uses `ContentControl.ContentProperty`, so element content follows the content-control ownership rules. While both `ComponentTemplate` and `ComponentTemplateKey` are `null`, `UIElement` content is added as logical and visual content. When no template child is present, `UIElement` content is measured and arranged inside `Padding + BorderThickness`; string content is measured by `TextMeasurer` and rendered by `TextRenderer`.
+The button does not declare its own content property. It uses `ContentControl.ContentProperty`, so element content follows the content-control ownership rules. While both `ComponentTemplate` and `ComponentTemplateKey` are `null`, `UIElement` content is added as logical and visual content. When no template child is present, `UIElement` content is measured inside `Padding + BorderThickness`; string content is measured by `TextMeasurer` and rendered by `TextRenderer`.
+
+As in WPF's default `Button`, the content is centered inside `Padding + BorderThickness`: the constructor sets framework defaults of `HorizontalAlignment.Center` for `HorizontalContentAlignment` and `VerticalAlignment.Center` for `VerticalContentAlignment`, and an Aspect or local value replaces them. Without a template, `Button` arranges `UIElement` content in a slot of the content's `DesiredSize` placed by these two properties, or across the whole inner width or height for `Stretch`, and draws string content at the same kind of slot of the measured text size; `Stretch` places text like `Left` and `Top`. For example, a 300 x 70 `Button` in a `UIRoot` gets `Padding` 8 and `BorderThickness` 1 from the default Aspect package, so its inner area is 282 x 52; a `TextBlock` content of desired size 61 x 22 is arranged in the middle of that area at its desired size, and the string `"Hold me"` (60.56 px wide) starts 110.72 px right of the inner left edge. The templates `DefaultTheme.CreateButtonTemplate()` and `ButtonTemplates.Modern` bind the two properties to their `ContentPresenter`'s `HorizontalAlignment` and `VerticalAlignment`, so a templated button places its content the same way. `ToggleButton` and `RepeatButton` keep the `Center` defaults; `CheckBox` and `RadioButton` set them back to `Left` and `Top`, as their WPF styles do.
 
 Fallback rendering draws the resolved background brush, then the border, then non-empty string content. If `Background` has an explicit value, that brush is used. Otherwise fallback state colors are wrapped in solid brushes for disabled, pressed, pointer-over, and keyboard-focused states before falling back to the default background.
 
@@ -71,7 +98,7 @@ When `ComponentTemplate` supplies a template child, layout is delegated to the b
 
 | Name | Description |
 | --- | --- |
-| `Button()` | Initializes a new button. The inherited `ButtonBase` constructor makes the control focusable, a tab stop, and assigns the hand cursor. |
+| `Button()` | Initializes a new button whose `HorizontalContentAlignment` and `VerticalContentAlignment` default to `Center`. The inherited `ButtonBase` constructor makes the control focusable, a tab stop, and assigns the hand cursor. |
 
 ## Properties
 
@@ -95,6 +122,8 @@ When `ComponentTemplate` supplies a template child, layout is delegated to the b
 | `Padding` | `Thickness` | `Control` | Gets or sets the padding around fallback content. |
 | `FontFamily` | `string` | `Control` | Gets or sets the inherited font family used to create the fallback text aspect. |
 | `FontSize` | `float` | `Control` | Gets or sets the inherited font size used to create the fallback text aspect. |
+| `HorizontalContentAlignment` | `HorizontalAlignment` | `Control` | Gets or sets the horizontal placement of the content inside `Padding + BorderThickness`. Defaults to `Center` on `Button`. |
+| `VerticalContentAlignment` | `VerticalAlignment` | `Control` | Gets or sets the vertical placement of the content inside `Padding + BorderThickness`. Defaults to `Center` on `Button`. |
 | `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the component template. When present, the template child handles layout and rendering. |
 | `ComponentTemplateInstance` | `ComponentTemplateInstance?` | `Control` | Gets the active component-template instance, when one has been applied. |
 | `AspectVariants` | `AspectVariantSet` | `Control` | Gets the active aspect variant values used by component templates. |
@@ -120,6 +149,8 @@ When `ComponentTemplate` supplies a template child, layout is delegated to the b
 | `PaddingProperty` | `UiProperty<Thickness>` | `Control` | Identifies the `Padding` UI property. |
 | `FontFamilyProperty` | `UiProperty<string>` | `Control` | Identifies the inherited `FontFamily` UI property. |
 | `FontSizeProperty` | `UiProperty<float>` | `Control` | Identifies the inherited `FontSize` UI property. |
+| `HorizontalContentAlignmentProperty` | `UiProperty<HorizontalAlignment>` | `Control` | Identifies the `HorizontalContentAlignment` UI property. |
+| `VerticalContentAlignmentProperty` | `UiProperty<VerticalAlignment>` | `Control` | Identifies the `VerticalContentAlignment` UI property. |
 | `ComponentTemplateProperty` | `UiProperty<ComponentTemplate?>` | `Control` | Identifies the `ComponentTemplate` UI property. |
 
 ## Important Inherited Methods

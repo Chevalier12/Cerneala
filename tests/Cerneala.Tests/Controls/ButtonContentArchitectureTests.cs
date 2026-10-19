@@ -109,7 +109,9 @@ public sealed class ButtonContentArchitectureTests
         {
             Content = "Go",
             Foreground = new SolidColorBrush(Color.White),
-            TextRenderer = renderer
+            TextRenderer = renderer,
+            HorizontalContentAlignment = HorizontalAlignment.Left,
+            VerticalContentAlignment = VerticalAlignment.Top
         };
         DrawCommandList commands = new();
 

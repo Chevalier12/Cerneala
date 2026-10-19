@@ -60,7 +60,7 @@ The default palette uses these color values:
 
 `PaletteKey` stores the full `ThemePalette`. The individual color keys are also set from that palette so callers can read either the complete palette or one typed color value.
 
-`CreateButtonTemplate()` creates a `ComponentTemplate<Button>` with a `Border` root and a nested `ContentPresenter`. The template binds the button's background, border color, border thickness, padding, content, foreground, font family, and font size into those template elements.
+`CreateButtonTemplate()` creates a `ComponentTemplate<Button>` with a `Border` root and a nested `ContentPresenter`. The template binds the button's background, border color, border thickness, padding, content, foreground, font family, and font size into those template elements. It also binds the button's `HorizontalContentAlignment` and `VerticalContentAlignment` to the presenter's `HorizontalAlignment` and `VerticalAlignment`, as WPF's default button template does. With the `Button` defaults of `Center` and `Center`, a 300 x 70 button with `Padding` 8 and `BorderThickness` 1 arranges a `TextBlock` content of desired size 61 x 22 in the middle of its 282 x 52 inner area, at its desired size; `Stretch` and `Stretch` arrange it across the whole inner area.
 
 `ThemeTokenBridge.CreateEnvironment` projects the default color keys into aspect tokens when a theme is converted to an `AspectEnvironment`.
 
@@ -80,7 +80,7 @@ The default palette uses these color values:
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `Create()` | `Theme` | Creates the built-in theme named `Default`, including palette, individual color values, and default theme motion tokens. |
-| `CreateButtonTemplate()` | `ComponentTemplate<Button>` | Creates a button template whose root is a `Border` containing a `ContentPresenter` bound to button chrome, content, foreground, and font properties. |
+| `CreateButtonTemplate()` | `ComponentTemplate<Button>` | Creates a button template whose root is a `Border` containing a `ContentPresenter` bound to button chrome, content, foreground, font, and content-alignment properties. |
 
 ## Applies to
 

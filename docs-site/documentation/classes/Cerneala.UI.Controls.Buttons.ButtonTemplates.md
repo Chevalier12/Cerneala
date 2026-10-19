@@ -57,7 +57,7 @@ AspectPackage package = AspectPackage.Create("App")
 
 `Modern` creates a `Border` root and a nested `ContentPresenter`. The content presenter receives the owning button's `ResourceProvider` and `FontResourceId`, then the template records `ButtonSlots.Root` for the border and `ButtonSlots.Content` for the content presenter. It also registers the content presenter as the required `PART_Content` template part.
 
-The template binds `Background`, `BorderBrush`, `BorderThickness`, and `Padding` from the owner button to the border with local target value source. It binds `ContentControl.Content` from the button to `ContentPresenter.Content`, and binds the button `Foreground` to the content presenter. These bindings let aspect rules that target the button and local button values drive the visual tree created by the component template. The `Content` and `Foreground` bindings use the default `TemplateOwnerBinding` source, so a rule that targets `ButtonSlots.Content` cannot override those two presenter properties; it still sets the presenter's other properties.
+The template binds `Background`, `BorderBrush`, `BorderThickness`, and `Padding` from the owner button to the border with local target value source. It binds `ContentControl.Content` from the button to `ContentPresenter.Content`, binds the button `Foreground` to the content presenter, and binds the button's `HorizontalContentAlignment` and `VerticalContentAlignment` to the presenter's `HorizontalAlignment` and `VerticalAlignment`, so the content is centered by default, as in WPF's default button. These bindings let aspect rules that target the button and local button values drive the visual tree created by the component template. The `Content`, `Foreground`, and alignment bindings use the default `TemplateOwnerBinding` source, so a rule that targets `ButtonSlots.Content` cannot override those presenter properties; it still sets the presenter's other properties. To move the content, set `HorizontalContentAlignment` or `VerticalContentAlignment` on the button.
 
 `DefaultAspectPackage.Create()` registers this template as `Button.Modern`. The playground modern-aspect sample also registers the same template and demonstrates targeting `ButtonSlots.Content` from aspect rules.
 
@@ -65,7 +65,7 @@ The template binds `Background`, `BorderBrush`, `BorderThickness`, and `Padding`
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `Modern` | `ComponentTemplate<Button>` | Gets the built-in modern button component template. The template creates a `Border` root, a `ContentPresenter` content part, registers button slots, and binds the button chrome and content properties into the template tree. |
+| `Modern` | `ComponentTemplate<Button>` | Gets the built-in modern button component template. The template creates a `Border` root, a `ContentPresenter` content part, registers button slots, and binds the button chrome, content, and content-alignment properties into the template tree. |
 
 ## Applies to
 
