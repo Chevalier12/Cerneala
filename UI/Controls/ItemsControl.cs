@@ -367,11 +367,7 @@ public class ItemsControl : Control
         switch (container)
         {
             case ContentPresenter presenter:
-                presenter.Content = null;
-                presenter.ClearValue(ContentPresenter.ContentTemplateProperty);
-                presenter.ClearValue(ContentPresenter.ContentTemplateKeyProperty);
-                presenter.LocalTemplateRegistry = null;
-                presenter.ContentIndex = -1;
+                presenter.ClearItemContainerPresentation();
                 break;
             case ContentControl contentControl:
                 contentControl.Content = null;

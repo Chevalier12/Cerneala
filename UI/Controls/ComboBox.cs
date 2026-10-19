@@ -265,11 +265,7 @@ public class ComboBox : Selector
         if (container is ComboBoxItem { Content: ContentPresenter presenter } &&
             !ReferenceEquals(container, ItemContainerGenerator.GetItem(container)))
         {
-            presenter.Content = null;
-            presenter.ContentTemplate = null;
-            presenter.ContentTemplateKey = null;
-            presenter.LocalTemplateRegistry = null;
-            presenter.ContentIndex = -1;
+            presenter.PrepareItemPresentation(null, null, null, null, -1);
         }
 
         base.ClearItemContainer(container);

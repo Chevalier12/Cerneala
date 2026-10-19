@@ -158,6 +158,25 @@ public class ContentPresenter : Control
         }
     }
 
+    // Clears what PrepareItemContainerPresentation wrote. Clearing a container presents no item, so, as with
+    // preparation, the presented child is rebuilt only on the next measure and no template runs without its item.
+    internal void ClearItemContainerPresentation()
+    {
+        deferPresentationRefresh = true;
+        try
+        {
+            Content = null;
+            ClearValue(ContentTemplateProperty);
+            ClearValue(ContentTemplateKeyProperty);
+            LocalTemplateRegistry = null;
+            ContentIndex = -1;
+        }
+        finally
+        {
+            deferPresentationRefresh = false;
+        }
+    }
+
     internal void RefreshAspectContentTemplates(AspectCatalog catalog)
     {
         if (ReferenceEquals(aspectTemplateCatalog, catalog))

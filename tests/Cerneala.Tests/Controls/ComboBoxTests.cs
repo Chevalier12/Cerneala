@@ -2184,6 +2184,55 @@ public sealed class ComboBoxTests
             $"highlighted={highlighted} selected={comboBox.SelectedItem} text={comboBox.Text}");
     }
 
+    // Clearing a realized drop-down row is not presenting an item, so the row's ItemTemplate does not run with a
+    // null item (#535).
+    [Theory]
+    [InlineData(nameof(ComboBox.ItemsSource))]
+    [InlineData(nameof(ComboBox.ItemTemplate))]
+    public void ReplacingItemsSourceOrItemTemplateDoesNotRunTheRowTemplateWithoutItsItem(string change)
+    {
+        List<string?> rowCalls = [];
+        ContentPresenter? selection = null;
+        ContentTemplate<string> RowTemplate(string prefix) => new("row", key: null, priority: 0, context =>
+        {
+            if (!ReferenceEquals(context.Presenter, selection))
+            {
+                rowCalls.Add(context.Data);
+            }
+
+            return new TextBlock { Text = prefix + context.Data };
+        });
+        UIRoot root = new(300, 200);
+        ComboBox comboBox = new() { Width = 180, ItemTemplate = RowTemplate(""), ItemsSource = new[] { "a", "b", "c" } };
+        root.VisualChildren.Add(comboBox);
+        root.ProcessFrame();
+        selection = Assert.IsType<ContentPresenter>(comboBox.ComponentTemplateInstance!.Parts["PART_SelectionPresenter"]);
+        comboBox.IsDropDownOpen = true;
+        root.ProcessFrame();
+        Assert.Equal(3, comboBox.RealizedItemCount);
+
+        rowCalls.Clear();
+        if (change == nameof(ComboBox.ItemsSource))
+        {
+            comboBox.ItemsSource = new[] { "d" };
+        }
+        else
+        {
+            comboBox.ItemTemplate = RowTemplate("x");
+        }
+
+        Assert.Empty(rowCalls);
+        root.ProcessFrame();
+
+        Assert.DoesNotContain(null, rowCalls);
+        Assert.Equal(change == nameof(ComboBox.ItemsSource) ? ["d"] : ["a", "b", "c"], rowCalls.Distinct());
+        Assert.Equal(
+            change == nameof(ComboBox.ItemsSource) ? ["d"] : ["xa", "xb", "xc"],
+            comboBox.ItemContainerGenerator.RealizedContainers.OrderBy(pair => pair.Key).Select(pair =>
+                Assert.IsType<TextBlock>(Assert.IsType<ContentPresenter>(
+                    Assert.IsType<ComboBoxItem>(pair.Value).Content).PresentedChild).Text));
+    }
+
     [Fact]
     public void FilteredHighlightedItemFollowsItsItemWhenNewItemsSourceIsAssigned()
     {
