@@ -15,7 +15,7 @@ Correction to the [architecture diagram](../assets/cerneala-architecture.png): i
 | Type | File | Role | Owner |
 |---|---|---|---|
 | `Servo` | `UI/Servo/Servo.cs` | Public facade: `FindAsync`, `FindAllAsync`, `ExistsAsync`, input actions, waits, screenshots; `Servo.Id` attached property | caller; `new Servo(window)` or `new Servo(host)` |
-| `ServoTarget` | `UI/Servo/ServoTarget.cs` | Selector: `ById`, `ByName`, `ByRole`, `WithName`, `Within` | caller (immutable) |
+| `ServoTarget` | `UI/Servo/ServoTarget.cs` | Selector: `ById`, `ByName`, `ByRole`, `WithName`, `WithNameContaining`, `WithNameMatching`, `Where`, `Within`, `Nth`, `First`, `Last` | caller (immutable) |
 | `ServoElement` | `UI/Servo/ServoElement.cs` | Read-only snapshot of a found element; never the live element | caller |
 | `ServoOptions` | `UI/Servo/ServoOptions.cs` | `DefaultTimeout` (5 s by default; zero, negative and infinite are rejected); copied at construction | `Servo` |
 | `ServoContext` | `UI/Servo/ServoContext.cs` | Internal; binds to the window or host, marshals to the owning thread, serializes input | `Servo` |
@@ -59,9 +59,9 @@ The operation completes on the UI thread after all of these happened: the events
 ## Queries
 
 - `Servo.Id` is an attached `UiProperty<string?>` with `AffectsSemantics`; whitespace is trimmed, and a blank value becomes `null`. In markup, the `Servo.Id="save"` attribute is emitted as this property.
-- Matching uses ordinal comparison on Id, Name and Role, within an optional `Within` scope.
+- Matching uses ordinal comparison on Id, Name (exact, substring, or a caller-supplied `Regex`) and Role, then every `Where` predicate over a `ServoElement` snapshot, within an optional `Within` scope. `ServoQueryEngine.ResolveAll` is the single resolution path: it resolves the scope target first (including its own position), keeps candidates that have an ancestor in that set, and applies `Nth`/`First`/`Last` last, in semantic document order. Example: `ServoTarget.ByRole(SemanticsRole.Button).WithName("Delete").Nth(2)` resolves the third Delete button, or nothing when there are fewer than three.
 - Cardinality is explicit:
-  - `FindAsync` throws `ServoTargetNotFoundException` for zero matches and `ServoTargetAmbiguousException` for more than one;
+  - `FindAsync` throws `ServoTargetNotFoundException` for zero matches and `ServoTargetAmbiguousException` for more than one; a target with `Nth`/`First`/`Last` resolves to zero or one match, so it is never ambiguous;
   - `FindAllAsync` returns an empty list for zero matches;
   - `ExistsAsync` returns a `bool`.
 - The Servo semantic projection keeps hidden and collapsed nodes, so `WaitForAsync(target, ServoCondition.Hidden)` can tell "hidden" apart from "missing".
@@ -109,5 +109,5 @@ Servo adds no frame phase. Its frames enter through `UiHost.Update` at the same 
 ## Known Limitations
 
 - Live Preview input (`WindowApplicationRuntime.ClickPreview`, `MovePreviewPointer`, `SendPreviewText`, `PressPreviewKey`) calls the same driver directly and skips the Servo queue and gate. Whether it can interleave with a running Servo operation on the same window is netestat.
-- Selectors combine only through `WithName` and `Within`. There is no selector for "this Id and this Role".
+- An Id plus a Role is written with a predicate, `ServoTarget.ById("x").Where(element => element.Role == SemanticsRole.Button)`; there is no dedicated `WithRole`.
 - Screenshot tests check the save calls on a fake graphics session; no test decodes the written PNG.
