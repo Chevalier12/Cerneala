@@ -4,7 +4,13 @@ namespace Cerneala.UI.Input;
 
 internal sealed class KeyboardActivationController
 {
+    private readonly PressedStateTracker pressedStateTracker;
     private UIElement? spacePressedElement;
+
+    public KeyboardActivationController(PressedStateTracker pressedStateTracker)
+    {
+        this.pressedStateTracker = pressedStateTracker;
+    }
 
     public void Process(
         IReadOnlyList<KeyboardDispatchResult> results,
@@ -125,9 +131,9 @@ internal sealed class KeyboardActivationController
     // Like WPF ButtonBase.OnLostKeyboardFocus: the Space press belongs to the focus it
     // started on, so a focus change forgets it and the later release clicks nothing.
     // The pressed look stays while the pointer still presses the same element.
-    public void OnFocusChanged(IInputPressable? pointerPressedElement)
+    public void OnFocusChanged()
     {
-        if (ReferenceEquals(spacePressedElement, pointerPressedElement))
+        if (ReferenceEquals(spacePressedElement, pressedStateTracker.PressedElement))
         {
             spacePressedElement = null;
             return;

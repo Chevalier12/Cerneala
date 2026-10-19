@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
@@ -447,6 +448,28 @@ public sealed class ElementInputBridgeTests
 
         Assert.True(child.IsPointerOver);
         Assert.True(frame.Stats.RenderedElements > 0);
+    }
+
+    [Fact]
+    public void DroppedBridgeIsCollectableWhileItsSharedFocusManagerLives()
+    {
+        FocusManager sharedFocusManager = new();
+        WeakReference droppedBridge = CreateDroppedBridge(sharedFocusManager);
+
+        for (int i = 0; i < 3; i++)
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+        }
+
+        Assert.False(droppedBridge.IsAlive);
+        GC.KeepAlive(sharedFocusManager);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static WeakReference CreateDroppedBridge(FocusManager sharedFocusManager)
+    {
+        return new WeakReference(new ElementInputBridge(focusManager: sharedFocusManager));
     }
 
     private static UIRoot RootWithChild(out UIElement child)

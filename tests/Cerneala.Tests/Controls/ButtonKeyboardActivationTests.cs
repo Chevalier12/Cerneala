@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
@@ -173,6 +174,30 @@ public sealed class ButtonKeyboardActivationTests
 
         bridge.Dispatch(root, new InputFrame(pointerUp, pointerUp, space, noKeys, []));
         Assert.Equal(1, firstClicks);
+    }
+
+    [Fact]
+    public void SpacePressedButtonIsReleasedWithoutClickWhenFocusMovesAwayOnASharedFocusManager()
+    {
+        UIRoot root = RootWithTwoButtons(out ButtonBase first, out ButtonBase second);
+        FocusManager sharedFocusManager = new();
+        CreateDroppedBridge(sharedFocusManager);
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        ElementInputBridge bridge = new(focusManager: sharedFocusManager);
+        Assert.True(sharedFocusManager.Focus(first, root.InputCache.EnsureCurrent(root)));
+        int firstClicks = 0;
+        first.Click += (_, _) => firstClicks++;
+
+        bridge.Dispatch(root, KeyPressFrame(InputKey.Space));
+        Assert.True(first.IsPressed);
+
+        Assert.True(sharedFocusManager.Focus(second, root.InputCache.EnsureCurrent(root)));
+        Assert.False(first.IsPressed);
+
+        bridge.Dispatch(root, KeyReleaseFrame(InputKey.Space));
+        Assert.False(second.IsPressed);
+        Assert.Equal(0, firstClicks);
     }
 
     [Fact]
@@ -372,6 +397,12 @@ public sealed class ButtonKeyboardActivationTests
         Assert.True(bridge.FocusManager.Focus(button, routeMap));
 
         return bridge;
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void CreateDroppedBridge(FocusManager sharedFocusManager)
+    {
+        _ = new ElementInputBridge(focusManager: sharedFocusManager);
     }
 
     private static UIRoot RootWithButton(out ButtonBase button)
