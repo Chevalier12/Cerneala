@@ -28,51 +28,20 @@ public class ContentControl : Control
         set
         {
             object? oldContent = Content;
-            if (ContentEqualityComparer.Equals(oldContent, value))
+            try
             {
                 SetValue(ContentProperty, value);
-                return;
             }
-
-            ValidateCanOwnChild(this, value as UIElement);
-            UIElement? hostedOldContent = hostedContentElement;
-            bool hostsNewContent = HostsContentDirectly(value);
-            if (hostedOldContent is not null || hostsNewContent)
+            catch
             {
-                if (hostedOldContent is not null)
+                // Hosting failed after the new value was stored: storing the old value again hosts the old content.
+                if (!ContentEqualityComparer.Equals(Content, oldContent))
                 {
-                    RemoveContentElement(hostedOldContent);
-                }
-
-                try
-                {
-                    if (hostsNewContent)
-                    {
-                        AddContentElement(value);
-                    }
-
-                    SetValue(ContentProperty, value);
-                }
-                catch
-                {
-                    if (hostsNewContent)
-                    {
-                        RemoveContentElement(value);
-                    }
-
-                    if (hostedOldContent is not null)
-                    {
-                        AddContentElement(hostedOldContent);
-                    }
-
                     SetValue(ContentProperty, oldContent);
-                    throw;
                 }
 
-                return;
+                throw;
             }
-
-            SetValue(ContentProperty, value);
         }
     }
 
@@ -85,17 +54,17 @@ public class ContentControl : Control
     // True when this control is the direct parent of the given content when that content is a UIElement.
     internal virtual bool HostsContentDirectly(object? content) => ComponentTemplate is null && ComponentTemplateKey is null;
 
-    // Content that this control does not host is taken later by its other owner (a ContentPresenter, or the TabItem
-    // that holds it), so SetValue, and a ClearValue that makes it effective, check it here, before the store changes,
-    // as the Content setter does. Only a write that becomes the effective Content is checked: a shadowed write does
-    // not change Content, as in WPF, where the ownership work runs in the property-changed callback of ContentProperty.
+    // Every write of Content that becomes the effective Content, the setter and SetValue with any value source, and a
+    // ClearValue that makes a lower source's element effective, checks the element here, before the store changes,
+    // whether this control hosts it (OnPropertyChanged) or another owner takes it later (a ContentPresenter, or the
+    // TabItem that holds it). A shadowed write does not change Content, so it is not checked, as in WPF, where the
+    // ownership work runs in the property-changed callback of ContentProperty.
     internal override void ValidateEffectiveValueChange(UiProperty property, object? value)
     {
         base.ValidateEffectiveValueChange(property, value);
         if (ReferenceEquals(property, ContentProperty) &&
             value is UIElement element &&
-            !ReferenceEquals(element, Content) &&
-            !HostsContentDirectly(element))
+            !ReferenceEquals(element, Content))
         {
             ValidateCanOwnChild(this, element);
         }
@@ -129,6 +98,20 @@ public class ContentControl : Control
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
+        // The effective Content changed through any path (the setter, SetValue or ClearValue with any value source),
+        // so the hosted element follows it, as WPF's ContentControl.OnContentChanged moves the logical child.
+        if (ReferenceEquals(args.Property, ContentProperty))
+        {
+            RemoveContentElement(hostedContentElement);
+            if (HostsContentDirectly(args.NewValue))
+            {
+                AddContentElement(args.NewValue);
+            }
+
+            base.OnPropertyChanged(args);
+            return;
+        }
+
         if (!ReferenceEquals(args.Property, ComponentTemplateProperty) &&
             !ReferenceEquals(args.Property, ComponentTemplateKeyProperty))
         {
