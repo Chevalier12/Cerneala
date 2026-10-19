@@ -274,19 +274,33 @@ public class Selector : ItemsControl
             }
         }
 
-        RefreshSelectionContainer(args.Change.OldIndex, "Selection changed", ref preparationFailure);
-        RefreshSelectionContainer(args.Change.NewIndex, "Selection changed", ref preparationFailure);
-        if (!relocated)
+        try
         {
-            RaiseEvent(new SelectionChangedEventArgs(
-                SelectionChangedEvent,
-                this,
-                args.Change,
-                removed is null ? [] : [removed],
-                added is null ? [] : [added]));
+            RefreshSelectionContainer(args.Change.OldIndex, "Selection changed", ref preparationFailure);
+            RefreshSelectionContainer(args.Change.NewIndex, "Selection changed", ref preparationFailure);
+            if (!relocated)
+            {
+                RaiseEvent(new SelectionChangedEventArgs(
+                    SelectionChangedEvent,
+                    this,
+                    args.Change,
+                    removed is null ? [] : [removed],
+                    added is null ? [] : [added]));
+            }
+        }
+        finally
+        {
+            OnSelectionChangeCompleted();
         }
 
         ThrowPreparationFailure(preparationFailure);
+    }
+
+    // Runs at the end of every selection change, after the Selected, Unselected, and SelectionChanged handlers, also
+    // when one of them throws. As in WPF, where a subclass's OnSelectionChanged override runs after
+    // base.OnSelectionChanged raised SelectionChanged, a subclass can react here to what those handlers changed.
+    internal virtual void OnSelectionChangeCompleted()
+    {
     }
 
     // A re-preparation failure raised while a selection change notifies its new SelectedIndex, by a nested
@@ -364,18 +378,23 @@ public class Selector : ItemsControl
         public Selector? Owner { get; set; }
 
         // As in WPF, where ButtonBase marks the mouse button events handled, a command source in the container, such as
-        // a CheckBox from the ItemTemplate, owns its click, as the input bridge resolves the click to it.
+        // a CheckBox from the ItemTemplate, owns its click, as the input bridge resolves the click to it. A release that
+        // completes no click, because the press was elsewhere in the container, is not the command source's click, so
+        // it still selects the container, as the press on the row does in WPF. Any release that selects the container
+        // is handled, as WPF's ListBoxItem handles the press, so an enclosing Button or RadioButton is not clicked,
+        // checked, or commanded by it (#490).
         public void OnMouseUp(UiElementId _, RoutedEventArgs args)
         {
-            if (Owner is null || args is not MouseButtonEventArgs { ChangedButton: InputMouseButton.Left })
+            if (Owner is null || args is not MouseButtonEventArgs { ChangedButton: InputMouseButton.Left } mouseArgs)
             {
                 return;
             }
 
             UIElement? clickOwner = FindClickOwner(container, args.OriginalSource);
-            if (clickOwner is not IInputCommandSource || ReferenceEquals(clickOwner, container))
+            if (mouseArgs.ClickCount <= 0 || clickOwner is not IInputCommandSource || ReferenceEquals(clickOwner, container))
             {
                 Owner.SelectContainer(container);
+                args.Handled = true;
             }
         }
     }

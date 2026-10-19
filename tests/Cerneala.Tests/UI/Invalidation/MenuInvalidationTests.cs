@@ -148,6 +148,56 @@ public sealed class MenuInvalidationTests
             (arrangesForUnchangedViewport, unchangedViewport.ArrangeCalls, arrangesForNarrowerViewport, content.ArrangeCount));
     }
 
+    [Fact]
+    public void OpenOverlayWhoseScrollViewerIsTallerThanTheWindowSettlesAfterTheSecondFrame()
+    {
+        // The layer measures the ScrollViewer unbounded (500 high, no scroll bar) and then clamped to the 80 px below
+        // the target (scroll bar shown), in its measure and in its arrange. Each measure toggles the scroll bar and
+        // queues the ScrollViewer's measure again, so a layer arrange in the second frame leaves work for a third.
+        UIRoot root = new(200, 100, 1);
+        Border target = new() { Height = 20, VerticalAlignment = VerticalAlignment.Top };
+        root.VisualChildren.Add(target);
+        ScrollViewer viewer = new() { Content = new UIElement { Height = 500 } };
+        Overlay overlay = new() { PlacementTarget = target, Content = viewer };
+        root.VisualChildren.Add(overlay);
+        overlay.IsOpen = true;
+
+        root.ProcessFrame();
+        root.ProcessFrame();
+        bool hasWorkAfterSecondFrame = root.Scheduler.HasWork;
+        FrameStats laterFrame = root.ProcessFrame();
+
+        Assert.Equal((20f, 80f), (viewer.ArrangedBounds.Y, viewer.ArrangedBounds.Height));
+        Assert.Equal(
+            (false, 0, 0),
+            (hasWorkAfterSecondFrame, laterFrame.MeasuredElements, laterFrame.ArrangedElements));
+    }
+
+    [Fact]
+    public void OpenComboBoxDropDownWithFiftyItemsSettlesAfterTheSecondFrame()
+    {
+        UIRoot root = new(300, 200, 1);
+        ComboBox combo = new() { Width = 120, VerticalAlignment = VerticalAlignment.Top };
+        for (int index = 0; index < 50; index++)
+        {
+            combo.Items.Add($"Item {index}");
+        }
+
+        root.VisualChildren.Add(combo);
+        root.ProcessFrame();
+        combo.IsDropDownOpen = true;
+
+        root.ProcessFrame();
+        root.ProcessFrame();
+        bool hasWorkAfterSecondFrame = root.Scheduler.HasWork;
+        FrameStats laterFrame = root.ProcessFrame();
+
+        Assert.True(combo.IsDropDownOpen);
+        Assert.Equal(
+            (false, 0, 0),
+            (hasWorkAfterSecondFrame, laterFrame.MeasuredElements, laterFrame.ArrangedElements));
+    }
+
     private static Overlay CreateOverlay(UIElement target, UIElement content)
     {
         return new Overlay

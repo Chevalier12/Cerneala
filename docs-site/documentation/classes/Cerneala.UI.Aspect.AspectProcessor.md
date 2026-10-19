@@ -58,7 +58,7 @@ The processor is root-owned. `Process`, `Clear`, and environment synchronization
 
 For each element, the processor composes one catalog from the root registry, packages stored in the application resource provider, packages stored in the resource dictionaries of the element and its ancestors from outer to inner scope (the element's own resources are the innermost scope), and the element's `ElementAspect`. The composition is cached by root-catalog identity, resource-dictionary identity/version, ancestry, and element-aspect identity/version. Stable inputs reuse the same catalog snapshot. A composed catalog reports the `Version` of the root registry snapshot it was built from, so recomposition never consumes a version and has no count limit; the processor detects a changed composition by catalog identity, not by `Version`.
 
-Before applying declarations, the processor synchronizes matching `AspectBehavior` sidecars from the composed catalog. Each visible behavior occurrence attaches once; unchanged occurrences retain their lifetimes, while removed or replaced occurrences are disposed. This lifecycle path owns generated Motion/event/observation sidecars without introducing another Aspect matcher or cascade.
+Before applying declarations, the processor synchronizes matching `AspectBehavior` sidecars from the composed catalog. Each visible behavior occurrence attaches once; unchanged occurrences retain their lifetimes, while removed or replaced occurrences are disposed. A lifetime is finished once its disposal starts, also when its `Dispose` throws: the synchronized occurrences are stored first, every other removed lifetime is still disposed, the failed lifetime is never disposed again, and the first exception then propagates. When attaching a new occurrence throws, the lifetimes attached earlier in the same synchronization are disposed and the attach exception propagates. This lifecycle path owns generated Motion/event/observation sidecars without introducing another Aspect matcher or cascade.
 
 Cascade comparison uses the rule layer first, then the composed source/scope order, target specificity, and declaration order. This gives application packages precedence over root packages in the same layer, inner scopes precedence over outer scopes, and the runtime-layer `ElementAspect` precedence over reusable package rules. Markup/local UI property sources still participate independently in `UiPropertyStore` precedence.
 
@@ -72,7 +72,7 @@ When an owner is processed, the processor compares its current states with its p
 
 The engine receives the target element, current catalog, synchronized environment, root theme provider, and the element's `AspectVariantSet` when the element is a `Control`; non-control elements are processed with `AspectVariantSet.Empty`. It also receives an `AspectDataContext` built from the element's current `DataContext`, so `AspectCondition.Data` works on the root frame-processing path. The root property-mutation observer compares effective property changes with the engine's captured property dependencies and queues Aspect work even when the property metadata does not include `AffectsAspect`. Mutations performed by the engine during its own apply/clear operation are suppressed from this feedback path.
 
-`Clear` disposes synchronized behavior lifetimes, delegates to `AspectEngine.Clear`, and discards the element's catalog/environment caches. Element lifecycle cleanup calls this during detach, which removes previously applied aspect-base values and tracked diagnostics/dependencies; reattach resolves the current ancestry and local aspect afresh.
+`Clear` disposes synchronized behavior lifetimes, delegates to `AspectEngine.Clear`, and discards the element's catalog/environment caches. A lifetime whose `Dispose` throws does not skip this cleanup: the other lifetimes are disposed, the aspect-base values and caches are cleared, and the first exception then propagates; a later reattach attaches new lifetimes. Element lifecycle cleanup calls this during detach, which removes previously applied aspect-base values and tracked diagnostics/dependencies; reattach resolves the current ancestry and local aspect afresh.
 
 The `Engine` property exposes the owned `AspectEngine` for dependency inspection and low-level aspect operations. Read root-owned Aspect diagnostics through `UIRoot.Detective`; mutating the engine directly can bypass the root-level catalog and token-default synchronization performed by `Process`.
 
@@ -93,7 +93,7 @@ The `Engine` property exposes the owned `AspectEngine` for dependency inspection
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `Process(UIElement element)` | `void` | Composes visible root/application/scoped/local Aspect sources, applies them through the engine, refreshes content/template context, and applies a control template when needed. Throws `ArgumentNullException` when `element` is `null`. |
-| `Clear(UIElement element)` | `void` | Disposes package behavior lifetimes and clears aspect-base values and tracked aspect state for `element`. |
+| `Clear(UIElement element)` | `void` | Disposes package behavior lifetimes and clears aspect-base values and tracked aspect state for `element`. When a lifetime's `Dispose` throws, the rest of the cleanup still runs, then the first exception propagates. |
 
 ## Applies to
 

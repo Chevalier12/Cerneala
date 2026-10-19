@@ -292,6 +292,105 @@ public sealed class ButtonTests
         Assert.Equal(0, outerCommands);
     }
 
+    // A selector item owns the click that selects it, as a WPF ListBoxItem handles the press (#490): the enclosing
+    // button is neither clicked nor runs its command.
+    [Fact]
+    public void ClickOnListBoxItemInsideButtonSelectsTheItemWithoutButtonClick()
+    {
+        int commands = 0;
+        ListBoxItem two = new() { Content = "Two" };
+        ListBox list = new() { Width = 120, Height = 80 };
+        list.Items.Add(new ListBoxItem { Content = "One" });
+        list.Items.Add(two);
+        Button button = new() { Content = list, Width = 200, Height = 100, Command = new ActionCommand(_ => commands++) };
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+        UIRoot root = CreateWindowRoot(button);
+
+        ClickCenter(root, two);
+
+        Assert.Equal(1, list.SelectedIndex);
+        Assert.Equal(0, clicks);
+        Assert.Equal(0, commands);
+    }
+
+    [Fact]
+    public void ClickOnButtonOutsideNestedListBoxRaisesButtonClickOnce()
+    {
+        ListBox list = new() { Width = 120, Height = 80 };
+        list.Items.Add(new ListBoxItem { Content = "One" });
+        Button button = new() { Content = list, Width = 200, Height = 100 };
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+        UIRoot root = CreateWindowRoot(button);
+        LayoutRect bounds = button.ArrangedBounds;
+        float x = bounds.X + 5;
+        float y = bounds.Y + 5;
+        Assert.Same(button, new HitTestService().HitTest(root, x, y)?.Element);
+
+        Click(root, x, y);
+
+        Assert.Equal(-1, list.SelectedIndex);
+        Assert.Equal(1, clicks);
+    }
+
+    [Fact]
+    public void PickingComboBoxDropDownItemInsideButtonSelectsTheItemWithoutButtonClick()
+    {
+        ComboBoxItem two = new() { Content = "Two" };
+        ComboBox comboBox = new() { Width = 120 };
+        comboBox.Items.Add(new ComboBoxItem { Content = "One" });
+        comboBox.Items.Add(two);
+        Button button = new() { Content = comboBox, Width = 200, Height = 100 };
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+        UIRoot root = CreateWindowRoot(button);
+        comboBox.IsDropDownOpen = true;
+        root.ProcessFrame();
+        Assert.True(two.IsAttached);
+
+        ClickCenter(root, two);
+
+        Assert.Equal(1, comboBox.SelectedIndex);
+        Assert.False(comboBox.IsDropDownOpen);
+        Assert.Equal(0, clicks);
+    }
+
+    [Fact]
+    public void PickingComboBoxDropDownItemInsideRadioButtonLeavesTheRadioButtonUnchecked()
+    {
+        ComboBoxItem two = new() { Content = "Two" };
+        ComboBox comboBox = new() { Width = 120 };
+        comboBox.Items.Add(new ComboBoxItem { Content = "One" });
+        comboBox.Items.Add(two);
+        RadioButton radio = new() { Content = comboBox, Width = 200, Height = 100 };
+        UIRoot root = CreateWindowRoot(radio);
+        comboBox.IsDropDownOpen = true;
+        root.ProcessFrame();
+        Assert.True(two.IsAttached);
+
+        ClickCenter(root, two);
+
+        Assert.Equal(1, comboBox.SelectedIndex);
+        Assert.False(radio.IsChecked);
+    }
+
+    private static UIRoot CreateWindowRoot(UIElement child)
+    {
+        Cerneala.UI.Layout.Panels.Canvas canvas = new();
+        canvas.VisualChildren.Add(child);
+        UIRoot root = new(360, 240);
+        root.VisualChildren.Add(new Window { Content = canvas, Width = 360, Height = 240 });
+        root.ProcessFrame();
+        return root;
+    }
+
+    private static void ClickCenter(UIRoot root, UIElement element)
+    {
+        LayoutRect bounds = element.ArrangedBounds;
+        Click(root, bounds.X + bounds.Width / 2, bounds.Y + bounds.Height / 2);
+    }
+
     private static UIRoot CreateCanvasRoot(UIElement child)
     {
         return CreateCanvasRoot(new Cerneala.UI.Layout.Panels.Canvas(), child);

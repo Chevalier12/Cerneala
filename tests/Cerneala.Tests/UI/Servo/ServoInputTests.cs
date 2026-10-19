@@ -128,6 +128,64 @@ public sealed class ServoInputTests
     }
 
     [Theory]
+    [InlineData("key")]
+    [InlineData("text")]
+    public async Task KeyboardOnlyActionBeforeAnyPointerActionLeavesTheHostPointerWhereItIs(string action)
+    {
+        Button button = new() { Content = "Target", Width = 160, Height = 48 };
+        UiHost host = CreateHost(button);
+        LayoutRect bounds = button.ArrangedBounds;
+        PointerSnapshot appPointer = PointerSnapshot.Empty.WithPosition(
+            bounds.X + (bounds.Width / 2),
+            bounds.Y + (bounds.Height / 2));
+        host.Update(new InputFrame(PointerSnapshot.Empty, appPointer, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []), host.Viewport, TimeSpan.Zero);
+        host.Update(new InputFrame(appPointer, appPointer, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []), host.Viewport, TimeSpan.Zero);
+        Assert.True(button.IsMouseOver);
+        int enters = 0;
+        int leaves = 0;
+        button.AddHandler(UIElement.MouseEnterEvent, (_, _) => enters++, handledEventsToo: true);
+        button.AddHandler(UIElement.MouseLeaveEvent, (_, _) => leaves++, handledEventsToo: true);
+        ServoApi servo = new(host);
+
+        if (action == "key") await servo.PressKeyAsync(InputKey.F2);
+        else await servo.SendTextAsync("ab");
+
+        Assert.Equal((appPointer.X, appPointer.Y), (host.LastFrame!.Input.Pointer.X, host.LastFrame.Input.Pointer.Y));
+        Assert.True(button.IsMouseOver);
+        host.Update(new InputFrame(appPointer, appPointer, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []), host.Viewport, TimeSpan.Zero);
+        Assert.True(button.IsMouseOver);
+        Assert.Equal((0, 0), (enters, leaves));
+    }
+
+    [Fact]
+    public async Task KeyboardOnlyActionAfterAPointerActionStaysAtTheServoPointer()
+    {
+        Button left = new() { Content = "Left", Width = 100, Height = 48 };
+        Button right = new() { Content = "Right", Width = 100, Height = 48 };
+        ServoApi.SetId(right, "right");
+        StackPanel panel = new() { Orientation = Orientation.Horizontal };
+        panel.VisualChildren.Add(left);
+        panel.VisualChildren.Add(right);
+        UiHost host = CreateHost(panel);
+        LayoutRect leftBounds = left.ArrangedBounds;
+        PointerSnapshot appPointer = PointerSnapshot.Empty.WithPosition(
+            leftBounds.X + (leftBounds.Width / 2),
+            leftBounds.Y + (leftBounds.Height / 2));
+        host.Update(new InputFrame(PointerSnapshot.Empty, appPointer, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []), host.Viewport, TimeSpan.Zero);
+        Assert.True(left.IsMouseOver);
+        ServoApi servo = new(host);
+        await servo.HoverAsync(ServoTarget.ById("right"));
+        float servoX = host.LastFrame!.Input.Pointer.X;
+        float servoY = host.LastFrame.Input.Pointer.Y;
+
+        await servo.PressKeyAsync(InputKey.F2);
+
+        Assert.Equal((servoX, servoY), (host.LastFrame!.Input.Pointer.X, host.LastFrame.Input.Pointer.Y));
+        Assert.True(right.IsMouseOver);
+        Assert.False(left.IsMouseOver);
+    }
+
+    [Theory]
     [InlineData("hidden")]
     [InlineData("disabled")]
     [InlineData("zero-bounds")]

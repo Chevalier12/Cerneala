@@ -6,9 +6,13 @@ namespace Cerneala.Platforms.Sdl3;
 // reports a press or release as the difference between two snapshots, and a frame may
 // hold only events whose arrival order matches the order ElementInputBridge dispatches
 // them in (position, wheel, buttons, keys, text). Buttons are dispatched in
-// InputMouseButton order, so a frame holds at most one button transition, and a wheel
-// notch only before it. Key events read Ctrl, Shift and Alt from the frame's final
-// snapshot and are dispatched in InputKey order, so a frame also holds the events of one key only:
+// InputMouseButton order, so a frame holds at most one button transition. The bridge
+// hit-tests a frame once, before the wheel can scroll the element under the pointer, so
+// a frame never holds both a wheel notch and a button transition: a press after a notch
+// waits for the next frame, which hit-tests the layout after the scroll, as WPF raises
+// the press after the layout pass the scroll caused. Key events read Ctrl, Shift and Alt
+// from the frame's final snapshot and are dispatched in InputKey order, so a frame also
+// holds the events of one key only:
 // at most one transition, as the frame's first key event, then repeats of that key.
 // An event that breaks a rule closes the frame; it and every later event wait in
 // arrival order for the next frames, and the source asks for them.
@@ -227,6 +231,7 @@ internal sealed class SdlInputSource : IInputSource
         bool repeat = input.Kind == PendingKind.Key && input.Repeat && input.Down && downKeys.Contains((InputKey)input.Value);
         if ((phase < framePhase && !CanJoinOutOfOrder(input, repeat)) ||
             (hasButtonTransition && input.Kind is PendingKind.Button or PendingKind.Wheel) ||
+            (hasWheel && input.Kind == PendingKind.Button) ||
             (input.Kind == PendingKind.Key && !CanJoinFrameKey(input)))
         {
             return false;
@@ -261,7 +266,7 @@ internal sealed class SdlInputSource : IInputSource
                 break;
             case PendingKind.Key:
                 frameKey = (InputKey)input.Value;
-                lastKeyDown = input.Down ? (InputKey)input.Value : InputKey.None;
+                lastKeyDown = input.Down && TypesText((InputKey)input.Value) ? (InputKey)input.Value : InputKey.None;
                 if (repeat)
                 {
                     keyRepeats.Add((InputKey)input.Value);
@@ -319,6 +324,14 @@ internal sealed class SdlInputSource : IInputSource
         frameKey == InputKey.None ||
         (frameKey == (InputKey)input.Value && IsRepeatOfHeldKey(input));
 
+    // Whether SDL can send text after this key's key-down. SDL drops text that starts with a
+    // control character, so Backspace, Tab, Enter, Escape and Delete type none, and the
+    // function, navigation and modifier keys type no character at all. Text after their
+    // key-down comes from elsewhere, for example an IME commit or the emoji panel. The
+    // keypad and punctuation keys (NumPad0 to OemBackslash) type a character.
+    private static bool TypesText(InputKey key) =>
+        key is InputKey.Space or (>= InputKey.D0 and <= InputKey.Z) or (>= InputKey.NumPad0 and <= InputKey.OemBackslash);
+
     private bool IsRepeatOfHeldKey(in PendingInput input) =>
         input.Repeat && input.Down && downKeys.Contains((InputKey)input.Value);
 
@@ -365,6 +378,11 @@ internal sealed class SdlInputSource : IInputSource
             return InputKey.F1 + (scancode - 58);
         }
 
+        if (scancode is >= 89 and <= 97)
+        {
+            return InputKey.NumPad1 + (scancode - 89);
+        }
+
         return scancode switch
         {
             39 => InputKey.D0,
@@ -373,6 +391,17 @@ internal sealed class SdlInputSource : IInputSource
             42 => InputKey.Back,
             43 => InputKey.Tab,
             44 => InputKey.Space,
+            45 => InputKey.OemMinus,
+            46 => InputKey.OemPlus,
+            47 => InputKey.OemOpenBrackets,
+            48 => InputKey.OemCloseBrackets,
+            49 => InputKey.OemPipe,
+            51 => InputKey.OemSemicolon,
+            52 => InputKey.OemQuotes,
+            53 => InputKey.OemTilde,
+            54 => InputKey.OemComma,
+            55 => InputKey.OemPeriod,
+            56 => InputKey.OemQuestion,
             73 => InputKey.Insert,
             74 => InputKey.Home,
             75 => InputKey.PageUp,
@@ -383,6 +412,15 @@ internal sealed class SdlInputSource : IInputSource
             80 => InputKey.Left,
             81 => InputKey.Down,
             82 => InputKey.Up,
+            84 => InputKey.Divide,
+            85 => InputKey.Multiply,
+            86 => InputKey.Subtract,
+            87 => InputKey.Add,
+            // WPF reports keypad Enter as Key.Enter.
+            88 => InputKey.Enter,
+            98 => InputKey.NumPad0,
+            99 => InputKey.Decimal,
+            100 => InputKey.OemBackslash,
             224 => InputKey.LeftCtrl,
             225 => InputKey.LeftShift,
             226 => InputKey.LeftAlt,
@@ -394,7 +432,8 @@ internal sealed class SdlInputSource : IInputSource
     }
 
     // The inverse of MapScancode: the scancode SDL reports for the key, or -1 when no
-    // scancode that MapScancode maps back to this key exists.
+    // scancode that MapScancode maps back to this key exists. Enter maps back to the main
+    // Enter key, not to keypad Enter.
     internal static int MapInputKey(InputKey key)
     {
         if (key is >= InputKey.A and <= InputKey.Z)
@@ -412,6 +451,11 @@ internal sealed class SdlInputSource : IInputSource
             return 58 + (key - InputKey.F1);
         }
 
+        if (key is >= InputKey.NumPad1 and <= InputKey.NumPad9)
+        {
+            return 89 + (key - InputKey.NumPad1);
+        }
+
         return key switch
         {
             InputKey.D0 => 39,
@@ -420,6 +464,17 @@ internal sealed class SdlInputSource : IInputSource
             InputKey.Back => 42,
             InputKey.Tab => 43,
             InputKey.Space => 44,
+            InputKey.OemMinus => 45,
+            InputKey.OemPlus => 46,
+            InputKey.OemOpenBrackets => 47,
+            InputKey.OemCloseBrackets => 48,
+            InputKey.OemPipe => 49,
+            InputKey.OemSemicolon => 51,
+            InputKey.OemQuotes => 52,
+            InputKey.OemTilde => 53,
+            InputKey.OemComma => 54,
+            InputKey.OemPeriod => 55,
+            InputKey.OemQuestion => 56,
             InputKey.Insert => 73,
             InputKey.Home => 74,
             InputKey.PageUp => 75,
@@ -430,6 +485,13 @@ internal sealed class SdlInputSource : IInputSource
             InputKey.Left => 80,
             InputKey.Down => 81,
             InputKey.Up => 82,
+            InputKey.Divide => 84,
+            InputKey.Multiply => 85,
+            InputKey.Subtract => 86,
+            InputKey.Add => 87,
+            InputKey.NumPad0 => 98,
+            InputKey.Decimal => 99,
+            InputKey.OemBackslash => 100,
             InputKey.LeftCtrl => 224,
             InputKey.LeftShift => 225,
             InputKey.LeftAlt => 226,
@@ -454,9 +516,9 @@ internal sealed class SdlInputSource : IInputSource
     }
 
     // The order ElementInputBridge dispatches one frame's input in. The wheel shares the
-    // buttons' rank: it is not a transition, and one frame routes both to the same target.
-    // It is raised before the buttons, so TryApply keeps a wheel notch out of a frame
-    // after that frame's button transition.
+    // buttons' rank, but TryApply never puts a wheel notch and a button transition in one
+    // frame: the bridge raises the wheel before the buttons, and the scroll it causes moves
+    // the element the buttons were hit-tested on.
     private enum FramePhase : byte
     {
         Empty,

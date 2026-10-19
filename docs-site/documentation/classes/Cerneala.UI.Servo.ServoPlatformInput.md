@@ -22,6 +22,15 @@ await servo.SendPlatformInputAsync(
     ServoPlatformInput.KeyUp(InputKey.Back),
     ServoPlatformInput.Text("abc"));
 
+// Press keypad 5, which types "5", while Backspace is held, as a keyboard does.
+await servo.SendPlatformInputAsync(
+    ServoPlatformInput.KeyDown(InputKey.Back),
+    ServoPlatformInput.KeyDown(InputKey.NumPad5),
+    ServoPlatformInput.Text("5"),
+    ServoPlatformInput.KeyUp(InputKey.NumPad5),
+    ServoPlatformInput.KeyDown(InputKey.Back, repeat: true),
+    ServoPlatformInput.KeyUp(InputKey.Back));
+
 // Click at client DIP (120, 40), then scroll down two notches at the same point.
 var point = new ServoPoint(120, 40);
 await servo.SendPlatformInputAsync(
@@ -38,6 +47,8 @@ Instances are immutable and created only through the factory methods. They have 
 Each event becomes one platform event, in the order given. The platform input source then builds frames from them exactly as it does for a physical device. That is the difference from `Servo.PressKeyAsync` and the other Servo actions, which build `InputFrame` values themselves and never touch the platform. See "Input paths" on the `Servo` page.
 
 `KeyDown(key, repeat: true)` is an auto-repeat event: the key is already down, and the app sees a `KeyDown` with `IsRepeat` set to `true`. `Text` is committed text input, for example the `"A"` that follows `KeyDown(InputKey.A)` with Shift held. It is dropped by the platform while text input is inactive.
+
+Every `InputKey` member except `None` and `Unknown` can be sent, including the keypad keys (`NumPad0` to `NumPad9`, `Multiply`, `Add`, `Subtract`, `Decimal`, `Divide`) and the punctuation keys (`OemPeriod`, `OemComma`, `OemMinus`, `OemPlus` and the other `Oem` keys). The SDL platform sends each key as its SDL scancode, for example `NumPad5` as `SDL_SCANCODE_KP_5` (93) and `OemPeriod` as `SDL_SCANCODE_PERIOD` (55). `Enter` is sent as the main Enter key; keypad Enter also arrives as `Enter`. A key event carries no text: send the text the key types with `Text`, as in the example above.
 
 Pointer positions are client DIPs. A wheel delta uses the unit of `Servo.ScrollAsync`: 120 per notch, and the sign is the direction. SDL reports whole notches, so the delta of an SDL window must be a non-zero multiple of 120; another value makes `SendPlatformInputAsync` throw `ArgumentException` before any event is pushed.
 
