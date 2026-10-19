@@ -202,6 +202,7 @@ public class Control : UIElement
 
         AspectEnvironment environment = Root?.AspectProcessor.GetEnvironment(this) ?? new AspectEnvironment("template");
         ComponentTemplateContext context = new(this, environment, AspectStateSet.FromElement(this), AspectVariants);
+        OnTemplateInstanceCreating();
         ComponentTemplateInstance instance = template.CreateInstance(this, context);
         try
         {
@@ -232,6 +233,13 @@ public class Control : UIElement
     }
 
     protected virtual void OnTemplateApplied(ComponentTemplateInstance? instance)
+    {
+    }
+
+    // Runs right before a template builds a new instance, however the template is applied: when ComponentTemplate or
+    // ComponentTemplateKey changes, in measure or arrange, or when a ComponentTemplateKey starts to resolve through
+    // the aspect catalog.
+    internal virtual void OnTemplateInstanceCreating()
     {
     }
 

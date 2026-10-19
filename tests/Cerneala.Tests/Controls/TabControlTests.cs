@@ -818,6 +818,35 @@ public sealed class TabControlTests
     }
 
     [Fact]
+    public void ElementContentMovesFromTheContentAreaToAComponentTemplateKeyThatResolvesLater()
+    {
+        UIRoot root = new(300, 200);
+        FixedElement a = new();
+        TabItem first = new() { Header = "1", Content = a };
+        TabControl tabControl = new() { ComponentTemplateKey = "App.Tabs" };
+        tabControl.SetItems(new[] { first, new TabItem { Header = "2" } });
+        tabControl.SelectedIndex = 0;
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+        Assert.Null(tabControl.ComponentTemplateInstance);
+        Assert.True(HasVisualAncestor(a, tabControl), "a is not in the content area before the key resolves");
+        ContentPresenter? presenter = null;
+        ComponentTemplate<TabControl> template = new("App.Tabs", context =>
+            presenter = new ContentPresenter { Content = context.Owner.SelectedContent });
+
+        root.AspectRegistry.Register(AspectPackage.Create("App")
+            .Components(components => components.AddTemplate(
+                new ComponentTemplateDefinition("App.Tabs", typeof(TabControl), template))));
+        root.AspectProcessor.Process(tabControl);
+        root.ProcessFrame();
+
+        Assert.NotNull(tabControl.ComponentTemplateInstance);
+        Assert.NotNull(presenter);
+        Assert.Same(presenter, a.LogicalParent);
+        Assert.Same(presenter, a.VisualParent);
+    }
+
+    [Fact]
     public void ElementContentOfTheSelectedTabStaysOwnedWhenTheContentTemplateDoesNotShowIt()
     {
         UIRoot root = new(300, 200);
