@@ -1,3 +1,5 @@
+using Cerneala.UI.Aspect;
+using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 
 namespace Cerneala.Tests.UI.Elements;
@@ -173,6 +175,47 @@ public sealed class ElementLifecycleTests
         Assert.Null(element.ElementId);
     }
 
+    // An Unloaded handler throws, then a package behavior lifetime throws from Dispose while the button is
+    // removed. The handler's exception reaches the caller, the lifetime is disposed once, and the button's
+    // aspect state is cleared, so adding the button again creates a new lifetime.
+    [Fact]
+    public void ThrowingBehaviorLifetimeDoesNotReplaceTheEarlierUnloadedFailure()
+    {
+        int created = 0, disposed = 0;
+        AspectBehavior behavior = new(typeof(Button), _ =>
+        {
+            created++;
+            return new ThrowingLifetime(() =>
+            {
+                disposed++;
+                throw new InvalidOperationException("lifetime dispose failed");
+            });
+        });
+        UIRoot root = new();
+        root.AspectRegistry.Register(AspectPackage.Create("P").Components(c => c.AddBehavior(behavior)));
+        Button button = new();
+        bool throwOnUnloaded = true;
+        button.Unloaded += (_, _) =>
+        {
+            if (throwOnUnloaded) { throw new InvalidOperationException("Unloaded handler failed"); }
+        };
+        root.VisualChildren.Add(button);
+        root.ProcessFrame();
+        Assert.Equal(1, created);
+
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+            () => root.VisualChildren.Remove(button));
+
+        Assert.Equal("Unloaded handler failed", exception.Message);
+        Assert.Equal(1, disposed);
+        Assert.Null(button.Root);
+        throwOnUnloaded = false;
+        root.VisualChildren.Add(button);
+        root.ProcessFrame();
+        Assert.Equal(2, created);
+        Assert.Equal(1, disposed);
+    }
+
     private static void Connect(UIElement parent, UIElement middle, UIElement leaf, bool logicalFirst)
     {
         (logicalFirst ? parent.LogicalChildren : parent.VisualChildren).Add(middle);
@@ -203,6 +246,11 @@ public sealed class ElementLifecycleTests
         {
             calls.Add("behavior detached");
         }
+    }
+
+    private sealed class ThrowingLifetime(Action dispose) : IDisposable
+    {
+        public void Dispose() => dispose();
     }
 
     private sealed class ThrowingDetachElement(string name) : UIElement

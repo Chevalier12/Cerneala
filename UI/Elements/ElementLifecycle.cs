@@ -125,15 +125,23 @@ public static class ElementLifecycle
 
         root.ElementIds.Release(element);
         root.ResourceDependencyTracker.RemoveOwner(element);
-        try
-        {
-            element.DetachFromRoot();
-        }
-        finally
-        {
-            root.Motion.Properties.RemoveBindings(element);
-            root.RemovePendingWork(element);
-            root.AspectProcessor.Clear(element);
-        }
+
+        // Every cleanup step runs even when an earlier one throws, and the first failure propagates. A throw from a
+        // finally block would replace the exception in flight, for example an Unloaded handler's exception by a
+        // behavior lifetime's Dispose failure.
+        ExceptionDispatchInfo? failure = null;
+        try { element.DetachFromRoot(); }
+        catch (Exception exception) { failure = ExceptionDispatchInfo.Capture(exception); }
+
+        try { root.Motion.Properties.RemoveBindings(element); }
+        catch (Exception exception) { failure ??= ExceptionDispatchInfo.Capture(exception); }
+
+        try { root.RemovePendingWork(element); }
+        catch (Exception exception) { failure ??= ExceptionDispatchInfo.Capture(exception); }
+
+        try { root.AspectProcessor.Clear(element); }
+        catch (Exception exception) { failure ??= ExceptionDispatchInfo.Capture(exception); }
+
+        failure?.Throw();
     }
 }
