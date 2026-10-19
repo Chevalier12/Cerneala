@@ -52,6 +52,17 @@ ListBox listBox = new()
 };
 ```
 
+`Background` fills the whole list area behind the rows. Here a list arranged at `(3, 4, 40, 30)` draws one red `FillRectangle` at `(3, 4, 40, 30)` first, then the row of `One` on top of it.
+
+```csharp
+using Cerneala.Drawing;
+using Cerneala.UI.Controls;
+using Cerneala.UI.Media;
+
+ListBox listBox = new() { Background = new SolidColorBrush(Color.Red) };
+listBox.Items.Add(new ListBoxItem { Content = "One" });
+```
+
 ## Remarks
 
 `ListBox` is a concrete `Selector` that configures item presentation for a vertical list. Its constructor assigns a retained vertical `StackPanel` directly to `ItemsPanel`.
@@ -61,6 +72,8 @@ Each data item is wrapped in a `ListBoxItem` container. If an item is already a 
 `ListBoxItem` receives `ItemIndex`, `Item`, and `IsSelected` during container preparation. When a selected realized container is invalidated, the container render and input visual state are refreshed.
 
 Row content follows `ItemsControl`: without `ItemTemplate`, a row's `Content` is the item's `DisplayMemberPath` value (the item itself when the path is empty); with `ItemTemplate`, it is the item. The row shows a `string` value as text, and `ListBox` passes `ItemTemplate`, `ItemTemplateKey`, and `Templates` to the row, so a template creates the row's visual. For example, `SetItems(new[] { "Apple" })` creates a row whose `Content` is `"Apple"` and whose text reads `Apple`; the row is as tall as that text. See [`ListBoxItem`](Cerneala.UI.Controls.ListBoxItem.md#content-presentation) for every content kind. An item that is already a `ListBoxItem` is its own row and does not use the item template. Any other `UIElement` item is wrapped in a `ListBoxItem` row: with `ItemTemplate`, the row shows the element that the template creates for it (the item is `context.Data` and its index is `context.Index`), as in WPF; without `ItemTemplate`, the row shows the element that a template of `Templates` creates for it when one matches the element and `ItemTemplateKey`, and otherwise hosts the element directly.
+
+As the `Border` of the WPF `ListBox` template, `Background` fills the list's arranged bounds, and the rows draw on top of it. Without `Background` (the default, `null`) the list draws no fill, so the area behind it shows through. A `ListBox` with a `ComponentTemplate` draws no background itself; the template draws its own chrome. `Background` is registered with `AffectsRender`, so changing it redraws the list without a new measure or arrange.
 
 ## Constructors
 
@@ -91,6 +104,7 @@ Row content follows `ItemsControl`: without `ItemTemplate`, a row's `Content` is
 | `ItemTemplate` | `ContentTemplate?` | Inherited from `ItemsControl`. Gets or sets the template used to display non-container items. `ListBox` applies it inside each `ListBoxItem` row. |
 | `ItemTemplateKey` | `string?` | Inherited from `ItemsControl`. Gets or sets the template key used by content presentation. |
 | `ItemsPanel` | `Panel?` | Inherited from `ItemsControl`. Gets or sets the retained panel used by the items presenter. `ListBox` initializes it to a vertical `StackPanel`. |
+| `Background` | `Brush?` | Inherited from `Control`. Gets or sets the brush that fills the list's arranged bounds behind its rows. The default is `null` (no fill). Ignored when a `ComponentTemplate` is set. |
 
 ## Events
 
@@ -114,6 +128,7 @@ Row content follows `ItemsControl`: without `ItemTemplate`, a row's `Content` is
 | `CreateItemContainer(int index, object? item)` | Returns the item itself when it is a `ListBoxItem`; otherwise a new `ListBoxItem`. |
 | `PrepareItemContent(UIElement container, int index, object? item)` | Passes `ItemTemplate`, `ItemTemplateKey`, `Templates`, and the item index to a `ListBoxItem` row, then sets its `Content` as `ItemsControl` does. |
 | `ClearItemContainer(UIElement container)` | Clears the container as `ItemsControl` does, then removes the item template from a `ListBoxItem` row. |
+| `OnRender(RenderContext context)` | Without a `ComponentTemplate`, fills the arranged bounds with `Background` when it is set and the bounds are not empty; with a `ComponentTemplate`, draws nothing. |
 
 ## Applies to
 
