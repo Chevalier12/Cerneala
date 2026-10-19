@@ -29,7 +29,7 @@ internal sealed class KeyboardActivationController
 
             if (result.Key == InputKey.Space)
             {
-                ProcessSpace(result, commandRouter, routeMap);
+                ProcessSpace(result, focusManager, commandRouter, routeMap);
             }
         }
 
@@ -55,20 +55,33 @@ internal sealed class KeyboardActivationController
         }
     }
 
-    private void ProcessSpace(KeyboardDispatchResult result, CommandRouter commandRouter, ElementInputRouteMap routeMap)
+    private void ProcessSpace(
+        KeyboardDispatchResult result,
+        FocusManager focusManager,
+        CommandRouter commandRouter,
+        ElementInputRouteMap routeMap)
     {
         if (result.Kind == KeyboardDispatchKind.Pressed)
         {
-            PressSpace(result, routeMap);
+            PressSpace(result, focusManager, routeMap);
             return;
         }
 
         ReleaseSpace(result, commandRouter, routeMap);
     }
 
-    private void PressSpace(KeyboardDispatchResult result, ElementInputRouteMap routeMap)
+    private void PressSpace(KeyboardDispatchResult result, FocusManager focusManager, ElementInputRouteMap routeMap)
     {
         if (result.Handled)
+        {
+            return;
+        }
+
+        // The press runs after the whole frame's key dispatch and navigation. When focus left
+        // the Space target in the meantime (a Tab in the same frame, or a KeyDown handler),
+        // OnFocusChanged ran before there was a press to forget, so the press does not start:
+        // like WPF ButtonBase.OnKeyDown, a Space press starts only on the focused element.
+        if (!ReferenceEquals(focusManager.FocusedElement, result.Target))
         {
             return;
         }
