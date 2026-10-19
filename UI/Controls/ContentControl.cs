@@ -14,6 +14,9 @@ public class ContentControl : Control
     // predicate reads state that changed.
     private UIElement? hostedContentElement;
 
+    // Set when OnPropertyChanged could not host the new Content element, so NotifyPropertyChange restores the old value.
+    private bool contentHostingFailed;
+
     public static readonly UiProperty<object?> ContentProperty = UiProperty<object?>.Register(
         nameof(Content),
         typeof(ContentControl),
@@ -70,6 +73,46 @@ public class ContentControl : Control
         }
     }
 
+    // A change of the effective Content whose new element could not be hosted, for example because its attach threw,
+    // restores the previous value at the value source that changed, which hosts the previous element again, and then
+    // rethrows. So a failed replacement restores the previous content ownership whatever wrote it: the setter, or
+    // SetValue and ClearValue with any value source.
+    internal override void NotifyPropertyChange(in UiPropertyChange change)
+    {
+        if (!ReferenceEquals(change.Args.Property, ContentProperty))
+        {
+            base.NotifyPropertyChange(change);
+            return;
+        }
+
+        contentHostingFailed = false;
+        try
+        {
+            base.NotifyPropertyChange(change);
+        }
+        catch when (contentHostingFailed && change.MutatingSource != UiPropertyValueSource.Default)
+        {
+            contentHostingFailed = false;
+            RestoreContentSource(change);
+            throw;
+        }
+    }
+
+    // A write at the source became the effective value: the source held the old value when it was the old effective
+    // source, and held nothing otherwise. A clear of the source revealed a lower value: the source held the old value.
+    private void RestoreContentSource(in UiPropertyChange change)
+    {
+        UiPropertyValueSource source = change.MutatingSource;
+        if (change.Args.ValueSource == source && change.OldEffectiveSource != source)
+        {
+            ClearValueUntyped(ContentProperty, source);
+        }
+        else
+        {
+            SetValueUntyped(ContentProperty, change.OldSourceValue, source);
+        }
+    }
+
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
         if (TemplateChild is not null)
@@ -105,7 +148,15 @@ public class ContentControl : Control
             RemoveContentElement(hostedContentElement);
             if (HostsContentDirectly(args.NewValue))
             {
-                AddContentElement(args.NewValue);
+                try
+                {
+                    AddContentElement(args.NewValue);
+                }
+                catch
+                {
+                    contentHostingFailed = true;
+                    throw;
+                }
             }
 
             base.OnPropertyChanged(args);
@@ -271,13 +322,15 @@ public class ContentControl : Control
             return;
         }
 
-        LogicalChildren.Add(element);
+        // An attach that throws leaves the element in the collection whose Add attached it, so it leaves both again.
         try
         {
+            LogicalChildren.Add(element);
             VisualChildren.Add(element);
         }
         catch
         {
+            VisualChildren.Remove(element);
             LogicalChildren.Remove(element);
             throw;
         }
