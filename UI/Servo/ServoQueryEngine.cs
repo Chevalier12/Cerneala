@@ -16,7 +16,7 @@ internal sealed class ServoQueryEngine
     {
         ArgumentNullException.ThrowIfNull(root);
         ArgumentNullException.ThrowIfNull(target);
-        SemanticsTree tree = semanticsProvider.Build(root, SemanticsProjection.Servo);
+        SemanticsTree tree = root.GetServoSemanticsTree();
         IReadOnlyList<ServoResolvedElement> matches = ResolveAll(root, tree, target);
         if (matches.Count == 0)
         {
