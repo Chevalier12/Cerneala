@@ -494,6 +494,7 @@ public sealed class AspectProcessor
     private sealed class BehaviorState : IDisposable
     {
         private List<AppliedBehavior> applied = [];
+        private bool isDisposed;
 
         public void Synchronize(UIElement element, IReadOnlyList<AspectBehavior> desired)
         {
@@ -515,6 +516,10 @@ public sealed class AspectProcessor
                     AppliedBehavior added = new(behavior, behavior.Attach(element));
                     attached.Add(added);
                     next.Add(added);
+                    if (isDisposed)
+                    {
+                        break;
+                    }
                 }
             }
             catch
@@ -523,6 +528,16 @@ public sealed class AspectProcessor
                 ExceptionDispatchInfo? rollbackFailure = null;
                 DisposeReverse(attached, ref rollbackFailure);
                 throw;
+            }
+
+            // The factory detached the element: the detach disposed this state's lifetimes and dropped the state, so
+            // the lifetimes attached here belong to an attachment that is already gone. The next attach creates new ones.
+            if (isDisposed)
+            {
+                ExceptionDispatchInfo? detachFailure = null;
+                DisposeReverse(attached, ref detachFailure);
+                detachFailure?.Throw();
+                return;
             }
 
             // A lifetime is finished once its disposal starts, also when Dispose throws: the new state is stored
@@ -543,6 +558,7 @@ public sealed class AspectProcessor
 
         public void Dispose()
         {
+            isDisposed = true;
             List<AppliedBehavior> previous = applied;
             applied = [];
             ExceptionDispatchInfo? failure = null;
