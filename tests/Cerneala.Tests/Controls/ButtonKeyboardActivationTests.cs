@@ -98,6 +98,59 @@ public sealed class ButtonKeyboardActivationTests
     }
 
     [Fact]
+    public void SpaceAndTabInOneFrameDoNotLeaveTheOldButtonPressed()
+    {
+        UIRoot root = RootWithTwoButtons(out ButtonBase first, out ButtonBase second);
+        ElementInputBridge bridge = FocusedBridge(root, first);
+        int firstClicks = 0;
+        int secondClicks = 0;
+        first.Click += (_, _) => firstClicks++;
+        second.Click += (_, _) => secondClicks++;
+
+        bridge.Dispatch(root, KeyboardFrame(previousKeys: [], currentKeys: [InputKey.Space, InputKey.Tab]));
+        Assert.Same(second, bridge.FocusManager.FocusedElement);
+        Assert.False(first.IsPressed);
+        Assert.False(second.IsPressed);
+
+        bridge.Dispatch(root, KeyboardFrame(previousKeys: [InputKey.Space, InputKey.Tab], currentKeys: [InputKey.Space]));
+        Assert.False(first.IsPressed);
+        Assert.False(second.IsPressed);
+
+        bridge.Dispatch(root, KeyReleaseFrame(InputKey.Space));
+        Assert.False(first.IsPressed);
+        Assert.False(second.IsPressed);
+        Assert.Equal(0, firstClicks);
+        Assert.Equal(0, secondClicks);
+    }
+
+    [Fact]
+    public void SpaceKeyDownHandlerThatMovesFocusDoesNotLeaveTheButtonPressed()
+    {
+        UIRoot root = RootWithTwoButtons(out ButtonBase first, out ButtonBase second);
+        ElementInputBridge bridge = FocusedBridge(root, first);
+        int firstClicks = 0;
+        int secondClicks = 0;
+        first.Click += (_, _) => firstClicks++;
+        second.Click += (_, _) => secondClicks++;
+        first.Handlers.AddHandler(InputEvents.KeyDownEvent, (_, _) =>
+            bridge.FocusManager.Focus(second, root.InputCache.EnsureCurrent(root)));
+
+        bridge.Dispatch(root, KeyPressFrame(InputKey.Space));
+        Assert.Same(second, bridge.FocusManager.FocusedElement);
+        Assert.False(first.IsPressed);
+        Assert.False(second.IsPressed);
+
+        bridge.Dispatch(root, KeyHeldFrame(InputKey.Space));
+        Assert.False(first.IsPressed);
+
+        bridge.Dispatch(root, KeyReleaseFrame(InputKey.Space));
+        Assert.False(first.IsPressed);
+        Assert.False(second.IsPressed);
+        Assert.Equal(0, firstClicks);
+        Assert.Equal(0, secondClicks);
+    }
+
+    [Fact]
     public void SpacePressedButtonStaysPressedWhileThePointerHoldsItAfterFocusMovesAway()
     {
         UIRoot root = RootWithTwoButtons(out ButtonBase first, out ButtonBase second);
