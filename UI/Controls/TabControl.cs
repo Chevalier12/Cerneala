@@ -41,6 +41,9 @@ public class TabControl : Selector
     // The tab whose Content the content area was last prepared to show.
     private TabItem? presentedTab;
 
+    // The height of the header row as last arranged without a template: the content area and its chrome start there.
+    private float contentAreaTop;
+
     public TabControl()
     {
         selectedContentPresenter = new SelectedContentPresenter(this);
@@ -123,15 +126,20 @@ public class TabControl : Selector
             return size;
         }
 
+        // As the ContentPanel Border of the WPF TabControl template, the content area below the header row lays out the
+        // selected content inside BorderThickness and Padding; the header row is not inset.
         LayoutSize headerSize = ItemsPresenter.Measure(context);
         UpdateSelectedContent();
         LayoutSize available = context.AvailableSize;
         float contentHeight = available.IsHeightUnconstrained
             ? float.PositiveInfinity
             : MathF.Max(0, available.Height - headerSize.Height);
-        LayoutSize contentSize = selectedContentPresenter.Measure(
-            new MeasureContext(new LayoutSize(available.Width, contentHeight), context.Rounding));
-        return new LayoutSize(MathF.Max(headerSize.Width, contentSize.Width), headerSize.Height + contentSize.Height);
+        Thickness insets = Insets;
+        LayoutSize contentSize = selectedContentPresenter.Measure(new MeasureContext(
+            ContentControl.Deflate(new LayoutSize(available.Width, contentHeight), insets),
+            context.Rounding));
+        LayoutSize contentAreaSize = ContentControl.Inflate(contentSize, insets);
+        return new LayoutSize(MathF.Max(headerSize.Width, contentAreaSize.Width), headerSize.Height + contentAreaSize.Height);
     }
 
     protected override LayoutRect ArrangeCore(ArrangeContext context)
@@ -144,21 +152,35 @@ public class TabControl : Selector
         LayoutRect final = context.FinalRect;
         float headerHeight = MathF.Min(ItemsPresenter.DesiredSize.Height, final.Height);
         ItemsPresenter.Arrange(new ArrangeContext(new LayoutRect(final.X, final.Y, final.Width, headerHeight), context.Rounding));
-        selectedContentPresenter.Arrange(new ArrangeContext(
-            new LayoutRect(final.X, final.Y + headerHeight, final.Width, MathF.Max(0, final.Height - headerHeight)),
-            context.Rounding));
+        LayoutRect contentArea = new(final.X, final.Y + headerHeight, final.Width, MathF.Max(0, final.Height - headerHeight));
+        selectedContentPresenter.Arrange(new ArrangeContext(ContentControl.Deflate(contentArea, Insets), context.Rounding));
+        // The chrome below follows the header row, which can change height while this control keeps its bounds.
+        if (headerHeight != contentAreaTop)
+        {
+            contentAreaTop = headerHeight;
+            IncrementRenderVersion();
+            Invalidate(InvalidationFlags.Render, "TabControl content area changed");
+        }
+
         return final;
     }
 
-    // The WPF TabControl template draws Background and BorderBrush around the selected content only, not around the
-    // header row as the ItemsControl chrome would, and the layout above does not inset that content, so a TabControl
-    // without a template draws no chrome of its own.
+    // As the ContentPanel Border of the WPF TabControl template, a TabControl without a template fills the content area
+    // below the header row with Background and draws BorderBrush around it, not around the header row as the
+    // ItemsControl chrome would; a ComponentTemplate draws its own chrome.
     protected override void OnRender(RenderContext context)
     {
+        if (TemplateChild is null)
+        {
+            LayoutRect bounds = context.Bounds;
+            float top = MathF.Min(contentAreaTop, MathF.Max(0, bounds.Height));
+            Border.RenderBox(this, context, new LayoutRect(bounds.X, bounds.Y + top, bounds.Width, bounds.Height - top));
+        }
     }
 
-    // The header row starts at the top of a TabControl without a template, as the layout above arranges it, so a
-    // scroll offset reaches the headers without an inset; a ComponentTemplate has none either.
+    // The header row starts at the top of a TabControl without a template, as the layout above arranges it, and
+    // Padding and BorderThickness inset only the content area below it, so a scroll offset reaches the headers without
+    // an inset; a ComponentTemplate has none either.
     internal override float ItemsTopInset => 0;
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)

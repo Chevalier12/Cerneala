@@ -13,13 +13,25 @@ public class Border : Decorator
 
     internal static void RenderBox(Control control, RenderContext context)
     {
-        RenderBackground(control, context);
-        RenderBorder(control, context);
+        RenderBox(control, context, context.Bounds);
+    }
+
+    // Draws the box of control over bounds, a part of its own bounds, for a control whose chrome surrounds only one
+    // area, as the TabControl content area below the header row.
+    internal static void RenderBox(Control control, RenderContext context, LayoutRect bounds)
+    {
+        RenderBackground(control, context, bounds);
+        RenderBorder(control, context, bounds);
     }
 
     internal static void RenderBackground(Control control, RenderContext context)
     {
-        DrawRect rect = ToDrawRect(context.Bounds);
+        RenderBackground(control, context, context.Bounds);
+    }
+
+    private static void RenderBackground(Control control, RenderContext context, LayoutRect bounds)
+    {
+        DrawRect rect = ToDrawRect(bounds);
         if (control.Background is { } background && rect.Width > 0 && rect.Height > 0)
         {
             context.DrawingContext.FillRectangle(rect, background);
@@ -28,7 +40,12 @@ public class Border : Decorator
 
     internal static void RenderBorder(Control control, RenderContext context)
     {
-        DrawRect rect = ToDrawRect(context.Bounds);
+        RenderBorder(control, context, context.Bounds);
+    }
+
+    private static void RenderBorder(Control control, RenderContext context, LayoutRect bounds)
+    {
+        DrawRect rect = ToDrawRect(bounds);
         Thickness borderThickness = control.BorderThickness;
         float thickness = MathF.Max(MathF.Max(borderThickness.Left, borderThickness.Top), MathF.Max(borderThickness.Right, borderThickness.Bottom));
         if (control.BorderBrush is { } borderBrush && thickness > 0 && rect.Width > 0 && rect.Height > 0)
