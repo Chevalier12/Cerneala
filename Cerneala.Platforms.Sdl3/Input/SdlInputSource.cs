@@ -261,7 +261,7 @@ internal sealed class SdlInputSource : IInputSource
                 break;
             case PendingKind.Key:
                 frameKey = (InputKey)input.Value;
-                lastKeyDown = input.Down ? (InputKey)input.Value : InputKey.None;
+                lastKeyDown = input.Down && TypesText((InputKey)input.Value) ? (InputKey)input.Value : InputKey.None;
                 if (repeat)
                 {
                     keyRepeats.Add((InputKey)input.Value);
@@ -318,6 +318,13 @@ internal sealed class SdlInputSource : IInputSource
     private bool CanJoinFrameKey(in PendingInput input) =>
         frameKey == InputKey.None ||
         (frameKey == (InputKey)input.Value && IsRepeatOfHeldKey(input));
+
+    // Whether SDL can send text after this key's key-down. SDL drops text that starts with a
+    // control character, so Backspace, Tab, Enter, Escape and Delete type none, and the
+    // function, navigation and modifier keys type no character at all. Text after their
+    // key-down comes from elsewhere, for example an IME commit or the emoji panel.
+    private static bool TypesText(InputKey key) =>
+        key is InputKey.Space or (>= InputKey.D0 and <= InputKey.Z);
 
     private bool IsRepeatOfHeldKey(in PendingInput input) =>
         input.Repeat && input.Down && downKeys.Contains((InputKey)input.Value);

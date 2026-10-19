@@ -13,6 +13,7 @@ public sealed class SdlInputTransitionTests
 {
     private const int BackspaceScancode = 42;
     private const int EndScancode = 77;
+    private const int EnterScancode = 40;
     private const int XScancode = 27;
     private const int AScancode = 4;
     private const int LeftCtrlScancode = 224;
@@ -389,6 +390,61 @@ public sealed class SdlInputTransitionTests
         InputFrame repeated = source.GetFrame();
         Assert.Equal(1, repeated.Keyboard.GetRepeatCount(heldKey));
         Assert.Empty(repeated.TextInputEvents);
+    }
+
+    [Theory]
+    [InlineData(BackspaceScancode, InputKey.Back)]
+    [InlineData(DeleteScancode, InputKey.Delete)]
+    [InlineData(LeftScancode, InputKey.Left)]
+    [InlineData(EnterScancode, InputKey.Enter)]
+    public void RepeatAfterTextWithNoKeyDownWaitsForTheNextFrame(int heldScancode, InputKey heldKey)
+    {
+        SdlInputSource source = new();
+        source.SetKey(heldScancode, true);
+        _ = source.GetFrame();
+        // An IME commit or the emoji panel inserts "x" with no key-down; the held key types no text.
+        source.SetKey(heldScancode, true, repeat: true);
+        source.AddText("x");
+        source.SetKey(heldScancode, true, repeat: true);
+
+        InputFrame typed = source.GetFrame();
+        Assert.Equal(1, typed.Keyboard.GetRepeatCount(heldKey));
+        Assert.Equal(["x"], typed.TextInputEvents.Select(textInput => textInput.Text));
+        InputFrame repeated = source.GetFrame();
+        Assert.Equal(1, repeated.Keyboard.GetRepeatCount(heldKey));
+        Assert.Empty(repeated.TextInputEvents);
+    }
+
+    [Fact]
+    public void FocusedTextBoxDeletesTextWithNoKeyDownInsertedWhileBackspaceIsHeld()
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1, WindowDisplayScale = 1 };
+        RecordingGraphicsFactory graphics = new();
+        using WindowApplicationRuntime runtime = new(new SdlWindowPlatform(api, graphics));
+        TextBox box = new() { Text = "abcd" };
+        runtime.StartMainWindow(new Window { Content = box, Width = 320, Height = 200 });
+        uint windowId = Assert.IsType<SdlWindowSurface>(Assert.Single(graphics.Surfaces)).WindowId;
+        var bounds = box.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        Pump(runtime, api, new SdlEvent(SdlEventKind.MouseButtonDown, windowId, X: x, Y: y, MouseButton: 1));
+        Pump(runtime, api, new SdlEvent(SdlEventKind.MouseButtonUp, windowId, X: x, Y: y, MouseButton: 1));
+        Pump(runtime, api, new SdlEvent(SdlEventKind.KeyDown, windowId, Scancode: EndScancode));
+        Pump(runtime, api, new SdlEvent(SdlEventKind.KeyUp, windowId, Scancode: EndScancode));
+        Pump(runtime, api, new SdlEvent(SdlEventKind.KeyDown, windowId, Scancode: BackspaceScancode));
+        Assert.Equal("abc", box.Text);
+
+        // In arrival order: "ab", "abx", "ab". No key-down types the "x".
+        Pump(runtime, api,
+            new SdlEvent(SdlEventKind.KeyDown, windowId, Scancode: BackspaceScancode, Repeat: true),
+            new SdlEvent(SdlEventKind.TextInput, windowId, Text: "x"),
+            new SdlEvent(SdlEventKind.KeyDown, windowId, Scancode: BackspaceScancode, Repeat: true));
+        for (int frame = 0; frame < 4; frame++)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+
+        Assert.Equal("ab", box.Text);
     }
 
     [Fact]
