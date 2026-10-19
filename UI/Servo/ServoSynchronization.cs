@@ -72,8 +72,7 @@ internal sealed class ServoSynchronization
 
         if (matches.Count > 1)
         {
-            throw new ServoTargetAmbiguousException(
-                $"The Servo target matched {matches.Count} elements; exactly one was required.");
+            throw ServoQueryEngine.CreateAmbiguousException(target, matches.Count);
         }
 
         if (matches.Count == 0)

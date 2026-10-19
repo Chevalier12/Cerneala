@@ -53,4 +53,36 @@ public sealed class ServoTarget
         ArgumentNullException.ThrowIfNull(scope);
         return new ServoTarget(Id, Name, Role, scope);
     }
+
+    // Example: ByRole(Button).WithName("Save").Within(ById("toolbar")) gives
+    // Role=Button, Name="Save" within (Id="toolbar").
+    public override string ToString()
+    {
+        string criteria = string.Join(", ", DescribeOwnCriteria());
+        return Scope is null ? criteria : $"{criteria} {DescribeScope()}";
+    }
+
+    // The own criteria in display order: Id, Role, Name.
+    internal IEnumerable<string> DescribeOwnCriteria()
+    {
+        if (Id is not null)
+        {
+            yield return $"Id={Quote(Id)}";
+        }
+
+        if (Role is SemanticsRole role)
+        {
+            yield return $"Role={role}";
+        }
+
+        if (Name is not null)
+        {
+            yield return $"Name={Quote(Name)}";
+        }
+    }
+
+    internal string DescribeScope() => $"within ({Scope})";
+
+    private static string Quote(string value) =>
+        $"\"{value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal)}\"";
 }

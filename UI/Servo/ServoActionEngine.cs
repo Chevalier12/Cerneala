@@ -20,23 +20,23 @@ internal sealed class ServoActionEngine
         if (!ReferenceEquals(element.Root, root))
         {
             throw new ServoTargetNotActionableException(
-                "The Servo target detached before input could be dispatched.");
+                $"The Servo target {target} detached before input could be dispatched.");
         }
 
         if (!UIElementVisibility.IsEffectivelyVisible(element))
         {
-            throw new ServoTargetNotActionableException("The Servo target is not effectively visible.");
+            throw new ServoTargetNotActionableException($"The Servo target {target} is not effectively visible.");
         }
 
         if (!element.IsEnabled)
         {
-            throw new ServoTargetNotActionableException("The Servo target is disabled.");
+            throw new ServoTargetNotActionableException($"The Servo target {target} is disabled.");
         }
 
         LayoutRect bounds = InputCoordinateConverter.GetRootBounds(element);
         if (!HasUsableBounds(bounds))
         {
-            throw new ServoTargetNotActionableException("The Servo target has no usable arranged bounds.");
+            throw new ServoTargetNotActionableException($"The Servo target {target} has no usable arranged bounds.");
         }
 
         float x = bounds.X + (bounds.Width / 2);
@@ -45,7 +45,7 @@ internal sealed class ServoActionEngine
         if (hit is null || !root.InputCache.EnsureCurrent(root).GetVisualRouteToRoot(hit.Element).Contains(element))
         {
             throw new ServoTargetNotActionableException(
-                "The Servo target center is not hit-testable in the current tree.");
+                $"The Servo target {target} center is not hit-testable in the current tree.");
         }
 
         return new ServoActionTarget(element, x, y);

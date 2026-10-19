@@ -15,20 +15,26 @@ internal sealed class ServoQueryEngine
 
     internal ServoResolvedElement Resolve(UIRoot root, ServoTarget target)
     {
-        IReadOnlyList<ServoResolvedElement> matches = ResolveAll(root, target);
+        ArgumentNullException.ThrowIfNull(root);
+        ArgumentNullException.ThrowIfNull(target);
+        SemanticsTree tree = semanticsProvider.Build(root, SemanticsProjection.Servo);
+        List<ServoResolvedElement> matches = [];
+        CollectMatches(root, tree.Root, target, [], matches);
         if (matches.Count == 0)
         {
-            throw new ServoTargetNotFoundException("The Servo target did not match any element.");
+            throw new ServoTargetNotFoundException(DescribeNotFound(root, tree.Root, target));
         }
 
         if (matches.Count > 1)
         {
-            throw new ServoTargetAmbiguousException(
-                $"The Servo target matched {matches.Count} elements; exactly one was required.");
+            throw CreateAmbiguousException(target, matches.Count);
         }
 
         return matches[0];
     }
+
+    internal static ServoTargetAmbiguousException CreateAmbiguousException(ServoTarget target, int matchCount) =>
+        new($"The Servo target {target} matched {matchCount} elements; exactly one was required.");
 
     internal IReadOnlyList<ServoElement> FindAll(UIRoot root, ServoTarget target)
     {
@@ -120,16 +126,18 @@ internal sealed class ServoQueryEngine
             return false;
         }
 
-        if (target.Scope is null)
-        {
-            return true;
-        }
+        return target.Scope is null || HasAncestorMatching(target.Scope, ancestors);
+    }
 
+    private static bool HasAncestorMatching(
+        ServoTarget scope,
+        IReadOnlyList<ServoSemanticEntry> ancestors)
+    {
         for (int index = ancestors.Count - 1; index >= 0; index--)
         {
             ServoSemanticEntry ancestor = ancestors[index];
             IReadOnlyList<ServoSemanticEntry> ancestorAncestors = ancestors.Take(index).ToArray();
-            if (Matches(ancestor, target.Scope, ancestorAncestors))
+            if (Matches(ancestor, scope, ancestorAncestors))
             {
                 return true;
             }
@@ -140,9 +148,97 @@ internal sealed class ServoQueryEngine
 
     private static bool MatchesOwnCriteria(ServoSemanticEntry candidate, ServoTarget target)
     {
-        return (target.Id is null || string.Equals(Servo.GetId(candidate.Element), target.Id, StringComparison.Ordinal)) &&
-            (target.Name is null || string.Equals(candidate.Node.Name, target.Name, StringComparison.Ordinal)) &&
-            (target.Role is null || candidate.Node.Role == target.Role);
+        return MatchesId(candidate, target) && MatchesName(candidate, target) && MatchesRole(candidate, target);
+    }
+
+    private static bool MatchesId(ServoSemanticEntry candidate, ServoTarget target) =>
+        target.Id is null || string.Equals(Servo.GetId(candidate.Element), target.Id, StringComparison.Ordinal);
+
+    private static bool MatchesName(ServoSemanticEntry candidate, ServoTarget target) =>
+        target.Name is null || string.Equals(candidate.Node.Name, target.Name, StringComparison.Ordinal);
+
+    private static bool MatchesRole(ServoSemanticEntry candidate, ServoTarget target) =>
+        target.Role is null || candidate.Node.Role == target.Role;
+
+    // Runs only after a resolution found no match. A near miss is an element that fails exactly one criterion
+    // of a target with two or more criteria; a single-criterion target has no near misses, because every
+    // element fails exactly its one criterion.
+    private static string DescribeNotFound(UIRoot root, SemanticsNode treeRoot, ServoTarget target)
+    {
+        string message = $"The Servo target {target} did not match any element.";
+        string[] criteria = target.Scope is null
+            ? [.. target.DescribeOwnCriteria()]
+            : [.. target.DescribeOwnCriteria(), target.DescribeScope()];
+        if (criteria.Length < 2)
+        {
+            return message;
+        }
+
+        int[] nearMissCounts = new int[criteria.Length];
+        CountNearMisses(root, treeRoot, target, [], nearMissCounts);
+        string[] nearMisses = Enumerable.Range(0, criteria.Length)
+            .Where(index => nearMissCounts[index] > 0)
+            .OrderByDescending(index => nearMissCounts[index])
+            .ThenBy(index => index)
+            .Select(index => $"{nearMissCounts[index]} matched every criterion except {criteria[index]}")
+            .ToArray();
+        return nearMisses.Length == 0
+            ? message
+            : $"{message} Near misses: {string.Join("; ", nearMisses)}.";
+    }
+
+    private static void CountNearMisses(
+        UIRoot root,
+        SemanticsNode node,
+        ServoTarget target,
+        IReadOnlyList<ServoSemanticEntry> ancestors,
+        int[] nearMissCounts)
+    {
+        if (!TryResolveEntry(root, node, out ServoSemanticEntry entry))
+        {
+            return;
+        }
+
+        if (GetOnlyFailedCriterion(entry, target, ancestors) is int failed)
+        {
+            nearMissCounts[failed]++;
+        }
+
+        List<ServoSemanticEntry> descendantsAncestors = new(ancestors.Count + 1);
+        descendantsAncestors.AddRange(ancestors);
+        descendantsAncestors.Add(entry);
+        foreach (SemanticsNode child in node.Children)
+        {
+            CountNearMisses(root, child, target, descendantsAncestors, nearMissCounts);
+        }
+    }
+
+    // The index of the one failed criterion, in the order of ServoTarget.DescribeOwnCriteria followed by the
+    // scope, or null when no criterion or more than one criterion fails.
+    private static int? GetOnlyFailedCriterion(
+        ServoSemanticEntry candidate,
+        ServoTarget target,
+        IReadOnlyList<ServoSemanticEntry> ancestors)
+    {
+        int index = 0;
+        int failures = 0;
+        int failed = -1;
+        void Check(bool matches)
+        {
+            if (!matches)
+            {
+                failures++;
+                failed = index;
+            }
+
+            index++;
+        }
+
+        if (target.Id is not null) Check(MatchesId(candidate, target));
+        if (target.Role is not null) Check(MatchesRole(candidate, target));
+        if (target.Name is not null) Check(MatchesName(candidate, target));
+        if (target.Scope is not null) Check(HasAncestorMatching(target.Scope, ancestors));
+        return failures == 1 ? failed : null;
     }
 
     private static bool TryResolveEntry(UIRoot root, SemanticsNode node, out ServoSemanticEntry entry)
