@@ -11,12 +11,17 @@ public sealed class ServoOptions
         get => defaultTimeout;
         set
         {
-            if (value <= TimeSpan.Zero)
-            {
-                throw new ArgumentOutOfRangeException(nameof(value), value, "The Servo timeout must be positive and finite.");
-            }
-
+            ValidateTimeout(value, nameof(value));
             defaultTimeout = value;
+        }
+    }
+
+    // Timeout.InfiniteTimeSpan is -1 ms, so the positive check also rejects it.
+    internal static void ValidateTimeout(TimeSpan timeout, string parameterName)
+    {
+        if (timeout <= TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(parameterName, timeout, "The Servo timeout must be positive and finite.");
         }
     }
 

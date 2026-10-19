@@ -152,6 +152,14 @@ var servo = new Servo(window, new ServoOptions
 });
 ```
 
+One slow step can get its own timeout without changing the others. Every
+operation has an overload with a `TimeSpan timeout` right before the token:
+
+```csharp
+await servo.WaitForIdleAsync(TimeSpan.FromSeconds(30)); // this call only
+await servo.WaitForIdleAsync();                          // DefaultTimeout again
+```
+
 Timeouts throw `ServoTimeoutException`. Caller cancellation remains
 `OperationCanceledException`, and exceptions from `WaitUntilAsync` predicates
 propagate unchanged.
@@ -191,13 +199,16 @@ Servo-specific failures derive from `ServoException`:
 - `ServoTargetNotFoundException` — an operation requiring one target found none;
 - `ServoTargetAmbiguousException` — a query or action requiring one target found several (`WaitForAsync` keeps waiting instead);
 - `ServoTargetNotActionableException` — a resolved target cannot perform the requested capture;
-- `ServoTimeoutException` — the configured operation deadline expired.
+- `ServoTimeoutException` — the operation deadline (`DefaultTimeout` or the call's own timeout) expired.
 
 Target actions such as `ClickAsync` wait for a missing or not-yet-actionable target
 (hidden, disabled, covered) and retry after each rendered frame. When the deadline expires
-first, `ServoTimeoutException` names the last reason, for example
-`... Last failure: The Servo target is disabled.`, and its `InnerException` is the
-`ServoTargetNotFoundException` or `ServoTargetNotActionableException` of the last attempt.
+first, `ServoTimeoutException` names the target and the last reason, and its
+`InnerException` is the `ServoTargetNotFoundException` or
+`ServoTargetNotActionableException` of the last attempt. The messages name the target
+with `ServoTarget.ToString()`. For example, a click on a button that stays disabled
+throws `The Servo operation on target Id="save" exceeded its 00:00:05 timeout. Last
+failure: The Servo target Id="save" is disabled.`
 
 ## See Also
 

@@ -21,9 +21,11 @@ ServoException failure = new ServoTargetNotActionableException("Target is hidden
 
 Actionability checks are owned by Servo actions rather than by query snapshots.
 
-Target input actions (`ClickAsync`, `HoverAsync`, `DragAsync`, `ScrollAsync`, `TypeIntoAsync`, `ReplaceTextAsync`) do not throw this exception to the caller. They retry after each rendered frame while the target is hidden, disabled, detached, without usable bounds, or covered at its center. When `ServoOptions.DefaultTimeout` expires first, they throw `ServoTimeoutException`, and its `InnerException` is the last `ServoTargetNotActionableException`. For example, a click on a button that stays disabled throws `ServoTimeoutException` whose `InnerException.Message` is `"The Servo target is disabled."`.
+Servo's message names the target and the failed check, for example `The Servo target Id="save" is disabled.` or `The Servo target Id="save" center is not hit-testable in the current tree.`
 
-A target screenshot (`SaveScreenshotAsync(ServoTarget, string, CancellationToken)`) does not retry and still throws this exception at once when the target is hidden or has no visible pixels.
+Target input actions (`ClickAsync`, `HoverAsync`, `DragAsync`, `ScrollAsync`, `TypeIntoAsync`, `ReplaceTextAsync`) do not throw this exception to the caller. They retry after each rendered frame while the target is hidden, disabled, detached, without usable bounds, or covered at its center. When the timeout (`ServoOptions.DefaultTimeout`, or the `timeout` argument of the overload the call used) expires first, they throw `ServoTimeoutException`, and its `InnerException` is the last `ServoTargetNotActionableException`. For example, a click on a button `Id="save"` that stays disabled throws `ServoTimeoutException` whose `InnerException.Message` is `"The Servo target Id="save" is disabled."`. `DragAsync(ServoTarget, ServoTarget, ...)` retries while either the source or the destination is not actionable; the inner exception's message names the target that failed in the last attempt.
+
+A target screenshot (`SaveScreenshotAsync(ServoTarget, string, CancellationToken)`) does not retry and still throws this exception at once when the target is hidden or has no visible pixels, for example `The Servo target Id="status" is not effectively visible.`
 
 ## Constructors
 

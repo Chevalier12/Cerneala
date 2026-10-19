@@ -24,7 +24,7 @@ internal sealed class ServoActionEngine
     // other failure, including an ambiguous target, ends the action at once.
     // Example: a "Save" button that becomes enabled two frames after ClickAsync gets one click, in the
     // frame after it became enabled. A button that stays disabled ends with the operation's
-    // cancellation as a ServoTimeoutDiagnosticException ("Last failure: The Servo target is
+    // cancellation as a ServoTimeoutDiagnosticException ("Last failure: The Servo target Id="save" is
     // disabled.", inner: the last ServoTargetNotActionableException), which ServoOperation turns into
     // ServoTimeoutException when the timeout caused the cancellation.
     // checkBeforeInput runs in every attempt right before the actionability check, inside the same
@@ -82,30 +82,33 @@ internal sealed class ServoActionEngine
         ServoException lastFailure) =>
         new($"Last failure: {lastFailure.Message}", lastFailure, canceled.CancellationToken);
 
-    private ServoActionTarget ResolveActionable(UIRoot root, ServoTarget target)
+    // Call it only inside a DispatchWhenActionableAsync attempt, so that its not-found and
+    // not-actionable failures are retried. Example: DragAsync(source, destination) resolves the
+    // destination here, inside the source's attempt, before the pointer moves.
+    internal ServoActionTarget ResolveActionable(UIRoot root, ServoTarget target)
     {
         ServoResolvedElement match = queryEngine.Resolve(root, target);
         UIElement element = match.Element;
         if (!ReferenceEquals(element.Root, root))
         {
             throw new ServoTargetNotActionableException(
-                "The Servo target detached before input could be dispatched.");
+                $"The Servo target {target} detached before input could be dispatched.");
         }
 
         if (!UIElementVisibility.IsEffectivelyVisible(element))
         {
-            throw new ServoTargetNotActionableException("The Servo target is not effectively visible.");
+            throw new ServoTargetNotActionableException($"The Servo target {target} is not effectively visible.");
         }
 
         if (!element.IsEnabled)
         {
-            throw new ServoTargetNotActionableException("The Servo target is disabled.");
+            throw new ServoTargetNotActionableException($"The Servo target {target} is disabled.");
         }
 
         LayoutRect bounds = InputCoordinateConverter.GetRootBounds(element);
         if (!HasUsableBounds(bounds))
         {
-            throw new ServoTargetNotActionableException("The Servo target has no usable arranged bounds.");
+            throw new ServoTargetNotActionableException($"The Servo target {target} has no usable arranged bounds.");
         }
 
         float x = bounds.X + (bounds.Width / 2);
@@ -114,7 +117,7 @@ internal sealed class ServoActionEngine
         if (hit is null || !root.InputCache.EnsureCurrent(root).GetVisualRouteToRoot(hit.Element).Contains(element))
         {
             throw new ServoTargetNotActionableException(
-                "The Servo target center is not hit-testable in the current tree.");
+                $"The Servo target {target} center is not hit-testable in the current tree.");
         }
 
         return new ServoActionTarget(element, x, y);
@@ -135,7 +138,7 @@ internal sealed class ServoActionEngine
             value is not (string or null))
         {
             throw new ServoException(
-                "The Servo target does not expose a text value, so its text cannot be replaced.");
+                $"The Servo target {target} does not expose a text value, so its text cannot be replaced.");
         }
 
         return new ServoTextValue((string?)value ?? string.Empty, IsSecret: false);
@@ -150,8 +153,8 @@ internal sealed class ServoActionEngine
         }
 
         throw new ServoException(actual.IsSecret
-            ? "The text replacement did not leave the requested password in the Servo target; the target rejected or changed the typed input."
-            : $"The text replacement did not leave the requested value in the Servo target. Requested: \"{text}\". Actual: \"{actual.Text}\".");
+            ? $"The text replacement did not leave the requested password in the Servo target {target}; the target rejected or changed the typed input."
+            : $"The text replacement did not leave the requested value in the Servo target {target}. Requested: \"{text}\". Actual: \"{actual.Text}\".");
     }
 
     private static bool HasUsableBounds(LayoutRect bounds)

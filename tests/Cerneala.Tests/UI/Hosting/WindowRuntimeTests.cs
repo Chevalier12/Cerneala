@@ -600,10 +600,13 @@ public sealed class WindowRuntimeTests : IDisposable
         ServoTimeoutException timeout = await Assert.ThrowsAsync<ServoTimeoutException>(() => click);
         Assert.True(elapsed.Elapsed >= timeoutDuration, $"Timed out early after {elapsed.Elapsed}.");
         Assert.True(elapsed.Elapsed < timeoutDuration + TimeSpan.FromSeconds(2), $"Timed out late after {elapsed.Elapsed}.");
-        Assert.Contains("Last failure: The Servo target is disabled.", timeout.Message);
+        Assert.Equal(
+            "The Servo operation on target Id=\"save\" exceeded its 00:00:00.3000000 timeout. " +
+            "Last failure: The Servo target Id=\"save\" is disabled.",
+            timeout.Message);
         ServoTargetNotActionableException lastFailure =
             Assert.IsType<ServoTargetNotActionableException>(timeout.InnerException);
-        Assert.Equal("The Servo target is disabled.", lastFailure.Message);
+        Assert.Equal("The Servo target Id=\"save\" is disabled.", lastFailure.Message);
         Assert.Equal(0, clicks);
         Assert.False(window.LastFrame!.Input.Pointer.IsDown(InputMouseButton.Left));
 
