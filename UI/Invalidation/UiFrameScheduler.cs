@@ -365,10 +365,7 @@ public sealed class UiFrameScheduler
 
                 layoutQueue.RemoveMeasure(element);
 
-                bool wasMeasuredRecursively = processors.SupportsIncrementalMeasure &&
-                    ReferenceEquals(element.LastScheduledMeasureRoot, element.Root) &&
-                    element.LastScheduledMeasurePass == CurrentMeasurePass &&
-                    element.LastScheduledMeasureLayoutVersion == element.LayoutVersion;
+                bool wasMeasuredRecursively = processors.SupportsIncrementalMeasure && WasMeasuredInCurrentPass(element);
                 if (!Elements.UIElementVisibility.IsEffectivelyParticipatingInLayout(element) ||
                     wasMeasuredRecursively ||
                     DeferMeasureToSkippingAncestor(element))
@@ -422,7 +419,47 @@ public sealed class UiFrameScheduler
             }
         }
 
+        if (processors.SupportsIncrementalMeasure)
+        {
+            CompleteOwnMeasuresQueuedDuringPhase();
+        }
+
         trace.RecordPhaseSummary(FramePhase.Measure, processed);
+    }
+
+    private bool WasMeasuredInCurrentPass(Elements.UIElement element)
+    {
+        return ReferenceEquals(element.LastScheduledMeasureRoot, element.Root) &&
+            element.LastScheduledMeasurePass == CurrentMeasurePass &&
+            element.LastScheduledMeasureLayoutVersion == element.LayoutVersion;
+    }
+
+    // Measure work queued during this phase is not in its snapshot, for example the measure that a ScrollViewer's
+    // measure queues for its ItemsControl when the viewport changes, right before it measures that ItemsControl. An
+    // element that this pass measured after the request, at its current layout version, has completed its own queued
+    // measure, as the snapshot loop completes it. A propagated entry stays queued: it stands for a descendant whose
+    // queued measure can still be pending.
+    private void CompleteOwnMeasuresQueuedDuringPhase()
+    {
+        if (layoutQueue.MeasureCount == 0)
+        {
+            return;
+        }
+
+        IReadOnlyList<Elements.UIElement> remaining = layoutQueue.SnapshotMeasure();
+        for (int index = 0; index < remaining.Count; index++)
+        {
+            Elements.UIElement element = remaining[index];
+            if (layoutQueue.GetMeasureKind(element) == LayoutQueueEntryKind.Propagated ||
+                !WasMeasuredInCurrentPass(element))
+            {
+                continue;
+            }
+
+            layoutQueue.RemoveMeasure(element);
+            InvalidationFlags cleared = ClearProcessedFlags(element, InvalidationFlags.Measure);
+            trace.RecordClear(element, cleared);
+        }
     }
 
     private void ProcessArrange(FramePhaseProcessors processors, FrameStats stats)
