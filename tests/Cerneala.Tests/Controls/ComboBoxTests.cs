@@ -550,6 +550,26 @@ public sealed class ComboBoxTests
         Assert.Equal(0, comboBox.SelectedIndex);
     }
 
+    // A right click while the left button is held does not cancel the left press, so the left release on the field
+    // still toggles the drop-down, as the WPF ToggleButton clicks on MouseLeftButtonUp (#593).
+    [Fact]
+    public void NonEditableFieldLeftReleaseAfterRightClickWhileHeldTogglesDropDown()
+    {
+        (UIRoot root, ComboBox comboBox) = CreateNonEditableField();
+        LayoutRect bounds = comboBox.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, ButtonsFrame(x, y, previousLeft: false, previousRight: false, currentLeft: true, currentRight: false));
+        bridge.Dispatch(root, ButtonsFrame(x, y, previousLeft: true, previousRight: false, currentLeft: true, currentRight: true));
+        bridge.Dispatch(root, ButtonsFrame(x, y, previousLeft: true, previousRight: true, currentLeft: true, currentRight: false));
+        bridge.Dispatch(root, ButtonsFrame(x, y, previousLeft: true, previousRight: false, currentLeft: false, currentRight: false));
+        root.ProcessFrame();
+
+        Assert.True(comboBox.IsDropDownOpen);
+    }
+
     // The non-hit-testable selection box lets a press on the selected text hit the field itself, so a press there
     // and a release on the empty part of the field make one click. A press on the field and a release on
     // PART_DropDownToggle hit different elements and make no click.
@@ -3592,6 +3612,22 @@ public sealed class ComboBoxTests
         }
 
         return new InputFrame(previous, current, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []);
+    }
+
+    private static InputFrame ButtonsFrame(
+        float x,
+        float y,
+        bool previousLeft,
+        bool previousRight,
+        bool currentLeft,
+        bool currentRight)
+    {
+        return new InputFrame(
+            PointerSnapshot.Empty.WithPosition(x, y).WithButton(InputMouseButton.Left, previousLeft).WithButton(InputMouseButton.Right, previousRight),
+            PointerSnapshot.Empty.WithPosition(x, y).WithButton(InputMouseButton.Left, currentLeft).WithButton(InputMouseButton.Right, currentRight),
+            KeyboardSnapshot.Empty,
+            KeyboardSnapshot.Empty,
+            []);
     }
 
     private static InputFrame TextInputFrame(string text)

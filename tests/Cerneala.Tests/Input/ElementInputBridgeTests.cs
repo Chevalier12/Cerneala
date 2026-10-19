@@ -301,6 +301,84 @@ public sealed class ElementInputBridgeTests
         Assert.Equal(1, executionCount);
     }
 
+    // As in WPF, where ButtonBase clicks on MouseLeftButtonUp and only the left button sets IsPressed, a right click
+    // while the left button is held does not cancel the left press (#593).
+    [Fact]
+    public void RightClickWhileLeftButtonIsHeldDoesNotCancelLeftClickOfButton()
+    {
+        UIRoot root = new(100, 100);
+        ButtonBase button = ArrangedButton(0, 0, 40, 40);
+        root.VisualChildren.Add(button);
+        int clickCount = 0;
+        int executionCount = 0;
+        button.Click += (_, _) => clickCount++;
+        button.Command = new ActionCommand(_ => executionCount++);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, ButtonsFrame(10, 10, previousLeft: false, previousRight: false, currentLeft: true, currentRight: false));
+        bridge.Dispatch(root, ButtonsFrame(10, 10, previousLeft: true, previousRight: false, currentLeft: true, currentRight: true));
+        bridge.Dispatch(root, ButtonsFrame(10, 10, previousLeft: true, previousRight: true, currentLeft: true, currentRight: false));
+
+        Assert.True(button.IsPressed);
+        Assert.Equal(0, clickCount);
+
+        bridge.Dispatch(root, ButtonsFrame(10, 10, previousLeft: true, previousRight: false, currentLeft: false, currentRight: false));
+
+        Assert.False(button.IsPressed);
+        Assert.Equal(1, clickCount);
+        Assert.Equal(1, executionCount);
+    }
+
+    [Fact]
+    public void RightClickOnButtonNeitherPressesNorClicksIt()
+    {
+        UIRoot root = new(100, 100);
+        ButtonBase button = ArrangedButton(0, 0, 40, 40);
+        root.VisualChildren.Add(button);
+        int clickCount = 0;
+        button.Click += (_, _) => clickCount++;
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, ButtonsFrame(10, 10, previousLeft: false, previousRight: false, currentLeft: false, currentRight: true));
+
+        Assert.False(button.IsPressed);
+
+        bridge.Dispatch(root, ButtonsFrame(10, 10, previousLeft: false, previousRight: true, currentLeft: false, currentRight: false));
+
+        Assert.False(button.IsPressed);
+        Assert.Equal(0, clickCount);
+    }
+
+    // As in WPF, where MouseDevice starts the click count at 1 when the pressed button differs from the previously
+    // pressed button, a press of another button ends the double-click sequence of the left button.
+    [Fact]
+    public void PressOfAnotherButtonRestartsTheLeftClickCount()
+    {
+        UIRoot root = RootWithChild(out UIElement child);
+        List<int> leftClickCounts = [];
+        child.Handlers.AddHandler(InputEvents.MouseLeftButtonUpEvent, (_, args) => leftClickCounts.Add(((MouseButtonEventArgs)args).ClickCount));
+        ElementInputBridge bridge = new();
+
+        void LeftClick()
+        {
+            bridge.Dispatch(root, ButtonsFrame(10, 10, previousLeft: false, previousRight: false, currentLeft: true, currentRight: false));
+            bridge.Dispatch(root, ButtonsFrame(10, 10, previousLeft: true, previousRight: false, currentLeft: false, currentRight: false));
+        }
+
+        LeftClick();
+        LeftClick();
+        bridge.Dispatch(root, ButtonsFrame(10, 10, previousLeft: false, previousRight: false, currentLeft: false, currentRight: true));
+        bridge.Dispatch(root, ButtonsFrame(10, 10, previousLeft: false, previousRight: true, currentLeft: false, currentRight: false));
+        LeftClick();
+        bridge.Dispatch(root, ButtonsFrame(10, 10, previousLeft: false, previousRight: false, currentLeft: true, currentRight: false));
+        bridge.Dispatch(root, ButtonsFrame(10, 10, previousLeft: true, previousRight: false, currentLeft: true, currentRight: true));
+        bridge.Dispatch(root, ButtonsFrame(10, 10, previousLeft: true, previousRight: true, currentLeft: true, currentRight: false));
+        bridge.Dispatch(root, ButtonsFrame(10, 10, previousLeft: true, previousRight: false, currentLeft: false, currentRight: false));
+        LeftClick();
+
+        Assert.Equal([1, 2, 1, 1, 1], leftClickCounts);
+    }
+
     [Fact]
     public void ReleaseAfterDetachClearsPressedStateWithoutClickOrCommand()
     {
@@ -530,5 +608,21 @@ public sealed class ElementInputBridgeTests
         }
 
         return new InputFrame(previous, current, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []);
+    }
+
+    private static InputFrame ButtonsFrame(
+        float x,
+        float y,
+        bool previousLeft,
+        bool previousRight,
+        bool currentLeft,
+        bool currentRight)
+    {
+        return new InputFrame(
+            PointerSnapshot.Empty.WithPosition(x, y).WithButton(InputMouseButton.Left, previousLeft).WithButton(InputMouseButton.Right, previousRight),
+            PointerSnapshot.Empty.WithPosition(x, y).WithButton(InputMouseButton.Left, currentLeft).WithButton(InputMouseButton.Right, currentRight),
+            KeyboardSnapshot.Empty,
+            KeyboardSnapshot.Empty,
+            []);
     }
 }

@@ -99,5 +99,6 @@ public enum InputKey
     OemPipe,
     OemCloseBrackets,
     OemQuotes,
-    OemBackslash
+    OemBackslash,
+    Clear
 }

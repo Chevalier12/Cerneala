@@ -59,6 +59,10 @@ Calling `Cancel` clears the pressed target and the accumulated click count. Call
 
 The comparison uses `ReferenceEquals`, so two different `UIElement` instances are not treated as the same click target.
 
+The public `Press` and `Release` track the left mouse button. `ElementInputBridge` keeps one press per mouse button, as each WPF mouse button has its own down and up messages: a right-button press and release while the left button is held do not complete or clear the left press. For example, a left press on a `Button`, a right press and release on the same `Button`, then a left release over it give the left release `ClickCount == 1`, so the `Button` raises `Click` once.
+
+As WPF's `MouseDevice` starts `ClickCount` at 1 when the pressed button differs from the previously pressed button, a press of another button ends the consecutive-click sequence. For example, a left click, a second left click, a right click, and a third left click on the same element give the left releases `ClickCount` values `1`, `2`, and `1`. A count continues only when the same button clicks the same element again.
+
 ## Constructors
 
 | Name | Description |
@@ -69,9 +73,9 @@ The comparison uses `ReferenceEquals`, so two different `UIElement` instances ar
 
 | Name | Description |
 | --- | --- |
-| `Press(UIElement?)` | Stores the element that received the press. Passing `null` clears the effective click target for matching purposes. |
-| `Release(UIElement?)` | Clears the stored press and returns the current consecutive click count for a matching target; returns `0` and resets the count for a non-matching release. |
-| `Cancel()` | Clears the stored pressed target and resets the consecutive click count. |
+| `Press(UIElement?)` | Stores the element that received the left-button press. Passing `null` clears the effective click target for matching purposes. |
+| `Release(UIElement?)` | Clears the stored left-button press and returns the current consecutive click count for a matching target; returns `0` and resets the count for a non-matching release. |
+| `Cancel()` | Clears the stored pressed targets of every button and resets the consecutive click count. |
 
 ## Applies to
 

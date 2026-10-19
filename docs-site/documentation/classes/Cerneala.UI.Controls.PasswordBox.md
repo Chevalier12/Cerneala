@@ -39,6 +39,8 @@ Copy and cut shortcuts are consumed without placing password text on the clipboa
 
 Pointer press and drag place the internal caret and selection like `TextBox`: at the mask character drawn under the pointer, after converting the unrounded root pointer position through the render transforms of the password box and every ancestor. A pointer position that cannot be converted keeps the current caret.
 
+Like `TextBox`, an enabled password box owns a left click into it: it marks the left `MouseDown` and the left `MouseUp` that ends its pointer selection handled, and an enclosing `ButtonBase` is not pressed, raises no `Click`, and runs no `Command` for that click.
+
 Rendering uses one `PasswordChar` for each Unicode text element in the stored password. Accessibility semantics report an editable-text role but never publish the password value.
 
 `Password` is still a normal managed `string`. The control prevents accidental exposure through editing APIs, clipboard history, undo history and semantics; it does not provide secure-memory wiping.

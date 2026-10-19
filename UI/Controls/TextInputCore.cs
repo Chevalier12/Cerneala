@@ -35,6 +35,7 @@ internal sealed class TextInputCore
         control.Handlers.AddHandler(InputEvents.TextInputEvent, OnRoutedTextInput);
         control.Handlers.AddHandler(InputEvents.KeyDownEvent, OnRoutedKeyDown);
         control.Handlers.AddHandler(InputEvents.MouseDownEvent, OnRoutedMouseDown);
+        control.Handlers.AddHandler(InputEvents.MouseUpEvent, OnRoutedMouseUp);
         control.Handlers.AddHandler(InputEvents.LostMouseCaptureEvent, (_, _) => CancelMouseSelection());
     }
 
@@ -293,6 +294,19 @@ internal sealed class TextInputCore
     private void OnRoutedMouseDown(UiElementId sender, RoutedEventArgs args)
     {
         if (args is MouseButtonEventArgs mouseArgs &&
+            mouseArgs.ChangedButton == InputMouseButton.Left)
+        {
+            mouseArgs.Handled = true;
+        }
+    }
+
+    // The release that ends the mouse selection begun by a press on this control is the control's, as WPF's text
+    // editor handles MouseLeftButtonUp while it holds the capture: an enclosing Button does not click or run its
+    // command (#586). The input bridge completes the selection after the MouseUp, so it is still active here.
+    private void OnRoutedMouseUp(UiElementId sender, RoutedEventArgs args)
+    {
+        if (isMouseSelecting &&
+            args is MouseButtonEventArgs mouseArgs &&
             mouseArgs.ChangedButton == InputMouseButton.Left)
         {
             mouseArgs.Handled = true;

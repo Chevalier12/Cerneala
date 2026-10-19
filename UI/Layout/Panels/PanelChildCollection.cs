@@ -33,11 +33,31 @@ public sealed class PanelChildCollection : IReadOnlyList<UIElement>
             owner.LogicalChildren.InsertOwned(GetLogicalIndex(index), child);
             owner.VisualChildren.Insert(index, child);
         }
-        catch when (!wasLogicalChild && ReferenceEquals(child.LogicalParent, owner))
+        catch when (ReferenceEquals(child.VisualParent, owner) || (!wasLogicalChild && ReferenceEquals(child.LogicalParent, owner)))
         {
             // The logical insertion can throw after it published the child (from a LogicalChildren.Changed handler),
-            // and the visual insertion can throw after it; either way the child must not stay a logical-only child.
-            owner.LogicalChildren.Remove(child);
+            // and the visual insertion can throw after it published the child too (from a VisualChildren.Changed
+            // handler); either way the child must leave the panel, so that a later Add can add it. ValidateInsertion
+            // rejected a child that already was a visual child, so a visual parent here comes from this call. Visual
+            // first: the logical removal then detaches the child, which also ends a presence exit that the visual
+            // removal started; in the other order the exit would keep the child attached. The visual removal raises
+            // VisualChildren.Changed again, after it unpublished the child; a handler that throws there must not skip
+            // the logical removal.
+            try
+            {
+                if (ReferenceEquals(child.VisualParent, owner))
+                {
+                    owner.VisualChildren.Remove(child);
+                }
+            }
+            finally
+            {
+                if (!wasLogicalChild && ReferenceEquals(child.LogicalParent, owner))
+                {
+                    owner.LogicalChildren.Remove(child);
+                }
+            }
+
             throw;
         }
     }

@@ -538,7 +538,9 @@ internal readonly record struct SdlEvent(
     byte MouseButton = 0,
     bool Repeat = false,
     bool WheelFlipped = false,
-    string? Text = null);
+    string? Text = null,
+    // SDL_KMOD_NUM of a key event: Num Lock was on when the key went down or up.
+    bool NumLock = false);
 
 internal delegate void SdlEventWatch(SdlEvent @event);
 

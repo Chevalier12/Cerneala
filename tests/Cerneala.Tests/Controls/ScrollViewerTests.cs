@@ -2,6 +2,7 @@ using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Controls.Templates;
+using Cerneala.UI.Detective;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
@@ -83,6 +84,65 @@ public sealed class ScrollViewerTests
         HitTestResult? result = new HitTestService().HitTest(root, 0.2f, 0.2f);
 
         Assert.Same(content, result!.Element);
+    }
+
+    // The content fits, so the scroll bar stays Collapsed in both modes and only the presenter's scroll capability
+    // changes (#561). WPF's ScrollContentPresenter.CanVerticallyScroll and CanHorizontallyScroll call InvalidateMeasure.
+    // The constraint is the one of the content's last Measure call: switching back can reuse an older cached measure
+    // of the content without running its MeasureCore.
+    [Theory]
+    [InlineData(false, ScrollBarVisibility.Disabled, ScrollBarVisibility.Auto, 320f, float.PositiveInfinity)]
+    [InlineData(false, ScrollBarVisibility.Auto, ScrollBarVisibility.Disabled, float.PositiveInfinity, 320f)]
+    [InlineData(true, ScrollBarVisibility.Disabled, ScrollBarVisibility.Auto, 200f, float.PositiveInfinity)]
+    [InlineData(true, ScrollBarVisibility.Auto, ScrollBarVisibility.Disabled, float.PositiveInfinity, 200f)]
+    public void ScrollViewerMeasuresContentWithNewConstraintWhenScrollingIsEnabledOrDisabled(
+        bool horizontal,
+        ScrollBarVisibility from,
+        ScrollBarVisibility to,
+        float before,
+        float after)
+    {
+        UIRoot root = new(400, 400);
+        FixedElement content = new(new LayoutSize(200, 320));
+        ScrollViewer viewer = new()
+        {
+            Width = 200,
+            Height = 320,
+            HorizontalScrollBarVisibility = horizontal ? from : ScrollBarVisibility.Disabled,
+            VerticalScrollBarVisibility = horizontal ? ScrollBarVisibility.Disabled : from,
+            Content = content
+        };
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+        float first = LastConstraint();
+
+        Switch(to);
+        float switched = LastConstraint();
+        Switch(from);
+        float switchedBack = LastConstraint();
+
+        Assert.Equal((before, after, before), (first, switched, switchedBack));
+
+        void Switch(ScrollBarVisibility visibility)
+        {
+            if (horizontal)
+            {
+                viewer.HorizontalScrollBarVisibility = visibility;
+            }
+            else
+            {
+                viewer.VerticalScrollBarVisibility = visibility;
+            }
+
+            root.ProcessFrame();
+            root.ProcessFrame();
+        }
+
+        float LastConstraint()
+        {
+            LayoutSize constraint = LayoutDiagnostics.Capture(content).LastMeasureAvailableSize!.Value;
+            return horizontal ? constraint.Width : constraint.Height;
+        }
     }
 
     [Fact]

@@ -253,20 +253,23 @@ internal sealed class WindowApplicationRuntime : IDisposable
             return false;
         }
 
+        // A failing detach callback, here or in a window closed with this one, does not keep any window open:
+        // the close completes, then the first failure propagates, as ElementLifecycle.DetachSubtree does for
+        // the elements it detaches.
+        ExceptionDispatchInfo? failure = null;
         foreach (Window owned in window.OwnedWindows.ToArray())
         {
-            Close(owned, force: true);
+            CloseCascaded(owned, ref failure);
         }
 
         if (application is null && ReferenceEquals(window, legacyMainWindow))
         {
             foreach (Window remaining in windows.Where(candidate => !ReferenceEquals(candidate, window)).ToArray())
             {
-                Close(remaining, force: true);
+                CloseCascaded(remaining, ref failure);
             }
         }
 
-        ExceptionDispatchInfo? detachFailure = null;
         if (contexts.Remove(window, out WindowContext? context))
         {
             if (context.IsModal)
@@ -274,8 +277,6 @@ internal sealed class WindowApplicationRuntime : IDisposable
                 SetOwnerEnabled(window.Owner, enabled: true);
             }
 
-            // A failing detach callback does not keep the window open: the close completes, then the first
-            // failure propagates, as ElementLifecycle.DetachSubtree does for the elements it detaches.
             try
             {
                 context.Root.VisualChildren.Remove(window);
@@ -283,7 +284,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
             }
             catch (Exception exception)
             {
-                detachFailure = ExceptionDispatchInfo.Capture(exception);
+                failure ??= ExceptionDispatchInfo.Capture(exception);
             }
 
             context.Root.ReleaseDrawingResources();
@@ -302,8 +303,20 @@ internal sealed class WindowApplicationRuntime : IDisposable
         window.SetRuntimeOwner(null);
         window.MarkClosed();
         application?.HandleWindowClosed(window);
-        detachFailure?.Throw();
+        failure?.Throw();
         return true;
+    }
+
+    private void CloseCascaded(Window window, ref ExceptionDispatchInfo? failure)
+    {
+        try
+        {
+            Close(window, force: true);
+        }
+        catch (Exception exception)
+        {
+            failure ??= ExceptionDispatchInfo.Capture(exception);
+        }
     }
 
     internal void SetApplication(Application value)
@@ -330,10 +343,13 @@ internal sealed class WindowApplicationRuntime : IDisposable
     internal void CloseAll()
     {
         VerifyAccess();
+        ExceptionDispatchInfo? failure = null;
         foreach (Window window in windows.ToArray())
         {
-            Close(window, force: true);
+            CloseCascaded(window, ref failure);
         }
+
+        failure?.Throw();
     }
 
     public void SetOwner(Window window, Window? owner)
@@ -702,11 +718,14 @@ internal sealed class WindowApplicationRuntime : IDisposable
             VerifyAccess();
         }
 
+        // A window whose close throws does not stop the disposal: every window closes, the platform is
+        // disposed and the Application exits, then the first failure propagates.
+        ExceptionDispatchInfo? failure = null;
         foreach (Window window in windows.ToArray())
         {
             if (verifyAccess)
             {
-                Close(window, force: true);
+                CloseCascaded(window, ref failure);
             }
             else if (contexts.Remove(window, out WindowContext? context))
             {
@@ -738,6 +757,8 @@ internal sealed class WindowApplicationRuntime : IDisposable
         {
             attachedApplication?.ResetStateForTesting();
         }
+
+        failure?.Throw();
     }
 
     private WindowContext GetOrCreateContext(Window window)

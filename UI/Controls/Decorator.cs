@@ -31,7 +31,7 @@ public class Decorator : Control
             }
             catch
             {
-                RemoveChild(value);
+                DiscardRejectedChild(value);
                 AddChild(oldChild);
                 child = oldChild;
                 throw;
@@ -66,6 +66,21 @@ public class Decorator : Control
     }
 
     private void RemoveChild(UIElement? element)
+    {
+        if (element is null)
+        {
+            return;
+        }
+
+        // Logical first: the child stays attached through its visual parent, so the visual removal can start a
+        // presence exit. In the other order the logical removal detaches the child and cancels that exit.
+        LogicalChildren.Remove(element);
+        VisualChildren.Remove(element);
+    }
+
+    // A rejected child never became the child, so it leaves at once without a presence exit: the visual removal first,
+    // so the logical removal detaches it and cancels the exit that the visual removal started.
+    private void DiscardRejectedChild(UIElement? element)
     {
         if (element is null)
         {
