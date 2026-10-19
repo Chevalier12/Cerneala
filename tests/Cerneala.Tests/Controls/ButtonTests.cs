@@ -982,6 +982,121 @@ public sealed class ButtonTests
         Assert.False(button.IsPressed);
     }
 
+    // As in WPF, where ButtonBase presses itself in its MouseLeftButtonDown class handler, a MouseDown or
+    // MouseLeftButtonDown that an element in the button's content marks handled never reaches the button: the button is
+    // not pressed, does not repeat, and the release raises no Click, runs no Command and leaves IsChecked unchanged (#645).
+    [Theory]
+    [InlineData("Button", "none")]
+    [InlineData("Button", "MouseDown")]
+    [InlineData("Button", "MouseLeftButtonDown")]
+    [InlineData("RepeatButton", "none")]
+    [InlineData("RepeatButton", "MouseDown")]
+    [InlineData("RepeatButton", "MouseLeftButtonDown")]
+    [InlineData("CheckBox", "none")]
+    [InlineData("CheckBox", "MouseDown")]
+    [InlineData("CheckBox", "MouseLeftButtonDown")]
+    public void HandledMouseDownInButtonContentKeepsThePressFromTheButton(string buttonKind, string handledEvent)
+    {
+        Border border = new() { Width = 120, Height = 30, Background = new Cerneala.UI.Media.SolidColorBrush(Color.White) };
+        int commands = 0;
+        Button button = buttonKind switch
+        {
+            "RepeatButton" => new Cerneala.UI.Controls.Primitives.RepeatButton(),
+            "CheckBox" => new CheckBox(),
+            _ => new Button()
+        };
+        button.Content = border;
+        button.Width = 200;
+        button.Height = 80;
+        button.Command = new ActionCommand(_ => commands++);
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+        if (handledEvent == "MouseDown")
+        {
+            border.MouseDown += (_, args) => args.Handled = true;
+        }
+        else if (handledEvent == "MouseLeftButtonDown")
+        {
+            border.MouseLeftButtonDown += (_, args) => args.Handled = true;
+        }
+
+        UIRoot root = CreateWindowRoot(button);
+        LayoutRect bounds = border.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        Assert.Same(border, new HitTestService().HitTest(root, x, y)?.Element);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        root.ProcessFrame();
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true, currentDown: true), TimeSpan.FromSeconds(2));
+        root.ProcessFrame();
+        bool pressedWhileHeld = button.IsPressed;
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        bool handled = handledEvent != "none";
+        Assert.Equal(!handled, pressedWhileHeld);
+        Assert.False(button.IsPressed);
+        if (handled)
+        {
+            Assert.Equal(0, clicks);
+        }
+        else if (buttonKind == "RepeatButton")
+        {
+            Assert.True(clicks > 1, $"The held RepeatButton clicked {clicks} times; the press and at least one repeat were expected.");
+        }
+        else
+        {
+            Assert.Equal(1, clicks);
+        }
+
+        Assert.Equal(clicks, commands);
+        if (button is CheckBox checkBox)
+        {
+            Assert.Equal(!handled, checkBox.IsChecked);
+        }
+    }
+
+    // The button presses itself before its own and its ancestors' MouseDown handlers run, as WPF's ButtonBase class
+    // handler runs on the button before the button's instance handlers and before the event bubbles further (#645).
+    [Theory]
+    [InlineData(false, "MouseDown")]
+    [InlineData(false, "MouseLeftButtonDown")]
+    [InlineData(true, "MouseDown")]
+    [InlineData(true, "MouseLeftButtonDown")]
+    public void MouseDownHandledOnTheButtonOrAnAncestorStillPressesAndClicksTheButton(bool handleOnAncestor, string handledEvent)
+    {
+        int commands = 0;
+        Button button = new() { Content = "b", Width = 200, Height = 80, Command = new ActionCommand(_ => commands++) };
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+        UIRoot root = CreateWindowRoot(button);
+        UIElement handlerOwner = handleOnAncestor ? button.VisualParent! : button;
+        if (handledEvent == "MouseDown")
+        {
+            handlerOwner.MouseDown += (_, args) => args.Handled = true;
+        }
+        else
+        {
+            handlerOwner.MouseLeftButtonDown += (_, args) => args.Handled = true;
+        }
+
+        LayoutRect bounds = button.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bool pressedAfterPress = button.IsPressed;
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.True(pressedAfterPress);
+        Assert.Equal(1, clicks);
+        Assert.Equal(1, commands);
+    }
+
     [Fact]
     public void PickingComboBoxDropDownItemInsideButtonSelectsTheItemWithoutButtonClick()
     {
