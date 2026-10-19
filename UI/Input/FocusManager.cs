@@ -7,11 +7,19 @@ public sealed class FocusManager
 {
     private IReadOnlyList<UIElement> focusedPath = [];
 
+    // Weak, like WPF's weak event pattern: a host can share one FocusManager across many
+    // ElementInputBridge instances, and a dropped bridge must stay collectable (#509).
+    private readonly List<WeakReference<KeyboardActivationController>> focusChangeListeners = [];
+
     public UIElement? FocusedElement { get; private set; }
 
-    // Raised after FocusedElement changes and before the focus routed events, so input
+    // Notified after FocusedElement changes and before the focus routed events, so input
     // state tied to the old focus (a held Space press) is gone when handlers run.
-    internal event Action? FocusedElementChanged;
+    internal void AddFocusChangeListener(KeyboardActivationController listener)
+    {
+        focusChangeListeners.RemoveAll(static reference => !reference.TryGetTarget(out _));
+        focusChangeListeners.Add(new WeakReference<KeyboardActivationController>(listener));
+    }
 
     public bool Focus(UIElement? element, ElementInputRouteMap routeMap)
     {
@@ -40,7 +48,7 @@ public sealed class FocusManager
             : routeMap.GetVisualRouteToRoot(element);
         UpdateFocusState(oldFocus, element, focusedPath, nextPath);
         focusedPath = nextPath;
-        FocusedElementChanged?.Invoke();
+        NotifyFocusChanged();
         KeyboardFocusChangedEventArgs? previewLostArgs = RaisePreviewFocusLost(routeMap, oldFocus, element);
         KeyboardFocusChangedEventArgs? previewGotArgs = RaisePreviewFocusGot(routeMap, oldFocus, element);
         RaiseFocusLost(routeMap, oldFocus, element, previewLostArgs);
@@ -63,7 +71,7 @@ public sealed class FocusManager
             return [];
         }
 
-        if (!FocusPolicy.CanFocus(FocusedElement, routeMap))
+        if (!FocusPolicy.CanFocus(FocusedElement, ResolveRouteMap(FocusedElement, routeMap)))
         {
             Focus(null, routeMap);
             return [];
@@ -80,9 +88,9 @@ public sealed class FocusManager
             }
 
             if (inputFrame.Keyboard.IsPressed(key) &&
-                TryGetKeyboardTarget(routeMap, out UIElement? pressedTarget, out UiElementId pressedId))
+                TryGetKeyboardTarget(routeMap, out UIElement? pressedTarget, out UiElementId pressedId, out ElementInputRouteMap pressedMap))
             {
-                bool handled = RaiseKeyPair(routeMap, pressedId, key, inputFrame.Keyboard, InputEvents.PreviewKeyDownEvent, InputEvents.KeyDownEvent);
+                bool handled = RaiseKeyPair(pressedMap, pressedId, key, inputFrame.Keyboard, InputEvents.PreviewKeyDownEvent, InputEvents.KeyDownEvent);
                 results.Add(new KeyboardDispatchResult(pressedTarget, pressedId, key, KeyboardDispatchKind.Pressed, handled));
             }
 
@@ -91,17 +99,17 @@ public sealed class FocusManager
                 int repeatCount = inputFrame.Keyboard.GetRepeatCount(key);
                 for (int i = 0; i < repeatCount; i++)
                 {
-                    if (TryGetKeyboardTarget(routeMap, out _, out UiElementId repeatId))
+                    if (TryGetKeyboardTarget(routeMap, out _, out UiElementId repeatId, out ElementInputRouteMap repeatMap))
                     {
-                        RaiseKeyPair(routeMap, repeatId, key, inputFrame.Keyboard, InputEvents.PreviewKeyDownEvent, InputEvents.KeyDownEvent, isRepeat: true);
+                        RaiseKeyPair(repeatMap, repeatId, key, inputFrame.Keyboard, InputEvents.PreviewKeyDownEvent, InputEvents.KeyDownEvent, isRepeat: true);
                     }
                 }
             }
 
             if (inputFrame.Keyboard.IsReleased(key) &&
-                TryGetKeyboardTarget(routeMap, out UIElement? releasedTarget, out UiElementId releasedId))
+                TryGetKeyboardTarget(routeMap, out UIElement? releasedTarget, out UiElementId releasedId, out ElementInputRouteMap releasedMap))
             {
-                bool handled = RaiseKeyPair(routeMap, releasedId, key, inputFrame.Keyboard, InputEvents.PreviewKeyUpEvent, InputEvents.KeyUpEvent);
+                bool handled = RaiseKeyPair(releasedMap, releasedId, key, inputFrame.Keyboard, InputEvents.PreviewKeyUpEvent, InputEvents.KeyUpEvent);
                 results.Add(new KeyboardDispatchResult(releasedTarget, releasedId, key, KeyboardDispatchKind.Released, handled));
             }
         }
@@ -112,10 +120,12 @@ public sealed class FocusManager
     internal bool TryGetKeyboardTarget(
         ElementInputRouteMap routeMap,
         [NotNullWhen(true)] out UIElement? target,
-        out UiElementId targetId)
+        out UiElementId targetId,
+        out ElementInputRouteMap targetRouteMap)
     {
         target = FocusedElement;
-        if (target is not null && FocusPolicy.CanFocus(target, routeMap) && routeMap.TryGetId(target, out targetId))
+        targetRouteMap = target is null ? routeMap : ResolveRouteMap(target, routeMap);
+        if (target is not null && FocusPolicy.CanFocus(target, targetRouteMap) && targetRouteMap.TryGetId(target, out targetId))
         {
             return true;
         }
@@ -123,6 +133,44 @@ public sealed class FocusManager
         target = null;
         targetId = default;
         return false;
+    }
+
+    // A handler can focus an element that it attached after the supplied route map was
+    // built. That element is routed over its root's current route map instead.
+    private static ElementInputRouteMap ResolveRouteMap(UIElement element, ElementInputRouteMap routeMap)
+    {
+        return !routeMap.TryGetId(element, out _) && element.Root is UIRoot root
+            ? root.InputCache.EnsureCurrent(root)
+            : routeMap;
+    }
+
+    private void NotifyFocusChanged()
+    {
+        if (focusChangeListeners.Count == 0)
+        {
+            return;
+        }
+
+        // A listener can move the focus again or build another bridge, so the live
+        // listeners are copied first, as an event invocation uses its delegate list.
+        List<KeyboardActivationController> listeners = new(focusChangeListeners.Count);
+        for (int i = 0; i < focusChangeListeners.Count;)
+        {
+            if (focusChangeListeners[i].TryGetTarget(out KeyboardActivationController? listener))
+            {
+                listeners.Add(listener);
+                i++;
+            }
+            else
+            {
+                focusChangeListeners.RemoveAt(i);
+            }
+        }
+
+        foreach (KeyboardActivationController listener in listeners)
+        {
+            listener.OnFocusChanged();
+        }
     }
 
     private static bool RaiseKeyPair(

@@ -145,7 +145,7 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
 
         object? coerced = Property.CoerceUntyped(Target, value);
         Property.ValidateUntyped(coerced);
-        Target.ValidatePropertyMutation(Property, coerced);
+        Target.ValidatePropertyWrite(Property, coerced, UiPropertyValueSource.Animation);
     }
 
     private void OnMotionCompleted(object? sender, MotionCompletedEventArgs args)

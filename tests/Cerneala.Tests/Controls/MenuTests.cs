@@ -516,6 +516,38 @@ public sealed class MenuTests
         Assert.Empty(menu.Session.OpenPath);
     }
 
+    // Clearing a realized menu item is not presenting an item, so its header ItemTemplate does not run with a null
+    // item (#535).
+    [Theory]
+    [InlineData(nameof(Menu.ItemsSource))]
+    [InlineData(nameof(Menu.ItemTemplate))]
+    public void ReplacingItemsSourceOrItemTemplateDoesNotRunTheHeaderTemplateWithoutItsItem(string change)
+    {
+        List<string?> calls = [];
+        ContentTemplate<string> HeaderTemplate(string prefix) => new("header", key: null, priority: 0, context =>
+        {
+            calls.Add(context.Data);
+            return new TextBlock { Text = prefix + context.Data };
+        });
+        Menu menu = new() { ItemTemplate = HeaderTemplate(""), ItemsSource = new[] { "Open", "Save" } };
+        UIRoot root = Attach(menu);
+        Assert.Equal(["Open", "Save"], calls);
+
+        calls.Clear();
+        if (change == nameof(Menu.ItemsSource))
+        {
+            menu.ItemsSource = new[] { "Close" };
+        }
+        else
+        {
+            menu.ItemTemplate = HeaderTemplate("x");
+        }
+
+        root.ProcessFrame();
+
+        Assert.Equal(change == nameof(Menu.ItemsSource) ? ["Close"] : ["Open", "Save"], calls);
+    }
+
     [Fact]
     public void MenuItemCanMoveBetweenRootsWithoutKeepingTheOldSession()
     {

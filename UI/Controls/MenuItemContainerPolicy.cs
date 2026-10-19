@@ -31,11 +31,7 @@ internal static class MenuItemContainerPolicy
 
         if (container.Header is ContentPresenter presenter)
         {
-            presenter.Content = null;
-            presenter.ContentTemplate = null;
-            presenter.ContentTemplateKey = null;
-            presenter.LocalTemplateRegistry = null;
-            presenter.ContentIndex = -1;
+            presenter.PrepareItemPresentation(null, null, null, null, -1);
         }
 
         container.Header = null;

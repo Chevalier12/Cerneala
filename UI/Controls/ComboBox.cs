@@ -202,6 +202,9 @@ public class ComboBox : Selector
 
     protected override Type DefaultContainerType => typeof(ComboBoxItem);
 
+    // The non-editable field takes its press, as the WPF template's ToggleButton does (see OnMouseUp).
+    internal override bool OwnsPointerClick => !IsEditable && IsEnabled;
+
     internal override int ViewItemCount => filteredSourceIndices?.Count ?? base.ViewItemCount;
 
     internal override int GetSourceIndexForViewIndex(int viewIndex)
@@ -265,11 +268,7 @@ public class ComboBox : Selector
         if (container is ComboBoxItem { Content: ContentPresenter presenter } &&
             !ReferenceEquals(container, ItemContainerGenerator.GetItem(container)))
         {
-            presenter.Content = null;
-            presenter.ContentTemplate = null;
-            presenter.ContentTemplateKey = null;
-            presenter.LocalTemplateRegistry = null;
-            presenter.ContentIndex = -1;
+            presenter.PrepareItemPresentation(null, null, null, null, -1);
         }
 
         base.ClearItemContainer(container);
@@ -855,15 +854,8 @@ public class ComboBox : Selector
 
     // The overlay is already projected or withdrawn, so the event is raised even when starting or canceling the
     // selection transaction rethrows a re-preparation failure. The failure propagates after the event.
-    // Opened and Closed of an overlay inside the drop-down bubble through the drop-down overlay; only its own
-    // projection counts.
     private void OnOverlayOpened(UiElementId _, RoutedEventArgs args)
     {
-        if (!ReferenceEquals(args.OriginalSource, dropDownOverlay))
-        {
-            return;
-        }
-
         ResetDropDownVirtualization();
         try
         {
@@ -880,11 +872,6 @@ public class ComboBox : Selector
 
     private void OnOverlayClosed(UiElementId _, RoutedEventArgs args)
     {
-        if (!ReferenceEquals(args.OriginalSource, dropDownOverlay))
-        {
-            return;
-        }
-
         try
         {
             if (IsDropDownOpen)
@@ -969,11 +956,15 @@ public class ComboBox : Selector
     // input bridge resolves the click to it, and a pointer drag source, such as a TextBox or a Thumb there. The
     // projected list is not in the field's visual subtree. As the WPF ToggleButton handles the field's click, the
     // toggle marks the MouseUp handled, so an ancestor command source, such as a Button whose Content is this
-    // ComboBox, does not also click or run its command.
+    // ComboBox, does not also click or run its command. Inside such a command source the input bridge resolves the
+    // press and the release to that command source, so the field also checks that the press hit the same element as
+    // the release: a press on the outer Button followed by a release on the field clicks only the outer Button, as
+    // the WPF ToggleButton never sees that press (#468).
     private void OnMouseUp(UiElementId _, RoutedEventArgs args)
     {
         if (IsEditable || !IsEnabled ||
-            args is not MouseButtonEventArgs { ChangedButton: InputMouseButton.Left, ClickCount: > 0 } ||
+            args is not MouseButtonEventArgs { ChangedButton: InputMouseButton.Left, ClickCount: > 0 } mouseArgs ||
+            !Equals(mouseArgs.PressOriginalSource, args.OriginalSource) ||
             !ReferenceEquals(FindClickOwner(this, args.OriginalSource), this) ||
             IsInPointerDragSource(args.OriginalSource))
         {

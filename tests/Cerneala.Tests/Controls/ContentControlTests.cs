@@ -1,4 +1,5 @@
 using Cerneala.UI.Controls;
+using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
 
@@ -152,6 +153,222 @@ public sealed class ContentControlTests
     }
 
     [Fact]
+    public void ClearValueRejectsTemplatedLowerSourceElementContentThatGotAnotherParent()
+    {
+        UIRoot root = new(300, 200);
+        ContentControl control = new()
+        {
+            ComponentTemplate = new ComponentTemplate<ContentControl>("test", context =>
+                new ContentPresenter { Content = context.Owner.Content }),
+            Content = "text"
+        };
+        Border holder = new();
+        Border revealed = new() { Width = 10, Height = 10 };
+        root.VisualChildren.Add(control);
+        root.ProcessFrame();
+
+        control.SetValue(ContentControl.ContentProperty, (object?)revealed, UiPropertyValueSource.AspectBase);
+        holder.Child = revealed;
+        root.VisualChildren.Add(holder);
+
+        InvalidOperationException rejected = Assert.Throws<InvalidOperationException>(
+            () => control.ClearValue(ContentControl.ContentProperty));
+
+        Assert.Equal("Element must be removed from its current parent before reparenting.", rejected.Message);
+        Assert.Equal("text", control.Content);
+        Assert.Equal(UiPropertyValueSource.Local, control.GetValueSource(ContentControl.ContentProperty));
+        Assert.Same(holder, revealed.LogicalParent);
+        root.ProcessFrame();
+        Assert.Same(holder, revealed.VisualParent);
+    }
+
+    [Fact]
+    public void SetValueStoresShadowedTemplatedElementContentThatHasAnotherParentWithoutChangingContent()
+    {
+        ContentControl control = new()
+        {
+            ComponentTemplate = new ComponentTemplate<ContentControl>("test", context =>
+                new ContentPresenter { Content = context.Owner.Content }),
+            Content = "text"
+        };
+        UIElement parented = new();
+        UIElement parent = new();
+        parent.LogicalChildren.Add(parented);
+        parent.VisualChildren.Add(parented);
+
+        control.SetValue(ContentControl.ContentProperty, (object?)parented, UiPropertyValueSource.MarkupConditional);
+
+        Assert.Equal("text", control.Content);
+        Assert.Equal(UiPropertyValueSource.Local, control.GetValueSource(ContentControl.ContentProperty));
+        Assert.Same(parented, control.GetSourceValue(ContentControl.ContentProperty, UiPropertyValueSource.MarkupConditional));
+        Assert.Same(parent, parented.LogicalParent);
+        Assert.Same(parent, parented.VisualParent);
+    }
+
+    [Fact]
+    public void SetValueHostsUntemplatedElementContentLikeTheContentSetter()
+    {
+        ContentControl control = new();
+        UIElement first = new();
+        UIElement second = new();
+
+        control.SetValue(ContentControl.ContentProperty, (object?)first);
+
+        Assert.Same(control, first.LogicalParent);
+        Assert.Same(control, first.VisualParent);
+
+        control.SetValue(ContentControl.ContentProperty, (object?)second);
+
+        Assert.Null(first.LogicalParent);
+        Assert.Null(first.VisualParent);
+        Assert.Same(control, second.LogicalParent);
+        Assert.Same(control, second.VisualParent);
+
+        control.ClearValue(ContentControl.ContentProperty);
+
+        Assert.Null(control.Content);
+        Assert.Null(second.LogicalParent);
+        Assert.Null(second.VisualParent);
+        Assert.Empty(control.LogicalChildren);
+        Assert.Empty(control.VisualChildren);
+    }
+
+    [Fact]
+    public void ClearingAValueSourceHostsTheElementContentOfTheNextSource()
+    {
+        ContentControl control = new();
+        UIElement conditional = new();
+        UIElement local = new();
+        control.SetValue(ContentControl.ContentProperty, (object?)conditional, UiPropertyValueSource.MarkupConditional);
+
+        control.SetValue(ContentControl.ContentProperty, (object?)local);
+
+        Assert.Same(local, control.Content);
+        Assert.Same(control, local.VisualParent);
+        Assert.Null(conditional.LogicalParent);
+        Assert.Null(conditional.VisualParent);
+
+        control.ClearValue(ContentControl.ContentProperty);
+
+        Assert.Same(conditional, control.Content);
+        Assert.Same(control, conditional.LogicalParent);
+        Assert.Same(control, conditional.VisualParent);
+        Assert.Null(local.LogicalParent);
+        Assert.Null(local.VisualParent);
+    }
+
+    [Fact]
+    public void SetValueRejectsUntemplatedElementContentThatHasAnotherParentLikeTheContentSetter()
+    {
+        ContentControl control = new();
+        UIElement oldChild = new();
+        UIElement parented = new();
+        UIElement parent = new();
+        control.Content = oldChild;
+        parent.LogicalChildren.Add(parented);
+
+        Assert.Throws<InvalidOperationException>(() => control.Content = parented);
+        InvalidOperationException rejected = Assert.Throws<InvalidOperationException>(
+            () => control.SetValue(ContentControl.ContentProperty, (object?)parented));
+
+        Assert.Equal("Element must be removed from its current parent before reparenting.", rejected.Message);
+        Assert.Same(oldChild, control.Content);
+        Assert.Same(control, oldChild.LogicalParent);
+        Assert.Same(control, oldChild.VisualParent);
+        Assert.Same(parent, parented.LogicalParent);
+        Assert.DoesNotContain(parented, control.LogicalChildren);
+    }
+
+    [Fact]
+    public void ContentSetterWhoseElementAttachThrowsRestoresThePreviousOwnership()
+    {
+        UIRoot root = new(200, 200);
+        ContentControl control = new();
+        root.VisualChildren.Add(control);
+        root.ProcessFrame();
+        Border oldChild = new();
+        control.Content = oldChild;
+        ThrowingAttachElement failed = new();
+
+        Assert.Throws<InvalidOperationException>(() => control.Content = failed);
+
+        AssertPreviousOwnershipRestored(control, oldChild, failed);
+    }
+
+    [Theory]
+    [InlineData(UiPropertyValueSource.Local)]
+    [InlineData(UiPropertyValueSource.MarkupConditional)]
+    public void SetValueWhoseElementAttachThrowsRestoresThePreviousContentAndOwnership(UiPropertyValueSource source)
+    {
+        UIRoot root = new(200, 200);
+        ContentControl control = new();
+        root.VisualChildren.Add(control);
+        root.ProcessFrame();
+        Border oldChild = new();
+        control.SetValue(ContentControl.ContentProperty, (object?)oldChild, source);
+        ThrowingAttachElement failed = new();
+
+        Assert.Throws<InvalidOperationException>(
+            () => control.SetValue(ContentControl.ContentProperty, (object?)failed, source));
+
+        AssertPreviousOwnershipRestored(control, oldChild, failed);
+        Assert.Equal(source, control.GetValueSource(ContentControl.ContentProperty));
+    }
+
+    [Fact]
+    public void ClearValueWhoseRevealedElementAttachThrowsRestoresThePreviousContentAndOwnership()
+    {
+        UIRoot root = new(200, 200);
+        ContentControl control = new();
+        root.VisualChildren.Add(control);
+        root.ProcessFrame();
+        Border oldChild = new();
+        control.Content = oldChild;
+        ThrowingAttachElement failed = new();
+        control.SetValue(ContentControl.ContentProperty, (object?)failed, UiPropertyValueSource.MarkupConditional);
+
+        Assert.Throws<InvalidOperationException>(() => control.ClearValue(ContentControl.ContentProperty));
+
+        AssertPreviousOwnershipRestored(control, oldChild, failed);
+        Assert.Equal(UiPropertyValueSource.Local, control.GetValueSource(ContentControl.ContentProperty));
+    }
+
+    [Fact]
+    public void FailedRestoreOfThePreviousElementRethrowsTheFirstFailureWithoutRestoringAgain()
+    {
+        UIRoot root = new(200, 200);
+        ContentControl control = new();
+        root.VisualChildren.Add(control);
+        root.ProcessFrame();
+        ThrowingAttachElement oldChild = new() { Throws = false };
+        control.Content = oldChild;
+        oldChild.Throws = true;
+        ThrowingAttachElement failed = new();
+
+        InvalidOperationException failure = Assert.Throws<InvalidOperationException>(() => control.Content = failed);
+
+        Assert.Equal("attach failed", failure.Message);
+        Assert.Same(oldChild, control.Content);
+        Assert.Empty(control.LogicalChildren);
+        Assert.Empty(control.VisualChildren);
+        Assert.Null(failed.LogicalParent);
+        Assert.Null(failed.VisualParent);
+        Assert.Null(oldChild.LogicalParent);
+        Assert.Null(oldChild.VisualParent);
+    }
+
+    private static void AssertPreviousOwnershipRestored(ContentControl control, UIElement oldChild, UIElement failed)
+    {
+        Assert.Same(oldChild, control.Content);
+        Assert.Same(control, oldChild.LogicalParent);
+        Assert.Same(control, oldChild.VisualParent);
+        Assert.Equal([oldChild], control.LogicalChildren);
+        Assert.Equal([oldChild], control.VisualChildren);
+        Assert.Null(failed.LogicalParent);
+        Assert.Null(failed.VisualParent);
+    }
+
+    [Fact]
     public void MeasuresAndArrangesContentInsideInsets()
     {
         ContentControl control = new()
@@ -206,6 +423,20 @@ public sealed class ContentControlTests
         protected override void OnDetached()
         {
             DetachedCount++;
+        }
+    }
+
+    private sealed class ThrowingAttachElement : Border
+    {
+        public bool Throws { get; set; } = true;
+
+        protected override void OnAttached()
+        {
+            base.OnAttached();
+            if (Throws)
+            {
+                throw new InvalidOperationException("attach failed");
+            }
         }
     }
 }

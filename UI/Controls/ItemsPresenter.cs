@@ -806,6 +806,8 @@ public class ItemsPresenter : Control
     // The panel inherits from this presenter, and adding it queued this presenter for that work, which this
     // measure removes from the queue. So the propagation starts at this presenter, whose only visual child is
     // the panel, and also writes the panel's own inherited values.
+    // Like the frame's Aspect phase, only elements with queued Aspect work are processed, for example the rows
+    // that a refresh added; a row whose Aspect inputs did not change keeps its result.
     private void ProcessInheritedAndAspectForSubtree(UIElement? element)
     {
         if (element?.Root is not UIRoot root)
@@ -816,6 +818,11 @@ public class ItemsPresenter : Control
         root.InheritedPropertyPropagator.PropagateFrom(this);
         foreach (UIElement current in ElementTreeWalker.PreOrder(element, ElementChildRole.Visual))
         {
+            if (!current.DirtyState.Has(InvalidationFlags.Aspect) && !root.AspectQueue.Contains(current))
+            {
+                continue;
+            }
+
             root.AspectProcessor.Process(current);
             root.AspectQueue.Remove(current);
             current.DirtyState.Clear(InvalidationFlags.Aspect);

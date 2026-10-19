@@ -140,6 +140,17 @@ The code sets `first.Visibility = Visibility.Collapsed;`.
 - `UIElement.Arrange` reuses its result when the final rectangle and
   `LayoutVersion` equal the last arrange and the desired sizes it read are
   unchanged (`UIElement.HasValidArrangeCache`).
+- A `UIElement.Measure` that runs (does not return a cached size) makes the
+  element's own arrange cache invalid, as WPF's `Measure` calls
+  `InvalidateArrange`, also when its `DesiredSize` does not change: its
+  `ArrangeCore` can read measure state other than desired sizes. For example,
+  a `Grid` with two `*` rows holding children 100 wide and 60 and 20 high shares a measured
+  height of 80 by weight (40 and 40), while measured unbounded each row keeps
+  its content height (60 and 20). Both measures give a `DesiredSize` of
+  100 x 80; after the unbounded measure, an arrange in the same slot
+  `0, 0, 100, 80` runs `ArrangeCore` and places the second child at Y 60
+  (#516). The visual parent's arrange cache still depends only on the
+  element's desired size.
 - An arrange reads desired sizes: the element aligns itself in its slot by its
   own, and it places its visual children by theirs. When an arrange starts, it
   records its own `DesiredSize` and starts a new count of children whose
@@ -151,11 +162,15 @@ The code sets `first.Visibility = Visibility.Collapsed;`.
   its queue entry as already arranged. This also covers a measure from inside
   the parent's `MeasureCore`, which the frame's desired-size step does not see.
   A measure that gives the same desired size, or a later measure that gives
-  the old value back, keeps both caches. For example, the overlay layer
+  the old value back, keeps the parent's cache, and the element's own cache
+  when that measure returns a cached size. For example, the overlay layer
   measures an `Overlay`'s content unbounded and then clamped to the space
-  beside its target: content that desires 50 x 300 with 80 px below the target
-  desires 50 x 300 and then 50 x 80 again, in the layer's measure and in its
-  arrange, and is not arranged again when its slot stays `20, 120, 50, 80`.
+  beside its target: content without visual children that desires 50 x 300
+  with 80 px below the target desires 50 x 300 and then 50 x 80 again in the
+  layer's measure. Its measures return cached sizes, so it
+  is not arranged again when its slot stays `20, 120, 50, 80`. The
+  `ContentPresenter` around it has a child and keeps only its last
+  constraint, so its measures run, and it is arranged again.
 - `UIElement.SetDesiredSize` also queues the element and its visual parent as
   `Required` arrange work when the element is attached and its `DesiredSize`
   changes. Only these two caches depend on the changed value; the ancestors
@@ -171,9 +186,12 @@ The code sets `first.Visibility = Visibility.Collapsed;`.
   `LayoutManager.Arrange` skip that cache: every request for the element's own
   arrange also invalidates its arrange cache. For example, the layer of an open
   `Overlay` whose `ScrollViewer` (500 px of content) gets the 80 px below its
-  target reuses its arrange in the second frame; an `ArrangeCore` there would
-  measure the `ScrollViewer` unbounded and clamped again, and the scroll bar it
-  hides and shows would queue measure work for a third frame (#514). When the
+  target is measured again in the second frame, so its `ArrangeCore` runs. As a
+  WPF `ArrangeOverride` uses the measure results, that arrange reuses the
+  placement the layer's measure computed while the viewport, the target bounds
+  and the content's desired size are unchanged, and does not measure the
+  `ScrollViewer` again; measuring it there, unbounded and clamped, would hide
+  and show its scroll bar and queue measure work for a third frame (#514). When the
   measure runs during the arrange phase, the entry is not in that phase's
   snapshot and the next frame processes it. A measure that gives the same
   desired size queues nothing.

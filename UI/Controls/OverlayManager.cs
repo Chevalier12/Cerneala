@@ -240,6 +240,7 @@ internal sealed class OverlayManager
     {
         private readonly UIRoot root;
         private readonly Dictionary<ContentPresenter, Overlay> overlays = new(ReferenceEqualityComparer.Instance);
+        private readonly Dictionary<ContentPresenter, MeasuredPlacement> measuredPlacements = new(ReferenceEqualityComparer.Instance);
 
         public OverlayLayer(UIRoot root)
         {
@@ -259,6 +260,7 @@ internal sealed class OverlayManager
             ContentPresenter presenter = overlay.ProjectedPresenter;
             VisualChildren.Remove(presenter);
             overlays.Remove(presenter);
+            measuredPlacements.Remove(presenter);
             InvalidatePlacement();
         }
 
@@ -277,25 +279,47 @@ internal sealed class OverlayManager
             LayoutSize viewport = ViewportSize(context.AvailableSize);
             foreach (UIElement child in VisualChildren)
             {
-                Overlay overlay = overlays[(ContentPresenter)child];
-                MeasureOverlay(overlay, viewport, context.Rounding);
+                ContentPresenter presenter = (ContentPresenter)child;
+                Overlay overlay = overlays[presenter];
+                LayoutRect targetBounds = overlay.EffectivePlacementTarget.ArrangedBounds;
+                LayoutRect rect = MeasureOverlay(overlay, viewport, context.Rounding);
+                measuredPlacements[presenter] = new MeasuredPlacement(viewport, targetBounds, presenter.DesiredSize, rect);
             }
 
             return viewport;
         }
 
+        // As a WPF ArrangeOverride uses the measure results, the arrange reuses the placement that the measure computed
+        // while its inputs are unchanged, and measures the content again only when the viewport, the target bounds, or
+        // the content's desired size changed since then, for example when the target was arranged after the measure.
+        // Measuring the content in the arrange phase would queue its measure for the next frame whenever that measure
+        // changes the content, such as a ScrollViewer whose scroll bar the unbounded measure hides and the clamped
+        // measure shows again (#514).
         protected override LayoutRect ArrangeCore(ArrangeContext context)
         {
             LayoutSize viewport = ViewportSize(context.FinalRect.Size);
             foreach (UIElement child in VisualChildren)
             {
-                Overlay overlay = overlays[(ContentPresenter)child];
-                LayoutRect rect = MeasureOverlay(overlay, viewport, context.Rounding);
+                ContentPresenter presenter = (ContentPresenter)child;
+                Overlay overlay = overlays[presenter];
+                LayoutRect rect = measuredPlacements.TryGetValue(presenter, out MeasuredPlacement measured) &&
+                    measured.Viewport == viewport &&
+                    measured.TargetBounds == overlay.EffectivePlacementTarget.ArrangedBounds &&
+                    measured.DesiredSize == presenter.DesiredSize
+                        ? measured.Rect
+                        : MeasureOverlay(overlay, viewport, context.Rounding);
                 child.Arrange(new ArrangeContext(rect, context.Rounding));
             }
 
             return context.FinalRect;
         }
+
+        // The placement that MeasureCore computed for an overlay, with the inputs it was computed from.
+        private readonly record struct MeasuredPlacement(
+            LayoutSize Viewport,
+            LayoutRect TargetBounds,
+            LayoutSize DesiredSize,
+            LayoutRect Rect);
 
         private LayoutRect MeasureOverlay(Overlay overlay, LayoutSize viewport, LayoutRounding rounding)
         {

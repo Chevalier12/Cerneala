@@ -9,16 +9,18 @@ public sealed class TextInputBridge
         ArgumentNullException.ThrowIfNull(routeMap);
 
         // Handlers can move focus or detach the focused element, so every text event
-        // resolves its target from the focus at the moment it is raised.
+        // resolves its target from the focus at the moment it is raised. An element that
+        // a handler attached and focused after routeMap was built is routed over its
+        // root's current route map, as key events are.
         foreach (TextInputSnapshotEvent textInputEvent in textInputEvents)
         {
-            if (!focusManager.TryGetKeyboardTarget(routeMap, out _, out UiElementId focusedId))
+            if (!focusManager.TryGetKeyboardTarget(routeMap, out _, out UiElementId focusedId, out ElementInputRouteMap targetMap))
             {
                 continue;
             }
 
             RoutedEventRouter.RaisePair(
-                routeMap.InputTree,
+                targetMap.InputTree,
                 focusedId,
                 new TextCompositionEventArgs(InputEvents.PreviewTextInputEvent, focusedId, textInputEvent.Text),
                 new TextCompositionEventArgs(InputEvents.TextInputEvent, focusedId, textInputEvent.Text));

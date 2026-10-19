@@ -89,7 +89,41 @@ public sealed class UiPropertyStore
         return frameworkDefaults.ContainsKey(property);
     }
 
-    private (object? Value, UiPropertyValueSource Source) GetEffectiveValue(UiProperty property)
+    // True when a value written at source would be the effective value: no source before it in EffectiveOrder holds a
+    // value. For Default (a framework default) that means no source holds a value at all.
+    internal bool IsEffectiveForWrite(UiProperty property, UiPropertyValueSource source)
+    {
+        ArgumentNullException.ThrowIfNull(property);
+        if (!values.TryGetValue(property, out Dictionary<UiPropertyValueSource, object?>? propertyValues))
+        {
+            return true;
+        }
+
+        foreach (UiPropertyValueSource candidate in EffectiveOrder)
+        {
+            if (candidate == source)
+            {
+                return true;
+            }
+
+            if (propertyValues.ContainsKey(candidate))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    // The effective value that ClearValue(property, source) would leave, without changing the store.
+    internal object? GetValueAfterClear(UiProperty property, UiPropertyValueSource source)
+    {
+        ValidateSource(source);
+        return GetEffectiveValue(property, source).Value;
+    }
+
+    private (object? Value, UiPropertyValueSource Source) GetEffectiveValue(
+        UiProperty property, UiPropertyValueSource? ignoredSource = null)
     {
         ArgumentNullException.ThrowIfNull(property);
 
@@ -97,7 +131,7 @@ public sealed class UiPropertyStore
         {
             foreach (UiPropertyValueSource source in EffectiveOrder)
             {
-                if (propertyValues.TryGetValue(source, out object? value))
+                if (source != ignoredSource && propertyValues.TryGetValue(source, out object? value))
                 {
                     return (value, source);
                 }

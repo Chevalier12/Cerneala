@@ -91,15 +91,8 @@ public class ToolTip : Control
         }
     }
 
-    // Opened and Closed of an overlay inside the tooltip content bubble through the tooltip overlay; only its own
-    // projection counts.
     private void OnOverlayOpened(UiElementId _, RoutedEventArgs args)
     {
-        if (!ReferenceEquals(args.OriginalSource, overlay))
-        {
-            return;
-        }
-
         if (!IsOpen)
         {
             SetValue(IsOpenProperty, true);
@@ -110,11 +103,6 @@ public class ToolTip : Control
 
     private void OnOverlayClosed(UiElementId _, RoutedEventArgs args)
     {
-        if (!ReferenceEquals(args.OriginalSource, overlay))
-        {
-            return;
-        }
-
         if (IsOpen)
         {
             SetValue(IsOpenProperty, false);

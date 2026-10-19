@@ -2,6 +2,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.Reflection;
 using Cerneala.Drawing;
+using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
@@ -12,6 +13,7 @@ using Cerneala.UI.Platform;
 using Microsoft.Extensions.DependencyInjection;
 using Cerneala.UI.Resources;
 using Cerneala.UI.Servo;
+using Cerneala.UI.Text;
 using ServoApi = Cerneala.UI.Servo.Servo;
 
 namespace Cerneala.Tests.UI.Hosting;
@@ -1642,6 +1644,184 @@ public sealed class WindowRuntimeTests : IDisposable
     }
 
     [Fact]
+    public void DisablingAnOwnerDuringATextBoxPressReleasesTheSelectionCaptureBeforeTheDialogCloses()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        TextBox editor = new() { Text = "ABCDEFGHIJKLMNOPQRSTUVWXYZ", Width = 300, Height = 40 };
+        Button ok = new() { Content = "OK", Width = 120, Height = 40 };
+        StackPanel panel = new();
+        panel.VisualChildren.Add(editor);
+        panel.VisualChildren.Add(ok);
+        Window owner = new() { Content = panel, Width = 400, Height = 200 };
+        int okClicks = 0;
+        int lostCaptures = 0;
+        ok.Click += (_, _) => okClicks++;
+        editor.AddHandler(UIElement.LostMouseCaptureEvent, (_, _) => lostCaptures++, handledEventsToo: true);
+        Window? dialog = null;
+        editor.AddHandler(UIElement.PreviewMouseDownEvent, (_, _) =>
+        {
+            if (dialog is not null) return;
+            dialog = new Window { Owner = owner, Width = 220, Height = 120 };
+            _ = dialog.ShowDialogAsync();
+        }, handledEventsToo: true);
+        owner.Show();
+        FakePlatformWindow nativeOwner = platform.Windows[0];
+        PumpFrames(runtime, nativeOwner, 1);
+        LayoutRect editorBounds = editor.ArrangedBounds;
+        LayoutRect okBounds = ok.ArrangedBounds;
+        float editorY = editorBounds.Y + editorBounds.Height / 2;
+
+        nativeOwner.Input.MovePointer(editorBounds.X + 20, editorY);
+        PumpFrames(runtime, nativeOwner, 1);
+        nativeOwner.Input.SetButton(InputMouseButton.Left, down: true);
+        PumpFrames(runtime, nativeOwner, 1);
+
+        Assert.False(nativeOwner.Enabled);
+        TextSelection afterPress = editor.Selection;
+        Assert.Equal(afterPress.Anchor, afterPress.Active);
+        Assert.Equal(1, lostCaptures);
+
+        // The release is lost while the owner is disabled; the dialog then closes.
+        nativeOwner.Input.ForgetButton(InputMouseButton.Left);
+        dialog!.Close();
+        PumpFrames(runtime, nativeOwner, 1);
+
+        nativeOwner.Input.MovePointer(editorBounds.X + editorBounds.Width - 10, editorY);
+        PumpFrames(runtime, nativeOwner, 1);
+        Assert.Equal(afterPress, editor.Selection);
+
+        nativeOwner.Input.MovePointer(okBounds.X + okBounds.Width / 2, okBounds.Y + okBounds.Height / 2);
+        PumpFrames(runtime, nativeOwner, 1);
+        nativeOwner.Input.SetButton(InputMouseButton.Left, down: true);
+        PumpFrames(runtime, nativeOwner, 1);
+        nativeOwner.Input.SetButton(InputMouseButton.Left, down: false);
+        PumpFrames(runtime, nativeOwner, 1);
+
+        Assert.Equal(1, okClicks);
+        Assert.Equal(afterPress, editor.Selection);
+    }
+
+    [Fact]
+    public void DisablingAnOwnerDuringASliderThumbPressCancelsTheThumbDrag()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Slider slider = new() { Minimum = 0, Maximum = 100, Value = 50, Width = 300, Height = 30 };
+        Window owner = new() { Content = slider, Width = 400, Height = 200 };
+        owner.Show();
+        FakePlatformWindow nativeOwner = platform.Windows[0];
+        PumpFrames(runtime, nativeOwner, 1);
+        Thumb thumb = slider.Track.Thumb;
+        List<bool> dragCompletions = [];
+        thumb.DragCompleted += (_, args) => dragCompletions.Add(args.Canceled);
+        Window? dialog = null;
+        thumb.AddHandler(UIElement.PreviewMouseDownEvent, (_, _) =>
+        {
+            if (dialog is not null) return;
+            dialog = new Window { Owner = owner, Width = 220, Height = 120 };
+            _ = dialog.ShowDialogAsync();
+        }, handledEventsToo: true);
+        LayoutRect thumbBounds = thumb.ArrangedBounds;
+        float thumbY = thumbBounds.Y + thumbBounds.Height / 2;
+
+        nativeOwner.Input.MovePointer(thumbBounds.X + thumbBounds.Width / 2, thumbY);
+        PumpFrames(runtime, nativeOwner, 1);
+        nativeOwner.Input.SetButton(InputMouseButton.Left, down: true);
+        PumpFrames(runtime, nativeOwner, 1);
+
+        Assert.False(nativeOwner.Enabled);
+        Assert.False(thumb.IsDragging);
+        Assert.Equal([true], dragCompletions);
+
+        nativeOwner.Input.ForgetButton(InputMouseButton.Left);
+        dialog!.Close();
+        PumpFrames(runtime, nativeOwner, 1);
+        nativeOwner.Input.MovePointer(thumbBounds.X + thumbBounds.Width / 2 + 100, thumbY);
+        PumpFrames(runtime, nativeOwner, 1);
+
+        Assert.Equal(50, slider.Value);
+        Assert.False(thumb.IsDragging);
+    }
+
+    [Fact]
+    public void DisablingAnOwnerDuringAButtonPressCancelsThePressedStateAndTheClick()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Button button = new() { Content = "Open", Width = 120, Height = 40 };
+        Window owner = new() { Content = button, Width = 400, Height = 200 };
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+        Window? dialog = null;
+        button.AddHandler(UIElement.PreviewMouseDownEvent, (_, _) =>
+        {
+            if (dialog is not null) return;
+            dialog = new Window { Owner = owner, Width = 220, Height = 120 };
+            _ = dialog.ShowDialogAsync();
+        }, handledEventsToo: true);
+        owner.Show();
+        FakePlatformWindow nativeOwner = platform.Windows[0];
+        PumpFrames(runtime, nativeOwner, 1);
+        LayoutRect bounds = button.ArrangedBounds;
+
+        nativeOwner.Input.MovePointer(bounds.X + bounds.Width / 2, bounds.Y + bounds.Height / 2);
+        PumpFrames(runtime, nativeOwner, 1);
+        nativeOwner.Input.SetButton(InputMouseButton.Left, down: true);
+        PumpFrames(runtime, nativeOwner, 1);
+
+        Assert.False(nativeOwner.Enabled);
+        Assert.False(button.IsPressed);
+
+        nativeOwner.Input.ForgetButton(InputMouseButton.Left);
+        dialog!.Close();
+        PumpFrames(runtime, nativeOwner, 1);
+
+        Assert.False(button.IsPressed);
+        Assert.Equal(0, clicks);
+    }
+
+    [Fact]
+    public async Task CloseFinishesClosingTheWindowWhenContentDetachThrowsThenPropagatesTheFailure()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Window owner = new();
+        owner.Show();
+        owner.Activate();
+        ElementAspect aspect = new(
+            "ThrowsOnDetach",
+            typeof(UIElement),
+            [],
+            [],
+            _ => new CallbackLifetime(() => throw new InvalidOperationException("Dispose failed")));
+        Window dialog = new() { Content = new Border { Aspect = aspect } };
+        int closedCount = 0;
+        dialog.Closed += (_, _) => closedCount++;
+        Task<bool?> result = dialog.ShowDialogAsync();
+        FakePlatformWindow nativeDialog = platform.Windows[1];
+
+        InvalidOperationException failure = Assert.Throws<InvalidOperationException>(dialog.Close);
+
+        Assert.Equal("Dispose failed", failure.Message);
+        Assert.False(dialog.IsShown);
+        Assert.True(dialog.IsClosed);
+        Assert.Equal(1, closedCount);
+        Assert.Equal(1, nativeDialog.DestroyCount);
+        Assert.Equal(1, nativeDialog.Session.DisposeCount);
+        Assert.DoesNotContain(dialog, runtime.Windows);
+        Assert.True(platform.Windows[0].Enabled);
+        Assert.Empty(owner.OwnedWindows);
+        Assert.True(result.IsCompleted);
+        Assert.Null(await result);
+
+        dialog.Close();
+
+        Assert.Equal(1, closedCount);
+        Assert.Equal(1, nativeDialog.DestroyCount);
+    }
+
+    [Fact]
     public void ClosingCanCancelAndClosedWindowCannotBeShownAgain()
     {
         Install(new FakeWindowPlatform());
@@ -1946,7 +2126,9 @@ public sealed class WindowRuntimeTests : IDisposable
 
         public bool Enabled { get; private set; } = true;
 
-        public bool Destroyed { get; private set; }
+        public bool Destroyed => DestroyCount > 0;
+
+        public int DestroyCount { get; private set; }
 
         public int ApplyPropertiesCount { get; private set; }
 
@@ -1997,7 +2179,7 @@ public sealed class WindowRuntimeTests : IDisposable
 
         public void Destroy()
         {
-            Destroyed = true;
+            DestroyCount++;
         }
 
         public void Dispose()
@@ -2007,6 +2189,16 @@ public sealed class WindowRuntimeTests : IDisposable
     }
 
     private sealed record FakeWindowSurface(int Id) : IWindowSurface;
+
+    private sealed class CallbackLifetime(Action dispose) : IDisposable
+    {
+        private Action? dispose = dispose;
+
+        public void Dispose()
+        {
+            Interlocked.Exchange(ref dispose, null)?.Invoke();
+        }
+    }
 
     private sealed class MutableInputSource : IInputSource
     {
@@ -2033,6 +2225,13 @@ public sealed class WindowRuntimeTests : IDisposable
         public void SetButton(InputMouseButton button, bool down)
         {
             currentPointer = currentPointer.WithButton(button, down);
+        }
+
+        // A disabled native window drops held buttons without a release edge, as SdlInputSource does.
+        public void ForgetButton(InputMouseButton button)
+        {
+            currentPointer = currentPointer.WithButton(button, false);
+            previousPointer = previousPointer.WithButton(button, false);
         }
     }
 

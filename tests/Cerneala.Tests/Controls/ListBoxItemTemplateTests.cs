@@ -407,6 +407,75 @@ public sealed class ListBoxItemTemplateTests
         new ContentControl().Content = item;
     }
 
+    // A selection change prepares the realized row again in place, so the row takes the item out of the element its
+    // old template built before it hosts the item directly.
+    [Fact]
+    public void SelectingARowAfterATemplatePredicateStoppedMatchingItsUIElementItemHostsTheItemInTheRow()
+    {
+        HashSet<UIElement> wrapped = [];
+        Plain item = new();
+        Plain other = new();
+        wrapped.Add(item);
+        ListBox listBox = new();
+        listBox.Templates.Add(new ContentTemplate<Plain>("wrap", key: null, priority: 0,
+            context => new Wrapper(context.Data),
+            predicate: context => context.Data is Plain plain && wrapped.Contains(plain)));
+        listBox.ItemsSource = new UIElement[] { item };
+        UIRoot root = new(100, 100);
+        root.VisualChildren.Add(listBox);
+        root.ProcessFrame();
+        ListBoxItem row = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.IsType<Wrapper>(item.VisualParent);
+
+        wrapped.Remove(item);
+        listBox.SelectedIndex = 0;
+        root.ProcessFrame();
+
+        Assert.Same(row, listBox.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.True(row.IsSelected);
+        Assert.Same(row, item.VisualParent);
+        Assert.Same(row, item.LogicalParent);
+        Assert.Same(root, Ancestors(item).Last());
+        Assert.Empty(Descendants(row).OfType<Wrapper>());
+
+        listBox.ItemsSource = new UIElement[] { other };
+        root.ProcessFrame();
+
+        Assert.Null(item.VisualParent);
+        Assert.Null(item.LogicalParent);
+        new ContentControl().Content = item;
+    }
+
+    // An item that an element outside the row holds cannot be hosted by the row, and the failed attempt leaves no
+    // logical child behind.
+    [Fact]
+    public void RowThatCannotHostItsUIElementItemDirectlyKeepsNoLogicalChildForIt()
+    {
+        HashSet<UIElement> wrapped = [];
+        Plain item = new();
+        wrapped.Add(item);
+        ListBox listBox = new();
+        listBox.Templates.Add(new ContentTemplate<Plain>("wrap", key: null, priority: 0,
+            context => new Wrapper(context.Data),
+            predicate: context => context.Data is Plain plain && wrapped.Contains(plain)));
+        listBox.ItemsSource = new UIElement[] { item };
+        Wrapper elsewhere = new(null);
+        UIRoot root = new(100, 100);
+        root.VisualChildren.Add(listBox);
+        root.VisualChildren.Add(elsewhere);
+        root.ProcessFrame();
+        ListBoxItem row = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[0]);
+        item.VisualParent!.VisualChildren.Remove(item);
+        elsewhere.VisualChildren.Add(item);
+
+        wrapped.Remove(item);
+        Assert.Throws<InvalidOperationException>(() => listBox.SelectedIndex = 0);
+
+        Assert.DoesNotContain(item, row.LogicalChildren);
+        Assert.Null(item.LogicalParent);
+        Assert.Same(elsewhere, item.VisualParent);
+    }
+
     private static IEnumerable<UIElement> Ancestors(UIElement element)
     {
         for (UIElement? current = element.VisualParent; current is not null; current = current.VisualParent)

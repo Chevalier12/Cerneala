@@ -51,13 +51,13 @@ sealed class Tile : UIElement, IInputCommandSource
 
 ## Remarks
 
-The input system looks for the nearest element on the route from the target to the root that implements this interface. It calls `ExecuteCommand` in these cases:
+For pointer input, the input system looks for the nearest element on the route from the hit element to the root that implements this interface. For Enter and Space, only the element with keyboard focus counts, as WPF `ButtonBase` reacts to these keys only when it is the event's `OriginalSource`: when a `ComboBox` inside a `Button` has keyboard focus, Enter and Space do not click the `Button` and do not run its command. It calls `ExecuteCommand` in these cases:
 
 | Input | Condition |
 | --- | --- |
 | Left button released | The press and the release hit the same command source, so the click count is above 0. Neither the preview nor the bubble mouse-up events were handled. The element that received the mouse-up is the hit element or the command source. A `RepeatButton` is skipped here because it runs its command while pressed. |
-| Enter pressed | The key event was not handled. |
-| Space released | The key event was not handled, and the same command source received the Space press. |
+| Enter pressed | The command source has keyboard focus, and the key event was not handled. |
+| Space released | The command source has keyboard focus, the key event was not handled, and the same command source received the Space press. |
 | `RepeatButton` held | On each repeat tick. |
 
 For Enter and Space, an element that also implements `IInputActivatable` gets `Activate` first, then `ExecuteCommand`. For a button, `Activate` raises `Click`. On a pointer release, `ButtonBase` raises `Click` from its own `MouseUp` handler, and then the input system calls `ExecuteCommand`. `ExecuteCommand` itself does not raise `Click`.

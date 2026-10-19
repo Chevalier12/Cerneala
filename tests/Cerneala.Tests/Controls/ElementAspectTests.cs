@@ -246,6 +246,171 @@ public sealed class ElementAspectTests
         Assert.False(border.DirtyState.Has(InvalidationFlags.Aspect));
     }
 
+    [Fact]
+    public void ReplacingAnAspectWhosePropertyChangedHandlerThrowsFollowsTheNewAspectAndThenThrows()
+    {
+        UIRoot root = new();
+        Border border = new();
+        int oldAlive = 0;
+        int newCreated = 0;
+        ElementAspect oldAspect = new(
+            "Old",
+            typeof(UIElement),
+            [new ElementAspectValue(UIElement.OpacityProperty, 0.9f)],
+            [],
+            _ =>
+            {
+                oldAlive++;
+                return new CallbackLifetime(() => oldAlive--);
+            });
+        ElementAspect newAspect = new(
+            "New",
+            typeof(UIElement),
+            [new ElementAspectValue(UIElement.OpacityProperty, 0.5f)],
+            [],
+            _ =>
+            {
+                newCreated++;
+                return new CallbackLifetime(() => { });
+            });
+        border.Aspect = oldAspect;
+        root.VisualChildren.Add(border);
+        root.ProcessFrame();
+        bool armed = true;
+        border.PropertyChanged += (_, args) =>
+        {
+            if (armed && ReferenceEquals(args.Property, UIElement.AspectProperty))
+            {
+                throw new InvalidOperationException("Handler failed");
+            }
+        };
+
+        InvalidOperationException failure = Assert.Throws<InvalidOperationException>(() => border.Aspect = newAspect);
+        armed = false;
+        root.ProcessFrame();
+
+        Assert.Equal("Handler failed", failure.Message);
+        Assert.Same(newAspect, border.Aspect);
+        Assert.Equal(0, oldAlive);
+        Assert.Equal(1, newCreated);
+        Assert.Equal(0.5f, border.Opacity);
+
+        Assert.True(newAspect.SetValue(UIElement.OpacityProperty, 0.25f));
+        root.ProcessFrame();
+        Assert.Equal(0.25f, border.Opacity);
+
+        Assert.True(oldAspect.SetValue(UIElement.OpacityProperty, 0.8f));
+        Assert.False(border.DirtyState.Has(InvalidationFlags.Aspect));
+    }
+
+    [Fact]
+    public void AspectWhoseBehaviorFactoryThrowsIsStillFollowedAndCreatesItsLifetimeOnReattach()
+    {
+        UIRoot root = new();
+        Border border = new();
+        root.VisualChildren.Add(border);
+        root.ProcessFrame();
+        bool throwInFactory = true;
+        int created = 0;
+        ElementAspect aspect = new(
+            "Throwing",
+            typeof(UIElement),
+            [new ElementAspectValue(UIElement.OpacityProperty, 0.5f)],
+            [],
+            _ =>
+            {
+                if (throwInFactory)
+                {
+                    throw new InvalidOperationException("Factory failed");
+                }
+
+                created++;
+                return new CallbackLifetime(() => { });
+            });
+
+        InvalidOperationException failure = Assert.Throws<InvalidOperationException>(() => border.Aspect = aspect);
+        root.ProcessFrame();
+
+        Assert.Equal("Factory failed", failure.Message);
+        Assert.Same(aspect, border.Aspect);
+        Assert.Equal(0.5f, border.Opacity);
+
+        Assert.True(aspect.SetValue(UIElement.OpacityProperty, 0.4f));
+        root.ProcessFrame();
+        Assert.Equal(0.4f, border.Opacity);
+
+        throwInFactory = false;
+        root.VisualChildren.Remove(border);
+        root.VisualChildren.Add(border);
+        root.ProcessFrame();
+
+        Assert.Equal(1, created);
+        Assert.True(aspect.SetValue(UIElement.OpacityProperty, 0.25f));
+        root.ProcessFrame();
+        Assert.Equal(0.25f, border.Opacity);
+    }
+
+    [Fact]
+    public void OldLifetimeThatAssignsAnotherAspectOnDisposeLeavesTheElementFollowingOnlyThatAspect()
+    {
+        UIRoot root = new();
+        Border border = new();
+        List<string> events = [];
+        ElementAspect x = new(
+            "X",
+            typeof(UIElement),
+            [new ElementAspectValue(UIElement.OpacityProperty, 0.7f)],
+            [],
+            _ =>
+            {
+                events.Add("create X");
+                return new CallbackLifetime(() => events.Add("dispose X"));
+            });
+        ElementAspect newAspect = new(
+            "New",
+            typeof(UIElement),
+            [new ElementAspectValue(UIElement.OpacityProperty, 0.5f)],
+            [],
+            _ =>
+            {
+                events.Add("create New");
+                return new CallbackLifetime(() => events.Add("dispose New"));
+            });
+        bool reassign = true;
+        ElementAspect oldAspect = new(
+            "Old",
+            typeof(UIElement),
+            [],
+            [],
+            _ => new CallbackLifetime(() =>
+            {
+                events.Add("dispose Old");
+                if (reassign)
+                {
+                    reassign = false;
+                    border.Aspect = x;
+                }
+            }));
+        border.Aspect = oldAspect;
+        root.VisualChildren.Add(border);
+        root.ProcessFrame();
+
+        border.Aspect = newAspect;
+        root.ProcessFrame();
+
+        Assert.Same(x, border.Aspect);
+        Assert.Equal(0.7f, border.Opacity);
+        Assert.Equal(["dispose Old", "create X"], events);
+        Assert.False(border.DirtyState.Has(InvalidationFlags.Aspect));
+
+        Assert.True(newAspect.SetValue(UIElement.OpacityProperty, 0.3f));
+        Assert.False(border.DirtyState.Has(InvalidationFlags.Aspect));
+
+        Assert.True(x.SetValue(UIElement.OpacityProperty, 0.6f));
+        root.ProcessFrame();
+        Assert.Equal(0.6f, border.Opacity);
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
@@ -386,6 +551,105 @@ public sealed class ElementAspectTests
         root.VisualChildren.Remove(border);
 
         Assert.Equal(["create 1", "dispose 1", "create 2", "dispose 2"], events);
+    }
+
+    [Fact]
+    public void AspectAssignedByAnUnloadedHandlerGetsNoLifetimeUntilTheElementIsAttachedAgain()
+    {
+        UIRoot root = new();
+        Border border = new();
+        List<string> events = [];
+        int creates = 0;
+        ElementAspect other = new(
+            "Other",
+            typeof(UIElement),
+            [],
+            [],
+            _ =>
+            {
+                int create = ++creates;
+                events.Add($"create other {create}");
+                return new EveryCallLifetime(() => events.Add($"dispose other {create}"));
+            });
+        bool assign = true;
+        border.Unloaded += (_, _) =>
+        {
+            if (assign)
+            {
+                assign = false;
+                border.Aspect = other;
+            }
+        };
+        root.VisualChildren.Add(border);
+
+        root.VisualChildren.Remove(border);
+
+        Assert.Null(border.Root);
+        Assert.Same(other, border.Aspect);
+        Assert.Empty(events);
+
+        root.VisualChildren.Add(border);
+
+        Assert.Equal(["create other 1"], events);
+
+        root.VisualChildren.Remove(border);
+
+        Assert.Equal(["create other 1", "dispose other 1"], events);
+    }
+
+    [Fact]
+    public void AspectAssignedByALifetimeDisposedOnDetachGetsNoLifetimeUntilTheElementIsAttachedAgain()
+    {
+        UIRoot root = new();
+        Border border = new();
+        List<string> events = [];
+        int otherCreates = 0;
+        ElementAspect other = new(
+            "Other",
+            typeof(UIElement),
+            [],
+            [],
+            _ =>
+            {
+                int create = ++otherCreates;
+                events.Add($"create other {create}");
+                return new EveryCallLifetime(() => events.Add($"dispose other {create}"));
+            });
+        int firstDisposes = 0;
+        ElementAspect first = new(
+            "First",
+            typeof(UIElement),
+            [],
+            [],
+            _ =>
+            {
+                events.Add("create first");
+                // Records every Dispose call, so a second dispose of the lifetime shows up.
+                return new EveryCallLifetime(() =>
+                {
+                    events.Add($"dispose first {++firstDisposes}");
+                    if (firstDisposes == 1)
+                    {
+                        border.Aspect = other;
+                    }
+                });
+            });
+        border.Aspect = first;
+        root.VisualChildren.Add(border);
+
+        root.VisualChildren.Remove(border);
+
+        Assert.Null(border.Root);
+        Assert.Same(other, border.Aspect);
+        Assert.Equal(["create first", "dispose first 1"], events);
+
+        root.VisualChildren.Add(border);
+
+        Assert.Equal(["create first", "dispose first 1", "create other 1"], events);
+
+        root.VisualChildren.Remove(border);
+
+        Assert.Equal(["create first", "dispose first 1", "create other 1", "dispose other 1"], events);
     }
 
     private sealed class CallbackLifetime(Action dispose) : IDisposable

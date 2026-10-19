@@ -3,6 +3,7 @@ using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Items;
 using Cerneala.UI.Controls.Templates;
+using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
@@ -556,6 +557,37 @@ public sealed class TabControlTests
     }
 
     [Fact]
+    public void ContentAreaShowsTheTemplateElementOnTheNextFrameAfterTheSelectedTabTemplateThrewOnce()
+    {
+        UIRoot root = new(300, 200);
+        FixedElement a = new();
+        FixedElement b = new();
+        FixedElement shown = new();
+        bool fail = true;
+        ContentTemplate throwing = new(
+            "boom",
+            typeof(FixedElement),
+            null,
+            0,
+            _ => fail ? throw new InvalidOperationException("boom") : shown);
+        TabItem first = new() { Header = "H1", Content = a };
+        TabItem second = new() { Header = "H2", Content = b, ContentTemplate = throwing };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        root.VisualChildren.Add(tabControl);
+        tabControl.SelectedIndex = 0;
+        root.ProcessFrame();
+
+        tabControl.SelectedIndex = 1;
+        Assert.Throws<InvalidOperationException>(() => root.ProcessFrame());
+
+        fail = false;
+        root.ProcessFrame();
+
+        Assert.True(HasVisualAncestor(shown, tabControl), "the template's element is not under the TabControl");
+    }
+
+    [Fact]
     public void ElementItemOfARemovedGeneratedTabCanBeAddedToAnotherParent()
     {
         UIRoot root = new(300, 200);
@@ -656,6 +688,56 @@ public sealed class TabControlTests
     }
 
     [Fact]
+    public void ClearValueRejectsLowerSourceElementContentThatGotAnotherParent()
+    {
+        UIRoot root = new(300, 200);
+        FixedElement revealed = new();
+        TabItem first = new() { Header = "H1", Content = new FixedElement() };
+        TabItem second = new() { Header = "H2", Content = "text" };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        tabControl.SelectedIndex = 0;
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+
+        second.SetValue(ContentControl.ContentProperty, (object?)revealed, UiPropertyValueSource.AspectBase);
+        Border holder = new();
+        holder.Child = revealed;
+        root.VisualChildren.Add(holder);
+
+        InvalidOperationException rejected = Assert.Throws<InvalidOperationException>(
+            () => second.ClearValue(ContentControl.ContentProperty));
+        Assert.Equal("Element must be removed from its current parent before reparenting.", rejected.Message);
+        Assert.Equal("text", second.Content);
+        Assert.Equal(UiPropertyValueSource.Local, second.GetValueSource(ContentControl.ContentProperty));
+        Assert.Same(holder, revealed.LogicalParent);
+
+        tabControl.SelectedIndex = 1;
+        root.ProcessFrame();
+
+        Assert.Same(holder, revealed.VisualParent);
+    }
+
+    [Fact]
+    public void SetValueStoresShadowedElementContentThatHasAnotherParentWithoutChangingContent()
+    {
+        UIRoot root = new(300, 200);
+        Border holder = new();
+        FixedElement parented = new();
+        holder.Child = parented;
+        root.VisualChildren.Add(holder);
+        TabItem tab = new() { Content = "text" };
+
+        tab.SetValue(ContentControl.ContentProperty, (object?)parented, UiPropertyValueSource.AspectBase);
+
+        Assert.Equal("text", tab.Content);
+        Assert.Equal(UiPropertyValueSource.Local, tab.GetValueSource(ContentControl.ContentProperty));
+        Assert.Same(parented, tab.GetSourceValue(ContentControl.ContentProperty, UiPropertyValueSource.AspectBase));
+        Assert.Same(holder, parented.LogicalParent);
+        Assert.Same(holder, parented.VisualParent);
+    }
+
+    [Fact]
     public void ElementContentOfATabThatIsNotSelectedStaysOwnedWhenTheTabGetsAComponentTemplate()
     {
         UIRoot root = new(300, 200);
@@ -724,6 +806,64 @@ public sealed class TabControlTests
 
         Assert.Equal([2, 1, 0], loaded);
         Assert.Equal([1, 1, 0], unloaded);
+    }
+
+    [Fact]
+    public void HeldElementContentIsUnloadedWhenAnotherVisualParentRemovesIt()
+    {
+        UIRoot root = new(300, 200);
+        Border a = new() { Width = 50, Height = 20 };
+        Border b = new() { Width = 50, Height = 20 };
+        int loaded = 0;
+        int unloaded = 0;
+        b.Loaded += (_, _) => loaded++;
+        b.Unloaded += (_, _) => unloaded++;
+        TabItem first = new() { Header = "1", Content = a };
+        TabItem second = new() { Header = "2", Content = b };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        tabControl.SelectedIndex = 0;
+        Border host = new();
+        root.VisualChildren.Add(tabControl);
+        root.VisualChildren.Add(host);
+        root.ProcessFrame();
+
+        host.VisualChildren.Add(b);
+        root.ProcessFrame();
+        Assert.True(b.IsLoaded);
+        Assert.Equal(1, loaded);
+
+        host.VisualChildren.Remove(b);
+        root.ProcessFrame();
+
+        Assert.Null(b.VisualParent);
+        Assert.Same(second, b.LogicalParent);
+        Assert.False(b.IsLoaded);
+        Assert.Null(b.Root);
+        Assert.Equal(1, loaded);
+        Assert.Equal(1, unloaded);
+
+        tabControl.SelectedIndex = 1;
+        root.ProcessFrame();
+
+        Assert.True(b.IsLoaded);
+        Assert.Same(root, b.Root);
+        Assert.True(IsVisualDescendantOf(b, tabControl));
+        Assert.Equal(2, loaded);
+        Assert.Equal(1, unloaded);
+    }
+
+    private static bool IsVisualDescendantOf(UIElement element, UIElement ancestor)
+    {
+        for (UIElement? current = element.VisualParent; current is not null; current = current.VisualParent)
+        {
+            if (ReferenceEquals(current, ancestor))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     [Fact]

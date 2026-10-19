@@ -1,7 +1,10 @@
+using System.Runtime.CompilerServices;
+using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
+using Canvas = Cerneala.UI.Layout.Panels.Canvas;
 
 namespace Cerneala.Tests.Controls;
 
@@ -96,6 +99,59 @@ public sealed class ButtonKeyboardActivationTests
     }
 
     [Fact]
+    public void SpaceAndTabInOneFrameDoNotLeaveTheOldButtonPressed()
+    {
+        UIRoot root = RootWithTwoButtons(out ButtonBase first, out ButtonBase second);
+        ElementInputBridge bridge = FocusedBridge(root, first);
+        int firstClicks = 0;
+        int secondClicks = 0;
+        first.Click += (_, _) => firstClicks++;
+        second.Click += (_, _) => secondClicks++;
+
+        bridge.Dispatch(root, KeyboardFrame(previousKeys: [], currentKeys: [InputKey.Space, InputKey.Tab]));
+        Assert.Same(second, bridge.FocusManager.FocusedElement);
+        Assert.False(first.IsPressed);
+        Assert.False(second.IsPressed);
+
+        bridge.Dispatch(root, KeyboardFrame(previousKeys: [InputKey.Space, InputKey.Tab], currentKeys: [InputKey.Space]));
+        Assert.False(first.IsPressed);
+        Assert.False(second.IsPressed);
+
+        bridge.Dispatch(root, KeyReleaseFrame(InputKey.Space));
+        Assert.False(first.IsPressed);
+        Assert.False(second.IsPressed);
+        Assert.Equal(0, firstClicks);
+        Assert.Equal(0, secondClicks);
+    }
+
+    [Fact]
+    public void SpaceKeyDownHandlerThatMovesFocusDoesNotLeaveTheButtonPressed()
+    {
+        UIRoot root = RootWithTwoButtons(out ButtonBase first, out ButtonBase second);
+        ElementInputBridge bridge = FocusedBridge(root, first);
+        int firstClicks = 0;
+        int secondClicks = 0;
+        first.Click += (_, _) => firstClicks++;
+        second.Click += (_, _) => secondClicks++;
+        first.Handlers.AddHandler(InputEvents.KeyDownEvent, (_, _) =>
+            bridge.FocusManager.Focus(second, root.InputCache.EnsureCurrent(root)));
+
+        bridge.Dispatch(root, KeyPressFrame(InputKey.Space));
+        Assert.Same(second, bridge.FocusManager.FocusedElement);
+        Assert.False(first.IsPressed);
+        Assert.False(second.IsPressed);
+
+        bridge.Dispatch(root, KeyHeldFrame(InputKey.Space));
+        Assert.False(first.IsPressed);
+
+        bridge.Dispatch(root, KeyReleaseFrame(InputKey.Space));
+        Assert.False(first.IsPressed);
+        Assert.False(second.IsPressed);
+        Assert.Equal(0, firstClicks);
+        Assert.Equal(0, secondClicks);
+    }
+
+    [Fact]
     public void SpacePressedButtonStaysPressedWhileThePointerHoldsItAfterFocusMovesAway()
     {
         UIRoot root = RootWithTwoButtons(out ButtonBase first, out ButtonBase second);
@@ -118,6 +174,30 @@ public sealed class ButtonKeyboardActivationTests
 
         bridge.Dispatch(root, new InputFrame(pointerUp, pointerUp, space, noKeys, []));
         Assert.Equal(1, firstClicks);
+    }
+
+    [Fact]
+    public void SpacePressedButtonIsReleasedWithoutClickWhenFocusMovesAwayOnASharedFocusManager()
+    {
+        UIRoot root = RootWithTwoButtons(out ButtonBase first, out ButtonBase second);
+        FocusManager sharedFocusManager = new();
+        CreateDroppedBridge(sharedFocusManager);
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        ElementInputBridge bridge = new(focusManager: sharedFocusManager);
+        Assert.True(sharedFocusManager.Focus(first, root.InputCache.EnsureCurrent(root)));
+        int firstClicks = 0;
+        first.Click += (_, _) => firstClicks++;
+
+        bridge.Dispatch(root, KeyPressFrame(InputKey.Space));
+        Assert.True(first.IsPressed);
+
+        Assert.True(sharedFocusManager.Focus(second, root.InputCache.EnsureCurrent(root)));
+        Assert.False(first.IsPressed);
+
+        bridge.Dispatch(root, KeyReleaseFrame(InputKey.Space));
+        Assert.False(second.IsPressed);
+        Assert.Equal(0, firstClicks);
     }
 
     [Fact]
@@ -189,6 +269,126 @@ public sealed class ButtonKeyboardActivationTests
         Assert.Equal(0, executions);
     }
 
+    [Fact]
+    public void SpaceReleaseGoesToButtonCreatedAndFocusedByRepeatOfSameFrame()
+    {
+        UIRoot root = RootWithButton(out ButtonBase first);
+        ElementInputBridge bridge = FocusedBridge(root, first);
+        int executions = 0;
+        first.Command = new ActionCommand(_ => executions++);
+        ButtonBase? second = null;
+        List<string> log = [];
+        first.Handlers.AddHandler(InputEvents.KeyDownEvent, (_, args) =>
+        {
+            if (args is KeyEventArgs { Key: InputKey.Space, IsRepeat: true } && second is null)
+            {
+                second = new ButtonBase();
+                second.Handlers.AddHandler(InputEvents.KeyUpEvent, (_, _) => log.Add("second.KeyUp"), handledEventsToo: true);
+                root.VisualChildren.Add(second);
+                Assert.True(bridge.FocusManager.Focus(second, root.InputCache.EnsureCurrent(root)));
+            }
+        }, handledEventsToo: true);
+        first.Handlers.AddHandler(InputEvents.KeyUpEvent, (_, _) => log.Add("first.KeyUp"), handledEventsToo: true);
+        KeyboardSnapshot none = KeyboardSnapshot.FromDownKeys([]);
+        KeyboardSnapshot space = KeyboardSnapshot.FromDownKeys([InputKey.Space]);
+
+        bridge.Dispatch(root, KeyPressFrame(InputKey.Space));
+        bridge.Dispatch(root, new InputFrame(PointerSnapshot.Empty, PointerSnapshot.Empty, space, none, [], [InputKey.Space]));
+
+        Assert.Equal(["second.KeyUp"], log);
+        Assert.False(first.IsPressed);
+        Assert.Equal(0, executions);
+    }
+
+    [Fact]
+    public void EnterOnFocusedComboBoxInsideButtonDoesNotClickButton()
+    {
+        UIRoot root = RootWithComboBoxInsideButton(out ComboBox comboBox, out Button outer);
+        ElementInputBridge bridge = BridgeWithComboBoxFocusedByClicks(root, comboBox);
+        int clicks = 0;
+        int executions = 0;
+        outer.Click += (_, _) => clicks++;
+        outer.Command = new ActionCommand(_ => executions++);
+
+        bridge.Dispatch(root, KeyPressFrame(InputKey.Enter));
+        bridge.Dispatch(root, KeyReleaseFrame(InputKey.Enter));
+
+        Assert.True(comboBox.IsKeyboardFocused);
+        Assert.Equal(0, clicks);
+        Assert.Equal(0, executions);
+    }
+
+    [Fact]
+    public void SpaceOnFocusedComboBoxInsideButtonDoesNotPressOrClickButton()
+    {
+        UIRoot root = RootWithComboBoxInsideButton(out ComboBox comboBox, out Button outer);
+        ElementInputBridge bridge = BridgeWithComboBoxFocusedByClicks(root, comboBox);
+        int clicks = 0;
+        int executions = 0;
+        outer.Click += (_, _) => clicks++;
+        outer.Command = new ActionCommand(_ => executions++);
+
+        bridge.Dispatch(root, KeyPressFrame(InputKey.Space));
+        bool pressedWhileSpaceHeld = outer.IsPressed;
+        bridge.Dispatch(root, KeyReleaseFrame(InputKey.Space));
+
+        Assert.True(comboBox.IsKeyboardFocused);
+        Assert.False(pressedWhileSpaceHeld);
+        Assert.Equal(0, clicks);
+        Assert.Equal(0, executions);
+    }
+
+    private static UIRoot RootWithComboBoxInsideButton(out ComboBox comboBox, out Button outer)
+    {
+        UIRoot root = new(300, 200);
+        comboBox = new ComboBox { IsEditable = false, Width = 180, Height = 32 };
+        comboBox.SetItems(new[] { "one", "two", "three" });
+        comboBox.SelectedIndex = 0;
+        outer = new Button { Content = comboBox };
+        Canvas canvas = new();
+        Canvas.SetLeft(outer, 60);
+        canvas.VisualChildren.Add(outer);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        return root;
+    }
+
+    // Two clicks on the field: the first opens the drop-down, the second closes it. The ComboBox keeps the focus.
+    private static ElementInputBridge BridgeWithComboBoxFocusedByClicks(UIRoot root, ComboBox comboBox)
+    {
+        ElementInputBridge bridge = new();
+        LayoutRect field = comboBox.ArrangedBounds;
+        float x = field.X + (field.Width / 2);
+        float y = field.Y + (field.Height / 2);
+        for (int i = 0; i < 2; i++)
+        {
+            bridge.Dispatch(root, PointerFrame(x, y, previousDown: false, currentDown: true));
+            bridge.Dispatch(root, PointerFrame(x, y, previousDown: true, currentDown: false));
+            root.ProcessFrame();
+        }
+
+        Assert.True(comboBox.IsKeyboardFocused);
+        Assert.False(comboBox.IsDropDownOpen);
+        return bridge;
+    }
+
+    private static InputFrame PointerFrame(float x, float y, bool previousDown, bool currentDown)
+    {
+        PointerSnapshot previous = PointerSnapshot.Empty.WithPosition(x, y);
+        PointerSnapshot current = PointerSnapshot.Empty.WithPosition(x, y);
+        if (previousDown)
+        {
+            previous = previous.WithButton(InputMouseButton.Left, true);
+        }
+
+        if (currentDown)
+        {
+            current = current.WithButton(InputMouseButton.Left, true);
+        }
+
+        return new InputFrame(previous, current, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []);
+    }
+
     private static ElementInputBridge FocusedBridge(UIRoot root, ButtonBase button)
     {
         ElementInputBridge bridge = new();
@@ -197,6 +397,12 @@ public sealed class ButtonKeyboardActivationTests
         Assert.True(bridge.FocusManager.Focus(button, routeMap));
 
         return bridge;
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void CreateDroppedBridge(FocusManager sharedFocusManager)
+    {
+        _ = new ElementInputBridge(focusManager: sharedFocusManager);
     }
 
     private static UIRoot RootWithButton(out ButtonBase button)

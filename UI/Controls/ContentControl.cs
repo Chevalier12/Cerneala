@@ -14,6 +14,12 @@ public class ContentControl : Control
     // predicate reads state that changed.
     private UIElement? hostedContentElement;
 
+    // Set when OnPropertyChanged could not host the new Content element, so NotifyPropertyChange restores the old value.
+    private bool contentHostingFailed;
+
+    // True while NotifyPropertyChange stores the previous Content again after a failed hosting.
+    private bool restoringContent;
+
     public static readonly UiProperty<object?> ContentProperty = UiProperty<object?>.Register(
         nameof(Content),
         typeof(ContentControl),
@@ -28,51 +34,20 @@ public class ContentControl : Control
         set
         {
             object? oldContent = Content;
-            if (ContentEqualityComparer.Equals(oldContent, value))
+            try
             {
                 SetValue(ContentProperty, value);
-                return;
             }
-
-            ValidateCanOwnChild(this, value as UIElement);
-            UIElement? hostedOldContent = hostedContentElement;
-            bool hostsNewContent = HostsContentDirectly(value);
-            if (hostedOldContent is not null || hostsNewContent)
+            catch
             {
-                if (hostedOldContent is not null)
+                // Hosting failed after the new value was stored: storing the old value again hosts the old content.
+                if (!ContentEqualityComparer.Equals(Content, oldContent))
                 {
-                    RemoveContentElement(hostedOldContent);
-                }
-
-                try
-                {
-                    if (hostsNewContent)
-                    {
-                        AddContentElement(value);
-                    }
-
-                    SetValue(ContentProperty, value);
-                }
-                catch
-                {
-                    if (hostsNewContent)
-                    {
-                        RemoveContentElement(value);
-                    }
-
-                    if (hostedOldContent is not null)
-                    {
-                        AddContentElement(hostedOldContent);
-                    }
-
                     SetValue(ContentProperty, oldContent);
-                    throw;
                 }
 
-                return;
+                throw;
             }
-
-            SetValue(ContentProperty, value);
         }
     }
 
@@ -85,17 +60,74 @@ public class ContentControl : Control
     // True when this control is the direct parent of the given content when that content is a UIElement.
     internal virtual bool HostsContentDirectly(object? content) => ComponentTemplate is null && ComponentTemplateKey is null;
 
-    // Content that this control does not host is taken later by its other owner (a ContentPresenter, or the TabItem
-    // that holds it), so SetValue checks it here, before the store changes, as the Content setter does.
-    internal override void ValidatePropertyMutation(UiProperty property, object? value)
+    // Every write of Content that becomes the effective Content, the setter and SetValue with any value source, and a
+    // ClearValue that makes a lower source's element effective, checks the element here, before the store changes,
+    // whether this control hosts it (OnPropertyChanged) or another owner takes it later (a ContentPresenter, or the
+    // TabItem that holds it). A shadowed write does not change Content, so it is not checked, as in WPF, where the
+    // ownership work runs in the property-changed callback of ContentProperty.
+    internal override void ValidateEffectiveValueChange(UiProperty property, object? value)
     {
-        base.ValidatePropertyMutation(property, value);
+        base.ValidateEffectiveValueChange(property, value);
         if (ReferenceEquals(property, ContentProperty) &&
             value is UIElement element &&
-            !ReferenceEquals(element, Content) &&
-            !HostsContentDirectly(element))
+            !ReferenceEquals(element, Content))
         {
             ValidateCanOwnChild(this, element);
+        }
+    }
+
+    // A change of the effective Content whose new element could not be hosted, for example because its attach threw,
+    // restores the previous value at the value source that changed, which hosts the previous element again, and then
+    // rethrows. So a failed replacement restores the previous content ownership whatever wrote it: the setter, or
+    // SetValue and ClearValue with any value source.
+    internal override void NotifyPropertyChange(in UiPropertyChange change)
+    {
+        if (!ReferenceEquals(change.Args.Property, ContentProperty))
+        {
+            base.NotifyPropertyChange(change);
+            return;
+        }
+
+        contentHostingFailed = false;
+        try
+        {
+            base.NotifyPropertyChange(change);
+        }
+        catch when (contentHostingFailed && !restoringContent && change.MutatingSource != UiPropertyValueSource.Default)
+        {
+            // A restore that fails too, because the previous element cannot be hosted again either, is not restored
+            // again: that would swap the two values forever. The previous value stays stored, unhosted, and the first
+            // failure propagates.
+            contentHostingFailed = false;
+            restoringContent = true;
+            try
+            {
+                RestoreContentSource(change);
+            }
+            catch
+            {
+            }
+            finally
+            {
+                restoringContent = false;
+            }
+
+            throw;
+        }
+    }
+
+    // A write at the source became the effective value: the source held the old value when it was the old effective
+    // source, and held nothing otherwise. A clear of the source revealed a lower value: the source held the old value.
+    private void RestoreContentSource(in UiPropertyChange change)
+    {
+        UiPropertyValueSource source = change.MutatingSource;
+        if (change.Args.ValueSource == source && change.OldEffectiveSource != source)
+        {
+            ClearValueUntyped(ContentProperty, source);
+        }
+        else
+        {
+            SetValueUntyped(ContentProperty, change.OldSourceValue, source);
         }
     }
 
@@ -127,6 +159,28 @@ public class ContentControl : Control
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
+        // The effective Content changed through any path (the setter, SetValue or ClearValue with any value source),
+        // so the hosted element follows it, as WPF's ContentControl.OnContentChanged moves the logical child.
+        if (ReferenceEquals(args.Property, ContentProperty))
+        {
+            RemoveContentElement(hostedContentElement);
+            if (HostsContentDirectly(args.NewValue))
+            {
+                try
+                {
+                    AddContentElement(args.NewValue);
+                }
+                catch
+                {
+                    contentHostingFailed = true;
+                    throw;
+                }
+            }
+
+            base.OnPropertyChanged(args);
+            return;
+        }
+
         if (!ReferenceEquals(args.Property, ComponentTemplateProperty) &&
             !ReferenceEquals(args.Property, ComponentTemplateKeyProperty))
         {
@@ -142,7 +196,9 @@ public class ContentControl : Control
         }
     }
 
-    // A subclass calls this after its own state changed what HostsContentDirectly returns for Content.
+    // A subclass calls this after its own state changed what HostsContentDirectly returns for Content. Content that
+    // this control starts to host can still be inside an element that its previous presentation built for it, for
+    // example a template's element in a ContentPresenter child, so it leaves that subtree first.
     internal void UpdateContentHosting()
     {
         UIElement? wanted = HostsContentDirectly(Content) ? Content as UIElement : null;
@@ -152,6 +208,11 @@ public class ContentControl : Control
         }
 
         RemoveContentElement(hostedContentElement);
+        if (wanted is not null)
+        {
+            DetachChildFromOwnedSubtree(this, wanted);
+        }
+
         AddContentElement(wanted);
     }
 
@@ -236,6 +297,29 @@ public class ContentControl : Control
             contentControl.Content = null;
         }
 
+        // A ContentPresenter that presents its content directly also names that element in Content and PresentedChild.
+        // Releasing the element through Content keeps both in step with the presenter's children, so the presenter can
+        // present the element again, for example when a template reuses it as its container.
+        if (child.VisualParent is ContentPresenter presenter &&
+            !ReferenceEquals(presenter, owner) &&
+            ReferenceEquals(presenter.PresentedChild, child) &&
+            ReferenceEquals(presenter.Content, child) &&
+            IsOwnedBy(presenter, owner, ElementChildRole.Visual))
+        {
+            presenter.Content = null;
+        }
+
+        // A TabItem that hosts its header directly also names that element in Header. Releasing the element through
+        // Header keeps the property in step with the tab's children, so the tab can take the element again, for
+        // example when a template reuses it as its container.
+        if (child.VisualParent is TabItem tabItem &&
+            !ReferenceEquals(tabItem, owner) &&
+            tabItem.HostsHeaderDirectly(child) &&
+            IsOwnedBy(tabItem, owner, ElementChildRole.Visual))
+        {
+            tabItem.Header = null;
+        }
+
         UIElement? visualParent = child.VisualParent;
         if (IsOwnedBy(visualParent, owner, ElementChildRole.Visual))
         {
@@ -256,8 +340,19 @@ public class ContentControl : Control
             return;
         }
 
-        LogicalChildren.Add(element);
-        VisualChildren.Add(element);
+        // An attach that throws leaves the element in the collection whose Add attached it, so it leaves both again.
+        try
+        {
+            LogicalChildren.Add(element);
+            VisualChildren.Add(element);
+        }
+        catch
+        {
+            VisualChildren.Remove(element);
+            LogicalChildren.Remove(element);
+            throw;
+        }
+
         hostedContentElement = element;
     }
 

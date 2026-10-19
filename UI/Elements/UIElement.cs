@@ -19,6 +19,8 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     private static long nextPrismVisualNodeId;
     private readonly ElementAspectConsumer aspectConsumer;
     private IDisposable? elementAspectBehavior;
+    // The aspect whose consumers include this element: its SetValue invalidates the element.
+    private ElementAspect? followedAspect;
     private readonly long prismVisualNodeId;
     private ImageResourceLeaseSet? sourceImageLeases;
     private ImageResourceLeaseSet? prismImageLeases;
@@ -287,6 +289,12 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     internal virtual bool ActivatesOnPointerRelease => true;
 
+    // True for an element that is not a command source but owns the pointer presses on it as its own click, as a WPF
+    // ButtonBase in its template handles MouseLeftButtonDown, such as the field of a non-editable ComboBox. The input
+    // bridge resolves such a press to this element, so an enclosing command source is not pressed, does not repeat,
+    // and does not click for it.
+    internal virtual bool OwnsPointerClick => false;
+
     internal virtual TimeSpan? PointerRepeatDelay => null;
 
     internal virtual TimeSpan PointerRepeatInterval => TimeSpan.Zero;
@@ -311,6 +319,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     private readonly List<IElementLifecycleBehavior> lifecycleBehaviors = [];
     private bool isInitialized;
     private int attachmentGeneration;
+    private bool isDetachingFromRoot;
 
     internal LayoutSize? LastMeasureAvailableSize { get; set; }
 
@@ -623,8 +632,11 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         return FindResource<T>(id.Key);
     }
 
+    // A parent attaches this element only through its LogicalChildren or VisualChildren. A TabItem gives the Content
+    // it holds this LogicalParent without adding it to its LogicalChildren, so that LogicalParent does not attach it.
     internal bool HasAttachedParent =>
-        (LogicalParent?.Root is not null) || (VisualParent?.Root is not null);
+        (LogicalParent is { Root: not null } logicalParent && logicalParent.LogicalChildren.IndexOf(this) >= 0) ||
+        (VisualParent?.Root is not null);
 
     private void OnElementResourceChanged(object? sender, ResourceChangedEventArgs args)
     {
@@ -768,6 +780,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     internal void DetachFromRoot()
     {
         attachmentGeneration++;
+        isDetachingFromRoot = true;
         // A failing detach callback does not skip the element's later callbacks: each one runs, the element is
         // detached, then the first failure propagates.
         ExceptionDispatchInfo? failure = null;
@@ -798,6 +811,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
             ElementId = null;
             Root?.AdvanceImageResolutionEpoch();
             Root = null;
+            isDetachingFromRoot = false;
         }
 
         failure?.Throw();
@@ -904,6 +918,11 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         }
 
         Root?.CountMeasureCall();
+        // ArrangeCore can read measure state other than the desired sizes, such as the heights of a Grid's * rows, which
+        // keep their content height when measured unbounded. A measure that runs therefore makes the element's own
+        // arrange cache invalid, as WPF's Measure calls InvalidateArrange, also when the desired size is unchanged (#516).
+        // The parent's arrange cache still depends only on this element's desired size.
+        LastArrangeLayoutVersion = -1;
         int invalidationCountBeforeMeasure = measureCacheInvalidationCount;
         LayoutSize desired = !UIElementVisibility.ParticipatesInLayout(this)
             ? LayoutSize.Zero
@@ -1592,9 +1611,47 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         }
     }
 
+    // Makes the element follow the aspect it reports: disposes the lifetime of the aspect it followed, moves its consumer
+    // to the current aspect, and creates the current aspect's lifetime while attached. A failing lifetime or factory does
+    // not skip the later steps; the first failure is kept in failure. The old lifetime's Dispose may assign another
+    // aspect; that nested change already makes the element follow the newer aspect, so this one stops there.
+    private void FollowAspect(ref ExceptionDispatchInfo? failure)
+    {
+        ElementAspect? aspect = Aspect;
+        if (ReferenceEquals(followedAspect, aspect))
+        {
+            return;
+        }
+
+        if (followedAspect is ElementAspect previous)
+        {
+            followedAspect = null;
+            previous.Detach(aspectConsumer);
+            try { DetachElementAspectBehavior(); }
+            catch (Exception exception) { failure ??= ExceptionDispatchInfo.Capture(exception); }
+        }
+
+        if (aspect is null || followedAspect is not null || !ReferenceEquals(Aspect, aspect))
+        {
+            return;
+        }
+
+        aspect.Attach(aspectConsumer);
+        followedAspect = aspect;
+        if (IsAttached)
+        {
+            // A throwing factory leaves the element without a lifetime but still following the aspect; the next
+            // attachment creates the lifetime.
+            try { AttachElementAspectBehavior(); }
+            catch (Exception exception) { failure ??= ExceptionDispatchInfo.Capture(exception); }
+        }
+    }
+
     private void AttachElementAspectBehavior()
     {
-        if (elementAspectBehavior is null && Aspect is ElementAspect aspect)
+        // The detach callbacks still see the element attached, but the detach has already disposed the lifetime
+        // and leaves the element detached: an aspect they assign gets its lifetime on the next attach.
+        if (!isDetachingFromRoot && elementAspectBehavior is null && Aspect is ElementAspect aspect)
         {
             int generation = attachmentGeneration;
             IDisposable? behavior = aspect.AttachBehavior(this);

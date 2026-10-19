@@ -65,6 +65,13 @@ public sealed class PressedStateTracker
             {
                 return pressable;
             }
+
+            // The press belongs to an element that owns its clicks, such as a non-editable ComboBox field, so an
+            // enclosing button is not pressed.
+            if (current.OwnsPointerClick)
+            {
+                return null;
+            }
         }
 
         return null;

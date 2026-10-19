@@ -17,8 +17,11 @@ public sealed class ElementInputBridge
     private readonly RepeatButtonController repeatButtonController;
     private readonly TextInputBridge textInputBridge;
     private bool hasLastPointerPosition;
+    private object? pressOriginalSource;
     private float lastPointerX;
     private float lastPointerY;
+    private bool isDispatching;
+    private bool pointerModeCancelPending;
 
     public ElementInputBridge(
         HitTestService? hitTestService = null,
@@ -39,11 +42,10 @@ public sealed class ElementInputBridge
         this.focusManager = focusManager ?? new FocusManager();
         retainedInputBindingProcessor = new RetainedInputBindingProcessor();
         keyboardNavigationController = new KeyboardNavigationController();
-        keyboardActivationController = new KeyboardActivationController();
+        keyboardActivationController = new KeyboardActivationController(this.pressedStateTracker);
         repeatButtonController = new RepeatButtonController();
         this.textInputBridge = textInputBridge ?? new TextInputBridge();
-        this.focusManager.FocusedElementChanged += () =>
-            keyboardActivationController.OnFocusChanged(this.pressedStateTracker.PressedElement);
+        this.focusManager.AddFocusChangeListener(keyboardActivationController);
     }
 
     public PointerCaptureManager PointerCaptureManager => pointerCaptureManager;
@@ -73,16 +75,52 @@ public sealed class ElementInputBridge
         }
 
         root.ActiveFocusManager = focusManager;
-        ElementInputRouteMap routeMap = root.InputCache.EnsureCurrent(root);
-        HitTestResult? hitTarget = hitTestService.HitTest(root, routeMap, inputFrame.Pointer.X, inputFrame.Pointer.Y);
-        HitTestResult? pointerTarget = pointerCaptureManager.OverrideTarget(hitTarget, routeMap, inputFrame.Pointer.X, inputFrame.Pointer.Y);
+        (ElementInputRouteMap routeMap, HitTestResult? hitTarget, HitTestResult? pointerTarget) = ResolvePointerTargets(root, inputFrame);
 
-        DispatchPointer(root, inputFrame, frameTime, routeMap, hitTarget, pointerTarget);
-        IReadOnlyList<KeyboardDispatchResult> keyboardResults = focusManager.DispatchKeyboardWithResults(inputFrame, routeMap);
-        IReadOnlyList<KeyboardDispatchResult> activationResults = retainedInputBindingProcessor.Process(keyboardResults, inputFrame, commandRouter, routeMap);
-        keyboardNavigationController.Process(activationResults, inputFrame, root, focusManager, routeMap);
-        keyboardActivationController.Process(activationResults, focusManager, commandRouter, routeMap);
-        textInputBridge.Dispatch(inputFrame.TextInputEvents, focusManager, routeMap);
+        isDispatching = true;
+        try
+        {
+            DispatchPointer(root, inputFrame, frameTime, routeMap, hitTarget, pointerTarget);
+            IReadOnlyList<KeyboardDispatchResult> keyboardResults = focusManager.DispatchKeyboardWithResults(inputFrame, routeMap);
+            IReadOnlyList<KeyboardDispatchResult> activationResults = retainedInputBindingProcessor.Process(keyboardResults, inputFrame, commandRouter, routeMap);
+            keyboardNavigationController.Process(activationResults, inputFrame, root, focusManager, routeMap);
+            keyboardActivationController.Process(activationResults, focusManager, commandRouter, routeMap);
+            textInputBridge.Dispatch(inputFrame.TextInputEvents, focusManager, routeMap);
+        }
+        finally
+        {
+            isDispatching = false;
+        }
+
+        if (pointerModeCancelPending)
+        {
+            pointerModeCancelPending = false;
+            CancelPointerModeCore(root.InputCache.EnsureCurrent(root));
+        }
+    }
+
+    // The WM_CANCELMODE that Win32 sends to a window when EnableWindow disables it: the pointer capture is released, so
+    // the captured element gets LostMouseCapture and ends its drag, and the pressed, click and repeat state of the
+    // interrupted press is dropped. A cancel requested by an input handler, for example a PreviewMouseDown handler that
+    // shows a modal dialog, runs when the dispatch ends, after the press has begun its drag and taken the capture.
+    internal void CancelPointerMode(UIRoot root)
+    {
+        ArgumentNullException.ThrowIfNull(root);
+        if (isDispatching)
+        {
+            pointerModeCancelPending = true;
+            return;
+        }
+
+        CancelPointerModeCore(root.InputCache.EnsureCurrent(root));
+    }
+
+    private void CancelPointerModeCore(ElementInputRouteMap routeMap)
+    {
+        pointerCaptureManager.Release(routeMap);
+        repeatButtonController.Cancel(pressedStateTracker);
+        pressedStateTracker.Cancel();
+        clickTracker.Cancel();
     }
 
     private void DispatchPointer(
@@ -98,9 +136,16 @@ public sealed class ElementInputBridge
             inputFrame.Pointer.X != lastPointerX ||
             inputFrame.Pointer.Y != lastPointerY;
 
+        // Handlers of an earlier pointer event of this frame can remove or move elements, so each later event is raised
+        // on the element under the pointer at that moment, as WPF raises each mouse message on the element under the
+        // mouse when it processes that message.
         if (moved || !hoverTracker.IsCurrentRouteValid(routeMap))
         {
-            hoverTracker.Update(pointerTarget, routeMap, inputFrame.Pointer.X, inputFrame.Pointer.Y);
+            if (hoverTracker.Update(pointerTarget, routeMap, inputFrame.Pointer.X, inputFrame.Pointer.Y))
+            {
+                (routeMap, hitTarget, pointerTarget) = ResolvePointerTargets(root, inputFrame);
+            }
+
             if (hasLastPointerPosition)
             {
                 RaiseMouseMovePair(routeMap, pointerTarget);
@@ -111,6 +156,7 @@ public sealed class ElementInputBridge
         // One MouseWheel pair per platform wheel event, as WPF raises one per WM_MOUSEWHEEL.
         foreach (int wheelDelta in inputFrame.Pointer.WheelDeltas)
         {
+            (routeMap, hitTarget, pointerTarget) = ResolvePointerTargets(root, inputFrame);
             RaiseWheelPair(routeMap, pointerTarget, wheelDelta);
         }
 
@@ -123,7 +169,9 @@ public sealed class ElementInputBridge
 
             if (inputFrame.Pointer.IsPressed(button))
             {
+                (routeMap, hitTarget, pointerTarget) = ResolvePointerTargets(root, inputFrame);
                 clickTracker.Press(ResolveClickTarget(hitTarget?.Element, routeMap));
+                pressOriginalSource = pointerTarget?.ElementId;
                 pressedStateTracker.Press(pointerTarget?.Element, routeMap);
                 if (button == InputMouseButton.Left &&
                     pointerTarget is not null &&
@@ -146,6 +194,8 @@ public sealed class ElementInputBridge
                     button,
                     isDown: true,
                     clickCount: 1,
+                    previewHandled,
+                    handled,
                     out bool buttonPreviewHandled);
                 if (!previewHandled && !buttonPreviewHandled)
                 {
@@ -173,17 +223,21 @@ public sealed class ElementInputBridge
 
             if (inputFrame.Pointer.IsReleased(button))
             {
+                (routeMap, hitTarget, pointerTarget) = ResolvePointerTargets(root, inputFrame);
                 if (button == InputMouseButton.Left)
                 {
                     repeatButtonController.Cancel(pressedStateTracker);
                 }
 
-                int clickCount = clickTracker.Release(ResolveClickTarget(hitTarget?.Element, routeMap));
-                bool handled = RaiseMousePair(routeMap, pointerTarget, InputEvents.PreviewMouseUpEvent, InputEvents.MouseUpEvent, button, clickCount);
-                handled |= RaiseMouseButtonSpecificPair(routeMap, pointerTarget, button, isDown: false, clickCount);
+                int clickCount = clickTracker.Release(
+                    ResolveReleaseClickTarget(hitTarget?.Element, clickTracker.PressedTarget, routeMap));
+                object? releasedPressSource = pressOriginalSource;
+                pressOriginalSource = null;
+                bool handled = RaiseMousePair(routeMap, pointerTarget, InputEvents.PreviewMouseUpEvent, InputEvents.MouseUpEvent, button, clickCount, out bool previewHandled, releasedPressSource);
+                handled |= RaiseMouseButtonSpecificPair(routeMap, pointerTarget, button, isDown: false, clickCount, previewHandled, handled, out _, releasedPressSource);
                 if (button == InputMouseButton.Left && clickCount == 2)
                 {
-                    handled |= RaiseDirectMousePairAlongRoute(routeMap, pointerTarget, InputEvents.PreviewMouseDoubleClickEvent, InputEvents.MouseDoubleClickEvent, button, clickCount);
+                    handled |= RaiseDirectMousePairAlongRoute(routeMap, pointerTarget, InputEvents.PreviewMouseDoubleClickEvent, InputEvents.MouseDoubleClickEvent, button, clickCount, previewInitiallyHandled: false, bubbleInitiallyHandled: false, out _, releasedPressSource);
                 }
                 CompletePointerDrag(routeMap, pointerTarget, button, clickCount);
                 if (!handled)
@@ -212,6 +266,16 @@ public sealed class ElementInputBridge
         hasLastPointerPosition = true;
         lastPointerX = inputFrame.Pointer.X;
         lastPointerY = inputFrame.Pointer.Y;
+    }
+
+    private (ElementInputRouteMap RouteMap, HitTestResult? HitTarget, HitTestResult? PointerTarget) ResolvePointerTargets(
+        UIRoot root,
+        InputFrame inputFrame)
+    {
+        ElementInputRouteMap routeMap = root.InputCache.EnsureCurrent(root);
+        HitTestResult? hitTarget = hitTestService.HitTest(root, routeMap, inputFrame.Pointer.X, inputFrame.Pointer.Y);
+        HitTestResult? pointerTarget = pointerCaptureManager.OverrideTarget(hitTarget, routeMap, inputFrame.Pointer.X, inputFrame.Pointer.Y);
+        return (routeMap, hitTarget, pointerTarget);
     }
 
     private void ExecuteButtonCommandOnClick(
@@ -305,6 +369,9 @@ public sealed class ElementInputBridge
         return null;
     }
 
+    // A press belongs to the nearest command source or element that owns its clicks, such as a non-editable
+    // ComboBox field, as in WPF the nearest button handles MouseLeftButtonDown. An enclosing command source then
+    // does not get the click.
     private static UIElement? ResolveClickTarget(
         UIElement? element,
         ElementInputRouteMap routeMap)
@@ -314,7 +381,40 @@ public sealed class ElementInputBridge
             return null;
         }
 
-        return FindAncestor<IInputCommandSource>(element, routeMap) ?? element;
+        foreach (UIElement current in routeMap.GetVisualRouteToRoot(element))
+        {
+            if (current is IInputCommandSource || current.OwnsPointerClick)
+            {
+                return current;
+            }
+        }
+
+        return element;
+    }
+
+    // An element that owns its clicks without being a command source completes only a click whose press it took. A
+    // release on it after a press on an enclosing command source belongs to that command source, as a WPF Button
+    // that took the press clicks for a release over its content.
+    private static UIElement? ResolveReleaseClickTarget(
+        UIElement? element,
+        UIElement? pressedTarget,
+        ElementInputRouteMap routeMap)
+    {
+        if (element is null)
+        {
+            return null;
+        }
+
+        foreach (UIElement current in routeMap.GetVisualRouteToRoot(element))
+        {
+            if (current is IInputCommandSource ||
+                (current.OwnsPointerClick && ReferenceEquals(current, pressedTarget)))
+            {
+                return current;
+            }
+        }
+
+        return element;
     }
 
     private static UIElement? ResolveFocusTarget(UIElement element, ElementInputRouteMap routeMap)
@@ -336,19 +436,9 @@ public sealed class ElementInputBridge
         RoutedEvent previewEvent,
         RoutedEvent bubbleEvent,
         InputMouseButton button,
-        int clickCount)
-    {
-        return RaiseMousePair(routeMap, target, previewEvent, bubbleEvent, button, clickCount, out _);
-    }
-
-    private static bool RaiseMousePair(
-        ElementInputRouteMap routeMap,
-        HitTestResult? target,
-        RoutedEvent previewEvent,
-        RoutedEvent bubbleEvent,
-        InputMouseButton button,
         int clickCount,
-        out bool previewHandled)
+        out bool previewHandled,
+        object? pressOriginalSource = null)
     {
         if (target is null)
         {
@@ -356,8 +446,16 @@ public sealed class ElementInputBridge
             return false;
         }
 
-        MouseButtonEventArgs previewArgs = new(previewEvent, target.ElementId, button, target.X, target.Y, clickCount);
-        MouseButtonEventArgs bubbleArgs = new(bubbleEvent, target.ElementId, button, target.X, target.Y, clickCount);
+        MouseButtonEventArgs previewArgs = new(previewEvent, target.ElementId, button, target.X, target.Y, clickCount)
+        {
+            RouteMap = routeMap,
+            PressOriginalSource = pressOriginalSource
+        };
+        MouseButtonEventArgs bubbleArgs = new(bubbleEvent, target.ElementId, button, target.X, target.Y, clickCount)
+        {
+            RouteMap = routeMap,
+            PressOriginalSource = pressOriginalSource
+        };
         RoutedEventRouter.RaisePair(
             routeMap.InputTree,
             target.ElementId,
@@ -367,18 +465,18 @@ public sealed class ElementInputBridge
         return previewArgs.Handled || bubbleArgs.Handled;
     }
 
-    private static bool RaiseMouseButtonSpecificPair(ElementInputRouteMap routeMap, HitTestResult? target, InputMouseButton button, bool isDown, int clickCount)
-    {
-        return RaiseMouseButtonSpecificPair(routeMap, target, button, isDown, clickCount, out _);
-    }
-
+    // As in WPF, the button-specific events report the generic MouseDown or MouseUp, so each phase starts with the
+    // Handled value of the matching generic phase: ordinary handlers do not run after the generic event was handled.
     private static bool RaiseMouseButtonSpecificPair(
         ElementInputRouteMap routeMap,
         HitTestResult? target,
         InputMouseButton button,
         bool isDown,
         int clickCount,
-        out bool previewHandled)
+        bool genericPreviewHandled,
+        bool genericHandled,
+        out bool previewHandled,
+        object? pressOriginalSource = null)
     {
         (RoutedEvent Preview, RoutedEvent Bubble)? pair = (button, isDown) switch
         {
@@ -395,18 +493,7 @@ public sealed class ElementInputBridge
             return false;
         }
 
-        return RaiseDirectMousePairAlongRoute(routeMap, target, events.Preview, events.Bubble, button, clickCount, out previewHandled);
-    }
-
-    private static bool RaiseDirectMousePairAlongRoute(
-        ElementInputRouteMap routeMap,
-        HitTestResult? target,
-        RoutedEvent previewEvent,
-        RoutedEvent bubbleEvent,
-        InputMouseButton button,
-        int clickCount)
-    {
-        return RaiseDirectMousePairAlongRoute(routeMap, target, previewEvent, bubbleEvent, button, clickCount, out _);
+        return RaiseDirectMousePairAlongRoute(routeMap, target, events.Preview, events.Bubble, button, clickCount, genericPreviewHandled, genericHandled, out previewHandled, pressOriginalSource);
     }
 
     private static bool RaiseDirectMousePairAlongRoute(
@@ -416,7 +503,10 @@ public sealed class ElementInputBridge
         RoutedEvent bubbleEvent,
         InputMouseButton button,
         int clickCount,
-        out bool previewHandled)
+        bool previewInitiallyHandled,
+        bool bubbleInitiallyHandled,
+        out bool previewHandled,
+        object? pressOriginalSource = null)
     {
         if (target is null)
         {
@@ -425,19 +515,28 @@ public sealed class ElementInputBridge
         }
 
         IReadOnlyList<UiElementId> route = routeMap.InputTree.GetRouteToRoot(target.ElementId);
-        bool handled = false;
+        bool handled = previewInitiallyHandled;
 
         foreach (UiElementId elementId in route.Reverse())
         {
-            MouseButtonEventArgs args = new(previewEvent, target.ElementId, button, target.X, target.Y, clickCount) { Handled = handled };
+            MouseButtonEventArgs args = new(previewEvent, target.ElementId, button, target.X, target.Y, clickCount)
+            {
+                Handled = handled,
+                PressOriginalSource = pressOriginalSource
+            };
             RoutedEventRouter.Raise(routeMap.InputTree, elementId, args);
             handled |= args.Handled;
         }
 
         previewHandled = handled;
+        handled |= bubbleInitiallyHandled;
         foreach (UiElementId elementId in route)
         {
-            MouseButtonEventArgs args = new(bubbleEvent, target.ElementId, button, target.X, target.Y, clickCount) { Handled = handled };
+            MouseButtonEventArgs args = new(bubbleEvent, target.ElementId, button, target.X, target.Y, clickCount)
+            {
+                Handled = handled,
+                PressOriginalSource = pressOriginalSource
+            };
             RoutedEventRouter.Raise(routeMap.InputTree, elementId, args);
             handled |= args.Handled;
         }

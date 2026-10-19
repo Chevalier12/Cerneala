@@ -8,6 +8,8 @@ public sealed class ClickTracker
     private UIElement? lastClickedTarget;
     private int clickCount;
 
+    internal UIElement? PressedTarget => pressedTarget;
+
     public void Press(UIElement? target)
     {
         pressedTarget = target;

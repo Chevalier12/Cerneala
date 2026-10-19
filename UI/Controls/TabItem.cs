@@ -2,6 +2,7 @@ using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Input;
+using Cerneala.UI.Rendering;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Controls.Templates;
 
@@ -123,6 +124,10 @@ public class TabItem : ContentControl, ISelectableItemContainer
 
     private bool HostsHeaderElement => !IsComponentTemplated && HeaderTemplate is null && HeaderTemplateKey is null;
 
+    // True when the element is the Header that this tab hosts as its own child.
+    internal bool HostsHeaderDirectly(UIElement element) =>
+        ReferenceEquals(hostedHeader, element) && ReferenceEquals(Header, element);
+
     // The owning TabControl passes the registry of its Templates and the item index for a generated tab.
     internal void SetHeaderPresentation(ContentTemplateRegistry? registry, int index)
     {
@@ -155,6 +160,16 @@ public class TabItem : ContentControl, ISelectableItemContainer
         UIElement? header = hostedHeader ?? headerPresenter;
         header?.Arrange(new ArrangeContext(Deflate(context.FinalRect, Insets), context.Rounding));
         return context.FinalRect;
+    }
+
+    // As the outer border of the WPF TabItem template, a tab without a template fills its bounds with Background;
+    // a ComponentTemplate draws its own chrome.
+    protected override void OnRender(RenderContext context)
+    {
+        if (TemplateChild is null)
+        {
+            Border.RenderBackground(this, context);
+        }
     }
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)

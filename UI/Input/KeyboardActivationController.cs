@@ -4,7 +4,13 @@ namespace Cerneala.UI.Input;
 
 internal sealed class KeyboardActivationController
 {
+    private readonly PressedStateTracker pressedStateTracker;
     private UIElement? spacePressedElement;
+
+    public KeyboardActivationController(PressedStateTracker pressedStateTracker)
+    {
+        this.pressedStateTracker = pressedStateTracker;
+    }
 
     public void Process(
         IReadOnlyList<KeyboardDispatchResult> results,
@@ -29,7 +35,7 @@ internal sealed class KeyboardActivationController
 
             if (result.Key == InputKey.Space)
             {
-                ProcessSpace(result, commandRouter, routeMap);
+                ProcessSpace(result, focusManager, commandRouter, routeMap);
             }
         }
 
@@ -48,32 +54,45 @@ internal sealed class KeyboardActivationController
             return;
         }
 
-        if (FindValidAncestor<IInputCommandSource>(result.Target, routeMap) is IInputCommandSource commandSource)
+        if (FindValidCommandSource(result.Target, routeMap) is IInputCommandSource commandSource)
         {
             (commandSource as IInputActivatable)?.Activate();
             commandSource.ExecuteCommand(commandRouter, routeMap);
         }
     }
 
-    private void ProcessSpace(KeyboardDispatchResult result, CommandRouter commandRouter, ElementInputRouteMap routeMap)
+    private void ProcessSpace(
+        KeyboardDispatchResult result,
+        FocusManager focusManager,
+        CommandRouter commandRouter,
+        ElementInputRouteMap routeMap)
     {
         if (result.Kind == KeyboardDispatchKind.Pressed)
         {
-            PressSpace(result, routeMap);
+            PressSpace(result, focusManager, routeMap);
             return;
         }
 
         ReleaseSpace(result, commandRouter, routeMap);
     }
 
-    private void PressSpace(KeyboardDispatchResult result, ElementInputRouteMap routeMap)
+    private void PressSpace(KeyboardDispatchResult result, FocusManager focusManager, ElementInputRouteMap routeMap)
     {
         if (result.Handled)
         {
             return;
         }
 
-        if (FindValidAncestor<IInputCommandSource>(result.Target, routeMap) is not UIElement commandElement)
+        // The press runs after the whole frame's key dispatch and navigation. When focus left
+        // the Space target in the meantime (a Tab in the same frame, or a KeyDown handler),
+        // OnFocusChanged ran before there was a press to forget, so the press does not start:
+        // like the OnKeyDown of WPF buttons, a Space press starts only on the focused element.
+        if (!ReferenceEquals(focusManager.FocusedElement, result.Target))
+        {
+            return;
+        }
+
+        if (FindValidCommandSource(result.Target, routeMap) is not UIElement commandElement)
         {
             ClearPressed();
             return;
@@ -98,7 +117,7 @@ internal sealed class KeyboardActivationController
             return;
         }
 
-        UIElement? commandElement = FindValidAncestor<IInputCommandSource>(result.Target, routeMap);
+        UIElement? commandElement = FindValidCommandSource(result.Target, routeMap);
         if (!ReferenceEquals(pressedElement, commandElement) ||
             commandElement is not IInputCommandSource commandSource)
         {
@@ -112,9 +131,9 @@ internal sealed class KeyboardActivationController
     // Like WPF ButtonBase.OnLostKeyboardFocus: the Space press belongs to the focus it
     // started on, so a focus change forgets it and the later release clicks nothing.
     // The pressed look stays while the pointer still presses the same element.
-    public void OnFocusChanged(IInputPressable? pointerPressedElement)
+    public void OnFocusChanged()
     {
-        if (ReferenceEquals(spacePressedElement, pointerPressedElement))
+        if (ReferenceEquals(spacePressedElement, pressedStateTracker.PressedElement))
         {
             spacePressedElement = null;
             return;
@@ -141,17 +160,11 @@ internal sealed class KeyboardActivationController
         spacePressedElement = null;
     }
 
-    private static UIElement? FindValidAncestor<TContract>(UIElement element, ElementInputRouteMap routeMap)
+    // Only the key target itself activates, as WPF buttons react to Enter and Space only when they are the key event's
+    // OriginalSource: a key on a focused descendant of a command source does not activate that command source.
+    private static UIElement? FindValidCommandSource(UIElement target, ElementInputRouteMap routeMap)
     {
-        foreach (UIElement current in routeMap.GetVisualRouteToRoot(element))
-        {
-            if (current is TContract && IsValidInputElement(current, routeMap))
-            {
-                return current;
-            }
-        }
-
-        return null;
+        return target is IInputCommandSource && IsValidInputElement(target, routeMap) ? target : null;
     }
 
     private static bool IsValidInputElement(UIElement element, ElementInputRouteMap routeMap)

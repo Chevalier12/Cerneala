@@ -1464,6 +1464,229 @@ public sealed class ItemsControlTests
         Assert.Same(second, container.PresentedChild);
     }
 
+    [Fact]
+    public void TabSwitchBackWithUnchangedItemsSourceKeepsEveryRowElement()
+    {
+        int built = 0;
+        ObservableCollection<string> source = ["a", "b", "c"];
+        ItemsControl list = new() { ItemsSource = source, ItemTemplate = CountingTextTemplate(() => built++) };
+        TabControl tabs = new();
+        tabs.Items.Add(new TabItem { Header = "A", Content = list });
+        tabs.Items.Add(new TabItem { Header = "B", Content = new TextBlock { Text = "B" } });
+        tabs.SelectedIndex = 0;
+        UIRoot root = new(400, 300);
+        Dictionary<UIElement, int> aspectPasses = CountAspectPasses(root);
+        root.VisualChildren.Add(tabs);
+        root.ProcessFrame();
+        List<UIElement> before = RowElements(list);
+        Assert.Equal(3, built);
+
+        tabs.SelectedIndex = 1;
+        root.ProcessFrame();
+        tabs.SelectedIndex = 0;
+        aspectPasses.Clear();
+        root.ProcessFrame();
+
+        Assert.True(list.IsAttached);
+        Assert.Equal(3, built);
+        Assert.Equal(before, RowElements(list));
+        // Attaching queues the subtree for one Aspect pass; the rows get no other.
+        Assert.All(before, element => Assert.Equal(1, aspectPasses.GetValueOrDefault(element)));
+    }
+
+    [Fact]
+    public void ReattachWithUnchangedValueTypeItemsSourceKeepsEveryRowElement()
+    {
+        int built = 0;
+        ObservableCollection<int> source = [1, 2, 3];
+        ItemsControl list = new()
+        {
+            ItemsSource = source,
+            ItemTemplate = new ContentTemplate<int>("number", key: null, priority: 0, context =>
+            {
+                built++;
+                return new TextBlock { Text = context.Data.ToString() };
+            })
+        };
+        UIRoot root = new(400, 300);
+        root.VisualChildren.Add(list);
+        root.ProcessFrame();
+        List<UIElement> before = RowElements(list);
+        Assert.Equal(3, built);
+
+        root.VisualChildren.Remove(list);
+        root.VisualChildren.Add(list);
+        root.ProcessFrame();
+
+        Assert.Equal(3, built);
+        Assert.Equal(before, RowElements(list));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ItemsSourceChangedWhileDetachedShowsTheCurrentItemsOnReattach(bool notifying)
+    {
+        IList<string> source = notifying ? new ObservableCollection<string> { "a", "b", "c" } : new List<string> { "a", "b", "c" };
+        ItemsControl list = new() { ItemsSource = source, ItemTemplate = CountingTextTemplate(() => { }) };
+        UIRoot root = new(400, 300);
+        root.VisualChildren.Add(list);
+        root.ProcessFrame();
+
+        root.VisualChildren.Remove(list);
+        source[1] = "changed";
+        source.Add("d");
+        root.VisualChildren.Add(list);
+        root.ProcessFrame();
+
+        Assert.Equal(4, list.ItemCount);
+        Assert.Equal(
+            ["a", "changed", "c", "d"],
+            RowElements(list).OfType<TextBlock>().Select(text => text.Text));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void PanelMeasureRunsAspectOnlyOnElementsThatNeedIt(bool changeWidth)
+    {
+        UIRoot root = new(400, 300);
+        Dictionary<UIElement, int> aspectPasses = CountAspectPasses(root);
+        ObservableCollection<string> source = ["a", "b", "c"];
+        ItemsControl list = new()
+        {
+            ItemsSource = source,
+            Width = 200,
+            ItemTemplate = new ContentTemplate<string>("row", key: null, priority: 0, context =>
+            {
+                Border row = new() { Child = new TextBlock { Text = context.Data } };
+                return row;
+            })
+        };
+        root.VisualChildren.Add(list);
+        root.ProcessFrame();
+        List<UIElement> oldRows = RowElements(list);
+        Assert.Equal(9, oldRows.Count);
+
+        if (changeWidth)
+        {
+            list.Width = 150;
+        }
+        else
+        {
+            source.Add("d");
+        }
+
+        aspectPasses.Clear();
+        root.ProcessFrame();
+
+        Assert.Equal(changeWidth ? 150 : 200, list.ItemsPresenter.LayoutPanelRoot!.ArrangedBounds.Width);
+        Assert.All(oldRows, element => Assert.Equal(0, aspectPasses.GetValueOrDefault(element)));
+        List<UIElement> newRows = RowElements(list).Except(oldRows).ToList();
+        Assert.Equal(changeWidth ? 0 : 3, newRows.Count);
+        Assert.All(newRows, element => Assert.Equal(1, aspectPasses.GetValueOrDefault(element)));
+    }
+
+    // Counts how often the Aspect pass evaluates each element, with a rule that never matches.
+    private static Dictionary<UIElement, int> CountAspectPasses(UIRoot root)
+    {
+        Dictionary<UIElement, int> passes = new(ReferenceEqualityComparer.Instance);
+        root.AspectRegistry.Register(AspectPackage.Create("count").Components(components => components.AddRule(new AspectRuleSet(
+            "count",
+            AspectLayer.App,
+            new AspectTarget(typeof(UIElement), conditions: [AspectCondition.Predicate("count", match =>
+            {
+                passes[match.Element] = passes.GetValueOrDefault(match.Element) + 1;
+                return false;
+            })]),
+            [],
+            declarationOrder: 0))));
+        return passes;
+    }
+
+    private static ContentTemplate<string> CountingTextTemplate(Action built)
+    {
+        return new ContentTemplate<string>("text", key: null, priority: 0, context =>
+        {
+            built();
+            return new TextBlock { Text = context.Data };
+        });
+    }
+
+    private static List<UIElement> RowElements(ItemsControl control)
+    {
+        return control.ItemContainerGenerator.RealizedContainers
+            .OrderBy(pair => pair.Key)
+            .SelectMany(pair => ElementTreeWalker.PreOrder(pair.Value))
+            .ToList();
+    }
+
+    // Clearing a realized container is not presenting an item, so it runs no ItemTemplate; only the new items are
+    // presented, on the next layout pass (#535).
+    [Fact]
+    public void ReplacingItemsSourceRunsTheItemTemplateOnlyForTheNewItems()
+    {
+        List<string?> calls = [];
+        ItemsControl control = new()
+        {
+            ItemTemplate = new ContentTemplate<string>("item", key: null, priority: 0, context =>
+            {
+                calls.Add(context.Data);
+                return new TextBlock { Text = context.Data ?? string.Empty };
+            }),
+            ItemsSource = new[] { "A", "B", "C" }
+        };
+        UIRoot root = new(300, 200);
+        root.VisualChildren.Add(control);
+        root.ProcessFrame();
+        Assert.Equal(["A", "B", "C"], calls);
+
+        calls.Clear();
+        control.ItemsSource = new[] { "D" };
+        Assert.Empty(calls);
+        root.ProcessFrame();
+
+        Assert.Equal(["D"], calls);
+        ContentPresenter container = Assert.IsType<ContentPresenter>(control.ItemContainerGenerator.RealizedContainers[0]);
+        Assert.Equal("D", Assert.IsType<TextBlock>(container.PresentedChild).Text);
+    }
+
+    [Theory]
+    [InlineData(nameof(ItemsControl.ItemsSource))]
+    [InlineData(nameof(ItemsControl.ItemTemplate))]
+    public void ReplacingItemsSourceOrItemTemplateDoesNotRunATemplateWithoutItsItem(string change)
+    {
+        ItemsControl control = new()
+        {
+            ItemTemplate = new ContentTemplate<TemplatedPerson>("person", key: null, priority: 0,
+                context => new TextBlock { Text = context.Data!.Name }),
+            ItemsSource = new[] { new TemplatedPerson("Ana"), new TemplatedPerson("Bob") }
+        };
+        UIRoot root = new(300, 200);
+        root.VisualChildren.Add(control);
+        root.ProcessFrame();
+
+        if (change == nameof(ItemsControl.ItemsSource))
+        {
+            control.ItemsSource = new[] { new TemplatedPerson("Cleo") };
+        }
+        else
+        {
+            control.ItemTemplate = new ContentTemplate<TemplatedPerson>("other", key: null, priority: 0,
+                context => new TextBlock { Text = "x" + context.Data!.Name });
+        }
+
+        root.ProcessFrame();
+
+        string[] expected = change == nameof(ItemsControl.ItemsSource) ? ["Cleo"] : ["xAna", "xBob"];
+        Assert.Equal(
+            expected,
+            control.ItemContainerGenerator.RealizedContainers.OrderBy(pair => pair.Key)
+                .Select(pair => Assert.IsType<TextBlock>(Assert.IsType<ContentPresenter>(pair.Value).PresentedChild).Text));
+    }
+
+    private sealed record TemplatedPerson(string Name);
+
     private static ContentTemplate WrapElementTemplate()
     {
         return new ContentTemplate("wrap", typeof(object), key: null, priority: 0,

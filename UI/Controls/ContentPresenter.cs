@@ -18,6 +18,8 @@ public class ContentPresenter : Control
     private bool generatedTextChild;
     private bool deferPresentationRefresh;
     private int contentIndex = -1;
+    // Counts refreshes, so a refresh can tell that a nested refresh replaced the presentation while it ran.
+    private int presentationRefresh;
     private AspectCatalog? aspectTemplateCatalog;
     private ContentTemplateRegistry? localTemplateRegistry;
 
@@ -158,6 +160,25 @@ public class ContentPresenter : Control
         }
     }
 
+    // Clears what PrepareItemContainerPresentation wrote. Clearing a container presents no item, so, as with
+    // preparation, the presented child is rebuilt only on the next measure and no template runs without its item.
+    internal void ClearItemContainerPresentation()
+    {
+        deferPresentationRefresh = true;
+        try
+        {
+            Content = null;
+            ClearValue(ContentTemplateProperty);
+            ClearValue(ContentTemplateKeyProperty);
+            LocalTemplateRegistry = null;
+            ContentIndex = -1;
+        }
+        finally
+        {
+            deferPresentationRefresh = false;
+        }
+    }
+
     internal void RefreshAspectContentTemplates(AspectCatalog catalog)
     {
         if (ReferenceEquals(aspectTemplateCatalog, catalog))
@@ -231,10 +252,11 @@ public class ContentPresenter : Control
             return;
         }
 
+        // The field is cleared first: the removal raises Unloaded, and a handler can present other content at once.
         if (ReferenceEquals(presentedChild, previousContent))
         {
-            RemovePresentedChild(previousContent);
             presentedChild = null;
+            RemovePresentedChild(previousContent);
         }
         else
         {
@@ -250,13 +272,20 @@ public class ContentPresenter : Control
         }
 
         presentationDirty = false;
+        int refresh = ++presentationRefresh;
         object? content = Content;
         OnPresentationRefreshing(content);
         try
         {
             ContentTemplate? template = ResolveContentTemplate(content);
             UIElement? previousChild = presentedChild;
+            bool previousChildIsGeneratedText = generatedTextChild;
             ElementContentPlacement? releasedContent = ReleaseElementContent(content, template is not null);
+            if (refresh != presentationRefresh)
+            {
+                return;
+            }
+
             UIElement? next;
             try
             {
@@ -264,8 +293,18 @@ public class ContentPresenter : Control
             }
             catch
             {
-                RestorePresentation(previousChild, releasedContent);
+                if (refresh == presentationRefresh)
+                {
+                    RestorePresentation(previousChild, previousChildIsGeneratedText, releasedContent);
+                }
+
                 throw;
+            }
+
+            if (refresh != presentationRefresh)
+            {
+                DiscardSupersededChild(next, content);
+                return;
             }
 
             if (ReferenceEquals(presentedChild, next))
@@ -273,18 +312,43 @@ public class ContentPresenter : Control
                 return;
             }
 
-            RemovePresentedChild(presentedChild);
+            UIElement? replacedChild = presentedChild;
+            presentedChild = null;
+            RemovePresentedChild(replacedChild);
+            if (refresh != presentationRefresh)
+            {
+                DiscardSupersededChild(next, content);
+                return;
+            }
+
             try
             {
                 AddPresentedChild(next);
-                presentedChild = next;
             }
             catch
             {
-                RemovePresentedChild(next);
-                RestorePresentation(previousChild, releasedContent);
+                if (refresh == presentationRefresh)
+                {
+                    RemovePresentedChild(next);
+                    RestorePresentation(previousChild, previousChildIsGeneratedText, releasedContent);
+                }
+
                 throw;
             }
+
+            // Adding the child raises Loaded at once, and a handler can change the content in the same way.
+            if (refresh != presentationRefresh)
+            {
+                if (!ReferenceEquals(next, presentedChild))
+                {
+                    RemovePresentedChild(next);
+                }
+
+                DiscardSupersededChild(next, content);
+                return;
+            }
+
+            presentedChild = next;
         }
         finally
         {
@@ -292,10 +356,30 @@ public class ContentPresenter : Control
         }
     }
 
-    // A refresh that fails keeps the previous presentation: the element content goes back to the place the refresh
-    // took it from, and the previous presented child goes back into the presenter.
-    private void RestorePresentation(UIElement? previousChild, ElementContentPlacement? releasedContent)
+    // Removing an element from the presenter raises its Unloaded event at once, and a handler can change Content,
+    // ContentTemplate, or ContentTemplateKey. That change runs a nested refresh, which presents the current content.
+    // The outer refresh then holds a child built for content that is no longer current: it does not present that
+    // child, and it takes the element content back out of it, so the element is free to be presented elsewhere.
+    private void DiscardSupersededChild(UIElement? child, object? content)
     {
+        if (child is not null &&
+            content is UIElement element &&
+            !ReferenceEquals(child, element) &&
+            !ReferenceEquals(child, presentedChild))
+        {
+            ContentControl.DetachChildFromOwnedSubtree(child, element);
+        }
+    }
+
+    // A refresh that fails keeps the previous presentation: the element content goes back to the place the refresh
+    // took it from, and the previous presented child goes back into the presenter. The presentation stays dirty, so
+    // the next measure or arrange tries the refresh again.
+    private void RestorePresentation(
+        UIElement? previousChild,
+        bool previousChildIsGeneratedText,
+        ElementContentPlacement? releasedContent)
+    {
+        presentationDirty = true;
         releasedContent?.Restore();
         if (previousChild is not null && !ReferenceEquals(previousChild.VisualParent, this))
         {
@@ -303,6 +387,7 @@ public class ContentPresenter : Control
         }
 
         presentedChild = previousChild;
+        generatedTextChild = previousChildIsGeneratedText;
     }
 
     // A presenter whose element content is owned elsewhere while it is not shown, for example the content area of a
@@ -451,8 +536,8 @@ public class ContentPresenter : Control
         }
 
         contentReleasableByTemplate = null;
-        RemovePresentedChild(child);
         presentedChild = null;
+        RemovePresentedChild(child);
     }
 
     private void RemovePresentedChild(UIElement? child)
@@ -466,13 +551,18 @@ public class ContentPresenter : Control
         LogicalChildren.Remove(child);
     }
 
-    // Where element content was in the tree before a refresh released it.
+    // Where element content was in the tree before a refresh released it. A Decorator names its child in Child, a
+    // ContentControl that hosts its content directly or a ContentPresenter that presents it directly names it in
+    // Content, and a TabItem that hosts its header directly names it in Header; the release goes through that property
+    // (ContentControl.DetachChildFromOwnedSubtree), so the rollback goes through it too, and each Decorator,
+    // ContentControl, ContentPresenter or TabItem involved keeps the property in step with its children.
     private readonly record struct ElementContentPlacement(
         UIElement Element,
         UIElement? VisualParent,
         int VisualIndex,
         UIElement? LogicalParent,
-        int LogicalIndex)
+        int LogicalIndex,
+        NamedChildSlot NamedSlot)
     {
         public static ElementContentPlacement Capture(UIElement element)
         {
@@ -483,15 +573,23 @@ public class ContentPresenter : Control
                 visualParent,
                 visualParent?.VisualChildren.IndexOf(element) ?? -1,
                 logicalParent,
-                logicalParent?.LogicalChildren.IndexOf(element) ?? -1);
+                logicalParent?.LogicalChildren.IndexOf(element) ?? -1,
+                SlotNaming(visualParent, element));
         }
 
         // A template that failed after it took the element still holds it, so the element leaves that template's
-        // element first.
+        // element first. The template can also have changed the previous parent's children, so the old index is
+        // limited to the current count. The visual tree comes first, because a Panel takes a logical child only
+        // when it is already its visual child.
         public void Restore()
         {
             bool restoreVisual = !ReferenceEquals(Element.VisualParent, VisualParent);
             bool restoreLogical = !ReferenceEquals(Element.LogicalParent, LogicalParent);
+            if (restoreVisual && SlotNaming(Element.VisualParent, Element) is var currentSlot and not NamedChildSlot.None)
+            {
+                SetNamedChild(Element.VisualParent!, currentSlot, null);
+            }
+
             if (restoreVisual)
             {
                 Element.VisualParent?.VisualChildren.Remove(Element);
@@ -500,14 +598,67 @@ public class ContentPresenter : Control
             if (restoreLogical)
             {
                 Element.LogicalParent?.LogicalChildren.Remove(Element);
-                LogicalParent?.LogicalChildren.Insert(LogicalIndex, Element);
             }
 
-            if (restoreVisual)
+            if (NamedSlot != NamedChildSlot.None && restoreVisual && restoreLogical && ReferenceEquals(VisualParent, LogicalParent))
             {
-                VisualParent?.VisualChildren.Insert(VisualIndex, Element);
+                SetNamedChild(VisualParent!, NamedSlot, Element);
+                return;
+            }
+
+            if (restoreVisual && VisualParent is not null)
+            {
+                VisualParent.VisualChildren.Insert(Math.Min(VisualIndex, VisualParent.VisualChildren.Count), Element);
+            }
+
+            if (restoreLogical && LogicalParent is not null)
+            {
+                LogicalParent.LogicalChildren.Insert(Math.Min(LogicalIndex, LogicalParent.LogicalChildren.Count), Element);
             }
         }
+
+        private static NamedChildSlot SlotNaming(UIElement? parent, UIElement element)
+        {
+            return parent switch
+            {
+                Decorator decorator when ReferenceEquals(decorator.Child, element) => NamedChildSlot.DecoratorChild,
+                TabItem tabItem when tabItem.HostsHeaderDirectly(element) => NamedChildSlot.TabItemHeader,
+                ContentControl contentControl when contentControl.HostsContentDirectly(element) &&
+                    ReferenceEquals(contentControl.Content, element) => NamedChildSlot.ContentControlContent,
+                ContentPresenter presenter when ReferenceEquals(presenter.PresentedChild, element) &&
+                    ReferenceEquals(presenter.Content, element) => NamedChildSlot.PresenterContent,
+                _ => NamedChildSlot.None
+            };
+        }
+
+        private static void SetNamedChild(UIElement parent, NamedChildSlot slot, UIElement? element)
+        {
+            switch (slot)
+            {
+                case NamedChildSlot.DecoratorChild:
+                    ((Decorator)parent).Child = element;
+                    break;
+                case NamedChildSlot.TabItemHeader:
+                    ((TabItem)parent).Header = element;
+                    break;
+                case NamedChildSlot.ContentControlContent:
+                    ((ContentControl)parent).Content = element;
+                    break;
+                case NamedChildSlot.PresenterContent:
+                    ((ContentPresenter)parent).Content = element;
+                    break;
+            }
+        }
+    }
+
+    // The property through which a parent names an element child.
+    private enum NamedChildSlot
+    {
+        None,
+        DecoratorChild,
+        ContentControlContent,
+        PresenterContent,
+        TabItemHeader
     }
 
     private sealed class ReferenceContentEqualityComparer : IEqualityComparer<object?>

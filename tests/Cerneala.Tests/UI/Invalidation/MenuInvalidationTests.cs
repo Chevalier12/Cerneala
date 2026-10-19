@@ -139,8 +139,12 @@ public sealed class MenuInvalidationTests
         root.ProcessFrame();
 
         Assert.Equal(new LayoutRect(20, expectedY, 50, expectedHeight), content.ArrangedBounds);
+        // The unchanged-viewport frame arranges the layer and the content's ContentPresenter: the layer's arrange measures
+        // the presenter unbounded and then clamped, and a measure that runs makes the presenter's own arrange cache
+        // invalid, as WPF's Measure calls InvalidateArrange (#516). The content's measures return cached sizes, so it
+        // keeps its arrange.
         Assert.Equal(
-            (0, 1, 0, 0),
+            (0, 2, 0, 0),
             (arrangesForUnchangedViewport, unchangedViewport.ArrangeCalls, arrangesForNarrowerViewport, content.ArrangeCount));
     }
 
