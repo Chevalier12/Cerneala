@@ -137,15 +137,6 @@ public class TabControl : Selector
     {
         bool templateChanged = ReferenceEquals(args.Property, ComponentTemplateProperty) ||
             ReferenceEquals(args.Property, ComponentTemplateKeyProperty);
-        if (templateChanged && IsComponentTemplated)
-        {
-            // From now on the template shows SelectedContent: the content area and the selected tab let go of a
-            // UIElement content before the template is built, so a ContentPresenter in the template can take it.
-            presentedTab = null;
-            selectedContentPresenter.PrepareItemPresentation(null, null, null, null, -1);
-            SelectedTabItem?.ReleaseContentForContentArea();
-        }
-
         base.OnPropertyChanged(args);
         if (ReferenceEquals(args.Property, SelectedIndexProperty))
         {
@@ -156,6 +147,16 @@ public class TabControl : Selector
         {
             UpdateTemplatedContentOwnership();
         }
+    }
+
+    // From now on the template shows SelectedContent: the content area and the selected tab let go of a UIElement
+    // content before the template is built, so a ContentPresenter in the template can take it. This also holds when a
+    // ComponentTemplateKey starts to resolve after the content area showed the content.
+    internal override void OnTemplateInstanceCreating()
+    {
+        presentedTab = null;
+        selectedContentPresenter.PrepareItemPresentation(null, null, null, null, -1);
+        SelectedTabItem?.ReleaseContentForContentArea();
     }
 
     // The template that goes away lets go of the element content of the tabs it showed, so the next template or the
