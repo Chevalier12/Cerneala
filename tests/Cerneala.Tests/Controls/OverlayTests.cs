@@ -231,6 +231,48 @@ public sealed class OverlayTests
         Assert.Equal(new LayoutRect(expectedX, 20, naturalWidth, 15), content.VisualParent!.ArrangedBounds);
     }
 
+    // Pins the measure sequence that OverlayPlacement.md documents for AutoHorizontal: the natural-width
+    // measure, then a second measure at the viewport width only for content wider than the viewport.
+    // The first constraint is the root's ordinary measure of the canvas, before overlay placement.
+    [Theory]
+    [InlineData(30, false)]
+    [InlineData(200, true)]
+    public void AutoHorizontalMeasuresAtNaturalWidthAndAgainAtViewportWidthOnlyForWiderContent(
+        float contentWidth,
+        bool expectsViewportWidthMeasure)
+    {
+        UIRoot root = new(120, 80);
+        FixedElement target = new(new LayoutSize(20, 10));
+        RecordingElement content = new(new LayoutSize(contentWidth, 15));
+        Overlay overlay = new()
+        {
+            Placement = OverlayPlacement.AutoHorizontal,
+            PlacementTarget = target,
+            Content = content,
+            IsOpen = true
+        };
+        LayoutCanvas canvas = new();
+        LayoutCanvas.SetLeft(target, 15);
+        LayoutCanvas.SetTop(target, 20);
+        canvas.VisualChildren.Add(target);
+        canvas.VisualChildren.Add(overlay);
+        root.VisualChildren.Add(canvas);
+
+        root.ProcessFrame();
+
+        List<LayoutSize> expected =
+        [
+            new LayoutSize(120, 80),
+            new LayoutSize(float.PositiveInfinity, float.PositiveInfinity)
+        ];
+        if (expectsViewportWidthMeasure)
+        {
+            expected.Add(new LayoutSize(120, 15));
+        }
+
+        Assert.Equal(expected, content.MeasureConstraints);
+    }
+
     [Fact]
     public void NestedMenuItemSubmenuOpensBesideItsParentItemAtItsNaturalWidth()
     {
