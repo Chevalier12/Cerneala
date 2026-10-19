@@ -97,8 +97,8 @@ During item container preparation, `Selector` installs a left-button `MouseUp` h
 | Name | Description |
 | --- | --- |
 | `IsItemSelected(int index)` | Returns whether the internal `SelectionModel` currently selects `index`. |
-| `PrepareItemContainer(UIElement container, int index, object? item)` | Prepares the inherited item container state and associates a left-button mouse-up selection handler with the container. |
-| `ClearItemContainer(UIElement container)` | Clears inherited item container state and detaches this selector as the handler owner for the container. |
+| `PrepareItemContainer(UIElement container, int index, object? item)` | Prepares the inherited item container state and associates a left-button mouse-up selection handler with the container. While the container is enabled, it owns the pointer presses on it, as a WPF `ListBoxItem` handles `MouseLeftButtonDown`: an enclosing `ButtonBase`, for example a `Button` whose `Content` is the `ListBox`, is not pressed, does not repeat, and is not clicked for a press on the container. |
+| `ClearItemContainer(UIElement container)` | Clears inherited item container state, detaches this selector as the handler owner for the container, and ends the container's ownership of its pointer presses. |
 | `SelectContainer(UIElement container)` | Selects the index at which the selector's own item container generator currently realizes `container`; this index already follows inserted, removed, and moved items. Does nothing when the selector has not realized `container`, or when `container` still shows an item that was replaced and has not been prepared for the new item yet, or when the last preparation of `container` threw and no later preparation has succeeded. |
 ## Property Information
 

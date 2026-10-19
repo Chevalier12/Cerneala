@@ -203,7 +203,7 @@ public class ComboBox : Selector
     protected override Type DefaultContainerType => typeof(ComboBoxItem);
 
     // The non-editable field takes its press, as the WPF template's ToggleButton does (see OnMouseUp).
-    internal override bool OwnsPointerClick => !IsEditable && IsEnabled;
+    internal override bool OwnsPointerClick => base.OwnsPointerClick || (!IsEditable && IsEnabled);
 
     internal override int ViewItemCount => filteredSourceIndices?.Count ?? base.ViewItemCount;
 

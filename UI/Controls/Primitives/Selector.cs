@@ -81,6 +81,7 @@ public class Selector : ItemsControl
                 return created;
             });
         registration.Owner = this;
+        container.IsSelectorItemContainer = true;
     }
 
     protected internal override void ClearItemContainer(UIElement container)
@@ -90,6 +91,7 @@ public class Selector : ItemsControl
             ReferenceEquals(registration.Owner, this))
         {
             registration.Owner = null;
+            container.IsSelectorItemContainer = false;
         }
     }
 
