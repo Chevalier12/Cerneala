@@ -65,6 +65,26 @@ bool hasError = await servo.ExistsAsync(ServoTarget.ById("save-error"));
 invalid cardinalities. `FindAllAsync` may return an empty list, and
 `ExistsAsync` accepts any nonzero match count.
 
+When several elements match on purpose, for example one Delete button per list
+row, select one explicitly with `Nth` (zero-based), `First`, or `Last`. The
+position is applied after every other criterion, including `Within`:
+
+```csharp
+ServoTarget delete = ServoTarget.ByRole(SemanticsRole.Button).WithName("Delete");
+
+await servo.ClickAsync(delete.Nth(2));      // third Delete button in document order
+await servo.ClickAsync(delete.Within(ServoTarget.ById("row").Last()));
+
+ServoTarget item = ServoTarget.ByRole(SemanticsRole.Button)
+    .WithNameContaining("of 10")             // ordinal substring
+    .Where(element => element.IsEnabled);    // predicate over the snapshot
+```
+
+`delete.Nth(5)` with three buttons throws `ServoTargetNotFoundException`; a
+target without a position that matches three buttons still throws
+`ServoTargetAmbiguousException`. `WithNameMatching(Regex)` is the third name
+refinement; the three name methods share one slot, so the last call wins.
+
 ## Drive Real Input
 
 Pointer and keyboard operations send Cerneala input frames. They do not assign
@@ -82,7 +102,11 @@ await servo.PressKeyAsync(InputKey.S, ServoModifiers.Control);
 ```
 
 `TypeIntoAsync` composes a click and text input. `ReplaceTextAsync` composes a
-click, `Control+A`, and text input. Target-based actions resolve current bounds,
+click, `Control+A`, and text input (`Delete` for empty text), on every operating
+system. It accepts only a target with a text value (a `TextBox`, a `PasswordBox`)
+and throws `ServoException` unless the value then equals the requested text, so
+`ReplaceTextAsync(target, "x\ny")` on a single-line `TextBox` fails instead of
+leaving `"xy"`. Target-based actions resolve current bounds,
 effective visibility, enabled state, and hit testing before sending input. The
 bounds are where the target is drawn: render and Motion transforms of the target
 and its ancestors apply, so actions aim at the center of the drawn target.
@@ -107,6 +131,13 @@ await servo.WaitUntilAsync(async cancellationToken =>
     return current.Name == "Saved";
 });
 ```
+
+`Visible`, `Hidden`, `Enabled`, `Disabled`, and `Focused` need exactly one match.
+While several elements match, for example an outgoing and an incoming copy of a
+button during a page transition, the wait keeps going as it does while none
+match. If several still match at the timeout, the `ServoTimeoutException`
+message ends with `The Servo target still matched 2 elements; exactly one was
+required.` (with the real count).
 
 Use `WaitForIdleAsync` only when global quiescence is the contract. It considers
 relay work, scheduled work, input state, and Motion; continuous Motion therefore
@@ -158,7 +189,7 @@ peers.
 Servo-specific failures derive from `ServoException`:
 
 - `ServoTargetNotFoundException` — an operation requiring one target found none;
-- `ServoTargetAmbiguousException` — an operation requiring one target found several;
+- `ServoTargetAmbiguousException` — a query or action requiring one target found several (`WaitForAsync` keeps waiting instead);
 - `ServoTargetNotActionableException` — a resolved target cannot perform the requested input or capture;
 - `ServoTimeoutException` — the configured operation deadline expired.
 

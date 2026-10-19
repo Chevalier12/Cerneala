@@ -270,6 +270,15 @@ internal sealed class WindowApplicationRuntime : IDisposable
             }
         }
 
+        // A window closed above can complete this close re-entrantly. Example: the owned window is the
+        // Application.MainWindow under OnMainWindowClose, so its close shuts the Application down, and
+        // Shutdown closes this window too. That close is the window's only teardown and its only Closed.
+        if (window.IsClosed)
+        {
+            failure?.Throw();
+            return true;
+        }
+
         if (contexts.Remove(window, out WindowContext? context))
         {
             if (context.IsModal)

@@ -73,9 +73,22 @@ Layout elements use their drawn bounds: the axis-aligned box of `ArrangedBounds`
 
 The center of these bounds must hit the target or a descendant on the current input route. A union with a gap at its center can therefore be queryable but not actionable; Servo does not search for a substitute point. Disabled colliders remain queryable, but cannot supply a hit. Target screenshots of layout elements and scene nodes use the same bounds and capture the rendered window pixels there, not a separate rendering of the node.
 
-Input sequences are serialized per window or host. `TypeIntoAsync` composes a click and text input. `ReplaceTextAsync` composes a click, `Control+A`, and text input rather than assigning a control property.
+Input sequences are serialized per window or host. `TypeIntoAsync` composes a click and text input. `ReplaceTextAsync` composes a click, `Control+A`, and text input rather than assigning a control property. When the replacement text is empty, it presses `Delete` instead of sending text.
 
-Every operation uses `ServoOptions.DefaultTimeout`. Expiration throws `ServoTimeoutException`; caller cancellation remains `OperationCanceledException`. Waits reevaluate after retained frame boundaries and release their transient subscriptions on every completion path. Async `WaitUntilAsync` predicates may issue Servo queries and do not hold the input serialization gate. `WaitForIdleAsync` requires the relay, scheduler, and Motion system to be idle, no active Servo pointer repeat, and no Servo input sequence in progress; continuous Motion therefore times out.
+`ReplaceTextAsync` behaves the same on every operating system: its steps are Cerneala `InputFrame`s, not platform key events, and `Control+A` is the select-all shortcut of `TextBox` and `PasswordBox` on every platform. Cerneala has no Command key.
+
+`ReplaceTextAsync` accepts only a target that exposes a text value: the semantic `Value` property, as a `TextBox` does, or a `PasswordBox`. Any other target, for example a `Button`, throws `ServoException` before any input is sent, so nothing is clicked and no key reaches the focused element. After the input, the target's value must equal the requested text exactly, compared ordinally; otherwise the call throws `ServoException` with the requested and the actual value. A `PasswordBox` is checked through its `Password`, and its error message contains neither password. Examples, for a `TextBox` holding `abc`:
+
+```csharp
+await servo.ReplaceTextAsync(ServoTarget.ById("name"), "xyz"); // Text == "xyz"
+await servo.ReplaceTextAsync(ServoTarget.ById("name"), "");    // Text == ""
+// TextBox is single-line and drops "\n": Text becomes "xy", and the call throws ServoException.
+await servo.ReplaceTextAsync(ServoTarget.ById("name"), "x\ny");
+```
+
+A read-only `TextBox`, or a control whose handler takes `Control+A` for something else, also throws, because its value does not become the requested text.
+
+Every operation uses `ServoOptions.DefaultTimeout`. Expiration throws `ServoTimeoutException`; caller cancellation remains `OperationCanceledException`. Waits reevaluate after retained frame boundaries and release their transient subscriptions on every completion path. `WaitForAsync` with a unique-target condition treats multiple matches as not yet satisfied, the same as no match, so an outgoing and an incoming copy of a target during a transition do not fail the wait; if the last evaluation before the timeout still found multiple matches, the `ServoTimeoutException` message states the match count. Queries such as `FindAsync` and target actions still throw `ServoTargetAmbiguousException` immediately. Async `WaitUntilAsync` predicates may issue Servo queries and do not hold the input serialization gate. `WaitForIdleAsync` requires the relay, scheduler, and Motion system to be idle, no active Servo pointer repeat, and no Servo input sequence in progress; continuous Motion therefore times out.
 
 `HoldKeyAsync` requires a `Window`-owned Servo; a direct `UiHost` Servo rejects it with `NotSupportedException` before sending input. The duration must be positive. The key and any requested left-side Shift, Control, or Alt modifiers follow the same focused-element routing as `PressKeyAsync`; `PressKeyAsync` remains a tap. The monotonic hold interval starts when the Window runtime completes Servo input for the key-down frame, **after** `Window.FrameRendered` callbacks have returned. It is not a physical display/scanout timestamp. Subsequent Servo-owned window frames keep the same down state without synthesizing repeated `KeyDown` events; to send auto-repeat `KeyDown` events, use `SendPlatformInputAsync` (see "Input paths"). Key-up is delivered in the first input frame begun at or after the requested minimum **monotonic wall-clock** duration, followed by modifier release; frame scheduling can make the actual interval longer.
 
@@ -134,7 +147,7 @@ Screenshots are supported only by the `Window` constructor and use the applicati
 | `SendTextAsync(string, CancellationToken)` | Sends Unicode text elements to the currently focused element. |
 | `SendPlatformInputAsync(IReadOnlyList<ServoPlatformInput>, CancellationToken)` | Pushes the events through the Window platform's own event queue (also available as `SendPlatformInputAsync(params ServoPlatformInput[])`), so they go through the real platform input source. |
 | `TypeIntoAsync(ServoTarget, string, CancellationToken)` | Clicks a target and sends text to it. |
-| `ReplaceTextAsync(ServoTarget, string, CancellationToken)` | Clicks a target, selects all with `Control+A`, and sends replacement text. |
+| `ReplaceTextAsync(ServoTarget, string, CancellationToken)` | Clicks a target that exposes a text value, selects all with `Control+A`, sends the replacement text (or `Delete` for empty text), and throws `ServoException` unless the value then equals the text. |
 | `WaitForAsync(ServoTarget, ServoCondition, CancellationToken)` | Waits for a target cardinality or unique-target state condition at frame boundaries. |
 | `WaitUntilAsync(Func<CancellationToken, Task<bool>>, CancellationToken)` | Waits until an asynchronous predicate succeeds; predicate exceptions propagate. |
 | `WaitForIdleAsync(CancellationToken)` | Waits until scheduled, relay, input, and Motion work are idle. |

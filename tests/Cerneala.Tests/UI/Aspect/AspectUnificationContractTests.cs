@@ -387,6 +387,84 @@ public sealed class AspectUnificationContractTests
     }
 
     [Fact]
+    public void PackageBehaviorFactoryThatDetachesItsElementLeavesNoAspectValuesOnTheDetachedElement()
+    {
+        SolidColorBrush brush = new(Color.Red);
+        UIRoot root = new();
+        Button button = new();
+        int attaches = 0;
+        root.VisualChildren.Add(button);
+        root.ProcessFrame();
+
+        root.AspectRegistry.Register(AspectPackage.Create("P").Components(components =>
+        {
+            components.AddRule(new AspectRuleSet(
+                "P.button",
+                AspectLayer.App,
+                new AspectTarget(typeof(Button)),
+                [new AspectDeclaration(Control.BackgroundProperty, AspectValue<Brush?>.Literal(brush))],
+                declarationOrder: 0));
+            components.AddBehavior(new AspectBehavior(typeof(Button), _ =>
+            {
+                if (++attaches == 1)
+                {
+                    root.VisualChildren.Remove(button);
+                }
+
+                return null;
+            }));
+        }));
+        root.ProcessFrame();
+
+        Assert.False(button.IsAttached);
+        Assert.NotSame(brush, button.Background);
+        Assert.NotEqual(UiPropertyValueSource.AspectBase, button.GetValueSource(Control.BackgroundProperty));
+        Assert.Equal(0, root.AspectProcessor.Engine.GetDependencies(button).CatalogVersion);
+
+        root.VisualChildren.Add(button);
+        root.ProcessFrame();
+        Assert.Same(brush, button.Background);
+        Assert.Equal(UiPropertyValueSource.AspectBase, button.GetValueSource(Control.BackgroundProperty));
+    }
+
+    [Fact]
+    public void PackageBehaviorFactoryThatDetachesAndReattachesItsElementLeavesTheRuleApplied()
+    {
+        SolidColorBrush brush = new(Color.Red);
+        UIRoot root = new();
+        Button button = new();
+        int attaches = 0;
+        root.VisualChildren.Add(button);
+        root.ProcessFrame();
+
+        root.AspectRegistry.Register(AspectPackage.Create("P").Components(components =>
+        {
+            components.AddRule(new AspectRuleSet(
+                "P.button",
+                AspectLayer.App,
+                new AspectTarget(typeof(Button)),
+                [new AspectDeclaration(Control.BackgroundProperty, AspectValue<Brush?>.Literal(brush))],
+                declarationOrder: 0));
+            components.AddBehavior(new AspectBehavior(typeof(Button), _ =>
+            {
+                if (++attaches == 1)
+                {
+                    root.VisualChildren.Remove(button);
+                    root.VisualChildren.Add(button);
+                }
+
+                return null;
+            }));
+        }));
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.True(button.IsAttached);
+        Assert.Same(brush, button.Background);
+        Assert.Equal(UiPropertyValueSource.AspectBase, button.GetValueSource(Control.BackgroundProperty));
+    }
+
+    [Fact]
     public void RuleAndTargetCopyCallerOwnedCollections()
     {
         List<AspectCondition> conditions =

@@ -21,6 +21,8 @@ ServoException failure = new ServoTimeoutException("The target did not become vi
 
 External cancellation remains an `OperationCanceledException` and is distinct from a Servo timeout.
 
+When a `WaitForAsync` with `Visible`, `Hidden`, `Enabled`, `Disabled`, or `Focused` times out and its last evaluation still found multiple matches, the message appends the match count, for example `The Servo operation exceeded its 00:00:05 timeout. The Servo target still matched 2 elements; exactly one was required.`
+
 ## Constructors
 
 | Name | Description |

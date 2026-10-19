@@ -128,6 +128,127 @@ public sealed class ServoInputTests
     }
 
     [Theory]
+    [InlineData("DEFAULT", "replacement")]
+    [InlineData("", "replacement")]
+    [InlineData("DEFAULT", "")]
+    [InlineData("line1\nline2", "x")]
+    public async Task ReplaceTextLeavesExactlyTheRequestedValue(string previous, string text)
+    {
+        TextBox editor = new() { Text = previous, Width = 200, Height = 40 };
+        ServoApi.SetId(editor, "editor");
+        UiHost host = CreateHost(editor, width: 240, height: 80);
+        ServoApi servo = new(host);
+        int keyDowns = 0;
+        editor.AddHandler(InputEvents.KeyDownEvent, (_, _) => keyDowns++, handledEventsToo: true);
+
+        await servo.ReplaceTextAsync(ServoTarget.ById("editor"), text);
+
+        Assert.Equal(text, editor.Text);
+        Assert.Equal(text, (await servo.FindAsync(ServoTarget.ById("editor"))).Value);
+        Assert.True(editor.IsKeyboardFocused);
+        Assert.True(keyDowns > 0);
+    }
+
+    [Theory]
+    [InlineData("read-only")]
+    [InlineData("multi-line-into-single-line")]
+    [InlineData("rebound-select-all")]
+    public async Task ReplaceTextFailsWhenTheTargetDoesNotEndWithTheRequestedValue(string scenario)
+    {
+        TextBox editor = new()
+        {
+            Text = "abc",
+            IsReadOnly = scenario == "read-only",
+            Width = 200,
+            Height = 40
+        };
+        ServoApi.SetId(editor, "editor");
+        if (scenario == "rebound-select-all")
+        {
+            editor.AddHandler(
+                InputEvents.PreviewKeyDownEvent,
+                (_, args) =>
+                {
+                    KeyEventArgs key = Assert.IsType<KeyEventArgs>(args);
+                    if (key.Key == InputKey.A && key.IsControlDown)
+                    {
+                        key.Handled = true;
+                    }
+                });
+        }
+
+        UiHost host = CreateHost(editor, width: 240, height: 80);
+        ServoApi servo = new(host);
+        string text = scenario == "multi-line-into-single-line" ? "x\ny" : "xyz";
+
+        ServoException exception = await Assert.ThrowsAsync<ServoException>(
+            () => servo.ReplaceTextAsync(ServoTarget.ById("editor"), text));
+
+        Assert.NotEqual(text, editor.Text);
+        Assert.Contains(text, exception.Message);
+        Assert.Contains(editor.Text, exception.Message);
+    }
+
+    [Fact]
+    public async Task ReplaceTextRejectsATargetWithoutATextValueBeforeAnyInput()
+    {
+        TextBox editor = new() { Text = "abc", Width = 120, Height = 40 };
+        Button button = new() { Content = "Target", Width = 120, Height = 40 };
+        ServoApi.SetId(editor, "editor");
+        ServoApi.SetId(button, "button");
+        StackPanel panel = new();
+        panel.VisualChildren.Add(editor);
+        panel.VisualChildren.Add(button);
+        UiHost host = CreateHost(panel, width: 240, height: 120);
+        ServoApi servo = new(host);
+        await servo.ClickAsync(ServoTarget.ById("editor"));
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+        UiFrame before = host.LastFrame!;
+
+        ServoException exception = await Assert.ThrowsAsync<ServoException>(
+            () => servo.ReplaceTextAsync(ServoTarget.ById("button"), "x"));
+
+        Assert.Contains("text value", exception.Message);
+        Assert.Same(before, host.LastFrame);
+        Assert.Equal(0, clicks);
+        Assert.True(editor.IsKeyboardFocused);
+        Assert.Equal("abc", editor.Text);
+    }
+
+    [Fact]
+    public async Task ReplaceTextReplacesAndVerifiesAPasswordWithoutRevealingIt()
+    {
+        PasswordBox password = new() { Password = "old-secret", Width = 200, Height = 40 };
+        ServoApi.SetId(password, "password");
+        UiHost host = CreateHost(password, width: 240, height: 80);
+        ServoApi servo = new(host);
+
+        await servo.ReplaceTextAsync(ServoTarget.ById("password"), "new-secret");
+        Assert.Equal("new-secret", password.Password);
+
+        await servo.ReplaceTextAsync(ServoTarget.ById("password"), "");
+        Assert.Equal("", password.Password);
+    }
+
+    [Fact]
+    public async Task ReplaceTextFailureOnAPasswordDoesNotRevealTheRequestedOrActualPassword()
+    {
+        DigitsOnlyPasswordBox password = new() { Password = "1234", Width = 200, Height = 40 };
+        ServoApi.SetId(password, "password");
+        UiHost host = CreateHost(password, width: 240, height: 80);
+        ServoApi servo = new(host);
+
+        ServoException exception = await Assert.ThrowsAsync<ServoException>(
+            () => servo.ReplaceTextAsync(ServoTarget.ById("password"), "pass987"));
+
+        Assert.Equal("987", password.Password);
+        Assert.DoesNotContain("pass987", exception.Message);
+        Assert.DoesNotContain("987", exception.Message);
+        Assert.DoesNotContain("1234", exception.Message);
+    }
+
+    [Theory]
     [InlineData("key")]
     [InlineData("text")]
     public async Task KeyboardOnlyActionBeforeAnyPointerActionLeavesTheHostPointerWhereItIs(string action)
@@ -442,6 +563,12 @@ public sealed class ServoInputTests
         Assert.Equal(
             new WindowScreenshotRegion(0, 80, 200, 80),
             new ServoCaptureEngine(new ServoQueryEngine()).ResolveRegion(host.Root!, target));
+    }
+
+    private sealed class DigitsOnlyPasswordBox : PasswordBox
+    {
+        protected override string NormalizeTextInput(string text) =>
+            new(base.NormalizeTextInput(text).Where(char.IsDigit).ToArray());
     }
 
     private static StackPanel CreateScaledPanel(UIElement target)
