@@ -74,11 +74,12 @@ public sealed class GridTests
         // Measured at (100, 80), the two * rows share the height by weight (40 and 40). Measured unbounded, each keeps
         // its content height (60 and 20). Both measures end at a desired size of 100 x 80, so only the newer measure
         // state tells the same-slot arrange where row 1 starts: Y 60, as for a Grid that was only measured unbounded.
+        // The children are 100 wide, so the * column desires the full width.
         Grid grid = new();
         grid.RowDefinitions.Add(new RowDefinition(GridLength.Stars(1)));
         grid.RowDefinitions.Add(new RowDefinition(GridLength.Stars(1)));
-        UIElement first = new() { Height = 60 };
-        UIElement second = new() { Height = 20 };
+        UIElement first = new() { Width = 100, Height = 60 };
+        UIElement second = new() { Width = 100, Height = 20 };
         Grid.SetRow(second, 1);
         grid.VisualChildren.Add(first);
         grid.VisualChildren.Add(second);
