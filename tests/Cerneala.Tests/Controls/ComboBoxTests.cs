@@ -1731,6 +1731,69 @@ public sealed class ComboBoxTests
         Assert.Equal("Search label", comboBox.Text);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ComboBoxItemContentIsTheSelectedItemText(bool isEditable)
+    {
+        UIRoot root = new(360, 240);
+        ComboBox comboBox = new() { Width = 150, Height = 30, IsEditable = isEditable };
+        comboBox.Items.Add(new ComboBoxItem { Content = "Alpha" });
+        comboBox.Items.Add(new ComboBoxItem { Content = new TextBlock { Text = "Beta" } });
+        LayoutCanvas canvas = new();
+        canvas.VisualChildren.Add(comboBox);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+
+        comboBox.SelectedIndex = 0;
+        root.ProcessFrame();
+
+        Assert.Equal("Alpha", comboBox.Text);
+        Assert.Equal("Alpha", Assert.IsType<ContentPresenter>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_SelectionPresenter"]).Content);
+
+        comboBox.SelectedIndex = 1;
+        root.ProcessFrame();
+
+        Assert.Equal("Beta", comboBox.Text);
+    }
+
+    [Fact]
+    public void EditableTextSearchMatchesComboBoxItemContent()
+    {
+        ComboBox comboBox = new()
+        {
+            IsEditable = true,
+            IsTextFilterEnabled = false
+        };
+        comboBox.Items.Add(new ComboBoxItem { Content = "Alpha" });
+        comboBox.Items.Add(new ComboBoxItem { Content = "Beta" });
+        comboBox.ApplyTemplate();
+        TextBox editor = Assert.IsType<TextBox>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_EditableTextBox"]);
+
+        editor.ReceiveTextInput("Be");
+
+        Assert.Equal(1, comboBox.SelectedIndex);
+        Assert.Equal("Beta", comboBox.Text);
+        Assert.Equal("Beta", editor.Text);
+    }
+
+    [Fact]
+    public void NonEditableTextInputMatchesComboBoxItemContent()
+    {
+        ComboBox comboBox = new() { IsEditable = false };
+        comboBox.Items.Add(new ComboBoxItem { Content = "Alpha" });
+        comboBox.Items.Add(new ComboBoxItem { Content = "Beta" });
+        TextCompositionEventArgs input = new(InputEvents.TextInputEvent, comboBox, "Be");
+
+        comboBox.RaiseEvent(input);
+
+        Assert.True(input.Handled);
+        Assert.Equal(1, comboBox.SelectedIndex);
+        Assert.Equal("Beta", comboBox.Text);
+    }
+
     [Fact]
     public void NonEditableTextInputSelectsFirstPrefixMatchWithoutOpeningDropDown()
     {
