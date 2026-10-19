@@ -623,8 +623,11 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         return FindResource<T>(id.Key);
     }
 
+    // A parent attaches this element only through its LogicalChildren or VisualChildren. A TabItem gives the Content
+    // it holds this LogicalParent without adding it to its LogicalChildren, so that LogicalParent does not attach it.
     internal bool HasAttachedParent =>
-        (LogicalParent?.Root is not null) || (VisualParent?.Root is not null);
+        (LogicalParent is { Root: not null } logicalParent && logicalParent.LogicalChildren.IndexOf(this) >= 0) ||
+        (VisualParent?.Root is not null);
 
     private void OnElementResourceChanged(object? sender, ResourceChangedEventArgs args)
     {
