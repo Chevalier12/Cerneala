@@ -180,6 +180,130 @@ public sealed class AspectUnificationContractTests
     }
 
     [Fact]
+    public void DetachingWithAThrowingPackageBehaviorLifetimeDisposesEveryLifetimeOnceAndClearsAspectState()
+    {
+        List<string> events = [];
+        int[] counts = new int[3];
+        SolidColorBrush brush = new(Color.Red);
+        AspectPackage package = AspectPackage.Create("A").Components(components =>
+        {
+            components.AddRule(new AspectRuleSet(
+                "A.button",
+                AspectLayer.App,
+                new AspectTarget(typeof(Button)),
+                [new AspectDeclaration(Control.BackgroundProperty, AspectValue<Brush?>.Literal(brush))],
+                declarationOrder: 0));
+            for (int behaviorIndex = 0; behaviorIndex < 3; behaviorIndex++)
+            {
+                int i = behaviorIndex;
+                components.AddBehavior(new AspectBehavior(typeof(Button), _ =>
+                {
+                    int n = ++counts[i];
+                    events.Add($"create B{i}#{n}");
+                    return new RecordingLifetime(() =>
+                    {
+                        events.Add($"dispose B{i}#{n}");
+                        if (i == 2 && n == 1)
+                        {
+                            throw new InvalidOperationException("B2 dispose failed");
+                        }
+                    });
+                }));
+            }
+        });
+        UIRoot root = new();
+        root.AspectRegistry.Register(package);
+        Button button = new();
+        root.VisualChildren.Add(button);
+        root.ProcessFrame();
+        Assert.Same(brush, button.Background);
+
+        InvalidOperationException failure = Assert.Throws<InvalidOperationException>(
+            () => root.VisualChildren.Remove(button));
+
+        Assert.Equal("B2 dispose failed", failure.Message);
+        Assert.Equal(
+            ["create B0#1", "create B1#1", "create B2#1", "dispose B2#1", "dispose B1#1", "dispose B0#1"],
+            events);
+        Assert.NotSame(brush, button.Background);
+
+        root.VisualChildren.Add(button);
+        root.ProcessFrame();
+        Assert.Equal(["create B0#2", "create B1#2", "create B2#2"], events[6..]);
+        Assert.Same(brush, button.Background);
+
+        root.VisualChildren.Remove(button);
+        Assert.Equal(["dispose B2#2", "dispose B1#2", "dispose B0#2"], events[9..]);
+    }
+
+    [Fact]
+    public void ReplacingAPackageBehaviorWhoseLifetimeThrowsKeepsTheNewLifetimeAndDisposesTheOldOnce()
+    {
+        List<string> events = [];
+        int xCount = 0;
+        int yCount = 0;
+        AspectBehavior x = new(typeof(Border), _ =>
+        {
+            int n = ++xCount;
+            events.Add($"create X#{n}");
+            return new RecordingLifetime(() =>
+            {
+                events.Add($"dispose X#{n}");
+                if (n == 1)
+                {
+                    throw new InvalidOperationException("X dispose failed");
+                }
+            });
+        });
+        AspectBehavior y = new(typeof(Border), _ =>
+        {
+            int n = ++yCount;
+            events.Add($"create Y#{n}");
+            return new RecordingLifetime(() => events.Add($"dispose Y#{n}"));
+        });
+        UIRoot root = new();
+        root.AspectRegistry.Register(BehaviorPackage("X", x));
+        Border border = new();
+        root.VisualChildren.Add(border);
+        root.ProcessFrame();
+
+        root.AspectRegistry.Register(BehaviorPackage("Y", y), notify: false);
+        root.AspectRegistry.Unregister("X");
+        InvalidOperationException failure = Assert.Throws<InvalidOperationException>(() => root.ProcessFrame());
+
+        Assert.Equal("X dispose failed", failure.Message);
+        root.ProcessFrame();
+        root.VisualChildren.Remove(border);
+        Assert.Equal(["create X#1", "create Y#1", "dispose X#1", "dispose Y#1"], events);
+    }
+
+    [Fact]
+    public void FailedPackageBehaviorAttachKeepsItsExceptionWhenARolledBackLifetimeThrows()
+    {
+        int rollbackDisposals = 0;
+        AspectBehavior attached = new(typeof(Border), _ => new RecordingLifetime(() =>
+        {
+            rollbackDisposals++;
+            throw new InvalidOperationException("rollback dispose failed");
+        }));
+        AspectBehavior failing = new(typeof(Border), _ => throw new InvalidOperationException("attach failed"));
+        UIRoot root = new();
+        Border border = new();
+        root.VisualChildren.Add(border);
+        root.ProcessFrame();
+
+        root.AspectRegistry.Register(AspectPackage.Create("Failing").Components(components =>
+        {
+            components.AddBehavior(attached);
+            components.AddBehavior(failing);
+        }));
+        InvalidOperationException failure = Assert.Throws<InvalidOperationException>(() => root.ProcessFrame());
+
+        Assert.Equal("attach failed", failure.Message);
+        Assert.Equal(1, rollbackDisposals);
+    }
+
+    [Fact]
     public void RuleAndTargetCopyCallerOwnedCollections()
     {
         List<AspectCondition> conditions =
@@ -575,5 +699,11 @@ public sealed class AspectUnificationContractTests
         {
             Interlocked.Exchange(ref dispose, null)?.Invoke();
         }
+    }
+
+    // Runs the callback on every Dispose call, so a second disposal is visible.
+    private sealed class RecordingLifetime(Action dispose) : IDisposable
+    {
+        public void Dispose() => dispose();
     }
 }
