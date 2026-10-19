@@ -158,6 +158,17 @@ public class TabControl : Selector
         }
     }
 
+    // A Selected or SelectionChanged handler can give the template's ContentPresenter the new SelectedContent, which
+    // lets go of the content of the tab that was just deselected. As in WPF, where TabControl.OnSelectionChanged runs
+    // after the SelectionChanged handlers, that tab owns its content again at once, not only at the next layout pass.
+    internal override void OnSelectionChangeCompleted()
+    {
+        if (IsComponentTemplated)
+        {
+            UpdateTemplatedContentOwnership();
+        }
+    }
+
     // The template that goes away lets go of the element content of the tabs it showed, so the next template or the
     // content area can show it, and its tab can own it again.
     protected override void OnTemplateApplied(ComponentTemplateInstance? instance)
