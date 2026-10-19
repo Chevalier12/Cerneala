@@ -19,7 +19,7 @@ ServoCondition expected = ServoCondition.Visible;
 
 ## Remarks
 
-`Exists` and `Missing` describe target cardinality and accept any nonzero match count or zero matches, respectively. The other values wait while no match exists and require a unique match when one appears; multiple matches throw `ServoTargetAmbiguousException` immediately. Conditions are reevaluated at retained frame boundaries.
+`Exists` and `Missing` describe target cardinality and accept any nonzero match count or zero matches, respectively. The other values require a unique match: they keep waiting while no match exists and while multiple matches exist, because transitions can briefly keep an outgoing and an incoming copy of the same target. If the last evaluation before the timeout still found multiple matches, `ServoTimeoutException` states the match count, for example `The Servo target still matched 2 elements; exactly one was required.` Conditions are reevaluated at retained frame boundaries.
 
 ## Fields
 
