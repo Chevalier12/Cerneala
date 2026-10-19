@@ -191,7 +191,10 @@ public sealed class ElementInputBridgeTests
         UIElement content = new();
         Button button = new()
         {
-            Content = content
+            Content = content,
+            // The content has no size of its own; stretched, it fills the Button, so the pointer is over it.
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            VerticalContentAlignment = VerticalAlignment.Stretch
         };
         button.Arrange(new ArrangeContext(new LayoutRect(0, 0, 40, 40)));
         root.VisualChildren.Add(button);

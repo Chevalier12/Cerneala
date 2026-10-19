@@ -21,6 +21,9 @@ public class CheckBox : ToggleButton
         SetFrameworkDefault(ComponentTemplateProperty, CheckBoxTemplates.Default);
         SetFrameworkDefault(BorderBrushProperty, DefaultBorderBrush);
         SetFrameworkDefault(BorderThicknessProperty, new Thickness(1));
+        // WPF's CheckBox style is not based on the ButtonBase style, so its content keeps Control's Left and Top.
+        SetFrameworkDefault(HorizontalContentAlignmentProperty, HorizontalAlignment.Left);
+        SetFrameworkDefault(VerticalContentAlignmentProperty, VerticalAlignment.Top);
     }
 
     protected override LayoutSize MeasureCore(MeasureContext context)

@@ -81,6 +81,18 @@ public class Control : UIElement
             UiPropertyOptions.Inherits | UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender,
             validateValue: value => value > 0 && float.IsFinite(value)));
 
+    // As in WPF, the defaults are Left and Top; a control that places its content reads them, for example Button,
+    // whose framework defaults are Center, and a template that binds them to its ContentPresenter's alignment.
+    public static readonly UiProperty<HorizontalAlignment> HorizontalContentAlignmentProperty = UiProperty<HorizontalAlignment>.Register(
+        nameof(HorizontalContentAlignment),
+        typeof(Control),
+        new UiPropertyMetadata<HorizontalAlignment>(HorizontalAlignment.Left, UiPropertyOptions.AffectsArrange | UiPropertyOptions.AffectsRender));
+
+    public static readonly UiProperty<VerticalAlignment> VerticalContentAlignmentProperty = UiProperty<VerticalAlignment>.Register(
+        nameof(VerticalContentAlignment),
+        typeof(Control),
+        new UiPropertyMetadata<VerticalAlignment>(VerticalAlignment.Top, UiPropertyOptions.AffectsArrange | UiPropertyOptions.AffectsRender));
+
     public Brush? Background
     {
         get => GetValue(BackgroundProperty);
@@ -124,6 +136,18 @@ public class Control : UIElement
     {
         get => GetValue(FontSizeProperty);
         set => SetValue(FontSizeProperty, value);
+    }
+
+    public HorizontalAlignment HorizontalContentAlignment
+    {
+        get => GetValue(HorizontalContentAlignmentProperty);
+        set => SetValue(HorizontalContentAlignmentProperty, value);
+    }
+
+    public VerticalAlignment VerticalContentAlignment
+    {
+        get => GetValue(VerticalContentAlignmentProperty);
+        set => SetValue(VerticalContentAlignmentProperty, value);
     }
 
     public ComponentTemplate? ComponentTemplate
