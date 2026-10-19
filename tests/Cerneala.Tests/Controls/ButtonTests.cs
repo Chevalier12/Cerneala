@@ -551,6 +551,52 @@ public sealed class ButtonTests
         Assert.Equal(1, clicks);
     }
 
+    // As in WPF, a handled PreviewMouseDown or PreviewMouseLeftButtonDown keeps the press from the button: the button is
+    // not pressed, and the release raises no Click and runs no Command (#620). A press whose preview is not handled still
+    // clicks once.
+    [Theory]
+    [InlineData(false, false, false)]
+    [InlineData(true, false, false)]
+    [InlineData(false, true, false)]
+    [InlineData(true, false, true)]
+    [InlineData(false, true, true)]
+    public void HandledPreviewMouseDownKeepsThePressFromTheButton(bool handlePreviewMouseDown, bool handlePreviewLeftButtonDown, bool pressOnNestedTextBox)
+    {
+        int commands = 0;
+        TextBox text = new() { Text = "abc", Width = 120, Height = 30 };
+        Button button = new() { Content = pressOnNestedTextBox ? text : "b", Width = 200, Height = 80, Command = new ActionCommand(_ => commands++) };
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+        UIElement handlerOwner = pressOnNestedTextBox ? text : button;
+        if (handlePreviewMouseDown)
+        {
+            handlerOwner.PreviewMouseDown += (_, args) => args.Handled = true;
+        }
+
+        if (handlePreviewLeftButtonDown)
+        {
+            handlerOwner.PreviewMouseLeftButtonDown += (_, args) => args.Handled = true;
+        }
+
+        UIRoot root = CreateWindowRoot(button);
+        LayoutRect bounds = pressOnNestedTextBox ? text.ArrangedBounds : button.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        Assert.Same(pressOnNestedTextBox ? text : button, new HitTestService().HitTest(root, x, y)?.Element);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bool pressedAfterPress = button.IsPressed;
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        bool handled = handlePreviewMouseDown || handlePreviewLeftButtonDown;
+        Assert.Equal(!handled, pressedAfterPress);
+        Assert.Equal(handled ? 0 : 1, clicks);
+        Assert.Equal(handled ? 0 : 1, commands);
+        Assert.False(button.IsPressed);
+    }
+
     [Fact]
     public void PickingComboBoxDropDownItemInsideButtonSelectsTheItemWithoutButtonClick()
     {
