@@ -33,7 +33,7 @@ internal sealed class ServoQueryEngine
         return matches[0];
     }
 
-    internal static ServoTargetAmbiguousException CreateAmbiguousException(ServoTarget target, int matchCount) =>
+    private static ServoTargetAmbiguousException CreateAmbiguousException(ServoTarget target, int matchCount) =>
         new($"The Servo target {target} matched {matchCount} elements; exactly one was required.");
 
     internal IReadOnlyList<ServoElement> FindAll(UIRoot root, ServoTarget target)

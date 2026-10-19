@@ -132,8 +132,12 @@ public sealed class ServoFailureMessageTests
             () => servo.FindAsync(target))).Message);
         Assert.Equal(expected, (await Assert.ThrowsAsync<ServoTargetAmbiguousException>(
             () => servo.ClickAsync(target))).Message);
-        Assert.Equal(expected, (await Assert.ThrowsAsync<ServoTargetAmbiguousException>(
-            () => servo.WaitForAsync(target, ServoCondition.Visible))).Message);
+        // WaitForAsync treats ambiguity as not yet satisfied; its timeout names the target and the count.
+        Assert.Equal(
+            "The Servo wait for target Id=\"duplicate\" to be Visible exceeded its 00:00:00.1000000 timeout. " +
+            "The Servo target still matched 2 elements; exactly one was required.",
+            (await Assert.ThrowsAsync<ServoTimeoutException>(
+                () => servo.WaitForAsync(target, ServoCondition.Visible, TimeSpan.FromMilliseconds(100)))).Message);
     }
 
     [Theory]

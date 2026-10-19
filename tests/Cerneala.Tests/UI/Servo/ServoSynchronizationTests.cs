@@ -56,9 +56,135 @@ public sealed class ServoSynchronizationTests
         ServoApi.SetId(second, "duplicate");
         root.VisualChildren.Add(first);
         root.VisualChildren.Add(second);
-        await Assert.ThrowsAsync<ServoTargetAmbiguousException>(
-            () => servo.WaitForAsync(ServoTarget.ById("duplicate"), ServoCondition.Visible));
         await servo.WaitForAsync(ServoTarget.ById("duplicate"), ServoCondition.Exists);
+    }
+
+    [Fact]
+    public async Task WaitForTreatsTransientAmbiguityAsNotYetSatisfied()
+    {
+        UIRoot root = new(240, 120);
+        Button outgoing = new() { Content = "Next" };
+        Button incoming = new() { Content = "Next" };
+        ServoApi.SetId(outgoing, "next");
+        ServoApi.SetId(incoming, "next");
+        root.VisualChildren.Add(outgoing);
+        root.VisualChildren.Add(incoming);
+        UiHost host = CreateHost(root);
+        ServoApi servo = new(host);
+
+        Task wait = servo.WaitForAsync(ServoTarget.ById("next"), ServoCondition.Enabled);
+        for (int frame = 0; frame < 3; frame++)
+        {
+            host.Update(EmptyInput(), host.Viewport, TimeSpan.FromMilliseconds(16));
+            Thread.Sleep(1);
+        }
+
+        Assert.False(wait.IsCompleted, wait.Exception?.InnerException?.ToString());
+        root.VisualChildren.Remove(outgoing);
+        PumpUntilCompleted(host, wait);
+        await wait;
+    }
+
+    [Fact]
+    public void WaitForTimeoutStatesTheMatchCountWhenTheTargetStaysAmbiguous()
+    {
+        UIRoot root = new(240, 120);
+        for (int index = 0; index < 2; index++)
+        {
+            Button duplicate = new() { Content = "Next" };
+            ServoApi.SetId(duplicate, "next");
+            root.VisualChildren.Add(duplicate);
+        }
+
+        UiHost host = CreateHost(root);
+        ServoApi servo = new(host, new ServoOptions
+        {
+            DefaultTimeout = TimeSpan.FromMilliseconds(200)
+        });
+
+        ServoTimeoutException failure = Assert.Throws<ServoTimeoutException>(() => CompleteSynchronously(
+            servo.WaitForAsync(ServoTarget.ById("next"), ServoCondition.Enabled)));
+        Assert.Contains("The Servo target still matched 2 elements; exactly one was required.", failure.Message);
+    }
+
+    [Fact]
+    public void WaitForTimeoutOmitsAmbiguityThatResolvedBeforeTheLastEvaluation()
+    {
+        UIRoot root = new(240, 120);
+        Button first = new() { Content = "Next" };
+        Button second = new() { Content = "Next" };
+        ServoApi.SetId(first, "next");
+        ServoApi.SetId(second, "next");
+        root.VisualChildren.Add(first);
+        root.VisualChildren.Add(second);
+        UiHost host = CreateHost(root);
+        ServoApi servo = new(host, new ServoOptions
+        {
+            DefaultTimeout = TimeSpan.FromSeconds(1)
+        });
+
+        Task wait = servo.WaitForAsync(ServoTarget.ById("next"), ServoCondition.Enabled);
+        Assert.False(wait.IsCompleted, wait.Exception?.InnerException?.ToString());
+        root.VisualChildren.Remove(first);
+        root.VisualChildren.Remove(second);
+        for (int frame = 0; frame < 20; frame++)
+        {
+            host.Update(EmptyInput(), host.Viewport, TimeSpan.FromMilliseconds(16));
+            Thread.Sleep(5);
+        }
+
+        ServoTimeoutException failure = Assert.Throws<ServoTimeoutException>(() => CompleteSynchronously(wait));
+        Assert.DoesNotContain("matched", failure.Message);
+    }
+
+    [Fact]
+    public void CallerCancellationOfAnAmbiguousWaitRemainsCancellation()
+    {
+        UIRoot root = new(240, 120);
+        for (int index = 0; index < 2; index++)
+        {
+            Button duplicate = new() { Content = "Next" };
+            ServoApi.SetId(duplicate, "next");
+            root.VisualChildren.Add(duplicate);
+        }
+
+        UiHost host = CreateHost(root);
+        ServoApi servo = new(host);
+        using CancellationTokenSource cancellation = new();
+
+        Task wait = servo.WaitForAsync(ServoTarget.ById("next"), ServoCondition.Visible, cancellation.Token);
+        Assert.False(wait.IsCompleted, wait.Exception?.InnerException?.ToString());
+        cancellation.Cancel();
+
+        Exception failure = Assert.ThrowsAny<OperationCanceledException>(() => CompleteSynchronously(wait));
+        Assert.IsNotType<ServoTimeoutException>(failure);
+    }
+
+    [Fact]
+    public async Task WaitForExistsAndMissingKeepCardinalitySemanticsWithMultipleMatches()
+    {
+        UIRoot root = new(240, 120);
+        Button first = new() { Content = "First" };
+        Button second = new() { Content = "Second" };
+        ServoApi.SetId(first, "duplicate");
+        ServoApi.SetId(second, "duplicate");
+        root.VisualChildren.Add(first);
+        root.VisualChildren.Add(second);
+        UiHost host = CreateHost(root);
+        ServoApi servo = new(host);
+        ServoTarget target = ServoTarget.ById("duplicate");
+
+        await servo.WaitForAsync(target, ServoCondition.Exists);
+
+        Task missing = servo.WaitForAsync(target, ServoCondition.Missing);
+        Assert.False(missing.IsCompleted, missing.Exception?.InnerException?.ToString());
+        root.VisualChildren.Remove(first);
+        host.Update(EmptyInput(), host.Viewport, TimeSpan.FromMilliseconds(16));
+        Thread.Sleep(1);
+        Assert.False(missing.IsCompleted, missing.Exception?.InnerException?.ToString());
+        root.VisualChildren.Remove(second);
+        PumpUntilCompleted(host, missing);
+        await missing;
     }
 
     [Fact]

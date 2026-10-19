@@ -23,6 +23,8 @@ External cancellation remains an `OperationCanceledException` and is distinct fr
 
 The timeout is `ServoOptions.DefaultTimeout`, or the `timeout` argument of the overload the call used. Servo's message contains that value and, for an operation that takes a target, the target description: `The Servo operation on target Id="save" exceeded its 00:00:05 timeout.`, `The Servo wait for target Id="dialog" to be Visible exceeded its 00:00:05 timeout.`, or `The Servo operation exceeded its 00:00:05 timeout.` for an operation without a target.
 
+When a `WaitForAsync` with `Visible`, `Hidden`, `Enabled`, `Disabled`, or `Focused` times out and its last evaluation still found multiple matches, the message appends the match count, for example `The Servo wait for target Role=Button to be Visible exceeded its 00:00:05 timeout. The Servo target still matched 2 elements; exactly one was required.`
+
 ## Constructors
 
 | Name | Description |

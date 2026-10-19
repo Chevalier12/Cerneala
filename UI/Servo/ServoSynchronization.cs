@@ -23,9 +23,7 @@ internal sealed class ServoSynchronization
             throw new ArgumentOutOfRangeException(nameof(condition));
         }
 
-        return WaitAsync(
-            (root, _) => Task.FromResult(IsConditionSatisfied(root, target, condition)),
-            cancellationToken);
+        return WaitForConditionAsync(target, condition, cancellationToken);
     }
 
     internal Task WaitUntilAsync(
@@ -57,8 +55,36 @@ internal sealed class ServoSynchronization
         }
     }
 
-    private bool IsConditionSatisfied(UIRoot root, ServoTarget target, ServoCondition condition)
+    private async Task WaitForConditionAsync(
+        ServoTarget target,
+        ServoCondition condition,
+        CancellationToken cancellationToken)
     {
+        int ambiguousMatchCount = 0;
+        try
+        {
+            await WaitAsync(
+                (root, _) => Task.FromResult(
+                    IsConditionSatisfied(root, target, condition, out ambiguousMatchCount)),
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException exception) when (
+            ambiguousMatchCount > 1 && cancellationToken.IsCancellationRequested)
+        {
+            throw new ServoTimeoutDiagnosticException(
+                $"The Servo target still matched {ambiguousMatchCount} elements; exactly one was required.",
+                exception,
+                cancellationToken);
+        }
+    }
+
+    private bool IsConditionSatisfied(
+        UIRoot root,
+        ServoTarget target,
+        ServoCondition condition,
+        out int ambiguousMatchCount)
+    {
+        ambiguousMatchCount = 0;
         IReadOnlyList<ServoResolvedElement> matches = queryEngine.ResolveAll(root, target);
         if (condition == ServoCondition.Exists)
         {
@@ -72,7 +98,10 @@ internal sealed class ServoSynchronization
 
         if (matches.Count > 1)
         {
-            throw ServoQueryEngine.CreateAmbiguousException(target, matches.Count);
+            // Transitions can briefly keep an outgoing and an incoming copy of the target;
+            // ambiguity is "not yet satisfied", and the count is reported if it lasts until timeout.
+            ambiguousMatchCount = matches.Count;
+            return false;
         }
 
         if (matches.Count == 0)

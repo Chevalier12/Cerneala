@@ -41,11 +41,28 @@ internal static class ServoOperation
         {
             return await operation(linked.Token).ConfigureAwait(false);
         }
-        catch (OperationCanceledException) when (
+        catch (OperationCanceledException exception) when (
             !cancellationToken.IsCancellationRequested && timeoutSource.IsCancellationRequested)
         {
-            throw new ServoTimeoutException(
-                $"{describeSubject?.Invoke() ?? DefaultSubject} exceeded its {timeout} timeout.");
+            string message = $"{describeSubject?.Invoke() ?? DefaultSubject} exceeded its {timeout} timeout.";
+            throw new ServoTimeoutException(exception is ServoTimeoutDiagnosticException diagnostic
+                ? $"{message} {diagnostic.Message}"
+                : message);
         }
+    }
+}
+
+/// <summary>
+/// Cancellation raised by a wait whose last evaluation explains why it was still unsatisfied.
+/// <see cref="ServoOperation"/> appends the message to the timeout failure.
+/// </summary>
+internal sealed class ServoTimeoutDiagnosticException : OperationCanceledException
+{
+    internal ServoTimeoutDiagnosticException(
+        string diagnostic,
+        Exception innerException,
+        CancellationToken cancellationToken)
+        : base(diagnostic, innerException, cancellationToken)
+    {
     }
 }

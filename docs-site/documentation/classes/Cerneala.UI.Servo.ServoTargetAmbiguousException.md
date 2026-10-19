@@ -24,6 +24,8 @@ Use a more specific target or `FindAllAsync` when multiple matches are expected.
 
 Servo's message names the target and the match count, for example `The Servo target Role=Button matched 3 elements; exactly one was required.`
 
+`WaitForAsync` does not throw this exception: it treats multiple matches as a condition that is not yet satisfied and keeps waiting. A wait that is still ambiguous at its timeout throws `ServoTimeoutException` with the match count in the message.
+
 ## Constructors
 
 | Name | Description |
