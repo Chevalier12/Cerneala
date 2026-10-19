@@ -1,7 +1,11 @@
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Markup;
+using Cerneala.UI.Motion.Presence;
+using Cerneala.Tests.UI.Motion.Core;
 using LayoutPanel = Cerneala.UI.Layout.Panels.Panel;
+using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
 
 namespace Cerneala.Tests.UI.Layout;
 
@@ -99,6 +103,135 @@ public sealed class PanelChildrenTests
 
         Assert.Same(panel, child.LogicalParent);
         Assert.Same(panel, child.VisualParent);
+    }
+
+    // Issue #493: removing the visual child first and the logical child second canceled the exit at once.
+    [Theory]
+    [MemberData(nameof(Panels))]
+    public void ChildrenRemoveOfAChildWithPresenceKeepsTheExitRunningUntilItEnds(string panelType)
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(200, 200, motionClock: clock);
+        LayoutPanel panel = CreatePanel(panelType);
+        root.VisualChildren.Add(panel);
+        Border child = new() { Width = 50, Height = 20, Presence = CreatePresence() };
+        panel.Children.Add(child);
+        root.ProcessFrame();
+
+        Assert.True(panel.Children.Remove(child));
+        root.ProcessFrame();
+
+        Assert.Equal(PresenceState.Exiting, root.Motion.Presence.GetState(child));
+        Assert.Equal([child], root.Motion.Presence.GetExitingVisualChildren(panel));
+        Assert.True(child.IsAttached);
+        Assert.Empty(panel.Children);
+
+        clock.Advance(TimeSpan.FromMilliseconds(120));
+        root.ProcessFrame();
+
+        Assert.Equal(PresenceState.Detached, root.Motion.Presence.GetState(child));
+        Assert.Empty(root.Motion.Presence.GetExitingVisualChildren(panel));
+        Assert.False(child.IsAttached);
+    }
+
+    // Issue #493: conditional panel children are reconciled visual first for insertion; removal must not cancel the exit.
+    [Fact]
+    public void ConditionalPanelChildWithPresenceExitsWhenItsConditionTurnsFalseAndReturnsWhenItTurnsTrue()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(200, 200, motionClock: clock);
+        StackPanel panel = new();
+        Border child = new() { Width = 50, Height = 20, Presence = CreatePresence() };
+        MarkupObservation observation = GeneratedMarkup.ObserveProperty(panel, UIElement.IsEnabledProperty);
+        using IDisposable conditions = GeneratedMarkup.AttachConditions(
+            panel,
+            [observation],
+            [new MarkupConditionRule(0, () => (bool)observation.Value!, null, new MarkupConditionalContent(0, () => [child]))]);
+        root.VisualChildren.Add(panel);
+        root.ProcessFrame();
+        Assert.Equal([child], panel.Children);
+        Assert.Equal([child], panel.LogicalChildren);
+
+        panel.IsEnabled = false;
+        root.ProcessFrame();
+
+        Assert.Equal(PresenceState.Exiting, root.Motion.Presence.GetState(child));
+        Assert.Equal([child], root.Motion.Presence.GetExitingVisualChildren(panel));
+        Assert.True(child.IsAttached);
+        Assert.Empty(panel.Children);
+        Assert.Empty(panel.LogicalChildren);
+
+        clock.Advance(TimeSpan.FromMilliseconds(120));
+        root.ProcessFrame();
+
+        Assert.Equal(PresenceState.Detached, root.Motion.Presence.GetState(child));
+        Assert.False(child.IsAttached);
+
+        panel.IsEnabled = true;
+        root.ProcessFrame();
+
+        Assert.Equal([child], panel.Children);
+        Assert.Equal([child], panel.LogicalChildren);
+        Assert.Equal(PresenceState.Present, root.Motion.Presence.GetState(child));
+    }
+
+    // Issue #494: the logical insertion publishes the child before LogicalChildren.Changed runs, so a throwing
+    // handler must not leave a logical-only child that Children.Add and Children.Remove can no longer fix.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ChildrenAddOrInsertWhoseLogicalChangedHandlerThrowsLeavesTheChildWithNeitherParent(bool insert)
+    {
+        UIRoot root = new(200, 200);
+        StackPanel panel = new();
+        root.VisualChildren.Add(panel);
+        Border existing = new();
+        panel.Children.Add(existing);
+        Border child = new() { Width = 50, Height = 20 };
+        bool throwOnce = true;
+        panel.LogicalChildren.Changed += (_, _) =>
+        {
+            if (throwOnce)
+            {
+                throwOnce = false;
+                throw new InvalidOperationException("handler failed");
+            }
+        };
+
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
+        {
+            if (insert)
+            {
+                panel.Children.Insert(0, child);
+            }
+            else
+            {
+                panel.Children.Add(child);
+            }
+        });
+
+        Assert.Equal("handler failed", exception.Message);
+        Assert.Null(child.LogicalParent);
+        Assert.Null(child.VisualParent);
+        Assert.Null(child.Root);
+        Assert.Equal([existing], panel.VisualChildren);
+        Assert.Equal([existing], panel.LogicalChildren);
+
+        panel.Children.Add(child);
+
+        Assert.Same(panel, child.LogicalParent);
+        Assert.Same(panel, child.VisualParent);
+        Assert.Equal([existing, child], panel.LogicalChildren);
+        Assert.True(panel.Children.Remove(child));
+        Assert.Null(child.LogicalParent);
+        Assert.Null(child.VisualParent);
+    }
+
+    private static PresenceOptions CreatePresence()
+    {
+        return PresenceOptions.FadeAndScale(
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)),
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)));
     }
 
     private static LayoutPanel CreatePanel(string panelType)

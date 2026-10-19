@@ -1263,7 +1263,10 @@ internal sealed class MarkupConditionController : IElementDataLifecycleBehavior,
 
                 break;
             case global::Cerneala.UI.Layout.Panels.Panel:
-                // Visual first: a panel accepts a logical child only when it is already one of its visual children.
+                // Remove logical first, so the visual removal can start a presence exit that the logical removal
+                // would otherwise cancel. Insert visual first: a panel accepts a logical child only when it is
+                // already one of its visual children.
+                RemoveUndesired(owner.LogicalChildren, desired);
                 Reconcile(owner.VisualChildren, desired);
                 Reconcile(owner.LogicalChildren, desired);
                 break;
@@ -1285,13 +1288,17 @@ internal sealed class MarkupConditionController : IElementDataLifecycleBehavior,
         activeContent.AddRange(content);
     }
 
-    private static void Reconcile(UIElementCollection collection, IReadOnlyList<UIElement> desired)
+    private static void RemoveUndesired(UIElementCollection collection, IReadOnlyList<UIElement> desired)
     {
         foreach (UIElement child in collection.Where(child => !desired.Any(candidate => ReferenceEquals(candidate, child))).ToArray())
         {
             collection.Remove(child);
         }
+    }
 
+    private static void Reconcile(UIElementCollection collection, IReadOnlyList<UIElement> desired)
+    {
+        RemoveUndesired(collection, desired);
         for (int index = 0; index < desired.Count; index++)
         {
             UIElement child = desired[index];
