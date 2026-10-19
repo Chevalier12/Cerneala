@@ -557,6 +557,28 @@ public sealed class WindowRuntimeTests : IDisposable
     }
 
     [Fact]
+    public async Task ServoReplaceTextWaitsForATextBoxThatAppearsFramesLater()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        StackPanel panel = new();
+        Window window = new() { Content = panel };
+        window.Show();
+        ServoApi servo = new(window);
+        TextBox editor = new() { Text = "old", Width = 160, Height = 32 };
+        ServoApi.SetId(editor, "editor");
+
+        Task replace = servo.ReplaceTextAsync(ServoTarget.ById("editor"), "new");
+        PumpFrames(runtime, 3);
+        Assert.False(replace.IsCompleted);
+
+        panel.VisualChildren.Add(editor);
+        PumpUntilCompleted(runtime, replace);
+        await replace;
+        Assert.Equal("new", editor.Text);
+    }
+
+    [Fact]
     public async Task ServoClickOnATargetThatNeverBecomesActionableTimesOutNamingTheLastReason()
     {
         FakeWindowPlatform platform = new();

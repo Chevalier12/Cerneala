@@ -1,3 +1,5 @@
+using Cerneala.UI.Accessibility;
+using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
@@ -25,14 +27,23 @@ internal sealed class ServoActionEngine
     // cancellation as a ServoTimeoutDiagnosticException ("Last failure: The Servo target is
     // disabled.", inner: the last ServoTargetNotActionableException), which ServoOperation turns into
     // ServoTimeoutException when the timeout caused the cancellation.
+    // checkBeforeInput runs in every attempt right before the actionability check, inside the same
+    // materialization. Its not-found failure is retried like the others; any other failure ends the
+    // action before input. Example: ReplaceTextAsync passes ReadTextValue, so a TextBox that appears
+    // two frames later is replaced, and a Button fails at once because it has no text value.
     internal async Task DispatchWhenActionableAsync(
         ServoTarget target,
         Func<Func<UIRoot, ServoActionTarget>, Task> dispatch,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Action<UIRoot>? checkBeforeInput = null)
     {
         ArgumentNullException.ThrowIfNull(target);
         ArgumentNullException.ThrowIfNull(dispatch);
-        Func<UIRoot, ServoActionTarget> resolve = root => ResolveActionable(root, target);
+        Func<UIRoot, ServoActionTarget> resolve = root =>
+        {
+            checkBeforeInput?.Invoke(root);
+            return ResolveActionable(root, target);
+        };
         using ServoFrameSignal signal = new(context);
         ServoException? lastFailure = null;
         while (true)
@@ -109,6 +120,40 @@ internal sealed class ServoActionEngine
         return new ServoActionTarget(element, x, y);
     }
 
+    // The text a text replacement must leave: the semantic Value of the target, or the password of a
+    // PasswordBox, whose semantic Value is always null so that the projection never reveals it.
+    // Example: a TextBox holding "abc" reads "abc"; a Button has no Value and throws ServoException.
+    internal ServoTextValue ReadTextValue(UIRoot root, ServoTarget target)
+    {
+        ServoResolvedElement match = queryEngine.Resolve(root, target);
+        if (match.Element is PasswordBox passwordBox)
+        {
+            return new ServoTextValue(passwordBox.Password, IsSecret: true);
+        }
+
+        if (!match.Node.Properties.TryGetValue(SemanticsProperty.Value, out object? value) ||
+            value is not (string or null))
+        {
+            throw new ServoException(
+                "The Servo target does not expose a text value, so its text cannot be replaced.");
+        }
+
+        return new ServoTextValue((string?)value ?? string.Empty, IsSecret: false);
+    }
+
+    internal void VerifyReplacedText(UIRoot root, ServoTarget target, string text)
+    {
+        ServoTextValue actual = ReadTextValue(root, target);
+        if (string.Equals(actual.Text, text, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        throw new ServoException(actual.IsSecret
+            ? "The text replacement did not leave the requested password in the Servo target; the target rejected or changed the typed input."
+            : $"The text replacement did not leave the requested value in the Servo target. Requested: \"{text}\". Actual: \"{actual.Text}\".");
+    }
+
     private static bool HasUsableBounds(LayoutRect bounds)
     {
         return float.IsFinite(bounds.X) &&
@@ -122,3 +167,5 @@ internal sealed class ServoActionEngine
 }
 
 internal readonly record struct ServoActionTarget(UIElement Element, float X, float Y);
+
+internal readonly record struct ServoTextValue(string Text, bool IsSecret);
