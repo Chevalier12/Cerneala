@@ -87,10 +87,11 @@ public class ContentControl : Control
 
     // Content that this control does not host is taken later by its other owner (a ContentPresenter, or the TabItem
     // that holds it), so SetValue, and a ClearValue that makes it effective, check it here, before the store changes,
-    // as the Content setter does.
-    internal override void ValidatePropertyMutation(UiProperty property, object? value)
+    // as the Content setter does. Only a write that becomes the effective Content is checked: a shadowed write does
+    // not change Content, as in WPF, where the ownership work runs in the property-changed callback of ContentProperty.
+    internal override void ValidateEffectiveValueChange(UiProperty property, object? value)
     {
-        base.ValidatePropertyMutation(property, value);
+        base.ValidateEffectiveValueChange(property, value);
         if (ReferenceEquals(property, ContentProperty) &&
             value is UIElement element &&
             !ReferenceEquals(element, Content) &&

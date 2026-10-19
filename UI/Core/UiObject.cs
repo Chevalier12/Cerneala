@@ -24,6 +24,22 @@ public class UiObject
     {
     }
 
+    // Validates a value that a write makes the effective value, before the store changes. A write at a source below the
+    // effective source is stored and shadowed without this check, as a style or trigger value under a local value.
+    internal virtual void ValidateEffectiveValueChange(UiProperty property, object? value)
+    {
+    }
+
+    // Runs the owner's checks for a write of the coerced value at source, before the store changes.
+    internal void ValidatePropertyWrite(UiProperty property, object? coerced, UiPropertyValueSource source)
+    {
+        ValidatePropertyMutation(property, coerced);
+        if (propertyStore.IsEffectiveForWrite(property, source))
+        {
+            ValidateEffectiveValueChange(property, coerced);
+        }
+    }
+
     internal void SetFrameworkDefault<T>(UiProperty<T> property, T value)
     {
         ArgumentNullException.ThrowIfNull(property);
@@ -32,7 +48,7 @@ public class UiObject
         UiPropertyValueSource oldSource = GetValueSource(property);
         object? coerced = property.CoerceUntyped(this, value);
         property.ValidateUntyped(coerced);
-        ValidatePropertyMutation(property, coerced);
+        ValidatePropertyWrite(property, coerced, UiPropertyValueSource.Default);
         propertyStore.SetFrameworkDefault(property, coerced);
         propertyValueVersion++;
         T newValue = GetValue(property);
@@ -180,7 +196,7 @@ public class UiObject
             // Catch only their value rejection, never coercion or write callbacks.
             try
             {
-                ValidatePropertyMutation(property, coerced);
+                ValidatePropertyWrite(property, coerced, source);
             }
             catch (ArgumentException)
             {
@@ -190,7 +206,7 @@ public class UiObject
         else
         {
             property.ValidateUntyped(coerced);
-            ValidatePropertyMutation(property, coerced);
+            ValidatePropertyWrite(property, coerced, source);
         }
         propertyStore.SetValue(property, source, coerced);
         applied = true;
@@ -241,13 +257,15 @@ public class UiObject
 
     // A clear makes a lower source's value effective. That value was valid when it was written, but the owner's state
     // can have changed since, for example a Content element that got another parent. So the clear checks it, before the
-    // store changes, as a write checks the value it stores.
+    // store changes, as a write checks the value it stores. The revealed value becomes the effective value, so it also
+    // gets the checks of a write that becomes effective.
     private void ValidateValueRevealedByClear(UiProperty property, object? oldValue, UiPropertyValueSource source)
     {
         object? revealedValue = propertyStore.GetValueAfterClear(property, source);
         if (!property.AreEqualUntyped(oldValue, revealedValue))
         {
             ValidatePropertyMutation(property, revealedValue);
+            ValidateEffectiveValueChange(property, revealedValue);
         }
     }
 
@@ -264,7 +282,7 @@ public class UiObject
         object? oldSourceValue = GetSourceValue(property, source);
         object? coerced = property.CoerceUntyped(this, value);
         property.ValidateUntyped(coerced);
-        ValidatePropertyMutation(property, coerced);
+        ValidatePropertyWrite(property, coerced, source);
 
         propertyStore.SetValue(property, source, coerced);
         propertyValueVersion++;

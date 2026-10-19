@@ -183,6 +183,29 @@ public sealed class ContentControlTests
     }
 
     [Fact]
+    public void SetValueStoresShadowedTemplatedElementContentThatHasAnotherParentWithoutChangingContent()
+    {
+        ContentControl control = new()
+        {
+            ComponentTemplate = new ComponentTemplate<ContentControl>("test", context =>
+                new ContentPresenter { Content = context.Owner.Content }),
+            Content = "text"
+        };
+        UIElement parented = new();
+        UIElement parent = new();
+        parent.LogicalChildren.Add(parented);
+        parent.VisualChildren.Add(parented);
+
+        control.SetValue(ContentControl.ContentProperty, (object?)parented, UiPropertyValueSource.MarkupConditional);
+
+        Assert.Equal("text", control.Content);
+        Assert.Equal(UiPropertyValueSource.Local, control.GetValueSource(ContentControl.ContentProperty));
+        Assert.Same(parented, control.GetSourceValue(ContentControl.ContentProperty, UiPropertyValueSource.MarkupConditional));
+        Assert.Same(parent, parented.LogicalParent);
+        Assert.Same(parent, parented.VisualParent);
+    }
+
+    [Fact]
     public void MeasuresAndArrangesContentInsideInsets()
     {
         ContentControl control = new()

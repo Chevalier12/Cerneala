@@ -719,6 +719,25 @@ public sealed class TabControlTests
     }
 
     [Fact]
+    public void SetValueStoresShadowedElementContentThatHasAnotherParentWithoutChangingContent()
+    {
+        UIRoot root = new(300, 200);
+        Border holder = new();
+        FixedElement parented = new();
+        holder.Child = parented;
+        root.VisualChildren.Add(holder);
+        TabItem tab = new() { Content = "text" };
+
+        tab.SetValue(ContentControl.ContentProperty, (object?)parented, UiPropertyValueSource.AspectBase);
+
+        Assert.Equal("text", tab.Content);
+        Assert.Equal(UiPropertyValueSource.Local, tab.GetValueSource(ContentControl.ContentProperty));
+        Assert.Same(parented, tab.GetSourceValue(ContentControl.ContentProperty, UiPropertyValueSource.AspectBase));
+        Assert.Same(holder, parented.LogicalParent);
+        Assert.Same(holder, parented.VisualParent);
+    }
+
+    [Fact]
     public void ElementContentOfATabThatIsNotSelectedStaysOwnedWhenTheTabGetsAComponentTemplate()
     {
         UIRoot root = new(300, 200);
