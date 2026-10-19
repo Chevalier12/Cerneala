@@ -255,7 +255,7 @@ public class ComboBox : Selector
         // All five values go in before the presenter rebuilds its child on its next measure, so the row presents
         // its item once, with its index (#574).
         presenter.PrepareItemPresentation(
-            ItemTemplate is null ? GetItemDisplayText(item) : item,
+            ItemTemplate is null ? GetRowContent(item) : item,
             ItemTemplate,
             ItemTemplateKey,
             ContentTemplateRegistry,
@@ -264,6 +264,14 @@ public class ComboBox : Selector
         presenter.FontFamily = FontFamily;
         presenter.FontSize = FontSize;
         comboBoxItem.Content = presenter;
+    }
+
+    // As in WPF, an element item that is not a ComboBoxItem is the content of its generated row, so the row presents
+    // the element itself (#606). Any other display value is presented as its text.
+    private object GetRowContent(object? item)
+    {
+        object? value = GetItemDisplayValue(item);
+        return value as UIElement ?? (object)(value?.ToString() ?? string.Empty);
     }
 
     protected internal override void ClearItemContainer(UIElement container)
@@ -635,17 +643,23 @@ public class ComboBox : Selector
         }
 
         int presentedIndex = selectionTransactionActive ? previewSelectedIndex : SelectedIndex;
-        object? presentedItem = presentedIndex >= 0 && presentedIndex < ItemCount
-            ? GetItemAt(presentedIndex)
-            : null;
+        bool hasPresentedItem = presentedIndex >= 0 && presentedIndex < ItemCount;
+        object? presentedItem = hasPresentedItem ? GetItemAt(presentedIndex) : null;
         string presentedText = selectionTransactionActive && presentedIndex >= 0
             ? GetItemText(presentedItem)
             : Text;
-        selectionPresenter.Content = ItemTemplate is null ? presentedText : presentedItem;
-        selectionPresenter.ContentTemplate = ItemTemplate;
-        selectionPresenter.ContentTemplateKey = ItemTemplateKey;
-        selectionPresenter.LocalTemplateRegistry = ContentTemplateRegistry;
-        selectionPresenter.ContentIndex = presentedIndex;
+
+        // As WPF's ComboBox.UpdateSelectionBoxItem shows a missing item as text, the ItemTemplate presents only an
+        // item: with no item, the selection box presents the text as it does without an ItemTemplate. All five
+        // values go in before the presenter rebuilds its child on its next measure, so the selection box presents
+        // its item once, with its index (#623).
+        ContentTemplate? itemTemplate = hasPresentedItem ? ItemTemplate : null;
+        selectionPresenter.PrepareItemPresentation(
+            itemTemplate is null ? presentedText : presentedItem,
+            itemTemplate,
+            ItemTemplateKey,
+            ContentTemplateRegistry,
+            presentedIndex);
     }
 
     private void SynchronizeDropDownState()
@@ -962,14 +976,16 @@ public class ComboBox : Selector
     // ComboBox, does not also click or run its command. Inside such a command source the input bridge resolves the
     // press and the release to that command source, so the field also checks that the press hit the same element as
     // the release: a press on the outer Button followed by a release on the field clicks only the outer Button, as
-    // the WPF ToggleButton never sees that press (#468).
+    // the WPF ToggleButton never sees that press (#468). The click owner and the drag source are found with the route
+    // map the input bridge routed the MouseUp with, so they stay the same when an earlier handler on the route removes
+    // the clicked content from the field (#622).
     private void OnMouseUp(UiElementId _, RoutedEventArgs args)
     {
         if (IsEditable || !IsEnabled ||
             args is not MouseButtonEventArgs { ChangedButton: InputMouseButton.Left, ClickCount: > 0 } mouseArgs ||
             !Equals(mouseArgs.PressOriginalSource, args.OriginalSource) ||
-            !ReferenceEquals(FindClickOwner(this, args.OriginalSource), this) ||
-            IsInPointerDragSource(args.OriginalSource))
+            !ReferenceEquals(FindClickOwner(this, args.OriginalSource, mouseArgs.RouteMap), this) ||
+            IsInPointerDragSource(args.OriginalSource, mouseArgs.RouteMap))
         {
             return;
         }
@@ -978,8 +994,40 @@ public class ComboBox : Selector
         args.Handled = true;
     }
 
-    private bool IsInPointerDragSource(object? source)
+    // With routeMap, source and its visual parents are those of the route map the input event was routed with, as in
+    // Selector.FindClickOwner.
+    private bool IsInPointerDragSource(object? source, ElementInputRouteMap? routeMap)
     {
+        if (routeMap is not null)
+        {
+            UIElement? routed = source switch
+            {
+                UIElement candidate => candidate,
+                UiElementId id when routeMap.TryGetElement(id, out UIElement? resolved) => resolved,
+                _ => null
+            };
+
+            if (routed is null)
+            {
+                return false;
+            }
+
+            foreach (UIElement current in routeMap.GetVisualRouteToRoot(routed))
+            {
+                if (ReferenceEquals(current, this))
+                {
+                    return false;
+                }
+
+                if (current is IPointerDragSource)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         UIElement? element = source switch
         {
             UIElement candidate => candidate,

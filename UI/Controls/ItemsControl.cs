@@ -11,6 +11,7 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Virtualization;
+using Cerneala.UI.Rendering;
 
 namespace Cerneala.UI.Controls;
 
@@ -172,6 +173,8 @@ public class ItemsControl : Control
         return viewIndex;
     }
 
+    // As the Border around the ItemsPresenter in the WPF ItemsControl template, a control without a template lays out its
+    // items inside BorderThickness and Padding; a ComponentTemplate lays out its own chrome.
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
         if (TemplateChild is not null)
@@ -179,7 +182,10 @@ public class ItemsControl : Control
             return base.MeasureCore(context);
         }
 
-        return itemsPresenter.Measure(context);
+        Thickness insets = Insets;
+        LayoutSize available = ContentControl.Deflate(context.AvailableSize, insets);
+        LayoutSize itemsSize = itemsPresenter.Measure(new MeasureContext(available, context.Rounding));
+        return ContentControl.Inflate(itemsSize, insets);
     }
 
     protected override LayoutRect ArrangeCore(ArrangeContext context)
@@ -189,8 +195,18 @@ public class ItemsControl : Control
             return base.ArrangeCore(context);
         }
 
-        itemsPresenter.Arrange(context);
+        itemsPresenter.Arrange(new ArrangeContext(ContentControl.Deflate(context.FinalRect, Insets), context.Rounding));
         return context.FinalRect;
+    }
+
+    // As that Border, a control without a template fills its bounds with Background behind its items and draws
+    // BorderBrush around them; a ComponentTemplate draws its own chrome.
+    protected override void OnRender(RenderContext context)
+    {
+        if (TemplateChild is null)
+        {
+            Border.RenderBox(this, context);
+        }
     }
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
@@ -343,11 +359,6 @@ public class ItemsControl : Control
         return DisplayMemberPathAccessor.Resolve(item, DisplayMemberPath);
     }
 
-    internal string GetItemDisplayText(object? item)
-    {
-        return GetItemDisplayValue(item)?.ToString() ?? string.Empty;
-    }
-
     protected internal virtual void ClearItemContainer(UIElement container)
     {
         object? item = ItemContainerGenerator.GetItem(container);
@@ -489,9 +500,14 @@ public class ItemsControl : Control
         }
     }
 
+    // The distance from the top of this control to the top of its items, as its own layout arranges them: without a
+    // template, below its top inset. A subclass that lays out its items without a template in another way overrides it.
+    internal virtual float ItemsTopInset => TemplateChild is null ? Insets.Top : 0;
+
+    // The scroll offset counts from the top of this control, so the items see it less their top inset.
     internal void UpdateAutomaticVirtualization(float viewportExtent, float scrollOffset)
     {
-        if (itemsPresenter.UpdateAutomaticVirtualization(viewportExtent, scrollOffset))
+        if (itemsPresenter.UpdateAutomaticVirtualization(viewportExtent, scrollOffset - ItemsTopInset))
         {
             InvalidateItems("Items scroll viewport changed");
         }

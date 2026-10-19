@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Items;
@@ -7,12 +8,65 @@ using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
 using Orientation = Cerneala.UI.Layout.Orientation;
 
 namespace Cerneala.Tests.Controls;
 
 public sealed class TabControlTests
 {
+    // The ItemsControl chrome (#609) does not apply: the built-in header row and content area are not inset, so a
+    // TabControl without a template draws no Background or BorderBrush of its own.
+    [Fact]
+    public void TabControlWithoutTemplateDrawsNoChromeOfItsOwn()
+    {
+        TabControl tabControl = new()
+        {
+            Background = new SolidColorBrush(Color.Red),
+            BorderBrush = new SolidColorBrush(Color.Blue),
+            BorderThickness = new Thickness(2)
+        };
+        tabControl.SetItems(new[] { new TabItem { Header = "First", Content = "Page" } });
+        UIRoot root = new(100, 100);
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+
+        Assert.Equal(0, root.Detective.CaptureRendering(tabControl).CommandCount);
+    }
+
+    // The header row starts at the top of a TabControl without a template, which applies no Padding, so a scroll
+    // viewport realizes the tabs it shows, not the tabs a top inset would have moved into it.
+    [Fact]
+    public void ScrollViewerVirtualizationRealizesTheTabsInTheViewportOfATabControlWithPadding()
+    {
+        TabItem[] tabs = Enumerable.Range(0, 100)
+            .Select(index => new TabItem { Header = index.ToString(), Height = 10 })
+            .ToArray();
+        TabControl tabControl = new()
+        {
+            ItemsPanel = new Cerneala.UI.Layout.Panels.VirtualizingStackPanel(),
+            Padding = new Thickness(0, 100, 0, 0)
+        };
+        tabControl.SetItems(tabs);
+        ScrollViewer viewer = new()
+        {
+            Content = tabControl,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        UIRoot root = new(100, 30);
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+
+        viewer.ScrollInfo.SetVerticalOffset(105);
+        root.ProcessFrame();
+
+        // Tabs 10..13 cover 100..140, the 30 px the viewport shows from offset 105.
+        int[] realized = [.. Enumerable.Range(0, tabs.Length).Where(index => tabs[index].VisualParent is not null)];
+        Assert.Contains(10, realized);
+        Assert.Contains(13, realized);
+        Assert.DoesNotContain(0, realized);
+    }
+
     [Fact]
     public void TabControlSelectedTabItemReturnsUnrealizedTabItem()
     {

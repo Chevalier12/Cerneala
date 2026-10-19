@@ -52,14 +52,21 @@ ListBox listBox = new()
 };
 ```
 
-`Background` fills the whole list area behind the rows. Here a list arranged at `(3, 4, 40, 30)` draws one red `FillRectangle` at `(3, 4, 40, 30)` first, then the row of `One` on top of it.
+`Background` fills the whole list area behind the rows, and `BorderBrush` draws a border around it. Here a list arranged at `(3, 4, 40, 30)` draws one red `FillRectangle` at `(3, 4, 40, 30)` first, then one blue `DrawRectangle` (thickness 2) at `(3, 4, 40, 30)`, then the row of `One` on top of them. The row is arranged at `x = 15`, `y = 16` with width 16: 2 + 10 = 12 pixels inside each edge.
 
 ```csharp
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Layout;
 using Cerneala.UI.Media;
 
-ListBox listBox = new() { Background = new SolidColorBrush(Color.Red) };
+ListBox listBox = new()
+{
+    Background = new SolidColorBrush(Color.Red),
+    BorderBrush = new SolidColorBrush(Color.Blue),
+    BorderThickness = new Thickness(2),
+    Padding = new Thickness(10)
+};
 listBox.Items.Add(new ListBoxItem { Content = "One" });
 ```
 
@@ -73,7 +80,7 @@ Each data item is wrapped in a `ListBoxItem` container. If an item is already a 
 
 Row content follows `ItemsControl`: without `ItemTemplate`, a row's `Content` is the item's `DisplayMemberPath` value (the item itself when the path is empty); with `ItemTemplate`, it is the item. The row shows a `string` value as text, and `ListBox` passes `ItemTemplate`, `ItemTemplateKey`, and `Templates` to the row, so a template creates the row's visual. For example, `SetItems(new[] { "Apple" })` creates a row whose `Content` is `"Apple"` and whose text reads `Apple`; the row is as tall as that text. See [`ListBoxItem`](Cerneala.UI.Controls.ListBoxItem.md#content-presentation) for every content kind. An item that is already a `ListBoxItem` is its own row and does not use the item template. Any other `UIElement` item is wrapped in a `ListBoxItem` row: with `ItemTemplate`, the row shows the element that the template creates for it (the item is `context.Data` and its index is `context.Index`), as in WPF; without `ItemTemplate`, the row shows the element that a template of `Templates` creates for it when one matches the element and `ItemTemplateKey`, and otherwise hosts the element directly.
 
-As the `Border` of the WPF `ListBox` template, `Background` fills the list's arranged bounds, and the rows draw on top of it. Without `Background` (the default, `null`) the list draws no fill, so the area behind it shows through. A `ListBox` with a `ComponentTemplate` draws no background itself; the template draws its own chrome. `Background` is registered with `AffectsRender`, so changing it redraws the list without a new measure or arrange.
+As the `Border` of the WPF `ListBox` template, `Background` fills the list's arranged bounds, `BorderBrush` draws a border around them (as `Border` does, with the largest side of `BorderThickness` as its thickness), and the rows draw on top. Without `Background` (the default, `null`) the list draws no fill, so the area behind it shows through; without `BorderBrush` or with a zero `BorderThickness` it draws no border. The rows are laid out inside `BorderThickness + Padding`, as WPF gives `Padding` to the `ScrollViewer` inside that `Border`, and `DesiredSize` includes both. With the defaults (`Thickness.Zero`) the rows touch the list edges. A `ListBox` with a `ComponentTemplate` draws no chrome and does not inset its template; the template draws its own chrome. This behavior comes from `ItemsControl`. `Background` and `BorderBrush` are registered with `AffectsRender`, so changing them redraws the list without a new measure or arrange; `BorderThickness` and `Padding` also affect measure.
 
 ## Constructors
 
@@ -105,6 +112,9 @@ As the `Border` of the WPF `ListBox` template, `Background` fills the list's arr
 | `ItemTemplateKey` | `string?` | Inherited from `ItemsControl`. Gets or sets the template key used by content presentation. |
 | `ItemsPanel` | `Panel?` | Inherited from `ItemsControl`. Gets or sets the retained panel used by the items presenter. `ListBox` initializes it to a vertical `StackPanel`. |
 | `Background` | `Brush?` | Inherited from `Control`. Gets or sets the brush that fills the list's arranged bounds behind its rows. The default is `null` (no fill). Ignored when a `ComponentTemplate` is set. |
+| `BorderBrush` | `Brush?` | Inherited from `Control`. Gets or sets the brush of the border around the list's arranged bounds. The default is `null` (no border). Ignored when a `ComponentTemplate` is set. |
+| `BorderThickness` | `Thickness` | Inherited from `Control`. Gets or sets the border width; the rows are inset by it. The default is `Thickness.Zero`. Ignored when a `ComponentTemplate` is set. |
+| `Padding` | `Thickness` | Inherited from `Control`. Gets or sets the space between the border and the rows. The default is `Thickness.Zero`. Ignored when a `ComponentTemplate` is set. |
 
 ## Events
 
@@ -128,7 +138,7 @@ As the `Border` of the WPF `ListBox` template, `Background` fills the list's arr
 | `CreateItemContainer(int index, object? item)` | Returns the item itself when it is a `ListBoxItem`; otherwise a new `ListBoxItem`. |
 | `PrepareItemContent(UIElement container, int index, object? item)` | Passes `ItemTemplate`, `ItemTemplateKey`, `Templates`, and the item index to a `ListBoxItem` row, then sets its `Content` as `ItemsControl` does. |
 | `ClearItemContainer(UIElement container)` | Clears the container as `ItemsControl` does, then removes the item template from a `ListBoxItem` row. |
-| `OnRender(RenderContext context)` | Without a `ComponentTemplate`, fills the arranged bounds with `Background` when it is set and the bounds are not empty; with a `ComponentTemplate`, draws nothing. |
+| `OnRender(RenderContext context)` | Inherited from `ItemsControl`. Without a `ComponentTemplate`, fills the arranged bounds with `Background` and draws `BorderBrush` around them when they are set and the bounds are not empty; with a `ComponentTemplate`, draws nothing. |
 
 ## Applies to
 

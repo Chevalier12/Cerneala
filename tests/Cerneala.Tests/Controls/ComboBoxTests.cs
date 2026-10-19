@@ -859,6 +859,114 @@ public sealed class ComboBoxTests
         Assert.False(comboBox.IsDropDownOpen);
     }
 
+    // The field finds the click owner with the route map the input bridge routed the MouseUp with, so a click on
+    // content that is neither a command source nor a drag source still toggles the drop-down when a handler that
+    // ran earlier on the route removed that content from the selection box (#622).
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void NonEditableFieldClickOnHitTestableTemplateContentTogglesDropDownWhenEarlierHandlerRemovesIt(bool remove)
+    {
+        (UIRoot root, ComboBox comboBox) = CreateNonEditableField();
+        int handlerRuns = 0;
+        comboBox.ItemTemplate = new ContentTemplate<string>(
+            "badge",
+            key: null,
+            priority: 0,
+            context =>
+            {
+                LayoutStackPanel panel = new();
+                Border badge = new() { Width = 40, Height = 16, Background = new SolidColorBrush(Color.Red) };
+                badge.AddHandler(InputEvents.MouseUpEvent, (_, _) =>
+                {
+                    handlerRuns++;
+                    if (remove)
+                    {
+                        panel.Children.Remove(badge);
+                    }
+                });
+                panel.Children.Add(badge);
+                return panel;
+            });
+        root.ProcessFrame();
+        UIElement presenter = comboBox.ComponentTemplateInstance!.Parts["PART_SelectionPresenter"];
+        presenter.IsHitTestVisible = true;
+        root.ProcessFrame();
+        Border badge = Assert.IsType<Border>(FindDescendant<Border>(presenter));
+        LayoutRect bounds = badge.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.Equal(1, handlerRuns);
+        Assert.Equal(remove, badge.VisualParent is null);
+        Assert.True(comboBox.IsDropDownOpen);
+    }
+
+    // Content that owns its click, a command source (CheckBox) or a pointer drag source (TextBox, ColorSpectrum), keeps
+    // it also when a handler that ran earlier on the route removed that content from the selection box, so the field
+    // never opens (#622).
+    [Theory]
+    [InlineData("check")]
+    [InlineData("text")]
+    [InlineData("spectrum")]
+    public void NonEditableFieldClickOnHitTestableTemplateInputContentKeepsDropDownClosedWhenEarlierHandlerRemovesIt(
+        string kind)
+    {
+        (UIRoot root, ComboBox comboBox) = CreateNonEditableField();
+        int handlerRuns = 0;
+        comboBox.ItemTemplate = new ContentTemplate<string>(
+            kind,
+            key: null,
+            priority: 0,
+            context =>
+            {
+                LayoutStackPanel panel = new();
+                UIElement content = kind switch
+                {
+                    "check" => new CheckBox { Content = context.Data },
+                    "text" => new TextBox { Text = context.Data, Width = 80 },
+                    _ => new ColorSpectrum { Width = 40, Height = 16 }
+                };
+                content.AddHandler(InputEvents.MouseUpEvent, (_, _) =>
+                {
+                    handlerRuns++;
+                    panel.Children.Remove(content);
+                }, handledEventsToo: true);
+                panel.Children.Add(content);
+                return panel;
+            });
+        root.ProcessFrame();
+        UIElement presenter = comboBox.ComponentTemplateInstance!.Parts["PART_SelectionPresenter"];
+        presenter.IsHitTestVisible = true;
+        root.ProcessFrame();
+        int opened = 0;
+        comboBox.DropDownOpened += (_, _) => opened++;
+        UIElement content = kind switch
+        {
+            "check" => Assert.IsType<CheckBox>(FindDescendant<CheckBox>(presenter)),
+            "text" => Assert.IsType<TextBox>(FindDescendant<TextBox>(presenter)),
+            _ => Assert.IsType<ColorSpectrum>(FindDescendant<ColorSpectrum>(presenter))
+        };
+        LayoutRect bounds = content.ArrangedBounds;
+        float x = bounds.X + 6;
+        float y = bounds.Y + bounds.Height / 2;
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.Equal(1, handlerRuns);
+        Assert.Null(content.VisualParent);
+        Assert.Equal(0, opened);
+        Assert.False(comboBox.IsDropDownOpen);
+    }
+
     // As in WPF, where the template's ToggleButton handles the field's click, one click on the field of a
     // non-editable ComboBox inside a Button only toggles the drop-down: the outer Button raises no Click and runs
     // no Command. A click on the outer Button outside the ComboBox still clicks it once.
@@ -1871,6 +1979,51 @@ public sealed class ComboBoxTests
         Assert.Equal(string.Empty, comboBox.Text);
     }
 
+    // As in WPF, an element item that is not a ComboBoxItem is the content of its generated ComboBoxItem, so the row
+    // presents the element itself, not its type name (#606). Other items keep their text.
+    [Fact]
+    public void ElementItemIsPresentedByItsGeneratedComboBoxItem()
+    {
+        TextBlock alpha = new() { Text = "Alpha" };
+        ComboBox comboBox = new() { Width = 150, Height = 30, IsEditable = false };
+        comboBox.Items.Add(alpha);
+        comboBox.Items.Add("Beta");
+        ComboBox memberPathComboBox = new()
+        {
+            Width = 150,
+            Height = 30,
+            IsEditable = false,
+            DisplayMemberPath = "Address.City"
+        };
+        memberPathComboBox.SetItems(new[] { new Person(new Address("Iasi")) });
+        LayoutCanvas canvas = new();
+        canvas.VisualChildren.Add(comboBox);
+        canvas.VisualChildren.Add(memberPathComboBox);
+        UIRoot root = new(360, 240);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+
+        comboBox.IsDropDownOpen = true;
+        root.ProcessFrame();
+
+        ComboBoxItem alphaRow = Assert.IsType<ComboBoxItem>(comboBox.ItemContainerGenerator.RealizedContainers[0]);
+        ContentPresenter alphaPresenter = Assert.IsType<ContentPresenter>(alphaRow.Content);
+        Assert.Same(alpha, alphaPresenter.Content);
+        Assert.Same(alpha, alphaPresenter.PresentedChild);
+        Assert.Same(alphaPresenter, alpha.VisualParent);
+        ContentPresenter betaPresenter = Assert.IsType<ContentPresenter>(
+            Assert.IsType<ComboBoxItem>(comboBox.ItemContainerGenerator.RealizedContainers[1]).Content);
+        Assert.Equal("Beta", betaPresenter.Content);
+
+        comboBox.IsDropDownOpen = false;
+        memberPathComboBox.IsDropDownOpen = true;
+        root.ProcessFrame();
+
+        ContentPresenter cityPresenter = Assert.IsType<ContentPresenter>(
+            Assert.IsType<ComboBoxItem>(memberPathComboBox.ItemContainerGenerator.RealizedContainers[0]).Content);
+        Assert.Equal("Iasi", cityPresenter.Content);
+    }
+
     [Fact]
     public void InvalidDisplayMemberPathThrowsDescriptiveException()
     {
@@ -2645,6 +2798,43 @@ public sealed class ComboBoxTests
         Assert.Equal(
             "open=[a@0, b@1, c@2] replace=[d@0]",
             $"open=[{string.Join(", ", openCalls)}] replace=[{string.Join(", ", rowCalls)}]");
+    }
+
+    // As WPF's ComboBox.UpdateSelectionBoxItem shows a missing item as an empty string with the string template, the
+    // selection box presents no item without the ItemTemplate. A selected item runs it once, with its index (#623).
+    [Fact]
+    public void SelectionBoxRunsTheItemTemplateOnlyForASelectedItem()
+    {
+        List<string> calls = [];
+        UIRoot root = new(300, 200);
+        ComboBox comboBox = new()
+        {
+            IsEditable = false,
+            Width = 180,
+            ItemTemplate = new ContentTemplate<string>("row", key: null, priority: 0, context =>
+            {
+                calls.Add($"{context.Data ?? "null"}@{context.Index}");
+                return new TextBlock { Text = context.Data ?? string.Empty };
+            }),
+            ItemsSource = new[] { "a", "b" }
+        };
+        root.VisualChildren.Add(comboBox);
+        root.ProcessFrame();
+        ContentPresenter selection = Assert.IsType<ContentPresenter>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_SelectionPresenter"]);
+        string initial = $"[{string.Join(", ", calls)}] text={(selection.PresentedChild as TextBlock)?.Text ?? "none"}";
+        calls.Clear();
+
+        comboBox.SelectedIndex = 1;
+        root.ProcessFrame();
+        string selected = $"[{string.Join(", ", calls)}] text={(selection.PresentedChild as TextBlock)?.Text ?? "none"}";
+        calls.Clear();
+
+        comboBox.SelectedIndex = -1;
+        root.ProcessFrame();
+        string cleared = $"[{string.Join(", ", calls)}] text={(selection.PresentedChild as TextBlock)?.Text ?? "none"}";
+
+        Assert.Equal(["[] text=", "[b@1] text=b", "[] text="], [initial, selected, cleared]);
     }
 
     [Fact]
