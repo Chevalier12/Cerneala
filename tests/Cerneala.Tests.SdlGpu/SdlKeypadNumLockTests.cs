@@ -234,6 +234,62 @@ public sealed class SdlKeypadNumLockTests
         Assert.Equal(text, box.Text);
     }
 
+    // An IME that takes a keypad key gives WM_KEYDOWN with VK_PROCESSKEY, which tells neither
+    // the digit key nor the navigation key, and SDL sends no key event for it. The next press
+    // of keypad 4 with Num Lock on is still NumPad4.
+    [WindowsNativeFact]
+    public void NativeKeypadKeyAfterAnImeProcessedPressRaisesTheKeyWindowsSendsForIt()
+    {
+        const bool numLock = true;
+        NativeSdlApi api = new();
+        RecordingGraphicsFactory graphics = new();
+        using WindowApplicationRuntime runtime = new(new SdlWindowPlatform(api, graphics, coordinateScaleOverride: 1));
+        TextBox box = new() { Text = "abc" };
+        List<string> keys = [];
+        box.AddHandler(UIElement.KeyDownEvent, (_, args) => keys.Add("down " + ((KeyEventArgs)args).Key), handledEventsToo: true);
+        box.AddHandler(UIElement.KeyUpEvent, (_, args) => keys.Add("up " + ((KeyEventArgs)args).Key), handledEventsToo: true);
+        string title = $"SDL keypad IME {Guid.NewGuid():N}";
+        runtime.StartMainWindow(new Window { Content = box, Width = 320, Height = 200, Title = title });
+        uint windowId = Assert.IsType<SdlWindowSurface>(Assert.Single(graphics.Surfaces)).WindowId;
+        nint handle = FindWindow(null, title);
+        Assert.NotEqual(0, handle);
+        MakeForeground(runtime, handle);
+        Assert.Equal(SDL.GetWindowFromID(windowId), SDL.GetKeyboardFocus());
+        PumpNative(runtime, api, new SdlEvent(SdlEventKind.MouseButtonDown, windowId, X: 20, Y: 20, MouseButton: 1));
+        PumpNative(runtime, api, new SdlEvent(SdlEventKind.MouseButtonUp, windowId, X: 20, Y: 20, MouseButton: 1));
+        Assert.True(box.IsKeyboardFocused);
+        SendScancodes(runtime, (0x4F, false, true), (0x4F, true, true));
+
+        bool numLockWas = (GetKeyState(VirtualKeyNumLock) & 1) != 0;
+        if (numLockWas != numLock)
+        {
+            ToggleNumLock(runtime);
+        }
+
+        try
+        {
+            Assert.Equal(numLock, (GetKeyState(VirtualKeyNumLock) & 1) != 0);
+            keys.Clear();
+            // Keypad 4 (scan code 0x4B) taken by an IME: VK_PROCESSKEY down, VK_NUMPAD4 up.
+            Assert.True(PostMessage(handle, 0x100, 0xE5, 1 | (0x4B << 16)));
+            Assert.True(PostMessage(handle, 0x101, 0x64, unchecked((nint)(1u | (0x4Bu << 16) | (1u << 30) | (1u << 31)))));
+            PumpFor(runtime, 300);
+            Assert.Empty(keys);
+
+            SendScancodes(runtime, (0x4B, false, false), (0x4B, true, false));
+        }
+        finally
+        {
+            if (numLockWas != numLock)
+            {
+                ToggleNumLock(runtime);
+            }
+        }
+
+        Assert.Equal(["down NumPad4", "up NumPad4"], keys);
+        Assert.Equal("abc4", box.Text);
+    }
+
     private const ushort ShiftScan = 0x2A;
     private const ushort XScan = 0x2D;
     private const int VirtualKeyNumLock = 0x90;
@@ -306,6 +362,13 @@ public sealed class SdlKeypadNumLockTests
             : SdlNativeFactAttribute.NativeSkipReason;
     }
 
+    private sealed class WindowsNativeFactAttribute : FactAttribute
+    {
+        public WindowsNativeFactAttribute() => Skip = !OperatingSystem.IsWindows()
+            ? "Windows-specific native SDL contract."
+            : SdlNativeFactAttribute.NativeSkipReason;
+    }
+
     [DllImport("user32.dll", EntryPoint = "FindWindowW", CharSet = CharSet.Unicode)]
     private static extern nint FindWindow(string? className, string windowName);
     [DllImport("user32.dll")]
@@ -324,6 +387,9 @@ public sealed class SdlKeypadNumLockTests
     private static extern nint SetFocus(nint window);
     [DllImport("user32.dll")]
     private static extern short GetKeyState(int virtualKey);
+    [DllImport("user32.dll", EntryPoint = "PostMessageW")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool PostMessage(nint window, uint message, nint wParam, nint lParam);
     [DllImport("user32.dll", SetLastError = true)]
     private static extern uint SendInput(uint count, [In] NativeInput[] inputs, int size);
 

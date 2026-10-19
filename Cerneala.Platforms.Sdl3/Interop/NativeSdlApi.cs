@@ -732,16 +732,25 @@ internal sealed class NativeSdlApi : ISdlApi
             // SDL strips the high bit of the scan code, which some on-screen keyboards set.
             int scan = (int)((flags >> 16) & 0x7F);
             bool extended = ((flags >> 24) & 1) != 0;
-            if (!extended && scan is 0x47 or 0x48 or 0x49 or 0x4B or 0x4C or 0x4D or 0x4F or 0x50 or 0x51 or 0x52 or 0x53)
+            // VK_NUMPAD0 to VK_NUMPAD9 and VK_DECIMAL are the digit keys; VK_CLEAR, VK_PRIOR to
+            // VK_DOWN, VK_INSERT and VK_DELETE the navigation keys. Another virtual key tells
+            // neither and is not recorded: VK_PROCESSKEY of a key an IME takes gets no SDL key
+            // event, so its message would be taken by the next press of that key.
+            bool? digit = virtualKey switch
+            {
+                >= 0x60 and <= 0x69 or 0x6E => true,
+                0x0C or (>= 0x21 and <= 0x28) or 0x2D or 0x2E => false,
+                _ => null,
+            };
+            if (!extended && digit is bool isDigit &&
+                scan is 0x47 or 0x48 or 0x49 or 0x4B or 0x4C or 0x4D or 0x4F or 0x50 or 0x51 or 0x52 or 0x53)
             {
                 if (keypadMessages.Count == MaxKeypadMessages)
                 {
                     keypadMessages.RemoveAt(0);
                 }
 
-                // VK_NUMPAD0 to VK_NUMPAD9 and VK_DECIMAL; otherwise a navigation key.
-                bool digit = virtualKey is >= 0x60 and <= 0x69 or 0x6E;
-                keypadMessages.Add(new KeypadMessage((ushort)scan, kind is 0x100 or 0x104, digit));
+                keypadMessages.Add(new KeypadMessage((ushort)scan, kind is 0x100 or 0x104, isDigit));
             }
         }
 
