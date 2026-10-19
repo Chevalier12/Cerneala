@@ -12,6 +12,27 @@ public sealed class SdlInputSourceTests
     [InlineData(225, InputKey.LeftShift)]
     [InlineData(224, InputKey.LeftCtrl)]
     [InlineData(226, InputKey.LeftAlt)]
+    [InlineData(98, InputKey.NumPad0)]
+    [InlineData(89, InputKey.NumPad1)]
+    [InlineData(93, InputKey.NumPad5)]
+    [InlineData(97, InputKey.NumPad9)]
+    [InlineData(85, InputKey.Multiply)]
+    [InlineData(87, InputKey.Add)]
+    [InlineData(86, InputKey.Subtract)]
+    [InlineData(99, InputKey.Decimal)]
+    [InlineData(84, InputKey.Divide)]
+    [InlineData(51, InputKey.OemSemicolon)]
+    [InlineData(46, InputKey.OemPlus)]
+    [InlineData(54, InputKey.OemComma)]
+    [InlineData(45, InputKey.OemMinus)]
+    [InlineData(55, InputKey.OemPeriod)]
+    [InlineData(56, InputKey.OemQuestion)]
+    [InlineData(53, InputKey.OemTilde)]
+    [InlineData(47, InputKey.OemOpenBrackets)]
+    [InlineData(49, InputKey.OemPipe)]
+    [InlineData(48, InputKey.OemCloseBrackets)]
+    [InlineData(52, InputKey.OemQuotes)]
+    [InlineData(100, InputKey.OemBackslash)]
     public void ScancodesMapToInputKeys(int scancode, InputKey expected)
     {
         SdlInputSource source = new();
@@ -21,6 +42,31 @@ public sealed class SdlInputSourceTests
         Assert.True(frame.Keyboard.IsPressed(expected));
         source.SetKey(scancode, false);
         Assert.True(source.GetFrame().Keyboard.IsReleased(expected));
+    }
+
+    [Theory]
+    [InlineData(93, InputKey.NumPad5, "5")]
+    [InlineData(55, InputKey.OemPeriod, ".")]
+    public void KeypadAndPunctuationKeysArePressedWithTheTextTheyType(int scancode, InputKey expected, string text)
+    {
+        SdlInputSource source = new();
+        source.SetKey(scancode, true);
+        source.AddText(text);
+        InputFrame frame = source.GetFrame();
+
+        Assert.Equal([expected], Enum.GetValues<InputKey>().Where(frame.Keyboard.IsPressed));
+        Assert.Equal([text], frame.TextInputEvents.Select(textInput => textInput.Text));
+    }
+
+    // WPF reports keypad Enter as Key.Enter.
+    [Fact]
+    public void KeypadEnterIsEnter()
+    {
+        SdlInputSource source = new();
+        source.SetKey(88, true);
+        Assert.True(source.GetFrame().Keyboard.IsPressed(InputKey.Enter));
+        source.SetKey(88, false);
+        Assert.True(source.GetFrame().Keyboard.IsReleased(InputKey.Enter));
     }
 
     [Fact]

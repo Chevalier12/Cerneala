@@ -377,6 +377,11 @@ internal sealed class SdlInputSource : IInputSource
             return InputKey.F1 + (scancode - 58);
         }
 
+        if (scancode is >= 89 and <= 97)
+        {
+            return InputKey.NumPad1 + (scancode - 89);
+        }
+
         return scancode switch
         {
             39 => InputKey.D0,
@@ -385,6 +390,17 @@ internal sealed class SdlInputSource : IInputSource
             42 => InputKey.Back,
             43 => InputKey.Tab,
             44 => InputKey.Space,
+            45 => InputKey.OemMinus,
+            46 => InputKey.OemPlus,
+            47 => InputKey.OemOpenBrackets,
+            48 => InputKey.OemCloseBrackets,
+            49 => InputKey.OemPipe,
+            51 => InputKey.OemSemicolon,
+            52 => InputKey.OemQuotes,
+            53 => InputKey.OemTilde,
+            54 => InputKey.OemComma,
+            55 => InputKey.OemPeriod,
+            56 => InputKey.OemQuestion,
             73 => InputKey.Insert,
             74 => InputKey.Home,
             75 => InputKey.PageUp,
@@ -395,6 +411,15 @@ internal sealed class SdlInputSource : IInputSource
             80 => InputKey.Left,
             81 => InputKey.Down,
             82 => InputKey.Up,
+            84 => InputKey.Divide,
+            85 => InputKey.Multiply,
+            86 => InputKey.Subtract,
+            87 => InputKey.Add,
+            // WPF reports keypad Enter as Key.Enter.
+            88 => InputKey.Enter,
+            98 => InputKey.NumPad0,
+            99 => InputKey.Decimal,
+            100 => InputKey.OemBackslash,
             224 => InputKey.LeftCtrl,
             225 => InputKey.LeftShift,
             226 => InputKey.LeftAlt,
@@ -406,7 +431,8 @@ internal sealed class SdlInputSource : IInputSource
     }
 
     // The inverse of MapScancode: the scancode SDL reports for the key, or -1 when no
-    // scancode that MapScancode maps back to this key exists.
+    // scancode that MapScancode maps back to this key exists. Enter maps back to the main
+    // Enter key, not to keypad Enter.
     internal static int MapInputKey(InputKey key)
     {
         if (key is >= InputKey.A and <= InputKey.Z)
@@ -424,6 +450,11 @@ internal sealed class SdlInputSource : IInputSource
             return 58 + (key - InputKey.F1);
         }
 
+        if (key is >= InputKey.NumPad1 and <= InputKey.NumPad9)
+        {
+            return 89 + (key - InputKey.NumPad1);
+        }
+
         return key switch
         {
             InputKey.D0 => 39,
@@ -432,6 +463,17 @@ internal sealed class SdlInputSource : IInputSource
             InputKey.Back => 42,
             InputKey.Tab => 43,
             InputKey.Space => 44,
+            InputKey.OemMinus => 45,
+            InputKey.OemPlus => 46,
+            InputKey.OemOpenBrackets => 47,
+            InputKey.OemCloseBrackets => 48,
+            InputKey.OemPipe => 49,
+            InputKey.OemSemicolon => 51,
+            InputKey.OemQuotes => 52,
+            InputKey.OemTilde => 53,
+            InputKey.OemComma => 54,
+            InputKey.OemPeriod => 55,
+            InputKey.OemQuestion => 56,
             InputKey.Insert => 73,
             InputKey.Home => 74,
             InputKey.PageUp => 75,
@@ -442,6 +484,13 @@ internal sealed class SdlInputSource : IInputSource
             InputKey.Left => 80,
             InputKey.Down => 81,
             InputKey.Up => 82,
+            InputKey.Divide => 84,
+            InputKey.Multiply => 85,
+            InputKey.Subtract => 86,
+            InputKey.Add => 87,
+            InputKey.NumPad0 => 98,
+            InputKey.Decimal => 99,
+            InputKey.OemBackslash => 100,
             InputKey.LeftCtrl => 224,
             InputKey.LeftShift => 225,
             InputKey.LeftAlt => 226,

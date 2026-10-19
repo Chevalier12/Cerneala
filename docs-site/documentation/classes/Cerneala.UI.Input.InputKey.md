@@ -47,7 +47,17 @@ panel.AddHandler(InputEvents.KeyDownEvent, (_, args) =>
 
 For every other key, the focus manager raises `PreviewKeyDown` and `KeyDown` on the focused element when the key goes down in a frame, and `PreviewKeyUp` and `KeyUp` when it goes up.
 
-The SDL input source produces every other member: letters, digits, `F1` to `F12`, the arrow, editing, and navigation keys, and the left and right Shift, Ctrl, and Alt keys.
+The SDL input source produces every other member: letters, digits, `F1` to `F12`, the arrow, editing, and navigation keys, the left and right Shift, Ctrl, and Alt keys, the numeric keypad keys, and the punctuation keys. The keypad and punctuation keys have the names of WPF `System.Windows.Input.Key`. Keypad Enter is `Enter`, as in WPF.
+
+A key raises its key events and, separately, the text it types. Example: with Num Lock on, keypad 5 in a focused `TextBox` raises `KeyDown` with `NumPad5`, then `TextInput` with the text `"5"`, then `KeyUp` with `NumPad5`; the `.` key raises `KeyDown` with `OemPeriod`, then `TextInput` with `"."`.
+
+```csharp
+TextBox box = new();
+box.KeyDown += (_, e) => Console.WriteLine(((KeyEventArgs)e).Key);
+// Keypad 5 pressed in the focused box prints "NumPad5", and the box text becomes "5".
+```
+
+The SDL input source maps SDL scancodes, which name a key by its position on a US keyboard, not by the character it types in the current layout. Example: the key right of `L` is `OemSemicolon` also on a German keyboard, where it types `ö`.
 
 Some keys have built-in behavior:
 
@@ -60,7 +70,7 @@ Some keys have built-in behavior:
 | `LeftShift`/`RightShift`, `LeftCtrl`/`RightCtrl`, `LeftAlt`/`RightAlt` | Set `KeyEventArgs.IsShiftDown`, `IsControlDown`, and `IsAltDown`, and match `KeyModifiers` in `KeyGesture`. |
 | `Up`, `Down`, `Escape`, `Enter`, `Tab`, `F4` | `ComboBox` and `Menu` keyboard navigation. |
 
-The numeric values follow declaration order: `Unknown` is `0`, `None` is `1`, `A` is `27`, and `F12` is `70`.
+The numeric values follow declaration order: `Unknown` is `0`, `None` is `1`, `A` is `27`, `F12` is `70`, and `OemBackslash` is `97`.
 
 ## Fields
 
@@ -92,6 +102,24 @@ The numeric values follow declaration order: `Unknown` is `0`, `None` is `1`, `A
 | `LeftAlt` | `57` | Left Alt. |
 | `RightAlt` | `58` | Right Alt. |
 | `F1` to `F12` | `59` to `70` | Function keys. |
+| `NumPad0` to `NumPad9` | `71` to `80` | Digit keys `0` to `9` on the numeric keypad. |
+| `Multiply` | `81` | Keypad `*`. |
+| `Add` | `82` | Keypad `+`. |
+| `Subtract` | `83` | Keypad `-`. |
+| `Decimal` | `84` | Keypad `.`. |
+| `Divide` | `85` | Keypad `/`. |
+| `OemSemicolon` | `86` | The `;` and `:` key. |
+| `OemPlus` | `87` | The `=` and `+` key. |
+| `OemComma` | `88` | The `,` and `<` key. |
+| `OemMinus` | `89` | The `-` and `_` key. |
+| `OemPeriod` | `90` | The `.` and `>` key. |
+| `OemQuestion` | `91` | The `/` and `?` key. |
+| `OemTilde` | `92` | The `` ` `` and `~` key. |
+| `OemOpenBrackets` | `93` | The `[` and `{` key. |
+| `OemPipe` | `94` | The `\` and `\|` key above Enter. |
+| `OemCloseBrackets` | `95` | The `]` and `}` key. |
+| `OemQuotes` | `96` | The `'` and `"` key. |
+| `OemBackslash` | `97` | The extra key next to left Shift on ISO keyboards. |
 
 ## Applies to
 
