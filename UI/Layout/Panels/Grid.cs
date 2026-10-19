@@ -10,8 +10,6 @@ public class Grid : Panel
     private static readonly ConditionalWeakTable<UIElement, StrongBox<GridPlacement>> placements = new();
     private float[] measuredColumnSizes = [0];
     private float[] measuredRowSizes = [0];
-    private bool measuredColumnsUnbounded;
-    private bool measuredRowsUnbounded;
 
     public Grid()
     {
@@ -214,11 +212,43 @@ public class Grid : Panel
             }
         }
 
-        measuredColumnSizes = columnSizes;
-        measuredRowSizes = rowSizes;
-        measuredColumnsUnbounded = float.IsPositiveInfinity(context.AvailableSize.Width);
-        measuredRowsUnbounded = float.IsPositiveInfinity(context.AvailableSize.Height);
-        return new LayoutSize(SumDesiredSizes(columnSizes, context.Rounding), SumDesiredSizes(rowSizes, context.Rounding));
+        measuredColumnSizes = GetContentSizes(columnAxis: true, columns, rows, columnSizes, columnMeasureSizes, context.AvailableSize.Width);
+        measuredRowSizes = GetContentSizes(columnAxis: false, columns, rows, rowSizes, rowMeasureSizes, context.AvailableSize.Height);
+        return new LayoutSize(
+            SumDesiredSizes(measuredColumnSizes, context.Rounding),
+            SumDesiredSizes(measuredRowSizes, context.Rounding));
+    }
+
+    // As in WPF, the grid desires the minimum size of each definition, and arrange keeps it as the minimum of a star
+    // definition. On a finite axis a star definition's share of the available size only sets the size its children are
+    // measured with; its minimum is the size those children ask for, as for a star definition on an unbounded axis. As
+    // WPF clips a child's desired size to the size it was measured with, a child asks for at most the size of its cells:
+    // a 1* and a 2* column in 300 pixels holding 50-pixel children desire 50 pixels each, not 100 and 200.
+    private float[] GetContentSizes(
+        bool columnAxis,
+        GridLength[] columns,
+        GridLength[] rows,
+        float[] sizes,
+        float[] measureSizes,
+        float availableSize)
+    {
+        GridLength[] lengths = columnAxis ? columns : rows;
+        if (float.IsPositiveInfinity(availableSize) || !lengths.Any(length => length.IsStar))
+        {
+            return sizes;
+        }
+
+        float[] contentSizes = (float[])sizes.Clone();
+        for (int i = 0; i < lengths.Length; i++)
+        {
+            if (lengths[i].IsStar)
+            {
+                contentSizes[i] = 0;
+            }
+        }
+
+        ExpandContentSizedDefinitions(columnAxis, columns, rows, contentSizes, float.PositiveInfinity, measureSizes: measureSizes);
+        return contentSizes;
     }
 
     // With layout rounding, the definitions that lie on device pixels add their device pixels, as StackPanel adds its
@@ -384,8 +414,8 @@ public class Grid : Panel
     {
         GridLength[] columns = GetColumnLengths();
         GridLength[] rows = GetRowLengths();
-        float[] columnSizes = ResolveArrangeSizes(columns, measuredColumnSizes, measuredColumnsUnbounded, context.FinalRect.Width);
-        float[] rowSizes = ResolveArrangeSizes(rows, measuredRowSizes, measuredRowsUnbounded, context.FinalRect.Height);
+        float[] columnSizes = ResolveArrangeSizes(columns, measuredColumnSizes, context.FinalRect.Width);
+        float[] rowSizes = ResolveArrangeSizes(rows, measuredRowSizes, context.FinalRect.Height);
         RoundSizes(columnSizes, context.Rounding);
         RoundSizes(rowSizes, context.Rounding);
 
@@ -451,7 +481,8 @@ public class Grid : Panel
     }
 
     // As in WPF, children in one definition size it first. Spanning children follow, narrowest span first,
-    // and each adds only the size that the definitions it spans still miss.
+    // and each adds only the size that the definitions it spans still miss. With measureSizes, a child's desired size
+    // is clipped to the size it was measured with at those definition sizes.
     private void ExpandContentSizedDefinitions(
         bool columnAxis,
         GridLength[] columns,
@@ -459,7 +490,8 @@ public class Grid : Panel
         float[] sizes,
         float availableSize,
         int maxSpan = int.MaxValue,
-        bool skipPixelCrossSpans = false)
+        bool skipPixelCrossSpans = false,
+        float[]? measureSizes = null)
     {
         GridLength[] lengths = columnAxis ? columns : rows;
         GridLength[] crossLengths = columnAxis ? rows : columns;
@@ -487,13 +519,14 @@ public class Grid : Panel
 
                 if (childSpan == span)
                 {
-                    ExpandContentSizedDefinition(
-                        lengths,
-                        sizes,
-                        columnAxis ? placement.Column : placement.Row,
-                        span,
-                        availableSize,
-                        columnAxis ? child.DesiredSize.Width : child.DesiredSize.Height);
+                    int index = columnAxis ? placement.Column : placement.Row;
+                    float desiredSize = columnAxis ? child.DesiredSize.Width : child.DesiredSize.Height;
+                    if (measureSizes is not null)
+                    {
+                        desiredSize = MathF.Min(desiredSize, GetChildConstraint(lengths, index, span, Sum(measureSizes, index, span)));
+                    }
+
+                    ExpandContentSizedDefinition(lengths, sizes, index, span, availableSize, desiredSize);
                 }
                 else if (childSpan > span)
                 {
@@ -553,7 +586,6 @@ public class Grid : Panel
     private static float[] ResolveArrangeSizes(
         GridLength[] lengths,
         float[] measuredSizes,
-        bool measuredUnbounded,
         float finalSize)
     {
         float[] sizes = ResolveFixedSizes(lengths);
@@ -565,9 +597,9 @@ public class Grid : Panel
             }
         }
 
-        // Star definitions measured against an unbounded axis were sized to their content;
-        // that content size stays a minimum when the final size is shared by weight.
-        ResolveStarSizes(lengths, sizes, finalSize, measuredUnbounded ? measuredSizes : null);
+        // The content size a star definition desired in measure (see GetContentSizes) stays a minimum when the final
+        // size is shared by weight.
+        ResolveStarSizes(lengths, sizes, finalSize, measuredSizes);
         return sizes;
     }
 

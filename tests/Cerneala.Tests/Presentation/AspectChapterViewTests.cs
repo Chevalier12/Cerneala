@@ -304,7 +304,9 @@ public sealed class AspectChapterViewTests : IDisposable
 
         Assert.All(frames, frame => Assert.Equal(0, frame.Stats.InheritedElements));
         Assert.All(frames, frame => Assert.InRange(frame.Stats.AspectElements, 0, 1));
-        Assert.InRange(frames[0].Stats.MeasuredElements, 0, 5);
+        // Issue #496: as in WPF, the status bar's Grid desires the width of its texts, so the first hue change also
+        // measures the status bar's Border and the chapter's root Grid again.
+        Assert.InRange(frames[0].Stats.MeasuredElements, 0, 6);
         Assert.InRange(frames[0].Stats.ArrangedElements, 0, 6);
         Assert.All(frames.Skip(1), frame => Assert.Equal(0, frame.Stats.MeasuredElements));
         Assert.All(frames.Skip(1), frame => Assert.Equal(0, frame.Stats.ArrangedElements));
