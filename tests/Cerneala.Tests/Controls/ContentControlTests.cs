@@ -1,4 +1,5 @@
 using Cerneala.UI.Controls;
+using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
 
@@ -149,6 +150,36 @@ public sealed class ContentControlTests
         UIElement loose = new();
         control.SetValue(ContentControl.ContentProperty, (object?)loose);
         Assert.Same(loose, control.Content);
+    }
+
+    [Fact]
+    public void ClearValueRejectsTemplatedLowerSourceElementContentThatGotAnotherParent()
+    {
+        UIRoot root = new(300, 200);
+        ContentControl control = new()
+        {
+            ComponentTemplate = new ComponentTemplate<ContentControl>("test", context =>
+                new ContentPresenter { Content = context.Owner.Content }),
+            Content = "text"
+        };
+        Border holder = new();
+        Border revealed = new() { Width = 10, Height = 10 };
+        root.VisualChildren.Add(control);
+        root.ProcessFrame();
+
+        control.SetValue(ContentControl.ContentProperty, (object?)revealed, UiPropertyValueSource.AspectBase);
+        holder.Child = revealed;
+        root.VisualChildren.Add(holder);
+
+        InvalidOperationException rejected = Assert.Throws<InvalidOperationException>(
+            () => control.ClearValue(ContentControl.ContentProperty));
+
+        Assert.Equal("Element must be removed from its current parent before reparenting.", rejected.Message);
+        Assert.Equal("text", control.Content);
+        Assert.Equal(UiPropertyValueSource.Local, control.GetValueSource(ContentControl.ContentProperty));
+        Assert.Same(holder, revealed.LogicalParent);
+        root.ProcessFrame();
+        Assert.Same(holder, revealed.VisualParent);
     }
 
     [Fact]

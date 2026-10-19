@@ -86,7 +86,8 @@ public class ContentControl : Control
     internal virtual bool HostsContentDirectly(object? content) => ComponentTemplate is null && ComponentTemplateKey is null;
 
     // Content that this control does not host is taken later by its other owner (a ContentPresenter, or the TabItem
-    // that holds it), so SetValue checks it here, before the store changes, as the Content setter does.
+    // that holds it), so SetValue, and a ClearValue that makes it effective, check it here, before the store changes,
+    // as the Content setter does.
     internal override void ValidatePropertyMutation(UiProperty property, object? value)
     {
         base.ValidatePropertyMutation(property, value);
