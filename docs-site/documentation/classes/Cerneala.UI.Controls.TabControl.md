@@ -16,6 +16,9 @@ public class TabControl : Selector
 Inheritance:
 `object` -> `UiObject` -> `UIElement` -> `Control` -> `ItemsControl` -> `Selector` -> `TabControl`
 
+Attributes:
+`[TemplatePart("PART_ItemsPresenter", typeof(ItemsPresenter))]`
+
 ## Examples
 
 ```csharp
@@ -73,6 +76,42 @@ The desired size is the wider of the two parts, and the header row height plus t
 The content area is refreshed during measure, after the tabs are realized. Changing `SelectedIndex`, `ContentTemplate`, or the `Content` or `ContentTemplate` of the selected tab invalidates measure, so the next layout pass shows the change. `SelectedContent` and `SelectedContentTemplate` are computed from the selected tab, so they return the new values at once.
 
 When `Content` is a `UIElement`, that element is a child of the content area while its tab is selected. When another tab is selected, the next layout pass removes it from the content area and gives it back to its `TabItem`, which owns it as its `LogicalParent` until its tab is selected again. As in WPF, only the content of the selected tab is loaded: the element raises `Loaded` when its tab is shown and `Unloaded` once when another tab is selected, and the content of a tab that is not selected raises neither. For example, with `first.Content = button` and `SelectedIndex = 0`, `button` is under the `TabControl` after layout and has raised `Loaded` once; after `SelectedIndex = 1` and the next layout pass, `button` has raised `Unloaded` once, `button.IsLoaded` is `false`, `button.VisualParent` is `null` and `button.LogicalParent` is `first`, so adding `button` to another parent throws `InvalidOperationException`.
+
+### Tab headers in a ComponentTemplate
+
+As in WPF, where the `TabControl` template holds the panel that hosts the tab headers, a `ComponentTemplate` shows the headers through its `PART_ItemsPresenter` part, an `ItemsPresenter` registered with `context.RequirePart("PART_ItemsPresenter", presenter)`. When the template is applied, that `ItemsPresenter` gets `ItemsOwner == tabs` and realizes the tabs, `TabItem` items and generated tabs alike, in the `ItemsPanel`. The built-in header row is removed from the control's visual and logical children, so it hosts no tab while the template is applied. A click on a header inside the template selects its tab, as in the built-in header row.
+
+The part is optional, as in WPF, where a missing template part does not throw. A template without `PART_ItemsPresenter`, for example one that only shows `SelectedContent`, is applied without an error; the tabs then stay in the built-in header row, which is not laid out while the template is applied, so no header is shown. When the template is removed (`ComponentTemplate = null`), the template's `ItemsPresenter` gets `ItemsOwner == null`, and the built-in header row hosts the tabs again on the next layout pass. When the template is replaced, the `PART_ItemsPresenter` of the new template hosts them.
+
+```csharp
+using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Templates;
+
+TabItem first = new() { Header = "One", Content = "C1" };
+TabItem second = new() { Header = "Two", Content = "C2" };
+TabControl tabs = new();
+tabs.SetItems(new[] { first, second });
+tabs.SelectedIndex = 0;
+
+ItemsPresenter? headers = null;
+ContentPresenter? page = null;
+tabs.ComponentTemplate = new ComponentTemplate<TabControl>("tabs", context =>
+{
+    headers = new ItemsPresenter();
+    page = new ContentPresenter { Content = context.Owner.SelectedContent };
+    StackPanel root = new();
+    root.Children.Add(headers);
+    root.Children.Add(page);
+    context.RequirePart("PART_ItemsPresenter", headers);
+    return root;
+});
+tabs.SelectionChanged += (_, _) => page!.Content = tabs.SelectedContent;
+// headers.ItemsOwner is tabs. After the next layout pass, the headers "One" and "Two" are inside headers,
+// and page shows "C1". A click on "Two" selects second, and page shows "C2".
+
+tabs.ComponentTemplate = null;
+// headers.ItemsOwner is null. After the next layout pass, "One" and "Two" are in the built-in header row again.
+```
 
 ### Element content with a ComponentTemplate
 
@@ -209,6 +248,12 @@ Selection can also be changed through the inherited `Selector` input behavior: a
 | `SelectedContent` | `object?` | Gets the `Content` of `SelectedTabItem`, or `null` when `SelectedTabItem` is `null`. For a data item whose tab has not been realized yet, this is `null` until the next layout pass. |
 | `SelectedContentTemplate` | `ContentTemplate?` | Gets the template the content area uses: `SelectedTabItem.ContentTemplate` when it is not `null`, otherwise `ContentTemplate`; `null` when `SelectedTabItem` is `null`. |
 | `SelectedTabItem` | `TabItem?` | Gets the selected `TabItem` item, or the realized tab container prepared for the selected item, or `null` when there is no valid selected tab item. |
+
+## Template Parts
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `PART_ItemsPresenter` | `ItemsPresenter` | Optional. Realizes and presents the tab headers (`TabItem` containers) while the `ComponentTemplate` is applied. Without it, no header is shown while the template is applied. |
 
 ## Relevant Inherited Properties
 

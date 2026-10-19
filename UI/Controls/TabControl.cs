@@ -9,6 +9,7 @@ using Cerneala.UI.Layout;
 
 namespace Cerneala.UI.Controls;
 
+[TemplatePart("PART_ItemsPresenter", typeof(ItemsPresenter))]
 public class TabControl : Selector
 {
     public static readonly UiProperty<ContentTemplate?> ContentTemplateProperty = UiProperty<ContentTemplate?>.Register(
@@ -158,13 +159,16 @@ public class TabControl : Selector
         }
     }
 
-    // The template that goes away lets go of the element content of the tabs it showed, so the next template or the
-    // content area can show it, and its tab can own it again.
+    // As in WPF, the template's PART_ItemsPresenter hosts the tab headers and is optional: without it, or without a
+    // template, the built-in header row hosts them. The template that goes away lets go of the element content of the
+    // tabs it showed, so the next template or the content area can show it, and its tab can own it again.
     protected override void OnTemplateApplied(ComponentTemplateInstance? instance)
     {
         base.OnTemplateApplied(instance);
+        ActivateItemsPresenter(null);
         if (instance is not null)
         {
+            ActivateItemsPresenter(GetOptionalTemplatePart<ItemsPresenter>("PART_ItemsPresenter"));
             return;
         }
 
