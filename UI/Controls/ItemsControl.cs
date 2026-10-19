@@ -343,11 +343,6 @@ public class ItemsControl : Control
         return DisplayMemberPathAccessor.Resolve(item, DisplayMemberPath);
     }
 
-    internal string GetItemDisplayText(object? item)
-    {
-        return GetItemDisplayValue(item)?.ToString() ?? string.Empty;
-    }
-
     protected internal virtual void ClearItemContainer(UIElement container)
     {
         object? item = ItemContainerGenerator.GetItem(container);

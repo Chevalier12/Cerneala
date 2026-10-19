@@ -1871,6 +1871,51 @@ public sealed class ComboBoxTests
         Assert.Equal(string.Empty, comboBox.Text);
     }
 
+    // As in WPF, an element item that is not a ComboBoxItem is the content of its generated ComboBoxItem, so the row
+    // presents the element itself, not its type name (#606). Other items keep their text.
+    [Fact]
+    public void ElementItemIsPresentedByItsGeneratedComboBoxItem()
+    {
+        TextBlock alpha = new() { Text = "Alpha" };
+        ComboBox comboBox = new() { Width = 150, Height = 30, IsEditable = false };
+        comboBox.Items.Add(alpha);
+        comboBox.Items.Add("Beta");
+        ComboBox memberPathComboBox = new()
+        {
+            Width = 150,
+            Height = 30,
+            IsEditable = false,
+            DisplayMemberPath = "Address.City"
+        };
+        memberPathComboBox.SetItems(new[] { new Person(new Address("Iasi")) });
+        LayoutCanvas canvas = new();
+        canvas.VisualChildren.Add(comboBox);
+        canvas.VisualChildren.Add(memberPathComboBox);
+        UIRoot root = new(360, 240);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+
+        comboBox.IsDropDownOpen = true;
+        root.ProcessFrame();
+
+        ComboBoxItem alphaRow = Assert.IsType<ComboBoxItem>(comboBox.ItemContainerGenerator.RealizedContainers[0]);
+        ContentPresenter alphaPresenter = Assert.IsType<ContentPresenter>(alphaRow.Content);
+        Assert.Same(alpha, alphaPresenter.Content);
+        Assert.Same(alpha, alphaPresenter.PresentedChild);
+        Assert.Same(alphaPresenter, alpha.VisualParent);
+        ContentPresenter betaPresenter = Assert.IsType<ContentPresenter>(
+            Assert.IsType<ComboBoxItem>(comboBox.ItemContainerGenerator.RealizedContainers[1]).Content);
+        Assert.Equal("Beta", betaPresenter.Content);
+
+        comboBox.IsDropDownOpen = false;
+        memberPathComboBox.IsDropDownOpen = true;
+        root.ProcessFrame();
+
+        ContentPresenter cityPresenter = Assert.IsType<ContentPresenter>(
+            Assert.IsType<ComboBoxItem>(memberPathComboBox.ItemContainerGenerator.RealizedContainers[0]).Content);
+        Assert.Equal("Iasi", cityPresenter.Content);
+    }
+
     [Fact]
     public void InvalidDisplayMemberPathThrowsDescriptiveException()
     {
