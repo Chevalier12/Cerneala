@@ -144,7 +144,9 @@ public class ContentControl : Control
         }
     }
 
-    // A subclass calls this after its own state changed what HostsContentDirectly returns for Content.
+    // A subclass calls this after its own state changed what HostsContentDirectly returns for Content. Content that
+    // this control starts to host can still be inside an element that its previous presentation built for it, for
+    // example a template's element in a ContentPresenter child, so it leaves that subtree first.
     internal void UpdateContentHosting()
     {
         UIElement? wanted = HostsContentDirectly(Content) ? Content as UIElement : null;
@@ -154,6 +156,11 @@ public class ContentControl : Control
         }
 
         RemoveContentElement(hostedContentElement);
+        if (wanted is not null)
+        {
+            DetachChildFromOwnedSubtree(this, wanted);
+        }
+
         AddContentElement(wanted);
     }
 
@@ -282,7 +289,16 @@ public class ContentControl : Control
         }
 
         LogicalChildren.Add(element);
-        VisualChildren.Add(element);
+        try
+        {
+            VisualChildren.Add(element);
+        }
+        catch
+        {
+            LogicalChildren.Remove(element);
+            throw;
+        }
+
         hostedContentElement = element;
     }
 
