@@ -34,6 +34,39 @@ public sealed class TabControlTests
         Assert.Equal(0, root.Detective.CaptureRendering(tabControl).CommandCount);
     }
 
+    // The header row starts at the top of a TabControl without a template, which applies no Padding, so a scroll
+    // viewport realizes the tabs it shows, not the tabs a top inset would have moved into it.
+    [Fact]
+    public void ScrollViewerVirtualizationRealizesTheTabsInTheViewportOfATabControlWithPadding()
+    {
+        TabItem[] tabs = Enumerable.Range(0, 100)
+            .Select(index => new TabItem { Header = index.ToString(), Height = 10 })
+            .ToArray();
+        TabControl tabControl = new()
+        {
+            ItemsPanel = new Cerneala.UI.Layout.Panels.VirtualizingStackPanel(),
+            Padding = new Thickness(0, 100, 0, 0)
+        };
+        tabControl.SetItems(tabs);
+        ScrollViewer viewer = new()
+        {
+            Content = tabControl,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        UIRoot root = new(100, 30);
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+
+        viewer.ScrollInfo.SetVerticalOffset(105);
+        root.ProcessFrame();
+
+        // Tabs 10..13 cover 100..140, the 30 px the viewport shows from offset 105.
+        int[] realized = [.. Enumerable.Range(0, tabs.Length).Where(index => tabs[index].VisualParent is not null)];
+        Assert.Contains(10, realized);
+        Assert.Contains(13, realized);
+        Assert.DoesNotContain(0, realized);
+    }
+
     [Fact]
     public void TabControlSelectedTabItemReturnsUnrealizedTabItem()
     {

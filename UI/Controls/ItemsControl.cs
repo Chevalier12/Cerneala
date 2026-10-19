@@ -500,11 +500,14 @@ public class ItemsControl : Control
         }
     }
 
-    // The scroll offset counts from the top of this control; without a template the items start below its top inset.
+    // The distance from the top of this control to the top of its items, as its own layout arranges them: without a
+    // template, below its top inset. A subclass that lays out its items without a template in another way overrides it.
+    internal virtual float ItemsTopInset => TemplateChild is null ? Insets.Top : 0;
+
+    // The scroll offset counts from the top of this control, so the items see it less their top inset.
     internal void UpdateAutomaticVirtualization(float viewportExtent, float scrollOffset)
     {
-        float itemsOffset = TemplateChild is null ? scrollOffset - Insets.Top : scrollOffset;
-        if (itemsPresenter.UpdateAutomaticVirtualization(viewportExtent, itemsOffset))
+        if (itemsPresenter.UpdateAutomaticVirtualization(viewportExtent, scrollOffset - ItemsTopInset))
         {
             InvalidateItems("Items scroll viewport changed");
         }

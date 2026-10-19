@@ -157,6 +157,10 @@ public class TabControl : Selector
     {
     }
 
+    // The header row starts at the top of a TabControl without a template, as the layout above arranges it, so a
+    // scroll offset reaches the headers without an inset; a ComponentTemplate has none either.
+    internal override float ItemsTopInset => 0;
+
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
         bool templateChanged = ReferenceEquals(args.Property, ComponentTemplateProperty) ||
