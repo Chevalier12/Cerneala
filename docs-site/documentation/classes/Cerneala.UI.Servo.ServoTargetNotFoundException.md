@@ -22,6 +22,8 @@ await Assert.ThrowsAsync<ServoTargetNotFoundException>(
 
 `FindAllAsync` returns an empty list and `ExistsAsync` returns `false` for the same cardinality instead of throwing this exception.
 
+Target input actions (`ClickAsync`, `HoverAsync`, `DragAsync`, `ScrollAsync`, `TypeIntoAsync`, `ReplaceTextAsync`) do not throw this exception to the caller. They retry after each rendered frame until the target appears. When `ServoOptions.DefaultTimeout` expires first, they throw `ServoTimeoutException`, and its `InnerException` is the last `ServoTargetNotFoundException`.
+
 ## Constructors
 
 | Name | Description |

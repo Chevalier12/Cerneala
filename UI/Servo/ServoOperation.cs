@@ -33,10 +33,18 @@ internal static class ServoOperation
         {
             return await operation(linked.Token).ConfigureAwait(false);
         }
-        catch (OperationCanceledException) when (
+        catch (OperationCanceledException canceled) when (
             !cancellationToken.IsCancellationRequested && timeoutSource.IsCancellationRequested)
         {
-            throw new ServoTimeoutException($"The Servo operation exceeded its {timeout} timeout.");
+            string message = $"The Servo operation exceeded its {timeout} timeout.";
+            // A retried action carries the failure it was retrying as the InnerException of its
+            // cancellation (ServoActionEngine.DispatchWhenActionableAsync).
+            if (canceled.InnerException is ServoException lastFailure)
+            {
+                throw new ServoTimeoutException($"{message} Last failure: {lastFailure.Message}", lastFailure);
+            }
+
+            throw new ServoTimeoutException(message);
         }
     }
 }
