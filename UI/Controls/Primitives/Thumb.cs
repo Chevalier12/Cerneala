@@ -52,6 +52,10 @@ public class Thumb : Control, IPointerDragSource
 
     public float TotalVerticalChange { get; private set; }
 
+    // A left press on an enabled thumb starts its drag, as a WPF Thumb handles MouseLeftButtonDown and captures the mouse,
+    // so an enclosing button is not pressed, does not repeat, and does not click for it (#619).
+    internal override bool OwnsPointerClick => IsEnabled;
+
     public bool BeginDrag(PointerCaptureManager captureManager, ElementInputRouteMap routeMap, MouseButtonEventArgs args)
     {
         ArgumentNullException.ThrowIfNull(captureManager);
