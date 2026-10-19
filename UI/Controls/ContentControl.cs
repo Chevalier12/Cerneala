@@ -17,6 +17,9 @@ public class ContentControl : Control
     // Set when OnPropertyChanged could not host the new Content element, so NotifyPropertyChange restores the old value.
     private bool contentHostingFailed;
 
+    // True while NotifyPropertyChange stores the previous Content again after a failed hosting.
+    private bool restoringContent;
+
     public static readonly UiProperty<object?> ContentProperty = UiProperty<object?>.Register(
         nameof(Content),
         typeof(ContentControl),
@@ -90,10 +93,25 @@ public class ContentControl : Control
         {
             base.NotifyPropertyChange(change);
         }
-        catch when (contentHostingFailed && change.MutatingSource != UiPropertyValueSource.Default)
+        catch when (contentHostingFailed && !restoringContent && change.MutatingSource != UiPropertyValueSource.Default)
         {
+            // A restore that fails too, because the previous element cannot be hosted again either, is not restored
+            // again: that would swap the two values forever. The previous value stays stored, unhosted, and the first
+            // failure propagates.
             contentHostingFailed = false;
-            RestoreContentSource(change);
+            restoringContent = true;
+            try
+            {
+                RestoreContentSource(change);
+            }
+            catch
+            {
+            }
+            finally
+            {
+                restoringContent = false;
+            }
+
             throw;
         }
     }

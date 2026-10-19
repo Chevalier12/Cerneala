@@ -333,6 +333,30 @@ public sealed class ContentControlTests
         Assert.Equal(UiPropertyValueSource.Local, control.GetValueSource(ContentControl.ContentProperty));
     }
 
+    [Fact]
+    public void FailedRestoreOfThePreviousElementRethrowsTheFirstFailureWithoutRestoringAgain()
+    {
+        UIRoot root = new(200, 200);
+        ContentControl control = new();
+        root.VisualChildren.Add(control);
+        root.ProcessFrame();
+        ThrowingAttachElement oldChild = new() { Throws = false };
+        control.Content = oldChild;
+        oldChild.Throws = true;
+        ThrowingAttachElement failed = new();
+
+        InvalidOperationException failure = Assert.Throws<InvalidOperationException>(() => control.Content = failed);
+
+        Assert.Equal("attach failed", failure.Message);
+        Assert.Same(oldChild, control.Content);
+        Assert.Empty(control.LogicalChildren);
+        Assert.Empty(control.VisualChildren);
+        Assert.Null(failed.LogicalParent);
+        Assert.Null(failed.VisualParent);
+        Assert.Null(oldChild.LogicalParent);
+        Assert.Null(oldChild.VisualParent);
+    }
+
     private static void AssertPreviousOwnershipRestored(ContentControl control, UIElement oldChild, UIElement failed)
     {
         Assert.Same(oldChild, control.Content);
@@ -404,10 +428,15 @@ public sealed class ContentControlTests
 
     private sealed class ThrowingAttachElement : Border
     {
+        public bool Throws { get; set; } = true;
+
         protected override void OnAttached()
         {
             base.OnAttached();
-            throw new InvalidOperationException("attach failed");
+            if (Throws)
+            {
+                throw new InvalidOperationException("attach failed");
+            }
         }
     }
 }
