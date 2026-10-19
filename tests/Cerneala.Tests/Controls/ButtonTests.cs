@@ -791,6 +791,69 @@ public sealed class ButtonTests
         Assert.Equal(0, clicks);
     }
 
+    // A press on a thumb belongs to the thumb, as a WPF Thumb marks MouseLeftButtonDown handled before the enclosing
+    // ButtonBase focuses itself (#640): the button does not get keyboard focus, and the element that had it keeps it.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void PressingThumbInsideButtonKeepsKeyboardFocusOnPreviouslyFocusedElement(bool scrollBarThumb)
+    {
+        Button other = new() { Content = "other", Width = 100, Height = 30 };
+        Cerneala.UI.Controls.Primitives.ScrollBar scrollBar = new() { Maximum = 100, Value = 50, Width = 16, Height = 120 };
+        Cerneala.UI.Controls.Primitives.Thumb plainThumb = new() { Width = 40, Height = 20 };
+        Button button = new() { Content = scrollBarThumb ? scrollBar : plainThumb, Width = 200, Height = 160 };
+        StackPanel panel = new();
+        panel.Children.Add(other);
+        panel.Children.Add(button);
+        UIRoot root = CreateWindowRoot(panel);
+        Cerneala.UI.Controls.Primitives.Thumb thumb = scrollBarThumb ? scrollBar.Track.Thumb : plainThumb;
+        LayoutRect otherBounds = other.ArrangedBounds;
+        float otherX = otherBounds.X + otherBounds.Width / 2;
+        float otherY = otherBounds.Y + otherBounds.Height / 2;
+        LayoutRect bounds = thumb.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        Assert.Same(thumb, new HitTestService().HitTest(root, x, y)?.Element);
+        ElementInputBridge bridge = new();
+        bridge.Dispatch(root, PointerFrame(otherX, otherY, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(otherX, otherY, previousDown: true));
+        root.ProcessFrame();
+        Assert.True(other.IsKeyboardFocused);
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        root.ProcessFrame();
+        bool buttonFocusedWhileHeld = button.IsKeyboardFocused;
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.False(thumb.Focusable);
+        Assert.False(buttonFocusedWhileHeld);
+        Assert.False(button.IsKeyboardFocused);
+        Assert.True(other.IsKeyboardFocused);
+    }
+
+    [Fact]
+    public void PressingButtonOutsideNestedThumbGivesButtonKeyboardFocus()
+    {
+        Cerneala.UI.Controls.Primitives.Thumb thumb = new() { Width = 40, Height = 20 };
+        Button button = new() { Content = thumb, Width = 200, Height = 80 };
+        UIRoot root = CreateWindowRoot(button);
+        LayoutRect bounds = button.ArrangedBounds;
+        float x = bounds.X + 5;
+        float y = bounds.Y + 5;
+        Assert.Same(button, new HitTestService().HitTest(root, x, y)?.Element);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        root.ProcessFrame();
+        bool focusedWhileHeld = button.IsKeyboardFocused;
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.True(focusedWhileHeld);
+        Assert.True(button.IsKeyboardFocused);
+    }
+
     [Fact]
     public void HoldingMouseOnThumbInsideRepeatButtonNeitherPressesNorRepeatsIt()
     {
