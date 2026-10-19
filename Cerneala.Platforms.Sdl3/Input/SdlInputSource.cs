@@ -6,9 +6,13 @@ namespace Cerneala.Platforms.Sdl3;
 // reports a press or release as the difference between two snapshots, and a frame may
 // hold only events whose arrival order matches the order ElementInputBridge dispatches
 // them in (position, wheel, buttons, keys, text). Buttons are dispatched in
-// InputMouseButton order, so a frame holds at most one button transition, and a wheel
-// notch only before it. Key events read Ctrl, Shift and Alt from the frame's final
-// snapshot and are dispatched in InputKey order, so a frame also holds the events of one key only:
+// InputMouseButton order, so a frame holds at most one button transition. The bridge
+// hit-tests a frame once, before the wheel can scroll the element under the pointer, so
+// a frame never holds both a wheel notch and a button transition: a press after a notch
+// waits for the next frame, which hit-tests the layout after the scroll, as WPF raises
+// the press after the layout pass the scroll caused. Key events read Ctrl, Shift and Alt
+// from the frame's final snapshot and are dispatched in InputKey order, so a frame also
+// holds the events of one key only:
 // at most one transition, as the frame's first key event, then repeats of that key.
 // An event that breaks a rule closes the frame; it and every later event wait in
 // arrival order for the next frames, and the source asks for them.
@@ -227,6 +231,7 @@ internal sealed class SdlInputSource : IInputSource
         bool repeat = input.Kind == PendingKind.Key && input.Repeat && input.Down && downKeys.Contains((InputKey)input.Value);
         if ((phase < framePhase && !CanJoinOutOfOrder(input, repeat)) ||
             (hasButtonTransition && input.Kind is PendingKind.Button or PendingKind.Wheel) ||
+            (hasWheel && input.Kind == PendingKind.Button) ||
             (input.Kind == PendingKind.Key && !CanJoinFrameKey(input)))
         {
             return false;
@@ -454,9 +459,9 @@ internal sealed class SdlInputSource : IInputSource
     }
 
     // The order ElementInputBridge dispatches one frame's input in. The wheel shares the
-    // buttons' rank: it is not a transition, and one frame routes both to the same target.
-    // It is raised before the buttons, so TryApply keeps a wheel notch out of a frame
-    // after that frame's button transition.
+    // buttons' rank, but TryApply never puts a wheel notch and a button transition in one
+    // frame: the bridge raises the wheel before the buttons, and the scroll it causes moves
+    // the element the buttons were hit-tested on.
     private enum FramePhase : byte
     {
         Empty,

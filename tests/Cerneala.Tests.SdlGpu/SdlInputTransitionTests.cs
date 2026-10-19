@@ -435,11 +435,32 @@ public sealed class SdlInputTransitionTests
         source.SetButton(1, true);
         source.MovePointer(30, 40);
 
+        InputFrame wheeled = source.GetFrame();
+        Assert.Equal(120, wheeled.Pointer.WheelDelta);
+        Assert.False(wheeled.Pointer.IsPressed(InputMouseButton.Left));
         InputFrame pressed = source.GetFrame();
         Assert.True(pressed.Pointer.IsPressed(InputMouseButton.Left));
         Assert.Equal(10, pressed.Pointer.X);
-        Assert.Equal(120, pressed.Pointer.WheelDelta);
+        Assert.Equal(0, pressed.Pointer.WheelDelta);
         Assert.Equal(30, source.GetFrame().Pointer.X);
+    }
+
+    [Fact]
+    public void ReleaseAfterWheelNotchWaitsForTheNextFrame()
+    {
+        SdlInputSource source = new();
+        source.MovePointer(10, 20);
+        source.SetButton(1, true);
+        _ = source.GetFrame();
+        source.AddWheel(-1, flipped: false);
+        source.SetButton(1, false);
+
+        InputFrame wheeled = source.GetFrame();
+        Assert.Equal(-120, wheeled.Pointer.WheelDelta);
+        Assert.False(wheeled.Pointer.IsReleased(InputMouseButton.Left));
+        InputFrame released = source.GetFrame();
+        Assert.True(released.Pointer.IsReleased(InputMouseButton.Left));
+        Assert.Equal(0, released.Pointer.WheelDelta);
     }
 
     [Fact]
@@ -562,6 +583,52 @@ public sealed class SdlInputTransitionTests
         }
 
         Assert.Equal(["wheel on A", $"{button} down on B"], log);
+    }
+
+    [Fact]
+    public void PressAfterWheelNotchInOnePumpIsRaisedOnTheRowScrolledUnderThePointer()
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1, WindowDisplayScale = 1 };
+        RecordingGraphicsFactory graphics = new();
+        using WindowApplicationRuntime runtime = new(new SdlWindowPlatform(api, graphics));
+        StackPanel panel = new();
+        List<Border> rows = [];
+        for (int i = 0; i < 60; i++)
+        {
+            Border row = new() { Height = 20, Background = new SolidColorBrush(new Color((byte)(i * 4), 80, 120)) };
+            rows.Add(row);
+            panel.VisualChildren.Add(row);
+        }
+
+        ScrollViewer viewer = new() { Content = panel, Width = 300, Height = 200 };
+        Window window = new() { Content = viewer, Width = 320, Height = 220 };
+        List<string> log = [];
+        window.AddHandler(UIElement.PreviewMouseWheelEvent, (_, _) => log.Add("wheel"), handledEventsToo: true);
+        for (int i = 0; i < rows.Count; i++)
+        {
+            int index = i;
+            rows[i].AddHandler(UIElement.PreviewMouseDownEvent, (_, _) => log.Add($"down on row {index}"), handledEventsToo: true);
+        }
+
+        runtime.StartMainWindow(window);
+        uint windowId = Assert.IsType<SdlWindowSurface>(Assert.Single(graphics.Surfaces)).WindowId;
+        float x = rows[5].ArrangedBounds.X + 20;
+        float y = rows[5].ArrangedBounds.Y + 10;
+        Pump(runtime, api, new SdlEvent(SdlEventKind.MouseMotion, windowId, X: x, Y: y));
+
+        // One wheel notch down scrolls row 7 under the pointer; the press arrives in the same pump.
+        Pump(runtime, api,
+            new SdlEvent(SdlEventKind.MouseWheel, windowId, X: x, Y: y, Data2: -1),
+            new SdlEvent(SdlEventKind.MouseButtonDown, windowId, X: x, Y: y, MouseButton: 1));
+        for (int frame = 0; frame < 4; frame++)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+
+        Assert.True(viewer.Presenter.VerticalOffset > 0);
+        int rowUnderPointer = rows.FindIndex(row => y >= row.ArrangedBounds.Y && y < row.ArrangedBounds.Y + row.ArrangedBounds.Height);
+        Assert.Equal(7, rowUnderPointer);
+        Assert.Equal(["wheel", "down on row 7"], log);
     }
 
     private static void Pump(WindowApplicationRuntime runtime, FakeSdlApi api, params SdlEvent[] events)
