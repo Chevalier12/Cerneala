@@ -1,5 +1,6 @@
 using Cerneala.UI.Core;
 using Cerneala.UI.Controls.Templates;
+using Cerneala.UI.Elements;
 
 namespace Cerneala.UI.Controls.Buttons;
 
@@ -22,6 +23,8 @@ public static class ButtonTemplates
         context.Bind(Control.PaddingProperty, border, Control.PaddingProperty, UiPropertyValueSource.Local);
         context.Bind(ContentControl.ContentProperty, presenter, ContentPresenter.ContentProperty);
         context.Bind(Control.ForegroundProperty, presenter, Control.ForegroundProperty);
+        context.Bind(Control.HorizontalContentAlignmentProperty, presenter, UIElement.HorizontalAlignmentProperty);
+        context.Bind(Control.VerticalContentAlignmentProperty, presenter, UIElement.VerticalAlignmentProperty);
 
         return border;
     });

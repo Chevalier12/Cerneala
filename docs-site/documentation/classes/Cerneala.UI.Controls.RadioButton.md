@@ -45,7 +45,7 @@ RadioButton radio = new() { Content = inner, Width = 200, Height = 80 };
 
 ## Remarks
 
-`RadioButton` derives from `Button`, so it keeps the button content, text rendering, focus, command, and input behavior inherited through `ButtonBase` and `ContentControl`.
+`RadioButton` derives from `Button`, so it keeps the button content, text rendering, focus, command, and input behavior inherited through `ButtonBase` and `ContentControl`. Unlike `Button`, its constructor sets `HorizontalContentAlignment` to `Left` and `VerticalContentAlignment` to `Top` as framework defaults, because WPF's `RadioButton` style is not based on the `ButtonBase` style. So a 300 x 70 `RadioButton` with the string content `"Choice"` draws the text at the top-left corner of its border and padding; set both properties to `Center` to center it.
 
 The class adds a single selection state, `IsChecked`. It overrides `ButtonBase.OnClick` to set `IsChecked` to `true` and then raise `Click`, as the WPF `RadioButton` checks itself in its click. So `IsChecked` changes only when the radio button itself is clicked, with the same rule that decides when `ButtonBase` raises `Click`:
 
@@ -64,7 +64,7 @@ The implementation does not define radio groups, mutual exclusion, or automatic 
 
 | Name | Description |
 | --- | --- |
-| `RadioButton()` | Initializes a new, unchecked `RadioButton`. |
+| `RadioButton()` | Initializes a new, unchecked `RadioButton` whose content alignment defaults to `Left` and `Top`. |
 
 ## Fields
 
