@@ -39,11 +39,10 @@ public sealed class ElementInputBridge
         this.focusManager = focusManager ?? new FocusManager();
         retainedInputBindingProcessor = new RetainedInputBindingProcessor();
         keyboardNavigationController = new KeyboardNavigationController();
-        keyboardActivationController = new KeyboardActivationController();
+        keyboardActivationController = new KeyboardActivationController(this.pressedStateTracker);
         repeatButtonController = new RepeatButtonController();
         this.textInputBridge = textInputBridge ?? new TextInputBridge();
-        this.focusManager.FocusedElementChanged += () =>
-            keyboardActivationController.OnFocusChanged(this.pressedStateTracker.PressedElement);
+        this.focusManager.AddFocusChangeListener(keyboardActivationController);
     }
 
     public PointerCaptureManager PointerCaptureManager => pointerCaptureManager;

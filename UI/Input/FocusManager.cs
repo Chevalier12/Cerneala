@@ -7,11 +7,19 @@ public sealed class FocusManager
 {
     private IReadOnlyList<UIElement> focusedPath = [];
 
+    // Weak, like WPF's weak event pattern: a host can share one FocusManager across many
+    // ElementInputBridge instances, and a dropped bridge must stay collectable (#509).
+    private readonly List<WeakReference<KeyboardActivationController>> focusChangeListeners = [];
+
     public UIElement? FocusedElement { get; private set; }
 
-    // Raised after FocusedElement changes and before the focus routed events, so input
+    // Notified after FocusedElement changes and before the focus routed events, so input
     // state tied to the old focus (a held Space press) is gone when handlers run.
-    internal event Action? FocusedElementChanged;
+    internal void AddFocusChangeListener(KeyboardActivationController listener)
+    {
+        focusChangeListeners.RemoveAll(static reference => !reference.TryGetTarget(out _));
+        focusChangeListeners.Add(new WeakReference<KeyboardActivationController>(listener));
+    }
 
     public bool Focus(UIElement? element, ElementInputRouteMap routeMap)
     {
@@ -40,7 +48,7 @@ public sealed class FocusManager
             : routeMap.GetVisualRouteToRoot(element);
         UpdateFocusState(oldFocus, element, focusedPath, nextPath);
         focusedPath = nextPath;
-        FocusedElementChanged?.Invoke();
+        NotifyFocusChanged();
         KeyboardFocusChangedEventArgs? previewLostArgs = RaisePreviewFocusLost(routeMap, oldFocus, element);
         KeyboardFocusChangedEventArgs? previewGotArgs = RaisePreviewFocusGot(routeMap, oldFocus, element);
         RaiseFocusLost(routeMap, oldFocus, element, previewLostArgs);
@@ -123,6 +131,35 @@ public sealed class FocusManager
         target = null;
         targetId = default;
         return false;
+    }
+
+    private void NotifyFocusChanged()
+    {
+        if (focusChangeListeners.Count == 0)
+        {
+            return;
+        }
+
+        // A listener can move the focus again or build another bridge, so the live
+        // listeners are copied first, as an event invocation uses its delegate list.
+        List<KeyboardActivationController> listeners = new(focusChangeListeners.Count);
+        for (int i = 0; i < focusChangeListeners.Count;)
+        {
+            if (focusChangeListeners[i].TryGetTarget(out KeyboardActivationController? listener))
+            {
+                listeners.Add(listener);
+                i++;
+            }
+            else
+            {
+                focusChangeListeners.RemoveAt(i);
+            }
+        }
+
+        foreach (KeyboardActivationController listener in listeners)
+        {
+            listener.OnFocusChanged();
+        }
     }
 
     private static bool RaiseKeyPair(
