@@ -533,9 +533,10 @@ public class ContentPresenter : Control
     }
 
     // Where element content was in the tree before a refresh released it. A Decorator names its child in Child, and a
-    // ContentControl that hosts its content directly names it in Content; the release goes through that property
-    // (ContentControl.DetachChildFromOwnedSubtree), so the rollback goes through it too, and each Decorator or
-    // ContentControl involved keeps the property in step with its children.
+    // ContentControl that hosts its content directly or a ContentPresenter that presents it directly names it in
+    // Content; the release goes through that property (ContentControl.DetachChildFromOwnedSubtree), so the rollback
+    // goes through it too, and each Decorator, ContentControl or ContentPresenter involved keeps the property in step
+    // with its children.
     private readonly record struct ElementContentPlacement(
         UIElement Element,
         UIElement? VisualParent,
@@ -604,19 +605,25 @@ public class ContentPresenter : Control
                 Decorator decorator => ReferenceEquals(decorator.Child, element),
                 ContentControl contentControl => contentControl.HostsContentDirectly(element) &&
                     ReferenceEquals(contentControl.Content, element),
+                ContentPresenter presenter => ReferenceEquals(presenter.PresentedChild, element) &&
+                    ReferenceEquals(presenter.Content, element),
                 _ => false
             };
         }
 
         private static void SetNamedChild(UIElement parent, UIElement? element)
         {
-            if (parent is Decorator decorator)
+            switch (parent)
             {
-                decorator.Child = element;
-            }
-            else
-            {
-                ((ContentControl)parent).Content = element;
+                case Decorator decorator:
+                    decorator.Child = element;
+                    break;
+                case ContentPresenter presenter:
+                    presenter.Content = element;
+                    break;
+                default:
+                    ((ContentControl)parent).Content = element;
+                    break;
             }
         }
     }

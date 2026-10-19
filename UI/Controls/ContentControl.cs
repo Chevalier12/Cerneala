@@ -236,6 +236,18 @@ public class ContentControl : Control
             contentControl.Content = null;
         }
 
+        // A ContentPresenter that presents its content directly also names that element in Content and PresentedChild.
+        // Releasing the element through Content keeps both in step with the presenter's children, so the presenter can
+        // present the element again, for example when a template reuses it as its container.
+        if (child.VisualParent is ContentPresenter presenter &&
+            !ReferenceEquals(presenter, owner) &&
+            ReferenceEquals(presenter.PresentedChild, child) &&
+            ReferenceEquals(presenter.Content, child) &&
+            IsOwnedBy(presenter, owner, ElementChildRole.Visual))
+        {
+            presenter.Content = null;
+        }
+
         UIElement? visualParent = child.VisualParent;
         if (IsOwnedBy(visualParent, owner, ElementChildRole.Visual))
         {
