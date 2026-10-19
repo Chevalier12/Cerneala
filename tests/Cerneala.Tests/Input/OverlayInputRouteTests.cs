@@ -226,6 +226,94 @@ public sealed class OverlayInputRouteTests
         Assert.Equal(1, windowMoves);
     }
 
+    // Opened and Closed describe the overlay that raised them, like WPF Popup.Opened and Popup.Closed (issue #491).
+    [Fact]
+    public void OpeningAndClosingAComboBoxDropDownInsideAnOpenOverlayDoesNotRaiseTheOverlayOpenedOrClosed()
+    {
+        ComboBox comboBox = new() { Width = 120 };
+        comboBox.Items.Add(new ComboBoxItem { Content = "One" });
+        StackPanel content = new();
+        content.VisualChildren.Add(comboBox);
+        (Overlay outer, UIRoot root, List<string> log) = OpenOuterOverlay(content);
+
+        comboBox.IsDropDownOpen = true;
+        root.ProcessFrame();
+        Assert.True(comboBox.IsDropDownOpen);
+        comboBox.IsDropDownOpen = false;
+        root.ProcessFrame();
+
+        Assert.True(outer.IsOpen);
+        Assert.Equal(["Opened outer"], log);
+    }
+
+    [Fact]
+    public void OpeningAndClosingANestedOverlayDoesNotRaiseTheEnclosingOverlayOpenedOrClosed()
+    {
+        Overlay inner = new() { Content = new Border { Width = 40, Height = 20 } };
+        StackPanel content = new();
+        content.VisualChildren.Add(inner);
+        (Overlay outer, UIRoot root, List<string> log) = OpenOuterOverlay(content);
+        int innerOpened = 0;
+        int innerClosed = 0;
+        inner.Opened += (_, _) => innerOpened++;
+        inner.Closed += (_, _) => innerClosed++;
+
+        inner.IsOpen = true;
+        root.ProcessFrame();
+        inner.IsOpen = false;
+        root.ProcessFrame();
+
+        Assert.Equal(1, innerOpened);
+        Assert.Equal(1, innerClosed);
+        Assert.True(outer.IsOpen);
+        Assert.Equal(["Opened outer"], log);
+    }
+
+    [Fact]
+    public void OpeningAndClosingASubmenuInsideAnOpenOverlayDoesNotRaiseTheOverlayOpenedOrClosed()
+    {
+        MenuItem file = Branch("File", Leaf("Open"));
+        MenuBar menuBar = new();
+        menuBar.Items.Add(file);
+        (Overlay outer, UIRoot root, List<string> log) = OpenOuterOverlay(menuBar);
+
+        file.IsSubmenuOpen = true;
+        root.ProcessFrame();
+        Assert.True(file.SubmenuOverlay!.IsProjected);
+        file.IsSubmenuOpen = false;
+        root.ProcessFrame();
+
+        Assert.True(outer.IsOpen);
+        Assert.Equal(["Opened outer"], log);
+    }
+
+    [Fact]
+    public void OpeningAndClosingAnOverlayRaisesItsOwnOpenedAndClosedOnce()
+    {
+        (Overlay outer, UIRoot root, List<string> log) = OpenOuterOverlay(new Border { Width = 40, Height = 20 });
+
+        outer.IsOpen = false;
+        root.ProcessFrame();
+
+        Assert.Equal(["Opened outer", "Closed outer"], log);
+    }
+
+    // Opens an overlay that holds content inside a Window and logs its Opened and Closed with their OriginalSource.
+    private static (Overlay Outer, UIRoot Root, List<string> Log) OpenOuterOverlay(UIElement content)
+    {
+        Overlay outer = new() { Content = content };
+        List<string> log = [];
+        outer.Opened += (_, args) => log.Add("Opened " + (ReferenceEquals(args.OriginalSource, outer) ? "outer" : args.OriginalSource.GetType().Name));
+        outer.Closed += (_, args) => log.Add("Closed " + (ReferenceEquals(args.OriginalSource, outer) ? "outer" : args.OriginalSource.GetType().Name));
+        LayoutCanvas canvas = new();
+        canvas.VisualChildren.Add(outer);
+        UIRoot root = Attach(new Window { Content = canvas, Width = 360, Height = 240 });
+        outer.IsOpen = true;
+        root.ProcessFrame();
+        Assert.True(outer.IsProjected);
+        return (outer, root, log);
+    }
+
     private static MenuItem Branch(string header, params MenuItem[] children)
     {
         MenuItem item = Leaf(header);

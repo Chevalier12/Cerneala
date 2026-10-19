@@ -505,14 +505,8 @@ public class MenuItem : ItemsControl, IInputCommandSource, ICommandStateSource, 
         }
     }
 
-    // Opened and Closed of a nested submenu bubble through this item's overlay; only its own projection counts.
     private void OnOverlayOpened(UiElementId _, RoutedEventArgs args)
     {
-        if (!ReferenceEquals(args.OriginalSource, submenuOverlay))
-        {
-            return;
-        }
-
         if (!IsEnabled || !HasSubmenu)
         {
             if (submenuOverlay is not null)
@@ -533,11 +527,6 @@ public class MenuItem : ItemsControl, IInputCommandSource, ICommandStateSource, 
 
     private void OnOverlayClosed(UiElementId _, RoutedEventArgs args)
     {
-        if (!ReferenceEquals(args.OriginalSource, submenuOverlay))
-        {
-            return;
-        }
-
         if (IsSubmenuOpen)
         {
             SetValue(IsSubmenuOpenProperty, false);

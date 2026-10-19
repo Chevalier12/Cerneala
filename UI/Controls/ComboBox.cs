@@ -858,15 +858,8 @@ public class ComboBox : Selector
 
     // The overlay is already projected or withdrawn, so the event is raised even when starting or canceling the
     // selection transaction rethrows a re-preparation failure. The failure propagates after the event.
-    // Opened and Closed of an overlay inside the drop-down bubble through the drop-down overlay; only its own
-    // projection counts.
     private void OnOverlayOpened(UiElementId _, RoutedEventArgs args)
     {
-        if (!ReferenceEquals(args.OriginalSource, dropDownOverlay))
-        {
-            return;
-        }
-
         ResetDropDownVirtualization();
         try
         {
@@ -883,11 +876,6 @@ public class ComboBox : Selector
 
     private void OnOverlayClosed(UiElementId _, RoutedEventArgs args)
     {
-        if (!ReferenceEquals(args.OriginalSource, dropDownOverlay))
-        {
-            return;
-        }
-
         try
         {
             if (IsDropDownOpen)
