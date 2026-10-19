@@ -123,6 +123,10 @@ public class TabItem : ContentControl, ISelectableItemContainer
 
     private bool HostsHeaderElement => !IsComponentTemplated && HeaderTemplate is null && HeaderTemplateKey is null;
 
+    // True when the element is the Header that this tab hosts as its own child.
+    internal bool HostsHeaderDirectly(UIElement element) =>
+        ReferenceEquals(hostedHeader, element) && ReferenceEquals(Header, element);
+
     // The owning TabControl passes the registry of its Templates and the item index for a generated tab.
     internal void SetHeaderPresentation(ContentTemplateRegistry? registry, int index)
     {

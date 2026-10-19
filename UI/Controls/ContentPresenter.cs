@@ -532,18 +532,18 @@ public class ContentPresenter : Control
         LogicalChildren.Remove(child);
     }
 
-    // Where element content was in the tree before a refresh released it. A Decorator names its child in Child, and a
+    // Where element content was in the tree before a refresh released it. A Decorator names its child in Child, a
     // ContentControl that hosts its content directly or a ContentPresenter that presents it directly names it in
-    // Content; the release goes through that property (ContentControl.DetachChildFromOwnedSubtree), so the rollback
-    // goes through it too, and each Decorator, ContentControl or ContentPresenter involved keeps the property in step
-    // with its children.
+    // Content, and a TabItem that hosts its header directly names it in Header; the release goes through that property
+    // (ContentControl.DetachChildFromOwnedSubtree), so the rollback goes through it too, and each Decorator,
+    // ContentControl, ContentPresenter or TabItem involved keeps the property in step with its children.
     private readonly record struct ElementContentPlacement(
         UIElement Element,
         UIElement? VisualParent,
         int VisualIndex,
         UIElement? LogicalParent,
         int LogicalIndex,
-        bool NamedByParent)
+        NamedChildSlot NamedSlot)
     {
         public static ElementContentPlacement Capture(UIElement element)
         {
@@ -555,7 +555,7 @@ public class ContentPresenter : Control
                 visualParent?.VisualChildren.IndexOf(element) ?? -1,
                 logicalParent,
                 logicalParent?.LogicalChildren.IndexOf(element) ?? -1,
-                IsNamedByParent(visualParent, element));
+                SlotNaming(visualParent, element));
         }
 
         // A template that failed after it took the element still holds it, so the element leaves that template's
@@ -566,9 +566,9 @@ public class ContentPresenter : Control
         {
             bool restoreVisual = !ReferenceEquals(Element.VisualParent, VisualParent);
             bool restoreLogical = !ReferenceEquals(Element.LogicalParent, LogicalParent);
-            if (restoreVisual && IsNamedByParent(Element.VisualParent, Element))
+            if (restoreVisual && SlotNaming(Element.VisualParent, Element) is var currentSlot and not NamedChildSlot.None)
             {
-                SetNamedChild(Element.VisualParent!, null);
+                SetNamedChild(Element.VisualParent!, currentSlot, null);
             }
 
             if (restoreVisual)
@@ -581,9 +581,9 @@ public class ContentPresenter : Control
                 Element.LogicalParent?.LogicalChildren.Remove(Element);
             }
 
-            if (NamedByParent && restoreVisual && restoreLogical && ReferenceEquals(VisualParent, LogicalParent))
+            if (NamedSlot != NamedChildSlot.None && restoreVisual && restoreLogical && ReferenceEquals(VisualParent, LogicalParent))
             {
-                SetNamedChild(VisualParent!, Element);
+                SetNamedChild(VisualParent!, NamedSlot, Element);
                 return;
             }
 
@@ -598,34 +598,48 @@ public class ContentPresenter : Control
             }
         }
 
-        private static bool IsNamedByParent(UIElement? parent, UIElement element)
+        private static NamedChildSlot SlotNaming(UIElement? parent, UIElement element)
         {
             return parent switch
             {
-                Decorator decorator => ReferenceEquals(decorator.Child, element),
-                ContentControl contentControl => contentControl.HostsContentDirectly(element) &&
-                    ReferenceEquals(contentControl.Content, element),
-                ContentPresenter presenter => ReferenceEquals(presenter.PresentedChild, element) &&
-                    ReferenceEquals(presenter.Content, element),
-                _ => false
+                Decorator decorator when ReferenceEquals(decorator.Child, element) => NamedChildSlot.DecoratorChild,
+                TabItem tabItem when tabItem.HostsHeaderDirectly(element) => NamedChildSlot.TabItemHeader,
+                ContentControl contentControl when contentControl.HostsContentDirectly(element) &&
+                    ReferenceEquals(contentControl.Content, element) => NamedChildSlot.ContentControlContent,
+                ContentPresenter presenter when ReferenceEquals(presenter.PresentedChild, element) &&
+                    ReferenceEquals(presenter.Content, element) => NamedChildSlot.PresenterContent,
+                _ => NamedChildSlot.None
             };
         }
 
-        private static void SetNamedChild(UIElement parent, UIElement? element)
+        private static void SetNamedChild(UIElement parent, NamedChildSlot slot, UIElement? element)
         {
-            switch (parent)
+            switch (slot)
             {
-                case Decorator decorator:
-                    decorator.Child = element;
+                case NamedChildSlot.DecoratorChild:
+                    ((Decorator)parent).Child = element;
                     break;
-                case ContentPresenter presenter:
-                    presenter.Content = element;
+                case NamedChildSlot.TabItemHeader:
+                    ((TabItem)parent).Header = element;
                     break;
-                default:
+                case NamedChildSlot.ContentControlContent:
                     ((ContentControl)parent).Content = element;
+                    break;
+                case NamedChildSlot.PresenterContent:
+                    ((ContentPresenter)parent).Content = element;
                     break;
             }
         }
+    }
+
+    // The property through which a parent names an element child.
+    private enum NamedChildSlot
+    {
+        None,
+        DecoratorChild,
+        ContentControlContent,
+        PresenterContent,
+        TabItemHeader
     }
 
     private sealed class ReferenceContentEqualityComparer : IEqualityComparer<object?>
