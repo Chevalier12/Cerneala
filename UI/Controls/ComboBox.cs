@@ -252,11 +252,14 @@ public class ComboBox : Selector
             presenter = new ContentPresenter();
         }
 
-        presenter.Content = ItemTemplate is null ? GetItemDisplayText(item) : item;
-        presenter.ContentTemplate = ItemTemplate;
-        presenter.ContentTemplateKey = ItemTemplateKey;
-        presenter.LocalTemplateRegistry = ContentTemplateRegistry;
-        presenter.ContentIndex = index;
+        // All five values go in before the presenter rebuilds its child on its next measure, so the row presents
+        // its item once, with its index (#574).
+        presenter.PrepareItemPresentation(
+            ItemTemplate is null ? GetItemDisplayText(item) : item,
+            ItemTemplate,
+            ItemTemplateKey,
+            ContentTemplateRegistry,
+            index);
         presenter.Foreground = Foreground;
         presenter.FontFamily = FontFamily;
         presenter.FontSize = FontSize;

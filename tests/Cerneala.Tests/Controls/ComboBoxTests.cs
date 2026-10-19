@@ -2526,6 +2526,44 @@ public sealed class ComboBoxTests
                     Assert.IsType<ComboBoxItem>(pair.Value).Content).PresentedChild).Text));
     }
 
+    // Preparing a drop-down row presents its item once, with the row's final index, as ListBox rows do (#574).
+    [Fact]
+    public void PreparingDropDownRowsRunsTheRowTemplateOnceWithTheRowIndex()
+    {
+        List<string> rowCalls = [];
+        ContentPresenter? selection = null;
+        UIRoot root = new(300, 200);
+        ComboBox comboBox = new()
+        {
+            Width = 180,
+            ItemTemplate = new ContentTemplate<string>("row", key: null, priority: 0, context =>
+            {
+                if (!ReferenceEquals(context.Presenter, selection))
+                {
+                    rowCalls.Add($"{context.Data}@{context.Index}");
+                }
+
+                return new TextBlock { Text = context.Data };
+            }),
+            ItemsSource = new[] { "a", "b", "c" }
+        };
+        root.VisualChildren.Add(comboBox);
+        root.ProcessFrame();
+        selection = Assert.IsType<ContentPresenter>(comboBox.ComponentTemplateInstance!.Parts["PART_SelectionPresenter"]);
+        rowCalls.Clear();
+
+        comboBox.IsDropDownOpen = true;
+        root.ProcessFrame();
+        string[] openCalls = [.. rowCalls];
+        rowCalls.Clear();
+        comboBox.ItemsSource = new[] { "d" };
+        root.ProcessFrame();
+
+        Assert.Equal(
+            "open=[a@0, b@1, c@2] replace=[d@0]",
+            $"open=[{string.Join(", ", openCalls)}] replace=[{string.Join(", ", rowCalls)}]");
+    }
+
     [Fact]
     public void FilteredHighlightedItemFollowsItsItemWhenNewItemsSourceIsAssigned()
     {
