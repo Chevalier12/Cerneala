@@ -48,7 +48,7 @@ internal sealed class KeyboardActivationController
             return;
         }
 
-        if (FindValidAncestor<IInputCommandSource>(result.Target, routeMap) is IInputCommandSource commandSource)
+        if (FindValidCommandSource(result.Target, routeMap) is IInputCommandSource commandSource)
         {
             (commandSource as IInputActivatable)?.Activate();
             commandSource.ExecuteCommand(commandRouter, routeMap);
@@ -73,7 +73,7 @@ internal sealed class KeyboardActivationController
             return;
         }
 
-        if (FindValidAncestor<IInputCommandSource>(result.Target, routeMap) is not UIElement commandElement)
+        if (FindValidCommandSource(result.Target, routeMap) is not UIElement commandElement)
         {
             ClearPressed();
             return;
@@ -98,7 +98,7 @@ internal sealed class KeyboardActivationController
             return;
         }
 
-        UIElement? commandElement = FindValidAncestor<IInputCommandSource>(result.Target, routeMap);
+        UIElement? commandElement = FindValidCommandSource(result.Target, routeMap);
         if (!ReferenceEquals(pressedElement, commandElement) ||
             commandElement is not IInputCommandSource commandSource)
         {
@@ -141,17 +141,11 @@ internal sealed class KeyboardActivationController
         spacePressedElement = null;
     }
 
-    private static UIElement? FindValidAncestor<TContract>(UIElement element, ElementInputRouteMap routeMap)
+    // Only the key target itself activates, as WPF buttons react to Enter and Space only when they are the key event's
+    // OriginalSource: a key on a focused descendant of a command source does not activate that command source.
+    private static UIElement? FindValidCommandSource(UIElement target, ElementInputRouteMap routeMap)
     {
-        foreach (UIElement current in routeMap.GetVisualRouteToRoot(element))
-        {
-            if (current is TContract && IsValidInputElement(current, routeMap))
-            {
-                return current;
-            }
-        }
-
-        return null;
+        return target is IInputCommandSource && IsValidInputElement(target, routeMap) ? target : null;
     }
 
     private static bool IsValidInputElement(UIElement element, ElementInputRouteMap routeMap)
