@@ -539,7 +539,9 @@ internal readonly record struct SdlEvent(
     bool Repeat = false,
     bool WheelFlipped = false,
     string? Text = null,
-    // SDL_KMOD_NUM of a key event: Num Lock was on when the key went down or up.
+    // SDL_KMOD_NUM of a key event: Num Lock was on when the key went down or up. On Windows,
+    // for a keypad key, whether Windows sent its digit virtual key instead: Shift inverts Num
+    // Lock for the keypad, so Shift + keypad 4 with Num Lock on is VK_LEFT (#618).
     bool NumLock = false);
 
 internal delegate void SdlEventWatch(SdlEvent @event);

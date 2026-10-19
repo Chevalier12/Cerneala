@@ -10,12 +10,40 @@ internal sealed class NativeSdlApi : ISdlApi
     // here from the push until PollEvent hands the event out, or until SDL quits.
     private readonly object pushedTextSync = new();
     private readonly HashSet<nint> pushedText = [];
+    // SDL reports a keypad key with the same scancode, keycode, raw code and modifiers whatever
+    // virtual key Windows sends for it. With Num Lock on, Shift + keypad 4 makes Windows send
+    // VK_LEFT between a fake Shift release and a fake Shift press, and WPF raises Left (#618).
+    // The hook sees each message before SDL turns it into a key event and records the keypad
+    // key messages in arrival order; PollEvent takes the one of each keypad key event. Both run
+    // on the thread that pumps SDL events.
+    private readonly List<KeypadMessage> keypadMessages = [];
+    private SDL.WindowsMessageHook? windowsMessageHook;
 
-    public bool InitializeVideo() =>
-        SDL.Init(SDL.InitFlags.Video | SDL.InitFlags.Events);
+    public bool InitializeVideo()
+    {
+        if (!SDL.Init(SDL.InitFlags.Video | SDL.InitFlags.Events))
+        {
+            return false;
+        }
+
+        if (OperatingSystem.IsWindows())
+        {
+            windowsMessageHook = RecordKeypadMessage;
+            SDL.SetWindowsMessageHook(windowsMessageHook, 0);
+        }
+
+        return true;
+    }
 
     public void Quit()
     {
+        if (windowsMessageHook is not null)
+        {
+            SDL.SetWindowsMessageHook(null!, 0);
+            windowsMessageHook = null;
+            keypadMessages.Clear();
+        }
+
         SDL.Quit();
         ReleaseAllPushedText();
     }
@@ -682,9 +710,66 @@ internal sealed class NativeSdlApi : ISdlApi
         {
             ReleasePushedText(native.Text.Text);
         }
+        else if (@event.Kind is SdlEventKind.KeyDown or SdlEventKind.KeyUp &&
+            TakeKeypadMessage(native.Key.Raw, @event.Kind == SdlEventKind.KeyDown) is bool digit)
+        {
+            @event = @event with { NumLock = digit };
+        }
 
         return true;
     }
+
+    // Records WM_KEYDOWN, WM_KEYUP, WM_SYSKEYDOWN and WM_SYSKEYUP of the keypad keys whose key
+    // follows Num Lock, by the scan code SDL reports as the event's raw code.
+    private bool RecordKeypadMessage(nint userdata, nint message)
+    {
+        // MSG: hwnd, message, wParam, lParam; each field is pointer-aligned.
+        uint kind = unchecked((uint)Marshal.ReadInt32(message, nint.Size));
+        if (kind is 0x100 or 0x101 or 0x104 or 0x105)
+        {
+            nint virtualKey = Marshal.ReadIntPtr(message, 2 * nint.Size);
+            long flags = Marshal.ReadIntPtr(message, 3 * nint.Size);
+            // SDL strips the high bit of the scan code, which some on-screen keyboards set.
+            int scan = (int)((flags >> 16) & 0x7F);
+            bool extended = ((flags >> 24) & 1) != 0;
+            if (!extended && scan is 0x47 or 0x48 or 0x49 or 0x4B or 0x4C or 0x4D or 0x4F or 0x50 or 0x51 or 0x52 or 0x53)
+            {
+                if (keypadMessages.Count == MaxKeypadMessages)
+                {
+                    keypadMessages.RemoveAt(0);
+                }
+
+                // VK_NUMPAD0 to VK_NUMPAD9 and VK_DECIMAL; otherwise a navigation key.
+                bool digit = virtualKey is >= 0x60 and <= 0x69 or 0x6E;
+                keypadMessages.Add(new KeypadMessage((ushort)scan, kind is 0x100 or 0x104, digit));
+            }
+        }
+
+        return true;
+    }
+
+    // Whether Windows sent the digit virtual key for the keypad key event with this raw code,
+    // or null when no message is recorded for it, for example for an event the app pushed
+    // (raw code 0). SDL can drop a message without an event, for example the key-up of a key
+    // that is not down; the older messages before the match are such leftovers.
+    private bool? TakeKeypadMessage(ushort raw, bool down)
+    {
+        for (int i = 0; i < keypadMessages.Count; i++)
+        {
+            KeypadMessage recorded = keypadMessages[i];
+            if (recorded.Scan == raw && recorded.Down == down)
+            {
+                keypadMessages.RemoveRange(0, i + 1);
+                return recorded.Digit;
+            }
+        }
+
+        return null;
+    }
+
+    private const int MaxKeypadMessages = 64;
+
+    private readonly record struct KeypadMessage(ushort Scan, bool Down, bool Digit);
 
     public bool PushEvent(in SdlEvent @event)
     {
