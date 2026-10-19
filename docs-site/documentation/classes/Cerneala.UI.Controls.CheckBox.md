@@ -39,7 +39,7 @@ CheckBox checkBox = new()
 
 `CheckBox` derives its toggle behavior from `ToggleButton`. A left mouse button release with a click count greater than zero toggles `IsChecked`.
 
-The constructor installs the default component template, a one-pixel border thickness, and a default border brush as framework defaults at the `Default` value source. Any Aspect, local, or other higher-source value replaces them.
+The constructor installs the default component template, a one-pixel border thickness, and a default border brush as framework defaults at the `Default` value source. Any Aspect, local, or other higher-source value replaces them. It also sets `HorizontalContentAlignment` back to `Left` and `VerticalContentAlignment` back to `Top`, the `Control` defaults that WPF's `CheckBox` keeps, instead of the `Center` defaults that `Button` sets. The default template does not read these two properties.
 
 The default template contains a bordered indicator, a `PART_CheckMark` element, and a `ContentPresenter`. The presenter is separated from the indicator by a six-pixel margin. `Background` and `Padding` are bound to the outer root `Border`, so the padding surrounds both the indicator and the content. `BorderBrush` and `BorderThickness` style the indicator box. `Foreground`, `FontFamily`, `FontSize`, and `Content` are bound to the `ContentPresenter`.
 
@@ -55,7 +55,7 @@ A custom component template may provide `PART_CheckMark` as any `UIElement`, suc
 
 | Name | Description |
 | --- | --- |
-| `CheckBox()` | Initializes a checkbox with its default component template, border brush, and one-pixel indicator border. |
+| `CheckBox()` | Initializes a checkbox with its default component template, border brush, one-pixel indicator border, and `Left`/`Top` content alignment. |
 
 ## Template Parts
 

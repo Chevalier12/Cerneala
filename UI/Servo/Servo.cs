@@ -20,7 +20,7 @@ public sealed class Servo
         ArgumentNullException.ThrowIfNull(window);
         context = ServoContext.ForWindow(window);
         Options = ServoOptions.Copy(options);
-        actionEngine = new ServoActionEngine(queryEngine);
+        actionEngine = new ServoActionEngine(context, queryEngine);
         synchronization = new ServoSynchronization(context, queryEngine);
         captureEngine = new ServoCaptureEngine(queryEngine);
     }
@@ -30,7 +30,7 @@ public sealed class Servo
         ArgumentNullException.ThrowIfNull(host);
         context = ServoContext.ForHost(host);
         Options = ServoOptions.Copy(options);
-        actionEngine = new ServoActionEngine(queryEngine);
+        actionEngine = new ServoActionEngine(context, queryEngine);
         synchronization = new ServoSynchronization(context, queryEngine);
         captureEngine = new ServoCaptureEngine(queryEngine);
     }
@@ -97,8 +97,8 @@ public sealed class Servo
     {
         ArgumentNullException.ThrowIfNull(target);
         return RunAsync(token => context.ExecuteInputAsync(
-            (_, input, operationToken) => input.ClickAsync(
-                root => actionEngine.ResolveActionable(root, target), operationToken),
+            (_, input, operationToken) => actionEngine.DispatchWhenActionableAsync(
+                target, resolve => input.ClickAsync(resolve, operationToken), operationToken),
             token), cancellationToken);
     }
 
@@ -108,8 +108,8 @@ public sealed class Servo
     {
         ArgumentNullException.ThrowIfNull(target);
         return RunAsync(token => context.ExecuteInputAsync(
-            (_, input, operationToken) => input.HoverAsync(
-                root => actionEngine.ResolveActionable(root, target), operationToken),
+            (_, input, operationToken) => actionEngine.DispatchWhenActionableAsync(
+                target, resolve => input.HoverAsync(resolve, operationToken), operationToken),
             token), cancellationToken);
     }
 
@@ -122,12 +122,15 @@ public sealed class Servo
         ArgumentNullException.ThrowIfNull(source);
         ArgumentOutOfRangeException.ThrowIfLessThan(steps, 1);
         return RunAsync(token => context.ExecuteInputAsync(
-            (_, input, operationToken) => input.DragAsync(
-                    root => actionEngine.ResolveActionable(root, source),
+            (_, input, operationToken) => actionEngine.DispatchWhenActionableAsync(
+                source,
+                resolve => input.DragAsync(
+                    resolve,
                     destination.X,
                     destination.Y,
                     steps,
                     operationToken),
+                operationToken),
             token), cancellationToken);
     }
 
@@ -138,8 +141,8 @@ public sealed class Servo
     {
         ArgumentNullException.ThrowIfNull(target);
         return RunAsync(token => context.ExecuteInputAsync(
-            (_, input, operationToken) => input.ScrollAsync(
-                root => actionEngine.ResolveActionable(root, target), wheelDelta, operationToken),
+            (_, input, operationToken) => actionEngine.DispatchWhenActionableAsync(
+                target, resolve => input.ScrollAsync(resolve, wheelDelta, operationToken), operationToken),
             token), cancellationToken);
     }
 
@@ -201,8 +204,8 @@ public sealed class Servo
         ArgumentNullException.ThrowIfNull(text);
         return RunAsync(token => context.ExecuteInputAsync(
             [
-                (_, input, operationToken) => input.ClickAsync(
-                    root => actionEngine.ResolveActionable(root, target), operationToken),
+                (_, input, operationToken) => actionEngine.DispatchWhenActionableAsync(
+                    target, resolve => input.ClickAsync(resolve, operationToken), operationToken),
                 (_, input, operationToken) => input.SendTextAsync(text, operationToken)
             ],
             token), cancellationToken);
@@ -215,12 +218,27 @@ public sealed class Servo
     {
         ArgumentNullException.ThrowIfNull(target);
         ArgumentNullException.ThrowIfNull(text);
+        // Ctrl+A is the select-all shortcut of the Cerneala text controls on every operating system, and
+        // these steps are Cerneala input frames, not platform key events. Selected text is removed by the
+        // typed replacement, or by Delete when the replacement is empty. The final step checks the result.
         return RunAsync(token => context.ExecuteInputAsync(
             [
-                (_, input, operationToken) => input.ClickAsync(
-                    root => actionEngine.ResolveActionable(root, target), operationToken),
+                // The text-value check runs in each click attempt before input: a target without a
+                // text value fails at once, a missing or not-yet-actionable one is waited for.
+                (_, input, operationToken) => actionEngine.DispatchWhenActionableAsync(
+                    target,
+                    resolve => input.ClickAsync(resolve, operationToken),
+                    operationToken,
+                    root => actionEngine.ReadTextValue(root, target)),
                 (_, input, operationToken) => input.PressKeyAsync(InputKey.A, ServoModifiers.Control, operationToken),
-                (_, input, operationToken) => input.SendTextAsync(text, operationToken)
+                text.Length == 0
+                    ? (_, input, operationToken) => input.PressKeyAsync(InputKey.Delete, ServoModifiers.None, operationToken)
+                    : (_, input, operationToken) => input.SendTextAsync(text, operationToken),
+                (root, _, _) =>
+                {
+                    actionEngine.VerifyReplacedText(root, target, text);
+                    return Task.CompletedTask;
+                }
             ],
             token), cancellationToken);
     }

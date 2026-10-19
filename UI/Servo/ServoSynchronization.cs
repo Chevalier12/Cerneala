@@ -23,9 +23,7 @@ internal sealed class ServoSynchronization
             throw new ArgumentOutOfRangeException(nameof(condition));
         }
 
-        return WaitAsync(
-            (root, _) => Task.FromResult(IsConditionSatisfied(root, target, condition)),
-            cancellationToken);
+        return WaitForConditionAsync(target, condition, cancellationToken);
     }
 
     internal Task WaitUntilAsync(
@@ -57,8 +55,36 @@ internal sealed class ServoSynchronization
         }
     }
 
-    private bool IsConditionSatisfied(UIRoot root, ServoTarget target, ServoCondition condition)
+    private async Task WaitForConditionAsync(
+        ServoTarget target,
+        ServoCondition condition,
+        CancellationToken cancellationToken)
     {
+        int ambiguousMatchCount = 0;
+        try
+        {
+            await WaitAsync(
+                (root, _) => Task.FromResult(
+                    IsConditionSatisfied(root, target, condition, out ambiguousMatchCount)),
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException exception) when (
+            ambiguousMatchCount > 1 && cancellationToken.IsCancellationRequested)
+        {
+            throw new ServoTimeoutDiagnosticException(
+                $"The Servo target still matched {ambiguousMatchCount} elements; exactly one was required.",
+                exception,
+                cancellationToken);
+        }
+    }
+
+    private bool IsConditionSatisfied(
+        UIRoot root,
+        ServoTarget target,
+        ServoCondition condition,
+        out int ambiguousMatchCount)
+    {
+        ambiguousMatchCount = 0;
         IReadOnlyList<ServoResolvedElement> matches = queryEngine.ResolveAll(root, target);
         if (condition == ServoCondition.Exists)
         {
@@ -72,8 +98,10 @@ internal sealed class ServoSynchronization
 
         if (matches.Count > 1)
         {
-            throw new ServoTargetAmbiguousException(
-                $"The Servo target matched {matches.Count} elements; exactly one was required.");
+            // Transitions can briefly keep an outgoing and an incoming copy of the target;
+            // ambiguity is "not yet satisfied", and the count is reported if it lasts until timeout.
+            ambiguousMatchCount = matches.Count;
+            return false;
         }
 
         if (matches.Count == 0)
@@ -91,84 +119,5 @@ internal sealed class ServoSynchronization
             ServoCondition.Focused => element.IsKeyboardFocused,
             _ => throw new ArgumentOutOfRangeException(nameof(condition))
         };
-    }
-
-    private sealed class ServoFrameSignal : IDisposable
-    {
-        private readonly object sync = new();
-        private readonly SemaphoreSlim pulse = new(0, 1);
-        private readonly IDisposable subscription;
-        private Exception? invalidation;
-        private bool disposed;
-
-        internal ServoFrameSignal(ServoContext context)
-        {
-            subscription = context.SubscribeToFrames(Signal, Invalidate);
-        }
-
-        internal async Task WaitAsync(CancellationToken cancellationToken)
-        {
-            ThrowIfInvalidated();
-            await pulse.WaitAsync(cancellationToken).ConfigureAwait(false);
-            ThrowIfInvalidated();
-        }
-
-        internal void ThrowIfInvalidated()
-        {
-            Exception? failure;
-            lock (sync)
-            {
-                failure = invalidation;
-            }
-
-            if (failure is not null)
-            {
-                throw failure;
-            }
-        }
-
-        public void Dispose()
-        {
-            lock (sync)
-            {
-                if (disposed)
-                {
-                    return;
-                }
-
-                disposed = true;
-            }
-
-            subscription.Dispose();
-            pulse.Dispose();
-        }
-
-        private void Signal()
-        {
-            lock (sync)
-            {
-                if (!disposed && pulse.CurrentCount == 0)
-                {
-                    pulse.Release();
-                }
-            }
-        }
-
-        private void Invalidate(Exception exception)
-        {
-            lock (sync)
-            {
-                if (disposed)
-                {
-                    return;
-                }
-
-                invalidation ??= exception;
-                if (pulse.CurrentCount == 0)
-                {
-                    pulse.Release();
-                }
-            }
-        }
     }
 }

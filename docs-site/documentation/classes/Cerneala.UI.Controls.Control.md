@@ -85,6 +85,8 @@ Layout is delegated to the active template child. During measure and arrange, `C
 
 Component-template and component-template-key changes affect measure, arrange, render, hit testing, and input visuals. The root Aspect processor refreshes keyed templates when the package catalog changes. `Background` and `BorderBrush` affect render and input visuals. `Foreground` accepts the same solid, gradient, image, drawing, and visual brushes, is inherited, and affects render. A `null` foreground suppresses text drawing. `BorderThickness`, `Padding`, `FontFamily`, and `FontSize` affect measurement and rendering; `FontFamily`, `FontSize`, and `Foreground` inherit through the UI property system.
 
+`HorizontalContentAlignment` and `VerticalContentAlignment` say where a control places its content inside its border and padding. As in WPF, they default to `HorizontalAlignment.Left` and `VerticalAlignment.Top` on `Control`, and they affect arrange and render. `Control` itself does not read them: a control that places its content does, and a template binds them to the `HorizontalAlignment` and `VerticalAlignment` of its `ContentPresenter`. `Button` sets framework defaults of `Center` and `Center`, as WPF's default `ButtonBase` style does, and `CheckBox` and `RadioButton` keep `Left` and `Top`. For example, a `Button` with `Width = 300`, `Height = 70`, `Padding = new Thickness(8)`, `BorderThickness = new Thickness(1)` and the string content `"Hold me"` (about 61 x 22) draws the text in the middle of its 282 x 52 inner area; with `HorizontalContentAlignment = HorizontalAlignment.Left` and `VerticalContentAlignment = VerticalAlignment.Top` it draws the text at the inner top-left corner. Only `Button` (with or without a template) and the button templates `DefaultTheme.CreateButtonTemplate()` and `ButtonTemplates.Modern` read these properties; for example, a `ContentControl` without a template still arranges an element content across its whole inner area.
+
 `Padding` and `BorderThickness` reject negative, `NaN`, and infinite side values. `FontFamily` rejects `null`, empty, and whitespace-only values. `FontSize` must be finite and greater than zero.
 
 `SetAspectVariant<TControl, TValue>` first verifies that the receiver is assignable to the key's declared owner type, then updates `AspectVariants`. When the value actually changes, the control invalidates aspect and render state. Applying a key owned by an unrelated control type throws instead of storing nominally typed metadata on the wrong component.
@@ -108,6 +110,8 @@ Component-template and component-template-key changes affect measure, arrange, r
 | `PaddingProperty` | `UiProperty<Thickness>` | Identifies the `Padding` UI property. Defaults to `Thickness.Zero`; affects measure and render; each side must be finite and non-negative. |
 | `FontFamilyProperty` | `UiProperty<string>` | Identifies the inherited `FontFamily` UI property. Defaults to `"Default"`; affects measure and render; rejects empty or whitespace-only values. |
 | `FontSizeProperty` | `UiProperty<float>` | Identifies the inherited `FontSize` UI property. Defaults to `16`; affects measure and render; must be finite and greater than zero. |
+| `HorizontalContentAlignmentProperty` | `UiProperty<HorizontalAlignment>` | Identifies the `HorizontalContentAlignment` UI property. Defaults to `HorizontalAlignment.Left`; affects arrange and render. `Button` overrides the default with `Center`. |
+| `VerticalContentAlignmentProperty` | `UiProperty<VerticalAlignment>` | Identifies the `VerticalContentAlignment` UI property. Defaults to `VerticalAlignment.Top`; affects arrange and render. `Button` overrides the default with `Center`. |
 
 ## Properties
 
@@ -120,6 +124,8 @@ Component-template and component-template-key changes affect measure, arrange, r
 | `Padding` | `Thickness` | Gets or sets the padding inside the border. Values must be finite and non-negative. |
 | `FontFamily` | `string` | Gets or sets the inherited font family. The value cannot be empty or whitespace-only. |
 | `FontSize` | `float` | Gets or sets the inherited font size. The value must be finite and greater than zero. |
+| `HorizontalContentAlignment` | `HorizontalAlignment` | Gets or sets the horizontal placement of the content inside the border and padding, for controls and templates that read it. Defaults to `Left`. |
+| `VerticalContentAlignment` | `VerticalAlignment` | Gets or sets the vertical placement of the content inside the border and padding, for controls and templates that read it. Defaults to `Top`. |
 | `ComponentTemplate` | `ComponentTemplate?` | Gets or sets the component template. |
 | `ComponentTemplateKey` | `string?` | Gets or sets the name of a component template registered by an Aspect package. A direct `ComponentTemplate` takes precedence. |
 | `ComponentTemplateInstance` | `ComponentTemplateInstance?` | Gets the active component template instance after `ApplyTemplate()` creates one. |

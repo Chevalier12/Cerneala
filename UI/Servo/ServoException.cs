@@ -43,4 +43,9 @@ public sealed class ServoTimeoutException : ServoException
         : base(message)
     {
     }
+
+    public ServoTimeoutException(string message, Exception? innerException)
+        : base(message, innerException)
+    {
+    }
 }

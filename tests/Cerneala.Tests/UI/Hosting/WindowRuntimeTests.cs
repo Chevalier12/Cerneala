@@ -425,14 +425,15 @@ public sealed class WindowRuntimeTests : IDisposable
         ServoApi.SetId(button, "target");
         Window window = new() { Content = button };
         window.Show();
-        ServoApi servo = new(window);
+        ServoApi servo = new(window, new ServoOptions { DefaultTimeout = TimeSpan.FromMilliseconds(300) });
         int clicks = 0;
         button.Click += (_, _) => clicks++;
 
         Task rejected = servo.ClickAsync(ServoTarget.ById("target"));
         button.IsEnabled = false;
-        PumpUntilCompleted(runtime, rejected);
-        await Assert.ThrowsAsync<ServoTargetNotActionableException>(() => rejected);
+        PumpUntilCompletedWithin(runtime, rejected, TimeSpan.FromSeconds(5));
+        ServoTimeoutException timeout = await Assert.ThrowsAsync<ServoTimeoutException>(() => rejected);
+        Assert.IsType<ServoTargetNotActionableException>(timeout.InnerException);
         Assert.Equal(0, clicks);
         Assert.False(window.LastFrame!.Input.Pointer.IsDown(InputMouseButton.Left));
 
@@ -441,6 +442,204 @@ public sealed class WindowRuntimeTests : IDisposable
         PumpUntilCompleted(runtime, next);
         await next;
         Assert.Equal(1, clicks);
+    }
+
+    [Theory]
+    [InlineData("click")]
+    [InlineData("hover")]
+    [InlineData("drag")]
+    [InlineData("scroll")]
+    [InlineData("type")]
+    [InlineData("replace")]
+    public async Task ServoTargetActionsWaitForATargetThatBecomesEnabledFramesLater(string action)
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        TextBox editor = new() { Text = "old", Width = 160, Height = 32, IsEnabled = false };
+        ServoApi.SetId(editor, "editor");
+        Window window = new() { Content = editor };
+        window.Show();
+        ServoApi servo = new(window);
+        ServoTarget target = ServoTarget.ById("editor");
+
+        Task operation = action switch
+        {
+            "click" => servo.ClickAsync(target),
+            "hover" => servo.HoverAsync(target),
+            "drag" => servo.DragAsync(target, new ServoPoint(5, 5), steps: 2),
+            "scroll" => servo.ScrollAsync(target, -120),
+            "type" => servo.TypeIntoAsync(target, "!"),
+            "replace" => servo.ReplaceTextAsync(target, "new"),
+            _ => throw new ArgumentOutOfRangeException(nameof(action))
+        };
+        PumpFrames(runtime, 3);
+        Assert.False(operation.IsCompleted);
+
+        editor.IsEnabled = true;
+        PumpUntilCompleted(runtime, operation);
+        await operation;
+
+        var pointer = window.LastFrame!.Input.Pointer;
+        switch (action)
+        {
+            case "click":
+                Assert.True(editor.IsKeyboardFocused);
+                break;
+            case "hover":
+                Assert.True(editor.IsMouseOver);
+                break;
+            case "drag":
+                Assert.Equal((5f, 5f), (pointer.X, pointer.Y));
+                Assert.False(pointer.IsDown(InputMouseButton.Left));
+                break;
+            case "scroll":
+                Assert.Equal(-120, pointer.WheelValue);
+                break;
+            case "type":
+                Assert.Equal("old!", editor.Text);
+                break;
+            case "replace":
+                Assert.Equal("new", editor.Text);
+                break;
+        }
+    }
+
+    [Fact]
+    public async Task ServoClickWaitsForACoveringOverlayToDisappear()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Button button = new() { Content = "Save", Width = 160, Height = 32 };
+        ServoApi.SetId(button, "save");
+        Border overlay = new() { Background = new Cerneala.UI.Media.SolidColorBrush(new Color(0, 0, 0)) };
+        Cerneala.UI.Layout.Panels.Grid grid = new();
+        grid.Children.Add(button);
+        grid.Children.Add(overlay);
+        Window window = new() { Content = grid };
+        window.Show();
+        ServoApi servo = new(window);
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+
+        Task click = servo.ClickAsync(ServoTarget.ById("save"));
+        PumpFrames(runtime, 3);
+        Assert.False(click.IsCompleted);
+        Assert.Equal(0, clicks);
+
+        grid.Children.Remove(overlay);
+        PumpUntilCompleted(runtime, click);
+        await click;
+        Assert.Equal(1, clicks);
+    }
+
+    [Fact]
+    public async Task ServoClickWaitsForATargetThatAppearsFramesLater()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        StackPanel panel = new();
+        Window window = new() { Content = panel };
+        window.Show();
+        ServoApi servo = new(window);
+        Button button = new() { Content = "Later", Width = 160, Height = 32 };
+        ServoApi.SetId(button, "later");
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+
+        Task click = servo.ClickAsync(ServoTarget.ById("later"));
+        PumpFrames(runtime, 3);
+        Assert.False(click.IsCompleted);
+
+        panel.VisualChildren.Add(button);
+        PumpUntilCompleted(runtime, click);
+        await click;
+        Assert.Equal(1, clicks);
+    }
+
+    [Fact]
+    public async Task ServoReplaceTextWaitsForATextBoxThatAppearsFramesLater()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        StackPanel panel = new();
+        Window window = new() { Content = panel };
+        window.Show();
+        ServoApi servo = new(window);
+        TextBox editor = new() { Text = "old", Width = 160, Height = 32 };
+        ServoApi.SetId(editor, "editor");
+
+        Task replace = servo.ReplaceTextAsync(ServoTarget.ById("editor"), "new");
+        PumpFrames(runtime, 3);
+        Assert.False(replace.IsCompleted);
+
+        panel.VisualChildren.Add(editor);
+        PumpUntilCompleted(runtime, replace);
+        await replace;
+        Assert.Equal("new", editor.Text);
+    }
+
+    [Fact]
+    public async Task ServoClickOnATargetThatNeverBecomesActionableTimesOutNamingTheLastReason()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Button button = new() { Content = "Save", Width = 160, Height = 32, IsEnabled = false };
+        ServoApi.SetId(button, "save");
+        Window window = new() { Content = button };
+        window.Show();
+        TimeSpan timeoutDuration = TimeSpan.FromMilliseconds(300);
+        ServoApi servo = new(window, new ServoOptions { DefaultTimeout = timeoutDuration });
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+
+        Stopwatch elapsed = Stopwatch.StartNew();
+        Task click = servo.ClickAsync(ServoTarget.ById("save"));
+        PumpUntilCompletedWithin(runtime, click, TimeSpan.FromSeconds(5));
+        elapsed.Stop();
+
+        ServoTimeoutException timeout = await Assert.ThrowsAsync<ServoTimeoutException>(() => click);
+        Assert.True(elapsed.Elapsed >= timeoutDuration, $"Timed out early after {elapsed.Elapsed}.");
+        Assert.True(elapsed.Elapsed < timeoutDuration + TimeSpan.FromSeconds(2), $"Timed out late after {elapsed.Elapsed}.");
+        Assert.Contains("Last failure: The Servo target is disabled.", timeout.Message);
+        ServoTargetNotActionableException lastFailure =
+            Assert.IsType<ServoTargetNotActionableException>(timeout.InnerException);
+        Assert.Equal("The Servo target is disabled.", lastFailure.Message);
+        Assert.Equal(0, clicks);
+        Assert.False(window.LastFrame!.Input.Pointer.IsDown(InputMouseButton.Left));
+
+        button.IsEnabled = true;
+        Task next = servo.ClickAsync(ServoTarget.ById("save"));
+        PumpUntilCompleted(runtime, next);
+        await next;
+        Assert.Equal(1, clicks);
+    }
+
+    [Fact]
+    public async Task ServoClickOnAnAmbiguousTargetStillFailsWithoutWaiting()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Button first = new() { Content = "First", Width = 160, Height = 32 };
+        Button second = new() { Content = "Second", Width = 160, Height = 32 };
+        ServoApi.SetId(first, "duplicate");
+        ServoApi.SetId(second, "duplicate");
+        StackPanel panel = new();
+        panel.VisualChildren.Add(first);
+        panel.VisualChildren.Add(second);
+        Window window = new() { Content = panel };
+        window.Show();
+        ServoApi servo = new(window);
+        int clicks = 0;
+        first.Click += (_, _) => clicks++;
+        second.Click += (_, _) => clicks++;
+
+        Stopwatch elapsed = Stopwatch.StartNew();
+        Task click = servo.ClickAsync(ServoTarget.ById("duplicate"));
+        PumpUntilCompleted(runtime, click);
+
+        await Assert.ThrowsAsync<ServoTargetAmbiguousException>(() => click);
+        Assert.True(elapsed.Elapsed < TimeSpan.FromSeconds(2), $"The ambiguous click waited {elapsed.Elapsed}.");
+        Assert.Equal(0, clicks);
     }
 
     [Fact]
@@ -2056,6 +2255,30 @@ public sealed class WindowRuntimeTests : IDisposable
         }
 
         Assert.True(operation.IsCompleted, "The Servo operation did not complete within 64 deterministic frames.");
+    }
+
+    private static void PumpUntilCompletedWithin(
+        WindowApplicationRuntime runtime,
+        Task operation,
+        TimeSpan maximumDuration)
+    {
+        Stopwatch elapsed = Stopwatch.StartNew();
+        while (!operation.IsCompleted && elapsed.Elapsed < maximumDuration)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+            Thread.Sleep(1);
+        }
+
+        Assert.True(operation.IsCompleted, $"The Servo operation did not complete within {maximumDuration}.");
+    }
+
+    private static void PumpFrames(WindowApplicationRuntime runtime, int frames)
+    {
+        for (int frame = 0; frame < frames; frame++)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+            Thread.Sleep(5);
+        }
     }
 
     private static void CompleteSynchronously(Task operation)
