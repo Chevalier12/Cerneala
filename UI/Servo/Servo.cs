@@ -215,12 +215,27 @@ public sealed class Servo
     {
         ArgumentNullException.ThrowIfNull(target);
         ArgumentNullException.ThrowIfNull(text);
+        // Ctrl+A is the select-all shortcut of the Cerneala text controls on every operating system, and
+        // these steps are Cerneala input frames, not platform key events. Selected text is removed by the
+        // typed replacement, or by Delete when the replacement is empty. The final step checks the result.
         return RunAsync(token => context.ExecuteInputAsync(
             [
+                (root, _, _) =>
+                {
+                    actionEngine.ReadTextValue(root, target);
+                    return Task.CompletedTask;
+                },
                 (_, input, operationToken) => input.ClickAsync(
                     root => actionEngine.ResolveActionable(root, target), operationToken),
                 (_, input, operationToken) => input.PressKeyAsync(InputKey.A, ServoModifiers.Control, operationToken),
-                (_, input, operationToken) => input.SendTextAsync(text, operationToken)
+                text.Length == 0
+                    ? (_, input, operationToken) => input.PressKeyAsync(InputKey.Delete, ServoModifiers.None, operationToken)
+                    : (_, input, operationToken) => input.SendTextAsync(text, operationToken),
+                (root, _, _) =>
+                {
+                    actionEngine.VerifyReplacedText(root, target, text);
+                    return Task.CompletedTask;
+                }
             ],
             token), cancellationToken);
     }
