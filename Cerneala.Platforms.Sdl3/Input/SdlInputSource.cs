@@ -27,6 +27,8 @@ internal sealed class SdlInputSource : IInputSource
     private PointerSnapshot currentPointer = PointerSnapshot.Empty;
     private KeyboardSnapshot previousKeyboard = KeyboardSnapshot.Empty;
     private readonly HashSet<InputKey> downKeys = [];
+    // The key each held keypad key went down as, by scancode.
+    private readonly Dictionary<int, InputKey> heldKeypadKeys = [];
     private readonly List<TextInputSnapshotEvent> textInput = [];
     private readonly List<InputKey> keyRepeats = [];
     private readonly List<int> wheelDeltas = [];
@@ -109,9 +111,27 @@ internal sealed class SdlInputSource : IInputSource
         Accept(new PendingInput(PendingKind.Wheel, Value: flipped ? -delta : delta));
     }
 
-    public void SetKey(int scancode, bool down, bool repeat = false)
+    // numLock is SDL_KMOD_NUM of the key event. A keypad key keeps the key it went down as
+    // until it goes up, also when Num Lock changes while it is held.
+    public void SetKey(int scancode, bool down, bool repeat = false, bool numLock = false)
     {
-        InputKey key = MapScancode(scancode);
+        InputKey key = MapScancode(scancode, numLock);
+        if (IsNumLockKeypadKey(scancode))
+        {
+            if (heldKeypadKeys.TryGetValue(scancode, out InputKey held))
+            {
+                key = held;
+                if (!down)
+                {
+                    heldKeypadKeys.Remove(scancode);
+                }
+            }
+            else if (down)
+            {
+                heldKeypadKeys.Add(scancode, key);
+            }
+        }
+
         if (key is InputKey.None or InputKey.Unknown)
         {
             // A frame cannot report this key, but the text it types must not be credited
@@ -130,7 +150,11 @@ internal sealed class SdlInputSource : IInputSource
     // The window stops receiving key events (disabled, or the keyboard focus moved), so
     // the release of a key held now goes elsewhere. The held keys are dropped without a
     // release, like a window that gets no key-up message, so their next press is a press.
-    public void ForgetKeys() => Accept(new PendingInput(PendingKind.ForgetKeys));
+    public void ForgetKeys()
+    {
+        heldKeypadKeys.Clear();
+        Accept(new PendingInput(PendingKind.ForgetKeys));
+    }
 
     // The window stops receiving mouse button events (disabled), so the release of a button
     // held now is never seen. The held buttons are dropped without a release, like a window
@@ -361,8 +385,32 @@ internal sealed class SdlInputSource : IInputSource
         return false;
     }
 
-    internal static InputKey MapScancode(int scancode)
+    // SDL_SCANCODE_KP_1 to KP_9, KP_0 and KP_PERIOD: the keypad keys whose key follows Num Lock.
+    private static bool IsNumLockKeypadKey(int scancode) => scancode is >= 89 and <= 99;
+
+    // With Num Lock off, the keypad keys are the navigation keys that Windows sends for them
+    // and WPF raises: keypad 4 is Left, keypad 5 is Clear, keypad . is Delete. SDL keeps the
+    // keypad scancode in both states.
+    internal static InputKey MapScancode(int scancode, bool numLock)
     {
+        if (!numLock && IsNumLockKeypadKey(scancode))
+        {
+            return scancode switch
+            {
+                89 => InputKey.End,
+                90 => InputKey.Down,
+                91 => InputKey.PageDown,
+                92 => InputKey.Left,
+                93 => InputKey.Clear,
+                94 => InputKey.Right,
+                95 => InputKey.Home,
+                96 => InputKey.Up,
+                97 => InputKey.PageUp,
+                98 => InputKey.Insert,
+                _ => InputKey.Delete
+            };
+        }
+
         if (scancode is >= 4 and <= 29)
         {
             return InputKey.A + (scancode - 4);
@@ -431,11 +479,19 @@ internal sealed class SdlInputSource : IInputSource
         };
     }
 
-    // The inverse of MapScancode: the scancode SDL reports for the key, or -1 when no
-    // scancode that MapScancode maps back to this key exists. Enter maps back to the main
-    // Enter key, not to keypad Enter.
-    internal static int MapInputKey(InputKey key)
+    // The inverse of MapScancode: the scancode SDL reports for the key and the Num Lock state
+    // it reports it with, or -1 when no scancode that MapScancode maps back to this key
+    // exists. Enter maps back to the main Enter key, not to keypad Enter, and the navigation
+    // keys map back to their own keys, not to the keypad with Num Lock off. Clear exists only
+    // as keypad 5 with Num Lock off.
+    internal static int MapInputKey(InputKey key, out bool numLock)
     {
+        numLock = key != InputKey.Clear;
+        if (key == InputKey.Clear)
+        {
+            return 93;
+        }
+
         if (key is >= InputKey.A and <= InputKey.Z)
         {
             return 4 + (key - InputKey.A);

@@ -284,7 +284,7 @@ public sealed class SdlInputTransitionTests
     public void HeldKeyRepeatsDoNotLagBehindTheInput(int scancode, InputKey key, string text)
     {
         SdlInputSource source = new();
-        source.SetKey(scancode, true);
+        source.SetKey(scancode, true, numLock: true);
         source.AddText(text);
         _ = source.GetFrame();
         // 15 frames (1 s at 15 fps); before each, 2 auto-repeats with their text (30 repeats/s).
@@ -292,7 +292,7 @@ public sealed class SdlInputTransitionTests
         {
             for (int i = 0; i < 2; i++)
             {
-                source.SetKey(scancode, true, repeat: true);
+                source.SetKey(scancode, true, repeat: true, numLock: true);
                 source.AddText(text);
             }
 
@@ -301,7 +301,7 @@ public sealed class SdlInputTransitionTests
             Assert.Equal(2, input.TextInputEvents.Count);
         }
 
-        source.SetKey(scancode, false);
+        source.SetKey(scancode, false, numLock: true);
         Assert.True(source.GetFrame().Keyboard.IsReleased(key));
     }
 
@@ -474,9 +474,9 @@ public sealed class SdlInputTransitionTests
         // In arrival order: "ab", "ab5", "ab".
         Pump(runtime, api,
             new SdlEvent(SdlEventKind.KeyDown, windowId, Scancode: BackspaceScancode, Repeat: true),
-            new SdlEvent(SdlEventKind.KeyDown, windowId, Scancode: Keypad5Scancode),
+            new SdlEvent(SdlEventKind.KeyDown, windowId, Scancode: Keypad5Scancode, NumLock: true),
             new SdlEvent(SdlEventKind.TextInput, windowId, Text: "5"),
-            new SdlEvent(SdlEventKind.KeyUp, windowId, Scancode: Keypad5Scancode),
+            new SdlEvent(SdlEventKind.KeyUp, windowId, Scancode: Keypad5Scancode, NumLock: true),
             new SdlEvent(SdlEventKind.KeyDown, windowId, Scancode: BackspaceScancode, Repeat: true));
         for (int frame = 0; frame < 4; frame++)
         {
@@ -505,9 +505,9 @@ public sealed class SdlInputTransitionTests
         Pump(runtime, api, new SdlEvent(SdlEventKind.MouseButtonUp, windowId, X: x, Y: y, MouseButton: 1));
 
         Pump(runtime, api,
-            new SdlEvent(SdlEventKind.KeyDown, windowId, Scancode: Keypad5Scancode),
+            new SdlEvent(SdlEventKind.KeyDown, windowId, Scancode: Keypad5Scancode, NumLock: true),
             new SdlEvent(SdlEventKind.TextInput, windowId, Text: "5"));
-        Pump(runtime, api, new SdlEvent(SdlEventKind.KeyUp, windowId, Scancode: Keypad5Scancode));
+        Pump(runtime, api, new SdlEvent(SdlEventKind.KeyUp, windowId, Scancode: Keypad5Scancode, NumLock: true));
         Pump(runtime, api,
             new SdlEvent(SdlEventKind.KeyDown, windowId, Scancode: PeriodScancode),
             new SdlEvent(SdlEventKind.TextInput, windowId, Text: "."));

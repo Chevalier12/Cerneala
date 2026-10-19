@@ -464,7 +464,7 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
         {
             case ServoPlatformInputKind.KeyDown:
             case ServoPlatformInputKind.KeyUp:
-                int scancode = SdlInputSource.MapInputKey(input.Key);
+                int scancode = SdlInputSource.MapInputKey(input.Key, out bool numLock);
                 if (scancode < 0)
                 {
                     throw new ArgumentException(
@@ -477,7 +477,8 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
                     down ? SdlEventKind.KeyDown : SdlEventKind.KeyUp,
                     WindowId,
                     Scancode: scancode,
-                    Repeat: down && input.Repeat);
+                    Repeat: down && input.Repeat,
+                    NumLock: numLock);
             case ServoPlatformInputKind.Text:
                 return new SdlEvent(SdlEventKind.TextInput, WindowId, Text: input.CommittedText);
             case ServoPlatformInputKind.PointerMove:
@@ -597,7 +598,7 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
                 break;
             case SdlEventKind.KeyDown when enabled:
             case SdlEventKind.KeyUp when enabled:
-                inputSource.SetKey(@event.Scancode, @event.Kind == SdlEventKind.KeyDown, @event.Repeat);
+                inputSource.SetKey(@event.Scancode, @event.Kind == SdlEventKind.KeyDown, @event.Repeat, @event.NumLock);
                 callbacks.RenderRequested();
                 break;
             case SdlEventKind.TextInput when enabled:

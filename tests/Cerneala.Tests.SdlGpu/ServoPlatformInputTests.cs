@@ -311,7 +311,7 @@ public sealed class ServoPlatformInputTests
         int mapped = 0;
         for (int scancode = 0; scancode < 512; scancode++)
         {
-            InputKey key = SdlInputSource.MapScancode(scancode);
+            InputKey key = SdlInputSource.MapScancode(scancode, numLock: true);
             if (key is InputKey.Unknown or InputKey.None)
             {
                 continue;
@@ -325,21 +325,47 @@ public sealed class ServoPlatformInputTests
                 continue;
             }
 
-            Assert.Equal(scancode, SdlInputSource.MapInputKey(key));
-            Assert.Equal(key, SdlInputSource.MapScancode(SdlInputSource.MapInputKey(key)));
+            Assert.Equal(scancode, SdlInputSource.MapInputKey(key, out bool numLock));
+            Assert.True(numLock);
         }
 
         Assert.True(mapped > 0);
         foreach (InputKey key in Enum.GetValues<InputKey>().Where(key => key is not (InputKey.Unknown or InputKey.None)))
         {
-            int scancode = SdlInputSource.MapInputKey(key);
+            int scancode = SdlInputSource.MapInputKey(key, out bool numLock);
             Assert.True(scancode >= 0, $"{key} has no SDL scancode.");
-            Assert.Equal(key, SdlInputSource.MapScancode(scancode));
+            Assert.Equal(key, SdlInputSource.MapScancode(scancode, numLock));
         }
 
-        Assert.Equal(-1, SdlInputSource.MapInputKey(InputKey.None));
-        Assert.Equal(-1, SdlInputSource.MapInputKey(InputKey.Unknown));
-        Assert.Equal(EndScancode, SdlInputSource.MapInputKey(InputKey.End));
+        Assert.Equal(-1, SdlInputSource.MapInputKey(InputKey.None, out _));
+        Assert.Equal(-1, SdlInputSource.MapInputKey(InputKey.Unknown, out _));
+        Assert.Equal(EndScancode, SdlInputSource.MapInputKey(InputKey.End, out _));
+        // Clear is keypad 5 with Num Lock off; the navigation keys go back to their own keys.
+        Assert.Equal(Keypad5Scancode, SdlInputSource.MapInputKey(InputKey.Clear, out bool clearNumLock));
+        Assert.False(clearNumLock);
+    }
+
+    [Fact]
+    public void KeypadKeysAreSentWithTheirNumLockState()
+    {
+        TextBox textBox = new() { Width = 200, Height = 40 };
+        using Harness harness = new(textBox, "editor");
+        harness.Focus("editor");
+        List<string> keyEvents = [];
+        harness.Window.AddHandler(UIElement.KeyDownEvent, (_, args) =>
+            keyEvents.Add("Down:" + ((KeyEventArgs)args).Key), handledEventsToo: true);
+        harness.Window.AddHandler(UIElement.KeyUpEvent, (_, args) =>
+            keyEvents.Add("Up:" + ((KeyEventArgs)args).Key), handledEventsToo: true);
+
+        harness.Send(
+            ServoPlatformInput.KeyDown(InputKey.NumPad5),
+            ServoPlatformInput.KeyUp(InputKey.NumPad5),
+            ServoPlatformInput.KeyDown(InputKey.Clear),
+            ServoPlatformInput.KeyUp(InputKey.Clear));
+
+        Assert.Equal([Keypad5Scancode, Keypad5Scancode, Keypad5Scancode, Keypad5Scancode], harness.Api.PushedEvents.Select(pushed => pushed.Scancode));
+        Assert.Equal([true, true, false, false], harness.Api.PushedEvents.Select(pushed => pushed.NumLock));
+        Assert.Equal(["Down:NumPad5", "Up:NumPad5", "Down:Clear", "Up:Clear"], keyEvents);
     }
 
     private static ServoPoint Center(UIElement element)
