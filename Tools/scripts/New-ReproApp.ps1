@@ -522,7 +522,9 @@ $crnTemplate = @'
 
 $scenarioTemplate = @'
 using Cerneala.UI.Controls;
+using Cerneala.UI.Layout;
 using Cerneala.UI.Servo;
+using Cerneala.UI.Text;
 using ServoApi = Cerneala.UI.Servo.Servo;
 
 namespace Issue@@N@@;

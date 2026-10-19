@@ -289,7 +289,10 @@ foreach ($v in $variants) {
 # zips and GIFs only when everything matched
 if ($mismatches.Count -eq 0) {
     foreach ($v in $variants) {
-        Compress-Archive -Path (Join-Path $WorkDir "publish\$v\*") -DestinationPath $zip[$v] -Force
+        # ZipFile.CreateFromDirectory is about twice as fast as Compress-Archive on a ~200 MB publish folder and writes the same entries.
+        if (Test-Path -LiteralPath $zip[$v]) { Remove-Item -LiteralPath $zip[$v] -Force }
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        [IO.Compression.ZipFile]::CreateFromDirectory((Join-Path $WorkDir "publish\$v"), $zip[$v], [IO.Compression.CompressionLevel]::Optimal, $false)
         Write-Host ("zip: {0} ({1:N1} MB)" -f $zip[$v], ((Get-Item -LiteralPath $zip[$v]).Length / 1MB))
         if ($Pr -gt 0) {
             & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'New-ReproGif.ps1') -FramesDirectory (Join-Path $WorkDir "frames-$v") -OutputPath $gif[$v]
