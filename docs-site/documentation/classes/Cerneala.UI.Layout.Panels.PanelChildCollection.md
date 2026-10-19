@@ -45,9 +45,9 @@ bool removed = panel.Children.Remove(child);
 
 `Panel.Children` is the API application code uses to add panel children. It follows WPF `Panel.Children`, whose `UIElementCollection` makes an added child a visual child and a logical child of the panel in one call. Cerneala's `UIElementCollection` stores one role only, so a panel exposes this separate collection over its two role collections.
 
-`Add` and `Insert` first validate the visual insertion (index range, an element added to itself, an ancestor, a child that already has a visual parent, a different root), so a rejected child gets neither parent. Then the child is inserted into `LogicalChildren` and into `VisualChildren`. If the visual insertion still throws, the child is removed from `LogicalChildren` again before the exception propagates. The logical position follows the visual position: the child is placed after the logical children that come before it in `VisualChildren`.
+`Add` and `Insert` first validate the visual insertion (index range, an element added to itself, an ancestor, a child that already has a visual parent, a different root), so a rejected child gets neither parent. Then the child is inserted into `LogicalChildren` and into `VisualChildren`. If either insertion throws after the child became a logical child of the panel, for example because a `LogicalChildren.Changed` handler throws, the child is removed from `LogicalChildren` again before the exception propagates, so the panel never keeps a logical-only child and a later `Add` can add the same child. The logical position follows the visual position: the child is placed after the logical children that come before it in `VisualChildren`.
 
-`Remove` returns `false` when the child is not a visual child of the panel. Otherwise it removes the child from `VisualChildren`, and from `LogicalChildren` when the panel is also its logical parent, and returns `true`. A visual-only child that was added with `VisualChildren.Add` can also be removed with `Remove`.
+`Remove` returns `false` when the child is not a visual child of the panel. Otherwise it removes the child from `LogicalChildren` when the panel is also its logical parent, then from `VisualChildren`, and returns `true`. The logical removal comes first, so a child with `UIElement.Presence` set is still attached through the panel when the visual removal starts its exit animation: the child stays an exiting visual child of the panel until the exit ends, as `PresenceOptions` describes. A visual-only child that was added with `VisualChildren.Add` can also be removed with `Remove`.
 
 `Count`, the indexer, and enumeration read `VisualChildren`, the children the panel measures, arranges, and draws.
 
@@ -86,3 +86,4 @@ Cerneala retained UI layout panels: `Panel`, `StackPanel`, `Grid`, `Canvas`, `Vi
 - `Cerneala.UI.Layout.Panels.Panel`
 - `Cerneala.UI.Elements.UIElementCollection`
 - `Cerneala.UI.Elements.UIElement`
+- `Cerneala.UI.Motion.Presence.PresenceOptions`

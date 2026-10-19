@@ -174,6 +174,58 @@ public sealed class PanelChildrenTests
         Assert.Equal(PresenceState.Present, root.Motion.Presence.GetState(child));
     }
 
+    // Issue #494: the logical insertion publishes the child before LogicalChildren.Changed runs, so a throwing
+    // handler must not leave a logical-only child that Children.Add and Children.Remove can no longer fix.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ChildrenAddOrInsertWhoseLogicalChangedHandlerThrowsLeavesTheChildWithNeitherParent(bool insert)
+    {
+        UIRoot root = new(200, 200);
+        StackPanel panel = new();
+        root.VisualChildren.Add(panel);
+        Border existing = new();
+        panel.Children.Add(existing);
+        Border child = new() { Width = 50, Height = 20 };
+        bool throwOnce = true;
+        panel.LogicalChildren.Changed += (_, _) =>
+        {
+            if (throwOnce)
+            {
+                throwOnce = false;
+                throw new InvalidOperationException("handler failed");
+            }
+        };
+
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
+        {
+            if (insert)
+            {
+                panel.Children.Insert(0, child);
+            }
+            else
+            {
+                panel.Children.Add(child);
+            }
+        });
+
+        Assert.Equal("handler failed", exception.Message);
+        Assert.Null(child.LogicalParent);
+        Assert.Null(child.VisualParent);
+        Assert.Null(child.Root);
+        Assert.Equal([existing], panel.VisualChildren);
+        Assert.Equal([existing], panel.LogicalChildren);
+
+        panel.Children.Add(child);
+
+        Assert.Same(panel, child.LogicalParent);
+        Assert.Same(panel, child.VisualParent);
+        Assert.Equal([existing, child], panel.LogicalChildren);
+        Assert.True(panel.Children.Remove(child));
+        Assert.Null(child.LogicalParent);
+        Assert.Null(child.VisualParent);
+    }
+
     private static PresenceOptions CreatePresence()
     {
         return PresenceOptions.FadeAndScale(
