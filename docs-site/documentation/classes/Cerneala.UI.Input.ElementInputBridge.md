@@ -53,6 +53,8 @@ Pointer dispatch updates hover state when the pointer moves, raises preview and 
 
 The bridge raises one `PreviewMouseWheel` and `MouseWheel` pair for each entry of `InputFrame.Pointer.WheelDeltas`, in list order, with that entry as `MouseWheelEventArgs.Delta`, after the frame's mouse move and before its button events. Like WPF, which raises one `MouseWheel` event per `WM_MOUSEWHEEL` message, three platform wheel notches that reach one frame raise three pairs with `Delta = -120`, not one pair with `Delta = -360`.
 
+A press belongs to the nearest element in its visual route that is an `IInputCommandSource` or the field of a non-editable `ComboBox`, as in WPF the nearest `ButtonBase` handles `MouseLeftButtonDown`. A release completes the click only on that element; a release on a non-editable `ComboBox` field after a press on an enclosing command source still completes the command source's click. For example, with a non-editable `ComboBox` as the `Content` of a `Button`, a press on the middle of the field followed by a release on the `Button` outside the `ComboBox` has `ClickCount == 0`, so the `Button` raises no `Click` and runs no `Command`.
+
 The `frameTime` overload treats its `TimeSpan` argument as the elapsed delta for the current input frame. The value must be non-negative. Time-dependent input behavior such as `RepeatButton` consumes that same delta once per host update. The compatibility overload without `frameTime` delegates with `TimeSpan.Zero`.
 
 Keyboard dispatch is delegated to `FocusManager`, `RetainedInputBindingProcessor`, `KeyboardNavigationController`, and `KeyboardActivationController`. Text input events are delegated to `TextInputBridge`.

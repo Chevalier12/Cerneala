@@ -19,9 +19,15 @@ internal sealed class RepeatButtonController
         CommandRouter commandRouter,
         PressedStateTracker pressedStateTracker)
     {
+        // The repeat source starts only when it took the press: a press that the pressed-state tracker gave to a
+        // nearer element, such as a ToggleButton or a non-editable ComboBox field in the RepeatButton, neither
+        // clicks nor repeats it.
         UIElement? hitSource = FindAncestor(hitElement, routeMap);
         UIElement? routedSource = FindAncestor(routedElement, routeMap);
-        if (hitSource is null || !ReferenceEquals(hitSource, routedSource) || !IsValid(hitSource, root, routeMap))
+        if (hitSource is null ||
+            !ReferenceEquals(hitSource, routedSource) ||
+            !ReferenceEquals(pressedStateTracker.PressedElement, hitSource) ||
+            !IsValid(hitSource, root, routeMap))
         {
             Clear();
             return;
