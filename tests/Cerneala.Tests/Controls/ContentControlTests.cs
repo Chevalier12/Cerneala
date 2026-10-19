@@ -1,4 +1,5 @@
 using Cerneala.UI.Controls;
+using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
 
@@ -149,6 +150,29 @@ public sealed class ContentControlTests
         UIElement loose = new();
         control.SetValue(ContentControl.ContentProperty, (object?)loose);
         Assert.Same(loose, control.Content);
+    }
+
+    [Fact]
+    public void SetValueStoresShadowedTemplatedElementContentThatHasAnotherParentWithoutChangingContent()
+    {
+        ContentControl control = new()
+        {
+            ComponentTemplate = new ComponentTemplate<ContentControl>("test", context =>
+                new ContentPresenter { Content = context.Owner.Content }),
+            Content = "text"
+        };
+        UIElement parented = new();
+        UIElement parent = new();
+        parent.LogicalChildren.Add(parented);
+        parent.VisualChildren.Add(parented);
+
+        control.SetValue(ContentControl.ContentProperty, (object?)parented, UiPropertyValueSource.MarkupConditional);
+
+        Assert.Equal("text", control.Content);
+        Assert.Equal(UiPropertyValueSource.Local, control.GetValueSource(ContentControl.ContentProperty));
+        Assert.Same(parented, control.GetSourceValue(ContentControl.ContentProperty, UiPropertyValueSource.MarkupConditional));
+        Assert.Same(parent, parented.LogicalParent);
+        Assert.Same(parent, parented.VisualParent);
     }
 
     [Fact]

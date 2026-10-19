@@ -3,6 +3,7 @@ using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Items;
 using Cerneala.UI.Controls.Templates;
+using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
@@ -652,6 +653,25 @@ public sealed class TabControlTests
         root.ProcessFrame();
 
         Assert.True(HasVisualAncestor(loose, tabControl), "loose is not under the TabControl while tab 1 is selected");
+        Assert.Same(holder, parented.VisualParent);
+    }
+
+    [Fact]
+    public void SetValueStoresShadowedElementContentThatHasAnotherParentWithoutChangingContent()
+    {
+        UIRoot root = new(300, 200);
+        Border holder = new();
+        FixedElement parented = new();
+        holder.Child = parented;
+        root.VisualChildren.Add(holder);
+        TabItem tab = new() { Content = "text" };
+
+        tab.SetValue(ContentControl.ContentProperty, (object?)parented, UiPropertyValueSource.AspectBase);
+
+        Assert.Equal("text", tab.Content);
+        Assert.Equal(UiPropertyValueSource.Local, tab.GetValueSource(ContentControl.ContentProperty));
+        Assert.Same(parented, tab.GetSourceValue(ContentControl.ContentProperty, UiPropertyValueSource.AspectBase));
+        Assert.Same(holder, parented.LogicalParent);
         Assert.Same(holder, parented.VisualParent);
     }
 
