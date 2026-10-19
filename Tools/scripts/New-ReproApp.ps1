@@ -1,7 +1,7 @@
 #requires -Version 7.0
 <#
 .SYNOPSIS
-Creates the skeleton of a cerneala-fix-bug reproduction app: a small Cerneala window with a live OK/BUG verdict and a Servo-driven check mode.
+Creates the skeleton of a cerneala-fix-bug reproduction app: a small Cerneala window with a live OK/BUG verdict and a Servo-driven check mode. With -Change it creates the same app for a non-bug change, with an OK/FAIL verdict.
 
 .DESCRIPTION
 cerneala-fix-bug (step 5) ships every fix with a reproduction app that is built twice, before and after the
@@ -15,6 +15,8 @@ fix. This script writes the mechanical part of that app, so that the agent only 
                        [--frames <folder>]) with Servo, screenshots, report file, exit codes
                        0 = OK, 1 = BUG, 2 = NOT REACHED, 3 = ERROR, 4 = PARTIAL (group app: only some bugs reproduce).
                        With -AlsoIssues the app is a group app: one app checks several issues, one verdict per issue.
+                       With -Change the app is a demo app of an enhancement or another non-bug change: the verdict says
+                       "OK: #<N> works so far." or "FAIL: #<N> does not work." (exit code 1), and no text talks about a bug.
   MainWindow.crn       Verdict area, numbered user steps, "what you should see", scenario host.
   MainWindow.crn.cs    The scenario. It starts as a tiny working sample (a button that check mode clicks), so the
                        generated app builds and exits with 0 unmodified. Members marked "FILL IN" are the ones to change.
@@ -37,6 +39,11 @@ The app folder, for example <scratchpad>\repro-369\Issue369. It is created when 
 .PARAMETER CernealaRoot
 Root of the Cerneala checkout or worktree the app builds against. Default: git rev-parse --show-toplevel of the current directory.
 
+.PARAMETER Change
+Generate a demo app for a change that is not a bug (an enhancement, documentation, ...), tied to the GitHub issue -Issue.
+The verdict becomes "OK: #<N> works so far." / "FAIL: #<N> does not work.", and the other texts talk about the change.
+Exit codes stay 0 OK, 1 FAIL, 2 NOT REACHED, 3 ERROR. Cannot be combined with -AlsoIssues.
+
 .PARAMETER Force
 Overwrite files that already exist in the destination.
 
@@ -44,6 +51,8 @@ Overwrite files that already exist in the destination.
 pwsh -NoProfile -File Tools/scripts/New-ReproApp.ps1 -Issue 369 -Destination $env:TEMP/repro-369/Issue369
 .EXAMPLE
 pwsh -NoProfile -File Tools/scripts/New-ReproApp.ps1 -Issue 480 -AlsoIssues 484,485 -Destination $env:TEMP/repro-480/Issue480
+.EXAMPLE
+pwsh -NoProfile -File Tools/scripts/New-ReproApp.ps1 -Issue 612 -Change -Destination $env:TEMP/demo-612/Issue612
 #>
 [CmdletBinding()]
 param(
@@ -51,6 +60,7 @@ param(
     [string[]] $AlsoIssues = @(),
     [Parameter(Mandatory)][string] $Destination,
     [string] $CernealaRoot,
+    [switch] $Change,
     [switch] $Force
 )
 
@@ -64,6 +74,8 @@ $otherIssues = [int[]]@($AlsoIssues | ForEach-Object { $_ -split ',' } | ForEach
 })
 if ($otherIssues -contains $Issue) { throw "-AlsoIssues must not contain -Issue ($Issue)." }
 if (@($otherIssues | Select-Object -Unique).Count -ne $otherIssues.Count) { throw "-AlsoIssues must not contain duplicates ($($otherIssues -join ', '))." }
+
+if ($Change -and $otherIssues.Count -gt 0) { throw "-Change supports one issue only: do not combine it with -AlsoIssues ($($otherIssues -join ', '))." }
 
 if (-not $CernealaRoot) {
     $CernealaRoot = (& git rev-parse --show-toplevel 2>$null)
@@ -124,13 +136,13 @@ using ServoApi = Cerneala.UI.Servo.Servo;
 
 namespace Issue@@N@@;
 
-/// <summary>Result of one invariant check. Passed = false is the bug. Totals and Now are shown while the app runs.</summary>
+/// <summary>Result of one invariant check. @@RESULT_SUMMARY@@ Totals and Now are shown while the app runs.</summary>
 public sealed record ReproCheckResult(bool Passed, string? Failure, string Totals, string Now);
 
 /// <summary>One action of check mode: a description for the window and the GIF, and the Servo action itself.</summary>
 public sealed record ReproStep(string Description, Func<ServoApi, Task> Action);
 
-/// <summary>Thrown when the condition that triggers the bug never happened. Check mode turns it into exit code 2.</summary>
+/// <summary>Thrown when @@TRIGGER@@ never happened. Check mode turns it into exit code 2.</summary>
 public sealed class ReproNotReachedException(string message) : Exception(message);
 
 /// <summary>The text blocks of MainWindow.crn that the harness writes to.</summary>
@@ -153,7 +165,7 @@ public interface IReproScenario
     /// <summary>The numbered actions the user does, as literal text.</summary>
     string ReproUserSteps { get; }
 
-    /// <summary>What the user sees when the bug is absent.</summary>
+    /// <summary>What the user sees@@ABSENT_SUFFIX@@.</summary>
     string ReproExpected { get; }
 
     /// <summary>True when the checked state changed since the last invariant check (must be true before the first check).</summary>
@@ -177,7 +189,7 @@ public sealed class ReproHarness
 {
     public const int Issue = @@N@@;
 
-    /// <summary>Every bug the app checks; more than one for a group app (New-ReproApp.ps1 -AlsoIssues).</summary>
+    /// <summary>@@ISSUES_SUMMARY@@</summary>
     public static readonly IReadOnlyList<int> Issues = [@@ISSUES@@];
 
     public const int FrameCap = 300;
@@ -218,8 +230,8 @@ public sealed class ReproHarness
             if (!IsGroup)
             {
                 return firstFailures.Count == 0
-                    ? $"OK: bug #{Issue} does not reproduce so far."
-                    : $"BUG: bug #{Issue} reproduces.";
+                    ? $"@@OK_LINE@@"
+                    : $"@@FAIL_LINE@@";
             }
 
             int[] failed = Issues.Where(firstFailures.ContainsKey).ToArray();
@@ -495,7 +507,7 @@ $crnTemplate = @'
             <StackPanel Grid.Column="0" Margin="20,14,20,14">
                 <TextBlock Text="Your turn: do these steps" FontSize="16" />
                 <TextBlock Name="StepsText" TextWrapping="Wrap" Margin="0,6,0,0" />
-                <TextBlock Text="What you should see when the bug is absent" FontSize="16" Margin="0,14,0,0" />
+                <TextBlock Text="What you should see@@ABSENT_SUFFIX@@" FontSize="16" Margin="0,14,0,0" />
                 <TextBlock Name="ExpectedText" TextWrapping="Wrap" Foreground="$MutedBrush" Margin="0,6,0,0" />
             </StackPanel>
 
@@ -574,7 +586,7 @@ public partial class MainWindow : Window, IReproScenario
     public string ReproUserSteps =>
         "1. Click the sample button.\n2. Click it again.";
 
-    // FILL IN 3/6, what you should see: the literal result when the bug is absent.
+    // FILL IN 3/6, what you should see: the literal result@@ABSENT_SUFFIX@@.
     public string ReproExpected =>
         "The top line stays green and the click count follows your clicks.";
 
@@ -626,12 +638,40 @@ public partial class MainWindow : Window, IReproScenario
 }
 '@
 
+# The wording of the verdict and of the texts that talk about the bug. With -Change the app talks about the change instead.
+$wording = if ($Change) {
+    [ordered]@{
+        '@@RESULT_SUMMARY@@' = 'Passed = false means the change does not work.'
+        '@@TRIGGER@@'        = 'the condition that exercises the change'
+        '@@ABSENT_SUFFIX@@'  = ''
+        '@@ISSUES_SUMMARY@@' = 'The issue the app checks.'
+        '@@OK_LINE@@'        = 'OK: #{Issue} works so far.'
+        '@@FAIL_LINE@@'      = 'FAIL: #{Issue} does not work.'
+        '@@EXIT_CODES@@'     = '0 OK, 1 FAIL, 2 NOT REACHED, 3 ERROR.'
+    }
+}
+else {
+    [ordered]@{
+        '@@RESULT_SUMMARY@@' = 'Passed = false is the bug.'
+        '@@TRIGGER@@'        = 'the condition that triggers the bug'
+        '@@ABSENT_SUFFIX@@'  = ' when the bug is absent'
+        '@@ISSUES_SUMMARY@@' = 'Every bug the app checks; more than one for a group app (New-ReproApp.ps1 -AlsoIssues).'
+        '@@OK_LINE@@'        = 'OK: bug #{Issue} does not reproduce so far.'
+        '@@FAIL_LINE@@'      = 'BUG: bug #{Issue} reproduces.'
+        '@@EXIT_CODES@@'     = '0 OK, 1 BUG, 2 NOT REACHED, 3 ERROR, 4 PARTIAL (group app: only some bugs reproduce).'
+    }
+}
+function Expand-Wording([string] $template) {
+    foreach ($token in $wording.Keys) { $template = $template.Replace($token, $wording[$token]) }
+    $template
+}
+
 $files = [ordered]@{
     "Issue$Issue.csproj"    = $csprojTemplate.Replace('@@ROOT@@', $CernealaRoot)
     'BackendRegistration.cs' = $backendTemplate
-    'ReproHarness.cs'       = $harnessTemplate.Replace('@@N@@', "$Issue").Replace('@@ISSUES@@', ((@($Issue) + $otherIssues) -join ', '))
-    'MainWindow.crn'        = $crnTemplate.Replace('@@N@@', "$Issue")
-    'MainWindow.crn.cs'     = $scenarioTemplate.Replace('@@N@@', "$Issue")
+    'ReproHarness.cs'       = (Expand-Wording $harnessTemplate).Replace('@@N@@', "$Issue").Replace('@@ISSUES@@', ((@($Issue) + $otherIssues) -join ', '))
+    'MainWindow.crn'        = (Expand-Wording $crnTemplate).Replace('@@N@@', "$Issue")
+    'MainWindow.crn.cs'     = (Expand-Wording $scenarioTemplate).Replace('@@N@@', "$Issue")
 }
 
 if (-not $Force) {
@@ -654,5 +694,5 @@ Next:
   dotnet build "$csproj" -c Release
   `$p = Start-Process -PassThru "$destinationFull\bin\Release\net8.0-windows\Issue$Issue.exe" -ArgumentList '--check','<report>.txt','--frames','<frames-folder>'; `$p.WaitForExit(120000)
   Fill in the 6 marked members of MainWindow.crn.cs; ReproHarness.cs normally stays as generated.
-  Exit codes: 0 OK, 1 BUG, 2 NOT REACHED, 3 ERROR, 4 PARTIAL (group app: only some bugs reproduce).
+  Exit codes: $($wording['@@EXIT_CODES@@'])
 "@
