@@ -277,29 +277,32 @@ public sealed class SdlInputTransitionTests
         Assert.Equal(30, source.GetFrame().Pointer.X);
     }
 
-    [Fact]
-    public void HeldKeyRepeatsDoNotLagBehindTheInput()
+    [Theory]
+    [InlineData(AScancode, InputKey.A, "a")]
+    [InlineData(Keypad5Scancode, InputKey.NumPad5, "5")]
+    [InlineData(PeriodScancode, InputKey.OemPeriod, ".")]
+    public void HeldKeyRepeatsDoNotLagBehindTheInput(int scancode, InputKey key, string text)
     {
         SdlInputSource source = new();
-        source.SetKey(AScancode, true);
-        source.AddText("a");
+        source.SetKey(scancode, true);
+        source.AddText(text);
         _ = source.GetFrame();
         // 15 frames (1 s at 15 fps); before each, 2 auto-repeats with their text (30 repeats/s).
         for (int frame = 0; frame < 15; frame++)
         {
             for (int i = 0; i < 2; i++)
             {
-                source.SetKey(AScancode, true, repeat: true);
-                source.AddText("a");
+                source.SetKey(scancode, true, repeat: true);
+                source.AddText(text);
             }
 
             InputFrame input = source.GetFrame();
-            Assert.Equal(2, input.Keyboard.GetRepeatCount(InputKey.A));
+            Assert.Equal(2, input.Keyboard.GetRepeatCount(key));
             Assert.Equal(2, input.TextInputEvents.Count);
         }
 
-        source.SetKey(AScancode, false);
-        Assert.True(source.GetFrame().Keyboard.IsReleased(InputKey.A));
+        source.SetKey(scancode, false);
+        Assert.True(source.GetFrame().Keyboard.IsReleased(key));
     }
 
     [Fact]

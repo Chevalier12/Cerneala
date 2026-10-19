@@ -327,9 +327,10 @@ internal sealed class SdlInputSource : IInputSource
     // Whether SDL can send text after this key's key-down. SDL drops text that starts with a
     // control character, so Backspace, Tab, Enter, Escape and Delete type none, and the
     // function, navigation and modifier keys type no character at all. Text after their
-    // key-down comes from elsewhere, for example an IME commit or the emoji panel.
+    // key-down comes from elsewhere, for example an IME commit or the emoji panel. The
+    // keypad and punctuation keys (NumPad0 to OemBackslash) type a character.
     private static bool TypesText(InputKey key) =>
-        key is InputKey.Space or (>= InputKey.D0 and <= InputKey.Z);
+        key is InputKey.Space or (>= InputKey.D0 and <= InputKey.Z) or (>= InputKey.NumPad0 and <= InputKey.OemBackslash);
 
     private bool IsRepeatOfHeldKey(in PendingInput input) =>
         input.Repeat && input.Down && downKeys.Contains((InputKey)input.Value);
