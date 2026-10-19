@@ -206,6 +206,13 @@ public sealed class ElementInputBridge
                 {
                     BeginPointerDrag(routeMap, pointerTarget, button);
                 }
+                else if (button == InputMouseButton.Left)
+                {
+                    // As in WPF, a handled preview keeps the press from ButtonBase.OnMouseLeftButtonDown: the button is
+                    // not pressed, and the release completes no click, so it raises no Click and runs no Command (#620).
+                    pressedStateTracker.Cancel();
+                    clickTracker.CancelPress(button);
+                }
 
                 if (button == InputMouseButton.Left)
                 {

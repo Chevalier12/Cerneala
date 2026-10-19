@@ -1,5 +1,6 @@
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Core;
+using Cerneala.UI.Layout;
 
 namespace Cerneala.UI.Controls;
 
@@ -9,6 +10,13 @@ public class RadioButton : Button
         nameof(IsChecked),
         typeof(RadioButton),
         new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsAspect));
+
+    // WPF's RadioButton style is not based on the ButtonBase style, so its content keeps Control's Left and Top.
+    public RadioButton()
+    {
+        SetFrameworkDefault(HorizontalContentAlignmentProperty, HorizontalAlignment.Left);
+        SetFrameworkDefault(VerticalContentAlignmentProperty, VerticalAlignment.Top);
+    }
 
     public bool IsChecked
     {

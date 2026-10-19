@@ -15,11 +15,11 @@ Correction to the [architecture diagram](../assets/cerneala-architecture.png): i
 | Type | File | Role | Owner |
 |---|---|---|---|
 | `Servo` | `UI/Servo/Servo.cs` | Public facade: `FindAsync`, `FindAllAsync`, `ExistsAsync`, input actions, waits, screenshots; `Servo.Id` attached property | caller; `new Servo(window)` or `new Servo(host)` |
-| `ServoTarget` | `UI/Servo/ServoTarget.cs` | Selector: `ById`, `ByName`, `ByRole`, `WithName`, `Within` | caller (immutable) |
+| `ServoTarget` | `UI/Servo/ServoTarget.cs` | Selector: `ById`, `ByName`, `ByRole`, `WithName`, `WithNameContaining`, `WithNameMatching`, `Where`, `Within`, `Nth`, `First`, `Last` | caller (immutable) |
 | `ServoElement` | `UI/Servo/ServoElement.cs` | Read-only snapshot of a found element; never the live element | caller |
 | `ServoOptions` | `UI/Servo/ServoOptions.cs` | `DefaultTimeout` (5 s by default; zero, negative and infinite are rejected); copied at construction | `Servo` |
 | `ServoContext` | `UI/Servo/ServoContext.cs` | Internal; binds to the window or host, marshals to the owning thread, serializes input | `Servo` |
-| `ServoQueryEngine` | `UI/Servo/ServoQueryEngine.cs` | Internal; resolves targets against `SemanticsProvider.Build(root, SemanticsProjection.Servo)` | `Servo` |
+| `ServoQueryEngine` | `UI/Servo/ServoQueryEngine.cs` | Internal; resolves targets against the root's cached Servo projection, `UIRoot.GetServoSemanticsTree()` (see [accessibility.md](accessibility.md), "The Servo cache") | `Servo` |
 | `ServoActionEngine` | `UI/Servo/ServoActionEngine.cs` | Internal; checks that a target can receive input and computes its center point | `Servo` |
 | `RetainedServoInputDriver` | `UI/Servo/RetainedServoInputDriver.cs` | Internal; builds `InputFrame` sequences (pointer, keyboard, text) and dispatches them | per window (`ServoInputState.Driver`) or per host |
 | `ServoInputState` | `UI/Servo/ServoInputState.cs` | Internal; one gate (`SemaphoreSlim(1, 1)`) plus the driver | per window, created by `WindowApplicationRuntime`; per `UiHost` through a weak table |
@@ -31,16 +31,16 @@ Correction to the [architecture diagram](../assets/cerneala-architecture.png): i
 
 Example: `await servo.ClickAsync(ServoTarget.ById("save"))` on a `Window`.
 
-1. `ServoOperation.RunAsync` links the caller's token with the `DefaultTimeout`. The timeout also covers time spent waiting in the queue.
+1. `ServoOperation.RunAsync` links the caller's token with the timeout: `DefaultTimeout`, or the `timeout` argument of the overload the call used. The timeout also covers time spent waiting in the queue.
 2. `ServoContext.ExecuteSerializedAsync` gets the window's `ServoInputState` on the UI thread and takes its gate. Two `Servo` instances on the same window therefore run one after the other; different windows do not block each other.
-3. `ServoActionEngine.ResolveActionable` resolves exactly one element and checks, in order:
+3. `ServoActionEngine.DispatchWhenActionableAsync` starts one dispatch attempt (steps 4 to 7). During the attempt, inside the lazy step materialization of step 4, `ServoActionEngine.ResolveActionable` resolves exactly one element and checks, in order:
    - it is still attached to this root;
    - it is effectively visible;
    - it is enabled;
    - it has usable arranged bounds;
    - its center hits the element itself or one of its descendants (`root.InputCache.HitTest` plus the route to the root).
 
-   Any failure throws `ServoTargetNotActionableException` before any input is sent.
+   Any failure throws `ServoTargetNotActionableException` (no match: `ServoTargetNotFoundException`) before any input is sent. `DispatchWhenActionableAsync` catches these two, waits for the next rendered frame through `ServoFrameSignal` (`Window.FrameRendered` or `UiHost.FrameUpdated`), and starts a new attempt on the UI thread, still holding the gate. Because the check runs inside the attempt's own first input frame, no frame runs between the check and the input. An ambiguous target, or any other failure, ends the action at once. When the timeout ends the wait, the cancellation carries the last failure as its `InnerException`, and `ServoOperation.RunAsync` throws `ServoTimeoutException` with `Last failure: <message>` and that `InnerException`.
 4. `RetainedServoInputDriver.ClickAsync` builds three `InputFrame` steps: pointer move to the center, left button down, left button up. The steps are built lazily, after scheduled layout, so a target moved by pending layout is clicked at its new position.
 5. Dispatch:
    - **Window:** `WindowApplicationRuntime.EnqueueServoInputAsync` queues a `ServoInputOperation` and requests a render. On each render tick, `UpdateServoInput` gives `UiHost.Update` the next Servo frame instead of the platform frame.
@@ -48,7 +48,7 @@ Example: `await servo.ClickAsync(ServoTarget.ById("save"))` on a `Window`.
 6. `UiHost.UpdateCore` handles the frame like platform input: Relay drain, scheduled layout, then `ElementInputBridge.Dispatch`, which hit-tests, focuses on press, raises the preview and bubble mouse events, and runs the button command on click.
 7. The task completes only after the frame that carried the input has been presented. In the window test, `Click` fires at present `before + 2` and the task completes at `before + 3`.
 
-`TypeIntoAsync` is a click followed by text input. `ReplaceTextAsync` is a click, Ctrl+A, then text input. Neither writes `Text` directly. `ServoContext.ExecuteInputAsync` runs these steps one after the other under the same gate and starts each step on the UI thread through the Relay: a window step completes from a frame continuation that can resume on another thread, and `EnqueueServoInputAsync` accepts input only on the window's UI thread.
+`TypeIntoAsync` is a click followed by text input. `ReplaceTextAsync` is a click whose every attempt first checks that the target exposes a text value (semantic `Value`, or a `PasswordBox`; `ServoActionEngine.ReadTextValue` as the `checkBeforeInput` of `DispatchWhenActionableAsync`, so a missing target is waited for and a target without a text value fails before input), Ctrl+A, then text input (Delete for empty text), then a check that the value equals the requested text; both checks throw `ServoException`. Neither writes `Text` directly. `ServoContext.ExecuteInputAsync` runs these steps one after the other under the same gate and starts each step on the UI thread through the Relay: a window step completes from a frame continuation that can resume on another thread, and `EnqueueServoInputAsync` accepts input only on the window's UI thread.
 
 ### Platform input path
 
@@ -59,9 +59,9 @@ The operation completes on the UI thread after all of these happened: the events
 ## Queries
 
 - `Servo.Id` is an attached `UiProperty<string?>` with `AffectsSemantics`; whitespace is trimmed, and a blank value becomes `null`. In markup, the `Servo.Id="save"` attribute is emitted as this property.
-- Matching uses ordinal comparison on Id, Name and Role, within an optional `Within` scope.
+- Matching uses ordinal comparison on Id, Name (exact, substring, or a caller-supplied `Regex`) and Role, then every `Where` predicate over a `ServoElement` snapshot, within an optional `Within` scope. `ServoQueryEngine.ResolveAll` is the single resolution path: it resolves the scope target first (including its own position), keeps candidates that have an ancestor in that set, and applies `Nth`/`First`/`Last` last, in semantic document order. Example: `ServoTarget.ByRole(SemanticsRole.Button).WithName("Delete").Nth(2)` resolves the third Delete button, or nothing when there are fewer than three.
 - Cardinality is explicit:
-  - `FindAsync` throws `ServoTargetNotFoundException` for zero matches and `ServoTargetAmbiguousException` for more than one;
+  - `FindAsync` throws `ServoTargetNotFoundException` for zero matches and `ServoTargetAmbiguousException` for more than one; a target with `Nth`/`First`/`Last` resolves to zero or one match, so it is never ambiguous;
   - `FindAllAsync` returns an empty list for zero matches;
   - `ExistsAsync` returns a `bool`.
 - The Servo semantic projection keeps hidden and collapsed nodes, so `WaitForAsync(target, ServoCondition.Hidden)` can tell "hidden" apart from "missing".
@@ -75,7 +75,7 @@ The operation completes on the UI thread after all of these happened: the events
   - no active motion;
   - no active pointer repeat;
   - the Servo gate is free.
-- Servo does not pump frames. In window mode the application loop does it. In host mode the caller must call `host.Update`. A wait without frames ends with `ServoTimeoutException`.
+- Servo does not pump frames. In window mode the application loop does it. In host mode the caller must call `host.Update`. A wait, or a target action on a not-yet-actionable target, without frames ends with `ServoTimeoutException`.
 
 ## Screenshots
 
@@ -98,7 +98,8 @@ Servo adds no frame phase. Its frames enter through `UiHost.Update` at the same 
 - Click and hover go through hit testing and routed input; a click focuses and releases the button. `tests/Cerneala.Tests/UI/Servo/ServoInputTests.cs:HoverAndClickUseHitTestingRoutedInputAndRetainedCommit`.
 - Text actions compose focus, keys and text input, without direct assignment (`"DEFAULT"` + `"!"` → `"DEFAULT!"`). `ServoInputTests.cs:TextActionsComposeFocusKeyAndTextInputWithoutDirectAssignment`.
 - On a window, every step of a composed text action dispatches on the window's UI thread. `WindowRuntimeTests.cs:ServoWindowComposedTextActionsDispatchEveryStepOnTheOwningThread`.
-- Hidden, disabled, zero-size and not-hit-testable targets throw `ServoTargetNotActionableException`. `ServoInputTests.cs:TargetActionsRejectNonActionableElements`.
+- Hidden, disabled, zero-size and not-hit-testable targets send no input; the action retries every frame and ends with `ServoTimeoutException` naming the last reason, with the `ServoTargetNotActionableException` as `InnerException`. `ServoInputTests.cs:TargetActionsTimeOutOnNonActionableElementsNamingTheLastReason`, `WindowRuntimeTests.cs:ServoClickOnATargetThatNeverBecomesActionableTimesOutNamingTheLastReason`.
+- A target that becomes enabled, uncovered or present frames after the call gets its input without a prior wait; an ambiguous target still fails at once. `WindowRuntimeTests.cs:ServoTargetActionsWaitForATargetThatBecomesEnabledFramesLater`, `ServoClickWaitsForACoveringOverlayToDisappear`, `ServoClickWaitsForATargetThatAppearsFramesLater`, `ServoClickOnAnAmbiguousTargetStillFailsWithoutWaiting`.
 - Zero, one and many matches are handled differently. `tests/Cerneala.Tests/UI/Servo/ServoQueryTests.cs:CardinalityContractsDistinguishMissingSingleAndAmbiguousTargets`.
 - Idle waits for scheduler work and finite motion, and times out on continuous motion. `tests/Cerneala.Tests/UI/Servo/ServoSynchronizationTests.cs:WaitForIdleObservesSchedulerFiniteMotionAndContinuousMotion`.
 - A window action completes only after its input frame was presented. `tests/Cerneala.Tests/UI/Hosting/WindowRuntimeTests.cs:ServoWindowActionCompletesOnlyAfterItsInputFrameWasPresented`.
@@ -109,5 +110,5 @@ Servo adds no frame phase. Its frames enter through `UiHost.Update` at the same 
 ## Known Limitations
 
 - Live Preview input (`WindowApplicationRuntime.ClickPreview`, `MovePreviewPointer`, `SendPreviewText`, `PressPreviewKey`) calls the same driver directly and skips the Servo queue and gate. Whether it can interleave with a running Servo operation on the same window is netestat.
-- Selectors combine only through `WithName` and `Within`. There is no selector for "this Id and this Role".
+- An Id plus a Role is written with a predicate, `ServoTarget.ById("x").Where(element => element.Role == SemanticsRole.Button)`; there is no dedicated `WithRole`.
 - Screenshot tests check the save calls on a fake graphics session; no test decodes the written PNG.

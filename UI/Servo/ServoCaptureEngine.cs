@@ -21,13 +21,13 @@ internal sealed class ServoCaptureEngine
         if (!ReferenceEquals(element.Root, root))
         {
             throw new ServoTargetNotActionableException(
-                "The Servo target detached before its screenshot could be captured.");
+                $"The Servo target {target} detached before its screenshot could be captured.");
         }
 
         if (!UIElementVisibility.IsEffectivelyVisible(element))
         {
             throw new ServoTargetNotActionableException(
-                "The Servo target is not effectively visible for capture.");
+                $"The Servo target {target} is not effectively visible for capture.");
         }
 
         UiViewport viewport = new(root.ViewportWidth, root.ViewportHeight, root.Scale);
@@ -37,7 +37,7 @@ internal sealed class ServoCaptureEngine
                 out WindowScreenshotRegion region))
         {
             throw new ServoTargetNotActionableException(
-                "The Servo target has no visible framebuffer region to capture.");
+                $"The Servo target {target} has no visible framebuffer region to capture.");
         }
 
         return region;

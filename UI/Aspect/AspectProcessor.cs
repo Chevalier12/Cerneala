@@ -33,7 +33,13 @@ public sealed class AspectProcessor
         root.Relay.VerifyAccess();
         ArgumentNullException.ThrowIfNull(element);
         AspectCatalog catalog = GetCatalog(element);
-        SynchronizeBehaviors(element, catalog);
+        // A behavior factory that detached the element ended this attachment: the detach's Clear removed its Aspect
+        // state, so nothing more is applied to it. A reattach queues the element's Aspect work again.
+        if (!SynchronizeBehaviors(element, catalog))
+        {
+            return;
+        }
+
         AspectEnvironment environment = GetEnvironment(element, catalog);
         if (element is ContentPresenter presenter)
         {
@@ -330,11 +336,13 @@ public sealed class AspectProcessor
         return GetCatalogState(element).Catalog;
     }
 
-    private void SynchronizeBehaviors(UIElement element, AspectCatalog catalog)
+    // Returns false when a behavior factory detached the element, which disposed this state through Clear.
+    private bool SynchronizeBehaviors(UIElement element, AspectCatalog catalog)
     {
         BehaviorState state = behaviorStates.GetValue(element, _ => new BehaviorState());
         AspectBehavior[] desired = catalog.Behaviors.Where(behavior => behavior.Matches(element)).ToArray();
         state.Synchronize(element, desired);
+        return !state.IsDisposed;
     }
 
     private CatalogState GetCatalogState(UIElement element)
@@ -495,6 +503,8 @@ public sealed class AspectProcessor
     {
         private List<AppliedBehavior> applied = [];
         private bool isDisposed;
+
+        public bool IsDisposed => isDisposed;
 
         public void Synchronize(UIElement element, IReadOnlyList<AspectBehavior> desired)
         {

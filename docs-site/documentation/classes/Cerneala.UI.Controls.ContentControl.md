@@ -63,6 +63,8 @@ host.ComponentTemplate = new ComponentTemplate<ContentControl>("ContentHost", co
 
 The hosted element follows the effective value of `ContentProperty`, whatever wrote it: the `Content` setter, or `SetValue` and `ClearValue` with any `UiPropertyValueSource`. For example, on an untemplated `host`, `host.SetValue(ContentControl.ContentProperty, (object?)child)` makes `child.LogicalParent` and `child.VisualParent` equal to `host`. A later `SetValue` with another element, or `host.ClearValue(ContentControl.ContentProperty)`, removes `child` from both collections again. When clearing one value source makes the element of a lower value source the effective `Content`, that element becomes the hosted child.
 
+A hosted element that leaves because `Content` changed, for example to `null` or to another value, is removed from `LogicalChildren` first and from `VisualChildren` second. So an element with `UIElement.Presence` set is still attached through the control when the visual removal starts its exit animation: on an attached control it stays an exiting visual child of the control (listed by `PresenceCoordinator.GetExitingVisualChildren`) until the exit ends, as `PresenceOptions` describes. For example, after `host.Content = null`, `root.Motion.Presence.GetState(oldChild)` is `PresenceState.Exiting` while the exit runs, and `PresenceState.Detached` after it ends. Setting the exiting element as `Content` again cancels its exit. An element whose hosting fails is removed at once, without an exit.
+
 When `ComponentTemplate` or `ComponentTemplateKey` is set, `ContentControl` releases any directly owned content element from its subtree. A template can then decide how to present the content, commonly by binding or assigning it to a `ContentPresenter`.
 
 A `ContentControl` can itself be the element that a `ContentPresenter`'s content template creates around `UIElement` content. When the control hosts that element directly and the presenter releases it, for example because its `ContentTemplate` changes, it sets the control's `Content` to `null` instead of only removing the child, so `Content` and the control's children stay in step. See `ContentPresenter` for details.
@@ -123,3 +125,4 @@ UI area: retained controls, layout, templating, and content presentation.
 - `ContentPresenter`
 - `ComponentTemplate`
 - `UIElement`
+- `Cerneala.UI.Motion.Presence.PresenceOptions`

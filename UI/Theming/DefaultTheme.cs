@@ -1,6 +1,7 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Templates;
+using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Motion.States;
 
@@ -49,6 +50,8 @@ public static class DefaultTheme
             context.Bind(Control.ForegroundProperty, presenter, Control.ForegroundProperty);
             context.Bind(Control.FontFamilyProperty, presenter, Control.FontFamilyProperty);
             context.Bind(Control.FontSizeProperty, presenter, Control.FontSizeProperty);
+            context.Bind(Control.HorizontalContentAlignmentProperty, presenter, UIElement.HorizontalAlignmentProperty);
+            context.Bind(Control.VerticalContentAlignmentProperty, presenter, UIElement.VerticalAlignmentProperty);
 
             return border;
         });

@@ -54,6 +54,14 @@ public class ColorSpectrum : Control, IPointerDragSource
         SetFrameworkDefault(BorderBrushProperty, new SolidColorBrush(new Color(70, 76, 86)));
         SetFrameworkDefault(BorderThicknessProperty, new Thickness(1));
         Handlers.AddHandler(InputEvents.KeyDownEvent, OnKeyDown);
+        Handlers.AddHandler(InputEvents.MouseMoveEvent, OnCapturedPointerInput);
+        Handlers.AddHandler(InputEvents.MouseWheelEvent, OnCapturedPointerInput);
+        Handlers.AddHandler(InputEvents.MouseDownEvent, OnCapturedPointerInput);
+        Handlers.AddHandler(InputEvents.MouseUpEvent, OnCapturedPointerInput);
+        Handlers.AddHandler(InputEvents.MouseLeftButtonDownEvent, OnCapturedPointerInput);
+        Handlers.AddHandler(InputEvents.MouseLeftButtonUpEvent, OnCapturedPointerInput);
+        Handlers.AddHandler(InputEvents.MouseRightButtonDownEvent, OnCapturedPointerInput);
+        Handlers.AddHandler(InputEvents.MouseRightButtonUpEvent, OnCapturedPointerInput);
         Handlers.AddHandler(InputEvents.LostMouseCaptureEvent, (_, _) => isDragging = false);
     }
 
@@ -80,6 +88,10 @@ public class ColorSpectrum : Control, IPointerDragSource
         get => GetValue(ValueProperty);
         set => SetValue(ValueProperty, value);
     }
+
+    // A left press on an enabled spectrum starts its drag, as a press on a Thumb does (#619), so an enclosing button
+    // is not pressed, does not repeat, and does not click for it.
+    internal override bool OwnsPointerClick => IsEnabled;
 
     public void SetSelection(float saturation, float value)
     {
@@ -218,6 +230,16 @@ public class ColorSpectrum : Control, IPointerDragSource
         float saturation = bounds.Width <= 0 ? 0 : point.X / bounds.Width;
         float value = bounds.Height <= 0 ? 0 : 1 - (point.Y / bounds.Height);
         SetSelection(saturation, value);
+    }
+
+    // The pointer input of the spectrum's own drag is handled, as a Thumb handles it, so the release that ends the drag
+    // does not click an enclosing button.
+    private void OnCapturedPointerInput(UiElementId _, RoutedEventArgs args)
+    {
+        if (isDragging)
+        {
+            args.Handled = true;
+        }
     }
 
     private void OnKeyDown(UiElementId _, RoutedEventArgs args)

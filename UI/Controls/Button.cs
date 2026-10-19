@@ -15,6 +15,13 @@ public class Button : ButtonBase
     private TextMeasurer textMeasurer = TextMeasurer.Default;
     private TextRenderer textRenderer = TextRenderer.Default;
 
+    // As WPF's ButtonBase theme style, a Button centers its content inside its border and padding.
+    public Button()
+    {
+        SetFrameworkDefault(HorizontalContentAlignmentProperty, HorizontalAlignment.Center);
+        SetFrameworkDefault(VerticalContentAlignmentProperty, VerticalAlignment.Center);
+    }
+
     public TextMeasurer TextMeasurer
     {
         get => textMeasurer;
@@ -74,7 +81,8 @@ public class Button : ButtonBase
 
         if (Content is UIElement element)
         {
-            element.Arrange(new ArrangeContext(ContentControl.Deflate(context.FinalRect, Insets), context.Rounding));
+            LayoutRect inner = ContentControl.Deflate(context.FinalRect, Insets);
+            element.Arrange(new ArrangeContext(AlignContent(inner, element.DesiredSize), context.Rounding));
         }
 
         return context.FinalRect;
@@ -103,9 +111,36 @@ public class Button : ButtonBase
         if (Content is string text && !string.IsNullOrEmpty(text))
         {
             LayoutRect contentBounds = ContentControl.Deflate(context.Bounds, Insets);
-            DrawPoint point = new(contentBounds.X, contentBounds.Y);
-            TextRenderer.Render(context.DrawingContext, text, CreateTextAspect(), contentBounds.Width, point);
+            TextAspect aspect = CreateTextAspect();
+            LayoutSize textSize = TextMeasurer.Measure(text, aspect, contentBounds.Width).Size;
+            LayoutRect textBounds = AlignContent(contentBounds, textSize);
+            DrawPoint point = new(textBounds.X, textBounds.Y);
+            TextRenderer.Render(context.DrawingContext, text, aspect, contentBounds.Width, point);
         }
+    }
+
+    // The slot that a WPF ContentPresenter with HorizontalAlignment and VerticalAlignment bound to the content
+    // alignment gets inside the inner rect: the content's size, or the whole inner size for Stretch.
+    private LayoutRect AlignContent(LayoutRect inner, LayoutSize contentSize)
+    {
+        HorizontalAlignment horizontal = HorizontalContentAlignment;
+        VerticalAlignment vertical = VerticalContentAlignment;
+        float width = horizontal == HorizontalAlignment.Stretch ? inner.Width : MathF.Min(contentSize.Width, inner.Width);
+        float height = vertical == VerticalAlignment.Stretch ? inner.Height : MathF.Min(contentSize.Height, inner.Height);
+        float x = horizontal switch
+        {
+            HorizontalAlignment.Center => inner.X + ((inner.Width - width) / 2),
+            HorizontalAlignment.Right => inner.X + inner.Width - width,
+            _ => inner.X
+        };
+        float y = vertical switch
+        {
+            VerticalAlignment.Center => inner.Y + ((inner.Height - height) / 2),
+            VerticalAlignment.Bottom => inner.Y + inner.Height - height,
+            _ => inner.Y
+        };
+
+        return new LayoutRect(x, y, width, height);
     }
 
     private LayoutSize MeasureTextContent(LayoutSize availableSize)
