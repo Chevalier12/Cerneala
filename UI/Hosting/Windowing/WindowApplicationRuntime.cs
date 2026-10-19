@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.ExceptionServices;
 using Cerneala.Drawing;
 using Cerneala.Drawing.Prism;
 using Cerneala.Timbre;
@@ -265,6 +266,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
             }
         }
 
+        ExceptionDispatchInfo? detachFailure = null;
         if (contexts.Remove(window, out WindowContext? context))
         {
             if (context.IsModal)
@@ -272,8 +274,18 @@ internal sealed class WindowApplicationRuntime : IDisposable
                 SetOwnerEnabled(window.Owner, enabled: true);
             }
 
-            context.Root.VisualChildren.Remove(window);
-            context.Root.LogicalChildren.Remove(window);
+            // A failing detach callback does not keep the window open: the close completes, then the first
+            // failure propagates, as ElementLifecycle.DetachSubtree does for the elements it detaches.
+            try
+            {
+                context.Root.VisualChildren.Remove(window);
+                context.Root.LogicalChildren.Remove(window);
+            }
+            catch (Exception exception)
+            {
+                detachFailure = ExceptionDispatchInfo.Capture(exception);
+            }
+
             context.Root.ReleaseDrawingResources();
             context.Root.SetTimbreRuntime(null);
             context.PlatformWindow.Destroy();
@@ -290,6 +302,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
         window.SetRuntimeOwner(null);
         window.MarkClosed();
         application?.HandleWindowClosed(window);
+        detachFailure?.Throw();
         return true;
     }
 

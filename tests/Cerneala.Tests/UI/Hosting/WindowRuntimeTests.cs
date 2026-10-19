@@ -2,6 +2,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.Reflection;
 using Cerneala.Drawing;
+using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
@@ -1781,6 +1782,46 @@ public sealed class WindowRuntimeTests : IDisposable
     }
 
     [Fact]
+    public async Task CloseFinishesClosingTheWindowWhenContentDetachThrowsThenPropagatesTheFailure()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Window owner = new();
+        owner.Show();
+        owner.Activate();
+        ElementAspect aspect = new(
+            "ThrowsOnDetach",
+            typeof(UIElement),
+            [],
+            [],
+            _ => new CallbackLifetime(() => throw new InvalidOperationException("Dispose failed")));
+        Window dialog = new() { Content = new Border { Aspect = aspect } };
+        int closedCount = 0;
+        dialog.Closed += (_, _) => closedCount++;
+        Task<bool?> result = dialog.ShowDialogAsync();
+        FakePlatformWindow nativeDialog = platform.Windows[1];
+
+        InvalidOperationException failure = Assert.Throws<InvalidOperationException>(dialog.Close);
+
+        Assert.Equal("Dispose failed", failure.Message);
+        Assert.False(dialog.IsShown);
+        Assert.True(dialog.IsClosed);
+        Assert.Equal(1, closedCount);
+        Assert.Equal(1, nativeDialog.DestroyCount);
+        Assert.Equal(1, nativeDialog.Session.DisposeCount);
+        Assert.DoesNotContain(dialog, runtime.Windows);
+        Assert.True(platform.Windows[0].Enabled);
+        Assert.Empty(owner.OwnedWindows);
+        Assert.True(result.IsCompleted);
+        Assert.Null(await result);
+
+        dialog.Close();
+
+        Assert.Equal(1, closedCount);
+        Assert.Equal(1, nativeDialog.DestroyCount);
+    }
+
+    [Fact]
     public void ClosingCanCancelAndClosedWindowCannotBeShownAgain()
     {
         Install(new FakeWindowPlatform());
@@ -2085,7 +2126,9 @@ public sealed class WindowRuntimeTests : IDisposable
 
         public bool Enabled { get; private set; } = true;
 
-        public bool Destroyed { get; private set; }
+        public bool Destroyed => DestroyCount > 0;
+
+        public int DestroyCount { get; private set; }
 
         public int ApplyPropertiesCount { get; private set; }
 
@@ -2136,7 +2179,7 @@ public sealed class WindowRuntimeTests : IDisposable
 
         public void Destroy()
         {
-            Destroyed = true;
+            DestroyCount++;
         }
 
         public void Dispose()
@@ -2146,6 +2189,16 @@ public sealed class WindowRuntimeTests : IDisposable
     }
 
     private sealed record FakeWindowSurface(int Id) : IWindowSurface;
+
+    private sealed class CallbackLifetime(Action dispose) : IDisposable
+    {
+        private Action? dispose = dispose;
+
+        public void Dispose()
+        {
+            Interlocked.Exchange(ref dispose, null)?.Invoke();
+        }
+    }
 
     private sealed class MutableInputSource : IInputSource
     {
