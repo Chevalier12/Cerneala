@@ -329,7 +329,7 @@ public class ContentPresenter : Control
             {
                 if (refresh == presentationRefresh)
                 {
-                    RemovePresentedChild(next);
+                    DiscardRejectedChild(next);
                     RestorePresentation(previousChild, previousChildIsGeneratedText, releasedContent);
                 }
 
@@ -341,7 +341,7 @@ public class ContentPresenter : Control
             {
                 if (!ReferenceEquals(next, presentedChild))
                 {
-                    RemovePresentedChild(next);
+                    DiscardRejectedChild(next);
                 }
 
                 DiscardSupersededChild(next, content);
@@ -537,10 +537,27 @@ public class ContentPresenter : Control
 
         contentReleasableByTemplate = null;
         presentedChild = null;
-        RemovePresentedChild(child);
+        // A move to a new owner is not an exit: the element leaves at once.
+        DiscardRejectedChild(child);
     }
 
     private void RemovePresentedChild(UIElement? child)
+    {
+        if (child is null)
+        {
+            return;
+        }
+
+        // Logical first: the child stays attached through its visual parent, so the visual removal can start a
+        // presence exit. In the other order the logical removal detaches the child and cancels that exit.
+        LogicalChildren.Remove(child);
+        VisualChildren.Remove(child);
+    }
+
+    // A child that never became the presented child, or that a new owner takes, leaves at once without a presence
+    // exit: the visual removal first, so the logical removal detaches it and cancels the exit that the visual removal
+    // started.
+    private void DiscardRejectedChild(UIElement? child)
     {
         if (child is null)
         {

@@ -1,6 +1,9 @@
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Motion.Presence;
+using Cerneala.Tests.UI.Motion.Core;
+using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
 
 namespace Cerneala.Tests.Controls;
 
@@ -941,6 +944,147 @@ public sealed class ContentPresenterTests
         Assert.False(content.IsAttached);
         Assert.Null(content.VisualParent);
         Assert.Null(content.LogicalParent);
+    }
+
+    // Issue #626: removing the visual child first and the logical child second canceled the exit at once.
+    [Fact]
+    public void ContentSetToNullKeepsTheExitOfADirectlyPresentedElementWithPresenceRunningUntilItEnds()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(200, 200, motionClock: clock);
+        ContentPresenter presenter = new();
+        root.VisualChildren.Add(presenter);
+        Border child = new() { Width = 50, Height = 20, Presence = CreatePresence() };
+        presenter.Content = child;
+        root.ProcessFrame();
+        Assert.Same(presenter, child.VisualParent);
+
+        presenter.Content = null;
+        root.ProcessFrame();
+
+        Assert.Null(presenter.PresentedChild);
+        Assert.Equal(PresenceState.Exiting, root.Motion.Presence.GetState(child));
+        Assert.Equal([child], root.Motion.Presence.GetExitingVisualChildren(presenter));
+        Assert.True(child.IsAttached);
+        Assert.Null(child.LogicalParent);
+        Assert.Empty(presenter.VisualChildren);
+        Assert.Empty(presenter.LogicalChildren);
+
+        clock.Advance(TimeSpan.FromMilliseconds(120));
+        root.ProcessFrame();
+
+        Assert.Equal(PresenceState.Detached, root.Motion.Presence.GetState(child));
+        Assert.Empty(root.Motion.Presence.GetExitingVisualChildren(presenter));
+        Assert.False(child.IsAttached);
+    }
+
+    // Issue #626: a replaced directly presented element with presence exits while the new element becomes present.
+    [Fact]
+    public void ContentReplacedKeepsTheExitOfTheOldPresentedElementWithPresenceRunningAndTheNewElementIsPresent()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(200, 200, motionClock: clock);
+        ContentPresenter presenter = new();
+        root.VisualChildren.Add(presenter);
+        Border oldChild = new() { Width = 50, Height = 20, Presence = CreatePresence() };
+        Border newChild = new() { Width = 50, Height = 20, Presence = CreatePresence() };
+        presenter.Content = oldChild;
+        root.ProcessFrame();
+
+        presenter.Content = newChild;
+        root.ProcessFrame();
+
+        Assert.Same(newChild, presenter.PresentedChild);
+        Assert.Equal(PresenceState.Exiting, root.Motion.Presence.GetState(oldChild));
+        Assert.Equal([oldChild], root.Motion.Presence.GetExitingVisualChildren(presenter));
+        Assert.True(oldChild.IsAttached);
+        Assert.Equal(PresenceState.Present, root.Motion.Presence.GetState(newChild));
+        Assert.Equal([newChild], presenter.VisualChildren);
+        Assert.Equal([newChild], presenter.LogicalChildren);
+
+        clock.Advance(TimeSpan.FromMilliseconds(120));
+        root.ProcessFrame();
+
+        Assert.Equal(PresenceState.Detached, root.Motion.Presence.GetState(oldChild));
+        Assert.Empty(root.Motion.Presence.GetExitingVisualChildren(presenter));
+        Assert.False(oldChild.IsAttached);
+        Assert.Equal(PresenceState.Present, root.Motion.Presence.GetState(newChild));
+    }
+
+    // Issue #626: presenting the exiting element again cancels its exit and hosts it in both trees again.
+    [Fact]
+    public void ContentSetAgainWhileItsPresentedElementExitsCancelsTheExit()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(200, 200, motionClock: clock);
+        ContentPresenter presenter = new();
+        root.VisualChildren.Add(presenter);
+        Border child = new() { Width = 50, Height = 20, Presence = CreatePresence() };
+        presenter.Content = child;
+        root.ProcessFrame();
+        presenter.Content = null;
+        root.ProcessFrame();
+
+        presenter.Content = child;
+        root.ProcessFrame();
+
+        Assert.Same(child, presenter.PresentedChild);
+        Assert.Same(presenter, child.LogicalParent);
+        Assert.Same(presenter, child.VisualParent);
+        Assert.Equal(PresenceState.Present, root.Motion.Presence.GetState(child));
+        Assert.Empty(root.Motion.Presence.GetExitingVisualChildren(presenter));
+        Assert.True(child.IsAttached);
+    }
+
+    // Issue #626: a template that takes the directly presented element moves it at once; that move is not an exit.
+    [Fact]
+    public void TemplateThatTakesTheDirectlyPresentedElementWithPresenceDoesNotStartAnExit()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(200, 200, motionClock: clock);
+        ContentPresenter presenter = new();
+        root.VisualChildren.Add(presenter);
+        Border child = new() { Width = 50, Height = 20, Presence = CreatePresence() };
+        presenter.Content = child;
+        root.ProcessFrame();
+
+        presenter.ContentTemplate = WrapTemplate("wrap", key: null);
+        root.ProcessFrame();
+
+        Border wrapper = Assert.IsType<Border>(presenter.PresentedChild);
+        Assert.Same(wrapper, child.VisualParent);
+        Assert.Same(wrapper, child.LogicalParent);
+        Assert.NotEqual(PresenceState.Exiting, root.Motion.Presence.GetState(child));
+        Assert.Empty(root.Motion.Presence.GetExitingVisualChildren(presenter));
+    }
+
+    // Issue #626: an element whose presentation a Loaded handler supersedes never became the presented child, so it
+    // leaves at once, without an exit.
+    [Fact]
+    public void ElementContentSupersededByLoadedWhileItIsAddedLeavesWithoutAnExit()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(200, 200, motionClock: clock);
+        ContentPresenter presenter = new() { Content = "first" };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        Border content = new() { Width = 50, Height = 20, Presence = CreatePresence() };
+        SetContentOnFirstLoaded(content, presenter, "other");
+
+        presenter.Content = content;
+        root.ProcessFrame();
+
+        AssertPresentsOnlyText(presenter, "other");
+        Assert.Equal(PresenceState.Detached, root.Motion.Presence.GetState(content));
+        Assert.Empty(root.Motion.Presence.GetExitingVisualChildren(presenter));
+        Assert.False(content.IsAttached);
+    }
+
+    private static PresenceOptions CreatePresence()
+    {
+        return PresenceOptions.FadeAndScale(
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)),
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)));
     }
 
     private static void SetContentOnFirstLoaded(UIElement element, ContentPresenter presenter, object newContent)
