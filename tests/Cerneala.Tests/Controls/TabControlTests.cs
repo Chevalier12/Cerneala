@@ -789,6 +789,99 @@ public sealed class TabControlTests
     }
 
     [Fact]
+    public void DeselectedTabOwnsTheElementContentThatASelectionChangedHandlerTookFromTheTemplateBeforeTheNextLayoutPass()
+    {
+        UIRoot root = new(300, 200);
+        FixedElement a = new();
+        FixedElement b = new();
+        StackPanel other = new();
+        TabItem first = new() { Header = "1", Content = a };
+        TabItem second = new() { Header = "2", Content = b };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        tabControl.SelectedIndex = 0;
+        ContentPresenter? presenter = null;
+        tabControl.ComponentTemplate = new ComponentTemplate<TabControl>("tabs", context =>
+            presenter = new ContentPresenter { Content = context.Owner.SelectedContent });
+        tabControl.SelectionChanged += (_, _) => presenter!.Content = tabControl.SelectedContent;
+        root.VisualChildren.Add(tabControl);
+        root.VisualChildren.Add(other);
+        root.ProcessFrame();
+
+        tabControl.SelectedIndex = 1;
+
+        Assert.Same(presenter, b.LogicalParent);
+        Assert.Same(first, a.LogicalParent);
+        Assert.Null(a.VisualParent);
+        Assert.Throws<InvalidOperationException>(() => other.Children.Add(a));
+        Assert.Empty(other.Children);
+
+        tabControl.SelectedIndex = 0;
+        root.ProcessFrame();
+
+        Assert.Same(presenter, a.LogicalParent);
+        Assert.Same(presenter, a.VisualParent);
+        Assert.Same(second, b.LogicalParent);
+        Assert.Null(b.VisualParent);
+    }
+
+    [Fact]
+    public void DeselectedTabOwnsTheElementContentThatASelectedHandlerTookFromTheTemplateBeforeTheNextLayoutPass()
+    {
+        UIRoot root = new(300, 200);
+        FixedElement a = new();
+        FixedElement b = new();
+        StackPanel other = new();
+        TabItem first = new() { Header = "1", Content = a };
+        TabItem second = new() { Header = "2", Content = b };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        tabControl.SelectedIndex = 0;
+        ContentPresenter? presenter = null;
+        tabControl.ComponentTemplate = new ComponentTemplate<TabControl>("tabs", context =>
+            presenter = new ContentPresenter { Content = context.Owner.SelectedContent });
+        second.Selected += (_, _) => presenter!.Content = second.Content;
+        root.VisualChildren.Add(tabControl);
+        root.VisualChildren.Add(other);
+        root.ProcessFrame();
+
+        tabControl.SelectedIndex = 1;
+
+        Assert.Same(presenter, b.LogicalParent);
+        Assert.Same(first, a.LogicalParent);
+        Assert.Throws<InvalidOperationException>(() => other.Children.Add(a));
+    }
+
+    [Fact]
+    public void DeselectedTabOwnsTheElementContentWhenTheSelectionChangedHandlerThatTookItThrows()
+    {
+        UIRoot root = new(300, 200);
+        FixedElement a = new();
+        FixedElement b = new();
+        TabItem first = new() { Header = "1", Content = a };
+        TabItem second = new() { Header = "2", Content = b };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        tabControl.SelectedIndex = 0;
+        ContentPresenter? presenter = null;
+        tabControl.ComponentTemplate = new ComponentTemplate<TabControl>("tabs", context =>
+            presenter = new ContentPresenter { Content = context.Owner.SelectedContent });
+        tabControl.SelectionChanged += (_, _) =>
+        {
+            presenter!.Content = tabControl.SelectedContent;
+            throw new InvalidOperationException("handler failed");
+        };
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => tabControl.SelectedIndex = 1);
+
+        Assert.Equal("handler failed", exception.Message);
+        Assert.Same(presenter, b.LogicalParent);
+        Assert.Same(first, a.LogicalParent);
+    }
+
+    [Fact]
     public void ElementContentMovesBetweenTheContentAreaAndTheComponentTemplate()
     {
         UIRoot root = new(300, 200);

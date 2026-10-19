@@ -274,19 +274,33 @@ public class Selector : ItemsControl
             }
         }
 
-        RefreshSelectionContainer(args.Change.OldIndex, "Selection changed", ref preparationFailure);
-        RefreshSelectionContainer(args.Change.NewIndex, "Selection changed", ref preparationFailure);
-        if (!relocated)
+        try
         {
-            RaiseEvent(new SelectionChangedEventArgs(
-                SelectionChangedEvent,
-                this,
-                args.Change,
-                removed is null ? [] : [removed],
-                added is null ? [] : [added]));
+            RefreshSelectionContainer(args.Change.OldIndex, "Selection changed", ref preparationFailure);
+            RefreshSelectionContainer(args.Change.NewIndex, "Selection changed", ref preparationFailure);
+            if (!relocated)
+            {
+                RaiseEvent(new SelectionChangedEventArgs(
+                    SelectionChangedEvent,
+                    this,
+                    args.Change,
+                    removed is null ? [] : [removed],
+                    added is null ? [] : [added]));
+            }
+        }
+        finally
+        {
+            OnSelectionChangeCompleted();
         }
 
         ThrowPreparationFailure(preparationFailure);
+    }
+
+    // Runs at the end of every selection change, after the Selected, Unselected, and SelectionChanged handlers, also
+    // when one of them throws. As in WPF, where a subclass's OnSelectionChanged override runs after
+    // base.OnSelectionChanged raised SelectionChanged, a subclass can react here to what those handlers changed.
+    internal virtual void OnSelectionChangeCompleted()
+    {
     }
 
     // A re-preparation failure raised while a selection change notifies its new SelectedIndex, by a nested
