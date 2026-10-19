@@ -36,11 +36,11 @@ public sealed class SdlInputSourceTests
     public void ScancodesMapToInputKeys(int scancode, InputKey expected)
     {
         SdlInputSource source = new();
-        source.SetKey(scancode, true);
+        source.SetKey(scancode, true, numLock: true);
         InputFrame frame = source.GetFrame();
         Assert.True(frame.Keyboard.IsDown(expected));
         Assert.True(frame.Keyboard.IsPressed(expected));
-        source.SetKey(scancode, false);
+        source.SetKey(scancode, false, numLock: true);
         Assert.True(source.GetFrame().Keyboard.IsReleased(expected));
     }
 
@@ -50,7 +50,7 @@ public sealed class SdlInputSourceTests
     public void KeypadAndPunctuationKeysArePressedWithTheTextTheyType(int scancode, InputKey expected, string text)
     {
         SdlInputSource source = new();
-        source.SetKey(scancode, true);
+        source.SetKey(scancode, true, numLock: true);
         source.AddText(text);
         InputFrame frame = source.GetFrame();
 

@@ -333,6 +333,40 @@ public sealed class ContentControlTests
         Assert.Equal(UiPropertyValueSource.Local, control.GetValueSource(ContentControl.ContentProperty));
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ReplacementWhoseElementLoadedHandlerThrowsReleasesTheElementForReuse(bool useSetValue)
+    {
+        UIRoot root = new(300, 200);
+        ContentControl control = new();
+        root.VisualChildren.Add(control);
+        root.ProcessFrame();
+        Button oldChild = new() { Content = "old" };
+        control.Content = oldChild;
+        Button failed = new() { Content = "next" };
+        failed.Loaded += (_, _) => throw new InvalidOperationException("Loaded handler failed");
+
+        Assert.Throws<InvalidOperationException>(() =>
+        {
+            if (useSetValue)
+            {
+                control.SetValue(ContentControl.ContentProperty, (object?)failed);
+            }
+            else
+            {
+                control.Content = failed;
+            }
+        });
+
+        AssertPreviousOwnershipRestored(control, oldChild, failed);
+        Assert.True(oldChild.IsLoaded);
+        Assert.False(failed.IsLoaded);
+        Border reuse = new();
+        reuse.Child = failed;
+        Assert.Same(reuse, failed.LogicalParent);
+    }
+
     [Fact]
     public void FailedRestoreOfThePreviousElementRethrowsTheFirstFailureWithoutRestoringAgain()
     {

@@ -46,6 +46,7 @@ public class ScrollContentPresenter : ContentControl, IScrollInfo
         typeof(ScrollContentPresenter),
         new UiPropertyMetadata<float>(0, UiPropertyOptions.None, validateValue: IsValidExtent));
 
+    private bool canHorizontallyScroll = true;
     private bool canVerticallyScroll = true;
 
     public float HorizontalOffset
@@ -84,17 +85,39 @@ public class ScrollContentPresenter : ContentControl, IScrollInfo
         private set => SetValue(ViewportHeightProperty, value);
     }
 
-    public bool CanHorizontallyScroll { get; set; } = true;
+    // MeasureCore reads both capabilities to choose the content constraint, so a change invalidates the measure, as in
+    // WPF. ScrollViewer measures this presenter with the same size after a switch between Disabled and Auto, and the
+    // cached measure would keep the old constraint (#561).
+    public bool CanHorizontallyScroll
+    {
+        get => canHorizontallyScroll;
+        set
+        {
+            if (canHorizontallyScroll == value)
+            {
+                return;
+            }
+
+            canHorizontallyScroll = value;
+            Invalidate(InvalidationFlags.Measure, "Scroll capability changed");
+        }
+    }
 
     public bool CanVerticallyScroll
     {
         get => canVerticallyScroll;
         set
         {
+            bool changed = canVerticallyScroll != value;
             canVerticallyScroll = value;
             if (!value)
             {
                 StopItemsVirtualization(ContentElement);
+            }
+
+            if (changed)
+            {
+                Invalidate(InvalidationFlags.Measure, "Scroll capability changed");
             }
         }
     }

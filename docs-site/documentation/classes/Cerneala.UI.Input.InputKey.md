@@ -47,7 +47,7 @@ panel.AddHandler(InputEvents.KeyDownEvent, (_, args) =>
 
 For every other key, the focus manager raises `PreviewKeyDown` and `KeyDown` on the focused element when the key goes down in a frame, and `PreviewKeyUp` and `KeyUp` when it goes up.
 
-The SDL input source produces every other member: letters, digits, `F1` to `F12`, the arrow, editing, and navigation keys, the left and right Shift, Ctrl, and Alt keys, the numeric keypad keys, and the punctuation keys. The keypad and punctuation keys have the names of WPF `System.Windows.Input.Key`. Keypad Enter is `Enter`, as in WPF.
+The SDL input source produces every other member: letters, digits, `F1` to `F12`, the arrow, editing, and navigation keys, the left and right Shift, Ctrl, and Alt keys, the numeric keypad keys, `Clear`, and the punctuation keys. The keypad and punctuation keys have the names of WPF `System.Windows.Input.Key`. Keypad Enter is `Enter`, as in WPF.
 
 A key raises its key events and, separately, the text it types. Example: with Num Lock on, keypad 5 in a focused `TextBox` raises `KeyDown` with `NumPad5`, then `TextInput` with the text `"5"`, then `KeyUp` with `NumPad5`; the `.` key raises `KeyDown` with `OemPeriod`, then `TextInput` with `"."`.
 
@@ -58,6 +58,24 @@ box.KeyDown += (_, e) => Console.WriteLine(((KeyEventArgs)e).Key);
 ```
 
 The SDL input source maps SDL scancodes, which name a key by its position on a US keyboard, not by the character it types in the current layout. Example: the key right of `L` is `OemSemicolon` also on a German keyboard, where it types `ö`.
+
+The keypad digit keys and keypad `.` follow Num Lock, as in WPF, where the key comes from the Windows virtual key. SDL reports the same keypad scancode in both states and the Num Lock state in the key event's modifiers (`SDL_KMOD_NUM`):
+
+| Keypad key | Num Lock on | Num Lock off |
+| --- | --- | --- |
+| `0` | `NumPad0` | `Insert` |
+| `1` | `NumPad1` | `End` |
+| `2` | `NumPad2` | `Down` |
+| `3` | `NumPad3` | `PageDown` |
+| `4` | `NumPad4` | `Left` |
+| `5` | `NumPad5` | `Clear` |
+| `6` | `NumPad6` | `Right` |
+| `7` | `NumPad7` | `Home` |
+| `8` | `NumPad8` | `Up` |
+| `9` | `NumPad9` | `PageUp` |
+| `.` | `Decimal` | `Delete` |
+
+Example: a focused `TextBox` holds `abc` with the caret at the end, and Num Lock is off. Keypad 4 raises `KeyDown` with `Left` and moves the caret before `c`; typing `X` then gives `abXc`. Keypad `.` then raises `Delete` and deletes the `c`, so the text is `abX`. With Num Lock on, keypad 4 raises `NumPad4` and types `4`. A keypad key keeps the key it went down as until it goes up: keypad 4 pressed with Num Lock off raises `KeyDown` with `Left`, and its auto-repeats and its `KeyUp` are `Left` too, also when Num Lock is turned on while the key is held. The other keypad keys (`Multiply`, `Add`, `Subtract`, `Divide`, and keypad Enter) do not depend on Num Lock.
 
 Some keys have built-in behavior:
 
@@ -70,7 +88,7 @@ Some keys have built-in behavior:
 | `LeftShift`/`RightShift`, `LeftCtrl`/`RightCtrl`, `LeftAlt`/`RightAlt` | Set `KeyEventArgs.IsShiftDown`, `IsControlDown`, and `IsAltDown`, and match `KeyModifiers` in `KeyGesture`. |
 | `Up`, `Down`, `Escape`, `Enter`, `Tab`, `F4` | `ComboBox` and `Menu` keyboard navigation. |
 
-The numeric values follow declaration order: `Unknown` is `0`, `None` is `1`, `A` is `27`, `F12` is `70`, and `OemBackslash` is `97`.
+The numeric values follow declaration order: `Unknown` is `0`, `None` is `1`, `A` is `27`, `F12` is `70`, `OemBackslash` is `97`, and `Clear` is `98`.
 
 ## Fields
 
@@ -120,6 +138,7 @@ The numeric values follow declaration order: `Unknown` is `0`, `None` is `1`, `A
 | `OemCloseBrackets` | `95` | The `]` and `}` key. |
 | `OemQuotes` | `96` | The `'` and `"` key. |
 | `OemBackslash` | `97` | The extra key next to left Shift on ISO keyboards. |
+| `Clear` | `98` | Keypad 5 with Num Lock off (WPF `Key.Clear`). |
 
 ## Applies to
 

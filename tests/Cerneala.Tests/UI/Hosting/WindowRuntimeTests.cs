@@ -2,6 +2,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.Reflection;
 using Cerneala.Drawing;
+using Cerneala.UI;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
@@ -1819,6 +1820,117 @@ public sealed class WindowRuntimeTests : IDisposable
 
         Assert.Equal(1, closedCount);
         Assert.Equal(1, nativeDialog.DestroyCount);
+    }
+
+    [Fact]
+    public void OwnerClosesWhenClosingAnOwnedWindowThrowsThenPropagatesTheFailure()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Window owner = new();
+        int ownerClosedCount = 0;
+        owner.Closed += (_, _) => ownerClosedCount++;
+        owner.Show();
+        Window throwing = new() { Owner = owner, Content = CreateContentThatThrowsOnDetach() };
+        Window second = new() { Owner = owner };
+        throwing.Show();
+        second.Show();
+
+        InvalidOperationException failure = Assert.Throws<InvalidOperationException>(owner.Close);
+
+        Assert.Equal("Dispose failed", failure.Message);
+        Assert.True(throwing.IsClosed);
+        Assert.True(second.IsClosed);
+        Assert.False(owner.IsShown);
+        Assert.True(owner.IsClosed);
+        Assert.Equal(1, ownerClosedCount);
+        Assert.All(platform.Windows, window => Assert.Equal(1, window.DestroyCount));
+        Assert.Equal(1, platform.Windows[0].Session.DisposeCount);
+        Assert.Empty(runtime.Windows);
+    }
+
+    [Fact]
+    public void ClosingMainWindowClosesEveryWindowWhenClosingOneThrows()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Window main = new();
+        Window throwing = new() { Content = CreateContentThatThrowsOnDetach() };
+        Window secondary = new();
+        runtime.StartMainWindow(main);
+        throwing.Show();
+        secondary.Show();
+
+        InvalidOperationException failure = Assert.Throws<InvalidOperationException>(main.Close);
+
+        Assert.Equal("Dispose failed", failure.Message);
+        Assert.True(main.IsClosed);
+        Assert.True(throwing.IsClosed);
+        Assert.True(secondary.IsClosed);
+        Assert.Empty(runtime.Windows);
+        Assert.All(platform.Windows, window => Assert.Equal(1, window.DestroyCount));
+    }
+
+    [Fact]
+    public void ShutdownClosesEveryWindowAndExitsWhenClosingOneThrows()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Application app = new() { ShutdownMode = ApplicationShutdownMode.OnExplicitShutdown };
+        app.Install(runtime);
+        int exitCount = 0;
+        app.Exit += (_, _) => exitCount++;
+        Window throwing = new() { Content = CreateContentThatThrowsOnDetach() };
+        Window secondary = new();
+        throwing.Show();
+        secondary.Show();
+
+        InvalidOperationException failure = Assert.Throws<InvalidOperationException>(app.Shutdown);
+
+        Assert.Equal("Dispose failed", failure.Message);
+        Assert.True(throwing.IsClosed);
+        Assert.True(secondary.IsClosed);
+        Assert.Empty(runtime.Windows);
+        Assert.All(platform.Windows, window => Assert.Equal(1, window.DestroyCount));
+        Assert.Equal(1, exitCount);
+        Assert.Null(Application.Current);
+    }
+
+    [Fact]
+    public void RuntimeDisposeClosesEveryWindowAndExitsWhenClosingOneThrows()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Application app = new() { ShutdownMode = ApplicationShutdownMode.OnExplicitShutdown };
+        app.Install(runtime);
+        int exitCount = 0;
+        app.Exit += (_, _) => exitCount++;
+        Window throwing = new() { Content = CreateContentThatThrowsOnDetach() };
+        Window secondary = new();
+        throwing.Show();
+        secondary.Show();
+
+        InvalidOperationException failure = Assert.Throws<InvalidOperationException>(runtime.Dispose);
+
+        Assert.Equal("Dispose failed", failure.Message);
+        Assert.True(throwing.IsClosed);
+        Assert.True(secondary.IsClosed);
+        Assert.Empty(runtime.Windows);
+        Assert.All(platform.Windows, window => Assert.Equal(1, window.DestroyCount));
+        Assert.Null(WindowApplicationRuntime.Current);
+        Assert.Equal(1, exitCount);
+        Assert.Null(Application.Current);
+    }
+
+    private static Border CreateContentThatThrowsOnDetach()
+    {
+        ElementAspect aspect = new(
+            "ThrowsOnDetach",
+            typeof(UIElement),
+            [],
+            [],
+            _ => new CallbackLifetime(() => throw new InvalidOperationException("Dispose failed")));
+        return new Border { Aspect = aspect };
     }
 
     [Fact]

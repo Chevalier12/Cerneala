@@ -1,12 +1,15 @@
 using Cerneala.Drawing;
+using Cerneala.UI;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
+using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Virtualization;
 using Cerneala.UI.Media;
+using Cerneala.UI.Rendering;
 
 namespace Cerneala.Tests.Controls;
 
@@ -100,6 +103,24 @@ public sealed class ListBoxTests
         Assert.False(check.IsChecked);
         Assert.Equal(1, listBox.SelectedIndex);
         Assert.True(row.IsSelected);
+    }
+
+    // A click into a TextBox of the ItemTemplate is the text box's, as WPF's text editor handles the left button
+    // down and up before ListBoxItem sees them (#586): the text box gets the focus and the row is not selected.
+    [Fact]
+    public void ListBoxClickInsideTemplateTextBoxFocusesItWithoutSelectingRow()
+    {
+        (UIRoot root, ListBox listBox) = CreateListBox(context => new TextBox { Text = context.Data, Width = 60 });
+        ListBoxItem row = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[1]);
+        TextBox text = Assert.IsType<TextBox>(FindDescendant<TextBox>(row));
+        LayoutRect bounds = text.ArrangedBounds;
+        ElementInputBridge bridge = new();
+
+        Click(root, bridge, bounds.X + bounds.Width / 2, bounds.Y + bounds.Height / 2);
+
+        Assert.True(text.IsKeyboardFocused);
+        Assert.Equal(-1, listBox.SelectedIndex);
+        Assert.False(row.IsSelected);
     }
 
     // As in WPF, where the press on the row selects it, a release on a button in the row that the button does not turn
@@ -421,6 +442,56 @@ public sealed class ListBoxTests
         Assert.Equal(reference.DesiredSize.Height + 8, item.DesiredSize.Height);
     }
 
+    // As the Border of the WPF ListBox template, Background fills the arranged bounds behind the items (#590).
+    [Fact]
+    public void ListBoxFillsItsArrangedBoundsWithBackgroundBehindItsItems()
+    {
+        SolidColorBrush red = new(Color.Red);
+        ListBox listBox = new() { Background = red };
+        listBox.Items.Add(new ListBoxItem { Content = "One" });
+        UIRoot root = new();
+        root.VisualChildren.Add(listBox);
+        root.ProcessFrame();
+        listBox.Arrange(new ArrangeContext(new LayoutRect(3, 4, 40, 30)));
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
+
+        List<DrawCommand> commands = [.. root.RetainedRenderer.Commit(root)];
+
+        DrawCommand fill = Assert.Single(commands, command => ReferenceEquals(command.Brush, red));
+        Assert.Equal(DrawCommandKind.FillRectangle, fill.Kind);
+        Assert.Equal(new DrawRect(3, 4, 40, 30), fill.Rect);
+        Assert.Equal(0, commands.IndexOf(fill));
+        Assert.True(commands.Count > 1);
+    }
+
+    [Fact]
+    public void ListBoxWithoutBackgroundDrawsNoFill()
+    {
+        UIRoot root = new(100, 100);
+        ListBox listBox = new();
+        listBox.SetItems(new[] { "one" });
+        root.VisualChildren.Add(listBox);
+        root.ProcessFrame();
+
+        Assert.Empty(Render(listBox));
+    }
+
+    [Fact]
+    public void ListBoxWithComponentTemplateLeavesItsBackgroundToTheTemplate()
+    {
+        UIRoot root = new(100, 100);
+        ListBox listBox = new()
+        {
+            Background = new SolidColorBrush(Color.Red),
+            ComponentTemplate = new ComponentTemplate<ListBox>("list", _ => new Border())
+        };
+        root.VisualChildren.Add(listBox);
+        root.ProcessFrame();
+
+        Assert.Empty(Render(listBox));
+    }
+
     [Fact]
     public void TabControlSelectedTabItemReturnsUnrealizedTabItem()
     {
@@ -444,6 +515,13 @@ public sealed class ListBoxTests
         TabItem selected = tabControl.SelectedTabItem!;
         Assert.Equal("Second", selected.Header);
         Assert.Equal("Second content", selected.Content);
+    }
+
+    private static DrawCommandList Render(UIElement element)
+    {
+        DrawCommandList commands = new();
+        element.Render(new RenderContext(element, new DrawingContext(commands), element.ArrangedBounds, RenderLayer.Default, new RenderCounters()));
+        return commands;
     }
 
     private static InputFrame PointerFrame(float x, float y, bool previousDown = false, bool currentDown = false)

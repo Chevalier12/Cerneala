@@ -334,6 +334,110 @@ public sealed class ButtonTests
         Assert.Equal(1, clicks);
     }
 
+    // A click into a text box belongs to the text box, as a WPF TextBox handles MouseLeftButtonDown and
+    // MouseLeftButtonUp (#586): it gets the focus and the caret, and the enclosing button is neither pressed, clicked,
+    // nor runs its command.
+    [Fact]
+    public void ClickInsideTextBoxInsideButtonPlacesCaretWithoutButtonClick()
+    {
+        int commands = 0;
+        TextBox text = new() { Text = "abc", Width = 120, Height = 30 };
+        Button button = new() { Content = text, Width = 200, Height = 80, Command = new ActionCommand(_ => commands++) };
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+        UIRoot root = CreateWindowRoot(button);
+        text.MoveCaret(0);
+        LayoutRect bounds = text.ArrangedBounds;
+        float x = bounds.X + bounds.Width - 4;
+        float y = bounds.Y + bounds.Height / 2;
+        Assert.Same(text, new HitTestService().HitTest(root, x, y)?.Element);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bool pressedDuringPress = button.IsPressed;
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.Equal(0, clicks);
+        Assert.Equal(0, commands);
+        Assert.False(pressedDuringPress);
+        Assert.True(text.IsKeyboardFocused);
+        Assert.Equal(3, text.Caret.Position);
+    }
+
+    [Fact]
+    public void ClickInsidePasswordBoxInsideButtonRaisesNoButtonClick()
+    {
+        int commands = 0;
+        PasswordBox password = new() { Width = 120, Height = 30 };
+        Button button = new() { Content = password, Width = 200, Height = 80, Command = new ActionCommand(_ => commands++) };
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+        UIRoot root = CreateWindowRoot(button);
+        LayoutRect bounds = password.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        Assert.Same(password, new HitTestService().HitTest(root, x, y)?.Element);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bool pressedDuringPress = button.IsPressed;
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.Equal(0, clicks);
+        Assert.Equal(0, commands);
+        Assert.False(pressedDuringPress);
+        Assert.True(password.IsKeyboardFocused);
+    }
+
+    [Fact]
+    public void ClickOnButtonOutsideNestedTextBoxRaisesButtonClickAndCommandOnce()
+    {
+        int commands = 0;
+        TextBox text = new() { Width = 120, Height = 30 };
+        Button button = new() { Content = text, Width = 200, Height = 80, Command = new ActionCommand(_ => commands++) };
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+        UIRoot root = CreateWindowRoot(button);
+        LayoutRect bounds = button.ArrangedBounds;
+        float x = bounds.X + 5;
+        float y = bounds.Y + 5;
+        Assert.Same(button, new HitTestService().HitTest(root, x, y)?.Element);
+
+        Click(root, x, y);
+
+        Assert.Equal(1, clicks);
+        Assert.Equal(1, commands);
+        Assert.False(text.IsKeyboardFocused);
+    }
+
+    // A press on the button followed by a release over the text box is the button's click, as the WPF Button that
+    // took the press captures the mouse and clicks for a release over its content.
+    [Fact]
+    public void PressOnButtonAndReleaseOverNestedTextBoxRaisesButtonClickOnce()
+    {
+        TextBox text = new() { Width = 120, Height = 30 };
+        Button button = new() { Content = text, Width = 200, Height = 80 };
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+        UIRoot root = CreateWindowRoot(button);
+        LayoutRect buttonBounds = button.ArrangedBounds;
+        LayoutRect textBounds = text.ArrangedBounds;
+        float pressX = buttonBounds.X + 5;
+        float pressY = buttonBounds.Y + 5;
+        float releaseX = textBounds.X + textBounds.Width / 2;
+        float releaseY = textBounds.Y + textBounds.Height / 2;
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(pressX, pressY, currentDown: true));
+        bridge.Dispatch(root, MoveFrame(pressX, pressY, releaseX, releaseY));
+        bridge.Dispatch(root, PointerFrame(releaseX, releaseY, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.Equal(1, clicks);
+    }
+
     [Fact]
     public void PickingComboBoxDropDownItemInsideButtonSelectsTheItemWithoutButtonClick()
     {
@@ -372,6 +476,54 @@ public sealed class ButtonTests
         ClickCenter(root, two);
 
         Assert.Equal(1, comboBox.SelectedIndex);
+        Assert.False(radio.IsChecked);
+    }
+
+    [Fact]
+    public void ClickingButtonInsideRadioButtonClicksOnlyTheInnerButton()
+    {
+        Button inner = new() { Content = "Inner", Width = 100, Height = 30 };
+        RadioButton radio = new() { Content = inner, Width = 200, Height = 80 };
+        int innerClicks = 0;
+        int radioClicks = 0;
+        inner.Click += (_, _) => innerClicks++;
+        radio.Click += (_, args) =>
+        {
+            if (IsSource(args.OriginalSource, radio))
+            {
+                radioClicks++;
+            }
+        };
+        UIRoot root = CreateWindowRoot(radio);
+
+        ClickCenter(root, inner);
+
+        Assert.Equal(1, innerClicks);
+        Assert.Equal(0, radioClicks);
+        Assert.False(radio.IsChecked);
+
+        LayoutRect radioBounds = radio.ArrangedBounds;
+        Click(root, radioBounds.X + 5, radioBounds.Y + 5);
+
+        Assert.Equal(1, innerClicks);
+        Assert.Equal(1, radioClicks);
+        Assert.True(radio.IsChecked);
+    }
+
+    [Fact]
+    public void ReleaseOnRadioButtonAfterPressOutsideLeavesItUnchecked()
+    {
+        RadioButton radio = new() { Content = "R", Width = 100, Height = 50 };
+        UIRoot root = CreateCanvasRoot(radio);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(250, 150, currentDown: true));
+        root.ProcessFrame();
+        bridge.Dispatch(root, PointerFrame(50, 25, previousDown: true, currentDown: true));
+        root.ProcessFrame();
+        bridge.Dispatch(root, PointerFrame(50, 25, previousDown: true));
+        root.ProcessFrame();
+
         Assert.False(radio.IsChecked);
     }
 
@@ -434,6 +586,13 @@ public sealed class ButtonTests
             current = current.WithButton(InputMouseButton.Left, true);
         }
 
+        return new InputFrame(previous, current, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []);
+    }
+
+    private static InputFrame MoveFrame(float fromX, float fromY, float toX, float toY)
+    {
+        PointerSnapshot previous = PointerSnapshot.Empty.WithPosition(fromX, fromY).WithButton(InputMouseButton.Left, true);
+        PointerSnapshot current = PointerSnapshot.Empty.WithPosition(toX, toY).WithButton(InputMouseButton.Left, true);
         return new InputFrame(previous, current, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []);
     }
 

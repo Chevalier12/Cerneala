@@ -1,5 +1,6 @@
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Rendering;
 
 namespace Cerneala.UI.Controls;
 
@@ -44,6 +45,16 @@ public class ListBox : Selector
         if (container is ListBoxItem listBoxItem)
         {
             listBoxItem.SetItemPresentation(null, null, null, -1);
+        }
+    }
+
+    // As the outer border of the WPF ListBox template, a list without a template fills its bounds with Background
+    // behind its items; a ComponentTemplate draws its own chrome.
+    protected override void OnRender(RenderContext context)
+    {
+        if (TemplateChild is null)
+        {
+            Border.RenderBackground(this, context);
         }
     }
 }

@@ -1,16 +1,10 @@
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Core;
-using Cerneala.UI.Input;
 
 namespace Cerneala.UI.Controls;
 
 public class RadioButton : Button
 {
-    public RadioButton()
-    {
-        Handlers.AddHandler(InputEvents.MouseUpEvent, OnMouseUp);
-    }
-
     public static readonly UiProperty<bool> IsCheckedProperty = UiProperty<bool>.Register(
         nameof(IsChecked),
         typeof(RadioButton),
@@ -22,11 +16,11 @@ public class RadioButton : Button
         set => SetValue(IsCheckedProperty, value);
     }
 
-    private void OnMouseUp(UiElementId source, RoutedEventArgs args)
+    // Checks only through ButtonBase's click, so a release that a command source in the content owns, or a release
+    // that follows no press on this button, leaves IsChecked unchanged (#587).
+    protected override void OnClick()
     {
-        if (args is MouseButtonEventArgs { ChangedButton: InputMouseButton.Left })
-        {
-            IsChecked = true;
-        }
+        IsChecked = true;
+        base.OnClick();
     }
 }

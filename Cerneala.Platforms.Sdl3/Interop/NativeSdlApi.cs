@@ -695,12 +695,14 @@ internal sealed class NativeSdlApi : ISdlApi
             case SdlEventKind.KeyDown:
             case SdlEventKind.KeyUp:
                 SDL.Scancode scancode = (SDL.Scancode)@event.Scancode;
+                SDL.Keymod mod = @event.NumLock ? SDL.Keymod.Num : SDL.Keymod.None;
                 native.Key = new SDL.KeyboardEvent
                 {
                     Type = @event.Kind == SdlEventKind.KeyDown ? SDL.EventType.KeyDown : SDL.EventType.KeyUp,
                     WindowID = @event.WindowId,
                     Scancode = scancode,
-                    Key = SDL.GetKeyFromScancode(scancode, SDL.Keymod.None, false),
+                    Key = SDL.GetKeyFromScancode(scancode, mod, false),
+                    Mod = mod,
                     Down = @event.Kind == SdlEventKind.KeyDown,
                     Repeat = @event.Repeat
                 };
@@ -920,7 +922,8 @@ internal sealed class NativeSdlApi : ISdlApi
         new(kind, @event.WindowID, @event.Data1, @event.Data2);
 
     private static SdlEvent Key(SdlEventKind kind, SDL.KeyboardEvent @event) =>
-        new(kind, @event.WindowID, Scancode: (int)@event.Scancode, Repeat: @event.Repeat);
+        new(kind, @event.WindowID, Scancode: (int)@event.Scancode, Repeat: @event.Repeat,
+            NumLock: (@event.Mod & SDL.Keymod.Num) != 0);
 
     private static SdlEvent Button(SdlEventKind kind, SDL.MouseButtonEvent @event) =>
         new(kind, @event.WindowID, X: @event.X, Y: @event.Y, MouseButton: @event.Button);

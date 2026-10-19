@@ -1,203 +1,312 @@
 namespace Cerneala.Tests.Architecture;
 
 // Blanks comments and string or character literals in C# source text, keeping line breaks, so that a text scan
-// for forbidden terms sees only code.
+// for forbidden terms sees only code. The scan reads the original text, so escape sequences are recognized after
+// earlier characters have been blanked, and the code inside interpolation holes stays visible.
 internal static class CSharpSourceText
 {
     internal static string RemoveCommentsAndStringLiterals(string text)
     {
         char[] searchableText = text.ToCharArray();
-
-        for (int i = 0; i < searchableText.Length; i++)
-        {
-            if (searchableText[i] == '/' && i + 1 < searchableText.Length)
-            {
-                if (searchableText[i + 1] == '/')
-                {
-                    i = ClearUntilLineEnd(searchableText, i);
-                    continue;
-                }
-
-                if (searchableText[i + 1] == '*')
-                {
-                    i = ClearBlockComment(searchableText, i);
-                    continue;
-                }
-            }
-
-            if (searchableText[i] == '@' && i + 1 < searchableText.Length && searchableText[i + 1] == '"')
-            {
-                i = ClearVerbatimStringLiteral(searchableText, i);
-                continue;
-            }
-
-            if (searchableText[i] == '"' && CountQuoteRun(searchableText, i) >= 3)
-            {
-                i = ClearRawStringLiteral(searchableText, i, CountQuoteRun(searchableText, i));
-                continue;
-            }
-
-            if (searchableText[i] == '"')
-            {
-                i = ClearStringLiteral(searchableText, i);
-                continue;
-            }
-
-            if (searchableText[i] == '\'')
-            {
-                i = ClearCharacterLiteral(searchableText, i);
-            }
-        }
-
+        ScanCode(text, searchableText, 0, isInterpolationHole: false);
         return new string(searchableText);
     }
 
-    private static int ClearUntilLineEnd(char[] text, int start)
+    // Returns the index after the scanned code. In an interpolation hole the scan stops at the '}' that closes the
+    // hole or at the ':' that starts its format text, and returns that index.
+    private static int ScanCode(string text, char[] searchableText, int start, bool isInterpolationHole)
     {
+        int nesting = 0;
         int i = start;
-        for (; i < text.Length && text[i] is not '\r' and not '\n'; i++)
+        while (i < text.Length)
         {
-            text[i] = ' ';
+            char current = text[i];
+            char next = i + 1 < text.Length ? text[i + 1] : '\0';
+
+            if (current == '/' && next == '/')
+            {
+                i = ClearUntilLineEnd(text, searchableText, i);
+                continue;
+            }
+
+            if (current == '/' && next == '*')
+            {
+                i = ClearBlockComment(text, searchableText, i);
+                continue;
+            }
+
+            if (TryClearStringLiteral(text, searchableText, i, out int literalEnd))
+            {
+                i = literalEnd;
+                continue;
+            }
+
+            if (current == '\'')
+            {
+                i = ClearCharacterLiteral(text, searchableText, i);
+                continue;
+            }
+
+            if (isInterpolationHole)
+            {
+                if (current is '(' or '[' or '{')
+                {
+                    nesting++;
+                }
+                else if (current is ')' or ']')
+                {
+                    nesting--;
+                }
+                else if (current == '}')
+                {
+                    if (nesting == 0)
+                    {
+                        return i;
+                    }
+
+                    nesting--;
+                }
+                else if (current == ':' && nesting == 0)
+                {
+                    if (next != ':')
+                    {
+                        return i;
+                    }
+
+                    i++;
+                }
+            }
+
+            i++;
         }
 
         return i;
     }
 
-    private static int ClearBlockComment(char[] text, int start)
+    private static int ClearUntilLineEnd(string text, char[] searchableText, int start)
+    {
+        int i = start;
+        for (; i < text.Length && text[i] is not '\r' and not '\n'; i++)
+        {
+            searchableText[i] = ' ';
+        }
+
+        return i;
+    }
+
+    private static int ClearBlockComment(string text, char[] searchableText, int start)
     {
         for (int i = start; i < text.Length; i++)
         {
-            if (i + 1 < text.Length && text[i] == '*' && text[i + 1] == '/')
+            if (i > start + 2 && text[i - 1] == '*' && text[i] == '/')
             {
-                text[i] = ' ';
-                text[i + 1] = ' ';
+                searchableText[i] = ' ';
                 return i + 1;
             }
 
-            ClearNonLineEnding(text, i);
+            ClearNonLineEnding(text, searchableText, i);
         }
 
-        return text.Length - 1;
+        return text.Length;
     }
 
-    private static int ClearStringLiteral(char[] text, int start)
+    // Recognizes "...", @"...", $"...", $@"...", @$"...", """...""" and $$"""...""" at start.
+    private static bool TryClearStringLiteral(string text, char[] searchableText, int start, out int end)
     {
-        for (int i = start; i < text.Length; i++)
+        int i = start;
+        bool isVerbatim = false;
+        if (i < text.Length && text[i] == '@')
         {
-            bool escaped = i > start && text[i - 1] == '\\' && !IsEscapedEscape(text, i - 1, start);
+            isVerbatim = true;
+            i++;
+        }
+
+        int dollarCount = CountRun(text, i, '$');
+        i += dollarCount;
+        if (!isVerbatim && i < text.Length && text[i] == '@')
+        {
+            isVerbatim = true;
+            i++;
+        }
+
+        int quoteCount = CountRun(text, i, '"');
+        if (quoteCount == 0)
+        {
+            end = start;
+            return false;
+        }
+
+        bool isRaw = !isVerbatim && quoteCount >= 3;
+        int delimiterLength = isRaw ? quoteCount : 1;
+        for (int j = start; j < i + delimiterLength; j++)
+        {
+            searchableText[j] = ' ';
+        }
+
+        end = isRaw
+            ? ClearRawStringContent(text, searchableText, i + delimiterLength, quoteCount, dollarCount)
+            : ClearQuotedStringContent(text, searchableText, i + 1, isVerbatim, dollarCount > 0);
+        return true;
+    }
+
+    private static int ClearQuotedStringContent(string text, char[] searchableText, int start, bool isVerbatim, bool isInterpolated)
+    {
+        int i = start;
+        while (i < text.Length)
+        {
             char current = text[i];
-            ClearNonLineEnding(text, i);
+            char next = i + 1 < text.Length ? text[i + 1] : '\0';
 
-            if (current == '"' && i > start && !escaped)
+            if (!isVerbatim && current is '\r' or '\n')
             {
                 return i;
             }
 
-            if (current is '\r' or '\n')
+            if (!isVerbatim && current == '\\' && next is not '\r' and not '\n' and not '\0')
             {
-                return i;
-            }
-        }
-
-        return text.Length - 1;
-    }
-
-    private static int ClearVerbatimStringLiteral(char[] text, int start)
-    {
-        text[start] = ' ';
-        text[start + 1] = ' ';
-
-        for (int i = start + 2; i < text.Length; i++)
-        {
-            if (text[i] == '"' && i + 1 < text.Length && text[i + 1] == '"')
-            {
-                text[i] = ' ';
-                text[i + 1] = ' ';
-                i++;
+                searchableText[i] = ' ';
+                searchableText[i + 1] = ' ';
+                i += 2;
                 continue;
             }
 
-            char current = text[i];
-            ClearNonLineEnding(text, i);
-
             if (current == '"')
             {
-                return i;
-            }
-        }
-
-        return text.Length - 1;
-    }
-
-    private static int ClearRawStringLiteral(char[] text, int start, int quoteRunLength)
-    {
-        for (int i = start; i < text.Length; i++)
-        {
-            if (i > start && CountQuoteRun(text, i) >= quoteRunLength)
-            {
-                for (int j = 0; j < quoteRunLength; j++)
+                searchableText[i] = ' ';
+                if (isVerbatim && next == '"')
                 {
-                    text[i + j] = ' ';
+                    searchableText[i + 1] = ' ';
+                    i += 2;
+                    continue;
                 }
 
-                return i + quoteRunLength - 1;
+                return i + 1;
             }
 
-            ClearNonLineEnding(text, i);
-        }
-
-        return text.Length - 1;
-    }
-
-    private static int CountQuoteRun(char[] text, int start)
-    {
-        int quoteCount = 0;
-        for (int i = start; i < text.Length && text[i] == '"'; i++)
-        {
-            quoteCount++;
-        }
-
-        return quoteCount;
-    }
-
-    private static int ClearCharacterLiteral(char[] text, int start)
-    {
-        for (int i = start; i < text.Length; i++)
-        {
-            bool escaped = i > start && text[i - 1] == '\\' && !IsEscapedEscape(text, i - 1, start);
-            char current = text[i];
-            ClearNonLineEnding(text, i);
-
-            if (current == '\'' && i > start && !escaped)
+            if (isInterpolated && current is '{' or '}' && next == current)
             {
-                return i;
+                searchableText[i] = ' ';
+                searchableText[i + 1] = ' ';
+                i += 2;
+                continue;
             }
 
+            if (isInterpolated && current == '{')
+            {
+                searchableText[i] = ' ';
+                i = ClearInterpolationHole(text, searchableText, i + 1, 1);
+                continue;
+            }
+
+            ClearNonLineEnding(text, searchableText, i);
+            i++;
+        }
+
+        return i;
+    }
+
+    private static int ClearRawStringContent(string text, char[] searchableText, int start, int quoteCount, int dollarCount)
+    {
+        int i = start;
+        while (i < text.Length)
+        {
+            if (text[i] == '"' && CountRun(text, i, '"') >= quoteCount)
+            {
+                for (int j = 0; j < quoteCount; j++)
+                {
+                    searchableText[i + j] = ' ';
+                }
+
+                return i + quoteCount;
+            }
+
+            if (dollarCount > 0 && text[i] == '{')
+            {
+                int braceCount = CountRun(text, i, '{');
+                for (int j = 0; j < braceCount; j++)
+                {
+                    searchableText[i + j] = ' ';
+                }
+
+                i += braceCount;
+                if (braceCount >= dollarCount)
+                {
+                    i = ClearInterpolationHole(text, searchableText, i, dollarCount);
+                }
+
+                continue;
+            }
+
+            ClearNonLineEnding(text, searchableText, i);
+            i++;
+        }
+
+        return i;
+    }
+
+    // Keeps the hole's code, blanks its format text, and blanks the closing braces.
+    private static int ClearInterpolationHole(string text, char[] searchableText, int start, int closingBraceCount)
+    {
+        int i = ScanCode(text, searchableText, start, isInterpolationHole: true);
+        for (; i < text.Length && text[i] != '}'; i++)
+        {
+            ClearNonLineEnding(text, searchableText, i);
+        }
+
+        for (int j = 0; j < closingBraceCount && i < text.Length && text[i] == '}'; j++, i++)
+        {
+            searchableText[i] = ' ';
+        }
+
+        return i;
+    }
+
+    private static int ClearCharacterLiteral(string text, char[] searchableText, int start)
+    {
+        searchableText[start] = ' ';
+        int i = start + 1;
+        while (i < text.Length)
+        {
+            char current = text[i];
             if (current is '\r' or '\n')
             {
                 return i;
             }
+
+            searchableText[i] = ' ';
+            if (current == '\\' && i + 1 < text.Length && text[i + 1] is not '\r' and not '\n')
+            {
+                searchableText[i + 1] = ' ';
+                i += 2;
+                continue;
+            }
+
+            i++;
+            if (current == '\'')
+            {
+                return i;
+            }
         }
 
-        return text.Length - 1;
+        return i;
     }
 
-    private static bool IsEscapedEscape(char[] text, int slashIndex, int literalStart)
+    private static int CountRun(string text, int start, char character)
     {
-        int slashCount = 0;
-        for (int i = slashIndex; i > literalStart && text[i] == '\\'; i--)
+        int count = 0;
+        for (int i = start; i < text.Length && text[i] == character; i++)
         {
-            slashCount++;
+            count++;
         }
 
-        return slashCount % 2 == 0;
+        return count;
     }
 
-    private static void ClearNonLineEnding(char[] text, int index)
+    private static void ClearNonLineEnding(string text, char[] searchableText, int index)
     {
         if (text[index] is not '\r' and not '\n')
         {
-            text[index] = ' ';
+            searchableText[index] = ' ';
         }
     }
 }
