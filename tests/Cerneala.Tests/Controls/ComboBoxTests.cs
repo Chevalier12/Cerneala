@@ -651,6 +651,46 @@ public sealed class ComboBoxTests
         Assert.True(comboBox.IsDropDownOpen);
     }
 
+    // A release on a button in a drop-down item that the button does not turn into a click, because the press was on
+    // the empty part of the item, is not the button's click: it selects the item and closes the drop-down.
+    [Fact]
+    public void NonEditableItemPressOnEmptyPartReleasedOnTemplateCheckBoxSelectsItemWithoutCheckingIt()
+    {
+        (UIRoot root, ComboBox comboBox) = CreateNonEditableField();
+        comboBox.ItemTemplate = new ContentTemplate<string>(
+            "check",
+            key: null,
+            priority: 0,
+            context => new CheckBox { Content = context.Data, Width = 30 });
+        root.ProcessFrame();
+        LayoutRect field = comboBox.ArrangedBounds;
+        ElementInputBridge bridge = new();
+        bridge.Dispatch(root, PointerFrame(field.X + field.Width / 2, field.Y + field.Height / 2, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(field.X + field.Width / 2, field.Y + field.Height / 2, previousDown: true));
+        root.ProcessFrame();
+        Assert.True(comboBox.IsDropDownOpen);
+        UIElement second = comboBox.ItemContainerGenerator.RealizedContainers[1];
+        CheckBox check = Assert.IsType<CheckBox>(FindDescendant<CheckBox>(second));
+        int clicks = 0;
+        check.Click += (_, _) => clicks++;
+        LayoutRect itemBounds = second.ArrangedBounds;
+        LayoutRect checkBounds = check.ArrangedBounds;
+        float pressX = itemBounds.X + itemBounds.Width - 4;
+        Assert.True(pressX > checkBounds.X + checkBounds.Width);
+        float releaseX = checkBounds.X + 6;
+        float releaseY = checkBounds.Y + checkBounds.Height / 2;
+
+        bridge.Dispatch(root, PointerFrame(pressX, itemBounds.Y + itemBounds.Height / 2, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(releaseX, releaseY, previousDown: true, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(releaseX, releaseY, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.Equal(0, clicks);
+        Assert.False(check.IsChecked);
+        Assert.Equal(1, comboBox.SelectedIndex);
+        Assert.False(comboBox.IsDropDownOpen);
+    }
+
     // As in the WPF default template, the selection box is not hit-testable, so a click on a button that the
     // ItemTemplate shows in the closed field only toggles the drop-down.
     [Fact]

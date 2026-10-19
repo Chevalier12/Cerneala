@@ -102,6 +102,35 @@ public sealed class ListBoxTests
         Assert.True(row.IsSelected);
     }
 
+    // As in WPF, where the press on the row selects it, a release on a button in the row that the button does not turn
+    // into a click, because the press was on the row, is not the button's click and still selects the row.
+    [Fact]
+    public void ListBoxPressOnEmptyPartOfRowReleasedOnTemplateCheckBoxSelectsRowWithoutCheckingIt()
+    {
+        (UIRoot root, ListBox listBox) = CreateListBox(context => new CheckBox { Content = context.Data, Width = 60 });
+        ListBoxItem row = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[1]);
+        CheckBox check = Assert.IsType<CheckBox>(FindDescendant<CheckBox>(row));
+        int clicks = 0;
+        check.Click += (_, _) => clicks++;
+        LayoutRect rowBounds = row.ArrangedBounds;
+        LayoutRect checkBounds = check.ArrangedBounds;
+        float pressX = rowBounds.X + rowBounds.Width - 10;
+        Assert.True(pressX > checkBounds.X + checkBounds.Width);
+        float releaseX = checkBounds.X + 6;
+        float releaseY = checkBounds.Y + checkBounds.Height / 2;
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(pressX, rowBounds.Y + rowBounds.Height / 2, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(releaseX, releaseY, previousDown: true, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(releaseX, releaseY, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.Equal(0, clicks);
+        Assert.False(check.IsChecked);
+        Assert.Equal(1, listBox.SelectedIndex);
+        Assert.True(row.IsSelected);
+    }
+
     [Fact]
     public void ListBoxSelectionSurvivesContainerRecycling()
     {
