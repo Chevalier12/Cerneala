@@ -163,6 +163,32 @@ public sealed class ServoFailureMessageTests
     }
 
     [Fact]
+    public async Task ReplaceTextFailuresNameTheTarget()
+    {
+        TextBox editor = new() { Text = "abc", IsReadOnly = true, Width = 200, Height = 40 };
+        Button button = new() { Content = "Save", Width = 200, Height = 40 };
+        ServoApi.SetId(editor, "editor");
+        ServoApi.SetId(button, "save");
+        StackPanel panel = new();
+        panel.VisualChildren.Add(editor);
+        panel.VisualChildren.Add(button);
+        ServoApi servo = new(CreateHost(panel));
+
+        ServoException noValue = await Assert.ThrowsAsync<ServoException>(
+            () => servo.ReplaceTextAsync(ServoTarget.ById("save"), "x"));
+        ServoException mismatch = await Assert.ThrowsAsync<ServoException>(
+            () => servo.ReplaceTextAsync(ServoTarget.ById("editor"), "xyz"));
+
+        Assert.Equal(
+            "The Servo target Id=\"save\" does not expose a text value, so its text cannot be replaced.",
+            noValue.Message);
+        Assert.Equal(
+            "The text replacement did not leave the requested value in the Servo target Id=\"editor\". " +
+            "Requested: \"xyz\". Actual: \"abc\".",
+            mismatch.Message);
+    }
+
+    [Fact]
     public void ScreenshotRegionFailureNamesTheTarget()
     {
         Button button = new() { Content = "Target", Width = 160, Height = 48, Visibility = Visibility.Hidden };

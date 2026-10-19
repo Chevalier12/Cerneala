@@ -102,7 +102,11 @@ await servo.PressKeyAsync(InputKey.S, ServoModifiers.Control);
 ```
 
 `TypeIntoAsync` composes a click and text input. `ReplaceTextAsync` composes a
-click, `Control+A`, and text input. Target-based actions resolve current bounds,
+click, `Control+A`, and text input (`Delete` for empty text), on every operating
+system. It accepts only a target with a text value (a `TextBox`, a `PasswordBox`)
+and throws `ServoException` unless the value then equals the requested text, so
+`ReplaceTextAsync(target, "x\ny")` on a single-line `TextBox` fails instead of
+leaving `"xy"`. Target-based actions resolve current bounds,
 effective visibility, enabled state, and hit testing before sending input. The
 bounds are where the target is drawn: render and Motion transforms of the target
 and its ancestors apply, so actions aim at the center of the drawn target.
