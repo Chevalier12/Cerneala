@@ -190,8 +190,14 @@ Servo-specific failures derive from `ServoException`:
 
 - `ServoTargetNotFoundException` — an operation requiring one target found none;
 - `ServoTargetAmbiguousException` — a query or action requiring one target found several (`WaitForAsync` keeps waiting instead);
-- `ServoTargetNotActionableException` — a resolved target cannot perform the requested input or capture;
+- `ServoTargetNotActionableException` — a resolved target cannot perform the requested capture;
 - `ServoTimeoutException` — the configured operation deadline expired.
+
+Target actions such as `ClickAsync` wait for a missing or not-yet-actionable target
+(hidden, disabled, covered) and retry after each rendered frame. When the deadline expires
+first, `ServoTimeoutException` names the last reason, for example
+`... Last failure: The Servo target is disabled.`, and its `InnerException` is the
+`ServoTargetNotFoundException` or `ServoTargetNotActionableException` of the last attempt.
 
 ## See Also
 

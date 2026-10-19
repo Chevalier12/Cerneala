@@ -120,16 +120,28 @@ public sealed class ServoSceneTests
         Assert.True(await servo.ExistsAsync(ServoTarget.ById("collider")));
         Assert.Equal(new LayoutRect(24, 0, 40, 20), (await servo.FindAsync(target)).Bounds);
         await servo.ClickAsync(target);
+        ServoApi shortServo = new(host, new ServoOptions { DefaultTimeout = TimeSpan.FromMilliseconds(200) });
         collider.Enabled = false;
-        await Assert.ThrowsAsync<ServoTargetNotActionableException>(() => servo.ClickAsync(target));
+        AssertClickTimesOutNotActionable(shortServo, target);
         collider.Enabled = true;
         world.ScaleX = 0;
-        await Assert.ThrowsAsync<ServoTargetNotActionableException>(() => servo.ClickAsync(target));
+        AssertClickTimesOutNotActionable(shortServo, target);
         world.Visibility = Visibility.Hidden;
         Assert.False((await servo.FindAsync(target)).IsVisible);
-        await Assert.ThrowsAsync<ServoTargetNotActionableException>(() => servo.ClickAsync(target));
+        AssertClickTimesOutNotActionable(shortServo, target);
         world.Children.Remove(sprite);
         Assert.False(await servo.ExistsAsync(target));
+    }
+
+    // Blocks on the click instead of awaiting it: the timeout completes the task on a timer thread,
+    // and the test must keep mutating the scene on its owning UI thread afterwards.
+    private static void AssertClickTimesOutNotActionable(ServoApi servo, ServoTarget target)
+    {
+        ServoTimeoutException timeout = Assert.Throws<ServoTimeoutException>(
+            () => servo.ClickAsync(target).GetAwaiter().GetResult());
+        ServoTargetNotActionableException lastFailure =
+            Assert.IsType<ServoTargetNotActionableException>(timeout.InnerException);
+        Assert.Contains("Last failure: " + lastFailure.Message, timeout.Message);
     }
 
     private static UiHost CreateHost(Scene2D world, bool useViewBox = true, Thickness margin = default, float dpi = 1)
