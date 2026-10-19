@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Cerneala.UI.Accessibility;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
@@ -26,6 +27,55 @@ public sealed class ServoFailureMessageTests
             "Id=\"ok\" within (Id=\"dialog\" within (Id=\"main\"))",
             ServoTarget.ById("ok").Within(ServoTarget.ById("dialog").Within(ServoTarget.ById("main"))).ToString());
         Assert.Equal("Name=\"Say \\\"hi\\\" C:\\\\x\"", ServoTarget.ByName("Say \"hi\" C:\\x").ToString());
+    }
+
+    [Fact]
+    public void TargetToStringDescribesNameRefinementsPredicatesAndPositions()
+    {
+        ServoTarget button = ServoTarget.ByRole(SemanticsRole.Button);
+
+        Assert.Equal("Role=Button, Name contains \"3 of\"", button.WithNameContaining("3 of").ToString());
+        Assert.Equal("Role=Button, Name matches /^Item \\d+$/", button.WithNameMatching(new Regex(@"^Item \d+$")).ToString());
+        Assert.Equal(
+            "Role=Button, Name matches /item/ (IgnoreCase)",
+            button.WithNameMatching(new Regex("item", RegexOptions.IgnoreCase)).ToString());
+        Assert.Equal("Role=Button, Name=\"B\"", button.WithNameContaining("A").WithName("B").ToString());
+        Assert.Equal(
+            "Role=Button, where <predicate>, where <predicate>",
+            button.Where(element => element.IsEnabled).Where(element => element.IsVisible).ToString());
+        Assert.Equal("Role=Button, Nth(2)", button.Nth(2).ToString());
+        Assert.Equal("Role=Button, First()", button.First().ToString());
+        Assert.Equal("Role=Button, Last()", button.Last().ToString());
+        // Nth(0) and First() select the same element and read the same.
+        Assert.Equal(
+            "Role=Button, Name=\"Delete\" within (Id=\"row\", Last()), First()",
+            button.WithName("Delete").Within(ServoTarget.ById("row").Last()).Nth(0).ToString());
+    }
+
+    [Fact]
+    public async Task NotFoundMessageCountsNearMissesOfPredicatesAndPositions()
+    {
+        StackPanel panel = new();
+        panel.VisualChildren.Add(new Button { Content = "One" });
+        panel.VisualChildren.Add(new Button { Content = "Two", IsEnabled = false });
+        ServoApi servo = new(CreateHost(panel));
+
+        ServoTargetNotFoundException outOfRange = await Assert.ThrowsAsync<ServoTargetNotFoundException>(
+            () => servo.FindAsync(ServoTarget.ByRole(SemanticsRole.Button).Nth(5)));
+        ServoTargetNotFoundException predicate = await Assert.ThrowsAsync<ServoTargetNotFoundException>(
+            () => servo.FindAsync(ServoTarget.ByRole(SemanticsRole.Button)
+                .WithName("Two")
+                .Where(element => element.IsEnabled)));
+
+        Assert.Equal(
+            "The Servo target Role=Button, Nth(5) did not match any element. " +
+            "Near misses: 2 matched every criterion, but Nth(5) selects none of them.",
+            outOfRange.Message);
+        Assert.Equal(
+            "The Servo target Role=Button, Name=\"Two\", where <predicate> did not match any element. " +
+            "Near misses: 1 matched every criterion except Name=\"Two\"; " +
+            "1 matched every criterion except where <predicate>.",
+            predicate.Message);
     }
 
     [Fact]
