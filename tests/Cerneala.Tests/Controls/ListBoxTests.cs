@@ -102,6 +102,24 @@ public sealed class ListBoxTests
         Assert.True(row.IsSelected);
     }
 
+    // A click into a TextBox of the ItemTemplate is the text box's, as WPF's text editor handles the left button
+    // down and up before ListBoxItem sees them (#586): the text box gets the focus and the row is not selected.
+    [Fact]
+    public void ListBoxClickInsideTemplateTextBoxFocusesItWithoutSelectingRow()
+    {
+        (UIRoot root, ListBox listBox) = CreateListBox(context => new TextBox { Text = context.Data, Width = 60 });
+        ListBoxItem row = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[1]);
+        TextBox text = Assert.IsType<TextBox>(FindDescendant<TextBox>(row));
+        LayoutRect bounds = text.ArrangedBounds;
+        ElementInputBridge bridge = new();
+
+        Click(root, bridge, bounds.X + bounds.Width / 2, bounds.Y + bounds.Height / 2);
+
+        Assert.True(text.IsKeyboardFocused);
+        Assert.Equal(-1, listBox.SelectedIndex);
+        Assert.False(row.IsSelected);
+    }
+
     // As in WPF, where the press on the row selects it, a release on a button in the row that the button does not turn
     // into a click, because the press was on the row, is not the button's click and still selects the row.
     [Fact]

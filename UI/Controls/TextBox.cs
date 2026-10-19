@@ -130,6 +130,10 @@ public class TextBox : Control, ITimeSensitiveRenderElement, IPointerDragSource,
         set => textInput.ResourceProvider = value;
     }
 
+    // The press belongs to the text box, as WPF's text editor handles MouseLeftButtonDown, so an enclosing button is
+    // not pressed (#586).
+    internal override bool OwnsPointerClick => IsEnabled;
+
     internal bool CenterSingleLineContentVertically
     {
         get => centerSingleLineContentVertically;

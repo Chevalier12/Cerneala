@@ -110,6 +110,10 @@ public class PasswordBox : Control, ITimeSensitiveRenderElement, IPointerDragSou
 
     internal int UndoHistoryCount => textInput.UndoHistoryCount;
 
+    // The press belongs to the password box, as WPF's text editor handles MouseLeftButtonDown, so an enclosing
+    // button is not pressed (#586).
+    internal override bool OwnsPointerClick => IsEnabled;
+
     protected virtual string NormalizeTextInput(string text) =>
         TextInputCore.NormalizeSingleLineInput(text);
 
