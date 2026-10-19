@@ -68,6 +68,54 @@ public sealed class ListBoxTests
         Assert.Equal(-1, listBox.SelectedIndex);
     }
 
+    // The click stays the CheckBox's when its Click handler removes or collapses it, or detaches the ListBox, before the
+    // MouseUp bubbles to the row: the row decides with the route the input bridge resolved the click with (#550).
+    [Theory]
+    [InlineData("remove")]
+    [InlineData("collapse")]
+    [InlineData("detach")]
+    public void ListBoxClickOnCheckBoxThatItsClickHandlerRemovesDoesNotSelectRow(string change)
+    {
+        CheckBox check = new() { Content = "check", Width = 80, Height = 24 };
+        ListBoxItem one = new() { Content = "One" };
+        ListBoxItem two = new() { Content = check };
+        ListBox listBox = new() { Width = 160, Height = 100 };
+        listBox.Items.Add(one);
+        listBox.Items.Add(two);
+        Cerneala.UI.Layout.Panels.Canvas canvas = new();
+        int clicks = 0;
+        check.Click += (_, _) =>
+        {
+            clicks++;
+            switch (change)
+            {
+                case "remove":
+                    two.Content = "removed";
+                    break;
+                case "collapse":
+                    check.Visibility = Visibility.Collapsed;
+                    break;
+                default:
+                    canvas.VisualChildren.Remove(listBox);
+                    break;
+            }
+        };
+        int selectionChanges = 0;
+        listBox.SelectionChanged += (_, _) => selectionChanges++;
+        UIRoot root = new(300, 200);
+        canvas.VisualChildren.Add(listBox);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        LayoutRect bounds = check.ArrangedBounds;
+
+        Click(root, new ElementInputBridge(), bounds.X + bounds.Width / 2, bounds.Y + bounds.Height / 2);
+
+        Assert.Equal(1, clicks);
+        Assert.Equal(-1, listBox.SelectedIndex);
+        Assert.False(two.IsSelected);
+        Assert.Equal(0, selectionChanges);
+    }
+
     [Fact]
     public void ListBoxClickOnTemplateTextSelectsRow()
     {
