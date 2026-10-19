@@ -255,7 +255,7 @@ public class ComboBox : Selector
         // All five values go in before the presenter rebuilds its child on its next measure, so the row presents
         // its item once, with its index (#574).
         presenter.PrepareItemPresentation(
-            ItemTemplate is null ? GetItemDisplayText(item) : item,
+            ItemTemplate is null ? GetRowContent(item) : item,
             ItemTemplate,
             ItemTemplateKey,
             ContentTemplateRegistry,
@@ -264,6 +264,14 @@ public class ComboBox : Selector
         presenter.FontFamily = FontFamily;
         presenter.FontSize = FontSize;
         comboBoxItem.Content = presenter;
+    }
+
+    // As in WPF, an element item that is not a ComboBoxItem is the content of its generated row, so the row presents
+    // the element itself (#606). Any other display value is presented as its text.
+    private object GetRowContent(object? item)
+    {
+        object? value = GetItemDisplayValue(item);
+        return value as UIElement ?? (object)(value?.ToString() ?? string.Empty);
     }
 
     protected internal override void ClearItemContainer(UIElement container)
