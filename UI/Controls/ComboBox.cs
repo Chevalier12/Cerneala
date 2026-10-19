@@ -962,14 +962,16 @@ public class ComboBox : Selector
     // ComboBox, does not also click or run its command. Inside such a command source the input bridge resolves the
     // press and the release to that command source, so the field also checks that the press hit the same element as
     // the release: a press on the outer Button followed by a release on the field clicks only the outer Button, as
-    // the WPF ToggleButton never sees that press (#468).
+    // the WPF ToggleButton never sees that press (#468). The click owner and the drag source are found with the route
+    // map the input bridge routed the MouseUp with, so they stay the same when an earlier handler on the route removes
+    // the clicked content from the field (#622).
     private void OnMouseUp(UiElementId _, RoutedEventArgs args)
     {
         if (IsEditable || !IsEnabled ||
             args is not MouseButtonEventArgs { ChangedButton: InputMouseButton.Left, ClickCount: > 0 } mouseArgs ||
             !Equals(mouseArgs.PressOriginalSource, args.OriginalSource) ||
-            !ReferenceEquals(FindClickOwner(this, args.OriginalSource), this) ||
-            IsInPointerDragSource(args.OriginalSource))
+            !ReferenceEquals(FindClickOwner(this, args.OriginalSource, mouseArgs.RouteMap), this) ||
+            IsInPointerDragSource(args.OriginalSource, mouseArgs.RouteMap))
         {
             return;
         }
@@ -978,8 +980,40 @@ public class ComboBox : Selector
         args.Handled = true;
     }
 
-    private bool IsInPointerDragSource(object? source)
+    // With routeMap, source and its visual parents are those of the route map the input event was routed with, as in
+    // Selector.FindClickOwner.
+    private bool IsInPointerDragSource(object? source, ElementInputRouteMap? routeMap)
     {
+        if (routeMap is not null)
+        {
+            UIElement? routed = source switch
+            {
+                UIElement candidate => candidate,
+                UiElementId id when routeMap.TryGetElement(id, out UIElement? resolved) => resolved,
+                _ => null
+            };
+
+            if (routed is null)
+            {
+                return false;
+            }
+
+            foreach (UIElement current in routeMap.GetVisualRouteToRoot(routed))
+            {
+                if (ReferenceEquals(current, this))
+                {
+                    return false;
+                }
+
+                if (current is IPointerDragSource)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         UIElement? element = source switch
         {
             UIElement candidate => candidate,
