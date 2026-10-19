@@ -551,6 +551,186 @@ public sealed class ButtonTests
         Assert.Equal(1, clicks);
     }
 
+    // A press on a thumb belongs to the thumb, as a WPF Thumb handles MouseLeftButtonDown and captures the mouse before
+    // the enclosing ButtonBase sees it (#619): the button is not pressed while the mouse is held or during the drag.
+    [Theory]
+    [InlineData(30)]
+    [InlineData(0)]
+    public void PressingAndDraggingThumbInsideButtonLeavesButtonUnpressed(float dragX)
+    {
+        int commands = 0;
+        Cerneala.UI.Controls.Primitives.Thumb thumb = new() { Width = 40, Height = 20 };
+        int deltas = 0;
+        thumb.DragDelta += (_, _) => deltas++;
+        Button button = new() { Content = thumb, Width = 200, Height = 80, Command = new ActionCommand(_ => commands++) };
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+        UIRoot root = CreateWindowRoot(button);
+        LayoutRect bounds = thumb.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        Assert.Same(thumb, new HitTestService().HitTest(root, x, y)?.Element);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        root.ProcessFrame();
+        bool pressedAfterPress = button.IsPressed;
+        bool draggingAfterPress = thumb.IsDragging;
+        bridge.Dispatch(root, MoveFrame(x, y, x + dragX, y));
+        root.ProcessFrame();
+        bool pressedDuringDrag = button.IsPressed;
+        bridge.Dispatch(root, PointerFrame(x + dragX, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.True(draggingAfterPress);
+        Assert.False(pressedAfterPress);
+        Assert.False(pressedDuringDrag);
+        Assert.False(button.IsPressed);
+        Assert.Equal(dragX == 0 ? 0 : 1, deltas);
+        Assert.Equal(0, clicks);
+        Assert.Equal(0, commands);
+    }
+
+    [Fact]
+    public void HoldingMouseOnButtonOutsideNestedThumbPressesButtonUntilReleaseAndClicksOnce()
+    {
+        int commands = 0;
+        Cerneala.UI.Controls.Primitives.Thumb thumb = new() { Width = 40, Height = 20 };
+        Button button = new() { Content = thumb, Width = 200, Height = 80, Command = new ActionCommand(_ => commands++) };
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+        UIRoot root = CreateWindowRoot(button);
+        LayoutRect bounds = button.ArrangedBounds;
+        float x = bounds.X + 5;
+        float y = bounds.Y + 5;
+        Assert.Same(button, new HitTestService().HitTest(root, x, y)?.Element);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        root.ProcessFrame();
+        bool pressedWhileHeld = button.IsPressed;
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.True(pressedWhileHeld);
+        Assert.False(button.IsPressed);
+        Assert.False(thumb.IsDragging);
+        Assert.Equal(1, clicks);
+        Assert.Equal(1, commands);
+    }
+
+    [Fact]
+    public void DraggingScrollBarThumbInsideButtonLeavesButtonUnpressed()
+    {
+        Cerneala.UI.Controls.Primitives.ScrollBar scrollBar = new() { Maximum = 100, Value = 50, Width = 16, Height = 120 };
+        Button button = new() { Content = scrollBar, Width = 200, Height = 160 };
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+        UIRoot root = CreateWindowRoot(button);
+        Cerneala.UI.Controls.Primitives.Thumb thumb = scrollBar.Track.Thumb;
+        LayoutRect bounds = thumb.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        Assert.Same(thumb, new HitTestService().HitTest(root, x, y)?.Element);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        root.ProcessFrame();
+        bool pressedAfterPress = button.IsPressed;
+        bridge.Dispatch(root, MoveFrame(x, y, x, y + 10));
+        root.ProcessFrame();
+        bool pressedDuringDrag = button.IsPressed;
+        bridge.Dispatch(root, PointerFrame(x, y + 10, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.False(pressedAfterPress);
+        Assert.False(pressedDuringDrag);
+        Assert.True(scrollBar.Value > 50);
+        Assert.Equal(0, clicks);
+    }
+
+    [Fact]
+    public void HoldingMouseOnThumbInsideRepeatButtonNeitherPressesNorRepeatsIt()
+    {
+        Cerneala.UI.Controls.Primitives.Thumb thumb = new() { Width = 40, Height = 20 };
+        Cerneala.UI.Controls.Primitives.RepeatButton button = new() { Content = thumb, Width = 200, Height = 80 };
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+        UIRoot root = CreateWindowRoot(button);
+        LayoutRect bounds = thumb.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true, currentDown: true), TimeSpan.FromSeconds(2));
+        bool pressedWhileHeld = button.IsPressed;
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.False(pressedWhileHeld);
+        Assert.Equal(0, clicks);
+    }
+
+    // A press on a color spectrum belongs to the spectrum, as a press on a Thumb does (#619): the spectrum captures the
+    // mouse and picks the color, so the enclosing button is not pressed and does not click for it.
+    [Theory]
+    [InlineData(20)]
+    [InlineData(0)]
+    public void PressingAndDraggingColorSpectrumInsideButtonLeavesButtonUnpressedAndUnclicked(float dragX)
+    {
+        int commands = 0;
+        ColorSpectrum spectrum = new() { Width = 100, Height = 60 };
+        Button button = new() { Content = spectrum, Width = 200, Height = 100, Command = new ActionCommand(_ => commands++) };
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+        UIRoot root = CreateWindowRoot(button);
+        LayoutRect bounds = spectrum.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        Assert.Same(spectrum, new HitTestService().HitTest(root, x, y)?.Element);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        root.ProcessFrame();
+        bool pressedAfterPress = button.IsPressed;
+        bridge.Dispatch(root, MoveFrame(x, y, x + dragX, y));
+        root.ProcessFrame();
+        bool pressedDuringDrag = button.IsPressed;
+        bridge.Dispatch(root, PointerFrame(x + dragX, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.False(pressedAfterPress);
+        Assert.False(pressedDuringDrag);
+        Assert.False(button.IsPressed);
+        Assert.Equal(0.5f + dragX / 100, spectrum.Saturation, 0.001f);
+        Assert.Equal(0, clicks);
+        Assert.Equal(0, commands);
+    }
+
+    [Fact]
+    public void HoldingMouseOnColorSpectrumInsideRepeatButtonNeitherPressesNorRepeatsIt()
+    {
+        ColorSpectrum spectrum = new() { Width = 100, Height = 60 };
+        Cerneala.UI.Controls.Primitives.RepeatButton button = new() { Content = spectrum, Width = 200, Height = 100 };
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+        UIRoot root = CreateWindowRoot(button);
+        LayoutRect bounds = spectrum.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true, currentDown: true), TimeSpan.FromSeconds(2));
+        bool pressedWhileHeld = button.IsPressed;
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.False(pressedWhileHeld);
+        Assert.Equal(0, clicks);
+    }
+
     [Fact]
     public void PickingComboBoxDropDownItemInsideButtonSelectsTheItemWithoutButtonClick()
     {

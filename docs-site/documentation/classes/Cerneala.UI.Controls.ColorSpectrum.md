@@ -33,6 +33,8 @@ The control paints white-to-hue horizontally and transparent-to-black vertically
 
 A pointer press, move, or release selects the point drawn under the pointer. The unrounded root pointer position is converted through the render transforms of the spectrum and every ancestor, like `MouseEventArgs.GetPosition(spectrum)`, and the result is divided by the arranged size: `Saturation` is `x / Width` and `Value` is `1 - y / Height`, both clamped to `0..1`. For example, a `100` by `100` spectrum inside a panel with `RenderTransform = new Transform(Matrix3x2.CreateScale(2, 2))` and `RenderTransformOrigin = new LayoutPoint(0, 0)` is drawn at root `0..200`, so a click at root `(100, 100)` gives `Saturation == 0.5` and `Value == 0.5`. Without transforms the root and layout positions are equal. A pointer position that cannot be converted, for example through a non-invertible transform, keeps the current selection.
 
+An enabled spectrum takes a left press for itself, as a `Thumb` does: it captures the mouse for the drag and handles the pointer input of that drag, so an enclosing `ButtonBase` is not pressed, a `RepeatButton` does not repeat, and the release raises no `Click` and runs no `Command`. For example, with `Button button = new() { Content = new ColorSpectrum { Width = 100, Height = 60 }, Width = 200, Height = 100 };`, pressing the center of the spectrum and dragging 20 pixels to the right sets `Saturation` to `0.7` and leaves `button.IsPressed` at `false`, with no `Click`.
+
 `Hue` is coerced to `0..360`. `Saturation` and `Value` are coerced to `0..1`. `SetSelection` updates both channels as one logical operation and raises one `ValueChanged` event.
 
 ## Constructors
