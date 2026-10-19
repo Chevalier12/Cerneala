@@ -758,6 +758,64 @@ public sealed class TabControlTests
     }
 
     [Fact]
+    public void HeldElementContentIsUnloadedWhenAnotherVisualParentRemovesIt()
+    {
+        UIRoot root = new(300, 200);
+        Border a = new() { Width = 50, Height = 20 };
+        Border b = new() { Width = 50, Height = 20 };
+        int loaded = 0;
+        int unloaded = 0;
+        b.Loaded += (_, _) => loaded++;
+        b.Unloaded += (_, _) => unloaded++;
+        TabItem first = new() { Header = "1", Content = a };
+        TabItem second = new() { Header = "2", Content = b };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        tabControl.SelectedIndex = 0;
+        Border host = new();
+        root.VisualChildren.Add(tabControl);
+        root.VisualChildren.Add(host);
+        root.ProcessFrame();
+
+        host.VisualChildren.Add(b);
+        root.ProcessFrame();
+        Assert.True(b.IsLoaded);
+        Assert.Equal(1, loaded);
+
+        host.VisualChildren.Remove(b);
+        root.ProcessFrame();
+
+        Assert.Null(b.VisualParent);
+        Assert.Same(second, b.LogicalParent);
+        Assert.False(b.IsLoaded);
+        Assert.Null(b.Root);
+        Assert.Equal(1, loaded);
+        Assert.Equal(1, unloaded);
+
+        tabControl.SelectedIndex = 1;
+        root.ProcessFrame();
+
+        Assert.True(b.IsLoaded);
+        Assert.Same(root, b.Root);
+        Assert.True(IsVisualDescendantOf(b, tabControl));
+        Assert.Equal(2, loaded);
+        Assert.Equal(1, unloaded);
+    }
+
+    private static bool IsVisualDescendantOf(UIElement element, UIElement ancestor)
+    {
+        for (UIElement? current = element.VisualParent; current is not null; current = current.VisualParent)
+        {
+            if (ReferenceEquals(current, ancestor))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    [Fact]
     public void ComponentTemplatePresenterCanShowTheSelectedElementContent()
     {
         UIRoot root = new(300, 200);
