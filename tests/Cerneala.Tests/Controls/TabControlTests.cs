@@ -882,6 +882,74 @@ public sealed class TabControlTests
     }
 
     [Fact]
+    public void ElementContentOfTheSelectedTabStaysOwnedWhenTheComponentTemplateDoesNotShowIt()
+    {
+        UIRoot root = new(300, 200);
+        FixedElement a = new();
+        FixedElement b = new();
+        FixedElement other = new();
+        TabItem first = new() { Header = "1", Content = a };
+        TabItem second = new() { Header = "2", Content = b };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        tabControl.SelectedIndex = 0;
+        tabControl.ComponentTemplate = new ComponentTemplate<TabControl>("plain", _ => new Border());
+        root.VisualChildren.Add(tabControl);
+        root.VisualChildren.Add(other);
+        root.ProcessFrame();
+
+        Assert.Same(first, a.LogicalParent);
+        Assert.Null(a.VisualParent);
+        Assert.Throws<InvalidOperationException>(() => other.LogicalChildren.Add(a));
+
+        tabControl.SelectedIndex = 1;
+        root.ProcessFrame();
+
+        Assert.Same(second, b.LogicalParent);
+        Assert.Null(b.VisualParent);
+        InvalidOperationException rejected = Assert.Throws<InvalidOperationException>(() => other.LogicalChildren.Add(b));
+        Assert.Equal("Element must be removed from its current parent before reparenting.", rejected.Message);
+        Assert.Throws<InvalidOperationException>(() => new TabItem().Content = b);
+        Assert.Same(first, a.LogicalParent);
+        Assert.Empty(other.LogicalChildren);
+    }
+
+    [Fact]
+    public void ElementContentKeptByTheSelectedTabGoesToTheNextAspectComponentTemplateThatShowsIt()
+    {
+        UIRoot root = new(300, 200);
+        FixedElement a = new();
+        ContentPresenter? presenter = null;
+        ComponentTemplate<TabControl> plain = new("Scoped.Plain", _ => new Border());
+        ComponentTemplate<TabControl> showing = new("Scoped.Showing", context =>
+            presenter = new ContentPresenter { Content = context.Owner.SelectedContent });
+        TabItem first = new() { Header = "1", Content = a };
+        TabControl tabControl = new() { ComponentTemplateKey = "Scoped.Tabs" };
+        tabControl.SetItems(new[] { first, new TabItem { Header = "2" } });
+        tabControl.SelectedIndex = 0;
+        Border scope = new() { Child = tabControl };
+        scope.Resources["Templates"] = AspectPackage.Create("Scoped.Plain")
+            .Components(components => components.AddTemplate(
+                new ComponentTemplateDefinition("Scoped.Tabs", typeof(TabControl), plain)))
+            .Build();
+        root.VisualChildren.Add(scope);
+        root.ProcessFrame();
+
+        Assert.Same(first, a.LogicalParent);
+
+        scope.Resources["Templates"] = AspectPackage.Create("Scoped.Showing")
+            .Components(components => components.AddTemplate(
+                new ComponentTemplateDefinition("Scoped.Tabs", typeof(TabControl), showing)))
+            .Build();
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.NotNull(presenter);
+        Assert.Same(presenter, a.LogicalParent);
+        Assert.Same(presenter, a.VisualParent);
+    }
+
+    [Fact]
     public void ElementContentMovesBetweenTheContentAreaAndTheComponentTemplate()
     {
         UIRoot root = new(300, 200);

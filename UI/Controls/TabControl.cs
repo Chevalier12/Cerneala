@@ -101,8 +101,13 @@ public class TabControl : Selector
         if (TemplateChild is not null)
         {
             LayoutSize size = base.MeasureCore(context);
-            // The template may have let go of the content of a tab shown before; that tab owns it again.
-            UpdateTemplatedContentOwnership();
+            // The template is built and measured: every tab whose UIElement content nothing shows owns it again, the
+            // tab shown before and the selected tab when the template did not take its content.
+            foreach (TabItem tab in GetTabs())
+            {
+                tab.HoldContent();
+            }
+
             return size;
         }
 
@@ -171,7 +176,8 @@ public class TabControl : Selector
     }
 
     // The template that goes away lets go of the element content of the tabs it showed, so the next template or the
-    // content area can show it, and its tab can own it again.
+    // content area can show it, and its tab can own it again. When an aspect template replaces the old one, the
+    // selected tab lets go of its content in OnTemplateInstanceCreating, before the next template is built.
     protected override void OnTemplateApplied(ComponentTemplateInstance? instance)
     {
         base.OnTemplateApplied(instance);
@@ -190,8 +196,9 @@ public class TabControl : Selector
     }
 
     // With a ComponentTemplate, the template shows SelectedContent, so the selected tab lets go of a UIElement content
-    // and every other tab owns its content again once nothing shows it. Without one, every tab owns a content that
-    // nothing shows, and the content area takes the selected tab's content in measure.
+    // and every other tab owns its content again once nothing shows it; the next measure gives the selected tab its
+    // content back when the template did not take it. Without one, every tab owns a content that nothing shows, and
+    // the content area takes the selected tab's content in measure.
     private void UpdateTemplatedContentOwnership()
     {
         TabItem? selected = IsComponentTemplated ? SelectedTabItem : null;
