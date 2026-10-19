@@ -105,7 +105,7 @@ public sealed class ServoFailureMessageTests
             .Within(ServoTarget.ById("toolbar"));
 
         ServoTargetNotFoundException failure = await Assert.ThrowsAsync<ServoTargetNotFoundException>(
-            () => servo.ClickAsync(target));
+            () => servo.FindAsync(target));
 
         Assert.Equal(
             "The Servo target Role=Button, Name=\"Save\" within (Id=\"toolbar\") did not match any element. " +
@@ -156,10 +156,34 @@ public sealed class ServoFailureMessageTests
         if (state == "zero-bounds") button.Arrange(new ArrangeContext(new LayoutRect(0, 0, 0, 48)));
         ServoApi servo = new(host);
 
-        ServoTargetNotActionableException failure = await Assert.ThrowsAsync<ServoTargetNotActionableException>(
-            () => servo.ClickAsync(ServoTarget.ById("target")));
+        // Target actions retry a not-actionable target, so the failure arrives as the timeout's last failure.
+        ServoTimeoutException timeout = await Assert.ThrowsAsync<ServoTimeoutException>(
+            () => servo.ClickAsync(ServoTarget.ById("target"), TimeSpan.FromMilliseconds(100)));
 
-        Assert.Equal(expected, failure.Message);
+        Assert.Equal(
+            $"The Servo operation on target Id=\"target\" exceeded its 00:00:00.1000000 timeout. Last failure: {expected}",
+            timeout.Message);
+        Assert.Equal(expected, Assert.IsType<ServoTargetNotActionableException>(timeout.InnerException).Message);
+    }
+
+    [Fact]
+    public async Task NotFoundLastFailureOfATargetActionKeepsTheNearMisses()
+    {
+        StackPanel panel = new();
+        panel.VisualChildren.Add(new Button { Content = "Save" });
+        ServoApi servo = new(CreateHost(panel));
+        ServoTarget target = ServoTarget.ByRole(SemanticsRole.Button).WithName("Open");
+
+        ServoTimeoutException timeout = await Assert.ThrowsAsync<ServoTimeoutException>(
+            () => servo.ClickAsync(target, TimeSpan.FromMilliseconds(100)));
+
+        const string notFound =
+            "The Servo target Role=Button, Name=\"Open\" did not match any element. " +
+            "Near misses: 1 matched every criterion except Name=\"Open\".";
+        Assert.Equal(
+            $"The Servo operation on target Role=Button, Name=\"Open\" exceeded its 00:00:00.1000000 timeout. Last failure: {notFound}",
+            timeout.Message);
+        Assert.Equal(notFound, Assert.IsType<ServoTargetNotFoundException>(timeout.InnerException).Message);
     }
 
     [Fact]

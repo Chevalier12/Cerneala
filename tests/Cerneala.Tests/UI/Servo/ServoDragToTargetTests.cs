@@ -47,10 +47,12 @@ public sealed class ServoDragToTargetTests
         Assert.Same(scene.Bin, scene.DropTarget);
     }
 
+    // The destination is waited for like the source: no attempt presses the pointer while it is not actionable,
+    // and the timeout names both targets and the destination's last failure.
     [Theory]
-    [InlineData("disabled")]
-    [InlineData("missing")]
-    public async Task DragToANonActionableDestinationFailsBeforeThePointerIsPressed(string state)
+    [InlineData("disabled", "The Servo target Id=\"bin\" is disabled.")]
+    [InlineData("missing", "The Servo target Id=\"missing-bin\" did not match any element.")]
+    public async Task DragToANonActionableDestinationTimesOutWithoutPressingThePointer(string state, string lastFailure)
     {
         DragScene scene = DragScene.Create();
         ServoApi servo = new(scene.Host);
@@ -62,16 +64,51 @@ public sealed class ServoDragToTargetTests
             scene.Bin.IsEnabled = false;
         }
 
-        ServoException failure = state == "missing"
-            ? await Assert.ThrowsAsync<ServoTargetNotFoundException>(
-                () => servo.DragAsync(ServoTarget.ById("card"), destination))
-            : await Assert.ThrowsAsync<ServoTargetNotActionableException>(
-                () => servo.DragAsync(ServoTarget.ById("card"), destination));
+        ServoTimeoutException failure = await Assert.ThrowsAsync<ServoTimeoutException>(
+            () => servo.DragAsync(ServoTarget.ById("card"), destination, 12, TimeSpan.FromMilliseconds(200)));
 
-        Assert.Contains(destination.ToString(), failure.Message, StringComparison.Ordinal);
+        Assert.Equal(
+            $"The Servo operation on targets Id=\"card\" and {destination} exceeded its 00:00:00.2000000 timeout. " +
+            $"Last failure: {lastFailure}",
+            failure.Message);
+        Assert.Equal(lastFailure, failure.InnerException!.Message);
+        Assert.IsType(
+            state == "missing" ? typeof(ServoTargetNotFoundException) : typeof(ServoTargetNotActionableException),
+            failure.InnerException);
         Assert.Equal(0, dragsStarted);
         Assert.Null(scene.ReleasePoint);
         Assert.False(scene.Host.LastFrame!.Input.Pointer.IsDown(InputMouseButton.Left));
+    }
+
+    [Fact]
+    public async Task DragToTargetWaitsForADestinationThatBecomesEnabledInALaterFrame()
+    {
+        DragScene scene = DragScene.Create();
+        ServoApi servo = new(scene.Host);
+        int dragsStarted = 0;
+        scene.Card.DragStarted += (_, _) => dragsStarted++;
+        scene.Bin.IsEnabled = false;
+
+        Task drag = servo.DragAsync(ServoTarget.ById("card"), ServoTarget.ById("bin"), steps: 4);
+        Assert.False(drag.IsCompleted);
+        scene.PumpFrame();
+        Thread.Sleep(10);
+        scene.PumpFrame();
+        Assert.False(drag.IsCompleted);
+        Assert.Equal(0, dragsStarted);
+
+        scene.Bin.IsEnabled = true;
+        for (int frame = 0; frame < 32 && !drag.IsCompleted; frame++)
+        {
+            scene.PumpFrame();
+            Thread.Sleep(1);
+        }
+
+        Assert.True(drag.IsCompleted, "The Servo drag did not complete within 32 frames.");
+        await drag;
+        Assert.Equal(1, dragsStarted);
+        Assert.Equal((260f, 50f), scene.ReleasePoint);
+        Assert.Same(scene.Bin, scene.DropTarget);
     }
 
     [Fact]
@@ -106,6 +143,12 @@ public sealed class ServoDragToTargetTests
         internal (float X, float Y)? ReleasePoint { get; private set; }
 
         internal UIElement? DropTarget { get; private set; }
+
+        internal void PumpFrame() =>
+            Host.Update(
+                new InputFrame(PointerSnapshot.Empty, PointerSnapshot.Empty, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []),
+                Host.Viewport,
+                TimeSpan.FromMilliseconds(16));
 
         internal static DragScene Create()
         {

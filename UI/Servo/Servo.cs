@@ -20,7 +20,7 @@ public sealed class Servo
         ArgumentNullException.ThrowIfNull(window);
         context = ServoContext.ForWindow(window);
         Options = ServoOptions.Copy(options);
-        actionEngine = new ServoActionEngine(queryEngine);
+        actionEngine = new ServoActionEngine(context, queryEngine);
         synchronization = new ServoSynchronization(context, queryEngine);
         captureEngine = new ServoCaptureEngine(queryEngine);
     }
@@ -30,7 +30,7 @@ public sealed class Servo
         ArgumentNullException.ThrowIfNull(host);
         context = ServoContext.ForHost(host);
         Options = ServoOptions.Copy(options);
-        actionEngine = new ServoActionEngine(queryEngine);
+        actionEngine = new ServoActionEngine(context, queryEngine);
         synchronization = new ServoSynchronization(context, queryEngine);
         captureEngine = new ServoCaptureEngine(queryEngine);
     }
@@ -136,8 +136,8 @@ public sealed class Servo
         return ServoOperation.RunAsync(
             timeout,
             token => context.ExecuteInputAsync(
-                (_, input, operationToken) => input.ClickAsync(
-                    root => actionEngine.ResolveActionable(root, target), operationToken),
+                (_, input, operationToken) => actionEngine.DispatchWhenActionableAsync(
+                    target, resolve => input.ClickAsync(resolve, operationToken), operationToken),
                 token),
             cancellationToken,
             DescribeTarget(target));
@@ -158,8 +158,8 @@ public sealed class Servo
         return ServoOperation.RunAsync(
             timeout,
             token => context.ExecuteInputAsync(
-                (_, input, operationToken) => input.HoverAsync(
-                    root => actionEngine.ResolveActionable(root, target), operationToken),
+                (_, input, operationToken) => actionEngine.DispatchWhenActionableAsync(
+                    target, resolve => input.HoverAsync(resolve, operationToken), operationToken),
                 token),
             cancellationToken,
             DescribeTarget(target));
@@ -185,18 +185,18 @@ public sealed class Servo
         return ServoOperation.RunAsync(
             timeout,
             token => context.ExecuteInputAsync(
-                (_, input, operationToken) => input.DragAsync(
-                    root => actionEngine.ResolveActionable(root, source),
-                    _ => destination,
-                    steps,
+                (_, input, operationToken) => actionEngine.DispatchWhenActionableAsync(
+                    source,
+                    resolve => input.DragAsync(resolve, _ => destination, steps, operationToken),
                     operationToken),
                 token),
             cancellationToken,
             DescribeTarget(source));
     }
 
-    // The destination's actionable center is resolved at dispatch time, together with the source, before
-    // the pointer moves.
+    // The destination's actionable center is resolved in the same attempt as the source, before the
+    // pointer moves. A missing or not-actionable destination is retried like the source, so a drop zone
+    // that appears or becomes enabled a few frames later still receives the drop.
     public Task DragAsync(
         ServoTarget source,
         ServoTarget destination,
@@ -218,14 +218,17 @@ public sealed class Servo
         return ServoOperation.RunAsync(
             timeout,
             token => context.ExecuteInputAsync(
-                (_, input, operationToken) => input.DragAsync(
-                    root => actionEngine.ResolveActionable(root, source),
-                    root =>
-                    {
-                        ServoActionTarget end = actionEngine.ResolveActionable(root, destination);
-                        return new ServoPoint(end.X, end.Y);
-                    },
-                    steps,
+                (_, input, operationToken) => actionEngine.DispatchWhenActionableAsync(
+                    source,
+                    resolve => input.DragAsync(
+                        resolve,
+                        root =>
+                        {
+                            ServoActionTarget end = actionEngine.ResolveActionable(root, destination);
+                            return new ServoPoint(end.X, end.Y);
+                        },
+                        steps,
+                        operationToken),
                     operationToken),
                 token),
             cancellationToken,
@@ -249,8 +252,8 @@ public sealed class Servo
         return ServoOperation.RunAsync(
             timeout,
             token => context.ExecuteInputAsync(
-                (_, input, operationToken) => input.ScrollAsync(
-                    root => actionEngine.ResolveActionable(root, target), wheelDelta, operationToken),
+                (_, input, operationToken) => actionEngine.DispatchWhenActionableAsync(
+                    target, resolve => input.ScrollAsync(resolve, wheelDelta, operationToken), operationToken),
                 token),
             cancellationToken,
             DescribeTarget(target));
@@ -352,8 +355,8 @@ public sealed class Servo
             timeout,
             token => context.ExecuteInputAsync(
                 [
-                    (_, input, operationToken) => input.ClickAsync(
-                        root => actionEngine.ResolveActionable(root, target), operationToken),
+                    (_, input, operationToken) => actionEngine.DispatchWhenActionableAsync(
+                        target, resolve => input.ClickAsync(resolve, operationToken), operationToken),
                     (_, input, operationToken) => input.SendTextAsync(text, operationToken)
                 ],
                 token),
@@ -383,13 +386,13 @@ public sealed class Servo
             timeout,
             token => context.ExecuteInputAsync(
                 [
-                    (root, _, _) =>
-                    {
-                        actionEngine.ReadTextValue(root, target);
-                        return Task.CompletedTask;
-                    },
-                    (_, input, operationToken) => input.ClickAsync(
-                        root => actionEngine.ResolveActionable(root, target), operationToken),
+                    // The text-value check runs in each click attempt before input: a target without a
+                    // text value fails at once, a missing or not-yet-actionable one is waited for.
+                    (_, input, operationToken) => actionEngine.DispatchWhenActionableAsync(
+                        target,
+                        resolve => input.ClickAsync(resolve, operationToken),
+                        operationToken,
+                        root => actionEngine.ReadTextValue(root, target)),
                     (_, input, operationToken) => input.PressKeyAsync(InputKey.A, ServoModifiers.Control, operationToken),
                     text.Length == 0
                         ? (_, input, operationToken) => input.PressKeyAsync(InputKey.Delete, ServoModifiers.None, operationToken)

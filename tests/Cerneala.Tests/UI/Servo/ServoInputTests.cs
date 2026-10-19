@@ -307,11 +307,11 @@ public sealed class ServoInputTests
     }
 
     [Theory]
-    [InlineData("hidden")]
-    [InlineData("disabled")]
-    [InlineData("zero-bounds")]
-    [InlineData("not-hit-testable")]
-    public async Task TargetActionsRejectNonActionableElements(string state)
+    [InlineData("hidden", "The Servo target Id=\"target\" is not effectively visible.")]
+    [InlineData("disabled", "The Servo target Id=\"target\" is disabled.")]
+    [InlineData("zero-bounds", "The Servo target Id=\"target\" has no usable arranged bounds.")]
+    [InlineData("not-hit-testable", "The Servo target Id=\"target\" center is not hit-testable in the current tree.")]
+    public async Task TargetActionsTimeOutOnNonActionableElementsNamingTheLastReason(string state, string reason)
     {
         Button button = new() { Content = "Target", Width = 160, Height = 48 };
         ServoApi.SetId(button, "target");
@@ -334,10 +334,48 @@ public sealed class ServoInputTests
             button.Arrange(new ArrangeContext(new LayoutRect(0, 0, 0, 48)));
         }
 
-        ServoApi servo = new(host);
+        ServoApi servo = new(host, new ServoOptions { DefaultTimeout = TimeSpan.FromMilliseconds(200) });
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
 
-        await Assert.ThrowsAsync<ServoTargetNotActionableException>(
+        ServoTimeoutException timeout = await Assert.ThrowsAsync<ServoTimeoutException>(
             () => servo.ClickAsync(ServoTarget.ById("target")));
+
+        Assert.Contains("Last failure: " + reason, timeout.Message);
+        ServoTargetNotActionableException lastFailure =
+            Assert.IsType<ServoTargetNotActionableException>(timeout.InnerException);
+        Assert.Equal(reason, lastFailure.Message);
+        Assert.Equal(0, clicks);
+    }
+
+    [Fact]
+    public async Task ClickOnAUiHostWaitsForATargetThatBecomesEnabledInALaterFrame()
+    {
+        Button button = new() { Content = "Save", Width = 160, Height = 48, IsEnabled = false };
+        ServoApi.SetId(button, "save");
+        UiHost host = CreateHost(button);
+        ServoApi servo = new(host);
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+
+        Task click = servo.ClickAsync(ServoTarget.ById("save"));
+        Assert.False(click.IsCompleted);
+        host.Update(EmptyInput(), host.Viewport, TimeSpan.FromMilliseconds(16));
+        Thread.Sleep(10);
+        host.Update(EmptyInput(), host.Viewport, TimeSpan.FromMilliseconds(16));
+        Assert.False(click.IsCompleted);
+        Assert.Equal(0, clicks);
+
+        button.IsEnabled = true;
+        for (int frame = 0; frame < 32 && !click.IsCompleted; frame++)
+        {
+            host.Update(EmptyInput(), host.Viewport, TimeSpan.FromMilliseconds(16));
+            Thread.Sleep(1);
+        }
+
+        Assert.True(click.IsCompleted, "The Servo click did not complete within 32 frames.");
+        await click;
+        Assert.Equal(1, clicks);
     }
 
     [Fact]
@@ -594,15 +632,15 @@ public sealed class ServoInputTests
             Root = root,
             Viewport = new UiViewport(width, height)
         });
-        host.Update(
-            new InputFrame(
-                PointerSnapshot.Empty,
-                PointerSnapshot.Empty,
-                KeyboardSnapshot.Empty,
-                KeyboardSnapshot.Empty,
-                []),
-            host.Viewport,
-            TimeSpan.Zero);
+        host.Update(EmptyInput(), host.Viewport, TimeSpan.Zero);
         return host;
     }
+
+    private static InputFrame EmptyInput() =>
+        new(
+            PointerSnapshot.Empty,
+            PointerSnapshot.Empty,
+            KeyboardSnapshot.Empty,
+            KeyboardSnapshot.Empty,
+            []);
 }
