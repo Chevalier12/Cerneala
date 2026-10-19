@@ -317,6 +317,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     private readonly List<IElementLifecycleBehavior> lifecycleBehaviors = [];
     private bool isInitialized;
     private int attachmentGeneration;
+    private bool isDetachingFromRoot;
 
     internal LayoutSize? LastMeasureAvailableSize { get; set; }
 
@@ -774,6 +775,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     internal void DetachFromRoot()
     {
         attachmentGeneration++;
+        isDetachingFromRoot = true;
         // A failing detach callback does not skip the element's later callbacks: each one runs, the element is
         // detached, then the first failure propagates.
         ExceptionDispatchInfo? failure = null;
@@ -804,6 +806,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
             ElementId = null;
             Root?.AdvanceImageResolutionEpoch();
             Root = null;
+            isDetachingFromRoot = false;
         }
 
         failure?.Throw();
@@ -1600,7 +1603,9 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     private void AttachElementAspectBehavior()
     {
-        if (elementAspectBehavior is null && Aspect is ElementAspect aspect)
+        // The detach callbacks still see the element attached, but the detach has already disposed the lifetime
+        // and leaves the element detached: an aspect they assign gets its lifetime on the next attach.
+        if (!isDetachingFromRoot && elementAspectBehavior is null && Aspect is ElementAspect aspect)
         {
             int generation = attachmentGeneration;
             IDisposable? behavior = aspect.AttachBehavior(this);

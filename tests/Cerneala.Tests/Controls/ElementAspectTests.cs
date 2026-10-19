@@ -388,6 +388,105 @@ public sealed class ElementAspectTests
         Assert.Equal(["create 1", "dispose 1", "create 2", "dispose 2"], events);
     }
 
+    [Fact]
+    public void AspectAssignedByAnUnloadedHandlerGetsNoLifetimeUntilTheElementIsAttachedAgain()
+    {
+        UIRoot root = new();
+        Border border = new();
+        List<string> events = [];
+        int creates = 0;
+        ElementAspect other = new(
+            "Other",
+            typeof(UIElement),
+            [],
+            [],
+            _ =>
+            {
+                int create = ++creates;
+                events.Add($"create other {create}");
+                return new EveryCallLifetime(() => events.Add($"dispose other {create}"));
+            });
+        bool assign = true;
+        border.Unloaded += (_, _) =>
+        {
+            if (assign)
+            {
+                assign = false;
+                border.Aspect = other;
+            }
+        };
+        root.VisualChildren.Add(border);
+
+        root.VisualChildren.Remove(border);
+
+        Assert.Null(border.Root);
+        Assert.Same(other, border.Aspect);
+        Assert.Empty(events);
+
+        root.VisualChildren.Add(border);
+
+        Assert.Equal(["create other 1"], events);
+
+        root.VisualChildren.Remove(border);
+
+        Assert.Equal(["create other 1", "dispose other 1"], events);
+    }
+
+    [Fact]
+    public void AspectAssignedByALifetimeDisposedOnDetachGetsNoLifetimeUntilTheElementIsAttachedAgain()
+    {
+        UIRoot root = new();
+        Border border = new();
+        List<string> events = [];
+        int otherCreates = 0;
+        ElementAspect other = new(
+            "Other",
+            typeof(UIElement),
+            [],
+            [],
+            _ =>
+            {
+                int create = ++otherCreates;
+                events.Add($"create other {create}");
+                return new EveryCallLifetime(() => events.Add($"dispose other {create}"));
+            });
+        int firstDisposes = 0;
+        ElementAspect first = new(
+            "First",
+            typeof(UIElement),
+            [],
+            [],
+            _ =>
+            {
+                events.Add("create first");
+                // Records every Dispose call, so a second dispose of the lifetime shows up.
+                return new EveryCallLifetime(() =>
+                {
+                    events.Add($"dispose first {++firstDisposes}");
+                    if (firstDisposes == 1)
+                    {
+                        border.Aspect = other;
+                    }
+                });
+            });
+        border.Aspect = first;
+        root.VisualChildren.Add(border);
+
+        root.VisualChildren.Remove(border);
+
+        Assert.Null(border.Root);
+        Assert.Same(other, border.Aspect);
+        Assert.Equal(["create first", "dispose first 1"], events);
+
+        root.VisualChildren.Add(border);
+
+        Assert.Equal(["create first", "dispose first 1", "create other 1"], events);
+
+        root.VisualChildren.Remove(border);
+
+        Assert.Equal(["create first", "dispose first 1", "create other 1", "dispose other 1"], events);
+    }
+
     private sealed class CallbackLifetime(Action dispose) : IDisposable
     {
         private Action? dispose = dispose;
