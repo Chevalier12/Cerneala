@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Cerneala.UI.Accessibility;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
@@ -40,8 +41,7 @@ internal sealed class ServoQueryEngine
 
     internal bool Exists(UIRoot root, ServoTarget target)
     {
-        SemanticsTree tree = semanticsProvider.Build(root, SemanticsProjection.Servo);
-        return ContainsMatch(root, tree.Root, target, []);
+        return ResolveAll(root, target).Count > 0;
     }
 
     internal IReadOnlyList<ServoResolvedElement> ResolveAll(UIRoot root, ServoTarget target)
@@ -49,114 +49,83 @@ internal sealed class ServoQueryEngine
         ArgumentNullException.ThrowIfNull(root);
         ArgumentNullException.ThrowIfNull(target);
         SemanticsTree tree = semanticsProvider.Build(root, SemanticsProjection.Servo);
+        return ResolveAll(root, tree, target);
+    }
+
+    private static IReadOnlyList<ServoResolvedElement> ResolveAll(UIRoot root, SemanticsTree tree, ServoTarget target)
+    {
+        HashSet<UIElement>? scopeElements = null;
+        if (target.Scope is not null)
+        {
+            scopeElements = new HashSet<UIElement>(ReferenceEqualityComparer.Instance);
+            foreach (ServoResolvedElement scopeMatch in ResolveAll(root, tree, target.Scope))
+            {
+                scopeElements.Add(scopeMatch.Element);
+            }
+        }
+
         List<ServoResolvedElement> matches = [];
-        CollectMatches(root, tree.Root, target, [], matches);
-        return matches;
+        CollectMatches(root, tree.Root, target, scopeElements, insideScope: scopeElements is null, matches);
+        return SelectPosition(matches, target.Position);
     }
 
     private static void CollectMatches(
         UIRoot root,
         SemanticsNode node,
         ServoTarget target,
-        IReadOnlyList<ServoSemanticEntry> ancestors,
+        HashSet<UIElement>? scopeElements,
+        bool insideScope,
         List<ServoResolvedElement> matches)
     {
-        if (!TryResolveEntry(root, node, out ServoSemanticEntry entry))
+        if (!TryResolveEntry(root, node, out UIElement? element))
         {
             return;
         }
 
-        if (Matches(entry, target, ancestors))
+        if (insideScope && MatchesOwnCriteria(node, element, target))
         {
-            matches.Add(new ServoResolvedElement(node, entry.Element));
+            matches.Add(new ServoResolvedElement(node, element));
         }
 
-        List<ServoSemanticEntry> descendantsAncestors = new(ancestors.Count + 1);
-        descendantsAncestors.AddRange(ancestors);
-        descendantsAncestors.Add(entry);
+        bool descendantsInsideScope = insideScope || scopeElements!.Contains(element);
         foreach (SemanticsNode child in node.Children)
         {
-            CollectMatches(root, child, target, descendantsAncestors, matches);
+            CollectMatches(root, child, target, scopeElements, descendantsInsideScope, matches);
         }
     }
 
-    private static bool ContainsMatch(
-        UIRoot root,
-        SemanticsNode node,
-        ServoTarget target,
-        IReadOnlyList<ServoSemanticEntry> ancestors)
+    private static IReadOnlyList<ServoResolvedElement> SelectPosition(
+        List<ServoResolvedElement> matches,
+        Index? position)
     {
-        if (!TryResolveEntry(root, node, out ServoSemanticEntry entry))
+        if (position is not Index index)
         {
-            return false;
+            return matches;
         }
 
-        if (Matches(entry, target, ancestors))
-        {
-            return true;
-        }
-
-        List<ServoSemanticEntry> descendantsAncestors = new(ancestors.Count + 1);
-        descendantsAncestors.AddRange(ancestors);
-        descendantsAncestors.Add(entry);
-        foreach (SemanticsNode child in node.Children)
-        {
-            if (ContainsMatch(root, child, target, descendantsAncestors))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        int offset = index.GetOffset(matches.Count);
+        return offset >= 0 && offset < matches.Count ? [matches[offset]] : [];
     }
 
-    private static bool Matches(
-        ServoSemanticEntry candidate,
-        ServoTarget target,
-        IReadOnlyList<ServoSemanticEntry> ancestors)
+    private static bool MatchesOwnCriteria(SemanticsNode node, UIElement element, ServoTarget target)
     {
-        if (!MatchesOwnCriteria(candidate, target))
-        {
-            return false;
-        }
-
-        if (target.Scope is null)
-        {
-            return true;
-        }
-
-        for (int index = ancestors.Count - 1; index >= 0; index--)
-        {
-            ServoSemanticEntry ancestor = ancestors[index];
-            IReadOnlyList<ServoSemanticEntry> ancestorAncestors = ancestors.Take(index).ToArray();
-            if (Matches(ancestor, target.Scope, ancestorAncestors))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return (target.Id is null || string.Equals(Servo.GetId(element), target.Id, StringComparison.Ordinal)) &&
+            target.MatchesName(node.Name) &&
+            (target.Role is null || node.Role == target.Role) &&
+            (!target.HasPredicates || target.MatchesPredicates(CreateSnapshot(new ServoResolvedElement(node, element))));
     }
 
-    private static bool MatchesOwnCriteria(ServoSemanticEntry candidate, ServoTarget target)
-    {
-        return (target.Id is null || string.Equals(Servo.GetId(candidate.Element), target.Id, StringComparison.Ordinal)) &&
-            (target.Name is null || string.Equals(candidate.Node.Name, target.Name, StringComparison.Ordinal)) &&
-            (target.Role is null || candidate.Node.Role == target.Role);
-    }
-
-    private static bool TryResolveEntry(UIRoot root, SemanticsNode node, out ServoSemanticEntry entry)
+    private static bool TryResolveEntry(UIRoot root, SemanticsNode node, [NotNullWhen(true)] out UIElement? element)
     {
         if (node.ElementId is UiElementId elementId &&
-            root.ElementIds.TryGetElement(elementId, out UIElement? element) &&
+            root.ElementIds.TryGetElement(elementId, out element) &&
             element is not null &&
             ReferenceEquals(element.Root, root))
         {
-            entry = new ServoSemanticEntry(node, element);
             return true;
         }
 
-        entry = default;
+        element = null;
         return false;
     }
 
@@ -176,8 +145,6 @@ internal sealed class ServoQueryEngine
             node.GetProperty<string>(SemanticsProperty.Value),
             node.Properties);
     }
-
-    private readonly record struct ServoSemanticEntry(SemanticsNode Node, UIElement Element);
 }
 
 internal sealed record ServoResolvedElement(SemanticsNode Node, UIElement Element);
