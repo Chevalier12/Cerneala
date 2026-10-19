@@ -66,6 +66,37 @@ public sealed class GridTests
         Assert.Equal(new LayoutRect(0, 0, 50, 25), child.ArrangedBounds);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void SameSlotArrangeAfterUnboundedMeasureUsesTheNewStarRowSizes(bool measureShorterFirst)
+    {
+        // Measured at (100, 80), the two * rows share the height by weight (40 and 40). Measured unbounded, each keeps
+        // its content height (60 and 20). Both measures end at a desired size of 100 x 80, so only the newer measure
+        // state tells the same-slot arrange where row 1 starts: Y 60, as for a Grid that was only measured unbounded.
+        Grid grid = new();
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Stars(1)));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Stars(1)));
+        UIElement first = new() { Height = 60 };
+        UIElement second = new() { Height = 20 };
+        Grid.SetRow(second, 1);
+        grid.VisualChildren.Add(first);
+        grid.VisualChildren.Add(second);
+        LayoutRect slot = new(0, 0, 100, 80);
+        grid.Measure(new MeasureContext(new LayoutSize(100, 80)));
+        grid.Arrange(new ArrangeContext(slot));
+        if (measureShorterFirst)
+        {
+            grid.Measure(new MeasureContext(new LayoutSize(100, 50)));
+        }
+
+        grid.Measure(new MeasureContext(new LayoutSize(100, float.PositiveInfinity)));
+        grid.Arrange(new ArrangeContext(slot));
+
+        Assert.Equal(new LayoutSize(100, 80), grid.DesiredSize);
+        Assert.Equal(60, second.ArrangedBounds.Y);
+    }
+
     [Fact]
     public void LayoutKeepsStoredColumnPlacementWhenGridHasFewerColumns()
     {

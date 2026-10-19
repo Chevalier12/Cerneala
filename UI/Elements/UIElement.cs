@@ -915,6 +915,11 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         }
 
         Root?.CountMeasureCall();
+        // ArrangeCore can read measure state other than the desired sizes, such as the heights of a Grid's * rows, which
+        // keep their content height when measured unbounded. A measure that runs therefore makes the element's own
+        // arrange cache invalid, as WPF's Measure calls InvalidateArrange, also when the desired size is unchanged (#516).
+        // The parent's arrange cache still depends only on this element's desired size.
+        LastArrangeLayoutVersion = -1;
         int invalidationCountBeforeMeasure = measureCacheInvalidationCount;
         LayoutSize desired = !UIElementVisibility.ParticipatesInLayout(this)
             ? LayoutSize.Zero
