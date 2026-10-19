@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Items;
@@ -7,12 +8,32 @@ using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
 using Orientation = Cerneala.UI.Layout.Orientation;
 
 namespace Cerneala.Tests.Controls;
 
 public sealed class TabControlTests
 {
+    // The ItemsControl chrome (#609) does not apply: the built-in header row and content area are not inset, so a
+    // TabControl without a template draws no Background or BorderBrush of its own.
+    [Fact]
+    public void TabControlWithoutTemplateDrawsNoChromeOfItsOwn()
+    {
+        TabControl tabControl = new()
+        {
+            Background = new SolidColorBrush(Color.Red),
+            BorderBrush = new SolidColorBrush(Color.Blue),
+            BorderThickness = new Thickness(2)
+        };
+        tabControl.SetItems(new[] { new TabItem { Header = "First", Content = "Page" } });
+        UIRoot root = new(100, 100);
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+
+        Assert.Equal(0, root.Detective.CaptureRendering(tabControl).CommandCount);
+    }
+
     [Fact]
     public void TabControlSelectedTabItemReturnsUnrealizedTabItem()
     {

@@ -513,6 +513,48 @@ public sealed class ListBoxTests
         Assert.True(commands.Count > 1);
     }
 
+    // As the Border of the WPF ListBox template, BorderBrush draws the border around the rows (#609).
+    [Fact]
+    public void ListBoxDrawsItsBorderBrushAroundItsArrangedBounds()
+    {
+        SolidColorBrush blue = new(Color.Blue);
+        ListBox listBox = new() { BorderBrush = blue, BorderThickness = new Thickness(2) };
+        listBox.Items.Add(new ListBoxItem { Content = "One" });
+        UIRoot root = new();
+        root.VisualChildren.Add(listBox);
+        root.ProcessFrame();
+        listBox.Arrange(new ArrangeContext(new LayoutRect(3, 4, 40, 30)));
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
+
+        List<DrawCommand> commands = [.. root.RetainedRenderer.Commit(root)];
+
+        DrawCommand border = Assert.Single(commands, command => ReferenceEquals(command.Brush, blue));
+        Assert.Equal(DrawCommandKind.DrawRectangle, border.Kind);
+        Assert.Equal(new DrawRect(3, 4, 40, 30), border.Rect);
+    }
+
+    // As the WPF ListBox template, the rows are arranged inside BorderThickness and Padding (#609).
+    [Fact]
+    public void ListBoxArrangesItsRowsInsideBorderThicknessAndPadding()
+    {
+        ListBoxItem row = new() { Content = "One" };
+        ListBox listBox = new() { BorderThickness = new Thickness(2), Padding = new Thickness(10) };
+        listBox.Items.Add(row);
+        UIRoot root = new();
+        root.VisualChildren.Add(listBox);
+        root.ProcessFrame();
+
+        Assert.Equal(new LayoutSize(row.DesiredSize.Width + 24, row.DesiredSize.Height + 24), listBox.DesiredSize);
+
+        listBox.Arrange(new ArrangeContext(new LayoutRect(3, 4, 40, 30)));
+        root.ProcessFrame();
+
+        Assert.Equal(15, row.ArrangedBounds.X);
+        Assert.Equal(16, row.ArrangedBounds.Y);
+        Assert.Equal(16, row.ArrangedBounds.Width);
+    }
+
     [Fact]
     public void ListBoxWithoutBackgroundDrawsNoFill()
     {
