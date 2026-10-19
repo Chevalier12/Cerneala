@@ -789,6 +789,192 @@ public sealed class TabControlTests
     }
 
     [Fact]
+    public void SelectedContentPropertiesAreReadOnly()
+    {
+        TabControl tabControl = new();
+
+        Assert.True(TabControl.SelectedContentProperty.IsReadOnly);
+        Assert.True(TabControl.SelectedContentTemplateProperty.IsReadOnly);
+        Assert.Throws<InvalidOperationException>(() => tabControl.SetValue(TabControl.SelectedContentProperty, "X"));
+        Assert.Throws<InvalidOperationException>(() =>
+            tabControl.SetValue(TabControl.SelectedContentTemplateProperty, new ContentTemplate<string>("x", key: null, priority: 0, _ => new FixedElement())));
+    }
+
+    [Fact]
+    public void ComponentTemplatePresenterBoundToSelectedContentFollowsTheSelectedTabAndItsContent()
+    {
+        UIRoot root = new(300, 200);
+        TabItem first = new() { Header = "1", Content = "C1" };
+        TabItem second = new() { Header = "2", Content = "C2" };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        tabControl.SelectedIndex = 0;
+        ContentPresenter? presenter = null;
+        tabControl.ComponentTemplate = new ComponentTemplate<TabControl>("tabs", context =>
+        {
+            presenter = new ContentPresenter();
+            context.Bind(TabControl.SelectedContentProperty, presenter, ContentPresenter.ContentProperty);
+            return presenter;
+        });
+        List<object?> changes = [];
+        tabControl.PropertyChanged += (_, args) =>
+        {
+            if (ReferenceEquals(args.Property, TabControl.SelectedContentProperty))
+            {
+                changes.Add(args.NewValue);
+            }
+        };
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+
+        Assert.Equal("C1", presenter!.Content);
+
+        tabControl.SelectedIndex = 1;
+        root.ProcessFrame();
+
+        Assert.Equal("C2", tabControl.SelectedContent);
+        Assert.Equal("C2", presenter.Content);
+
+        second.Content = "C2b";
+        root.ProcessFrame();
+
+        Assert.Equal("C2b", presenter.Content);
+        Assert.Equal(["C2", "C2b"], changes);
+    }
+
+    [Fact]
+    public void ComponentTemplatePresenterBoundToSelectedContentTemplateFollowsTheSelectedTab()
+    {
+        UIRoot root = new(300, 200);
+        ContentTemplate<string> tabTemplate = new("tab", key: null, priority: 0, _ => new FixedElement());
+        ContentTemplate<string> controlTemplate = new("control", key: null, priority: 0, _ => new FixedElement());
+        ContentTemplate<string> newTabTemplate = new("new", key: null, priority: 0, _ => new FixedElement());
+        TabItem first = new() { Header = "1", Content = "C1", ContentTemplate = tabTemplate };
+        TabItem second = new() { Header = "2", Content = "C2" };
+        TabControl tabControl = new() { ContentTemplate = controlTemplate };
+        tabControl.SetItems(new[] { first, second });
+        tabControl.SelectedIndex = 0;
+        ContentPresenter? presenter = null;
+        tabControl.ComponentTemplate = new ComponentTemplate<TabControl>("tabs", context =>
+        {
+            presenter = new ContentPresenter();
+            context.Bind(TabControl.SelectedContentProperty, presenter, ContentPresenter.ContentProperty);
+            context.Bind(TabControl.SelectedContentTemplateProperty, presenter, ContentPresenter.ContentTemplateProperty);
+            return presenter;
+        });
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+
+        Assert.Same(tabTemplate, presenter!.ContentTemplate);
+
+        tabControl.SelectedIndex = 1;
+        root.ProcessFrame();
+
+        Assert.Same(controlTemplate, presenter.ContentTemplate);
+
+        second.ContentTemplate = newTabTemplate;
+        root.ProcessFrame();
+
+        Assert.Same(newTabTemplate, presenter.ContentTemplate);
+
+        second.ClearValue(TabItem.ContentTemplateProperty);
+        ContentTemplate<string> otherControlTemplate = new("other", key: null, priority: 0, _ => new FixedElement());
+        tabControl.ContentTemplate = otherControlTemplate;
+        root.ProcessFrame();
+
+        Assert.Same(otherControlTemplate, presenter.ContentTemplate);
+    }
+
+    [Fact]
+    public void SelectedContentPropertyChangesWhenTheTabOfTheSelectedDataItemIsRealized()
+    {
+        UIRoot root = new(300, 200);
+        TabControl tabControl = new() { ItemsSource = new[] { "A", "B" } };
+        tabControl.SelectedIndex = 1;
+        List<object?> changes = [];
+        tabControl.PropertyChanged += (_, args) =>
+        {
+            if (ReferenceEquals(args.Property, TabControl.SelectedContentProperty))
+            {
+                changes.Add(args.NewValue);
+            }
+        };
+
+        // The tab of a data item exists only once layout realizes it.
+        Assert.Null(tabControl.SelectedContent);
+
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+
+        Assert.Equal("B", tabControl.SelectedContent);
+        Assert.Equal(["B"], changes);
+
+        tabControl.SelectedIndex = 0;
+
+        Assert.Equal("A", tabControl.SelectedContent);
+        Assert.Equal(["B", "A"], changes);
+    }
+
+    [Fact]
+    public void ComponentTemplatePresenterBoundToSelectedContentKeepsTheElementContentOwnership()
+    {
+        UIRoot root = new(300, 200);
+        FixedElement a = new();
+        FixedElement b = new();
+        FixedElement c = new();
+        FixedElement other = new();
+        TabItem first = new() { Header = "1", Content = a };
+        TabItem second = new() { Header = "2", Content = b };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        tabControl.SelectedIndex = 0;
+        ContentPresenter? presenter = null;
+        tabControl.ComponentTemplate = new ComponentTemplate<TabControl>("tabs", context =>
+        {
+            presenter = new ContentPresenter();
+            context.Bind(TabControl.SelectedContentProperty, presenter, ContentPresenter.ContentProperty);
+            return presenter;
+        });
+        root.VisualChildren.Add(tabControl);
+        root.VisualChildren.Add(other);
+        root.ProcessFrame();
+
+        Assert.Same(presenter, a.VisualParent);
+        Assert.Same(second, b.LogicalParent);
+        Assert.Throws<InvalidOperationException>(() => other.LogicalChildren.Add(b));
+
+        tabControl.SelectedIndex = 1;
+
+        // The binding hands the content over at the selection change, before any layout pass.
+        Assert.Same(presenter, b.LogicalParent);
+        Assert.Same(first, a.LogicalParent);
+
+        root.ProcessFrame();
+
+        Assert.Same(presenter, b.LogicalParent);
+        Assert.Same(presenter, b.VisualParent);
+        Assert.Same(first, a.LogicalParent);
+        Assert.Null(a.VisualParent);
+        Assert.Throws<InvalidOperationException>(() => other.LogicalChildren.Add(a));
+
+        second.Content = c;
+        root.ProcessFrame();
+
+        Assert.Same(presenter, c.VisualParent);
+        Assert.Null(b.LogicalParent);
+        Assert.Null(b.VisualParent);
+        other.LogicalChildren.Add(b);
+        Assert.Same(other, b.LogicalParent);
+
+        tabControl.SelectedIndex = 0;
+        root.ProcessFrame();
+
+        Assert.Same(presenter, a.VisualParent);
+        Assert.Same(second, c.LogicalParent);
+        Assert.Null(c.VisualParent);
+    }
+
+    [Fact]
     public void DeselectedTabOwnsTheElementContentThatASelectionChangedHandlerTookFromTheTemplateBeforeTheNextLayoutPass()
     {
         UIRoot root = new(300, 200);

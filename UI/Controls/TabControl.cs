@@ -17,6 +17,23 @@ public class TabControl : Selector
         typeof(TabControl),
         new UiPropertyMetadata<ContentTemplate?>(null, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
 
+    // As in WPF, SelectedContent and SelectedContentTemplate are read-only properties that follow the selected tab, so a
+    // ComponentTemplate can bind its ContentPresenter to them.
+    private static readonly UiPropertyKey<object?> SelectedContentPropertyKey = UiProperty<object?>.RegisterReadOnly(
+        nameof(SelectedContent),
+        typeof(TabControl),
+        new UiPropertyMetadata<object?>(null, UiPropertyOptions.None, ContentControl.ContentEqualityComparer));
+
+    public static readonly UiProperty<object?> SelectedContentProperty = SelectedContentPropertyKey.Property;
+
+    private static readonly UiPropertyKey<ContentTemplate?> SelectedContentTemplatePropertyKey =
+        UiProperty<ContentTemplate?>.RegisterReadOnly(
+            nameof(SelectedContentTemplate),
+            typeof(TabControl),
+            new UiPropertyMetadata<ContentTemplate?>(null));
+
+    public static readonly UiProperty<ContentTemplate?> SelectedContentTemplateProperty = SelectedContentTemplatePropertyKey.Property;
+
     // Shows the content of the selected tab below the header row; a TabItem never hosts its own Content.
     private readonly ContentPresenter selectedContentPresenter;
 
@@ -38,10 +55,9 @@ public class TabControl : Selector
         set => SetValue(ContentTemplateProperty, value);
     }
 
-    public object? SelectedContent => SelectedTabItem?.Content;
+    public object? SelectedContent => GetValue(SelectedContentProperty);
 
-    public ContentTemplate? SelectedContentTemplate =>
-        SelectedTabItem is { } tab ? tab.ContentTemplate ?? ContentTemplate : null;
+    public ContentTemplate? SelectedContentTemplate => GetValue(SelectedContentTemplateProperty);
 
     protected override Type DefaultContainerType => typeof(TabItem);
 
@@ -88,11 +104,7 @@ public class TabControl : Selector
     {
         if (ReferenceEquals(tab, SelectedTabItem))
         {
-            if (IsComponentTemplated)
-            {
-                tab.ReleaseContentForContentArea();
-            }
-
+            UpdateSelectedContentProperties();
             InvalidateSelectedContent("Selected tab content changed");
         }
     }
@@ -102,13 +114,11 @@ public class TabControl : Selector
         if (TemplateChild is not null)
         {
             LayoutSize size = base.MeasureCore(context);
-            // The template is built and measured: every tab whose UIElement content nothing shows owns it again, the
-            // tab shown before and the selected tab when the template did not take its content.
-            foreach (TabItem tab in GetTabs())
-            {
-                tab.HoldContent();
-            }
-
+            // The tab of a data item exists only once the template realized it, so SelectedContent follows it here, and
+            // every other tab owns a content that nothing shows again. The template is built and measured, so the
+            // selected tab owns its UIElement content again when the template did not take it.
+            UpdateSelectedContentProperties();
+            SelectedTabItem?.HoldContent();
             return size;
         }
 
@@ -146,10 +156,15 @@ public class TabControl : Selector
         base.OnPropertyChanged(args);
         if (ReferenceEquals(args.Property, SelectedIndexProperty))
         {
+            UpdateSelectedContentProperties();
             InvalidateSelectedContent("Selected tab changed");
         }
+        else if (ReferenceEquals(args.Property, ContentTemplateProperty))
+        {
+            UpdateSelectedContentProperties();
+        }
 
-        if (templateChanged || (ReferenceEquals(args.Property, SelectedIndexProperty) && IsComponentTemplated))
+        if (templateChanged)
         {
             UpdateTemplatedContentOwnership();
         }
@@ -207,6 +222,32 @@ public class TabControl : Selector
     private void UpdateTemplatedContentOwnership()
     {
         TabItem? selected = IsComponentTemplated ? SelectedTabItem : null;
+        HoldContentOfOtherTabs(selected);
+        selected?.ReleaseContentForContentArea();
+    }
+
+    // Sets SelectedContent and SelectedContentTemplate to those of the selected tab. With a ComponentTemplate, the
+    // selected tab lets go of a UIElement content before SelectedContent changes, so a ContentPresenter bound to
+    // SelectedContentProperty can take it at once, and every other tab owns its content again once nothing shows it.
+    private void UpdateSelectedContentProperties()
+    {
+        TabItem? tab = SelectedTabItem;
+        bool templated = IsComponentTemplated;
+        if (templated)
+        {
+            tab?.ReleaseContentForContentArea();
+        }
+
+        SetValue(SelectedContentPropertyKey, tab?.Content);
+        SetValue(SelectedContentTemplatePropertyKey, tab is null ? null : tab.ContentTemplate ?? ContentTemplate);
+        if (templated)
+        {
+            HoldContentOfOtherTabs(tab);
+        }
+    }
+
+    private void HoldContentOfOtherTabs(TabItem? selected)
+    {
         foreach (TabItem tab in GetTabs())
         {
             if (!ReferenceEquals(tab, selected))
@@ -214,8 +255,6 @@ public class TabControl : Selector
                 tab.HoldContent();
             }
         }
-
-        selected?.ReleaseContentForContentArea();
     }
 
     // TabItem items, which a templated control may never realize, and the realized generated tabs.
@@ -239,13 +278,15 @@ public class TabControl : Selector
     }
 
     // The only place the content area changes: it runs in measure, after the tabs are realized, so a UIElement
-    // content joins the content area while its tab is selected and leaves it when another tab is selected.
+    // content joins the content area while its tab is selected and leaves it when another tab is selected. The tab of
+    // a data item exists only once it is realized, so SelectedContent is updated here too.
     private void UpdateSelectedContent()
     {
         TabItem? previousTab = presentedTab;
         TabItem? tab = SelectedTabItem;
         presentedTab = tab;
-        selectedContentPresenter.PrepareItemPresentation(tab?.Content, SelectedContentTemplate, null, null, -1);
+        UpdateSelectedContentProperties();
+        selectedContentPresenter.PrepareItemPresentation(SelectedContent, SelectedContentTemplate, null, null, -1);
         // Changing the Content of the content area let go of the content of the tab shown before at once; that tab
         // owns it again before the content area is measured, so a template that throws while it is measured cannot
         // leave that content without an owner.

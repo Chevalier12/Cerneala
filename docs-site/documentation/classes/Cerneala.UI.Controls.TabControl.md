@@ -73,7 +73,16 @@ Without a `ComponentTemplate`, `TabControl` lays out two parts:
 
 The desired size is the wider of the two parts, and the header row height plus the content area height. Neither part applies `Padding` or `BorderThickness`, and `TabControl` draws no background itself. When the control has a `ComponentTemplate`, layout goes to the template, and the built-in header row and content area are not laid out.
 
-The content area is refreshed during measure, after the tabs are realized. Changing `SelectedIndex`, `ContentTemplate`, or the `Content` or `ContentTemplate` of the selected tab invalidates measure, so the next layout pass shows the change. `SelectedContent` and `SelectedContentTemplate` are computed from the selected tab, so they return the new values at once.
+The content area is refreshed during measure, after the tabs are realized. Changing `SelectedIndex`, `ContentTemplate`, or the `Content` or `ContentTemplate` of the selected tab invalidates measure, so the next layout pass shows the change.
+
+### SelectedContent and SelectedContentTemplate
+
+As in WPF, `SelectedContent` and `SelectedContentTemplate` are read-only UI properties, identified by `SelectedContentProperty` and `SelectedContentTemplateProperty`. Only the `TabControl` sets them: `SetValue(TabControl.SelectedContentProperty, value)` throws `InvalidOperationException`. They change at once, and raise `PropertyChanged`, when `SelectedIndex`, `ContentTemplate`, or the `Content` or `ContentTemplate` of the selected tab changes, so they already hold the new values when `SelectionChanged` is raised. The tab of a data item exists only once layout realizes it, so for a data item they change in the next layout pass. For example, with `ItemsSource = new[] { "A", "B" }` and `SelectedIndex = 1` before the first layout pass, `SelectedContent` is `null`; after the layout pass it is `"B"` and `PropertyChanged` was raised once for `SelectedContentProperty`; after `SelectedIndex = 0` it is `"A"` at once.
+
+| Property | Value |
+| --- | --- |
+| `SelectedContent` | `SelectedTabItem.Content`, or `null` when `SelectedTabItem` is `null`. |
+| `SelectedContentTemplate` | `SelectedTabItem.ContentTemplate` when it is not `null`, otherwise `ContentTemplate`; `null` when `SelectedTabItem` is `null`. |
 
 When `Content` is a `UIElement`, that element is a child of the content area while its tab is selected. When another tab is selected, the next layout pass removes it from the content area and gives it back to its `TabItem`, which owns it as its `LogicalParent` until its tab is selected again. As in WPF, only the content of the selected tab is loaded: the element raises `Loaded` when its tab is shown and `Unloaded` once when another tab is selected, and the content of a tab that is not selected raises neither. For example, with `first.Content = button` and `SelectedIndex = 0`, `button` is under the `TabControl` after layout and has raised `Loaded` once; after `SelectedIndex = 1` and the next layout pass, `button` has raised `Unloaded` once, `button.IsLoaded` is `false`, `button.VisualParent` is `null` and `button.LogicalParent` is `first`, so adding `button` to another parent throws `InvalidOperationException`.
 
@@ -115,7 +124,7 @@ tabs.ComponentTemplate = null;
 
 ### Element content with a ComponentTemplate
 
-When the control has a `ComponentTemplate` (or a `ComponentTemplateKey`), the template shows the selected tab's content, for example with a `ContentPresenter` whose `Content` is `SelectedContent`. Then the selected tab lets go of a `UIElement` content, so a `ContentPresenter` in the template can take it as its logical and visual child. Right before the template is built, the built-in content area is emptied and the selected tab lets go of its content. This holds however the template gets applied: when `ComponentTemplate` or `ComponentTemplateKey` is set, and also when a `ComponentTemplateKey` that did not resolve starts to resolve after the content area showed the content, for example when the aspect package that provides the key is registered after a layout pass. When another tab is selected, the newly selected tab lets go of its content at once, before the `Selected` and `SelectionChanged` handlers run, so a handler can give it to a `ContentPresenter` in the template. Every other tab owns its `UIElement` content again (as its `LogicalParent`) as soon as nothing shows it: at the end of the selection change, after its `Selected`, `Unselected`, and `SelectionChanged` handlers ran (also when one of them throws), or at the next layout pass when the template still showed it then. As in WPF, where `TabControl.OnSelectionChanged` runs after the `SelectionChanged` handlers, there is no frame in between: right after `tabs.SelectedIndex = 1` returns, the content of the tab that a handler took out of the presenter already has its `TabItem` as `LogicalParent`. When the template is replaced or removed, the old template lets go of the tabs' content, and without a template the content area shows the selected tab's content again on the next layout pass.
+When the control has a `ComponentTemplate` (or a `ComponentTemplateKey`), the template shows the selected tab's content, usually with a `ContentPresenter` bound to `SelectedContentProperty`, as WPF's default template binds `ContentSource="SelectedContent"`. Then the selected tab lets go of a `UIElement` content, so a `ContentPresenter` in the template can take it as its logical and visual child. Right before the template is built, the built-in content area is emptied and the selected tab lets go of its content. This holds however the template gets applied: when `ComponentTemplate` or `ComponentTemplateKey` is set, and also when a `ComponentTemplateKey` that did not resolve starts to resolve after the content area showed the content, for example when the aspect package that provides the key is registered after a layout pass. When another tab is selected, or the selected tab gets another `Content`, the newly shown tab lets go of its content before `SelectedContent` changes, so the bound presenter takes it at once. This happens before the `Selected` and `SelectionChanged` handlers run, so a handler can also give the content to a `ContentPresenter` in the template that is not bound. Every other tab owns its `UIElement` content again (as its `LogicalParent`) as soon as nothing shows it: at the selection change, at the end of the selection change, after its `Selected`, `Unselected`, and `SelectionChanged` handlers ran (also when one of them throws), or at the next layout pass when the template still showed it then. As in WPF, where `TabControl.OnSelectionChanged` runs after the `SelectionChanged` handlers, there is no frame in between: right after `tabs.SelectedIndex = 1` returns, the content of the tab that a handler took out of the presenter already has its `TabItem` as `LogicalParent`. When the template is replaced or removed, the old template lets go of the tabs' content, and without a template the content area shows the selected tab's content again on the next layout pass.
 
 ```csharp
 using Cerneala.UI.Controls;
@@ -131,16 +140,24 @@ tabs.SelectedIndex = 0;
 
 ContentPresenter? presenter = null;
 tabs.ComponentTemplate = new ComponentTemplate<TabControl>("tabs", context =>
-    presenter = new ContentPresenter { Content = context.Owner.SelectedContent });
-tabs.SelectionChanged += (_, _) => presenter!.Content = tabs.SelectedContent;
+{
+    presenter = new ContentPresenter();
+    context.Bind(TabControl.SelectedContentProperty, presenter, ContentPresenter.ContentProperty);
+    context.Bind(TabControl.SelectedContentTemplateProperty, presenter, ContentPresenter.ContentTemplateProperty);
+    return presenter;
+});
 // After the next layout pass: page1.LogicalParent and page1.VisualParent are presenter,
 // page2.LogicalParent is second and page2.VisualParent is null.
 
 tabs.SelectedIndex = 1;
-// At once, before the next layout pass: the handler gave page2 to presenter, page1.LogicalParent
-// is first and page1.VisualParent is null, so adding page1 to another parent throws
-// InvalidOperationException.
+// presenter.Content is page2: page2 is under presenter, page1.LogicalParent is first and
+// page1.VisualParent is null, so adding page1 to another parent throws InvalidOperationException.
+
+second.Content = "Text";
+// presenter.Content is "Text". page2 has no parent any more, so it can be added to another parent.
 ```
+
+A template that copies the value once, for example `new ContentPresenter { Content = context.Owner.SelectedContent }`, keeps showing the content of the tab that was selected when the template was built, unless a `SelectionChanged` handler gives the presenter the new `SelectedContent`.
 
 The selected tab lets go of its content only for the template to take it. When nothing in the template took it by the end of the next layout pass, the selected `TabItem` owns it again as its `LogicalParent`. The same happens when an aspect template for `ComponentTemplateKey` replaces the old template: the selected tab lets go of its content before the new template is built. For example, with `tabs.ComponentTemplate = new ComponentTemplate<TabControl>("plain", _ => new Border())`, `SelectedIndex = 1` and the next layout pass, `page2.LogicalParent` is `second` and `page2.VisualParent` is `null`, so `other.Children.Add(page2)` throws `InvalidOperationException` with the message `Element must be removed from its current parent before reparenting.`
 
@@ -242,14 +259,16 @@ Selection can also be changed through the inherited `Selector` input behavior: a
 | Name | Type | Description |
 | --- | --- | --- |
 | `ContentTemplateProperty` | `UiProperty<ContentTemplate?>` | Identifies the `ContentTemplate` UI property. The default value is `null`; metadata affects measure and render. |
+| `SelectedContentProperty` | `UiProperty<object?>` | Identifies the read-only `SelectedContent` UI property. The default value is `null`. Only the `TabControl` sets it. |
+| `SelectedContentTemplateProperty` | `UiProperty<ContentTemplate?>` | Identifies the read-only `SelectedContentTemplate` UI property. The default value is `null`. Only the `TabControl` sets it. |
 
 ## Properties
 
 | Name | Type | Description |
 | --- | --- | --- |
 | `ContentTemplate` | `ContentTemplate?` | Gets or sets the template of the content area for a selected tab whose `TabItem.ContentTemplate` is `null`. The default value is `null`. |
-| `SelectedContent` | `object?` | Gets the `Content` of `SelectedTabItem`, or `null` when `SelectedTabItem` is `null`. For a data item whose tab has not been realized yet, this is `null` until the next layout pass. |
-| `SelectedContentTemplate` | `ContentTemplate?` | Gets the template the content area uses: `SelectedTabItem.ContentTemplate` when it is not `null`, otherwise `ContentTemplate`; `null` when `SelectedTabItem` is `null`. |
+| `SelectedContent` | `object?` | Gets the `Content` of `SelectedTabItem`, or `null` when `SelectedTabItem` is `null`. Read-only UI property (`SelectedContentProperty`). For a data item whose tab has not been realized yet, this is `null` until the next layout pass. |
+| `SelectedContentTemplate` | `ContentTemplate?` | Gets the template the content area uses: `SelectedTabItem.ContentTemplate` when it is not `null`, otherwise `ContentTemplate`; `null` when `SelectedTabItem` is `null`. Read-only UI property (`SelectedContentTemplateProperty`). |
 | `SelectedTabItem` | `TabItem?` | Gets the selected `TabItem` item, or the realized tab container prepared for the selected item, or `null` when there is no valid selected tab item. |
 
 ## Template Parts
