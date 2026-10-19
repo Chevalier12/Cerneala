@@ -71,7 +71,7 @@ Without a `ComponentTemplate`, `TabControl` lays out two parts:
 - The header row at the top: the item containers (`TabItem`) in the `ItemsPanel`. The default `ItemsPanel` is a `StackPanel` with `Orientation.Horizontal`, so headers go from left to right. Setting `ItemsPanel` replaces it. The header row gets its desired height (at most the available height) and the full width.
 - The content area below it: a `ContentPresenter` owned by the `TabControl`. It gets the full width and the remaining height. It shows `SelectedContent` with `SelectedContentTemplate`. A `TabItem` never shows its own `Content`; only the selected tab's content is shown, here.
 
-The desired size is the wider of the two parts, and the header row height plus the content area height. Neither part applies `Padding` or `BorderThickness`, and `TabControl` draws no background itself. When the control has a `ComponentTemplate`, layout goes to the template, and the built-in header row and content area are not laid out.
+The desired size is the wider of the two parts, and the header row height plus the content area height. Neither part applies `Padding` or `BorderThickness`, and `TabControl` draws no `Background` or `BorderBrush` itself, unlike `ItemsControl` and `ListBox` without a template. When the control has a `ComponentTemplate`, layout goes to the template, and the built-in header row and content area are not laid out.
 
 The content area is refreshed during measure, after the tabs are realized. Changing `SelectedIndex`, `ContentTemplate`, or the `Content` or `ContentTemplate` of the selected tab invalidates measure, so the next layout pass shows the change.
 

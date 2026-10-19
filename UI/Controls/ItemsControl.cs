@@ -11,6 +11,7 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Virtualization;
+using Cerneala.UI.Rendering;
 
 namespace Cerneala.UI.Controls;
 
@@ -172,6 +173,8 @@ public class ItemsControl : Control
         return viewIndex;
     }
 
+    // As the Border around the ItemsPresenter in the WPF ItemsControl template, a control without a template lays out its
+    // items inside BorderThickness and Padding; a ComponentTemplate lays out its own chrome.
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
         if (TemplateChild is not null)
@@ -179,7 +182,10 @@ public class ItemsControl : Control
             return base.MeasureCore(context);
         }
 
-        return itemsPresenter.Measure(context);
+        Thickness insets = Insets;
+        LayoutSize available = ContentControl.Deflate(context.AvailableSize, insets);
+        LayoutSize itemsSize = itemsPresenter.Measure(new MeasureContext(available, context.Rounding));
+        return ContentControl.Inflate(itemsSize, insets);
     }
 
     protected override LayoutRect ArrangeCore(ArrangeContext context)
@@ -189,8 +195,18 @@ public class ItemsControl : Control
             return base.ArrangeCore(context);
         }
 
-        itemsPresenter.Arrange(context);
+        itemsPresenter.Arrange(new ArrangeContext(ContentControl.Deflate(context.FinalRect, Insets), context.Rounding));
         return context.FinalRect;
+    }
+
+    // As that Border, a control without a template fills its bounds with Background behind its items and draws
+    // BorderBrush around them; a ComponentTemplate draws its own chrome.
+    protected override void OnRender(RenderContext context)
+    {
+        if (TemplateChild is null)
+        {
+            Border.RenderBox(this, context);
+        }
     }
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
@@ -489,9 +505,11 @@ public class ItemsControl : Control
         }
     }
 
+    // The scroll offset counts from the top of this control; without a template the items start below its top inset.
     internal void UpdateAutomaticVirtualization(float viewportExtent, float scrollOffset)
     {
-        if (itemsPresenter.UpdateAutomaticVirtualization(viewportExtent, scrollOffset))
+        float itemsOffset = TemplateChild is null ? scrollOffset - Insets.Top : scrollOffset;
+        if (itemsPresenter.UpdateAutomaticVirtualization(viewportExtent, itemsOffset))
         {
             InvalidateItems("Items scroll viewport changed");
         }

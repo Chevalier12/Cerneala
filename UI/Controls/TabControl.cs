@@ -6,6 +6,7 @@ using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Rendering;
 
 namespace Cerneala.UI.Controls;
 
@@ -147,6 +148,13 @@ public class TabControl : Selector
             new LayoutRect(final.X, final.Y + headerHeight, final.Width, MathF.Max(0, final.Height - headerHeight)),
             context.Rounding));
         return final;
+    }
+
+    // The WPF TabControl template draws Background and BorderBrush around the selected content only, not around the
+    // header row as the ItemsControl chrome would, and the layout above does not inset that content, so a TabControl
+    // without a template draws no chrome of its own.
+    protected override void OnRender(RenderContext context)
+    {
     }
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)

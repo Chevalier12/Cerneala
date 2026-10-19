@@ -1,14 +1,18 @@
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.Reflection;
+using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Core;
 using Cerneala.UI.Data;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
 using Cerneala.UI.Layout.Virtualization;
+using Cerneala.UI.Media;
 
 namespace Cerneala.Tests.Controls;
 
@@ -1686,6 +1690,125 @@ public sealed class ItemsControlTests
     }
 
     private sealed record TemplatedPerson(string Name);
+
+    // As the Border of the WPF ItemsControl template, Background fills the bounds, BorderBrush draws the border, and
+    // the items are arranged inside BorderThickness + Padding (#609).
+    [Fact]
+    public void ItemsControlDrawsItsChromeAndArrangesItsItemsInsideBorderThicknessAndPadding()
+    {
+        SolidColorBrush red = new(Color.Red);
+        SolidColorBrush blue = new(Color.Blue);
+        ItemsControl control = new()
+        {
+            Background = red,
+            BorderBrush = blue,
+            BorderThickness = new Thickness(2),
+            Padding = new Thickness(10)
+        };
+        TextBlock text = new() { Text = "One" };
+        control.Items.Add(text);
+        UIRoot root = new();
+        root.VisualChildren.Add(control);
+        root.ProcessFrame();
+
+        Assert.Equal(new LayoutSize(text.DesiredSize.Width + 24, text.DesiredSize.Height + 24), control.DesiredSize);
+
+        control.Arrange(new ArrangeContext(new LayoutRect(3, 4, 40, 30)));
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
+        List<DrawCommand> commands = [.. root.RetainedRenderer.Commit(root)];
+
+        DrawCommand fill = Assert.Single(commands, command => ReferenceEquals(command.Brush, red));
+        Assert.Equal(DrawCommandKind.FillRectangle, fill.Kind);
+        Assert.Equal(new DrawRect(3, 4, 40, 30), fill.Rect);
+        Assert.Equal(0, commands.IndexOf(fill));
+        DrawCommand border = Assert.Single(commands, command => ReferenceEquals(command.Brush, blue));
+        Assert.Equal(DrawCommandKind.DrawRectangle, border.Kind);
+        Assert.Equal(new DrawRect(3, 4, 40, 30), border.Rect);
+        Assert.Equal(new LayoutRect(15, 16, 16, 6), control.ItemsPresenter.ArrangedBounds);
+        Assert.Equal(15, text.ArrangedBounds.X);
+        Assert.Equal(16, text.ArrangedBounds.Y);
+    }
+
+    [Fact]
+    public void ItemsControlWithoutChromeDrawsNothingAndArrangesItsItemsAtItsBounds()
+    {
+        ItemsControl control = new();
+        TextBlock text = new() { Text = "One" };
+        control.Items.Add(text);
+        UIRoot root = new();
+        root.VisualChildren.Add(control);
+        root.ProcessFrame();
+
+        Assert.Equal(text.DesiredSize, control.DesiredSize);
+
+        control.Arrange(new ArrangeContext(new LayoutRect(3, 4, 40, 30)));
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
+        List<DrawCommand> commands = [.. root.RetainedRenderer.Commit(root)];
+
+        Assert.DoesNotContain(commands, command => command.Kind is DrawCommandKind.FillRectangle or DrawCommandKind.DrawRectangle);
+        Assert.Equal(new LayoutRect(3, 4, 40, 30), control.ItemsPresenter.ArrangedBounds);
+    }
+
+    [Fact]
+    public void ItemsControlWithComponentTemplateLeavesItsChromeToTheTemplate()
+    {
+        TextBlock templateText = new() { Text = "Template" };
+        ItemsControl control = new()
+        {
+            Background = new SolidColorBrush(Color.Red),
+            BorderBrush = new SolidColorBrush(Color.Blue),
+            BorderThickness = new Thickness(2),
+            Padding = new Thickness(10),
+            ComponentTemplate = new ComponentTemplate<ItemsControl>("items", _ => templateText)
+        };
+        UIRoot root = new();
+        root.VisualChildren.Add(control);
+        root.ProcessFrame();
+
+        Assert.Equal(templateText.DesiredSize, control.DesiredSize);
+
+        control.Arrange(new ArrangeContext(new LayoutRect(3, 4, 40, 30)));
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
+        List<DrawCommand> commands = [.. root.RetainedRenderer.Commit(root)];
+
+        Assert.DoesNotContain(commands, command => command.Kind is DrawCommandKind.FillRectangle or DrawCommandKind.DrawRectangle);
+        Assert.Equal(new LayoutRect(3, 4, 40, 30), templateText.ArrangedBounds);
+    }
+
+    // The scroll offset counts from the top of the ItemsControl, and the items start below its top inset, so the
+    // rows realized for the viewport are the ones the inset moved into it.
+    [Fact]
+    public void ScrollViewerVirtualizationRealizesTheRowsInTheViewportBelowTheTopInset()
+    {
+        FixedElement[] source = Enumerable.Range(0, 100)
+            .Select(index => new FixedElement(index.ToString(), new LayoutSize(80, 10)))
+            .ToArray();
+        ItemsControl control = new()
+        {
+            ItemsSource = source,
+            ItemsPanel = new VirtualizingStackPanel(),
+            Padding = new Thickness(0, 100, 0, 0)
+        };
+        ScrollViewer viewer = new()
+        {
+            Content = control,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        UIRoot root = new(100, 30);
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+
+        viewer.ScrollInfo.SetVerticalOffset(105);
+        root.ProcessFrame();
+
+        // Rows 0..3 cover 5..35 below the inset, the 30 px the viewport shows from offset 105.
+        Assert.Contains(0, control.ItemContainerGenerator.RealizedContainers.Keys);
+        Assert.Contains(3, control.ItemContainerGenerator.RealizedContainers.Keys);
+        Assert.DoesNotContain(9, control.ItemContainerGenerator.RealizedContainers.Keys);
+    }
 
     private static ContentTemplate WrapElementTemplate()
     {
