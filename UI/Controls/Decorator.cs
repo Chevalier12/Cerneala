@@ -72,7 +72,9 @@ public class Decorator : Control
             return;
         }
 
-        VisualChildren.Remove(element);
+        // Logical first: the child stays attached through its visual parent, so the visual removal can start a
+        // presence exit. In the other order the logical removal detaches the child and cancels that exit.
         LogicalChildren.Remove(element);
+        VisualChildren.Remove(element);
     }
 }

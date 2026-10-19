@@ -1,6 +1,10 @@
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Markup;
+using Cerneala.UI.Motion.Presence;
+using Cerneala.Tests.UI.Motion.Core;
+using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
 
 namespace Cerneala.Tests.Controls;
 
@@ -89,6 +93,140 @@ public sealed class DecoratorTests
 
         Assert.Equal(new LayoutSize(16, 11), desired);
         Assert.Equal(new LayoutRect(3, 3, 24, 14), child.ArrangedBounds);
+    }
+
+    // Issue #542: removing the visual child first and the logical child second canceled the exit at once.
+    [Fact]
+    public void ChildSetToNullKeepsTheExitOfAChildWithPresenceRunningUntilItEnds()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(200, 200, motionClock: clock);
+        Border border = new();
+        root.VisualChildren.Add(border);
+        Border child = new() { Width = 50, Height = 20, Presence = CreatePresence() };
+        border.Child = child;
+        root.ProcessFrame();
+
+        border.Child = null;
+        root.ProcessFrame();
+
+        Assert.Null(border.Child);
+        Assert.Equal(PresenceState.Exiting, root.Motion.Presence.GetState(child));
+        Assert.Equal([child], root.Motion.Presence.GetExitingVisualChildren(border));
+        Assert.True(child.IsAttached);
+        Assert.Null(child.LogicalParent);
+        Assert.Empty(border.VisualChildren);
+        Assert.Empty(border.LogicalChildren);
+
+        clock.Advance(TimeSpan.FromMilliseconds(120));
+        root.ProcessFrame();
+
+        Assert.Equal(PresenceState.Detached, root.Motion.Presence.GetState(child));
+        Assert.Empty(root.Motion.Presence.GetExitingVisualChildren(border));
+        Assert.False(child.IsAttached);
+    }
+
+    // Issue #542: a replaced child with presence exits while the new child becomes present.
+    [Fact]
+    public void ChildReplacedKeepsTheExitOfTheOldChildWithPresenceRunningAndTheNewChildIsPresent()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(200, 200, motionClock: clock);
+        Border border = new();
+        root.VisualChildren.Add(border);
+        Border oldChild = new() { Width = 50, Height = 20, Presence = CreatePresence() };
+        Border newChild = new() { Width = 50, Height = 20, Presence = CreatePresence() };
+        border.Child = oldChild;
+        root.ProcessFrame();
+
+        border.Child = newChild;
+        root.ProcessFrame();
+
+        Assert.Same(newChild, border.Child);
+        Assert.Equal(PresenceState.Exiting, root.Motion.Presence.GetState(oldChild));
+        Assert.Equal([oldChild], root.Motion.Presence.GetExitingVisualChildren(border));
+        Assert.True(oldChild.IsAttached);
+        Assert.Equal(PresenceState.Present, root.Motion.Presence.GetState(newChild));
+        Assert.Equal([newChild], border.VisualChildren);
+        Assert.Equal([newChild], border.LogicalChildren);
+
+        clock.Advance(TimeSpan.FromMilliseconds(120));
+        root.ProcessFrame();
+
+        Assert.Equal(PresenceState.Detached, root.Motion.Presence.GetState(oldChild));
+        Assert.Empty(root.Motion.Presence.GetExitingVisualChildren(border));
+        Assert.False(oldChild.IsAttached);
+        Assert.Equal(PresenceState.Present, root.Motion.Presence.GetState(newChild));
+    }
+
+    // Issue #542: setting the exiting child again cancels its exit and makes it the child of both trees again.
+    [Fact]
+    public void ChildSetAgainWhileItExitsCancelsTheExit()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(200, 200, motionClock: clock);
+        Border border = new();
+        root.VisualChildren.Add(border);
+        Border child = new() { Width = 50, Height = 20, Presence = CreatePresence() };
+        border.Child = child;
+        root.ProcessFrame();
+        border.Child = null;
+        root.ProcessFrame();
+
+        border.Child = child;
+        root.ProcessFrame();
+
+        Assert.Same(child, border.Child);
+        Assert.Same(border, child.LogicalParent);
+        Assert.Same(border, child.VisualParent);
+        Assert.Equal(PresenceState.Present, root.Motion.Presence.GetState(child));
+        Assert.Empty(root.Motion.Presence.GetExitingVisualChildren(border));
+        Assert.True(child.IsAttached);
+    }
+
+    // Issue #542: conditional Border content goes through Decorator.Child, so its removal must not cancel the exit.
+    [Fact]
+    public void ConditionalBorderChildWithPresenceExitsWhenItsConditionTurnsFalseAndReturnsWhenItTurnsTrue()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(200, 200, motionClock: clock);
+        Border border = new();
+        Border child = new() { Width = 50, Height = 20, Presence = CreatePresence() };
+        MarkupObservation observation = GeneratedMarkup.ObserveProperty(border, UIElement.IsEnabledProperty);
+        using IDisposable conditions = GeneratedMarkup.AttachConditions(
+            border,
+            [observation],
+            [new MarkupConditionRule(0, () => (bool)observation.Value!, null, new MarkupConditionalContent(0, () => [child]))]);
+        root.VisualChildren.Add(border);
+        root.ProcessFrame();
+        Assert.Same(child, border.Child);
+
+        border.IsEnabled = false;
+        root.ProcessFrame();
+
+        Assert.Null(border.Child);
+        Assert.Equal(PresenceState.Exiting, root.Motion.Presence.GetState(child));
+        Assert.Equal([child], root.Motion.Presence.GetExitingVisualChildren(border));
+        Assert.True(child.IsAttached);
+
+        clock.Advance(TimeSpan.FromMilliseconds(120));
+        root.ProcessFrame();
+
+        Assert.Equal(PresenceState.Detached, root.Motion.Presence.GetState(child));
+        Assert.False(child.IsAttached);
+
+        border.IsEnabled = true;
+        root.ProcessFrame();
+
+        Assert.Same(child, border.Child);
+        Assert.Equal(PresenceState.Present, root.Motion.Presence.GetState(child));
+    }
+
+    private static PresenceOptions CreatePresence()
+    {
+        return PresenceOptions.FadeAndScale(
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)),
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)));
     }
 
     private sealed class FixedElement(LayoutSize size) : UIElement
