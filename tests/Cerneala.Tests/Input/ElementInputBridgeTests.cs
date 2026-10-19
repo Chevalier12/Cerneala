@@ -23,6 +23,65 @@ public sealed class ElementInputBridgeTests
         Assert.Equal(["preview-root", "bubble-child"], calls);
     }
 
+    // As in WPF, the button-specific events carry the Handled value of the MouseDown or MouseUp they report:
+    // ordinary handlers on the ancestors do not run, handlers added with handledEventsToo still run.
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void HandledMouseDownOrUpStopsOrdinaryLeftButtonHandlersOnAncestors(bool isDown)
+    {
+        UIRoot root = RootWithChild(out UIElement child);
+        child.Handlers.AddHandler(isDown ? InputEvents.MouseDownEvent : InputEvents.MouseUpEvent, (_, args) => args.Handled = true);
+        RoutedEvent buttonEvent = isDown ? InputEvents.MouseLeftButtonDownEvent : InputEvents.MouseLeftButtonUpEvent;
+        int ordinaryCalls = 0;
+        int handledTooCalls = 0;
+        root.Handlers.AddHandler(buttonEvent, (_, _) => ordinaryCalls++);
+        root.Handlers.AddHandler(buttonEvent, (_, _) => handledTooCalls++, handledEventsToo: true);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(10, 10, pressed: true));
+        bridge.Dispatch(root, PointerFrame(10, 10, 10, 10, previousDown: true));
+
+        Assert.Equal(0, ordinaryCalls);
+        Assert.Equal(1, handledTooCalls);
+    }
+
+    [Fact]
+    public void HandledPreviewMouseDownStopsOrdinaryPreviewLeftButtonDownHandlers()
+    {
+        UIRoot root = RootWithChild(out UIElement child);
+        root.Handlers.AddHandler(InputEvents.PreviewMouseDownEvent, (_, args) => args.Handled = true);
+        int ordinaryCalls = 0;
+        int handledTooCalls = 0;
+        child.Handlers.AddHandler(InputEvents.PreviewMouseLeftButtonDownEvent, (_, _) => ordinaryCalls++);
+        child.Handlers.AddHandler(InputEvents.PreviewMouseLeftButtonDownEvent, (_, _) => handledTooCalls++, handledEventsToo: true);
+
+        new ElementInputBridge().Dispatch(root, PointerFrame(10, 10, pressed: true));
+
+        Assert.Equal(0, ordinaryCalls);
+        Assert.Equal(1, handledTooCalls);
+    }
+
+    [Fact]
+    public void HandledRightMouseUpStopsOrdinaryRightButtonUpHandlersOnAncestors()
+    {
+        UIRoot root = RootWithChild(out UIElement child);
+        child.Handlers.AddHandler(InputEvents.MouseUpEvent, (_, args) => args.Handled = true);
+        int ordinaryCalls = 0;
+        int handledTooCalls = 0;
+        root.Handlers.AddHandler(InputEvents.MouseRightButtonUpEvent, (_, _) => ordinaryCalls++);
+        root.Handlers.AddHandler(InputEvents.MouseRightButtonUpEvent, (_, _) => handledTooCalls++, handledEventsToo: true);
+        PointerSnapshot released = PointerSnapshot.Empty.WithPosition(10, 10);
+        PointerSnapshot pressed = released.WithButton(InputMouseButton.Right, true);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, new InputFrame(released, pressed, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []));
+        bridge.Dispatch(root, new InputFrame(pressed, released, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []));
+
+        Assert.Equal(0, ordinaryCalls);
+        Assert.Equal(1, handledTooCalls);
+    }
+
     [Fact]
     public void MouseMoveUpdatesHoverAndInvalidatesBeforeScheduler()
     {

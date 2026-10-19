@@ -148,6 +148,8 @@ public sealed class ElementInputBridge
                     button,
                     isDown: true,
                     clickCount: 1,
+                    previewHandled,
+                    handled,
                     out bool buttonPreviewHandled);
                 if (!previewHandled && !buttonPreviewHandled)
                 {
@@ -184,11 +186,11 @@ public sealed class ElementInputBridge
                     ResolveReleaseClickTarget(hitTarget?.Element, clickTracker.PressedTarget, routeMap));
                 object? releasedPressSource = pressOriginalSource;
                 pressOriginalSource = null;
-                bool handled = RaiseMousePair(routeMap, pointerTarget, InputEvents.PreviewMouseUpEvent, InputEvents.MouseUpEvent, button, clickCount, releasedPressSource);
-                handled |= RaiseMouseButtonSpecificPair(routeMap, pointerTarget, button, isDown: false, clickCount, releasedPressSource);
+                bool handled = RaiseMousePair(routeMap, pointerTarget, InputEvents.PreviewMouseUpEvent, InputEvents.MouseUpEvent, button, clickCount, out bool previewHandled, releasedPressSource);
+                handled |= RaiseMouseButtonSpecificPair(routeMap, pointerTarget, button, isDown: false, clickCount, previewHandled, handled, out _, releasedPressSource);
                 if (button == InputMouseButton.Left && clickCount == 2)
                 {
-                    handled |= RaiseDirectMousePairAlongRoute(routeMap, pointerTarget, InputEvents.PreviewMouseDoubleClickEvent, InputEvents.MouseDoubleClickEvent, button, clickCount, releasedPressSource);
+                    handled |= RaiseDirectMousePairAlongRoute(routeMap, pointerTarget, InputEvents.PreviewMouseDoubleClickEvent, InputEvents.MouseDoubleClickEvent, button, clickCount, previewInitiallyHandled: false, bubbleInitiallyHandled: false, out _, releasedPressSource);
                 }
                 CompletePointerDrag(routeMap, pointerTarget, button, clickCount);
                 if (!handled)
@@ -378,18 +380,6 @@ public sealed class ElementInputBridge
         RoutedEvent bubbleEvent,
         InputMouseButton button,
         int clickCount,
-        object? pressOriginalSource)
-    {
-        return RaiseMousePair(routeMap, target, previewEvent, bubbleEvent, button, clickCount, out _, pressOriginalSource);
-    }
-
-    private static bool RaiseMousePair(
-        ElementInputRouteMap routeMap,
-        HitTestResult? target,
-        RoutedEvent previewEvent,
-        RoutedEvent bubbleEvent,
-        InputMouseButton button,
-        int clickCount,
         out bool previewHandled,
         object? pressOriginalSource = null)
     {
@@ -416,23 +406,16 @@ public sealed class ElementInputBridge
         return previewArgs.Handled || bubbleArgs.Handled;
     }
 
+    // As in WPF, the button-specific events report the generic MouseDown or MouseUp, so each phase starts with the
+    // Handled value of the matching generic phase: ordinary handlers do not run after the generic event was handled.
     private static bool RaiseMouseButtonSpecificPair(
         ElementInputRouteMap routeMap,
         HitTestResult? target,
         InputMouseButton button,
         bool isDown,
         int clickCount,
-        object? pressOriginalSource)
-    {
-        return RaiseMouseButtonSpecificPair(routeMap, target, button, isDown, clickCount, out _, pressOriginalSource);
-    }
-
-    private static bool RaiseMouseButtonSpecificPair(
-        ElementInputRouteMap routeMap,
-        HitTestResult? target,
-        InputMouseButton button,
-        bool isDown,
-        int clickCount,
+        bool genericPreviewHandled,
+        bool genericHandled,
         out bool previewHandled,
         object? pressOriginalSource = null)
     {
@@ -451,7 +434,7 @@ public sealed class ElementInputBridge
             return false;
         }
 
-        return RaiseDirectMousePairAlongRoute(routeMap, target, events.Preview, events.Bubble, button, clickCount, out previewHandled, pressOriginalSource);
+        return RaiseDirectMousePairAlongRoute(routeMap, target, events.Preview, events.Bubble, button, clickCount, genericPreviewHandled, genericHandled, out previewHandled, pressOriginalSource);
     }
 
     private static bool RaiseDirectMousePairAlongRoute(
@@ -461,18 +444,8 @@ public sealed class ElementInputBridge
         RoutedEvent bubbleEvent,
         InputMouseButton button,
         int clickCount,
-        object? pressOriginalSource)
-    {
-        return RaiseDirectMousePairAlongRoute(routeMap, target, previewEvent, bubbleEvent, button, clickCount, out _, pressOriginalSource);
-    }
-
-    private static bool RaiseDirectMousePairAlongRoute(
-        ElementInputRouteMap routeMap,
-        HitTestResult? target,
-        RoutedEvent previewEvent,
-        RoutedEvent bubbleEvent,
-        InputMouseButton button,
-        int clickCount,
+        bool previewInitiallyHandled,
+        bool bubbleInitiallyHandled,
         out bool previewHandled,
         object? pressOriginalSource = null)
     {
@@ -483,7 +456,7 @@ public sealed class ElementInputBridge
         }
 
         IReadOnlyList<UiElementId> route = routeMap.InputTree.GetRouteToRoot(target.ElementId);
-        bool handled = false;
+        bool handled = previewInitiallyHandled;
 
         foreach (UiElementId elementId in route.Reverse())
         {
@@ -497,6 +470,7 @@ public sealed class ElementInputBridge
         }
 
         previewHandled = handled;
+        handled |= bubbleInitiallyHandled;
         foreach (UiElementId elementId in route)
         {
             MouseButtonEventArgs args = new(bubbleEvent, target.ElementId, button, target.X, target.Y, clickCount)

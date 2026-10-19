@@ -1069,6 +1069,43 @@ public sealed class ComboBoxTests
         Assert.Equal(0, command.Executions);
     }
 
+    // As in WPF, MouseLeftButtonUp carries the Handled value of the MouseUp it reports: after the ComboBox marks
+    // the field's MouseUp handled, an ordinary MouseLeftButtonUp handler on the outer Button does not run, and a
+    // handler added with handledEventsToo still runs once.
+    [Fact]
+    public void NonEditableFieldClickInsideButtonSkipsOrdinaryOuterMouseLeftButtonUpHandlers()
+    {
+        UIRoot root = new(300, 200);
+        ComboBox comboBox = new() { IsEditable = false, Width = 180, Height = 32 };
+        comboBox.SetItems(new[] { "one", "two", "three" });
+        comboBox.SelectedIndex = 0;
+        Button outer = new() { Content = comboBox };
+        LayoutCanvas canvas = new();
+        LayoutCanvas.SetLeft(outer, 60);
+        canvas.VisualChildren.Add(outer);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        int outerClicks = 0;
+        int ordinaryLeftUps = 0;
+        int handledTooLeftUps = 0;
+        outer.Click += (_, _) => outerClicks++;
+        outer.MouseLeftButtonUp += (_, _) => ordinaryLeftUps++;
+        outer.AddHandler(UIElement.MouseLeftButtonUpEvent, (_, _) => handledTooLeftUps++, handledEventsToo: true);
+        LayoutRect fieldBounds = comboBox.ArrangedBounds;
+        float fieldX = fieldBounds.X + fieldBounds.Width / 2;
+        float fieldY = fieldBounds.Y + fieldBounds.Height / 2;
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(fieldX, fieldY, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(fieldX, fieldY, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.True(comboBox.IsDropDownOpen);
+        Assert.Equal(0, outerClicks);
+        Assert.Equal(0, ordinaryLeftUps);
+        Assert.Equal(1, handledTooLeftUps);
+    }
+
     private sealed class CountingCommand : ICommand
     {
         public int Executions { get; private set; }
