@@ -47,12 +47,14 @@ public sealed class PanelChildCollection : IReadOnlyList<UIElement>
             return false;
         }
 
-        owner.VisualChildren.Remove(child);
+        // Logical first: the child stays attached through its visual parent, so the visual removal can start a
+        // presence exit. In the other order the logical removal detaches the child and cancels that exit.
         if (ReferenceEquals(child.LogicalParent, owner))
         {
             owner.LogicalChildren.Remove(child);
         }
 
+        owner.VisualChildren.Remove(child);
         return true;
     }
 
