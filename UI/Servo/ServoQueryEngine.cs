@@ -7,8 +7,6 @@ namespace Cerneala.UI.Servo;
 
 internal sealed class ServoQueryEngine
 {
-    private readonly SemanticsProvider semanticsProvider = new();
-
     internal ServoElement Find(UIRoot root, ServoTarget target)
     {
         return CreateSnapshot(Resolve(root, target));
@@ -18,7 +16,7 @@ internal sealed class ServoQueryEngine
     {
         ArgumentNullException.ThrowIfNull(root);
         ArgumentNullException.ThrowIfNull(target);
-        SemanticsTree tree = semanticsProvider.Build(root, SemanticsProjection.Servo);
+        SemanticsTree tree = root.GetServoSemanticsTree();
         IReadOnlyList<ServoResolvedElement> matches = ResolveAll(root, tree, target);
         if (matches.Count == 0)
         {
@@ -53,7 +51,7 @@ internal sealed class ServoQueryEngine
     {
         ArgumentNullException.ThrowIfNull(root);
         ArgumentNullException.ThrowIfNull(target);
-        SemanticsTree tree = semanticsProvider.Build(root, SemanticsProjection.Servo);
+        SemanticsTree tree = root.GetServoSemanticsTree();
         return ResolveAll(root, tree, target);
     }
 
@@ -100,9 +98,10 @@ internal sealed class ServoQueryEngine
         }
 
         bool descendantsInsideScope = insideScope || scopeElements!.Contains(element);
-        foreach (SemanticsNode child in node.Children)
+        IReadOnlyList<SemanticsNode> children = node.Children;
+        for (int index = 0; index < children.Count; index++)
         {
-            CollectMatches(root, child, target, scopeElements, descendantsInsideScope, matches);
+            CollectMatches(root, children[index], target, scopeElements, descendantsInsideScope, matches);
         }
     }
 
