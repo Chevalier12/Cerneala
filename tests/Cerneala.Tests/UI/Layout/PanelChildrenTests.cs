@@ -282,6 +282,48 @@ public sealed class PanelChildrenTests
         Assert.Equal([existing, child], panel.LogicalChildren);
     }
 
+    // PR #613 review: the rollback's own VisualChildren.Remove raises Changed again, so a handler that throws on every
+    // call must not skip the logical removal and leave a logical-only child that a retried Children.Add rejects.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ChildrenAddOrInsertWhoseVisualChangedHandlerAlwaysThrowsStillLeavesTheChildWithNeitherParent(bool insert)
+    {
+        UIRoot root = new(200, 200);
+        StackPanel panel = new();
+        root.VisualChildren.Add(panel);
+        Border existing = new();
+        panel.Children.Add(existing);
+        Border child = new() { Width = 50, Height = 20 };
+        EventHandler<ElementTreeChange> handler = (_, _) => throw new InvalidOperationException("visual handler failed");
+        panel.VisualChildren.Changed += handler;
+
+        Assert.Throws<InvalidOperationException>(() =>
+        {
+            if (insert)
+            {
+                panel.Children.Insert(0, child);
+            }
+            else
+            {
+                panel.Children.Add(child);
+            }
+        });
+
+        Assert.Null(child.LogicalParent);
+        Assert.Null(child.VisualParent);
+        Assert.False(child.IsAttached);
+        Assert.Equal([existing], panel.VisualChildren);
+        Assert.Equal([existing], panel.LogicalChildren);
+
+        panel.VisualChildren.Changed -= handler;
+        panel.Children.Add(child);
+
+        Assert.Same(panel, child.LogicalParent);
+        Assert.Same(panel, child.VisualParent);
+        Assert.Equal([existing, child], panel.LogicalChildren);
+    }
+
     // Issue #591: the rollback undoes only what the failed call did, so a child that was already a visual child of the
     // panel stays one when Children.Add rejects it.
     [Fact]

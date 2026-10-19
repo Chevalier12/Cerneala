@@ -40,15 +40,22 @@ public sealed class PanelChildCollection : IReadOnlyList<UIElement>
             // handler); either way the child must leave the panel, so that a later Add can add it. ValidateInsertion
             // rejected a child that already was a visual child, so a visual parent here comes from this call. Visual
             // first: the logical removal then detaches the child, which also ends a presence exit that the visual
-            // removal started; in the other order the exit would keep the child attached.
-            if (ReferenceEquals(child.VisualParent, owner))
+            // removal started; in the other order the exit would keep the child attached. The visual removal raises
+            // VisualChildren.Changed again, after it unpublished the child; a handler that throws there must not skip
+            // the logical removal.
+            try
             {
-                owner.VisualChildren.Remove(child);
+                if (ReferenceEquals(child.VisualParent, owner))
+                {
+                    owner.VisualChildren.Remove(child);
+                }
             }
-
-            if (!wasLogicalChild && ReferenceEquals(child.LogicalParent, owner))
+            finally
             {
-                owner.LogicalChildren.Remove(child);
+                if (!wasLogicalChild && ReferenceEquals(child.LogicalParent, owner))
+                {
+                    owner.LogicalChildren.Remove(child);
+                }
             }
 
             throw;
