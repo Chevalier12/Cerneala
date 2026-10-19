@@ -223,6 +223,38 @@ public sealed class ApplicationRuntimeTests : IDisposable
     }
 
     [Fact]
+    public void OwnerClosedOnceWhenOwnedMainWindowShutsDownDuringCascade()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = new(platform);
+        WindowApplicationRuntime.Install(runtime);
+        Application app = new() { ShutdownMode = ApplicationShutdownMode.OnMainWindowClose };
+        app.Install(runtime);
+        int exitCount = 0;
+        app.Exit += (_, _) => exitCount++;
+        Window owner = new();
+        int ownerClosedCount = 0;
+        owner.Closed += (_, _) => ownerClosedCount++;
+        owner.Show();
+        Window main = new() { Owner = owner };
+        int mainClosedCount = 0;
+        main.Closed += (_, _) => mainClosedCount++;
+        main.Show();
+        app.MainWindow = main;
+
+        owner.Close();
+
+        Assert.Equal(1, ownerClosedCount);
+        Assert.Equal(1, mainClosedCount);
+        Assert.Equal(1, exitCount);
+        Assert.True(owner.IsClosed);
+        Assert.True(main.IsClosed);
+        Assert.Empty(runtime.Windows);
+        Assert.Equal(2, platform.CreatedWindows.Count);
+        Assert.All(platform.CreatedWindows, window => Assert.Equal(1, window.DestroyCount));
+    }
+
+    [Fact]
     public void LifecyclePublishesServicesBeforeStartupAndDisposesAfterExit()
     {
         List<string> events = [];
@@ -664,8 +696,12 @@ public sealed class ApplicationRuntimeTests : IDisposable
                 throw createWindowFailure;
             }
 
-            return new FakePlatformWindow(callbacks);
+            FakePlatformWindow platformWindow = new(callbacks);
+            CreatedWindows.Add(platformWindow);
+            return platformWindow;
         }
+
+        public List<FakePlatformWindow> CreatedWindows { get; } = [];
 
         public void PumpEvents()
         {
@@ -718,8 +754,11 @@ public sealed class ApplicationRuntimeTests : IDisposable
             callbacks.ActivationChanged(true);
         }
 
+        public int DestroyCount { get; private set; }
+
         public void Destroy()
         {
+            DestroyCount++;
         }
 
         public void Dispose()
