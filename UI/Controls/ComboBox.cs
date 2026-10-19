@@ -643,17 +643,23 @@ public class ComboBox : Selector
         }
 
         int presentedIndex = selectionTransactionActive ? previewSelectedIndex : SelectedIndex;
-        object? presentedItem = presentedIndex >= 0 && presentedIndex < ItemCount
-            ? GetItemAt(presentedIndex)
-            : null;
+        bool hasPresentedItem = presentedIndex >= 0 && presentedIndex < ItemCount;
+        object? presentedItem = hasPresentedItem ? GetItemAt(presentedIndex) : null;
         string presentedText = selectionTransactionActive && presentedIndex >= 0
             ? GetItemText(presentedItem)
             : Text;
-        selectionPresenter.Content = ItemTemplate is null ? presentedText : presentedItem;
-        selectionPresenter.ContentTemplate = ItemTemplate;
-        selectionPresenter.ContentTemplateKey = ItemTemplateKey;
-        selectionPresenter.LocalTemplateRegistry = ContentTemplateRegistry;
-        selectionPresenter.ContentIndex = presentedIndex;
+
+        // As WPF's ComboBox.UpdateSelectionBoxItem shows a missing item as text, the ItemTemplate presents only an
+        // item: with no item, the selection box presents the text as it does without an ItemTemplate. All five
+        // values go in before the presenter rebuilds its child on its next measure, so the selection box presents
+        // its item once, with its index (#623).
+        ContentTemplate? itemTemplate = hasPresentedItem ? ItemTemplate : null;
+        selectionPresenter.PrepareItemPresentation(
+            itemTemplate is null ? presentedText : presentedItem,
+            itemTemplate,
+            ItemTemplateKey,
+            ContentTemplateRegistry,
+            presentedIndex);
     }
 
     private void SynchronizeDropDownState()

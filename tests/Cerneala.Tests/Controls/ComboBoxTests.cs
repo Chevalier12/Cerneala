@@ -2800,6 +2800,43 @@ public sealed class ComboBoxTests
             $"open=[{string.Join(", ", openCalls)}] replace=[{string.Join(", ", rowCalls)}]");
     }
 
+    // As WPF's ComboBox.UpdateSelectionBoxItem shows a missing item as an empty string with the string template, the
+    // selection box presents no item without the ItemTemplate. A selected item runs it once, with its index (#623).
+    [Fact]
+    public void SelectionBoxRunsTheItemTemplateOnlyForASelectedItem()
+    {
+        List<string> calls = [];
+        UIRoot root = new(300, 200);
+        ComboBox comboBox = new()
+        {
+            IsEditable = false,
+            Width = 180,
+            ItemTemplate = new ContentTemplate<string>("row", key: null, priority: 0, context =>
+            {
+                calls.Add($"{context.Data ?? "null"}@{context.Index}");
+                return new TextBlock { Text = context.Data ?? string.Empty };
+            }),
+            ItemsSource = new[] { "a", "b" }
+        };
+        root.VisualChildren.Add(comboBox);
+        root.ProcessFrame();
+        ContentPresenter selection = Assert.IsType<ContentPresenter>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_SelectionPresenter"]);
+        string initial = $"[{string.Join(", ", calls)}] text={(selection.PresentedChild as TextBlock)?.Text ?? "none"}";
+        calls.Clear();
+
+        comboBox.SelectedIndex = 1;
+        root.ProcessFrame();
+        string selected = $"[{string.Join(", ", calls)}] text={(selection.PresentedChild as TextBlock)?.Text ?? "none"}";
+        calls.Clear();
+
+        comboBox.SelectedIndex = -1;
+        root.ProcessFrame();
+        string cleared = $"[{string.Join(", ", calls)}] text={(selection.PresentedChild as TextBlock)?.Text ?? "none"}";
+
+        Assert.Equal(["[] text=", "[b@1] text=b", "[] text="], [initial, selected, cleared]);
+    }
+
     [Fact]
     public void FilteredHighlightedItemFollowsItsItemWhenNewItemsSourceIsAssigned()
     {
