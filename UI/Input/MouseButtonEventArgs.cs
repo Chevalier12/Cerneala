@@ -24,6 +24,10 @@ public sealed class MouseButtonEventArgs : MouseEventArgs
     // a ComboBox inside a Button, uses it to check that the press and the release hit the same element.
     internal object? PressOriginalSource { get; init; }
 
+    // The route map the input bridge resolved and routed this event with, taken before any handler ran. Handlers that
+    // decide click ownership use it so that a tree change by an earlier handler does not change the decision (#501).
+    internal ElementInputRouteMap? RouteMap { get; init; }
+
     internal MouseButtonEventArgs(
         RoutedEvent routedEvent,
         object originalSource,

@@ -449,10 +449,12 @@ public sealed class ElementInputBridge
 
         MouseButtonEventArgs previewArgs = new(previewEvent, target.ElementId, button, target.X, target.Y, clickCount)
         {
+            RouteMap = routeMap,
             PressOriginalSource = pressOriginalSource
         };
         MouseButtonEventArgs bubbleArgs = new(bubbleEvent, target.ElementId, button, target.X, target.Y, clickCount)
         {
+            RouteMap = routeMap,
             PressOriginalSource = pressOriginalSource
         };
         RoutedEventRouter.RaisePair(
