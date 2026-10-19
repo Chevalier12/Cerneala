@@ -53,9 +53,11 @@ internal static class DecoratorExample
 ```
 
 ## Remarks
-`Decorator` is the base implementation for controls that wrap exactly one `UIElement`. Setting `Child` adds that element to both `LogicalChildren` and `VisualChildren`. Replacing the child removes the old element from both child collections before attaching the new element.
+`Decorator` is the base implementation for controls that wrap exactly one `UIElement`. Setting `Child` adds that element to both `LogicalChildren` and `VisualChildren`. Replacing the child, or setting `Child` to `null`, removes the old element from both child collections before attaching the new element.
 
-The assigned child must be unparented and cannot be the decorator itself, one of the decorator's ancestors, or an element already attached under a different root. Invalid assignments throw `InvalidOperationException`. If an assignment fails while replacing an existing child, the previous child is restored.
+The old element is removed from `LogicalChildren` first and from `VisualChildren` second. So an old child with `UIElement.Presence` set is still attached through the decorator when the visual removal starts its exit animation: on an attached decorator it stays an exiting visual child of the decorator (listed by `PresenceCoordinator.GetExitingVisualChildren`) until the exit ends, as `PresenceOptions` describes. For example, after `border.Child = null`, `root.Motion.Presence.GetState(oldChild)` is `PresenceState.Exiting` while the exit runs, and `PresenceState.Detached` after it ends. Conditional child content of a `Border` in markup is set through `Child`, so it exits the same way when its condition turns false.
+
+The assigned child must be unparented and cannot be the decorator itself, one of the decorator's ancestors, or an element already attached under a different root. Invalid assignments throw `InvalidOperationException`. If an assignment fails while replacing an existing child, the previous child is restored. The rejected element leaves both child collections at once, without a presence exit, because it never became the child.
 
 Layout uses the inherited `Padding` and `BorderThickness` from `Control` as a single inset. `MeasureCore` measures the child with the available size deflated by those insets, then returns the child's desired size inflated by the same insets. `ArrangeCore` arranges the child inside the final rectangle deflated by those insets.
 
@@ -99,3 +101,4 @@ Cerneala UI retained controls.
 - `Cerneala.UI.Controls.Control`
 - `Cerneala.UI.Controls.Border`
 - `Cerneala.UI.Controls.ContentControl`
+- `Cerneala.UI.Motion.Presence.PresenceOptions`
