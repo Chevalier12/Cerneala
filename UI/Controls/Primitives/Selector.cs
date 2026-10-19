@@ -382,7 +382,9 @@ public class Selector : ItemsControl
         // completes no click, because the press was elsewhere in the container, is not the command source's click, so
         // it still selects the container, as the press on the row does in WPF. Any release that selects the container
         // is handled, as WPF's ListBoxItem handles the press, so an enclosing Button or RadioButton is not clicked,
-        // checked, or commanded by it (#490).
+        // checked, or commanded by it (#490). The click owner is found with the route map the input bridge routed the
+        // MouseUp with, so it stays the same when an earlier handler, such as the CheckBox's Click, removes the clicked
+        // element from the container or detaches the Selector (#550).
         public void OnMouseUp(UiElementId _, RoutedEventArgs args)
         {
             if (Owner is null || args is not MouseButtonEventArgs { ChangedButton: InputMouseButton.Left } mouseArgs)
@@ -390,7 +392,7 @@ public class Selector : ItemsControl
                 return;
             }
 
-            UIElement? clickOwner = FindClickOwner(container, args.OriginalSource);
+            UIElement? clickOwner = FindClickOwner(container, args.OriginalSource, mouseArgs.RouteMap);
             if (mouseArgs.ClickCount <= 0 || clickOwner is not IInputCommandSource || ReferenceEquals(clickOwner, container))
             {
                 Owner.SelectContainer(container);
@@ -401,8 +403,35 @@ public class Selector : ItemsControl
 
     // The element that owns a click whose source is source, walking the visual parents from source up to owner:
     // owner itself, the first IInputCommandSource below owner, or null when source is not in owner's visual subtree.
-    internal static UIElement? FindClickOwner(UIElement owner, object? source)
+    // With routeMap, the route map an input event was routed with, source and its visual parents are those of that
+    // route map, not of the live tree, which a handler that ran earlier on the route may have changed.
+    internal static UIElement? FindClickOwner(UIElement owner, object? source, ElementInputRouteMap? routeMap = null)
     {
+        if (routeMap is not null)
+        {
+            UIElement? routed = source switch
+            {
+                UIElement candidate => candidate,
+                UiElementId id when routeMap.TryGetElement(id, out UIElement? resolved) => resolved,
+                _ => null
+            };
+
+            if (routed is null)
+            {
+                return null;
+            }
+
+            foreach (UIElement current in routeMap.GetVisualRouteToRoot(routed))
+            {
+                if (ReferenceEquals(current, owner) || current is IInputCommandSource)
+                {
+                    return current;
+                }
+            }
+
+            return null;
+        }
+
         UIElement? element = source switch
         {
             UIElement candidate => candidate,
