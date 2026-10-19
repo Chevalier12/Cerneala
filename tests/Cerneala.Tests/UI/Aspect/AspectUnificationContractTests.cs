@@ -464,6 +464,137 @@ public sealed class AspectUnificationContractTests
         Assert.Equal(UiPropertyValueSource.AspectBase, button.GetValueSource(Control.BackgroundProperty));
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void PropertyChangedHandlerThatDetachesItsElementDuringTheApplyLeavesNoAspectStateOnTheDetachedElement(
+        bool detachOnLastDeclaration)
+    {
+        SolidColorBrush background = new(Color.Red);
+        SolidColorBrush foreground = new(Color.Blue);
+        UiProperty trigger = detachOnLastDeclaration ? Control.ForegroundProperty : Control.BackgroundProperty;
+        UIRoot root = new();
+        Button button = new();
+        root.VisualChildren.Add(button);
+        root.ProcessFrame();
+        bool detached = false;
+        button.PropertyChanged += (_, args) =>
+        {
+            if (!detached && ReferenceEquals(args.Property, trigger) && button.IsAttached)
+            {
+                detached = true;
+                root.VisualChildren.Remove(button);
+            }
+        };
+
+        root.AspectRegistry.Register(AspectPackage.Create("P").Components(components =>
+        {
+            components.AddRule(new AspectRuleSet(
+                "P.button",
+                AspectLayer.App,
+                new AspectTarget(typeof(Button)),
+                [
+                    new AspectDeclaration(Control.BackgroundProperty, AspectValue<Brush?>.Literal(background)),
+                    new AspectDeclaration(Control.ForegroundProperty, AspectValue<Brush?>.Literal(foreground)),
+                ],
+                declarationOrder: 0));
+        }));
+        root.ProcessFrame();
+
+        Assert.False(button.IsAttached);
+        Assert.NotEqual(UiPropertyValueSource.AspectBase, button.GetValueSource(Control.BackgroundProperty));
+        Assert.NotEqual(UiPropertyValueSource.AspectBase, button.GetValueSource(Control.ForegroundProperty));
+        Assert.Equal(0, root.AspectProcessor.Engine.GetDependencies(button).CatalogVersion);
+
+        root.VisualChildren.Add(button);
+        root.ProcessFrame();
+        Assert.Same(background, button.Background);
+        Assert.Same(foreground, button.Foreground);
+        Assert.Equal(UiPropertyValueSource.AspectBase, button.GetValueSource(Control.BackgroundProperty));
+        Assert.Equal(UiPropertyValueSource.AspectBase, button.GetValueSource(Control.ForegroundProperty));
+    }
+
+    [Fact]
+    public void PropertyChangedHandlerThatDetachesItsElementDuringTheApplyLeavesItsComponentTemplateLikeANormalDetach()
+    {
+        UIRoot root = new();
+        ComponentTemplate<Button> template = new("App.Button", _ => new Border());
+        root.AspectRegistry.Register(AspectPackage.Create("App").Components(components => components.AddTemplate(
+            new ComponentTemplateDefinition("App.Button", typeof(Button), template))));
+        Button button = new() { ComponentTemplateKey = "App.Button" };
+        root.VisualChildren.Add(button);
+        root.ProcessFrame();
+        ComponentTemplateInstance? instance = button.ComponentTemplateInstance;
+        Assert.NotNull(instance);
+        bool detached = false;
+        button.PropertyChanged += (_, args) =>
+        {
+            if (!detached && ReferenceEquals(args.Property, Control.BackgroundProperty) && button.IsAttached)
+            {
+                detached = true;
+                root.VisualChildren.Remove(button);
+            }
+        };
+
+        root.AspectRegistry.Register(AspectPackage.Create("P").Components(components =>
+        {
+            components.AddRule(new AspectRuleSet(
+                "P.button",
+                AspectLayer.App,
+                new AspectTarget(typeof(Button)),
+                [new AspectDeclaration(Control.BackgroundProperty, AspectValue<Brush?>.Literal(new SolidColorBrush(Color.Red)))],
+                declarationOrder: 0));
+        }));
+        root.ProcessFrame();
+
+        Assert.False(button.IsAttached);
+        Assert.Same(instance, button.ComponentTemplateInstance);
+    }
+
+    [Fact]
+    public void PropertyChangedHandlerThatDetachesAndReattachesItsElementDuringTheApplyLeavesTheRuleApplied()
+    {
+        SolidColorBrush background = new(Color.Red);
+        SolidColorBrush foreground = new(Color.Blue);
+        UIRoot root = new();
+        Button button = new();
+        root.VisualChildren.Add(button);
+        root.ProcessFrame();
+        bool reattached = false;
+        button.PropertyChanged += (_, args) =>
+        {
+            if (!reattached && ReferenceEquals(args.Property, Control.BackgroundProperty) && button.IsAttached)
+            {
+                reattached = true;
+                root.VisualChildren.Remove(button);
+                root.VisualChildren.Add(button);
+            }
+        };
+
+        root.AspectRegistry.Register(AspectPackage.Create("P").Components(components =>
+        {
+            components.AddRule(new AspectRuleSet(
+                "P.button",
+                AspectLayer.App,
+                new AspectTarget(typeof(Button)),
+                [
+                    new AspectDeclaration(Control.BackgroundProperty, AspectValue<Brush?>.Literal(background)),
+                    new AspectDeclaration(Control.ForegroundProperty, AspectValue<Brush?>.Literal(foreground)),
+                ],
+                declarationOrder: 0));
+        }));
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.True(reattached);
+        Assert.True(button.IsAttached);
+        Assert.Same(background, button.Background);
+        Assert.Same(foreground, button.Foreground);
+        Assert.Equal(UiPropertyValueSource.AspectBase, button.GetValueSource(Control.BackgroundProperty));
+        Assert.Equal(UiPropertyValueSource.AspectBase, button.GetValueSource(Control.ForegroundProperty));
+        Assert.NotEqual(0, root.AspectProcessor.Engine.GetDependencies(button).CatalogVersion);
+    }
+
     [Fact]
     public void RuleAndTargetCopyCallerOwnedCollections()
     {

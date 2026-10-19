@@ -5,6 +5,9 @@ using Cerneala.UI.Theming;
 
 internal sealed class AspectEngineElementState
 {
+    // Counts the Clear calls, so that an apply sees a Clear that a property-change callback ran during that apply.
+    public int ClearCount { get; set; }
+
     public ResolvedAspect? LastResolved { get; set; }
 
     public ThemeProvider? LastThemeProvider { get; set; }

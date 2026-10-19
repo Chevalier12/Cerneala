@@ -96,7 +96,22 @@ public sealed class AspectEngine
             out AspectRuleEvaluationSnapshot[] ruleEvaluations);
         ValidateResolvedValues(element, resolved);
         AspectEngineElementState state = states.GetOrCreateValue(element);
-        bool changed = ApplyResolved(element, state.LastResolved, resolved, themeProvider);
+        int clearCount = state.ClearCount;
+        List<UiProperty> written = [];
+        bool changed = ApplyResolved(element, state, clearCount, resolved, themeProvider, written);
+        if (state.ClearCount != clearCount)
+        {
+            // A property-change callback cleared the element during this apply, for example by detaching it. The values
+            // written before the Clear belong to the state that the Clear ended, so they are removed too, and nothing of
+            // this apply is stored or tracked. A reattach applies the rules again.
+            foreach (UiProperty property in written)
+            {
+                element.ClearValueUntyped(property, UiPropertyValueSource.AspectBase);
+            }
+
+            return new AspectApplicationResult(changed, resolved);
+        }
+
         state.LastResolved = resolved;
         state.LastThemeProvider = themeProvider;
         state.RuleEvaluations = ruleEvaluations;
@@ -348,7 +363,13 @@ public sealed class AspectEngine
     {
         threadAccess.VerifyAccess();
         ArgumentNullException.ThrowIfNull(element);
-        if (!states.TryGetValue(element, out AspectEngineElementState? state) || state.LastResolved is null)
+        if (!states.TryGetValue(element, out AspectEngineElementState? state))
+        {
+            return;
+        }
+
+        state.ClearCount++;
+        if (state.LastResolved is null)
         {
             return;
         }
@@ -373,12 +394,17 @@ public sealed class AspectEngine
 
     internal void VerifyAccess() => threadAccess.VerifyAccess();
 
+    // Stops at the first mutation whose property-change callbacks cleared the element (state.ClearCount changed).
+    // written receives every property set to an aspect-base value.
     private static bool ApplyResolved(
         UIElement element,
-        ResolvedAspect? previous,
+        AspectEngineElementState state,
+        int clearCount,
         ResolvedAspect next,
-        ThemeProvider? themeProvider)
+        ThemeProvider? themeProvider,
+        List<UiProperty> written)
     {
+        ResolvedAspect? previous = state.LastResolved;
         bool changed = false;
         foreach (UiProperty property in previous?.Values.Keys ?? [])
         {
@@ -391,6 +417,10 @@ public sealed class AspectEngine
                     themeProvider,
                     () => element.ClearValueUntyped(property, UiPropertyValueSource.AspectBase));
                 changed = true;
+                if (state.ClearCount != clearCount)
+                {
+                    return changed;
+                }
             }
         }
 
@@ -408,7 +438,12 @@ public sealed class AspectEngine
                     motionValue,
                     themeProvider,
                     () => element.SetValueUntyped(property, resolvedValue.Value, UiPropertyValueSource.AspectBase));
+                written.Add(property);
                 changed = true;
+                if (state.ClearCount != clearCount)
+                {
+                    return changed;
+                }
             }
         }
 

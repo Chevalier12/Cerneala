@@ -35,7 +35,8 @@ public sealed class AspectProcessor
         AspectCatalog catalog = GetCatalog(element);
         // A behavior factory that detached the element ended this attachment: the detach's Clear removed its Aspect
         // state, so nothing more is applied to it. A reattach queues the element's Aspect work again.
-        if (!SynchronizeBehaviors(element, catalog))
+        BehaviorState attachment = SynchronizeBehaviors(element, catalog);
+        if (attachment.IsDisposed)
         {
             return;
         }
@@ -70,6 +71,12 @@ public sealed class AspectProcessor
                 root.ThemeProvider,
                 variants,
                 new AspectDataContext(element.DataContext, owner: element)));
+        }
+
+        // A property-change callback detached the element during the apply: the same as a detaching behavior factory.
+        if (attachment.IsDisposed)
+        {
+            return;
         }
 
         if (element is Control templatedControl)
@@ -336,13 +343,14 @@ public sealed class AspectProcessor
         return GetCatalogState(element).Catalog;
     }
 
-    // Returns false when a behavior factory detached the element, which disposed this state through Clear.
-    private bool SynchronizeBehaviors(UIElement element, AspectCatalog catalog)
+    // The returned state belongs to the element's current attachment: the detach's Clear disposes it, also when a
+    // behavior factory detached the element here.
+    private BehaviorState SynchronizeBehaviors(UIElement element, AspectCatalog catalog)
     {
         BehaviorState state = behaviorStates.GetValue(element, _ => new BehaviorState());
         AspectBehavior[] desired = catalog.Behaviors.Where(behavior => behavior.Matches(element)).ToArray();
         state.Synchronize(element, desired);
-        return !state.IsDisposed;
+        return state;
     }
 
     private CatalogState GetCatalogState(UIElement element)
