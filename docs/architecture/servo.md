@@ -19,7 +19,7 @@ Correction to the [architecture diagram](../assets/cerneala-architecture.png): i
 | `ServoElement` | `UI/Servo/ServoElement.cs` | Read-only snapshot of a found element; never the live element | caller |
 | `ServoOptions` | `UI/Servo/ServoOptions.cs` | `DefaultTimeout` (5 s by default; zero, negative and infinite are rejected); copied at construction | `Servo` |
 | `ServoContext` | `UI/Servo/ServoContext.cs` | Internal; binds to the window or host, marshals to the owning thread, serializes input | `Servo` |
-| `ServoQueryEngine` | `UI/Servo/ServoQueryEngine.cs` | Internal; resolves targets against `SemanticsProvider.Build(root, SemanticsProjection.Servo)` | `Servo` |
+| `ServoQueryEngine` | `UI/Servo/ServoQueryEngine.cs` | Internal; resolves targets against the root's cached Servo projection, `UIRoot.GetServoSemanticsTree()` (see [accessibility.md](accessibility.md), "The Servo cache") | `Servo` |
 | `ServoActionEngine` | `UI/Servo/ServoActionEngine.cs` | Internal; checks that a target can receive input and computes its center point | `Servo` |
 | `RetainedServoInputDriver` | `UI/Servo/RetainedServoInputDriver.cs` | Internal; builds `InputFrame` sequences (pointer, keyboard, text) and dispatches them | per window (`ServoInputState.Driver`) or per host |
 | `ServoInputState` | `UI/Servo/ServoInputState.cs` | Internal; one gate (`SemaphoreSlim(1, 1)`) plus the driver | per window, created by `WindowApplicationRuntime`; per `UiHost` through a weak table |

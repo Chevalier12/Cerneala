@@ -27,6 +27,9 @@ public sealed partial class UIRoot : UIElement, IElementHost, IInvalidationSink
     private SemanticsTree? cachedSemanticsTree;
     private int cachedSemanticsTreeVersion = -1;
     private bool semanticsDirty = true;
+    private SemanticsTree? cachedServoSemanticsTree;
+    private int cachedServoSemanticsTreeVersion = -1;
+    private bool servoSemanticsDirty = true;
 
     public UIRoot(
         float viewportWidth = 0,
@@ -338,6 +341,7 @@ public sealed partial class UIRoot : UIElement, IElementHost, IInvalidationSink
     {
         TreeVersion++;
         semanticsDirty = true;
+        servoSemanticsDirty = true;
         RetainedRenderCache.InvalidateRoot();
     }
 
@@ -361,6 +365,7 @@ public sealed partial class UIRoot : UIElement, IElementHost, IInvalidationSink
         if (effective.HasFlag(InvalidationFlags.Semantics))
         {
             semanticsDirty = true;
+            servoSemanticsDirty = true;
         }
 
         if (effective.HasFlag(InvalidationFlags.Render))
@@ -397,6 +402,26 @@ public sealed partial class UIRoot : UIElement, IElementHost, IInvalidationSink
         cachedSemanticsTreeVersion = TreeVersion;
         semanticsDirty = false;
         return cachedSemanticsTree;
+    }
+
+    internal int ServoSemanticsBuildCount { get; private set; }
+
+    // The Servo projection also includes scene input subtrees, whose presence depends on
+    // layout and scene presentation readiness. Those change only through frame work and
+    // raise no semantics invalidation, so ProcessFrameCore also discards this tree.
+    internal SemanticsTree GetServoSemanticsTree()
+    {
+        Relay.VerifyAccess();
+        if (!servoSemanticsDirty && cachedServoSemanticsTree is not null && cachedServoSemanticsTreeVersion == TreeVersion)
+        {
+            return cachedServoSemanticsTree;
+        }
+
+        cachedServoSemanticsTree = semanticsProvider.Build(this, SemanticsProjection.Servo);
+        cachedServoSemanticsTreeVersion = TreeVersion;
+        servoSemanticsDirty = false;
+        ServoSemanticsBuildCount++;
+        return cachedServoSemanticsTree;
     }
 
     public FrameStats ProcessFrame(
@@ -453,6 +478,7 @@ public sealed partial class UIRoot : UIElement, IElementHost, IInvalidationSink
         finally
         {
             activeFrameStats = null;
+            servoSemanticsDirty = true;
         }
     }
 

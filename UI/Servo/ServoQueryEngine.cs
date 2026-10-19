@@ -6,8 +6,6 @@ namespace Cerneala.UI.Servo;
 
 internal sealed class ServoQueryEngine
 {
-    private readonly SemanticsProvider semanticsProvider = new();
-
     internal ServoElement Find(UIRoot root, ServoTarget target)
     {
         return CreateSnapshot(Resolve(root, target));
@@ -40,7 +38,7 @@ internal sealed class ServoQueryEngine
 
     internal bool Exists(UIRoot root, ServoTarget target)
     {
-        SemanticsTree tree = semanticsProvider.Build(root, SemanticsProjection.Servo);
+        SemanticsTree tree = root.GetServoSemanticsTree();
         return ContainsMatch(root, tree.Root, target, []);
     }
 
@@ -48,17 +46,19 @@ internal sealed class ServoQueryEngine
     {
         ArgumentNullException.ThrowIfNull(root);
         ArgumentNullException.ThrowIfNull(target);
-        SemanticsTree tree = semanticsProvider.Build(root, SemanticsProjection.Servo);
+        SemanticsTree tree = root.GetServoSemanticsTree();
         List<ServoResolvedElement> matches = [];
         CollectMatches(root, tree.Root, target, [], matches);
         return matches;
     }
 
+    // One ancestor stack serves the whole walk: a node is pushed before its children are
+    // visited and popped after them, so ancestors[0..Count) is always the current path.
     private static void CollectMatches(
         UIRoot root,
         SemanticsNode node,
         ServoTarget target,
-        IReadOnlyList<ServoSemanticEntry> ancestors,
+        List<ServoSemanticEntry> ancestors,
         List<ServoResolvedElement> matches)
     {
         if (!TryResolveEntry(root, node, out ServoSemanticEntry entry))
@@ -66,54 +66,55 @@ internal sealed class ServoQueryEngine
             return;
         }
 
-        if (Matches(entry, target, ancestors))
+        if (Matches(entry, target, ancestors, ancestors.Count))
         {
             matches.Add(new ServoResolvedElement(node, entry.Element));
         }
 
-        List<ServoSemanticEntry> descendantsAncestors = new(ancestors.Count + 1);
-        descendantsAncestors.AddRange(ancestors);
-        descendantsAncestors.Add(entry);
-        foreach (SemanticsNode child in node.Children)
+        ancestors.Add(entry);
+        IReadOnlyList<SemanticsNode> children = node.Children;
+        for (int index = 0; index < children.Count; index++)
         {
-            CollectMatches(root, child, target, descendantsAncestors, matches);
+            CollectMatches(root, children[index], target, ancestors, matches);
         }
+
+        ancestors.RemoveAt(ancestors.Count - 1);
     }
 
     private static bool ContainsMatch(
         UIRoot root,
         SemanticsNode node,
         ServoTarget target,
-        IReadOnlyList<ServoSemanticEntry> ancestors)
+        List<ServoSemanticEntry> ancestors)
     {
         if (!TryResolveEntry(root, node, out ServoSemanticEntry entry))
         {
             return false;
         }
 
-        if (Matches(entry, target, ancestors))
+        if (Matches(entry, target, ancestors, ancestors.Count))
         {
             return true;
         }
 
-        List<ServoSemanticEntry> descendantsAncestors = new(ancestors.Count + 1);
-        descendantsAncestors.AddRange(ancestors);
-        descendantsAncestors.Add(entry);
-        foreach (SemanticsNode child in node.Children)
+        ancestors.Add(entry);
+        bool found = false;
+        IReadOnlyList<SemanticsNode> children = node.Children;
+        for (int index = 0; index < children.Count && !found; index++)
         {
-            if (ContainsMatch(root, child, target, descendantsAncestors))
-            {
-                return true;
-            }
+            found = ContainsMatch(root, children[index], target, ancestors);
         }
 
-        return false;
+        ancestors.RemoveAt(ancestors.Count - 1);
+        return found;
     }
 
+    // The candidate's ancestors are ancestors[0..ancestorCount), nearest last.
     private static bool Matches(
         ServoSemanticEntry candidate,
         ServoTarget target,
-        IReadOnlyList<ServoSemanticEntry> ancestors)
+        List<ServoSemanticEntry> ancestors,
+        int ancestorCount)
     {
         if (!MatchesOwnCriteria(candidate, target))
         {
@@ -125,11 +126,9 @@ internal sealed class ServoQueryEngine
             return true;
         }
 
-        for (int index = ancestors.Count - 1; index >= 0; index--)
+        for (int index = ancestorCount - 1; index >= 0; index--)
         {
-            ServoSemanticEntry ancestor = ancestors[index];
-            IReadOnlyList<ServoSemanticEntry> ancestorAncestors = ancestors.Take(index).ToArray();
-            if (Matches(ancestor, target.Scope, ancestorAncestors))
+            if (Matches(ancestors[index], target.Scope, ancestors, index))
             {
                 return true;
             }

@@ -63,7 +63,15 @@ The walk includes template parts, because nodes have no "presentational" flag. O
 - when an `Invalidate` request carries `InvalidationFlags.Semantics`. A property registered with `UiPropertyOptions.AffectsSemantics` produces that flag when its value changes. Examples: `UIElement.IsEnabled`, `IsVisible`, `Visibility`, `IsKeyboardFocused`, `AccessibleName.NameProperty`, `ContentControl.Content`, `TextBlock.Text`, `TextBox.Text`, `MenuItem.Header`.
 - in `UIRoot.IncrementTreeVersion`, which runs when a child collection changes.
 
-Servo does not use this cache. It calls `Build(root, SemanticsProjection.Servo)` for every query.
+### The Servo cache
+
+Servo uses a second cache in the same root, for the Servo projection. `UIRoot.GetServoSemanticsTree()` returns the cached Servo tree while `servoSemanticsDirty` is false and `TreeVersion` has not changed. Otherwise it calls `Build(root, SemanticsProjection.Servo)` and counts the build in `ServoSemanticsBuildCount` (internal, for tests).
+
+`servoSemanticsDirty` becomes true in the same three cases as `semanticsDirty`, and also after every `UIRoot.ProcessFrameCore` call. `UiHost.Update` calls it only when the scheduler has work or motion is active. The Servo projection depends on state that changes only through frame work, for example the arranged size of a `RenderSurface2D` and its scene presentation readiness; neither raises `InvalidationFlags.Semantics`. A frame without work keeps the tree.
+
+Example: a `WaitForAsync(ServoTarget.ById("later"), ServoCondition.Exists)` that waits 10 idle frames builds the Servo tree once; adding the element raises `TreeVersion`, so the next evaluation builds it a second time. `tests/Cerneala.Tests/UI/Servo/ServoSemanticsCacheTests.cs:WaitForOverIdleFramesBuildsTheServoSemanticsTreeOnce`.
+
+Known risk: a peer that reads state with no `AffectsSemantics` flag, changed without any frame work, leaves the Servo tree stale until the next invalidation. The Accessibility cache has the same risk.
 
 ## Lifecycle And Ownership
 
@@ -71,7 +79,7 @@ Servo does not use this cache. It calls `Build(root, SemanticsProjection.Servo)`
 - A tree is an immutable snapshot. A later change never edits it; the next `GetSemanticsTree()` call builds a new tree and replaces the cached one. The old tree stays valid for whoever still holds it.
 - Automation peers are created during one build and are not kept. Nothing in the system needs to be disposed.
 - A node refers to its element only through `ElementId`. `root.ElementIds` resolves that id only while the element is attached to that root. After a detach, the id in an old snapshot no longer resolves.
-- Servo builds its own tree for each query and does not keep it in the root.
+- The root also holds the last Servo-projection tree, the `TreeVersion` it was built at, and the `servoSemanticsDirty` bit. Servo queries reuse it until it is invalidated (see "The Servo cache").
 - `AccessibleName.NameProperty` is an ordinary property value on the element and lives as long as the element.
 
 ## Frame Integration
