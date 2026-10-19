@@ -56,6 +56,13 @@ public sealed class ClickTracker
         return clickCount;
     }
 
+    // A press that did not reach its click target, because a handler marked its preview handled, completes no click on
+    // release (#620).
+    internal void CancelPress(InputMouseButton button)
+    {
+        pressedTargets[(int)button] = null;
+    }
+
     public void Cancel()
     {
         Array.Clear(pressedTargets);
