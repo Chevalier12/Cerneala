@@ -296,7 +296,7 @@ internal sealed class RetainedServoInputDriver : IServoInputDriver
                         cancellationToken.ThrowIfCancellationRequested();
                         ServoInputStep step = sequence.Steps[nextIndex++];
                         attempted = step;
-                        return step.Frame;
+                        return RouteStep(step);
                     },
                     host.Viewport,
                     TimeSpan.Zero,
@@ -318,7 +318,7 @@ internal sealed class RetainedServoInputDriver : IServoInputDriver
                 keyboard = reset.Keyboard;
                 try
                 {
-                    host.Update(reset.Frame, host.Viewport, TimeSpan.Zero);
+                    host.Update(RouteStep(reset), host.Viewport, TimeSpan.Zero);
                 }
                 catch
                 {
@@ -329,6 +329,16 @@ internal sealed class RetainedServoInputDriver : IServoInputDriver
             throw;
         }
     }
+
+    // The frame to route for a step. A step of a Servo that has run no pointer action yet carries no
+    // position of its own, so it is routed where the host routed the pointer last and moves nothing.
+    // Example: the application's own frames put the pointer on a button at (160, 80) and Servo, before
+    // any pointer action, presses F2. The key frames are routed at (160, 80), not (0, 0), so the button
+    // stays hovered.
+    private InputFrame RouteStep(ServoInputStep step) =>
+        !step.HasPointerPosition && host.LastFrame is UiFrame last
+            ? step.Frame.WithPointerPosition(last.Input.Pointer.X, last.Input.Pointer.Y)
+            : step.Frame;
 
     private List<ServoInputStep> CreateKeyPressSteps(InputKey key, ServoModifiers modifiers)
     {
