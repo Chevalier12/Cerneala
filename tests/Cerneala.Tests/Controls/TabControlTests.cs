@@ -1368,6 +1368,136 @@ public sealed class TabControlTests
         AssertContentAreaShows(tabControl, new[] { first, second }, "C1b", "C1");
     }
 
+    [Fact]
+    public void TabControlDeclaresItemsPresenterTemplatePart()
+    {
+        TemplatePartAttribute part = Assert.Single(
+            typeof(TabControl).GetCustomAttributes(typeof(TemplatePartAttribute), true).Cast<TemplatePartAttribute>());
+
+        Assert.Equal("PART_ItemsPresenter", part.Name);
+        Assert.Equal(typeof(ItemsPresenter), part.Type);
+    }
+
+    [Fact]
+    public void ComponentTemplateItemsPresenterPartHostsTheTabsAndAClickOnAHeaderSelectsItsTab()
+    {
+        UIRoot root = new(300, 200);
+        TabItem first = new() { Header = "One", Content = "C1" };
+        TabItem second = new() { Header = "Two", Content = "C2" };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        tabControl.SelectedIndex = 0;
+        ItemsPresenter? headers = null;
+        tabControl.ComponentTemplate = HeadersAboveContentTemplate(presenter => headers = presenter);
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+
+        Assert.NotNull(headers);
+        Assert.Same(tabControl, headers.ItemsOwner);
+        Assert.True(HasVisualAncestor(first, headers), "the first tab is not under the template's ItemsPresenter");
+        Assert.True(HasVisualAncestor(second, headers), "the second tab is not under the template's ItemsPresenter");
+        Assert.DoesNotContain(tabControl.VisualChildren, child => child is ItemsPresenter && !ReferenceEquals(child, headers));
+        // The template puts a 30 pixel spacer above the headers, so the header row is below the spacer.
+        Assert.True(second.ArrangedBounds.Y >= 30 && second.ArrangedBounds.Width > 0, $"second arranged {second.ArrangedBounds}");
+
+        float x = second.ArrangedBounds.X + second.ArrangedBounds.Width / 2;
+        float y = second.ArrangedBounds.Y + second.ArrangedBounds.Height / 2;
+        ElementInputBridge bridge = new();
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+
+        Assert.Equal(1, tabControl.SelectedIndex);
+        Assert.True(second.IsSelected);
+    }
+
+    [Fact]
+    public void ComponentTemplateItemsPresenterPartHostsTheGeneratedTabsOfItemsSource()
+    {
+        UIRoot root = new(300, 200);
+        TabControl tabControl = new() { ItemsSource = new[] { "A", "B" } };
+        tabControl.SelectedIndex = 1;
+        ItemsPresenter? headers = null;
+        tabControl.ComponentTemplate = HeadersAboveContentTemplate(presenter => headers = presenter);
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+
+        Assert.NotNull(headers);
+        Assert.Same(tabControl, headers.ItemsOwner);
+        Assert.Equal(2, tabControl.RealizedItemCount);
+        foreach (UIElement container in tabControl.ItemContainerGenerator.RealizedContainers.Values)
+        {
+            TabItem tab = Assert.IsType<TabItem>(container);
+            Assert.True(HasVisualAncestor(tab, headers), $"the tab of '{tab.Header}' is not under the template's ItemsPresenter");
+            Assert.True(tab.ArrangedBounds.Y >= 30 && tab.ArrangedBounds.Width > 0, $"'{tab.Header}' arranged {tab.ArrangedBounds}");
+        }
+
+        Assert.Equal("B", tabControl.SelectedTabItem!.Header);
+    }
+
+    [Fact]
+    public void RemovingTheComponentTemplateHostsTheTabsInTheBuiltInHeaderRowAgain()
+    {
+        UIRoot root = new(300, 200);
+        TabItem first = new() { Header = "One", Content = "C1" };
+        TabItem second = new() { Header = "Two", Content = "C2" };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        tabControl.SelectedIndex = 0;
+        ItemsPresenter? headers = null;
+        tabControl.ComponentTemplate = HeadersAboveContentTemplate(presenter => headers = presenter);
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+        Assert.True(HasVisualAncestor(first, headers!), "the first tab is not under the template's ItemsPresenter");
+
+        tabControl.ComponentTemplate = null;
+        root.ProcessFrame();
+
+        Assert.Null(headers!.ItemsOwner);
+        Assert.Same(tabControl, tabControl.ItemsPresenter.ItemsOwner);
+        Assert.Same(tabControl, tabControl.ItemsPresenter.VisualParent);
+        Assert.True(HasVisualAncestor(first, tabControl.ItemsPresenter), "the first tab is not in the built-in header row");
+        Assert.True(HasVisualAncestor(second, tabControl.ItemsPresenter), "the second tab is not in the built-in header row");
+        Assert.Equal(0, first.ArrangedBounds.Y);
+        Assert.True(second.ArrangedBounds.Width > 0, $"second arranged {second.ArrangedBounds}");
+        AssertContentAreaShows(tabControl, new[] { first, second }, "C1", "C2");
+    }
+
+    [Fact]
+    public void ComponentTemplateWithoutItemsPresenterPartIsAppliedAndTheTabsStayInTheBuiltInHeaderRow()
+    {
+        UIRoot root = new(300, 200);
+        TabItem first = new() { Header = "One", Content = "C1" };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, new TabItem { Header = "Two", Content = "C2" } });
+        tabControl.SelectedIndex = 0;
+        ContentPresenter? page = null;
+        tabControl.ComponentTemplate = new ComponentTemplate<TabControl>("tabs", context =>
+            page = new ContentPresenter { Content = context.Owner.SelectedContent });
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+
+        Assert.NotNull(tabControl.ComponentTemplateInstance);
+        Assert.Same(tabControl, tabControl.ItemsPresenter.ItemsOwner);
+        Assert.Same(tabControl, tabControl.ItemsPresenter.VisualParent);
+        Assert.False(HasVisualAncestor(first, page!), "the first tab is inside the template");
+    }
+
+    // A 30 pixel spacer, the PART_ItemsPresenter header row, and a ContentPresenter that shows SelectedContent.
+    private static ComponentTemplate<TabControl> HeadersAboveContentTemplate(Action<ItemsPresenter> created)
+    {
+        return new ComponentTemplate<TabControl>("tabs", context =>
+        {
+            ItemsPresenter headers = new();
+            created(headers);
+            StackPanel root = new();
+            root.Children.Add(new FixedElement(new LayoutSize(10, 30)));
+            root.Children.Add(headers);
+            root.Children.Add(new ContentPresenter { Content = context.Owner.SelectedContent });
+            context.RequirePart("PART_ItemsPresenter", headers);
+            return root;
+        });
+    }
+
     private static bool HasTabItemAncestor(UIElement element)
     {
         for (UIElement? current = element.VisualParent; current is not null; current = current.VisualParent)
