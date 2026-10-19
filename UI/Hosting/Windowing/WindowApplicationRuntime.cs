@@ -997,6 +997,11 @@ internal sealed class WindowApplicationRuntime : IDisposable
             ownerContext.ModalDisableCount += enabled ? -1 : 1;
             ownerContext.ModalDisableCount = Math.Max(0, ownerContext.ModalDisableCount);
             ownerContext.PlatformWindow.SetEnabled(ownerContext.ModalDisableCount == 0);
+            if (!enabled && ownerContext.ModalDisableCount == 1)
+            {
+                // As EnableWindow sends WM_CANCELMODE: the disabled window keeps no capture or drag of a press.
+                ownerContext.Host.InputBridge.CancelPointerMode(ownerContext.Root);
+            }
         }
     }
 
