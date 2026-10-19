@@ -304,6 +304,89 @@ public sealed class AspectUnificationContractTests
     }
 
     [Fact]
+    public void PackageBehaviorFactoryThatDetachesItsElementDisposesItsLifetimeOnce()
+    {
+        List<string> events = [];
+        int aCount = 0;
+        int bCount = 0;
+        UIRoot root = new();
+        Border border = new();
+        AspectBehavior a = new(typeof(Border), _ =>
+        {
+            int n = ++aCount;
+            events.Add($"create A#{n}");
+            return new RecordingLifetime(() => events.Add($"dispose A#{n}"));
+        });
+        AspectBehavior b = new(typeof(Border), _ =>
+        {
+            int n = ++bCount;
+            events.Add($"create B#{n}");
+            if (n == 1)
+            {
+                root.VisualChildren.Remove(border);
+            }
+
+            return new RecordingLifetime(() => events.Add($"dispose B#{n}"));
+        });
+        root.AspectRegistry.Register(BehaviorPackage("A", a));
+        root.VisualChildren.Add(border);
+        root.ProcessFrame();
+
+        root.AspectRegistry.Register(BehaviorPackage("B", b));
+        root.ProcessFrame();
+        Assert.Equal(["create A#1", "create B#1", "dispose A#1", "dispose B#1"], events);
+
+        root.VisualChildren.Add(border);
+        root.ProcessFrame();
+        Assert.Equal(["create A#2", "create B#2"], events[4..]);
+
+        root.VisualChildren.Remove(border);
+        Assert.Equal(["dispose B#2", "dispose A#2"], events[6..]);
+    }
+
+    [Fact]
+    public void PackageBehaviorAfterAFactoryThatDetachesTheElementIsNotAttachedToTheDetachedElement()
+    {
+        List<string> events = [];
+        int xCount = 0;
+        int yCount = 0;
+        UIRoot root = new();
+        Border border = new();
+        AspectBehavior x = new(typeof(Border), _ =>
+        {
+            int n = ++xCount;
+            events.Add($"create X#{n}");
+            if (n == 1)
+            {
+                root.VisualChildren.Remove(border);
+            }
+
+            return new RecordingLifetime(() => events.Add($"dispose X#{n}"));
+        });
+        AspectBehavior y = new(typeof(Border), _ =>
+        {
+            int n = ++yCount;
+            events.Add($"create Y#{n}");
+            return new RecordingLifetime(() => events.Add($"dispose Y#{n}"));
+        });
+        root.VisualChildren.Add(border);
+        root.ProcessFrame();
+
+        root.AspectRegistry.Register(AspectPackage.Create("XY").Components(components =>
+        {
+            components.AddBehavior(x);
+            components.AddBehavior(y);
+        }));
+        root.ProcessFrame();
+        Assert.Equal(["create X#1", "dispose X#1"], events);
+
+        root.VisualChildren.Add(border);
+        root.ProcessFrame();
+        root.VisualChildren.Remove(border);
+        Assert.Equal(["create X#2", "create Y#1", "dispose Y#1", "dispose X#2"], events[2..]);
+    }
+
+    [Fact]
     public void RuleAndTargetCopyCallerOwnedCollections()
     {
         List<AspectCondition> conditions =
