@@ -369,6 +369,84 @@ public sealed class ContentPresenterTests
     }
 
     [Fact]
+    public void ReplacingContentTemplateKeepsElementContentInTheTabItemHeaderThatTheTemplateReuses()
+    {
+        UIRoot root = new(200, 200);
+        FixedElement content = new(new LayoutSize(10, 10));
+        TabItem cached = new();
+        Func<ContentTemplateContext, UIElement?> factory = context =>
+        {
+            cached.Header = context.Data;
+            return cached;
+        };
+        ContentPresenter presenter = new()
+        {
+            ContentTemplate = new ContentTemplate("cache1", typeof(object), key: null, priority: 0, factory),
+            Content = content
+        };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        Assert.Same(cached, content.VisualParent);
+
+        presenter.ContentTemplate = new ContentTemplate("cache2", typeof(object), key: null, priority: 0, factory);
+        root.ProcessFrame();
+
+        Assert.Same(cached, presenter.PresentedChild);
+        Assert.Same(content, cached.Header);
+        Assert.Same(cached, content.VisualParent);
+        Assert.Same(cached, content.LogicalParent);
+        Assert.Same(root, content.Root);
+        Assert.Single(cached.VisualChildren);
+        Assert.Contains(content, cached.VisualChildren);
+        Assert.Contains(content, cached.LogicalChildren);
+    }
+
+    [Fact]
+    public void ReplacingContentTemplateReleasesElementContentThroughTheOldTabItemHeader()
+    {
+        FixedElement content = new(new LayoutSize(10, 10));
+        ContentPresenter presenter = new()
+        {
+            ContentTemplate = TabItemHeaderTemplate("first"),
+            Content = content
+        };
+        TabItem oldContainer = Assert.IsType<TabItem>(presenter.PresentedChild);
+        Assert.Same(oldContainer, content.VisualParent);
+
+        presenter.ContentTemplate = TabItemHeaderTemplate("second");
+
+        TabItem newContainer = Assert.IsType<TabItem>(presenter.PresentedChild);
+        Assert.NotSame(oldContainer, newContainer);
+        Assert.Same(newContainer, content.VisualParent);
+        Assert.Null(oldContainer.Header);
+        Assert.DoesNotContain(content, oldContainer.VisualChildren);
+        Assert.DoesNotContain(content, oldContainer.LogicalChildren);
+    }
+
+    [Fact]
+    public void ThrowingContentTemplateKeepsElementContentInThePreviousTabItemHeader()
+    {
+        UIRoot root = new(200, 200);
+        FixedElement content = new(new LayoutSize(10, 10));
+        ContentPresenter presenter = new() { ContentTemplate = TabItemHeaderTemplate("first"), Content = content };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        TabItem oldContainer = Assert.IsType<TabItem>(presenter.PresentedChild);
+
+        Assert.Throws<InvalidOperationException>(() => presenter.ContentTemplate = ThrowingTemplate(takeContent: true));
+
+        Assert.Same(oldContainer, presenter.PresentedChild);
+        Assert.Same(content, oldContainer.Header);
+        Assert.Same(oldContainer, content.VisualParent);
+        Assert.Same(oldContainer, content.LogicalParent);
+        Assert.Single(oldContainer.VisualChildren);
+        Assert.Same(root, content.Root);
+
+        root.ProcessFrame();
+        Assert.Equal(new LayoutSize(10, 10), oldContainer.DesiredSize);
+    }
+
+    [Fact]
     public void ReplacingPassThroughContentTemplateKeepsElementContentInPlace()
     {
         UIRoot root = new(200, 200);
@@ -430,6 +508,11 @@ public sealed class ContentPresenterTests
     private static ContentTemplate ContentControlTemplate(string name)
     {
         return new ContentTemplate(name, typeof(object), key: null, priority: 0, context => new ContentControl { Content = context.Data });
+    }
+
+    private static ContentTemplate TabItemHeaderTemplate(string name)
+    {
+        return new ContentTemplate(name, typeof(object), key: null, priority: 0, context => new TabItem { Header = context.Data });
     }
 
     private static ContentTemplate ThrowingTemplate(bool takeContent)

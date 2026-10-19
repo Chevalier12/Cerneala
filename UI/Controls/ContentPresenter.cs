@@ -466,13 +466,15 @@ public class ContentPresenter : Control
         LogicalChildren.Remove(child);
     }
 
-    // Where element content was in the tree before a refresh released it.
+    // Where element content was in the tree before a refresh released it. A TabItem that hosted the element as its
+    // Header let go of it through its Header, so it takes it back through its Header.
     private readonly record struct ElementContentPlacement(
         UIElement Element,
         UIElement? VisualParent,
         int VisualIndex,
         UIElement? LogicalParent,
-        int LogicalIndex)
+        int LogicalIndex,
+        TabItem? HeaderHost)
     {
         public static ElementContentPlacement Capture(UIElement element)
         {
@@ -483,7 +485,8 @@ public class ContentPresenter : Control
                 visualParent,
                 visualParent?.VisualChildren.IndexOf(element) ?? -1,
                 logicalParent,
-                logicalParent?.LogicalChildren.IndexOf(element) ?? -1);
+                logicalParent?.LogicalChildren.IndexOf(element) ?? -1,
+                visualParent is TabItem tab && tab.HostsHeaderDirectly(element) ? tab : null);
         }
 
         // A template that failed after it took the element still holds it, so the element leaves that template's
@@ -500,6 +503,16 @@ public class ContentPresenter : Control
             if (restoreLogical)
             {
                 Element.LogicalParent?.LogicalChildren.Remove(Element);
+            }
+
+            if (HeaderHost is not null && HeaderHost.Header is null)
+            {
+                HeaderHost.Header = Element;
+                return;
+            }
+
+            if (restoreLogical)
+            {
                 LogicalParent?.LogicalChildren.Insert(LogicalIndex, Element);
             }
 
