@@ -54,6 +54,17 @@ A target with a position resolves to at most one element for every Servo operati
 
 `WithNameMatching` uses `Regex.IsMatch`, so the pattern can match any part of the name; use `^` and `$` to require the whole name. The supplied `Regex` keeps its own options, for example `RegexOptions.IgnoreCase`.
 
+`ToString()` returns a readable description, and every target failure message of Servo contains it. The criteria appear in the order ID, role, name, predicates; then the scope in parentheses after `within`; then the position. Text values are in double quotes, with `"` and `\` escaped by `\`. A `Where` predicate has no readable form, so each one appears as `where <predicate>`. `Nth(0)` reads `First()`, because both select the same match.
+
+| Target | `ToString()` |
+| --- | --- |
+| `ServoTarget.ById("save")` | `Id="save"` |
+| `ServoTarget.ByRole(SemanticsRole.Button).WithName("Save").Within(ServoTarget.ById("toolbar"))` | `Role=Button, Name="Save" within (Id="toolbar")` |
+| `ServoTarget.ByRole(SemanticsRole.Button).WithNameContaining("3 of")` | `Role=Button, Name contains "3 of"` |
+| `ServoTarget.ByRole(SemanticsRole.Button).WithNameMatching(new Regex("item", RegexOptions.IgnoreCase))` | `Role=Button, Name matches /item/ (IgnoreCase)` |
+| `ServoTarget.ByRole(SemanticsRole.Button).Where(element => element.IsEnabled)` | `Role=Button, where <predicate>` |
+| `ServoTarget.ByRole(SemanticsRole.Button).WithName("Delete").Within(ServoTarget.ById("row").Last()).Nth(2)` | `Role=Button, Name="Delete" within (Id="row", Last()), Nth(2)` |
+
 ## Methods
 
 | Name | Description |
@@ -69,6 +80,7 @@ A target with a position resolves to at most one element for every Servo operati
 | `Nth(int)` | Returns a new target that selects the match at the zero-based index in document order: `Nth(2)` selects the third match. Replaces an earlier position. Throws `ArgumentOutOfRangeException` for a negative index. |
 | `First()` | Returns a new target that selects the first match in document order. Same as `Nth(0)`. |
 | `Last()` | Returns a new target that selects the last match in document order. |
+| `ToString()` | Returns the readable description used in Servo failure messages, for example `Role=Button, Name="Save" within (Id="toolbar")`. |
 
 ## Applies to
 

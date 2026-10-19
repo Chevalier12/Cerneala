@@ -59,17 +59,19 @@ internal sealed class RetainedServoInputDriver : IServoInputDriver
 
     public Task DragAsync(
         Func<UIRoot, ServoActionTarget> resolveTarget,
-        float endX,
-        float endY,
+        Func<UIRoot, ServoPoint> resolveDestination,
         int steps,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(resolveTarget);
-        ValidatePointerPosition(endX, endY);
+        ArgumentNullException.ThrowIfNull(resolveDestination);
         ArgumentOutOfRangeException.ThrowIfLessThan(steps, 1);
         return DispatchAsync(new ServoInputSequence(() =>
         {
+            // Both ends resolve before the first step is appended, so a destination that cannot be resolved
+            // fails the drag before the pointer moves or is pressed.
             ServoActionTarget target = ResolveTarget(resolveTarget);
+            ServoPoint destination = resolveDestination(RequireRoot());
             List<ServoInputStep> frames = new(steps + 3);
             AppendPointerMove(frames, target.X, target.Y);
             AppendPointerButton(frames, InputMouseButton.Left, isDown: true);
@@ -78,8 +80,8 @@ internal sealed class RetainedServoInputDriver : IServoInputDriver
                 float progress = step / (float)steps;
                 AppendPointerMove(
                     frames,
-                    Lerp(target.X, endX, progress),
-                    Lerp(target.Y, endY, progress));
+                    Lerp(target.X, destination.X, progress),
+                    Lerp(target.Y, destination.Y, progress));
             }
 
             AppendPointerButton(frames, InputMouseButton.Left, isDown: false);
@@ -372,11 +374,13 @@ internal sealed class RetainedServoInputDriver : IServoInputDriver
 
     private ServoActionTarget ResolveTarget(Func<UIRoot, ServoActionTarget> resolveTarget)
     {
-        ServoActionTarget target = resolveTarget(host.Root ?? throw new ServoException(
-            "The Servo UiHost does not currently have a root."));
+        ServoActionTarget target = resolveTarget(RequireRoot());
         ValidatePointerPosition(target.X, target.Y);
         return target;
     }
+
+    private UIRoot RequireRoot() =>
+        host.Root ?? throw new ServoException("The Servo UiHost does not currently have a root.");
 
     private void AppendPointerMove(List<ServoInputStep> steps, float x, float y)
     {

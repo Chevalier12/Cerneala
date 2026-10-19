@@ -5,19 +5,19 @@ namespace Cerneala.UI.Servo;
 
 public sealed class ServoTarget
 {
-    private readonly Func<string, bool>? nameMatcher;
+    private readonly NameCriterion? nameCriterion;
     private readonly Func<ServoElement, bool>[] predicates;
 
     private ServoTarget(
         string? id,
-        Func<string, bool>? nameMatcher,
+        NameCriterion? nameCriterion,
         SemanticsRole? role,
         ServoTarget? scope,
         Func<ServoElement, bool>[] predicates,
         Index? position)
     {
         Id = id;
-        this.nameMatcher = nameMatcher;
+        this.nameCriterion = nameCriterion;
         Role = role;
         Scope = scope;
         this.predicates = predicates;
@@ -32,7 +32,11 @@ public sealed class ServoTarget
 
     internal Index? Position { get; }
 
+    internal bool HasName => nameCriterion is not null;
+
     internal bool HasPredicates => predicates.Length > 0;
+
+    internal int PredicateCount => predicates.Length;
 
     public static ServoTarget ById(string id)
     {
@@ -59,31 +63,34 @@ public sealed class ServoTarget
     public ServoTarget WithName(string name)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        return WithNameMatcher(ExactName(name));
+        return WithNameCriterion(ExactName(name));
     }
 
     public ServoTarget WithNameContaining(string value)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(value);
-        return WithNameMatcher(candidate => candidate.Contains(value, StringComparison.Ordinal));
+        return WithNameCriterion(new NameCriterion(
+            candidate => candidate.Contains(value, StringComparison.Ordinal),
+            $"Name contains {Quote(value)}"));
     }
 
     public ServoTarget WithNameMatching(Regex pattern)
     {
         ArgumentNullException.ThrowIfNull(pattern);
-        return WithNameMatcher(pattern.IsMatch);
+        string options = pattern.Options == RegexOptions.None ? string.Empty : $" ({pattern.Options})";
+        return WithNameCriterion(new NameCriterion(pattern.IsMatch, $"Name matches /{pattern}/{options}"));
     }
 
     public ServoTarget Where(Func<ServoElement, bool> predicate)
     {
         ArgumentNullException.ThrowIfNull(predicate);
-        return new ServoTarget(Id, nameMatcher, Role, Scope, [.. predicates, predicate], Position);
+        return new ServoTarget(Id, nameCriterion, Role, Scope, [.. predicates, predicate], Position);
     }
 
     public ServoTarget Within(ServoTarget scope)
     {
         ArgumentNullException.ThrowIfNull(scope);
-        return new ServoTarget(Id, nameMatcher, Role, scope, predicates, Position);
+        return new ServoTarget(Id, nameCriterion, Role, scope, predicates, Position);
     }
 
     public ServoTarget Nth(int index)
@@ -96,9 +103,54 @@ public sealed class ServoTarget
 
     public ServoTarget Last() => WithPosition(Index.FromEnd(1));
 
+    // Example: ByRole(Button).WithName("Save").Within(ById("toolbar")) gives
+    // Role=Button, Name="Save" within (Id="toolbar"), and ByRole(Button).Within(ById("row").Last()).Nth(2)
+    // gives Role=Button within (Id="row", Last()), Nth(2).
+    public override string ToString()
+    {
+        string description = string.Join(", ", DescribeOwnCriteria());
+        if (Scope is not null)
+        {
+            description = $"{description} {DescribeScope()}";
+        }
+
+        return Position is Index position ? $"{description}, {DescribePosition(position)}" : description;
+    }
+
+    // The own criteria in display order: Id, Role, Name, then one entry per Where predicate.
+    internal IEnumerable<string> DescribeOwnCriteria()
+    {
+        if (Id is not null)
+        {
+            yield return $"Id={Quote(Id)}";
+        }
+
+        if (Role is SemanticsRole role)
+        {
+            yield return $"Role={role}";
+        }
+
+        if (nameCriterion is not null)
+        {
+            yield return nameCriterion.Description;
+        }
+
+        foreach (Func<ServoElement, bool> _ in predicates)
+        {
+            yield return "where <predicate>";
+        }
+    }
+
+    internal string DescribeScope() => $"within ({Scope})";
+
+    internal static string DescribePosition(Index position) =>
+        position.Equals(Index.Start) ? "First()"
+        : position.Equals(Index.FromEnd(1)) ? "Last()"
+        : $"Nth({position.Value})";
+
     internal bool MatchesName(string? name)
     {
-        return nameMatcher is null || (name is not null && nameMatcher(name));
+        return nameCriterion is null || (name is not null && nameCriterion.Matches(name));
     }
 
     internal bool MatchesPredicates(ServoElement element)
@@ -114,12 +166,20 @@ public sealed class ServoTarget
         return true;
     }
 
-    private static Func<string, bool> ExactName(string name) =>
-        candidate => string.Equals(candidate, name, StringComparison.Ordinal);
+    internal bool MatchesPredicate(int index, ServoElement element) => predicates[index](element);
 
-    private ServoTarget WithNameMatcher(Func<string, bool> matcher) =>
-        new(Id, matcher, Role, Scope, predicates, Position);
+    private static NameCriterion ExactName(string name) =>
+        new(candidate => string.Equals(candidate, name, StringComparison.Ordinal), $"Name={Quote(name)}");
+
+    private static string Quote(string value) =>
+        $"\"{value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal)}\"";
+
+    private ServoTarget WithNameCriterion(NameCriterion criterion) =>
+        new(Id, criterion, Role, Scope, predicates, Position);
 
     private ServoTarget WithPosition(Index position) =>
-        new(Id, nameMatcher, Role, Scope, predicates, position);
+        new(Id, nameCriterion, Role, Scope, predicates, position);
+
+    // Description is the readable form used by ToString, for example Name contains "Item".
+    private sealed record NameCriterion(Func<string, bool> Matches, string Description);
 }

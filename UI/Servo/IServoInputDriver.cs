@@ -11,8 +11,7 @@ internal interface IServoInputDriver
 
     Task DragAsync(
         Func<UIRoot, ServoActionTarget> resolveTarget,
-        float endX,
-        float endY,
+        Func<UIRoot, ServoPoint> resolveDestination,
         int steps,
         CancellationToken cancellationToken);
 

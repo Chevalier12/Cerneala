@@ -31,7 +31,7 @@ Correction to the [architecture diagram](../assets/cerneala-architecture.png): i
 
 Example: `await servo.ClickAsync(ServoTarget.ById("save"))` on a `Window`.
 
-1. `ServoOperation.RunAsync` links the caller's token with the `DefaultTimeout`. The timeout also covers time spent waiting in the queue.
+1. `ServoOperation.RunAsync` links the caller's token with the timeout: `DefaultTimeout`, or the `timeout` argument of the overload the call used. The timeout also covers time spent waiting in the queue.
 2. `ServoContext.ExecuteSerializedAsync` gets the window's `ServoInputState` on the UI thread and takes its gate. Two `Servo` instances on the same window therefore run one after the other; different windows do not block each other.
 3. `ServoActionEngine.DispatchWhenActionableAsync` starts one dispatch attempt (steps 4 to 7). During the attempt, inside the lazy step materialization of step 4, `ServoActionEngine.ResolveActionable` resolves exactly one element and checks, in order:
    - it is still attached to this root;
