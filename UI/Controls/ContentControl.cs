@@ -341,6 +341,7 @@ public class ContentControl : Control
         }
 
         // An attach that throws leaves the element in the collection whose Add attached it, so it leaves both again.
+        // Visual first, unlike RemoveContentElement: the rejected element leaves at once, without a presence exit.
         try
         {
             LogicalChildren.Add(element);
@@ -363,8 +364,10 @@ public class ContentControl : Control
             return;
         }
 
-        VisualChildren.Remove(element);
+        // Logical first: the element stays attached through its visual parent, so the visual removal can start a
+        // presence exit. In the other order the logical removal detaches the element and cancels that exit.
         LogicalChildren.Remove(element);
+        VisualChildren.Remove(element);
         if (ReferenceEquals(hostedContentElement, element))
         {
             hostedContentElement = null;

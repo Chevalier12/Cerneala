@@ -2,6 +2,9 @@ using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Motion.Presence;
+using Cerneala.Tests.UI.Motion.Core;
+using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
 
 namespace Cerneala.Tests.Controls;
 
@@ -389,6 +392,127 @@ public sealed class ContentControlTests
         Assert.Null(failed.VisualParent);
         Assert.Null(oldChild.LogicalParent);
         Assert.Null(oldChild.VisualParent);
+    }
+
+    // Issue #616: removing the visual child first and the logical child second canceled the exit at once.
+    [Fact]
+    public void ContentSetToNullKeepsTheExitOfAnElementWithPresenceRunningUntilItEnds()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(200, 200, motionClock: clock);
+        ContentControl control = new();
+        root.VisualChildren.Add(control);
+        Border child = new() { Width = 50, Height = 20, Presence = CreatePresence() };
+        control.Content = child;
+        root.ProcessFrame();
+
+        control.Content = null;
+        root.ProcessFrame();
+
+        Assert.Null(control.Content);
+        Assert.Equal(PresenceState.Exiting, root.Motion.Presence.GetState(child));
+        Assert.Equal([child], root.Motion.Presence.GetExitingVisualChildren(control));
+        Assert.True(child.IsAttached);
+        Assert.Null(child.LogicalParent);
+        Assert.Empty(control.VisualChildren);
+        Assert.Empty(control.LogicalChildren);
+
+        clock.Advance(TimeSpan.FromMilliseconds(120));
+        root.ProcessFrame();
+
+        Assert.Equal(PresenceState.Detached, root.Motion.Presence.GetState(child));
+        Assert.Empty(root.Motion.Presence.GetExitingVisualChildren(control));
+        Assert.False(child.IsAttached);
+    }
+
+    // Issue #616: replaced element content with presence exits while the new element becomes present.
+    [Fact]
+    public void ContentReplacedKeepsTheExitOfTheOldElementWithPresenceRunningAndTheNewElementIsPresent()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(200, 200, motionClock: clock);
+        ContentControl control = new();
+        root.VisualChildren.Add(control);
+        Border oldChild = new() { Width = 50, Height = 20, Presence = CreatePresence() };
+        Border newChild = new() { Width = 50, Height = 20, Presence = CreatePresence() };
+        control.Content = oldChild;
+        root.ProcessFrame();
+
+        control.Content = newChild;
+        root.ProcessFrame();
+
+        Assert.Same(newChild, control.Content);
+        Assert.Equal(PresenceState.Exiting, root.Motion.Presence.GetState(oldChild));
+        Assert.Equal([oldChild], root.Motion.Presence.GetExitingVisualChildren(control));
+        Assert.True(oldChild.IsAttached);
+        Assert.Equal(PresenceState.Present, root.Motion.Presence.GetState(newChild));
+        Assert.Equal([newChild], control.VisualChildren);
+        Assert.Equal([newChild], control.LogicalChildren);
+
+        clock.Advance(TimeSpan.FromMilliseconds(120));
+        root.ProcessFrame();
+
+        Assert.Equal(PresenceState.Detached, root.Motion.Presence.GetState(oldChild));
+        Assert.Empty(root.Motion.Presence.GetExitingVisualChildren(control));
+        Assert.False(oldChild.IsAttached);
+        Assert.Equal(PresenceState.Present, root.Motion.Presence.GetState(newChild));
+    }
+
+    // Issue #616: setting the exiting element as Content again cancels its exit and hosts it in both trees again.
+    [Fact]
+    public void ContentSetAgainWhileItsElementExitsCancelsTheExit()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(200, 200, motionClock: clock);
+        ContentControl control = new();
+        root.VisualChildren.Add(control);
+        Border child = new() { Width = 50, Height = 20, Presence = CreatePresence() };
+        control.Content = child;
+        root.ProcessFrame();
+        control.Content = null;
+        root.ProcessFrame();
+
+        control.Content = child;
+        root.ProcessFrame();
+
+        Assert.Same(child, control.Content);
+        Assert.Same(control, child.LogicalParent);
+        Assert.Same(control, child.VisualParent);
+        Assert.Equal(PresenceState.Present, root.Motion.Presence.GetState(child));
+        Assert.Empty(root.Motion.Presence.GetExitingVisualChildren(control));
+        Assert.True(child.IsAttached);
+    }
+
+    // Issue #616: a failed replacement restores the previous element without an exit and removes the rejected one at once.
+    [Fact]
+    public void FailedReplacementRestoresThePreviousElementWithPresenceAndRemovesTheRejectedElementAtOnce()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(200, 200, motionClock: clock);
+        ContentControl control = new();
+        root.VisualChildren.Add(control);
+        Border oldChild = new() { Width = 50, Height = 20, Presence = CreatePresence() };
+        control.Content = oldChild;
+        root.ProcessFrame();
+        Button failed = new() { Content = "next", Presence = CreatePresence() };
+        failed.Loaded += (_, _) => throw new InvalidOperationException("Loaded handler failed");
+
+        Assert.Throws<InvalidOperationException>(() => control.Content = failed);
+        root.ProcessFrame();
+
+        AssertPreviousOwnershipRestored(control, oldChild, failed);
+        Assert.Equal(PresenceState.Present, root.Motion.Presence.GetState(oldChild));
+        Assert.Equal(PresenceState.Detached, root.Motion.Presence.GetState(failed));
+        Assert.Empty(root.Motion.Presence.GetExitingVisualChildren(control));
+        Assert.True(oldChild.IsAttached);
+        Assert.False(failed.IsAttached);
+    }
+
+    private static PresenceOptions CreatePresence()
+    {
+        return PresenceOptions.FadeAndScale(
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)),
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)));
     }
 
     private static void AssertPreviousOwnershipRestored(ContentControl control, UIElement oldChild, UIElement failed)
