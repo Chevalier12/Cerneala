@@ -150,8 +150,15 @@ public class Application
 
         shutdownRequested = true;
         this.exitCode = exitCode;
-        runtime?.CloseAll();
-        CompleteExit();
+        try
+        {
+            // CloseAll closes every window even when one close throws, then rethrows the first failure.
+            runtime?.CloseAll();
+        }
+        finally
+        {
+            CompleteExit();
+        }
     }
 
     protected virtual void ConfigureServices(IServiceCollection services)
