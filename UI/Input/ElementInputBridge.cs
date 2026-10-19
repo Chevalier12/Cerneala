@@ -73,9 +73,7 @@ public sealed class ElementInputBridge
         }
 
         root.ActiveFocusManager = focusManager;
-        ElementInputRouteMap routeMap = root.InputCache.EnsureCurrent(root);
-        HitTestResult? hitTarget = hitTestService.HitTest(root, routeMap, inputFrame.Pointer.X, inputFrame.Pointer.Y);
-        HitTestResult? pointerTarget = pointerCaptureManager.OverrideTarget(hitTarget, routeMap, inputFrame.Pointer.X, inputFrame.Pointer.Y);
+        (ElementInputRouteMap routeMap, HitTestResult? hitTarget, HitTestResult? pointerTarget) = ResolvePointerTargets(root, inputFrame);
 
         DispatchPointer(root, inputFrame, frameTime, routeMap, hitTarget, pointerTarget);
         IReadOnlyList<KeyboardDispatchResult> keyboardResults = focusManager.DispatchKeyboardWithResults(inputFrame, routeMap);
@@ -98,9 +96,16 @@ public sealed class ElementInputBridge
             inputFrame.Pointer.X != lastPointerX ||
             inputFrame.Pointer.Y != lastPointerY;
 
+        // Handlers of an earlier pointer event of this frame can remove or move elements, so each later event is raised
+        // on the element under the pointer at that moment, as WPF raises each mouse message on the element under the
+        // mouse when it processes that message.
         if (moved || !hoverTracker.IsCurrentRouteValid(routeMap))
         {
-            hoverTracker.Update(pointerTarget, routeMap, inputFrame.Pointer.X, inputFrame.Pointer.Y);
+            if (hoverTracker.Update(pointerTarget, routeMap, inputFrame.Pointer.X, inputFrame.Pointer.Y))
+            {
+                (routeMap, hitTarget, pointerTarget) = ResolvePointerTargets(root, inputFrame);
+            }
+
             if (hasLastPointerPosition)
             {
                 RaiseMouseMovePair(routeMap, pointerTarget);
@@ -111,6 +116,7 @@ public sealed class ElementInputBridge
         // One MouseWheel pair per platform wheel event, as WPF raises one per WM_MOUSEWHEEL.
         foreach (int wheelDelta in inputFrame.Pointer.WheelDeltas)
         {
+            (routeMap, hitTarget, pointerTarget) = ResolvePointerTargets(root, inputFrame);
             RaiseWheelPair(routeMap, pointerTarget, wheelDelta);
         }
 
@@ -123,6 +129,7 @@ public sealed class ElementInputBridge
 
             if (inputFrame.Pointer.IsPressed(button))
             {
+                (routeMap, hitTarget, pointerTarget) = ResolvePointerTargets(root, inputFrame);
                 clickTracker.Press(ResolveClickTarget(hitTarget?.Element, routeMap));
                 pressedStateTracker.Press(pointerTarget?.Element, routeMap);
                 if (button == InputMouseButton.Left &&
@@ -173,6 +180,7 @@ public sealed class ElementInputBridge
 
             if (inputFrame.Pointer.IsReleased(button))
             {
+                (routeMap, hitTarget, pointerTarget) = ResolvePointerTargets(root, inputFrame);
                 if (button == InputMouseButton.Left)
                 {
                     repeatButtonController.Cancel(pressedStateTracker);
@@ -212,6 +220,16 @@ public sealed class ElementInputBridge
         hasLastPointerPosition = true;
         lastPointerX = inputFrame.Pointer.X;
         lastPointerY = inputFrame.Pointer.Y;
+    }
+
+    private (ElementInputRouteMap RouteMap, HitTestResult? HitTarget, HitTestResult? PointerTarget) ResolvePointerTargets(
+        UIRoot root,
+        InputFrame inputFrame)
+    {
+        ElementInputRouteMap routeMap = root.InputCache.EnsureCurrent(root);
+        HitTestResult? hitTarget = hitTestService.HitTest(root, routeMap, inputFrame.Pointer.X, inputFrame.Pointer.Y);
+        HitTestResult? pointerTarget = pointerCaptureManager.OverrideTarget(hitTarget, routeMap, inputFrame.Pointer.X, inputFrame.Pointer.Y);
+        return (routeMap, hitTarget, pointerTarget);
     }
 
     private void ExecuteButtonCommandOnClick(
