@@ -74,6 +74,36 @@ focusManager.DispatchKeyboard(
 
 Handlers are copied into the route map when `ElementInputRouteBuilder.Build` runs, so the example adds them before building it.
 
+The following example focuses an element that a `KeyDown` handler creates during dispatch. The frame presses Back and Tab. Back goes to `first`, whose handler adds `created` to the tree and focuses it. `created` is not in `frameMap`, so the Tab press is routed over the root's current route map and goes to `created`.
+
+```csharp
+using Cerneala.UI.Elements;
+using Cerneala.UI.Input;
+
+UIRoot root = new();
+UIElement first = new() { Focusable = true };
+root.VisualChildren.Add(first);
+
+FocusManager focusManager = new();
+List<string> receivers = [];
+first.Handlers.AddHandler(InputEvents.KeyDownEvent, (_, args) =>
+{
+    receivers.Add($"first {((KeyEventArgs)args).Key}");
+    UIElement created = new() { Focusable = true };
+    created.Handlers.AddHandler(InputEvents.KeyDownEvent, (_, e) => receivers.Add($"created {((KeyEventArgs)e).Key}"));
+    root.VisualChildren.Add(created);
+    focusManager.Focus(created, root.InputCache.EnsureCurrent(root));
+});
+
+ElementInputRouteMap frameMap = root.InputCache.EnsureCurrent(root);
+focusManager.Focus(first, frameMap);
+focusManager.DispatchKeyboard(
+    new InputFrame(PointerSnapshot.Empty, PointerSnapshot.Empty, KeyboardSnapshot.Empty, KeyboardSnapshot.FromDownKeys([InputKey.Back, InputKey.Tab]), []),
+    frameMap);
+
+// receivers is ["first Back", "created Tab"].
+```
+
 ## Remarks
 
 `FocusManager` stores the current keyboard-focused `UIElement` in `FocusedElement`. Calling `Focus` with the same element returns `false` and does not raise focus events. Calling `Focus(null, routeMap)` clears focus when an element is currently focused.
@@ -84,9 +114,11 @@ When focus changes, the manager updates `IsKeyboardFocused` on the old and new f
 
 Focus events are raised after state is updated. Preview keyboard focus events are raised before bubbling keyboard focus events. If a preview lost or got keyboard focus event is handled, the matching `LostKeyboardFocus` or `GotKeyboardFocus` event is suppressed. The non-keyboard `LostFocus` and `GotFocus` events are still raised when the old or new element has a route-map id.
 
-`DispatchKeyboard` sends the key events of an `InputFrame` to the focused element: for each key, the press, then one `PreviewKeyDown`/`KeyDown` pair with `IsRepeat == true` for each auto-repeat in `InputFrame.KeyboardFrame.GetRepeatCount`, then the release. It raises preview and bubbling key events through the routed event system, skips `InputKey.None` and `InputKey.Unknown`, and includes current Ctrl, Shift, and Alt modifier state in `KeyEventArgs`. If the focused element can no longer receive focus under the supplied route map when dispatch starts, dispatch clears focus and does not route the keyboard input.
+`DispatchKeyboard` sends the key events of an `InputFrame` to the focused element: for each key, the press, then one `PreviewKeyDown`/`KeyDown` pair with `IsRepeat == true` for each auto-repeat in `InputFrame.KeyboardFrame.GetRepeatCount`, then the release. It raises preview and bubbling key events through the routed event system, skips `InputKey.None` and `InputKey.Unknown`, and includes current Ctrl, Shift, and Alt modifier state in `KeyEventArgs`. If the focused element can no longer receive focus when dispatch starts, dispatch clears focus and does not route the keyboard input.
 
-Each key event goes to the element that has keyboard focus at the moment the event is raised, not to the element that had focus when dispatch started. A handler that moves focus during one key event therefore changes the target of the next key event of the same frame, including the next repeat of the same key. When a handler clears focus or makes the focused element unable to receive focus, for example by detaching it, the remaining key events of the frame are not raised.
+Each key event goes to the element that has keyboard focus at the moment the event is raised, not to the element that had focus when dispatch started. A handler that moves focus during one key event therefore changes the target of the next key event of the same frame, including the next repeat of the same key. When a handler clears focus or makes the focused element unable to receive focus, for example by detaching, disabling, or hiding it, the remaining key events of the frame are not raised.
+
+A key event is routed over the supplied route map when the focused element is in it. When it is not, for example because a handler of the same frame attached the element after the map was built and then focused it, the event is routed over the current route map of the element's root (`UIRoot.InputCache.EnsureCurrent`). The remaining key events of the frame, including a release, therefore reach that element. The same rule decides, when dispatch starts, whether the focused element can still receive focus.
 
 ## Constructors
 

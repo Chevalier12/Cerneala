@@ -234,6 +234,38 @@ public sealed class FocusManagerTests
     }
 
     [Fact]
+    public void LaterKeyOfSameFrameGoesToElementCreatedAndFocusedByEarlierKeyHandler()
+    {
+        UIRoot root = new();
+        UIElement first = new() { Focusable = true };
+        root.VisualChildren.Add(first);
+        FocusManager manager = new();
+        UIElement? created = null;
+        List<string> receivers = [];
+        first.Handlers.AddHandler(InputEvents.KeyDownEvent, (_, args) =>
+        {
+            KeyEventArgs key = (KeyEventArgs)args;
+            receivers.Add($"first {key.Key}");
+            if (key.Key == InputKey.Back)
+            {
+                created = new UIElement { Focusable = true };
+                created.Handlers.AddHandler(InputEvents.KeyDownEvent, (_, e) => receivers.Add($"created {((KeyEventArgs)e).Key}"));
+                root.VisualChildren.Add(created);
+                Assert.True(manager.Focus(created, root.InputCache.EnsureCurrent(root)));
+            }
+        });
+        ElementInputRouteMap frameMap = root.InputCache.EnsureCurrent(root);
+        manager.Focus(first, frameMap);
+
+        manager.DispatchKeyboard(
+            new InputFrame(PointerSnapshot.Empty, PointerSnapshot.Empty, KeyboardSnapshot.Empty, KeyboardSnapshot.FromDownKeys([InputKey.Back, InputKey.Tab]), []),
+            frameMap);
+
+        Assert.Equal(["first Back", "created Tab"], receivers);
+        Assert.Same(created, manager.FocusedElement);
+    }
+
+    [Fact]
     public void KeyRepeatForKeyThatIsNeitherDownNorReleasedRaisesNothing()
     {
         UIRoot root = new();
