@@ -4,21 +4,45 @@ namespace Cerneala.UI.Input;
 
 public sealed class ClickTracker
 {
-    private UIElement? pressedTarget;
+    // One press per mouse button, as each WPF mouse button has its own down and up messages: a right click while the
+    // left button is held does not complete or clear the left press (#593).
+    private readonly UIElement?[] pressedTargets = new UIElement?[(int)InputMouseButton.XButton2 + 1];
+    private InputMouseButton lastPressedButton;
+    private InputMouseButton lastClickedButton;
     private UIElement? lastClickedTarget;
     private int clickCount;
 
-    internal UIElement? PressedTarget => pressedTarget;
-
     public void Press(UIElement? target)
     {
-        pressedTarget = target;
+        Press(InputMouseButton.Left, target);
     }
 
     public int Release(UIElement? target)
     {
+        return Release(InputMouseButton.Left, target);
+    }
+
+    internal UIElement? PressedTarget(InputMouseButton button) => pressedTargets[(int)button];
+
+    // As WPF's MouseDevice starts the click count at 1 when the pressed button differs from the previously pressed
+    // button, a press of another button ends the consecutive-click sequence.
+    internal void Press(InputMouseButton button, UIElement? target)
+    {
+        if (button != lastPressedButton)
+        {
+            lastClickedTarget = null;
+            clickCount = 0;
+        }
+
+        lastPressedButton = button;
+        pressedTargets[(int)button] = target;
+    }
+
+    internal int Release(InputMouseButton button, UIElement? target)
+    {
+        UIElement? pressedTarget = pressedTargets[(int)button];
         bool isClick = pressedTarget is not null && ReferenceEquals(pressedTarget, target);
-        pressedTarget = null;
+        pressedTargets[(int)button] = null;
         if (!isClick)
         {
             lastClickedTarget = null;
@@ -26,14 +50,15 @@ public sealed class ClickTracker
             return 0;
         }
 
-        clickCount = ReferenceEquals(lastClickedTarget, target) ? clickCount + 1 : 1;
+        clickCount = ReferenceEquals(lastClickedTarget, target) && lastClickedButton == button ? clickCount + 1 : 1;
         lastClickedTarget = target;
+        lastClickedButton = button;
         return clickCount;
     }
 
     public void Cancel()
     {
-        pressedTarget = null;
+        Array.Clear(pressedTargets);
         lastClickedTarget = null;
         clickCount = 0;
     }

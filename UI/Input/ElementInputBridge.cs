@@ -17,7 +17,7 @@ public sealed class ElementInputBridge
     private readonly RepeatButtonController repeatButtonController;
     private readonly TextInputBridge textInputBridge;
     private bool hasLastPointerPosition;
-    private object? pressOriginalSource;
+    private readonly object?[] pressOriginalSources = new object?[(int)InputMouseButton.XButton2 + 1];
     private float lastPointerX;
     private float lastPointerY;
     private bool isDispatching;
@@ -170,14 +170,19 @@ public sealed class ElementInputBridge
             if (inputFrame.Pointer.IsPressed(button))
             {
                 (routeMap, hitTarget, pointerTarget) = ResolvePointerTargets(root, inputFrame);
-                clickTracker.Press(ResolveClickTarget(hitTarget?.Element, routeMap));
-                pressOriginalSource = pointerTarget?.ElementId;
-                pressedStateTracker.Press(pointerTarget?.Element, routeMap);
-                if (button == InputMouseButton.Left &&
-                    pointerTarget is not null &&
-                    ResolveFocusTarget(pointerTarget.Element, routeMap) is UIElement focusTarget)
+                // Each button keeps its own press, and only the left button presses a button visually, as a WPF
+                // ButtonBase sets IsPressed on MouseLeftButtonDown only: a right click while the left button is held
+                // leaves the left press, its IsPressed and its click intact (#593).
+                clickTracker.Press(button, ResolveClickTarget(hitTarget?.Element, routeMap));
+                pressOriginalSources[(int)button] = pointerTarget?.ElementId;
+                if (button == InputMouseButton.Left)
                 {
-                    focusManager.Focus(focusTarget, routeMap);
+                    pressedStateTracker.Press(pointerTarget?.Element, routeMap);
+                    if (pointerTarget is not null &&
+                        ResolveFocusTarget(pointerTarget.Element, routeMap) is UIElement focusTarget)
+                    {
+                        focusManager.Focus(focusTarget, routeMap);
+                    }
                 }
 
                 bool handled = RaiseMousePair(
@@ -230,9 +235,10 @@ public sealed class ElementInputBridge
                 }
 
                 int clickCount = clickTracker.Release(
-                    ResolveReleaseClickTarget(hitTarget?.Element, clickTracker.PressedTarget, routeMap));
-                object? releasedPressSource = pressOriginalSource;
-                pressOriginalSource = null;
+                    button,
+                    ResolveReleaseClickTarget(hitTarget?.Element, clickTracker.PressedTarget(button), routeMap));
+                object? releasedPressSource = pressOriginalSources[(int)button];
+                pressOriginalSources[(int)button] = null;
                 bool handled = RaiseMousePair(routeMap, pointerTarget, InputEvents.PreviewMouseUpEvent, InputEvents.MouseUpEvent, button, clickCount, out bool previewHandled, releasedPressSource);
                 handled |= RaiseMouseButtonSpecificPair(routeMap, pointerTarget, button, isDown: false, clickCount, previewHandled, handled, out _, releasedPressSource);
                 if (button == InputMouseButton.Left && clickCount == 2)
@@ -245,7 +251,10 @@ public sealed class ElementInputBridge
                     ExecuteButtonCommandOnClick(routeMap, pointerTarget, hitTarget, button, clickCount);
                 }
 
-                pressedStateTracker.Release();
+                if (button == InputMouseButton.Left)
+                {
+                    pressedStateTracker.Release();
+                }
             }
         }
 
