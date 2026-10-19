@@ -2,6 +2,7 @@ using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Input;
+using Cerneala.UI.Rendering;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Controls.Templates;
 
@@ -155,6 +156,16 @@ public class TabItem : ContentControl, ISelectableItemContainer
         UIElement? header = hostedHeader ?? headerPresenter;
         header?.Arrange(new ArrangeContext(Deflate(context.FinalRect, Insets), context.Rounding));
         return context.FinalRect;
+    }
+
+    // As the outer border of the WPF TabItem template, a tab without a template fills its bounds with Background;
+    // a ComponentTemplate draws its own chrome.
+    protected override void OnRender(RenderContext context)
+    {
+        if (TemplateChild is null)
+        {
+            Border.RenderBackground(this, context);
+        }
     }
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
