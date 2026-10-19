@@ -3,6 +3,7 @@ using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Items;
 using Cerneala.UI.Controls.Templates;
+using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
@@ -653,6 +654,37 @@ public sealed class TabControlTests
 
         Assert.True(HasVisualAncestor(loose, tabControl), "loose is not under the TabControl while tab 1 is selected");
         Assert.Same(holder, parented.VisualParent);
+    }
+
+    [Fact]
+    public void ClearValueRejectsLowerSourceElementContentThatGotAnotherParent()
+    {
+        UIRoot root = new(300, 200);
+        FixedElement revealed = new();
+        TabItem first = new() { Header = "H1", Content = new FixedElement() };
+        TabItem second = new() { Header = "H2", Content = "text" };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        tabControl.SelectedIndex = 0;
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+
+        second.SetValue(ContentControl.ContentProperty, (object?)revealed, UiPropertyValueSource.AspectBase);
+        Border holder = new();
+        holder.Child = revealed;
+        root.VisualChildren.Add(holder);
+
+        InvalidOperationException rejected = Assert.Throws<InvalidOperationException>(
+            () => second.ClearValue(ContentControl.ContentProperty));
+        Assert.Equal("Element must be removed from its current parent before reparenting.", rejected.Message);
+        Assert.Equal("text", second.Content);
+        Assert.Equal(UiPropertyValueSource.Local, second.GetValueSource(ContentControl.ContentProperty));
+        Assert.Same(holder, revealed.LogicalParent);
+
+        tabControl.SelectedIndex = 1;
+        root.ProcessFrame();
+
+        Assert.Same(holder, revealed.VisualParent);
     }
 
     [Fact]

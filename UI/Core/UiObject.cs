@@ -125,6 +125,7 @@ public class UiObject
         T oldValue = GetValue(property);
         UiPropertyValueSource oldSource = GetValueSource(property);
         object? oldSourceValue = GetSourceValue(property, source);
+        ValidateValueRevealedByClear(property, oldValue, source);
         propertyStore.ClearValue(property, source);
         propertyValueVersion++;
         T newValue = GetValue(property);
@@ -221,6 +222,7 @@ public class UiObject
         object? oldValue = GetValue(property);
         UiPropertyValueSource oldSource = GetValueSource(property);
         object? oldSourceValue = GetSourceValue(property, source);
+        ValidateValueRevealedByClear(property, oldValue, source);
         propertyStore.ClearValue(property, source);
         propertyValueVersion++;
         object? newValue = GetValue(property);
@@ -235,6 +237,18 @@ public class UiObject
         }
 
         return oldValue;
+    }
+
+    // A clear makes a lower source's value effective. That value was valid when it was written, but the owner's state
+    // can have changed since, for example a Content element that got another parent. So the clear checks it, before the
+    // store changes, as a write checks the value it stores.
+    private void ValidateValueRevealedByClear(UiProperty property, object? oldValue, UiPropertyValueSource source)
+    {
+        object? revealedValue = propertyStore.GetValueAfterClear(property, source);
+        if (!property.AreEqualUntyped(oldValue, revealedValue))
+        {
+            ValidatePropertyMutation(property, revealedValue);
+        }
     }
 
     protected virtual void OnPropertyChanged(UiPropertyChangedEventArgs args)

@@ -89,7 +89,15 @@ public sealed class UiPropertyStore
         return frameworkDefaults.ContainsKey(property);
     }
 
-    private (object? Value, UiPropertyValueSource Source) GetEffectiveValue(UiProperty property)
+    // The effective value that ClearValue(property, source) would leave, without changing the store.
+    internal object? GetValueAfterClear(UiProperty property, UiPropertyValueSource source)
+    {
+        ValidateSource(source);
+        return GetEffectiveValue(property, source).Value;
+    }
+
+    private (object? Value, UiPropertyValueSource Source) GetEffectiveValue(
+        UiProperty property, UiPropertyValueSource? ignoredSource = null)
     {
         ArgumentNullException.ThrowIfNull(property);
 
@@ -97,7 +105,7 @@ public sealed class UiPropertyStore
         {
             foreach (UiPropertyValueSource source in EffectiveOrder)
             {
-                if (propertyValues.TryGetValue(source, out object? value))
+                if (source != ignoredSource && propertyValues.TryGetValue(source, out object? value))
                 {
                     return (value, source);
                 }

@@ -83,7 +83,7 @@ Derived objects can enforce mutation affinity before their property store is rea
 
 Effective values are resolved in this order, from highest to lowest priority: `Local`, `Animation`, `MarkupConditional`, `MarkupBase`, `TemplateOwnerBinding`, `AspectVisualState`, `AspectBase`, `TemplateBinding`, and `Inherited`. When no stored value exists for a property, `GetValueSource` returns `Default` and `GetValue` returns the framework default that Cerneala installed internally for that object, if any, or otherwise the property's metadata default value.
 
-`SetValue` coerces the supplied value through the property's metadata, validates the coerced value, stores it for the requested source, and returns the previous effective value. `ClearValue` removes the stored value for the requested source and also returns the previous effective value. `Default` is not a storable source; storing or clearing that source is rejected by the underlying store.
+`SetValue` coerces the supplied value through the property's metadata, validates the coerced value, stores it for the requested source, and returns the previous effective value. `ClearValue` removes the stored value for the requested source and also returns the previous effective value. Some Cerneala types also check a value against their own state before it is stored, for example `ContentControl` rejects a `Content` element that already has another parent. When a clear makes another value effective, that value is checked the same way before the store changes; if the check throws, the cleared value stays stored. `Default` is not a storable source; storing or clearing that source is rejected by the underlying store.
 
 Public `SetValue` and `ClearValue` overloads that take `UiProperty<T>` reject read-only properties with `InvalidOperationException`. Read-only properties can be changed only through a matching `UiPropertyKey<T>` overload.
 
@@ -139,6 +139,7 @@ The new value is stored before `OnPropertyChanged` runs. When `OnPropertyChanged
 | `GetValue`, `GetValueSource`, `GetSourceValue`, `SetValue`, `ClearValue` | `ArgumentNullException` | The supplied property or key is `null`. |
 | `SetValue`, `ClearValue` | `InvalidOperationException` | The overload takes `UiProperty<T>` and the property is read-only. |
 | `SetValue` | `ArgumentException` | The value is not assignable to the property's value type, or the coerced value fails validation. |
+| `SetValue`, `ClearValue` | The owner's check exception, for example `InvalidOperationException` | The owner type rejects the value that would be stored or, for `ClearValue`, the value that would become effective. Nothing is stored or cleared. |
 | `SetValue`, `ClearValue`, `GetSourceValue` | `ArgumentOutOfRangeException` | The supplied source is not a defined concrete source, or is `UiPropertyValueSource.Default`. |
 | `SetValue`, `ClearValue` | Any exception | `OnPropertyChanged` or a `PropertyChanged` handler threw. The new value stays stored, and the mutation report and invalidation already ran. |
 
