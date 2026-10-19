@@ -314,6 +314,119 @@ public sealed class ButtonTests
         Assert.Equal(0, commands);
     }
 
+    // A press on a selector item belongs to the item, as a WPF ListBoxItem handles MouseLeftButtonDown before the
+    // enclosing ButtonBase sees it (#589): the button is not pressed while the mouse is held.
+    [Fact]
+    public void HoldingMouseOnListBoxItemInsideButtonLeavesButtonUnpressed()
+    {
+        ListBoxItem two = new() { Content = "Two" };
+        ListBox list = new() { Width = 120, Height = 80 };
+        list.Items.Add(new ListBoxItem { Content = "One" });
+        list.Items.Add(two);
+        Button button = new() { Content = list, Width = 200, Height = 100 };
+        UIRoot root = CreateWindowRoot(button);
+        LayoutRect bounds = two.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        root.ProcessFrame();
+        bool pressedWhileHeld = button.IsPressed;
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.False(pressedWhileHeld);
+        Assert.False(button.IsPressed);
+        Assert.Equal(1, list.SelectedIndex);
+    }
+
+    [Fact]
+    public void HoldingMouseOnButtonOutsideNestedListBoxPressesButtonUntilRelease()
+    {
+        ListBox list = new() { Width = 120, Height = 80 };
+        list.Items.Add(new ListBoxItem { Content = "One" });
+        Button button = new() { Content = list, Width = 200, Height = 100 };
+        UIRoot root = CreateWindowRoot(button);
+        LayoutRect bounds = button.ArrangedBounds;
+        float x = bounds.X + 5;
+        float y = bounds.Y + 5;
+        Assert.Same(button, new HitTestService().HitTest(root, x, y)?.Element);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        root.ProcessFrame();
+        bool pressedWhileHeld = button.IsPressed;
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.True(pressedWhileHeld);
+        Assert.False(button.IsPressed);
+    }
+
+    // The enclosing button never took the press, so a release on the button's own area after a press on an item does
+    // not click it, as a WPF ButtonBase clicks only for a release while IsPressed is true.
+    [Fact]
+    public void ReleaseOnButtonAfterPressOnListBoxItemInsideButtonDoesNotClickTheButton()
+    {
+        ListBoxItem two = new() { Content = "Two" };
+        ListBox list = new() { Width = 120, Height = 80 };
+        list.Items.Add(new ListBoxItem { Content = "One" });
+        list.Items.Add(two);
+        Button button = new() { Content = list, Width = 200, Height = 100 };
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+        UIRoot root = CreateWindowRoot(button);
+        LayoutRect itemBounds = two.ArrangedBounds;
+        float itemX = itemBounds.X + itemBounds.Width / 2;
+        float itemY = itemBounds.Y + itemBounds.Height / 2;
+        LayoutRect buttonBounds = button.ArrangedBounds;
+        float buttonX = buttonBounds.X + 5;
+        float buttonY = buttonBounds.Y + 5;
+        Assert.Same(button, new HitTestService().HitTest(root, buttonX, buttonY)?.Element);
+        PointerSnapshot heldOnItem = PointerSnapshot.Empty.WithPosition(itemX, itemY).WithButton(InputMouseButton.Left, true);
+        PointerSnapshot heldOnButton = PointerSnapshot.Empty.WithPosition(buttonX, buttonY).WithButton(InputMouseButton.Left, true);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(itemX, itemY, currentDown: true));
+        root.ProcessFrame();
+        bridge.Dispatch(root, new InputFrame(heldOnItem, heldOnButton, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []));
+        root.ProcessFrame();
+        bool pressedWhileHeldOnButton = button.IsPressed;
+        bridge.Dispatch(root, PointerFrame(buttonX, buttonY, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.False(pressedWhileHeldOnButton);
+        Assert.Equal(0, clicks);
+    }
+
+    [Fact]
+    public void HoldingMouseOnListBoxItemInsideRepeatButtonNeitherPressesNorRepeatsIt()
+    {
+        ListBoxItem two = new() { Content = "Two" };
+        ListBox list = new() { Width = 120, Height = 80 };
+        list.Items.Add(new ListBoxItem { Content = "One" });
+        list.Items.Add(two);
+        Cerneala.UI.Controls.Primitives.RepeatButton button = new() { Content = list, Width = 200, Height = 100 };
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+        UIRoot root = CreateWindowRoot(button);
+        LayoutRect bounds = two.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true, currentDown: true), TimeSpan.FromSeconds(2));
+        bool pressedWhileHeld = button.IsPressed;
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.False(pressedWhileHeld);
+        Assert.Equal(0, clicks);
+        Assert.Equal(1, list.SelectedIndex);
+    }
+
     [Fact]
     public void ClickOnButtonOutsideNestedListBoxRaisesButtonClickOnce()
     {

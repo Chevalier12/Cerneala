@@ -203,7 +203,7 @@ public class ComboBox : Selector
     protected override Type DefaultContainerType => typeof(ComboBoxItem);
 
     // The non-editable field takes its press, as the WPF template's ToggleButton does (see OnMouseUp).
-    internal override bool OwnsPointerClick => !IsEditable && IsEnabled;
+    internal override bool OwnsPointerClick => base.OwnsPointerClick || (!IsEditable && IsEnabled);
 
     internal override int ViewItemCount => filteredSourceIndices?.Count ?? base.ViewItemCount;
 
@@ -252,11 +252,14 @@ public class ComboBox : Selector
             presenter = new ContentPresenter();
         }
 
-        presenter.Content = ItemTemplate is null ? GetItemDisplayText(item) : item;
-        presenter.ContentTemplate = ItemTemplate;
-        presenter.ContentTemplateKey = ItemTemplateKey;
-        presenter.LocalTemplateRegistry = ContentTemplateRegistry;
-        presenter.ContentIndex = index;
+        // All five values go in before the presenter rebuilds its child on its next measure, so the row presents
+        // its item once, with its index (#574).
+        presenter.PrepareItemPresentation(
+            ItemTemplate is null ? GetItemDisplayText(item) : item,
+            ItemTemplate,
+            ItemTemplateKey,
+            ContentTemplateRegistry,
+            index);
         presenter.Foreground = Foreground;
         presenter.FontFamily = FontFamily;
         presenter.FontSize = FontSize;
@@ -1047,12 +1050,21 @@ public class ComboBox : Selector
         }
 
         string textPath = TextSearch.GetTextPath(this);
-        if (textPath.Length > 0)
-        {
-            return DisplayMemberPathAccessor.Resolve(item, textPath)?.ToString() ?? string.Empty;
-        }
+        return GetPlainText(textPath.Length > 0
+            ? DisplayMemberPathAccessor.Resolve(item, textPath)
+            : GetItemDisplayValue(item));
+    }
 
-        return GetItemDisplayText(item);
+    // As WPF's TextSearch converts a value to plain text: a content element, such as a ComboBoxItem, gives the text
+    // of its Content, a TextBlock gives its Text, and any other value gives its ToString().
+    private static string GetPlainText(object? value)
+    {
+        return value switch
+        {
+            ContentControl contentControl => GetPlainText(contentControl.Content),
+            TextBlock textBlock => textBlock.Text,
+            _ => value?.ToString() ?? string.Empty
+        };
     }
 
     private void ResetTextSearchPrefix()
