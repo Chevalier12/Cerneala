@@ -4,6 +4,7 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using StackPanel = Cerneala.UI.Layout.Panels.StackPanel;
+using VirtualizingStackPanel = Cerneala.UI.Layout.Panels.VirtualizingStackPanel;
 
 namespace Cerneala.Tests.Controls;
 
@@ -99,6 +100,29 @@ public sealed class ItemsPresenterDirtyStateRegressionTests
 
         Assert.Equal(measureCount + 1, outer.MeasureCount);
         Assert.Empty(DirtyElements(root));
+    }
+
+    // Issue #487: the scroll presenter invalidates the ItemsControl's items for the new viewport during its own
+    // measure and then measures the ItemsControl, so that measure completes the ItemsControl's queued measure.
+    [Theory]
+    [InlineData(300f)]
+    [InlineData(120f)]
+    public void VirtualizingItemsControlInAScrollViewerSettlesInTheFrameThatMeasuresANewViewportHeight(float height)
+    {
+        ItemsControl items = new() { ItemsPanel = new VirtualizingStackPanel() };
+        items.SetItems(Enumerable.Range(0, 1000).Select(_ => (object)new Border { Height = 20 }).ToArray());
+        ScrollViewer viewer = new() { Height = 100, Content = items };
+        UIRoot root = new(300, 400);
+        root.VisualChildren.Add(viewer);
+        Settle(root);
+        viewer.ScrollInfo.SetVerticalOffset(500);
+        Settle(root);
+
+        viewer.Height = height;
+        root.ProcessFrame();
+
+        Assert.Empty(DirtyElements(root));
+        Assert.False(root.Scheduler.HasWork);
     }
 
     private static ItemsControl CreateSizedItemsControl()

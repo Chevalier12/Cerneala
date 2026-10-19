@@ -165,10 +165,18 @@ The code sets `first.Visibility = Visibility.Collapsed;`.
   arranges it with its last slot (`LayoutManager.GetFinalRect`), as WPF's
   `InvalidateArrange` puts an element in the layout manager's arrange queue.
   The queued arrange goes through `LayoutManager.Arrange`, so it still reuses
-  the cache when the desired sizes it read have come back. When the measure
-  runs during the arrange phase, the entry is not in that phase's snapshot and
-  the next frame processes it. A measure that gives the same desired size
-  queues nothing.
+  the cache when the desired sizes it read have come back. The scheduler clears
+  the element's `Arrange` flag before it processes a `Required` entry, so a
+  flag that only a descendant's measure ancestor propagation set does not make
+  `LayoutManager.Arrange` skip that cache: every request for the element's own
+  arrange also invalidates its arrange cache. For example, the layer of an open
+  `Overlay` whose `ScrollViewer` (500 px of content) gets the 80 px below its
+  target reuses its arrange in the second frame; an `ArrangeCore` there would
+  measure the `ScrollViewer` unbounded and clamped again, and the scroll bar it
+  hides and shows would queue measure work for a third frame (#514). When the
+  measure runs during the arrange phase, the entry is not in that phase's
+  snapshot and the next frame processes it. A measure that gives the same
+  desired size queues nothing.
 - An attached element's `Invalidate` does not change its `LayoutVersion`. When
   the request queues `Arrange` for its target, `DirtyPropagation.Propagate`
   invalidates the target's arrange cache and keeps its slot. With `Subtree`, it
