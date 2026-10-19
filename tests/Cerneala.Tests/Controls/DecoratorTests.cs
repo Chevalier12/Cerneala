@@ -184,6 +184,43 @@ public sealed class DecoratorTests
         Assert.True(child.IsAttached);
     }
 
+    // A rejected child never became the child, so it leaves at once instead of exiting, and the old child stays.
+    [Fact]
+    public void ChildAssignmentWhoseVisualChangedHandlerThrowsDetachesTheRejectedChildWithPresenceAtOnce()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(200, 200, motionClock: clock);
+        Border border = new();
+        root.VisualChildren.Add(border);
+        Border oldChild = new() { Width = 50, Height = 20, Presence = CreatePresence() };
+        Border newChild = new() { Width = 50, Height = 20, Presence = CreatePresence() };
+        border.Child = oldChild;
+        root.ProcessFrame();
+        bool throwOnce = true;
+        border.VisualChildren.Changed += (_, change) =>
+        {
+            if (throwOnce && change.Kind == ElementTreeChangeKind.Added && ReferenceEquals(change.Child, newChild))
+            {
+                throwOnce = false;
+                throw new InvalidOperationException("handler failed");
+            }
+        };
+
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => border.Child = newChild);
+        root.ProcessFrame();
+
+        Assert.Equal("handler failed", exception.Message);
+        Assert.Equal(PresenceState.Detached, root.Motion.Presence.GetState(newChild));
+        Assert.False(newChild.IsAttached);
+        Assert.Null(newChild.LogicalParent);
+        Assert.Null(newChild.VisualParent);
+        Assert.Empty(root.Motion.Presence.GetExitingVisualChildren(border));
+        Assert.Same(oldChild, border.Child);
+        Assert.Equal([oldChild], border.VisualChildren);
+        Assert.Equal([oldChild], border.LogicalChildren);
+        Assert.Equal(PresenceState.Present, root.Motion.Presence.GetState(oldChild));
+    }
+
     // Issue #542: conditional Border content goes through Decorator.Child, so its removal must not cancel the exit.
     [Fact]
     public void ConditionalBorderChildWithPresenceExitsWhenItsConditionTurnsFalseAndReturnsWhenItTurnsTrue()
