@@ -32,8 +32,9 @@ public sealed class PanelChildrenTests
         }
         else
         {
-            // A grid without definitions has one star row and column that take the finite available size.
-            Assert.Equal(new LayoutSize(200, 200), panel.DesiredSize);
+            // Issue #496: as in WPF, a grid without definitions desires its content size, and its one star row and
+            // column share the final arranged size, so the child is centered in the 200 x 200 arranged grid.
+            Assert.Equal(new LayoutSize(50, 20), panel.DesiredSize);
             Assert.Equal(new LayoutRect(75, 90, 50, 20), child.ArrangedBounds);
         }
     }

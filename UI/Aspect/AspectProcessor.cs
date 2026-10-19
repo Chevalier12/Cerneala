@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Core;
@@ -117,22 +118,30 @@ public sealed class AspectProcessor
         SynchronizeBehaviors(element, GetCatalog(element));
     }
 
+    // A throwing behavior lifetime does not skip the rest of the cleanup: the aspect-base values and the caches
+    // are still cleared, then the first failure propagates.
     public void Clear(UIElement element)
     {
         root.Relay.VerifyAccess();
+        ExceptionDispatchInfo? failure = null;
         if (behaviorStates.TryGetValue(element, out BehaviorState? behaviorState))
         {
-            behaviorState.Dispose();
             behaviorStates.Remove(element);
+            try { behaviorState.Dispose(); }
+            catch (Exception exception) { failure = ExceptionDispatchInfo.Capture(exception); }
         }
 
-        ApplyEngine(() => engine.Clear(element));
+        try { ApplyEngine(() => engine.Clear(element)); }
+        catch (Exception exception) { failure ??= ExceptionDispatchInfo.Capture(exception); }
+
         catalogStates.Remove(element);
         environmentStates.Remove(element);
         if (element is Control control)
         {
             templateOwnerStates.Remove(control);
         }
+
+        failure?.Throw();
     }
 
     internal void OnPropertyMutated(UiPropertyMutation mutation)
@@ -510,25 +519,35 @@ public sealed class AspectProcessor
             }
             catch
             {
-                DisposeReverse(attached);
+                // The attach failure came first; a rolled-back lifetime that also throws does not replace it.
+                ExceptionDispatchInfo? rollbackFailure = null;
+                DisposeReverse(attached, ref rollbackFailure);
                 throw;
             }
 
-            for (int index = applied.Count - 1; index >= 0; index--)
+            // A lifetime is finished once its disposal starts, also when Dispose throws: the new state is stored
+            // first, every removed lifetime is disposed once, then the first failure propagates.
+            List<AppliedBehavior> previous = applied;
+            applied = next;
+            ExceptionDispatchInfo? failure = null;
+            for (int index = previous.Count - 1; index >= 0; index--)
             {
                 if (!reused[index])
                 {
-                    applied[index].Lifetime?.Dispose();
+                    DisposeLifetime(previous[index], ref failure);
                 }
             }
 
-            applied = next;
+            failure?.Throw();
         }
 
         public void Dispose()
         {
-            DisposeReverse(applied);
+            List<AppliedBehavior> previous = applied;
             applied = [];
+            ExceptionDispatchInfo? failure = null;
+            DisposeReverse(previous, ref failure);
+            failure?.Throw();
         }
 
         private int FindReusable(AspectBehavior behavior, IReadOnlyList<bool> reused)
@@ -544,12 +563,18 @@ public sealed class AspectProcessor
             return -1;
         }
 
-        private static void DisposeReverse(IReadOnlyList<AppliedBehavior> values)
+        private static void DisposeReverse(IReadOnlyList<AppliedBehavior> values, ref ExceptionDispatchInfo? failure)
         {
             for (int index = values.Count - 1; index >= 0; index--)
             {
-                values[index].Lifetime?.Dispose();
+                DisposeLifetime(values[index], ref failure);
             }
+        }
+
+        private static void DisposeLifetime(AppliedBehavior value, ref ExceptionDispatchInfo? failure)
+        {
+            try { value.Lifetime?.Dispose(); }
+            catch (Exception exception) { failure ??= ExceptionDispatchInfo.Capture(exception); }
         }
 
         private readonly record struct AppliedBehavior(AspectBehavior Behavior, IDisposable? Lifetime);

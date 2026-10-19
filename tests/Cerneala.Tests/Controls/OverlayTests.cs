@@ -304,6 +304,56 @@ public sealed class OverlayTests
             recentSubmenu);
     }
 
+    // A submenu taller than its side of the viewport scrolls vertically; as in WPF, its width makes room for the
+    // vertical scrollbar instead of taking the scrollbar column out of the items (#510).
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void SubmenuTallerThanTheViewportWidensForItsVerticalScrollBar(bool nested)
+    {
+        UIRoot root = new(1100, 820);
+        MenuItem file = new() { Header = "File", Width = 140, Height = 34 };
+        MenuItem owner = file;
+        if (nested)
+        {
+            owner = new MenuItem { Header = "Recent", Width = 140, Height = 34 };
+            file.Items.Add(new MenuItem { Header = "Open", Width = 140, Height = 34 });
+            file.Items.Add(owner);
+        }
+
+        MenuItem first = null!;
+        for (int i = 0; i < 30; i++)
+        {
+            MenuItem item = new() { Header = $"item{i}", Width = 140, Height = 34 };
+            first ??= item;
+            owner.Items.Add(item);
+        }
+
+        MenuBar menuBar = new() { HorizontalAlignment = HorizontalAlignment.Left };
+        menuBar.Items.Add(file);
+        root.VisualChildren.Add(menuBar);
+        root.ProcessFrame();
+        file.IsSubmenuOpen = true;
+        root.ProcessFrame();
+        if (nested)
+        {
+            owner.IsSubmenuOpen = true;
+            root.ProcessFrame();
+        }
+
+        root.ProcessFrame();
+
+        ScrollViewer viewer = FindAncestor<ScrollViewer>(first);
+        ScrollContentPresenter presenter = FindAncestor<ScrollContentPresenter>(first);
+        LayoutRect submenu = owner.SubmenuOverlay!.ProjectedPresenter.ArrangedBounds;
+        Assert.True(viewer.IsVerticalScrollBarVisible);
+        Assert.Equal(140, first.ArrangedBounds.Width);
+        Assert.True(
+            presenter.ViewportWidth >= presenter.ExtentWidth,
+            $"ViewportWidth={presenter.ViewportWidth} ExtentWidth={presenter.ExtentWidth}");
+        Assert.Equal(142 + viewer.VerticalScrollBar.ArrangedBounds.Width, submenu.Width);
+    }
+
     [Fact]
     public void MultipleOverlaysKeepLastOpenedContentTopmost()
     {
@@ -676,6 +726,20 @@ public sealed class OverlayTests
     {
         bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
         bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+    }
+
+    private static T FindAncestor<T>(UIElement element)
+        where T : UIElement
+    {
+        for (UIElement? current = element.VisualParent; current is not null; current = current.VisualParent)
+        {
+            if (current is T match)
+            {
+                return match;
+            }
+        }
+
+        throw new InvalidOperationException($"No {typeof(T).Name} ancestor.");
     }
 
     // The root holds the content element and, only while projected content remains, the overlay layer last.

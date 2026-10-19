@@ -23,7 +23,7 @@ public sealed class GridTests
 
         LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(100, 50)));
 
-        Assert.Equal(new LayoutSize(100, 22), desired);
+        Assert.Equal(new LayoutSize(50, 22), desired);
         Assert.Equal(new LayoutSize(30, 12), autoChild.DesiredSize);
     }
 
@@ -203,8 +203,89 @@ public sealed class GridTests
         grid.Measure(new MeasureContext(new LayoutSize(200, 40)));
         grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 200, 40)));
 
+        // The 30-pixel-high child was measured with its 20-pixel share and asks its row for at most 20 (issue #496).
+        Assert.Equal(30, grid.DesiredSize.Height);
         Assert.Equal(new LayoutRect(0, 0, 200, 20), small.ArrangedBounds);
         Assert.Equal(new LayoutRect(0, 20, 200, 20), large.ArrangedBounds);
+    }
+
+    // Issue #496: as in WPF, a star definition on a finite axis desires the size of its content, not its share.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void StarDefinitionsOnAFiniteAxisDesireTheirContentSize(bool explicitDefinitions)
+    {
+        Grid grid = new();
+        if (explicitDefinitions)
+        {
+            grid.ColumnDefinitions.Add(new ColumnDefinition());
+            grid.RowDefinitions.Add(new RowDefinition());
+        }
+
+        grid.VisualChildren.Add(new UIElement { Width = 50, Height = 20 });
+
+        LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(200, 200)));
+
+        Assert.Equal(new LayoutSize(50, 20), desired);
+    }
+
+    [Fact]
+    public void LeftTopAlignedGridWithoutDefinitionsShrinksToItsContent()
+    {
+        UIRoot root = new(200, 200);
+        Grid grid = new() { HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top };
+        UIElement child = new() { Width = 50, Height = 20 };
+        grid.VisualChildren.Add(child);
+        root.VisualChildren.Add(grid);
+
+        root.ProcessFrame();
+
+        Assert.Equal(
+            (new LayoutRect(0, 0, 50, 20), new LayoutRect(0, 0, 50, 20)),
+            (grid.ArrangedBounds, child.ArrangedBounds));
+    }
+
+    [Fact]
+    public void StretchedGridSharesFiniteStarColumnsByWeight()
+    {
+        Grid grid = new();
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(2)));
+        UIElement first = new() { Width = 50, Height = 20 };
+        UIElement second = new() { Width = 50, Height = 20 };
+        Grid.SetColumn(second, 1);
+        grid.VisualChildren.Add(first);
+        grid.VisualChildren.Add(second);
+
+        grid.Measure(new MeasureContext(new LayoutSize(300, 100)));
+        grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 300, 100)));
+
+        Assert.Equal(
+            (new LayoutSize(100, 20), new LayoutRect(25, 40, 50, 20), new LayoutRect(175, 40, 50, 20)),
+            (grid.DesiredSize, first.ArrangedBounds, second.ArrangedBounds));
+    }
+
+    // As in WPF, the content size a finite star definition desires stays its minimum in arrange: a Left-aligned grid
+    // with 1* and 2* columns that hold 50-pixel children desires 100 pixels and gives each column 50 pixels.
+    [Fact]
+    public void FiniteStarColumnsKeepTheirContentSizeAsMinimumWhenArrangedAtTheDesiredSize()
+    {
+        UIRoot root = new(300, 100);
+        Grid grid = new() { HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top };
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(1)));
+        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Stars(2)));
+        UIElement first = new() { Width = 50, Height = 20 };
+        UIElement second = new() { Width = 50, Height = 20 };
+        Grid.SetColumn(second, 1);
+        grid.VisualChildren.Add(first);
+        grid.VisualChildren.Add(second);
+        root.VisualChildren.Add(grid);
+
+        root.ProcessFrame();
+
+        Assert.Equal(
+            (new LayoutRect(0, 0, 100, 20), new LayoutRect(0, 0, 50, 20), new LayoutRect(50, 0, 50, 20)),
+            (grid.ArrangedBounds, first.ArrangedBounds, second.ArrangedBounds));
     }
 
     [Fact]
@@ -301,7 +382,7 @@ public sealed class GridTests
         LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(800, 300)));
         grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 800, 300)));
 
-        Assert.Equal(new LayoutSize(800, 300), desired);
+        Assert.Equal(new LayoutSize(100, 90), desired);
         Assert.Equal(new LayoutRect(0, 0, 100, 80), wrapping.ArrangedBounds);
         Assert.Equal(new LayoutSize(100, 220), starChild.LastAvailableSize);
         Assert.Equal(new LayoutRect(0, 80, 100, 220), starChild.ArrangedBounds);
@@ -324,7 +405,7 @@ public sealed class GridTests
         LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(300, 800)));
         grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 300, 800)));
 
-        Assert.Equal(new LayoutSize(300, 800), desired);
+        Assert.Equal(new LayoutSize(90, 100), desired);
         Assert.Equal(new LayoutRect(0, 0, 80, 100), wrapping.ArrangedBounds);
         Assert.Equal(new LayoutSize(220, 100), starChild.LastAvailableSize);
         Assert.Equal(new LayoutRect(80, 0, 220, 100), starChild.ArrangedBounds);
@@ -347,7 +428,7 @@ public sealed class GridTests
         LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(800, 300)));
         grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 800, 300)));
 
-        Assert.Equal(new LayoutSize(800, 300), desired);
+        Assert.Equal(new LayoutSize(800, 90), desired);
         Assert.Equal(new LayoutRect(0, 0, 100, 80), wrapping.ArrangedBounds);
         Assert.Equal(new LayoutSize(100, 220), starChild.LastAvailableSize);
         Assert.Equal(new LayoutRect(0, 80, 100, 220), starChild.ArrangedBounds);
@@ -370,7 +451,7 @@ public sealed class GridTests
         LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(300, 800)));
         grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 300, 800)));
 
-        Assert.Equal(new LayoutSize(300, 800), desired);
+        Assert.Equal(new LayoutSize(90, 800), desired);
         Assert.Equal(new LayoutRect(0, 0, 80, 100), wrapping.ArrangedBounds);
         Assert.Equal(new LayoutSize(220, 100), starChild.LastAvailableSize);
         Assert.Equal(new LayoutRect(80, 0, 220, 100), starChild.ArrangedBounds);
@@ -395,7 +476,7 @@ public sealed class GridTests
         LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(800, 300)));
         grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 800, 300)));
 
-        Assert.Equal(new LayoutSize(800, 300), desired);
+        Assert.Equal(new LayoutSize(140, 260), desired);
         Assert.Equal(new LayoutRect(0, 0, 140, 60), wrapping.ArrangedBounds);
         Assert.Equal(240, items.LastAvailableSize.Height);
         Assert.Equal(new LayoutRect(0, 60, 40, 240), items.ArrangedBounds);
@@ -420,7 +501,7 @@ public sealed class GridTests
         LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(300, 800)));
         grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 300, 800)));
 
-        Assert.Equal(new LayoutSize(300, 800), desired);
+        Assert.Equal(new LayoutSize(260, 140), desired);
         Assert.Equal(new LayoutRect(0, 0, 60, 140), wrapping.ArrangedBounds);
         Assert.Equal(240, items.LastAvailableSize.Width);
         Assert.Equal(new LayoutRect(60, 0, 240, 40), items.ArrangedBounds);
@@ -448,7 +529,7 @@ public sealed class GridTests
         LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(800, height)));
         grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 800, height)));
 
-        Assert.Equal(new LayoutSize(800, height), desired);
+        Assert.Equal(new LayoutSize(160, 210), desired);
         Assert.Equal(new LayoutRect(0, 0, 160, 60), wrapping.ArrangedBounds);
         Assert.Equal(160, wrapping.LastAvailableSize.Width);
         Assert.Equal(height - 60, items.LastAvailableSize.Height);
@@ -477,7 +558,7 @@ public sealed class GridTests
         LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(width, 800)));
         grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, width, 800)));
 
-        Assert.Equal(new LayoutSize(width, 800), desired);
+        Assert.Equal(new LayoutSize(210, 160), desired);
         Assert.Equal(new LayoutRect(0, 0, 60, 160), wrapping.ArrangedBounds);
         Assert.Equal(160, wrapping.LastAvailableSize.Height);
         Assert.Equal(width - 60, items.LastAvailableSize.Width);
@@ -504,7 +585,7 @@ public sealed class GridTests
         LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(300, 300)));
         grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 300, 300)));
 
-        Assert.Equal(new LayoutSize(300, 300), desired);
+        Assert.Equal(new LayoutSize(125, 100), desired);
         Assert.Equal(new LayoutRect(0, 0, 125, 80), wrapping.ArrangedBounds);
         Assert.Equal(new LayoutRect(0, 0, 75, 100), aspect.ArrangedBounds);
     }
@@ -527,7 +608,7 @@ public sealed class GridTests
         LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(300, 300)));
         grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 300, 300)));
 
-        Assert.Equal(new LayoutSize(300, 300), desired);
+        Assert.Equal(new LayoutSize(110, 300), desired);
         Assert.Equal(new LayoutRect(0, 150, 60, 150), wrapping.ArrangedBounds);
         Assert.Equal(240, autoRowChild.LastAvailableSize.Width);
         Assert.Equal(new LayoutRect(60, 0, 240, 150), autoRowChild.ArrangedBounds);
@@ -573,7 +654,7 @@ public sealed class GridTests
         LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(300, 100)));
         grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 300, 100)));
 
-        Assert.Equal(new LayoutSize(100, 100), desired);
+        Assert.Equal(new LayoutSize(100, 20), desired);
         Assert.Equal(new LayoutRect(0, 0, 100, 100), spanning.ArrangedBounds);
         Assert.Equal(new LayoutRect(50, 0, 50, 100), marker.ArrangedBounds);
     }
@@ -594,7 +675,7 @@ public sealed class GridTests
         LayoutSize desired = grid.Measure(new MeasureContext(new LayoutSize(100, 300)));
         grid.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 300)));
 
-        Assert.Equal(new LayoutSize(100, 100), desired);
+        Assert.Equal(new LayoutSize(20, 100), desired);
         Assert.Equal(new LayoutRect(0, 0, 100, 100), spanning.ArrangedBounds);
         Assert.Equal(new LayoutRect(0, 50, 100, 50), marker.ArrangedBounds);
     }
@@ -1010,7 +1091,7 @@ public sealed class GridTests
         Assert.Equal(starChild.ArrangeSize, starChild.MeasureSizes[^1]);
         Assert.Equal(130, columns ? starChild.ArrangeSize.Width : starChild.ArrangeSize.Height);
         Assert.Equal(70, columns ? autoChild.ArrangedBounds.Width : autoChild.ArrangedBounds.Height);
-        Assert.Equal(200, columns ? desired.Width : desired.Height);
+        Assert.Equal(80, columns ? desired.Width : desired.Height);
     }
 
     // Two 33.6 px pixel rows and two Auto rows that share a 21 px child (10.5 px each) are rounded to 34, 34, 10 and
@@ -1058,7 +1139,7 @@ public sealed class GridTests
         Assert.Equal(50, columns ? autoChild.ArrangedBounds.Width : autoChild.ArrangedBounds.Height);
         Assert.Equal(150, columns ? starChild.ArrangeSize.Width : starChild.ArrangeSize.Height);
         Assert.Equal(starChild.ArrangeSize, starChild.MeasureSizes[^1]);
-        Assert.Equal(200, columns ? desired.Width : desired.Height);
+        Assert.Equal(60, columns ? desired.Width : desired.Height);
     }
 
     // Two 33.6 px pixel rows are rounded to 34 and 33 px, with or without a third, empty Auto row (0 px). The Auto-column
@@ -1101,7 +1182,7 @@ public sealed class GridTests
         Assert.Equal(50, columns ? autoChild.ArrangedBounds.Width : autoChild.ArrangedBounds.Height);
         Assert.Equal(150, columns ? starChild.ArrangeSize.Width : starChild.ArrangeSize.Height);
         Assert.Equal(starChild.ArrangeSize, starChild.MeasureSizes[^1]);
-        Assert.Equal(200, columns ? desired.Width : desired.Height);
+        Assert.Equal(60, columns ? desired.Width : desired.Height);
     }
 
     // Rows 33.6, 33.6 and * in a 100 px high grid are rounded to 34, 33 and 33 px. The Auto-column child in the second
