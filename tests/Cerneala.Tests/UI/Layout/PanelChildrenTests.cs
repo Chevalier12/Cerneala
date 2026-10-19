@@ -227,6 +227,81 @@ public sealed class PanelChildrenTests
         Assert.Null(child.VisualParent);
     }
 
+    // Issue #591: the visual insertion publishes the child before VisualChildren.Changed runs, so a throwing handler
+    // must not leave a visual-only child that a retried Children.Add rejects as already a child. A child with Presence
+    // must not start an exit that keeps it attached.
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public void ChildrenAddOrInsertWhoseVisualChangedHandlerThrowsLeavesTheChildWithNeitherParent(bool insert, bool withPresence)
+    {
+        UIRoot root = new(200, 200);
+        StackPanel panel = new();
+        root.VisualChildren.Add(panel);
+        Border existing = new();
+        panel.Children.Add(existing);
+        Border child = new() { Width = 50, Height = 20, Presence = withPresence ? CreatePresence() : null };
+        bool throwOnce = true;
+        panel.VisualChildren.Changed += (_, _) =>
+        {
+            if (throwOnce)
+            {
+                throwOnce = false;
+                throw new InvalidOperationException("visual handler failed");
+            }
+        };
+
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
+        {
+            if (insert)
+            {
+                panel.Children.Insert(0, child);
+            }
+            else
+            {
+                panel.Children.Add(child);
+            }
+        });
+
+        Assert.Equal("visual handler failed", exception.Message);
+        Assert.Null(child.LogicalParent);
+        Assert.Null(child.VisualParent);
+        Assert.Null(child.Root);
+        Assert.False(child.IsAttached);
+        Assert.Empty(root.Motion.Presence.GetExitingVisualChildren(panel));
+        Assert.Equal([existing], panel.VisualChildren);
+        Assert.Equal([existing], panel.LogicalChildren);
+
+        panel.Children.Add(child);
+
+        Assert.Same(panel, child.LogicalParent);
+        Assert.Same(panel, child.VisualParent);
+        Assert.Equal([existing, child], panel.VisualChildren);
+        Assert.Equal([existing, child], panel.LogicalChildren);
+    }
+
+    // Issue #591: the rollback undoes only what the failed call did, so a child that was already a visual child of the
+    // panel stays one when Children.Add rejects it.
+    [Fact]
+    public void ChildrenAddOfAChildThatIsAlreadyAVisualChildThrowsAndKeepsItAVisualChild()
+    {
+        UIRoot root = new(200, 200);
+        StackPanel panel = new();
+        root.VisualChildren.Add(panel);
+        Border child = new();
+        panel.VisualChildren.Add(child);
+
+        Assert.Throws<InvalidOperationException>(() => panel.Children.Add(child));
+
+        Assert.Same(panel, child.VisualParent);
+        Assert.Null(child.LogicalParent);
+        Assert.True(child.IsAttached);
+        Assert.Equal([child], panel.VisualChildren);
+        Assert.Empty(panel.LogicalChildren);
+    }
+
     private static PresenceOptions CreatePresence()
     {
         return PresenceOptions.FadeAndScale(
