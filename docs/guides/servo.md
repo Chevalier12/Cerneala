@@ -65,6 +65,26 @@ bool hasError = await servo.ExistsAsync(ServoTarget.ById("save-error"));
 invalid cardinalities. `FindAllAsync` may return an empty list, and
 `ExistsAsync` accepts any nonzero match count.
 
+When several elements match on purpose, for example one Delete button per list
+row, select one explicitly with `Nth` (zero-based), `First`, or `Last`. The
+position is applied after every other criterion, including `Within`:
+
+```csharp
+ServoTarget delete = ServoTarget.ByRole(SemanticsRole.Button).WithName("Delete");
+
+await servo.ClickAsync(delete.Nth(2));      // third Delete button in document order
+await servo.ClickAsync(delete.Within(ServoTarget.ById("row").Last()));
+
+ServoTarget item = ServoTarget.ByRole(SemanticsRole.Button)
+    .WithNameContaining("of 10")             // ordinal substring
+    .Where(element => element.IsEnabled);    // predicate over the snapshot
+```
+
+`delete.Nth(5)` with three buttons throws `ServoTargetNotFoundException`; a
+target without a position that matches three buttons still throws
+`ServoTargetAmbiguousException`. `WithNameMatching(Regex)` is the third name
+refinement; the three name methods share one slot, so the last call wins.
+
 ## Drive Real Input
 
 Pointer and keyboard operations send Cerneala input frames. They do not assign

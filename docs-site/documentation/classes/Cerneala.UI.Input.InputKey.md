@@ -59,7 +59,7 @@ box.KeyDown += (_, e) => Console.WriteLine(((KeyEventArgs)e).Key);
 
 The SDL input source maps SDL scancodes, which name a key by its position on a US keyboard, not by the character it types in the current layout. Example: the key right of `L` is `OemSemicolon` also on a German keyboard, where it types `ö`.
 
-The keypad digit keys and keypad `.` follow Num Lock, as in WPF, where the key comes from the Windows virtual key. SDL reports the same keypad scancode in both states and the Num Lock state in the key event's modifiers (`SDL_KMOD_NUM`):
+The keypad digit keys and keypad `.` follow Num Lock, as in WPF, where the key comes from the Windows virtual key. SDL reports the same keypad scancode in both states and the Num Lock state in the key event's modifiers (`SDL_KMOD_NUM`). On Windows, the SDL input source reads the virtual key that Windows sends for each keypad key instead, so Shift works as in WPF (see below):
 
 | Keypad key | Num Lock on | Num Lock off |
 | --- | --- | --- |
@@ -75,7 +75,11 @@ The keypad digit keys and keypad `.` follow Num Lock, as in WPF, where the key c
 | `9` | `NumPad9` | `PageUp` |
 | `.` | `Decimal` | `Delete` |
 
-Example: a focused `TextBox` holds `abc` with the caret at the end, and Num Lock is off. Keypad 4 raises `KeyDown` with `Left` and moves the caret before `c`; typing `X` then gives `abXc`. Keypad `.` then raises `Delete` and deletes the `c`, so the text is `abX`. With Num Lock on, keypad 4 raises `NumPad4` and types `4`. A keypad key keeps the key it went down as until it goes up: keypad 4 pressed with Num Lock off raises `KeyDown` with `Left`, and its auto-repeats and its `KeyUp` are `Left` too, also when Num Lock is turned on while the key is held. The other keypad keys (`Multiply`, `Add`, `Subtract`, `Divide`, and keypad Enter) do not depend on Num Lock.
+Example: a focused `TextBox` holds `abc` with the caret at the end, and Num Lock is off. Keypad 4 raises `KeyDown` with `Left` and moves the caret before `c`; typing `X` then gives `abXc`. Keypad `.` then raises `Delete` and deletes the `c`, so the text is `abX`. With Num Lock on, keypad 4 raises `NumPad4` and types `4`. A keypad key keeps the key it went down as until it goes up: keypad 4 pressed with Num Lock off raises `KeyDown` with `Left`, and its auto-repeats and its `KeyUp` are `Left` too, also when Num Lock is turned on while the key is held.
+
+On Windows, Shift inverts Num Lock for these keypad keys, as in WPF. With Num Lock on, Shift + a keypad key raises the key of the "Num Lock off" column, and without Shift: Windows releases Shift for that key, so `IsShiftDown` is `false` and `KeyUp` with `LeftShift` comes before it, `KeyDown` with `LeftShift` after it. Example: a focused `TextBox` holds `abc` with the caret at the end, and Num Lock is on. Holding Shift and pressing keypad 4 raises `KeyDown` with `Left`, and the caret moves before `c` without selecting; typing `x` then gives `abxc`. Shift + keypad `.` raises `Delete`. With Num Lock off, Shift + keypad 4 raises `Left` with `IsShiftDown` `true`, so it selects `c`. On other platforms, a keypad key follows only the Num Lock state that SDL reports.
+
+The other keypad keys (`Multiply`, `Add`, `Subtract`, `Divide`, and keypad Enter) do not depend on Num Lock.
 
 Some keys have built-in behavior:
 

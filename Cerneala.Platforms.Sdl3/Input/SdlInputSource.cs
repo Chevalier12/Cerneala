@@ -111,7 +111,7 @@ internal sealed class SdlInputSource : IInputSource
         Accept(new PendingInput(PendingKind.Wheel, Value: flipped ? -delta : delta));
     }
 
-    // numLock is SDL_KMOD_NUM of the key event. A keypad key keeps the key it went down as
+    // numLock is SdlEvent.NumLock of the key event. A keypad key keeps the key it went down as
     // until it goes up, also when Num Lock changes while it is held.
     public void SetKey(int scancode, bool down, bool repeat = false, bool numLock = false)
     {
