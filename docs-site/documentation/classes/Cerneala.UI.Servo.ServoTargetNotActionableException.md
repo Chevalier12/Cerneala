@@ -21,6 +21,8 @@ ServoException failure = new ServoTargetNotActionableException("Target is hidden
 
 Actionability checks are owned by Servo actions rather than by query snapshots.
 
+Servo's message names the target and the failed check, for example `The Servo target Id="save" is disabled.` or `The Servo target Id="save" center is not hit-testable in the current tree.` For `DragAsync(ServoTarget, ServoTarget, ...)`, the description says whether the source or the destination failed.
+
 ## Constructors
 
 | Name | Description |

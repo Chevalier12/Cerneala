@@ -22,6 +22,8 @@ await Assert.ThrowsAsync<ServoTargetAmbiguousException>(
 
 Use a more specific target or `FindAllAsync` when multiple matches are expected.
 
+Servo's message names the target and the match count, for example `The Servo target Role=Button matched 3 elements; exactly one was required.`
+
 ## Constructors
 
 | Name | Description |

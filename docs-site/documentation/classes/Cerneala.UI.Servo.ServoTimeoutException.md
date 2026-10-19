@@ -21,6 +21,8 @@ ServoException failure = new ServoTimeoutException("The target did not become vi
 
 External cancellation remains an `OperationCanceledException` and is distinct from a Servo timeout.
 
+The timeout is `ServoOptions.DefaultTimeout`, or the `timeout` argument of the overload the call used. Servo's message contains that value and, for an operation that takes a target, the target description: `The Servo operation on target Id="save" exceeded its 00:00:05 timeout.`, `The Servo wait for target Id="dialog" to be Visible exceeded its 00:00:05 timeout.`, or `The Servo operation exceeded its 00:00:05 timeout.` for an operation without a target.
+
 ## Constructors
 
 | Name | Description |
