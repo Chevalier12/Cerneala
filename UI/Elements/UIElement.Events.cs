@@ -176,39 +176,20 @@ public partial class UIElement
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
-        base.OnPropertyChanged(args);
         if (ReferenceEquals(args.Property, AspectProperty))
         {
-            // A failing behavior lifetime does not skip the later steps: the old aspect is detached and the new one
-            // attached, then the first failure propagates.
+            // The new aspect is already stored, so a throwing PropertyChanged handler or a failing behavior lifetime
+            // does not skip the switch: the element follows the aspect it reports, then the first failure propagates.
             ExceptionDispatchInfo? failure = null;
-            if (args.OldValue is ElementAspect oldAspect)
-            {
-                try { DetachElementAspectBehavior(); }
-                catch (Exception exception) { failure = ExceptionDispatchInfo.Capture(exception); }
-                oldAspect.Detach(aspectConsumer);
-            }
-
-            if (args.NewValue is ElementAspect newAspect)
-            {
-                newAspect.Attach(aspectConsumer);
-                if (IsAttached)
-                {
-                    try
-                    {
-                        AttachElementAspectBehavior();
-                    }
-                    catch (Exception exception)
-                    {
-                        newAspect.Detach(aspectConsumer);
-                        failure ??= ExceptionDispatchInfo.Capture(exception);
-                    }
-                }
-            }
-
+            try { base.OnPropertyChanged(args); }
+            catch (Exception exception) { failure = ExceptionDispatchInfo.Capture(exception); }
+            FollowAspect(ref failure);
             failure?.Throw();
+            return;
         }
-        else if (ReferenceEquals(args.Property, DataContextProperty)) DataContextChanged?.Invoke(this, args);
+
+        base.OnPropertyChanged(args);
+        if (ReferenceEquals(args.Property, DataContextProperty)) DataContextChanged?.Invoke(this, args);
         else if (ReferenceEquals(args.Property, IsEnabledProperty)) IsEnabledChanged?.Invoke(this, args);
         else if (ReferenceEquals(args.Property, IsVisibleProperty) || ReferenceEquals(args.Property, VisibilityProperty)) IsVisibleChanged?.Invoke(this, args);
         else if (ReferenceEquals(args.Property, FocusableProperty)) FocusableChanged?.Invoke(this, args);

@@ -19,6 +19,8 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     private static long nextPrismVisualNodeId;
     private readonly ElementAspectConsumer aspectConsumer;
     private IDisposable? elementAspectBehavior;
+    // The aspect whose consumers include this element: its SetValue invalidates the element.
+    private ElementAspect? followedAspect;
     private readonly long prismVisualNodeId;
     private ImageResourceLeaseSet? sourceImageLeases;
     private ImageResourceLeaseSet? prismImageLeases;
@@ -1598,6 +1600,42 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         if (ReferenceEquals(property, AspectProperty) && value is ElementAspect aspect)
         {
             ValidateLocalAspect(aspect);
+        }
+    }
+
+    // Makes the element follow the aspect it reports: disposes the lifetime of the aspect it followed, moves its consumer
+    // to the current aspect, and creates the current aspect's lifetime while attached. A failing lifetime or factory does
+    // not skip the later steps; the first failure is kept in failure. The old lifetime's Dispose may assign another
+    // aspect; that nested change already makes the element follow the newer aspect, so this one stops there.
+    private void FollowAspect(ref ExceptionDispatchInfo? failure)
+    {
+        ElementAspect? aspect = Aspect;
+        if (ReferenceEquals(followedAspect, aspect))
+        {
+            return;
+        }
+
+        if (followedAspect is ElementAspect previous)
+        {
+            followedAspect = null;
+            previous.Detach(aspectConsumer);
+            try { DetachElementAspectBehavior(); }
+            catch (Exception exception) { failure ??= ExceptionDispatchInfo.Capture(exception); }
+        }
+
+        if (aspect is null || followedAspect is not null || !ReferenceEquals(Aspect, aspect))
+        {
+            return;
+        }
+
+        aspect.Attach(aspectConsumer);
+        followedAspect = aspect;
+        if (IsAttached)
+        {
+            // A throwing factory leaves the element without a lifetime but still following the aspect; the next
+            // attachment creates the lifetime.
+            try { AttachElementAspectBehavior(); }
+            catch (Exception exception) { failure ??= ExceptionDispatchInfo.Capture(exception); }
         }
     }
 
