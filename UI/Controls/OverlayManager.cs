@@ -358,6 +358,12 @@ internal sealed class OverlayManager
 
             float sideLimit = placeBelow ? below : above;
             float height = MathF.Min(requestedHeight, sideLimit);
+            if (!overlay.MatchTargetWidth && desired.Height > height)
+            {
+                desired = MeasureWidthAtHeight(presenter, naturalWidthLimit, height, rounding);
+                width = MathF.Min(desired.Width, viewport.Width);
+            }
+
             if (hasExplicitHeight || desired.Height > height || width != naturalWidthLimit)
             {
                 presenter.Measure(new MeasureContext(new LayoutSize(width, height), rounding));
@@ -391,6 +397,15 @@ internal sealed class OverlayManager
             LayoutSize desired = presenter.Measure(new MeasureContext(
                 new LayoutSize(naturalWidthLimit, naturalHeightLimit),
                 rounding));
+            float requestedHeight = hasExplicitHeight
+                ? overlay.Height
+                : MathF.Min(desired.Height, overlay.MaxHeight);
+            float height = MathF.Min(requestedHeight, viewport.Height);
+            if (!overlay.MatchTargetWidth && desired.Height > height)
+            {
+                desired = MeasureWidthAtHeight(presenter, naturalWidthLimit, height, rounding);
+            }
+
             float requestedWidth = overlay.MatchTargetWidth
                 ? MathF.Min(targetBounds.Width, viewport.Width)
                 : MathF.Min(desired.Width, viewport.Width);
@@ -398,10 +413,6 @@ internal sealed class OverlayManager
             bool fitsLeft = requestedWidth <= left;
             bool placeRight = fitsRight;
             float width = requestedWidth;
-            float requestedHeight = hasExplicitHeight
-                ? overlay.Height
-                : MathF.Min(desired.Height, overlay.MaxHeight);
-            float height = MathF.Min(requestedHeight, viewport.Height);
             if (hasExplicitHeight || desired.Height > height || desired.Width > width)
             {
                 presenter.Measure(new MeasureContext(new LayoutSize(width, height), rounding));
@@ -411,6 +422,18 @@ internal sealed class OverlayManager
             x = Math.Clamp(x, 0, MathF.Max(0, viewport.Width - width));
             float y = Math.Clamp(targetBounds.Y, 0, MathF.Max(0, viewport.Height - height));
             return new LayoutRect(x, y, width, height);
+        }
+
+        // Content cut to a smaller height than it asked for can need more width, for example a vertical scrollbar
+        // beside its items. As WPF measures popup content within the screen, the width comes from a measure at the
+        // final height, so the scrollbar is added to the overlay instead of taken from the content.
+        private static LayoutSize MeasureWidthAtHeight(
+            ContentPresenter presenter,
+            float naturalWidthLimit,
+            float height,
+            LayoutRounding rounding)
+        {
+            return presenter.Measure(new MeasureContext(new LayoutSize(naturalWidthLimit, height), rounding));
         }
 
         private LayoutSize ViewportSize(LayoutSize fallback)

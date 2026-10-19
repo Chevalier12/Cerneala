@@ -33,7 +33,7 @@ overlay.Placement = OverlayPlacement.AutoHorizontal;
 
 ## Remarks
 
-All modes clamp projected geometry to the current `UIRoot` viewport. `Overlay.MaxHeight` limits only auto-sized overlays; when `Overlay.Height` is set, that height is used and `MaxHeight` is not applied. `AutoHorizontal` measures the content once with a width limited to the viewport and uses the same width on either side; it does not remeasure against the chosen side's space, so content wider than that side is clamped back into the viewport and can overlap the target.
+All modes clamp projected geometry to the current `UIRoot` viewport. `Overlay.MaxHeight` limits only auto-sized overlays; when `Overlay.Height` is set, that height is used and `MaxHeight` is not applied. `AutoHorizontal` measures the content once with a width limited to the viewport (and once more at the viewport height when the content is taller, so a vertical scrollbar is included in the width; see `Overlay`) and uses the same width on either side; it does not remeasure against the chosen side's space, so content wider than that side is clamped back into the viewport and can overlap the target.
 
 ## Applies to
 
