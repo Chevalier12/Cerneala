@@ -520,7 +520,8 @@ public sealed class ContentPresenterTests
         Assert.Single(oldContainer.VisualChildren);
         Assert.Same(root, content.Root);
 
-        root.ProcessFrame();
+        // Measured right after the failure: the next frame runs the failed refresh again (#531).
+        oldContainer.Measure(new MeasureContext(new LayoutSize(200, 200)));
         Assert.Equal(new LayoutSize(10, 10), oldContainer.DesiredSize);
     }
 

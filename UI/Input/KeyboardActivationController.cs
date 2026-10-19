@@ -86,7 +86,7 @@ internal sealed class KeyboardActivationController
         // The press runs after the whole frame's key dispatch and navigation. When focus left
         // the Space target in the meantime (a Tab in the same frame, or a KeyDown handler),
         // OnFocusChanged ran before there was a press to forget, so the press does not start:
-        // like WPF ButtonBase.OnKeyDown, a Space press starts only on the focused element.
+        // like the OnKeyDown of WPF buttons, a Space press starts only on the focused element.
         if (!ReferenceEquals(focusManager.FocusedElement, result.Target))
         {
             return;

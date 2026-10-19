@@ -370,7 +370,7 @@ public sealed class ElementInputBridge
     }
 
     // A press belongs to the nearest command source or element that owns its clicks, such as a non-editable
-    // ComboBox field, as in WPF the nearest ButtonBase handles MouseLeftButtonDown. An enclosing command source then
+    // ComboBox field, as in WPF the nearest button handles MouseLeftButtonDown. An enclosing command source then
     // does not get the click.
     private static UIElement? ResolveClickTarget(
         UIElement? element,
