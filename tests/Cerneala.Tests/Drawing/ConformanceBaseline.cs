@@ -12,9 +12,9 @@ internal static class ConformanceBaseline
         }
 
         string path = Path.Combine(
-            directory, "tests", "Baselines", "Conformance", "RetiredWindowsDx", fileName);
+            directory, "tests", "Baselines", "Conformance", "SdlGpu", fileName);
         return File.Exists(path)
             ? path
-            : throw new FileNotFoundException("The historical conformance reference is missing.", path);
+            : throw new FileNotFoundException("The SDL_GPU conformance reference is missing.", path);
     }
 }

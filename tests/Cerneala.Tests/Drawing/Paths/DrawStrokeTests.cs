@@ -77,8 +77,15 @@ public sealed class DrawStrokeTests
             false,
             new DrawStrokeStyle(join: DrawLineJoin.Round));
 
+        // The 2 px stroke turns at (10,0); its outer miter corner is (11,-1).
+        // A mitered corner shares one cross-section between both segments, so it
+        // is identified by reaching that corner, not by having more indices.
+        static bool IsOuterMiterCorner(DrawPoint point) =>
+            MathF.Abs(point.X - 11) < 0.001f && MathF.Abs(point.Y + 1) < 0.001f;
         Assert.Equal(bevel.Indices.Length, limitedMiter.Indices.Length);
-        Assert.True(miter.Indices.Length > limitedMiter.Indices.Length);
+        Assert.Contains(miter.Vertices, IsOuterMiterCorner);
+        Assert.DoesNotContain(limitedMiter.Vertices, IsOuterMiterCorner);
+        Assert.DoesNotContain(bevel.Vertices, IsOuterMiterCorner);
         Assert.True(round.Indices.Length > bevel.Indices.Length);
     }
 

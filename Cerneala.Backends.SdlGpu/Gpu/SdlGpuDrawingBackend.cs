@@ -17,6 +17,16 @@ internal sealed partial class SdlGpuDrawingBackend :
 {
     private const int TextSubpixelPhaseCount = 8;
     private static readonly int[] QuadIndices = [0, 1, 2, 0, 2, 3];
+    // Inner corners 0-3 (coverage 1) and their outer copies 4-7 (coverage 0):
+    // the interior quad, then one fringe quad per edge.
+    private static readonly int[] FringedQuadIndices =
+    [
+        0, 1, 2, 0, 2, 3,
+        0, 1, 5, 0, 5, 4,
+        1, 2, 6, 1, 6, 5,
+        2, 3, 7, 2, 7, 6,
+        3, 0, 4, 3, 4, 7
+    ];
     private static readonly object WhiteTextureKey = new();
     private static readonly IReadOnlySet<DrawCommandKind> CommandKinds =
         new HashSet<DrawCommandKind>
@@ -520,24 +530,68 @@ internal sealed partial class SdlGpuDrawingBackend :
             command.Rect,
             command.Color,
             command.BrushOpacity);
+        DrawRect rect = command.Rect;
+        float left = UiCoordinateMapper.LogicalToPhysicalPixel(rect.X, CoordinateScale) / CoordinateScale;
+        float top = UiCoordinateMapper.LogicalToPhysicalPixel(rect.Y, CoordinateScale) / CoordinateScale;
+        float right = UiCoordinateMapper.LogicalToPhysicalPixel(rect.Right, CoordinateScale) / CoordinateScale;
+        float bottom = UiCoordinateMapper.LogicalToPhysicalPixel(rect.Bottom, CoordinateScale) / CoordinateScale;
+        bool edgeCoverage = UsesEdgeCoverage(batches);
+        if (edgeCoverage && (left == right || top == bottom))
+        {
+            return;
+        }
+
         Span<SdlGpuVertex> vertices = batches.Allocate(
-            4,
-            QuadIndices,
+            edgeCoverage ? 8 : 4,
+            edgeCoverage ? FringedQuadIndices : QuadIndices,
             CreateBatchKey(
                 DrawPrimitiveTopology.TriangleList,
                 paint.Texture,
                 paint.Sampling,
                 paint.AddressMode,
                 state));
-        DrawRect rect = command.Rect;
-        float left = UiCoordinateMapper.LogicalToPhysicalPixel(rect.X, CoordinateScale) / CoordinateScale;
-        float top = UiCoordinateMapper.LogicalToPhysicalPixel(rect.Y, CoordinateScale) / CoordinateScale;
-        float right = UiCoordinateMapper.LogicalToPhysicalPixel(rect.Right, CoordinateScale) / CoordinateScale;
-        float bottom = UiCoordinateMapper.LogicalToPhysicalPixel(rect.Bottom, CoordinateScale) / CoordinateScale;
-        vertices[0] = CreatePaintedVertex(new DrawPoint(left, top), new DrawPoint(rect.X, rect.Y), paint, state);
-        vertices[1] = CreatePaintedVertex(new DrawPoint(right, top), new DrawPoint(rect.Right, rect.Y), paint, state);
-        vertices[2] = CreatePaintedVertex(new DrawPoint(right, bottom), new DrawPoint(rect.Right, rect.Bottom), paint, state);
-        vertices[3] = CreatePaintedVertex(new DrawPoint(left, bottom), new DrawPoint(rect.X, rect.Bottom), paint, state);
+        Matrix3x2 transform = state.Transform;
+        float coordinateScale = CurrentScale.Value;
+        float extrusionScale = ExtrusionScale(transform);
+        Vector4 color = PremultiplyVertexColor(paint.Tint, state.Opacity);
+        // The snapped edges stay exact; the 1 px ramp centred on them only blends
+        // edges that a transform moves off the pixel grid.
+        ReadOnlySpan<DrawPoint> positions =
+        [
+            new DrawPoint(left, top),
+            new DrawPoint(right, top),
+            new DrawPoint(right, bottom),
+            new DrawPoint(left, bottom)
+        ];
+        ReadOnlySpan<DrawPoint> brushPoints =
+        [
+            new DrawPoint(rect.X, rect.Y),
+            new DrawPoint(rect.Right, rect.Y),
+            new DrawPoint(rect.Right, rect.Bottom),
+            new DrawPoint(rect.X, rect.Bottom)
+        ];
+        ReadOnlySpan<DrawPoint> outward =
+        [
+            new DrawPoint(-0.5f, -0.5f),
+            new DrawPoint(0.5f, -0.5f),
+            new DrawPoint(0.5f, 0.5f),
+            new DrawPoint(-0.5f, 0.5f)
+        ];
+        for (int i = 0; i < 4; i++)
+        {
+            if (!edgeCoverage)
+            {
+                vertices[i] = CreateEdgeVertex(
+                    positions[i], brushPoints[i], default, 1, paint, color, transform, coordinateScale, extrusionScale);
+                continue;
+            }
+
+            DrawPoint inward = new(-outward[i].X, -outward[i].Y);
+            vertices[i] = CreateEdgeVertex(
+                positions[i], brushPoints[i], inward, 1, paint, color, transform, coordinateScale, extrusionScale);
+            vertices[i + 4] = CreateEdgeVertex(
+                positions[i], brushPoints[i], outward[i], 0, paint, color, transform, coordinateScale, extrusionScale);
+        }
     }
 
     private void AddPathFill(
@@ -552,10 +606,7 @@ internal sealed partial class SdlGpuDrawingBackend :
         }
 
         AddPaintedGeometry(
-            mesh.Positions,
-            mesh.BrushPoints,
-            mesh.Indices,
-            DrawPrimitiveTopology.TriangleList,
+            mesh,
             command.Rect,
             command.Brush,
             command.BrushOpacity,
@@ -576,10 +627,7 @@ internal sealed partial class SdlGpuDrawingBackend :
         }
 
         AddPaintedGeometry(
-            stroke.Positions,
-            stroke.BrushPoints,
-            stroke.Indices,
-            DrawPrimitiveTopology.TriangleList,
+            stroke,
             stroke.BrushBounds,
             command.Pen?.Brush ?? command.Brush,
             command.BrushOpacity,
@@ -831,10 +879,7 @@ internal sealed partial class SdlGpuDrawingBackend :
     }
 
     private void AddPaintedGeometry(
-        DrawPoint[] positions,
-        DrawPoint[] brushPoints,
-        int[] indices,
-        DrawPrimitiveTopology topology,
+        SdlGpuGeometry mesh,
         DrawRect bounds,
         IDrawBrush? brush,
         float commandOpacity,
@@ -847,40 +892,83 @@ internal sealed partial class SdlGpuDrawingBackend :
             bounds,
             fallbackColor,
             commandOpacity);
+        DrawPoint[] positions = mesh.Positions;
+        DrawPoint[] brushPoints = mesh.BrushPoints;
+        DrawPoint[] extrusions = mesh.Extrusions;
+        float[] coverages = mesh.Coverages;
         Span<SdlGpuVertex> vertices = batches.Allocate(
             positions.Length,
-            indices,
+            mesh.Indices,
             CreateBatchKey(
-                topology,
+                DrawPrimitiveTopology.TriangleList,
                 paint.Texture,
                 paint.Sampling,
                 paint.AddressMode,
                 state));
         Matrix3x2 transform = state.Transform;
         float coordinateScale = CurrentScale.Value;
+        float extrusionScale = ExtrusionScale(transform);
         Vector4 vertexColor = PremultiplyVertexColor(paint.Tint, state.Opacity);
+        bool edgeCoverage = UsesEdgeCoverage(batches);
         for (int i = 0; i < vertices.Length; i++)
         {
-            vertices[i] = CreateVertex(
+            vertices[i] = CreateEdgeVertex(
                 positions[i],
-                paint.MapTextureCoordinate(brushPoints[Math.Min(i, brushPoints.Length - 1)]),
+                brushPoints[Math.Min(i, brushPoints.Length - 1)],
+                edgeCoverage ? extrusions[i] : default,
+                edgeCoverage ? coverages[i] : 1,
+                paint,
                 vertexColor,
                 transform,
-                coordinateScale);
+                coordinateScale,
+                extrusionScale);
         }
     }
 
-    private static SdlGpuVertex CreatePaintedVertex(
+    // Edge coverage ramps antialias edges only on single-sample targets. On a
+    // multisampled target MSAA antialiases them: vertices stay on the exact edges
+    // (no extrusion, full coverage), so fringe triangles have zero area.
+    private static bool UsesEdgeCoverage(Cerberus batches) =>
+        batches.Target.SampleCount == SdlGpuSampleCount.One;
+
+    // Maps an extrusion given in physical pixels at the identity transform to
+    // device pixels: the transform's linear part divided by sqrt(|det|) keeps the
+    // coverage ramp about one device pixel wide under scale and rotation.
+    private static float ExtrusionScale(Matrix3x2 transform)
+    {
+        float determinant = MathF.Abs((transform.M11 * transform.M22) - (transform.M12 * transform.M21));
+        return determinant > 1e-12f ? 1 / MathF.Sqrt(determinant) : 0;
+    }
+
+    // Draws a vertex at its exact edge position moved by its extrusion. The brush
+    // point moves by the same local offset and the color is scaled by the coverage.
+    private static SdlGpuVertex CreateEdgeVertex(
         DrawPoint position,
         DrawPoint brushPoint,
+        DrawPoint extrusion,
+        float coverage,
         SdlGpuPaint paint,
-        RenderState state) =>
-        CreateVertex(
-            position,
-            paint.MapTextureCoordinate(brushPoint),
-            paint.Tint,
-            state.Transform,
-            state.Opacity);
+        Vector4 premultipliedColor,
+        Matrix3x2 transform,
+        float coordinateScale,
+        float extrusionScale)
+    {
+        Vector2 transformed = Vector2.Transform(
+            new Vector2(position.X, position.Y),
+            transform);
+        Vector2 offset = new Vector2(
+            (extrusion.X * transform.M11) + (extrusion.Y * transform.M21),
+            (extrusion.X * transform.M12) + (extrusion.Y * transform.M22)) * extrusionScale;
+        float localScale = extrusionScale / coordinateScale;
+        DrawPoint movedBrushPoint = new(
+            brushPoint.X + (extrusion.X * localScale),
+            brushPoint.Y + (extrusion.Y * localScale));
+        DrawPoint textureCoordinate = paint.MapTextureCoordinate(movedBrushPoint);
+        return new SdlGpuVertex(
+            (transformed * coordinateScale) + offset,
+            new Vector2(textureCoordinate.X, textureCoordinate.Y),
+            premultipliedColor * coverage);
+    }
 
     private static void AddQuad(
         Cerberus batches,

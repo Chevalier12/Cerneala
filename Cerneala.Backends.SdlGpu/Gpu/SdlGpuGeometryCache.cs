@@ -106,7 +106,7 @@ internal sealed class SdlGpuGeometryCache
         {
             logical[i] = new DrawPoint(mesh.Vertices[i].X / coordinateScale, mesh.Vertices[i].Y / coordinateScale);
         }
-        return new SdlGpuGeometry(logical, logical, mesh.Indices, command.Rect);
+        return new SdlGpuGeometry(logical, logical, mesh.Extrusions, mesh.Coverages, mesh.Indices, command.Rect);
     }
 
     private static SdlGpuGeometry BuildStroke(DrawCommand command, float coordinateScale)
@@ -128,7 +128,8 @@ internal sealed class SdlGpuGeometryCache
         DrawRect bounds = command.Kind == DrawCommandKind.DrawLine
             ? BoundsOf(stroke.BrushPoints)
             : command.Rect;
-        return new SdlGpuGeometry(logical, stroke.BrushPoints, stroke.Mesh.Indices, bounds);
+        return new SdlGpuGeometry(
+            logical, stroke.BrushPoints, stroke.Mesh.Extrusions, stroke.Mesh.Coverages, stroke.Mesh.Indices, bounds);
     }
 
     private static DrawRect BoundsOf(IReadOnlyList<DrawPoint> points)
@@ -167,14 +168,26 @@ internal sealed class SdlGpuGeometryCache
     }
 }
 
-internal sealed class SdlGpuGeometry(DrawPoint[] positions, DrawPoint[] brushPoints, int[] indices, DrawRect brushBounds)
+// Positions lie on the exact shape edges, so a stencil clip uses them alone. A
+// painted vertex is moved by its extrusion (physical pixels) and paints its
+// coverage of the brush.
+internal sealed class SdlGpuGeometry(
+    DrawPoint[] positions,
+    DrawPoint[] brushPoints,
+    DrawPoint[] extrusions,
+    float[] coverages,
+    int[] indices,
+    DrawRect brushBounds)
 {
     internal DrawPoint[] Positions { get; } = positions;
     internal DrawPoint[] BrushPoints { get; } = brushPoints;
+    internal DrawPoint[] Extrusions { get; } = extrusions;
+    internal float[] Coverages { get; } = coverages;
     internal int[] Indices { get; } = indices;
     internal DrawRect BrushBounds { get; } = brushBounds;
     internal bool IsEmpty => Positions.Length == 0 || Indices.Length == 0;
     internal long ArrayBytes { get; } =
         ((long)positions.Length * 2 * sizeof(float)) + ((long)indices.Length * sizeof(int)) +
+        ((long)extrusions.Length * 2 * sizeof(float)) + ((long)coverages.Length * sizeof(float)) +
         (ReferenceEquals(positions, brushPoints) ? 0 : (long)brushPoints.Length * 2 * sizeof(float));
 }

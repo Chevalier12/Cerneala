@@ -120,6 +120,43 @@ Drawing has no `FramePhase`. Recording happens in the `RenderCache` phase,
 composition at the end of `UiHost` update (`RetainedRenderer.Commit`), and
 analysis plus submission in `UiHost.Draw`, after the update.
 
+## Edge Antialiasing
+
+2D fills and strokes get distance-based edge coverage: a pixel whose centre
+lies `d` physical pixels outside an edge gets coverage `clamp(0.5 - d, 0, 1)`.
+
+- **Mesh.** `DrawTriangleMesh` (`Drawing/Paths/DrawTriangleMesh.cs`) holds, per
+  vertex, a command-local position on the exact edge, an extrusion in physical
+  pixels (about 0.5 px across the edge, miter-scaled) and a coverage (0 or 1,
+  or less for strokes thinner than one pixel). Every edge has an inner copy
+  (extrusion inward, coverage 1) and an outer copy (extrusion outward,
+  coverage 0), so the fringe quad between them ramps linearly.
+- **Fills.** `DrawPathMeshBuilder` takes the resolved outline from LibTess
+  `BoundaryContours` (explicit normal, so outer contours and holes have opposite
+  orientation), builds the copies with clamped miter normals, triangulates the
+  interior from the inner copies, and adds one fringe quad per boundary edge.
+- **Strokes.** `DrawStrokeTessellator` builds one continuous strip per contour
+  with four rows: outer fringe, outer edge, inner edge, inner fringe. Segments
+  share vertices, so smooth curves have no internal seams and no doubled
+  blending. Joins, caps, dashes and alignment keep their pen semantics.
+- **Emission.** `SdlGpuDrawingBackend.CreateEdgeVertex` maps a vertex to
+  `Transform(position) * scale + Lhat(extrusion)`, where `Lhat` is the
+  transform's linear part divided by `sqrt(|det|)`, and multiplies the
+  premultiplied color by the coverage. The geometry cache key does not include
+  the transform, and the ramp stays about one device pixel wide under scaling
+  and rotation (exact for similarity transforms, approximate for skew).
+- **Targets.** The ramp applies only on single-sample targets
+  (`UsesEdgeCoverage`). On a multisampled target the extrusion is ignored and
+  coverage is 1, so MSAA alone antialiases and the output equals the
+  pre-ramp output. Compositing layers and brush captures are single-sample.
+- **Unchanged.** Stencil clips use the positions only, so clip edges stay hard.
+  `FillRectangle` keeps its pixel snapping; its fringe only blends edges that a
+  transform moves off the pixel grid.
+
+Example. `FillPath` of a polygon with its left edge at physical x = 10.25, on a
+white single-sample target, paints pixel 9 white, pixel 10 with 75% brush and
+25% white, and pixel 11 with the full brush.
+
 ## Invariants
 
 Test paths are under `tests/Cerneala.Tests/` unless they start with
@@ -149,6 +186,14 @@ Test paths are under `tests/Cerneala.Tests/` unless they start with
 - A failed SDL frame does not break the next frame. Test:
   `tests/Cerneala.Tests.SdlGpu/DrawingBackendLifecycleContractTests.cs:FailedCompositingFrameDoesNotPoisonTheNextFrame`
   (native, opt-in with `CERNEALA_SDL_NATIVE_TESTS=1`).
+- Fill and stroke edges follow the coverage rule on single-sample targets,
+  including gradients, opacity, clips, scaled transforms and hairlines. Tests:
+  `tests/Cerneala.Tests.SdlGpu/EdgeAntialiasingRenderingTests.cs` (native),
+  for example `StraightFillEdgeAtFractionalPositionGetsDistanceCoverage` and
+  `IssueEllipseSceneMatchesExactAreaCoverageWithoutMultisampling` (maximum RGB
+  delta 20 against exact area coverage).
+- On a multisampled target the ramp is not applied. Test:
+  `tests/Cerneala.Tests.SdlGpu/EdgeAntialiasingRenderingTests.cs:MultisamplingStillBlendsCurvedEdgesAndKeepsInteriorAndOutsideUnchanged`.
 - The public `DrawingFrameContext.StateAnalysis` property: netestat.
   `SdlGpuDrawingBackend.Render` after dispose throws: netestat.
 
