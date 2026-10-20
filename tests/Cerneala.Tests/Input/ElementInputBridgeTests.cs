@@ -83,6 +83,61 @@ public sealed class ElementInputBridgeTests
         Assert.Equal(1, handledTooCalls);
     }
 
+    // As in WPF, which raises the button-specific event on each element when the generic event reaches that element, a
+    // MouseDown or MouseUp handled on an element stops ordinary button-specific handlers only on its ancestors: the
+    // handlers on that element and on the elements below it run (#660).
+    [Theory]
+    [InlineData(InputMouseButton.Left, true)]
+    [InlineData(InputMouseButton.Left, false)]
+    [InlineData(InputMouseButton.Right, true)]
+    [InlineData(InputMouseButton.Right, false)]
+    public void HandledMouseDownOrUpStillRunsButtonHandlersOnTheHandlingElementAndBelowIt(InputMouseButton button, bool isDown)
+    {
+        UIRoot root = RootWithParentAndChild(out UIElement parent, out UIElement child);
+        parent.Handlers.AddHandler(isDown ? InputEvents.MouseDownEvent : InputEvents.MouseUpEvent, (_, args) => args.Handled = true);
+        RoutedEvent buttonEvent = (button, isDown) switch
+        {
+            (InputMouseButton.Left, true) => InputEvents.MouseLeftButtonDownEvent,
+            (InputMouseButton.Left, false) => InputEvents.MouseLeftButtonUpEvent,
+            (_, true) => InputEvents.MouseRightButtonDownEvent,
+            _ => InputEvents.MouseRightButtonUpEvent
+        };
+        List<string> calls = [];
+        child.Handlers.AddHandler(buttonEvent, (_, _) => calls.Add("child"));
+        parent.Handlers.AddHandler(buttonEvent, (_, _) => calls.Add("parent"));
+        root.Handlers.AddHandler(buttonEvent, (_, _) => calls.Add("root"));
+        PointerSnapshot released = PointerSnapshot.Empty.WithPosition(10, 10);
+        PointerSnapshot pressed = released.WithButton(button, true);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, new InputFrame(released, pressed, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []));
+        bridge.Dispatch(root, new InputFrame(pressed, released, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []));
+
+        Assert.Equal(["child", "parent"], calls);
+    }
+
+    // The tunnelling preview pairs follow the same rule: a PreviewMouseDown or PreviewMouseUp handled on an element stops
+    // ordinary preview button-specific handlers only on the elements below it (#660).
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void HandledPreviewMouseDownOrUpStillRunsPreviewButtonHandlersOnTheHandlingElementAndAboveIt(bool isDown)
+    {
+        UIRoot root = RootWithParentAndChild(out UIElement parent, out UIElement child);
+        parent.Handlers.AddHandler(isDown ? InputEvents.PreviewMouseDownEvent : InputEvents.PreviewMouseUpEvent, (_, args) => args.Handled = true);
+        RoutedEvent buttonEvent = isDown ? InputEvents.PreviewMouseLeftButtonDownEvent : InputEvents.PreviewMouseLeftButtonUpEvent;
+        List<string> calls = [];
+        root.Handlers.AddHandler(buttonEvent, (_, _) => calls.Add("root"));
+        parent.Handlers.AddHandler(buttonEvent, (_, _) => calls.Add("parent"));
+        child.Handlers.AddHandler(buttonEvent, (_, _) => calls.Add("child"));
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(10, 10, pressed: true));
+        bridge.Dispatch(root, PointerFrame(10, 10, 10, 10, previousDown: true));
+
+        Assert.Equal(["root", "parent"], calls);
+    }
+
     [Fact]
     public void MouseMoveUpdatesHoverAndInvalidatesBeforeScheduler()
     {
@@ -648,6 +703,16 @@ public sealed class ElementInputBridgeTests
         UIRoot root = new(100, 100);
         child = HitTestServiceTests.Arranged(0, 0, 40, 40);
         root.VisualChildren.Add(child);
+        return root;
+    }
+
+    private static UIRoot RootWithParentAndChild(out UIElement parent, out UIElement child)
+    {
+        UIRoot root = new(100, 100);
+        parent = HitTestServiceTests.Arranged(0, 0, 60, 60);
+        child = HitTestServiceTests.Arranged(0, 0, 40, 40);
+        parent.VisualChildren.Add(child);
+        root.VisualChildren.Add(parent);
         return root;
     }
 

@@ -1,9 +1,11 @@
 using System.Runtime.CompilerServices;
+using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
 using Canvas = Cerneala.UI.Layout.Panels.Canvas;
 
 namespace Cerneala.Tests.Controls;
@@ -192,6 +194,103 @@ public sealed class ButtonKeyboardActivationTests
 
         bridge.Dispatch(root, new InputFrame(pointerUp, pointerUp, space, noKeys, []));
         Assert.Equal(1, firstClicks);
+    }
+
+    // As WPF ButtonBase.OnMouseLeftButtonUp, where shouldClick is !IsSpaceKeyDown && IsPressed: a mouse click on a button
+    // that Space holds pressed neither clears IsPressed nor clicks, and the Space release raises the one Click (#661).
+    // A MouseDown handled in the button's content does not take the Space press away either.
+    [Theory]
+    [InlineData("none")]
+    [InlineData("MouseDown")]
+    [InlineData("PreviewMouseDown")]
+    public void MouseClickOnASpacePressedButtonKeepsItPressedAndClicksOnceOnSpaceRelease(string handledEvent)
+    {
+        UIRoot root = WindowRootWithButton(out Button button, out Border content);
+        if (handledEvent == "MouseDown")
+        {
+            content.MouseDown += (_, args) => args.Handled = true;
+        }
+        else if (handledEvent == "PreviewMouseDown")
+        {
+            content.PreviewMouseDown += (_, args) => args.Handled = true;
+        }
+
+        int clicks = 0;
+        int executions = 0;
+        button.Click += (_, _) => clicks++;
+        button.Command = new ActionCommand(_ => executions++);
+        ElementInputBridge bridge = FocusedBridge(root, button);
+        (float x, float y) = Center(content);
+
+        bridge.Dispatch(root, PointerKeyFrame(x, y, false, false, [], [InputKey.Space]));
+        Assert.True(button.IsPressed);
+
+        bridge.Dispatch(root, PointerKeyFrame(x, y, false, true, [InputKey.Space], [InputKey.Space]));
+        Assert.True(button.IsPressed);
+
+        bridge.Dispatch(root, PointerKeyFrame(x, y, true, false, [InputKey.Space], [InputKey.Space]));
+        Assert.True(button.IsPressed);
+        Assert.Equal(0, clicks);
+        Assert.Equal(0, executions);
+
+        bridge.Dispatch(root, PointerKeyFrame(x, y, false, false, [InputKey.Space], []));
+        Assert.False(button.IsPressed);
+        Assert.Equal(1, clicks);
+        Assert.Equal(1, executions);
+    }
+
+    // As WPF ButtonBase.OnKeyUp, which clicks only when the left mouse button is released: when Space is released while
+    // the mouse still presses the button, the button stays pressed, and the mouse release raises the one Click (#661).
+    [Fact]
+    public void SpaceReleaseWhileTheMouseStillPressesTheButtonLeavesTheClickToTheMouseRelease()
+    {
+        UIRoot root = WindowRootWithButton(out Button button, out Border content);
+        int clicks = 0;
+        int executions = 0;
+        button.Click += (_, _) => clicks++;
+        button.Command = new ActionCommand(_ => executions++);
+        ElementInputBridge bridge = FocusedBridge(root, button);
+        (float x, float y) = Center(content);
+
+        bridge.Dispatch(root, PointerKeyFrame(x, y, false, false, [], [InputKey.Space]));
+        bridge.Dispatch(root, PointerKeyFrame(x, y, false, true, [InputKey.Space], [InputKey.Space]));
+        bridge.Dispatch(root, PointerKeyFrame(x, y, true, true, [InputKey.Space], []));
+        Assert.True(button.IsPressed);
+        Assert.Equal(0, clicks);
+        Assert.Equal(0, executions);
+
+        bridge.Dispatch(root, PointerKeyFrame(x, y, true, false, [], []));
+        Assert.False(button.IsPressed);
+        Assert.Equal(1, clicks);
+        Assert.Equal(1, executions);
+    }
+
+    // As WPF ButtonBase.OnKeyDown, which presses only when the button does not have the mouse captured: Space on a
+    // button that the mouse already presses does nothing, so the mouse release raises the one Click (#661).
+    [Fact]
+    public void SpaceOnAButtonTheMouseAlreadyPressesLeavesTheClickToTheMouseRelease()
+    {
+        UIRoot root = WindowRootWithButton(out Button button, out Border content);
+        int clicks = 0;
+        int executions = 0;
+        button.Click += (_, _) => clicks++;
+        button.Command = new ActionCommand(_ => executions++);
+        ElementInputBridge bridge = FocusedBridge(root, button);
+        (float x, float y) = Center(content);
+
+        bridge.Dispatch(root, PointerKeyFrame(x, y, false, true, [], []));
+        bridge.Dispatch(root, PointerKeyFrame(x, y, true, true, [], [InputKey.Space]));
+        Assert.True(button.IsPressed);
+
+        bridge.Dispatch(root, PointerKeyFrame(x, y, true, false, [InputKey.Space], [InputKey.Space]));
+        Assert.False(button.IsPressed);
+        Assert.Equal(1, clicks);
+        Assert.Equal(1, executions);
+
+        bridge.Dispatch(root, PointerKeyFrame(x, y, false, false, [InputKey.Space], []));
+        Assert.False(button.IsPressed);
+        Assert.Equal(1, clicks);
+        Assert.Equal(1, executions);
     }
 
     [Fact]
@@ -439,6 +538,37 @@ public sealed class ButtonKeyboardActivationTests
         second.Arrange(new ArrangeContext(new LayoutRect(50, 0, 40, 40)));
         root.VisualChildren.Add(second);
         return root;
+    }
+
+    private static UIRoot WindowRootWithButton(out Button button, out Border content)
+    {
+        content = new Border { Width = 120, Height = 30, Background = new SolidColorBrush(Color.White) };
+        button = new Button { Content = content, Width = 200, Height = 80 };
+        Canvas canvas = new();
+        canvas.VisualChildren.Add(button);
+        UIRoot root = new(360, 240);
+        root.VisualChildren.Add(new Window { Content = canvas, Width = 360, Height = 240 });
+        root.ProcessFrame();
+        return root;
+    }
+
+    private static (float X, float Y) Center(UIElement element)
+    {
+        LayoutRect bounds = element.ArrangedBounds;
+        return (bounds.X + (bounds.Width / 2), bounds.Y + (bounds.Height / 2));
+    }
+
+    private static InputFrame PointerKeyFrame(
+        float x,
+        float y,
+        bool previousDown,
+        bool currentDown,
+        InputKey[] previousKeys,
+        InputKey[] currentKeys)
+    {
+        PointerSnapshot previous = PointerSnapshot.Empty.WithPosition(x, y).WithButton(InputMouseButton.Left, previousDown);
+        PointerSnapshot current = PointerSnapshot.Empty.WithPosition(x, y).WithButton(InputMouseButton.Left, currentDown);
+        return new InputFrame(previous, current, KeyboardSnapshot.FromDownKeys(previousKeys), KeyboardSnapshot.FromDownKeys(currentKeys), []);
     }
 
     private static InputFrame KeyPressFrame(InputKey key)
