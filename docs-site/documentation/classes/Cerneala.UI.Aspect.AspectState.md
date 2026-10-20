@@ -52,7 +52,7 @@ bool containsDanger = states.Contains(danger);
 
 `AspectStateSet.FromElement(UIElement)` derives the built-in hover, pressed, focus, focus-within, disabled, selected, checked, and expanded states from the corresponding element or control properties.
 
-`Checked` is active when `ToggleButton.IsChecked` is `true` (including on `CheckBox` and other derived controls), or when `RadioButton.IsChecked` is `true`. `Expanded` is active when `MenuItem.IsSubmenuOpen` or `ComboBox.IsDropDownOpen` is `true`. False values do not activate either state. Changes to these source properties invalidate aspect resolution, so state-conditioned rules on attached controls are re-evaluated on the next processed frame.
+`Checked` is active when `ToggleButton.IsChecked` is `true` (including on `CheckBox`, `RadioButton`, and other derived controls). `Expanded` is active when `MenuItem.IsSubmenuOpen` or `ComboBox.IsDropDownOpen` is `true`. False values do not activate either state. Changes to these source properties invalidate aspect resolution, so state-conditioned rules on attached controls are re-evaluated on the next processed frame.
 
 Use `Create(string)` when a control or component needs a domain-specific state. The constructor is private, so callers cannot subclass or instantiate arbitrary states directly. State names must not be null, empty, or whitespace.
 
@@ -60,7 +60,7 @@ Use `Create(string)` when a control or component needs a domain-specific state. 
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `Checked` | `AspectState` | Gets the built-in `checked` state, derived from `ToggleButton.IsChecked` or `RadioButton.IsChecked`. |
+| `Checked` | `AspectState` | Gets the built-in `checked` state, derived from `ToggleButton.IsChecked`, which `CheckBox` and `RadioButton` inherit. |
 | `Disabled` | `AspectState` | Gets the built-in `disabled` state. |
 | `Expanded` | `AspectState` | Gets the built-in `expanded` state, derived from `MenuItem.IsSubmenuOpen` or `ComboBox.IsDropDownOpen`. |
 | `Focus` | `AspectState` | Gets the built-in `focus` state. |

@@ -66,7 +66,7 @@ The set is value-like. `Add` and `Remove` return a new `AspectStateSet` when the
 | `FocusWithin` | `UIElement.IsKeyboardFocusWithin` is `true`. |
 | `Disabled` | `UIElement.IsEnabled` is `false`. |
 | `Selected` | The element implements `ISelectableItemContainer` and `IsSelected` is `true`. |
-| `Checked` | `ToggleButton.IsChecked` is `true` (including on `CheckBox` and other derived controls), or `RadioButton.IsChecked` is `true`. |
+| `Checked` | `ToggleButton.IsChecked` is `true` (including on `CheckBox`, `RadioButton`, and other derived controls). |
 | `Expanded` | `MenuItem.IsSubmenuOpen` or `ComboBox.IsDropDownOpen` is `true`. |
 
 `Checked` and `Expanded` are absent when their source property is `false`, and are not inferred on unrelated element types. The four source properties carry `AffectsAspect` metadata, so changes queue attached controls for aspect resolution on the next processed frame. `FromElement` returns a snapshot; obtain a new set to observe later changes.

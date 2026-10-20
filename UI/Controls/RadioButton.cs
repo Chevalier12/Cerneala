@@ -1,34 +1,143 @@
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Core;
+using Cerneala.UI.Elements;
+using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
 
 namespace Cerneala.UI.Controls;
 
-public class RadioButton : Button
+public class RadioButton : ToggleButton
 {
-    public static readonly UiProperty<bool> IsCheckedProperty = UiProperty<bool>.Register(
-        nameof(IsChecked),
+    public static readonly UiProperty<string> GroupNameProperty = UiProperty<string>.Register(
+        nameof(GroupName),
         typeof(RadioButton),
-        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsAspect));
+        new UiPropertyMetadata<string>(string.Empty, UiPropertyOptions.None, validateValue: value => value is not null));
 
     // WPF's RadioButton style is not based on the ButtonBase style, so its content keeps Control's Left and Top.
     public RadioButton()
     {
         SetFrameworkDefault(HorizontalContentAlignmentProperty, HorizontalAlignment.Left);
         SetFrameworkDefault(VerticalContentAlignmentProperty, VerticalAlignment.Top);
+        Handlers.AddHandler(InputEvents.KeyDownEvent, OnKeyDown);
     }
 
-    public bool IsChecked
+    // The name of the group this radio button belongs to. With a name, the group is every radio button with that name
+    // under the same visual root. Without a name, it is the unnamed radio buttons that share this one's parent.
+    public string GroupName
     {
-        get => GetValue(IsCheckedProperty);
-        set => SetValue(IsCheckedProperty, value);
+        get => GetValue(GroupNameProperty);
+        set => SetValue(GroupNameProperty, value);
     }
 
-    // Checks only through ButtonBase's click, so a release that a command source in the content owns, or a release
-    // that follows no press on this button, leaves IsChecked unchanged (#587).
-    protected override void OnClick()
+    // Reached only through ButtonBase's click, so a release that a command source in the content owns, or a release
+    // that follows no press on this button, leaves IsChecked unchanged (#587). A click never unchecks.
+    protected override void OnToggle()
     {
         IsChecked = true;
-        base.OnClick();
+    }
+
+    // As WPF, the other checked radio buttons of the group are unchecked before Checked is raised, so their Unchecked
+    // comes first.
+    protected override void OnChecked(RoutedEventArgs e)
+    {
+        foreach (RadioButton other in GetGroup())
+        {
+            if (!ReferenceEquals(other, this) && other.IsChecked)
+            {
+                other.IsChecked = false;
+            }
+        }
+
+        base.OnChecked(e);
+    }
+
+    private void OnKeyDown(UiElementId _, RoutedEventArgs args)
+    {
+        if (args.Handled || args is not KeyEventArgs keyArgs)
+        {
+            return;
+        }
+
+        int step = keyArgs.Key switch
+        {
+            InputKey.Up or InputKey.Left => -1,
+            InputKey.Down or InputKey.Right => 1,
+            _ => 0
+        };
+        if (step == 0 ||
+            Root is not UIRoot { ActiveFocusManager: { } focusManager } root ||
+            !ReferenceEquals(focusManager.FocusedElement, this))
+        {
+            return;
+        }
+
+        List<RadioButton> group = GetGroup();
+        int index = group.IndexOf(this);
+        if (index < 0)
+        {
+            return;
+        }
+
+        ElementInputRouteMap routeMap = root.InputCache.EnsureCurrent(root);
+        for (int distance = 1; distance < group.Count; distance++)
+        {
+            int candidateIndex = (((index + (step * distance)) % group.Count) + group.Count) % group.Count;
+            RadioButton candidate = group[candidateIndex];
+            if (!FocusPolicy.CanFocus(candidate, routeMap))
+            {
+                continue;
+            }
+
+            if (focusManager.Focus(candidate, routeMap))
+            {
+                candidate.IsChecked = true;
+                args.Handled = true;
+            }
+
+            return;
+        }
+    }
+
+    // The group of this radio button in visual pre-order, this one included. A named group is every radio button with
+    // that name under the topmost visual ancestor. An unnamed group is the unnamed radio buttons among the logical
+    // children of the logical parent, or of the visual parent when there is no logical parent.
+    private List<RadioButton> GetGroup()
+    {
+        string groupName = GroupName;
+        IEnumerable<UIElement> candidates;
+        if (groupName.Length > 0)
+        {
+            UIElement top = this;
+            while (top.VisualParent is { } parent)
+            {
+                top = parent;
+            }
+
+            candidates = ElementTreeWalker.PreOrder(top);
+        }
+        else if (LogicalParent is { } logicalParent)
+        {
+            candidates = logicalParent.LogicalChildren;
+        }
+        else if (VisualParent is { } visualParent)
+        {
+            candidates = visualParent.VisualChildren;
+        }
+        else
+        {
+            candidates = [this];
+        }
+
+        List<RadioButton> group = [];
+        foreach (UIElement candidate in candidates)
+        {
+            if (candidate is RadioButton radioButton &&
+                string.Equals(radioButton.GroupName, groupName, StringComparison.Ordinal))
+            {
+                group.Add(radioButton);
+            }
+        }
+
+        return group;
     }
 }

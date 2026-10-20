@@ -202,7 +202,6 @@ public sealed class AspectCheckedExpandedTests
         return control switch
         {
             ToggleButton => (control, ToggleButton.IsCheckedProperty, AspectState.Checked),
-            RadioButton => (control, RadioButton.IsCheckedProperty, AspectState.Checked),
             MenuItem => (control, MenuItem.IsSubmenuOpenProperty, AspectState.Expanded),
             ComboBox => (control, ComboBox.IsDropDownOpenProperty, AspectState.Expanded),
             _ => throw new ArgumentException("Unsupported test control.", nameof(controlType))
