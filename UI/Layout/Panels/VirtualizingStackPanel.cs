@@ -399,12 +399,26 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
         return FromDevicePixels(devicePixels, rounding);
     }
 
-    // The top of the item at index in this panel, as arrange places it, while an automatic viewport drives the panel;
-    // null otherwise. As WPF's VirtualizingStackPanel.BringIndexIntoView, an owner scrolls an item without a container
-    // there before the item is realized.
-    internal float? EstimateAutomaticItemOffset(int index)
+    // The top and bottom of each of the first count items in this panel, as arrange places them, while an automatic
+    // viewport drives the panel; no bounds otherwise. As WPF's VirtualizingStackPanel.BringIndexIntoView, an owner
+    // scrolls an item without a container there before the item is realized. The item extents are added as EstimateOffset
+    // adds them, in one walk, so the bounds of the first n items cost n steps.
+    internal IEnumerable<(float Top, float Bottom)> EnumerateAutomaticItemBounds(int count)
     {
-        return automaticViewport is null ? null : EstimateOffset(index, measureRounding);
+        if (automaticViewport is null)
+        {
+            yield break;
+        }
+
+        LayoutRounding rounding = measureRounding;
+        double estimatedDevicePixels = rounding.ToDevicePixels(estimatedItemExtent);
+        double devicePixels = 0;
+        for (int index = 0; index < count; index++)
+        {
+            double next = devicePixels + GetItemDevicePixels(index, rounding, estimatedDevicePixels);
+            yield return (FromDevicePixels(devicePixels, rounding), FromDevicePixels(next, rounding));
+            devicePixels = next;
+        }
     }
 
     private float EstimateTotalExtent(int itemCount, LayoutRounding rounding)

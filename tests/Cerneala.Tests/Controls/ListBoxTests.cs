@@ -811,6 +811,46 @@ public sealed class ListBoxTests
         Assert.InRange(listBox.ItemContainerGenerator.RealizedContainers.Count, 1, 20);
     }
 
+    // As WPF's BringIndexIntoView, which keeps scrolling until the item is in view, End and ScrollIntoView bring a row
+    // that is not realized fully into the viewport also when the rows are 10 and 40 pixels high in turn, so that the
+    // panel's estimate changes with the rows it measures at the new place (#702).
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void EndAndScrollIntoViewBringAnUnrealizedRowIntoViewWhenTheRowHeightsDiffer(bool endKey)
+    {
+        ListBox listBox = new()
+        {
+            Width = 150,
+            Height = 100,
+            ItemsPanel = new Cerneala.UI.Layout.Panels.VirtualizingStackPanel(),
+            ItemTemplate = new ContentTemplate<string>("row", key: null, priority: 0,
+                context => new Border { Height = int.Parse(context.Data!) % 2 == 0 ? 10 : 40 }),
+            ItemsSource = Enumerable.Range(0, 10_000).Select(index => index.ToString()).ToArray()
+        };
+        UIRoot root = new(360, 300);
+        root.VisualChildren.Add(new Window { Content = listBox, Width = 360, Height = 300 });
+        root.ProcessFrame();
+        ElementInputBridge bridge = new();
+        ClickCenter(root, bridge, Row(listBox, 0));
+
+        if (endKey)
+        {
+            PressKey(root, bridge, InputKey.End);
+            Assert.Contains(9999, listBox.ItemContainerGenerator.RealizedContainers.Keys);
+            AssertFocusedSelectedRow(listBox, 9999);
+        }
+        else
+        {
+            listBox.ScrollIntoView("5001");
+            root.ProcessFrame();
+            Assert.Contains(5001, listBox.ItemContainerGenerator.RealizedContainers.Keys);
+            AssertRowInsideViewport(listBox, 5001);
+        }
+
+        Assert.InRange(listBox.ItemContainerGenerator.RealizedContainers.Count, 1, 20);
+    }
+
     // As WPF's ListBox.ScrollIntoView, a row below the viewport scrolls up until its bottom is at the bottom of the
     // viewport. The viewport is 100 pixels high and the rows 20, so row 15 ends at 320 and the offset becomes 220 (#680).
     [Fact]

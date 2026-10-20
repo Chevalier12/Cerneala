@@ -155,7 +155,7 @@ ListBox listBox = new()
 listBox.SetItems(Enumerable.Range(0, 2000).Select(index => index.ToString()));
 ```
 
-In such a list the keys and `ScrollIntoView` also reach rows that have no container yet, as WPF's `VirtualizingStackPanel.BringIndexIntoView`. End, Home, PageUp, PageDown, the arrow keys, and `ScrollIntoView` first scroll to the place that the panel estimates for the row: above the viewport the row goes to the top, below it to the bottom. After the next arrange, which creates the row, the list scrolls it to its exact place, and a key gives it the focus then. For example, in a list 100 pixels high with 10,000 rows 10 pixels high, `ScrollIntoView("5000")` and one frame show row `5000` inside the viewport, and at most 20 rows exist.
+In such a list the keys and `ScrollIntoView` also reach rows that have no container yet, as WPF's `VirtualizingStackPanel.BringIndexIntoView`. End, Home, PageUp, PageDown, the arrow keys, and `ScrollIntoView` first scroll to the place that the panel estimates for the row: above the viewport the row goes to the top, below it to the bottom. After the next arrange, which creates the row, the list scrolls it to its exact place, and a key gives it the focus then. When the rows have different heights, the rows measured at the new place change the estimate, so the list scrolls again after each arrange that follows a scroll, until a scroll does not move the viewport. For example, in a list 100 pixels high with 10,000 rows 10 pixels high, `ScrollIntoView("5000")` and one frame show row `5000` inside the viewport, and at most 20 rows exist.
 
 ### Selection modes
 
