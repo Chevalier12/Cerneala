@@ -275,6 +275,14 @@ public sealed class ElementInputBridge
                 if (button == InputMouseButton.Left)
                 {
                     repeatButtonController.Cancel(pressedStateTracker);
+
+                    // As WPF ButtonBase.OnMouseLeftButtonUp, where shouldClick is !IsSpaceKeyDown && IsPressed: the
+                    // release of a press on the element that Space holds pressed completes no click, so it raises no
+                    // Click and runs no Command, and the element stays pressed until Space is released (#661).
+                    if (keyboardActivationController.IsSpacePressed(clickTracker.PressedTarget(button)))
+                    {
+                        clickTracker.CancelPress(button);
+                    }
                 }
 
                 int clickCount = clickTracker.Release(

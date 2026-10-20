@@ -57,7 +57,7 @@ The public `Press(UIElement?)` resolves the nearest `IInputPressable` by walking
 
 Calling `Press` with `null`, or with an element whose visual ancestor chain does not contain an `IInputPressable`, cancels any existing pressed state. Calling `Press` for the same resolved pressable again leaves the state unchanged. Calling `Press` for a different pressable first clears the previous `PressedElement`, then sets the new pressable's `IsPressed` property to `true`.
 
-`Release` delegates to `Cancel`; both clear the current `PressedElement` and set its `IsPressed` property to `false`. `ElementInputBridge` uses this tracker during pointer button dispatch to set pressed visuals on a left-button press and clear them on the left-button release. As a WPF `ButtonBase` sets `IsPressed` on `MouseLeftButtonDown` only, the right, middle, and extra buttons do not change the pressed state: a right press on a `Button` leaves `IsPressed == false`, and a right press and release while the left button holds a `Button` keep its `IsPressed == true`.
+`Release` delegates to `Cancel`; both clear the current `PressedElement` and set its `IsPressed` property to `false`. The tracker also holds the Space press of `ElementInputBridge`, as WPF's `ButtonBase` keeps `IsPressed` while `IsSpaceKeyDown` is set: when Space holds the same element pressed, `Release` and `Cancel` clear `PressedElement` but leave `IsPressed` at `true`, and the Space release sets it to `false`. The Space release leaves `IsPressed` at `true` in the same way while `PressedElement` is that element. `ElementInputBridge` uses this tracker during pointer button dispatch to set pressed visuals on a left-button press and clear them on the left-button release. As a WPF `ButtonBase` sets `IsPressed` on `MouseLeftButtonDown` only, the right, middle, and extra buttons do not change the pressed state: a right press on a `Button` leaves `IsPressed == false`, and a right press and release while the left button holds a `Button` keep its `IsPressed == true`.
 
 ## Constructors
 
@@ -76,8 +76,8 @@ Calling `Press` with `null`, or with an element whose visual ancestor chain does
 | Name | Description |
 | --- | --- |
 | `Press(UIElement?)` | Resolves the supplied element or one of its visual ancestors to an `IInputPressable`, sets it as `PressedElement`, and sets `IsPressed` to `true`. If no pressable target is found, clears any existing pressed state. |
-| `Release()` | Clears the current pressed state. |
-| `Cancel()` | Clears the current pressed state without requiring a pointer release. |
+| `Release()` | Clears the current pressed state. `IsPressed` stays `true` while Space holds the same element. |
+| `Cancel()` | Clears the current pressed state without requiring a pointer release. `IsPressed` stays `true` while Space holds the same element. |
 
 ## Applies to
 
