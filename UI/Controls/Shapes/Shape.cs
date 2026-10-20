@@ -204,6 +204,22 @@ public abstract class Shape : Control
         return new DrawRect(rect.X, rect.Y, MathF.Max(0, rect.Width), MathF.Max(0, rect.Height));
     }
 
+    /// <summary>
+    /// Deflates the arranged bounds by half the effective stroke thickness so the centered pen stays inside them,
+    /// like WPF's <c>Ellipse</c> and <c>Rectangle</c>. A non-null <see cref="Stroke"/> counts even when transparent.
+    /// </summary>
+    private protected DrawRect DeflateByHalfStroke(LayoutRect arrangedBounds, out float inset)
+    {
+        DrawRect bounds = ToDrawRect(arrangedBounds);
+        float thickness = Stroke is null ? 0 : StrokeThickness;
+        inset = thickness / 2;
+        return new DrawRect(
+            bounds.X + inset,
+            bounds.Y + inset,
+            MathF.Max(0, bounds.Width - thickness),
+            MathF.Max(0, bounds.Height - thickness));
+    }
+
     private static bool HasVisibleBrush(Brush? brush)
     {
         return brush is not null && brush.Opacity > 0 && (brush.SolidColor?.A ?? 255) > 0;

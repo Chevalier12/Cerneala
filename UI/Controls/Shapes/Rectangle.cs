@@ -17,7 +17,7 @@ public sealed class Rectangle : Shape
         new UiPropertyMetadata<float>(0, UiPropertyOptions.AffectsRender, validateValue: IsValidRadius));
 
     private PathGeometry? roundedGeometry;
-    private (float Width, float Height, float RadiusX, float RadiusY) roundedKey;
+    private (float Width, float Height, float RadiusX, float RadiusY, float Inset) roundedKey;
 
     [MarkupValueConstraint(MarkupValueConstraint.NonNegative)]
     public float RadiusX
@@ -40,7 +40,7 @@ public sealed class Rectangle : Shape
             return geometry;
         }
 
-        DrawRect bounds = ToDrawRect(arrangedBounds);
+        DrawRect bounds = DeflateByHalfStroke(arrangedBounds, out float inset);
         float radiusX = MathF.Min(RadiusX, bounds.Width / 2);
         float radiusY = MathF.Min(RadiusY, bounds.Height / 2);
         if (radiusX == 0 || radiusY == 0)
@@ -48,21 +48,24 @@ public sealed class Rectangle : Shape
             return new RectangleGeometry(bounds);
         }
 
-        var key = (bounds.Width, bounds.Height, radiusX, radiusY);
+        var key = (bounds.Width, bounds.Height, radiusX, radiusY, inset);
         if (roundedGeometry is null || roundedKey != key)
         {
-            float width = bounds.Width;
-            float height = bounds.Height;
+            // The path is local to the arranged bounds, so it starts at the stroke inset instead of the origin.
+            float left = inset;
+            float top = inset;
+            float right = inset + bounds.Width;
+            float bottom = inset + bounds.Height;
             roundedGeometry = PathGeometry.FromPath(new DrawPathBuilder()
-                .MoveTo(new DrawPoint(radiusX, 0))
-                .LineTo(new DrawPoint(width - radiusX, 0))
-                .ArcTo(radiusX, radiusY, 0, false, true, new DrawPoint(width, radiusY))
-                .LineTo(new DrawPoint(width, height - radiusY))
-                .ArcTo(radiusX, radiusY, 0, false, true, new DrawPoint(width - radiusX, height))
-                .LineTo(new DrawPoint(radiusX, height))
-                .ArcTo(radiusX, radiusY, 0, false, true, new DrawPoint(0, height - radiusY))
-                .LineTo(new DrawPoint(0, radiusY))
-                .ArcTo(radiusX, radiusY, 0, false, true, new DrawPoint(radiusX, 0))
+                .MoveTo(new DrawPoint(left + radiusX, top))
+                .LineTo(new DrawPoint(right - radiusX, top))
+                .ArcTo(radiusX, radiusY, 0, false, true, new DrawPoint(right, top + radiusY))
+                .LineTo(new DrawPoint(right, bottom - radiusY))
+                .ArcTo(radiusX, radiusY, 0, false, true, new DrawPoint(right - radiusX, bottom))
+                .LineTo(new DrawPoint(left + radiusX, bottom))
+                .ArcTo(radiusX, radiusY, 0, false, true, new DrawPoint(left, bottom - radiusY))
+                .LineTo(new DrawPoint(left, top + radiusY))
+                .ArcTo(radiusX, radiusY, 0, false, true, new DrawPoint(left + radiusX, top))
                 .Close()
                 .Build());
             roundedKey = key;

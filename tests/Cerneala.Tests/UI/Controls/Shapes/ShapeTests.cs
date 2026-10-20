@@ -19,7 +19,7 @@ public sealed class ShapeTests
         {
             Fill = new SolidColorBrush(Color.White),
             Stroke = new SolidColorBrush(Color.Black),
-            StrokeThickness = 2
+            StrokeThickness = 3
         };
         root.VisualChildren.Add(rectangle);
         root.ProcessFrame();
@@ -32,7 +32,8 @@ public sealed class ShapeTests
         Assert.Equal(2, commands.Count);
         Assert.Equal(DrawCommandKind.FillRectangle, commands[0].Kind);
         Assert.Equal(DrawCommandKind.DrawRectangle, commands[1].Kind);
-        Assert.Equal(new DrawRect(1, 2, 30, 20), commands[0].Rect);
+        Assert.Equal(new DrawRect(2.5f, 3.5f, 27, 17), commands[0].Rect);
+        Assert.Equal(new DrawRect(2.5f, 3.5f, 27, 17), commands[1].Rect);
     }
 
     [Fact]
@@ -56,7 +57,8 @@ public sealed class ShapeTests
         Assert.Equal(2, commands.Count);
         Assert.Equal(DrawCommandKind.FillEllipse, commands[0].Kind);
         Assert.Equal(DrawCommandKind.DrawEllipse, commands[1].Kind);
-        Assert.Equal(new DrawRect(1, 2, 30, 20), commands[0].Rect);
+        Assert.Equal(new DrawRect(2.5f, 3.5f, 27, 17), commands[0].Rect);
+        Assert.Equal(new DrawRect(2.5f, 3.5f, 27, 17), commands[1].Rect);
     }
 
     [Fact]
@@ -235,5 +237,128 @@ public sealed class ShapeTests
         LayoutSize desired = rectangle.Measure(new MeasureContext(new LayoutSize(100, 100)));
 
         Assert.Equal(new LayoutSize(32, 22), desired);
+    }
+
+    [Fact]
+    public void EllipseStrokeStaysInsideTheArrangedBounds()
+    {
+        Ellipse ellipse = new()
+        {
+            Stroke = new SolidColorBrush(Color.Black),
+            StrokeThickness = 1
+        };
+
+        DrawCommand command = Assert.Single(Record(ellipse, new LayoutRect(0, 0, 12, 12)));
+
+        Assert.Equal(DrawCommandKind.DrawEllipse, command.Kind);
+        Assert.Equal(new DrawRect(0.5f, 0.5f, 11, 11), command.Rect);
+    }
+
+    [Fact]
+    public void StrokeThicknessLargerThanTheBoundsLeavesNothingToDraw()
+    {
+        Shape[] shapes = [new Ellipse(), new RectangleShape()];
+        foreach (Shape shape in shapes)
+        {
+            shape.Fill = new SolidColorBrush(Color.White);
+            shape.Stroke = new SolidColorBrush(Color.Black);
+            shape.StrokeThickness = 40;
+
+            DrawCommandList commands = Record(shape, new LayoutRect(1, 2, 30, 20));
+
+            Assert.DoesNotContain(commands, command => command.Kind is
+                DrawCommandKind.FillEllipse or DrawCommandKind.DrawEllipse or
+                DrawCommandKind.FillRectangle or DrawCommandKind.DrawRectangle);
+        }
+    }
+
+    [Fact]
+    public void WithoutAStrokeTheFillUsesTheFullArrangedBounds()
+    {
+        Shape[] shapes = [new Ellipse(), new RectangleShape()];
+        foreach (Shape shape in shapes)
+        {
+            shape.Fill = new SolidColorBrush(Color.White);
+            shape.StrokeThickness = 6;
+
+            DrawCommand command = Assert.Single(Record(shape, new LayoutRect(1, 2, 30, 20)));
+
+            Assert.Equal(new DrawRect(1, 2, 30, 20), command.Rect);
+        }
+    }
+
+    [Fact]
+    public void ZeroStrokeThicknessKeepsTheFullArrangedBounds()
+    {
+        Shape[] shapes = [new Ellipse(), new RectangleShape()];
+        foreach (Shape shape in shapes)
+        {
+            shape.Fill = new SolidColorBrush(Color.White);
+            shape.Stroke = new SolidColorBrush(Color.Black);
+            shape.StrokeThickness = 0;
+
+            DrawCommand command = Assert.Single(Record(shape, new LayoutRect(1, 2, 30, 20)));
+
+            Assert.Equal(new DrawRect(1, 2, 30, 20), command.Rect);
+        }
+    }
+
+    [Fact]
+    public void ATransparentStrokeStillDeflatesTheFillLikeWpf()
+    {
+        Shape[] shapes = [new Ellipse(), new RectangleShape()];
+        foreach (Shape shape in shapes)
+        {
+            shape.Fill = new SolidColorBrush(Color.White);
+            shape.Stroke = new SolidColorBrush(new Color(0, 0, 0, 0));
+            shape.StrokeThickness = 4;
+
+            DrawCommand command = Assert.Single(Record(shape, new LayoutRect(1, 2, 30, 20)));
+
+            Assert.Equal(new DrawRect(3, 4, 26, 16), command.Rect);
+        }
+    }
+
+    [Fact]
+    public void ExplicitGeometryIsNotDeflatedByTheStroke()
+    {
+        Shape[] shapes = [new Ellipse(), new RectangleShape()];
+        foreach (Shape shape in shapes)
+        {
+            shape.Geometry = new RectangleGeometry(new DrawRect(5, 6, 10, 8));
+            shape.Fill = new SolidColorBrush(Color.White);
+            shape.Stroke = new SolidColorBrush(Color.Black);
+            shape.StrokeThickness = 4;
+
+            DrawCommand[] commands = Record(shape, new LayoutRect(1, 2, 30, 20)).ToArray();
+
+            Assert.Equal(2, commands.Length);
+            Assert.Equal(DrawCommandKind.FillRectangle, commands[0].Kind);
+            Assert.Equal(DrawCommandKind.DrawRectangle, commands[1].Kind);
+            Assert.All(commands, command => Assert.Equal(new DrawRect(5, 6, 10, 8), command.Rect));
+        }
+    }
+
+    [Fact]
+    public void EllipseAndRectangleNaturalSizeIsTheStrokeThicknessOnly()
+    {
+        Ellipse stroked = new() { Stroke = new SolidColorBrush(Color.Black), StrokeThickness = 2 };
+        Ellipse unstroked = new() { StrokeThickness = 2 };
+        RectangleShape strokedRectangle = new() { Stroke = new SolidColorBrush(Color.Black), StrokeThickness = 2 };
+
+        Assert.Equal(new LayoutSize(2, 2), stroked.Measure(new MeasureContext(new LayoutSize(100, 100))));
+        Assert.Equal(new LayoutSize(0, 0), unstroked.Measure(new MeasureContext(new LayoutSize(100, 100))));
+        Assert.Equal(new LayoutSize(2, 2), strokedRectangle.Measure(new MeasureContext(new LayoutSize(100, 100))));
+    }
+
+    private static DrawCommandList Record(Shape shape, LayoutRect bounds)
+    {
+        UIRoot root = new();
+        root.VisualChildren.Add(shape);
+        root.ProcessFrame();
+        shape.Arrange(new ArrangeContext(bounds));
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "shape-stroke-inset");
+        root.ProcessFrame();
+        return root.RetainedRenderer.Commit(root);
     }
 }

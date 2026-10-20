@@ -84,7 +84,7 @@ The constructor installs the default component template `RadioButton.Default`, a
 
 `PART_CheckMark` may be any `UIElement`. The control sets its `Visibility` to `Visible` while `IsChecked` is `true` and to `Hidden` otherwise, so a checked radio button draws the dot and an unchecked one draws only the ring. For example, after the user clicks `small` and then `large`, `large` draws its dot and `small` does not. The dot's `Fill` belongs to the template and is not bound to `Foreground`. The part is optional: a custom component template without it still works, but no element shows the checked state. A `ComponentTemplate` set by the application replaces the default template.
 
-The ring stroke is centered on the indicator's edge, as `Ellipse` draws every stroke, so half of a thick `BorderThickness` lies outside the 12 x 12 indicator.
+The ring `Ellipse` draws its stroke inside its arranged bounds, like WPF: the outer edge of the stroke touches the edge of the indicator, so even a thick `BorderThickness` stays inside the 12 x 12 indicator. For example, with the default one-pixel `BorderThickness`, the ring is drawn in the rectangle `(0.5, 0.5, 11, 11)` of the indicator, and nothing is drawn outside `(0, 0, 12, 12)`.
 
 ### Checking by click and keyboard
 

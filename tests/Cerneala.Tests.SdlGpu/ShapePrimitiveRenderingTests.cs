@@ -79,6 +79,8 @@ public sealed class ShapePrimitiveRenderingTests
             ? Matrix.CreateTranslation(-45, -45) * transform * Matrix.CreateTranslation(45, 45)
             : transform * Matrix.CreateTranslation(45, 45)));
         DrawRect rect = scene == 0 ? new(45, 45, 40, 30) : new(0, 0, 40, 30);
+        // Rectangle and ellipse deflate their fill and stroke by half the 2px stroke thickness.
+        DrawRect deflated = scene == 0 ? new(46, 46, 38, 28) : new(1, 1, 38, 28);
         if (shape.ClipToBounds)
         {
             expectedCommands.Add(DrawCommand.PushClip(rect));
@@ -87,12 +89,12 @@ public sealed class ShapePrimitiveRenderingTests
         switch (scene)
         {
             case 0:
-                expectedCommands.Add(DrawCommand.FillRectangle(rect, fill, opacity));
-                expectedCommands.Add(DrawCommand.DrawRectangle(rect, pen, opacity));
+                expectedCommands.Add(DrawCommand.FillRectangle(deflated, fill, opacity));
+                expectedCommands.Add(DrawCommand.DrawRectangle(deflated, pen, opacity));
                 break;
             case 1:
-                expectedCommands.Add(DrawCommand.FillEllipse(rect, fill, opacity));
-                expectedCommands.Add(DrawCommand.DrawEllipse(rect, pen, opacity));
+                expectedCommands.Add(DrawCommand.FillEllipse(deflated, fill, opacity));
+                expectedCommands.Add(DrawCommand.DrawEllipse(deflated, pen, opacity));
                 break;
             case 2:
                 expectedCommands.Add(DrawCommand.DrawLine(default, new DrawPoint(36, 0), pen, opacity));
@@ -105,7 +107,7 @@ public sealed class ShapePrimitiveRenderingTests
                 {
                     4 => DrawPathFactory.Polyline(Points),
                     5 => DrawPathFactory.Polygon(Points),
-                    6 => DrawPathParser.ParseSvg("M12 0L28 0A12 5 0 0 1 40 5L40 25A12 5 0 0 1 28 30L12 30A12 5 0 0 1 0 25L0 5A12 5 0 0 1 12 0Z"),
+                    6 => DrawPathParser.ParseSvg("M13 1L27 1A12 5 0 0 1 39 6L39 24A12 5 0 0 1 27 29L13 29A12 5 0 0 1 1 24L1 6A12 5 0 0 1 13 1Z"),
                     _ => DrawPathParser.ParseSvg(CurveData)
                 };
                 expectedCommands.Add(DrawCommand.FillPath(path, path.Bounds, path.Bounds, fill, DrawFillRule.EvenOdd, opacity));
@@ -128,6 +130,51 @@ public sealed class ShapePrimitiveRenderingTests
                     Math.Abs(actual[index].G - expected[index].G), Math.Abs(actual[index].B - expected[index].B))));
         }
         Assert.True(maximumDelta <= 2, $"Scene {scene}, scale {coordinateScale}: maximum RGB delta {maximumDelta}/255.");
+    }
+
+    [SdlNativeTheory]
+    [InlineData(0)]
+    [InlineData(1)]
+    public void ThickStrokeStaysInsideTheArrangedBounds(int scene)
+    {
+        using SdlDrawingFixture fixture = new(64, 64, useMultisampling: true, coordinateScale: 1f);
+        Color red = new(255, 0, 0);
+        Shape shape = scene == 0 ? new RectangleShape() : new Ellipse();
+        shape.Fill = new SolidColorBrush(new Color(0, 0, 255));
+        shape.Stroke = new SolidColorBrush(red);
+        shape.StrokeThickness = 6;
+        UIRoot root = new();
+        root.VisualChildren.Add(shape);
+        root.ProcessFrame();
+        shape.Arrange(new ArrangeContext(new LayoutRect(10, 10, 40, 30)));
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "shape-stroke-inside-bounds");
+        root.ProcessFrame();
+
+        Color[] pixels = fixture.Render(root.RetainedRenderer.Commit(root), Color.Black);
+
+        int maximumOutsideDelta = 0;
+        for (int y = 0; y < 64; y++)
+        {
+            for (int x = 0; x < 64; x++)
+            {
+                if (x >= 10 && x < 50 && y >= 10 && y < 40)
+                {
+                    continue;
+                }
+
+                Color pixel = pixels[(y * 64) + x];
+                maximumOutsideDelta = Math.Max(maximumOutsideDelta, Math.Max(pixel.R, Math.Max(pixel.G, pixel.B)));
+            }
+        }
+
+        Assert.True(
+            maximumOutsideDelta <= 2,
+            $"Scene {scene}: maximum delta from the background outside the arranged bounds {maximumOutsideDelta}/255.");
+        // Stroke band: 6px wide, just inside the left and top edges at the middle of the shape.
+        Assert.True(IsStrokeColored(fixture.Sample(pixels, 11.5f, 25.5f)), $"Left edge pixel {fixture.Sample(pixels, 11.5f, 25.5f)}.");
+        Assert.True(IsStrokeColored(fixture.Sample(pixels, 30.5f, 11.5f)), $"Top edge pixel {fixture.Sample(pixels, 30.5f, 11.5f)}.");
+
+        static bool IsStrokeColored(Color pixel) => pixel.R >= 200 && pixel.G <= 50 && pixel.B <= 50;
     }
 
     [SdlNativeTheory]
