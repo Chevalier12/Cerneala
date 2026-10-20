@@ -15,27 +15,130 @@ namespace Cerneala.Tests.Controls;
 
 public sealed class TabControlTests
 {
-    // The ItemsControl chrome (#609) does not apply: the built-in header row and content area are not inset, so a
-    // TabControl without a template draws no Background or BorderBrush of its own.
+    // As the ContentPanel Border of the WPF TabControl template (#649), a TabControl without a template fills the content
+    // area below the header row with Background, draws BorderBrush around it, and lays out the selected content inside
+    // BorderThickness and Padding; the header row keeps its place at the top.
     [Fact]
-    public void TabControlWithoutTemplateDrawsNoChromeOfItsOwn()
+    public void TabControlWithoutTemplateDrawsItsChromeAroundTheContentArea()
     {
+        SolidColorBrush red = new(Color.Red);
+        SolidColorBrush blue = new(Color.Blue);
+        Border page = new()
+        {
+            Width = 50,
+            Height = 30,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top
+        };
+        TabItem tab = new() { Header = "First", Content = page };
+        TabControl tabControl = new()
+        {
+            Background = red,
+            BorderBrush = blue,
+            BorderThickness = new Thickness(4),
+            Padding = new Thickness(10)
+        };
+        tabControl.SetItems(new[] { tab });
+        tabControl.SelectedIndex = 0;
+        UIRoot root = new(200, 200);
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+        root.ProcessFrame();
+        List<DrawCommand> commands = [.. root.RetainedRenderer.Commit(root)];
+
+        float headerHeight = tabControl.ItemsPresenter.ArrangedBounds.Height;
+        Assert.True(headerHeight > 0);
+        Assert.Equal(new LayoutRect(0, 0, 200, headerHeight), tabControl.ItemsPresenter.ArrangedBounds);
+        Assert.Equal(0, tab.ArrangedBounds.X);
+        Assert.Equal(0, tab.ArrangedBounds.Y);
+        Assert.Equal(new LayoutRect(14, headerHeight + 14, 50, 30), page.ArrangedBounds);
+        Assert.Equal(
+            new LayoutSize(MathF.Max(tabControl.ItemsPresenter.DesiredSize.Width, 50 + 28), headerHeight + 30 + 28),
+            tabControl.DesiredSize);
+        DrawRect contentArea = new(0, headerHeight, 200, 200 - headerHeight);
+        DrawCommand fill = Assert.Single(commands, command => ReferenceEquals(command.Brush, red));
+        Assert.Equal(DrawCommandKind.FillRectangle, fill.Kind);
+        Assert.Equal(contentArea, fill.Rect);
+        DrawCommand border = Assert.Single(commands, command => ReferenceEquals(command.Brush, blue));
+        Assert.Equal(DrawCommandKind.DrawRectangle, border.Kind);
+        Assert.Equal(contentArea, border.Rect);
+        Assert.Equal(2, root.Detective.CaptureRendering(tabControl).CommandCount);
+    }
+
+    // The header row can change height while the TabControl keeps its bounds; the chrome follows the content area.
+    [Fact]
+    public void TabControlChromeFollowsTheHeaderRowWhenItsHeightChanges()
+    {
+        SolidColorBrush red = new(Color.Red);
+        TabItem tab = new() { Header = "First", Content = "Page", Height = 20 };
+        TabControl tabControl = new() { Background = red };
+        tabControl.SetItems(new[] { tab });
+        UIRoot root = new(200, 200);
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+        DrawCommand before = Assert.Single(root.RetainedRenderer.Commit(root), command => ReferenceEquals(command.Brush, red));
+        Assert.Equal(new DrawRect(0, 20, 200, 180), before.Rect);
+
+        tab.Height = 40;
+        root.ProcessFrame();
+
+        Assert.Equal(new LayoutRect(0, 0, 200, 200), tabControl.ArrangedBounds);
+        DrawCommand after = Assert.Single(root.RetainedRenderer.Commit(root), command => ReferenceEquals(command.Brush, red));
+        Assert.Equal(new DrawRect(0, 40, 200, 160), after.Rect);
+    }
+
+    // With the default Background, BorderBrush, BorderThickness and Padding, the content area draws nothing and the
+    // selected content starts right below the header row, at the left edge.
+    [Fact]
+    public void TabControlWithoutChromeDrawsNothingAndArrangesTheContentBelowTheHeaderRow()
+    {
+        Border page = new()
+        {
+            Width = 50,
+            Height = 30,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top
+        };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { new TabItem { Header = "First", Content = page } });
+        tabControl.SelectedIndex = 0;
+        UIRoot root = new(200, 200);
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        float headerHeight = tabControl.ItemsPresenter.ArrangedBounds.Height;
+        Assert.Equal(new LayoutRect(0, headerHeight, 50, 30), page.ArrangedBounds);
+        Assert.Equal(
+            new LayoutSize(MathF.Max(tabControl.ItemsPresenter.DesiredSize.Width, 50), headerHeight + 30),
+            tabControl.DesiredSize);
+        Assert.Equal(0, root.Detective.CaptureRendering(tabControl).CommandCount);
+    }
+
+    [Fact]
+    public void TabControlWithComponentTemplateLeavesItsChromeToTheTemplate()
+    {
+        TextBlock templateText = new() { Text = "Template" };
         TabControl tabControl = new()
         {
             Background = new SolidColorBrush(Color.Red),
             BorderBrush = new SolidColorBrush(Color.Blue),
-            BorderThickness = new Thickness(2)
+            BorderThickness = new Thickness(4),
+            Padding = new Thickness(10),
+            ComponentTemplate = new ComponentTemplate<TabControl>("tabs", _ => templateText)
         };
         tabControl.SetItems(new[] { new TabItem { Header = "First", Content = "Page" } });
-        UIRoot root = new(100, 100);
+        UIRoot root = new(200, 200);
         root.VisualChildren.Add(tabControl);
         root.ProcessFrame();
 
+        Assert.Equal(templateText.DesiredSize, tabControl.DesiredSize);
+        Assert.Equal(new LayoutRect(0, 0, 200, 200), templateText.ArrangedBounds);
         Assert.Equal(0, root.Detective.CaptureRendering(tabControl).CommandCount);
     }
 
-    // The header row starts at the top of a TabControl without a template, which applies no Padding, so a scroll
-    // viewport realizes the tabs it shows, not the tabs a top inset would have moved into it.
+    // The header row starts at the top of a TabControl without a template, and Padding insets only the content area
+    // below it, so a scroll viewport realizes the tabs it shows, not the tabs a top inset would have moved into it.
     [Fact]
     public void ScrollViewerVirtualizationRealizesTheTabsInTheViewportOfATabControlWithPadding()
     {
