@@ -1283,6 +1283,49 @@ public sealed class ComboBoxTests
         public void Execute(object? parameter) => Executions++;
     }
 
+    // A ListBoxItem given as an item of a ComboBox is wrapped in a ComboBoxItem and stays focusable (#662), so a press
+    // on it in the open drop-down focuses it. As WPF's ComboBox focuses itself when its drop-down closes with the
+    // keyboard focus inside the drop-down, the click that selects the item and closes the drop-down leaves the focus on
+    // the ComboBox, not on the item in the closed drop-down.
+    [Fact]
+    public void ClosingDropDownTakesFocusBackFromFocusedItemContent()
+    {
+        UIRoot root = new(360, 300);
+        ComboBox comboBox = new() { IsEditable = false, Width = 150, Height = 30 };
+        ListBoxItem inner = new() { Content = "inner" };
+        comboBox.Items.Add(inner);
+        comboBox.Items.Add(new ComboBoxItem { Content = "plain" });
+        LayoutCanvas canvas = new();
+        canvas.VisualChildren.Add(comboBox);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        ElementInputBridge bridge = new();
+        LayoutRect field = comboBox.ArrangedBounds;
+        ClickAt(root, bridge, field.X + field.Width / 2, field.Y + field.Height / 2);
+        Assert.True(comboBox.IsDropDownOpen);
+        LayoutRect row = inner.ArrangedBounds;
+
+        bridge.Dispatch(root, PointerFrame(row.X + row.Width / 2, row.Y + row.Height / 2, currentDown: true));
+        root.ProcessFrame();
+        bool innerFocusedWhilePressed = inner.IsKeyboardFocused;
+        bridge.Dispatch(root, PointerFrame(row.X + row.Width / 2, row.Y + row.Height / 2, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.True(innerFocusedWhilePressed);
+        Assert.Equal(0, comboBox.SelectedIndex);
+        Assert.False(comboBox.IsDropDownOpen);
+        Assert.False(inner.IsKeyboardFocused);
+        Assert.True(comboBox.IsKeyboardFocused);
+    }
+
+    private static void ClickAt(UIRoot root, ElementInputBridge bridge, float x, float y)
+    {
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        root.ProcessFrame();
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+    }
+
     private static bool IsDescendantOf(UIElement element, UIElement ancestor)
     {
         for (UIElement? current = element.VisualParent; current is not null; current = current.VisualParent)
