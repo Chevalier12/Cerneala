@@ -727,6 +727,10 @@ public sealed class SelectorTests
         ListBox second = new();
         second.SetItems(new[] { shared });
         second.ItemContainerGenerator.GetOrCreate(0);
+        // A ListBox selects only a row that can take the focus (#675), which needs a row in a root.
+        UIRoot root = new(100, 100);
+        root.VisualChildren.Add(second);
+        root.ProcessFrame();
 
         MouseButtonEventArgs args = new(InputEvents.MouseUpEvent, shared, InputMouseButton.Left, 0, 0, 1);
         foreach (RoutedEventHandler handler in shared.Handlers.GetHandlers(InputEvents.MouseUpEvent))
