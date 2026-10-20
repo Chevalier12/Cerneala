@@ -785,6 +785,64 @@ public sealed class ListBoxTests
         Assert.InRange(listBox.ItemContainerGenerator.RealizedContainers.Count, 1, 20);
     }
 
+    // A ListBox without a fixed height inside an outer ScrollViewer 300 pixels high realizes the rows of that outer
+    // viewport, so End scrolls the outer viewer until the last of its 10,000 rows is visible, and focuses it, as WPF's
+    // BringIntoView reaches the outer ScrollViewer (#702).
+    [Fact]
+    public void EndInAListBoxWithoutFixedHeightScrollsTheOuterScrollViewerToTheLastRow()
+    {
+        (UIRoot root, ListBox listBox, ScrollViewer outer) = CreateOuterViewerListBox();
+        ElementInputBridge bridge = new();
+        ClickCenter(root, bridge, Row(listBox, 0));
+
+        PressKey(root, bridge, InputKey.End);
+
+        Assert.Equal(9999, listBox.SelectedIndex);
+        Assert.Contains(9999, listBox.ItemContainerGenerator.RealizedContainers.Keys);
+        Assert.True(Row(listBox, 9999).IsKeyboardFocused);
+        AssertInsideViewport(outer, Row(listBox, 9999));
+        Assert.InRange(listBox.ItemContainerGenerator.RealizedContainers.Count, 1, 40);
+    }
+
+    // ScrollIntoView of row 5000 of a ListBox without a fixed height inside an outer ScrollViewer 300 pixels high
+    // scrolls the outer viewer until the row is visible, and realizes it (#702).
+    [Fact]
+    public void ScrollIntoViewInAListBoxWithoutFixedHeightScrollsTheOuterScrollViewerToTheRow()
+    {
+        (UIRoot root, ListBox listBox, ScrollViewer outer) = CreateOuterViewerListBox();
+        Assert.DoesNotContain(5000, listBox.ItemContainerGenerator.RealizedContainers.Keys);
+
+        listBox.ScrollIntoView("5000");
+        root.ProcessFrame();
+
+        Assert.Contains(5000, listBox.ItemContainerGenerator.RealizedContainers.Keys);
+        AssertInsideViewport(outer, Row(listBox, 5000));
+        Assert.InRange(listBox.ItemContainerGenerator.RealizedContainers.Count, 1, 40);
+    }
+
+    // The arrange that realizes the last row of that ListBox brings the row into view again, inside the outer
+    // ScrollViewer's arrange of the ListBox, where the rows have their new place before the outer presenter has its new
+    // bounds. The outer viewer scrolls once, straight to the offset that shows the row: 100,000 - 300 = 99,700 (#702).
+    [Fact]
+    public void ScrollIntoViewInAListBoxWithoutFixedHeightScrollsTheOuterScrollViewerOnce()
+    {
+        (UIRoot root, ListBox listBox, ScrollViewer outer) = CreateOuterViewerListBox();
+        List<float> offsets = [];
+        outer.Presenter.PropertyChanged += (_, args) =>
+        {
+            if (ReferenceEquals(args.Property, ScrollContentPresenter.VerticalOffsetProperty))
+            {
+                offsets.Add((float)args.NewValue!);
+            }
+        };
+
+        listBox.ScrollIntoView("9999");
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.Equal([99_700f], offsets);
+    }
+
     // As WPF's ListBox, which brings a row without a container into view through VirtualizingStackPanel's
     // BringIndexIntoView, End and Home reach rows that are not realized: the row is realized, selected, focused and
     // inside the viewport, and only a few rows are realized (#702).
@@ -839,6 +897,81 @@ public sealed class ListBoxTests
 
         AssertRowInsideViewport(listBox, 5000);
         Assert.InRange(listBox.ItemContainerGenerator.RealizedContainers.Count, 1, 20);
+    }
+
+    // As WPF's ScrollIntoView, which is not input and works on a disabled list, ScrollIntoView scrolls the row into the
+    // viewport of a ListBox 200 pixels high also when the ListBox, its parent, or the row itself is disabled, with a
+    // VirtualizingStackPanel (row 5000 of 10,000) and with a StackPanel (row 90 of 100) (#702).
+    [Theory]
+    [InlineData(true, "ListBox")]
+    [InlineData(false, "ListBox")]
+    [InlineData(true, "Parent")]
+    [InlineData(false, "Parent")]
+    [InlineData(false, "Row")]
+    public void ScrollIntoViewScrollsADisabledListBox(bool virtualizing, string disabled)
+    {
+        int count = virtualizing ? 10_000 : 100;
+        int target = virtualizing ? 5000 : 90;
+        ListBox listBox = new()
+        {
+            Width = 150,
+            Height = 200,
+            ItemsPanel = virtualizing
+                ? new Cerneala.UI.Layout.Panels.VirtualizingStackPanel()
+                : new Cerneala.UI.Layout.Panels.StackPanel(),
+            ItemContainerAspect = RowHeight(10),
+            ItemsSource = Enumerable.Range(0, count).Select(index => index.ToString()).ToArray()
+        };
+        Cerneala.UI.Layout.Panels.StackPanel parent = new();
+        parent.VisualChildren.Add(listBox);
+        UIRoot root = new(360, 300);
+        root.VisualChildren.Add(new Window { Content = parent, Width = 360, Height = 300 });
+        root.ProcessFrame();
+
+        switch (disabled)
+        {
+            case "ListBox": listBox.IsEnabled = false; break;
+            case "Parent": parent.IsEnabled = false; break;
+            default: Row(listBox, target).IsEnabled = false; break;
+        }
+
+        root.ProcessFrame();
+        listBox.ScrollIntoView(target.ToString());
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.True(ListBoxScrollViewer(listBox).Presenter.VerticalOffset > 0);
+        AssertRowInsideViewport(listBox, target);
+    }
+
+    // The same for a disabled realized row of a VirtualizingStackPanel: with the template's ScrollViewer at offset 155,
+    // row 15 (150 to 160) is cut at the top, and ScrollIntoView scrolls back until its top is at the top, offset 150 (#702).
+    [Fact]
+    public void ScrollIntoViewScrollsToADisabledRowOfAVirtualizingListBox()
+    {
+        ListBox listBox = new()
+        {
+            Width = 150,
+            Height = 200,
+            ItemsPanel = new Cerneala.UI.Layout.Panels.VirtualizingStackPanel(),
+            ItemContainerAspect = RowHeight(10),
+            ItemsSource = Enumerable.Range(0, 10_000).Select(index => index.ToString()).ToArray()
+        };
+        UIRoot root = new(360, 300);
+        root.VisualChildren.Add(new Window { Content = listBox, Width = 360, Height = 300 });
+        root.ProcessFrame();
+        ScrollContentPresenter presenter = ListBoxScrollViewer(listBox).Presenter;
+        presenter.SetVerticalOffset(155);
+        root.ProcessFrame();
+        Row(listBox, 15).IsEnabled = false;
+        root.ProcessFrame();
+
+        listBox.ScrollIntoView("15");
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.Equal(150, presenter.VerticalOffset);
+        AssertRowInsideViewport(listBox, 15);
     }
 
     // As WPF's BringIndexIntoView, which keeps scrolling until the item is in view, End and ScrollIntoView bring a row
@@ -1715,6 +1848,32 @@ public sealed class ListBoxTests
         root.VisualChildren.Add(new Window { Content = listBox, Width = 360, Height = 300 });
         root.ProcessFrame();
         return (root, listBox);
+    }
+
+    // A ListBox 150 wide without a fixed height, with a VirtualizingStackPanel and 10,000 rows of 10 pixels, as the
+    // content of a ScrollViewer in a window 300 pixels high, after the first layout.
+    private static (UIRoot Root, ListBox ListBox, ScrollViewer Outer) CreateOuterViewerListBox()
+    {
+        ListBox listBox = new()
+        {
+            Width = 150,
+            ItemsPanel = new Cerneala.UI.Layout.Panels.VirtualizingStackPanel(),
+            ItemContainerAspect = RowHeight(10),
+            ItemsSource = Enumerable.Range(0, 10_000).Select(index => index.ToString()).ToArray()
+        };
+        ScrollViewer outer = new() { Content = listBox, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+        UIRoot root = new(360, 300);
+        root.VisualChildren.Add(new Window { Content = outer, Width = 360, Height = 300 });
+        root.ProcessFrame();
+        Assert.InRange(listBox.ItemContainerGenerator.RealizedContainers.Count, 1, 40);
+        return (root, listBox, outer);
+    }
+
+    private static void AssertInsideViewport(ScrollViewer viewer, UIElement element)
+    {
+        LayoutRect viewport = viewer.Presenter.ArrangedBounds;
+        LayoutRect bounds = element.ArrangedBounds;
+        Assert.InRange(bounds.Y, viewport.Y, viewport.Y + viewport.Height - bounds.Height);
     }
 
     private static ElementAspect RowHeight(float height)

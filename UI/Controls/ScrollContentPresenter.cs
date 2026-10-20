@@ -50,6 +50,7 @@ public class ScrollContentPresenter : ContentControl, IScrollInfo
     private bool canVerticallyScroll = true;
     private bool hostsItemsViewport;
     private bool? viewerMeasuredWithFiniteHeight;
+    private LayoutPoint arrangedContentOrigin;
 
     public float HorizontalOffset
     {
@@ -200,15 +201,111 @@ public class ScrollContentPresenter : ContentControl, IScrollInfo
         float contentWidth = CanHorizontallyScroll ? MathF.Max(ExtentWidth, ViewportWidth) : ViewportWidth;
         float contentHeight = CanVerticallyScroll ? MathF.Max(ExtentHeight, ViewportHeight) : ViewportHeight;
         UIElement? content = ContentElement;
+        // The content's arrange can bring an element into view, which sets a new offset (see MakeVisible). The content
+        // is placed with the offsets read here, so the origin and ArrangedScrollOffset keep those, and the new offset
+        // applies in the next arrange.
+        LayoutPoint offset = new(HorizontalOffset, VerticalOffset);
+        arrangedContentOrigin = new LayoutPoint(context.FinalRect.X - offset.X, context.FinalRect.Y - offset.Y);
         content?.Arrange(new ArrangeContext(
-            new LayoutRect(
-                context.FinalRect.X - HorizontalOffset,
-                context.FinalRect.Y - VerticalOffset,
-                contentWidth,
-                contentHeight),
+            new LayoutRect(arrangedContentOrigin.X, arrangedContentOrigin.Y, contentWidth, contentHeight),
             context.Rounding));
-        ArrangedScrollOffset = content is null ? LayoutPoint.Zero : new LayoutPoint(HorizontalOffset, VerticalOffset);
+        ArrangedScrollOffset = content is null ? LayoutPoint.Zero : offset;
         return context.FinalRect;
+    }
+
+    // As WPF's ScrollContentPresenter.MakeVisible: scrolls each axis that can scroll by the least amount that shows
+    // rectangle, in the coordinates of visual, an element inside the content (LayoutRect.Empty is the whole visual), and
+    // returns the part of it that is visible then, in this presenter's coordinates. A visual outside the content, and a
+    // rectangle that stays outside the viewport, give LayoutRect.Empty. It reads the places of the last arrange, which an
+    // offset set since then does not change, so a second call before the next arrange finds the same place.
+    public LayoutRect MakeVisible(UIElement visual, LayoutRect rectangle)
+    {
+        ArgumentNullException.ThrowIfNull(visual);
+        if (!ContainsInContent(visual))
+        {
+            return LayoutRect.Empty;
+        }
+
+        if (rectangle == LayoutRect.Empty)
+        {
+            rectangle = new LayoutRect(0, 0, visual.ArrangedBounds.Width, visual.ArrangedBounds.Height);
+        }
+
+        LayoutPoint position = GetContentPosition(visual);
+        float left = position.X + rectangle.X;
+        float top = position.Y + rectangle.Y;
+        float right = left + rectangle.Width;
+        float bottom = top + rectangle.Height;
+        float horizontalOffset = ComputeOffsetShowing(HorizontalOffset, ViewportWidth, left, right);
+        if (CanHorizontallyScroll && horizontalOffset != HorizontalOffset)
+        {
+            SetHorizontalOffset(horizontalOffset);
+        }
+
+        float verticalOffset = ComputeOffsetShowing(VerticalOffset, ViewportHeight, top, bottom);
+        if (CanVerticallyScroll && verticalOffset != VerticalOffset)
+        {
+            SetVerticalOffset(verticalOffset);
+        }
+
+        float visibleLeft = MathF.Max(left, HorizontalOffset);
+        float visibleTop = MathF.Max(top, VerticalOffset);
+        float visibleRight = MathF.Min(right, HorizontalOffset + ViewportWidth);
+        float visibleBottom = MathF.Min(bottom, VerticalOffset + ViewportHeight);
+        if (visibleRight < visibleLeft || visibleBottom < visibleTop)
+        {
+            return LayoutRect.Empty;
+        }
+
+        return new LayoutRect(
+            visibleLeft - HorizontalOffset,
+            visibleTop - VerticalOffset,
+            visibleRight - visibleLeft,
+            visibleBottom - visibleTop);
+    }
+
+    // Whether element is the content or inside it.
+    internal bool ContainsInContent(UIElement element)
+    {
+        for (UIElement? current = element; current is not null; current = current.VisualParent)
+        {
+            if (ReferenceEquals(current.VisualParent, this))
+            {
+                return ReferenceEquals(current, ContentElement);
+            }
+        }
+
+        return false;
+    }
+
+    // The place of element, the content or an element inside it, in the scrolled content: where it is when both offsets
+    // are 0, which does not change when the content scrolls. It counts from the content origin of the arrange that placed
+    // the content, which holds before the arrange that applies a new offset, and during the content's own arrange, where
+    // the elements arranged so far have their new place and this presenter's bounds and ArrangedScrollOffset still have
+    // their old ones.
+    internal LayoutPoint GetContentPosition(UIElement element)
+    {
+        return new LayoutPoint(
+            element.ArrangedBounds.X - arrangedContentOrigin.X,
+            element.ArrangedBounds.Y - arrangedContentOrigin.Y);
+    }
+
+    // As WPF's ScrollContentPresenter.ComputeScrollOffsetWithMinimalScroll, on one axis: the offset that shows the part
+    // from start to end with the least scroll. A part above the viewport aligns its start with the viewport start, and a
+    // part below aligns its end with the viewport end; a part larger than the viewport aligns its end when it is above and
+    // its start when it is below, and a part that covers the viewport or lies inside it keeps the offset.
+    internal static float ComputeOffsetShowing(float offset, float viewport, float start, float end)
+    {
+        float viewEnd = offset + viewport;
+        bool above = start < offset && end < viewEnd;
+        bool below = end > viewEnd && start > offset;
+        bool larger = end - start > viewport;
+        if ((above && !larger) || (below && larger))
+        {
+            return start;
+        }
+
+        return above || below ? end - viewport : offset;
     }
 
     protected override void OnDetached()

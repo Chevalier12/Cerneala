@@ -2694,6 +2694,11 @@
     "source": "UI/Input/PressedStateTracker.cs"
   },
   {
+    "name": "Cerneala.UI.Input.RequestBringIntoViewEventArgs",
+    "file": "documentation/classes/Cerneala.UI.Input.RequestBringIntoViewEventArgs.md",
+    "source": "UI/Input/RequestBringIntoViewEventArgs.cs"
+  },
+  {
     "name": "Cerneala.UI.Input.RoutedCommand",
     "file": "documentation/classes/Cerneala.UI.Input.RoutedCommand.md",
     "source": "UI/Input/RoutedCommand.cs"

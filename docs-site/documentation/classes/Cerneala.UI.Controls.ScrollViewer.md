@@ -104,11 +104,19 @@ The active scroll bars use a `LargeChange` equal to the presenter's viewport on 
 
 Offsets are clamped by `ScrollContentPresenter` to the valid `0..(extent - viewport)` range. Disabling an axis forces that axis offset back to `0`.
 
+As WPF's `ScrollViewer`, the viewer handles `UIElement.RequestBringIntoViewEvent`, which `UIElement.BringIntoView` raises, when the requesting element is inside the presenter's content. It marks the event handled, calls `Presenter.MakeVisible` with the element and the requested rectangle, and then calls its own `BringIntoView` with the part that is visible after the scroll, in the viewer's coordinates, so the `ScrollViewer`s around it scroll too. A request from the viewer itself or from an element outside the content, such as a scroll bar, bubbles on unchanged, and a handler that marked the event handled before it reached the viewer stops it. For example, a `Button` 20 high, 300 pixels down in an inner `ScrollViewer` with `Height = 100` that starts 200 pixels down in an outer `ScrollViewer` 100 high:
+
+```csharp
+button.BringIntoView();
+// inner.Presenter.VerticalOffset is 220 (the Button ends at 320);
+// outer.Presenter.VerticalOffset is 200 (the visible Button is at 280..300 in the outer content).
+```
+
 ## Constructors
 
 | Name | Description |
 | --- | --- |
-| `ScrollViewer()` | Registers mouse wheel handling and applies the default component template: a `Border` around a grid containing the three required parts. |
+| `ScrollViewer()` | Registers mouse wheel and `RequestBringIntoView` handling and applies the default component template: a `Border` around a grid containing the three required parts. |
 
 ## Fields
 

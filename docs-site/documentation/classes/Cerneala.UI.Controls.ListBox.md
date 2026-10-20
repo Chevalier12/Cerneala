@@ -157,6 +157,21 @@ listBox.SetItems(Enumerable.Range(0, 2000).Select(index => index.ToString()));
 
 In such a list the keys and `ScrollIntoView` also reach rows that have no container yet, as WPF's `VirtualizingStackPanel.BringIndexIntoView`. End, Home, PageUp, PageDown, the arrow keys, and `ScrollIntoView` first scroll to the place that the panel estimates for the row: above the viewport the row goes to the top, below it to the bottom. After the next arrange, which creates the row, the list scrolls it to its exact place, and a key gives it the focus then. When the rows have different heights, the rows measured at the new place change the estimate, so the list scrolls again after each arrange that follows a scroll, until a scroll does not move the viewport. For example, in a list 100 pixels high with 10,000 rows 10 pixels high, `ScrollIntoView("5000")` and one frame show row `5000` inside the viewport, and at most 20 rows exist.
 
+The list scrolls a row into view as WPF does: it calls `UIElement.BringIntoView` with the row's place in the panel, and each `ScrollViewer` around the row scrolls by the least amount that shows it (see `ScrollContentPresenter.MakeVisible`). So the keys and `ScrollIntoView` also scroll an outer `ScrollViewer`, for example for a list without a fixed `Height`, whose template's `ScrollViewer` cannot scroll. In the example below the outer viewport is 300 pixels high and the 10,000 rows are 10 pixels high. After `ScrollIntoView("9999")` and two frames, the outer `ScrollViewer` has scrolled once, to the vertical offset `99700`, and row `9999` is realized at the bottom of the outer viewport. When the template's `ScrollViewer` and an outer one both move during a scroll, the list scrolls again after the next arrange until none of them moves.
+
+```csharp
+ListBox listBox = new()
+{
+    Width = 150,
+    ItemsPanel = new Cerneala.UI.Layout.Panels.VirtualizingStackPanel(),
+    ItemsSource = Enumerable.Range(0, 10_000).Select(index => index.ToString()).ToArray()
+};
+ScrollViewer outer = new() { Content = listBox, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+// The rows are 10 pixels high and the outer viewer is 300 pixels high.
+listBox.ScrollIntoView("9999");
+// After two frames: outer.Presenter.VerticalOffset is 99700.
+```
+
 ### Selection modes
 
 `SelectionMode` decides what the user's clicks and keys select. The default is `SelectionMode.Single`. `SelectedItems` lists the selected items in selection order, and `SelectedItem` and `SelectedIndex` are the first of them. For example, in `SelectionMode.Multiple` a click on `Cherry` and then a click on `Apple` gives `SelectedItems` `["Cherry", "Apple"]` and `SelectedIndex` `2`.
@@ -201,7 +216,7 @@ The text of an item is its `TextSearch.Text` when it is set on the item, otherwi
 
 ### ScrollIntoView
 
-`ScrollIntoView(item)` finds the first item equal to `item` by `object.Equals`. When its row is above the viewport, the template's `ScrollViewer` scrolls until the row's top is at the top of the viewport; when it is below, until the row's bottom is at the bottom of the viewport. A row that is already in the viewport, an item that the list does not hold, and `null` when no item is `null` change nothing. Before the rows have their position, for example before the first layout, the row scrolls into view after the next arrange of the list. A row that is not realized then, and a list without `PART_ScrollViewer`, do not scroll.
+`ScrollIntoView(item)` finds the first item equal to `item` by `object.Equals`. When its row is above the viewport, the template's `ScrollViewer` scrolls until the row's top is at the top of the viewport; when it is below, until the row's bottom is at the bottom of the viewport. The scroll goes through `UIElement.BringIntoView`, so every `ScrollViewer` around the row scrolls by the same rule, also an outer one. A row that is already in the viewport, an item that the list does not hold, and `null` when no item is `null` change nothing. Before the rows have their position, for example before the first layout, the row scrolls into view after the next arrange of the list. A row that is not realized then, and a list without `PART_ScrollViewer`, do not scroll.
 
 ## Constructors
 
@@ -256,7 +271,7 @@ The text of an item is its `TextSearch.Text` when it is set on the item, otherwi
 | --- | --- |
 | `SelectAll()` | Selects every item. Throws `NotSupportedException` when `SelectionMode` is `Single`. |
 | `UnselectAll()` | Deselects every item, in every `SelectionMode`. |
-| `ScrollIntoView(object? item)` | Scrolls the template's `ScrollViewer` until the row of the first item equal to `item` is in the viewport. Does nothing for an item that the list does not hold or a row already in the viewport; before the rows have their position, scrolls after the next arrange. |
+| `ScrollIntoView(object? item)` | Scrolls the template's `ScrollViewer`, and every outer `ScrollViewer`, through `UIElement.BringIntoView` until the row of the first item equal to `item` is in the viewport. Does nothing for an item that the list does not hold or a row already in the viewport; before the rows have their position, scrolls after the next arrange. |
 | `SetItems(IEnumerable? items)` | Inherited from `ItemsControl`. Replaces the local `Items` collection. |
 | `GetItemAt(int index)` | Inherited from `ItemsControl`. Gets an item from the `ItemsSource` snapshot when `ItemsSource` is set; otherwise from `Items`. |
 
