@@ -62,11 +62,13 @@ Custom templates must register a `Track` named `PART_Track`. The `Track` propert
 
 `OrientationProperty` is registered with `UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange | UiPropertyOptions.AffectsRender`, so changing `Orientation` participates in layout and render invalidation.
 
+A `Slider` is not focusable by default (`Focusable` is `false`). A slider with `Focusable = true` takes keyboard focus on a left press anywhere inside it, also on its `Thumb`, which handles the press itself and cannot take the focus. As WPF's `Slider` does, it handles `MouseDown` with `handledEventsToo` and focuses itself unless the focus is already inside it, and it marks that `MouseDown` handled when the focus moved. For example, a `Button` has the focus and the user presses the thumb of `new Slider { Focusable = true }`: after the press, `slider.IsKeyboardFocused` is `true` and the `Button` lost the focus. With the default `Focusable = false`, the same press leaves the focus on the `Button`.
+
 ## Constructors
 
 | Name | Description |
 | --- | --- |
-| `Slider()` | Initializes a new `Slider` with its default component template. |
+| `Slider()` | Initializes a new `Slider` with its default component template, and registers the `MouseDown` handler (`handledEventsToo: true`) that focuses a focusable slider on a left press inside it. |
 
 ## Fields
 

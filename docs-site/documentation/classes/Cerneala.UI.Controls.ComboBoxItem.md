@@ -27,6 +27,14 @@ comboBox.Items.Add(item);
 
 `ComboBoxItem` reuses the `ListBoxItem` selection contract. Its `Item` property preserves the original item independently from the visual content presenter used by `ComboBox`.
 
+Unlike a `ListBoxItem`, a `ComboBoxItem` is not focusable: its constructor sets `Focusable` to `false`. A press on an item of the drop-down therefore leaves keyboard focus where it was, normally on the `ComboBox`, which handles the keys of its open drop-down. This follows WPF, where `ComboBoxItem.OnMouseLeftButtonDown` does not focus the item. For example, after a click on `ComboBoxItem { Content = "Draft" }` in the open drop-down of a focused `ComboBox`, `comboBox.IsKeyboardFocused` is still `true`. An application can set `Focusable = true` on an item to focus it with `FocusManager.Focus`.
+
+## Constructors
+
+| Name | Description |
+| --- | --- |
+| `ComboBoxItem()` | Initializes a new `ComboBoxItem` with `Focusable` set to `false`. |
+
 ## Properties
 
 | Name | Description |

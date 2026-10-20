@@ -595,6 +595,248 @@ public sealed class AspectUnificationContractTests
         Assert.NotEqual(0, root.AspectProcessor.Engine.GetDependencies(button).CatalogVersion);
     }
 
+    // An ItemsPresenter applies the Aspect of the rows it realizes during its measure, so a tree change made there
+    // behaves like one made in the frame's Aspect phase.
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void PropertyChangedHandlerThatDetachesItsElementDuringTheApplyDoesNotThrow(bool insideItemsControl)
+    {
+        SolidColorBrush brush = new(Color.Red);
+        UIRoot root = new(300, 200);
+        root.AspectRegistry.Register(AspectPackage.Create("App").Components(components => components.AddRule(
+            new AspectRuleSet(
+                "button",
+                AspectLayer.App,
+                new AspectTarget(typeof(Button)),
+                [new AspectDeclaration(Control.BackgroundProperty, AspectValue<Brush?>.Literal(brush))],
+                declarationOrder: 0))));
+        Button button = new();
+        Border border = new() { Child = button };
+        button.PropertyChanged += (_, args) =>
+        {
+            if (ReferenceEquals(args.Property, Control.BackgroundProperty) && button.IsAttached)
+            {
+                border.Child = null;
+            }
+        };
+        AddRow(root, border, insideItemsControl);
+
+        Exception? failure = Record.Exception(() => root.ProcessFrame());
+
+        Assert.Null(failure);
+        Assert.False(button.IsAttached);
+        Assert.Null(border.Child);
+        Assert.NotEqual(UiPropertyValueSource.AspectBase, button.GetValueSource(Control.BackgroundProperty));
+        Assert.Equal(0, root.AspectProcessor.Engine.GetDependencies(button).CatalogVersion);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void PropertyChangedHandlerThatDetachesALaterRowElementDuringTheApplyLeavesNoAspectValuesOnIt(
+        bool insideItemsControl)
+    {
+        SolidColorBrush brush = new(Color.Red);
+        UIRoot root = new(300, 200);
+        root.AspectRegistry.Register(AspectPackage.Create("App").Components(components =>
+        {
+            components.AddRule(new AspectRuleSet(
+                "trigger",
+                AspectLayer.App,
+                new AspectTarget(typeof(TriggerControl)),
+                [new AspectDeclaration(Control.BackgroundProperty, AspectValue<Brush?>.Literal(brush))],
+                declarationOrder: 0));
+            components.AddRule(new AspectRuleSet(
+                "button",
+                AspectLayer.App,
+                new AspectTarget(typeof(Button)),
+                [new AspectDeclaration(Control.BackgroundProperty, AspectValue<Brush?>.Literal(brush))],
+                declarationOrder: 1));
+        }));
+        TriggerControl trigger = new();
+        Button button = new();
+        StackPanel row = new();
+        row.Children.Add(trigger);
+        row.Children.Add(button);
+        trigger.PropertyChanged += (_, args) =>
+        {
+            if (ReferenceEquals(args.Property, Control.BackgroundProperty) && button.IsAttached)
+            {
+                row.Children.Remove(button);
+            }
+        };
+        AddRow(root, row, insideItemsControl);
+
+        Exception? failure = Record.Exception(() => root.ProcessFrame());
+
+        Assert.Null(failure);
+        Assert.Same(brush, trigger.Background);
+        Assert.False(button.IsAttached);
+        Assert.NotEqual(UiPropertyValueSource.AspectBase, button.GetValueSource(Control.BackgroundProperty));
+        Assert.Equal(0, root.AspectProcessor.Engine.GetDependencies(button).CatalogVersion);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void PropertyChangedHandlerThatDetachesAndReattachesARowElementDuringTheApplyLeavesTheRuleApplied(
+        bool insideItemsControl)
+    {
+        SolidColorBrush background = new(Color.Red);
+        SolidColorBrush foreground = new(Color.Blue);
+        UIRoot root = new(300, 200);
+        root.AspectRegistry.Register(AspectPackage.Create("App").Components(components => components.AddRule(
+            new AspectRuleSet(
+                "button",
+                AspectLayer.App,
+                new AspectTarget(typeof(Button)),
+                [
+                    new AspectDeclaration(Control.BackgroundProperty, AspectValue<Brush?>.Literal(background)),
+                    new AspectDeclaration(Control.ForegroundProperty, AspectValue<Brush?>.Literal(foreground)),
+                ],
+                declarationOrder: 0))));
+        Button button = new();
+        Border border = new() { Child = button };
+        bool reattached = false;
+        button.PropertyChanged += (_, args) =>
+        {
+            if (!reattached && ReferenceEquals(args.Property, Control.BackgroundProperty) && button.IsAttached)
+            {
+                reattached = true;
+                border.Child = null;
+                border.Child = button;
+            }
+        };
+        AddRow(root, border, insideItemsControl);
+
+        Exception? failure = Record.Exception(() =>
+        {
+            root.ProcessFrame();
+            root.ProcessFrame();
+        });
+
+        Assert.Null(failure);
+        Assert.True(reattached);
+        Assert.True(button.IsAttached);
+        Assert.Same(background, button.Background);
+        Assert.Same(foreground, button.Foreground);
+        Assert.Equal(UiPropertyValueSource.AspectBase, button.GetValueSource(Control.BackgroundProperty));
+        Assert.Equal(UiPropertyValueSource.AspectBase, button.GetValueSource(Control.ForegroundProperty));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void PackageBehaviorFactoryThatDetachesARowElementDoesNotThrow(bool insideItemsControl)
+    {
+        SolidColorBrush brush = new(Color.Red);
+        UIRoot root = new(300, 200);
+        Button button = new();
+        Border border = new() { Child = button };
+        int attaches = 0;
+        root.AspectRegistry.Register(AspectPackage.Create("P").Components(components =>
+        {
+            components.AddRule(new AspectRuleSet(
+                "P.button",
+                AspectLayer.App,
+                new AspectTarget(typeof(Button)),
+                [new AspectDeclaration(Control.BackgroundProperty, AspectValue<Brush?>.Literal(brush))],
+                declarationOrder: 0));
+            components.AddBehavior(new AspectBehavior(typeof(Button), _ =>
+            {
+                if (++attaches == 1)
+                {
+                    border.Child = null;
+                }
+
+                return null;
+            }));
+        }));
+        AddRow(root, border, insideItemsControl);
+
+        Exception? failure = Record.Exception(() => root.ProcessFrame());
+
+        Assert.Null(failure);
+        Assert.False(button.IsAttached);
+        Assert.NotEqual(UiPropertyValueSource.AspectBase, button.GetValueSource(Control.BackgroundProperty));
+
+        border.Child = button;
+        root.ProcessFrame();
+        Assert.Same(brush, button.Background);
+        Assert.Equal(UiPropertyValueSource.AspectBase, button.GetValueSource(Control.BackgroundProperty));
+    }
+
+    // The trigger's apply runs in the frame's Aspect phase after the row's, so the Aspect work that registering the
+    // behavior package queues for the row waits for the ItemsPresenter's measure, which the row's new width causes
+    // and which attaches the behavior to the attached row.
+    [Fact]
+    public void PackageBehaviorFactoryThatDetachesARowElementWhileTheItemsPresenterMeasuresDoesNotThrow()
+    {
+        SolidColorBrush brush = new(Color.Red);
+        UIRoot root = new(300, 200);
+        Button button = new();
+        Border border = new() { Child = button };
+        ItemsControl items = new();
+        items.SetItems(new object[] { border });
+        TriggerControl trigger = new();
+        root.VisualChildren.Add(items);
+        root.VisualChildren.Add(trigger);
+        root.ProcessFrame();
+
+        int attaches = 0;
+        AspectPackage behaviorPackage = AspectPackage.Create("P").Components(components =>
+        {
+            components.AddRule(new AspectRuleSet(
+                "P.button",
+                AspectLayer.App,
+                new AspectTarget(typeof(Button)),
+                [new AspectDeclaration(Control.BackgroundProperty, AspectValue<Brush?>.Literal(brush))],
+                declarationOrder: 0));
+            components.AddBehavior(new AspectBehavior(typeof(Button), _ =>
+            {
+                if (++attaches == 1)
+                {
+                    border.Child = null;
+                }
+
+                return null;
+            }));
+        });
+        bool registered = false;
+        trigger.PropertyChanged += (_, args) =>
+        {
+            if (!registered && ReferenceEquals(args.Property, Control.BackgroundProperty))
+            {
+                registered = true;
+                root.AspectRegistry.Register(behaviorPackage);
+                border.Width = 40;
+            }
+        };
+        root.AspectRegistry.Register(AspectPackage.Create("T").Components(components => components.AddRule(
+            new AspectRuleSet(
+                "T.trigger",
+                AspectLayer.App,
+                new AspectTarget(typeof(TriggerControl)),
+                [new AspectDeclaration(Control.BackgroundProperty, AspectValue<Brush?>.Literal(new SolidColorBrush(Color.Blue)))],
+                declarationOrder: 0))));
+
+        Exception? failure = Record.Exception(() => root.ProcessFrame());
+
+        Assert.Null(failure);
+        Assert.True(registered);
+        Assert.Equal(1, attaches);
+        Assert.False(button.IsAttached);
+        Assert.Null(border.Child);
+        Assert.NotEqual(UiPropertyValueSource.AspectBase, button.GetValueSource(Control.BackgroundProperty));
+
+        border.Child = button;
+        root.ProcessFrame();
+        Assert.Equal(2, attaches);
+        Assert.Same(brush, button.Background);
+        Assert.Equal(UiPropertyValueSource.AspectBase, button.GetValueSource(Control.BackgroundProperty));
+    }
+
     // The nested Apply after the Clear stores its own result; the ended outer apply does not remove its values.
     [Fact]
     public void PropertyChangedHandlerThatClearsAndAppliesItsElementAgainDuringTheApplyKeepsTheNestedResult()
@@ -1003,6 +1245,21 @@ public sealed class AspectUnificationContractTests
                 declarationOrder: 0)));
     }
 
+    // Inside an ItemsControl the row is realized by its ItemsPresenter during the measure.
+    private static void AddRow(UIRoot root, UIElement row, bool insideItemsControl)
+    {
+        if (insideItemsControl)
+        {
+            ItemsControl items = new();
+            items.SetItems(new object[] { row });
+            root.VisualChildren.Add(items);
+        }
+        else
+        {
+            root.VisualChildren.Add(row);
+        }
+    }
+
     private static AspectPackage BehaviorPackage(string packageName, AspectBehavior behavior)
     {
         return AspectPackage.Create(packageName)
@@ -1035,6 +1292,10 @@ public sealed class AspectUnificationContractTests
     }
 
     // Runs the callback on every Dispose call, so a second disposal is visible.
+    private sealed class TriggerControl : Control
+    {
+    }
+
     private sealed class RecordingLifetime(Action dispose) : IDisposable
     {
         public void Dispose() => dispose();

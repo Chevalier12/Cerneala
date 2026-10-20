@@ -479,6 +479,7 @@ public class ComboBox : Selector
                 }
                 else
                 {
+                    TakeFocusFromDropDown();
                     CancelSelectionTransaction();
                 }
             }
@@ -553,6 +554,27 @@ public class ComboBox : Selector
     {
         IsDropDownOpen = false;
         base.OnDetached();
+    }
+
+    // As WPF's ComboBox focuses itself when its drop-down closes with the keyboard focus inside the drop-down, an
+    // element in the drop-down that took the focus, such as a focusable ListBoxItem given as an item (#662), does not
+    // keep it in the closed drop-down.
+    private void TakeFocusFromDropDown()
+    {
+        if (dropDownOverlay?.Content is not UIElement dropDownContent ||
+            Root is not UIRoot { ActiveFocusManager: { FocusedElement: { } focused } focusManager } root)
+        {
+            return;
+        }
+
+        for (UIElement? current = focused; current is not null; current = current.VisualParent)
+        {
+            if (ReferenceEquals(current, dropDownContent))
+            {
+                focusManager.Focus(this, root.InputCache.EnsureCurrent(root));
+                return;
+            }
+        }
     }
 
     private void DetachTemplateParts()

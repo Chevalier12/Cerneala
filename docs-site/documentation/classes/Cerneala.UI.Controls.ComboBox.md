@@ -78,6 +78,8 @@ The pointer area that opens the drop-down depends on the mode. In non-editable m
 
 Keyboard commands include `F4`, `Alt+Down`, `Alt+Up`, `Escape`, `Enter`, `Tab`, arrow keys, `Home`, and `End`. The drop-down also closes after pointer selection, light-dismiss, disabling, or detaching. `Enter`, `Tab`, and pointer selection commit a pending preview.
 
+When the drop-down closes while keyboard focus is on an element inside it, the `ComboBox` takes the focus, as WPF's `ComboBox` focuses itself when its drop-down closes with the focus inside it. For example, a `ListBoxItem` given as an item, `comboBox.Items.Add(new ListBoxItem { Content = "inner" })`, is wrapped in a `ComboBoxItem` and stays focusable, so a press on it in the open drop-down focuses it; the click selects it and closes the drop-down, and then `comboBox.IsKeyboardFocused` is `true` and the `ListBoxItem` is no longer focused.
+
 The template must provide `PART_SelectionPresenter`, `PART_EditableTextBox`, `PART_DropDownToggle`, `PART_DropDownOverlay`, and `PART_ItemsPresenter`.
 
 `AspectState.Expanded` is active while `IsDropDownOpen` is `true`. The property includes `AffectsAspect` metadata, so opening or closing the drop-down also queues aspect resolution for the attached control on the next processed frame.
