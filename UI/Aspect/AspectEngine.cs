@@ -103,10 +103,14 @@ public sealed class AspectEngine
         {
             // A property-change callback cleared the element during this apply, for example by detaching it. The values
             // written before the Clear belong to the state that the Clear ended, so they are removed too, and nothing of
-            // this apply is stored or tracked. A reattach applies the rules again.
+            // this apply is stored or tracked. A reattach applies the rules again. A nested apply that ran after the Clear
+            // stored its own result, and the values of that result are its own: they stay.
             foreach (UiProperty property in written)
             {
-                element.ClearValueUntyped(property, UiPropertyValueSource.AspectBase);
+                if (state.LastResolved?.Values.ContainsKey(property) != true)
+                {
+                    element.ClearValueUntyped(property, UiPropertyValueSource.AspectBase);
+                }
             }
 
             return new AspectApplicationResult(changed, resolved);

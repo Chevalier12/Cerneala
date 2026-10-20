@@ -595,6 +595,47 @@ public sealed class AspectUnificationContractTests
         Assert.NotEqual(0, root.AspectProcessor.Engine.GetDependencies(button).CatalogVersion);
     }
 
+    // The nested Apply after the Clear stores its own result; the ended outer apply does not remove its values.
+    [Fact]
+    public void PropertyChangedHandlerThatClearsAndAppliesItsElementAgainDuringTheApplyKeepsTheNestedResult()
+    {
+        SolidColorBrush background = new(Color.Red);
+        SolidColorBrush foreground = new(Color.Blue);
+        AspectCatalog catalog = new AspectRegistry().Register(AspectPackage.Create("P").Components(components =>
+        {
+            components.AddRule(new AspectRuleSet(
+                "P.button",
+                AspectLayer.App,
+                new AspectTarget(typeof(Button)),
+                [
+                    new AspectDeclaration(Control.BackgroundProperty, AspectValue<Brush?>.Literal(background)),
+                    new AspectDeclaration(Control.ForegroundProperty, AspectValue<Brush?>.Literal(foreground)),
+                ],
+                declarationOrder: 0));
+        })).BuildCatalog();
+        AspectEngine engine = new();
+        AspectEnvironment environment = new("test");
+        Button button = new();
+        bool nested = false;
+        button.PropertyChanged += (_, args) =>
+        {
+            if (!nested && ReferenceEquals(args.Property, Control.BackgroundProperty))
+            {
+                nested = true;
+                engine.Clear(button);
+                engine.Apply(button, catalog, environment);
+            }
+        };
+
+        engine.Apply(button, catalog, environment);
+
+        Assert.True(nested);
+        Assert.Equal(
+            "Background=AspectBase/True Foreground=AspectBase/True",
+            $"Background={button.GetValueSource(Control.BackgroundProperty)}/{ReferenceEquals(background, button.Background)} " +
+            $"Foreground={button.GetValueSource(Control.ForegroundProperty)}/{ReferenceEquals(foreground, button.Foreground)}");
+    }
+
     [Fact]
     public void RuleAndTargetCopyCallerOwnedCollections()
     {
