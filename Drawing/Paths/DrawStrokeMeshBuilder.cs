@@ -12,11 +12,11 @@ internal static class DrawStrokeMeshBuilder
         ArgumentNullException.ThrowIfNull(style);
 
         IReadOnlyList<DrawStrokeContour> contours = CreateContours(command, coordinateScale);
-        DrawStrokeMesh stroke = DrawStrokeTessellator.Tessellate(contours, thickness, style);
+        DrawStrokeMesh stroke = DrawStrokeTessellator.Tessellate(contours, thickness, style, coordinateScale);
         if (stroke.IsEmpty)
         {
             return new DrawStrokeRenderMesh(
-                new DrawTriangleMesh([], []),
+                DrawTriangleMesh.Empty,
                 [],
                 0,
                 0);
@@ -36,7 +36,7 @@ internal static class DrawStrokeMeshBuilder
         }
 
         return new DrawStrokeRenderMesh(
-            new DrawTriangleMesh(vertices, stroke.Indices),
+            new DrawTriangleMesh(vertices, stroke.Extrusions, stroke.Coverages, stroke.Indices),
             stroke.Vertices,
             left,
             top);

@@ -61,6 +61,8 @@ public sealed class SdlGpuGeometryCacheTests
                 destination.Width * scale, destination.Height * scale, destination.X * scale, destination.Y * scale, command.FillRule);
             SdlGpuGeometry actual = cache.GetFill(command, scale);
             Assert.Equal(expected.Vertices.Select(p => new DrawPoint(p.X / scale, p.Y / scale)), actual.Positions);
+            Assert.Equal(expected.Extrusions, actual.Extrusions);
+            Assert.Equal(expected.Coverages, actual.Coverages);
             Assert.Equal(expected.Indices, actual.Indices);
             Assert.Same(actual.Positions, actual.BrushPoints);
         }
@@ -74,6 +76,8 @@ public sealed class SdlGpuGeometryCacheTests
             DrawStrokeRenderMesh expected = DrawStrokeMeshBuilder.Build(command, pen.Thickness, pen.Style, scale);
             SdlGpuGeometry actual = cache.GetStroke(command, scale);
             Assert.Equal(expected.Mesh.Vertices.Select(p => new DrawPoint((p.X + expected.Left) / scale, (p.Y + expected.Top) / scale)), actual.Positions);
+            Assert.Equal(expected.Mesh.Extrusions, actual.Extrusions);
+            Assert.Equal(expected.Mesh.Coverages, actual.Coverages);
             Assert.Equal(expected.Mesh.Indices, actual.Indices);
             Assert.Equal(expected.BrushPoints, actual.BrushPoints);
         }

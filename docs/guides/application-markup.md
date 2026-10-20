@@ -165,8 +165,10 @@ A canceled `Closing` event does not trigger shutdown.
 
 `UseMultisampling` controls whether the selected rendering backend requests
 multisampled render targets. It accepts `True` or `False` and defaults to
-`False`. Set it to `True` when the application deliberately prefers
-multisampled edge smoothing over lower GPU memory use:
+`False`. 2D fills and strokes have smooth edges with either value: with
+`False` each edge gets a coverage ramp one physical pixel wide, and with `True`
+multisampling smooths the edges instead. Set it to `True` when the application
+deliberately prefers multisampled rendering over lower GPU memory use:
 
 ```xml
 <Application StartupWindow="ShellWindow"
