@@ -4,6 +4,8 @@ using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Media;
+using Cerneala.UI.Motion.Presence;
+using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
 
 namespace Cerneala.Tests.UI.Core;
 
@@ -440,6 +442,83 @@ public sealed class InheritedPropertyTreePropagationTests
 
         Assert.Null(failure);
         Assert.False(inner.IsAttached);
+        Assert.Null(second.DataContext);
+        Assert.Equal(UiPropertyValueSource.Default, second.GetValueSource(UIElement.DataContextProperty));
+        Assert.Equal("row", after.DataContext);
+        Assert.Equal(30f, after.FontSize);
+    }
+
+    // A removed ancestor with Presence stays attached while it exits, so the walk cannot tell the removal from the
+    // elements' root alone.
+    [Theory]
+    [InlineData(InheritedWritePath.FrameInheritedPhase)]
+    [InlineData(InheritedWritePath.FrameInheritedPhaseInsideItemsControl)]
+    [InlineData(InheritedWritePath.ItemsPresenterMeasure)]
+    public void HandlerThatRemovesAnExitingAncestorStopsTheWritesIntoTheRemovedSubtree(InheritedWritePath path)
+    {
+        UIRoot root = new(300, 200);
+        TextBlock first = new();
+        TextBlock second = new();
+        StackPanel inner = new()
+        {
+            Presence = PresenceOptions.FadeAndScale(
+                MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)),
+                MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)))
+        };
+        inner.Children.Add(first);
+        inner.Children.Add(second);
+        TextBlock after = new();
+        StackPanel row = new();
+        row.Children.Add(inner);
+        row.Children.Add(after);
+        bool removed = false;
+        first.PropertyChanged += (_, args) =>
+        {
+            if (!removed && ReferenceEquals(args.Property, UIElement.DataContextProperty) && inner.IsAttached)
+            {
+                removed = true;
+                row.Children.Remove(inner);
+            }
+        };
+
+        Exception? failure = WriteInheritedValuesToRow(root, row, path);
+
+        Assert.Null(failure);
+        Assert.True(removed);
+        Assert.Null(inner.VisualParent);
+        Assert.Null(second.DataContext);
+        Assert.Equal(UiPropertyValueSource.Default, second.GetValueSource(UIElement.DataContextProperty));
+        Assert.Equal("row", after.DataContext);
+        Assert.Equal(30f, after.FontSize);
+    }
+
+    [Fact]
+    public void HandlerThatRemovesAnAncestorDuringADetachedWalkStopsTheWritesIntoTheRemovedSubtree()
+    {
+        TextBlock first = new();
+        TextBlock second = new();
+        StackPanel inner = new();
+        inner.Children.Add(first);
+        inner.Children.Add(second);
+        TextBlock after = new();
+        StackPanel row = new();
+        row.Children.Add(inner);
+        row.Children.Add(after);
+        bool removed = false;
+        first.PropertyChanged += (_, args) =>
+        {
+            if (!removed && ReferenceEquals(args.Property, UIElement.DataContextProperty))
+            {
+                removed = true;
+                row.Children.Remove(inner);
+            }
+        };
+        SetInheritedValues(row);
+
+        Exception? failure = Record.Exception(() => new InheritedPropertyPropagator().PropagateFrom(row));
+
+        Assert.Null(failure);
+        Assert.True(removed);
         Assert.Null(second.DataContext);
         Assert.Equal(UiPropertyValueSource.Default, second.GetValueSource(UIElement.DataContextProperty));
         Assert.Equal("row", after.DataContext);
