@@ -791,6 +791,69 @@ public sealed class ButtonTests
         Assert.Equal(0, clicks);
     }
 
+    // A press on a thumb belongs to the thumb, as a WPF Thumb marks MouseLeftButtonDown handled before the enclosing
+    // ButtonBase focuses itself (#640): the button does not get keyboard focus, and the element that had it keeps it.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void PressingThumbInsideButtonKeepsKeyboardFocusOnPreviouslyFocusedElement(bool scrollBarThumb)
+    {
+        Button other = new() { Content = "other", Width = 100, Height = 30 };
+        Cerneala.UI.Controls.Primitives.ScrollBar scrollBar = new() { Maximum = 100, Value = 50, Width = 16, Height = 120 };
+        Cerneala.UI.Controls.Primitives.Thumb plainThumb = new() { Width = 40, Height = 20 };
+        Button button = new() { Content = scrollBarThumb ? scrollBar : plainThumb, Width = 200, Height = 160 };
+        StackPanel panel = new();
+        panel.Children.Add(other);
+        panel.Children.Add(button);
+        UIRoot root = CreateWindowRoot(panel);
+        Cerneala.UI.Controls.Primitives.Thumb thumb = scrollBarThumb ? scrollBar.Track.Thumb : plainThumb;
+        LayoutRect otherBounds = other.ArrangedBounds;
+        float otherX = otherBounds.X + otherBounds.Width / 2;
+        float otherY = otherBounds.Y + otherBounds.Height / 2;
+        LayoutRect bounds = thumb.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        Assert.Same(thumb, new HitTestService().HitTest(root, x, y)?.Element);
+        ElementInputBridge bridge = new();
+        bridge.Dispatch(root, PointerFrame(otherX, otherY, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(otherX, otherY, previousDown: true));
+        root.ProcessFrame();
+        Assert.True(other.IsKeyboardFocused);
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        root.ProcessFrame();
+        bool buttonFocusedWhileHeld = button.IsKeyboardFocused;
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.False(thumb.Focusable);
+        Assert.False(buttonFocusedWhileHeld);
+        Assert.False(button.IsKeyboardFocused);
+        Assert.True(other.IsKeyboardFocused);
+    }
+
+    [Fact]
+    public void PressingButtonOutsideNestedThumbGivesButtonKeyboardFocus()
+    {
+        Cerneala.UI.Controls.Primitives.Thumb thumb = new() { Width = 40, Height = 20 };
+        Button button = new() { Content = thumb, Width = 200, Height = 80 };
+        UIRoot root = CreateWindowRoot(button);
+        LayoutRect bounds = button.ArrangedBounds;
+        float x = bounds.X + 5;
+        float y = bounds.Y + 5;
+        Assert.Same(button, new HitTestService().HitTest(root, x, y)?.Element);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        root.ProcessFrame();
+        bool focusedWhileHeld = button.IsKeyboardFocused;
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.True(focusedWhileHeld);
+        Assert.True(button.IsKeyboardFocused);
+    }
+
     [Fact]
     public void HoldingMouseOnThumbInsideRepeatButtonNeitherPressesNorRepeatsIt()
     {
@@ -917,6 +980,250 @@ public sealed class ButtonTests
         Assert.Equal(handled ? 0 : 1, clicks);
         Assert.Equal(handled ? 0 : 1, commands);
         Assert.False(button.IsPressed);
+    }
+
+    // As in WPF, where ButtonBase presses itself in its MouseLeftButtonDown class handler, a MouseDown or
+    // MouseLeftButtonDown that an element in the button's content marks handled never reaches the button: the button is
+    // not pressed, does not repeat, and the release raises no Click, runs no Command and leaves IsChecked unchanged (#645).
+    [Theory]
+    [InlineData("Button", "none")]
+    [InlineData("Button", "MouseDown")]
+    [InlineData("Button", "MouseLeftButtonDown")]
+    [InlineData("RepeatButton", "none")]
+    [InlineData("RepeatButton", "MouseDown")]
+    [InlineData("RepeatButton", "MouseLeftButtonDown")]
+    [InlineData("CheckBox", "none")]
+    [InlineData("CheckBox", "MouseDown")]
+    [InlineData("CheckBox", "MouseLeftButtonDown")]
+    public void HandledMouseDownInButtonContentKeepsThePressFromTheButton(string buttonKind, string handledEvent)
+    {
+        Border border = new() { Width = 120, Height = 30, Background = new Cerneala.UI.Media.SolidColorBrush(Color.White) };
+        int commands = 0;
+        Button button = buttonKind switch
+        {
+            "RepeatButton" => new Cerneala.UI.Controls.Primitives.RepeatButton(),
+            "CheckBox" => new CheckBox(),
+            _ => new Button()
+        };
+        button.Content = border;
+        button.Width = 200;
+        button.Height = 80;
+        button.Command = new ActionCommand(_ => commands++);
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+        if (handledEvent == "MouseDown")
+        {
+            border.MouseDown += (_, args) => args.Handled = true;
+        }
+        else if (handledEvent == "MouseLeftButtonDown")
+        {
+            border.MouseLeftButtonDown += (_, args) => args.Handled = true;
+        }
+
+        UIRoot root = CreateWindowRoot(button);
+        LayoutRect bounds = border.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        Assert.Same(border, new HitTestService().HitTest(root, x, y)?.Element);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        root.ProcessFrame();
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true, currentDown: true), TimeSpan.FromSeconds(2));
+        root.ProcessFrame();
+        bool pressedWhileHeld = button.IsPressed;
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        bool handled = handledEvent != "none";
+        Assert.Equal(!handled, pressedWhileHeld);
+        Assert.False(button.IsPressed);
+        if (handled)
+        {
+            Assert.Equal(0, clicks);
+        }
+        else if (buttonKind == "RepeatButton")
+        {
+            Assert.True(clicks > 1, $"The held RepeatButton clicked {clicks} times; the press and at least one repeat were expected.");
+        }
+        else
+        {
+            Assert.Equal(1, clicks);
+        }
+
+        Assert.Equal(clicks, commands);
+        if (button is CheckBox checkBox)
+        {
+            Assert.Equal(!handled, checkBox.IsChecked);
+        }
+    }
+
+    // The button presses itself before its own and its ancestors' MouseDown handlers run, as WPF's ButtonBase class
+    // handler runs on the button before the button's instance handlers and before the event bubbles further (#645).
+    [Theory]
+    [InlineData(false, "MouseDown")]
+    [InlineData(false, "MouseLeftButtonDown")]
+    [InlineData(true, "MouseDown")]
+    [InlineData(true, "MouseLeftButtonDown")]
+    public void MouseDownHandledOnTheButtonOrAnAncestorStillPressesAndClicksTheButton(bool handleOnAncestor, string handledEvent)
+    {
+        int commands = 0;
+        Button button = new() { Content = "b", Width = 200, Height = 80, Command = new ActionCommand(_ => commands++) };
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+        UIRoot root = CreateWindowRoot(button);
+        UIElement handlerOwner = handleOnAncestor ? button.VisualParent! : button;
+        if (handledEvent == "MouseDown")
+        {
+            handlerOwner.MouseDown += (_, args) => args.Handled = true;
+        }
+        else
+        {
+            handlerOwner.MouseLeftButtonDown += (_, args) => args.Handled = true;
+        }
+
+        LayoutRect bounds = button.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bool pressedAfterPress = button.IsPressed;
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.True(pressedAfterPress);
+        Assert.Equal(1, clicks);
+        Assert.Equal(1, commands);
+    }
+
+    // As in WPF, where a control focuses itself in its MouseLeftButtonDown class handling, a handled PreviewMouseDown
+    // or PreviewMouseLeftButtonDown keeps the focus where it was (#644). A press whose preview is not handled still
+    // focuses the pressed Button or TextBox, also when the TextBox marks its own MouseDown handled.
+    [Theory]
+    [InlineData("Button", "PreviewMouseDown")]
+    [InlineData("Button", "PreviewMouseLeftButtonDown")]
+    [InlineData("Button", "none")]
+    [InlineData("ButtonContent", "PreviewMouseDown")]
+    [InlineData("ButtonContent", "PreviewMouseLeftButtonDown")]
+    [InlineData("ButtonContent", "none")]
+    [InlineData("TextBox", "PreviewMouseDown")]
+    [InlineData("TextBox", "PreviewMouseLeftButtonDown")]
+    [InlineData("TextBox", "none")]
+    public void HandledPressPreviewKeepsKeyboardFocusOnPreviouslyFocusedElement(string target, string handledEvent)
+    {
+        Button first = new() { Content = "first", Width = 100, Height = 40 };
+        Border border = new() { Width = 120, Height = 30, Background = new Cerneala.UI.Media.SolidColorBrush(Color.White) };
+        TextBox text = new() { Text = "abc", Width = 120, Height = 30 };
+        Button second = new() { Content = target == "ButtonContent" ? border : "second", Width = 200, Height = 60 };
+        UIElement focusTarget = target == "TextBox" ? text : second;
+        UIElement pressed = target switch
+        {
+            "ButtonContent" => border,
+            "TextBox" => text,
+            _ => second
+        };
+        if (handledEvent == "PreviewMouseDown")
+        {
+            pressed.PreviewMouseDown += (_, args) => args.Handled = true;
+        }
+        else if (handledEvent == "PreviewMouseLeftButtonDown")
+        {
+            pressed.PreviewMouseLeftButtonDown += (_, args) => args.Handled = true;
+        }
+
+        StackPanel panel = new();
+        panel.Children.Add(first);
+        panel.Children.Add(focusTarget);
+        UIRoot root = CreateWindowRoot(panel);
+        ElementInputBridge bridge = new();
+        LayoutRect firstBounds = first.ArrangedBounds;
+        float firstX = firstBounds.X + firstBounds.Width / 2;
+        float firstY = firstBounds.Y + firstBounds.Height / 2;
+        bridge.Dispatch(root, PointerFrame(firstX, firstY, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(firstX, firstY, previousDown: true));
+        root.ProcessFrame();
+        Assert.True(first.IsKeyboardFocused);
+        LayoutRect bounds = pressed.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        Assert.Same(pressed, new HitTestService().HitTest(root, x, y)?.Element);
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        root.ProcessFrame();
+        bool focusedWhileHeld = focusTarget.IsKeyboardFocused;
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        bool handled = handledEvent != "none";
+        Assert.Equal(!handled, focusedWhileHeld);
+        Assert.Equal(!handled, focusTarget.IsKeyboardFocused);
+        Assert.Equal(handled, first.IsKeyboardFocused);
+    }
+
+    // As in WPF, where ButtonBase focuses itself in the same MouseLeftButtonDown class handler that presses it, a
+    // MouseDown or MouseLeftButtonDown that an element in the button's content marks handled keeps the focus off the
+    // button, as it keeps the press (#645, #644). Handlers on the button and its ancestors run after the button took the
+    // press and the focus, so they do not undo either.
+    [Theory]
+    [InlineData("Content", "MouseDown")]
+    [InlineData("Content", "MouseLeftButtonDown")]
+    [InlineData("Button", "MouseDown")]
+    [InlineData("Button", "MouseLeftButtonDown")]
+    [InlineData("Ancestor", "MouseDown")]
+    [InlineData("Ancestor", "MouseLeftButtonDown")]
+    public void HandledMouseDownInButtonContentKeepsKeyboardFocusOffTheButton(string handlerOwner, string handledEvent)
+    {
+        Button other = new() { Content = "other", Width = 100, Height = 40 };
+        Border border = new() { Width = 120, Height = 30, Background = new Cerneala.UI.Media.SolidColorBrush(Color.White) };
+        Button button = new() { Content = border, Width = 200, Height = 80 };
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+        StackPanel panel = new();
+        panel.Children.Add(other);
+        panel.Children.Add(button);
+        UIElement owner = handlerOwner switch
+        {
+            "Content" => border,
+            "Button" => button,
+            _ => panel
+        };
+        if (handledEvent == "MouseDown")
+        {
+            owner.MouseDown += (_, args) => args.Handled = true;
+        }
+        else
+        {
+            owner.MouseLeftButtonDown += (_, args) => args.Handled = true;
+        }
+
+        UIRoot root = CreateWindowRoot(panel);
+        ElementInputBridge bridge = new();
+        LayoutRect otherBounds = other.ArrangedBounds;
+        float otherX = otherBounds.X + otherBounds.Width / 2;
+        float otherY = otherBounds.Y + otherBounds.Height / 2;
+        bridge.Dispatch(root, PointerFrame(otherX, otherY, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(otherX, otherY, previousDown: true));
+        root.ProcessFrame();
+        Assert.True(other.IsKeyboardFocused);
+        LayoutRect bounds = border.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        Assert.Same(border, new HitTestService().HitTest(root, x, y)?.Element);
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        root.ProcessFrame();
+        bool pressedWhileHeld = button.IsPressed;
+        bool focusedWhileHeld = button.IsKeyboardFocused;
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        bool contentHandled = handlerOwner == "Content";
+        Assert.Equal(!contentHandled, pressedWhileHeld);
+        Assert.Equal(!contentHandled, focusedWhileHeld);
+        Assert.Equal(!contentHandled, button.IsKeyboardFocused);
+        Assert.Equal(contentHandled, other.IsKeyboardFocused);
+        Assert.Equal(contentHandled ? 0 : 1, clicks);
     }
 
     [Fact]
