@@ -200,6 +200,80 @@ public sealed class ListBoxTests
         Assert.True(row.IsSelected);
     }
 
+    // As a WPF ListBoxItem focuses itself when it handles MouseLeftButtonDown (#662): a click on a row takes keyboard
+    // focus from the button that had it, so a Space press after the click does not click that button.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ClickOnListBoxItemFocusesItSoSpaceDoesNotClickPreviouslyFocusedButton(bool generatedContainers)
+    {
+        Button other = new() { Content = "other", Width = 100, Height = 40 };
+        ListBox listBox = new() { Width = 150, Height = 100 };
+        if (generatedContainers)
+        {
+            listBox.SetItems(new[] { "a", "b" });
+        }
+        else
+        {
+            listBox.Items.Add(new ListBoxItem { Content = "a" });
+            listBox.Items.Add(new ListBoxItem { Content = "b" });
+        }
+
+        UIRoot root = CreateFocusWindowRoot(other, listBox);
+        ListBoxItem first = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[0]);
+        int otherClicks = 0;
+        other.Click += (_, _) => otherClicks++;
+        ElementInputBridge bridge = new();
+        ClickCenter(root, bridge, other);
+        Assert.True(other.IsKeyboardFocused);
+        int clicksBefore = otherClicks;
+
+        ClickCenter(root, bridge, first);
+        bool otherFocusedAfterItemClick = other.IsKeyboardFocused;
+        bridge.Dispatch(root, KeyFrame([], [InputKey.Space]));
+        bridge.Dispatch(root, KeyFrame([InputKey.Space], []));
+        root.ProcessFrame();
+
+        Assert.Equal(0, listBox.SelectedIndex);
+        Assert.True(first.IsKeyboardFocused);
+        Assert.True(listBox.IsKeyboardFocusWithin);
+        Assert.False(otherFocusedAfterItemClick);
+        Assert.Equal(0, otherClicks - clicksBefore);
+    }
+
+    // A row whose Focusable is false cannot take the focus, and it owns the press, so no focusable element above it,
+    // such as a focusable ListBox, takes the focus either: the focus stays where it was (#640, #662).
+    [Fact]
+    public void PressOnNonFocusableListBoxItemLeavesFocusWhereItWas()
+    {
+        Button other = new() { Content = "other", Width = 100, Height = 40 };
+        ListBox listBox = new() { Focusable = true, Width = 150, Height = 100 };
+        ListBoxItem first = new() { Content = "a", Focusable = false };
+        listBox.Items.Add(first);
+        listBox.Items.Add(new ListBoxItem { Content = "b" });
+        UIRoot root = CreateFocusWindowRoot(other, listBox);
+        ElementInputBridge bridge = new();
+        ClickCenter(root, bridge, other);
+        Assert.True(other.IsKeyboardFocused);
+
+        ClickCenter(root, bridge, first);
+
+        Assert.True(other.IsKeyboardFocused);
+        Assert.False(first.IsKeyboardFocused);
+        Assert.False(listBox.IsKeyboardFocusWithin);
+    }
+
+    // A WPF ComboBoxItem does not focus itself on a press, and the ComboBox keeps the keyboard focus while its drop-down
+    // is open, so a ComboBoxItem stays non-focusable although a ListBoxItem is focusable (#662). As a ListBox moves
+    // the Tab key into its list only once in WPF, a row is no Tab stop.
+    [Fact]
+    public void ListBoxItemIsFocusableAndComboBoxItemIsNot()
+    {
+        Assert.True(new ListBoxItem().Focusable);
+        Assert.False(new ListBoxItem().IsTabStop);
+        Assert.False(new ComboBoxItem().Focusable);
+    }
+
     [Fact]
     public void ListBoxSelectionSurvivesContainerRecycling()
     {
@@ -646,6 +720,40 @@ public sealed class ListBoxTests
         bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
         bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
         root.ProcessFrame();
+    }
+
+    private static void ClickCenter(UIRoot root, ElementInputBridge bridge, UIElement element)
+    {
+        LayoutRect bounds = element.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        root.ProcessFrame();
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+    }
+
+    // The button at the top left and the list box 120 pixels below it, in a window.
+    private static UIRoot CreateFocusWindowRoot(Button other, ListBox listBox)
+    {
+        Cerneala.UI.Layout.Panels.Canvas canvas = new();
+        canvas.VisualChildren.Add(other);
+        canvas.VisualChildren.Add(listBox);
+        Cerneala.UI.Layout.Panels.Canvas.SetTop(listBox, 120);
+        UIRoot root = new(360, 300);
+        root.VisualChildren.Add(new Window { Content = canvas, Width = 360, Height = 300 });
+        root.ProcessFrame();
+        return root;
+    }
+
+    private static InputFrame KeyFrame(InputKey[] previousKeys, InputKey[] currentKeys)
+    {
+        return new InputFrame(
+            PointerSnapshot.Empty,
+            PointerSnapshot.Empty,
+            KeyboardSnapshot.FromDownKeys(previousKeys),
+            KeyboardSnapshot.FromDownKeys(currentKeys),
+            []);
     }
 
     private static T? FindDescendant<T>(UIElement element) where T : UIElement

@@ -48,6 +48,13 @@ public class TabItem : ContentControl, ISelectableItemContainer
     private ContentTemplateRegistry? headerTemplateRegistry;
     private int headerIndex = -1;
 
+    // Focusable as a WPF TabItem, a Control that focuses itself when it handles MouseLeftButtonDown: a press on the tab
+    // moves keyboard focus to it (#662). Not a Tab stop, as the WPF tab strip lets the Tab key into its tabs only once.
+    public TabItem()
+    {
+        Focusable = true;
+    }
+
     public int ItemIndex { get; set; } = -1;
 
     public object? Item { get; set; }

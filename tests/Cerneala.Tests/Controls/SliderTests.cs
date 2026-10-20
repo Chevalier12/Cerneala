@@ -87,6 +87,45 @@ public sealed class SliderTests
         Assert.Equal(0.25f, slider.Value);
     }
 
+    // As a WPF Slider focuses itself on a MouseDown that its Thumb handled (#662): a press on the thumb of a focusable
+    // slider takes keyboard focus from the button that had it. A slider that is not focusable leaves the focus there.
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void PressOnThumbOfFocusableSliderFocusesSlider(bool sliderFocusable)
+    {
+        Button other = new() { Content = "other", Width = 100, Height = 30 };
+        Slider slider = new() { Focusable = sliderFocusable, Minimum = 0, Maximum = 100, Value = 50, Width = 200, Height = 20 };
+        Cerneala.UI.Controls.StackPanel panel = new();
+        panel.Children.Add(other);
+        panel.Children.Add(slider);
+        UIRoot root = new(360, 240);
+        root.VisualChildren.Add(new Window { Content = panel, Width = 360, Height = 240 });
+        root.ProcessFrame();
+        ElementInputBridge bridge = new();
+        LayoutRect otherBounds = other.ArrangedBounds;
+        bridge.Dispatch(root, PointerFrame(otherBounds.X + 5, otherBounds.Y + 5, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(otherBounds.X + 5, otherBounds.Y + 5, otherBounds.X + 5, otherBounds.Y + 5, previousDown: true));
+        root.ProcessFrame();
+        Assert.True(other.IsKeyboardFocused);
+        Thumb thumb = slider.Track.Thumb;
+        LayoutRect bounds = thumb.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        Assert.Same(thumb, new HitTestService().HitTest(root, x, y)?.Element);
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        root.ProcessFrame();
+        bool focusedWhileHeld = slider.IsKeyboardFocused;
+        bridge.Dispatch(root, PointerFrame(x, y, x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.Equal(sliderFocusable, focusedWhileHeld);
+        Assert.Equal(sliderFocusable, slider.IsKeyboardFocused);
+        Assert.Equal(!sliderFocusable, other.IsKeyboardFocused);
+        Assert.False(thumb.Focusable);
+    }
+
     [Fact]
     public void SliderOrientationAffectsTrackLayout()
     {

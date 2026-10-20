@@ -33,8 +33,11 @@ public class ListBoxItem : ContentControl, ISelectableItemContainer
         typeof(ListBoxItem),
         new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsAspect));
 
+    // Focusable as a WPF ListBoxItem, a Control that focuses itself when it handles MouseLeftButtonDown: a press on the
+    // row moves keyboard focus to it (#662). Not a Tab stop, as a WPF ListBox lets the Tab key into its list only once.
     public ListBoxItem()
     {
+        Focusable = true;
         UpdateContentPresenter();
     }
 
