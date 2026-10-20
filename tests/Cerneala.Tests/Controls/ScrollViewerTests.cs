@@ -1048,6 +1048,205 @@ public sealed class ScrollViewerTests
         Assert.Equal(new LayoutRect(0, 0, 108, 80), viewer.Presenter.ArrangedBounds);
     }
 
+    // As in WPF, where the RepeatButtons and the Thumb of the default ScrollBar template are not focusable, Tab from a
+    // button before the ScrollViewer does not stop on a part of its vertical scroll bar (#700).
+    [Fact]
+    public void TabDoesNotStopOnThePartsOfTheVerticalScrollBar()
+    {
+        (UIRoot root, Button before, ScrollViewer viewer) = CreateFocusViewer(new LayoutSize(80, 300), horizontal: false);
+        Assert.True(viewer.IsVerticalScrollBarVisible);
+        ElementInputBridge bridge = new();
+        ClickCenter(root, bridge, before);
+        Assert.True(before.IsKeyboardFocused);
+
+        for (int press = 0; press < 3; press++)
+        {
+            PressKey(root, bridge, InputKey.Tab);
+
+            UIElement focused = Assert.IsAssignableFrom<UIElement>(root.ActiveFocusManager?.FocusedElement);
+            Assert.False(
+                IsInsideScrollBar(focused),
+                $"Tab press {press + 1} focused {focused.GetType().Name} in a scroll bar.");
+        }
+    }
+
+    // Tab does not stop on the parts of the horizontal bar either (#700).
+    [Fact]
+    public void TabDoesNotStopOnThePartsOfTheHorizontalScrollBar()
+    {
+        (UIRoot root, Button before, ScrollViewer viewer) = CreateFocusViewer(new LayoutSize(600, 20), horizontal: true);
+        Assert.True(viewer.IsHorizontalScrollBarVisible);
+        ElementInputBridge bridge = new();
+        ClickCenter(root, bridge, before);
+        Assert.True(before.IsKeyboardFocused);
+
+        for (int press = 0; press < 3; press++)
+        {
+            PressKey(root, bridge, InputKey.Tab);
+
+            UIElement focused = Assert.IsAssignableFrom<UIElement>(root.ActiveFocusManager?.FocusedElement);
+            Assert.False(
+                IsInsideScrollBar(focused),
+                $"Tab press {press + 1} focused {focused.GetType().Name} in a scroll bar.");
+        }
+    }
+
+    // A click on the increase button of the vertical bar scrolls and leaves the keyboard focus on the focused button,
+    // as in WPF where the RepeatButtons of the ScrollBar are not focusable (#700).
+    [Fact]
+    public void ClickOnTheVerticalIncreaseButtonKeepsTheKeyboardFocus()
+    {
+        (UIRoot root, Button before, ScrollViewer viewer) = CreateFocusViewer(new LayoutSize(80, 300), horizontal: false);
+        ElementInputBridge bridge = new();
+        ClickCenter(root, bridge, before);
+        Assert.True(before.IsKeyboardFocused);
+        RepeatButton increase = Assert.IsType<RepeatButton>(
+            viewer.VerticalScrollBar.ComponentTemplateInstance!.Parts["PART_IncreaseButton"]);
+
+        ClickCenter(root, bridge, increase);
+
+        Assert.Equal(48, viewer.Presenter.VerticalOffset);
+        Assert.True(before.IsKeyboardFocused);
+    }
+
+    // The same for the decrease button of the vertical bar (#700).
+    [Fact]
+    public void ClickOnTheVerticalDecreaseButtonKeepsTheKeyboardFocus()
+    {
+        (UIRoot root, Button before, ScrollViewer viewer) = CreateFocusViewer(new LayoutSize(80, 300), horizontal: false);
+        ElementInputBridge bridge = new();
+        viewer.Presenter.SetVerticalOffset(100);
+        root.ProcessFrame();
+        ClickCenter(root, bridge, before);
+        Assert.True(before.IsKeyboardFocused);
+        RepeatButton decrease = Assert.IsType<RepeatButton>(
+            viewer.VerticalScrollBar.ComponentTemplateInstance!.Parts["PART_DecreaseButton"]);
+
+        ClickCenter(root, bridge, decrease);
+
+        Assert.Equal(52, viewer.Presenter.VerticalOffset);
+        Assert.True(before.IsKeyboardFocused);
+    }
+
+    // The same for the increase button of the horizontal bar (#700).
+    [Fact]
+    public void ClickOnTheHorizontalIncreaseButtonKeepsTheKeyboardFocus()
+    {
+        (UIRoot root, Button before, ScrollViewer viewer) = CreateFocusViewer(new LayoutSize(600, 20), horizontal: true);
+        Assert.True(viewer.IsHorizontalScrollBarVisible);
+        ElementInputBridge bridge = new();
+        ClickCenter(root, bridge, before);
+        Assert.True(before.IsKeyboardFocused);
+        RepeatButton increase = Assert.IsType<RepeatButton>(
+            viewer.HorizontalScrollBar.ComponentTemplateInstance!.Parts["PART_IncreaseButton"]);
+
+        ClickCenter(root, bridge, increase);
+
+        Assert.Equal(48, viewer.Presenter.HorizontalOffset);
+        Assert.True(before.IsKeyboardFocused);
+    }
+
+    // Guards the same contract for the page area of the Track, which is not a button: a click on it pages and leaves the
+    // keyboard focus (#700).
+    [Fact]
+    public void ClickOnTheTrackPageAreaKeepsTheKeyboardFocus()
+    {
+        (UIRoot root, Button before, ScrollViewer viewer) = CreateFocusViewer(new LayoutSize(80, 300), horizontal: false);
+        ElementInputBridge bridge = new();
+        ClickCenter(root, bridge, before);
+        Assert.True(before.IsKeyboardFocused);
+
+        ClickTrackAfterThumb(root, bridge, viewer.VerticalScrollBar.Track);
+
+        Assert.True(viewer.Presenter.VerticalOffset > 0);
+        Assert.True(before.IsKeyboardFocused);
+    }
+
+    // Guards the same contract for the Thumb: a drag of it scrolls and leaves the keyboard focus (#700).
+    [Fact]
+    public void DragOfTheThumbKeepsTheKeyboardFocus()
+    {
+        (UIRoot root, Button before, ScrollViewer viewer) = CreateFocusViewer(new LayoutSize(80, 300), horizontal: false);
+        ElementInputBridge bridge = new();
+        ClickCenter(root, bridge, before);
+        Assert.True(before.IsKeyboardFocused);
+        LayoutRect thumb = viewer.VerticalScrollBar.Track.Thumb.ArrangedBounds;
+        float x = thumb.X + (thumb.Width / 2);
+        float y = thumb.Y + (thumb.Height / 2);
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        root.ProcessFrame();
+        bridge.Dispatch(root, PointerFrame(x, y, x, y + 5, previousDown: true, currentDown: true));
+        root.ProcessFrame();
+        bridge.Dispatch(root, PointerFrame(x, y + 5, x, y + 5, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.True(viewer.Presenter.VerticalOffset > 0);
+        Assert.True(before.IsKeyboardFocused);
+    }
+
+    // A button before a 150 by 60 ScrollViewer in a window; the content decides which bar is visible.
+    private static (UIRoot Root, Button Before, ScrollViewer Viewer) CreateFocusViewer(LayoutSize content, bool horizontal)
+    {
+        Button before = new() { Content = "Before" };
+        ScrollViewer viewer = new()
+        {
+            Width = 150,
+            Height = 60,
+            Content = new FixedElement(content),
+            VerticalScrollBarVisibility = horizontal ? ScrollBarVisibility.Disabled : ScrollBarVisibility.Auto,
+            HorizontalScrollBarVisibility = horizontal ? ScrollBarVisibility.Auto : ScrollBarVisibility.Disabled
+        };
+        Cerneala.UI.Layout.Panels.StackPanel panel = new();
+        panel.VisualChildren.Add(before);
+        panel.VisualChildren.Add(viewer);
+        UIRoot root = new(360, 300);
+        root.VisualChildren.Add(new Window { Content = panel, Width = 360, Height = 300 });
+        root.ProcessFrame();
+        return (root, before, viewer);
+    }
+
+    private static void ClickCenter(UIRoot root, ElementInputBridge bridge, UIElement element)
+    {
+        LayoutRect bounds = element.ArrangedBounds;
+        float x = bounds.X + (bounds.Width / 2);
+        float y = bounds.Y + (bounds.Height / 2);
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        root.ProcessFrame();
+        bridge.Dispatch(root, PointerFrame(x, y, x, y, previousDown: true));
+        root.ProcessFrame();
+    }
+
+    private static void PressKey(UIRoot root, ElementInputBridge bridge, InputKey key)
+    {
+        bridge.Dispatch(root, KeyFrame([], [key]));
+        bridge.Dispatch(root, KeyFrame([key], []));
+        root.ProcessFrame();
+    }
+
+    private static InputFrame KeyFrame(InputKey[] previousKeys, InputKey[] currentKeys)
+    {
+        return new InputFrame(
+            PointerSnapshot.Empty,
+            PointerSnapshot.Empty,
+            KeyboardSnapshot.FromDownKeys(previousKeys),
+            KeyboardSnapshot.FromDownKeys(currentKeys),
+            []);
+    }
+
+    private static bool IsInsideScrollBar(UIElement element)
+    {
+        for (UIElement? current = element; current is not null; current = current.VisualParent)
+        {
+            if (current is ScrollBar)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static void ClickTrackAfterThumb(UIRoot root, ElementInputBridge bridge, Track track)
     {
         LayoutRect thumb = track.Thumb.ArrangedBounds;

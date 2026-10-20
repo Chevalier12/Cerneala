@@ -27,10 +27,14 @@ internal static class ScrollBarTemplates
         return root;
     });
 
+    // As the RepeatButtons of the WPF default ScrollBar template, the arrows take no focus: Tab does not stop on them and a
+    // click on one scrolls without moving the keyboard focus from the element that has it (#700).
     private static RepeatButton CreateDirectionButton()
     {
         return new RepeatButton
         {
+            Focusable = false,
+            IsTabStop = false,
             Background = new SolidColorBrush(new Color(245, 245, 245)),
             BorderBrush = new SolidColorBrush(new Color(130, 130, 130)),
             BorderThickness = new Thickness(1),
