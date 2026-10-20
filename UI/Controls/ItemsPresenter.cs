@@ -187,9 +187,9 @@ public class ItemsPresenter : Control
             return false;
         }
 
-        RealizationWindow previous = panel.RealizationWindow;
         panel.ClearViewport();
-        if (panel.RealizationWindow == previous)
+        // The presenter's window, not the panel's, decides whether the items change: a non-virtualizing panel presents every item.
+        if (GetRealizationWindow() == lastRealizationWindow)
         {
             return false;
         }
