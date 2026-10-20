@@ -83,7 +83,11 @@ A press on an element inside the row that can take the focus itself, such as a `
 
 With `Focusable = false`, a press on the row leaves the focus where it was. The row owns the press, so no focusable element above it, such as a `ListBox` with `Focusable = true`, takes the focus either. `ComboBoxItem` derives from `ListBoxItem` but sets `Focusable` back to `false`; see `ComboBoxItem`.
 
-A click selects the item in its `ListBox` only when the item can take the keyboard focus, as WPF's `ListBoxItem` notifies its `ListBox` of the click only when its `Focus()` succeeds. For example, an item with `Focusable = false` in a `ListBox` whose `SelectedIndex` is `-1`: after a click on the item, `IsSelected` is still `false`, `SelectedIndex` is still `-1`, and the focus is still on the element that had it. The same item with `Focusable = true` (the default) is selected and focused by the click. The item's focusability is read at the press, so an item whose `GotFocus` handler sets `Focusable = false` is still selected when the button is released. A `ComboBoxItem` is the exception: its `ComboBox` selects it on a click although it is not focusable.
+A click changes the selection of its `ListBox` only when the item can take the keyboard focus, as WPF's `ListBoxItem` notifies its `ListBox` of the click only when its `Focus()` succeeds. What the click then selects depends on `ListBox.SelectionMode`; see `ListBox`. For example, an item with `Focusable = false` in a `ListBox` whose `SelectedIndex` is `-1`: after a click on the item, `IsSelected` is still `false`, `SelectedIndex` is still `-1`, and the focus is still on the element that had it. The same item with `Focusable = true` (the default) is selected and focused by the click. The item's focusability is read at the press, so an item whose `GotFocus` handler sets `Focusable = false` is still selected when the button is released. A `ComboBoxItem` is the exception: its `ComboBox` selects it on a click although it is not focusable.
+
+### Keyboard focus from keys
+
+The keys of a focused `ListBox` move the keyboard focus from row to row, as in a WPF `ListBox`. The arrow keys, Home, End, Page Up, Page Down, and type-ahead text focus the row they reach, and Space acts on the focused row. For example, in a `ListBox` with `SelectionMode.Multiple` that shows `"A"`, `"B"`, and `"C"`, after a click on the row `"A"`, a Down press focuses the row `"B"`: its `IsKeyboardFocused` is `true`, and `SelectionModel.SelectedIndices` stays `[0]`. A Space press then selects `"B"` too. In `SelectionMode.Single`, the same Down press focuses and selects `"B"`. See [`ListBox`](Cerneala.UI.Controls.ListBox.md#keyboard) for every key.
 
 ## Constructors
 
@@ -105,7 +109,7 @@ A click selects the item in its `ListBox` only when the item can take the keyboa
 | --- | --- | --- |
 | `ItemIndex` | `int` | Gets or sets the source item index associated with this container. Defaults to `-1`. |
 | `Item` | `object?` | Gets or sets the source item associated with this container. Defaults to `null`. |
-| `IsSelected` | `bool` | Gets or sets whether this container represents the selected item. Backed by `IsSelectedProperty`. |
+| `IsSelected` | `bool` | Gets or sets whether this container represents a selected item. In a `ListBox` that selects several items, every row of a selected item has `IsSelected == true`. Backed by `IsSelectedProperty`. |
 
 ## Methods
 

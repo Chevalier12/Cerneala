@@ -39,8 +39,7 @@ public class ComboBox : Selector
     private bool synchronizingParts;
     private bool preserveTextWhileDeselecting;
     private bool updatingTextSearch;
-    private string textSearchPrefix = string.Empty;
-    private long lastTextSearchInputTime;
+    private readonly ItemTextSearch textSearch = new();
     private List<int>? filteredSourceIndices;
     private string filterText = string.Empty;
     private bool selectionTransactionActive;
@@ -802,22 +801,7 @@ public class ComboBox : Selector
             return;
         }
 
-        long now = Environment.TickCount64;
-        if (lastTextSearchInputTime == 0 || now - lastTextSearchInputTime > 1000)
-        {
-            textSearchPrefix = string.Empty;
-        }
-
-        lastTextSearchInputTime = now;
-        string candidatePrefix = textSearchPrefix + input;
-        int matchIndex = FindMatchingItem(candidatePrefix, exactMatch: false);
-        if (matchIndex < 0 && textSearchPrefix.Length > 0)
-        {
-            candidatePrefix = input;
-            matchIndex = FindMatchingItem(candidatePrefix, exactMatch: false);
-        }
-
-        textSearchPrefix = candidatePrefix;
+        int matchIndex = textSearch.Search(this, input, IsTextSearchCaseSensitive);
         if (matchIndex >= 0)
         {
             if (selectionTransactionActive)
@@ -1095,52 +1079,17 @@ public class ComboBox : Selector
 
     private int FindMatchingItem(string searchText, bool exactMatch)
     {
-        CompareInfo compareInfo = CultureInfo.CurrentCulture.CompareInfo;
-        CompareOptions options = IsTextSearchCaseSensitive ? CompareOptions.None : CompareOptions.IgnoreCase;
-        for (int index = 0; index < ItemCount; index++)
-        {
-            string itemText = GetItemText(GetItemAt(index));
-            bool matches = exactMatch
-                ? compareInfo.Compare(itemText, searchText, options) == 0
-                : compareInfo.IsPrefix(itemText, searchText, options);
-            if (matches)
-            {
-                return index;
-            }
-        }
-
-        return -1;
+        return ItemTextSearch.FindMatchingItem(this, searchText, exactMatch, IsTextSearchCaseSensitive);
     }
 
     private string GetItemText(object? item)
     {
-        if (item is UiObject uiObject && uiObject.GetValueSource(TextSearch.TextProperty) != UiPropertyValueSource.Default)
-        {
-            return TextSearch.GetText(uiObject);
-        }
-
-        string textPath = TextSearch.GetTextPath(this);
-        return GetPlainText(textPath.Length > 0
-            ? DisplayMemberPathAccessor.Resolve(item, textPath)
-            : GetItemDisplayValue(item));
-    }
-
-    // As WPF's TextSearch converts a value to plain text: a content element, such as a ComboBoxItem, gives the text
-    // of its Content, a TextBlock gives its Text, and any other value gives its ToString().
-    private static string GetPlainText(object? value)
-    {
-        return value switch
-        {
-            ContentControl contentControl => GetPlainText(contentControl.Content),
-            TextBlock textBlock => textBlock.Text,
-            _ => value?.ToString() ?? string.Empty
-        };
+        return ItemTextSearch.GetItemText(this, item);
     }
 
     private void ResetTextSearchPrefix()
     {
-        textSearchPrefix = string.Empty;
-        lastTextSearchInputTime = 0;
+        textSearch.Reset();
     }
 
     private void BeginSelectionTransaction()

@@ -22,4 +22,9 @@ public sealed class SelectionChangedEventArgs : RoutedEventArgs
     public IReadOnlyList<object?> RemovedItems { get; } = [];
 
     public IReadOnlyList<object?> AddedItems { get; } = [];
+
+    // The indices a SelectionModel change deselected and selected, so the selection owner refreshes their containers.
+    internal IReadOnlyList<int> RemovedIndices { get; init; } = [];
+
+    internal IReadOnlyList<int> AddedIndices { get; init; } = [];
 }

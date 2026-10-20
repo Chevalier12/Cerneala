@@ -36,16 +36,16 @@ model.Clear();
 
 ## Remarks
 
-`SelectionChangedEventArgs` wraps the `SelectionChangeResult` produced by `SelectionModel.Select(int)`.
+`SelectionChangedEventArgs` wraps the `SelectionChangeResult` produced by a `SelectionModel` operation such as `Select`, `Add`, `Remove`, `SelectRange`, or `AddRange`.
 
-The `Change` property contains the previous selected index, the new selected index, and the `Changed` flag. `SelectionModel` raises `SelectionChanged` only after the stored selected index changes; selecting the current index again returns a result with `Changed == false` and does not raise the event.
+The `Change` property contains `SelectedIndex` before the change (`OldIndex`), `SelectedIndex` after the change (`NewIndex`), and the `Changed` flag. `SelectionModel` raises `SelectionChanged` only after its selected indices change; an operation that leaves them the same, such as selecting the only selected index again, returns a result with `Changed == false` and does not raise the event. Because `SelectedIndex` is only the first selected index, `OldIndex` and `NewIndex` can be equal in a raised event. For example, `Add(0)` on a model whose selected indices are `[2]` gives `[2, 0]` and raises `SelectionChanged` with `OldIndex == 2` and `NewIndex == 2`.
 
 The value `-1` represents no selection in `SelectionModel`, so a change whose `NewIndex` is `-1` represents a cleared selection.
 
 The same type is used in two ways:
 
 - `SelectionModel.SelectionChanged` is a plain .NET event. It uses the one-argument constructor, so only `Change` is set. `RemovedItems` and `AddedItems` are empty, and `RoutedEvent`, `Source` and `OriginalSource` are not set.
-- `Selector.SelectionChanged` is the bubbling routed event `Selector.SelectionChangedEvent`. `Selector` raises it after it handles the model change, with the selector as `Source`. `RemovedItems` holds the item at `Change.OldIndex` and `AddedItems` holds the item at `Change.NewIndex`, each only when that index is inside the current item range; otherwise the list is empty. For example, selecting index `1` of a `ListBox` with items `"A"` and `"B"` when nothing was selected gives `RemovedItems = []` and `AddedItems = ["B"]`.
+- `Selector.SelectionChanged` is the bubbling routed event `Selector.SelectionChangedEvent`. `Selector` raises it after it handles the model change, with the selector as `Source`. `RemovedItems` holds every item that left the selection and `AddedItems` holds every item that entered it, so each list can hold more than one item; `null` items and indexes outside the current item range are left out. For example, selecting index `1` of a `ListBox` with items `"A"` and `"B"` when nothing was selected gives `RemovedItems = []` and `AddedItems = ["B"]`. In a `ListBox` with `SelectionMode.Extended` that shows `"Apple"`, `"Banana"`, and `"Cherry"`, with only `"Apple"` selected, a Shift-click on `"Cherry"` gives `RemovedItems = []` and `AddedItems = ["Banana", "Cherry"]`; a plain click on `"Banana"` then gives `RemovedItems = ["Apple", "Cherry"]` and `AddedItems = []`. When an item change removes or replaces selected items, the event holds those items in `RemovedItems`, and `AddedItems` is empty.
 
 ## Constructors
 
@@ -66,7 +66,7 @@ The same type is used in two ways:
 
 ## Applies to
 
-`Cerneala` UI controls that use `SelectionModel` for single-index selection state.
+`Cerneala` UI controls that use `SelectionModel` for their selection state.
 
 ## See also
 

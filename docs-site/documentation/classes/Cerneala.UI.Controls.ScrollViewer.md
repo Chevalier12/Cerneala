@@ -85,6 +85,13 @@ The default scroll policy disables horizontal scrolling and enables automatic ve
 
 During measure and arrange, the control reevaluates whether each scroll bar is needed through the template root. `Visible` and `Hidden` reserve the default scroll bar's `12` unit cross-axis size. `Auto` shows a scroll bar only when the presenter's extent is larger than its viewport. If one automatically visible scroll bar reduces the opposite viewport enough to require the other bar, the layout pass reevaluates both axes for at most three passes. A non-convergent state uses the conservative union of bars observed during those passes.
 
+The presenter desires, on each axis, the smaller of its viewport and its extent, as WPF's `ScrollContentPresenter` does, so a viewer whose content fits asks only for the content size and not for the whole available space. The visible or reserved scroll bars and `BorderThickness` are added to that size. For example, a viewer measured with an available size of 100 x 100:
+
+- With content that desires 80 x 20 and both `HorizontalScrollBarVisibility` and `VerticalScrollBarVisibility` set to `Auto`, `DesiredSize` is 80 x 20 and no scroll bar is visible.
+- With content that desires 80 x 300 and `VerticalScrollBarVisibility = ScrollBarVisibility.Auto`, the vertical scroll bar is visible, `ScrollInfo.ExtentHeight` is `300`, `ScrollInfo.ViewportHeight` is `100`, the presenter desires 80 x 100, and `DesiredSize` is 92 x 100: the 80-unit content width plus the 12-unit scroll bar.
+
+The viewport is still the presenter's available size during measure and its final size during arrange, so a parent that arranges the viewer larger than `DesiredSize` gets a larger viewport.
+
 Template replacement unsubscribes the old presenter and scroll bars, releases content ownership from the old presenter, then connects and synchronizes the new parts. Missing parts and wrong part types fail during template application with the part name and expected type. Old parts cannot continue changing viewer offsets after a swap.
 
 Visibility changes performed during convergence normally enqueue layout work along the visual ancestor chain. The viewer consumes measure and arrange entries only from the changed scroll bar through its own template boundary, because that hierarchy is laid out synchronously. It also increments the layout version of every template element between the scroll bar and the viewer, so the default `Border` and its `Grid` (or any deeper custom template nesting) re-arrange the newly shown or hidden bar. Work for parents outside the viewer remains scheduled so an outer grid or panel can recompute the viewer's slot. Render, hit-test, input, and other invalidations remain intact; the next unchanged frame therefore has no stale internal layout work.
@@ -155,7 +162,7 @@ Offsets are clamped by `ScrollContentPresenter` to the valid `0..(extent - viewp
 | Vertical scrolling default | `Auto` |
 | Border inset | The template grid is arranged inside the viewer's `BorderThickness` on each side. |
 | Presenter available size | The star-sized grid cell remaining after the border inset and the visible or hidden auto-sized scroll-bar cells reserve space. |
-| Desired size with finite available size | Uses the template grid's finite desired size plus `BorderThickness`. |
+| Desired size with finite available size | Uses the template grid's finite desired size plus `BorderThickness`. The presenter cell desires, per axis, the smaller of the viewport and the extent, so content 80 x 20 in 100 x 100 gives 80 x 20, and content 80 x 300 with a visible vertical bar gives 92 x 100. |
 | Desired size with unbounded available size | Star grid tracks use child desired sizes, preserving the presenter's content-driven desired size plus visible/reserved bars and `BorderThickness`. |
 
 ## Property Information

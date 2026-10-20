@@ -58,7 +58,12 @@ ScrollContentPresenter presenter = new()
 ## Remarks
 `ScrollContentPresenter` is the content host used by `ScrollViewer`. It exposes the `IScrollInfo` metrics that scroll bars and wheel handling use: current offsets, total content extent, viewport size, and per-axis scroll enablement.
 
-During measure, scroll-enabled axes are measured with an infinite available size so content can report its natural extent. Disabled axes are measured with the available viewport dimension. The measured content size becomes `ExtentWidth` and `ExtentHeight`; the finite available size becomes `ViewportWidth` and `ViewportHeight`.
+During measure, scroll-enabled axes are measured with an infinite available size so content can report its natural extent. Disabled axes are measured with the available viewport dimension. The measured content size becomes `ExtentWidth` and `ExtentHeight`; the finite available size becomes `ViewportWidth` and `ViewportHeight`, and an infinite available dimension makes the viewport equal to the extent on that axis.
+
+As in WPF's `ScrollContentPresenter`, the desired size on each axis is the smaller of the viewport and the extent, so content that fits does not ask for the whole available space. The viewport stays the available size during measure, and arrange then sets it to the final size. For example, measured with an available size of 100 x 100:
+
+- Content that desires 80 x 20 gives `DesiredSize` 80 x 20, with `ViewportWidth` and `ViewportHeight` `100`.
+- Content that desires 80 x 300 gives `DesiredSize` 80 x 100, with `ExtentHeight` `300` and `ViewportHeight` `100`.
 
 Changing `CanHorizontallyScroll` or `CanVerticallyScroll` invalidates the presenter's measure, as in WPF, also when the presenter's own available size stays the same. For example, a `ScrollViewer` 200 x 320 whose content desires 200 x 320 measures that content with height `320` while `VerticalScrollBarVisibility` is `Disabled`. After `VerticalScrollBarVisibility = ScrollBarVisibility.Auto`, the content is measured with height `float.PositiveInfinity`, although the scroll bar stays collapsed in both modes. `ScrollViewer` sets the capability during its own measure, and measure work queued during the measure phase runs on a later frame: after the first `UIRoot.ProcessFrame` the content's last measure constraint is still `320`, after the second it is `float.PositiveInfinity`. Setting the current value again does not invalidate anything.
 

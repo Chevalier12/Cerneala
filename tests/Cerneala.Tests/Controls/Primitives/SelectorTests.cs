@@ -177,7 +177,7 @@ public sealed class SelectorTests
 
         listBox.Items[1] = "x";
         listBox.FailFor = "x";
-        Assert.Throws<InvalidOperationException>(() => listBox.Measure(new MeasureContext(new LayoutSize(100, 100))));
+        Assert.Throws<InvalidOperationException>(() => listBox.Root!.ProcessFrame());
         if (!keepFailing)
         {
             listBox.FailFor = null;
@@ -199,7 +199,7 @@ public sealed class SelectorTests
 
         listBox.Items[1] = "x";
         listBox.FailFor = "x";
-        Assert.Throws<InvalidOperationException>(() => listBox.Measure(new MeasureContext(new LayoutSize(100, 100))));
+        Assert.Throws<InvalidOperationException>(() => listBox.Root!.ProcessFrame());
         listBox.FailFor = null;
         listBox.Root!.ProcessFrame();
         Click(listBox, 5, 15);
@@ -409,6 +409,35 @@ public sealed class SelectorTests
         Assert.Equal(0, raised);
     }
 
+    // Every selected item follows its item when items move or are reset, in selection order, without SelectionChanged.
+    [Fact]
+    public void EverySelectedItemFollowsItsItemWhenItemsMoveOrReset()
+    {
+        ObservableCollection<string> items = new(["a", "b", "c", "d"]);
+        ListBox listBox = new() { SelectionMode = SelectionMode.Multiple, ItemsSource = items };
+        listBox.SelectionModel.Select(1);
+        listBox.SelectionModel.Add(3);
+        int raised = 0;
+        listBox.SelectionChanged += (_, _) => raised++;
+
+        items.Move(0, 3);
+
+        Assert.Equal([0, 2], listBox.SelectionModel.SelectedIndices);
+        Assert.Equal(["b", "d"], listBox.SelectedItems);
+
+        ListBox reset = new() { SelectionMode = SelectionMode.Multiple };
+        reset.SetItems(new[] { "a", "b", "c", "d" });
+        reset.SelectionModel.Select(1);
+        reset.SelectionModel.Add(3);
+        reset.SelectionChanged += (_, _) => raised++;
+
+        reset.SetItems(new[] { "d", "x", "b" });
+
+        Assert.Equal([2, 0], reset.SelectionModel.SelectedIndices);
+        Assert.Equal(["b", "d"], reset.SelectedItems);
+        Assert.Equal(0, raised);
+    }
+
     [Fact]
     public void RemovingSelectedItemClearsSelectionAndReportsRemovedItem()
     {
@@ -474,13 +503,11 @@ public sealed class SelectorTests
         ListBox listBox = new();
         listBox.SetItems(new[] { "a", "b", "c" });
         root.VisualChildren.Add(listBox);
-        listBox.Measure(new MeasureContext(new LayoutSize(100, 100)));
-        listBox.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+        root.ProcessFrame();
         listBox.SelectedIndex = 1;
 
         listBox.Items.Insert(0, "z");
-        listBox.Measure(new MeasureContext(new LayoutSize(100, 100)));
-        listBox.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+        root.ProcessFrame();
 
         Assert.Equal(4, listBox.RealizedItemCount);
         foreach (UIElement container in listBox.ItemContainerGenerator.RealizedContainers.Values)
@@ -648,8 +675,7 @@ public sealed class SelectorTests
 
         listBox.Items[0] = "x";
         listBox.Items.Insert(0, a);
-        listBox.Measure(new MeasureContext(new LayoutSize(100, 100)));
-        listBox.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+        listBox.Root!.ProcessFrame();
         Click(listBox, 50, 5);
 
         Assert.Equal(0, listBox.SelectedIndex);

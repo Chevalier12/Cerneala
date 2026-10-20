@@ -28,6 +28,14 @@ public sealed class MouseButtonEventArgs : MouseEventArgs
     // decide click ownership use it so that a tree change by an earlier handler does not change the decision (#501).
     internal ElementInputRouteMap? RouteMap { get; init; }
 
+    // The modifier keys that the keyboard of the input frame holds down, as WPF's Keyboard.Modifiers when a mouse
+    // button handler runs, so a ListBox can select by Ctrl+click and Shift+click. False on events raised elsewhere.
+    internal bool IsControlDown { get; init; }
+
+    internal bool IsShiftDown { get; init; }
+
+    internal bool IsAltDown { get; init; }
+
     internal MouseButtonEventArgs(
         RoutedEvent routedEvent,
         object originalSource,

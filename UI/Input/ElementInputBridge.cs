@@ -160,6 +160,7 @@ public sealed class ElementInputBridge
             RaiseWheelPair(routeMap, pointerTarget, wheelDelta);
         }
 
+        KeyModifiers modifiers = GetModifiers(inputFrame.Keyboard);
         foreach (InputMouseButton button in Enum.GetValues<InputMouseButton>())
         {
             if (button is InputMouseButton.None)
@@ -196,6 +197,7 @@ public sealed class ElementInputBridge
                     InputEvents.MouseDownEvent,
                     button,
                     1,
+                    modifiers,
                     out bool previewHandled,
                     previewHandledOnArrival,
                     handledOnArrival);
@@ -207,6 +209,7 @@ public sealed class ElementInputBridge
                     button,
                     isDown: true,
                     clickCount: 1,
+                    modifiers,
                     previewHandledOnArrival,
                     handledOnArrival,
                     out bool buttonPreviewHandled,
@@ -296,11 +299,11 @@ public sealed class ElementInputBridge
                 pressOriginalSources[(int)button] = null;
                 HashSet<UiElementId> previewHandledOnArrival = [];
                 HashSet<UiElementId> handledOnArrival = [];
-                bool handled = RaiseMousePair(routeMap, pointerTarget, InputEvents.PreviewMouseUpEvent, InputEvents.MouseUpEvent, button, clickCount, out _, previewHandledOnArrival, handledOnArrival, releasedPressSource);
-                handled |= RaiseMouseButtonSpecificPair(routeMap, pointerTarget, button, isDown: false, clickCount, previewHandledOnArrival, handledOnArrival, out _, null, out _, releasedPressSource);
+                bool handled = RaiseMousePair(routeMap, pointerTarget, InputEvents.PreviewMouseUpEvent, InputEvents.MouseUpEvent, button, clickCount, modifiers, out _, previewHandledOnArrival, handledOnArrival, releasedPressSource);
+                handled |= RaiseMouseButtonSpecificPair(routeMap, pointerTarget, button, isDown: false, clickCount, modifiers, previewHandledOnArrival, handledOnArrival, out _, null, out _, releasedPressSource);
                 if (button == InputMouseButton.Left && clickCount == 2)
                 {
-                    handled |= RaiseDirectMousePairAlongRoute(routeMap, pointerTarget, InputEvents.PreviewMouseDoubleClickEvent, InputEvents.MouseDoubleClickEvent, button, clickCount, genericPreviewHandledOnArrival: null, genericHandledOnArrival: null, out _, null, out _, releasedPressSource);
+                    handled |= RaiseDirectMousePairAlongRoute(routeMap, pointerTarget, InputEvents.PreviewMouseDoubleClickEvent, InputEvents.MouseDoubleClickEvent, button, clickCount, modifiers, genericPreviewHandledOnArrival: null, genericHandledOnArrival: null, out _, null, out _, releasedPressSource);
                 }
                 CompletePointerDrag(routeMap, pointerTarget, button, clickCount);
                 if (!handled)
@@ -511,6 +514,7 @@ public sealed class ElementInputBridge
         RoutedEvent bubbleEvent,
         InputMouseButton button,
         int clickCount,
+        KeyModifiers modifiers,
         out bool previewHandled,
         ISet<UiElementId> previewHandledOnArrival,
         ISet<UiElementId> bubbleHandledOnArrival,
@@ -525,12 +529,18 @@ public sealed class ElementInputBridge
         MouseButtonEventArgs previewArgs = new(previewEvent, target.ElementId, button, target.X, target.Y, clickCount)
         {
             RouteMap = routeMap,
-            PressOriginalSource = pressOriginalSource
+            PressOriginalSource = pressOriginalSource,
+            IsControlDown = modifiers.HasFlag(KeyModifiers.Control),
+            IsShiftDown = modifiers.HasFlag(KeyModifiers.Shift),
+            IsAltDown = modifiers.HasFlag(KeyModifiers.Alt)
         };
         MouseButtonEventArgs bubbleArgs = new(bubbleEvent, target.ElementId, button, target.X, target.Y, clickCount)
         {
             RouteMap = routeMap,
-            PressOriginalSource = pressOriginalSource
+            PressOriginalSource = pressOriginalSource,
+            IsControlDown = modifiers.HasFlag(KeyModifiers.Control),
+            IsShiftDown = modifiers.HasFlag(KeyModifiers.Shift),
+            IsAltDown = modifiers.HasFlag(KeyModifiers.Alt)
         };
         RoutedEventRouter.RaisePair(
             routeMap.InputTree,
@@ -553,6 +563,7 @@ public sealed class ElementInputBridge
         InputMouseButton button,
         bool isDown,
         int clickCount,
+        KeyModifiers modifiers,
         IReadOnlySet<UiElementId> genericPreviewHandledOnArrival,
         IReadOnlySet<UiElementId> genericHandledOnArrival,
         out bool previewHandled,
@@ -576,7 +587,7 @@ public sealed class ElementInputBridge
             return false;
         }
 
-        return RaiseDirectMousePairAlongRoute(routeMap, target, events.Preview, events.Bubble, button, clickCount, genericPreviewHandledOnArrival, genericHandledOnArrival, out previewHandled, observedBubbleId, out bubbleHandledBeforeObserved, pressOriginalSource);
+        return RaiseDirectMousePairAlongRoute(routeMap, target, events.Preview, events.Bubble, button, clickCount, modifiers, genericPreviewHandledOnArrival, genericHandledOnArrival, out previewHandled, observedBubbleId, out bubbleHandledBeforeObserved, pressOriginalSource);
     }
 
     private static bool RaiseDirectMousePairAlongRoute(
@@ -586,6 +597,7 @@ public sealed class ElementInputBridge
         RoutedEvent bubbleEvent,
         InputMouseButton button,
         int clickCount,
+        KeyModifiers modifiers,
         IReadOnlySet<UiElementId>? genericPreviewHandledOnArrival,
         IReadOnlySet<UiElementId>? genericHandledOnArrival,
         out bool previewHandled,
@@ -608,7 +620,10 @@ public sealed class ElementInputBridge
             MouseButtonEventArgs args = new(previewEvent, target.ElementId, button, target.X, target.Y, clickCount)
             {
                 Handled = handled || genericPreviewHandledOnArrival?.Contains(elementId) == true,
-                PressOriginalSource = pressOriginalSource
+                PressOriginalSource = pressOriginalSource,
+                IsControlDown = modifiers.HasFlag(KeyModifiers.Control),
+                IsShiftDown = modifiers.HasFlag(KeyModifiers.Shift),
+                IsAltDown = modifiers.HasFlag(KeyModifiers.Alt)
             };
             RoutedEventRouter.Raise(routeMap.InputTree, elementId, args);
             handled |= args.Handled;
@@ -627,13 +642,39 @@ public sealed class ElementInputBridge
             MouseButtonEventArgs args = new(bubbleEvent, target.ElementId, button, target.X, target.Y, clickCount)
             {
                 Handled = handledOnArrival,
-                PressOriginalSource = pressOriginalSource
+                PressOriginalSource = pressOriginalSource,
+                IsControlDown = modifiers.HasFlag(KeyModifiers.Control),
+                IsShiftDown = modifiers.HasFlag(KeyModifiers.Shift),
+                IsAltDown = modifiers.HasFlag(KeyModifiers.Alt)
             };
             RoutedEventRouter.Raise(routeMap.InputTree, elementId, args);
             handled |= args.Handled;
         }
 
         return handled;
+    }
+
+    // The modifier keys that the frame's keyboard holds down, the left or the right key, as FocusManager gives them to
+    // the key events of the same frame.
+    private static KeyModifiers GetModifiers(InputFrame.KeyboardFrame keyboard)
+    {
+        KeyModifiers modifiers = KeyModifiers.None;
+        if (keyboard.IsDown(InputKey.LeftCtrl) || keyboard.IsDown(InputKey.RightCtrl))
+        {
+            modifiers |= KeyModifiers.Control;
+        }
+
+        if (keyboard.IsDown(InputKey.LeftShift) || keyboard.IsDown(InputKey.RightShift))
+        {
+            modifiers |= KeyModifiers.Shift;
+        }
+
+        if (keyboard.IsDown(InputKey.LeftAlt) || keyboard.IsDown(InputKey.RightAlt))
+        {
+            modifiers |= KeyModifiers.Alt;
+        }
+
+        return modifiers;
     }
 
     private static void RaiseMouseMovePair(ElementInputRouteMap routeMap, HitTestResult? target)

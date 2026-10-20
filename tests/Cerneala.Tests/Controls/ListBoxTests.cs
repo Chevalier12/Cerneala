@@ -333,6 +333,577 @@ public sealed class ListBoxTests
         Assert.False(new ComboBoxItem().Focusable);
     }
 
+    // As in WPF, Down on the focused row of a single-selection ListBox focuses and selects the next row (#680).
+    [Fact]
+    public void DownKeyAfterClickSelectsNextRow()
+    {
+        (UIRoot root, ListBox listBox, ElementInputBridge bridge) = CreateFruitListBoxWithClickedApple();
+
+        PressKey(root, bridge, InputKey.Down);
+
+        Assert.Equal(1, listBox.SelectedIndex);
+    }
+
+    // As in WPF, Up on the focused row of a single-selection ListBox focuses and selects the previous row (#680).
+    [Fact]
+    public void UpKeyAfterDownSelectsPreviousRow()
+    {
+        (UIRoot root, ListBox listBox, ElementInputBridge bridge) = CreateFruitListBoxWithClickedApple();
+        PressKey(root, bridge, InputKey.Down);
+        Assert.Equal(1, listBox.SelectedIndex);
+
+        PressKey(root, bridge, InputKey.Up);
+
+        Assert.Equal(0, listBox.SelectedIndex);
+    }
+
+    // As in WPF, End selects the last row and Home the first row of a single-selection ListBox (#680).
+    [Fact]
+    public void EndKeySelectsLastRowAndHomeKeySelectsFirstRow()
+    {
+        (UIRoot root, ListBox listBox, ElementInputBridge bridge) = CreateFruitListBoxWithClickedApple();
+
+        PressKey(root, bridge, InputKey.End);
+        Assert.Equal(2, listBox.SelectedIndex);
+
+        PressKey(root, bridge, InputKey.Home);
+        Assert.Equal(0, listBox.SelectedIndex);
+    }
+
+    // As WPF's TextSearch on a ListBox, typing a letter on the focused row selects the first row whose text starts
+    // with it (#680).
+    [Fact]
+    public void TypedLetterSelectsFirstRowStartingWithIt()
+    {
+        (UIRoot root, ListBox listBox, ElementInputBridge bridge) = CreateFruitListBoxWithClickedApple();
+
+        bridge.Dispatch(root, new InputFrame(
+            PointerSnapshot.Empty,
+            PointerSnapshot.Empty,
+            KeyboardSnapshot.Empty,
+            KeyboardSnapshot.Empty,
+            [new TextInputSnapshotEvent("c")]));
+        root.ProcessFrame();
+
+        Assert.Equal(2, listBox.SelectedIndex);
+    }
+
+    [Fact]
+    public void ListBoxSelectionModeIsSingleByDefault()
+    {
+        Assert.Equal(SelectionMode.Single, new ListBox().SelectionMode);
+    }
+
+    // As WPF's ListBox in Single mode, Ctrl+click on the selected row deselects it, and Ctrl+click on another row
+    // selects that row only.
+    [Fact]
+    public void SingleSelectionModeCtrlClickOnSelectedRowDeselectsIt()
+    {
+        (UIRoot root, ListBox listBox) = CreateSelectionModeListBox(SelectionMode.Single, "Apple", "Banana", "Cherry");
+        ElementInputBridge bridge = new();
+        ClickRow(root, bridge, listBox, 1);
+
+        ClickRow(root, bridge, listBox, 1, InputKey.LeftCtrl);
+
+        Assert.Equal(-1, listBox.SelectedIndex);
+        Assert.Equal([false, false, false], RowSelection(listBox));
+
+        ClickRow(root, bridge, listBox, 2, InputKey.LeftCtrl);
+
+        Assert.Equal(["Cherry"], listBox.SelectedItems);
+    }
+
+    // SelectAll keeps a linear cost: every item of a large ListBox is selected.
+    [Fact]
+    public void SelectAllSelectsEveryItemOfLargeListBox()
+    {
+        ListBox listBox = new() { SelectionMode = SelectionMode.Extended };
+        listBox.SetItems(Enumerable.Range(0, 100_000).Select(index => (object)index).ToArray());
+
+        listBox.SelectAll();
+
+        Assert.Equal(100_000, listBox.SelectionModel.SelectedIndices.Count);
+        Assert.Equal(0, listBox.SelectedIndex);
+        Assert.True(listBox.SelectionModel.IsSelected(99_999));
+    }
+
+    // As in WPF, a click in a ListBox whose SelectionMode is Multiple selects or deselects the row and keeps the other
+    // selected rows.
+    [Fact]
+    public void MultipleSelectionModeClickTogglesRow()
+    {
+        (UIRoot root, ListBox listBox) = CreateSelectionModeListBox(SelectionMode.Multiple, "Apple", "Banana", "Cherry");
+        ElementInputBridge bridge = new();
+
+        ClickRow(root, bridge, listBox, 0);
+        ClickRow(root, bridge, listBox, 2);
+
+        Assert.Equal(["Apple", "Cherry"], listBox.SelectedItems);
+        Assert.Equal(0, listBox.SelectedIndex);
+        Assert.Equal([true, false, true], RowSelection(listBox));
+
+        ClickRow(root, bridge, listBox, 0);
+
+        Assert.Equal(["Cherry"], listBox.SelectedItems);
+        Assert.Equal(2, listBox.SelectedIndex);
+        Assert.Equal([false, false, true], RowSelection(listBox));
+    }
+
+    // As in WPF, in a ListBox whose SelectionMode is Extended, Shift+click selects the rows from the anchor to the
+    // clicked row, Ctrl+click selects or deselects one row, and a plain click selects only the clicked row.
+    [Fact]
+    public void ExtendedSelectionModeClicksFollowShiftAndCtrl()
+    {
+        (UIRoot root, ListBox listBox) = CreateSelectionModeListBox(SelectionMode.Extended, "Apple", "Banana", "Cherry");
+        ElementInputBridge bridge = new();
+
+        ClickRow(root, bridge, listBox, 0);
+        ClickRow(root, bridge, listBox, 2, InputKey.LeftShift);
+
+        Assert.Equal(["Apple", "Banana", "Cherry"], listBox.SelectedItems);
+        Assert.Equal([true, true, true], RowSelection(listBox));
+
+        ClickRow(root, bridge, listBox, 1, InputKey.LeftCtrl);
+
+        Assert.Equal(["Apple", "Cherry"], listBox.SelectedItems);
+        Assert.Equal([true, false, true], RowSelection(listBox));
+
+        ClickRow(root, bridge, listBox, 1);
+
+        Assert.Equal(["Banana"], listBox.SelectedItems);
+        Assert.Equal(1, listBox.SelectedIndex);
+        Assert.Equal([false, true, false], RowSelection(listBox));
+    }
+
+    // As in WPF, Ctrl+click moves the anchor to the clicked row, and Ctrl+Shift+click adds the rows from the anchor to
+    // the clicked row to the selection, where Shift+click alone would replace it.
+    [Fact]
+    public void ExtendedSelectionModeCtrlShiftClickAddsRangeFromAnchor()
+    {
+        (UIRoot root, ListBox listBox) = CreateSelectionModeListBox(SelectionMode.Extended, "A", "B", "C", "D", "E");
+        ElementInputBridge bridge = new();
+
+        ClickRow(root, bridge, listBox, 0);
+        ClickRow(root, bridge, listBox, 3, InputKey.LeftCtrl);
+        ClickRow(root, bridge, listBox, 4, InputKey.LeftCtrl, InputKey.LeftShift);
+
+        Assert.Equal(["A", "D", "E"], listBox.SelectedItems);
+        Assert.Equal([true, false, false, true, true], RowSelection(listBox));
+    }
+
+    // As in WPF, one click that changes several rows raises one SelectionChanged with every added and removed item.
+    [Fact]
+    public void ExtendedSelectionClickRaisesOneSelectionChangedWithEveryChangedItem()
+    {
+        (UIRoot root, ListBox listBox) = CreateSelectionModeListBox(SelectionMode.Extended, "Apple", "Banana", "Cherry");
+        ElementInputBridge bridge = new();
+        ClickRow(root, bridge, listBox, 0);
+        List<SelectionChangedEventArgs> raised = [];
+        listBox.SelectionChanged += (_, args) => raised.Add(args);
+
+        ClickRow(root, bridge, listBox, 2, InputKey.RightShift);
+
+        SelectionChangedEventArgs range = Assert.Single(raised);
+        Assert.Equal(["Banana", "Cherry"], range.AddedItems);
+        Assert.Empty(range.RemovedItems);
+        raised.Clear();
+
+        ClickRow(root, bridge, listBox, 1);
+
+        SelectionChangedEventArgs single = Assert.Single(raised);
+        Assert.Empty(single.AddedItems);
+        Assert.Equal(["Apple", "Cherry"], single.RemovedItems);
+    }
+
+    // As in WPF, SelectAll selects every item of a ListBox whose SelectionMode is not Single, and UnselectAll
+    // deselects them.
+    [Fact]
+    public void SelectAllSelectsEveryItemAndUnselectAllDeselectsThem()
+    {
+        (UIRoot root, ListBox listBox) = CreateSelectionModeListBox(SelectionMode.Multiple, "Apple", "Banana", "Cherry");
+
+        listBox.SelectAll();
+        root.ProcessFrame();
+
+        Assert.Equal(["Apple", "Banana", "Cherry"], listBox.SelectedItems);
+        Assert.Equal([true, true, true], RowSelection(listBox));
+
+        listBox.UnselectAll();
+        root.ProcessFrame();
+
+        Assert.Empty(listBox.SelectedItems);
+        Assert.Equal(-1, listBox.SelectedIndex);
+        Assert.Equal([false, false, false], RowSelection(listBox));
+    }
+
+    // As WPF's ListBox.SelectAll, which throws NotSupportedException when SelectionMode is Single.
+    [Fact]
+    public void SelectAllThrowsInSingleSelectionMode()
+    {
+        ListBox listBox = new();
+        listBox.SetItems(new[] { "Apple", "Banana" });
+        listBox.SelectedIndex = 1;
+
+        Assert.Throws<NotSupportedException>(listBox.SelectAll);
+        Assert.Equal(["Banana"], listBox.SelectedItems);
+
+        listBox.UnselectAll();
+
+        Assert.Equal(-1, listBox.SelectedIndex);
+    }
+
+    // As in WPF, a change of SelectionMode to Single keeps only the first selected item.
+    [Fact]
+    public void SelectionModeChangeToSingleKeepsFirstSelectedItem()
+    {
+        (UIRoot root, ListBox listBox) = CreateSelectionModeListBox(SelectionMode.Multiple, "Apple", "Banana", "Cherry");
+        ElementInputBridge bridge = new();
+        ClickRow(root, bridge, listBox, 2);
+        ClickRow(root, bridge, listBox, 0);
+        Assert.Equal(["Cherry", "Apple"], listBox.SelectedItems);
+
+        listBox.SelectionMode = SelectionMode.Single;
+        root.ProcessFrame();
+
+        Assert.Equal(["Cherry"], listBox.SelectedItems);
+        Assert.Equal(2, listBox.SelectedIndex);
+        Assert.Equal([false, false, true], RowSelection(listBox));
+    }
+
+    // As in WPF, removing a selected item deselects it and reports it in RemovedItems; the other selected items stay
+    // selected at their new indices.
+    [Fact]
+    public void RemovingSelectedItemOfMultipleSelectionKeepsTheOtherSelectedItems()
+    {
+        (UIRoot root, ListBox listBox) = CreateSelectionModeListBox(SelectionMode.Multiple, "Apple", "Banana", "Cherry");
+        ElementInputBridge bridge = new();
+        ClickRow(root, bridge, listBox, 0);
+        ClickRow(root, bridge, listBox, 1);
+        ClickRow(root, bridge, listBox, 2);
+        List<SelectionChangedEventArgs> raised = [];
+        listBox.SelectionChanged += (_, args) => raised.Add(args);
+
+        listBox.Items.RemoveAt(1);
+        root.ProcessFrame();
+
+        SelectionChangedEventArgs change = Assert.Single(raised);
+        Assert.Equal(["Banana"], change.RemovedItems);
+        Assert.Empty(change.AddedItems);
+        Assert.Equal(["Apple", "Cherry"], listBox.SelectedItems);
+        Assert.Equal([0, 1], listBox.SelectionModel.SelectedIndices);
+        Assert.Equal([true, true], RowSelection(listBox));
+    }
+
+    // As the WPF ListBox template, the default template is a Border around a ScrollViewer around the items presenter,
+    // and the rows are in that ScrollViewer (#680).
+    [Fact]
+    public void DefaultTemplateHostsTheRowsInAScrollViewerInsideABorder()
+    {
+        (UIRoot _, ListBox listBox) = CreateRowListBox(height: 100, rowCount: 3);
+
+        ComponentTemplateInstance instance = Assert.IsType<ComponentTemplateInstance>(listBox.ComponentTemplateInstance);
+        Border border = Assert.IsType<Border>(instance.Root);
+        ScrollViewer scrollViewer = Assert.IsType<ScrollViewer>(border.Child);
+        Assert.Same(scrollViewer, instance.Parts["PART_ScrollViewer"]);
+        ItemsPresenter presenter = Assert.IsType<ItemsPresenter>(scrollViewer.Content);
+        Assert.Same(presenter, instance.Parts["PART_ItemsPresenter"]);
+        Assert.Same(presenter, listBox.ItemsPresenter);
+        Assert.True(IsInside(Row(listBox, 0), scrollViewer));
+        // The three rows fit, so no scroll bar shows and each row stretches over the whole width.
+        Assert.False(scrollViewer.IsVerticalScrollBarVisible);
+        Assert.False(scrollViewer.IsHorizontalScrollBarVisible);
+        Assert.Equal(150, Row(listBox, 2).ArrangedBounds.Width);
+    }
+
+    // With ComponentTemplate set to null, the ListBox lays out its rows itself, inside BorderThickness and Padding,
+    // without a ScrollViewer.
+    [Fact]
+    public void ListBoxWithoutComponentTemplateLaysOutItsRowsWithoutScrollViewer()
+    {
+        ListBoxItem row = new() { Content = "One" };
+        ListBox listBox = new() { ComponentTemplate = null, BorderThickness = new Thickness(2), Padding = new Thickness(10) };
+        listBox.Items.Add(row);
+        UIRoot root = new();
+        root.VisualChildren.Add(listBox);
+        root.ProcessFrame();
+        listBox.Arrange(new ArrangeContext(new LayoutRect(3, 4, 40, 30)));
+        root.ProcessFrame();
+
+        Assert.Null(listBox.ComponentTemplateInstance);
+        Assert.False(HasAncestor<ScrollViewer>(row));
+        Assert.Equal(new LayoutRect(15, 16, 16, row.DesiredSize.Height), row.ArrangedBounds);
+    }
+
+    // A ListBox inside an outer ScrollViewer realizes only the rows in that ScrollViewer's viewport, as an ItemsControl
+    // does. The rows start below the top Padding, so the viewport reaches the rows that much later (#680).
+    [Theory]
+    [InlineData(0, 4)]
+    [InlineData(20, 2)]
+    public void ListBoxInsideAnOuterScrollViewerRealizesOnlyTheVisibleRows(float topPadding, int firstVisibleRow)
+    {
+        ListBox listBox = new()
+        {
+            Padding = new Thickness(0, topPadding, 0, 0),
+            ItemsPanel = new Cerneala.UI.Layout.Panels.VirtualizingStackPanel(),
+            ItemContainerAspect = RowHeight(10),
+            ItemsSource = Enumerable.Range(0, 100).Select(index => index.ToString()).ToArray()
+        };
+        ScrollViewer viewer = new() { Content = listBox, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+        UIRoot root = new(100, 30);
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+
+        Assert.InRange(listBox.ItemContainerGenerator.RealizedContainers.Count, 1, 8);
+        Assert.Contains(0, listBox.ItemContainerGenerator.RealizedContainers.Keys);
+
+        viewer.ScrollInfo.SetVerticalOffset(45);
+        root.ProcessFrame();
+
+        Assert.InRange(listBox.ItemContainerGenerator.RealizedContainers.Count, 1, 8);
+        Assert.DoesNotContain(0, listBox.ItemContainerGenerator.RealizedContainers.Keys);
+        Assert.Contains(firstVisibleRow, listBox.ItemContainerGenerator.RealizedContainers.Keys);
+    }
+
+    // As WPF's ListBox.ScrollIntoView, a row below the viewport scrolls up until its bottom is at the bottom of the
+    // viewport. The viewport is 100 pixels high and the rows 20, so row 15 ends at 320 and the offset becomes 220 (#680).
+    [Fact]
+    public void ScrollIntoViewBringsARowBelowTheViewportToTheViewportBottom()
+    {
+        (UIRoot root, ListBox listBox) = CreateRowListBox(height: 100, rowCount: 20);
+        ScrollContentPresenter presenter = ListBoxScrollViewer(listBox).Presenter;
+        Assert.Equal(0, presenter.VerticalOffset);
+
+        listBox.ScrollIntoView("15");
+        root.ProcessFrame();
+
+        Assert.Equal(220, presenter.VerticalOffset);
+        AssertRowInsideViewport(listBox, 15);
+    }
+
+    // As WPF's ListBox.ScrollIntoView, a row above the viewport scrolls down until its top is at the top of the
+    // viewport (#680).
+    [Fact]
+    public void ScrollIntoViewBringsARowAboveTheViewportToTheViewportTop()
+    {
+        (UIRoot root, ListBox listBox) = CreateRowListBox(height: 100, rowCount: 20);
+        listBox.ScrollIntoView("15");
+        root.ProcessFrame();
+
+        listBox.ScrollIntoView("2");
+        root.ProcessFrame();
+
+        Assert.Equal(40, ListBoxScrollViewer(listBox).Presenter.VerticalOffset);
+        AssertRowInsideViewport(listBox, 2);
+    }
+
+    // A visible row and an item that the ListBox does not hold leave the scroll offset as it was (#680).
+    [Fact]
+    public void ScrollIntoViewOfAVisibleRowOrOfAMissingItemDoesNotScroll()
+    {
+        (UIRoot root, ListBox listBox) = CreateRowListBox(height: 100, rowCount: 20);
+
+        listBox.ScrollIntoView("1");
+        listBox.ScrollIntoView("4");
+        listBox.ScrollIntoView("missing");
+        listBox.ScrollIntoView(null);
+        root.ProcessFrame();
+
+        Assert.Equal(0, ListBoxScrollViewer(listBox).Presenter.VerticalOffset);
+    }
+
+    // Before the first layout the rows have no position yet, so the ListBox scrolls the row into view after its next
+    // arrange (#680).
+    [Fact]
+    public void ScrollIntoViewBeforeTheFirstLayoutScrollsAfterIt()
+    {
+        (UIRoot root, ListBox listBox) = CreateRowListBox(height: 100, rowCount: 20, layout: false);
+
+        listBox.ScrollIntoView("15");
+        root.ProcessFrame();
+
+        Assert.Equal(220, ListBoxScrollViewer(listBox).Presenter.VerticalOffset);
+        AssertRowInsideViewport(listBox, 15);
+    }
+
+    // As in WPF, Down on the last visible row focuses and selects the next row and scrolls it into view (#680).
+    [Fact]
+    public void DownKeyOnTheLastVisibleRowScrollsTheNextRowIntoView()
+    {
+        (UIRoot root, ListBox listBox) = CreateRowListBox(height: 80, rowCount: 20);
+        ElementInputBridge bridge = new();
+        ClickCenter(root, bridge, Row(listBox, 3));
+
+        PressKey(root, bridge, InputKey.Down);
+
+        Assert.Equal(20, ListBoxScrollViewer(listBox).Presenter.VerticalOffset);
+        AssertFocusedSelectedRow(listBox, 4);
+    }
+
+    // As in WPF, PageDown moves to the last fully visible row, and from there one page further; PageUp mirrors it. The
+    // viewport shows exactly four rows of 20 pixels (#680).
+    [Fact]
+    public void PageDownAndPageUpMoveByTheRowsOfOneViewport()
+    {
+        (UIRoot root, ListBox listBox) = CreateRowListBox(height: 80, rowCount: 20);
+        ElementInputBridge bridge = new();
+        ClickCenter(root, bridge, Row(listBox, 0));
+
+        PressKey(root, bridge, InputKey.PageDown);
+        AssertFocusedSelectedRow(listBox, 3);
+
+        PressKey(root, bridge, InputKey.PageDown);
+        AssertFocusedSelectedRow(listBox, 7);
+
+        PressKey(root, bridge, InputKey.PageUp);
+        AssertFocusedSelectedRow(listBox, 4);
+
+        PressKey(root, bridge, InputKey.PageUp);
+        AssertFocusedSelectedRow(listBox, 0);
+    }
+
+    // As in WPF's Extended mode, Shift+Down and Shift+Up select the rows from the anchor to the focused row, and Down
+    // without a modifier selects only the next row (#680).
+    [Fact]
+    public void ExtendedSelectionModeShiftArrowsSelectFromTheAnchorAndDownSelectsOnlyTheNextRow()
+    {
+        (UIRoot root, ListBox listBox) = CreateSelectionModeListBox(SelectionMode.Extended, "A", "B", "C", "D", "E");
+        ElementInputBridge bridge = new();
+        ClickRow(root, bridge, listBox, 1);
+
+        PressKey(root, bridge, InputKey.Down, InputKey.LeftShift);
+        PressKey(root, bridge, InputKey.Down, InputKey.LeftShift);
+        Assert.Equal([1, 2, 3], listBox.SelectionModel.SelectedIndices);
+        Assert.True(Row(listBox, 3).IsKeyboardFocused);
+
+        PressKey(root, bridge, InputKey.Up, InputKey.LeftShift);
+        Assert.Equal([1, 2], listBox.SelectionModel.SelectedIndices);
+
+        PressKey(root, bridge, InputKey.Down);
+        Assert.Equal([3], listBox.SelectionModel.SelectedIndices);
+        Assert.Equal([false, false, false, true, false], RowSelection(listBox));
+        Assert.True(Row(listBox, 3).IsKeyboardFocused);
+    }
+
+    // As WPF's line navigation, Down on the last row finds no next row and changes nothing: the rows that Shift+click
+    // selected stay selected (#680).
+    [Fact]
+    public void DownKeyOnTheLastRowKeepsTheSelection()
+    {
+        (UIRoot root, ListBox listBox) = CreateSelectionModeListBox(SelectionMode.Extended, "A", "B", "C");
+        ElementInputBridge bridge = new();
+        ClickRow(root, bridge, listBox, 0);
+        ClickRow(root, bridge, listBox, 2, InputKey.LeftShift);
+        Assert.Equal([0, 1, 2], listBox.SelectionModel.SelectedIndices);
+        Assert.True(Row(listBox, 2).IsKeyboardFocused);
+
+        PressKey(root, bridge, InputKey.Down);
+
+        Assert.Equal([0, 1, 2], listBox.SelectionModel.SelectedIndices);
+        Assert.True(Row(listBox, 2).IsKeyboardFocused);
+    }
+
+    // As in WPF's Extended mode, Ctrl+Down moves only the focus, and Ctrl+Space toggles the focused row (#680).
+    [Fact]
+    public void ExtendedSelectionModeCtrlDownMovesOnlyTheFocusAndCtrlSpaceTogglesTheFocusedRow()
+    {
+        (UIRoot root, ListBox listBox) = CreateSelectionModeListBox(SelectionMode.Extended, "A", "B", "C");
+        ElementInputBridge bridge = new();
+        ClickRow(root, bridge, listBox, 0);
+
+        PressKey(root, bridge, InputKey.Down, InputKey.LeftCtrl);
+        Assert.Equal([0], listBox.SelectionModel.SelectedIndices);
+        Assert.True(Row(listBox, 1).IsKeyboardFocused);
+
+        PressKey(root, bridge, InputKey.Space, InputKey.LeftCtrl);
+        Assert.Equal([0, 1], listBox.SelectionModel.SelectedIndices);
+
+        PressKey(root, bridge, InputKey.Space, InputKey.LeftCtrl);
+        Assert.Equal([0], listBox.SelectionModel.SelectedIndices);
+    }
+
+    // As in WPF's Multiple mode, Down moves only the focus, and Space toggles the focused row (#680).
+    [Fact]
+    public void MultipleSelectionModeDownMovesOnlyTheFocusAndSpaceTogglesTheFocusedRow()
+    {
+        (UIRoot root, ListBox listBox) = CreateSelectionModeListBox(SelectionMode.Multiple, "A", "B", "C");
+        ElementInputBridge bridge = new();
+        ClickRow(root, bridge, listBox, 0);
+        Assert.Equal([0], listBox.SelectionModel.SelectedIndices);
+
+        PressKey(root, bridge, InputKey.Down);
+        Assert.Equal([0], listBox.SelectionModel.SelectedIndices);
+        Assert.True(Row(listBox, 1).IsKeyboardFocused);
+
+        PressKey(root, bridge, InputKey.Space);
+        Assert.Equal([0, 1], listBox.SelectionModel.SelectedIndices);
+
+        PressKey(root, bridge, InputKey.Space);
+        Assert.Equal([0], listBox.SelectionModel.SelectedIndices);
+    }
+
+    // As in WPF, Ctrl+A selects every row in Multiple and Extended mode (#680).
+    [Theory]
+    [InlineData(SelectionMode.Multiple)]
+    [InlineData(SelectionMode.Extended)]
+    public void CtrlASelectsEveryRow(SelectionMode mode)
+    {
+        (UIRoot root, ListBox listBox) = CreateSelectionModeListBox(mode, "A", "B", "C");
+        ElementInputBridge bridge = new();
+        ClickRow(root, bridge, listBox, 0);
+
+        PressKey(root, bridge, InputKey.A, InputKey.LeftCtrl);
+
+        Assert.Equal([true, true, true], RowSelection(listBox));
+        Assert.Equal(["A", "B", "C"], listBox.SelectedItems);
+    }
+
+    // SelectAll is not supported in Single mode, so Ctrl+A leaves the selection as it was (#680).
+    [Fact]
+    public void CtrlAInSingleSelectionModeLeavesTheSelection()
+    {
+        (UIRoot root, ListBox listBox) = CreateSelectionModeListBox(SelectionMode.Single, "A", "B", "C");
+        ElementInputBridge bridge = new();
+        ClickRow(root, bridge, listBox, 1);
+
+        PressKey(root, bridge, InputKey.A, InputKey.LeftCtrl);
+
+        Assert.Equal([1], listBox.SelectionModel.SelectedIndices);
+    }
+
+    [Fact]
+    public void ListBoxTextSearchIsEnabledAndCaseInsensitiveByDefault()
+    {
+        ListBox listBox = new();
+
+        Assert.True(listBox.IsTextSearchEnabled);
+        Assert.False(listBox.IsTextSearchCaseSensitive);
+    }
+
+    // With IsTextSearchEnabled false, a typed letter selects nothing (#680).
+    [Fact]
+    public void TypedLetterSelectsNothingWhenTextSearchIsDisabled()
+    {
+        (UIRoot root, ListBox listBox, ElementInputBridge bridge) = CreateFruitListBoxWithClickedApple();
+        listBox.IsTextSearchEnabled = false;
+
+        TypeText(root, bridge, "c");
+
+        Assert.Equal(0, listBox.SelectedIndex);
+    }
+
+    // As WPF's TextSearch, letters typed in quick succession search for the prefix they form: "b" then "a" keeps
+    // Banana, where "a" alone would select Apple (#680).
+    [Fact]
+    public void TypedLettersInQuickSuccessionSearchForTheirPrefix()
+    {
+        (UIRoot root, ListBox listBox, ElementInputBridge bridge) = CreateFruitListBoxWithClickedApple();
+
+        TypeText(root, bridge, "b", "a");
+
+        Assert.Equal(1, listBox.SelectedIndex);
+        Assert.True(Row(listBox, 1).IsKeyboardFocused);
+    }
+
     [Fact]
     public void ListBoxSelectionSurvivesContainerRecycling()
     {
@@ -667,25 +1238,26 @@ public sealed class ListBoxTests
         Assert.Equal(new DrawRect(3, 4, 40, 30), border.Rect);
     }
 
-    // As the WPF ListBox template, the rows are arranged inside BorderThickness and Padding (#609).
+    // As the WPF ListBox template, the rows are arranged inside BorderThickness and Padding (#609). The root and the
+    // arranged rectangle are large enough for the row, so the ScrollViewer of the template shows no scroll bar.
     [Fact]
     public void ListBoxArrangesItsRowsInsideBorderThicknessAndPadding()
     {
         ListBoxItem row = new() { Content = "One" };
         ListBox listBox = new() { BorderThickness = new Thickness(2), Padding = new Thickness(10) };
         listBox.Items.Add(row);
-        UIRoot root = new();
+        UIRoot root = new(200, 200);
         root.VisualChildren.Add(listBox);
         root.ProcessFrame();
 
         Assert.Equal(new LayoutSize(row.DesiredSize.Width + 24, row.DesiredSize.Height + 24), listBox.DesiredSize);
 
-        listBox.Arrange(new ArrangeContext(new LayoutRect(3, 4, 40, 30)));
+        listBox.Arrange(new ArrangeContext(new LayoutRect(3, 4, 80, 60)));
         root.ProcessFrame();
 
         Assert.Equal(15, row.ArrangedBounds.X);
         Assert.Equal(16, row.ArrangedBounds.Y);
-        Assert.Equal(16, row.ArrangedBounds.Width);
+        Assert.Equal(56, row.ArrangedBounds.Width);
     }
 
     [Fact]
@@ -747,7 +1319,12 @@ public sealed class ListBoxTests
         return commands;
     }
 
-    private static InputFrame PointerFrame(float x, float y, bool previousDown = false, bool currentDown = false)
+    private static InputFrame PointerFrame(
+        float x,
+        float y,
+        bool previousDown = false,
+        bool currentDown = false,
+        KeyboardSnapshot? keyboard = null)
     {
         PointerSnapshot previous = PointerSnapshot.Empty.WithPosition(x, y);
         PointerSnapshot current = PointerSnapshot.Empty.WithPosition(x, y);
@@ -761,7 +1338,7 @@ public sealed class ListBoxTests
             current = current.WithButton(InputMouseButton.Left, true);
         }
 
-        return new InputFrame(previous, current, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []);
+        return new InputFrame(previous, current, keyboard ?? KeyboardSnapshot.Empty, keyboard ?? KeyboardSnapshot.Empty, []);
     }
 
     private static (UIRoot Root, ListBox ListBox) CreateListBox(Func<ContentTemplateContext<string>, UIElement> build)
@@ -803,6 +1380,156 @@ public sealed class ListBoxTests
         root.VisualChildren.Add(new Window { Content = canvas, Width = 360, Height = 300 });
         root.ProcessFrame();
         return root;
+    }
+
+    // A ListBox with "Apple", "Banana", "Cherry" in a window, after the user clicked "Apple": it is selected and has
+    // the keyboard focus.
+    private static (UIRoot Root, ListBox ListBox, ElementInputBridge Bridge) CreateFruitListBoxWithClickedApple()
+    {
+        ListBox listBox = new() { Width = 150, Height = 120 };
+        listBox.SetItems(new[] { "Apple", "Banana", "Cherry" });
+        UIRoot root = new(360, 300);
+        root.VisualChildren.Add(new Window { Content = listBox, Width = 360, Height = 300 });
+        root.ProcessFrame();
+        ListBoxItem apple = Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[0]);
+        ElementInputBridge bridge = new();
+
+        ClickCenter(root, bridge, apple);
+
+        Assert.Equal(0, listBox.SelectedIndex);
+        Assert.True(apple.IsKeyboardFocused);
+        return (root, listBox, bridge);
+    }
+
+    // A ListBox with the given SelectionMode and items in a window.
+    private static (UIRoot Root, ListBox ListBox) CreateSelectionModeListBox(SelectionMode mode, params string[] items)
+    {
+        ListBox listBox = new() { SelectionMode = mode, Width = 150, Height = 200 };
+        listBox.SetItems(items);
+        UIRoot root = new(360, 300);
+        root.VisualChildren.Add(new Window { Content = listBox, Width = 360, Height = 300 });
+        root.ProcessFrame();
+        return (root, listBox);
+    }
+
+    // A click on the center of the row at index, with the modifier keys held down during the press and the release.
+    private static void ClickRow(UIRoot root, ElementInputBridge bridge, ListBox listBox, int index, params InputKey[] modifiers)
+    {
+        LayoutRect bounds = listBox.ItemContainerGenerator.RealizedContainers[index].ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        KeyboardSnapshot keyboard = KeyboardSnapshot.FromDownKeys(modifiers);
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true, keyboard: keyboard));
+        root.ProcessFrame();
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true, keyboard: keyboard));
+        root.ProcessFrame();
+    }
+
+    private static bool[] RowSelection(ListBox listBox)
+    {
+        return [.. Enumerable.Range(0, listBox.ItemCount)
+            .Select(index => Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[index]).IsSelected)];
+    }
+
+    // A press and release of key, with the modifier keys pressed before it and released after it.
+    private static void PressKey(UIRoot root, ElementInputBridge bridge, InputKey key, params InputKey[] modifiers)
+    {
+        InputKey[] withKey = [.. modifiers, key];
+        if (modifiers.Length > 0)
+        {
+            bridge.Dispatch(root, KeyFrame([], modifiers));
+        }
+
+        bridge.Dispatch(root, KeyFrame(modifiers, withKey));
+        bridge.Dispatch(root, KeyFrame(withKey, modifiers));
+        if (modifiers.Length > 0)
+        {
+            bridge.Dispatch(root, KeyFrame(modifiers, []));
+        }
+
+        root.ProcessFrame();
+    }
+
+    // The texts typed in one input frame, as text input events in that order.
+    private static void TypeText(UIRoot root, ElementInputBridge bridge, params string[] texts)
+    {
+        bridge.Dispatch(root, new InputFrame(
+            PointerSnapshot.Empty,
+            PointerSnapshot.Empty,
+            KeyboardSnapshot.Empty,
+            KeyboardSnapshot.Empty,
+            [.. texts.Select(text => new TextInputSnapshotEvent(text))]));
+        root.ProcessFrame();
+    }
+
+    // A ListBox 150 wide and height high, with rowCount rows "0", "1", ... of 20 pixels, in a window.
+    private static (UIRoot Root, ListBox ListBox) CreateRowListBox(float height, int rowCount, bool layout = true)
+    {
+        ListBox listBox = new() { Width = 150, Height = height, ItemContainerAspect = RowHeight(20) };
+        listBox.SetItems(Enumerable.Range(0, rowCount).Select(index => index.ToString()).ToArray());
+        UIRoot root = new(360, 300);
+        root.VisualChildren.Add(new Window { Content = listBox, Width = 360, Height = 300 });
+        if (layout)
+        {
+            root.ProcessFrame();
+        }
+
+        return (root, listBox);
+    }
+
+    private static ElementAspect RowHeight(float height)
+    {
+        return new ElementAspect([new ElementAspectValue(UIElement.HeightProperty, height)]);
+    }
+
+    private static ListBoxItem Row(ListBox listBox, int index)
+    {
+        return Assert.IsType<ListBoxItem>(listBox.ItemContainerGenerator.RealizedContainers[index]);
+    }
+
+    private static ScrollViewer ListBoxScrollViewer(ListBox listBox)
+    {
+        return Assert.IsType<ScrollViewer>(listBox.ComponentTemplateInstance!.Parts["PART_ScrollViewer"]);
+    }
+
+    private static void AssertRowInsideViewport(ListBox listBox, int index)
+    {
+        LayoutRect viewport = ListBoxScrollViewer(listBox).Presenter.ArrangedBounds;
+        LayoutRect row = Row(listBox, index).ArrangedBounds;
+        Assert.InRange(row.Y, viewport.Y, viewport.Y + viewport.Height - row.Height);
+    }
+
+    private static void AssertFocusedSelectedRow(ListBox listBox, int index)
+    {
+        Assert.Equal(index, listBox.SelectedIndex);
+        Assert.True(Row(listBox, index).IsKeyboardFocused);
+        AssertRowInsideViewport(listBox, index);
+    }
+
+    private static bool IsInside(UIElement element, UIElement ancestor)
+    {
+        for (UIElement? current = element; current is not null; current = current.VisualParent)
+        {
+            if (ReferenceEquals(current, ancestor))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool HasAncestor<T>(UIElement element) where T : UIElement
+    {
+        for (UIElement? current = element.VisualParent; current is not null; current = current.VisualParent)
+        {
+            if (current is T)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static InputFrame KeyFrame(InputKey[] previousKeys, InputKey[] currentKeys)

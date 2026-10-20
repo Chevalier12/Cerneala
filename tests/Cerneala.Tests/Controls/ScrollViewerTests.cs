@@ -610,6 +610,65 @@ public sealed class ScrollViewerTests
         Assert.Equal(new LayoutSize(40, 40), viewer.DesiredSize);
     }
 
+    // As WPF's ScrollContentPresenter: the desired size on each axis is the smaller of the available size and the
+    // extent, while the viewport stays the available size.
+    [Fact]
+    public void PresenterDesiresTheSmallerOfTheAvailableSizeAndTheExtent()
+    {
+        ScrollContentPresenter presenter = new()
+        {
+            Content = new FixedElement(new LayoutSize(80, 300))
+        };
+
+        presenter.Measure(new MeasureContext(new LayoutSize(100, 100)));
+
+        Assert.Equal(new LayoutSize(80, 100), presenter.DesiredSize);
+        Assert.Equal(100, presenter.ViewportWidth);
+        Assert.Equal(100, presenter.ViewportHeight);
+    }
+
+    [Fact]
+    public void ViewerWithSmallContentDesiresTheContentSize()
+    {
+        ScrollViewer viewer = new()
+        {
+            Content = new FixedElement(new LayoutSize(80, 20)),
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+
+        viewer.Measure(new MeasureContext(new LayoutSize(100, 100)));
+
+        Assert.Equal(new LayoutSize(80, 20), viewer.DesiredSize);
+        Assert.False(viewer.IsHorizontalScrollBarVisible);
+        Assert.False(viewer.IsVerticalScrollBarVisible);
+    }
+
+    // The 300 px tall content overflows the 100 px viewport, so the vertical bar shows as before and the viewer desires
+    // the 100 px height it has, plus the 12 px bar next to the 80 px wide content.
+    [Fact]
+    public void ViewerWithTallContentDesiresTheAvailableHeightAndShowsTheVerticalBar()
+    {
+        ScrollViewer viewer = new()
+        {
+            Content = new FixedElement(new LayoutSize(80, 300)),
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+
+        viewer.Measure(new MeasureContext(new LayoutSize(100, 100)));
+
+        Assert.Equal(new LayoutSize(92, 100), viewer.DesiredSize);
+        Assert.True(viewer.IsVerticalScrollBarVisible);
+        Assert.Equal(300, viewer.ScrollInfo.ExtentHeight);
+        Assert.Equal(100, viewer.ScrollInfo.ViewportHeight);
+
+        viewer.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+
+        Assert.Equal(new LayoutRect(0, 0, 88, 100), viewer.Presenter.ArrangedBounds);
+        Assert.Equal(88, viewer.ScrollInfo.ViewportWidth);
+        Assert.Equal(100, viewer.ScrollInfo.ViewportHeight);
+    }
+
     [Fact]
     public void ScrollInfoOffsetUpdatesScrollBarValues()
     {

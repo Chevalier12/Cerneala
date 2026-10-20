@@ -36,9 +36,9 @@ Console.WriteLine(second.Changed); // false
 
 ## Remarks
 
-`SelectionChangeResult` is returned by `SelectionModel.Select`, `SelectionModel.Clear`, and `SelectionModel<T>.SelectItem`. It is also exposed through `SelectionChangedEventArgs.Change` when `SelectionModel.SelectionChanged` is raised.
+`SelectionChangeResult` is returned by `SelectionModel.Select`, `Add`, `Remove`, `SelectRange`, `AddRange`, `Clear`, and `SelectionModel<T>.SelectItem`. It is also exposed through `SelectionChangedEventArgs.Change` when `SelectionModel.SelectionChanged` is raised.
 
-`OldIndex` is the selected index before the operation, and `NewIndex` is the selected index requested by the operation. `Changed` is `true` when the selected index actually changed. Selecting the same index again returns a result with `Changed == false`.
+`OldIndex` is `SelectionModel.SelectedIndex` before the operation, and `NewIndex` is `SelectionModel.SelectedIndex` after it. `Changed` is `true` when the operation changed the selected indices, also when `SelectedIndex` stays the same. For example, `Add(0)` on a model whose selected indices are `[2]` returns `(OldIndex: 2, NewIndex: 2, Changed: true)`, and `Remove(2)` on `[2, 0]` returns `(2, 0, true)`. Selecting the only selected index again returns a result with `Changed == false`.
 
 The value `-1` represents no selection in `SelectionModel`. The type is a readonly record struct, so it has value equality and compiler-synthesized record members such as `Deconstruct`, `Equals`, `GetHashCode`, and `ToString`.
 
@@ -46,15 +46,15 @@ The value `-1` represents no selection in `SelectionModel`. The type is a readon
 
 | Name | Description |
 | --- | --- |
-| `SelectionChangeResult(int OldIndex, int NewIndex, bool Changed)` | Initializes a selection change result with the previous index, requested new index, and change flag. |
+| `SelectionChangeResult(int OldIndex, int NewIndex, bool Changed)` | Initializes a selection change result with the previous index, new index, and change flag. |
 
 ## Properties
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `OldIndex` | `int` | Gets the selected index before the selection operation. |
-| `NewIndex` | `int` | Gets the selected index requested by the selection operation. |
-| `Changed` | `bool` | Gets whether the operation changed the selected index. |
+| `OldIndex` | `int` | Gets `SelectedIndex` before the selection operation. |
+| `NewIndex` | `int` | Gets `SelectedIndex` after the selection operation. |
+| `Changed` | `bool` | Gets whether the operation changed the selected indices. |
 
 ## Methods
 
@@ -75,7 +75,7 @@ The value `-1` represents no selection in `SelectionModel`. The type is a readon
 
 ## Applies to
 
-Cerneala UI controls that use `SelectionModel` for single-index selection state.
+Cerneala UI controls that use `SelectionModel` for their selection state.
 
 ## See also
 

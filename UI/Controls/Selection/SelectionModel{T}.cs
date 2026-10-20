@@ -18,10 +18,7 @@ public sealed class SelectionModel<T> : SelectionModel
     public void SetItems(IEnumerable<T>? source)
     {
         items = source is null ? [] : [.. source];
-        if (SelectedIndex >= items.Count)
-        {
-            Clear();
-        }
+        SetSelectedIndices([.. SelectedIndices.Where(index => index < items.Count)]);
     }
 
     public SelectionChangeResult SelectItem(T item)
