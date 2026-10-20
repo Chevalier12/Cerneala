@@ -277,12 +277,12 @@ public class ContentControl : Control
 
         // A Decorator also names its child in Child. Releasing the element through Child keeps that property in step
         // with the Decorator's children, so the Decorator can take the element again, for example when a template
-        // reuses it as its container.
+        // reuses it as its container. The element leaves without a presence exit.
         if (child.VisualParent is Decorator decorator &&
             ReferenceEquals(decorator.Child, child) &&
             IsOwnedBy(decorator, owner, ElementChildRole.Visual))
         {
-            decorator.Child = null;
+            decorator.ReleaseChildElementForNewOwner();
         }
 
         // A ContentControl that hosts its content directly also names that element in Content. Releasing the element
