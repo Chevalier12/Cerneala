@@ -1075,6 +1075,27 @@ public sealed class ListBoxTests
         AssertRowInsideViewport(listBox, 15);
     }
 
+    // As in WPF, a click on the increase button of the ListBox scroll bar scrolls it and leaves the keyboard focus on
+    // the focused row (#700).
+    [Fact]
+    public void ClickOnTheScrollBarIncreaseButtonLeavesTheFocusOnTheRow()
+    {
+        (UIRoot root, ListBox listBox) = CreateRowListBox(height: 100, rowCount: 20);
+        ElementInputBridge bridge = new();
+        ListBoxItem first = Row(listBox, 0);
+        ClickCenter(root, bridge, first);
+        Assert.True(first.IsKeyboardFocused);
+        ScrollViewer scrollViewer = ListBoxScrollViewer(listBox);
+        Assert.True(scrollViewer.IsVerticalScrollBarVisible);
+        Cerneala.UI.Controls.Primitives.RepeatButton increase = Assert.IsType<Cerneala.UI.Controls.Primitives.RepeatButton>(
+            scrollViewer.VerticalScrollBar.ComponentTemplateInstance!.Parts["PART_IncreaseButton"]);
+
+        ClickCenter(root, bridge, increase);
+
+        Assert.True(scrollViewer.Presenter.VerticalOffset > 0);
+        Assert.True(first.IsKeyboardFocused);
+    }
+
     // As in WPF, Down on the last visible row focuses and selects the next row and scrolls it into view (#680).
     [Fact]
     public void DownKeyOnTheLastVisibleRowScrollsTheNextRowIntoView()

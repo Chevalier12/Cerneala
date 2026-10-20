@@ -60,7 +60,7 @@ float trackValue = scrollBar.Track.Value; // 80
 
 `ScrollBar` derives from `RangeBase`, so `Minimum`, `Maximum`, `Value`, `SmallChange`, and `LargeChange` use the inherited range validation and coercion rules. `Value` is coerced into the active `Minimum..Maximum` range, and non-finite range values are rejected by the inherited UI properties.
 
-The default template requires `PART_Track` and supplies optional-contract parts `PART_DecreaseButton` and `PART_IncreaseButton` as `RepeatButton` instances. The buttons sit at the ends of an orientation-aware panel and use `<`, `>`, `^`, and `v` glyphs. Custom templates may omit both buttons, but must register a valid `Track`.
+The default template requires `PART_Track` and supplies optional-contract parts `PART_DecreaseButton` and `PART_IncreaseButton` as `RepeatButton` instances. The buttons sit at the ends of an orientation-aware panel and use `<`, `>`, `^`, and `v` glyphs. As in the WPF default template, the buttons are not focusable and are not Tab stops: Tab skips them, and a click on one scrolls without moving the keyboard focus. Custom templates may omit both buttons, but must register a valid `Track`.
 
 The constructor applies the default template and sets default visuals: `Background` is `new SolidColorBrush(new Color(235, 235, 235))`, `BorderBrush` is `new SolidColorBrush(new Color(130, 130, 130))`, and `BorderThickness` is `new Thickness(1)`.
 
