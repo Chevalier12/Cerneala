@@ -1416,10 +1416,11 @@ public sealed class ItemContainerGeneratorTests
         return new ElementAspect([new ElementAspectValue(UIElement.MarginProperty, new Thickness(3))]);
     }
 
+    // Lays out the 100 x 100 root of element through a frame, as the runtime does. A direct Measure of element does not
+    // reach the ItemsPresenter inside the ListBox template, whose invalidation waits in the root's layout queue.
     private static void Layout(UIElement element)
     {
-        element.Measure(new MeasureContext(new LayoutSize(100, 100)));
-        element.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+        element.Root!.ProcessFrame();
     }
 
     // A MarkingListBox in a root with the items "a" and "b" laid out, and the container of "a".

@@ -150,7 +150,9 @@ public class ScrollContentPresenter : ContentControl, IScrollInfo
         ExtentHeight = ResolveExtent(contentSize.Height, available.Height);
         ViewportWidth = ResolveViewport(available.Width, ExtentWidth);
         ViewportHeight = ResolveViewport(available.Height, ExtentHeight);
-        return new LayoutSize(ViewportWidth, ViewportHeight);
+        // As WPF's ScrollContentPresenter: the viewport is the available size, and the desired size on each axis is
+        // the smaller of the viewport and the extent, so content that fits does not ask for the whole space.
+        return new LayoutSize(MathF.Min(ViewportWidth, ExtentWidth), MathF.Min(ViewportHeight, ExtentHeight));
     }
 
     protected override LayoutRect ArrangeCore(ArrangeContext context)

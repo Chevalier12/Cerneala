@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Controls.Primitives`
 Assembly/Project: `Cerneala`  
 Source: `UI/Controls/Primitives/Selector.cs`
 
-Provides single-index selection behavior for item controls, including selected item lookup and mouse-up selection of realized item containers.
+Provides selection behavior for item controls, with one or more selected items, selected item lookup, and mouse-up selection of realized item containers.
 
 ```csharp
 public class Selector : ItemsControl
@@ -38,9 +38,26 @@ selector.Items.Remove("Brush");
 // selector.SelectedIndex is -1 and selector.SelectedItem is null.
 ```
 
+Every selected item follows its item. Here a `ListBox` selects `"b"` and then `"d"`, and the first item moves to the end:
+
+```csharp
+using System.Collections.ObjectModel;
+using Cerneala.UI.Controls;
+
+ObservableCollection<string> items = new(["a", "b", "c", "d"]);
+ListBox listBox = new() { SelectionMode = SelectionMode.Multiple, ItemsSource = items };
+listBox.SelectionModel.Select(1);
+listBox.SelectionModel.Add(3);
+
+items.Move(0, 3);
+// Items: "b", "c", "d", "a"
+// listBox.SelectionModel.SelectedIndices is [0, 2], listBox.SelectedItems is ["b", "d"],
+// and no SelectionChanged is raised.
+```
+
 ## Remarks
 
-`Selector` builds on `ItemsControl` and keeps a private `SelectionModel` as the selection source of truth. Setting `SelectedIndex` calls `SelectionModel.Select`; when the model changes, `Selector` updates `SelectedIndexProperty`, invalidates the previously selected and newly selected realized containers, and re-prepares those containers so `ISelectableItemContainer` state is refreshed.
+`Selector` builds on `ItemsControl` and keeps a private `SelectionModel` as the selection source of truth. Setting `SelectedIndex` calls `SelectionModel.Select`; when the model changes, `Selector` updates `SelectedIndexProperty`, invalidates the realized containers of every index that left or entered the selection, and re-prepares those containers so `ISelectableItemContainer` state is refreshed.
 
 When that re-preparation throws, the exception propagates out of the `SelectedIndex` setter, and `SelectedIndex` already holds the new index. The container stays realized, `ItemContainerGenerator.GetItemIndex` returns `-1` for it, and the items stay dirty, so the next layout pass prepares it again, the same way as a failed preparation during realization. For example, a `ListBox` subclass whose `PrepareItemContent` override shows a selected item as `"a (selected)"` realizes `"a"` and `"b"`. `SelectedIndex = 0` runs while that override throws once: the setter throws, `SelectedIndex` is `0`, the row still shows `"a"`, and `GetItemIndex` returns `-1` for its container. After the next measure and arrange, with no item change, the row shows `"a (selected)"` and `GetItemIndex` returns `0`.
 
@@ -50,19 +67,23 @@ A selection change made while `Selector` sets `SelectedIndexProperty` for anothe
 
 `SetValue(Selector.SelectedIndexProperty, n)`, `ClearValue`, a binding, or an aspect that changes `SelectedIndex` behaves exactly like `SelectedIndex = n`, as WPF requires of a dependency property and its CLR wrapper. `SelectionModel` selects the new index first, and the `SelectedIndexProperty` change is then notified inside that selection change: every `PropertyChanged` handler and every `OnPropertyChanged` override runs, the old and the new containers are re-prepared, `SelectionChanged` is raised, and only then a failed re-preparation propagates out of `SetValue`. For example, a `ComboBox` subclass whose `PrepareItemContent` throws for `"two"` shows `"one"`, `"two"`, and `"three"`, its rows are realized, and `"one"` is selected. A `PropertyChanged` handler sees `SelectionModel.SelectedIndex == 1` when `SelectedIndex` becomes `1`. `comboBox.SetValue(Selector.SelectedIndexProperty, 1)` throws `InvalidOperationException`, and before it throws, `SelectionChanged` is raised once with `RemovedItems == ["one"]` and `AddedItems == ["two"]`. Afterwards `SelectionModel.SelectedIndex` is `1`, `Text` is `"two"`, and the selection box shows `"two"`, with the drop-down open or closed. When a `PropertyChanged` handler closes the open drop-down because `SelectedIndex` changed, the drop-down is also closed afterwards.
 
-Selection is single-index only. The valid no-selection value is `-1`; lower values are rejected by `SelectionModel.Select`.
+The selection can hold several items. `SelectionModel.SelectedIndices` lists the selected indices in selection order, and `SelectedIndex` is the first of them, as WPF's `SelectedIndex` is the first item of `SelectedItems`. Setting `SelectedIndex` makes that index the only selected index. `SelectionModel.Add`, `Remove`, `SelectRange`, and `AddRange` change the selection without clearing it, and `Selector` handles those changes the same way as a `SelectedIndex` change. `ListBox` lets the user select several items through `ListBox.SelectionMode` and exposes them through `ListBox.SelectedItems`; `ComboBox` and `TabControl` let the user select one item. The valid no-selection value is `-1`; lower values are rejected by `SelectionModel.Select`.
 
-The selection follows the selected item when the items change, through `Items` or through an `ItemsSource` that raises `INotifyCollectionChanged` or `IObservableList` notifications:
+`SelectionChanged` reports every item that left the selection in `RemovedItems` and every item that entered it in `AddedItems`, so each list can hold more than one item. For example, a `ListBox` with `SelectionMode.Extended` shows `"Apple"`, `"Banana"`, and `"Cherry"`, with nothing selected, and `SelectAll()` selects every item in that order. A plain click on `"Banana"` raises `SelectionChanged` once with `RemovedItems == ["Apple", "Cherry"]` and `AddedItems == []`.
+
+Every selected item follows its item when the items change, through `Items` or through an `ItemsSource` that raises `INotifyCollectionChanged` or `IObservableList` notifications. Each row below applies to each selected item:
 
 | Change | Result |
 | --- | --- |
-| Items are inserted or removed before the selected item. | `SelectedIndex` moves by the number of inserted or removed items. `SelectedItem` stays the same. |
-| Items are inserted or removed after the selected item. | Nothing changes. |
-| The selected item is removed or replaced. | The selection is cleared: `SelectedIndex` becomes `-1` and `SelectionChanged` reports the removed item in `RemovedItems`. When the selected item was removed, `TabControl` then selects a neighbouring tab. |
-| The selected item, or items around it, are moved. | `SelectedIndex` becomes the selected item's new index. |
-| The items are reset (`SetItems`, `Items.Clear`, a new `ItemsSource`, or a reset notification). | If the previous selected item is still present (compared with `object.Equals`), `SelectedIndex` becomes its index, preferring the same index when that position still holds an equal item. Otherwise the selection is cleared. |
+| Items are inserted or removed before the selected item. | Its selected index moves by the number of inserted or removed items. The item stays selected. |
+| Items are inserted or removed after the selected item. | Nothing changes for that item. |
+| The selected item is removed or replaced. | That item is deselected, and `SelectionChanged` reports it in `RemovedItems` with an empty `AddedItems`. The other selected items stay selected. When the last selected item was removed, `SelectedIndex` becomes `-1`, and `TabControl` then selects a neighbouring tab. |
+| The selected item, or items around it, are moved. | Its selected index becomes the item's new index. |
+| The items are reset (`SetItems`, `Items.Clear`, a new `ItemsSource`, or a reset notification). | If the item is still present (compared with `object.Equals`), its selected index becomes the item's index, preferring the same index when that position still holds an equal item. Otherwise the item is deselected. |
 
-When only the index moves and the selected item stays the same, `Selector` updates `SelectedIndex` and the affected containers but does not raise the routed `SelectionChanged` event, because the selection did not change.
+The selected items keep their selection order. For example, a `ListBox` with `SelectionMode.Multiple` shows `"a"`, `"b"`, `"c"`, and `"d"`, with `"b"` and then `"d"` selected (`SelectedIndices == [1, 3]`). `SetItems(new[] { "d", "x", "b" })` leaves `SelectedIndices == [2, 0]` and `SelectedItems == ["b", "d"]`. When a `ListBox` with `SelectionMode.Multiple` shows `"Apple"`, `"Banana"`, and `"Cherry"`, all selected, `Items.RemoveAt(1)` raises `SelectionChanged` once with `RemovedItems == ["Banana"]` and `AddedItems == []`, and leaves `SelectedItems == ["Apple", "Cherry"]` at the indices `[0, 1]`.
+
+When the item change only moves selected indices and every selected item stays selected, `Selector` updates `SelectedIndex`, the selected indices, and the affected containers but does not raise the routed `SelectionChanged` event, because the selection did not change.
 
 When the selection follows its item and the re-preparation of its container throws, the exception propagates out of the item change, for example out of `Items.RemoveAt` or out of the `ItemsSource` collection's `Remove` or `Move`. The items are already changed and `SelectedIndex` already holds the new index. The control's item view still follows the change, and the items stay dirty, so the next layout pass realizes the current items and prepares that container again. For example, an editable `ComboBox` subclass whose `PrepareItemContent` override throws for `"b2"` shows `"x"`, `"b1"`, `"c"`, and `"b2"`, the user typed `"b"`, so the drop-down shows `"b1"` and `"b2"`, and `"b2"` is selected. `Items.RemoveAt(0)` runs while that override throws once: the call throws, `SelectedIndex` is `2`, and the filtered drop-down maps to the source indexes `0` and `2`. The next layout pass completes without an exception and shows `"b1"` and `"b2"`.
 
@@ -88,15 +109,15 @@ During item container preparation, `Selector` installs a left-button `MouseUp` h
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `SelectedIndex` | `int` | Gets or sets the selected item index. Setting the property selects that index through `SelectionModel`, and `SetValue(SelectedIndexProperty, n)`, a binding, or an aspect does the same. When items change, the index follows the selected item. |
-| `SelectedItem` | `object?` | Gets the selected object from the active item source (`ItemsSource` when set, otherwise `Items`) when `SelectedIndex` is valid; otherwise, `null`. Inserting, removing, or moving other items does not change it. |
-| `SelectionModel` | `SelectionModel` | Gets the selector's internal single-selection model. |
+| `SelectedIndex` | `int` | Gets the first selected index in selection order, or `-1`; sets the only selected index. Setting the property selects that index through `SelectionModel`, and `SetValue(SelectedIndexProperty, n)`, a binding, or an aspect does the same. When items change, every selected index follows its item. |
+| `SelectedItem` | `object?` | Gets the object at `SelectedIndex` from the active item source (`ItemsSource` when set, otherwise `Items`) when `SelectedIndex` is valid; otherwise, `null`. Inserting, removing, or moving other items does not change it. |
+| `SelectionModel` | `SelectionModel` | Gets the selector's internal selection model, which holds every selected index in selection order. |
 
 ## Methods
 
 | Name | Description |
 | --- | --- |
-| `IsItemSelected(int index)` | Returns whether the internal `SelectionModel` currently selects `index`. |
+| `IsItemSelected(int index)` | Returns whether `index` is one of the selected indices of the internal `SelectionModel`. |
 | `PrepareItemContainer(UIElement container, int index, object? item)` | Prepares the inherited item container state and associates a left-button mouse-up selection handler with the container. While the container is enabled, it owns the pointer presses on it, as a WPF `ListBoxItem` handles `MouseLeftButtonDown`: an enclosing `ButtonBase`, for example a `Button` whose `Content` is the `ListBox`, is not pressed, does not repeat, and is not clicked for a press on the container. |
 | `ClearItemContainer(UIElement container)` | Clears inherited item container state, detaches this selector as the handler owner for the container, and ends the container's ownership of its pointer presses. |
 | `SelectContainer(UIElement container)` | Selects the index at which the selector's own item container generator currently realizes `container`; this index already follows inserted, removed, and moved items. Does nothing when the selector has not realized `container`, or when `container` still shows an item that was replaced and has not been prepared for the new item yet, or when the last preparation of `container` threw and no later preparation has succeeded. |

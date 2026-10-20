@@ -14,12 +14,13 @@ public class Selector : ItemsControl
     private static readonly ConditionalWeakTable<UIElement, SelectorClickHandlerRegistration> clickHandlerRegistrations = new();
     private readonly SelectionModel selectionModel = new();
 
-    // The item SelectedIndex referred to after the last selection or item change. An index set
-    // before its item exists refers to no item, so item changes leave it unchanged.
-    private object? selectedItem;
-    private bool hasSelectedItem;
-    private bool changingSelectionForItems;
-    private bool relocatingSelection;
+    // The item each selected index referred to after the last selection or item change, in selection order. An index
+    // set before its item exists refers to no item, so item changes leave it unchanged.
+    private readonly List<SelectedEntry> selectedEntries = [];
+
+    // Set by an item change just before it moves the selection: the selected items that it removed. That change
+    // deselects them and raises SelectionChanged with them; a change that only moved selected items raises none.
+    private List<object?>? itemsChangeRemovedItems;
 
     // The number of selection changes notifying their new SelectedIndex. A selection change nested in that
     // notification, or a subclass refreshing its own containers in it, hands its first re-preparation failure to the
@@ -105,6 +106,13 @@ public class Selector : ItemsControl
         }
     }
 
+    // Selects the container for a left click that it takes. A subclass that selects by the modifier keys of the click,
+    // such as a ListBox whose SelectionMode is not Single, overrides it.
+    internal virtual void SelectContainerOnClick(UIElement container, MouseButtonEventArgs args)
+    {
+        SelectContainer(container);
+    }
+
     // Whether a left click that the container takes selects it. Every click does, unless a subclass requires more. It is
     // asked at the left press, before the press moves the focus, and the release of that press uses that answer; a
     // release without a press on the container asks at the release.
@@ -128,48 +136,19 @@ public class Selector : ItemsControl
 
     internal override void OnItemsReplaced(int index, int removedCount, int addedCount)
     {
-        int selectedIndex = selectionModel.SelectedIndex;
-        if (hasSelectedItem && selectedIndex >= index)
-        {
-            if (selectedIndex < index + removedCount)
-            {
-                ClearSelectionForItems();
-            }
-            else
-            {
-                RelocateSelection(selectedIndex - removedCount + addedCount);
-            }
-        }
-
-        CaptureSelectedItem();
+        UpdateSelectionForItems(entry => entry.Index < index
+            ? entry.Index
+            : entry.Index < index + removedCount ? -1 : entry.Index - removedCount + addedCount);
     }
 
     internal override void OnItemsMoved(int oldIndex, int newIndex, int count)
     {
-        if (hasSelectedItem)
-        {
-            RelocateSelection(GetIndexAfterMove(selectionModel.SelectedIndex, oldIndex, newIndex, count));
-        }
-
-        CaptureSelectedItem();
+        UpdateSelectionForItems(entry => GetIndexAfterMove(entry.Index, oldIndex, newIndex, count));
     }
 
     internal override void OnItemsReset()
     {
-        if (hasSelectedItem)
-        {
-            int selectedIndex = FindItemIndex(selectedItem, selectionModel.SelectedIndex);
-            if (selectedIndex < 0)
-            {
-                ClearSelectionForItems();
-            }
-            else
-            {
-                RelocateSelection(selectedIndex);
-            }
-        }
-
-        CaptureSelectedItem();
+        UpdateSelectionForItems(entry => FindItemIndex(entry.Item, entry.Index));
     }
 
     // The index of the item at itemIndex after count items moved from oldIndex to newIndex.
@@ -204,58 +183,87 @@ public class Selector : ItemsControl
         return -1;
     }
 
-    // The selected item was removed or replaced.
-    private void ClearSelectionForItems()
+    // Every selected item follows its item to the index that newIndexOf gives, or is deselected when it gives -1, as
+    // the item was removed or replaced. Selected items that only moved change SelectedIndex, not the selection, so they
+    // raise no SelectionChanged.
+    private void UpdateSelectionForItems(Func<SelectedEntry, int> newIndexOf)
     {
-        changingSelectionForItems = true;
-        try
+        List<int> indices = new(selectedEntries.Count);
+        HashSet<int> kept = [];
+        List<object?> removed = [];
+        foreach (SelectedEntry entry in selectedEntries)
         {
-            selectionModel.Clear();
+            int index = entry.HasItem ? newIndexOf(entry) : entry.Index;
+            if (index < 0)
+            {
+                removed.Add(entry.Item);
+            }
+            else if (kept.Add(index))
+            {
+                indices.Add(index);
+            }
         }
-        finally
+
+        if (removed.Count > 0 || !indices.SequenceEqual(selectionModel.SelectedIndices))
         {
-            changingSelectionForItems = false;
+            itemsChangeRemovedItems = removed;
+            try
+            {
+                selectionModel.SetSelectedIndices(indices);
+            }
+            finally
+            {
+                itemsChangeRemovedItems = null;
+            }
         }
+
+        CaptureSelectedItems();
     }
 
-    // The selected item moved to another index: SelectedIndex changes, but the selection does not.
-    private void RelocateSelection(int index)
+    private void CaptureSelectedItems()
     {
-        changingSelectionForItems = true;
-        relocatingSelection = true;
-        try
+        selectedEntries.Clear();
+        foreach (int index in selectionModel.SelectedIndices)
         {
-            selectionModel.Select(index);
+            bool hasItem = index < ItemCount;
+            selectedEntries.Add(new SelectedEntry(index, hasItem ? GetItemAt(index) : null, hasItem));
         }
-        finally
-        {
-            changingSelectionForItems = false;
-            relocatingSelection = false;
-        }
-    }
-
-    private void CaptureSelectedItem()
-    {
-        CaptureSelectedItem(SelectedIndex);
-    }
-
-    private void CaptureSelectedItem(int index)
-    {
-        hasSelectedItem = index >= 0 && index < ItemCount;
-        selectedItem = hasSelectedItem ? GetItemAt(index) : null;
     }
 
     private void OnSelectionChanged(object? sender, SelectionChangedEventArgs args)
     {
-        bool forItems = changingSelectionForItems;
-        bool relocated = relocatingSelection;
-        changingSelectionForItems = false;
-        relocatingSelection = false;
-        object? removed = selectedItem;
-        object? added = args.Change.NewIndex >= 0 && args.Change.NewIndex < ItemCount ? GetItemAt(args.Change.NewIndex) : null;
+        List<object?>? removedForItems = itemsChangeRemovedItems;
+        itemsChangeRemovedItems = null;
+        bool forItems = removedForItems is not null;
+        bool relocated = removedForItems is { Count: 0 };
+        List<object?> removed = [];
+        List<object?> added = [];
+        if (removedForItems is not null)
+        {
+            removed.AddRange(removedForItems.Where(item => item is not null));
+        }
+        else
+        {
+            HashSet<int> removedIndices = [.. args.RemovedIndices];
+            foreach (SelectedEntry entry in selectedEntries)
+            {
+                if (entry.HasItem && entry.Item is not null && removedIndices.Contains(entry.Index))
+                {
+                    removed.Add(entry.Item);
+                }
+            }
 
-        // A selection change nested in the SelectedIndex notification below replaces this new item.
-        CaptureSelectedItem(args.Change.NewIndex);
+            foreach (int index in args.AddedIndices)
+            {
+                if (index < ItemCount && GetItemAt(index) is { } item)
+                {
+                    added.Add(item);
+                }
+            }
+        }
+
+        // A selection change nested in the SelectedIndex notification below replaces these new items.
+        CaptureSelectedItems();
         bool wasChangingSelectionForItems = IsChangingSelectionForItems;
         IsChangingSelectionForItems = forItems;
         ExceptionDispatchInfo? preparationFailure = null;
@@ -284,16 +292,19 @@ public class Selector : ItemsControl
 
         try
         {
-            RefreshSelectionContainer(args.Change.OldIndex, "Selection changed", ref preparationFailure);
-            RefreshSelectionContainer(args.Change.NewIndex, "Selection changed", ref preparationFailure);
+            foreach (int index in args.RemovedIndices)
+            {
+                RefreshSelectionContainer(index, "Selection changed", ref preparationFailure);
+            }
+
+            foreach (int index in args.AddedIndices)
+            {
+                RefreshSelectionContainer(index, "Selection changed", ref preparationFailure);
+            }
+
             if (!relocated)
             {
-                RaiseEvent(new SelectionChangedEventArgs(
-                    SelectionChangedEvent,
-                    this,
-                    args.Change,
-                    removed is null ? [] : [removed],
-                    added is null ? [] : [added]));
+                RaiseEvent(new SelectionChangedEventArgs(SelectionChangedEvent, this, args.Change, removed, added));
             }
         }
         finally
@@ -374,6 +385,8 @@ public class Selector : ItemsControl
         container.Invalidate(InvalidationFlags.Render | InvalidationFlags.InputVisual, reason);
     }
 
+    private readonly record struct SelectedEntry(int Index, object? Item, bool HasItem);
+
     private sealed class SelectorClickHandlerRegistration
     {
         private readonly UIElement container;
@@ -431,7 +444,7 @@ public class Selector : ItemsControl
             {
                 if (releasesPress ? pressSelectsContainer : Owner.SelectsContainerOnClick(container, mouseArgs))
                 {
-                    Owner.SelectContainer(container);
+                    Owner.SelectContainerOnClick(container, mouseArgs);
                 }
 
                 args.Handled = true;

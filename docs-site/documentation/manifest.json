@@ -1570,6 +1570,11 @@
     "source": "UI/Controls/Selection/SelectionModel{T}.cs"
   },
   {
+    "name": "Cerneala.UI.Controls.SelectionMode",
+    "file": "documentation/classes/Cerneala.UI.Controls.SelectionMode.md",
+    "source": "UI/Controls/SelectionMode.cs"
+  },
+  {
     "name": "Cerneala.UI.Controls.Shapes.Ellipse",
     "file": "documentation/classes/Cerneala.UI.Controls.Shapes.Ellipse.md",
     "source": "UI/Controls/Shapes/Ellipse.cs"
