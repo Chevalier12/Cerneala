@@ -31,7 +31,7 @@ DrawStrokeStyle dashedOutline = new(
 
 Dash entries are positive lengths in logical drawing units and alternate painted and skipped portions. An odd-length pattern is repeated to produce an even cycle. `DashOffset` selects the initial phase, wraps through the complete cycle, and continues across line, curve, and contour segments.
 
-`Inside` and `Outside` apply to closed contours according to their winding direction. Open contours always use centered alignment because they have no interior. Caps close the ends of open paths and individual painted dash fragments. A miter that exceeds `MiterLimit` falls back to a bevel join.
+`Inside` and `Outside` apply to closed contours according to their winding direction. Open contours always use centered alignment because they have no interior. Caps close the ends of open paths and individual painted dash fragments. A dash fragment of an `Inside` or `Outside` closed contour keeps its offset band, and its caps are built around the middle of that band: with thickness `12` and `Inside`, a top edge at y = 20 gets the band y = 20..32, and a `Round` cap is a half circle of radius 6 centered on y = 26, so no cap crosses the contour line. A miter that exceeds `MiterLimit` falls back to a bevel join.
 
 The constructor copies `dashPattern`; modifying the source sequence later does not change the style. All enum values must be defined, `MiterLimit` must be finite and at least `1`, every dash value must be positive and finite, and `DashOffset` must be finite.
 

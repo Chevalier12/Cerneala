@@ -370,6 +370,9 @@ internal static class DrawStrokeTessellator
         DrawPoint normal = Normal(direction);
         DrawPoint outward = start ? Multiply(direction, -1) : direction;
         float extension = profile.Thickness / 2;
+        // An Inside/Outside band is offset from the contour line, so round and
+        // triangle caps are built around the middle of the band, not the contour point.
+        DrawPoint middle = Add(point, Multiply(normal, (profile.Left - profile.Right) / 2));
         switch (cap)
         {
             case DrawLineCap.Square:
@@ -377,7 +380,7 @@ internal static class DrawStrokeTessellator
             case DrawLineCap.Triangle:
             {
                 Section section = AddSection(mesh, point, normal, profile);
-                DrawPoint tip = Add(point, Multiply(outward, extension));
+                DrawPoint tip = Add(middle, Multiply(outward, extension));
                 // The tip's miter for two 45 degree edges is sqrt(2) long.
                 float miterLength = MathF.Sqrt(2);
                 int tipSolid = mesh.AddVertex(
@@ -396,7 +399,7 @@ internal static class DrawStrokeTessellator
             case DrawLineCap.Round:
             {
                 Section section = AddSection(mesh, point, normal, profile);
-                int center = mesh.AddVertex(point, default, profile.Coverage);
+                int center = mesh.AddVertex(middle, default, profile.Coverage);
                 float sweep = start ? MathF.PI : -MathF.PI;
                 int steps = Math.Max(2, (int)MathF.Ceiling(MathF.PI / RoundStep));
                 float startAngle = MathF.Atan2(normal.Y, normal.X);
@@ -404,7 +407,7 @@ internal static class DrawStrokeTessellator
                 for (int step = 1; step < steps; step++)
                 {
                     float angle = startAngle + (sweep * step / steps);
-                    Side arc = AddSide(mesh, point, new DrawPoint(MathF.Cos(angle), MathF.Sin(angle)), extension, profile);
+                    Side arc = AddSide(mesh, middle, new DrawPoint(MathF.Cos(angle), MathF.Sin(angle)), extension, profile);
                     AddWedge(mesh, center, previousSide, arc);
                     previousSide = arc;
                 }
