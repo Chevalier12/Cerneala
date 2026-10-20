@@ -547,6 +547,52 @@ public sealed class ContentControlTests
         Assert.Empty(root.Motion.Presence.GetExitingVisualChildren(oldControl));
     }
 
+    // The release for a new owner raises Unloaded; content that a handler sets on the releasing control then stays, as
+    // in ContentPresenter.ReleaseContentForNewOwner.
+    [Fact]
+    public void ContentSetByUnloadedWhileANewOwnerTakesTheHostedElementStays()
+    {
+        UIRoot root = new(200, 200);
+        Border child = new() { Width = 50, Height = 20 };
+        Border replacement = new() { Width = 10, Height = 10 };
+        ContentControl? oldControl = null;
+        ContentPresenter presenter = new()
+        {
+            Content = child,
+            ContentTemplate = new ContentTemplate<UIElement>(
+                "cc",
+                key: null,
+                priority: 0,
+                context => oldControl = new ContentControl { Content = context.Data })
+        };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        ContentControl first = oldControl!;
+        bool changed = false;
+        child.Unloaded += (_, _) =>
+        {
+            if (!changed)
+            {
+                changed = true;
+                first.Content = replacement;
+            }
+        };
+
+        presenter.ContentTemplate = new ContentTemplate<UIElement>(
+            "wrap",
+            key: null,
+            priority: 0,
+            context => new Border { Child = context.Data });
+        root.ProcessFrame();
+
+        Assert.True(changed);
+        Assert.Same(replacement, first.Content);
+        Assert.Same(first, replacement.VisualParent);
+        Assert.Same(first, replacement.LogicalParent);
+        Border wrapper = Assert.IsType<Border>(child.VisualParent);
+        Assert.Same(child, wrapper.Child);
+    }
+
     private static PresenceOptions CreatePresence()
     {
         return PresenceOptions.FadeAndScale(

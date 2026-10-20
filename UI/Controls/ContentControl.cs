@@ -378,17 +378,22 @@ public class ContentControl : Control
 
     // Another owner takes the content element that this control hosts directly: the element leaves at once, without a
     // presence exit, so the new owner can add it, and Content becomes null. The visual removal first, so the logical
-    // removal detaches the element and cancels the exit that the visual removal started.
+    // removal detaches the element and cancels the exit that the visual removal started. The field is cleared first: the
+    // removal raises Unloaded, and content that a handler sets then stays.
     private void ReleaseContentForNewOwner()
     {
-        if (hostedContentElement is { } element && ReferenceEquals(element, Content))
+        object? released = Content;
+        if (hostedContentElement is { } element && ReferenceEquals(element, released))
         {
             hostedContentElement = null;
             VisualChildren.Remove(element);
             LogicalChildren.Remove(element);
         }
 
-        Content = null;
+        if (ReferenceEquals(Content, released))
+        {
+            Content = null;
+        }
     }
 
     private void ReleaseContentElementFromOwnedSubtree()
