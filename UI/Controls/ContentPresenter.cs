@@ -541,6 +541,20 @@ public class ContentPresenter : Control
         DiscardRejectedChild(child);
     }
 
+    // Another owner takes the element that this presenter presents directly: the element leaves at once, without a
+    // presence exit, so the new owner can add it, and Content becomes null. The field is cleared first: the removal
+    // raises Unloaded, and content that a handler presents then stays.
+    internal void ReleaseContentForNewOwner()
+    {
+        UIElement? child = presentedChild;
+        presentedChild = null;
+        DiscardRejectedChild(child);
+        if (child is not null && ReferenceEquals(Content, child))
+        {
+            Content = null;
+        }
+    }
+
     private void RemovePresentedChild(UIElement? child)
     {
         if (child is null)

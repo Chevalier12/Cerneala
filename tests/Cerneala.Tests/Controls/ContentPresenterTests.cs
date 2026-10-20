@@ -1058,6 +1058,31 @@ public sealed class ContentPresenterTests
         Assert.Empty(root.Motion.Presence.GetExitingVisualChildren(presenter));
     }
 
+    // PR #652 review: a nested presenter that presents the element directly lets go of it for the next template; that
+    // release is a move, not an exit, so the next template can add the element to the element it creates.
+    [Fact]
+    public void ElementWithPresenceReleasedByANestedPresenterForTheNextTemplateMovesWithoutAnExit()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(200, 200, motionClock: clock);
+        Border child = new() { Width = 50, Height = 20, Presence = CreatePresence() };
+        ContentPresenter presenter = new() { Content = child, ContentTemplate = ContentPresenterTemplate("inner") };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        ContentPresenter inner = Assert.IsType<ContentPresenter>(child.VisualParent);
+
+        presenter.ContentTemplate = WrapTemplate("wrap", key: null);
+        root.ProcessFrame();
+
+        Border wrapper = Assert.IsType<Border>(presenter.PresentedChild);
+        Assert.Same(wrapper, child.VisualParent);
+        Assert.Same(wrapper, child.LogicalParent);
+        Assert.Null(inner.Content);
+        Assert.Null(inner.PresentedChild);
+        Assert.Equal(PresenceState.Present, root.Motion.Presence.GetState(child));
+        Assert.Empty(root.Motion.Presence.GetExitingVisualChildren(inner));
+    }
+
     // Issue #626: an element whose presentation a Loaded handler supersedes never became the presented child, so it
     // leaves at once, without an exit.
     [Fact]
