@@ -77,6 +77,7 @@ public class Selector : ItemsControl
             static key =>
             {
                 SelectorClickHandlerRegistration created = new(key);
+                key.Handlers.AddHandler(InputEvents.MouseDownEvent, created.OnMouseDown, handledEventsToo: true);
                 key.Handlers.AddHandler(InputEvents.MouseUpEvent, created.OnMouseUp);
                 return created;
             });
@@ -104,7 +105,9 @@ public class Selector : ItemsControl
         }
     }
 
-    // Whether a left click that the container takes selects it. Every click does, unless a subclass requires more.
+    // Whether a left click that the container takes selects it. Every click does, unless a subclass requires more. It is
+    // asked at the left press, before the press moves the focus, and the release of that press uses that answer; a
+    // release without a press on the container asks at the release.
     internal virtual bool SelectsContainerOnClick(UIElement container, MouseButtonEventArgs args) => true;
 
     // SetValue, a binding, or an aspect changed SelectedIndex without a selection. The selection model follows first,
@@ -382,6 +385,25 @@ public class Selector : ItemsControl
 
         public Selector? Owner { get; set; }
 
+        // The last left press on the container: its owner, its original source, and whether that owner selects the
+        // container on its click. As WPF's ListBoxItem decides at the press, when its Focus() succeeds, a handler that
+        // the press's focus change runs, such as a GotFocus handler that sets Focusable to false, does not change it.
+        private Selector? pressOwner;
+        private object? pressSource;
+        private bool pressSelects;
+
+        public void OnMouseDown(UiElementId _, RoutedEventArgs args)
+        {
+            if (Owner is null || args is not MouseButtonEventArgs { ChangedButton: InputMouseButton.Left } mouseArgs)
+            {
+                return;
+            }
+
+            pressOwner = Owner;
+            pressSource = args.OriginalSource;
+            pressSelects = Owner.SelectsContainerOnClick(container, mouseArgs);
+        }
+
         // As in WPF, where ButtonBase marks the mouse button events handled, a command source in the container, such as
         // a CheckBox from the ItemTemplate, owns its click, as the input bridge resolves the click to it. A release that
         // completes no click, because the press was elsewhere in the container, is not the command source's click, so
@@ -398,10 +420,16 @@ public class Selector : ItemsControl
                 return;
             }
 
+            bool releasesPress = ReferenceEquals(pressOwner, Owner) &&
+                pressSource is not null &&
+                Equals(mouseArgs.PressOriginalSource, pressSource);
+            bool pressSelectsContainer = pressSelects;
+            pressOwner = null;
+            pressSource = null;
             UIElement? clickOwner = FindClickOwner(container, args.OriginalSource, mouseArgs.RouteMap);
             if (mouseArgs.ClickCount <= 0 || clickOwner is not IInputCommandSource || ReferenceEquals(clickOwner, container))
             {
-                if (Owner.SelectsContainerOnClick(container, mouseArgs))
+                if (releasesPress ? pressSelectsContainer : Owner.SelectsContainerOnClick(container, mouseArgs))
                 {
                     Owner.SelectContainer(container);
                 }

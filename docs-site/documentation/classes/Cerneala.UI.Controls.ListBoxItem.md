@@ -83,7 +83,7 @@ A press on an element inside the row that can take the focus itself, such as a `
 
 With `Focusable = false`, a press on the row leaves the focus where it was. The row owns the press, so no focusable element above it, such as a `ListBox` with `Focusable = true`, takes the focus either. `ComboBoxItem` derives from `ListBoxItem` but sets `Focusable` back to `false`; see `ComboBoxItem`.
 
-A click selects the item in its `ListBox` only when the item can take the keyboard focus, as WPF's `ListBoxItem` notifies its `ListBox` of the click only when its `Focus()` succeeds. For example, an item with `Focusable = false` in a `ListBox` whose `SelectedIndex` is `-1`: after a click on the item, `IsSelected` is still `false`, `SelectedIndex` is still `-1`, and the focus is still on the element that had it. The same item with `Focusable = true` (the default) is selected and focused by the click. A `ComboBoxItem` is the exception: its `ComboBox` selects it on a click although it is not focusable.
+A click selects the item in its `ListBox` only when the item can take the keyboard focus, as WPF's `ListBoxItem` notifies its `ListBox` of the click only when its `Focus()` succeeds. For example, an item with `Focusable = false` in a `ListBox` whose `SelectedIndex` is `-1`: after a click on the item, `IsSelected` is still `false`, `SelectedIndex` is still `-1`, and the focus is still on the element that had it. The same item with `Focusable = true` (the default) is selected and focused by the click. The item's focusability is read at the press, so an item whose `GotFocus` handler sets `Focusable = false` is still selected when the button is released. A `ComboBoxItem` is the exception: its `ComboBox` selects it on a click although it is not focusable.
 
 ## Constructors
 

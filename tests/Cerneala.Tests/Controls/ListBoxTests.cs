@@ -294,6 +294,34 @@ public sealed class ListBoxTests
         Assert.Equal(!focusable, other.IsKeyboardFocused);
     }
 
+    // WPF's ListBoxItem selects itself when the Focus() of its press succeeds, so a row whose press focused it is
+    // selected, also when a GotFocus handler then makes it non-focusable before the release.
+    [Fact]
+    public void ClickSelectsListBoxItemWhosePressFocusedItAlthoughItIsNoLongerFocusableAtTheRelease()
+    {
+        Button other = new() { Content = "other", Width = 100, Height = 40 };
+        ListBox listBox = new() { Width = 150, Height = 100 };
+        ListBoxItem first = new() { Content = "a" };
+        listBox.Items.Add(first);
+        listBox.Items.Add(new ListBoxItem { Content = "b" });
+        bool focusedByPress = false;
+        first.GotFocus += (_, _) =>
+        {
+            focusedByPress = true;
+            first.Focusable = false;
+        };
+        UIRoot root = CreateFocusWindowRoot(other, listBox);
+        ElementInputBridge bridge = new();
+        ClickCenter(root, bridge, other);
+
+        ClickCenter(root, bridge, first);
+
+        Assert.True(focusedByPress);
+        Assert.False(first.Focusable);
+        Assert.Equal(0, listBox.SelectedIndex);
+        Assert.True(first.IsSelected);
+    }
+
     // A WPF ComboBoxItem does not focus itself on a press, and the ComboBox keeps the keyboard focus while its drop-down
     // is open, so a ComboBoxItem stays non-focusable although a ListBoxItem is focusable (#662). As a ListBox moves
     // the Tab key into its list only once in WPF, a row is no Tab stop.
