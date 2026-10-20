@@ -175,16 +175,18 @@ public sealed class ElementInputBridge
                 // leaves the left press, its IsPressed and its click intact (#593).
                 clickTracker.Press(button, ResolveClickTarget(hitTarget?.Element, routeMap));
                 pressOriginalSources[(int)button] = pointerTarget?.ElementId;
+                UIElement? focusTarget = null;
                 if (button == InputMouseButton.Left)
                 {
                     pressedStateTracker.Press(pointerTarget?.Element, routeMap);
-                    if (pointerTarget is not null &&
-                        ResolveFocusTarget(pointerTarget.Element, routeMap) is UIElement focusTarget)
-                    {
-                        focusManager.Focus(focusTarget, routeMap);
-                    }
+                    focusTarget = pointerTarget is null ? null : ResolveFocusTarget(pointerTarget.Element, routeMap);
                 }
 
+                UIElement? pressOwner = button == InputMouseButton.Left ? pressedStateTracker.PressedElement as UIElement : null;
+                UiElementId? pressOwnerId = pressOwner is not null && routeMap.TryGetId(pressOwner, out UiElementId ownerId)
+                    ? ownerId
+                    : null;
+                UIElement? focusBeforePress = focusManager.FocusedElement;
                 bool handled = RaiseMousePair(
                     routeMap,
                     pointerTarget,
@@ -192,7 +194,9 @@ public sealed class ElementInputBridge
                     InputEvents.MouseDownEvent,
                     button,
                     1,
-                    out bool previewHandled);
+                    out bool previewHandled,
+                    pressOwnerId,
+                    out bool handledBeforePressOwner);
                 handled |= RaiseMouseButtonSpecificPair(
                     routeMap,
                     pointerTarget,
@@ -201,7 +205,25 @@ public sealed class ElementInputBridge
                     clickCount: 1,
                     previewHandled,
                     handled,
-                    out bool buttonPreviewHandled);
+                    out bool buttonPreviewHandled,
+                    pressOwnerId,
+                    out bool buttonHandledBeforePressOwner);
+
+                // As in WPF, where a control focuses itself when MouseLeftButtonDown reaches its class handler, the press
+                // moves the focus after its events and before the drag begins. A handled PreviewMouseDown or
+                // PreviewMouseLeftButtonDown keeps the focus where it was, and so does a MouseDown or MouseLeftButtonDown
+                // that an element in a button's content handled, which also keeps the press from that button (#644). A
+                // press handler that moved the focus itself, such as a menu that light-dismisses and restores the focus to
+                // its root item, keeps its choice.
+                if (focusTarget is not null &&
+                    ReferenceEquals(focusManager.FocusedElement, focusBeforePress) &&
+                    !previewHandled &&
+                    !buttonPreviewHandled &&
+                    !((handledBeforePressOwner || buttonHandledBeforePressOwner) && ReferenceEquals(focusTarget, pressOwner)))
+                {
+                    focusManager.Focus(focusTarget, root.InputCache.EnsureCurrent(root));
+                }
+
                 if (!previewHandled && !buttonPreviewHandled)
                 {
                     BeginPointerDrag(routeMap, pointerTarget, button);
@@ -212,6 +234,20 @@ public sealed class ElementInputBridge
                     // not pressed, and the release completes no click, so it raises no Click and runs no Command (#620).
                     pressedStateTracker.Cancel();
                     clickTracker.CancelPress(button);
+                }
+
+                // As in WPF, where ButtonBase.OnMouseLeftButtonDown presses the button when the bubbling press reaches
+                // it, a MouseDown or MouseLeftButtonDown that an element in the button's content handled keeps the press
+                // from the button. Handlers on the button and its ancestors run after the press and do not undo it (#645).
+                if ((handledBeforePressOwner || buttonHandledBeforePressOwner) &&
+                    pressOwner is not null &&
+                    ReferenceEquals(pressedStateTracker.PressedElement, pressOwner))
+                {
+                    pressedStateTracker.Cancel();
+                    if (ReferenceEquals(clickTracker.PressedTarget(button), pressOwner))
+                    {
+                        clickTracker.CancelPress(button);
+                    }
                 }
 
                 if (button == InputMouseButton.Left)
@@ -246,11 +282,11 @@ public sealed class ElementInputBridge
                     ResolveReleaseClickTarget(hitTarget?.Element, clickTracker.PressedTarget(button), routeMap));
                 object? releasedPressSource = pressOriginalSources[(int)button];
                 pressOriginalSources[(int)button] = null;
-                bool handled = RaiseMousePair(routeMap, pointerTarget, InputEvents.PreviewMouseUpEvent, InputEvents.MouseUpEvent, button, clickCount, out bool previewHandled, releasedPressSource);
-                handled |= RaiseMouseButtonSpecificPair(routeMap, pointerTarget, button, isDown: false, clickCount, previewHandled, handled, out _, releasedPressSource);
+                bool handled = RaiseMousePair(routeMap, pointerTarget, InputEvents.PreviewMouseUpEvent, InputEvents.MouseUpEvent, button, clickCount, out bool previewHandled, null, out _, releasedPressSource);
+                handled |= RaiseMouseButtonSpecificPair(routeMap, pointerTarget, button, isDown: false, clickCount, previewHandled, handled, out _, null, out _, releasedPressSource);
                 if (button == InputMouseButton.Left && clickCount == 2)
                 {
-                    handled |= RaiseDirectMousePairAlongRoute(routeMap, pointerTarget, InputEvents.PreviewMouseDoubleClickEvent, InputEvents.MouseDoubleClickEvent, button, clickCount, previewInitiallyHandled: false, bubbleInitiallyHandled: false, out _, releasedPressSource);
+                    handled |= RaiseDirectMousePairAlongRoute(routeMap, pointerTarget, InputEvents.PreviewMouseDoubleClickEvent, InputEvents.MouseDoubleClickEvent, button, clickCount, previewInitiallyHandled: false, bubbleInitiallyHandled: false, out _, null, out _, releasedPressSource);
                 }
                 CompletePointerDrag(routeMap, pointerTarget, button, clickCount);
                 if (!handled)
@@ -433,6 +469,9 @@ public sealed class ElementInputBridge
         return element;
     }
 
+    // A press focuses the nearest focusable element. An element that owns its clicks takes the press for itself, as a
+    // WPF Thumb marks MouseLeftButtonDown handled before an enclosing ButtonBase focuses itself, so when it cannot take
+    // focus, the focus stays where it was (#640).
     private static UIElement? ResolveFocusTarget(UIElement element, ElementInputRouteMap routeMap)
     {
         foreach (UIElement current in routeMap.GetVisualRouteToRoot(element))
@@ -440,6 +479,11 @@ public sealed class ElementInputBridge
             if (FocusPolicy.CanFocus(current, routeMap))
             {
                 return current;
+            }
+
+            if (current.OwnsPointerClick)
+            {
+                return null;
             }
         }
 
@@ -454,11 +498,14 @@ public sealed class ElementInputBridge
         InputMouseButton button,
         int clickCount,
         out bool previewHandled,
+        UiElementId? observedBubbleId,
+        out bool bubbleHandledBeforeObserved,
         object? pressOriginalSource = null)
     {
         if (target is null)
         {
             previewHandled = false;
+            bubbleHandledBeforeObserved = false;
             return false;
         }
 
@@ -476,7 +523,9 @@ public sealed class ElementInputBridge
             routeMap.InputTree,
             target.ElementId,
             previewArgs,
-            bubbleArgs);
+            bubbleArgs,
+            observedBubbleId,
+            out bubbleHandledBeforeObserved);
         previewHandled = previewArgs.Handled;
         return previewArgs.Handled || bubbleArgs.Handled;
     }
@@ -492,6 +541,8 @@ public sealed class ElementInputBridge
         bool genericPreviewHandled,
         bool genericHandled,
         out bool previewHandled,
+        UiElementId? observedBubbleId,
+        out bool bubbleHandledBeforeObserved,
         object? pressOriginalSource = null)
     {
         (RoutedEvent Preview, RoutedEvent Bubble)? pair = (button, isDown) switch
@@ -506,10 +557,11 @@ public sealed class ElementInputBridge
         if (pair is not { } events)
         {
             previewHandled = false;
+            bubbleHandledBeforeObserved = false;
             return false;
         }
 
-        return RaiseDirectMousePairAlongRoute(routeMap, target, events.Preview, events.Bubble, button, clickCount, genericPreviewHandled, genericHandled, out previewHandled, pressOriginalSource);
+        return RaiseDirectMousePairAlongRoute(routeMap, target, events.Preview, events.Bubble, button, clickCount, genericPreviewHandled, genericHandled, out previewHandled, observedBubbleId, out bubbleHandledBeforeObserved, pressOriginalSource);
     }
 
     private static bool RaiseDirectMousePairAlongRoute(
@@ -522,11 +574,14 @@ public sealed class ElementInputBridge
         bool previewInitiallyHandled,
         bool bubbleInitiallyHandled,
         out bool previewHandled,
+        UiElementId? observedBubbleId,
+        out bool bubbleHandledBeforeObserved,
         object? pressOriginalSource = null)
     {
         if (target is null)
         {
             previewHandled = false;
+            bubbleHandledBeforeObserved = false;
             return false;
         }
 
@@ -546,8 +601,18 @@ public sealed class ElementInputBridge
 
         previewHandled = handled;
         handled |= bubbleInitiallyHandled;
+        // Only a handler on an element before observed counts: a bubble that starts handled, because the generic event
+        // was handled further up the route, was not handled before observed, as WPF raises the button-specific event on
+        // each element when the generic event reaches it.
+        bool bubbleStartsHandled = handled;
+        bubbleHandledBeforeObserved = false;
         foreach (UiElementId elementId in route)
         {
+            if (elementId == observedBubbleId)
+            {
+                bubbleHandledBeforeObserved = handled && !bubbleStartsHandled;
+            }
+
             MouseButtonEventArgs args = new(bubbleEvent, target.ElementId, button, target.X, target.Y, clickCount)
             {
                 Handled = handled,

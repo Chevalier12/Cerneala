@@ -249,7 +249,17 @@ public class TabItem : ContentControl, ISelectableItemContainer
         UIElement? wanted = HostsHeaderElement ? Header as UIElement : null;
         if (hostedHeader is not null && !ReferenceEquals(hostedHeader, wanted))
         {
-            RemoveHeaderElement(hostedHeader);
+            // An element that is still the Header moves to the header presenter: it leaves at once, without a
+            // presence exit, so the presenter or its template can take it. An element that is no longer the Header exits.
+            if (ReferenceEquals(hostedHeader, Header))
+            {
+                ReleaseHeaderElementFromOwnedSubtree();
+                hostedHeader = null;
+            }
+            else
+            {
+                RemoveHeaderElement(hostedHeader);
+            }
         }
 
         object? header = Header;
@@ -317,12 +327,23 @@ public class TabItem : ContentControl, ISelectableItemContainer
             return;
         }
 
-        VisualChildren.Remove(element);
+        // Logical first: the element stays attached through its visual parent, so the visual removal can start a
+        // presence exit. In the other order the logical removal detaches the element and cancels that exit.
         LogicalChildren.Remove(element);
+        VisualChildren.Remove(element);
         if (ReferenceEquals(hostedHeader, element))
         {
             hostedHeader = null;
         }
+    }
+
+    // Another owner takes the header element that this tab hosts directly: the element leaves at once, without a
+    // presence exit, so the new owner can add it, and Header becomes null.
+    internal void ReleaseHeaderForNewOwner()
+    {
+        ReleaseHeaderElementFromOwnedSubtree();
+        hostedHeader = null;
+        Header = null;
     }
 
     private void ReleaseHeaderElementFromOwnedSubtree()

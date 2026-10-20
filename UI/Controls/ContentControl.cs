@@ -299,25 +299,26 @@ public class ContentControl : Control
 
         // A ContentPresenter that presents its content directly also names that element in Content and PresentedChild.
         // Releasing the element through Content keeps both in step with the presenter's children, so the presenter can
-        // present the element again, for example when a template reuses it as its container.
+        // present the element again, for example when a template reuses it as its container. The element leaves
+        // without a presence exit.
         if (child.VisualParent is ContentPresenter presenter &&
             !ReferenceEquals(presenter, owner) &&
             ReferenceEquals(presenter.PresentedChild, child) &&
             ReferenceEquals(presenter.Content, child) &&
             IsOwnedBy(presenter, owner, ElementChildRole.Visual))
         {
-            presenter.Content = null;
+            presenter.ReleaseContentForNewOwner();
         }
 
         // A TabItem that hosts its header directly also names that element in Header. Releasing the element through
         // Header keeps the property in step with the tab's children, so the tab can take the element again, for
-        // example when a template reuses it as its container.
+        // example when a template reuses it as its container. The element leaves without a presence exit.
         if (child.VisualParent is TabItem tabItem &&
             !ReferenceEquals(tabItem, owner) &&
             tabItem.HostsHeaderDirectly(child) &&
             IsOwnedBy(tabItem, owner, ElementChildRole.Visual))
         {
-            tabItem.Header = null;
+            tabItem.ReleaseHeaderForNewOwner();
         }
 
         UIElement? visualParent = child.VisualParent;
