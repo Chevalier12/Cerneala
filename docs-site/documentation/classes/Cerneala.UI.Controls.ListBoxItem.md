@@ -73,11 +73,21 @@ When the item is a row of a `ListBox`, the `ListBox` passes its `ItemTemplate`, 
 
 When the item has a `ComponentTemplate` or a `ComponentTemplateKey`, the template presents `Content`, and the item creates no internal presenter.
 
+### Keyboard focus on a click
+
+A `ListBoxItem` is focusable: its constructor sets `Focusable` to `true`, as a WPF `ListBoxItem` is a `Control` whose `Focusable` defaults to `true`. A left press on the item moves keyboard focus to the item, as WPF's `ListBoxItem.OnMouseLeftButtonDown` focuses the item. `IsTabStop` stays `false`, so the Tab key does not stop on every row, as a WPF `ListBox` lets the Tab key into its list only once.
+
+For example, a `Button` named `other` has the focus, and the user clicks the first row of a `ListBox`. After the click, the row's `IsKeyboardFocused` is `true`, the `ListBox`'s `IsKeyboardFocusWithin` is `true`, and `other.IsKeyboardFocused` is `false`. A Space press after the click therefore does not click `other`.
+
+A press on an element inside the row that can take the focus itself, such as a `TextBox` or `CheckBox` from the `ItemTemplate`, focuses that element instead, as before.
+
+With `Focusable = false`, a press on the row leaves the focus where it was. The row owns the press, so no focusable element above it, such as a `ListBox` with `Focusable = true`, takes the focus either. `ComboBoxItem` derives from `ListBoxItem` but sets `Focusable` back to `false`; see `ComboBoxItem`.
+
 ## Constructors
 
 | Name | Description |
 | --- | --- |
-| `ListBoxItem()` | Initializes a new `ListBoxItem` with `ItemIndex` set to `-1`, `Item` set to `null`, and `IsSelected` set to `false`. The new item already has its internal `ContentPresenter`, which presents the `null` content. |
+| `ListBoxItem()` | Initializes a new `ListBoxItem` with `ItemIndex` set to `-1`, `Item` set to `null`, `IsSelected` set to `false`, and `Focusable` set to `true` (`IsTabStop` stays `false`). The new item already has its internal `ContentPresenter`, which presents the `null` content. |
 
 ## Fields
 

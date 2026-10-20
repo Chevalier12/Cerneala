@@ -101,11 +101,15 @@ A `TabItem` never hosts its `Content`, also when it is a `UIElement`. The `TabCo
 
 Assigning a `UIElement` to `Header` uses the same ownership validation as `ContentControl.Content`: the element cannot be self-owned, cannot be an ancestor, cannot already have a logical or visual parent, and cannot belong to a different root.
 
+### Keyboard focus on a click
+
+A `TabItem` is focusable: its constructor sets `Focusable` to `true`, as a WPF `TabItem` is a `Control` whose `Focusable` defaults to `true` and which focuses itself in `OnMouseLeftButtonDown`. A left press on the tab moves keyboard focus to the tab. For example, a `Button` has the focus and the user clicks the header of the second tab of a `TabControl`: the tab's `IsKeyboardFocused` becomes `true`, the `TabControl`'s `IsKeyboardFocusWithin` becomes `true`, the `Button` loses the focus, and the release selects the tab. The `TabControl` itself does not take the focus, also when its `Focusable` is `true`. `IsTabStop` stays `false`, so the Tab key does not stop on every tab. With `Focusable = false`, a press on the tab leaves the focus where it was.
+
 ## Constructors
 
 | Name | Description |
 | --- | --- |
-| `TabItem()` | Initializes a new `TabItem` instance. |
+| `TabItem()` | Initializes a new `TabItem` instance with `Focusable` set to `true` (`IsTabStop` stays `false`). |
 
 ## Fields
 

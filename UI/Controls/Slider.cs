@@ -1,6 +1,8 @@
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Core;
+using Cerneala.UI.Elements;
+using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
 
@@ -15,6 +17,7 @@ public class Slider : RangeBase
     public Slider()
     {
         SetFrameworkDefault(ComponentTemplateProperty, SliderTemplates.Default);
+        AddHandler(InputEvents.MouseDownEvent, OnMouseDown, handledEventsToo: true);
     }
 
     public static readonly UiProperty<Orientation> OrientationProperty = UiProperty<Orientation>.Register(
@@ -111,6 +114,23 @@ public class Slider : RangeBase
         finally
         {
             syncingTrack = false;
+        }
+    }
+
+    // As a WPF Slider focuses itself on a left MouseDown inside it, also one that its Thumb already handled, a press on
+    // a focusable slider moves keyboard focus to it unless the focus is already inside it (#662).
+    private void OnMouseDown(UiElementId _, RoutedEventArgs args)
+    {
+        if (args is not MouseButtonEventArgs { ChangedButton: InputMouseButton.Left, RouteMap: { } routeMap } ||
+            IsKeyboardFocusWithin ||
+            Root is not UIRoot { ActiveFocusManager: { } focusManager })
+        {
+            return;
+        }
+
+        if (focusManager.Focus(this, routeMap))
+        {
+            args.Handled = true;
         }
     }
 

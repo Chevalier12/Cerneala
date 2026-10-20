@@ -208,6 +208,45 @@ public sealed class TabControlTests
         Assert.Equal("B", tabControl.SelectedItem);
     }
 
+    // As a WPF TabItem focuses itself when it handles MouseLeftButtonDown (#662): a press on a tab takes keyboard focus
+    // from the button that had it, also in a focusable TabControl.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void PressOnTabItemFocusesIt(bool tabControlFocusable)
+    {
+        Button other = new() { Content = "other", Width = 100, Height = 30 };
+        TabControl tabControl = new() { Focusable = tabControlFocusable, Width = 200, Height = 120 };
+        TabItem second = new() { Header = "Two", Content = "Second content" };
+        tabControl.SetItems(new[] { new TabItem { Header = "One", Content = "First content" }, second });
+        StackPanel panel = new();
+        panel.Children.Add(other);
+        panel.Children.Add(tabControl);
+        UIRoot root = new(360, 240);
+        root.VisualChildren.Add(new Window { Content = panel, Width = 360, Height = 240 });
+        root.ProcessFrame();
+        ElementInputBridge bridge = new();
+        LayoutRect otherBounds = other.ArrangedBounds;
+        bridge.Dispatch(root, PointerFrame(otherBounds.X + 5, otherBounds.Y + 5, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(otherBounds.X + 5, otherBounds.Y + 5, previousDown: true));
+        root.ProcessFrame();
+        Assert.True(other.IsKeyboardFocused);
+        float x = second.ArrangedBounds.X + second.ArrangedBounds.Width / 2;
+        float y = second.ArrangedBounds.Y + second.ArrangedBounds.Height / 2;
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        root.ProcessFrame();
+        bool focusedWhileHeld = second.IsKeyboardFocused;
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.True(focusedWhileHeld);
+        Assert.True(second.IsKeyboardFocused);
+        Assert.True(tabControl.IsKeyboardFocusWithin);
+        Assert.False(other.IsKeyboardFocused);
+        Assert.Same(second, tabControl.SelectedTabItem);
+    }
+
     [Fact]
     public void TabControlClickSelectsTabItem()
     {
