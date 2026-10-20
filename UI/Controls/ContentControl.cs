@@ -277,24 +277,25 @@ public class ContentControl : Control
 
         // A Decorator also names its child in Child. Releasing the element through Child keeps that property in step
         // with the Decorator's children, so the Decorator can take the element again, for example when a template
-        // reuses it as its container.
+        // reuses it as its container. The element leaves without a presence exit.
         if (child.VisualParent is Decorator decorator &&
             ReferenceEquals(decorator.Child, child) &&
             IsOwnedBy(decorator, owner, ElementChildRole.Visual))
         {
-            decorator.Child = null;
+            decorator.ReleaseChildElementForNewOwner();
         }
 
         // A ContentControl that hosts its content directly also names that element in Content. Releasing the element
         // through Content keeps the property in step with the control's children, so the control can take the
-        // element again, for example when a template reuses it as its container.
+        // element again, for example when a template reuses it as its container. The element leaves without a
+        // presence exit.
         if (child.VisualParent is ContentControl contentControl &&
             !ReferenceEquals(contentControl, owner) &&
             contentControl.HostsContentDirectly(child) &&
             ReferenceEquals(contentControl.Content, child) &&
             IsOwnedBy(contentControl, owner, ElementChildRole.Visual))
         {
-            contentControl.Content = null;
+            contentControl.ReleaseContentForNewOwner();
         }
 
         // A ContentPresenter that presents its content directly also names that element in Content and PresentedChild.
@@ -372,6 +373,26 @@ public class ContentControl : Control
         if (ReferenceEquals(hostedContentElement, element))
         {
             hostedContentElement = null;
+        }
+    }
+
+    // Another owner takes the content element that this control hosts directly: the element leaves at once, without a
+    // presence exit, so the new owner can add it, and Content becomes null. The visual removal first, so the logical
+    // removal detaches the element and cancels the exit that the visual removal started. The field is cleared first: the
+    // removal raises Unloaded, and content that a handler sets then stays.
+    private void ReleaseContentForNewOwner()
+    {
+        object? released = Content;
+        if (hostedContentElement is { } element && ReferenceEquals(element, released))
+        {
+            hostedContentElement = null;
+            VisualChildren.Remove(element);
+            LogicalChildren.Remove(element);
+        }
+
+        if (ReferenceEquals(Content, released))
+        {
+            Content = null;
         }
     }
 

@@ -78,6 +78,21 @@ public class Decorator : Control
         VisualChildren.Remove(element);
     }
 
+    // Another owner takes the child: the element leaves at once, without a presence exit, so the new owner can add it,
+    // and Child becomes null.
+    internal void ReleaseChildElementForNewOwner()
+    {
+        UIElement? oldChild = child;
+        if (oldChild is null)
+        {
+            return;
+        }
+
+        child = null;
+        DiscardRejectedChild(oldChild);
+        Invalidate(Cerneala.UI.Invalidation.InvalidationFlags.Measure | Cerneala.UI.Invalidation.InvalidationFlags.Render, "Decorator child changed");
+    }
+
     // A rejected child never became the child, so it leaves at once without a presence exit: the visual removal first,
     // so the logical removal detaches it and cancels the exit that the visual removal started.
     private void DiscardRejectedChild(UIElement? element)

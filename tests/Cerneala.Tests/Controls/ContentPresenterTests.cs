@@ -1083,6 +1083,31 @@ public sealed class ContentPresenterTests
         Assert.Empty(root.Motion.Presence.GetExitingVisualChildren(inner));
     }
 
+    // Issue #664: the Border of the previous template lets go of the element for the next template; that release is a
+    // move, not an exit, so the next template can add the element to the Border it creates.
+    [Fact]
+    public void ElementWithPresenceReleasedByADecoratorForTheNextTemplateMovesWithoutAnExit()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(200, 200, motionClock: clock);
+        Border child = new() { Width = 50, Height = 20, Presence = CreatePresence() };
+        ContentPresenter presenter = new() { Content = child, ContentTemplate = WrapTemplate("wrap1", key: null) };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        Border first = Assert.IsType<Border>(child.VisualParent);
+
+        presenter.ContentTemplate = WrapTemplate("wrap2", key: null);
+        root.ProcessFrame();
+
+        Border wrapper = Assert.IsType<Border>(presenter.PresentedChild);
+        Assert.NotSame(first, wrapper);
+        Assert.Same(wrapper, child.VisualParent);
+        Assert.Same(wrapper, child.LogicalParent);
+        Assert.Null(first.Child);
+        Assert.Equal(PresenceState.Present, root.Motion.Presence.GetState(child));
+        Assert.Empty(root.Motion.Presence.GetExitingVisualChildren(first));
+    }
+
     // Issue #626: an element whose presentation a Loaded handler supersedes never became the presented child, so it
     // leaves at once, without an exit.
     [Fact]
