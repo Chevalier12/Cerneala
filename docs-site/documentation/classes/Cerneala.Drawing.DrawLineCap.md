@@ -24,7 +24,7 @@ DrawStrokeStyle style = new(
 
 ## Remarks
 
-Endpoint caps apply to open contours and painted dash fragments. Closed solid contours use joins instead of endpoint caps.
+Endpoint caps apply to open contours and painted dash fragments. On a dash of an `Inside` or `Outside` closed contour, the cap is centered on the middle of the offset stroke band, not on the contour line. Closed solid contours use joins instead of endpoint caps.
 
 ## Fields
 

@@ -156,6 +156,115 @@ public sealed class DrawStrokeTests
         Assert.Equal(openInside.Indices, openOutside.Indices);
     }
 
+    // Contract (2026-10-20): an Inside/Outside aligned stroke behaves like a centered
+    // stroke on the contour offset by T/2 toward the interior/exterior, so the dash
+    // caps are built around the band's mid-line, not around the contour line.
+    // Rectangle (20,20,160,80), thickness 12, dashes [30,20]: the second top-edge
+    // dash runs x = 70..100 and the top edge's band is y = bandMinimum..bandMaximum.
+    [Theory]
+    [InlineData(DrawLineCap.Round, DrawStrokeAlignment.Inside, 20f, 32f)]
+    [InlineData(DrawLineCap.Round, DrawStrokeAlignment.Outside, 8f, 20f)]
+    [InlineData(DrawLineCap.Triangle, DrawStrokeAlignment.Inside, 20f, 32f)]
+    [InlineData(DrawLineCap.Triangle, DrawStrokeAlignment.Outside, 8f, 20f)]
+    [InlineData(DrawLineCap.Square, DrawStrokeAlignment.Inside, 20f, 32f)]
+    [InlineData(DrawLineCap.Square, DrawStrokeAlignment.Outside, 8f, 20f)]
+    [InlineData(DrawLineCap.Round, DrawStrokeAlignment.Center, 14f, 26f)]
+    [InlineData(DrawLineCap.Triangle, DrawStrokeAlignment.Center, 14f, 26f)]
+    [InlineData(DrawLineCap.Square, DrawStrokeAlignment.Center, 14f, 26f)]
+    public void DashedClosedStrokeCapsAreBuiltAroundTheAlignedBand(
+        DrawLineCap cap,
+        DrawStrokeAlignment alignment,
+        float bandMinimum,
+        float bandMaximum)
+    {
+        const float DashStart = 70;
+        const float DashEnd = 100;
+        const float HalfThickness = 6;
+        const float Epsilon = 0.01f;
+        float middle = (bandMinimum + bandMaximum) / 2;
+        DrawPoint[] rectangle =
+        [
+            new DrawPoint(20, 20),
+            new DrawPoint(180, 20),
+            new DrawPoint(180, 100),
+            new DrawPoint(20, 100)
+        ];
+
+        DrawStrokeMesh mesh = DrawStrokeTessellator.Tessellate(
+            [new DrawStrokeContour(rectangle, true)],
+            thickness: 12,
+            new DrawStrokeStyle(
+                startCap: cap,
+                endCap: cap,
+                dashPattern: [30, 20],
+                alignment: alignment));
+
+        // Only the second top-edge dash and its caps lie in x = 60..110, y < 50.
+        DrawPoint[] dash = mesh.Vertices
+            .Where(point => point.X is >= 60 and <= 110 && point.Y < 50)
+            .ToArray();
+        Assert.NotEmpty(dash);
+        foreach (DrawPoint point in dash)
+        {
+            float overhang = MathF.Max(MathF.Max(DashStart - point.X, point.X - DashEnd), 0);
+            float alongBand = MathF.Abs(point.Y - middle);
+            Assert.True(
+                point.Y >= bandMinimum - Epsilon && point.Y <= bandMaximum + Epsilon,
+                $"{cap} {alignment}: vertex ({point.X}, {point.Y}) is outside the band y = {bandMinimum}..{bandMaximum}.");
+            switch (cap)
+            {
+                case DrawLineCap.Round:
+                    // A semicircle of radius 6 centred on the band mid-line at the dash end.
+                    float distance = MathF.Sqrt((overhang * overhang) + (alongBand * alongBand));
+                    Assert.True(
+                        distance <= HalfThickness + Epsilon,
+                        $"{cap} {alignment}: vertex ({point.X}, {point.Y}) is {distance} from the dash end on the mid-line y = {middle}, expected at most {HalfThickness}.");
+                    break;
+                case DrawLineCap.Triangle:
+                    // A triangle with its base on the band and its tip on the mid-line.
+                    Assert.True(
+                        alongBand <= HalfThickness - overhang + Epsilon,
+                        $"{cap} {alignment}: vertex ({point.X}, {point.Y}) is {alongBand} from the mid-line y = {middle} at overhang {overhang}, expected at most {HalfThickness - overhang}.");
+                    break;
+            }
+        }
+
+        Assert.Equal(DashStart - HalfThickness, dash.Min(point => point.X), 3);
+        Assert.Equal(DashEnd + HalfThickness, dash.Max(point => point.X), 3);
+        if (cap == DrawLineCap.Triangle)
+        {
+            DrawPoint tip = dash.OrderByDescending(point => point.X).First();
+            Assert.Equal(middle, tip.Y, 3);
+        }
+    }
+
+    [Theory]
+    [InlineData(DrawStrokeAlignment.Inside, 20f, 20f, 180f, 100f)]
+    [InlineData(DrawStrokeAlignment.Center, 14f, 14f, 186f, 106f)]
+    [InlineData(DrawStrokeAlignment.Outside, 8f, 8f, 192f, 112f)]
+    public void SolidClosedAlignedStrokeKeepsContourBand(
+        DrawStrokeAlignment alignment,
+        float minimumX,
+        float minimumY,
+        float maximumX,
+        float maximumY)
+    {
+        DrawPoint[] rectangle =
+        [
+            new DrawPoint(20, 20),
+            new DrawPoint(180, 20),
+            new DrawPoint(180, 100),
+            new DrawPoint(20, 100)
+        ];
+
+        DrawStrokeMesh mesh = DrawStrokeTessellator.Tessellate(
+            [new DrawStrokeContour(rectangle, true)],
+            thickness: 12,
+            new DrawStrokeStyle(alignment: alignment));
+
+        AssertBounds(mesh, minimumX, minimumY, maximumX, maximumY);
+    }
+
     [Fact]
     public void PenCommandsRetainGeometryStyleAndFacadePayload()
     {
