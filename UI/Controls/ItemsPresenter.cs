@@ -87,11 +87,19 @@ public class ItemsPresenter : Control
         get => virtualizationContext;
         set
         {
+            // Like an AffectsMeasure property, a different context schedules the items refresh by itself (#708).
+            if (virtualizationContext == value)
+            {
+                return;
+            }
+
             virtualizationContext = value;
             if (value is null)
             {
                 ReleasePanelVirtualizationContext();
             }
+
+            MarkItemsDirty();
         }
     }
 
@@ -127,7 +135,9 @@ public class ItemsPresenter : Control
             previous.CacheItems != nextContext.CacheItems;
         bool needsItemsRefresh = itemsDirty || virtualizationShapeChanged || lastRealizationWindow != nextWindow;
 
-        VirtualizationContext = nextContext;
+        // Written to the field, not through the setter: the setter marks the items dirty, and this method does that
+        // itself only when a refresh is needed.
+        virtualizationContext = nextContext;
         if (!needsItemsRefresh)
         {
             ApplyVirtualizationContext(panelRoot, nextContext, nextWindow);

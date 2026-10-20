@@ -4,6 +4,7 @@ using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Media;
@@ -128,6 +129,64 @@ public sealed class ItemsPresenterTests
         presenter.Measure(context);
 
         Assert.Equal(100, panel.VisualChildren.Count);
+    }
+
+    // The public setter schedules the layout by itself, like an AffectsMeasure property, so the next frames realize the
+    // new window and the presenter's desired size is the panel's, also after an arrange-only wheel step (#708).
+    [Fact]
+    public void SettingVirtualizationContextOnALivePresenterRealizesItsWindowAndKeepsTheExtentAfterAWheelStep()
+    {
+        (UIRoot root, ItemsControl itemsControl, ScrollViewer viewer) = CreateScrolledMixedRowItemsControl();
+        ItemsPresenter presenter = itemsControl.ItemsPresenter;
+        Assert.Equal(60, itemsControl.ItemContainerGenerator.RealizedContainers.Count);
+
+        presenter.VirtualizationContext = new VirtualizationContext(60, 20, 200, 0, 0);
+        ProcessFramesUntilIdle(root);
+
+        Assert.Equal(10, itemsControl.ItemContainerGenerator.RealizedContainers.Count);
+        AssertPresenterPanelAndExtentHeights(140, presenter, viewer);
+
+        WheelDownOneNotch(root, 50, 50);
+        ProcessFramesUntilIdle(root);
+
+        Assert.Equal(10, itemsControl.ItemContainerGenerator.RealizedContainers.Count);
+        AssertPresenterPanelAndExtentHeights(140, presenter, viewer);
+    }
+
+    // The first context is applied through MarkItemsDirty only to establish the applied state, so this test isolates
+    // the null set: it alone must schedule the layout that realizes every item again (#708).
+    [Fact]
+    public void SettingVirtualizationContextToNullAfterItWasAppliedRealizesEveryItemAgain()
+    {
+        (UIRoot root, ItemsControl itemsControl, ScrollViewer viewer) = CreateScrolledMixedRowItemsControl();
+        ItemsPresenter presenter = itemsControl.ItemsPresenter;
+        presenter.VirtualizationContext = new VirtualizationContext(60, 20, 200, 0, 0);
+        presenter.MarkItemsDirty();
+        ProcessFramesUntilIdle(root);
+        Assert.Equal(10, itemsControl.ItemContainerGenerator.RealizedContainers.Count);
+
+        presenter.VirtualizationContext = null;
+        ProcessFramesUntilIdle(root);
+
+        Assert.Equal(60, itemsControl.ItemContainerGenerator.RealizedContainers.Count);
+        AssertPresenterPanelAndExtentHeights(800, presenter, viewer);
+    }
+
+    // Setting an equal context does no extra work (#708).
+    [Fact]
+    public void SettingAnEqualVirtualizationContextAgainSchedulesNoLayout()
+    {
+        (UIRoot root, ItemsControl itemsControl, _) = CreateScrolledMixedRowItemsControl();
+        ItemsPresenter presenter = itemsControl.ItemsPresenter;
+        presenter.VirtualizationContext = new VirtualizationContext(60, 20, 200, 0, 0);
+        presenter.MarkItemsDirty();
+        ProcessFramesUntilIdle(root);
+        Assert.False(root.Scheduler.HasWork);
+
+        presenter.VirtualizationContext = new VirtualizationContext(60, 20, 200, 0, 0);
+
+        Assert.False(root.Scheduler.HasWork);
+        Assert.Equal(10, itemsControl.ItemContainerGenerator.RealizedContainers.Count);
     }
 
     [Fact]
@@ -1257,6 +1316,52 @@ public sealed class ItemsPresenterTests
         UIRoot root = new(200, 100);
         root.VisualChildren.Add(viewer);
         return (menu, viewer, root);
+    }
+
+    // 60 rows of 20 px at every third index and 10 px otherwise (800 px in all) in an ItemsControl of width 150, inside a
+    // ScrollViewer with a visible vertical bar, inside a 360x200 window, settled.
+    private static (UIRoot Root, ItemsControl ItemsControl, ScrollViewer Viewer) CreateScrolledMixedRowItemsControl()
+    {
+        ItemsControl itemsControl = new() { Width = 150 };
+        for (int index = 0; index < 60; index++)
+        {
+            itemsControl.Items.Add(new Border { Height = index % 3 == 0 ? 20 : 10 });
+        }
+
+        ScrollViewer viewer = new() { Content = itemsControl, VerticalScrollBarVisibility = ScrollBarVisibility.Visible };
+        UIRoot root = new(360, 200);
+        root.VisualChildren.Add(new Window { Content = viewer, Width = 360, Height = 200 });
+        ProcessFramesUntilIdle(root);
+        return (root, itemsControl, viewer);
+    }
+
+    private static void ProcessFramesUntilIdle(UIRoot root)
+    {
+        for (int frame = 0; frame < 10 && (frame == 0 || root.Scheduler.HasWork); frame++)
+        {
+            root.ProcessFrame();
+        }
+
+        Assert.False(root.Scheduler.HasWork);
+    }
+
+    private static void AssertPresenterPanelAndExtentHeights(float expected, ItemsPresenter presenter, ScrollViewer viewer)
+    {
+        Assert.Equal(
+            $"presenter={expected} panel={expected} extent={expected}",
+            $"presenter={presenter.DesiredSize.Height} panel={presenter.LayoutPanelRoot!.DesiredSize.Height} " +
+            $"extent={viewer.Presenter.ExtentHeight}");
+    }
+
+    // One real wheel notch down over (x, y), through the input bridge.
+    private static void WheelDownOneNotch(UIRoot root, float x, float y)
+    {
+        new ElementInputBridge().Dispatch(root, new InputFrame(
+            PointerSnapshot.Empty.WithPosition(x, y).WithWheelValue(0),
+            PointerSnapshot.Empty.WithPosition(x, y).WithWheelValue(-120),
+            KeyboardSnapshot.Empty,
+            KeyboardSnapshot.Empty,
+            []));
     }
 
     private static int[] RealizedIndices(ItemsControl control)
