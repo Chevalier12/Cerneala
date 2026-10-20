@@ -92,7 +92,7 @@ When `ComponentTemplate` supplies a template child, layout is delegated to the b
 
 `TextMeasurer` and `TextRenderer` default to `TextMeasurer.Default` and `TextRenderer.Default`. Assigning `null` to either property throws `ArgumentNullException`. Changing `TextMeasurer` invalidates measure and render; changing `TextRenderer` invalidates render.
 
-`AutomationPeer.Create(button)` creates a `ButtonAutomationPeer`, which reports `SemanticsRole.Button` and resolves its name from an explicit accessible name or supported button content text.
+`AutomationPeer.Create(button)` creates a `ButtonAutomationPeer`, which reports `SemanticsRole.Button` and resolves its name from an explicit accessible name or supported button content text. `RepeatButton` gets the same peer. `ToggleButton`, `CheckBox`, and `RadioButton` derive from `Button` but get the derived `ToggleButtonAutomationPeer`.
 
 ## Constructors
 

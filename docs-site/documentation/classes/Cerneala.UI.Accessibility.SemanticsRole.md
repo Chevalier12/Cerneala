@@ -29,7 +29,7 @@ bool isMenuBar = role == SemanticsRole.MenuBar;
 
 ## Remarks
 
-Automation peers assign a `SemanticsRole` when they create a `SemanticsNode`. Menu roots use `Menu` or `MenuBar`, while every menu entry uses `MenuItem`, including entries that own a submenu.
+Automation peers assign a `SemanticsRole` when they create a `SemanticsNode`. Menu roots use `Menu` or `MenuBar`, while every menu entry uses `MenuItem`, including entries that own a submenu. `ToggleButtonAutomationPeer` assigns `CheckBox` to a `CheckBox` and `RadioButton` to a `RadioButton`; a plain `ToggleButton` keeps `Button`.
 
 ## Fields
 
@@ -47,6 +47,8 @@ Automation peers assign a `SemanticsRole` when they create a `SemanticsNode`. Me
 | `Menu` | Identifies a vertical menu. |
 | `MenuBar` | Identifies a menu bar. |
 | `MenuItem` | Identifies an item in a menu or menu bar. |
+| `CheckBox` | Identifies a check box. Produced by `ToggleButtonAutomationPeer` for `CheckBox` elements. |
+| `RadioButton` | Identifies a radio button. Produced by `ToggleButtonAutomationPeer` for `RadioButton` elements. |
 
 ## Applies to
 

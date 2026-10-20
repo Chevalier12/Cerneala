@@ -18,7 +18,7 @@ Accessibility builds a **semantics tree**: an immutable snapshot of the visual t
 | `SemanticsNode` | `UI/Accessibility/SemanticsNode.cs` | Immutable node: `ElementId`, `Role`, `Name`, `Properties`, `Children`, `GetProperty<T>` | snapshot |
 | `SemanticsRole`, `SemanticsProperty` | `UI/Accessibility/SemanticsRole.cs`, `SemanticsProperty.cs` | Role and property-key enums | contract |
 | `AutomationPeer` | `UI/Accessibility/AutomationPeer.cs` | Per-element adapter that produces one node; `Create` picks the peer type with a type switch | transient, created during one build |
-| `ButtonAutomationPeer`, `TextBoxAutomationPeer`, `PasswordBoxAutomationPeer`, `ItemsControlAutomationPeer`, `MenuAutomationPeer`, `MenuItemAutomationPeer` | `UI/Accessibility/*AutomationPeer.cs` | Control-specific role, name and properties | transient |
+| `ButtonAutomationPeer`, `ToggleButtonAutomationPeer`, `TextBoxAutomationPeer`, `PasswordBoxAutomationPeer`, `ItemsControlAutomationPeer`, `MenuAutomationPeer`, `MenuItemAutomationPeer` | `UI/Accessibility/*AutomationPeer.cs` | Control-specific role, name and properties | transient |
 | `AccessibleName` | `UI/Accessibility/AccessibleName.cs` | Attached `NameProperty` (`AffectsSemantics`; blank becomes `null`) and the content-text fallback | element property value |
 | `IAccessibilityPlatform` | `UI/Platform/IAccessibilityPlatform.cs` | `void Publish(SemanticsTree tree)` | no production implementer |
 
@@ -34,7 +34,9 @@ Accessibility builds a **semantics tree**: an immutable snapshot of the visual t
 2. The Servo projection keeps every child, and also adds the children of an `IInputSubtreeHost` (for example `SceneNode2D` and `RenderSurface2D`).
 3. `AutomationPeer.Create(element)` picks the peer, and `CreateNode(children)` builds the node.
 
-Peer selection, in order: `MenuItem`, `MenuBar`, `Menu`, `Button`, `TextBox`, `PasswordBox`, `ItemsControl`, `TextBlock` (role `Text`), and everything else. The default peer has role `Root` for a `UIRoot` and `Group` otherwise. Its properties are `IsEnabled` and `IsFocused` (`IsKeyboardFocused`).
+Peer selection, in order: `MenuItem`, `MenuBar`, `Menu`, `ToggleButton` (so also `CheckBox` and `RadioButton`), `Button`, `TextBox`, `PasswordBox`, `ItemsControl`, `TextBlock` (role `Text`), and everything else. The default peer has role `Root` for a `UIRoot` and `Group` otherwise. Its properties are `IsEnabled` and `IsFocused` (`IsKeyboardFocused`).
+
+`ToggleButtonAutomationPeer` (a `ButtonAutomationPeer`) gives role `CheckBox` to a `CheckBox`, `RadioButton` to a `RadioButton`, and `Button` to any other `ToggleButton`. It adds `SemanticsProperty.IsChecked`, which is always present and holds `ToggleButton.IsChecked`. `ToggleButton.IsCheckedProperty` has `AffectsSemantics`, so a change marks both caches dirty and the next query sees the new value without a frame.
 
 The name comes from `AccessibleName.NameProperty` when it is set. Otherwise it is the content text: a non-blank `string`, a `TextBlock.Text`, or the content of a `Button`, `ContentControl` or `ContentPresenter`.
 
@@ -97,6 +99,9 @@ Semantics adds no frame phase and no queue. `InvalidationFlags.Semantics` only s
 - A node's `ElementId` resolves through `root.ElementIds` only while the element is attached. `SemanticsProviderTests.cs:ElementIdResolvesOnlyWhileElementBelongsToRoot`.
 - A button reports role, name and enabled state. `tests/Cerneala.Tests/UI/Accessibility/ButtonSemanticsTests.cs:ButtonExposesRoleNameAndEnabledState`.
 - A password box never exposes its value. `tests/Cerneala.Tests/UI/Accessibility/TextBoxSemanticsTests.cs:PasswordBoxDoesNotExposePasswordValue`.
+- `CheckBox` reports role `CheckBox` and `IsChecked`; `RadioButton` reports role `RadioButton` and `IsChecked` whether checked or not; a plain `ToggleButton` keeps role `Button` and reports `IsChecked`; `Button` and `RepeatButton` keep role `Button` with no `IsChecked` key. `tests/Cerneala.Tests/UI/Accessibility/ToggleButtonSemanticsTests.cs:CheckedCheckBoxExposesCheckBoxRoleNameAndCheckedState`, `ToggleButtonSemanticsTests.cs:RadioButtonExposesRadioButtonRoleAndCheckedStateWhetherCheckedOrNot`, `ToggleButtonSemanticsTests.cs:PlainToggleButtonKeepsButtonRoleAndExposesCheckedState`, `ToggleButtonSemanticsTests.cs:ButtonAndRepeatButtonKeepButtonRoleWithoutCheckedState`.
+- `AutomationPeer.Create` returns a `ToggleButtonAutomationPeer` for a `CheckBox`, and its inherited `Invoke` toggles `IsChecked`. `ToggleButtonSemanticsTests.cs:CreateReturnsAToggleButtonAutomationPeerWhoseInvokeTogglesTheCheckBox`.
+- A Servo click on a `CheckBox` shows up as `IsChecked` in the next Servo query. A direct `IsChecked` change on a plain `ToggleButton` (no template part follows it) shows up in the next Servo query without a frame, with one Servo tree build. `ToggleButtonSemanticsTests.cs:ServoClickOnCheckBoxIsReportedAsCheckedByTheNextQuery`, `ToggleButtonSemanticsTests.cs:IsCheckedChangeIsVisibleToTheNextQueryWithoutAFrame`.
 - `ButtonAutomationPeer.Invoke` clicks an enabled button and does nothing on a disabled one. `ButtonSemanticsTests.cs:ButtonAutomationPeerInvokesEnabledButtonThroughClickRoute`, `ButtonSemanticsTests.cs:ButtonAutomationPeerDoesNotInvokeDisabledButton`.
 - `IAccessibilityPlatform.Publish` receives the snapshot unchanged. This is tested only against a test-local recorder: `tests/Cerneala.Tests/UI/Accessibility/AccessibilityPlatformTests.cs:PlatformBoundaryReceivesSemanticsTreeSnapshot`.
 - Changing `Visibility` after the tree was built removes the subtree from the next tree: netestat.
@@ -110,7 +115,7 @@ Detective reports only whether an accessibility service is present (`Accessibili
 - No platform adapter (see Responsibility). The archived roadmap says "contract exists; real adapter behavior remains later" ([roadmap-v2.md](../archive/roadmap-v2/roadmap-v2.md)).
 - `GetSemanticsTree` has no production caller, and it does not call `Relay.VerifyAccess`.
 - Roles `None`, `ListItem` and `Image`, and the property `IsSelected`, are declared but never produced.
-- `CheckBox`, `RadioButton`, `ToggleButton` and `RepeatButton` all become role `Button`, with no checked state. `ComboBox`, `ListBox` and `TabControl` become role `List`. Controls without a dedicated peer become role `Group`.
+- `CheckBox` becomes role `CheckBox`, `RadioButton` becomes role `RadioButton`, and a plain `ToggleButton` stays role `Button`; all three report `IsChecked`. `RepeatButton` becomes role `Button` without `IsChecked`. `ComboBox`, `ListBox` and `TabControl` become role `List`. Controls without a dedicated peer become role `Group`.
 - Peer selection is a fixed type switch, with no per-element override.
 - Some `AffectsSemantics` properties are not read by any peer, for example `IsPointerOver`. Changing them still marks the tree dirty, so the next query rebuilds an identical tree.
 - `ButtonAutomationPeer.Invoke` has no production caller. Servo actions use synthesized input, not peers.

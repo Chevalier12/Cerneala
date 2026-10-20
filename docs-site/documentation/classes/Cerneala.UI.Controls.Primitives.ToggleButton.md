@@ -41,7 +41,9 @@ toggle.IsChecked = true;  // no change: checkedCount stays 1
 
 Every actual change of `IsChecked` raises `Checked` (new value `true`) or `Unchecked` (new value `false`), as in WPF, whatever made the change: a click, code such as `toggle.IsChecked = true`, a binding, or markup. Setting the value that `IsChecked` already has is no change and raises nothing. So a click raises exactly one `Checked` or `Unchecked`, before `Click`. The events are raised from `OnPropertyChanged` through the protected virtual `OnChecked` and `OnUnchecked` methods; an override that does not call the base method suppresses the event.
 
-`IsChecked` is backed by a `UiProperty<bool>` with a default value of `false`. Its metadata uses `AffectsRender`, `AffectsInputVisual`, and `AffectsAspect`. `AspectState.Checked` is active while `IsChecked` is `true`; changing it invalidates rendering, input visuals, and aspect resolution.
+`IsChecked` is backed by a `UiProperty<bool>` with a default value of `false`. Its metadata uses `AffectsRender`, `AffectsInputVisual`, `AffectsAspect`, and `AffectsSemantics`. `AspectState.Checked` is active while `IsChecked` is `true`; changing it invalidates rendering, input visuals, aspect resolution, and the cached semantics tree.
+
+`AutomationPeer.Create` creates a `ToggleButtonAutomationPeer` for a `ToggleButton`. Its semantics node has role `Button` and a `SemanticsProperty.IsChecked` entry that always holds the current `IsChecked` value; `CheckBox` and `RadioButton` report their own roles.
 
 Derive from `ToggleButton` and override `OnToggle` when a custom toggle policy is needed. The base implementation simply assigns `IsChecked = !IsChecked`.
 

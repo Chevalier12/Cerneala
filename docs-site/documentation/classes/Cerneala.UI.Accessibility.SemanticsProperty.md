@@ -31,7 +31,7 @@ bool isExpanded = (bool)properties[SemanticsProperty.IsExpanded]!;
 
 ## Remarks
 
-`AutomationPeer.GetProperties()` returns values keyed by `SemanticsProperty`. The base peer supplies `IsEnabled` and `IsFocused`; specialized peers add `Value` (`TextBoxAutomationPeer` and `PasswordBoxAutomationPeer`, which reports `null`), `ItemCount` (`ItemsControlAutomationPeer`, `MenuAutomationPeer`, and `MenuItemAutomationPeer`), and `IsExpanded` (`MenuItemAutomationPeer`). No built-in peer sets `IsSelected`.
+`AutomationPeer.GetProperties()` returns values keyed by `SemanticsProperty`. The base peer supplies `IsEnabled` and `IsFocused`; specialized peers add `Value` (`TextBoxAutomationPeer` and `PasswordBoxAutomationPeer`, which reports `null`), `ItemCount` (`ItemsControlAutomationPeer`, `MenuAutomationPeer`, and `MenuItemAutomationPeer`), `IsExpanded` (`MenuItemAutomationPeer`), and `IsChecked` (`ToggleButtonAutomationPeer`, for `ToggleButton`, `CheckBox`, and `RadioButton`). No built-in peer sets `IsSelected`.
 
 ## Fields
 
@@ -43,6 +43,7 @@ bool isExpanded = (bool)properties[SemanticsProperty.IsExpanded]!;
 | `Value` | Contains the value exposed by a control. |
 | `ItemCount` | Contains the number of items owned by a collection control. |
 | `IsExpanded` | Indicates whether an expandable item is currently open. |
+| `IsChecked` | Indicates whether a toggle control is checked. The value is a `bool` and is always present for a `ToggleButton`, also when `false`. |
 
 ## Applies to
 

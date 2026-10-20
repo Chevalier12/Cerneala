@@ -112,7 +112,9 @@ When the radio button has keyboard focus, a `KeyDown` of `Up` or `Left` moves to
 
 This differs from WPF, where arrow keys move only focus between radio buttons and Space checks the focused one. A key that comes from a focused element inside the radio button's content is ignored, and modifier keys are not considered.
 
-`IsCheckedProperty` is registered by `ToggleButton` with `UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsAspect`, so changing `IsChecked` participates in render, input-visual, and aspect invalidation. `AspectState.Checked` is active while `IsChecked` is `true`.
+`IsCheckedProperty` is registered by `ToggleButton` with `UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsAspect | UiPropertyOptions.AffectsSemantics`, so changing `IsChecked` participates in render, input-visual, aspect, and semantics invalidation. `AspectState.Checked` is active while `IsChecked` is `true`.
+
+In the semantics tree a `RadioButton` has role `SemanticsRole.RadioButton` and a `SemanticsProperty.IsChecked` entry (present also when `false`), produced by `ToggleButtonAutomationPeer`.
 
 ## Constructors
 
