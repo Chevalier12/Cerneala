@@ -1097,6 +1097,40 @@ public sealed class ButtonTests
         Assert.Equal(1, commands);
     }
 
+    // As in WPF, which raises MouseLeftButtonDown on each element when MouseDown reaches it, a MouseDown that the button
+    // marks handled does not stop the MouseLeftButtonDown handlers of its content, which run before the button's
+    // handlers: a content handler that marks MouseLeftButtonDown handled keeps the press from the button (#660).
+    [Fact]
+    public void MouseDownHandledOnTheButtonStillRunsMouseLeftButtonDownHandlersOfItsContent()
+    {
+        Border border = new() { Width = 120, Height = 30, Background = new Cerneala.UI.Media.SolidColorBrush(Color.White) };
+        bool borderHandlerRan = false;
+        border.MouseLeftButtonDown += (_, args) =>
+        {
+            borderHandlerRan = true;
+            args.Handled = true;
+        };
+        Button button = new() { Content = border, Width = 200, Height = 80 };
+        button.MouseDown += (_, args) => args.Handled = true;
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+        UIRoot root = CreateWindowRoot(button);
+        LayoutRect bounds = border.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        Assert.Same(border, new HitTestService().HitTest(root, x, y)?.Element);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bool pressedWhileHeld = button.IsPressed;
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.True(borderHandlerRan);
+        Assert.False(pressedWhileHeld);
+        Assert.Equal(0, clicks);
+    }
+
     // As in WPF, where a control focuses itself in its MouseLeftButtonDown class handling, a handled PreviewMouseDown
     // or PreviewMouseLeftButtonDown keeps the focus where it was (#644). A press whose preview is not handled still
     // focuses the pressed Button or TextBox, also when the TextBox marks its own MouseDown handled.

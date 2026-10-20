@@ -4,43 +4,41 @@ public static class RoutedEventRouter
 {
     public static void RaisePair(UiInputTree tree, UiElementId targetId, RoutedEventArgs previewArgs, RoutedEventArgs bubbleArgs)
     {
-        RaisePair(tree, targetId, previewArgs, bubbleArgs, observedId: null, out _);
+        RaisePair(tree, targetId, previewArgs, bubbleArgs, previewHandledOnArrival: null, bubbleHandledOnArrival: null);
     }
 
-    // Also reports whether bubbleArgs was already handled when its route reached observedId.
+    // Also collects, for each of the two routes, the elements that its args reached already handled.
     internal static void RaisePair(
         UiInputTree tree,
         UiElementId targetId,
         RoutedEventArgs previewArgs,
         RoutedEventArgs bubbleArgs,
-        UiElementId? observedId,
-        out bool bubbleHandledOnArrival)
+        ISet<UiElementId>? previewHandledOnArrival,
+        ISet<UiElementId>? bubbleHandledOnArrival)
     {
         ArgumentNullException.ThrowIfNull(previewArgs);
         ArgumentNullException.ThrowIfNull(bubbleArgs);
 
-        Raise(tree, targetId, previewArgs);
+        Raise(tree, targetId, previewArgs, previewHandledOnArrival);
         bubbleArgs.Handled |= previewArgs.Handled;
-        Raise(tree, targetId, bubbleArgs, observedId, out bubbleHandledOnArrival);
+        Raise(tree, targetId, bubbleArgs, bubbleHandledOnArrival);
     }
 
     public static void Raise(UiInputTree tree, UiElementId targetId, RoutedEventArgs args)
     {
-        Raise(tree, targetId, args, observedId: null, out _);
+        Raise(tree, targetId, args, handledOnArrival: null);
     }
 
-    // Also reports whether args was already handled when its route reached observedId, before that element's handlers
-    // ran. handledOnArrival is false when the route does not pass observedId.
+    // Also adds to handledOnArrival each element of the route that args reached already handled, before that element's
+    // handlers ran.
     internal static void Raise(
         UiInputTree tree,
         UiElementId targetId,
         RoutedEventArgs args,
-        UiElementId? observedId,
-        out bool handledOnArrival)
+        ISet<UiElementId>? handledOnArrival)
     {
         ArgumentNullException.ThrowIfNull(tree);
         ArgumentNullException.ThrowIfNull(args);
-        handledOnArrival = false;
 
         IReadOnlyList<UiElementId> routeToRoot = tree.GetRouteToRoot(targetId);
         IEnumerable<UiElementId> route = args.RoutedEvent.RoutingStrategy switch
@@ -54,9 +52,9 @@ public static class RoutedEventRouter
         foreach (UiElementId elementId in route)
         {
             args.Source = elementId;
-            if (elementId == observedId)
+            if (args.Handled)
             {
-                handledOnArrival = args.Handled;
+                handledOnArrival?.Add(elementId);
             }
 
             foreach (InputRoutedEventHandlerRegistration registration in tree.GetHandlerRegistrations(elementId, args.RoutedEvent))
