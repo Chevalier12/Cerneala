@@ -99,9 +99,17 @@ internal sealed class KeyboardActivationController
         }
 
         ClearPressed();
+
+        // Like WPF ButtonBase.OnKeyDown, which presses only when the button does not have the mouse captured: Space on
+        // the element that the left mouse button presses starts no press, so the mouse release clicks it once (#661).
+        if (ReferenceEquals(pressedStateTracker.PressedElement, commandElement))
+        {
+            return;
+        }
+
         if (commandElement is IInputPressable pressable)
         {
-            pressable.IsPressed = true;
+            pressedStateTracker.PressKeyboard(pressable);
         }
 
         spacePressedElement = commandElement;
@@ -112,7 +120,11 @@ internal sealed class KeyboardActivationController
         UIElement? pressedElement = spacePressedElement;
         ClearPressed();
 
-        if (result.Handled || pressedElement is null)
+        // Like WPF ButtonBase.OnKeyUp, which clicks only when the left mouse button is released: while the mouse still
+        // presses the element, the element stays pressed and the mouse release clicks it (#661).
+        if (result.Handled ||
+            pressedElement is null ||
+            ReferenceEquals(pressedStateTracker.PressedElement, pressedElement))
         {
             return;
         }
@@ -133,13 +145,14 @@ internal sealed class KeyboardActivationController
     // The pressed look stays while the pointer still presses the same element.
     public void OnFocusChanged()
     {
-        if (ReferenceEquals(spacePressedElement, pressedStateTracker.PressedElement))
-        {
-            spacePressedElement = null;
-            return;
-        }
-
         ClearPressed();
+    }
+
+    // Like WPF ButtonBase.OnMouseLeftButtonUp, where shouldClick is !IsSpaceKeyDown: a mouse release on the element
+    // that Space holds pressed is not its click (#661).
+    public bool IsSpacePressed(UIElement? element)
+    {
+        return element is not null && ReferenceEquals(spacePressedElement, element);
     }
 
     private void ClearPressedIfInvalid(ElementInputRouteMap routeMap)
@@ -150,14 +163,11 @@ internal sealed class KeyboardActivationController
         }
     }
 
+    // The pressed state stays while the left mouse button still presses the same element.
     private void ClearPressed()
     {
-        if (spacePressedElement is IInputPressable pressable)
-        {
-            pressable.IsPressed = false;
-        }
-
         spacePressedElement = null;
+        pressedStateTracker.ReleaseKeyboard();
     }
 
     // Only the key target itself activates, as WPF buttons react to Enter and Space only when they are the key event's

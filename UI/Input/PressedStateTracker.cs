@@ -4,6 +4,11 @@ namespace Cerneala.UI.Input;
 
 public sealed class PressedStateTracker
 {
+    // The element that a Space press of the input bridge holds pressed. As in WPF, where ButtonBase.IsSpaceKeyDown keeps
+    // IsPressed through a mouse release and a lost mouse capture, an element that the left mouse button and Space both
+    // press stays pressed until both have let it go (#661).
+    private IInputPressable? keyboardPressedElement;
+
     public IInputPressable? PressedElement { get; private set; }
 
     public void Press(UIElement? target)
@@ -48,8 +53,38 @@ public sealed class PressedStateTracker
             return;
         }
 
-        PressedElement.IsPressed = false;
+        if (!ReferenceEquals(PressedElement, keyboardPressedElement))
+        {
+            PressedElement.IsPressed = false;
+        }
+
         PressedElement = null;
+    }
+
+    internal void PressKeyboard(IInputPressable pressable)
+    {
+        if (!ReferenceEquals(keyboardPressedElement, pressable))
+        {
+            ReleaseKeyboard();
+        }
+
+        keyboardPressedElement = pressable;
+        pressable.IsPressed = true;
+    }
+
+    internal void ReleaseKeyboard()
+    {
+        if (keyboardPressedElement is null)
+        {
+            return;
+        }
+
+        if (!ReferenceEquals(keyboardPressedElement, PressedElement))
+        {
+            keyboardPressedElement.IsPressed = false;
+        }
+
+        keyboardPressedElement = null;
     }
 
     private static IInputPressable? ResolvePressable(
