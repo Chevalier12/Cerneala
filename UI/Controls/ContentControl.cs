@@ -287,14 +287,15 @@ public class ContentControl : Control
 
         // A ContentControl that hosts its content directly also names that element in Content. Releasing the element
         // through Content keeps the property in step with the control's children, so the control can take the
-        // element again, for example when a template reuses it as its container.
+        // element again, for example when a template reuses it as its container. The element leaves without a
+        // presence exit.
         if (child.VisualParent is ContentControl contentControl &&
             !ReferenceEquals(contentControl, owner) &&
             contentControl.HostsContentDirectly(child) &&
             ReferenceEquals(contentControl.Content, child) &&
             IsOwnedBy(contentControl, owner, ElementChildRole.Visual))
         {
-            contentControl.Content = null;
+            contentControl.ReleaseContentForNewOwner();
         }
 
         // A ContentPresenter that presents its content directly also names that element in Content and PresentedChild.
@@ -373,6 +374,21 @@ public class ContentControl : Control
         {
             hostedContentElement = null;
         }
+    }
+
+    // Another owner takes the content element that this control hosts directly: the element leaves at once, without a
+    // presence exit, so the new owner can add it, and Content becomes null. The visual removal first, so the logical
+    // removal detaches the element and cancels the exit that the visual removal started.
+    private void ReleaseContentForNewOwner()
+    {
+        if (hostedContentElement is { } element && ReferenceEquals(element, Content))
+        {
+            hostedContentElement = null;
+            VisualChildren.Remove(element);
+            LogicalChildren.Remove(element);
+        }
+
+        Content = null;
     }
 
     private void ReleaseContentElementFromOwnedSubtree()

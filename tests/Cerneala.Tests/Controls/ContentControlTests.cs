@@ -1,4 +1,5 @@
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
@@ -506,6 +507,44 @@ public sealed class ContentControlTests
         Assert.Empty(root.Motion.Presence.GetExitingVisualChildren(control));
         Assert.True(oldChild.IsAttached);
         Assert.False(failed.IsAttached);
+    }
+
+    // Issue #653: content that a new owner takes moves without an exit, so a template that wraps it can add it.
+    [Fact]
+    public void ContentReleasedForANewOwnerLeavesWithoutAnExitAndTheNewTemplateHostsIt()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(200, 200, motionClock: clock);
+        Border child = new() { Width = 50, Height = 20, Presence = CreatePresence() };
+        ContentControl? oldControl = null;
+        ContentPresenter presenter = new()
+        {
+            Content = child,
+            ContentTemplate = new ContentTemplate<UIElement>(
+                "cc",
+                key: null,
+                priority: 0,
+                context => oldControl = new ContentControl { Content = context.Data })
+        };
+        root.VisualChildren.Add(presenter);
+        root.ProcessFrame();
+        Assert.Same(oldControl, child.VisualParent);
+
+        presenter.ContentTemplate = new ContentTemplate<UIElement>(
+            "wrap",
+            key: null,
+            priority: 0,
+            context => new Border { Child = context.Data });
+        root.ProcessFrame();
+
+        Border wrapper = Assert.IsType<Border>(child.VisualParent);
+        Assert.Same(child, wrapper.Child);
+        Assert.Same(presenter, wrapper.VisualParent);
+        Assert.Null(oldControl!.Content);
+        Assert.Empty(oldControl.VisualChildren);
+        Assert.Empty(oldControl.LogicalChildren);
+        Assert.Equal(PresenceState.Present, root.Motion.Presence.GetState(child));
+        Assert.Empty(root.Motion.Presence.GetExitingVisualChildren(oldControl));
     }
 
     private static PresenceOptions CreatePresence()
