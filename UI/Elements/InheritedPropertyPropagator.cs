@@ -9,36 +9,55 @@ public sealed class InheritedPropertyPropagator
         return PropagateFrom(root, null);
     }
 
+    // A write raises the child's PropertyChanged, and the handler can change the tree, for example by removing its own
+    // element or a later sibling, so the walk does not enumerate the live child lists. Like a recursive pre-order walk,
+    // it reads an element's children after that element's writes. An element that a handler removed from the parent it
+    // was reached through, or detached from the walk's root, gets no further writes, and neither does its subtree; a
+    // later add queues the inherited work of its new place.
     internal int PropagateFrom(UIElement root, Action<UIElement>? beginDescendantPropagation)
     {
         ArgumentNullException.ThrowIfNull(root);
+        UIRoot? tree = root.Root;
+        Stack<(UIElement Parent, UIElement Child)> pending = new();
+        PushChildren(pending, root);
         int changed = 0;
-        foreach (UIElement child in root.VisualChildren)
+        while (pending.TryPop(out (UIElement Parent, UIElement Child) entry))
         {
-            changed += PropagateToSubtree(root, child, beginDescendantPropagation);
+            if (!IsReachedThrough(entry.Parent, entry.Child, tree))
+            {
+                continue;
+            }
+
+            changed += ApplyInheritedValues(entry.Parent, entry.Child, tree);
+            if (!IsReachedThrough(entry.Parent, entry.Child, tree))
+            {
+                continue;
+            }
+
+            // Consume work covered by this traversal before descending. A later
+            // callback can still requeue this element with genuinely new work.
+            beginDescendantPropagation?.Invoke(entry.Child);
+            PushChildren(pending, entry.Child);
         }
 
         return changed;
     }
 
-    private static int PropagateToSubtree(
-        UIElement parent,
-        UIElement child,
-        Action<UIElement>? beginDescendantPropagation)
+    private static void PushChildren(Stack<(UIElement Parent, UIElement Child)> pending, UIElement parent)
     {
-        int changed = ApplyInheritedValues(parent, child);
-        // Consume work covered by this traversal before descending. A later
-        // callback can still requeue this element with genuinely new work.
-        beginDescendantPropagation?.Invoke(child);
-        foreach (UIElement grandchild in child.VisualChildren)
+        UIElementCollection children = parent.VisualChildren;
+        for (int index = children.Count - 1; index >= 0; index--)
         {
-            changed += PropagateToSubtree(child, grandchild, beginDescendantPropagation);
+            pending.Push((parent, children[index]));
         }
-
-        return changed;
     }
 
-    private static int ApplyInheritedValues(UIElement parent, UIElement child)
+    private static bool IsReachedThrough(UIElement parent, UIElement child, UIRoot? tree)
+    {
+        return ReferenceEquals(child.VisualParent, parent) && ReferenceEquals(child.Root, tree);
+    }
+
+    private static int ApplyInheritedValues(UIElement parent, UIElement child, UIRoot? tree)
     {
         int changed = 0;
         foreach (UiProperty property in UiPropertyRegistry.GetPropertiesWithOptions(UiPropertyOptions.Inherits))
@@ -57,6 +76,11 @@ public sealed class InheritedPropertyPropagator
             if (!property.AreEqualUntyped(oldEffective, child.GetValue(property)))
             {
                 changed++;
+            }
+
+            if (!IsReachedThrough(parent, child, tree))
+            {
+                break;
             }
         }
 
