@@ -312,13 +312,13 @@ public class ContentControl : Control
 
         // A TabItem that hosts its header directly also names that element in Header. Releasing the element through
         // Header keeps the property in step with the tab's children, so the tab can take the element again, for
-        // example when a template reuses it as its container.
+        // example when a template reuses it as its container. The element leaves without a presence exit.
         if (child.VisualParent is TabItem tabItem &&
             !ReferenceEquals(tabItem, owner) &&
             tabItem.HostsHeaderDirectly(child) &&
             IsOwnedBy(tabItem, owner, ElementChildRole.Visual))
         {
-            tabItem.Header = null;
+            tabItem.ReleaseHeaderForNewOwner();
         }
 
         UIElement? visualParent = child.VisualParent;
