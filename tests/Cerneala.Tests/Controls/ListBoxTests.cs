@@ -753,6 +753,37 @@ public sealed class ListBoxTests
         Assert.Equal(100, listBox.ItemContainerGenerator.RealizedContainers.Count);
     }
 
+    // A ListBox that loses its fixed Height is as high as its realized rows, also when they differ from the panel's estimate (#705).
+    [Fact]
+    public void ListBoxThatLosesItsFixedHeightGrowsToItsRealizedRows()
+    {
+        ListBox listBox = new()
+        {
+            Width = 150,
+            Height = 100,
+            ItemsPanel = new Cerneala.UI.Layout.Panels.VirtualizingStackPanel(),
+            ItemsSource = Enumerable.Range(0, 100)
+                .Select(index => new ListBoxItem { Height = index < 11 ? 10 : 20, Content = index.ToString() })
+                .ToArray()
+        };
+        Cerneala.UI.Layout.Panels.StackPanel stack = new();
+        stack.VisualChildren.Add(listBox);
+        UIRoot root = new(360, 300);
+        root.VisualChildren.Add(new Window { Content = stack, Width = 360, Height = 300 });
+        root.ProcessFrame();
+        Assert.Equal(11, listBox.ItemContainerGenerator.RealizedContainers.Count);
+
+        listBox.Height = float.NaN;
+        for (int frame = 0; frame < 5 && root.Scheduler.HasWork; frame++)
+        {
+            root.ProcessFrame();
+        }
+
+        Assert.False(root.Scheduler.HasWork);
+        Assert.Equal(100, listBox.ItemContainerGenerator.RealizedContainers.Count);
+        Assert.Equal(1890, listBox.ArrangedBounds.Height);
+    }
+
     // A ListBox 100 pixels high inside an outer ScrollViewer has a finite viewport of its own, so its own ScrollViewer,
     // not the outer one, decides which rows are realized: after End and a scroll of the outer viewer, the last row
     // stays realized and only a few rows are (#702).
