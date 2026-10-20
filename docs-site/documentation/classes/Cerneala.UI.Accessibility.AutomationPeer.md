@@ -17,7 +17,7 @@ Inheritance:
 `Object` -> `AutomationPeer`
 
 Derived:
-`ButtonAutomationPeer`, `ItemsControlAutomationPeer`, `MenuAutomationPeer`, `MenuItemAutomationPeer`, `PasswordBoxAutomationPeer`, `TextBoxAutomationPeer`
+`ButtonAutomationPeer`, `ItemsControlAutomationPeer`, `MenuAutomationPeer`, `MenuItemAutomationPeer`, `PasswordBoxAutomationPeer`, `TextBoxAutomationPeer`, `ToggleButtonAutomationPeer` (through `ButtonAutomationPeer`)
 
 ## Examples
 
@@ -55,7 +55,8 @@ The default role is `SemanticsRole.Root` for `UIRoot` and `SemanticsRole.Group` 
 | `MenuItem` | `MenuItemAutomationPeer` | Uses `SemanticsRole.MenuItem`; derives a name from `Header` and adds item-count and expanded state. |
 | `MenuBar` | `MenuAutomationPeer` | Uses `SemanticsRole.MenuBar` and adds `SemanticsProperty.ItemCount`. |
 | `Menu` | `MenuAutomationPeer` | Uses `SemanticsRole.Menu` and adds `SemanticsProperty.ItemCount`. |
-| `Button` | `ButtonAutomationPeer` | Uses `SemanticsRole.Button`; name can fall back to content text. |
+| `ToggleButton` (including `CheckBox` and `RadioButton`) | `ToggleButtonAutomationPeer` | Uses `SemanticsRole.CheckBox` for `CheckBox`, `SemanticsRole.RadioButton` for `RadioButton`, and `SemanticsRole.Button` for any other `ToggleButton`; adds `SemanticsProperty.IsChecked`. Matched before `Button`. |
+| `Button` (including `RepeatButton`) | `ButtonAutomationPeer` | Uses `SemanticsRole.Button`; name can fall back to content text. No `IsChecked` entry. |
 | `TextBox` | `TextBoxAutomationPeer` | Uses `SemanticsRole.EditableText` and adds the current text as `SemanticsProperty.Value`. |
 | `PasswordBox` | `PasswordBoxAutomationPeer` | Uses `SemanticsRole.EditableText` without exposing a semantic value. |
 | `ItemsControl` | `ItemsControlAutomationPeer` | Uses `SemanticsRole.List`; adds `SemanticsProperty.ItemCount`. |
@@ -103,6 +104,7 @@ Cerneala UI semantics and accessibility infrastructure.
 - `Cerneala.UI.Accessibility.SemanticsNode`
 - `Cerneala.UI.Accessibility.AccessibleName`
 - `Cerneala.UI.Accessibility.ButtonAutomationPeer`
+- `Cerneala.UI.Accessibility.ToggleButtonAutomationPeer`
 - `Cerneala.UI.Accessibility.TextBoxAutomationPeer`
 - `Cerneala.UI.Accessibility.PasswordBoxAutomationPeer`
 - `Cerneala.UI.Accessibility.ItemsControlAutomationPeer`

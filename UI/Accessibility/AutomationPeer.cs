@@ -1,4 +1,5 @@
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
 
 namespace Cerneala.UI.Accessibility;
@@ -34,6 +35,7 @@ public class AutomationPeer
             MenuItem menuItem => new MenuItemAutomationPeer(menuItem),
             MenuBar menuBar => new MenuAutomationPeer(menuBar),
             Menu menu => new MenuAutomationPeer(menu),
+            ToggleButton toggleButton => new ToggleButtonAutomationPeer(toggleButton),
             Button button => new ButtonAutomationPeer(button),
             TextBox textBox => new TextBoxAutomationPeer(textBox),
             PasswordBox passwordBox => new PasswordBoxAutomationPeer(passwordBox),

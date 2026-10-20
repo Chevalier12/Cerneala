@@ -635,6 +635,11 @@
     "source": "UI/Accessibility/ButtonAutomationPeer.cs"
   },
   {
+    "name": "Cerneala.UI.Accessibility.ToggleButtonAutomationPeer",
+    "file": "documentation/classes/Cerneala.UI.Accessibility.ToggleButtonAutomationPeer.md",
+    "source": "UI/Accessibility/ToggleButtonAutomationPeer.cs"
+  },
+  {
     "name": "Cerneala.UI.Accessibility.ItemsControlAutomationPeer",
     "file": "documentation/classes/Cerneala.UI.Accessibility.ItemsControlAutomationPeer.md",
     "source": "UI/Accessibility/ItemsControlAutomationPeer.cs"

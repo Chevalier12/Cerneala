@@ -7,5 +7,6 @@ public enum SemanticsProperty
     IsSelected,
     Value,
     ItemCount,
-    IsExpanded
+    IsExpanded,
+    IsChecked
 }

@@ -3,7 +3,7 @@ using Cerneala.UI.Input;
 
 namespace Cerneala.UI.Accessibility;
 
-public sealed class ButtonAutomationPeer : AutomationPeer
+public class ButtonAutomationPeer : AutomationPeer
 {
     private readonly Button button;
 

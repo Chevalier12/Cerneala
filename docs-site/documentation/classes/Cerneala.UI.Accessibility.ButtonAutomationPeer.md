@@ -10,11 +10,14 @@ Source: `UI/Accessibility/ButtonAutomationPeer.cs`
 Provides the semantics automation peer used for `Cerneala.UI.Controls.Button` instances.
 
 ```csharp
-public sealed class ButtonAutomationPeer : AutomationPeer
+public class ButtonAutomationPeer : AutomationPeer
 ```
 
 Inheritance:
 `object` -> `AutomationPeer` -> `ButtonAutomationPeer`
+
+Derived:
+`ToggleButtonAutomationPeer`
 
 ## Examples
 
@@ -50,9 +53,9 @@ string? name = peer.Name; // "Store"
 
 ## Remarks
 
-`ButtonAutomationPeer` is the specialized `AutomationPeer` created by `AutomationPeer.Create` for `Button` elements. It keeps the `Button` passed to the constructor as its semantic owner through the base `AutomationPeer` constructor.
+`ButtonAutomationPeer` is the specialized `AutomationPeer` created by `AutomationPeer.Create` for `Button` and `RepeatButton` elements. `ToggleButton`, `CheckBox`, and `RadioButton` also derive from `Button`, but the factory gives them the derived `ToggleButtonAutomationPeer`, which adds their checked state and, for `CheckBox` and `RadioButton`, their own role. It keeps the `Button` passed to the constructor as its semantic owner through the base `AutomationPeer` constructor.
 
-The peer always reports `SemanticsRole.Button`. Its `Name` first uses `AccessibleName.GetName(button)`, which returns a non-blank explicit accessible name when one is set. If there is no explicit name, the name is derived from supported button content text, including non-blank `string` content, `TextBlock.Text`, nested `Button.Content`, `ContentControl.Content`, and `ContentPresenter.Content`.
+The peer reports `SemanticsRole.Button`; the class is not sealed, and `ToggleButtonAutomationPeer` overrides `Role`. Its `Name` first uses `AccessibleName.GetName(button)`, which returns a non-blank explicit accessible name when one is set. If there is no explicit name, the name is derived from supported button content text, including non-blank `string` content, `TextBlock.Text`, nested `Button.Content`, `ContentControl.Content`, and `ContentPresenter.Content`.
 
 Inherited `AutomationPeer` behavior still applies. `GetProperties()` returns the owner's enabled and keyboard focus state, and `CreateNode(IReadOnlyList<SemanticsNode> children)` builds a `SemanticsNode` using the owner element id, the effective role, the resolved name, peer properties, and the supplied child nodes.
 
@@ -99,4 +102,5 @@ Inherited `AutomationPeer` behavior still applies. `GetProperties()` returns the
 - `Cerneala.UI.Accessibility.AutomationPeer`
 - `Cerneala.UI.Accessibility.AccessibleName`
 - `Cerneala.UI.Accessibility.SemanticsRole`
+- `Cerneala.UI.Accessibility.ToggleButtonAutomationPeer`
 - `Cerneala.UI.Controls.Button`

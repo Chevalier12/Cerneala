@@ -13,5 +13,7 @@ public enum SemanticsRole
     Image,
     Menu,
     MenuBar,
-    MenuItem
+    MenuItem,
+    CheckBox,
+    RadioButton
 }
