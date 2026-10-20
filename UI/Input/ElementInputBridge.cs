@@ -175,20 +175,18 @@ public sealed class ElementInputBridge
                 // leaves the left press, its IsPressed and its click intact (#593).
                 clickTracker.Press(button, ResolveClickTarget(hitTarget?.Element, routeMap));
                 pressOriginalSources[(int)button] = pointerTarget?.ElementId;
+                UIElement? focusTarget = null;
                 if (button == InputMouseButton.Left)
                 {
                     pressedStateTracker.Press(pointerTarget?.Element, routeMap);
-                    if (pointerTarget is not null &&
-                        ResolveFocusTarget(pointerTarget.Element, routeMap) is UIElement focusTarget)
-                    {
-                        focusManager.Focus(focusTarget, routeMap);
-                    }
+                    focusTarget = pointerTarget is null ? null : ResolveFocusTarget(pointerTarget.Element, routeMap);
                 }
 
                 UIElement? pressOwner = button == InputMouseButton.Left ? pressedStateTracker.PressedElement as UIElement : null;
                 UiElementId? pressOwnerId = pressOwner is not null && routeMap.TryGetId(pressOwner, out UiElementId ownerId)
                     ? ownerId
                     : null;
+                UIElement? focusBeforePress = focusManager.FocusedElement;
                 bool handled = RaiseMousePair(
                     routeMap,
                     pointerTarget,
@@ -210,6 +208,22 @@ public sealed class ElementInputBridge
                     out bool buttonPreviewHandled,
                     pressOwnerId,
                     out bool buttonHandledBeforePressOwner);
+
+                // As in WPF, where a control focuses itself when MouseLeftButtonDown reaches its class handler, the press
+                // moves the focus after its events and before the drag begins. A handled PreviewMouseDown or
+                // PreviewMouseLeftButtonDown keeps the focus where it was, and so does a MouseDown or MouseLeftButtonDown
+                // that an element in a button's content handled, which also keeps the press from that button (#644). A
+                // press handler that moved the focus itself, such as a menu that light-dismisses and restores the focus to
+                // its root item, keeps its choice.
+                if (focusTarget is not null &&
+                    ReferenceEquals(focusManager.FocusedElement, focusBeforePress) &&
+                    !previewHandled &&
+                    !buttonPreviewHandled &&
+                    !((handledBeforePressOwner || buttonHandledBeforePressOwner) && ReferenceEquals(focusTarget, pressOwner)))
+                {
+                    focusManager.Focus(focusTarget, root.InputCache.EnsureCurrent(root));
+                }
+
                 if (!previewHandled && !buttonPreviewHandled)
                 {
                     BeginPointerDrag(routeMap, pointerTarget, button);

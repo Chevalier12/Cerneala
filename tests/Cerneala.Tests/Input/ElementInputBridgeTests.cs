@@ -227,6 +227,96 @@ public sealed class ElementInputBridgeTests
         Assert.False(button.IsKeyboardFocused);
     }
 
+    // A MouseDown handled in a focusable element's content keeps the focus off that element only when the element is
+    // the button whose press it cancels (#644). The Track of a focusable Slider marks the MouseDown of a press beside its
+    // thumb handled, and the Slider still takes focus, as a WPF Slider focuses itself with handledEventsToo.
+    [Fact]
+    public void PointerPressOnTrackOfFocusableSliderFocusesTheSliderAfterTheTrackHandledMouseDown()
+    {
+        Button other = new() { Content = "other", Width = 100, Height = 30 };
+        Slider slider = new() { Focusable = true, Minimum = 0, Maximum = 100, Value = 50, Width = 200, Height = 30 };
+        bool mouseDownHandledBeforeSlider = false;
+        slider.Handlers.AddHandler(
+            InputEvents.MouseDownEvent,
+            (_, args) => mouseDownHandledBeforeSlider = args.Handled,
+            handledEventsToo: true);
+        StackPanel panel = new();
+        panel.Children.Add(other);
+        panel.Children.Add(slider);
+        UIRoot root = new(400, 400);
+        root.VisualChildren.Add(new Window { Content = panel, Width = 400, Height = 400 });
+        root.ProcessFrame();
+        ElementInputBridge bridge = new();
+        LayoutRect otherBounds = other.ArrangedBounds;
+        float otherX = otherBounds.X + otherBounds.Width / 2;
+        float otherY = otherBounds.Y + otherBounds.Height / 2;
+        bridge.Dispatch(root, PointerFrame(otherX, otherY, pressed: true));
+        bridge.Dispatch(root, PointerFrame(otherX, otherY, otherX, otherY, previousDown: true));
+        root.ProcessFrame();
+        Assert.True(other.IsKeyboardFocused);
+        LayoutRect track = slider.Track.ArrangedBounds;
+        float x = track.X + 4;
+        float y = track.Y + track.Height / 2;
+        UIElement? hit = new HitTestService().HitTest(root, x, y)?.Element;
+        Assert.NotNull(hit);
+        Assert.NotSame(slider.Track.Thumb, hit);
+
+        bridge.Dispatch(root, PointerFrame(x, y, pressed: true));
+        root.ProcessFrame();
+        bool sliderFocusedWhileHeld = slider.IsKeyboardFocused;
+        bridge.Dispatch(root, PointerFrame(x, y, x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.True(mouseDownHandledBeforeSlider);
+        Assert.NotEqual(50, slider.Value);
+        Assert.True(sliderFocusedWhileHeld);
+        Assert.True(slider.IsKeyboardFocused);
+        Assert.False(other.IsKeyboardFocused);
+    }
+
+    // The press moves the focus after its events (#644). A press handler that moves the focus itself, without marking
+    // the press handled, keeps its choice: the pressed button does not take the focus back.
+    [Theory]
+    [InlineData("PreviewMouseDown")]
+    [InlineData("MouseDown")]
+    public void PointerPressHandlerThatMovesFocusKeepsItsChoice(string handlerEvent)
+    {
+        Button first = new() { Content = "first", Width = 100, Height = 30 };
+        Button second = new() { Content = "second", Width = 100, Height = 30 };
+        Button third = new() { Content = "third", Width = 100, Height = 30 };
+        StackPanel panel = new();
+        panel.Children.Add(first);
+        panel.Children.Add(second);
+        panel.Children.Add(third);
+        UIRoot root = new(400, 400);
+        root.VisualChildren.Add(new Window { Content = panel, Width = 400, Height = 400 });
+        root.ProcessFrame();
+        ElementInputBridge bridge = new();
+        RoutedEvent routedEvent = handlerEvent == "PreviewMouseDown" ? InputEvents.PreviewMouseDownEvent : InputEvents.MouseDownEvent;
+        second.Handlers.AddHandler(routedEvent, (_, _) => bridge.FocusManager.Focus(third, root.InputCache.EnsureCurrent(root)));
+        LayoutRect firstBounds = first.ArrangedBounds;
+        float firstX = firstBounds.X + firstBounds.Width / 2;
+        float firstY = firstBounds.Y + firstBounds.Height / 2;
+        bridge.Dispatch(root, PointerFrame(firstX, firstY, pressed: true));
+        bridge.Dispatch(root, PointerFrame(firstX, firstY, firstX, firstY, previousDown: true));
+        root.ProcessFrame();
+        Assert.True(first.IsKeyboardFocused);
+        LayoutRect bounds = second.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+
+        bridge.Dispatch(root, PointerFrame(x, y, pressed: true));
+        root.ProcessFrame();
+        bool thirdFocusedWhileHeld = third.IsKeyboardFocused;
+        bridge.Dispatch(root, PointerFrame(x, y, x, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.True(thirdFocusedWhileHeld);
+        Assert.True(third.IsKeyboardFocused);
+        Assert.False(second.IsKeyboardFocused);
+        Assert.False(first.IsKeyboardFocused);
+    }
+
     [Fact]
     public void CapturedButtonReleaseOutsideDoesNotExecuteCommand()
     {
