@@ -13,6 +13,9 @@ Represents a button that the user can check but not clear, and that unchecks the
 public class RadioButton : ToggleButton
 ```
 
+Attributes:
+`TemplatePart("PART_CheckMark", typeof(Cerneala.UI.Elements.UIElement))`
+
 Inheritance:
 `object` -> `UiObject` -> `UIElement` -> `Control` -> `ContentControl` -> `ButtonBase` -> `Button` -> `ToggleButton` -> `RadioButton`
 
@@ -69,7 +72,19 @@ RadioButton radio = new() { Content = inner, Width = 200, Height = 80 };
 
 ## Remarks
 
-`RadioButton` derives from `ToggleButton`, as WPF's `RadioButton` does. It inherits `IsChecked`, `IsCheckedProperty`, `Checked`, and `Unchecked` from `ToggleButton`, so a handler for `ToggleButton.CheckedEvent` on a panel also receives the `Checked` events of radio buttons inside it. Its constructor sets `HorizontalContentAlignment` to `Left` and `VerticalContentAlignment` to `Top` as framework defaults, because WPF's `RadioButton` style is not based on the `ButtonBase` style. So a 300 x 70 `RadioButton` with the string content `"Choice"` draws the text at the top-left corner of its border and padding; set both properties to `Center` to center it.
+`RadioButton` derives from `ToggleButton`, as WPF's `RadioButton` does. It inherits `IsChecked`, `IsCheckedProperty`, `Checked`, and `Unchecked` from `ToggleButton`, so a handler for `ToggleButton.CheckedEvent` on a panel also receives the `Checked` events of radio buttons inside it. Its constructor sets `HorizontalContentAlignment` to `Left` and `VerticalContentAlignment` to `Top` as framework defaults, because WPF's `RadioButton` style is not based on the `ButtonBase` style. The default template does not read these two properties; a custom template can.
+
+### Default template
+
+The constructor installs the default component template `RadioButton.Default`, a one-pixel `BorderThickness`, and a `BorderBrush` of RGB (100, 110, 125) as framework defaults at the `Default` value source. Any Aspect, local, or other higher-source value replaces them; inside a `UIRoot` with the default aspect package, the `button.base` rule for `Button` also styles radio buttons. The template is laid out like the `CheckBox` template:
+
+- A round indicator, 12 x 12 pixels (smaller only when less space is available), vertically centered at the left. It contains a ring, an `Ellipse` whose `Stroke` is `BorderBrush` and whose `StrokeThickness` is the largest side of `BorderThickness`, and the `PART_CheckMark` dot, a 6 x 6 black `Ellipse` centered in the ring.
+- A `ContentPresenter` six pixels to the right of the indicator, with `Content`, `Foreground`, `FontFamily`, and `FontSize` bound to it.
+- An outer `Border` with `Background` and `Padding` bound to it, so the padding surrounds both the indicator and the content.
+
+`PART_CheckMark` may be any `UIElement`. The control sets its `Visibility` to `Visible` while `IsChecked` is `true` and to `Hidden` otherwise, so a checked radio button draws the dot and an unchecked one draws only the ring. For example, after the user clicks `small` and then `large`, `large` draws its dot and `small` does not. The dot's `Fill` belongs to the template and is not bound to `Foreground`. The part is optional: a custom component template without it still works, but no element shows the checked state. A `ComponentTemplate` set by the application replaces the default template.
+
+The ring stroke is centered on the indicator's edge, as `Ellipse` draws every stroke, so half of a thick `BorderThickness` lies outside the 12 x 12 indicator.
 
 ### Checking by click and keyboard
 
@@ -97,13 +112,19 @@ When the radio button has keyboard focus, a `KeyDown` of `Up` or `Left` moves to
 
 This differs from WPF, where arrow keys move only focus between radio buttons and Space checks the focused one. A key that comes from a focused element inside the radio button's content is ignored, and modifier keys are not considered.
 
-`IsCheckedProperty` is registered by `ToggleButton` with `UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsAspect`, so changing `IsChecked` participates in render, input-visual, and aspect invalidation. `AspectState.Checked` is active while `IsChecked` is `true`. The default `Button` rendering does not draw the checked state; use an aspect rule on `AspectState.Checked` or a template to show it.
+`IsCheckedProperty` is registered by `ToggleButton` with `UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsAspect`, so changing `IsChecked` participates in render, input-visual, and aspect invalidation. `AspectState.Checked` is active while `IsChecked` is `true`.
 
 ## Constructors
 
 | Name | Description |
 | --- | --- |
-| `RadioButton()` | Initializes a new, unchecked `RadioButton` with an empty `GroupName`, whose content alignment defaults to `Left` and `Top`. |
+| `RadioButton()` | Initializes a new, unchecked `RadioButton` with an empty `GroupName`, its default component template, border brush, one-pixel border thickness, and `Left`/`Top` content alignment. |
+
+## Template Parts
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `PART_CheckMark` | `Cerneala.UI.Elements.UIElement` | Optional element whose visibility reflects `IsChecked`. The default template uses a 6 x 6 black `Ellipse` centered in the ring. |
 
 ## Fields
 

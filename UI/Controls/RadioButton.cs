@@ -1,11 +1,15 @@
+using Cerneala.Drawing;
 using Cerneala.UI.Controls.Primitives;
+using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
 
 namespace Cerneala.UI.Controls;
 
+[TemplatePart("PART_CheckMark", typeof(UIElement))]
 public class RadioButton : ToggleButton
 {
     public static readonly UiProperty<string> GroupNameProperty = UiProperty<string>.Register(
@@ -13,9 +17,15 @@ public class RadioButton : ToggleButton
         typeof(RadioButton),
         new UiPropertyMetadata<string>(string.Empty, UiPropertyOptions.None, validateValue: value => value is not null));
 
+    private static readonly Brush DefaultBorderBrush = new SolidColorBrush(new Color(100, 110, 125));
+    private UIElement? checkMark;
+
     // WPF's RadioButton style is not based on the ButtonBase style, so its content keeps Control's Left and Top.
     public RadioButton()
     {
+        SetFrameworkDefault(ComponentTemplateProperty, RadioButtonTemplates.Default);
+        SetFrameworkDefault(BorderBrushProperty, DefaultBorderBrush);
+        SetFrameworkDefault(BorderThicknessProperty, new Thickness(1));
         SetFrameworkDefault(HorizontalContentAlignmentProperty, HorizontalAlignment.Left);
         SetFrameworkDefault(VerticalContentAlignmentProperty, VerticalAlignment.Top);
         Handlers.AddHandler(InputEvents.KeyDownEvent, OnKeyDown);
@@ -27,6 +37,50 @@ public class RadioButton : ToggleButton
     {
         get => GetValue(GroupNameProperty);
         set => SetValue(GroupNameProperty, value);
+    }
+
+    protected override LayoutSize MeasureCore(MeasureContext context)
+    {
+        ApplyTemplate();
+        SynchronizeIndicator();
+        return base.MeasureCore(context);
+    }
+
+    protected override void OnTemplateApplied(ComponentTemplateInstance? instance)
+    {
+        checkMark = instance is null
+            ? null
+            : GetOptionalTemplatePart<UIElement>("PART_CheckMark");
+        SynchronizeIndicator();
+    }
+
+    protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
+    {
+        base.OnPropertyChanged(args);
+        if (ReferenceEquals(args.Property, IsCheckedProperty) ||
+            ReferenceEquals(args.Property, BorderThicknessProperty))
+        {
+            SynchronizeIndicator();
+        }
+    }
+
+    // The dot is shown while the radio button is checked. The ring is the default template's own round indicator; its
+    // stroke thickness is the largest side of BorderThickness, as Button draws its border.
+    private void SynchronizeIndicator()
+    {
+        if (checkMark is null)
+        {
+            return;
+        }
+
+        checkMark.Visibility = IsChecked ? Visibility.Visible : Visibility.Hidden;
+        if (checkMark.VisualParent is RadioButtonTemplates.RoundIndicator indicator)
+        {
+            Thickness border = BorderThickness;
+            indicator.Ring.StrokeThickness = MathF.Max(
+                MathF.Max(border.Left, border.Top),
+                MathF.Max(border.Right, border.Bottom));
+        }
     }
 
     // Reached only through ButtonBase's click, so a release that a command source in the content owns, or a release

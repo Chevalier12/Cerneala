@@ -1,9 +1,17 @@
+using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
+using Cerneala.UI.Controls.Templates;
+using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
+using Cerneala.UI.Invalidation;
+using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
+using Cerneala.UI.Rendering;
 using Cerneala.UI.Servo;
+using RadioEllipse = Cerneala.UI.Controls.Shapes.Ellipse;
 using ServoApi = Cerneala.UI.Servo.Servo;
 
 namespace Cerneala.Tests.Controls;
@@ -287,6 +295,174 @@ public sealed class RadioButtonTests
 
         AssertOnlyCheckedAndFocused(second, first, second);
     }
+
+    [Fact]
+    public void DefaultTemplateProvidesARoundRingWithACenteredDotLeftOfTheContent()
+    {
+        UIRoot root = new(200, 100);
+        RadioButton radio = new() { Content = "Large" };
+        root.VisualChildren.Add(radio);
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
+
+        RadioEllipse dot = GetDot(radio);
+        UIElement indicator = Assert.IsAssignableFrom<UIElement>(dot.VisualParent);
+        RadioEllipse ring = GetRing(indicator, dot);
+        UIElement presenter = Assert.Single(indicator.VisualParent!.VisualChildren, child => child is ContentPresenter);
+
+        Assert.Equal(12, indicator.ArrangedBounds.Width, 0.01f);
+        Assert.Equal(12, indicator.ArrangedBounds.Height, 0.01f);
+        Assert.Equal(12, ring.ArrangedBounds.Width, 0.01f);
+        Assert.Equal(12, ring.ArrangedBounds.Height, 0.01f);
+        Assert.True(
+            indicator.ArrangedBounds.X + indicator.ArrangedBounds.Width <= presenter.ArrangedBounds.X + 0.01f,
+            $"Indicator {indicator.ArrangedBounds} must be left of the content {presenter.ArrangedBounds}.");
+        float radioCenterY = radio.ArrangedBounds.Y + (radio.ArrangedBounds.Height / 2);
+        float indicatorCenterY = indicator.ArrangedBounds.Y + (indicator.ArrangedBounds.Height / 2);
+        Assert.InRange(MathF.Abs(radioCenterY - indicatorCenterY), 0, 0.5f);
+        Assert.Equal(6, dot.ArrangedBounds.Width, 0.01f);
+        Assert.Equal(6, dot.ArrangedBounds.Height, 0.01f);
+        Assert.Equal(ring.ArrangedBounds.X + 3, dot.ArrangedBounds.X, 0.01f);
+        Assert.Equal(ring.ArrangedBounds.Y + 3, dot.ArrangedBounds.Y, 0.01f);
+        Assert.Equal(Color.Black, Assert.IsType<SolidColorBrush>(dot.Fill).Color);
+    }
+
+    [Fact]
+    public void DotIsDrawnOnlyWhileTheRadioButtonIsChecked()
+    {
+        UIRoot root = new(200, 100);
+        RadioButton radio = new() { Content = "Large" };
+        root.VisualChildren.Add(radio);
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
+        RadioEllipse dot = GetDot(radio);
+
+        Assert.Equal(Visibility.Hidden, dot.Visibility);
+        Assert.DoesNotContain(root.RetainedRenderer.Commit(root), command => IsDotFill(command, dot));
+
+        radio.IsChecked = true;
+        root.ProcessFrame();
+
+        Assert.Equal(Visibility.Visible, dot.Visibility);
+        DrawCommand fill = Assert.Single(root.RetainedRenderer.Commit(root), command => IsDotFill(command, dot));
+        Assert.Equal(6, fill.Rect.Width, 0.01f);
+        Assert.Equal(6, fill.Rect.Height, 0.01f);
+
+        radio.IsChecked = false;
+        root.ProcessFrame();
+
+        Assert.Equal(Visibility.Hidden, dot.Visibility);
+        Assert.DoesNotContain(root.RetainedRenderer.Commit(root), command => IsDotFill(command, dot));
+    }
+
+    [Fact]
+    public async Task ClickingMovesTheDotFromTheOldRadioButtonToTheNewOne()
+    {
+        (UiHost host, _) = CreateHost(out RadioButton[] radios, "small", "large");
+        ServoApi servo = new(host);
+        UIRoot root = Assert.IsType<UIRoot>(host.Root);
+        RadioButton small = radios[0];
+        RadioButton large = radios[1];
+        RadioEllipse smallDot = GetDot(small);
+        RadioEllipse largeDot = GetDot(large);
+
+        await servo.ClickAsync(ServoTarget.ById("small"));
+        await servo.ClickAsync(ServoTarget.ById("large"));
+        host.Update(EmptyInput(), host.Viewport, TimeSpan.Zero);
+
+        Assert.Equal(Visibility.Hidden, smallDot.Visibility);
+        Assert.Equal(Visibility.Visible, largeDot.Visibility);
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
+        Assert.DoesNotContain(commands, command => IsDotFill(command, smallDot));
+        Assert.Single(commands, command => IsDotFill(command, largeDot));
+    }
+
+    [Fact]
+    public void BrushesAndBorderThicknessReachTheRingBackgroundAndTextButNotTheDot()
+    {
+        UIRoot root = new(200, 100);
+        SolidColorBrush foreground = new(Color.White);
+        SolidColorBrush background = new(Color.Tomato);
+        SolidColorBrush borderBrush = new(Color.Blue);
+        RadioButton radio = new()
+        {
+            Content = "Large",
+            IsChecked = true,
+            Foreground = foreground,
+            Background = background,
+            BorderBrush = borderBrush,
+            BorderThickness = new Thickness(3)
+        };
+        root.VisualChildren.Add(radio);
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
+        RadioEllipse dot = GetDot(radio);
+
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
+
+        DrawCommand ring = Assert.Single(commands, command => command.Kind == DrawCommandKind.DrawEllipse);
+        Assert.Same(borderBrush, ring.Pen!.Brush);
+        Assert.Equal(3, ring.Pen.Thickness, 0.01f);
+        Assert.Contains(commands, command => command.Kind == DrawCommandKind.FillRectangle && ReferenceEquals(command.Brush, background));
+        Assert.Contains(commands, command => command.Kind == DrawCommandKind.DrawText && ReferenceEquals(command.Brush, foreground));
+        Assert.NotSame(foreground, dot.Fill);
+        Assert.Single(commands, command => IsDotFill(command, dot));
+    }
+
+    [Fact]
+    public void FrameworkDefaultBorderIsAOnePixelBorderInTheCheckBoxBorderColor()
+    {
+        RadioButton bare = new();
+
+        Assert.Equal(new Thickness(1), bare.BorderThickness);
+        Assert.Equal(new Color(100, 110, 125), Assert.IsType<SolidColorBrush>(bare.BorderBrush).Color);
+    }
+
+    [Fact]
+    public void DefaultRingIsDrawnWithTheBorderBrushAndOnePixelThickness()
+    {
+        UIRoot root = new(200, 100);
+        RadioButton radio = new() { Content = "Large" };
+        root.VisualChildren.Add(radio);
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
+
+        DrawCommand ring = Assert.Single(root.RetainedRenderer.Commit(root), command => command.Kind == DrawCommandKind.DrawEllipse);
+
+        Assert.Equal(1, ring.Pen!.Thickness, 0.01f);
+        Assert.Same(radio.BorderBrush, ring.Pen.Brush);
+    }
+
+    [Fact]
+    public void LocalComponentTemplateReplacesTheDefaultTemplate()
+    {
+        Border custom = new();
+        RadioButton radio = new()
+        {
+            Content = "Large",
+            IsChecked = true,
+            ComponentTemplate = new ComponentTemplate<RadioButton>("RadioButton.Custom", _ => custom)
+        };
+
+        radio.Measure(new MeasureContext(new LayoutSize(100, 30)));
+
+        ComponentTemplateInstance instance = Assert.IsType<ComponentTemplateInstance>(radio.ComponentTemplateInstance);
+        Assert.Same(custom, instance.Root);
+        Assert.False(instance.Parts.TryGetValue("PART_CheckMark", out _));
+    }
+
+    private static RadioEllipse GetDot(RadioButton radio)
+    {
+        ComponentTemplateInstance instance = Assert.IsType<ComponentTemplateInstance>(radio.ComponentTemplateInstance);
+        Assert.True(instance.Parts.TryGetValue("PART_CheckMark", out UIElement? element));
+        return Assert.IsType<RadioEllipse>(element);
+    }
+
+    private static RadioEllipse GetRing(UIElement indicator, RadioEllipse dot) =>
+        Assert.Single(indicator.VisualChildren.OfType<RadioEllipse>(), child => !ReferenceEquals(child, dot));
+
+    private static bool IsDotFill(DrawCommand command, RadioEllipse dot) =>
+        command.Kind == DrawCommandKind.FillEllipse && ReferenceEquals(command.Brush, dot.Fill);
 
     private static void AssertOnlyCheckedAndFocused(RadioButton expected, params RadioButton[] all)
     {
