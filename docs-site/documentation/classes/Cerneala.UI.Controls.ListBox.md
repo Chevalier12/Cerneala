@@ -142,7 +142,35 @@ The list desires the size of its rows plus `BorderThickness + Padding`, but not 
 
 `ListBox` reads both parts with `GetOptionalTemplatePart`, so a custom `ComponentTemplate` can provide them. `PART_ItemsPresenter` hosts the rows. `PART_ScrollViewer` is the viewer that `ScrollIntoView`, the arrow keys, and PageUp/PageDown scroll. With `ComponentTemplate = null`, the list has no template: it lays out its rows itself inside `BorderThickness + Padding`, draws `Background` and `BorderBrush` itself as `ItemsControl` does, and does not scroll. For example, such a list arranged at `(3, 4, 40, 30)` with `BorderThickness = 2` and `Padding = 10` arranges its row at `(15, 16)` with width 16, and no `ScrollViewer` is created.
 
-A `ListBox` that is the content of an outer `ScrollViewer`, with a `VirtualizingStackPanel` as `ItemsPanel`, realizes only the rows in the outer viewport, as an `ItemsControl` does, also with the default template; the top `BorderThickness` and `Padding` move the rows down by that amount. For example, 100 rows 10 pixels high in an outer viewer 30 pixels high realize at most 8 rows; at vertical offset `45` row `0` is not realized and row `4` is, or row `2` when `Padding.Top` is `20`. The `ScrollViewer` of the default template does not give its viewport to the `ItemsPanel`, because its content is the `ItemsPresenter`, not an `ItemsControl`. So a `VirtualizingStackPanel` in a `ListBox` with a fixed `Height` is not limited to the rows in the template's viewport; only an outer `ScrollViewer` limits them.
+A `ListBox` that is the content of an outer `ScrollViewer`, with a `VirtualizingStackPanel` as `ItemsPanel`, realizes only the rows in the outer viewport, as an `ItemsControl` does, also with the default template; the top `BorderThickness` and `Padding` move the rows down by that amount. For example, 100 rows 10 pixels high in an outer viewer 30 pixels high realize at most 8 rows; at vertical offset `45` row `0` is not realized and row `4` is, or row `2` when `Padding.Top` is `20`.
+
+The `ScrollViewer` of the template also gives its viewport to a `VirtualizingStackPanel`, as WPF's `ScrollContentPresenter` scrolls the panel of its `ItemsPresenter` content. It does so while that `ScrollViewer` was measured with a finite height, for example because the list has a fixed `Height`. Then the list realizes only the rows in the template's viewport, also inside an outer `ScrollViewer`: the template's viewport wins over the outer one. For example, the list below shows 10 rows when each row is 20 pixels high; after the user presses End, only the rows `1989` to `1999` exist, and row `1999` is selected and visible. A list without a fixed `Height` that is the content of an outer `ScrollViewer` measures its template's `ScrollViewer` with an unbounded height, so the outer viewport applies, as in the paragraph above.
+
+```csharp
+ListBox listBox = new()
+{
+    Height = 200,
+    ItemsPanel = new Cerneala.UI.Layout.Panels.VirtualizingStackPanel()
+};
+listBox.SetItems(Enumerable.Range(0, 2000).Select(index => index.ToString()));
+```
+
+In such a list the keys and `ScrollIntoView` also reach rows that have no container yet, as WPF's `VirtualizingStackPanel.BringIndexIntoView`. End, Home, PageUp, PageDown, the arrow keys, and `ScrollIntoView` first scroll to the place that the panel estimates for the row: above the viewport the row goes to the top, below it to the bottom. After the next arrange, which creates the row, the list scrolls it to its exact place, and a key gives it the focus then. When the rows have different heights, the rows measured at the new place change the estimate, so the list scrolls again after each arrange that follows a scroll, until a scroll does not move the viewport. For example, in a list 100 pixels high with 10,000 rows 10 pixels high, `ScrollIntoView("5000")` and one frame show row `5000` inside the viewport, and at most 20 rows exist.
+
+The list scrolls a row into view as WPF does: it calls `UIElement.BringIntoView` with the row's place in the panel, and each `ScrollViewer` around the row scrolls by the least amount that shows it (see `ScrollContentPresenter.MakeVisible`). So the keys and `ScrollIntoView` also scroll an outer `ScrollViewer`, for example for a list without a fixed `Height`, whose template's `ScrollViewer` cannot scroll. In the example below the outer viewport is 300 pixels high and the 10,000 rows are 10 pixels high. After `ScrollIntoView("9999")` and two frames, the outer `ScrollViewer` has scrolled once, to the vertical offset `99700`, and row `9999` is realized at the bottom of the outer viewport. When the template's `ScrollViewer` and an outer one both move during a scroll, the list scrolls again after the next arrange until none of them moves.
+
+```csharp
+ListBox listBox = new()
+{
+    Width = 150,
+    ItemsPanel = new Cerneala.UI.Layout.Panels.VirtualizingStackPanel(),
+    ItemsSource = Enumerable.Range(0, 10_000).Select(index => index.ToString()).ToArray()
+};
+ScrollViewer outer = new() { Content = listBox, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+// The rows are 10 pixels high and the outer viewer is 300 pixels high.
+listBox.ScrollIntoView("9999");
+// After two frames: outer.Presenter.VerticalOffset is 99700.
+```
 
 ### Selection modes
 
@@ -188,7 +216,7 @@ The text of an item is its `TextSearch.Text` when it is set on the item, otherwi
 
 ### ScrollIntoView
 
-`ScrollIntoView(item)` finds the first item equal to `item` by `object.Equals`. When its row is above the viewport, the template's `ScrollViewer` scrolls until the row's top is at the top of the viewport; when it is below, until the row's bottom is at the bottom of the viewport. A row that is already in the viewport, an item that the list does not hold, and `null` when no item is `null` change nothing. Before the rows have their position, for example before the first layout, the row scrolls into view after the next arrange of the list. A row that is not realized then, and a list without `PART_ScrollViewer`, do not scroll.
+`ScrollIntoView(item)` finds the first item equal to `item` by `object.Equals`. When its row is above the viewport, the template's `ScrollViewer` scrolls until the row's top is at the top of the viewport; when it is below, until the row's bottom is at the bottom of the viewport. The scroll goes through `UIElement.BringIntoView`, so every `ScrollViewer` around the row scrolls by the same rule, also an outer one. A row that is already in the viewport, an item that the list does not hold, and `null` when no item is `null` change nothing. Before the rows have their position, for example before the first layout, the row scrolls into view after the next arrange of the list. A row that is not realized then, and a list without `PART_ScrollViewer`, do not scroll.
 
 ## Constructors
 
@@ -243,7 +271,7 @@ The text of an item is its `TextSearch.Text` when it is set on the item, otherwi
 | --- | --- |
 | `SelectAll()` | Selects every item. Throws `NotSupportedException` when `SelectionMode` is `Single`. |
 | `UnselectAll()` | Deselects every item, in every `SelectionMode`. |
-| `ScrollIntoView(object? item)` | Scrolls the template's `ScrollViewer` until the row of the first item equal to `item` is in the viewport. Does nothing for an item that the list does not hold or a row already in the viewport; before the rows have their position, scrolls after the next arrange. |
+| `ScrollIntoView(object? item)` | Scrolls the template's `ScrollViewer`, and every outer `ScrollViewer`, through `UIElement.BringIntoView` until the row of the first item equal to `item` is in the viewport. Does nothing for an item that the list does not hold or a row already in the viewport; before the rows have their position, scrolls after the next arrange. |
 | `SetItems(IEnumerable? items)` | Inherited from `ItemsControl`. Replaces the local `Items` collection. |
 | `GetItemAt(int index)` | Inherited from `ItemsControl`. Gets an item from the `ItemsSource` snapshot when `ItemsSource` is set; otherwise from `Items`. |
 

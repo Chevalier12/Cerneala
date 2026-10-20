@@ -24,6 +24,7 @@ public class ScrollViewer : Control
     public ScrollViewer()
     {
         Handlers.AddHandler(InputEvents.MouseWheelEvent, OnMouseWheel);
+        Handlers.AddHandler(RequestBringIntoViewEvent, OnRequestBringIntoView);
         SetFrameworkDefault(ComponentTemplateProperty, ScrollViewerTemplates.Default);
     }
 
@@ -132,6 +133,14 @@ public class ScrollViewer : Control
     {
         ApplyTemplate();
         ConfigureScrollCapabilities();
+        // As in WPF, a ScrollViewer measured with an unbounded height gives its content an unbounded viewport. Its
+        // template can measure the presenter again with a finite height, such as a Grid row with the content's size, or
+        // the arrange with the final size, so the presenter takes this from the viewer's own measure constraint.
+        if (presenter is not null)
+        {
+            presenter.ViewerMeasuredWithFiniteHeight = float.IsFinite(context.AvailableSize.Height);
+        }
+
         ScrollBarState state = ConvergeMeasure(context);
         ApplyScrollBarVisibility(state);
         UpdateScrollBarState();
@@ -340,6 +349,7 @@ public class ScrollViewer : Control
         {
             presenter.PropertyChanged -= OnPresenterPropertyChanged;
             presenter.Content = null;
+            presenter.ViewerMeasuredWithFiniteHeight = null;
         }
 
         if (horizontalScrollBar is not null)
@@ -370,6 +380,30 @@ public class ScrollViewer : Control
         presenter.SetVerticalOffset(presenter.VerticalOffset - (MathF.Sign(wheelArgs.Delta) * LineScrollAmount));
         args.Handled = oldOffset != presenter.VerticalOffset;
         UpdateScrollBarState();
+    }
+
+    // As WPF's ScrollViewer.OnRequestBringIntoView: a request from an element inside the content is handled here. The
+    // presenter scrolls until the requested part is visible, and the part that is visible then goes on as this viewer's
+    // own request, so the ScrollViewers around this one scroll to it too. A request from this viewer itself, or from an
+    // element outside the content such as a scroll bar, bubbles on.
+    private void OnRequestBringIntoView(UiElementId source, RoutedEventArgs args)
+    {
+        if (args is not RequestBringIntoViewEventArgs request ||
+            presenter is null ||
+            !presenter.ContainsInContent(request.TargetObject))
+        {
+            return;
+        }
+
+        args.Handled = true;
+        LayoutRect visible = presenter.MakeVisible(request.TargetObject, request.TargetRect);
+        BringIntoView(visible == LayoutRect.Empty
+            ? LayoutRect.Empty
+            : visible with
+            {
+                X = visible.X + presenter.ArrangedBounds.X - ArrangedBounds.X,
+                Y = visible.Y + presenter.ArrangedBounds.Y - ArrangedBounds.Y
+            });
     }
 
     private void OnPresenterPropertyChanged(object? sender, UiPropertyChangedEventArgs args)

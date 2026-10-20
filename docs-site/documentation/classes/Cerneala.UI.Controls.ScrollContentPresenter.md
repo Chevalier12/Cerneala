@@ -73,6 +73,20 @@ Offsets must be finite, non-negative values. `SetHorizontalOffset` and `SetVerti
 
 Changing `HorizontalOffset` or `VerticalOffset` affects arrange, render, and hit testing, but not measure. The presenter clears its clip when detached from the element tree.
 
+`MakeVisible(UIElement visual, LayoutRect rectangle)` works as WPF's `ScrollContentPresenter.MakeVisible`, which `ScrollViewer` calls when an element raises `RequestBringIntoView`. `rectangle` is in the coordinates of `visual`, an element inside the content; `LayoutRect.Empty` means the whole `visual`. On each axis that can scroll, the offset changes by the least amount that shows the rectangle, by WPF's minimal-scroll rule:
+
+- A rectangle above (or left of) the viewport, and not larger than it, scrolls until its start is at the viewport start.
+- A rectangle below (or right of) the viewport, and not larger than it, scrolls until its end is at the viewport end.
+- A rectangle larger than the viewport aligns its end when it is above, and its start when it is below.
+- A rectangle inside the viewport, or one that covers the whole viewport, keeps the offset.
+
+The method returns the part of the rectangle that is visible after the scroll, in the presenter's coordinates, or `LayoutRect.Empty` when `visual` is not inside the content or nothing of the rectangle is visible. It reads the positions of the last arrange, and an offset set since then does not change them, so a second call before the next arrange gives the same offset. For example, a 20-pixel-high element that starts 300 pixels down in the content of a presenter whose viewport is 100 high and whose `VerticalOffset` is `0`:
+
+```csharp
+LayoutRect visible = viewer.Presenter.MakeVisible(button, LayoutRect.Empty);
+// viewer.Presenter.VerticalOffset is 220; visible is (0, 80, button width, 20).
+```
+
 For content elements that opt into layout motion, movement caused only by a scroll-offset change does not start or restart a layout correction. Layout motion excludes the applied scroll displacement from snapshot comparison; genuine layout changes inside the content still animate.
 
 ## Constructors
@@ -107,6 +121,7 @@ For content elements that opt into layout motion, movement caused only by a scro
 | --- | --- | --- |
 | `SetHorizontalOffset(float offset)` | `void` | Requests a horizontal offset. The stored value is coerced to `0` when horizontal scrolling is disabled, or to the range `0` through `ExtentWidth - ViewportWidth` when enabled. |
 | `SetVerticalOffset(float offset)` | `void` | Requests a vertical offset. The stored value is coerced to `0` when vertical scrolling is disabled, or to the range `0` through `ExtentHeight - ViewportHeight` when enabled. |
+| `MakeVisible(UIElement visual, LayoutRect rectangle)` | `LayoutRect` | Scrolls each axis that can scroll by the least amount that shows `rectangle` of `visual` (`LayoutRect.Empty` is the whole element), and returns its visible part in this presenter's coordinates, or `LayoutRect.Empty`. |
 
 ## Events
 This class does not declare additional public events.

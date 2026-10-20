@@ -111,6 +111,21 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
         }
     }
 
+    // The reverse of UpdateViewport, for a scroll presenter that stops giving the only viewport: as in WPF, where an
+    // unbounded viewport realizes every item, the panel realizes and stacks every child again. The recorded heights
+    // still belong to their items, so they stay. A panel without a viewport keeps its cached measure.
+    public void ClearViewport()
+    {
+        if (automaticViewport is null)
+        {
+            return;
+        }
+
+        automaticViewport = null;
+        automaticWindow = RealizationWindow.Empty;
+        IncrementLayoutVersion();
+    }
+
     // A recorded height belongs to one item, so it follows that item when the collection changes.
     internal void OnItemsReplaced(int index, int removedCount, int addedCount)
     {
@@ -381,6 +396,28 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
         }
 
         return FromDevicePixels(devicePixels, rounding);
+    }
+
+    // The top and bottom of each of the first count items in this panel, as arrange places them, while an automatic
+    // viewport drives the panel; no bounds otherwise. As WPF's VirtualizingStackPanel.BringIndexIntoView, an owner
+    // scrolls an item without a container there before the item is realized. The item extents are added as EstimateOffset
+    // adds them, in one walk, so the bounds of the first n items cost n steps.
+    internal IEnumerable<(float Top, float Bottom)> EnumerateAutomaticItemBounds(int count)
+    {
+        if (automaticViewport is null)
+        {
+            yield break;
+        }
+
+        LayoutRounding rounding = measureRounding;
+        double estimatedDevicePixels = rounding.ToDevicePixels(estimatedItemExtent);
+        double devicePixels = 0;
+        for (int index = 0; index < count; index++)
+        {
+            double next = devicePixels + GetItemDevicePixels(index, rounding, estimatedDevicePixels);
+            yield return (FromDevicePixels(devicePixels, rounding), FromDevicePixels(next, rounding));
+            devicePixels = next;
+        }
     }
 
     private float EstimateTotalExtent(int itemCount, LayoutRounding rounding)

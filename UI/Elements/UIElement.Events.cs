@@ -12,6 +12,7 @@ public partial class UIElement
     public static readonly RoutedEvent LoadedEvent = RoutedEventRegistry.Register(nameof(Loaded), typeof(UIElement), RoutingStrategy.Direct, typeof(RoutedEventArgs));
     public static readonly RoutedEvent UnloadedEvent = RoutedEventRegistry.Register(nameof(Unloaded), typeof(UIElement), RoutingStrategy.Direct, typeof(RoutedEventArgs));
     public static readonly RoutedEvent SizeChangedEvent = RoutedEventRegistry.Register(nameof(SizeChanged), typeof(UIElement), RoutingStrategy.Direct, typeof(SizeChangedEventArgs));
+    public static readonly RoutedEvent RequestBringIntoViewEvent = RoutedEventRegistry.Register(nameof(RequestBringIntoView), typeof(UIElement), RoutingStrategy.Bubble, typeof(RequestBringIntoViewEventArgs));
 
     public static readonly RoutedEvent PreviewMouseDownEvent = InputEvents.PreviewMouseDownEvent.AddOwner(typeof(UIElement));
     public static readonly RoutedEvent MouseDownEvent = InputEvents.MouseDownEvent.AddOwner(typeof(UIElement));
@@ -56,6 +57,7 @@ public partial class UIElement
     public event RoutedEventHandler Loaded { add => AddHandler(LoadedEvent, value); remove => RemoveHandler(LoadedEvent, value); }
     public event RoutedEventHandler Unloaded { add => AddHandler(UnloadedEvent, value); remove => RemoveHandler(UnloadedEvent, value); }
     public event RoutedEventHandler SizeChanged { add => AddHandler(SizeChangedEvent, value); remove => RemoveHandler(SizeChangedEvent, value); }
+    public event EventHandler<RequestBringIntoViewEventArgs> RequestBringIntoView { add => AddTypedHandler(RequestBringIntoViewEvent, value); remove => RemoveTypedHandler(RequestBringIntoViewEvent, value); }
     public event RoutedEventHandler PreviewMouseDown { add => AddHandler(PreviewMouseDownEvent, value); remove => RemoveHandler(PreviewMouseDownEvent, value); }
     public event RoutedEventHandler MouseDown { add => AddHandler(MouseDownEvent, value); remove => RemoveHandler(MouseDownEvent, value); }
     public event RoutedEventHandler PreviewMouseUp { add => AddHandler(PreviewMouseUpEvent, value); remove => RemoveHandler(PreviewMouseUpEvent, value); }
@@ -129,6 +131,20 @@ public partial class UIElement
         }
 
         RaiseLocalHandlers(args);
+    }
+
+    // As WPF's FrameworkElement.BringIntoView: raises RequestBringIntoView from this element, so the ScrollViewers
+    // around it scroll until the whole element is visible. It uses the positions of the last arrange.
+    public void BringIntoView()
+    {
+        BringIntoView(LayoutRect.Empty);
+    }
+
+    // As above for targetRectangle, in this element's coordinates, where 0, 0 is its top left corner. LayoutRect.Empty
+    // means the whole element.
+    public void BringIntoView(LayoutRect targetRectangle)
+    {
+        RaiseEvent(new RequestBringIntoViewEventArgs(RequestBringIntoViewEvent, this, targetRectangle));
     }
 
     protected void AddTypedHandler<TEventArgs>(RoutedEvent routedEvent, EventHandler<TEventArgs> handler)

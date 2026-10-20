@@ -2259,7 +2259,11 @@ public sealed class ComboBoxTests
         viewer.ScrollInfo.SetVerticalOffset(1400);
         root.ProcessFrame();
         root.ProcessFrame();
-        Assert.Equal(200, comboBox.ItemContainerGenerator.RealizedContainers.Count);
+        // Without the ComboBox context the drop-down's ScrollViewer, whose content is the ItemsPresenter, gives the
+        // panel its viewport: items of 34 (6800 / 200) at offset 1400 in a viewport of 120 show items 41 to 44, and the
+        // panel's automatic cache of one item on each side adds items 40 and 45 (#702).
+        Assert.Equal(120, viewer.Presenter.ViewportHeight);
+        Assert.Equal(Enumerable.Range(40, 6), comboBox.ItemContainerGenerator.RealizedContainers.Keys.Order());
         Assert.Equal(6800, viewer.ScrollInfo.ExtentHeight);
         Assert.Equal(1400, viewer.ScrollInfo.VerticalOffset);
     }

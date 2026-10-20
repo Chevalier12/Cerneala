@@ -79,6 +79,15 @@ Rendering calls `Render`, which null-checks the `RenderContext` and delegates to
 
 Retained composition surrounds a transformed subtree with affine drawing scopes. Local drawing transforms run before the element and ancestor transforms. Rectangle, ellipse, path, text, image, and clip geometry therefore retain rotation and skew rather than being reduced to axis-aligned bounds. Inspectors of the composed command stream must include its active drawing state to obtain final coordinates. `Shape` uses these same transform and opacity properties.
 
+`BringIntoView()` and `BringIntoView(LayoutRect)` work as WPF's `FrameworkElement.BringIntoView`: they raise the bubbling `RequestBringIntoViewEvent` from the element, with a `RequestBringIntoViewEventArgs` whose `TargetObject` is the element and whose `TargetRect` is the rectangle in the element's own coordinates (`LayoutRect.Empty`, the value that `BringIntoView()` sends, means the whole element). Each `ScrollViewer` around the element scrolls by the least amount that shows that part, the innermost first. The scroll uses the positions of the last arrange, so an element that was never arranged has no place to scroll to yet. For example, a `Button` 20 pixels high that starts 300 pixels down in the content of a `ScrollViewer` 100 pixels high:
+
+```csharp
+button.BringIntoView();
+// viewer.Presenter.VerticalOffset is 220: the Button ends at 320, the bottom of the viewport.
+```
+
+A handler that sets `Handled` before the event reaches a `ScrollViewer` stops the scroll.
+
 Invalidation is routed to the attached `UIRoot` when available. Detached elements mark their local `DirtyState`; measure invalidation also propagates to visual ancestors until a layout boundary is reached.
 
 Value validation is enforced by property metadata. `Width` and `Height` accept `float.NaN` for automatic sizing or a finite non-negative value; `RenderTransform` cannot be `null`; `RenderTransformOrigin` must be normalized from `0` to `1`; `Opacity` must be finite and between `0` and `1`; transform scalar values must be finite; `TabIndex` must be non-negative; and `LayoutMotionId` must be either `null` or non-blank.
@@ -123,6 +132,7 @@ Value validation is enforced by property metadata. `Width` and `Height` accept `
 | `IsTabStopProperty` | Property identifier for `IsTabStop`; defaults to `false` and affects aspect matching. |
 | `TabIndexProperty` | Property identifier for `TabIndex`; defaults to `0`, affects hit testing, and requires a non-negative value. |
 | `CursorProperty` | Property identifier for `Cursor`; defaults to `null`. |
+| `RequestBringIntoViewEvent` | Routed event identifier for `RequestBringIntoView`; `Bubble` routing with `RequestBringIntoViewEventArgs`. |
 
 ## Properties
 | Name | Type | Description |
@@ -192,6 +202,13 @@ Value validation is enforced by property metadata. `Width` and `Height` accept `
 | `Invalidate(InvalidationFlags, string)` | Creates an `InvalidationRequest` for this element and passes it to `Invalidate(InvalidationRequest)`. |
 | `Invalidate(InvalidationRequest)` | Routes invalidation to the attached root or marks local dirty state when detached. |
 | `OnPropertyInvalidated(UiPropertyChangedEventArgs, UiPropertyOptions)` | Maps property metadata to invalidation flags, updates layout/render versions, and invalidates the element. |
+| `BringIntoView()` | Raises `RequestBringIntoViewEvent` for the whole element, so the `ScrollViewer`s around it scroll until it is visible. |
+| `BringIntoView(LayoutRect)` | Raises `RequestBringIntoViewEvent` for the rectangle, in the element's own coordinates; `LayoutRect.Empty` means the whole element. |
+
+## Events
+| Name | Description |
+| --- | --- |
+| `RequestBringIntoView` | `EventHandler<RequestBringIntoViewEventArgs>`; raised by `BringIntoView`, bubbles from the element. `ScrollViewer` handles it for an element inside its content. |
 
 ## Protected Methods
 | Name | Description |
