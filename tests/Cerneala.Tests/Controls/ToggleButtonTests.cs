@@ -1,3 +1,4 @@
+using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
@@ -32,6 +33,70 @@ public sealed class ToggleButtonTests
         bridge.Dispatch(root, PointerFrame(10, 10, 60, 10, previousDown: true));
 
         Assert.False(toggle.IsChecked);
+    }
+
+    [Fact]
+    public void AssigningIsCheckedInCodeRaisesCheckedOnceAndUncheckedOnce()
+    {
+        ToggleButton toggle = new();
+        int checkedCount = 0;
+        int uncheckedCount = 0;
+        toggle.Checked += (_, _) => checkedCount++;
+        toggle.Unchecked += (_, _) => uncheckedCount++;
+
+        toggle.IsChecked = true;
+
+        Assert.Equal(1, checkedCount);
+        Assert.Equal(0, uncheckedCount);
+
+        toggle.IsChecked = true;
+
+        Assert.Equal(1, checkedCount);
+        Assert.Equal(0, uncheckedCount);
+
+        toggle.IsChecked = false;
+
+        Assert.Equal(1, checkedCount);
+        Assert.Equal(1, uncheckedCount);
+
+        toggle.IsChecked = false;
+
+        Assert.Equal(1, uncheckedCount);
+    }
+
+    [Fact]
+    public void AssigningCheckBoxIsCheckedInCodeRaisesChecked()
+    {
+        CheckBox checkBox = new();
+        int checkedCount = 0;
+        checkBox.Checked += (_, _) => checkedCount++;
+
+        checkBox.IsChecked = true;
+
+        Assert.Equal(1, checkedCount);
+    }
+
+    [Fact]
+    public void CompletedClickRaisesExactlyOneCheckedAndThenOneUnchecked()
+    {
+        UIRoot root = RootWithToggle(out ToggleButton toggle);
+        ElementInputBridge bridge = new();
+        int checkedCount = 0;
+        int uncheckedCount = 0;
+        toggle.Checked += (_, _) => checkedCount++;
+        toggle.Unchecked += (_, _) => uncheckedCount++;
+
+        bridge.Dispatch(root, PointerFrame(10, 10, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(10, 10, previousDown: true));
+
+        Assert.Equal(1, checkedCount);
+        Assert.Equal(0, uncheckedCount);
+
+        bridge.Dispatch(root, PointerFrame(10, 10, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(10, 10, previousDown: true));
+
+        Assert.Equal(1, checkedCount);
+        Assert.Equal(1, uncheckedCount);
     }
 
     private static UIRoot RootWithToggle(out ToggleButton toggle)

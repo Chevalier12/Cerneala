@@ -27,10 +27,37 @@ public class ToggleButton : Button
         IsChecked = !IsChecked;
     }
 
+    protected virtual void OnChecked(RoutedEventArgs e)
+    {
+        RaiseEvent(e);
+    }
+
+    protected virtual void OnUnchecked(RoutedEventArgs e)
+    {
+        RaiseEvent(e);
+    }
+
+    // Every actual IsChecked change raises Checked or Unchecked, as WPF's ToggleButton does, whether a click, code or a
+    // binding made it. Setting the value it already has is no change and raises nothing.
+    protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
+    {
+        base.OnPropertyChanged(args);
+        if (ReferenceEquals(args.Property, IsCheckedProperty))
+        {
+            if (IsChecked)
+            {
+                OnChecked(new RoutedEventArgs(CheckedEvent, this));
+            }
+            else
+            {
+                OnUnchecked(new RoutedEventArgs(UncheckedEvent, this));
+            }
+        }
+    }
+
     protected override void OnClick()
     {
         OnToggle();
-        RaiseEvent(new RoutedEventArgs(IsChecked ? CheckedEvent : UncheckedEvent, this));
         base.OnClick();
     }
 }

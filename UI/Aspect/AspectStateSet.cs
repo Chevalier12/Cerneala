@@ -81,7 +81,7 @@ public sealed class AspectStateSet : IEquatable<AspectStateSet>
             activeStates.Add(AspectState.Selected);
         }
 
-        if (element is ToggleButton { IsChecked: true } or RadioButton { IsChecked: true })
+        if (element is ToggleButton { IsChecked: true })
         {
             activeStates.Add(AspectState.Checked);
         }

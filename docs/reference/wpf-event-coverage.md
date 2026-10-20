@@ -13,7 +13,7 @@ This audit maps the current retained control surface to applicable WPF event con
 ## Implemented control events
 
 - `ButtonBase`: `Click`.
-- `ToggleButton`, `CheckBox`: `Checked` and `Unchecked` inherited from the shared primitive. `RadioButton` derives from `Button`; it has `IsChecked` but no `Checked` or `Unchecked` event.
+- `ToggleButton`, `CheckBox`, `RadioButton`: `Checked` and `Unchecked` inherited from the shared primitive, raised on every `IsChecked` change.
 - `RangeBase`, `Slider`, `ProgressBar`, `ScrollBar`: `ValueChanged`; `ScrollBar` also exposes `Scroll`.
 - `Selector`, `ListBox`, `ComboBox`, `TabControl`: `SelectionChanged`; selectable item containers also raise `Selected` and `Unselected`.
 - `ComboBox`: routed `DropDownOpened` and `DropDownClosed`, emitted when its in-root overlay is actually projected or withdrawn.
