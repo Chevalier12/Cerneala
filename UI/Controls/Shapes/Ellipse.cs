@@ -7,6 +7,6 @@ public sealed class Ellipse : Shape
 {
     protected override Geometry ResolveGeometry(LayoutRect arrangedBounds)
     {
-        return Geometry ?? new EllipseGeometry(ToDrawRect(arrangedBounds));
+        return Geometry ?? new EllipseGeometry(DeflateByHalfStroke(arrangedBounds, out _));
     }
 }

@@ -105,11 +105,66 @@ public sealed class ShapePrimitiveTests
         DrawPathContour contour = Assert.Single(path.Contours);
         DrawPathSegment[] arcs = contour.Segments.Where(segment => segment.Kind == DrawPathSegmentKind.Arc).ToArray();
         Assert.Equal(4, arcs.Length);
-        Assert.All(arcs, arc => { Assert.Equal(20, arc.RadiusX); Assert.Equal(3, arc.RadiusY); });
+        // The default 1px stroke deflates the 40x20 bounds to 39x19, so RadiusX 50 clamps to 19.5; RadiusY 3 stays.
+        Assert.All(arcs, arc => { Assert.Equal(19.5f, arc.RadiusX); Assert.Equal(3, arc.RadiusY); });
         Assert.True(contour.IsClosed);
         Assert.Equal(50, rectangle.RadiusX);
         Assert.Same(path, StrokePath(Record(rectangle, new LayoutRect(10, 20, 40, 20))));
         Assert.NotSame(path, StrokePath(Record(rectangle, new LayoutRect(10, 20, 60, 20))));
+    }
+
+    [Fact]
+    public void RoundedRectanglePathIsInsetByHalfTheStrokeInLocalCoordinates()
+    {
+        RectangleShape rectangle = new()
+        {
+            RadiusX = 12, RadiusY = 5, StrokeThickness = 2,
+            Fill = new SolidColorBrush(Color.White), Stroke = new SolidColorBrush(Color.Black)
+        };
+        DrawCommand[] commands = PaintCommands(Record(rectangle, new LayoutRect(45, 45, 40, 30)));
+        Assert.Equal(2, commands.Length);
+        DrawPath path = commands[0].Path!;
+        DrawPathContour contour = Assert.Single(path.Contours);
+
+        Assert.Equal(new DrawRect(1, 1, 38, 28), path.Bounds);
+        Assert.Equal(new DrawPoint(13, 1), contour.StartPoint);
+        Assert.All(
+            contour.Segments.Where(segment => segment.Kind == DrawPathSegmentKind.Arc),
+            arc => { Assert.Equal(12, arc.RadiusX); Assert.Equal(5, arc.RadiusY); });
+    }
+
+    [Fact]
+    public void RoundedRectangleRadiiClampToHalfTheDeflatedSize()
+    {
+        RectangleShape rectangle = new()
+        {
+            RadiusX = 100, RadiusY = 100, StrokeThickness = 4,
+            Fill = new SolidColorBrush(Color.White), Stroke = new SolidColorBrush(Color.Black)
+        };
+        DrawCommand[] commands = PaintCommands(Record(rectangle, new LayoutRect(0, 0, 40, 30)));
+        DrawPathContour contour = Assert.Single(commands[0].Path!.Contours);
+
+        // Deflated size is 36x26, so the radii clamp to 18 and 13.
+        Assert.All(
+            contour.Segments.Where(segment => segment.Kind == DrawPathSegmentKind.Arc),
+            arc => { Assert.Equal(18, arc.RadiusX); Assert.Equal(13, arc.RadiusY); });
+        Assert.Equal(new DrawRect(2, 2, 36, 26), commands[0].Path!.Bounds);
+    }
+
+    [Fact]
+    public void RoundedRectanglePathIsRebuiltWhenOnlyTheStrokeThicknessChanges()
+    {
+        RectangleShape rectangle = new()
+        {
+            RadiusX = 12, RadiusY = 5, StrokeThickness = 2,
+            Fill = new SolidColorBrush(Color.White), Stroke = new SolidColorBrush(Color.Black)
+        };
+        DrawPath first = StrokePath(Record(rectangle, new LayoutRect(0, 0, 40, 30)));
+        rectangle.StrokeThickness = 4;
+        DrawPath second = StrokePath(Record(rectangle, new LayoutRect(0, 0, 40, 30)));
+
+        Assert.NotSame(first, second);
+        Assert.Equal(new DrawRect(2, 2, 36, 26), second.Bounds);
     }
 
     [Theory]

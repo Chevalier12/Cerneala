@@ -42,13 +42,27 @@ Rectangle rectangle = new()
 
 ## Remarks
 
-`Rectangle` fits its arranged bounds. `RadiusX` and `RadiusY` are the horizontal and vertical radii of its elliptical corners. Both default to `0` and must be finite and non-negative. Rendering limits each radius independently to half the corresponding dimension without changing the property value. If either effective radius is zero, the corners are square. Radius changes affect rendering, not natural measurement.
+`Rectangle` fits its arranged bounds. `RadiusX` and `RadiusY` are the horizontal and vertical radii of its elliptical corners. Both default to `0` and must be finite and non-negative. Rendering limits each radius independently to half the corresponding dimension of the stroke-deflated rectangle (see Stroke placement) without changing the property value. If either effective radius is zero, the corners are square. Radius changes affect rendering, not natural measurement.
 
 Rounded rectangles use one cached immutable path with four elliptical arcs for both fill and stroke. Moving the control preserves that geometry; a changed size or effective radius rebuilds it. Square rectangles retain the native rectangle drawing path. An explicit inherited `Geometry` takes precedence and is not modified by the radius properties.
 
 Rendering is implemented by `Shape` and supports its fill and stroke brushes. A positive `StrokeThickness` is required for a stroke. Opacity and affine transforms use the shared `UIElement` retained rendering path, including its transform origin. Rotated corners and outlines retain their geometry.
 
-Default measuring uses an empty rectangle because the default geometry is based on `LayoutRect.Empty` during measure. Set `Geometry` when the shape should report a natural desired size; its bounds are used for measuring, with `StrokeThickness` added as padding when `Stroke` is assigned.
+### Stroke placement
+
+When `Geometry` is `null`, `Rectangle` draws its fill and its stroke on the arranged bounds deflated by half the effective stroke thickness, as WPF does. The outer edge of the stroke touches the arranged bounds, and nothing is drawn outside them.
+
+The effective thickness `t` is `0` when `Stroke` is `null` or `StrokeThickness` is `0`. Otherwise `t` is `StrokeThickness`. A non-null `Stroke` that is fully transparent still counts, so it still reserves `t`. The drawn rectangle is `(X + t/2, Y + t/2, max(0, Width - t), max(0, Height - t))`, where `X`, `Y`, `Width`, and `Height` are the arranged bounds.
+
+For example, arranged bounds `(1, 2, 30, 20)` with `StrokeThickness = 3` draw the fill and the stroke in the rectangle `(2.5, 3.5, 27, 17)`. The stroke covers `1` to `31` horizontally and `2` to `22` vertically.
+
+`RadiusX` and `RadiusY` keep their values and apply to the deflated rectangle. Each effective radius is limited to half the width and half the height of the deflated rectangle, not of the arranged bounds. For example, `RadiusX = 12` on arranged bounds `30` x `20` with `StrokeThickness = 2` uses the deflated rectangle `28` x `18`, so the effective `RadiusX` is `12` and the effective `RadiusY` for `RadiusY = 12` is `9`.
+
+When the stroke is thicker than the element, the deflated rectangle is empty and nothing is drawn. For example, `StrokeThickness = 40` on a `30` x `20` rectangle draws neither fill nor stroke.
+
+This rule applies only to the default geometry. A supplied `Geometry` is drawn as it is, and its stroke stays centered on the geometry.
+
+Default measuring uses an empty rectangle because the default geometry is based on `LayoutRect.Empty` during measure. Set `Geometry` when the shape should report a natural desired size; its bounds are used for measuring, with `StrokeThickness` added as padding when `Stroke` is assigned. The stroke deflation applies to rendering only: a `Rectangle` with a `Stroke` and no explicit size still measures `(StrokeThickness, StrokeThickness)`.
 
 ## Constructors
 
@@ -103,10 +117,11 @@ Default measuring uses an empty rectangle because the default geometry is based 
 
 | Condition | Result |
 | --- | --- |
-| `Geometry` is `null` | Fits the arranged bounds, using an elliptical-corner path when both effective radii are positive. |
-| `Geometry` is not `null` | Renders the supplied geometry through `Shape.RenderGeometry`. |
-| `Fill` is visible and bounds are positive | Fills the rectangle or rounded path. |
-| `Stroke` is visible, `StrokeThickness > 0`, and bounds are positive | Strokes the rectangle or rounded path. |
+| `Geometry` is `null` | Fits the arranged bounds deflated by half the effective stroke thickness, using an elliptical-corner path when both effective radii are positive. |
+| `Geometry` is not `null` | Renders the supplied geometry through `Shape.RenderGeometry`. Its stroke stays centered on the geometry. |
+| `Fill` is visible and the deflated rectangle has positive width and height | Fills the deflated rectangle or rounded path. |
+| `Stroke` is visible, `StrokeThickness > 0`, and the deflated rectangle has positive width and height | Strokes the deflated rectangle or rounded path, so the outer edge of the stroke touches the arranged bounds. |
+| `StrokeThickness` is larger than the arranged width or height | The deflated rectangle is empty; no fill or stroke command is emitted. |
 | `Opacity <= 0` | Emits no drawing commands. |
 
 ## Applies To

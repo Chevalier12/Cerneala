@@ -42,7 +42,7 @@ Rectangle rectangle = new()
 
 The shape's `OpacityProperty` and `RenderTransformProperty` fields are compatibility aliases for the corresponding `UIElement` properties. Their CLR accessors remain available on `Shape`, but share the same values and retained rendering behavior as `UIElement`. Transforms use the inherited `RenderTransformOrigin` and compose with ancestor transforms; a rotated rectangle remains a rotated rectangle. Changing render-scope state does not require rebuilding the shape's local geometry commands.
 
-Retained composition omits a shape whose effective opacity is zero. Local geometry recording is independent of opacity, so a shape initially at zero opacity can become visible without rebuilding its local commands. No geometry is recorded when the resolved geometry is `null`. Rectangle and ellipse geometry can render both fill and native `DrawPen` strokes. Path geometry emits a native fill and/or one native stroke using the same immutable path, preserving curves, arcs, contour boundaries, caps, and joins. A path with zero width or height skips filling but can still stroke. `PathGeometry` coordinates are translated by the control's arranged position; `SvgGeometry` retains its view-box-to-arranged-bounds mapping.
+Retained composition omits a shape whose effective opacity is zero. Local geometry recording is independent of opacity, so a shape initially at zero opacity can become visible without rebuilding its local commands. No geometry is recorded when the resolved geometry is `null`. Rectangle and ellipse geometry can render both fill and native `DrawPen` strokes. `Shape` strokes are centered on the geometry it renders, with one exception made by the derived classes: `Rectangle` and `Ellipse`, when `Geometry` is `null`, resolve their default geometry from the arranged bounds deflated by half the effective stroke thickness, so the outer edge of their stroke touches the arranged bounds (see `Rectangle` and `Ellipse`). An explicit `Geometry`, `Line`, `Polyline`, `Polygon`, `Path`, and `SvgPath` keep the stroke centered on the geometry. Path geometry emits a native fill and/or one native stroke using the same immutable path, preserving curves, arcs, contour boundaries, caps, and joins. A path with zero width or height skips filling but can still stroke. `PathGeometry` coordinates are translated by the control's arranged position; `SvgGeometry` retains its view-box-to-arranged-bounds mapping.
 
 `FillRule` defaults to `DrawFillRule.NonZero`. `EvenOdd` is also supported. It affects path and SVG filling, not strokes; undefined enum values are rejected. Changing the fill rule invalidates rendering.
 
@@ -63,7 +63,7 @@ Retained composition omits a shape whose effective opacity is zero. Local geomet
 | Name | Description |
 | --- | --- |
 | `Fill` | Gets or sets the brush used to fill the shape interior. |
-| `Stroke` | Gets or sets the brush used to draw the shape outline. |
+| `Stroke` | Gets or sets the brush used to draw the shape outline. Strokes are centered on the geometry, except for the default geometry of `Rectangle` and `Ellipse`, which is deflated by half the effective stroke thickness. |
 | `StrokeThickness` | Gets or sets the outline thickness. The value must be finite and non-negative. |
 | `Geometry` | Gets or sets explicit geometry used for measuring and rendering when a derived class resolves it. |
 | `FillRule` | Gets or sets the `DrawFillRule` used to fill path and SVG geometry. |
