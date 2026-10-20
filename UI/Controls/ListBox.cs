@@ -45,6 +45,12 @@ public class ListBox : Selector
     private object? pendingScrollItem;
     private bool hasPendingScrollItem;
 
+    // The row that keyboard navigation or ScrollIntoView scrolled to by the items panel's estimate because it had no
+    // container: after the next arrange, which realizes it, it scrolls to its exact place, and gets the focus when
+    // focusPendingRow is true.
+    private int pendingScrollIndex = -1;
+    private bool focusPendingRow;
+
     public ListBox()
     {
         ItemsPanel = new StackPanel();
@@ -115,6 +121,8 @@ public class ListBox : Selector
 
         pendingScrollItem = item;
         hasPendingScrollItem = true;
+        pendingScrollIndex = -1;
+        focusPendingRow = false;
         Invalidate(InvalidationFlags.Arrange, "ListBox scroll into view");
     }
 
@@ -177,15 +185,20 @@ public class ListBox : Selector
     protected override LayoutRect ArrangeCore(ArrangeContext context)
     {
         LayoutRect bounds = base.ArrangeCore(context);
-        if (hasPendingScrollItem)
+        // One adjustment ends the pending row: a VirtualizingStackPanel gives the row's place from its measure, which
+        // the measure that realized the row has already updated, so no later arrange is awaited. A row that still has no
+        // container keeps the focus where it is.
+        if (hasPendingScrollItem || pendingScrollIndex >= 0)
         {
-            object? item = pendingScrollItem;
+            int index = hasPendingScrollItem ? FindItem(pendingScrollItem) : pendingScrollIndex;
+            bool focus = focusPendingRow;
             pendingScrollItem = null;
             hasPendingScrollItem = false;
-            int index = FindItem(item);
-            if (index >= 0)
+            pendingScrollIndex = -1;
+            focusPendingRow = false;
+            if (index >= 0 && index < ItemCount && ScrollRowIntoView(index) && focus)
             {
-                ScrollRowIntoView(index);
+                FocusRow(index);
             }
         }
 
@@ -256,8 +269,7 @@ public class ListBox : Selector
     // rows from the anchor to it, with Ctrl+Shift adds them, and with Ctrl it moves only the focus.
     private void NavigateToRow(int index, bool control, bool shift)
     {
-        ScrollRowIntoView(index);
-        FocusRow(index);
+        BringRowIntoView(index, focus: true);
         switch (SelectionMode)
         {
             case SelectionMode.Single:
@@ -388,6 +400,14 @@ public class ListBox : Selector
 
         offset = Math.Clamp(down ? offset + viewportHeight : offset - viewportHeight, 0, maxOffset);
         int target = FindFullyVisibleEdgeRow(presenter, offset, viewportHeight, down);
+        // A VirtualizingStackPanel has realized only the rows of the current viewport, so the edge row one viewport
+        // further is found with the panel's estimate when that row has no container.
+        int estimated = EstimateFullyVisibleEdgeRow(presenter, offset, viewportHeight, down);
+        if (estimated >= 0 && !ItemContainerGenerator.RealizedContainers.ContainsKey(estimated))
+        {
+            target = estimated;
+        }
+
         if (target >= 0)
         {
             return target;
@@ -417,25 +437,117 @@ public class ListBox : Selector
         return edge;
     }
 
-    // Scrolls the realized row at index into view, as ScrollIntoView describes; false when the row is not realized.
-    private bool ScrollRowIntoView(int index)
+    // The last (down) or first fully visible row by the estimate of a VirtualizingStackPanel when the viewport starts
+    // at offset, or -1. The estimated row tops grow with the index, so a binary search finds the row.
+    private int EstimateFullyVisibleEdgeRow(ScrollContentPresenter presenter, float offset, float viewportHeight, bool down)
     {
-        if (!ItemContainerGenerator.RealizedContainers.TryGetValue(index, out UIElement? row))
+        if (EstimateRowBounds(0, presenter) is null)
         {
-            return false;
+            return -1;
         }
 
-        if (scrollViewer is not null)
+        float viewportEnd = offset + viewportHeight;
+        int low = 0;
+        int high = ItemCount - 1;
+        int found = -1;
+        while (low <= high)
+        {
+            int middle = low + ((high - low) / 2);
+            (float top, float bottom) = EstimateRowBounds(middle, presenter)!.Value;
+            if (down ? bottom <= viewportEnd : top >= offset)
+            {
+                found = middle;
+                if (down)
+                {
+                    low = middle + 1;
+                }
+                else
+                {
+                    high = middle - 1;
+                }
+            }
+            else if (down)
+            {
+                high = middle - 1;
+            }
+            else
+            {
+                low = middle + 1;
+            }
+        }
+
+        if (found < 0)
+        {
+            return -1;
+        }
+
+        (float foundTop, float foundBottom) = EstimateRowBounds(found, presenter)!.Value;
+        return foundTop >= offset && foundBottom <= viewportEnd ? found : -1;
+    }
+
+    // As WPF's ListBox, which brings a row without a container into view through VirtualizingStackPanel's
+    // BringIndexIntoView before it focuses the row: a realized row scrolls into view and gets the focus now; a row
+    // without a container scrolls to the panel's estimate, and in the arrange after the measure that realizes it, once,
+    // to its measured place, and gets the focus then. An estimate that does not move the viewport ends there.
+    private void BringRowIntoView(int index, bool focus)
+    {
+        float offsetBefore = scrollViewer?.Presenter.VerticalOffset ?? 0;
+        if (ScrollRowIntoView(index))
+        {
+            if (focus)
+            {
+                FocusRow(index);
+            }
+
+            return;
+        }
+
+        if (scrollViewer is not null && scrollViewer.Presenter.VerticalOffset != offsetBefore)
+        {
+            pendingScrollItem = null;
+            hasPendingScrollItem = false;
+            pendingScrollIndex = index;
+            focusPendingRow = focus;
+            Invalidate(InvalidationFlags.Arrange, "ListBox bring row into view");
+        }
+    }
+
+    // Scrolls the row at index into view, as ScrollIntoView describes; false when the row is not realized. A
+    // VirtualizingStackPanel gives the place of every row, realized or not; another panel gives the arranged place of a
+    // realized row, and a row without a container does not scroll there.
+    private bool ScrollRowIntoView(int index)
+    {
+        bool realized = ItemContainerGenerator.RealizedContainers.TryGetValue(index, out UIElement? row);
+        if (scrollViewer is not null && GetRowBounds(index, row, scrollViewer.Presenter) is (float top, float bottom))
         {
             ScrollContentPresenter presenter = scrollViewer.Presenter;
-            float offset = GetOffsetShowingRow(row, presenter);
+            float offset = GetOffsetShowing(top, bottom, presenter);
             if (offset != presenter.VerticalOffset)
             {
                 presenter.SetVerticalOffset(offset);
             }
         }
 
-        return true;
+        return realized;
+    }
+
+    // The top and bottom of the row in the scrolled content. The offsets of a VirtualizingStackPanel come from its
+    // measure and are where it arranges each item, so they hold before the panel is arranged at a new scroll offset;
+    // the arranged bounds of a row hold only after that arrange.
+    private (float Top, float Bottom)? GetRowBounds(int index, UIElement? row, ScrollContentPresenter presenter)
+    {
+        if (EstimateRowBounds(index, presenter) is { } panelBounds)
+        {
+            return panelBounds;
+        }
+
+        if (row is null)
+        {
+            return null;
+        }
+
+        float top = GetRowTop(row, presenter);
+        return (top, top + row.ArrangedBounds.Height);
     }
 
     // The vertical offset that shows the row: the current offset when the row is in the viewport, else the offset that
@@ -443,7 +555,11 @@ public class ListBox : Selector
     private static float GetOffsetShowingRow(UIElement row, ScrollContentPresenter presenter)
     {
         float top = GetRowTop(row, presenter);
-        float bottom = top + row.ArrangedBounds.Height;
+        return GetOffsetShowing(top, top + row.ArrangedBounds.Height, presenter);
+    }
+
+    private static float GetOffsetShowing(float top, float bottom, ScrollContentPresenter presenter)
+    {
         float offset = presenter.VerticalOffset;
         if (top < offset)
         {
@@ -451,6 +567,22 @@ public class ListBox : Selector
         }
 
         return bottom > offset + presenter.ViewportHeight ? bottom - presenter.ViewportHeight : offset;
+    }
+
+    // The top and bottom of the row at index in the scrolled content, from the offsets of the VirtualizingStackPanel
+    // that presents the rows (measured heights, and the estimate for the rows it has not measured), or null when no
+    // such panel virtualizes them.
+    private (float Top, float Bottom)? EstimateRowBounds(int index, ScrollContentPresenter presenter)
+    {
+        if (ItemsPresenter.LayoutPanelRoot is not Layout.Panels.VirtualizingStackPanel panel ||
+            panel.EstimateAutomaticItemOffset(index) is not float top ||
+            panel.EstimateAutomaticItemOffset(index + 1) is not float bottom)
+        {
+            return null;
+        }
+
+        float panelTop = GetRowTop(panel, presenter);
+        return (panelTop + top, panelTop + bottom);
     }
 
     // The top of the row in the scrolled content, which does not change when the content scrolls.

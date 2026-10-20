@@ -132,6 +132,14 @@ public class ScrollViewer : Control
     {
         ApplyTemplate();
         ConfigureScrollCapabilities();
+        // As in WPF, a ScrollViewer measured with an unbounded height gives its content an unbounded viewport. Its
+        // template can measure the presenter again with a finite height, such as a Grid row with the content's size, or
+        // the arrange with the final size, so the presenter takes this from the viewer's own measure constraint.
+        if (presenter is not null)
+        {
+            presenter.ViewerMeasuredWithFiniteHeight = float.IsFinite(context.AvailableSize.Height);
+        }
+
         ScrollBarState state = ConvergeMeasure(context);
         ApplyScrollBarVisibility(state);
         UpdateScrollBarState();
@@ -340,6 +348,7 @@ public class ScrollViewer : Control
         {
             presenter.PropertyChanged -= OnPresenterPropertyChanged;
             presenter.Content = null;
+            presenter.ViewerMeasuredWithFiniteHeight = null;
         }
 
         if (horizontalScrollBar is not null)

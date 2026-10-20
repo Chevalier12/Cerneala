@@ -17,7 +17,8 @@ public class ItemsPresenter : Control
     private bool itemsDirty = true;
     private RealizationWindow? lastRealizationWindow;
     private RealizationWindow? presentedRealizationWindow;
-    private ItemsVirtualizationViewport? automaticViewport;
+    private ItemsVirtualizationViewport? ownerViewport;
+    private ItemsVirtualizationViewport? hostViewport;
     private VirtualizationContext? virtualizationContext;
     private VirtualizingStackPanel? contextPanel;
     private ItemsControl? itemsOwner;
@@ -137,19 +138,76 @@ public class ItemsPresenter : Control
         return true;
     }
 
+    // The viewport of a scroll presenter whose content is the owner, with an offset that counts from the top of the items.
     internal bool UpdateAutomaticVirtualization(float viewportExtent, float scrollOffset)
+    {
+        ownerViewport = new ItemsVirtualizationViewport(GetItemCount(), viewportExtent, scrollOffset);
+        return ApplyAutomaticViewport();
+    }
+
+    // The viewport of a scroll presenter whose content is this presenter, with an offset that counts from its top.
+    internal bool UpdateHostVirtualization(float viewportExtent, float scrollOffset)
+    {
+        hostViewport = new ItemsVirtualizationViewport(GetItemCount(), viewportExtent, scrollOffset);
+        return ApplyAutomaticViewport();
+    }
+
+    // The scroll presenter that pushed the owner viewport no longer drives these items, so a virtualizing
+    // panel that enters later must not realize against that viewport. A host viewport keeps applying.
+    internal bool ClearAutomaticViewport()
+    {
+        if (ownerViewport is null)
+        {
+            return false;
+        }
+
+        ownerViewport = null;
+        return ApplyAutomaticViewport();
+    }
+
+    // The hosting scroll presenter no longer gives this presenter a finite viewport, for example because it was
+    // measured with an unbounded height inside an outer viewer, so the owner viewport applies again. Without an owner
+    // viewport no scroll presenter limits the items any more, so the panel stops virtualizing and realizes every item.
+    internal bool ClearHostViewport()
+    {
+        if (hostViewport is null)
+        {
+            return false;
+        }
+
+        hostViewport = null;
+        if (ownerViewport is not null)
+        {
+            return ApplyAutomaticViewport();
+        }
+
+        if (ResolveItemsPanel() is not VirtualizingStackPanel panel || !panel.ClearViewport())
+        {
+            return false;
+        }
+
+        MarkItemsDirty();
+        return true;
+    }
+
+    // As WPF's ScrollContentPresenter, which makes the panel of an ItemsPresenter child its scroll info, the scroll
+    // presenter that hosts this presenter drives its panel, so its viewport wins over the viewport of a scroll
+    // presenter around the owner, for example an outer ScrollViewer around a ListBox with a fixed height.
+    private ItemsVirtualizationViewport? AutomaticViewport => hostViewport ?? ownerViewport;
+
+    private bool ApplyAutomaticViewport()
     {
         // The viewport is kept while a non-virtualizing panel or a fixed context presents the items, so a
         // virtualizing panel that replaces them later realizes only the current viewport's items in its first refresh.
-        automaticViewport = new ItemsVirtualizationViewport(GetItemCount(), viewportExtent, scrollOffset);
-        if (VirtualizationContext is not null ||
+        if (AutomaticViewport is not ItemsVirtualizationViewport viewport ||
+            VirtualizationContext is not null ||
             ResolveItemsPanel() is not IItemsVirtualizingPanel virtualizingPanel)
         {
             return false;
         }
 
         RealizationWindow previous = virtualizingPanel.RealizationWindow;
-        virtualizingPanel.UpdateViewport(automaticViewport.Value);
+        virtualizingPanel.UpdateViewport(viewport);
         RealizationWindow next = virtualizingPanel.RealizationWindow;
         bool changed = itemsDirty || previous != next;
         if (changed)
@@ -158,13 +216,6 @@ public class ItemsPresenter : Control
         }
 
         return changed;
-    }
-
-    // The scroll presenter that pushed the viewport no longer drives these items, so a virtualizing
-    // panel that enters later must not realize against that viewport.
-    internal void ClearAutomaticViewport()
-    {
-        automaticViewport = null;
     }
 
     protected override LayoutSize MeasureCore(MeasureContext context)
@@ -663,23 +714,34 @@ public class ItemsPresenter : Control
     // that pushes the viewport, so the panel must not keep realizing against a stale count, and a
     // panel that is about to become the root, which has not received the viewport, must not realize
     // every item.
+    // Both viewports keep the current count, so the owner viewport that applies again when the host viewport is cleared
+    // does not bring back an old count.
     private void RefreshAutomaticViewport()
     {
-        if (automaticViewport is not ItemsVirtualizationViewport viewport ||
-            VirtualizationContext is not null ||
-            ResolveItemsPanel() is not IItemsVirtualizingPanel virtualizingPanel)
+        if (AutomaticViewport is not ItemsVirtualizationViewport viewport)
         {
             return;
         }
 
         int itemCount = GetItemCount();
-        if (itemCount == viewport.ItemCount && ReferenceEquals(virtualizingPanel, panelRoot))
+        if (ownerViewport is ItemsVirtualizationViewport owner && owner.ItemCount != itemCount)
+        {
+            ownerViewport = owner with { ItemCount = itemCount };
+        }
+
+        if (hostViewport is ItemsVirtualizationViewport host && host.ItemCount != itemCount)
+        {
+            hostViewport = host with { ItemCount = itemCount };
+        }
+
+        if (VirtualizationContext is not null ||
+            ResolveItemsPanel() is not IItemsVirtualizingPanel virtualizingPanel ||
+            (itemCount == viewport.ItemCount && ReferenceEquals(virtualizingPanel, panelRoot)))
         {
             return;
         }
 
-        automaticViewport = viewport with { ItemCount = itemCount };
-        virtualizingPanel.UpdateViewport(automaticViewport.Value);
+        virtualizingPanel.UpdateViewport(AutomaticViewport.Value);
     }
 
     // Collection changes reach only the current panel root, so a panel that is about to become
@@ -757,12 +819,13 @@ public class ItemsPresenter : Control
     // The containers that a failed refresh kept displaced in the panel represent no item any more and leave the
     // panel here, so the previous owner's generator releases them now, before user code can give one another parent
     // that a later commit would detach it from.
-    // The scroll presenter pushes the viewport only to the owner's active presenter, so the viewport kept here
-    // describes the previous owner's scrolling and is dropped too.
+    // The scroll presenters push their viewports only to the owner's active presenter, so the viewports kept here
+    // describe the previous owner's scrolling and are dropped too.
     private void WithdrawRealizedItems(ItemsControl? previousOwner)
     {
         ReleasePanelVirtualizationContext();
-        automaticViewport = null;
+        ownerViewport = null;
+        hostViewport = null;
         if (panelRoot is not null)
         {
             ClearPanelChildren(panelRoot);

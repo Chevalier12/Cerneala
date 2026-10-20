@@ -515,7 +515,30 @@ public class ItemsControl : Control
 
     internal void ClearAutomaticVirtualization()
     {
-        itemsPresenter.ClearAutomaticViewport();
+        if (itemsPresenter.ClearAutomaticViewport())
+        {
+            InvalidateItems("Items scroll viewport cleared");
+        }
+    }
+
+    // As WPF's ScrollContentPresenter, whose ItemsPresenter child's panel becomes its scroll info, the scroll presenter
+    // that hosts an items presenter, for example the ScrollViewer of a ListBox template, drives its items. Its offset
+    // counts from the top of the presenter, so no ItemsTopInset applies. Only the active presenter shows the items.
+    internal void UpdateHostedVirtualization(ItemsPresenter presenter, float viewportExtent, float scrollOffset)
+    {
+        if (ReferenceEquals(presenter, itemsPresenter) &&
+            presenter.UpdateHostVirtualization(viewportExtent, scrollOffset))
+        {
+            InvalidateItems("Items host scroll viewport changed");
+        }
+    }
+
+    internal void ClearHostedVirtualization(ItemsPresenter presenter)
+    {
+        if (ReferenceEquals(presenter, itemsPresenter) && presenter.ClearHostViewport())
+        {
+            InvalidateItems("Items host scroll viewport cleared");
+        }
     }
 
     private void UnsubscribeItemsSource()

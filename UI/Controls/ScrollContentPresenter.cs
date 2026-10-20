@@ -48,6 +48,8 @@ public class ScrollContentPresenter : ContentControl, IScrollInfo
 
     private bool canHorizontallyScroll = true;
     private bool canVerticallyScroll = true;
+    private bool hostsItemsViewport;
+    private bool? viewerMeasuredWithFiniteHeight;
 
     public float HorizontalOffset
     {
@@ -122,6 +124,24 @@ public class ScrollContentPresenter : ContentControl, IScrollInfo
         }
     }
 
+    // Whether the ScrollViewer whose template holds this presenter was measured with a finite height; null outside a
+    // ScrollViewer, where this presenter's own available height decides. MeasureCore reads it, so a change invalidates
+    // the measure.
+    internal bool? ViewerMeasuredWithFiniteHeight
+    {
+        get => viewerMeasuredWithFiniteHeight;
+        set
+        {
+            if (viewerMeasuredWithFiniteHeight == value)
+            {
+                return;
+            }
+
+            viewerMeasuredWithFiniteHeight = value;
+            Invalidate(InvalidationFlags.Measure, "Scroll viewer height bound changed");
+        }
+    }
+
     // The pre-rounding displacement applied by the last arrange, not the requested offset.
     // Layout snapshots can precede the arrange that applies a new offset.
     internal LayoutPoint ArrangedScrollOffset { get; private set; }
@@ -144,6 +164,15 @@ public class ScrollContentPresenter : ContentControl, IScrollInfo
         LayoutSize measureSize = new(
             CanHorizontallyScroll ? float.PositiveInfinity : available.Width,
             CanVerticallyScroll ? float.PositiveInfinity : available.Height);
+        // An unbounded height, such as for a ListBox without a fixed height inside an outer ScrollViewer, shows every
+        // item, so an items presenter content gets no viewport from this presenter and the outer viewer's applies.
+        hostsItemsViewport = CanVerticallyScroll && available.Height >= 0 && float.IsFinite(available.Height) &&
+            ViewerMeasuredWithFiniteHeight != false;
+        if (!hostsItemsViewport)
+        {
+            StopHostedItemsVirtualization(content);
+        }
+
         UpdateItemsVirtualization(available.Height);
         LayoutSize contentSize = content?.Measure(new MeasureContext(measureSize, context.Rounding)) ?? LayoutSize.Zero;
         ExtentWidth = ResolveExtent(contentSize.Width, available.Width);
@@ -197,13 +226,26 @@ public class ScrollContentPresenter : ContentControl, IScrollInfo
         }
     }
 
-    // Only this presenter knows when it stops pushing the viewport to an items control, which keeps the last
-    // viewport for a virtualizing panel that enters later, so the control drops that viewport here.
-    private static void StopItemsVirtualization(UIElement? content)
+    // Only this presenter knows when it stops pushing the viewport to an items control or an items presenter, which
+    // keeps the last viewport for a virtualizing panel that enters later, so the control drops that viewport here.
+    // The next measure decides again whether a new content gets a host viewport, so an offset set before it pushes
+    // none with the viewport height of the old content.
+    private void StopItemsVirtualization(UIElement? content)
     {
+        hostsItemsViewport = false;
         if (content is ItemsControl itemsControl)
         {
             itemsControl.ClearAutomaticVirtualization();
+        }
+
+        StopHostedItemsVirtualization(content);
+    }
+
+    private static void StopHostedItemsVirtualization(UIElement? content)
+    {
+        if (content is ItemsPresenter { ItemsOwner: { } owner } presenter)
+        {
+            owner.ClearHostedVirtualization(presenter);
         }
     }
 
@@ -213,12 +255,24 @@ public class ScrollContentPresenter : ContentControl, IScrollInfo
         VerticalOffset = VerticalOffset;
     }
 
+    // As WPF's ScrollContentPresenter, which scrolls the panel of an ItemsPresenter child, an items presenter content
+    // realizes only the items in this viewport, and only while the last measure gave this presenter and its ScrollViewer
+    // a finite height.
     private void UpdateItemsVirtualization(float viewportExtent)
     {
-        if (CanVerticallyScroll && ContentElement is ItemsControl itemsControl &&
-            viewportExtent >= 0 && float.IsFinite(viewportExtent))
+        if (!CanVerticallyScroll || viewportExtent < 0 || !float.IsFinite(viewportExtent))
         {
-            itemsControl.UpdateAutomaticVirtualization(viewportExtent, VerticalOffset);
+            return;
+        }
+
+        switch (ContentElement)
+        {
+            case ItemsControl itemsControl:
+                itemsControl.UpdateAutomaticVirtualization(viewportExtent, VerticalOffset);
+                break;
+            case ItemsPresenter { ItemsOwner: { } owner } presenter when hostsItemsViewport:
+                owner.UpdateHostedVirtualization(presenter, viewportExtent, VerticalOffset);
+                break;
         }
     }
 

@@ -142,7 +142,20 @@ The list desires the size of its rows plus `BorderThickness + Padding`, but not 
 
 `ListBox` reads both parts with `GetOptionalTemplatePart`, so a custom `ComponentTemplate` can provide them. `PART_ItemsPresenter` hosts the rows. `PART_ScrollViewer` is the viewer that `ScrollIntoView`, the arrow keys, and PageUp/PageDown scroll. With `ComponentTemplate = null`, the list has no template: it lays out its rows itself inside `BorderThickness + Padding`, draws `Background` and `BorderBrush` itself as `ItemsControl` does, and does not scroll. For example, such a list arranged at `(3, 4, 40, 30)` with `BorderThickness = 2` and `Padding = 10` arranges its row at `(15, 16)` with width 16, and no `ScrollViewer` is created.
 
-A `ListBox` that is the content of an outer `ScrollViewer`, with a `VirtualizingStackPanel` as `ItemsPanel`, realizes only the rows in the outer viewport, as an `ItemsControl` does, also with the default template; the top `BorderThickness` and `Padding` move the rows down by that amount. For example, 100 rows 10 pixels high in an outer viewer 30 pixels high realize at most 8 rows; at vertical offset `45` row `0` is not realized and row `4` is, or row `2` when `Padding.Top` is `20`. The `ScrollViewer` of the default template does not give its viewport to the `ItemsPanel`, because its content is the `ItemsPresenter`, not an `ItemsControl`. So a `VirtualizingStackPanel` in a `ListBox` with a fixed `Height` is not limited to the rows in the template's viewport; only an outer `ScrollViewer` limits them.
+A `ListBox` that is the content of an outer `ScrollViewer`, with a `VirtualizingStackPanel` as `ItemsPanel`, realizes only the rows in the outer viewport, as an `ItemsControl` does, also with the default template; the top `BorderThickness` and `Padding` move the rows down by that amount. For example, 100 rows 10 pixels high in an outer viewer 30 pixels high realize at most 8 rows; at vertical offset `45` row `0` is not realized and row `4` is, or row `2` when `Padding.Top` is `20`.
+
+The `ScrollViewer` of the template also gives its viewport to a `VirtualizingStackPanel`, as WPF's `ScrollContentPresenter` scrolls the panel of its `ItemsPresenter` content. It does so while that `ScrollViewer` was measured with a finite height, for example because the list has a fixed `Height`. Then the list realizes only the rows in the template's viewport, also inside an outer `ScrollViewer`: the template's viewport wins over the outer one. For example, the list below shows 10 rows when each row is 20 pixels high; after the user presses End, only the rows `1989` to `1999` exist, and row `1999` is selected and visible. A list without a fixed `Height` that is the content of an outer `ScrollViewer` measures its template's `ScrollViewer` with an unbounded height, so the outer viewport applies, as in the paragraph above.
+
+```csharp
+ListBox listBox = new()
+{
+    Height = 200,
+    ItemsPanel = new Cerneala.UI.Layout.Panels.VirtualizingStackPanel()
+};
+listBox.SetItems(Enumerable.Range(0, 2000).Select(index => index.ToString()));
+```
+
+In such a list the keys and `ScrollIntoView` also reach rows that have no container yet, as WPF's `VirtualizingStackPanel.BringIndexIntoView`. End, Home, PageUp, PageDown, the arrow keys, and `ScrollIntoView` first scroll to the place that the panel estimates for the row: above the viewport the row goes to the top, below it to the bottom. After the next arrange, which creates the row, the list scrolls it to its exact place, and a key gives it the focus then. For example, in a list 100 pixels high with 10,000 rows 10 pixels high, `ScrollIntoView("5000")` and one frame show row `5000` inside the viewport, and at most 20 rows exist.
 
 ### Selection modes
 

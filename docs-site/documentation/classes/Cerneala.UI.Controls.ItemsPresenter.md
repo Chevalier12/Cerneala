@@ -82,7 +82,24 @@ Setting `ItemsOwner` to a different value, including `null`, immediately gives b
 
 Changing `Items`, `ItemTemplate`, or `ItemsPanel` marks the presentation dirty and refreshes the panel content. When the realization window moves, the presenter synchronizes children by reference: overlapping containers remain attached, exiting containers are removed, and entering containers are inserted or moved into order. `MarkItemsDirty()` explicitly marks the presenter dirty, increments layout and render versions, and invalidates measure, arrange, render, and hit testing.
 
-Fixed-extent virtualization can be driven explicitly through `VirtualizationContext`. When owned by an `ItemsControl`, a panel implementing `IItemsVirtualizingPanel` instead receives automatic viewport updates from the surrounding `ScrollViewer`; `VirtualizingStackPanel` uses that path for variable-height items.
+Fixed-extent virtualization can be driven explicitly through `VirtualizationContext`, which wins over the automatic viewports below. When owned by an `ItemsControl`, a panel implementing `IItemsVirtualizingPanel` instead receives automatic viewport updates from a `ScrollViewer`; `VirtualizingStackPanel` uses that path for variable-height items. As in WPF, two shapes give the viewport:
+
+- The `ScrollViewer` whose content is the owning `ItemsControl`. The viewport starts below the control's top `BorderThickness` and `Padding`, where the rows start.
+- The `ScrollViewer` whose content is this presenter, such as `PART_ScrollViewer` of the `ListBox` template, while that `ScrollViewer` was measured with a finite height. A `ScrollContentPresenter` that is not in a `ScrollViewer` uses its own available height. When both shapes apply, this one wins; when it stops, for example because the `ScrollViewer` is measured with an unbounded height, the first shape applies again.
+
+```csharp
+// First shape: the viewer's content is the ItemsControl.
+ScrollViewer viewer = new()
+{
+    Height = 200,
+    Content = new ItemsControl { ItemsPanel = new VirtualizingStackPanel() }
+};
+
+// Second shape: the ListBox template's ScrollViewer has the ItemsPresenter as content.
+ListBox listBox = new() { Height = 200, ItemsPanel = new VirtualizingStackPanel() };
+```
+
+With 2,000 rows 20 pixels high, the 200-pixel viewport shows 10 rows, and the `ListBox` above realizes 11 to 13 rows while the user scrolls with the mouse wheel and presses End, instead of all 2,000.
 
 When the presenter refreshes items with a non-null `VirtualizationContext` and its resolved panel is a `VirtualizingStackPanel`, it copies the context to that panel's `VirtualizationContext`. The panel keeps that copy only while the presenter supplies it. Setting the presenter's `VirtualizationContext` to `null` immediately sets the panel's `VirtualizationContext` to `null` too, and the panel returns to its own realization: it follows an automatic viewport when one was pushed, and otherwise realizes and stacks every item. For example, a presenter with 100 items and the context `new VirtualizationContext(100, 10, 30, 0, CacheItems: 1)` realizes 4 children in a `VirtualizingStackPanel` with no `ScrollViewer`; after `VirtualizationContext = null`, `MarkItemsDirty()`, and the next measure, the panel's `VirtualizationContext` is `null` and it realizes all 100. When the resolved panel changes, for example after `ItemsPanel` changes, the next refresh clears the previous panel's copy in the same way, whether the new panel is another `VirtualizingStackPanel` or a non-virtualizing panel such as `StackPanel`. For example, after the presenter above changes `ItemsPanel` from that `VirtualizingStackPanel` to a `StackPanel` and measures again, the old panel's `VirtualizationContext` is `null`, and the old panel placed in another presenter with no context and 2000 px of height realizes all 100 items. A context assigned directly to a panel that the presenter never wrote to is left unchanged.
 

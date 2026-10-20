@@ -664,6 +664,153 @@ public sealed class ListBoxTests
         Assert.Contains(firstVisibleRow, listBox.ItemContainerGenerator.RealizedContainers.Keys);
     }
 
+    // As in WPF, where the panel of the ItemsPresenter in the template's ScrollViewer gets that ScrollViewer's
+    // viewport, a ListBox 100 pixels high with a VirtualizingStackPanel realizes only the rows its own ScrollViewer
+    // shows, before and after End scrolls to the last of its 10,000 rows (#702).
+    [Fact]
+    public void FixedHeightListBoxVirtualizesThroughTheScrollViewerOfItsTemplate()
+    {
+        (UIRoot root, ListBox listBox) = CreateVirtualizingWindowListBox();
+
+        Assert.InRange(listBox.ItemContainerGenerator.RealizedContainers.Count, 1, 20);
+        Assert.Contains(0, listBox.ItemContainerGenerator.RealizedContainers.Keys);
+
+        ElementInputBridge bridge = new();
+        ClickCenter(root, bridge, Row(listBox, 0));
+        PressKey(root, bridge, InputKey.End);
+
+        Assert.Equal(9999, listBox.SelectedIndex);
+        Assert.Contains(9999, listBox.ItemContainerGenerator.RealizedContainers.Keys);
+        Assert.InRange(listBox.ItemContainerGenerator.RealizedContainers.Count, 1, 20);
+    }
+
+    // As in WPF, where an unbounded viewport realizes every item, a ListBox in a StackPanel that loses its fixed height,
+    // or whose ScrollViewer stops scrolling vertically, gets no viewport from its own ScrollViewer any more, and no
+    // outer ScrollViewer gives one, so its VirtualizingStackPanel realizes all 100 rows, not the window of the old
+    // 100-pixel viewport (#702).
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ListBoxWhoseScrollViewerStopsGivingAViewportRealizesEveryRow(bool disableVerticalScrolling)
+    {
+        ListBox listBox = new()
+        {
+            Width = 150,
+            Height = 100,
+            ItemsPanel = new Cerneala.UI.Layout.Panels.VirtualizingStackPanel(),
+            ItemContainerAspect = RowHeight(10),
+            ItemsSource = Enumerable.Range(0, 100).Select(index => index.ToString()).ToArray()
+        };
+        Cerneala.UI.Layout.Panels.StackPanel stack = new();
+        stack.VisualChildren.Add(listBox);
+        UIRoot root = new(360, 300);
+        root.VisualChildren.Add(new Window { Content = stack, Width = 360, Height = 300 });
+        root.ProcessFrame();
+        Assert.InRange(listBox.ItemContainerGenerator.RealizedContainers.Count, 1, 20);
+
+        if (disableVerticalScrolling)
+        {
+            ListBoxScrollViewer(listBox).VerticalScrollBarVisibility = ScrollBarVisibility.Disabled;
+        }
+        else
+        {
+            listBox.Height = float.NaN;
+        }
+
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.Equal(100, listBox.ItemContainerGenerator.RealizedContainers.Count);
+    }
+
+    // A ListBox 100 pixels high inside an outer ScrollViewer has a finite viewport of its own, so its own ScrollViewer,
+    // not the outer one, decides which rows are realized: after End and a scroll of the outer viewer, the last row
+    // stays realized and only a few rows are (#702).
+    [Fact]
+    public void FixedHeightListBoxInsideAnOuterScrollViewerVirtualizesThroughItsOwnScrollViewer()
+    {
+        ListBox listBox = CreateVirtualizingRowListBox();
+        Cerneala.UI.Layout.Panels.StackPanel stack = new();
+        stack.VisualChildren.Add(new Border { Height = 150 });
+        stack.VisualChildren.Add(listBox);
+        stack.VisualChildren.Add(new Border { Height = 200 });
+        ScrollViewer outer = new() { Content = stack, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+        UIRoot root = new(360, 300);
+        root.VisualChildren.Add(new Window { Content = outer, Width = 360, Height = 300 });
+        root.ProcessFrame();
+
+        Assert.InRange(listBox.ItemContainerGenerator.RealizedContainers.Count, 1, 20);
+
+        ElementInputBridge bridge = new();
+        ClickCenter(root, bridge, Row(listBox, 0));
+        PressKey(root, bridge, InputKey.End);
+        Assert.Contains(9999, listBox.ItemContainerGenerator.RealizedContainers.Keys);
+
+        outer.ScrollInfo.SetVerticalOffset(100);
+        root.ProcessFrame();
+
+        Assert.Equal(100, outer.Presenter.VerticalOffset);
+        Assert.Equal(9999, listBox.SelectedIndex);
+        Assert.Contains(9999, listBox.ItemContainerGenerator.RealizedContainers.Keys);
+        Assert.InRange(listBox.ItemContainerGenerator.RealizedContainers.Count, 1, 20);
+    }
+
+    // As WPF's ListBox, which brings a row without a container into view through VirtualizingStackPanel's
+    // BringIndexIntoView, End and Home reach rows that are not realized: the row is realized, selected, focused and
+    // inside the viewport, and only a few rows are realized (#702).
+    [Fact]
+    public void EndAndHomeReachRowsThatAreNotRealizedInAVirtualizedListBox()
+    {
+        (UIRoot root, ListBox listBox) = CreateVirtualizingWindowListBox();
+        ElementInputBridge bridge = new();
+        ClickCenter(root, bridge, Row(listBox, 0));
+
+        PressKey(root, bridge, InputKey.End);
+
+        AssertFocusedSelectedRow(listBox, 9999);
+        Assert.InRange(listBox.ItemContainerGenerator.RealizedContainers.Count, 1, 20);
+
+        PressKey(root, bridge, InputKey.Home);
+
+        AssertFocusedSelectedRow(listBox, 0);
+        Assert.InRange(listBox.ItemContainerGenerator.RealizedContainers.Count, 1, 20);
+    }
+
+    // As WPF's page navigation, the second PageDown moves one viewport further, to rows that are not realized yet: the
+    // viewport shows about 10 rows of 10 pixels, so each PageDown moves the selection by about 10 rows (#702).
+    [Fact]
+    public void PageDownMovesByAViewportIntoRowsThatAreNotRealizedInAVirtualizedListBox()
+    {
+        (UIRoot root, ListBox listBox) = CreateVirtualizingWindowListBox();
+        ElementInputBridge bridge = new();
+        ClickCenter(root, bridge, Row(listBox, 0));
+
+        PressKey(root, bridge, InputKey.PageDown);
+        int first = listBox.SelectedIndex;
+        AssertFocusedSelectedRow(listBox, first);
+        Assert.InRange(first, 7, 10);
+
+        PressKey(root, bridge, InputKey.PageDown);
+        int second = listBox.SelectedIndex;
+        AssertFocusedSelectedRow(listBox, second);
+        Assert.InRange(second - first, 7, 11);
+        Assert.InRange(listBox.ItemContainerGenerator.RealizedContainers.Count, 1, 20);
+    }
+
+    // ScrollIntoView of an item whose row is not realized scrolls the row into the viewport and realizes it (#702).
+    [Fact]
+    public void ScrollIntoViewReachesARowThatIsNotRealizedInAVirtualizedListBox()
+    {
+        (UIRoot root, ListBox listBox) = CreateVirtualizingWindowListBox();
+        Assert.DoesNotContain(5000, listBox.ItemContainerGenerator.RealizedContainers.Keys);
+
+        listBox.ScrollIntoView("5000");
+        root.ProcessFrame();
+
+        AssertRowInsideViewport(listBox, 5000);
+        Assert.InRange(listBox.ItemContainerGenerator.RealizedContainers.Count, 1, 20);
+    }
+
     // As WPF's ListBox.ScrollIntoView, a row below the viewport scrolls up until its bottom is at the bottom of the
     // viewport. The viewport is 100 pixels high and the rows 20, so row 15 ends at 320 and the offset becomes 220 (#680).
     [Fact]
@@ -1474,6 +1621,29 @@ public sealed class ListBoxTests
             root.ProcessFrame();
         }
 
+        return (root, listBox);
+    }
+
+    // A ListBox 150 wide and 100 high with a VirtualizingStackPanel and 10,000 rows "0", "1", ... of 10 pixels.
+    private static ListBox CreateVirtualizingRowListBox()
+    {
+        return new ListBox
+        {
+            Width = 150,
+            Height = 100,
+            ItemsPanel = new Cerneala.UI.Layout.Panels.VirtualizingStackPanel(),
+            ItemContainerAspect = RowHeight(10),
+            ItemsSource = Enumerable.Range(0, 10_000).Select(index => index.ToString()).ToArray()
+        };
+    }
+
+    // That ListBox alone in a window, after the first layout.
+    private static (UIRoot Root, ListBox ListBox) CreateVirtualizingWindowListBox()
+    {
+        ListBox listBox = CreateVirtualizingRowListBox();
+        UIRoot root = new(360, 300);
+        root.VisualChildren.Add(new Window { Content = listBox, Width = 360, Height = 300 });
+        root.ProcessFrame();
         return (root, listBox);
     }
 
