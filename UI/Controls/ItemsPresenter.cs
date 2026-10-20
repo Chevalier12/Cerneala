@@ -167,7 +167,8 @@ public class ItemsPresenter : Control
 
     // The hosting scroll presenter no longer gives this presenter a finite viewport, for example because it was
     // measured with an unbounded height inside an outer viewer, so the owner viewport applies again. Without an owner
-    // viewport no scroll presenter limits the items any more, so the panel stops virtualizing and realizes every item.
+    // viewport no scroll presenter limits the items any more, so the panel stops virtualizing and realizes every item,
+    // through the IItemsVirtualizingPanel contract, so a custom virtualizing panel does it like a VirtualizingStackPanel.
     internal bool ClearHostViewport()
     {
         if (hostViewport is null)
@@ -181,7 +182,14 @@ public class ItemsPresenter : Control
             return ApplyAutomaticViewport();
         }
 
-        if (ResolveItemsPanel() is not VirtualizingStackPanel panel || !panel.ClearViewport())
+        if (ResolveItemsPanel() is not IItemsVirtualizingPanel panel)
+        {
+            return false;
+        }
+
+        RealizationWindow previous = panel.RealizationWindow;
+        panel.ClearViewport();
+        if (panel.RealizationWindow == previous)
         {
             return false;
         }

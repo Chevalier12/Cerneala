@@ -723,6 +723,36 @@ public sealed class ListBoxTests
         Assert.Equal(100, listBox.ItemContainerGenerator.RealizedContainers.Count);
     }
 
+    // A panel that virtualizes only through the public IItemsVirtualizingPanel contract loses the viewport of the
+    // ListBox's own ScrollViewer like a VirtualizingStackPanel when the ListBox in a StackPanel loses its fixed height:
+    // all 100 rows are realized, not the rows of the old 100-pixel viewport (#702).
+    [Fact]
+    public void ListBoxWithACustomVirtualizingPanelRealizesEveryRowWhenItLosesItsFixedHeight()
+    {
+        FixedRowVirtualizingPanel panel = new();
+        ListBox listBox = new()
+        {
+            Width = 150,
+            Height = 100,
+            ItemsPanel = panel,
+            ItemContainerAspect = RowHeight(10),
+            ItemsSource = Enumerable.Range(0, 100).Select(index => index.ToString()).ToArray()
+        };
+        Cerneala.UI.Layout.Panels.StackPanel stack = new();
+        stack.VisualChildren.Add(listBox);
+        UIRoot root = new(360, 300);
+        root.VisualChildren.Add(new Window { Content = stack, Width = 360, Height = 300 });
+        root.ProcessFrame();
+        Assert.True(panel.ViewportUpdates > 0);
+        Assert.InRange(listBox.ItemContainerGenerator.RealizedContainers.Count, 1, 20);
+
+        listBox.Height = float.NaN;
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.Equal(100, listBox.ItemContainerGenerator.RealizedContainers.Count);
+    }
+
     // A ListBox 100 pixels high inside an outer ScrollViewer has a finite viewport of its own, so its own ScrollViewer,
     // not the outer one, decides which rows are realized: after End and a scroll of the outer viewer, the last row
     // stays realized and only a few rows are (#702).
@@ -1821,6 +1851,61 @@ public sealed class ListBoxTests
         }
 
         return labels;
+    }
+
+    // A panel that virtualizes through the public IItemsVirtualizingPanel contract alone: rows 10 pixels high, the
+    // window of the last viewport, and every item while it has no viewport.
+    private sealed class FixedRowVirtualizingPanel : Cerneala.UI.Layout.Panels.Panel, IItemsVirtualizingPanel
+    {
+        private const float RowExtent = 10;
+        private ItemsVirtualizationViewport? viewport;
+
+        public int ViewportUpdates { get; private set; }
+
+        public RealizationWindow RealizationWindow => viewport is { } current
+            ? RealizationWindow.Create(
+                current.ItemCount,
+                (int)(current.ScrollOffset / RowExtent),
+                (int)MathF.Ceiling((current.ScrollOffset + current.ViewportExtent) / RowExtent))
+            : new RealizationWindow(0, int.MaxValue);
+
+        public float TotalExtent => (viewport?.ItemCount ?? VisualChildren.Count) * RowExtent;
+
+        public void UpdateViewport(ItemsVirtualizationViewport next)
+        {
+            viewport = next;
+            ViewportUpdates++;
+            Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange, "test viewport");
+        }
+
+        public void ClearViewport()
+        {
+            viewport = null;
+            Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange, "test viewport cleared");
+        }
+
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            foreach (UIElement child in VisualChildren)
+            {
+                child.Measure(new MeasureContext(new LayoutSize(context.AvailableSize.Width, float.PositiveInfinity), context.Rounding));
+            }
+
+            return new LayoutSize(0, TotalExtent);
+        }
+
+        protected override LayoutRect ArrangeCore(ArrangeContext context)
+        {
+            int start = viewport is null ? 0 : RealizationWindow.StartIndex;
+            for (int index = 0; index < VisualChildren.Count; index++)
+            {
+                VisualChildren[index].Arrange(new ArrangeContext(
+                    new LayoutRect(context.FinalRect.X, context.FinalRect.Y + ((start + index) * RowExtent), context.FinalRect.Width, RowExtent),
+                    context.Rounding));
+            }
+
+            return context.FinalRect;
+        }
     }
 
     private sealed class Marker(string label) : UIElement

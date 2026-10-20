@@ -7,4 +7,7 @@ public interface IItemsVirtualizingPanel
     float TotalExtent { get; }
 
     void UpdateViewport(ItemsVirtualizationViewport viewport);
+
+    // The reverse of UpdateViewport: the panel stops virtualizing and realizes every item.
+    void ClearViewport();
 }

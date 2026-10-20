@@ -113,18 +113,17 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
 
     // The reverse of UpdateViewport, for a scroll presenter that stops giving the only viewport: as in WPF, where an
     // unbounded viewport realizes every item, the panel realizes and stacks every child again. The recorded heights
-    // still belong to their items, so they stay. False when the panel had no viewport.
-    internal bool ClearViewport()
+    // still belong to their items, so they stay. A panel without a viewport keeps its cached measure.
+    public void ClearViewport()
     {
         if (automaticViewport is null)
         {
-            return false;
+            return;
         }
 
         automaticViewport = null;
         automaticWindow = RealizationWindow.Empty;
         IncrementLayoutVersion();
-        return true;
     }
 
     // A recorded height belongs to one item, so it follows that item when the collection changes.
