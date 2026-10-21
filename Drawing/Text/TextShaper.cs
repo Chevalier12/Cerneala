@@ -49,6 +49,20 @@ public sealed class TextShaper
         return true;
     }
 
+    public bool TryMeasureDecorations(DrawTextRun textRun, out TextDecorationMetrics metrics)
+    {
+        ArgumentNullException.ThrowIfNull(textRun);
+
+        if (textRun.Font is not SkiaFont skiaFont)
+        {
+            metrics = default;
+            return false;
+        }
+
+        metrics = SkiaTextRendering.MeasureDecorations(skiaFont, textRun.Size);
+        return true;
+    }
+
     public bool TryMeasureCaretVerticalMetrics(DrawTextRun textRun, out TextCaretVerticalMetrics metrics)
     {
         ArgumentNullException.ThrowIfNull(textRun);

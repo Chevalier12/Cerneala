@@ -67,6 +67,12 @@ The cache key includes the text, resolved font identity, font size, wrapping mod
 
 Calls to `Measure` lock around cache access for the `TextMeasurer` instance. The exposed `LayoutCache` object can still be accessed directly by callers, so direct cache operations should be coordinated by the caller when shared across threads.
 
+`MeasureParagraph` lays out a list of `TextSpan` values as one paragraph through the Drawing text layout engine (`DrawTextLayout`). It supports several fonts and sizes on one line, alignment, a line limit, a line height, and `TextWrapping.WrapWithOverflow`. This is the path of `TextBlock`. The paragraph layouts are cached in the same `TextLayoutCache` as the results of `Measure`, but in their own store, so the existing `Measure` overloads and their results are unchanged.
+
+The key of a paragraph layout holds the wrapping, trimming, scale, normalized width and height, the options, and, for every span, its text, the identity of its resolved font, and its font size. The brush, the foreground, and the decorations of a span are not in the key, so paragraphs that differ only in them return the same `TextParagraphLayout` instance. A different weight, style, stretch, family, size, or a different split of the same text into spans gives a different layout.
+
+`MeasureParagraph` normalizes the width before it builds the key. When the aspect is `NoWrap`, has no trimming, and the alignment is `Left`, the width is not used and every available width shares one layout. In every other case a positive finite width is kept, because it is the width the lines wrap, align, or trim to; positive infinity stays unconstrained, and a width that is not positive or is `NaN` becomes `0`. The available height is used only when trimming is not `None`; the paragraph keeps at least its first line, also when the height is smaller than one line. Without trimming, any height gives the same layout.
+
 `TextMeasurer` does not render text. It prepares measurement data for layout and rendering code.
 
 ## Constructors
@@ -89,6 +95,7 @@ Calls to `Measure` lock around cache access for the `TextMeasurer` instance. The
 | --- | --- | --- |
 | `Measure(string text, TextAspect aspect, float availableWidth)` | `TextMeasureResult` | Measures text for the supplied text aspect and available width, using the layout cache when an equivalent measurement already exists. |
 | `Measure(string text, TextAspect aspect, LayoutSize availableSize)` | `TextMeasureResult` | Measures text against width and height, including horizontal and final-visible-line ellipsis behavior. |
+| `MeasureParagraph(IReadOnlyList<TextSpan> spans, TextAspect paragraphAspect, TextParagraphOptions options, LayoutSize availableSize)` | `TextParagraphLayout` | Lays out the spans as one paragraph, with alignment, line limit, line height and mixed fonts, and caches the layout. |
 
 ## Method Details
 
@@ -127,6 +134,59 @@ public virtual TextMeasureResult Measure(string text, TextAspect aspect, LayoutS
 
 `availableSize.Width` controls wrapping and horizontal collapse. `availableSize.Height` limits visible lines only when trimming is not `None`; at least the first line remains visible, matching the WPF `TextBlock` height-overflow contract.
 
+### MeasureParagraph
+
+```csharp
+public virtual TextParagraphLayout MeasureParagraph(
+    IReadOnlyList<TextSpan> spans,
+    TextAspect paragraphAspect,
+    TextParagraphOptions options,
+    LayoutSize availableSize)
+```
+
+#### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `spans` | `IReadOnlyList<TextSpan>` | The pieces of text, each with its own `TextAspect`. Each span resolves its own font from its aspect, using the scale of `paragraphAspect`; a span whose aspect has a `FontResourceId` ignores weight, style, and stretch. |
+| `paragraphAspect` | `TextAspect` | Gives the wrapping, trimming, and scale of the whole paragraph. The wrapping and trimming of the aspects of the spans are not used. |
+| `options` | `TextParagraphOptions` | Alignment, maximum lines, line height, and line stacking strategy. |
+| `availableSize` | `LayoutSize` | The width the lines wrap, align, or trim to, and, with trimming, the height that limits the visible lines. |
+
+#### Returns
+
+`TextParagraphLayout`
+
+The measured size (the widest line, the height of the lines), the line count, and the Drawing text layout. No spans give size `0`, `0` and no lines; one empty span gives width `0` and one line of the height of the font.
+
+#### Exceptions
+
+| Exception | Condition |
+| --- | --- |
+| `ArgumentNullException` | `spans` or `options` is `null`. |
+
+#### Example
+
+```csharp
+using Cerneala.Drawing;
+using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
+using Cerneala.UI.Text;
+
+SolidColorBrush black = new(Color.Black);
+TextAspect regular = new("Segoe UI", 16, TextWrapping.Wrap, foreground: black);
+TextAspect bold = new("Segoe UI", 16, TextWrapping.Wrap, foreground: black, fontWeight: FontWeight.Bold);
+
+TextParagraphLayout paragraph = TextMeasurer.Default.MeasureParagraph(
+    [new TextSpan("Hello ", regular), new TextSpan("world", bold)],
+    regular,
+    new TextParagraphOptions(TextAlignment.Center, MaxLines: 2),
+    new LayoutSize(120, float.PositiveInfinity));
+
+LayoutSize size = paragraph.Size;
+int lines = paragraph.LineCount;
+```
+
 ## Applies To
 
 Cerneala UI text layout services in the `Cerneala` project.
@@ -138,3 +198,6 @@ Cerneala UI text layout services in the `Cerneala` project.
 - `TextAspect`
 - `LineBreakService`
 - `FontResolver`
+- `TextSpan`
+- `TextParagraphOptions`
+- `TextParagraphLayout`

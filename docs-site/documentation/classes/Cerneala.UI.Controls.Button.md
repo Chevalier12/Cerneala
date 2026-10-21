@@ -90,6 +90,8 @@ Fallback rendering draws the resolved background brush, then the border, then no
 
 When `ComponentTemplate` supplies a template child, layout is delegated to the base template path and `Button` skips its fallback rendering. Template-based buttons commonly bind `Content`, `Background`, `BorderBrush`, `BorderThickness`, and `Padding` into the template root or presenter.
 
+The fallback text aspect of string content is built from `FontFamily`, `FontSize`, `FontWeight`, `FontStyle`, `FontStretch`, and `Foreground`. For example, a `Button` with `FontWeight = FontWeight.Bold` and the string content `"OK"` measures and draws `"OK"` with the bold face of its font family. The string content is still a single run of text measured by `TextMeasurer.Measure`; it does not use the inline or paragraph options of `TextBlock`.
+
 `TextMeasurer` and `TextRenderer` default to `TextMeasurer.Default` and `TextRenderer.Default`. Assigning `null` to either property throws `ArgumentNullException`. Changing `TextMeasurer` invalidates measure and render; changing `TextRenderer` invalidates render.
 
 `AutomationPeer.Create(button)` creates a `ButtonAutomationPeer`, which reports `SemanticsRole.Button` and resolves its name from an explicit accessible name or supported button content text. `RepeatButton` gets the same peer. `ToggleButton`, `CheckBox`, and `RadioButton` derive from `Button` but get the derived `ToggleButtonAutomationPeer`.
@@ -122,6 +124,9 @@ When `ComponentTemplate` supplies a template child, layout is delegated to the b
 | `Padding` | `Thickness` | `Control` | Gets or sets the padding around fallback content. |
 | `FontFamily` | `string` | `Control` | Gets or sets the inherited font family used to create the fallback text aspect. |
 | `FontSize` | `float` | `Control` | Gets or sets the inherited font size used to create the fallback text aspect. |
+| `FontWeight` | `FontWeight` | `Control` | Gets or sets the inherited font weight used to create the fallback text aspect. |
+| `FontStyle` | `FontStyle` | `Control` | Gets or sets the inherited font style used to create the fallback text aspect. |
+| `FontStretch` | `FontStretch` | `Control` | Gets or sets the inherited font stretch used to create the fallback text aspect. |
 | `HorizontalContentAlignment` | `HorizontalAlignment` | `Control` | Gets or sets the horizontal placement of the content inside `Padding + BorderThickness`. Defaults to `Center` on `Button`. |
 | `VerticalContentAlignment` | `VerticalAlignment` | `Control` | Gets or sets the vertical placement of the content inside `Padding + BorderThickness`. Defaults to `Center` on `Button`. |
 | `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the component template. When present, the template child handles layout and rendering. |
@@ -149,6 +154,9 @@ When `ComponentTemplate` supplies a template child, layout is delegated to the b
 | `PaddingProperty` | `UiProperty<Thickness>` | `Control` | Identifies the `Padding` UI property. |
 | `FontFamilyProperty` | `UiProperty<string>` | `Control` | Identifies the inherited `FontFamily` UI property. |
 | `FontSizeProperty` | `UiProperty<float>` | `Control` | Identifies the inherited `FontSize` UI property. |
+| `FontWeightProperty` | `UiProperty<FontWeight>` | `Control` | Identifies the inherited `FontWeight` UI property. |
+| `FontStyleProperty` | `UiProperty<FontStyle>` | `Control` | Identifies the inherited `FontStyle` UI property. |
+| `FontStretchProperty` | `UiProperty<FontStretch>` | `Control` | Identifies the inherited `FontStretch` UI property. |
 | `HorizontalContentAlignmentProperty` | `UiProperty<HorizontalAlignment>` | `Control` | Identifies the `HorizontalContentAlignment` UI property. |
 | `VerticalContentAlignmentProperty` | `UiProperty<VerticalAlignment>` | `Control` | Identifies the `VerticalContentAlignment` UI property. |
 | `ComponentTemplateProperty` | `UiProperty<ComponentTemplate?>` | `Control` | Identifies the `ComponentTemplate` UI property. |

@@ -46,10 +46,13 @@ catch (ArgumentException ex)
 | --- | --- |
 | `NoWrap` | One line per paragraph. A line break in the text still starts a new line. |
 | `Wrap` | Breaks after the last break opportunity, such as a space, that fits the width. A word wider than the width is split after the last character that fits. If not even one character fits, that character gets its own line. |
+| `WrapWithOverflow` | Breaks at the same break opportunities as `Wrap`, but a word that is wider than the width is not split: it stays whole on its line, and the line overflows the width, up to the next break opportunity. |
+
+For example, with the text `"abcdefghij kl"` and a width that fits four characters, `Wrap` gives the lines `"abcd"`, `"efgh"`, `"ij"`, `"kl"`, and `WrapWithOverflow` gives `"abcdefghij"`, `"kl"`. A hyphen is a break opportunity too: `"abcdefgh-ijkl mn"` at the same width gives `"abcdefgh-"`, `"ijkl"`, `"mn"`. Text with no break opportunity at all is one line. In a `TextBlock` the measured width of an overflowing line is larger than the available width.
 
 Wrapping is off when the available width is infinite, zero, or negative.
 
-`TextBox.TextWrapping` uses the same enum and also defaults to `NoWrap`; a change invalidates measure and render. A `TextBox` does not pass the value through `TextAspect.Wrapping`: its text view breaks the lines itself with the same Unicode line breaker. `Wrap` breaks at word boundaries at the width of the text view, splits a word that is wider than the width, and keeps the trailing spaces of a wrapped line on that line, so `TextBox.GetLineText(0)` of `"one two three"` is `"one "` at `Width = 60`. While `Wrap` is set, the horizontal scroll bar of the text box is `Disabled`, so the text does not scroll horizontally. `NoWrap` breaks lines only at line break characters, which a text box keeps only with `AcceptsReturn`:
+`TextBox.TextWrapping` uses the same enum and also defaults to `NoWrap`; a change invalidates measure and render. A `TextBox` does not pass the value through `TextAspect.Wrapping`: its text view breaks the lines itself with the same Unicode line breaker. `Wrap` breaks at word boundaries at the width of the text view, splits a word that is wider than the width, and keeps the trailing spaces of a wrapped line on that line, so `TextBox.GetLineText(0)` of `"one two three"` is `"one "` at `Width = 60`. While `Wrap` is set, the horizontal scroll bar of the text box is `Disabled`, so the text does not scroll horizontally. `WrapWithOverflow` breaks the lines of a text box at the same width but keeps a word that is wider than the text view whole on its line; only `Wrap` disables the horizontal scroll bar, so that line scrolls horizontally to the caret. `NoWrap` breaks lines only at line break characters, which a text box keeps only with `AcceptsReturn`:
 
 ```csharp
 using Cerneala.UI.Controls;
@@ -68,6 +71,7 @@ In `.crn` markup the value is the member name, matched without regard to case, f
 | --- | ---: | --- |
 | `NoWrap` | `0` | Keeps each paragraph on one line. |
 | `Wrap` | `1` | Breaks lines at word boundaries, splitting words that do not fit. |
+| `WrapWithOverflow` | `2` | Breaks lines at word boundaries, keeping a word that does not fit whole on its line so that the line overflows. |
 
 ## Applies to
 

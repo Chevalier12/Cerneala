@@ -67,6 +67,16 @@ if (TextShaper.Default.TryMeasureCaretVerticalMetrics(textRun, out TextCaretVert
 
 `TryMeasureLineHeight`, `TryMeasureBaseline`, and `TryMeasureCaretVerticalMetrics` read the cached line metrics for the run's Skia typeface at the run's size. The metrics come from OpenType horizontal font extents when available and fall back to Skia font metrics otherwise. `TryMeasureBaseline` returns the baseline distance, `TryMeasureLineHeight` returns the line height, and caret metrics currently use an offset of `0` with that line height.
 
+`TryMeasureDecorations` returns a `TextDecorationMetrics` from the Skia font metrics of the run's typeface at the run's size, cached for each typeface and size. The underline offset is the distance from the baseline down to the top of the underline stroke, and the strikethrough offset is the distance from the baseline to the bottom of the strikethrough stroke (negative when above the baseline). When the font reports no position, or a thickness that is missing or not greater than zero, the matching value of `TextDecorationMetrics.CreateFallback(run.Size)` is used. For a non-Skia font it returns `false` and sets `metrics` to `default`. `TextRenderer.RenderParagraph` calls it to place the decorations of a `TextSpan`.
+
+```csharp
+if (TextShaper.Default.TryMeasureDecorations(textRun, out TextDecorationMetrics decorations))
+{
+    float underlineTop = baselineY + decorations.UnderlineOffset;
+    float strikeBottom = baselineY + decorations.StrikethroughOffset;
+}
+```
+
 All public methods throw `ArgumentNullException` when `textRun` is `null`. For non-Skia fonts, the methods return `false` and assign `default` or `0` to the `out` value.
 
 ## Constructors
@@ -86,6 +96,7 @@ All public methods throw `ArgumentNullException` when `textRun` is `null`. For n
 | `TryMeasureLineHeight(DrawTextRun textRun, out float lineHeight)` | `bool` | Attempts to read the line height for the run's Skia typeface and size. |
 | `TryMeasureBaseline(DrawTextRun textRun, out float baseline)` | `bool` | Attempts to read the baseline distance for the run's Skia typeface and size. |
 | `TryMeasureCaretVerticalMetrics(DrawTextRun textRun, out TextCaretVerticalMetrics metrics)` | `bool` | Attempts to read caret metrics using a zero offset and the run's line height. |
+| `TryMeasureDecorations(DrawTextRun textRun, out TextDecorationMetrics metrics)` | `bool` | Attempts to read the underline and strikethrough position and thickness for the run's Skia typeface and size. |
 
 ## Exceptions
 | Member | Exception | Condition |
@@ -94,6 +105,7 @@ All public methods throw `ArgumentNullException` when `textRun` is `null`. For n
 | `TryMeasureLineHeight(DrawTextRun, out float)` | `ArgumentNullException` | `textRun` is `null`. |
 | `TryMeasureBaseline(DrawTextRun, out float)` | `ArgumentNullException` | `textRun` is `null`. |
 | `TryMeasureCaretVerticalMetrics(DrawTextRun, out TextCaretVerticalMetrics)` | `ArgumentNullException` | `textRun` is `null`. |
+| `TryMeasureDecorations(DrawTextRun, out TextDecorationMetrics)` | `ArgumentNullException` | `textRun` is `null`. |
 | `TryShape`, `TryMeasureLineHeight`, `TryMeasureBaseline`, `TryMeasureCaretVerticalMetrics` | `InvalidOperationException` | The run's `SkiaFont` typeface has no font data (empty stream). |
 | `TryMeasureCaretVerticalMetrics(DrawTextRun, out TextCaretVerticalMetrics)` | `ArgumentOutOfRangeException` | The measured line height is zero, negative, or not finite. |
 
@@ -106,3 +118,4 @@ Cerneala drawing text shaping and UI text layout paths that use Skia-backed font
 - `Cerneala.Drawing.Text.SkiaTextRasterizer`
 - `Cerneala.Drawing.Text.TextShapeResult`
 - `Cerneala.Drawing.Text.TextCaretVerticalMetrics`
+- `Cerneala.Drawing.Text.TextDecorationMetrics`

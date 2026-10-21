@@ -158,14 +158,40 @@ public sealed partial class UiMarkupGenerator
             MarkupAttribute attribute,
             ITypeSymbol enumType)
         {
-            string value = attribute.Value.Trim();
-            IFieldSymbol? member = enumType.GetMembers()
-                .OfType<IFieldSymbol>()
-                .FirstOrDefault(candidate => candidate.HasConstantValue &&
-                    string.Equals(candidate.Name, value, StringComparison.OrdinalIgnoreCase));
-            return member is null
-                ? Invalid(attribute, elementName, propertyName, attribute.Value)
-                : enumType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + "." + member.Name;
+            string? code = EnumExpression(enumType, attribute.Value, ignoreCase: true);
+            return code ?? Invalid(attribute, elementName, propertyName, attribute.Value);
+        }
+
+        // The C# expression of an enum markup value, or null when a name is not a member. A [Flags] enum also accepts a
+        // comma-separated list of names, which is combined as (E.A | E.B); a list is invalid for an enum without [Flags].
+        private static string? EnumExpression(ITypeSymbol enumType, string rawValue, bool ignoreCase)
+        {
+            StringComparison comparison = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+            string typeName = enumType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            string[] names = rawValue.Contains(',') && IsFlagsEnum(enumType) ? rawValue.Split(',') : [rawValue];
+            List<string> members = [];
+            foreach (string name in names)
+            {
+                string trimmed = name.Trim();
+                IFieldSymbol? member = enumType.GetMembers()
+                    .OfType<IFieldSymbol>()
+                    .FirstOrDefault(candidate => candidate.HasConstantValue &&
+                        string.Equals(candidate.Name, trimmed, comparison));
+                if (member is null)
+                {
+                    return null;
+                }
+
+                members.Add(typeName + "." + member.Name);
+            }
+
+            return members.Count == 1 ? members[0] : "(" + string.Join(" | ", members) + ")";
+        }
+
+        private static bool IsFlagsEnum(ITypeSymbol enumType)
+        {
+            return enumType.GetAttributes().Any(attribute =>
+                attribute.AttributeClass?.ToDisplayString() == "System.FlagsAttribute");
         }
 
         private static string Literal(string value)

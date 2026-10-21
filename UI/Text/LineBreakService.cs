@@ -18,9 +18,7 @@ public sealed class LineBreakService
         IReadOnlyList<UnicodeLineSegment> segments = UnicodeLineBreakEngine.BreakLines(
             text,
             availableWidth,
-            aspect.Wrapping == TextWrapping.NoWrap
-                ? UnicodeLineWrapMode.NoWrap
-                : UnicodeLineWrapMode.Word,
+            MapWrapping(aspect.Wrapping),
             (start, length) => MeasureTextWidth(text.Substring(start, length), aspect, font));
 
         if (aspect.Trimming == TextTrimming.None || float.IsPositiveInfinity(availableWidth))
@@ -32,6 +30,14 @@ public sealed class LineBreakService
             .Select(segment => CollapseSegment(text, segment, aspect, font, availableWidth, forceEllipsis: false))
             .ToArray();
     }
+
+    internal static UnicodeLineWrapMode MapWrapping(TextWrapping wrapping) =>
+        wrapping switch
+        {
+            TextWrapping.NoWrap => UnicodeLineWrapMode.NoWrap,
+            TextWrapping.WrapWithOverflow => UnicodeLineWrapMode.WordWithOverflow,
+            _ => UnicodeLineWrapMode.Word
+        };
 
     internal TextLine CollapseLine(
         TextLine line,

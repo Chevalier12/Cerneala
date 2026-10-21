@@ -389,6 +389,9 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
             }
         }
 
+        public bool IsFlagsEnum => GetValueType(symbol) is { TypeKind: TypeKind.Enum } type &&
+            type.GetAttributes().Any(attribute => attribute.AttributeClass?.ToDisplayString() == "System.FlagsAttribute");
+
         public string DeclaringTypeMetadataName =>
             symbol.ContainingType is ITypeSymbol type ? owner.WrapType(type).MetadataName : string.Empty;
 

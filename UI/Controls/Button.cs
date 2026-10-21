@@ -152,7 +152,13 @@ public class Button : ButtonBase
 
     private TextAspect CreateTextAspect()
     {
-        return new TextAspect(FontFamily, FontSize, foreground: Foreground);
+        return new TextAspect(
+            FontFamily,
+            FontSize,
+            foreground: Foreground,
+            fontWeight: FontWeight,
+            fontStyle: FontStyle,
+            fontStretch: FontStretch);
     }
 
     private Brush? ResolveBackground()

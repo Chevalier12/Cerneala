@@ -81,6 +81,30 @@ public class Control : UIElement
             UiPropertyOptions.Inherits | UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender,
             validateValue: value => value > 0 && float.IsFinite(value)));
 
+    public static readonly UiProperty<FontWeight> FontWeightProperty = UiProperty<FontWeight>.Register(
+        nameof(FontWeight),
+        typeof(Control),
+        new UiPropertyMetadata<FontWeight>(
+            FontWeight.Normal,
+            UiPropertyOptions.Inherits | UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender,
+            validateValue: value => Enum.IsDefined(value)));
+
+    public static readonly UiProperty<FontStyle> FontStyleProperty = UiProperty<FontStyle>.Register(
+        nameof(FontStyle),
+        typeof(Control),
+        new UiPropertyMetadata<FontStyle>(
+            FontStyle.Normal,
+            UiPropertyOptions.Inherits | UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender,
+            validateValue: value => Enum.IsDefined(value)));
+
+    public static readonly UiProperty<FontStretch> FontStretchProperty = UiProperty<FontStretch>.Register(
+        nameof(FontStretch),
+        typeof(Control),
+        new UiPropertyMetadata<FontStretch>(
+            FontStretch.Normal,
+            UiPropertyOptions.Inherits | UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender,
+            validateValue: value => Enum.IsDefined(value)));
+
     // As in WPF, the defaults are Left and Top; a control that places its content reads them, for example Button,
     // whose framework defaults are Center, and a template that binds them to its ContentPresenter's alignment.
     public static readonly UiProperty<HorizontalAlignment> HorizontalContentAlignmentProperty = UiProperty<HorizontalAlignment>.Register(
@@ -136,6 +160,24 @@ public class Control : UIElement
     {
         get => GetValue(FontSizeProperty);
         set => SetValue(FontSizeProperty, value);
+    }
+
+    public FontWeight FontWeight
+    {
+        get => GetValue(FontWeightProperty);
+        set => SetValue(FontWeightProperty, value);
+    }
+
+    public FontStyle FontStyle
+    {
+        get => GetValue(FontStyleProperty);
+        set => SetValue(FontStyleProperty, value);
+    }
+
+    public FontStretch FontStretch
+    {
+        get => GetValue(FontStretchProperty);
+        set => SetValue(FontStretchProperty, value);
     }
 
     public HorizontalAlignment HorizontalContentAlignment

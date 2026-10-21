@@ -73,6 +73,17 @@ public sealed partial class UiMarkupGenerator
 
             if (parsedMarkup is not null)
             {
+                if (IsInlineElement(element))
+                {
+                    // The binding helpers attach to a UIElement owner; an inline is not an element.
+                    Report(
+                        InvalidBindingSource,
+                        attribute,
+                        trimmedValue,
+                        "Bindings are not supported on inline elements.");
+                    return;
+                }
+
                 if (!spec.IsUiProperty)
                 {
                     Report(
@@ -176,6 +187,16 @@ public sealed partial class UiMarkupGenerator
                 {
                     if (resourceExpression.ApplicationResourceName is not null && spec.IsUiProperty)
                     {
+                        if (IsInlineElement(element))
+                        {
+                            Report(
+                                InvalidBindingSource,
+                                attribute,
+                                trimmedValue,
+                                "Application resource references are not supported on inline elements.");
+                            return;
+                        }
+
                         EmitApplicationResourceBinding(
                             variable,
                             spec,

@@ -6,7 +6,9 @@ internal enum UnicodeLineWrapMode
 {
     NoWrap,
     Word,
-    Character
+    Character,
+    // As Word, but a word that does not fit stays whole on its line and overflows, up to the next break opportunity.
+    WordWithOverflow
 }
 
 internal enum UnicodeLineTrimMode
@@ -204,6 +206,7 @@ internal static class UnicodeLineBreakEngine
         {
             int lineStart = elements[currentIndex].Start;
             int lastFittingIndex = FindLastFittingElementIndex(
+                text,
                 elements,
                 currentIndex,
                 availableWidth,
@@ -219,7 +222,8 @@ internal static class UnicodeLineBreakEngine
 
             int breakIndex = -1;
             int breakMeasureEnd = lineStart;
-            if (mode == UnicodeLineWrapMode.Word)
+            bool wordBreaks = mode is UnicodeLineWrapMode.Word or UnicodeLineWrapMode.WordWithOverflow;
+            if (wordBreaks)
             {
                 for (int index = lastFittingIndex; index >= currentIndex; index--)
                 {
@@ -245,7 +249,7 @@ internal static class UnicodeLineBreakEngine
                 AddLine(text, lineStart, breakMeasureEnd - lineStart, measure, lines);
                 currentIndex = SkipLeadingBreakWhitespace(elements, breakIndex + 1);
             }
-            else if (mode == UnicodeLineWrapMode.Word &&
+            else if (wordBreaks &&
                 lastFittingIndex >= currentIndex &&
                 lastFittingIndex + 1 < elements.Length &&
                 IsBreakWhitespace(elements[lastFittingIndex + 1].Text))
@@ -253,6 +257,24 @@ internal static class UnicodeLineBreakEngine
                 int fallbackEnd = elements[lastFittingIndex].End;
                 AddLine(text, lineStart, fallbackEnd - lineStart, measure, lines);
                 currentIndex = SkipLeadingBreakWhitespace(elements, lastFittingIndex + 1);
+            }
+            else if (mode == UnicodeLineWrapMode.WordWithOverflow)
+            {
+                // No break opportunity in the fitting range: the word overflows to its own end.
+                int overflowIndex = FindOverflowBreakIndex(text, elements, Math.Max(lastFittingIndex + 1, currentIndex), lineStart);
+                if (overflowIndex < 0)
+                {
+                    int paragraphEnd = paragraphStart + paragraphLength;
+                    int trimmedEnd = TrimTrailingBreakWhitespace(text, lineStart, paragraphEnd);
+                    AddLine(text, lineStart, trimmedEnd - lineStart, measure, lines);
+                    break;
+                }
+
+                int overflowEnd = IsBreakWhitespace(elements[overflowIndex].Text)
+                    ? TrimTrailingBreakWhitespace(text, lineStart, elements[overflowIndex].End)
+                    : elements[overflowIndex].End;
+                AddLine(text, lineStart, overflowEnd - lineStart, measure, lines);
+                currentIndex = SkipLeadingBreakWhitespace(elements, overflowIndex + 1);
             }
             else if (lastFittingIndex >= currentIndex)
             {
@@ -269,7 +291,33 @@ internal static class UnicodeLineBreakEngine
         }
     }
 
+    private static int FindOverflowBreakIndex(
+        string text,
+        UnicodeTextElement[] elements,
+        int startIndex,
+        int lineStart)
+    {
+        for (int index = startIndex; index < elements.Length; index++)
+        {
+            if (!IsBreakOpportunityAfter(elements[index].Text))
+            {
+                continue;
+            }
+
+            int measureEnd = IsBreakWhitespace(elements[index].Text)
+                ? TrimTrailingBreakWhitespace(text, lineStart, elements[index].End)
+                : elements[index].End;
+            if (measureEnd > lineStart)
+            {
+                return index;
+            }
+        }
+
+        return -1;
+    }
+
     private static int FindLastFittingElementIndex(
+        string text,
         UnicodeTextElement[] elements,
         int startIndex,
         float availableWidth,
@@ -282,7 +330,11 @@ internal static class UnicodeLineBreakEngine
         while (low <= high)
         {
             int middle = low + ((high - low) / 2);
-            int end = elements[middle].End;
+            // The white space at the end of a line is dropped when the line breaks there, so it does not have to fit:
+            // a line that is exactly as wide as the available width keeps the word that ends at its edge.
+            int end = IsBreakWhitespace(elements[middle].Text)
+                ? TrimTrailingBreakWhitespace(text, lineStart, elements[middle].End)
+                : elements[middle].End;
             if (measure(lineStart, end - lineStart) <= availableWidth)
             {
                 lastFittingIndex = middle;

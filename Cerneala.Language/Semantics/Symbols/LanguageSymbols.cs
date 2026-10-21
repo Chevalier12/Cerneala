@@ -134,6 +134,9 @@ internal interface ILanguageMemberSymbol
 
     IReadOnlyList<string> EnumValues { get; }
 
+    // True when the value type is an enum marked [Flags]: a markup value may then list several names separated by commas.
+    bool IsFlagsEnum { get; }
+
     string DeclaringTypeMetadataName { get; }
 
     string AssemblyName { get; }

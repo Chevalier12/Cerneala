@@ -13,6 +13,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         "Cerneala.UI.Controls",
         "Cerneala.UI.Controls.Primitives",
         "Cerneala.UI.Controls.Shapes",
+        "Cerneala.UI.Documents",
         "Cerneala.UI.Elements",
         "Cerneala.UI.Layout.Panels",
         "Cerneala.UI.Media",
@@ -245,6 +246,26 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         {
             AddDiagnostic("CERNEALAUI002", element.NameToken.Span, element.Name);
             return;
+        }
+
+        if (type.IsOrDerivesFrom("Cerneala.UI.Documents.Inline"))
+        {
+            if (isRoot || type.IsAbstract)
+            {
+                AddDiagnostic("CERNEALAUI002", element.NameToken.Span, element.Name);
+                return;
+            }
+
+            // An inline belongs to the Inlines of a TextBlock or a Span; a property element is the value of a property.
+            bool underPropertyElement = parents.TryGetValue(element, out ElementSyntax? inlineParent) &&
+                inlineParent?.Kind == SyntaxKind.PropertyElement;
+            if (!underPropertyElement &&
+                (parentType is null || !parentType.IsOrDerivesFrom("Cerneala.UI.Controls.TextBlock") &&
+                    !parentType.IsOrDerivesFrom("Cerneala.UI.Documents.Span")))
+            {
+                AddDiagnostic("CERNEALAUI003", element.NameToken.Span, parentType?.Name ?? element.Name, "#child");
+                return;
+            }
         }
 
         if (type.MetadataName == "Cerneala.UI.Controls.Tile")
@@ -839,10 +860,17 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         string type = member.ValueTypeMetadataName.TrimEnd('?');
         if (member.EnumValues.Count > 0)
         {
-            string? enumValue = member.EnumValues.FirstOrDefault(candidate =>
-                string.Equals(candidate, value, StringComparison.OrdinalIgnoreCase));
-            converted = enumValue;
-            return enumValue is not null;
+            // A [Flags] enum accepts a comma-separated list of names; every name must be a member.
+            string[] names = member.IsFlagsEnum ? value.Split(',') : [value];
+            string[] enumValues = names
+                .Select(name => member.EnumValues.FirstOrDefault(candidate =>
+                    string.Equals(candidate, name.Trim(), StringComparison.OrdinalIgnoreCase)))
+                .Where(enumValue => enumValue is not null)
+                .Select(enumValue => enumValue!)
+                .ToArray();
+            bool allMembers = enumValues.Length == names.Length;
+            converted = allMembers ? string.Join(", ", enumValues) : null;
+            return allMembers;
         }
 
         if (type is "bool" or "System.Boolean")
