@@ -127,7 +127,7 @@ An inline takes each style property that it does not set from the nearest `Span`
 
 ### Background
 
-As in WPF, `Background` fills the whole render bounds of the `TextBlock`, not only the area of the text, and the text is drawn on top of it. `OnRender` emits one `FillRectangle` with the `Background` brush before the text draw commands, also when `Text` is empty. For example, `<TextBlock Width="200" Background="Tomato" Text="Hello" />` arranged at 200 x 20 draws a `FillRectangle` at `0, 0, 200, 20` with the tomato brush, then the `DrawText` of `Hello`. The default `null` draws no rectangle. `Background` does not inherit and does not change the layout, so changing it invalidates render only.
+As in WPF, `Background` fills the whole render bounds of the `TextBlock`, not only the area of the text, and the text is drawn on top of it. `OnRender` emits one `FillRectangle` with the `Background` brush before the text draw commands, also when `Text` is empty. For example, `<TextBlock Width="200" Background="Tomato" Text="Hello" />` arranged at 200 x 20 draws a `FillRectangle` at `0, 0, 200, 20` with the tomato brush, then the `DrawText` of `Hello`. The default `null` draws no rectangle, and neither do render bounds with a width or height of `0`, for example a `TextBlock` in a `Grid` column of width `0`. `Background` does not inherit and does not change the layout, so changing it invalidates render only.
 
 ### Resources, trimming, and invalidation
 
