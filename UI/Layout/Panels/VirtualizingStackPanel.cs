@@ -237,10 +237,11 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
                 continue;
             }
 
-            // Automatic mode places the first realized child at its estimated prefix extent, rounded to a device pixel,
-            // and stacks the following realized children on it. An estimate is an average, so a prefix of 10.5 device
-            // pixels followed by a row of 11 would round each child's own position on its own (ties to even) to 10 and 22,
-            // leaving a gap after the first row's bottom at 21.
+            // Automatic mode places the first realized child at its prefix extent, which EstimateOffset has rounded to a
+            // device pixel, and stacks the following realized children on it. An estimate is an average, so a prefix of
+            // 10.5 device pixels followed by a row of 11 would round each child's own position on its own (ties to even)
+            // to 10 and 22, leaving a gap after the first row's bottom at 21. The Round here only rounds a fractional
+            // FinalRect.Y.
             if (automaticViewport is not null && !placedFirstAutomaticChild)
             {
                 y = context.Rounding.Round(context.FinalRect.Y + EstimateOffset(itemIndex, context.Rounding));
@@ -350,8 +351,9 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
 
         // The window adds the item extents as EstimateOffset and EstimateTotalExtent do, so the scroll offset
         // TotalExtent - ViewportExtent finds the last items, the ones that arrange places there. Each prefix stays in device
-        // pixels and is compared with the first device pixels past the offset and the viewport end, found once, which gives
-        // the window that converting every prefix to an extent gives, without a conversion per item.
+        // pixels, rounded to a whole device pixel as they round it, and is compared with the first device pixels past the
+        // offset and the viewport end, found once, which gives the window that converting every prefix to an extent gives,
+        // without a conversion per item.
         LayoutRounding rounding = measureRounding;
         float offset = viewport.ScrollOffset;
         float viewportEnd = offset + viewport.ViewportExtent;
@@ -363,7 +365,7 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
         while (start < viewport.ItemCount)
         {
             double next = cursor + GetItemDevicePixels(start, rounding, estimatedDevicePixels);
-            if ((float)next >= offsetDevicePixels)
+            if ((float)RoundPrefix(next, rounding) >= offsetDevicePixels)
             {
                 break;
             }
@@ -373,7 +375,7 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
         }
 
         int end = start;
-        while (end < viewport.ItemCount && (!((float)cursor >= viewportEndDevicePixels) || end == start))
+        while (end < viewport.ItemCount && (!((float)RoundPrefix(cursor, rounding) >= viewportEndDevicePixels) || end == start))
         {
             cursor += GetItemDevicePixels(end, rounding, estimatedDevicePixels);
             end++;
@@ -385,7 +387,8 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
     }
 
     // The extent of the items before index. The arrange offsets, the realization window and TotalExtent all add the
-    // item extents this way, so they agree.
+    // item extents this way, so they agree. The sum is rounded to a whole device pixel, as the first realized row's
+    // position is.
     private float EstimateOffset(int index, LayoutRounding rounding)
     {
         double devicePixels = 0;
@@ -395,13 +398,13 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
             devicePixels += GetItemDevicePixels(current, rounding, estimatedDevicePixels);
         }
 
-        return FromDevicePixels(devicePixels, rounding);
+        return FromDevicePixels(RoundPrefix(devicePixels, rounding), rounding);
     }
 
     // The top and bottom of each of the first count items in this panel, as arrange places them, while an automatic
     // viewport drives the panel; no bounds otherwise. As WPF's VirtualizingStackPanel.BringIndexIntoView, an owner
     // scrolls an item without a container there before the item is realized. The item extents are added as EstimateOffset
-    // adds them, in one walk, so the bounds of the first n items cost n steps.
+    // adds them, rounded to whole device pixels, in one walk, so the bounds of the first n items cost n steps.
     internal IEnumerable<(float Top, float Bottom)> EnumerateAutomaticItemBounds(int count)
     {
         if (automaticViewport is null)
@@ -415,7 +418,9 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
         for (int index = 0; index < count; index++)
         {
             double next = devicePixels + GetItemDevicePixels(index, rounding, estimatedDevicePixels);
-            yield return (FromDevicePixels(devicePixels, rounding), FromDevicePixels(next, rounding));
+            yield return (
+                FromDevicePixels(RoundPrefix(devicePixels, rounding), rounding),
+                FromDevicePixels(RoundPrefix(next, rounding), rounding));
             devicePixels = next;
         }
     }
@@ -433,6 +438,16 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
         return measuredItemExtents.TryGetValue(index, out float extent)
             ? rounding.ToDevicePixels(extent)
             : estimatedDevicePixels;
+    }
+
+    // A sum of device pixels that includes the averaged estimate is not a whole number, but rows are placed on device
+    // pixels, so with layout rounding every prefix is rounded to one: a prefix of 533.33 device pixels is the 533 pixels
+    // that the rows end at, not 534 after the desired size rounds it up. Halves round up, not to even, so that adding
+    // whole measured heights to a prefix adds them to its rounded value too: 10.5 rounds to 11, and 21 more make 32 as
+    // 31.5 does, where ties to even would give 10 and 32.
+    private static double RoundPrefix(double devicePixels, LayoutRounding rounding)
+    {
+        return rounding.IsEnabled ? Math.Round(devicePixels, MidpointRounding.AwayFromZero) : devicePixels;
     }
 
     // The sum stays a double until here. Past 2^24 a float holds only even integers, so a float sum of items that are

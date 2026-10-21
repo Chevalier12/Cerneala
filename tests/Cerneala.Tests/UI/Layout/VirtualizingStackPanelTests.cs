@@ -264,9 +264,10 @@ public sealed class VirtualizingStackPanelTests
         panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 99, panel.DesiredSize.Height), rounding));
 
         Assert.Equal(new RealizationWindow(1, 3), panel.RealizationWindow);
-        Assert.Equal(31.5f, panel.TotalExtent * scale, 3);
-        // The first realized row starts at the device pixel nearest to 10.5 (ties to even), and the second touches it.
-        Assert.Equal("10..21, 21..31", GetVerticalDeviceEdges([panel.VisualChildren[1], panel.VisualChildren[2]], scale));
+        Assert.Equal(32f, panel.TotalExtent * scale, 3);
+        // The first realized row starts at the device pixel nearest to 10.5 (ties up), the second touches it, and the
+        // last one ends at the total extent, which is a whole device pixel too.
+        Assert.Equal("11..22, 22..32", GetVerticalDeviceEdges([panel.VisualChildren[1], panel.VisualChildren[2]], scale));
     }
 
     [Theory]
@@ -884,6 +885,46 @@ public sealed class VirtualizingStackPanelTests
         Assert.InRange(last.Y + last.Height, totalExtent - 2, totalExtent + 2);
     }
 
+    [Theory]
+    [InlineData(1f)]
+    [InlineData(1.25f)]
+    [InlineData(1.75f)]
+    public void AutomaticViewportScrolledToTheEndKeepsTheTotalExtentOnAWholeDevicePixelWhenTheEstimateIsNot(float scale)
+    {
+        // Rows of 20 and 10 device pixels (20 at every third index) are measured, so the estimate of the rows that are
+        // not measured is their average, for example 100/7 device pixels at scale 1: not a whole device pixel. The total
+        // extent must still be a whole number of device pixels, and the last item must end at it when the scroll offset
+        // is TotalExtent - viewport (#707).
+        LayoutRounding rounding = LayoutRounding.ForScale(scale);
+        const int itemCount = 40;
+        float viewportExtent = 100 / scale;
+        float GetHeight(int index) => (index % 3 == 0 ? 20 : 10) / scale;
+        VirtualizingStackPanel panel = new() { FirstRealizedIndex = 0 };
+        for (int index = 0; index < 10; index++)
+        {
+            panel.VisualChildren.Add(new FixedHeightElement(GetHeight(index)));
+        }
+
+        panel.UpdateViewport(new ItemsVirtualizationViewport(itemCount, viewportExtent, 0, 0));
+        panel.Measure(new MeasureContext(new LayoutSize(100, viewportExtent), rounding));
+        panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, panel.DesiredSize.Height), rounding));
+
+        // The same ten children now stand for the last ten items, which have the same heights because 30 is a multiple of 3.
+        panel.FirstRealizedIndex = itemCount - 10;
+        panel.UpdateViewport(new ItemsVirtualizationViewport(itemCount, viewportExtent, panel.TotalExtent - viewportExtent, 0));
+        // The widths 99 and 98 differ from the first pass, so the measure and arrange caches do not reuse it.
+        panel.Measure(new MeasureContext(new LayoutSize(99, viewportExtent), rounding));
+        panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 99, panel.DesiredSize.Height), rounding));
+        panel.UpdateViewport(new ItemsVirtualizationViewport(itemCount, viewportExtent, panel.TotalExtent - viewportExtent, 0));
+        panel.Measure(new MeasureContext(new LayoutSize(98, viewportExtent), rounding));
+        panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 98, panel.DesiredSize.Height), rounding));
+
+        LayoutRect last = panel.VisualChildren[9].ArrangedBounds;
+        float totalDevicePixels = panel.TotalExtent * scale;
+        Assert.Equal(MathF.Round(totalDevicePixels), totalDevicePixels, 3);
+        Assert.Equal(totalDevicePixels, (last.Y + last.Height) * scale, 3);
+    }
+
     // 30 rows of height 40 with a viewport of 200, so rows 0..4 are realized and rows 5..29 are skipped; the enter
     // motion of every row has ended.
     private static (UIRoot Root, VirtualizingStackPanel Panel) CreatePresenceRows(ManualMotionClock clock)
@@ -939,8 +980,9 @@ public sealed class VirtualizingStackPanelTests
         int itemCount)
     {
         // The window must be the one found by adding each item's device pixels in a double and converting every
-        // prefix to a float extent before comparing it with the scroll offset and the viewport end, also next to
-        // item edges past 2^24 device pixels, where neighbouring float offsets are several device pixels apart.
+        // prefix, rounded to a whole device pixel, to a float extent before comparing it with the scroll offset and the
+        // viewport end, also next to item edges past 2^24 device pixels, where neighbouring float offsets are several
+        // device pixels apart.
         // Items 0 to 9 are measured. With two heights the estimate of the other items, their average, is half a
         // device pixel off a whole one: 33.5 at scale 1, and 32.8 and 33.6 average to 33.2 (41.5 device pixels) at 1.25.
         LayoutRounding rounding = LayoutRounding.ForScale(scale);
@@ -1008,9 +1050,10 @@ public sealed class VirtualizingStackPanelTests
         return new RealizationWindow(start, end);
     }
 
+    // Every prefix is rounded to a whole device pixel (halves up), as the panel places the rows (#707).
     private static float PrefixToExtent(double devicePixels, float scale)
     {
-        float extent = (float)devicePixels / scale;
+        float extent = (float)Math.Round(devicePixels, MidpointRounding.AwayFromZero) / scale;
         return float.IsFinite(extent) ? extent : float.MaxValue;
     }
 
