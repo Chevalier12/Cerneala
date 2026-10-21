@@ -727,7 +727,7 @@ internal sealed class TextInputView : UIElement
 
     private float GetWrapWidth(float availableWidth)
     {
-        return host.TextWrapping == TextWrapping.Wrap && float.IsFinite(availableWidth)
+        return host.TextWrapping != TextWrapping.NoWrap && float.IsFinite(availableWidth)
             ? MathF.Max(0, availableWidth - CaretWidth)
             : float.PositiveInfinity;
     }
@@ -764,7 +764,7 @@ internal sealed class TextInputView : UIElement
         IReadOnlyList<UnicodeLineSegment> segments = UnicodeLineBreakEngine.BreakLines(
             text,
             wrapWidth,
-            host.TextWrapping == TextWrapping.Wrap ? UnicodeLineWrapMode.Word : UnicodeLineWrapMode.NoWrap,
+            LineBreakService.MapWrapping(host.TextWrapping),
             Measure);
         TextInputLine[] lines = new TextInputLine[segments.Count];
         float width = 0;
@@ -822,7 +822,10 @@ internal sealed class TextInputView : UIElement
             Control.FontFamily,
             Control.FontSize,
             foreground: foreground,
-            fontResourceId: FontResourceId);
+            fontResourceId: FontResourceId,
+            fontWeight: Control.FontWeight,
+            fontStyle: Control.FontStyle,
+            fontStretch: Control.FontStretch);
     }
 
     private TextMeasurer GetTextMeasurer()

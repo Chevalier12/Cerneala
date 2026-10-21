@@ -41,13 +41,15 @@ DrawTextRun run = aspect.ToDrawTextRun(font, "Hello");
 
 The constructor requires a non-empty font family, positive finite `fontSize` and `scale` that are each no greater than `16384`, supported `TextWrapping` and `TextTrimming` values, and an effective text size no greater than `16384`. `Foreground` may be `null`; measurement and shaping remain independent of the brush, while `TextRenderer` skips drawing when no foreground is supplied.
 
+`FontWeight`, `FontStyle`, and `FontStretch` select the face of `FontFamily`. They are part of the identity of the resolved font, so aspects that differ in them never share a cached layout, while an aspect with all three `Normal` keeps the identity it had before they existed. Example: `new TextAspect("Arial", 16, fontWeight: FontWeight.Bold)` resolves to the identity `"Arial:16:700:Normal:Normal"`.
+
 `ToDrawTextRun` requires a non-null `ResolvedTextFont` and non-null text. The resulting `DrawTextRun` uses the resolved draw font, the supplied text, and `FontSize * Scale` as its size.
 
 ## Constructors
 
 | Signature | Description |
 | --- | --- |
-| `TextAspect(string fontFamily, float fontSize, TextWrapping wrapping = TextWrapping.NoWrap, TextTrimming trimming = TextTrimming.None, float scale = 1, Brush? foreground = null, ResourceId<FontResource>? fontResourceId = null)` | Initializes an immutable text aspect and validates font, size, scale, wrapping, trimming, and effective size values. |
+| `TextAspect(string fontFamily, float fontSize, TextWrapping wrapping = TextWrapping.NoWrap, TextTrimming trimming = TextTrimming.None, float scale = 1, Brush? foreground = null, ResourceId<FontResource>? fontResourceId = null, FontWeight fontWeight = FontWeight.Normal, FontStyle fontStyle = FontStyle.Normal, FontStretch fontStretch = FontStretch.Normal)` | Initializes an immutable text aspect and validates font, size, scale, wrapping, trimming, effective size, weight, style, and stretch values. Throws `ArgumentOutOfRangeException` for a `fontWeight`, `fontStyle`, or `fontStretch` that is not a defined enum member. |
 
 ## Properties
 
@@ -60,6 +62,9 @@ The constructor requires a non-empty font family, positive finite `fontSize` and
 | `Wrapping` | `TextWrapping` | Gets the wrapping mode used by measurement and line breaking. |
 | `Trimming` | `TextTrimming` | Gets the trimming mode included in layout cache keys. |
 | `Scale` | `float` | Gets the text scale applied to font size for font resolution and draw text runs. |
+| `FontWeight` | `FontWeight` | Gets the weight of the font face. The default is `FontWeight.Normal`. Ignored when `FontResourceId` is set. |
+| `FontStyle` | `FontStyle` | Gets the slant of the font face. The default is `FontStyle.Normal`. Ignored when `FontResourceId` is set. |
+| `FontStretch` | `FontStretch` | Gets the width of the font face. The default is `FontStretch.Normal`. Ignored when `FontResourceId` is set. |
 
 ## Methods
 

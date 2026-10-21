@@ -31,6 +31,7 @@ Wrapping operates on Unicode grapheme clusters. `Word` prefers shared line-break
 | `NoWrap` | Keeps each explicit paragraph on one line. |
 | `Word` | Prefers word and punctuation boundaries, then falls back safely. |
 | `Character` | Wraps at Unicode grapheme-cluster boundaries. |
+| `WordWithOverflow` | Breaks at word and punctuation boundaries like `Word`, but never splits a word that is wider than the width constraint: that word stays whole on its own line and overflows the constraint up to the next break opportunity. |
 
 ## Applies To
 

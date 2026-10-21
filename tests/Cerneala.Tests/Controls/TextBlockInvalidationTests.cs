@@ -123,10 +123,18 @@ public sealed class TextBlockInvalidationTests
             this.height = height;
         }
 
-        public override TextMeasureResult Measure(string text, TextAspect aspect, float availableWidth)
+        // A TextBlock measures through MeasureParagraph (issue #683), so the fixed measurer overrides that.
+        public override TextParagraphLayout MeasureParagraph(
+            IReadOnlyList<TextSpan> spans,
+            TextAspect paragraphAspect,
+            TextParagraphOptions options,
+            LayoutSize availableSize)
         {
-            TextLayoutKey key = new(text, $"{aspect.FontFamily}:{width}x{height}", aspect.FontSize, aspect.Wrapping, availableWidth, aspect.Trimming, aspect.Scale);
-            return new TextMeasureResult(new LayoutSize(width, height), 1, key, key.FontIdentity, [new TextLine(text, width)]);
+            return new TextParagraphLayout(
+                new LayoutSize(width, height),
+                1,
+                DrawTextLayoutEngine.Build([], new DrawTextLayoutOptions()),
+                $"{paragraphAspect.FontFamily}:{width}x{height}");
         }
     }
 }

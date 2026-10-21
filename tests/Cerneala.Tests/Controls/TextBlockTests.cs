@@ -127,9 +127,9 @@ public sealed class TextBlockTests
 
     private sealed class RecordingTextMeasurer : TextMeasurer
     {
-        private readonly TextMeasureResult measurement;
+        private readonly TextParagraphLayout measurement;
 
-        public RecordingTextMeasurer(TextMeasureResult measurement)
+        public RecordingTextMeasurer(TextParagraphLayout measurement)
         {
             this.measurement = measurement;
         }
@@ -140,18 +140,26 @@ public sealed class TextBlockTests
 
         public float AvailableWidth { get; private set; }
 
-        public override TextMeasureResult Measure(string text, TextAspect aspect, float availableWidth)
+        // A TextBlock measures through MeasureParagraph (issue #683), so the injected measurer overrides that.
+        public override TextParagraphLayout MeasureParagraph(
+            IReadOnlyList<TextSpan> spans,
+            TextAspect paragraphAspect,
+            TextParagraphOptions options,
+            LayoutSize availableSize)
         {
-            Text = text;
-            CapturedTextAspect = aspect;
-            AvailableWidth = availableWidth;
+            Text = string.Concat(spans.Select(static span => span.Text));
+            CapturedTextAspect = paragraphAspect;
+            AvailableWidth = availableSize.Width;
             return measurement;
         }
     }
 
-    private static TextMeasureResult CreateMeasurement(float width, float height)
+    private static TextParagraphLayout CreateMeasurement(float width, float height)
     {
-        TextLayoutKey key = new("Hello", "Serif:13", 13, TextWrapping.NoWrap, float.PositiveInfinity, TextTrimming.None, 1);
-        return new TextMeasureResult(new LayoutSize(width, height), 1, key, key.FontIdentity, [new TextLine("Hello", width)]);
+        return new TextParagraphLayout(
+            new LayoutSize(width, height),
+            1,
+            DrawTextLayoutEngine.Build([], new DrawTextLayoutOptions()),
+            "Serif:13");
     }
 }

@@ -222,7 +222,8 @@ public sealed partial class UiMarkupGenerator
                 compilation.GetTypeByMetadataName("Cerneala.UI.Elements." + metadataName) ??
                 compilation.GetTypeByMetadataName("Cerneala.UI.Layout.Panels." + metadataName) ??
                 compilation.GetTypeByMetadataName("Cerneala.UI.Media." + metadataName) ??
-                compilation.GetTypeByMetadataName("Cerneala.UI.Servo." + metadataName);
+                compilation.GetTypeByMetadataName("Cerneala.UI.Servo." + metadataName) ??
+                compilation.GetTypeByMetadataName("Cerneala.UI.Documents." + metadataName);
         }
 
         private INamedTypeSymbol? ResolveElementTypeSymbol(string elementName)
@@ -235,8 +236,9 @@ public sealed partial class UiMarkupGenerator
             INamedTypeSymbol? type = ResolveBuiltInElementTypeSymbol(elementName);
             INamedTypeSymbol? uiElementType = compilation.GetTypeByMetadataName("Cerneala.UI.Elements.UIElement");
             INamedTypeSymbol? windowType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Window");
+            bool isUiElement = uiElementType is not null && type is not null && IsOrDerivesFrom(type, uiElementType);
             if (type is null || type.TypeKind != TypeKind.Class || type.IsAbstract ||
-                uiElementType is null || !IsOrDerivesFrom(type, uiElementType) ||
+                (!isUiElement && !IsInlineType(type)) ||
                 (windowType is not null && IsOrDerivesFrom(type, windowType)))
             {
                 type = null;
@@ -248,6 +250,39 @@ public sealed partial class UiMarkupGenerator
             }
 
             return type;
+        }
+
+        // An inline (Run, Span, Bold, Italic, LineBreak or a subclass) is a markup element that is not a UIElement: it can
+        // only be a child of a TextBlock or of a Span.
+        private bool IsInlineType(INamedTypeSymbol type)
+        {
+            INamedTypeSymbol? inlineType = compilation.GetTypeByMetadataName("Cerneala.UI.Documents.Inline");
+            return inlineType is not null && IsOrDerivesFrom(type, inlineType);
+        }
+
+        // True for the elements whose content is a list of inlines: a TextBlock (its Inlines) and a Span (its Inlines).
+        private bool IsInlineHostType(INamedTypeSymbol type)
+        {
+            INamedTypeSymbol? textBlockType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.TextBlock");
+            INamedTypeSymbol? spanType = compilation.GetTypeByMetadataName("Cerneala.UI.Documents.Span");
+            return (textBlockType is not null && IsOrDerivesFrom(type, textBlockType)) ||
+                (spanType is not null && IsOrDerivesFrom(type, spanType));
+        }
+
+        private INamedTypeSymbol? GetElementTypeSymbol(MarkupElement element)
+        {
+            if (ResolveElementType(element) is null)
+            {
+                return null;
+            }
+
+            return resolvedElementTypes.TryGetValue(element.Name.Value, out INamedTypeSymbol? type) ? type : null;
+        }
+
+        private bool IsInlineElement(MarkupElement element)
+        {
+            INamedTypeSymbol? type = GetElementTypeSymbol(element);
+            return type is not null && IsInlineType(type);
         }
 
         private INamedTypeSymbol? ResolvePropertyOwnerType(string elementName, bool isRoot)

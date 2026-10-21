@@ -844,10 +844,10 @@ public sealed partial class UiMarkupGenerator
 
             if (type.TypeKind == TypeKind.Enum)
             {
-                IFieldSymbol? member = type.GetMembers(value).OfType<IFieldSymbol>().FirstOrDefault(field => field.HasConstantValue);
-                if (member is not null)
+                string? enumCode = EnumExpression(type, value, ignoreCase: false);
+                if (enumCode is not null)
                 {
-                    return type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + "." + member.Name;
+                    return enumCode;
                 }
             }
 

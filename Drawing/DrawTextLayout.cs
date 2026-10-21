@@ -9,7 +9,8 @@ public enum DrawTextWrapping
 {
     NoWrap,
     Word,
-    Character
+    Character,
+    WordWithOverflow
 }
 
 public enum DrawTextAlignment
@@ -17,7 +18,15 @@ public enum DrawTextAlignment
     Start,
     Center,
     End,
-    Justify
+    Justify,
+    Left,
+    Right
+}
+
+public enum DrawLineStackingStrategy
+{
+    MaxHeight,
+    BlockLineHeight
 }
 
 public enum DrawTextTrimming
@@ -117,7 +126,9 @@ public sealed record DrawTextLayoutOptions
         int maxLines = 0,
         DrawTextTrimming trimming = DrawTextTrimming.None,
         DrawTextDirection direction = DrawTextDirection.Auto,
-        float scale = 1)
+        float scale = 1,
+        float lineHeight = float.NaN,
+        DrawLineStackingStrategy lineStackingStrategy = DrawLineStackingStrategy.MaxHeight)
     {
         ThrowIfNotConstraint(maxWidth, nameof(maxWidth));
         ThrowIfNotConstraint(maxHeight, nameof(maxHeight));
@@ -146,6 +157,14 @@ public sealed record DrawTextLayoutOptions
         {
             throw new ArgumentOutOfRangeException(nameof(scale));
         }
+        if (!float.IsNaN(lineHeight) && (!float.IsFinite(lineHeight) || lineHeight <= 0))
+        {
+            throw new ArgumentOutOfRangeException(nameof(lineHeight));
+        }
+        if (!Enum.IsDefined(lineStackingStrategy))
+        {
+            throw new ArgumentOutOfRangeException(nameof(lineStackingStrategy));
+        }
 
         MaxWidth = maxWidth;
         MaxHeight = maxHeight;
@@ -156,6 +175,8 @@ public sealed record DrawTextLayoutOptions
         Trimming = trimming;
         Direction = direction;
         Scale = scale;
+        LineHeight = lineHeight;
+        LineStackingStrategy = lineStackingStrategy;
     }
 
     public float MaxWidth { get; }
@@ -176,6 +197,11 @@ public sealed record DrawTextLayoutOptions
 
     public float Scale { get; }
 
+    // NaN keeps the height of the line content.
+    public float LineHeight { get; }
+
+    public DrawLineStackingStrategy LineStackingStrategy { get; }
+
     private static void ThrowIfNotConstraint(float value, string parameterName)
     {
         if ((!float.IsFinite(value) && !float.IsPositiveInfinity(value)) || value < 0)
@@ -193,7 +219,8 @@ public sealed class DrawTextLayoutRun
         IDrawBrush brush,
         float opacity,
         DrawTextDirection direction,
-        DrawRect bounds)
+        DrawRect bounds,
+        int spanIndex)
     {
         TextRun = textRun;
         Position = position;
@@ -201,6 +228,7 @@ public sealed class DrawTextLayoutRun
         Opacity = opacity;
         Direction = direction;
         Bounds = bounds;
+        SpanIndex = spanIndex;
     }
 
     public DrawTextRun TextRun { get; }
@@ -220,6 +248,9 @@ public sealed class DrawTextLayoutRun
     public DrawTextDirection Direction { get; }
 
     public DrawRect Bounds { get; }
+
+    // The index of the layout's source span that this run's text came from.
+    internal int SpanIndex { get; }
 }
 
 public sealed class DrawTextLayoutLine
@@ -231,14 +262,21 @@ public sealed class DrawTextLayoutLine
         DrawRect bounds,
         float baseline,
         DrawTextDirection direction,
-        bool isTrimmed)
+        bool isTrimmed,
+        float measuredWidth)
     {
         this.runs = Array.AsReadOnly(runs);
         Bounds = bounds;
         Baseline = baseline;
         Direction = direction;
         IsTrimmed = isTrimmed;
+        MeasuredWidth = measuredWidth;
     }
+
+    // The width of the line text as the line breaker measured it. A wrapping width that is at least this wide breaks the
+    // line the same way again. Bounds.Width can differ from it: it is the sum of the widths of the runs, and it includes
+    // the justification.
+    internal float MeasuredWidth { get; }
 
     public IReadOnlyList<DrawTextLayoutRun> Runs => runs;
 
@@ -357,7 +395,9 @@ internal static class DrawTextLayoutCache
                 .Append(options.MaxLines).Append('|')
                 .Append((int)options.Trimming).Append('|')
                 .Append((int)options.Direction).Append('|')
-                .Append(options.Scale);
+                .Append(options.Scale).Append('|')
+                .Append(options.LineHeight).Append('|')
+                .Append((int)options.LineStackingStrategy);
             foreach (DrawTextSpan span in spans)
             {
                 key.Append('\u001F').Append(span.Text)
@@ -390,7 +430,8 @@ internal static class DrawTextLayoutEngine
         float Opacity,
         UnicodeTextDirection Direction,
         float Width,
-        bool IsWhitespace);
+        bool IsWhitespace,
+        int SpanIndex);
 
     public static DrawTextLayout Build(
         IReadOnlyList<DrawTextSpan> spans,
@@ -416,7 +457,8 @@ internal static class DrawTextLayoutEngine
         for (int index = 0; index < candidates.Count; index++)
         {
             UnicodeLineSegment candidate = candidates[index];
-            float lineHeight = ResolveLineHeight(ranges, candidate, options.Scale) * options.LineSpacing;
+            float lineHeight = ApplyLineHeight(ResolveLineMetrics(ranges, candidate, options.Scale).Height, options) *
+                options.LineSpacing;
             bool exceedsLines = options.MaxLines > 0 && accepted.Count >= options.MaxLines;
             bool exceedsHeight = measuredHeight + lineHeight > options.MaxHeight;
             if (exceedsLines || exceedsHeight)
@@ -462,11 +504,17 @@ internal static class DrawTextLayoutEngine
         {
             UnicodeLineSegment segment = accepted[index];
             DrawTextDirection baseDirection = ResolveBaseDirection(segment.Text, options.Direction);
-            float lineHeight = ResolveLineHeight(ranges, segment, options.Scale);
+            LineMetrics contentMetrics = ResolveLineMetrics(ranges, segment, options.Scale);
+            float contentHeight = contentMetrics.Height;
+            float contentBaseline = contentMetrics.Baseline;
+            float lineHeight = ApplyLineHeight(contentHeight, options);
             float advanceHeight = lineHeight * options.LineSpacing;
-            float baseline = ResolveBaseline(ranges, segment, options.Scale, lineHeight);
+            float baseline = lineHeight == contentHeight
+                ? contentBaseline
+                : contentBaseline * lineHeight / contentHeight;
+            // As in WPF, the line that ends a paragraph (before a hard line break or at the end of the text) is not justified.
             bool justify = options.Alignment == DrawTextAlignment.Justify &&
-                index < accepted.Count - 1 && !segment.IsTrimmed;
+                !segment.IsTrimmed && !EndsParagraph(text, accepted, index);
             Fragment[] fragments = CreateFragments(text, ranges, segment, options.Scale, baseDirection, justify);
             float contentWidth = fragments.Sum(static fragment => fragment.Width);
             float layoutWidth = float.IsFinite(options.MaxWidth)
@@ -482,14 +530,17 @@ internal static class DrawTextLayoutEngine
                 if (fragment.Text.Length > 0)
                 {
                     DrawTextRun textRun = new(fragment.Font, fragment.Text, fragment.Size);
-                    DrawRect runBounds = new(x, y, fragment.Width, lineHeight);
+                    // A justified space includes its share of the extra width, so the runs of the line touch each other.
+                    float runWidth = fragment.IsWhitespace ? fragment.Width + justification : fragment.Width;
+                    DrawRect runBounds = new(x, y, runWidth, lineHeight);
                     runs.Add(new DrawTextLayoutRun(
                         textRun,
                         new DrawPoint(x, y + baseline),
                         fragment.Brush,
                         fragment.Opacity,
                         MapDirection(fragment.Direction),
-                        runBounds));
+                        runBounds,
+                        fragment.SpanIndex));
                 }
                 x += fragment.Width;
                 if (fragment.IsWhitespace)
@@ -506,7 +557,8 @@ internal static class DrawTextLayoutEngine
                 bounds,
                 y + baseline,
                 baseDirection,
-                segment.IsTrimmed));
+                segment.IsTrimmed,
+                segment.Width));
             maximumRight = MathF.Max(maximumRight, bounds.Right);
             y += advanceHeight;
         }
@@ -518,6 +570,19 @@ internal static class DrawTextLayoutEngine
             ? 0
             : MathF.Min(options.MaxHeight, lines[^1].Bounds.Bottom);
         return new DrawTextLayout(lines.ToArray(), new DrawRect(0, 0, width, height), options);
+    }
+
+    private static bool EndsParagraph(string text, List<UnicodeLineSegment> lines, int index)
+    {
+        if (index == lines.Count - 1)
+        {
+            return true;
+        }
+
+        // A soft wrap only skips the white space between two lines. A hard line break between them ends the paragraph.
+        UnicodeLineSegment line = lines[index];
+        int end = line.SourceStart + line.SourceLength;
+        return text.AsSpan(end, lines[index + 1].SourceStart - end).IndexOfAny('\r', '\n') >= 0;
     }
 
     private static SpanRange[] CreateRanges(IReadOnlyList<DrawTextSpan> spans)
@@ -571,39 +636,82 @@ internal static class DrawTextLayoutEngine
             : StringInfo.ParseCombiningCharacters(value).Length * span.Size * scale * 0.5f;
     }
 
-    private static float ResolveLineHeight(
+    // The content height of a line and the distance from its top to the shared baseline. Every span on the line
+    // contributes: the baseline is the largest baseline of the spans (so no glyph rises above the top of the line) and the
+    // height is that baseline plus the largest part below the baseline.
+    private static LineMetrics ResolveLineMetrics(
         SpanRange[] ranges,
         UnicodeLineSegment line,
         float scale)
     {
-        float height = 0;
+        bool found = false;
+        SpanMetrics highest = default;
+        SpanMetrics deepest = default;
         int end = line.SourceStart + Math.Max(1, line.SourceLength);
         foreach (SpanRange range in ranges)
         {
-            if (range.End < line.SourceStart || range.Start >= end)
+            if (range.End <= line.SourceStart || range.Start >= end)
             {
                 continue;
             }
-            DrawTextRun run = new(range.Span.Font, "Mg", range.Span.Size * scale);
-            float candidate = TextShaper.Default.TryMeasureLineHeight(run, out float measured)
-                ? measured
-                : range.Span.Size * scale * 1.2f;
-            height = MathF.Max(height, candidate);
+
+            Include(MeasureSpan(range.Span, scale));
         }
-        return height > 0 ? height : ranges[0].Span.Size * scale * 1.2f;
+
+        if (!found)
+        {
+            // A line that no span overlaps, as the empty line after a trailing line break, has the style of the span
+            // that holds its start.
+            Include(MeasureSpan(FindSpan(ranges, line.SourceStart), scale));
+        }
+
+        // One span gives both extremes in the common case, and then its measured height is used as it is.
+        float height = highest == deepest ? highest.Height : highest.Baseline + deepest.Descent;
+        return new LineMetrics(height, highest.Baseline);
+
+        void Include(SpanMetrics metrics)
+        {
+            if (!found || metrics.Baseline > highest.Baseline)
+            {
+                highest = metrics;
+            }
+
+            if (!found || metrics.Descent > deepest.Descent)
+            {
+                deepest = metrics;
+            }
+
+            found = true;
+        }
     }
 
-    private static float ResolveBaseline(
-        SpanRange[] ranges,
-        UnicodeLineSegment line,
-        float scale,
-        float lineHeight)
+    private static SpanMetrics MeasureSpan(DrawTextSpan span, float scale)
     {
-        DrawTextSpan span = FindSpan(ranges, line.SourceStart);
         DrawTextRun run = new(span.Font, "Mg", span.Size * scale);
-        return TextShaper.Default.TryMeasureBaseline(run, out float baseline)
-            ? baseline
-            : lineHeight * 0.8f;
+        float height = TextShaper.Default.TryMeasureLineHeight(run, out float measuredHeight)
+            ? measuredHeight
+            : span.Size * scale * 1.2f;
+        float baseline = TextShaper.Default.TryMeasureBaseline(run, out float measuredBaseline)
+            ? measuredBaseline
+            : height * 0.8f;
+        return new SpanMetrics(height, baseline, height - baseline);
+    }
+
+    private readonly record struct SpanMetrics(float Height, float Baseline, float Descent);
+
+    private readonly record struct LineMetrics(float Height, float Baseline);
+
+    // The line box height: the content height, or the requested line height by the stacking strategy.
+    private static float ApplyLineHeight(float contentHeight, DrawTextLayoutOptions options)
+    {
+        if (float.IsNaN(options.LineHeight))
+        {
+            return contentHeight;
+        }
+
+        return options.LineStackingStrategy == DrawLineStackingStrategy.BlockLineHeight
+            ? options.LineHeight
+            : MathF.Max(options.LineHeight, contentHeight);
     }
 
     private static Fragment[] CreateFragments(
@@ -621,7 +729,8 @@ internal static class DrawTextLayoutEngine
             segment.SourceStart,
             segment.SourceLength))
         {
-            DrawTextSpan span = FindSpan(ranges, element.Start);
+            int spanIndex = FindSpanIndex(ranges, element.Start);
+            DrawTextSpan span = ranges[spanIndex].Span;
             IDrawFont font = ResolveFont(span, element.Text, scale);
             UnicodeTextDirection direction = UnicodeBidiEngine.GetDirection(element.Text);
             if (direction == UnicodeTextDirection.Neutral)
@@ -642,13 +751,15 @@ internal static class DrawTextLayoutEngine
                     span.Opacity,
                     direction,
                     MeasureLiteral(element.Text, span, scale),
-                    UnicodeLineBreakEngine.IsBreakWhitespace(element.Text)),
+                    UnicodeLineBreakEngine.IsBreakWhitespace(element.Text),
+                    spanIndex),
                 preserveClusters);
         }
 
         if (segment.IsTrimmed && segment.Text.EndsWith(UnicodeLineBreakEngine.Ellipsis, StringComparison.Ordinal))
         {
-            DrawTextSpan span = FindSpan(ranges, Math.Max(segment.SourceStart, sourceEnd - 1));
+            int spanIndex = FindSpanIndex(ranges, Math.Max(segment.SourceStart, sourceEnd - 1));
+            DrawTextSpan span = ranges[spanIndex].Span;
             UnicodeTextDirection direction = logical.Count > 0
                 ? logical[^1].Direction
                 : baseDirection == DrawTextDirection.RightToLeft
@@ -664,7 +775,8 @@ internal static class DrawTextLayoutEngine
                     span.Opacity,
                     direction,
                     MeasureLiteral(UnicodeLineBreakEngine.Ellipsis, span, scale),
-                    false),
+                    false,
+                    spanIndex),
                 preserveClusters);
         }
 
@@ -682,6 +794,7 @@ internal static class DrawTextLayoutEngine
             Fragment previous = fragments[^1];
             if (ReferenceEquals(previous.Font, candidate.Font) &&
                 ReferenceEquals(previous.Brush, candidate.Brush) &&
+                previous.SpanIndex == candidate.SpanIndex &&
                 previous.Size == candidate.Size &&
                 previous.Opacity == candidate.Opacity &&
                 previous.Direction == candidate.Direction)
@@ -719,16 +832,20 @@ internal static class DrawTextLayoutEngine
         return span.Font;
     }
 
-    private static DrawTextSpan FindSpan(SpanRange[] ranges, int sourceIndex)
+    private static DrawTextSpan FindSpan(SpanRange[] ranges, int sourceIndex) =>
+        ranges[FindSpanIndex(ranges, sourceIndex)].Span;
+
+    private static int FindSpanIndex(SpanRange[] ranges, int sourceIndex)
     {
-        foreach (SpanRange range in ranges)
+        for (int index = 0; index < ranges.Length; index++)
         {
+            SpanRange range = ranges[index];
             if (sourceIndex >= range.Start && sourceIndex < range.End)
             {
-                return range.Span;
+                return index;
             }
         }
-        return ranges[^1].Span;
+        return ranges.Length - 1;
     }
 
     private static DrawTextDirection ResolveBaseDirection(string text, DrawTextDirection requested)
@@ -753,6 +870,7 @@ internal static class DrawTextLayoutEngine
             DrawTextWrapping.NoWrap => UnicodeLineWrapMode.NoWrap,
             DrawTextWrapping.Word => UnicodeLineWrapMode.Word,
             DrawTextWrapping.Character => UnicodeLineWrapMode.Character,
+            DrawTextWrapping.WordWithOverflow => UnicodeLineWrapMode.WordWithOverflow,
             _ => throw new ArgumentOutOfRangeException(nameof(wrapping))
         };
 
@@ -766,6 +884,8 @@ internal static class DrawTextLayoutEngine
         return alignment switch
         {
             DrawTextAlignment.Center => remaining / 2,
+            DrawTextAlignment.Right => remaining,
+            DrawTextAlignment.Left => 0,
             DrawTextAlignment.End when direction == DrawTextDirection.LeftToRight => remaining,
             DrawTextAlignment.Start when direction == DrawTextDirection.RightToLeft => remaining,
             _ => 0

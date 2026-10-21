@@ -39,6 +39,8 @@ bool contains = cache.Contains(key);
 
 The factory argument to `GetOrAdd` must be non-null. `Clear` removes all cached results and resets hit and miss counters to zero.
 
+The cache also keeps the paragraph layouts that `TextMeasurer.MeasureParagraph` produces (`TextParagraphLayout`), in a second store with its own least-recently-used order. The two stores share the `Hits` and `Misses` counters and each holds at most `Capacity` entries, so `Capacity` is the bound of each store and `Count` is the number of retained results of `GetOrAdd` plus the number of retained paragraph layouts. For example, with `Capacity = 2`, laying out the paragraphs `"one"`, `"two"`, and `"three"` leaves `Count` equal to `2`, and `"one"` is measured again on its next request. `Clear` empties both stores. The paragraph store is used through `TextMeasurer`; it has no public method.
+
 ## Constructors
 
 | Name | Description |
@@ -55,8 +57,8 @@ The factory argument to `GetOrAdd` must be non-null. `Clear` removes all cached 
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `Capacity` | `int` | Gets the maximum number of retained layouts. |
-| `Count` | `int` | Gets the number of currently retained layouts. |
+| `Capacity` | `int` | Gets the maximum number of retained layouts in each of the two stores (line measurement results and paragraph layouts). |
+| `Count` | `int` | Gets the number of currently retained layouts: the line measurement results plus the paragraph layouts. |
 | `Hits` | `int` | Gets the number of cache hits. |
 | `Misses` | `int` | Gets the number of cache misses. |
 
@@ -65,7 +67,7 @@ The factory argument to `GetOrAdd` must be non-null. `Clear` removes all cached 
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `GetOrAdd(TextLayoutKey key, Func<TextLayoutKey, TextMeasureResult> factory)` | `TextMeasureResult` | Returns an existing cached result or creates, stores, and returns a new one. |
-| `Contains(TextLayoutKey key)` | `bool` | Returns whether the cache contains a result for `key`. |
+| `Contains(TextLayoutKey key)` | `bool` | Returns whether the cache contains a result for `key`. It checks only the line measurement results, not the paragraph layouts. |
 | `Clear()` | `void` | Clears cached results and resets counters. |
 
 ## Applies To

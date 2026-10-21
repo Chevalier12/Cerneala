@@ -5567,5 +5567,100 @@
     "name": "Cerneala.UI.Detective.TimbreDiagnosticsSnapshot",
     "file": "documentation/classes/Cerneala.UI.Detective.TimbreDiagnosticsSnapshot.md",
     "source": "UI/Detective/TimbreDiagnosticsSnapshot.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.FontWeight",
+    "file": "documentation/classes/Cerneala.Drawing.FontWeight.md",
+    "source": "Drawing/FontWeight.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.FontStyle",
+    "file": "documentation/classes/Cerneala.Drawing.FontStyle.md",
+    "source": "Drawing/FontStyle.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.FontStretch",
+    "file": "documentation/classes/Cerneala.Drawing.FontStretch.md",
+    "source": "Drawing/FontStretch.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawLineStackingStrategy",
+    "file": "documentation/classes/Cerneala.Drawing.DrawLineStackingStrategy.md",
+    "source": "Drawing/DrawTextLayout.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Text.TextDecorationMetrics",
+    "file": "documentation/classes/Cerneala.Drawing.Text.TextDecorationMetrics.md",
+    "source": "Drawing/Text/TextDecorationMetrics.cs"
+  },
+  {
+    "name": "Cerneala.UI.Text.TextAlignment",
+    "file": "documentation/classes/Cerneala.UI.Text.TextAlignment.md",
+    "source": "UI/Text/TextAlignment.cs"
+  },
+  {
+    "name": "Cerneala.UI.Text.TextDecorations",
+    "file": "documentation/classes/Cerneala.UI.Text.TextDecorations.md",
+    "source": "UI/Text/TextDecorations.cs"
+  },
+  {
+    "name": "Cerneala.UI.Text.LineStackingStrategy",
+    "file": "documentation/classes/Cerneala.UI.Text.LineStackingStrategy.md",
+    "source": "UI/Text/LineStackingStrategy.cs"
+  },
+  {
+    "name": "Cerneala.UI.Text.TextSpan",
+    "file": "documentation/classes/Cerneala.UI.Text.TextSpan.md",
+    "source": "UI/Text/TextSpan.cs"
+  },
+  {
+    "name": "Cerneala.UI.Text.TextParagraphOptions",
+    "file": "documentation/classes/Cerneala.UI.Text.TextParagraphOptions.md",
+    "source": "UI/Text/TextParagraphOptions.cs"
+  },
+  {
+    "name": "Cerneala.UI.Text.TextParagraphLayout",
+    "file": "documentation/classes/Cerneala.UI.Text.TextParagraphLayout.md",
+    "source": "UI/Text/TextParagraphLayout.cs"
+  },
+  {
+    "name": "Cerneala.UI.Documents.TextElement",
+    "file": "documentation/classes/Cerneala.UI.Documents.TextElement.md",
+    "source": "UI/Documents/TextElement.cs"
+  },
+  {
+    "name": "Cerneala.UI.Documents.Inline",
+    "file": "documentation/classes/Cerneala.UI.Documents.Inline.md",
+    "source": "UI/Documents/Inline.cs"
+  },
+  {
+    "name": "Cerneala.UI.Documents.Run",
+    "file": "documentation/classes/Cerneala.UI.Documents.Run.md",
+    "source": "UI/Documents/Run.cs"
+  },
+  {
+    "name": "Cerneala.UI.Documents.Span",
+    "file": "documentation/classes/Cerneala.UI.Documents.Span.md",
+    "source": "UI/Documents/Span.cs"
+  },
+  {
+    "name": "Cerneala.UI.Documents.Bold",
+    "file": "documentation/classes/Cerneala.UI.Documents.Bold.md",
+    "source": "UI/Documents/Bold.cs"
+  },
+  {
+    "name": "Cerneala.UI.Documents.Italic",
+    "file": "documentation/classes/Cerneala.UI.Documents.Italic.md",
+    "source": "UI/Documents/Italic.cs"
+  },
+  {
+    "name": "Cerneala.UI.Documents.LineBreak",
+    "file": "documentation/classes/Cerneala.UI.Documents.LineBreak.md",
+    "source": "UI/Documents/LineBreak.cs"
+  },
+  {
+    "name": "Cerneala.UI.Documents.InlineCollection",
+    "file": "documentation/classes/Cerneala.UI.Documents.InlineCollection.md",
+    "source": "UI/Documents/InlineCollection.cs"
   }
 ]

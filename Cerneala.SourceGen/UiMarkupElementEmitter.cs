@@ -25,7 +25,7 @@ public sealed partial class UiMarkupGenerator
             public MarkupElement Element { get; }
         }
 
-        public string EmitElement(MarkupElement element, bool initializeComponentRoot = false)
+        public string EmitElement(MarkupElement element, bool initializeComponentRoot = false, bool allowInline = false)
         {
             string? requestedName = element.Attribute("Name")?.Value;
             string variable;
@@ -63,6 +63,16 @@ public sealed partial class UiMarkupGenerator
             if (typeName is null)
             {
                 Report(UnsupportedElement, element, element.Name.LocalName);
+                return variable;
+            }
+
+            INamedTypeSymbol? elementType = GetElementTypeSymbol(element);
+            bool isInline = elementType is not null && IsInlineType(elementType);
+            if (isInline && !allowInline)
+            {
+                // An inline is created only as a child of a TextBlock or a Span; anywhere else (a template root, the
+                // body of a directive) it cannot be used as a UIElement.
+                Report(InvalidDirective, element, Path.GetFileName(file.Path), InlineDirectiveContentMessage);
                 return variable;
             }
 
@@ -123,7 +133,14 @@ public sealed partial class UiMarkupGenerator
                 return variable;
             }
 
-            IReadOnlyList<AspectResource> aspects = ResolveAspects(element);
+            if (isInline && element.Attribute("Aspect") is MarkupAttribute inlineAspect)
+            {
+                // An Aspect targets a UIElement.
+                Report(UnsupportedProperty, inlineAspect, element.Name.LocalName, "Aspect");
+                return variable;
+            }
+
+            IReadOnlyList<AspectResource> aspects = isInline ? [] : ResolveAspects(element);
             DirectiveTemplateNode[] templates = parsedContent.Nodes.OfType<DirectiveTemplateNode>().ToArray();
             DirectiveTemplatesNode[] templateCollections = parsedContent.Nodes.OfType<DirectiveTemplatesNode>().ToArray();
             if (templates.Length > 1)
@@ -177,6 +194,13 @@ public sealed partial class UiMarkupGenerator
                         continue;
                     }
 
+                    if (isInline && attribute.Name.LocalName.Contains('.'))
+                    {
+                        // Attached properties (Grid.Row, Servo.Id) belong to UIElements.
+                        Report(UnsupportedProperty, attribute, element.Name.LocalName, attribute.Name.LocalName);
+                        continue;
+                    }
+
                     if (TryEmitGridAttachedProperty(variable, attribute))
                     {
                         continue;
@@ -212,7 +236,11 @@ public sealed partial class UiMarkupGenerator
                 }
                 EmitItemsControlItemsPanelElement(element, variable);
 
-                if (!isTileMap && parsedContent.HasDirectives)
+                if (elementType is not null && HasInlineContent(element, elementType))
+                {
+                    EmitInlineContent(element, elementType, variable, parsedContent);
+                }
+                else if (!isTileMap && parsedContent.HasDirectives)
                 {
                     EmitReactiveContent(element, variable, parsedContent);
                 }
@@ -231,8 +259,9 @@ public sealed partial class UiMarkupGenerator
                                     break;
                                 }
 
-                                string childVariable = EmitElement(child.Element);
-                                EmitChild(element, variable, childVariable);
+                                bool childIsInline = IsInlineElement(child.Element);
+                                string childVariable = EmitElement(child.Element, allowInline: childIsInline);
+                                EmitChild(element, variable, childVariable, childIsInline);
                                 break;
                             case DirectiveTemplateNode _:
                             case DirectiveTemplatesNode _:
@@ -460,9 +489,24 @@ public sealed partial class UiMarkupGenerator
             }
         }
 
-        private void EmitChild(MarkupElement parent, string parentVariable, string childVariable)
+        private void EmitChild(MarkupElement parent, string parentVariable, string childVariable, bool childIsInline = false)
         {
             INamedTypeSymbol? parentType = ResolveElementTypeSymbol(parent.Name.LocalName);
+            if (childIsInline)
+            {
+                // An inline belongs to the Inlines of a TextBlock or of a Span, and to nothing else.
+                if (parentType is not null && IsInlineHostType(parentType))
+                {
+                    currentLines.Add(parentVariable + ".Inlines.Add(" + childVariable + ");");
+                }
+                else
+                {
+                    Report(UnsupportedProperty, parent, parent.Name.LocalName, "#child");
+                }
+
+                return;
+            }
+
             INamedTypeSymbol? panelType = compilation.GetTypeByMetadataName("Cerneala.UI.Layout.Panels.Panel");
             INamedTypeSymbol? itemsControlType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.ItemsControl");
             INamedTypeSymbol? decoratorType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Decorator");

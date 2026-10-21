@@ -418,6 +418,9 @@ public class TextBox : Control, ITimeSensitiveRenderElement, IPointerDragSource,
 
         if (ReferenceEquals(property, FontFamilyProperty) ||
             ReferenceEquals(property, FontSizeProperty) ||
+            ReferenceEquals(property, FontWeightProperty) ||
+            ReferenceEquals(property, FontStyleProperty) ||
+            ReferenceEquals(property, FontStretchProperty) ||
             ReferenceEquals(property, ForegroundProperty) ||
             ReferenceEquals(property, PaddingProperty) ||
             ReferenceEquals(property, TextWrappingProperty) ||
@@ -483,7 +486,8 @@ public class TextBox : Control, ITimeSensitiveRenderElement, IPointerDragSource,
     void ITextInputHost.RaiseSelectionChanged() =>
         OnSelectionChanged(new RoutedEventArgs(SelectionChangedEvent, this));
 
-    // Wrapped text wraps at the viewport width, so it does not scroll horizontally, as in WPF.
+    // Wrapped text wraps at the viewport width, so it does not scroll horizontally, as in WPF. WrapWithOverflow keeps a word
+    // that is wider than the viewport on one line, so that line has to scroll horizontally to be reachable.
     private void UpdateContentHostScrollBars()
     {
         if (contentHost is null)

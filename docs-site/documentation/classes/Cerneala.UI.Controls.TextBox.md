@@ -118,6 +118,10 @@ The caret is one device pixel wide (`1 / Root.Scale` layout units) and is drawn 
 
 `TextWrapping.Wrap` breaks the text at word boundaries at the width of the text view. A word wider than the width is split. While `TextWrapping` is `Wrap`, the horizontal scroll bar of the template is `Disabled`, whatever `HorizontalScrollBarVisibility` says, so the text does not scroll horizontally. `NoWrap` breaks lines only at line break characters.
 
+`TextWrapping.WrapWithOverflow` breaks at word boundaries at the same width as `Wrap` (the width of the text view minus the caret width), but a word that is wider than that width stays whole on one line instead of being split. Only `Wrap` disables the horizontal scroll bar, so with `WrapWithOverflow` the scroll bar follows `HorizontalScrollBarVisibility`, and a line with a too-long word scrolls horizontally to the caret. For example, in a `TextBox` with `TextWrapping = TextWrapping.WrapWithOverflow` and `Width = 100`, typing the 26 letters `abcdefghijklmnopqrstuvwxyz` gives `LineCount` equal to `1`, an extent wider than the viewport, and a horizontal offset greater than `0`. With `TextWrapping.Wrap` the same input gives `LineCount` greater than `1` and a horizontal offset of `0`.
+
+`FontWeight`, `FontStyle`, and `FontStretch` are inherited from `Control` and select the face of `FontFamily` that the text view measures and draws with; changing one of them measures and draws the text again, like a change of `FontFamily` or `FontSize`. A `FontResourceId` font ignores them.
+
 `HorizontalScrollBarVisibility` and `VerticalScrollBarVisibility` are passed to the `ScrollViewer` of the template. Both default to `Hidden`: the bar takes no space and is not drawn, and the text still scrolls on that axis. With `Auto` the bar shows when the text does not fit. With `Disabled` the text does not scroll on that axis. See `ScrollBarVisibility`.
 
 After an edit or a caret move, the `ScrollViewer` scrolls the least amount that shows the caret, in the same frame. This does not raise `RequestBringIntoView`. The mouse wheel scrolls the text vertically. When the text cannot scroll, the wheel event stays unhandled, so an enclosing scroll viewer gets it.
@@ -218,7 +222,7 @@ Derived controls can override `NormalizeTextInput`, `OnTextChanged` and `OnSelec
 | `IsReadOnly` | `bool` | Gets or sets whether user editing operations are rejected. |
 | `AcceptsReturn` | `bool` | Gets or sets whether Enter types a line break. The default is `false`. |
 | `AcceptsTab` | `bool` | Gets or sets whether Tab and Shift+Tab type a tab instead of moving the focus. The default is `false`. |
-| `TextWrapping` | `TextWrapping` | Gets or sets whether lines wrap at the width of the text view. The default is `NoWrap`. |
+| `TextWrapping` | `TextWrapping` | Gets or sets whether lines wrap at the width of the text view: `NoWrap` (default), `Wrap`, or `WrapWithOverflow`, which keeps a too-long word whole on one line. |
 | `MinLines` | `int` | Gets or sets the least height in lines. The default is `1`; a value below `1` throws `ArgumentException`. |
 | `MaxLines` | `int` | Gets or sets the greatest height in lines. The default is `int.MaxValue`; a value below `1` throws `ArgumentException`. |
 | `HorizontalScrollBarVisibility` | `ScrollBarVisibility` | Gets or sets the horizontal scroll bar policy of the template. The default is `Hidden`. |

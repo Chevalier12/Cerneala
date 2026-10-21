@@ -50,14 +50,51 @@ public sealed class FontResolver
         return new ResolvedTextFont(font);
     }
 
+    public ResolvedTextFont Resolve(string familyName, float size, FontWeight weight, FontStyle style, FontStretch stretch)
+    {
+        if (weight == FontWeight.Normal && style == FontStyle.Normal && stretch == FontStretch.Normal)
+        {
+            return Resolve(familyName, size);
+        }
+
+        if (string.IsNullOrWhiteSpace(familyName))
+        {
+            throw new ArgumentException("Font family cannot be empty.", nameof(familyName));
+        }
+
+        if (size <= 0 || !float.IsFinite(size))
+        {
+            throw new ArgumentOutOfRangeException(nameof(size), "Font size must be positive and finite.");
+        }
+
+        IDrawFont font = fontSource is null
+            ? new FallbackDrawFont(familyName, size)
+            : fontSource.LoadFont(familyName, size, weight, style, stretch);
+        ArgumentNullException.ThrowIfNull(font);
+        return new ResolvedTextFont(
+            font,
+            $"{font.FamilyName}:{font.Size:R}:{(int)weight}:{style}:{stretch}");
+    }
+
     public ResolvedTextFont Resolve(TextAspect aspect)
+    {
+        return Resolve(aspect, aspect.Scale);
+    }
+
+    // A font resource is an exact face, so it ignores the weight, style and stretch of the aspect.
+    internal ResolvedTextFont Resolve(TextAspect aspect, float scale)
     {
         if (aspect.FontResourceId is ResourceId<FontResource> fontResourceId)
         {
             return Resolve(fontResourceId);
         }
 
-        return Resolve(aspect.FontFamily, aspect.FontSize * aspect.Scale);
+        return Resolve(
+            aspect.FontFamily,
+            aspect.FontSize * scale,
+            aspect.FontWeight,
+            aspect.FontStyle,
+            aspect.FontStretch);
     }
 
     public ResolvedTextFont Resolve(ResourceId<FontResource> id)

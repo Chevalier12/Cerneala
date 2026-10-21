@@ -15,7 +15,10 @@ public readonly record struct TextAspect
         TextTrimming trimming = TextTrimming.None,
         float scale = 1,
         Brush? foreground = null,
-        ResourceId<FontResource>? fontResourceId = null)
+        ResourceId<FontResource>? fontResourceId = null,
+        FontWeight fontWeight = FontWeight.Normal,
+        FontStyle fontStyle = FontStyle.Normal,
+        FontStretch fontStretch = FontStretch.Normal)
     {
         if (string.IsNullOrWhiteSpace(fontFamily))
         {
@@ -35,6 +38,21 @@ public readonly record struct TextAspect
             throw new ArgumentOutOfRangeException(nameof(trimming), "Text trimming is not supported.");
         }
 
+        if (!Enum.IsDefined(fontWeight))
+        {
+            throw new ArgumentOutOfRangeException(nameof(fontWeight), "Font weight is not supported.");
+        }
+
+        if (!Enum.IsDefined(fontStyle))
+        {
+            throw new ArgumentOutOfRangeException(nameof(fontStyle), "Font style is not supported.");
+        }
+
+        if (!Enum.IsDefined(fontStretch))
+        {
+            throw new ArgumentOutOfRangeException(nameof(fontStretch), "Font stretch is not supported.");
+        }
+
         FontFamily = fontFamily;
         FontSize = fontSize;
         Foreground = foreground;
@@ -42,6 +60,9 @@ public readonly record struct TextAspect
         Wrapping = wrapping;
         Trimming = trimming;
         Scale = scale;
+        FontWeight = fontWeight;
+        FontStyle = fontStyle;
+        FontStretch = fontStretch;
     }
 
     public string FontFamily { get; }
@@ -57,6 +78,12 @@ public readonly record struct TextAspect
     public TextTrimming Trimming { get; }
 
     public float Scale { get; }
+
+    public FontWeight FontWeight { get; }
+
+    public FontStyle FontStyle { get; }
+
+    public FontStretch FontStretch { get; }
 
     public DrawTextRun ToDrawTextRun(ResolvedTextFont font, string text)
     {
