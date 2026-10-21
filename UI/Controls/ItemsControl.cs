@@ -422,7 +422,6 @@ public class ItemsControl : Control
     internal void SetVirtualizationContext(VirtualizationContext? context)
     {
         itemsPresenter.VirtualizationContext = context;
-        itemsPresenter.MarkItemsDirty();
         InvalidateItems("Items virtualization context changed");
     }
 

@@ -220,7 +220,9 @@ public sealed class ItemsControlTests
         root.VisualChildren.Add(viewer);
         root.ProcessFrame();
 
-        control.ItemsPresenter.VirtualizationContext = new VirtualizationContext(items.Length, 20, 200, 0, 0);
+        // The fixed context realizes every row, so the viewer keeps its 40000 px extent and scrolls to 20000 while the
+        // context presents the items; the setter applies the context by itself (#708).
+        control.ItemsPresenter.VirtualizationContext = new VirtualizationContext(items.Length, 20, 40000, 0, 0);
         root.ProcessFrame();
         viewer.ScrollInfo.SetVerticalOffset(20000);
         root.ProcessFrame();

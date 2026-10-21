@@ -87,11 +87,19 @@ public class ItemsPresenter : Control
         get => virtualizationContext;
         set
         {
+            // Like an AffectsMeasure property, a different context schedules the items refresh by itself (#708).
+            if (virtualizationContext == value)
+            {
+                return;
+            }
+
             virtualizationContext = value;
             if (value is null)
             {
                 ReleasePanelVirtualizationContext();
             }
+
+            MarkItemsDirty();
         }
     }
 
@@ -127,7 +135,9 @@ public class ItemsPresenter : Control
             previous.CacheItems != nextContext.CacheItems;
         bool needsItemsRefresh = itemsDirty || virtualizationShapeChanged || lastRealizationWindow != nextWindow;
 
-        VirtualizationContext = nextContext;
+        // Written to the field, not through the setter: the setter marks the items dirty, and this method does that
+        // itself only when a refresh is needed.
+        virtualizationContext = nextContext;
         if (!needsItemsRefresh)
         {
             ApplyVirtualizationContext(panelRoot, nextContext, nextWindow);
@@ -243,7 +253,17 @@ public class ItemsPresenter : Control
         // so the panel does not arrange them with an empty desired size.
         if (RefreshItems() && panelRoot?.LastMeasureAvailableSize is LayoutSize availableSize)
         {
+            LayoutSize measuredPanelSize = panelRoot.DesiredSize;
             MeasurePanelRoot(new MeasureContext(availableSize, context.Rounding));
+
+            // This presenter's desired size is still the panel's size from the last measure, so a panel size that changed
+            // here is measured again by the next frame. That measure refreshes nothing, because the window it reads is
+            // the one recorded above, and returns the panel's size, so the next arrange refreshes nothing and does not
+            // invalidate again.
+            if (panelRoot.DesiredSize != measuredPanelSize)
+            {
+                Invalidate(InvalidationFlags.Measure, "Items presenter panel size changed while arranging");
+            }
         }
 
         panelRoot?.Arrange(context);
