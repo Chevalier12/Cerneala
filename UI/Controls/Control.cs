@@ -8,6 +8,7 @@ using Cerneala.UI.Layout;
 using Cerneala.UI.Input;
 using Cerneala.UI.Markup;
 using Cerneala.UI.Media;
+using Cerneala.UI.Rendering;
 
 namespace Cerneala.UI.Controls;
 
@@ -340,6 +341,23 @@ public class Control : UIElement
     // the aspect catalog.
     internal virtual void OnTemplateInstanceCreating()
     {
+    }
+
+    // Fills the render bounds with Background, for a control that draws its own background: Border, TabItem without
+    // a template, TextBlock, and the render surfaces. A null Background or empty bounds draw nothing.
+    internal void RenderBackground(RenderContext context)
+    {
+        RenderBackground(context, context.Bounds);
+    }
+
+    // Fills bounds, a part of the render bounds, with Background.
+    internal void RenderBackground(RenderContext context, LayoutRect bounds)
+    {
+        DrawRect rect = Border.ToDrawRect(bounds);
+        if (Background is { } background && rect.Width > 0 && rect.Height > 0)
+        {
+            context.DrawingContext.FillRectangle(rect, background);
+        }
     }
 
     protected TElement GetRequiredTemplatePart<TElement>(string name)
