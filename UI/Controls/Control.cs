@@ -260,6 +260,39 @@ public class Control : UIElement
     {
     }
 
+    // True for a control that builds its first template instance only in its own measure, as every WPF control does
+    // (FrameworkElement.ApplyTemplate runs in MeasureCore). A Collapsed control is never measured, so it never builds
+    // it: a ScrollViewer's hidden ScrollBar has no Track, Thumb or RepeatButton until it is shown (#714). A control
+    // that already has an instance still replaces it at once when its template changes.
+    internal virtual bool BuildsFirstTemplateInMeasure => false;
+
+    // Applies the template outside layout: when ComponentTemplate or ComponentTemplateKey changes, and in the Aspect
+    // pass, where a ComponentTemplateKey resolves through the aspect catalog.
+    internal void ApplyTemplateOutsideLayout()
+    {
+        if (BuildsFirstTemplateInMeasure && ComponentTemplateInstance is null)
+        {
+            return;
+        }
+
+        ApplyTemplate();
+    }
+
+    // Applies the template in this control's measure or arrange. A template built here, such as the first one of a
+    // control that builds it in measure, gets the frame's Inherited and Aspect work before it is measured, because
+    // the frame ran those phases before the layout; so it is laid out and drawn in this frame as if it had been built
+    // before the layout, and leaves no work for the next frame.
+    internal void ApplyTemplateInLayout()
+    {
+        ComponentTemplateInstance? previous = ComponentTemplateInstance;
+        ApplyTemplate();
+        if (ComponentTemplateInstance is { Root: { } templateRoot } instance &&
+            !ReferenceEquals(instance, previous))
+        {
+            Root?.ProcessInheritedAndAspectForSubtree(this, templateRoot);
+        }
+    }
+
     // Runs right before a template builds a new instance, however the template is applied: when ComponentTemplate or
     // ComponentTemplateKey changes, in measure or arrange, or when a ComponentTemplateKey starts to resolve through
     // the aspect catalog.
@@ -296,13 +329,13 @@ public class Control : UIElement
 
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
-        ApplyTemplate();
+        ApplyTemplateInLayout();
         return TemplateChild?.Measure(context) ?? LayoutSize.Zero;
     }
 
     protected override LayoutRect ArrangeCore(ArrangeContext context)
     {
-        ApplyTemplate();
+        ApplyTemplateInLayout();
         TemplateChild?.Arrange(context);
         return context.FinalRect;
     }
@@ -313,7 +346,7 @@ public class Control : UIElement
         if (ReferenceEquals(args.Property, ComponentTemplateProperty) ||
             ReferenceEquals(args.Property, ComponentTemplateKeyProperty))
         {
-            ApplyTemplate();
+            ApplyTemplateOutsideLayout();
         }
     }
 

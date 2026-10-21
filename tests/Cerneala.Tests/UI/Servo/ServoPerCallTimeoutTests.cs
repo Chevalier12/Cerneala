@@ -25,7 +25,7 @@ public sealed class ServoPerCallTimeoutTests
         Assert.Equal(
             new[]
             {
-                "ClickAsync", "DragAsync", "DragAsync", "ExistsAsync", "FindAllAsync", "FindAsync",
+                "ClickAsync", "ClickAsync", "DragAsync", "DragAsync", "ExistsAsync", "FindAllAsync", "FindAsync",
                 "HoldKeyAsync", "HoverAsync", "PressKeyAsync", "ReplaceTextAsync", "SaveScreenshotAsync",
                 "SaveScreenshotAsync", "ScrollAsync", "SendPlatformInputAsync", "SendTextAsync", "TypeIntoAsync",
                 "WaitForAsync", "WaitForIdleAsync", "WaitUntilAsync"

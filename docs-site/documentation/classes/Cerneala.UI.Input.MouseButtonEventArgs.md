@@ -52,7 +52,7 @@ MouseButtonEventArgs args = new(
 
 `MouseButtonEventArgs` extends `MouseEventArgs` with `ChangedButton` and `ClickCount`. The inherited `X` and `Y` properties store the integer pointer coordinates supplied to the constructor.
 
-The retained input bridge creates this event data for mouse down and mouse up routed event pairs. Mouse down events are created with a click count of `1`. Mouse up events receive the value produced by `ClickTracker.Release`: `0` when the press and release resolve to different targets; otherwise the click count, which is `1` for a first click and grows by one for each consecutive click on the same target (`2` for a double click).
+The retained input bridge creates this event data for mouse down and mouse up routed event pairs. As WPF's `MouseDevice`, the click count is decided on the press. A mouse down event carries `1` for a first press. It carries `2` for a press of the same button on the same target within `500` ms and `4` pixels on each axis of the previous press, `3` for the next such press, and so on; a press that is too late, too far, of another button, or on another target starts again at `1`. Mouse up events receive the value produced by `ClickTracker.Release`: `0` when the press and release resolve to different targets; otherwise the click count of the device, which is the count that the most recent press of any button set. Two quick left clicks on the same element therefore give `ClickCount` values `1` and `2` on the two `MouseDown` events and on the two `MouseUp` events, and the second left release also raises `MouseDoubleClick`. See `ClickTracker` for the full rules and a left, left, right, left, left sequence.
 
 `ClickCount` is stored exactly as supplied to the constructor. The class does not validate, normalize, or recalculate it.
 
@@ -108,6 +108,7 @@ Because `MouseButtonEventArgs` derives from `RoutedEventArgs`, handlers can use 
 ## See also
 
 - `InputEvents`
+- `ClickTracker`
 - `InputMouseButton`
 - `MouseEventArgs`
 - `RoutedEventArgs`

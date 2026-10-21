@@ -40,7 +40,9 @@ ScrollViewer viewer = new()
 
 For `Auto`, "content is larger" means the extent is strictly greater than the viewport. For example, content `300` high in a `300` high viewport does not show the vertical bar; content `301` high does.
 
-`Hidden` sets the bar to `Visibility.Hidden`: the bar is not drawn but keeps its layout space.
+`Hidden` collapses the bar (`Visibility.Collapsed`), as `Disabled` does, and as WPF's `ComputedHorizontalScrollBarVisibility` and `ComputedVerticalScrollBarVisibility` do: the bar is not drawn and takes no layout space, and the presenter still scrolls on that axis. For example, a `ScrollViewer` with `HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden`, `VerticalScrollBarVisibility = ScrollBarVisibility.Visible`, and a `100` x `100` slot arranges the presenter at `(0, 0, 88, 100)` and the vertical bar at `(88, 0, 12, 100)`: the hidden horizontal bar takes none of the `100` height, and `Presenter.CanHorizontallyScroll` is `true`. Only `Visible`, and `Auto` when the content is larger than the viewport, show a bar.
+
+`TextBox` uses `Hidden` as the default of its `HorizontalScrollBarVisibility` and `VerticalScrollBarVisibility`.
 
 ## Values
 
@@ -48,7 +50,7 @@ For `Auto`, "content is larger" means the extent is strictly greater than the vi
 | --- | --- | --- | --- |
 | `Disabled` | `0` | Never shown (`Visibility.Collapsed`). | Off. The offset stays `0`. |
 | `Auto` | `1` | Shown only when the content is larger than the viewport; otherwise collapsed. | On. |
-| `Hidden` | `2` | Not drawn, but keeps its layout space (`Visibility.Hidden`). | On. |
+| `Hidden` | `2` | Never shown and takes no layout space (`Visibility.Collapsed`). | On. |
 | `Visible` | `3` | Always shown. | On. |
 
 ## Applies to
@@ -60,3 +62,4 @@ For `Auto`, "content is larger" means the extent is strictly greater than the vi
 - `Cerneala.UI.Controls.ScrollViewer`
 - `Cerneala.UI.Controls.IScrollInfo`
 - `Cerneala.UI.Controls.ScrollContentPresenter`
+- `Cerneala.UI.Controls.TextBox`

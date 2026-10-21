@@ -49,6 +49,15 @@ catch (ArgumentException ex)
 
 Wrapping is off when the available width is infinite, zero, or negative.
 
+`TextBox.TextWrapping` uses the same enum and also defaults to `NoWrap`; a change invalidates measure and render. A `TextBox` does not pass the value through `TextAspect.Wrapping`: its text view breaks the lines itself with the same Unicode line breaker. `Wrap` breaks at word boundaries at the width of the text view, splits a word that is wider than the width, and keeps the trailing spaces of a wrapped line on that line, so `TextBox.GetLineText(0)` of `"one two three"` is `"one "` at `Width = 60`. While `Wrap` is set, the horizontal scroll bar of the text box is `Disabled`, so the text does not scroll horizontally. `NoWrap` breaks lines only at line break characters, which a text box keeps only with `AcceptsReturn`:
+
+```csharp
+using Cerneala.UI.Controls;
+using Cerneala.UI.Text;
+
+TextBox notes = new() { AcceptsReturn = true, TextWrapping = TextWrapping.Wrap };
+```
+
 Validation: `TextBlock.TextWrapping` throws `ArgumentException` for a value outside the enum, and the `TextAspect` constructor throws `ArgumentOutOfRangeException` ("Text wrapping is not supported.").
 
 In `.crn` markup the value is the member name, matched without regard to case, for example `TextWrapping="Wrap"`.
@@ -62,10 +71,11 @@ In `.crn` markup the value is the member name, matched without regard to case, f
 
 ## Applies to
 
-`TextBlock.TextWrapping` and `TextAspect.Wrapping`.
+`TextBlock.TextWrapping`, `TextBox.TextWrapping` and `TextAspect.Wrapping`.
 
 ## See also
 
 - `Cerneala.UI.Controls.TextBlock`
+- `Cerneala.UI.Controls.TextBox`
 - `Cerneala.UI.Text.TextAspect`
 - `Cerneala.UI.Text.LineBreakService`

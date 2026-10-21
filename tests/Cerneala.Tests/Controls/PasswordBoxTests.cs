@@ -176,6 +176,55 @@ public sealed class PasswordBoxTests
         Assert.Equal(Enumerable.Reverse(rightStops), leftStops);
     }
 
+    // A password has no word structure, as in WPF's PasswordBox: Ctrl+Left and Ctrl+Right go to its start and end, so the
+    // caret does not show where its words are.
+    [Fact]
+    public void PasswordBoxCtrlLeftAndCtrlRightMoveToTheStartAndEnd()
+    {
+        UIRoot root = FocusedPasswordBox("ab cd", clipboard: null, out PasswordBox passwordBox, out ElementInputBridge bridge);
+
+        bridge.Dispatch(root, KeyFrame(InputKey.End));
+        bridge.Dispatch(root, KeyFrame(InputKey.Left, InputKey.LeftCtrl));
+        bridge.Dispatch(root, TextInputFrame("X"));
+        Assert.Equal("Xab cd", passwordBox.Password);
+
+        bridge.Dispatch(root, KeyFrame(InputKey.Right, InputKey.LeftCtrl));
+        bridge.Dispatch(root, TextInputFrame("Y"));
+        Assert.Equal("Xab cdY", passwordBox.Password);
+    }
+
+    [Fact]
+    public void PasswordBoxCtrlShiftLeftSelectsToTheStart()
+    {
+        UIRoot root = FocusedPasswordBox("ab cd", clipboard: null, out PasswordBox passwordBox, out ElementInputBridge bridge);
+
+        bridge.Dispatch(root, KeyFrame(InputKey.End));
+        bridge.Dispatch(root, KeyFrame(InputKey.Left, InputKey.LeftCtrl, InputKey.LeftShift));
+        bridge.Dispatch(root, TextInputFrame("X"));
+
+        Assert.Equal("X", passwordBox.Password);
+    }
+
+    [Fact]
+    public void PasswordBoxDoubleClickSelectsTheWholePassword()
+    {
+        UIRoot root = FocusedPasswordBox("ab cd", clipboard: null, out PasswordBox passwordBox, out ElementInputBridge bridge);
+        root.ProcessFrame();
+        LayoutRect bounds = passwordBox.ArrangedBounds;
+        float x = bounds.X + passwordBox.BorderThickness.Left + passwordBox.Padding.Left + 2;
+        float y = bounds.Y + (bounds.Height / 2);
+
+        for (int click = 0; click < 2; click++)
+        {
+            bridge.Dispatch(root, PointerFrame(x, y, previousDown: false, currentDown: true));
+            bridge.Dispatch(root, PointerFrame(x, y, previousDown: true, currentDown: false));
+        }
+
+        bridge.Dispatch(root, TextInputFrame("X"));
+
+        Assert.Equal("X", passwordBox.Password);
+    }
+
     [Fact]
     public void PasswordBoxDoesNotExposePlainTextEditingApi()
     {
@@ -233,13 +282,13 @@ public sealed class PasswordBoxTests
             command => command.Kind == DrawCommandKind.FillRectangle && command.Rect.Width == 1).Rect.X;
     }
 
-    private static InputFrame KeyFrame(InputKey key)
+    private static InputFrame KeyFrame(InputKey key, params InputKey[] modifiers)
     {
         return new InputFrame(
             PointerSnapshot.Empty,
             PointerSnapshot.Empty,
-            KeyboardSnapshot.Empty,
-            KeyboardSnapshot.FromDownKeys([key]),
+            KeyboardSnapshot.FromDownKeys(modifiers),
+            KeyboardSnapshot.FromDownKeys([.. modifiers, key]),
             []);
     }
 

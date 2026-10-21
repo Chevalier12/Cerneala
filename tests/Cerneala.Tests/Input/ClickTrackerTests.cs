@@ -40,4 +40,36 @@ public sealed class ClickTrackerTests
 
         Assert.Equal(0, clickCount);
     }
+
+    [Fact]
+    public void StartPressCountsOneEvenInsideTheDoubleClickTimeAndSize()
+    {
+        UIElement target = new();
+        ClickTracker tracker = new();
+
+        tracker.Press(InputMouseButton.Left, target, 10, 10, TimeSpan.Zero);
+        tracker.Release(InputMouseButton.Left, target);
+        int count = tracker.Press(InputMouseButton.Left, target, 10, 10, TimeSpan.Zero, PressClickSequence.Start);
+
+        Assert.Equal(1, count);
+    }
+
+    [Fact]
+    public void ContinuePressIgnoresTheTimeButKeepsTheButtonTargetAndPositionTests()
+    {
+        UIElement target = new();
+        ClickTracker tracker = new();
+
+        tracker.Press(InputMouseButton.Left, target, 10, 10, TimeSpan.Zero, PressClickSequence.Start);
+        tracker.Release(InputMouseButton.Left, target);
+        int later = tracker.Press(InputMouseButton.Left, target, 10, 10, TimeSpan.FromSeconds(30), PressClickSequence.Continue);
+        tracker.Release(InputMouseButton.Left, target);
+        int moved = tracker.Press(InputMouseButton.Left, target, 50, 10, TimeSpan.FromSeconds(30), PressClickSequence.Continue);
+        tracker.Release(InputMouseButton.Left, target);
+        int otherTarget = tracker.Press(InputMouseButton.Left, new UIElement(), 50, 10, TimeSpan.FromSeconds(30), PressClickSequence.Continue);
+
+        Assert.Equal(2, later);
+        Assert.Equal(1, moved);
+        Assert.Equal(1, otherTarget);
+    }
 }

@@ -60,9 +60,13 @@ public class ScrollBar : RangeBase
         }
     }
 
+    // A ScrollViewer's bars are Collapsed while their content fits, so a bar that is never shown never builds its
+    // Track, Thumb and RepeatButtons (#714). Its first measure builds them and OnTemplateApplied syncs the Track.
+    internal override bool BuildsFirstTemplateInMeasure => true;
+
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
-        ApplyTemplate();
+        ApplyTemplateInLayout();
         SyncTrack();
         return base.MeasureCore(context);
     }

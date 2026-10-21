@@ -1,6 +1,7 @@
 using System.Globalization;
 using Cerneala.Drawing;
 using Cerneala.Drawing.Text;
+using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Core;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
@@ -11,6 +12,7 @@ using Cerneala.UI.Text;
 
 namespace Cerneala.UI.Controls;
 
+[TemplatePart(TextInputTemplates.ContentHostPartName, typeof(ScrollViewer))]
 public class PasswordBox : Control, ITimeSensitiveRenderElement, IPointerDragSource, ITextInputHost
 {
     public static readonly RoutedEvent PasswordChangedEvent = RoutedEventRegistry.Register(
@@ -123,18 +125,50 @@ public class PasswordBox : Control, ITimeSensitiveRenderElement, IPointerDragSou
         RaiseEvent(args);
     }
 
-    protected override LayoutSize MeasureCore(MeasureContext context) => textInput.Measure(context);
+    protected override LayoutRect ArrangeCore(ArrangeContext context)
+    {
+        LayoutRect arranged = base.ArrangeCore(context);
+        textInput.View.CompleteLayout();
+        return arranged;
+    }
 
-    protected override LayoutRect ArrangeCore(ArrangeContext context) => context.FinalRect;
-
-    protected override void OnRender(RenderContext context) => textInput.Render(context);
+    // The password box scrolls its single line horizontally like a TextBox, without scroll bars, as in WPF.
+    protected override void OnTemplateApplied(ComponentTemplateInstance? instance)
+    {
+        base.OnTemplateApplied(instance);
+        ScrollViewer? contentHost = instance is null
+            ? null
+            : GetRequiredTemplatePart<ScrollViewer>(TextInputTemplates.ContentHostPartName);
+        textInput.AttachContentHost(contentHost);
+        if (contentHost is not null)
+        {
+            contentHost.HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden;
+            contentHost.VerticalScrollBarVisibility = ScrollBarVisibility.Hidden;
+        }
+    }
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
         base.OnPropertyChanged(args);
-        if (ReferenceEquals(args.Property, IsKeyboardFocusedProperty))
+        UiProperty property = args.Property;
+        if (ReferenceEquals(property, IsKeyboardFocusedProperty))
         {
             textInput.OnKeyboardFocusChanged(IsKeyboardFocused);
+        }
+
+        if (ReferenceEquals(property, PasswordCharProperty) ||
+            ReferenceEquals(property, FontFamilyProperty) ||
+            ReferenceEquals(property, FontSizeProperty) ||
+            ReferenceEquals(property, ForegroundProperty) ||
+            ReferenceEquals(property, PaddingProperty))
+        {
+            textInput.View.InvalidateTextMetrics("PasswordBox text layout property changed");
+        }
+        else if (ReferenceEquals(property, CaretBrushProperty) ||
+            ReferenceEquals(property, SelectionBackgroundProperty) ||
+            ReferenceEquals(property, IsEnabledProperty))
+        {
+            textInput.View.InvalidateTextRender("PasswordBox text render property changed");
         }
     }
 
@@ -193,9 +227,17 @@ public class PasswordBox : Control, ITimeSensitiveRenderElement, IPointerDragSou
 
     Color ITextInputHost.SelectionBackground => SelectionBackground;
 
-    Thickness ITextInputHost.Insets => Insets;
-
     bool ITextInputHost.AllowsEditing => true;
+
+    bool ITextInputHost.AcceptsReturn => false;
+
+    bool ITextInputHost.AcceptsTab => false;
+
+    int ITextInputHost.MaxLength => 0;
+
+    CharacterCasing ITextInputHost.CharacterCasing => CharacterCasing.Normal;
+
+    TextWrapping ITextInputHost.TextWrapping => TextWrapping.NoWrap;
 
     bool ITextInputHost.CentersSingleLineContentVertically => false;
 
@@ -229,6 +271,7 @@ public class PasswordBox : Control, ITimeSensitiveRenderElement, IPointerDragSou
     {
         Focusable = true;
         IsTabStop = true;
+        SetFrameworkDefault(ComponentTemplateProperty, TextInputTemplates.PasswordBox);
         SetFrameworkDefault(PaddingProperty, new Thickness(4, 2, 4, 2));
         SetFrameworkDefault(BorderThicknessProperty, new Thickness(1));
         SetFrameworkDefault(BorderBrushProperty, new SolidColorBrush(new Color(120, 130, 145)));

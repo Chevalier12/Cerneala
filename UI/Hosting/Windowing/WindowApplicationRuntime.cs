@@ -647,28 +647,34 @@ internal sealed class WindowApplicationRuntime : IDisposable
         bool frameRendered = false;
         foreach (WindowContext context in contexts.Values.ToArray())
         {
+            bool rendered = false;
             if (!context.Window.IsShown ||
                 context.PlatformWindow.Viewport.Width <= 0 ||
                 context.PlatformWindow.Viewport.Height <= 0)
             {
                 context.DrainServoCleanupWithoutPresentation();
-                continue;
+            }
+            else
+            {
+                context.Host.AdvanceRenderTime(elapsedTime);
+                if (IsLiveContext(context) &&
+                    (context.RenderRequested ||
+                     context.Root.Relay.HasPendingWork ||
+                     context.Root.Scheduler.HasWork ||
+                     context.Root.Motion.HasActiveMotion ||
+                     context.Host.InputBridge.HasActivePointerRepeat))
+                {
+                    rendered = Render(context, elapsedTime, renderTimeAlreadyAdvanced: true);
+                    frameRendered |= rendered;
+                }
             }
 
-            context.Host.AdvanceRenderTime(elapsedTime);
-            if (!IsLiveContext(context))
+            // A rendered frame adds its time to the input clock when it dispatches input. Every other pump of a live
+            // window, one with nothing to render, a hidden one or one without a viewport, adds it here, so the
+            // double-click time follows real time.
+            if (!rendered && IsLiveContext(context))
             {
-                continue;
-            }
-
-            if (context.RenderRequested ||
-                context.Root.Relay.HasPendingWork ||
-                context.Root.Scheduler.HasWork ||
-                context.Root.Motion.HasActiveMotion ||
-                context.Host.InputBridge.HasActivePointerRepeat)
-            {
-                bool rendered = Render(context, elapsedTime, renderTimeAlreadyAdvanced: true);
-                frameRendered |= rendered;
+                context.Host.InputBridge.AdvanceInputClock(elapsedTime);
             }
         }
 

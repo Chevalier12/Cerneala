@@ -85,6 +85,16 @@ Layout elements use their drawn bounds: the axis-aligned box of `ArrangedBounds`
 
 The center of these bounds must hit the target or a descendant on the current input route. A union with a gap at its center can therefore be queryable but not actionable; Servo does not search for a substitute point. Disabled colliders remain queryable, but cannot supply a hit. Target screenshots of layout elements and scene nodes use the same bounds and capture the rendered window pixels there, not a separate rendering of the node.
 
+`ClickAsync` without a `clickCount` is always one click: its press has click count `1` and never continues the sequence of an earlier click, however little time has passed. Two calls in a row give two single clicks on a `Button`: the `MouseDown` events carry `ClickCount == 1` both times and no `MouseDoubleClick` is raised. To send a multi-click, pass `clickCount`: `ClickAsync(target, clickCount: N)` presses and releases N times at the same point, with the click counts `1` to `N`. These presses start and continue the sequence explicitly, so the elapsed time and the pointer travel between them do not matter. `clickCount: 2` raises `MouseDoubleClick` once; a following plain `ClickAsync` counts `1` again. A `clickCount` below `1` throws `ArgumentOutOfRangeException` before any input. The press of `DragAsync` always starts a new sequence. Example, for a `TextBox` with Servo ID `editor`, `Width = 200`, `Height = 40` and the text `hello world` (each call starts its own sequence; the tests run the two clicks on separate boxes):
+
+```csharp
+await servo.ClickAsync(ServoTarget.ById("editor"), clickCount: 2); // SelectedText == "world"
+await servo.ClickAsync(ServoTarget.ById("editor"), clickCount: 3); // SelectedText == "hello world"
+await servo.ClickAsync(ServoTarget.ById("editor"), clickCount: 0); // throws ArgumentOutOfRangeException
+```
+
+A double-click on a `TextBox` selects the word at the click point, and a triple-click selects the line. The click lands on the center of the target; in this 200 x 40 box that point is right of the text, so the word at that point is the last one, `world`. `TypeIntoAsync` and `ReplaceTextAsync` click once (`clickCount` 1).
+
 Input sequences are serialized per window or host. `TypeIntoAsync` composes a click and text input. `ReplaceTextAsync` composes a click, `Control+A`, and text input rather than assigning a control property. When the replacement text is empty, it presses `Delete` instead of sending text.
 
 `ReplaceTextAsync` behaves the same on every operating system: its steps are Cerneala `InputFrame`s, not platform key events, and `Control+A` is the select-all shortcut of `TextBox` and `PasswordBox` on every platform. Cerneala has no Command key.
@@ -94,7 +104,7 @@ Input sequences are serialized per window or host. `TypeIntoAsync` composes a cl
 ```csharp
 await servo.ReplaceTextAsync(ServoTarget.ById("name"), "xyz"); // Text == "xyz"
 await servo.ReplaceTextAsync(ServoTarget.ById("name"), "");    // Text == ""
-// TextBox is single-line and drops "\n": Text becomes "xy", and the call throws ServoException.
+// A TextBox with AcceptsReturn == false is single-line and drops "\n": Text becomes "xy", and the call throws ServoException.
 await servo.ReplaceTextAsync(ServoTarget.ById("name"), "x\ny");
 ```
 
@@ -152,7 +162,8 @@ Screenshots are supported only by the `Window` constructor and use the applicati
 | `FindAsync(ServoTarget, CancellationToken)` | Returns the single current match; throws for zero or multiple matches. |
 | `FindAllAsync(ServoTarget, CancellationToken)` | Returns all current matches in stable semantic-tree order. |
 | `ExistsAsync(ServoTarget, CancellationToken)` | Returns whether at least one current match exists. |
-| `ClickAsync(ServoTarget, CancellationToken)` | Waits until the target is actionable, then clicks its center through routed pointer input. |
+| `ClickAsync(ServoTarget, CancellationToken)` | Waits until the target is actionable, then clicks its center through routed pointer input. The click always has click count `1`. |
+| `ClickAsync(ServoTarget, int, CancellationToken)` | Same, but presses and releases `clickCount` times at the center, with click counts `1` to `clickCount`. Throws `ArgumentOutOfRangeException` when `clickCount` is below `1`. |
 | `HoverAsync(ServoTarget, CancellationToken)` | Waits until the target is actionable, then moves the pointer to its center. |
 | `DragAsync(ServoTarget, ServoPoint, int, CancellationToken)` | Waits until the target is actionable, then drags from its center to an absolute client-DIP destination. |
 | `DragAsync(ServoTarget, ServoTarget, int, CancellationToken)` | Waits until the source and the destination are both actionable, then drags from the source center to the destination center. |
@@ -179,6 +190,7 @@ Each overload behaves like the method above with the same name, but uses `timeou
 | `FindAllAsync(ServoTarget, TimeSpan, CancellationToken)` | `FindAllAsync` with its own timeout. |
 | `ExistsAsync(ServoTarget, TimeSpan, CancellationToken)` | `ExistsAsync` with its own timeout. |
 | `ClickAsync(ServoTarget, TimeSpan, CancellationToken)` | `ClickAsync` with its own timeout. |
+| `ClickAsync(ServoTarget, int, TimeSpan, CancellationToken)` | `ClickAsync` with `clickCount` and its own timeout; `clickCount` is required. |
 | `HoverAsync(ServoTarget, TimeSpan, CancellationToken)` | `HoverAsync` with its own timeout. |
 | `DragAsync(ServoTarget, ServoPoint, int, TimeSpan, CancellationToken)` | `DragAsync` to a point with its own timeout; `steps` is required. |
 | `DragAsync(ServoTarget, ServoTarget, int, TimeSpan, CancellationToken)` | `DragAsync` to a target with its own timeout; `steps` is required. |

@@ -19,6 +19,16 @@ internal sealed class TextEditingController
         return before != Editor.Document.Text || selection != Editor.Selection;
     }
 
+    public bool MoveByWord(int direction, bool extendSelection)
+    {
+        TextSelection beforeSelection = Editor.Selection;
+        TextCaret beforeCaret = Editor.Caret;
+
+        Editor.MoveCaretByWord(direction, extendSelection);
+
+        return beforeSelection != Editor.Selection || beforeCaret != Editor.Caret;
+    }
+
     public bool HandleKey(InputKey key, bool extendSelection = false)
     {
         string before = Editor.Document.Text;

@@ -605,7 +605,7 @@ public sealed class ButtonTests
         LayoutRect bounds = text.ArrangedBounds;
         float x = bounds.X + bounds.Width - 4;
         float y = bounds.Y + bounds.Height / 2;
-        Assert.Same(text, new HitTestService().HitTest(root, x, y)?.Element);
+        Assert.True(IsSameOrInside(new HitTestService().HitTest(root, x, y)?.Element, text));
         ElementInputBridge bridge = new();
 
         bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
@@ -632,7 +632,7 @@ public sealed class ButtonTests
         LayoutRect bounds = password.ArrangedBounds;
         float x = bounds.X + bounds.Width / 2;
         float y = bounds.Y + bounds.Height / 2;
-        Assert.Same(password, new HitTestService().HitTest(root, x, y)?.Element);
+        Assert.True(IsSameOrInside(new HitTestService().HitTest(root, x, y)?.Element, password));
         ElementInputBridge bridge = new();
 
         bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
@@ -967,7 +967,7 @@ public sealed class ButtonTests
         LayoutRect bounds = pressOnNestedTextBox ? text.ArrangedBounds : button.ArrangedBounds;
         float x = bounds.X + bounds.Width / 2;
         float y = bounds.Y + bounds.Height / 2;
-        Assert.Same(pressOnNestedTextBox ? text : button, new HitTestService().HitTest(root, x, y)?.Element);
+        UIElement? hit = new HitTestService().HitTest(root, x, y)?.Element;
         ElementInputBridge bridge = new();
 
         bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
@@ -1181,7 +1181,8 @@ public sealed class ButtonTests
         LayoutRect bounds = pressed.ArrangedBounds;
         float x = bounds.X + bounds.Width / 2;
         float y = bounds.Y + bounds.Height / 2;
-        Assert.Same(pressed, new HitTestService().HitTest(root, x, y)?.Element);
+        UIElement? hit = new HitTestService().HitTest(root, x, y)?.Element;
+        Assert.True(pressed is TextBox ? IsSameOrInside(hit, pressed) : ReferenceEquals(hit, pressed));
 
         bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
         root.ProcessFrame();
@@ -1494,6 +1495,20 @@ public sealed class ButtonTests
         return root;
     }
 
+    // A TextBox and a PasswordBox draw through their template, so the element under a point inside them is the text
+    // view or the template's Border: the point is on the text box when the hit element is the box or inside it.
+    private static bool IsSameOrInside(UIElement? element, UIElement owner)
+    {
+        for (UIElement? current = element; current is not null; current = current.VisualParent)
+        {
+            if (ReferenceEquals(current, owner))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
     private static void Click(UIRoot root, float x, float y)
     {
         ElementInputBridge bridge = new();

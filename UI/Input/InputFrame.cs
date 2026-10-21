@@ -69,14 +69,22 @@ public sealed class InputFrame
         TextInputEvents = Array.AsReadOnly(textInputEvents.ToArray());
     }
 
-    private InputFrame(PointerFrame pointer, KeyboardFrame keyboard, IReadOnlyList<TextInputSnapshotEvent> textInputEvents)
+    private InputFrame(
+        PointerFrame pointer,
+        KeyboardFrame keyboard,
+        IReadOnlyList<TextInputSnapshotEvent> textInputEvents,
+        PressClickSequence pressClickSequence)
     {
         Pointer = pointer;
         Keyboard = keyboard;
         TextInputEvents = textInputEvents;
+        PressClickSequence = pressClickSequence;
     }
 
     public PointerFrame Pointer { get; }
+
+    // Only Servo input sets it; see PressClickSequence.
+    internal PressClickSequence PressClickSequence { get; }
 
     public KeyboardFrame Keyboard { get; }
 
@@ -94,7 +102,12 @@ public sealed class InputFrame
         new(
             new PointerFrame(Pointer.Previous.WithPosition(x, y), Pointer.Current.WithPosition(x, y), [.. Pointer.WheelDeltas]),
             Keyboard,
-            TextInputEvents);
+            TextInputEvents,
+            PressClickSequence);
+
+    // The same frame whose mouse presses relate to the earlier click sequence as given.
+    internal InputFrame WithPressClickSequence(PressClickSequence pressClickSequence) =>
+        new(Pointer, Keyboard, TextInputEvents, pressClickSequence);
 
     public sealed class PointerFrame
     {

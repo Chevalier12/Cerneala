@@ -2,16 +2,61 @@ namespace Cerneala.UI.Text;
 
 internal sealed class UndoRedoStack
 {
-    private readonly Stack<TextEditorSnapshot> undo = new();
-    private readonly Stack<TextEditorSnapshot> redo = new();
+    // Both lists keep the newest unit at the end, so the top of a stack is the last element
+    // and trimming the oldest units removes from the front.
+    private readonly List<TextEditorSnapshot> undo = new();
+    private readonly List<TextEditorSnapshot> redo = new();
+    private int limit = -1;
+    private bool isEnabled = true;
 
     public int UndoCount => undo.Count;
 
     public int RedoCount => redo.Count;
 
+    public bool CanUndo => undo.Count > 0;
+
+    public bool CanRedo => redo.Count > 0;
+
+    /// <summary>
+    /// Maximum number of units each stack keeps. -1 is unlimited, 0 keeps nothing, n keeps the newest n units.
+    /// </summary>
+    public int Limit
+    {
+        get => limit;
+        set
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThan(value, -1);
+            limit = value;
+            Trim(undo);
+            Trim(redo);
+        }
+    }
+
+    /// <summary>
+    /// When false both stacks are cleared and nothing is recorded.
+    /// </summary>
+    public bool IsEnabled
+    {
+        get => isEnabled;
+        set
+        {
+            isEnabled = value;
+            if (!value)
+            {
+                Clear();
+            }
+        }
+    }
+
     public void PushUndo(TextEditorSnapshot snapshot)
     {
-        undo.Push(snapshot);
+        if (!isEnabled)
+        {
+            return;
+        }
+
+        undo.Add(snapshot);
+        Trim(undo);
         redo.Clear();
     }
 
@@ -23,8 +68,9 @@ internal sealed class UndoRedoStack
             return false;
         }
 
-        redo.Push(current);
-        snapshot = undo.Pop();
+        redo.Add(current);
+        Trim(redo);
+        snapshot = Pop(undo);
         return true;
     }
 
@@ -36,8 +82,9 @@ internal sealed class UndoRedoStack
             return false;
         }
 
-        undo.Push(current);
-        snapshot = redo.Pop();
+        undo.Add(current);
+        Trim(undo);
+        snapshot = Pop(redo);
         return true;
     }
 
@@ -45,5 +92,21 @@ internal sealed class UndoRedoStack
     {
         undo.Clear();
         redo.Clear();
+    }
+
+    private static TextEditorSnapshot Pop(List<TextEditorSnapshot> stack)
+    {
+        int last = stack.Count - 1;
+        TextEditorSnapshot snapshot = stack[last];
+        stack.RemoveAt(last);
+        return snapshot;
+    }
+
+    private void Trim(List<TextEditorSnapshot> stack)
+    {
+        if (limit >= 0 && stack.Count > limit)
+        {
+            stack.RemoveRange(0, stack.Count - limit);
+        }
     }
 }

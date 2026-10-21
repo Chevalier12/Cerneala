@@ -129,15 +129,33 @@ public sealed class Servo
     public Task ClickAsync(
         ServoTarget target,
         TimeSpan timeout,
+        CancellationToken cancellationToken = default) =>
+        ClickAsync(target, 1, timeout, cancellationToken);
+
+    // Sends clickCount press and release pairs at the center of the target. The input system counts them 1, 2, ..., N,
+    // as a real fast multi-click, so clickCount 2 raises MouseDoubleClick once and selects the word of a TextBox, and 3
+    // selects its line. The first press always starts a new click sequence, so ClickAsync(target) is one click (count 1)
+    // however recently Servo clicked before.
+    public Task ClickAsync(
+        ServoTarget target,
+        int clickCount,
+        CancellationToken cancellationToken = default) =>
+        ClickAsync(target, clickCount, Options.DefaultTimeout, cancellationToken);
+
+    public Task ClickAsync(
+        ServoTarget target,
+        int clickCount,
+        TimeSpan timeout,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(target);
+        ArgumentOutOfRangeException.ThrowIfLessThan(clickCount, 1);
         ServoOptions.ValidateTimeout(timeout, nameof(timeout));
         return ServoOperation.RunAsync(
             timeout,
             token => context.ExecuteInputAsync(
                 (_, input, operationToken) => actionEngine.DispatchWhenActionableAsync(
-                    target, resolve => input.ClickAsync(resolve, operationToken), operationToken),
+                    target, resolve => input.ClickAsync(resolve, clickCount, operationToken), operationToken),
                 token),
             cancellationToken,
             DescribeTarget(target));
@@ -356,7 +374,7 @@ public sealed class Servo
             token => context.ExecuteInputAsync(
                 [
                     (_, input, operationToken) => actionEngine.DispatchWhenActionableAsync(
-                        target, resolve => input.ClickAsync(resolve, operationToken), operationToken),
+                        target, resolve => input.ClickAsync(resolve, 1, operationToken), operationToken),
                     (_, input, operationToken) => input.SendTextAsync(text, operationToken)
                 ],
                 token),
@@ -390,7 +408,7 @@ public sealed class Servo
                     // text value fails at once, a missing or not-yet-actionable one is waited for.
                     (_, input, operationToken) => actionEngine.DispatchWhenActionableAsync(
                         target,
-                        resolve => input.ClickAsync(resolve, operationToken),
+                        resolve => input.ClickAsync(resolve, 1, operationToken),
                         operationToken,
                         root => actionEngine.ReadTextValue(root, target)),
                     (_, input, operationToken) => input.PressKeyAsync(InputKey.A, ServoModifiers.Control, operationToken),

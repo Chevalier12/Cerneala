@@ -208,8 +208,11 @@ public sealed class PrismChapterViewTests : IDisposable
         PrismChapterView view = new();
         root.VisualChildren.Add(view);
         root.ProcessFrame();
+        // A TextBox hosts its text in the ScrollViewer of its own template (PART_ContentHost), which is not an editor
+        // scroll host.
         ScrollViewer[] hosts = Descendants(view)
             .OfType<ScrollViewer>()
+            .Where(host => !IsInsideTextInput(host))
             .ToArray();
 
         Assert.Equal(3, hosts.Length);
@@ -384,10 +387,14 @@ public sealed class PrismChapterViewTests : IDisposable
 
         UIElement[] elements = Descendants(view).ToArray();
         LayoutRect preview = Assert.Single(elements.OfType<SvgImage>()).ArrangedBounds;
-        LayoutRect[] zones = elements.OfType<ScrollViewer>()
+        // The ScrollViewer in a TextBox template (PART_ContentHost) is not an editor zone.
+        ScrollViewer[] zoneHosts = elements.OfType<ScrollViewer>()
+            .Where(host => !IsInsideTextInput(host))
+            .ToArray();
+        LayoutRect[] zones = zoneHosts
             .Select(host => host.ArrangedBounds)
             .ToArray();
-        ScrollViewer layersHost = elements.OfType<ScrollViewer>().First();
+        ScrollViewer layersHost = zoneHosts.First();
 
         Assert.True(preview.Width > 0 && preview.Height > 0);
         Assert.Equal(3, zones.Length);
@@ -471,6 +478,19 @@ public sealed class PrismChapterViewTests : IDisposable
     {
         view.Measure(new MeasureContext(new LayoutSize(width, height)));
         view.Arrange(new ArrangeContext(new LayoutRect(0, 0, width, height)));
+    }
+
+    private static bool IsInsideTextInput(UIElement element)
+    {
+        for (UIElement? current = element.VisualParent; current is not null; current = current.VisualParent)
+        {
+            if (current is TextBox or PasswordBox)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static IEnumerable<UIElement> Descendants(UIElement element)

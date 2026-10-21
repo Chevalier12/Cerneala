@@ -894,69 +894,12 @@ public class ItemsPresenter : Control
         }
     }
 
-    // The panel inherits from this presenter, and adding it queued this presenter for that work, which this
-    // measure removes from the queue. So the propagation starts at this presenter, whose only visual child is
-    // the panel, and also writes the panel's own inherited values.
-    // Like the frame's Aspect phase, only elements with queued Aspect work are processed, for example the rows
-    // that a refresh added; a row whose Aspect inputs did not change keeps its result.
-    // An apply can change the tree, for example a property-change callback or a package behavior factory that detaches
-    // its element, so the walk does not enumerate the live child lists. Like a live pre-order walk, it reads an
-    // element's children after that element's apply, so the subtree that the apply creates, for example from a content
-    // template, is processed before the panel measures it. An element that an earlier apply detached is skipped, and an
-    // element's work is taken off the queue before its apply, like in the frame's Aspect phase, so the work that a
-    // reattach during the apply queues stays queued for the next pass.
+    // The panel inherits from this presenter, so the propagation starts here (see UIRoot.ProcessInheritedAndAspectForSubtree).
     private void ProcessInheritedAndAspectForSubtree(UIElement? element)
     {
-        if (element?.Root is not UIRoot root)
+        if (element?.Root is UIRoot root)
         {
-            return;
-        }
-
-        root.InheritedPropertyPropagator.PropagateFrom(this);
-        Stack<UIElement> pending = new();
-        pending.Push(element);
-        while (pending.Count > 0)
-        {
-            UIElement current = pending.Pop();
-            if (!ReferenceEquals(current.Root, root))
-            {
-                continue;
-            }
-
-            ProcessQueuedAspect(root, current);
-            IReadOnlyList<UIElement> children = current.VisualChildren;
-            for (int index = children.Count - 1; index >= 0; index--)
-            {
-                pending.Push(children[index]);
-            }
-        }
-
-        root.InheritedPropertyPropagator.PropagateFrom(this);
-        foreach (UIElement current in ElementTreeWalker.PreOrder(element, ElementChildRole.Visual))
-        {
-            root.InheritedPropertyQueue.Remove(current);
-            current.DirtyState.Clear(InvalidationFlags.Inherited);
-        }
-    }
-
-    private static void ProcessQueuedAspect(UIRoot root, UIElement element)
-    {
-        if (!element.DirtyState.Has(InvalidationFlags.Aspect) && !root.AspectQueue.Contains(element))
-        {
-            return;
-        }
-
-        root.AspectQueue.Remove(element);
-        element.DirtyState.Clear(InvalidationFlags.Aspect);
-        try
-        {
-            root.AspectProcessor.Process(element);
-        }
-        catch
-        {
-            element.DirtyState.Mark(InvalidationFlags.Aspect);
-            root.AspectQueue.Enqueue(element);
-            throw;
+            root.ProcessInheritedAndAspectForSubtree(this, element);
         }
     }
 

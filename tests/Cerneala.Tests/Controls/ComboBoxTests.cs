@@ -2151,8 +2151,10 @@ public sealed class ComboBoxTests
         TextBox editor = Assert.IsType<TextBox>(instance.Parts["PART_EditableTextBox"]);
         ToggleButton toggle = Assert.IsType<ToggleButton>(instance.Parts["PART_DropDownToggle"]);
         DirectionPath glyph = Assert.IsType<DirectionPath>(toggle.Content);
+        // The editable TextBox draws its own background through the Border of its template; the field border is the
+        // ComboBox template's.
         Border fieldBorder = Assert.Single(Descendants(instance.Root!).OfType<Border>(),
-            border => ReferenceEquals(border.Background, background));
+            border => ReferenceEquals(border.Background, background) && !IsDescendantOf(border, editor));
 
         Assert.Same(background, fieldBorder.Background);
         Assert.Same(foreground, selection.Foreground);

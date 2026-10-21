@@ -549,6 +549,157 @@ public sealed class ElementInputBridgeTests
         Assert.Equal([1, 2, 1, 1, 1], leftClickCounts);
     }
 
+    // As WPF's MouseDevice, which decides the click count on the press: a press continues the sequence when it is of the
+    // same button, on the same target, within the double-click time (500 ms) and within the double-click size (4 px).
+    [Fact]
+    public void SecondQuickPressCarriesClickCountTwoOnMouseDown()
+    {
+        UIRoot root = RootWithChild(out UIElement child);
+        List<int> downCounts = [];
+        List<int> buttonDownCounts = [];
+        List<int> upCounts = [];
+        int doubleClicks = 0;
+        child.Handlers.AddHandler(InputEvents.MouseDownEvent, (_, args) => downCounts.Add(((MouseButtonEventArgs)args).ClickCount));
+        child.Handlers.AddHandler(InputEvents.MouseLeftButtonDownEvent, (_, args) => buttonDownCounts.Add(((MouseButtonEventArgs)args).ClickCount));
+        child.Handlers.AddHandler(InputEvents.MouseUpEvent, (_, args) => upCounts.Add(((MouseButtonEventArgs)args).ClickCount));
+        child.Handlers.AddHandler(InputEvents.MouseDoubleClickEvent, (_, _) => doubleClicks++);
+        ElementInputBridge bridge = new();
+
+        LeftClick(bridge, root, 10, 10, TimeSpan.Zero);
+        LeftClick(bridge, root, 10, 10, TimeSpan.Zero);
+
+        Assert.Equal([1, 2], downCounts);
+        Assert.Equal([1, 2], buttonDownCounts);
+        Assert.Equal([1, 2], upCounts);
+        Assert.Equal(1, doubleClicks);
+    }
+
+    [Fact]
+    public void SecondPressAfterMoreThanTheDoubleClickTimeRestartsTheClickCount()
+    {
+        UIRoot root = RootWithChild(out UIElement child);
+        List<int> downCounts = [];
+        List<int> upCounts = [];
+        int doubleClicks = 0;
+        child.Handlers.AddHandler(InputEvents.MouseDownEvent, (_, args) => downCounts.Add(((MouseButtonEventArgs)args).ClickCount));
+        child.Handlers.AddHandler(InputEvents.MouseUpEvent, (_, args) => upCounts.Add(((MouseButtonEventArgs)args).ClickCount));
+        child.Handlers.AddHandler(InputEvents.MouseDoubleClickEvent, (_, _) => doubleClicks++);
+        ElementInputBridge bridge = new();
+
+        LeftClick(bridge, root, 10, 10, TimeSpan.Zero);
+        LeftClick(bridge, root, 10, 10, TimeSpan.FromMilliseconds(600));
+
+        Assert.Equal([1, 1], downCounts);
+        Assert.Equal([1, 1], upCounts);
+        Assert.Equal(0, doubleClicks);
+    }
+
+    [Fact]
+    public void SecondPressAtTheDoubleClickTimeLimitStillContinuesTheClickCount()
+    {
+        UIRoot root = RootWithChild(out UIElement child);
+        List<int> downCounts = [];
+        child.Handlers.AddHandler(InputEvents.MouseDownEvent, (_, args) => downCounts.Add(((MouseButtonEventArgs)args).ClickCount));
+        ElementInputBridge bridge = new();
+
+        LeftClick(bridge, root, 10, 10, TimeSpan.Zero);
+        LeftClick(bridge, root, 10, 10, TimeSpan.FromMilliseconds(500));
+
+        Assert.Equal([1, 2], downCounts);
+    }
+
+    [Fact]
+    public void SecondPressMoreThanTheDoubleClickSizeAwayRestartsTheClickCount()
+    {
+        UIRoot root = RootWithChild(out UIElement child);
+        List<int> downCounts = [];
+        List<int> upCounts = [];
+        child.Handlers.AddHandler(InputEvents.MouseDownEvent, (_, args) => downCounts.Add(((MouseButtonEventArgs)args).ClickCount));
+        child.Handlers.AddHandler(InputEvents.MouseUpEvent, (_, args) => upCounts.Add(((MouseButtonEventArgs)args).ClickCount));
+        ElementInputBridge bridge = new();
+
+        LeftClick(bridge, root, 10, 10, TimeSpan.Zero);
+        LeftClick(bridge, root, 20, 10, TimeSpan.Zero);
+
+        Assert.Equal([1, 1], downCounts);
+        Assert.Equal([1, 1], upCounts);
+    }
+
+    [Fact]
+    public void SecondPressWithinTheDoubleClickSizeOnBothAxesContinuesTheClickCount()
+    {
+        UIRoot root = RootWithChild(out UIElement child);
+        List<int> downCounts = [];
+        child.Handlers.AddHandler(InputEvents.MouseDownEvent, (_, args) => downCounts.Add(((MouseButtonEventArgs)args).ClickCount));
+        ElementInputBridge bridge = new();
+
+        LeftClick(bridge, root, 10, 10, TimeSpan.Zero);
+        LeftClick(bridge, root, 14, 6, TimeSpan.Zero);
+
+        Assert.Equal([1, 2], downCounts);
+    }
+
+    [Fact]
+    public void ThreeQuickPressesCarryClickCountThreeOnTheThirdPress()
+    {
+        UIRoot root = RootWithChild(out UIElement child);
+        List<int> downCounts = [];
+        List<int> upCounts = [];
+        child.Handlers.AddHandler(InputEvents.MouseDownEvent, (_, args) => downCounts.Add(((MouseButtonEventArgs)args).ClickCount));
+        child.Handlers.AddHandler(InputEvents.MouseUpEvent, (_, args) => upCounts.Add(((MouseButtonEventArgs)args).ClickCount));
+        ElementInputBridge bridge = new();
+
+        LeftClick(bridge, root, 10, 10, TimeSpan.Zero);
+        LeftClick(bridge, root, 10, 10, TimeSpan.FromMilliseconds(100));
+        LeftClick(bridge, root, 10, 10, TimeSpan.FromMilliseconds(100));
+
+        Assert.Equal([1, 2, 3], downCounts);
+        Assert.Equal([1, 2, 3], upCounts);
+    }
+
+    [Fact]
+    public void PointerDragSourceReceivesTheClickCountOfThePress()
+    {
+        UIRoot root = new(100, 100);
+        DragSourceElement source = new();
+        source.Arrange(new ArrangeContext(new LayoutRect(0, 0, 40, 40)));
+        root.VisualChildren.Add(source);
+        ElementInputBridge bridge = new();
+
+        LeftClick(bridge, root, 10, 10, TimeSpan.Zero);
+        LeftClick(bridge, root, 10, 10, TimeSpan.Zero);
+
+        Assert.Equal([1, 2], source.BeginClickCounts);
+        Assert.Equal([1, 2], source.CompleteClickCounts);
+    }
+
+    private static void LeftClick(ElementInputBridge bridge, UIRoot root, float x, float y, TimeSpan timeBeforePress)
+    {
+        bridge.Dispatch(root, ButtonsFrame(x, y, previousLeft: false, previousRight: false, currentLeft: true, currentRight: false), timeBeforePress);
+        bridge.Dispatch(root, ButtonsFrame(x, y, previousLeft: true, previousRight: false, currentLeft: false, currentRight: false), TimeSpan.Zero);
+    }
+
+    private sealed class DragSourceElement : UIElement, IPointerDragSource
+    {
+        internal List<int> BeginClickCounts { get; } = [];
+
+        internal List<int> CompleteClickCounts { get; } = [];
+
+        bool IPointerDragSource.BeginPointerDrag(PointerCaptureManager captureManager, ElementInputRouteMap routeMap, MouseButtonEventArgs args)
+        {
+            BeginClickCounts.Add(args.ClickCount);
+            return true;
+        }
+
+        bool IPointerDragSource.UpdatePointerDrag(MouseEventArgs args) => false;
+
+        bool IPointerDragSource.CompletePointerDrag(PointerCaptureManager captureManager, ElementInputRouteMap routeMap, MouseButtonEventArgs args)
+        {
+            CompleteClickCounts.Add(args.ClickCount);
+            return true;
+        }
+    }
+
     [Fact]
     public void ReleaseAfterDetachClearsPressedStateWithoutClickOrCommand()
     {
