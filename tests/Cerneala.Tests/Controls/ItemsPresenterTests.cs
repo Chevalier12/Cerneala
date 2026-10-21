@@ -153,15 +153,14 @@ public sealed class ItemsPresenterTests
         AssertPresenterPanelAndExtentHeights(140, presenter, viewer);
     }
 
-    // The first context is applied through MarkItemsDirty only to establish the applied state, so this test isolates
-    // the null set: it alone must schedule the layout that realizes every item again (#708).
+    // The whole sequence (set a context, frames, set null, frames) uses only the public setter: each set must schedule
+    // the layout that realizes its window, and the null set the layout that realizes every item again (#708).
     [Fact]
     public void SettingVirtualizationContextToNullAfterItWasAppliedRealizesEveryItemAgain()
     {
         (UIRoot root, ItemsControl itemsControl, ScrollViewer viewer) = CreateScrolledMixedRowItemsControl();
         ItemsPresenter presenter = itemsControl.ItemsPresenter;
         presenter.VirtualizationContext = new VirtualizationContext(60, 20, 200, 0, 0);
-        presenter.MarkItemsDirty();
         ProcessFramesUntilIdle(root);
         Assert.Equal(10, itemsControl.ItemContainerGenerator.RealizedContainers.Count);
 
