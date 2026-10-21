@@ -239,8 +239,10 @@ public class TextBlock : Control
         return paragraph.Size;
     }
 
+    // As in WPF, Background fills the render bounds under the text, also when Text is empty.
     protected override void OnRender(RenderContext context)
     {
+        Border.RenderBackground(this, context);
         if (string.IsNullOrEmpty(Text))
         {
             return;
