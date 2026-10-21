@@ -189,6 +189,34 @@ public sealed class ItemsPresenterTests
         Assert.Equal(10, itemsControl.ItemContainerGenerator.RealizedContainers.Count);
     }
 
+    // A custom panel can change its realization window without marking the presenter's items dirty, so the presenter
+    // finds the change when it arranges. It then realizes and measures the new rows, and its own desired size must follow
+    // the panel's (#708).
+    [Fact]
+    public void ArrangeTimeWindowChangeOfACustomVirtualizingPanelUpdatesThePresenterDesiredSize()
+    {
+        WindowVirtualizingPanel panel = new() { Window = new RealizationWindow(0, 60) };
+        ItemsPresenter presenter = new()
+        {
+            Items = Enumerable.Range(0, 60).Select(_ => new Border { Height = 10 }).ToArray(),
+            ItemsPanel = panel
+        };
+        UIRoot root = new(360, 200);
+        root.VisualChildren.Add(presenter);
+        ProcessFramesUntilIdle(root);
+        Assert.Equal(
+            "children=60 presenter=600 panel=600",
+            $"children={panel.VisualChildren.Count} presenter={presenter.DesiredSize.Height} panel={panel.DesiredSize.Height}");
+
+        panel.Window = new RealizationWindow(0, 14);
+        presenter.Invalidate(InvalidationFlags.Arrange, "test arrange only");
+        ProcessFramesUntilIdle(root);
+
+        Assert.Equal(
+            "children=14 presenter=140 panel=140",
+            $"children={panel.VisualChildren.Count} presenter={presenter.DesiredSize.Height} panel={panel.DesiredSize.Height}");
+    }
+
     [Fact]
     public void ReplacingVirtualizingStackPanelWithStackPanelReleasesOldPanelVirtualizationContext()
     {
@@ -1367,6 +1395,50 @@ public sealed class ItemsPresenterTests
     private static int[] RealizedIndices(ItemsControl control)
     {
         return [.. control.ItemContainerGenerator.RealizedContainers.Keys.Order()];
+    }
+
+    // A panel that virtualizes through the public IItemsVirtualizingPanel contract alone, with a window that a test sets
+    // directly: rows stack at their desired heights, and the panel never invalidates anything when its window changes.
+    private sealed class WindowVirtualizingPanel : Cerneala.UI.Layout.Panels.Panel, IItemsVirtualizingPanel
+    {
+        public RealizationWindow Window { get; set; }
+
+        public RealizationWindow RealizationWindow => Window;
+
+        public float TotalExtent => VisualChildren.Sum(child => child.DesiredSize.Height);
+
+        public void UpdateViewport(ItemsVirtualizationViewport viewport)
+        {
+        }
+
+        public void ClearViewport()
+        {
+        }
+
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            float height = 0;
+            foreach (UIElement child in VisualChildren)
+            {
+                height += child.Measure(new MeasureContext(new LayoutSize(context.AvailableSize.Width, float.PositiveInfinity), context.Rounding)).Height;
+            }
+
+            return new LayoutSize(0, height);
+        }
+
+        protected override LayoutRect ArrangeCore(ArrangeContext context)
+        {
+            float y = context.FinalRect.Y;
+            foreach (UIElement child in VisualChildren)
+            {
+                child.Arrange(new ArrangeContext(
+                    new LayoutRect(context.FinalRect.X, y, context.FinalRect.Width, child.DesiredSize.Height),
+                    context.Rounding));
+                y += child.DesiredSize.Height;
+            }
+
+            return context.FinalRect;
+        }
     }
 
     private class ItemElement(string value) : UIElement

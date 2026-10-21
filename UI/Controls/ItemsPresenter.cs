@@ -253,7 +253,17 @@ public class ItemsPresenter : Control
         // so the panel does not arrange them with an empty desired size.
         if (RefreshItems() && panelRoot?.LastMeasureAvailableSize is LayoutSize availableSize)
         {
+            LayoutSize measuredPanelSize = panelRoot.DesiredSize;
             MeasurePanelRoot(new MeasureContext(availableSize, context.Rounding));
+
+            // This presenter's desired size is still the panel's size from the last measure, so a panel size that changed
+            // here is measured again by the next frame. That measure refreshes nothing, because the window it reads is
+            // the one recorded above, and returns the panel's size, so the next arrange refreshes nothing and does not
+            // invalidate again.
+            if (panelRoot.DesiredSize != measuredPanelSize)
+            {
+                Invalidate(InvalidationFlags.Measure, "Items presenter panel size changed while arranging");
+            }
         }
 
         panelRoot?.Arrange(context);
