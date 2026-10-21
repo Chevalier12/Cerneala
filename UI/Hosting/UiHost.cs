@@ -278,13 +278,45 @@ public sealed class UiHost
         DrawCore(drawingBackend, backdropFrameSource);
     }
 
+    // Draws the last committed command list even if the root was invalidated after
+    // that commit. Used for captures, which must work from a frame handler.
+    internal void DrawLastCommitted(
+        IDrawingBackend drawingBackend,
+        IBackdropFrameSource? backdropFrameSource)
+    {
+        ArgumentNullException.ThrowIfNull(drawingBackend);
+        ValidateBackdropCompatibility(
+            drawingBackend,
+            backdropFrameSource);
+        UIRoot currentRoot = RequireRoot();
+        currentRoot.Relay.VerifyAccess();
+        // The invalidation queue belongs to the next commit; a capture must not drain it.
+        DrawCore(
+            currentRoot.RetainedRenderer.RenderLastCommitted(currentRoot),
+            prismCacheInvalidations: null,
+            drawingBackend,
+            backdropFrameSource);
+    }
+
     private void DrawCore(
         IDrawingBackend drawingBackend,
         IBackdropFrameSource? backdropFrameSource)
     {
         UIRoot currentRoot = RequireRoot();
         currentRoot.Relay.VerifyAccess();
-        DrawCommandList commands = currentRoot.RetainedRenderer.Render(currentRoot);
+        DrawCore(
+            currentRoot.RetainedRenderer.Render(currentRoot),
+            currentRoot.PrismCacheInvalidations,
+            drawingBackend,
+            backdropFrameSource);
+    }
+
+    private void DrawCore(
+        DrawCommandList commands,
+        PrismCacheInvalidationQueue? prismCacheInvalidations,
+        IDrawingBackend drawingBackend,
+        IBackdropFrameSource? backdropFrameSource)
+    {
         PrismFrameAnalysis analysis = prismFrameAnalyzer.Analyze(commands);
         IBackdropFrameLease? lease = AcquireBackdropFrame(
             analysis,
@@ -298,9 +330,9 @@ public sealed class UiHost
                 analysis,
                 lease,
                 sourceToken,
-                currentRoot.PrismCacheInvalidations);
-            currentRoot.RetainedRenderer.Submit(
-                currentRoot,
+                prismCacheInvalidations);
+            RetainedRenderer.SubmitCommands(
+                commands,
                 drawingBackend,
                 in frameContext);
         }

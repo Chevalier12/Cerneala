@@ -461,18 +461,23 @@ internal sealed class WindowApplicationRuntime : IDisposable
             Directory.CreateDirectory(directory);
         }
 
-        using FileStream output = File.Create(fullPath);
-        Action<IDrawingBackend> draw = drawingBackend => context.Host.Draw(
+        // Encode in memory so a failed capture never creates, truncates, or half-writes the file.
+        using MemoryStream png = new();
+        Action<IDrawingBackend> draw = drawingBackend => context.Host.DrawLastCommitted(
             drawingBackend,
             graphicsSession as IBackdropFrameSource);
         if (region is WindowScreenshotRegion pixelRegion)
         {
-            screenshotSource.RenderPng(output, Color.White, pixelRegion, draw);
+            screenshotSource.RenderPng(png, Color.White, pixelRegion, draw);
         }
         else
         {
-            screenshotSource.RenderPng(output, Color.White, draw);
+            screenshotSource.RenderPng(png, Color.White, draw);
         }
+
+        using FileStream output = File.Create(fullPath);
+        png.Position = 0;
+        png.CopyTo(output);
     }
 
     internal WindowPreviewFrame CapturePreviewFrame(

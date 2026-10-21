@@ -2,6 +2,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.Reflection;
 using Cerneala.Drawing;
+using Cerneala.Drawing.Prism;
 using Cerneala.UI;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
@@ -1752,6 +1753,147 @@ public sealed class WindowRuntimeTests : IDisposable
     }
 
     [Fact]
+    public void SaveScreenshotFromFrameRenderedAfterAChangeCapturesThePresentedFrame()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        TextBlock status = new() { Text = "initial" };
+        Window window = new() { Content = status };
+        window.Show();
+        FakePlatformWindow nativeWindow = Assert.Single(platform.Windows);
+        string path = Path.Combine(Path.GetTempPath(), $"cerneala-screenshot-{Guid.NewGuid():N}.png");
+        string laterPath = Path.Combine(Path.GetTempPath(), $"cerneala-screenshot-{Guid.NewGuid():N}.png");
+        bool handled = false;
+        List<string>? textsDrawnForHandlerCapture = null;
+        window.FrameRendered += (_, _) =>
+        {
+            if (handled)
+            {
+                return;
+            }
+
+            handled = true;
+            status.Text = "changed";
+            window.SaveScreenshot(path);
+            textsDrawnForHandlerCapture = nativeWindow.Backend.RenderedTexts[^1];
+        };
+
+        try
+        {
+            nativeWindow.RequestRender();
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+            Assert.True(handled);
+            Assert.True(File.Exists(path));
+            Assert.True(new FileInfo(path).Length > 0);
+            Assert.NotNull(textsDrawnForHandlerCapture);
+            Assert.Contains("initial", textsDrawnForHandlerCapture);
+            Assert.DoesNotContain("changed", textsDrawnForHandlerCapture);
+
+            nativeWindow.RequestRender();
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+            window.SaveScreenshot(laterPath);
+
+            Assert.True(File.Exists(laterPath));
+            List<string> textsDrawnForLaterCapture = nativeWindow.Backend.RenderedTexts[^1];
+            Assert.Contains("changed", textsDrawnForLaterCapture);
+            Assert.DoesNotContain("initial", textsDrawnForLaterCapture);
+        }
+        finally
+        {
+            File.Delete(path);
+            File.Delete(laterPath);
+        }
+    }
+
+    [Fact]
+    public void SaveScreenshotFromFrameRenderedLeavesPrismInvalidationsForTheNextFrame()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        TextBlock status = new() { Text = "initial" };
+        Window window = new() { Content = status };
+        window.Show();
+        FakePlatformWindow nativeWindow = Assert.Single(platform.Windows);
+        string path = Path.Combine(Path.GetTempPath(), $"cerneala-screenshot-{Guid.NewGuid():N}.png");
+        PrismCacheOwnerToken owner = new(4242);
+        bool handled = false;
+        int captureFirstRender = -1;
+        int captureEndRender = -1;
+        window.FrameRendered += (_, _) =>
+        {
+            if (handled)
+            {
+                return;
+            }
+
+            handled = true;
+            // Queued after the presented frame: it belongs to the next commit.
+            window.Root!.PrismCacheInvalidations.EnqueueOwner(owner);
+            status.Text = "changed";
+            captureFirstRender = nativeWindow.Backend.RenderCount;
+            window.SaveScreenshot(path);
+            captureEndRender = nativeWindow.Backend.RenderCount;
+        };
+
+        try
+        {
+            nativeWindow.RequestRender();
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+            Assert.True(handled);
+            Assert.True(captureEndRender > captureFirstRender);
+            List<List<PrismCacheInvalidation>> drained = nativeWindow.Backend.DrainedPrismInvalidations;
+            for (int render = captureFirstRender; render < captureEndRender; render++)
+            {
+                Assert.Empty(drained[render]);
+            }
+
+            nativeWindow.RequestRender();
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+            Assert.True(nativeWindow.Backend.RenderCount > captureEndRender);
+            PrismCacheInvalidation invalidation = Assert.Single(drained[captureEndRender]);
+            Assert.Equal(PrismCacheInvalidationKind.Owner, invalidation.Kind);
+            Assert.Equal(owner, invalidation.OwnerToken);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void SaveScreenshotThatFailsToDrawLeavesNoFileAtThePath()
+    {
+        FakeWindowPlatform platform = new();
+        Install(platform);
+        Window window = new() { Content = new TextBlock { Text = "Current frame" } };
+        window.Show();
+        FakeGraphicsSession session = Assert.Single(platform.Windows).Session;
+        string path = Path.Combine(Path.GetTempPath(), $"cerneala-screenshot-{Guid.NewGuid():N}.png");
+        string existingPath = Path.Combine(Path.GetTempPath(), $"cerneala-screenshot-{Guid.NewGuid():N}.png");
+        byte[] existingBytes = [1, 2, 3, 4, 5];
+        File.WriteAllBytes(existingPath, existingBytes);
+        session.RenderPngFailure = new IOException("encoder failed");
+
+        try
+        {
+            IOException thrown = Assert.Throws<IOException>(() => window.SaveScreenshot(path));
+            Assert.Same(session.RenderPngFailure, thrown);
+            Assert.False(File.Exists(path));
+
+            Assert.Throws<IOException>(() => window.SaveScreenshot(existingPath));
+            Assert.Equal(existingBytes, File.ReadAllBytes(existingPath));
+        }
+        finally
+        {
+            File.Delete(path);
+            File.Delete(existingPath);
+        }
+    }
+
+    [Fact]
     public async Task ServoScreenshotUsesWindowOwnerForFullAndFreshTargetCapture()
     {
         FakeWindowPlatform platform = new();
@@ -2733,9 +2875,45 @@ public sealed class WindowRuntimeTests : IDisposable
     {
         public int RenderCount { get; private set; }
 
+        // The text strings of the text commands of each Render call, in call order.
+        public List<List<string>> RenderedTexts { get; } = [];
+
+        // The Prism cache invalidations each Render call drained from its frame context,
+        // the way SdlGpuDrawingBackend consumes them, in call order.
+        public List<List<PrismCacheInvalidation>> DrainedPrismInvalidations { get; } = [];
+
         public void Render(DrawCommandList commands, in DrawingFrameContext frameContext)
         {
             RenderCount++;
+            List<PrismCacheInvalidation> drained = [];
+            if (frameContext.PrismCacheInvalidations is { } invalidations)
+            {
+                while (invalidations.TryDequeue(out PrismCacheInvalidation invalidation))
+                {
+                    drained.Add(invalidation);
+                }
+            }
+
+            DrainedPrismInvalidations.Add(drained);
+            List<string> texts = [];
+            for (int index = 0; index < commands.Count; index++)
+            {
+                DrawCommand command = commands[index];
+                if (command.Text is not null)
+                {
+                    texts.Add(command.Text);
+                }
+
+                if (command.TextLayout is not null)
+                {
+                    foreach (DrawTextLayoutLine line in command.TextLayout.Lines)
+                    {
+                        texts.Add(line.Text);
+                    }
+                }
+            }
+
+            RenderedTexts.Add(texts);
         }
     }
 
@@ -2764,6 +2942,9 @@ public sealed class WindowRuntimeTests : IDisposable
         public WindowScreenshotRegion? LastRegion { get; private set; }
 
         public TimeSpan PresentDelay { get; set; }
+
+        // When set, RenderPng writes a byte to the output and then throws it.
+        public Exception? RenderPngFailure { get; set; }
 
         public void Resize(int pixelWidth, int pixelHeight, float coordinateScale)
         {
@@ -2805,6 +2986,10 @@ public sealed class WindowRuntimeTests : IDisposable
             draw(Backend);
             RenderCountAtSave = Backend.RenderCount;
             output.WriteByte(0);
+            if (RenderPngFailure is not null)
+            {
+                throw RenderPngFailure;
+            }
         }
 
         public void Dispose()

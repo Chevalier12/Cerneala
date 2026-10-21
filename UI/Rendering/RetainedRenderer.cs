@@ -38,6 +38,19 @@ public sealed class RetainedRenderer
         return renderCache.RootCommands;
     }
 
+    // The last completed commit, even when later invalidation left it stale. A capture
+    // taken from a frame handler draws the frame that was just presented, not a new one.
+    internal DrawCommandList RenderLastCommitted(UIRoot root)
+    {
+        ArgumentNullException.ThrowIfNull(root);
+        if (!renderCache.HasCommittedRootCommands)
+        {
+            throw new InvalidOperationException("Root command list is not committed. Call RetainedRenderer.Commit during update before rendering or submitting.");
+        }
+
+        return renderCache.RootCommands;
+    }
+
     public void Submit(
         UIRoot root,
         IDrawingBackend backend,
@@ -45,6 +58,15 @@ public sealed class RetainedRenderer
     {
         ArgumentNullException.ThrowIfNull(backend);
         DrawCommandList commands = Render(root);
+        SubmitCommands(commands, backend, in frameContext);
+    }
+
+    internal static void SubmitCommands(
+        DrawCommandList commands,
+        IDrawingBackend backend,
+        in DrawingFrameContext frameContext)
+    {
+        ArgumentNullException.ThrowIfNull(backend);
         frameContext.EnsureCurrent(commands);
         backend.Render(commands, in frameContext);
     }

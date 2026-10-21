@@ -19,6 +19,10 @@ public sealed class RetainedRenderCache : IDisposable
 
     public bool IsRootValid { get; private set; }
 
+    // True while RootCommands holds the completed list of the last commit, including
+    // after InvalidateRoot, which leaves those commands intact.
+    internal bool HasCommittedRootCommands { get; private set; }
+
     public ElementRenderCache GetElementCache(UIElement element)
     {
         ObjectDisposedException.ThrowIf(disposed, this);
@@ -40,6 +44,7 @@ public sealed class RetainedRenderCache : IDisposable
     {
         ObjectDisposedException.ThrowIf(disposed, this);
         IsRootValid = true;
+        HasCommittedRootCommands = true;
         Version++;
     }
 
@@ -52,6 +57,7 @@ public sealed class RetainedRenderCache : IDisposable
     internal void ReleaseRootResources()
     {
         InvalidateRoot();
+        HasCommittedRootCommands = false;
         rootCommands.Clear();
         rootImages.Clear();
     }
