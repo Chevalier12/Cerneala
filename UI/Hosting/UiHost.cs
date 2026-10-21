@@ -290,9 +290,10 @@ public sealed class UiHost
             backdropFrameSource);
         UIRoot currentRoot = RequireRoot();
         currentRoot.Relay.VerifyAccess();
+        // The invalidation queue belongs to the next commit; a capture must not drain it.
         DrawCore(
-            currentRoot,
             currentRoot.RetainedRenderer.RenderLastCommitted(currentRoot),
+            prismCacheInvalidations: null,
             drawingBackend,
             backdropFrameSource);
     }
@@ -304,15 +305,15 @@ public sealed class UiHost
         UIRoot currentRoot = RequireRoot();
         currentRoot.Relay.VerifyAccess();
         DrawCore(
-            currentRoot,
             currentRoot.RetainedRenderer.Render(currentRoot),
+            currentRoot.PrismCacheInvalidations,
             drawingBackend,
             backdropFrameSource);
     }
 
     private void DrawCore(
-        UIRoot currentRoot,
         DrawCommandList commands,
+        PrismCacheInvalidationQueue? prismCacheInvalidations,
         IDrawingBackend drawingBackend,
         IBackdropFrameSource? backdropFrameSource)
     {
@@ -329,7 +330,7 @@ public sealed class UiHost
                 analysis,
                 lease,
                 sourceToken,
-                currentRoot.PrismCacheInvalidations);
+                prismCacheInvalidations);
             RetainedRenderer.SubmitCommands(
                 commands,
                 drawingBackend,
