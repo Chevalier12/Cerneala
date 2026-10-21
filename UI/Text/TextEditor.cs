@@ -143,6 +143,27 @@ internal sealed class TextEditor
         Replace(start, length, string.Empty);
     }
 
+    /// <summary>
+    /// Deletes the text between the caret and position, or only the selection when there is one, in one undo unit that
+    /// restores the caret as <see cref="Backspace"/> and <see cref="Delete"/> do.
+    /// </summary>
+    public void DeleteTo(int position)
+    {
+        if (!Selection.IsEmpty)
+        {
+            ReplaceSelection(string.Empty);
+            return;
+        }
+
+        int target = Math.Clamp(position, 0, Document.Length);
+        if (target == Caret.Position)
+        {
+            return;
+        }
+
+        Replace(Math.Min(target, Caret.Position), Math.Abs(target - Caret.Position), string.Empty);
+    }
+
     public bool Undo()
     {
         if (!UndoRedo.TryPopUndo(Capture(), out TextEditorSnapshot snapshot))

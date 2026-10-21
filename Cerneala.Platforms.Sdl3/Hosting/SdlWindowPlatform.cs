@@ -59,6 +59,7 @@ internal sealed class SdlWindowPlatform : IWindowPlatform
         lifetime = new SdlPlatformLifetime(api);
         cursorService = new SdlCursorService(api);
         platformServices = new PlatformServices(
+            Clipboard: new SdlClipboard(api),
             Cursor: cursorService,
             TextInput: new SdlTextInputPlatform());
         eventWatch = ProcessWatchedEvent;

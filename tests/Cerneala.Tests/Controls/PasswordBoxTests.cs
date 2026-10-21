@@ -193,6 +193,39 @@ public sealed class PasswordBoxTests
         Assert.Equal("Xab cdY", passwordBox.Password);
     }
 
+    // The password is one word: Ctrl+Backspace deletes from the start to the caret, Ctrl+Delete from the caret to the end.
+    [Fact]
+    public void PasswordBoxCtrlBackspaceDeletesFromTheStartToTheCaret()
+    {
+        UIRoot root = FocusedPasswordBox("secret", clipboard: null, out PasswordBox passwordBox, out ElementInputBridge bridge);
+
+        bridge.Dispatch(root, KeyFrame(InputKey.End));
+        bridge.Dispatch(root, KeyFrame(InputKey.Back, InputKey.LeftCtrl));
+        Assert.Equal(string.Empty, passwordBox.Password);
+
+        passwordBox.Password = "ab cd";
+        bridge.Dispatch(root, KeyFrame(InputKey.End));
+        bridge.Dispatch(root, KeyFrame(InputKey.Left));
+        bridge.Dispatch(root, KeyFrame(InputKey.Back, InputKey.LeftCtrl));
+        Assert.Equal("d", passwordBox.Password);
+    }
+
+    [Fact]
+    public void PasswordBoxCtrlDeleteDeletesFromTheCaretToTheEnd()
+    {
+        UIRoot root = FocusedPasswordBox("secret", clipboard: null, out PasswordBox passwordBox, out ElementInputBridge bridge);
+
+        bridge.Dispatch(root, KeyFrame(InputKey.Home));
+        bridge.Dispatch(root, KeyFrame(InputKey.Delete, InputKey.LeftCtrl));
+        Assert.Equal(string.Empty, passwordBox.Password);
+
+        passwordBox.Password = "ab cd";
+        bridge.Dispatch(root, KeyFrame(InputKey.Home));
+        bridge.Dispatch(root, KeyFrame(InputKey.Right));
+        bridge.Dispatch(root, KeyFrame(InputKey.Delete, InputKey.LeftCtrl));
+        Assert.Equal("a", passwordBox.Password);
+    }
+
     [Fact]
     public void PasswordBoxCtrlShiftLeftSelectsToTheStart()
     {

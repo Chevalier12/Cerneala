@@ -144,7 +144,7 @@ Typing is recorded in units. Consecutive typed insertions with no other edit or 
 
 `SelectedText` gets the selected text, and `string.Empty` for an empty selection. Setting it replaces the selection with the new text, selects the new text, and records one undo unit that later typing does not join. Undo restores the old text and the old selection. `null` is treated as an empty string. The setter is a programmatic change, like `Text`: it works when `IsReadOnly` is `true` and ignores `MaxLength` and `CharacterCasing`. Setting a value equal to the current selected text does nothing.
 
-`Copy()`, `Cut()` and `Paste()` do what Ctrl+C, Ctrl+X and Ctrl+V do, through the clipboard of the `UIRoot` platform services. They return nothing and do nothing when there is no clipboard, when `Copy` or `Cut` has an empty selection, or when `Paste` finds no text. `Cut()` and `Paste()` also do nothing while `IsReadOnly` is `true`; `Copy()` still works. Pasted text goes through `NormalizeTextInput`, `CharacterCasing` and `MaxLength`. There is no context menu.
+`Copy()`, `Cut()` and `Paste()` do what Ctrl+C, Ctrl+X and Ctrl+V do, through the clipboard of the `UIRoot` platform services; in a window opened through the SDL platform, that is the system clipboard. They return nothing and do nothing when there is no clipboard, when `Copy` or `Cut` has an empty selection, or when `Paste` finds no text. `Cut()` and `Paste()` also do nothing while `IsReadOnly` is `true`; `Copy()` still works. Pasted text goes through `NormalizeTextInput`, `CharacterCasing` and `MaxLength`. There is no context menu.
 
 ### Keyboard
 
@@ -156,6 +156,7 @@ Typing is recorded in units. Consecutive typed insertions with no other edit or 
 | Ctrl+Home, Ctrl+End | Move to the start or the end of the text. Shift extends the selection. |
 | Up, Down, PageUp, PageDown | Move between drawn lines, keeping the horizontal position through shorter lines. PageUp and PageDown move by the number of whole lines in the viewport. Up on the first line moves to the start of the text, and Down on the last line to the end. Shift extends the selection. With a single drawn line, or with Ctrl or Alt down, these keys stay unhandled, so an enclosing `ComboBox` still gets them. |
 | Backspace, Delete | Delete a character or the selection. |
+| Ctrl+Backspace, Ctrl+Delete | With an empty selection, delete a word: Ctrl+Backspace deletes from the place Ctrl+Left moves to up to the caret, and Ctrl+Delete from the caret to the place Ctrl+Right moves to. With a selection, they delete only the selection, like Backspace and Delete. Shift does not change them. Each is one undo unit, and they do nothing while `IsReadOnly` is `true`. Example: with `Text == "hello world"` and the caret at `11`, Ctrl+Backspace gives `"hello "` with the caret at `6`; with the caret at `8`, it gives `"hello rld"`; with the caret at `0`, Ctrl+Delete gives `"world"`; Ctrl+Z then gives `"hello world"` again. |
 | Enter | Types a line break when `AcceptsReturn` is `true`, `IsReadOnly` is `false`, and Ctrl and Alt are up. Otherwise it stays unhandled, so a default button or an enclosing handler gets it. |
 | Tab, Shift+Tab | Type a tab when `AcceptsTab` is `true`, `IsReadOnly` is `false`, and Ctrl and Alt are up. Otherwise they stay unhandled and move the focus. Ctrl+Tab always moves the focus. |
 | Ctrl+A | Selects all text. |

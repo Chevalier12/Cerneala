@@ -794,6 +794,13 @@ internal interface ISdlApi
 
     void DestroyCursor(nint cursor);
 
+    // Returns false when SDL refuses the write, for example while another program holds the clipboard open.
+    bool SetClipboardText(string text);
+
+    string GetClipboardText();
+
+    bool HasClipboardText();
+
     void PushGpuDebugGroup(nint commandBuffer, string label);
 
     void PopGpuDebugGroup(nint commandBuffer);

@@ -235,6 +235,125 @@ public sealed class TextBoxEditingApiTests
     }
 
     [Fact]
+    public void CtrlBackspaceDeletesFromTheStartOfThePreviousWordToTheCaret()
+    {
+        TextBox textBox = NewTextBox("hello world");
+        UIRoot root = Host(textBox, clipboard: null, out ElementInputBridge bridge);
+        textBox.MoveCaret(11);
+
+        bridge.Dispatch(root, KeyFrame(InputKey.Back, InputKey.LeftCtrl));
+
+        Assert.Equal("hello ", textBox.Text);
+        Assert.Equal(6, textBox.Caret.Position);
+        Assert.True(textBox.Selection.IsEmpty);
+    }
+
+    [Fact]
+    public void CtrlBackspaceInsideAWordDeletesFromTheWordStartToTheCaret()
+    {
+        TextBox textBox = NewTextBox("hello world");
+        UIRoot root = Host(textBox, clipboard: null, out ElementInputBridge bridge);
+        textBox.MoveCaret(8);
+
+        bridge.Dispatch(root, KeyFrame(InputKey.Back, InputKey.LeftCtrl));
+
+        Assert.Equal("hello rld", textBox.Text);
+        Assert.Equal(6, textBox.Caret.Position);
+    }
+
+    [Fact]
+    public void CtrlDeleteDeletesFromTheCaretToTheStartOfTheNextWord()
+    {
+        TextBox textBox = NewTextBox("hello world");
+        UIRoot root = Host(textBox, clipboard: null, out ElementInputBridge bridge);
+        textBox.MoveCaret(0);
+
+        bridge.Dispatch(root, KeyFrame(InputKey.Delete, InputKey.LeftCtrl));
+
+        Assert.Equal("world", textBox.Text);
+        Assert.Equal(0, textBox.Caret.Position);
+        Assert.True(textBox.Selection.IsEmpty);
+    }
+
+    [Fact]
+    public void CtrlShiftBackspaceDeletesTheWordWithoutSelecting()
+    {
+        TextBox textBox = NewTextBox("hello world");
+        UIRoot root = Host(textBox, clipboard: null, out ElementInputBridge bridge);
+        textBox.MoveCaret(11);
+
+        bridge.Dispatch(root, KeyFrame(InputKey.Back, InputKey.LeftCtrl, InputKey.LeftShift));
+
+        Assert.Equal("hello ", textBox.Text);
+        Assert.True(textBox.Selection.IsEmpty);
+    }
+
+    [Fact]
+    public void CtrlBackspaceAndCtrlDeleteWithASelectionDeleteOnlyTheSelection()
+    {
+        TextBox textBox = NewTextBox("hello world");
+        UIRoot root = Host(textBox, clipboard: null, out ElementInputBridge bridge);
+        textBox.Select(6, 11);
+
+        bridge.Dispatch(root, KeyFrame(InputKey.Back, InputKey.LeftCtrl));
+
+        Assert.Equal("hello ", textBox.Text);
+
+        textBox.Text = "hello world";
+        textBox.Select(0, 5);
+
+        bridge.Dispatch(root, KeyFrame(InputKey.Delete, InputKey.LeftCtrl));
+
+        Assert.Equal(" world", textBox.Text);
+    }
+
+    [Fact]
+    public void CtrlBackspaceIsOneUndoUnitAndCtrlZRestoresTheTextAndCaretAsBackspaceDoes()
+    {
+        TextBox textBox = NewTextBox("hello world");
+        UIRoot root = Host(textBox, clipboard: null, out ElementInputBridge bridge);
+        textBox.MoveCaret(11);
+
+        bridge.Dispatch(root, KeyFrame(InputKey.Back, InputKey.LeftCtrl));
+        Assert.Equal("hello ", textBox.Text);
+
+        bridge.Dispatch(root, KeyFrame(InputKey.Z, InputKey.LeftCtrl));
+
+        Assert.Equal("hello world", textBox.Text);
+        Assert.Equal(11, textBox.Caret.Position);
+        Assert.True(textBox.Selection.IsEmpty);
+        Assert.False(textBox.CanUndo);
+    }
+
+    [Fact]
+    public void CtrlBackspaceAndCtrlDeleteDoNothingWhenThereIsNothingToDelete()
+    {
+        TextBox textBox = NewTextBox("hello");
+        UIRoot root = Host(textBox, clipboard: null, out ElementInputBridge bridge);
+        textBox.MoveCaret(0);
+        bridge.Dispatch(root, KeyFrame(InputKey.Back, InputKey.LeftCtrl));
+        textBox.MoveCaret(5);
+        bridge.Dispatch(root, KeyFrame(InputKey.Delete, InputKey.LeftCtrl));
+
+        Assert.Equal("hello", textBox.Text);
+        Assert.False(textBox.CanUndo);
+    }
+
+    [Fact]
+    public void ReadOnlyBlocksCtrlBackspaceAndCtrlDelete()
+    {
+        TextBox textBox = NewTextBox("hello world");
+        textBox.IsReadOnly = true;
+        UIRoot root = Host(textBox, clipboard: null, out ElementInputBridge bridge);
+        textBox.MoveCaret(11);
+        bridge.Dispatch(root, KeyFrame(InputKey.Back, InputKey.LeftCtrl));
+        textBox.MoveCaret(0);
+        bridge.Dispatch(root, KeyFrame(InputKey.Delete, InputKey.LeftCtrl));
+
+        Assert.Equal("hello world", textBox.Text);
+    }
+
+    [Fact]
     public void DoubleClickSelectsTheWordUnderThePointer()
     {
         TextBox textBox = NewTextBox("hello world");

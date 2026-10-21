@@ -53,7 +53,7 @@ sealed class MemoryClipboard : IClipboard
 
 `PasswordBox` never calls `SetText`: Control+C and Control+X are handled without touching the clipboard.
 
-The controls look for the clipboard in `IPlatformServices.Clipboard` of their root first, then in `IPlatformServices.TextInput.Clipboard`. When neither is set, the shortcuts do nothing. The SDL platform that `Cerneala.Backends.SdlGpu` registers sets neither, so applications that need clipboard shortcuts must supply an implementation.
+The controls look for the clipboard in `IPlatformServices.Clipboard` of their root first, then in `IPlatformServices.TextInput.Clipboard`. When neither is set, the shortcuts do nothing. The SDL platform that `Cerneala.Backends.SdlGpu` registers sets `IPlatformServices.Clipboard` to the system clipboard (`SDL_SetClipboardText`, `SDL_GetClipboardText`, `SDL_HasClipboardText`), so in an SDL window these shortcuts work without application code. `HasText` is `false` when the system clipboard holds no text or an empty text, and `GetText` then returns `null`. `SetText` does nothing and does not throw when SDL refuses the write, for example while another program holds the system clipboard open, so a copy in that moment leaves the clipboard and the control unchanged. On Windows, SDL returns line breaks as `\r\n`: after `SetText("a\nb")`, `GetText()` returns `"a\r\nb"`. An application that calls `UIRoot.SetPlatformServices` with its own `IPlatformServices` replaces the whole set of that root, including the SDL clipboard, cursor, and text input.
 
 ## Properties
 

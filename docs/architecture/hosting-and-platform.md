@@ -228,7 +228,7 @@ Hosting adds no `FramePhase`. It owns the loop that decides whether a window ren
 
 ## Known Limitations
 
-- In production, the SDL platform fills only `Cursor` and `TextInput`, and `TextInput` only reports `SupportsIme`. Code that reads `PlatformServices.Clipboard`, `FileDialogs`, `Dpi`, `Accessibility` or `ReducedMotion` gets `null`.
+- In production, the SDL platform fills only `Clipboard` (the system clipboard), `Cursor` and `TextInput`, and `TextInput` only reports `SupportsIme`. Code that reads `PlatformServices.FileDialogs`, `Dpi`, `Accessibility` or `ReducedMotion` gets `null`.
 - `IUiBackend` has no production implementer. Windows get their drawing backend from `IWindowGraphicsSession`, not from `UiHostOptions.Backend`.
 - With a user `Main`, the generated module initializer only registers the descriptor (`RegisterStartup`). The descriptor runs through `GeneratedWindowApplication.PumpHosted`, which is `internal`. A text search found only tests calling it.
 - The idle loop sleeps `Thread.Sleep(1)`; it does not wait on platform events or vsync. Idle CPU cost: nemăsurat.

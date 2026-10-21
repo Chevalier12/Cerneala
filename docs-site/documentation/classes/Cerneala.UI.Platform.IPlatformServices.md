@@ -47,7 +47,7 @@ Every member may be `null`, which means the platform does not offer that service
 
 A `UIRoot` starts with `PlatformServices.Empty`. `UIRoot.SetPlatformServices` replaces the set; passing `null` installs `PlatformServices.Empty`. It must be called on the root's UI thread, otherwise it throws `InvalidOperationException`. It does not dispose the previous set. When the new set has a `ReducedMotion` source, the root applies its mode; when it has none, the current reduced-motion mode is kept.
 
-`UiHost` installs `UiHostOptions.PlatformServices` on its root when it is created and when its root is replaced. A window application installs the services of its windowing platform on each window root. The SDL platform supplies `Cursor` and `TextInput` and leaves the other members `null`.
+`UiHost` installs `UiHostOptions.PlatformServices` on its root when it is created and when its root is replaced. A window application installs the services of its windowing platform on each window root. The SDL platform supplies `Clipboard` (the system clipboard), `Cursor`, and `TextInput`, and leaves the other members `null`.
 
 Which Cerneala code reads each member:
 

@@ -684,15 +684,33 @@ internal sealed class TextInputCore
     {
         TextSelection beforeSelection = Selection;
         TextCaret beforeCaret = Caret;
+        editor.MoveCaret(GetWordTargetPosition(backward), extendSelection);
+        return beforeSelection != Selection || beforeCaret != Caret;
+    }
+
+    // The text position Ctrl+Left (backward) or Ctrl+Right moves the caret to, and where Ctrl+Backspace or Ctrl+Delete
+    // deletes up to.
+    private int GetWordTargetPosition(bool backward)
+    {
         int displayIndex = host.GetDisplayIndex(Caret.Position);
         int target = backward
             ? TextWordBoundaries.GetPreviousWordStart(host.DisplayText, displayIndex)
             : TextWordBoundaries.GetNextWordStart(host.DisplayText, displayIndex);
-        editor.MoveCaret(host.GetTextPosition(target), extendSelection);
-        return beforeSelection != Selection || beforeCaret != Caret;
+        return host.GetTextPosition(target);
     }
 
-    // Left and Right move by text element, and with Ctrl by word, as WPF's Ctrl+Left and Ctrl+Right.
+    // Ctrl+Backspace and Ctrl+Delete delete up to the place Ctrl+Left and Ctrl+Right move to; a selection is deleted alone.
+    private bool DeleteByWord(bool backward)
+    {
+        string before = editor.Document.Text;
+        TextSelection beforeSelection = Selection;
+        TextCaret beforeCaret = Caret;
+        editor.DeleteTo(GetWordTargetPosition(backward));
+        return before != editor.Document.Text || beforeSelection != Selection || beforeCaret != Caret;
+    }
+
+    // Left and Right move by text element, and with Ctrl by word, as WPF's Ctrl+Left and Ctrl+Right. Backspace and Delete
+    // delete a text element, and with Ctrl a word, as WPF's Ctrl+Backspace and Ctrl+Delete.
     private bool HandleEditingKey(InputKey key, bool extendSelection, bool byWord)
     {
         if (!host.AllowsEditing && key is InputKey.Back or InputKey.Delete)
@@ -702,7 +720,9 @@ internal sealed class TextInputCore
 
         bool changed = byWord && key is InputKey.Left or InputKey.Right
             ? MoveCaretByWord(backward: key == InputKey.Left, extendSelection)
-            : controller.HandleKey(key, extendSelection);
+            : byWord && key is InputKey.Back or InputKey.Delete
+                ? DeleteByWord(backward: key == InputKey.Back)
+                : controller.HandleKey(key, extendSelection);
         switch (key)
         {
             case InputKey.Back:
