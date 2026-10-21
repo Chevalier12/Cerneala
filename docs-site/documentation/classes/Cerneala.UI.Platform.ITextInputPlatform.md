@@ -32,7 +32,7 @@ sealed class BasicTextInput : ITextInputPlatform
 
 `Clipboard` is a default interface member that returns `null`. `TextBox` and `PasswordBox` read it only when `IPlatformServices.Clipboard` of their root is `null`; see `IClipboard`.
 
-No Cerneala code reads `SupportsIme`. The SDL platform supplies an implementation whose `SupportsIme` is `true` and whose `Clipboard` is the default `null`. It starts SDL text input for every window when the window is created, so typed characters and text committed by an input method editor reach the focused text control as `TextInput` events.
+No Cerneala code reads `SupportsIme`. The SDL platform supplies an implementation whose `SupportsIme` is `true` and whose `Clipboard` is the default `null`; the SDL clipboard is `IPlatformServices.Clipboard`, which is read first. It starts SDL text input for every window when the window is created, so typed characters and text committed by an input method editor reach the focused text control as `TextInput` events.
 
 ## Properties
 

@@ -1003,6 +1003,12 @@ internal sealed class NativeSdlApi : ISdlApi
 
     public void DestroyCursor(nint cursor) => SDL.DestroyCursor(cursor);
 
+    public bool SetClipboardText(string text) => SDL.SetClipboardText(text);
+
+    public string GetClipboardText() => SDL.GetClipboardText();
+
+    public bool HasClipboardText() => SDL.HasClipboardText();
+
     public void PushGpuDebugGroup(nint commandBuffer, string label) =>
         SDL.PushGPUDebugGroup(commandBuffer, label);
 

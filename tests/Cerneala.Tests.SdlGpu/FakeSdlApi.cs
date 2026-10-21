@@ -46,6 +46,11 @@ internal sealed class FakeSdlApi : ISdlApi
 
     public bool StartTextInputResult { get; set; } = true;
 
+    // The system clipboard text; null is an empty clipboard, which HasClipboardText reports as false.
+    public string? ClipboardText { get; set; }
+
+    public bool SetClipboardTextResult { get; set; } = true;
+
     public string Error { get; set; } = "fake SDL error";
 
     public nint DeviceResult { get; set; } = (nint)0x1234;
@@ -1117,6 +1122,21 @@ internal sealed class FakeSdlApi : ISdlApi
     }
 
     public void DestroyCursor(nint cursor) => DestroyedCursors.Add(cursor);
+
+    public bool SetClipboardText(string text)
+    {
+        if (!SetClipboardTextResult)
+        {
+            return false;
+        }
+
+        ClipboardText = text;
+        return true;
+    }
+
+    public string GetClipboardText() => ClipboardText ?? string.Empty;
+
+    public bool HasClipboardText() => !string.IsNullOrEmpty(ClipboardText);
 
     public void PushGpuDebugGroup(nint commandBuffer, string label) =>
         DebugLabelCalls.Add($"push:{commandBuffer}:{label}");
