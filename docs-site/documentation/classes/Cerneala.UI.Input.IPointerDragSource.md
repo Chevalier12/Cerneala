@@ -93,7 +93,7 @@ Built-in implementations: `Thumb` (public methods), and `ColorSpectrum`, `TextBo
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `BeginPointerDrag(PointerCaptureManager captureManager, ElementInputRouteMap routeMap, MouseButtonEventArgs args)` | `bool` | Starts a drag. `args.ChangedButton` is `Left` and `args.ClickCount` is `1`. |
+| `BeginPointerDrag(PointerCaptureManager captureManager, ElementInputRouteMap routeMap, MouseButtonEventArgs args)` | `bool` | Starts a drag. `args.ChangedButton` is `Left` and `args.ClickCount` is the click count of the press: `1` for a first press, `2` for the second press of a double click, and `3` for the third. |
 | `UpdatePointerDrag(MouseEventArgs args)` | `bool` | Reports a pointer move. |
 | `CompletePointerDrag(PointerCaptureManager captureManager, ElementInputRouteMap routeMap, MouseButtonEventArgs args)` | `bool` | Ends a drag. `args.ClickCount` is the click count of the release. |
 

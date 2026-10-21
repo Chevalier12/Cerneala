@@ -81,7 +81,7 @@ public sealed class AspectProcessor
 
         if (element is Control templatedControl)
         {
-            templatedControl.ApplyTemplate();
+            templatedControl.ApplyTemplateOutsideLayout();
             InvalidateTemplateSlotStates(templatedControl);
         }
     }

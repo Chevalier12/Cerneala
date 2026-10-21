@@ -62,7 +62,9 @@ public sealed class PresentationOverlayAspectTests : IDisposable
         root.ProcessFrame();
         root.ProcessFrame();
 
-        AssertUsesPresentationScrollAspect(GetDropDownScrollViewer(comboBox));
+        ScrollViewer scrollViewer = GetDropDownScrollViewer(comboBox);
+        scrollViewer.VerticalScrollBar.ApplyTemplate(); // The items fit, so the Collapsed bar has not built its template (#714).
+        AssertUsesPresentationScrollAspect(scrollViewer);
     }
 
     private static ScrollViewer GetDropDownScrollViewer(ComboBox comboBox)

@@ -1,6 +1,6 @@
 using Cerneala.Drawing;
-using Cerneala.UI.Layout;
 using Cerneala.UI.Media;
+using Cerneala.UI.Text;
 
 namespace Cerneala.UI.Controls;
 
@@ -20,9 +20,18 @@ internal interface ITextInputHost
 
     Color SelectionBackground { get; }
 
-    Thickness Insets { get; }
-
     bool AllowsEditing { get; }
+
+    bool AcceptsReturn { get; }
+
+    bool AcceptsTab { get; }
+
+    // The most characters typed or pasted text can bring the text to; 0 is no limit.
+    int MaxLength { get; }
+
+    CharacterCasing CharacterCasing { get; }
+
+    TextWrapping TextWrapping { get; }
 
     bool CentersSingleLineContentVertically { get; }
 

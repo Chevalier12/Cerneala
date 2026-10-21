@@ -22,6 +22,7 @@ public sealed class ElementInputBridge
     private float lastPointerY;
     private bool isDispatching;
     private bool pointerModeCancelPending;
+    private TimeSpan inputClock;
 
     public ElementInputBridge(
         HitTestService? hitTestService = null,
@@ -74,6 +75,8 @@ public sealed class ElementInputBridge
             throw new ArgumentOutOfRangeException(nameof(frameTime));
         }
 
+        // The clock that dates presses for the double-click time advances by the frame time of each dispatched frame.
+        inputClock += frameTime;
         root.ActiveFocusManager = focusManager;
         (ElementInputRouteMap routeMap, HitTestResult? hitTarget, HitTestResult? pointerTarget) = ResolvePointerTargets(root, inputFrame);
 
@@ -97,6 +100,18 @@ public sealed class ElementInputBridge
             pointerModeCancelPending = false;
             CancelPointerModeCore(root.InputCache.EnsureCurrent(root));
         }
+    }
+
+    // The time of a pump that rendered no frame, so dispatched no input. Without it the double-click time would count only
+    // the time of rendered frames: a click, 2 s with nothing to render, and a click at the same point would count 1, 2.
+    internal void AdvanceInputClock(TimeSpan elapsedTime)
+    {
+        if (elapsedTime < TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(elapsedTime));
+        }
+
+        inputClock += elapsedTime;
     }
 
     // The WM_CANCELMODE that Win32 sends to a window when EnableWindow disables it: the pointer capture is released, so
@@ -174,7 +189,13 @@ public sealed class ElementInputBridge
                 // Each button keeps its own press, and only the left button presses a button visually, as a WPF
                 // ButtonBase sets IsPressed on MouseLeftButtonDown only: a right click while the left button is held
                 // leaves the left press, its IsPressed and its click intact (#593).
-                clickTracker.Press(button, ResolveClickTarget(hitTarget?.Element, routeMap));
+                int pressClickCount = clickTracker.Press(
+                    button,
+                    ResolveClickTarget(hitTarget?.Element, routeMap),
+                    inputFrame.Pointer.X,
+                    inputFrame.Pointer.Y,
+                    inputClock,
+                    inputFrame.PressClickSequence);
                 pressOriginalSources[(int)button] = pointerTarget?.ElementId;
                 UIElement? focusTarget = null;
                 if (button == InputMouseButton.Left)
@@ -196,7 +217,7 @@ public sealed class ElementInputBridge
                     InputEvents.PreviewMouseDownEvent,
                     InputEvents.MouseDownEvent,
                     button,
-                    1,
+                    pressClickCount,
                     modifiers,
                     out bool previewHandled,
                     previewHandledOnArrival,
@@ -208,7 +229,7 @@ public sealed class ElementInputBridge
                     pointerTarget,
                     button,
                     isDown: true,
-                    clickCount: 1,
+                    clickCount: pressClickCount,
                     modifiers,
                     previewHandledOnArrival,
                     handledOnArrival,
@@ -233,7 +254,7 @@ public sealed class ElementInputBridge
 
                 if (!previewHandled && !buttonPreviewHandled)
                 {
-                    BeginPointerDrag(routeMap, pointerTarget, button);
+                    BeginPointerDrag(routeMap, pointerTarget, button, pressClickCount);
                 }
                 else if (button == InputMouseButton.Left)
                 {
@@ -377,7 +398,7 @@ public sealed class ElementInputBridge
         commandSource.ExecuteCommand(commandRouter, routeMap);
     }
 
-    private void BeginPointerDrag(ElementInputRouteMap routeMap, HitTestResult? target, InputMouseButton button)
+    private void BeginPointerDrag(ElementInputRouteMap routeMap, HitTestResult? target, InputMouseButton button, int clickCount)
     {
         if (button != InputMouseButton.Left || target is null)
         {
@@ -389,7 +410,7 @@ public sealed class ElementInputBridge
             return;
         }
 
-        dragSource.BeginPointerDrag(pointerCaptureManager, routeMap, new MouseButtonEventArgs(InputEvents.MouseDownEvent, target.ElementId, button, target.X, target.Y, 1));
+        dragSource.BeginPointerDrag(pointerCaptureManager, routeMap, new MouseButtonEventArgs(InputEvents.MouseDownEvent, target.ElementId, button, target.X, target.Y, clickCount));
     }
 
     private static void UpdatePointerDrag(

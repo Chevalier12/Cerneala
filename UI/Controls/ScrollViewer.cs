@@ -20,6 +20,7 @@ public class ScrollViewer : Control
     private ScrollBar? verticalScrollBar;
     private bool syncingScrollBars;
     private object? content;
+    private MeasureContext? templateMeasureContext;
 
     public ScrollViewer()
     {
@@ -141,6 +142,7 @@ public class ScrollViewer : Control
             presenter.ViewerMeasuredWithFiniteHeight = float.IsFinite(context.AvailableSize.Height);
         }
 
+        templateMeasureContext = context;
         ScrollBarState state = ConvergeMeasure(context);
         ApplyScrollBarVisibility(state);
         UpdateScrollBarState();
@@ -227,7 +229,7 @@ public class ScrollViewer : Control
     {
         ScrollBarState state = InitialScrollBarState();
         ScrollBarState seen = state;
-        MeasureContext measureContext = new(context.FinalRect.Size, context.Rounding);
+        MeasureContext measureContext = GetArrangeMeasureContext(context);
         for (int pass = 0; pass < 3; pass++)
         {
             ApplyScrollBarVisibility(state);
@@ -249,6 +251,30 @@ public class ScrollViewer : Control
         UpdateScrollBarState();
         TemplateRoot.Arrange(context);
         return seen;
+    }
+
+    // The arrange measures the template again so that its layout and the scroll bars follow the final size, such as an
+    // Auto bar for a viewer measured with an unbounded height and arranged lower than its content. On an axis where the
+    // final size is the size the template desired, the last measure already gave that layout, so the axis keeps the
+    // constraint of this viewer's own measure. A measure that a template element asks for later, such as when the
+    // content's desired size grows, reuses the element's last constraint (LayoutManager.GetAvailableSize), as in WPF.
+    // A left-aligned viewer measured with width 300 and arranged at its desired width 18 thus keeps 300, so the presenter
+    // can desire the grown content width 86; with 18 it would desire 18 again and the viewer would not grow (#713).
+    private MeasureContext GetArrangeMeasureContext(ArrangeContext context)
+    {
+        LayoutSize finalSize = context.FinalRect.Size;
+        if (templateMeasureContext is not MeasureContext measured)
+        {
+            return new MeasureContext(finalSize, context.Rounding);
+        }
+
+        LayoutSize desired = TemplateRoot.DesiredSize;
+        LayoutSize constraint = measured.AvailableSize;
+        return new MeasureContext(
+            new LayoutSize(
+                finalSize.Width == desired.Width ? constraint.Width : finalSize.Width,
+                finalSize.Height == desired.Height ? constraint.Height : finalSize.Height),
+            context.Rounding);
     }
 
     private ScrollBarState InitialScrollBarState()
@@ -517,14 +543,16 @@ public class ScrollViewer : Control
             (visibility == ScrollBarVisibility.Auto && scrollable);
     }
 
+    // As WPF's ComputedHorizontalScrollBarVisibility and ComputedVerticalScrollBarVisibility: only Visible, and Auto
+    // when the content does not fit, show the bar. Hidden collapses it like Disabled, so it takes no space, while the
+    // presenter still scrolls on that axis (see ConfigureScrollCapabilities).
     private static Visibility ToVisibility(ScrollBarVisibility visibility, bool visible)
     {
         return visibility switch
         {
-            ScrollBarVisibility.Disabled => Visibility.Collapsed,
-            ScrollBarVisibility.Hidden => Visibility.Hidden,
             ScrollBarVisibility.Visible => Visibility.Visible,
-            _ => visible ? Visibility.Visible : Visibility.Collapsed
+            ScrollBarVisibility.Auto => visible ? Visibility.Visible : Visibility.Collapsed,
+            _ => Visibility.Collapsed
         };
     }
 

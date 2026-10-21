@@ -6,6 +6,10 @@ internal sealed class TextEditor
 {
     private readonly bool recordsHistory;
 
+    // Editor state right after the last typed insertion, while that insertion is still the newest undo unit.
+    // The next typed insertion merges into that unit only when the state is still exactly this one.
+    private TextEditorSnapshot? typedRunEnd;
+
     public TextEditor(TextDocument? document = null, bool recordsHistory = true)
     {
         Document = document ?? new TextDocument();
@@ -29,6 +33,7 @@ internal sealed class TextEditor
 
     public void MoveCaret(int position, bool extendSelection = false)
     {
+        typedRunEnd = null;
         int caretPosition = NormalizeCaretPosition(Document.Text, Caret.Position, position);
         TextCaret caret = TextCaret.At(caretPosition, Document.Length);
         Caret = caret;
@@ -53,8 +58,23 @@ internal sealed class TextEditor
         }
     }
 
+    public void MoveCaretByWord(int direction, bool extendSelection = false)
+    {
+        if (direction < 0)
+        {
+            MoveCaret(TextWordBoundaries.GetPreviousWordStart(Document.Text, Caret.Position), extendSelection);
+            return;
+        }
+
+        if (direction > 0)
+        {
+            MoveCaret(TextWordBoundaries.GetNextWordStart(Document.Text, Caret.Position), extendSelection);
+        }
+    }
+
     public void Select(int anchor, int active)
     {
+        typedRunEnd = null;
         Selection = NormalizeSelection(Document.Text, anchor, active);
         Caret = TextCaret.At(Selection.Active, Document.Length);
     }
@@ -68,6 +88,20 @@ internal sealed class TextEditor
         }
 
         ReplaceSelection(value);
+    }
+
+    /// <summary>
+    /// Inserts text the user typed. Consecutive typed insertions with nothing in between share one undo unit.
+    /// </summary>
+    public void InsertTypedText(string text)
+    {
+        string value = text ?? string.Empty;
+        if (value.Length == 0 && Selection.IsEmpty)
+        {
+            return;
+        }
+
+        Replace(Selection.Start, Selection.Length, value, typed: true);
     }
 
     public void ReplaceSelection(string text)
@@ -136,24 +170,40 @@ internal sealed class TextEditor
         return new TextEditorSnapshot(Document.Text, Caret, Selection);
     }
 
-    private void Replace(int start, int length, string text)
+    private void Replace(int start, int length, string text, bool typed = false)
     {
         Document.ValidateRange(start, length);
         TextEditorSnapshot before = Capture();
+        bool mergesIntoPreviousUnit = typed && recordsHistory && UndoRedo.CanUndo && typedRunEnd == before;
+        if (!mergesIntoPreviousUnit)
+        {
+            typedRunEnd = null;
+        }
+
         Document.Replace(start, length, text);
         int caretPosition = start + text.Length;
         Caret = TextCaret.At(caretPosition, Document.Length);
         Selection = TextSelection.Caret(Caret.Position);
 
-        if (recordsHistory &&
-            (before.Text != Document.Text || before.Caret != Caret || before.Selection != Selection))
+        if (!recordsHistory ||
+            (before.Text == Document.Text && before.Caret == Caret && before.Selection == Selection))
         {
-            UndoRedo.PushUndo(before);
+            return;
         }
+
+        if (mergesIntoPreviousUnit)
+        {
+            typedRunEnd = Capture();
+            return;
+        }
+
+        UndoRedo.PushUndo(before);
+        typedRunEnd = typed && UndoRedo.CanUndo ? Capture() : null;
     }
 
     private void ApplySnapshot(TextEditorSnapshot snapshot, bool recordUndo)
     {
+        typedRunEnd = null;
         TextEditorSnapshot before = Capture();
         Document.SetText(snapshot.Text);
         Caret = TextCaret.At(snapshot.Caret.Position, Document.Length);

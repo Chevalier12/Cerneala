@@ -105,6 +105,7 @@ public sealed class ScrollBarTests
                 return templateTrack;
             })
         };
+        scrollBar.ApplyTemplate(); // A ScrollBar builds its template in its first measure or on ApplyTemplate (#714).
 
         templateTrack.Value = 50;
 
@@ -289,6 +290,7 @@ public sealed class ScrollBarTests
             LargeChange = 10,
             ComponentTemplate = TrackTemplate("minimal", track)
         };
+        scrollBar.ApplyTemplate(); // A ScrollBar builds its template in its first measure or on ApplyTemplate (#714).
         List<ScrollEventType> events = [];
         scrollBar.Scroll += (_, args) => events.Add(args.ScrollEventType);
 

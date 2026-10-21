@@ -507,6 +507,78 @@ public sealed partial class UIRoot : UIElement, IElementHost, IInvalidationSink
         activeFrameStats?.CountArrangeCall();
     }
 
+    // Runs the frame's Inherited and Aspect work for a subtree that layout creates under parent, so the subtree is
+    // complete before it is measured in the same frame: the panel and rows of an ItemsPresenter, and a template that a
+    // control builds in its measure (#714). The frame's own phases ran before the measure, so they do not reach it.
+    // Adding the subtree queued parent for that work, which this removes from the queue. So the propagation starts
+    // at parent, whose visual child is the subtree, and also writes the subtree root's own inherited values.
+    // Like the frame's Aspect phase, only elements with queued Aspect work are processed, for example the rows
+    // that a refresh added; a row whose Aspect inputs did not change keeps its result.
+    // An apply can change the tree, for example a property-change callback or a package behavior factory that detaches
+    // its element, so the walk does not enumerate the live child lists. Like a live pre-order walk, it reads an
+    // element's children after that element's apply, so the subtree that the apply creates, for example from a content
+    // template, is processed before it is measured. An element that an earlier apply detached is skipped, and an
+    // element's work is taken off the queue before its apply, like in the frame's Aspect phase, so the work that a
+    // reattach during the apply queues stays queued for the next pass.
+    internal void ProcessInheritedAndAspectForSubtree(UIElement parent, UIElement subtree)
+    {
+        ArgumentNullException.ThrowIfNull(parent);
+        ArgumentNullException.ThrowIfNull(subtree);
+        if (!ReferenceEquals(subtree.Root, this))
+        {
+            return;
+        }
+
+        InheritedPropertyPropagator.PropagateFrom(parent);
+        Stack<UIElement> pending = new();
+        pending.Push(subtree);
+        while (pending.Count > 0)
+        {
+            UIElement current = pending.Pop();
+            if (!ReferenceEquals(current.Root, this))
+            {
+                continue;
+            }
+
+            ProcessQueuedAspect(current);
+            IReadOnlyList<UIElement> children = current.VisualChildren;
+            for (int index = children.Count - 1; index >= 0; index--)
+            {
+                pending.Push(children[index]);
+            }
+        }
+
+        InheritedPropertyPropagator.PropagateFrom(parent);
+        InheritedPropertyQueue.Remove(parent);
+        parent.DirtyState.Clear(InvalidationFlags.Inherited);
+        foreach (UIElement current in ElementTreeWalker.PreOrder(subtree, ElementChildRole.Visual))
+        {
+            InheritedPropertyQueue.Remove(current);
+            current.DirtyState.Clear(InvalidationFlags.Inherited);
+        }
+    }
+
+    private void ProcessQueuedAspect(UIElement element)
+    {
+        if (!element.DirtyState.Has(InvalidationFlags.Aspect) && !AspectQueue.Contains(element))
+        {
+            return;
+        }
+
+        AspectQueue.Remove(element);
+        element.DirtyState.Clear(InvalidationFlags.Aspect);
+        try
+        {
+            AspectProcessor.Process(element);
+        }
+        catch
+        {
+            element.DirtyState.Mark(InvalidationFlags.Aspect);
+            AspectQueue.Enqueue(element);
+            throw;
+        }
+    }
+
     private FramePhaseProcessors CreatePhaseProcessors()
     {
         FramePhaseProcessors layoutProcessors = LayoutManager.CreatePhaseProcessors();

@@ -62,7 +62,7 @@ float trackValue = scrollBar.Track.Value; // 80
 
 The default template requires `PART_Track` and supplies optional-contract parts `PART_DecreaseButton` and `PART_IncreaseButton` as `RepeatButton` instances. The buttons sit at the ends of an orientation-aware panel and use `<`, `>`, `^`, and `v` glyphs. As in the WPF default template, the buttons are not focusable and are not Tab stops: Tab skips them, and a click on one scrolls without moving the keyboard focus. Custom templates may omit both buttons, but must register a valid `Track`.
 
-The constructor applies the default template and sets default visuals: `Background` is `new SolidColorBrush(new Color(235, 235, 235))`, `BorderBrush` is `new SolidColorBrush(new Color(130, 130, 130))`, and `BorderThickness` is `new Thickness(1)`.
+As in WPF, where a control builds its template in its own measure, a `ScrollBar` builds its first template instance late: at its first measure, when `ApplyTemplate()` is called explicitly, or when `Track` is read. The constructor and setting `ComponentTemplate` or `ComponentTemplateKey` on a scroll bar that has no instance yet do not build it. A `Collapsed` scroll bar is never measured, so it has no `ComponentTemplateInstance` and no `Track`, `Thumb` or `RepeatButton` elements. For example, in a `ScrollViewer` whose content fits, the `Auto` bars stay `Collapsed`, and `ComponentTemplateInstance` of both is `null`. When content grows past the viewport and the bar becomes `Visible`, it builds its template in the layout of that frame and is laid out and drawn in the same frame. Once an instance exists, a template change replaces it at once. Until the template is built, the `Minimum`, `Maximum`, `Value`, `SmallChange`, `LargeChange`, `ViewportSize` and `Orientation` values are kept on the scroll bar and copied to the track when the template is applied. The constructor sets default visuals: `Background` is `new SolidColorBrush(new Color(235, 235, 235))`, `BorderBrush` is `new SolidColorBrush(new Color(130, 130, 130))`, and `BorderThickness` is `new Thickness(1)`.
 
 `Orientation` defaults to `Orientation.Vertical`. The default template gives each direction button a layout length of `12` and the remaining axis length to the track. On an axis shorter than `24`, each button gets half the axis length and the track gets `0`; for example, a 20-pixel-high vertical scroll bar has two 10-pixel buttons. Changing orientation rearranges the existing template instance rather than recreating it.
 
@@ -70,7 +70,7 @@ The scroll bar keeps its active track synchronized with `Minimum`, `Maximum`, `V
 
 `ScrollEventType.SmallDecrement`, `SmallIncrement`, `LargeDecrement`, `LargeIncrement`, and `ThumbTrack` identify those interaction paths. The current control does not raise `EndScroll` on release because no release-level scroll consumer exists; the event is not emitted as decorative noise.
 
-`Track` always returns `PART_Track` from the active template. Template replacement detaches the old track and button handlers before connecting the new parts. Assigning `null` to `ComponentTemplate` clears the local override and restores the default template.
+`Track` always returns `PART_Track` from the active template; reading it builds the template first if it is not built yet. Template replacement detaches the old track and button handlers before connecting the new parts. Assigning `null` to `ComponentTemplate` clears the local override and restores the default template.
 
 The default template binds `Background`, `BorderBrush`, and `BorderThickness` to its border root.
 
@@ -78,7 +78,7 @@ The default template binds `Background`, `BorderBrush`, and `BorderThickness` to
 
 | Name | Description |
 | --- | --- |
-| `ScrollBar()` | Initializes the default visuals and viewport size, then applies the default component template with direction buttons and `PART_Track`. |
+| `ScrollBar()` | Initializes the default visuals and viewport size and selects the default component template with direction buttons and `PART_Track`. The template instance is built at the first measure, on `ApplyTemplate()`, or when `Track` is read. |
 
 ## Fields
 

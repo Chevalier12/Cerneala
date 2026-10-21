@@ -1180,6 +1180,11 @@
     "source": "UI/Controls/Canvas.cs"
   },
   {
+    "name": "Cerneala.UI.Controls.CharacterCasing",
+    "file": "documentation/classes/Cerneala.UI.Controls.CharacterCasing.md",
+    "source": "UI/Controls/CharacterCasing.cs"
+  },
+  {
     "name": "Cerneala.UI.Controls.CheckBox",
     "file": "documentation/classes/Cerneala.UI.Controls.CheckBox.md",
     "source": "UI/Controls/CheckBox.cs"

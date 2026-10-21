@@ -93,8 +93,15 @@ internal sealed class CommandSourceState
 
         isAttached = true;
         callbackGuard = refreshDispatcher.Activate();
-        Subscribe(resolveCommand());
-        owner.QueueCommandStateRefresh();
+        ICommand? command = resolveCommand();
+        Subscribe(command);
+
+        // Refresh does nothing for a source without a command, and setting one queues a refresh (OnCommandChanged).
+        // So a ScrollBar's RepeatButtons, built in the bar's first measure, leave no work for the next frame (#714).
+        if (command is not null)
+        {
+            owner.QueueCommandStateRefresh();
+        }
     }
 
     public void Detach()

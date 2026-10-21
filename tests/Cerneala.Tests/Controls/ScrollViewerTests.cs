@@ -351,11 +351,13 @@ public sealed class ScrollViewerTests
 
         Assert.True(viewer.IsVerticalScrollBarVisible);
         Assert.False(viewer.IsHorizontalScrollBarVisible);
-        Assert.Equal(Visibility.Hidden, viewer.HorizontalScrollBar.Visibility);
+        Assert.Equal(Visibility.Collapsed, viewer.HorizontalScrollBar.Visibility);
     }
 
+    // As WPF's ComputedHorizontalScrollBarVisibility, a Hidden policy collapses the bar: it takes no space and is not
+    // drawn, while the presenter can still scroll on that axis.
     [Fact]
-    public void HiddenAndVisiblePoliciesReserveTemplateGridSpace()
+    public void HiddenPolicyTakesNoTemplateGridSpaceAndVisiblePolicyReservesIt()
     {
         ScrollViewer viewer = new()
         {
@@ -367,11 +369,112 @@ public sealed class ScrollViewerTests
         viewer.Measure(new MeasureContext(new LayoutSize(100, 100)));
         viewer.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
 
-        Assert.Equal(new LayoutRect(0, 0, 88, 88), viewer.Presenter.ArrangedBounds);
-        Assert.Equal(new LayoutRect(0, 88, 88, 12), viewer.HorizontalScrollBar.ArrangedBounds);
-        Assert.Equal(new LayoutRect(88, 0, 12, 88), viewer.VerticalScrollBar.ArrangedBounds);
-        Assert.Equal(Visibility.Hidden, viewer.HorizontalScrollBar.Visibility);
+        Assert.Equal(new LayoutRect(0, 0, 88, 100), viewer.Presenter.ArrangedBounds);
+        Assert.Equal(new LayoutRect(88, 0, 12, 100), viewer.VerticalScrollBar.ArrangedBounds);
+        Assert.Equal(Visibility.Collapsed, viewer.HorizontalScrollBar.Visibility);
         Assert.Equal(Visibility.Visible, viewer.VerticalScrollBar.Visibility);
+        Assert.True(viewer.Presenter.CanHorizontallyScroll);
+    }
+
+    // A left-aligned viewer in a StackPanel desires its content's width, so it grows when its content grows, as WPF's
+    // ScrollViewer does for every horizontal policy.
+    [Theory]
+    [InlineData(ScrollBarVisibility.Auto)]
+    [InlineData(ScrollBarVisibility.Hidden)]
+    [InlineData(ScrollBarVisibility.Disabled)]
+    public void AutoWidthViewerGrowsWhenContentGrows(ScrollBarVisibility horizontal)
+    {
+        TextBlock block = new() { Text = "ab" };
+        ScrollViewer viewer = new()
+        {
+            Content = block,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            HorizontalScrollBarVisibility = horizontal,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Hidden
+        };
+        StackPanel panel = new();
+        panel.Children.Add(viewer);
+        UIRoot root = new(300, 200);
+        root.VisualChildren.Add(panel);
+        root.ProcessFrame();
+        float before = viewer.ArrangedBounds.Width;
+
+        block.Text = "abcdefghijkl";
+        root.ProcessFrame();
+
+        Assert.True(block.DesiredSize.Width > before);
+        Assert.Equal(block.DesiredSize.Width, viewer.ArrangedBounds.Width);
+    }
+
+    // As WPF, where a control builds its template in its own measure and a Collapsed element is never measured: a bar
+    // that was never shown has no Track, Thumb or RepeatButton (#714).
+    [Fact]
+    public void HiddenScrollBarsDoNotBuildTheirTemplates()
+    {
+        ScrollViewer viewer = new()
+        {
+            Width = 120,
+            Content = new TextBlock { Text = "hello world" },
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Hidden
+        };
+        StackPanel panel = new();
+        panel.Children.Add(viewer);
+        UIRoot root = new(800, 2000);
+        root.VisualChildren.Add(panel);
+
+        root.ProcessFrame();
+
+        Assert.Equal(Visibility.Collapsed, viewer.HorizontalScrollBar.Visibility);
+        Assert.Equal(Visibility.Collapsed, viewer.VerticalScrollBar.Visibility);
+        Assert.Null(viewer.HorizontalScrollBar.ComponentTemplateInstance);
+        Assert.Null(viewer.VerticalScrollBar.ComponentTemplateInstance);
+        Assert.DoesNotContain(Descendants(viewer), element => element is Track or Thumb or RepeatButton);
+    }
+
+    // An Auto bar whose content grows past the viewport builds its template in the frame that shows it, and is laid
+    // out as a bar that was visible from the start (#714).
+    [Fact]
+    public void AutoScrollBarBuildsItsTemplateInTheFrameThatShowsIt()
+    {
+        MutableElement content = new(new LayoutSize(20, 20));
+        ScrollViewer viewer = new()
+        {
+            Width = 120,
+            Height = 60,
+            Content = content,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        UIRoot root = new(300, 200);
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+        Assert.Null(viewer.VerticalScrollBar.ComponentTemplateInstance);
+
+        content.Resize(new LayoutSize(20, 200));
+        root.ProcessFrame();
+
+        ScrollViewer reference = new()
+        {
+            Width = 120,
+            Height = 60,
+            Content = new FixedElement(new LayoutSize(20, 200)),
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Visible
+        };
+        UIRoot referenceRoot = new(300, 200);
+        referenceRoot.VisualChildren.Add(reference);
+        referenceRoot.ProcessFrame();
+        ScrollBar bar = viewer.VerticalScrollBar;
+        ScrollBar referenceBar = reference.VerticalScrollBar;
+        Assert.Equal(Visibility.Visible, bar.Visibility);
+        Assert.NotNull(bar.ComponentTemplateInstance);
+        Assert.Equal(referenceBar.ArrangedBounds, bar.ArrangedBounds);
+        Assert.Equal(referenceBar.Track.ArrangedBounds, bar.Track.ArrangedBounds);
+        Assert.Equal(referenceBar.Track.Thumb.ArrangedBounds, bar.Track.Thumb.ArrangedBounds);
+        Assert.True(bar.Track.Thumb.ArrangedBounds.Height > 0);
+        Assert.Equal(referenceBar.Maximum, bar.Track.Maximum);
+        Assert.Equal(referenceBar.ViewportSize, bar.Track.ViewportSize);
     }
 
     [Fact]
@@ -410,9 +513,9 @@ public sealed class ScrollViewerTests
         viewer.Measure(new MeasureContext(new LayoutSize(100, 100)));
         viewer.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
 
-        Assert.Equal(new LayoutRect(1, 2, 84, 82), viewer.Presenter.ArrangedBounds);
-        Assert.Equal(new LayoutRect(85, 2, 12, 82), viewer.VerticalScrollBar.ArrangedBounds);
-        Assert.Equal(new LayoutRect(1, 84, 84, 12), viewer.HorizontalScrollBar.ArrangedBounds);
+        Assert.Equal(new LayoutRect(1, 2, 84, 94), viewer.Presenter.ArrangedBounds);
+        Assert.Equal(new LayoutRect(85, 2, 12, 94), viewer.VerticalScrollBar.ArrangedBounds);
+        Assert.Equal(Visibility.Collapsed, viewer.HorizontalScrollBar.Visibility);
     }
 
     [Fact]

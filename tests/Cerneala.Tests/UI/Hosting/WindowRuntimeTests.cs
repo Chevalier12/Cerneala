@@ -248,6 +248,118 @@ public sealed class WindowRuntimeTests : IDisposable
         Assert.False(button.IsMouseOver);
     }
 
+    // Preview clicks are real user input, so their click count follows the real time of the window runtime: the frames
+    // that the runtime pumps between two clicks advance the input clock of the same ElementInputBridge (#682).
+    [Theory]
+    [InlineData(2000, 1, false)]
+    [InlineData(0, 2, true)]
+    public void DesignPreviewClickCountFollowsTheTimeThePumpedFramesAdvance(
+        int millisecondsBetweenClicks, int secondClickCount, bool wordSelected)
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        TextBox editor = new() { Text = "hello world", Width = 200, Height = 40 };
+        Window window = new() { Content = editor };
+        runtime.StartPreviewWindow(window);
+        List<int> downCounts = [];
+        editor.AddHandler(
+            InputEvents.MouseDownEvent,
+            (_, args) => downCounts.Add(((MouseButtonEventArgs)args).ClickCount),
+            handledEventsToo: true);
+        LayoutRect bounds = editor.ArrangedBounds;
+        float x = bounds.X + (bounds.Width / 2);
+        float y = bounds.Y + (bounds.Height / 2);
+
+        runtime.SetPreviewPointerButton(window, x, y, InputMouseButton.Left, isDown: true);
+        runtime.SetPreviewPointerButton(window, x, y, InputMouseButton.Left, isDown: false);
+        if (millisecondsBetweenClicks > 0)
+        {
+            // The runtime advances its clock only by the frames that it pumps: pump 250 ms frames up to the gap.
+            for (int elapsed = 0; elapsed < millisecondsBetweenClicks; elapsed += 250)
+            {
+                window.Invalidate(Cerneala.UI.Invalidation.InvalidationFlags.Render, "preview time");
+                runtime.PumpOnce(TimeSpan.FromMilliseconds(250));
+            }
+        }
+
+        runtime.SetPreviewPointerButton(window, x, y, InputMouseButton.Left, isDown: true);
+        runtime.SetPreviewPointerButton(window, x, y, InputMouseButton.Left, isDown: false);
+
+        Assert.Equal([1, secondClickCount], downCounts);
+        Assert.Equal(wordSelected, editor.SelectedText.Length > 0);
+    }
+
+    // What the VS preview does while the user is idle: its animation timer calls Capture, which pumps the runtime with
+    // the real time since the previous pump, but nothing invalidates, so the pumps render no frame (#682).
+    [Fact]
+    public void DesignPreviewClickCountFollowsRealTimeThroughIdlePumps()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Button button = new() { Content = "Target", Width = 160, Height = 40 };
+        Window window = new() { Content = button };
+        runtime.StartPreviewWindow(window);
+        List<int> downCounts = [];
+        button.AddHandler(
+            InputEvents.MouseDownEvent,
+            (_, args) => downCounts.Add(((MouseButtonEventArgs)args).ClickCount),
+            handledEventsToo: true);
+        LayoutRect bounds = button.ArrangedBounds;
+        float x = bounds.X + (bounds.Width / 2);
+        float y = bounds.Y + (bounds.Height / 2);
+
+        runtime.SetPreviewPointerButton(window, x, y, InputMouseButton.Left, isDown: true);
+        runtime.SetPreviewPointerButton(window, x, y, InputMouseButton.Left, isDown: false);
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        for (int elapsed = 0; elapsed < 2000; elapsed += 250)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(250));
+        }
+
+        runtime.SetPreviewPointerButton(window, x, y, InputMouseButton.Left, isDown: true);
+        runtime.SetPreviewPointerButton(window, x, y, InputMouseButton.Left, isDown: false);
+
+        Assert.Equal([1, 1], downCounts);
+    }
+
+    // The time of a pump counts for the double-click time even when the window is hidden or has no viewport for it.
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void DesignPreviewClickCountFollowsRealTimeWhileTheWindowIsHiddenOrHasNoViewport(bool hide)
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Button button = new() { Content = "Target", Width = 160, Height = 40 };
+        Window window = new() { Content = button };
+        runtime.StartPreviewWindow(window);
+        List<int> downCounts = [];
+        button.AddHandler(
+            InputEvents.MouseDownEvent,
+            (_, args) => downCounts.Add(((MouseButtonEventArgs)args).ClickCount),
+            handledEventsToo: true);
+        LayoutRect bounds = button.ArrangedBounds;
+        float x = bounds.X + (bounds.Width / 2);
+        float y = bounds.Y + (bounds.Height / 2);
+
+        runtime.SetPreviewPointerButton(window, x, y, InputMouseButton.Left, isDown: true);
+        runtime.SetPreviewPointerButton(window, x, y, InputMouseButton.Left, isDown: false);
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        if (hide) window.Hide();
+        else platform.Windows[0].ReportBounds(new UiViewport(0, 0), 0, 0, WindowState.Normal);
+        for (int elapsed = 0; elapsed < 2000; elapsed += 250)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(250));
+        }
+
+        if (hide) window.Show();
+        else platform.Windows[0].ReportBounds(new UiViewport(800, 600), 0, 0, WindowState.Normal);
+        runtime.SetPreviewPointerButton(window, x, y, InputMouseButton.Left, isDown: true);
+        runtime.SetPreviewPointerButton(window, x, y, InputMouseButton.Left, isDown: false);
+
+        Assert.Equal([1, 1], downCounts);
+    }
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
@@ -554,6 +666,50 @@ public sealed class WindowRuntimeTests : IDisposable
         PumpUntilCompleted(runtime, click);
         await click;
         Assert.Equal(1, clicks);
+    }
+
+    // The window runtime dispatches Servo steps with the real frame time (#682). ClickAsync is one click even when the
+    // frames of two calls are far inside the double-click time, and a multi-click stays one sequence when its frames are
+    // far outside it.
+    [Fact]
+    public async Task ServoClickCountsAreIndependentOfTheFrameTimeOfTheWindowRuntime()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Button button = new() { Content = "Target", Width = 160, Height = 32 };
+        ServoApi.SetId(button, "target");
+        Window window = new() { Content = button };
+        window.Show();
+        ServoApi servo = new(window);
+        List<int> downCounts = [];
+        int doubleClicks = 0;
+        button.AddHandler(
+            InputEvents.MouseDownEvent,
+            (_, args) => downCounts.Add(((MouseButtonEventArgs)args).ClickCount),
+            handledEventsToo: true);
+        button.AddHandler(InputEvents.MouseDoubleClickEvent, (_, _) => doubleClicks++, handledEventsToo: true);
+
+        Task first = servo.ClickAsync(ServoTarget.ById("target"));
+        PumpUntilCompleted(runtime, first);
+        await first;
+        Task second = servo.ClickAsync(ServoTarget.ById("target"));
+        PumpUntilCompleted(runtime, second);
+        await second;
+
+        Assert.Equal([1, 1], downCounts);
+        Assert.Equal(0, doubleClicks);
+
+        Task multi = servo.ClickAsync(ServoTarget.ById("target"), clickCount: 2);
+        for (int frame = 0; frame < 64 && !multi.IsCompleted; frame++)
+        {
+            runtime.PumpOnce(TimeSpan.FromSeconds(1));
+            Thread.Sleep(1);
+        }
+
+        Assert.True(multi.IsCompleted);
+        await multi;
+        Assert.Equal([1, 1, 1, 2], downCounts);
+        Assert.Equal(1, doubleClicks);
     }
 
     [Fact]

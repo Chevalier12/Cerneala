@@ -43,16 +43,32 @@ internal sealed class RetainedServoInputDriver : IServoInputDriver
         }), cancellationToken);
     }
 
-    public Task ClickAsync(Func<UIRoot, ServoActionTarget> resolveTarget, CancellationToken cancellationToken)
+    // clickCount presses at one point. The first press starts a new click sequence, so the action never continues the
+    // sequence of an earlier action, and the later presses continue it whatever time the frames took.
+    // Example: clickCount 2 on a Button counts 1 then 2 and raises MouseDoubleClick once; two ClickAsync calls with
+    // clickCount 1 count 1 and 1.
+    public Task ClickAsync(
+        Func<UIRoot, ServoActionTarget> resolveTarget,
+        int clickCount,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(resolveTarget);
+        ArgumentOutOfRangeException.ThrowIfLessThan(clickCount, 1);
         return DispatchAsync(new ServoInputSequence(() =>
         {
             ServoActionTarget target = ResolveTarget(resolveTarget);
             List<ServoInputStep> steps = [];
             AppendPointerMove(steps, target.X, target.Y);
-            AppendPointerButton(steps, InputMouseButton.Left, isDown: true);
-            AppendPointerButton(steps, InputMouseButton.Left, isDown: false);
+            for (int click = 0; click < clickCount; click++)
+            {
+                AppendPointerButton(
+                    steps,
+                    InputMouseButton.Left,
+                    isDown: true,
+                    click == 0 ? PressClickSequence.Start : PressClickSequence.Continue);
+                AppendPointerButton(steps, InputMouseButton.Left, isDown: false);
+            }
+
             return steps;
         }), cancellationToken);
     }
@@ -74,7 +90,7 @@ internal sealed class RetainedServoInputDriver : IServoInputDriver
             ServoPoint destination = resolveDestination(RequireRoot());
             List<ServoInputStep> frames = new(steps + 3);
             AppendPointerMove(frames, target.X, target.Y);
-            AppendPointerButton(frames, InputMouseButton.Left, isDown: true);
+            AppendPointerButton(frames, InputMouseButton.Left, isDown: true, PressClickSequence.Start);
             for (int step = 1; step <= steps; step++)
             {
                 float progress = step / (float)steps;
@@ -391,9 +407,10 @@ internal sealed class RetainedServoInputDriver : IServoInputDriver
     private void AppendPointerButton(
         List<ServoInputStep> steps,
         InputMouseButton button,
-        bool isDown)
+        bool isDown,
+        PressClickSequence sequence = PressClickSequence.ByTime)
     {
-        AppendStep(steps, pointer.WithButton(button, isDown), keyboard, []);
+        AppendStep(steps, pointer.WithButton(button, isDown), keyboard, [], sequence);
     }
 
     private void AppendKeyboard(
@@ -407,9 +424,11 @@ internal sealed class RetainedServoInputDriver : IServoInputDriver
         List<ServoInputStep> steps,
         PointerSnapshot nextPointer,
         KeyboardSnapshot nextKeyboard,
-        IReadOnlyList<TextInputSnapshotEvent> textInputEvents)
+        IReadOnlyList<TextInputSnapshotEvent> textInputEvents,
+        PressClickSequence sequence = PressClickSequence.ByTime)
     {
-        InputFrame frame = new(pointer, nextPointer, keyboard, nextKeyboard, textInputEvents);
+        InputFrame frame = new InputFrame(pointer, nextPointer, keyboard, nextKeyboard, textInputEvents)
+            .WithPressClickSequence(sequence);
         pointer = nextPointer;
         keyboard = nextKeyboard;
         steps.Add(new ServoInputStep(frame, pointer, keyboard, hasPointerPosition));

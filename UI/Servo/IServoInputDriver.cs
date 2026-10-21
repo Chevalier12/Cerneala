@@ -7,7 +7,7 @@ internal interface IServoInputDriver
 {
     Task HoverAsync(Func<UIRoot, ServoActionTarget> resolveTarget, CancellationToken cancellationToken);
 
-    Task ClickAsync(Func<UIRoot, ServoActionTarget> resolveTarget, CancellationToken cancellationToken);
+    Task ClickAsync(Func<UIRoot, ServoActionTarget> resolveTarget, int clickCount, CancellationToken cancellationToken);
 
     Task DragAsync(
         Func<UIRoot, ServoActionTarget> resolveTarget,

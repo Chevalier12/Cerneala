@@ -60,6 +60,26 @@ public sealed class TextEditingControllerTests
     }
 
     [Fact]
+    public void MoveByWordMovesAndReportsChange()
+    {
+        TextEditor editor = new(new TextDocument("hello world"));
+        editor.MoveCaret(0);
+        TextEditingController controller = new(editor);
+
+        Assert.True(controller.MoveByWord(1, extendSelection: false));
+        Assert.Equal(6, editor.Caret.Position);
+        Assert.True(controller.MoveByWord(1, extendSelection: true));
+        Assert.Equal(new TextSelection(6, 11), editor.Selection);
+        Assert.False(controller.MoveByWord(1, extendSelection: true));
+        Assert.True(controller.MoveByWord(-1, extendSelection: false));
+        Assert.Equal(6, editor.Caret.Position);
+        Assert.True(editor.Selection.IsEmpty);
+        Assert.True(controller.MoveByWord(-1, extendSelection: false));
+        Assert.Equal(0, editor.Caret.Position);
+        Assert.False(controller.MoveByWord(-1, extendSelection: false));
+    }
+
+    [Fact]
     public void HandleKeyLeftMovesOverSurrogatePairAsOneTextElement()
     {
         TextEditor editor = new(new TextDocument("a😀b"));
