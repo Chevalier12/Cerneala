@@ -278,13 +278,44 @@ public sealed class UiHost
         DrawCore(drawingBackend, backdropFrameSource);
     }
 
+    // Draws the last committed command list even if the root was invalidated after
+    // that commit. Used for captures, which must work from a frame handler.
+    internal void DrawLastCommitted(
+        IDrawingBackend drawingBackend,
+        IBackdropFrameSource? backdropFrameSource)
+    {
+        ArgumentNullException.ThrowIfNull(drawingBackend);
+        ValidateBackdropCompatibility(
+            drawingBackend,
+            backdropFrameSource);
+        UIRoot currentRoot = RequireRoot();
+        currentRoot.Relay.VerifyAccess();
+        DrawCore(
+            currentRoot,
+            currentRoot.RetainedRenderer.RenderLastCommitted(currentRoot),
+            drawingBackend,
+            backdropFrameSource);
+    }
+
     private void DrawCore(
         IDrawingBackend drawingBackend,
         IBackdropFrameSource? backdropFrameSource)
     {
         UIRoot currentRoot = RequireRoot();
         currentRoot.Relay.VerifyAccess();
-        DrawCommandList commands = currentRoot.RetainedRenderer.Render(currentRoot);
+        DrawCore(
+            currentRoot,
+            currentRoot.RetainedRenderer.Render(currentRoot),
+            drawingBackend,
+            backdropFrameSource);
+    }
+
+    private void DrawCore(
+        UIRoot currentRoot,
+        DrawCommandList commands,
+        IDrawingBackend drawingBackend,
+        IBackdropFrameSource? backdropFrameSource)
+    {
         PrismFrameAnalysis analysis = prismFrameAnalyzer.Analyze(commands);
         IBackdropFrameLease? lease = AcquireBackdropFrame(
             analysis,
@@ -299,8 +330,8 @@ public sealed class UiHost
                 lease,
                 sourceToken,
                 currentRoot.PrismCacheInvalidations);
-            currentRoot.RetainedRenderer.Submit(
-                currentRoot,
+            RetainedRenderer.SubmitCommands(
+                commands,
                 drawingBackend,
                 in frameContext);
         }

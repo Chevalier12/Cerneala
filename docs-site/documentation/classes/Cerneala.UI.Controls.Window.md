@@ -42,6 +42,8 @@ The window renders its configured background and border before its content. `Las
 
 `SaveScreenshot` redraws the current retained command tree into a complete client framebuffer before encoding the PNG. This keeps captures complete even when the displayed frame is changing continuously under Motion. Call it from `FrameRendered` when the capture must correspond to a specific frame boundary.
 
+The capture is the last committed frame, which is the frame that was just presented. A change made before the call, in the same `FrameRendered` handler, is not in it yet: layout and the retained commit run in the next frame. For example, `status.Text = "changed"; SaveScreenshot("b.png");` in a `FrameRendered` handler saves the previous text, and a capture from a later `FrameRendered` shows `changed`. The PNG is encoded in memory and the file is written only when the capture succeeds, so a failed capture leaves no new or truncated file at `path`, and an existing file there keeps its content.
+
 When the native platform activates a window and no retained element already has keyboard focus, a window with `Focusable` set to `true` receives keyboard focus automatically. Activation preserves an existing focused child instead of replacing it with the window.
 
 ## Properties
@@ -65,7 +67,7 @@ When the native platform activates a window and no retained element already has 
 ## Methods
 | Name | Description |
 | --- | --- |
-| `SaveScreenshot(string path)` | Draws the current retained client frame and saves it as a PNG. |
+| `SaveScreenshot(string path)` | Draws the last committed retained client frame and saves it as a PNG. |
 
 ## Applies to
 Desktop window hosting backends.
