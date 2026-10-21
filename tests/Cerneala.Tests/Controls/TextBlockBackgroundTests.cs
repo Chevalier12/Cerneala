@@ -18,10 +18,7 @@ public sealed class TextBlockBackgroundTests
     {
         DrawCommandList commands = Render(new TextBlock { Width = 200, Text = "Hello", Background = Red });
 
-        int fill = IndexOfBackground(commands);
-        Assert.True(fill >= 0, "No FillRectangle with the Background brush.");
-        DrawRect rect = commands[fill].Rect;
-        Assert.Equal((0f, 0f, 200f, 20f), (rect.X, rect.Y, rect.Width, rect.Height));
+        int fill = AssertBackgroundFillsArrangedBounds(commands);
         int firstText = IndexOfFirst(commands, DrawCommandKind.DrawText);
         Assert.True(firstText > fill, $"DrawText at {firstText} is not after the background at {fill}.");
     }
@@ -31,7 +28,7 @@ public sealed class TextBlockBackgroundTests
     {
         DrawCommandList commands = Render(new TextBlock { Width = 200, Background = Red });
 
-        Assert.True(IndexOfBackground(commands) >= 0, "No FillRectangle with the Background brush.");
+        AssertBackgroundFillsArrangedBounds(commands);
     }
 
     [Fact]
@@ -43,8 +40,7 @@ public sealed class TextBlockBackgroundTests
 
         DrawCommandList commands = Render(textBlock);
 
-        int fill = IndexOfBackground(commands);
-        Assert.True(fill >= 0, "No FillRectangle with the Background brush.");
+        int fill = AssertBackgroundFillsArrangedBounds(commands);
         Assert.True(IndexOfFirst(commands, DrawCommandKind.DrawText) > fill);
     }
 
@@ -78,6 +74,16 @@ public sealed class TextBlockBackgroundTests
         root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
         root.ProcessFrame();
         return root.RetainedRenderer.Commit(root);
+    }
+
+    // The TextBlock is arranged at 0, 0, 200 x 20 by Render; the background must cover all of it, not only the text.
+    private static int AssertBackgroundFillsArrangedBounds(DrawCommandList commands)
+    {
+        int fill = IndexOfBackground(commands);
+        Assert.True(fill >= 0, "No FillRectangle with the Background brush.");
+        DrawRect rect = commands[fill].Rect;
+        Assert.Equal((0f, 0f, 200f, 20f), (rect.X, rect.Y, rect.Width, rect.Height));
+        return fill;
     }
 
     private static int IndexOfBackground(DrawCommandList commands)
