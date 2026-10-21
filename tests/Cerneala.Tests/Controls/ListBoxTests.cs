@@ -1045,6 +1045,54 @@ public sealed class ListBoxTests
         Assert.InRange(listBox.ItemContainerGenerator.RealizedContainers.Count, 1, 20);
     }
 
+    // Rows of 20 and 10 pixels (20 at every third index) are 13.33 pixels high on average, so the panel estimates the
+    // rows it has not measured with a height that is not a whole number of device pixels. At the end of the list the
+    // extent of the viewer must still equal the panel's TotalExtent, and the last row must end at the viewport bottom (#707).
+    [Theory]
+    [InlineData(40)]
+    [InlineData(400)]
+    public void EndOfAVirtualizingListBoxWithRowsOfDifferentHeightsEndsTheLastRowAtTheViewportBottom(int rowCount)
+    {
+        (UIRoot root, ListBox listBox) = CreateMixedHeightRowListBox(rowCount);
+        ElementInputBridge bridge = new();
+        ClickCenter(root, bridge, Row(listBox, 0));
+
+        PressKey(root, bridge, InputKey.End);
+        ProcessFramesUntilIdle(root);
+
+        AssertLastRowEndsAtViewportBottomAtTotalExtent(listBox, rowCount - 1);
+    }
+
+    [Fact]
+    public void WheelToTheEndAndReplacingTheItemsWithFewerRowsEndsTheLastRowAtTheViewportBottom()
+    {
+        (UIRoot root, ListBox listBox) = CreateMixedHeightRowListBox(60);
+        ScrollContentPresenter presenter = ListBoxScrollViewer(listBox).Presenter;
+        LayoutRect bounds = listBox.ArrangedBounds;
+        for (int notch = 0; notch < 100; notch++)
+        {
+            float before = presenter.VerticalOffset;
+            new ElementInputBridge().Dispatch(root, new InputFrame(
+                PointerSnapshot.Empty.WithPosition(bounds.X + bounds.Width / 2, bounds.Y + bounds.Height / 2).WithWheelValue(0),
+                PointerSnapshot.Empty.WithPosition(bounds.X + bounds.Width / 2, bounds.Y + bounds.Height / 2).WithWheelValue(-120),
+                KeyboardSnapshot.Empty,
+                KeyboardSnapshot.Empty,
+                []));
+            ProcessFramesUntilIdle(root);
+            if (presenter.VerticalOffset == before)
+            {
+                break;
+            }
+        }
+
+        Assert.Equal(presenter.ExtentHeight - presenter.ViewportHeight, presenter.VerticalOffset);
+
+        listBox.SetItems(CreateMixedHeightRows(40));
+        ProcessFramesUntilIdle(root);
+
+        AssertLastRowEndsAtViewportBottomAtTotalExtent(listBox, 39);
+    }
+
     // As WPF's ListBox.ScrollIntoView, a row below the viewport scrolls up until its bottom is at the bottom of the
     // viewport. The viewport is 100 pixels high and the rows 20, so row 15 ends at 320 and the offset becomes 220 (#680).
     [Fact]
@@ -1890,6 +1938,47 @@ public sealed class ListBoxTests
             ItemContainerAspect = RowHeight(10),
             ItemsSource = Enumerable.Range(0, 10_000).Select(index => index.ToString()).ToArray()
         };
+    }
+
+    private static UIElement[] CreateMixedHeightRows(int rowCount)
+    {
+        return [.. Enumerable.Range(0, rowCount)
+            .Select(index => new ListBoxItem { Height = index % 3 == 0 ? 20 : 10, Content = index.ToString() })];
+    }
+
+    // A ListBox 150 wide and 100 high with a VirtualizingStackPanel and rowCount rows of 20 and 10 pixels, in a canvas
+    // in a window, after the first layout.
+    private static (UIRoot Root, ListBox ListBox) CreateMixedHeightRowListBox(int rowCount)
+    {
+        ListBox listBox = new() { Width = 150, Height = 100, ItemsPanel = new Cerneala.UI.Layout.Panels.VirtualizingStackPanel() };
+        listBox.SetItems(CreateMixedHeightRows(rowCount));
+        Cerneala.UI.Layout.Panels.Canvas canvas = new();
+        canvas.VisualChildren.Add(listBox);
+        UIRoot root = new(360, 300);
+        root.VisualChildren.Add(new Window { Content = canvas, Width = 360, Height = 300 });
+        root.ProcessFrame();
+        return (root, listBox);
+    }
+
+    private static void ProcessFramesUntilIdle(UIRoot root)
+    {
+        for (int frame = 0; frame < 10 && (frame == 0 || root.Scheduler.HasWork); frame++)
+        {
+            root.ProcessFrame();
+        }
+    }
+
+    // The scheduler is idle, the viewer's extent is the panel's TotalExtent, and the row ends at the viewport bottom.
+    private static void AssertLastRowEndsAtViewportBottomAtTotalExtent(ListBox listBox, int lastIndex)
+    {
+        ScrollContentPresenter presenter = ListBoxScrollViewer(listBox).Presenter;
+        LayoutRect viewport = presenter.ArrangedBounds;
+        LayoutRect last = Row(listBox, lastIndex).ArrangedBounds;
+        float totalExtent = Assert.IsType<Cerneala.UI.Layout.Panels.VirtualizingStackPanel>(listBox.ItemsPanel).TotalExtent;
+
+        Assert.Equal(
+            (totalExtent, viewport.Y + presenter.ViewportHeight),
+            (presenter.ExtentHeight, last.Y + last.Height));
     }
 
     // That ListBox alone in a window, after the first layout.
