@@ -2031,7 +2031,7 @@ public sealed class SdlGpuFrameTransactionCharacterizationTests
             text,
             size,
             CoordinateScale: 1,
-            PixelPhase: new DrawPoint(0.125f, 0.375f));
+            PixelPhase: new DrawPoint(0.125f, 0));
         return new TextCommandScenario(
             commands,
             new TextAtlasKeySet(
