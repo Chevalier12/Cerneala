@@ -125,15 +125,19 @@ An inline takes each style property that it does not set from the nearest `Span`
 
 `TextDecorations` draws a rectangle for each flag over the text of each span, in the foreground brush of the span. They do not change the layout, so changing them invalidates only render. A span without a foreground brush (`Foreground` of `null`) draws neither text nor decorations.
 
+### Background
+
+As in WPF, `Background` fills the whole render bounds of the `TextBlock`, not only the area of the text, and the text is drawn on top of it. `OnRender` emits one `FillRectangle` with the `Background` brush before the text draw commands, also when `Text` is empty. For example, `<TextBlock Width="200" Background="Tomato" Text="Hello" />` arranged at 200 x 20 draws a `FillRectangle` at `0, 0, 200, 20` with the tomato brush, then the `DrawText` of `Hello`. The default `null` draws no rectangle, and neither do render bounds with a width or height of `0`, for example a `TextBlock` in a `Grid` column of width `0`. `Background` does not inherit and does not change the layout, so changing it invalidates render only.
+
 ### Resources, trimming, and invalidation
 
-The `Text` value is never stored as `null`. Assigning `null` through the property or `TextProperty` is coerced to `string.Empty`. Empty text still measures through the text measurer, but `OnRender` exits without emitting a text draw command.
+The `Text` value is never stored as `null`. Assigning `null` through the property or `TextProperty` is coerced to `string.Empty`. Empty text still measures through the text measurer, but `OnRender` emits no text draw command for it; it draws only the `Background`, when one is set.
 
 By default the control uses `TextMeasurer.Default` and `TextRenderer.Default`. Supplying `FontResourceId` together with a local `ResourceProvider` or root resource provider makes the control use a resource-backed `FontResolver` and an internal text layout cache. When a font resource dependency is recorded through `ResourceDependencyTracker` or the root tracker, resource changes invalidate measure and render.
 
 `TextWrapping.Wrap` allows measurement to respect the available width. `TextTrimming.CharacterEllipsis` collapses overflow at Unicode text-element boundaries, while `TextTrimming.WordEllipsis` prefers complete words and falls back to character trimming for an oversized first word. Both modes append `U+2026`, respect finite width, and collapse the last visible line when finite height hides later lines. `TextTrimming.None` preserves the uncollapsed text layout.
 
-Changing text, wrapping, alignment, line height, line stacking strategy, maximum lines, font weight, style or stretch, font resource, resource provider, or text measurer invalidates measure and render. Changing `TextDecorations` invalidates render only. Changing the text renderer invalidates render only. Changing inherited `Foreground` invalidates render without changing the text layout identity.
+Changing text, wrapping, alignment, line height, line stacking strategy, maximum lines, font weight, style or stretch, font resource, resource provider, or text measurer invalidates measure and render. Changing `TextDecorations` or `Background` invalidates render only. Changing the text renderer invalidates render only. Changing inherited `Foreground` invalidates render without changing the text layout identity.
 
 ## Constructors
 
@@ -183,6 +187,7 @@ Changing text, wrapping, alignment, line height, line stacking strategy, maximum
 | `FontStyle` | `Control` | Inherited font style. Defaults to `FontStyle.Normal` and affects measure and render. Selects the closest real face of the family. |
 | `FontStretch` | `Control` | Inherited font stretch. Defaults to `FontStretch.Normal` and affects measure and render. Selects the closest real face of the family. |
 | `Foreground` | `Control` | Inherited foreground brush. Defaults to a solid brush with `Color.Black`, inherits through the UI property system, and affects render. |
+| `Background` | `Control` | Brush that fills the whole render bounds under the text. Defaults to `null` (no fill), does not inherit, and affects render. |
 
 ## Methods
 

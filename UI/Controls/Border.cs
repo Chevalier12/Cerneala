@@ -20,22 +20,8 @@ public class Border : Decorator
     // area, as the TabControl content area below the header row.
     internal static void RenderBox(Control control, RenderContext context, LayoutRect bounds)
     {
-        RenderBackground(control, context, bounds);
+        control.RenderBackground(context, bounds);
         RenderBorder(control, context, bounds);
-    }
-
-    internal static void RenderBackground(Control control, RenderContext context)
-    {
-        RenderBackground(control, context, context.Bounds);
-    }
-
-    private static void RenderBackground(Control control, RenderContext context, LayoutRect bounds)
-    {
-        DrawRect rect = ToDrawRect(bounds);
-        if (control.Background is { } background && rect.Width > 0 && rect.Height > 0)
-        {
-            context.DrawingContext.FillRectangle(rect, background);
-        }
     }
 
     internal static void RenderBorder(Control control, RenderContext context)

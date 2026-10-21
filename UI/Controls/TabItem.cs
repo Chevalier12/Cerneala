@@ -175,7 +175,7 @@ public class TabItem : ContentControl, ISelectableItemContainer
     {
         if (TemplateChild is null)
         {
-            Border.RenderBackground(this, context);
+            RenderBackground(context);
         }
     }
 

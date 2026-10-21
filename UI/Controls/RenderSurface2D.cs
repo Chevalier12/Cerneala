@@ -503,7 +503,7 @@ public partial class RenderSurface2D : ContentControl,
 
     protected override void OnRender(RenderContext context)
     {
-        Border.RenderBackground(this, context);
+        RenderBackground(context);
         DrawRect bounds = Border.ToDrawRect(context.Bounds);
         if (bounds.Width > 0 &&
             bounds.Height > 0 &&

@@ -102,7 +102,7 @@ public class RenderSurface3D : ContentControl, ITimeSensitiveRenderElement, IRen
 
     protected override void OnRender(RenderContext context)
     {
-        Border.RenderBackground(this, context);
+        RenderBackground(context);
         DrawRect bounds = Border.ToDrawRect(context.Bounds);
         if (draw is not null && bounds.Width > 0 && bounds.Height > 0)
         {
