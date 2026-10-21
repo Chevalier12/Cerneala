@@ -74,6 +74,32 @@ public sealed class ToolTipTests
         Assert.Same(existingParent, content.VisualParent);
     }
 
+    // As a WPF ToolTip with Placement Custom: the placement gets the target's bounds and the ToolTip's size and returns
+    // its corner, here 5 pixels right of the target's right edge; a corner outside the viewport moves into it.
+    [Fact]
+    public void CustomPlacementPutsToolTipWhereThePlacementSaysInsideTheViewport()
+    {
+        UIRoot root = new(100, 100);
+        FixedElement target = new(new LayoutSize(20, 10));
+        LayoutCanvas.SetLeft(target, 30);
+        LayoutCanvas.SetTop(target, 40);
+        ToolTip toolTip = new() { Content = new FixedElement(new LayoutSize(30, 10)) };
+        LayoutCanvas canvas = new();
+        canvas.VisualChildren.Add(target);
+        canvas.VisualChildren.Add(toolTip);
+        root.VisualChildren.Add(canvas);
+        toolTip.SetCustomPlacement(target, (bounds, size) => new LayoutPoint(bounds.X + bounds.Width + 5, bounds.Y));
+        toolTip.IsOpen = true;
+        root.ProcessFrame();
+
+        Assert.Equal(new LayoutRect(55, 40, 30, 10), toolTip.PopupRoot.ArrangedBounds);
+
+        toolTip.SetCustomPlacement(target, (bounds, size) => new LayoutPoint(bounds.X + 80, bounds.Y - 90));
+        root.ProcessFrame();
+
+        Assert.Equal(new LayoutRect(70, 0, 30, 10), toolTip.PopupRoot.ArrangedBounds);
+    }
+
     private static InputFrame PointerFrame(float x, float y, bool currentDown = false)
     {
         PointerSnapshot previous = PointerSnapshot.Empty.WithPosition(x, y);

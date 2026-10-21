@@ -190,7 +190,7 @@ public sealed class ElementInputBridge
                 UIElement? focusBeforePress = focusManager.FocusedElement;
                 HashSet<UiElementId> previewHandledOnArrival = [];
                 HashSet<UiElementId> handledOnArrival = [];
-                bool handled = RaiseMousePair(
+                RaiseMousePair(
                     routeMap,
                     pointerTarget,
                     InputEvents.PreviewMouseDownEvent,
@@ -203,7 +203,7 @@ public sealed class ElementInputBridge
                     handledOnArrival);
                 // The button-specific bubble reaches each element with the Handled value of MouseDown there, so a press
                 // handled before the press owner is a MouseDown or a MouseLeftButtonDown handled below it.
-                handled |= RaiseMouseButtonSpecificPair(
+                RaiseMouseButtonSpecificPair(
                     routeMap,
                     pointerTarget,
                     button,
@@ -257,9 +257,12 @@ public sealed class ElementInputBridge
                     }
                 }
 
+                // As WPF RepeatButton.OnMouseLeftButtonDown, which clicks and starts the repeat timer when the bubbling
+                // press reaches the button: the same presses that keep the press from a button keep it from a
+                // RepeatButton, and handlers on the button and its ancestors that run after the press do not undo it.
                 if (button == InputMouseButton.Left)
                 {
-                    if (!handled)
+                    if (!previewHandled && !buttonPreviewHandled && !handledBeforePressOwner)
                     {
                         repeatButtonController.Begin(
                             root,

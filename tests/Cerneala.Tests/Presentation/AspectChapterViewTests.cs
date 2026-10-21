@@ -303,7 +303,13 @@ public sealed class AspectChapterViewTests : IDisposable
         UiFrame[] frames = DragWithInputFrames(host, ref pointer, hueSlider, steps: 12);
 
         Assert.All(frames, frame => Assert.Equal(0, frame.Stats.InheritedElements));
-        Assert.All(frames, frame => Assert.InRange(frame.Stats.AspectElements, 0, 1));
+        // As in WPF, the press focuses the hue Slider: the swatch Button and its 17 ancestors lose IsKeyboardFocusWithin,
+        // the Slider and its 5 overlay ancestors gain it, and the pointer enters a track RepeatButton. The Slider moves
+        // its thumb to the press, so in the next frame the pointer moves from one track RepeatButton to the other.
+        // Neither reapplies the preview's aspect values.
+        Assert.InRange(frames[0].Stats.AspectElements, 0, 25);
+        Assert.InRange(frames[1].Stats.AspectElements, 0, 2);
+        Assert.All(frames.Skip(2), frame => Assert.InRange(frame.Stats.AspectElements, 0, 1));
         // Issue #496: as in WPF, the status bar's Grid desires the width of its texts, so the first hue change also
         // measures the status bar's Border and the chapter's root Grid again.
         Assert.InRange(frames[0].Stats.MeasuredElements, 0, 6);

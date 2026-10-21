@@ -127,6 +127,48 @@ public sealed class ColorPickerTests
             .Count() >= 2);
     }
 
+    // A color ramp draws only its gradient, its (70, 76, 86) border and its white thumb: no slider track bar under the
+    // gradient, which would hide the checkerboard behind the transparent end of the alpha ramp.
+    [Fact]
+    public void ColorRampsDrawNoSliderTrackBarUnderTheirGradient()
+    {
+        ColorPicker picker = new()
+        {
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top
+        };
+        UIRoot root = new(400, 400);
+        root.VisualChildren.Add(picker);
+        root.ProcessFrame();
+        root.ProcessFrame();
+        DrawCommand[] commands = root.RetainedRenderer.Commit(root).ToArray();
+
+        foreach (string name in new[] { "PART_HueSlider", "PART_AlphaSlider" })
+        {
+            Slider slider = Part<Slider>(picker, name);
+            LayoutRect track = slider.Track.ArrangedBounds;
+            LayoutRect thumb = slider.Track.Thumb.ArrangedBounds;
+            DrawCommand[] inside = commands
+                .Where(command => command.Kind is DrawCommandKind.FillRectangle or DrawCommandKind.DrawRectangle)
+
+                // The checkerboard behind the alpha ramp fills plain colors without a brush.
+                .Where(command => command.Brush is not null)
+                .Where(command =>
+                    command.Rect.X >= track.X && command.Rect.Y >= track.Y &&
+                    command.Rect.X + command.Rect.Width <= track.X + track.Width &&
+                    command.Rect.Y + command.Rect.Height <= track.Y + track.Height)
+                .ToArray();
+
+            Assert.Equal(4, inside.Length);
+            Assert.Equal(Border.ToDrawRect(track), inside[0].Rect);
+            Assert.IsType<LinearGradientBrush>(inside[0].Brush);
+            Assert.Equal(new Color(70, 76, 86), Assert.IsType<SolidColorBrush>(inside[1].Brush).Color);
+            Assert.Equal(Border.ToDrawRect(thumb), inside[2].Rect);
+            Assert.Equal(Color.White, Assert.IsType<SolidColorBrush>(inside[2].Brush).Color);
+            Assert.Equal(Color.Black, Assert.IsType<SolidColorBrush>(inside[3].Brush).Color);
+        }
+    }
+
     private static ColorPicker ArrangePicker()
     {
         ColorPicker picker = new();

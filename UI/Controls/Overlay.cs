@@ -10,6 +10,7 @@ public class Overlay : Control, IInputProjectionOwner
 {
     private readonly ContentPresenter presenter = new();
     private bool isProjected;
+    private Func<LayoutRect, LayoutSize, LayoutPoint>? customPlacement;
 
     public Overlay()
     {
@@ -172,6 +173,24 @@ public class Overlay : Control, IInputProjectionOwner
     internal ContentPresenter ProjectedPresenter => presenter;
 
     internal UIElement EffectivePlacementTarget => PlacementTarget ?? this;
+
+    // As WPF's Popup.CustomPopupPlacementCallback: when set, it replaces Placement and gets the arranged bounds of the
+    // placement target and the overlay's size, and returns the overlay's top-left corner in root coordinates. The
+    // overlay still stays inside the viewport.
+    internal Func<LayoutRect, LayoutSize, LayoutPoint>? CustomPlacement
+    {
+        get => customPlacement;
+        set
+        {
+            if (customPlacement == value)
+            {
+                return;
+            }
+
+            customPlacement = value;
+            Root?.OverlayManager.InvalidatePlacement(this);
+        }
+    }
 
     internal OverlayDismissScope? DismissScope { get; set; }
 

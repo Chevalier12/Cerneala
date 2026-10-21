@@ -217,6 +217,8 @@ public sealed class TrackTests
         Assert.Equal(50, track.Value);
     }
 
+    // As WPF's vertical Track, whose values grow upward: the thumb for Minimum is at the bottom, y 100..110, and dragging
+    // it up by 50 pixels raises the value by 50; the horizontal part of the movement does nothing.
     [Fact]
     public void VerticalThumbDragUsesVerticalAxis()
     {
@@ -232,10 +234,123 @@ public sealed class TrackTests
         root.VisualChildren.Add(track);
         ElementInputBridge bridge = new();
 
-        bridge.Dispatch(root, PointerFrame(5, 5, currentDown: true));
-        bridge.Dispatch(root, PointerFrame(5, 5, 55, 55, previousDown: true, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(5, 105, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(5, 105, 55, 55, previousDown: true, currentDown: true));
 
         Assert.Equal(50, track.Value);
+    }
+
+    // As WPF's Track template parts: the default template has a decrease and an increase RepeatButton that take no focus
+    // and fill the track on each side of the thumb. For a horizontal track with value 50 of 0..100 in 110 pixels, the
+    // decrease button is x 0..50, the thumb x 50..60 and the increase button x 60..110.
+    [Fact]
+    public void DefaultTemplateRepeatButtonsFillTrackOnEachSideOfThumb()
+    {
+        Track track = new() { Minimum = 0, Maximum = 100, Value = 50 };
+
+        track.Measure(new MeasureContext(new LayoutSize(110, 20)));
+        track.Arrange(new ArrangeContext(new LayoutRect(0, 0, 110, 20)));
+
+        RepeatButton decrease = Assert.IsType<RepeatButton>(track.DecreaseRepeatButton);
+        RepeatButton increase = Assert.IsType<RepeatButton>(track.IncreaseRepeatButton);
+        Assert.Same(decrease, track.ComponentTemplateInstance!.Parts["PART_DecreaseRepeatButton"]);
+        Assert.Same(increase, track.ComponentTemplateInstance.Parts["PART_IncreaseRepeatButton"]);
+        Assert.Equal(new LayoutRect(0, 0, 50, 20), decrease.ArrangedBounds);
+        Assert.Equal(new LayoutRect(50, 0, 10, 20), track.Thumb.ArrangedBounds);
+        Assert.Equal(new LayoutRect(60, 0, 50, 20), increase.ArrangedBounds);
+        Assert.False(decrease.Focusable);
+        Assert.False(decrease.IsTabStop);
+        Assert.False(increase.Focusable);
+        Assert.False(increase.IsTabStop);
+        Assert.Equal(
+            ["PART_Thumb", "PART_DecreaseRepeatButton", "PART_IncreaseRepeatButton"],
+            typeof(Track).GetCustomAttributes(typeof(TemplatePartAttribute), inherit: true)
+                .Cast<TemplatePartAttribute>()
+                .Select(part => part.Name));
+    }
+
+    // A vertical track has Minimum at the bottom: with value 25 of 0..100 in 110 pixels, the thumb is y 75..85, the
+    // increase button above it is y 0..75 and the decrease button below it is y 85..110. IsDirectionReversed puts
+    // Minimum at the top: the thumb is y 25..35, the decrease button y 0..25 and the increase button y 35..110.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void VerticalTrackPlacesMinimumAtBottomUnlessReversed(bool reversed)
+    {
+        Track track = new() { Orientation = Orientation.Vertical, IsDirectionReversed = reversed, Minimum = 0, Maximum = 100, Value = 25 };
+
+        track.Measure(new MeasureContext(new LayoutSize(20, 110)));
+        track.Arrange(new ArrangeContext(new LayoutRect(0, 0, 20, 110)));
+
+        LayoutRect decrease = track.DecreaseRepeatButton!.ArrangedBounds;
+        LayoutRect increase = track.IncreaseRepeatButton!.ArrangedBounds;
+        if (reversed)
+        {
+            Assert.Equal(new LayoutRect(0, 25, 20, 10), track.Thumb.ArrangedBounds);
+            Assert.Equal(new LayoutRect(0, 0, 20, 25), decrease);
+            Assert.Equal(new LayoutRect(0, 35, 20, 75), increase);
+            Assert.Equal(0, track.ValueFromPoint(10, 5));
+            Assert.Equal(100, track.ValueFromPoint(10, 105));
+        }
+        else
+        {
+            Assert.Equal(new LayoutRect(0, 75, 20, 10), track.Thumb.ArrangedBounds);
+            Assert.Equal(new LayoutRect(0, 0, 20, 75), increase);
+            Assert.Equal(new LayoutRect(0, 85, 20, 25), decrease);
+            Assert.Equal(100, track.ValueFromPoint(10, 5));
+            Assert.Equal(0, track.ValueFromPoint(10, 105));
+        }
+    }
+
+    // A reversed horizontal track has Minimum at the right: with value 30 the thumb is x 70..80, the increase button
+    // x 0..70 and the decrease button x 80..110; dragging the thumb 20 pixels to the left raises the value by 20, and a
+    // press on the decrease button at the right lowers it by LargeChange.
+    [Fact]
+    public void ReversedHorizontalTrackPlacesMinimumAtRight()
+    {
+        UIRoot root = new(200, 100);
+        Track track = new() { IsDirectionReversed = true, Minimum = 0, Maximum = 100, Value = 30, LargeChange = 10 };
+        track.Measure(new MeasureContext(new LayoutSize(110, 20)));
+        track.Arrange(new ArrangeContext(new LayoutRect(0, 0, 110, 20)));
+        root.VisualChildren.Add(track);
+
+        Assert.Equal(new LayoutRect(70, 0, 10, 20), track.Thumb.ArrangedBounds);
+        Assert.Equal(new LayoutRect(0, 0, 70, 20), track.IncreaseRepeatButton!.ArrangedBounds);
+        Assert.Equal(new LayoutRect(80, 0, 30, 20), track.DecreaseRepeatButton!.ArrangedBounds);
+        Assert.Equal(100, track.ValueFromPoint(5, 10));
+        Assert.Equal(0, track.ValueFromPoint(105, 10));
+
+        ElementInputBridge bridge = new();
+        bridge.Dispatch(root, PointerFrame(75, 5, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(75, 5, 55, 5, previousDown: true, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(55, 5, 55, 5, previousDown: true));
+        Assert.Equal(50, track.Value, 3);
+
+        bridge.Dispatch(root, PointerFrame(100, 5, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(100, 5, 100, 5, previousDown: true));
+        Assert.Equal(40, track.Value, 3);
+    }
+
+    // The repeat buttons draw nothing in any state: a held press on the track, which presses the decrease button, adds
+    // no drawing to the track's render commands.
+    [Fact]
+    public void PressedRepeatButtonDrawsNothing()
+    {
+        UIRoot root = new(200, 100);
+        Track track = new() { Minimum = 0, Maximum = 100, Value = 50, LargeChange = 0, Width = 110, Height = 20 };
+        root.VisualChildren.Add(track);
+        root.ProcessFrame();
+        int commandsBefore = root.RetainedRenderer.Commit(root).Count();
+        ElementInputBridge bridge = new();
+        LayoutRect bounds = track.ArrangedBounds;
+
+        bridge.Dispatch(root, PointerFrame(bounds.X + 20, bounds.Y + 5, currentDown: true));
+        root.ProcessFrame();
+        int commandsWhilePressed = root.RetainedRenderer.Commit(root).Count();
+
+        Assert.True(track.DecreaseRepeatButton!.IsPressed);
+        Assert.Equal(commandsBefore, commandsWhilePressed);
+        Assert.Equal(4, commandsBefore);
     }
 
     [Theory]
@@ -386,12 +501,15 @@ public sealed class TrackTests
         return PointerFrame(x, y, x, y, currentDown: currentDown);
     }
 
+    // The vertical track is reversed, as a vertical ScrollBar's track, so Minimum is at the top and both orientations
+    // place the same value at the same distance from the track's start.
     private static Track CreateTrack(Orientation orientation, float value)
     {
         bool horizontal = orientation == Orientation.Horizontal;
         return new Track
         {
             Orientation = orientation,
+            IsDirectionReversed = !horizontal,
             Minimum = 0,
             Maximum = 100,
             Value = value,

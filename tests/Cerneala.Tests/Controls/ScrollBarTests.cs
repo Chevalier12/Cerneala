@@ -351,6 +351,69 @@ public sealed class ScrollBarTests
         Assert.DoesNotContain(ScrollEventType.EndScroll, events);
     }
 
+    // As WPF's vertical ScrollBar, whose template reverses its Track: Minimum puts the thumb at the top of the track and
+    // Maximum at the bottom, and dragging the thumb down raises the value.
+    [Fact]
+    public void VerticalScrollBarKeepsMinimumAtTop()
+    {
+        UIRoot root = new(20, 200);
+        ScrollBar scrollBar = new() { Orientation = Orientation.Vertical, Minimum = 0, Maximum = 100, Value = 0 };
+        scrollBar.Measure(new MeasureContext(new LayoutSize(12, 110)));
+        scrollBar.Arrange(new ArrangeContext(new LayoutRect(0, 0, 12, 110)));
+        root.VisualChildren.Add(scrollBar);
+        LayoutRect track = scrollBar.Track.ArrangedBounds;
+        LayoutRect thumb = scrollBar.Track.Thumb.ArrangedBounds;
+        Assert.Equal(track.Y, thumb.Y);
+
+        float x = thumb.X + (thumb.Width / 2);
+        float y = thumb.Y + (thumb.Height / 2);
+        float travel = track.Height - thumb.Height;
+        ElementInputBridge bridge = new();
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, x, y + (travel / 2), previousDown: true, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y + (travel / 2), x, y + (travel / 2), previousDown: true));
+        Assert.Equal(50, scrollBar.Value, 3);
+
+        scrollBar.Value = 100;
+        scrollBar.Measure(new MeasureContext(new LayoutSize(12, 110)));
+        scrollBar.Arrange(new ArrangeContext(new LayoutRect(0, 0, 12, 110)));
+        thumb = scrollBar.Track.Thumb.ArrangedBounds;
+        Assert.Equal(track.Y + track.Height, thumb.Y + thumb.Height);
+    }
+
+    // As WPF's ScrollBar track, whose sides are RepeatButtons: a press beside the thumb pages by LargeChange with a
+    // LargeDecrement Scroll event, and holding it longer than Delay pages again.
+    [Fact]
+    public void TrackPressPagesAndRepeatsWhileHeld()
+    {
+        UIRoot root = new(120, 20);
+        ScrollBar scrollBar = new()
+        {
+            Orientation = Orientation.Horizontal,
+            Maximum = 100,
+            Value = 50,
+            LargeChange = 10
+        };
+        scrollBar.Measure(new MeasureContext(new LayoutSize(110, 12)));
+        scrollBar.Arrange(new ArrangeContext(new LayoutRect(0, 0, 110, 12)));
+        root.VisualChildren.Add(scrollBar);
+        List<ScrollEventType> events = [];
+        scrollBar.Scroll += (_, args) => events.Add(args.ScrollEventType);
+        LayoutRect track = scrollBar.Track.ArrangedBounds;
+        LayoutRect thumb = scrollBar.Track.Thumb.ArrangedBounds;
+        float x = track.X + ((thumb.X - track.X) / 2);
+        float y = track.Y + (track.Height / 2);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true), TimeSpan.Zero);
+        Assert.Equal(40, scrollBar.Value);
+        bridge.Dispatch(root, PointerFrame(x, y, x, y, previousDown: true, currentDown: true), TimeSpan.FromMilliseconds(500));
+        Assert.Equal(30, scrollBar.Value);
+        bridge.Dispatch(root, PointerFrame(x, y, x, y, previousDown: true), TimeSpan.Zero);
+
+        Assert.Equal([ScrollEventType.LargeDecrement, ScrollEventType.LargeDecrement], events);
+    }
+
     [Fact]
     public void ClearingCustomTemplateRestoresDefaultTrackAndButtons()
     {

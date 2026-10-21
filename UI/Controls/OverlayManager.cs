@@ -323,9 +323,32 @@ internal sealed class OverlayManager
 
         private LayoutRect MeasureOverlay(Overlay overlay, LayoutSize viewport, LayoutRounding rounding)
         {
+            if (overlay.CustomPlacement is { } customPlacement)
+            {
+                return MeasureCustomOverlay(overlay, customPlacement, viewport, rounding);
+            }
+
             return overlay.Placement == OverlayPlacement.AutoHorizontal
                 ? MeasureHorizontalOverlay(overlay, viewport, rounding)
                 : MeasureVerticalOverlay(overlay, viewport, rounding);
+        }
+
+        // As a WPF popup with Placement Custom: the content takes its desired size within the viewport, the callback
+        // gives its top-left corner from the target's bounds and that size, and the corner moves into the viewport.
+        private static LayoutRect MeasureCustomOverlay(
+            Overlay overlay,
+            Func<LayoutRect, LayoutSize, LayoutPoint> customPlacement,
+            LayoutSize viewport,
+            LayoutRounding rounding)
+        {
+            LayoutRect targetBounds = overlay.EffectivePlacementTarget.ArrangedBounds;
+            LayoutSize desired = overlay.ProjectedPresenter.Measure(new MeasureContext(viewport, rounding));
+            float width = MathF.Min(desired.Width, viewport.Width);
+            float height = MathF.Min(desired.Height, viewport.Height);
+            LayoutPoint position = customPlacement(targetBounds, new LayoutSize(width, height));
+            float x = Math.Clamp(position.X, 0, MathF.Max(0, viewport.Width - width));
+            float y = Math.Clamp(position.Y, 0, MathF.Max(0, viewport.Height - height));
+            return new LayoutRect(x, y, width, height);
         }
 
         private static LayoutRect MeasureVerticalOverlay(
