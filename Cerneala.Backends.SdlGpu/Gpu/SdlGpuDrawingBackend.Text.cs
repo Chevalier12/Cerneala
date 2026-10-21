@@ -115,7 +115,8 @@ internal sealed partial class SdlGpuDrawingBackend
                     baseline,
                     cachedEntries[0].OriginOffset,
                     cachedEntries[0].Width,
-                    cachedEntries[0].Height),
+                    cachedEntries[0].Height,
+                    state.Transform),
                 ApplyOpacity(
                     cachedSolid!.Color,
                     cachedSolid.Opacity * commandOpacity),
@@ -137,7 +138,8 @@ internal sealed partial class SdlGpuDrawingBackend
             resources.FindTexture(session, blueKey) is { } blueTexture)
         {
             DrawRect destination = CreateTextDestination(
-                baseline, redTexture.OriginOffset, redTexture.Width, redTexture.Height);
+                baseline, redTexture.OriginOffset, redTexture.Width, redTexture.Height,
+                state.Transform);
             Color tint = ApplyOpacity(cachedSolid.Color, cachedSolid.Opacity * commandOpacity);
             AddTextLayer(redTexture, redKey, destination, tint, SdlGpuColorWriteMask.Red, state, batches);
             AddTextLayer(greenTexture, greenKey, destination, tint, SdlGpuColorWriteMask.Green, state, batches);
@@ -172,7 +174,8 @@ internal sealed partial class SdlGpuDrawingBackend
                 baseline,
                 first.OriginOffset,
                 first.Width,
-                first.Height);
+                first.Height,
+                state.Transform);
             if (descriptor is SolidDrawBrushDescriptor solid)
             {
                 Color tint = ApplyOpacity(
@@ -259,7 +262,8 @@ internal sealed partial class SdlGpuDrawingBackend
     {
         MarkBrushTextureUsed(textureKey);
         DrawRect destination = CreateTextDestination(
-            baseline, texture.OriginOffset, texture.Width, texture.Height);
+            baseline, texture.OriginOffset, texture.Width, texture.Height,
+            state.Transform);
         nint handle = texture.Handle;
         Color tint = ApplyOpacity(Color.White, commandOpacity);
         DrawSamplingMode sampling = DrawSamplingMode.Linear;
@@ -302,19 +306,44 @@ internal sealed partial class SdlGpuDrawingBackend
         DrawPoint baseline,
         DrawPoint originOffset,
         int width,
-        int height)
+        int height,
+        Matrix3x2 transform)
     {
+        float scale = CoordinateScale;
         float left = MathF.Round(
-            (baseline.X * CoordinateScale) + originOffset.X) /
-            CoordinateScale;
-        float top = MathF.Round(
-            (baseline.Y * CoordinateScale) + originOffset.Y) /
-            CoordinateScale;
+            (baseline.X * scale) + originOffset.X) /
+            scale;
+        float top;
+        if (transform.M12 == 0 && transform.M21 == 0 && transform.M22 != 0)
+        {
+            // Snap the device baseline to the nearest whole pixel, half up as
+            // Skia's baseline snap rounds, like Direct2D's default vertical
+            // snap. originOffset.Y is whole at vertical phase 0.
+            float deviceBaseline = MathF.Floor(
+                (((baseline.Y * transform.M22) + transform.M32) * scale) + 0.5f);
+            float deviceTop = deviceBaseline + (originOffset.Y * transform.M22);
+            top = ((deviceTop / scale) - transform.M32) / transform.M22;
+        }
+        else
+        {
+            // Rotated or skewed: a 1/8 phase of 4/8 or more lands one row
+            // lower, as Skia's baseline snap rounded it before the vertical
+            // phase left the raster key.
+            float physical = baseline.Y * scale;
+            float row = MathF.Floor(physical);
+            int bucket = (int)MathF.Floor(
+                ((physical - row) * TextSubpixelPhaseCount) + 0.5f);
+            if (bucket * 2 >= TextSubpixelPhaseCount)
+            {
+                row += 1;
+            }
+            top = (row + originOffset.Y) / scale;
+        }
         return new DrawRect(
             left,
             top,
-            width / CoordinateScale,
-            height / CoordinateScale);
+            width / scale,
+            height / scale);
     }
 
     private void AddTextAtlasLayers(
@@ -426,10 +455,13 @@ internal sealed partial class SdlGpuDrawingBackend
         return output;
     }
 
+    // The vertical baseline is snapped when the quad is placed
+    // (CreateTextDestination), so the raster phase and the raster key carry
+    // only the horizontal phase.
     private static DrawPoint CanonicalPhase(DrawPoint point, float scale)
         => new(
             CanonicalizePixelPhase(point.X * scale),
-            CanonicalizePixelPhase(point.Y * scale));
+            0);
 
     private static float CanonicalizePixelPhase(float physicalPosition)
     {

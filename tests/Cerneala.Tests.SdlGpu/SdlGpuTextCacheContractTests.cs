@@ -5,6 +5,7 @@ using Cerneala.Drawing.Prism.Graph;
 using Cerneala.Drawing.Text;
 using Cerneala.Platforms.Sdl3;
 using Cerneala.UI.Media;
+using Matrix3x2 = System.Numerics.Matrix3x2;
 
 namespace Cerneala.Tests.SdlGpu;
 
@@ -28,7 +29,7 @@ public sealed class SdlGpuTextCacheContractTests
     [InlineData(-0.0626f, 0.875f)]
     public void CanonicalPixelPhaseHandlesNegativeAndBoundaryPositions(float position, float expected)
     {
-        Assert.Equal(new DrawPoint(expected, expected), CanonicalPhase(new DrawPoint(position, position), 1));
+        Assert.Equal(new DrawPoint(expected, 0), CanonicalPhase(new DrawPoint(position, position), 1));
     }
 
     [Theory]
@@ -65,8 +66,8 @@ public sealed class SdlGpuTextCacheContractTests
         using Fixture fixture = new();
         var map = typeof(SdlGpuDrawingBackend)
             .GetMethod("CreateTextDestination", BindingFlags.Instance | BindingFlags.NonPublic)!
-            .CreateDelegate<Func<DrawPoint, DrawPoint, int, int, DrawRect>>(fixture.Backend);
-        DrawRect destination = map(new DrawPoint(20, 30), new DrawPoint(-10.5f, -16.25f), 8, 8);
+            .CreateDelegate<Func<DrawPoint, DrawPoint, int, int, Matrix3x2, DrawRect>>(fixture.Backend);
+        DrawRect destination = map(new DrawPoint(20, 30), new DrawPoint(-10.5f, -16f), 8, 8, Matrix3x2.Identity);
         Assert.Equal(new DrawRect(10, 14, 8, 8), destination);
     }
 
