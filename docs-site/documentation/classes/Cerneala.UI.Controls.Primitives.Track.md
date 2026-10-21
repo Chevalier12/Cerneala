@@ -11,6 +11,8 @@ Represents a retained range track that positions and drags a `Thumb` over a fini
 
 ```csharp
 [TemplatePart("PART_Thumb", typeof(Thumb))]
+[TemplatePart("PART_DecreaseRepeatButton", typeof(RepeatButton))]
+[TemplatePart("PART_IncreaseRepeatButton", typeof(RepeatButton))]
 public class Track : Control
 ```
 
@@ -59,9 +61,42 @@ track.Measure(new MeasureContext(new LayoutSize(100, 20)));
 track.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 20)));
 ```
 
+Place `Minimum` at the bottom or the top of a vertical track:
+
+```csharp
+using Cerneala.UI.Controls.Primitives;
+using Cerneala.UI.Layout;
+using Cerneala.UI.Layout.Panels;
+
+Track track = new()
+{
+    Minimum = 0,
+    Maximum = 100,
+    Value = 0,
+    Orientation = Orientation.Vertical
+};
+
+track.Measure(new MeasureContext(new LayoutSize(20, 110)));
+track.Arrange(new ArrangeContext(new LayoutRect(0, 0, 20, 110)));
+float bottom = track.Thumb.ArrangedBounds.Y; // 100: Minimum is at the bottom
+
+Track reversed = new()
+{
+    Minimum = 0,
+    Maximum = 100,
+    Value = 0,
+    Orientation = Orientation.Vertical,
+    IsDirectionReversed = true
+};
+
+reversed.Measure(new MeasureContext(new LayoutSize(20, 110)));
+reversed.Arrange(new ArrangeContext(new LayoutRect(0, 0, 20, 110)));
+float top = reversed.Thumb.ArrangedBounds.Y; // 0: Minimum is at the top
+```
+
 ## Remarks
 
-`Track` requires a `Thumb` named `PART_Thumb` in its active component template. The default template supplies that part through `TrackLayoutPanel`, which template authors can also use to keep thumb arrangement owned by `Track`. `Thumb` always returns the part from the active template rather than a parallel fallback instance. Replacing the template unsubscribes the old thumb before subscribing to the new one. Assigning `null` to `ComponentTemplate` clears the local override and restores the default template.
+`Track` requires a `Thumb` named `PART_Thumb` in its active component template. As WPF's `Track.DecreaseRepeatButton` and `Track.IncreaseRepeatButton`, the template can also register two `RepeatButton` parts, `PART_DecreaseRepeatButton` and `PART_IncreaseRepeatButton`; both are optional. The default template supplies all three parts through `TrackLayoutPanel`, which template authors can also use to keep thumb arrangement owned by `Track`. The default repeat buttons draw nothing in any state, take no focus (`Focusable` and `IsTabStop` are `false`), and keep the `RepeatButton` defaults `Delay = 500` and `Interval = 100`. `Thumb` always returns the part from the active template rather than a parallel fallback instance. Replacing the template unsubscribes the old thumb before subscribing to the new one. Assigning `null` to `ComponentTemplate` clears the local override and restores the default template.
 
 `Minimum`, `Maximum`, and `Value` accept only finite floating-point values. `ViewportSize`, `SmallChange`, and `LargeChange` accept only finite, non-negative values. `Value` is coerced into the active `Minimum..Maximum` range. If an endpoint change would invert the range, the other endpoint is moved to preserve an ordered range, then `Value` is coerced again.
 
@@ -69,7 +104,11 @@ The default template layout is orientation-aware. A horizontal track reports a d
 
 Dragging the thumb updates `Value` from the pointer delta, using horizontal movement for horizontal tracks and vertical movement for vertical tracks. The delta is `DragDeltaEventArgs.HorizontalChange` or `VerticalChange`, which `Thumb` measures in the layout space where the thumb is arranged, so the drawn thumb stays under the pointer when an ancestor has a render transform. For example, a horizontal track with `Maximum = 100` and `110` layout pixels of width (travel `100`) inside a panel with `RenderTransform = new Transform(Matrix3x2.CreateScale(2, 2))` changes `Value` by `30` when the pointer drags the thumb `60` root pixels. `ValueChanged` is raised when the stored value actually changes.
 
-A left mouse down on the track outside the thumb compares the clicked position with the current value and applies `DecreaseLarge` or `IncreaseLarge`; the input event is marked handled only when this changes the value. The press is tested where the track and thumb are drawn: the root pointer position is converted through every render transform of the track, its ancestors, and the thumb, like `MouseEventArgs.GetPosition`. A press inside the drawn thumb never pages. In the 2x example above, with `Value = 0`, the thumb is arranged at x `0..10` and drawn at x `0..20`, so a press at root x `18` leaves `Value` at `0`, and a press at root x `150` raises it by `LargeChange`.
+As in WPF, `IsDirectionReversed = false` puts `Minimum` at the left end of a horizontal track and at the bottom end of a vertical one, so the value of a vertical track grows upward. `IsDirectionReversed = true` puts `Minimum` at the right end and at the top end. The thumb position, `ValueFromPoint`, the drag direction, and the side of each repeat button all follow it. A vertical `ScrollBar` sets its track's `IsDirectionReversed` to `true`, so its `Minimum` stays at the top, as in WPF's vertical `ScrollBar` template.
+
+`Track` arranges the repeat buttons on the two sides of the thumb: the decrease button fills the track from the `Minimum` end to the thumb, and the increase button fills it from the thumb to the `Maximum` end. A `Click` of the decrease button calls `DecreaseLarge`, and a `Click` of the increase button calls `IncreaseLarge`. So a left press on the track outside the thumb changes `Value` by `LargeChange` toward the press, and a press held longer than the button's `Delay` repeats the change every `Interval` milliseconds, as WPF's track does. For example, a horizontal track with `Minimum = 0`, `Maximum = 100`, `Value = 50`, and `LargeChange = 10`: a press to the right of the thumb gives `Value == 60` at once; while the press is held, `Value` becomes `70` after `500` ms and grows by `10` every further `100` ms. The repeat stops when the button is released, or when the thumb reaches the pointer, because the pointer is then over the thumb and no longer over the repeat button. Hit testing applies render transforms, so a press is compared with where the track, its buttons, and the thumb are drawn. A press inside the drawn thumb never pages.
+
+`Slider` can make a press beside the thumb move the value to the pressed point instead, through its `IsMoveToPointEnabled` property. Then the slider, not the track, handles the left `PreviewMouseDown`, as WPF's `Slider`: it converts the root pointer position through every render transform of the track and its ancestors like `MouseEventArgs.GetPosition`, sets its `Value` from the track's `ValueFromPoint`, and the handled preview keeps the press from the repeat buttons, so it neither pages nor repeats. `Track` itself registers no press handler. In the 2x example above, with `Value = 0`, the thumb is arranged at x `0..10` and drawn at x `0..20`, so a press at root x `18` leaves `Value` at `0`.
 
 The default template binds `Background`, `BorderBrush`, and `BorderThickness` to its border root. The constructor initializes `Background` to `new SolidColorBrush(new Color(225, 225, 225))`, `BorderBrush` to `new SolidColorBrush(new Color(120, 120, 120))`, and `BorderThickness` to `new Thickness(1)` as framework defaults at the `Default` value source, so any Aspect, local, or other higher-source value replaces them. It also initializes `SmallChange` to `0.1f` and `LargeChange` to `1`.
 
@@ -79,7 +118,7 @@ The default template binds `Background`, `BorderBrush`, and `BorderThickness` to
 
 | Name | Description |
 | --- | --- |
-| `Track()` | Initializes the default visuals and change increments, registers left-mouse-down handling, and applies the default component template containing `PART_Thumb`. |
+| `Track()` | Initializes the default visuals and change increments, and applies the default component template containing `PART_Thumb`, `PART_DecreaseRepeatButton`, and `PART_IncreaseRepeatButton`. |
 
 ## Fields
 
@@ -92,19 +131,23 @@ The default template binds `Background`, `BorderBrush`, and `BorderThickness` to
 | `SmallChangeProperty` | `UiProperty<float>` | Identifies the `SmallChange` property. The default value is `0.1`; values must be finite and non-negative. Metadata option is `AffectsInputVisual`. |
 | `LargeChangeProperty` | `UiProperty<float>` | Identifies the `LargeChange` property. The default value is `1`; values must be finite and non-negative. Metadata option is `AffectsInputVisual`. |
 | `OrientationProperty` | `UiProperty<Orientation>` | Identifies the `Orientation` property. The default value is `Orientation.Horizontal`; metadata options are `AffectsMeasure`, `AffectsArrange`, and `AffectsRender`. |
+| `IsDirectionReversedProperty` | `UiProperty<bool>` | Identifies the `IsDirectionReversed` property. The default value is `false`; metadata options are `AffectsArrange` and `AffectsRender`. |
 
 ## Properties
 
 | Name | Type | Description |
 | --- | --- | --- |
 | `Thumb` | `Thumb` | Gets the `PART_Thumb` instance from the active component template. The getter applies the template before returning. |
+| `DecreaseRepeatButton` | `RepeatButton?` | Applies the template and gets its optional `PART_DecreaseRepeatButton`, which fills the track between the `Minimum` end and the thumb and calls `DecreaseLarge` on each `Click`; `null` when the template has none. |
+| `IncreaseRepeatButton` | `RepeatButton?` | Applies the template and gets its optional `PART_IncreaseRepeatButton`, which fills the track between the thumb and the `Maximum` end and calls `IncreaseLarge` on each `Click`; `null` when the template has none. |
 | `Minimum` | `float` | Gets or sets the lower bound for `Value`. If set above `Maximum`, `Maximum` is raised to match it. |
 | `Maximum` | `float` | Gets or sets the upper bound for `Value`. If set below `Minimum`, `Minimum` is lowered to match it. |
 | `Value` | `float` | Gets or sets the current range value. The value is coerced into `Minimum..Maximum`. |
 | `ViewportSize` | `float` | Gets or sets the visible viewport size used to compute thumb length. Values must be finite and non-negative. |
 | `SmallChange` | `float` | Gets or sets the small range increment used by `DecreaseSmall` and `IncreaseSmall`. Values must be finite and non-negative. |
-| `LargeChange` | `float` | Gets or sets the large range increment used by `DecreaseLarge`, `IncreaseLarge`, and page-like track clicks. Values must be finite and non-negative. |
+| `LargeChange` | `float` | Gets or sets the large range increment used by `DecreaseLarge`, `IncreaseLarge`, and the repeat buttons beside the thumb. Values must be finite and non-negative. |
 | `Orientation` | `Orientation` | Gets or sets whether the track lays out horizontally or vertically. |
+| `IsDirectionReversed` | `bool` | Gets or sets whether `Minimum` is at the right end of a horizontal track and the top end of a vertical one (`true`) instead of the left end and the bottom end (`false`). |
 | `ValueRatio` | `float` | Gets the current `Value` normalized into the active range as `0..1`; returns `0` when the range is zero. |
 
 ## Methods
@@ -115,7 +158,7 @@ The default template binds `Background`, `BorderBrush`, and `BorderThickness` to
 | `IncreaseLarge()` | `void` | Adds `LargeChange` to `Value`; the result is coerced into the active range. |
 | `DecreaseSmall()` | `void` | Subtracts `SmallChange` from `Value`; the result is coerced into the active range. |
 | `IncreaseSmall()` | `void` | Adds `SmallChange` to `Value`; the result is coerced into the active range. |
-| `ValueFromPoint(float x, float y)` | `float` | Converts an arranged point, in the same layout coordinates as `ArrangedBounds` and without render transforms, to a range value by centering the thumb over the point, clamping the result to the track travel area, and mapping it into `Minimum..Maximum`. A track press converts the root pointer position into these coordinates before calling it. |
+| `ValueFromPoint(float x, float y)` | `float` | Converts an arranged point, in the same layout coordinates as `ArrangedBounds` and without render transforms, to a range value by centering the thumb over the point, clamping the result to the track travel area, and mapping it into `Minimum..Maximum`. A `Slider` with `IsMoveToPointEnabled` converts the root pointer position of a press into these coordinates before calling it. |
 
 ## Events
 
@@ -134,6 +177,7 @@ The default template binds `Background`, `BorderBrush`, and `BorderThickness` to
 | `SmallChange` | `SmallChangeProperty` | `0.1f` | Finite, non-negative `float` | `UiPropertyOptions.AffectsInputVisual` |
 | `LargeChange` | `LargeChangeProperty` | `1` | Finite, non-negative `float` | `UiPropertyOptions.AffectsInputVisual` |
 | `Orientation` | `OrientationProperty` | `Orientation.Horizontal` | `Orientation` value | `UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange | UiPropertyOptions.AffectsRender` |
+| `IsDirectionReversed` | `IsDirectionReversedProperty` | `false` | `bool` value | `UiPropertyOptions.AffectsArrange | UiPropertyOptions.AffectsRender` |
 
 ## Range Behavior
 
@@ -151,7 +195,7 @@ The default template binds `Background`, `BorderBrush`, and `BorderThickness` to
 | --- | --- |
 | Default template and `Orientation.Horizontal` | The internal panel reports at least `32` width and at least the active thumb height or `10`. |
 | Default template and `Orientation.Vertical` | The internal panel reports at least the active thumb width or `10` and at least `32` height. |
-| Any valid template | `Track` arranges the active `PART_Thumb` at the offset implied by `ValueRatio` and the computed thumb length. |
+| Any valid template | `Track` arranges the active `PART_Thumb` at the offset implied by `ValueRatio`, `IsDirectionReversed`, and the computed thumb length, and arranges each repeat button part over the track between its end and the thumb. |
 | Track length is less than the minimum thumb length | The thumb is clamped to the track length and has zero travel. |
 
 ## Relevant Inherited Properties
@@ -161,7 +205,7 @@ The default template binds `Background`, `BorderBrush`, and `BorderThickness` to
 | `Background` | `Brush?` | `Control` | Gets or sets the fill brush bound to the default template root. The constructor sets a solid brush with color `Color(225, 225, 225)`. |
 | `BorderBrush` | `Brush?` | `Control` | Gets or sets the border brush bound to the default template root. The constructor sets a solid brush with color `Color(120, 120, 120)`. |
 | `BorderThickness` | `Thickness` | `Control` | Gets or sets the border thickness bound to the default template root. The constructor sets it to `new Thickness(1)`. |
-| `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the control template. Valid templates must register `PART_Thumb` as a `Thumb`; assigning `null` restores the default template. |
+| `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the control template. Valid templates must register `PART_Thumb` as a `Thumb` and can register `PART_DecreaseRepeatButton` and `PART_IncreaseRepeatButton` as `RepeatButton`; assigning `null` restores the default template. |
 
 ## Applies to
 

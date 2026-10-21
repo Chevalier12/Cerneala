@@ -1,4 +1,3 @@
-using System.Numerics;
 using Cerneala.Drawing;
 using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Core;
@@ -10,9 +9,13 @@ using Cerneala.UI.Layout.Panels;
 namespace Cerneala.UI.Controls.Primitives;
 
 [TemplatePart("PART_Thumb", typeof(Thumb))]
+[TemplatePart("PART_DecreaseRepeatButton", typeof(RepeatButton))]
+[TemplatePart("PART_IncreaseRepeatButton", typeof(RepeatButton))]
 public class Track : Control
 {
     private Thumb? thumb;
+    private RepeatButton? decreaseRepeatButton;
+    private RepeatButton? increaseRepeatButton;
     private TrackValueChangeReason valueChangeReason;
 
     public Track()
@@ -26,7 +29,6 @@ public class Track : Control
         SetFrameworkDefault(BorderThicknessProperty, new Thickness(1));
         SmallChange = 0.1f;
         LargeChange = 1;
-        Handlers.AddHandler(InputEvents.MouseDownEvent, OnMouseDown);
         SetFrameworkDefault(ComponentTemplateProperty, TrackTemplates.Default);
     }
 
@@ -69,11 +71,16 @@ public class Track : Control
         typeof(Track),
         new UiPropertyMetadata<Orientation>(Orientation.Horizontal, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange | UiPropertyOptions.AffectsRender));
 
+    // As WPF's Track.IsDirectionReversed: false puts Minimum at the left of a horizontal track and at the bottom of a
+    // vertical one; true puts it at the right and at the top.
+    public static readonly UiProperty<bool> IsDirectionReversedProperty = UiProperty<bool>.Register(
+        nameof(IsDirectionReversed),
+        typeof(Track),
+        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsArrange | UiPropertyOptions.AffectsRender));
+
     public event EventHandler? ValueChanged;
 
     internal event EventHandler<TrackValueChangedEventArgs>? ValueChangedWithReason;
-
-    internal bool MoveToPointOnClick { get; set; }
 
     public Thumb Thumb
     {
@@ -81,6 +88,26 @@ public class Track : Control
         {
             ApplyTemplate();
             return thumb ?? throw new InvalidOperationException("Track template did not provide the required part 'PART_Thumb'.");
+        }
+    }
+
+    // As WPF's Track.DecreaseRepeatButton: the optional part that fills the track between the Minimum end and the thumb.
+    public RepeatButton? DecreaseRepeatButton
+    {
+        get
+        {
+            ApplyTemplate();
+            return decreaseRepeatButton;
+        }
+    }
+
+    // As WPF's Track.IncreaseRepeatButton: the optional part that fills the track between the thumb and the Maximum end.
+    public RepeatButton? IncreaseRepeatButton
+    {
+        get
+        {
+            ApplyTemplate();
+            return increaseRepeatButton;
         }
     }
 
@@ -126,6 +153,12 @@ public class Track : Control
         set => SetValue(OrientationProperty, value);
     }
 
+    public bool IsDirectionReversed
+    {
+        get => GetValue(IsDirectionReversedProperty);
+        set => SetValue(IsDirectionReversedProperty, value);
+    }
+
     public float ValueRatio => GetValueRatio(Value);
 
     public void DecreaseLarge()
@@ -156,8 +189,13 @@ public class Track : Control
         float relative = Orientation == Orientation.Horizontal
             ? x - ArrangedBounds.X - (thumbLength / 2)
             : y - ArrangedBounds.Y - (thumbLength / 2);
-        float ratio = travel <= 0 ? 0 : relative / travel;
-        return Minimum + (Range * MathF.Min(MathF.Max(ratio, 0), 1));
+        if (travel <= 0)
+        {
+            return Minimum;
+        }
+
+        float ratio = MathF.Min(MathF.Max(relative / travel, 0), 1);
+        return Minimum + (Range * (IsMinimumAtEnd ? 1 - ratio : ratio));
     }
 
     protected override LayoutSize MeasureCore(MeasureContext context)
@@ -169,11 +207,7 @@ public class Track : Control
     protected override LayoutRect ArrangeCore(ArrangeContext context)
     {
         LayoutRect arranged = base.ArrangeCore(context);
-        if (thumb is not null)
-        {
-            ArrangeThumb(thumb, context);
-        }
-
+        ArrangeParts(context);
         return arranged;
     }
 
@@ -185,6 +219,18 @@ public class Track : Control
             thumb = null;
         }
 
+        if (decreaseRepeatButton is not null)
+        {
+            decreaseRepeatButton.Click -= OnDecreaseRepeatButtonClick;
+            decreaseRepeatButton = null;
+        }
+
+        if (increaseRepeatButton is not null)
+        {
+            increaseRepeatButton.Click -= OnIncreaseRepeatButtonClick;
+            increaseRepeatButton = null;
+        }
+
         if (instance is null)
         {
             return;
@@ -192,6 +238,17 @@ public class Track : Control
 
         thumb = GetRequiredTemplatePart<Thumb>("PART_Thumb");
         thumb.DragDelta += OnThumbDragDelta;
+        decreaseRepeatButton = GetOptionalTemplatePart<RepeatButton>("PART_DecreaseRepeatButton");
+        increaseRepeatButton = GetOptionalTemplatePart<RepeatButton>("PART_IncreaseRepeatButton");
+        if (decreaseRepeatButton is not null)
+        {
+            decreaseRepeatButton.Click += OnDecreaseRepeatButtonClick;
+        }
+
+        if (increaseRepeatButton is not null)
+        {
+            increaseRepeatButton.Click += OnIncreaseRepeatButtonClick;
+        }
     }
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
@@ -230,16 +287,48 @@ public class Track : Control
 
     private float Range => MathF.Max(0, Maximum - Minimum);
 
-    private void ArrangeThumb(Thumb activeThumb, ArrangeContext context)
+    // Whether Minimum is at the right end of a horizontal track or the bottom end of a vertical one.
+    private bool IsMinimumAtEnd => Orientation == Orientation.Horizontal ? IsDirectionReversed : !IsDirectionReversed;
+
+    // The change of value that moving the thumb by a distance in layout pixels makes, as WPF's Track.ValueFromDistance.
+    internal float ValueFromDistance(float horizontal, float vertical)
+    {
+        float length = GetTrackLength(ArrangedBounds);
+        float travel = MathF.Max(0, length - GetThumbLength(length));
+        if (travel <= 0 || Range <= 0)
+        {
+            return 0;
+        }
+
+        float pixelDelta = Orientation == Orientation.Horizontal ? horizontal : vertical;
+        return (IsMinimumAtEnd ? -pixelDelta : pixelDelta) / travel * Range;
+    }
+
+    // The thumb sits at the value's place along the track, and the repeat buttons fill the track on each side of it:
+    // the decrease button toward the Minimum end and the increase button toward the Maximum end.
+    private void ArrangeParts(ArrangeContext context)
     {
         float length = GetTrackLength(context.FinalRect);
         float thumbLength = GetThumbLength(length);
         float travel = MathF.Max(0, length - thumbLength);
-        float offset = travel * ValueRatio;
-        LayoutRect thumbRect = Orientation == Orientation.Horizontal
-            ? new LayoutRect(context.FinalRect.X + offset, context.FinalRect.Y, thumbLength, context.FinalRect.Height)
-            : new LayoutRect(context.FinalRect.X, context.FinalRect.Y + offset, context.FinalRect.Width, thumbLength);
-        activeThumb.Arrange(new ArrangeContext(thumbRect, context.Rounding));
+        float offset = travel * (IsMinimumAtEnd ? 1 - ValueRatio : ValueRatio);
+        float thumbEnd = offset + thumbLength;
+        ArrangeAlongTrack(thumb, context, offset, thumbLength);
+        ArrangeAlongTrack(IsMinimumAtEnd ? increaseRepeatButton : decreaseRepeatButton, context, 0, offset);
+        ArrangeAlongTrack(IsMinimumAtEnd ? decreaseRepeatButton : increaseRepeatButton, context, thumbEnd, MathF.Max(0, length - thumbEnd));
+    }
+
+    private void ArrangeAlongTrack(UIElement? element, ArrangeContext context, float start, float length)
+    {
+        if (element is null)
+        {
+            return;
+        }
+
+        LayoutRect rect = Orientation == Orientation.Horizontal
+            ? new LayoutRect(context.FinalRect.X + start, context.FinalRect.Y, length, context.FinalRect.Height)
+            : new LayoutRect(context.FinalRect.X, context.FinalRect.Y + start, context.FinalRect.Width, length);
+        element.Arrange(new ArrangeContext(rect, context.Rounding));
     }
 
     private float GetValueRatio(float value)
@@ -271,50 +360,23 @@ public class Track : Control
 
     private void OnThumbDragDelta(object? sender, DragDeltaEventArgs args)
     {
-        float length = GetTrackLength(ArrangedBounds);
-        float travel = MathF.Max(0, length - GetThumbLength(length));
-        if (travel <= 0 || Range <= 0)
+        float change = ValueFromDistance(args.HorizontalChange, args.VerticalChange);
+        if (change != 0)
         {
-            return;
+            ChangeValue(Value + change, TrackValueChangeReason.ThumbTrack);
         }
-
-        float pixelDelta = Orientation == Orientation.Horizontal ? args.HorizontalChange : args.VerticalChange;
-        ChangeValue(Value + ((pixelDelta / travel) * Range), TrackValueChangeReason.ThumbTrack);
     }
 
-    private void OnMouseDown(UiElementId source, RoutedEventArgs args)
+    private void OnDecreaseRepeatButtonClick(UiElementId source, RoutedEventArgs args)
     {
-        if (args is not MouseButtonEventArgs mouseArgs ||
-            mouseArgs.ChangedButton != InputMouseButton.Left ||
-            thumb is null)
-        {
-            return;
-        }
+        DecreaseLarge();
+        args.Handled = true;
+    }
 
-        // Hit testing applies render transforms, so the press is compared where the track and thumb are drawn.
-        Vector2 rootPoint = new(mouseArgs.RootX, mouseArgs.RootY);
-        if (!InputCoordinateConverter.TryRootToElement(this, rootPoint, out Vector2 trackPoint) ||
-            IsInside(thumb, rootPoint))
-        {
-            return;
-        }
-
-        float oldValue = Value;
-        float pointValue = ValueFromPoint(ArrangedBounds.X + trackPoint.X, ArrangedBounds.Y + trackPoint.Y);
-        if (MoveToPointOnClick)
-        {
-            ChangeValue(pointValue, TrackValueChangeReason.ThumbTrack);
-        }
-        else if (pointValue < Value)
-        {
-            DecreaseLarge();
-        }
-        else
-        {
-            IncreaseLarge();
-        }
-
-        args.Handled = oldValue != Value;
+    private void OnIncreaseRepeatButtonClick(UiElementId source, RoutedEventArgs args)
+    {
+        IncreaseLarge();
+        args.Handled = true;
     }
 
     private void ChangeValue(float newValue, TrackValueChangeReason reason)
@@ -340,15 +402,6 @@ public class Track : Control
     private static bool IsValidNonNegativeFloat(float value)
     {
         return value >= 0 && float.IsFinite(value);
-    }
-
-    private static bool IsInside(UIElement element, Vector2 rootPoint)
-    {
-        return InputCoordinateConverter.TryRootToElement(element, rootPoint, out Vector2 point) &&
-            point.X >= 0 &&
-            point.Y >= 0 &&
-            point.X < element.ArrangedBounds.Width &&
-            point.Y < element.ArrangedBounds.Height;
     }
 }
 

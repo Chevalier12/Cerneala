@@ -40,6 +40,8 @@ The default template combines a two-dimensional `ColorSpectrum`, a hue slider, a
 
 Hue is expressed in degrees from `0` through `360`. Saturation, value, and alpha use the `0..1` range. The alpha slider changes only the alpha channel, while hue and spectrum changes preserve the current alpha. Its ramp composites the transparent-to-opaque color gradient over a checkerboard so transparency remains visually distinguishable on any picker background.
 
+The hue and alpha sliders use a ramp template whose `Track` draws the gradient, with no slider track bar or selection range under it, and they set `Slider.IsMoveToPointEnabled` to `true`: a press on a ramp moves the value to the color under the pointer. As every `Slider`, they are focusable tab stops, so Tab reaches them and the arrow keys change the hue or the alpha by `SmallChange`.
+
 Custom templates must provide every declared template part.
 
 ## Constructors

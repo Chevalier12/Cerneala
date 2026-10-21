@@ -283,18 +283,15 @@ public sealed class ElementInputBridgeTests
     }
 
     // A MouseDown handled in a focusable element's content keeps the focus off that element only when the element is
-    // the button whose press it cancels (#644). The Track of a focusable Slider marks the MouseDown of a press beside its
-    // thumb handled, and the Slider still takes focus, as a WPF Slider focuses itself with handledEventsToo.
+    // the button whose press it cancels (#644). A press on the track of a focusable Slider beside its thumb presses the
+    // track's decrease RepeatButton, which steps the value down by LargeChange; the Slider then focuses itself and marks
+    // the MouseDown handled, as a WPF Slider does with handledEventsToo (#662), and neither undoes the other: the Slider
+    // takes the focus and the value goes from 50 to 40.
     [Fact]
-    public void PointerPressOnTrackOfFocusableSliderFocusesTheSliderAfterTheTrackHandledMouseDown()
+    public void PointerPressOnTrackOfFocusableSliderFocusesTheSliderAndStepsByLargeChange()
     {
         Button other = new() { Content = "other", Width = 100, Height = 30 };
-        Slider slider = new() { Focusable = true, Minimum = 0, Maximum = 100, Value = 50, Width = 200, Height = 30 };
-        bool mouseDownHandledBeforeSlider = false;
-        slider.Handlers.AddHandler(
-            InputEvents.MouseDownEvent,
-            (_, args) => mouseDownHandledBeforeSlider = args.Handled,
-            handledEventsToo: true);
+        Slider slider = new() { Minimum = 0, Maximum = 100, Value = 50, LargeChange = 10, Width = 200, Height = 30 };
         StackPanel panel = new();
         panel.Children.Add(other);
         panel.Children.Add(slider);
@@ -322,8 +319,7 @@ public sealed class ElementInputBridgeTests
         bridge.Dispatch(root, PointerFrame(x, y, x, y, previousDown: true));
         root.ProcessFrame();
 
-        Assert.True(mouseDownHandledBeforeSlider);
-        Assert.NotEqual(50, slider.Value);
+        Assert.Equal(40, slider.Value);
         Assert.True(sliderFocusedWhileHeld);
         Assert.True(slider.IsKeyboardFocused);
         Assert.False(other.IsKeyboardFocused);
@@ -370,6 +366,32 @@ public sealed class ElementInputBridgeTests
         Assert.True(third.IsKeyboardFocused);
         Assert.False(second.IsKeyboardFocused);
         Assert.False(first.IsKeyboardFocused);
+    }
+
+    // As in WPF, where RepeatButton.OnMouseLeftButtonDown clicks and starts its timer when the bubbling press reaches
+    // it, a MouseDown that the RepeatButton's parent marks handled after the button does not undo the press: the press
+    // clicks once, and a press held past Delay clicks again (#645 rule for the press owner).
+    [Fact]
+    public void MouseDownHandledByParentAfterRepeatButtonStillClicksAndRepeats()
+    {
+        UIRoot root = new(100, 100);
+        UIElement parent = HitTestServiceTests.Arranged(0, 0, 60, 60);
+        RepeatButton button = new() { Delay = 100, Interval = 50 };
+        button.Arrange(new ArrangeContext(new LayoutRect(0, 0, 40, 40)));
+        parent.VisualChildren.Add(button);
+        root.VisualChildren.Add(parent);
+        parent.Handlers.AddHandler(InputEvents.MouseDownEvent, (_, args) => args.Handled = true, handledEventsToo: true);
+        int clickCount = 0;
+        button.Click += (_, _) => clickCount++;
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(10, 10, pressed: true));
+        int clicksAfterPress = clickCount;
+        bridge.Dispatch(root, PointerFrame(10, 10, 10, 10, previousDown: true, currentDown: true), TimeSpan.FromMilliseconds(150));
+
+        Assert.Equal(1, clicksAfterPress);
+        Assert.Equal(2, clickCount);
+        Assert.True(button.IsPressed);
     }
 
     [Fact]

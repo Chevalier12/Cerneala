@@ -159,6 +159,9 @@ public class ScrollBar : RangeBase
             track.LargeChange = LargeChange;
             track.ViewportSize = ViewportSize;
             track.Orientation = Orientation;
+
+            // As WPF's vertical ScrollBar template, which reverses its Track: Minimum stays at the top.
+            track.IsDirectionReversed = Orientation == Orientation.Vertical;
         }
         finally
         {

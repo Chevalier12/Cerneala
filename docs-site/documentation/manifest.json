@@ -1400,6 +1400,11 @@
     "source": "UI/Controls/OverlayPlacement.cs"
   },
   {
+    "name": "Cerneala.UI.Controls.Primitives.AutoToolTipPlacement",
+    "file": "documentation/classes/Cerneala.UI.Controls.Primitives.AutoToolTipPlacement.md",
+    "source": "UI/Controls/Primitives/AutoToolTipPlacement.cs"
+  },
+  {
     "name": "Cerneala.UI.Controls.Primitives.ButtonBase",
     "file": "documentation/classes/Cerneala.UI.Controls.Primitives.ButtonBase.md",
     "source": "UI/Controls/Primitives/ButtonBase.cs"
@@ -1453,6 +1458,21 @@
     "name": "Cerneala.UI.Controls.Primitives.Thumb",
     "file": "documentation/classes/Cerneala.UI.Controls.Primitives.Thumb.md",
     "source": "UI/Controls/Primitives/Thumb.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Primitives.TickBar",
+    "file": "documentation/classes/Cerneala.UI.Controls.Primitives.TickBar.md",
+    "source": "UI/Controls/Primitives/TickBar.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Primitives.TickBarPlacement",
+    "file": "documentation/classes/Cerneala.UI.Controls.Primitives.TickBarPlacement.md",
+    "source": "UI/Controls/Primitives/TickBarPlacement.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Primitives.TickPlacement",
+    "file": "documentation/classes/Cerneala.UI.Controls.Primitives.TickPlacement.md",
+    "source": "UI/Controls/Primitives/TickPlacement.cs"
   },
   {
     "name": "Cerneala.UI.Controls.Primitives.ToggleButton",

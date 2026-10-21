@@ -1,4 +1,5 @@
 using Cerneala.UI.Core;
+using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Input;
 
@@ -69,6 +70,15 @@ public class ToolTip : Control
     }
 
     public PopupRoot PopupRoot => popupRoot;
+
+    // As WPF's ToolTip.PlacementTarget with Placement Custom and its CustomPopupPlacementCallback: the ToolTip opens
+    // where the placement returns from the target's bounds and the ToolTip's size. A null target places it relative to
+    // the ToolTip itself, and a null placement restores the default placement.
+    internal void SetCustomPlacement(UIElement? target, Func<LayoutRect, LayoutSize, LayoutPoint>? placement)
+    {
+        overlay.PlacementTarget = target ?? this;
+        overlay.CustomPlacement = placement;
+    }
 
     protected override LayoutSize MeasureCore(MeasureContext context)
     {

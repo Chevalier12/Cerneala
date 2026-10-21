@@ -64,7 +64,13 @@ internal static class ColorPickerTemplates
         {
             Width = 220,
             Height = 16,
-            Cursor = Cerneala.UI.Input.Cursor.Hand
+            Cursor = Cerneala.UI.Input.Cursor.Hand,
+
+            // The ramp's Track draws the color gradient, with no slider track bar under it.
+            ComponentTemplate = SliderTemplates.ColorRamp,
+
+            // A press on a color ramp jumps to the color under the pointer.
+            IsMoveToPointEnabled = true
         };
         Track track = slider.Track;
         track.BorderBrush = new SolidColorBrush(new Color(70, 76, 86));
