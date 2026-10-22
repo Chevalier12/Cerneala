@@ -103,7 +103,7 @@ opacity = card.Opacity;                                                  // 0.9 
 
 ## Remarks
 
-Derived objects can enforce mutation affinity before their property store is read or changed. Attached `UIElement` instances use this hook to reject typed and untyped `SetValue` and `ClearValue` calls from any thread other than the owning root's Relay thread; plain `UiObject` instances retain their existing unrestricted behavior.
+Derived objects can enforce mutation affinity before their property store is read or changed. Attached `UIElement` instances use this hook to reject typed and untyped `SetValue`, `ClearValue` and `SetFrameworkDefault` calls from any thread other than the owning root's Relay thread; plain `UiObject` instances retain their existing unrestricted behavior.
 
 `UiObject` is the base for objects that participate in Cerneala's UI property system. It stores values in a private `UiPropertyStore` and resolves an effective value from multiple `UiPropertyValueSource` layers.
 
@@ -169,9 +169,9 @@ The new value is stored before `OnPropertyChanged` runs. When `OnPropertyChanged
 | `SetFrameworkDefault` | `ArgumentException` | The coerced value fails validation. |
 | `SetValue`, `ClearValue`, `SetFrameworkDefault` | `InvalidOperationException` | The overload takes `UiProperty<T>` and the property is read-only. |
 | `SetValue` | `ArgumentException` | The value is not assignable to the property's value type, or the coerced value fails validation. |
-| `SetValue`, `ClearValue` | The owner's check exception, for example `InvalidOperationException` | The owner type rejects the value that would be stored or, for `ClearValue`, the value that would become effective. Nothing is stored or cleared. |
+| `SetValue`, `ClearValue`, `SetFrameworkDefault` | The owner's check exception, for example `InvalidOperationException` | The owner type rejects the value that would be stored or, for `ClearValue`, the value that would become effective. Nothing is stored or cleared. |
 | `SetValue`, `ClearValue`, `GetSourceValue` | `ArgumentOutOfRangeException` | The supplied source is not a defined concrete source, or is `UiPropertyValueSource.Default`. |
-| `SetValue`, `ClearValue` | Any exception | `OnPropertyChanged` or a `PropertyChanged` handler threw. The new value stays stored, and the mutation report and invalidation already ran. |
+| `SetValue`, `ClearValue`, `SetFrameworkDefault` | Any exception | `OnPropertyChanged` or a `PropertyChanged` handler threw. The new value stays stored, and the mutation report and invalidation already ran. |
 
 ## Applies to
 
