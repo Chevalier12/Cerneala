@@ -18,11 +18,7 @@ public sealed class PrismChapterViewTests : IDisposable
 {
     public PrismChapterViewTests()
     {
-        Application.ResetForTesting();
-        WindowApplicationRuntime.ResetForTesting();
-        WindowApplicationRuntime runtime = WindowApplicationRuntime.CurrentOrDefault;
-        App app = new();
-        app.Install(runtime);
+        PresentationTestApplication.Install();
     }
 
     public void Dispose()
