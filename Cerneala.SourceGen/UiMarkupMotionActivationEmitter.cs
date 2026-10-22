@@ -60,17 +60,23 @@ public sealed partial class UiMarkupGenerator
                     bool holdsMotionValue = property.Target.Prism is null &&
                         property.Target.Timbre is null &&
                         HasBuiltInMixer(property.Property.ValueType);
-                    assignments.Add(holdsMotionValue
-                        ? "global::Cerneala.UI.Markup.GeneratedMarkup.SetMotionProperty(" + sessionName + ", " +
-                            targetCode + ", " + property.Property.PropertyCode + ", " + valueCode + ");"
-                        : property.Target.Prism is null
-                            ? targetCode + ".SetValue(" +
-                                property.Property.PropertyCode + ", " +
-                                valueCode + ");"
-                            : EmitPrismMotionSet(
-                                property,
-                                targetCode,
-                                valueCode));
+                    if (holdsMotionValue)
+                    {
+                        assignments.Add(
+                            "global::Cerneala.UI.Markup.GeneratedMarkup.SetMotionProperty(" + sessionName + ", " +
+                            targetCode + ", " + property.Property.PropertyCode + ", " + valueCode + ");");
+                    }
+                    else if (property.Target.Prism is null)
+                    {
+                        assignments.Add(
+                            targetCode + ".SetValue(" +
+                            property.Property.PropertyCode + ", " +
+                            valueCode + ");");
+                    }
+                    else
+                    {
+                        assignments.Add(EmitPrismMotionSet(property, targetCode, valueCode));
+                    }
                 }
 
                 currentPostLines.Add(
