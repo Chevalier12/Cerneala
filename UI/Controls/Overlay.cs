@@ -83,7 +83,7 @@ public class Overlay : Control, IInputProjectionOwner
             UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange,
             validateValue: value => float.IsNaN(value) || (float.IsFinite(value) && value >= 0)));
 
-    public static readonly UiProperty<float> MaxHeightProperty = UiProperty<float>.Register(
+    public new static readonly UiProperty<float> MaxHeightProperty = UiProperty<float>.Register(
         nameof(MaxHeight),
         typeof(Overlay),
         new UiPropertyMetadata<float>(
@@ -164,7 +164,7 @@ public class Overlay : Control, IInputProjectionOwner
         set => SetValue(HeightProperty, value);
     }
 
-    public float MaxHeight
+    public new float MaxHeight
     {
         get => GetValue(MaxHeightProperty);
         set => SetValue(MaxHeightProperty, value);

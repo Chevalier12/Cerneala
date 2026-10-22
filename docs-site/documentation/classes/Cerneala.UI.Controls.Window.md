@@ -51,7 +51,7 @@ When the native platform activates a window and no retained element already has 
 | --- | --- |
 | `Title` | Native window title. |
 | `Width`, `Height` | Requested dimensions. |
-| `MinWidth`, `MinHeight`, `MaxWidth`, `MaxHeight` | Client-area dimension constraints; maximum limits also apply when maximized. |
+| `MinWidth`, `MinHeight`, `MaxWidth`, `MaxHeight` | Client-area dimension constraints; maximum limits also apply when maximized. They hide the `UIElement` layout limits of the same names and are separate properties: for `UIElement element = new Window { MinWidth = 640 }`, `element.MinWidth` is `0`. |
 | `Left`, `Top` | Requested screen position. |
 | `WindowState` | Normal, minimized, or maximized state. |
 | `ResizeMode` | Native resize policy. |

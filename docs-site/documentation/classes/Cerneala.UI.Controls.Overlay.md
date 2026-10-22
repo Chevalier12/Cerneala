@@ -56,7 +56,7 @@ Light-dismiss examines only the topmost eligible overlay. An exterior pointer pr
 | `IsLightDismissEnabled` | `bool` | `false` | Enables exterior-click and focus-exit dismissal. |
 | `MatchTargetWidth` | `bool` | `false` | Measures and arranges projected content at the target width, clamped to the viewport. |
 | `Height` | `float` | `NaN` (automatic) | Exact projected height. Overrides `MaxHeight` and is clamped to available viewport space. |
-| `MaxHeight` | `float` | Positive infinity | Maximum automatically sized projected height; accepts zero or a positive value. |
+| `MaxHeight` | `float` | Positive infinity | Maximum automatically sized projected height; accepts zero or a positive value. It hides `UIElement.MaxHeight` and is a separate property: setting `Overlay.MaxHeight` does not change `UIElement.MaxHeight`. |
 
 Each property has a same-named `UiProperty` identifier field.
 

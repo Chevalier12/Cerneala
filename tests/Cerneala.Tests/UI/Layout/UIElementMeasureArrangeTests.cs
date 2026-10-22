@@ -66,6 +66,27 @@ public sealed class UIElementMeasureArrangeTests
     }
 
     [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ExplicitDimensionLargerThanTheSlotIsMeasuredAndArrangedAtTheSlot(bool vertical)
+    {
+        // Unlike MinWidth and MinHeight, an explicit Width or Height does not overflow its slot.
+        SizeRecordingElement element = new()
+        {
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top
+        };
+        SetDimension(element, vertical, UIElement.WidthProperty, UIElement.HeightProperty, 200);
+
+        element.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        element.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+
+        Assert.Equal(
+            (100f, 200f, 100f),
+            (Length(element.MeasureSize!.Value, vertical), Length(element.DesiredSize, vertical), Length(element.ArrangedBounds.Size, vertical)));
+    }
+
+    [Theory]
     [InlineData(2f, false, 0.75f, 0f, "2..20", "17..20")]
     [InlineData(2f, false, 0f, 0.75f, "0..18", "15..18")]
     [InlineData(2f, true, 0.75f, 0f, "2..20", "17..20")]
@@ -246,6 +267,18 @@ public sealed class UIElementMeasureArrangeTests
             (3f, 7f, 7f, 7f),
             (MathF.Round(start * 1.5f), MathF.Round(end * 1.5f), MathF.Round(desired * 1.5f), MathF.Round(nextStart * 1.5f)));
     }
+
+    private static void SetDimension(
+        UIElement element,
+        bool vertical,
+        Cerneala.UI.Core.UiProperty<float> horizontal,
+        Cerneala.UI.Core.UiProperty<float> verticalProperty,
+        float value)
+    {
+        element.SetValue(vertical ? verticalProperty : horizontal, value);
+    }
+
+    private static float Length(LayoutSize size, bool vertical) => vertical ? size.Height : size.Width;
 
     private static string GetDeviceEdges(UIElement element, float scale, bool vertical)
     {

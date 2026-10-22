@@ -23,22 +23,22 @@ public class Window : ContentControl
         typeof(Window),
         new UiPropertyMetadata<float>(600, UiPropertyOptions.AffectsMeasure, validateValue: IsValidPositiveDimension));
 
-    public static readonly UiProperty<float> MinWidthProperty = UiProperty<float>.Register(
+    public new static readonly UiProperty<float> MinWidthProperty = UiProperty<float>.Register(
         nameof(MinWidth),
         typeof(Window),
         new UiPropertyMetadata<float>(0, UiPropertyOptions.AffectsMeasure, validateValue: IsValidMinimumDimension));
 
-    public static readonly UiProperty<float> MinHeightProperty = UiProperty<float>.Register(
+    public new static readonly UiProperty<float> MinHeightProperty = UiProperty<float>.Register(
         nameof(MinHeight),
         typeof(Window),
         new UiPropertyMetadata<float>(0, UiPropertyOptions.AffectsMeasure, validateValue: IsValidMinimumDimension));
 
-    public static readonly UiProperty<float> MaxWidthProperty = UiProperty<float>.Register(
+    public new static readonly UiProperty<float> MaxWidthProperty = UiProperty<float>.Register(
         nameof(MaxWidth),
         typeof(Window),
         new UiPropertyMetadata<float>(float.PositiveInfinity, UiPropertyOptions.AffectsMeasure, validateValue: IsValidMaximumDimension));
 
-    public static readonly UiProperty<float> MaxHeightProperty = UiProperty<float>.Register(
+    public new static readonly UiProperty<float> MaxHeightProperty = UiProperty<float>.Register(
         nameof(MaxHeight),
         typeof(Window),
         new UiPropertyMetadata<float>(float.PositiveInfinity, UiPropertyOptions.AffectsMeasure, validateValue: IsValidMaximumDimension));
@@ -124,7 +124,7 @@ public class Window : ContentControl
     }
 
     [MarkupValueConstraint(MarkupValueConstraint.NonNegative)]
-    public float MinWidth
+    public new float MinWidth
     {
         get => GetValue(MinWidthProperty);
         set
@@ -139,7 +139,7 @@ public class Window : ContentControl
     }
 
     [MarkupValueConstraint(MarkupValueConstraint.NonNegative)]
-    public float MinHeight
+    public new float MinHeight
     {
         get => GetValue(MinHeightProperty);
         set
@@ -154,7 +154,7 @@ public class Window : ContentControl
     }
 
     [MarkupValueConstraint(MarkupValueConstraint.Positive)]
-    public float MaxWidth
+    public new float MaxWidth
     {
         get => GetValue(MaxWidthProperty);
         set
@@ -169,7 +169,7 @@ public class Window : ContentControl
     }
 
     [MarkupValueConstraint(MarkupValueConstraint.Positive)]
-    public float MaxHeight
+    public new float MaxHeight
     {
         get => GetValue(MaxHeightProperty);
         set

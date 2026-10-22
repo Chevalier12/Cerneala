@@ -82,6 +82,26 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         typeof(UIElement),
         new UiPropertyMetadata<float>(float.NaN, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange, validateValue: IsValidDimension));
 
+    public static readonly UiProperty<float> MinWidthProperty = UiProperty<float>.Register(
+        nameof(MinWidth),
+        typeof(UIElement),
+        new UiPropertyMetadata<float>(0, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange, validateValue: IsValidMinimumDimension));
+
+    public static readonly UiProperty<float> MaxWidthProperty = UiProperty<float>.Register(
+        nameof(MaxWidth),
+        typeof(UIElement),
+        new UiPropertyMetadata<float>(float.PositiveInfinity, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange, validateValue: IsValidMaximumDimension));
+
+    public static readonly UiProperty<float> MinHeightProperty = UiProperty<float>.Register(
+        nameof(MinHeight),
+        typeof(UIElement),
+        new UiPropertyMetadata<float>(0, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange, validateValue: IsValidMinimumDimension));
+
+    public static readonly UiProperty<float> MaxHeightProperty = UiProperty<float>.Register(
+        nameof(MaxHeight),
+        typeof(UIElement),
+        new UiPropertyMetadata<float>(float.PositiveInfinity, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange, validateValue: IsValidMaximumDimension));
+
     public static readonly UiProperty<HorizontalAlignment> HorizontalAlignmentProperty = UiProperty<HorizontalAlignment>.Register(
         nameof(HorizontalAlignment),
         typeof(UIElement),
@@ -315,6 +335,8 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     protected override void VerifyMutationAccess() => OwnerRelay?.VerifyAccess();
 
+    // True while MinWidth, MaxWidth, MinHeight or MaxHeight differs from its default (OnPropertyInvalidated).
+    private bool hasSizeLimits;
     private bool hasPendingCommandStateRefresh;
     private bool hasPendingRenderScopeInvalidation;
     private bool hasPendingRenderContentInvalidation;
@@ -403,6 +425,34 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     {
         get => GetValue(HeightProperty);
         set => SetValue(HeightProperty, value);
+    }
+
+    [MarkupValueConstraint(MarkupValueConstraint.NonNegative)]
+    public float MinWidth
+    {
+        get => GetValue(MinWidthProperty);
+        set => SetValue(MinWidthProperty, value);
+    }
+
+    [MarkupValueConstraint(MarkupValueConstraint.NonNegative)]
+    public float MaxWidth
+    {
+        get => GetValue(MaxWidthProperty);
+        set => SetValue(MaxWidthProperty, value);
+    }
+
+    [MarkupValueConstraint(MarkupValueConstraint.NonNegative)]
+    public float MinHeight
+    {
+        get => GetValue(MinHeightProperty);
+        set => SetValue(MinHeightProperty, value);
+    }
+
+    [MarkupValueConstraint(MarkupValueConstraint.NonNegative)]
+    public float MaxHeight
+    {
+        get => GetValue(MaxHeightProperty);
+        set => SetValue(MaxHeightProperty, value);
     }
 
     public HorizontalAlignment HorizontalAlignment
@@ -1336,13 +1386,11 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         // An explicit dimension is rounded to the nearest device pixel before it constrains measure and becomes the
         // desired size, as WPF rounds an explicit Width and Height. ApplyAlignment arranges at the same rounded value,
         // so 99.4 is measured and arranged at 99 instead of measured at 99 and arranged at the rounded-up 100.
-        float width = context.Rounding.Round(Width);
-        float height = context.Rounding.Round(Height);
-        bool hasWidth = !float.IsNaN(width);
-        bool hasHeight = !float.IsNaN(height);
+        SizeLimits horizontal = GetHorizontalSizeLimits(context.Rounding);
+        SizeLimits vertical = GetVerticalSizeLimits(context.Rounding);
         LayoutSize constrainedSize = new(
-            hasWidth ? MathF.Min(contentAvailableSize.Width, width) : contentAvailableSize.Width,
-            hasHeight ? MathF.Min(contentAvailableSize.Height, height) : contentAvailableSize.Height);
+            horizontal.ConstrainAvailable(contentAvailableSize.Width),
+            vertical.ConstrainAvailable(contentAvailableSize.Height));
         // MeasureCore receives the size rounded to the nearest device pixel, as WPF rounds the size it passes to
         // MeasureOverride. Arrange rounds the rectangle ArrangeCore receives the same way, so an element that fills
         // its slot is measured at the size it is then arranged at (99.6 would be measured but 100 arranged).
@@ -1351,8 +1399,8 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
             context.Rounding.Round(constrainedSize.Height));
         LayoutSize measuredSize = MeasureCore(new MeasureContext(roundedSize, context.Rounding)).ClampNonNegative();
         LayoutSize contentDesiredSize = new(
-            hasWidth ? width : measuredSize.Width,
-            hasHeight ? height : measuredSize.Height);
+            horizontal.ClampDesired(measuredSize.Width),
+            vertical.ClampDesired(measuredSize.Height));
         // With layout rounding the margin adds device pixels to the content, as a panel adds its children: at scale 1.5
         // an explicit 2.5 is 4 device pixels (4 / 1.5f) and a margin of 2 is 3, but their float sum times 1.5 is slightly
         // above 7, which Measure would round up to an 8th device pixel.
@@ -1433,22 +1481,22 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         // DesiredSize is rounded up, so it can exceed the explicit dimension that measure rounded to the nearest
         // device pixel (99.4 is measured at 99, but a 0.3 margin rounds the desired 99.3 up to 100). The arranged
         // size is capped at that rounded explicit dimension, as WPF caps the arrange size at the rounded Height.
-        float explicitWidth = rounding.Round(Width);
-        float explicitHeight = rounding.Round(Height);
-        bool hasWidth = !float.IsNaN(explicitWidth);
-        bool hasHeight = !float.IsNaN(explicitHeight);
-        float width = !hasWidth
-            ? HorizontalAlignment == HorizontalAlignment.Stretch ? finalRect.Width : Math.Min(desiredSize.Width, finalRect.Width)
-            : Math.Min(Math.Min(desiredSize.Width, explicitWidth), finalRect.Width);
-        float height = !hasHeight
-            ? VerticalAlignment == VerticalAlignment.Stretch ? finalRect.Height : Math.Min(desiredSize.Height, finalRect.Height)
-            : Math.Min(Math.Min(desiredSize.Height, explicitHeight), finalRect.Height);
+        SizeLimits horizontal = GetHorizontalSizeLimits(rounding);
+        SizeLimits vertical = GetVerticalSizeLimits(rounding);
+        float width = horizontal.ClampArranged(!horizontal.HasExplicitDimension && HorizontalAlignment == HorizontalAlignment.Stretch
+            ? finalRect.Width
+            : Math.Min(desiredSize.Width, finalRect.Width));
+        float height = vertical.ClampArranged(!vertical.HasExplicitDimension && VerticalAlignment == VerticalAlignment.Stretch
+            ? finalRect.Height
+            : Math.Min(desiredSize.Height, finalRect.Height));
 
+        // As WPF aligns a stretched element that is narrower than its slot, a MaxWidth or an explicit Width centers it.
+        // An element that MinWidth makes wider than its slot starts at the slot's left edge when stretched.
         float x = HorizontalAlignment switch
         {
             HorizontalAlignment.Center => finalRect.X + ((finalRect.Width - width) / 2),
             HorizontalAlignment.Right => finalRect.X + finalRect.Width - width,
-            HorizontalAlignment.Stretch when hasWidth => finalRect.X + ((finalRect.Width - width) / 2),
+            HorizontalAlignment.Stretch when width <= finalRect.Width => finalRect.X + ((finalRect.Width - width) / 2),
             _ => finalRect.X
         };
 
@@ -1456,11 +1504,76 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         {
             VerticalAlignment.Center => finalRect.Y + ((finalRect.Height - height) / 2),
             VerticalAlignment.Bottom => finalRect.Y + finalRect.Height - height,
-            VerticalAlignment.Stretch when hasHeight => finalRect.Y + ((finalRect.Height - height) / 2),
+            VerticalAlignment.Stretch when height <= finalRect.Height => finalRect.Y + ((finalRect.Height - height) / 2),
             _ => finalRect.Y
         };
 
         return new LayoutRect(x, y, width, height);
+    }
+
+    // Layout reads the four limit properties only on an element that sets one of them: every measure and arrange reads
+    // the limits, and reading the defaults would make each about 45 % slower.
+    private SizeLimits GetHorizontalSizeLimits(LayoutRounding rounding) => hasSizeLimits
+        ? SizeLimits.Create(Width, MinWidth, MaxWidth, rounding)
+        : SizeLimits.Create(rounding.Round(Width));
+
+    private SizeLimits GetVerticalSizeLimits(LayoutRounding rounding) => hasSizeLimits
+        ? SizeLimits.Create(Height, MinHeight, MaxHeight, rounding)
+        : SizeLimits.Create(rounding.Round(Height));
+
+    // The size limits of one axis, as WPF's FrameworkElement.MinMax: MinWidth wins over a smaller Width and over a
+    // smaller MaxWidth, and MaxWidth wins over a larger Width. Each value is rounded to the nearest device pixel, as an
+    // explicit Width is. Width = 50 with MinWidth = 80 gives Lower = Upper = 80.
+    private readonly struct SizeLimits
+    {
+        private SizeLimits(float minimum, float lower, float upper, bool hasExplicitDimension)
+        {
+            Minimum = minimum;
+            Lower = lower;
+            Upper = upper;
+            HasExplicitDimension = hasExplicitDimension;
+        }
+
+        // MinWidth: the one limit that wins over a smaller slot. A larger explicit Width keeps the slot's size.
+        public float Minimum { get; }
+
+        // The least desired size: the explicit Width within the limits, or MinWidth.
+        public float Lower { get; }
+
+        // The largest size: the explicit Width or MaxWidth, whichever is smaller, but at least MinWidth.
+        public float Upper { get; }
+
+        public bool HasExplicitDimension { get; }
+
+        public static SizeLimits Create(float dimension, float minimum, float maximum, LayoutRounding rounding)
+        {
+            float explicitDimension = rounding.Round(dimension);
+            float roundedMinimum = rounding.Round(minimum);
+            bool hasExplicitDimension = !float.IsNaN(explicitDimension);
+            float upper = MathF.Max(MathF.Min(hasExplicitDimension ? explicitDimension : float.PositiveInfinity, rounding.Round(maximum)), roundedMinimum);
+            float lower = MathF.Max(MathF.Min(upper, hasExplicitDimension ? explicitDimension : 0), roundedMinimum);
+            return new SizeLimits(roundedMinimum, lower, upper, hasExplicitDimension);
+        }
+
+        // The limits with MinWidth and MaxWidth at their defaults: the explicit Width alone, or none.
+        public static SizeLimits Create(float explicitDimension) => float.IsNaN(explicitDimension)
+            ? new SizeLimits(0, 0, float.PositiveInfinity, false)
+            : new SizeLimits(0, explicitDimension, explicitDimension, true);
+
+        // MeasureCore receives at most the upper limit, and at least MinWidth even when the slot is smaller.
+        public float ConstrainAvailable(float available) => Clamp(available, Minimum, Upper);
+
+        public float ClampDesired(float measured) => Clamp(measured, Lower, Upper);
+
+        public float ClampArranged(float arranged) => Clamp(arranged, Minimum, Upper);
+
+        // Layout sizes are never NaN, so plain comparisons replace MathF.Min and MathF.Max, which also order NaN and
+        // signed zeros and cost a measurable part of each measure and arrange.
+        private static float Clamp(float value, float minimum, float maximum)
+        {
+            float limited = value < maximum ? value : maximum;
+            return limited > minimum ? limited : minimum;
+        }
     }
 
     public void Invalidate(InvalidationFlags flags, string reason)
@@ -1510,6 +1623,12 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         if ((options & (UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange)) != UiPropertyOptions.None)
         {
             IncrementLayoutVersion();
+        }
+
+        if (IsSizeLimitProperty(args.Property))
+        {
+            hasSizeLimits = MinWidth != 0 || MinHeight != 0 ||
+                !float.IsPositiveInfinity(MaxWidth) || !float.IsPositiveInfinity(MaxHeight);
         }
 
         if ((options & (UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual)) != UiPropertyOptions.None)
@@ -1776,6 +1895,24 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     private static bool IsValidDimension(float value)
     {
         return float.IsNaN(value) || (float.IsFinite(value) && value >= 0);
+    }
+
+    private static bool IsSizeLimitProperty(UiProperty property)
+    {
+        return ReferenceEquals(property, MinWidthProperty) ||
+            ReferenceEquals(property, MaxWidthProperty) ||
+            ReferenceEquals(property, MinHeightProperty) ||
+            ReferenceEquals(property, MaxHeightProperty);
+    }
+
+    private static bool IsValidMinimumDimension(float value)
+    {
+        return float.IsFinite(value) && value >= 0;
+    }
+
+    private static bool IsValidMaximumDimension(float value)
+    {
+        return float.IsPositiveInfinity(value) || (float.IsFinite(value) && value >= 0);
     }
 
     private static bool IsValidLayoutMotionId(LayoutMotionId? id)
