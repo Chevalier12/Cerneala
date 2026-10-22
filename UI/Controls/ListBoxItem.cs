@@ -37,7 +37,7 @@ public class ListBoxItem : ContentControl, ISelectableItemContainer
     // row moves keyboard focus to it (#662). Not a Tab stop, as a WPF ListBox lets the Tab key into its list only once.
     public ListBoxItem()
     {
-        Focusable = true;
+        SetFrameworkDefault(FocusableProperty, true);
         UpdateContentPresenter();
     }
 

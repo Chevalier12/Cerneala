@@ -39,7 +39,10 @@ public sealed partial class TileMap2D : SceneNode2D, ISceneSpatialParticipant2D,
     internal static TileMap2D FromSource(TileMapSource2D source)
     {
         ArgumentNullException.ThrowIfNull(source);
-        return new TileMap2D { Source = source, Layer = source.Catalog.Order };
+        TileMap2D map = new() { Source = source };
+        // The model order is a starting value: a markup, Aspect or Motion value of Layer wins over it (#734).
+        map.SetFrameworkDefault(LayerProperty, source.Catalog.Order);
+        return map;
     }
 
     internal TileMapSource2D? Source

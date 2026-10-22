@@ -34,8 +34,8 @@ public class ColorSwatch : Control
 
     public ColorSwatch()
     {
-        Width = 20;
-        Height = 20;
+        SetFrameworkDefault(WidthProperty, 20);
+        SetFrameworkDefault(HeightProperty, 20);
         SetFrameworkDefault(BorderBrushProperty, new SolidColorBrush(new Color(90, 98, 110)));
         SetFrameworkDefault(BorderThicknessProperty, new Thickness(1));
         SetFrameworkDefault(ComponentTemplateProperty, ColorSwatchTemplates.Default);

@@ -48,9 +48,9 @@ public class ColorSpectrum : Control, IPointerDragSource
 
     public ColorSpectrum()
     {
-        Focusable = true;
-        IsTabStop = true;
-        Cursor = Cerneala.UI.Input.Cursor.Crosshair;
+        SetFrameworkDefault(FocusableProperty, true);
+        SetFrameworkDefault(IsTabStopProperty, true);
+        SetFrameworkDefault(CursorProperty, Cerneala.UI.Input.Cursor.Crosshair);
         SetFrameworkDefault(BorderBrushProperty, new SolidColorBrush(new Color(70, 76, 86)));
         SetFrameworkDefault(BorderThicknessProperty, new Thickness(1));
         Handlers.AddHandler(InputEvents.KeyDownEvent, OnKeyDown);

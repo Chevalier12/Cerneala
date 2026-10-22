@@ -104,6 +104,142 @@ public sealed partial class UiMarkupGeneratorTests
             border.GetValueSource(Cerneala.UI.Elements.UIElement.OpacityProperty));
     }
 
+    // #731: a literal attribute is a MarkupBase value whether or not the document has reactive
+    // conditions, so a Motion animation of the same property is visible.
+    [Theory]
+    [InlineData("@on Loaded { @run $Replay; }")]
+    [InlineData("@handle Active; @on Loaded { @run $Replay as Active; }")]
+    [InlineData("@handle Active; @on Loaded { @run $Replay as Active; } @when $self.IsEnabled { @if value == false { @cancel Active; } }")]
+    public void MotionClipAnimatesLiteralAttributeWithOrWithoutReactiveConditions(string aspectBody)
+    {
+        string markup = $$"""
+            <Border Opacity="1" Aspect="$Entrance">
+              <Border.Resources>
+                <MotionClip Name="Replay" TargetType="Border">
+                  @animate with Tween(100ms, Linear) { @from { Opacity = 1; } @to { Opacity = 0; } }
+                </MotionClip>
+                <Aspect Name="Entrance" TargetType="Border">
+                  {{aspectBody}}
+                </Aspect>
+              </Border.Resources>
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGenerator("MotionClipLiteralBase.crn", markup, out Compilation compilation);
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        using System.IO.MemoryStream stream = new();
+        Microsoft.CodeAnalysis.Emit.EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+        Cerneala.UI.Controls.Border border = Assert.IsType<Cerneala.UI.Controls.Border>(
+            InvokeCreate(stream, "Cerneala.GeneratedUi.MotionClipLiteralBaseFactory"));
+
+        Assert.Equal(1f, border.Opacity, 0.001f);
+        Assert.Equal(
+            Cerneala.UI.Core.UiPropertyValueSource.MarkupBase,
+            border.GetValueSource(Cerneala.UI.Elements.UIElement.OpacityProperty));
+
+        ManualClock clock = new();
+        Cerneala.UI.Elements.UIRoot root = new(100, 100, motionClock: clock);
+        root.VisualChildren.Add(border);
+        root.ProcessFrame();
+
+        clock.Advance(TimeSpan.FromMilliseconds(50));
+        root.ProcessFrame();
+
+        Assert.Equal(0.5f, border.Opacity, 0.01f);
+        Assert.Equal(
+            Cerneala.UI.Core.UiPropertyValueSource.Animation,
+            border.GetValueSource(Cerneala.UI.Elements.UIElement.OpacityProperty));
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        root.ProcessFrame();
+
+        Assert.Equal(0f, border.Opacity, 0.001f);
+        Assert.False(root.Motion.HasActiveMotion);
+
+        border.Opacity = 0.5f;
+        root.ProcessFrame();
+
+        Assert.Equal(0.5f, border.Opacity, 0.001f);
+        Assert.Equal(
+            Cerneala.UI.Core.UiPropertyValueSource.Local,
+            border.GetValueSource(Cerneala.UI.Elements.UIElement.OpacityProperty));
+    }
+
+    // #731: every generated markup value of a UiProperty (literal attribute, resource reference,
+    // text content) is MarkupBase in a document without reactive conditions.
+    [Fact]
+    public void NonReactiveDocumentWritesGeneratedMarkupValuesAsMarkupBase()
+    {
+        const string markup = """
+            <StackPanel>
+              <StackPanel.Resources>
+                <SolidColorBrush Name="Accent" Color="White" />
+              </StackPanel.Resources>
+              <Border Name="Card" Opacity="0.8" Background="$Accent" />
+              <TextBlock Name="Caption">Hello</TextBlock>
+              <TextBlock Name="Rich"><Run Name="Part">World</Run></TextBlock>
+              <Button Name="Action">Go</Button>
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("NonReactiveMarkupBase.crn", markup, out Compilation compilation);
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        using System.IO.MemoryStream stream = new();
+        Microsoft.CodeAnalysis.Emit.EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+        Cerneala.UI.Controls.StackPanel panel = Assert.IsType<Cerneala.UI.Controls.StackPanel>(
+            InvokeCreate(stream, "Cerneala.GeneratedUi.NonReactiveMarkupBaseFactory"));
+        Cerneala.UI.Controls.Border card = Assert.IsType<Cerneala.UI.Controls.Border>(panel.Children[0]);
+        Cerneala.UI.Controls.TextBlock caption = Assert.IsType<Cerneala.UI.Controls.TextBlock>(panel.Children[1]);
+        Cerneala.UI.Controls.TextBlock rich = Assert.IsType<Cerneala.UI.Controls.TextBlock>(panel.Children[2]);
+        Cerneala.UI.Documents.Run part = Assert.IsType<Cerneala.UI.Documents.Run>(Assert.Single(rich.Inlines));
+        Cerneala.UI.Controls.Button action = Assert.IsType<Cerneala.UI.Controls.Button>(panel.Children[3]);
+
+        Assert.Equal(0.8f, card.Opacity, 0.001f);
+        Assert.Equal("Hello", caption.Text);
+        Assert.Equal("World", part.Text);
+        Assert.Equal("Go", action.Content);
+        Assert.Equal(Cerneala.UI.Core.UiPropertyValueSource.MarkupBase, card.GetValueSource(Cerneala.UI.Elements.UIElement.OpacityProperty));
+        Assert.Equal(Cerneala.UI.Core.UiPropertyValueSource.MarkupBase, card.GetValueSource(Cerneala.UI.Controls.Control.BackgroundProperty));
+        Assert.Equal(Cerneala.UI.Core.UiPropertyValueSource.MarkupBase, caption.GetValueSource(Cerneala.UI.Controls.TextBlock.TextProperty));
+        Assert.Equal(Cerneala.UI.Core.UiPropertyValueSource.MarkupBase, part.GetValueSource(Cerneala.UI.Documents.Run.TextProperty));
+        Assert.Equal(Cerneala.UI.Core.UiPropertyValueSource.MarkupBase, action.GetValueSource(Cerneala.UI.Controls.ContentControl.ContentProperty));
+    }
+
+    // #731: a MarkupBase write infers SetValue's type argument from the value, so a uint literal must be typed.
+    // The @when made this document emit SetValue before #731 too.
+    [Fact]
+    public void ReactiveDocumentCompilesUnsignedIntegerLiteralAttributes()
+    {
+        const string markup = """
+            <StackPanel Aspect="$Gate">
+              <StackPanel.Resources>
+                <Aspect Name="Gate" TargetType="StackPanel">
+                  @when $self.IsEnabled { @if value == false { @set { Opacity = 0.5; } } }
+                </Aspect>
+              </StackPanel.Resources>
+              <RenderSurface2D>
+                <RenderSurface2D.Scene>
+                  <Scene2D>
+                    <Sprite2D>
+                      <BoxCollider2D Width="32" Height="8" CollisionLayer="2" CollisionMask="4294967295" />
+                    </Sprite2D>
+                  </Scene2D>
+                </RenderSurface2D.Scene>
+              </RenderSurface2D>
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("ReactiveUnsignedLiteral.crn", markup, out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        Assert.Contains(
+            "Collider2D.CollisionLayerProperty, ((uint)2), global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);",
+            SingleGeneratedSource(result),
+            StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData("current")]
     [InlineData("1 with Tween(100ms)")]

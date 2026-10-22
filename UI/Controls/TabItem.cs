@@ -52,7 +52,7 @@ public class TabItem : ContentControl, ISelectableItemContainer
     // moves keyboard focus to it (#662). Not a Tab stop, as the WPF tab strip lets the Tab key into its tabs only once.
     public TabItem()
     {
-        Focusable = true;
+        SetFrameworkDefault(FocusableProperty, true);
     }
 
     public int ItemIndex { get; set; } = -1;

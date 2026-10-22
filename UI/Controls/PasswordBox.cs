@@ -269,14 +269,14 @@ public class PasswordBox : Control, ITimeSensitiveRenderElement, IPointerDragSou
 
     private void InitializeTextInputDefaults()
     {
-        Focusable = true;
-        IsTabStop = true;
+        SetFrameworkDefault(FocusableProperty, true);
+        SetFrameworkDefault(IsTabStopProperty, true);
         SetFrameworkDefault(ComponentTemplateProperty, TextInputTemplates.PasswordBox);
         SetFrameworkDefault(PaddingProperty, new Thickness(4, 2, 4, 2));
         SetFrameworkDefault(BorderThicknessProperty, new Thickness(1));
         SetFrameworkDefault(BorderBrushProperty, new SolidColorBrush(new Color(120, 130, 145)));
         SetFrameworkDefault(BackgroundProperty, new SolidColorBrush(Color.White));
-        Cursor = Cerneala.UI.Input.Cursor.IBeam;
+        SetFrameworkDefault(CursorProperty, Cerneala.UI.Input.Cursor.IBeam);
     }
 
     private static int CountTextElements(string text)

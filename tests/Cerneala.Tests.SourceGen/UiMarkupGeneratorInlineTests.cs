@@ -252,7 +252,7 @@ public sealed partial class UiMarkupGeneratorTests
 
         Assert.Empty(result.Diagnostics);
         string source = SingleGeneratedSource(result);
-        Assert.Contains(".Text = \"Hello   world\";", source);
+        Assert.Contains(".SetValue(global::Cerneala.UI.Controls.TextBlock.TextProperty, \"Hello   world\", global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);", source);
         Assert.DoesNotContain("Inlines", source, StringComparison.Ordinal);
         Assert.DoesNotContain("Documents.Run", source, StringComparison.Ordinal);
         Assert.DoesNotContain(compilation.GetDiagnostics(), diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);

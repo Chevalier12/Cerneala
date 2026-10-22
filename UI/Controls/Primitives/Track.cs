@@ -27,8 +27,8 @@ public class Track : Control
             BorderBrushProperty,
             new Cerneala.UI.Media.SolidColorBrush(new Color(120, 120, 120)));
         SetFrameworkDefault(BorderThicknessProperty, new Thickness(1));
-        SmallChange = 0.1f;
-        LargeChange = 1;
+        SetFrameworkDefault(SmallChangeProperty, 0.1f);
+        SetFrameworkDefault(LargeChangeProperty, 1f);
         SetFrameworkDefault(ComponentTemplateProperty, TrackTemplates.Default);
     }
 

@@ -6,6 +6,6 @@ public class ComboBoxItem : ListBoxItem
     // and the ComboBox keeps the keyboard focus while its drop-down is open, so a press on an item leaves it there (#662).
     public ComboBoxItem()
     {
-        Focusable = false;
+        SetFrameworkDefault(FocusableProperty, false);
     }
 }

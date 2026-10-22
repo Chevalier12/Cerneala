@@ -24,7 +24,7 @@ internal sealed class TileStaticCollider2D : Collider2D
         CollisionLayer = descriptor.CollisionLayer;
         CollisionMask = descriptor.CollisionMask;
         IsTrigger = descriptor.IsTrigger;
-        IsHitTestVisible = false;
+        SetFrameworkDefault(IsHitTestVisibleProperty, false);
         DebugIdentity = descriptor.DebugIdentity;
     }
 

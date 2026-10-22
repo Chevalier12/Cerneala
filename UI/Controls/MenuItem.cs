@@ -30,13 +30,13 @@ public class MenuItem : ItemsControl, IInputCommandSource, ICommandStateSource, 
     public MenuItem()
     {
         commandState = new CommandSourceState(this, () => Command, () => CommandParameter);
-        Focusable = true;
-        IsTabStop = true;
-        Cursor = Cerneala.UI.Input.Cursor.Hand;
-        ItemsPanel = new global::Cerneala.UI.Layout.Panels.StackPanel
+        SetFrameworkDefault(FocusableProperty, true);
+        SetFrameworkDefault(IsTabStopProperty, true);
+        SetFrameworkDefault(CursorProperty, Cerneala.UI.Input.Cursor.Hand);
+        SetFrameworkDefault(ItemsPanelProperty, new global::Cerneala.UI.Layout.Panels.StackPanel
         {
             Orientation = Orientation.Vertical
-        };
+        });
         SetFrameworkDefault(BackgroundProperty, new SolidColorBrush(Color.White));
         SetFrameworkDefault(ForegroundProperty, new SolidColorBrush(Color.Black));
         SetFrameworkDefault(BorderBrushProperty, new SolidColorBrush(new Color(210, 214, 220)));

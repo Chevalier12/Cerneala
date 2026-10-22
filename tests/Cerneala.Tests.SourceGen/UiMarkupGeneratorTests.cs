@@ -1018,8 +1018,8 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         Assert.Contains("public static partial class SampleFactory", generatedSource);
         Assert.Contains("global::Cerneala.UI.Controls.StackPanel", generatedSource);
-        Assert.Contains(".Text = \"Hello\";", generatedSource);
-        Assert.Contains(".Content = \"Go\";", generatedSource);
+        Assert.Contains(".SetValue(global::Cerneala.UI.Controls.TextBlock.TextProperty, \"Hello\", global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);", generatedSource);
+        Assert.Contains(".SetValue(global::Cerneala.UI.Controls.ContentControl.ContentProperty, \"Go\", global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);", generatedSource);
 
         using MemoryStream stream = new();
         EmitResult emit = compilation.Emit(stream);
@@ -1106,14 +1106,14 @@ public sealed partial class UiMarkupGeneratorTests
         string generatedSource = SingleGeneratedSource(result);
 
         Assert.Contains("public static partial class TypedViewFactory", generatedSource);
-        Assert.Contains(".BorderBrush = new global::Cerneala.UI.Media.SolidColorBrush(global::Cerneala.Drawing.Color.White);", generatedSource);
-        Assert.Contains(".BorderThickness = new global::Cerneala.UI.Layout.Thickness(1f);", generatedSource);
-        Assert.Contains(".Padding = new global::Cerneala.UI.Layout.Thickness(4f);", generatedSource);
-        Assert.Contains(".Foreground = new global::Cerneala.UI.Media.SolidColorBrush(new global::Cerneala.Drawing.Color(0, 0, 0));", generatedSource);
+        Assert.Contains(".SetValue(global::Cerneala.UI.Controls.Control.BorderBrushProperty, new global::Cerneala.UI.Media.SolidColorBrush(global::Cerneala.Drawing.Color.White), global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);", generatedSource);
+        Assert.Contains(".SetValue(global::Cerneala.UI.Controls.Control.BorderThicknessProperty, new global::Cerneala.UI.Layout.Thickness(1f), global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);", generatedSource);
+        Assert.Contains(".SetValue(global::Cerneala.UI.Controls.Control.PaddingProperty, new global::Cerneala.UI.Layout.Thickness(4f), global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);", generatedSource);
+        Assert.Contains(".SetValue(global::Cerneala.UI.Controls.Control.ForegroundProperty, new global::Cerneala.UI.Media.SolidColorBrush(new global::Cerneala.Drawing.Color(0, 0, 0)), global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);", generatedSource);
         Assert.DoesNotContain("UiMarkupReader", generatedSource);
         Assert.DoesNotContain("UiMarkupParser", generatedSource);
         Assert.DoesNotContain("UiMarkupSerializer", generatedSource);
-        Assert.DoesNotContain("SetValue(", generatedSource);
+        Assert.DoesNotContain("SetValueUntyped", generatedSource);
         Assert.DoesNotContain("propertyStore", generatedSource);
 
         using MemoryStream stream = new();
@@ -1243,14 +1243,14 @@ public sealed partial class UiMarkupGeneratorTests
         string generatedSource = SingleGeneratedSource(result);
 
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
-        Assert.Contains(".Background = new global::Cerneala.UI.Media.SolidColorBrush(global::Cerneala.Drawing.Color.White);", generatedSource);
-        Assert.Contains(".BorderBrush = new global::Cerneala.UI.Media.SolidColorBrush(new global::Cerneala.Drawing.Color(0, 1, 2, 3));", generatedSource);
-        Assert.Contains(".BorderThickness = new global::Cerneala.UI.Layout.Thickness(1f);", generatedSource);
-        Assert.Contains(".Padding = new global::Cerneala.UI.Layout.Thickness(2f);", generatedSource);
-        Assert.Contains(".FontFamily = \"Consolas\";", generatedSource);
-        Assert.Contains(".FontSize = 12f;", generatedSource);
-        Assert.Contains(".Foreground = new global::Cerneala.UI.Media.SolidColorBrush(global::Cerneala.Drawing.Color.Black);", generatedSource);
-        Assert.Contains(".Margin = new global::Cerneala.UI.Layout.Thickness(1f, 2f, 3f, 4f);", generatedSource);
+        Assert.Contains(".SetValue(global::Cerneala.UI.Controls.Control.BackgroundProperty, new global::Cerneala.UI.Media.SolidColorBrush(global::Cerneala.Drawing.Color.White), global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);", generatedSource);
+        Assert.Contains(".SetValue(global::Cerneala.UI.Controls.Control.BorderBrushProperty, new global::Cerneala.UI.Media.SolidColorBrush(new global::Cerneala.Drawing.Color(0, 1, 2, 3)), global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);", generatedSource);
+        Assert.Contains(".SetValue(global::Cerneala.UI.Controls.Control.BorderThicknessProperty, new global::Cerneala.UI.Layout.Thickness(1f), global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);", generatedSource);
+        Assert.Contains(".SetValue(global::Cerneala.UI.Controls.Control.PaddingProperty, new global::Cerneala.UI.Layout.Thickness(2f), global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);", generatedSource);
+        Assert.Contains(".SetValue(global::Cerneala.UI.Controls.Control.FontFamilyProperty, \"Consolas\", global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);", generatedSource);
+        Assert.Contains(".SetValue(global::Cerneala.UI.Controls.Control.FontSizeProperty, 12f, global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);", generatedSource);
+        Assert.Contains(".SetValue(global::Cerneala.UI.Controls.Control.ForegroundProperty, new global::Cerneala.UI.Media.SolidColorBrush(global::Cerneala.Drawing.Color.Black), global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);", generatedSource);
+        Assert.Contains(".SetValue(global::Cerneala.UI.Elements.UIElement.MarginProperty, new global::Cerneala.UI.Layout.Thickness(1f, 2f, 3f, 4f), global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);", generatedSource);
 
         using MemoryStream stream = new();
         EmitResult emit = compilation.Emit(stream);
@@ -1314,7 +1314,8 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         string generatedSource = SingleGeneratedSource(result);
         Assert.Contains("global::Cerneala.UI.Media.LinearGradientBrush", generatedSource);
-        Assert.Contains(".Fill = LinearResource", generatedSource);
+        Assert.Contains(".SetValue(global::Cerneala.UI.Controls.Shapes.Shape.FillProperty, LinearResource", generatedSource);
+        Assert.Contains(".SetValue(global::Cerneala.UI.Controls.Shapes.Shape.StrokeProperty, RadialResource", generatedSource);
 
         using MemoryStream stream = new();
         EmitResult emit = compilation.Emit(stream);
@@ -2352,7 +2353,7 @@ public sealed partial class UiMarkupGeneratorTests
 
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         Assert.Contains("global::Cerneala.UI.Controls.TextBlock KickerLabel = new();", generatedSource);
-        Assert.Contains("KickerLabel.Text = \"HELLO\";", generatedSource);
+        Assert.Contains("KickerLabel.SetValue(global::Cerneala.UI.Controls.TextBlock.TextProperty, \"HELLO\", global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);", generatedSource);
 
         using MemoryStream stream = new();
         EmitResult emit = compilation.Emit(stream);
@@ -3829,7 +3830,7 @@ public sealed partial class UiMarkupGeneratorTests
 
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         Assert.Contains("global::TestInput.Components.ProfileCard", SingleGeneratedSource(result));
-        Assert.Contains(".Score = 7;", SingleGeneratedSource(result));
+        Assert.Contains(".SetValue(global::TestInput.Components.ProfileCard.ScoreProperty, 7, global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);", SingleGeneratedSource(result));
         using MemoryStream stream = new();
         EmitResult emit = compilation.Emit(stream);
         Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));

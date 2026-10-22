@@ -462,8 +462,7 @@ public sealed partial class UiMarkupGenerator
                 variable,
                 attribute,
                 spec,
-                "Servo.Id",
-                forceUiPropertyAssignment: true);
+                "Servo.Id");
             return true;
         }
 
@@ -472,16 +471,14 @@ public sealed partial class UiMarkupGenerator
             switch (element.Name.LocalName)
             {
                 case "TextBlock":
-                    currentLines.Add(reactiveDocument
-                        ? variable + ".SetValue(global::Cerneala.UI.Controls.TextBlock.TextProperty, " + Literal(text) +
-                            ", global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);"
-                        : variable + ".Text = " + Literal(text) + ";");
+                    currentLines.Add(
+                        variable + ".SetValue(global::Cerneala.UI.Controls.TextBlock.TextProperty, " + Literal(text) +
+                        ", global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);");
                     break;
                 case "Button":
-                    currentLines.Add(reactiveDocument
-                        ? variable + ".SetValue(global::Cerneala.UI.Controls.ContentControl.ContentProperty, (object?)" + Literal(text) +
-                            ", global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);"
-                        : variable + ".Content = " + Literal(text) + ";");
+                    currentLines.Add(
+                        variable + ".SetValue(global::Cerneala.UI.Controls.ContentControl.ContentProperty, (object?)" + Literal(text) +
+                        ", global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);");
                     break;
                 default:
                     Report(UnsupportedProperty, element, element.Name.LocalName, "#text");

@@ -13,8 +13,7 @@ public sealed partial class UiMarkupGenerator
             string variable,
             MarkupAttribute attribute,
             PropertySpec? explicitSpec = null,
-            string? explicitPropertyName = null,
-            bool forceUiPropertyAssignment = false)
+            string? explicitPropertyName = null)
         {
             string elementName = element.Name.LocalName;
             string propertyName = explicitPropertyName ?? attribute.Name.LocalName;
@@ -205,7 +204,7 @@ public sealed partial class UiMarkupGenerator
                         return;
                     }
 
-                    currentLines.Add((reactiveDocument || forceUiPropertyAssignment) && spec.IsUiProperty
+                    currentLines.Add(spec.IsUiProperty
                         ? variable + ".SetValue(" + spec.PropertyCode + ", " + resourceExpression.Code +
                             ", global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);"
                         : variable + "." + spec.Name + " = " + resourceExpression.Code + ";");
@@ -223,7 +222,7 @@ public sealed partial class UiMarkupGenerator
                 return;
             }
 
-            currentLines.Add((reactiveDocument || forceUiPropertyAssignment) && spec.IsUiProperty
+            currentLines.Add(spec.IsUiProperty
                 ? variable + ".SetValue(" + spec.PropertyCode + ", " + expression.Code +
                     ", global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);"
                 : variable + "." + spec.Name + " = " + expression.Code + ";");

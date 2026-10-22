@@ -25,6 +25,26 @@ public sealed class TileMap2DFactoryTests
         Assert.Same(model.Chunks[0], lease.Value.Grid);
     }
 
+    // #734: the model order is a starting value, not an application write, so a markup Layer wins over it.
+    [Fact]
+    public void FromModelLayerIsNotLocalSoAMarkupLayerWins()
+    {
+        TileMap2D map = TileMap2D.FromModel(GridModel(23));
+
+        Assert.Equal(23, map.Layer);
+        Assert.NotEqual(Cerneala.UI.Core.UiPropertyValueSource.Local, map.GetValueSource(SceneNode2D.LayerProperty));
+
+        map.SetValue(SceneNode2D.LayerProperty, 7, Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);
+
+        Assert.Equal(7, map.Layer);
+        Assert.Equal(Cerneala.UI.Core.UiPropertyValueSource.MarkupBase, map.GetValueSource(SceneNode2D.LayerProperty));
+
+        map.Layer = 3;
+
+        Assert.Equal(3, map.Layer);
+        Assert.Equal(Cerneala.UI.Core.UiPropertyValueSource.Local, map.GetValueSource(SceneNode2D.LayerProperty));
+    }
+
     [Fact]
     public void FromModelForwardsImageMetadataAndSourceValidation()
     {

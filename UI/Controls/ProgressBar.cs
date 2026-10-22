@@ -10,10 +10,10 @@ public class ProgressBar : RangeBase
 {
     public ProgressBar()
     {
-        Background = new Cerneala.UI.Media.SolidColorBrush(new Color(230, 230, 230));
-        Foreground = new SolidColorBrush(new Color(65, 135, 230));
-        BorderBrush = new Cerneala.UI.Media.SolidColorBrush(new Color(120, 120, 120));
-        BorderThickness = new Thickness(1);
+        SetFrameworkDefault(BackgroundProperty, new Cerneala.UI.Media.SolidColorBrush(new Color(230, 230, 230)));
+        SetFrameworkDefault(ForegroundProperty, new SolidColorBrush(new Color(65, 135, 230)));
+        SetFrameworkDefault(BorderBrushProperty, new Cerneala.UI.Media.SolidColorBrush(new Color(120, 120, 120)));
+        SetFrameworkDefault(BorderThicknessProperty, new Thickness(1));
     }
 
     public float ValueRatio => Maximum <= Minimum ? 0 : (Value - Minimum) / (Maximum - Minimum);
