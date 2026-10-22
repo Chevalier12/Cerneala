@@ -78,8 +78,8 @@ public class ContentControl : Control
 
     // A change of the effective Content whose new element could not be hosted, for example because its attach threw,
     // restores the previous value at the value source that changed, which hosts the previous element again, and then
-    // rethrows. So a failed replacement restores the previous content ownership whatever wrote it: the setter, or
-    // SetValue and ClearValue with any value source.
+    // rethrows. So a failed replacement restores the previous content ownership whatever wrote it: the setter,
+    // SetValue and ClearValue with any value source, or SetFrameworkDefault.
     internal override void NotifyPropertyChange(in UiPropertyChange change)
     {
         if (!ReferenceEquals(change.Args.Property, ContentProperty))
@@ -93,7 +93,7 @@ public class ContentControl : Control
         {
             base.NotifyPropertyChange(change);
         }
-        catch when (contentHostingFailed && !restoringContent && change.MutatingSource != UiPropertyValueSource.Default)
+        catch when (contentHostingFailed && !restoringContent)
         {
             // A restore that fails too, because the previous element cannot be hosted again either, is not restored
             // again: that would swap the two values forever. The previous value stays stored, unhosted, and the first
@@ -118,10 +118,16 @@ public class ContentControl : Control
 
     // A write at the source became the effective value: the source held the old value when it was the old effective
     // source, and held nothing otherwise. A clear of the source revealed a lower value: the source held the old value.
+    // A framework default changes the effective value only while no concrete source has one, so the old value was the
+    // previous framework default, or the metadata default when there was none, and writing it back restores Content.
     private void RestoreContentSource(in UiPropertyChange change)
     {
         UiPropertyValueSource source = change.MutatingSource;
-        if (change.Args.ValueSource == source && change.OldEffectiveSource != source)
+        if (source == UiPropertyValueSource.Default)
+        {
+            SetFrameworkDefault(ContentProperty, change.OldSourceValue);
+        }
+        else if (change.Args.ValueSource == source && change.OldEffectiveSource != source)
         {
             ClearValueUntyped(ContentProperty, source);
         }
