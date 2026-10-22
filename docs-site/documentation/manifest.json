@@ -2934,6 +2934,11 @@
     "source": "UI/Layout/ArrangeContext.cs"
   },
   {
+    "name": "Cerneala.UI.Layout.CornerRadius",
+    "file": "documentation/classes/Cerneala.UI.Layout.CornerRadius.md",
+    "source": "UI/Layout/CornerRadius.cs"
+  },
+  {
     "name": "Cerneala.UI.Layout.HorizontalAlignment",
     "file": "documentation/classes/Cerneala.UI.Layout.HorizontalAlignment.md",
     "source": "UI/Layout/Alignment.cs"

@@ -522,6 +522,11 @@ internal static class PreviewMarkupHotReload
             return ConversionResult.Converted(thickness);
         }
 
+        if (targetType == typeof(CornerRadius) && TryParseCornerRadius(rawValue, out CornerRadius cornerRadius))
+        {
+            return ConversionResult.Converted(cornerRadius);
+        }
+
         if (targetType == typeof(LayoutPoint) && TryParseFloatParts(rawValue, 2, out float[]? point))
         {
             return ConversionResult.Converted(new LayoutPoint(point[0], point[1]));
@@ -604,6 +609,25 @@ internal static class PreviewMarkupHotReload
         }
 
         thickness = default;
+        return false;
+    }
+
+    private static bool TryParseCornerRadius(string value, out CornerRadius cornerRadius)
+    {
+        string[] rawParts = value.Split(',', StringSplitOptions.TrimEntries);
+        if (rawParts.Length == 1 && TryParseFloat(rawParts[0], out float uniform))
+        {
+            cornerRadius = new CornerRadius(uniform);
+            return true;
+        }
+
+        if (rawParts.Length == 4 && TryParseFloatParts(value, 4, out float[] parts))
+        {
+            cornerRadius = new CornerRadius(parts[0], parts[1], parts[2], parts[3]);
+            return true;
+        }
+
+        cornerRadius = default;
         return false;
     }
 

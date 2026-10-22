@@ -350,15 +350,26 @@ public class Control : UIElement
         RenderBackground(context, context.Bounds);
     }
 
-    // Fills bounds, a part of the render bounds, with Background.
-    internal void RenderBackground(RenderContext context, LayoutRect bounds)
+    // Fills bounds, a part of the render bounds, with Background, rounded by cornerRadius when it is not zero.
+    internal void RenderBackground(RenderContext context, LayoutRect bounds, CornerRadius cornerRadius = default)
     {
         DrawRect rect = Border.ToDrawRect(bounds);
         if (Background is { } background && rect.Width > 0 && rect.Height > 0)
         {
-            context.DrawingContext.FillRectangle(rect, background);
+            if (Border.HasCornerRadius(cornerRadius))
+            {
+                context.DrawingContext.FillRoundedRectangle(rect, Border.ToDrawCornerRadius(cornerRadius, rect), background);
+            }
+            else
+            {
+                context.DrawingContext.FillRectangle(rect, background);
+            }
         }
     }
+
+    // The path of this control's border when it is not one uniform stroke, kept while its size, thickness and corner
+    // radius are the same. See Border.RenderBorder.
+    internal BorderOutlineCache BorderOutline => borderOutline ??= new BorderOutlineCache();
 
     protected TElement GetRequiredTemplatePart<TElement>(string name)
         where TElement : UIElement
@@ -409,6 +420,8 @@ public class Control : UIElement
             ApplyTemplateOutsideLayout();
         }
     }
+
+    private BorderOutlineCache? borderOutline;
 
     private ComponentTemplate? ComponentTemplateInstanceTemplate { get; set; }
 

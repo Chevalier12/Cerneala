@@ -1127,6 +1127,49 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Equal("Typed", child.Text);
     }
 
+    [Theory]
+    [InlineData("8", "new global::Cerneala.UI.Layout.CornerRadius(8f)", 8f, 8f, 8f, 8f)]
+    [InlineData("8,0,0,8", "new global::Cerneala.UI.Layout.CornerRadius(8f, 0f, 0f, 8f)", 8f, 0f, 0f, 8f)]
+    [InlineData(" 1.5 , 2 , 3 , 4 ", "new global::Cerneala.UI.Layout.CornerRadius(1.5f, 2f, 3f, 4f)", 1.5f, 2f, 3f, 4f)]
+    public void SourceGeneratorEmitsCornerRadiusThroughTheTypedProperty(
+        string value,
+        string expectedExpression,
+        float topLeft,
+        float topRight,
+        float bottomRight,
+        float bottomLeft)
+    {
+        GeneratorRunResult result = RunGenerator("corner-radius.crn", $"<Border CornerRadius=\"{value}\" />", out Compilation compilation);
+        string generatedSource = SingleGeneratedSource(result);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Contains(
+            ".SetValue(global::Cerneala.UI.Controls.Border.CornerRadiusProperty, " + expectedExpression + ", global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);",
+            generatedSource);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Border border = Assert.IsType<Border>(InvokeCreate(stream, "Cerneala.GeneratedUi.CornerRadiusFactory"));
+        Assert.Equal(new Cerneala.UI.Layout.CornerRadius(topLeft, topRight, bottomRight, bottomLeft), border.CornerRadius);
+    }
+
+    [Theory]
+    [InlineData("-1")]
+    [InlineData("8,-1,0,0")]
+    [InlineData("1,2")]
+    [InlineData("1,2,3")]
+    [InlineData("1,2,3,4,5")]
+    [InlineData("big")]
+    public void SourceGeneratorReportsInvalidCornerRadiusValues(string value)
+    {
+        GeneratorRunResult result = RunGenerator("BadCornerRadius.crn", $"<Border CornerRadius=\"{value}\" />", out _);
+
+        AssertDiagnostic(result, "CERNEALAUI004", "BadCornerRadius.crn");
+        Assert.Empty(result.GeneratedSources);
+    }
+
     [Fact]
     public void SourceGeneratorEmitsAllNamedColorsThroughColorApi()
     {

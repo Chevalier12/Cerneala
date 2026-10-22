@@ -118,6 +118,8 @@ public sealed partial class UiMarkupGenerator
                 MarkupValueKind.PositiveFloat => PositiveFloat(elementName, propertyName, attribute),
                 MarkupValueKind.Thickness => Thickness(elementName, propertyName, attribute),
                 MarkupValueKind.NonNegativeThickness => NonNegativeThickness(elementName, propertyName, attribute),
+                MarkupValueKind.CornerRadius => CornerRadius(elementName, propertyName, attribute, nonNegative: false),
+                MarkupValueKind.NonNegativeCornerRadius => CornerRadius(elementName, propertyName, attribute, nonNegative: true),
                 MarkupValueKind.LayoutPoint => LayoutPoint(elementName, propertyName, attribute),
                 MarkupValueKind.DrawPoint => DrawPoint(elementName, propertyName, attribute),
                 MarkupValueKind.DrawPointList => DrawPointList(elementName, propertyName, attribute),
@@ -355,6 +357,29 @@ public sealed partial class UiMarkupGenerator
             }
 
             return Invalid(attribute, elementName, propertyName, value);
+        }
+
+        // One value for all four corners, or topLeft, topRight, bottomRight, bottomLeft. Any other count is invalid.
+        private string? CornerRadius(string elementName, string propertyName, MarkupAttribute attribute, bool nonNegative)
+        {
+            string value = attribute.Value;
+            string[] parts = value.Split(',').Select(part => part.Trim()).ToArray();
+            if (parts.Length != 1 && parts.Length != 4)
+            {
+                return Invalid(attribute, elementName, propertyName, value);
+            }
+
+            string?[] corners = parts
+                .Select(part => nonNegative
+                    ? NonNegativeFloatPart(elementName, propertyName, attribute, part)
+                    : FloatPart(elementName, propertyName, attribute, part))
+                .ToArray();
+            if (corners.Any(corner => corner is null))
+            {
+                return null;
+            }
+
+            return "new global::Cerneala.UI.Layout.CornerRadius(" + string.Join(", ", corners) + ")";
         }
 
         private string? LayoutPoint(string elementName, string propertyName, MarkupAttribute attribute)

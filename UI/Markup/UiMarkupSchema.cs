@@ -22,10 +22,11 @@ public static class UiMarkupSchema
                 () => new StackPanel(),
                 AddPanelChild)))
             .Register(WithControlProperties(new UiMarkupElementRegistration(
-                "Border",
-                () => new Border(),
-                (element, child) => ((Border)element).Child = child,
-                nameof(Border.Child))))
+                    "Border",
+                    () => new Border(),
+                    (element, child) => ((Border)element).Child = child,
+                    nameof(Border.Child))
+                .RegisterProperty(new UiMarkupPropertyRegistration(nameof(Border.CornerRadius), (element, value) => ((Border)element).CornerRadius = ParseCornerRadius(value)))))
             .Register(WithControlProperties(new UiMarkupElementRegistration(
                     "Button",
                     () => new Button(),
@@ -98,6 +99,17 @@ public static class UiMarkupSchema
             1 => new Thickness(ParseFloat(parts[0])),
             4 => new Thickness(ParseFloat(parts[0]), ParseFloat(parts[1]), ParseFloat(parts[2]), ParseFloat(parts[3])),
             _ => throw new FormatException("Thickness must use one value or four comma-separated values.")
+        };
+    }
+
+    private static CornerRadius ParseCornerRadius(string value)
+    {
+        string[] parts = value.Split(',', StringSplitOptions.TrimEntries);
+        return parts.Length switch
+        {
+            1 => new CornerRadius(ParseFloat(parts[0])),
+            4 => new CornerRadius(ParseFloat(parts[0]), ParseFloat(parts[1]), ParseFloat(parts[2]), ParseFloat(parts[3])),
+            _ => throw new FormatException("CornerRadius must use one value or four comma-separated values.")
         };
     }
 

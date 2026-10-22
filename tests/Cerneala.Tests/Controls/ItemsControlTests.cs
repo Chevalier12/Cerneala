@@ -1726,7 +1726,8 @@ public sealed class ItemsControlTests
         Assert.Equal(0, commands.IndexOf(fill));
         DrawCommand border = Assert.Single(commands, command => ReferenceEquals(command.Brush, blue));
         Assert.Equal(DrawCommandKind.DrawRectangle, border.Kind);
-        Assert.Equal(new DrawRect(3, 4, 40, 30), border.Rect);
+        // The border is painted inside the arranged bounds: a centred pen of thickness 2 on the bounds deflated by 1.
+        Assert.Equal(new DrawRect(4, 5, 38, 28), border.Rect);
         Assert.Equal(new LayoutRect(15, 16, 16, 6), control.ItemsPresenter.ArrangedBounds);
         Assert.Equal(15, text.ArrangedBounds.X);
         Assert.Equal(16, text.ArrangedBounds.Y);
