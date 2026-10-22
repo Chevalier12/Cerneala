@@ -124,8 +124,11 @@ public abstract class TextElement : UiObject, IUiPropertyOwner
         // A write or a clear that changes the effective value is reported through OnPropertyInvalidated. One that keeps the
         // value but changes its source still changes whether this element sets the property (IsSet), and so what the
         // element takes from its parent: a local value equal to the default stops the inheritance, and clearing it
-        // restores the inheritance.
-        if (mutation.OldEffectiveSource == mutation.NewEffectiveSource ||
+        // restores the inheritance. A framework default equal to the default keeps the source at Default, but stops the
+        // inheritance too when no other source has a value.
+        bool frameworkDefaultWrite = mutation.MutatingSource == UiPropertyValueSource.Default &&
+            mutation.NewEffectiveSource == UiPropertyValueSource.Default;
+        if ((mutation.OldEffectiveSource == mutation.NewEffectiveSource && !frameworkDefaultWrite) ||
             !mutation.Property.AreEqualUntyped(mutation.OldEffectiveValue, mutation.NewEffectiveValue))
         {
             return;

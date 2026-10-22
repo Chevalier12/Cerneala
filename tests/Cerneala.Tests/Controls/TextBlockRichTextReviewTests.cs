@@ -132,6 +132,23 @@ public sealed class TextBlockRichTextReviewTests
         Assert.True(textBlock.DirtyState.Has(InvalidationFlags.Render));
     }
 
+    [Fact]
+    public void FrameworkDefaultEqualToTheDefaultOnAnInlineMakesItStopInheritingTheTextBlockValue()
+    {
+        TextBlock textBlock = CreateTextBlock(string.Empty);
+        textBlock.FontSize = 20;
+        Run run = new("abcd");
+        textBlock.Inlines.Add(run);
+        LayoutSize inherited = Measure(textBlock, 1000);
+        LayoutSize atSixteen = Measure(CreateTextBlock("abcd"), 1000);
+
+        run.SetFrameworkDefault(TextElement.FontSizeProperty, 16f);
+        LayoutSize afterWrite = Measure(textBlock, 1000);
+
+        Assert.True(inherited.Width > atSixteen.Width);
+        Assert.Equal(atSixteen, afterWrite);
+    }
+
     // 5. Justify keeps the decoration of a run continuous over the justification gap.
 
     [Fact]

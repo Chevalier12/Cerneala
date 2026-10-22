@@ -72,6 +72,19 @@ public class UiObject
                 coerced,
                 !EqualityComparer<T>.Default.Equals(value, (T)coerced!));
         }
+        else
+        {
+            NotifyPropertyMutated(
+                property,
+                UiPropertyValueSource.Default,
+                oldValue,
+                oldSource,
+                newValue,
+                GetValueSource(property),
+                oldValue,
+                coerced,
+                !EqualityComparer<T>.Default.Equals(value, (T)coerced!));
+        }
     }
 
     internal bool HasFrameworkDefault(UiProperty property)
