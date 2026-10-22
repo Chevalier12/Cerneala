@@ -12,11 +12,7 @@ public sealed class PrismOuterGlowLabViewTests : IDisposable
 {
     public PrismOuterGlowLabViewTests()
     {
-        Application.ResetForTesting();
-        WindowApplicationRuntime.ResetForTesting();
-        WindowApplicationRuntime runtime = WindowApplicationRuntime.CurrentOrDefault;
-        App app = new();
-        app.Install(runtime);
+        PresentationTestApplication.Install();
     }
 
     public void Dispose()

@@ -25,11 +25,7 @@ public sealed class AspectChapterViewTests : IDisposable
 {
     public AspectChapterViewTests()
     {
-        Application.ResetForTesting();
-        WindowApplicationRuntime.ResetForTesting();
-        WindowApplicationRuntime runtime = WindowApplicationRuntime.CurrentOrDefault;
-        App app = new();
-        app.Install(runtime);
+        PresentationTestApplication.Install();
     }
 
     public void Dispose()
@@ -121,10 +117,17 @@ public sealed class AspectChapterViewTests : IDisposable
             <= chrome.ArrangedBounds.X + chrome.ArrangedBounds.Width - chrome.BorderThickness.Right - 8);
     }
 
-    [Fact]
-    public async Task BooleanPropertyEditorsReceiveTheApplicationCheckBoxAspect()
+    [Theory]
+    [InlineData(1070, 726)]
+    // A shorter window, where the ClipToBounds row starts below the visible list, as it does at 1070x726 once one more property is registered on Control (issue #738).
+    [InlineData(1070, 660)]
+    public async Task BooleanPropertyEditorsReceiveTheApplicationCheckBoxAspect(float width, float height)
     {
-        UIRoot root = AttachStudio(out AspectChapterView view);
+        UIRoot root = AttachStudio(out AspectChapterView view, width, height);
+        // As a user who types the property name in the search box, so the row is in view whatever else is registered on the element types (issue #738).
+        view.FilterPropertyForTests(UIElement.ClipToBoundsProperty.Name);
+        root.ProcessFrame();
+        root.ProcessFrame();
         CheckBox checkBox = Assert.IsAssignableFrom<CheckBox>(PropertyRow(view, UIElement.ClipToBoundsProperty).Editor);
         checkBox.ApplyTemplate();
         Border indicator = Assert.IsType<Border>(
