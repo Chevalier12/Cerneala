@@ -1902,6 +1902,27 @@ public sealed class ComboBoxTests
         Assert.Equal("Search label", comboBox.Text);
     }
 
+    [Fact]
+    public void FrameworkDefaultTextOverridesItemFallbackText()
+    {
+        ComboBoxItem item = new() { Content = "Visible label" };
+        item.SetFrameworkDefault(TextSearch.TextProperty, "Search label");
+        ComboBox comboBox = new()
+        {
+            IsEditable = true,
+            IsTextFilterEnabled = false
+        };
+        comboBox.SetItems(new[] { item });
+        comboBox.ApplyTemplate();
+        TextBox editor = Assert.IsType<TextBox>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_EditableTextBox"]);
+
+        editor.ReceiveTextInput("Sea");
+
+        Assert.Equal(0, comboBox.SelectedIndex);
+        Assert.Equal("Search label", comboBox.Text);
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]

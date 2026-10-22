@@ -113,11 +113,6 @@ public abstract class TextElement : UiObject, IUiPropertyOwner
         };
     }
 
-    internal bool IsSet(UiProperty property)
-    {
-        return GetValueSource(property) != UiPropertyValueSource.Default || HasFrameworkDefault(property);
-    }
-
     public void OnPropertyInvalidated(UiPropertyChangedEventArgs args, UiPropertyOptions options)
     {
         ArgumentNullException.ThrowIfNull(args);

@@ -79,6 +79,13 @@ public class UiObject
         return propertyStore.HasFrameworkDefault(property);
     }
 
+    // True when this object sets the property: a value at a concrete source, or a framework default. GetValueSource
+    // reports Default for a framework default too, so it alone cannot tell a starting value from no value.
+    internal bool IsSet(UiProperty property)
+    {
+        return GetValueSource(property) != UiPropertyValueSource.Default || HasFrameworkDefault(property);
+    }
+
     public T GetValue<T>(UiProperty<T> property)
     {
         ArgumentNullException.ThrowIfNull(property);
