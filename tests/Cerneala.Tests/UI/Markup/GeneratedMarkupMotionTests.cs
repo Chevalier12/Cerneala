@@ -1,6 +1,10 @@
+using Cerneala.Drawing;
+using Cerneala.UI.Controls;
+using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Data;
 using Cerneala.UI.Markup;
+using Cerneala.UI.Media;
 using Cerneala.UI.Layout.Panels;
 using Cerneala.UI.Motion;
 using Cerneala.UI.Motion.Core;
@@ -379,6 +383,104 @@ public sealed class GeneratedMarkupMotionTests
         Assert.True(high.IsActive);
         Assert.Equal(0f, binding.Value.Target);
         Assert.Equal(current, binding.Value.Current);
+    }
+
+    [Fact]
+    public void SetMotionPropertyOnCollapsedTargetKeepsTheValueWhenTheTargetIsShown()
+    {
+        UIRoot root = new();
+        Border owner = new();
+        Border target = new() { Visibility = Visibility.Collapsed };
+        owner.VisualChildren.Add(target);
+        using IDisposable session = GeneratedMarkup.AttachMotionSession(owner);
+        root.VisualChildren.Add(owner);
+        root.ProcessFrame();
+
+        GeneratedMarkup.SetMotionProperty(session, target, UIElement.OpacityProperty, 0.3f);
+        target.Visibility = Visibility.Visible;
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.Equal(0.3f, target.Opacity);
+        Assert.Equal(UiPropertyValueSource.Animation, target.GetValueSource(UIElement.OpacityProperty));
+    }
+
+    [Fact]
+    public void SetMotionPropertyOnTargetOutsideTheOwnerRootWritesLocal()
+    {
+        UIRoot root = new();
+        Border owner = new();
+        Border detached = new();
+        using IDisposable session = GeneratedMarkup.AttachMotionSession(owner);
+        root.VisualChildren.Add(owner);
+        root.ProcessFrame();
+
+        Exception? error = Record.Exception(
+            () => GeneratedMarkup.SetMotionProperty(session, detached, UIElement.OpacityProperty, 0.3f));
+
+        Assert.Null(error);
+        Assert.Equal(0.3f, detached.Opacity);
+        Assert.Equal(UiPropertyValueSource.Local, detached.GetValueSource(UIElement.OpacityProperty));
+    }
+
+    [Fact]
+    public void SetMotionPropertyValueSurvivesOwnerHideAndShow()
+    {
+        UIRoot root = new();
+        Border owner = new();
+        Border target = new();
+        owner.VisualChildren.Add(target);
+        using IDisposable session = GeneratedMarkup.AttachMotionSession(owner);
+        root.VisualChildren.Add(owner);
+        root.ProcessFrame();
+        SolidColorBrush red = new(Color.Red);
+
+        GeneratedMarkup.SetMotionProperty<Brush?>(session, target, Control.BackgroundProperty, red);
+        root.ProcessFrame();
+        owner.Visibility = Visibility.Collapsed;
+        root.ProcessFrame();
+        owner.Visibility = Visibility.Visible;
+        root.ProcessFrame();
+
+        Assert.Same(red, target.Background);
+        Assert.Equal(UiPropertyValueSource.Animation, target.GetValueSource(Control.BackgroundProperty));
+    }
+
+    [Fact]
+    public void SetMotionPropertyAfterAnimationSurvivesOwnerHide()
+    {
+        TestMotionClock clock = new();
+        UIRoot root = new(motionClock: clock);
+        Border owner = new();
+        Border target = new();
+        owner.VisualChildren.Add(target);
+        using IDisposable session = GeneratedMarkup.AttachMotionSession(owner);
+        root.VisualChildren.Add(owner);
+        root.ProcessFrame();
+
+        GeneratedMarkup.StartMotionProperty(
+            session,
+            target,
+            UIElement.OpacityProperty,
+            false,
+            default,
+            false,
+            0.5f,
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)),
+            new MotionPropertyStartOptions());
+        root.ProcessFrame();
+        clock.Advance(TimeSpan.FromMilliseconds(50));
+        root.ProcessFrame();
+
+        GeneratedMarkup.SetMotionProperty(session, target, UIElement.OpacityProperty, 0.2f);
+        root.ProcessFrame();
+        owner.Visibility = Visibility.Collapsed;
+        root.ProcessFrame();
+        owner.Visibility = Visibility.Visible;
+        root.ProcessFrame();
+
+        Assert.Equal(0.2f, target.Opacity);
+        Assert.Equal(UiPropertyValueSource.Animation, target.GetValueSource(UIElement.OpacityProperty));
     }
 
     private static MotionHandle StartHalfwayReducedMotionOpacity(UIRoot root, TestMotionClock clock, UIElement element)

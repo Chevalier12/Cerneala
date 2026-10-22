@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Cerneala.UI.Core;
 using Cerneala.UI.Data;
 using Cerneala.UI.Elements;
@@ -95,6 +96,18 @@ public static partial class GeneratedMarkup
             to,
             spec,
             options);
+    }
+
+    // Immediate @set of a property that Motion can animate: the value is held
+    // as the property's Motion value, so a later @animate continues from it. A
+    // target outside the owner's root gets a Local write instead.
+    public static void SetMotionProperty<T>(
+        IDisposable session,
+        UIElement target,
+        UiProperty<T> property,
+        T value)
+    {
+        GetMotionSession(session).SetProperty(target, property, value);
     }
 
     public static MotionHandle StartBoundMotionProperty<T>(
@@ -211,6 +224,20 @@ public static partial class GeneratedMarkup
 
         public bool CanStartExecution => !disposed && CanStart;
 
+        // True only while the session can start and the target is attached to the
+        // owner's root; motion is then that root's Motion system.
+        private bool TryGetTargetMotion(UIElement target, [NotNullWhen(true)] out MotionSystem? motion)
+        {
+            if (CanStart && owner.Root is { } root && ReferenceEquals(target.Root, root))
+            {
+                motion = root.Motion;
+                return true;
+            }
+
+            motion = null;
+            return false;
+        }
+
         public void Attach()
         {
             if (attached || disposed)
@@ -323,14 +350,11 @@ public static partial class GeneratedMarkup
             ArgumentNullException.ThrowIfNull(target);
             ArgumentNullException.ThrowIfNull(property);
             ArgumentNullException.ThrowIfNull(options);
-            if (!CanStart ||
-                owner.Root is null ||
-                !ReferenceEquals(target.Root, owner.Root))
+            if (!TryGetTargetMotion(target, out MotionSystem? motion))
             {
                 throw new InvalidOperationException("Motion targets must be attached to the session owner's UIRoot.");
             }
 
-            MotionSystem motion = owner.Root.Motion;
             MotionPropertyBinding<T> binding = motion.Properties.GetOrCreateBinding(motion, target, property);
             bindings.Add(binding);
             if (hasFrom)
@@ -341,6 +365,30 @@ public static partial class GeneratedMarkup
             MotionSpec<T> effectiveSpec = spec ?? (MotionSpec<T>)motion.AnimatableProperties.Get(property).DefaultSpec;
             T destination = toCurrent ? binding.Value.Current : to;
             return binding.AnimateTo(destination, effectiveSpec, options);
+        }
+
+        public void SetProperty<T>(UIElement target, UiProperty<T> property, T value)
+        {
+            ArgumentNullException.ThrowIfNull(target);
+            ArgumentNullException.ThrowIfNull(property);
+            if (!CanStart)
+            {
+                throw new InvalidOperationException("Motion targets must be attached to the session owner's UIRoot.");
+            }
+
+            if (!TryGetTargetMotion(target, out MotionSystem? motion))
+            {
+                // A target outside the owner's root has no Motion system to hold the value.
+                target.SetValue(property, value);
+                return;
+            }
+
+            MotionPropertyBinding<T> binding = motion.Properties.GetOrCreateBinding(motion, target, property);
+            // The held value belongs to this @set, not to the session: canceling the
+            // session (owner hidden or detached, Aspect replaced) must not clear it.
+            // A later @animate adds the binding again through StartProperty.
+            bindings.Remove(binding);
+            binding.JumpToAndHold(value);
         }
 
         public MotionHandle StartBoundProperty<T>(
@@ -359,12 +407,11 @@ public static partial class GeneratedMarkup
             ArgumentNullException.ThrowIfNull(observation);
             ArgumentNullException.ThrowIfNull(projection);
             ArgumentNullException.ThrowIfNull(options);
-            if (!CanStart || owner.Root is null || !ReferenceEquals(target.Root, owner.Root))
+            if (!TryGetTargetMotion(target, out MotionSystem? motion))
             {
                 throw new InvalidOperationException("Motion targets must be attached to the session owner's UIRoot.");
             }
 
-            MotionSystem motion = owner.Root.Motion;
             MotionPropertyBinding<T> binding = motion.Properties.GetOrCreateBinding(motion, target, property);
             bindings.Add(binding);
             MotionSpec<T> effectiveSpec = spec ?? (MotionSpec<T>)motion.AnimatableProperties.Get(property).DefaultSpec;
@@ -455,7 +502,7 @@ public static partial class GeneratedMarkup
             ArgumentNullException.ThrowIfNull(getValue);
             ArgumentNullException.ThrowIfNull(setValue);
             ArgumentNullException.ThrowIfNull(options);
-            if (!CanStart || owner.Root is null || !ReferenceEquals(target.Root, owner.Root))
+            if (!TryGetTargetMotion(target, out MotionSystem? motion))
             {
                 throw new InvalidOperationException(
                     "Prism Motion targets must be attached to the renderable session owner's UIRoot.");
@@ -478,7 +525,7 @@ public static partial class GeneratedMarkup
 
                 typed.Dispose(restoreBase: false);
                 PrismMotionBinding<T> replacement = CreatePrismBinding(
-                    owner.Root.Motion,
+                    motion,
                     target,
                     instance,
                     getValue,
@@ -489,7 +536,7 @@ public static partial class GeneratedMarkup
             }
 
             PrismMotionBinding<T> binding = CreatePrismBinding(
-                owner.Root.Motion,
+                motion,
                 target,
                 instance,
                 getValue,

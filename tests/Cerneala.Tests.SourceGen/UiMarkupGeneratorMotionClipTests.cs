@@ -34,8 +34,74 @@ public sealed partial class UiMarkupGeneratorTests
         AssertNoGeneratorOrCompilationErrors(result, compilation);
         string generated = SingleGeneratedSource(result);
         Assert.Contains("Status.SetValue(global::Cerneala.UI.Controls.TextBlock.TextProperty, \"ARMING\")", generated, StringComparison.Ordinal);
-        Assert.Contains("SetValue(global::Cerneala.UI.Elements.UIElement.OpacityProperty, 0.5f)", generated, StringComparison.Ordinal);
+        Assert.Contains("GeneratedMarkup.SetMotionProperty(", generated, StringComparison.Ordinal);
+        Assert.Contains("UIElement.OpacityProperty, 0.5f)", generated, StringComparison.Ordinal);
+        Assert.DoesNotContain("SetValue(global::Cerneala.UI.Elements.UIElement.OpacityProperty", generated, StringComparison.Ordinal);
         Assert.Contains("MarkupMotionExecution.Sequence", generated, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void MotionSetFollowedByAnimateOfSamePropertyAnimatesFromTheSetValue()
+    {
+        // The issue's markup (#730); @when makes the document reactive, so Opacity="1" is a MarkupBase value.
+        const string markup = """
+            <Border Opacity="1" Aspect="$Entrance">
+              <Border.Resources>
+                <MotionClip Name="Replay" TargetType="Border">
+                  @sequence
+                  {
+                    @set { $Status.Text = "ARMING"; Opacity = 0.2; }
+                    @animate with Tween(100ms, Linear) { @to { Opacity = 1; } }
+                  }
+                </MotionClip>
+                <Aspect Name="Entrance" TargetType="Border">
+                  @handle Active;
+                  @on Loaded { @run $Replay as Active; }
+                  @when $self.IsEnabled { @if value == false { @cancel Active; } }
+                </Aspect>
+              </Border.Resources>
+              <TextBlock Name="Status" />
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGenerator("MotionSetThenAnimate.crn", markup, out Compilation compilation);
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        using System.IO.MemoryStream stream = new();
+        Microsoft.CodeAnalysis.Emit.EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+        Cerneala.UI.Controls.Border border = Assert.IsType<Cerneala.UI.Controls.Border>(
+            InvokeCreate(stream, "Cerneala.GeneratedUi.MotionSetThenAnimateFactory"));
+        Cerneala.UI.Controls.TextBlock status = Assert.IsType<Cerneala.UI.Controls.TextBlock>(border.Child);
+        ManualClock clock = new();
+        Cerneala.UI.Elements.UIRoot root = new(100, 100, motionClock: clock);
+        root.VisualChildren.Add(border);
+        root.ProcessFrame();
+
+        clock.Advance(TimeSpan.FromMilliseconds(50));
+        root.ProcessFrame();
+
+        Assert.InRange(border.Opacity, 0.55f, 0.65f);
+        Assert.Equal(
+            Cerneala.UI.Core.UiPropertyValueSource.Animation,
+            border.GetValueSource(Cerneala.UI.Elements.UIElement.OpacityProperty));
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        root.ProcessFrame();
+
+        Assert.Equal(1f, border.Opacity, 0.001f);
+        Assert.False(root.Motion.HasActiveMotion);
+        Assert.Equal("ARMING", status.Text);
+        Assert.Equal(
+            Cerneala.UI.Core.UiPropertyValueSource.Local,
+            status.GetValueSource(Cerneala.UI.Controls.TextBlock.TextProperty));
+
+        border.Opacity = 0.5f;
+        root.ProcessFrame();
+
+        Assert.Equal(0.5f, border.Opacity, 0.001f);
+        Assert.Equal(
+            Cerneala.UI.Core.UiPropertyValueSource.Local,
+            border.GetValueSource(Cerneala.UI.Elements.UIElement.OpacityProperty));
     }
 
     [Theory]
