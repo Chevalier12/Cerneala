@@ -75,17 +75,45 @@ meter.ClearValue(MeterObject.CountProperty, UiPropertyValueSource.Local);
 effectiveValue = meter.GetValue(MeterObject.CountProperty); // 2
 ```
 
+Give a custom control a starting value that markup, Aspects and C# values override:
+
+```csharp
+using Cerneala.UI.Controls;
+using Cerneala.UI.Core;
+using Cerneala.UI.Elements;
+
+public sealed class MyCard : Border
+{
+    public MyCard()
+    {
+        SetFrameworkDefault(OpacityProperty, 0.9f);
+    }
+}
+
+MyCard card = new();
+float opacity = card.Opacity;                                            // 0.9
+UiPropertyValueSource source = card.GetValueSource(UIElement.OpacityProperty); // Default
+
+card.SetValue(UIElement.OpacityProperty, 0.5f, UiPropertyValueSource.MarkupBase); // what <local:MyCard Opacity="0.5" /> writes
+opacity = card.Opacity;                                                  // 0.5, source MarkupBase
+
+card.ClearValue(UIElement.OpacityProperty, UiPropertyValueSource.MarkupBase);
+opacity = card.Opacity;                                                  // 0.9 again, source Default
+```
+
 ## Remarks
 
 Derived objects can enforce mutation affinity before their property store is read or changed. Attached `UIElement` instances use this hook to reject typed and untyped `SetValue` and `ClearValue` calls from any thread other than the owning root's Relay thread; plain `UiObject` instances retain their existing unrestricted behavior.
 
 `UiObject` is the base for objects that participate in Cerneala's UI property system. It stores values in a private `UiPropertyStore` and resolves an effective value from multiple `UiPropertyValueSource` layers.
 
-Effective values are resolved in this order, from highest to lowest priority: `Local`, `Animation`, `MarkupConditional`, `MarkupBase`, `TemplateOwnerBinding`, `AspectVisualState`, `AspectBase`, `TemplateBinding`, and `Inherited`. When no stored value exists for a property, `GetValueSource` returns `Default` and `GetValue` returns the framework default that Cerneala installed internally for that object, if any, or otherwise the property's metadata default value.
+Effective values are resolved in this order, from highest to lowest priority: `Local`, `Animation`, `MarkupConditional`, `MarkupBase`, `TemplateOwnerBinding`, `AspectVisualState`, `AspectBase`, `TemplateBinding`, and `Inherited`. When no stored value exists for a property, `GetValueSource` returns `Default` and `GetValue` returns the starting value that the object set with `SetFrameworkDefault`, if any, or otherwise the property's metadata default value.
+
+`SetFrameworkDefault` is the way a control gives a property a starting value in its constructor. It stores the value below every stored source, so a markup attribute (`MarkupBase`), an Aspect value (`AspectBase`), a binding, an animation, an inherited value and a C# value (`Local`) all win over it, and clearing them shows the starting value again, with the source `Default`. Cerneala's own controls use it, for example `CheckBox()` and `Thumb()`. Do not write a starting value with the CLR property setter in the constructor: `Opacity = 0.9f` writes a `Local` value, which is above every other source, so `<local:MyCard Opacity="0.5" />` and an Aspect value for `Opacity` are then ignored and the card stays at `0.9`. A second call for the same property replaces the earlier starting value. The value is coerced and validated as `SetValue` coerces and validates it, and `PropertyChanged` is raised, with the source `Default`, only when the effective value changes, for example when no source holds a value yet.
 
 `SetValue` coerces the supplied value through the property's metadata, validates the coerced value, stores it for the requested source, and returns the previous effective value. `ClearValue` removes the stored value for the requested source and also returns the previous effective value. Some Cerneala types also check a value against their own state before it is stored, for example `ContentControl` rejects a `Content` element that already has another parent. When a clear makes another value effective, that value is checked the same way before the store changes; if the check throws, the cleared value stays stored. `Default` is not a storable source; storing or clearing that source is rejected by the underlying store.
 
-Public `SetValue` and `ClearValue` overloads that take `UiProperty<T>` reject read-only properties with `InvalidOperationException`. Read-only properties can be changed only through a matching `UiPropertyKey<T>` overload.
+Public `SetValue` and `ClearValue` overloads that take `UiProperty<T>`, and `SetFrameworkDefault`, reject read-only properties with `InvalidOperationException`. Read-only properties can be changed only through a matching `UiPropertyKey<T>` overload.
 
 `PropertyChanged` is raised only when a set or clear operation changes the effective value according to the property's equality comparer. Derived classes can override `OnPropertyChanged` to add behavior around that event. After an effective change, if the property has invalidation options such as `AffectsMeasure`, `AffectsArrange`, `AffectsRender`, `AffectsHitTest`, `AffectsAspect`, `AffectsInputVisual`, `AffectsSemantics`, or `Inherits`, and the object implements `IUiPropertyOwner`, `OnPropertyInvalidated` is called with those options.
 
@@ -131,13 +159,15 @@ The new value is stored before `OnPropertyChanged` runs. When `OnPropertyChanged
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `OnPropertyChanged(UiPropertyChangedEventArgs args)` | `void` | Raises `PropertyChanged`. Derived classes can override this method to react to effective property changes. |
+| `SetFrameworkDefault<T>(UiProperty<T> property, T value)` | `void` | Sets the object's starting value for `property`, below every stored source. Markup, Aspect, binding, animation, inherited and local values override it, and clearing them shows it again. `protected internal`. |
 
 ## Exceptions
 
 | Member | Exception | Condition |
 | --- | --- | --- |
-| `GetValue`, `GetValueSource`, `GetSourceValue`, `SetValue`, `ClearValue` | `ArgumentNullException` | The supplied property or key is `null`. |
-| `SetValue`, `ClearValue` | `InvalidOperationException` | The overload takes `UiProperty<T>` and the property is read-only. |
+| `GetValue`, `GetValueSource`, `GetSourceValue`, `SetValue`, `ClearValue`, `SetFrameworkDefault` | `ArgumentNullException` | The supplied property or key is `null`. |
+| `SetFrameworkDefault` | `ArgumentException` | The coerced value fails validation. |
+| `SetValue`, `ClearValue`, `SetFrameworkDefault` | `InvalidOperationException` | The overload takes `UiProperty<T>` and the property is read-only. |
 | `SetValue` | `ArgumentException` | The value is not assignable to the property's value type, or the coerced value fails validation. |
 | `SetValue`, `ClearValue` | The owner's check exception, for example `InvalidOperationException` | The owner type rejects the value that would be stored or, for `ClearValue`, the value that would become effective. Nothing is stored or cleared. |
 | `SetValue`, `ClearValue`, `GetSourceValue` | `ArgumentOutOfRangeException` | The supplied source is not a defined concrete source, or is `UiPropertyValueSource.Default`. |

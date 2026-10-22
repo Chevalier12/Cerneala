@@ -40,9 +40,16 @@ public class UiObject
         }
     }
 
-    internal void SetFrameworkDefault<T>(UiProperty<T> property, T value)
+    // Stores the control's starting value below every value source, so markup, Aspect, binding, animation and local
+    // values override it, and clearing them shows it again. Protected so a control in another assembly can call it.
+    protected internal void SetFrameworkDefault<T>(UiProperty<T> property, T value)
     {
         ArgumentNullException.ThrowIfNull(property);
+        if (property.IsReadOnly)
+        {
+            throw new InvalidOperationException($"UI property '{property.DiagnosticName}' is read-only.");
+        }
+
         VerifyMutationAccess();
         T oldValue = GetValue(property);
         UiPropertyValueSource oldSource = GetValueSource(property);

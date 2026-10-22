@@ -46,6 +46,21 @@ public sealed class ReadOnlyUiPropertyTests
         Assert.Equal(7, owner.GetValue(key.Property));
     }
 
+    // SetFrameworkDefault is reachable from derived controls in any assembly, so it must not bypass the key that guards
+    // a read-only property.
+    [Fact]
+    public void FrameworkDefaultRejectsReadOnlyProperty()
+    {
+        UiPropertyKey<int> key = UiProperty<int>.RegisterReadOnly(
+            UniqueName(),
+            typeof(ReadOnlyUiPropertyTests),
+            new UiPropertyMetadata<int>(0));
+        UiObject owner = new();
+
+        Assert.Throws<InvalidOperationException>(() => owner.SetFrameworkDefault(key.Property, 5));
+        Assert.Equal((0, UiPropertyValueSource.Default), (owner.GetValue(key.Property), owner.GetValueSource(key.Property)));
+    }
+
     private static string UniqueName()
     {
         return $"{nameof(ReadOnlyUiPropertyTests)}_{Guid.NewGuid():N}";
