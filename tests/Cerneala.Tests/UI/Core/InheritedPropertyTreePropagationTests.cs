@@ -324,6 +324,75 @@ public sealed class InheritedPropertyTreePropagationTests
         Assert.Null(child.GetSourceValue(Control.FontSizeProperty, UiPropertyValueSource.Inherited));
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void LocalValueEqualToTheDefaultReachesAChildWithItsOwnStartingValueInBothOrders(bool writeBeforeAttach)
+    {
+        UIRoot root = new();
+        Control parent = new();
+        FontSizeDefaultControl child = new();
+        parent.VisualChildren.Add(child);
+        if (writeBeforeAttach)
+        {
+            parent.FontSize = 16;
+        }
+
+        root.VisualChildren.Add(parent);
+        root.ProcessFrame();
+        int parentChanges = 0;
+        parent.PropertyChanged += (_, args) =>
+        {
+            if (args.Property == Control.FontSizeProperty)
+            {
+                parentChanges++;
+            }
+        };
+        if (!writeBeforeAttach)
+        {
+            parent.FontSize = 16;
+            root.ProcessFrame();
+        }
+
+        Assert.Equal(16, child.FontSize);
+        Assert.Equal(UiPropertyValueSource.Inherited, child.GetValueSource(Control.FontSizeProperty));
+        Assert.Equal(0, parentChanges);
+    }
+
+    [Fact]
+    public void ClearingALocalValueEqualToTheDefaultGivesTheChildItsOwnStartingValueAgain()
+    {
+        UIRoot root = new();
+        Control parent = new() { FontSize = 16 };
+        FontSizeDefaultControl child = new();
+        parent.VisualChildren.Add(child);
+        root.VisualChildren.Add(parent);
+        root.ProcessFrame();
+
+        parent.ClearValue(Control.FontSizeProperty);
+        root.ProcessFrame();
+
+        Assert.Equal(24, child.FontSize);
+        Assert.Equal(UiPropertyValueSource.Default, child.GetValueSource(Control.FontSizeProperty));
+    }
+
+    [Fact]
+    public void FrameworkDefaultEqualToTheDefaultWrittenAfterAttachReachesAChildWithItsOwnStartingValue()
+    {
+        UIRoot root = new();
+        StartingFontSizeControl parent = new();
+        FontSizeDefaultControl child = new();
+        parent.VisualChildren.Add(child);
+        root.VisualChildren.Add(parent);
+        root.ProcessFrame();
+
+        parent.SetStartingFontSize(16);
+        root.ProcessFrame();
+
+        Assert.Equal(16, child.FontSize);
+        Assert.Equal(UiPropertyValueSource.Inherited, child.GetValueSource(Control.FontSizeProperty));
+    }
+
     [Fact]
     public void VisualContainerPropertiesDoNotInherit()
     {
@@ -635,6 +704,14 @@ public sealed class InheritedPropertyTreePropagationTests
         public FontSizeDefaultControl()
         {
             SetFrameworkDefault(FontSizeProperty, 24f);
+        }
+    }
+
+    private sealed class StartingFontSizeControl : Control
+    {
+        public void SetStartingFontSize(float value)
+        {
+            SetFrameworkDefault(FontSizeProperty, value);
         }
     }
 
