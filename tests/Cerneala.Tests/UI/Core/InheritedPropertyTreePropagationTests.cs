@@ -1,5 +1,6 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
@@ -257,6 +258,70 @@ public sealed class InheritedPropertyTreePropagationTests
 
         Assert.Same(secondForeground, child.Foreground);
         Assert.Equal(UiPropertyValueSource.Inherited, child.GetValueSource(Control.ForegroundProperty));
+    }
+
+    [Fact]
+    public void ProgressBarFrameworkDefaultForegroundPropagatesToTemplateText()
+    {
+        TextBlock? text = null;
+        ProgressBar bar = new()
+        {
+            ComponentTemplate = new ComponentTemplate<ProgressBar>("Probe", _ => text = new TextBlock { Text = "x" })
+        };
+        UIRoot root = new(200, 50);
+        root.VisualChildren.Add(bar);
+
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.NotNull(text);
+        Assert.Equal(UiPropertyValueSource.Default, bar.GetValueSource(Control.ForegroundProperty));
+        Assert.Same(bar.Foreground, text.Foreground);
+        Assert.Equal(new Color(65, 135, 230), ((SolidColorBrush)text.Foreground!).Color);
+        Assert.Equal(UiPropertyValueSource.Inherited, text.GetValueSource(Control.ForegroundProperty));
+    }
+
+    [Fact]
+    public void FrameworkDefaultFontSizePropagatesAndComesBackAfterALocalValueIsCleared()
+    {
+        UIRoot root = new();
+        FontSizeDefaultControl parent = new();
+        TextBlock child = new();
+        parent.VisualChildren.Add(child);
+        root.VisualChildren.Add(parent);
+        root.ProcessFrame();
+
+        Assert.Equal(24, child.FontSize);
+        Assert.Equal(UiPropertyValueSource.Inherited, child.GetValueSource(Control.FontSizeProperty));
+
+        parent.FontSize = 30;
+        root.ProcessFrame();
+
+        Assert.Equal(30, child.FontSize);
+
+        parent.ClearValue(Control.FontSizeProperty);
+        root.ProcessFrame();
+
+        Assert.Equal(24, child.FontSize);
+        Assert.Equal(UiPropertyValueSource.Inherited, child.GetValueSource(Control.FontSizeProperty));
+    }
+
+    [Fact]
+    public void ParentWithOnlyTheMetadataDefaultClearsTheChildInheritedValue()
+    {
+        UIRoot root = new();
+        Control parent = new() { FontSize = 20 };
+        TextBlock child = new();
+        parent.VisualChildren.Add(child);
+        root.VisualChildren.Add(parent);
+        root.ProcessFrame();
+
+        parent.ClearValue(Control.FontSizeProperty);
+        root.ProcessFrame();
+
+        Assert.Equal(Control.FontSizeProperty.Metadata.DefaultValue, child.FontSize);
+        Assert.Equal(UiPropertyValueSource.Default, child.GetValueSource(Control.FontSizeProperty));
+        Assert.Null(child.GetSourceValue(Control.FontSizeProperty, UiPropertyValueSource.Inherited));
     }
 
     [Fact]
@@ -563,6 +628,14 @@ public sealed class InheritedPropertyTreePropagationTests
     {
         source.DataContext = "row";
         source.SetValue(Control.FontSizeProperty, 30f);
+    }
+
+    private sealed class FontSizeDefaultControl : Control
+    {
+        public FontSizeDefaultControl()
+        {
+            SetFrameworkDefault(FontSizeProperty, 24f);
+        }
     }
 
     private sealed class InheritanceCountingElement : UIElement

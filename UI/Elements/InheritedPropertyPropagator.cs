@@ -59,8 +59,9 @@ public sealed class InheritedPropertyPropagator
         foreach (UiProperty property in UiPropertyRegistry.GetPropertiesWithOptions(UiPropertyOptions.Inherits))
         {
             object? oldEffective = child.GetValue(property);
-            UiPropertyValueSource parentSource = parent.GetValueSource(property);
-            if (parentSource == UiPropertyValueSource.Default)
+            // A framework default counts as a value the parent sets, as a style value does: it is passed down. Only a
+            // parent whose value is the metadata default leaves the child without an inherited value.
+            if (!parent.IsSet(property))
             {
                 child.ClearValueUntyped(property, UiPropertyValueSource.Inherited);
             }
