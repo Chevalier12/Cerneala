@@ -89,6 +89,8 @@ Component-template and component-template-key changes affect measure, arrange, r
 
 `Padding` and `BorderThickness` reject negative, `NaN`, and infinite side values. `FontFamily` rejects `null`, empty, and whitespace-only values. `FontSize` must be finite and greater than zero. `FontWeight`, `FontStyle`, and `FontStretch` reject values that are not defined members of their enum with `ArgumentException`; for example `control.FontWeight = (FontWeight)450` throws.
 
+A derived control gives a property its starting value in its constructor with `UiObject.SetFrameworkDefault`, not with the CLR property setter. For example, `SetFrameworkDefault(BorderThicknessProperty, new Thickness(1))` in `public MyControl()` lets `<local:MyControl BorderThickness="3" />` and an Aspect value for `BorderThickness` win, and clearing them shows `1` again. `BorderThickness = new Thickness(1)` in the constructor instead writes a `Local` value, which wins over markup and Aspect values, so the control keeps `1`. `CheckBox`, `RadioButton` and `Button` set their defaults this way.
+
 `SetAspectVariant<TControl, TValue>` first verifies that the receiver is assignable to the key's declared owner type, then updates `AspectVariants`. When the value actually changes, the control invalidates aspect and render state. Applying a key owned by an unrelated control type throws instead of storing nominally typed metadata on the wrong component.
 
 ## Constructors

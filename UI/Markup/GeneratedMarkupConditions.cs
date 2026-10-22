@@ -748,8 +748,9 @@ public static partial class GeneratedMarkup
                     unsubscribeContext.Add(() => observed.PropertyChanged -= OnContextPropertyChanged);
                 }
 
+                // An element's own DataContext: a value at a source other than Inherited, or a framework default.
                 UiPropertyValueSource source = observed.GetValueSource(UIElement.DataContextProperty);
-                if (source is not UiPropertyValueSource.Default and not UiPropertyValueSource.Inherited)
+                if (source != UiPropertyValueSource.Inherited && observed.IsSet(UIElement.DataContextProperty))
                 {
                     return observed.DataContext;
                 }

@@ -65,7 +65,7 @@ internal sealed class ItemTextSearch
     // item's display value, as plain text.
     public static string GetItemText(ItemsControl owner, object? item)
     {
-        if (item is UiObject uiObject && uiObject.GetValueSource(TextSearch.TextProperty) != UiPropertyValueSource.Default)
+        if (item is UiObject uiObject && uiObject.IsSet(TextSearch.TextProperty))
         {
             return TextSearch.GetText(uiObject);
         }

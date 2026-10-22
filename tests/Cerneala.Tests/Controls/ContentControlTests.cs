@@ -320,6 +320,24 @@ public sealed class ContentControlTests
     }
 
     [Fact]
+    public void FrameworkDefaultWhoseElementAttachThrowsRestoresThePreviousContentAndOwnership()
+    {
+        UIRoot root = new(200, 200);
+        ContentControl control = new();
+        root.VisualChildren.Add(control);
+        root.ProcessFrame();
+        Border oldChild = new();
+        control.SetFrameworkDefault(ContentControl.ContentProperty, (object?)oldChild);
+        ThrowingAttachElement failed = new();
+
+        Assert.Throws<InvalidOperationException>(
+            () => control.SetFrameworkDefault(ContentControl.ContentProperty, (object?)failed));
+
+        AssertPreviousOwnershipRestored(control, oldChild, failed);
+        Assert.Equal(UiPropertyValueSource.Default, control.GetValueSource(ContentControl.ContentProperty));
+    }
+
+    [Fact]
     public void ClearValueWhoseRevealedElementAttachThrowsRestoresThePreviousContentAndOwnership()
     {
         UIRoot root = new(200, 200);

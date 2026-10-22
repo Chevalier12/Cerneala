@@ -40,9 +40,16 @@ public class UiObject
         }
     }
 
-    internal void SetFrameworkDefault<T>(UiProperty<T> property, T value)
+    // Stores the control's starting value below every value source, so markup, Aspect, binding, animation and local
+    // values override it, and clearing them shows it again. Protected so a control in another assembly can call it.
+    protected internal void SetFrameworkDefault<T>(UiProperty<T> property, T value)
     {
         ArgumentNullException.ThrowIfNull(property);
+        if (property.IsReadOnly)
+        {
+            throw new InvalidOperationException($"UI property '{property.DiagnosticName}' is read-only.");
+        }
+
         VerifyMutationAccess();
         T oldValue = GetValue(property);
         UiPropertyValueSource oldSource = GetValueSource(property);
@@ -65,11 +72,31 @@ public class UiObject
                 coerced,
                 !EqualityComparer<T>.Default.Equals(value, (T)coerced!));
         }
+        else
+        {
+            NotifyPropertyMutated(
+                property,
+                UiPropertyValueSource.Default,
+                oldValue,
+                oldSource,
+                newValue,
+                GetValueSource(property),
+                oldValue,
+                coerced,
+                !EqualityComparer<T>.Default.Equals(value, (T)coerced!));
+        }
     }
 
     internal bool HasFrameworkDefault(UiProperty property)
     {
         return propertyStore.HasFrameworkDefault(property);
+    }
+
+    // True when this object sets the property: a value at a concrete source, or a framework default. GetValueSource
+    // reports Default for a framework default too, so it alone cannot tell a starting value from no value.
+    internal bool IsSet(UiProperty property)
+    {
+        return GetValueSource(property) != UiPropertyValueSource.Default || HasFrameworkDefault(property);
     }
 
     public T GetValue<T>(UiProperty<T> property)
