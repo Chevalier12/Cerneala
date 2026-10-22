@@ -67,6 +67,25 @@ public sealed class GeneratedMarkupObservationTests
     }
 
     [Fact]
+    public void DataPathReadsTheFrameworkDefaultDataContextOfAParent()
+    {
+        EndpointRoot context = new(new EndpointChild("first"));
+        StackPanel parent = new();
+        parent.SetFrameworkDefault(UIElement.DataContextProperty, (object?)context);
+        UIElement target = new();
+        parent.Children.Add(target);
+        MarkupObservation observation = GeneratedMarkup.ObserveDataPath(
+            target,
+            new MarkupDataPathSegment("Child", value => ((EndpointRoot)value!).Child));
+
+        observation.Start();
+
+        Assert.True(observation.IsResolved);
+        Assert.Same(context.Child, observation.Value);
+        observation.Stop();
+    }
+
+    [Fact]
     public void DataPathSingleSegmentReadsWritesAndRebindsRoot()
     {
         EndpointChild firstChild = new("first");
