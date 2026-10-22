@@ -53,7 +53,7 @@ public class ListBox : Selector
 
     public ListBox()
     {
-        ItemsPanel = new StackPanel();
+        SetFrameworkDefault(ItemsPanelProperty, new StackPanel());
         Handlers.AddHandler(InputEvents.KeyDownEvent, OnKeyDown);
         Handlers.AddHandler(InputEvents.TextInputEvent, OnTextInput);
         SetFrameworkDefault(ComponentTemplateProperty, ListBoxTemplates.Default);

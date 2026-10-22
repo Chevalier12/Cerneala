@@ -503,13 +503,13 @@ public class TextBox : Control, ITimeSensitiveRenderElement, IPointerDragSource,
 
     private void InitializeTextInputDefaults()
     {
-        Focusable = true;
-        IsTabStop = true;
+        SetFrameworkDefault(FocusableProperty, true);
+        SetFrameworkDefault(IsTabStopProperty, true);
         SetFrameworkDefault(ComponentTemplateProperty, TextInputTemplates.TextBox);
         SetFrameworkDefault(PaddingProperty, new Thickness(4, 2, 4, 2));
         SetFrameworkDefault(BorderThicknessProperty, new Thickness(1));
         SetFrameworkDefault(BorderBrushProperty, new SolidColorBrush(new Color(120, 130, 145)));
         SetFrameworkDefault(BackgroundProperty, new SolidColorBrush(Color.White));
-        Cursor = Cerneala.UI.Input.Cursor.IBeam;
+        SetFrameworkDefault(CursorProperty, Cerneala.UI.Input.Cursor.IBeam);
     }
 }

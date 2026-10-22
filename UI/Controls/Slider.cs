@@ -24,8 +24,8 @@ public class Slider : RangeBase
     // As WPF's Slider, which is focusable and a tab stop.
     public Slider()
     {
-        Focusable = true;
-        IsTabStop = true;
+        SetFrameworkDefault(FocusableProperty, true);
+        SetFrameworkDefault(IsTabStopProperty, true);
         SetFrameworkDefault(ComponentTemplateProperty, SliderTemplates.Default);
         AddHandler(InputEvents.MouseDownEvent, OnMouseDown, handledEventsToo: true);
         AddHandler(Thumb.DragStartedEvent, OnThumbDragStarted, handledEventsToo: true);

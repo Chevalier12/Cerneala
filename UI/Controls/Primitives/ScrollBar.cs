@@ -22,10 +22,10 @@ public class ScrollBar : RangeBase
 
     public ScrollBar()
     {
-        Background = new Cerneala.UI.Media.SolidColorBrush(new Color(235, 235, 235));
-        BorderBrush = new Cerneala.UI.Media.SolidColorBrush(new Color(130, 130, 130));
-        BorderThickness = new Thickness(1);
-        ViewportSize = 0;
+        SetFrameworkDefault(BackgroundProperty, new Cerneala.UI.Media.SolidColorBrush(new Color(235, 235, 235)));
+        SetFrameworkDefault(BorderBrushProperty, new Cerneala.UI.Media.SolidColorBrush(new Color(130, 130, 130)));
+        SetFrameworkDefault(BorderThicknessProperty, new Thickness(1));
+        SetFrameworkDefault(ViewportSizeProperty, 0f);
         SetFrameworkDefault(ComponentTemplateProperty, ScrollBarTemplates.Default);
     }
 

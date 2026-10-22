@@ -47,7 +47,7 @@ public class TabControl : Selector
     public TabControl()
     {
         selectedContentPresenter = new SelectedContentPresenter(this);
-        ItemsPanel = new StackPanel { Orientation = Layout.Orientation.Horizontal };
+        SetFrameworkDefault(ItemsPanelProperty, new StackPanel { Orientation = Layout.Orientation.Horizontal });
         LogicalChildren.Add(selectedContentPresenter);
         VisualChildren.Add(selectedContentPresenter);
     }

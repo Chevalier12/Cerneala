@@ -55,9 +55,9 @@ public class ComboBox : Selector
 
     public ComboBox()
     {
-        Focusable = true;
-        IsTabStop = true;
-        ItemsPanel = defaultItemsPanel;
+        SetFrameworkDefault(FocusableProperty, true);
+        SetFrameworkDefault(IsTabStopProperty, true);
+        SetFrameworkDefault(ItemsPanelProperty, defaultItemsPanel);
         Handlers.AddHandler(InputEvents.KeyDownEvent, OnKeyDown);
         Handlers.AddHandler(InputEvents.TextInputEvent, OnTextInput);
         Handlers.AddHandler(InputEvents.MouseUpEvent, OnMouseUp);

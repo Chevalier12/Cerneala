@@ -14,7 +14,7 @@ public class Overlay : Control, IInputProjectionOwner
 
     public Overlay()
     {
-        IsHitTestVisible = false;
+        SetFrameworkDefault(IsHitTestVisibleProperty, false);
         LogicalChildren.Add(presenter);
     }
 

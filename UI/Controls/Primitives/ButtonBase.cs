@@ -27,9 +27,9 @@ public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource, 
     public ButtonBase()
     {
         commandState = new CommandSourceState(this, () => Command, () => CommandParameter);
-        Focusable = true;
-        IsTabStop = true;
-        Cursor = Cerneala.UI.Input.Cursor.Hand;
+        SetFrameworkDefault(FocusableProperty, true);
+        SetFrameworkDefault(IsTabStopProperty, true);
+        SetFrameworkDefault(CursorProperty, Cerneala.UI.Input.Cursor.Hand);
         AddHandler(MouseUpEvent, OnMouseUp);
     }
 
