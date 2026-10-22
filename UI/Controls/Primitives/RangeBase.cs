@@ -93,7 +93,7 @@ public class RangeBase : Control
             float coercedValue = CoerceToRange(Value);
             if (coercedValue != Value)
             {
-                Value = coercedValue;
+                Correct(ValueProperty, coercedValue);
                 return;
             }
 
@@ -102,12 +102,12 @@ public class RangeBase : Control
 
         if (ReferenceEquals(args.Property, MinimumProperty) && Maximum < Minimum)
         {
-            Maximum = Minimum;
+            Correct(MaximumProperty, Minimum);
         }
 
         if (ReferenceEquals(args.Property, MaximumProperty) && Minimum > Maximum)
         {
-            Minimum = Maximum;
+            Correct(MinimumProperty, Maximum);
         }
 
         if (ReferenceEquals(args.Property, MinimumProperty) || ReferenceEquals(args.Property, MaximumProperty))
@@ -115,8 +115,23 @@ public class RangeBase : Control
             float coercedValue = CoerceToRange(Value);
             if (coercedValue != Value)
             {
-                Value = coercedValue;
+                Correct(ValueProperty, coercedValue);
             }
+        }
+    }
+
+    // Writes a range correction at the source that holds the current value, so the correction never adds a Local
+    // value over a markup, Aspect, binding or animation value (#733).
+    private void Correct(UiProperty<float> property, float value)
+    {
+        UiPropertyValueSource source = GetValueSource(property);
+        if (source == UiPropertyValueSource.Default)
+        {
+            SetFrameworkDefault(property, value);
+        }
+        else
+        {
+            SetValue(property, value, source);
         }
     }
 

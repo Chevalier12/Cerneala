@@ -767,7 +767,6 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         private readonly MarkupComponentPair? userControlPair;
         private readonly ApplicationResourceCatalog? applicationResources;
         private readonly HashSet<string> reportedDiagnostics = new(StringComparer.Ordinal);
-        private readonly bool reactiveDocument;
         private string? documentRootVariable;
         private int nextId;
 
@@ -801,15 +800,6 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             ReadResources();
             ReadInlineAspects();
             ImportApplicationAspects();
-            DirectiveParseResult[] elementDirectiveContent = document.Root
-                .DescendantsAndSelf()
-                .Select(element => GetDirectiveContent(
-                    element,
-                    DirectiveContentKind.Elements |
-                    DirectiveContentKind.Templates))
-                .ToArray();
-            reactiveDocument = allAspects.Any(aspect => aspect.Conditions.Count > 0) ||
-                elementDirectiveContent.Any(content => content.HasDirectives);
             BindPrism();
             EmitAspectTemplates();
         }

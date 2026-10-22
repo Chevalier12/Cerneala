@@ -115,10 +115,9 @@ public sealed partial class UiMarkupGenerator
                 return;
             }
 
-            currentLines.Add(reactiveDocument
-                ? variable + ".SetValue(global::Cerneala.UI.Documents.Run.TextProperty, " + Literal(text) +
-                    ", global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);"
-                : variable + ".Text = " + Literal(text) + ";");
+            currentLines.Add(
+                variable + ".SetValue(global::Cerneala.UI.Documents.Run.TextProperty, " + Literal(text) +
+                ", global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);");
         }
 
         // The raw content of the element: adjacent text nodes are one text (a comment does not split it), and the

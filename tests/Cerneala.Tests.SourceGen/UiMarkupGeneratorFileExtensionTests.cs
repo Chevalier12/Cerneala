@@ -33,7 +33,7 @@ public sealed partial class UiMarkupGeneratorTests
         GeneratedSourceResult source = Assert.Single(result.GeneratedSources);
         string normalizedSource = source.SourceText.ToString().Replace("\r\n", "\n", StringComparison.Ordinal);
         string sourceHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(normalizedSource)));
-        Assert.Equal("DCD437128E0720708F736B79865B5D8C9F3A1D38C2BA580473DD655E62F4CF9F", sourceHash);
+        Assert.Equal("8FE54C678949788D6AB60A5C9EA49CE8B1988E48904399474DAE0A235EF91C17", sourceHash);
         Assert.Empty(result.Diagnostics);
     }
 }

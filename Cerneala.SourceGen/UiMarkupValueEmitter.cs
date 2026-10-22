@@ -246,7 +246,25 @@ public sealed partial class UiMarkupGenerator
                 SpecialType.System_UInt64 => ulong.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
                 _ => false
             };
-            return valid ? value : Invalid(attribute, elementName, propertyName, attribute.Value);
+            if (!valid)
+            {
+                return Invalid(attribute, elementName, propertyName, attribute.Value);
+            }
+
+            // A bare literal is an int, and SetValue infers its type argument from the value, so every other
+            // integer type gets a cast.
+            string? keyword = type switch
+            {
+                SpecialType.System_Byte => "byte",
+                SpecialType.System_SByte => "sbyte",
+                SpecialType.System_Int16 => "short",
+                SpecialType.System_UInt16 => "ushort",
+                SpecialType.System_UInt32 => "uint",
+                SpecialType.System_Int64 => "long",
+                SpecialType.System_UInt64 => "ulong",
+                _ => null
+            };
+            return keyword is null ? value : "((" + keyword + ")" + value + ")";
         }
 
         private string? Double(string elementName, string propertyName, MarkupAttribute attribute)

@@ -15,8 +15,8 @@ public sealed partial class UiMarkupGeneratorTests
 
         Assert.Empty(result.Diagnostics);
         string source = SingleGeneratedSource(result);
-        Assert.Contains(".Width = " + expected + ";", source);
-        Assert.Contains(".StartPoint = new global::Cerneala.Drawing.DrawPoint(" + expected + ", " + expected + ");", source);
+        Assert.Contains(".SetValue(global::Cerneala.UI.Elements.UIElement.WidthProperty, " + expected + ", global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);", source);
+        Assert.Contains(".SetValue(global::Cerneala.UI.Controls.Shapes.Line.StartPointProperty, new global::Cerneala.Drawing.DrawPoint(" + expected + ", " + expected + "), global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);", source);
         Assert.DoesNotContain(compilation.GetDiagnostics(), diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
     }
 
