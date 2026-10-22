@@ -34,7 +34,9 @@ using (root.Motion.BeginTransaction(Motion.Tween(TimeSpan.FromMilliseconds(100))
 The root's frame processing samples the animation. Ordinary C# setters such as
 `panel.Opacity = 0f` write the `Local` source, which outranks `Animation`; a
 transaction does not change that precedence, so the visible value jumps rather
-than animates. `Width` is not registered as animatable by default and is ignored
+than animates. A markup `@set` of an animatable property writes the `Animation`
+source instead, so a later `@animate` of it still shows (see the `@set` section
+of `docs/reference/motion-markup-syntax.md`). `Width` is not registered as animatable by default and is ignored
 by transactions. Layout motion is a separate facility below.
 
 State targets use interactive priority and return to the property's captured baseline when the state exits:

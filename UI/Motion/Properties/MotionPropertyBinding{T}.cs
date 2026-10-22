@@ -92,6 +92,28 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
         return handle;
     }
 
+    // Snaps the Motion value and holds it, like an animation that completed at
+    // once with HoldOnComplete: the Animation source carries the value until a
+    // later motion or Clear replaces it.
+    internal void JumpToAndHold(T value)
+    {
+        ThrowIfDisposed();
+        motion.VerifyAccess();
+        Value.JumpTo(value);
+        activeHandle = null;
+        holdOnComplete = true;
+        completedNaturally = true;
+        hasPendingSample = false;
+        motion.Graph.Unregister(node);
+        if (Target is UIElement element && !UIElementVisibility.IsEffectivelyVisible(element))
+        {
+            Clear();
+            return;
+        }
+
+        motion.Properties.StageSet(Target, Property, Value.Current, invalidationCategory);
+    }
+
     public override void Clear(MotionClearBehavior behavior = MotionClearBehavior.RestoreBase)
     {
         if (disposed)

@@ -89,7 +89,9 @@ These shaped the markup. They are observations from this build, not fixes:
 - **`@set` writes the Local value, which outranks Motion's Animation value.** After a property
   has been `@set`, later animations of it no longer show. Resets between animation cycles (the
   second burst in chapter 7) are one-frame `Tween(16ms)` animations instead; `@set` is kept for
-  properties that are never animated, such as `Text` and `Visibility`.
+  properties that are never animated, such as `Text` and `Visibility`. Fixed since (#730):
+  `@set` of a property that `@animate` accepts now writes the Motion value, so a later animation
+  continues from it; the reel keeps its one-frame resets.
 - **Two animations on the same property of the same element cancel each other.** Inside a
   `@parallel`, that cancellation stops every sibling.
 - **`@stagger` accepts only a plain `Tween`**, and `@from` is applied the moment an animation

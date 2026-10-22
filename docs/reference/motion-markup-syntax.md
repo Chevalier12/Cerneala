@@ -261,6 +261,37 @@ spec because it performs no interpolation:
 }
 ```
 
+The value source an `@set` assignment writes depends on the property:
+
+- A property that `@animate` accepts (a UI property whose type is `float`,
+  `double`, `Color`, `Brush`, `Thickness`, `DrawPoint`, `DrawSize`, `DrawRect`
+  or `Transform`) gets its Motion value: `@set` jumps the property's Motion
+  value and holds it, like an animation that completed at once with
+  `holdOnComplete`. It writes the `Animation` source, so a later `@animate` of
+  the same property starts from the set value and replaces it. Like every held
+  Motion value of the Aspect, it is removed when the Aspect's Motion session
+  cancels its executions (the owner is hidden, collapsed or detached, or the
+  Aspect is replaced), and the property returns to its non-Motion value.
+- Any other property (`Text`, `Visibility`, `bool` and enum properties) is
+  written to the `Local` source, as a C# setter would. It stays after the
+  session ends.
+
+A `Local` value set from C# (`border.Opacity = 0.5f`) outranks `Animation`, so
+it also hides a Motion value written by `@set`. In this clip the border appears
+at 20 % opacity and fades to 100 % in 100 ms; at +50 ms `Opacity` is 0.6 and
+its value source is `Animation`:
+
+```xml
+@sequence
+{
+    @set { Opacity = 0.2; }
+    @animate with Tween(100ms, Linear) { @to { Opacity = 1; } }
+}
+```
+
+A Prism property target (`$self.prism...`) of `@set` writes the Prism instance
+value directly, as before.
+
 Properties in one `@animate` block run in parallel:
 
 ```xml

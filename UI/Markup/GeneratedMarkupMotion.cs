@@ -97,6 +97,17 @@ public static partial class GeneratedMarkup
             options);
     }
 
+    // Immediate @set of a property that Motion can animate: the value is held
+    // as the property's Motion value, so a later @animate continues from it.
+    public static void SetMotionProperty<T>(
+        IDisposable session,
+        UIElement target,
+        UiProperty<T> property,
+        T value)
+    {
+        GetMotionSession(session).SetProperty(target, property, value);
+    }
+
     public static MotionHandle StartBoundMotionProperty<T>(
         IDisposable session,
         UIElement target,
@@ -341,6 +352,23 @@ public static partial class GeneratedMarkup
             MotionSpec<T> effectiveSpec = spec ?? (MotionSpec<T>)motion.AnimatableProperties.Get(property).DefaultSpec;
             T destination = toCurrent ? binding.Value.Current : to;
             return binding.AnimateTo(destination, effectiveSpec, options);
+        }
+
+        public void SetProperty<T>(UIElement target, UiProperty<T> property, T value)
+        {
+            ArgumentNullException.ThrowIfNull(target);
+            ArgumentNullException.ThrowIfNull(property);
+            if (!CanStart ||
+                owner.Root is null ||
+                !ReferenceEquals(target.Root, owner.Root))
+            {
+                throw new InvalidOperationException("Motion targets must be attached to the session owner's UIRoot.");
+            }
+
+            MotionSystem motion = owner.Root.Motion;
+            MotionPropertyBinding<T> binding = motion.Properties.GetOrCreateBinding(motion, target, property);
+            bindings.Add(binding);
+            binding.JumpToAndHold(value);
         }
 
         public MotionHandle StartBoundProperty<T>(
