@@ -268,10 +268,13 @@ The value source an `@set` assignment writes depends on the property:
   or `Transform`) gets its Motion value: `@set` jumps the property's Motion
   value and holds it, like an animation that completed at once with
   `holdOnComplete`. It writes the `Animation` source, so a later `@animate` of
-  the same property starts from the set value and replaces it. Like every held
-  Motion value of the Aspect, it is removed when the Aspect's Motion session
-  cancels its executions (the owner is hidden, collapsed or detached, or the
-  Aspect is replaced), and the property returns to its non-Motion value.
+  the same property starts from the set value and replaces it. The set value
+  is held also while the target is hidden, and it is not owned by the Aspect's
+  Motion session: hiding the target or the owner, detaching the owner, or
+  replacing the Aspect does not clear it. A later `@animate` of the property
+  takes it back, and that animation is cleared when the session cancels its
+  executions, like any animation. A target outside the owner's root cannot hold
+  a Motion value, so `@set` writes the `Local` source there.
 - Any other property (`Text`, `Visibility`, `bool` and enum properties) is
   written to the `Local` source, as a C# setter would. It stays after the
   session ends.

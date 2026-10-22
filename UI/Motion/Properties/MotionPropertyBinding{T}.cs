@@ -16,6 +16,7 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
     private T pendingSample = default!;
     private bool holdOnComplete;
     private bool completedNaturally;
+    private bool holdsSetValue;
     private bool disposed;
 
     public MotionPropertyBinding(MotionSystem motion, UiObject target, UiProperty<T> property, MotionValue<T> value)
@@ -40,6 +41,8 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
     internal override bool IsActive =>
         activeHandle?.IsActive == true || Value.IsAnimating || hasPendingSample;
 
+    internal override bool HoldsSetValue => holdsSetValue;
+
     public override UiObject Target { get; }
 
     public UiProperty<T> Property { get; }
@@ -61,6 +64,7 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
             return handle;
         }
 
+        holdsSetValue = false;
         holdOnComplete = effectiveOptions.HoldOnComplete;
         completedNaturally = false;
         activeHandle = handle;
@@ -94,23 +98,19 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
 
     // Snaps the Motion value and holds it, like an animation that completed at
     // once with HoldOnComplete: the Animation source carries the value until a
-    // later motion or Clear replaces it.
+    // later motion or Clear replaces it. The value is held also while the target
+    // is hidden, so it is still there when the target is shown again.
     internal void JumpToAndHold(T value)
     {
         ThrowIfDisposed();
         motion.VerifyAccess();
         Value.JumpTo(value);
         activeHandle = null;
+        holdsSetValue = true;
         holdOnComplete = true;
         completedNaturally = true;
         hasPendingSample = false;
         motion.Graph.Unregister(node);
-        if (Target is UIElement element && !UIElementVisibility.IsEffectivelyVisible(element))
-        {
-            Clear();
-            return;
-        }
-
         motion.Properties.StageSet(Target, Property, Value.Current, invalidationCategory);
     }
 
@@ -121,6 +121,7 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
             return;
         }
 
+        holdsSetValue = false;
         motion.VerifyAccess();
         activeHandle?.Cancel(MotionCancelBehavior.KeepCurrent);
         activeHandle = null;

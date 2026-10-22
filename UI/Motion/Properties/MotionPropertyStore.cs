@@ -67,6 +67,13 @@ public sealed class MotionPropertyStore
 
         foreach (MotionPropertyBinding binding in targetBindings)
         {
+            // A value written by a Motion @set is held like a Local write, so hiding the subtree does not
+            // clear it; a later animation of the property clears the flag and is canceled normally.
+            if (binding.HoldsSetValue)
+            {
+                continue;
+            }
+
             binding.Clear();
         }
     }

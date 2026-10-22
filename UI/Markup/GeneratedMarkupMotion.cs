@@ -98,7 +98,8 @@ public static partial class GeneratedMarkup
     }
 
     // Immediate @set of a property that Motion can animate: the value is held
-    // as the property's Motion value, so a later @animate continues from it.
+    // as the property's Motion value, so a later @animate continues from it. A
+    // target outside the owner's root gets a Local write instead.
     public static void SetMotionProperty<T>(
         IDisposable session,
         UIElement target,
@@ -358,16 +359,24 @@ public static partial class GeneratedMarkup
         {
             ArgumentNullException.ThrowIfNull(target);
             ArgumentNullException.ThrowIfNull(property);
-            if (!CanStart ||
-                owner.Root is null ||
-                !ReferenceEquals(target.Root, owner.Root))
+            if (!CanStart)
             {
                 throw new InvalidOperationException("Motion targets must be attached to the session owner's UIRoot.");
             }
 
+            if (owner.Root is null || !ReferenceEquals(target.Root, owner.Root))
+            {
+                // A target outside the owner's root has no Motion system to hold the value.
+                target.SetValue(property, value);
+                return;
+            }
+
             MotionSystem motion = owner.Root.Motion;
             MotionPropertyBinding<T> binding = motion.Properties.GetOrCreateBinding(motion, target, property);
-            bindings.Add(binding);
+            // The held value belongs to this @set, not to the session: canceling the
+            // session (owner hidden or detached, Aspect replaced) must not clear it.
+            // A later @animate adds the binding again through StartProperty.
+            bindings.Remove(binding);
             binding.JumpToAndHold(value);
         }
 

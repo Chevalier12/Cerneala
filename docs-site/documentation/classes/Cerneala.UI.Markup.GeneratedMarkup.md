@@ -80,7 +80,7 @@ the read-once helper; attribute paths use binding attachment helpers instead.
 | `StartTimbreMotion(IDisposable session, Func<MarkupMotionExecution> start)` | `MarkupMotionExecution` | Starts an audio Motion execution owned by the Timbre session: hiding the owner does not cancel it; detach, Aspect replacement and session disposal do. |
 | `StartTimbreMotionProperty(UIElement target, string sound, string parameterName, bool hasFrom, float from, bool toCurrent, float to, MotionSpec<float>? spec, MotionPropertyStartOptions options)` | `MotionHandle` | Starts one `$X.timbre.Sound.Property` leaf: captures the sound's running playback and its `Volume` or named parameter once and animates it like `TimbreMotionAnimationBuilder.With`; a sound that is not playing completes immediately without starting audio. |
 | `StartMotionProperty<T>(IDisposable session, UIElement target, UiProperty<T> property, bool hasFrom, T from, bool toCurrent, T to, MotionSpec<T>? spec, MotionPropertyStartOptions options)` | `MotionHandle` | Starts one typed property animation through the target root's motion system. |
-| `SetMotionProperty<T>(IDisposable session, UIElement target, UiProperty<T> property, T value)` | `void` | Applies a generated Motion `@set` of an animatable UI property: jumps the property's Motion value to `value` and holds it in the `Animation` source, like an animation that completed at once with `HoldOnComplete`. |
+| `SetMotionProperty<T>(IDisposable session, UIElement target, UiProperty<T> property, T value)` | `void` | Applies a generated Motion `@set` of an animatable UI property: jumps the property's Motion value to `value` and holds it in the `Animation` source, like an animation that completed at once with `HoldOnComplete`. The held value survives hiding the target or the owner; a target outside the owner's root gets a `Local` write. |
 | `StartBoundMotionProperty<T>(IDisposable session, UIElement target, UiProperty<T> property, bool hasFrom, T from, MarkupObservation observation, BindingMode mode, Func<object?, T> projection, MotionSpec<T>? spec, MotionPropertyStartOptions options)` | `MotionHandle` | Starts one typed property animation whose destination follows an explicit one-way or two-way markup binding for the lifetime of the execution. |
 | `StartPrismMotionProperty<T>(IDisposable session, UIElement target, int propertyId, Func<PrismInstance, T> getValue, Action<PrismInstance, T> setValue, bool discrete, bool hasFrom, T from, bool toCurrent, T to, MotionSpec<T>? spec, MotionPropertyStartOptions options)` | `MotionHandle` | Starts a statically resolved Prism property animation through the existing motion session and scheduler. |
 | `StartBoundPrismMotionProperty<T>(IDisposable session, UIElement target, int propertyId, Func<PrismInstance, T> getValue, Action<PrismInstance, T> setValue, bool discrete, bool hasFrom, T from, MarkupObservation observation, BindingMode mode, Func<object?, T> projection, MotionSpec<T>? spec, MotionPropertyStartOptions options)` | `MotionHandle` | Starts a Prism property animation whose destination follows an explicit one-way or two-way markup binding for the lifetime of the execution. |
@@ -241,9 +241,13 @@ properties `@animate` accepts) is lowered to `SetMotionProperty<T>`. It uses the
 same per-target, per-property Motion binding as `StartMotionProperty<T>`: an
 active animation of the property is canceled with `KeepCurrent`, the value is
 written to the `Animation` source and held, and a later `StartMotionProperty<T>`
-starts from it. The binding belongs to the session, so canceling the session's
-executions clears the held value like a held animation. A `Local` value still
-outranks it. `@set` of other UI properties is lowered to a plain
+starts from it. The held value is not owned by the session and is held also
+while the target is hidden: hiding the target or the owner, detaching the owner
+and replacing the Aspect do not clear it. A later animation of the same property
+takes the binding back, and that animation is canceled with the session like any
+animation. A target outside the owner's root cannot hold a Motion value, so it
+gets a `Local` write instead. A `Local` value still outranks the held value.
+`@set` of other UI properties is lowered to a plain
 `SetValue(property, value)` that writes `Local`, and a Prism target uses
 `SetPrismMotionProperty<T>`.
 
@@ -337,7 +341,8 @@ Prism instance.
 | Motion session factories | `ArgumentNullException` | A required owner, callback, start delegate, target, property, accessor delegate, or options value is `null`. |
 | `AddMotionTrigger`, `StartMotion`, `StartMotionExecution`, `CancelMotionExecution`, `StartMotionProperty<T>`, `SetMotionProperty<T>`, `StartPrismMotionProperty<T>` | `ArgumentException` | The supplied lifetime was not created by `AttachMotionSession`, or a named execution slot is empty or whitespace. |
 | `AddMotionTrigger`, `StartMotion`, `StartMotionExecution`, `CancelMotionExecution` | `ObjectDisposedException` | The motion session has already been disposed. `StartMotionProperty<T>` and `StartPrismMotionProperty<T>` do not check disposal; after disposal they throw `InvalidOperationException` because the session can no longer start motion. |
-| `StartMotion`, `StartMotionExecution`, `StartMotionProperty<T>`, `SetMotionProperty<T>`, `StartPrismMotionProperty<T>` | `InvalidOperationException` | The session owner is detached or non-renderable, the target is not attached to the same root, an execution returns `null`, or a Prism property ID is reused with an incompatible type. |
+| `StartMotion`, `StartMotionExecution`, `StartMotionProperty<T>`, `SetMotionProperty<T>`, `StartPrismMotionProperty<T>` | `InvalidOperationException` | The session owner is detached or non-renderable, an execution returns `null`, or a Prism property ID is reused with an incompatible type. |
+| `StartMotionProperty<T>`, `StartPrismMotionProperty<T>` | `InvalidOperationException` | The target is not attached to the same root as the session owner. `SetMotionProperty<T>` does not throw for this case; it writes the value to the `Local` source. |
 | `AttachPrism(...)`, `TryGetPrismInstance(...)`, `GetPrismInstance(...)`, `SetPrismMotionProperty<T>(...)` | `ArgumentNullException` | A required owner, target, instance factory, binding-factory collection, getter, or setter is `null`. |
 | `AttachPrism(...)` | `ArgumentException` | The binding-factory collection contains a `null` entry. |
 | `AttachPrism(...)` | `InvalidOperationException` | The instance factory or a binding factory returns `null`. |
