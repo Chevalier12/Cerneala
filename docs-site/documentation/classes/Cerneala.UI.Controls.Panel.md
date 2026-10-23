@@ -53,6 +53,8 @@ Layout behavior is inherited from `Cerneala.UI.Layout.Panels.Panel`. During meas
 
 During arrange, each visible visual child is arranged into the same final rectangle passed to the panel. Collapsed children are arranged at the final rectangle origin with zero width and zero height. The panel returns the final rectangle as its arranged bounds.
 
+The `ZIndex` attached property and its `GetZIndex` and `SetZIndex` accessors are inherited from `Cerneala.UI.Layout.Panels.Panel`, so `Panel.SetZIndex(child, 1)` works with this type too. They draw a child with a higher `ZIndex` above the other children of the panel; see that page for the full behavior.
+
 ## Constructors
 
 | Name | Description |

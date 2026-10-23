@@ -67,7 +67,7 @@ public sealed class HitTestService
         for (int i = element.VisualChildren.Count - 1; i >= 0; i--)
         {
             HitTestResult? childResult = HitTestElement(
-                element.VisualChildren[i],
+                element.GetVisualChildInZOrder(i),
                 routeMap,
                 x,
                 y,

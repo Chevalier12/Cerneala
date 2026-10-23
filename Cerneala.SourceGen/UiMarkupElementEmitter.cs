@@ -196,7 +196,7 @@ public sealed partial class UiMarkupGenerator
 
                     if (isInline && attribute.Name.LocalName.Contains('.'))
                     {
-                        // Attached properties (Grid.Row, Servo.Id) belong to UIElements.
+                        // Attached properties (Grid.Row, Servo.Id, Panel.ZIndex) belong to UIElements.
                         Report(UnsupportedProperty, attribute, element.Name.LocalName, attribute.Name.LocalName);
                         continue;
                     }
@@ -206,7 +206,7 @@ public sealed partial class UiMarkupGenerator
                         continue;
                     }
 
-                    if (TryEmitServoAttachedProperty(element, variable, attribute))
+                    if (TryEmitUiPropertyAttachedProperty(element, variable, attribute))
                     {
                         continue;
                     }
@@ -422,23 +422,42 @@ public sealed partial class UiMarkupGenerator
             return true;
         }
 
-        private bool TryEmitServoAttachedProperty(
+        // Attached properties backed by a UiProperty field of their owner type (Servo.Id, Panel.ZIndex).
+        // Example: Panel.ZIndex="2" sets Panel.ZIndexProperty to the integer 2 on the element.
+        private static readonly (string MarkupName, string OwnerMetadataName, string FieldName, string PropertyName, MarkupValueKind Kind)[] UiPropertyAttachedProperties =
+        [
+            ("Servo.Id", "Cerneala.UI.Servo.Servo", "IdProperty", "Id", MarkupValueKind.String),
+            ("Panel.ZIndex", "Cerneala.UI.Layout.Panels.Panel", "ZIndexProperty", "ZIndex", MarkupValueKind.Integer)
+        ];
+
+        private bool TryEmitUiPropertyAttachedProperty(
             MarkupElement element,
             string variable,
             MarkupAttribute attribute)
         {
-            if (!string.Equals(
-                    attribute.Name.LocalName,
-                    "Servo.Id",
-                    StringComparison.Ordinal))
+            int tableIndex = -1;
+            for (int i = 0; i < UiPropertyAttachedProperties.Length; i++)
+            {
+                if (string.Equals(
+                        attribute.Name.LocalName,
+                        UiPropertyAttachedProperties[i].MarkupName,
+                        StringComparison.Ordinal))
+                {
+                    tableIndex = i;
+                    break;
+                }
+            }
+
+            if (tableIndex < 0)
             {
                 return false;
             }
 
-            INamedTypeSymbol? ownerType = compilation.GetTypeByMetadataName(
-                "Cerneala.UI.Servo.Servo");
+            (string markupName, string ownerMetadataName, string fieldName, string propertyName, MarkupValueKind kind) =
+                UiPropertyAttachedProperties[tableIndex];
+            INamedTypeSymbol? ownerType = compilation.GetTypeByMetadataName(ownerMetadataName);
             IFieldSymbol? propertyField = ownerType?
-                .GetMembers("IdProperty")
+                .GetMembers(fieldName)
                 .OfType<IFieldSymbol>()
                 .FirstOrDefault();
             if (propertyField?.Type is not INamedTypeSymbol fieldType || fieldType.TypeArguments.Length != 1)
@@ -452,8 +471,8 @@ public sealed partial class UiMarkupGenerator
             }
 
             PropertySpec spec = new(
-                "Id",
-                MarkupValueKind.String,
+                propertyName,
+                kind,
                 propertyField.ContainingType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) +
                     "." + propertyField.Name,
                 fieldType.TypeArguments[0]);
@@ -462,7 +481,7 @@ public sealed partial class UiMarkupGenerator
                 variable,
                 attribute,
                 spec,
-                "Servo.Id");
+                markupName);
             return true;
         }
 

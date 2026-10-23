@@ -1178,6 +1178,18 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         return context.FinalRect;
     }
 
+    // The visual child at index in drawing order, bottom to top; a Panel orders its children by Panel.ZIndex.
+    internal virtual UIElement GetVisualChildInZOrder(int index)
+    {
+        return VisualChildren[index];
+    }
+
+    // Called when a visual child's Panel.ZIndex changes. VisualChildren mutations are detected through
+    // UIElementCollection.Version instead.
+    internal virtual void InvalidateVisualChildZOrder()
+    {
+    }
+
     public void Render(RenderContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -1643,6 +1655,11 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
                 IncrementRenderVersion();
                 hasPendingRenderContentInvalidation = true;
             }
+        }
+
+        if (ReferenceEquals(args.Property, Cerneala.UI.Layout.Panels.Panel.ZIndexProperty))
+        {
+            VisualParent?.InvalidateVisualChildZOrder();
         }
 
         InvalidationFlags flags = MapInvalidationOptions(options);
