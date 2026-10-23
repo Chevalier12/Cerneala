@@ -1040,6 +1040,269 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
+    public void CanvasLeftAndTopMarkupPositionTheChild()
+    {
+        const string markup = """
+            <Canvas>
+              <Border Width="10" Height="10" Canvas.Left="12" Canvas.Top="20" />
+            </Canvas>
+            """;
+
+        GeneratorRunResult result = RunGenerator("CanvasPosition.crn", markup, out Compilation compilation);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        UIElement canvas = InvokeCreate(stream, "Cerneala.GeneratedUi.CanvasPositionFactory");
+        UIElement child = canvas.VisualChildren[0];
+        Assert.Equal(12f, Cerneala.UI.Layout.Panels.Canvas.GetLeft(child));
+        Assert.Equal(20f, Cerneala.UI.Layout.Panels.Canvas.GetTop(child));
+
+        canvas.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        canvas.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+        Assert.Equal(12f, child.ArrangedBounds.X);
+        Assert.Equal(20f, child.ArrangedBounds.Y);
+    }
+
+    [Fact]
+    public void CanvasLeftBindingBindsToTheAttachedProperty()
+    {
+        const string inputSource = """
+            using System.ComponentModel;
+
+            namespace TestInput;
+
+            public sealed class PositionRow : INotifyPropertyChanged
+            {
+                public event PropertyChangedEventHandler? PropertyChanged;
+                public float X { get; set; } = 7;
+            }
+            """;
+        const string markup = """
+            <ItemsControl>
+              <ItemsControl.ItemTemplate>
+                <ContentTemplate DataType="TestInput.PositionRow">
+                  <Border Canvas.Left="$DataContext.X" />
+                </ContentTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            """;
+
+        GeneratorRunResult result = RunGeneratorWithInput(
+            "CanvasLeftBinding.crn",
+            markup,
+            inputSource,
+            out Compilation compilation);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Contains("ObserveDataPath(contentTemplateContext", SingleGeneratedSource(result), StringComparison.Ordinal);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Assembly assembly = Assembly.Load(stream.ToArray());
+        ItemsControl items = Assert.IsType<ItemsControl>(
+            assembly.GetType("Cerneala.GeneratedUi.CanvasLeftBindingFactory", throwOnError: true)!
+                .GetMethod("Create", Type.EmptyTypes)!
+                .Invoke(null, null));
+        object row = Activator.CreateInstance(assembly.GetType("TestInput.PositionRow", throwOnError: true)!)!;
+        Border border = Assert.IsType<Border>(items.ItemTemplate!.Create(
+            new Cerneala.UI.Controls.Templates.ContentTemplateContext(row, owner: items)));
+
+        Assert.Equal(7f, Cerneala.UI.Layout.Panels.Canvas.GetLeft(border));
+    }
+
+    [Fact]
+    public void CanvasLeftWithAnInvalidValueReportsPropertyValueDiagnostic()
+    {
+        GeneratorRunResult result = RunGenerator(
+            "InvalidCanvasLeft.crn",
+            "<Canvas><Border Canvas.Left=\"abc\" /></Canvas>",
+            out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI004", "InvalidCanvasLeft.crn");
+        Assert.DoesNotContain(result.Diagnostics, other => other.Id == "CERNEALAUI003");
+        Assert.Contains("Left", diagnostic.GetMessage(), StringComparison.Ordinal);
+        Assert.Contains("abc", diagnostic.GetMessage(), StringComparison.Ordinal);
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
+    public void UnknownCanvasAttachedPropertyReportsUnsupportedProperty()
+    {
+        GeneratorRunResult result = RunGenerator(
+            "UnknownCanvasProperty.crn",
+            "<Canvas><Border Canvas.Foo=\"1\" /></Canvas>",
+            out _);
+
+        AssertDiagnostic(result, "CERNEALAUI003", "UnknownCanvasProperty.crn");
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    private const string TaggerSource = """
+        using System.ComponentModel;
+        using System.Collections.Generic;
+        using Cerneala.UI.Core;
+        using Cerneala.UI.Elements;
+
+        namespace TestInput;
+
+        public static class Layering
+        {
+            public static readonly UiProperty<int> LayerProperty = UiProperty<int>.Register(
+                "Layer",
+                typeof(Layering),
+                new UiPropertyMetadata<int>(0));
+
+            public static void SetLayer(UIElement element, int layer) => element.SetValue(LayerProperty, layer);
+            public static int GetLayer(UIElement element) => element.GetValue(LayerProperty);
+        }
+
+        public static class Tagger
+        {
+            private static readonly Dictionary<UIElement, string> tags = new();
+            private static readonly Dictionary<UIElement, float> weights = new();
+
+            public static void SetTag(UIElement element, string tag) => tags[element] = tag;
+            public static string GetTag(UIElement element) => tags.TryGetValue(element, out string? tag) ? tag : string.Empty;
+            public static void SetWeight(UIElement element, float weight) => weights[element] = weight;
+            public static float GetWeight(UIElement element) => weights.TryGetValue(element, out float weight) ? weight : 0f;
+        }
+
+        public sealed class NamedRow : INotifyPropertyChanged
+        {
+            public event PropertyChangedEventHandler? PropertyChanged;
+            public string Name { get; set; } = string.Empty;
+            public int Layer { get; set; } = 5;
+        }
+        """;
+
+    [Fact]
+    public void UiPropertyAttachedPropertyOfAnAppOwnerSetsTheProperty()
+    {
+        GeneratorRunResult result = RunGeneratorWithInput(
+            "AppOwnerLiteral.crn",
+            "<Border Layering.Layer=\"2\" />",
+            TaggerSource,
+            out Compilation compilation);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Contains("Layering.LayerProperty", SingleGeneratedSource(result), StringComparison.Ordinal);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Assembly assembly = Assembly.Load(stream.ToArray());
+        Border border = Assert.IsType<Border>(
+            assembly.GetType("Cerneala.GeneratedUi.AppOwnerLiteralFactory", throwOnError: true)!
+                .GetMethod("Create", Type.EmptyTypes)!
+                .Invoke(null, null));
+        Type layering = assembly.GetType("TestInput.Layering", throwOnError: true)!;
+        Assert.Equal(2, layering.GetMethod("GetLayer")!.Invoke(null, new object[] { border }));
+    }
+
+    [Fact]
+    public void UiPropertyAttachedPropertyOfAnAppOwnerBindsToTheProperty()
+    {
+        const string markup = """
+            <ItemsControl>
+              <ItemsControl.ItemTemplate>
+                <ContentTemplate DataType="TestInput.NamedRow">
+                  <Border Layering.Layer="$DataContext.Layer" />
+                </ContentTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            """;
+
+        GeneratorRunResult result = RunGeneratorWithInput("AppOwnerBinding.crn", markup, TaggerSource, out Compilation compilation);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Contains("ObserveDataPath(contentTemplateContext", SingleGeneratedSource(result), StringComparison.Ordinal);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Assembly assembly = Assembly.Load(stream.ToArray());
+        ItemsControl items = Assert.IsType<ItemsControl>(
+            assembly.GetType("Cerneala.GeneratedUi.AppOwnerBindingFactory", throwOnError: true)!
+                .GetMethod("Create", Type.EmptyTypes)!
+                .Invoke(null, null));
+        object row = Activator.CreateInstance(assembly.GetType("TestInput.NamedRow", throwOnError: true)!)!;
+        Border border = Assert.IsType<Border>(items.ItemTemplate!.Create(
+            new Cerneala.UI.Controls.Templates.ContentTemplateContext(row, owner: items)));
+
+        Type layering = assembly.GetType("TestInput.Layering", throwOnError: true)!;
+        Assert.Equal(5, layering.GetMethod("GetLayer")!.Invoke(null, new object[] { border }));
+    }
+
+    [Fact]
+    public void StaticSetterAttachedPropertyCallsTheSetter()
+    {
+        const string markup = """
+            <Border Tagger.Tag="x" Tagger.Weight="2.5" />
+            """;
+
+        GeneratorRunResult result = RunGeneratorWithInput("StaticSetter.crn", markup, TaggerSource, out Compilation compilation);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        string generatedSource = SingleGeneratedSource(result);
+        Assert.Contains("global::TestInput.Tagger.SetTag(", generatedSource, StringComparison.Ordinal);
+        Assert.Contains("global::TestInput.Tagger.SetWeight(", generatedSource, StringComparison.Ordinal);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Assembly assembly = Assembly.Load(stream.ToArray());
+        Border border = Assert.IsType<Border>(
+            assembly.GetType("Cerneala.GeneratedUi.StaticSetterFactory", throwOnError: true)!
+                .GetMethod("Create", Type.EmptyTypes)!
+                .Invoke(null, null));
+        Type tagger = assembly.GetType("TestInput.Tagger", throwOnError: true)!;
+        Assert.Equal("x", tagger.GetMethod("GetTag")!.Invoke(null, new object[] { border }));
+        Assert.Equal(2.5f, tagger.GetMethod("GetWeight")!.Invoke(null, new object[] { border }));
+    }
+
+    [Fact]
+    public void StaticSetterAttachedPropertyWithAnInvalidLiteralReportsPropertyValueDiagnostic()
+    {
+        GeneratorRunResult result = RunGeneratorWithInput(
+            "InvalidStaticSetter.crn",
+            "<Border Tagger.Weight=\"abc\" />",
+            TaggerSource,
+            out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI004", "InvalidStaticSetter.crn");
+        Assert.DoesNotContain(result.Diagnostics, other => other.Id == "CERNEALAUI003");
+        Assert.Contains("Weight", diagnostic.GetMessage(), StringComparison.Ordinal);
+        Assert.Contains("abc", diagnostic.GetMessage(), StringComparison.Ordinal);
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
+    public void StaticSetterAttachedPropertyWithABindingReportsPropertyValueDiagnostic()
+    {
+        const string markup = """
+            <ItemsControl>
+              <ItemsControl.ItemTemplate>
+                <ContentTemplate DataType="TestInput.NamedRow">
+                  <Border Tagger.Tag="$DataContext.Name" />
+                </ContentTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            """;
+
+        GeneratorRunResult result = RunGeneratorWithInput("StaticSetterBinding.crn", markup, TaggerSource, out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI004", "StaticSetterBinding.crn");
+        Assert.DoesNotContain(result.Diagnostics, other => other.Id == "CERNEALAUI003");
+        Assert.Contains("Tag", diagnostic.GetMessage(), StringComparison.Ordinal);
+        Assert.Contains("$DataContext.Name", diagnostic.GetMessage(), StringComparison.Ordinal);
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
     public void TemplatePartPathEmitsReactivePartObservation()
     {
         const string markup = """

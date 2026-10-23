@@ -388,6 +388,95 @@ public sealed class SemanticScopesTests
         }
     }
 
+    private const string AttachedPropertyCompanionSource = """
+        using System.ComponentModel;
+        using Cerneala.UI.Core;
+        using Cerneala.UI.Elements;
+
+        namespace Demo;
+
+        public static class Layering
+        {
+            public static readonly UiProperty<int> LayerProperty = UiProperty<int>.Register(
+                "Layer",
+                typeof(Layering),
+                new UiPropertyMetadata<int>(0));
+
+            public static void SetLayer(UIElement element, int layer) => element.SetValue(LayerProperty, layer);
+            public static int GetLayer(UIElement element) => element.GetValue(LayerProperty);
+        }
+
+        public static class Tagger
+        {
+            public static void SetTag(UIElement element, string tag) { }
+            public static string GetTag(UIElement element) => string.Empty;
+            public static void SetWeight(UIElement element, float weight) { }
+            public static float GetWeight(UIElement element) => 0f;
+        }
+
+        public sealed class Row : INotifyPropertyChanged
+        {
+            public event PropertyChangedEventHandler? PropertyChanged;
+            public string X { get; set; } = string.Empty;
+            public float W { get; set; }
+            public int L { get; set; }
+        }
+        """;
+
+    private static void AssertEditorAndBuildReportTheSameDiagnostics(string markup, string expectedIds)
+    {
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze(
+            "AttachedParity.crn",
+            markup,
+            "AttachedParity.cs",
+            AttachedPropertyCompanionSource);
+
+        Assert.Empty(result.Syntax.Diagnostics);
+        string[] editor = result.SemanticDiagnostics.Select(diagnostic => diagnostic.Id).Order(StringComparer.Ordinal).ToArray();
+        string[] build = result.SourceGeneratorDiagnostics.Select(diagnostic => diagnostic.Id).Order(StringComparer.Ordinal).ToArray();
+        Assert.Equal(editor, build);
+        Assert.Equal(expectedIds, string.Join(",", build));
+    }
+
+    [Theory]
+    [InlineData("Canvas.Left=\"12\" Canvas.Top=\"20\"", "")]
+    [InlineData("Canvas.Foo=\"1\"", "CERNEALAUI003")]
+    [InlineData("Canvas.Left=\"abc\"", "CERNEALAUI004")]
+    [InlineData("Grid.Row=\"1\"", "")]
+    [InlineData("Panel.ZIndex=\"2\"", "")]
+    [InlineData("Servo.Id=\"x\"", "")]
+    [InlineData("AccessibleName.Name=\"Save\"", "CERNEALAUI003")]
+    [InlineData("LayoutBoundary.IsBoundary=\"True\"", "CERNEALAUI003")]
+    [InlineData("Tagger.Tag=\"x\"", "")]
+    [InlineData("Tagger.Weight=\"2.5\"", "")]
+    [InlineData("Tagger.Weight=\"abc\"", "CERNEALAUI004")]
+    [InlineData("Tagger.Missing=\"x\"", "CERNEALAUI003")]
+    [InlineData("Layering.Layer=\"2\"", "")]
+    [InlineData("Layering.Layer=\"abc\"", "CERNEALAUI004")]
+    public void AttachedPropertyMarkupReportsTheSameDiagnosticsInEditorAndBuild(string attachedAttributes, string expectedIds)
+    {
+        AssertEditorAndBuildReportTheSameDiagnostics(
+            "<Canvas><Border Width=\"10\" Height=\"10\" " + attachedAttributes + " /></Canvas>",
+            expectedIds);
+    }
+
+    // A binding is valid only on an attached property backed by a UiProperty (Canvas.Left); on a setter-only
+    // one (Tagger.Tag, Grid.Row) the editor and the build both report CERNEALAUI004.
+    [Theory]
+    [InlineData("Canvas.Left=\"$DataContext.W\"", "")]
+    [InlineData("Layering.Layer=\"$DataContext.L\"", "")]
+    [InlineData("Tagger.Tag=\"$DataContext.X\"", "CERNEALAUI004")]
+    [InlineData("Tagger.Weight=\"$DataContext.W\"", "CERNEALAUI004")]
+    [InlineData("Grid.Row=\"$DataContext.W\"", "CERNEALAUI004")]
+    public void AttachedPropertyBindingReportsTheSameDiagnosticsInEditorAndBuild(string attachedAttributes, string expectedIds)
+    {
+        AssertEditorAndBuildReportTheSameDiagnostics(
+            "<ItemsControl><ItemsControl.ItemTemplate><ContentTemplate DataType=\"Demo.Row\">" +
+            "<Border Width=\"10\" Height=\"10\" " + attachedAttributes + " />" +
+            "</ContentTemplate></ItemsControl.ItemTemplate></ItemsControl>",
+            expectedIds);
+    }
+
     [Theory]
     [InlineData("<Aspect>@default { Opacity = 0.5; }</Aspect>")]
     [InlineData("<Aspect />")]

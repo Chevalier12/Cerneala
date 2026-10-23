@@ -46,15 +46,28 @@ internal sealed class FixedElement(LayoutSize size) : UIElement
 }
 ```
 
+Place the same child in markup. `Canvas.Left` and `Canvas.Top` accept a number or a binding:
+
+```xml
+<Canvas Width="300" Height="300">
+  <Border Width="10" Height="10" Canvas.Left="12" Canvas.Top="20" />
+  <Border Width="10" Height="10" Canvas.Left="$DataContext.X" />
+</Canvas>
+```
+
+After layout, the first `Border` is arranged at `(12, 20)` inside the canvas, the same as `Canvas.SetLeft(border, 12)` and `Canvas.SetTop(border, 20)`. The second `Border` follows the `X` value of its data context. A value that is not a number, for example `Canvas.Left="abc"`, reports `CERNEALAUI004`, and an unknown name, for example `Canvas.Foo="1"`, reports `CERNEALAUI003`, in the editor and in the build.
+
 ## Remarks
 
-`Canvas` is a layout panel for absolute positioning. It stores per-child `Left` and `Top` coordinates for `UIElement` instances and applies those offsets during arrange. Unset coordinates read as `0`.
+`Canvas` is a layout panel for absolute positioning. `Left` and `Top` are attached properties, like WPF `Canvas.Left` and `Canvas.Top`: `LeftProperty` and `TopProperty` are `UiProperty<float>` values with the default value `0`, stored on each child `UIElement`. The canvas applies them as offsets during arrange. `SetLeft`, `GetLeft`, `SetTop`, and `GetTop` call `SetValue` and `GetValue` with these properties.
 
 During measure, visible children are measured with `LayoutSize.Unconstrained`, collapsed children are measured with `LayoutSize.Zero`, and the canvas returns `LayoutSize.Zero` as its desired size. Child size and coordinate offsets do not expand the canvas desired size.
 
 During arrange, each visible child is positioned at the canvas final rectangle origin plus its `Left` and `Top` values, using the child's `DesiredSize`. Collapsed children are arranged at the canvas final rectangle origin with zero size.
 
-Changing `Left` or `Top` invalidates the parent canvas arrange pass only when the element's visual parent is a `Canvas` and the new coordinate differs from the stored value. Passing `null` to a coordinate getter or setter throws `ArgumentNullException`.
+When the effective value of `Left` or `Top` changes, from any value source (`SetLeft`, `SetValue`, or a markup binding), the child requests an arrange pass (`UiPropertyOptions.AffectsArrange`), and when the child's visual parent is a `Canvas`, that parent canvas is invalidated for arrange too, so the child moves on the next frame. Setting the value the property already has changes nothing. Passing `null` to a coordinate getter or setter throws `ArgumentNullException`.
+
+In markup, `<Canvas>` is `Cerneala.UI.Controls.Canvas`, which derives from this class, so `Canvas.Left` and `Canvas.Top` resolve to `LeftProperty` and `TopProperty` here.
 
 ## Constructors
 
@@ -62,14 +75,21 @@ Changing `Left` or `Top` invalidates the parent canvas arrange pass only when th
 | --- | --- |
 | `Canvas()` | Initializes a new canvas panel. The constructor is implicit. |
 
+## Fields
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `LeftProperty` | `UiProperty<float>` | Identifies the `Left` attached property. Default value `0`. Options: `AffectsArrange`. |
+| `TopProperty` | `UiProperty<float>` | Identifies the `Top` attached property. Default value `0`. Options: `AffectsArrange`. |
+
 ## Methods
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `GetLeft(UIElement element)` | `float` | Gets the stored left offset for `element`, or `0` when no value is stored. |
-| `GetTop(UIElement element)` | `float` | Gets the stored top offset for `element`, or `0` when no value is stored. |
-| `SetLeft(UIElement element, float left)` | `void` | Sets the left offset for `element` and invalidates the parent canvas arrange pass when the value changes. |
-| `SetTop(UIElement element, float top)` | `void` | Sets the top offset for `element` and invalidates the parent canvas arrange pass when the value changes. |
+| `GetLeft(UIElement element)` | `float` | Gets the `Left` value of `element`. Returns `0` when it was never set. |
+| `GetTop(UIElement element)` | `float` | Gets the `Top` value of `element`. Returns `0` when it was never set. |
+| `SetLeft(UIElement element, float left)` | `void` | Sets the `Left` value of `element`; the parent canvas arranges again when the value changes. |
+| `SetTop(UIElement element, float top)` | `void` | Sets the `Top` value of `element`; the parent canvas arranges again when the value changes. |
 
 ## Inherited Properties
 

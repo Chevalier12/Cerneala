@@ -211,6 +211,11 @@ public sealed partial class UiMarkupGenerator
                         continue;
                     }
 
+                    if (TryEmitDeclaredAttachedProperty(element, variable, attribute))
+                    {
+                        continue;
+                    }
+
                     if (TryEmitEventAttribute(element, variable, attribute))
                     {
                         continue;
@@ -427,8 +432,105 @@ public sealed partial class UiMarkupGenerator
         private static readonly (string MarkupName, string OwnerMetadataName, string FieldName, string PropertyName, MarkupValueKind Kind)[] UiPropertyAttachedProperties =
         [
             ("Servo.Id", "Cerneala.UI.Servo.Servo", "IdProperty", "Id", MarkupValueKind.String),
-            ("Panel.ZIndex", "Cerneala.UI.Layout.Panels.Panel", "ZIndexProperty", "ZIndex", MarkupValueKind.Integer)
+            ("Panel.ZIndex", "Cerneala.UI.Layout.Panels.Panel", "ZIndexProperty", "ZIndex", MarkupValueKind.Integer),
+            ("Canvas.Left", "Cerneala.UI.Layout.Panels.Canvas", "LeftProperty", "Left", MarkupValueKind.Float),
+            ("Canvas.Top", "Cerneala.UI.Layout.Panels.Canvas", "TopProperty", "Top", MarkupValueKind.Float)
         ];
+
+        // Any other Owner.X attribute the editor accepts (CernealaSemanticModel.BindAttachedAttribute): the owner
+        // resolves like the editor resolves it and has a static SetX(element, T).
+        //   - Owner.XProperty is a public static UiProperty<T>: handled like the table above (literal or binding).
+        //     Example: for an owner Layering with "public static readonly UiProperty<int> LayerProperty",
+        //     Layering.Layer="2" -> element.SetValue(global::Layering.LayerProperty, 2, ...).
+        //   - Otherwise only a literal is valid: Tagger.Tag="x" -> global::TestInput.Tagger.SetTag(element, "x").
+        //     A '$' binding on such a setter is rejected by the editor (CERNEALAUI004), and the generator reports
+        //     the editor's diagnostics and stops before it emits, so it never reaches this method with one.
+        // Returns false (the caller then reports CERNEALAUI003) when no such owner or member exists.
+        private bool TryEmitDeclaredAttachedProperty(
+            MarkupElement element,
+            string variable,
+            MarkupAttribute attribute)
+        {
+            string markupName = attribute.Name.LocalName;
+            int separator = markupName.LastIndexOf('.');
+            if (separator <= 0)
+            {
+                return false;
+            }
+
+            string ownerName = markupName.Substring(0, separator);
+            string propertyName = markupName.Substring(separator + 1);
+            INamedTypeSymbol? ownerType = ResolveAttachedPropertyOwnerType(ownerName);
+            INamedTypeSymbol? elementType = GetElementTypeSymbol(element);
+            INamedTypeSymbol? uiPropertyType = compilation.GetTypeByMetadataName("Cerneala.UI.Core.UiProperty`1");
+            if (ownerType is null || elementType is null || uiPropertyType is null)
+            {
+                return false;
+            }
+
+            IFieldSymbol? propertyField = FindUiPropertyField(ownerType, propertyName + "Property", uiPropertyType);
+            if (propertyField is { DeclaredAccessibility: Accessibility.Public, Type: INamedTypeSymbol fieldType } &&
+                fieldType.TypeArguments.Length == 1)
+            {
+                ITypeSymbol valueType = fieldType.TypeArguments[0];
+                EmitProperty(
+                    element,
+                    variable,
+                    attribute,
+                    new PropertySpec(
+                        propertyName,
+                        GetMarkupValueKind(valueType, constraintSource: null),
+                        propertyField.ContainingType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) +
+                            "." + propertyField.Name,
+                        valueType),
+                    markupName);
+                return true;
+            }
+
+            IMethodSymbol? setter = FindAttachedPropertySetter(ownerType, "Set" + propertyName, elementType);
+            if (setter is null)
+            {
+                return false;
+            }
+
+            ITypeSymbol setterValueType = setter.Parameters[1].Type;
+            PropertySpec spec = new(propertyName, GetMarkupValueKind(setterValueType, constraintSource: null), string.Empty, setterValueType);
+            string value = attribute.Value;
+            GeneratedExpression? expression = ParseLiteralValue(
+                ownerName,
+                propertyName,
+                attribute,
+                setterValueType.SpecialType == SpecialType.System_String ? UnescapeMarkupDollar(value) : value,
+                spec);
+            if (expression is not null)
+            {
+                currentLines.Add(
+                    setter.ContainingType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + "." + setter.Name +
+                    "(" + variable + ", " + expression.Code + ");");
+            }
+
+            return true;
+        }
+
+        private IMethodSymbol? FindAttachedPropertySetter(INamedTypeSymbol ownerType, string setterName, INamedTypeSymbol elementType)
+        {
+            for (INamedTypeSymbol? current = ownerType; current is not null; current = current.BaseType)
+            {
+                IMethodSymbol? setter = current.GetMembers(setterName)
+                    .OfType<IMethodSymbol>()
+                    .FirstOrDefault(candidate => candidate.IsStatic &&
+                        candidate.MethodKind == MethodKind.Ordinary &&
+                        candidate.Parameters.Length == 2 &&
+                        IsAccessibleFromGeneratedCode(candidate) &&
+                        compilation.ClassifyCommonConversion(elementType, candidate.Parameters[0].Type).IsImplicit);
+                if (setter is not null)
+                {
+                    return setter;
+                }
+            }
+
+            return null;
+        }
 
         private bool TryEmitUiPropertyAttachedProperty(
             MarkupElement element,

@@ -47,6 +47,17 @@ internal static class LanguagePipelineHarness
         return new LanguagePipelineResult(syntax, semantic, sourceGenerator);
     }
 
+    // The companion C# source is given to both the semantic model (editor) and the source generator (build).
+    public static LanguagePipelineResult Analyze(string path, string text, string sourcePath, string source)
+    {
+        LanguageParseResult syntax = ParseWithLanguageParser(path, text);
+        IReadOnlyList<HarnessDiagnostic> sourceGenerator = AnalyzePairedSourceGenerator(path, text, sourcePath, source);
+        IReadOnlyList<HarnessDiagnostic> semantic = syntax.Diagnostics.Count == 0
+            ? RunSemanticModel(path, text, CreateCompilation(sourcePath, source))
+            : [];
+        return new LanguagePipelineResult(syntax, semantic, sourceGenerator);
+    }
+
     public static IReadOnlyList<HarnessDiagnostic> AnalyzePairedSourceGenerator(
         string path,
         string text,
@@ -87,9 +98,12 @@ internal static class LanguagePipelineHarness
         return workspace.GetSemanticModel(path);
     }
 
-    private static IReadOnlyList<HarnessDiagnostic> RunSemanticModel(string path, string text)
+    private static IReadOnlyList<HarnessDiagnostic> RunSemanticModel(
+        string path,
+        string text,
+        CSharpCompilation? companionCompilation = null)
     {
-        CSharpCompilation compilation = CreateCompilation();
+        CSharpCompilation compilation = companionCompilation ?? CreateCompilation();
         CernealaDocument document = new(path, LanguageSourceText.From(text));
         using CernealaCompilation workspace = new(
             new RoslynCompilationSymbols(compilation),

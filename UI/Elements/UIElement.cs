@@ -1662,6 +1662,11 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
             VisualParent?.InvalidateVisualChildZOrder();
         }
 
+        if (Cerneala.UI.Layout.Panels.Canvas.IsPositionProperty(args.Property))
+        {
+            Cerneala.UI.Layout.Panels.Canvas.InvalidateParentCanvasArrange(this);
+        }
+
         InvalidationFlags flags = MapInvalidationOptions(options);
         bool isVisibilityChange = ReferenceEquals(args.Property, VisibilityProperty) &&
             args.OldValue is Visibility &&
