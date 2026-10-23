@@ -1,6 +1,8 @@
+using Cerneala.Drawing;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
+using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Media;
 
@@ -145,6 +147,57 @@ public sealed class ThumbTests
 
         Assert.False(bridge.PointerCaptureManager.HasCapture);
         Assert.False(thumb.IsDragging);
+    }
+
+    [Fact]
+    public void PositiveUniformBorderIsDrawnOutsideTheArrangedBoundsLikeABorder()
+    {
+        Thumb thumb = new() { BorderBrush = new SolidColorBrush(Color.Black), BorderThickness = new Thickness(2) };
+
+        DrawCommandList commands = RenderAt(thumb, new LayoutRect(0, 0, 20, 20));
+
+        // The centred pen of thickness 2 on the bounds inflated by 1 covers the 2px just outside (0, 0, 20, 20).
+        DrawCommand border = Assert.Single(commands, command => ReferenceEquals(command.Brush, thumb.BorderBrush));
+        Assert.Equal(DrawCommandKind.DrawRectangle, border.Kind);
+        Assert.Equal(new DrawRect(-1, -1, 22, 22), border.Rect);
+        Assert.Equal(2, border.Thickness);
+    }
+
+    [Fact]
+    public void NegativeUniformBorderIsDrawnInsideTheArrangedBoundsLikeABorder()
+    {
+        Thumb thumb = new() { BorderBrush = new SolidColorBrush(Color.Black), BorderThickness = new Thickness(-2) };
+
+        DrawCommandList commands = RenderAt(thumb, new LayoutRect(0, 0, 20, 20));
+
+        // The centred pen of thickness 2 on the bounds deflated by 1 covers the 2px just inside (0, 0, 20, 20).
+        DrawCommand border = Assert.Single(commands, command => ReferenceEquals(command.Brush, thumb.BorderBrush));
+        Assert.Equal(DrawCommandKind.DrawRectangle, border.Kind);
+        Assert.Equal(new DrawRect(1, 1, 18, 18), border.Rect);
+        Assert.Equal(2, border.Thickness);
+    }
+
+    [Fact]
+    public void SingleSideBorderIsOneEvenOddPathLikeABorder()
+    {
+        Thumb thumb = new() { BorderBrush = new SolidColorBrush(Color.Black), BorderThickness = new Thickness(0, 0, 0, 2) };
+
+        DrawCommandList commands = RenderAt(thumb, new LayoutRect(0, 0, 20, 20));
+
+        DrawCommand border = Assert.Single(commands, command => ReferenceEquals(command.Brush, thumb.BorderBrush));
+        Assert.Equal(DrawCommandKind.FillPath, border.Kind);
+        Assert.Equal(DrawFillRule.EvenOdd, border.FillRule);
+    }
+
+    private static DrawCommandList RenderAt(Thumb thumb, LayoutRect bounds)
+    {
+        UIRoot root = new();
+        root.VisualChildren.Add(thumb);
+        root.ProcessFrame();
+        thumb.Arrange(new ArrangeContext(bounds));
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
+        return root.RetainedRenderer.Commit(root);
     }
 
     private static InputFrame PointerFrame(

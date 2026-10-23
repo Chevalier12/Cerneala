@@ -44,7 +44,7 @@ ItemsControl control = new()
 </ItemsControl>
 ```
 
-`Background`, `BorderBrush`, `BorderThickness`, and `Padding` work as on a `Border` around the items. Here the control is arranged at `(3, 4, 40, 30)`: it draws one red `FillRectangle` at `(3, 4, 40, 30)`, then one blue `DrawRectangle` (thickness 2) at `(4, 5, 38, 28)`, so the 2 pixel border lies inside `(3, 4, 40, 30)`, then the text. The items are arranged in `(15, 16, 16, 6)`, which is 2 + 10 = 12 pixels inside each edge, and `DesiredSize` is the text size plus 24 on each axis.
+`Background`, `BorderBrush`, `BorderThickness`, and `Padding` work as on a `Border` around the items. The sides of `BorderThickness` are signed: `-2` is a 2 pixel band inside the control, and `2` is a 2 pixel band outside it. Here the control has `BorderThickness = new Thickness(-2)` and is arranged at `(3, 4, 40, 30)`: it draws one red `FillRectangle` at `(3, 4, 40, 30)`, then one blue `DrawRectangle` (thickness 2) at `(4, 5, 38, 28)`, so the 2 pixel border lies inside `(3, 4, 40, 30)`, then the text. With `new Thickness(2)` the blue `DrawRectangle` is at `(2, 3, 42, 32)`, outside `(3, 4, 40, 30)`, and the items are arranged in `(13, 14, 20, 10)`, 10 pixels inside each edge. The items are arranged in `(15, 16, 16, 6)`, which is 2 + 10 = 12 pixels inside each edge, and `DesiredSize` is the text size plus 24 on each axis.
 
 ```csharp
 using Cerneala.Drawing;
@@ -56,7 +56,7 @@ ItemsControl control = new()
 {
     Background = new SolidColorBrush(Color.Red),
     BorderBrush = new SolidColorBrush(Color.Blue),
-    BorderThickness = new Thickness(2),
+    BorderThickness = new Thickness(-2),
     Padding = new Thickness(10)
 };
 control.Items.Add(new TextBlock { Text = "One" });
@@ -69,9 +69,9 @@ Without a component template, `ItemsControl` uses its built-in `ItemsPresenter`.
 As the `Border` around the `ItemsPresenter` in the WPF `ItemsControl` template, a control without a component template draws and lays out its chrome:
 
 - `Background` fills the arranged bounds behind the items. The default `null` draws no fill.
-- `BorderBrush` paints the border inside the arranged bounds, as `Border` does, each side with its own `BorderThickness` side. Nothing is drawn when `BorderBrush` is `null` or every side of `BorderThickness` is 0.
-- The items presenter is measured with the available size minus `BorderThickness + Padding`, and arranged inside the arranged bounds minus `BorderThickness + Padding`. `DesiredSize` is the items size plus those insets. With the defaults (`Thickness.Zero`) the items fill the whole control, as before.
-- When the control is the content of a `ScrollViewer` and virtualizes, the scroll offset is counted from the top of the items, below `BorderThickness.Top + Padding.Top`. For example, with `Padding.Top = 100`, rows 10 pixels high and the viewer scrolled to 105, rows 0 to 3 are realized: they fill the viewport from 105 to 135.
+- `BorderBrush` paints the border as `Border` does, each side with its own signed `BorderThickness` side: a negative side inside the arranged bounds, a positive side outside them. Nothing is drawn when `BorderBrush` is `null` or every side of `BorderThickness` is 0.
+- The items presenter is measured with the available size minus (`Padding` plus the negative sides of `BorderThickness`; a positive side takes no room), and arranged inside the arranged bounds minus the same insets. `DesiredSize` is the items size plus those insets. With the defaults (`Thickness.Zero`) the items fill the whole control, as before.
+- When the control is the content of a `ScrollViewer` and virtualizes, the scroll offset is counted from the top of the items, below `Padding.Top` plus the inward part of `BorderThickness.Top` (`-BorderThickness.Top` when it is negative, otherwise 0). For example, with `Padding.Top = 100`, rows 10 pixels high and the viewer scrolled to 105, rows 0 to 3 are realized: they fill the viewport from 105 to 135.
 
 A control with a component template draws no chrome itself and does not inset its template: the template binds these properties where it needs them. `ListBox`, `Selector`, `ComboBox`, `Menu`, `MenuBar`, and `MenuItem` follow the same rule; `ListBox`, `ComboBox`, `Menu`, `MenuBar`, and `MenuItem` have a default component template, so their template decides where these properties apply. `TabControl` without a template lays out its header row and content area itself, and applies these properties to the content area below the header row only. `Background` and `BorderBrush` are registered with `AffectsRender`; `BorderThickness` and `Padding` with `AffectsMeasure | AffectsRender`.
 
@@ -149,7 +149,7 @@ In `.crn` markup, declare the owned collection exclusively with `@templates { ..
 | `RealizedItemCount` | `int` | Advanced diagnostic count of currently realized containers. |
 | `Background` | `Brush?` | Inherited from `Control`. Fills the arranged bounds behind the items when there is no component template. Default `null`. |
 | `BorderBrush` | `Brush?` | Inherited from `Control`. Draws the border around the arranged bounds when there is no component template. Default `null`. |
-| `BorderThickness` | `Thickness` | Inherited from `Control`. Border width; the items are inset by it when there is no component template. Default `Thickness.Zero`. |
+| `BorderThickness` | `Thickness` | Inherited from `Control`. Signed border width: a negative side `-t` is a band of `t` pixels inside the control and insets the items by `t` when there is no component template; a positive side is painted outside the control and insets nothing. Default `Thickness.Zero`. |
 | `Padding` | `Thickness` | Inherited from `Control`. Space between the border and the items when there is no component template. Default `Thickness.Zero`. |
 
 ## Methods
@@ -172,8 +172,8 @@ In `.crn` markup, declare the owned collection exclusively with `@templates { ..
 | `IsItemSelected(int)` | Returns whether the item at an index is selected. The base implementation returns `false`. |
 | `OnItemContainerPrepared(UIElement, int)` | Called after a container is prepared. The base implementation does nothing. |
 | `ActivateItemsPresenter(ItemsPresenter?)` | Activates a template presenter or restores the fallback presenter. |
-| `MeasureCore(MeasureContext)` | Without a component template, measures the items presenter inside `BorderThickness + Padding` and adds them to its size; with one, measures the template. |
-| `ArrangeCore(ArrangeContext)` | Without a component template, arranges the items presenter inside `BorderThickness + Padding`; with one, arranges the template. |
+| `MeasureCore(MeasureContext)` | Without a component template, measures the items presenter inside `Padding` plus the inward part of `BorderThickness` and adds them to its size; with one, measures the template. |
+| `ArrangeCore(ArrangeContext)` | Without a component template, arranges the items presenter inside `Padding` plus the inward part of `BorderThickness`; with one, arranges the template. |
 | `OnRender(RenderContext)` | Without a component template, fills the bounds with `Background` and draws `BorderBrush` around them; with one, draws nothing. |
 
 ## Applies to

@@ -105,7 +105,18 @@ public sealed class ControlTests
 
         Assert.Throws<ArgumentException>(() => control.Padding = new Thickness(-1));
         Assert.Throws<ArgumentException>(() => control.Padding = new Thickness(float.NaN));
-        Assert.Throws<ArgumentException>(() => control.BorderThickness = new Thickness(-1));
+        Assert.Throws<ArgumentException>(() => control.BorderThickness = new Thickness(float.NaN));
         Assert.Throws<ArgumentException>(() => control.BorderThickness = new Thickness(float.PositiveInfinity));
+        Assert.Throws<ArgumentException>(() => control.BorderThickness = new Thickness(1, 2, float.NegativeInfinity, 4));
+    }
+
+    [Fact]
+    public void BorderThicknessAcceptsSignedSides()
+    {
+        Control control = new();
+
+        control.BorderThickness = new Thickness(-4, 3, -2, 0);
+
+        Assert.Equal(new Thickness(-4, 3, -2, 0), control.BorderThickness);
     }
 }

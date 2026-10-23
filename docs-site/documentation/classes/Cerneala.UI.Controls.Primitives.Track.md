@@ -204,7 +204,7 @@ The default template binds `Background`, `BorderBrush`, and `BorderThickness` to
 | --- | --- | --- | --- |
 | `Background` | `Brush?` | `Control` | Gets or sets the fill brush bound to the default template root. The constructor sets a solid brush with color `Color(225, 225, 225)`. |
 | `BorderBrush` | `Brush?` | `Control` | Gets or sets the border brush bound to the default template root. The constructor sets a solid brush with color `Color(120, 120, 120)`. |
-| `BorderThickness` | `Thickness` | `Control` | Gets or sets the border thickness bound to the default template root. The constructor sets it to `new Thickness(1)`. |
+| `BorderThickness` | `Thickness` | `Control` | Gets or sets the border thickness bound to the default template root. The sides are signed: `-t` is a band of `t` pixels inside the track, `+t` a band outside it. The constructor sets it to `new Thickness(1)`, so the default border is painted outside the track. |
 | `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the control template. Valid templates must register `PART_Thumb` as a `Thumb` and can register `PART_DecreaseRepeatButton` and `PART_IncreaseRepeatButton` as `RepeatButton`; assigning `null` restores the default template. |
 
 ## Applies to

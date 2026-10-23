@@ -9,7 +9,9 @@ namespace Cerneala.Tests.Controls;
 
 public sealed class TextBoxMultiLineTests
 {
-    private const float VerticalInsets = 6;
+    // The TextBox default Padding is (4, 2, 4, 2) and its default BorderThickness is a positive 1, painted outside the
+    // arranged bounds, so the vertical insets are 2 + 2 = 4.
+    private const float VerticalInsets = 4;
 
     [Fact]
     public void AcceptsReturnEnterInsertsNewLineBetweenTypedText()

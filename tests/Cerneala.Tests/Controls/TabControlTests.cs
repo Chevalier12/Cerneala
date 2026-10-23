@@ -35,7 +35,8 @@ public sealed class TabControlTests
         {
             Background = red,
             BorderBrush = blue,
-            BorderThickness = new Thickness(4),
+            // A negative side is the inward border: it paints inside the content area and takes room from the page.
+            BorderThickness = new Thickness(-4),
             Padding = new Thickness(10)
         };
         tabControl.SetItems(new[] { tab });

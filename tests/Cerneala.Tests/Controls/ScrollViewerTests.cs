@@ -369,8 +369,9 @@ public sealed class ScrollViewerTests
         viewer.Measure(new MeasureContext(new LayoutSize(100, 100)));
         viewer.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
 
-        Assert.Equal(new LayoutRect(0, 0, 88, 100), viewer.Presenter.ArrangedBounds);
-        Assert.Equal(new LayoutRect(88, 0, 12, 100), viewer.VerticalScrollBar.ArrangedBounds);
+        // The ScrollBar default border is a positive 1, painted outside the bar, so the bar is 10 wide.
+        Assert.Equal(new LayoutRect(0, 0, 90, 100), viewer.Presenter.ArrangedBounds);
+        Assert.Equal(new LayoutRect(90, 0, 10, 100), viewer.VerticalScrollBar.ArrangedBounds);
         Assert.Equal(Visibility.Collapsed, viewer.HorizontalScrollBar.Visibility);
         Assert.Equal(Visibility.Visible, viewer.VerticalScrollBar.Visibility);
         Assert.True(viewer.Presenter.CanHorizontallyScroll);
@@ -504,7 +505,8 @@ public sealed class ScrollViewerTests
     {
         ScrollViewer viewer = new()
         {
-            BorderThickness = new Thickness(1, 2, 3, 4),
+            // Negative sides are the inward border: they take room from the template parts.
+            BorderThickness = new Thickness(-1, -2, -3, -4),
             Content = new FixedElement(new LayoutSize(20, 20)),
             HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden,
             VerticalScrollBarVisibility = ScrollBarVisibility.Visible
@@ -513,8 +515,8 @@ public sealed class ScrollViewerTests
         viewer.Measure(new MeasureContext(new LayoutSize(100, 100)));
         viewer.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
 
-        Assert.Equal(new LayoutRect(1, 2, 84, 94), viewer.Presenter.ArrangedBounds);
-        Assert.Equal(new LayoutRect(85, 2, 12, 94), viewer.VerticalScrollBar.ArrangedBounds);
+        Assert.Equal(new LayoutRect(1, 2, 86, 94), viewer.Presenter.ArrangedBounds);
+        Assert.Equal(new LayoutRect(87, 2, 10, 94), viewer.VerticalScrollBar.ArrangedBounds);
         Assert.Equal(Visibility.Collapsed, viewer.HorizontalScrollBar.Visibility);
     }
 
@@ -589,8 +591,8 @@ public sealed class ScrollViewerTests
         viewer.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 80)));
 
         Assert.True(viewer.IsVerticalScrollBarVisible);
-        Assert.Equal(new LayoutRect(0, 0, 88, 80), viewer.Presenter.ArrangedBounds);
-        Assert.Equal(new LayoutRect(88, 0, 12, 80), viewer.VerticalScrollBar.ArrangedBounds);
+        Assert.Equal(new LayoutRect(0, 0, 90, 80), viewer.Presenter.ArrangedBounds);
+        Assert.Equal(new LayoutRect(90, 0, 10, 80), viewer.VerticalScrollBar.ArrangedBounds);
     }
 
     [Fact]
@@ -673,7 +675,8 @@ public sealed class ScrollViewerTests
         StackPanel content = new();
         ScrollViewer viewer = new()
         {
-            BorderThickness = new Thickness(1),
+            // A negative side is the inward border: the parts are arranged inside it.
+            BorderThickness = new Thickness(-1),
             Content = content,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto
         };
@@ -686,8 +689,8 @@ public sealed class ScrollViewerTests
         root.ProcessFrame();
 
         Assert.True(viewer.IsVerticalScrollBarVisible);
-        Assert.Equal(new LayoutRect(1, 1, 86, 98), viewer.Presenter.ArrangedBounds);
-        Assert.Equal(new LayoutRect(87, 1, 12, 98), viewer.VerticalScrollBar.ArrangedBounds);
+        Assert.Equal(new LayoutRect(1, 1, 88, 98), viewer.Presenter.ArrangedBounds);
+        Assert.Equal(new LayoutRect(89, 1, 10, 98), viewer.VerticalScrollBar.ArrangedBounds);
     }
 
     [Fact]
@@ -748,7 +751,7 @@ public sealed class ScrollViewerTests
     }
 
     // The 300 px tall content overflows the 100 px viewport, so the vertical bar shows as before and the viewer desires
-    // the 100 px height it has, plus the 12 px bar next to the 80 px wide content.
+    // the 100 px height it has, plus the 10 px bar next to the 80 px wide content.
     [Fact]
     public void ViewerWithTallContentDesiresTheAvailableHeightAndShowsTheVerticalBar()
     {
@@ -760,15 +763,15 @@ public sealed class ScrollViewerTests
 
         viewer.Measure(new MeasureContext(new LayoutSize(100, 100)));
 
-        Assert.Equal(new LayoutSize(92, 100), viewer.DesiredSize);
+        Assert.Equal(new LayoutSize(90, 100), viewer.DesiredSize);
         Assert.True(viewer.IsVerticalScrollBarVisible);
         Assert.Equal(300, viewer.ScrollInfo.ExtentHeight);
         Assert.Equal(100, viewer.ScrollInfo.ViewportHeight);
 
         viewer.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
 
-        Assert.Equal(new LayoutRect(0, 0, 88, 100), viewer.Presenter.ArrangedBounds);
-        Assert.Equal(88, viewer.ScrollInfo.ViewportWidth);
+        Assert.Equal(new LayoutRect(0, 0, 90, 100), viewer.Presenter.ArrangedBounds);
+        Assert.Equal(90, viewer.ScrollInfo.ViewportWidth);
         Assert.Equal(100, viewer.ScrollInfo.ViewportHeight);
     }
 
@@ -1148,7 +1151,7 @@ public sealed class ScrollViewerTests
 
         Assert.Same(second, viewer.Root);
         Assert.Same(second, viewer.Presenter.Root);
-        Assert.Equal(new LayoutRect(0, 0, 108, 80), viewer.Presenter.ArrangedBounds);
+        Assert.Equal(new LayoutRect(0, 0, 110, 80), viewer.Presenter.ArrangedBounds);
     }
 
     // As in WPF, where the RepeatButtons and the Thumb of the default ScrollBar template are not focusable, Tab from a

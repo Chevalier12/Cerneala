@@ -298,9 +298,9 @@ public sealed class OverlayTests
         LayoutRect recentSubmenu = recent.SubmenuOverlay!.ProjectedPresenter.ArrangedBounds;
         Assert.Equal(file.ArrangedBounds.X, fileSubmenu.X);
         Assert.Equal(file.ArrangedBounds.Y + file.ArrangedBounds.Height, fileSubmenu.Y);
-        Assert.Equal(142, fileSubmenu.Width);
+        Assert.Equal(140, fileSubmenu.Width);
         Assert.Equal(
-            new LayoutRect(recentBounds.X + recentBounds.Width, recentBounds.Y, 142, recentSubmenu.Height),
+            new LayoutRect(recentBounds.X + recentBounds.Width, recentBounds.Y, 140, recentSubmenu.Height),
             recentSubmenu);
     }
 
@@ -351,7 +351,7 @@ public sealed class OverlayTests
         Assert.True(
             presenter.ViewportWidth >= presenter.ExtentWidth,
             $"ViewportWidth={presenter.ViewportWidth} ExtentWidth={presenter.ExtentWidth}");
-        Assert.Equal(142 + viewer.VerticalScrollBar.ArrangedBounds.Width, submenu.Width);
+        Assert.Equal(140 + viewer.VerticalScrollBar.ArrangedBounds.Width, submenu.Width);
     }
 
     [Fact]

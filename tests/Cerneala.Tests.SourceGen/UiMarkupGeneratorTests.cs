@@ -1171,6 +1171,25 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
+    public void SourceGeneratorAcceptsSignedBorderThicknessSides()
+    {
+        GeneratorRunResult result = RunGenerator("signed-border.crn", "<Border BorderThickness=\"-4,3,-2,3\" />", out Compilation compilation);
+        string generatedSource = SingleGeneratedSource(result);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Contains(
+            ".SetValue(global::Cerneala.UI.Controls.Control.BorderThicknessProperty, new global::Cerneala.UI.Layout.Thickness(-4f, 3f, -2f, 3f), global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);",
+            generatedSource);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Border border = Assert.IsType<Border>(InvokeCreate(stream, "Cerneala.GeneratedUi.SignedBorderFactory"));
+        Assert.Equal(new Cerneala.UI.Layout.Thickness(-4, 3, -2, 3), border.BorderThickness);
+    }
+
+    [Fact]
     public void SourceGeneratorEmitsAllNamedColorsThroughColorApi()
     {
         const string markup = """

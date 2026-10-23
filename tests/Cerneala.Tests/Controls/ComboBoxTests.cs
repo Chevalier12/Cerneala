@@ -119,7 +119,7 @@ public sealed class ComboBoxTests
         Border border = Assert.IsType<Border>(overlay.Content);
         ScrollViewer scrollViewer = Assert.IsType<ScrollViewer>(border.Child);
         Assert.Equal(
-            scrollViewer.Presenter.ExtentHeight + border.BorderThickness.Vertical,
+            scrollViewer.Presenter.ExtentHeight + InwardVerticalBorder(border),
             overlay.ProjectedPresenter.ArrangedBounds.Height);
         Assert.True(overlay.ProjectedPresenter.ArrangedBounds.Height < 300);
         Assert.False(scrollViewer.IsVerticalScrollBarVisible);
@@ -156,7 +156,7 @@ public sealed class ComboBoxTests
         Assert.True(comboBox.IsDropDownOpen);
         Assert.Equal([1, 2, 0, 3, 4], RealizedSourceIndices(comboBox));
         Assert.Equal(
-            scrollViewer.Presenter.ExtentHeight + border.BorderThickness.Vertical,
+            scrollViewer.Presenter.ExtentHeight + InwardVerticalBorder(border),
             overlay.ProjectedPresenter.ArrangedBounds.Height);
         Assert.True(overlay.ProjectedPresenter.ArrangedBounds.Height < comboBox.MaxDropDownHeight);
     }
@@ -194,7 +194,7 @@ public sealed class ComboBoxTests
         Assert.True(comboBox.IsDropDownOpen);
         Assert.Equal([0, 1, 2, 3, 4], RealizedSourceIndices(comboBox));
         Assert.Equal(
-            scrollViewer.Presenter.ExtentHeight + border.BorderThickness.Vertical,
+            scrollViewer.Presenter.ExtentHeight + InwardVerticalBorder(border),
             overlay.ProjectedPresenter.ArrangedBounds.Height);
         Assert.True(overlay.ProjectedPresenter.ArrangedBounds.Height < comboBox.MaxDropDownHeight);
     }
@@ -1316,6 +1316,13 @@ public sealed class ComboBoxTests
         Assert.False(comboBox.IsDropDownOpen);
         Assert.False(inner.IsKeyboardFocused);
         Assert.True(comboBox.IsKeyboardFocused);
+    }
+
+    // Only a negative BorderThickness side takes room from the child; the default positive 1 of the drop-down border is
+    // painted outside the bounds, so the drop-down is exactly as tall as the items.
+    private static float InwardVerticalBorder(Border border)
+    {
+        return MathF.Max(0, -border.BorderThickness.Top) + MathF.Max(0, -border.BorderThickness.Bottom);
     }
 
     private static void ClickAt(UIRoot root, ElementInputBridge bridge, float x, float y)

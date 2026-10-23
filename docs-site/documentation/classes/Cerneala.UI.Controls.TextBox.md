@@ -114,7 +114,7 @@ The caret is one device pixel wide (`1 / Root.Scale` layout units) and is drawn 
 
 ### Lines, size and scrolling
 
-`MinLines` and `MaxLines` set the height of the text box in lines of its font, plus the vertical `Padding` and `BorderThickness`. `MaxLines` limits the height that the template gets; `MinLines` is the least desired height. The default `MaxLines` is `int.MaxValue`, which is no limit. If `MinLines` is greater than `MaxLines` when the text box is measured, measure throws `InvalidOperationException`. For example, `MinLines = 4` with `MaxLines = 2` throws at the first `Measure`.
+`MinLines` and `MaxLines` set the height of the text box in lines of its font, plus the vertical `Padding` and the negative sides of `BorderThickness`. The default `BorderThickness` is a positive 1, painted outside the bounds, so it adds nothing; for example, `MinLines = 3` gives a height of 3 times the line height plus 4 (the default `Padding` of 2 on top and bottom). `MaxLines` limits the height that the template gets; `MinLines` is the least desired height. The default `MaxLines` is `int.MaxValue`, which is no limit. If `MinLines` is greater than `MaxLines` when the text box is measured, measure throws `InvalidOperationException`. For example, `MinLines = 4` with `MaxLines = 2` throws at the first `Measure`.
 
 `TextWrapping.Wrap` breaks the text at word boundaries at the width of the text view. A word wider than the width is split. While `TextWrapping` is `Wrap`, the horizontal scroll bar of the template is `Disabled`, whatever `HorizontalScrollBarVisibility` says, so the text does not scroll horizontally. `NoWrap` breaks lines only at line break characters.
 

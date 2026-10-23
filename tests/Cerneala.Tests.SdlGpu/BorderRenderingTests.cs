@@ -8,7 +8,8 @@ using Cerneala.UI.Media;
 
 namespace Cerneala.Tests.Drawing.SdlGpu;
 
-// The border is painted inside the arranged bounds (10, 10, 40, 30): columns 10..49, rows 10..39.
+// Negative sides paint inside the arranged bounds (10, 10, 40, 30), columns 10..49 and rows 10..39; positive sides paint
+// outside them.
 [Collection(SdlNativeTestCollection.Name)]
 public sealed class BorderRenderingTests
 {
@@ -26,7 +27,7 @@ public sealed class BorderRenderingTests
         Border border = new()
         {
             BorderBrush = new SolidColorBrush(BorderColor),
-            BorderThickness = new Thickness(0, 0, 0, 2)
+            BorderThickness = new Thickness(0, 0, 0, -2)
         };
 
         Color[] pixels = Render(border, out SdlDrawingFixture fixture);
@@ -53,7 +54,7 @@ public sealed class BorderRenderingTests
         Border border = new()
         {
             BorderBrush = new SolidColorBrush(BorderColor),
-            BorderThickness = new Thickness(1, 2, 3, 4)
+            BorderThickness = new Thickness(-1, -2, -3, -4)
         };
 
         Color[] pixels = Render(border, out SdlDrawingFixture fixture);
@@ -74,7 +75,7 @@ public sealed class BorderRenderingTests
         Border border = new()
         {
             BorderBrush = new SolidColorBrush(BorderColor),
-            BorderThickness = new Thickness(4)
+            BorderThickness = new Thickness(-4)
         };
 
         Color[] pixels = Render(border, out SdlDrawingFixture fixture);
@@ -97,7 +98,7 @@ public sealed class BorderRenderingTests
         {
             Background = new SolidColorBrush(BackgroundColor),
             BorderBrush = new SolidColorBrush(BorderColor),
-            BorderThickness = new Thickness(2),
+            BorderThickness = new Thickness(-2),
             CornerRadius = new CornerRadius(8)
         };
 
@@ -126,7 +127,7 @@ public sealed class BorderRenderingTests
         {
             Background = new SolidColorBrush(BackgroundColor),
             BorderBrush = new SolidColorBrush(BorderColor),
-            BorderThickness = new Thickness(2),
+            BorderThickness = new Thickness(-2),
             CornerRadius = new CornerRadius(8, 0, 0, 8)
         };
 
@@ -143,6 +144,143 @@ public sealed class BorderRenderingTests
             Assert.True(IsBorder(At(fixture, pixels, Left + Width - 1, Top + Height - 1)), $"bottom-right corner {At(fixture, pixels, Left + Width - 1, Top + Height - 1)}");
             Assert.True(IsBackground(At(fixture, pixels, 30, 25)), $"interior {At(fixture, pixels, 30, 25)}");
             Assert.True(MaximumChannelOutsideBounds(pixels) <= 2, $"Maximum channel outside the arranged bounds {MaximumChannelOutsideBounds(pixels)}/255.");
+        }
+    }
+
+    [SdlNativeFact]
+    public void PositiveUniformBorderIsPaintedAroundTheBoundsWithSquareCorners()
+    {
+        Border border = new()
+        {
+            Background = new SolidColorBrush(BackgroundColor),
+            BorderBrush = new SolidColorBrush(BorderColor),
+            BorderThickness = new Thickness(4)
+        };
+
+        Color[] pixels = Render(border, out SdlDrawingFixture fixture);
+        using (fixture)
+        {
+            // The outer rectangle is columns 6..53 and rows 6..43. Each band is measured outward from the first pixel
+            // outside the bounds: columns 9..6, 50..53 and rows 9..6, 40..43.
+            Assert.Equal(4, BandWidth(fixture, pixels, Left - 1, 25, -1, 0));
+            Assert.Equal(4, BandWidth(fixture, pixels, Left + Width, 25, 1, 0));
+            Assert.Equal(4, BandWidth(fixture, pixels, 30, Top - 1, 0, -1));
+            Assert.Equal(4, BandWidth(fixture, pixels, 30, Top + Height, 0, 1));
+            // The pixels just inside each side, and the corner pixel of the bounds, are the background.
+            Assert.True(IsBackground(At(fixture, pixels, Left, 25)), $"left inside {At(fixture, pixels, Left, 25)}");
+            Assert.True(IsBackground(At(fixture, pixels, Left + Width - 1, 25)), $"right inside {At(fixture, pixels, Left + Width - 1, 25)}");
+            Assert.True(IsBackground(At(fixture, pixels, 30, Top)), $"top inside {At(fixture, pixels, 30, Top)}");
+            Assert.True(IsBackground(At(fixture, pixels, 30, Top + Height - 1)), $"bottom inside {At(fixture, pixels, 30, Top + Height - 1)}");
+            Assert.True(IsBackground(At(fixture, pixels, Left, Top)), $"top-left inside {At(fixture, pixels, Left, Top)}");
+            // The outer corner blocks (6..9, 6..9) and the three others are border: the corners are square.
+            for (int dy = 0; dy < 4; dy++)
+            {
+                for (int dx = 0; dx < 4; dx++)
+                {
+                    Assert.True(IsBorder(At(fixture, pixels, 6 + dx, 6 + dy)), $"top-left block {6 + dx},{6 + dy} {At(fixture, pixels, 6 + dx, 6 + dy)}");
+                    Assert.True(IsBorder(At(fixture, pixels, 50 + dx, 6 + dy)), $"top-right block {50 + dx},{6 + dy} {At(fixture, pixels, 50 + dx, 6 + dy)}");
+                    Assert.True(IsBorder(At(fixture, pixels, 6 + dx, 40 + dy)), $"bottom-left block {6 + dx},{40 + dy} {At(fixture, pixels, 6 + dx, 40 + dy)}");
+                    Assert.True(IsBorder(At(fixture, pixels, 50 + dx, 40 + dy)), $"bottom-right block {50 + dx},{40 + dy} {At(fixture, pixels, 50 + dx, 40 + dy)}");
+                }
+            }
+
+            int beyond = MaximumChannelOutside(pixels, 6, 6, 48, 38);
+            Assert.True(beyond <= 2, $"Maximum channel beyond the outer rectangle {beyond}/255.");
+        }
+    }
+
+    [SdlNativeFact]
+    public void PositiveSidesHaveTheirOwnBandWidthOutsideTheBounds()
+    {
+        Border border = new()
+        {
+            Background = new SolidColorBrush(BackgroundColor),
+            BorderBrush = new SolidColorBrush(BorderColor),
+            BorderThickness = new Thickness(1, 2, 3, 4)
+        };
+
+        Color[] pixels = Render(border, out SdlDrawingFixture fixture);
+        using (fixture)
+        {
+            // The outer rectangle is columns 9..52 and rows 8..43.
+            Assert.Equal(1, BandWidth(fixture, pixels, Left - 1, 25, -1, 0));
+            Assert.Equal(2, BandWidth(fixture, pixels, 30, Top - 1, 0, -1));
+            Assert.Equal(3, BandWidth(fixture, pixels, Left + Width, 25, 1, 0));
+            Assert.Equal(4, BandWidth(fixture, pixels, 30, Top + Height, 0, 1));
+            Assert.True(IsBackground(At(fixture, pixels, Left, 25)), $"left inside {At(fixture, pixels, Left, 25)}");
+            Assert.True(IsBackground(At(fixture, pixels, Left + Width - 1, 25)), $"right inside {At(fixture, pixels, Left + Width - 1, 25)}");
+            Assert.True(IsBackground(At(fixture, pixels, 30, Top)), $"top inside {At(fixture, pixels, 30, Top)}");
+            Assert.True(IsBackground(At(fixture, pixels, 30, Top + Height - 1)), $"bottom inside {At(fixture, pixels, 30, Top + Height - 1)}");
+            Assert.True(IsBorder(At(fixture, pixels, 9, 8)), $"top-left outer corner {At(fixture, pixels, 9, 8)}");
+            Assert.True(IsBorder(At(fixture, pixels, 52, 43)), $"bottom-right outer corner {At(fixture, pixels, 52, 43)}");
+            int beyond = MaximumChannelOutside(pixels, 9, 8, 44, 36);
+            Assert.True(beyond <= 2, $"Maximum channel beyond the outer rectangle {beyond}/255.");
+        }
+    }
+
+    // Mixed signs: -4 on the left is inside (columns 10..13), 3 on the top is outside (rows 7..9), -2 on the right is
+    // inside (columns 48..49), 3 on the bottom is outside (rows 40..42). The outer rectangle is columns 10..49 and rows
+    // 7..42, so the top-left outer corner (10, 7) is border.
+    [SdlNativeFact]
+    public void MixedSignSidesPaintInsideOnNegativeSidesAndOutsideOnPositiveSides()
+    {
+        Border border = new()
+        {
+            Background = new SolidColorBrush(BackgroundColor),
+            BorderBrush = new SolidColorBrush(BorderColor),
+            BorderThickness = new Thickness(-4, 3, -2, 3)
+        };
+
+        Color[] pixels = Render(border, out SdlDrawingFixture fixture);
+        using (fixture)
+        {
+            Assert.Equal(4, BandWidth(fixture, pixels, Left, 25, 1, 0));
+            Assert.Equal(2, BandWidth(fixture, pixels, Left + Width - 1, 25, -1, 0));
+            Assert.Equal(3, BandWidth(fixture, pixels, 30, Top - 1, 0, -1));
+            Assert.Equal(3, BandWidth(fixture, pixels, 30, Top + Height, 0, 1));
+            // The top and bottom rows of the bounds are background, since those sides are outside.
+            Assert.True(IsBackground(At(fixture, pixels, 30, Top)), $"top row {At(fixture, pixels, 30, Top)}");
+            Assert.True(IsBackground(At(fixture, pixels, 30, Top + Height - 1)), $"bottom row {At(fixture, pixels, 30, Top + Height - 1)}");
+            Assert.True(IsBackground(At(fixture, pixels, 30, 25)), $"interior {At(fixture, pixels, 30, 25)}");
+            Assert.True(IsBorder(At(fixture, pixels, 10, 7)), $"top-left outer corner {At(fixture, pixels, 10, 7)}");
+            Assert.True(IsBorder(At(fixture, pixels, 49, 42)), $"bottom-right outer corner {At(fixture, pixels, 49, 42)}");
+            int beyond = MaximumChannelOutside(pixels, 10, 7, 40, 36);
+            Assert.True(beyond <= 2, $"Maximum channel beyond the outer rectangle {beyond}/255.");
+        }
+    }
+
+    // Bounds (10, 10, 40, 30), CornerRadius 8, thickness +4. The bounds, and the background, have the radius-8 corner
+    // whose top-left arc has its centre at (18, 18). The outer figure is (6, 6, 48, 38) with radius 8 + 4 = 12 around
+    // the same centre. A pixel centre (x + 0.5, y + 0.5) is in the ring when its distance from the corner centre is
+    // between 8 and 12: (10, 10) is at 10.6, so it lies inside the bounds, outside the rounded background, and is border;
+    // (11, 11) is at 9.2; (13, 13) is at 6.4, inside radius 8, so it is background; (6, 6) is at 16.3 and (7, 7) at 14.9,
+    // beyond 12, so they are clear. The bottom-right corner centre is (42, 32): (49, 39) is at 10.6, border, and
+    // (53, 43) at 16.3, clear. Mid-left (8, 25) is on the straight part of the left band (columns 6..9, rows 18..32).
+    [SdlNativeFact]
+    public void PositiveBorderWithACornerRadiusKeepsItsWidthAroundTheRoundedCorner()
+    {
+        Border border = new()
+        {
+            Background = new SolidColorBrush(BackgroundColor),
+            BorderBrush = new SolidColorBrush(BorderColor),
+            BorderThickness = new Thickness(4),
+            CornerRadius = new CornerRadius(8)
+        };
+
+        Color[] pixels = Render(border, out SdlDrawingFixture fixture);
+        using (fixture)
+        {
+            Assert.True(IsBorder(At(fixture, pixels, 10, 10)), $"(10,10) {At(fixture, pixels, 10, 10)}");
+            Assert.True(IsBorder(At(fixture, pixels, 11, 11)), $"(11,11) {At(fixture, pixels, 11, 11)}");
+            Assert.True(IsBackground(At(fixture, pixels, 13, 13)), $"(13,13) {At(fixture, pixels, 13, 13)}");
+            Assert.True(IsClear(At(fixture, pixels, 6, 6)), $"(6,6) {At(fixture, pixels, 6, 6)}");
+            Assert.True(IsClear(At(fixture, pixels, 7, 7)), $"(7,7) {At(fixture, pixels, 7, 7)}");
+            Assert.True(IsBorder(At(fixture, pixels, 8, 25)), $"mid-left {At(fixture, pixels, 8, 25)}");
+            Assert.True(IsBorder(At(fixture, pixels, 49, 39)), $"(49,39) {At(fixture, pixels, 49, 39)}");
+            Assert.True(IsClear(At(fixture, pixels, 53, 43)), $"(53,43) {At(fixture, pixels, 53, 43)}");
+            Assert.True(IsBackground(At(fixture, pixels, 30, 25)), $"interior {At(fixture, pixels, 30, 25)}");
+            int beyond = MaximumChannelOutside(pixels, 6, 6, 48, 38);
+            Assert.True(beyond <= 2, $"Maximum channel beyond the outer rectangle {beyond}/255.");
         }
     }
 
@@ -175,14 +313,17 @@ public sealed class BorderRenderingTests
         return count;
     }
 
-    private static int MaximumChannelOutsideBounds(Color[] pixels)
+    private static int MaximumChannelOutsideBounds(Color[] pixels) => MaximumChannelOutside(pixels, Left, Top, Width, Height);
+
+    // The largest channel of any pixel outside the pixel rectangle (left, top, width, height).
+    private static int MaximumChannelOutside(Color[] pixels, int left, int top, int width, int height)
     {
         int maximum = 0;
         for (int y = 0; y < Size; y++)
         {
             for (int x = 0; x < Size; x++)
             {
-                if (x >= Left && x < Left + Width && y >= Top && y < Top + Height)
+                if (x >= left && x < left + width && y >= top && y < top + height)
                 {
                     continue;
                 }

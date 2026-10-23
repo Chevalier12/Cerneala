@@ -41,6 +41,8 @@ In markup, one value sets all four corners, and four comma-separated values set 
 
 A radius of `0` is a square corner. Use `Zero` when no corner is rounded.
 
+A radius belongs to the arranged bounds of the `Border`, which is also the edge of its background. A border painted outside the bounds (a positive `BorderThickness` side `t`) has an outer corner of radius + `t` when the radius is not `0`; a border painted inside (a negative side `-t`) has an inner corner of radius - `t`, never below `0`. For example, `CornerRadius = new CornerRadius(8)` with `BorderThickness = new Thickness(2)` gives an outer corner of radius 10 around a background corner of radius 8, and with `BorderThickness = new Thickness(-2)` an inner corner of radius 6.
+
 ## Constructors
 
 | Name | Description |

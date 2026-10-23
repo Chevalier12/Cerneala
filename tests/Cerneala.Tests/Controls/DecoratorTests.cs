@@ -83,7 +83,8 @@ public sealed class DecoratorTests
         Decorator decorator = new()
         {
             Padding = new Thickness(1),
-            BorderThickness = new Thickness(2)
+            // A negative side is the inward border: it takes room from the content (a positive side takes none).
+            BorderThickness = new Thickness(-2)
         };
         FixedElement child = new(new LayoutSize(10, 5));
         decorator.Child = child;

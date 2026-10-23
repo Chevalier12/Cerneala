@@ -35,6 +35,60 @@ public sealed class ProgressBarTests
     }
 
     [Fact]
+    public void DefaultBorderIsAStrokeOutsideTheArrangedBounds()
+    {
+        UIRoot root = new();
+        ProgressBar progress = new();
+        DrawCommandList commands = Render(root, progress, new LayoutRect(0, 0, 80, 10));
+
+        // The default BorderThickness is 1, a positive side: a pen of thickness 1 centred on the bounds inflated by 0.5
+        // covers exactly the 1 px ring just outside (0, 0, 80, 10).
+        DrawCommand border = Assert.Single(commands, command => ReferenceEquals(command.Brush, progress.BorderBrush));
+        Assert.Equal(DrawCommandKind.DrawRectangle, border.Kind);
+        Assert.Equal(new DrawRect(-0.5f, -0.5f, 81, 11), border.Rect);
+        Assert.Equal(1, border.Thickness);
+    }
+
+    [Fact]
+    public void NegativeBorderIsAStrokeInsideTheArrangedBounds()
+    {
+        UIRoot root = new();
+        ProgressBar progress = new() { BorderThickness = new Thickness(-1) };
+        DrawCommandList commands = Render(root, progress, new LayoutRect(0, 0, 80, 10));
+
+        DrawCommand border = Assert.Single(commands, command => ReferenceEquals(command.Brush, progress.BorderBrush));
+        Assert.Equal(DrawCommandKind.DrawRectangle, border.Kind);
+        Assert.Equal(new DrawRect(0.5f, 0.5f, 79, 9), border.Rect);
+        Assert.Equal(1, border.Thickness);
+    }
+
+    [Theory]
+    [InlineData(2f)]
+    [InlineData(-2f)]
+    public void BorderWithOneNonZeroSideIsNotAStrokeOnAllFourSides(float bottom)
+    {
+        UIRoot root = new();
+        ProgressBar progress = new() { BorderThickness = new Thickness(0, 0, 0, bottom) };
+        DrawCommandList commands = Render(root, progress, new LayoutRect(0, 0, 80, 10));
+
+        // As Border: the sides differ, so the border is one even-odd ring, which here is only the bottom band: below the
+        // bounds for +2, inside them for -2.
+        DrawCommand border = Assert.Single(commands, command => ReferenceEquals(command.Brush, progress.BorderBrush));
+        Assert.Equal(DrawCommandKind.FillPath, border.Kind);
+        Assert.Equal(DrawFillRule.EvenOdd, border.FillRule);
+    }
+
+    private static DrawCommandList Render(UIRoot root, ProgressBar progress, LayoutRect bounds)
+    {
+        root.VisualChildren.Add(progress);
+        root.ProcessFrame();
+        progress.Arrange(new ArrangeContext(bounds));
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
+        return root.RetainedRenderer.Commit(root);
+    }
+
+    [Fact]
     public void MarkupValueRemainsEffectiveAfterRangeIsConfigured()
     {
         ProgressBar progress = new();

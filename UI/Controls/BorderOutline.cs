@@ -4,8 +4,10 @@ using Cerneala.UI.Layout;
 namespace Cerneala.UI.Controls;
 
 // The ring between a control's outer shape and its inner shape, for a border that is not one uniform stroke: a side
-// thickness or a corner radius differs. It is local to the arranged bounds, so it keeps its identity while the control
-// only moves, and the render cache of a backend, which keys a path by identity, reuses the geometry it derived from it.
+// thickness or a corner radius differs. A positive side thickness puts the outer edge that far outside the arranged
+// bounds and a negative one puts the inner edge that far inside them. It is local to the top-left of the outer shape,
+// so it keeps its identity while the control only moves, and the render cache of a backend, which keys a path by
+// identity, reuses the geometry it derived from it.
 internal sealed class BorderOutlineCache
 {
     private DrawPath? path;
@@ -23,38 +25,50 @@ internal sealed class BorderOutlineCache
         return path;
     }
 
-    // Two closed figures filled with the even-odd rule: the outer rounded rectangle, and the inner one that the
-    // thicknesses leave, which is the hole. The inner corner radius is the outer one minus the thickness of the two
-    // sides it joins, so the inner corners are elliptical when the two thicknesses differ. A side with thickness 0 puts
-    // the inner edge on the outer edge, where the two coincide and the filled region is empty. The inner figure is
-    // omitted when the thicknesses cover the whole rectangle.
+    // Two closed figures filled with the even-odd rule: the outer figure, which is the bounds grown by each positive
+    // side, and the inner figure, which is the bounds shrunk by each negative side and is the hole. The bounds are at
+    // (outLeft, outTop) in the path. The corner radius r, scaled to fit the bounds, rounds the bounds. An outer corner
+    // with r greater than 0 is elliptical with the radii r plus the positive side thickness of the two sides it joins,
+    // so the ring keeps its width around it; with r equal to 0 it is square. The inner corner radius is r minus the
+    // negative side thickness of the two sides it joins, so the inner corners are elliptical when the two differ. A side
+    // with thickness 0 puts the inner edge on the outer edge, where the two coincide and the filled region is empty. The
+    // inner figure is omitted when the negative thicknesses cover the whole bounds.
     private static DrawPath Build(float width, float height, Thickness thickness, CornerRadius cornerRadius)
     {
-        DrawCornerRadius outer = Border.ToDrawCornerRadius(cornerRadius, new DrawRect(0, 0, width, height));
+        DrawCornerRadius radius = Border.ToDrawCornerRadius(cornerRadius, new DrawRect(0, 0, width, height));
+        float outLeft = MathF.Max(0, thickness.Left);
+        float outTop = MathF.Max(0, thickness.Top);
+        float outRight = MathF.Max(0, thickness.Right);
+        float outBottom = MathF.Max(0, thickness.Bottom);
+        float inLeft = MathF.Max(0, -thickness.Left);
+        float inTop = MathF.Max(0, -thickness.Top);
+        float inRight = MathF.Max(0, -thickness.Right);
+        float inBottom = MathF.Max(0, -thickness.Bottom);
+
         DrawPathBuilder builder = new();
         AddFigure(
             builder,
             0,
             0,
-            width,
-            height,
-            new Corner(outer.TopLeft, outer.TopLeft),
-            new Corner(outer.TopRight, outer.TopRight),
-            new Corner(outer.BottomRight, outer.BottomRight),
-            new Corner(outer.BottomLeft, outer.BottomLeft));
+            outLeft + width + outRight,
+            outTop + height + outBottom,
+            Outer(radius.TopLeft, outLeft, outTop),
+            Outer(radius.TopRight, outRight, outTop),
+            Outer(radius.BottomRight, outRight, outBottom),
+            Outer(radius.BottomLeft, outLeft, outBottom));
 
-        float innerLeft = thickness.Left;
-        float innerTop = thickness.Top;
-        float innerRight = width - thickness.Right;
-        float innerBottom = height - thickness.Bottom;
+        float innerLeft = outLeft + inLeft;
+        float innerTop = outTop + inTop;
+        float innerRight = outLeft + width - inRight;
+        float innerBottom = outTop + height - inBottom;
         float innerWidth = innerRight - innerLeft;
         float innerHeight = innerBottom - innerTop;
         if (innerWidth > 0 && innerHeight > 0)
         {
-            Corner topLeft = new(MathF.Max(0, outer.TopLeft - thickness.Left), MathF.Max(0, outer.TopLeft - thickness.Top));
-            Corner topRight = new(MathF.Max(0, outer.TopRight - thickness.Right), MathF.Max(0, outer.TopRight - thickness.Top));
-            Corner bottomRight = new(MathF.Max(0, outer.BottomRight - thickness.Right), MathF.Max(0, outer.BottomRight - thickness.Bottom));
-            Corner bottomLeft = new(MathF.Max(0, outer.BottomLeft - thickness.Left), MathF.Max(0, outer.BottomLeft - thickness.Bottom));
+            Corner topLeft = new(MathF.Max(0, radius.TopLeft - inLeft), MathF.Max(0, radius.TopLeft - inTop));
+            Corner topRight = new(MathF.Max(0, radius.TopRight - inRight), MathF.Max(0, radius.TopRight - inTop));
+            Corner bottomRight = new(MathF.Max(0, radius.BottomRight - inRight), MathF.Max(0, radius.BottomRight - inBottom));
+            Corner bottomLeft = new(MathF.Max(0, radius.BottomLeft - inLeft), MathF.Max(0, radius.BottomLeft - inBottom));
             float scale = MathF.Min(
                 MathF.Min(Fit(innerWidth, topLeft.X + topRight.X), Fit(innerWidth, bottomLeft.X + bottomRight.X)),
                 MathF.Min(Fit(innerHeight, topLeft.Y + bottomLeft.Y), Fit(innerHeight, topRight.Y + bottomRight.Y)));
@@ -71,6 +85,11 @@ internal sealed class BorderOutlineCache
         }
 
         return builder.Build();
+    }
+
+    private static Corner Outer(float radius, float horizontalSide, float verticalSide)
+    {
+        return radius > 0 ? new Corner(radius + horizontalSide, radius + verticalSide) : default;
     }
 
     private static float Fit(float available, float requested)
