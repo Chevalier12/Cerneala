@@ -23,6 +23,8 @@ public sealed partial class UiMarkupGenerator
             PositiveFloat,
             Thickness,
             NonNegativeThickness,
+            CornerRadius,
+            NonNegativeCornerRadius,
             LayoutPoint,
             DrawPoint,
             DrawPointList,
@@ -439,6 +441,11 @@ public sealed partial class UiMarkupGenerator
             if (typeName == "Cerneala.UI.Layout.Thickness")
             {
                 return constraint == "1" ? MarkupValueKind.NonNegativeThickness : MarkupValueKind.Thickness;
+            }
+
+            if (typeName == "Cerneala.UI.Layout.CornerRadius")
+            {
+                return constraint == "1" ? MarkupValueKind.NonNegativeCornerRadius : MarkupValueKind.CornerRadius;
             }
 
             if (typeName == "Cerneala.UI.Layout.LayoutPoint")

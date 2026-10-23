@@ -166,8 +166,34 @@ internal sealed partial class CernealaCompletionService
 
         ElementSyntax? element = model.FindCompletionElement(site.Offset);
         ILanguageMemberSymbol? member = FindTargetMember(model, element, site.AttributeName);
-        if (member is null ||
-            !member.ValueTypeMetadataName.TrimEnd('?').EndsWith("Thickness", StringComparison.Ordinal))
+        if (member is null)
+        {
+            return null;
+        }
+
+        string valueType = member.ValueTypeMetadataName.TrimEnd('?');
+        int commaCount = site.ValuePrefix.Count(character => character == ',');
+        int activeSignature = commaCount == 0 ? 0 : 1;
+        if (valueType.EndsWith("CornerRadius", StringComparison.Ordinal))
+        {
+            CernealaSignature uniformRadius = new(
+                "CornerRadius(uniform)",
+                [new CernealaSignatureParameter("uniform", "The same radius for all four corners.")]);
+            CernealaSignature cornerComponents = new(
+                "CornerRadius(topLeft, topRight, bottomRight, bottomLeft)",
+                [
+                    new CernealaSignatureParameter("topLeft", "Radius of the top-left corner."),
+                    new CernealaSignatureParameter("topRight", "Radius of the top-right corner."),
+                    new CernealaSignatureParameter("bottomRight", "Radius of the bottom-right corner."),
+                    new CernealaSignatureParameter("bottomLeft", "Radius of the bottom-left corner.")
+                ]);
+            return new CernealaSignatureHelp(
+                [uniformRadius, cornerComponents],
+                activeSignature,
+                activeSignature == 0 ? 0 : Clamp(commaCount, 0, 3));
+        }
+
+        if (!valueType.EndsWith("Thickness", StringComparison.Ordinal))
         {
             return null;
         }
@@ -183,8 +209,6 @@ internal sealed partial class CernealaCompletionService
                 new CernealaSignatureParameter("right", "Space on the right side."),
                 new CernealaSignatureParameter("bottom", "Space on the bottom side.")
             ]);
-        int commaCount = site.ValuePrefix.Count(character => character == ',');
-        int activeSignature = commaCount == 0 ? 0 : 1;
         int activeParameter = activeSignature == 0 ? 0 : Clamp(commaCount, 0, 3);
         return new CernealaSignatureHelp([uniform, components], activeSignature, activeParameter);
     }
@@ -756,6 +780,12 @@ internal sealed partial class CernealaCompletionService
         if (type.EndsWith("Thickness", StringComparison.Ordinal))
         {
             return ["0", "8", "8,4", "8,4,8,4"];
+        }
+
+        // A corner radius takes one value or four; two values are not a valid CornerRadius.
+        if (type.EndsWith("CornerRadius", StringComparison.Ordinal))
+        {
+            return ["0", "8", "8,8,0,0"];
         }
 
         if (type.EndsWith("Color", StringComparison.Ordinal) || type.EndsWith("Brush", StringComparison.Ordinal))

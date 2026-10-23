@@ -79,6 +79,55 @@ public sealed class UiFactoryTests
         Assert.Equal("MARKUP027", Assert.Single(result.Diagnostics).Code);
     }
 
+    [Theory]
+    [InlineData("8", 8f, 8f, 8f, 8f)]
+    [InlineData("8,0,0,8", 8f, 0f, 0f, 8f)]
+    [InlineData(" 1.5 , 2 , 3 , 4 ", 1.5f, 2f, 3f, 4f)]
+    public void CreateParsesBorderCornerRadius(string value, float topLeft, float topRight, float bottomRight, float bottomLeft)
+    {
+        UiFactory factory = new(UiMarkupSchema.CreateDefault());
+
+        MarkupResult<UIElement> result = factory.Create(Read($"<Border CornerRadius=\"{value}\" />"));
+
+        Assert.False(result.HasErrors);
+        Border border = Assert.IsType<Border>(result.Value);
+        Assert.Equal(new CornerRadius(topLeft, topRight, bottomRight, bottomLeft), border.CornerRadius);
+        Assert.Equal(topLeft, border.CornerRadius.TopLeft);
+        Assert.Equal(topRight, border.CornerRadius.TopRight);
+        Assert.Equal(bottomRight, border.CornerRadius.BottomRight);
+        Assert.Equal(bottomLeft, border.CornerRadius.BottomLeft);
+    }
+
+    [Theory]
+    [InlineData("1,2")]
+    [InlineData("1,2,3")]
+    [InlineData("1,2,3,4,5")]
+    [InlineData("1,,2,3")]
+    [InlineData("-1")]
+    [InlineData("8,-1,0,0")]
+    [InlineData("big")]
+    public void CreateRejectsInvalidBorderCornerRadius(string value)
+    {
+        UiFactory factory = new(UiMarkupSchema.CreateDefault());
+
+        MarkupResult<UIElement> result = factory.Create(Read($"<Border CornerRadius=\"{value}\" />"));
+
+        Assert.True(result.HasErrors);
+        Assert.Null(result.Value);
+        Assert.Equal("MARKUP027", Assert.Single(result.Diagnostics).Code);
+    }
+
+    [Fact]
+    public void CreateRejectsCornerRadiusOnElementsThatAreNotBorders()
+    {
+        UiFactory factory = new(UiMarkupSchema.CreateDefault());
+
+        MarkupResult<UIElement> result = factory.Create(Read("<Button CornerRadius=\"8\" />"));
+
+        Assert.True(result.HasErrors);
+        Assert.Equal("MARKUP023", Assert.Single(result.Diagnostics).Code);
+    }
+
     [Fact]
     public void CreateRejectsEmptyColorComponents()
     {

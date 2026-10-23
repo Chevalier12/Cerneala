@@ -1685,7 +1685,8 @@ public sealed class ListBoxTests
 
         DrawCommand border = Assert.Single(commands, command => ReferenceEquals(command.Brush, blue));
         Assert.Equal(DrawCommandKind.DrawRectangle, border.Kind);
-        Assert.Equal(new DrawRect(3, 4, 40, 30), border.Rect);
+        // The border is painted inside the arranged bounds: a centred pen of thickness 2 on the bounds deflated by 1.
+        Assert.Equal(new DrawRect(4, 5, 38, 28), border.Rect);
     }
 
     // As the WPF ListBox template, the rows are arranged inside BorderThickness and Padding (#609). The root and the

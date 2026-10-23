@@ -61,7 +61,8 @@ public sealed class TabControlTests
         Assert.Equal(contentArea, fill.Rect);
         DrawCommand border = Assert.Single(commands, command => ReferenceEquals(command.Brush, blue));
         Assert.Equal(DrawCommandKind.DrawRectangle, border.Kind);
-        Assert.Equal(contentArea, border.Rect);
+        // The border is painted inside the content area: a centred pen of thickness 4 on the area deflated by 2.
+        Assert.Equal(new DrawRect(2, headerHeight + 2, 196, 200 - headerHeight - 4), border.Rect);
         Assert.Equal(2, root.Detective.CaptureRendering(tabControl).CommandCount);
     }
 

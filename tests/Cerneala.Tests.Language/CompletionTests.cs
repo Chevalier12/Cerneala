@@ -162,6 +162,7 @@ public sealed class CompletionTests
     [InlineData("<Window><Button IsEnabled=\"|caret|\" /></Window>", "true")]
     [InlineData("<Window><Button HorizontalAlignment=\"|caret|\" /></Window>", "Center")]
     [InlineData("<Window><Button Margin=\"|caret|\" /></Window>", "8,4,8,4")]
+    [InlineData("<Window><Border CornerRadius=\"|caret|\" /></Window>", "8,8,0,0")]
     [InlineData("<Window><Button Background=\"|caret|\" /></Window>", "#FFFFFFFF")]
     [InlineData("<Window><Window.Resources><Tween Name=\"Quick\" Duration=\"|caret|\" /></Window.Resources></Window>", "250ms")]
     public void LiteralCompletionMatchesBuildConversions(string markup, string expected)
@@ -631,6 +632,29 @@ public sealed class CompletionTests
     [InlineData("<Window><Button Padding=\"0,4,|caret|\" /></Window>", 1, 2, "Thickness(left, top, right, bottom)")]
     [InlineData("<Window><Border BorderThickness=\"0,4,8,|caret|\" /></Window>", 1, 3, "Thickness(left, top, right, bottom)")]
     public void ThicknessAttributeSignatureHelpNamesTheActiveComponent(
+        string markup,
+        int expectedActiveSignature,
+        int expectedActiveParameter,
+        string expectedLabel)
+    {
+        using CompletionFixture fixture = CompletionFixture.Create(markup);
+        CernealaCompletionService service = new();
+
+        CernealaSignatureHelp help = Assert.IsType<CernealaSignatureHelp>(
+            service.GetSignatureHelp(fixture.Document, fixture.Offset, fixture.Model));
+
+        Assert.Equal(2, help.Signatures.Count);
+        Assert.Equal(expectedActiveSignature, help.ActiveSignature);
+        Assert.Equal(expectedActiveParameter, help.ActiveParameter);
+        Assert.Equal(expectedLabel, help.Signatures[help.ActiveSignature].Label);
+    }
+
+    [Theory]
+    [InlineData("<Window><Border CornerRadius=\"|caret|\" /></Window>", 0, 0, "CornerRadius(uniform)")]
+    [InlineData("<Window><Border CornerRadius=\"8,|caret|\" /></Window>", 1, 1, "CornerRadius(topLeft, topRight, bottomRight, bottomLeft)")]
+    [InlineData("<Window><Border CornerRadius=\"8,0,|caret|\" /></Window>", 1, 2, "CornerRadius(topLeft, topRight, bottomRight, bottomLeft)")]
+    [InlineData("<Window><Border CornerRadius=\"8,0,0,|caret|\" /></Window>", 1, 3, "CornerRadius(topLeft, topRight, bottomRight, bottomLeft)")]
+    public void CornerRadiusAttributeSignatureHelpNamesTheActiveCorner(
         string markup,
         int expectedActiveSignature,
         int expectedActiveParameter,

@@ -724,7 +724,8 @@ public sealed class SliderTests
         Assert.Equal(
             [
                 (DrawCommandKind.FillRectangle, new LayoutRect(0, 0, 110, 20), new Color(225, 225, 225), 0),
-                (DrawCommandKind.DrawRectangle, new LayoutRect(0, 0, 110, 20), new Color(120, 120, 120), 1),
+                // The track border is painted inside the track: a centred pen of thickness 1 on the track deflated by 0.5.
+                (DrawCommandKind.DrawRectangle, new LayoutRect(0.5f, 0.5f, 109, 19), new Color(120, 120, 120), 1),
                 (DrawCommandKind.FillRectangle, new LayoutRect(0, 0, 10, 20), new Color(180, 180, 180), 0),
                 (DrawCommandKind.DrawRectangle, new LayoutRect(0, 0, 10, 20), new Color(80, 80, 80), 1)
             ],
