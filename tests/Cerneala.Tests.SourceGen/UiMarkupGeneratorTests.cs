@@ -950,6 +950,96 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
+    public void PanelZIndexMarkupSetsTheAttachedProperty()
+    {
+        const string markup = """
+            <Canvas>
+              <Border Panel.ZIndex="1" />
+              <Border Panel.ZIndex="-2" />
+              <Border />
+            </Canvas>
+            """;
+
+        GeneratorRunResult result = RunGenerator("ZIndexView.crn", markup, out Compilation compilation);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Contains("Panel.ZIndexProperty", SingleGeneratedSource(result), StringComparison.Ordinal);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        UIElement canvas = InvokeCreate(stream, "Cerneala.GeneratedUi.ZIndexViewFactory");
+        Assert.Equal(1, Cerneala.UI.Layout.Panels.Panel.GetZIndex(canvas.VisualChildren[0]));
+        Assert.Equal(-2, Cerneala.UI.Layout.Panels.Panel.GetZIndex(canvas.VisualChildren[1]));
+        Assert.Equal(0, Cerneala.UI.Layout.Panels.Panel.GetZIndex(canvas.VisualChildren[2]));
+    }
+
+    [Fact]
+    public void PanelZIndexBindingBindsToTheAttachedProperty()
+    {
+        const string inputSource = """
+            using System.ComponentModel;
+
+            namespace TestInput;
+
+            public sealed class LayerRow : INotifyPropertyChanged
+            {
+                public event PropertyChangedEventHandler? PropertyChanged;
+                public int Layer { get; set; } = 3;
+            }
+            """;
+        const string markup = """
+            <ItemsControl>
+              <ItemsControl.ItemTemplate>
+                <ContentTemplate DataType="TestInput.LayerRow">
+                  <Border Panel.ZIndex="$DataContext.Layer" />
+                </ContentTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            """;
+
+        GeneratorRunResult result = RunGeneratorWithInput(
+            "ZIndexBinding.crn",
+            markup,
+            inputSource,
+            out Compilation compilation);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        string generatedSource = SingleGeneratedSource(result);
+        Assert.Contains("ObserveDataPath(contentTemplateContext", generatedSource, StringComparison.Ordinal);
+        Assert.Contains("Panel.ZIndexProperty", generatedSource, StringComparison.Ordinal);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Assembly assembly = Assembly.Load(stream.ToArray());
+        ItemsControl items = Assert.IsType<ItemsControl>(
+            assembly.GetType("Cerneala.GeneratedUi.ZIndexBindingFactory", throwOnError: true)!
+                .GetMethod("Create", Type.EmptyTypes)!
+                .Invoke(null, null));
+        object row = Activator.CreateInstance(assembly.GetType("TestInput.LayerRow", throwOnError: true)!)!;
+        Border border = Assert.IsType<Border>(items.ItemTemplate!.Create(
+            new Cerneala.UI.Controls.Templates.ContentTemplateContext(row, owner: items)));
+
+        Assert.Equal(3, Cerneala.UI.Layout.Panels.Panel.GetZIndex(border));
+    }
+
+    [Fact]
+    public void PanelZIndexWithAnInvalidValueReportsPropertyValueDiagnostic()
+    {
+        GeneratorRunResult result = RunGenerator(
+            "InvalidZIndex.crn",
+            "<Canvas><Border Panel.ZIndex=\"abc\" /></Canvas>",
+            out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI004", "InvalidZIndex.crn");
+        Assert.DoesNotContain(result.Diagnostics, other => other.Id == "CERNEALAUI003");
+        Assert.Contains("ZIndex", diagnostic.GetMessage(), StringComparison.Ordinal);
+        Assert.Contains("abc", diagnostic.GetMessage(), StringComparison.Ordinal);
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
     public void TemplatePartPathEmitsReactivePartObservation()
     {
         const string markup = """

@@ -74,9 +74,9 @@ public sealed record VisualBrush : TileBrush
             destination.Add(command);
         }
 
-        foreach (UIElement child in element.VisualChildren)
+        for (int index = 0; index < element.VisualChildren.Count; index++)
         {
-            Capture(child, destination);
+            Capture(element.GetVisualChildInZOrder(index), destination);
         }
     }
 }

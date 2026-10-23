@@ -21,6 +21,10 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
 
     public UIElement this[int index] => children[index];
 
+    // Changes with every insert, move and removal, as soon as the list changes, so a cache of the
+    // list order (Panel z-order) can never outlive a mutation, even one whose callbacks throw.
+    internal int Version { get; private set; }
+
     public void Add(UIElement child)
     {
         Insert(children.Count, child);
@@ -41,6 +45,7 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
         ValidateInsertion(index, child, ownerManaged);
         owner.Root?.Motion.Presence.TryCancelExitForAdd(owner, child);
         children.Insert(index, child);
+        Version++;
         SetParent(child, owner);
         UIRoot? root = owner.Root;
         if (root is not null)
@@ -126,6 +131,7 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
         child.ValidateParentChange(owner, role, ownerManaged: false);
         children.RemoveAt(oldIndex);
         children.Insert(newIndex, child);
+        Version++;
         owner.Root?.IncrementTreeVersion();
         InvalidateForVisualChildMutation(child, ElementTreeChangeKind.Added);
     }
@@ -157,6 +163,7 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
         if (role == ElementChildRole.Visual && owner.Root?.Motion.Presence.TryBeginExit(owner, child) == true)
         {
             children.RemoveAt(index);
+            Version++;
             SetParent(child, null);
             owner.Root.IncrementTreeVersion();
             InvalidateForVisualChildMutation(child, ElementTreeChangeKind.Removed);
@@ -165,6 +172,7 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
         }
 
         children.RemoveAt(index);
+        Version++;
 
         UIRoot? oldRoot = child.Root;
         SetParent(child, null);

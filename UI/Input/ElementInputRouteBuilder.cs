@@ -23,8 +23,8 @@ public sealed class ElementInputRouteBuilder
     }
 
     // Projected content is a visual child of the root-owned layer, but routes like WPF Popup content: from its visual
-    // root to the projection owner, then along the owner's ancestors. Traversal order stays visual, so route order
-    // (and with it keyboard navigation order) does not change.
+    // root to the projection owner, then along the owner's ancestors. Traversal order stays visual, in the drawing order
+    // of each element's visual children (Panel.ZIndex), and so does route order (and with it keyboard navigation order).
     private sealed class RouteBuild(bool includeDisabled)
     {
         private readonly ElementInputRouteMap map = new();
@@ -88,7 +88,7 @@ public sealed class ElementInputRouteBuilder
             for (int index = 0; index < visualChildren.Count; index++)
             {
                 AddElementAndDescendants(
-                    visualChildren[index],
+                    element.GetVisualChildInZOrder(index),
                     routeParentForDescendants,
                     visualParentForDescendants);
             }

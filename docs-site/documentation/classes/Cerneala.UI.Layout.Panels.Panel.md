@@ -51,6 +51,36 @@ internal sealed class FixedElement(LayoutSize desiredSize) : UIElement
 }
 ```
 
+Draw a child that comes first in `Children` above a later child with `ZIndex`:
+
+```csharp
+using Cerneala.Drawing;
+using Cerneala.UI.Controls;
+using Cerneala.UI.Media;
+
+// Canvas and Panel are the Cerneala.UI.Controls types; SetZIndex is inherited from Cerneala.UI.Layout.Panels.Panel.
+Canvas canvas = new();
+Border front = new() { Width = 100, Height = 100, Background = new SolidColorBrush(Color.Green) };
+Border back = new() { Width = 100, Height = 100, Background = new SolidColorBrush(Color.Red) };
+canvas.Children.Add(front);
+canvas.Children.Add(back);
+
+Panel.SetZIndex(front, 1);
+
+// Drawing order: back, then front. front covers back.
+// A click on the overlapping area reaches front.
+// Layout order is unchanged: canvas.Children[0] is still front.
+```
+
+The same property in markup:
+
+```xml
+<Canvas>
+    <Border Width="100" Height="100" Panel.ZIndex="1" />
+    <Border Width="100" Height="100" />
+</Canvas>
+```
+
 ## Remarks
 
 `Panel` is the default base implementation for layout containers in `Cerneala.UI.Layout.Panels`. Application code adds and removes children with `Children`, like WPF `Panel.Children`. `panel.Children.Add(child)` makes the child a visual child of the panel, so the panel measures, arranges, and draws it, and a logical child of the panel, so resource lookup and logical-tree walks reach it. `panel.Children.Remove(child)` clears both parents.
@@ -63,11 +93,35 @@ Collapsed children are still measured, but with `LayoutSize.Zero`, and they do n
 
 `Panel` does not add rendering behavior of its own. Rendering remains the inherited `UIElement.Render(RenderContext)` path unless a derived panel or child element provides rendering.
 
+### Z-order
+
+`ZIndex` is an attached property, like WPF `Panel.ZIndex`. It is an `int` with the default value `0`, and it applies to the visual children of any `Panel`, including `Canvas`, `Grid`, `StackPanel`, and `VirtualizingStackPanel`. On an element whose visual parent is not a `Panel`, it has no effect.
+
+The panel orders its visual children by ascending `ZIndex`. Children with the same `ZIndex` keep their `Children` order. A negative value is allowed and puts the child below the children with `0`. Example: `Children` is `[a, b, c]` and `Panel.SetZIndex(a, 1)` is called. Then:
+
+- Drawing order is `b`, `c`, `a`, so `a` is drawn on top.
+- Hit testing checks `a` first, so a click on the area that `a` and `c` both cover reaches `a`.
+- Keyboard Tab order is `b`, `c`, `a`.
+- The accessibility semantics tree lists the panel's children as `b`, `c`, `a`.
+- Measure and arrange keep the `Children` order. In a `StackPanel`, `a` stays at the top.
+
+Children that are leaving with a presence exit animation are drawn after all other children, whatever their `ZIndex`.
+
+Changing `ZIndex` requests render, hit-test, and semantics invalidation (`UiPropertyOptions.AffectsRender | AffectsHitTest | AffectsSemantics`). It does not request measure or arrange. Adding, removing, or moving a child also updates the order.
+
+In markup, `Panel.ZIndex="1"` sets the property, and `Panel.ZIndex="$DataContext.Layer"` binds it.
+
 ## Constructors
 
 | Name | Description |
 | --- | --- |
 | `Panel()` | Initializes a new `Panel` with an empty `Children` collection. |
+
+## Fields
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `ZIndexProperty` | `UiProperty<int>` | Identifies the `ZIndex` attached property. Default value `0`. Options: `AffectsRender`, `AffectsHitTest`, `AffectsSemantics`. |
 
 ## Properties
 
@@ -75,13 +129,20 @@ Collapsed children are still measured, but with `LayoutSize.Zero`, and they do n
 | --- | --- | --- |
 | `Children` | `PanelChildCollection` | Gets the children of the panel. `Add`, `Insert`, and `Remove` change the visual tree and the logical tree together. Enumeration, `Count`, and the indexer read `VisualChildren`. |
 
+## Methods
+
+| Name | Return Type | Description |
+| --- | --- | --- |
+| `GetZIndex(UIElement element)` | `int` | Gets the `ZIndex` of `element`. Returns `0` when it was never set. Throws `ArgumentNullException` when `element` is `null`. |
+| `SetZIndex(UIElement element, int value)` | `void` | Sets the `ZIndex` of `element`. Throws `ArgumentNullException` when `element` is `null`. |
+
 ## Declared Public Members
 
 | Member Type | Members |
 | --- | --- |
-| Fields | None. |
+| Fields | `ZIndexProperty` |
 | Properties | `Children` |
-| Methods | None. |
+| Methods | `GetZIndex`, `SetZIndex` |
 | Events | None. |
 
 ## Protected Layout Overrides
@@ -112,6 +173,7 @@ Collapsed children are still measured, but with `LayoutSize.Zero`, and they do n
 | Non-collapsed child during arrange | Receives the panel `ArrangeCore` final rectangle. |
 | Collapsed child during measure | Receives `LayoutSize.Zero` and does not affect the panel desired size. |
 | Collapsed child during arrange | Receives a zero-size rectangle at the panel final rectangle origin. |
+| Child with a `ZIndex` | Measured and arranged in `Children` order, like any other child. `ZIndex` changes only drawing, hit-testing, Tab, and semantics order. |
 
 ## Applies To
 

@@ -19,8 +19,9 @@ public sealed class SemanticsProvider
     private static SemanticsNode BuildNode(UIElement element, SemanticsProjection projection)
     {
         List<SemanticsNode> children = [];
-        foreach (UIElement child in element.VisualChildren)
+        for (int index = 0; index < element.VisualChildren.Count; index++)
         {
+            UIElement child = element.GetVisualChildInZOrder(index);
             if (projection == SemanticsProjection.Accessibility &&
                 !UIElementVisibility.ParticipatesInRendering(child))
             {

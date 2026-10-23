@@ -138,7 +138,7 @@ public sealed class DrawCommandListBuilder
         for (int index = 0; index < visualChildren.Count; index++)
         {
             AppendElement(
-                visualChildren[index],
+                element.GetVisualChildInZOrder(index),
                 renderCache,
                 counters,
                 rootCommands,

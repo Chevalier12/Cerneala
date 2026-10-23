@@ -386,6 +386,7 @@ public sealed partial class UIRoot : UIElement, IElementHost, IInvalidationSink
         ReferenceEquals(request.SourceProperty, UIElement.IsEnabledProperty) ||
         ReferenceEquals(request.SourceProperty, UIElement.IsVisibleProperty) ||
         ReferenceEquals(request.SourceProperty, UIElement.VisibilityProperty) ||
+        ReferenceEquals(request.SourceProperty, Cerneala.UI.Layout.Panels.Panel.ZIndexProperty) ||
         string.Equals(request.Reason, "Presence state changed", StringComparison.Ordinal) ||
         string.Equals(request.Reason, "Virtualization realization changed", StringComparison.Ordinal) ||
         string.Equals(request.Reason, "Input handler added", StringComparison.Ordinal) ||

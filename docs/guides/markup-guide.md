@@ -230,7 +230,7 @@ Attached layout properties use dotted names:
     Text="Placed by the parent Grid" />
 ```
 
-The source generator supports only `Grid.Row`, `Grid.Column`, `Grid.RowSpan`, `Grid.ColumnSpan`, and `Servo.Id` as attached properties. `Canvas.Left` and `Canvas.Top` report `CERNEALAUI003` in markup; set them in C# with `Canvas.SetLeft` and `Canvas.SetTop`
+The source generator supports only `Grid.Row`, `Grid.Column`, `Grid.RowSpan`, `Grid.ColumnSpan`, `Panel.ZIndex`, and `Servo.Id` as attached properties. `Panel.ZIndex` and `Servo.Id` also accept bindings, for example `Panel.ZIndex="$DataContext.Layer"`. `Canvas.Left` and `Canvas.Top` report `CERNEALAUI003` in markup; set them in C# with `Canvas.SetLeft` and `Canvas.SetTop`
 (`UI/Layout/Panels/Canvas.cs`).
 
 ### XML escaping
