@@ -65,7 +65,7 @@ During measure, visible children are measured with `LayoutSize.Unconstrained`, c
 
 During arrange, each visible child is positioned at the canvas final rectangle origin plus its `Left` and `Top` values, using the child's `DesiredSize`. Collapsed children are arranged at the canvas final rectangle origin with zero size.
 
-When the effective value of `Left` or `Top` changes, from any value source (`SetLeft`, `SetValue`, or a markup binding), the child requests an arrange pass (`UiPropertyOptions.AffectsArrange`), and when the child's visual parent is a `Canvas`, that parent canvas is invalidated for arrange too, so the child moves on the next frame. Setting the value the property already has changes nothing. Passing `null` to a coordinate getter or setter throws `ArgumentNullException`.
+When the effective value of `Left` or `Top` changes, from any value source (`SetLeft`, `SetValue`, or a markup binding), the arrange pass of the child's visual parent is invalidated (`UiPropertyOptions.AffectsParentArrange`), so a parent canvas arranges the child at its new position on the next frame. The child's own arrange pass is not invalidated. Setting the value the property already has changes nothing. Passing `null` to a coordinate getter or setter throws `ArgumentNullException`.
 
 In markup, `<Canvas>` is `Cerneala.UI.Controls.Canvas`, which derives from this class, so `Canvas.Left` and `Canvas.Top` resolve to `LeftProperty` and `TopProperty` here.
 
@@ -79,8 +79,8 @@ In markup, `<Canvas>` is `Cerneala.UI.Controls.Canvas`, which derives from this 
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `LeftProperty` | `UiProperty<float>` | Identifies the `Left` attached property. Default value `0`. Options: `AffectsArrange`. |
-| `TopProperty` | `UiProperty<float>` | Identifies the `Top` attached property. Default value `0`. Options: `AffectsArrange`. |
+| `LeftProperty` | `UiProperty<float>` | Identifies the `Left` attached property. Default value `0`. Options: `AffectsParentArrange`. |
+| `TopProperty` | `UiProperty<float>` | Identifies the `Top` attached property. Default value `0`. Options: `AffectsParentArrange`. |
 
 ## Methods
 

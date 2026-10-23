@@ -406,6 +406,7 @@ public class UiObject
                 UiPropertyOptions.AffectsAspect |
                 UiPropertyOptions.AffectsInputVisual |
                 UiPropertyOptions.AffectsSemantics |
+                UiPropertyOptions.AffectsParentArrange |
                 UiPropertyOptions.Inherits);
             if (invalidationOptions != UiPropertyOptions.None && this is IUiPropertyOwner owner)
             {

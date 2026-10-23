@@ -478,6 +478,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         ILanguageTypeSymbol? owner = ResolveMarkupType(ownerName);
         ILanguageMemberSymbol? member = owner?.GetMembers("Set" + propertyName)
             .FirstOrDefault(candidate => candidate.Kind == LanguageMemberKind.Method && candidate.IsStatic &&
+                IsCallableFromGeneratedCode(candidate) &&
                 candidate.Parameters.Count == 2 &&
                 elementType.IsOrImplements(candidate.Parameters[0].TypeMetadataName));
         if (member is null)
@@ -525,6 +526,12 @@ internal sealed partial class CernealaSemanticModel : IDisposable
             converted,
             isWritable: true));
     }
+
+    // Generated code calls a non-public member only when it is declared in the assembly being compiled
+    // (the build resolver applies the same rule), so the editor must not accept any other.
+    private bool IsCallableFromGeneratedCode(ILanguageMemberSymbol member) =>
+        member.Accessibility == LanguageAccessibility.Public ||
+        string.Equals(member.AssemblyName, compilation.AssemblyName, StringComparison.Ordinal);
 
     // True when the owner declares a public static XProperty field of type UiProperty<T>.
     private static bool HasAttachedUiProperty(ILanguageTypeSymbol owner, string propertyName) =>

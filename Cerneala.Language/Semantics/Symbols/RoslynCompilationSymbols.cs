@@ -24,6 +24,8 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
 
     public long Version { get; }
 
+    public string AssemblyName => compilation.Assembly.Name;
+
     public ILanguageTypeSymbol? FindType(string metadataName)
     {
         lock (typeNames)

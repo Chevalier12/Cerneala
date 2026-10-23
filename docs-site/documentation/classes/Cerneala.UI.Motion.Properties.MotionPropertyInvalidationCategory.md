@@ -36,7 +36,7 @@ Console.WriteLine(MotionPropertyInvalidationClassifier.Classify(UIElement.Visibi
 
 | `UiPropertyOptions` flag | Category flag added |
 | --- | --- |
-| `AffectsMeasure` or `AffectsArrange` | `Layout` |
+| `AffectsMeasure`, `AffectsArrange`, or `AffectsParentArrange` | `Layout` |
 | `AffectsRender` or `AffectsInputVisual` | `Render` |
 | `AffectsHitTest` | `HitTest` |
 | `AffectsSemantics` | `Semantics` |

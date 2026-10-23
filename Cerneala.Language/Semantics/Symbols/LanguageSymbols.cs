@@ -58,6 +58,10 @@ internal interface ILanguageCompilationSymbols
 {
     long Version { get; }
 
+    // Name of the assembly this compilation produces; members declared in it are the only non-public ones that
+    // generated code can call.
+    string AssemblyName { get; }
+
     ILanguageTypeSymbol? FindType(string metadataName);
 
     IReadOnlyList<ILanguageTypeSymbol> FindTypes(string simpleName);

@@ -1,22 +1,21 @@
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
-using Cerneala.UI.Invalidation;
 
 namespace Cerneala.UI.Layout.Panels;
 
 public class Canvas : Panel
 {
-    // The child options only queue the child's own arrange; UIElement.OnPropertyInvalidated also calls
-    // InvalidateParentCanvasArrange, because the parent Canvas is the one that places the child.
+    // Only the parent Canvas reads Left and Top, because it is the one that places the child. AffectsParentArrange
+    // queues the arrange of the child's visual parent and leaves the child's own arrange valid.
     public static readonly UiProperty<float> LeftProperty = UiProperty<float>.Register(
         "Left",
         typeof(Canvas),
-        new UiPropertyMetadata<float>(0f, UiPropertyOptions.AffectsArrange));
+        new UiPropertyMetadata<float>(0f, UiPropertyOptions.AffectsParentArrange));
 
     public static readonly UiProperty<float> TopProperty = UiProperty<float>.Register(
         "Top",
         typeof(Canvas),
-        new UiPropertyMetadata<float>(0f, UiPropertyOptions.AffectsArrange));
+        new UiPropertyMetadata<float>(0f, UiPropertyOptions.AffectsParentArrange));
 
     public static void SetLeft(UIElement element, float left)
     {
@@ -41,9 +40,6 @@ public class Canvas : Panel
         ArgumentNullException.ThrowIfNull(element);
         return element.GetValue(TopProperty);
     }
-
-    internal static bool IsPositionProperty(UiProperty property) =>
-        ReferenceEquals(property, LeftProperty) || ReferenceEquals(property, TopProperty);
 
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
@@ -78,14 +74,5 @@ public class Canvas : Panel
         }
 
         return context.FinalRect;
-    }
-
-    internal static void InvalidateParentCanvasArrange(UIElement element)
-    {
-        if (element.VisualParent is Canvas parent)
-        {
-            parent.IncrementLayoutVersion();
-            parent.Invalidate(InvalidationFlags.Arrange, "Canvas child coordinates changed");
-        }
     }
 }

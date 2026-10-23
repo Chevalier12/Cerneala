@@ -58,6 +58,42 @@ internal static class LanguagePipelineHarness
         return new LanguagePipelineResult(syntax, semantic, sourceGenerator);
     }
 
+    // Same as above, with extra referenced assemblies (for example a library compiled in memory); the editor and the
+    // generator get the identical compilation.
+    public static LanguagePipelineResult Analyze(
+        string path,
+        string text,
+        string sourcePath,
+        string source,
+        IReadOnlyList<MetadataReference> extraReferences)
+    {
+        LanguageParseResult syntax = ParseWithLanguageParser(path, text);
+        CSharpCompilation compilation = CreateCompilation(sourcePath, source, extraReferences);
+        IReadOnlyList<HarnessDiagnostic> sourceGenerator = RunSourceGenerator(compilation, path, text);
+        IReadOnlyList<HarnessDiagnostic> semantic = syntax.Diagnostics.Count == 0
+            ? RunSemanticModel(path, text, compilation)
+            : [];
+        return new LanguagePipelineResult(syntax, semantic, sourceGenerator);
+    }
+
+    // Emits a C# library that references the same assemblies as the harness compilation.
+    public static MetadataReference CreateLibraryReference(string assemblyName, string source)
+    {
+        CSharpCompilation library = CSharpCompilation.Create(
+            assemblyName,
+            [CSharpSyntaxTree.ParseText(source)],
+            References(),
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        using MemoryStream stream = new();
+        Microsoft.CodeAnalysis.Emit.EmitResult emitted = library.Emit(stream);
+        if (!emitted.Success)
+        {
+            throw new InvalidOperationException(string.Join(Environment.NewLine, emitted.Diagnostics));
+        }
+
+        return MetadataReference.CreateFromImage(stream.ToArray());
+    }
+
     public static IReadOnlyList<HarnessDiagnostic> AnalyzePairedSourceGenerator(
         string path,
         string text,
@@ -167,6 +203,17 @@ internal static class LanguagePipelineHarness
         [CSharpSyntaxTree.ParseText(source, path: sourcePath)],
         References(),
         new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
+    private static CSharpCompilation CreateCompilation(
+        string sourcePath,
+        string source,
+        IReadOnlyList<MetadataReference> extraReferences) => CSharpCompilation.Create(
+        "LanguageCorpus",
+        [CSharpSyntaxTree.ParseText(source, path: sourcePath)],
+        References().Concat(extraReferences),
+        // The IDE workspace imports non-public members of referenced assemblies; the default (Public) hides them.
+        new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+            .WithMetadataImportOptions(MetadataImportOptions.All));
 
     private static CSharpCompilation CreateCompilation() => CSharpCompilation.Create(
             "LanguageCorpus",

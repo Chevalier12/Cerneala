@@ -460,6 +460,29 @@ public sealed class SemanticScopesTests
             expectedIds);
     }
 
+    // An internal SetTag on a base type of another assembly is not callable from generated code (the build reports
+    // CERNEALAUI003), so the editor must not accept it either.
+    [Fact]
+    public void InternalAttachedSetterOfAReferencedAssemblyIsRejectedInEditorAndBuild()
+    {
+        MetadataReference library = LanguagePipelineHarness.CreateLibraryReference(
+            "TaggerLibrary",
+            "public class LibTaggerBase { internal static void SetTag(Cerneala.UI.Elements.UIElement element, string value) { } }");
+
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze(
+            "InternalSetter.crn",
+            "<Canvas><Border Width=\"10\" Height=\"10\" AppTagger.Tag=\"x\" /></Canvas>",
+            "InternalSetter.cs",
+            "public class AppTagger : LibTaggerBase { }",
+            [library]);
+
+        Assert.Empty(result.Syntax.Diagnostics);
+        string[] editor = result.SemanticDiagnostics.Select(diagnostic => diagnostic.Id).Order(StringComparer.Ordinal).ToArray();
+        string[] build = result.SourceGeneratorDiagnostics.Select(diagnostic => diagnostic.Id).Order(StringComparer.Ordinal).ToArray();
+        Assert.Equal(editor, build);
+        Assert.Equal("CERNEALAUI003", string.Join(",", build));
+    }
+
     // A binding is valid only on an attached property backed by a UiProperty (Canvas.Left); on a setter-only
     // one (Tagger.Tag, Grid.Row) the editor and the build both report CERNEALAUI004.
     [Theory]

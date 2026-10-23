@@ -226,7 +226,7 @@ Value validation is enforced by property metadata. `Width` and `Height` accept `
 | `Render(RenderContext)` | Validates the render context and calls `OnRender`. |
 | `Invalidate(InvalidationFlags, string)` | Creates an `InvalidationRequest` for this element and passes it to `Invalidate(InvalidationRequest)`. |
 | `Invalidate(InvalidationRequest)` | Routes invalidation to the attached root or marks local dirty state when detached. |
-| `OnPropertyInvalidated(UiPropertyChangedEventArgs, UiPropertyOptions)` | Maps property metadata to invalidation flags, updates layout/render versions, and invalidates the element. |
+| `OnPropertyInvalidated(UiPropertyChangedEventArgs, UiPropertyOptions)` | Maps property metadata to invalidation flags, updates layout/render versions, and invalidates the element. For `AffectsParentArrange`, it invalidates the arrange pass of the visual parent instead. |
 | `BringIntoView()` | Raises `RequestBringIntoViewEvent` for the whole element, so the `ScrollViewer`s around it scroll until it is visible. |
 | `BringIntoView(LayoutRect)` | Raises `RequestBringIntoViewEvent` for the rectangle, in the element's own coordinates; `LayoutRect.Empty` means the whole element. |
 
