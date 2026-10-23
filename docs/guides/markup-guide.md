@@ -953,16 +953,14 @@ inside resources still use `<Aspect TargetType="...">`.
                 Foreground = $CyanBrush;
                 BorderBrush = $CyanBrush;
             }
-            @if IsMouseOver == false
-            {
-                Background = $TransparentBrush;
-                Foreground = $PaperBrush;
-                BorderBrush = $LineStrongBrush;
-            }
         }
     </Aspect>
 </UserControl.Resources>
 ```
+
+There is no `@if IsMouseOver == false` branch. When the pointer leaves, the
+three hover values are removed and the `@default` values show again. See
+[When a condition stops matching](#when-a-condition-stops-matching).
 
 Apply it with:
 
@@ -1013,6 +1011,75 @@ logical expressions:
 ```
 
 Use `value` for the current value of the source watched by `@when`.
+
+### When a condition stops matching
+
+When an `@if` branch stops matching, the values it set are removed. You do not
+write a false branch to undo them. There is no `@else`.
+
+On an element, the element's own value shows again:
+
+```xml
+<Border Background="Black">
+    @when IsMouseOver
+    {
+        @if value == true
+        {
+            Background = White;
+        }
+    }
+</Border>
+```
+
+The background is `Black`. The pointer enters: it is `White`. The pointer
+leaves: it is `Black` again. If the element has no own value for the property,
+the next lower value source shows: an Aspect value, a template value, an
+inherited value, or the property's default.
+
+Inside an Aspect, the Aspect's `@default` value shows again:
+
+```xml
+<Aspect Name="HoverBorder" TargetType="Border">
+    @default
+    {
+        Background = Black;
+    }
+    @when IsMouseOver
+    {
+        @if IsMouseOver == true
+        {
+            Background = White;
+        }
+    }
+</Aspect>
+```
+
+A `<Border Aspect="$HoverBorder" />` is `Black`, then `White` while the pointer
+is over it, then `Black` again. What shows after the branch stops matching, in
+this order:
+
+1. another rule of the Aspects on the element that still matches, for example
+   the `@default` above;
+2. else the next lower value source: a template value, an inherited value, or
+   the property's default. Without the `@default` block above, the background
+   goes back to `null`, the default of `Background`.
+
+A value set from C# (`border.Background = brush;`) is a `Local` value. It wins
+over both the element's markup conditions and the Aspect, so it stays while
+the condition changes.
+
+Write an explicit `@if IsMouseOver == false { ... }` branch only when the
+false state must show a value different from what shows without it. Example:
+the `@default` is gray, the hover is white, and after the pointer leaves the
+border must be blue.
+
+The removal applies to values (`Property = value;`). An `@animate`, `@play` or
+`@pause` in a branch is an action: it runs when the branch starts matching. By
+default an animated value stays after the animation completes
+(`holdOnComplete = true`, see
+[Advanced Execution Options](../reference/motion-markup-syntax.md#advanced-execution-options)).
+So an animation back needs its own `@if IsMouseOver == false` branch, as in
+[State animation](#state-animation).
 
 ### Templates
 
@@ -1230,6 +1297,11 @@ Repeat(Tween(4s, Linear), forever)
 
 Use `current` when an animation should redirect smoothly from the element's
 current visual value.
+
+The `@if IsMouseOver == false` branch is needed here. An animated value stays
+after its animation completes, so without that branch the tile keeps
+`Opacity = 1` and `Scale = 1.03` after the pointer leaves. Plain values do not
+need it; see [When a condition stops matching](#when-a-condition-stops-matching).
 
 ### Composition
 
