@@ -78,13 +78,13 @@ RadioButton radio = new() { Content = inner, Width = 200, Height = 80 };
 
 The constructor installs the default component template `RadioButton.Default`, a one-pixel `BorderThickness`, and a `BorderBrush` of RGB (100, 110, 125) as framework defaults at the `Default` value source. Any Aspect, local, or other higher-source value replaces them; inside a `UIRoot` with the default aspect package, the `button.base` rule for `Button` also styles radio buttons. The template is laid out like the `CheckBox` template:
 
-- A round indicator, 12 x 12 pixels (smaller only when less space is available), vertically centered at the left. It contains a ring, an `Ellipse` whose `Stroke` is `BorderBrush` and whose `StrokeThickness` is the largest side of `BorderThickness`, and the `PART_CheckMark` dot, a 6 x 6 black `Ellipse` centered in the ring.
+- A round indicator, 12 x 12 pixels (smaller only when less space is available), vertically centered at the left. It contains a ring, an `Ellipse` whose `Stroke` is `BorderBrush` and whose `StrokeThickness` is the largest absolute value of the sides of `BorderThickness` (so `-1` and `1` both give a 1 pixel stroke), and the `PART_CheckMark` dot, a 6 x 6 black `Ellipse` centered in the ring.
 - A `ContentPresenter` six pixels to the right of the indicator, with `Content`, `Foreground`, `FontFamily`, and `FontSize` bound to it.
 - An outer `Border` with `Background` and `Padding` bound to it, so the padding surrounds both the indicator and the content.
 
 `PART_CheckMark` may be any `UIElement`. The control sets its `Visibility` to `Visible` while `IsChecked` is `true` and to `Hidden` otherwise, so a checked radio button draws the dot and an unchecked one draws only the ring. For example, after the user clicks `small` and then `large`, `large` draws its dot and `small` does not. The dot's `Fill` belongs to the template and is not bound to `Foreground`. The part is optional: a custom component template without it still works, but no element shows the checked state. A `ComponentTemplate` set by the application replaces the default template.
 
-The ring `Ellipse` draws its stroke inside its arranged bounds, like WPF: the outer edge of the stroke touches the edge of the indicator, so even a thick `BorderThickness` stays inside the 12 x 12 indicator. For example, with the default one-pixel `BorderThickness`, the ring is drawn in the rectangle `(0.5, 0.5, 11, 11)` of the indicator, and nothing is drawn outside `(0, 0, 12, 12)`.
+The ring `Ellipse` draws its stroke inside its arranged bounds, like WPF: the outer edge of the stroke touches the edge of the indicator, so even a thick `BorderThickness` stays inside the 12 x 12 indicator. The ring uses the magnitude of `BorderThickness`: the sign, which on a `Border` chooses inside or outside, is ignored here. For example, with the default one-pixel `BorderThickness`, the ring is drawn in the rectangle `(0.5, 0.5, 11, 11)` of the indicator, and nothing is drawn outside `(0, 0, 12, 12)`.
 
 ### Checking by click and keyboard
 

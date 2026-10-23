@@ -45,6 +45,8 @@ The constructor assigns visual defaults for the progress track: `Background` is 
 
 The control measures to `100 x 12` before margin and parent layout constraints are applied. Rendering fills the background first, fills the progress foreground second, and draws the border last. The rendered fill width clamps `ValueRatio` to the `0..1` range before multiplying by the arranged width.
 
+The border is painted as `Border` paints it, each side with its own signed `BorderThickness` side: a negative side `-t` is a band of `t` pixels inside the arranged bounds, a positive side `+t` is a band of `t` pixels outside them, and a side with thickness `0` is not painted. For example, a `ProgressBar` arranged at `(10, 10, 100, 12)` with the default `BorderThickness = new Thickness(1)` draws a stroke of thickness 1 at `(9.5, 9.5, 101, 13)`, which covers the pixel row and column just outside the bar; with `BorderThickness = new Thickness(-1)` it draws the stroke at `(10.5, 10.5, 99, 11)`, which covers the outermost pixel row and column inside the bar; with `BorderThickness = new Thickness(0, 0, 0, -2)` it paints only the rows `y = 20` and `y = 21`. The progress fill is not inset by `BorderThickness`: it covers the full arranged height, and the border is painted on top of it.
+
 `RangeBase` coerces `Value` into the current `Minimum..Maximum` range. If `Minimum` and `Maximum` collapse to the same value, `ValueRatio` returns `0`.
 
 ## Constructors
@@ -81,7 +83,7 @@ The control measures to `100 x 12` before margin and parent layout constraints a
 | `Background` | `Brush?` | `Control` | Gets or sets the track fill brush. The `ProgressBar` constructor sets a solid brush with color `Color(230, 230, 230)`. |
 | `Foreground` | `Brush?` | `Control` | Gets or sets the progress fill brush. The `ProgressBar` constructor sets it to a solid brush with color `Color(65, 135, 230)`. |
 | `BorderBrush` | `Brush?` | `Control` | Gets or sets the outline brush. The constructor sets a solid brush with color `Color(120, 120, 120)`. |
-| `BorderThickness` | `Thickness` | `Control` | Gets or sets the source thickness for the rendered outline. The `ProgressBar` constructor sets it to `new Thickness(1)`. |
+| `BorderThickness` | `Thickness` | `Control` | Gets or sets the signed thickness of each side of the rendered outline: `-t` is a band of `t` pixels inside the arranged bounds, `+t` a band of `t` pixels outside them. The `ProgressBar` constructor sets it to `new Thickness(1)`. |
 
 ## Rendering Behavior
 
@@ -89,7 +91,9 @@ The control measures to `100 x 12` before margin and parent layout constraints a
 | --- | --- |
 | `Background != null` and arranged width/height are positive | Emits a filled rectangle for the full progress bar track. |
 | `Foreground != null`, clamped fill width is positive, and arranged height is positive | Emits a filled rectangle from the left edge whose width is `arranged width * Clamp(ValueRatio, 0, 1)`. |
-| `BorderBrush != null`, effective border thickness is positive, and arranged width/height are positive | Emits a rectangle stroke around the arranged bounds. |
+| `BorderBrush != null`, every side of `BorderThickness` is the same positive value `t`, and arranged width/height are positive | Emits a `DrawRectangle` of thickness `t` on the arranged bounds inflated by `t / 2`, so the stroke covers exactly the `t` pixels outside each edge. |
+| `BorderBrush != null`, every side of `BorderThickness` is the same negative value `-t`, and arranged width/height are positive | Emits a `DrawRectangle` of thickness `t` on the arranged bounds deflated by `t / 2`, so the stroke covers exactly the `t` pixels inside each edge. |
+| `BorderBrush != null` and the sides of `BorderThickness` differ | Emits one `FillPath` with `DrawFillRule.EvenOdd`: the arranged bounds grown by each positive side, minus the bounds shrunk by each negative side. |
 
 ## Layout Behavior
 
@@ -97,7 +101,7 @@ The control measures to `100 x 12` before margin and parent layout constraints a
 | --- | --- |
 | Desired size from `MeasureCore` | `new LayoutSize(100, 12)` |
 | Fill direction | Left to right across the arranged width |
-| Effective border stroke thickness | Maximum of `BorderThickness.Left`, `Top`, `Right`, and `Bottom` |
+| Border thickness | Each side of `BorderThickness`: a negative side is painted inside the arranged bounds, a positive side outside them |
 
 ## Applies To
 
@@ -107,5 +111,6 @@ Cerneala retained UI controls and layout/rendering infrastructure.
 
 - `Cerneala.UI.Controls.Primitives.RangeBase`
 - `Cerneala.UI.Controls.Control`
+- `Cerneala.UI.Controls.Border`
 - `Cerneala.UI.Layout.Thickness`
 - `Cerneala.Drawing.Color`

@@ -65,7 +65,8 @@ public class RadioButton : ToggleButton
     }
 
     // The dot is shown while the radio button is checked. The ring is the default template's own round indicator; its
-    // stroke thickness is the largest side of BorderThickness, as Button draws its border.
+    // stroke thickness is the largest magnitude of the sides of BorderThickness, so -1 and 1 give the same 1 px stroke:
+    // the ring is a glyph, and the sign of a side only says on which side of the bounds a Border paints its band.
     private void SynchronizeIndicator()
     {
         if (checkMark is null)
@@ -78,8 +79,8 @@ public class RadioButton : ToggleButton
         {
             Thickness border = BorderThickness;
             indicator.Ring.StrokeThickness = MathF.Max(
-                MathF.Max(border.Left, border.Top),
-                MathF.Max(border.Right, border.Bottom));
+                MathF.Max(MathF.Abs(border.Left), MathF.Abs(border.Top)),
+                MathF.Max(MathF.Abs(border.Right), MathF.Abs(border.Bottom)));
         }
     }
 

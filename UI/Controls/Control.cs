@@ -59,7 +59,7 @@ public class Control : UIElement
     public static readonly UiProperty<Thickness> BorderThicknessProperty = UiProperty<Thickness>.Register(
         nameof(BorderThickness),
         typeof(Control),
-        new UiPropertyMetadata<Thickness>(Thickness.Zero, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender, validateValue: IsValidThickness));
+        new UiPropertyMetadata<Thickness>(Thickness.Zero, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender, validateValue: IsValidBorderThickness));
 
     public static readonly UiProperty<Thickness> PaddingProperty = UiProperty<Thickness>.Register(
         nameof(Padding),
@@ -136,7 +136,8 @@ public class Control : UIElement
         set => SetValue(BorderBrushProperty, value);
     }
 
-    [MarkupValueConstraint(MarkupValueConstraint.NonNegative)]
+    // Each side is signed: a negative side -t paints a band of t inside the arranged bounds, a positive side +t paints a
+    // band of t outside them, and 0 paints nothing. See Border.RenderBorder.
     public Thickness BorderThickness
     {
         get => GetValue(BorderThicknessProperty);
@@ -231,11 +232,22 @@ public class Control : UIElement
 
     protected UIElement? TemplateChild => ComponentTemplateInstance?.Root;
 
-    protected Thickness Insets => new(
-        Padding.Left + BorderThickness.Left,
-        Padding.Top + BorderThickness.Top,
-        Padding.Right + BorderThickness.Right,
-        Padding.Bottom + BorderThickness.Bottom);
+    // The room that the chrome takes from the content: each side of Padding plus the inward part of BorderThickness,
+    // which is -BorderThickness for a negative side and 0 for a positive one, since a positive border is painted outside
+    // the arranged bounds and takes no room.
+    protected Thickness Insets
+    {
+        get
+        {
+            Thickness padding = Padding;
+            Thickness border = BorderThickness;
+            return new Thickness(
+                padding.Left + MathF.Max(0, -border.Left),
+                padding.Top + MathF.Max(0, -border.Top),
+                padding.Right + MathF.Max(0, -border.Right),
+                padding.Bottom + MathF.Max(0, -border.Bottom));
+        }
+    }
 
     public void ApplyTemplate()
     {
@@ -436,6 +448,14 @@ public class Control : UIElement
 
         ComponentTemplateInstance? instance = ResolvingTemplateInstance ?? ComponentTemplateInstance;
         return instance?.Parts.TryGetValue(name, out UIElement? element) == true ? element : null;
+    }
+
+    private static bool IsValidBorderThickness(Thickness value)
+    {
+        return float.IsFinite(value.Left) &&
+            float.IsFinite(value.Top) &&
+            float.IsFinite(value.Right) &&
+            float.IsFinite(value.Bottom);
     }
 
     private static bool IsValidThickness(Thickness value)

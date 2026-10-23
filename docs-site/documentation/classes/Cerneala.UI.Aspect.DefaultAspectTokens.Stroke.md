@@ -51,7 +51,7 @@ AspectDeclaration declaration = new(
 
 The token name is the semantic string `stroke.control-border-thickness`. The default package uses `ControlBorderThickness.Ref()` in its `Button` base rule to resolve `Control.BorderThicknessProperty` from the active aspect environment.
 
-`Control.BorderThicknessProperty` itself defaults to `Thickness.Zero`, affects measure and render, and validates that every side is finite and non-negative. The stroke token supplies the default package value used by aspect resolution; it is separate from the control property's own metadata default.
+`Control.BorderThicknessProperty` itself defaults to `Thickness.Zero`, affects measure and render, and validates that every side is finite; a side may be negative (a band inside the arranged bounds) or positive (a band outside them), so the default `new Thickness(1)` is painted outside the control. The stroke token supplies the default package value used by aspect resolution; it is separate from the control property's own metadata default.
 
 ## Fields
 

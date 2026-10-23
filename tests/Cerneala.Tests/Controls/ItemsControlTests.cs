@@ -1704,7 +1704,8 @@ public sealed class ItemsControlTests
         {
             Background = red,
             BorderBrush = blue,
-            BorderThickness = new Thickness(2),
+            // A negative side is the inward border: it paints inside the bounds and takes room from the items.
+            BorderThickness = new Thickness(-2),
             Padding = new Thickness(10)
         };
         TextBlock text = new() { Text = "One" };

@@ -37,10 +37,6 @@ public class ProgressBar : RangeBase
             context.DrawingContext.FillRectangle(new DrawRect(rect.X, rect.Y, fillWidth, rect.Height), foreground);
         }
 
-        float thickness = MathF.Max(MathF.Max(BorderThickness.Left, BorderThickness.Top), MathF.Max(BorderThickness.Right, BorderThickness.Bottom));
-        if (BorderBrush is { } borderBrush && thickness > 0 && rect.Width > 0 && rect.Height > 0)
-        {
-            context.DrawingContext.DrawRectangle(rect, borderBrush, thickness);
-        }
+        Border.RenderBorder(this, context);
     }
 }

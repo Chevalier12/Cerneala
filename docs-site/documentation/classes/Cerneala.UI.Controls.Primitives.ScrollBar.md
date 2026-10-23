@@ -72,7 +72,7 @@ The scroll bar keeps its active track synchronized with `Minimum`, `Maximum`, `V
 
 `Track` always returns `PART_Track` from the active template; reading it builds the template first if it is not built yet. Template replacement detaches the old track and button handlers before connecting the new parts. Assigning `null` to `ComponentTemplate` clears the local override and restores the default template.
 
-The default template binds `Background`, `BorderBrush`, and `BorderThickness` to its border root.
+The default template binds `Background`, `BorderBrush`, and `BorderThickness` to its border root. `BorderThickness` is signed: a negative side is a band inside the scroll bar and takes room from the track and buttons, a positive side (the default 1) is painted outside the bar and takes none, so the default 1-unit border no longer takes 1 unit from each side of the bar: a default vertical scroll bar in a `ScrollViewer` is 10 units wide (it was 12 when the border was an inset).
 
 ## Constructors
 
@@ -127,7 +127,7 @@ The default template binds `Background`, `BorderBrush`, and `BorderThickness` to
 | `LargeChange` | `float` | `RangeBase` | Gets or sets the large range increment synchronized to `Track.LargeChange`. |
 | `Background` | `Brush?` | `Control` | Gets or sets the brush bound to the default template root. The constructor sets a solid brush with color `Color(235, 235, 235)`. |
 | `BorderBrush` | `Brush?` | `Control` | Gets or sets the brush bound to the default template root border. The constructor sets a solid brush with color `Color(130, 130, 130)`. |
-| `BorderThickness` | `Thickness` | `Control` | Gets or sets the thickness bound to the default template root border. The constructor sets it to `new Thickness(1)`. |
+| `BorderThickness` | `Thickness` | `Control` | Gets or sets the signed thickness bound to the default template root border: `-t` is a band of `t` pixels inside the bar, `+t` a band of `t` pixels outside it. The constructor sets it to `new Thickness(1)`. |
 | `ComponentTemplate` | `ComponentTemplate?` | `Control` | Gets or sets the control template. Valid templates require `PART_Track`; assigning `null` restores the default template. |
 
 ## Property Information

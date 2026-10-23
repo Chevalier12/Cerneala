@@ -61,7 +61,7 @@ A move is not an exit. When another owner takes the child out of the decorator, 
 
 The assigned child must be unparented and cannot be the decorator itself, one of the decorator's ancestors, or an element already attached under a different root. Invalid assignments throw `InvalidOperationException`. If an assignment fails while replacing an existing child, the previous child is restored. The rejected element leaves both child collections at once, without a presence exit, because it never became the child.
 
-Layout uses the inherited `Padding` and `BorderThickness` from `Control` as a single inset. `MeasureCore` measures the child with the available size deflated by those insets, then returns the child's desired size inflated by the same insets. `ArrangeCore` arranges the child inside the final rectangle deflated by those insets.
+Layout uses the inherited `Padding` and the inward part of `BorderThickness` from `Control` as a single inset: `Padding` plus `-t` on each side whose `BorderThickness` is negative (`-t`); a positive or zero side adds nothing. `MeasureCore` measures the child with the available size deflated by those insets, then returns the child's desired size inflated by the same insets. `ArrangeCore` arranges the child inside the final rectangle deflated by those insets.
 
 Changing `Child` invalidates measure and render for the decorator.
 
@@ -79,7 +79,7 @@ Changing `Child` invalidates measure and render for the decorator.
 | Name | Declared By | Description |
 | --- | --- | --- |
 | `Padding` | `Control` | Contributes to the inset used when measuring and arranging `Child`. |
-| `BorderThickness` | `Control` | Contributes to the inset used when measuring and arranging `Child`. |
+| `BorderThickness` | `Control` | Its negative sides contribute to the inset used when measuring and arranging `Child`. |
 | `Background` | `Control` | Inherited render property for the control background. |
 | `BorderBrush` | `Control` | Inherited nullable brush property for the control border. |
 | `ComponentTemplate` | `Control` | Inherited component template property. |
@@ -87,8 +87,8 @@ Changing `Child` invalidates measure and render for the decorator.
 ## Layout Behavior
 | Operation | Behavior |
 | --- | --- |
-| Measure | Measures `Child` with `AvailableSize` reduced by `Padding + BorderThickness`; returns the measured child size expanded by the same inset. |
-| Arrange | Arranges `Child` in the final rectangle reduced by `Padding + BorderThickness`; returns the original final rectangle. |
+| Measure | Measures `Child` with `AvailableSize` reduced by `Padding` plus the negative sides of `BorderThickness`; returns the measured child size expanded by the same inset. |
+| Arrange | Arranges `Child` in the final rectangle reduced by `Padding` plus the negative sides of `BorderThickness`; returns the original final rectangle. |
 | No child | Measures as `LayoutSize.Zero` plus insets and arranges no child. |
 
 ## Exceptions

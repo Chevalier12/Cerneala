@@ -491,22 +491,22 @@ public sealed class TextBoxEditingVisualContractTests
 
     private static float ContentX(TextBox textBox)
     {
-        return textBox.ArrangedBounds.X + textBox.BorderThickness.Left + textBox.Padding.Left;
+        return textBox.ArrangedBounds.X + Math.Max(0, -textBox.BorderThickness.Left) + textBox.Padding.Left;
     }
 
     private static float ContentWidth(TextBox textBox)
     {
-        return textBox.ArrangedBounds.Width - textBox.BorderThickness.Left - textBox.Padding.Left - textBox.BorderThickness.Right - textBox.Padding.Right;
+        return textBox.ArrangedBounds.Width - Math.Max(0, -textBox.BorderThickness.Left) - textBox.Padding.Left - Math.Max(0, -textBox.BorderThickness.Right) - textBox.Padding.Right;
     }
 
     private static float ContentY(TextBox textBox)
     {
-        return textBox.ArrangedBounds.Y + textBox.BorderThickness.Top + textBox.Padding.Top;
+        return textBox.ArrangedBounds.Y + Math.Max(0, -textBox.BorderThickness.Top) + textBox.Padding.Top;
     }
 
     private static float ContentHeight(TextBox textBox)
     {
-        return textBox.ArrangedBounds.Height - textBox.BorderThickness.Top - textBox.Padding.Top - textBox.BorderThickness.Bottom - textBox.Padding.Bottom;
+        return textBox.ArrangedBounds.Height - Math.Max(0, -textBox.BorderThickness.Top) - textBox.Padding.Top - Math.Max(0, -textBox.BorderThickness.Bottom) - textBox.Padding.Bottom;
     }
 
     // The text box draws through its template: the Border draws the chrome and the text view inside the content host

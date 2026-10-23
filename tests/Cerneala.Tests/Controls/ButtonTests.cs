@@ -1350,6 +1350,57 @@ public sealed class ButtonTests
         Assert.False(radio.IsChecked);
     }
 
+    [Fact]
+    public void PositiveUniformBorderIsDrawnOutsideTheArrangedBoundsLikeABorder()
+    {
+        Button button = new() { BorderBrush = new Cerneala.UI.Media.SolidColorBrush(Color.Black), BorderThickness = new Thickness(2) };
+
+        DrawCommandList commands = RenderButtonAt(button, new LayoutRect(0, 0, 80, 30));
+
+        // The centred pen of thickness 2 on the bounds inflated by 1 covers the 2px just outside (0, 0, 80, 30).
+        DrawCommand border = Assert.Single(commands, command => ReferenceEquals(command.Brush, button.BorderBrush));
+        Assert.Equal(DrawCommandKind.DrawRectangle, border.Kind);
+        Assert.Equal(new DrawRect(-1, -1, 82, 32), border.Rect);
+        Assert.Equal(2, border.Thickness);
+    }
+
+    [Fact]
+    public void NegativeUniformBorderIsDrawnInsideTheArrangedBoundsLikeABorder()
+    {
+        Button button = new() { BorderBrush = new Cerneala.UI.Media.SolidColorBrush(Color.Black), BorderThickness = new Thickness(-2) };
+
+        DrawCommandList commands = RenderButtonAt(button, new LayoutRect(0, 0, 80, 30));
+
+        // The centred pen of thickness 2 on the bounds deflated by 1 covers the 2px just inside (0, 0, 80, 30).
+        DrawCommand border = Assert.Single(commands, command => ReferenceEquals(command.Brush, button.BorderBrush));
+        Assert.Equal(DrawCommandKind.DrawRectangle, border.Kind);
+        Assert.Equal(new DrawRect(1, 1, 78, 28), border.Rect);
+        Assert.Equal(2, border.Thickness);
+    }
+
+    [Fact]
+    public void SingleSideBorderIsOneEvenOddPathLikeABorder()
+    {
+        Button button = new() { BorderBrush = new Cerneala.UI.Media.SolidColorBrush(Color.Black), BorderThickness = new Thickness(0, 0, 0, 2) };
+
+        DrawCommandList commands = RenderButtonAt(button, new LayoutRect(0, 0, 80, 30));
+
+        DrawCommand border = Assert.Single(commands, command => ReferenceEquals(command.Brush, button.BorderBrush));
+        Assert.Equal(DrawCommandKind.FillPath, border.Kind);
+        Assert.Equal(DrawFillRule.EvenOdd, border.FillRule);
+    }
+
+    private static DrawCommandList RenderButtonAt(Button button, LayoutRect bounds)
+    {
+        UIRoot root = new();
+        root.VisualChildren.Add(button);
+        root.ProcessFrame();
+        button.Arrange(new ArrangeContext(bounds));
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
+        return root.RetainedRenderer.Commit(root);
+    }
+
     private static (Button Button, DrawCommand Text) RenderStringButton(
         string label,
         float width,
@@ -1448,11 +1499,17 @@ public sealed class ButtonTests
 
     private static LayoutRect Deflate(LayoutRect bounds, Control control)
     {
+        // Only a negative border side is inward and takes room from the content; a positive side is painted outside.
+        Thickness border = control.BorderThickness;
+        float left = Math.Max(0, -border.Left);
+        float top = Math.Max(0, -border.Top);
+        float right = Math.Max(0, -border.Right);
+        float bottom = Math.Max(0, -border.Bottom);
         return new LayoutRect(
-            bounds.X + control.BorderThickness.Left + control.Padding.Left,
-            bounds.Y + control.BorderThickness.Top + control.Padding.Top,
-            bounds.Width - control.BorderThickness.Horizontal - control.Padding.Horizontal,
-            bounds.Height - control.BorderThickness.Vertical - control.Padding.Vertical);
+            bounds.X + left + control.Padding.Left,
+            bounds.Y + top + control.Padding.Top,
+            bounds.Width - left - right - control.Padding.Horizontal,
+            bounds.Height - top - bottom - control.Padding.Vertical);
     }
 
     private static void AssertCenteredAtDesiredSize(UIElement element, LayoutRect inner)

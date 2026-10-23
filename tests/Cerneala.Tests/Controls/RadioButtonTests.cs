@@ -433,6 +433,25 @@ public sealed class RadioButtonTests
         Assert.Same(radio.BorderBrush, ring.Pen.Brush);
     }
 
+    [Theory]
+    [InlineData(1f, 1f, 1f, 1f)]
+    [InlineData(-1f, -1f, -1f, -1f)]
+    [InlineData(-3f, 0f, 2f, 1f)]
+    public void RingStrokeIsTheLargestMagnitudeOfTheBorderThicknessSides(float left, float top, float right, float bottom)
+    {
+        UIRoot root = new(200, 100);
+        RadioButton radio = new() { Content = "Large", BorderThickness = new Thickness(left, top, right, bottom) };
+        root.VisualChildren.Add(radio);
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
+
+        DrawCommand ring = Assert.Single(root.RetainedRenderer.Commit(root), command => command.Kind == DrawCommandKind.DrawEllipse);
+
+        // -1 and 1 give the same 1 px ring stroke; (-3, 0, 2, 1) gives 3.
+        float expected = MathF.Max(MathF.Max(MathF.Abs(left), MathF.Abs(top)), MathF.Max(MathF.Abs(right), MathF.Abs(bottom)));
+        Assert.Equal(expected, ring.Pen!.Thickness, 0.01f);
+    }
+
     [Fact]
     public void LocalComponentTemplateReplacesTheDefaultTemplate()
     {

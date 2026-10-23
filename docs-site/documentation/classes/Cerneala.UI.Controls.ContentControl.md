@@ -85,7 +85,7 @@ tab.SetValue(ContentControl.ContentProperty, (object?)element);
 // Throws InvalidOperationException: a Local write becomes the effective Content.
 ```
 
-Without a template child, layout measures the hosted content inside `Padding + BorderThickness` and returns the content size inflated by those insets. Arrangement deflates the final bounds by the same insets before arranging the content element.
+Without a template child, layout measures the hosted content inside `Padding` plus the negative sides of `BorderThickness` and returns the content size inflated by those insets. Arrangement deflates the final bounds by the same insets before arranging the content element.
 
 ## Constructors
 | Name | Description |

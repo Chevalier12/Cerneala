@@ -153,10 +153,13 @@ public sealed class ColorPickerTests
 
                 // The checkerboard behind the alpha ramp fills plain colors without a brush.
                 .Where(command => command.Brush is not null)
+
+                // The ramp's 1 pixel border (the default positive BorderThickness) is painted outside the track, as a
+                // pen centred 0.5 pixel outside it, so the containment box is the track grown by 1 pixel on each side.
                 .Where(command =>
-                    command.Rect.X >= track.X && command.Rect.Y >= track.Y &&
-                    command.Rect.X + command.Rect.Width <= track.X + track.Width &&
-                    command.Rect.Y + command.Rect.Height <= track.Y + track.Height)
+                    command.Rect.X >= track.X - 1 && command.Rect.Y >= track.Y - 1 &&
+                    command.Rect.X + command.Rect.Width <= track.X + track.Width + 1 &&
+                    command.Rect.Y + command.Rect.Height <= track.Y + track.Height + 1)
                 .ToArray();
 
             Assert.Equal(4, inside.Length);

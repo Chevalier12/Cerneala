@@ -244,7 +244,7 @@ The slider keeps its track synchronized with its range, change increments, orien
 
 ## Layout Behavior
 
-The default template is a panel that arranges, in drawing order: the top or left `TickBar`, the track bar (a `Border` with background `Color(225, 225, 225)`, border `Color(120, 120, 120)`, and thickness `1`), `PART_SelectionRange`, the `Track`, and the bottom or right `TickBar`. The `Track` draws no background and no border in this template, so its transparent repeat buttons and its thumb lie over the bar. Each visible `TickBar` adds 6 pixels (4 pixels of ticks and a 2-pixel gap) across the track: a horizontal slider with `TickPlacement.Both` and no set `Height` is 12 pixels taller than the same slider with `TickPlacement.None`.
+The default template is a panel that arranges, in drawing order: the top or left `TickBar`, the track bar (a `Border` with background `Color(225, 225, 225)`, border `Color(120, 120, 120)`, and thickness `1`, a positive side painted outside the bar, so a 110 x 20 track bar draws its border as a pen of thickness 1 at `(-0.5, -0.5, 111, 21)`), `PART_SelectionRange`, the `Track`, and the bottom or right `TickBar`. The `Track` draws no background and no border in this template, so its transparent repeat buttons and its thumb lie over the bar. Each visible `TickBar` adds 6 pixels (4 pixels of ticks and a 2-pixel gap) across the track: a horizontal slider with `TickPlacement.Both` and no set `Height` is 12 pixels taller than the same slider with `TickPlacement.None`.
 
 The slider applies its component template before measure, synchronizes `PART_Track`, and uses the standard `Control` template layout path. It synchronizes the track again before arrange.
 

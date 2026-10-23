@@ -143,13 +143,7 @@ public class ColorSpectrum : Control, IPointerDragSource
                 new DrawPoint(0, rect.Height),
                 [new GradientStop(0, new Color(0, 0, 0, 0)), new GradientStop(1, Color.Black)]));
 
-        float borderThickness = MathF.Max(
-            MathF.Max(BorderThickness.Left, BorderThickness.Top),
-            MathF.Max(BorderThickness.Right, BorderThickness.Bottom));
-        if (BorderBrush is { } borderBrush && borderThickness > 0)
-        {
-            context.DrawingContext.DrawRectangle(rect, borderBrush, borderThickness);
-        }
+        Border.RenderBorder(this, context);
 
         float markerX = rect.X + (Saturation * rect.Width);
         float markerY = rect.Y + ((1 - Value) * rect.Height);

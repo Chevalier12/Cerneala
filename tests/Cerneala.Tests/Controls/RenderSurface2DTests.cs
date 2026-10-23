@@ -15,7 +15,8 @@ public sealed class RenderSurface2DTests
         RenderSurface2D surface = new()
         {
             Padding = new Thickness(2),
-            BorderThickness = new Thickness(1)
+            // A negative side is the inward border: it takes room from the content (a positive side takes none).
+            BorderThickness = new Thickness(-1)
         };
         FixedElement child = new(new LayoutSize(10, 5));
         surface.Content = child;

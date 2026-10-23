@@ -1,6 +1,8 @@
+using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
+using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Media;
 
@@ -32,6 +34,57 @@ public sealed class ColorSpectrumTests
 
         Assert.Equal((0.8f, 0.9f), (spectrum.Saturation, spectrum.Value));
         Assert.False(bridge.PointerCaptureManager.HasCapture);
+    }
+
+    [Fact]
+    public void PositiveUniformBorderIsDrawnOutsideTheArrangedBoundsLikeABorder()
+    {
+        ColorSpectrum spectrum = new() { BorderBrush = new SolidColorBrush(Color.Black), BorderThickness = new Thickness(2) };
+
+        DrawCommandList commands = RenderAt(spectrum, new LayoutRect(0, 0, 100, 60));
+
+        // The centred pen of thickness 2 on the bounds inflated by 1 covers the 2px just outside (0, 0, 100, 60).
+        DrawCommand border = Assert.Single(commands, command => ReferenceEquals(command.Brush, spectrum.BorderBrush));
+        Assert.Equal(DrawCommandKind.DrawRectangle, border.Kind);
+        Assert.Equal(new DrawRect(-1, -1, 102, 62), border.Rect);
+        Assert.Equal(2, border.Thickness);
+    }
+
+    [Fact]
+    public void NegativeUniformBorderIsDrawnInsideTheArrangedBoundsLikeABorder()
+    {
+        ColorSpectrum spectrum = new() { BorderBrush = new SolidColorBrush(Color.Black), BorderThickness = new Thickness(-2) };
+
+        DrawCommandList commands = RenderAt(spectrum, new LayoutRect(0, 0, 100, 60));
+
+        // The centred pen of thickness 2 on the bounds deflated by 1 covers the 2px just inside (0, 0, 100, 60).
+        DrawCommand border = Assert.Single(commands, command => ReferenceEquals(command.Brush, spectrum.BorderBrush));
+        Assert.Equal(DrawCommandKind.DrawRectangle, border.Kind);
+        Assert.Equal(new DrawRect(1, 1, 98, 58), border.Rect);
+        Assert.Equal(2, border.Thickness);
+    }
+
+    [Fact]
+    public void SingleSideBorderIsOneEvenOddPathLikeABorder()
+    {
+        ColorSpectrum spectrum = new() { BorderBrush = new SolidColorBrush(Color.Black), BorderThickness = new Thickness(0, 0, 0, 2) };
+
+        DrawCommandList commands = RenderAt(spectrum, new LayoutRect(0, 0, 100, 60));
+
+        DrawCommand border = Assert.Single(commands, command => ReferenceEquals(command.Brush, spectrum.BorderBrush));
+        Assert.Equal(DrawCommandKind.FillPath, border.Kind);
+        Assert.Equal(DrawFillRule.EvenOdd, border.FillRule);
+    }
+
+    private static DrawCommandList RenderAt(ColorSpectrum spectrum, LayoutRect bounds)
+    {
+        UIRoot root = new();
+        root.VisualChildren.Add(spectrum);
+        root.ProcessFrame();
+        spectrum.Arrange(new ArrangeContext(bounds));
+        root.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+        root.ProcessFrame();
+        return root.RetainedRenderer.Commit(root);
     }
 
     // The spectrum is arranged at a non-zero origin inside a parent that draws its content `scale` times

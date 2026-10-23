@@ -483,8 +483,10 @@ public sealed class AspectChapterViewTests : IDisposable
             comboBox.ItemsPresenter.LayoutPanelRoot!.VisualChildren
                 .Select(Cerneala.UI.Controls.Items.ItemContainerGenerator.GetItemIndex)
                 .ToArray());
+        // Only a negative (inward) border side takes room from the drop-down; a positive side is painted outside it.
         Assert.Equal(
-            scrollViewer.Presenter.ExtentHeight + border.BorderThickness.Vertical,
+            scrollViewer.Presenter.ExtentHeight +
+                MathF.Max(0, -border.BorderThickness.Top) + MathF.Max(0, -border.BorderThickness.Bottom),
             overlay.ProjectedPresenter.ArrangedBounds.Height);
         Assert.True(overlay.ProjectedPresenter.ArrangedBounds.Height < comboBox.MaxDropDownHeight);
         DrawCommand[] renderedCommands = root.RetainedRenderer.Commit(root)

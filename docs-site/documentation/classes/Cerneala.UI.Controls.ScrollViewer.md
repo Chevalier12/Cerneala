@@ -50,7 +50,7 @@ internal sealed class DocumentElement : UIElement
 }
 ```
 
-Give the viewer a background and a 1-unit border. The default template draws both and lays out the presenter and scroll bars inside the border:
+Give the viewer a background and an inward 1-unit border (a negative side is a band inside the viewer; a positive side is painted outside it and takes no room). The default template draws both and lays out the presenter and scroll bars inside the border:
 
 ```csharp
 using Cerneala.Drawing;
@@ -62,15 +62,15 @@ ScrollViewer viewer = new()
 {
     Background = new SolidColorBrush(new Color(22, 28, 32)),
     BorderBrush = new SolidColorBrush(new Color(44, 55, 62)),
-    BorderThickness = new Thickness(1),
+    BorderThickness = new Thickness(-1),
     VerticalScrollBarVisibility = ScrollBarVisibility.Visible
 };
 
 viewer.Measure(new MeasureContext(new LayoutSize(100, 100)));
 viewer.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
 
-// viewer.Presenter.ArrangedBounds         == (1, 1, 86, 98)
-// viewer.VerticalScrollBar.ArrangedBounds == (87, 1, 12, 98)
+// viewer.Presenter.ArrangedBounds         == (1, 1, 88, 98)
+// viewer.VerticalScrollBar.ArrangedBounds == (89, 1, 10, 98)
 ```
 
 ## Remarks
@@ -81,16 +81,16 @@ The default component template uses a two-row, two-column `Grid`: the presenter 
 
 The scroll bar parts exist as soon as the viewer's template is applied (reading `Presenter`, `HorizontalScrollBar` or `VerticalScrollBar` applies it), but a scroll bar builds its own template, with `Track`, `Thumb` and the direction `RepeatButton` elements, only at its first measure, as in WPF, so a bar that is `Collapsed` has none. For example, a viewer with `VerticalScrollBarVisibility = ScrollBarVisibility.Hidden`, or an `Auto` viewer whose content fits, has `VerticalScrollBar.ComponentTemplateInstance == null` and no `Track`, `Thumb` or `RepeatButton` below it. When an `Auto` bar becomes `Visible` because the content grew, it builds its template in the layout of that frame and is laid out and drawn in that frame. Reading `VerticalScrollBar.Track` builds the bar's template on demand. See `ScrollBar`.
 
-The default template's root is a `Border` that wraps that grid. The viewer's `Background`, `BorderBrush`, and `BorderThickness` are relayed to this border with `UiPropertyValueSource.TemplateOwnerBinding`, so they win over `Aspect` rules that target `Border`. The border fills `Background` over the whole viewer, paints `BorderBrush` inside the viewer's edges, each side with its own `BorderThickness` side, and arranges the grid inset by `BorderThickness` on each side. The presenter and scroll bars therefore sit inside the border, and the presenter's viewport clip stays inside it too. With the default values (`null`, `null`, `Thickness.Zero`) the template draws nothing extra and adds no inset. `Padding` is not used by the default template. A custom `ComponentTemplate` decides itself whether to use these properties.
+The default template's root is a `Border` that wraps that grid. The viewer's `Background`, `BorderBrush`, and `BorderThickness` are relayed to this border with `UiPropertyValueSource.TemplateOwnerBinding`, so they win over `Aspect` rules that target `Border`. The border fills `Background` over the whole viewer, paints `BorderBrush` with each side of its own signed `BorderThickness` (a negative side `-t` inside the viewer's edge, a positive side `+t` outside it), and arranges the grid inset by the negative sides only: `-1` insets the grid by 1 unit, `1` insets it by nothing and paints the border outside the viewer. With a negative border, the presenter and scroll bars sit inside the border, and the presenter's viewport clip stays inside it too. With the default values (`null`, `null`, `Thickness.Zero`) the template draws nothing extra and adds no inset. `Padding` is not used by the default template. A custom `ComponentTemplate` decides itself whether to use these properties.
 
 The default scroll policy disables horizontal scrolling and enables automatic vertical scrolling. `HorizontalScrollBarVisibility` defaults to `ScrollBarVisibility.Disabled`; `VerticalScrollBarVisibility` defaults to `ScrollBarVisibility.Auto`.
 
-During measure and arrange, the control reevaluates whether each scroll bar is needed through the template root. `Visible` reserves the default scroll bar's `12` unit cross-axis size. `Hidden` and `Disabled` collapse the bar, as WPF's computed scroll bar visibility does, so it takes no space; with `Hidden` the presenter still scrolls on that axis. `Auto` shows a scroll bar only when the presenter's extent is larger than its viewport. If one automatically visible scroll bar reduces the opposite viewport enough to require the other bar, the layout pass reevaluates both axes for at most three passes. A non-convergent state uses the conservative union of bars observed during those passes.
+During measure and arrange, the control reevaluates whether each scroll bar is needed through the template root. `Visible` reserves the default scroll bar's cross-axis size, which is `10`: the template's `12` minus the 1-unit default border of the scroll bar on each side, which is a positive side painted outside the bar. `Hidden` and `Disabled` collapse the bar, as WPF's computed scroll bar visibility does, so it takes no space; with `Hidden` the presenter still scrolls on that axis. `Auto` shows a scroll bar only when the presenter's extent is larger than its viewport. If one automatically visible scroll bar reduces the opposite viewport enough to require the other bar, the layout pass reevaluates both axes for at most three passes. A non-convergent state uses the conservative union of bars observed during those passes.
 
 The presenter desires, on each axis, the smaller of its viewport and its extent, as WPF's `ScrollContentPresenter` does, so a viewer whose content fits asks only for the content size and not for the whole available space. The visible or reserved scroll bars and `BorderThickness` are added to that size. For example, a viewer measured with an available size of 100 x 100:
 
 - With content that desires 80 x 20 and both `HorizontalScrollBarVisibility` and `VerticalScrollBarVisibility` set to `Auto`, `DesiredSize` is 80 x 20 and no scroll bar is visible.
-- With content that desires 80 x 300 and `VerticalScrollBarVisibility = ScrollBarVisibility.Auto`, the vertical scroll bar is visible, `ScrollInfo.ExtentHeight` is `300`, `ScrollInfo.ViewportHeight` is `100`, the presenter desires 80 x 100, and `DesiredSize` is 92 x 100: the 80-unit content width plus the 12-unit scroll bar.
+- With content that desires 80 x 300 and `VerticalScrollBarVisibility = ScrollBarVisibility.Auto`, the vertical scroll bar is visible, `ScrollInfo.ExtentHeight` is `300`, `ScrollInfo.ViewportHeight` is `100`, the presenter desires 80 x 100, and `DesiredSize` is 90 x 100: the 80-unit content width plus the 10-unit scroll bar.
 
 The viewport is still the presenter's available size during measure and its final size during arrange, so a parent that arranges the viewer larger than `DesiredSize` gets a larger viewport.
 
@@ -172,9 +172,9 @@ button.BringIntoView();
 | Track click scroll amount | One viewport per click: `ViewportHeight` on the vertical bar, `ViewportWidth` on the horizontal bar |
 | Horizontal scrolling default | `Disabled` |
 | Vertical scrolling default | `Auto` |
-| Border inset | The template grid is arranged inside the viewer's `BorderThickness` on each side. |
+| Border inset | The template grid is arranged inside the negative sides of the viewer's `BorderThickness`: `-t` on a side insets it by `t`; a positive or zero side insets it by nothing. |
 | Presenter available size | The star-sized grid cell remaining after the border inset and the visible auto-sized scroll-bar cells reserve space. Collapsed bars (`Disabled`, `Hidden`, or `Auto` with content that fits) reserve none. |
-| Desired size with finite available size | Uses the template grid's finite desired size plus `BorderThickness`. The presenter cell desires, per axis, the smaller of the viewport and the extent, so content 80 x 20 in 100 x 100 gives 80 x 20, and content 80 x 300 with a visible vertical bar gives 92 x 100. |
+| Desired size with finite available size | Uses the template grid's finite desired size plus the negative sides of `BorderThickness`. The presenter cell desires, per axis, the smaller of the viewport and the extent, so content 80 x 20 in 100 x 100 gives 80 x 20, and content 80 x 300 with a visible vertical bar gives 90 x 100. |
 | Desired size with unbounded available size | Star grid tracks use child desired sizes, preserving the presenter's content-driven desired size plus visible/reserved bars and `BorderThickness`. |
 
 ## Property Information

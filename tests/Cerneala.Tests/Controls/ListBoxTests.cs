@@ -621,7 +621,8 @@ public sealed class ListBoxTests
     public void ListBoxWithoutComponentTemplateLaysOutItsRowsWithoutScrollViewer()
     {
         ListBoxItem row = new() { Content = "One" };
-        ListBox listBox = new() { ComponentTemplate = null, BorderThickness = new Thickness(2), Padding = new Thickness(10) };
+        // A negative side is the inward border: it takes room from the rows (a positive side takes none).
+        ListBox listBox = new() { ComponentTemplate = null, BorderThickness = new Thickness(-2), Padding = new Thickness(10) };
         listBox.Items.Add(row);
         UIRoot root = new();
         root.VisualChildren.Add(listBox);
@@ -1685,8 +1686,8 @@ public sealed class ListBoxTests
 
         DrawCommand border = Assert.Single(commands, command => ReferenceEquals(command.Brush, blue));
         Assert.Equal(DrawCommandKind.DrawRectangle, border.Kind);
-        // The border is painted inside the arranged bounds: a centred pen of thickness 2 on the bounds deflated by 1.
-        Assert.Equal(new DrawRect(4, 5, 38, 28), border.Rect);
+        // A positive side is painted outside the arranged bounds: a centred pen of thickness 2 on the bounds inflated by 1.
+        Assert.Equal(new DrawRect(2, 3, 42, 32), border.Rect);
     }
 
     // As the WPF ListBox template, the rows are arranged inside BorderThickness and Padding (#609). The root and the
@@ -1695,7 +1696,8 @@ public sealed class ListBoxTests
     public void ListBoxArrangesItsRowsInsideBorderThicknessAndPadding()
     {
         ListBoxItem row = new() { Content = "One" };
-        ListBox listBox = new() { BorderThickness = new Thickness(2), Padding = new Thickness(10) };
+        // A negative side is the inward border: it takes room from the rows (a positive side takes none).
+        ListBox listBox = new() { BorderThickness = new Thickness(-2), Padding = new Thickness(10) };
         listBox.Items.Add(row);
         UIRoot root = new(200, 200);
         root.VisualChildren.Add(listBox);

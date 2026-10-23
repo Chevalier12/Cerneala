@@ -165,11 +165,7 @@ public class Thumb : Control, IPointerDragSource
             context.DrawingContext.FillRectangle(rect, background);
         }
 
-        float thickness = MathF.Max(MathF.Max(BorderThickness.Left, BorderThickness.Top), MathF.Max(BorderThickness.Right, BorderThickness.Bottom));
-        if (BorderBrush is { } borderBrush && thickness > 0 && rect.Width > 0 && rect.Height > 0)
-        {
-            context.DrawingContext.DrawRectangle(rect, borderBrush, thickness);
-        }
+        Border.RenderBorder(this, context);
     }
 
     // Drag changes are measured in the layout space where the thumb is arranged: the root point goes

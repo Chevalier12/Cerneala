@@ -31,7 +31,9 @@ public sealed class ScrollBarTests
         ElementInputBridge bridge = new();
 
         bridge.Dispatch(root, PointerFrame(18, 5, currentDown: true));
-        bridge.Dispatch(root, PointerFrame(18, 5, 55, 5, previousDown: true, currentDown: true));
+        // The ScrollBar default border is a positive 1, painted outside the bar, so it no longer takes 1 pixel from each
+        // end of the template: the thumb travels 76 pixels instead of 74, and a drag of 38 pixels is half of it.
+        bridge.Dispatch(root, PointerFrame(18, 5, 56, 5, previousDown: true, currentDown: true));
 
         Assert.Equal(50, scrollBar.Value);
     }
