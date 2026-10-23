@@ -24,7 +24,24 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
 
     public long Version { get; }
 
-    public string AssemblyName => compilation.Assembly.Name;
+    // Mirrors UiMarkupPropertyResolver.IsAccessibleFromGeneratedCode in Cerneala.SourceGen.
+    public bool IsAccessibleFromGeneratedCode(ILanguageMemberSymbol member, ILanguageTypeSymbol? pairType)
+    {
+        if (member is not RoslynMemberSymbol roslynMember)
+        {
+            return member.Accessibility == LanguageAccessibility.Public;
+        }
+
+        ISymbol symbol = roslynMember.Symbol;
+        if (pairType is RoslynTypeSymbol roslynPair)
+        {
+            return compilation.IsSymbolAccessibleWithin(symbol, roslynPair.Symbol);
+        }
+
+        return symbol.DeclaredAccessibility == Accessibility.Public ||
+            SymbolEqualityComparer.Default.Equals(symbol.ContainingAssembly, compilation.Assembly) &&
+            symbol.DeclaredAccessibility is Accessibility.Internal or Accessibility.ProtectedOrInternal;
+    }
 
     public ILanguageTypeSymbol? FindType(string metadataName)
     {
@@ -201,6 +218,8 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
             this.symbol = symbol;
         }
 
+        public ITypeSymbol Symbol => symbol;
+
         public string Name => symbol.Name;
 
         public string MetadataName => Volatile.Read(ref metadataName) ??
@@ -353,6 +372,8 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
             this.owner = owner;
             this.symbol = symbol;
         }
+
+        public ISymbol Symbol => symbol;
 
         public string Name => symbol.Name;
 

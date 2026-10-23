@@ -40,6 +40,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
     private readonly List<ResourceDefinition> applicationDefaultAspects = new();
     private ElementSyntax? root;
     private ILanguageTypeSymbol? rootType;
+    private ILanguageTypeSymbol? markupPairType;
     private bool disposed;
 
     public CernealaSemanticModel(
@@ -527,11 +528,9 @@ internal sealed partial class CernealaSemanticModel : IDisposable
             isWritable: true));
     }
 
-    // Generated code calls a non-public member only when it is declared in the assembly being compiled
-    // (the build resolver applies the same rule), so the editor must not accept any other.
+    // The editor must accept exactly the members the build resolver lets generated code call.
     private bool IsCallableFromGeneratedCode(ILanguageMemberSymbol member) =>
-        member.Accessibility == LanguageAccessibility.Public ||
-        string.Equals(member.AssemblyName, compilation.AssemblyName, StringComparison.Ordinal);
+        compilation.IsAccessibleFromGeneratedCode(member, markupPairType);
 
     // True when the owner declares a public static XProperty field of type UiProperty<T>.
     private static bool HasAttachedUiProperty(ILanguageTypeSymbol owner, string propertyName) =>
@@ -601,6 +600,8 @@ internal sealed partial class CernealaSemanticModel : IDisposable
             };
             if (pair is not null && pair.IsOrDerivesFrom(expectedBase))
             {
+                // The generator treats a Window, UserControl or Scene2D root with a companion class as a pair.
+                markupPairType = element.Name == "Application" ? null : pair;
                 return pair;
             }
 
