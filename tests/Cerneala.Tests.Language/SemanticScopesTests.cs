@@ -528,6 +528,37 @@ public sealed class SemanticScopesTests
             expectedIds);
     }
 
+    // Grid.SetRow/SetColumn throw for an index below 0 and Grid.SetRowSpan/SetColumnSpan for a span below 1, so the
+    // build rejects those literals (CERNEALAUI004) and the editor must report the same diagnostic on the value.
+    [Theory]
+    [InlineData("Grid.Row", "-1", "CERNEALAUI004")]
+    [InlineData("Grid.Column", "-1", "CERNEALAUI004")]
+    [InlineData("Grid.RowSpan", "0", "CERNEALAUI004")]
+    [InlineData("Grid.ColumnSpan", "0", "CERNEALAUI004")]
+    [InlineData("Grid.Row", "0", "")]
+    [InlineData("Grid.Column", "0", "")]
+    [InlineData("Grid.RowSpan", "2", "")]
+    [InlineData("Grid.ColumnSpan", "1", "")]
+    public void GridPlacementOutOfRangeReportsTheSameDiagnosticsInEditorAndBuild(
+        string property,
+        string value,
+        string expectedIds)
+    {
+        string markup = "<Grid><Border " + property + "=\"" + value + "\" /></Grid>";
+        AssertEditorAndBuildReportTheSameDiagnostics(markup, expectedIds);
+
+        if (expectedIds.Length > 0)
+        {
+            LanguagePipelineResult result = LanguagePipelineHarness.Analyze("AttachedParity.crn", markup);
+            HarnessDiagnostic editor = Assert.Single(result.SemanticDiagnostics);
+            int valueStart = markup.IndexOf("=\"" + value, StringComparison.Ordinal) + 1;
+            Assert.Equal(
+                (0, valueStart, 0, valueStart + value.Length + 2),
+                (editor.StartLine, editor.StartCharacter, editor.EndLine, editor.EndCharacter));
+            Assert.Equal(editor, Assert.Single(result.SourceGeneratorDiagnostics));
+        }
+    }
+
     [Theory]
     [InlineData("<Aspect>@default { Opacity = 0.5; }</Aspect>")]
     [InlineData("<Aspect />")]

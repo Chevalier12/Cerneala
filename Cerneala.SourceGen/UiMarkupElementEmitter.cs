@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using Cerneala.Language.Semantics;
 using Microsoft.CodeAnalysis;
 
 namespace Cerneala.SourceGen;
@@ -413,11 +414,11 @@ public sealed partial class UiMarkupGenerator
                 return false;
             }
 
-            bool isSpan = method.EndsWith("Span", StringComparison.Ordinal);
+            string propertyName = attribute.Name.LocalName.Substring("Grid.".Length);
             if (!int.TryParse(attribute.Value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int value) ||
-                (isSpan ? value <= 0 : value < 0))
+                !CernealaSemanticModel.IsValidGridPlacement(propertyName, value))
             {
-                Report(InvalidPropertyValue, attribute, "Grid", attribute.Name.LocalName.Substring("Grid.".Length), attribute.Value);
+                Report(InvalidPropertyValue, attribute, "Grid", propertyName, attribute.Value);
                 return true;
             }
 

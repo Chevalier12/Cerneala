@@ -511,7 +511,9 @@ internal sealed partial class CernealaSemanticModel : IDisposable
             return;
         }
 
-        if (!TryConvertLiteral(value, member, out object? converted))
+        if (!TryConvertLiteral(value, member, out object? converted) ||
+            owner!.MetadataName == "Cerneala.UI.Layout.Panels.Grid" && converted is int placement &&
+            !IsValidGridPlacement(propertyName, placement))
         {
             AddDiagnostic("CERNEALAUI004", attribute.ValueToken.Span, ownerName, propertyName, value);
             return;
@@ -527,6 +529,16 @@ internal sealed partial class CernealaSemanticModel : IDisposable
             converted,
             isWritable: true));
     }
+
+    // Grid.SetRow/SetColumn throw for an index below 0 and Grid.SetRowSpan/SetColumnSpan for a span below 1. Also read
+    // by the source generator (UiMarkupElementEmitter.TryEmitGridAttachedProperty), so that editor and build reject
+    // the same values: Grid.Row="-1" and Grid.RowSpan="0" report CERNEALAUI004 in both.
+    internal static bool IsValidGridPlacement(string propertyName, int value) => propertyName switch
+    {
+        "Row" or "Column" => value >= 0,
+        "RowSpan" or "ColumnSpan" => value >= 1,
+        _ => true
+    };
 
     // The editor must accept exactly the members the build resolver lets generated code call.
     private bool IsCallableFromGeneratedCode(ILanguageMemberSymbol member) =>
