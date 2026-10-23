@@ -287,6 +287,28 @@ public sealed partial class UiMarkupGenerator
             return type is not null && IsInlineType(type);
         }
 
+        // The owner of an attached property such as Tagger in Tagger.Tag="x". Mirrors the editor's
+        // CernealaSemanticModel.ResolveMarkupType (same namespace list, same order): a built-in type first, then
+        // the unique type declared in source with that simple name. Static classes are allowed.
+        private INamedTypeSymbol? ResolveAttachedPropertyOwnerType(string ownerName)
+        {
+            foreach (string @namespace in CernealaSemanticModel.BuiltInNamespaces)
+            {
+                INamedTypeSymbol? builtIn = compilation.GetTypeByMetadataName(@namespace + "." + ownerName);
+                if (builtIn is not null)
+                {
+                    return builtIn;
+                }
+            }
+
+            INamedTypeSymbol[] declared = compilation
+                .GetSymbolsWithName(candidate => string.Equals(candidate, ownerName, StringComparison.Ordinal), SymbolFilter.Type)
+                .OfType<INamedTypeSymbol>()
+                .Distinct<INamedTypeSymbol>(SymbolEqualityComparer.Default)
+                .ToArray();
+            return declared.Length == 1 ? declared[0] : null;
+        }
+
         private INamedTypeSymbol? ResolvePropertyOwnerType(string elementName, bool isRoot)
         {
             if (isRoot && string.Equals(document.Root.Name.LocalName, elementName, StringComparison.Ordinal))
@@ -431,10 +453,11 @@ public sealed partial class UiMarkupGenerator
             return sameAssembly && symbol.DeclaredAccessibility is Accessibility.Internal or Accessibility.ProtectedOrInternal;
         }
 
-        private static MarkupValueKind GetMarkupValueKind(ITypeSymbol valueType, IPropertySymbol property)
+        // constraintSource carries the optional MarkupValueConstraint attribute (a property); null when there is none.
+        private static MarkupValueKind GetMarkupValueKind(ITypeSymbol valueType, ISymbol? constraintSource)
         {
             valueType = UnwrapNullable(valueType);
-            string constraint = property.GetAttributes()
+            string constraint = constraintSource?.GetAttributes()
                 .FirstOrDefault(attribute => attribute.AttributeClass?.ToDisplayString() == "Cerneala.UI.Markup.MarkupValueConstraintAttribute")?
                 .ConstructorArguments.FirstOrDefault().Value?.ToString() ?? string.Empty;
             string typeName = valueType.ToDisplayString();

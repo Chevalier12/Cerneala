@@ -300,6 +300,17 @@ Color values accept the named colors known by the generator, ignoring case. They
 
 Direct text content is assigned to the target's supported text or content property. Direct text on an element without such a property is reported as an unsupported `#text` property.
 
+Attached properties use the `Owner.X` form, and the generator accepts exactly the attached properties that the Cerneala editor accepts. `Owner` is resolved from the built-in markup namespaces first and then as the unique type with that simple name declared in the compilation's source; it must have a static `SetX` method with two parameters whose first parameter accepts the element.
+
+| Markup | Owner member | Generated code |
+| --- | --- | --- |
+| `Grid.Row="1"`, `Grid.Column`, `Grid.RowSpan`, `Grid.ColumnSpan` | `Grid.SetRow` and the other setters | `Grid.SetRow(element, 1)`; a negative index or a span below `1` reports `CERNEALAUI004` |
+| `Canvas.Left="12"`, `Canvas.Top="20"`, `Panel.ZIndex="2"`, `Servo.Id="save"` | `Canvas.LeftProperty`, `Canvas.TopProperty`, `Panel.ZIndexProperty`, `Servo.IdProperty` | `SetValue` on the `UiProperty`; a binding such as `Canvas.Left="$DataContext.X"` is observed like any other property binding |
+| `Layering.Layer="2"` where the application declares `public static readonly UiProperty<int> LayerProperty` and `SetLayer(UIElement, int)` on `Layering` | `Layering.LayerProperty` | `SetValue` on the `UiProperty`; bindings are allowed |
+| `Tagger.Tag="x"` where the application declares only `SetTag(UIElement, string)` on `Tagger` | `Tagger.SetTag` | `Tagger.SetTag(element, "x")`; a binding reports `CERNEALAUI004` |
+
+A literal that cannot be converted to the value type, for example `Canvas.Left="abc"`, reports `CERNEALAUI004`. An owner or setter that does not exist, for example `Canvas.Foo="1"`, reports `CERNEALAUI003`.
+
 The generator reports diagnostics instead of emitting source when markup cannot be processed successfully:
 
 | Diagnostic ID | Condition |

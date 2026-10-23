@@ -86,6 +86,47 @@ public sealed class CanvasTests
         Assert.Equal(new LayoutRect(12, 8, 20, 10), child.ArrangedBounds);
     }
 
+    [Fact]
+    public void CanvasLeftPropertyMovesAnAlreadyArrangedChildOnTheNextFrame()
+    {
+        (UIRoot root, FixedElement child) = CreateArrangedCanvasChild();
+
+        child.SetValue(Canvas.LeftProperty, 30f);
+        root.ProcessFrame();
+
+        Assert.Equal(30f, Canvas.GetLeft(child));
+        Assert.Equal(30f, child.GetValue(Canvas.LeftProperty));
+        Assert.Equal(new LayoutRect(30, 0, 20, 10), child.ArrangedBounds);
+    }
+
+    [Fact]
+    public void CanvasTopPropertyMovesAnAlreadyArrangedChildOnTheNextFrame()
+    {
+        (UIRoot root, FixedElement child) = CreateArrangedCanvasChild();
+
+        child.SetValue(Canvas.TopProperty, 40f);
+        root.ProcessFrame();
+
+        Assert.Equal(40f, Canvas.GetTop(child));
+        Assert.Equal(40f, child.GetValue(Canvas.TopProperty));
+        Assert.Equal(new LayoutRect(0, 40, 20, 10), child.ArrangedBounds);
+    }
+
+    private static (UIRoot Root, FixedElement Child) CreateArrangedCanvasChild()
+    {
+        UIRoot root = new(100, 100);
+        Canvas canvas = new();
+        FixedElement child = new(new LayoutSize(20, 10));
+        root.VisualChildren.Add(canvas);
+        canvas.VisualChildren.Add(child);
+        root.Invalidate(
+            InvalidationFlags.Subtree | InvalidationFlags.Measure | InvalidationFlags.Arrange | InvalidationFlags.Render | InvalidationFlags.HitTest,
+            "initial canvas frame");
+        root.ProcessFrame();
+        Assert.Equal(new LayoutRect(0, 0, 20, 10), child.ArrangedBounds);
+        return (root, child);
+    }
+
     [Theory]
     [InlineData(1f, 3f, 13f)]
     [InlineData(2f, 1.5f, 6.5f)]

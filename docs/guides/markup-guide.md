@@ -230,8 +230,22 @@ Attached layout properties use dotted names:
     Text="Placed by the parent Grid" />
 ```
 
-The source generator supports only `Grid.Row`, `Grid.Column`, `Grid.RowSpan`, `Grid.ColumnSpan`, `Panel.ZIndex`, and `Servo.Id` as attached properties. `Panel.ZIndex` and `Servo.Id` also accept bindings, for example `Panel.ZIndex="$DataContext.Layer"`. `Canvas.Left` and `Canvas.Top` report `CERNEALAUI003` in markup; set them in C# with `Canvas.SetLeft` and `Canvas.SetTop`
-(`UI/Layout/Panels/Canvas.cs`).
+`Canvas.Left` and `Canvas.Top` place a child of a `Canvas`:
+
+```xml
+<Canvas Width="300" Height="300">
+  <Border Width="10" Height="10" Canvas.Left="12" Canvas.Top="20" />
+</Canvas>
+```
+
+After layout the `Border` is at `(12, 20)` inside the canvas, the same as `Canvas.SetLeft(border, 12)` and `Canvas.SetTop(border, 20)` in C#.
+
+The editor and the build accept the same attached properties. `Owner.X="value"` is accepted when `Owner` is a Cerneala markup type or a type declared in the application's own C# code, and `Owner` has a static `SetX(element, value)` method:
+
+- When `Owner` also has a public static `XProperty` field of type `UiProperty<T>`, the value may be a literal or a binding. This covers `Panel.ZIndex`, `Servo.Id`, `Canvas.Left`, and `Canvas.Top`, for example `Panel.ZIndex="$DataContext.Layer"` or `Canvas.Left="$DataContext.X"`.
+- Otherwise only a literal is valid, and the build calls the setter. `Grid.Row="1"` calls `Grid.SetRow(element, 1)`. With `public static class Tagger { public static void SetTag(UIElement element, string tag) { ... } }` in the application, `<Border Tagger.Tag="x" />` calls `Tagger.SetTag(border, "x")`. A binding such as `Tagger.Tag="$DataContext.Name"` or `Grid.Row="$DataContext.Row"` reports `CERNEALAUI004`.
+
+A value that cannot be converted, for example `Canvas.Left="abc"`, reports `CERNEALAUI004`. A name with no such setter, for example `Canvas.Foo="1"`, reports `CERNEALAUI003`. Types outside the markup namespaces, such as `AccessibleName` (`Cerneala.UI.Accessibility`), are not found and report `CERNEALAUI003`; set those in C#.
 
 ### XML escaping
 

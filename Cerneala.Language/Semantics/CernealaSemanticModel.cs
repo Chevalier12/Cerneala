@@ -8,7 +8,9 @@ namespace Cerneala.Language.Semantics;
 
 internal sealed partial class CernealaSemanticModel : IDisposable
 {
-    private static readonly string[] BuiltInNamespaces =
+    // Also read by the source generator (UiMarkupPropertyResolver.ResolveAttachedPropertyOwnerType) so that
+    // editor and build resolve the owner of an attached property from the same list.
+    internal static readonly string[] BuiltInNamespaces =
     [
         "Cerneala.UI.Controls",
         "Cerneala.UI.Controls.Primitives",
@@ -475,10 +477,21 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         string propertyName = name.Substring(separator + 1);
         ILanguageTypeSymbol? owner = ResolveMarkupType(ownerName);
         ILanguageMemberSymbol? member = owner?.GetMembers("Set" + propertyName)
-            .FirstOrDefault(candidate => candidate.Kind == LanguageMemberKind.Method && candidate.IsStatic);
+            .FirstOrDefault(candidate => candidate.Kind == LanguageMemberKind.Method && candidate.IsStatic &&
+                candidate.Parameters.Count == 2 &&
+                elementType.IsOrImplements(candidate.Parameters[0].TypeMetadataName));
         if (member is null)
         {
             AddDiagnostic("CERNEALAUI003", attribute.NameToken.Span, ownerName, propertyName);
+            return;
+        }
+
+        // Only an attached property backed by a UiProperty (Panel.ZIndex, Canvas.Left) can hold a binding. A
+        // setter-only one (Grid.Row, a static SetTag(UIElement, string)) takes a literal, so a '$' value is invalid.
+        if (!HasAttachedUiProperty(owner!, propertyName) &&
+            ContainsBinding(value) && !IsEncodedMarkupLiteral(value, member))
+        {
+            AddDiagnostic("CERNEALAUI004", attribute.ValueToken.Span, ownerName, propertyName, value);
             return;
         }
 
@@ -512,6 +525,13 @@ internal sealed partial class CernealaSemanticModel : IDisposable
             converted,
             isWritable: true));
     }
+
+    // True when the owner declares a public static XProperty field of type UiProperty<T>.
+    private static bool HasAttachedUiProperty(ILanguageTypeSymbol owner, string propertyName) =>
+        owner.GetMembers(propertyName + "Property").Any(candidate =>
+            candidate.Kind == LanguageMemberKind.Field && candidate.IsStatic &&
+            candidate.Accessibility == LanguageAccessibility.Public &&
+            candidate.ValueTypeMetadataName.StartsWith("Cerneala.UI.Core.UiProperty<", StringComparison.Ordinal));
 
     private void AddContentOwner(ElementSyntax element)
     {

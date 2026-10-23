@@ -1,4 +1,4 @@
-using System.Runtime.CompilerServices;
+using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 
@@ -6,45 +6,44 @@ namespace Cerneala.UI.Layout.Panels;
 
 public class Canvas : Panel
 {
-    private static readonly ConditionalWeakTable<UIElement, CanvasPosition> positions = new();
+    // The child options only queue the child's own arrange; UIElement.OnPropertyInvalidated also calls
+    // InvalidateParentCanvasArrange, because the parent Canvas is the one that places the child.
+    public static readonly UiProperty<float> LeftProperty = UiProperty<float>.Register(
+        "Left",
+        typeof(Canvas),
+        new UiPropertyMetadata<float>(0f, UiPropertyOptions.AffectsArrange));
+
+    public static readonly UiProperty<float> TopProperty = UiProperty<float>.Register(
+        "Top",
+        typeof(Canvas),
+        new UiPropertyMetadata<float>(0f, UiPropertyOptions.AffectsArrange));
 
     public static void SetLeft(UIElement element, float left)
     {
         ArgumentNullException.ThrowIfNull(element);
-        CanvasPosition position = positions.GetOrCreateValue(element);
-        if (position.Left == left)
-        {
-            return;
-        }
-
-        position.Left = left;
-        InvalidateParentCanvasArrange(element);
+        element.SetValue(LeftProperty, left);
     }
 
     public static float GetLeft(UIElement element)
     {
         ArgumentNullException.ThrowIfNull(element);
-        return positions.TryGetValue(element, out CanvasPosition? position) ? position.Left : 0;
+        return element.GetValue(LeftProperty);
     }
 
     public static void SetTop(UIElement element, float top)
     {
         ArgumentNullException.ThrowIfNull(element);
-        CanvasPosition position = positions.GetOrCreateValue(element);
-        if (position.Top == top)
-        {
-            return;
-        }
-
-        position.Top = top;
-        InvalidateParentCanvasArrange(element);
+        element.SetValue(TopProperty, top);
     }
 
     public static float GetTop(UIElement element)
     {
         ArgumentNullException.ThrowIfNull(element);
-        return positions.TryGetValue(element, out CanvasPosition? position) ? position.Top : 0;
+        return element.GetValue(TopProperty);
     }
+
+    internal static bool IsPositionProperty(UiProperty property) =>
+        ReferenceEquals(property, LeftProperty) || ReferenceEquals(property, TopProperty);
 
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
@@ -81,14 +80,7 @@ public class Canvas : Panel
         return context.FinalRect;
     }
 
-    private sealed class CanvasPosition
-    {
-        public float Left { get; set; }
-
-        public float Top { get; set; }
-    }
-
-    private static void InvalidateParentCanvasArrange(UIElement element)
+    internal static void InvalidateParentCanvasArrange(UIElement element)
     {
         if (element.VisualParent is Canvas parent)
         {
