@@ -421,6 +421,8 @@ public sealed class SemanticScopesTests
             public float W { get; set; }
             public int L { get; set; }
         }
+
+        public class SubGrid : Cerneala.UI.Layout.Panels.Grid { }
         """;
 
     private static void AssertEditorAndBuildReportTheSameDiagnostics(string markup, string expectedIds)
@@ -526,6 +528,48 @@ public sealed class SemanticScopesTests
             "<Border Width=\"10\" Height=\"10\" " + attachedAttributes + " />" +
             "</ContentTemplate></ItemsControl.ItemTemplate></ItemsControl>",
             expectedIds);
+    }
+
+    // Grid.SetRow/SetColumn throw for an index below 0 and Grid.SetRowSpan/SetColumnSpan for a span below 1, so the
+    // build rejects those literals (CERNEALAUI004) and the editor must report the same diagnostic on the value. The rule
+    // follows the setter, not the markup name: SubGrid.Row (SubGrid : Grid) calls the same Grid.SetRow.
+    [Theory]
+    [InlineData("Grid.Row", "-1", "CERNEALAUI004")]
+    [InlineData("Grid.Column", "-1", "CERNEALAUI004")]
+    [InlineData("Grid.RowSpan", "0", "CERNEALAUI004")]
+    [InlineData("Grid.ColumnSpan", "0", "CERNEALAUI004")]
+    [InlineData("Grid.Row", "0", "")]
+    [InlineData("Grid.Column", "0", "")]
+    [InlineData("Grid.RowSpan", "2", "")]
+    [InlineData("Grid.ColumnSpan", "1", "")]
+    [InlineData("SubGrid.Row", "-1", "CERNEALAUI004")]
+    [InlineData("SubGrid.Column", "-1", "CERNEALAUI004")]
+    [InlineData("SubGrid.RowSpan", "0", "CERNEALAUI004")]
+    [InlineData("SubGrid.ColumnSpan", "0", "CERNEALAUI004")]
+    [InlineData("SubGrid.Row", "1", "")]
+    [InlineData("SubGrid.RowSpan", "2", "")]
+    public void GridPlacementOutOfRangeReportsTheSameDiagnosticsInEditorAndBuild(
+        string property,
+        string value,
+        string expectedIds)
+    {
+        string markup = "<Grid><Border " + property + "=\"" + value + "\" /></Grid>";
+        AssertEditorAndBuildReportTheSameDiagnostics(markup, expectedIds);
+
+        if (expectedIds.Length > 0)
+        {
+            LanguagePipelineResult result = LanguagePipelineHarness.Analyze(
+                "AttachedParity.crn",
+                markup,
+                "AttachedParity.cs",
+                AttachedPropertyCompanionSource);
+            HarnessDiagnostic editor = Assert.Single(result.SemanticDiagnostics);
+            int valueStart = markup.IndexOf("=\"" + value, StringComparison.Ordinal) + 1;
+            Assert.Equal(
+                (0, valueStart, 0, valueStart + value.Length + 2),
+                (editor.StartLine, editor.StartCharacter, editor.EndLine, editor.EndCharacter));
+            Assert.Equal(editor, Assert.Single(result.SourceGeneratorDiagnostics));
+        }
     }
 
     [Theory]
