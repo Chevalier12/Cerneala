@@ -78,6 +78,7 @@ public sealed class ImageAsyncPresentationTests
     public async Task PendingImageOmitsPixelsAndCompletionUpdatesOnlyNaturalDimensions(bool explicitWidth)
     {
         await using Fixture fixture = new();
+        fixture.Image.Stretch = DrawBrushStretch.None;
         if (explicitWidth) { fixture.Image.Width = 60; }
         fixture.Root.ProcessFrame();
         Assert.Equal(ImageLoadingState.Loading, fixture.Image.LoadingState);
@@ -103,6 +104,7 @@ public sealed class ImageAsyncPresentationTests
     public async Task CompletionUsesTheCurrentIntrinsicSizePolicy(bool changeWhilePending)
     {
         await using Fixture fixture = new();
+        fixture.Image.Stretch = DrawBrushStretch.None;
         fixture.Image.UseIntrinsicSize = false;
         fixture.Root.ProcessFrame();
         fixture.Root.RetainedRenderer.Commit(fixture.Root);

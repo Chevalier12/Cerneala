@@ -9,6 +9,8 @@ namespace Cerneala.UI.Controls;
 
 public enum ImageLoadingState { Loading, Ready, Error }
 
+public enum StretchDirection { UpOnly, DownOnly, Both }
+
 public class Image : Control
 {
     private IResourceProvider? resourceProvider;
@@ -42,6 +44,34 @@ public class Image : Control
     {
         get => GetValue(SourceProperty);
         set => SetValue(SourceProperty, value);
+    }
+
+    public static readonly UiProperty<DrawBrushStretch> StretchProperty =
+        UiProperty<DrawBrushStretch>.Register(
+            nameof(Stretch),
+            typeof(Image),
+            new UiPropertyMetadata<DrawBrushStretch>(
+                DrawBrushStretch.Uniform,
+                UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
+
+    public static readonly UiProperty<StretchDirection> StretchDirectionProperty =
+        UiProperty<StretchDirection>.Register(
+            nameof(StretchDirection),
+            typeof(Image),
+            new UiPropertyMetadata<StretchDirection>(
+                StretchDirection.Both,
+                UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
+
+    public DrawBrushStretch Stretch
+    {
+        get => GetValue(StretchProperty);
+        set => SetValue(StretchProperty, value);
+    }
+
+    public StretchDirection StretchDirection
+    {
+        get => GetValue(StretchDirectionProperty);
+        set => SetValue(StretchDirectionProperty, value);
     }
 
     public ResourceId<ImageResource>? SourceResourceId
@@ -104,18 +134,57 @@ public class Image : Control
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
         IDrawImage? source = ResolveSource();
-        return source is null || !UseIntrinsicSize ? LayoutSize.Zero : new LayoutSize(source.Width, source.Height);
+        if (source is null || !UseIntrinsicSize)
+        {
+            return LayoutSize.Zero;
+        }
+
+        LayoutSize natural = new(source.Width, source.Height);
+        return ScaleSize(natural, ComputeScaleFactor(context.AvailableSize, natural, Stretch, StretchDirection));
     }
 
     protected override void OnRender(RenderContext context)
     {
         IDrawImage? source = ResolveSource();
-        if (source is null || context.Bounds.Width <= 0 || context.Bounds.Height <= 0)
+        LayoutRect bounds = context.Bounds;
+        if (source is null || bounds.Width <= 0 || bounds.Height <= 0)
         {
             return;
         }
 
-        context.DrawingContext.DrawImage(source, CalculateDestinationRect(source, context.Bounds), Color.White);
+        LayoutSize natural = new(source.Width, source.Height);
+        LayoutSize content = ScaleSize(natural, ComputeScaleFactor(bounds.Size, natural, Stretch, StretchDirection));
+        float x = HorizontalAlignment switch
+        {
+            HorizontalAlignment.Right => bounds.X + bounds.Width - content.Width,
+            HorizontalAlignment.Center => bounds.X + ((bounds.Width - content.Width) / 2),
+            HorizontalAlignment.Stretch when content.Width <= bounds.Width => bounds.X + ((bounds.Width - content.Width) / 2),
+            _ => bounds.X
+        };
+        float y = VerticalAlignment switch
+        {
+            VerticalAlignment.Bottom => bounds.Y + bounds.Height - content.Height,
+            VerticalAlignment.Center => bounds.Y + ((bounds.Height - content.Height) / 2),
+            VerticalAlignment.Stretch when content.Height <= bounds.Height => bounds.Y + ((bounds.Height - content.Height) / 2),
+            _ => bounds.Y
+        };
+
+        DrawRect destination = new(x, y, content.Width, content.Height);
+        if (content.Width <= bounds.Width && content.Height <= bounds.Height)
+        {
+            context.DrawingContext.DrawImage(source, destination, Color.White);
+            return;
+        }
+
+        context.DrawingContext.PushClip(new DrawRect(bounds.X, bounds.Y, bounds.Width, bounds.Height));
+        try
+        {
+            context.DrawingContext.DrawImage(source, destination, Color.White);
+        }
+        finally
+        {
+            context.DrawingContext.PopClip();
+        }
     }
 
     private IDrawImage? ResolveSource()
@@ -164,14 +233,59 @@ public class Image : Control
             ReferenceEquals(provider, ResourceProvider) && ReferenceEquals(direct, Source);
     }
 
-    private static DrawRect CalculateDestinationRect(IDrawImage source, LayoutRect bounds)
+    private static LayoutSize ScaleSize(LayoutSize natural, LayoutSize scale)
     {
-        float scale = MathF.Min(bounds.Width / source.Width, bounds.Height / source.Height);
-        float width = source.Width * scale;
-        float height = source.Height * scale;
-        float x = bounds.X + ((bounds.Width - width) / 2);
-        float y = bounds.Y + ((bounds.Height - height) / 2);
-        return new DrawRect(x, y, width, height);
+        return new LayoutSize(natural.Width * scale.Width, natural.Height * scale.Height);
+    }
+
+    // The scale factor of WPF Viewbox.ComputeScaleFactor: the x and y scale that stretch the natural size into the
+    // available size. An unconstrained (+Infinity) axis takes the scale of the other axis.
+    private static LayoutSize ComputeScaleFactor(
+        LayoutSize available, LayoutSize natural, DrawBrushStretch stretch, StretchDirection direction)
+    {
+        float scaleX = 1;
+        float scaleY = 1;
+        bool widthUnconstrained = available.IsWidthUnconstrained;
+        bool heightUnconstrained = available.IsHeightUnconstrained;
+        if (stretch != DrawBrushStretch.None && (!widthUnconstrained || !heightUnconstrained))
+        {
+            scaleX = natural.Width == 0 ? 0 : available.Width / natural.Width;
+            scaleY = natural.Height == 0 ? 0 : available.Height / natural.Height;
+            if (widthUnconstrained)
+            {
+                scaleX = scaleY;
+            }
+            else if (heightUnconstrained)
+            {
+                scaleY = scaleX;
+            }
+            else
+            {
+                switch (stretch)
+                {
+                    case DrawBrushStretch.Uniform:
+                        scaleX = scaleY = MathF.Min(scaleX, scaleY);
+                        break;
+                    case DrawBrushStretch.UniformToFill:
+                        scaleX = scaleY = MathF.Max(scaleX, scaleY);
+                        break;
+                }
+            }
+        }
+
+        switch (direction)
+        {
+            case StretchDirection.UpOnly:
+                scaleX = MathF.Max(scaleX, 1);
+                scaleY = MathF.Max(scaleY, 1);
+                break;
+            case StretchDirection.DownOnly:
+                scaleX = MathF.Min(scaleX, 1);
+                scaleY = MathF.Min(scaleY, 1);
+                break;
+        }
+
+        return new LayoutSize(scaleX, scaleY);
     }
 
     private void InvalidateResolvedSource(string reason)

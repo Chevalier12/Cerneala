@@ -60,6 +60,11 @@
     "source": "UI/Controls/Image.cs"
   },
   {
+    "name": "Cerneala.UI.Controls.StretchDirection",
+    "file": "documentation/classes/Cerneala.UI.Controls.StretchDirection.md",
+    "source": "UI/Controls/Image.cs"
+  },
+  {
     "name": "Cerneala.UI.Controls.RenderSurface2DPresentationState",
     "file": "documentation/classes/Cerneala.UI.Controls.RenderSurface2DPresentationState.md",
     "source": "UI/Controls/RenderSurface2D.Presentation.cs"

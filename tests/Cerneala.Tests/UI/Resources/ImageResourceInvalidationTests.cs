@@ -48,7 +48,8 @@ public sealed class ImageResourceInvalidationTests
         root.SetResourceProvider(store);
         Image image = new()
         {
-            SourceResourceId = id
+            SourceResourceId = id,
+            Stretch = DrawBrushStretch.None
         };
         root.VisualChildren.Add(image);
         root.ProcessFrame();
@@ -95,7 +96,8 @@ public sealed class ImageResourceInvalidationTests
         Image image = new()
         {
             SourceResourceId = logo,
-            ResourceProvider = store
+            ResourceProvider = store,
+            Stretch = DrawBrushStretch.None
         };
         image.Measure(new MeasureContext(new LayoutSize(100, 100)));
         image.DirtyState.ClearAll();
@@ -118,7 +120,8 @@ public sealed class ImageResourceInvalidationTests
         Image image = new()
         {
             SourceResourceId = id,
-            ResourceProvider = firstStore
+            ResourceProvider = firstStore,
+            Stretch = DrawBrushStretch.None
         };
         image.Measure(new MeasureContext(new LayoutSize(100, 100)));
         image.DirtyState.ClearAll();
