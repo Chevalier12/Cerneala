@@ -1,6 +1,6 @@
 # Plan index: authoring de lumi 2D in `RenderSurface2D`
 
-Status: în lucru: planurile copil finalizate, gate-ul final al indexului deschis (include criteriul MonoGame, retras)
+Status: în lucru: planurile copil finalizate, gate-ul final al indexului deschis. MonoGame/WindowsDX a fost scos din repository pe 2026-09-07 (`7890b6ae`); tinta de randare a acestui index este numai SDL_GPU.
 Data: 2026-09-04
 
 ## Scop
@@ -15,7 +15,7 @@ Acest index transforma cerinta „padure, sat, casa, garduri cu hitbox-uri si pl
 - `Scene2D` reda copiii in ordinea colectiei; nu exista straturi explicite, sortare Y sau transform comun de grup cu semantica de scena.
 - `HitTestService` traverseaza astazi numai arborele vizual. Nodurile scenei sunt deja `UIElement`, dar sunt copii logici si nu au bounds de layout; inputul unificat cere o extensie geometrica a aceluiasi hit-test si includerea lor in aceeasi harta de rutare.
 - `DrawSpriteBatch` exista deja si este implementat de backend-uri. Un tilemap trebuie sa-l reutilizeze inainte de a justifica modificari low-level.
-- MonoGame/WindowsDX pastreaza damage/replay partial, iar SDL_GPU reinregistreaza tinta suprafetei cand versiunea cadrului se schimba. Paritatea functionala si vizuala este obligatorie; identitatea contoarelor interne de damage nu este.
+- SDL_GPU reinregistreaza tinta suprafetei cand versiunea cadrului se schimba.
 - `Image` are deja `SourceResourceId`, rezolvare prin resursele radacinii, dependency tracking si cache cu ownership de backend. Aceasta cale trebuie reutilizata, nu duplicata.
 - `SceneNode2D.Invalidate` proceseaza deja Aspect, iar testele existente demonstreaza Aspect si Motion pe proprietatile `Sprite2D`; `Sprite2D.Record` deschide explicit scope-ul Prism. Aceasta integrare nu exista automat pentru viitoarele noduri care inregistreaza copii sau batch-uri.
 - `Tetrisish` este un consumator real al combinatiei `OnDraw` + `Scene`; compatibilitatea lui este un gate.
@@ -89,7 +89,7 @@ fundatia scenei
 - O valoare Motion care schimba transformul, Y/order sau geometria colliderului actualizeaza in acelasi sample redarea, hit-test-ul, sortarea si indexul spatial relevante.
 - Orice nod vizual adresabil care emite pixeli deschide/inchide Prism exception-safe cu bounds scene-space corecte. Grupurile/straturile pot incadra intervalul de comenzi al descendentilor; `SceneItems2D` nu primeste aceasta responsabilitate.
 - Aplicarea Prism nu schimba coliziunea sau picking-ul geometric. Efectele vizuale si gameplay-ul raman contracte distincte.
-- Prism map-level, layer-level si tile-level necesita caracterizarea scope-urilor imbricate pe ambele backend-uri; daca o combinatie nu este suportata de contractul Prism existent, generatorul emite diagnostic explicit in loc sa ignore unul dintre scope-uri.
+- Prism map-level, layer-level si tile-level necesita caracterizarea scope-urilor imbricate pe SDL_GPU; daca o combinatie nu este suportata de contractul Prism existent, generatorul emite diagnostic explicit in loc sa ignore unul dintre scope-uri.
 - Orice celula poate fi promovata explicit/lazy intr-un nod scene-space sparse (numele public se ingheata prin API review). Celula promovata este scoasa din batch-ul static, pastreaza pozitia de ordine si poate primi Aspect/Motion/Prism, input, animatie si collider; celelalte tile-uri raman date compacte.
 - Sintaxa `.crn` urmeaza gramatica reala Cerneala: `Aspect="$Resource"` sau property-element Aspect, Motion prin directivele existente `@animate with`, Prism prin `@prism { ... }`, iar materializarea prin `@templates`. Planul nu introduce sintaxa XML fictiva pentru Motion/Prism.
 
@@ -100,7 +100,7 @@ fundatia scenei
 - pathfinding/navigation; overlay-ul poate afisa o grila furnizata, dar nu inventeaza un sistem de navigatie;
 - editor vizual de harti ori inlocuitor pentru Tiled/LDtk;
 - suport implicit pentru toate orientările si extensiile formatelor externe;
-- expunerea handle-urilor native, `SpriteBatch`, `GraphicsDevice` sau comenzilor SDL_GPU;
+- expunerea handle-urilor native sau a comenzilor SDL_GPU;
 - rescrierea API-ului imperativ `OnDraw` ori migrarea fortata a consumatorilor existenti.
 - un al doilea router sau o a doua familie publica de evenimente pentru „game input”; geometria difera, sistemul UI/input nu.
 - materializarea automata a fiecarui tile ca `UIElement`; numai tile-urile promovate explicit/lazy primesc nod.
@@ -109,7 +109,7 @@ fundatia scenei
 
 - [ ] Citește fișierele sursă direct și folosește `rg` / `rg --files` pentru căutare textuală și inventariere.
 - [ ] Testele unitare/core si testele generatorului trec pe fiecare etapa relevanta.
-- [ ] Scenariile reale de randare trec atat pe MonoGame/WindowsDX, cat si pe SDL_GPU; diferentele sunt judecate dupa contract si dif-uri vizuale, nu dupa presupunerea ca backend-ul vechi are automat dreptate.
+- [ ] Scenariile reale de randare trec pe SDL_GPU; rezultatele sunt judecate dupa contract si dif-uri vizuale.
 - [ ] Capturile Cerneala sunt produse exclusiv prin `Window.SaveScreenshot`.
 - [ ] Gate-ul public API foloseste `Microsoft.DotNet.ApiCompat.Task.ValidateAssembliesTask`, cu verificarea numelor parametrilor, si arhiveaza raportul; o simpla compilare nu tine loc de API diff.
 - [ ] Pentru orice API public/protected se foloseste skill-ul `writing-api-documentation`, se actualizeaza sursa canonica din `docs-site/documentation/classes/` si `docs-site/documentation/manifest.json`.
@@ -130,4 +130,4 @@ fundatia scenei
 - [ ] Fisierele Tiled si LDtk din subsetul declarat produc acelasi model core sau diagnostice explicite; campurile nesuportate nu sunt ignorate tacit.
 - [ ] Overlay-ul de debug poate arata collidere, chunk-uri, coordonate tile, ordine si o grila externa de navigatie fara sa schimbe rezultatele picking/coliziune.
 - [ ] Compatibilitatea `Tetrisish` pentru `OnDraw` + `Scene` este demonstrata prin teste si scenariul runtime existent.
-- [ ] Toate planurile dependente sunt complet bifate, API diff-ul este revizuit, documentatia este sincronizata, testele complete si conformance-ul ambelor backend-uri sunt verzi.
+- [ ] Toate planurile dependente sunt complet bifate, API diff-ul este revizuit, documentatia este sincronizata, testele complete si conformance-ul SDL_GPU sunt verzi.
