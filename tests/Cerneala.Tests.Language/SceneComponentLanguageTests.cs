@@ -46,6 +46,7 @@ public sealed class SceneComponentLanguageTests
 
     [Theory]
     [InlineData("<Scene2D Do| />", "DoorX")]
+    [InlineData("<Scene2D | />", "X")]
     [InlineData("<Scene2D><Sprite2D X=\"$root.Do|\" /></Scene2D>", "DoorX")]
     public void PairedSceneRootCompletionIncludesCustomProperties(string marked, string expected)
     {

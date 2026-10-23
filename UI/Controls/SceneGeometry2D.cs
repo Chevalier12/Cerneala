@@ -117,7 +117,8 @@ internal static class SceneGeometry2D
     internal static Matrix3x2 CreateLocalTransform(Scene2D scene)
     {
         ArgumentNullException.ThrowIfNull(scene);
-        return CreateLocalTransform(scene, scene.TransformOrigin);
+        return CreateLocalTransform(scene, scene.TransformOrigin) *
+            Matrix3x2.CreateTranslation(scene.X, scene.Y);
     }
 
     internal static Matrix3x2 CreateLocalTransform(

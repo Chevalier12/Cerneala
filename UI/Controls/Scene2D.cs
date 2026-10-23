@@ -26,6 +26,15 @@ public class Scene2D : SceneNode2D
             typeof(Scene2D),
             new UiPropertyMetadata<DrawPoint>(default, UiPropertyOptions.AffectsRender));
 
+    public static readonly UiProperty<float> XProperty = RegisterPlacement(nameof(X));
+
+    public static readonly UiProperty<float> YProperty = RegisterPlacement(nameof(Y));
+
+    private static UiProperty<float> RegisterPlacement(string name) =>
+        UiProperty<float>.Register(name, typeof(Scene2D),
+            new UiPropertyMetadata<float>(0, UiPropertyOptions.AffectsRender,
+                validateValue: float.IsFinite));
+
     private readonly List<SceneOrderEntry> effectiveOrder = [];
     private readonly CollisionWorld2D ownedCollisionWorld;
     private long collisionMutationVersion;
@@ -55,6 +64,19 @@ public class Scene2D : SceneNode2D
     {
         get => GetValue(TransformOriginProperty);
         set => SetValue(TransformOriginProperty, value);
+    }
+
+    // Placement in the parent, applied after the whole local transform.
+    public float X
+    {
+        get => GetValue(XProperty);
+        set => SetValue(XProperty, value);
+    }
+
+    public float Y
+    {
+        get => GetValue(YProperty);
+        set => SetValue(YProperty, value);
     }
 
     internal long CollisionMutationVersion =>
@@ -343,7 +365,9 @@ public class Scene2D : SceneNode2D
     {
         base.OnPropertyChanged(args);
         if (SceneGeometry2D.IsSceneTransformProperty(args.Property) ||
-            ReferenceEquals(args.Property, TransformOriginProperty))
+            ReferenceEquals(args.Property, TransformOriginProperty) ||
+            ReferenceEquals(args.Property, XProperty) ||
+            ReferenceEquals(args.Property, YProperty))
         {
             NotifyCollisionMutation(this, SceneCollisionMutationKind.Geometry);
         }

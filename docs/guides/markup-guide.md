@@ -109,7 +109,7 @@ Use `UserControl` for reusable views and pages:
 
 For reusable retained scene groups, pair a `<Scene2D>` document with a
 `partial class HouseView : Scene2D` companion and import its namespace to use
-`<local:HouseView />`. The component remains in the logical scene tree, not the
+`<local:HouseView X="256" Y="96" />`. The component remains in the logical scene tree, not the
 visual layout tree. See the canonical [Scene2D component documentation](../../docs-site/documentation/classes/Cerneala.UI.Controls.Scene2D.md)
 for the complete two-file example and construction constraints.
 
@@ -431,9 +431,11 @@ HUD controls can be placed over the game surface.
 
 `RenderSurface2D.Scene` accepts one `Scene2D` root. That is not a one-group
 limit: nest any number of `Scene2D` nodes to represent world groups and major
-layers. A group uses scene-space transform channels such as `TranslateX`,
-`TranslateY`, `Scale`, and `Rotation`; `TransformOrigin` is an absolute local
-scene-space point.
+layers. Place a group or a Scene2D component in its parent with `X` and `Y`,
+for example `<local:HouseView X="256" Y="96" />`; they apply after the group's
+own transform. A group also uses scene-space transform channels such as
+`TranslateX`, `TranslateY`, `Scale`, and `Rotation`; `TransformOrigin` is an
+absolute local scene-space point.
 
 The default `OrderMode="Source"` preserves declaration or collection order.
 `Layer` sorts by `SceneNode2D.Layer`. `LayerThenY` sorts by layer, then by the

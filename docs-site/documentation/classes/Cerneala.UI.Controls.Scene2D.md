@@ -68,8 +68,8 @@ Import its CLR namespace in the consuming document:
 <RenderSurface2D xmlns:local="clr-namespace:Game" RedrawMode="OnDemand">
     <RenderSurface2D.Scene>
         <Scene2D OrderMode="Layer">
-            <local:HouseView TranslateX="30" TranslateY="20" Scale="2" Layer="10" />
-            <local:HouseView TranslateX="90" TranslateY="40" Layer="20" />
+            <local:HouseView X="30" Y="20" Scale="2" Layer="10" />
+            <local:HouseView X="90" Y="40" Layer="20" />
         </Scene2D>
     </RenderSurface2D.Scene>
 </RenderSurface2D>
@@ -78,6 +78,24 @@ Import its CLR namespace in the consuming document:
 A component can also be the single direct child of `RenderSurface2D.Scene`.
 Position and transform channels affect the entire instance; `Layer` is interpreted
 by its containing scene's `OrderMode`, just like an ordinary `Scene2D` group.
+
+### Placing a group with X and Y
+
+`X` and `Y` place the group's local origin in its parent's coordinates. They are
+applied after the group's own scale, skew, rotation and translation, so rotation and
+scale still turn around `TransformOrigin` in the group's local coordinates:
+
+```xml
+<local:HouseView X="256" Y="96" Rotation="1.5708" TransformOrigin="16,12" />
+```
+
+Here the house first turns about a quarter turn around its local point
+`(16, 12)`, then moves by `(256, 96)`. The pivot `(16, 12)` therefore ends at
+`(272, 108)`, and the local corner `(0, 0)` ends at about `(284, 92)`.
+
+`X`/`Y` and `TranslateX`/`TranslateY` add up: `X="100" TranslateX="5"` moves the
+group by 105. Use `X`/`Y` for where the group stands in the world, and
+`TranslateX`/`TranslateY` for an extra offset such as an animated bounce.
 
 ## Remarks
 
@@ -125,9 +143,9 @@ The world also owns prepared spatial collision-region interests. Detaching the o
 
 The scene owns the query world, not the collision shapes themselves. A `Sprite2D` owns zero or one live collider through its `Collider` property. `Scene2D.Children` rejects collider nodes, including in derived markup components. A static `Tile` or `TileDefinition2D` likewise owns zero or one immutable descriptor through `Collider`.
 
-`Scene2D` applies the inherited `Scale`, `ScaleX`, `ScaleY`, `SkewX`, `SkewY`, `Rotation`, `TranslateX`, `TranslateY`, and `RenderTransform` channels to the entire descendant group. `TransformOrigin` is an absolute point in the group's local scene coordinates, not a normalized layout point. The local transform is composed in this order: translate away from the origin, scale, skew, rotate, translate, apply `RenderTransform`, and translate back to the origin. Nested groups compose their transforms from child to parent.
+`Scene2D` applies the inherited `Scale`, `ScaleX`, `ScaleY`, `SkewX`, `SkewY`, `Rotation`, `TranslateX`, `TranslateY`, and `RenderTransform` channels to the entire descendant group. `TransformOrigin` is an absolute point in the group's local scene coordinates, not a normalized layout point. The local transform is composed in this order: translate away from the origin, scale, skew, rotate, translate, apply `RenderTransform`, translate back to the origin, and finally translate by the group's `X` and `Y` placement. Nested groups compose their transforms from child to parent. Changing `X` or `Y` moves the group's drawing, picking and colliders together, like the other channels.
 
-These transform channels and `TransformOrigin` are `UiProperty` values, so Aspect and Motion can control them. A group `Opacity` scopes its descendants. Prism attached to a group captures exactly that group's descendant commands and uses their aggregate transformed scene bounds; Prism attached to a child remains nested inside the group scope.
+These transform channels and `TransformOrigin` are `UiProperty` values, so Aspect and Motion can control them. `X` and `Y` are also `UiProperty<float>` values, but Motion has no implicit spec for them; animate `TranslateX`/`TranslateY` instead. `X` and `Y` must be finite numbers; `NaN` or infinity is rejected. A group `Opacity` scopes its descendants. Prism attached to a group captures exactly that group's descendant commands and uses their aggregate transformed scene bounds; Prism attached to a child remains nested inside the group scope.
 
 Aspect can also assign the structural `OrderMode` and inherited `Layer` properties. Motion deliberately rejects those two properties because no ordering mixer or interpolation contract exists. Animating `TranslateY`, other transform channels, or `Opacity` remains supported and updates ordering or presentation in the same logical frame.
 
@@ -186,6 +204,8 @@ Simulation and collision interests remain independent: a pointwise effect does n
 | `CollisionWorld` | `CollisionWorld2D` | Root-owned collision query world shared by this group and its nested scene groups. |
 | `OrderMode` | `SceneOrderMode` | Selects source, layer, or stable layer-then-Y recording order. The default is `Source`. |
 | `TransformOrigin` | `DrawPoint` | Absolute transform pivot in local scene-space units. The default is `(0, 0)`. |
+| `X` | `float` | Horizontal placement of the group's local origin in its parent, applied after the local transform. The default is `0`. |
+| `Y` | `float` | Vertical placement of the group's local origin in its parent, applied after the local transform. The default is `0`. |
 
 ## Fields
 
@@ -193,6 +213,8 @@ Simulation and collision interests remain independent: a pointwise effect does n
 | --- | --- | --- |
 | `OrderModeProperty` | `UiProperty<SceneOrderMode>` | Identifies the `OrderMode` UI property. Changes affect rendering and ordering. |
 | `TransformOriginProperty` | `UiProperty<DrawPoint>` | Identifies the `TransformOrigin` UI property. Changes affect rendering. |
+| `XProperty` | `UiProperty<float>` | Identifies the `X` UI property. Changes affect rendering, picking and collision geometry. |
+| `YProperty` | `UiProperty<float>` | Identifies the `Y` UI property. Changes affect rendering, picking and collision geometry. |
 
 ## Applies to
 

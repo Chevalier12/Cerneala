@@ -127,6 +127,31 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
+    public void SceneComponentAndGroupAcceptXAndYPlacement()
+    {
+        const string world = """
+            <RenderSurface2D xmlns:local="clr-namespace:Game;assembly=GeneratorTests">
+                <RenderSurface2D.Scene>
+                    <Scene2D>
+                        <local:HouseView X="256" Y="96" />
+                        <Scene2D X="10" Y="-4" />
+                    </Scene2D>
+                </RenderSurface2D.Scene>
+            </RenderSurface2D>
+            """;
+        Assembly assembly = CompileSceneComponent(HouseComponentMarkup, world);
+        RenderSurface2D surface = (RenderSurface2D)assembly.GetType("Cerneala.GeneratedUi.WorldFactory")!
+            .GetMethod("Create", Type.EmptyTypes)!.Invoke(null, null)!;
+        Scene2D house = Assert.IsAssignableFrom<Scene2D>(surface.Scene!.Children[0]);
+        Scene2D group = Assert.IsAssignableFrom<Scene2D>(surface.Scene.Children[1]);
+        Assert.Equal("Game.HouseView", house.GetType().FullName);
+        Assert.Equal(256, house.X);
+        Assert.Equal(96, house.Y);
+        Assert.Equal(10, group.X);
+        Assert.Equal(-4, group.Y);
+    }
+
+    [Fact]
     public void SceneComponentResolvesTypedDataContextThroughLogicalAncestorsAndRebindsOnReplacement()
     {
         const string markup = """
