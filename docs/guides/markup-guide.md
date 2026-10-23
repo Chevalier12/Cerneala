@@ -245,6 +245,8 @@ The editor and the build accept the same attached properties. `Owner.X="value"` 
 - When `Owner` also has a public static `XProperty` field of type `UiProperty<T>`, the value may be a literal or a binding. This covers `Panel.ZIndex`, `Servo.Id`, `Canvas.Left`, and `Canvas.Top`, for example `Panel.ZIndex="$DataContext.Layer"` or `Canvas.Left="$DataContext.X"`.
 - Otherwise only a literal is valid, and the build calls the setter. `Grid.Row="1"` calls `Grid.SetRow(element, 1)`. With `public static class Tagger { public static void SetTag(UIElement element, string tag) { ... } }` in the application, `<Border Tagger.Tag="x" />` calls `Tagger.SetTag(border, "x")`. A binding such as `Tagger.Tag="$DataContext.Name"` or `Grid.Row="$DataContext.Row"` reports `CERNEALAUI004`.
 
+The generated code must be able to call `SetX`. A public `SetX` always works. A non-public one works when it is declared in the application's own assembly, or, for a `Window`, `UserControl` or `Scene2D` markup file with a companion C# class, when that class can call it (for example an `internal` setter of a library that grants the application `[InternalsVisibleTo]`). Any other `SetX`, for example an `internal static void SetTag(UIElement element, string tag)` in a library without `[InternalsVisibleTo]`, is not found and reports `CERNEALAUI003`.
+
 A value that cannot be converted, for example `Canvas.Left="abc"`, reports `CERNEALAUI004`. A name with no such setter, for example `Canvas.Foo="1"`, reports `CERNEALAUI003`. Types outside the markup namespaces, such as `AccessibleName` (`Cerneala.UI.Accessibility`), are not found and report `CERNEALAUI003`; set those in C#.
 
 ### XML escaping

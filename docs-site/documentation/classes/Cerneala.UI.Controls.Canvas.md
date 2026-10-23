@@ -58,7 +58,7 @@ During measure, visible children are measured with `LayoutSize.Unconstrained`, c
 
 During arrange, each visible child is arranged at the canvas final rectangle origin plus its inherited `Left` and `Top` coordinates, using the child's desired size. Collapsed children are arranged at the canvas final rectangle origin with zero size.
 
-Changing `Left` or `Top` for a child whose visual parent is a canvas invalidates the parent canvas arrange pass, whatever sets the value (`SetLeft`, `SetValue`, or a markup binding). Setting a coordinate to its current value changes nothing.
+Changing `Left` or `Top` for a child invalidates the arrange pass of its visual parent (`UiPropertyOptions.AffectsParentArrange`), whatever sets the value (`SetLeft`, `SetValue`, or a markup binding). Setting a coordinate to its current value changes nothing.
 
 ## Constructors
 

@@ -51,7 +51,7 @@ bool affectsRender = category.HasFlag(MotionPropertyInvalidationCategory.Render)
 
 `MotionPropertyInvalidationClassifier` is used by the motion property pipeline to decide which broad invalidation buckets are associated with animated property writes. `MotionPropertyBinding<T>` stores the classified category for its target property, and `MotionPropertyStore` uses that category while flushing staged animation writes.
 
-The classifier groups `UiPropertyOptions.AffectsMeasure` and `UiPropertyOptions.AffectsArrange` into `MotionPropertyInvalidationCategory.Layout`. It groups `UiPropertyOptions.AffectsRender` and `UiPropertyOptions.AffectsInputVisual` into `MotionPropertyInvalidationCategory.Render`. `UiPropertyOptions.AffectsHitTest` maps to `HitTest`, and `UiPropertyOptions.AffectsSemantics` maps to `Semantics`.
+The classifier groups `UiPropertyOptions.AffectsMeasure`, `UiPropertyOptions.AffectsArrange`, and `UiPropertyOptions.AffectsParentArrange` into `MotionPropertyInvalidationCategory.Layout`; for example, `Canvas.LeftProperty` is a `Layout` property. It groups `UiPropertyOptions.AffectsRender` and `UiPropertyOptions.AffectsInputVisual` into `MotionPropertyInvalidationCategory.Render`. `UiPropertyOptions.AffectsHitTest` maps to `HitTest`, and `UiPropertyOptions.AffectsSemantics` maps to `Semantics`.
 
 Flags that are not motion invalidation categories, such as `AffectsAspect`, `Inherits`, and `ReadOnly`, do not add a category by themselves. Multiple matching flags produce a combined `MotionPropertyInvalidationCategory` value.
 

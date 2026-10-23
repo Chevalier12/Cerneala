@@ -58,6 +58,11 @@ internal interface ILanguageCompilationSymbols
 {
     long Version { get; }
 
+    // True when the code the source generator emits for a markup file can call or read this member. The generator
+    // checks a markup file paired with a C# class (pairType) with Roslyn's accessibility check from that class, which
+    // honors [InternalsVisibleTo]; any other markup file reaches public members and the non-public ones of this assembly.
+    bool IsAccessibleFromGeneratedCode(ILanguageMemberSymbol member, ILanguageTypeSymbol? pairType);
+
     ILanguageTypeSymbol? FindType(string metadataName);
 
     IReadOnlyList<ILanguageTypeSymbol> FindTypes(string simpleName);

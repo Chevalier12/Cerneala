@@ -1662,9 +1662,12 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
             VisualParent?.InvalidateVisualChildZOrder();
         }
 
-        if (Cerneala.UI.Layout.Panels.Canvas.IsPositionProperty(args.Property))
+        // An attached property that only the parent reads (Canvas.Left) re-arranges the parent, not this element.
+        if ((options & UiPropertyOptions.AffectsParentArrange) != UiPropertyOptions.None &&
+            VisualParent is UIElement arrangeParent)
         {
-            Cerneala.UI.Layout.Panels.Canvas.InvalidateParentCanvasArrange(this);
+            arrangeParent.IncrementLayoutVersion();
+            arrangeParent.Invalidate(InvalidationFlags.Arrange, "Child attached property changed");
         }
 
         InvalidationFlags flags = MapInvalidationOptions(options);

@@ -13,7 +13,7 @@ public static class MotionPropertyInvalidationClassifier
     public static MotionPropertyInvalidationCategory Classify(UiPropertyOptions options)
     {
         MotionPropertyInvalidationCategory category = MotionPropertyInvalidationCategory.None;
-        if ((options & (UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange)) != UiPropertyOptions.None)
+        if ((options & (UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsArrange | UiPropertyOptions.AffectsParentArrange)) != UiPropertyOptions.None)
         {
             category |= MotionPropertyInvalidationCategory.Layout;
         }

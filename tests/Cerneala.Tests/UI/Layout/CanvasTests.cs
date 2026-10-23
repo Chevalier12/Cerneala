@@ -1,7 +1,9 @@
+using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
+using Cerneala.UI.Motion.Properties;
 
 namespace Cerneala.Tests.UI.Layout;
 
@@ -110,6 +112,60 @@ public sealed class CanvasTests
         Assert.Equal(40f, Canvas.GetTop(child));
         Assert.Equal(40f, child.GetValue(Canvas.TopProperty));
         Assert.Equal(new LayoutRect(0, 40, 20, 10), child.ArrangedBounds);
+    }
+
+    [Fact]
+    public void ChangingCanvasLeftQueuesTheCanvasArrangeAndNotTheChildArrange()
+    {
+        (UIRoot root, FixedElement child) = CreateArrangedCanvasChild();
+        UIElement canvas = child.VisualParent!;
+        Assert.Empty(root.LayoutQueue.SnapshotArrange());
+
+        Canvas.SetLeft(child, 40);
+
+        IReadOnlyList<UIElement> queued = root.LayoutQueue.SnapshotArrange();
+        Assert.Contains(canvas, queued);
+        Assert.DoesNotContain(child, queued);
+    }
+
+    [Fact]
+    public void ParentArrangeOptionQueuesTheVisualParentArrangeOfAnyPanel()
+    {
+        UIRoot root = new(100, 100);
+        Panel stack = new StackPanel();
+        FixedElement child = new(new LayoutSize(20, 10));
+        root.VisualChildren.Add(stack);
+        stack.VisualChildren.Add(child);
+        root.Invalidate(
+            InvalidationFlags.Subtree | InvalidationFlags.Measure | InvalidationFlags.Arrange | InvalidationFlags.Render | InvalidationFlags.HitTest,
+            "initial stack frame");
+        root.ProcessFrame();
+        Assert.Empty(root.LayoutQueue.SnapshotArrange());
+
+        child.SetValue(ParentArrangeProbe.RankProperty, 3);
+
+        IReadOnlyList<UIElement> queued = root.LayoutQueue.SnapshotArrange();
+        Assert.Contains(stack, queued);
+        Assert.DoesNotContain(child, queued);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void MotionClassifiesCanvasPositionAsALayoutProperty(bool left)
+    {
+        MotionPropertyInvalidationCategory category = MotionPropertyInvalidationClassifier.Classify(
+            left ? Canvas.LeftProperty : Canvas.TopProperty);
+
+        Assert.True(category.HasFlag(MotionPropertyInvalidationCategory.Layout));
+    }
+
+    private static class ParentArrangeProbe
+    {
+        public static readonly UiProperty<int> RankProperty = UiProperty<int>.Register(
+            "Rank",
+            typeof(ParentArrangeProbe),
+            new UiPropertyMetadata<int>(0, UiPropertyOptions.AffectsParentArrange));
     }
 
     private static (UIRoot Root, FixedElement Child) CreateArrangedCanvasChild()

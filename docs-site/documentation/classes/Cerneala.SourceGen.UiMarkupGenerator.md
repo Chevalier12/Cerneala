@@ -300,7 +300,7 @@ Color values accept the named colors known by the generator, ignoring case. They
 
 Direct text content is assigned to the target's supported text or content property. Direct text on an element without such a property is reported as an unsupported `#text` property.
 
-Attached properties use the `Owner.X` form, and the generator accepts exactly the attached properties that the Cerneala editor accepts. `Owner` is resolved from the built-in markup namespaces first and then as the unique type with that simple name declared in the compilation's source; it must have a static `SetX` method with two parameters whose first parameter accepts the element.
+Attached properties use the `Owner.X` form, and the generator accepts exactly the attached properties that the Cerneala editor accepts. `Owner` is resolved from the built-in markup namespaces first and then as the unique type with that simple name declared in the compilation's source; it must have a static `SetX` method with two parameters whose first parameter accepts the element. The generated code must be able to call that method: it is public, or non-public and declared in the compilation's assembly, or, for a `Window`, `UserControl` or `Scene2D` markup file paired with a C# class, accessible from that class (Roslyn's accessibility rules, so `[InternalsVisibleTo]` counts). Any other `SetX` reports `CERNEALAUI003` in the editor and in the build.
 
 | Markup | Owner member | Generated code |
 | --- | --- | --- |

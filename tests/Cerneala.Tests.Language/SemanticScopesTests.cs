@@ -460,6 +460,57 @@ public sealed class SemanticScopesTests
             expectedIds);
     }
 
+    // An internal SetTag on a base type of another assembly is not callable from generated code (the build reports
+    // CERNEALAUI003), so the editor must not accept it either.
+    [Fact]
+    public void InternalAttachedSetterOfAReferencedAssemblyIsRejectedInEditorAndBuild()
+    {
+        MetadataReference library = LanguagePipelineHarness.CreateLibraryReference(
+            "TaggerLibrary",
+            "public class LibTaggerBase { internal static void SetTag(Cerneala.UI.Elements.UIElement element, string value) { } }");
+
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze(
+            "InternalSetter.crn",
+            "<Canvas><Border Width=\"10\" Height=\"10\" AppTagger.Tag=\"x\" /></Canvas>",
+            "InternalSetter.cs",
+            "public class AppTagger : LibTaggerBase { }",
+            [library]);
+
+        Assert.Empty(result.Syntax.Diagnostics);
+        string[] editor = result.SemanticDiagnostics.Select(diagnostic => diagnostic.Id).Order(StringComparer.Ordinal).ToArray();
+        string[] build = result.SourceGeneratorDiagnostics.Select(diagnostic => diagnostic.Id).Order(StringComparer.Ordinal).ToArray();
+        Assert.Equal(editor, build);
+        Assert.Equal("CERNEALAUI003", string.Join(",", build));
+    }
+
+    // A UserControl pair is compiled in the same assembly as the markup, and the generator checks accessibility against
+    // the pair type, which honors [InternalsVisibleTo]; the editor must accept the same internal setter.
+    [Theory]
+    [InlineData(MetadataImportOptions.All)]
+    [InlineData(MetadataImportOptions.Public)]
+    public void InternalAttachedSetterVisibleThroughInternalsVisibleToIsAcceptedInEditorAndBuildForAPairedUserControl(
+        MetadataImportOptions importOptions)
+    {
+        MetadataReference library = LanguagePipelineHarness.CreateLibraryReference(
+            "TaggerLibrary",
+            "[assembly: System.Runtime.CompilerServices.InternalsVisibleTo(\"LanguageCorpus\")]\n" +
+            "public class LibTaggerBase { internal static void SetTag(Cerneala.UI.Elements.UIElement element, string value) { } }");
+
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze(
+            "TaggedView.crn",
+            "<UserControl><Border Width=\"10\" Height=\"10\" AppTagger.Tag=\"x\" /></UserControl>",
+            "TaggedView.crn.cs",
+            "public class AppTagger : LibTaggerBase { }\n" +
+            "public partial class TaggedView : Cerneala.UI.Controls.UserControl { }",
+            [library],
+            importOptions);
+
+        Assert.Empty(result.Syntax.Diagnostics);
+        string[] editor = result.SemanticDiagnostics.Select(diagnostic => diagnostic.Id).Order(StringComparer.Ordinal).ToArray();
+        string[] build = result.SourceGeneratorDiagnostics.Select(diagnostic => diagnostic.Id).Order(StringComparer.Ordinal).ToArray();
+        Assert.Equal("build: editor:", "build:" + string.Join(",", build) + " editor:" + string.Join(",", editor));
+    }
+
     // A binding is valid only on an attached property backed by a UiProperty (Canvas.Left); on a setter-only
     // one (Tagger.Tag, Grid.Row) the editor and the build both report CERNEALAUI004.
     [Theory]
