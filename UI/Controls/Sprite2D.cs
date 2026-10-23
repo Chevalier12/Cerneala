@@ -405,8 +405,8 @@ public sealed class Sprite2D : SceneNode2D
         // does not take and then drop an image lease on every frame.
         if (ResolveGeometrySource() is IDrawImage geometry)
         {
-            ResolveGeometry(current, geometry, out DrawRect culledDestination, out _, out DrawRect culledSource);
-            if (!context.IntersectsVisibleLocalBounds(SceneBounds2D.Known(GetDrawBounds(current, culledDestination, culledSource))) &&
+            ResolveGeometry(current, geometry, out SpriteGeometry culledGeometry);
+            if (!context.IntersectsVisibleLocalBounds(SceneBounds2D.Known(GetDrawBounds(current, culledGeometry))) &&
                 !HasPrismInSceneAncestry(context))
             {
                 return;
@@ -428,20 +428,20 @@ public sealed class Sprite2D : SceneNode2D
             };
         }
 
-        ResolveGeometry(current, source, out DrawRect destination, out DrawRect? effectiveSourceRect, out DrawRect resolvedSourceRect);
-        RenderSurface2DSpriteFlip effectiveFlip = ComposeFlip(current.Flip, animationFrame?.Flip ?? RenderSurface2DSpriteFlip.None);
-        DrawRect drawBounds = GetDrawBounds(current, destination, resolvedSourceRect);
+        ResolveGeometry(current, source, out SpriteGeometry placement);
+        DrawRect destination = placement.Destination;
+        DrawRect drawBounds = GetDrawBounds(current, placement);
         SceneBounds2D bounds = SceneBounds2D.Known(drawBounds);
         if (!context.IntersectsVisibleLocalBounds(bounds) && !HasPrismInSceneAncestry(context))
         {
             return;
         }
         DrawImageOptions options = new(
-            source: effectiveSourceRect,
+            source: placement.SourceRect,
             tint: tint,
             rotation: current.Rotation,
-            origin: current.Origin,
-            flip: (DrawImageFlip)effectiveFlip,
+            origin: placement.DrawOrigin,
+            flip: (DrawImageFlip)placement.Flip,
             layerDepth: current.LayerDepth,
             sampling: current.Sampling);
         using ScenePrismScope prism = context.HasPrism(this)
@@ -504,8 +504,8 @@ public sealed class Sprite2D : SceneNode2D
 
         if (source is not null)
         {
-            ResolveGeometry(current, source, out DrawRect destination, out _, out DrawRect resolvedSourceRect);
-            localBounds = SceneBounds2D.Known(GetImageLocalBounds(current, destination, resolvedSourceRect));
+            ResolveGeometry(current, source, out SpriteGeometry geometry);
+            localBounds = SceneBounds2D.Known(geometry.LocalBounds);
         }
         else
         {
@@ -532,7 +532,8 @@ public sealed class Sprite2D : SceneNode2D
 
     private SceneBounds2D GetDeclaredLocalBounds(in Snapshot current)
     {
-        DrawRect? frame = animationPlayback.CurrentFrame?.SourceRect;
+        // A trimmed frame is sized and anchored by its logical (untrimmed) frame.
+        DrawSize? frame = animationPlayback.CurrentFrame?.FrameSize;
         float sourceWidth = frame?.Width ?? current.SourceWidth;
         float sourceHeight = frame?.Height ?? current.SourceHeight;
         float width = float.IsNaN(current.Width) ? sourceWidth : current.Width;
@@ -665,14 +666,14 @@ public sealed class Sprite2D : SceneNode2D
         }
     }
 
-    private void ResolveGeometry(
-        in Snapshot current,
-        IDrawImage source,
-        out DrawRect destination,
-        out DrawRect? sourceRect,
-        out DrawRect resolvedSourceRect)
+    // A trimmed animation frame draws only its visible pixels, but the sprite's
+    // size, Origin and bounds describe the logical (untrimmed) frame. The draw
+    // moves the image origin by the pixels' offset inside that frame, so each
+    // pixel lands where the untrimmed frame would have put it.
+    private void ResolveGeometry(in Snapshot current, IDrawImage source, out SpriteGeometry geometry)
     {
-        sourceRect = animationPlayback.CurrentFrame?.SourceRect;
+        SpriteAnimationFrame? frame = animationPlayback.CurrentFrame;
+        DrawRect? sourceRect = frame?.SourceRect;
         if (sourceRect is null &&
             (current.SourceX != 0 || current.SourceY != 0 || !float.IsNaN(current.SourceWidth) || !float.IsNaN(current.SourceHeight)))
         {
@@ -680,27 +681,86 @@ public sealed class Sprite2D : SceneNode2D
                 float.IsNaN(current.SourceWidth) ? source.Width - current.SourceX : current.SourceWidth,
                 float.IsNaN(current.SourceHeight) ? source.Height - current.SourceY : current.SourceHeight);
         }
-        resolvedSourceRect = DrawImageGeometry.ResolveSourceRect(source, sourceRect);
-        destination = new DrawRect(current.X, current.Y,
-            float.IsNaN(current.Width) ? resolvedSourceRect.Width : current.Width,
-            float.IsNaN(current.Height) ? resolvedSourceRect.Height : current.Height);
+        DrawRect resolvedSourceRect = DrawImageGeometry.ResolveSourceRect(source, sourceRect);
+        float sourceWidth = resolvedSourceRect.Width;
+        float sourceHeight = resolvedSourceRect.Height;
+        float frameWidth = frame?.FrameSize.Width ?? sourceWidth;
+        float frameHeight = frame?.FrameSize.Height ?? sourceHeight;
+        float width = float.IsNaN(current.Width) ? frameWidth : current.Width;
+        float height = float.IsNaN(current.Height) ? frameHeight : current.Height;
+        RenderSurface2DSpriteFlip flip = ComposeFlip(current.Flip, frame?.Flip ?? RenderSurface2DSpriteFlip.None);
+
+        float drawnWidth = sourceWidth == frameWidth ? width : sourceWidth * width / frameWidth;
+        float drawnHeight = sourceHeight == frameHeight ? height : sourceHeight * height / frameHeight;
+        DrawPoint drawOrigin = current.Origin;
+        if (frame is not null)
+        {
+            DrawPoint offset = frame.Offset;
+            float offsetX = (flip & RenderSurface2DSpriteFlip.Horizontal) != 0
+                ? frameWidth - offset.X - sourceWidth
+                : offset.X;
+            float offsetY = (flip & RenderSurface2DSpriteFlip.Vertical) != 0
+                ? frameHeight - offset.Y - sourceHeight
+                : offset.Y;
+            drawOrigin = new DrawPoint(current.Origin.X - offsetX, current.Origin.Y - offsetY);
+        }
+
+        geometry = new SpriteGeometry(
+            sourceRect,
+            new DrawRect(current.X, current.Y, drawnWidth, drawnHeight),
+            new DrawRect(current.X, current.Y, width, height),
+            new DrawRect(
+                -(current.Origin.X * width / frameWidth),
+                -(current.Origin.Y * height / frameHeight),
+                width,
+                height),
+            drawOrigin,
+            flip);
     }
 
-    private static DrawRect GetImageLocalBounds(in Snapshot current, DrawRect destination, DrawRect resolvedSourceRect)
-    {
-        float originX = current.Origin.X * destination.Width / resolvedSourceRect.Width;
-        float originY = current.Origin.Y * destination.Height / resolvedSourceRect.Height;
-        return new DrawRect(-originX, -originY, destination.Width, destination.Height);
-    }
-
-    private static DrawRect GetDrawBounds(in Snapshot current, DrawRect destination, DrawRect resolvedSourceRect)
+    private static DrawRect GetDrawBounds(in Snapshot current, in SpriteGeometry geometry)
     {
         return SceneGeometry2D.TryTransformBounds(
-            GetImageLocalBounds(current, destination, resolvedSourceRect),
+            geometry.LocalBounds,
             current.LocalTransform,
             out DrawRect bounds)
             ? bounds
-            : destination;
+            : geometry.LogicalDestination;
+    }
+
+    private readonly struct SpriteGeometry
+    {
+        internal SpriteGeometry(
+            DrawRect? sourceRect,
+            DrawRect destination,
+            DrawRect logicalDestination,
+            DrawRect localBounds,
+            DrawPoint drawOrigin,
+            RenderSurface2DSpriteFlip flip)
+        {
+            SourceRect = sourceRect;
+            Destination = destination;
+            LogicalDestination = logicalDestination;
+            LocalBounds = localBounds;
+            DrawOrigin = drawOrigin;
+            Flip = flip;
+        }
+
+        // The source rectangle to draw, or null for the whole image.
+        internal DrawRect? SourceRect { get; }
+
+        // Where the visible pixels draw; smaller than the logical frame when trimmed.
+        internal DrawRect Destination { get; }
+
+        // The untrimmed frame at the sprite position.
+        internal DrawRect LogicalDestination { get; }
+
+        // Bounds of the untrimmed frame relative to the sprite anchor.
+        internal DrawRect LocalBounds { get; }
+
+        internal DrawPoint DrawOrigin { get; }
+
+        internal RenderSurface2DSpriteFlip Flip { get; }
     }
 
     private static RenderSurface2DSpriteFlip ComposeFlip(

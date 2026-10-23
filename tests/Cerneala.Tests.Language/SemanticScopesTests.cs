@@ -306,6 +306,51 @@ public sealed class SemanticScopesTests
     }
 
     [Fact]
+    public void SpriteAnimationSetCellAttributesAndCellFramesProduceNoLanguageDiagnostics()
+    {
+        const string markup = """
+            <RenderSurface2D>
+              <RenderSurface2D.Resources>
+                <SpriteAnimationSet Name="Animations" CellWidth="32" CellHeight="32" CellMargin="2" CellSpacing="1">
+                  <SpriteAnimationClip Name="Walk">
+                    <SpriteAnimationFrame Column="0" Row="1" Duration="150ms" />
+                    <SpriteAnimationFrame Column="1" Row="1" Duration="150ms" Flip="Horizontal" />
+                  </SpriteAnimationClip>
+                </SpriteAnimationSet>
+              </RenderSurface2D.Resources>
+              <RenderSurface2D.Scene>
+                <Scene2D><Sprite2D Animations="$Animations" AnimationState="Walk" /></Scene2D>
+              </RenderSurface2D.Scene>
+            </RenderSurface2D>
+            """;
+        CernealaSemanticModel model = Model("CellAnimation.crn", markup, string.Empty);
+
+        Assert.Empty(model.Diagnostics);
+        CernealaSemanticSymbol reference = SymbolAt(model, markup, "$Animations");
+        Assert.Equal("Cerneala.UI.Controls.SpriteAnimationSet", reference.ValueType);
+    }
+
+    [Fact]
+    public void SpriteAnimationSetSourceAttributeProducesNoLanguageDiagnostics()
+    {
+        const string markup = """
+            <RenderSurface2D>
+              <RenderSurface2D.Resources>
+                <SpriteAnimationSet Name="Animations" Source="Assets/hero.json" Version="2" />
+              </RenderSurface2D.Resources>
+              <RenderSurface2D.Scene>
+                <Scene2D><Sprite2D Animations="$Animations" AnimationState="Walk" /></Scene2D>
+              </RenderSurface2D.Scene>
+            </RenderSurface2D>
+            """;
+        CernealaSemanticModel model = Model("AsepriteAnimation.crn", markup, string.Empty);
+
+        Assert.Empty(model.Diagnostics);
+        CernealaSemanticSymbol reference = SymbolAt(model, markup, "$Animations");
+        Assert.Equal("Cerneala.UI.Controls.SpriteAnimationSet", reference.ValueType);
+    }
+
+    [Fact]
     public void ItemsTemplatesInferOrOverrideDataTypeAndModelContentOwnership()
     {
         const string markup = """

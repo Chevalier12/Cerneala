@@ -176,7 +176,8 @@ public sealed partial class UiMarkupGenerator
         Compilation compilation,
         MarkupComponentPair pair,
         GenerationScope.ApplicationResourceCatalog? applicationResources,
-        SourceGeneratorSemanticModel semanticModel)
+        SourceGeneratorSemanticModel semanticModel,
+        AnimationAssetIndex animationAssets)
     {
         if (file.Text is null)
         {
@@ -233,7 +234,8 @@ public sealed partial class UiMarkupGenerator
             dataType,
             semanticModel,
             pair,
-            applicationResources);
+            applicationResources,
+            animationAssets);
         if (scope.HasErrors)
         {
             return;

@@ -10,6 +10,94 @@ public sealed class SpriteAnimationFrame
         TimeSpan duration,
         RenderSurface2DSpriteFlip flip = RenderSurface2DSpriteFlip.None)
     {
+        ValidateFrame(sourceRect, duration, flip);
+
+        SourceRect = sourceRect;
+        Duration = duration;
+        Flip = flip;
+        Offset = default;
+        FrameSize = new DrawSize(sourceRect.Width, sourceRect.Height);
+    }
+
+    // A trimmed frame: SourceRect holds only the visible pixels, which sat at
+    // offset inside a logical (untrimmed) frame of frameSize, in source pixels.
+    public SpriteAnimationFrame(
+        DrawRect sourceRect,
+        TimeSpan duration,
+        RenderSurface2DSpriteFlip flip,
+        DrawPoint offset,
+        DrawSize frameSize)
+    {
+        ValidateFrame(sourceRect, duration, flip);
+        if (!float.IsFinite(offset.X) || !float.IsFinite(offset.Y) || offset.X < 0 || offset.Y < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(offset));
+        }
+        if (!float.IsFinite(frameSize.Width) ||
+            !float.IsFinite(frameSize.Height) ||
+            frameSize.Width <= 0 ||
+            frameSize.Height <= 0 ||
+            offset.X + sourceRect.Width > frameSize.Width ||
+            offset.Y + sourceRect.Height > frameSize.Height)
+        {
+            throw new ArgumentOutOfRangeException(nameof(frameSize));
+        }
+
+        SourceRect = sourceRect;
+        Duration = duration;
+        Flip = flip;
+        Offset = offset;
+        FrameSize = frameSize;
+    }
+
+    // Builds the frame at the given cell of a uniform grid atlas.
+    public static SpriteAnimationFrame FromCell(
+        int column,
+        int row,
+        float cellWidth,
+        float cellHeight,
+        TimeSpan duration,
+        RenderSurface2DSpriteFlip flip = RenderSurface2DSpriteFlip.None,
+        float margin = 0,
+        float spacing = 0)
+    {
+        if (column < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(column));
+        }
+        if (row < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(row));
+        }
+        if (!float.IsFinite(cellWidth) || cellWidth <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(cellWidth));
+        }
+        if (!float.IsFinite(cellHeight) || cellHeight <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(cellHeight));
+        }
+        if (!float.IsFinite(margin) || margin < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(margin));
+        }
+        if (!float.IsFinite(spacing) || spacing < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(spacing));
+        }
+
+        return new SpriteAnimationFrame(
+            new DrawRect(
+                margin + (column * (cellWidth + spacing)),
+                margin + (row * (cellHeight + spacing)),
+                cellWidth,
+                cellHeight),
+            duration,
+            flip);
+    }
+
+    private static void ValidateFrame(DrawRect sourceRect, TimeSpan duration, RenderSurface2DSpriteFlip flip)
+    {
         if (!float.IsFinite(sourceRect.X) ||
             !float.IsFinite(sourceRect.Y) ||
             !float.IsFinite(sourceRect.Width) ||
@@ -27,10 +115,6 @@ public sealed class SpriteAnimationFrame
         {
             throw new ArgumentOutOfRangeException(nameof(flip));
         }
-
-        SourceRect = sourceRect;
-        Duration = duration;
-        Flip = flip;
     }
 
     public DrawRect SourceRect { get; }
@@ -38,6 +122,12 @@ public sealed class SpriteAnimationFrame
     public TimeSpan Duration { get; }
 
     public RenderSurface2DSpriteFlip Flip { get; }
+
+    // Top-left of SourceRect's pixels inside the logical (untrimmed) frame, in source pixels.
+    public DrawPoint Offset { get; }
+
+    // Logical (untrimmed) frame size in source pixels.
+    public DrawSize FrameSize { get; }
 }
 
 public sealed class SpriteAnimationClip
@@ -85,9 +175,7 @@ public sealed class SpriteAnimationClip
         {
             for (int index = 0; index < copied.Length; index++)
             {
-                if (index > 0 &&
-                    (copied[index].SourceRect != copied[index - 1].SourceRect ||
-                     copied[index].Flip != copied[index - 1].Flip))
+                if (index > 0 && !SpriteAnimationPlayback.FramesHaveSamePresentation(copied[index - 1], copied[index]))
                 {
                     lastPresentationChangeTicks = durationTicks;
                 }
@@ -455,12 +543,13 @@ internal sealed class SpriteAnimationPlayback
             ? resolved
             : null;
 
-    private static bool FramesHaveSamePresentation(
+    internal static bool FramesHaveSamePresentation(
         SpriteAnimationFrame? left,
         SpriteAnimationFrame? right) =>
         ReferenceEquals(left, right) ||
         (left is not null && right is not null &&
-         left.SourceRect == right.SourceRect && left.Flip == right.Flip);
+         left.SourceRect == right.SourceRect && left.Flip == right.Flip &&
+         left.Offset == right.Offset && left.FrameSize == right.FrameSize);
 
     private static long SaturatingAdd(long left, long right) =>
         right > long.MaxValue - left ? long.MaxValue : left + right;

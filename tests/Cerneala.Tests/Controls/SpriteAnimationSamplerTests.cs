@@ -36,6 +36,105 @@ public sealed class SpriteAnimationSamplerTests
 
     [Fact]
     [Trait("SpriteAnimationStage", "1")]
+    public void LegacyConstructorUsesZeroOffsetAndSourceSizedFrame()
+    {
+        SpriteAnimationFrame frame = new(new DrawRect(40, 8, 10, 12), TimeSpan.FromMilliseconds(100));
+
+        Assert.Equal(new DrawPoint(0, 0), frame.Offset);
+        Assert.Equal(new DrawSize(10, 12), frame.FrameSize);
+    }
+
+    [Fact]
+    [Trait("SpriteAnimationStage", "1")]
+    public void TrimmedFrameConstructorValidatesOffsetAndFrameSize()
+    {
+        TimeSpan duration = TimeSpan.FromMilliseconds(100);
+        DrawRect source = new(40, 0, 10, 12);
+        RenderSurface2DSpriteFlip none = RenderSurface2DSpriteFlip.None;
+
+        SpriteAnimationFrame frame = new(source, duration, none, new DrawPoint(8, 4), new DrawSize(32, 32));
+        Assert.Equal(new DrawPoint(8, 4), frame.Offset);
+        Assert.Equal(new DrawSize(32, 32), frame.FrameSize);
+        // A trimmed rect that exactly touches the logical frame edge is valid.
+        _ = new SpriteAnimationFrame(source, duration, none, new DrawPoint(22, 20), new DrawSize(32, 32));
+
+        Assert.Equal("offset", Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new SpriteAnimationFrame(source, duration, none, new DrawPoint(-1, 0), new DrawSize(32, 32))).ParamName);
+        Assert.Equal("offset", Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new SpriteAnimationFrame(source, duration, none, new DrawPoint(0, -0.5f), new DrawSize(32, 32))).ParamName);
+        // DrawPoint and DrawSize reject NaN themselves, before the frame sees them.
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new SpriteAnimationFrame(source, duration, none, new DrawPoint(float.NaN, 0), new DrawSize(32, 32)));
+        Assert.Equal("frameSize", Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new SpriteAnimationFrame(source, duration, none, default, new DrawSize(0, 32))).ParamName);
+        Assert.Equal("frameSize", Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new SpriteAnimationFrame(source, duration, none, default, new DrawSize(32, 0))).ParamName);
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new SpriteAnimationFrame(source, duration, none, default, new DrawSize(float.NaN, 32)));
+        Assert.Equal("frameSize", Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new SpriteAnimationFrame(source, duration, none, new DrawPoint(23, 0), new DrawSize(32, 32))).ParamName);
+        Assert.Equal("frameSize", Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new SpriteAnimationFrame(source, duration, none, new DrawPoint(0, 21), new DrawSize(32, 32))).ParamName);
+        Assert.Equal("sourceRect", Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new SpriteAnimationFrame(new DrawRect(0, 0, 0, 1), duration, none, default, new DrawSize(32, 32))).ParamName);
+        Assert.Equal("duration", Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new SpriteAnimationFrame(source, TimeSpan.Zero, none, default, new DrawSize(32, 32))).ParamName);
+        Assert.Equal("flip", Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new SpriteAnimationFrame(source, duration, (RenderSurface2DSpriteFlip)8, default, new DrawSize(32, 32))).ParamName);
+    }
+
+    [Fact]
+    [Trait("SpriteAnimationStage", "1")]
+    public void FromCellComputesTheSourceRectFromGridPosition()
+    {
+        TimeSpan duration = TimeSpan.FromMilliseconds(150);
+
+        Assert.Equal(new DrawRect(35, 2, 32, 32),
+            SpriteAnimationFrame.FromCell(1, 0, 32, 32, duration, margin: 2, spacing: 1).SourceRect);
+        Assert.Equal(new DrawRect(32, 32, 32, 32), SpriteAnimationFrame.FromCell(1, 1, 32, 32, duration).SourceRect);
+        Assert.Equal(new DrawRect(0, 64, 32, 32), SpriteAnimationFrame.FromCell(0, 2, 32, 32, duration).SourceRect);
+
+        SpriteAnimationFrame frame = SpriteAnimationFrame.FromCell(
+            1, 0, 16, 24, duration, RenderSurface2DSpriteFlip.Horizontal);
+        Assert.Equal(new DrawRect(16, 0, 16, 24), frame.SourceRect);
+        Assert.Equal(duration, frame.Duration);
+        Assert.Equal(RenderSurface2DSpriteFlip.Horizontal, frame.Flip);
+        Assert.Equal(new DrawPoint(0, 0), frame.Offset);
+        Assert.Equal(new DrawSize(16, 24), frame.FrameSize);
+    }
+
+    [Fact]
+    [Trait("SpriteAnimationStage", "1")]
+    public void FromCellRejectsInvalidArguments()
+    {
+        TimeSpan duration = TimeSpan.FromMilliseconds(150);
+
+        Assert.Equal("column", Assert.Throws<ArgumentOutOfRangeException>(() =>
+            SpriteAnimationFrame.FromCell(-1, 0, 32, 32, duration)).ParamName);
+        Assert.Equal("row", Assert.Throws<ArgumentOutOfRangeException>(() =>
+            SpriteAnimationFrame.FromCell(0, -1, 32, 32, duration)).ParamName);
+        Assert.Equal("cellWidth", Assert.Throws<ArgumentOutOfRangeException>(() =>
+            SpriteAnimationFrame.FromCell(0, 0, 0, 32, duration)).ParamName);
+        Assert.Equal("cellWidth", Assert.Throws<ArgumentOutOfRangeException>(() =>
+            SpriteAnimationFrame.FromCell(0, 0, float.NaN, 32, duration)).ParamName);
+        Assert.Equal("cellHeight", Assert.Throws<ArgumentOutOfRangeException>(() =>
+            SpriteAnimationFrame.FromCell(0, 0, 32, 0, duration)).ParamName);
+        Assert.Equal("cellHeight", Assert.Throws<ArgumentOutOfRangeException>(() =>
+            SpriteAnimationFrame.FromCell(0, 0, 32, float.PositiveInfinity, duration)).ParamName);
+        Assert.Equal("margin", Assert.Throws<ArgumentOutOfRangeException>(() =>
+            SpriteAnimationFrame.FromCell(0, 0, 32, 32, duration, margin: -1)).ParamName);
+        Assert.Equal("margin", Assert.Throws<ArgumentOutOfRangeException>(() =>
+            SpriteAnimationFrame.FromCell(0, 0, 32, 32, duration, margin: float.NaN)).ParamName);
+        Assert.Equal("spacing", Assert.Throws<ArgumentOutOfRangeException>(() =>
+            SpriteAnimationFrame.FromCell(0, 0, 32, 32, duration, spacing: -1)).ParamName);
+        Assert.Equal("spacing", Assert.Throws<ArgumentOutOfRangeException>(() =>
+            SpriteAnimationFrame.FromCell(0, 0, 32, 32, duration, spacing: float.PositiveInfinity)).ParamName);
+        Assert.Equal("duration", Assert.Throws<ArgumentOutOfRangeException>(() =>
+            SpriteAnimationFrame.FromCell(0, 0, 32, 32, TimeSpan.Zero)).ParamName);
+    }
+
+    [Fact]
+    [Trait("SpriteAnimationStage", "1")]
     public void SamplerIsDeterministicAtEveryBoundaryAndPlaybackRate()
     {
         SpriteAnimationClip loop = new(

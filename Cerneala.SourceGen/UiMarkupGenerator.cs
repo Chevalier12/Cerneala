@@ -230,9 +230,21 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             .Combine(declarations)
             .Select(static (input, cancellationToken) => MarkupCompilationFacts.Create(
                 input.Left, input.Right, cancellationToken, forEmission: true));
+        // Non-markup AdditionalFiles that markup imports (Aseprite JSON exports). They feed only the
+        // output step, so editing one regenerates the factories without redoing the semantic analysis.
+        IncrementalValueProvider<ImmutableArray<AnimationAsset>> animationAssets = context.AdditionalTextsProvider
+            .Where(static file => IsAnimationAssetPath(file.Path))
+            .Select(static (file, cancellationToken) => new AnimationAsset(
+                file.Path,
+                file.GetText(cancellationToken)?.ToString()))
+            .Collect();
         context.RegisterSourceOutput(
-            semanticMarkupFiles.Collect().Combine(emissionInputs),
-            static (sourceContext, input) => GenerateFiles(sourceContext, input.Left, input.Right.Compilation));
+            semanticMarkupFiles.Collect().Combine(emissionInputs).Combine(animationAssets),
+            static (sourceContext, input) => GenerateFiles(
+                sourceContext,
+                input.Left.Left,
+                input.Left.Right.Compilation,
+                new AnimationAssetIndex(input.Right)));
     }
 
     private static SemanticMarkupSource AnalyzeMarkupFile(
@@ -257,7 +269,11 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         return new SemanticMarkupSource(file, semanticModel);
     }
 
-    private static void GenerateFiles(SourceProductionContext context, ImmutableArray<SemanticMarkupSource> inputs, Compilation compilation)
+    private static void GenerateFiles(
+        SourceProductionContext context,
+        ImmutableArray<SemanticMarkupSource> inputs,
+        Compilation compilation,
+        AnimationAssetIndex animationAssets)
     {
         ImmutableArray<MarkupSource> files = inputs
             .Select(input => new MarkupSource(input.Source.Path, input.Source.Text, input.Source.TypeNames))
@@ -347,7 +363,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 compilation,
                 applicationPairs[applicationIndex].Pair!,
                 startupBackend,
-                semanticModels[files[applicationIndex].Path]);
+                semanticModels[files[applicationIndex].Path],
+                animationAssets);
         }
 
         for (int i = 0; i < files.Length; i++)
@@ -377,7 +394,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                         generateStartup,
                         startupBackend,
                         applicationResources,
-                        semanticModels[files[i].Path]);
+                        semanticModels[files[i].Path],
+                        animationAssets);
                 }
 
                 continue;
@@ -392,7 +410,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                     {
                         GenerateSceneComponentFile(
                             context, files[i], classNames[i], compilation, pair.Pair,
-                            applicationResources, semanticModels[files[i].Path]);
+                            applicationResources, semanticModels[files[i].Path], animationAssets);
                     }
                     else
                     {
@@ -403,7 +421,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                             compilation,
                             pair.Pair,
                             applicationResources,
-                            semanticModels[files[i].Path]);
+                            semanticModels[files[i].Path],
+                            animationAssets);
                     }
                 }
 
@@ -416,7 +435,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 classNames[i],
                 compilation,
                 applicationResources,
-                semanticModels[files[i].Path]);
+                semanticModels[files[i].Path],
+                animationAssets);
         }
     }
 
@@ -458,7 +478,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         string className,
         Compilation compilation,
         GenerationScope.ApplicationResourceCatalog? applicationResources,
-        SourceGeneratorSemanticModel semanticModel)
+        SourceGeneratorSemanticModel semanticModel,
+        AnimationAssetIndex animationAssets)
     {
         if (file.Text is null)
         {
@@ -496,7 +517,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             compilation,
             dataType,
             semanticModel,
-            applicationResources: applicationResources);
+            applicationResources: applicationResources,
+            animationAssets: animationAssets);
         if (scope.HasErrors)
         {
             return;
@@ -766,6 +788,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         private readonly INamedTypeSymbol? dataType;
         private readonly MarkupComponentPair? userControlPair;
         private readonly ApplicationResourceCatalog? applicationResources;
+        private readonly AnimationAssetIndex animationAssets;
         private readonly HashSet<string> reportedDiagnostics = new(StringComparer.Ordinal);
         private string? documentRootVariable;
         private int nextId;
@@ -778,7 +801,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             INamedTypeSymbol? dataType,
             SourceGeneratorSemanticModel semanticModel,
             MarkupComponentPair? userControlPair = null,
-            ApplicationResourceCatalog? applicationResources = null)
+            ApplicationResourceCatalog? applicationResources = null,
+            AnimationAssetIndex? animationAssets = null)
         {
             this.context = context;
             this.file = file;
@@ -788,6 +812,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             this.semanticModel = semanticModel;
             this.userControlPair = userControlPair;
             this.applicationResources = applicationResources;
+            this.animationAssets = animationAssets ?? AnimationAssetIndex.Empty;
             currentLines = Lines;
             currentPostLines = PostLines;
 

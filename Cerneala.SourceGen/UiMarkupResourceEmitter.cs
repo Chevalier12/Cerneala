@@ -378,10 +378,13 @@ public sealed partial class UiMarkupGenerator
 
             MarkupAttribute? unsupportedSetAttribute = resource.Attributes()
                 .FirstOrDefault(attribute => !attribute.IsNamespaceDeclaration &&
-                    attribute.Name.LocalName is not "Name" and not "Version");
+                    attribute.Name.LocalName is not "Name" and not "Version" and not "Source" and not
+                        "CellWidth" and not "CellHeight" and not "CellMargin" and not "CellSpacing");
             if (unsupportedSetAttribute is not null)
             {
-                ReportAnimation(unsupportedSetAttribute, "SpriteAnimationSet supports only Name and Version attributes.");
+                ReportAnimation(
+                    unsupportedSetAttribute,
+                    "SpriteAnimationSet supports only Name, Version, Source, CellWidth, CellHeight, CellMargin, and CellSpacing attributes.");
                 return;
             }
             if (resource.Nodes().OfType<MarkupText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
@@ -396,77 +399,20 @@ public sealed partial class UiMarkupGenerator
                 return;
             }
 
+            if (!TryReadSpriteCellGrid(resource, out SpriteCellGrid? cellGrid))
+            {
+                return;
+            }
+
             List<string> clipExpressions = [];
             HashSet<string> clipNames = new(StringComparer.Ordinal);
-            foreach (MarkupElement clip in resource.Elements())
+            MarkupAttribute? sourceAttribute = resource.Attribute("Source");
+            bool clipsRead = sourceAttribute is null
+                ? ReadSpriteAnimationClipElements(resource, cellGrid, clipExpressions, clipNames)
+                : ReadAsepriteSpriteAnimationClips(name, resource, sourceAttribute, clipExpressions, clipNames);
+            if (!clipsRead)
             {
-                if (clip.Name.LocalName != "SpriteAnimationClip")
-                {
-                    ReportAnimation(clip, "SpriteAnimationSet accepts only SpriteAnimationClip children.");
-                    return;
-                }
-
-                MarkupAttribute? clipNameAttribute = clip.Attribute("Name");
-                string clipName = clipNameAttribute?.Value.Trim() ?? string.Empty;
-                if (clipName.Length == 0)
-                {
-                    ReportAnimation((object?)clipNameAttribute ?? clip, "SpriteAnimationClip Name cannot be empty.");
-                    return;
-                }
-                if (!clipNames.Add(clipName))
-                {
-                    ReportAnimation(clipNameAttribute!, "Animation clip name '" + clipName + "' is duplicate.");
-                    return;
-                }
-
-                MarkupAttribute? unsupportedClipAttribute = clip.Attributes()
-                    .FirstOrDefault(attribute => !attribute.IsNamespaceDeclaration &&
-                        attribute.Name.LocalName is not "Name" and not "IsLooping" and not "Version");
-                if (unsupportedClipAttribute is not null)
-                {
-                    ReportAnimation(unsupportedClipAttribute, "SpriteAnimationClip supports only Name, IsLooping, and Version attributes.");
-                    return;
-                }
-                if (clip.Nodes().OfType<MarkupText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
-                {
-                    ReportAnimation(clip, "SpriteAnimationClip accepts frame elements and no text content.");
-                    return;
-                }
-
-                bool isLooping = true;
-                MarkupAttribute? loopingAttribute = clip.Attribute("IsLooping");
-                if (loopingAttribute is not null && !bool.TryParse(loopingAttribute.Value, out isLooping))
-                {
-                    ReportAnimation(loopingAttribute, "IsLooping must be true or false.");
-                    return;
-                }
-                string? clipVersion = ParseAnimationVersion(clip, "SpriteAnimationClip");
-                if (clipVersion is null)
-                {
-                    return;
-                }
-
-                List<string> frameExpressions = [];
-                foreach (MarkupElement frame in clip.Elements())
-                {
-                    string? frameExpression = ParseSpriteAnimationFrame(frame);
-                    if (frameExpression is null)
-                    {
-                        return;
-                    }
-                    frameExpressions.Add(frameExpression);
-                }
-                if (frameExpressions.Count == 0)
-                {
-                    ReportAnimation(clip, "SpriteAnimationClip '" + clipName + "' requires at least one frame.");
-                    return;
-                }
-
-                clipExpressions.Add(
-                    "new global::Cerneala.UI.Controls.SpriteAnimationClip(" + Literal(clipName) +
-                    ", new global::Cerneala.UI.Controls.SpriteAnimationFrame[] { " +
-                    string.Join(", ", frameExpressions) + " }, " +
-                    (isLooping ? "true" : "false") + ", " + clipVersion + ")");
+                return;
             }
             if (clipExpressions.Count == 0)
             {
@@ -487,6 +433,271 @@ public sealed partial class UiMarkupGenerator
             currentLines.Add("global::Cerneala.UI.Controls.SpriteAnimationSet " + variable + " = " + expression + ";");
         }
 
+        // The uniform grid that Column/Row frames address, declared on the SpriteAnimationSet.
+        private sealed class SpriteCellGrid
+        {
+            public SpriteCellGrid(string width, string height, string margin, string spacing)
+            {
+                Width = width;
+                Height = height;
+                Margin = margin;
+                Spacing = spacing;
+            }
+
+            public string Width { get; }
+
+            public string Height { get; }
+
+            public string Margin { get; }
+
+            public string Spacing { get; }
+        }
+
+        private bool TryReadSpriteCellGrid(MarkupElement resource, out SpriteCellGrid? grid)
+        {
+            grid = null;
+            MarkupAttribute? width = resource.Attribute("CellWidth");
+            MarkupAttribute? height = resource.Attribute("CellHeight");
+            MarkupAttribute? margin = resource.Attribute("CellMargin");
+            MarkupAttribute? spacing = resource.Attribute("CellSpacing");
+            MarkupAttribute? firstCell = width ?? height ?? margin ?? spacing;
+            if (firstCell is null)
+            {
+                return true;
+            }
+
+            if (resource.Attribute("Source") is not null)
+            {
+                ReportAnimation(
+                    firstCell,
+                    "SpriteAnimationSet cannot combine Source with " + firstCell.Name.LocalName +
+                    "; the Aseprite export already defines every frame rectangle.");
+                return false;
+            }
+            if (width is null != height is null)
+            {
+                MarkupAttribute present = (width ?? height)!;
+                ReportAnimation(
+                    present,
+                    "SpriteAnimationSet " + present.Name.LocalName + " requires " +
+                    (width is null ? "CellWidth" : "CellHeight") + ".");
+                return false;
+            }
+            if (width is null)
+            {
+                ReportAnimation(
+                    firstCell,
+                    "SpriteAnimationSet " + firstCell.Name.LocalName + " requires CellWidth and CellHeight.");
+                return false;
+            }
+
+            if (!TryParseCellValue(width, mustBePositive: true, out string? widthLiteral) ||
+                !TryParseCellValue(height!, mustBePositive: true, out string? heightLiteral))
+            {
+                return false;
+            }
+
+            string marginLiteral = "0f";
+            string spacingLiteral = "0f";
+            if ((margin is not null && !TryParseCellValue(margin, mustBePositive: false, out marginLiteral!)) ||
+                (spacing is not null && !TryParseCellValue(spacing, mustBePositive: false, out spacingLiteral!)))
+            {
+                return false;
+            }
+
+            grid = new SpriteCellGrid(widthLiteral!, heightLiteral!, marginLiteral, spacingLiteral);
+            return true;
+        }
+
+        private bool TryParseCellValue(MarkupAttribute attribute, bool mustBePositive, out string? literal)
+        {
+            if (TryParseFiniteFloat(attribute.Value, out literal) &&
+                float.TryParse(attribute.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out float value) &&
+                (mustBePositive ? value > 0 : value >= 0))
+            {
+                return true;
+            }
+
+            ReportAnimation(
+                attribute,
+                "SpriteAnimationSet " + attribute.Name.LocalName + " must be a finite number " +
+                (mustBePositive ? "greater than zero." : "of zero or more."));
+            literal = null;
+            return false;
+        }
+
+        private bool ReadSpriteAnimationClipElements(
+            MarkupElement resource,
+            SpriteCellGrid? cellGrid,
+            List<string> clipExpressions,
+            HashSet<string> clipNames)
+        {
+            foreach (MarkupElement clip in resource.Elements())
+            {
+                if (clip.Name.LocalName != "SpriteAnimationClip")
+                {
+                    ReportAnimation(clip, "SpriteAnimationSet accepts only SpriteAnimationClip children.");
+                    return false;
+                }
+
+                MarkupAttribute? clipNameAttribute = clip.Attribute("Name");
+                string clipName = clipNameAttribute?.Value.Trim() ?? string.Empty;
+                if (clipName.Length == 0)
+                {
+                    ReportAnimation((object?)clipNameAttribute ?? clip, "SpriteAnimationClip Name cannot be empty.");
+                    return false;
+                }
+                if (!clipNames.Add(clipName))
+                {
+                    ReportAnimation(clipNameAttribute!, "Animation clip name '" + clipName + "' is duplicate.");
+                    return false;
+                }
+
+                MarkupAttribute? unsupportedClipAttribute = clip.Attributes()
+                    .FirstOrDefault(attribute => !attribute.IsNamespaceDeclaration &&
+                        attribute.Name.LocalName is not "Name" and not "IsLooping" and not "Version");
+                if (unsupportedClipAttribute is not null)
+                {
+                    ReportAnimation(unsupportedClipAttribute, "SpriteAnimationClip supports only Name, IsLooping, and Version attributes.");
+                    return false;
+                }
+                if (clip.Nodes().OfType<MarkupText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
+                {
+                    ReportAnimation(clip, "SpriteAnimationClip accepts frame elements and no text content.");
+                    return false;
+                }
+
+                bool isLooping = true;
+                MarkupAttribute? loopingAttribute = clip.Attribute("IsLooping");
+                if (loopingAttribute is not null && !bool.TryParse(loopingAttribute.Value, out isLooping))
+                {
+                    ReportAnimation(loopingAttribute, "IsLooping must be true or false.");
+                    return false;
+                }
+                string? clipVersion = ParseAnimationVersion(clip, "SpriteAnimationClip");
+                if (clipVersion is null)
+                {
+                    return false;
+                }
+
+                List<string> frameExpressions = [];
+                foreach (MarkupElement frame in clip.Elements())
+                {
+                    string? frameExpression = ParseSpriteAnimationFrame(frame, cellGrid);
+                    if (frameExpression is null)
+                    {
+                        return false;
+                    }
+                    frameExpressions.Add(frameExpression);
+                }
+                if (frameExpressions.Count == 0)
+                {
+                    ReportAnimation(clip, "SpriteAnimationClip '" + clipName + "' requires at least one frame.");
+                    return false;
+                }
+
+                clipExpressions.Add(BuildSpriteAnimationClipExpression(clipName, frameExpressions, isLooping, clipVersion));
+            }
+
+            return true;
+        }
+
+        // SpriteAnimationSet Source="...": one clip per frame tag of an Aseprite JSON export that
+        // the project lists in AdditionalFiles. The export is read at build time, not at runtime.
+        private bool ReadAsepriteSpriteAnimationClips(
+            string setName,
+            MarkupElement resource,
+            MarkupAttribute sourceAttribute,
+            List<string> clipExpressions,
+            HashSet<string> clipNames)
+        {
+            string setLabel = "SpriteAnimationSet '" + setName + "'";
+            string source = sourceAttribute.Value.Trim();
+            if (source.Length == 0)
+            {
+                ReportAnimation(sourceAttribute, setLabel + " Source cannot be empty.");
+                return false;
+            }
+
+            if (resource.Elements().Any())
+            {
+                ReportAnimation(
+                    sourceAttribute,
+                    setLabel + " cannot combine Source with SpriteAnimationClip children; " +
+                    "declare every clip as a frame tag in the JSON file, or remove Source.");
+                return false;
+            }
+
+            AnimationAsset[] matches = animationAssets.Find(source);
+            if (matches.Length == 0)
+            {
+                ReportAnimation(
+                    sourceAttribute,
+                    setLabel + " Source '" + source + "' matches no AdditionalFiles item. " +
+                    "Add <AdditionalFiles Include=\"" + source.Replace('/', '\\') + "\" /> to the project file " +
+                    "(the file must be a .json Aseprite export).");
+                return false;
+            }
+            if (matches.Length > 1)
+            {
+                ReportAnimation(
+                    sourceAttribute,
+                    setLabel + " Source '" + source + "' matches more than one AdditionalFiles item: " +
+                    string.Join(", ", matches.Select(match => match.FilePath)) +
+                    ". Use a longer Source path to select one file.");
+                return false;
+            }
+
+            AnimationAsset asset = matches[0];
+            if (!AsepriteJson.TryRead(Path.GetFileName(asset.FilePath), asset.Text, out List<AsepriteClip> clips, out string error))
+            {
+                ReportAnimation(sourceAttribute, setLabel + " Source: " + error);
+                return false;
+            }
+
+            foreach (AsepriteClip clip in clips)
+            {
+                clipNames.Add(clip.Name);
+                clipExpressions.Add(BuildSpriteAnimationClipExpression(
+                    clip.Name,
+                    clip.Frames.Select(BuildAsepriteFrameExpression).ToList(),
+                    clip.IsLooping,
+                    "1L"));
+            }
+
+            return true;
+        }
+
+        private static string BuildSpriteAnimationClipExpression(
+            string clipName,
+            IReadOnlyList<string> frameExpressions,
+            bool isLooping,
+            string clipVersion) =>
+            "new global::Cerneala.UI.Controls.SpriteAnimationClip(" + Literal(clipName) +
+            ", new global::Cerneala.UI.Controls.SpriteAnimationFrame[] { " +
+            string.Join(", ", frameExpressions) + " }, " +
+            (isLooping ? "true" : "false") + ", " + clipVersion + ")";
+
+        private static string BuildAsepriteFrameExpression(AsepriteFrame frame)
+        {
+            string rect = "new global::Cerneala.Drawing.DrawRect(" + FloatLiteral(frame.X) + ", " + FloatLiteral(frame.Y) +
+                ", " + FloatLiteral(frame.Width) + ", " + FloatLiteral(frame.Height) + ")";
+            string duration = "global::System.TimeSpan.FromMilliseconds(" +
+                frame.DurationMilliseconds.ToString("R", CultureInfo.InvariantCulture) + ")";
+            string flip = "global::Cerneala.UI.Controls.RenderSurface2DSpriteFlip.None";
+            if (!frame.IsTrimmed)
+            {
+                return "new global::Cerneala.UI.Controls.SpriteAnimationFrame(" + rect + ", " + duration + ", " + flip + ")";
+            }
+
+            return "new global::Cerneala.UI.Controls.SpriteAnimationFrame(" + rect + ", " + duration + ", " + flip +
+                ", new global::Cerneala.Drawing.DrawPoint(" + FloatLiteral(frame.OffsetX) + ", " + FloatLiteral(frame.OffsetY) +
+                "), new global::Cerneala.Drawing.DrawSize(" + FloatLiteral(frame.FrameWidth) + ", " + FloatLiteral(frame.FrameHeight) + "))";
+        }
+
+        private static string FloatLiteral(double value) =>
+            ((float)value).ToString("R", CultureInfo.InvariantCulture) + "f";
+
         private string? ParseAnimationVersion(MarkupElement element, string elementName)
         {
             MarkupAttribute? attribute = element.Attribute("Version");
@@ -502,7 +713,7 @@ public sealed partial class UiMarkupGenerator
             return version.ToString(CultureInfo.InvariantCulture) + "L";
         }
 
-        private string? ParseSpriteAnimationFrame(MarkupElement frame)
+        private string? ParseSpriteAnimationFrame(MarkupElement frame, SpriteCellGrid? cellGrid)
         {
             if (frame.Name.LocalName != "SpriteAnimationFrame")
             {
@@ -517,6 +728,26 @@ public sealed partial class UiMarkupGenerator
             }
 
             string[] required = ["SourceX", "SourceY", "SourceWidth", "SourceHeight", "Duration"];
+            MarkupAttribute? columnAttribute = frame.Attribute("Column");
+            MarkupAttribute? rowAttribute = frame.Attribute("Row");
+            bool isCellFrame = columnAttribute is not null || rowAttribute is not null;
+            MarkupAttribute? firstSourceAttribute = required
+                .Where(attributeName => attributeName != "Duration")
+                .Select(attributeName => frame.Attribute(attributeName))
+                .FirstOrDefault(attribute => attribute is not null);
+
+            if (isCellFrame)
+            {
+                return ParseSpriteCellFrame(frame, cellGrid, columnAttribute, rowAttribute, firstSourceAttribute);
+            }
+            if (firstSourceAttribute is null && cellGrid is not null)
+            {
+                ReportAnimation(
+                    frame,
+                    "SpriteAnimationFrame needs Column and Row (or SourceX, SourceY, SourceWidth, and SourceHeight).");
+                return null;
+            }
+
             string? missingName = required.FirstOrDefault(attributeName => frame.Attribute(attributeName) is null);
             if (missingName is not null)
             {
@@ -555,14 +786,99 @@ public sealed partial class UiMarkupGenerator
                 return null;
             }
 
-            MarkupAttribute durationAttribute = frame.Attribute("Duration")!;
-            if (!TryBuildDurationExpression(durationAttribute.Value.Trim(), out string duration))
+            if (!TryParseFrameTiming(frame, out string duration, out string flip))
             {
-                ReportAnimation(durationAttribute, "Frame duration must be positive and use the existing ms or s duration syntax.");
                 return null;
             }
 
-            string flip = "global::Cerneala.UI.Controls.RenderSurface2DSpriteFlip.None";
+            return "new global::Cerneala.UI.Controls.SpriteAnimationFrame(" +
+                "new global::Cerneala.Drawing.DrawRect(" + sourceX + ", " + sourceY + ", " + sourceWidth + ", " + sourceHeight + "), " +
+                duration + ", " + flip + ")";
+        }
+
+        // A frame addressed by Column and Row in the grid that the SpriteAnimationSet declares.
+        private string? ParseSpriteCellFrame(
+            MarkupElement frame,
+            SpriteCellGrid? cellGrid,
+            MarkupAttribute? columnAttribute,
+            MarkupAttribute? rowAttribute,
+            MarkupAttribute? firstSourceAttribute)
+        {
+            if (columnAttribute is null || rowAttribute is null)
+            {
+                MarkupAttribute present = (columnAttribute ?? rowAttribute)!;
+                ReportAnimation(
+                    present,
+                    "SpriteAnimationFrame " + present.Name.LocalName + " requires " +
+                    (columnAttribute is null ? "Column" : "Row") + ".");
+                return null;
+            }
+            if (cellGrid is null)
+            {
+                ReportAnimation(
+                    columnAttribute,
+                    "SpriteAnimationFrame Column and Row require CellWidth and CellHeight on the SpriteAnimationSet.");
+                return null;
+            }
+            if (firstSourceAttribute is not null)
+            {
+                ReportAnimation(
+                    firstSourceAttribute,
+                    "SpriteAnimationFrame cannot combine Column and Row with " + firstSourceAttribute.Name.LocalName +
+                    "; use either the cell form or the pixel form.");
+                return null;
+            }
+
+            MarkupAttribute? unsupported = frame.Attributes()
+                .FirstOrDefault(attribute => !attribute.IsNamespaceDeclaration &&
+                    attribute.Name.LocalName is not "Column" and not "Row" and not "Duration" and not "Flip");
+            if (unsupported is not null)
+            {
+                ReportAnimation(unsupported, "SpriteAnimationFrame attribute '" + unsupported.Name.LocalName + "' is not supported.");
+                return null;
+            }
+            if (!TryParseCellIndex(columnAttribute, out string? column) || !TryParseCellIndex(rowAttribute, out string? row))
+            {
+                return null;
+            }
+            if (frame.Attribute("Duration") is null)
+            {
+                ReportAnimation(frame, "SpriteAnimationFrame requires Duration.");
+                return null;
+            }
+            if (!TryParseFrameTiming(frame, out string duration, out string flip))
+            {
+                return null;
+            }
+
+            return "global::Cerneala.UI.Controls.SpriteAnimationFrame.FromCell(" +
+                column + ", " + row + ", " + cellGrid.Width + ", " + cellGrid.Height + ", " + duration + ", " + flip + ", " +
+                cellGrid.Margin + ", " + cellGrid.Spacing + ")";
+        }
+
+        private bool TryParseCellIndex(MarkupAttribute attribute, out string? literal)
+        {
+            if (int.TryParse(attribute.Value.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out int value))
+            {
+                literal = value.ToString(CultureInfo.InvariantCulture);
+                return true;
+            }
+
+            ReportAnimation(attribute, "SpriteAnimationFrame " + attribute.Name.LocalName + " must be a non-negative integer.");
+            literal = null;
+            return false;
+        }
+
+        private bool TryParseFrameTiming(MarkupElement frame, out string duration, out string flip)
+        {
+            flip = "global::Cerneala.UI.Controls.RenderSurface2DSpriteFlip.None";
+            MarkupAttribute durationAttribute = frame.Attribute("Duration")!;
+            if (!TryBuildDurationExpression(durationAttribute.Value.Trim(), out duration))
+            {
+                ReportAnimation(durationAttribute, "Frame duration must be positive and use the existing ms or s duration syntax.");
+                return false;
+            }
+
             MarkupAttribute? flipAttribute = frame.Attribute("Flip");
             if (flipAttribute is not null)
             {
@@ -574,13 +890,11 @@ public sealed partial class UiMarkupGenerator
                 else
                 {
                     ReportAnimation(flipAttribute, "Frame Flip must be None, Horizontal, or Vertical.");
-                    return null;
+                    return false;
                 }
             }
 
-            return "new global::Cerneala.UI.Controls.SpriteAnimationFrame(" +
-                "new global::Cerneala.Drawing.DrawRect(" + sourceX + ", " + sourceY + ", " + sourceWidth + ", " + sourceHeight + "), " +
-                duration + ", " + flip + ")";
+            return true;
         }
 
         private void ReportAnimation(object locationSource, string message) =>

@@ -217,6 +217,126 @@ public sealed class SpriteAnimationIntegrationTests
         Assert.Equal(new DrawRect(32, 32, 8, 24), Draw(sprite).ImageSource);
     }
 
+    public static TheoryData<RenderSurface2DSpriteFlip, float, float> TrimmedPlacementCases => new()
+    {
+        { RenderSurface2DSpriteFlip.None, float.NaN, float.NaN },
+        { RenderSurface2DSpriteFlip.Horizontal, float.NaN, float.NaN },
+        { RenderSurface2DSpriteFlip.None, 64, 64 },
+        { RenderSurface2DSpriteFlip.Vertical, 64, 64 }
+    };
+
+    [Theory]
+    [MemberData(nameof(TrimmedPlacementCases))]
+    [Trait("SpriteAnimationStage", "2")]
+    public void TrimmedFrameLandsWhereTheUntrimmedFrameWouldDrawIt(
+        RenderSurface2DSpriteFlip spriteFlip,
+        float width,
+        float height)
+    {
+        // Trimmed rect (40,0,10,12) sat at (8,4) inside a 32x32 logical frame.
+        Sprite2D trimmed = PlacedSprite(spriteFlip, width, height, TrimmedFrame());
+        Sprite2D reference = PlacedSprite(spriteFlip, width, height,
+            new SpriteAnimationFrame(new DrawRect(0, 0, 32, 32), TimeSpan.FromMilliseconds(100)));
+
+        DrawCommand trimmedDraw = Draw(trimmed);
+        DrawCommand referenceDraw = Draw(reference);
+        DrawPoint[] actual = DrawImageGeometry.GetDestinationCorners(
+            trimmedDraw.Image!, trimmedDraw.Rect, trimmedDraw.ImageOptions!);
+
+        float scaleX = float.IsNaN(width) ? 1 : width / 32;
+        float scaleY = float.IsNaN(height) ? 1 : height / 32;
+        // The composed flip mirrors the trimmed rect inside the logical frame:
+        // horizontal puts it at 32 - 8 - 10 = 14, vertical at 32 - 4 - 12 = 16.
+        float left = (spriteFlip & RenderSurface2DSpriteFlip.Horizontal) != 0 ? 14 : 8;
+        float top = (spriteFlip & RenderSurface2DSpriteFlip.Vertical) != 0 ? 16 : 4;
+        (float X, float Y)[] logical = [(left, top), (left + 10, top), (left + 10, top + 12), (left, top + 12)];
+        for (int index = 0; index < 4; index++)
+        {
+            DrawPoint expected = DrawImageGeometry.TransformDestinationPoint(
+                referenceDraw.Image!, referenceDraw.Rect, referenceDraw.ImageOptions!,
+                logical[index].X * scaleX, logical[index].Y * scaleY);
+            Assert.Equal(expected.X, actual[index].X, 3);
+            Assert.Equal(expected.Y, actual[index].Y, 3);
+        }
+
+        Assert.Equal(new DrawRect(40, 0, 10, 12), trimmedDraw.ImageSource);
+        Assert.Equal(new DrawRect(100, 50, 10 * scaleX, 12 * scaleY), trimmedDraw.Rect);
+    }
+
+    [Theory]
+    [InlineData(float.NaN, float.NaN, -16, -32, 32, 32)]
+    [InlineData(64f, 64f, -32, -64, 64, 64)]
+    [Trait("SpriteAnimationStage", "2")]
+    public void TrimmedFrameBoundsFollowTheLogicalFrame(
+        float width, float height, float x, float y, float boundsWidth, float boundsHeight)
+    {
+        Sprite2D sprite = PlacedSprite(RenderSurface2DSpriteFlip.None, width, height, TrimmedFrame());
+        SceneBounds2D expected = SceneBounds2D.Known(new DrawRect(x, y, boundsWidth, boundsHeight));
+
+        Assert.Equal(expected, sprite.GetHitTestLocalBounds());
+        Assert.Equal(expected, sprite.GetVisibleLocalBounds());
+        Assert.Equal(expected, sprite.GetPresentationLocalBounds());
+    }
+
+    [Fact]
+    [Trait("SpriteAnimationStage", "2")]
+    public void FramesWithTheSameLogicalSizeKeepBoundsWhileTheirTrimmedRectsDiffer()
+    {
+        SpriteAnimationFrame full = new(new DrawRect(0, 0, 32, 32), TimeSpan.FromMilliseconds(100));
+        SpriteAnimationFrame trimmed = TrimmedFrame();
+        Sprite2D sprite = PlacedSprite(
+            RenderSurface2DSpriteFlip.None, float.NaN, float.NaN, full, trimmed);
+        SceneBounds2D before = sprite.GetHitTestLocalBounds();
+
+        Assert.True(sprite.AdvanceAnimation(TimeSpan.FromMilliseconds(100)));
+
+        Assert.Equal(new DrawRect(40, 0, 10, 12), Draw(sprite).ImageSource);
+        Assert.Equal(before, sprite.GetHitTestLocalBounds());
+        Assert.Equal(SceneBounds2D.Known(new DrawRect(-16, -32, 32, 32)), sprite.GetHitTestLocalBounds());
+    }
+
+    [Fact]
+    [Trait("SpriteAnimationStage", "2")]
+    public void FramesDifferingOnlyInOffsetOrFrameSizeCountAsPresentationChanges()
+    {
+        DrawRect source = new(40, 0, 10, 12);
+        TimeSpan duration = TimeSpan.FromMilliseconds(100);
+        RenderSurface2DSpriteFlip none = RenderSurface2DSpriteFlip.None;
+        SpriteAnimationFrame at84 = new(source, duration, none, new DrawPoint(8, 4), new DrawSize(32, 32));
+        SpriteAnimationFrame at00 = new(source, duration, none, new DrawPoint(0, 0), new DrawSize(32, 32));
+        SpriteAnimationFrame bigger = new(source, duration, none, new DrawPoint(0, 0), new DrawSize(48, 48));
+
+        Sprite2D offsetSprite = Animated(Set(Clip("Walk", true, at84, at00)), "Walk");
+        Assert.True(offsetSprite.AdvanceAnimation(duration));
+        Sprite2D sizeSprite = Animated(Set(Clip("Walk", true, at00, bigger)), "Walk");
+        Assert.True(sizeSprite.AdvanceAnimation(duration));
+        // The control: identical SourceRect, Flip, Offset and FrameSize stay unchanged.
+        Sprite2D sameSprite = Animated(Set(Clip("Walk", true, at84, at84)), "Walk");
+        Assert.False(sameSprite.AdvanceAnimation(duration));
+    }
+
+    private static SpriteAnimationFrame TrimmedFrame() => new(
+        new DrawRect(40, 0, 10, 12),
+        TimeSpan.FromMilliseconds(100),
+        RenderSurface2DSpriteFlip.None,
+        new DrawPoint(8, 4),
+        new DrawSize(32, 32));
+
+    private static Sprite2D PlacedSprite(
+        RenderSurface2DSpriteFlip flip,
+        float width,
+        float height,
+        params SpriteAnimationFrame[] frames) => new()
+    {
+        Image = new(new TestImage()),
+        X = 100, Y = 50, Width = width, Height = height,
+        Origin = new DrawPoint(16, 32),
+        Rotation = 0.5f,
+        Flip = flip,
+        Animations = Set(Clip("Pose", true, frames)),
+        AnimationState = "Pose"
+    };
+
     private static Sprite2D Animated(SpriteAnimationSet animations, string state) => new()
     {
         Image = new(new TestImage()),

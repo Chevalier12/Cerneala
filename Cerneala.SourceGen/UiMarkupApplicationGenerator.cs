@@ -108,7 +108,8 @@ public sealed partial class UiMarkupGenerator
         Compilation compilation,
         INamedTypeSymbol application,
         ApplicationBackendSelection? backendSelection,
-        SourceGeneratorSemanticModel semanticModel)
+        SourceGeneratorSemanticModel semanticModel,
+        AnimationAssetIndex animationAssets)
     {
         if (!TryGetEmissionDocument(context, file, semanticModel, out EmissionMarkupDocument document))
         {
@@ -198,7 +199,14 @@ public sealed partial class UiMarkupGenerator
             return null;
         }
 
-        GenerationScope scope = new(context, file, document, compilation, dataType: null, semanticModel);
+        GenerationScope scope = new(
+            context,
+            file,
+            document,
+            compilation,
+            dataType: null,
+            semanticModel,
+            animationAssets: animationAssets);
         if (scope.HasErrors)
         {
             return null;

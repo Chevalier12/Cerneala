@@ -14,7 +14,8 @@ public sealed partial class UiMarkupGenerator
         Compilation compilation,
         MarkupComponentPair pair,
         GenerationScope.ApplicationResourceCatalog? applicationResources,
-        SourceGeneratorSemanticModel semanticModel)
+        SourceGeneratorSemanticModel semanticModel,
+        AnimationAssetIndex animationAssets)
     {
         if (file.Text is null || !TryGetEmissionDocument(context, file, semanticModel, out EmissionMarkupDocument document))
         {
@@ -46,7 +47,8 @@ public sealed partial class UiMarkupGenerator
             return;
         }
 
-        GenerationScope scope = new(context, file, document, compilation, dataType, semanticModel, pair, applicationResources);
+        GenerationScope scope = new(
+            context, file, document, compilation, dataType, semanticModel, pair, applicationResources, animationAssets);
         if (scope.HasErrors)
         {
             return;
