@@ -416,7 +416,7 @@ public sealed partial class UiMarkupGenerator
 
             string propertyName = attribute.Name.LocalName.Substring("Grid.".Length);
             if (!int.TryParse(attribute.Value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int value) ||
-                !CernealaSemanticModel.IsValidGridPlacement(propertyName, value))
+                !CernealaSemanticModel.IsValidGridPlacement("Cerneala.UI.Layout.Panels.Grid", method, value))
             {
                 Report(InvalidPropertyValue, attribute, "Grid", propertyName, attribute.Value);
                 return true;

@@ -304,7 +304,7 @@ Attached properties use the `Owner.X` form, and the generator accepts exactly th
 
 | Markup | Owner member | Generated code |
 | --- | --- | --- |
-| `Grid.Row="1"`, `Grid.Column`, `Grid.RowSpan`, `Grid.ColumnSpan` | `Grid.SetRow` and the other setters | `Grid.SetRow(element, 1)`; a negative index or a span below `1`, for example `Grid.Row="-1"` or `Grid.RowSpan="0"`, reports `CERNEALAUI004` in the editor and in the build |
+| `Grid.Row="1"`, `Grid.Column`, `Grid.RowSpan`, `Grid.ColumnSpan` | `Grid.SetRow` and the other setters | `Grid.SetRow(element, 1)`; a negative index or a span below `1`, for example `Grid.Row="-1"` or `Grid.RowSpan="0"`, reports `CERNEALAUI004` in the editor and in the build; so does the same value through a type that derives from `Grid`, for example `SubGrid.Row="-1"`, because it calls the same `Grid.SetRow` |
 | `Canvas.Left="12"`, `Canvas.Top="20"`, `Panel.ZIndex="2"`, `Servo.Id="save"` | `Canvas.LeftProperty`, `Canvas.TopProperty`, `Panel.ZIndexProperty`, `Servo.IdProperty` | `SetValue` on the `UiProperty`; a binding such as `Canvas.Left="$DataContext.X"` is observed like any other property binding |
 | `Layering.Layer="2"` where the application declares `public static readonly UiProperty<int> LayerProperty` and `SetLayer(UIElement, int)` on `Layering` | `Layering.LayerProperty` | `SetValue` on the `UiProperty`; bindings are allowed |
 | `Tagger.Tag="x"` where the application declares only `SetTag(UIElement, string)` on `Tagger` | `Tagger.SetTag` | `Tagger.SetTag(element, "x")`; a binding reports `CERNEALAUI004` |
