@@ -3085,6 +3085,99 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
+    public void AspectWhenBranchStopsMatchingRestoresDefaultBlockWithoutFalseBranch()
+    {
+        const string markup = """
+            <StackPanel>
+              <StackPanel.Resources>
+                <Aspect Name="HoverBorder" TargetType="Border">
+                  @default
+                  {
+                    Background = Black;
+                  }
+                  @when IsMouseOver
+                  {
+                    @if IsMouseOver == true
+                    {
+                      Background = White;
+                    }
+                  }
+                </Aspect>
+              </StackPanel.Resources>
+              <Border Aspect="$HoverBorder" />
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("AspectRevertToDefault.crn", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        StackPanel panel = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.AspectRevertToDefaultFactory"));
+        Border border = Assert.IsType<Border>(panel.VisualChildren[0]);
+        UIRoot root = new();
+        root.VisualChildren.Add(panel);
+        root.ProcessFrame();
+        AssertSolidBackground(Cerneala.Drawing.Color.Black, border);
+
+        border.IsPointerOver = true;
+        root.ProcessFrame();
+        AssertSolidBackground(Cerneala.Drawing.Color.White, border);
+
+        border.IsPointerOver = false;
+        root.ProcessFrame();
+        Assert.Equal(Cerneala.UI.Core.UiPropertyValueSource.AspectBase, border.GetValueSource(Control.BackgroundProperty));
+        AssertSolidBackground(Cerneala.Drawing.Color.Black, border);
+    }
+
+    [Fact]
+    public void AspectWhenBranchStopsMatchingWithoutDefaultBlockRestoresLowerValueSource()
+    {
+        const string markup = """
+            <StackPanel>
+              <StackPanel.Resources>
+                <Aspect Name="HoverBorder" TargetType="Border">
+                  @when IsMouseOver
+                  {
+                    @if IsMouseOver == true
+                    {
+                      Background = White;
+                    }
+                  }
+                </Aspect>
+              </StackPanel.Resources>
+              <Border Aspect="$HoverBorder" />
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("AspectRevertToLowerSource.crn", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        StackPanel panel = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.AspectRevertToLowerSourceFactory"));
+        Border border = Assert.IsType<Border>(panel.VisualChildren[0]);
+        UIRoot root = new();
+        root.VisualChildren.Add(panel);
+        root.ProcessFrame();
+        Assert.Equal(Cerneala.UI.Core.UiPropertyValueSource.Default, border.GetValueSource(Control.BackgroundProperty));
+        Assert.Null(border.Background);
+
+        border.IsPointerOver = true;
+        root.ProcessFrame();
+        AssertSolidBackground(Cerneala.Drawing.Color.White, border);
+
+        border.IsPointerOver = false;
+        root.ProcessFrame();
+        Assert.Equal(Cerneala.UI.Core.UiPropertyValueSource.Default, border.GetValueSource(Control.BackgroundProperty));
+        Assert.Null(border.Background);
+    }
+
+    [Fact]
     public void ConditionalChildrenAreLazyCachedAndKeepMarkupOrder()
     {
         const string markup = """
