@@ -41,7 +41,8 @@ public sealed class ImageResourceCacheTests
         root.SetImageLoader(loader);
         Image image = new()
         {
-            SourceResourceId = id
+            SourceResourceId = id,
+            Stretch = DrawBrushStretch.None
         };
         root.VisualChildren.Add(image);
 

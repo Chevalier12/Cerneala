@@ -44,7 +44,8 @@ public sealed class PathBackedImageResourceIntegrationTests
         Image image = new()
         {
             SourceResourceId = id,
-            UseIntrinsicSize = true
+            UseIntrinsicSize = true,
+            Stretch = DrawBrushStretch.None
         };
         root.VisualChildren.Add(image);
 

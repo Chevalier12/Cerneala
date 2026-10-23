@@ -56,7 +56,7 @@ The configured image loader must support `IImageLoader.Load(Stream)`. The built-
 
 Changing `SourcePath` while the control is attached and effectively visible reloads the SVG immediately. When the control is not effectively visible, loading is deferred until it becomes renderable. The previous loaded image is disposed when it implements `IDisposable`. Detaching the control also releases its loaded image. An empty or `null` source path clears the image.
 
-The SVG is rasterized at its document bounds. Inherited `Image` layout and rendering behavior then preserves that raster's aspect ratio. Set inherited `Width` and `Height` for a fixed display size, and set `UseIntrinsicSize` to `false` when the SVG's intrinsic dimensions should not determine desired layout size.
+The SVG is rasterized at its document bounds. Inherited `Image` layout and rendering behavior then sizes that raster by the inherited `Stretch` and `StretchDirection`; the default `Uniform` preserves its aspect ratio. Set inherited `Width` and `Height` for a fixed display size, and set `UseIntrinsicSize` to `false` when the SVG's intrinsic dimensions should not determine desired layout size.
 
 ## Constructors
 
@@ -76,7 +76,7 @@ The SVG is rasterized at its document bounds. Inherited `Image` layout and rende
 | --- | --- | --- | --- |
 | `SourcePath` | `string?` | `null` | Gets or sets the SVG file path. A visible attached control reloads when this value changes; a non-renderable control defers loading. |
 
-`SvgImage` also inherits `Source`, `UseIntrinsicSize`, resource properties, and layout properties from `Image` and `UIElement`.
+`SvgImage` also inherits `Source`, `Stretch`, `StretchDirection`, `UseIntrinsicSize`, resource properties, and layout properties from `Image` and `UIElement`.
 
 ## Applies To
 
