@@ -87,7 +87,9 @@ public sealed class ServoPlatformInputTests
         Task send = harness.Servo.SendPlatformInputAsync(
             ServoPlatformInput.KeyDown(InputKey.A),
             ServoPlatformInput.KeyUp(InputKey.A));
-        send.ContinueWith(
+        // Delays the thread that completes send, as a busy runner can, so the asserts must not race the observing continuation (#750).
+        send.ContinueWith(_ => Thread.Sleep(50), TaskContinuationOptions.ExecuteSynchronously);
+        Task observed = send.ContinueWith(
             _ =>
             {
                 keyDownsAtCompletion = Volatile.Read(ref keyDowns);
@@ -96,6 +98,7 @@ public sealed class ServoPlatformInputTests
             TaskContinuationOptions.ExecuteSynchronously);
         harness.Pump(send);
         send.GetAwaiter().GetResult();
+        observed.GetAwaiter().GetResult();
 
         // SdlInputSource defers the release of a key pressed in the same pump to the next frame.
         Assert.Equal(1, keyDownsAtCompletion);
@@ -144,11 +147,14 @@ public sealed class ServoPlatformInputTests
             ServoPlatformInput.PointerMove(center),
             ServoPlatformInput.PointerDown(center, InputMouseButton.Left),
             ServoPlatformInput.PointerUp(center, InputMouseButton.Left));
-        send.ContinueWith(
+        // Delays the thread that completes send, as a busy runner can, so the asserts must not race the observing continuation (#750).
+        send.ContinueWith(_ => Thread.Sleep(50), TaskContinuationOptions.ExecuteSynchronously);
+        Task observed = send.ContinueWith(
             _ => clicksAtCompletion = Volatile.Read(ref clicks),
             TaskContinuationOptions.ExecuteSynchronously);
         harness.Pump(send);
         send.GetAwaiter().GetResult();
+        observed.GetAwaiter().GetResult();
 
         Assert.Equal(1, clicksAtCompletion);
         Assert.Equal(1, clicks);
