@@ -16,6 +16,13 @@ public sealed partial class UiMarkupGenerator
             return new DirectiveExpressionParser(header).Parse();
         }
 
+        // Parses a property value such as "$DataContext.A and $DataContext.B"
+        // with the @if/@when grammar; location is where the text starts.
+        public static DirectiveExpression ParseExpression(string text, DirectiveExpressionLocation location)
+        {
+            return ParseExpression(new DirectiveHeader(text, location.Source, location.Offset));
+        }
+
         private sealed class DirectiveExpressionParser
         {
             private readonly DirectiveHeader header;

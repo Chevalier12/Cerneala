@@ -236,6 +236,67 @@ the following text is not parsed as a binding, resource, or interpolation.
 
 A standalone `$` that does not begin a valid path also remains literal.
 
+## Logical Binding Expressions
+
+A `bool` target may combine one or more sources with the operators that `@if`
+accepts:
+
+```xml
+<StackPanel DataType="EditorViewModel">
+  <Button Content="Save" IsEnabled="$DataContext.HasName and $DataContext.IsValid" />
+  <Button Content="Retry" IsEnabled="$DataContext.Attempts > 0 or $self.IsFocused" />
+  <TextBlock Text="Empty" IsVisible="$DataContext.Count == 0" />
+  <Button Content="Publish"
+          IsEnabled="($DataContext.IsDraft or $DataContext.IsReviewed) and $DataContext.HasName" />
+</StackPanel>
+```
+
+With `HasName = true` and `IsValid = false`, the Save button has
+`IsEnabled == False`. Setting `IsValid = true` makes it `True` in the same
+frame. A change to a property that the expression does not read does not
+reevaluate it.
+
+The grammar is the reactive-condition grammar:
+
+| Element | Accepted forms |
+| --- | --- |
+| Logical operators | `and`, `or`; `and` binds tighter than `or`; parentheses group. |
+| Comparisons | `==`, `!=`, `<`, `<=`, `>`, `>=`, one per operand pair. Ordering needs numeric or string operands. |
+| Leaves | A `bool` source such as `$DataContext.IsValid`, or a comparison. |
+| Literals | `true`, `false`, numbers, double-quoted strings, `Null` (only with `==` and `!=`), and an enum member name on the right of a comparison. |
+| Sources | Every source form in [Binding Grammar](#binding-grammar). |
+
+There is no `not` operator. Write the comparison instead, for example
+`$DataContext.IsBusy == false`.
+
+The expression is always `OneWay`. Every distinct path is observed once, and a
+change to any of them recomputes the complete value. Evaluation uses C#
+short-circuit rules, but every written source stays observed.
+
+A leaf or comparison whose source is unresolved, for example because the data
+context is `null`, evaluates to `false`, as in `@if`. With a `null` data
+context, `$DataContext.HasName and $DataContext.IsValid` gives `False`, and
+`$DataContext.Count != 0` also gives `False`.
+
+A single path without an operator remains an ordinary direct binding and may
+carry a mode. Everything else is reported by the generator as
+`CERNEALAUI007`:
+
+```xml
+<!-- Invalid: the target is not bool. -->
+<TextBlock Text="$DataContext.HasName and $DataContext.IsValid" />
+<!-- Invalid: a mode inside or after an expression. -->
+<Button IsEnabled="$DataContext.HasName:TwoWay and $DataContext.IsValid" />
+<!-- Invalid: a logical leaf must be bool. -->
+<Button IsEnabled="$DataContext.Name and $DataContext.IsValid" />
+<!-- Invalid: both sides of a comparison must have the same type. -->
+<Button IsEnabled="$DataContext.Count == $DataContext.Name" />
+<!-- Invalid: value exists only in @if conditions. -->
+<Button IsEnabled="value == true and $DataContext.IsValid" />
+<!-- Invalid: a source must start with $; write $self.IsFocused. -->
+<Button IsEnabled="IsFocused and $DataContext.IsValid" />
+```
+
 ## Named Elements And Self
 
 Named element bindings may point backward or forward within the same name
@@ -335,6 +396,23 @@ binding written in the wrong form:
 Text = "$DataContext.Name"; // Invalid; remove the quotes.
 ```
 
+A `bool` property may also take an unquoted
+[logical binding expression](#logical-binding-expressions). Like
+interpolation, it needs no mode suffix:
+
+```xml
+<Button DataType="EditorViewModel" IsEnabled="False">
+  @when $DataContext.IsAdmin
+  {
+    IsEnabled = $DataContext.HasName or $DataContext.IsDraft;
+  }
+</Button>
+```
+
+While the rule wins, the button follows `HasName or IsDraft`. When the rule
+stops winning, the expression stops observing its sources and `IsEnabled`
+returns to `False`.
+
 For each target property, only the binding supplied by the winning conditional
 rule is active. An inactive provider does not observe its value source or write
 back to it. Activation reads the current source immediately; deactivation
@@ -428,7 +506,10 @@ resource references are unchanged.
 Markup bindings intentionally do not provide WPF `{Binding ...}` syntax,
 runtime reflection paths, custom converters, `FallbackValue`,
 `TargetNullValue`, `UpdateSourceTrigger`, `OneTime`, `OneWayToSource`,
-multi-binding, or arbitrary C# expressions. Invalid syntax, inaccessible
+or arbitrary C# expressions. Multi-source bindings exist only as string
+[interpolation](#reactive-string-interpolation) and `bool`
+[logical binding expressions](#logical-binding-expressions); there is no
+multi-binding with a converter or a method call. Invalid syntax, inaccessible
 members, incompatible types, read-only endpoints, and unobservable CLR owners
 produce source-generator diagnostics.
 

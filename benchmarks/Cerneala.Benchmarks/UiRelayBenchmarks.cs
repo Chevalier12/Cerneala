@@ -125,7 +125,7 @@ public class UiRelayBindingBenchmarks
         TextBlock target = new();
         MarkupObservation firstObservation = GeneratedMarkup.ObserveObject(() => first);
         MarkupObservation secondObservation = GeneratedMarkup.ObserveObject(() => second);
-        _ = GeneratedMarkup.AttachInterpolatedStringBinding(
+        _ = GeneratedMarkup.AttachComputedBinding(
             target,
             target,
             TextBlock.TextProperty,

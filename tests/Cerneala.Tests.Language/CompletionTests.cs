@@ -349,6 +349,24 @@ public sealed class CompletionTests
     }
 
     [Fact]
+    public void PropertyExpressionCompletesSourcesAndMembersAfterEverySigil()
+    {
+        using CompletionFixture sources = CompletionFixture.Create(
+            "<Window DataType=\"Test.ViewModel\"><Button Name=\"Action\" IsEnabled=\"$DataContext.IsReady and $|caret|\" /></Window>");
+        using CompletionFixture members = CompletionFixture.Create(
+            "<Window DataType=\"Test.ViewModel\"><Button IsEnabled=\"($DataContext.IsReady or $self.IsFocused) and $DataContext.|caret|\" /></Window>");
+
+        IReadOnlyList<CernealaCompletionItem> sourceItems = sources.Complete();
+        Assert.Contains(sourceItems, item => item.Label == "$DataContext");
+        Assert.Contains(sourceItems, item => item.Label == "$Action");
+        CernealaCompletionItem isReady = Assert.Single(members.Complete().Where(item => item.Label == "IsReady"));
+        string applied = members.Text.Substring(0, isReady.ReplacementSpan.Start) +
+            isReady.InsertText +
+            members.Text.Substring(isReady.ReplacementSpan.End);
+        Assert.Contains("and $DataContext.IsReady\"", applied, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void DirectivesArgumentsAndSignatureHelpUseTheExactEmbeddedContext()
     {
         using CompletionFixture aspect = CompletionFixture.Create(

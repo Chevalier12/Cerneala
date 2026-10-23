@@ -38,7 +38,8 @@ public sealed partial class UiMarkupGenerator
                 value,
                 assignment: false,
                 stringTarget: spec.ValueType.SpecialType == SpecialType.System_String,
-                attribute);
+                attribute,
+                expressionTarget: spec.ValueType);
             if (parsedMarkup?.Kind == ParsedMarkupValueKind.Invalid)
             {
                 return;

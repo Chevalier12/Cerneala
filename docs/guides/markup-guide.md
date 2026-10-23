@@ -859,6 +859,28 @@ Binding modes are not allowed inside interpolated strings.
 To render a literal dollar sign where interpolation is possible, escape it as
 `\$`.
 
+### Logical expressions
+
+`bool` properties can combine several sources with the `@if` operators `and`,
+`or`, `==`, `!=`, `<`, `<=`, `>`, `>=` and parentheses:
+
+```xml
+<Button
+    Content="Save"
+    IsEnabled="$DataContext.HasName and $DataContext.IsValid" />
+<TextBlock
+    Text="No items"
+    IsVisible="$DataContext.Count == 0" />
+```
+
+The Save button is enabled only while both `HasName` and `IsValid` are `true`.
+A change to either source updates it in the same frame. The expression is
+always one-way and allows no mode suffix. It works only on `bool` targets;
+`Text="$DataContext.A and $DataContext.B"` is a build error. There is no
+`not`: write `$DataContext.IsBusy == false`. See
+[Logical Binding Expressions](../reference/markup-data-bindings.md#logical-binding-expressions)
+for the full grammar and the null rules.
+
 ### Binding rules
 
 - A direct binding is unquoted in Aspect assignment syntax.

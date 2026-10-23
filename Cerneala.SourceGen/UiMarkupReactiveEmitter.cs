@@ -16,12 +16,14 @@ public sealed partial class UiMarkupGenerator
                 string ownerVariable,
                 string elementName,
                 bool isRoot = false,
-                TemplateEmissionContext? templateContext = null)
+                TemplateEmissionContext? templateContext = null,
+                bool propertyExpression = false)
             {
                 OwnerVariable = ownerVariable;
                 ElementName = elementName;
                 IsRoot = isRoot;
                 TemplateContext = templateContext;
+                PropertyExpression = propertyExpression;
             }
 
             public string OwnerVariable { get; }
@@ -32,9 +34,17 @@ public sealed partial class UiMarkupGenerator
 
             public TemplateEmissionContext? TemplateContext { get; }
 
+            // A bool property value such as IsEnabled="$DataContext.A and $DataContext.B":
+            // sources must be $-prefixed and CLR path owners must be observable, as for
+            // direct property bindings.
+            public bool PropertyExpression { get; }
+
             public List<string> ObservationLines { get; } = [];
 
             public List<string> ObservationNames { get; } = [];
+
+            // One resolved source per distinct observation, in emission order.
+            public List<BindingSourceDescriptor> Sources { get; } = [];
 
             public Dictionary<string, ObservationEmission> Observations { get; } = new(StringComparer.Ordinal);
 
@@ -292,6 +302,16 @@ public sealed partial class UiMarkupGenerator
             {
                 case DirectiveSourceExpression source:
                     {
+                        if (plan.PropertyExpression && !source.Text.StartsWith("$", StringComparison.Ordinal))
+                        {
+                            Report(
+                                InvalidBindingSource,
+                                source.Location,
+                                source.Text,
+                                "Property expression sources must start with '$' ($DataContext, $self, $owner, $root or $name).");
+                            return null;
+                        }
+
                         ObservationEmission? observation = EmitObservation(plan, source.Text, source.Location.Source, source.Location);
                         return observation is null
                             ? null
@@ -595,7 +615,8 @@ public sealed partial class UiMarkupGenerator
                 plan.OwnerVariable,
                 plan.ElementName,
                 plan.IsRoot,
-                plan.TemplateContext);
+                plan.TemplateContext,
+                validateClrObservability: plan.PropertyExpression);
             BindingSourceDescriptor? descriptor = ResolveBindingSource(
                 resolutionContext,
                 expression,
@@ -619,6 +640,7 @@ public sealed partial class UiMarkupGenerator
                 name,
                 descriptor);
             plan.Observations.Add(descriptor.CanonicalExpression, emission);
+            plan.Sources.Add(descriptor);
 
             return emission;
         }
@@ -936,7 +958,8 @@ public sealed partial class UiMarkupGenerator
                             assignment: true,
                             stringTarget: spec.ValueType.SpecialType == SpecialType.System_String,
                             assignment.ValueLocation,
-                            requireExplicitMode: true);
+                            requireExplicitMode: true,
+                            expressionTarget: spec.ValueType);
                         if (parsedMarkup?.Kind == ParsedMarkupValueKind.Invalid)
                         {
                             continue;

@@ -286,7 +286,7 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.True(compilation.GetDiagnostics().All(diagnostic => diagnostic.Severity != DiagnosticSeverity.Error));
         string generated = SingleGeneratedSource(result);
         Assert.DoesNotContain("AttachPropertyBinding", generated, StringComparison.Ordinal);
-        Assert.DoesNotContain("AttachInterpolatedStringBinding", generated, StringComparison.Ordinal);
+        Assert.DoesNotContain("AttachComputedBinding", generated, StringComparison.Ordinal);
     }
 
     [Fact]

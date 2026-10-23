@@ -156,7 +156,7 @@ public sealed class BindingRelayTests
         MarkupObservation firstObservation = GeneratedMarkup.ObserveObject(() => first);
         MarkupObservation secondObservation = GeneratedMarkup.ObserveObject(() => second);
         int composeCount = 0;
-        using Binding interpolation = GeneratedMarkup.AttachInterpolatedStringBinding(
+        using Binding interpolation = GeneratedMarkup.AttachComputedBinding(
             target,
             target,
             TextBlock.TextProperty,
@@ -208,7 +208,7 @@ public sealed class BindingRelayTests
         ThreadedTextSource source = new("initial");
         TextBlock target = new();
         MarkupObservation observation = GeneratedMarkup.ObserveObject(() => source);
-        Binding binding = GeneratedMarkup.AttachInterpolatedStringBinding(
+        Binding binding = GeneratedMarkup.AttachComputedBinding(
             target,
             target,
             TextBlock.TextProperty,

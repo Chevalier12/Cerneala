@@ -37,18 +37,18 @@ public static partial class GeneratedMarkup
         return controller;
     }
 
-    public static Binding AttachInterpolatedStringBinding(
+    public static Binding AttachComputedBinding<T>(
         UIElement owner,
         UiObject target,
-        UiProperty<string> targetProperty,
+        UiProperty<T> targetProperty,
         IReadOnlyList<MarkupObservation> observations,
-        Func<string> compose,
+        Func<T> compose,
         string description)
     {
         ArgumentNullException.ThrowIfNull(owner);
         ArgumentNullException.ThrowIfNull(compose);
 
-        MarkupPropertyBindingController<string> controller = new(
+        MarkupPropertyBindingController<T> controller = new(
             owner,
             target,
             targetProperty,
@@ -89,16 +89,16 @@ public static partial class GeneratedMarkup
         return new MarkupConditionalValue(target, targetProperty, controller);
     }
 
-    public static MarkupConditionalValue CreateConditionalInterpolatedStringBinding(
+    public static MarkupConditionalValue CreateConditionalComputedBinding<T>(
         UiObject target,
-        UiProperty<string> targetProperty,
+        UiProperty<T> targetProperty,
         IReadOnlyList<MarkupObservation> observations,
-        Func<string> compose,
+        Func<T> compose,
         string description)
     {
         ArgumentNullException.ThrowIfNull(compose);
 
-        MarkupPropertyBindingController<string> controller = new(
+        MarkupPropertyBindingController<T> controller = new(
             null,
             target,
             targetProperty,

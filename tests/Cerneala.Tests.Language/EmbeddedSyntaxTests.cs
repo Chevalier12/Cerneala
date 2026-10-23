@@ -49,6 +49,66 @@ public sealed class EmbeddedSyntaxTests
         Assert.InRange(result.Diagnostics[0].Span.Start, 9, 9 + text.Length);
     }
 
+    // Mirrors UiMarkupGenerator.ParseMarkupExpression: bool targets take any value with '$'
+    // that is not one whole binding token; string targets only '$'-leading values with an
+    // operator; other targets any parsed value with an operator.
+    [Theory]
+    [InlineData("$DataContext.A and $DataContext.B", true, false, "Expression")]
+    [InlineData("($DataContext.A)", true, false, "Expression")]
+    [InlineData("IsFocused and $DataContext.B", true, false, "Expression")]
+    [InlineData("$DataContext.Count &gt; 0", true, false, "Expression")]
+    [InlineData("  $DataContext.A or $self.IsFocused  ", true, false, "Expression")]
+    [InlineData("$DataContext.A", true, false, "None")]
+    [InlineData("$DataContext.A:TwoWay", true, false, "None")]
+    [InlineData("$DataContext.A:Two", true, false, "None")]
+    [InlineData("$Accent", true, false, "None")]
+    [InlineData("No binding", true, false, "None")]
+    [InlineData("$DataContext.A and", true, false, "Rejected")]
+    [InlineData("Hello $DataContext.Name", true, false, "Rejected")]
+    [InlineData("$DataContext.A:TwoWay and $DataContext.B", true, false, "Rejected")]
+    [InlineData("($DataContext.A and $DataContext.B):OneWay", true, false, "Rejected")]
+    [InlineData("($DataContext.A)", false, false, "None")]
+    [InlineData("IsFocused and $DataContext.B", false, false, "NonBooleanTarget")]
+    [InlineData("$DataContext.Count &lt; 3", false, false, "NonBooleanTarget")]
+    [InlineData("IsFocused and $DataContext.B", false, true, "None")]
+    [InlineData("Hello $DataContext.Name", false, true, "None")]
+    [InlineData("$DataContext.A and $DataContext.B", false, true, "NonBooleanTarget")]
+    [InlineData("$DataContext.A and", false, false, "None")]
+    public void PropertyExpressionShapeMatchesTheGeneratorDetectionRule(
+        string text,
+        bool booleanTarget,
+        bool stringTarget,
+        string expected)
+    {
+        BindingExpressionSyntax syntax = BindingExpressionSyntaxParser.Parse(text);
+
+        Assert.Equal(expected, syntax.Classify(booleanTarget, stringTarget).ToString());
+    }
+
+    [Fact]
+    public void PropertyExpressionSourcesKeepDocumentSpansAcrossEntitiesAndWhitespace()
+    {
+        const string text = "  $DataContext.Count &lt; 3 or $self.IsFocused ";
+        BindingExpressionSyntax syntax = BindingExpressionSyntaxParser.Parse(text, absoluteOffset: 40);
+
+        Assert.Equal("$DataContext.Count < 3 or $self.IsFocused", syntax.Text);
+        Assert.Equal(42, syntax.Span.Start);
+        Assert.Equal(text.TrimEnd().Length - 2, syntax.Span.Length);
+        Assert.Collection(
+            syntax.Sources,
+            source =>
+            {
+                Assert.Equal("$DataContext.Count", source.Text);
+                Assert.Equal(42, source.Span.Start);
+            },
+            source =>
+            {
+                Assert.Equal("$self.IsFocused", source.Text);
+                Assert.Equal(40 + text.IndexOf("$self", StringComparison.Ordinal), source.Span.Start);
+                Assert.Equal(["self", "IsFocused"], source.Segments.Select(segment => segment.Name));
+            });
+    }
+
     [Fact]
     public void GeneralDirectiveGrammarFindsTemplatesConditionsAssignmentsAndComparators()
     {

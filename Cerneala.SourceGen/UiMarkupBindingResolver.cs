@@ -20,7 +20,8 @@ public sealed partial class UiMarkupGenerator
         {
             Invalid,
             DirectBinding,
-            Interpolation
+            Interpolation,
+            Expression
         }
 
         private enum BindingSourceKind
@@ -76,11 +77,13 @@ public sealed partial class UiMarkupGenerator
             private ParsedMarkupValue(
                 ParsedMarkupValueKind kind,
                 MarkupBindingToken? binding,
-                IReadOnlyList<MarkupInterpolationFragment>? fragments)
+                IReadOnlyList<MarkupInterpolationFragment>? fragments,
+                DirectiveExpression? expression = null)
             {
                 Kind = kind;
                 Binding = binding;
                 Fragments = fragments ?? [];
+                Expression = expression;
             }
 
             public ParsedMarkupValueKind Kind { get; }
@@ -89,6 +92,8 @@ public sealed partial class UiMarkupGenerator
 
             public IReadOnlyList<MarkupInterpolationFragment> Fragments { get; }
 
+            public DirectiveExpression? Expression { get; }
+
             public static ParsedMarkupValue Invalid() => new(ParsedMarkupValueKind.Invalid, null, null);
 
             public static ParsedMarkupValue Direct(MarkupBindingToken binding) =>
@@ -96,6 +101,9 @@ public sealed partial class UiMarkupGenerator
 
             public static ParsedMarkupValue Interpolation(IReadOnlyList<MarkupInterpolationFragment> fragments) =>
                 new(ParsedMarkupValueKind.Interpolation, null, fragments);
+
+            public static ParsedMarkupValue FromExpression(DirectiveExpression expression) =>
+                new(ParsedMarkupValueKind.Expression, null, null, expression);
         }
 
         private sealed class BindingResolutionContext
@@ -189,15 +197,25 @@ public sealed partial class UiMarkupGenerator
         {
             public ResolvedMarkupValue(
                 ParsedMarkupValue parsed,
-                IReadOnlyList<BindingSourceDescriptor> sources)
+                IReadOnlyList<BindingSourceDescriptor> sources,
+                ReactivePlan? expressionPlan = null,
+                string? expressionCode = null)
             {
                 Parsed = parsed;
                 Sources = sources;
+                ExpressionPlan = expressionPlan;
+                ExpressionCode = expressionCode;
             }
 
             public ParsedMarkupValue Parsed { get; }
 
             public IReadOnlyList<BindingSourceDescriptor> Sources { get; }
+
+            // For an Expression value: the observations the bound expression reads
+            // and the C# Boolean code that computes the target value.
+            public ReactivePlan? ExpressionPlan { get; }
+
+            public string? ExpressionCode { get; }
         }
 
         private ParsedMarkupValue? ParseMarkupBindingValue(
@@ -205,7 +223,8 @@ public sealed partial class UiMarkupGenerator
             bool assignment,
             bool stringTarget,
             object diagnosticSource,
-            bool requireExplicitMode = false)
+            bool requireExplicitMode = false,
+            ITypeSymbol? expressionTarget = null)
         {
             string value = rawValue.Trim();
             bool quoted = assignment && value.Length >= 2 && value[0] == '"' && value[value.Length - 1] == '"';
@@ -215,6 +234,15 @@ public sealed partial class UiMarkupGenerator
                 return stringTarget
                     ? ParseMarkupInterpolation(content, rejectPurePath: true, contentOffset: 1, diagnosticSource)
                     : null;
+            }
+
+            if (expressionTarget is not null)
+            {
+                ParsedMarkupValue? expression = ParseMarkupExpression(rawValue, value, expressionTarget, diagnosticSource);
+                if (expression is not null)
+                {
+                    return expression;
+                }
             }
 
             if (value.StartsWith("$", StringComparison.Ordinal))
@@ -247,6 +275,154 @@ public sealed partial class UiMarkupGenerator
             }
 
             return null;
+        }
+
+        private const string ExpressionModeMessage =
+            "Binding modes are not allowed in a property expression; expression bindings are always OneWay.";
+
+        // Recognizes a logical/comparison expression over binding sources, written with the
+        // @if/@when grammar, for example IsEnabled="$DataContext.HasName and $DataContext.IsValid".
+        // Returns null when the value keeps its existing meaning (a single binding token, a
+        // single reference, a literal or a string interpolation).
+        private ParsedMarkupValue? ParseMarkupExpression(
+            string rawValue,
+            string value,
+            ITypeSymbol targetType,
+            object diagnosticSource)
+        {
+            bool booleanTarget = targetType.SpecialType == SpecialType.System_Boolean;
+            bool stringTarget = targetType.SpecialType == SpecialType.System_String;
+            if (value.IndexOf('$') < 0 || (stringTarget && !value.StartsWith("$", StringComparison.Ordinal)))
+            {
+                return null;
+            }
+
+            BindingTokenParseResult leadingToken = ParseBindingToken(value, 0);
+            if (leadingToken.Length == value.Length && (leadingToken.Token is not null || leadingToken.Error is not null))
+            {
+                return null;
+            }
+
+            int colon = FindExpressionModeSeparator(value);
+            DirectiveExpressionLocation location = MarkupValueLocation(diagnosticSource, rawValue);
+            DirectiveExpression expression;
+            try
+            {
+                expression = DirectiveCursor.ParseExpression(value, location);
+            }
+            catch (DirectiveParseException exception)
+            {
+                if (!booleanTarget)
+                {
+                    return null;
+                }
+
+                Report(
+                    InvalidBindingSource,
+                    colon >= 0 ? OffsetDiagnosticSource(location, colon) : exception.LocationSource ?? location,
+                    value,
+                    colon >= 0 ? ExpressionModeMessage : exception.Message);
+                return ParsedMarkupValue.Invalid();
+            }
+
+            if (expression is DirectiveSourceExpression)
+            {
+                return null;
+            }
+
+            if (!booleanTarget)
+            {
+                if (!HasExpressionOperator(expression))
+                {
+                    return null;
+                }
+
+                Report(
+                    InvalidBindingSource,
+                    location,
+                    value,
+                    "Logical expressions are supported only for bool targets; the target type is '" +
+                    targetType.ToDisplayString() + "'.");
+                return ParsedMarkupValue.Invalid();
+            }
+
+            if (colon >= 0)
+            {
+                Report(InvalidBindingSource, OffsetDiagnosticSource(location, colon), value, ExpressionModeMessage);
+                return ParsedMarkupValue.Invalid();
+            }
+
+            return ParsedMarkupValue.FromExpression(expression);
+        }
+
+        private static bool HasExpressionOperator(DirectiveExpression expression)
+        {
+            return expression switch
+            {
+                DirectiveGroupExpression group => HasExpressionOperator(group.Inner),
+                DirectiveLogicalExpression or DirectiveComparisonExpression => true,
+                _ => false
+            };
+        }
+
+        // The offset of a ':' outside quoted string literals, or -1.
+        private static int FindExpressionModeSeparator(string value)
+        {
+            bool quoted = false;
+            bool escaped = false;
+            for (int index = 0; index < value.Length; index++)
+            {
+                char character = value[index];
+                if (escaped)
+                {
+                    escaped = false;
+                }
+                else if (quoted && character == '\\')
+                {
+                    escaped = true;
+                }
+                else if (character == '"')
+                {
+                    quoted = !quoted;
+                }
+                else if (!quoted && character == ':')
+                {
+                    return index;
+                }
+            }
+
+            return -1;
+        }
+
+        // Where the trimmed value starts: after the opening quote of an attribute, or at
+        // the value of a directive assignment.
+        private DirectiveExpressionLocation MarkupValueLocation(object diagnosticSource, string rawValue)
+        {
+            int leadingWhitespace = rawValue.Length - rawValue.TrimStart().Length;
+            switch (diagnosticSource)
+            {
+                case DirectiveExpressionLocation location:
+                    return new DirectiveExpressionLocation(location.Source, location.Offset + leadingWhitespace);
+                case MarkupAttribute attribute:
+                    {
+                        int valueStart = -1;
+                        string? text = file.Text;
+                        if (text is not null && attribute.Span.End <= text.Length)
+                        {
+                            string attributeText = text.Substring(attribute.Span.Start, attribute.Span.Length);
+                            int equals = attributeText.IndexOf('=');
+                            valueStart = equals < 0 ? -1 : attributeText.IndexOfAny(['"', '\''], equals);
+                        }
+
+                        return new DirectiveExpressionLocation(
+                            attribute,
+                            valueStart < 0 ? 0 : valueStart + 1 + leadingWhitespace);
+                    }
+                case MarkupObject markupObject:
+                    return new DirectiveExpressionLocation(markupObject, 0);
+                default:
+                    throw new InvalidOperationException("Unsupported markup value diagnostic source.");
+            }
         }
 
         private ParsedMarkupValue? ParseMarkupInterpolation(
@@ -535,6 +711,44 @@ public sealed partial class UiMarkupGenerator
                 }
 
                 return new ResolvedMarkupValue(parsed, [descriptor]);
+            }
+
+            if (parsed.Kind == ParsedMarkupValueKind.Expression)
+            {
+                // Same binding and type checks as @if/@when; each distinct source becomes one observation.
+                DirectiveExpression expression = parsed.Expression!;
+                ReactivePlan plan = new(
+                    resolutionContext.OwnerVariable,
+                    resolutionContext.ElementName,
+                    resolutionContext.IsRoot,
+                    resolutionContext.TemplateContext,
+                    propertyExpression: true);
+                BoundDirectiveExpression? bound = BindDirectiveExpression(plan, expression, null);
+                string? predicate = bound is null
+                    ? null
+                    : RequireBooleanPredicate(bound, expression.Location, DescribeExpression(expression));
+                if (predicate is null)
+                {
+                    return null;
+                }
+
+                // Mirrors the direct-binding rule: the expression must not read the property it writes.
+                foreach (BindingSourceDescriptor expressionSource in plan.Sources)
+                {
+                    if (expressionSource.Property is not null &&
+                        string.Equals(expressionSource.OwnerCode, resolutionContext.OwnerVariable, StringComparison.Ordinal) &&
+                        string.Equals(expressionSource.Property.PropertyCode, target.PropertyCode, StringComparison.Ordinal))
+                    {
+                        Report(
+                            InvalidBindingSource,
+                            diagnosticSource,
+                            expressionSource.CanonicalExpression,
+                            "A UI property expression cannot read its own target property.");
+                        return null;
+                    }
+                }
+
+                return new ResolvedMarkupValue(parsed, [], plan, predicate);
             }
 
             Dictionary<string, BindingSourceDescriptor> unique = new(StringComparer.Ordinal);
@@ -1101,10 +1315,10 @@ public sealed partial class UiMarkupGenerator
             ResolvedMarkupValue resolved,
             string description)
         {
-            Dictionary<string, ObservationEmission> observations = EmitResolvedObservations(resolved.Sources);
             string attachExpression;
             if (resolved.Parsed.Kind == ParsedMarkupValueKind.DirectBinding)
             {
+                Dictionary<string, ObservationEmission> observations = EmitResolvedObservations(resolved.Sources);
                 MarkupBindingToken token = resolved.Parsed.Binding!;
                 BindingSourceDescriptor source = resolved.Sources[0];
                 ObservationEmission observation = observations[source.CanonicalExpression];
@@ -1117,10 +1331,9 @@ public sealed partial class UiMarkupGenerator
             else
             {
                 attachExpression =
-                    "global::Cerneala.UI.Markup.GeneratedMarkup.AttachInterpolatedStringBinding(" +
+                    "global::Cerneala.UI.Markup.GeneratedMarkup.AttachComputedBinding<" + target.ValueTypeCode + ">(" +
                     resolutionContext.OwnerVariable + ", " + resolutionContext.OwnerVariable + ", " +
-                    target.PropertyCode + ", " + ObservationArrayCode(observations.Values) + ", () => " +
-                    ComposeInterpolationCode(resolved.Parsed, observations) + ", " + Literal(description) + ")";
+                    target.PropertyCode + ", " + EmitComputedValueArguments(resolved) + ", " + Literal(description) + ")";
             }
 
             currentPostLines.Add(resolutionContext.TemplateContext is null
@@ -1134,9 +1347,9 @@ public sealed partial class UiMarkupGenerator
             ResolvedMarkupValue resolved,
             string description)
         {
-            Dictionary<string, ObservationEmission> observations = EmitResolvedObservations(resolved.Sources);
             if (resolved.Parsed.Kind == ParsedMarkupValueKind.DirectBinding)
             {
+                Dictionary<string, ObservationEmission> observations = EmitResolvedObservations(resolved.Sources);
                 MarkupBindingToken token = resolved.Parsed.Binding!;
                 BindingSourceDescriptor source = resolved.Sources[0];
                 ObservationEmission observation = observations[source.CanonicalExpression];
@@ -1147,10 +1360,26 @@ public sealed partial class UiMarkupGenerator
             }
 
             return
-                "global::Cerneala.UI.Markup.GeneratedMarkup.CreateConditionalInterpolatedStringBinding(" +
+                "global::Cerneala.UI.Markup.GeneratedMarkup.CreateConditionalComputedBinding<" + target.ValueTypeCode + ">(" +
                 resolutionContext.OwnerVariable + ", " + target.PropertyCode + ", " +
-                ObservationArrayCode(observations.Values) + ", () => " +
-                ComposeInterpolationCode(resolved.Parsed, observations) + ", " + Literal(description) + ")";
+                EmitComputedValueArguments(resolved) + ", " + Literal(description) + ")";
+        }
+
+        // Emits the observations of an interpolation or expression value and returns the
+        // "observations, () => compose" arguments of the computed binding factories.
+        private string EmitComputedValueArguments(ResolvedMarkupValue resolved)
+        {
+            if (resolved.Parsed.Kind == ParsedMarkupValueKind.Expression)
+            {
+                ReactivePlan plan = resolved.ExpressionPlan!;
+                currentPostLines.AddRange(plan.ObservationLines);
+                return "new global::Cerneala.UI.Markup.MarkupObservation[] { " +
+                    string.Join(", ", plan.ObservationNames) + " }, () => " + resolved.ExpressionCode;
+            }
+
+            Dictionary<string, ObservationEmission> observations = EmitResolvedObservations(resolved.Sources);
+            return ObservationArrayCode(observations.Values) + ", () => " +
+                ComposeInterpolationCode(resolved.Parsed, observations);
         }
 
         private Dictionary<string, ObservationEmission> EmitResolvedObservations(
