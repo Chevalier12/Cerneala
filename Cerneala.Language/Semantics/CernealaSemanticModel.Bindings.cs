@@ -18,6 +18,11 @@ internal sealed partial class CernealaSemanticModel
     {
         resultType = null;
         TextSpan contentSpan = AttributeContentSpan(attribute);
+        if (TryBindPropertyExpression(element, target, value, contentSpan, dataType))
+        {
+            return true;
+        }
+
         if (TryBindDirectResourceReference(element, target, value, contentSpan, out resultType))
         {
             return true;
@@ -79,6 +84,49 @@ internal sealed partial class CernealaSemanticModel
         }
 
         return false;
+    }
+
+    // A property expression such as IsEnabled="$DataContext.A and $DataContext.B", detected
+    // with the generator's rule. The model resolves each '$' path (symbols and unresolved
+    // members) and reports the non-bool target error with the generator's text. Syntax,
+    // bare identifiers, 'value', modes, self-reads and type rules stay generator-only, as
+    // for @if, so the generator's message is the one the build shows.
+    private bool TryBindPropertyExpression(
+        ElementSyntax element,
+        ILanguageMemberSymbol target,
+        string value,
+        TextSpan contentSpan,
+        ILanguageTypeSymbol? dataType)
+    {
+        if (value.IndexOf('$') < 0)
+        {
+            return false;
+        }
+
+        string targetType = target.ValueTypeMetadataName;
+        BindingExpressionSyntax expression = BindingExpressionSyntaxParser.Parse(value, contentSpan.Start);
+        switch (expression.Classify(
+            booleanTarget: targetType is "bool" or "System.Boolean",
+            stringTarget: targetType.TrimEnd('?') is "string" or "System.String"))
+        {
+            case BindingExpressionShape.Expression:
+                foreach (BindingPathSyntax source in expression.Sources)
+                {
+                    ResolveBindingPath(element, source, dataType);
+                }
+
+                return true;
+            case BindingExpressionShape.Rejected:
+                return true;
+            case BindingExpressionShape.NonBooleanTarget:
+                AddBindingDiagnostic(
+                    expression.Text,
+                    expression.Span,
+                    "Logical expressions are supported only for bool targets; the target type is '" + targetType + "'.");
+                return true;
+            default:
+                return false;
+        }
     }
 
     private bool TryBindDirectResourceReference(

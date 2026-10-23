@@ -87,7 +87,7 @@ public sealed class GeneratedMarkupBindingTests
         MarkupObservation secondObservation = GeneratedMarkup.ObserveProperty(second, ObjectEndpoint.ValueProperty);
         TextBlock direct = new();
         int composeCount = 0;
-        using Binding directBinding = GeneratedMarkup.AttachInterpolatedStringBinding(
+        using Binding directBinding = GeneratedMarkup.AttachComputedBinding(
             direct,
             direct,
             TextBlock.TextProperty,
@@ -118,7 +118,7 @@ public sealed class GeneratedMarkupBindingTests
         MarkupObservation conditionObservation = GeneratedMarkup.ObserveProperty(condition, UIElement.IsEnabledProperty);
         TextBlock target = new();
         target.SetValue(TextBlock.TextProperty, "base", UiPropertyValueSource.MarkupBase);
-        MarkupConditionalValue interpolated = GeneratedMarkup.CreateConditionalInterpolatedStringBinding(
+        MarkupConditionalValue interpolated = GeneratedMarkup.CreateConditionalComputedBinding(
             target,
             TextBlock.TextProperty,
             [conditionalFirstObservation, conditionalSecondObservation],
@@ -145,6 +145,69 @@ public sealed class GeneratedMarkupBindingTests
         conditionalSecond.Value = 4;
         condition.IsEnabled = true;
         Assert.Equal("three-4", target.Text);
+    }
+
+    [Fact]
+    public void ComputedBooleanBindingRecomputesFromEverySourceAndStopsAfterDisposal()
+    {
+        UIElement first = new() { IsEnabled = false };
+        UIElement second = new() { IsEnabled = false };
+        MarkupObservation firstObservation = GeneratedMarkup.ObserveProperty(first, UIElement.IsEnabledProperty);
+        MarkupObservation secondObservation = GeneratedMarkup.ObserveProperty(second, UIElement.IsEnabledProperty);
+        TextBlock target = new();
+        int composeCount = 0;
+        Binding binding = GeneratedMarkup.AttachComputedBinding(
+            target,
+            target,
+            UIElement.IsVisibleProperty,
+            [firstObservation, secondObservation],
+            () =>
+            {
+                composeCount++;
+                return (bool)firstObservation.Value! && (bool)secondObservation.Value!;
+            },
+            "computed boolean");
+
+        Assert.False(target.IsVisible);
+        Assert.Equal(UiPropertyValueSource.MarkupBase, target.GetValueSource(UIElement.IsVisibleProperty));
+        first.IsEnabled = true;
+        Assert.False(target.IsVisible);
+        composeCount = 0;
+        second.IsEnabled = true;
+        Assert.Equal(1, composeCount);
+        Assert.True(target.IsVisible);
+
+        binding.Dispose();
+        Assert.Equal(UiPropertyValueSource.Default, target.GetValueSource(UIElement.IsVisibleProperty));
+        composeCount = 0;
+        first.IsEnabled = false;
+        Assert.Equal(0, composeCount);
+
+        UIElement condition = new() { IsEnabled = false };
+        MarkupObservation conditionObservation = GeneratedMarkup.ObserveProperty(condition, UIElement.IsEnabledProperty);
+        TextBlock conditionalTarget = new();
+        MarkupConditionalValue computed = GeneratedMarkup.CreateConditionalComputedBinding(
+            conditionalTarget,
+            UIElement.IsEnabledProperty,
+            [firstObservation, secondObservation],
+            () => (bool)firstObservation.Value! || (bool)secondObservation.Value!,
+            "conditional computed boolean");
+        using IDisposable conditions = GeneratedMarkup.AttachConditions(
+            conditionalTarget,
+            [conditionObservation],
+            [new MarkupConditionRule(0, () => (bool)conditionObservation.Value!, [computed])]);
+        first.IsEnabled = false;
+        second.IsEnabled = false;
+        Assert.True(conditionalTarget.IsEnabled);
+        condition.IsEnabled = true;
+        Assert.False(conditionalTarget.IsEnabled);
+        Assert.Equal(UiPropertyValueSource.MarkupConditional, conditionalTarget.GetValueSource(UIElement.IsEnabledProperty));
+        second.IsEnabled = true;
+        Assert.True(conditionalTarget.IsEnabled);
+        condition.IsEnabled = false;
+        second.IsEnabled = false;
+        Assert.True(conditionalTarget.IsEnabled);
+        Assert.Equal(UiPropertyValueSource.Default, conditionalTarget.GetValueSource(UIElement.IsEnabledProperty));
     }
 
     [Fact]

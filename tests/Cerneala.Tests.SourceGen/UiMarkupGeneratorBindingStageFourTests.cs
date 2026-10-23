@@ -62,7 +62,7 @@ public sealed partial class UiMarkupGeneratorTests
 
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         Assert.Contains("AttachPropertyBinding<", generated);
-        Assert.Contains("AttachInterpolatedStringBinding", generated);
+        Assert.Contains("AttachComputedBinding<string>(", generated);
         Assert.Contains("CreateConditionalPropertyBinding<", generated);
         Assert.Contains(
             "ObserveProperty(Later, global::Cerneala.UI.Controls.Primitives.RangeBase.ValueProperty)",

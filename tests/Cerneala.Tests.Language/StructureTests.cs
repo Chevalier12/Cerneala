@@ -214,6 +214,34 @@ public sealed class StructureTests
     }
 
     [Fact]
+    public void PropertyExpressionsClassifyEverySourcePathBeforeWorkspaceLoad()
+    {
+        const string value = "$DataContext.Enabled and $Action.IsFocused or $self.IsVisible";
+        const string markup = "<Window><Button Name=\"Action\" IsEnabled=\"" + value + "\" /></Window>";
+        using Fixture fixture = Fixture.Create(markup);
+        CernealaStructureService service = new();
+
+        IReadOnlyList<CernealaSemanticToken> tokens = service.GetSemanticTokens(fixture.Document, model: null);
+
+        int valueStart = markup.IndexOf(value, StringComparison.Ordinal);
+        foreach ((string name, string member) in new[]
+        {
+            ("DataContext", "Enabled"),
+            ("Action", "IsFocused"),
+            ("self", "IsVisible")
+        })
+        {
+            int sigil = markup.IndexOf("$" + name + ".", valueStart, StringComparison.Ordinal);
+            Assert.Contains(tokens, token => token.Span.Start == sigil && token.Span.Length == 1 &&
+                token.Kind == CernealaSemanticTokenKind.ReferenceSigil);
+            Assert.Contains(tokens, token => token.Span.Start == sigil + 1 && token.Span.Length == name.Length &&
+                token.Kind == CernealaSemanticTokenKind.ReferenceName);
+            Assert.Contains(tokens, token => token.Span.Start == sigil + name.Length + 2 &&
+                token.Span.Length == member.Length && token.Kind == CernealaSemanticTokenKind.Property);
+        }
+    }
+
+    [Fact]
     public void MarkupTypeTagsRemainPlainTextWithoutSemanticOverrides()
     {
         const string markup = """

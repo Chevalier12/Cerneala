@@ -47,12 +47,24 @@ internal sealed class CernealaStructureService
                     AddCandidate(candidates, content, CernealaSemanticTokenKind.Keyword, 75);
                 }
 
+                string contentText = document.Text.Substring(content);
                 EmbeddedParseResult<BindingValueSyntax> binding = BindingSyntaxParser.Parse(
-                    document.Text.Substring(content),
+                    contentText,
                     content.Start);
                 IEnumerable<BindingPathSyntax> paths = binding.Syntax.Binding is null
                     ? binding.Syntax.Fragments.OfType<BindingFragmentSyntax>().Select(fragment => fragment.Binding)
                     : [binding.Syntax.Binding];
+                if (binding.Syntax.Kind == BindingValueKind.Invalid && binding.Syntax.Binding is not null)
+                {
+                    // A '$'-leading property expression: classify every source path, not only the first.
+                    IReadOnlyList<BindingPathSyntax> sources = BindingExpressionSyntaxParser.Parse(
+                        contentText,
+                        content.Start).Sources;
+                    if (sources.Count > 0)
+                    {
+                        paths = sources;
+                    }
+                }
                 foreach (BindingPathSyntax path in paths)
                 {
                     AddBindingCandidates(candidates, document, path);

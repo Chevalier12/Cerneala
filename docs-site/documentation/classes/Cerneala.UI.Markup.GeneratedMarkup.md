@@ -116,10 +116,10 @@ the read-once helper; attribute paths use binding attachment helpers instead.
 | `SetPrismStyleVector(PrismStyleState state, int entryStableId, int slot, Vector4 value)` | `void` | Writes a vector catalog slot in generated style state. |
 | `SetPrismStyleResource(PrismStyleState state, int entryStableId, int slot, PrismResourceId value)` | `void` | Writes a resource catalog slot in generated style state. |
 | `AttachPropertyBinding<T>(UIElement owner, UiObject target, UiProperty<T> targetProperty, MarkupObservation observation, BindingMode mode, Func<object?, T> projection, string description)` | `Binding` | Attaches a typed one-way or two-way binding in the `MarkupBase` value slot. |
-| `AttachInterpolatedStringBinding(UIElement owner, UiObject target, UiProperty<string> targetProperty, IReadOnlyList<MarkupObservation> observations, Func<string> compose, string description)` | `Binding` | Attaches a one-way string composer backed by one or more observations. |
+| `AttachComputedBinding<T>(UIElement owner, UiObject target, UiProperty<T> targetProperty, IReadOnlyList<MarkupObservation> observations, Func<T> compose, string description)` | `Binding` | Attaches a one-way binding in the `MarkupBase` value slot whose value `compose` computes from one or more observations; any observation change recomputes it. Generated string interpolation uses `T = string`; `bool` logical binding expressions use `T = bool`. |
 | `AttachResource<T>(UIElement owner, UiObject target, UiProperty<T> targetProperty, string key, UiPropertyValueSource valueSource)` | `IDisposable` | Resolves the nearest resource, tracks application-provider changes, and updates the generated target value slot. |
 | `CreateConditionalPropertyBinding<T>(UiObject target, UiProperty<T> targetProperty, MarkupObservation observation, BindingMode mode, Func<object?, T> projection, string description)` | `MarkupConditionalValue` | Creates a reactive conditional value provider activated only while its rule wins. |
-| `CreateConditionalInterpolatedStringBinding(UiObject target, UiProperty<string> targetProperty, IReadOnlyList<MarkupObservation> observations, Func<string> compose, string description)` | `MarkupConditionalValue` | Creates a conditional one-way string composer. |
+| `CreateConditionalComputedBinding<T>(UiObject target, UiProperty<T> targetProperty, IReadOnlyList<MarkupObservation> observations, Func<T> compose, string description)` | `MarkupConditionalValue` | Creates a conditional one-way computed value provider, active only while its rule wins; used for interpolation and logical expressions in directive assignments. |
 | `FormatStringValue(object? value)` | `string` | Converts a binding value with `CurrentCulture`; `null` becomes `string.Empty`. |
 
 ## Remarks
@@ -333,7 +333,7 @@ Prism instance.
 | --- | --- | --- |
 | Observation factories | `ArgumentNullException` or `ArgumentException` | A required source, getter, path segment collection, property, owner, or part name is invalid. |
 | Property binding factories | `ArgumentNullException` | A required owner, target, target property, observation, observation collection, or projection delegate is `null`. |
-| Interpolated binding factories | `ArgumentNullException` | A required owner, target, target property, observation collection, or compose delegate is `null`. |
+| Computed binding factories | `ArgumentNullException` | A required owner, target, target property, observation collection, or compose delegate is `null`. |
 | `AttachResource<T>` | `ArgumentNullException` or `ArgumentException` | A required owner, target, target property, or resource key is invalid. |
 | `GetTemplateOwner` | `InvalidOperationException` | The element was not created by a component template that is currently attached to its owner. |
 | `GetTemplatePart<T>` | `InvalidOperationException` | The template owner has no part with that name, or the part is not a `T`. |

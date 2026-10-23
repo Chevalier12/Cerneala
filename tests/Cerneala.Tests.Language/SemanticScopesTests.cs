@@ -102,6 +102,115 @@ public sealed class SemanticScopesTests
         Assert.DoesNotContain(model.Symbols, symbol => symbol.Name is "First" or "Second" or "Third");
     }
 
+    private const string ExpressionViewModels = """
+        using System.ComponentModel;
+        namespace Demo;
+        public enum Density { Compact, Wide }
+        public sealed class ExpressionViewModel : INotifyPropertyChanged
+        {
+            public event PropertyChangedEventHandler? PropertyChanged;
+            public bool HasName { get; set; }
+            public bool IsValid { get; set; }
+            public int Count { get; set; }
+            public string Name { get; set; } = string.Empty;
+            public Density Density { get; set; }
+        }
+        """;
+
+    [Theory]
+    [InlineData("$DataContext.HasName and $DataContext.IsValid")]
+    [InlineData("($DataContext.HasName or $DataContext.IsValid) and $Host.IsEnabled")]
+    [InlineData("$root.IsEnabled and $DataContext.IsValid")]
+    [InlineData("$DataContext.Count &gt; 0")]
+    [InlineData("$DataContext.Count >= 2")]
+    [InlineData("$DataContext.Count &lt; 3 or $DataContext.IsValid")]
+    [InlineData("$DataContext.Density == Compact")]
+    [InlineData("$DataContext.Name != &quot;Ada&quot; and $DataContext.HasName == true")]
+    public void BoolPropertyExpressionResolvesEverySourceWithoutDiagnostics(string value)
+    {
+        string markup = "<StackPanel Name=\"Host\" DataType=\"Demo.ExpressionViewModel\"><TextBlock IsEnabled=\"" +
+            value + "\" /></StackPanel>";
+        CernealaSemanticModel model = Model("PropertyExpression.crn", markup, ExpressionViewModels);
+
+        Assert.Empty(model.Diagnostics);
+        int valueStart = markup.IndexOf(value, StringComparison.Ordinal);
+        int sources = model.Symbols.Count(symbol =>
+            symbol.Kind == CernealaSemanticSymbolKind.BindingSource &&
+            symbol.Span.Start >= valueStart &&
+            symbol.Span.End <= valueStart + value.Length);
+        int segments = model.Symbols.Count(symbol =>
+            symbol.Kind == CernealaSemanticSymbolKind.BindingSegment &&
+            symbol.Span.Start >= valueStart &&
+            symbol.Span.End <= valueStart + value.Length);
+        Assert.Equal(value.Count(character => character == '$'), sources);
+        Assert.Equal(sources, segments);
+    }
+
+    // These are errors, but only the generator knows them (syntax, bare identifiers,
+    // 'value', modes, self-reads and type rules). The shared model must stay silent so
+    // the generator's own CERNEALAUI007 message reaches the build.
+    [Theory]
+    [InlineData("IsFocused and $DataContext.IsValid")]
+    [InlineData("value and $DataContext.IsValid")]
+    [InlineData("$DataContext.HasName:TwoWay and $DataContext.IsValid")]
+    [InlineData("($DataContext.HasName and $DataContext.IsValid):OneWay")]
+    [InlineData("$DataContext.Name and $DataContext.IsValid")]
+    [InlineData("$DataContext.Count == $DataContext.Name")]
+    [InlineData("$DataContext.HasName and")]
+    [InlineData("$self.IsEnabled and $DataContext.IsValid")]
+    [InlineData("$Host and $DataContext.IsValid")]
+    [InlineData("$Accent and $DataContext.IsValid")]
+    public void BoolPropertyExpressionLeavesGeneratorOnlyRulesToTheGenerator(string value)
+    {
+        string markup = "<StackPanel Name=\"Host\" DataType=\"Demo.ExpressionViewModel\"><StackPanel.Resources>" +
+            "<SolidColorBrush Name=\"Accent\" Color=\"Red\" /></StackPanel.Resources><TextBlock IsEnabled=\"" +
+            value + "\" /></StackPanel>";
+
+        Assert.Empty(Model("PropertyExpressionGeneratorRule.crn", markup, ExpressionViewModels).Diagnostics);
+    }
+
+    [Fact]
+    public void BoolPropertyExpressionReportsEachUnresolvedMemberOnItsOwnPath()
+    {
+        const string markup = "<StackPanel DataType=\"Demo.ExpressionViewModel\">" +
+            "<TextBlock IsEnabled=\"$DataContext.HasNam and $DataContext.IsVali\" /></StackPanel>";
+        CernealaSemanticModel model = Model("PropertyExpressionUnresolved.crn", markup, ExpressionViewModels);
+
+        Assert.Collection(
+            model.Diagnostics.OrderBy(diagnostic => diagnostic.Span.Start),
+            diagnostic =>
+            {
+                Assert.Equal("CERNEALAUI007", diagnostic.Id);
+                Assert.Equal(markup.IndexOf("HasNam", StringComparison.Ordinal), diagnostic.Span.Start);
+                Assert.Contains("Readable property 'HasNam' was not found on 'Demo.ExpressionViewModel'.", diagnostic.Message, StringComparison.Ordinal);
+            },
+            diagnostic =>
+            {
+                Assert.Equal("CERNEALAUI007", diagnostic.Id);
+                Assert.Equal(markup.IndexOf("IsVali", StringComparison.Ordinal), diagnostic.Span.Start);
+                Assert.Contains("Readable property 'IsVali' was not found on 'Demo.ExpressionViewModel'.", diagnostic.Message, StringComparison.Ordinal);
+            });
+    }
+
+    [Theory]
+    [InlineData("Text", "$DataContext.HasName and $DataContext.IsValid", "string")]
+    [InlineData("Opacity", "$DataContext.HasName and $DataContext.IsValid", "float")]
+    [InlineData("Opacity", "IsFocused or $DataContext.IsValid", "float")]
+    [InlineData("Opacity", "$DataContext.Count &gt; 0", "float")]
+    public void PropertyExpressionOnNonBoolTargetReportsTheGeneratorMessage(string property, string value, string targetType)
+    {
+        string markup = "<StackPanel DataType=\"Demo.ExpressionViewModel\"><TextBlock " + property + "=\"" +
+            value + "\" /></StackPanel>";
+
+        LanguageDiagnostic diagnostic = Assert.Single(
+            Model("PropertyExpressionNonBool.crn", markup, ExpressionViewModels).Diagnostics);
+        Assert.Equal("CERNEALAUI007", diagnostic.Id);
+        Assert.Contains(
+            "Logical expressions are supported only for bool targets; the target type is '" + targetType + "'.",
+            diagnostic.Message,
+            StringComparison.Ordinal);
+    }
+
     [Fact]
     public void NameScopesSeparateTemplatePartsAndResolvePartQueries()
     {
