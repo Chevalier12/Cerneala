@@ -179,7 +179,39 @@ public class Scene2D : SceneNode2D
                     entry.MayHoldResources = true;
                     entry.Node.Record(childContext);
                 }
-                RecordOverlays(childContext);
+                // The refreshed index holds no overlay, so there is nothing to record.
+                return;
+            }
+
+            if (OrderMode != SceneOrderMode.Source && indexed.Length > 0 && indexed.Length == Children.Count &&
+                !childBounds.HasOverlay)
+            {
+                // Only the children the cull keeps are ordered and recorded; the
+                // total-order comparer gives them the order they would have in
+                // the full sort. The refreshed index holds no overlay.
+                effectiveOrder.Clear();
+                bool byY = OrderMode == SceneOrderMode.LayerThenY;
+                foreach (int slot in childBounds.Query(visible))
+                {
+                    ref SceneChildBoundsIndex2D.Entry entry = ref indexed[slot];
+                    if (entry.IsOverlay ||
+                        (entry.CanPrune && SceneChildBoundsIndex2D.IsClearlyOutside(entry.VisibleBounds, visible)))
+                    {
+                        continue;
+                    }
+                    entry.MayHoldResources = true;
+                    SceneNode2D node = entry.Node;
+                    effectiveOrder.Add(new SceneOrderEntry(
+                        node,
+                        slot,
+                        node.OrderLayer,
+                        byY ? GetSceneYAnchor(node, childContext) : 0));
+                }
+                effectiveOrder.Sort(byY ? SceneOrderEntryComparer.LayerThenY : SceneOrderEntryComparer.Layer);
+                for (int index = 0; index < effectiveOrder.Count; index++)
+                {
+                    effectiveOrder[index].Node.Record(childContext);
+                }
                 return;
             }
 

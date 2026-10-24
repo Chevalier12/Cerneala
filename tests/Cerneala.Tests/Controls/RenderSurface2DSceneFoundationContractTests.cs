@@ -516,6 +516,101 @@ public sealed class RenderSurface2DSceneFoundationContractTests
             Images(commands));
     }
 
+    [Theory]
+    [InlineData(SceneOrderMode.Layer)]
+    [InlineData(SceneOrderMode.LayerThenY)]
+    public void OrderedModesNeitherOrderNorRecordClearlyOffscreenSprites(SceneOrderMode mode)
+    {
+        Scene2D scene = new() { OrderMode = mode };
+        Sprite2D visibleLow = AreaSprite("visible low", 10, 60);
+        Sprite2D visibleHigh = AreaSprite("visible high", 30, 20);
+        Sprite2D visibleSide = AreaSprite("visible side", 50, 20);
+        scene.Children.Add(AreaSprite("far right", 1000, 20));
+        scene.Children.Add(visibleLow);
+        scene.Children.Add(AreaSprite("far left", -1000, 20));
+        scene.Children.Add(visibleHigh);
+        scene.Children.Add(AreaSprite("far below", 20, 1000));
+        scene.Children.Add(visibleSide);
+        scene.Children.Add(AreaSprite("far above", 20, -1000));
+        RenderSurface2D surface = new() { Scene = scene };
+
+        DrawCommandList commands = Record(surface, new DrawRect(0, 0, 100, 100));
+
+        SceneNode2D[] expected = mode == SceneOrderMode.Layer
+            ? [visibleLow, visibleHigh, visibleSide]
+            : [visibleHigh, visibleSide, visibleLow];
+        Assert.Equal(expected.Length, scene.RecordedOrder.Count);
+        Assert.Equal(expected, scene.RecordedOrder.Select(entry => entry.Node));
+        Assert.Equal(
+            mode == SceneOrderMode.Layer
+                ? ["visible low", "visible high", "visible side"]
+                : ["visible high", "visible side", "visible low"],
+            ImageNames(commands));
+    }
+
+    [Theory]
+    [InlineData(SceneOrderMode.Layer)]
+    [InlineData(SceneOrderMode.LayerThenY)]
+    public void CulledOrderedPathKeepsTheFullSortOrderOfTheVisibleChildren(SceneOrderMode mode)
+    {
+        // Name, layer, x, y; every sprite is 10x10, so the Y anchor is y + 10.
+        (string Name, int Layer, float X, float Y)[] sprites =
+        [
+            ("a", 0, 10, 50), ("far f", 0, 500, 10), ("b", 0, 30, 20),
+            ("far g", -1, -500, 0), ("c tie of a", 0, 50, 50), ("live", 0, 0, 0),
+            ("d", 1, 0, 0), ("far h", 1, 20, 900), ("e edge", -1, 95, 80),
+            ("i", -1, 70, 20), ("j tie of b", 0, 70, 20)
+        ];
+        Scene2D scene = new() { OrderMode = mode };
+        Scene2D live = new();
+        live.Children.Add(AreaSprite("live sprite", 60, 60));
+        List<(SceneNode2D Node, string Name, int Layer, float Bottom, bool Visible)> all = [];
+        foreach ((string name, int layer, float x, float y) in sprites)
+        {
+            SceneNode2D node = name == "live" ? live : AreaSprite(name, x, y);
+            node.Layer = layer;
+            scene.Children.Add(node);
+            all.Add((node, name == "live" ? "live sprite" : name, layer,
+                name == "live" ? 70 : y + 10, !name.StartsWith("far")));
+        }
+        RenderSurface2D surface = new() { Scene = scene };
+
+        DrawCommandList commands = Record(surface, new DrawRect(0, 0, 100, 100));
+
+        var expected = all
+            .Select((item, index) => (item, index))
+            .OrderBy(pair => pair.item.Layer)
+            .ThenBy(pair => mode == SceneOrderMode.LayerThenY ? pair.item.Bottom : 0)
+            .ThenBy(pair => pair.index)
+            .Where(pair => pair.item.Visible)
+            .Select(pair => pair.item)
+            .ToArray();
+        // The recorded order may also hold culled children; the visible ones keep their full-sort order.
+        Assert.Equal(
+            expected.Select(item => item.Node),
+            scene.RecordedOrder.Select(entry => entry.Node).Where(node => expected.Any(item => item.Node == node)));
+        Assert.Equal(expected.Select(item => item.Name), ImageNames(commands));
+    }
+
+    [Fact]
+    public void DebugOverlayKeepsTheFullOrderedPathAndEveryChildOrdered()
+    {
+        Scene2D scene = new() { OrderMode = SceneOrderMode.LayerThenY };
+        Sprite2D visible = AreaSprite("visible", 10, 10);
+        Sprite2D offscreen = AreaSprite("offscreen", 1000, 10);
+        Scene2DDebugOverlay overlay = new();
+        scene.Children.Add(offscreen);
+        scene.Children.Add(overlay);
+        scene.Children.Add(visible);
+        RenderSurface2D surface = new() { Scene = scene };
+
+        Record(surface, new DrawRect(0, 0, 100, 100));
+
+        Assert.Equal(
+            [offscreen, visible],
+            scene.RecordedOrder.Select(entry => entry.Node));
+    }
+
     [Fact]
     public void NestedScenesOrderIndependentlyAndReactToRuntimeLayerChanges()
     {
@@ -848,6 +943,16 @@ public sealed class RenderSurface2DSceneFoundationContractTests
             X = 0, Y = y, Width = 1, Height = 1
         };
     }
+
+    private static Sprite2D AreaSprite(string name, float x, float y) =>
+        new()
+        {
+            Image = new(new TestImage(name)),
+            X = x, Y = y, Width = 10, Height = 10
+        };
+
+    private static IEnumerable<string> ImageNames(DrawCommandList commands) =>
+        Images(commands).Select(image => ((TestImage)image!).Name);
 
     private static IDisposable AttachPrism(UIElement element, string name)
     {
