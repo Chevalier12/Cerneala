@@ -215,3 +215,50 @@ reflection-invocation count nor attribution to Cerneala; method identities and
 reachable source paths require separate evidence.
 The current acceptance status and all failed sets are recorded in
 `TestResults/SceneStreaming/implementation-status.md`.
+
+## RenderSurface2D virtualization (ordering, groups, SDL_GPU frames)
+
+Three runners measure one `RenderSurface2D` whose `Scene2D` holds N children while an
+800x600 camera pans 1 px per frame over +-300 px. The sprites are 16 px, placed 96 px apart, so
+the visible set stays at about 55 whatever N is, and a fixed-seed shuffle assigns grid cells to
+children so child order never follows position. Headless frames are driven as `UiHost` does:
+`TimeSensitiveRenderInvalidator.Invalidate(root, 16 ms)`, `ProcessFrame` when the scheduler has
+work, command recording when `FrameVersion` changed. Run them without concurrent builds,
+indexers, profilers, tests or other benchmarks. Each writes a JSON report to the given path and
+prints one line per row; the optional trailing argument is a comma-separated size list that
+replaces the defaults.
+
+```powershell
+dotnet build .\benchmarks\Cerneala.Benchmarks\Cerneala.Benchmarks.csproj -c Release
+dotnet .\benchmarks\Cerneala.Benchmarks\bin\Release\net8.0-windows\Cerneala.Benchmarks.dll --rs2d-ordering .\tmp\rs2d-ordering.json 1000,10000
+dotnet .\benchmarks\Cerneala.Benchmarks\bin\Release\net8.0-windows\Cerneala.Benchmarks.dll --rs2d-groups .\tmp\rs2d-groups.json 1000
+dotnet .\benchmarks\Cerneala.Benchmarks\bin\Release\net8.0-windows\Cerneala.Benchmarks.dll --rs2d-sdlgpu .\tmp\rs2d-sdlgpu.json 1000
+```
+
+- `--rs2d-ordering` (defaults 1,000 / 10,000 / 100,000): `Source` order (S1), `Layer` (S2, S2b with
+  four random layers), `LayerThenY` (S3), each with a panning and a static camera (continuous and
+  on-demand redraw), and one `SceneItems2D` holding all N cells (S4). **Gate:** in the counting pass
+  after the timed frames, every recorded frame must draw no more image commands than the sprites
+  that intersect the camera, and no fewer than those that overlap it by area; both bounds come from
+  the grid arithmetic, not from the scene. A continuous surface that records no frame also fails.
+  Timing is reported, never gated.
+- `--rs2d-groups` (defaults 1,000 / 10,000 / 100,000; 1,000 / 10,000 for M1a and M1b): scenarios
+  the optimizations do not cover yet, **report only, no performance gate**. S5a/S5b are N nested
+  `Scene2D` groups (with one sprite, empty). S6 is N animated sprites directly in the scene and in
+  a `SceneItems2D`, of which only the camera's sprites are visible. M1a is N `TileMap2D` children
+  (4x4 tiles), M1b is N one-item `SceneItems2D` children, M1c is the `Sprite2D` control.
+  The runner fails only when the fixture is wrong (cells not realized, tile maps never ready).
+  A `TileMap2D` attach takes minutes at 10,000 maps, so 100,000 is not run.
+- `--rs2d-sdlgpu` (defaults 1,000 / 10,000 / 100,000): opens a real 800x600 SDL_GPU window per
+  scenario (S1 `Source`, S2 `Layer`, S3 `LayerThenY`, S4 `SceneItems2D`), size and present mode
+  (VSync, Immediate), at scale 1 without MSAA, driven by `WindowApplicationRuntime.PumpOnce`. It
+  reports pump interval, frames over 16.67 ms, CPU time without the present wait (`ProcessingTime`
+  minus `CompleteFrame`), the `Window.LastFrame.DiagnosticsTiming` phases and
+  `SdlGpuDrawingBackend.LastFrameCounters`. **Gate:** vertices and draw calls submitted by every
+  rendered frame stay within the sprites the camera sees (at most 6 vertices per sprite). Intervals
+  depend on the display and driver and are never gated; the full default run takes several minutes.
+
+A setup (build plus attach) longer than 20 s skips the next size of that scenario. Timings are
+warmed (200 frames) and use 500 headless / 600 window frames; allocation is
+`GC.GetAllocatedBytesForCurrentThread` of the measuring thread. No counter was added to production
+code, so per-frame `Record` call counts and spatial-index visits are not reported.
