@@ -21,17 +21,18 @@ Inheritance:
 The following example builds a root-to-button hierarchy and raises a bubbling mouse event. `RoutedEventRouter` asks the tree for the route and invokes handlers from the target toward the root.
 
 ```csharp
+using Cerneala.UI.Controls;
 using Cerneala.UI.Input;
 
 UiInputTree tree = new();
-UiElementId root = new("root");
-UiElementId panel = new("panel");
-UiElementId button = new("button");
+Border root = new();
+Border panel = new();
+Border button = new();
 List<string> calls = [];
 
-tree.Add(root, parentId: null);
-tree.Add(panel, parentId: root);
-tree.Add(button, parentId: panel);
+tree.Add(root, parent: null);
+tree.Add(panel, parent: root);
+tree.Add(button, parent: panel);
 
 tree.AddHandler(root, InputEvents.MouseDownEvent, (_, _) => calls.Add("root"));
 tree.AddHandler(panel, InputEvents.MouseDownEvent, (_, _) => calls.Add("panel"));
@@ -52,11 +53,11 @@ RoutedEventRouter.Raise(tree, button, args);
 
 ## Remarks
 
-`UiInputTree` is a lightweight routing data structure. Elements are registered by `UiElementId`, optionally with a parent id, and the parent must already exist before a child is added. The root element uses `null` as its parent id.
+`UiInputTree` is a lightweight routing data structure. Elements are registered by `UIElement` (compared by reference), optionally with a parent element, and the parent must already be registered before a child is added. The root element uses `null` as its parent.
 
 The tree itself returns routes from a target element to the root. Routing direction is applied by `RoutedEventRouter`: bubble events use the route as returned, tunnel events reverse it, and direct events use only the target.
 
-Handlers are registered per `(UiElementId, RoutedEvent)` pair. When dispatch asks for handlers on a disabled element, the tree returns no handlers for that element. Disabled elements are still part of the route, so their enabled ancestors and descendants can still receive the event when the router reaches them.
+Handlers are registered per element and `RoutedEvent`. A `RoutedEventHandler` receives the element whose handler runs as `sender`. When dispatch asks for handlers on a disabled element, the tree returns no handlers for that element. Disabled elements are still part of the route, so their enabled ancestors and descendants can still receive the event when the router reaches them.
 
 The router asks the tree for an element's handlers when routing reaches that element, and gets a copy of the list at that moment. A handler added during dispatch to the element being visited does not run in that same dispatch. A handler added to an element that routing has not reached yet does run in that same dispatch. For example, during a bubble event, a child handler that adds a handler to its parent makes the new parent handler run right after the child.
 
@@ -70,9 +71,9 @@ The router asks the tree for an element's handlers when routing reaches that ele
 
 | Name | Description |
 | --- | --- |
-| `Add(UiElementId id, UiElementId? parentId, bool isEnabled = true)` | Registers an input element with an optional parent and enabled state. Throws `ArgumentException` when the parent id is not registered, and `InvalidOperationException` when the element id is already registered. |
-| `AddHandler(UiElementId id, RoutedEvent routedEvent, RoutedEventHandler handler, bool handledEventsToo = false)` | Registers a handler for an element and routed event. With `handledEventsToo` set to `true`, the handler also runs after an earlier handler set `Handled` to `true`. Throws `ArgumentNullException` for a null event or handler, and `ArgumentException` when the element id is not registered. |
-| `GetRouteToRoot(UiElementId targetId)` | Returns the registered route from `targetId` up through its ancestors. Throws `ArgumentException` when the target id is not registered. |
+| `Add(UIElement element, UIElement? parent, bool isEnabled = true)` | Registers an input element with an optional parent and enabled state. Throws `ArgumentNullException` when `element` is `null`, `ArgumentException` when the parent is not registered, and `InvalidOperationException` when the element is already registered. |
+| `AddHandler(UIElement element, RoutedEvent routedEvent, RoutedEventHandler handler, bool handledEventsToo = false)` | Registers a handler for an element and routed event. With `handledEventsToo` set to `true`, the handler also runs after an earlier handler set `Handled` to `true`. Throws `ArgumentNullException` for a null element, event, or handler, and `ArgumentException` when the element is not registered. |
+| `GetRouteToRoot(UIElement target)` | Returns the registered route from `target` up through its ancestors. Throws `ArgumentNullException` when `target` is `null` and `ArgumentException` when the target is not registered. |
 
 ## Applies to
 
@@ -85,5 +86,5 @@ Target framework: `net8.0`
 - `Cerneala.UI.Input.RoutedEventRouter`
 - `Cerneala.UI.Input.RoutedEvent`
 - `Cerneala.UI.Input.RoutedEventArgs`
-- `Cerneala.UI.Input.UiElementId`
+- `Cerneala.UI.Elements.UIElement`
 - `Cerneala.UI.Input.ElementInputRouteMap`

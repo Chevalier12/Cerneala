@@ -1,3 +1,4 @@
+using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 
 namespace Cerneala.Tests.Input;
@@ -40,7 +41,7 @@ public sealed class CommandingTests
             (_, args) => args.CanExecute = true);
 
         ExecutedRoutedEventArgs executedArgs = new(CommandEvents.ExecutedEvent, new object(), command, null);
-        binding.OnExecuted(new UiElementId("target"), executedArgs);
+        binding.OnExecuted(new UIElement(), executedArgs);
 
         Assert.True(executed);
     }
@@ -54,7 +55,7 @@ public sealed class CommandingTests
         CommandBinding binding = new(save, (_, _) => executed = true);
 
         ExecutedRoutedEventArgs args = new(CommandEvents.ExecutedEvent, new object(), open, null);
-        binding.OnExecuted(new UiElementId("target"), args);
+        binding.OnExecuted(new UIElement(), args);
 
         Assert.False(executed);
     }
@@ -67,7 +68,7 @@ public sealed class CommandingTests
         CommandBinding binding = new(save, null, (_, args) => args.CanExecute = true);
 
         CanExecuteRoutedEventArgs args = new(CommandEvents.CanExecuteEvent, new object(), open, null);
-        binding.OnCanExecute(new UiElementId("target"), args);
+        binding.OnCanExecute(new UIElement(), args);
 
         Assert.False(args.CanExecute);
     }

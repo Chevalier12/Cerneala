@@ -22,15 +22,13 @@ public static class RoutedEventTrace
         return new RoutedEventTraceSnapshot(
             routedEvent.Name,
             routedEvent.RoutingStrategy,
-            target.ElementId?.ToString(),
-            route.Select(element => new RoutedEventTraceStep(element.ElementId?.ToString(), element.GetType().Name)).ToArray());
+            route.Select(element => new RoutedEventTraceStep(element.GetType().Name)).ToArray());
     }
 }
 
 public sealed record RoutedEventTraceSnapshot(
     string EventName,
     RoutingStrategy RoutingStrategy,
-    string? TargetId,
     IReadOnlyList<RoutedEventTraceStep> Steps)
 {
     public override string ToString()
@@ -39,10 +37,10 @@ public sealed record RoutedEventTraceSnapshot(
     }
 }
 
-public sealed record RoutedEventTraceStep(string? ElementId, string ElementType)
+public sealed record RoutedEventTraceStep(string ElementType)
 {
     public override string ToString()
     {
-        return $"{ElementType}#{ElementId ?? "unattached"}";
+        return ElementType;
     }
 }

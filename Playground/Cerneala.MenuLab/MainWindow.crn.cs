@@ -38,12 +38,12 @@ public partial class MainWindow : Window<MenuLabViewModel>
         ViewModel.UpdateMenuSession(sessionOpen);
     }
 
-    private void OnSubmenuOpened(UiElementId sender, RoutedEventArgs args)
+    private void OnSubmenuOpened(MenuItem sender, RoutedEventArgs args)
     {
         ViewModel.RecordSubmenuOpened(HeaderOf(args));
     }
 
-    private void OnSubmenuClosed(UiElementId sender, RoutedEventArgs args)
+    private void OnSubmenuClosed(MenuItem sender, RoutedEventArgs args)
     {
         ViewModel.RecordSubmenuClosed(HeaderOf(args));
     }

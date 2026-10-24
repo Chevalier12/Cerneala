@@ -16,6 +16,6 @@ public static class FocusPolicy
             element.Focusable &&
             element.IsEnabled &&
             UIElementVisibility.ParticipatesInInput(element) &&
-            routeMap.TryGetId(element, out _);
+            routeMap.Contains(element);
     }
 }

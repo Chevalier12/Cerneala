@@ -373,7 +373,7 @@ public class Slider : RangeBase
 
     // As a WPF Slider focuses itself on a left MouseDown inside it, also one that its Thumb already handled, a press on
     // a focusable slider moves keyboard focus to it unless the focus is already inside it (#662).
-    private void OnMouseDown(UiElementId _, RoutedEventArgs args)
+    private void OnMouseDown(object _, RoutedEventArgs args)
     {
         if (args is not MouseButtonEventArgs { ChangedButton: InputMouseButton.Left, RouteMap: { } routeMap } ||
             IsKeyboardFocusWithin ||
@@ -392,7 +392,7 @@ public class Slider : RangeBase
     // thumb, on the track or on a TickBar beside it, moves the value to the pressed point, snapped to a tick. The handled
     // preview keeps the press from the repeat buttons, so it does not page and does not repeat. A press on the thumb
     // still starts its drag.
-    private void OnPreviewMouseDown(UiElementId _, RoutedEventArgs args)
+    private void OnPreviewMouseDown(object _, RoutedEventArgs args)
     {
         if (!IsMoveToPointEnabled ||
             track is null ||
@@ -424,7 +424,7 @@ public class Slider : RangeBase
 
     // A thumb drag snaps the value that the pointer reached since the drag started, so a thumb that snapping keeps in
     // place still follows the pointer to the next tick.
-    private void OnThumbDragStarted(UiElementId _, RoutedEventArgs args)
+    private void OnThumbDragStarted(object _, RoutedEventArgs args)
     {
         if (track is not null && ReferenceEquals(args.OriginalSource, track.Thumb))
         {
@@ -434,7 +434,7 @@ public class Slider : RangeBase
     }
 
     // As WPF's Slider.OnThumbDragCompleted: the end of the drag closes the drag ToolTip.
-    private void OnThumbDragCompleted(UiElementId _, RoutedEventArgs args)
+    private void OnThumbDragCompleted(object _, RoutedEventArgs args)
     {
         if (autoToolTip is not null && track is not null && ReferenceEquals(args.OriginalSource, track.Thumb))
         {
@@ -547,7 +547,7 @@ public class Slider : RangeBase
     // As WPF's Slider commands and SliderGesture: with no modifier key, Up and Right raise the value by SmallChange and
     // Down and Left lower it, swapped when IsDirectionReversed is true; PageUp and PageDown change it by LargeChange, Home
     // sets Minimum and End sets Maximum. Each of these keys is handled, also when the value is already at the end.
-    private void OnKeyDown(UiElementId _, RoutedEventArgs args)
+    private void OnKeyDown(object _, RoutedEventArgs args)
     {
         if (args is not KeyEventArgs keyArgs ||
             !IsEnabled ||

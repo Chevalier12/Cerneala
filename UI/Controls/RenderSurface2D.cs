@@ -607,7 +607,7 @@ public partial class RenderSurface2D : ContentControl,
             scenePosition,
             filter,
             hitTestColliders);
-        return hit is not null && routeMap.TryGetId(hit, out _)
+        return hit is not null && routeMap.Contains(hit)
             ? hit
             : null;
     }

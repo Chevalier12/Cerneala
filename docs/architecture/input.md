@@ -20,8 +20,8 @@ handlers do that through normal property writes and invalidation.
 | `ElementInputBridge` | `UI/Input/ElementInputBridge.cs` | Dispatches one `InputFrame` to the tree: pointer, keyboard, bindings, navigation, activation, text. | `UiHost` (`UiHost.InputBridge`) |
 | `ElementInputCache` | `UI/Input/ElementInputCache.cs` | Holds the current `ElementInputRouteMap`; rebuilds it when needed; counts rebuilds (`RebuildCount`). | `UIRoot` (`UIRoot.InputCache`) |
 | `ElementInputRouteBuilder` | `UI/Input/ElementInputRouteBuilder.cs` | Walks the visual tree and builds a route map. | `ElementInputCache` |
-| `ElementInputRouteMap` | `UI/Input/ElementInputRouteMap.cs` | Element ↔ `UiElementId` lookup plus its `UiInputTree`. | `ElementInputCache` |
-| `UiInputTree` | `UI/Input/UiInputTree.cs` | Parent links and handler registrations by `UiElementId`. `GetRouteToRoot` gives a route. | `ElementInputRouteMap` |
+| `ElementInputRouteMap` | `UI/Input/ElementInputRouteMap.cs` | Registered elements and their visual parents, plus its `UiInputTree`. `Contains(element)` tells whether an element is registered and routable. | `ElementInputCache` |
+| `UiInputTree` | `UI/Input/UiInputTree.cs` | Parent links and handler registrations keyed by `UIElement` (reference identity). `GetRouteToRoot` gives a route. | `ElementInputRouteMap` |
 | `HitTestService` | `UI/Input/HitTestService.cs` | Finds the element under a point. | `ElementInputCache` |
 | `RoutedEventRouter` | `UI/Input/RoutedEventRouter.cs` | Raises a routed event along a route (`Direct`, `Bubble`, `Tunnel`). | Static |
 | `FocusManager` | `UI/Input/FocusManager.cs` | Keyboard focus and keyboard event dispatch to the focused element. | `ElementInputBridge`; the active one is set on `UIRoot.ActiveFocusManager` during dispatch |
@@ -91,7 +91,7 @@ Routes do not walk `UIElement` parents at event time. They use the
   its whole subtree;
 - a disabled element is not added and its handlers are not exported, but its
   children are walked and attach to the nearest added ancestor;
-- each added element gets a `UiElementId`, its parent link and its handlers.
+- each added element gets its parent link and its handlers, keyed by the element itself.
 
 `BuildForCommandState` builds a separate map that includes disabled elements.
 The `CommandState` phase builds it once per frame pass, on first use, and does

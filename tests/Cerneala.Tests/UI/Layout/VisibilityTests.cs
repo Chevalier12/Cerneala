@@ -60,7 +60,7 @@ public sealed class VisibilityTests
 
         ElementInputRouteMap routeMap = new ElementInputRouteBuilder().Build(root);
 
-        Assert.False(routeMap.TryGetId(child, out _));
+        Assert.False(routeMap.Contains(child));
     }
 
     [Theory]
@@ -80,7 +80,7 @@ public sealed class VisibilityTests
 
         ElementInputRouteMap routeMap = new ElementInputRouteBuilder().Build(root);
 
-        Assert.False(routeMap.TryGetId(child, out _));
+        Assert.False(routeMap.Contains(child));
     }
 
     [Fact]

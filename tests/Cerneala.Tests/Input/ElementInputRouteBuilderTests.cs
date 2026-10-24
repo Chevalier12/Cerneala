@@ -6,7 +6,7 @@ namespace Cerneala.Tests.Input;
 public sealed class ElementInputRouteBuilderTests
 {
     [Fact]
-    public void BuildMapsAttachedElementsToIds()
+    public void BuildRegistersAttachedElements()
     {
         UIRoot root = new();
         UIElement child = new();
@@ -14,34 +14,30 @@ public sealed class ElementInputRouteBuilderTests
 
         ElementInputRouteMap map = new ElementInputRouteBuilder().Build(root);
 
-        Assert.True(map.TryGetId(root, out UiElementId rootId));
-        Assert.True(map.TryGetId(child, out UiElementId childId));
-        Assert.True(map.TryGetElement(rootId, out UIElement? resolvedRoot));
-        Assert.True(map.TryGetElement(childId, out UIElement? resolvedChild));
-        Assert.Same(root, resolvedRoot);
-        Assert.Same(child, resolvedChild);
+        Assert.True(map.Contains(root));
+        Assert.True(map.Contains(child));
+        Assert.Equal(2, map.Count);
+        Assert.Same(root, map.ElementsInRouteOrder[0]);
+        Assert.Same(child, map.ElementsInRouteOrder[1]);
     }
 
     [Fact]
-    public void RouteMapMapsDistinctEqualValueElementsToDistinctIds()
+    public void RouteMapKeepsDistinctEqualValueElementsDistinct()
     {
         EqualValueElement first = new(1);
         EqualValueElement second = new(1);
         ElementInputRouteMap map = new();
-        UiElementId firstId = new("first");
-        UiElementId secondId = new("second");
 
-        map.Add(first, firstId, null);
-        map.Add(second, secondId, firstId);
+        map.Add(first, null);
+        map.Add(second, first);
 
-        Assert.True(map.TryGetId(first, out UiElementId resolvedFirstId));
-        Assert.True(map.TryGetId(second, out UiElementId resolvedSecondId));
-        Assert.Equal(firstId, resolvedFirstId);
-        Assert.Equal(secondId, resolvedSecondId);
-        Assert.True(map.TryGetElement(firstId, out UIElement? resolvedFirst));
-        Assert.True(map.TryGetElement(secondId, out UIElement? resolvedSecond));
-        Assert.Same(first, resolvedFirst);
-        Assert.Same(second, resolvedSecond);
+        Assert.True(map.Contains(first));
+        Assert.True(map.Contains(second));
+        Assert.Equal(2, map.Count);
+        IReadOnlyList<UIElement> route = map.InputTree.GetRouteToRoot(second);
+        Assert.Equal(2, route.Count);
+        Assert.Same(second, route[0]);
+        Assert.Same(first, route[1]);
     }
 
     [Fact]
@@ -54,11 +50,12 @@ public sealed class ElementInputRouteBuilderTests
         parent.VisualChildren.Add(child);
 
         ElementInputRouteMap map = new ElementInputRouteBuilder().Build(root);
-        Assert.True(map.TryGetId(child, out UiElementId childId));
-        Assert.True(map.TryGetId(parent, out UiElementId parentId));
-        Assert.True(map.TryGetId(root, out UiElementId rootId));
 
-        Assert.Equal([childId, parentId, rootId], map.InputTree.GetRouteToRoot(childId));
+        IReadOnlyList<UIElement> route = map.InputTree.GetRouteToRoot(child);
+        Assert.Equal(3, route.Count);
+        Assert.Same(child, route[0]);
+        Assert.Same(parent, route[1]);
+        Assert.Same(root, route[2]);
     }
 
     [Fact]
@@ -74,11 +71,13 @@ public sealed class ElementInputRouteBuilderTests
 
         ElementInputRouteMap map = new ElementInputRouteBuilder().Build(root);
 
-        Assert.False(map.TryGetId(disabled, out _));
-        Assert.False(map.TryGetId(invisible, out _));
-        Assert.True(map.TryGetId(includedGrandchild, out UiElementId grandchildId));
-        Assert.True(map.TryGetId(root, out UiElementId rootId));
-        Assert.Equal([grandchildId, rootId], map.InputTree.GetRouteToRoot(grandchildId));
+        Assert.False(map.Contains(disabled));
+        Assert.False(map.Contains(invisible));
+        Assert.True(map.Contains(includedGrandchild));
+        IReadOnlyList<UIElement> route = map.InputTree.GetRouteToRoot(includedGrandchild);
+        Assert.Equal(2, route.Count);
+        Assert.Same(includedGrandchild, route[0]);
+        Assert.Same(root, route[1]);
     }
 
     [Fact]
@@ -96,9 +95,9 @@ public sealed class ElementInputRouteBuilderTests
         child.Handlers.AddHandler(routedEvent, (_, _) => handled = true);
 
         ElementInputRouteMap map = new ElementInputRouteBuilder().Build(root);
-        Assert.True(map.TryGetId(child, out UiElementId childId));
+        Assert.True(map.Contains(child));
 
-        RoutedEventRouter.Raise(map.InputTree, childId, new RoutedEventArgs(routedEvent, childId));
+        RoutedEventRouter.Raise(map.InputTree, child, new RoutedEventArgs(routedEvent, child));
 
         Assert.True(handled);
     }

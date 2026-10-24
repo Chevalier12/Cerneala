@@ -54,7 +54,7 @@ if (FocusPolicy.CanFocus(editor, routeMap))
 | The element explicitly accepts focus. | `UIElement.Focusable` |
 | The element is enabled. | `UIElement.IsEnabled` |
 | The element participates in input visibility. | `UIElementVisibility.ParticipatesInInput(element)` |
-| The element is present in the supplied route map. | `ElementInputRouteMap.TryGetId(element, out _)` |
+| The element is present in the supplied route map. | `ElementInputRouteMap.Contains(element)` |
 
 Input visibility requires the element not to be presence-exiting, `IsVisible` to be `true`, and `Visibility` to be `Visible`. Hidden, collapsed, runtime-invisible, detached, disabled, or non-focusable elements are rejected.
 

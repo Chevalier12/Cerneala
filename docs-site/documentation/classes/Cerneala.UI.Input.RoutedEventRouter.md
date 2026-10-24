@@ -21,17 +21,18 @@ Inheritance:
 Raise a bubbling event from a target element to its ancestors.
 
 ```csharp
+using Cerneala.UI.Controls;
 using Cerneala.UI.Input;
 
 UiInputTree tree = new();
-UiElementId root = new("root");
-UiElementId panel = new("panel");
-UiElementId button = new("button");
+Border root = new();
+Border panel = new();
+Border button = new();
 List<string> calls = new();
 
-tree.Add(root, parentId: null);
-tree.Add(panel, parentId: root);
-tree.Add(button, parentId: panel);
+tree.Add(root, parent: null);
+tree.Add(panel, parent: root);
+tree.Add(button, parent: panel);
 
 tree.AddHandler(root, InputEvents.MouseDownEvent, (_, _) => calls.Add("root"));
 tree.AddHandler(panel, InputEvents.MouseDownEvent, (_, _) => calls.Add("panel"));
@@ -53,14 +54,15 @@ RoutedEventRouter.Raise(tree, button, args);
 Raise a preview/bubble pair. When a preview handler marks the event as handled, the bubble event is still raised, but with `Handled` already `true`, so only bubble handlers registered with `handledEventsToo: true` run.
 
 ```csharp
+using Cerneala.UI.Controls;
 using Cerneala.UI.Input;
 
 UiInputTree tree = new();
-UiElementId root = new("root");
-UiElementId button = new("button");
+Border root = new();
+Border button = new();
 
-tree.Add(root, parentId: null);
-tree.Add(button, parentId: root);
+tree.Add(root, parent: null);
+tree.Add(button, parent: root);
 tree.AddHandler(root, InputEvents.PreviewMouseDownEvent, (_, args) => args.Handled = true);
 
 MouseButtonEventArgs previewArgs = new(
@@ -95,7 +97,7 @@ RoutedEventRouter.RaisePair(tree, button, previewArgs, bubbleArgs);
 | `Bubble` | The target element followed by its ancestors up to the root. |
 | `Tunnel` | The root followed by descendants down to the target element. |
 
-Before invoking handlers for each element, `Raise` sets `args.Source` to the current `UiElementId`. `args.OriginalSource` is not changed by the router. When `args.Handled` is `true`, including after an individual handler sets it, the router skips handlers registered without `handledEventsToo`. Routing does not stop: it still visits every remaining route element, updates `Source`, and runs handlers registered with `handledEventsToo: true`.
+Before invoking handlers for each element, `Raise` sets `args.Source` to the current `UIElement` and passes the same element to the handler as `sender`. `args.OriginalSource` is not changed by the router. When `args.Handled` is `true`, including after an individual handler sets it, the router skips handlers registered without `handledEventsToo`. Routing does not stop: it still visits every remaining route element, updates `Source`, and runs handlers registered with `handledEventsToo: true`.
 
 The `UiInputTree` decides which handlers the router sees. Disabled elements return no handlers, but the route continues past them. The handler list of an element is copied when routing reaches that element. A handler added during dispatch to the element being visited does not run in that same dispatch; a handler added to an element that routing has not reached yet does run.
 
@@ -105,19 +107,19 @@ The `UiInputTree` decides which handlers the router sees. Disabled elements retu
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `Raise(UiInputTree tree, UiElementId targetId, RoutedEventArgs args)` | `void` | Raises a single routed event through the supplied input tree using the routing strategy stored on `args.RoutedEvent`. |
-| `RaisePair(UiInputTree tree, UiElementId targetId, RoutedEventArgs previewArgs, RoutedEventArgs bubbleArgs)` | `void` | Raises a preview event, then always raises the paired bubble event, marked handled when the preview was handled. |
+| `Raise(UiInputTree tree, UIElement target, RoutedEventArgs args)` | `void` | Raises a single routed event through the supplied input tree using the routing strategy stored on `args.RoutedEvent`. |
+| `RaisePair(UiInputTree tree, UIElement target, RoutedEventArgs previewArgs, RoutedEventArgs bubbleArgs)` | `void` | Raises a preview event, then always raises the paired bubble event, marked handled when the preview was handled. |
 
 ## Exceptions
 
 | Member | Exception | Condition |
 | --- | --- | --- |
-| `Raise(UiInputTree, UiElementId, RoutedEventArgs)` | `ArgumentNullException` | `tree` or `args` is `null`. |
-| `Raise(UiInputTree, UiElementId, RoutedEventArgs)` | `ArgumentException` | `targetId` is not registered in the supplied `UiInputTree`. |
-| `Raise(UiInputTree, UiElementId, RoutedEventArgs)` | `InvalidOperationException` | `args.RoutedEvent.RoutingStrategy` is not a supported routing strategy value. |
-| `RaisePair(UiInputTree, UiElementId, RoutedEventArgs, RoutedEventArgs)` | `ArgumentNullException` | `previewArgs`, `bubbleArgs`, or the delegated `tree` argument is `null`. |
-| `RaisePair(UiInputTree, UiElementId, RoutedEventArgs, RoutedEventArgs)` | `ArgumentException` | `targetId` is not registered when either delegated raise is performed. |
-| `RaisePair(UiInputTree, UiElementId, RoutedEventArgs, RoutedEventArgs)` | `InvalidOperationException` | A delegated routed event has an unsupported routing strategy value. |
+| `Raise(UiInputTree, UIElement, RoutedEventArgs)` | `ArgumentNullException` | `tree`, `target`, or `args` is `null`. |
+| `Raise(UiInputTree, UIElement, RoutedEventArgs)` | `ArgumentException` | `target` is not registered in the supplied `UiInputTree`. |
+| `Raise(UiInputTree, UIElement, RoutedEventArgs)` | `InvalidOperationException` | `args.RoutedEvent.RoutingStrategy` is not a supported routing strategy value. |
+| `RaisePair(UiInputTree, UIElement, RoutedEventArgs, RoutedEventArgs)` | `ArgumentNullException` | `previewArgs`, `bubbleArgs`, or the delegated `tree` or `target` argument is `null`. |
+| `RaisePair(UiInputTree, UIElement, RoutedEventArgs, RoutedEventArgs)` | `ArgumentException` | `target` is not registered when either delegated raise is performed. |
+| `RaisePair(UiInputTree, UIElement, RoutedEventArgs, RoutedEventArgs)` | `InvalidOperationException` | A delegated routed event has an unsupported routing strategy value. |
 
 ## Applies to
 

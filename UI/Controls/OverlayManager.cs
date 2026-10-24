@@ -125,10 +125,10 @@ internal sealed class OverlayManager
         }
     }
 
-    private void OnPreviewMouseDown(UiElementId _, RoutedEventArgs args)
+    private void OnPreviewMouseDown(object _, RoutedEventArgs args)
     {
         Overlay? overlay = TopmostLightDismissOverlay();
-        UIElement? source = ResolveElement(args.OriginalSource);
+        UIElement? source = args.OriginalSource as UIElement;
         if (overlay is null || IsWithinDismissDomain(source, overlay))
         {
             return;
@@ -137,7 +137,7 @@ internal sealed class OverlayManager
         Dismiss(overlay);
     }
 
-    private void OnPreviewLostKeyboardFocus(UiElementId _, RoutedEventArgs args)
+    private void OnPreviewLostKeyboardFocus(object _, RoutedEventArgs args)
     {
         Overlay? overlay = TopmostLightDismissOverlay();
         if (overlay is null || args is not KeyboardFocusChangedEventArgs focusArgs)
@@ -145,7 +145,7 @@ internal sealed class OverlayManager
             return;
         }
 
-        UIElement? next = ResolveElement(focusArgs.NewFocus);
+        UIElement? next = focusArgs.NewFocus as UIElement;
         if (!IsWithinDismissDomain(next, overlay))
         {
             Dismiss(overlay);
@@ -201,18 +201,6 @@ internal sealed class OverlayManager
         }
 
         return null;
-    }
-
-    private UIElement? ResolveElement(object? value)
-    {
-        if (value is UIElement element)
-        {
-            return element;
-        }
-
-        return value is UiElementId id && root.ElementIds.TryGetElement(id, out UIElement? resolved)
-            ? resolved
-            : null;
     }
 
     private static bool IsWithin(UIElement? candidate, UIElement ancestor)

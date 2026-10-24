@@ -29,12 +29,12 @@ public sealed class TouchInputBridge
 
     private static void RaiseCaptureChanged(ElementInputRouteMap routeMap, UIElement? element, RoutedEvent routedEvent, int touchId)
     {
-        if (element is null || !routeMap.TryGetId(element, out UiElementId id))
+        if (element is null || !routeMap.Contains(element))
         {
             return;
         }
 
-        RoutedEventRouter.Raise(routeMap.InputTree, id, new TouchEventArgs(routedEvent, id, touchId, 0, 0, TouchInputAction.Move));
+        RoutedEventRouter.Raise(routeMap.InputTree, element, new TouchEventArgs(routedEvent, element, touchId, 0, 0, TouchInputAction.Move));
     }
 
     public void Release(int touchId, ElementInputRouteMap routeMap)
@@ -79,9 +79,9 @@ public sealed class TouchInputBridge
 
         RoutedEventRouter.RaisePair(
             routeMap.InputTree,
-            target.ElementId,
-            new TouchEventArgs(preview, target.ElementId, point.Id, point.X, point.Y, point.Action),
-            new TouchEventArgs(bubble, target.ElementId, point.Id, point.X, point.Y, point.Action));
+            target.Element,
+            new TouchEventArgs(preview, target.Element, point.Id, point.X, point.Y, point.Action),
+            new TouchEventArgs(bubble, target.Element, point.Id, point.X, point.Y, point.Action));
     }
 
     private HitTestResult? ResolveTarget(ElementInputRouteMap routeMap, TouchInputPoint point, HitTestResult? hit)
@@ -91,9 +91,9 @@ public sealed class TouchInputBridge
             return hit;
         }
 
-        if (routeMap.TryGetId(captured, out UiElementId id))
+        if (routeMap.Contains(captured))
         {
-            return new HitTestResult(captured, id, point.X, point.Y);
+            return new HitTestResult(captured, point.X, point.Y);
         }
 
         capturedElementsByTouchId.Remove(point.Id);

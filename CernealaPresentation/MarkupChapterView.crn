@@ -92,7 +92,7 @@
                             FontSize="11"
                             Foreground="$SlateBrush"
                             TextWrapping="Wrap"
-                            Text="public partial class MainWindow : Window&#xA;{&#xA;  private void OnLaunch(&#xA;    UiElementId sender,&#xA;    RoutedEventArgs args)&#xA;  {&#xA;    Launch.Motion()&#xA;      .Scale.To(&#xA;        1.08f,&#xA;        Motion.Spring&lt;float>());&#xA;  }&#xA;}" />
+                            Text="public partial class MainWindow : Window&#xA;{&#xA;  private void OnLaunch(&#xA;    Button sender,&#xA;    RoutedEventArgs args)&#xA;  {&#xA;    Launch.Motion()&#xA;      .Scale.To(&#xA;        1.08f,&#xA;        Motion.Spring&lt;float>());&#xA;  }&#xA;}" />
                     </StackPanel>
                 </Border>
             </Grid>

@@ -131,7 +131,7 @@ internal sealed class RepeatButtonController
             candidate.IsEnabled &&
             UIElementVisibility.ParticipatesInInput(candidate) &&
             ReferenceEquals(candidate.Root, root) &&
-            routeMap.TryGetId(candidate, out _);
+            routeMap.Contains(candidate);
     }
 
     private static void Activate(

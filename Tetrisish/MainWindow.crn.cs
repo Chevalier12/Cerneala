@@ -7,7 +7,7 @@ public partial class MainWindow : Window
 {
     private long displayedStateVersion = -1;
 
-    private void OnPreviewKeyDown(UiElementId sender, RoutedEventArgs args)
+    private void OnPreviewKeyDown(MainWindow sender, RoutedEventArgs args)
     {
         if (args is not KeyEventArgs keyArgs)
         {
@@ -35,7 +35,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnPreviewKeyUp(UiElementId sender, RoutedEventArgs args)
+    private void OnPreviewKeyUp(MainWindow sender, RoutedEventArgs args)
     {
         if (args is KeyEventArgs { Key: InputKey.Down })
         {

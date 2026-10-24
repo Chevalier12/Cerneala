@@ -38,7 +38,7 @@ The returned text starts with `Render cache`, then includes a root cache line an
 
 `Dump` first captures root cache state with `RenderDiagnostics.CaptureRoot`, then walks the selected tree in pre-order and captures each element with `RenderDiagnostics.CaptureElement`. The default traversal role is `ElementChildRole.Visual`; pass `ElementChildRole.Logical` to inspect the logical tree instead.
 
-Each element line is produced from `ElementRenderDiagnosticsSnapshot.ToString()` and includes the element type/id, whether the element cache is valid or stale, render versions, command count, content bounds, and render dependencies. The root line is produced from `RootRenderDiagnosticsSnapshot.ToString()` and includes root validity, cache version, and root command count.
+Each element line is produced from `ElementRenderDiagnosticsSnapshot.ToString()` and starts with the element type and includes whether the element cache is valid or stale, render versions, command count, content bounds, and render dependencies. The root line is produced from `RootRenderDiagnosticsSnapshot.ToString()` and includes root validity, cache version, and root command count.
 
 ## Constructors
 | Name | Description |

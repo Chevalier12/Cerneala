@@ -84,7 +84,7 @@ This type feeds Cerneala's own `SemanticsNode` model. It is not a platform UI Au
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `Create(UIElement element)` | `AutomationPeer` | Creates the base peer or a specialized peer for known controls. Throws `ArgumentNullException` when `element` is `null`. |
-| `CreateNode(IReadOnlyList<SemanticsNode> children)` | `SemanticsNode` | Creates a semantic node using `Owner.ElementId`, the effective role, `Name`, `GetProperties()`, and the supplied child nodes. |
+| `CreateNode(IReadOnlyList<SemanticsNode> children)` | `SemanticsNode` | Creates a semantic node for `Owner`, the effective role, `Name`, `GetProperties()`, and the supplied child nodes. |
 | `GetProperties()` | `IReadOnlyDictionary<SemanticsProperty, object?>` | Returns the base semantic property dictionary containing enabled and focused state. Derived peers can add or replace entries. |
 
 ## Protected Members

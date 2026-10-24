@@ -56,7 +56,7 @@ public sealed class VisibilityCombinationTests
         ElementInputRouteMap routeMap = new ElementInputRouteBuilder().Build(root);
 
         Assert.Equal(visibilityCase.ParticipatesInInput, UIElementVisibility.ParticipatesInInput(element));
-        Assert.Equal(visibilityCase.ParticipatesInInput, routeMap.TryGetId(element, out _));
+        Assert.Equal(visibilityCase.ParticipatesInInput, routeMap.Contains(element));
     }
 
     [Theory]

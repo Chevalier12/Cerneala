@@ -9,7 +9,6 @@ Represents an immutable diagnostic snapshot of a UI element's current layout sta
 
 ```csharp
 public sealed record LayoutDiagnosticsSnapshot(
-    string? ElementId,
     string ElementType,
     LayoutSize DesiredSize,
     LayoutRect ArrangedBounds,
@@ -34,7 +33,6 @@ using Cerneala.UI.Detective;
 using Cerneala.UI.Layout;
 
 var snapshot = new LayoutDiagnosticsSnapshot(
-    ElementId: "button-1",
     ElementType: "Button",
     DesiredSize: new LayoutSize(96, 32),
     ArrangedBounds: new LayoutRect(12, 8, 96, 32),
@@ -50,23 +48,22 @@ string summary = snapshot.ToString();
 
 ## Remarks
 
-`LayoutDiagnosticsSnapshot` stores the layout values captured from a `UIElement`: element id, element type name, desired size, arranged bounds, layout version, visibility, and the most recent measure and arrange inputs with their layout versions.
+`LayoutDiagnosticsSnapshot` stores the layout values captured from a `UIElement`: element type name, desired size, arranged bounds, layout version, visibility, and the most recent measure and arrange inputs with their layout versions.
 
 Use `LayoutDiagnostics.Capture(UIElement)` when the values should come from a live element. The record constructor is useful when tests or diagnostics need to create a known snapshot directly.
 
-`ToString()` returns a short invariant-culture summary containing the element type, element id or `unattached`, desired size, arranged bounds, layout version, and visibility.
+`ToString()` returns a short invariant-culture summary starting with the element type (for example `Button`), followed by desired size, arranged bounds, layout version, and visibility.
 
 ## Constructors
 
 | Name | Description |
 | --- | --- |
-| `LayoutDiagnosticsSnapshot(string?, string, LayoutSize, LayoutRect, int, Visibility, LayoutSize?, int, LayoutRect?, int)` | Initializes a layout diagnostic snapshot with element identity, current layout values, and last measure/arrange diagnostic values. |
+| `LayoutDiagnosticsSnapshot(string, LayoutSize, LayoutRect, int, Visibility, LayoutSize?, int, LayoutRect?, int)` | Initializes a layout diagnostic snapshot with the element type, current layout values, and last measure/arrange diagnostic values. |
 
 ## Properties
 
 | Name | Description |
 | --- | --- |
-| `ElementId` | Gets the captured element id text, or `null` when the element is not attached to an id. |
 | `ElementType` | Gets the captured runtime type name of the element. |
 | `DesiredSize` | Gets the element's desired size at capture time. |
 | `ArrangedBounds` | Gets the element's arranged bounds at capture time. |

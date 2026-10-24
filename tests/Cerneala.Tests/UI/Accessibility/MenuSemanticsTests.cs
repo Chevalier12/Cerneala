@@ -40,9 +40,8 @@ public sealed class MenuSemanticsTests
         parent.IsSubmenuOpen = true;
         root.ProcessFrame();
         SemanticsTree openTree = root.GetSemanticsTree();
-        SemanticsNode openMenu = Find(openTree.Root, menu.ElementId);
-        SemanticsNode openParent = Find(openTree.Root, parent.ElementId);
-        UiElementId childId = Assert.IsType<UiElementId>(child.ElementId);
+        SemanticsNode openMenu = Find(openTree.Root, menu);
+        SemanticsNode openParent = Find(openTree.Root, parent);
 
         Assert.Equal(SemanticsRole.Menu, openMenu.Role);
         Assert.Equal(1, openMenu.GetProperty<int>(SemanticsProperty.ItemCount));
@@ -52,39 +51,39 @@ public sealed class MenuSemanticsTests
         Assert.True(openParent.GetProperty<bool>(SemanticsProperty.IsEnabled));
         Assert.True(openParent.GetProperty<bool>(SemanticsProperty.IsFocused));
         Assert.True(openParent.GetProperty<bool>(SemanticsProperty.IsExpanded));
-        Assert.Equal("Open", Find(openTree.Root, childId).Name);
+        Assert.Equal("Open", Find(openTree.Root, child).Name);
 
         parent.IsSubmenuOpen = false;
         root.ProcessFrame();
         SemanticsTree closedTree = root.GetSemanticsTree();
-        SemanticsNode closedParent = Find(closedTree.Root, parent.ElementId);
+        SemanticsNode closedParent = Find(closedTree.Root, parent);
 
         Assert.NotSame(openTree, closedTree);
         Assert.False(closedParent.GetProperty<bool>(SemanticsProperty.IsExpanded));
-        Assert.Null(FindOrDefault(closedTree.Root, childId));
+        Assert.Null(FindOrDefault(closedTree.Root, child));
 
         parent.IsEnabled = false;
         root.ProcessFrame();
-        SemanticsNode disabledParent = Find(root.GetSemanticsTree().Root, parent.ElementId);
+        SemanticsNode disabledParent = Find(root.GetSemanticsTree().Root, parent);
 
         Assert.False(disabledParent.GetProperty<bool>(SemanticsProperty.IsEnabled));
     }
 
-    private static SemanticsNode Find(SemanticsNode node, UiElementId? id)
+    private static SemanticsNode Find(SemanticsNode node, UIElement? element)
     {
-        return FindOrDefault(node, id) ?? throw new Xunit.Sdk.XunitException($"No semantics node exists for '{id}'.");
+        return FindOrDefault(node, element) ?? throw new Xunit.Sdk.XunitException($"No semantics node exists for the {element?.GetType().Name}.");
     }
 
-    private static SemanticsNode? FindOrDefault(SemanticsNode node, UiElementId? id)
+    private static SemanticsNode? FindOrDefault(SemanticsNode node, UIElement? element)
     {
-        if (node.ElementId == id)
+        if (ReferenceEquals(node.Element, element))
         {
             return node;
         }
 
         foreach (SemanticsNode child in node.Children)
         {
-            SemanticsNode? match = FindOrDefault(child, id);
+            SemanticsNode? match = FindOrDefault(child, element);
             if (match is not null)
             {
                 return match;

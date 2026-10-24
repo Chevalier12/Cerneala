@@ -224,7 +224,7 @@ internal sealed class RenderSurface3DConformanceFixture
         ? RenderProjection3D.Orthographic(orthographicHeight, .01f, 100)
         : RenderProjection3D.Perspective(MathF.PI / 3, .01f, 100);
 
-    private void OnWheel(UiElementId _, RoutedEventArgs args)
+    private void OnWheel(object _, RoutedEventArgs args)
     {
         if (args is not MouseWheelEventArgs wheel) return;
         distance = Math.Clamp(distance * MathF.Exp(-wheel.Delta / 1200f), 2, 15);
@@ -280,8 +280,8 @@ internal sealed class RenderSurface3DConformanceFixture
 
         bool IPointerDragSource.BeginPointerDrag(PointerCaptureManager manager, ElementInputRouteMap map, MouseButtonEventArgs args)
         {
-            if (args.ChangedButton != InputMouseButton.Left || args.OriginalSource is not UiElementId id ||
-                !map.TryGetElement(id, out UIElement? hit) || !ReferenceEquals(hit, this)) return false;
+            if (args.ChangedButton != InputMouseButton.Left || args.OriginalSource is not UIElement hit ||
+                !map.Contains(hit) || !ReferenceEquals(hit, this)) return false;
             capture = manager;
             routeMap = map;
             last = new Vector2(args.X, args.Y);

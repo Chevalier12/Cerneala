@@ -65,6 +65,6 @@ internal sealed class RetainedInputBindingProcessor
         return element.IsAttached &&
             element.IsEnabled &&
             UIElementVisibility.ParticipatesInInput(element) &&
-            routeMap.TryGetId(element, out _);
+            routeMap.Contains(element);
     }
 }

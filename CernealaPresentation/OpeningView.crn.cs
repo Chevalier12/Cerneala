@@ -67,7 +67,7 @@ internal partial class OpeningView : UserControl
                 StringComparison.OrdinalIgnoreCase);
     }
 
-    private void OnContinue(UiElementId sender, RoutedEventArgs args)
+    private void OnContinue(Button sender, RoutedEventArgs args)
     {
         if (isContinuing)
         {

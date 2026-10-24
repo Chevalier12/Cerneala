@@ -2259,11 +2259,6 @@
     "source": "UI/Elements/ElementHandlerStore.cs"
   },
   {
-    "name": "Cerneala.UI.Elements.ElementIdProvider",
-    "file": "documentation/classes/Cerneala.UI.Elements.ElementIdProvider.md",
-    "source": "UI/Elements/ElementIdProvider.cs"
-  },
-  {
     "name": "Cerneala.UI.Elements.ElementLifecycle",
     "file": "documentation/classes/Cerneala.UI.Elements.ElementLifecycle.md",
     "source": "UI/Elements/ElementLifecycle.cs"
@@ -2837,11 +2832,6 @@
     "name": "Cerneala.UI.Input.TouchInputPoint",
     "file": "documentation/classes/Cerneala.UI.Input.TouchInputPoint.md",
     "source": "UI/Input/TouchInputBridge.cs"
-  },
-  {
-    "name": "Cerneala.UI.Input.UiElementId",
-    "file": "documentation/classes/Cerneala.UI.Input.UiElementId.md",
-    "source": "UI/Input/UiElementId.cs"
   },
   {
     "name": "Cerneala.UI.Input.UiInputElement",

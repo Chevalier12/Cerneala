@@ -227,10 +227,8 @@ internal sealed class ServoQueryEngine
 
     private static bool TryResolveEntry(UIRoot root, SemanticsNode node, [NotNullWhen(true)] out UIElement? element)
     {
-        if (node.ElementId is UiElementId elementId &&
-            root.ElementIds.TryGetElement(elementId, out element) &&
-            element is not null &&
-            ReferenceEquals(element.Root, root))
+        element = node.Element;
+        if (element is not null && ReferenceEquals(element.Root, root))
         {
             return true;
         }

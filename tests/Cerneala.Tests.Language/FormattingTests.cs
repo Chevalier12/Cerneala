@@ -212,7 +212,10 @@ public sealed class FormattingTests
             [code],
             includeFixAll: false), action => action.Title == "Create event handler OnLoaded");
         string generatedCode = Apply(companion, eventAction.Edits);
-        Assert.Contains("private void OnLoaded(", generatedCode, StringComparison.Ordinal);
+        Assert.Contains(
+            "private void OnLoaded(Fixture.View sender, Cerneala.UI.Input.RoutedEventArgs args)",
+            generatedCode,
+            StringComparison.Ordinal);
         Assert.Contains(
             LanguagePipelineHarness.AnalyzePairedSourceGenerator(
                 eventFixture.Document.Path,
@@ -226,6 +229,29 @@ public sealed class FormattingTests
                 eventFixture.Document.Text.ToString(),
                 eventFixture.CodePath,
                 generatedCode),
+            diagnostic => diagnostic.Id == "CERNEALAUI009");
+
+        using Fixture childEventFixture = Fixture.Create(
+            "<Window><Slider ValueChanged=\"OnVolume\" /></Window>",
+            companion: companion);
+        CernealaCodeAction childEventAction = Assert.Single(service.GetCodeActions(
+            childEventFixture.Document,
+            childEventFixture.Model,
+            childEventFixture.Document.Syntax.Span,
+            [new CernealaCodeActionDiagnostic("CERNEALAUI009", childEventFixture.Document.Syntax.Span)],
+            [new CernealaAdditionalDocument(childEventFixture.CodePath, SourceText.From(companion))],
+            includeFixAll: false), action => action.Title == "Create event handler OnVolume");
+        string childGeneratedCode = Apply(companion, childEventAction.Edits);
+        Assert.Contains(
+            "private void OnVolume(Cerneala.UI.Controls.Slider sender, Cerneala.UI.Input.RoutedPropertyChangedEventArgs<float> e)",
+            childGeneratedCode,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            LanguagePipelineHarness.AnalyzePairedSourceGenerator(
+                childEventFixture.Document.Path,
+                childEventFixture.Document.Text.ToString(),
+                childEventFixture.CodePath,
+                childGeneratedCode),
             diagnostic => diagnostic.Id == "CERNEALAUI009");
 
         using Fixture propertyElement = Fixture.Create("""

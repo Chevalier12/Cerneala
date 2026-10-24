@@ -51,6 +51,6 @@ public class AutomationPeer
 
     public SemanticsNode CreateNode(IReadOnlyList<SemanticsNode> children)
     {
-        return new SemanticsNode(Owner.ElementId, EffectiveRole, Name, GetProperties(), children);
+        return new SemanticsNode(Owner, EffectiveRole, Name, GetProperties(), children);
     }
 }

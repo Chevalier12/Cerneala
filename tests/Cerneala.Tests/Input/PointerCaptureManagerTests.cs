@@ -14,8 +14,8 @@ public sealed class PointerCaptureManagerTests
         root.VisualChildren.Add(captured);
         root.VisualChildren.Add(hit);
         ElementInputRouteMap map = root.InputCache.EnsureCurrent(root);
-        Assert.True(map.TryGetId(hit, out UiElementId hitId));
-        HitTestResult hitTarget = new(hit, hitId, 5, 6);
+        Assert.True(map.Contains(hit));
+        HitTestResult hitTarget = new(hit, 5, 6);
         PointerCaptureManager manager = new();
 
         manager.Capture(captured, map);
@@ -37,8 +37,8 @@ public sealed class PointerCaptureManagerTests
         manager.Capture(captured, firstMap);
         root.VisualChildren.Remove(captured);
         ElementInputRouteMap secondMap = root.InputCache.EnsureCurrent(root);
-        Assert.True(secondMap.TryGetId(hit, out UiElementId hitId));
-        HitTestResult hitTarget = new(hit, hitId, 5, 6);
+        Assert.True(secondMap.Contains(hit));
+        HitTestResult hitTarget = new(hit, 5, 6);
 
         HitTestResult? result = manager.OverrideTarget(hitTarget, secondMap, 5, 6);
 

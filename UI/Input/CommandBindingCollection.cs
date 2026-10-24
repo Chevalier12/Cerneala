@@ -51,7 +51,7 @@ public sealed class CommandBindingCollection : IReadOnlyList<CommandBinding>
         NotifyChanged();
     }
 
-    public void InvokeCanExecute(UiElementId sender, CanExecuteRoutedEventArgs args)
+    public void InvokeCanExecute(object sender, CanExecuteRoutedEventArgs args)
     {
         ArgumentNullException.ThrowIfNull(args);
         foreach (CommandBinding binding in GetDispatchSnapshot())
@@ -64,7 +64,7 @@ public sealed class CommandBindingCollection : IReadOnlyList<CommandBinding>
         }
     }
 
-    public void InvokeExecuted(UiElementId sender, ExecutedRoutedEventArgs args)
+    public void InvokeExecuted(object sender, ExecutedRoutedEventArgs args)
     {
         ArgumentNullException.ThrowIfNull(args);
         foreach (CommandBinding binding in GetDispatchSnapshot())

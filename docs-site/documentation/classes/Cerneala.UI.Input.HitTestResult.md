@@ -7,7 +7,7 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Input/HitTestResult.cs`
 
-Stores the element, element id, and local coordinates produced by a retained UI hit test.
+Stores the element and local coordinates produced by a retained UI hit test.
 
 ```csharp
 public sealed class HitTestResult
@@ -26,13 +26,13 @@ using Cerneala.UI.Input;
 HitTestResult? result = inputCache.HitTest(root, pointerX, pointerY);
 if (result is not null)
 {
-    RoutePointerEvent(result.ElementId, result.X, result.Y);
+    RoutePointerEvent(result.Element, result.X, result.Y);
 }
 ```
 
 ## Remarks
 
-`HitTestResult` is an immutable result object. `Element` stores the matched `UIElement`, `ElementId` stores the element id used by the input route map, and `X` and `Y` store the hit coordinates associated with the result.
+`HitTestResult` is an immutable result object. `Element` stores the matched `UIElement`, which is also the key the input route map and `UiInputTree` use, and `X` and `Y` store the hit coordinates associated with the result.
 
 The constructor throws when `element` is `null`.
 
@@ -40,14 +40,13 @@ The constructor throws when `element` is `null`.
 
 | Name | Description |
 | --- | --- |
-| `HitTestResult(UIElement, UiElementId, float, float)` | Initializes a hit test result for an element, element id, and coordinates. |
+| `HitTestResult(UIElement, float, float)` | Initializes a hit test result for an element and coordinates. |
 
 ## Properties
 
 | Name | Type | Description |
 | --- | --- | --- |
 | `Element` | `UIElement` | Gets the element matched by the hit test. |
-| `ElementId` | `UiElementId` | Gets the id of the matched element in the input route map. |
 | `X` | `float` | Gets the hit X coordinate. |
 | `Y` | `float` | Gets the hit Y coordinate. |
 

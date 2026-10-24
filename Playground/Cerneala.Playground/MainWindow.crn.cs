@@ -215,7 +215,7 @@ public sealed class ShowcaseNavigation : ScrollViewer
         return button;
     }
 
-    private void OnNavigationButtonClick(UiElementId sender, RoutedEventArgs args)
+    private void OnNavigationButtonClick(object sender, RoutedEventArgs args)
     {
         if (args.OriginalSource is Button { Content: string showcaseName })
         {

@@ -15,7 +15,7 @@ public sealed class CommandBindingCollectionTests
         bindings.Add(new CommandBinding(command, (_, _) => calls.Add("second")));
 
         bindings.InvokeExecuted(
-            new UiElementId("target"),
+            new UIElement(),
             new ExecutedRoutedEventArgs(CommandEvents.ExecutedEvent, "target", command, null));
 
         Assert.Equal(["first", "second"], calls);
@@ -39,7 +39,7 @@ public sealed class CommandBindingCollectionTests
         bindings.Add(new CommandBinding(save, (_, _) => executed = true));
 
         bindings.InvokeExecuted(
-            new UiElementId("target"),
+            new UIElement(),
             new ExecutedRoutedEventArgs(CommandEvents.ExecutedEvent, "target", open, null));
 
         Assert.False(executed);
@@ -65,7 +65,7 @@ public sealed class CommandBindingCollectionTests
         }));
 
         element.CommandBindings.InvokeExecuted(
-            new UiElementId("target"),
+            new UIElement(),
             new ExecutedRoutedEventArgs(CommandEvents.ExecutedEvent, "target", command, null));
 
         Assert.Equal(["first"], calls);
@@ -91,7 +91,7 @@ public sealed class CommandBindingCollectionTests
         }));
 
         element.CommandBindings.InvokeCanExecute(
-            new UiElementId("target"),
+            new UIElement(),
             new CanExecuteRoutedEventArgs(CommandEvents.CanExecuteEvent, "target", command, null));
 
         Assert.Equal(["first"], calls);
@@ -114,7 +114,7 @@ public sealed class CommandBindingCollectionTests
         bindings.Add(new CommandBinding(command, (_, _) => calls.Add("C")));
 
         bindings.InvokeExecuted(
-            new UiElementId("target"),
+            new UIElement(),
             new ExecutedRoutedEventArgs(CommandEvents.ExecutedEvent, "target", command, null));
 
         Assert.Equal(["A", "B", "C"], calls);
@@ -135,7 +135,7 @@ public sealed class CommandBindingCollectionTests
         bindings.Add(new CommandBinding(command, (_, _) => calls.Add("B")));
 
         bindings.InvokeExecuted(
-            new UiElementId("target"),
+            new UIElement(),
             new ExecutedRoutedEventArgs(CommandEvents.ExecutedEvent, "target", command, null));
 
         Assert.Equal(["A", "B"], calls);
@@ -159,7 +159,7 @@ public sealed class CommandBindingCollectionTests
         bindings.Add(new CommandBinding(command, null, (_, _) => calls.Add("C")));
 
         bindings.InvokeCanExecute(
-            new UiElementId("target"),
+            new UIElement(),
             new CanExecuteRoutedEventArgs(CommandEvents.CanExecuteEvent, "target", command, null));
 
         Assert.Equal(["A", "B", "C"], calls);
@@ -180,7 +180,7 @@ public sealed class CommandBindingCollectionTests
         bindings.Add(new CommandBinding(command, null, (_, _) => calls.Add("B")));
 
         bindings.InvokeCanExecute(
-            new UiElementId("target"),
+            new UIElement(),
             new CanExecuteRoutedEventArgs(CommandEvents.CanExecuteEvent, "target", command, null));
 
         Assert.Equal(["A", "B"], calls);

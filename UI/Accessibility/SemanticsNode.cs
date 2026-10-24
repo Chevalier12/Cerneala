@@ -1,4 +1,4 @@
-using Cerneala.UI.Input;
+using Cerneala.UI.Elements;
 using System.Collections.ObjectModel;
 
 namespace Cerneala.UI.Accessibility;
@@ -6,13 +6,13 @@ namespace Cerneala.UI.Accessibility;
 public sealed class SemanticsNode
 {
     public SemanticsNode(
-        UiElementId? elementId,
+        UIElement? element,
         SemanticsRole role,
         string? name = null,
         IReadOnlyDictionary<SemanticsProperty, object?>? properties = null,
         IReadOnlyList<SemanticsNode>? children = null)
     {
-        ElementId = elementId;
+        Element = element;
         Role = role;
         Name = string.IsNullOrWhiteSpace(name) ? null : name;
         Properties = new ReadOnlyDictionary<SemanticsProperty, object?>(
@@ -21,7 +21,7 @@ public sealed class SemanticsNode
             children is null ? [] : children.ToArray());
     }
 
-    public UiElementId? ElementId { get; }
+    public UIElement? Element { get; }
 
     public SemanticsRole Role { get; }
 

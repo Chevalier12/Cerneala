@@ -10,12 +10,12 @@ Source: `UI/Input/UiInputTree.cs`
 Represents a method that handles a routed event on one element of the route.
 
 ```csharp
-public delegate void RoutedEventHandler(UiElementId sender, RoutedEventArgs args)
+public delegate void RoutedEventHandler(object sender, RoutedEventArgs args)
 ```
 
 ## Examples
 
-The same handler runs on the button and on its parent. `sender` is the id of the element whose handler runs. `args.Source` is updated to the same element before each handler runs.
+The same handler runs on the button and on its parent. `sender` is the element whose handler runs. `args.Source` is updated to the same element before each handler runs.
 
 ```csharp
 using Cerneala.UI.Controls;
@@ -31,20 +31,23 @@ panel.VisualChildren.Add(button);
 root.ProcessFrame();
 
 RoutedEventHandler log = (sender, args) =>
-    Console.WriteLine($"{sender} source={args.Source} original={args.OriginalSource}");
+    Console.WriteLine(
+        $"{sender.GetType().Name} sourceIsSender={ReferenceEquals(args.Source, sender)} originalIsButton={ReferenceEquals(args.OriginalSource, button)}");
 panel.AddHandler(ButtonBase.ClickEvent, log);
 button.AddHandler(ButtonBase.ClickEvent, log);
 
 button.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent, button));
-// ui-3 source=ui-3 original=Cerneala.UI.Controls.Button
-// ui-2 source=ui-2 original=Cerneala.UI.Controls.Button
+// Button sourceIsSender=True originalIsButton=True
+// UIElement sourceIsSender=True originalIsButton=True
 ```
 
 ## Remarks
 
-`sender` is a `UiElementId`, not the element object. It identifies the element whose handler is running, so it changes as the event moves along the route. To get the element that raised the event, read `args.OriginalSource`.
+`sender` is the element whose handler is running, as an `object`. It changes as the event moves along the route. To get the element that raised the event, read `args.OriginalSource`.
 
-When `UIElement.RaiseEvent` calls only the element's own handlers, because the event is `Direct` or the element has no root or no id yet, `sender` is the element's `ElementId`. When the element has no id, `sender` is a new `UiElementId` made from the element's type name, for example `Button`.
+When `UIElement.RaiseEvent` calls only the element's own handlers, because the event is `Direct` or the element has no root, `sender` is that element, and `args.Source` is set to that element too. `args.OriginalSource` keeps the value the caller gave it.
+
+In markup, an event attribute such as `<Button Click="OnSave" />` calls a code-behind method whose first parameter has the exact type of the element: `OnSave(Button sender, RoutedEventArgs args)`. The first parameter may also be a base type of the element (`UIElement` or `object`).
 
 A handler runs only when `args.Handled` is `false`, unless it was added with `handledEventsToo: true`.
 
@@ -54,7 +57,7 @@ Register a handler with `UIElement.AddHandler`, `UiInputTree.AddHandler`, or a C
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `sender` | `UiElementId` | The id of the route element whose handler is running. |
+| `sender` | `object` | The element whose handler is running. Cast it to `UIElement` or the element type. |
 | `args` | `RoutedEventArgs` | The routed event data. Cast it to the event's argument type, for example `MouseButtonEventArgs`. |
 
 ## Applies to
@@ -66,4 +69,4 @@ Register a handler with `UIElement.AddHandler`, `UiInputTree.AddHandler`, or a C
 - `Cerneala.UI.Input.RoutedEventArgs`
 - `Cerneala.UI.Input.RoutedEvent`
 - `Cerneala.UI.Input.RoutedEventRouter`
-- `Cerneala.UI.Input.UiElementId`
+- `Cerneala.UI.Elements.UIElement`

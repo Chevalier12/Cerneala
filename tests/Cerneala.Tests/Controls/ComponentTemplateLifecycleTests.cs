@@ -328,12 +328,12 @@ public sealed class ComponentTemplateLifecycleTests
         LifecycleElement child = new();
 
         control.ComponentTemplate = new ComponentTemplate<Control>("test", _ => child);
-        UiElementId id = child.ElementId!.Value;
+        Assert.Same(root, child.Root);
+        Assert.Equal(1, child.AttachedCount);
         control.ApplyTemplate();
 
         Assert.Same(root, child.Root);
         Assert.Equal(1, child.AttachedCount);
-        Assert.Equal(id, child.ElementId!.Value);
     }
 
     [Fact]
@@ -356,7 +356,7 @@ public sealed class ComponentTemplateLifecycleTests
         bool routed = false;
         child.Handlers.AddHandler(InputEvents.MouseDownEvent, (_, _) => routed = true);
         ElementInputRouteMap map = new ElementInputRouteBuilder().Build(root);
-        RoutedEventRouter.Raise(map.InputTree, child.ElementId!.Value, new MouseButtonEventArgs(InputEvents.MouseDownEvent, child.ElementId.Value, InputMouseButton.Left, 10, 10, 1));
+        RoutedEventRouter.Raise(map.InputTree, child, new MouseButtonEventArgs(InputEvents.MouseDownEvent, child, InputMouseButton.Left, 10, 10, 1));
         child.SetValue(UIElement.IsEnabledProperty, false, UiPropertyValueSource.AspectBase);
 
         Assert.Equal(new LayoutSize(20, 10), child.DesiredSize);

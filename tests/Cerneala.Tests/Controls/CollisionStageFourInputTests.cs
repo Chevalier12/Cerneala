@@ -116,8 +116,8 @@ public sealed class CollisionStageFourInputTests
         ElementInputRouteMap routeMap = root.InputCache.EnsureCurrent(root);
 
         Assert.Same(sprite, hit?.Element);
-        Assert.True(routeMap.TryGetId(sprite, out UiElementId spriteId));
-        Assert.Equal(spriteId, hit?.ElementId);
+        Assert.True(routeMap.Contains(sprite));
+        Assert.Same(sprite, hit?.Element);
         Assert.Equal(
             [sprite, house, scene, scene.Surface!, root],
             routeMap.GetRouteToRoot(sprite));
@@ -173,13 +173,13 @@ public sealed class CollisionStageFourInputTests
         root.InputCache.EnsureCurrent(root);
 
         Assert.Equal(baseline + 1, root.InputCache.RebuildCount);
-        Assert.True(root.InputCache.RouteMap.TryGetId(second, out _));
+        Assert.True(root.InputCache.RouteMap.Contains(second));
 
         second.IsVisible = false;
         root.InputCache.EnsureCurrent(root);
 
         Assert.Equal(baseline + 2, root.InputCache.RebuildCount);
-        Assert.False(root.InputCache.RouteMap.TryGetId(second, out _));
+        Assert.False(root.InputCache.RouteMap.Contains(second));
     }
 
     [Fact]

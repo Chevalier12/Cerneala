@@ -23,9 +23,11 @@ Implements:
 ## Examples
 
 ```csharp
+using Cerneala.UI.Controls;
 using Cerneala.UI.Input;
 
 RoutedCommand saveCommand = new("Save", typeof(EditorCommands));
+Border editor = new();
 CommandBindingCollection bindings = new();
 List<string> calls = [];
 
@@ -43,12 +45,12 @@ bindings.Add(new CommandBinding(
     }));
 
 bindings.InvokeCanExecute(
-    new UiElementId("editor"),
-    new CanExecuteRoutedEventArgs(CommandEvents.CanExecuteEvent, "editor", saveCommand, null));
+    editor,
+    new CanExecuteRoutedEventArgs(CommandEvents.CanExecuteEvent, editor, saveCommand, null));
 
 bindings.InvokeExecuted(
-    new UiElementId("editor"),
-    new ExecutedRoutedEventArgs(CommandEvents.ExecutedEvent, "editor", saveCommand, null));
+    editor,
+    new ExecutedRoutedEventArgs(CommandEvents.ExecutedEvent, editor, saveCommand, null));
 ```
 
 ## Remarks
@@ -81,8 +83,8 @@ When the collection is owned by a `UIElement`, `Add`, successful `Remove`, and n
 | `Add(CommandBinding)` | Adds a non-null binding and notifies the owner, when present. |
 | `Remove(CommandBinding)` | Removes a non-null binding and returns whether it was found. Owner notification occurs only when a binding is removed. |
 | `Clear()` | Removes all bindings. Owner notification occurs only when the collection was not already empty. |
-| `InvokeCanExecute(UiElementId, CanExecuteRoutedEventArgs)` | Invokes can-execute handling on the bindings that existed when the call started, in insertion order, until the args are handled or those bindings are exhausted. |
-| `InvokeExecuted(UiElementId, ExecutedRoutedEventArgs)` | Invokes executed handling on the bindings that existed when the call started, in insertion order, until the args are handled or those bindings are exhausted. |
+| `InvokeCanExecute(object, CanExecuteRoutedEventArgs)` | Invokes can-execute handling on the bindings that existed when the call started, in insertion order, until the args are handled or those bindings are exhausted. |
+| `InvokeExecuted(object, ExecutedRoutedEventArgs)` | Invokes executed handling on the bindings that existed when the call started, in insertion order, until the args are handled or those bindings are exhausted. |
 | `GetEnumerator()` | Returns an enumerator over the stored bindings. |
 
 ## Explicit Interface Implementations
@@ -97,8 +99,8 @@ When the collection is owned by a `UIElement`, `Add`, successful `Remove`, and n
 | --- | --- | --- |
 | `Add(CommandBinding)` | `ArgumentNullException` | `binding` is `null`. |
 | `Remove(CommandBinding)` | `ArgumentNullException` | `binding` is `null`. |
-| `InvokeCanExecute(UiElementId, CanExecuteRoutedEventArgs)` | `ArgumentNullException` | `args` is `null`. |
-| `InvokeExecuted(UiElementId, ExecutedRoutedEventArgs)` | `ArgumentNullException` | `args` is `null`. |
+| `InvokeCanExecute(object, CanExecuteRoutedEventArgs)` | `ArgumentNullException` | `args` is `null`. |
+| `InvokeExecuted(object, ExecutedRoutedEventArgs)` | `ArgumentNullException` | `args` is `null`. |
 | `this[int index]` | `ArgumentOutOfRangeException` | `index` is negative or not less than `Count`. |
 
 ## Applies to

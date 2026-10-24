@@ -242,7 +242,7 @@ public partial class AspectChapterView : UserControl
         editorBuilt = false;
     }
 
-    private void OnReset(UiElementId sender, RoutedEventArgs args)
+    private void OnReset(Button sender, RoutedEventArgs args)
     {
         AspectStudioTarget target = SelectedTarget;
         target.Reset();
@@ -251,11 +251,11 @@ public partial class AspectChapterView : UserControl
         UpdateStatus("RESET");
     }
 
-    private void OnSelectBorder(UiElementId sender, RoutedEventArgs args) => SelectTarget(AspectStudioElementKind.Border);
+    private void OnSelectBorder(Button sender, RoutedEventArgs args) => SelectTarget(AspectStudioElementKind.Border);
 
-    private void OnSelectTextBlock(UiElementId sender, RoutedEventArgs args) => SelectTarget(AspectStudioElementKind.TextBlock);
+    private void OnSelectTextBlock(Button sender, RoutedEventArgs args) => SelectTarget(AspectStudioElementKind.TextBlock);
 
-    private void OnSelectButton(UiElementId sender, RoutedEventArgs args) => SelectTarget(AspectStudioElementKind.Button);
+    private void OnSelectButton(Button sender, RoutedEventArgs args) => SelectTarget(AspectStudioElementKind.Button);
 
     private void OnPropertySearchChanged(object? sender, TextChangedEventArgs args)
     {

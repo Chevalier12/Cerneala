@@ -10,7 +10,7 @@ Source: `UI/Detective/RoutedEventTrace.cs`
 Represents one element visited by a routed event diagnostic trace.
 
 ```csharp
-public sealed record RoutedEventTraceStep(string? ElementId, string ElementType)
+public sealed record RoutedEventTraceStep(string ElementType)
 ```
 
 Inheritance:
@@ -23,19 +23,10 @@ Create a trace step directly and format it for diagnostic output:
 ```csharp
 using Cerneala.UI.Detective;
 
-RoutedEventTraceStep step = new("42", "Button");
+RoutedEventTraceStep step = new("Button");
 
 string text = step.ToString();
-// "Button#42"
-```
-
-When the element id is not available, the formatted value uses `unattached`:
-
-```csharp
-RoutedEventTraceStep step = new(null, "UIElement");
-
-string text = step.ToString();
-// "UIElement#unattached"
+// "Button"
 ```
 
 `RoutedEventTrace.Trace` creates steps from the routed event route:
@@ -56,13 +47,13 @@ RoutedEventTraceStep firstStep = snapshot.Steps[0];
 ## Remarks
 
 `RoutedEventTraceStep` is a small immutable diagnostic record used by `RoutedEventTraceSnapshot.Steps`.
-Each step stores the traced element id as text and the element type name captured while building the route.
+Each step stores the element type name captured while building the route.
 
-`RoutedEventTrace.Trace` creates each step with `element.ElementId?.ToString()` and `element.GetType().Name`.
+`RoutedEventTrace.Trace` creates each step with `element.GetType().Name`.
 The route order depends on the routed event strategy: bubble traces run from the target up through its enabled ancestors, tunnel traces run the same steps in reverse order, and direct traces contain only the target. Disabled ancestors, including a disabled root, are not steps.
 Disabled ancestors are skipped by the trace builder.
 
-`ToString()` returns `ElementType#ElementId`. If `ElementId` is `null`, it returns `ElementType#unattached`.
+`ToString()` returns `ElementType`.
 
 Because this type is a C# record, it also has record value equality and compiler-generated members for the primary constructor parameters.
 
@@ -70,20 +61,19 @@ Because this type is a C# record, it also has record value equality and compiler
 
 | Name | Description |
 | --- | --- |
-| `RoutedEventTraceStep(string? ElementId, string ElementType)` | Initializes a trace step with the optional element id text and the element type name. |
+| `RoutedEventTraceStep(string ElementType)` | Initializes a trace step with the element type name. |
 
 ## Properties
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `ElementId` | `string?` | The traced element id converted to text, or `null` when no id is available. |
 | `ElementType` | `string` | The element type name captured for the traced route step. |
 
 ## Methods
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `ToString()` | `string` | Formats the step as `ElementType#ElementId`, using `unattached` when `ElementId` is `null`. |
+| `ToString()` | `string` | Returns `ElementType`. |
 
 ## Applies to
 

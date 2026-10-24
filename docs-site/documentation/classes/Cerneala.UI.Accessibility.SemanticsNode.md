@@ -17,14 +17,14 @@ public sealed class SemanticsNode
 using Cerneala.UI.Accessibility;
 
 var node = new SemanticsNode(
-    elementId: null,
+    element: null,
     role: SemanticsRole.Text,
     name: "Status");
 ```
 
 ## Remarks
 
-`SemanticsNode` stores the semantic role, optional accessible name, optional element id, custom semantic properties, and child semantic nodes for an accessibility tree snapshot.
+`SemanticsNode` stores the semantic role, optional accessible name, optional source `UIElement`, custom semantic properties, and child semantic nodes for an accessibility tree snapshot.
 
 The constructor normalizes blank names to `null`, copies the supplied property dictionary into a read-only dictionary, and copies the supplied child list into a read-only collection. `GetProperty<T>` returns a typed semantic property value when the stored value matches `T`; otherwise it returns `default`.
 
@@ -32,13 +32,13 @@ The constructor normalizes blank names to `null`, copies the supplied property d
 
 | Name | Description |
 | --- | --- |
-| `SemanticsNode(UiElementId?, SemanticsRole, string?, IReadOnlyDictionary<SemanticsProperty, object?>?, IReadOnlyList<SemanticsNode>?)` | Initializes a semantics node with an element id, role, optional name, optional properties, and optional children. |
+| `SemanticsNode(UIElement?, SemanticsRole, string?, IReadOnlyDictionary<SemanticsProperty, object?>?, IReadOnlyList<SemanticsNode>?)` | Initializes a semantics node with its source element, role, optional name, optional properties, and optional children. |
 
 ## Properties
 
 | Name | Description |
 | --- | --- |
-| `ElementId` | Gets the associated UI element id, when one exists. |
+| `Element` | Gets the `UIElement` this node was built from (a `UIElement?`), or `null` when the node has no element. |
 | `Role` | Gets the semantic role represented by the node. |
 | `Name` | Gets the normalized accessible name, or `null` when none is supplied. |
 | `Properties` | Gets the read-only semantic property map. |

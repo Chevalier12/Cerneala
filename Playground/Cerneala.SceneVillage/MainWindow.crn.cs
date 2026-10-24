@@ -9,7 +9,7 @@ public partial class MainWindow : Window
     private int selectedCount;
     private int displayedRealizedCount = -1;
 
-    private void OnPreviewKeyDown(UiElementId sender, RoutedEventArgs args)
+    private void OnPreviewKeyDown(MainWindow sender, RoutedEventArgs args)
     {
         if (args is not KeyEventArgs key)
         {
@@ -27,7 +27,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnPreviewKeyUp(UiElementId sender, RoutedEventArgs args)
+    private void OnPreviewKeyUp(MainWindow sender, RoutedEventArgs args)
     {
         if (args is KeyEventArgs key && GameSurface.SetMovementKey(key.Key, false))
         {
@@ -45,23 +45,23 @@ public partial class MainWindow : Window
         RefreshStatus();
     }
 
-    private void OnStaticClick(UiElementId sender, RoutedEventArgs args) => SelectPreset(StressPreset.Static);
+    private void OnStaticClick(Button sender, RoutedEventArgs args) => SelectPreset(StressPreset.Static);
 
-    private void OnAnimatedClick(UiElementId sender, RoutedEventArgs args) => SelectPreset(StressPreset.Animated);
+    private void OnAnimatedClick(Button sender, RoutedEventArgs args) => SelectPreset(StressPreset.Animated);
 
-    private void OnCollisionClick(UiElementId sender, RoutedEventArgs args) => SelectPreset(StressPreset.Collision);
+    private void OnCollisionClick(Button sender, RoutedEventArgs args) => SelectPreset(StressPreset.Collision);
 
-    private void OnCountZeroClick(UiElementId sender, RoutedEventArgs args) => SelectCount(0);
+    private void OnCountZeroClick(Button sender, RoutedEventArgs args) => SelectCount(0);
 
-    private void OnCountHundredClick(UiElementId sender, RoutedEventArgs args) => SelectCount(100);
+    private void OnCountHundredClick(Button sender, RoutedEventArgs args) => SelectCount(100);
 
-    private void OnCountThousandClick(UiElementId sender, RoutedEventArgs args) => SelectCount(1_000);
+    private void OnCountThousandClick(Button sender, RoutedEventArgs args) => SelectCount(1_000);
 
-    private void OnCountTenThousandClick(UiElementId sender, RoutedEventArgs args) => SelectCount(10_000);
+    private void OnCountTenThousandClick(Button sender, RoutedEventArgs args) => SelectCount(10_000);
 
-    private void OnFieldClick(UiElementId sender, RoutedEventArgs args) => GameSurface.GoToStressField();
+    private void OnFieldClick(Button sender, RoutedEventArgs args) => GameSurface.GoToStressField();
 
-    private void OnVillageClick(UiElementId sender, RoutedEventArgs args) => GameSurface.ResetPlayer();
+    private void OnVillageClick(Button sender, RoutedEventArgs args) => GameSurface.ResetPlayer();
 
     private void SelectPreset(StressPreset preset)
     {

@@ -295,7 +295,7 @@ public class ListBox : Selector
         }
     }
 
-    private void OnKeyDown(UiElementId _, RoutedEventArgs args)
+    private void OnKeyDown(object _, RoutedEventArgs args)
     {
         if (args is not KeyEventArgs keyArgs || keyArgs.Handled || keyArgs.IsAltDown || !IsEnabled || ItemCount == 0)
         {
@@ -355,7 +355,7 @@ public class ListBox : Selector
 
     // As WPF's TextSearch, a typed text moves to the first row whose text starts with the letters typed so far, as Down
     // without a modifier moves to a row.
-    private void OnTextInput(UiElementId _, RoutedEventArgs args)
+    private void OnTextInput(object _, RoutedEventArgs args)
     {
         if (args is not TextCompositionEventArgs textArgs || textArgs.Handled || !IsEnabled || !IsTextSearchEnabled)
         {

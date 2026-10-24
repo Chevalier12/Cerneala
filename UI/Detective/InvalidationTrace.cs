@@ -36,7 +36,6 @@ public sealed class InvalidationTrace
         Add(new InvalidationTraceEntry(
             InvalidationTraceEventKind.Request,
             request.Target,
-            GetElementId(request.Target),
             request.Flags,
             null,
             request.Reason,
@@ -68,7 +67,6 @@ public sealed class InvalidationTrace
         Add(new InvalidationTraceEntry(
             InvalidationTraceEventKind.PhaseSummary,
             null,
-            null,
             InvalidationFlags.None,
             phase,
             count.ToString(),
@@ -92,7 +90,7 @@ public sealed class InvalidationTrace
             return;
         }
 
-        Add(new InvalidationTraceEntry(kind, element, GetElementId(element), flags, phase, reason, null));
+        Add(new InvalidationTraceEntry(kind, element, flags, phase, reason, null));
     }
 
     private void Add(InvalidationTraceEntry entry)
@@ -103,11 +101,6 @@ public sealed class InvalidationTrace
         }
 
         entries.Add(entry);
-    }
-
-    private static string? GetElementId(UIElement? element)
-    {
-        return element?.ElementId?.ToString();
     }
 }
 
@@ -124,7 +117,6 @@ public enum InvalidationTraceEventKind
 public sealed record InvalidationTraceEntry(
     InvalidationTraceEventKind Kind,
     UIElement? Element,
-    string? ElementId,
     InvalidationFlags Flags,
     FramePhase? Phase,
     string Reason,

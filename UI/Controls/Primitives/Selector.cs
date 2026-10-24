@@ -405,7 +405,7 @@ public class Selector : ItemsControl
         private object? pressSource;
         private bool pressSelects;
 
-        public void OnMouseDown(UiElementId _, RoutedEventArgs args)
+        public void OnMouseDown(object _, RoutedEventArgs args)
         {
             if (Owner is null || args is not MouseButtonEventArgs { ChangedButton: InputMouseButton.Left } mouseArgs)
             {
@@ -426,7 +426,7 @@ public class Selector : ItemsControl
         // not clicked, checked, or commanded by it (#490). The click owner is found with the route map the input
         // bridge routed the MouseUp with, so it stays the same when an earlier handler, such as the CheckBox's Click,
         // removes the clicked element from the container or detaches the Selector (#550).
-        public void OnMouseUp(UiElementId _, RoutedEventArgs args)
+        public void OnMouseUp(object _, RoutedEventArgs args)
         {
             if (Owner is null || args is not MouseButtonEventArgs { ChangedButton: InputMouseButton.Left } mouseArgs)
             {
@@ -435,7 +435,7 @@ public class Selector : ItemsControl
 
             bool releasesPress = ReferenceEquals(pressOwner, Owner) &&
                 pressSource is not null &&
-                Equals(mouseArgs.PressOriginalSource, pressSource);
+                ReferenceEquals(mouseArgs.PressOriginalSource, pressSource);
             bool pressSelectsContainer = pressSelects;
             pressOwner = null;
             pressSource = null;
@@ -460,12 +460,7 @@ public class Selector : ItemsControl
     {
         if (routeMap is not null)
         {
-            UIElement? routed = source switch
-            {
-                UIElement candidate => candidate,
-                UiElementId id when routeMap.TryGetElement(id, out UIElement? resolved) => resolved,
-                _ => null
-            };
+            UIElement? routed = source as UIElement;
 
             if (routed is null)
             {
@@ -483,12 +478,7 @@ public class Selector : ItemsControl
             return null;
         }
 
-        UIElement? element = source switch
-        {
-            UIElement candidate => candidate,
-            UiElementId id when owner.Root?.ElementIds.TryGetElement(id, out UIElement? resolved) == true => resolved,
-            _ => null
-        };
+        UIElement? element = source as UIElement;
 
         for (UIElement? current = element; current is not null; current = current.VisualParent)
         {

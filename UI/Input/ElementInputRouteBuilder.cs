@@ -28,7 +28,7 @@ public sealed class ElementInputRouteBuilder
     private sealed class RouteBuild(bool includeDisabled)
     {
         private readonly ElementInputRouteMap map = new();
-        private readonly Dictionary<IInputProjectionOwner, UiElementId?> ownerRouteIds = new(ReferenceEqualityComparer.Instance);
+        private readonly Dictionary<IInputProjectionOwner, UIElement?> ownerRouteParents = new(ReferenceEqualityComparer.Instance);
         private readonly List<PendingProjection> pending = [];
 
         public ElementInputRouteMap Run(UIRoot root)
@@ -38,7 +38,7 @@ public sealed class ElementInputRouteBuilder
             return map;
         }
 
-        private void AddElementAndDescendants(UIElement element, UiElementId? routeParentId, UiElementId? visualParentId)
+        private void AddElementAndDescendants(UIElement element, UIElement? routeParent, UIElement? visualParent)
         {
             if (!UIElementVisibility.ParticipatesInInput(element))
             {
@@ -48,40 +48,39 @@ public sealed class ElementInputRouteBuilder
             if (element.LogicalParent is IInputProjectionOwner owner &&
                 ReferenceEquals(owner.ProjectedInputRoot, element))
             {
-                if (!ownerRouteIds.TryGetValue(owner, out UiElementId? ownerRouteId))
+                if (!ownerRouteParents.TryGetValue(owner, out UIElement? ownerRouteParent))
                 {
                     // The owner is not registered yet; the projection is added after the rest of the tree.
-                    pending.Add(new PendingProjection(element, owner, visualParentId));
+                    pending.Add(new PendingProjection(element, owner, visualParent));
                     return;
                 }
 
-                routeParentId = ownerRouteId;
+                routeParent = ownerRouteParent;
             }
 
-            AddCore(element, routeParentId, visualParentId);
+            AddCore(element, routeParent, visualParent);
         }
 
-        private void AddCore(UIElement element, UiElementId? routeParentId, UiElementId? visualParentId)
+        private void AddCore(UIElement element, UIElement? routeParent, UIElement? visualParent)
         {
-            UiElementId? routeParentForDescendants = routeParentId;
-            UiElementId? visualParentForDescendants = visualParentId;
+            UIElement? routeParentForDescendants = routeParent;
+            UIElement? visualParentForDescendants = visualParent;
 
-            if (element.IsAttached && element.ElementId.HasValue && ShouldInclude(element, includeDisabled))
+            if (element.IsAttached && ShouldInclude(element, includeDisabled))
             {
-                UiElementId id = element.ElementId.Value;
-                map.Add(element, id, routeParentId, visualParentId);
-                routeParentForDescendants = id;
-                visualParentForDescendants = id;
+                map.Add(element, routeParent, visualParent);
+                routeParentForDescendants = element;
+                visualParentForDescendants = element;
 
                 foreach ((RoutedEvent routedEvent, RoutedEventHandler handler, bool handledEventsToo) in element.Handlers.EnumerateHandlers())
                 {
-                    map.InputTree.AddHandler(id, routedEvent, handler, handledEventsToo);
+                    map.InputTree.AddHandler(element, routedEvent, handler, handledEventsToo);
                 }
             }
 
             if (element is IInputProjectionOwner owner)
             {
-                ownerRouteIds[owner] = routeParentForDescendants;
+                ownerRouteParents[owner] = routeParentForDescendants;
             }
 
             UIElementCollection visualChildren = element.VisualChildren;
@@ -109,12 +108,12 @@ public sealed class ElementInputRouteBuilder
         {
             while (pending.Count > 0)
             {
-                int index = pending.FindIndex(projection => ownerRouteIds.ContainsKey(projection.Owner));
+                int index = pending.FindIndex(projection => ownerRouteParents.ContainsKey(projection.Owner));
                 if (index >= 0)
                 {
                     PendingProjection projection = pending[index];
                     pending.RemoveAt(index);
-                    AddCore(projection.Root, ownerRouteIds[projection.Owner], projection.VisualParentId);
+                    AddCore(projection.Root, ownerRouteParents[projection.Owner], projection.VisualParent);
                     continue;
                 }
 
@@ -122,10 +121,10 @@ public sealed class ElementInputRouteBuilder
                 // routing through its visual ancestors.
                 PendingProjection orphan = pending[0];
                 pending.RemoveAt(0);
-                AddCore(orphan.Root, orphan.VisualParentId, orphan.VisualParentId);
+                AddCore(orphan.Root, orphan.VisualParent, orphan.VisualParent);
             }
         }
 
-        private readonly record struct PendingProjection(UIElement Root, IInputProjectionOwner Owner, UiElementId? VisualParentId);
+        private readonly record struct PendingProjection(UIElement Root, IInputProjectionOwner Owner, UIElement? VisualParent);
     }
 }

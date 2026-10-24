@@ -22,7 +22,7 @@ public sealed class RenderCacheDumperTests
 
         Assert.Contains("Render cache", dump, StringComparison.Ordinal);
         Assert.Contains("root valid=", dump, StringComparison.Ordinal);
-        Assert.Contains($"RenderingTestElement#{child.ElementId}", dump, StringComparison.Ordinal);
+        Assert.Contains("- RenderingTestElement cacheValid=", dump, StringComparison.Ordinal);
         Assert.Contains("cacheValid=True", dump, StringComparison.Ordinal);
         Assert.Contains("commands=1", dump, StringComparison.Ordinal);
     }

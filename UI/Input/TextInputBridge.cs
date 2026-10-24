@@ -1,3 +1,5 @@
+using Cerneala.UI.Elements;
+
 namespace Cerneala.UI.Input;
 
 public sealed class TextInputBridge
@@ -14,16 +16,16 @@ public sealed class TextInputBridge
         // root's current route map, as key events are.
         foreach (TextInputSnapshotEvent textInputEvent in textInputEvents)
         {
-            if (!focusManager.TryGetKeyboardTarget(routeMap, out _, out UiElementId focusedId, out ElementInputRouteMap targetMap))
+            if (!focusManager.TryGetKeyboardTarget(routeMap, out UIElement? focused, out ElementInputRouteMap targetMap))
             {
                 continue;
             }
 
             RoutedEventRouter.RaisePair(
                 targetMap.InputTree,
-                focusedId,
-                new TextCompositionEventArgs(InputEvents.PreviewTextInputEvent, focusedId, textInputEvent.Text),
-                new TextCompositionEventArgs(InputEvents.TextInputEvent, focusedId, textInputEvent.Text));
+                focused,
+                new TextCompositionEventArgs(InputEvents.PreviewTextInputEvent, focused, textInputEvent.Text),
+                new TextCompositionEventArgs(InputEvents.TextInputEvent, focused, textInputEvent.Text));
         }
     }
 }

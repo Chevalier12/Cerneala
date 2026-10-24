@@ -239,7 +239,7 @@ public sealed class UiMarkupIncrementalTests
     public void EventHandlerSignatureChangeInvalidatesEmission()
     {
         const string prefix = "using Cerneala.UI.Controls; using Cerneala.UI.Input; namespace Input { public partial class View : UserControl { ";
-        AssertEditMatchesFreshRun(prefix + "private void OnSave(UiElementId sender, RoutedEventArgs args) { } } }",
+        AssertEditMatchesFreshRun(prefix + "private void OnSave(Button sender, RoutedEventArgs args) { } } }",
             prefix + "private void OnSave(string sender, RoutedEventArgs args) { } } }", "View.crn.cs",
             new MarkupText("View.crn", "<UserControl><Button Click=\"OnSave\" /></UserControl>"),
             beforeHasErrors: false, afterHasErrors: true);

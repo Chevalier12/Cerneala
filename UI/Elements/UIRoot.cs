@@ -82,7 +82,6 @@ public sealed partial class UIRoot : UIElement, IElementHost, IInvalidationSink
         ViewportWidth = viewportWidth;
         ViewportHeight = viewportHeight;
         Scale = scale;
-        ElementIds = new ElementIdProvider();
         Trace = invalidationTrace;
         QueueOrderIndex = new ElementQueueOrderIndex(this);
         LayoutQueue = new LayoutQueue(this);
@@ -124,8 +123,6 @@ public sealed partial class UIRoot : UIElement, IElementHost, IInvalidationSink
     internal ElementQueueOrderIndex QueueOrderIndex { get; }
 
     internal int ViewportVersion { get; private set; }
-
-    public ElementIdProvider ElementIds { get; }
 
     internal InvalidationTrace Trace { get; }
 

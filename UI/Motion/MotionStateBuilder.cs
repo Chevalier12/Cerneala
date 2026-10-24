@@ -85,13 +85,13 @@ public sealed class MotionStateBuilder
         EvaluateAll(force: false);
     }
 
-    private void OnLoaded(UiElementId sender, RoutedEventArgs args)
+    private void OnLoaded(object sender, RoutedEventArgs args)
     {
         observedStates = AspectStateSet.FromElement(Facade.Element);
         EvaluateAll(force: true);
     }
 
-    private void OnUnloaded(UiElementId sender, RoutedEventArgs args)
+    private void OnUnloaded(object sender, RoutedEventArgs args)
     {
         foreach (StateProperty stateProperty in properties.Values)
         {

@@ -40,14 +40,14 @@ The root is created with an enabled `InvalidationTrace`. The default `UIRoot` co
 
 ```text
 Dirty tree
-- UIElement#ui-2 flags=Render version=2 reason=manual render
+- UIElement flags=Render version=2 reason=manual render
 ```
 
 ## Remarks
 
 `DirtyTreeDumper` walks the element tree in preorder using `ElementTreeWalker.PreOrder`. By default it walks visual children because `Dump` uses `ElementChildRole.Visual` unless another role is supplied.
 
-Only elements whose `DirtyState.IsDirty` value is `true` are written to the dump. Each dirty element line includes the runtime type name, element id, invalidation flags, and dirty-state version. If an `InvalidationTrace` is supplied, the dumper also appends the latest dirty-cause reason for the same element. Dirty causes are trace entries with kind `Request`, `Propagation`, or `Queue`; `Clear` entries are not reported as reasons.
+Only elements whose `DirtyState.IsDirty` value is `true` are written to the dump. Each dirty element line includes the runtime type name, invalidation flags, and dirty-state version. If an `InvalidationTrace` is supplied, the dumper also appends the latest dirty-cause reason for the same element. Dirty causes are trace entries with kind `Request`, `Propagation`, or `Queue`; `Clear` entries are not reported as reasons.
 
 When the latest relevant trace entry can be associated with a source property, the line also includes `source=...`. The dumper searches backward through trace entries for the same element until it finds a source property name or reaches a request entry.
 

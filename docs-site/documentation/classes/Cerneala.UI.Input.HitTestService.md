@@ -36,7 +36,7 @@ HitTestResult? result = new HitTestService().HitTest(root, 25, 25);
 if (result is not null)
 {
     UIElement element = result.Element;
-    UiElementId id = result.ElementId;
+    float hitX = result.X;
 }
 ```
 
@@ -68,7 +68,7 @@ Clipping is honored when a `ClipNode` is set on an element, or when `ClipToBound
 
 Hit testing starts from arranged layout bounds, then maps the pointer into each element's transformed coordinate space. Render and motion transforms therefore move, scale, and rotate the effective hit-test region. A non-invertible transform makes that element and its subtree un-hittable.
 
-The returned `HitTestResult` stores the hit `UIElement`, its `UiElementId`, and the original `X` and `Y` coordinates passed to the service.
+The returned `HitTestResult` stores the hit `UIElement` and the original `X` and `Y` coordinates passed to the service.
 
 ## Constructors
 
@@ -126,7 +126,7 @@ Parameters:
 | Name | Type | Description |
 | --- | --- | --- |
 | `root` | `UIElement` | Element subtree to test. |
-| `routeMap` | `ElementInputRouteMap` | Map used to translate hit elements into `UiElementId` values. |
+| `routeMap` | `ElementInputRouteMap` | Map that decides which hit elements are registered and routable. |
 | `x` | `float` | X coordinate in layout space. |
 | `y` | `float` | Y coordinate in layout space. |
 | `filter` | `HitTestFilter?` | Optional filter. When `null`, all eligible elements are included. |

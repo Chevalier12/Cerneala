@@ -761,7 +761,7 @@ public sealed class SelectorTests
         MouseButtonEventArgs args = new(InputEvents.MouseUpEvent, shared, InputMouseButton.Left, 0, 0, 1);
         foreach (RoutedEventHandler handler in shared.Handlers.GetHandlers(InputEvents.MouseUpEvent))
         {
-            handler(new UiElementId("shared"), args);
+            handler(shared, args);
         }
 
         Assert.Equal(-1, first.SelectedIndex);

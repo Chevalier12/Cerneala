@@ -475,13 +475,7 @@ internal sealed class TextInputCore
     // A press on the scroll bars of the content host scrolls; it does not place the caret or select.
     private bool IsTextPress(object? originalSource, ElementInputRouteMap? routeMap)
     {
-        UIElement? source = originalSource switch
-        {
-            UIElement element => element,
-            UiElementId id when routeMap?.TryGetElement(id, out UIElement? resolved) == true => resolved,
-            UiElementId id when Control.Root?.ElementIds.TryGetElement(id, out UIElement? resolved) == true => resolved,
-            _ => null
-        };
+        UIElement? source = originalSource as UIElement;
         for (UIElement? current = source;
             current is not null && !ReferenceEquals(current, Control);
             current = current.VisualParent)
@@ -495,7 +489,7 @@ internal sealed class TextInputCore
         return true;
     }
 
-    private void OnRoutedTextInput(UiElementId sender, RoutedEventArgs args)
+    private void OnRoutedTextInput(object sender, RoutedEventArgs args)
     {
         if (args is not TextCompositionEventArgs textArgs || textArgs.Handled)
         {
@@ -506,7 +500,7 @@ internal sealed class TextInputCore
         textArgs.Handled = true;
     }
 
-    private void OnRoutedKeyDown(UiElementId sender, RoutedEventArgs args)
+    private void OnRoutedKeyDown(object sender, RoutedEventArgs args)
     {
         if (args is not KeyEventArgs keyArgs || keyArgs.Handled)
         {
@@ -543,7 +537,7 @@ internal sealed class TextInputCore
         keyArgs.Handled = handled;
     }
 
-    private void OnRoutedMouseDown(UiElementId sender, RoutedEventArgs args)
+    private void OnRoutedMouseDown(object sender, RoutedEventArgs args)
     {
         if (args is MouseButtonEventArgs mouseArgs &&
             mouseArgs.ChangedButton == InputMouseButton.Left &&
@@ -556,7 +550,7 @@ internal sealed class TextInputCore
     // The release that ends the mouse selection begun by a press on this control is the control's, as WPF's text
     // editor handles MouseLeftButtonUp while it holds the capture: an enclosing Button does not click or run its
     // command (#586). The input bridge completes the selection after the MouseUp, so it is still active here.
-    private void OnRoutedMouseUp(UiElementId sender, RoutedEventArgs args)
+    private void OnRoutedMouseUp(object sender, RoutedEventArgs args)
     {
         if (isMouseSelecting &&
             args is MouseButtonEventArgs mouseArgs &&

@@ -24,7 +24,7 @@ public sealed partial class UiMarkupGeneratorTests
             public float DoorX { get => GetValue(DoorXProperty); set => SetValue(DoorXProperty, value); }
             public Sprite2D DoorNode => Door;
             public int LoadCount { get; private set; }
-            private void OnHouseLoaded(UiElementId sender, RoutedEventArgs args) => LoadCount++;
+            private void OnHouseLoaded(HouseView sender, RoutedEventArgs args) => LoadCount++;
         }
         """;
 

@@ -22,7 +22,7 @@ public partial class SceneWorldShowcase : UserControl
     private CancellationTokenSource? lifetime;
     private SceneCollisionRegion2D? playerRegion;
 
-    private void OnLoaded(UiElementId sender, RoutedEventArgs args)
+    private void OnLoaded(SceneWorldShowcase sender, RoutedEventArgs args)
     {
         if (lifetime is not null) return;
         lifetime = new();
@@ -33,7 +33,7 @@ public partial class SceneWorldShowcase : UserControl
         Begin(token => LoadWorldAsync(State.IsLdtk, resume: true, Root!.Relay, token));
     }
 
-    private void OnUnloaded(UiElementId sender, RoutedEventArgs args)
+    private void OnUnloaded(SceneWorldShowcase sender, RoutedEventArgs args)
     {
         CancellationTokenSource? previous = lifetime;
         lifetime = null;
@@ -143,21 +143,21 @@ public partial class SceneWorldShowcase : UserControl
         finally { acquired?.Dispose(); }
     }
 
-    private void OnSelectPlayer(UiElementId sender, RoutedEventArgs args)
+    private void OnSelectPlayer(Cerneala.UI.Controls.Scene2D sender, RoutedEventArgs args)
     {
         if (State.IsBusy) return;
         PlayerSelections++;
         State.Status = "Player selected. Arrows: move; Space: attack.";
     }
 
-    private void OnDoor(UiElementId sender, RoutedEventArgs args)
+    private void OnDoor(Sprite2D sender, RoutedEventArgs args)
     {
         if (State.IsBusy) return;
         State.DoorClosed = !State.DoorClosed;
         State.Status = State.DoorClosed ? "Door closed: collider active." : "Door open: collider disabled.";
     }
 
-    private void OnPlayerKey(UiElementId sender, RoutedEventArgs args)
+    private void OnPlayerKey(Cerneala.UI.Controls.Scene2D sender, RoutedEventArgs args)
     {
         if (args is not KeyEventArgs key) return;
         if (State.IsBusy || playerRegion?.IsReady != true)
@@ -188,21 +188,21 @@ public partial class SceneWorldShowcase : UserControl
         args.Handled = true;
     }
 
-    private void OnReset(UiElementId sender, RoutedEventArgs args) =>
+    private void OnReset(Button sender, RoutedEventArgs args) =>
         Begin(token => PreparePlayerAsync(Root!.Relay, reset: true, token));
-    private void OnPan(UiElementId sender, RoutedEventArgs args)
+    private void OnPan(Button sender, RoutedEventArgs args)
     { if (!State.IsBusy) State.CameraX = State.CameraX > -500 ? State.CameraX - 128 : 8; }
-    private void OnHome(UiElementId sender, RoutedEventArgs args) { if (!State.IsBusy) State.CameraX = 8; }
-    private void OnMutate(UiElementId sender, RoutedEventArgs args)
+    private void OnHome(Button sender, RoutedEventArgs args) { if (!State.IsBusy) State.CameraX = 8; }
+    private void OnMutate(Button sender, RoutedEventArgs args)
     { if (!State.IsBusy && State.IsLoaded) Begin(token => State.PlantAsync(token)); }
-    private void OnAddNpc(UiElementId sender, RoutedEventArgs args)
+    private void OnAddNpc(Button sender, RoutedEventArgs args)
     { if (!State.IsBusy) State.Npcs.Add(new(300 + State.Npcs.Count * 20, 190)); }
-    private void OnDebug(UiElementId sender, RoutedEventArgs args)
+    private void OnDebug(Button sender, RoutedEventArgs args)
     {
         if (!State.IsBusy)
             State.DebugFlags = State.DebugFlags == Scene2DDebugFlags.None ? Scene2DDebugFlags.All : Scene2DDebugFlags.None;
     }
-    private void OnFormat(UiElementId sender, RoutedEventArgs args) =>
+    private void OnFormat(Button sender, RoutedEventArgs args) =>
         Begin(token => LoadWorldAsync(!State.IsLdtk, resume: false, Root!.Relay, token));
 }
 

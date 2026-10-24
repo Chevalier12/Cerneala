@@ -117,16 +117,16 @@ public partial class UIElement
         args.OriginalSource ??= this;
         args.Source ??= args.OriginalSource;
 
-        if (args.RoutedEvent.RoutingStrategy == RoutingStrategy.Direct || Root is null || !ElementId.HasValue)
+        if (args.RoutedEvent.RoutingStrategy == RoutingStrategy.Direct || Root is null)
         {
             RaiseLocalHandlers(args);
             return;
         }
 
         ElementInputRouteMap routeMap = Root.InputCache.EnsureCurrent(Root);
-        if (routeMap.TryGetId(this, out UiElementId id))
+        if (routeMap.Contains(this))
         {
-            RoutedEventRouter.Raise(routeMap.InputTree, id, args);
+            RoutedEventRouter.Raise(routeMap.InputTree, this, args);
             return;
         }
 
@@ -181,11 +181,12 @@ public partial class UIElement
 
     private void RaiseLocalHandlers(RoutedEventArgs args)
     {
+        args.Source = this;
         foreach (RoutedEventHandlerRegistration registration in Handlers.GetRegistrations(args.RoutedEvent))
         {
             if (!args.Handled || registration.HandledEventsToo)
             {
-                registration.Handler(ElementId ?? new UiElementId(GetType().Name), args);
+                registration.Handler(this, args);
             }
         }
     }

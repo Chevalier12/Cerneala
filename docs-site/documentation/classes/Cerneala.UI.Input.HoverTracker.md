@@ -29,11 +29,10 @@ UIElement child = new();
 root.VisualChildren.Add(child);
 
 ElementInputRouteMap routeMap = new ElementInputRouteBuilder().Build(root);
-routeMap.TryGetId(child, out UiElementId childId);
 
 HoverTracker tracker = new();
 
-tracker.Update(new HitTestResult(child, childId, 12.4f, 8.6f), routeMap);
+tracker.Update(new HitTestResult(child, 12.4f, 8.6f), routeMap);
 bool isPointerOver = child.IsPointerOver; // true
 
 tracker.Update(null, routeMap, 20, 10);
@@ -42,7 +41,7 @@ bool isStillPointerOver = child.IsPointerOver; // false
 
 ## Remarks
 
-`HoverTracker` is used by `ElementInputBridge` during pointer dispatch to keep `UIElement.IsPointerOver` current for the element under the pointer and its visual ancestors. It compares the previous hovered path with the next path, which `ElementInputRouteMap.GetRouteToRoot` builds from the parent ids recorded in the route map.
+`HoverTracker` is used by `ElementInputBridge` during pointer dispatch to keep `UIElement.IsPointerOver` current for the element under the pointer and its visual ancestors. It compares the previous hovered path with the next path, which `ElementInputRouteMap.GetRouteToRoot` builds from the parent links recorded in the route map.
 
 When the hover target changes, elements that leave the hover path receive `InputEvents.MouseLeaveEvent` and have `IsPointerOver` set to `false`. Elements that enter the hover path receive `InputEvents.MouseEnterEvent` and have `IsPointerOver` set to `true`. Both events are direct routed events raised through the provided `ElementInputRouteMap`.
 

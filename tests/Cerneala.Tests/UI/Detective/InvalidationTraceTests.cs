@@ -49,12 +49,11 @@ public sealed class InvalidationTraceTests
     }
 
     [Fact]
-    public void TraceEntryKeepsElementIdRecordedAtInvalidationTime()
+    public void TraceEntryKeepsTheElementRecordedAtInvalidationTime()
     {
         UIRoot root = new(invalidationTrace: new InvalidationTrace());
         UIElement child = new();
         root.VisualChildren.Add(child);
-        string elementId = child.ElementId!.Value.ToString();
 
         child.Invalidate(InvalidationFlags.Render, "render");
         InvalidationTraceEntry requestEntry = Assert.Single(
@@ -63,7 +62,7 @@ public sealed class InvalidationTraceTests
 
         root.VisualChildren.Remove(child);
 
-        Assert.Equal(elementId, requestEntry.ElementId);
+        Assert.Same(child, requestEntry.Element);
     }
 
     [Fact]

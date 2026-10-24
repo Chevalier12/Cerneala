@@ -10,7 +10,6 @@ public static class LayoutDiagnostics
     {
         ArgumentNullException.ThrowIfNull(element);
         return new LayoutDiagnosticsSnapshot(
-            element.ElementId?.ToString(),
             element.GetType().Name,
             element.DesiredSize,
             element.ArrangedBounds,
@@ -24,7 +23,6 @@ public static class LayoutDiagnostics
 }
 
 public sealed record LayoutDiagnosticsSnapshot(
-    string? ElementId,
     string ElementType,
     LayoutSize DesiredSize,
     LayoutRect ArrangedBounds,
@@ -39,6 +37,6 @@ public sealed record LayoutDiagnosticsSnapshot(
     {
         return string.Create(
             CultureInfo.InvariantCulture,
-            $"{ElementType}#{ElementId ?? "unattached"} desired={DesiredSize} arranged={ArrangedBounds} layoutVersion={LayoutVersion} visibility={Visibility}");
+            $"{ElementType} desired={DesiredSize} arranged={ArrangedBounds} layoutVersion={LayoutVersion} visibility={Visibility}");
     }
 }

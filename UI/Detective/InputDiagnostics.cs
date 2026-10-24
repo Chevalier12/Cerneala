@@ -8,7 +8,6 @@ public static class InputDiagnostics
     public static InputDiagnosticsSnapshot Capture(UIElement? hitTarget, RoutedEvent? routedEvent = null)
     {
         return new InputDiagnosticsSnapshot(
-            hitTarget?.ElementId?.ToString(),
             hitTarget?.GetType().Name,
             routedEvent?.Name,
             routedEvent?.RoutingStrategy);
@@ -16,13 +15,12 @@ public static class InputDiagnostics
 }
 
 public sealed record InputDiagnosticsSnapshot(
-    string? HitTargetId,
     string? HitTargetType,
     string? RoutedEventName,
     RoutingStrategy? RoutingStrategy)
 {
     public override string ToString()
     {
-        return $"input target={HitTargetType ?? "none"}#{HitTargetId ?? "none"}, routedEvent={RoutedEventName ?? "none"}, strategy={RoutingStrategy?.ToString() ?? "none"}";
+        return $"input target={HitTargetType ?? "none"}, routedEvent={RoutedEventName ?? "none"}, strategy={RoutingStrategy?.ToString() ?? "none"}";
     }
 }

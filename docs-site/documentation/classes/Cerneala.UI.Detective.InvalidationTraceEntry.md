@@ -13,7 +13,6 @@ Represents one retained diagnostic event recorded by `InvalidationTrace`.
 public sealed record InvalidationTraceEntry(
     InvalidationTraceEventKind Kind,
     UIElement? Element,
-    string? ElementId,
     InvalidationFlags Flags,
     FramePhase? Phase,
     string Reason,
@@ -28,7 +27,7 @@ Implements:
 
 ## Examples
 
-The entry is usually created by `InvalidationTrace` rather than by application code directly. The root needs an enabled trace; adding the child already records two `Request` entries with the reason `Visual child added`, so the example takes the last one. A request entry keeps the invalidated element, the element id captured at the time of invalidation, the requested flags, the textual reason, and the optional source property.
+The entry is usually created by `InvalidationTrace` rather than by application code directly. The root needs an enabled trace; adding the child already records two `Request` entries with the reason `Visual child added`, so the example takes the last one. A request entry keeps the invalidated element, the requested flags, the textual reason, and the optional source property.
 
 ```csharp
 InvalidationTrace trace = new();
@@ -41,17 +40,16 @@ child.Invalidate(InvalidationFlags.Render, "render");
 InvalidationTraceEntry entry = trace.Entries.Last(
     candidate => candidate.Kind == InvalidationTraceEventKind.Request);
 
-Console.WriteLine(entry.ElementId); // ui-2
-Console.WriteLine(entry.Flags);     // Render
-Console.WriteLine(entry.Reason);    // render
+Console.WriteLine(ReferenceEquals(entry.Element, child)); // True
+Console.WriteLine(entry.Flags);                           // Render
+Console.WriteLine(entry.Reason);                          // render
 ```
 
 ## Remarks
 
 `InvalidationTraceEntry` is a sealed record used by the invalidation diagnostics pipeline. `InvalidationTrace` creates entries for request, propagation, queue, frame phase, phase summary, and clear events.
 
-`Element` can be `null` for entries that summarize a frame phase rather than a specific element. `ElementId` is stored separately from `Element`; request entries capture the element id as a string when the entry is recorded, so the diagnostic id can still be read after the element is detached and its live `ElementId` becomes unavailable.
-
+`Element` can be `null` for entries that summarize a frame phase rather than a specific element.
 `Phase` is populated for phase and phase-summary events. `Flags` contains the invalidation categories involved in the event; phase-summary entries use `InvalidationFlags.None`. `SourcePropertyName` is a convenience projection over `SourceProperty.DiagnosticName` and returns `null` when the entry has no source property.
 
 Because this type is a C# record, it also has synthesized value equality, deconstruction, `ToString`, and `GetHashCode` behavior based on its record components.
@@ -60,7 +58,7 @@ Because this type is a C# record, it also has synthesized value equality, decons
 
 | Name | Description |
 | --- | --- |
-| `InvalidationTraceEntry(InvalidationTraceEventKind Kind, UIElement? Element, string? ElementId, InvalidationFlags Flags, FramePhase? Phase, string Reason, UiProperty? SourceProperty)` | Initializes a trace entry with the event kind, optional element, captured element id, invalidation flags, optional frame phase, reason text, and optional source property. |
+| `InvalidationTraceEntry(InvalidationTraceEventKind Kind, UIElement? Element, InvalidationFlags Flags, FramePhase? Phase, string Reason, UiProperty? SourceProperty)` | Initializes a trace entry with the event kind, optional element, invalidation flags, optional frame phase, reason text, and optional source property. |
 
 ## Properties
 
@@ -68,7 +66,6 @@ Because this type is a C# record, it also has synthesized value equality, decons
 | --- | --- | --- |
 | `Kind` | `InvalidationTraceEventKind` | Gets the category of diagnostic event represented by the entry. |
 | `Element` | `UIElement?` | Gets the element associated with the event, or `null` for non-element summary entries. |
-| `ElementId` | `string?` | Gets the element id string captured when the entry was recorded, or `null` when no element id was available. |
 | `Flags` | `InvalidationFlags` | Gets the invalidation flags associated with the event. |
 | `Phase` | `FramePhase?` | Gets the frame phase associated with phase events, or `null` for events that are not tied to a frame phase. |
 | `Reason` | `string` | Gets the diagnostic reason text recorded for the event. |

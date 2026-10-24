@@ -64,7 +64,7 @@ public sealed partial class UiMarkupGeneratorTests
         GeneratorRunResult result = RunPairedGenerator(
             "Views/SurfaceHost.crn", markup, inputSource, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
-        Assert.Contains("Viewport.Draw += this.OnDraw;", SingleGeneratedSource(result), StringComparison.Ordinal);
+        Assert.Contains("Viewport.Draw += (__cernealaSender, __cernealaArgs) => this.OnDraw(Viewport, __cernealaArgs);", SingleGeneratedSource(result), StringComparison.Ordinal);
 
         using MemoryStream stream = new();
         EmitResult emit = compilation.Emit(stream);

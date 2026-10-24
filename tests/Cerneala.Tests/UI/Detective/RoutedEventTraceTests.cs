@@ -15,7 +15,7 @@ public sealed class RoutedEventTraceTests
 
         Assert.Equal(RoutingStrategy.Bubble, trace.RoutingStrategy);
         Assert.Equal(
-            [$"UIElement#{child.ElementId}", $"UIElement#{parent.ElementId}", $"UIRoot#{root.ElementId}"],
+            ["UIElement", "UIElement", "UIRoot"],
             trace.Steps.Select(step => step.ToString()).ToArray());
     }
 
@@ -28,7 +28,7 @@ public sealed class RoutedEventTraceTests
 
         Assert.Equal(RoutingStrategy.Tunnel, trace.RoutingStrategy);
         Assert.Equal(
-            [$"UIRoot#{root.ElementId}", $"UIElement#{parent.ElementId}", $"UIElement#{child.ElementId}"],
+            ["UIRoot", "UIElement", "UIElement"],
             trace.Steps.Select(step => step.ToString()).ToArray());
     }
 
@@ -44,7 +44,7 @@ public sealed class RoutedEventTraceTests
         RoutedEventTraceSnapshot trace = RoutedEventTrace.Trace(child, InputEvents.MouseDownEvent);
 
         Assert.Equal(
-            [$"UIElement#{child.ElementId}", $"UIRoot#{root.ElementId}"],
+            ["UIElement", "UIRoot"],
             trace.Steps.Select(step => step.ToString()).ToArray());
     }
 

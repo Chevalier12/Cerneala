@@ -187,13 +187,13 @@ public class ScrollBar : RangeBase
         }
     }
 
-    private void OnDecreaseClick(UiElementId source, RoutedEventArgs args)
+    private void OnDecreaseClick(object source, RoutedEventArgs args)
     {
         track?.DecreaseSmall();
         args.Handled = true;
     }
 
-    private void OnIncreaseClick(UiElementId source, RoutedEventArgs args)
+    private void OnIncreaseClick(object source, RoutedEventArgs args)
     {
         track?.IncreaseSmall();
         args.Handled = true;

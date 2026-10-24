@@ -153,7 +153,7 @@ public sealed partial class UiMarkupGeneratorTests
 
             public partial class WorldView : UserControl<WorldState>
             {
-                private void OnDoorMouseDown(UiElementId sender, RoutedEventArgs args)
+                private void OnDoorMouseDown(Sprite2D sender, RoutedEventArgs args)
                 {
                     ViewModel.IsClosed = false;
                     args.Handled = true;

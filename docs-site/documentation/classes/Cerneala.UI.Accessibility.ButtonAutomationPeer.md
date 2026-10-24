@@ -57,7 +57,7 @@ string? name = peer.Name; // "Store"
 
 The peer reports `SemanticsRole.Button`; the class is not sealed, and `ToggleButtonAutomationPeer` overrides `Role`. Its `Name` first uses `AccessibleName.GetName(button)`, which returns a non-blank explicit accessible name when one is set. If there is no explicit name, the name is derived from supported button content text, including non-blank `string` content, `TextBlock.Text`, nested `Button.Content`, `ContentControl.Content`, and `ContentPresenter.Content`.
 
-Inherited `AutomationPeer` behavior still applies. `GetProperties()` returns the owner's enabled and keyboard focus state, and `CreateNode(IReadOnlyList<SemanticsNode> children)` builds a `SemanticsNode` using the owner element id, the effective role, the resolved name, peer properties, and the supplied child nodes.
+Inherited `AutomationPeer` behavior still applies. `GetProperties()` returns the owner's enabled and keyboard focus state, and `CreateNode(IReadOnlyList<SemanticsNode> children)` builds a `SemanticsNode` for the owner element, the effective role, the resolved name, peer properties, and the supplied child nodes.
 
 `Invoke()` calls `IInputActivatable.Activate` on the button, the same call keyboard activation uses. That runs the button's click logic, which a pointer click also reaches. It returns `false` without raising `Click` when the button is disabled.
 

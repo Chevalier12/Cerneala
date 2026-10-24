@@ -87,11 +87,10 @@ public sealed class HitTestService
                 y,
                 filter);
             if (geometricElement is not null &&
-                routeMap.TryGetId(geometricElement, out UiElementId geometricElementId))
+                routeMap.Contains(geometricElement))
             {
                 return new HitTestResult(
                     geometricElement,
-                    geometricElementId,
                     x,
                     y);
             }
@@ -104,8 +103,8 @@ public sealed class HitTestService
             return null;
         }
 
-        return routeMap.TryGetId(element, out UiElementId elementId)
-            ? new HitTestResult(element, elementId, x, y)
+        return routeMap.Contains(element)
+            ? new HitTestResult(element, x, y)
             : null;
     }
 

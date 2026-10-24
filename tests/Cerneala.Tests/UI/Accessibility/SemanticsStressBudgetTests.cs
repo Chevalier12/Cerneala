@@ -80,11 +80,10 @@ public sealed class SemanticsStressBudgetTests
         FrameStats stats = root.ProcessFrame();
         SemanticsTree second = root.GetSemanticsTree();
 
-        Assert.NotNull(target.ElementId);
         Assert.NotSame(first, second);
         Assert.Equal(treeVersion, root.TreeVersion);
-        Assert.NotNull(FindNode(second.Root, target.ElementId));
-        Assert.Equal("Updated target", FindNode(second.Root, target.ElementId)!.Name);
+        Assert.NotNull(FindNode(second.Root, target));
+        Assert.Equal("Updated target", FindNode(second.Root, target)!.Name);
         Assert.Equal(0, stats.MeasuredElements);
         Assert.Equal(0, stats.ArrangedElements);
         Assert.Equal(0, stats.MeasureCalls);
@@ -116,16 +115,16 @@ public sealed class SemanticsStressBudgetTests
         return root;
     }
 
-    private static SemanticsNode? FindNode(SemanticsNode node, UiElementId? elementId)
+    private static SemanticsNode? FindNode(SemanticsNode node, UIElement? element)
     {
-        if (node.ElementId == elementId)
+        if (ReferenceEquals(node.Element, element))
         {
             return node;
         }
 
         foreach (SemanticsNode child in node.Children)
         {
-            SemanticsNode? match = FindNode(child, elementId);
+            SemanticsNode? match = FindNode(child, element);
             if (match is not null)
             {
                 return match;

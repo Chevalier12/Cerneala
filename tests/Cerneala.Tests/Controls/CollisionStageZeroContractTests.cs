@@ -212,8 +212,7 @@ public sealed class CollisionStageZeroContractTests
             route);
         Assert.True(sprite.IsPointerOver);
         ElementInputRouteMap map = root.InputCache.EnsureCurrent(root);
-        Assert.True(map.TryGetId(sprite, out UiElementId id));
-        Assert.False(string.IsNullOrEmpty(id.Value));
+        Assert.True(map.Contains(sprite));
         bridge.PointerCaptureManager.Capture(sprite, map);
         scene.Children.Remove((SceneNode2D)sprite);
         bridge.Dispatch(root, PointerFrame(20, 20));

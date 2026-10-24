@@ -228,7 +228,7 @@ public class ColorSpectrum : Control, IPointerDragSource
 
     // The pointer input of the spectrum's own drag is handled, as a Thumb handles it, so the release that ends the drag
     // does not click an enclosing button.
-    private void OnCapturedPointerInput(UiElementId _, RoutedEventArgs args)
+    private void OnCapturedPointerInput(object _, RoutedEventArgs args)
     {
         if (isDragging)
         {
@@ -236,7 +236,7 @@ public class ColorSpectrum : Control, IPointerDragSource
         }
     }
 
-    private void OnKeyDown(UiElementId _, RoutedEventArgs args)
+    private void OnKeyDown(object _, RoutedEventArgs args)
     {
         if (args is not KeyEventArgs keyArgs || !IsEnabled)
         {

@@ -3995,7 +3995,7 @@ public sealed partial class UiMarkupGeneratorTests
 
             public partial class MainWindow : UserControl<MainWindowViewModel>
             {
-                private void OnSave(UiElementId sender, RoutedEventArgs args) => ViewModel.Save();
+                private void OnSave(Button sender, RoutedEventArgs args) => ViewModel.Save();
             }
             """;
         const string markup = """
@@ -4017,7 +4017,7 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Contains("public MainWindow()", generatedSource);
         Assert.Contains("public MainWindow(global::TestInput.Views.MainWindowViewModel viewModel)", generatedSource);
         Assert.Contains("private global::Cerneala.UI.Controls.Button SaveButton", generatedSource);
-        Assert.Contains("SaveButton.Click += this.OnSave;", generatedSource);
+        Assert.Contains("SaveButton.Click += (__cernealaSender, __cernealaArgs) => this.OnSave(SaveButton, __cernealaArgs);", generatedSource);
         Assert.DoesNotContain("MainWindowFactory", generatedSource);
 
         using MemoryStream stream = new();
@@ -4163,7 +4163,7 @@ public sealed partial class UiMarkupGeneratorTests
             public partial class EventTemplateView : UserControl
             {
                 public int ClickCount { get; private set; }
-                private void OnInnerClick(UiElementId sender, RoutedEventArgs args) => ClickCount++;
+                private void OnInnerClick(Button sender, RoutedEventArgs args) => ClickCount++;
             }
             """;
         const string markup = """
@@ -4645,7 +4645,7 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         Assert.Contains("public MainWindow(global::TestInput.Views.MainWindowViewModel viewModel)", generatedSource);
         Assert.DoesNotContain("public MainWindow()", generatedSource);
-        Assert.Contains("this.SourceInitialized += this.OnSourceInitialized;", generatedSource);
+        Assert.Contains("this.SourceInitialized += (__cernealaSender, __cernealaArgs) => this.OnSourceInitialized(this, __cernealaArgs);", generatedSource);
         Assert.Contains("private global::Cerneala.UI.Controls.Button SaveButton", generatedSource);
         Assert.DoesNotContain("MainWindowFactory", generatedSource);
 

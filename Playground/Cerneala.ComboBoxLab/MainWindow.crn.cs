@@ -60,7 +60,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnPreviewKeyDown(UiElementId sender, RoutedEventArgs args)
+    private void OnPreviewKeyDown(MainWindow sender, RoutedEventArgs args)
     {
         if (args is KeyEventArgs { Key: InputKey.F12 })
         {
@@ -70,12 +70,12 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnReset(UiElementId sender, RoutedEventArgs args)
+    private void OnReset(Button sender, RoutedEventArgs args)
     {
         ResetControls();
     }
 
-    private void OnLoadStressItems(UiElementId sender, RoutedEventArgs args)
+    private void OnLoadStressItems(Button sender, RoutedEventArgs args)
     {
         string[] stressItems =
         [
@@ -85,17 +85,17 @@ public partial class MainWindow : Window
         SetAllItems(stressItems);
     }
 
-    private void OnFilterToggle(UiElementId sender, RoutedEventArgs args)
+    private void OnFilterToggle(CheckBox sender, RoutedEventArgs args)
     {
         FilteredCombo.IsTextFilterEnabled = FilterToggle.IsChecked;
     }
 
-    private void OnCaseToggle(UiElementId sender, RoutedEventArgs args)
+    private void OnCaseToggle(CheckBox sender, RoutedEventArgs args)
     {
         FilteredCombo.IsTextSearchCaseSensitive = CaseToggle.IsChecked;
     }
 
-    private void OnReadOnlyToggle(UiElementId sender, RoutedEventArgs args)
+    private void OnReadOnlyToggle(CheckBox sender, RoutedEventArgs args)
     {
         FilteredCombo.IsReadOnly = ReadOnlyToggle.IsChecked;
     }

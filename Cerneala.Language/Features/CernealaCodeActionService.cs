@@ -269,8 +269,13 @@ internal sealed class CernealaCodeActionService
 
             ILanguageMemberSymbol? invoke = symbol.MemberSymbol?.ValueType?.GetMembers("Invoke")
                 .FirstOrDefault(member => member.Kind == LanguageMemberKind.Method);
+            ILanguageTypeSymbol? senderType = FindEventOwnerType(model, symbol);
+            // The generated handler receives the element that declares the event attribute as its first parameter,
+            // so the stub types the sender as that element's type.
             string parameters = string.Join(", ", (invoke?.Parameters ?? [])
-                .Select(parameter => FormatType(parameter.TypeMetadataName) + " " + parameter.Name));
+                .Select((parameter, index) => FormatType(
+                    index == 0 && senderType is not null ? senderType.MetadataName : parameter.TypeMetadataName) +
+                    " " + parameter.Name));
             string newline = source.ToString().Contains("\r\n", StringComparison.Ordinal) ? "\r\n" : "\n";
             string indent = LineIndent(source.ToString(), insertion);
             string memberIndent = indent + "    ";
@@ -284,6 +289,17 @@ internal sealed class CernealaCodeActionService
                 ["CERNEALAUI009"],
                 [new CernealaTextEdit(location.Path, new TextSpan(insertion, 0), method)]));
         }
+    }
+
+    private static ILanguageTypeSymbol? FindEventOwnerType(CernealaSemanticModel model, CernealaSemanticSymbol eventSymbol)
+    {
+        ElementSyntax? owner = model.Document.Syntax.DescendantElements().FirstOrDefault(element =>
+            element.Attributes.Any(attribute => attribute.NameToken.Span.Equals(eventSymbol.Span)));
+        return owner is null
+            ? null
+            : model.Symbols.FirstOrDefault(symbol =>
+                symbol.Span.Equals(owner.NameToken.Span) &&
+                symbol.Kind is CernealaSemanticSymbolKind.Element or CernealaSemanticSymbolKind.RootType)?.TypeSymbol;
     }
 
     private static void AddPropertyElementConversions(

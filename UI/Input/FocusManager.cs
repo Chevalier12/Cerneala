@@ -88,10 +88,10 @@ public sealed class FocusManager
             }
 
             if (inputFrame.Keyboard.IsPressed(key) &&
-                TryGetKeyboardTarget(routeMap, out UIElement? pressedTarget, out UiElementId pressedId, out ElementInputRouteMap pressedMap))
+                TryGetKeyboardTarget(routeMap, out UIElement? pressedTarget, out ElementInputRouteMap pressedMap))
             {
-                bool handled = RaiseKeyPair(pressedMap, pressedId, key, inputFrame.Keyboard, InputEvents.PreviewKeyDownEvent, InputEvents.KeyDownEvent);
-                results.Add(new KeyboardDispatchResult(pressedTarget, pressedId, key, KeyboardDispatchKind.Pressed, handled));
+                bool handled = RaiseKeyPair(pressedMap, pressedTarget, key, inputFrame.Keyboard, InputEvents.PreviewKeyDownEvent, InputEvents.KeyDownEvent);
+                results.Add(new KeyboardDispatchResult(pressedTarget, key, KeyboardDispatchKind.Pressed, handled));
             }
 
             if (inputFrame.Keyboard.IsDown(key) || inputFrame.Keyboard.IsReleased(key))
@@ -99,18 +99,18 @@ public sealed class FocusManager
                 int repeatCount = inputFrame.Keyboard.GetRepeatCount(key);
                 for (int i = 0; i < repeatCount; i++)
                 {
-                    if (TryGetKeyboardTarget(routeMap, out _, out UiElementId repeatId, out ElementInputRouteMap repeatMap))
+                    if (TryGetKeyboardTarget(routeMap, out UIElement? repeatTarget, out ElementInputRouteMap repeatMap))
                     {
-                        RaiseKeyPair(repeatMap, repeatId, key, inputFrame.Keyboard, InputEvents.PreviewKeyDownEvent, InputEvents.KeyDownEvent, isRepeat: true);
+                        RaiseKeyPair(repeatMap, repeatTarget, key, inputFrame.Keyboard, InputEvents.PreviewKeyDownEvent, InputEvents.KeyDownEvent, isRepeat: true);
                     }
                 }
             }
 
             if (inputFrame.Keyboard.IsReleased(key) &&
-                TryGetKeyboardTarget(routeMap, out UIElement? releasedTarget, out UiElementId releasedId, out ElementInputRouteMap releasedMap))
+                TryGetKeyboardTarget(routeMap, out UIElement? releasedTarget, out ElementInputRouteMap releasedMap))
             {
-                bool handled = RaiseKeyPair(releasedMap, releasedId, key, inputFrame.Keyboard, InputEvents.PreviewKeyUpEvent, InputEvents.KeyUpEvent);
-                results.Add(new KeyboardDispatchResult(releasedTarget, releasedId, key, KeyboardDispatchKind.Released, handled));
+                bool handled = RaiseKeyPair(releasedMap, releasedTarget, key, inputFrame.Keyboard, InputEvents.PreviewKeyUpEvent, InputEvents.KeyUpEvent);
+                results.Add(new KeyboardDispatchResult(releasedTarget, key, KeyboardDispatchKind.Released, handled));
             }
         }
 
@@ -120,18 +120,16 @@ public sealed class FocusManager
     internal bool TryGetKeyboardTarget(
         ElementInputRouteMap routeMap,
         [NotNullWhen(true)] out UIElement? target,
-        out UiElementId targetId,
         out ElementInputRouteMap targetRouteMap)
     {
         target = FocusedElement;
         targetRouteMap = target is null ? routeMap : ResolveRouteMap(target, routeMap);
-        if (target is not null && FocusPolicy.CanFocus(target, targetRouteMap) && targetRouteMap.TryGetId(target, out targetId))
+        if (target is not null && FocusPolicy.CanFocus(target, targetRouteMap) && targetRouteMap.Contains(target))
         {
             return true;
         }
 
         target = null;
-        targetId = default;
         return false;
     }
 
@@ -139,7 +137,7 @@ public sealed class FocusManager
     // built. That element is routed over its root's current route map instead.
     private static ElementInputRouteMap ResolveRouteMap(UIElement element, ElementInputRouteMap routeMap)
     {
-        return !routeMap.TryGetId(element, out _) && element.Root is UIRoot root
+        return !routeMap.Contains(element) && element.Root is UIRoot root
             ? root.InputCache.EnsureCurrent(root)
             : routeMap;
     }
@@ -175,7 +173,7 @@ public sealed class FocusManager
 
     private static bool RaiseKeyPair(
         ElementInputRouteMap routeMap,
-        UiElementId targetId,
+        UIElement target,
         InputKey key,
         InputFrame.KeyboardFrame keyboard,
         RoutedEvent previewEvent,
@@ -185,11 +183,11 @@ public sealed class FocusManager
         bool isControlDown = keyboard.IsDown(InputKey.LeftCtrl) || keyboard.IsDown(InputKey.RightCtrl);
         bool isShiftDown = keyboard.IsDown(InputKey.LeftShift) || keyboard.IsDown(InputKey.RightShift);
         bool isAltDown = keyboard.IsDown(InputKey.LeftAlt) || keyboard.IsDown(InputKey.RightAlt);
-        KeyEventArgs previewArgs = new(previewEvent, targetId, key, isControlDown, isShiftDown, isAltDown, isRepeat);
-        KeyEventArgs bubbleArgs = new(bubbleEvent, targetId, key, isControlDown, isShiftDown, isAltDown, isRepeat);
+        KeyEventArgs previewArgs = new(previewEvent, target, key, isControlDown, isShiftDown, isAltDown, isRepeat);
+        KeyEventArgs bubbleArgs = new(bubbleEvent, target, key, isControlDown, isShiftDown, isAltDown, isRepeat);
         RoutedEventRouter.RaisePair(
             routeMap.InputTree,
-            targetId,
+            target,
             previewArgs,
             bubbleArgs);
         return previewArgs.Handled || bubbleArgs.Handled;
@@ -197,25 +195,25 @@ public sealed class FocusManager
 
     private static KeyboardFocusChangedEventArgs? RaisePreviewFocusLost(ElementInputRouteMap routeMap, UIElement? oldFocus, UIElement? newFocus)
     {
-        if (oldFocus is null || !routeMap.TryGetId(oldFocus, out UiElementId oldId))
+        if (oldFocus is null || !routeMap.Contains(oldFocus))
         {
             return null;
         }
 
-        KeyboardFocusChangedEventArgs args = new(InputEvents.PreviewLostKeyboardFocusEvent, oldId, oldFocus, newFocus);
-        RoutedEventRouter.Raise(routeMap.InputTree, oldId, args);
+        KeyboardFocusChangedEventArgs args = new(InputEvents.PreviewLostKeyboardFocusEvent, oldFocus, oldFocus, newFocus);
+        RoutedEventRouter.Raise(routeMap.InputTree, oldFocus, args);
         return args;
     }
 
     private static KeyboardFocusChangedEventArgs? RaisePreviewFocusGot(ElementInputRouteMap routeMap, UIElement? oldFocus, UIElement? newFocus)
     {
-        if (newFocus is null || !routeMap.TryGetId(newFocus, out UiElementId newId))
+        if (newFocus is null || !routeMap.Contains(newFocus))
         {
             return null;
         }
 
-        KeyboardFocusChangedEventArgs args = new(InputEvents.PreviewGotKeyboardFocusEvent, newId, oldFocus, newFocus);
-        RoutedEventRouter.Raise(routeMap.InputTree, newId, args);
+        KeyboardFocusChangedEventArgs args = new(InputEvents.PreviewGotKeyboardFocusEvent, newFocus, oldFocus, newFocus);
+        RoutedEventRouter.Raise(routeMap.InputTree, newFocus, args);
         return args;
     }
 
@@ -225,7 +223,7 @@ public sealed class FocusManager
         UIElement? newFocus,
         KeyboardFocusChangedEventArgs? previewArgs)
     {
-        if (oldFocus is null || !routeMap.TryGetId(oldFocus, out UiElementId oldId))
+        if (oldFocus is null || !routeMap.Contains(oldFocus))
         {
             return;
         }
@@ -234,11 +232,11 @@ public sealed class FocusManager
         {
             RoutedEventRouter.Raise(
                 routeMap.InputTree,
-                oldId,
-                new KeyboardFocusChangedEventArgs(InputEvents.LostKeyboardFocusEvent, oldId, oldFocus, newFocus));
+                oldFocus,
+                new KeyboardFocusChangedEventArgs(InputEvents.LostKeyboardFocusEvent, oldFocus, oldFocus, newFocus));
         }
 
-        RoutedEventRouter.Raise(routeMap.InputTree, oldId, new RoutedEventArgs(InputEvents.LostFocusEvent, oldId));
+        RoutedEventRouter.Raise(routeMap.InputTree, oldFocus, new RoutedEventArgs(InputEvents.LostFocusEvent, oldFocus));
     }
 
     private static void RaiseFocusGot(
@@ -247,7 +245,7 @@ public sealed class FocusManager
         UIElement? newFocus,
         KeyboardFocusChangedEventArgs? previewArgs)
     {
-        if (newFocus is null || !routeMap.TryGetId(newFocus, out UiElementId newId))
+        if (newFocus is null || !routeMap.Contains(newFocus))
         {
             return;
         }
@@ -256,11 +254,11 @@ public sealed class FocusManager
         {
             RoutedEventRouter.Raise(
                 routeMap.InputTree,
-                newId,
-                new KeyboardFocusChangedEventArgs(InputEvents.GotKeyboardFocusEvent, newId, oldFocus, newFocus));
+                newFocus,
+                new KeyboardFocusChangedEventArgs(InputEvents.GotKeyboardFocusEvent, newFocus, oldFocus, newFocus));
         }
 
-        RoutedEventRouter.Raise(routeMap.InputTree, newId, new RoutedEventArgs(InputEvents.GotFocusEvent, newId));
+        RoutedEventRouter.Raise(routeMap.InputTree, newFocus, new RoutedEventArgs(InputEvents.GotFocusEvent, newFocus));
     }
 
     private static void UpdateFocusState(

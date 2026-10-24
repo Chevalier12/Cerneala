@@ -7,7 +7,7 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Input/ElementInputRouteMap.cs`
 
-Stores the retained input routing map between `UIElement` instances, `UiElementId` values, route order, and the backing `UiInputTree`.
+Stores the retained set of input-routable `UIElement` instances, their route order, and the backing `UiInputTree`.
 
 ```csharp
 public sealed class ElementInputRouteMap
@@ -18,7 +18,7 @@ Inheritance:
 
 ## Examples
 
-Create a route map manually, then resolve in both directions and query the input route to the root.
+Create a route map manually, check that an element is registered, and query the input route to the root.
 
 ```csharp
 using Cerneala.UI.Elements;
@@ -28,28 +28,25 @@ ElementInputRouteMap map = new();
 
 UIElement root = new();
 UIElement child = new();
-UiElementId rootId = new("root");
-UiElementId childId = new("child");
 
-map.Add(root, rootId, parentId: null);
-map.Add(child, childId, parentId: rootId);
+map.Add(root, parent: null);
+map.Add(child, parent: root);
 
-bool foundChildId = map.TryGetId(child, out UiElementId resolvedChildId);
-bool foundChild = map.TryGetElement(childId, out UIElement? resolvedChild);
+bool childIsRegistered = map.Contains(child); // true
 
-IReadOnlyList<UiElementId> route = map.InputTree.GetRouteToRoot(childId);
-// route is childId, then rootId.
+IReadOnlyList<UIElement> route = map.InputTree.GetRouteToRoot(child);
+// route is child, then root.
 ```
 
 ## Remarks
 
-`ElementInputRouteMap` is the lookup surface used by retained input code after an input route has been built. It keeps a bidirectional association between `UIElement` objects and `UiElementId` values, preserves the order in which elements were added, and owns the `UiInputTree` used by routed input events.
+`ElementInputRouteMap` is the lookup surface used by retained input code after an input route has been built. It records which `UIElement` objects are registered, preserves the order in which elements were added, and owns the `UiInputTree` used by routed input events.
 
 Element lookup uses reference equality for `UIElement` keys. Two distinct element instances that compare equal through `Equals` are still tracked as distinct elements.
 
-Scene-node lookup also checks the live preparation state of its owning [RenderSurface2D](Cerneala.UI.Controls.RenderSurface2D.md). `TryGetId` returns false/default and `TryGetElement` returns false/null while that scene's required visible coverage is unavailable, even when the node is still registered in this snapshot. This prevents existing capture/focus targets from bypassing scene readiness after asynchronous source publication. It does not remove entries from `Count`, `ElementsInRouteOrder`, or the backing `InputTree`, and it does not disable the node or its simulation. Use the normal retained input dispatch services rather than manually raising input through a stale backing tree.
+Scene-node lookup also checks the live preparation state of its owning [RenderSurface2D](Cerneala.UI.Controls.RenderSurface2D.md). `Contains` returns `false` while that scene's required visible coverage is unavailable, even when the node is still registered in this snapshot. This prevents existing capture/focus targets from bypassing scene readiness after asynchronous source publication. It does not remove entries from `Count`, `ElementsInRouteOrder`, or the backing `InputTree`, and it does not disable the node or its simulation. Use the normal retained input dispatch services rather than manually raising input through a stale backing tree.
 
-`Add` registers the element in all internal structures and immediately adds the same id to `InputTree`. The supplied `parentId`, when present, must already exist in the `InputTree`; `UiInputTree.Add` throws if a child is registered before its parent. The enabled state stored in the `InputTree` is copied from `element.IsEnabled` at the time of `Add`.
+`Add` registers the element in all internal structures and immediately adds the same element to `InputTree`. The supplied `parent`, when present, must already exist in the `InputTree`; `UiInputTree.Add` throws if a child is registered before its parent. The enabled state stored in the `InputTree` is copied from `element.IsEnabled` at the time of `Add`.
 
 For a map built by `ElementInputRouteBuilder`, the `InputTree` route of content projected by an `Overlay` continues from the projected presenter to the overlay and its ancestors. Retained input services that ask where the pointer or the focus is visually (pointer-over and focus-within state, cursor resolution, and the focus, pressed, click, and drag owner of a pointer press) use the element's visual ancestors instead, which stop at the root-owned overlay layer. A map filled through the public `Add` uses the same parent for both.
 
@@ -67,15 +64,14 @@ For a map built by `ElementInputRouteBuilder`, the `InputTree` route of content 
 | --- | --- | --- |
 | `Count` | `int` | Gets the number of elements registered in the map. |
 | `ElementsInRouteOrder` | `IReadOnlyList<UIElement>` | Gets the elements in the order they were added to the map. |
-| `InputTree` | `UiInputTree` | Gets the input tree associated with the registered element ids. |
+| `InputTree` | `UiInputTree` | Gets the input tree associated with the registered elements. |
 
 ## Methods
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `Add(UIElement, UiElementId, UiElementId?)` | `void` | Adds an element/id pair, appends the element to route order, and registers the id with the input tree. Throws if `element` is `null`; duplicate elements or ids are rejected by the underlying dictionaries/input tree. |
-| `TryGetElement(UiElementId, out UIElement?)` | `bool` | Attempts to resolve an element from a registered id. |
-| `TryGetId(UIElement, out UiElementId)` | `bool` | Attempts to resolve the id for a registered element. Throws if `element` is `null`. |
+| `Add(UIElement, UIElement?)` | `void` | Registers an element with its parent, appends the element to route order, and registers it with the input tree. Throws `ArgumentNullException` if `element` is `null` and `ArgumentException` if the element is already registered. |
+| `Contains(UIElement)` | `bool` | Returns whether the element is registered in this map and its input route is currently available. Throws if `element` is `null`. |
 
 ## Applies to
 

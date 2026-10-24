@@ -150,14 +150,14 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnServoClick(UiElementId sender, RoutedEventArgs args)
+    private void OnServoClick(Button sender, RoutedEventArgs args)
     {
         servoActivated = true;
         ServoButton.Content = "SERVO ACTIVE";
         StatusText.Text = "servo: activated";
     }
 
-    private void OnPreviewKeyDown(UiElementId sender, RoutedEventArgs args)
+    private void OnPreviewKeyDown(MainWindow sender, RoutedEventArgs args)
     {
         inputObserved = true;
         StatusText.Text = args is KeyEventArgs key

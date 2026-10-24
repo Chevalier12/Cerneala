@@ -787,7 +787,7 @@ public class ComboBox : Selector
         }
     }
 
-    private void OnTextInput(UiElementId _, RoutedEventArgs args)
+    private void OnTextInput(object _, RoutedEventArgs args)
     {
         if (args is not TextCompositionEventArgs textArgs || textArgs.Handled ||
             !IsEnabled || IsEditable || !IsTextSearchEnabled)
@@ -817,7 +817,7 @@ public class ComboBox : Selector
         textArgs.Handled = true;
     }
 
-    private void OnEditablePreviewKeyDown(UiElementId _, RoutedEventArgs args)
+    private void OnEditablePreviewKeyDown(object _, RoutedEventArgs args)
     {
         suppressAutocompleteForCurrentEdit = args is KeyEventArgs
         {
@@ -825,12 +825,12 @@ public class ComboBox : Selector
         };
     }
 
-    private void OnEditablePreviewKeyUp(UiElementId _, RoutedEventArgs args)
+    private void OnEditablePreviewKeyUp(object _, RoutedEventArgs args)
     {
         suppressAutocompleteForCurrentEdit = false;
     }
 
-    private void OnDropDownToggleChecked(UiElementId _, RoutedEventArgs args)
+    private void OnDropDownToggleChecked(object _, RoutedEventArgs args)
     {
         if (!synchronizingParts)
         {
@@ -839,7 +839,7 @@ public class ComboBox : Selector
         }
     }
 
-    private void OnDropDownToggleUnchecked(UiElementId _, RoutedEventArgs args)
+    private void OnDropDownToggleUnchecked(object _, RoutedEventArgs args)
     {
         if (synchronizingParts)
         {
@@ -877,7 +877,7 @@ public class ComboBox : Selector
 
     // The overlay is already projected or withdrawn, so the event is raised even when starting or canceling the
     // selection transaction rethrows a re-preparation failure. The failure propagates after the event.
-    private void OnOverlayOpened(UiElementId _, RoutedEventArgs args)
+    private void OnOverlayOpened(object _, RoutedEventArgs args)
     {
         ResetDropDownVirtualization();
         try
@@ -893,7 +893,7 @@ public class ComboBox : Selector
         }
     }
 
-    private void OnOverlayClosed(UiElementId _, RoutedEventArgs args)
+    private void OnOverlayClosed(object _, RoutedEventArgs args)
     {
         try
         {
@@ -908,7 +908,7 @@ public class ComboBox : Selector
         }
     }
 
-    private void OnKeyDown(UiElementId _, RoutedEventArgs args)
+    private void OnKeyDown(object _, RoutedEventArgs args)
     {
         if (args is not KeyEventArgs keyArgs || !IsEnabled)
         {
@@ -985,11 +985,11 @@ public class ComboBox : Selector
     // the WPF ToggleButton never sees that press (#468). The click owner and the drag source are found with the route
     // map the input bridge routed the MouseUp with, so they stay the same when an earlier handler on the route removes
     // the clicked content from the field (#622).
-    private void OnMouseUp(UiElementId _, RoutedEventArgs args)
+    private void OnMouseUp(object _, RoutedEventArgs args)
     {
         if (IsEditable || !IsEnabled ||
             args is not MouseButtonEventArgs { ChangedButton: InputMouseButton.Left, ClickCount: > 0 } mouseArgs ||
-            !Equals(mouseArgs.PressOriginalSource, args.OriginalSource) ||
+            !ReferenceEquals(mouseArgs.PressOriginalSource, args.OriginalSource) ||
             !ReferenceEquals(FindClickOwner(this, args.OriginalSource, mouseArgs.RouteMap), this) ||
             IsInPointerDragSource(args.OriginalSource, mouseArgs.RouteMap))
         {
@@ -1006,12 +1006,7 @@ public class ComboBox : Selector
     {
         if (routeMap is not null)
         {
-            UIElement? routed = source switch
-            {
-                UIElement candidate => candidate,
-                UiElementId id when routeMap.TryGetElement(id, out UIElement? resolved) => resolved,
-                _ => null
-            };
+            UIElement? routed = source as UIElement;
 
             if (routed is null)
             {
@@ -1034,12 +1029,7 @@ public class ComboBox : Selector
             return false;
         }
 
-        UIElement? element = source switch
-        {
-            UIElement candidate => candidate,
-            UiElementId id when Root?.ElementIds.TryGetElement(id, out UIElement? resolved) == true => resolved,
-            _ => null
-        };
+        UIElement? element = source as UIElement;
 
         for (UIElement? current = element; current is not null && !ReferenceEquals(current, this); current = current.VisualParent)
         {

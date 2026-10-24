@@ -64,7 +64,7 @@ Entries are exposed through `Entries` in recording order. The trace retains at m
 
 Disabled traces keep `IsEnabled` set to `false` and ignore all record calls. `RecordRequest` still validates that its `request` argument is not null before checking `IsEnabled`.
 
-Each entry stores both the `UIElement` reference and the element id string available at recording time. This lets diagnostics keep the recorded id even if the element is detached later. `DirtyTreeDumper` can use the trace to attach the latest dirty reason and source property name to a dirty-tree dump.
+Each entry stores the `UIElement` reference of the invalidated element. `DirtyTreeDumper` can use the trace to attach the latest dirty reason and source property name to a dirty-tree dump.
 
 ## Constructors
 
@@ -125,7 +125,6 @@ public enum InvalidationTraceEventKind
 public sealed record InvalidationTraceEntry(
     InvalidationTraceEventKind Kind,
     UIElement? Element,
-    string? ElementId,
     InvalidationFlags Flags,
     FramePhase? Phase,
     string Reason,
@@ -136,7 +135,6 @@ public sealed record InvalidationTraceEntry(
 | --- | --- | --- |
 | `Kind` | `InvalidationTraceEventKind` | Event category. |
 | `Element` | `UIElement?` | Element associated with the entry, or null for phase summaries. |
-| `ElementId` | `string?` | Element id string captured when the entry was recorded. |
 | `Flags` | `InvalidationFlags` | Invalidation flags associated with the entry. |
 | `Phase` | `FramePhase?` | Frame phase associated with the entry, when applicable. |
 | `Reason` | `string` | Request reason, propagation reason, phase name, phase-summary count, or `Clear`. |

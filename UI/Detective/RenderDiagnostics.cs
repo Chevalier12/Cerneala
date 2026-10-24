@@ -19,7 +19,6 @@ public static class RenderDiagnostics
 
         ElementRenderCache elementCache = cache.GetElementCache(element);
         return new ElementRenderDiagnosticsSnapshot(
-            element.ElementId?.ToString(),
             element.GetType().Name,
             element.RenderVersion,
             element.RenderDependencies,
@@ -43,7 +42,6 @@ public sealed record RootRenderDiagnosticsSnapshot(bool IsRootValid, int Version
 }
 
 public sealed record ElementRenderDiagnosticsSnapshot(
-    string? ElementId,
     string ElementType,
     int ElementRenderVersion,
     RenderDependency ElementDependencies,
@@ -58,6 +56,6 @@ public sealed record ElementRenderDiagnosticsSnapshot(
     {
         return string.Create(
             CultureInfo.InvariantCulture,
-            $"{ElementType}#{ElementId ?? "unattached"} cacheValid={IsCacheValid}, stale={IsStale}, elementRenderVersion={ElementRenderVersion}, cacheRenderVersion={CacheRenderVersion}, commands={CommandCount}, bounds={ContentBounds}, elementDependencies={ElementDependencies}, cacheDependencies={CacheDependencies}");
+            $"{ElementType} cacheValid={IsCacheValid}, stale={IsStale}, elementRenderVersion={ElementRenderVersion}, cacheRenderVersion={CacheRenderVersion}, commands={CommandCount}, bounds={ContentBounds}, elementDependencies={ElementDependencies}, cacheDependencies={CacheDependencies}");
     }
 }

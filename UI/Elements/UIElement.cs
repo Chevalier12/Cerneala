@@ -258,8 +258,6 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     public bool IsInitialized => isInitialized;
 
-    public UiElementId? ElementId { get; private set; }
-
     public ElementHandlerStore Handlers { get; }
 
     public CommandBindingCollection CommandBindings { get; }
@@ -796,11 +794,10 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         Invalidate(InvalidationFlags.Render, "Prism attachment changed");
     }
 
-    internal void AttachToRoot(UIRoot root, UiElementId id)
+    internal void AttachToRoot(UIRoot root)
     {
         Root = root ?? throw new ArgumentNullException(nameof(root));
         root.AdvanceImageResolutionEpoch();
-        ElementId = id;
         attachmentGeneration++;
 
         // Behaviors the Aspect behavior adds attach themselves (the element is
@@ -862,7 +859,6 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
             ReleaseImageResources();
             Root?.RetainedRenderCache.ReleaseElement(this);
             Bindings.Clear();
-            ElementId = null;
             Root?.AdvanceImageResolutionEpoch();
             Root = null;
             isDetachingFromRoot = false;

@@ -51,7 +51,6 @@ The returned `LayoutDiagnosticsSnapshot` is a point-in-time value. It does not s
 
 ```csharp
 public sealed record LayoutDiagnosticsSnapshot(
-    string? ElementId,
     string ElementType,
     LayoutSize DesiredSize,
     LayoutRect ArrangedBounds,
@@ -67,7 +66,6 @@ public sealed record LayoutDiagnosticsSnapshot(
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `ElementId` | `string?` | The element identifier converted to text, or `null` when the element has no identifier. |
 | `ElementType` | `string` | The runtime type name of the captured element. |
 | `DesiredSize` | `LayoutSize` | The element's current `DesiredSize`. |
 | `ArrangedBounds` | `LayoutRect` | The element's current `ArrangedBounds`. |
@@ -82,7 +80,7 @@ public sealed record LayoutDiagnosticsSnapshot(
 
 | Name | Description |
 | --- | --- |
-| `ToString()` | Formats the element type, element id or `unattached`, desired size, arranged bounds, layout version, and visibility using invariant culture. |
+| `ToString()` | Formats the element type, desired size, arranged bounds, layout version, and visibility using invariant culture. |
 
 ## Applies to
 

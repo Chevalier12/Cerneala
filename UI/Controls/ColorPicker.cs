@@ -160,7 +160,7 @@ public class ColorPicker : Control
         alphaBrushWidth = -1;
     }
 
-    private void OnSpectrumValueChanged(UiElementId _, RoutedEventArgs args)
+    private void OnSpectrumValueChanged(object _, RoutedEventArgs args)
     {
         if (synchronizingParts || spectrum is null)
         {

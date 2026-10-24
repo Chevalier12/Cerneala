@@ -324,21 +324,21 @@ public partial class PresentationWindow : Window
         skipNextHeaderDiagnosticsRefresh = true;
     }
 
-    private void OnWelcome(UiElementId sender, RoutedEventArgs args) => ShowChapter(PresentationChapter.Welcome);
-    private void OnRetained(UiElementId sender, RoutedEventArgs args) => ShowChapter(PresentationChapter.RetainedModel);
-    private void OnMarkup(UiElementId sender, RoutedEventArgs args) => ShowChapter(PresentationChapter.Markup);
-    private void OnAspect(UiElementId sender, RoutedEventArgs args) => ShowChapter(PresentationChapter.Aspect);
-    private void OnMotion(UiElementId sender, RoutedEventArgs args) => ShowChapter(PresentationChapter.Motion);
-    private void OnPrism(UiElementId sender, RoutedEventArgs args) => ShowChapter(PresentationChapter.Prism);
-    private void OnPipeline(UiElementId sender, RoutedEventArgs args) => ShowChapter(PresentationChapter.FramePipeline);
+    private void OnWelcome(ToggleButton sender, RoutedEventArgs args) => ShowChapter(PresentationChapter.Welcome);
+    private void OnRetained(ToggleButton sender, RoutedEventArgs args) => ShowChapter(PresentationChapter.RetainedModel);
+    private void OnMarkup(ToggleButton sender, RoutedEventArgs args) => ShowChapter(PresentationChapter.Markup);
+    private void OnAspect(ToggleButton sender, RoutedEventArgs args) => ShowChapter(PresentationChapter.Aspect);
+    private void OnMotion(ToggleButton sender, RoutedEventArgs args) => ShowChapter(PresentationChapter.Motion);
+    private void OnPrism(ToggleButton sender, RoutedEventArgs args) => ShowChapter(PresentationChapter.Prism);
+    private void OnPipeline(ToggleButton sender, RoutedEventArgs args) => ShowChapter(PresentationChapter.FramePipeline);
 
-    private void OnPrevious(UiElementId sender, RoutedEventArgs args)
+    private void OnPrevious(Button sender, RoutedEventArgs args)
     {
         int index = ChapterIndex(currentChapter);
         ShowChapter(ChapterOrder[Math.Max(0, index - 1)]);
     }
 
-    private void OnNext(UiElementId sender, RoutedEventArgs args)
+    private void OnNext(Button sender, RoutedEventArgs args)
     {
         int index = ChapterIndex(currentChapter);
         ShowChapter(ChapterOrder[index == ChapterOrder.Length - 1 ? 0 : index + 1]);

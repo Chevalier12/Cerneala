@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Cerneala.UI.Elements;
 
 namespace Cerneala.UI.Input;
@@ -7,19 +8,19 @@ public sealed class CommandRouter
     public bool CanExecute(RoutedCommandContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
-        if (!TryGetTargetRoute(context, out UiElementId targetId, out IReadOnlyList<UiElementId> routeToRoot))
+        if (!TryGetTargetRoute(context, out UIElement? target, out IReadOnlyList<UIElement> routeToRoot))
         {
             return false;
         }
 
-        CanExecuteRoutedEventArgs previewArgs = new(CommandEvents.PreviewCanExecuteEvent, targetId, context.Command, context.Parameter);
+        CanExecuteRoutedEventArgs previewArgs = new(CommandEvents.PreviewCanExecuteEvent, target, context.Command, context.Parameter);
         RaiseCommandBindings(context.RouteMap, routeToRoot.Reverse(), previewArgs);
         if (previewArgs.Handled)
         {
             return previewArgs.CanExecute;
         }
 
-        CanExecuteRoutedEventArgs bubbleArgs = new(CommandEvents.CanExecuteEvent, targetId, context.Command, context.Parameter)
+        CanExecuteRoutedEventArgs bubbleArgs = new(CommandEvents.CanExecuteEvent, target, context.Command, context.Parameter)
         {
             CanExecute = previewArgs.CanExecute
         };
@@ -30,16 +31,16 @@ public sealed class CommandRouter
     public bool Execute(RoutedCommandContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
-        if (!CanExecute(context) || !TryGetTargetRoute(context, out UiElementId targetId, out IReadOnlyList<UiElementId> routeToRoot))
+        if (!CanExecute(context) || !TryGetTargetRoute(context, out UIElement? target, out IReadOnlyList<UIElement> routeToRoot))
         {
             return false;
         }
 
-        ExecutedRoutedEventArgs previewArgs = new(CommandEvents.PreviewExecutedEvent, targetId, context.Command, context.Parameter);
+        ExecutedRoutedEventArgs previewArgs = new(CommandEvents.PreviewExecutedEvent, target, context.Command, context.Parameter);
         RaiseCommandBindings(context.RouteMap, routeToRoot.Reverse(), previewArgs);
         if (!previewArgs.Handled)
         {
-            ExecutedRoutedEventArgs bubbleArgs = new(CommandEvents.ExecutedEvent, targetId, context.Command, context.Parameter);
+            ExecutedRoutedEventArgs bubbleArgs = new(CommandEvents.ExecutedEvent, target, context.Command, context.Parameter);
             RaiseCommandBindings(context.RouteMap, routeToRoot, bubbleArgs);
         }
 
@@ -48,45 +49,46 @@ public sealed class CommandRouter
 
     private static bool TryGetTargetRoute(
         RoutedCommandContext context,
-        out UiElementId targetId,
-        out IReadOnlyList<UiElementId> routeToRoot)
+        [NotNullWhen(true)] out UIElement? target,
+        out IReadOnlyList<UIElement> routeToRoot)
     {
-        targetId = default;
+        target = null;
         routeToRoot = [];
-        if (context.Target is null || !context.RouteMap.TryGetId(context.Target, out targetId))
+        if (context.Target is null || !context.RouteMap.Contains(context.Target))
         {
             return false;
         }
 
-        routeToRoot = context.RouteMap.InputTree.GetRouteToRoot(targetId);
+        target = context.Target;
+        routeToRoot = context.RouteMap.InputTree.GetRouteToRoot(target);
         return true;
     }
 
     private static void RaiseCommandBindings(
         ElementInputRouteMap routeMap,
-        IEnumerable<UiElementId> route,
+        IEnumerable<UIElement> route,
         RoutedEventArgs args)
     {
-        foreach (UiElementId elementId in route)
+        foreach (UIElement element in route)
         {
             if (args.Handled)
             {
                 return;
             }
 
-            if (!routeMap.TryGetElement(elementId, out UIElement? element) || element is null)
+            if (!routeMap.Contains(element))
             {
                 continue;
             }
 
-            args.Source = elementId;
+            args.Source = element;
             if (args is CanExecuteRoutedEventArgs canExecuteArgs)
             {
-                element.CommandBindings.InvokeCanExecute(elementId, canExecuteArgs);
+                element.CommandBindings.InvokeCanExecute(element, canExecuteArgs);
             }
             else if (args is ExecutedRoutedEventArgs executedArgs)
             {
-                element.CommandBindings.InvokeExecuted(elementId, executedArgs);
+                element.CommandBindings.InvokeExecuted(element, executedArgs);
             }
         }
     }

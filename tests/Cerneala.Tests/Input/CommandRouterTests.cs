@@ -97,6 +97,35 @@ public sealed class CommandRouterTests
         Assert.Equal(["preview-root", "preview-child"], calls);
     }
 
+    [Fact]
+    public void CommandBindingHandlersReceiveTheElementOwningTheBindingAsSenderAndSource()
+    {
+        BuildTree(out UIElement parent, out UIElement child, out ElementInputRouteMap map);
+        RoutedCommand command = new("Save", typeof(CommandRouterTests));
+        List<(object Sender, object Source, object OriginalSource)> canExecuteCalls = [];
+        List<(object Sender, object Source, object OriginalSource)> executedCalls = [];
+        parent.CommandBindings.Add(new CommandBinding(
+            command,
+            (sender, args) => executedCalls.Add((sender, args.Source, args.OriginalSource)),
+            (sender, args) =>
+            {
+                canExecuteCalls.Add((sender, args.Source, args.OriginalSource));
+                args.CanExecute = true;
+            }));
+
+        bool didExecute = new CommandRouter().Execute(new RoutedCommandContext(command, child, map));
+
+        Assert.True(didExecute);
+        Assert.NotEmpty(canExecuteCalls);
+        Assert.NotEmpty(executedCalls);
+        Assert.All(canExecuteCalls.Concat(executedCalls), call =>
+        {
+            Assert.Same(parent, call.Sender);
+            Assert.Same(parent, call.Source);
+            Assert.Same(child, call.OriginalSource);
+        });
+    }
+
     private static UIRoot BuildTree(out UIElement parent, out UIElement child, out ElementInputRouteMap map)
     {
         UIRoot root = new();

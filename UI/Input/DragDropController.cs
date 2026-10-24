@@ -71,9 +71,9 @@ public sealed class DragDropController
     {
         RoutedEventRouter.RaisePair(
             routeMap.InputTree,
-            target.ElementId,
-            new DragEventArgs(preview, target.ElementId, session!.Data, x, y),
-            new DragEventArgs(bubble, target.ElementId, session.Data, x, y));
+            target.Element,
+            new DragEventArgs(preview, target.Element, session!.Data, x, y),
+            new DragEventArgs(bubble, target.Element, session.Data, x, y));
     }
 
     private sealed class DragSession(UIElement source, DataTransfer data)

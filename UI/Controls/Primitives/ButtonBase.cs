@@ -109,7 +109,7 @@ public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource, 
         }
     }
 
-    private void OnMouseUp(UiElementId _, RoutedEventArgs args)
+    private void OnMouseUp(object _, RoutedEventArgs args)
     {
         if (ShouldClickOnMouseUp &&
             args is MouseButtonEventArgs { ChangedButton: InputMouseButton.Left, ClickCount: > 0 } mouseArgs &&
@@ -137,12 +137,7 @@ public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource, 
             routeMap = root.InputCache.EnsureCurrent(root);
         }
 
-        UIElement? source = args.OriginalSource switch
-        {
-            UIElement element => element,
-            UiElementId id when routeMap.TryGetElement(id, out UIElement? resolved) => resolved,
-            _ => null
-        };
+        UIElement? source = args.OriginalSource as UIElement;
         if (source is null)
         {
             return true;

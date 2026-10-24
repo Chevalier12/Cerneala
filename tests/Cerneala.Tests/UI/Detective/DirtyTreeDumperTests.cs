@@ -20,11 +20,11 @@ public sealed class DirtyTreeDumperTests
         string dump = new DirtyTreeDumper().Dump(root, root.Detective.Invalidation);
 
         Assert.Contains("Dirty tree", dump, StringComparison.Ordinal);
-        Assert.Contains($"UIElement#{child.ElementId}", dump, StringComparison.Ordinal);
+        Assert.Contains("- UIElement flags=", dump, StringComparison.Ordinal);
         Assert.Contains("flags=Render", dump, StringComparison.Ordinal);
         Assert.Contains("version=", dump, StringComparison.Ordinal);
         Assert.Contains("reason=manual render", dump, StringComparison.Ordinal);
-        Assert.DoesNotContain($"UIRoot#{root.ElementId}", dump, StringComparison.Ordinal);
+        Assert.DoesNotContain("- UIRoot flags=", dump, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -38,7 +38,7 @@ public sealed class DirtyTreeDumperTests
 
         string dump = new DirtyTreeDumper().Dump(root, root.Detective.Invalidation);
 
-        Assert.Contains($"UIElement#{child.ElementId}", dump, StringComparison.Ordinal);
+        Assert.Contains("- UIElement flags=", dump, StringComparison.Ordinal);
         Assert.Contains("reason=Property changed", dump, StringComparison.Ordinal);
         Assert.Contains("source=Cerneala.UI.Elements.UIElement.Visibility", dump, StringComparison.Ordinal);
     }
@@ -71,7 +71,7 @@ public sealed class DirtyTreeDumperTests
         string dump = new DirtyTreeDumper().Dump(root, root.Detective.Invalidation);
         string childLine = Assert.Single(
             dump.Split(Environment.NewLine),
-            line => line.Contains($"UIElement#{child.ElementId}", StringComparison.Ordinal));
+            line => line.Contains("- UIElement flags=", StringComparison.Ordinal));
 
         Assert.Contains("reason=aspect requeued during aspect processor", childLine, StringComparison.Ordinal);
         Assert.DoesNotContain("reason=Clear", childLine, StringComparison.Ordinal);

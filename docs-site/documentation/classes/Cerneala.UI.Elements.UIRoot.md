@@ -73,7 +73,7 @@ Notifications from an assigned `ThemeProvider` and `IObservableResourceProvider`
 
 `UIRoot` is the owner object for a retained Cerneala UI tree. The constructor captures its calling thread as the owner of `Relay`, initializes the other root services, registers the default aspect package, marks the root as a layout boundary, and attaches the root element to itself through the element lifecycle.
 
-Children are attached by adding them to the inherited `VisualChildren` or `LogicalChildren` collections. Attached subtrees receive root ownership and element IDs through `ElementIds`; removing a subtree detaches it, releases its IDs, and removes its pending work from the root's element queues (layout, inherited property, command-state, aspect, render, and hit-test).
+Children are attached by adding them to the inherited `VisualChildren` or `LogicalChildren` collections. Attached subtrees receive root ownership; removing a subtree detaches it and removes its pending work from the root's element queues (layout, inherited property, command-state, aspect, render, and hit-test).
 
 Framework image consumers and retained command caches keep explicit image acquisitions. Replacing this root's image cache releases its own drawing resources and invalidates its retained commands; it does not clear a device cache shared with another root. Existing application-owned [image leases](Cerneala.UI.Resources.ImageResourceLease.md) remain valid until released. Detaching a control releases its own acquisition, but previously committed root commands keep their acquisitions until the next commit or root drawing-resource teardown.
 
@@ -103,7 +103,6 @@ Invalidation requests are expanded through `DirtyPropagation` and queued into th
 | `AspectRegistry` | `AspectRegistry` | Stores aspect packages for the root; the default aspect package is registered during construction. |
 | `CommandStateQueue` | `CommandStateQueue` | Queues elements whose command state must be refreshed. |
 | `Detective` | `Detective` | Gets the root-owned diagnostics entry point for snapshots, traces, and counters. |
-| `ElementIds` | `ElementIdProvider` | Provides stable element IDs for attached elements. |
 | `HitTestQueue` | `HitTestQueue` | Queues hit-test cache work. |
 | `ImageLoader` | `IImageLoader?` | Gets the image loader assigned by `SetImageLoader` or `SetImageResourceCache`. |
 | `ImageResourceCache` | `ImageResourceCache?` | Gets the image cache assigned by `SetImageLoader` or `SetImageResourceCache`. |

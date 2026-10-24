@@ -66,7 +66,7 @@ public sealed class DragDropControllerTests
         controller.Move(root, 45, 5);
 
         Assert.Equal(rebuildsAfterInitialBuild + 1, root.InputCache.RebuildCount);
-        Assert.False(root.InputCache.RouteMap.TryGetId(target, out _));
+        Assert.False(root.InputCache.RouteMap.Contains(target));
     }
 
     [Fact]
@@ -108,7 +108,7 @@ public sealed class DragDropControllerTests
 
         Assert.Equal(Cursor.Arrow, cursor);
         Assert.Equal(rebuildsAfterInitialBuild + 1, root.InputCache.RebuildCount);
-        Assert.False(root.InputCache.RouteMap.TryGetId(target, out _));
+        Assert.False(root.InputCache.RouteMap.Contains(target));
     }
 
     private static UIElement Arranged(float x, float y, float width, float height)

@@ -27,8 +27,8 @@ public sealed class WpfEventSurfaceTests
     public void HandledEventsTooRunsWithoutResumingOrdinaryHandlers()
     {
         UiInputTree tree = new();
-        UiElementId root = new("root");
-        UiElementId child = new("child");
+        UIElement root = new();
+        UIElement child = new();
         List<string> calls = [];
         tree.Add(root, null);
         tree.Add(child, root);
@@ -45,8 +45,8 @@ public sealed class WpfEventSurfaceTests
     public void HandledPreviewStillOffersBubbleToHandledEventsToo()
     {
         UiInputTree tree = new();
-        UiElementId root = new("root");
-        UiElementId child = new("child");
+        UIElement root = new();
+        UIElement child = new();
         bool observed = false;
         tree.Add(root, null);
         tree.Add(child, root);
@@ -141,7 +141,7 @@ public sealed class WpfEventSurfaceTests
         RangeBase range = new();
         bool observed = false;
         root.VisualChildren.Add(range);
-        root.AddHandler(RangeBase.ValueChangedEvent, (_, args) => observed = args.Source is UiElementId);
+        root.AddHandler(RangeBase.ValueChangedEvent, (_, args) => observed = ReferenceEquals(args.Source, root));
 
         range.Value = 0.5f;
 

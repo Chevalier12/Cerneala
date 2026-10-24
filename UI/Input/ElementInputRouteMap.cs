@@ -4,67 +4,56 @@ namespace Cerneala.UI.Input;
 
 public sealed class ElementInputRouteMap
 {
-    private readonly Dictionary<UIElement, UiElementId> idsByElement = new(ReferenceEqualityComparer.Instance);
-    private readonly Dictionary<UiElementId, UIElement> elementsById = [];
     private readonly List<UIElement> elementsInRouteOrder = [];
-    private readonly Dictionary<UiElementId, UiElementId?> visualParentIds = [];
+    private readonly Dictionary<UIElement, UIElement?> visualParents = new(ReferenceEqualityComparer.Instance);
 
     public UiInputTree InputTree { get; } = new();
 
-    public int Count => idsByElement.Count;
+    public int Count => visualParents.Count;
 
     public IReadOnlyList<UIElement> ElementsInRouteOrder => elementsInRouteOrder;
 
-    public void Add(UIElement element, UiElementId id, UiElementId? parentId)
+    public void Add(UIElement element, UIElement? parent)
     {
-        Add(element, id, parentId, parentId);
+        Add(element, parent, parent);
     }
 
     // The visual parent differs from the route parent only for projected content: its route parent is the projection
     // owner, its visual parent the nearest registered visual ancestor.
-    internal void Add(UIElement element, UiElementId id, UiElementId? parentId, UiElementId? visualParentId)
+    internal void Add(UIElement element, UIElement? parent, UIElement? visualParent)
     {
         ArgumentNullException.ThrowIfNull(element);
-        if (visualParentId.HasValue && !visualParentIds.ContainsKey(visualParentId.Value))
+        if (visualParent is not null && !visualParents.ContainsKey(visualParent))
         {
-            throw new ArgumentException("Visual parent element must be added before the child element.", nameof(visualParentId));
+            throw new ArgumentException("Visual parent element must be added before the child element.", nameof(visualParent));
         }
 
-        idsByElement.Add(element, id);
-        elementsById.Add(id, element);
+        if (visualParents.ContainsKey(element))
+        {
+            throw new ArgumentException("Element is already registered in this route map.", nameof(element));
+        }
+
+        InputTree.Add(element, parent, element.IsEnabled);
+        visualParents.Add(element, visualParent);
         elementsInRouteOrder.Add(element);
-        InputTree.Add(id, parentId, element.IsEnabled);
-        visualParentIds.Add(id, visualParentId);
     }
 
-    public bool TryGetId(UIElement element, out UiElementId id)
+    // Whether the element is registered in this map and its input route is available now.
+    public bool Contains(UIElement element)
     {
         ArgumentNullException.ThrowIfNull(element);
-        if (element is IInputRouteGuard { IsInputRouteAvailable: false })
-        {
-            id = default;
-            return false;
-        }
-        return idsByElement.TryGetValue(element, out id);
-    }
-
-    public bool TryGetElement(UiElementId id, out UIElement? element)
-    {
-        if (!elementsById.TryGetValue(id, out element)) { return false; }
-        if (element is not IInputRouteGuard { IsInputRouteAvailable: false }) { return true; }
-        element = null;
-        return false;
+        return element is not IInputRouteGuard { IsInputRouteAvailable: false } && visualParents.ContainsKey(element);
     }
 
     internal IReadOnlyList<UIElement> GetRouteToRoot(UIElement element)
     {
         ArgumentNullException.ThrowIfNull(element);
-        if (!TryGetId(element, out UiElementId id))
+        if (!Contains(element))
         {
             return [];
         }
 
-        return ToElements(InputTree.GetRouteToRoot(id));
+        return Available(InputTree.GetRouteToRoot(element));
     }
 
     // The registered visual ancestors of an element, nearest first. Unlike GetRouteToRoot, it does not continue from
@@ -72,26 +61,26 @@ public sealed class ElementInputRouteMap
     internal IReadOnlyList<UIElement> GetVisualRouteToRoot(UIElement element)
     {
         ArgumentNullException.ThrowIfNull(element);
-        if (!TryGetId(element, out UiElementId id))
+        if (!Contains(element))
         {
             return [];
         }
 
-        List<UiElementId> ids = [];
-        for (UiElementId? current = id; current.HasValue; current = visualParentIds[current.Value])
+        List<UIElement> elements = [];
+        for (UIElement? current = element; current is not null; current = visualParents[current])
         {
-            ids.Add(current.Value);
+            elements.Add(current);
         }
 
-        return ToElements(ids);
+        return Available(elements);
     }
 
-    private List<UIElement> ToElements(IReadOnlyList<UiElementId> ids)
+    private List<UIElement> Available(IReadOnlyList<UIElement> elements)
     {
-        List<UIElement> route = new(ids.Count);
-        foreach (UiElementId routeId in ids)
+        List<UIElement> route = new(elements.Count);
+        foreach (UIElement routeElement in elements)
         {
-            if (TryGetElement(routeId, out UIElement? routeElement) && routeElement is not null)
+            if (Contains(routeElement))
             {
                 route.Add(routeElement);
             }

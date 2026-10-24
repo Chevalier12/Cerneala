@@ -31,7 +31,7 @@ parent.VisualChildren.Add(child);
 
 RoutedEventTraceSnapshot trace = RoutedEventTrace.Trace(child, InputEvents.MouseDownEvent);
 
-// MouseDown Bubble: UIElement#... -> UIElement#... -> UIRoot#...
+// MouseDown Bubble: UIElement -> UIElement -> UIRoot
 string route = trace.ToString();
 ```
 
@@ -58,7 +58,7 @@ The route is based on the supplied `RoutedEvent.RoutingStrategy`:
 
 Ancestor traversal uses `ElementTreeWalker.Ancestors(target, role)`. The default `role` is `ElementChildRole.Visual`; pass `ElementChildRole.Logical` to trace through logical parents instead. Disabled ancestors are skipped because the trace filters ancestors where `IsEnabled` is `true`. The target itself is always included after the null checks.
 
-Each trace step stores the element identifier as `element.ElementId?.ToString()` and the runtime element type name from `element.GetType().Name`. If an element has no `ElementId`, `RoutedEventTraceStep.ToString()` renders that element as `ElementType#unattached`.
+Each trace step stores the runtime element type name from `element.GetType().Name`, for example `Border`. `RoutedEventTraceStep.ToString()` returns that type name.
 
 `Trace` throws `ArgumentNullException` when `target` or `routedEvent` is `null`. It throws `InvalidOperationException` if the routed event has a routing strategy outside the supported `Direct`, `Bubble`, and `Tunnel` values.
 
@@ -76,7 +76,6 @@ Each trace step stores the element identifier as `element.ElementId?.ToString()`
 public sealed record RoutedEventTraceSnapshot(
     string EventName,
     RoutingStrategy RoutingStrategy,
-    string? TargetId,
     IReadOnlyList<RoutedEventTraceStep> Steps)
 ```
 
@@ -84,21 +83,19 @@ public sealed record RoutedEventTraceSnapshot(
 | --- | --- | --- |
 | `EventName` | `string` | The routed event name copied from `RoutedEvent.Name`. |
 | `RoutingStrategy` | `RoutingStrategy` | The routing strategy copied from `RoutedEvent.RoutingStrategy`. |
-| `TargetId` | `string?` | The target element identifier, or `null` when the target is unattached. |
 | `Steps` | `IReadOnlyList<RoutedEventTraceStep>` | Ordered route entries produced for the trace. |
 | `ToString()` | `string` | Returns the event name, routing strategy, and step list joined with ` -> `. |
 
 ### RoutedEventTraceStep
 
 ```csharp
-public sealed record RoutedEventTraceStep(string? ElementId, string ElementType)
+public sealed record RoutedEventTraceStep(string ElementType)
 ```
 
 | Member | Type | Description |
 | --- | --- | --- |
-| `ElementId` | `string?` | The traced element identifier, or `null` when the element is unattached. |
 | `ElementType` | `string` | The runtime type name of the traced element. |
-| `ToString()` | `string` | Returns `ElementType#ElementId`, using `unattached` when `ElementId` is `null`. |
+| `ToString()` | `string` | Returns `ElementType`. |
 
 ## Applies To
 

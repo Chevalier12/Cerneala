@@ -43,9 +43,8 @@ public sealed class TouchInputBridgeTests
         bridge.Capture(3, captured, map);
         bridge.Dispatch(root, new TouchInputFrame(new TouchInputPoint(3, 45, 5, TouchInputAction.Move)));
 
-        UiElementId capturedId = Assert.Single(sources).ShouldBeId();
-        Assert.True(map.TryGetId(captured, out UiElementId expected));
-        Assert.Equal(expected, capturedId);
+        Assert.True(map.Contains(captured));
+        Assert.Same(captured, Assert.Single(sources));
     }
 
     [Fact]
@@ -107,13 +106,5 @@ public sealed class TouchInputBridgeTests
         UIElement element = new();
         element.Arrange(new ArrangeContext(new LayoutRect(x, y, width, height)));
         return element;
-    }
-}
-
-internal static class TouchInputBridgeTestExtensions
-{
-    public static UiElementId ShouldBeId(this object source)
-    {
-        return Assert.IsType<UiElementId>(source);
     }
 }

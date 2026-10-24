@@ -113,7 +113,7 @@ public static class ElementLifecycle
             throw new InvalidOperationException("Element is already attached to a different root.");
         }
 
-        element.AttachToRoot(root, root.ElementIds.GetOrCreate(element));
+        element.AttachToRoot(root);
     }
 
     private static void DetachSingle(UIRoot root, UIElement element)
@@ -123,7 +123,6 @@ public static class ElementLifecycle
             return;
         }
 
-        root.ElementIds.Release(element);
         root.ResourceDependencyTracker.RemoveOwner(element);
 
         // Every cleanup step runs even when an earlier one throws, and the first failure propagates. A throw from a

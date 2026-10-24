@@ -3,12 +3,12 @@ namespace Cerneala.UI.Input;
 public sealed class CommandBinding
 {
     private readonly RoutedEventHandler? executed;
-    private readonly Action<UiElementId, CanExecuteRoutedEventArgs>? canExecute;
+    private readonly Action<object, CanExecuteRoutedEventArgs>? canExecute;
 
     public CommandBinding(
         ICommand command,
         RoutedEventHandler? executed,
-        Action<UiElementId, CanExecuteRoutedEventArgs>? canExecute = null)
+        Action<object, CanExecuteRoutedEventArgs>? canExecute = null)
     {
         Command = command ?? throw new ArgumentNullException(nameof(command));
         this.executed = executed;
@@ -17,7 +17,7 @@ public sealed class CommandBinding
 
     public ICommand Command { get; }
 
-    public void OnExecuted(UiElementId sender, ExecutedRoutedEventArgs args)
+    public void OnExecuted(object sender, ExecutedRoutedEventArgs args)
     {
         ArgumentNullException.ThrowIfNull(args);
         if (!ReferenceEquals(Command, args.Command))
@@ -28,7 +28,7 @@ public sealed class CommandBinding
         executed?.Invoke(sender, args);
     }
 
-    public void OnCanExecute(UiElementId sender, CanExecuteRoutedEventArgs args)
+    public void OnCanExecute(object sender, CanExecuteRoutedEventArgs args)
     {
         ArgumentNullException.ThrowIfNull(args);
         if (!ReferenceEquals(Command, args.Command))

@@ -82,7 +82,7 @@ public sealed class ElementLifecycleTests
         root.VisualChildren.Remove(parent);
 
         Assert.Null(leaf.Root);
-        Assert.Null(leaf.ElementId);
+        Assert.False(leaf.IsAttached);
         Assert.Equal(["detached:leaf", "detached:middle", "detached:parent"], calls);
     }
 
@@ -145,7 +145,7 @@ public sealed class ElementLifecycleTests
         foreach (UIElement element in new UIElement[] { first, sibling, second, parent })
         {
             Assert.Null(element.Root);
-            Assert.Null(element.ElementId);
+            Assert.False(element.IsAttached);
         }
 
         Assert.Empty(root.VisualChildren);
@@ -172,7 +172,7 @@ public sealed class ElementLifecycleTests
         Assert.Equal("Unloaded handler failed", exception.Message);
         Assert.Equal(["behavior detached", "detached:element"], calls);
         Assert.Null(element.Root);
-        Assert.Null(element.ElementId);
+        Assert.False(element.IsAttached);
     }
 
     // An Unloaded handler throws, then a package behavior lifetime throws from Dispose while the button is

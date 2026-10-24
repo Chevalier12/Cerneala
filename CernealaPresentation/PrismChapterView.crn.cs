@@ -4,6 +4,7 @@ using System.Numerics;
 using Cerneala.Drawing;
 using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
@@ -245,7 +246,7 @@ public partial class PrismChapterView : UserControl
         UpdateModelStatus();
     }
 
-    private void OnReset(UiElementId sender, RoutedEventArgs args)
+    private void OnReset(Button sender, RoutedEventArgs args)
     {
         model.Reset();
         DetachPrism();
@@ -254,13 +255,13 @@ public partial class PrismChapterView : UserControl
         CommitStructure();
     }
 
-    private void OnAddLayer(UiElementId sender, RoutedEventArgs args)
+    private void OnAddLayer(Button sender, RoutedEventArgs args)
     {
         model.AddLayer();
         CommitStructure();
     }
 
-    private void OnDeleteLayer(UiElementId sender, RoutedEventArgs args)
+    private void OnDeleteLayer(Button sender, RoutedEventArgs args)
     {
         if (model.RemoveLayer(model.SelectedLayerId))
         {
@@ -268,13 +269,13 @@ public partial class PrismChapterView : UserControl
         }
     }
 
-    private void OnTargetMascot(UiElementId sender, RoutedEventArgs args) => SelectTarget(PrismStudioTarget.Mascot);
+    private void OnTargetMascot(Button sender, RoutedEventArgs args) => SelectTarget(PrismStudioTarget.Mascot);
 
-    private void OnTargetTypography(UiElementId sender, RoutedEventArgs args) => SelectTarget(PrismStudioTarget.Typography);
+    private void OnTargetTypography(Button sender, RoutedEventArgs args) => SelectTarget(PrismStudioTarget.Typography);
 
-    private void OnTargetBadge(UiElementId sender, RoutedEventArgs args) => SelectTarget(PrismStudioTarget.Badge);
+    private void OnTargetBadge(Button sender, RoutedEventArgs args) => SelectTarget(PrismStudioTarget.Badge);
 
-    private void OnTargetCard(UiElementId sender, RoutedEventArgs args) => SelectTarget(PrismStudioTarget.Card);
+    private void OnTargetCard(Button sender, RoutedEventArgs args) => SelectTarget(PrismStudioTarget.Card);
 
     private void SelectTarget(PrismStudioTarget target)
     {
@@ -289,21 +290,21 @@ public partial class PrismChapterView : UserControl
         AttachSelectedTarget();
     }
 
-    private void OnFiltersTab(UiElementId sender, RoutedEventArgs args)
+    private void OnFiltersTab(ToggleButton sender, RoutedEventArgs args)
     {
         catalogKind = PrismCatalogOperationKind.Filter;
         catalogCategory = null;
         RebuildCatalog();
     }
 
-    private void OnStylesTab(UiElementId sender, RoutedEventArgs args)
+    private void OnStylesTab(ToggleButton sender, RoutedEventArgs args)
     {
         catalogKind = PrismCatalogOperationKind.Style;
         catalogCategory = null;
         RebuildCatalog();
     }
 
-    private void OnCategory(UiElementId sender, RoutedEventArgs args)
+    private void OnCategory(Button sender, RoutedEventArgs args)
     {
         string[] categories = CurrentCatalog()
             .Select(operation => operation.Category)

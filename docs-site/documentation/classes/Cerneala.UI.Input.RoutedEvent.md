@@ -21,6 +21,7 @@ Inheritance:
 Register a bubbling routed event and raise it through a `UiInputTree`.
 
 ```csharp
+using Cerneala.UI.Controls;
 using Cerneala.UI.Input;
 
 RoutedEvent clickEvent = RoutedEventRegistry.Register(
@@ -30,14 +31,14 @@ RoutedEvent clickEvent = RoutedEventRegistry.Register(
     typeof(RoutedEventArgs));
 
 UiInputTree tree = new();
-UiElementId rootId = new("root");
-UiElementId childId = new("child");
+Border root = new();
+Border child = new();
 
-tree.Add(rootId, parentId: null);
-tree.Add(childId, parentId: rootId);
-tree.AddHandler(childId, clickEvent, (sender, args) => args.Handled = true);
+tree.Add(root, parent: null);
+tree.Add(child, parent: root);
+tree.AddHandler(child, clickEvent, (sender, args) => args.Handled = true);
 
-RoutedEventRouter.Raise(tree, childId, new RoutedEventArgs(clickEvent, childId));
+RoutedEventRouter.Raise(tree, child, new RoutedEventArgs(clickEvent, child));
 ```
 
 ## Remarks
@@ -46,7 +47,7 @@ RoutedEventRouter.Raise(tree, childId, new RoutedEventArgs(clickEvent, childId))
 
 `RoutedEventRegistry.Register` validates that the event-argument type derives from `RoutedEventArgs`, that the routing strategy is a defined `RoutingStrategy` value, and that the argument type is not null. The `RoutedEvent` constructor validates that `Name` is not empty or whitespace and that `OwnerType` and `ArgsType` are not null.
 
-The same `RoutedEvent` instance is used when handlers are registered and when an event is raised. `UiInputTree` stores handlers by `(UiElementId, RoutedEvent)`, and `RoutedEvent` does not override equality.
+The same `RoutedEvent` instance is used when handlers are registered and when an event is raised. `UiInputTree` stores handlers by element and `RoutedEvent`, and `RoutedEvent` does not override equality.
 
 `RoutingStrategy` controls how `RoutedEventRouter.Raise` builds the route:
 

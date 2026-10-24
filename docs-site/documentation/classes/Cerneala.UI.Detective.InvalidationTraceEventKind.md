@@ -62,7 +62,7 @@ The framework writes these entries in this order of the pipeline:
 | `Propagation` | Dirty flags are marked on an element. | `Flags` are the flags marked on that element. `Reason` is the request reason. |
 | `Queue` | The element is added to one phase queue. A request with several flags writes one entry per queue. | `Flags` holds one flag, such as `Render`. |
 | `Phase` | A frame phase finished processing the element without an exception. | `Phase` is the phase, and `Reason` is its name. `Flags` is the phase flag, or `None` for `CommandState`. |
-| `PhaseSummary` | A frame phase ends. A frame with work writes one per phase. A frame with no work and no active motion writes one `Idle` entry. | `Element` and `ElementId` are `null`. `Phase` is the phase. `Reason` is the number of processed elements as text, for example `"1"`. |
+| `PhaseSummary` | A frame phase ends. A frame with work writes one per phase. A frame with no work and no active motion writes one `Idle` entry. | `Element` is `null`. `Phase` is the phase. `Reason` is the number of processed elements as text, for example `"1"`. |
 | `Clear` | Dirty flags are removed from the element: after it is processed and not queued again, or when layout skips it. | `Flags` are the removed flags, which can include related flags such as `Text` and `Image`. `Reason` is `"Clear"`. |
 
 All six kinds are written only when the trace's `IsEnabled` is `true`. Code outside the framework can also write entries through the public `Record...` methods of `InvalidationTrace`.

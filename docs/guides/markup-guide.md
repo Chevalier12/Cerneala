@@ -760,13 +760,22 @@ Markup events reference methods by name:
 A common routed event handler shape is:
 
 ```csharp
+using Cerneala.UI.Controls;
 using Cerneala.UI.Input;
 
-private void OnSave(UiElementId sender, RoutedEventArgs args)
+private void OnSave(Button sender, RoutedEventArgs args)
 {
     // Application behavior belongs here.
 }
 ```
+
+The first parameter receives the element that has the attribute, with its exact
+type. In `<Button Click="OnSave" />` it is that `Button`. For
+`<Slider ValueChanged="OnVolume" />` the handler is
+`OnVolume(Slider sender, RoutedPropertyChangedEventArgs<float> args)`. The first
+parameter may also be a base type of the element (`UIElement` or `object`). Any
+other type is rejected with `CERNEALAUI009`. On the root element of the file, the
+sender is the code-behind class itself.
 
 Different events can require different event argument types. Copy the signature
 from a working handler or inspect the control's event declaration. Do not guess.

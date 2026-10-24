@@ -64,7 +64,7 @@ Both methods throw `ArgumentNullException` for null arguments. `CaptureElement` 
 | Type | Members | Description |
 | --- | --- | --- |
 | `RootRenderDiagnosticsSnapshot` | `IsRootValid`, `Version`, `RootCommandCount` | Root-level retained render-cache state. Its `ToString()` uses invariant culture and prints root validity, version, and command count. |
-| `ElementRenderDiagnosticsSnapshot` | `ElementId`, `ElementType`, `ElementRenderVersion`, `ElementDependencies`, `IsCacheValid`, `CacheRenderVersion`, `CacheDependencies`, `ContentBounds`, `CommandCount`, `IsStale` | Element-local retained render-cache state. Its `ToString()` uses invariant culture and prints element identity, cache validity, staleness, render versions, command count, bounds, and dependency values. |
+| `ElementRenderDiagnosticsSnapshot` | `ElementType`, `ElementRenderVersion`, `ElementDependencies`, `IsCacheValid`, `CacheRenderVersion`, `CacheDependencies`, `ContentBounds`, `CommandCount`, `IsStale` | Element-local retained render-cache state. Its `ToString()` uses invariant culture and prints the element type, cache validity, staleness, render versions, command count, bounds, and dependency values. |
 
 ## Applies To
 Project: `Cerneala`

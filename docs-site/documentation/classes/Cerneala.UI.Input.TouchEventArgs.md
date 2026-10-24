@@ -40,7 +40,7 @@ target.Handlers.AddHandler(InputEvents.TouchDownEvent, (_, args) =>
 
 When a touch is captured with `TouchInputBridge.Capture`, subsequent touch points for the same `TouchId` are routed to the captured element while that element remains in the current route map. Capture change notifications also use `TouchEventArgs`: `GotTouchCaptureEvent` and `LostTouchCaptureEvent` are raised with the touch id, `X` and `Y` set to `0`, and `Action` set to `TouchInputAction.Move`. They are raised only for an element present in the route map passed to `Capture` or `Release`.
 
-`OriginalSource` is supplied to the base `RoutedEventArgs` constructor by the bridge. For touch dispatch, it is the target element id selected by hit testing or capture routing.
+`OriginalSource` is supplied to the base `RoutedEventArgs` constructor by the bridge. For touch dispatch, it is the target element selected by hit testing or capture routing.
 
 ## Constructors
 | Name | Description |

@@ -120,7 +120,7 @@ public sealed class ScenePresentationTests
         Assert.Equal(1, fixture.Map.GetDiagnosticsSnapshot().DrawnTiles);
         Assert.Equal(RenderSurface2DPresentationState.Ready, fixture.Surface.PresentationState);
         Assert.Null(fixture.Surface.PresentationError);
-        Assert.True(fixture.Root.InputCache.EnsureCurrent(fixture.Root).TryGetId(fixture.Actor, out _));
+        Assert.True(fixture.Root.InputCache.EnsureCurrent(fixture.Root).Contains(fixture.Actor));
     }
 
     [Fact]

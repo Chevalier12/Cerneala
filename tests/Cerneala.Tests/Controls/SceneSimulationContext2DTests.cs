@@ -33,7 +33,6 @@ public sealed class SceneSimulationContext2DTests
         Assert.Null(wall.Surface);
         Assert.False(wall.IsAttached);
         Assert.False(wall.IsInitialized);
-        Assert.Null(wall.ElementId);
         Assert.Same(fixture.Context, wall.SimulationContext);
         Assert.InRange(fixture.Cast().Travel.X, 9.9999f, 10);
         Assert.Equal(2000, fixture.Actor.X);

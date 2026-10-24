@@ -31,8 +31,8 @@ root.VisualChildren.Add(child);
 
 ElementInputRouteMap map = new ElementInputRouteBuilder().Build(root);
 
-bool childIsInRoute = map.TryGetId(child, out UiElementId childId);
-IReadOnlyList<UiElementId> route = map.InputTree.GetRouteToRoot(childId);
+bool childIsInRoute = map.Contains(child);
+IReadOnlyList<UIElement> route = map.InputTree.GetRouteToRoot(child);
 ```
 
 ## Remarks

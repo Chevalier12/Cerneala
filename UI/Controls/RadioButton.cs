@@ -106,7 +106,7 @@ public class RadioButton : ToggleButton
         base.OnChecked(e);
     }
 
-    private void OnKeyDown(UiElementId _, RoutedEventArgs args)
+    private void OnKeyDown(object _, RoutedEventArgs args)
     {
         if (args.Handled || args is not KeyEventArgs keyArgs)
         {

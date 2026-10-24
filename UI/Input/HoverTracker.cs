@@ -108,11 +108,11 @@ public sealed class HoverTracker
 
     private static void RaiseDirect(ElementInputRouteMap routeMap, UIElement element, RoutedEvent routedEvent, float x, float y)
     {
-        if (!routeMap.TryGetId(element, out UiElementId id))
+        if (!routeMap.Contains(element))
         {
             return;
         }
 
-        RoutedEventRouter.Raise(routeMap.InputTree, id, new MouseEventArgs(routedEvent, id, (int)MathF.Round(x), (int)MathF.Round(y)));
+        RoutedEventRouter.Raise(routeMap.InputTree, element, new MouseEventArgs(routedEvent, element, (int)MathF.Round(x), (int)MathF.Round(y)));
     }
 }

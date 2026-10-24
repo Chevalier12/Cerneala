@@ -59,7 +59,7 @@ The strategy is fixed when the event is created with `RoutedEventRegistry.Regist
 | `Bubble` | The target element, then each ancestor up to the root. |
 | `Tunnel` | The root, then each descendant down to the target element. |
 
-`UIElement.RaiseEvent` sends a `Direct` event straight to the element's own handlers. It does the same for any strategy when the element has no root or no element id yet.
+`UIElement.RaiseEvent` sends a `Direct` event straight to the element's own handlers. It does the same for any strategy when the element has no root, or its root's route map does not contain it.
 
 Setting `RoutedEventArgs.Handled` to `true` does not shorten the route. The remaining elements are still visited, and only handlers registered with `handledEventsToo: true` run on them.
 

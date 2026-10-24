@@ -59,7 +59,7 @@ public sealed class DetachedQueuedElementTests
 
         Assert.DoesNotContain(child, root.HitTestQueue.Snapshot());
         ElementInputRouteMap routeMap = root.InputCache.EnsureCurrent(root);
-        Assert.False(routeMap.TryGetId(child, out _));
+        Assert.False(routeMap.Contains(child));
     }
 
     private static UIRoot RootWithChild(out UIElement child)

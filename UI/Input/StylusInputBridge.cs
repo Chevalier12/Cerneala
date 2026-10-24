@@ -45,8 +45,8 @@ public sealed class StylusInputBridge
 
         RoutedEventRouter.RaisePair(
             routeMap.InputTree,
-            target.ElementId,
-            new StylusEventArgs(preview, target.ElementId, point),
-            new StylusEventArgs(bubble, target.ElementId, point));
+            target.Element,
+            new StylusEventArgs(preview, target.Element, point),
+            new StylusEventArgs(bubble, target.Element, point));
     }
 }

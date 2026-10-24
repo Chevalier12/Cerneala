@@ -15,7 +15,7 @@ Accessibility builds a **semantics tree**: an immutable snapshot of the visual t
 | `SemanticsProvider` | `UI/Accessibility/SemanticsProvider.cs` | Stateless builder. Public `Build(UIRoot)` uses the Accessibility projection; internal `Build(root, projection)` also serves Servo | one per `UIRoot`; one per Servo query engine |
 | `SemanticsProjection` | same file (internal enum) | `Accessibility` (skips non-rendered subtrees) or `Servo` (keeps them) | value |
 | `SemanticsTree` | `UI/Accessibility/SemanticsTree.cs` | Immutable wrapper with `Root` | snapshot; the last one is cached by `UIRoot` |
-| `SemanticsNode` | `UI/Accessibility/SemanticsNode.cs` | Immutable node: `ElementId`, `Role`, `Name`, `Properties`, `Children`, `GetProperty<T>` | snapshot |
+| `SemanticsNode` | `UI/Accessibility/SemanticsNode.cs` | Immutable node: `Element`, `Role`, `Name`, `Properties`, `Children`, `GetProperty<T>` | snapshot |
 | `SemanticsRole`, `SemanticsProperty` | `UI/Accessibility/SemanticsRole.cs`, `SemanticsProperty.cs` | Role and property-key enums | contract |
 | `AutomationPeer` | `UI/Accessibility/AutomationPeer.cs` | Per-element adapter that produces one node; `Create` picks the peer type with a type switch | transient, created during one build |
 | `ButtonAutomationPeer`, `ToggleButtonAutomationPeer`, `TextBoxAutomationPeer`, `PasswordBoxAutomationPeer`, `ItemsControlAutomationPeer`, `MenuAutomationPeer`, `MenuItemAutomationPeer` | `UI/Accessibility/*AutomationPeer.cs` | Control-specific role, name and properties | transient |
@@ -80,7 +80,7 @@ Known risk: a peer that reads state with no `AffectsSemantics` flag, changed wit
 - Each `UIRoot` creates one `SemanticsProvider` and holds the last built `SemanticsTree`, the `TreeVersion` it was built at, and the `semanticsDirty` bit. A new root starts dirty.
 - A tree is an immutable snapshot. A later change never edits it; the next `GetSemanticsTree()` call builds a new tree and replaces the cached one. The old tree stays valid for whoever still holds it.
 - Automation peers are created during one build and are not kept. Nothing in the system needs to be disposed.
-- A node refers to its element only through `ElementId`. `root.ElementIds` resolves that id only while the element is attached to that root. After a detach, the id in an old snapshot no longer resolves.
+- A node refers to its element through `Element` (a `UIElement?`). The snapshot holds that reference as it was at build time; it does not check later whether the element is still attached to the root.
 - The root also holds the last Servo-projection tree, the `TreeVersion` it was built at, and the `servoSemanticsDirty` bit. Servo queries reuse it until it is invalidated (see "The Servo cache").
 - `AccessibleName.NameProperty` is an ordinary property value on the element and lives as long as the element.
 
@@ -96,7 +96,6 @@ Semantics adds no frame phase and no queue. `InvalidationFlags.Semantics` only s
 - Adding an item to an `ObservableList` bound to a `ListBox` changes `ItemCount` from 1 to 2. `tests/Cerneala.Tests/UI/Accessibility/AuthoringSemanticsContractTests.cs:ObservableListMutationInvalidatesListSemantics`.
 - The Accessibility projection omits hidden and collapsed subtrees; the Servo projection keeps them in visual order. `tests/Cerneala.Tests/UI/Accessibility/SemanticsProviderTests.cs:DefaultProjectionOmitsNonRenderedSubtrees`, `SemanticsProviderTests.cs:ServoProjectionIncludesNonRenderedSubtreesInStableOrder`.
 - An explicit accessible name overrides content text. `SemanticsProviderTests.cs:ExplicitAccessibleNameOverridesContentText`.
-- A node's `ElementId` resolves through `root.ElementIds` only while the element is attached. `SemanticsProviderTests.cs:ElementIdResolvesOnlyWhileElementBelongsToRoot`.
 - A button reports role, name and enabled state. `tests/Cerneala.Tests/UI/Accessibility/ButtonSemanticsTests.cs:ButtonExposesRoleNameAndEnabledState`.
 - A password box never exposes its value. `tests/Cerneala.Tests/UI/Accessibility/TextBoxSemanticsTests.cs:PasswordBoxDoesNotExposePasswordValue`.
 - `CheckBox` reports role `CheckBox` and `IsChecked`; `RadioButton` reports role `RadioButton` and `IsChecked` whether checked or not; a plain `ToggleButton` keeps role `Button` and reports `IsChecked`; `Button` and `RepeatButton` keep role `Button` with no `IsChecked` key. `tests/Cerneala.Tests/UI/Accessibility/ToggleButtonSemanticsTests.cs:CheckedCheckBoxExposesCheckBoxRoleNameAndCheckedState`, `ToggleButtonSemanticsTests.cs:RadioButtonExposesRadioButtonRoleAndCheckedStateWhetherCheckedOrNot`, `ToggleButtonSemanticsTests.cs:PlainToggleButtonKeepsButtonRoleAndExposesCheckedState`, `ToggleButtonSemanticsTests.cs:ButtonAndRepeatButtonKeepButtonRoleWithoutCheckedState`.

@@ -20,12 +20,12 @@ public sealed class HoverTrackerTests
         first.Handlers.AddHandler(InputEvents.MouseLeaveEvent, (_, _) => calls.Add("leave-first"));
         second.Handlers.AddHandler(InputEvents.MouseEnterEvent, (_, _) => calls.Add("enter-second"));
         ElementInputRouteMap map = new ElementInputRouteBuilder().Build(root);
-        Assert.True(map.TryGetId(first, out UiElementId firstId));
-        Assert.True(map.TryGetId(second, out UiElementId secondId));
+        Assert.True(map.Contains(first));
+        Assert.True(map.Contains(second));
         HoverTracker tracker = new();
 
-        tracker.Update(new HitTestResult(first, firstId, 1, 1), map);
-        tracker.Update(new HitTestResult(second, secondId, 2, 2), map);
+        tracker.Update(new HitTestResult(first, 1, 1), map);
+        tracker.Update(new HitTestResult(second, 2, 2), map);
 
         Assert.False(first.IsPointerOver);
         Assert.True(second.IsPointerOver);
@@ -39,9 +39,9 @@ public sealed class HoverTrackerTests
         UIElement target = new();
         root.VisualChildren.Add(target);
         ElementInputRouteMap map = new ElementInputRouteBuilder().Build(root);
-        Assert.True(map.TryGetId(target, out UiElementId id));
+        Assert.True(map.Contains(target));
         HoverTracker tracker = new();
-        HitTestResult result = new(target, id, 1, 1);
+        HitTestResult result = new(target, 1, 1);
 
         Assert.True(tracker.Update(result, map));
         Assert.False(tracker.Update(result, map));
@@ -56,10 +56,10 @@ public sealed class HoverTrackerTests
         MouseEventArgs? leaveArgs = null;
         target.Handlers.AddHandler(InputEvents.MouseLeaveEvent, (_, args) => leaveArgs = (MouseEventArgs)args);
         ElementInputRouteMap map = new ElementInputRouteBuilder().Build(root);
-        Assert.True(map.TryGetId(target, out UiElementId id));
+        Assert.True(map.Contains(target));
         HoverTracker tracker = new();
 
-        tracker.Update(new HitTestResult(target, id, 1, 1), map);
+        tracker.Update(new HitTestResult(target, 1, 1), map);
         tracker.Update(null, map, 9, 10);
 
         Assert.NotNull(leaveArgs);
@@ -74,10 +74,10 @@ public sealed class HoverTrackerTests
         UIElement target = new();
         root.VisualChildren.Add(target);
         ElementInputRouteMap map = new ElementInputRouteBuilder().Build(root);
-        Assert.True(map.TryGetId(target, out UiElementId id));
+        Assert.True(map.Contains(target));
         HoverTracker tracker = new();
 
-        tracker.Update(new HitTestResult(target, id, 1, 1), map);
+        tracker.Update(new HitTestResult(target, 1, 1), map);
 
         Assert.Contains(root.Detective.Invalidation.Entries, entry =>
             ReferenceEquals(entry.Element, target) &&

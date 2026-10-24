@@ -2,6 +2,7 @@ using System.Numerics;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
+using Cerneala.UI.Layout.Panels;
 using Cerneala.UI.Rendering;
 
 namespace Cerneala.SolarSystem;
@@ -207,7 +208,7 @@ public partial class MainWindow : Window<SolarSystemViewModel>, ITimeSensitiveRe
         targetZoom = selected.FocusZoom;
     }
 
-    private void OnWheel(UiElementId sender, RoutedEventArgs args)
+    private void OnWheel(Grid sender, RoutedEventArgs args)
     {
         if (args is not MouseWheelEventArgs wheel)
         {
@@ -231,7 +232,7 @@ public partial class MainWindow : Window<SolarSystemViewModel>, ITimeSensitiveRe
         args.Handled = true;
     }
 
-    private void OnPointerDown(UiElementId sender, RoutedEventArgs args)
+    private void OnPointerDown(Grid sender, RoutedEventArgs args)
     {
         if (args is not MouseEventArgs mouse)
         {
@@ -244,7 +245,7 @@ public partial class MainWindow : Window<SolarSystemViewModel>, ITimeSensitiveRe
         dragCamera = (cameraX, cameraY);
     }
 
-    private void OnPointerMove(UiElementId sender, RoutedEventArgs args)
+    private void OnPointerMove(Grid sender, RoutedEventArgs args)
     {
         if (!dragging || args is not MouseEventArgs mouse)
         {
@@ -263,7 +264,7 @@ public partial class MainWindow : Window<SolarSystemViewModel>, ITimeSensitiveRe
         targetY = cameraY = dragCamera.Y - delta.Y / zoom;
     }
 
-    private void OnPointerUp(UiElementId sender, RoutedEventArgs args)
+    private void OnPointerUp(Grid sender, RoutedEventArgs args)
     {
         dragging = false;
     }

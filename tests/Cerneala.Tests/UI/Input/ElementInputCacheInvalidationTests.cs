@@ -37,7 +37,7 @@ public sealed class ElementInputCacheInvalidationTests
         bridge.Dispatch(root, PointerFrame(10, 10));
 
         Assert.Equal(rebuildsAfterFirstDispatch + 1, root.InputCache.RebuildCount);
-        Assert.False(root.InputCache.RouteMap.TryGetId(child, out _));
+        Assert.False(root.InputCache.RouteMap.Contains(child));
     }
 
     [Fact]
@@ -103,8 +103,8 @@ public sealed class ElementInputCacheInvalidationTests
 
         Assert.NotSame(firstMap, secondMap);
         Assert.Equal(rebuildsAfterFirstRoot + 1, cache.RebuildCount);
-        Assert.False(secondMap.TryGetId(firstChild, out _));
-        Assert.True(secondMap.TryGetId(secondChild, out _));
+        Assert.False(secondMap.Contains(firstChild));
+        Assert.True(secondMap.Contains(secondChild));
     }
 
     private static UIRoot RootWithChild(out UIElement child)

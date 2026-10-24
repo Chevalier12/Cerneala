@@ -1,3 +1,4 @@
+using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 
 namespace Cerneala.Tests.Input;
@@ -8,9 +9,9 @@ public sealed class RoutedEventRouterTests
     public void BubbleEventsInvokeTargetThenAncestors()
     {
         UiInputTree tree = new();
-        UiElementId root = new("root");
-        UiElementId panel = new("panel");
-        UiElementId button = new("button");
+        UIElement root = new();
+        UIElement panel = new();
+        UIElement button = new();
         List<string> calls = new();
 
         tree.Add(root, null);
@@ -30,8 +31,8 @@ public sealed class RoutedEventRouterTests
     public void BubbleEventsSetSourceToCurrentRouteElementForEachHandler()
     {
         UiInputTree tree = new();
-        UiElementId root = new("root");
-        UiElementId button = new("button");
+        UIElement root = new();
+        UIElement button = new();
         List<object> sources = new();
 
         tree.Add(root, null);
@@ -42,18 +43,20 @@ public sealed class RoutedEventRouterTests
         MouseButtonEventArgs args = new(InputEvents.MouseDownEvent, button, InputMouseButton.Left, 0, 0, 1);
         RoutedEventRouter.Raise(tree, button, args);
 
-        Assert.Equal([button, root], sources);
-        Assert.Equal(root, args.Source);
-        Assert.Equal(button, args.OriginalSource);
+        Assert.Equal(2, sources.Count);
+        Assert.Same(button, sources[0]);
+        Assert.Same(root, sources[1]);
+        Assert.Same(root, args.Source);
+        Assert.Same(button, args.OriginalSource);
     }
 
     [Fact]
     public void TunnelEventsInvokeRootThenTarget()
     {
         UiInputTree tree = new();
-        UiElementId root = new("root");
-        UiElementId panel = new("panel");
-        UiElementId button = new("button");
+        UIElement root = new();
+        UIElement panel = new();
+        UIElement button = new();
         List<string> calls = new();
 
         tree.Add(root, null);
@@ -73,8 +76,8 @@ public sealed class RoutedEventRouterTests
     public void HandledStopsRoute()
     {
         UiInputTree tree = new();
-        UiElementId root = new("root");
-        UiElementId button = new("button");
+        UIElement root = new();
+        UIElement button = new();
         List<string> calls = new();
 
         tree.Add(root, null);
@@ -96,7 +99,7 @@ public sealed class RoutedEventRouterTests
     public void HandlersAddedDuringDispatchDoNotRunUntilNextDispatch()
     {
         UiInputTree tree = new();
-        UiElementId button = new("button");
+        UIElement button = new();
         List<string> calls = new();
 
         tree.Add(button, null);
@@ -119,9 +122,9 @@ public sealed class RoutedEventRouterTests
     public void DisabledElementsDoNotInvokeHandlers()
     {
         UiInputTree tree = new();
-        UiElementId root = new("root");
-        UiElementId panel = new("panel");
-        UiElementId button = new("button");
+        UIElement root = new();
+        UIElement panel = new();
+        UIElement button = new();
         List<string> calls = new();
 
         tree.Add(root, null);

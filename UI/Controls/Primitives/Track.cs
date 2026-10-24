@@ -367,13 +367,13 @@ public class Track : Control
         }
     }
 
-    private void OnDecreaseRepeatButtonClick(UiElementId source, RoutedEventArgs args)
+    private void OnDecreaseRepeatButtonClick(object source, RoutedEventArgs args)
     {
         DecreaseLarge();
         args.Handled = true;
     }
 
-    private void OnIncreaseRepeatButtonClick(UiElementId source, RoutedEventArgs args)
+    private void OnIncreaseRepeatButtonClick(object source, RoutedEventArgs args)
     {
         IncreaseLarge();
         args.Handled = true;

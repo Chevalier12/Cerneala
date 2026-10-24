@@ -19,9 +19,9 @@ public sealed class ElementTreeDumperTests
         string second = new ElementTreeDumper().Dump(root);
 
         Assert.Equal(first, second);
-        Assert.Contains($"- UIRoot#{root.ElementId}", first, StringComparison.Ordinal);
-        Assert.Contains($"  - Border#{parent.ElementId}", first, StringComparison.Ordinal);
-        Assert.Contains($"    - TextBlock#{child.ElementId}", first, StringComparison.Ordinal);
+        Assert.Contains("- UIRoot visibility=", first, StringComparison.Ordinal);
+        Assert.Contains("  - Border visibility=", first, StringComparison.Ordinal);
+        Assert.Contains("    - TextBlock visibility=", first, StringComparison.Ordinal);
         Assert.Contains("visibility=Visible", first, StringComparison.Ordinal);
         Assert.Contains("dirty=", first, StringComparison.Ordinal);
     }

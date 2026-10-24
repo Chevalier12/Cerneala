@@ -10,7 +10,6 @@ internal enum KeyboardDispatchKind
 
 internal sealed record KeyboardDispatchResult(
     UIElement Target,
-    UiElementId TargetId,
     InputKey Key,
     KeyboardDispatchKind Kind,
     bool Handled);

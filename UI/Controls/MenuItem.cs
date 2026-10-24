@@ -505,7 +505,7 @@ public class MenuItem : ItemsControl, IInputCommandSource, ICommandStateSource, 
         }
     }
 
-    private void OnOverlayOpened(UiElementId _, RoutedEventArgs args)
+    private void OnOverlayOpened(object _, RoutedEventArgs args)
     {
         if (!IsEnabled || !HasSubmenu)
         {
@@ -525,7 +525,7 @@ public class MenuItem : ItemsControl, IInputCommandSource, ICommandStateSource, 
         ReportSubmenuState(true);
     }
 
-    private void OnOverlayClosed(UiElementId _, RoutedEventArgs args)
+    private void OnOverlayClosed(object _, RoutedEventArgs args)
     {
         if (IsSubmenuOpen)
         {
@@ -546,7 +546,7 @@ public class MenuItem : ItemsControl, IInputCommandSource, ICommandStateSource, 
         RaiseEvent(new RoutedEventArgs(isOpen ? SubmenuOpenedEvent : SubmenuClosedEvent, this));
     }
 
-    private void OnMouseUp(UiElementId _, RoutedEventArgs args)
+    private void OnMouseUp(object _, RoutedEventArgs args)
     {
         if (args is not MouseButtonEventArgs
             {
@@ -560,13 +560,13 @@ public class MenuItem : ItemsControl, IInputCommandSource, ICommandStateSource, 
         ActivateItem(focusFirstChild: false);
     }
 
-    private void OnMouseEnter(UiElementId _, RoutedEventArgs args)
+    private void OnMouseEnter(object _, RoutedEventArgs args)
     {
         menuSession?.OnPointerEntered(this);
     }
 
     // Keys of submenu items bubble through this item (#404); the session handles them on the item that has focus.
-    private void OnKeyDown(UiElementId _, RoutedEventArgs args)
+    private void OnKeyDown(object _, RoutedEventArgs args)
     {
         if (args is KeyEventArgs keyArgs && IsHeaderSource(args.OriginalSource) && menuSession?.HandleKey(this, keyArgs) == true)
         {
@@ -576,12 +576,7 @@ public class MenuItem : ItemsControl, IInputCommandSource, ICommandStateSource, 
 
     private bool IsHeaderSource(object? source)
     {
-        UIElement? element = source switch
-        {
-            UIElement candidate => candidate,
-            UiElementId id when Root?.ElementIds.TryGetElement(id, out UIElement? resolved) == true => resolved,
-            _ => null
-        };
+        UIElement? element = source as UIElement;
 
         for (UIElement? current = element; current is not null; current = current.VisualParent)
         {

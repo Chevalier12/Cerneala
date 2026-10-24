@@ -21,7 +21,7 @@ public sealed class HitTestCacheInvalidationTests
         root.InputCache.EnsureCurrent(root);
 
         Assert.Equal(rebuildsAfterInitialBuild + 1, root.InputCache.RebuildCount);
-        Assert.True(root.InputCache.RouteMap.TryGetId(second, out _));
+        Assert.True(root.InputCache.RouteMap.Contains(second));
     }
 
     [Fact]
@@ -62,8 +62,8 @@ public sealed class HitTestCacheInvalidationTests
         invisible.IsVisible = false;
         root.InputCache.EnsureCurrent(root);
 
-        Assert.False(root.InputCache.RouteMap.TryGetId(disabled, out _));
-        Assert.False(root.InputCache.RouteMap.TryGetId(invisible, out _));
+        Assert.False(root.InputCache.RouteMap.Contains(disabled));
+        Assert.False(root.InputCache.RouteMap.Contains(invisible));
     }
 
     [Fact]

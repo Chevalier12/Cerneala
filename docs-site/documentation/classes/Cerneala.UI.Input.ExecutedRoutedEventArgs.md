@@ -19,9 +19,11 @@ Inheritance:
 The following example creates executed command event data and passes it to a command binding. The binding receives only matching command instances.
 
 ```csharp
+using Cerneala.UI.Controls;
 using Cerneala.UI.Input;
 
 RoutedCommand saveCommand = new("Save", typeof(ExecutedRoutedEventArgs));
+Border editor = new();
 object? receivedParameter = null;
 
 CommandBinding binding = new(
@@ -30,11 +32,11 @@ CommandBinding binding = new(
 
 ExecutedRoutedEventArgs args = new(
     CommandEvents.ExecutedEvent,
-    new UiElementId("editor"),
+    editor,
     saveCommand,
     "document.cerneala");
 
-binding.OnExecuted(new UiElementId("editor"), args);
+binding.OnExecuted(editor, args);
 ```
 
 ## Remarks

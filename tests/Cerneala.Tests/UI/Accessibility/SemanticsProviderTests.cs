@@ -71,22 +71,15 @@ public sealed class SemanticsProviderTests
     }
 
     [Fact]
-    public void ElementIdResolvesOnlyWhileElementBelongsToRoot()
+    public void NodeElementIsTheElementThatOwnsThePeer()
     {
         UIRoot root = new();
         Button button = new() { Content = "Target" };
         root.VisualChildren.Add(button);
+
         SemanticsNode node = new SemanticsProvider().Build(root).Root.Children.Single();
-        Assert.True(node.ElementId.HasValue);
-        var elementId = node.ElementId.Value;
 
-        Assert.True(root.ElementIds.TryGetElement(elementId, out UIElement? attached));
-        Assert.Same(button, attached);
-
-        root.VisualChildren.Remove(button);
-
-        Assert.False(root.ElementIds.TryGetElement(elementId, out UIElement? detached));
-        Assert.Null(detached);
+        Assert.Same(button, node.Element);
     }
 
     [Fact]

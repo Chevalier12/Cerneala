@@ -196,7 +196,7 @@ public sealed class ElementInputBridge
                     inputFrame.Pointer.Y,
                     inputClock,
                     inputFrame.PressClickSequence);
-                pressOriginalSources[(int)button] = pointerTarget?.ElementId;
+                pressOriginalSources[(int)button] = pointerTarget?.Element;
                 UIElement? focusTarget = null;
                 if (button == InputMouseButton.Left)
                 {
@@ -205,12 +205,12 @@ public sealed class ElementInputBridge
                 }
 
                 UIElement? pressOwner = button == InputMouseButton.Left ? pressedStateTracker.PressedElement as UIElement : null;
-                UiElementId? pressOwnerId = pressOwner is not null && routeMap.TryGetId(pressOwner, out UiElementId ownerId)
-                    ? ownerId
+                UIElement? routedPressOwner = pressOwner is not null && routeMap.Contains(pressOwner)
+                    ? pressOwner
                     : null;
                 UIElement? focusBeforePress = focusManager.FocusedElement;
-                HashSet<UiElementId> previewHandledOnArrival = [];
-                HashSet<UiElementId> handledOnArrival = [];
+                HashSet<UIElement> previewHandledOnArrival = new(ReferenceEqualityComparer.Instance);
+                HashSet<UIElement> handledOnArrival = new(ReferenceEqualityComparer.Instance);
                 RaiseMousePair(
                     routeMap,
                     pointerTarget,
@@ -234,7 +234,7 @@ public sealed class ElementInputBridge
                     previewHandledOnArrival,
                     handledOnArrival,
                     out bool buttonPreviewHandled,
-                    pressOwnerId,
+                    routedPressOwner,
                     out bool handledBeforePressOwner);
 
                 // As in WPF, where a control focuses itself when MouseLeftButtonDown reaches its class handler, the press
@@ -321,8 +321,8 @@ public sealed class ElementInputBridge
                     ResolveReleaseClickTarget(hitTarget?.Element, clickTracker.PressedTarget(button), routeMap));
                 object? releasedPressSource = pressOriginalSources[(int)button];
                 pressOriginalSources[(int)button] = null;
-                HashSet<UiElementId> previewHandledOnArrival = [];
-                HashSet<UiElementId> handledOnArrival = [];
+                HashSet<UIElement> previewHandledOnArrival = new(ReferenceEqualityComparer.Instance);
+                HashSet<UIElement> handledOnArrival = new(ReferenceEqualityComparer.Instance);
                 bool handled = RaiseMousePair(routeMap, pointerTarget, InputEvents.PreviewMouseUpEvent, InputEvents.MouseUpEvent, button, clickCount, modifiers, out _, previewHandledOnArrival, handledOnArrival, releasedPressSource);
                 handled |= RaiseMouseButtonSpecificPair(routeMap, pointerTarget, button, isDown: false, clickCount, modifiers, previewHandledOnArrival, handledOnArrival, out _, null, out _, releasedPressSource);
                 if (button == InputMouseButton.Left && clickCount == 2)
@@ -410,7 +410,7 @@ public sealed class ElementInputBridge
             return;
         }
 
-        dragSource.BeginPointerDrag(pointerCaptureManager, routeMap, new MouseButtonEventArgs(InputEvents.MouseDownEvent, target.ElementId, button, target.X, target.Y, clickCount));
+        dragSource.BeginPointerDrag(pointerCaptureManager, routeMap, new MouseButtonEventArgs(InputEvents.MouseDownEvent, target.Element, button, target.X, target.Y, clickCount));
     }
 
     private static void UpdatePointerDrag(
@@ -427,7 +427,7 @@ public sealed class ElementInputBridge
             return;
         }
 
-        dragSource.UpdatePointerDrag(new MouseEventArgs(InputEvents.MouseMoveEvent, target.ElementId, target.X, target.Y));
+        dragSource.UpdatePointerDrag(new MouseEventArgs(InputEvents.MouseMoveEvent, target.Element, target.X, target.Y));
     }
 
     private void CompletePointerDrag(ElementInputRouteMap routeMap, HitTestResult? target, InputMouseButton button, int clickCount)
@@ -442,7 +442,7 @@ public sealed class ElementInputBridge
             return;
         }
 
-        dragSource.CompletePointerDrag(pointerCaptureManager, routeMap, new MouseButtonEventArgs(InputEvents.MouseUpEvent, target.ElementId, button, target.X, target.Y, clickCount));
+        dragSource.CompletePointerDrag(pointerCaptureManager, routeMap, new MouseButtonEventArgs(InputEvents.MouseUpEvent, target.Element, button, target.X, target.Y, clickCount));
     }
 
     // Click, drag and focus owners are visual ancestors: content projected by an Overlay does not make the overlay's
@@ -540,8 +540,8 @@ public sealed class ElementInputBridge
         int clickCount,
         KeyModifiers modifiers,
         out bool previewHandled,
-        ISet<UiElementId> previewHandledOnArrival,
-        ISet<UiElementId> bubbleHandledOnArrival,
+        ISet<UIElement> previewHandledOnArrival,
+        ISet<UIElement> bubbleHandledOnArrival,
         object? pressOriginalSource = null)
     {
         if (target is null)
@@ -550,7 +550,7 @@ public sealed class ElementInputBridge
             return false;
         }
 
-        MouseButtonEventArgs previewArgs = new(previewEvent, target.ElementId, button, target.X, target.Y, clickCount)
+        MouseButtonEventArgs previewArgs = new(previewEvent, target.Element, button, target.X, target.Y, clickCount)
         {
             RouteMap = routeMap,
             PressOriginalSource = pressOriginalSource,
@@ -558,7 +558,7 @@ public sealed class ElementInputBridge
             IsShiftDown = modifiers.HasFlag(KeyModifiers.Shift),
             IsAltDown = modifiers.HasFlag(KeyModifiers.Alt)
         };
-        MouseButtonEventArgs bubbleArgs = new(bubbleEvent, target.ElementId, button, target.X, target.Y, clickCount)
+        MouseButtonEventArgs bubbleArgs = new(bubbleEvent, target.Element, button, target.X, target.Y, clickCount)
         {
             RouteMap = routeMap,
             PressOriginalSource = pressOriginalSource,
@@ -568,7 +568,7 @@ public sealed class ElementInputBridge
         };
         RoutedEventRouter.RaisePair(
             routeMap.InputTree,
-            target.ElementId,
+            target.Element,
             previewArgs,
             bubbleArgs,
             previewHandledOnArrival,
@@ -588,10 +588,10 @@ public sealed class ElementInputBridge
         bool isDown,
         int clickCount,
         KeyModifiers modifiers,
-        IReadOnlySet<UiElementId> genericPreviewHandledOnArrival,
-        IReadOnlySet<UiElementId> genericHandledOnArrival,
+        IReadOnlySet<UIElement> genericPreviewHandledOnArrival,
+        IReadOnlySet<UIElement> genericHandledOnArrival,
         out bool previewHandled,
-        UiElementId? observedBubbleId,
+        UIElement? observedBubble,
         out bool bubbleHandledBeforeObserved,
         object? pressOriginalSource = null)
     {
@@ -611,7 +611,7 @@ public sealed class ElementInputBridge
             return false;
         }
 
-        return RaiseDirectMousePairAlongRoute(routeMap, target, events.Preview, events.Bubble, button, clickCount, modifiers, genericPreviewHandledOnArrival, genericHandledOnArrival, out previewHandled, observedBubbleId, out bubbleHandledBeforeObserved, pressOriginalSource);
+        return RaiseDirectMousePairAlongRoute(routeMap, target, events.Preview, events.Bubble, button, clickCount, modifiers, genericPreviewHandledOnArrival, genericHandledOnArrival, out previewHandled, observedBubble, out bubbleHandledBeforeObserved, pressOriginalSource);
     }
 
     private static bool RaiseDirectMousePairAlongRoute(
@@ -622,10 +622,10 @@ public sealed class ElementInputBridge
         InputMouseButton button,
         int clickCount,
         KeyModifiers modifiers,
-        IReadOnlySet<UiElementId>? genericPreviewHandledOnArrival,
-        IReadOnlySet<UiElementId>? genericHandledOnArrival,
+        IReadOnlySet<UIElement>? genericPreviewHandledOnArrival,
+        IReadOnlySet<UIElement>? genericHandledOnArrival,
         out bool previewHandled,
-        UiElementId? observedBubbleId,
+        UIElement? observedBubble,
         out bool bubbleHandledBeforeObserved,
         object? pressOriginalSource = null)
     {
@@ -636,34 +636,34 @@ public sealed class ElementInputBridge
             return false;
         }
 
-        IReadOnlyList<UiElementId> route = routeMap.InputTree.GetRouteToRoot(target.ElementId);
+        IReadOnlyList<UIElement> route = routeMap.InputTree.GetRouteToRoot(target.Element);
         bool handled = false;
 
-        foreach (UiElementId elementId in route.Reverse())
+        foreach (UIElement element in route.Reverse())
         {
-            MouseButtonEventArgs args = new(previewEvent, target.ElementId, button, target.X, target.Y, clickCount)
+            MouseButtonEventArgs args = new(previewEvent, target.Element, button, target.X, target.Y, clickCount)
             {
-                Handled = handled || genericPreviewHandledOnArrival?.Contains(elementId) == true,
+                Handled = handled || genericPreviewHandledOnArrival?.Contains(element) == true,
                 PressOriginalSource = pressOriginalSource,
                 IsControlDown = modifiers.HasFlag(KeyModifiers.Control),
                 IsShiftDown = modifiers.HasFlag(KeyModifiers.Shift),
                 IsAltDown = modifiers.HasFlag(KeyModifiers.Alt)
             };
-            RoutedEventRouter.Raise(routeMap.InputTree, elementId, args);
+            RoutedEventRouter.Raise(routeMap.InputTree, element, args);
             handled |= args.Handled;
         }
 
         previewHandled = handled;
         bubbleHandledBeforeObserved = false;
-        foreach (UiElementId elementId in route)
+        foreach (UIElement element in route)
         {
-            bool handledOnArrival = handled || genericHandledOnArrival?.Contains(elementId) == true;
-            if (elementId == observedBubbleId)
+            bool handledOnArrival = handled || genericHandledOnArrival?.Contains(element) == true;
+            if (ReferenceEquals(element, observedBubble))
             {
                 bubbleHandledBeforeObserved = handledOnArrival;
             }
 
-            MouseButtonEventArgs args = new(bubbleEvent, target.ElementId, button, target.X, target.Y, clickCount)
+            MouseButtonEventArgs args = new(bubbleEvent, target.Element, button, target.X, target.Y, clickCount)
             {
                 Handled = handledOnArrival,
                 PressOriginalSource = pressOriginalSource,
@@ -671,7 +671,7 @@ public sealed class ElementInputBridge
                 IsShiftDown = modifiers.HasFlag(KeyModifiers.Shift),
                 IsAltDown = modifiers.HasFlag(KeyModifiers.Alt)
             };
-            RoutedEventRouter.Raise(routeMap.InputTree, elementId, args);
+            RoutedEventRouter.Raise(routeMap.InputTree, element, args);
             handled |= args.Handled;
         }
 
@@ -710,9 +710,9 @@ public sealed class ElementInputBridge
 
         RoutedEventRouter.RaisePair(
             routeMap.InputTree,
-            target.ElementId,
-            new MouseEventArgs(InputEvents.PreviewMouseMoveEvent, target.ElementId, target.X, target.Y),
-            new MouseEventArgs(InputEvents.MouseMoveEvent, target.ElementId, target.X, target.Y));
+            target.Element,
+            new MouseEventArgs(InputEvents.PreviewMouseMoveEvent, target.Element, target.X, target.Y),
+            new MouseEventArgs(InputEvents.MouseMoveEvent, target.Element, target.X, target.Y));
     }
 
     private static void RaiseWheelPair(ElementInputRouteMap routeMap, HitTestResult? target, int delta)
@@ -724,8 +724,8 @@ public sealed class ElementInputBridge
 
         RoutedEventRouter.RaisePair(
             routeMap.InputTree,
-            target.ElementId,
-            new MouseWheelEventArgs(InputEvents.PreviewMouseWheelEvent, target.ElementId, target.X, target.Y, delta),
-            new MouseWheelEventArgs(InputEvents.MouseWheelEvent, target.ElementId, target.X, target.Y, delta));
+            target.Element,
+            new MouseWheelEventArgs(InputEvents.PreviewMouseWheelEvent, target.Element, target.X, target.Y, delta),
+            new MouseWheelEventArgs(InputEvents.MouseWheelEvent, target.Element, target.X, target.Y, delta));
     }
 }

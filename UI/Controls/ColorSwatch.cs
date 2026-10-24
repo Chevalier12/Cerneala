@@ -109,7 +109,7 @@ public class ColorSwatch : Control
         }
     }
 
-    private void OnSwatchClick(UiElementId _, RoutedEventArgs args)
+    private void OnSwatchClick(object _, RoutedEventArgs args)
     {
         IsPickerOpen = true;
     }
@@ -122,7 +122,7 @@ public class ColorSwatch : Control
         }
     }
 
-    private void OnOverlayOpened(UiElementId _, RoutedEventArgs args)
+    private void OnOverlayOpened(object _, RoutedEventArgs args)
     {
         EnsurePicker();
         if (!IsPickerOpen)
@@ -131,7 +131,7 @@ public class ColorSwatch : Control
         }
     }
 
-    private void OnOverlayClosed(UiElementId _, RoutedEventArgs args)
+    private void OnOverlayClosed(object _, RoutedEventArgs args)
     {
         if (IsPickerOpen)
         {

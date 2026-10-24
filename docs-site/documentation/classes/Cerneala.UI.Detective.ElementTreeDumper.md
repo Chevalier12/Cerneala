@@ -36,9 +36,9 @@ string dump = new ElementTreeDumper().Dump(root);
 The returned string starts with the selected tree role and then lists the root and descendants in pre-order. Each element line also includes `visibility`, `bounds`, and `dirty` values.
 
 ```csharp
-bool hasRootLine = dump.Contains($"- UIRoot#{root.ElementId}", StringComparison.Ordinal);
-bool hasParentLine = dump.Contains($"  - Border#{parent.ElementId}", StringComparison.Ordinal);
-bool hasChildLine = dump.Contains($"    - TextBlock#{child.ElementId}", StringComparison.Ordinal);
+bool hasRootLine = dump.Contains("- UIRoot visibility=", StringComparison.Ordinal);
+bool hasParentLine = dump.Contains("  - Border visibility=", StringComparison.Ordinal);
+bool hasChildLine = dump.Contains("    - TextBlock visibility=", StringComparison.Ordinal);
 ```
 
 ## Remarks
@@ -47,7 +47,7 @@ bool hasChildLine = dump.Contains($"    - TextBlock#{child.ElementId}", StringCo
 
 `Dump` walks the selected child collection recursively. When `role` is `ElementChildRole.Visual`, it reads `UIElement.VisualChildren`; when `role` is `ElementChildRole.Logical`, it reads `UIElement.LogicalChildren`.
 
-The dump uses a two-space indent per depth level. Each element line contains the runtime type name, the attached `ElementId`, or `unattached` when the element is not attached to a root. The method trims the trailing line break before returning the string.
+The dump uses a two-space indent per depth level. Each element line starts with `- ` and the runtime type name, for example `Border`, followed by `visibility`, `bounds`, and `dirty`. The method trims the trailing line break before returning the string.
 
 ## Constructors
 

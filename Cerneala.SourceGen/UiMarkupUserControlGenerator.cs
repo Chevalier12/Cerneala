@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -594,7 +595,7 @@ public sealed partial class UiMarkupGenerator
 
             IMethodSymbol[] compatible = FindMethods(userControlPair.TypeSymbol, handlerName)
                 .Where(method => compilation.IsSymbolAccessibleWithin(method, userControlPair.TypeSymbol))
-                .Where(method => IsCompatibleEventHandler(method, invokeMethod))
+                .Where(method => IsCompatibleEventHandler(method, invokeMethod, elementType))
                 .ToArray();
             if (compatible.Length != 1)
             {
@@ -605,8 +606,48 @@ public sealed partial class UiMarkupGenerator
                 return true;
             }
 
-            currentLines.Add(variable + "." + eventSymbol.Name + " += this." + handlerName + ";");
+            currentLines.Add(variable + "." + eventSymbol.Name + " += " + EmitEventHandlerExpression(variable, handlerName, invokeMethod) + ";");
             return true;
+        }
+
+        // The handler's first parameter receives the element that declares the attribute, with its static type, in
+        // place of the delegate's sender; the other arguments pass through.
+        private static string EmitEventHandlerExpression(string variable, string handlerName, IMethodSymbol invokeMethod)
+        {
+            if (invokeMethod.Parameters.Length == 0)
+            {
+                return "this." + handlerName;
+            }
+
+            bool typedParameters = invokeMethod.Parameters.Any(parameter => parameter.RefKind != RefKind.None);
+            List<string> lambdaParameters = [];
+            List<string> arguments = [variable];
+            for (int index = 0; index < invokeMethod.Parameters.Length; index++)
+            {
+                IParameterSymbol parameter = invokeMethod.Parameters[index];
+                string name = index switch
+                {
+                    0 => "__cernealaSender",
+                    1 => "__cernealaArgs",
+                    _ => "__cernealaArg" + index.ToString(CultureInfo.InvariantCulture)
+                };
+                string modifier = parameter.RefKind switch
+                {
+                    RefKind.Ref => "ref ",
+                    RefKind.Out => "out ",
+                    RefKind.In => "in ",
+                    _ => string.Empty
+                };
+                lambdaParameters.Add(typedParameters
+                    ? modifier + parameter.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " " + name
+                    : name);
+                if (index > 0)
+                {
+                    arguments.Add(modifier + name);
+                }
+            }
+
+            return "(" + string.Join(", ", lambdaParameters) + ") => this." + handlerName + "(" + string.Join(", ", arguments) + ")";
         }
 
         private static IEventSymbol? FindEvent(INamedTypeSymbol type, string name)
@@ -634,10 +675,18 @@ public sealed partial class UiMarkupGenerator
             }
         }
 
-        private bool IsCompatibleEventHandler(IMethodSymbol method, IMethodSymbol invokeMethod)
+        // As a method group for the delegate, except that the first parameter, the sender, must accept the element that
+        // declares the attribute (elementType), since the generated handler passes that element.
+        private bool IsCompatibleEventHandler(IMethodSymbol method, IMethodSymbol invokeMethod, INamedTypeSymbol elementType)
         {
             if (method.IsStatic || method.IsGenericMethod || method.ReturnsVoid != invokeMethod.ReturnsVoid ||
                 method.Parameters.Length != invokeMethod.Parameters.Length)
+            {
+                return false;
+            }
+
+            if (!method.ReturnsVoid &&
+                !compilation.ClassifyConversion(method.ReturnType, invokeMethod.ReturnType).IsImplicit)
             {
                 return false;
             }
@@ -646,8 +695,10 @@ public sealed partial class UiMarkupGenerator
             {
                 IParameterSymbol handlerParameter = method.Parameters[index];
                 IParameterSymbol delegateParameter = invokeMethod.Parameters[index];
+                ITypeSymbol argumentType = index == 0 ? elementType : delegateParameter.Type;
                 if (handlerParameter.RefKind != delegateParameter.RefKind ||
-                    !compilation.ClassifyConversion(delegateParameter.Type, handlerParameter.Type).IsImplicit)
+                    (index == 0 && handlerParameter.RefKind != RefKind.None) ||
+                    !compilation.ClassifyConversion(argumentType, handlerParameter.Type).IsImplicit)
                 {
                     return false;
                 }

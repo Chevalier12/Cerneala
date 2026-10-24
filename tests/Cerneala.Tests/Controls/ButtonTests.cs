@@ -1576,7 +1576,7 @@ public sealed class ButtonTests
 
     private static bool IsSource(object? source, UIElement element)
     {
-        return ReferenceEquals(source, element) || Equals(source, element.ElementId);
+        return ReferenceEquals(source, element);
     }
 
     private static bool Executed { get; set; }

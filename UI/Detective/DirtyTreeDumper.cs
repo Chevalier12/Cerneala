@@ -23,7 +23,7 @@ public sealed class DirtyTreeDumper
 
             foundDirty = true;
             DirtyTraceInfo? latest = FindLatestEntry(trace, element);
-            builder.Append(CultureInfo.InvariantCulture, $"- {element.GetType().Name}#{element.ElementId?.ToString() ?? "unattached"}");
+            builder.Append(CultureInfo.InvariantCulture, $"- {element.GetType().Name}");
             builder.Append(CultureInfo.InvariantCulture, $" flags={element.DirtyState.Flags}");
             builder.Append(CultureInfo.InvariantCulture, $" version={element.DirtyState.Version}");
             if (latest is not null)

@@ -101,7 +101,7 @@ public class ToolTip : Control
         }
     }
 
-    private void OnOverlayOpened(UiElementId _, RoutedEventArgs args)
+    private void OnOverlayOpened(object _, RoutedEventArgs args)
     {
         if (!IsOpen)
         {
@@ -111,7 +111,7 @@ public class ToolTip : Control
         RaiseEvent(new RoutedEventArgs(OpenedEvent, this));
     }
 
-    private void OnOverlayClosed(UiElementId _, RoutedEventArgs args)
+    private void OnOverlayClosed(object _, RoutedEventArgs args)
     {
         if (IsOpen)
         {

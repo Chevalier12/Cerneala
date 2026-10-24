@@ -187,7 +187,7 @@ public class Thumb : Control, IPointerDragSource
         return new Vector2(parentPoint.X + parent.ArrangedBounds.X, parentPoint.Y + parent.ArrangedBounds.Y);
     }
 
-    private void OnCapturedPointerInput(UiElementId source, RoutedEventArgs args)
+    private void OnCapturedPointerInput(object source, RoutedEventArgs args)
     {
         if (isDragging)
         {

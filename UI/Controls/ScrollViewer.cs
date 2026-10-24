@@ -393,7 +393,7 @@ public class ScrollViewer : Control
         verticalScrollBar = null;
     }
 
-    private void OnMouseWheel(UiElementId source, RoutedEventArgs args)
+    private void OnMouseWheel(object source, RoutedEventArgs args)
     {
         if (args is not MouseWheelEventArgs wheelArgs ||
             VerticalScrollBarVisibility == ScrollBarVisibility.Disabled ||
@@ -412,7 +412,7 @@ public class ScrollViewer : Control
     // presenter scrolls until the requested part is visible, and the part that is visible then goes on as this viewer's
     // own request, so the ScrollViewers around this one scroll to it too. A request from this viewer itself, or from an
     // element outside the content such as a scroll bar, bubbles on.
-    private void OnRequestBringIntoView(UiElementId source, RoutedEventArgs args)
+    private void OnRequestBringIntoView(object source, RoutedEventArgs args)
     {
         if (args is not RequestBringIntoViewEventArgs request ||
             presenter is null ||

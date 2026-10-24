@@ -791,6 +791,55 @@ public sealed class ComboBoxTests
         Assert.Equal(0, comboBox.SelectedIndex);
     }
 
+    // The field toggles only when the press and the release hit the same element. Two different elements in a
+    // hit-testable selection box that are equal by Equals are still different elements: a press on the first and a
+    // release on the second do not toggle the drop-down, and a press and a release on the second do.
+    [Fact]
+    public void NonEditableFieldPressAndReleaseOnDifferentEqualElementsDoesNotToggleDropDown()
+    {
+        (UIRoot root, ComboBox comboBox) = CreateNonEditableField();
+        List<(EqualBorder First, EqualBorder Second)> pairs = [];
+        comboBox.ItemTemplate = new ContentTemplate<string>(
+            "pair",
+            key: null,
+            priority: 0,
+            context =>
+            {
+                EqualBorder left = new(1) { Width = 40, Height = 20, Background = new SolidColorBrush(Color.White) };
+                EqualBorder right = new(1) { Width = 40, Height = 20, Background = new SolidColorBrush(Color.White) };
+                pairs.Add((left, right));
+                LayoutStackPanel panel = new() { Orientation = Orientation.Horizontal };
+                panel.VisualChildren.Add(left);
+                panel.VisualChildren.Add(right);
+                return panel;
+            });
+        root.ProcessFrame();
+        UIElement presenter = comboBox.ComponentTemplateInstance!.Parts["PART_SelectionPresenter"];
+        presenter.IsHitTestVisible = true;
+        root.ProcessFrame();
+        (EqualBorder first, EqualBorder second) = pairs[^1];
+        Assert.Equal(first, second);
+        float y = first.ArrangedBounds.Y + first.ArrangedBounds.Height / 2;
+        float firstX = first.ArrangedBounds.X + first.ArrangedBounds.Width / 2;
+        float secondX = second.ArrangedBounds.X + second.ArrangedBounds.Width / 2;
+        Assert.Same(first, new HitTestService().HitTest(root, firstX, y)?.Element);
+        Assert.Same(second, new HitTestService().HitTest(root, secondX, y)?.Element);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(firstX, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(secondX, y, previousDown: true, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(secondX, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.False(comboBox.IsDropDownOpen);
+
+        bridge.Dispatch(root, PointerFrame(secondX, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(secondX, y, previousDown: true));
+        root.ProcessFrame();
+
+        Assert.True(comboBox.IsDropDownOpen);
+    }
+
     // A text box that the ItemTemplate shows in a hit-testable selection box owns its press as a pointer drag
     // source, as the bridge resolves it, so the click focuses the text box and the field stays closed (#393).
     [Fact]
@@ -4004,6 +4053,22 @@ public sealed class ComboBoxTests
         protected override LayoutSize MeasureCore(MeasureContext context)
         {
             return new LayoutSize(20, 10);
+        }
+    }
+
+    // Two instances with the same id are equal by Equals, but they are different elements.
+    private sealed class EqualBorder(int id) : Border
+    {
+        private readonly int id = id;
+
+        public override bool Equals(object? obj)
+        {
+            return obj is EqualBorder other && other.id == id;
+        }
+
+        public override int GetHashCode()
+        {
+            return id;
         }
     }
 }

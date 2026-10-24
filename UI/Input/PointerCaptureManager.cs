@@ -47,8 +47,8 @@ public sealed class PointerCaptureManager
             return hitTarget;
         }
 
-        return routeMap.TryGetId(CapturedElement, out UiElementId capturedId)
-            ? new HitTestResult(CapturedElement, capturedId, x, y)
+        return routeMap.Contains(CapturedElement)
+            ? new HitTestResult(CapturedElement, x, y)
             : ReleaseUnroutableCapture(hitTarget);
     }
 
@@ -60,11 +60,11 @@ public sealed class PointerCaptureManager
 
     private static void RaiseCaptureChanged(ElementInputRouteMap routeMap, UIElement? element, RoutedEvent routedEvent)
     {
-        if (element is null || !routeMap.TryGetId(element, out UiElementId id))
+        if (element is null || !routeMap.Contains(element))
         {
             return;
         }
 
-        RoutedEventRouter.Raise(routeMap.InputTree, id, new MouseEventArgs(routedEvent, id, 0, 0));
+        RoutedEventRouter.Raise(routeMap.InputTree, element, new MouseEventArgs(routedEvent, element, 0, 0));
     }
 }
