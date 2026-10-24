@@ -2,12 +2,12 @@ namespace Cerneala.UI.Input;
 
 public sealed class CommandBinding
 {
-    private readonly RoutedEventHandler? executed;
+    private readonly RoutedEventHandler<ExecutedRoutedEventArgs>? executed;
     private readonly Action<object, CanExecuteRoutedEventArgs>? canExecute;
 
     public CommandBinding(
         ICommand command,
-        RoutedEventHandler? executed,
+        RoutedEventHandler<ExecutedRoutedEventArgs>? executed,
         Action<object, CanExecuteRoutedEventArgs>? canExecute = null)
     {
         Command = command ?? throw new ArgumentNullException(nameof(command));

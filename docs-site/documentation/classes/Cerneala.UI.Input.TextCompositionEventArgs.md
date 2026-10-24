@@ -16,19 +16,21 @@ Inheritance:
 
 ## Examples
 
-The following example reads the text payload from a text input routed event handler.
+The following example reads the text payload from a text input routed event handler. `UIElement.TextInput` is a `RoutedEventHandler<TextCompositionEventArgs>`, so the handler needs no cast.
 
 ```csharp
 using Cerneala.UI.Input;
 
-void OnTextInput(object? sender, RoutedEventArgs args)
+void OnTextInput(object? sender, TextCompositionEventArgs args)
 {
-    if (args is TextCompositionEventArgs textArgs && !textArgs.Handled)
+    if (!args.Handled)
     {
-        string text = textArgs.Text;
-        textArgs.Handled = true;
+        string text = args.Text;
+        args.Handled = true;
     }
 }
+
+element.TextInput += OnTextInput;
 ```
 
 ## Remarks

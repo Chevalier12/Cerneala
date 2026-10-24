@@ -2749,6 +2749,11 @@
     "source": "UI/Input/UiInputTree.cs"
   },
   {
+    "name": "Cerneala.UI.Input.RoutedEventHandler_TArgs_",
+    "file": "documentation/classes/Cerneala.UI.Input.RoutedEventHandler_TArgs_.md",
+    "source": "UI/Input/UiInputTree.cs"
+  },
+  {
     "name": "Cerneala.UI.Input.RoutedEventRegistry",
     "file": "documentation/classes/Cerneala.UI.Input.RoutedEventRegistry.md",
     "source": "UI/Input/RoutedEventRegistry.cs"

@@ -119,6 +119,8 @@ A derived control gives a property its starting value in its constructor with `U
 | `FontStretchProperty` | `UiProperty<FontStretch>` | Identifies the inherited `FontStretch` UI property. Defaults to `FontStretch.Normal`; affects measure and render; rejects undefined enum values. |
 | `HorizontalContentAlignmentProperty` | `UiProperty<HorizontalAlignment>` | Identifies the `HorizontalContentAlignment` UI property. Defaults to `HorizontalAlignment.Left`; affects arrange and render. `Button` overrides the default with `Center`. |
 | `VerticalContentAlignmentProperty` | `UiProperty<VerticalAlignment>` | Identifies the `VerticalContentAlignment` UI property. Defaults to `VerticalAlignment.Top`; affects arrange and render. `Button` overrides the default with `Center`. |
+| `PreviewMouseDoubleClickEvent` | `RoutedEvent` | Identifies the `PreviewMouseDoubleClick` routed event. It uses `RoutingStrategy.Direct` and raises `MouseButtonEventArgs`. It is the `InputEvents.PreviewMouseDoubleClickEvent` event with `Control` added as an owner. |
+| `MouseDoubleClickEvent` | `RoutedEvent` | Identifies the `MouseDoubleClick` routed event. It uses `RoutingStrategy.Direct` and raises `MouseButtonEventArgs`. It is the `InputEvents.MouseDoubleClickEvent` event with `Control` added as an owner. |
 
 ## Properties
 
@@ -147,6 +149,19 @@ A derived control gives a property its starting value in its constructor with `U
 | --- | --- | --- |
 | `ApplyTemplate()` | `void` | Creates, reuses, or detaches the component template instance so it matches the direct template or named Aspect catalog template. |
 | `SetAspectVariant<TControl, TValue>(AspectVariantKey<TControl, TValue> key, TValue value)` | `void` | Sets an owner-compatible aspect variant value and invalidates aspect/render state when the variant set changes. |
+
+## Events
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `PreviewMouseDoubleClick` | `RoutedEventHandler<MouseButtonEventArgs>` | Occurs before `MouseDoubleClick`, when a mouse button is pressed again as the second click of a double click on the control. The handler receives `MouseButtonEventArgs`, so it reads `args.ChangedButton` without a cast. |
+| `MouseDoubleClick` | `RoutedEventHandler<MouseButtonEventArgs>` | Occurs when a mouse button is pressed again as the second click of a double click on the control. The handler receives `MouseButtonEventArgs`, so it reads `args.ChangedButton` without a cast. |
+
+Both events are `Direct`: they run on the element that was clicked and do not tunnel or bubble. See [RoutedEventHandler&lt;TArgs&gt;](Cerneala.UI.Input.RoutedEventHandler_TArgs_.md).
+
+```csharp
+control.MouseDoubleClick += (sender, args) => Console.WriteLine(args.ChangedButton);
+```
 
 ## Exceptions
 

@@ -89,6 +89,8 @@ RoutedEventRouter.RaisePair(tree, button, previewArgs, bubbleArgs);
 
 `RoutedEventRouter` is the retained input routing dispatcher. It does not store handlers itself; it reads the route and handler lists from the supplied `UiInputTree`.
 
+`Raise` first checks that `args` is an instance of `args.RoutedEvent.ArgsType`, the same check as `UIElement.RaiseEvent`. A wrong args object fails here with `ArgumentException`, before any handler runs. This is what lets a `RoutedEventHandler<TArgs>` receive its `TArgs` without a failing cast inside the handler.
+
 `Raise` builds a route from `args.RoutedEvent.RoutingStrategy`:
 
 | Strategy | Route |
@@ -115,10 +117,11 @@ The `UiInputTree` decides which handlers the router sees. Disabled elements retu
 | Member | Exception | Condition |
 | --- | --- | --- |
 | `Raise(UiInputTree, UIElement, RoutedEventArgs)` | `ArgumentNullException` | `tree`, `target`, or `args` is `null`. |
+| `Raise(UiInputTree, UIElement, RoutedEventArgs)` | `ArgumentException` | `args` is not an instance of `args.RoutedEvent.ArgsType` (`ParamName` is `args`). The check runs before any handler runs. For example, `MouseDownEvent` requires `MouseButtonEventArgs`, so a plain `new RoutedEventArgs(UIElement.MouseDownEvent, button)` throws. |
 | `Raise(UiInputTree, UIElement, RoutedEventArgs)` | `ArgumentException` | `target` is not registered in the supplied `UiInputTree`. |
 | `Raise(UiInputTree, UIElement, RoutedEventArgs)` | `InvalidOperationException` | `args.RoutedEvent.RoutingStrategy` is not a supported routing strategy value. |
 | `RaisePair(UiInputTree, UIElement, RoutedEventArgs, RoutedEventArgs)` | `ArgumentNullException` | `previewArgs`, `bubbleArgs`, or the delegated `tree` or `target` argument is `null`. |
-| `RaisePair(UiInputTree, UIElement, RoutedEventArgs, RoutedEventArgs)` | `ArgumentException` | `target` is not registered when either delegated raise is performed. |
+| `RaisePair(UiInputTree, UIElement, RoutedEventArgs, RoutedEventArgs)` | `ArgumentException` | `target` is not registered, or `previewArgs` or `bubbleArgs` is not an instance of its event's `ArgsType`, when the delegated raise is performed. A wrong `bubbleArgs` is found only after the preview raise has already run its handlers. |
 | `RaisePair(UiInputTree, UIElement, RoutedEventArgs, RoutedEventArgs)` | `InvalidOperationException` | A delegated routed event has an unsupported routing strategy value. |
 
 ## Applies to

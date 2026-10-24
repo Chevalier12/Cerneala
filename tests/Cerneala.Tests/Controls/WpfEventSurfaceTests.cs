@@ -148,6 +148,37 @@ public sealed class WpfEventSurfaceTests
         Assert.True(observed);
     }
 
+    // A typed handler receives the event's own args type, and RemoveHandler with the same handler removes one of its
+    // registrations: a handler added twice and removed once still runs once.
+    [Fact]
+    public void TypedAddHandlerReceivesTheEventArgsTypeAndRemoveHandlerRemovesOneRegistration()
+    {
+        UIElement element = new();
+        List<InputMouseButton> buttons = [];
+        RoutedEventHandler<MouseButtonEventArgs> handler = (_, args) => buttons.Add(args.ChangedButton);
+        element.AddHandler(UIElement.MouseDownEvent, handler);
+        element.AddHandler(UIElement.MouseDownEvent, handler);
+
+        element.RemoveHandler(UIElement.MouseDownEvent, handler);
+        element.RaiseEvent(new MouseButtonEventArgs(UIElement.MouseDownEvent, element, InputMouseButton.Right, 0, 0, 1));
+
+        Assert.Equal([InputMouseButton.Right], buttons);
+    }
+
+    // A handler whose args type the event's args are not, such as KeyEventArgs for MouseDown, is refused when it is
+    // added, not with an InvalidCastException when the event is raised.
+    [Fact]
+    public void TypedAddHandlerWithArgsTypeTheEventDoesNotRaiseThrows()
+    {
+        UIElement element = new();
+
+        ArgumentException exception = Assert.Throws<ArgumentException>(
+            () => element.AddHandler<KeyEventArgs>(UIElement.MouseDownEvent, (_, _) => { }));
+
+        Assert.Equal("handler", exception.ParamName);
+        Assert.Empty(element.Handlers.GetHandlers(UIElement.MouseDownEvent));
+    }
+
     [Fact]
     public void SelectableContainersExposeSelectedAndUnselectedEvents()
     {

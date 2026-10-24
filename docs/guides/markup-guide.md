@@ -777,8 +777,32 @@ parameter may also be a base type of the element (`UIElement` or `object`). Any
 other type is rejected with `CERNEALAUI009`. On the root element of the file, the
 sender is the code-behind class itself.
 
-Different events can require different event argument types. Copy the signature
-from a working handler or inspect the control's event declaration. Do not guess.
+The second parameter receives the event data with the type the event declares, so
+the handler needs no cast. A mouse event gives `MouseButtonEventArgs`:
+
+```xml
+<Sprite2D MouseDown="OnOpen" />
+```
+
+```csharp
+using Cerneala.UI.Input;
+
+private void OnOpen(Sprite2D sender, MouseButtonEventArgs args)
+{
+    InputMouseButton button = args.ChangedButton; // no cast
+}
+```
+
+The second parameter may be the event's argument type or a base type of it. For
+`MouseDown`, `OnOpen(Sprite2D sender, RoutedEventArgs args)` also compiles, but
+then `ChangedButton` is not visible. Any other type is rejected with
+`CERNEALAUI009`: `OnOpen(Sprite2D sender, KeyEventArgs args)` on `MouseDown`
+fails, because a `MouseDown` never raises `KeyEventArgs`.
+
+Events with plain `RoutedEventArgs` data, such as `Click`, `Loaded`, and
+`GotFocus`, use `RoutedEventArgs`. Different events can require different event
+argument types. Copy the signature from a working handler or inspect the
+control's event declaration. Do not guess.
 
 Use code-behind for:
 

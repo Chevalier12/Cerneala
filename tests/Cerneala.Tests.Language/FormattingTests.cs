@@ -254,6 +254,29 @@ public sealed class FormattingTests
                 childGeneratedCode),
             diagnostic => diagnostic.Id == "CERNEALAUI009");
 
+        using Fixture mouseEventFixture = Fixture.Create(
+            "<Window><Button MouseDown=\"OnPress\" /></Window>",
+            companion: companion);
+        CernealaCodeAction mouseEventAction = Assert.Single(service.GetCodeActions(
+            mouseEventFixture.Document,
+            mouseEventFixture.Model,
+            mouseEventFixture.Document.Syntax.Span,
+            [new CernealaCodeActionDiagnostic("CERNEALAUI009", mouseEventFixture.Document.Syntax.Span)],
+            [new CernealaAdditionalDocument(mouseEventFixture.CodePath, SourceText.From(companion))],
+            includeFixAll: false), action => action.Title == "Create event handler OnPress");
+        string mouseGeneratedCode = Apply(companion, mouseEventAction.Edits);
+        Assert.Contains(
+            "private void OnPress(Cerneala.UI.Controls.Button sender, Cerneala.UI.Input.MouseButtonEventArgs args)",
+            mouseGeneratedCode,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            LanguagePipelineHarness.AnalyzePairedSourceGenerator(
+                mouseEventFixture.Document.Path,
+                mouseEventFixture.Document.Text.ToString(),
+                mouseEventFixture.CodePath,
+                mouseGeneratedCode),
+            diagnostic => diagnostic.Id == "CERNEALAUI009");
+
         using Fixture propertyElement = Fixture.Create("""
             <Window>
               <Button>

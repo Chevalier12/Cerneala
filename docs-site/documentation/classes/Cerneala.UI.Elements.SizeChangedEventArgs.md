@@ -12,12 +12,15 @@ public sealed class SizeChangedEventArgs : RoutedEventArgs
 ```
 
 ## Examples
+`UIElement.SizeChanged` is a `RoutedEventHandler<SizeChangedEventArgs>`, so the handler receives `SizeChangedEventArgs` without a cast:
+
 ```csharp
-void OnSizeChanged(object sender, RoutedEventArgs args)
+void OnSizeChanged(object sender, SizeChangedEventArgs args)
 {
-    var change = (SizeChangedEventArgs)args;
-    Console.WriteLine(change.WidthChanged);
+    Console.WriteLine(args.WidthChanged);
 }
+
+element.SizeChanged += OnSizeChanged;
 ```
 
 ## Constructors

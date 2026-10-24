@@ -117,8 +117,8 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Contains(".MouseMove -=", generated);
         Assert.Contains(".MouseLeftButtonUp -=", generated);
         Assert.Contains(".LostMouseCapture -=", generated);
-        Assert.Contains(".Begin(mouseArgs.X, mouseArgs.Y", generated);
-        Assert.Contains(".Move(mouseArgs.X, mouseArgs.Y", generated);
+        Assert.Contains(".Begin(args.X, args.Y", generated);
+        Assert.Contains(".Move(args.X, args.Y", generated);
         Assert.Contains(".End(", generated);
         Assert.Contains(".PointerCaptureLost(", generated);
         Assert.Contains("MotionExtensions.Motion(", generated);

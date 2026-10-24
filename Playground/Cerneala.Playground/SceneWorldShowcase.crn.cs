@@ -157,22 +157,21 @@ public partial class SceneWorldShowcase : UserControl
         State.Status = State.DoorClosed ? "Door closed: collider active." : "Door open: collider disabled.";
     }
 
-    private void OnPlayerKey(Cerneala.UI.Controls.Scene2D sender, RoutedEventArgs args)
+    private void OnPlayerKey(Cerneala.UI.Controls.Scene2D sender, KeyEventArgs args)
     {
-        if (args is not KeyEventArgs key) return;
         if (State.IsBusy || playerRegion?.IsReady != true)
         {
             args.Handled = true;
             return;
         }
-        if (key.Key == InputKey.Space)
+        if (args.Key == InputKey.Space)
         {
             State.PlayerState = "Attack";
             PlayerSprite.RestartAnimation();
             args.Handled = true;
             return;
         }
-        Vector2 requested = key.Key switch
+        Vector2 requested = args.Key switch
         {
             InputKey.Up => new(0, -64), InputKey.Down => new(0, 64),
             InputKey.Left => new(-64, 0), InputKey.Right => new(64, 0), _ => default

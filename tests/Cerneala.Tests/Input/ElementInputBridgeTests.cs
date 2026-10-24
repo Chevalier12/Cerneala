@@ -24,6 +24,26 @@ public sealed class ElementInputBridgeTests
         Assert.Equal(["preview-root", "bubble-child"], calls);
     }
 
+    // The MouseDown event passes MouseButtonEventArgs to its handlers, so a handler reads ChangedButton without a cast.
+    // -= with the same handler removes it.
+    [Fact]
+    public void MouseDownEventHandlerReadsTheTypedArgsAndMinusEqualsRemovesIt()
+    {
+        UIRoot root = RootWithChild(out UIElement child);
+        List<InputMouseButton> buttons = [];
+        RoutedEventHandler<MouseButtonEventArgs> handler = (_, args) => buttons.Add(args.ChangedButton);
+        child.MouseDown += handler;
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, ButtonsFrame(10, 10, previousLeft: false, previousRight: false, currentLeft: false, currentRight: true));
+        bridge.Dispatch(root, ButtonsFrame(10, 10, previousLeft: false, previousRight: true, currentLeft: false, currentRight: false));
+        child.MouseDown -= handler;
+        bridge.Dispatch(root, ButtonsFrame(10, 10, previousLeft: false, previousRight: false, currentLeft: true, currentRight: false));
+        bridge.Dispatch(root, ButtonsFrame(10, 10, previousLeft: true, previousRight: false, currentLeft: false, currentRight: false));
+
+        Assert.Equal([InputMouseButton.Right], buttons);
+    }
+
     // As in WPF, the button-specific events carry the Handled value of the MouseDown or MouseUp they report:
     // ordinary handlers on the ancestors do not run, handlers added with handledEventsToo still run.
     [Theory]

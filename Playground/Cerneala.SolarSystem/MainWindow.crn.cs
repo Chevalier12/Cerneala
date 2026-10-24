@@ -208,18 +208,13 @@ public partial class MainWindow : Window<SolarSystemViewModel>, ITimeSensitiveRe
         targetZoom = selected.FocusZoom;
     }
 
-    private void OnWheel(Grid sender, RoutedEventArgs args)
+    private void OnWheel(Grid sender, MouseWheelEventArgs args)
     {
-        if (args is not MouseWheelEventArgs wheel)
-        {
-            return;
-        }
-
-        double nextZoom = Math.Clamp(targetZoom * Math.Exp(wheel.Delta / 120.0 * 0.2), MinZoom, MaxZoom);
+        double nextZoom = Math.Clamp(targetZoom * Math.Exp(args.Delta / 120.0 * 0.2), MinZoom, MaxZoom);
         if (follow is null)
         {
             // Keep the world point under the cursor fixed while zooming.
-            Vector2 cursor = wheel.GetPosition(Viewport);
+            Vector2 cursor = args.GetPosition(Viewport);
             double fromCentreX = cursor.X - ViewWidth / 2;
             double fromCentreY = cursor.Y - ViewHeight / 2;
             double worldX = targetX + fromCentreX / targetZoom;
@@ -232,27 +227,22 @@ public partial class MainWindow : Window<SolarSystemViewModel>, ITimeSensitiveRe
         args.Handled = true;
     }
 
-    private void OnPointerDown(Grid sender, RoutedEventArgs args)
+    private void OnPointerDown(Grid sender, MouseButtonEventArgs args)
     {
-        if (args is not MouseEventArgs mouse)
-        {
-            return;
-        }
-
         dragging = true;
         dragMoved = false;
-        dragOrigin = mouse.GetPosition(Viewport);
+        dragOrigin = args.GetPosition(Viewport);
         dragCamera = (cameraX, cameraY);
     }
 
-    private void OnPointerMove(Grid sender, RoutedEventArgs args)
+    private void OnPointerMove(Grid sender, MouseEventArgs args)
     {
-        if (!dragging || args is not MouseEventArgs mouse)
+        if (!dragging)
         {
             return;
         }
 
-        Vector2 delta = mouse.GetPosition(Viewport) - dragOrigin;
+        Vector2 delta = args.GetPosition(Viewport) - dragOrigin;
         if (!dragMoved && delta.Length() < 4)
         {
             return;

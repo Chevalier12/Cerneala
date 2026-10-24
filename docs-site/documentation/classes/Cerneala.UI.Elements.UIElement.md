@@ -226,6 +226,10 @@ Value validation is enforced by property metadata. `Width` and `Height` accept `
 | `Invalidate(InvalidationFlags, string)` | Creates an `InvalidationRequest` for this element and passes it to `Invalidate(InvalidationRequest)`. |
 | `Invalidate(InvalidationRequest)` | Routes invalidation to the attached root or marks local dirty state when detached. |
 | `OnPropertyInvalidated(UiPropertyChangedEventArgs, UiPropertyOptions)` | Maps property metadata to invalidation flags, updates layout/render versions, and invalidates the element. For `AffectsParentArrange`, it invalidates the arrange pass of the visual parent instead. |
+| `AddHandler(RoutedEvent, RoutedEventHandler, bool handledEventsToo = false)` | Registers an untyped handler for a routed event. With `handledEventsToo` set to `true`, the handler also runs after the event was marked handled. |
+| `RemoveHandler(RoutedEvent, RoutedEventHandler)` | Removes a handler registered with `AddHandler`. |
+| `AddHandler<TArgs>(RoutedEvent, RoutedEventHandler<TArgs>, bool handledEventsToo = false)` | Registers a typed handler that receives the event data as `TArgs`, with no cast. Throws `ArgumentNullException` for a null event or handler, and `ArgumentException` (parameter `handler`) when the event's `ArgsType` is not assignable to `TArgs`. Adding the same handler twice registers it twice. |
+| `RemoveHandler<TArgs>(RoutedEvent, RoutedEventHandler<TArgs>)` | Removes one registration of a handler added with `AddHandler<TArgs>`. |
 | `BringIntoView()` | Raises `RequestBringIntoViewEvent` for the whole element, so the `ScrollViewer`s around it scroll until it is visible. |
 | `BringIntoView(LayoutRect)` | Raises `RequestBringIntoViewEvent` for the rectangle, in the element's own coordinates; `LayoutRect.Empty` means the whole element. |
 
@@ -233,6 +237,24 @@ Value validation is enforced by property metadata. `Width` and `Height` accept `
 | Name | Description |
 | --- | --- |
 | `RequestBringIntoView` | `EventHandler<RequestBringIntoViewEventArgs>`; raised by `BringIntoView`, bubbles from the element. `ScrollViewer` handles it for an element inside its content. |
+| `PreviewMouseDown`, `MouseDown`, `PreviewMouseUp`, `MouseUp`, `PreviewMouseLeftButtonDown`, `MouseLeftButtonDown`, `PreviewMouseLeftButtonUp`, `MouseLeftButtonUp`, `PreviewMouseRightButtonDown`, `MouseRightButtonDown`, `PreviewMouseRightButtonUp`, `MouseRightButtonUp` | `RoutedEventHandler<MouseButtonEventArgs>`; routed mouse button events. |
+| `PreviewMouseMove`, `MouseMove`, `MouseEnter`, `MouseLeave`, `GotMouseCapture`, `LostMouseCapture`, `QueryCursor` | `RoutedEventHandler<MouseEventArgs>`; routed pointer events. |
+| `PreviewMouseWheel`, `MouseWheel` | `RoutedEventHandler<MouseWheelEventArgs>`; routed wheel events. |
+| `PreviewKeyDown`, `KeyDown`, `PreviewKeyUp`, `KeyUp` | `RoutedEventHandler<KeyEventArgs>`; routed key events. |
+| `PreviewGotKeyboardFocus`, `GotKeyboardFocus`, `PreviewLostKeyboardFocus`, `LostKeyboardFocus` | `RoutedEventHandler<KeyboardFocusChangedEventArgs>`; routed keyboard focus events. |
+| `PreviewTextInput`, `TextInput` | `RoutedEventHandler<TextCompositionEventArgs>`; routed text input events. |
+| `DragEnter`, `DragOver`, `DragLeave`, `Drop`, `PreviewDragEnter`, `PreviewDragOver`, `PreviewDragLeave`, `PreviewDrop` | `RoutedEventHandler<DragEventArgs>`; routed drag-and-drop events. |
+| `PreviewStylusDown`/`StylusDown`, `PreviewStylusUp`/`StylusUp`, `PreviewStylusMove`/`StylusMove`, `PreviewStylusInAirMove`/`StylusInAirMove`, `StylusEnter`, `StylusLeave`, `PreviewStylusInRange`/`StylusInRange`, `PreviewStylusOutOfRange`/`StylusOutOfRange`, `PreviewStylusSystemGesture`/`StylusSystemGesture`, `GotStylusCapture`, `LostStylusCapture`, `PreviewStylusButtonDown`/`StylusButtonDown`, `PreviewStylusButtonUp`/`StylusButtonUp` | `RoutedEventHandler<StylusEventArgs>`; routed stylus events. |
+| `PreviewTouchDown`/`TouchDown`, `PreviewTouchMove`/`TouchMove`, `PreviewTouchUp`/`TouchUp`, `TouchEnter`, `TouchLeave`, `GotTouchCapture`, `LostTouchCapture` | `RoutedEventHandler<TouchEventArgs>`; routed touch events. |
+| `SizeChanged` | `RoutedEventHandler<SizeChangedEventArgs>`; raised when the arranged size changes. |
+| `Loaded`, `Unloaded`, `GotFocus`, `LostFocus`, `GiveFeedback`, `PreviewGiveFeedback`, `QueryContinueDrag`, `PreviewQueryContinueDrag`, `ManipulationStarting`, `ManipulationStarted`, `ManipulationDelta`, `ManipulationInertiaStarting`, `ManipulationBoundaryFeedback`, `ManipulationCompleted` | `RoutedEventHandler`; the event data is plain `RoutedEventArgs`. |
+
+Each routed CLR event whose `RoutedEvent` raises a type more specific than `RoutedEventArgs` is declared with [RoutedEventHandler&lt;TArgs&gt;](Cerneala.UI.Input.RoutedEventHandler_TArgs_.md) and that exact type. The handler needs no cast:
+
+```csharp
+element.MouseDown += (sender, args) => Console.WriteLine(args.ChangedButton);
+element.KeyDown += (sender, args) => Console.WriteLine(args.Key);
+```
 
 ## Protected Methods
 | Name | Description |

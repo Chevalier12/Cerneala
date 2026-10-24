@@ -17,16 +17,16 @@ Inheritance:
 `object` -> `RoutedEventArgs` -> `TouchEventArgs`
 
 ## Examples
-```csharp
-target.Handlers.AddHandler(InputEvents.TouchDownEvent, (_, args) =>
-{
-    TouchEventArgs touch = (TouchEventArgs)args;
+`UIElement.TouchDown` is a `RoutedEventHandler<TouchEventArgs>`, so `args` is a `TouchEventArgs` and needs no cast.
 
-    int id = touch.TouchId;
-    float x = touch.X;
-    float y = touch.Y;
-    TouchInputAction action = touch.Action;
-});
+```csharp
+target.TouchDown += (_, args) =>
+{
+    int id = args.TouchId;
+    float x = args.X;
+    float y = args.Y;
+    TouchInputAction action = args.Action;
+};
 ```
 
 ## Remarks

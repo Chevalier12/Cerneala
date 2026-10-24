@@ -9,27 +9,22 @@ public partial class MainWindow : Window
     private int selectedCount;
     private int displayedRealizedCount = -1;
 
-    private void OnPreviewKeyDown(MainWindow sender, RoutedEventArgs args)
+    private void OnPreviewKeyDown(MainWindow sender, KeyEventArgs args)
     {
-        if (args is not KeyEventArgs key)
-        {
-            return;
-        }
-
-        if (GameSurface.SetMovementKey(key.Key, true))
+        if (GameSurface.SetMovementKey(args.Key, true))
         {
             args.Handled = true;
         }
-        else if (key.Key == InputKey.R)
+        else if (args.Key == InputKey.R)
         {
             GameSurface.ResetPlayer();
             args.Handled = true;
         }
     }
 
-    private void OnPreviewKeyUp(MainWindow sender, RoutedEventArgs args)
+    private void OnPreviewKeyUp(MainWindow sender, KeyEventArgs args)
     {
-        if (args is KeyEventArgs key && GameSurface.SetMovementKey(key.Key, false))
+        if (GameSurface.SetMovementKey(args.Key, false))
         {
             args.Handled = true;
         }

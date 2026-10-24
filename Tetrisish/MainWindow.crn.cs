@@ -7,14 +7,9 @@ public partial class MainWindow : Window
 {
     private long displayedStateVersion = -1;
 
-    private void OnPreviewKeyDown(MainWindow sender, RoutedEventArgs args)
+    private void OnPreviewKeyDown(MainWindow sender, KeyEventArgs args)
     {
-        if (args is not KeyEventArgs keyArgs)
-        {
-            return;
-        }
-
-        bool handled = keyArgs.Key switch
+        bool handled = args.Key switch
         {
             InputKey.Left => GameSurface.MoveHorizontal(-1),
             InputKey.Right => GameSurface.MoveHorizontal(1),
@@ -35,9 +30,9 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnPreviewKeyUp(MainWindow sender, RoutedEventArgs args)
+    private void OnPreviewKeyUp(MainWindow sender, KeyEventArgs args)
     {
-        if (args is KeyEventArgs { Key: InputKey.Down })
+        if (args.Key == InputKey.Down)
         {
             GameSurface.EndSoftDrop();
             args.Handled = true;

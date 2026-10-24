@@ -54,12 +54,12 @@ root.VisualChildren.Add(second);
 FocusManager focusManager = new();
 ElementInputRouteMap routeMap = null!;
 List<string> receivers = [];
-first.Handlers.AddHandler(InputEvents.KeyDownEvent, (_, _) =>
+first.KeyDown += (_, _) =>
 {
     receivers.Add("first");
     focusManager.Focus(second, routeMap);
-});
-second.Handlers.AddHandler(InputEvents.KeyDownEvent, (_, _) => receivers.Add("second"));
+};
+second.KeyDown += (_, _) => receivers.Add("second");
 
 routeMap = new ElementInputRouteBuilder().Build(root);
 focusManager.Focus(first, routeMap);
@@ -86,14 +86,14 @@ root.VisualChildren.Add(first);
 
 FocusManager focusManager = new();
 List<string> receivers = [];
-first.Handlers.AddHandler(InputEvents.KeyDownEvent, (_, args) =>
+first.KeyDown += (_, args) =>
 {
-    receivers.Add($"first {((KeyEventArgs)args).Key}");
+    receivers.Add($"first {args.Key}");
     UIElement created = new() { Focusable = true };
-    created.Handlers.AddHandler(InputEvents.KeyDownEvent, (_, e) => receivers.Add($"created {((KeyEventArgs)e).Key}"));
+    created.KeyDown += (_, e) => receivers.Add($"created {e.Key}");
     root.VisualChildren.Add(created);
     focusManager.Focus(created, root.InputCache.EnsureCurrent(root));
-});
+};
 
 ElementInputRouteMap frameMap = root.InputCache.EnsureCurrent(root);
 focusManager.Focus(first, frameMap);

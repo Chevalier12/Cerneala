@@ -116,6 +116,60 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Same(lid, viewType.GetProperty("Opened")!.GetValue(view));
     }
 
+    // MouseDown passes MouseButtonEventArgs, so a handler can take MouseButtonEventArgs and read ChangedButton without
+    // a cast.
+    [Fact]
+    public void SceneSpriteMouseDownHandlerReceivesTypedMouseButtonEventArgs()
+    {
+        const string inputSource = """
+            using Cerneala.UI.Controls;
+            using Cerneala.UI.Input;
+            namespace TestInput.Views;
+            public partial class LidView : UserControl
+            {
+                public MouseButtonEventArgs? OpenArgs { get; private set; }
+                private void OnOpen(Sprite2D sender, MouseButtonEventArgs args) => OpenArgs = args;
+            }
+            """;
+
+        GeneratorRunResult result = RunPairedGenerator("Views/LidView.crn", SpriteLidMarkup, inputSource, out Compilation compilation);
+
+        Assert.Empty(result.Diagnostics);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Assembly assembly = Assembly.Load(stream.ToArray());
+        Type viewType = assembly.GetType("TestInput.Views.LidView", throwOnError: true)!;
+        UserControl view = Assert.IsAssignableFrom<UserControl>(Activator.CreateInstance(viewType));
+        Sprite2D lid = GetNamedElement<Sprite2D>(viewType, view, "Lid");
+        MouseButtonEventArgs raised = new(InputEvents.MouseDownEvent, lid, InputMouseButton.Right, 0, 0, 1);
+
+        lid.RaiseEvent(raised);
+
+        Assert.Same(raised, viewType.GetProperty("OpenArgs")!.GetValue(view));
+    }
+
+    // MouseDown never passes KeyEventArgs, so a handler that takes KeyEventArgs cannot be wired.
+    [Fact]
+    public void MarkupEventHandlerWhoseArgsTypeTheEventDoesNotPassIsRejected()
+    {
+        const string inputSource = """
+            using Cerneala.UI.Controls;
+            using Cerneala.UI.Input;
+            namespace TestInput.Views;
+            public partial class LidView : UserControl
+            {
+                private void OnOpen(Sprite2D sender, KeyEventArgs args) { }
+            }
+            """;
+
+        GeneratorRunResult result = RunPairedGenerator("Views/LidView.crn", SpriteLidMarkup, inputSource, out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI009", "Views/LidView.crn");
+        Assert.Contains("OnOpen", diagnostic.GetMessage(), StringComparison.Ordinal);
+    }
+
     [Fact]
     public void MarkupEventHandlerWhoseSenderTypeDoesNotAcceptTheElementIsRejected()
     {

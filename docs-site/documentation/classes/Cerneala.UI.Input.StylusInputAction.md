@@ -27,8 +27,8 @@ root.VisualChildren.Add(pad);
 root.ProcessFrame();
 
 List<string> seen = [];
-pad.AddHandler(InputEvents.StylusInRangeEvent, (_, _) => seen.Add("InRange"));
-pad.AddHandler(InputEvents.StylusDownEvent, (_, args) => seen.Add("Down " + ((StylusEventArgs)args).Point.Pressure));
+pad.StylusInRange += (_, _) => seen.Add("InRange");
+pad.StylusDown += (_, args) => seen.Add("Down " + args.Point.Pressure);
 
 new StylusInputBridge().Dispatch(root, new StylusInputFrame(
     new StylusInputPoint(1, 100, 100, StylusInputAction.InRange),

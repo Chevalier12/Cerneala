@@ -326,19 +326,19 @@ public sealed partial class UiMarkupGenerator
                 "global::System.Func<global::System.TimeSpan> " + nowName +
                 " = () => global::System.TimeSpan.FromSeconds((double)global::System.Diagnostics.Stopwatch.GetTimestamp() / global::System.Diagnostics.Stopwatch.Frequency);");
             currentPostLines.Add(
-                "global::Cerneala.UI.Input.RoutedEventHandler " + downHandler +
-                " = (sender, args) => { if (" + controllerName + " is not null && args is global::Cerneala.UI.Input.MouseButtonEventArgs mouseArgs) " +
-                controllerName + ".Begin(mouseArgs.X, mouseArgs.Y, " + nowName + "()); };");
+                "global::Cerneala.UI.Input.RoutedEventHandler<global::Cerneala.UI.Input.MouseButtonEventArgs> " + downHandler +
+                " = (sender, args) => { if (" + controllerName + " is not null) " +
+                controllerName + ".Begin(args.X, args.Y, " + nowName + "()); };");
             currentPostLines.Add(
-                "global::Cerneala.UI.Input.RoutedEventHandler " + moveHandler +
-                " = (sender, args) => { if (" + controllerName + "?.State == global::Cerneala.UI.Motion.Input.PointerMotionState.Dragging && args is global::Cerneala.UI.Input.MouseEventArgs mouseArgs) " +
-                controllerName + ".Move(mouseArgs.X, mouseArgs.Y, " + nowName + "()); };");
+                "global::Cerneala.UI.Input.RoutedEventHandler<global::Cerneala.UI.Input.MouseEventArgs> " + moveHandler +
+                " = (sender, args) => { if (" + controllerName + "?.State == global::Cerneala.UI.Motion.Input.PointerMotionState.Dragging) " +
+                controllerName + ".Move(args.X, args.Y, " + nowName + "()); };");
             currentPostLines.Add(
-                "global::Cerneala.UI.Input.RoutedEventHandler " + upHandler +
+                "global::Cerneala.UI.Input.RoutedEventHandler<global::Cerneala.UI.Input.MouseButtonEventArgs> " + upHandler +
                 " = (sender, args) => { if (" + controllerName + "?.State == global::Cerneala.UI.Motion.Input.PointerMotionState.Dragging) " +
                 controllerName + ".End(" + drag.ReleaseSpec + "); };");
             currentPostLines.Add(
-                "global::Cerneala.UI.Input.RoutedEventHandler " + captureLostHandler +
+                "global::Cerneala.UI.Input.RoutedEventHandler<global::Cerneala.UI.Input.MouseEventArgs> " + captureLostHandler +
                 " = (sender, args) => { if (" + controllerName + "?.State == global::Cerneala.UI.Motion.Input.PointerMotionState.Dragging) " +
                 controllerName + ".PointerCaptureLost(" + drag.ReleaseSpec + "); };");
 
@@ -372,16 +372,16 @@ public sealed partial class UiMarkupGenerator
             string captureLostHandler = "motionGestureCaptureLostHandler" + id;
             currentPostLines.Add("global::Cerneala.UI.Motion.Input.GestureMotionController? " + controllerName + " = null;");
             currentPostLines.Add(
-                "global::Cerneala.UI.Input.RoutedEventHandler " + downHandler +
+                "global::Cerneala.UI.Input.RoutedEventHandler<global::Cerneala.UI.Input.MouseButtonEventArgs> " + downHandler +
                 " = (sender, args) => { if (" + controllerName + " is not null && " + controllerName +
                 ".State != global::Cerneala.UI.Motion.Input.PointerMotionState.Pressed) " + controllerName +
                 ".PointerPressed(" + gesture.Spec + "); };");
             currentPostLines.Add(
-                "global::Cerneala.UI.Input.RoutedEventHandler " + upHandler +
+                "global::Cerneala.UI.Input.RoutedEventHandler<global::Cerneala.UI.Input.MouseButtonEventArgs> " + upHandler +
                 " = (sender, args) => { if (" + controllerName + "?.State == global::Cerneala.UI.Motion.Input.PointerMotionState.Pressed) " +
                 controllerName + ".PointerReleased(" + gesture.Spec + "); };");
             currentPostLines.Add(
-                "global::Cerneala.UI.Input.RoutedEventHandler " + captureLostHandler +
+                "global::Cerneala.UI.Input.RoutedEventHandler<global::Cerneala.UI.Input.MouseEventArgs> " + captureLostHandler +
                 " = (sender, args) => { if (" + controllerName + "?.State == global::Cerneala.UI.Motion.Input.PointerMotionState.Pressed) " +
                 controllerName + ".PointerReleased(" + gesture.Spec + "); };");
 

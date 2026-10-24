@@ -35,11 +35,10 @@ target.Arrange(new ArrangeContext(new LayoutRect(40, 0, 20, 20)));
 root.VisualChildren.Add(source);
 root.VisualChildren.Add(target);
 
-target.Handlers.AddHandler(InputEvents.DropEvent, (_, args) =>
+target.Drop += (_, args) =>
 {
-    DragEventArgs dragArgs = (DragEventArgs)args;
-    bool hasText = dragArgs.Data.TryGetData("text/plain", out string? text);
-});
+    bool hasText = args.Data.TryGetData("text/plain", out string? text);
+};
 
 DragDropController controller = new();
 DataTransfer data = new DataTransfer().SetData("text/plain", "payload");

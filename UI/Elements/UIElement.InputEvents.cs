@@ -67,49 +67,49 @@ public partial class UIElement
     public static readonly RoutedEvent PreviewDragLeaveEvent = InputEvents.PreviewDragLeaveEvent.AddOwner(typeof(UIElement));
     public static readonly RoutedEvent PreviewDropEvent = InputEvents.PreviewDropEvent.AddOwner(typeof(UIElement));
 
-    public event RoutedEventHandler QueryCursor { add => AddHandler(QueryCursorEvent, value); remove => RemoveHandler(QueryCursorEvent, value); }
-    public event RoutedEventHandler PreviewMouseLeftButtonDown { add => AddHandler(PreviewMouseLeftButtonDownEvent, value); remove => RemoveHandler(PreviewMouseLeftButtonDownEvent, value); }
-    public event RoutedEventHandler MouseLeftButtonDown { add => AddHandler(MouseLeftButtonDownEvent, value); remove => RemoveHandler(MouseLeftButtonDownEvent, value); }
-    public event RoutedEventHandler PreviewMouseLeftButtonUp { add => AddHandler(PreviewMouseLeftButtonUpEvent, value); remove => RemoveHandler(PreviewMouseLeftButtonUpEvent, value); }
-    public event RoutedEventHandler MouseLeftButtonUp { add => AddHandler(MouseLeftButtonUpEvent, value); remove => RemoveHandler(MouseLeftButtonUpEvent, value); }
-    public event RoutedEventHandler PreviewMouseRightButtonDown { add => AddHandler(PreviewMouseRightButtonDownEvent, value); remove => RemoveHandler(PreviewMouseRightButtonDownEvent, value); }
-    public event RoutedEventHandler MouseRightButtonDown { add => AddHandler(MouseRightButtonDownEvent, value); remove => RemoveHandler(MouseRightButtonDownEvent, value); }
-    public event RoutedEventHandler PreviewMouseRightButtonUp { add => AddHandler(PreviewMouseRightButtonUpEvent, value); remove => RemoveHandler(PreviewMouseRightButtonUpEvent, value); }
-    public event RoutedEventHandler MouseRightButtonUp { add => AddHandler(MouseRightButtonUpEvent, value); remove => RemoveHandler(MouseRightButtonUpEvent, value); }
+    public event RoutedEventHandler<MouseEventArgs> QueryCursor { add => AddHandler(QueryCursorEvent, value); remove => RemoveHandler(QueryCursorEvent, value); }
+    public event RoutedEventHandler<MouseButtonEventArgs> PreviewMouseLeftButtonDown { add => AddHandler(PreviewMouseLeftButtonDownEvent, value); remove => RemoveHandler(PreviewMouseLeftButtonDownEvent, value); }
+    public event RoutedEventHandler<MouseButtonEventArgs> MouseLeftButtonDown { add => AddHandler(MouseLeftButtonDownEvent, value); remove => RemoveHandler(MouseLeftButtonDownEvent, value); }
+    public event RoutedEventHandler<MouseButtonEventArgs> PreviewMouseLeftButtonUp { add => AddHandler(PreviewMouseLeftButtonUpEvent, value); remove => RemoveHandler(PreviewMouseLeftButtonUpEvent, value); }
+    public event RoutedEventHandler<MouseButtonEventArgs> MouseLeftButtonUp { add => AddHandler(MouseLeftButtonUpEvent, value); remove => RemoveHandler(MouseLeftButtonUpEvent, value); }
+    public event RoutedEventHandler<MouseButtonEventArgs> PreviewMouseRightButtonDown { add => AddHandler(PreviewMouseRightButtonDownEvent, value); remove => RemoveHandler(PreviewMouseRightButtonDownEvent, value); }
+    public event RoutedEventHandler<MouseButtonEventArgs> MouseRightButtonDown { add => AddHandler(MouseRightButtonDownEvent, value); remove => RemoveHandler(MouseRightButtonDownEvent, value); }
+    public event RoutedEventHandler<MouseButtonEventArgs> PreviewMouseRightButtonUp { add => AddHandler(PreviewMouseRightButtonUpEvent, value); remove => RemoveHandler(PreviewMouseRightButtonUpEvent, value); }
+    public event RoutedEventHandler<MouseButtonEventArgs> MouseRightButtonUp { add => AddHandler(MouseRightButtonUpEvent, value); remove => RemoveHandler(MouseRightButtonUpEvent, value); }
 
-    public event RoutedEventHandler PreviewStylusDown { add => AddHandler(PreviewStylusDownEvent, value); remove => RemoveHandler(PreviewStylusDownEvent, value); }
-    public event RoutedEventHandler StylusDown { add => AddHandler(StylusDownEvent, value); remove => RemoveHandler(StylusDownEvent, value); }
-    public event RoutedEventHandler PreviewStylusUp { add => AddHandler(PreviewStylusUpEvent, value); remove => RemoveHandler(PreviewStylusUpEvent, value); }
-    public event RoutedEventHandler StylusUp { add => AddHandler(StylusUpEvent, value); remove => RemoveHandler(StylusUpEvent, value); }
-    public event RoutedEventHandler PreviewStylusMove { add => AddHandler(PreviewStylusMoveEvent, value); remove => RemoveHandler(PreviewStylusMoveEvent, value); }
-    public event RoutedEventHandler StylusMove { add => AddHandler(StylusMoveEvent, value); remove => RemoveHandler(StylusMoveEvent, value); }
-    public event RoutedEventHandler PreviewStylusInAirMove { add => AddHandler(PreviewStylusInAirMoveEvent, value); remove => RemoveHandler(PreviewStylusInAirMoveEvent, value); }
-    public event RoutedEventHandler StylusInAirMove { add => AddHandler(StylusInAirMoveEvent, value); remove => RemoveHandler(StylusInAirMoveEvent, value); }
-    public event RoutedEventHandler StylusEnter { add => AddHandler(StylusEnterEvent, value); remove => RemoveHandler(StylusEnterEvent, value); }
-    public event RoutedEventHandler StylusLeave { add => AddHandler(StylusLeaveEvent, value); remove => RemoveHandler(StylusLeaveEvent, value); }
-    public event RoutedEventHandler PreviewStylusInRange { add => AddHandler(PreviewStylusInRangeEvent, value); remove => RemoveHandler(PreviewStylusInRangeEvent, value); }
-    public event RoutedEventHandler StylusInRange { add => AddHandler(StylusInRangeEvent, value); remove => RemoveHandler(StylusInRangeEvent, value); }
-    public event RoutedEventHandler PreviewStylusOutOfRange { add => AddHandler(PreviewStylusOutOfRangeEvent, value); remove => RemoveHandler(PreviewStylusOutOfRangeEvent, value); }
-    public event RoutedEventHandler StylusOutOfRange { add => AddHandler(StylusOutOfRangeEvent, value); remove => RemoveHandler(StylusOutOfRangeEvent, value); }
-    public event RoutedEventHandler PreviewStylusSystemGesture { add => AddHandler(PreviewStylusSystemGestureEvent, value); remove => RemoveHandler(PreviewStylusSystemGestureEvent, value); }
-    public event RoutedEventHandler StylusSystemGesture { add => AddHandler(StylusSystemGestureEvent, value); remove => RemoveHandler(StylusSystemGestureEvent, value); }
-    public event RoutedEventHandler GotStylusCapture { add => AddHandler(GotStylusCaptureEvent, value); remove => RemoveHandler(GotStylusCaptureEvent, value); }
-    public event RoutedEventHandler LostStylusCapture { add => AddHandler(LostStylusCaptureEvent, value); remove => RemoveHandler(LostStylusCaptureEvent, value); }
-    public event RoutedEventHandler PreviewStylusButtonDown { add => AddHandler(PreviewStylusButtonDownEvent, value); remove => RemoveHandler(PreviewStylusButtonDownEvent, value); }
-    public event RoutedEventHandler StylusButtonDown { add => AddHandler(StylusButtonDownEvent, value); remove => RemoveHandler(StylusButtonDownEvent, value); }
-    public event RoutedEventHandler PreviewStylusButtonUp { add => AddHandler(PreviewStylusButtonUpEvent, value); remove => RemoveHandler(PreviewStylusButtonUpEvent, value); }
-    public event RoutedEventHandler StylusButtonUp { add => AddHandler(StylusButtonUpEvent, value); remove => RemoveHandler(StylusButtonUpEvent, value); }
+    public event RoutedEventHandler<StylusEventArgs> PreviewStylusDown { add => AddHandler(PreviewStylusDownEvent, value); remove => RemoveHandler(PreviewStylusDownEvent, value); }
+    public event RoutedEventHandler<StylusEventArgs> StylusDown { add => AddHandler(StylusDownEvent, value); remove => RemoveHandler(StylusDownEvent, value); }
+    public event RoutedEventHandler<StylusEventArgs> PreviewStylusUp { add => AddHandler(PreviewStylusUpEvent, value); remove => RemoveHandler(PreviewStylusUpEvent, value); }
+    public event RoutedEventHandler<StylusEventArgs> StylusUp { add => AddHandler(StylusUpEvent, value); remove => RemoveHandler(StylusUpEvent, value); }
+    public event RoutedEventHandler<StylusEventArgs> PreviewStylusMove { add => AddHandler(PreviewStylusMoveEvent, value); remove => RemoveHandler(PreviewStylusMoveEvent, value); }
+    public event RoutedEventHandler<StylusEventArgs> StylusMove { add => AddHandler(StylusMoveEvent, value); remove => RemoveHandler(StylusMoveEvent, value); }
+    public event RoutedEventHandler<StylusEventArgs> PreviewStylusInAirMove { add => AddHandler(PreviewStylusInAirMoveEvent, value); remove => RemoveHandler(PreviewStylusInAirMoveEvent, value); }
+    public event RoutedEventHandler<StylusEventArgs> StylusInAirMove { add => AddHandler(StylusInAirMoveEvent, value); remove => RemoveHandler(StylusInAirMoveEvent, value); }
+    public event RoutedEventHandler<StylusEventArgs> StylusEnter { add => AddHandler(StylusEnterEvent, value); remove => RemoveHandler(StylusEnterEvent, value); }
+    public event RoutedEventHandler<StylusEventArgs> StylusLeave { add => AddHandler(StylusLeaveEvent, value); remove => RemoveHandler(StylusLeaveEvent, value); }
+    public event RoutedEventHandler<StylusEventArgs> PreviewStylusInRange { add => AddHandler(PreviewStylusInRangeEvent, value); remove => RemoveHandler(PreviewStylusInRangeEvent, value); }
+    public event RoutedEventHandler<StylusEventArgs> StylusInRange { add => AddHandler(StylusInRangeEvent, value); remove => RemoveHandler(StylusInRangeEvent, value); }
+    public event RoutedEventHandler<StylusEventArgs> PreviewStylusOutOfRange { add => AddHandler(PreviewStylusOutOfRangeEvent, value); remove => RemoveHandler(PreviewStylusOutOfRangeEvent, value); }
+    public event RoutedEventHandler<StylusEventArgs> StylusOutOfRange { add => AddHandler(StylusOutOfRangeEvent, value); remove => RemoveHandler(StylusOutOfRangeEvent, value); }
+    public event RoutedEventHandler<StylusEventArgs> PreviewStylusSystemGesture { add => AddHandler(PreviewStylusSystemGestureEvent, value); remove => RemoveHandler(PreviewStylusSystemGestureEvent, value); }
+    public event RoutedEventHandler<StylusEventArgs> StylusSystemGesture { add => AddHandler(StylusSystemGestureEvent, value); remove => RemoveHandler(StylusSystemGestureEvent, value); }
+    public event RoutedEventHandler<StylusEventArgs> GotStylusCapture { add => AddHandler(GotStylusCaptureEvent, value); remove => RemoveHandler(GotStylusCaptureEvent, value); }
+    public event RoutedEventHandler<StylusEventArgs> LostStylusCapture { add => AddHandler(LostStylusCaptureEvent, value); remove => RemoveHandler(LostStylusCaptureEvent, value); }
+    public event RoutedEventHandler<StylusEventArgs> PreviewStylusButtonDown { add => AddHandler(PreviewStylusButtonDownEvent, value); remove => RemoveHandler(PreviewStylusButtonDownEvent, value); }
+    public event RoutedEventHandler<StylusEventArgs> StylusButtonDown { add => AddHandler(StylusButtonDownEvent, value); remove => RemoveHandler(StylusButtonDownEvent, value); }
+    public event RoutedEventHandler<StylusEventArgs> PreviewStylusButtonUp { add => AddHandler(PreviewStylusButtonUpEvent, value); remove => RemoveHandler(PreviewStylusButtonUpEvent, value); }
+    public event RoutedEventHandler<StylusEventArgs> StylusButtonUp { add => AddHandler(StylusButtonUpEvent, value); remove => RemoveHandler(StylusButtonUpEvent, value); }
 
-    public event RoutedEventHandler PreviewTouchDown { add => AddHandler(PreviewTouchDownEvent, value); remove => RemoveHandler(PreviewTouchDownEvent, value); }
-    public event RoutedEventHandler TouchDown { add => AddHandler(TouchDownEvent, value); remove => RemoveHandler(TouchDownEvent, value); }
-    public event RoutedEventHandler PreviewTouchMove { add => AddHandler(PreviewTouchMoveEvent, value); remove => RemoveHandler(PreviewTouchMoveEvent, value); }
-    public event RoutedEventHandler TouchMove { add => AddHandler(TouchMoveEvent, value); remove => RemoveHandler(TouchMoveEvent, value); }
-    public event RoutedEventHandler PreviewTouchUp { add => AddHandler(PreviewTouchUpEvent, value); remove => RemoveHandler(PreviewTouchUpEvent, value); }
-    public event RoutedEventHandler TouchUp { add => AddHandler(TouchUpEvent, value); remove => RemoveHandler(TouchUpEvent, value); }
-    public event RoutedEventHandler TouchEnter { add => AddHandler(TouchEnterEvent, value); remove => RemoveHandler(TouchEnterEvent, value); }
-    public event RoutedEventHandler TouchLeave { add => AddHandler(TouchLeaveEvent, value); remove => RemoveHandler(TouchLeaveEvent, value); }
-    public event RoutedEventHandler GotTouchCapture { add => AddHandler(GotTouchCaptureEvent, value); remove => RemoveHandler(GotTouchCaptureEvent, value); }
-    public event RoutedEventHandler LostTouchCapture { add => AddHandler(LostTouchCaptureEvent, value); remove => RemoveHandler(LostTouchCaptureEvent, value); }
+    public event RoutedEventHandler<TouchEventArgs> PreviewTouchDown { add => AddHandler(PreviewTouchDownEvent, value); remove => RemoveHandler(PreviewTouchDownEvent, value); }
+    public event RoutedEventHandler<TouchEventArgs> TouchDown { add => AddHandler(TouchDownEvent, value); remove => RemoveHandler(TouchDownEvent, value); }
+    public event RoutedEventHandler<TouchEventArgs> PreviewTouchMove { add => AddHandler(PreviewTouchMoveEvent, value); remove => RemoveHandler(PreviewTouchMoveEvent, value); }
+    public event RoutedEventHandler<TouchEventArgs> TouchMove { add => AddHandler(TouchMoveEvent, value); remove => RemoveHandler(TouchMoveEvent, value); }
+    public event RoutedEventHandler<TouchEventArgs> PreviewTouchUp { add => AddHandler(PreviewTouchUpEvent, value); remove => RemoveHandler(PreviewTouchUpEvent, value); }
+    public event RoutedEventHandler<TouchEventArgs> TouchUp { add => AddHandler(TouchUpEvent, value); remove => RemoveHandler(TouchUpEvent, value); }
+    public event RoutedEventHandler<TouchEventArgs> TouchEnter { add => AddHandler(TouchEnterEvent, value); remove => RemoveHandler(TouchEnterEvent, value); }
+    public event RoutedEventHandler<TouchEventArgs> TouchLeave { add => AddHandler(TouchLeaveEvent, value); remove => RemoveHandler(TouchLeaveEvent, value); }
+    public event RoutedEventHandler<TouchEventArgs> GotTouchCapture { add => AddHandler(GotTouchCaptureEvent, value); remove => RemoveHandler(GotTouchCaptureEvent, value); }
+    public event RoutedEventHandler<TouchEventArgs> LostTouchCapture { add => AddHandler(LostTouchCaptureEvent, value); remove => RemoveHandler(LostTouchCaptureEvent, value); }
 
     public event RoutedEventHandler ManipulationStarting { add => AddHandler(ManipulationStartingEvent, value); remove => RemoveHandler(ManipulationStartingEvent, value); }
     public event RoutedEventHandler ManipulationStarted { add => AddHandler(ManipulationStartedEvent, value); remove => RemoveHandler(ManipulationStartedEvent, value); }
@@ -120,8 +120,8 @@ public partial class UIElement
 
     public event RoutedEventHandler PreviewQueryContinueDrag { add => AddHandler(PreviewQueryContinueDragEvent, value); remove => RemoveHandler(PreviewQueryContinueDragEvent, value); }
     public event RoutedEventHandler PreviewGiveFeedback { add => AddHandler(PreviewGiveFeedbackEvent, value); remove => RemoveHandler(PreviewGiveFeedbackEvent, value); }
-    public event RoutedEventHandler PreviewDragEnter { add => AddHandler(PreviewDragEnterEvent, value); remove => RemoveHandler(PreviewDragEnterEvent, value); }
-    public event RoutedEventHandler PreviewDragOver { add => AddHandler(PreviewDragOverEvent, value); remove => RemoveHandler(PreviewDragOverEvent, value); }
-    public event RoutedEventHandler PreviewDragLeave { add => AddHandler(PreviewDragLeaveEvent, value); remove => RemoveHandler(PreviewDragLeaveEvent, value); }
-    public event RoutedEventHandler PreviewDrop { add => AddHandler(PreviewDropEvent, value); remove => RemoveHandler(PreviewDropEvent, value); }
+    public event RoutedEventHandler<DragEventArgs> PreviewDragEnter { add => AddHandler(PreviewDragEnterEvent, value); remove => RemoveHandler(PreviewDragEnterEvent, value); }
+    public event RoutedEventHandler<DragEventArgs> PreviewDragOver { add => AddHandler(PreviewDragOverEvent, value); remove => RemoveHandler(PreviewDragOverEvent, value); }
+    public event RoutedEventHandler<DragEventArgs> PreviewDragLeave { add => AddHandler(PreviewDragLeaveEvent, value); remove => RemoveHandler(PreviewDragLeaveEvent, value); }
+    public event RoutedEventHandler<DragEventArgs> PreviewDrop { add => AddHandler(PreviewDropEvent, value); remove => RemoveHandler(PreviewDropEvent, value); }
 }

@@ -27,8 +27,8 @@ root.VisualChildren.Add(pad);
 root.ProcessFrame();
 
 List<string> seen = [];
-pad.AddHandler(InputEvents.TouchDownEvent, (_, args) => seen.Add("Down " + ((TouchEventArgs)args).Action));
-pad.AddHandler(InputEvents.TouchUpEvent, (_, args) => seen.Add("Up " + ((TouchEventArgs)args).TouchId));
+pad.TouchDown += (_, args) => seen.Add("Down " + args.Action);
+pad.TouchUp += (_, args) => seen.Add("Up " + args.TouchId);
 
 new TouchInputBridge().Dispatch(root, new TouchInputFrame(
     new TouchInputPoint(7, 100, 100, TouchInputAction.Down),

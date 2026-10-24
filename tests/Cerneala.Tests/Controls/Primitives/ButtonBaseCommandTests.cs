@@ -45,7 +45,7 @@ public sealed class ButtonBaseCommandTests
         button.Command = command;
         button.CommandParameter = "file";
         object? received = null;
-        root.CommandBindings.Add(new CommandBinding(command, (_, args) => received = ((ExecutedRoutedEventArgs)args).Parameter, (_, args) =>
+        root.CommandBindings.Add(new CommandBinding(command, (_, args) => received = args.Parameter, (_, args) =>
         {
             args.CanExecute = true;
             args.Handled = true;

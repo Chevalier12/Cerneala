@@ -15,7 +15,7 @@ Inheritance: `object` -> `InputEvents`
 
 ## Examples
 
-Register a handler for a routed keyboard event and inspect the event catalog:
+Register a typed handler for a routed keyboard event and inspect the event catalog. `InputEvents.KeyDownEvent` raises `KeyEventArgs`, so `AddHandler<KeyEventArgs>` hands the handler a `KeyEventArgs` with no cast:
 
 ```csharp
 using Cerneala.UI.Elements;
@@ -23,11 +23,9 @@ using Cerneala.UI.Input;
 
 var element = new UIElement();
 
-element.Handlers.AddHandler(InputEvents.KeyDownEvent, (_, args) =>
+element.AddHandler<KeyEventArgs>(InputEvents.KeyDownEvent, (_, args) =>
 {
-    var keyArgs = (KeyEventArgs)args;
-
-    if (keyArgs.Key == InputKey.Enter)
+    if (args.Key == InputKey.Enter)
     {
         args.Handled = true;
     }

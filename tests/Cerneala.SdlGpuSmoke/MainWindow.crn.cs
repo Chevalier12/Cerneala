@@ -157,12 +157,10 @@ public partial class MainWindow : Window
         StatusText.Text = "servo: activated";
     }
 
-    private void OnPreviewKeyDown(MainWindow sender, RoutedEventArgs args)
+    private void OnPreviewKeyDown(MainWindow sender, KeyEventArgs args)
     {
         inputObserved = true;
-        StatusText.Text = args is KeyEventArgs key
-            ? $"input: {key.Key}"
-            : "input observed";
+        StatusText.Text = $"input: {args.Key}";
     }
 
     private void OnFrameRendered(object? sender, EventArgs args)

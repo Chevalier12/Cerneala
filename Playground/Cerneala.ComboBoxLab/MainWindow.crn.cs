@@ -60,9 +60,9 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnPreviewKeyDown(MainWindow sender, RoutedEventArgs args)
+    private void OnPreviewKeyDown(MainWindow sender, KeyEventArgs args)
     {
-        if (args is KeyEventArgs { Key: InputKey.F12 })
+        if (args.Key == InputKey.F12)
         {
             captureRequested = true;
             Invalidate(InvalidationFlags.Render, "ComboBox lab API capture");

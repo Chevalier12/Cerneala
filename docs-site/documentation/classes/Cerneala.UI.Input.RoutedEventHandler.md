@@ -49,6 +49,8 @@ When `UIElement.RaiseEvent` calls only the element's own handlers, because the e
 
 In markup, an event attribute such as `<Button Click="OnSave" />` calls a code-behind method whose first parameter has the exact type of the element: `OnSave(Button sender, RoutedEventArgs args)`. The first parameter may also be a base type of the element (`UIElement` or `object`).
 
+`RoutedEventHandler` receives plain `RoutedEventArgs`. Routed events that raise a more specific type use [RoutedEventHandler&lt;TArgs&gt;](Cerneala.UI.Input.RoutedEventHandler_TArgs_.md) instead, so the handler needs no cast: `MouseDown` is `event RoutedEventHandler<MouseButtonEventArgs>`. Events whose args type is exactly `RoutedEventArgs`, such as `Click`, `Loaded`, and `GotFocus`, use this delegate.
+
 A handler runs only when `args.Handled` is `false`, unless it was added with `handledEventsToo: true`.
 
 Register a handler with `UIElement.AddHandler`, `UiInputTree.AddHandler`, or a CLR event that wraps a routed event, such as `ButtonBase.Click`. Typed CLR events such as `EventHandler<TEventArgs>` use an internal adapter that passes the element object as `sender` instead.
@@ -58,7 +60,7 @@ Register a handler with `UIElement.AddHandler`, `UiInputTree.AddHandler`, or a C
 | Name | Type | Description |
 | --- | --- | --- |
 | `sender` | `object` | The element whose handler is running. Cast it to `UIElement` or the element type. |
-| `args` | `RoutedEventArgs` | The routed event data. Cast it to the event's argument type, for example `MouseButtonEventArgs`. |
+| `args` | `RoutedEventArgs` | The routed event data. For an event with a more specific args type, register a `RoutedEventHandler<TArgs>` instead of casting. |
 
 ## Applies to
 
@@ -66,6 +68,7 @@ Register a handler with `UIElement.AddHandler`, `UiInputTree.AddHandler`, or a C
 
 ## See also
 
+- `Cerneala.UI.Input.RoutedEventHandler<TArgs>`
 - `Cerneala.UI.Input.RoutedEventArgs`
 - `Cerneala.UI.Input.RoutedEvent`
 - `Cerneala.UI.Input.RoutedEventRouter`

@@ -17,24 +17,21 @@ Inheritance:
 `object` -> `RoutedEventArgs` -> `DragEventArgs`
 
 ## Examples
+`UIElement.Drop` is a `RoutedEventHandler<DragEventArgs>`, so `args` is a `DragEventArgs` and needs no cast.
+
 ```csharp
 UIElement target = new();
 
-target.Handlers.AddHandler(InputEvents.DropEvent, (_, args) =>
+target.Drop += (_, args) =>
 {
-    if (args is not DragEventArgs dragArgs)
+    if (args.Data.TryGetData<string>("text/plain", out string? text))
     {
-        return;
-    }
-
-    if (dragArgs.Data.TryGetData<string>("text/plain", out string? text))
-    {
-        float x = dragArgs.X;
-        float y = dragArgs.Y;
+        float x = args.X;
+        float y = args.Y;
 
         // Use text with the drop coordinates.
     }
-});
+};
 ```
 
 ## Remarks

@@ -4,6 +4,9 @@ namespace Cerneala.UI.Input;
 
 public delegate void RoutedEventHandler(object sender, RoutedEventArgs args);
 
+public delegate void RoutedEventHandler<in TArgs>(object sender, TArgs args)
+    where TArgs : RoutedEventArgs;
+
 internal readonly record struct InputRoutedEventHandlerRegistration(RoutedEventHandler Handler, bool HandledEventsToo);
 
 public sealed class UiInputTree

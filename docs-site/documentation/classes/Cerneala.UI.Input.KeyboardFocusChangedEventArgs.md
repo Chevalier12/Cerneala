@@ -17,7 +17,7 @@ Inheritance:
 `object` -> `RoutedEventArgs` -> `KeyboardFocusChangedEventArgs`
 
 ## Examples
-The focus events are registered on `InputEvents` and delivered through the routed event system. Handlers receive `RoutedEventArgs`, so cast to `KeyboardFocusChangedEventArgs` when handling keyboard focus events.
+The focus events are registered on `InputEvents` and delivered through the routed event system. The CLR events `UIElement.GotKeyboardFocus`, `LostKeyboardFocus`, `PreviewGotKeyboardFocus`, and `PreviewLostKeyboardFocus` are `RoutedEventHandler<KeyboardFocusChangedEventArgs>`, so the handler receives `KeyboardFocusChangedEventArgs` and needs no cast.
 
 ```csharp
 using Cerneala.UI.Elements;
@@ -25,16 +25,13 @@ using Cerneala.UI.Input;
 
 void AttachFocusHandler(UIElement element)
 {
-    element.Handlers.AddHandler(InputEvents.GotKeyboardFocusEvent, (_, args) =>
+    element.GotKeyboardFocus += (_, args) =>
     {
-        if (args is KeyboardFocusChangedEventArgs focusArgs)
-        {
-            object? oldFocus = focusArgs.OldFocus;
-            object? newFocus = focusArgs.NewFocus;
+        object? oldFocus = args.OldFocus;
+        object? newFocus = args.NewFocus;
 
-            // Use oldFocus and newFocus to update local focus-dependent state.
-        }
-    });
+        // Use oldFocus and newFocus to update local focus-dependent state.
+    };
 }
 ```
 

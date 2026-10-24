@@ -17,8 +17,8 @@ public class Control : UIElement
     public static readonly RoutedEvent PreviewMouseDoubleClickEvent = InputEvents.PreviewMouseDoubleClickEvent.AddOwner(typeof(Control));
     public static readonly RoutedEvent MouseDoubleClickEvent = InputEvents.MouseDoubleClickEvent.AddOwner(typeof(Control));
 
-    public event RoutedEventHandler PreviewMouseDoubleClick { add => AddHandler(PreviewMouseDoubleClickEvent, value); remove => RemoveHandler(PreviewMouseDoubleClickEvent, value); }
-    public event RoutedEventHandler MouseDoubleClick { add => AddHandler(MouseDoubleClickEvent, value); remove => RemoveHandler(MouseDoubleClickEvent, value); }
+    public event RoutedEventHandler<MouseButtonEventArgs> PreviewMouseDoubleClick { add => AddHandler(PreviewMouseDoubleClickEvent, value); remove => RemoveHandler(PreviewMouseDoubleClickEvent, value); }
+    public event RoutedEventHandler<MouseButtonEventArgs> MouseDoubleClick { add => AddHandler(MouseDoubleClickEvent, value); remove => RemoveHandler(MouseDoubleClickEvent, value); }
     public static readonly UiProperty<ComponentTemplate?> ComponentTemplateProperty = UiProperty<ComponentTemplate?>.Register(
         nameof(ComponentTemplate),
         typeof(Control),

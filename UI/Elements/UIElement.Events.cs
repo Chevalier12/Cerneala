@@ -56,36 +56,36 @@ public partial class UIElement
 
     public event RoutedEventHandler Loaded { add => AddHandler(LoadedEvent, value); remove => RemoveHandler(LoadedEvent, value); }
     public event RoutedEventHandler Unloaded { add => AddHandler(UnloadedEvent, value); remove => RemoveHandler(UnloadedEvent, value); }
-    public event RoutedEventHandler SizeChanged { add => AddHandler(SizeChangedEvent, value); remove => RemoveHandler(SizeChangedEvent, value); }
+    public event RoutedEventHandler<SizeChangedEventArgs> SizeChanged { add => AddHandler(SizeChangedEvent, value); remove => RemoveHandler(SizeChangedEvent, value); }
     public event EventHandler<RequestBringIntoViewEventArgs> RequestBringIntoView { add => AddTypedHandler(RequestBringIntoViewEvent, value); remove => RemoveTypedHandler(RequestBringIntoViewEvent, value); }
-    public event RoutedEventHandler PreviewMouseDown { add => AddHandler(PreviewMouseDownEvent, value); remove => RemoveHandler(PreviewMouseDownEvent, value); }
-    public event RoutedEventHandler MouseDown { add => AddHandler(MouseDownEvent, value); remove => RemoveHandler(MouseDownEvent, value); }
-    public event RoutedEventHandler PreviewMouseUp { add => AddHandler(PreviewMouseUpEvent, value); remove => RemoveHandler(PreviewMouseUpEvent, value); }
-    public event RoutedEventHandler MouseUp { add => AddHandler(MouseUpEvent, value); remove => RemoveHandler(MouseUpEvent, value); }
-    public event RoutedEventHandler PreviewMouseMove { add => AddHandler(PreviewMouseMoveEvent, value); remove => RemoveHandler(PreviewMouseMoveEvent, value); }
-    public event RoutedEventHandler MouseMove { add => AddHandler(MouseMoveEvent, value); remove => RemoveHandler(MouseMoveEvent, value); }
-    public event RoutedEventHandler PreviewMouseWheel { add => AddHandler(PreviewMouseWheelEvent, value); remove => RemoveHandler(PreviewMouseWheelEvent, value); }
-    public event RoutedEventHandler MouseWheel { add => AddHandler(MouseWheelEvent, value); remove => RemoveHandler(MouseWheelEvent, value); }
-    public event RoutedEventHandler MouseEnter { add => AddHandler(MouseEnterEvent, value); remove => RemoveHandler(MouseEnterEvent, value); }
-    public event RoutedEventHandler MouseLeave { add => AddHandler(MouseLeaveEvent, value); remove => RemoveHandler(MouseLeaveEvent, value); }
-    public event RoutedEventHandler GotMouseCapture { add => AddHandler(GotMouseCaptureEvent, value); remove => RemoveHandler(GotMouseCaptureEvent, value); }
-    public event RoutedEventHandler LostMouseCapture { add => AddHandler(LostMouseCaptureEvent, value); remove => RemoveHandler(LostMouseCaptureEvent, value); }
-    public event RoutedEventHandler PreviewKeyDown { add => AddHandler(PreviewKeyDownEvent, value); remove => RemoveHandler(PreviewKeyDownEvent, value); }
-    public event RoutedEventHandler KeyDown { add => AddHandler(KeyDownEvent, value); remove => RemoveHandler(KeyDownEvent, value); }
-    public event RoutedEventHandler PreviewKeyUp { add => AddHandler(PreviewKeyUpEvent, value); remove => RemoveHandler(PreviewKeyUpEvent, value); }
-    public event RoutedEventHandler KeyUp { add => AddHandler(KeyUpEvent, value); remove => RemoveHandler(KeyUpEvent, value); }
-    public event RoutedEventHandler PreviewGotKeyboardFocus { add => AddHandler(PreviewGotKeyboardFocusEvent, value); remove => RemoveHandler(PreviewGotKeyboardFocusEvent, value); }
-    public event RoutedEventHandler GotKeyboardFocus { add => AddHandler(GotKeyboardFocusEvent, value); remove => RemoveHandler(GotKeyboardFocusEvent, value); }
-    public event RoutedEventHandler PreviewLostKeyboardFocus { add => AddHandler(PreviewLostKeyboardFocusEvent, value); remove => RemoveHandler(PreviewLostKeyboardFocusEvent, value); }
-    public event RoutedEventHandler LostKeyboardFocus { add => AddHandler(LostKeyboardFocusEvent, value); remove => RemoveHandler(LostKeyboardFocusEvent, value); }
+    public event RoutedEventHandler<MouseButtonEventArgs> PreviewMouseDown { add => AddHandler(PreviewMouseDownEvent, value); remove => RemoveHandler(PreviewMouseDownEvent, value); }
+    public event RoutedEventHandler<MouseButtonEventArgs> MouseDown { add => AddHandler(MouseDownEvent, value); remove => RemoveHandler(MouseDownEvent, value); }
+    public event RoutedEventHandler<MouseButtonEventArgs> PreviewMouseUp { add => AddHandler(PreviewMouseUpEvent, value); remove => RemoveHandler(PreviewMouseUpEvent, value); }
+    public event RoutedEventHandler<MouseButtonEventArgs> MouseUp { add => AddHandler(MouseUpEvent, value); remove => RemoveHandler(MouseUpEvent, value); }
+    public event RoutedEventHandler<MouseEventArgs> PreviewMouseMove { add => AddHandler(PreviewMouseMoveEvent, value); remove => RemoveHandler(PreviewMouseMoveEvent, value); }
+    public event RoutedEventHandler<MouseEventArgs> MouseMove { add => AddHandler(MouseMoveEvent, value); remove => RemoveHandler(MouseMoveEvent, value); }
+    public event RoutedEventHandler<MouseWheelEventArgs> PreviewMouseWheel { add => AddHandler(PreviewMouseWheelEvent, value); remove => RemoveHandler(PreviewMouseWheelEvent, value); }
+    public event RoutedEventHandler<MouseWheelEventArgs> MouseWheel { add => AddHandler(MouseWheelEvent, value); remove => RemoveHandler(MouseWheelEvent, value); }
+    public event RoutedEventHandler<MouseEventArgs> MouseEnter { add => AddHandler(MouseEnterEvent, value); remove => RemoveHandler(MouseEnterEvent, value); }
+    public event RoutedEventHandler<MouseEventArgs> MouseLeave { add => AddHandler(MouseLeaveEvent, value); remove => RemoveHandler(MouseLeaveEvent, value); }
+    public event RoutedEventHandler<MouseEventArgs> GotMouseCapture { add => AddHandler(GotMouseCaptureEvent, value); remove => RemoveHandler(GotMouseCaptureEvent, value); }
+    public event RoutedEventHandler<MouseEventArgs> LostMouseCapture { add => AddHandler(LostMouseCaptureEvent, value); remove => RemoveHandler(LostMouseCaptureEvent, value); }
+    public event RoutedEventHandler<KeyEventArgs> PreviewKeyDown { add => AddHandler(PreviewKeyDownEvent, value); remove => RemoveHandler(PreviewKeyDownEvent, value); }
+    public event RoutedEventHandler<KeyEventArgs> KeyDown { add => AddHandler(KeyDownEvent, value); remove => RemoveHandler(KeyDownEvent, value); }
+    public event RoutedEventHandler<KeyEventArgs> PreviewKeyUp { add => AddHandler(PreviewKeyUpEvent, value); remove => RemoveHandler(PreviewKeyUpEvent, value); }
+    public event RoutedEventHandler<KeyEventArgs> KeyUp { add => AddHandler(KeyUpEvent, value); remove => RemoveHandler(KeyUpEvent, value); }
+    public event RoutedEventHandler<KeyboardFocusChangedEventArgs> PreviewGotKeyboardFocus { add => AddHandler(PreviewGotKeyboardFocusEvent, value); remove => RemoveHandler(PreviewGotKeyboardFocusEvent, value); }
+    public event RoutedEventHandler<KeyboardFocusChangedEventArgs> GotKeyboardFocus { add => AddHandler(GotKeyboardFocusEvent, value); remove => RemoveHandler(GotKeyboardFocusEvent, value); }
+    public event RoutedEventHandler<KeyboardFocusChangedEventArgs> PreviewLostKeyboardFocus { add => AddHandler(PreviewLostKeyboardFocusEvent, value); remove => RemoveHandler(PreviewLostKeyboardFocusEvent, value); }
+    public event RoutedEventHandler<KeyboardFocusChangedEventArgs> LostKeyboardFocus { add => AddHandler(LostKeyboardFocusEvent, value); remove => RemoveHandler(LostKeyboardFocusEvent, value); }
     public event RoutedEventHandler GotFocus { add => AddHandler(GotFocusEvent, value); remove => RemoveHandler(GotFocusEvent, value); }
     public event RoutedEventHandler LostFocus { add => AddHandler(LostFocusEvent, value); remove => RemoveHandler(LostFocusEvent, value); }
-    public event RoutedEventHandler PreviewTextInput { add => AddHandler(PreviewTextInputEvent, value); remove => RemoveHandler(PreviewTextInputEvent, value); }
-    public event RoutedEventHandler TextInput { add => AddHandler(TextInputEvent, value); remove => RemoveHandler(TextInputEvent, value); }
-    public event RoutedEventHandler DragEnter { add => AddHandler(DragEnterEvent, value); remove => RemoveHandler(DragEnterEvent, value); }
-    public event RoutedEventHandler DragLeave { add => AddHandler(DragLeaveEvent, value); remove => RemoveHandler(DragLeaveEvent, value); }
-    public event RoutedEventHandler DragOver { add => AddHandler(DragOverEvent, value); remove => RemoveHandler(DragOverEvent, value); }
-    public event RoutedEventHandler Drop { add => AddHandler(DropEvent, value); remove => RemoveHandler(DropEvent, value); }
+    public event RoutedEventHandler<TextCompositionEventArgs> PreviewTextInput { add => AddHandler(PreviewTextInputEvent, value); remove => RemoveHandler(PreviewTextInputEvent, value); }
+    public event RoutedEventHandler<TextCompositionEventArgs> TextInput { add => AddHandler(TextInputEvent, value); remove => RemoveHandler(TextInputEvent, value); }
+    public event RoutedEventHandler<DragEventArgs> DragEnter { add => AddHandler(DragEnterEvent, value); remove => RemoveHandler(DragEnterEvent, value); }
+    public event RoutedEventHandler<DragEventArgs> DragLeave { add => AddHandler(DragLeaveEvent, value); remove => RemoveHandler(DragLeaveEvent, value); }
+    public event RoutedEventHandler<DragEventArgs> DragOver { add => AddHandler(DragOverEvent, value); remove => RemoveHandler(DragOverEvent, value); }
+    public event RoutedEventHandler<DragEventArgs> Drop { add => AddHandler(DropEvent, value); remove => RemoveHandler(DropEvent, value); }
     public event RoutedEventHandler GiveFeedback { add => AddHandler(GiveFeedbackEvent, value); remove => RemoveHandler(GiveFeedbackEvent, value); }
     public event RoutedEventHandler QueryContinueDrag { add => AddHandler(QueryContinueDragEvent, value); remove => RemoveHandler(QueryContinueDragEvent, value); }
 
@@ -99,6 +99,28 @@ public partial class UIElement
     public void RemoveHandler(RoutedEvent routedEvent, RoutedEventHandler handler)
     {
         Handlers.RemoveHandler(routedEvent, handler);
+    }
+
+    // The handler receives the event's args as TArgs. TArgs must accept the event's ArgsType, so the cast in the
+    // adapter cannot fail: MouseDownEvent (MouseButtonEventArgs) accepts MouseButtonEventArgs, MouseEventArgs or
+    // RoutedEventArgs, and refuses KeyEventArgs.
+    public void AddHandler<TArgs>(RoutedEvent routedEvent, RoutedEventHandler<TArgs> handler, bool handledEventsToo = false)
+        where TArgs : RoutedEventArgs
+    {
+        ArgumentNullException.ThrowIfNull(routedEvent);
+        ArgumentNullException.ThrowIfNull(handler);
+        if (!typeof(TArgs).IsAssignableFrom(routedEvent.ArgsType))
+        {
+            throw new ArgumentException($"Event '{routedEvent.Name}' raises {routedEvent.ArgsType.Name}, which is not assignable to {typeof(TArgs).Name}.", nameof(handler));
+        }
+
+        AddAdaptedHandler(routedEvent, handler, (sender, args) => handler(sender, (TArgs)args), handledEventsToo);
+    }
+
+    public void RemoveHandler<TArgs>(RoutedEvent routedEvent, RoutedEventHandler<TArgs> handler)
+        where TArgs : RoutedEventArgs
+    {
+        RemoveAdaptedHandler(routedEvent, handler);
     }
 
     public void RaiseEvent(RoutedEventArgs args)
@@ -151,7 +173,19 @@ public partial class UIElement
         where TEventArgs : RoutedEventArgs
     {
         ArgumentNullException.ThrowIfNull(handler);
-        RoutedEventHandler adapter = (_, args) => handler(this, (TEventArgs)args);
+        AddAdaptedHandler(routedEvent, handler, (_, args) => handler(this, (TEventArgs)args), handledEventsToo: false);
+    }
+
+    protected void RemoveTypedHandler<TEventArgs>(RoutedEvent routedEvent, EventHandler<TEventArgs> handler)
+        where TEventArgs : RoutedEventArgs
+    {
+        RemoveAdaptedHandler(routedEvent, handler);
+    }
+
+    // A typed handler is stored as an untyped adapter. The adapters of one (event, handler) pair are kept on a stack,
+    // so removing the handler removes exactly one of its registrations.
+    private void AddAdaptedHandler(RoutedEvent routedEvent, Delegate handler, RoutedEventHandler adapter, bool handledEventsToo)
+    {
         (RoutedEvent, Delegate) key = (routedEvent, handler);
         if (!typedHandlerAdapters.TryGetValue(key, out Stack<RoutedEventHandler>? adapters))
         {
@@ -160,11 +194,10 @@ public partial class UIElement
         }
 
         adapters.Push(adapter);
-        AddHandler(routedEvent, adapter);
+        AddHandler(routedEvent, adapter, handledEventsToo);
     }
 
-    protected void RemoveTypedHandler<TEventArgs>(RoutedEvent routedEvent, EventHandler<TEventArgs> handler)
-        where TEventArgs : RoutedEventArgs
+    private void RemoveAdaptedHandler(RoutedEvent routedEvent, Delegate handler)
     {
         (RoutedEvent, Delegate) key = (routedEvent, handler);
         if (!typedHandlerAdapters.TryGetValue(key, out Stack<RoutedEventHandler>? adapters) || adapters.Count == 0)

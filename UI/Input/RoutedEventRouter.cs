@@ -42,6 +42,10 @@ public static class RoutedEventRouter
         ArgumentNullException.ThrowIfNull(tree);
         ArgumentNullException.ThrowIfNull(target);
         ArgumentNullException.ThrowIfNull(args);
+        if (!args.RoutedEvent.ArgsType.IsInstanceOfType(args))
+        {
+            throw new ArgumentException($"Event '{args.RoutedEvent.Name}' requires args assignable to {args.RoutedEvent.ArgsType.Name}.", nameof(args));
+        }
 
         IReadOnlyList<UIElement> routeToRoot = tree.GetRouteToRoot(target);
         IEnumerable<UIElement> route = args.RoutedEvent.RoutingStrategy switch

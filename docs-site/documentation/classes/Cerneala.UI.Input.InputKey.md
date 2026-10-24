@@ -26,13 +26,13 @@ Console.WriteLine(keyboard.IsDown(InputKey.Escape)); // True
 Console.WriteLine(keyboard.IsDown(InputKey.None));   // False, None is dropped
 
 UIElement panel = new() { Focusable = true };
-panel.AddHandler(InputEvents.KeyDownEvent, (_, args) =>
+panel.KeyDown += (_, args) =>
 {
-    if (args is KeyEventArgs { Key: InputKey.Escape })
+    if (args.Key == InputKey.Escape)
     {
         args.Handled = true;
     }
-});
+};
 ```
 
 ## Remarks
@@ -53,7 +53,7 @@ A key raises its key events and, separately, the text it types. Example: with Nu
 
 ```csharp
 TextBox box = new();
-box.KeyDown += (_, e) => Console.WriteLine(((KeyEventArgs)e).Key);
+box.KeyDown += (_, e) => Console.WriteLine(e.Key);
 // Keypad 5 pressed in the focused box prints "NumPad5", and the box text becomes "5".
 ```
 

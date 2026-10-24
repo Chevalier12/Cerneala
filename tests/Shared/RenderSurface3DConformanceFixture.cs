@@ -224,10 +224,9 @@ internal sealed class RenderSurface3DConformanceFixture
         ? RenderProjection3D.Orthographic(orthographicHeight, .01f, 100)
         : RenderProjection3D.Perspective(MathF.PI / 3, .01f, 100);
 
-    private void OnWheel(object _, RoutedEventArgs args)
+    private void OnWheel(object _, MouseWheelEventArgs args)
     {
-        if (args is not MouseWheelEventArgs wheel) return;
-        distance = Math.Clamp(distance * MathF.Exp(-wheel.Delta / 1200f), 2, 15);
+        distance = Math.Clamp(distance * MathF.Exp(-args.Delta / 1200f), 2, 15);
         orthographicHeight = 3.5f * distance / 5.2f;
         if (surface.Projection.Kind == RenderProjection3DKind.Orthographic)
             surface.Projection = RenderProjection3D.Orthographic(orthographicHeight, .01f, 100);

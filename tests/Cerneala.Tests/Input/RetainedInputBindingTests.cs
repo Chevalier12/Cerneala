@@ -28,7 +28,7 @@ public sealed class RetainedInputBindingTests
         RoutedCommand command = new("Save", typeof(RetainedInputBindingTests));
         object? receivedParameter = null;
         child.InputBindings.Add(new KeyBinding(command, InputKey.S, KeyModifiers.Control, "file"));
-        child.CommandBindings.Add(new CommandBinding(command, (_, args) => receivedParameter = ((ExecutedRoutedEventArgs)args).Parameter, (_, args) =>
+        child.CommandBindings.Add(new CommandBinding(command, (_, args) => receivedParameter = args.Parameter, (_, args) =>
         {
             args.CanExecute = true;
             args.Handled = true;

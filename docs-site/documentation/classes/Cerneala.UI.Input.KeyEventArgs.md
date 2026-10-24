@@ -18,30 +18,28 @@ Inheritance:
 
 ## Examples
 
-Handle a routed key event by casting the routed arguments to `KeyEventArgs` and marking the event as handled.
+Handle a routed key event and mark it as handled. `UIElement.KeyDown` is a `RoutedEventHandler<KeyEventArgs>`, so `args` is already a `KeyEventArgs` and needs no cast.
 
 ```csharp
-target.Handlers.AddHandler(InputEvents.KeyDownEvent, (_, args) =>
+target.KeyDown += (_, args) =>
 {
-    if (args is KeyEventArgs keyArgs &&
-        keyArgs.Key == InputKey.Enter &&
-        keyArgs.IsControlDown)
+    if (args.Key == InputKey.Enter && args.IsControlDown)
     {
         args.Handled = true;
     }
-});
+};
 ```
 
 React only to the first press of a held key and ignore the auto-repeated `KeyDown` events that follow while the key stays down.
 
 ```csharp
-target.Handlers.AddHandler(InputEvents.KeyDownEvent, (_, args) =>
+target.KeyDown += (_, args) =>
 {
-    if (args is KeyEventArgs { Key: InputKey.F5, IsRepeat: false })
+    if (args is { Key: InputKey.F5, IsRepeat: false })
     {
         args.Handled = true;
     }
-});
+};
 ```
 
 Holding F5 on the SDL3 desktop backend raises one `KeyDown` with `IsRepeat == false`, then one `KeyDown` with `IsRepeat == true` for each operating-system auto-repeat. The handler above handles only the first one.

@@ -33,8 +33,7 @@ element.CommandBindings.Add(new CommandBinding(
     saveCommand,
     (_, args) =>
     {
-        ExecutedRoutedEventArgs executedArgs = (ExecutedRoutedEventArgs)args;
-        savedParameter = executedArgs.Parameter;
+        savedParameter = args.Parameter;
         args.Handled = true;
     },
     (_, args) =>
@@ -48,7 +47,7 @@ element.CommandBindings.Add(new CommandBinding(
 
 `CommandBinding` is the per-command callback object used by `CommandBindingCollection` and `CommandRouter`. A binding stores one command reference and invokes its callbacks only when the routed event arguments carry the same command object. Matching uses reference equality through `ReferenceEquals(Command, args.Command)`.
 
-The executed callback uses the general `RoutedEventHandler` delegate, so code that needs command-specific data such as `Parameter` casts the event arguments to `ExecutedRoutedEventArgs`. The can-execute callback receives `CanExecuteRoutedEventArgs` directly and can set `CanExecute` and `Handled`. Both callbacks receive the element whose binding runs as `sender` (an `object`).
+The executed callback is a `RoutedEventHandler<ExecutedRoutedEventArgs>`, so it reads command-specific data such as `Parameter` directly, without a cast. The can-execute callback receives `CanExecuteRoutedEventArgs` directly and can set `CanExecute` and `Handled`. Both callbacks receive the element whose binding runs as `sender` (an `object`).
 
 Both callbacks can be `null`. `executed` has no default value, so pass `null` explicitly when you only need `canExecute`. If a matching event is raised and the corresponding callback is `null`, the binding does nothing. `OnExecuted` and `OnCanExecute` throw `ArgumentNullException` when their `args` argument is `null`; the constructor throws `ArgumentNullException` when `command` is `null`.
 
@@ -58,7 +57,7 @@ When a binding is stored in a `CommandBindingCollection`, bindings are invoked i
 
 | Name | Description |
 | --- | --- |
-| `CommandBinding(ICommand command, RoutedEventHandler? executed, Action<object, CanExecuteRoutedEventArgs>? canExecute = null)` | Initializes a command binding for `command` with an executed callback and an optional can-execute callback; both can be `null`. Throws `ArgumentNullException` when `command` is `null`. |
+| `CommandBinding(ICommand command, RoutedEventHandler<ExecutedRoutedEventArgs>? executed, Action<object, CanExecuteRoutedEventArgs>? canExecute = null)` | Initializes a command binding for `command` with an executed callback and an optional can-execute callback; both can be `null`. Throws `ArgumentNullException` when `command` is `null`. |
 
 ## Properties
 

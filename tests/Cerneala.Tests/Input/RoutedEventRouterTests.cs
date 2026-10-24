@@ -139,4 +139,22 @@ public sealed class RoutedEventRouterTests
 
         Assert.Equal(["button", "root"], calls);
     }
+
+    // As UIElement.RaiseEvent, the router refuses args that are not the event's ArgsType, before any handler runs: a
+    // MouseDown handler always receives MouseButtonEventArgs.
+    [Fact]
+    public void RaiseWithArgsThatAreNotTheEventArgsTypeThrowsBeforeAnyHandlerRuns()
+    {
+        UiInputTree tree = new();
+        UIElement button = new();
+        bool called = false;
+        tree.Add(button, null);
+        tree.AddHandler(button, InputEvents.MouseDownEvent, (_, _) => called = true);
+
+        ArgumentException exception = Assert.Throws<ArgumentException>(
+            () => RoutedEventRouter.Raise(tree, button, new RoutedEventArgs(InputEvents.MouseDownEvent, button)));
+
+        Assert.Equal("args", exception.ParamName);
+        Assert.False(called);
+    }
 }
