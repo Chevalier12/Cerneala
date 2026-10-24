@@ -7,9 +7,10 @@ using Cerneala.UI.Resources;
 namespace Cerneala.UI.Controls;
 
 // Parent-space bounds of a container's scene children, kept contiguous so a
-// per-frame traversal culls without touching every child object. A sprite
-// entry changes only when that sprite reports a geometry change; any other
-// node type is marked live and evaluated exactly on every traversal.
+// per-frame traversal culls without touching every child object. A sprite, or
+// a scene group whose whole subtree reports its bounds, changes only when it
+// reports a geometry change; any other node type is marked live and evaluated
+// exactly on every traversal.
 internal sealed class SceneChildBoundsIndex2D
 {
     // Entries spanning more cells than this are visited on every traversal.
@@ -28,6 +29,8 @@ internal sealed class SceneChildBoundsIndex2D
     private float cellSize = 256;
     // Entries without finite bounds, not prunable, live or oversized.
     private ulong[] always = [];
+    // Scene groups: input candidates even when their bounds miss the point.
+    private ulong[] branches = [];
     // Entries a traversal must visit even when culled: they may hold images,
     // or have a pending park evaluation.
     private ulong[] attention = [];
@@ -242,6 +245,8 @@ internal sealed class SceneChildBoundsIndex2D
         ref Entry entry = ref entries[slot];
         entry.GridCells = false;
         ClearBit(always, slot);
+        ClearBit(branches, slot);
+        if (entry.IsBranch) { SetBit(branches, slot); }
         if (entry.IsLive || !entry.CanPrune || !TryGetGridBounds(entry, out DrawRect? rect))
         {
             SetBit(always, slot);
@@ -279,6 +284,7 @@ internal sealed class SceneChildBoundsIndex2D
         candidateCellsCurrent = false;
         ref Entry entry = ref entries[slot];
         ClearBit(always, slot);
+        ClearBit(branches, slot);
         if (!entry.GridCells)
         {
             return;
@@ -392,7 +398,7 @@ internal sealed class SceneChildBoundsIndex2D
 
         for (int word = 0; word < words; word++)
         {
-            ulong bits = all ? ulong.MaxValue : candidates[word] | always[word];
+            ulong bits = all ? ulong.MaxValue : candidates[word] | always[word] | branches[word];
             if (word == words - 1 && (count & 63) != 0)
             {
                 bits &= (1UL << (count & 63)) - 1;
@@ -404,7 +410,7 @@ internal sealed class SceneChildBoundsIndex2D
                 ref Entry entry = ref current[slot];
                 // Test the contiguous bounds first; only then touch the node.
                 SceneNode2D node = entry.Node;
-                if ((entry.IsLive || MayContain(entry.HitTestBounds, point) ||
+                if ((entry.IsLive || entry.IsBranch || MayContain(entry.HitTestBounds, point) ||
                      (colliderPaths is { Count: > 0 } && colliderPaths.Contains(node))) &&
                     node.ParticipatesInInputRoute)
                 {
@@ -473,7 +479,8 @@ internal sealed class SceneChildBoundsIndex2D
         }
 
         entry.PresentationSettled = false;
-        if (!entry.IsLive && surface is not null)
+        // A group holds images throughout its subtree, not as one tracked leaf.
+        if (!entry.IsLive && !entry.IsBranch && surface is not null)
         {
             surface.ReleaseTrackedLeaf(entry.Node);
         }
@@ -556,11 +563,13 @@ internal sealed class SceneChildBoundsIndex2D
         {
             int length = Math.Max(words, always.Length * 2);
             always = new ulong[length];
+            branches = new ulong[length];
             attention = new ulong[length];
             parked = new ulong[length];
             candidates = new ulong[length];
         }
         Array.Clear(always);
+        Array.Clear(branches);
         Array.Clear(candidates);
         Array.Clear(parked);
         // Every rebuilt entry may hold images from before; visit each once.
@@ -600,8 +609,12 @@ internal sealed class SceneChildBoundsIndex2D
         // Declared bounds used by presentation culling; empty when hidden.
         internal SceneBounds2D PresentationBounds { get; private set; }
 
-        // Other node types can change bounds without reporting; test them live.
+        // Other node types, and groups holding any, can change bounds without
+        // reporting; test them live.
         internal bool IsLive { get; private set; }
+
+        // The child is a scene group, measured by the union of its subtree.
+        internal bool IsBranch { get; private set; }
 
         // An axis-aligned sprite without its own effect culls identically in
         // parent space, so a clearly separated one can be skipped.
@@ -635,13 +648,38 @@ internal sealed class SceneChildBoundsIndex2D
         internal void Measure()
         {
             ParkEvaluated = false;
+            PresentationSettled = false;
+            // An entry may change kind between measures; keep nothing stale.
+            IsLive = false;
+            CanPrune = false;
+            IsBranch = false;
+            VisibleBounds = HitTestBounds = PresentationBounds = default;
+            if (Node is Scene2D group)
+            {
+                IsBranch = true;
+                Layer = group.OrderLayer;
+                if (TryMeasureBranch(group, out SceneBounds2D content))
+                {
+                    // Colliders are outside the content bounds, so input never
+                    // prunes a group (see CollectInputCandidates).
+                    VisibleBounds = PresentationBounds =
+                        SceneGeometry2D.TransformBounds(content, group.GetLocalTransform());
+                    HitTestBounds = SceneBounds2D.Empty;
+                    CanPrune = true;
+                }
+                else
+                {
+                    IsLive = true;
+                }
+                return;
+            }
+
             if (Node is not Sprite2D sprite)
             {
                 IsLive = true;
                 return;
             }
 
-            PresentationSettled = false;
             Matrix3x2 transform = sprite.GetLocalTransform();
             VisibleBounds = SceneGeometry2D.TransformBounds(sprite.GetLocalBounds(), transform);
             HitTestBounds = SceneGeometry2D.TransformBounds(sprite.GetHitTestLocalBounds(), transform);
@@ -649,6 +687,49 @@ internal sealed class SceneChildBoundsIndex2D
             Layer = sprite.OrderLayer;
             CanPrune = transform.M12 == 0 && transform.M21 == 0 && transform.M11 > 0 && transform.M22 > 0 &&
                 !PrismAttachment.TryGetRenderState(sprite, out _, out _);
+        }
+
+        // The group-space union of what its subtree can draw or present. False
+        // when anything in it may change bounds silently or needs every visit
+        // (Prism effects, items, tile maps, overlays, custom nodes). The whole
+        // subtree is scanned even when the group is hidden, so a hidden group
+        // holding such a node is never pruned.
+        private static bool TryMeasureBranch(Scene2D group, out SceneBounds2D bounds)
+        {
+            bounds = SceneBounds2D.Empty;
+            if (PrismAttachment.TryGetRenderState(group, out _, out _))
+            {
+                return false;
+            }
+
+            SceneBounds2D union = SceneBounds2D.Empty;
+            for (int index = 0; index < group.Children.Count; index++)
+            {
+                SceneNode2D child = group.Children[index];
+                SceneBounds2D local;
+                switch (child)
+                {
+                    case Sprite2D sprite:
+                        if (PrismAttachment.TryGetRenderState(sprite, out _, out _)) { return false; }
+                        // Presentation reaches a sprite by its declared size
+                        // before its image gives it visible bounds.
+                        local = SceneGeometry2D.Union(sprite.GetLocalBounds(), sprite.GetPresentationLocalBounds());
+                        break;
+                    case Scene2D nested:
+                        if (!TryMeasureBranch(nested, out local)) { return false; }
+                        break;
+                    case Collider2D:
+                        if (PrismAttachment.TryGetRenderState(child, out _, out _)) { return false; }
+                        continue;
+                    default:
+                        return false;
+                }
+
+                union = SceneGeometry2D.Union(union, SceneGeometry2D.TransformBounds(local, child.GetLocalTransform()));
+            }
+
+            bounds = group.IsSceneRendered && group.Opacity > 0 ? union : SceneBounds2D.Empty;
+            return true;
         }
     }
 }

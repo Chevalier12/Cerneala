@@ -10,7 +10,7 @@ namespace Cerneala.StressTests;
 
 // Headless frame cost and recording gates of RenderSurface2D viewport virtualization, driven the way UiHost drives a frame
 // (camera, UI clock traversal, scheduler pass, record when the frame changed). An 800x600 camera pans over N 16 px sprites
-// on a 96 px grid, so about 70 sprites are visible whatever N is. The scenarios that are virtualized gate what is drawn,
+// on a 96 px grid, so about 55 sprites are visible whatever N is. The scenarios that are virtualized gate what is drawn,
 // recorded and ordered per frame; the scenarios that are not virtualized yet gate only that drawing is correct.
 [Collection(StressSettings.CollectionName)]
 public sealed class RenderSurface2DVirtualizationStressTests(ITestOutputHelper output)
@@ -41,12 +41,11 @@ public sealed class RenderSurface2DVirtualizationStressTests(ITestOutputHelper o
     [StressFact]
     public void S4_SceneItems_IsVirtualized() => Run(Virtualized("S4 SceneItems2D pan", Rs2dStressKind.Items));
 
-    // Known open gap: a nested Scene2D group is visited whether or not it is on screen, so its frame cost grows with N.
-    // Only the drawing is gated; recorded children and time are reported.
+    // A nested Scene2D group of sprites is culled by its parent like a sprite: one group per visible sprite, none when empty.
     [StressFact]
-    public void S5_Groups_DrawOnlyWhatTheCameraSees() => Run(
-        Drawing("S5a Scene2D group+1 sprite pan", Rs2dStressKind.GroupWithSprite, DefaultSizes, VisibleSprites),
-        Drawing("S5b Scene2D empty group pan", Rs2dStressKind.EmptyGroup, DefaultSizes, (n, view) => (0, 0)));
+    public void S5_Groups_IsVirtualized() => Run(
+        Virtualized("S5a Scene2D group+1 sprite pan", Rs2dStressKind.GroupWithSprite),
+        Virtualized("S5b Scene2D empty group pan", Rs2dStressKind.EmptyGroup, expected: (n, view) => (0, 0)));
 
     // Known open gap: offscreen Scene2D animations keep advancing (they are not parked), so cost grows with N.
     // Only the drawing is gated, plus the parking that SceneItems2D already does.
@@ -69,8 +68,9 @@ public sealed class RenderSurface2DVirtualizationStressTests(ITestOutputHelper o
 
     private static (int Min, int Max) VisibleSprites(int n, DrawRect view) => Rs2dStressScene.VisibleSprites(n, view);
 
-    private static Scenario Virtualized(string name, Rs2dStressKind kind, SceneOrderMode order = SceneOrderMode.Source) =>
-        new(new Rs2dStressSpec(name, kind, order), DefaultSizes, true, VisibleSprites);
+    private static Scenario Virtualized(string name, Rs2dStressKind kind, SceneOrderMode order = SceneOrderMode.Source,
+        Func<int, DrawRect, (int Min, int Max)>? expected = null) =>
+        new(new Rs2dStressSpec(name, kind, order), DefaultSizes, true, expected ?? VisibleSprites);
 
     private static Scenario Drawing(string name, Rs2dStressKind kind, int[] defaultSizes,
         Func<int, DrawRect, (int Min, int Max)> expected, bool animated = false, bool countBatchedSprites = false,

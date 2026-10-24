@@ -242,9 +242,9 @@ dotnet .\benchmarks\Cerneala.Benchmarks\bin\Release\net8.0-windows\Cerneala.Benc
   that intersect the camera, and no fewer than those that overlap it by area; both bounds come from
   the grid arithmetic, not from the scene. A continuous surface that records no frame also fails.
   Timing is reported, never gated.
-- `--rs2d-groups` (defaults 1,000 / 10,000 / 100,000; 1,000 / 10,000 for M1a and M1b): scenarios
-  the optimizations do not cover yet, **report only, no performance gate**. S5a/S5b are N nested
-  `Scene2D` groups (with one sprite, empty). S6 is N animated sprites directly in the scene and in
+- `--rs2d-groups` (defaults 1,000 / 10,000 / 100,000; 1,000 / 10,000 for M1a and M1b): groups,
+  animations and container children, **report only, no performance gate**. S5a/S5b are N nested
+  `Scene2D` groups (with one sprite, empty); a parent culls them like sprites. S6 is N animated sprites directly in the scene and in
   a `SceneItems2D`, of which only the camera's sprites are visible. M1a is N `TileMap2D` children
   (4x4 tiles), M1b is N one-item `SceneItems2D` children, M1c is the `Sprite2D` control.
   The runner fails only when the fixture is wrong (cells not realized, tile maps never ready).
@@ -277,12 +277,13 @@ $env:CERNEALA_SDL_NATIVE_TESTS = '1'; $env:CERNEALA_STRESS_N = '1000'
 dotnet test .\benchmarks\Cerneala.StressTests\Cerneala.StressTests.csproj -c Release --filter "FullyQualifiedName~RenderSurface2DSdlGpuFrameStressTests"
 ```
 
-- S1-S4 (`Source`, `Layer`, `LayerThenY`, `SceneItems2D`): every recorded frame draws within the
-  sprites the camera sees, records at most that many children (`Scene2D.RecordCounters` /
-  `SceneItems2D.RecordCounters`), builds no order entries in `Source` and `SceneItems2D` and at
-  most that many in the ordered modes, and the median frame stays under 2 ms.
-- S5, S6, M1a, M1b (nested groups, animations, `TileMap2D` and one-item `SceneItems2D` children)
-  are not virtualized yet: they gate only that drawing stays within what the camera sees, and that
-  a `SceneItems2D` parks offscreen animations; record counts, time and allocation are reported.
+- S1-S5 (`Source`, `Layer`, `LayerThenY`, `SceneItems2D`, nested `Scene2D` groups with one
+  sprite or empty): every recorded frame draws within the sprites the camera sees, records at most
+  that many children (`Scene2D.RecordCounters` / `SceneItems2D.RecordCounters`; no group when the
+  groups are empty), builds no order entries in `Source` and `SceneItems2D` and at most that many
+  in the ordered modes, and the median frame stays under 2 ms.
+- S6, M1a, M1b (animations, `TileMap2D` and one-item `SceneItems2D` children) are not virtualized
+  yet: they gate only that drawing stays within what the camera sees, and that a `SceneItems2D`
+  parks offscreen animations; record counts, time and allocation are reported.
 - The SDL_GPU tests gate vertices and draw calls per rendered frame, and a p95 interval under
   16.67 ms when the present mode is Immediate.

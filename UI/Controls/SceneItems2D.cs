@@ -682,7 +682,7 @@ public sealed class SceneItems2D : SceneNode2D, ISceneSpatialParticipant2D
 
     internal override void OnChildGeometryChanged(SceneNode2D child) => childBounds.MarkDirty(child);
 
-    private static SceneBounds2D GetVisibleBounds(in SceneChildBoundsIndex2D.Entry entry) => entry.IsLive
+    private static SceneBounds2D GetVisibleBounds(in SceneChildBoundsIndex2D.Entry entry) => entry.IsLive || entry.IsBranch
         ? SceneGeometry2D.TransformBounds(entry.Node.GetLocalBounds(), entry.Node.GetLocalTransform())
         : entry.VisibleBounds;
 

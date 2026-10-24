@@ -309,7 +309,8 @@ public sealed class RenderSurface2DSceneFoundationContractTests
     public void UniformToFillComposesWithNegativeSceneTransform()
     {
         Scene2D group = new() { ScaleX = -1 };
-        group.Children.Add(Sprite(new TestImage("mirrored"), y: 0));
+        // The view shows scene y 5..15; an offscreen group would be culled and push nothing.
+        group.Children.Add(Sprite(new TestImage("mirrored"), y: 6));
         Scene2D scene = new();
         scene.Children.Add(group);
         RenderSurface2D surface = new()
@@ -707,6 +708,140 @@ public sealed class RenderSurface2DSceneFoundationContractTests
         finally
         {
             root.VisualChildren.Remove(surface);
+        }
+    }
+
+    [Theory]
+    [InlineData(SceneOrderMode.Source)]
+    [InlineData(SceneOrderMode.Layer)]
+    [InlineData(SceneOrderMode.LayerThenY)]
+    public void NestedScenesOutsideTheViewAreNotRecordedByTheirParent(SceneOrderMode mode)
+    {
+        // Three groups of two sprites; only the first group overlaps the 100 x 100 view.
+        Scene2D scene = new() { OrderMode = mode };
+        Scene2D[] groups = new Scene2D[3];
+        for (int index = 0; index < groups.Length; index++)
+        {
+            float x = index == 0 ? 10 : 1000 * index;
+            groups[index] = new Scene2D();
+            groups[index].Children.Add(AreaSprite($"group {index} a", x, 20));
+            groups[index].Children.Add(AreaSprite($"group {index} b", x + 20, 40));
+            scene.Children.Add(groups[index]);
+        }
+        RenderSurface2D surface = new() { Scene = scene };
+        SceneRecordCounters2D counters = scene.RecordCounters;
+
+        for (int frame = 0; frame < 3; frame++)
+        {
+            long recorded = counters.RecordedChildren;
+            long farRecorded = groups[1].RecordCounters.RecordedChildren + groups[2].RecordCounters.RecordedChildren;
+
+            DrawCommandList commands = Record(surface, new DrawRect(0, 0, 100, 100));
+
+            Assert.Equal(["group 0 a", "group 0 b"], ImageNames(commands));
+            Assert.Equal(1, counters.RecordedChildren - recorded);
+            Assert.Equal(farRecorded, groups[1].RecordCounters.RecordedChildren + groups[2].RecordCounters.RecordedChildren);
+        }
+    }
+
+    [Theory]
+    [InlineData(SceneOrderMode.Source)]
+    [InlineData(SceneOrderMode.LayerThenY)]
+    public void CulledNestedSceneIsDrawnAgainAfterItsContentMovesIntoTheView(SceneOrderMode mode)
+    {
+        Scene2D scene = new() { OrderMode = mode };
+        Scene2D moved = new();
+        Sprite2D movedSprite = AreaSprite("moved sprite", 1000, 20);
+        moved.Children.Add(movedSprite);
+        Scene2D grown = new();
+        grown.Children.Add(AreaSprite("grown far", 2000, 20));
+        Scene2D shifted = new();
+        shifted.Children.Add(AreaSprite("shifted sprite", 3000, 20));
+        scene.Children.Add(moved);
+        scene.Children.Add(grown);
+        scene.Children.Add(shifted);
+        RenderSurface2D surface = new() { Scene = scene };
+        DrawRect view = new(0, 0, 100, 100);
+        Assert.Empty(ImageNames(Record(surface, view)));
+
+        // A descendant sprite moves, a group gains a visible child, and a group itself moves.
+        movedSprite.X = 10;
+        grown.Children.Add(AreaSprite("grown new", 40, 20));
+        shifted.X = -2930;
+
+        Assert.Equal(
+            ["grown new", "moved sprite", "shifted sprite"],
+            ImageNames(Record(surface, view)).Order());
+    }
+
+    [Theory]
+    [InlineData(SceneOrderMode.Source)]
+    [InlineData(SceneOrderMode.LayerThenY)]
+    public void HiddenNestedSceneIsDrawnAgainWhenShown(SceneOrderMode mode)
+    {
+        Scene2D scene = new() { OrderMode = mode };
+        Scene2D hidden = new() { IsVisible = false };
+        hidden.Children.Add(AreaSprite("hidden sprite", 10, 20));
+        Scene2D collapsed = new() { Visibility = Visibility.Collapsed };
+        collapsed.Children.Add(AreaSprite("collapsed sprite", 40, 20));
+        scene.Children.Add(hidden);
+        scene.Children.Add(collapsed);
+        RenderSurface2D surface = new() { Scene = scene };
+        DrawRect view = new(0, 0, 100, 100);
+        Assert.Empty(ImageNames(Record(surface, view)));
+
+        hidden.IsVisible = true;
+        Assert.Equal(["hidden sprite"], ImageNames(Record(surface, view)));
+
+        collapsed.Visibility = Visibility.Visible;
+        Assert.Equal(["collapsed sprite", "hidden sprite"], ImageNames(Record(surface, view)).Order());
+
+        hidden.IsVisible = false;
+        Assert.Equal(["collapsed sprite"], ImageNames(Record(surface, view)));
+    }
+
+    [Fact]
+    public void NestedScenesWithLiveContentStayRecordedEvenOffscreen()
+    {
+        Scene2D scene = new();
+        Scene2D near = new();
+        near.Children.Add(AreaSprite("near", 10, 20));
+        Scene2D farItems = new();
+        farItems.Children.Add(new SceneItems2D());
+        Scene2D farOverlay = new();
+        farOverlay.Children.Add(new Scene2DDebugOverlay());
+        Scene2D farPrism = new();
+        farPrism.Children.Add(AreaSprite("far prism sprite", 5000, 20));
+        Scene2D farPlain = new();
+        farPlain.Children.Add(AreaSprite("far plain sprite", 6000, 20));
+        scene.Children.Add(near);
+        scene.Children.Add(farItems);
+        scene.Children.Add(farOverlay);
+        scene.Children.Add(farPrism);
+        scene.Children.Add(farPlain);
+        RenderSurface2D surface = new() { Scene = scene };
+        UIRoot root = new();
+        using IDisposable prism = AttachPrism(farPrism, "Far");
+        ElementLifecycle.AttachSubtree(root, surface);
+        try
+        {
+            SceneRecordCounters2D counters = scene.RecordCounters;
+            for (int frame = 0; frame < 3; frame++)
+            {
+                long recorded = counters.RecordedChildren;
+
+                // A Prism scope records its group's content without culling.
+                Assert.Equal(
+                    ["near", "far prism sprite"],
+                    ImageNames(Record(surface, new DrawRect(0, 0, 100, 100))));
+
+                // The near group and the three groups with live content; the plain far group is culled.
+                Assert.Equal(4, counters.RecordedChildren - recorded);
+            }
+        }
+        finally
+        {
+            ElementLifecycle.DetachSubtree(root, surface);
         }
     }
 
