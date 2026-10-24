@@ -13,3 +13,4 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Cerneala.SvgAssetCompiler")]
 [assembly: InternalsVisibleTo("Cerneala.Tests.Timbre")]
 [assembly: InternalsVisibleTo("Cerneala.SdlGpuSmoke")]
+[assembly: InternalsVisibleTo("Cerneala.StressTests")]

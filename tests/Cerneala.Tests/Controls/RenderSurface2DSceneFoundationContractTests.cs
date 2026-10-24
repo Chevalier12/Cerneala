@@ -611,6 +611,105 @@ public sealed class RenderSurface2DSceneFoundationContractTests
             scene.RecordedOrder.Select(entry => entry.Node));
     }
 
+    [Theory]
+    [InlineData(SceneOrderMode.Source)]
+    [InlineData(SceneOrderMode.Layer)]
+    [InlineData(SceneOrderMode.LayerThenY)]
+    public void RecordCountersCountOnlyTheVisibleChildrenRecordedAndOrderedPerFrame(SceneOrderMode mode)
+    {
+        Scene2D scene = new() { OrderMode = mode };
+        for (int index = 0; index < 5; index++)
+        {
+            scene.Children.Add(AreaSprite($"visible {index}", 10 + index * 15, 20));
+            scene.Children.Add(AreaSprite($"far right {index}", 1000 + index * 15, 20));
+            scene.Children.Add(AreaSprite($"far below {index}", 20, 1000 + index * 15));
+        }
+        RenderSurface2D surface = new() { Scene = scene };
+        SceneRecordCounters2D counters = scene.RecordCounters;
+        Assert.Equal(0, counters.RecordedChildren);
+        Assert.Equal(0, counters.OrderedChildren);
+
+        for (int frame = 0; frame < 3; frame++)
+        {
+            long recorded = counters.RecordedChildren;
+            long ordered = counters.OrderedChildren;
+
+            DrawCommandList commands = Record(surface, new DrawRect(0, 0, 100, 100));
+
+            Assert.Equal(5, ImageNames(commands).Count());
+            Assert.Equal(5, counters.RecordedChildren - recorded);
+            // The Source fast path builds no order entries; the ordered modes build one per kept child.
+            Assert.Equal(mode == SceneOrderMode.Source ? 0 : 5, counters.OrderedChildren - ordered);
+        }
+    }
+
+    [Theory]
+    [InlineData(SceneOrderMode.Source)]
+    [InlineData(SceneOrderMode.Layer)]
+    [InlineData(SceneOrderMode.LayerThenY)]
+    public void RecordCountersCoverEveryChildWhenADebugOverlayKeepsTheFullPath(SceneOrderMode mode)
+    {
+        Scene2D scene = new() { OrderMode = mode };
+        for (int index = 0; index < 4; index++)
+        {
+            scene.Children.Add(AreaSprite($"visible {index}", 10 + index * 15, 20));
+            scene.Children.Add(AreaSprite($"far right {index}", 1000 + index * 15, 20));
+        }
+        scene.Children.Add(new Scene2DDebugOverlay());
+        RenderSurface2D surface = new() { Scene = scene };
+        SceneRecordCounters2D counters = scene.RecordCounters;
+
+        for (int frame = 0; frame < 2; frame++)
+        {
+            long recorded = counters.RecordedChildren;
+            long ordered = counters.OrderedChildren;
+
+            DrawCommandList commands = Record(surface, new DrawRect(0, 0, 100, 100));
+
+            Assert.Equal(4, ImageNames(commands).Count());
+            // Every sprite is ordered, the overlay is not an order entry; the culled sprites are not recorded, the overlay is.
+            Assert.Equal(8, counters.OrderedChildren - ordered);
+            Assert.Equal(4 + 1, counters.RecordedChildren - recorded);
+        }
+    }
+
+    [Fact]
+    public void SceneItemsRecordCountersCountOnlyTheVisibleItemsRecordedPerFrame()
+    {
+        // Ten items in a row; the 100 x 100 view shows those at x 0, 15, 30, 45, 60 and 75.
+        int[] xs = Enumerable.Range(0, 10).Select(index => index * 15 + (index >= 6 ? 1000 : 0)).ToArray();
+        SceneItems2D items = new() { ItemsSource = xs };
+        items.Templates.Add(new ContentTemplate<int>(
+            "sprite", null, 0, context => AreaSprite($"item {context.Data}", context.Data, 20)));
+        Scene2D scene = new();
+        scene.Children.Add(items);
+        RenderSurface2D surface = new() { Scene = scene };
+        UIRoot root = new();
+        root.VisualChildren.Add(surface);
+        try
+        {
+            for (int guard = 0; guard < 100 && items.RealizedItemCount < xs.Length; guard++) { root.ProcessFrame(); }
+            Assert.Equal(xs.Length, items.RealizedItemCount);
+            SceneRecordCounters2D counters = items.RecordCounters;
+
+            for (int frame = 0; frame < 3; frame++)
+            {
+                long recorded = counters.RecordedChildren;
+                long ordered = counters.OrderedChildren;
+
+                DrawCommandList commands = Record(surface, new DrawRect(0, 0, 100, 100));
+
+                Assert.Equal(6, ImageNames(commands).Count());
+                Assert.Equal(6, counters.RecordedChildren - recorded);
+                Assert.Equal(0, counters.OrderedChildren - ordered);
+            }
+        }
+        finally
+        {
+            root.VisualChildren.Remove(surface);
+        }
+    }
+
     [Fact]
     public void NestedScenesOrderIndependentlyAndReactToRuntimeLayerChanges()
     {

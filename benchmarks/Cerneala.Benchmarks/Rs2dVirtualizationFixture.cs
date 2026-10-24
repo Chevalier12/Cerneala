@@ -149,7 +149,10 @@ internal sealed class Rs2dStressScene
 
     // Sprites whose 16 px rectangle intersects the view, counted from the grid arithmetic alone (not from the scene).
     // Min excludes rectangles that only touch the view edge, Max includes them.
-    internal static (int Min, int Max) VisibleSprites(int n, DrawRect view)
+    internal static (int Min, int Max) VisibleSprites(int n, DrawRect view) => VisibleCells(n, view, SpriteSize);
+
+    // The same count for square cells of cellSize (for example the 64 px extent of a 4x4 tile map) on the 96 px grid.
+    internal static (int Min, int Max) VisibleCells(int n, DrawRect view, float cellSize)
     {
         int cols = (int)Math.Ceiling(Math.Sqrt(n));
         int min = 0, max = 0;
@@ -157,16 +160,16 @@ internal sealed class Rs2dStressScene
         for (int row = 0; row < rows; row++)
         {
             float y = row * Spacing;
-            bool rowOpen = y + SpriteSize > view.Y && y < view.Y + view.Height;
-            bool rowClosed = y + SpriteSize >= view.Y && y <= view.Y + view.Height;
+            bool rowOpen = y + cellSize > view.Y && y < view.Y + view.Height;
+            bool rowClosed = y + cellSize >= view.Y && y <= view.Y + view.Height;
             if (!rowClosed) { continue; }
             for (int col = 0; col < cols && row * cols + col < n; col++)
             {
                 float x = col * Spacing;
-                if (x + SpriteSize >= view.X && x <= view.X + view.Width)
+                if (x + cellSize >= view.X && x <= view.X + view.Width)
                 {
                     max++;
-                    if (rowOpen && x + SpriteSize > view.X && x < view.X + view.Width) { min++; }
+                    if (rowOpen && x + cellSize > view.X && x < view.X + view.Width) { min++; }
                 }
             }
         }

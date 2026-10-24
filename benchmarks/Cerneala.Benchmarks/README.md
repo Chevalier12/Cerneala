@@ -260,5 +260,29 @@ dotnet .\benchmarks\Cerneala.Benchmarks\bin\Release\net8.0-windows\Cerneala.Benc
 
 A setup (build plus attach) longer than 20 s skips the next size of that scenario. Timings are
 warmed (200 frames) and use 500 headless / 600 window frames; allocation is
-`GC.GetAllocatedBytesForCurrentThread` of the measuring thread. No counter was added to production
-code, so per-frame `Record` call counts and spatial-index visits are not reported.
+`GC.GetAllocatedBytesForCurrentThread` of the measuring thread. The runners do not report
+per-frame `Record` call counts; the stress tests below gate them.
+
+### RenderSurface2D virtualization stress tests
+
+`benchmarks/Cerneala.StressTests` is an xUnit project that runs the same scenes with pass/fail
+gates. It is part of `Cerneala.slnx`, but every test skips unless `CERNEALA_STRESS_TESTS=1`; the
+SDL_GPU window tests also need `CERNEALA_SDL_NATIVE_TESTS=1`. `CERNEALA_STRESS_N` (for example
+`1000,10000`) replaces the default sizes. The headless run at default sizes takes about 10 minutes.
+
+```powershell
+$env:CERNEALA_STRESS_TESTS = '1'
+dotnet test .\benchmarks\Cerneala.StressTests\Cerneala.StressTests.csproj -c Release --filter "FullyQualifiedName~RenderSurface2DVirtualizationStressTests"
+$env:CERNEALA_SDL_NATIVE_TESTS = '1'; $env:CERNEALA_STRESS_N = '1000'
+dotnet test .\benchmarks\Cerneala.StressTests\Cerneala.StressTests.csproj -c Release --filter "FullyQualifiedName~RenderSurface2DSdlGpuFrameStressTests"
+```
+
+- S1-S4 (`Source`, `Layer`, `LayerThenY`, `SceneItems2D`): every recorded frame draws within the
+  sprites the camera sees, records at most that many children (`Scene2D.RecordCounters` /
+  `SceneItems2D.RecordCounters`), builds no order entries in `Source` and `SceneItems2D` and at
+  most that many in the ordered modes, and the median frame stays under 2 ms.
+- S5, S6, M1a, M1b (nested groups, animations, `TileMap2D` and one-item `SceneItems2D` children)
+  are not virtualized yet: they gate only that drawing stays within what the camera sees, and that
+  a `SceneItems2D` parks offscreen animations; record counts, time and allocation are reported.
+- The SDL_GPU tests gate vertices and draw calls per rendered frame, and a p95 interval under
+  16.67 ms when the present mode is Immediate.

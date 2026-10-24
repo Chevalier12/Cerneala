@@ -51,6 +51,7 @@ public sealed class SceneItems2D : SceneNode2D, ISceneSpatialParticipant2D
 
     internal Exception? CollisionReadinessError => collisionReadinessError;
     internal SceneItems2DUpdateCounters UpdateCounters { get; } = new();
+    internal SceneRecordCounters2D RecordCounters { get; } = new();
     internal override UiRelay? OwnerRelay => SimulationContext?.Relay ?? rememberedRelay ?? base.OwnerRelay;
 
     SceneNode2D ISceneSpatialParticipant2D.Node => this;
@@ -594,6 +595,7 @@ public sealed class SceneItems2D : SceneNode2D, ISceneSpatialParticipant2D
                 entry.ParkEvaluated = false;
                 entry.AnimationParkHint = false;
                 if (entry.Node.IsAnimationParked) { surface?.UnparkAnimation(entry.Node); }
+                RecordCounters.CountRecorded();
                 entry.Node.Record(context);
                 continue;
             }
