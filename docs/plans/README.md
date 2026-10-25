@@ -88,3 +88,4 @@ Counts were taken on 2026-10-10. A new plan adds its own row here.
 | [architecture-docs](2026-10-10-architecture-docs.md) | 2026-10-10 | completed | 51 / 0 | Depends on [repo-docs-reorganization](2026-10-10-repo-docs-reorganization.md). |
 | [repo-docs-reorganization](2026-10-10-repo-docs-reorganization.md) | 2026-10-10 | completed | 82 / 0 | |
 | [docs-content-audit](2026-10-11-docs-content-audit.md) | 2026-10-11 | completed | 82 / 1 | The open box is the human browser check of the `docs-site` pages (Etapa 11). Depends on [repo-docs-reorganization](2026-10-10-repo-docs-reorganization.md) and [architecture-docs](2026-10-10-architecture-docs.md). |
+| [scene2d-contacte](2026-10-25-scene2d-contacte.md) | 2026-10-25 | completed | 27 / 0 | `Collider2D.Entered`/`Exited`. Plan 1 of the index `2026-10-25-scene2d-autonomie-index.md`, which is not in the repository. |

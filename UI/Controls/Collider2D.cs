@@ -9,6 +9,12 @@ public abstract class Collider2D : SceneNode2D
 {
     private long simulatedVersion = -1;
     private bool isSimulated;
+    private EventHandler<ColliderContactEventArgs>? entered;
+    private EventHandler<ColliderContactEventArgs>? exited;
+    // Contact state lives on the colliders, so it survives a collision world rebuild
+    // and moves with a collider that changes its root scene.
+    private HashSet<Collider2D>? reportedContacts;
+    private HashSet<Collider2D>? reportedBy;
 
     internal override void ValidateParentChange(UIElement? parent, ElementChildRole role, bool ownerManaged)
     {
@@ -123,6 +129,121 @@ public abstract class Collider2D : SceneNode2D
     {
         get => GetValue(CollisionMaskProperty);
         set => SetValue(CollisionMaskProperty, value);
+    }
+
+    /// <summary>
+    /// Raised when another collider starts touching this one. The sender is this collider and
+    /// <see cref="ColliderContactEventArgs.Other"/> is the collider that arrived.
+    /// </summary>
+    /// <remarks>
+    /// Two colliders touch under the same rule as <see cref="CollisionWorld2D.Intersects"/>. Events are raised once
+    /// per update of the scene's simulation context, never from inside the setter that moved a collider.
+    /// A handler added while colliders already overlap receives <see cref="Entered"/> at the next update.
+    /// </remarks>
+    public event EventHandler<ColliderContactEventArgs>? Entered
+    {
+        add
+        {
+            VerifyOwnerAccess();
+            bool hadHandlers = HasContactHandlers;
+            entered += value;
+            OnContactHandlersChanged(hadHandlers);
+        }
+        remove
+        {
+            VerifyOwnerAccess();
+            bool hadHandlers = HasContactHandlers;
+            entered -= value;
+            OnContactHandlersChanged(hadHandlers);
+        }
+    }
+
+    /// <summary>
+    /// Raised when another collider stops touching this one, including when it leaves the scene,
+    /// is disabled or hidden, or stops matching this collider's layer and mask.
+    /// The sender is this collider and <see cref="ColliderContactEventArgs.Other"/> is the collider that left.
+    /// </summary>
+    /// <remarks>
+    /// Removing the last handler of both events discards this collider's contacts without raising <see cref="Exited"/>.
+    /// </remarks>
+    public event EventHandler<ColliderContactEventArgs>? Exited
+    {
+        add
+        {
+            VerifyOwnerAccess();
+            bool hadHandlers = HasContactHandlers;
+            exited += value;
+            OnContactHandlersChanged(hadHandlers);
+        }
+        remove
+        {
+            VerifyOwnerAccess();
+            bool hadHandlers = HasContactHandlers;
+            exited -= value;
+            OnContactHandlersChanged(hadHandlers);
+        }
+    }
+
+    internal bool HasContactHandlers => entered is not null || exited is not null;
+
+    // Whether any contact bookkeeping must survive: handlers, or links to other colliders.
+    internal bool HasContactState =>
+        HasContactHandlers || reportedContacts is { Count: > 0 } || reportedBy is { Count: > 0 };
+
+    // Ordinal of this collider's newest entry in any collision world. It keeps event order
+    // stable for a collider that has just left its world.
+    internal long ContactOrdinal { get; set; }
+
+    internal bool ReportsContactWith(Collider2D other) => reportedContacts?.Contains(other) == true;
+
+    internal void LinkReportedContact(Collider2D other)
+    {
+        (reportedContacts ??= new HashSet<Collider2D>(ReferenceEqualityComparer.Instance)).Add(other);
+        (other.reportedBy ??= new HashSet<Collider2D>(ReferenceEqualityComparer.Instance)).Add(this);
+    }
+
+    internal void UnlinkReportedContact(Collider2D other)
+    {
+        reportedContacts?.Remove(other);
+        other.reportedBy?.Remove(this);
+    }
+
+    // Appends the colliders this one has reported and the colliders that have reported it.
+    internal void CopyContactPartners(List<Collider2D> destination)
+    {
+        if (reportedContacts is not null) { destination.AddRange(reportedContacts); }
+        if (reportedBy is not null) { destination.AddRange(reportedBy); }
+    }
+
+    internal void RaiseEntered(Collider2D other) =>
+        entered?.Invoke(this, new ColliderContactEventArgs(other));
+
+    internal void RaiseExited(Collider2D other) =>
+        exited?.Invoke(this, new ColliderContactEventArgs(other));
+
+    private void OnContactHandlersChanged(bool hadHandlers)
+    {
+        bool hasHandlers = HasContactHandlers;
+        if (hasHandlers == hadHandlers) { return; }
+
+        if (!hasHandlers && reportedContacts is { Count: > 0 })
+        {
+            // Nobody listens any more: forget the contacts without raising Exited.
+            foreach (Collider2D other in reportedContacts) { other.reportedBy?.Remove(this); }
+            reportedContacts.Clear();
+        }
+
+        SceneGeometry2D.FindRootScene(this)?.CollisionWorld.OnContactTrackingChanged(this, hasHandlers);
+    }
+
+    internal override void OnSimulationContextChanged(SceneSimulationContext2D? previous)
+    {
+        base.OnSimulationContextChanged(previous);
+        if (SimulationContext is not null && HasContactState)
+        {
+            // The new root scene's world did not see this collider's earlier contacts.
+            SceneGeometry2D.FindRootScene(this)?.CollisionWorld.MarkContactDirty(this);
+        }
     }
 
     internal override void Record(Scene2DRecordContext context)

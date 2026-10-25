@@ -20,6 +20,8 @@ using ServoApi = Cerneala.UI.Servo.Servo;
 
 namespace Cerneala.Tests.UI.Hosting;
 
+using Scene2D = global::Cerneala.UI.Controls.Scene2D;
+
 [Collection(WindowRuntimeTestCollection.Name)]
 public sealed class WindowRuntimeTests : IDisposable
 {
@@ -580,6 +582,44 @@ public sealed class WindowRuntimeTests : IDisposable
         Assert.False(runtime.PumpOnce(TimeSpan.FromMilliseconds(16)));
 
         Assert.Equal(framesAfterPress, nativeWindow.Session.PresentCount);
+    }
+
+    // A contact handler moves the fox away in the middle of a frame, after the delivery point. The Exited event waits
+    // for the next delivery, and nothing else asks for that frame, so the pump has to.
+    [Fact]
+    public void ContactChangesMadeByAContactHandlerKeepPumpOnceRenderingUntilTheyAreDelivered()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        BoxCollider2D coin = new() { Width = 10, Height = 10, IsTrigger = true };
+        Sprite2D fox = new() { X = 100, Collider = new BoxCollider2D { Width = 10, Height = 10 } };
+        Scene2D scene = new();
+        scene.Children.Add(new Sprite2D { Collider = coin });
+        scene.Children.Add(fox);
+        List<string> events = [];
+        coin.Entered += (_, _) =>
+        {
+            events.Add("entered");
+            fox.X = 100;
+        };
+        coin.Exited += (_, _) => events.Add("exited");
+        // A Continuous surface (the default) asks for a frame on every pump, so only an OnDemand one can go idle.
+        Window window = new() { Content = new RenderSurface2D { Scene = scene, RedrawMode = RenderSurface2DRedrawMode.OnDemand } };
+        window.Show();
+        FakePlatformWindow nativeWindow = Assert.Single(platform.Windows);
+        for (int settle = 0; settle < 8 && runtime.PumpOnce(TimeSpan.FromMilliseconds(16)); settle++) { }
+        Assert.False(runtime.PumpOnce(TimeSpan.FromMilliseconds(16)));
+        Assert.Empty(events);
+
+        fox.X = 5;
+
+        Assert.True(runtime.PumpOnce(TimeSpan.FromMilliseconds(16)));
+        Assert.Equal(["entered"], events);
+        Assert.True(runtime.PumpOnce(TimeSpan.FromMilliseconds(16)));
+        Assert.Equal(["entered", "exited"], events);
+        int framesAfterDelivery = nativeWindow.Session.PresentCount;
+        Assert.False(runtime.PumpOnce(TimeSpan.FromMilliseconds(16)));
+        Assert.Equal(framesAfterDelivery, nativeWindow.Session.PresentCount);
     }
 
     [Fact]

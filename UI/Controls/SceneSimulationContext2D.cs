@@ -1,3 +1,4 @@
+using Cerneala.UI.Elements;
 using Cerneala.UI.Relay;
 
 namespace Cerneala.UI.Controls;
@@ -6,6 +7,9 @@ namespace Cerneala.UI.Controls;
 public sealed class SceneSimulationContext2D : IDisposable
 {
     private readonly List<ISceneSpatialParticipant2D> spatialItems = [];
+    // A headless context delivers its own contact events; an attached one is delivered by its UI root.
+    private List<PendingContact2D>? contactEvents;
+    private UIRoot? contactRoot;
     private bool disposed;
     private bool refreshing;
     private bool refreshPending;
@@ -44,6 +48,12 @@ public sealed class SceneSimulationContext2D : IDisposable
             catch (Exception cleanup) { throw new AggregateException(failure, cleanup); }
             throw;
         }
+
+        if (surface?.Root is { } root)
+        {
+            contactRoot = root;
+            root.RegisterSceneContacts(this);
+        }
     }
 
     public Scene2D Scene { get; }
@@ -53,7 +63,11 @@ public sealed class SceneSimulationContext2D : IDisposable
     internal bool IsHeadless => Surface is null;
     internal IReadOnlyList<ISceneSpatialParticipant2D> SpatialItems => spatialItems;
 
-    /// <summary>Drains one bounded Relay snapshot and refreshes spatial interests. Does not render or advance UI Motion.</summary>
+    /// <summary>
+    /// Drains one bounded Relay snapshot, refreshes spatial interests and delivers the scene's pending
+    /// <see cref="Collider2D.Entered"/> and <see cref="Collider2D.Exited"/> events. Does not render or advance UI Motion.
+    /// </summary>
+    /// <exception cref="AggregateException">One or more contact handlers threw. Every event was still raised.</exception>
     public void Update()
     {
         Relay.VerifyAccess();
@@ -65,6 +79,9 @@ public sealed class SceneSimulationContext2D : IDisposable
         {
             Relay.Drain();
             RefreshSpatialItems();
+            contactEvents ??= [];
+            Scene.CollisionWorld.PrepareContacts(contactEvents, 0);
+            CollisionWorld2D.RaiseContacts(contactEvents);
         }
         finally { updating = false; }
     }
@@ -134,6 +151,8 @@ public sealed class SceneSimulationContext2D : IDisposable
         Relay.VerifyAccess();
         if (IsDisposed) { return; }
         Volatile.Write(ref disposed, true);
+        contactRoot?.UnregisterSceneContacts(this);
+        contactRoot = null;
         List<Exception>? failures = null;
         try { Scene.CollisionWorld.InvalidateSpatialRegions(); }
         catch (Exception failure) { (failures ??= []).Add(failure); }

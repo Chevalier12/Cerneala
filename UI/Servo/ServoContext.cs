@@ -118,6 +118,7 @@ internal sealed class ServoContext
             !root.Motion.HasActiveMotion &&
             !state.Driver.HasActivePointerRepeat &&
             !state.Driver.HasActiveInputHold &&
+            !root.HasPendingSceneContacts &&
             state.Gate.CurrentCount != 0;
     }
 

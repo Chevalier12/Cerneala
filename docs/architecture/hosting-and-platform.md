@@ -109,7 +109,8 @@ When the descriptor has no `CreateApplication`, a markup `MainWindow` without an
    - `Root.Scheduler.HasWork`;
    - `Root.Motion.HasActiveMotion`;
    - an active pointer repeat;
-   - an active input hold: a key or mouse button was down in the last input dispatch and some element has a `PreviewInputHeld` or `InputHeld` handler (`ElementInputBridge.HasActiveInputHold`).
+   - an active input hold: a key or mouse button was down in the last input dispatch and some element has a `PreviewInputHeld` or `InputHeld` handler (`ElementInputBridge.HasActiveInputHold`);
+   - a collider change in a scene of a `RenderSurface2D` under the root waits for its next contact delivery (`UIRoot.HasPendingSceneContacts`, `WindowApplicationRuntime.cs:672`). See [Collider contact events](scene2d.md#collider-contact-events).
 4. `Render`:
    - collects the platform `InputFrame` and runs `UiHost.Update`;
    - calls `graphicsSession.BeginFrame(Color.White)` and `UiHost.Draw`;

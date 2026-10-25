@@ -47,9 +47,9 @@ For package-backed asynchronous map data, keep the normal loop running until pre
 
 The public constructor requires a root `Scene2D` with no UI root, surface, parent, or existing simulation context. Its existing scene-node subtree adopts the context. Descendants added later adopt the same owner, and removing a subtree retires its spatial acquisitions and data observation. A scene cannot belong to two contexts. Dispose its independent context before reparenting it or attaching it to UI.
 
-The context reuses [UiRelay](Cerneala.UI.Relay.UiRelay.md), capturing the constructing thread. `Update` drains one bounded queue snapshot and refreshes map/collision interests. Work posted during the drain waits for another update. Nested updates are rejected. Scene-items collection notifications and template/tree changes belong on this owner; direct off-thread property, child/template collection, and collision-query operations are rejected. Asynchronous map completions return through the owner relay before changing scene state.
+The context reuses [UiRelay](Cerneala.UI.Relay.UiRelay.md), capturing the constructing thread. `Update` drains one bounded queue snapshot, refreshes map/collision interests, and then delivers the scene's pending [Collider2D contact events](Cerneala.UI.Controls.Collider2D.md#contact-events). Work posted during the drain waits for another update. Nested updates are rejected. Scene-items collection notifications and template/tree changes belong on this owner; direct off-thread property, child/template collection, and collision-query operations are rejected. Asynchronous map completions return through the owner relay before changing scene state.
 
-An attached [RenderSurface2D](Cerneala.UI.Controls.RenderSurface2D.md) creates the same kind of context using the existing `UIRoot.Relay`. Its normal frame/arrangement path supplies the viewport and refreshes spatial interest. The host, not application calls to `Update` or `Dispose`, owns that attached context; detach or replace the surface's scene to retire it. [SceneNode2D.SimulationContext](Cerneala.UI.Controls.SceneNode2D.md) identifies the current owner without changing `UIElement.Root` or `IsAttached`.
+An attached [RenderSurface2D](Cerneala.UI.Controls.RenderSurface2D.md) creates the same kind of context using the existing `UIRoot.Relay`. Its normal frame/arrangement path supplies the viewport and refreshes spatial interest. The host, not application calls to `Update` or `Dispose`, owns that attached context; detach or replace the surface's scene to retire it. `UiHost.Update` delivers that scene's contact events after input dispatch. [SceneNode2D.SimulationContext](Cerneala.UI.Controls.SceneNode2D.md) identifies the current owner without changing `UIElement.Root` or `IsAttached`.
 
 ### Without rendering
 
@@ -83,7 +83,7 @@ Disposal does not synchronously wait for arbitrary application work or prove col
 
 | Name | Description |
 | --- | --- |
-| `Update()` | Drains a bounded relay snapshot and refreshes independent scene interests. Throws after disposal, off-thread, for nested updates, or on a UI-hosted context. |
+| `Update()` | Drains a bounded relay snapshot, refreshes independent scene interests, and delivers pending collider contact events. Throws after disposal, off-thread, for nested updates, or on a UI-hosted context. Contact handler exceptions are rethrown as one `AggregateException` after all events of the delivery are raised. |
 | `Dispose()` | Retires an independent context on its owner thread. A live UI-hosted context must instead be retired by detaching/replacing its surface scene. |
 
 ## See also
