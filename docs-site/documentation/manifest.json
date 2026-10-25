@@ -1215,6 +1215,11 @@
     "source": "UI/Controls/Collider2D.cs"
   },
   {
+    "name": "Cerneala.UI.Controls.ColliderContactEventArgs",
+    "file": "documentation/classes/Cerneala.UI.Controls.ColliderContactEventArgs.md",
+    "source": "UI/Controls/ColliderContactEventArgs.cs"
+  },
+  {
     "name": "Cerneala.UI.Controls.CollisionHit2D",
     "file": "documentation/classes/Cerneala.UI.Controls.CollisionHit2D.md",
     "source": "UI/Controls/CollisionHit2D.cs"

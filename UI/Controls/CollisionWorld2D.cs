@@ -42,20 +42,26 @@ public sealed partial class CollisionWorld2D
         try
         {
             EnsureCurrent();
-            if (!entriesByCollider.TryGetValue(first, out CollisionEntry2D? firstEntry) ||
-                !entriesByCollider.TryGetValue(second, out CollisionEntry2D? secondEntry) ||
-                !PassesPairFilter(first, second))
-            {
-                return false;
-            }
-
-            exactTestCount++;
-            return CollisionNarrowPhase2D.Intersects(firstEntry.Geometry, secondEntry.Geometry);
+            return entriesByCollider.TryGetValue(first, out CollisionEntry2D? firstEntry) &&
+                entriesByCollider.TryGetValue(second, out CollisionEntry2D? secondEntry) &&
+                IntersectsEntries(firstEntry, secondEntry);
         }
         finally
         {
             FinishQuery(started);
         }
+    }
+
+    // The rule that Intersects and contact events share: the pair filter, then the exact shape test.
+    private bool IntersectsEntries(CollisionEntry2D first, CollisionEntry2D second)
+    {
+        if (!PassesPairFilter(first.Collider, second.Collider))
+        {
+            return false;
+        }
+
+        exactTestCount++;
+        return CollisionNarrowPhase2D.Intersects(first.Geometry, second.Geometry);
     }
 
     public CollisionHit2D[] Overlap(
@@ -338,6 +344,7 @@ public sealed partial class CollisionWorld2D
 
     internal void Reset()
     {
+        ForgetContactEntries();
         InvalidateSpatialRegions();
         broadphase.Clear();
         entriesByCollider.Clear();
@@ -366,9 +373,17 @@ public sealed partial class CollisionWorld2D
         candidates.Clear();
         nextId = 0;
         nextOrdinal = 0;
-        foreach (Collider2D collider in EnumerateColliders(owner))
+        BeginContactRebuild();
+        try
         {
-            AddOrUpdate(collider);
+            foreach (Collider2D collider in EnumerateColliders(owner))
+            {
+                AddOrUpdate(collider);
+            }
+        }
+        finally
+        {
+            EndContactRebuild();
         }
 
         initialized = true;
@@ -443,6 +458,7 @@ public sealed partial class CollisionWorld2D
             entriesByCollider[collider] = updated;
             entriesById[existing.Id] = updated;
             broadphase.AddOrUpdate(existing.Id, geometry.SceneBounds);
+            MarkContactDirty(collider);
             return true;
         }
 
@@ -468,6 +484,7 @@ public sealed partial class CollisionWorld2D
 
         entriesById[id] = entry;
         broadphase.AddOrUpdate(id, geometry.SceneBounds);
+        OnContactEntryAdded(entry);
         return true;
     }
 
@@ -480,6 +497,7 @@ public sealed partial class CollisionWorld2D
 
         broadphase.Remove(entry.Id);
         entriesById[entry.Id] = null;
+        OnContactEntryRemoved(collider);
         return true;
     }
 

@@ -26,7 +26,7 @@ bool updatedIncrementally = after.RebuildCount == before.RebuildCount;
 
 ## Remarks
 
-Candidate and exact-test counts are cumulative. Query timing uses `Stopwatch` on the current process and is diagnostic rather than a cross-machine performance guarantee. `EstimatedRetainedBytes` describes retained broadphase storage; it is not a managed-heap measurement of the complete scene.
+Candidate and exact-test counts are cumulative. They also include the work of [Collider2D contact events](Cerneala.UI.Controls.Collider2D.md#contact-events): a contact delivery adds its broadphase candidates and exact tests, but it is not a timed query and does not change `QueryCount` or the query durations. Query timing uses `Stopwatch` on the current process and is diagnostic rather than a cross-machine performance guarantee. `EstimatedRetainedBytes` describes retained broadphase storage; it is not a managed-heap measurement of the complete scene.
 
 ## Properties
 

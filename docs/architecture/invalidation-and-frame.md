@@ -85,7 +85,7 @@ Example. A `Button` inside a `StackPanel`, attached to a root. The code runs
 
 ## Where The Scheduler Runs
 
-One `UiHost` update (`UiHost.UpdateCore`, `UI/Hosting/UiHost.cs:145-244`) runs
+One `UiHost` update (`UiHost.UpdateCore`, `UI/Hosting/UiHost.cs:145-247`) runs
 these steps, in this order:
 
 ```text
@@ -94,11 +94,20 @@ these steps, in this order:
 2. UIRoot.BeginUpdate: Relay drain (UiRelay.Drain), outside the scheduler
 3. scheduler pass, only when queued work exists (MotionFrameReason.Scheduled)
 4. input dispatch (ElementInputBridge.Dispatch)
-5. scheduler pass for queued work, or for active Motion not yet sampled
+5. Collider2D contact delivery: UIRoot.DeliverSceneContacts
+   (UiHost.cs:189) raises Collider2D.Entered and Exited for the scenes
+   of the RenderSurface2D controls under the root
+6. scheduler pass for queued work, or for active Motion not yet sampled
    in this update (MotionFrameReason.Input)
-6. cursor resolution, then one more scheduler pass if it queued work
-7. root command list commit (RetainedRenderer.Commit)
+7. cursor resolution, then one more scheduler pass if it queued work
+8. root command list commit (RetainedRenderer.Commit)
 ```
+
+Contact delivery runs right after input dispatch. In the same update it sees
+the collider changes made by render-time advancement, Relay work and input
+handlers, and its handlers can still invalidate this frame's layout. A
+collider change made by a contact handler, or later in the same update, waits
+for the next update. See [Collider contact events](scene2d.md#collider-contact-events).
 
 Each scheduler pass is one `UiFrameScheduler.ProcessFrame`. Input dispatch
 happens between passes, so input sees the layout that step 3 committed.

@@ -184,6 +184,9 @@ public sealed class UiHost
             ArgumentNullException.ThrowIfNull(inputFrame);
             updatePhaseStarted = Stopwatch.GetTimestamp();
             InputBridge.Dispatch(currentRoot, inputFrame, frameTime);
+            // Scene contacts see what the clock, Relay posts and input handlers just moved, and their
+            // handlers can still invalidate this frame's layout.
+            currentRoot.DeliverSceneContacts();
             TimeSpan inputDispatchTime = Stopwatch.GetElapsedTime(updatePhaseStarted);
 
             updatePhaseStarted = Stopwatch.GetTimestamp();

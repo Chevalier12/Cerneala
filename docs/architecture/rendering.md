@@ -58,7 +58,7 @@ tree. Recording and the backend contract belong to [Drawing](drawing.md).
    when the element is visible), retains the images the commands use, and
    records `RenderVersion`, `Dependencies` and `ContentBounds`.
 4. **Commit.** At the end of every `UiHost` update,
-   `RetainedRenderer.Commit` (`UiHost.cs:220`) calls
+   `RetainedRenderer.Commit` (`UiHost.cs:223`) calls
    `DrawCommandListBuilder.Build` only when the root list is invalid.
 5. **Root build.** `Build` (`DrawCommandListBuilder.cs:17-43`) clears the root
    list and walks the whole visual tree in preorder. An element that does not
@@ -204,7 +204,7 @@ Test paths are under `tests/Cerneala.Tests/`.
 composed elements and emitted commands. `FrameStats.RenderedElements` counts
 the elements of the `RenderCache` phase, and the root's `InvalidationTrace`
 records that phase when tracing is enabled. `UiHost` reports the commit time in
-the frame's diagnostics timing (`UiHost.cs:219-237`).
+the frame's diagnostics timing (`UiHost.cs:222-240`).
 
 ## Known Limitations
 

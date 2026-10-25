@@ -12,6 +12,8 @@ using ServoApi = Cerneala.UI.Servo.Servo;
 
 namespace Cerneala.Tests.UI.Servo;
 
+using Scene2D = global::Cerneala.UI.Controls.Scene2D;
+
 public sealed class ServoSynchronizationTests
 {
     [Fact]
@@ -274,6 +276,45 @@ public sealed class ServoSynchronizationTests
         Assert.Throws<ServoTimeoutException>(() => CompleteSynchronously(shortServo.WaitForIdleAsync()));
 
         host.Update(HeldKeyInput(heldD, KeyboardSnapshot.Empty), host.Viewport, TimeSpan.FromMilliseconds(16));
+        await servo.WaitForIdleAsync();
+    }
+
+    [Fact]
+    public async Task WaitForIdleIsNotIdleWhileContactChangesWaitForDelivery()
+    {
+        BoxCollider2D coin = new() { Width = 10, Height = 10, IsTrigger = true };
+        Sprite2D fox = new() { X = 100, Collider = new BoxCollider2D { Width = 10, Height = 10 } };
+        Scene2D scene = new();
+        scene.Children.Add(new Sprite2D { Collider = coin });
+        scene.Children.Add(fox);
+        List<string> events = [];
+        coin.Entered += (_, _) =>
+        {
+            events.Add("entered");
+            fox.X = 100; // the Exited event waits for the next delivery
+        };
+        coin.Exited += (_, _) => events.Add("exited");
+        UIRoot root = new(200, 100);
+        root.VisualChildren.Add(new RenderSurface2D { Scene = scene });
+        UiHost host = CreateHost(root);
+        ServoApi servo = new(host);
+        ServoApi shortServo = new(host, new ServoOptions
+        {
+            DefaultTimeout = TimeSpan.FromMilliseconds(300)
+        });
+        host.Update(EmptyInput(), host.Viewport, TimeSpan.FromMilliseconds(16));
+        await servo.WaitForIdleAsync();
+        Assert.Empty(events);
+
+        fox.X = 5;
+        host.Update(EmptyInput(), host.Viewport, TimeSpan.FromMilliseconds(16));
+
+        Assert.Equal(["entered"], events);
+        Assert.Throws<ServoTimeoutException>(() => CompleteSynchronously(shortServo.WaitForIdleAsync()));
+
+        host.Update(EmptyInput(), host.Viewport, TimeSpan.FromMilliseconds(16));
+
+        Assert.Equal(["entered", "exited"], events);
         await servo.WaitForIdleAsync();
     }
 
