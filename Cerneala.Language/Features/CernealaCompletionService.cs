@@ -283,6 +283,11 @@ internal sealed partial class CernealaCompletionService
                 : model.GetCompletionElementType(child)?.IsOrDerivesFrom("Cerneala.UI.Controls.Collider2D") == true) == true;
         bool acceptsColliders = !alreadyHasCollider &&
             (staticTileOwner || CernealaSemanticModel.IsLiveColliderOwner(colliderOwnerType));
+        // A ConeCollider2D is a Vision, never a body: it is offered only inside an empty Sprite2D.Vision or Scene2D.Vision.
+        bool acceptsVision = parent?.Kind == SyntaxKind.PropertyElement && parent.Name.Split('.').Last() == "Vision" &&
+            CernealaSemanticModel.IsVisionOwner(model.GetCompletionElementType(model.GetCompletionParent(parent))) &&
+            !parent.Children.OfType<ElementSyntax>().Any(child =>
+                CernealaSemanticModel.IsConeCollider(model.GetCompletionElementType(child)));
         if (parentType?.MetadataName == "Cerneala.UI.Controls.TileMap2D" && parent?.Kind != SyntaxKind.PropertyElement)
         {
             Add(result, "Tile", ElementInsertion(site, "Tile"), site.WordSpan,
@@ -310,8 +315,10 @@ internal sealed partial class CernealaCompletionService
         {
             cancellationToken.ThrowIfCancellationRequested();
             bool collider = type.IsOrDerivesFrom("Cerneala.UI.Controls.Collider2D");
+            bool offered = !collider ||
+                (CernealaSemanticModel.IsConeCollider(type) ? acceptsVision : acceptsColliders);
             if (!IsElementType(type) || !IsExpectedType(type, expected, expectedItem) ||
-                collider && !acceptsColliders || staticTileOwner && !collider)
+                !offered || staticTileOwner && !collider)
             {
                 continue;
             }

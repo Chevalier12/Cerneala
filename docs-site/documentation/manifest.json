@@ -1260,6 +1260,11 @@
     "source": "UI/Controls/ComboBoxItem.cs"
   },
   {
+    "name": "Cerneala.UI.Controls.ConeCollider2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.ConeCollider2D.md",
+    "source": "UI/Controls/ConeCollider2D.cs"
+  },
+  {
     "name": "Cerneala.UI.Controls.ContentControl",
     "file": "documentation/classes/Cerneala.UI.Controls.ContentControl.md",
     "source": "UI/Controls/ContentControl.cs"

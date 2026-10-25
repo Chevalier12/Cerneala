@@ -55,6 +55,8 @@ public sealed class Scene2DDebugOverlay : SceneNode2D
 
     private static readonly Color ChunkColor = new(40, 210, 255);
     private static readonly Color TriggerColor = new(255, 180, 40);
+    // A Vision is a sensor, drawn apart from solid and trigger bodies and from every layer colour.
+    private static readonly Color VisionColor = new(190, 120, 255);
     private readonly List<ColliderGeometry2D> colliders = [];
     private readonly Dictionary<Color, DrawPen> pens = [];
     private Dictionary<LabelKey, DrawTextRun> previousLabels = [];
@@ -152,7 +154,9 @@ public sealed class Scene2DDebugOverlay : SceneNode2D
     private void DrawCollider(RenderSurface2DFrame frame, ColliderGeometry2D geometry, Matrix3x2 sceneToParent)
     {
         Collider2D collider = geometry.Collider;
+        bool isVision = collider.IsVisionSensor;
         Color color = collider.CollisionMask == 0 ? new Color(150, 150, 150)
+            : isVision ? VisionColor
             : collider.IsTrigger ? TriggerColor : LayerColor(collider.CollisionLayer);
         using DrawTransformScope scope = frame.Transform(geometry.ShapeToSceneTransform * sceneToParent);
         ColliderLocalShape2D shape = geometry.LocalShape;
@@ -165,6 +169,10 @@ public sealed class Scene2DDebugOverlay : SceneNode2D
             frame.DrawEllipse(new DrawRect(-shape.Radius, -shape.Radius, shape.Radius * 2, shape.Radius * 2), Pen(color));
             CountPrimitive();
         }
+        else if (shape.Kind == ColliderShapeKind2D.Cone)
+        {
+            DrawCone(frame, shape, color);
+        }
         else
         {
             int edges = shape.Kind == ColliderShapeKind2D.Segment ? shape.Vertices.Count - 1 : shape.Vertices.Count;
@@ -174,8 +182,32 @@ public sealed class Scene2DDebugOverlay : SceneNode2D
                 Line(frame, new DrawPoint(a.X, a.Y), new DrawPoint(b.X, b.Y), color);
             }
         }
-        Label(frame, $"L{collider.CollisionLayer:X8} M{collider.CollisionMask:X8} {(collider.CollisionMask == 0 ? "masked" : collider.IsTrigger ? "trigger" : "solid")}", default, color);
+        Label(frame, $"L{collider.CollisionLayer:X8} M{collider.CollisionMask:X8} {(collider.CollisionMask == 0 ? "masked" : isVision ? "vision" : collider.IsTrigger ? "trigger" : "solid")}", default, color);
         diagnostics = diagnostics with { Colliders = diagnostics.Colliders + 1 };
+    }
+
+    // The two rays from the apex, and the arc as line segments of at most 10 degrees each.
+    private void DrawCone(RenderSurface2DFrame frame, ColliderLocalShape2D cone, Color color)
+    {
+        const float MaxArcStep = 10 * MathF.PI / 180;
+        // Float rounding must not turn exactly 9 steps of 10 degrees (a 90 degree cone) into 10.
+        const float StepRoundingTolerance = 1e-4f;
+        int steps = Math.Max(1, (int)MathF.Ceiling((cone.Sweep / MaxArcStep) - StepRoundingTolerance));
+        DrawPoint previous = ConeEdgePoint(cone, 0);
+        Line(frame, default, previous, color);
+        for (int step = 1; step <= steps; step++)
+        {
+            DrawPoint next = ConeEdgePoint(cone, cone.Sweep * step / steps);
+            Line(frame, previous, next, color);
+            previous = next;
+        }
+        Line(frame, previous, default, color);
+    }
+
+    private static DrawPoint ConeEdgePoint(ColliderLocalShape2D cone, float angleFromStart)
+    {
+        (float sin, float cos) = MathF.SinCos(cone.StartAngle + angleFromStart);
+        return new DrawPoint(cos * cone.Radius, sin * cone.Radius);
     }
 
     private void DrawChildren(SceneNode2D owner, Scene2DRecordContext context)

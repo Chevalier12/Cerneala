@@ -13,8 +13,16 @@ internal sealed partial class CernealaSemanticModel
     internal static bool IsRemovedTileMapSourceMember(ILanguageTypeSymbol? type, string name) =>
         type?.MetadataName == "Cerneala.UI.Controls.TileMap2D" && name == "Source";
 
+    // The owner of a body collider: Sprite2D.Collider, which is also the content of a Sprite2D.
     internal static bool IsLiveColliderOwner(ILanguageTypeSymbol? type) =>
         type?.MetadataName == "Cerneala.UI.Controls.Sprite2D";
+
+    // The owner of a Vision slot: a Sprite2D or a Scene2D (also a scene component derived from it).
+    internal static bool IsVisionOwner(ILanguageTypeSymbol? type) =>
+        IsLiveColliderOwner(type) || type?.IsOrDerivesFrom("Cerneala.UI.Controls.Scene2D") == true;
+
+    internal static bool IsConeCollider(ILanguageTypeSymbol? type) =>
+        type?.MetadataName == "Cerneala.UI.Controls.ConeCollider2D";
 
     internal static bool IsTileColliderAttribute(ILanguageTypeSymbol type, string name) =>
         name is "OffsetX" or "OffsetY" or "CollisionLayer" or "CollisionMask" or "IsTrigger" ||
@@ -23,15 +31,83 @@ internal sealed partial class CernealaSemanticModel
         type.Name == "PolygonCollider2D" && name == "Points" ||
         type.Name == "SegmentCollider2D" && name is "EndX" or "EndY";
 
-    private bool HasLiveColliderOwner(ElementSyntax element)
+    // The shape of a Vision property element itself: one per owner, with one cone inside and nothing else (no text,
+    // no attribute other than a namespace declaration; the source generator rejects the same). What the cone is
+    // is checked where the cone is bound (GetColliderPlacementError).
+    private void ReportVisionPropertyElementShape(ElementSyntax element, ILanguageTypeSymbol? ownerType)
     {
-        if (!parents.TryGetValue(element, out ElementSyntax? parent) || parent is null) { return false; }
-        if (parent.Kind == SyntaxKind.PropertyElement)
+        if (element.Name.Split('.').Last() != "Vision" || !IsVisionOwner(ownerType))
         {
-            if (parent.Name.Split('.').Last() != "Collider" ||
-                !parents.TryGetValue(parent, out parent) || parent is null) { return false; }
+            return;
         }
-        return IsLiveColliderOwner(GetElementType(parent, ReferenceEquals(parent, root)));
+
+        bool hasText = element.Children.OfType<TextSyntax>().Any(static text =>
+            text.Kind != SyntaxKind.Comment && !string.IsNullOrWhiteSpace(text.Token.Text));
+        bool hasAttribute = element.Attributes.Any(static attribute =>
+            attribute.NameToken.Text != "xmlns" && !attribute.NameToken.Text.StartsWith("xmlns:", StringComparison.Ordinal));
+        if (!element.Children.OfType<ElementSyntax>().Any() || hasText || hasAttribute)
+        {
+            AddShapeDiagnostic(element.NameToken.Span, element.Name + " requires exactly one ConeCollider2D child.");
+        }
+
+        if (parents.TryGetValue(element, out ElementSyntax? owner) && owner is not null &&
+            !ReferenceEquals(owner.Children.OfType<ElementSyntax>().First(sibling => sibling.Name == element.Name), element))
+        {
+            AddShapeDiagnostic(element.NameToken.Span, element.Name + " may be declared only once.");
+        }
+    }
+
+    // The CERNEALAUI005 text for an element declared where it cannot live, or null when the place is valid.
+    // A body collider is a direct child of a Sprite2D or of Sprite2D.Collider. A ConeCollider2D is a sensor, not a
+    // body: it lives only in Sprite2D.Vision or Scene2D.Vision, and a Vision slot holds exactly one cone
+    // (docs/plans/2026-10-25-scene2d-vision.md, V4).
+    private string? GetColliderPlacementError(ElementSyntax element, ILanguageTypeSymbol type)
+    {
+        // Runs for every bound element, so leave early (a syntax-only check) unless this is a collider or
+        // the direct child of a Vision property element.
+        bool isCollider = type.IsOrDerivesFrom("Cerneala.UI.Controls.Collider2D");
+        parents.TryGetValue(element, out ElementSyntax? parent);
+        if (!isCollider && !(parent?.Kind == SyntaxKind.PropertyElement &&
+            (parent.Name == "Vision" || parent.Name.EndsWith(".Vision", StringComparison.Ordinal))))
+        {
+            return null;
+        }
+
+        ElementSyntax? slot = null;
+        ElementSyntax? owner = null;
+        if (parent is not null)
+        {
+            owner = parent;
+            if (parent.Kind == SyntaxKind.PropertyElement)
+            {
+                slot = parent;
+                parents.TryGetValue(parent, out owner);
+            }
+        }
+
+        ILanguageTypeSymbol? ownerType = owner is null ? null : GetElementType(owner, ReferenceEquals(owner, root));
+        string? slotName = slot?.Name.Split('.').Last();
+        if (slot is not null && slotName == "Vision" && IsVisionOwner(ownerType))
+        {
+            if (!IsConeCollider(type))
+            {
+                return slot.Name + " accepts a ConeCollider2D only.";
+            }
+
+            return ReferenceEquals(slot.Children.OfType<ElementSyntax>().First(), element)
+                ? null
+                : slot.Name + " accepts exactly one ConeCollider2D.";
+        }
+
+        if (IsConeCollider(type))
+        {
+            return "ConeCollider2D can only be a Vision; put it inside <Sprite2D.Vision> or <Scene2D.Vision>.";
+        }
+
+        bool bodySlot = (slot is null || slotName == "Collider") && IsLiveColliderOwner(ownerType);
+        return isCollider && !bodySlot
+            ? "Colliders can only be owned by Sprite2D or tiles; they cannot be scene roots or children of other UI elements."
+            : null;
     }
 
     private void BindTileDeclaration(ElementSyntax element, ILanguageTypeSymbol type)

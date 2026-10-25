@@ -141,7 +141,46 @@ For source-backed collision preparation without UI, give an unowned root group a
 
 The world also owns prepared spatial collision-region interests. Detaching the owning scene or changing its surface invalidates those leases and cancels unfinished preparation; reattachment does not revive old leases. See [CollisionWorld2D](Cerneala.UI.Controls.CollisionWorld2D.md) for readiness checks and explicit preparation before querying unloaded terrain.
 
-The scene owns the query world, not the collision shapes themselves. A `Sprite2D` owns zero or one live collider through its `Collider` property. `Scene2D.Children` rejects collider nodes, including in derived markup components. A static `Tile` or `TileDefinition2D` likewise owns zero or one immutable descriptor through `Collider`.
+The scene owns the query world, not the collision shapes themselves. A `Sprite2D` owns zero or one live collider through its `Collider` property. `Scene2D.Children` rejects collider nodes, including in derived markup components. The one collider a group can own is its `Vision`, described below. A static `Tile` or `TileDefinition2D` likewise owns zero or one immutable descriptor through `Collider`.
+
+### Vision
+
+`Vision` is a nullable [ConeCollider2D](Cerneala.UI.Controls.ConeCollider2D.md), `null` by default: the cone the whole group sees with. It is a logical child of the group in a slot of its own. It is never one of `Children`: `Children.Add(cone)` throws `InvalidOperationException`, and so does adding or removing it through `LogicalChildren`. Assign or clear it only through the property.
+
+```csharp
+Scene2D dragon = new() { X = 100, Y = 50 };
+dragon.Children.Add(new Sprite2D { X = -40, Y = -5, Collider = new BoxCollider2D { Width = 10, Height = 10 } });
+
+dragon.Vision = new ConeCollider2D { Radius = 150, Angle = 90, Direction = 0 };
+// dragon.Children.Count is still 1; the cone is not a child.
+// dragon.LogicalChildren.Count is 2; the cone's LogicalParent is dragon.
+dragon.Vision = null; // the cone leaves the group; the sprite stays
+```
+
+- The cone uses the group's transform: `X`, `Y`, `TransformOrigin` and the inherited transform channels place and turn it, as they place and turn the children. In the example the apex is at `(100, 50)` in the parent's coordinates. In another example, a group with `X = 0`, `Y = 0`, `TransformOrigin = new DrawPoint(100, 0)` and `Rotation = MathF.PI` moves its cone's apex from `(0, 0)` to `(200, 0)`, and the cone, which looked right, now looks left.
+- Adding, inserting, replacing, removing or clearing `Children` never touches the cone.
+- The cone is a sensor. It does not block, it is not picked, and only the group learns what it touches, through `dragon.Vision.Entered` and `Exited` and through `CollisionWorld.Overlap(dragon.Vision)`. It ignores every collider inside the group, also inside nested groups, and a body it sees receives no event for the cone. A cone on a root scene therefore sees nothing, because every collider of that scene is inside it. A sprite inside the group can have a `Vision` of its own, which sees the group's other parts. The rules are in [ConeCollider2D](Cerneala.UI.Controls.ConeCollider2D.md#a-vision-is-a-sensor).
+- A cone is the `Vision` of one owner at a time, sprite or group. Assigning it to a second owner throws `InvalidOperationException` and leaves it where it is; set the first owner's `Vision` to `null` first.
+- The cone draws nothing and is not part of the group's content. It does not change which children the group draws, their drawing order, or the bounds the group reports. A group with a `Vision` records and orders the same children as the same group without one, so its offscreen children are still skipped.
+
+#### Markup usage
+
+`<Scene2D.Vision>` holds exactly one [ConeCollider2D](Cerneala.UI.Controls.ConeCollider2D.md#markup-usage). The generated code assigns it to the `Vision` property of the group. It is never added to `Children`:
+
+```xml
+<Scene2D>
+    <Scene2D X="100" Y="50">
+        <Scene2D.Vision>
+            <ConeCollider2D Radius="150" Angle="90" Direction="0" />
+        </Scene2D.Vision>
+        <Sprite2D X="-40" Y="-5" Width="10" Height="10">
+            <BoxCollider2D Width="10" Height="10" />
+        </Sprite2D>
+    </Scene2D>
+</Scene2D>
+```
+
+The inner group has one child, the sprite, and its `Vision` is the cone. The outer root has no `Vision`. On the root of a paired scene component (see the `HouseView` example above), `<Scene2D.Vision>` is the `Vision` of the component itself. Any element other than a cone inside `<Scene2D.Vision>`, and a cone anywhere that is not a `Vision`, is `CERNEALAUI005`; the rules are listed in [ConeCollider2D, Markup usage](Cerneala.UI.Controls.ConeCollider2D.md#markup-usage).
 
 `Scene2D` applies the inherited `Scale`, `ScaleX`, `ScaleY`, `SkewX`, `SkewY`, `Rotation`, `TranslateX`, `TranslateY`, and `RenderTransform` channels to the entire descendant group. `TransformOrigin` is an absolute point in the group's local scene coordinates, not a normalized layout point. The local transform is composed in this order: translate away from the origin, scale, skew, rotate, translate, apply `RenderTransform`, translate back to the origin, and finally translate by the group's `X` and `Y` placement. Nested groups compose their transforms from child to parent. Changing `X` or `Y` moves the group's drawing, picking and colliders together, like the other channels.
 
@@ -194,13 +233,14 @@ Simulation and collision interests remain independent: a pointwise effect does n
 
 | Name | Description |
 | --- | --- |
-| `Scene2D()` | Creates an empty owned child collection. |
+| `Scene2D()` | Creates an empty owned child collection and no vision. |
 
 ## Properties
 
 | Name | Type | Description |
 | --- | --- | --- |
 | `Children` | `Collection<SceneNode2D>` | Ordered retained nodes recorded by the group. |
+| `Vision` | `ConeCollider2D?` | Gets or sets the cone the group sees with. It is a logical child in a slot of its own, never one of `Children`. The default is `null`. |
 | `CollisionWorld` | `CollisionWorld2D` | Root-owned collision query world shared by this group and its nested scene groups. |
 | `OrderMode` | `SceneOrderMode` | Selects source, layer, or stable layer-then-Y recording order. The default is `Source`. |
 | `TransformOrigin` | `DrawPoint` | Absolute transform pivot in local scene-space units. The default is `(0, 0)`. |
@@ -227,5 +267,6 @@ Project: `Cerneala`
 - `SceneOrderMode`
 - `SceneItems2D`
 - `Sprite2D`
+- `ConeCollider2D`
 - `CollisionWorld2D`
 - `MouseEventArgs`

@@ -21,15 +21,27 @@ public abstract class Collider2D : SceneNode2D
         UIElement? candidate = parent ?? LogicalParent;
         if (role != ElementChildRole.Logical || candidate is null || !AllowsCollisionParent(candidate))
         {
-            throw new InvalidOperationException("Live colliders can only be owned by Sprite2D; static Tile colliders are immutable data, never standalone scene nodes.");
+            throw new InvalidOperationException("Live colliders can only be owned by Sprite2D, or be the Vision of a Sprite2D or Scene2D; static Tile colliders are immutable data, never standalone scene nodes.");
         }
         if (!ownerManaged)
         {
-            throw new InvalidOperationException("Change collider ownership through the owner's Collider property, not LogicalChildren or VisualChildren.");
+            throw new InvalidOperationException("Change collider ownership through the owner's Collider or Vision property, not LogicalChildren or VisualChildren.");
         }
     }
 
     internal virtual bool AllowsCollisionParent(UIElement parent) => parent is Sprite2D;
+
+    // The owner whose Vision slot holds this collider, set by that slot while it holds the collider.
+    // A collider with an owner here is a sensor in the collision world: it never blocks, is never picked,
+    // and only its owner learns what it touches.
+    internal SceneNode2D? VisionOwner { get; set; }
+
+    internal bool IsVisionSensor => VisionOwner is not null;
+
+    // A sensor takes no part in input: it is not an input route node or a Servo target, and it adds nothing to the
+    // input bounds of its owner, which Servo aims at. The slot sets VisionOwner before the cone joins the tree and
+    // clears it after the cone leaves, so no route built in between sees another value.
+    internal override bool ParticipatesInInputRoute => base.ParticipatesInInputRoute && !IsVisionSensor;
 
     public static readonly UiProperty<bool> EnabledProperty =
         UiProperty<bool>.Register(
@@ -272,6 +284,10 @@ public abstract class Collider2D : SceneNode2D
     }
 
     internal abstract ColliderLocalShape2D GetLocalShape();
+
+    // Where the shape's origin sits in this collider's local space, before the collider's own transform.
+    // Every collider sits at OffsetX and OffsetY; a cone also mirrors its apex with the image of its sprite owner.
+    internal virtual Vector2 GetShapeOffset() => new(OffsetX, OffsetY);
 
     internal override void ValidatePropertyMutation(UiProperty property, object? value)
     {

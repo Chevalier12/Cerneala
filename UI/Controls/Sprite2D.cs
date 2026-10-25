@@ -15,6 +15,7 @@ public sealed class Sprite2D : SceneNode2D
 {
     private readonly SpriteAnimationPlayback animationPlayback = new();
     private readonly ColliderSlot2D colliderSlot;
+    private readonly ColliderSlot2D visionSlot;
     // Scene traversals visit every sprite several times per frame. Read the
     // properties they use once per property-store version, not once per visit.
     private long snapshotVersion = -1;
@@ -47,10 +48,13 @@ public sealed class Sprite2D : SceneNode2D
     private IDrawImage? localBoundsSource;
     private int localBoundsImageWidth;
     private int localBoundsImageHeight;
+    // The mirror the Vision cone last used or was told about; see RefreshVisionMirror.
+    private SpriteMirror2D visionMirror;
 
     public Sprite2D()
     {
-        colliderSlot = new ColliderSlot2D(this);
+        colliderSlot = new ColliderSlot2D(this, ColliderSlotRole2D.Body);
+        visionSlot = new ColliderSlot2D(this, ColliderSlotRole2D.Vision);
     }
 
     public Collider2D? Collider
@@ -59,14 +63,34 @@ public sealed class Sprite2D : SceneNode2D
         set => colliderSlot.Value = value;
     }
 
+    /// <summary>
+    /// Gets or sets the cone this sprite sees with, or <see langword="null"/> for none. The cone is a logical child of
+    /// the sprite in a slot of its own, separate from <see cref="Collider"/>, and it moves, turns and mirrors with the sprite.
+    /// </summary>
+    public ConeCollider2D? Vision
+    {
+        get => (ConeCollider2D?)visionSlot.Value;
+        set
+        {
+            visionSlot.Value = value;
+            // A sprite with a Vision is never parked (CanParkAnimation), so one that was parked while it had none resumes.
+            if (value is not null && IsAnimationParked)
+            {
+                Surface?.UnparkAnimation(this);
+            }
+        }
+    }
+
     internal override void AttachSurface(RenderSurface2D? surface)
     {
         base.AttachSurface(surface);
         colliderSlot.AttachSurface(surface);
+        visionSlot.AttachSurface(surface);
     }
 
     // Shapes use destination units relative to the sprite anchor. Image sizing,
-    // crop, Origin and Flip change presentation, not collision geometry.
+    // crop, Origin, Flip and animation frames change presentation, not collision geometry; the one
+    // exception is a Vision cone, which mirrors with the image (see SpriteMirror2D).
     internal override Matrix3x2 GetLocalTransform() => Current.LocalTransform;
 
     internal override bool IsSceneRendered => Current.IsRendered;
@@ -296,6 +320,7 @@ public sealed class Sprite2D : SceneNode2D
         if (animationPlayback.Restart())
         {
             if (Current.FrameAffectsBounds) { NotifyContainerGeometryChanged(); }
+            RefreshVisionMirror();
             IncrementRenderVersion();
             Surface?.InvalidateFrame();
         }
@@ -310,6 +335,7 @@ public sealed class Sprite2D : SceneNode2D
             // The new frame's source rectangle sizes or anchors this sprite.
             NotifyContainerGeometryChanged();
         }
+        if (changed) { RefreshVisionMirror(); }
         return changed;
     }
 
@@ -324,7 +350,9 @@ public sealed class Sprite2D : SceneNode2D
     internal override void AttachAnimationClock(SpriteAnimationClock? clock) =>
         animationPlayback.AttachClock(clock);
 
-    internal override bool CanParkAnimation => !AnimationFrameAffectsPresentation;
+    // A parked sprite is not visited for its frame changes while it is culled. The cone of a Vision lives in the
+    // collision world whether or not the sprite is drawn, and its frames flip it, so such a sprite stays visited.
+    internal override bool CanParkAnimation => !AnimationFrameAffectsPresentation && visionSlot.Value is null;
 
     internal override long NextAnimationChangeTicks => animationPlayback.NextChangeClockTicks;
 
@@ -335,6 +363,7 @@ public sealed class Sprite2D : SceneNode2D
         {
             NotifyContainerGeometryChanged();
         }
+        if (changed) { RefreshVisionMirror(); }
         return changed;
     }
 
@@ -664,6 +693,67 @@ public sealed class Sprite2D : SceneNode2D
         {
             RefreshAnimationRegistration();
         }
+
+        // After the playback follows the new selection: the cone mirrors with the image that is drawn now.
+        // Body colliders ignore all of these properties.
+        if (visionSlot.Value is not null && IsVisionMirrorProperty(args.Property))
+        {
+            RefreshVisionMirror();
+        }
+    }
+
+    // The properties that decide the flip the image is drawn with or the rectangle it is drawn in.
+    private static bool IsVisionMirrorProperty(UiProperty property) =>
+        ReferenceEquals(property, FlipProperty) ||
+        ReferenceEquals(property, ImageProperty) ||
+        ReferenceEquals(property, UIElement.WidthProperty) ||
+        ReferenceEquals(property, UIElement.HeightProperty) ||
+        ReferenceEquals(property, OriginProperty) ||
+        ReferenceEquals(property, SourceXProperty) ||
+        ReferenceEquals(property, SourceYProperty) ||
+        ReferenceEquals(property, SourceWidthProperty) ||
+        ReferenceEquals(property, SourceHeightProperty) ||
+        ReferenceEquals(property, AnimationsProperty) ||
+        ReferenceEquals(property, AnimationStateProperty);
+
+    // The mirror the cone uses: read by the cone each time its geometry is created, so the value kept here is the
+    // one the collision world last saw.
+    internal SpriteMirror2D ReadVisionMirror()
+    {
+        visionMirror = ComputeVisionMirror();
+        return visionMirror;
+    }
+
+    // Tells the collision world that the cone moved, but only when the mirror differs from the one it last used.
+    // Frame changes that keep the composed flip, and size changes of an unflipped axis, mutate nothing.
+    // Runs from property changes and from animation advances, which are the time phase. It does not run while a frame
+    // is recorded: the one advance that recording can start is unparking, and a sprite with a Vision is never parked.
+    private void RefreshVisionMirror()
+    {
+        if (visionSlot.Value is not { } vision) { return; }
+
+        SpriteMirror2D mirror = ComputeVisionMirror();
+        if (mirror == visionMirror) { return; }
+
+        visionMirror = mirror;
+        SceneGeometry2D.FindRootScene(this)?.NotifyCollisionMutation(vision, SceneCollisionMutationKind.Geometry);
+    }
+
+    private SpriteMirror2D ComputeVisionMirror()
+    {
+        RenderSurface2DSpriteFlip flip = ComposeFlip(Current.Flip, animationPlayback.CurrentFrame?.Flip ?? RenderSurface2DSpriteFlip.None);
+        if (flip == RenderSurface2DSpriteFlip.None) { return default; }
+
+        // The image flips inside the rectangle it is drawn in, so that rectangle's centre lines are the axes. A sprite
+        // with no known rectangle (no image and no declared size) mirrors across its anchor.
+        SceneBounds2D local = GetHitTestLocalBounds();
+        if (local.Kind != SceneBoundsKind.Known) { return new SpriteMirror2D(flip, 0, 0); }
+
+        DrawRect bounds = local.Bounds;
+        return new SpriteMirror2D(
+            flip,
+            (flip & RenderSurface2DSpriteFlip.Horizontal) != 0 ? bounds.X + (bounds.Width / 2) : 0,
+            (flip & RenderSurface2DSpriteFlip.Vertical) != 0 ? bounds.Y + (bounds.Height / 2) : 0);
     }
 
     // A trimmed animation frame draws only its visible pixels, but the sprite's

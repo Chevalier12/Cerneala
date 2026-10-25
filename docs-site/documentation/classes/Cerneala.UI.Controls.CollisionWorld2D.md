@@ -43,6 +43,34 @@ Pair filtering is bilateral: `(a.CollisionMask & b.CollisionLayer) != 0` and `(b
 
 Overlap results use stable attachment order. Ray and movement results use fraction, distance, then attachment ordinal. Methods do not mutate scene nodes and do not run a physics simulation.
 
+### Vision sensors
+
+The cone of a [Vision](Cerneala.UI.Controls.ConeCollider2D.md#a-vision-is-a-sensor) is in the world, but it is a sensor. Other colliders' queries never see it:
+
+- `Overlap`, `Raycast` and `MoveAndCollide` never return a `Vision`, whether it has `IsTrigger` set or not. It never blocks a move and is never one of the `TriggerHits`.
+- `Overlap(vision)` returns the colliders that touch the cone, in attachment order, and it is the way to ask what a `Vision` sees. It never returns another `Vision`, and it never returns a collider inside the subtree of the cone's owner: for a `Sprite2D` owner that is the sprite's own body, and for a `Scene2D` owner it is every collider in the group, also in nested groups. A `Sprite2D` inside a group still sees the group's other parts.
+- `Intersects(first, second)` is `false` when both colliders are Visions, and when one is a `Vision` and the other is inside that cone's owner's subtree. Otherwise it follows the usual rule, so `Intersects(fox.Collider, bee.Vision)` is `true` while the two shapes touch. Contact events use the same rule.
+- `MoveAndCollide(vision, displacement)` throws `InvalidOperationException` with a message that names `Vision`. It throws when the cone is enabled or not, and also when the cone's owner is not in this world's scene.
+- Picking never returns a `Vision`.
+
+```csharp
+ConeCollider2D cone = new() { Radius = 150, Angle = 90, Direction = 0 };
+BoxCollider2D foxBox = new() { Width = 10, Height = 10 };
+Sprite2D bee = new()
+{
+    Collider = new BoxCollider2D { Width = 10, Height = 10, OffsetX = -12, OffsetY = -5 },
+    Vision = cone
+};
+Sprite2D fox = new() { X = 60, Y = -5, Collider = foxBox };
+scene.Children.Add(bee);
+scene.Children.Add(fox);
+
+CollisionHit2D[] seen = scene.CollisionWorld.Overlap(cone);          // one hit: foxBox (never the bee's own body)
+CollisionHit2D[] around = scene.CollisionWorld.Overlap(foxBox);      // empty: the cone is not returned
+bool touching = scene.CollisionWorld.Intersects(foxBox, cone);       // true
+scene.CollisionWorld.MoveAndCollide(cone, new Vector2(10, 0));       // throws InvalidOperationException
+```
+
 When the scene has a UI or independent simulation owner, queries and diagnostics require its owner thread. Permanent in-memory colliders can still be queried without a context; asynchronous source preparation requires the explicit lifecycle below.
 
 ### Spatial data readiness
@@ -74,10 +102,10 @@ Prepared package chunk headers declare conservative collision envelopes before t
 
 | Name | Returns | Description |
 | --- | --- | --- |
-| `Intersects(Collider2D, Collider2D)` | `bool` | Tests one active, bilaterally compatible pair exactly. |
-| `Overlap(Collider2D, CollisionQuery2D)` | `CollisionHit2D[]` | Returns exact current overlaps, excluding the source collider. |
-| `Raycast(Vector2, Vector2, float, CollisionQuery2D)` | `CollisionHit2D[]` | Returns all ray hits up to the finite non-negative maximum distance. A zero direction is rejected. |
-| `MoveAndCollide(Collider2D, Vector2, CollisionQuery2D)` | `MoveCollisionResult2D` | Casts a collider continuously without mutating it. |
+| `Intersects(Collider2D, Collider2D)` | `bool` | Tests one active, bilaterally compatible pair exactly. `false` for two `Vision` cones and for a `Vision` with a collider inside its owner's subtree. |
+| `Overlap(Collider2D, CollisionQuery2D)` | `CollisionHit2D[]` | Returns exact current overlaps, excluding the source collider. Never returns a `Vision`. For a `Vision` source it returns the bodies in the cone, except the owner's own. |
+| `Raycast(Vector2, Vector2, float, CollisionQuery2D)` | `CollisionHit2D[]` | Returns all ray hits up to the finite non-negative maximum distance. A zero direction is rejected. Never returns a `Vision`. |
+| `MoveAndCollide(Collider2D, Vector2, CollisionQuery2D)` | `MoveCollisionResult2D` | Casts a collider continuously without mutating it. A `Vision` never blocks it. Throws `InvalidOperationException` when the moved collider is a `Vision`. |
 | `PrepareRegionAsync(DrawRect, CancellationToken)` | `ValueTask<SceneCollisionRegion2D>` | Prepares source collision data in a finite, nonnegative scene-space rectangle and returns a disposable interest. Requires an independent or UI-hosted simulation context and its owner thread. |
 | `GetDiagnosticsSnapshot()` | `CollisionWorld2DDiagnosticsSnapshot` | Captures current index, work, update, and timing counters. |
 

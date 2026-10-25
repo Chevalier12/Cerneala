@@ -52,10 +52,10 @@ public sealed partial class CollisionWorld2D
         }
     }
 
-    // The rule that Intersects and contact events share: the pair filter, then the exact shape test.
+    // The rule that Intersects and contact events share: the pair rules, then the exact shape test.
     private bool IntersectsEntries(CollisionEntry2D first, CollisionEntry2D second)
     {
-        if (!PassesPairFilter(first.Collider, second.Collider))
+        if (!PassesPairRules(first, second))
         {
             return false;
         }
@@ -88,8 +88,8 @@ public sealed partial class CollisionWorld2D
                 CollisionEntry2D? target = GetEntry(id);
                 if (target is null ||
                     ReferenceEquals(target.Collider, collider) ||
-                    !PassesQueryFilter(target.Collider, query) ||
-                    !PassesPairFilter(collider, target.Collider))
+                    !PassesQueryFilter(target, query) ||
+                    !PassesPairRules(source, target))
                 {
                     continue;
                 }
@@ -148,7 +148,7 @@ public sealed partial class CollisionWorld2D
             foreach (int id in candidates)
             {
                 CollisionEntry2D? target = GetEntry(id);
-                if (target is null || !PassesQueryFilter(target.Collider, query))
+                if (target is null || !PassesQueryFilter(target, query))
                 {
                     continue;
                 }
@@ -182,6 +182,12 @@ public sealed partial class CollisionWorld2D
         ArgumentNullException.ThrowIfNull(collider);
         owner.VerifyOwnerAccess();
         ValidateFinite(displacement, nameof(displacement));
+        if (collider.IsVisionSensor)
+        {
+            // Whatever its Enabled state, and even when its owner is not in this world.
+            throw new InvalidOperationException("A Vision cone is a sensor; it cannot be moved with MoveAndCollide.");
+        }
+
         long started = Stopwatch.GetTimestamp();
         try
         {
@@ -204,7 +210,7 @@ public sealed partial class CollisionWorld2D
                 CollisionEntry2D? target = GetEntry(id);
                 if (target is null ||
                     ReferenceEquals(target.Collider, collider) ||
-                    !PassesQueryFilter(target.Collider, query) ||
+                    !PassesQueryFilter(target, query) ||
                     !PassesPairFilter(collider, target.Collider))
                 {
                     continue;
@@ -284,8 +290,9 @@ public sealed partial class CollisionWorld2D
             foreach (int id in candidates)
             {
                 CollisionEntry2D? target = GetEntry(id);
-                if (target is null)
+                if (target is null || target.IsSensor)
                 {
+                    // A Vision is never picked.
                     continue;
                 }
 
@@ -443,7 +450,8 @@ public sealed partial class CollisionWorld2D
             if (existing.Geometry == geometry &&
                 existing.CollisionLayer == collider.CollisionLayer &&
                 existing.CollisionMask == collider.CollisionMask &&
-                existing.IsTrigger == collider.IsTrigger)
+                existing.IsTrigger == collider.IsTrigger &&
+                ReferenceEquals(existing.SensorOwner, collider.VisionOwner))
             {
                 return false;
             }
@@ -453,7 +461,8 @@ public sealed partial class CollisionWorld2D
                 Geometry = geometry,
                 CollisionLayer = collider.CollisionLayer,
                 CollisionMask = collider.CollisionMask,
-                IsTrigger = collider.IsTrigger
+                IsTrigger = collider.IsTrigger,
+                SensorOwner = collider.VisionOwner
             };
             entriesByCollider[collider] = updated;
             entriesById[existing.Id] = updated;
@@ -475,7 +484,8 @@ public sealed partial class CollisionWorld2D
             geometry,
             collider.CollisionLayer,
             collider.CollisionMask,
-            collider.IsTrigger);
+            collider.IsTrigger,
+            collider.VisionOwner);
         entriesByCollider.Add(collider, entry);
         while (entriesById.Count <= id)
         {
@@ -530,13 +540,53 @@ public sealed partial class CollisionWorld2D
         (first.CollisionMask & second.CollisionLayer) != 0 &&
         (second.CollisionMask & first.CollisionLayer) != 0;
 
-    private static bool PassesQueryFilter(Collider2D collider, CollisionQuery2D query) =>
-        !ReferenceEquals(collider, query.Exclude) &&
-        (query.IncludeTriggers || !collider.IsTrigger) &&
+    // The pair rules of Intersects, Overlap and contact events: the sensor rule, then the layer and mask filter.
+    private static bool PassesPairRules(CollisionEntry2D first, CollisionEntry2D second) =>
+        PassesSensorRule(first, second) &&
+        PassesPairFilter(first.Collider, second.Collider);
+
+    // A Vision is a sensor. Two sensors never touch, and a sensor never touches a collider inside the
+    // subtree of its owner: the sprite's own body for a Sprite2D, every collider of the group for a Scene2D.
+    private static bool PassesSensorRule(CollisionEntry2D first, CollisionEntry2D second)
+    {
+        if (first.SensorOwner is null && second.SensorOwner is null)
+        {
+            return true;
+        }
+
+        if (first.SensorOwner is not null && second.SensorOwner is not null)
+        {
+            return false;
+        }
+
+        (CollisionEntry2D sensor, CollisionEntry2D other) = first.SensorOwner is not null
+            ? (first, second)
+            : (second, first);
+        return !IsInsideSubtree(other.Collider, sensor.SensorOwner!);
+    }
+
+    private static bool IsInsideSubtree(Collider2D collider, SceneNode2D subtreeRoot)
+    {
+        for (UIElement? current = collider.LogicalParent; current is not null; current = current.LogicalParent)
+        {
+            if (ReferenceEquals(current, subtreeRoot))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // A Vision is never a target of a query: it does not block, and rays and other colliders' overlaps do not see it.
+    private static bool PassesQueryFilter(CollisionEntry2D target, CollisionQuery2D query) =>
+        !target.IsSensor &&
+        !ReferenceEquals(target.Collider, query.Exclude) &&
+        (query.IncludeTriggers || !target.Collider.IsTrigger) &&
         query.CollisionLayer != 0 &&
         query.CollisionMask != 0 &&
-        (query.CollisionMask & collider.CollisionLayer) != 0 &&
-        (collider.CollisionMask & query.CollisionLayer) != 0;
+        (query.CollisionMask & target.Collider.CollisionLayer) != 0 &&
+        (target.Collider.CollisionMask & query.CollisionLayer) != 0;
 
     private static CollisionHit2D CreateHit(
         CollisionEntry2D entry,
@@ -613,5 +663,10 @@ public sealed partial class CollisionWorld2D
         ColliderGeometry2D Geometry,
         uint CollisionLayer,
         uint CollisionMask,
-        bool IsTrigger);
+        bool IsTrigger,
+        SceneNode2D? SensorOwner)
+    {
+        // A Vision cone is a sensor; SensorOwner is the owner of its Vision slot.
+        internal bool IsSensor => SensorOwner is not null;
+    }
 }

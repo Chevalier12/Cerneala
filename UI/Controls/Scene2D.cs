@@ -37,6 +37,7 @@ public class Scene2D : SceneNode2D
 
     private readonly List<SceneOrderEntry> effectiveOrder = [];
     private readonly CollisionWorld2D ownedCollisionWorld;
+    private readonly ColliderSlot2D visionSlot;
     private long collisionMutationVersion;
     private long localTransformVersion = -1;
     private Matrix3x2 localTransform;
@@ -47,6 +48,7 @@ public class Scene2D : SceneNode2D
     public Scene2D()
     {
         ownedCollisionWorld = new CollisionWorld2D(this);
+        visionSlot = new ColliderSlot2D(this, ColliderSlotRole2D.Vision);
         Children = new ChildCollection(this);
         LogicalChildren.Changed += (_, _) =>
         {
@@ -57,6 +59,16 @@ public class Scene2D : SceneNode2D
     }
 
     public Collection<SceneNode2D> Children { get; }
+
+    /// <summary>
+    /// Gets or sets the cone this group sees with, or <see langword="null"/> for none. The cone is a logical child of the
+    /// group in a slot of its own, never one of <see cref="Children"/>, and it moves and turns with the group's transform.
+    /// </summary>
+    public ConeCollider2D? Vision
+    {
+        get => (ConeCollider2D?)visionSlot.Value;
+        set => visionSlot.Value = value;
+    }
 
     public CollisionWorld2D CollisionWorld =>
         (SceneGeometry2D.FindRootScene(this) ?? this).ownedCollisionWorld;
@@ -128,6 +140,7 @@ public class Scene2D : SceneNode2D
         {
             child.AttachSurface(surface);
         }
+        visionSlot.AttachSurface(surface);
     }
 
     protected override void OnDetached()

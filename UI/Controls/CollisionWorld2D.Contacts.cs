@@ -206,7 +206,9 @@ public sealed partial class CollisionWorld2D
         List<PendingContact2D> events,
         int worldOrder)
     {
-        bool report = touching && receiver.HasContactHandlers;
+        // A body never reports a Vision: only the sensor learns about the touch, with the body as Other.
+        // Two sensors never touch (IntersectsEntries), so a sensor receiver always has a body as Other.
+        bool report = touching && receiver.HasContactHandlers && (receiver.IsVisionSensor || !other.IsVisionSensor);
         if (report == receiver.ReportsContactWith(other)) { return; }
 
         if (report) { receiver.LinkReportedContact(other); }

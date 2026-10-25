@@ -146,13 +146,53 @@ Explicit destination dimensions, static crop dimensions, or an animation frame c
 </Sprite2D>
 ```
 
-Collider coordinates are destination units relative to the sprite anchor. `X`, `Y`, `Rotation`, and ancestor scene transforms place both the image and its collider. Image `Width`/`Height`, natural dimensions, crop, source-pixel `Origin`, `Flip`, and animation frames affect drawing only. A `32 × 32` collider stays `32 × 32` when the sprite is drawn at `64 × 64`; applications explicitly update or bind the collider geometry when needed. A collider can exist on a sprite without a resolved image and does not cause an image to be synthesized.
+Collider coordinates are destination units relative to the sprite anchor. `X`, `Y`, `Rotation`, and ancestor scene transforms place both the image and its collider. Image `Width`/`Height`, natural dimensions, crop, source-pixel `Origin`, `Flip`, and animation frames affect drawing only, with one exception: a `Vision` cone mirrors with the image, so the flip the image is drawn with (`Flip` composed with the frame's `Flip`) mirrors the cone's direction and its apex (see [Vision](#vision)). A `32 × 32` collider stays `32 × 32` when the sprite is drawn at `64 × 64`; applications explicitly update or bind the collider geometry when needed. A collider can exist on a sprite without a resolved image and does not cause an image to be synthesized.
+
+### Vision
+
+`Vision` is a second, separate slot: a nullable [ConeCollider2D](Cerneala.UI.Controls.ConeCollider2D.md), `null` by default. It is not the body. A sprite can have both, and neither slot replaces the other. The cone is a logical child of the sprite, not a visual child. Assign or clear it through this property, never through generic UI child collections.
+
+```csharp
+Sprite2D bee = new()
+{
+    Collider = new BoxCollider2D { Width = 10, Height = 10, OffsetX = -12, OffsetY = -5 },
+    Vision = new ConeCollider2D { Radius = 150, Angle = 90, Direction = 0 }
+};
+
+// bee.Collider is the box and bee.Vision is the cone. bee.LogicalChildren holds both; bee.VisualChildren is empty.
+bee.Vision = null; // the cone leaves the sprite; the box stays
+```
+
+- The body slot refuses a cone. `bee.Collider = new ConeCollider2D()` throws `InvalidOperationException` with a message that names `Vision`. The check runs before anything changes, so a body already in `Collider` stays attached.
+- One cone cannot be the `Vision` of two owners, sprite or scene group. Assigning it to a second owner throws `InvalidOperationException` and leaves it with the first owner. Set the first owner's `Vision` to `null` before moving it.
+- The cone moves with the sprite's `X`, `Y`, `Rotation` and the ancestor scene transforms, like the body.
+- The cone mirrors with the image. The flip it uses is the one the image is drawn with: `Flip` composed with the `Flip` of the current animation frame, exclusive-or on each axis. With `Direction = 0`, `Flip = Horizontal` makes the cone look left, and a clip whose frames have `Flip = Horizontal` does the same while `Flip` stays `None`. The apex mirrors across the centre line of the sprite's local image rectangle: for a `32 × 32` image at `Origin = (0, 0)`, a cone with `OffsetX = 28` has its apex at `x = 4` after `Flip = Horizontal`. A sprite with no known rectangle (no image and no declared `Width` and `Height`) mirrors across its anchor, so `OffsetX` becomes `-OffsetX`. The formulas and examples are in [ConeCollider2D](Cerneala.UI.Controls.ConeCollider2D.md#remarks). The body collider still ignores `Flip`.
+- The collision world reads the cone again, and contacts change at the next update, when the flip or the centre of the mirror changes: a new `Flip`, `Image`, `Width`, `Height`, `Origin`, `SourceX`, `SourceY`, `SourceWidth`, `SourceHeight`, `Animations` or `AnimationState`, an animation frame that changes the composed flip, or `RestartAnimation()`. A change that leaves the mirror as it was does nothing. A sprite without a `Vision` does none of this work. A sprite with a `Vision` is never parked while it is culled out of view, so its frames keep moving the cone. When a resource image finishes loading, the sprite does not tell the collision world, because recording a frame must not change collision state: the apex keeps the centre it had until the sprite's next change, such as a new `X`.
+- The cone is a sensor. It does not block, it is not picked, and only the sprite learns what it touches, through `bee.Vision.Entered` and `Exited` and through `CollisionWorld.Overlap(bee.Vision)`. It never sees the sprite's own `Collider`, and a body it sees receives no event for the cone. The rules are in [ConeCollider2D](Cerneala.UI.Controls.ConeCollider2D.md#a-vision-is-a-sensor).
+- `Vision` is not the markup content property. `Collider` stays the content property, so a body is declared directly inside the sprite and a cone is declared in the `Sprite2D.Vision` property element (see below).
+
+#### Markup usage
+
+`<Sprite2D.Vision>` holds exactly one [ConeCollider2D](Cerneala.UI.Controls.ConeCollider2D.md#markup-usage). The generated code assigns it to `Vision`. A sprite can declare its body and its vision together, in either order:
+
+```xml
+<Scene2D>
+    <Sprite2D Width="32" Height="32">
+        <BoxCollider2D Width="10" Height="10" OffsetX="-12" OffsetY="-5" />
+        <Sprite2D.Vision>
+            <ConeCollider2D Radius="150" Angle="90" Direction="0" />
+        </Sprite2D.Vision>
+    </Sprite2D>
+</Scene2D>
+```
+
+Here `sprite.Collider` is the box and `sprite.Vision` is the cone. The cone does not count as the sprite's "one collider", so this is not an error. A cone declared directly inside the sprite, as in `<Sprite2D><ConeCollider2D /></Sprite2D>`, is a `CERNEALAUI005` error in the editor and in the build: `ConeCollider2D can only be a Vision; put it inside <Sprite2D.Vision> or <Scene2D.Vision>.` Nothing is generated from that file. Any element other than a cone inside `<Sprite2D.Vision>` is also `CERNEALAUI005`. The other rules are listed in [ConeCollider2D, Markup usage](Cerneala.UI.Controls.ConeCollider2D.md#markup-usage).
 
 ## Sprite-sheet animation
 
 `Animations` selects a shared immutable [SpriteAnimationSet](Cerneala.UI.Controls.SpriteAnimationSet.md); `AnimationState` selects a case-sensitive clip name. Each sprite owns its playback progress. Null definitions, a null state, or an unresolved runtime state use the static source-coordinate properties and `Flip` instead. Replacing the set resets progress and saved state positions; replacing the image or data context alone does not.
 
-The selected frame supplies the effective source rectangle without changing the static source-coordinate properties. Automatic destination dimensions follow that selected frame. Frame flip and sprite `Flip` compose by XOR on each axis. The destination stays in scene coordinates; the full atlas does not become the sprite's bounds. Prism wraps the selected frame and does not alter the collider.
+The selected frame supplies the effective source rectangle without changing the static source-coordinate properties. Automatic destination dimensions follow that selected frame. Frame flip and sprite `Flip` compose by XOR on each axis. The destination stays in scene coordinates; the full atlas does not become the sprite's bounds. Prism wraps the selected frame and does not alter the collider. A `Vision` cone is the exception for the frame flip: it uses the composed flip, so a frame that flips the image mirrors the cone (see [Vision](#vision)).
 
 `AnimationStateChangeMode.Restart` starts a newly selected state at frame zero. `Resume` saves the outgoing state's position and restores a previously saved incoming position. `RestartAnimation()` resets the current state without changing the selected state. Pause and a zero playback rate preserve progress; negative or non-finite rates are rejected.
 
@@ -218,7 +258,8 @@ All five properties have matching public `<Name>Property` identifier fields and 
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `Collider` | `Collider2D?` | Gets or sets the single owner-managed live collision shape. This is the markup content property. |
+| `Collider` | `Collider2D?` | Gets or sets the single owner-managed live collision shape. This is the markup content property. It rejects a `ConeCollider2D`. |
+| `Vision` | `ConeCollider2D?` | Gets or sets the cone this sprite sees with, in a slot separate from `Collider`. The default is `null`. |
 | `Image` | `ImageReference?` | Gets or sets a direct image or typed resource reference. |
 | `X`, `Y` | `float` | Scene position; source-relative `Origin` remains the anchor. |
 | `Width`, `Height` | `float` | Draw size; inherited from `UIElement`. Omitted dimensions use natural selected-region size. |
@@ -257,7 +298,7 @@ Project: `Cerneala`
 
 | Name | Description |
 | --- | --- |
-| `Sprite2D()` | Creates a sprite with no collider and independent animation state. |
+| `Sprite2D()` | Creates a sprite with no collider, no vision and independent animation state. |
 
 ## Breaking-change migration
 
@@ -274,3 +315,4 @@ Custom path loaders used by cold scene images must implement `IAsyncImageLoader`
 - `Scene2D`
 - `SceneItems2D`
 - `SceneOrderMode`
+- `ConeCollider2D`

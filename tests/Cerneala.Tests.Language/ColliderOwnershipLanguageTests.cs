@@ -52,6 +52,129 @@ public sealed class ColliderOwnershipLanguageTests
                 diagnostic.Message.Contains("one collider", StringComparison.OrdinalIgnoreCase));
     }
 
+    // Vision is a separate slot (docs/plans/2026-10-25-scene2d-vision.md): a ConeCollider2D declared in
+    // Sprite2D.Vision or Scene2D.Vision is neither a body nor a second collider, so it raises no
+    // CERNEALAUI005 and no other error.
+    [Theory]
+    [InlineData("<Scene2D><Sprite2D><Sprite2D.Vision><ConeCollider2D Radius=\"150\" Angle=\"90\" Direction=\"0\" /></Sprite2D.Vision></Sprite2D></Scene2D>")]
+    [InlineData("<Scene2D><Sprite2D><BoxCollider2D /><Sprite2D.Vision><ConeCollider2D /></Sprite2D.Vision></Sprite2D></Scene2D>")]
+    [InlineData("<Scene2D><Sprite2D><Sprite2D.Vision><ConeCollider2D /></Sprite2D.Vision><BoxCollider2D /></Sprite2D></Scene2D>")]
+    [InlineData("<Scene2D><Scene2D><Scene2D.Vision><ConeCollider2D Radius=\"80\" /></Scene2D.Vision></Scene2D></Scene2D>")]
+    [InlineData("<Scene2D><Scene2D.Vision><ConeCollider2D Radius=\"120\" Angle=\"300\" /></Scene2D.Vision><Sprite2D /></Scene2D>")]
+    public void VisionMarkupRaisesNoColliderOwnershipOrOtherErrorDiagnostics(string markup)
+    {
+        using CernealaCompilation compilation = Compile(markup);
+        Assert.DoesNotContain(compilation.GetSemanticModel(MarkupPath).Diagnostics,
+            diagnostic => diagnostic.Id == "CERNEALAUI005");
+        Assert.DoesNotContain(compilation.GetSemanticModel(MarkupPath).Diagnostics,
+            diagnostic => diagnostic.Severity == LanguageDiagnosticSeverity.Error);
+    }
+
+    // A cone is a sensor, not a body: it can only be declared in Vision (user decision, 2026-10-25).
+    [Theory]
+    [InlineData("<Scene2D><Sprite2D><ConeCollider2D /></Sprite2D></Scene2D>")]
+    [InlineData("<Scene2D><Sprite2D><Sprite2D.Collider><ConeCollider2D /></Sprite2D.Collider></Sprite2D></Scene2D>")]
+    public void VisionDiagnosticsRejectAConeInTheSpriteBodySlotAndTheMessageNamesVision(string markup)
+    {
+        using CernealaCompilation compilation = Compile(markup);
+        Assert.Contains(compilation.GetSemanticModel(MarkupPath).Diagnostics,
+            diagnostic => diagnostic.Id == "CERNEALAUI005" && diagnostic.Message.Contains("Vision", StringComparison.Ordinal));
+    }
+
+    // The two completion tests first require the type: without it "not offered" would hold for the wrong reason.
+    [Fact]
+    public void VisionCompletionInSpriteContentOffersTheFourBodyShapesButNotTheCone()
+    {
+        Assert.NotNull(typeof(UIElement).Assembly.GetType("Cerneala.UI.Controls.ConeCollider2D"));
+        string[] labels = Complete("<Scene2D><Sprite2D><| /></Sprite2D></Scene2D>");
+        foreach (string shape in Shapes) { Assert.Contains(shape, labels); }
+        Assert.DoesNotContain("ConeCollider2D", labels);
+    }
+
+    [Fact]
+    public void VisionCompletionInsideSpriteVisionOffersTheCone()
+    {
+        Assert.NotNull(typeof(UIElement).Assembly.GetType("Cerneala.UI.Controls.ConeCollider2D"));
+        string[] labels = Complete("<Scene2D><Sprite2D><Sprite2D.Vision><| /></Sprite2D.Vision></Sprite2D></Scene2D>");
+        Assert.Contains("ConeCollider2D", labels);
+    }
+
+    // Stage 4 additions: a Vision slot takes the cone and only the cone, in the editor as in the build.
+    [Theory]
+    [InlineData("<Scene2D><Sprite2D><Sprite2D.Vision><| /></Sprite2D.Vision></Sprite2D></Scene2D>", true)]
+    [InlineData("<Scene2D><Scene2D.Vision><| /></Scene2D.Vision></Scene2D>", true)]
+    [InlineData("<Scene2D><Scene2D><Scene2D.Vision><| /></Scene2D.Vision></Scene2D></Scene2D>", true)]
+    [InlineData("<Scene2D><Sprite2D><Sprite2D.Vision><ConeCollider2D /><| /></Sprite2D.Vision></Sprite2D></Scene2D>", false)]
+    [InlineData("<Scene2D><Sprite2D><Sprite2D.Collider><| /></Sprite2D.Collider></Sprite2D></Scene2D>", false)]
+    [InlineData("<Scene2D><| /></Scene2D>", false)]
+    [InlineData("<Scene2D><TileMap2D><Tile Image=\"$Wall\"><| /></Tile></TileMap2D></Scene2D>", false)]
+    public void VisionCompletionOffersTheConeOnlyInsideAnEmptyVisionSlot(string marked, bool expected)
+    {
+        Assert.Equal(expected, Complete(marked).Contains("ConeCollider2D"));
+    }
+
+    [Theory]
+    [InlineData("<Scene2D><Sprite2D><Sprite2D.Vision><| /></Sprite2D.Vision></Sprite2D></Scene2D>")]
+    [InlineData("<Scene2D><Scene2D.Vision><| /></Scene2D.Vision></Scene2D>")]
+    public void VisionCompletionDoesNotOfferABodyShapeInsideAVisionSlot(string marked)
+    {
+        string[] labels = Complete(marked);
+        foreach (string shape in Shapes) { Assert.DoesNotContain(shape, labels); }
+    }
+
+    [Theory]
+    [InlineData("<Scene2D><Sprite2D><Sprite2D.Vision><BoxCollider2D /></Sprite2D.Vision></Sprite2D></Scene2D>", "Sprite2D.Vision accepts a ConeCollider2D only")]
+    [InlineData("<Scene2D><Scene2D.Vision><CircleCollider2D /></Scene2D.Vision></Scene2D>", "Scene2D.Vision accepts a ConeCollider2D only")]
+    [InlineData("<Scene2D><Sprite2D><Sprite2D.Vision><Sprite2D /></Sprite2D.Vision></Sprite2D></Scene2D>", "Sprite2D.Vision accepts a ConeCollider2D only")]
+    [InlineData("<Scene2D><Sprite2D><Sprite2D.Vision><ConeCollider2D /><ConeCollider2D /></Sprite2D.Vision></Sprite2D></Scene2D>", "Sprite2D.Vision accepts exactly one ConeCollider2D")]
+    [InlineData("<Scene2D><Sprite2D><Sprite2D.Vision /></Sprite2D></Scene2D>", "Sprite2D.Vision requires exactly one ConeCollider2D child")]
+    [InlineData("<Scene2D><Scene2D.Vision /></Scene2D>", "Scene2D.Vision requires exactly one ConeCollider2D child")]
+    [InlineData("<Scene2D><Sprite2D><Sprite2D.Vision><ConeCollider2D /></Sprite2D.Vision><Sprite2D.Vision><ConeCollider2D /></Sprite2D.Vision></Sprite2D></Scene2D>", "Sprite2D.Vision may be declared only once")]
+    public void VisionDiagnosticsRejectAnythingButOneConeInAVisionSlot(string markup, string expected)
+    {
+        using CernealaCompilation compilation = Compile(markup);
+        Assert.Contains(compilation.GetSemanticModel(MarkupPath).Diagnostics,
+            diagnostic => diagnostic.Id == "CERNEALAUI005" && diagnostic.Message.Contains(expected, StringComparison.Ordinal));
+    }
+
+    // The build rejects text and attributes on a Vision property element (UiMarkupPropertyElementEmitter), so the
+    // editor reports them too: both would otherwise show no error until the build.
+    [Theory]
+    [InlineData("<Scene2D><Sprite2D><Sprite2D.Vision>text<ConeCollider2D /></Sprite2D.Vision></Sprite2D></Scene2D>", "Sprite2D.Vision requires exactly one ConeCollider2D child")]
+    [InlineData("<Scene2D><Sprite2D><Sprite2D.Vision><ConeCollider2D />text</Sprite2D.Vision></Sprite2D></Scene2D>", "Sprite2D.Vision requires exactly one ConeCollider2D child")]
+    [InlineData("<Scene2D><Scene2D.Vision>text<ConeCollider2D /></Scene2D.Vision></Scene2D>", "Scene2D.Vision requires exactly one ConeCollider2D child")]
+    [InlineData("<Scene2D><Sprite2D><Sprite2D.Vision Radius=\"5\"><ConeCollider2D /></Sprite2D.Vision></Sprite2D></Scene2D>", "Sprite2D.Vision requires exactly one ConeCollider2D child")]
+    [InlineData("<Scene2D><Scene2D.Vision Name=\"V\"><ConeCollider2D /></Scene2D.Vision></Scene2D>", "Scene2D.Vision requires exactly one ConeCollider2D child")]
+    public void VisionDiagnosticsRejectTextAndAttributesOnAVisionPropertyElement(string markup, string expected)
+    {
+        using CernealaCompilation compilation = Compile(markup);
+        Assert.Contains(compilation.GetSemanticModel(MarkupPath).Diagnostics,
+            diagnostic => diagnostic.Id == "CERNEALAUI005" && diagnostic.Message.Contains(expected, StringComparison.Ordinal));
+    }
+
+    // Whitespace, comments and namespace declarations are not content: the build accepts them, so the editor does too.
+    [Theory]
+    [InlineData("<Scene2D><Sprite2D><Sprite2D.Vision>  <!-- looks right -->  <ConeCollider2D /></Sprite2D.Vision></Sprite2D></Scene2D>")]
+    [InlineData("<Scene2D><Sprite2D><Sprite2D.Vision xmlns:x=\"clr-namespace:Cerneala.UI.Controls;assembly=Cerneala\"><ConeCollider2D /></Sprite2D.Vision></Sprite2D></Scene2D>")]
+    public void VisionMarkupAllowsWhitespaceCommentsAndNamespaceDeclarationsOnTheVisionElement(string markup)
+    {
+        using CernealaCompilation compilation = Compile(markup);
+        Assert.DoesNotContain(compilation.GetSemanticModel(MarkupPath).Diagnostics,
+            diagnostic => diagnostic.Severity == LanguageDiagnosticSeverity.Error);
+    }
+
+    [Theory]
+    [InlineData("<ConeCollider2D />")]
+    [InlineData("<Scene2D><ConeCollider2D /></Scene2D>")]
+    [InlineData("<Button><ConeCollider2D /></Button>")]
+    public void VisionDiagnosticsRejectAConeOutsideAVisionSlot(string markup)
+    {
+        using CernealaCompilation compilation = Compile(markup);
+        Assert.Contains(compilation.GetSemanticModel(MarkupPath).Diagnostics,
+            diagnostic => diagnostic.Severity == LanguageDiagnosticSeverity.Error &&
+                diagnostic.Message.Contains("Vision", StringComparison.Ordinal));
+    }
+
     [Fact]
     public void StaticTileColliderCompletionOffersOnlyDescriptorProperties()
     {
