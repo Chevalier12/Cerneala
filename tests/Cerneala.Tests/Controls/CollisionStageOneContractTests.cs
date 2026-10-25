@@ -154,6 +154,9 @@ public sealed class CollisionStageOneContractTests
         Assert.True(registry.TryGet(BoxCollider2D.WidthProperty, out _));
         Assert.True(registry.TryGet(BoxCollider2D.HeightProperty, out _));
         Assert.True(registry.TryGet(CircleCollider2D.RadiusProperty, out _));
+        Assert.True(registry.TryGet(ConeCollider2D.RadiusProperty, out _));
+        Assert.True(registry.TryGet(ConeCollider2D.AngleProperty, out _));
+        Assert.True(registry.TryGet(ConeCollider2D.DirectionProperty, out _));
         Assert.False(registry.TryGet(Collider2D.EnabledProperty, out _));
         Assert.False(registry.TryGet(Collider2D.IsTriggerProperty, out _));
         Assert.False(registry.TryGet(Collider2D.CollisionLayerProperty, out _));

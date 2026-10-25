@@ -254,6 +254,16 @@ Planul nu le decidea. Utilizatorul a ales, pentru fiecare, varianta recomandată
 - **V3, `Direction`:** proprietatea păstrează valoarea scrisă. După `cone.Direction = 450`, `cone.Direction` citește 450. Numai geometria normalizează unghiul, deci conul privește în jos, ca la 90.
 - **V4, conul în slotul de corp în markup:** `<Sprite2D><ConeCollider2D /></Sprite2D>` dă eroare la compilare, CERNEALAUI005, cu un mesaj care trimite la `<Sprite2D.Vision>`. Editorul nu mai propune `ConeCollider2D` în conținutul lui `Sprite2D`.
 
+### D18 revizuit și Motion pe con (după finalizare, 2026-10-25)
+
+După ce planul a fost finalizat, utilizatorul a cerut, pe același PR (#765):
+
+- **Vârful conului se oglindește odată cu imaginea.** Înlocuiește „`OffsetX`/`OffsetY` nu se oglindesc” din D18. Imaginea se întoarce numai prin coordonatele de textură, în același dreptunghi (`Drawing/DrawImageOptions.cs:206-218`, `:256-263`). Deci axa este centrul dreptunghiului local al imaginii. Exemplu: o imagine de 32 × 32, `Origin = (0, 0)`, `OffsetX = 28`. După `Flip = Horizontal`, vârful ajunge la x = 4 și privește spre stânga.
+- **Conul folosește `Flip`-ul pe care îl vede utilizatorul:** `Sprite2D.Flip` combinat cu `Flip`-ul cadrului de animație, ca imaginea (`Sprite2D.cs`, `ComposeFlip`).
+- **Motion animă `Radius`, `Angle` și `Direction`**, la fel ca `CircleCollider2D.Radius`.
+
+Implementarea și dovezile sunt în „Schimbările de după finalizare”.
+
 ### Alte alegeri din Etapa 0
 
 - Proprietățile conului sunt `float`, ca `CircleCollider2D.Radius` (`CircleCollider2D.cs:7-17`).
@@ -344,13 +354,29 @@ Teste focusate pe codul final (suita completă nu a fost rulată):
 
 ### Limite cunoscute
 
-- `Flip` oglindește numai `Direction`. `OffsetX`/`OffsetY` nu se oglindesc (D18, scris în docs).
-- `Flip` vine din `Sprite2D.Flip`, nu din flip-ul compus cu cel al cadrului de animație.
+- ~~`Flip` oglindește numai `Direction`.~~ Rezolvat după finalizare: vârful se oglindește odată cu imaginea.
+- ~~`Flip` vine din `Sprite2D.Flip`.~~ Rezolvat după finalizare: conul folosește `Flip`-ul compus cu cel al cadrului.
 - Un `Vision` pe `Scene2D`-ul rădăcină nu vede nimic (consecință a lui V1, scrisă în docs).
 - Servo nu găsește conul nici după id, pentru că nu e în arborele Servo. Un collider de corp poate fi găsit (`ServoSceneTests`).
 - `CollisionWorld2DDiagnosticsSnapshot.EntryCount` numără și conurile.
-- Proprietățile conului nu sunt în registrul Motion (`AnimatablePropertyRegistry.cs`, care are Box și Circle). Planul nu le promitea.
+- ~~Proprietățile conului nu sunt în registrul Motion.~~ Rezolvat după finalizare.
 - Costul pe frame al regulii de senzor, al conului în GJK și al verificării din modelul de limbaj nu a fost măsurat.
+
+### Schimbările de după finalizare (2026-10-25)
+
+Pe același branch și PR (#765), la cererea utilizatorului (vezi „D18 revizuit și Motion pe con”). Fiecare schimbare are teste RED întâi.
+
+- **Vârful se oglindește cu imaginea.** `Collider2D.GetShapeOffset()` (intern, implicit `OffsetX`/`OffsetY`) e folosit de `SceneGeometry2D.TryCreateColliderGeometry` și `GetInputBounds`. `ConeCollider2D` îl suprascrie și oglindește vârful peste liniile de mijloc ale dreptunghiului local al imaginii (`SpriteMirror2D`, `Sprite2D.ComputeVisionMirror`). Dreptunghiul e cel din `GetHitTestLocalBounds()`. Fără dreptunghi cunoscut (fără imagine și fără mărime declarată), axa e punctul sprite-ului. Exemplu testat: o imagine de 32 × 32, `Origin = (0, 0)`, `OffsetX = 28`: după `Flip = Horizontal`, vârful e la x = 4 (`SceneVisionMirrorTests.TheApexMirrorsAcrossTheCentreLinesOfTheImage`). Testul vechi `FlipMirrorsTheDirectionButNotTheOffsetOfTheVision` a fost înlocuit de `FlipMirrorsTheApexAcrossTheCentreOfTheImageAndTheDirectionOfTheVision`, pentru că s-a schimbat contractul.
+- **`Flip`-ul cadrului.** Conul folosește `ComposeFlip(Sprite2D.Flip, cadrul curent)`, ca imaginea. `Sprite2D.RefreshVisionMirror` anunță lumea cu o mutație `Geometry` numai când oglinda chiar se schimbă, și numai dacă sprite-ul are `Vision`. O cheamă schimbările de `Flip`, `Image`, `Width`, `Height`, `Origin`, `Source*`, `Animations`, `AnimationState`, avansarea cadrului și repornirea animației. Avansarea cadrului rulează înainte de livrarea contactelor (`UiHost.cs:166`, `:189`), deci contactele se schimbă în același update.
+- **Animația unui sprite cu `Vision` nu se mai parchează** când sprite-ul e în afara ecranului (`Sprite2D.CanParkAnimation`). Altfel ar rata schimbările de `Flip` ale cadrelor, iar conul trebuie să vadă și în afara ecranului. Setter-ul `Vision` o deparchează.
+- **Motion:** `ConeCollider2D.RadiusProperty`, `AngleProperty` și `DirectionProperty` sunt în `AnimatablePropertyRegistry`, la fel ca `CircleCollider2D.RadiusProperty`. Animarea fluentă din C# mergea și înainte, pentru că nu citește registrul (`MotionAnimationBuilder.cs:36-53`). Registrul trebuie pentru tranzacțiile Motion și pentru `@animate` fără spec în markup. `Direction` se interpolează liniar, ca `UIElement.Rotation`: de la 350 la 10 trece prin 180.
+- **Limite noi:**
+  - Când o imagine dintr-o resursă termină de încărcat, vârful folosește centrul vechi până la următoarea schimbare a sprite-ului, de exemplu un `X` nou (testul `AResourceImageThatFinishesLoadingMovesTheApexOnlyAtTheNextChangeOfTheSprite`). Sprite-ul nu primește niciun apel la încărcare, iar singurul loc care ar observa-o e randarea, unde nu se schimbă lumea de coliziuni.
+  - O valoare setată din C# (`cone.Direction = 0`) are sursa `Local`, care bate `Animation`. Deci Motion nu se vede pe o proprietate setată astfel. E regula generală a framework-ului (`MotionTransactionContext.md:77`, `MotionPropertyBinding.md:63`). Valorile din markup și din Aspect sunt sub `Animation` și nu o ascund.
+  - Oglindirea vârfului presupune că conul nu are transformări proprii (`Rotation`, `Scale` pe con). Netestat.
+  - `@animate` în markup pe proprietățile conului nu are test: nu există precedent pentru collidere.
+  - Costul pe frame pentru sprite-urile cu `Vision` nu a fost măsurat: un `ComposeFlip`, o comparație de struct și o citire din cache a bounds-urilor la fiecare schimbare de cadru. Citirea formei și a offset-ului nu alocă după încălzire (`ReadingTheMirroredShapeAndOffsetOfAFlippedConeAllocatesNothingOnceWarm`).
+- **Verificare (numai teste focusate; suita completă nu a fost rulată):** `Cerneala.Tests` (filtrul larg, plus `Motion`, `SpriteAnimation`, `RenderSurface2D`, `InputRoute`, `Semantics`, `HitTest`): 1 938/1 938. `Cerneala.Tests.SceneVillage`: 29/29. `Cerneala.Tests.Scene2DPackages`: 104/104. `Cerneala.Tests.SdlGpu`: 89 trecute, 17 sărite (cer `CERNEALA_SDL_NATIVE_TESTS=1`). SourceGen și Language nu s-au schimbat și nu au fost rulate din nou.
 
 ### Ramurile pe `ColliderShapeKind2D` (Etapa 0)
 

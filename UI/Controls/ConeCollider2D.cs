@@ -1,3 +1,4 @@
+using System.Numerics;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 
@@ -64,10 +65,18 @@ public sealed class ConeCollider2D : Collider2D
     // here: the body slot refuses a cone, and Scene2D.Children refuses every collider.
     internal override bool AllowsCollisionParent(UIElement parent) => parent is Sprite2D or Scene2D;
 
+    // The cone follows the image of a sprite owner: the flip is the one the image is drawn with, the sprite's Flip
+    // composed with the Flip of its current animation frame.
     internal override ColliderLocalShape2D GetLocalShape() =>
-        GetLocalShape(LogicalParent is Sprite2D sprite ? sprite.Flip : RenderSurface2DSpriteFlip.None);
+        GetLocalShape(LogicalParent is Sprite2D sprite ? sprite.ReadVisionMirror().Flip : RenderSurface2DSpriteFlip.None);
 
-    // The flip mirrors Direction only; OffsetX and OffsetY stay where they are.
+    // The apex mirrors across the centre of the sprite's local image rectangle on each flipped axis.
+    internal override Vector2 GetShapeOffset() =>
+        LogicalParent is Sprite2D sprite
+            ? sprite.ReadVisionMirror().MirrorOffset(OffsetX, OffsetY)
+            : base.GetShapeOffset();
+
+    // The flip mirrors Direction here; GetShapeOffset mirrors the apex.
     internal ColliderLocalShape2D GetLocalShape(RenderSurface2DSpriteFlip flip)
     {
         float radius = Radius;

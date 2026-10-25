@@ -77,7 +77,7 @@ internal static class SceneGeometry2D
         SceneBounds2D result;
         if (node is Collider2D collider)
         {
-            Matrix3x2 shapeToRoot = Matrix3x2.CreateTranslation(collider.OffsetX, collider.OffsetY) * nodeToRoot;
+            Matrix3x2 shapeToRoot = Matrix3x2.CreateTranslation(collider.GetShapeOffset()) * nodeToRoot;
             result = TryGetColliderBounds(collider.GetLocalShape(), shapeToRoot, out DrawRect bounds)
                 ? SceneBounds2D.Known(bounds)
                 : SceneBounds2D.Unknown;
@@ -283,7 +283,7 @@ internal static class SceneGeometry2D
         ArgumentNullException.ThrowIfNull(collider);
         ColliderLocalShape2D shape = collider.GetLocalShape();
         Matrix3x2 shapeToScene =
-            Matrix3x2.CreateTranslation(collider.OffsetX, collider.OffsetY) *
+            Matrix3x2.CreateTranslation(collider.GetShapeOffset()) *
             GetLocalToSceneTransform(collider);
         if (!TryGetColliderBounds(shape, shapeToScene, out DrawRect bounds))
         {

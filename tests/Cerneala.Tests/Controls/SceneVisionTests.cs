@@ -190,20 +190,25 @@ public sealed class SceneVisionTests
     }
 
     [Fact]
-    public void FlipMirrorsTheDirectionButNotTheOffsetOfTheVision()
+    public void FlipMirrorsTheApexAcrossTheCentreOfTheImageAndTheDirectionOfTheVision()
     {
-        // No body: only the cone. The apex is 40 px to the right of the sprite, at x 240.
-        // A mirrored direction looks left from 240 and sees the fox centre at x 200.
-        // A mirrored offset would put the apex at x 160 and would not see it.
+        // A 32 x 32 image at Origin (0, 0) fills x 0..32, so its vertical centre line is x 16.
+        // No body: only the cone, Radius 50, Direction 0, with its apex at (28, 10).
+        // Flipped horizontally the apex is at x 4 and the cone looks left: a fox box at x -40..-30 (y 5..15) is
+        // 34..44 px from the apex and is seen. From the unmirrored apex at x 28 it would be 58..68 px away.
         Scene2D scene = new();
-        Sprite2D bee = new() { X = 200, Vision = new ConeCollider2D { Radius = 150, Angle = 90, Direction = 0, OffsetX = 40 } };
-        Sprite2D fox = Fox(195, -5);
+        Sprite2D bee = new()
+        {
+            Image = new ImageReference(new FixedImage(32, 32)),
+            Vision = new ConeCollider2D { Radius = 50, Angle = 90, Direction = 0, OffsetX = 28, OffsetY = 10 }
+        };
+        Sprite2D fox = Fox(-40, 5);
         scene.Children.Add(bee);
         scene.Children.Add(fox);
         using SceneSimulationContext2D context = new(scene);
         ContactLog log = new(bee.Vision!);
         context.Update();
-        Assert.Empty(log.Entered); // not flipped: the fox is behind the apex
+        Assert.Empty(log.Entered); // not flipped: the fox is behind the apex and out of reach
 
         bee.Flip = RenderSurface2DSpriteFlip.Horizontal;
         context.Update();

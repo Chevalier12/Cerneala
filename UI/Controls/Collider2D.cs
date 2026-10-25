@@ -285,6 +285,10 @@ public abstract class Collider2D : SceneNode2D
 
     internal abstract ColliderLocalShape2D GetLocalShape();
 
+    // Where the shape's origin sits in this collider's local space, before the collider's own transform.
+    // Every collider sits at OffsetX and OffsetY; a cone also mirrors its apex with the image of its sprite owner.
+    internal virtual Vector2 GetShapeOffset() => new(OffsetX, OffsetY);
+
     internal override void ValidatePropertyMutation(UiProperty property, object? value)
     {
         base.ValidatePropertyMutation(property, value);
