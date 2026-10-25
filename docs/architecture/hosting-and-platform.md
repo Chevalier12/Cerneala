@@ -102,7 +102,7 @@ When the descriptor has no `CreateApplication`, a markup `MainWindow` without an
 `RunStandalone` measures time with a `Stopwatch` and calls `PumpOnce(now - previous)`:
 
 1. `platform.PumpEvents()`. SDL turns native events into callbacks (`RequestClose`, `ActivationChanged`, `BoundsChanged`, `RenderRequested`) and into the window's input source.
-2. For each window: a hidden window, or one with a zero-size viewport, is skipped. Otherwise the host advances its render time.
+2. For each window: a hidden window, or one with a zero-size viewport, is skipped. Otherwise the host advances its render time. This also raises `Awake` on the awake scene objects of every `RenderSurface2D` under the root, once per pump (see [Awake](scene2d.md#awake)).
 3. The window is rendered only when one of these is true:
    - `RenderRequested`;
    - `Root.Relay.HasPendingWork`;
@@ -111,6 +111,8 @@ When the descriptor has no `CreateApplication`, a markup `MainWindow` without an
    - an active pointer repeat;
    - an active input hold: a key or mouse button was down in the last input dispatch and some element has a `PreviewInputHeld` or `InputHeld` handler (`ElementInputBridge.HasActiveInputHold`);
    - a collider change in a scene of a `RenderSurface2D` under the root waits for its next contact delivery (`UIRoot.HasPendingSceneContacts`, `WindowApplicationRuntime.cs:672`). See [Collider contact events](scene2d.md#collider-contact-events).
+
+   Awake scene objects are deliberately not a render condition: step 2 already runs on every pump of a shown window, so `Awake` is raised without one. Three pumps of 16 ms with an awake sprite in an `OnDemand` surface return `false` each and present no frame, and a handler that moves the sprite makes the same pump render. After the last awake sprite sleeps, pumps render nothing again. Tests: `WindowRuntimeTests.AnAwakeSpriteGetsAwakeOnEveryPumpWithoutRequestingFrames`, `AfterTheLastAwakeObjectSleepsPumpOnceRendersNoMoreFrames`; `PumpOnceWithNothingToDoStillAdvancesRenderTimeForAShownWindowAndRendersNoFrame` for an idle window.
 4. `Render`:
    - collects the platform `InputFrame` and runs `UiHost.Update`;
    - calls `graphicsSession.BeginFrame(Color.White)` and `UiHost.Draw`;

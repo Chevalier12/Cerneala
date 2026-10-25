@@ -35,6 +35,13 @@ public class Scene2D : SceneNode2D
             new UiPropertyMetadata<float>(0, UiPropertyOptions.AffectsRender,
                 validateValue: float.IsFinite));
 
+    // Changing it requests no frame: an awake node is delivered on every time advance of its surface, drawn or not.
+    public static readonly UiProperty<bool> IsAwakeProperty =
+        UiProperty<bool>.Register(
+            nameof(IsAwake),
+            typeof(Scene2D),
+            new UiPropertyMetadata<bool>(false));
+
     private readonly List<SceneOrderEntry> effectiveOrder = [];
     private readonly CollisionWorld2D ownedCollisionWorld;
     private readonly ColliderSlot2D visionSlot;
@@ -69,6 +76,32 @@ public class Scene2D : SceneNode2D
         get => (ConeCollider2D?)visionSlot.Value;
         set => visionSlot.Value = value;
     }
+
+    /// <summary>
+    /// Gets or sets whether this group receives <see cref="Awake"/> once per time advance of the render surface that shows
+    /// its scene. The default is <see langword="false"/>. The group receives the event whether or not it is drawn, so the
+    /// game keeps going off screen; it receives none while it is not in a scene shown by a surface that is attached to a
+    /// UI root.
+    /// </summary>
+    public bool IsAwake
+    {
+        get => GetValue(IsAwakeProperty);
+        set => SetValue(IsAwakeProperty, value);
+    }
+
+    /// <summary>
+    /// Occurs once per time advance of the render surface while <see cref="IsAwake"/> is <see langword="true"/>. The first
+    /// event after the group became awake, or entered a shown scene while awake, reports a zero
+    /// <see cref="FrameTimeEventArgs.Elapsed"/>; later events report the elapsed time of the frame. A handler can set
+    /// <see cref="IsAwake"/> to <see langword="false"/> to stop the events from the next frame.
+    /// </summary>
+    public event EventHandler<FrameTimeEventArgs>? Awake
+    {
+        add => AddAwakeHandler(value);
+        remove => RemoveAwakeHandler(value);
+    }
+
+    internal override bool WantsAwake => IsAwake;
 
     public CollisionWorld2D CollisionWorld =>
         (SceneGeometry2D.FindRootScene(this) ?? this).ownedCollisionWorld;
@@ -426,6 +459,10 @@ public class Scene2D : SceneNode2D
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
         base.OnPropertyChanged(args);
+        if (ReferenceEquals(args.Property, IsAwakeProperty))
+        {
+            RefreshAwakeRegistration();
+        }
         if (SceneGeometry2D.IsSceneTransformProperty(args.Property) ||
             ReferenceEquals(args.Property, TransformOriginProperty) ||
             ReferenceEquals(args.Property, XProperty) ||

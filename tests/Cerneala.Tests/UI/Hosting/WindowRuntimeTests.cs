@@ -584,6 +584,160 @@ public sealed class WindowRuntimeTests : IDisposable
         Assert.Equal(framesAfterPress, nativeWindow.Session.PresentCount);
     }
 
+    // Characterization (Scene2D awake, Stage 0): a shown window with no work still advances the render time on every pump
+    // (WindowApplicationRuntime.PumpOnce calls AdvanceRenderTime first), and renders no frame.
+    [Fact]
+    public void PumpOnceWithNothingToDoStillAdvancesRenderTimeForAShownWindowAndRendersNoFrame()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        RenderTimeProbe probe = new();
+        Window window = new() { Content = probe };
+        window.Show();
+        FakePlatformWindow nativeWindow = Assert.Single(platform.Windows);
+        for (int settle = 0; settle < 8 && runtime.PumpOnce(TimeSpan.FromMilliseconds(16)); settle++) { }
+        probe.Times.Clear();
+        int presentsBefore = nativeWindow.Session.PresentCount;
+
+        bool rendered = runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+        Assert.False(rendered);
+        Assert.Equal(presentsBefore, nativeWindow.Session.PresentCount);
+        Assert.Equal([TimeSpan.FromMilliseconds(16)], probe.Times);
+    }
+
+    // Characterization (Scene2D awake, Stage 0): a hidden window does not advance the render time, and the time of the
+    // hidden pumps is lost; the first pump after showing it again delivers only its own 16 ms, not 5 s + 16 ms.
+    [Fact]
+    public void PumpOnceDoesNotAdvanceRenderTimeForAHiddenWindowAndTheTimeIsNotCarriedOver()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        RenderTimeProbe probe = new();
+        Window window = new() { Content = probe };
+        window.Show();
+        for (int settle = 0; settle < 8 && runtime.PumpOnce(TimeSpan.FromMilliseconds(16)); settle++) { }
+        window.Hide();
+        probe.Times.Clear();
+
+        runtime.PumpOnce(TimeSpan.FromSeconds(5));
+
+        Assert.Empty(probe.Times);
+
+        window.Show();
+        probe.Times.Clear();
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+        Assert.Equal([TimeSpan.FromMilliseconds(16)], probe.Times);
+    }
+
+    // Scene2D awake, Stage 2: an awake sprite gets Awake on every real PumpOnce of a shown window; Awake alone, and setting
+    // IsAwake, request no frame.
+    [Fact]
+    public void AnAwakeSpriteGetsAwakeOnEveryPumpWithoutRequestingFrames()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Sprite2D sprite = new();
+        Scene2D scene = new();
+        scene.Children.Add(sprite);
+        Window window = new()
+        {
+            Content = new RenderSurface2D
+            {
+                Width = 200,
+                Height = 200,
+                Scene = scene,
+                RedrawMode = RenderSurface2DRedrawMode.OnDemand
+            }
+        };
+        window.Show();
+        FakePlatformWindow nativeWindow = Assert.Single(platform.Windows);
+        for (int settle = 0; settle < 8 && runtime.PumpOnce(TimeSpan.FromMilliseconds(16)); settle++) { }
+        Assert.False(runtime.PumpOnce(TimeSpan.FromMilliseconds(16)));
+        List<TimeSpan> elapsed = [];
+        sprite.Awake += (_, args) => elapsed.Add(args.Elapsed);
+        int presentsBefore = nativeWindow.Session.PresentCount;
+
+        sprite.IsAwake = true;
+        bool first = runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        bool second = runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        bool third = runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+        Assert.Equal([false, false, false], [first, second, third]);
+        Assert.Equal(presentsBefore, nativeWindow.Session.PresentCount);
+        Assert.Equal([TimeSpan.Zero, TimeSpan.FromMilliseconds(16), TimeSpan.FromMilliseconds(16)], elapsed);
+    }
+
+    // Scene2D awake, Stage 2: a handler that changes the scene makes PumpOnce render in the same pump; once the last awake
+    // sprite sleeps, further pumps render nothing and raise no Awake.
+    [Fact]
+    public void AfterTheLastAwakeObjectSleepsPumpOnceRendersNoMoreFrames()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Sprite2D sprite = new();
+        Scene2D scene = new();
+        scene.Children.Add(sprite);
+        Window window = new()
+        {
+            Content = new RenderSurface2D
+            {
+                Width = 200,
+                Height = 200,
+                Scene = scene,
+                RedrawMode = RenderSurface2DRedrawMode.OnDemand
+            }
+        };
+        window.Show();
+        FakePlatformWindow nativeWindow = Assert.Single(platform.Windows);
+        for (int settle = 0; settle < 8 && runtime.PumpOnce(TimeSpan.FromMilliseconds(16)); settle++) { }
+        Assert.False(runtime.PumpOnce(TimeSpan.FromMilliseconds(16)));
+        List<TimeSpan> elapsed = [];
+        sprite.Awake += (_, args) =>
+        {
+            elapsed.Add(args.Elapsed);
+            sprite.X += 1;
+            if (elapsed.Count == 3)
+            {
+                sprite.IsAwake = false;
+            }
+        };
+        sprite.IsAwake = true;
+        List<(bool Rendered, int Presents, int Awakes)> pumps = [];
+
+        for (int pump = 0; pump < 6; pump++)
+        {
+            bool rendered = runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+            pumps.Add((rendered, nativeWindow.Session.PresentCount, elapsed.Count));
+        }
+
+        int presentsBefore = pumps[0].Presents - 1;
+        Assert.Equal(
+            [
+                (true, presentsBefore + 1, 1),
+                (true, presentsBefore + 2, 2),
+                (true, presentsBefore + 3, 3),
+                (false, presentsBefore + 3, 3),
+                (false, presentsBefore + 3, 3),
+                (false, presentsBefore + 3, 3)
+            ],
+            pumps);
+        Assert.Equal([TimeSpan.Zero, TimeSpan.FromMilliseconds(16), TimeSpan.FromMilliseconds(16)], elapsed);
+        Assert.Equal(3f, sprite.X);
+    }
+
+    private sealed class RenderTimeProbe : UIElement, Cerneala.UI.Rendering.ITimeSensitiveRenderElement
+    {
+        public List<TimeSpan> Times { get; } = [];
+
+        public bool UpdateRenderTime(TimeSpan frameTime)
+        {
+            Times.Add(frameTime);
+            return false;
+        }
+    }
+
     // A contact handler moves the fox away in the middle of a frame, after the delivery point. The Exited event waits
     // for the next delivery, and nothing else asks for that frame, so the pump has to.
     [Fact]

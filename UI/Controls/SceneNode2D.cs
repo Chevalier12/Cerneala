@@ -173,6 +173,28 @@ public abstract class SceneNode2D : UIElement, IInputSubtreeHost, IInputCoordina
 
     internal void RefreshAnimationRegistration() => Surface?.RefreshAnimationRegistration(this);
 
+    private EventHandler<FrameTimeEventArgs>? awake;
+
+    // Only Sprite2D and Scene2D expose IsAwake and Awake; they share this storage and the surface's awake registry.
+    internal virtual bool WantsAwake => false;
+
+    // Position in the surface's awake registry, or -1.
+    internal int AwakeSlot { get; set; } = -1;
+
+    // Advances on every registration, so a delivery can tell a node that was put to sleep and woken again.
+    internal int AwakeVersion { get; set; }
+
+    // Whether the node has received an Awake since it was last registered; the first one reports a zero Elapsed.
+    internal bool AwakeDelivered { get; set; }
+
+    internal void AddAwakeHandler(EventHandler<FrameTimeEventArgs>? handler) => awake += handler;
+
+    internal void RemoveAwakeHandler(EventHandler<FrameTimeEventArgs>? handler) => awake -= handler;
+
+    internal void RefreshAwakeRegistration() => Surface?.RefreshAwakeRegistration(this);
+
+    internal void RaiseAwake(FrameTimeEventArgs args) => awake?.Invoke(this, args);
+
     public int Layer
     {
         get => GetValue(LayerProperty);
@@ -197,8 +219,10 @@ public abstract class SceneNode2D : UIElement, IInputSubtreeHost, IInputCoordina
     internal virtual void AttachSurface(RenderSurface2D? surface)
     {
         Surface?.RemoveAnimationRegistration(this);
+        Surface?.RemoveAwakeRegistration(this);
         Surface = surface;
         RefreshAnimationRegistration();
+        RefreshAwakeRegistration();
     }
 
     internal abstract void Record(Scene2DRecordContext context);
@@ -329,11 +353,13 @@ public abstract class SceneNode2D : UIElement, IInputSubtreeHost, IInputCoordina
         base.OnAttached();
         ProcessPendingAspect();
         RefreshAnimationRegistration();
+        RefreshAwakeRegistration();
     }
 
     protected override void OnDetached()
     {
         Surface?.RemoveAnimationRegistration(this);
+        Surface?.RemoveAwakeRegistration(this);
         base.OnDetached();
     }
 
