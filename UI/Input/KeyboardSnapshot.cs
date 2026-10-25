@@ -18,6 +18,8 @@ public sealed class KeyboardSnapshot
         return new KeyboardSnapshot(keys.Where(key => key is not InputKey.None and not InputKey.Unknown).ToHashSet());
     }
 
+    internal bool HasAnyDown => downKeys.Count > 0;
+
     public bool IsDown(InputKey key)
     {
         return downKeys.Contains(key);

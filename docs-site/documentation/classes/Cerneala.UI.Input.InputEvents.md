@@ -89,6 +89,8 @@ The `All` property exposes the complete catalog in declaration order. It is usef
 | `KeyDownEvent` | `KeyDown` | `Bubble` | `KeyEventArgs` |
 | `PreviewKeyUpEvent` | `PreviewKeyUp` | `Tunnel` | `KeyEventArgs` |
 | `KeyUpEvent` | `KeyUp` | `Bubble` | `KeyEventArgs` |
+| `PreviewInputHeldEvent` | `PreviewInputHeld` | `Tunnel` | `InputStateEventArgs` |
+| `InputHeldEvent` | `InputHeld` | `Bubble` | `InputStateEventArgs` |
 | `PreviewGotKeyboardFocusEvent` | `PreviewGotKeyboardFocus` | `Tunnel` | `KeyboardFocusChangedEventArgs` |
 | `GotKeyboardFocusEvent` | `GotKeyboardFocus` | `Bubble` | `KeyboardFocusChangedEventArgs` |
 | `PreviewLostKeyboardFocusEvent` | `PreviewLostKeyboardFocus` | `Tunnel` | `KeyboardFocusChangedEventArgs` |

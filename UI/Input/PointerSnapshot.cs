@@ -20,6 +20,23 @@ public sealed class PointerSnapshot
 
     public int WheelValue { get; }
 
+    // WithButton never stores InputMouseButton.None, so any true value is a real button.
+    internal bool HasAnyDown
+    {
+        get
+        {
+            foreach (bool isDown in buttons.Values)
+            {
+                if (isDown)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
     public bool IsDown(InputMouseButton button)
     {
         if (button is InputMouseButton.None)

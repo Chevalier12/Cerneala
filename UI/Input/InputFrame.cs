@@ -164,6 +164,8 @@ public sealed class InputFrame
             this.repeatEvents = repeatEvents;
         }
 
+        internal KeyboardSnapshot Current => current;
+
         public bool IsDown(InputKey key)
         {
             return current.IsDown(key);

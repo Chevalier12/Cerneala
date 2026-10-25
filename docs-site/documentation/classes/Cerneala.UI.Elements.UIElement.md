@@ -241,6 +241,7 @@ Value validation is enforced by property metadata. `Width` and `Height` accept `
 | `PreviewMouseMove`, `MouseMove`, `MouseEnter`, `MouseLeave`, `GotMouseCapture`, `LostMouseCapture`, `QueryCursor` | `RoutedEventHandler<MouseEventArgs>`; routed pointer events. |
 | `PreviewMouseWheel`, `MouseWheel` | `RoutedEventHandler<MouseWheelEventArgs>`; routed wheel events. |
 | `PreviewKeyDown`, `KeyDown`, `PreviewKeyUp`, `KeyUp` | `RoutedEventHandler<KeyEventArgs>`; routed key events. |
+| `PreviewInputHeld`, `InputHeld` | `RoutedEventHandler<InputStateEventArgs>`; raised once per rendered frame while a key or mouse button is down, on the focused element (else the root's first visual child, else the root). See [InputStateEventArgs](Cerneala.UI.Input.InputStateEventArgs.md). |
 | `PreviewGotKeyboardFocus`, `GotKeyboardFocus`, `PreviewLostKeyboardFocus`, `LostKeyboardFocus` | `RoutedEventHandler<KeyboardFocusChangedEventArgs>`; routed keyboard focus events. |
 | `PreviewTextInput`, `TextInput` | `RoutedEventHandler<TextCompositionEventArgs>`; routed text input events. |
 | `DragEnter`, `DragOver`, `DragLeave`, `Drop`, `PreviewDragEnter`, `PreviewDragOver`, `PreviewDragLeave`, `PreviewDrop` | `RoutedEventHandler<DragEventArgs>`; routed drag-and-drop events. |

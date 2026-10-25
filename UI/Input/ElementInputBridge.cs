@@ -23,6 +23,8 @@ public sealed class ElementInputBridge
     private bool isDispatching;
     private bool pointerModeCancelPending;
     private TimeSpan inputClock;
+    private bool wasInputHeld;
+    private bool hasActiveInputHold;
 
     public ElementInputBridge(
         HitTestService? hitTestService = null,
@@ -61,6 +63,10 @@ public sealed class ElementInputBridge
 
     internal bool HasActivePointerRepeat => repeatButtonController.IsActive;
 
+    // Input was held in the last dispatch and the route tree has a handler for PreviewInputHeld or InputHeld, so the next
+    // frame must run to raise it again even if nothing else asks for one.
+    internal bool HasActiveInputHold => hasActiveInputHold;
+
     public void Dispatch(UIRoot root, InputFrame inputFrame)
     {
         Dispatch(root, inputFrame, TimeSpan.Zero);
@@ -89,6 +95,7 @@ public sealed class ElementInputBridge
             keyboardNavigationController.Process(activationResults, inputFrame, root, focusManager, routeMap);
             keyboardActivationController.Process(activationResults, focusManager, commandRouter, routeMap);
             textInputBridge.Dispatch(inputFrame.TextInputEvents, focusManager, routeMap);
+            DispatchInputHeld(root, inputFrame, frameTime);
         }
         finally
         {
@@ -136,6 +143,72 @@ public sealed class ElementInputBridge
         repeatButtonController.Cancel(pressedStateTracker);
         pressedStateTracker.Cancel();
         clickTracker.Cancel();
+    }
+
+    // One InputHeld pair per update in which a key or a mouse button is down, after the rest of the input of the frame, so
+    // KeyDown and MouseDown of a press frame come first. It goes to the focused element. When nothing can take keyboard
+    // input it goes to the first visual child of the root that the route map contains, which is the hosted Window, so a
+    // Window handler works with nothing focused, and to the root itself when it has no such child. The first update of a
+    // hold has no time since a previous one, so its Elapsed is zero.
+    private void DispatchInputHeld(UIRoot root, InputFrame inputFrame, TimeSpan frameTime)
+    {
+        KeyboardSnapshot keyboard = inputFrame.Keyboard.Current;
+        PointerSnapshot pointer = inputFrame.Pointer.Current;
+        if (!keyboard.HasAnyDown && !pointer.HasAnyDown)
+        {
+            wasInputHeld = false;
+            hasActiveInputHold = false;
+            return;
+        }
+
+        TimeSpan elapsed = wasInputHeld ? frameTime : TimeSpan.Zero;
+        wasInputHeld = true;
+
+        ElementInputRouteMap routeMap = root.InputCache.EnsureCurrent(root);
+        if (HasInputHeldHandlers(routeMap))
+        {
+            UIElement? target = null;
+            ElementInputRouteMap targetMap = routeMap;
+            if (focusManager.TryGetKeyboardTarget(routeMap, out UIElement? focused, out ElementInputRouteMap focusedMap))
+            {
+                target = focused;
+                targetMap = focusedMap;
+            }
+            else
+            {
+                foreach (UIElement child in root.VisualChildren)
+                {
+                    if (routeMap.Contains(child))
+                    {
+                        target = child;
+                        break;
+                    }
+                }
+
+                if (target is null && routeMap.Contains(root))
+                {
+                    target = root;
+                }
+            }
+
+            if (target is not null)
+            {
+                RoutedEventRouter.RaisePair(
+                    targetMap.InputTree,
+                    target,
+                    new InputStateEventArgs(InputEvents.PreviewInputHeldEvent, target, keyboard, pointer, elapsed),
+                    new InputStateEventArgs(InputEvents.InputHeldEvent, target, keyboard, pointer, elapsed));
+            }
+        }
+
+        // Handlers can add or remove handlers, so the answer comes from the route tree as the raise left it.
+        hasActiveInputHold = HasInputHeldHandlers(root.InputCache.EnsureCurrent(root));
+    }
+
+    private static bool HasInputHeldHandlers(ElementInputRouteMap routeMap)
+    {
+        return routeMap.InputTree.HasHandlers(InputEvents.PreviewInputHeldEvent) ||
+            routeMap.InputTree.HasHandlers(InputEvents.InputHeldEvent);
     }
 
     private void DispatchPointer(

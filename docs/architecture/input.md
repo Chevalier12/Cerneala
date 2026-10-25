@@ -17,7 +17,7 @@ handlers do that through normal property writes and invalidation.
 |---|---|---|---|
 | `IInputSource` | `UI/Input/IInputSource.cs` | `GetFrame()` returns the next `InputFrame`. Production implementer: `SdlInputSource` (`Cerneala.Platforms.Sdl3/Input/SdlInputSource.cs`, internal). | Platform window |
 | `InputFrame` | `UI/Input/InputFrame.cs` | Immutable snapshot of pointer, keyboard and text input for one update. | One update |
-| `ElementInputBridge` | `UI/Input/ElementInputBridge.cs` | Dispatches one `InputFrame` to the tree: pointer, keyboard, bindings, navigation, activation, text. | `UiHost` (`UiHost.InputBridge`) |
+| `ElementInputBridge` | `UI/Input/ElementInputBridge.cs` | Dispatches one `InputFrame` to the tree: pointer, keyboard, bindings, navigation, activation, text, held input. | `UiHost` (`UiHost.InputBridge`) |
 | `ElementInputCache` | `UI/Input/ElementInputCache.cs` | Holds the current `ElementInputRouteMap`; rebuilds it when needed; counts rebuilds (`RebuildCount`). | `UIRoot` (`UIRoot.InputCache`) |
 | `ElementInputRouteBuilder` | `UI/Input/ElementInputRouteBuilder.cs` | Walks the visual tree and builds a route map. | `ElementInputCache` |
 | `ElementInputRouteMap` | `UI/Input/ElementInputRouteMap.cs` | Registered elements and their visual parents, plus its `UiInputTree`. `Contains(element)` tells whether an element is registered and routable. | `ElementInputCache` |
@@ -57,7 +57,18 @@ handlers do that through normal property writes and invalidation.
    6. input bindings;
    7. keyboard navigation (Tab);
    8. keyboard activation;
-   9. text input.
+   9. text input;
+   10. held input (`DispatchInputHeld`): when the frame has a key or a mouse
+       button down, one `PreviewInputHeld` / `InputHeld` pair with
+       `InputStateEventArgs`. The target is the focused element
+       (`FocusManager.TryGetKeyboardTarget`); without one, the first visual
+       child of the root that the route map contains (the hosted `Window`); else
+       the root. `Elapsed` is zero on the first frame of a hold and the frame
+       time after it. A frame with nothing down ends the hold and raises
+       nothing. The pair is raised only when `UiInputTree.HasHandlers` says some
+       element has a handler for either event; that set is filled by
+       `UiInputTree.AddHandler` while the route tree is built, so there is no
+       per-frame element walk.
 4. **Routing.** `RoutedEventRouter.Raise` (`RoutedEventRouter.cs:15-40`) gets the
    route from `UiInputTree.GetRouteToRoot(target)`: `Direct` uses only the
    target, `Bubble` goes target → root, `Tunnel` goes root → target. A handler
@@ -142,6 +153,11 @@ scene presentation readiness changes.
 - Input dispatch is not a scheduler phase. It runs in `UiHost.UpdateCore`
   between the scheduled pass and the input pass. The scheduler never processes
   `FramePhase.Input`.
+- After each dispatch, `ElementInputBridge.HasActiveInputHold` is true when
+  input is held and the route tree has a `PreviewInputHeld` or `InputHeld`
+  handler. `WindowApplicationRuntime.PumpOnce` and Servo idle read it (see
+  [hosting-and-platform.md](hosting-and-platform.md) and
+  [servo.md](servo.md)).
 - The `HitTest` phase calls `ElementInputCache.EnsureCurrent`
   (`UIRoot.cs:501`), so a frame with hit-test work leaves a current route map.
 - The `CommandState` phase calls `ICommandStateSource.RefreshCommandState` with

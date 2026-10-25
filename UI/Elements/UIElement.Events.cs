@@ -30,6 +30,8 @@ public partial class UIElement
     public static readonly RoutedEvent KeyDownEvent = InputEvents.KeyDownEvent.AddOwner(typeof(UIElement));
     public static readonly RoutedEvent PreviewKeyUpEvent = InputEvents.PreviewKeyUpEvent.AddOwner(typeof(UIElement));
     public static readonly RoutedEvent KeyUpEvent = InputEvents.KeyUpEvent.AddOwner(typeof(UIElement));
+    public static readonly RoutedEvent PreviewInputHeldEvent = InputEvents.PreviewInputHeldEvent.AddOwner(typeof(UIElement));
+    public static readonly RoutedEvent InputHeldEvent = InputEvents.InputHeldEvent.AddOwner(typeof(UIElement));
     public static readonly RoutedEvent PreviewGotKeyboardFocusEvent = InputEvents.PreviewGotKeyboardFocusEvent.AddOwner(typeof(UIElement));
     public static readonly RoutedEvent GotKeyboardFocusEvent = InputEvents.GotKeyboardFocusEvent.AddOwner(typeof(UIElement));
     public static readonly RoutedEvent PreviewLostKeyboardFocusEvent = InputEvents.PreviewLostKeyboardFocusEvent.AddOwner(typeof(UIElement));
@@ -74,6 +76,8 @@ public partial class UIElement
     public event RoutedEventHandler<KeyEventArgs> KeyDown { add => AddHandler(KeyDownEvent, value); remove => RemoveHandler(KeyDownEvent, value); }
     public event RoutedEventHandler<KeyEventArgs> PreviewKeyUp { add => AddHandler(PreviewKeyUpEvent, value); remove => RemoveHandler(PreviewKeyUpEvent, value); }
     public event RoutedEventHandler<KeyEventArgs> KeyUp { add => AddHandler(KeyUpEvent, value); remove => RemoveHandler(KeyUpEvent, value); }
+    public event RoutedEventHandler<InputStateEventArgs> PreviewInputHeld { add => AddHandler(PreviewInputHeldEvent, value); remove => RemoveHandler(PreviewInputHeldEvent, value); }
+    public event RoutedEventHandler<InputStateEventArgs> InputHeld { add => AddHandler(InputHeldEvent, value); remove => RemoveHandler(InputHeldEvent, value); }
     public event RoutedEventHandler<KeyboardFocusChangedEventArgs> PreviewGotKeyboardFocus { add => AddHandler(PreviewGotKeyboardFocusEvent, value); remove => RemoveHandler(PreviewGotKeyboardFocusEvent, value); }
     public event RoutedEventHandler<KeyboardFocusChangedEventArgs> GotKeyboardFocus { add => AddHandler(GotKeyboardFocusEvent, value); remove => RemoveHandler(GotKeyboardFocusEvent, value); }
     public event RoutedEventHandler<KeyboardFocusChangedEventArgs> PreviewLostKeyboardFocus { add => AddHandler(PreviewLostKeyboardFocusEvent, value); remove => RemoveHandler(PreviewLostKeyboardFocusEvent, value); }

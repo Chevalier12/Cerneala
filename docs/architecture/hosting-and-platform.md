@@ -108,7 +108,8 @@ When the descriptor has no `CreateApplication`, a markup `MainWindow` without an
    - `Root.Relay.HasPendingWork`;
    - `Root.Scheduler.HasWork`;
    - `Root.Motion.HasActiveMotion`;
-   - an active pointer repeat.
+   - an active pointer repeat;
+   - an active input hold: a key or mouse button was down in the last input dispatch and some element has a `PreviewInputHeld` or `InputHeld` handler (`ElementInputBridge.HasActiveInputHold`).
 4. `Render`:
    - collects the platform `InputFrame` and runs `UiHost.Update`;
    - calls `graphicsSession.BeginFrame(Color.White)` and `UiHost.Draw`;

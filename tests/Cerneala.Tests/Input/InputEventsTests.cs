@@ -20,6 +20,8 @@ public sealed class InputEventsTests
     [InlineData("MouseDoubleClick", RoutingStrategy.Direct)]
     [InlineData("PreviewKeyDown", RoutingStrategy.Tunnel)]
     [InlineData("KeyDown", RoutingStrategy.Bubble)]
+    [InlineData("PreviewInputHeld", RoutingStrategy.Tunnel)]
+    [InlineData("InputHeld", RoutingStrategy.Bubble)]
     [InlineData("PreviewTextInput", RoutingStrategy.Tunnel)]
     [InlineData("TextInput", RoutingStrategy.Bubble)]
     [InlineData("PreviewGotKeyboardFocus", RoutingStrategy.Tunnel)]

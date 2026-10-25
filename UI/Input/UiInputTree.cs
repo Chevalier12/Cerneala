@@ -14,6 +14,7 @@ public sealed class UiInputTree
     private readonly Dictionary<UIElement, UiInputElement> elements = new(ReferenceEqualityComparer.Instance);
     private readonly Dictionary<UIElement, Dictionary<RoutedEvent, List<InputRoutedEventHandlerRegistration>>> handlers =
         new(ReferenceEqualityComparer.Instance);
+    private readonly HashSet<RoutedEvent> eventsWithHandlers = new(ReferenceEqualityComparer.Instance);
 
     public void Add(UIElement element, UIElement? parent, bool isEnabled = true)
     {
@@ -53,6 +54,14 @@ public sealed class UiInputTree
         }
 
         registeredHandlers.Add(new InputRoutedEventHandlerRegistration(handler, handledEventsToo));
+        eventsWithHandlers.Add(routedEvent);
+    }
+
+    // Whether any element of the tree has a handler for the event, answered from the registrations recorded while the
+    // tree was built, without walking the elements.
+    internal bool HasHandlers(RoutedEvent routedEvent)
+    {
+        return eventsWithHandlers.Contains(routedEvent);
     }
 
     public IReadOnlyList<UIElement> GetRouteToRoot(UIElement target)
