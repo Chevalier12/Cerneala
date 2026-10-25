@@ -110,6 +110,24 @@ if (args is ["--scene-debug-overlay", string sceneDebugOverlayPath])
     return;
 }
 
+if (args is ["--rs2d-ordering", string rs2dOrderingPath, .. var rs2dOrderingSizes])
+{
+    Rs2dOrderingBenchmarkRunner.Run(rs2dOrderingPath, rs2dOrderingSizes);
+    return;
+}
+
+if (args is ["--rs2d-groups", string rs2dGroupsPath, .. var rs2dGroupsSizes])
+{
+    Rs2dGroupsBenchmarkRunner.Run(rs2dGroupsPath, rs2dGroupsSizes);
+    return;
+}
+
+if (args is ["--rs2d-sdlgpu", string rs2dSdlGpuPath, .. var rs2dSdlGpuSizes])
+{
+    Rs2dSdlGpuFrameBenchmarkRunner.Run(rs2dSdlGpuPath, rs2dSdlGpuSizes);
+    return;
+}
+
 ManualConfig config = ManualConfig
     .Create(DefaultConfig.Instance)
     .WithBuildTimeout(TimeSpan.FromMinutes(10));

@@ -36,6 +36,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Cerneala.Benchmarks" />
+    <InternalsVisibleTo Include="Cerneala.StressTests" />
     <InternalsVisibleTo Include="Cerneala.Tests" />
     <InternalsVisibleTo Include="Cerneala.Tests.SdlGpu" />
     <InternalsVisibleTo Include="Cerneala.Tests.SceneVillage" />

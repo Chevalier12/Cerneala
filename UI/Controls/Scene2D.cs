@@ -42,11 +42,18 @@ public class Scene2D : SceneNode2D
     private Matrix3x2 localTransform;
     private readonly SceneChildBoundsIndex2D childBounds = new();
 
+    internal SceneRecordCounters2D RecordCounters { get; } = new();
+
     public Scene2D()
     {
         ownedCollisionWorld = new CollisionWorld2D(this);
         Children = new ChildCollection(this);
-        LogicalChildren.Changed += (_, _) => childBounds.Invalidate();
+        LogicalChildren.Changed += (_, _) =>
+        {
+            childBounds.Invalidate();
+            // An enclosing scene indexes this group by its content bounds.
+            NotifyContainerGeometryChanged();
+        };
     }
 
     public Collection<SceneNode2D> Children { get; }
@@ -177,9 +184,44 @@ public class Scene2D : SceneNode2D
                         continue;
                     }
                     entry.MayHoldResources = true;
+                    RecordCounters.CountRecorded();
                     entry.Node.Record(childContext);
                 }
-                RecordOverlays(childContext);
+                // The refreshed index holds no overlay, so there is nothing to record.
+                return;
+            }
+
+            if (OrderMode != SceneOrderMode.Source && indexed.Length > 0 && indexed.Length == Children.Count &&
+                !childBounds.HasOverlay)
+            {
+                // Only the children the cull keeps are ordered and recorded; the
+                // total-order comparer gives them the order they would have in
+                // the full sort. The refreshed index holds no overlay.
+                effectiveOrder.Clear();
+                bool byY = OrderMode == SceneOrderMode.LayerThenY;
+                foreach (int slot in childBounds.Query(visible))
+                {
+                    ref SceneChildBoundsIndex2D.Entry entry = ref indexed[slot];
+                    if (entry.IsOverlay ||
+                        (entry.CanPrune && SceneChildBoundsIndex2D.IsClearlyOutside(entry.VisibleBounds, visible)))
+                    {
+                        continue;
+                    }
+                    entry.MayHoldResources = true;
+                    SceneNode2D node = entry.Node;
+                    effectiveOrder.Add(new SceneOrderEntry(
+                        node,
+                        slot,
+                        node.OrderLayer,
+                        byY ? GetSceneYAnchor(node, childContext) : 0));
+                    RecordCounters.CountOrdered();
+                }
+                effectiveOrder.Sort(byY ? SceneOrderEntryComparer.LayerThenY : SceneOrderEntryComparer.Layer);
+                for (int index = 0; index < effectiveOrder.Count; index++)
+                {
+                    RecordCounters.CountRecorded();
+                    effectiveOrder[index].Node.Record(childContext);
+                }
                 return;
             }
 
@@ -197,6 +239,7 @@ public class Scene2D : SceneNode2D
                     }
                     indexedEntry.MayHoldResources = true;
                 }
+                RecordCounters.CountRecorded();
                 node.Record(childContext);
             }
             RecordOverlays(childContext);
@@ -220,7 +263,11 @@ public class Scene2D : SceneNode2D
     {
         for (int index = 0; index < Children.Count; index++)
         {
-            if (Children[index] is Scene2DDebugOverlay overlay) { overlay.Record(childContext); }
+            if (Children[index] is Scene2DDebugOverlay overlay)
+            {
+                RecordCounters.CountRecorded();
+                overlay.Record(childContext);
+            }
         }
     }
 
@@ -306,6 +353,7 @@ public class Scene2D : SceneNode2D
                     index,
                     entry.IsLive ? entry.Node.OrderLayer : entry.Layer,
                     0));
+                RecordCounters.CountOrdered();
             }
             return effectiveOrder;
         }
@@ -321,6 +369,7 @@ public class Scene2D : SceneNode2D
                 orderMode == SceneOrderMode.LayerThenY
                     ? GetSceneYAnchor(child, context)
                     : 0));
+            RecordCounters.CountOrdered();
         }
 
         if (orderMode != SceneOrderMode.Source)
