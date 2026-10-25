@@ -497,6 +497,92 @@ public sealed class WindowRuntimeTests : IDisposable
     }
 
     [Fact]
+    public void HeldKeyWithAnInputHeldHandlerSchedulesFramesWithoutExternalRenderRequestsUntilReleased()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Window window = new() { Content = new TextBlock { Text = "Hold" } };
+        List<TimeSpan> elapsed = [];
+        window.Show();
+        window.Root!.InputHeld += (_, args) => elapsed.Add(args.Elapsed);
+        FakePlatformWindow nativeWindow = Assert.Single(platform.Windows);
+        // Adding the handler may itself request one frame; let it settle.
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        Assert.False(runtime.PumpOnce(TimeSpan.FromMilliseconds(16)));
+        nativeWindow.Input.SetKey(InputKey.D, true);
+        nativeWindow.RequestRender();
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        int framesAfterPress = nativeWindow.Session.PresentCount;
+
+        Assert.Equal([TimeSpan.Zero], elapsed);
+
+        Assert.True(runtime.PumpOnce(TimeSpan.FromMilliseconds(16)));
+        Assert.True(runtime.PumpOnce(TimeSpan.FromMilliseconds(16)));
+
+        Assert.Equal(framesAfterPress + 2, nativeWindow.Session.PresentCount);
+        Assert.Equal(
+            [TimeSpan.Zero, TimeSpan.FromMilliseconds(16), TimeSpan.FromMilliseconds(16)],
+            elapsed);
+
+        nativeWindow.Input.SetKey(InputKey.D, false);
+        Assert.True(runtime.PumpOnce(TimeSpan.FromMilliseconds(16)));
+        int framesAfterRelease = nativeWindow.Session.PresentCount;
+
+        Assert.False(runtime.PumpOnce(TimeSpan.FromMilliseconds(16)));
+        Assert.Equal(framesAfterRelease, nativeWindow.Session.PresentCount);
+        Assert.Equal(3, elapsed.Count);
+    }
+
+    [Fact]
+    public void HeldKeyRaisesInputHeldOnTheWindowItselfWithNothingFocused()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Window window = new() { Content = new TextBlock { Text = "Hold" } };
+        List<TimeSpan> elapsed = [];
+        List<bool> fromTheWindow = [];
+        window.InputHeld += (sender, args) =>
+        {
+            elapsed.Add(args.Elapsed);
+            fromTheWindow.Add(ReferenceEquals(sender, window) && ReferenceEquals(args.OriginalSource, window));
+        };
+        window.Show();
+        FakePlatformWindow nativeWindow = Assert.Single(platform.Windows);
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        nativeWindow.Input.SetKey(InputKey.D, true);
+        nativeWindow.RequestRender();
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+        Assert.True(runtime.PumpOnce(TimeSpan.FromMilliseconds(16)));
+        Assert.True(runtime.PumpOnce(TimeSpan.FromMilliseconds(16)));
+
+        Assert.Equal(
+            [TimeSpan.Zero, TimeSpan.FromMilliseconds(16), TimeSpan.FromMilliseconds(16)],
+            elapsed);
+        Assert.All(fromTheWindow, isFromTheWindow => Assert.True(isFromTheWindow));
+    }
+
+    [Fact]
+    public void HeldKeyWithoutAnInputHeldHandlerDoesNotScheduleFrames()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Window window = new() { Content = new TextBlock { Text = "Hold" } };
+        window.Show();
+        FakePlatformWindow nativeWindow = Assert.Single(platform.Windows);
+        Assert.False(runtime.PumpOnce(TimeSpan.FromMilliseconds(16)));
+        nativeWindow.Input.SetKey(InputKey.D, true);
+        nativeWindow.RequestRender();
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        int framesAfterPress = nativeWindow.Session.PresentCount;
+
+        Assert.False(runtime.PumpOnce(TimeSpan.FromMilliseconds(16)));
+        Assert.False(runtime.PumpOnce(TimeSpan.FromMilliseconds(16)));
+
+        Assert.Equal(framesAfterPress, nativeWindow.Session.PresentCount);
+    }
+
+    [Fact]
     public async Task ServoFirstFrameClickResolvesAfterLayoutQueuedByTheSameFrameCallback()
     {
         FakeWindowPlatform platform = new();
@@ -2838,19 +2924,35 @@ public sealed class WindowRuntimeTests : IDisposable
 
     private sealed class MutableInputSource : IInputSource
     {
+        private readonly HashSet<InputKey> downKeys = [];
         private PointerSnapshot previousPointer = PointerSnapshot.Empty;
         private PointerSnapshot currentPointer = PointerSnapshot.Empty;
+        private KeyboardSnapshot previousKeyboard = KeyboardSnapshot.Empty;
 
         public InputFrame GetFrame()
         {
+            KeyboardSnapshot currentKeyboard = KeyboardSnapshot.FromDownKeys(downKeys);
             InputFrame frame = new(
                 previousPointer,
                 currentPointer,
-                KeyboardSnapshot.Empty,
-                KeyboardSnapshot.Empty,
+                previousKeyboard,
+                currentKeyboard,
                 []);
             previousPointer = currentPointer;
+            previousKeyboard = currentKeyboard;
             return frame;
+        }
+
+        public void SetKey(InputKey key, bool down)
+        {
+            if (down)
+            {
+                downKeys.Add(key);
+            }
+            else
+            {
+                downKeys.Remove(key);
+            }
         }
 
         public void MovePointer(float x, float y)

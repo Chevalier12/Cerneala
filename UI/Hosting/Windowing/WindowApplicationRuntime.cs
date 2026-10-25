@@ -667,7 +667,8 @@ internal sealed class WindowApplicationRuntime : IDisposable
                      context.Root.Relay.HasPendingWork ||
                      context.Root.Scheduler.HasWork ||
                      context.Root.Motion.HasActiveMotion ||
-                     context.Host.InputBridge.HasActivePointerRepeat))
+                     context.Host.InputBridge.HasActivePointerRepeat ||
+                     context.Host.InputBridge.HasActiveInputHold))
                 {
                     rendered = Render(context, elapsedTime, renderTimeAlreadyAdvanced: true);
                     frameRendered |= rendered;

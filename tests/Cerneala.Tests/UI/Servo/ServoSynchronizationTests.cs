@@ -254,6 +254,30 @@ public sealed class ServoSynchronizationTests
     }
 
     [Fact]
+    public async Task WaitForIdleIsNotIdleWhileInputIsHeldAndAnInputHeldHandlerExists()
+    {
+        UIRoot root = new(200, 100);
+        UiHost host = CreateHost(root);
+        ServoApi servo = new(host);
+        ServoApi shortServo = new(host, new ServoOptions
+        {
+            DefaultTimeout = TimeSpan.FromMilliseconds(300)
+        });
+        KeyboardSnapshot heldD = KeyboardSnapshot.FromDownKeys([InputKey.D]);
+
+        // Held input without any handler needs no frames.
+        host.Update(HeldKeyInput(KeyboardSnapshot.Empty, heldD), host.Viewport, TimeSpan.FromMilliseconds(16));
+        await servo.WaitForIdleAsync();
+
+        root.InputHeld += (_, _) => { };
+        host.Update(HeldKeyInput(heldD, heldD), host.Viewport, TimeSpan.FromMilliseconds(16));
+        Assert.Throws<ServoTimeoutException>(() => CompleteSynchronously(shortServo.WaitForIdleAsync()));
+
+        host.Update(HeldKeyInput(heldD, KeyboardSnapshot.Empty), host.Viewport, TimeSpan.FromMilliseconds(16));
+        await servo.WaitForIdleAsync();
+    }
+
+    [Fact]
     public async Task TimeoutCancellationAndRootReplacementDetachWaitCallbacksAndLeaveServoUsable()
     {
         UIRoot firstRoot = new(200, 100);
@@ -346,6 +370,14 @@ public sealed class ServoSynchronizationTests
             PointerSnapshot.Empty,
             KeyboardSnapshot.Empty,
             KeyboardSnapshot.Empty,
+            []);
+
+    private static InputFrame HeldKeyInput(KeyboardSnapshot previous, KeyboardSnapshot current) =>
+        new(
+            PointerSnapshot.Empty,
+            PointerSnapshot.Empty,
+            previous,
+            current,
             []);
 
     private static void CompleteSynchronously(Task operation)

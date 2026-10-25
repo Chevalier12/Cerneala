@@ -2659,6 +2659,11 @@
     "source": "UI/Input/KeyboardSnapshot.cs"
   },
   {
+    "name": "Cerneala.UI.Input.InputStateEventArgs",
+    "file": "documentation/classes/Cerneala.UI.Input.InputStateEventArgs.md",
+    "source": "UI/Input/InputStateEventArgs.cs"
+  },
+  {
     "name": "Cerneala.UI.Input.KeyEventArgs",
     "file": "documentation/classes/Cerneala.UI.Input.KeyEventArgs.md",
     "source": "UI/Input/KeyEventArgs.cs"

@@ -30,6 +30,8 @@ public static class InputEvents
     public static readonly RoutedEvent KeyDownEvent = Register("KeyDown", RoutingStrategy.Bubble, typeof(KeyEventArgs));
     public static readonly RoutedEvent PreviewKeyUpEvent = Register("PreviewKeyUp", RoutingStrategy.Tunnel, typeof(KeyEventArgs));
     public static readonly RoutedEvent KeyUpEvent = Register("KeyUp", RoutingStrategy.Bubble, typeof(KeyEventArgs));
+    public static readonly RoutedEvent PreviewInputHeldEvent = Register("PreviewInputHeld", RoutingStrategy.Tunnel, typeof(InputStateEventArgs));
+    public static readonly RoutedEvent InputHeldEvent = Register("InputHeld", RoutingStrategy.Bubble, typeof(InputStateEventArgs));
     public static readonly RoutedEvent PreviewGotKeyboardFocusEvent = Register("PreviewGotKeyboardFocus", RoutingStrategy.Tunnel, typeof(KeyboardFocusChangedEventArgs));
     public static readonly RoutedEvent GotKeyboardFocusEvent = Register("GotKeyboardFocus", RoutingStrategy.Bubble, typeof(KeyboardFocusChangedEventArgs));
     public static readonly RoutedEvent PreviewLostKeyboardFocusEvent = Register("PreviewLostKeyboardFocus", RoutingStrategy.Tunnel, typeof(KeyboardFocusChangedEventArgs));
@@ -122,6 +124,8 @@ public static class InputEvents
         KeyDownEvent,
         PreviewKeyUpEvent,
         KeyUpEvent,
+        PreviewInputHeldEvent,
+        InputHeldEvent,
         PreviewGotKeyboardFocusEvent,
         GotKeyboardFocusEvent,
         PreviewLostKeyboardFocusEvent,

@@ -69,11 +69,12 @@ The operation completes on the UI thread after all of these happened: the events
 ## Waiting
 
 - `WaitForAsync`, `WaitUntilAsync` and `WaitForIdleAsync` evaluate their predicate on the UI thread. They re-check after each frame event: `Window.FrameRendered` and `Closed`, or `UiHost.FrameUpdated` and `RootChanged`. There is no polling interval.
-- Idle means all five are true:
+- Idle means all six are true:
   - no pending Relay work;
   - the scheduler has no work;
   - no active motion;
   - no active pointer repeat;
+  - no active input hold (`RetainedServoInputDriver.HasActiveInputHold`: input is held and some element has a `PreviewInputHeld` or `InputHeld` handler);
   - the Servo gate is free.
 - Servo does not pump frames. In window mode the application loop does it. In host mode the caller must call `host.Update`. A wait, or a target action on a not-yet-actionable target, without frames ends with `ServoTimeoutException`.
 

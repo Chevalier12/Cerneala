@@ -263,6 +263,8 @@ internal sealed class RetainedServoInputDriver : IServoInputDriver
 
     internal bool HasActivePointerRepeat => host.InputBridge.HasActivePointerRepeat;
 
+    internal bool HasActiveInputHold => host.InputBridge.HasActiveInputHold;
+
     private Task DispatchAsync(
         IReadOnlyList<ServoInputStep> steps,
         CancellationToken cancellationToken)
