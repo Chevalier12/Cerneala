@@ -99,6 +99,14 @@ Generation assigns the node through the owner's singular `Collider` property; a
 collider root, direct scene-group child, or second collider child reports
 `CERNEALAUI005`. Editor completion follows both the owner and cardinality rules.
 
+A `ConeCollider2D` is the exception to the owner rule. It is a sensor, so it is
+declared only in `<Sprite2D.Vision>` or `<Scene2D.Vision>`, one cone per element.
+Generation assigns it through the owner's `Vision` property, never through
+`Collider` or `Children`. A cone anywhere else, including directly inside a
+`Sprite2D`, reports `CERNEALAUI005` with a message that names `Vision`, as does
+any other element inside a `Vision` element. See
+[ConeCollider2D](Cerneala.UI.Controls.ConeCollider2D.md#markup-usage).
+
 A shape directly inside a static `Tile` instead lowers to an immutable
 `TileColliderDescriptor2D` constructor. A static tile also accepts at most one
 shape child. That context accepts literal geometry and filtering attributes only,

@@ -302,6 +302,98 @@ public sealed class SceneDebugOverlayTests
         Assert.Same(model, map.GetSourceModel());
     }
 
+    // A Vision is a sensor, so the overlay draws it in a colour of its own: not a layer colour, not the trigger
+    // orange and not the grey of a collider with an empty mask. IsTrigger does not matter on a Vision.
+    private static readonly Color VisionColor = new(190, 120, 255);
+    private static readonly Color TriggerColor = new(255, 180, 40);
+    private static readonly Color MaskedColor = new(150, 150, 150);
+
+    [Fact]
+    public void ASpritesVisionIsDrawnAsTwoRaysAndAnArcInTheVisionColourAndItsBodyKeepsItsUsualColour()
+    {
+        Scene2DDebugOverlay overlay = new() { Flags = Scene2DDebugFlags.Colliders };
+        Scene2D scene = new();
+        scene.Children.Add(new Sprite2D
+        {
+            X = 20,
+            Y = 20,
+            Collider = new BoxCollider2D { Width = 8, Height = 8 },
+            Vision = new ConeCollider2D { Radius = 30, Angle = 90, Direction = 0 }
+        });
+        scene.Children.Add(overlay);
+
+        DrawCommandList commands = Record(scene);
+
+        Assert.Equal(2, overlay.GetDiagnosticsSnapshot().Colliders);
+        DrawCommand[] lines = [.. commands.Where(command => command.Kind == DrawCommandKind.DrawLine)];
+        Assert.Equal(11, lines.Length); // 2 rays and an arc of 9 segments of 10 degrees
+        Assert.All(lines, line => Assert.Equal(VisionColor, PenColor(line)));
+
+        DrawCommand body = Assert.Single(commands.Where(command => command.Kind == DrawCommandKind.DrawRectangle));
+        Color bodyColor = PenColor(body);
+        Assert.NotEqual(VisionColor, bodyColor);
+        Assert.NotEqual(TriggerColor, bodyColor);
+        Assert.NotEqual(MaskedColor, bodyColor);
+
+        DrawCommand[] labels = [.. commands.Where(command => command.Kind == DrawCommandKind.DrawText)];
+        Assert.Equal(2, labels.Length);
+        DrawCommand visionLabel = Assert.Single(labels, label => label.Text!.EndsWith(" vision", StringComparison.Ordinal));
+        DrawCommand bodyLabel = Assert.Single(labels, label => label.Text!.EndsWith(" solid", StringComparison.Ordinal));
+        Assert.Equal(VisionColor, visionLabel.Color);
+        Assert.Equal(bodyColor, bodyLabel.Color);
+    }
+
+    [Fact]
+    public void AFullCircleVisionThatIsATriggerIsStillDrawnInTheVisionColourAndLabelledVision()
+    {
+        // An angle of 360 degrees is the shape of a circle; the colour comes from the slot, not from the shape.
+        Scene2DDebugOverlay overlay = new() { Flags = Scene2DDebugFlags.Colliders };
+        Scene2D scene = new();
+        scene.Children.Add(new Sprite2D
+        {
+            X = 32,
+            Y = 32,
+            Vision = new ConeCollider2D { Radius = 20, Angle = 360, IsTrigger = true }
+        });
+        scene.Children.Add(overlay);
+
+        DrawCommandList commands = Record(scene);
+
+        Assert.Equal(1, overlay.GetDiagnosticsSnapshot().Colliders);
+        DrawCommand circle = Assert.Single(commands.Where(command => command.Kind == DrawCommandKind.DrawEllipse));
+        Assert.Equal(VisionColor, PenColor(circle));
+        DrawCommand label = Assert.Single(commands.Where(command => command.Kind == DrawCommandKind.DrawText));
+        Assert.EndsWith(" vision", label.Text);
+        Assert.Equal(VisionColor, label.Color);
+    }
+
+    [Fact]
+    public void AVisionWithAnEmptyMaskKeepsTheMaskedGreyAndTheMaskedLabel()
+    {
+        Scene2DDebugOverlay overlay = new() { Flags = Scene2DDebugFlags.Colliders };
+        Scene2D scene = new();
+        scene.Children.Add(new Sprite2D
+        {
+            X = 20,
+            Y = 20,
+            Vision = new ConeCollider2D { Radius = 30, Angle = 90, CollisionMask = 0 }
+        });
+        scene.Children.Add(overlay);
+
+        DrawCommandList commands = Record(scene);
+
+        Assert.Equal(1, overlay.GetDiagnosticsSnapshot().Colliders);
+        Assert.All(
+            commands.Where(command => command.Kind == DrawCommandKind.DrawLine),
+            line => Assert.Equal(MaskedColor, PenColor(line)));
+        DrawCommand label = Assert.Single(commands.Where(command => command.Kind == DrawCommandKind.DrawText));
+        Assert.EndsWith(" masked", label.Text);
+        Assert.Equal(MaskedColor, label.Color);
+    }
+
+    private static Color PenColor(DrawCommand command) =>
+        ((Cerneala.UI.Media.SolidColorBrush)command.Pen!.Brush).Color;
+
     private static object Hit(CollisionHit2D hit) => (hit.Collider, hit.Entity, hit.Point, hit.Normal, hit.Distance, hit.Fraction, hit.IsTrigger);
 
     private static (Scene2D Scene, Scene2DDebugOverlay Overlay, TileMap2D Map) Fixture(int remoteChunks = 0)

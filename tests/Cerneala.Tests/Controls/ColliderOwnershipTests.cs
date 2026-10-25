@@ -29,6 +29,7 @@ public sealed class ColliderOwnershipTests
     [InlineData("Circle")]
     [InlineData("Polygon")]
     [InlineData("Segment")]
+    [InlineData("Cone")]
     public void EveryColliderKindRejectsSceneAndGenericTreeOwnership(string shape)
     {
         Collider2D collider = CreateCollider(shape);
@@ -213,6 +214,7 @@ public sealed class ColliderOwnershipTests
         "Circle" => new CircleCollider2D { Radius = 16 },
         "Polygon" => new PolygonCollider2D { Points = "0,0 32,0 0,32" },
         "Segment" => new SegmentCollider2D { EndX = 32 },
+        "Cone" => new ConeCollider2D(),
         _ => throw new ArgumentOutOfRangeException(nameof(shape))
     };
 

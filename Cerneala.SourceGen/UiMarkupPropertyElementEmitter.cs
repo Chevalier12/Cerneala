@@ -122,6 +122,7 @@ public sealed partial class UiMarkupGenerator
             return IsBrushPropertyElement(owner, child) ||
                 GetContentTemplatePropertyName(owner, child) is not null ||
                 IsRenderSurfaceSceneElement(owner, child) ||
+                IsVisionPropertyElement(owner, child) ||
                 IsLegacyTemplatesPropertyElement(owner, child) ||
                 IsItemsControlItemsPanelElement(owner, child) ||
                 (owner.Name.LocalName == "Grid" &&
@@ -230,6 +231,67 @@ public sealed partial class UiMarkupGenerator
 
             string sceneVariable = EmitElement(children[0]);
             currentLines.Add(ownerVariable + ".Scene = " + sceneVariable + ";");
+        }
+
+        // <Sprite2D.Vision> and <Scene2D.Vision> hold one ConeCollider2D. It is assigned to the Vision property of the
+        // owner: a sensor in a slot of its own, never the body of a Sprite2D and never one of the Children of a Scene2D.
+        private bool IsVisionPropertyElement(MarkupElement owner, MarkupElement child)
+        {
+            string ownerName = owner.Name.LocalName;
+            if (child.Name.LocalName != ownerName + ".Vision")
+            {
+                return false;
+            }
+
+            INamedTypeSymbol? ownerType = ResolvePropertyOwnerType(
+                ownerName,
+                isRoot: ReferenceEquals(owner, document.Root));
+            INamedTypeSymbol? spriteType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Sprite2D");
+            INamedTypeSymbol? sceneType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Scene2D");
+            return ownerType is not null &&
+                ((spriteType is not null && IsOrDerivesFrom(ownerType, spriteType)) ||
+                 (sceneType is not null && IsOrDerivesFrom(ownerType, sceneType)));
+        }
+
+        private void EmitVisionPropertyElement(MarkupElement owner, string ownerVariable)
+        {
+            MarkupElement[] propertyElements = owner.Elements()
+                .Where(child => IsVisionPropertyElement(owner, child))
+                .ToArray();
+            if (propertyElements.Length == 0)
+            {
+                return;
+            }
+
+            if (propertyElements.Length > 1)
+            {
+                Report(
+                    InvalidDocumentShape,
+                    propertyElements[1],
+                    Path.GetFileName(file.Path),
+                    owner.Name.LocalName + ".Vision may be declared only once.");
+                return;
+            }
+
+            MarkupElement propertyElement = propertyElements[0];
+            MarkupElement[] children = propertyElement.Elements().ToArray();
+            INamedTypeSymbol? childType = children.Length == 1 ? GetElementTypeSymbol(children[0]) : null;
+            INamedTypeSymbol? coneType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.ConeCollider2D");
+            if (propertyElement.Attributes().Any(attribute => !attribute.IsNamespaceDeclaration) ||
+                propertyElement.Nodes().OfType<MarkupText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)) ||
+                children.Length != 1 ||
+                childType is null || coneType is null || !IsOrDerivesFrom(childType, coneType))
+            {
+                Report(
+                    InvalidDocumentShape,
+                    propertyElement,
+                    Path.GetFileName(file.Path),
+                    propertyElement.Name.LocalName + " requires exactly one ConeCollider2D child.");
+                return;
+            }
+
+            string coneVariable = EmitElement(children[0]);
+            currentLines.Add(ownerVariable + ".Vision = " + coneVariable + ";");
         }
 
         private void ReportLegacyTemplatesPropertyElements(MarkupElement owner)

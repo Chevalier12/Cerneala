@@ -525,7 +525,10 @@ internal sealed class SceneChildBoundsIndex2D
 
         for (int index = 0; index < children.Count; index++)
         {
-            if (children[index] is not SceneNode2D child)
+            // A collider (a group's Vision) is a logical child but not scene content: it draws nothing, has no
+            // bounds to cull by and takes no part in ordering. The index holds exactly the scene's children, so a
+            // group with a Vision keeps the culled paths that need the index to match Scene2D.Children.
+            if (children[index] is not SceneNode2D child || child is Collider2D)
             {
                 continue;
             }

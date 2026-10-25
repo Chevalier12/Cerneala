@@ -222,6 +222,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         if (element.Kind == SyntaxKind.PropertyElement)
         {
             ILanguageMemberSymbol? property = BindPropertyElement(element, parentType);
+            ReportVisionPropertyElementShape(element, parentType);
             ILanguageTypeSymbol? propertyDataType = dataType;
             foreach (ElementSyntax child in element.Children.OfType<ElementSyntax>())
             {
@@ -276,9 +277,9 @@ internal sealed partial class CernealaSemanticModel : IDisposable
             BindTileDeclaration(element, type);
             return;
         }
-        if (type.IsOrDerivesFrom("Cerneala.UI.Controls.Collider2D") && !HasLiveColliderOwner(element))
+        if (GetColliderPlacementError(element, type) is { } placementError)
         {
-            AddShapeDiagnostic(element.NameToken.Span, "Colliders can only be owned by Sprite2D or tiles; they cannot be scene roots or children of other UI elements.");
+            AddShapeDiagnostic(element.NameToken.Span, placementError);
             return;
         }
         if (IsLiveColliderOwner(parentType) && !type.IsOrDerivesFrom("Cerneala.UI.Controls.Collider2D"))

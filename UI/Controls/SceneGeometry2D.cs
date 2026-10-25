@@ -325,8 +325,45 @@ internal static class SceneGeometry2D
                 epsilon),
             ColliderShapeKind2D.Segment => ContainsSegmentPoint(shape.Vertices,
                 new Vector2(localPoint.X, localPoint.Y), epsilon),
+            ColliderShapeKind2D.Cone => ContainsConePoint(shape,
+                new Vector2(localPoint.X, localPoint.Y), epsilon),
             _ => false
         };
+    }
+
+    // Inside the radius and inside the sweep, or within epsilon of one of the two straight edges.
+    private static bool ContainsConePoint(ColliderLocalShape2D cone, Vector2 point, float epsilon)
+    {
+        float radius = cone.Radius;
+        float distanceSquared = point.LengthSquared();
+        if (distanceSquared > (radius + epsilon) * (radius + epsilon))
+        {
+            return false;
+        }
+
+        float turn = 2 * MathF.PI;
+        float relative = (MathF.Atan2(point.Y, point.X) - cone.StartAngle) % turn;
+        if (relative < 0)
+        {
+            relative += turn;
+        }
+
+        if (relative <= cone.Sweep)
+        {
+            return true;
+        }
+
+        (float startSin, float startCos) = MathF.SinCos(cone.StartAngle);
+        (float endSin, float endCos) = MathF.SinCos(cone.StartAngle + cone.Sweep);
+        return IsNearEdge(point, new Vector2(startCos * radius, startSin * radius), epsilon) ||
+            IsNearEdge(point, new Vector2(endCos * radius, endSin * radius), epsilon);
+    }
+
+    // The edge runs from the apex (the origin) to the arc end.
+    private static bool IsNearEdge(Vector2 point, Vector2 arcEnd, float epsilon)
+    {
+        float fraction = Math.Clamp(Vector2.Dot(point, arcEnd) / arcEnd.LengthSquared(), 0, 1);
+        return Vector2.DistanceSquared(point, arcEnd * fraction) <= epsilon * epsilon;
     }
 
     private static bool ContainsConvexPoint(
@@ -395,10 +432,76 @@ internal static class SceneGeometry2D
             case ColliderShapeKind2D.Polygon:
             case ColliderShapeKind2D.Segment:
                 return TryGetPolygonBounds(shape.Vertices, shapeToScene, out bounds);
+            case ColliderShapeKind2D.Cone:
+                return TryGetConeBounds(shape, shapeToScene, out bounds);
             default:
                 bounds = default;
                 return false;
         }
+    }
+
+    // Tight bounds: the apex, the two arc ends, and the arc points where the transformed arc
+    // reaches its smallest or largest x or y. Every candidate is a point of the cone, so the
+    // box never extends past the shape.
+    private static bool TryGetConeBounds(
+        ColliderLocalShape2D cone,
+        Matrix3x2 transform,
+        out DrawRect bounds)
+    {
+        Vector2 apex = Vector2.Transform(Vector2.Zero, transform);
+        float left = apex.X;
+        float top = apex.Y;
+        float right = apex.X;
+        float bottom = apex.Y;
+        IncludeConeArcPoint(cone, transform, cone.StartAngle, ref left, ref top, ref right, ref bottom);
+        IncludeConeArcPoint(cone, transform, cone.StartAngle + cone.Sweep, ref left, ref top, ref right, ref bottom);
+        // x(angle) is proportional to M11 cos + M21 sin and y(angle) to M12 cos + M22 sin.
+        float xMaximum = MathF.Atan2(transform.M21, transform.M11);
+        float yMaximum = MathF.Atan2(transform.M22, transform.M12);
+        TryIncludeConeExtreme(cone, transform, xMaximum, ref left, ref top, ref right, ref bottom);
+        TryIncludeConeExtreme(cone, transform, xMaximum + MathF.PI, ref left, ref top, ref right, ref bottom);
+        TryIncludeConeExtreme(cone, transform, yMaximum, ref left, ref top, ref right, ref bottom);
+        TryIncludeConeExtreme(cone, transform, yMaximum + MathF.PI, ref left, ref top, ref right, ref bottom);
+        return TryCreateBounds(left, top, right, bottom, out bounds);
+    }
+
+    private static void TryIncludeConeExtreme(
+        ColliderLocalShape2D cone,
+        Matrix3x2 transform,
+        float angle,
+        ref float left,
+        ref float top,
+        ref float right,
+        ref float bottom)
+    {
+        double turn = 2 * Math.PI;
+        double relative = ((double)angle - cone.StartAngle) % turn;
+        if (relative < 0)
+        {
+            relative += turn;
+        }
+
+        if (relative <= cone.Sweep)
+        {
+            IncludeConeArcPoint(cone, transform, angle, ref left, ref top, ref right, ref bottom);
+        }
+    }
+
+    private static void IncludeConeArcPoint(
+        ColliderLocalShape2D cone,
+        Matrix3x2 transform,
+        float angle,
+        ref float left,
+        ref float top,
+        ref float right,
+        ref float bottom)
+    {
+        (float sin, float cos) = MathF.SinCos(angle);
+        Vector2 point = Vector2.Transform(new Vector2(cos * cone.Radius, sin * cone.Radius), transform);
+        left = MathF.Min(left, point.X);
+        top = MathF.Min(top, point.Y);
+        right = MathF.Max(right, point.X);
+        bottom = MathF.Max(bottom, point.Y);
     }
 
     private static bool TryGetPolygonBounds(

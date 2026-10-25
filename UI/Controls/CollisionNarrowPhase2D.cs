@@ -9,6 +9,9 @@ internal static class CollisionNarrowPhase2D
     private const int GjkIterations = 40;
     private const int EpaIterations = 48;
     private const int CastIterations = 64;
+    // A cone is convex up to a half circle. The margin absorbs float rounding of a 180 degree sweep.
+    private const float ConvexConeSweep = MathF.PI + 1e-5f;
+    private const string ConeCastMessage = "Cone colliders are Vision sensors; raycasts and shape casts never target or move them.";
 
     internal static bool Intersects(ColliderGeometry2D first, ColliderGeometry2D second) =>
         TryContact(first, second, out _);
@@ -22,6 +25,17 @@ internal static class CollisionNarrowPhase2D
         {
             contact = default;
             return false;
+        }
+
+        // GJK needs convex shapes. A cone wider than a half circle is the union of two narrower cones.
+        if (TrySplitWideCone(first, out ColliderGeometry2D firstLow, out ColliderGeometry2D firstHigh))
+        {
+            return TryContact(firstLow, second, out contact) || TryContact(firstHigh, second, out contact);
+        }
+
+        if (TrySplitWideCone(second, out ColliderGeometry2D secondLow, out ColliderGeometry2D secondHigh))
+        {
+            return TryContact(first, secondLow, out contact) || TryContact(first, secondHigh, out contact);
         }
 
         if (TryFastContact(first, second, out contact, out bool handled))
@@ -67,6 +81,7 @@ internal static class CollisionNarrowPhase2D
         float maxDistance,
         out NarrowPhaseContact2D contact)
     {
+        ThrowIfCone(geometry);
         Vector2 end = origin + (direction * maxDistance);
         if (geometry.LocalShape.Kind == ColliderShapeKind2D.Segment ||
             !Matrix3x2.Invert(geometry.ShapeToSceneTransform, out Matrix3x2 inverse))
@@ -123,6 +138,8 @@ internal static class CollisionNarrowPhase2D
         out NarrowPhaseContact2D contact,
         bool includeNonblockingInitialContact = false)
     {
+        ThrowIfCone(moving);
+        ThrowIfCone(target);
         float displacementLength = displacement.Length();
         if (TryContact(moving, target, out NarrowPhaseContact2D initial))
         {
@@ -338,7 +355,9 @@ internal static class CollisionNarrowPhase2D
     {
         // A segment has finite endpoints but no interior. Polygon SAT assumes
         // area; the existing support-mapped distance path handles both endpoints.
-        if (first.LocalShape.Kind == ColliderShapeKind2D.Segment || second.LocalShape.Kind == ColliderShapeKind2D.Segment)
+        // A cone has an arc edge. Polygon SAT would need vertices; the support-mapped path handles it.
+        if (first.LocalShape.Kind is ColliderShapeKind2D.Segment or ColliderShapeKind2D.Cone ||
+            second.LocalShape.Kind is ColliderShapeKind2D.Segment or ColliderShapeKind2D.Cone)
         {
             handled = false;
             contact = default;
@@ -925,12 +944,86 @@ internal static class CollisionNarrowPhase2D
             case ColliderShapeKind2D.Segment:
                 local = GetSupport(geometry.LocalShape.Vertices, localDirection);
                 break;
+            case ColliderShapeKind2D.Cone:
+                local = GetConeSupport(geometry.LocalShape, localDirection);
+                break;
             default:
                 local = default;
                 break;
         }
 
         return Vector2.Transform(local, transform) + translation;
+    }
+
+    // Valid for a sweep of at most a half circle: the cone is then convex, the hull of the apex and the arc.
+    private static Vector2 GetConeSupport(ColliderLocalShape2D cone, Vector2 localDirection)
+    {
+        (float startSin, float startCos) = MathF.SinCos(cone.StartAngle);
+        Vector2 startEdge = new(startCos * cone.Radius, startSin * cone.Radius);
+        float lengthSquared = localDirection.LengthSquared();
+        if (lengthSquared <= Epsilon * Epsilon)
+        {
+            return startEdge;
+        }
+
+        (float endSin, float endCos) = MathF.SinCos(cone.StartAngle + cone.Sweep);
+        Vector2 endEdge = new(endCos * cone.Radius, endSin * cone.Radius);
+        // The direction lies inside the arc when it is clockwise of the start edge and counter-clockwise of the end edge.
+        if (Cross(startEdge, localDirection) >= 0 && Cross(localDirection, endEdge) >= 0)
+        {
+            return localDirection * (cone.Radius / MathF.Sqrt(lengthSquared));
+        }
+
+        // Outside the arc the support point is the apex or one end of the arc.
+        Vector2 best = Vector2.Zero;
+        float bestProjection = 0;
+        float startProjection = Vector2.Dot(startEdge, localDirection);
+        if (startProjection > bestProjection)
+        {
+            best = startEdge;
+            bestProjection = startProjection;
+        }
+
+        return Vector2.Dot(endEdge, localDirection) > bestProjection ? endEdge : best;
+    }
+
+    private static bool TrySplitWideCone(
+        ColliderGeometry2D geometry,
+        out ColliderGeometry2D low,
+        out ColliderGeometry2D high)
+    {
+        ColliderLocalShape2D shape = geometry.LocalShape;
+        if (shape.Kind != ColliderShapeKind2D.Cone || shape.Sweep <= ConvexConeSweep)
+        {
+            low = default;
+            high = default;
+            return false;
+        }
+
+        float half = shape.Sweep * 0.5f;
+        low = CreateConeHalf(geometry, shape.StartAngle, half);
+        high = CreateConeHalf(geometry, shape.StartAngle + half, half);
+        return true;
+    }
+
+    private static ColliderGeometry2D CreateConeHalf(ColliderGeometry2D whole, float startAngle, float sweep)
+    {
+        ColliderLocalShape2D shape = ColliderLocalShape2D.Cone(whole.LocalShape.Radius, startAngle, sweep);
+        return whole with
+        {
+            LocalShape = shape,
+            SceneBounds = SceneGeometry2D.TryGetColliderBounds(shape, whole.ShapeToSceneTransform, out DrawRect bounds)
+                ? bounds
+                : whole.SceneBounds
+        };
+    }
+
+    private static void ThrowIfCone(ColliderGeometry2D geometry)
+    {
+        if (geometry.LocalShape.Kind == ColliderShapeKind2D.Cone)
+        {
+            throw new InvalidOperationException(ConeCastMessage);
+        }
     }
 
     private static bool TryGetSimilarityCircle(
@@ -1235,9 +1328,17 @@ internal static class CollisionNarrowPhase2D
             ColliderShapeKind2D.Circle => Vector2.Zero,
             ColliderShapeKind2D.Polygon => GetCentroid(geometry.LocalShape.Vertices),
             ColliderShapeKind2D.Segment => GetCentroid(geometry.LocalShape.Vertices),
+            ColliderShapeKind2D.Cone => GetConeCenter(geometry.LocalShape),
             _ => Vector2.Zero
         };
         return Vector2.Transform(local, geometry.ShapeToSceneTransform);
+    }
+
+    // A point inside the cone: half the radius along the middle of the arc.
+    private static Vector2 GetConeCenter(ColliderLocalShape2D cone)
+    {
+        (float sin, float cos) = MathF.SinCos(cone.StartAngle + (cone.Sweep * 0.5f));
+        return new Vector2(cos, sin) * (cone.Radius * 0.5f);
     }
 
     private static Vector2 GetFallbackNormal(

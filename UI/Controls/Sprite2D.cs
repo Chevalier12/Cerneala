@@ -15,6 +15,7 @@ public sealed class Sprite2D : SceneNode2D
 {
     private readonly SpriteAnimationPlayback animationPlayback = new();
     private readonly ColliderSlot2D colliderSlot;
+    private readonly ColliderSlot2D visionSlot;
     // Scene traversals visit every sprite several times per frame. Read the
     // properties they use once per property-store version, not once per visit.
     private long snapshotVersion = -1;
@@ -50,7 +51,8 @@ public sealed class Sprite2D : SceneNode2D
 
     public Sprite2D()
     {
-        colliderSlot = new ColliderSlot2D(this);
+        colliderSlot = new ColliderSlot2D(this, ColliderSlotRole2D.Body);
+        visionSlot = new ColliderSlot2D(this, ColliderSlotRole2D.Vision);
     }
 
     public Collider2D? Collider
@@ -59,14 +61,26 @@ public sealed class Sprite2D : SceneNode2D
         set => colliderSlot.Value = value;
     }
 
+    /// <summary>
+    /// Gets or sets the cone this sprite sees with, or <see langword="null"/> for none. The cone is a logical child of
+    /// the sprite in a slot of its own, separate from <see cref="Collider"/>, and it moves, turns and mirrors with the sprite.
+    /// </summary>
+    public ConeCollider2D? Vision
+    {
+        get => (ConeCollider2D?)visionSlot.Value;
+        set => visionSlot.Value = value;
+    }
+
     internal override void AttachSurface(RenderSurface2D? surface)
     {
         base.AttachSurface(surface);
         colliderSlot.AttachSurface(surface);
+        visionSlot.AttachSurface(surface);
     }
 
     // Shapes use destination units relative to the sprite anchor. Image sizing,
-    // crop, Origin and Flip change presentation, not collision geometry.
+    // crop, Origin and Flip change presentation, not collision geometry; the one
+    // exception is Flip, which mirrors the Direction of a Vision cone.
     internal override Matrix3x2 GetLocalTransform() => Current.LocalTransform;
 
     internal override bool IsSceneRendered => Current.IsRendered;
@@ -643,6 +657,11 @@ public sealed class Sprite2D : SceneNode2D
             ReferenceEquals(args.Property, UIElement.RotationProperty))
         {
             SceneGeometry2D.FindRootScene(this)?.NotifyCollisionMutation(this, SceneCollisionMutationKind.Geometry);
+        }
+        else if (ReferenceEquals(args.Property, FlipProperty) && Vision is { } vision)
+        {
+            // The cone mirrors its Direction with Flip; body colliders ignore Flip.
+            SceneGeometry2D.FindRootScene(this)?.NotifyCollisionMutation(vision, SceneCollisionMutationKind.Geometry);
         }
         else if (ReferenceEquals(args.Property, UIElement.IsVisibleProperty) ||
                  ReferenceEquals(args.Property, UIElement.VisibilityProperty))
