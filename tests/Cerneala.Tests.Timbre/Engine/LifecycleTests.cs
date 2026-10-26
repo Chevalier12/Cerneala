@@ -387,6 +387,28 @@ public sealed class LifecycleTests
         Assert.Equal(0, rig.Output.OpenCount - 1);
     }
 
+    // 922337203686 frames is the first length whose frames * TicksPerSecond
+    // exceeds long.MaxValue; its exact duration still fits a TimeSpan.
+    [Theory]
+    [InlineData(48000L, 10_000_000L)]
+    [InlineData(922337203686L, 192153584101250L)]
+    [InlineData(long.MaxValue, long.MaxValue)]
+    public async Task StreamingPlaybackDurationIsExactOrClampedForAnyReportedLength(long lengthFrames, long expectedTicks)
+    {
+        using TimbreRig rig = new();
+        TimbrePlayback playback = rig.Scope.Play(TimbreRig.Clip(new DeterministicTimbreSourceFactory(lengthFrames), TimbreLoading.Streaming));
+        try
+        {
+            await rig.ReadyAsync(playback);
+
+            Assert.Equal(TimeSpan.FromTicks(expectedTicks), playback.Duration);
+        }
+        finally
+        {
+            playback.Cancel();
+        }
+    }
+
     [Fact]
     public async Task LoadingPolicyRespectsAutoThresholdAndPreloadLimits()
     {
