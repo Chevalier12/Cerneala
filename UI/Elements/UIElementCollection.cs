@@ -160,14 +160,24 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
 
         child.ValidateParentChange(null, role, ownerManaged);
 
-        if (role == ElementChildRole.Visual && owner.Root?.Motion.Presence.TryBeginExit(owner, child) == true)
+        if (role == ElementChildRole.Visual && owner.Root is UIRoot exitRoot && exitRoot.Motion.Presence.TryBeginExit(owner, child))
         {
             children.RemoveAt(index);
             Version++;
             SetParent(child, null);
-            owner.Root.IncrementTreeVersion();
-            InvalidateForVisualChildMutation(child, ElementTreeChangeKind.Removed);
-            Changed?.Invoke(this, new ElementTreeChange(owner, child, role, ElementTreeChangeKind.Removed));
+
+            // An exit that is already complete detaches the child now, after the removal, as the detach below does.
+            try
+            {
+                exitRoot.Motion.Presence.CompleteFinishedExit(child);
+            }
+            finally
+            {
+                exitRoot.IncrementTreeVersion();
+                InvalidateForVisualChildMutation(child, ElementTreeChangeKind.Removed);
+                Changed?.Invoke(this, new ElementTreeChange(owner, child, role, ElementTreeChangeKind.Removed));
+            }
+
             return true;
         }
 

@@ -81,12 +81,20 @@ public sealed class PresenceCoordinator
                 exit.CompleteRemoval();
             }
         };
-        if (exit.OpacityHandle.IsCompleted)
+
+        return true;
+    }
+
+    // An exit that is complete as soon as it begins (reduced motion, a zero-length exit) detaches the element here.
+    // The owner calls this after it has removed the element from its children, so a failing detach callback cannot
+    // leave the element in the owner's list.
+    internal void CompleteFinishedExit(UIElement element)
+    {
+        ArgumentNullException.ThrowIfNull(element);
+        if (exits.TryGetValue(element, out ExitAnimation? exit) && exit.OpacityHandle?.IsCompleted == true)
         {
             exit.CompleteRemoval();
         }
-
-        return true;
     }
 
     internal bool TryCancelExitForAdd(UIElement newOwner, UIElement element)
