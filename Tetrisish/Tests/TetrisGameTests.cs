@@ -156,6 +156,47 @@ public sealed class TetrisGameTests
         Assert.InRange(surface.AppliedBlurDistance, 11.5f, 12.5f);
     }
 
+    [Theory]
+    [InlineData(120)]
+    [InlineData(24)]
+    [InlineData(20)]
+    [InlineData(16)]
+    [InlineData(7)]
+    public void SoftDropReleaseEndsWithTheBlurAtZeroAndInactive(int stepMilliseconds)
+    {
+        // Row 24 is the control (no release sample lands in (0, 0.5));
+        // rows 120, 20, 16 and 7 each publish a sample in (0, 0.5).
+        ProbeMotionClock clock = new();
+        UIRoot root = new(motionClock: clock);
+        TetrisGameSurface surface = new();
+        root.VisualChildren.Add(surface);
+        root.ProcessFrame();
+        Assert.True(surface.BeginSoftDrop());
+        root.ProcessFrame();
+        for (int frame = 0; frame < 14; frame++)
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(50));
+            root.ProcessFrame();
+        }
+
+        Assert.Equal(24f, surface.AppliedBlurDistance);
+        surface.EndSoftDrop();
+        root.ProcessFrame();
+        List<float> sampled = [surface.AppliedBlurDistance];
+        for (int elapsed = 0; elapsed < 400; elapsed += stepMilliseconds)
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(stepMilliseconds));
+            root.ProcessFrame();
+            sampled.Add(surface.AppliedBlurDistance);
+        }
+
+        Assert.True(
+            surface.AppliedBlurDistance == 0 && !surface.IsBlurActive,
+            $"step {stepMilliseconds} ms: final AppliedBlurDistance={surface.AppliedBlurDistance}, " +
+            $"IsBlurActive={surface.IsBlurActive}, BlurDistance={surface.BlurDistance}; " +
+            $"applied sequence after release: {string.Join(", ", sampled)}.");
+    }
+
     [Fact]
     public void ClosingAfterSoftDroppedPieceLandsDoesNotStartMotionAfterDetach()
     {
