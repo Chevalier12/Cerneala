@@ -68,7 +68,7 @@ least one region.
 | --- | --- |
 | `ArgumentNullException` | `samples` is `null`. |
 | `ArgumentException` | `samples` is empty, or a ghost does not contain enough samples for any fitted angular region. |
-| `ArgumentOutOfRangeException` | `options` contains an unsupported or non-finite value; a sample has a negative `IncidenceAngleDegrees`; or a non-finite sample value (for example a NaN `AperturePosition`) produces a non-finite fitted coefficient. |
+| `ArgumentOutOfRangeException` | `options` contains an unsupported or non-finite value; a sample has a negative or non-finite `IncidenceAngleDegrees` (checked for every sample before regions are formed, so the result does not depend on `RegionCount` or `MinimumSamplesPerRegion`); or a non-finite sample value (for example a NaN `AperturePosition`) produces a non-finite fitted coefficient. |
 
 ## See also
 
