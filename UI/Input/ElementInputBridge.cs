@@ -309,6 +309,13 @@ public sealed class ElementInputBridge
                     out bool buttonPreviewHandled,
                     routedPressOwner,
                     out bool handledBeforePressOwner);
+                // As WPF's Control, which raises the double click from its MouseLeftButtonDown class handler when the
+                // press counts 2, the double click belongs to the second press: a release outside the element after it
+                // does not cancel it, and the release raises no double click (#957).
+                if (button == InputMouseButton.Left && pressClickCount == 2)
+                {
+                    RaiseDirectMousePairAlongRoute(routeMap, pointerTarget, InputEvents.PreviewMouseDoubleClickEvent, InputEvents.MouseDoubleClickEvent, button, pressClickCount, modifiers, genericPreviewHandledOnArrival: null, genericHandledOnArrival: null, out _, null, out _);
+                }
 
                 // As in WPF, where a control focuses itself when MouseLeftButtonDown reaches its class handler, the press
                 // moves the focus after its events and before the drag begins. A handled PreviewMouseDown or
@@ -398,10 +405,6 @@ public sealed class ElementInputBridge
                 HashSet<UIElement> handledOnArrival = new(ReferenceEqualityComparer.Instance);
                 bool handled = RaiseMousePair(routeMap, pointerTarget, InputEvents.PreviewMouseUpEvent, InputEvents.MouseUpEvent, button, clickCount, modifiers, out _, previewHandledOnArrival, handledOnArrival, releasedPressSource);
                 handled |= RaiseMouseButtonSpecificPair(routeMap, pointerTarget, button, isDown: false, clickCount, modifiers, previewHandledOnArrival, handledOnArrival, out _, null, out _, releasedPressSource);
-                if (button == InputMouseButton.Left && clickCount == 2)
-                {
-                    handled |= RaiseDirectMousePairAlongRoute(routeMap, pointerTarget, InputEvents.PreviewMouseDoubleClickEvent, InputEvents.MouseDoubleClickEvent, button, clickCount, modifiers, genericPreviewHandledOnArrival: null, genericHandledOnArrival: null, out _, null, out _, releasedPressSource);
-                }
                 CompletePointerDrag(routeMap, pointerTarget, button, clickCount);
                 if (!handled)
                 {
