@@ -875,7 +875,7 @@ public sealed partial class UiMarkupGenerator
             MarkupAttribute durationAttribute = frame.Attribute("Duration")!;
             if (!TryBuildDurationExpression(durationAttribute.Value.Trim(), out duration))
             {
-                ReportAnimation(durationAttribute, "Frame duration must be positive and use the existing ms or s duration syntax.");
+                ReportAnimation(durationAttribute, "Frame duration must be positive (at least one 100 ns tick), no longer than TimeSpan.MaxValue, and use the existing ms or s duration syntax.");
                 return false;
             }
 
