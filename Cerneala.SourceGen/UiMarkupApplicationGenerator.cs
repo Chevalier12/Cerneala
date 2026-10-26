@@ -246,6 +246,11 @@ public sealed partial class UiMarkupGenerator
             source.Append("        ").AppendLine(line);
         }
 
+        foreach (string line in scope.PostLines)
+        {
+            source.Append("        ").AppendLine(line);
+        }
+
         if (root.Attribute("ShutdownMode") is MarkupAttribute shutdown)
         {
             string[] validModes = ["OnLastWindowClose", "OnMainWindowClose", "OnExplicitShutdown"];
