@@ -1,3 +1,5 @@
+using System.Runtime.ExceptionServices;
+
 namespace Cerneala.UI.Data;
 
 public sealed class BindingSubscriptionCollection
@@ -38,9 +40,15 @@ public sealed class BindingSubscriptionCollection
 
         IDisposable[] snapshot = bindings.ToArray();
         bindings.Clear();
+        // A failing Dispose does not skip the later subscriptions: each one is disposed, then the first failure
+        // propagates.
+        ExceptionDispatchInfo? failure = null;
         foreach (IDisposable binding in snapshot)
         {
-            binding.Dispose();
+            try { binding.Dispose(); }
+            catch (Exception exception) { failure ??= ExceptionDispatchInfo.Capture(exception); }
         }
+
+        failure?.Throw();
     }
 }
