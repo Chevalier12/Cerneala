@@ -1645,6 +1645,33 @@ public sealed class ListBoxTests
         Assert.Equal(reference.DesiredSize.Height + 8, item.DesiredSize.Height);
     }
 
+    // As in WPF, a row without an ItemTemplate shows the text of an item that is not a string, from ToString() (#903).
+    [Fact]
+    public void ListBoxRowsWithoutATemplateShowNonStringItemsThroughToString()
+    {
+        UIRoot root = new(200, 200);
+        ListBox listBox = new();
+        listBox.SetItems(new object[] { 1, DayOfWeek.Monday });
+        root.VisualChildren.Add(listBox);
+        root.ProcessFrame();
+
+        Assert.Equal(
+            ["1", "Monday"],
+            listBox.ItemContainerGenerator.RealizedContainers.OrderBy(pair => pair.Key)
+                .Select(pair => Assert.Single(FindTextBlocks(pair.Value)).Text));
+    }
+
+    [Fact]
+    public void ListBoxItemWithNonStringContentShowsItsText()
+    {
+        UIRoot root = new(200, 200);
+        ListBoxItem item = new() { Content = 42 };
+        root.VisualChildren.Add(item);
+        root.ProcessFrame();
+
+        Assert.Equal("42", Assert.Single(FindTextBlocks(item)).Text);
+    }
+
     // As the Border of the WPF ListBox template, Background fills the arranged bounds behind the items (#590).
     [Fact]
     public void ListBoxFillsItsArrangedBoundsWithBackgroundBehindItsItems()
