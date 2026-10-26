@@ -58,11 +58,13 @@ HitTestResult? result = new HitTestService().HitTest(root, 25, 25, filter);
 
 `HitTestService` walks `VisualChildren` from the last child to the first child, so later visual children win when elements overlap.
 
+An element that was removed from `VisualChildren` and still plays its presence exit animation is drawn after its former parent's visual children (see `PresenceCoordinator.GetExitingVisualChildren`). When its `PresenceOptions.ExcludeInputWhileExiting` is `false`, hit testing visits it, and its subtree, under its former parent before the live visual children, so a point over the exiting element hits it until the exit ends. With the default `true` it is skipped.
+
 The `HitTest(UIRoot, float, float, HitTestFilter?)` overload delegates through `UIRoot.InputCache`, which ensures the cached `ElementInputRouteMap` is current before performing the hit test.
 
 The `HitTest(UIElement, ElementInputRouteMap, float, float, HitTestFilter?)` overload uses the supplied route map directly. A matching element must be present in the route map; otherwise the method returns `null` even if the point is inside that element.
 
-Elements are skipped when they are presence-exiting, do not participate in hit testing through visibility state, or are disabled. Disabled elements also cause their subtree to be skipped.
+Elements are skipped when they are presence-exiting with `ExcludeInputWhileExiting` set to `true`, do not participate in hit testing through visibility state, or are disabled. Disabled elements also cause their subtree to be skipped.
 
 Clipping is honored when a `ClipNode` is set on an element, or when `ClipToBounds` is `true` (the clip is then the element's arranged bounds). A child outside its parent's arranged bounds can still be hit when the parent is not clipped. The root viewport is special: points outside a `UIRoot` viewport are rejected.
 

@@ -64,6 +64,27 @@ public sealed class HitTestService
             return null;
         }
 
+        // Exiting presence children draw after the live children, so they are tested first. One that excludes input
+        // while exiting is skipped by its IsPresenceExiting check.
+        if (element.Root is UIRoot root)
+        {
+            IReadOnlyList<UIElement> exitingChildren = root.Motion.Presence.GetExitingVisualChildren(element);
+            for (int i = exitingChildren.Count - 1; i >= 0; i--)
+            {
+                HitTestResult? exitingResult = HitTestElement(
+                    exitingChildren[i],
+                    routeMap,
+                    x,
+                    y,
+                    filter,
+                    elementTransform);
+                if (exitingResult is not null)
+                {
+                    return exitingResult;
+                }
+            }
+        }
+
         for (int i = element.VisualChildren.Count - 1; i >= 0; i--)
         {
             HitTestResult? childResult = HitTestElement(
