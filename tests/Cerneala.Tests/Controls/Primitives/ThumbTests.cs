@@ -105,6 +105,100 @@ public sealed class ThumbTests
         Assert.True(args.Canceled);
     }
 
+    // A drag ends with one canceled DragCompleted when the thumb, or an ancestor, stops being able to take input while
+    // the button is down, as it does when the thumb is detached (#952).
+    [Theory]
+    [InlineData("none")]
+    [InlineData("detach")]
+    [InlineData("hidden")]
+    [InlineData("collapsed")]
+    [InlineData("disabled")]
+    [InlineData("parentCollapsed")]
+    [InlineData("parentHidden")]
+    public void DragEndsWhenTheThumbStopsBeingAbleToTakeInputBeforeRelease(string change)
+    {
+        UIRoot root = new(100, 100);
+        UIElement parent = new();
+        Thumb thumb = new();
+        parent.Arrange(new ArrangeContext(new LayoutRect(0, 0, 50, 50)));
+        thumb.Arrange(new ArrangeContext(new LayoutRect(0, 0, 20, 20)));
+        parent.VisualChildren.Add(thumb);
+        root.VisualChildren.Add(parent);
+        ElementInputBridge bridge = new();
+        List<DragCompletedEventArgs> completed = [];
+        thumb.DragCompleted += (_, args) => completed.Add(args);
+
+        bridge.Dispatch(root, PointerFrame(5, 5, currentDown: true));
+        Assert.True(thumb.IsDragging);
+        switch (change)
+        {
+            case "detach": parent.VisualChildren.Remove(thumb); break;
+            case "hidden": thumb.Visibility = Visibility.Hidden; break;
+            case "collapsed": thumb.Visibility = Visibility.Collapsed; break;
+            case "disabled": thumb.IsEnabled = false; break;
+            case "parentCollapsed": parent.Visibility = Visibility.Collapsed; break;
+            case "parentHidden": parent.Visibility = Visibility.Hidden; break;
+        }
+
+        root.ProcessFrame();
+        bridge.Dispatch(root, PointerFrame(5, 5, 10, 10, previousDown: true, currentDown: true));
+
+        string state = $"row={change}: IsDragging={thumb.IsDragging}, DragCompleted count={completed.Count}, " +
+            $"canceled=[{string.Join(",", completed.Select(args => args.Canceled))}], HasCapture={bridge.PointerCaptureManager.HasCapture}";
+        if (change == "none")
+        {
+            Assert.True(thumb.IsDragging && completed.Count == 0, state);
+        }
+        else
+        {
+            Assert.True(!thumb.IsDragging && completed.Count == 1 && completed[0].Canceled, state);
+        }
+    }
+
+    // After the button was released and the thumb is visible and enabled again, a plain move over it reaches the parent.
+    [Theory]
+    [InlineData("none")]
+    [InlineData("hidden")]
+    [InlineData("disabled")]
+    public void ThumbDoesNotSwallowLaterPointerMovesAfterItBecameUsableAgain(string change)
+    {
+        UIRoot root = new(100, 100);
+        UIElement parent = new();
+        Thumb thumb = new();
+        parent.Arrange(new ArrangeContext(new LayoutRect(0, 0, 50, 50)));
+        thumb.Arrange(new ArrangeContext(new LayoutRect(0, 0, 20, 20)));
+        parent.VisualChildren.Add(thumb);
+        root.VisualChildren.Add(parent);
+        ElementInputBridge bridge = new();
+        int parentMoves = 0;
+        parent.Handlers.AddHandler(InputEvents.MouseMoveEvent, (_, _) => parentMoves++);
+
+        bridge.Dispatch(root, PointerFrame(5, 5, currentDown: true));
+        Assert.True(thumb.IsDragging);
+        switch (change)
+        {
+            case "hidden": thumb.Visibility = Visibility.Hidden; break;
+            case "disabled": thumb.IsEnabled = false; break;
+        }
+
+        root.ProcessFrame();
+        bridge.Dispatch(root, PointerFrame(5, 5, 10, 10, previousDown: true, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(10, 10, 10, 10, previousDown: true));
+        switch (change)
+        {
+            case "hidden": thumb.Visibility = Visibility.Visible; break;
+            case "disabled": thumb.IsEnabled = true; break;
+        }
+
+        root.ProcessFrame();
+        int before = parentMoves;
+        bridge.Dispatch(root, PointerFrame(10, 10, 12, 12));
+
+        Assert.True(
+            parentMoves > before && !thumb.IsDragging,
+            $"row={change}: IsDragging={thumb.IsDragging}, ancestor saw the plain move: {parentMoves > before} (moves before={before}, after={parentMoves}).");
+    }
+
     [Fact]
     public void ThumbCaptureMonopolizesPointerInputUntilLeftButtonRelease()
     {

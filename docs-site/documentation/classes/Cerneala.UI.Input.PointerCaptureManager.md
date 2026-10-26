@@ -43,7 +43,9 @@ void EndDrag(ElementInputRouteMap routeMap, PointerCaptureManager capture)
 
 `Release` clears capture and raises `LostMouseCaptureEvent` for the old captured element. Releasing when no element is captured does nothing.
 
-If the captured element is no longer present in the supplied route map, `OverrideTarget` clears capture and returns the original hit target.
+If the captured element is no longer present in the supplied route map, `OverrideTarget` clears capture, raises `LostMouseCaptureEvent` for the old captured element, and returns the original hit target. The element leaves the route map when it is detached, hidden, collapsed or disabled, itself or through an ancestor, so a dragging `Thumb` that becomes hidden ends its drag with `DragCompleted` and `Canceled = true` on the next pointer event.
+
+The old captured element always gets `LostMouseCaptureEvent`. When it is in the supplied route map, the event bubbles along its input route. When it is not, the event is raised with `UIElement.RaiseEvent`, which runs the element's own handlers when the element has no input route.
 
 ## Properties
 

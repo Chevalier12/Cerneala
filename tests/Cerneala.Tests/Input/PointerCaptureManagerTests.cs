@@ -1,5 +1,6 @@
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
+using Cerneala.UI.Layout;
 
 namespace Cerneala.Tests.Input;
 
@@ -44,6 +45,40 @@ public sealed class PointerCaptureManagerTests
 
         Assert.Same(hit, result!.Element);
         Assert.False(manager.HasCapture);
+    }
+
+    // Clearing the capture because the captured element can no longer take input notifies it like Release does (#952).
+    [Theory]
+    [InlineData("detach")]
+    [InlineData("hidden")]
+    [InlineData("disabled")]
+    public void OverrideTargetRaisesLostCaptureWhenItReleasesAnUnroutableCapture(string change)
+    {
+        UIRoot root = new();
+        UIElement captured = new();
+        UIElement hit = new();
+        root.VisualChildren.Add(captured);
+        root.VisualChildren.Add(hit);
+        int lostCount = 0;
+        captured.Handlers.AddHandler(InputEvents.LostMouseCaptureEvent, (_, _) => lostCount++);
+        PointerCaptureManager manager = new();
+        manager.Capture(captured, root.InputCache.EnsureCurrent(root));
+        switch (change)
+        {
+            case "detach": root.VisualChildren.Remove(captured); break;
+            case "hidden": captured.Visibility = Visibility.Hidden; break;
+            case "disabled": captured.IsEnabled = false; break;
+        }
+
+        root.ProcessFrame();
+        ElementInputRouteMap map = root.InputCache.EnsureCurrent(root);
+        Assert.False(map.Contains(captured));
+
+        manager.OverrideTarget(new HitTestResult(hit, 5, 6), map, 5, 6);
+        manager.OverrideTarget(new HitTestResult(hit, 5, 6), map, 5, 6);
+
+        Assert.False(manager.HasCapture);
+        Assert.Equal(1, lostCount);
     }
 
     [Fact]
