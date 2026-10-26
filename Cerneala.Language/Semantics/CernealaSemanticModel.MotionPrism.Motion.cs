@@ -350,9 +350,10 @@ internal sealed partial class CernealaSemanticModel
                 continue;
             }
 
+            // MotionClip body-shape errors are invalid directives (CERNEALAUI006), as in the generator's clip check.
             if (region.Keyword is "@handle" or "@cancel" && !isAspect)
             {
-                AddMotionDiagnostic("CERNEALAUI020", region.KeywordSpan, "MotionClip cannot contain " + region.Keyword + ".");
+                AddMotionDiagnostic("CERNEALAUI006", region.KeywordSpan, "MotionClip cannot contain " + region.Keyword + ".");
                 continue;
             }
 
@@ -360,7 +361,7 @@ internal sealed partial class CernealaSemanticModel
             {
                 if (!isAspect)
                 {
-                    AddMotionDiagnostic("CERNEALAUI020", region.KeywordSpan, "@on is available only inside Aspect.");
+                    AddMotionDiagnostic("CERNEALAUI006", region.KeywordSpan, "@on is available only inside Aspect.");
                 }
                 else
                 {

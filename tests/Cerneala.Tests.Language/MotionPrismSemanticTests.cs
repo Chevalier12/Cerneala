@@ -153,6 +153,34 @@ public sealed class MotionPrismSemanticTests
         Assert.Equal(sourceGenerator, semantic);
     }
 
+    [Theory]
+    [InlineData("@on Loaded { @animate { @to { Opacity = 1; } } }")]
+    [InlineData("@cancel Active;")]
+    [InlineData("@handle Active;")]
+    public void MotionClipBodyShapeErrorsUseInvalidDirectiveInEditorAndBuild(string body)
+    {
+        string markup = $$"""
+            <Border>
+              <Border.Resources>
+                <MotionClip Name="Invalid" TargetType="Border">{{body}}</MotionClip>
+              </Border.Resources>
+            </Border>
+            """;
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("MotionClipBodyShape.crn", markup);
+
+        string[] semantic = result.SemanticDiagnostics
+            .Where(diagnostic => diagnostic.Severity == nameof(DiagnosticSeverity.Error))
+            .Select(diagnostic => diagnostic.Id)
+            .ToArray();
+        string[] sourceGenerator = result.SourceGeneratorDiagnostics
+            .Where(diagnostic => diagnostic.Severity == nameof(DiagnosticSeverity.Error))
+            .Select(diagnostic => diagnostic.Id)
+            .ToArray();
+        Assert.True(
+            semantic.Length > 0 && semantic.All(id => id == "CERNEALAUI006") && semantic.SequenceEqual(sourceGenerator),
+            $"Body '{body}': editor [{string.Join(", ", semantic)}], build [{string.Join(", ", sourceGenerator)}] (expected only CERNEALAUI006 in both).");
+    }
+
     [Fact]
     public void PrismCatalogParametersNodesOperationsValuesAndApplicationsAreBound()
     {
