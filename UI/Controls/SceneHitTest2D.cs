@@ -200,14 +200,7 @@ internal static class SceneHitTest2D
         {
             SceneNode2D child = children[index];
             sourceIndices.Add(child, index);
-            SceneBounds2D transformed = SceneGeometry2D.TransformBounds(
-                child.GetLocalBounds(),
-                child.GetLocalTransform() * ownerToScene);
-            yAnchors.Add(
-                child,
-                transformed.Kind == SceneBoundsKind.Known
-                    ? transformed.Bounds.Bottom
-                    : 0);
+            yAnchors.Add(child, Scene2D.GetSceneYAnchor(child, ownerToScene));
         }
 
         children.Sort((left, right) =>
