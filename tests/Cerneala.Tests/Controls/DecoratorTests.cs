@@ -1,5 +1,6 @@
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Markup;
 using Cerneala.UI.Motion.Presence;
@@ -258,6 +259,69 @@ public sealed class DecoratorTests
 
         Assert.Same(child, border.Child);
         Assert.Equal(PresenceState.Present, root.Motion.Presence.GetState(child));
+    }
+
+    // Issue #982: a Child change made by a handler while a replacement runs wins; the decorator keeps exactly that child.
+    [Theory]
+    [InlineData(ChildChangeDuringReplacement.None)]
+    [InlineData(ChildChangeDuringReplacement.OldChildUnloaded)]
+    [InlineData(ChildChangeDuringReplacement.NewChildLoaded)]
+    public void ReplacingChildKeepsExactlyOneVisualChildWhenAHandlerSetsChildDuringTheReplacement(ChildChangeDuringReplacement change)
+    {
+        UIRoot root = new(200, 200);
+        Border border = new();
+        root.VisualChildren.Add(border);
+        UIElement oldChild = new();
+        UIElement other = new();
+        UIElement value = new();
+        border.Child = oldChild;
+        root.ProcessFrame();
+        bool done = false;
+        void SetOther(object? sender, RoutedEventArgs args)
+        {
+            if (!done)
+            {
+                done = true;
+                border.Child = other;
+            }
+        }
+
+        if (change == ChildChangeDuringReplacement.OldChildUnloaded)
+        {
+            oldChild.Unloaded += SetOther;
+        }
+        else if (change == ChildChangeDuringReplacement.NewChildLoaded)
+        {
+            value.Loaded += SetOther;
+        }
+
+        Exception? failure = Record.Exception(() => border.Child = value);
+        root.ProcessFrame();
+
+        string Name(UIElement? element) =>
+            element is null ? "null" : ReferenceEquals(element, oldChild) ? "old" : ReferenceEquals(element, other) ? "other" : "value";
+        UIElement expected = change == ChildChangeDuringReplacement.None ? value : other;
+        UIElement leftOut = ReferenceEquals(expected, value) ? other : value;
+        bool ok = failure is null &&
+            done == (change != ChildChangeDuringReplacement.None) &&
+            ReferenceEquals(border.Child, expected) &&
+            border.VisualChildren.Count == 1 && ReferenceEquals(border.VisualChildren[0], expected) &&
+            border.LogicalChildren.Count == 1 && ReferenceEquals(border.LogicalChildren[0], expected) &&
+            leftOut.VisualParent is null && leftOut.LogicalParent is null &&
+            oldChild.VisualParent is null && oldChild.LogicalParent is null;
+        Assert.True(
+            ok,
+            $"{change}: threw {failure?.GetType().Name ?? "nothing"}; handler ran={done}; Child={Name(border.Child)}; " +
+            $"VisualChildren=[{string.Join(",", border.VisualChildren.Select(Name))}]; " +
+            $"LogicalChildren=[{string.Join(",", border.LogicalChildren.OfType<UIElement>().Select(Name))}]; " +
+            $"{Name(leftOut)}.VisualParent={(leftOut.VisualParent is null ? "null" : "set")}.");
+    }
+
+    public enum ChildChangeDuringReplacement
+    {
+        None,
+        OldChildUnloaded,
+        NewChildLoaded
     }
 
     private static PresenceOptions CreatePresence()
