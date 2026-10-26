@@ -513,8 +513,9 @@ internal static class DrawTextLayoutEngine
                 ? contentBaseline
                 : contentBaseline * lineHeight / contentHeight;
             // As in WPF, the line that ends a paragraph (before a hard line break or at the end of the text) is not justified.
+            // The candidates decide it, so a line after which MaxLines or MaxHeight hides more of the paragraph is justified.
             bool justify = options.Alignment == DrawTextAlignment.Justify &&
-                !segment.IsTrimmed && !EndsParagraph(text, accepted, index);
+                !segment.IsTrimmed && !EndsParagraph(text, candidates, index);
             Fragment[] fragments = CreateFragments(text, ranges, segment, options.Scale, baseDirection, justify);
             float contentWidth = fragments.Sum(static fragment => fragment.Width);
             float layoutWidth = float.IsFinite(options.MaxWidth)
@@ -572,7 +573,7 @@ internal static class DrawTextLayoutEngine
         return new DrawTextLayout(lines.ToArray(), new DrawRect(0, 0, width, height), options);
     }
 
-    private static bool EndsParagraph(string text, List<UnicodeLineSegment> lines, int index)
+    private static bool EndsParagraph(string text, IReadOnlyList<UnicodeLineSegment> lines, int index)
     {
         if (index == lines.Count - 1)
         {
