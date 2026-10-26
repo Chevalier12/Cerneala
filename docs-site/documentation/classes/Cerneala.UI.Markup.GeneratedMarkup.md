@@ -182,8 +182,9 @@ Generated Aspect conditions use rule condition-state callbacks instead of `Marku
 
 `AttachResource<T>` follows element and ancestor resources before the attached
 root provider. A local resource therefore shadows an application resource with
-the same key. The controller subscribes only while its owner is attached,
-re-resolves the nearest value after matching application-provider changes, and
+the same key. The controller subscribes only while its owner is attached
+(at once when the owner is already attached at the call, otherwise when it
+attaches), re-resolves the nearest value after matching application-provider changes, and
 marshals a cross-thread provider notification through the root Relay.
 
 Disposing the lifetime returned by `AttachResource<T>` unsubscribes the

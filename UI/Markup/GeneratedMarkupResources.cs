@@ -24,8 +24,17 @@ public static partial class GeneratedMarkup
             targetProperty,
             key,
             valueSource);
-        controller.ApplyAvailableValue();
         owner.AddLifecycleBehavior(controller);
+        // The owner's attach path has already run for an attached owner, so the controller subscribes now.
+        if (owner.IsAttached)
+        {
+            controller.Attach();
+        }
+        else
+        {
+            controller.ApplyAvailableValue();
+        }
+
         return controller;
     }
 

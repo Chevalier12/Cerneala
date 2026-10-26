@@ -164,6 +164,51 @@ public sealed class ApplicationResourceIntegrationTests
         Assert.Equal(0, root.Relay.PendingCount);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void AttachResourceFollowsProviderChangesWhetherTheOwnerWasAttachedBeforeOrAfter(bool ownerAttachedFirst)
+    {
+        ResourceStore store = new();
+        ResourceId<Brush?> id = new("LateAccent");
+        SolidColorBrush initial = new(new Color(1, 2, 3));
+        SolidColorBrush updated = new(new Color(4, 5, 6));
+        SolidColorBrush reattached = new(new Color(7, 8, 9));
+        store.SetResource(id, initial);
+        UIRoot root = new(100, 100);
+        root.SetResourceProvider(store);
+        Border border = new();
+        if (ownerAttachedFirst)
+        {
+            root.VisualChildren.Add(border);
+        }
+
+        using IDisposable attachment = GeneratedMarkup.AttachResource(
+            border, border, Control.BackgroundProperty, id.Key, UiPropertyValueSource.MarkupBase);
+        if (!ownerAttachedFirst)
+        {
+            root.VisualChildren.Add(border);
+        }
+
+        root.ProcessFrame();
+        Assert.Same(initial, border.Background);
+
+        store.SetResource(id, updated);
+        root.ProcessFrame();
+        Assert.Same(updated, border.Background);
+
+        // Detach unsubscribes; reattach subscribes once again and re-reads the current value.
+        root.VisualChildren.Remove(border);
+        store.SetResource(id, reattached);
+        Assert.Same(updated, border.Background);
+        root.VisualChildren.Add(border);
+        root.ProcessFrame();
+        Assert.Same(reattached, border.Background);
+        store.SetResource(id, initial);
+        root.ProcessFrame();
+        Assert.Same(initial, border.Background);
+    }
+
     [Fact]
     public void ApplicationAspectAppliesToCodeCreatedDerivedControlAtCorrectPrecedence()
     {
