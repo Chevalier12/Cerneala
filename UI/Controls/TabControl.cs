@@ -41,6 +41,10 @@ public class TabControl : Selector
     // The tab whose Content the content area was last prepared to show.
     private TabItem? presentedTab;
 
+    // The tab that SelectedContent and SelectedContentTemplate were last read from. It is the Owner of that tab, so a
+    // change of its Content or ContentTemplate reaches this control whether or not its container is realized.
+    private TabItem? contentSourceTab;
+
     // The height of the header row as last arranged without a template: the content area and its chrome start there.
     private float contentAreaTop;
 
@@ -272,6 +276,20 @@ public class TabControl : Selector
             tab?.ReleaseContentForContentArea();
         }
 
+        if (!ReferenceEquals(contentSourceTab, tab))
+        {
+            if (contentSourceTab is not null && ReferenceEquals(contentSourceTab.Owner, this))
+            {
+                contentSourceTab.Owner = null;
+            }
+
+            contentSourceTab = tab;
+            if (tab is not null)
+            {
+                tab.Owner = this;
+            }
+        }
+
         SetValue(SelectedContentPropertyKey, tab?.Content);
         SetValue(SelectedContentTemplatePropertyKey, tab is null ? null : tab.ContentTemplate ?? ContentTemplate);
         if (templated)
@@ -358,15 +376,6 @@ public class TabControl : Selector
         Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange | InvalidationFlags.Render, reason);
     }
 
-    protected internal override void PrepareItemContainer(UIElement container, int index, object? item)
-    {
-        base.PrepareItemContainer(container, index, item);
-        if (container is TabItem tab)
-        {
-            tab.Owner = this;
-        }
-    }
-
     // As in WPF, ItemTemplate is the template of the header of a generated tab, and the item is its Content. Like
     // WPF's PrepareHeaderedContentControl, a null ItemTemplate or ItemTemplateKey is not written, so a HeaderTemplate or
     // HeaderTemplateKey from ItemContainerAspect applies. Changing either clears every container first, and clearing
@@ -398,17 +407,7 @@ public class TabControl : Selector
     {
         bool generated = !ReferenceEquals(ItemContainerGenerator.GetItem(container), container);
         base.ClearItemContainer(container);
-        if (container is not TabItem tab)
-        {
-            return;
-        }
-
-        if (ReferenceEquals(tab.Owner, this))
-        {
-            tab.Owner = null;
-        }
-
-        if (generated)
+        if (generated && container is TabItem tab)
         {
             tab.Header = null;
             tab.ClearValue(TabItem.HeaderTemplateProperty);
