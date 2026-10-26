@@ -55,6 +55,33 @@ During `UIRoot.ProcessFrame`, the command-state phase calls `RefreshCommandState
 
 `ButtonBase` and `MenuItem` implement this interface. They queue a refresh when they are attached, when `Command` or `CommandParameter` changes, and when an `IObservableCommand` raises `CanExecuteChanged`. Their refresh sets `IsEnabled` to the command's `CanExecute(CommandParameter)` and returns `true` only when `IsEnabled` changed. With a `null` command they return `false` and leave `IsEnabled` alone.
 
+For a `RoutedCommand`, their refresh also returns `false` and leaves `IsEnabled` alone when the element is not in `routeMap`, because the command cannot reach its `CommandBinding` from there. That happens while the element takes no part in input: it is collapsed, `Hidden`, has `IsVisible` set to `false`, is under such an ancestor, or is skipped by virtualization. The root then refreshes the element again after the next change of the element tree or of the input route, such as a `Visibility` or `IsVisible` change; an element still outside the route waits again. So a button that was collapsed during its refresh gets its command's `CanExecute` in the first frame processed after it becomes visible:
+
+```csharp
+using Cerneala.UI.Controls.Primitives;
+using Cerneala.UI.Elements;
+using Cerneala.UI.Input;
+using Cerneala.UI.Layout;
+
+UIRoot root = new(200, 200);
+ButtonBase save = new() { Visibility = Visibility.Collapsed };
+root.VisualChildren.Add(save);
+RoutedCommand command = new("Save", typeof(ButtonBase));
+root.CommandBindings.Add(new CommandBinding(command, null, (_, args) =>
+{
+    args.CanExecute = false;
+    args.Handled = true;
+}));
+
+save.Command = command;
+root.ProcessFrame();
+Console.WriteLine(save.IsEnabled); // True, the collapsed button kept its value
+
+save.Visibility = Visibility.Visible;
+root.ProcessFrame();
+Console.WriteLine(save.IsEnabled); // False, the binding's CanExecute
+```
+
 ## Methods
 
 | Name | Return Type | Description |

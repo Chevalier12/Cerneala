@@ -30,6 +30,7 @@ public sealed partial class UIRoot : UIElement, IElementHost, IInvalidationSink
     private SemanticsTree? cachedServoSemanticsTree;
     private int cachedServoSemanticsTreeVersion = -1;
     private bool servoSemanticsDirty = true;
+    private readonly HashSet<UIElement> commandStateRefreshesAwaitingInputRoute = new(ReferenceEqualityComparer.Instance);
 
     public UIRoot(
         float viewportWidth = 0,
@@ -340,6 +341,31 @@ public sealed partial class UIRoot : UIElement, IElementHost, IInvalidationSink
         semanticsDirty = true;
         servoSemanticsDirty = true;
         RetainedRenderCache.InvalidateRoot();
+        QueueCommandStateRefreshesAwaitingInputRoute();
+    }
+
+    // A command source whose routed command could not be evaluated because the source was outside the command-state
+    // input route (CommandSourceState.Refresh) is refreshed again after the next change that can rebuild that route:
+    // the tree version (structure, overlay projection) or an input-route invalidation (Visibility, IsVisible,
+    // virtualization, presence) (#901). A source that is still outside the route defers again.
+    internal void DeferCommandStateRefreshUntilInputRouteChanges(UIElement source)
+    {
+        commandStateRefreshesAwaitingInputRoute.Add(source);
+    }
+
+    private void QueueCommandStateRefreshesAwaitingInputRoute()
+    {
+        if (commandStateRefreshesAwaitingInputRoute.Count == 0)
+        {
+            return;
+        }
+
+        UIElement[] sources = [.. commandStateRefreshesAwaitingInputRoute];
+        commandStateRefreshesAwaitingInputRoute.Clear();
+        foreach (UIElement source in sources)
+        {
+            source.QueueCommandStateRefresh();
+        }
     }
 
     internal void RemovePendingWork(UIElement element)
@@ -348,6 +374,7 @@ public sealed partial class UIRoot : UIElement, IElementHost, IInvalidationSink
         LayoutQueue.RemoveArrange(element);
         InheritedPropertyQueue.Remove(element);
         CommandStateQueue.Remove(element);
+        commandStateRefreshesAwaitingInputRoute.Remove(element);
         AspectQueue.Remove(element);
         RenderQueue.Remove(element);
         HitTestQueue.Remove(element);
@@ -374,6 +401,7 @@ public sealed partial class UIRoot : UIElement, IElementHost, IInvalidationSink
             RequiresInputRouteRebuild(request))
         {
             InputCache.Invalidate(request.Reason);
+            QueueCommandStateRefreshesAwaitingInputRoute();
         }
 
         DirtyPropagation.Default.Propagate(request, this, LayoutQueue, InheritedPropertyQueue, AspectQueue, RenderQueue, HitTestQueue, Trace);
@@ -605,13 +633,15 @@ public sealed partial class UIRoot : UIElement, IElementHost, IInvalidationSink
         return new ElementInputRouteBuilder().BuildForCommandState(this);
     }
 
-    private static void ProcessCommandState(UIElement element, CommandRouter router, ElementInputRouteMap routeMap)
+    private void ProcessCommandState(UIElement element, CommandRouter router, ElementInputRouteMap routeMap)
     {
         if (element is not ICommandStateSource source)
         {
             return;
         }
 
+        // This refresh replaces an earlier deferral; it defers again if the source is still outside the route.
+        commandStateRefreshesAwaitingInputRoute.Remove(element);
         _ = source.RefreshCommandState(router, routeMap);
     }
 
