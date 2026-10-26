@@ -135,6 +135,33 @@ public sealed class MotionPrismSemanticTests
     }
 
     [Theory]
+    [InlineData("@on Loaded { @run $SlideIn(Label = \"save as draft\"); }", null)]
+    [InlineData("@handle Active; @on Loaded { @run $SlideIn(Label = \"save as draft\") as Active; }", "Active")]
+    public void MotionRunStringArgumentContainingTheWordAsIsNotAHandleSeparator(string aspectBody, string? handle)
+    {
+        string markup = $$"""
+            <Border Aspect="$Entrance">
+              <Border.Resources>
+                <MotionClip Name="SlideIn" TargetType="Border">
+                  @parameter Label: string = "default";
+                  @animate { debugName = Label; @to { TranslateY = 0; } }
+                </MotionClip>
+                <Aspect Name="Entrance" TargetType="Border">
+                  {{aspectBody}}
+                </Aspect>
+              </Border.Resources>
+            </Border>
+            """;
+
+        CernealaSemanticModel model = Model("MotionRunStringArgument.crn", markup);
+
+        Assert.Empty(model.Diagnostics.Where(IsMotionOrPrism));
+        Assert.Equal(
+            handle is null ? Array.Empty<string>() : new[] { handle, handle },
+            model.Symbols.Where(symbol => symbol.Kind == CernealaSemanticSymbolKind.MotionHandle).Select(symbol => symbol.Name));
+    }
+
+    [Theory]
     [InlineData("@on Loaded { @animate { @from { Opacity = 0; } } }", "CERNEALAUI020")]
     [InlineData("@on Loaded { @parallel { } }", "CERNEALAUI024")]
     [InlineData("@presence { enter = Tween(100ms); exit = Tween(100ms); } @presence { enter = Tween(100ms); exit = Tween(100ms); }", "CERNEALAUI025")]

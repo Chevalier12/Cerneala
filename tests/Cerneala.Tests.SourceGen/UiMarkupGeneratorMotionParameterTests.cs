@@ -50,6 +50,95 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
+    public void StringRunArgumentContainingTheWordAsIsNotTakenForAHandleSeparator()
+    {
+        const string markup = """
+            <Border Aspect="$Entrance">
+              <Border.Resources>
+                <MotionClip Name="SlideIn" TargetType="Border">
+                  @parameter Label: string = "default";
+                  @animate
+                  {
+                    debugName = Label;
+                    @from { TranslateY = 10; }
+                    @to { TranslateY = 0; }
+                  }
+                </MotionClip>
+                <Aspect Name="Entrance" TargetType="Border">
+                  @on Loaded { @run $SlideIn(Label = "save as draft"); }
+                </Aspect>
+              </Border.Resources>
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGenerator("MotionStringRunArgument.crn", markup, out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        Assert.Contains("DebugName = \"save as draft\"", SingleGeneratedSource(result), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void StringRunArgumentWithoutTheWordAsGeneratesTheSameShape()
+    {
+        // Control for the test above: the same markup with Label = "save draft".
+        const string markup = """
+            <Border Aspect="$Entrance">
+              <Border.Resources>
+                <MotionClip Name="SlideIn" TargetType="Border">
+                  @parameter Label: string = "default";
+                  @animate
+                  {
+                    debugName = Label;
+                    @from { TranslateY = 10; }
+                    @to { TranslateY = 0; }
+                  }
+                </MotionClip>
+                <Aspect Name="Entrance" TargetType="Border">
+                  @on Loaded { @run $SlideIn(Label = "save draft"); }
+                </Aspect>
+              </Border.Resources>
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGenerator("MotionStringRunArgumentControl.crn", markup, out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        Assert.Contains("DebugName = \"save draft\"", SingleGeneratedSource(result), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void StringRunArgumentContainingTheWordAsKeepsTheHandleAfterTheArguments()
+    {
+        const string markup = """
+            <Border Aspect="$Entrance">
+              <Border.Resources>
+                <MotionClip Name="SlideIn" TargetType="Border">
+                  @parameter Label: string = "default";
+                  @animate
+                  {
+                    debugName = Label;
+                    @from { TranslateY = 10; }
+                    @to { TranslateY = 0; }
+                  }
+                </MotionClip>
+                <Aspect Name="Entrance" TargetType="Border">
+                  @handle Active;
+                  @on Loaded { @run $SlideIn(Label = "save as draft") as Active; }
+                  @on Unloaded { @cancel Active; }
+                </Aspect>
+              </Border.Resources>
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGenerator("MotionStringRunArgumentHandle.crn", markup, out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        string generated = SingleGeneratedSource(result);
+        Assert.Contains("DebugName = \"save as draft\"", generated, StringComparison.Ordinal);
+        Assert.Contains("\"Active\", motionExecutionFactory", generated, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ParameterizedNestedClipEmitsANewFactoryTreeForEveryRun()
     {
         const string markup = """
