@@ -2,7 +2,7 @@ namespace Cerneala.Drawing;
 
 internal static class DrawArgument
 {
-    private const float MaxPixelSize = 2_000_000_000f;
+    internal const float MaxPixelSize = 2_000_000_000f;
     private const float MaxTextSize = 16_384f;
 
     public static void ThrowIfNotFinite(float value, string parameterName)
