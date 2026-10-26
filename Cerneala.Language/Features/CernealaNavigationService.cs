@@ -320,7 +320,8 @@ internal sealed class CernealaNavigationService
     {
         if (identity.Kind == IdentityKind.Local)
         {
-            return TryGetLocalDefinition(model, symbol, out CernealaLocation? definition) &&
+            return !IsAspectSite(symbol) &&
+                TryGetLocalDefinition(model, symbol, out CernealaLocation? definition) &&
                 SameLocation(definition!, identity.Definition!);
         }
 
@@ -362,6 +363,12 @@ internal sealed class CernealaNavigationService
         definition = null;
         return false;
     }
+
+    // An Aspect application site (the Aspect attribute, or an element that receives a default Aspect) and an
+    // Aspect body directive (@default, @template) navigate to the Aspect but do not spell its name.
+    private static bool IsAspectSite(CernealaSemanticSymbol symbol) =>
+        symbol.Kind == CernealaSemanticSymbolKind.AspectApplication ||
+        symbol.Kind == CernealaSemanticSymbolKind.Aspect && symbol.Name.StartsWith("@", StringComparison.Ordinal);
 
     private static bool IsLocalKind(CernealaSemanticSymbolKind kind) => kind is
         CernealaSemanticSymbolKind.Name or CernealaSemanticSymbolKind.TemplatePart or
