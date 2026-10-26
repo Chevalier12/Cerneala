@@ -210,6 +210,40 @@ public sealed class HitTestServiceTests
         Assert.Same(child, visualHit!.Element);
     }
 
+    [Theory]
+    [InlineData(0f)]
+    [InlineData(1e-20f)]
+    public void TinyNonZeroDeterminantTransformDoesNotThrowDuringHitTesting(float scale)
+    {
+        UIRoot root = new(300, 300);
+        UIElement element = Arranged(0, 0, 100, 100);
+        element.RenderTransformOrigin = new LayoutPoint(0, 0);
+        element.ScaleX = scale;
+        element.ScaleY = scale;
+        root.VisualChildren.Add(element);
+
+        HitTestResult? result = null;
+        Exception? failure = Record.Exception(() => result = new HitTestService().HitTest(root, 5, 5));
+
+        Assert.True(failure is null, "HitTest threw " + failure?.GetType().Name + ": " + failure?.Message);
+        Assert.Same(root, result!.Element);
+    }
+
+    [Fact]
+    public void OverflowingDeterminantTransformDoesNotThrowDuringHitTesting()
+    {
+        UIRoot root = new(300, 300);
+        UIElement element = Arranged(10, 10, 100, 100);
+        element.RenderTransformOrigin = new LayoutPoint(0, 0);
+        element.ScaleX = 1e20f;
+        element.ScaleY = 1e20f;
+        root.VisualChildren.Add(element);
+
+        Exception? failure = Record.Exception(() => new HitTestService().HitTest(root, 50, 50));
+
+        Assert.True(failure is null, "HitTest threw " + failure?.GetType().Name + ": " + failure?.Message);
+    }
+
     internal static UIElement Arranged(float x, float y, float width, float height)
     {
         UIElement element = new();

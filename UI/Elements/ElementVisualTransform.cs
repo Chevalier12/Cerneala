@@ -42,23 +42,31 @@ internal static class ElementVisualTransform
             Matrix3x2.CreateTranslation(pivotX, pivotY));
     }
 
+    // Returns false when the inverse cannot be represented with finite float values: a zero determinant, a
+    // determinant that overflows, or a denormal determinant whose reciprocal overflows.
     internal static bool TryInvert(Matrix3x2 matrix, out Matrix3x2 inverse)
     {
+        inverse = Matrix3x2.Identity;
         float determinant = (matrix.M11 * matrix.M22) - (matrix.M12 * matrix.M21);
-        if (MathF.Abs(determinant) <= float.Epsilon)
+        if (!float.IsFinite(determinant) || MathF.Abs(determinant) <= float.Epsilon)
         {
-            inverse = Matrix3x2.Identity;
             return false;
         }
 
         float reciprocal = 1 / determinant;
-        inverse = new Matrix3x2(
-            matrix.M22 * reciprocal,
-            -matrix.M12 * reciprocal,
-            -matrix.M21 * reciprocal,
-            matrix.M11 * reciprocal,
-            ((matrix.M32 * matrix.M21) - (matrix.M31 * matrix.M22)) * reciprocal,
-            ((matrix.M31 * matrix.M12) - (matrix.M32 * matrix.M11)) * reciprocal);
+        float m11 = matrix.M22 * reciprocal;
+        float m12 = -matrix.M12 * reciprocal;
+        float m21 = -matrix.M21 * reciprocal;
+        float m22 = matrix.M11 * reciprocal;
+        float m31 = ((matrix.M32 * matrix.M21) - (matrix.M31 * matrix.M22)) * reciprocal;
+        float m32 = ((matrix.M31 * matrix.M12) - (matrix.M32 * matrix.M11)) * reciprocal;
+        if (!float.IsFinite(m11) || !float.IsFinite(m12) || !float.IsFinite(m21) ||
+            !float.IsFinite(m22) || !float.IsFinite(m31) || !float.IsFinite(m32))
+        {
+            return false;
+        }
+
+        inverse = new Matrix3x2(m11, m12, m21, m22, m31, m32);
         return true;
     }
 }
