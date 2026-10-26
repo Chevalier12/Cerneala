@@ -20,7 +20,10 @@ The language includes inline and named `Aspect` behavior,
 property starts inside `@animate` with optional `@from` and required `@to`. Values support typed
 literals, enum members, `current`, the existing reactive `$` sources, and
 conditional expressions. A bare property name such as `TranslateY` is accepted
-in a condition but not as a value. The supported start
+in a condition but not as a value. `current` must be the whole value: a branch of a
+conditional such as `Opacity = IsMouseOver ? 1 : current;` is a build error
+(`CERNEALAUI020`). To start a Motion only in one case, put the condition on an
+`@if` around the `@animate` instead, as in the `@when IsMouseOver` example below. The supported start
 options are `retarget`, `holdOnComplete`, and `debugName`.
 
 Motion assignments accept these target forms:
