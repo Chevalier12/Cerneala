@@ -2,6 +2,7 @@ using System.Collections;
 using System.ComponentModel;
 using System.Globalization;
 using System.Reflection;
+using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 using Cerneala.Drawing;
@@ -390,7 +391,7 @@ internal static class PreviewMarkupHotReload
             ConversionResult conversion = TryConvert(target.ResourceScope, change.Value, property.ValueType);
             if (!conversion.Success)
             {
-                return MutationPreparation.Deferred();
+                return new MutationPreparation(conversion.Result, null);
             }
 
             object? oldLocalValue = uiObject.GetSourceValue(property, UiPropertyValueSource.Local);
@@ -421,7 +422,7 @@ internal static class PreviewMarkupHotReload
         ConversionResult clrConversion = TryConvert(target.ResourceScope, change.Value, clrProperty.PropertyType);
         if (!clrConversion.Success)
         {
-            return MutationPreparation.Deferred();
+            return new MutationPreparation(clrConversion.Result, null);
         }
 
         object? oldValue = clrProperty.GetValue(target.Value);
@@ -482,7 +483,12 @@ internal static class PreviewMarkupHotReload
             return ConversionResult.Failed();
         }
 
-        if (targetType == typeof(string) || targetType == typeof(object))
+        if (targetType == typeof(string))
+        {
+            return ConvertMarkupString(rawValue);
+        }
+
+        if (targetType == typeof(object))
         {
             return ConversionResult.Converted(rawValue);
         }
@@ -566,6 +572,34 @@ internal static class PreviewMarkupHotReload
         }
 
         return ConversionResult.Failed();
+    }
+
+    // A string target follows the build's markup rules: "\$" is consumed to a literal '$', and an
+    // unescaped '$' that starts a path makes the value an interpolation, which binds instead of
+    // assigning text. Only a literal is applied here; a value that may hold a path is compiled.
+    private static ConversionResult ConvertMarkupString(string rawValue)
+    {
+        StringBuilder literal = new(rawValue.Length);
+        for (int index = 0; index < rawValue.Length; index++)
+        {
+            char character = rawValue[index];
+            bool hasNext = index + 1 < rawValue.Length;
+            if (character == '\\' && hasNext && rawValue[index + 1] == '$')
+            {
+                literal.Append('$');
+                index++;
+                continue;
+            }
+
+            if (character == '$' && hasNext && (char.IsLetter(rawValue[index + 1]) || rawValue[index + 1] == '_'))
+            {
+                return ConversionResult.RequiresCompilation();
+            }
+
+            literal.Append(character);
+        }
+
+        return ConversionResult.Converted(literal.ToString());
     }
 
     private static bool TryParseFloat(string value, out float parsed)
@@ -677,17 +711,18 @@ internal static class PreviewMarkupHotReload
         public static MutationPreparation Applied(PropertyMutation mutation) =>
             new(PreviewMarkupUpdateResult.Applied, mutation);
 
-        public static MutationPreparation Deferred() =>
-            new(PreviewMarkupUpdateResult.DeferredInvalidEdit, null);
-
         public static MutationPreparation RequiresCompilation() =>
             new(PreviewMarkupUpdateResult.RequiresCompilation, null);
     }
 
-    private readonly record struct ConversionResult(bool Success, object? Value)
+    private readonly record struct ConversionResult(PreviewMarkupUpdateResult Result, object? Value)
     {
-        public static ConversionResult Converted(object? value) => new(true, value);
+        public bool Success => Result == PreviewMarkupUpdateResult.Applied;
 
-        public static ConversionResult Failed() => new(false, null);
+        public static ConversionResult Converted(object? value) => new(PreviewMarkupUpdateResult.Applied, value);
+
+        public static ConversionResult Failed() => new(PreviewMarkupUpdateResult.DeferredInvalidEdit, null);
+
+        public static ConversionResult RequiresCompilation() => new(PreviewMarkupUpdateResult.RequiresCompilation, null);
     }
 }
