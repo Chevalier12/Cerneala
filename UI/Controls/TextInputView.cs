@@ -368,7 +368,9 @@ internal sealed class TextInputView : UIElement
         }
 
         hasArranged = true;
-        arrangedWrapWidth = GetWrapWidth(context.FinalRect.Width);
+        // The text wraps at the viewport width, as in the measure: a line that WrapWithOverflow keeps wider makes the
+        // presenter arrange this view wider than the viewport, and that width must not join the other lines again.
+        arrangedWrapWidth = GetWrapWidth(Presenter?.ViewportWidth ?? context.FinalRect.Width);
         return context.FinalRect;
     }
 

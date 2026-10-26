@@ -162,8 +162,11 @@ public class ScrollContentPresenter : ContentControl, IScrollInfo
     {
         UIElement? content = ContentElement;
         LayoutSize available = context.AvailableSize;
+        // As WPF's ScrollContentPresenter, which measures an IScrollInfo content such as TextBoxView with its own
+        // constraint, a TextBox's text view gets the viewport width also when it scrolls horizontally: it wraps at that
+        // width and reports its widest line, which is wider for a word that WrapWithOverflow keeps whole (#915).
         LayoutSize measureSize = new(
-            CanHorizontallyScroll ? float.PositiveInfinity : available.Width,
+            CanHorizontallyScroll && content is not TextInputView ? float.PositiveInfinity : available.Width,
             CanVerticallyScroll ? float.PositiveInfinity : available.Height);
         // An unbounded height, such as for a ListBox without a fixed height inside an outer ScrollViewer, shows every
         // item, so an items presenter content gets no viewport from this presenter and the outer viewer's applies.

@@ -43,6 +43,38 @@ public sealed class TextBoxWrapWithOverflowTests
         Assert.Equal(0, presenter.HorizontalOffset);
     }
 
+    // Issue #915: WrapWithOverflow breaks short words at the viewport width, as Wrap does.
+    [Theory]
+    [InlineData(TextWrapping.Wrap)]
+    [InlineData(TextWrapping.WrapWithOverflow)]
+    public void ShortWordsWrapIntoSeveralLines(TextWrapping wrapping)
+    {
+        TextBox textBox = new() { TextWrapping = wrapping, Width = 100, VerticalAlignment = VerticalAlignment.Top };
+        UIRoot root = Host(textBox, out ElementInputBridge bridge);
+
+        bridge.Dispatch(root, TextFrame("one two three four five six seven"));
+        root.ProcessFrame();
+
+        Assert.True(textBox.LineCount > 1, $"{wrapping}: LineCount {textBox.LineCount}.");
+    }
+
+    // Issue #915: the short words around a word wider than the viewport still wrap at the viewport width, and only the
+    // long word's line makes the text wider than the viewport.
+    [Fact]
+    public void ShortWordsAroundALongWordWrapAtTheViewportWidth()
+    {
+        TextBox textBox = new() { TextWrapping = TextWrapping.WrapWithOverflow, Width = 100, VerticalAlignment = VerticalAlignment.Top };
+        UIRoot root = Host(textBox, out ElementInputBridge bridge);
+
+        bridge.Dispatch(root, TextFrame($"one two {LongWord} three four five six"));
+        root.ProcessFrame();
+
+        ScrollContentPresenter presenter = ContentHost(textBox).Presenter;
+        Assert.True(textBox.LineCount > 3, $"LineCount {textBox.LineCount}.");
+        Assert.Equal(LongWord, textBox.GetLineText(1).TrimEnd());
+        Assert.True(presenter.ExtentWidth > presenter.ViewportWidth, $"extent {presenter.ExtentWidth} viewport {presenter.ViewportWidth}");
+    }
+
     private static ScrollViewer ContentHost(Control control)
     {
         return Assert.IsType<ScrollViewer>(control.ComponentTemplateInstance!.Parts["PART_ContentHost"]);
