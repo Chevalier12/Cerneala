@@ -496,6 +496,57 @@ public sealed class SelectorTests
         Assert.Equal("b", listBox.SelectedItem);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void WritingTheCurrentSelectedIndexCollapsesAMultiSelectionThroughSetterAndSetValue(bool useSetValue)
+    {
+        ListBox listBox = new() { SelectionMode = SelectionMode.Multiple };
+        listBox.SetItems(new[] { "a", "b", "c" });
+        listBox.SelectionModel.Select(2);
+        listBox.SelectionModel.Add(0);
+        Assert.Equal([2, 0], listBox.SelectionModel.SelectedIndices);
+        Assert.Equal(2, listBox.SelectedIndex);
+        int raised = 0;
+        SelectionChangedEventArgs? lastArgs = null;
+        listBox.SelectionChanged += (_, args) =>
+        {
+            raised++;
+            lastArgs = args;
+        };
+
+        if (useSetValue)
+        {
+            listBox.SetValue(Selector.SelectedIndexProperty, 2);
+        }
+        else
+        {
+            listBox.SelectedIndex = 2;
+        }
+
+        Assert.Equal([2], listBox.SelectionModel.SelectedIndices);
+        Assert.Equal(1, raised);
+        Assert.Equal(["a"], lastArgs!.RemovedItems);
+        Assert.Empty(lastArgs.AddedItems);
+    }
+
+    [Fact]
+    public void WritingTheCurrentSelectedIndexBelowTheEffectiveSourceKeepsAMultiSelection()
+    {
+        ListBox listBox = new() { SelectionMode = SelectionMode.Multiple };
+        listBox.SetItems(new[] { "a", "b", "c" });
+        listBox.SelectionModel.Select(2);
+        listBox.SelectionModel.Add(0);
+        Assert.Equal(UiPropertyValueSource.Local, listBox.GetValueSource(Selector.SelectedIndexProperty));
+        int raised = 0;
+        listBox.SelectionChanged += (_, _) => raised++;
+
+        listBox.SetValue(Selector.SelectedIndexProperty, 2, UiPropertyValueSource.AspectBase);
+
+        Assert.Equal([2, 0], listBox.SelectionModel.SelectedIndices);
+        Assert.Equal(0, raised);
+    }
+
     [Fact]
     public void RealizedContainerOfSelectedItemStaysSelectedAfterInsertBeforeIt()
     {

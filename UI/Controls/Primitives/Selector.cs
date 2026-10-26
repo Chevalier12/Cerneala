@@ -32,6 +32,10 @@ public class Selector : ItemsControl
     // it notifies.
     private UiPropertyChange? pendingSelectedIndexChange;
 
+    // True while a selection change writes its new SelectedIndex, until that write is notified. The write follows the
+    // selection, so when it leaves SelectedIndex unchanged, for example after SelectionModel.Add, it selects nothing.
+    private bool isWritingSelectedIndexForSelection;
+
     public Selector()
     {
         selectionModel.SelectionChanged += OnSelectionChanged;
@@ -124,6 +128,11 @@ public class Selector : ItemsControl
     // then re-prepares its containers, raises SelectionChanged, and only then rethrows a failed re-preparation.
     internal override void NotifyPropertyChange(in UiPropertyChange change)
     {
+        if (ReferenceEquals(change.Args.Property, SelectedIndexProperty))
+        {
+            isWritingSelectedIndexForSelection = false;
+        }
+
         if (!ReferenceEquals(change.Args.Property, SelectedIndexProperty) || selectionModel.SelectedIndex == SelectedIndex)
         {
             base.NotifyPropertyChange(change);
@@ -131,6 +140,24 @@ public class Selector : ItemsControl
         }
 
         pendingSelectedIndexChange = change;
+        selectionModel.Select(SelectedIndex);
+    }
+
+    // SetValue, a binding, or an aspect wrote the current SelectedIndex. As the SelectedIndex setter does, that index
+    // becomes the only selected index, so a multi-selection collapses to it and raises SelectionChanged.
+    internal override void NotifyEffectiveValueRewritten(UiProperty property)
+    {
+        if (!ReferenceEquals(property, SelectedIndexProperty))
+        {
+            return;
+        }
+
+        if (isWritingSelectedIndexForSelection)
+        {
+            isWritingSelectedIndexForSelection = false;
+            return;
+        }
+
         selectionModel.Select(SelectedIndex);
     }
 
@@ -277,11 +304,13 @@ public class Selector : ItemsControl
             }
             else
             {
+                isWritingSelectedIndexForSelection = true;
                 SetValue(SelectedIndexProperty, args.Change.NewIndex);
             }
         }
         finally
         {
+            isWritingSelectedIndexForSelection = false;
             IsChangingSelectionForItems = wasChangingSelectionForItems;
             if (--selectedIndexNotificationDepth == 0)
             {
