@@ -39,7 +39,7 @@ The parent item opens a submenu. Its leaf child raises `Click`, executes its com
 
 ## Remarks
 
-A `MenuItem` with children is a parent item: activation opens or closes its submenu and never executes `Command` in this version. A left click on a parent header whose submenu is closed opens it. When the submenu is already open, for example because the pointer hovered the header, a click closes it only for a top-level item of a `Menu` or `MenuBar`; a nested parent item keeps its submenu open, like WPF `MenuItem`. A `MenuItem` without children is a leaf: valid activation raises the bubbling `Click` event once, executes its command through the retained command router once, and then closes the complete menu session. Disabled items do not activate.
+A `MenuItem` with children is a parent item: activation opens or closes its submenu and never executes `Command` in this version. A left click on a parent header whose submenu is closed opens it. When the submenu is already open, for example because the pointer hovered the header, a click closes it only for a top-level item of a `Menu` or `MenuBar`; a nested parent item keeps its submenu open, like WPF `MenuItem`. Because a parent item ignores `Command`, the command does not change its `IsEnabled` either: a parent whose command cannot execute stays enabled and opens its submenu. When a leaf that its command disabled gets children, it becomes enabled again; when a parent loses its last child, its command decides `IsEnabled` again. A `MenuItem` without children is a leaf: valid activation raises the bubbling `Click` event once, executes its command through the retained command router once, and then closes the complete menu session. Disabled items do not activate.
 
 Simple child data is wrapped in generated `MenuItem` containers. `DisplayMemberPath` determines each generated container's `Header`; an explicitly supplied `MenuItem` is used directly.
 
@@ -102,7 +102,7 @@ This first version does not provide a dedicated separator, icon or shortcut-text
 | --- | --- | --- |
 | `CanExecuteCommand(CommandRouter, ElementInputRouteMap)` | `bool` | Returns whether the item is a leaf whose command can execute through the current input route. |
 | `ExecuteCommand(CommandRouter, ElementInputRouteMap)` | `bool` | Executes the leaf command through direct or routed-command infrastructure and completes a pending leaf activation. |
-| `RefreshCommandState(CommandRouter, ElementInputRouteMap)` | `bool` | Refreshes command state and synchronizes the effective enabled state. |
+| `RefreshCommandState(CommandRouter, ElementInputRouteMap)` | `bool` | Refreshes command state and synchronizes the effective enabled state of a leaf item. For a parent item it only undoes a disable that its command wrote earlier. |
 
 ## Events
 

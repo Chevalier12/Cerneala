@@ -12,6 +12,7 @@ internal sealed class CommandSourceState
     private IObservableCommand? observableCommand;
     private Func<bool>? callbackGuard;
     private bool isAttached;
+    private bool disabledByCommand;
 
     public CommandSourceState(
         UIElement owner,
@@ -75,12 +76,37 @@ internal sealed class CommandSourceState
         }
 
         bool canExecute = CanExecute(router, routeMap);
+        if (canExecute)
+        {
+            disabledByCommand = false;
+        }
+
         if (owner.IsEnabled == canExecute)
         {
             return false;
         }
 
         owner.IsEnabled = canExecute;
+        disabledByCommand = !canExecute;
+        return true;
+    }
+
+    // For an owner that ignores its command (a MenuItem with children, #934): undo the disable that Refresh wrote,
+    // and leave an IsEnabled that the command did not write alone.
+    public bool RefreshIgnoringCommand()
+    {
+        if (!disabledByCommand)
+        {
+            return false;
+        }
+
+        disabledByCommand = false;
+        if (owner.IsEnabled)
+        {
+            return false;
+        }
+
+        owner.IsEnabled = true;
         return true;
     }
 
