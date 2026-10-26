@@ -454,6 +454,7 @@ public static partial class GeneratedMarkup
         private readonly UiProperty property;
         private UiObject? part;
         private bool started;
+        private bool applyingTemplate;
 
         public TemplatePartPropertyObservation(Control owner, string partName, UiProperty property)
         {
@@ -472,6 +473,7 @@ public static partial class GeneratedMarkup
             if (started) return;
             started = true;
             owner.PropertyChanged += OnOwnerPropertyChanged;
+            owner.ComponentTemplateInstanceChanged += OnTemplateInstanceChanged;
             Reconnect();
         }
 
@@ -480,6 +482,7 @@ public static partial class GeneratedMarkup
             if (!started) return;
             started = false;
             owner.PropertyChanged -= OnOwnerPropertyChanged;
+            owner.ComponentTemplateInstanceChanged -= OnTemplateInstanceChanged;
             DisconnectPart();
         }
 
@@ -499,9 +502,22 @@ public static partial class GeneratedMarkup
             return true;
         }
 
+        // A new ComponentTemplate builds the instance at once, as Reconnect does, also on a control that builds its first
+        // instance only in measure; OnTemplateInstanceChanged then reconnects.
         private void OnOwnerPropertyChanged(object? sender, UiPropertyChangedEventArgs args)
         {
             if (!ReferenceEquals(args.Property, Control.ComponentTemplateProperty) || !ShouldProcessCallback())
+            {
+                return;
+            }
+
+            owner.ApplyTemplate();
+        }
+
+        // Every replaced instance, including one the Aspect catalog resolves for ComponentTemplateKey (#924).
+        private void OnTemplateInstanceChanged()
+        {
+            if (applyingTemplate || !ShouldProcessCallback())
             {
                 return;
             }
@@ -525,7 +541,17 @@ public static partial class GeneratedMarkup
         private void Reconnect()
         {
             DisconnectPart();
-            owner.ApplyTemplate();
+            // The part is resolved below, so an instance this call builds needs no reconnection of its own.
+            applyingTemplate = true;
+            try
+            {
+                owner.ApplyTemplate();
+            }
+            finally
+            {
+                applyingTemplate = false;
+            }
+
             if (owner.ComponentTemplateInstance is null || !owner.ComponentTemplateInstance.Parts.TryGetValue(partName, out UIElement? resolved))
             {
                 SetUnresolved();

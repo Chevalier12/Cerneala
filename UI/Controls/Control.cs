@@ -276,6 +276,11 @@ public class Control : UIElement
 
         if (template is null)
         {
+            if (previousInstance is not null)
+            {
+                ComponentTemplateInstanceChanged?.Invoke();
+            }
+
             return;
         }
 
@@ -309,7 +314,14 @@ public class Control : UIElement
         {
             ResolvingTemplateInstance = null;
         }
+
+        ComponentTemplateInstanceChanged?.Invoke();
     }
+
+    // Raised after ComponentTemplateInstance changed, however the template was applied: a new ComponentTemplate or
+    // ComponentTemplateKey, the layout, or the Aspect pass when the catalog resolves ComponentTemplateKey to another
+    // template without any property change (#924). Template-part observers of generated markup reconnect on it.
+    internal event Action? ComponentTemplateInstanceChanged;
 
     protected virtual void OnTemplateApplied(ComponentTemplateInstance? instance)
     {

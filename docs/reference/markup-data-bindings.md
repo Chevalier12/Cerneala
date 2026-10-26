@@ -360,7 +360,10 @@ named control:
 The path must have exactly the form
 `$ControlName.parts.$PartName.Property`. The terminal property is mandatory, names are
 case-sensitive, and only one template level is traversed. The observation
-reconnects when the named control receives a new `ComponentTemplate`.
+reconnects whenever the named control replaces its template instance: after a
+new `ComponentTemplate`, and also when its `ComponentTemplateKey` resolves to
+another template through the Aspect catalog, for example after a later Aspect
+package registers a template with the same key.
 
 ## Conditional Binding Values
 
