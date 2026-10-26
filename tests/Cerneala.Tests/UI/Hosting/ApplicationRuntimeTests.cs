@@ -466,6 +466,59 @@ public sealed class ApplicationRuntimeTests : IDisposable
         Assert.Null(WindowApplicationRuntime.Current);
     }
 
+    [Theory]
+    [InlineData("application-aware", "resolve and create startup Window")]
+    [InlineData("legacy-configure-services", "configure and build services")]
+    [InlineData("legacy-create-window", "resolve and create startup Window")]
+    [InlineData("legacy-show-window", "show startup Window")]
+    [InlineData("hosted-legacy-configure-services", "configure and build services")]
+    [InlineData("hosted-legacy-create-window", "resolve and create startup Window")]
+    [InlineData("hosted-legacy-show-window", "show startup Window")]
+    public void GeneratedStartupFailureCarriesStageAndTargetDataOnEveryPath(string row, string expectedStage)
+    {
+        InvalidOperationException expected = new("boom");
+        WindowApplicationRuntime.Install(new WindowApplicationRuntime(
+            new FakeWindowPlatform(row.EndsWith("show-window", StringComparison.Ordinal) ? expected : null)));
+        GeneratedWindowStartupDescriptor descriptor = row switch
+        {
+            "application-aware" => new GeneratedWindowStartupDescriptor(
+                () => new FailureApplication(string.Empty, expected),
+                _ => { },
+                _ => throw expected,
+                "TestInput.FailingWindow"),
+            _ when row.EndsWith("configure-services", StringComparison.Ordinal) => new GeneratedWindowStartupDescriptor(
+                _ => throw expected,
+                _ => new Window()),
+            _ when row.EndsWith("create-window", StringComparison.Ordinal) => new GeneratedWindowStartupDescriptor(
+                _ => { },
+                _ => throw expected),
+            _ => new GeneratedWindowStartupDescriptor(
+                _ => { },
+                _ => new Window())
+        };
+
+        InvalidOperationException actual;
+        if (row.StartsWith("hosted-", StringComparison.Ordinal))
+        {
+            GeneratedWindowApplication.RegisterStartup(descriptor);
+            actual = Assert.Throws<InvalidOperationException>(
+                () => GeneratedWindowApplication.PumpHosted(TimeSpan.FromMilliseconds(16)));
+        }
+        else
+        {
+            actual = Assert.Throws<InvalidOperationException>(
+                () => GeneratedWindowApplication.Run(descriptor, []));
+        }
+
+        Assert.Same(expected, actual);
+        string present = string.Join(", ", actual.Data.Keys.Cast<object>().Select(key => $"{key}={actual.Data[key]}"));
+        string expectedTarget = row == "application-aware" ? "TestInput.FailingWindow" : "<legacy MainWindow>";
+        Assert.True(
+            Equals(expectedStage, actual.Data["Cerneala.StartupStage"])
+                && Equals(expectedTarget, actual.Data["Cerneala.StartupTarget"]),
+            $"{row}: Data keys present: [{present}]; expected Cerneala.StartupStage = '{expectedStage}' and Cerneala.StartupTarget = '{expectedTarget}'.");
+    }
+
     private static Type RequireApplicationType()
     {
         return typeof(Window).Assembly.GetType("Cerneala.UI.Application", throwOnError: true)!;
