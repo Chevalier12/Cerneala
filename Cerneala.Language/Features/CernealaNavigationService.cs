@@ -1,6 +1,7 @@
 using Cerneala.Language.Diagnostics;
 using Cerneala.Language.Semantics;
 using Cerneala.Language.Semantics.Symbols;
+using Cerneala.Language.Syntax;
 using Cerneala.Language.Text;
 using Microsoft.CodeAnalysis.CSharp;
 
@@ -102,6 +103,10 @@ internal sealed class CernealaNavigationService
                 if (includeDeclaration || !declaration)
                 {
                     AddDistinct(result, new CernealaLocation(candidateModel.Document.Path, span));
+                    if (TryGetClosingTagSpan(candidateModel, candidate, identity, span, out TextSpan closing))
+                    {
+                        AddDistinct(result, new CernealaLocation(candidateModel.Document.Path, closing));
+                    }
                 }
             }
         }
@@ -235,6 +240,10 @@ internal sealed class CernealaNavigationService
                 }
 
                 AddDistinct(edits, new CernealaTextEdit(candidateModel.Document.Path, span, newName));
+                if (TryGetClosingTagSpan(candidateModel, candidate, identity, span, out TextSpan closing))
+                {
+                    AddDistinct(edits, new CernealaTextEdit(candidateModel.Document.Path, closing, newName));
+                }
             }
         }
 
@@ -448,6 +457,31 @@ internal sealed class CernealaNavigationService
         }
 
         span = default;
+        return false;
+    }
+
+    // The semantic model maps a type or member named by an element to the opening tag's name only. The closing tag
+    // </t:Card> or </t:Card.Title> names the same symbol, so it is the same occurrence for references and rename.
+    private static bool TryGetClosingTagSpan(
+        CernealaSemanticModel model,
+        CernealaSemanticSymbol symbol,
+        SymbolIdentity identity,
+        TextSpan span,
+        out TextSpan closing)
+    {
+        if (identity.Kind is IdentityKind.Type or IdentityKind.Member)
+        {
+            ElementSyntax? element = model.Document.Syntax.DescendantElements().FirstOrDefault(candidate =>
+                candidate.NameToken.Span.Equals(symbol.Span));
+            if (element is not null && !element.IsSelfClosing && !element.CloseNameToken.IsMissing &&
+                string.Equals(element.CloseNameToken.Text, element.NameToken.Text, StringComparison.Ordinal))
+            {
+                closing = new TextSpan(element.CloseNameToken.Span.Start + span.Start - symbol.Span.Start, span.Length);
+                return true;
+            }
+        }
+
+        closing = default;
         return false;
     }
 
