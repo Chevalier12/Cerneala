@@ -192,6 +192,13 @@ public sealed partial class UiMarkupGenerator
                 kind = resource.Kind;
                 arguments = resource.Arguments;
             }
+            else if (syntax is MotionParameterSpecSyntax bareName)
+            {
+                // A bare name is a MotionClip spec parameter, which only TryResolveMotionSpec binds. Here no MotionClip
+                // parameters exist, so the name is a spec reference written without '$'.
+                ReportMotion(MotionDiagnosticKind.Type, bareName.Location, "Unknown Motion spec '" + bareName.Name + "'. Reference a Motion resource as '$" + bareName.Name + "'.");
+                return false;
+            }
             else
             {
                 MotionInlineSpecSyntax inline = (MotionInlineSpecSyntax)syntax;
