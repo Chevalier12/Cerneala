@@ -108,6 +108,41 @@ public sealed class ButtonBaseCommandStateIntegrationTests
         Assert.False(button.IsEnabled);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void CanExecuteChangedRefreshesTheButtonWhateverTheSender(bool senderIsTheCommand)
+    {
+        UIRoot root = RootWithButton(out ButtonBase button);
+        TrackingCommand command = new(_ => true);
+        button.Command = command;
+        root.ProcessFrame();
+        Assert.True(button.IsEnabled);
+
+        command.CanExecuteEvaluator = _ => false;
+        command.RaiseCanExecuteChanged(senderIsTheCommand ? command : null);
+        root.ProcessFrame();
+
+        Assert.False(button.IsEnabled);
+    }
+
+    [Fact]
+    public void CanExecuteChangedOfAReplacedCommandDoesNotRefreshTheButton()
+    {
+        UIRoot root = RootWithButton(out ButtonBase button);
+        TrackingCommand first = new(_ => true);
+        TrackingCommand second = new(_ => true);
+        button.Command = first;
+        button.Command = second;
+        root.ProcessFrame();
+
+        first.RaiseCanExecuteChanged(null);
+        FrameStats stats = root.ProcessFrame();
+
+        Assert.True(button.IsEnabled);
+        Assert.Equal(0, stats.CommandStateElements);
+    }
+
     [Fact]
     public void CommandChangesAndDetachReattachMaintainOneObservableSubscription()
     {
@@ -207,7 +242,12 @@ public sealed class ButtonBaseCommandStateIntegrationTests
 
         public void RaiseCanExecuteChanged()
         {
-            canExecuteChanged?.Invoke(this, EventArgs.Empty);
+            RaiseCanExecuteChanged(this);
+        }
+
+        public void RaiseCanExecuteChanged(object? sender)
+        {
+            canExecuteChanged?.Invoke(sender, EventArgs.Empty);
         }
     }
 }
