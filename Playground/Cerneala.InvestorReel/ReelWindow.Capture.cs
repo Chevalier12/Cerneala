@@ -55,17 +55,20 @@ public partial class ReelWindow
         {
             if (!string.IsNullOrWhiteSpace(theme))
             {
-                // Click the poster once the picker's entrance has made it actionable.
+                // Click the poster once the picker's entrance has made it actionable. ClickAsync retries every frame
+                // while the poster is not actionable and then throws ServoTimeoutException with the last
+                // ServoTargetNotActionableException inside, so each attempt gets a short timeout of its own instead of
+                // the 240 s default that the end-of-film wait needs.
                 ServoTarget poster = ServoTarget.ById("theme-" + theme.Trim().ToLowerInvariant());
                 for (int attempt = 0; ; attempt++)
                 {
                     await Task.Delay(1000);
                     try
                     {
-                        await servo.ClickAsync(poster);
+                        await servo.ClickAsync(poster, TimeSpan.FromSeconds(1));
                         break;
                     }
-                    catch (ServoTargetNotActionableException) when (attempt < 60)
+                    catch (ServoTimeoutException timeout) when (timeout.InnerException is ServoTargetNotActionableException && attempt < 60)
                     {
                     }
                 }
