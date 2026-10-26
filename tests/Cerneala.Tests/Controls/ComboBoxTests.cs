@@ -1676,6 +1676,30 @@ public sealed class ComboBoxTests
         Assert.Equal(0, RealizedSourceIndices(comboBox)[0]);
     }
 
+    [Theory]
+    [InlineData("Pineapple", "Apple")]
+    [InlineData("Apple", "Pineapple")]
+    public void EqualFuzzyFilterResultsKeepSourceOrder(string first, string second)
+    {
+        UIRoot root = new(300, 200);
+        ComboBox comboBox = new()
+        {
+            IsEditable = true,
+            IsTextFilterEnabled = true,
+            Width = 180
+        };
+        comboBox.SetItems(new[] { first, second });
+        root.VisualChildren.Add(comboBox);
+        root.ProcessFrame();
+        TextBox editor = Assert.IsType<TextBox>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_EditableTextBox"]);
+
+        editor.ReceiveTextInput("aple");
+        root.ProcessFrame();
+
+        Assert.Equal([0, 1], RealizedSourceIndices(comboBox));
+    }
+
     [Fact]
     public void TabCommitsEditablePreviewClosesDropDownAndLeavesCompositeControl()
     {

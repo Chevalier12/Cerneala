@@ -53,7 +53,7 @@ internal static class ComboBoxTextMatcher
             int distance = MinimumWindowDistance(normalizedItemText, normalizedQuery, maximumDistance);
             if (distance <= maximumDistance)
             {
-                matches.Add(new Match(sourceIndex, 3, distance, Math.Abs(itemText.Length - query.Length)));
+                matches.Add(new Match(sourceIndex, 3, distance, 0));
             }
         }
 
