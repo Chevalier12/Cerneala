@@ -36,7 +36,7 @@ The processor caches composition per element by root catalog reference, applicat
 5. publish (`AspectEngine.ApplyResolved`): write each winner through `UiPropertyValueSource.AspectBase`, and clear the `AspectBase` value of properties that had a winner last time and have none now. Losing declarations are never written;
 6. track dependencies for future `AspectQueue` invalidation.
 
-When a published value carries an `AspectMotion`, the engine wraps the write in `root.Motion.BeginTransaction(...)`, so the value animates instead of jumping. State-driven motion (`AspectMotionSource.State`) uses `MotionPriority.Interactive`; other motion uses `Normal`. See [motion.md](motion.md).
+When a published value carries an `AspectMotion`, the engine wraps the write in `root.Motion.BeginTransaction(...)`, so the value animates instead of jumping. State-driven motion (`AspectMotionSource.State`) uses `MotionPriority.Interactive`; other motion uses `Normal`. `AspectMotion.TokenName` is resolved in the theme's `MotionTokens` (`ThemeMotionTokens.Key`), not in the Aspect environment; when the theme has no such token, the value is written without a transition. See [motion.md](motion.md).
 
 ## Frame integration
 
@@ -241,6 +241,7 @@ Condition predicates are not reevaluated for diagnostics. `Apply` retains a comp
 - An explicit `null` token overrides the theme; removing it restores the theme value, also through template token bindings. `tests/Cerneala.Tests/UI/Aspect/ThemeTokenPrecedenceTests.cs:NullIsAnExplicitOverrideAndTemplateBindingsObserveIt`.
 - One condition in one apply is evaluated once; diagnostics report origin, scope, rejected rules and dependencies. `tests/Cerneala.Tests/UI/Detective/ModernAspectTraceTests.cs:TraceReportsOriginScopeRejectedRulesConditionsAndDependencies` (`Counters.ConditionEvaluations == 1`).
 - State-driven `AspectMotion` animates in both directions. `tests/Cerneala.Tests/UI/Aspect/AspectEngineTests.cs:EngineAnimatesStateAspectMotionInBothDirections`.
+- An `AspectMotion` token that the theme does not define writes the value without a transition, on enter, exit and `Clear`. `AspectEngineTests.cs:StateMotionWithATokenTheThemeCannotResolveAppliesTheValueWithoutTransition`.
 - An `ElementAspect` behavior attaches on attach and is disposed on detach and on `Aspect = null`. `tests/Cerneala.Tests/UI/Aspect/AspectAuditRegressionTests.cs:ElementAspectBehaviorFollowsAttachDetachAndReattachLifecycle`.
 - Dependency sets, condition results and diagnostics token traces are read-only copies of their inputs. `AspectAuditRegressionTests.cs:PublicAspectCollectionsAreStableReadOnlySnapshots`.
 - The removed parallel markup Aspect runtime and the authoring-specific value sources stay removed. `tests/Cerneala.Tests/Architecture/ModernAspectArchitectureTests.cs:ParallelMarkupAspectRuntimeAndAuthoringSpecificSourcesStayRemoved` (a name check; the only Aspect phase processor in `UIRoot` is `AspectProcessor.Process`).
