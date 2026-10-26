@@ -257,6 +257,8 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
     private bool enabled = true;
     private bool? lastActive;
     private (UiViewport Viewport, float Left, float Top, WindowState State)? lastBounds;
+    // Native position of the window in the normal state: where it was placed or last seen while normal.
+    private (int X, int Y)? normalPosition;
     private WindowState desiredState;
     private int graphicsPixelWidth;
     private int graphicsPixelHeight;
@@ -627,10 +629,9 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
     {
         if (float.IsFinite(value.Left) && float.IsFinite(value.Top))
         {
-            Require(api.SetWindowPosition(
-                Handle,
+            SetNormalPosition(
                 (int)MathF.Round(value.Left * nativeCoordinateScale),
-                (int)MathF.Round(value.Top * nativeCoordinateScale)),
+                (int)MathF.Round(value.Top * nativeCoordinateScale),
                 "SDL manual window position update");
             return;
         }
@@ -650,7 +651,7 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
             {
                 int x = bounds.X + Math.Max(0, (bounds.Width - width) / 2);
                 int y = bounds.Y + Math.Max(0, (bounds.Height - height) / 2);
-                Require(api.SetWindowPosition(Handle, x, y), "SDL centered window position update");
+                SetNormalPosition(x, y, "SDL centered window position update");
             }
 
             return;
@@ -667,10 +668,17 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
             throw SdlApiError.Create(api, "SDL owner-relative window position lookup");
         }
 
-        Require(api.SetWindowPosition(
-            Handle,
+        SetNormalPosition(
             ownerX + (ownerWidth - width) / 2,
-            ownerY + (ownerHeight - height) / 2), "SDL owner-relative window position update");
+            ownerY + (ownerHeight - height) / 2,
+            "SDL owner-relative window position update");
+    }
+
+    // Every position the window is placed at is its normal position, reported while it is maximized or minimized.
+    private void SetNormalPosition(int x, int y, string operation)
+    {
+        Require(api.SetWindowPosition(Handle, x, y), operation);
+        normalPosition = (x, y);
     }
 
     private void ApplyState(WindowState state)
@@ -703,12 +711,31 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
             throw SdlApiError.Create(api, "SDL window position lookup");
         }
 
-        float logicalX = desiredState != WindowState.Normal && float.IsFinite(window.Left)
-            ? window.Left
-            : x / nativeCoordinateScale;
-        float logicalY = desiredState != WindowState.Normal && float.IsFinite(window.Top)
-            ? window.Top
-            : y / nativeCoordinateScale;
+        // A maximized or minimized window reports its normal (restore) position, never the native
+        // maximized or minimized one: the model's own position, else the last known normal position, else NaN.
+        float logicalX;
+        float logicalY;
+        if (desiredState == WindowState.Normal)
+        {
+            normalPosition = (x, y);
+            logicalX = x / nativeCoordinateScale;
+            logicalY = y / nativeCoordinateScale;
+        }
+        else if (float.IsFinite(window.Left) && float.IsFinite(window.Top))
+        {
+            logicalX = window.Left;
+            logicalY = window.Top;
+        }
+        else if (normalPosition is (int normalX, int normalY))
+        {
+            logicalX = normalX / nativeCoordinateScale;
+            logicalY = normalY / nativeCoordinateScale;
+        }
+        else
+        {
+            logicalX = float.NaN;
+            logicalY = float.NaN;
+        }
         var current = (Viewport, logicalX, logicalY, desiredState);
         if (lastBounds != current)
         {
