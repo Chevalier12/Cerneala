@@ -258,6 +258,9 @@ public abstract class PrismNodeState
     public PrismNodeId Id { get; }
 
     public string? Name { get; }
+
+    // The group that contains this node, or null for a top-level node.
+    internal PrismGroupState? Parent { get; set; }
 }
 
 public sealed class PrismClipState

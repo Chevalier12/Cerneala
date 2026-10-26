@@ -50,6 +50,7 @@ public sealed class PrismMotionIntegrationTests
             scenario.Session,
             scenario.Element,
             propertyId: 102,
+            scope: null,
             static instance => instance.GetLayerState(LayerId).Visible,
             static (instance, value) => instance.GetLayerState(LayerId).Visible = value,
             discrete: true,
@@ -81,6 +82,7 @@ public sealed class PrismMotionIntegrationTests
             scenario.Session,
             scenario.Element,
             propertyId: 103,
+            scope: LayerId,
             static instance => instance.GetLayerState(LayerId).BlendMode,
             static (instance, value) => instance.GetLayerState(LayerId).BlendMode = value,
             discrete: true,
@@ -259,6 +261,7 @@ public sealed class PrismMotionIntegrationTests
             scenario.Session,
             scenario.Element,
             propertyId: 104,
+            scope: LayerId,
             static instance => instance.GetLayerState(LayerId).Opacity,
             static (instance, value) => instance.GetLayerState(LayerId).Opacity = value,
             discrete: false,
@@ -301,6 +304,7 @@ public sealed class PrismMotionIntegrationTests
             scenario.Session,
             scenario.Element,
             propertyId: 101,
+            scope: LayerId,
             static instance => instance.GetLayerState(LayerId).Opacity,
             static (instance, value) => instance.GetLayerState(LayerId).Opacity = value,
             discrete: false,
@@ -331,6 +335,7 @@ public sealed class PrismMotionIntegrationTests
             scenario.Session,
             scenario.Element,
             propertyId: 101,
+            scope: LayerId,
             static instance => instance.GetLayerState(LayerId).Opacity,
             static (instance, value) => instance.GetLayerState(LayerId).Opacity = value,
             discrete: false,
@@ -348,7 +353,207 @@ public sealed class PrismMotionIntegrationTests
         Assert.Equal(current, layer.Opacity);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void LayerVisibleFalseCancelsItsActiveMotionOnce(bool hideLayer)
+    {
+        MotionScenario scenario = CreateScenario();
+        MotionHandle handle = StartOpacityMotion(scenario, 0.25f);
+        int canceled = 0;
+        handle.Completed += (_, args) =>
+        {
+            if (args.IsCanceled)
+            {
+                canceled++;
+            }
+        };
+        scenario.Root.Motion.Tick();
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(25));
+        scenario.Root.Motion.Tick();
+
+        if (hideLayer)
+        {
+            scenario.Instance.GetLayerState(LayerId).Visible = false;
+        }
+
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(25));
+        MotionFrameResult frame = scenario.Root.Motion.Tick();
+
+        Assert.Equal(hideLayer, handle.IsCanceled);
+        Assert.Equal(hideLayer ? 1 : 0, canceled);
+        Assert.Equal(hideLayer ? 0 : 1, frame.MotionPropertyWrites);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void GroupVisibleFalseCancelsItsActiveMotionOnce(bool hideGroup)
+    {
+        MotionScenario scenario = CreateScenario(CreateGroupDefinition);
+        MotionHandle handle = GeneratedMarkup.StartPrismMotionProperty(
+            scenario.Session,
+            scenario.Element,
+            propertyId: 106,
+            scope: GroupId,
+            static instance => instance.GetGroupState(GroupId).Opacity,
+            static (instance, value) => instance.GetGroupState(GroupId).Opacity = value,
+            discrete: false,
+            hasFrom: false,
+            from: 0f,
+            toCurrent: false,
+            to: 0.25f,
+            spec: Tween<float>(),
+            MotionPropertyStartOptions.Default);
+        StrongBox<int> canceled = CountCancels(handle);
+        scenario.Root.Motion.Tick();
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(25));
+        scenario.Root.Motion.Tick();
+
+        if (hideGroup)
+        {
+            scenario.Instance.GetGroupState(GroupId).Visible = false;
+        }
+
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(25));
+        MotionFrameResult frame = scenario.Root.Motion.Tick();
+
+        Assert.Equal(hideGroup, handle.IsCanceled);
+        Assert.Equal(hideGroup ? 1 : 0, canceled.Value);
+        Assert.Equal(hideGroup ? 0 : 1, frame.MotionPropertyWrites);
+    }
+
+    [Fact]
+    public void GroupVisibleFalseCancelsTheActiveMotionOfAChildLayer()
+    {
+        MotionScenario scenario = CreateScenario(CreateGroupDefinition);
+        MotionHandle handle = StartChildOpacityMotion(scenario);
+        StrongBox<int> canceled = CountCancels(handle);
+        scenario.Root.Motion.Tick();
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(25));
+        scenario.Root.Motion.Tick();
+        scenario.Instance.GetGroupState(GroupId).Visible = false;
+        PrismValueVersion afterHide = scenario.Instance.ValueVersion;
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(25));
+        MotionFrameResult frame = scenario.Root.Motion.Tick();
+
+        Assert.True(handle.IsCanceled);
+        Assert.Equal(1, canceled.Value);
+        Assert.Equal(0, frame.MotionPropertyWrites);
+        Assert.Equal(afterHide, scenario.Instance.ValueVersion);
+    }
+
+    [Fact]
+    public void LayerVisibleTrueAgainDoesNotRestartTheCanceledMotion()
+    {
+        MotionScenario scenario = CreateScenario();
+        PrismLayerState layer = scenario.Instance.GetLayerState(LayerId);
+        MotionHandle handle = StartOpacityMotion(scenario, 0.25f);
+        StrongBox<int> canceled = CountCancels(handle);
+        scenario.Root.Motion.Tick();
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(25));
+        scenario.Root.Motion.Tick();
+        layer.Visible = false;
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(25));
+        scenario.Root.Motion.Tick();
+        float opacityAtCancel = layer.Opacity;
+
+        layer.Visible = true;
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(25));
+        MotionFrameResult frame = scenario.Root.Motion.Tick();
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(100));
+        scenario.Root.Motion.Tick();
+
+        Assert.True(handle.IsCanceled);
+        Assert.Equal(1, canceled.Value);
+        Assert.Equal(0, frame.MotionPropertyWrites);
+        Assert.Equal(opacityAtCancel, layer.Opacity);
+        Assert.False(scenario.Root.Motion.HasActiveMotion);
+    }
+
+    [Fact]
+    public void StartingAMotionOnAHiddenLayerCancelsItWithoutAWrite()
+    {
+        MotionScenario scenario = CreateScenario();
+        PrismLayerState layer = scenario.Instance.GetLayerState(LayerId);
+        layer.Visible = false;
+        PrismValueVersion afterHide = scenario.Instance.ValueVersion;
+
+        MotionHandle handle = StartOpacityMotion(scenario, 0.25f);
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(50));
+        MotionFrameResult frame = scenario.Root.Motion.Tick();
+
+        Assert.True(handle.IsCanceled);
+        Assert.Equal(0, frame.MotionPropertyWrites);
+        Assert.Equal(afterHide, scenario.Instance.ValueVersion);
+        Assert.Equal(1f, layer.Opacity);
+    }
+
+    [Fact]
+    public void VisibleMotionOutsideTheLayerScopeShowsAHiddenLayerAgain()
+    {
+        MotionScenario scenario = CreateScenario();
+        PrismLayerState layer = scenario.Instance.GetLayerState(LayerId);
+        layer.Visible = false;
+
+        MotionHandle handle = GeneratedMarkup.StartPrismMotionProperty(
+            scenario.Session,
+            scenario.Element,
+            propertyId: 102,
+            scope: null,
+            static instance => instance.GetLayerState(LayerId).Visible,
+            static (instance, value) => instance.GetLayerState(LayerId).Visible = value,
+            discrete: true,
+            hasFrom: false,
+            from: false,
+            toCurrent: false,
+            to: true,
+            spec: Tween<bool>(),
+            new MotionPropertyStartOptions { HoldOnComplete = true });
+        scenario.Root.Motion.Tick();
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(100));
+        scenario.Root.Motion.Tick();
+
+        Assert.True(handle.IsCompleted);
+        Assert.True(layer.Visible);
+    }
+
     private static readonly PrismNodeId LayerId = new(1);
+
+    private static readonly PrismNodeId GroupId = new(2);
+
+    private static readonly PrismNodeId ChildLayerId = new(3);
+
+    private static StrongBox<int> CountCancels(MotionHandle handle)
+    {
+        StrongBox<int> canceled = new();
+        handle.Completed += (_, args) =>
+        {
+            if (args.IsCanceled)
+            {
+                canceled.Value++;
+            }
+        };
+        return canceled;
+    }
+
+    private static MotionHandle StartChildOpacityMotion(MotionScenario scenario)
+    {
+        return GeneratedMarkup.StartPrismMotionProperty(
+            scenario.Session,
+            scenario.Element,
+            propertyId: 107,
+            scope: ChildLayerId,
+            static instance => instance.GetLayerState(ChildLayerId).Opacity,
+            static (instance, value) => instance.GetLayerState(ChildLayerId).Opacity = value,
+            discrete: false,
+            hasFrom: false,
+            from: 0f,
+            toCurrent: false,
+            to: 0.25f,
+            spec: Tween<float>(),
+            MotionPropertyStartOptions.Default);
+    }
 
     private static MotionHandle StartHalfwayReducedMotionOpacity(MotionScenario scenario)
     {
@@ -356,6 +561,7 @@ public sealed class PrismMotionIntegrationTests
             scenario.Session,
             scenario.Element,
             propertyId: 101,
+            scope: LayerId,
             static instance => instance.GetLayerState(LayerId).Opacity,
             static (instance, value) => instance.GetLayerState(LayerId).Opacity = value,
             discrete: false,
@@ -380,6 +586,7 @@ public sealed class PrismMotionIntegrationTests
             scenario.Session,
             scenario.Element,
             propertyId: 101,
+            scope: LayerId,
             static instance => instance.GetLayerState(LayerId).Opacity,
             static (instance, value) => instance.GetLayerState(LayerId).Opacity = value,
             discrete: false,
@@ -394,14 +601,17 @@ public sealed class PrismMotionIntegrationTests
     private static TweenSpec<T> Tween<T>() =>
         new(TimeSpan.FromMilliseconds(100), Easings.Linear);
 
-    private static MotionScenario CreateScenario()
+    private static MotionScenario CreateScenario() =>
+        CreateScenario(static () => CreateDefinition());
+
+    private static MotionScenario CreateScenario(Func<PrismClipDefinition> createDefinition)
     {
         ManualMotionClock clock = new();
         UIRoot root = new(motionClock: clock);
         UIElement element = new();
         _ = GeneratedMarkup.AttachPrism(
             element,
-            () => new PrismInstance(CreateDefinition()));
+            () => new PrismInstance(createDefinition()));
         IDisposable session = GeneratedMarkup.AttachMotionSession(element);
         root.VisualChildren.Add(element);
         root.ProcessFrame();
@@ -430,6 +640,7 @@ public sealed class PrismMotionIntegrationTests
                 session,
                 element,
                 propertyId: 105,
+                scope: LayerId,
                 static target => target.GetLayerState(LayerId).Opacity,
                 static (target, value) => target.GetLayerState(LayerId).Opacity = value,
                 discrete: false,
@@ -475,6 +686,23 @@ public sealed class PrismMotionIntegrationTests
                     "Glow",
                     filters: [new PrismFilterDefinition(PrismFilterId.Blur)],
                     opacity: opacity)
+            ]);
+    }
+
+    private static PrismClipDefinition CreateGroupDefinition()
+    {
+        return new PrismClipDefinition(
+            "motion-group",
+            [
+                new PrismGroupDefinition(
+                    GroupId,
+                    "Card",
+                    [
+                        new PrismLayerDefinition(
+                            ChildLayerId,
+                            "Face",
+                            filters: [new PrismFilterDefinition(PrismFilterId.Blur)])
+                    ])
             ]);
     }
 

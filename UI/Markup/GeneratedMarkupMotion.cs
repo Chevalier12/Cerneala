@@ -6,6 +6,7 @@ using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Motion.Interpolation;
 using Cerneala.UI.Motion.Properties;
 using Cerneala.UI.Motion.Specs;
+using Cerneala.UI.Prism.Definitions;
 using Cerneala.UI.Prism.Runtime;
 
 namespace Cerneala.UI.Markup;
@@ -138,6 +139,7 @@ public static partial class GeneratedMarkup
         IDisposable session,
         UIElement target,
         int propertyId,
+        PrismNodeId? scope,
         Func<PrismInstance, T> getValue,
         Action<PrismInstance, T> setValue,
         bool discrete,
@@ -151,6 +153,7 @@ public static partial class GeneratedMarkup
         return GetMotionSession(session).StartPrismProperty(
             target,
             propertyId,
+            scope,
             getValue,
             setValue,
             discrete,
@@ -166,6 +169,7 @@ public static partial class GeneratedMarkup
         IDisposable session,
         UIElement target,
         int propertyId,
+        PrismNodeId? scope,
         Func<PrismInstance, T> getValue,
         Action<PrismInstance, T> setValue,
         bool discrete,
@@ -180,6 +184,7 @@ public static partial class GeneratedMarkup
         return GetMotionSession(session).StartBoundPrismProperty(
             target,
             propertyId,
+            scope,
             getValue,
             setValue,
             discrete,
@@ -429,6 +434,7 @@ public static partial class GeneratedMarkup
         public MotionHandle StartPrismProperty<T>(
             UIElement target,
             int propertyId,
+            PrismNodeId? scope,
             Func<PrismInstance, T> getValue,
             Action<PrismInstance, T> setValue,
             bool discrete,
@@ -442,6 +448,7 @@ public static partial class GeneratedMarkup
             PrismMotionBinding<T> binding = GetOrCreatePrismBinding(
                 target,
                 propertyId,
+                scope,
                 getValue,
                 setValue,
                 discrete,
@@ -460,6 +467,7 @@ public static partial class GeneratedMarkup
         public MotionHandle StartBoundPrismProperty<T>(
             UIElement target,
             int propertyId,
+            PrismNodeId? scope,
             Func<PrismInstance, T> getValue,
             Action<PrismInstance, T> setValue,
             bool discrete,
@@ -474,6 +482,7 @@ public static partial class GeneratedMarkup
             PrismMotionBinding<T> binding = GetOrCreatePrismBinding(
                 target,
                 propertyId,
+                scope,
                 getValue,
                 setValue,
                 discrete,
@@ -493,6 +502,7 @@ public static partial class GeneratedMarkup
         private PrismMotionBinding<T> GetOrCreatePrismBinding<T>(
             UIElement target,
             int propertyId,
+            PrismNodeId? scope,
             Func<PrismInstance, T> getValue,
             Action<PrismInstance, T> setValue,
             bool discrete,
@@ -528,6 +538,7 @@ public static partial class GeneratedMarkup
                     motion,
                     target,
                     instance,
+                    scope,
                     getValue,
                     setValue,
                     discrete);
@@ -539,6 +550,7 @@ public static partial class GeneratedMarkup
                 motion,
                 target,
                 instance,
+                scope,
                 getValue,
                 setValue,
                 discrete);
@@ -677,6 +689,7 @@ public static partial class GeneratedMarkup
             MotionSystem motion,
             UIElement target,
             PrismInstance instance,
+            PrismNodeId? scope,
             Func<PrismInstance, T> getValue,
             Action<PrismInstance, T> setValue,
             bool discrete)
@@ -688,6 +701,7 @@ public static partial class GeneratedMarkup
                 motion,
                 target,
                 instance,
+                scope,
                 getValue,
                 setValue,
                 mixer);
@@ -957,6 +971,7 @@ public static partial class GeneratedMarkup
     {
         private readonly MotionSystem motion;
         private readonly UIElement target;
+        private readonly PrismNodeId? scope;
         private readonly Action<PrismInstance, T> setValue;
         private readonly T baseValue;
         private readonly MotionValue<T> value;
@@ -973,6 +988,7 @@ public static partial class GeneratedMarkup
             MotionSystem motion,
             UIElement target,
             PrismInstance instance,
+            PrismNodeId? scope,
             Func<PrismInstance, T> getValue,
             Action<PrismInstance, T> setValue,
             ValueMixer<T> mixer)
@@ -980,6 +996,7 @@ public static partial class GeneratedMarkup
             this.motion = motion;
             this.target = target;
             Instance = instance;
+            this.scope = scope;
             this.setValue = setValue;
             baseValue = getValue(instance);
             value = motion.Graph.CreateValue(baseValue, mixer);
@@ -1018,9 +1035,7 @@ public static partial class GeneratedMarkup
                 options.ToMotionStartOptions());
             activeHandle = handle;
             handle.Completed += OnMotionCompleted;
-            if (!target.IsAttached ||
-                !UIElementVisibility.IsEffectivelyVisible(target) ||
-                !IsCurrentInstance())
+            if (!IsTargetLive())
             {
                 Clear(restoreBase: false);
                 return handle;
@@ -1077,9 +1092,7 @@ public static partial class GeneratedMarkup
                 return new MotionNodeTickResult(Completed: true);
             }
 
-            if (!target.IsAttached ||
-                !UIElementVisibility.IsEffectivelyVisible(target) ||
-                !IsCurrentInstance())
+            if (!IsTargetLive())
             {
                 Clear(restoreBase: false);
                 return new MotionNodeTickResult(Completed: true);
@@ -1135,6 +1148,16 @@ public static partial class GeneratedMarkup
 
             activeHandle = null;
             completedNaturally = args.State == MotionCompletionState.Completed;
+        }
+
+        // The motion may write only while its element is attached and renderable, still owns
+        // this Prism instance, and the Prism node of the property is effectively visible.
+        private bool IsTargetLive()
+        {
+            return target.IsAttached &&
+                UIElementVisibility.IsEffectivelyVisible(target) &&
+                IsCurrentInstance() &&
+                (scope is not { } scopeId || Instance.IsNodeEffectivelyVisible(scopeId));
         }
 
         private bool IsCurrentInstance()
