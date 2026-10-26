@@ -19,13 +19,13 @@ public static class UIElementVisibility
     public static bool ParticipatesInInput(UIElement element)
     {
         ArgumentNullException.ThrowIfNull(element);
-        return !element.IsPresenceExiting && ParticipatesInRendering(element);
+        return !element.IsPresenceInputExcluded && ParticipatesInRendering(element);
     }
 
     public static bool ParticipatesInHitTest(UIElement element)
     {
         ArgumentNullException.ThrowIfNull(element);
-        return !element.IsPresenceExiting &&
+        return !element.IsPresenceInputExcluded &&
             element.IsHitTestVisible &&
             ParticipatesInRendering(element);
     }

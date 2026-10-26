@@ -133,6 +133,30 @@ public sealed class PresenceCoordinatorTests
         Assert.NotSame(child, new HitTestService().HitTest(root, 5, 5)?.Element);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void InputParticipationWhileExitingFollowsOnlyTheInputOption(bool excludeInputWhileExiting)
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(100, 100, motionClock: clock);
+        Canvas parent = new();
+        Rectangle child = CreateChild();
+        child.Presence = PresenceOptions.FadeAndScale(
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)),
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)),
+            excludeInputWhileExiting);
+        root.VisualChildren.Add(parent);
+        parent.VisualChildren.Add(child);
+        root.ProcessFrame();
+
+        parent.VisualChildren.Remove(child);
+
+        Assert.Equal(PresenceState.Exiting, root.Motion.Presence.GetState(child));
+        Assert.Equal(!excludeInputWhileExiting, UIElementVisibility.ParticipatesInInput(child));
+        Assert.Equal(!excludeInputWhileExiting, UIElementVisibility.ParticipatesInHitTest(child));
+    }
+
     [Fact]
     public void ExitCompletionRemovesElementOnce()
     {

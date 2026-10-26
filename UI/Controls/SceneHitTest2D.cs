@@ -87,7 +87,7 @@ internal static class SceneHitTest2D
     {
         HitTestFilterBehavior behavior = filter.Evaluate(node);
         if (behavior == HitTestFilterBehavior.ExcludeSubtree ||
-            node.IsPresenceExiting ||
+            node.IsPresenceInputExcluded ||
             !UIElementVisibility.ParticipatesInHitTest(node) ||
             !node.IsEnabled)
         {
@@ -156,7 +156,7 @@ internal static class SceneHitTest2D
         IReadOnlySet<Collider2D> colliderHits)
     {
         return collider.ParticipatesInInputRoute &&
-            !collider.IsPresenceExiting &&
+            !collider.IsPresenceInputExcluded &&
             UIElementVisibility.ParticipatesInHitTest(collider) &&
             collider.IsEnabled &&
             collider.Enabled &&

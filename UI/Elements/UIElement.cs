@@ -299,7 +299,12 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     internal Transform LayoutCorrectionTransform { get; private set; } = Transform.Identity;
 
+    // True while the presence coordinator plays this element's exit, whatever its input option: the element is still
+    // rendered, so its queued work must stay queued (#940).
     internal bool IsPresenceExiting { get; private set; }
+
+    // True while the element is exiting and its PresenceOptions.ExcludeInputWhileExiting removes it from input.
+    internal bool IsPresenceInputExcluded { get; private set; }
 
     // A virtualizing panel keeps a child outside its realization window in VisualChildren but does not realize it,
     // so the child is not rendered, hit tested or routed input until the panel realizes it again.
@@ -1317,15 +1322,31 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         Invalidate(InvalidationFlags.Render, "Layout motion correction changed");
     }
 
-    internal void SetPresenceExiting(bool isExiting)
+    internal void SetPresenceExiting(bool isExiting, bool excludesInput)
     {
-        if (IsPresenceExiting == isExiting)
+        bool isInputExcluded = isExiting && excludesInput;
+        if (IsPresenceExiting == isExiting && IsPresenceInputExcluded == isInputExcluded)
         {
             return;
         }
 
         IsPresenceExiting = isExiting;
+        IsPresenceInputExcluded = isInputExcluded;
         Invalidate(InvalidationFlags.HitTest, "Presence state changed");
+    }
+
+    // An exiting element's descendants left VisualChildren with it and are still rendered through it.
+    internal bool IsInPresenceExitingSubtree()
+    {
+        for (UIElement? current = this; current is not null; current = current.VisualParent)
+        {
+            if (current.IsPresenceExiting)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     internal void SetSkippedByVirtualization(bool isSkipped)
