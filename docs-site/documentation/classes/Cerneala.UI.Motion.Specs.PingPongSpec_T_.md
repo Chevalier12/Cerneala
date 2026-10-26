@@ -54,7 +54,7 @@ float returningValue = sampler.Current; // 5
 
 `PingPongSpec<T>` wraps a `TweenSpec<T>` and repeats its duration for the requested number of cycles. Pass `null` for an unbounded animation. Even-numbered cycles reverse progress so the sampler alternates between the `from` and `to` values instead of restarting at the beginning of each cycle.
 
-Each sampler starts at `from`. During sampling, progress is calculated from elapsed milliseconds within the current cycle, transformed through the wrapped tween's `Easing`, and mixed with the supplied `ValueMixer<T>`. The wrapped tween's `Duration` and `Easing` are used directly.
+Each sampler starts at `from`. During sampling, the cycle index and the progress within the current cycle are calculated from the exact elapsed `TimeSpan` ticks, so an elapsed time that is a whole number of cycles always lands at the start of the next cycle, transformed through the wrapped tween's `Easing`, and mixed with the supplied `ValueMixer<T>`. The wrapped tween's `Duration` and `Easing` are used directly.
 
 For a finite cycle count, the total runtime is `inner.Duration * cycles`. When the sampler reaches or passes that total duration, it completes and sets `Current` to `from` for an even cycle count, or `to` for an odd cycle count. With `cycles: null`, the sampler remains active until its owner cancels it. Reduced-motion modes complete an unbounded ping-pong immediately at `to`.
 
