@@ -669,6 +669,41 @@ public sealed class WindowRuntimeTests : IDisposable
         Assert.Equal([TimeSpan.Zero, TimeSpan.FromMilliseconds(16), TimeSpan.FromMilliseconds(16)], elapsed);
     }
 
+    // Contract: like every other user callback of an update, an Awake handler raised by PumpOnce runs inside the UI relay
+    // synchronization context, so an async handler continues on the UI thread after an await.
+    [Fact]
+    public void AnAwakeHandlerRunsInTheRelaySynchronizationContextDuringPumpOnce()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Sprite2D sprite = new();
+        Scene2D scene = new();
+        scene.Children.Add(sprite);
+        Window window = new()
+        {
+            Content = new RenderSurface2D
+            {
+                Width = 200,
+                Height = 200,
+                Scene = scene,
+                RedrawMode = RenderSurface2DRedrawMode.OnDemand
+            }
+        };
+        window.Show();
+        for (int settle = 0; settle < 8 && runtime.PumpOnce(TimeSpan.FromMilliseconds(16)); settle++) { }
+        Assert.False(runtime.PumpOnce(TimeSpan.FromMilliseconds(16)));
+        List<SynchronizationContext?> contexts = [];
+        sprite.Awake += (_, _) => contexts.Add(SynchronizationContext.Current);
+
+        sprite.IsAwake = true;
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+        SynchronizationContext? recorded = Assert.Single(contexts);
+        Assert.True(
+            recorded is Cerneala.UI.Relay.UiRelaySynchronizationContext,
+            $"The Awake handler ran with SynchronizationContext.Current = {recorded?.GetType().FullName ?? "null"}.");
+    }
+
     // Scene2D awake, Stage 2: a handler that changes the scene makes PumpOnce render in the same pump; once the last awake
     // sprite sleeps, further pumps render nothing and raise no Awake.
     [Fact]
