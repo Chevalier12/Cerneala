@@ -318,6 +318,32 @@ public sealed class ServoSynchronizationTests
         await servo.WaitForIdleAsync();
     }
 
+    // User decision (#762): Servo IsIdle ignores awake nodes, so WaitForIdle completes while a sprite is awake and nothing else has work.
+    [Fact]
+    public async Task WaitForIdleCompletesWhileASpriteOnASurfaceIsAwake()
+    {
+        Sprite2D bee = new();
+        Scene2D scene = new();
+        scene.Children.Add(bee);
+        UIRoot root = new(200, 100);
+        root.VisualChildren.Add(new RenderSurface2D { Scene = scene });
+        UiHost host = CreateHost(root);
+        ServoApi servo = new(host, new ServoOptions
+        {
+            DefaultTimeout = TimeSpan.FromMilliseconds(300)
+        });
+        int awakeCount = 0;
+        bee.Awake += (_, _) => awakeCount++;
+        bee.IsAwake = true;
+        host.Update(EmptyInput(), host.Viewport, TimeSpan.FromMilliseconds(16));
+        host.Update(EmptyInput(), host.Viewport, TimeSpan.FromMilliseconds(16));
+        Assert.Equal(2, awakeCount);
+
+        await servo.WaitForIdleAsync();
+
+        Assert.True(bee.IsAwake);
+    }
+
     [Fact]
     public async Task TimeoutCancellationAndRootReplacementDetachWaitCallbacksAndLeaveServoUsable()
     {

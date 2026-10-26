@@ -136,6 +136,44 @@ Until all required map chunks and sprite/Prism/atlas images are ready, the surfa
 
 Explicit destination dimensions, static crop dimensions, or an animation frame can provide bounds before decoding. Images outside proven required coverage are not prepared, and unused sprite and Prism acquisitions are retired without detaching the sprite or its collider. Unknown natural dimensions cannot prove exclusion; Prism can conservatively require off-camera input because effects may extend beyond sprite bounds. [SceneItems2D](Cerneala.UI.Controls.SceneItems2D.md) realizes its collection independently of the viewport; only presentation work for its realized children is culled. Removing a sprite's resolved content also retires its no-longer-used Prism images, including pending work. Other consumers may still keep a shared atlas resident.
 
+### Awake
+
+`IsAwake` is `false` by default. While it is `true`, the sprite receives `Awake` once per time advance of the render surface that shows its scene. A handler can put the sprite back to sleep: the bee below stops receiving events once `hunger` is under 25, and the surface no longer visits it.
+
+```csharp
+float hunger = 30;
+bee.IsAwake = true;
+bee.Awake += (_, e) =>
+{
+    hunger -= (float)e.Elapsed.TotalSeconds;
+    if (hunger < 25)
+    {
+        bee.IsAwake = false;
+    }
+};
+```
+
+Here `bee` is a `Sprite2D` in the scene of a `RenderSurface2D` attached to a UI root. With host updates of 1 s, `Elapsed` is `0 s` on the first event and `1 s` on every later one, so the bee gets 7 events (`hunger` is 24 on the 7th) and none after that. This is the test `SceneAwakeTests.TheSummaryExampleCompilesAndWorks`. The event data is a [FrameTimeEventArgs](Cerneala.UI.Controls.FrameTimeEventArgs.md).
+
+The rules, each with the test that checks it (all in `SceneAwakeTests` unless another class is named):
+
+- **When it is raised.** Once per time advance of the surface: a `UiHost.Update` (`UiHost.cs:166`) or a `PumpOnce` of a shown window (`WindowApplicationRuntime.cs:664`) reaches `RenderSurface2D.UpdateRenderTime`, which raises `Awake` at its end (`RenderSurface2D.cs:266`). A sprite with `IsAwake == false` gets none (`NoAwakeIsRaisedWhileIsAwakeIsFalse`). `PumpOnce` does not advance render time for a hidden window, or one with a zero-size viewport (`WindowApplicationRuntime.cs:656-661`), and the time of those pumps is not added to the next one (`WindowRuntimeTests.PumpOnceDoesNotAdvanceRenderTimeForAHiddenWindowAndTheTimeIsNotCarriedOver`). So a long hidden time does not show up as one large `Elapsed`. One exception, read from source and not tested: while a Servo input operation still has a release to route through a hidden window, that window runs one host update with zero elapsed time (`WindowApplicationRuntime.cs:1370`), and its awake sprites get one `Awake` with a zero `Elapsed`.
+- **`Elapsed`.** `0` on the first event, then the time of the update: updates of 16 ms give `0`, `16 ms`, `16 ms` (`AwakeIsRaisedOncePerUpdateWithZeroThenTheFrameTime`). The sender is the sprite.
+- **Off screen.** A sprite far outside the visible area of the surface (the test puts it at `X = 100000`, `Y = 100000`) still receives `Awake`; animation parking does not apply to it (`AnOffscreenSpriteKeepsReceivingAwake`).
+- **Leaving and coming back.** A sprite removed from the scene stops receiving `Awake` (its `IsAwake` stays `true`). Added back, its first `Elapsed` is `0` again (`ANodeRemovedFromTheSceneStopsAndWhenAddedBackStartsAtZeroAgain`). The same holds when the surface is removed from the UI root and added again (`ASurfaceRemovedFromTheRootStopsAwakeAndWhenReaddedStartsAtZeroAgain`), and for a sprite that is already awake when it enters the scene (`ANodeAlreadyAwakeWhenItEntersTheSceneStartsAtZero`). Setting `IsAwake` to `false` and then to `true` also restarts at `0` (`SettingIsAwakeFalseStopsTheEventsAndWakingAgainRestartsAtZero`).
+- **Headless.** A scene driven only by `SceneSimulationContext2D.Update()` has no surface and never gets `Awake` (`AHeadlessSceneNeverGetsAwake`).
+- **Order.** Awake sprites and groups are visited in the order in which they became awake: after `b.IsAwake = true; a.IsAwake = true;` every update delivers `b` and then `a`. A node that sleeps and wakes again goes to the end (`NodesReceiveAwakeInTheOrderTheyBecameAwakeAndAReawokenNodeGoesToTheEnd`). Nodes that are already awake when their scene reaches a surface, or when the surface reaches the root, are visited in scene order, a parent before its children, whatever order they were woken in (`AwakeNodesOfASceneAttachedToASurfaceRegisterInSceneOrderParentFirst`, `AwakeNodesOfASceneRegisterInSceneOrderParentFirstWhenTheSurfaceIsAddedToTheRoot`).
+- **Changes made inside a handler.**
+  - A sprite that sets its own `IsAwake` to `false` gets no event from the next update (`ANodeThatSleepsInItsOwnHandlerGetsNoEventFromTheNextUpdate`).
+  - A node woken by a handler gets its first `Awake`, with `Elapsed` `0`, in the next update and never in the same one (`ANodeWokenInAHandlerGetsItsFirstAwakeOnTheNextUpdate`).
+  - A node put to sleep or removed from the scene by the `Awake` handler of another node that runs earlier in the same update gets no `Awake` in that update (`ANodePutToSleepOrRemovedByAnEarlierHandlerGetsNoAwakeInThatUpdate`).
+- **Before input.** `Awake` is raised in the same update before `InputHeld`, because the time advance runs before input dispatch (`AwakeIsRaisedBeforeInputHeldInTheSameUpdate`; `UiHost.cs:166` and `:186`).
+- **A handler that throws.** The other awake nodes still get `Awake` in that update. Afterwards the update throws an `AggregateException` that contains the handler's exception (`AThrowingAwakeHandlerDoesNotStopTheOthersAndTheUpdateThrowsAnAggregateException`).
+- **Frames.** Setting `IsAwake`, and an `Awake` handler that changes nothing, request no frame: in an `OnDemand` surface, three pumps with an awake sprite each return `false` and present nothing (`WindowRuntimeTests.AnAwakeSpriteGetsAwakeOnEveryPumpWithoutRequestingFrames`). A handler that changes the scene, for example `sprite.X += 1`, makes the same pump render a frame; once the last awake sprite sleeps, further pumps render nothing and raise no `Awake` (`WindowRuntimeTests.AfterTheLastAwakeObjectSleepsPumpOnceRendersNoMoreFrames`). A `Continuous` surface (the default) already asks for a frame on every pump (`RenderSurface2D.cs:257`).
+- **Servo.** `Servo.WaitForIdleAsync` does not wait for awake objects (`ServoSynchronizationTests.WaitForIdleCompletesWhileASpriteOnASurfaceIsAwake`).
+
+`Awake` exists on `Sprite2D` and `Scene2D`, not on other scene nodes. For a group, see [Scene2D, Awake](Cerneala.UI.Controls.Scene2D.md#awake).
+
 ## Collider ownership
 
 `Collider` is the nullable `Collider2D` content property. A sprite owns zero or one live collider. Assigning the property owns logical attachment, surface invalidation, and registration in the containing scene's collision world; it does not add a visual layout child. Assign a replacement or `null` through this property, not through generic UI child collections. A collider must be cleared from its current owner before moving to another sprite. Assigning a collider that already has an owner is rejected before the current collider is removed.
@@ -253,6 +291,7 @@ All five properties have matching public `<Name>Property` identifier fields and 
 | `FlipProperty` | `UiProperty<RenderSurface2DSpriteFlip>` | Identifies horizontal or vertical mirroring. |
 | `SamplingProperty` | `UiProperty<DrawSamplingMode>` | Identifies this sprite's image sampling mode. |
 | `LayerDepthProperty` | `UiProperty<float>` | Identifies the sprite layer depth. |
+| `IsAwakeProperty` | `UiProperty<bool>` | Identifies the `IsAwake` UI property. Changing it requests no frame. |
 
 ## Properties
 
@@ -270,6 +309,7 @@ All five properties have matching public `<Name>Property` identifier fields and 
 | `Flip` | `RenderSurface2DSpriteFlip` | Gets or sets sprite mirroring. |
 | `Sampling` | `DrawSamplingMode` | Gets or sets image filtering for this sprite; default `Linear`. |
 | `LayerDepth` | `float` | Gets or sets the layer depth forwarded to image drawing. |
+| `IsAwake` | `bool` | Gets or sets whether the sprite receives `Awake` once per time advance of its surface. The default is `false`. See [Awake](#awake). |
 | `Layer` | `int` | Gets or sets the parent-scene ordering layer. Inherited from `SceneNode2D`. |
 | `PrismInputDomain` | `DrawRect?` | Optional complete local input of this sprite's non-pointwise composition. Inherited from `SceneNode2D`; required when active effects lack supported automatic input selection in a hosted spatial scene. |
 | `Rotation` | `float` | Gets or sets rotation in radians. Inherited from `UIElement`. |
@@ -289,6 +329,13 @@ All five properties have matching public `<Name>Property` identifier fields and 
 | `Flip` | `FlipProperty` | `RenderSurface2DSpriteFlip.None` | `AffectsRender` |
 | `Sampling` | `SamplingProperty` | `DrawSamplingMode.Linear` | `AffectsRender`; accepts `Point` or `Linear`. |
 | `LayerDepth` | `LayerDepthProperty` | `0` | `AffectsRender` |
+| `IsAwake` | `IsAwakeProperty` | `false` | None (no `AffectsRender` or other option); changing it requests no frame. |
+
+## Events
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `Awake` | `EventHandler<FrameTimeEventArgs>` | Occurs once per time advance of the surface that shows the sprite's scene, while `IsAwake` is `true`. The sender is the sprite. See [Awake](#awake). |
 
 ## Applies to
 
@@ -316,3 +363,4 @@ Custom path loaders used by cold scene images must implement `IAsyncImageLoader`
 - `SceneItems2D`
 - `SceneOrderMode`
 - `ConeCollider2D`
+- `FrameTimeEventArgs`

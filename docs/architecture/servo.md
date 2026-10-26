@@ -77,6 +77,7 @@ The operation completes on the UI thread after all of these happened: the events
   - no active input hold (`RetainedServoInputDriver.HasActiveInputHold`: input is held and some element has a `PreviewInputHeld` or `InputHeld` handler);
   - no collider change in a `RenderSurface2D` scene under the root waits for its next contact delivery (`UIRoot.HasPendingSceneContacts`, `ServoContext.cs:121`);
   - the Servo gate is free.
+- Awake scene objects (`Sprite2D.IsAwake`, `Scene2D.IsAwake`) do not block idle. This is the user decision on issue #762: `bee.IsAwake = true; await servo.WaitForIdleAsync();` completes when there is no other UI work (`ServoContext.IsIdle`, `ServoContext.cs:112-123`, has no awake condition). Test: `tests/Cerneala.Tests/UI/Servo/ServoSynchronizationTests.cs:WaitForIdleCompletesWhileASpriteOnASurfaceIsAwake`. See [Awake](scene2d.md#awake).
 - Servo does not pump frames. In window mode the application loop does it. In host mode the caller must call `host.Update`. A wait, or a target action on a not-yet-actionable target, without frames ends with `ServoTimeoutException`.
 
 ## Screenshots

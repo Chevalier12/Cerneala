@@ -123,6 +123,7 @@ public sealed class UiHost
     {
         UIRoot currentRoot = RequireRoot();
         currentRoot.Relay.VerifyAccess();
+        using UiRelaySynchronizationContext.Scope contextScope = currentRoot.Relay.EnterSynchronizationContext();
         ObjectMotionRuntime.TickCurrent();
         TimeSensitiveRenderInvalidator.Invalidate(currentRoot, elapsedTime);
     }

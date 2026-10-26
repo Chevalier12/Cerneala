@@ -86,6 +86,14 @@ public partial class RenderSurface2D : ContentControl,
     // The bucket last appended to; cleared whenever a bucket is retired.
     private long lastScheduledDue;
     private List<(SceneNode2D Node, int Version)>? lastScheduledBucket;
+    // Awake nodes in the order they became awake. A removed node leaves a null tombstone, so removal is O(1) and keeps
+    // the order of the others; delivery compacts the list. Separate from the animations: awake nodes are never parked.
+    private readonly List<SceneNode2D?> awakeNodes = [];
+    private readonly List<(SceneNode2D Node, int Version)> awakeSnapshot = [];
+    private int awakeCount;
+    private bool deliveringAwake;
+    // The arguments last built for a non-zero frame time; reused while the frame time repeats.
+    private FrameTimeEventArgs? frameTimeArgs;
     private SceneSimulationContext2D? simulationContext;
     internal const int WarmPreparationTileBudget = 256;
     private int nextWarmPreparationIndex;
@@ -246,17 +254,17 @@ public partial class RenderSurface2D : ContentControl,
                 scheduleBucketPool.Push(due.Value);
             }
         }
-        if (!animationChanged &&
-            (!IsDrawingActive || RedrawMode != RenderSurface2DRedrawMode.Continuous))
+        bool changed = animationChanged || (IsDrawingActive && RedrawMode == RenderSurface2DRedrawMode.Continuous);
+        if (changed)
         {
-            return false;
+            // Continuous scene recording is not itself a content mutation. Imperative
+            // callbacks may depend on time or external state, so remain conservative
+            // about content; scene readiness only changes when the scene does.
+            InvalidateFrame(animationChanged || draw is not null, presentationChanged);
         }
 
-        // Continuous scene recording is not itself a content mutation. Imperative
-        // callbacks may depend on time or external state, so remain conservative
-        // about content; scene readiness only changes when the scene does.
-        InvalidateFrame(animationChanged || draw is not null, presentationChanged);
-        return true;
+        DeliverAwake(frameTime);
+        return changed;
     }
 
     internal int ActiveAnimationCount => activeAnimations.Count + scheduledAnimationCount;
@@ -359,6 +367,112 @@ public partial class RenderSurface2D : ContentControl,
     {
         Unschedule(node);
         RemoveFrameAnimation(node);
+    }
+
+    // A node is registered while it is attached to this surface's tree and wants Awake. Registering a registered
+    // node keeps its place; a new registration goes to the end and restarts the node at a zero Elapsed.
+    internal void RefreshAwakeRegistration(SceneNode2D node)
+    {
+        if (!node.IsAttached || !node.WantsAwake || !ReferenceEquals(node.Surface, this))
+        {
+            RemoveAwakeRegistration(node);
+        }
+        else if (node.AwakeSlot < 0)
+        {
+            node.AwakeSlot = awakeNodes.Count;
+            node.AwakeVersion++;
+            node.AwakeDelivered = false;
+            awakeNodes.Add(node);
+            awakeCount++;
+        }
+    }
+
+    internal void RemoveAwakeRegistration(SceneNode2D node)
+    {
+        int slot = node.AwakeSlot;
+        if (slot < 0)
+        {
+            return;
+        }
+        awakeNodes[slot] = null;
+        node.AwakeSlot = -1;
+        awakeCount--;
+        // Without deliveries (nothing ticks) tombstones would pile up.
+        if (awakeNodes.Count - awakeCount > 32 && awakeNodes.Count - awakeCount > awakeCount)
+        {
+            CompactAwakeNodes();
+        }
+    }
+
+    private void CompactAwakeNodes()
+    {
+        int write = 0;
+        for (int read = 0; read < awakeNodes.Count; read++)
+        {
+            if (awakeNodes[read] is { } node)
+            {
+                node.AwakeSlot = write;
+                awakeNodes[write++] = node;
+            }
+        }
+        awakeNodes.RemoveRange(write, awakeNodes.Count - write);
+    }
+
+    // Raises Awake on the nodes that were awake when the delivery began, in the order they became awake. A handler's
+    // changes count from the next time advance: a node woken meanwhile is not in the snapshot, and one put to sleep,
+    // removed or woken again meanwhile no longer matches its snapshot entry, so it gets nothing in this delivery.
+    private void DeliverAwake(TimeSpan frameTime)
+    {
+        if (!IsAttached || awakeCount == 0)
+        {
+            return;
+        }
+        if (deliveringAwake)
+        {
+            throw new InvalidOperationException("Scene awake delivery cannot be nested.");
+        }
+
+        CompactAwakeNodes();
+        foreach (SceneNode2D? node in awakeNodes)
+        {
+            awakeSnapshot.Add((node!, node!.AwakeVersion));
+        }
+
+        deliveringAwake = true;
+        List<Exception>? failures = null;
+        try
+        {
+            foreach ((SceneNode2D node, int version) in awakeSnapshot)
+            {
+                if (node.AwakeSlot < 0 || node.AwakeVersion != version)
+                {
+                    continue;
+                }
+
+                FrameTimeEventArgs args;
+                if (node.AwakeDelivered)
+                {
+                    args = frameTimeArgs is { } shared && shared.Elapsed == frameTime
+                        ? shared
+                        : frameTimeArgs = new FrameTimeEventArgs(frameTime);
+                }
+                else
+                {
+                    node.AwakeDelivered = true;
+                    args = FrameTimeEventArgs.Zero;
+                }
+
+                try { node.RaiseAwake(args); }
+                catch (Exception failure) { (failures ??= []).Add(failure); }
+            }
+        }
+        finally
+        {
+            awakeSnapshot.Clear();
+            deliveringAwake = false;
+        }
+
+        if (failures is not null) { throw new AggregateException(failures); }
     }
 
     // Stops visiting a culled node's frame changes. Its clock still advances,
@@ -479,6 +593,12 @@ public partial class RenderSurface2D : ContentControl,
             node.ActiveAnimationIndex = -1;
         }
         activeAnimations.Clear();
+        foreach (SceneNode2D? node in awakeNodes)
+        {
+            if (node is not null) { node.AwakeSlot = -1; }
+        }
+        awakeNodes.Clear();
+        awakeCount = 0;
         foreach (List<(SceneNode2D Node, int Version)> bucket in scheduledAnimations.Values)
         {
             foreach ((SceneNode2D node, int version) in bucket)

@@ -190,6 +190,32 @@ Aspect can also assign the structural `OrderMode` and inherited `Layer` properti
 
 A transform with no inverse, such as `ScaleX="0"`, still records the group. Forward rendering and conservative bounds remain available, while world-to-local conversion is unavailable internally for that transform.
 
+### Awake
+
+`IsAwake` is `false` by default. While it is `true`, the group receives `Awake` once per time advance of the render surface that shows its scene. `Scene2D.Awake` is for the group itself. The children of the group do not receive it through the group: each child gets its own `Awake` only when that child is awake itself. A group and its children are registered independently, each by its own `IsAwake` (`Scene2D.cs:104`, `RenderSurface2D.cs:376`; no dedicated test for an asleep group with awake children).
+
+```csharp
+Scene2D flock = new();
+flock.Children.Add(new Sprite2D());
+int ticks = 0;
+flock.Awake += (sender, e) => ticks++; // sender is flock; e is a FrameTimeEventArgs
+
+flock.IsAwake = true;
+// flock is in the Scene of a RenderSurface2D attached to a UI root.
+// With host updates of 16 ms, Awake is raised once per update, with e.Elapsed 0 ms, 16 ms, 16 ms, ...
+// The Sprite2D child is not awake, so it receives nothing.
+```
+
+The rules of [Sprite2D, Awake](Cerneala.UI.Controls.Sprite2D.md#awake) apply to a group in the same way. These cases are tested for `Scene2D` as well as for `Sprite2D`, in `SceneAwakeTests`:
+
+- `IsAwake` defaults to `false` (`IsAwakeDefaultsToFalse`), and a group that is not awake gets no event (`NoAwakeIsRaisedWhileIsAwakeIsFalse`).
+- `Elapsed` is `0` on the first event, then the time of the update (`AwakeIsRaisedOncePerUpdateWithZeroThenTheFrameTime`); setting `IsAwake` to `false` stops the events, and waking again restarts at `0` (`SettingIsAwakeFalseStopsTheEventsAndWakingAgainRestartsAtZero`, `ANodeThatSleepsInItsOwnHandlerGetsNoEventFromTheNextUpdate`).
+- A group removed from its parent scene stops receiving `Awake`; added back, it starts at `0` again (`ANodeRemovedFromTheSceneStopsAndWhenAddedBackStartsAtZeroAgain`, `ANodeAlreadyAwakeWhenItEntersTheSceneStartsAtZero`).
+- A group woken inside a handler gets its first `Awake` in the next update (`ANodeWokenInAHandlerGetsItsFirstAwakeOnTheNextUpdate`).
+- A group is visited in the order of waking, and a parent group before its children when they were awake before the scene reached the surface (`AwakeNodesOfASceneAttachedToASurfaceRegisterInSceneOrderParentFirst`).
+
+Setting `IsAwake` on a group requests no frame by itself: `IsAwakeProperty` has no options (`Scene2D.cs:39-43`). The pump test that shows this (`WindowRuntimeTests.AnAwakeSpriteGetsAwakeOnEveryPumpWithoutRequestingFrames`) uses a sprite.
+
 ### Prism input and streamed children
 
 For source-backed children, a pointwise operation reads the same scene pixel rather than neighboring scene pixels or an input-wide distribution. Compositions containing only the following active filters and paint styles therefore preserve ordinary viewport selection and offscreen resource retirement:
@@ -241,6 +267,7 @@ Simulation and collision interests remain independent: a pointwise effect does n
 | --- | --- | --- |
 | `Children` | `Collection<SceneNode2D>` | Ordered retained nodes recorded by the group. |
 | `Vision` | `ConeCollider2D?` | Gets or sets the cone the group sees with. It is a logical child in a slot of its own, never one of `Children`. The default is `null`. |
+| `IsAwake` | `bool` | Gets or sets whether the group receives `Awake` once per time advance of its surface. The default is `false`. See [Awake](#awake). |
 | `CollisionWorld` | `CollisionWorld2D` | Root-owned collision query world shared by this group and its nested scene groups. |
 | `OrderMode` | `SceneOrderMode` | Selects source, layer, or stable layer-then-Y recording order. The default is `Source`. |
 | `TransformOrigin` | `DrawPoint` | Absolute transform pivot in local scene-space units. The default is `(0, 0)`. |
@@ -255,6 +282,13 @@ Simulation and collision interests remain independent: a pointwise effect does n
 | `TransformOriginProperty` | `UiProperty<DrawPoint>` | Identifies the `TransformOrigin` UI property. Changes affect rendering. |
 | `XProperty` | `UiProperty<float>` | Identifies the `X` UI property. Changes affect rendering, picking and collision geometry. |
 | `YProperty` | `UiProperty<float>` | Identifies the `Y` UI property. Changes affect rendering, picking and collision geometry. |
+| `IsAwakeProperty` | `UiProperty<bool>` | Identifies the `IsAwake` UI property. It has no options; changing it requests no frame. |
+
+## Events
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `Awake` | `EventHandler<FrameTimeEventArgs>` | Occurs once per time advance of the surface that shows the group's scene, while `IsAwake` is `true`. The sender is the group. See [Awake](#awake). |
 
 ## Applies to
 
@@ -270,3 +304,4 @@ Project: `Cerneala`
 - `ConeCollider2D`
 - `CollisionWorld2D`
 - `MouseEventArgs`
+- `FrameTimeEventArgs`

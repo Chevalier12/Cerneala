@@ -213,6 +213,39 @@ public sealed class Sprite2D : SceneNode2D
                 UiPropertyOptions.AffectsRender,
                 validateValue: static value => value is SpriteAnimationStateChangeMode.Restart or SpriteAnimationStateChangeMode.Resume));
 
+    // Changing it requests no frame: an awake node is delivered on every time advance of its surface, drawn or not.
+    public static readonly UiProperty<bool> IsAwakeProperty =
+        UiProperty<bool>.Register(
+            nameof(IsAwake),
+            typeof(Sprite2D),
+            new UiPropertyMetadata<bool>(false));
+
+    /// <summary>
+    /// Gets or sets whether this sprite receives <see cref="Awake"/> once per time advance of the render surface that shows
+    /// its scene. The default is <see langword="false"/>. The sprite receives the event whether or not it is drawn, so
+    /// the game keeps going off screen; it receives none while it is not in a scene shown by a surface that is attached to
+    /// a UI root.
+    /// </summary>
+    public bool IsAwake
+    {
+        get => GetValue(IsAwakeProperty);
+        set => SetValue(IsAwakeProperty, value);
+    }
+
+    /// <summary>
+    /// Occurs once per time advance of the render surface while <see cref="IsAwake"/> is <see langword="true"/>. The first
+    /// event after the sprite became awake, or entered a shown scene while awake, reports a zero
+    /// <see cref="FrameTimeEventArgs.Elapsed"/>; later events report the elapsed time of the frame. A handler can set
+    /// <see cref="IsAwake"/> to <see langword="false"/> to stop the events from the next frame.
+    /// </summary>
+    public event EventHandler<FrameTimeEventArgs>? Awake
+    {
+        add => AddAwakeHandler(value);
+        remove => RemoveAwakeHandler(value);
+    }
+
+    internal override bool WantsAwake => IsAwake;
+
     public ImageReference? Image
     {
         get => GetValue(ImageProperty);
@@ -668,6 +701,10 @@ public sealed class Sprite2D : SceneNode2D
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
         base.OnPropertyChanged(args);
+        if (ReferenceEquals(args.Property, IsAwakeProperty))
+        {
+            RefreshAwakeRegistration();
+        }
         if (ReferenceEquals(args.Property, XProperty) || ReferenceEquals(args.Property, YProperty) ||
             ReferenceEquals(args.Property, UIElement.RotationProperty))
         {

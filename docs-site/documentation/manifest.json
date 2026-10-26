@@ -1305,6 +1305,11 @@
     "source": "UI/Controls/Decorator.cs"
   },
   {
+    "name": "Cerneala.UI.Controls.FrameTimeEventArgs",
+    "file": "documentation/classes/Cerneala.UI.Controls.FrameTimeEventArgs.md",
+    "source": "UI/Controls/FrameTimeEventArgs.cs"
+  },
+  {
     "name": "Cerneala.UI.Controls.Image",
     "file": "documentation/classes/Cerneala.UI.Controls.Image.md",
     "source": "UI/Controls/Image.cs"
