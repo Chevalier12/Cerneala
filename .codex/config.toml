@@ -69,6 +69,17 @@ This project provides `cerneala_roslyn`, a local Roslyn/MSBuild MCP over the sav
 - Read `Tools/RoslynMcp/README.md` before relying on tool semantics, coverage or freshness. Save files first. Existing ordinary `.cs` edits refresh on calls; explicitly call `reload_workspace` after adding/removing/renaming files, changing project/solution/build inputs or analyzer outputs, and after any `.crn`/AdditionalFile change. AdditionalFiles can be stale without warnings. Reissue affected queries after reload.
 - Respect result caps, warnings, ambiguous cross-assembly/target-framework identity and virtual generated-source paths. Static relationships are not proof of runtime execution, complete dispatch coverage or a causal chain; confirm the relevant mechanism with source and faithful runtime experiments.
 - The configured 12-tool allow-list excludes `rename_symbol` and other unselected upstream tools. Do not bypass it by invoking the raw server. If MCP tools are missing or fail, report the observation and use delegated source inspection; do not pretend they ran or silently reinstall/reconfigure the server.
+- `workspace_symbol` requires `query`, `kinds`, and `maxResults` (pass `null` for the defaults). The first call loads the whole solution and takes about 30–60 s.
+
+### Warning: mcpRoslyn processes and RAM
+
+Every Claude Code or Codex session that connects to this server runs its own `mcpRoslyn.exe`, for as long as that session is open. The machine has 16 GB. The launcher starts it with `--idle-unload-seconds 60`, so the solution is in memory only while tools are used:
+
+- Before the first tool call, the process holds about 55 MB: the solution is not loaded yet. The first call loads it, which takes about 30–60 s.
+- While the solution is loaded, the process holds about 0.9–1.1 GB.
+- 60 s after the last tool call, the server unloads the solution and gives the memory back: about 100–240 MB private memory remains. The next call loads it again, in about 25–50 s. Example, measured 2026-10-15: 863 MB after a `workspace_symbol` call, 99 MB after the idle time, 884 MB after the next call, 106 MB after the next idle time.
+- The launcher puts itself and `mcpRoslyn.exe` in a Windows kill-on-close job. When a client closes the connection or kills the launcher, `mcpRoslyn.exe` and its BuildHost children exit with it. Processes started by an older launcher or by any other launcher can still be orphaned: stop only such orphans, by exact PID, after checking that the PID is still `mcpRoslyn` and that no open session owns it. Never stop the server of a live session, including this one.
+- Do not start extra connections to the server (probes, test harnesses) while a session already holds one, unless the task needs it. Stop any probe you started before finishing.
 
 ## Durable repository workflow
 
@@ -78,15 +89,37 @@ Before delegating broad repository exploration, follow the FileTree generate-the
 
 Skills are executable policy. Use named or clearly applicable skills; parent reads the complete `SKILL.md` and required references before task actions, never delegates interpretation. Choose minimal skills, order multiple workflows before implementation, and prefer provided scripts/harnesses/templates/assets. Do not carry skills into unrelated work. Report unavailable tooling/state and use the safest compatible fallback; announce execution changes briefly and report blocking gates in final. Prefer Cerneala algorithm-market, checklist planning, implement-plan, fix-bug, and writing-api-documentation workflows over generic intuition.
 
-When you discover a Cerneala defect during any task, including one outside its scope, invoke `$github-issue-raise` on your own. It proves the defect with a faithful reproduction, checks for duplicate issues, drafts the issue in the issue #3 format under `.artifacts/issue-drafts/`, and posts it only after the user approves that draft. Do not silently fix an out-of-scope defect inside the current task; list pending drafts in the final message.
+When you discover a Cerneala defect during any task, including one outside its scope, invoke `$github-issue-raise` on your own. It proves the defect with a faithful reproduction, checks for duplicate issues, drafts the issue in the issue #3 format under `.artifacts/issue-drafts/` of the main checkout (see "Temporary worktree for skills"), and posts it only after the user approves that draft. If the user is away, the draft stays there and the task continues. Do not silently fix an out-of-scope defect inside the current task; list pending drafts in the final message.
 
-For checklist plans, recover current stage/gates; execute one atomic stage without later-stage interleaving. Pass gates, parent-review, immediately check off verified completion, review that checkpoint, then reread the remaining plan before advancing. Checkmarks mean implemented or deliberately resolved AND verified: tests exist/pass, canonical docs/manifest synchronized, required full suite actually passed. Stay on blocked stages unless the user changes the plan.
+For checklist plans, recover current stage/gates; execute one atomic stage without later-stage interleaving. Pass gates, parent-review, immediately check off verified completion, review that checkpoint, then reread the remaining plan before advancing. Checkmarks mean implemented or deliberately resolved AND verified: tests exist/pass, canonical docs/manifest synchronized, focused tests for all changed and affected code actually passed. Stay on blocked stages unless the user changes the plan.
 
 For isolated C# mechanics prefer CSI when cheaper and faithful. The command is `dotnet-csi <script>.csx` (global .NET tool `dotnet-csi`, installed in `%USERPROFILE%\.dotnet\tools`, which is on the user PATH); there is no `csi` command. Use a project-approved temporary `.csx` rather than stdin, a short timeout, cleanup, and check/terminate suspicious stuck `dotnet-csi.exe` processes. Never leave interactive/long-running CSI in the background. Keep all temporary experiments outside production globs/build discovery; remove them unless preservation is requested.
 
+## Temporary worktree for skills
+
+The skills that change code work in a temporary git worktree from their very first step (user decision, 2026-10-15): `cerneala-fix-bug`, `cerneala-fix-bug-group`, `cerneala-implement-plan`, `cerneala-implement-issue`, `cerneala-performance-gate`, `repo-cleanup`, and `cerneala-breaker`. The main checkout and its dirty user files stay untouched.
+
+- **Start (step 0, before any read, search, build, or edit):** if `git rev-parse --git-dir` and `git rev-parse --git-common-dir` print different paths, the session is already in a linked worktree: stay there and create none. Otherwise pick a short task name, for example `fix-grid-span` or `issue-943`, run `git fetch origin`, then `git worktree add -b worktree-<name> .claude/worktrees/<name> origin/master` from the main checkout. Codex has no tool that moves the session into the worktree: run every later command with the worktree as its working directory, edit only files under the worktree, except the files in "Files that must outlive the worktree" below, and give Luna explorers the worktree's paths.
+- **Finish (after the skill's last step):** remove only a worktree that this skill created at step 0, and only when its work is published: `git status --porcelain` prints nothing, and after `git fetch origin`, `git branch -r --contains HEAD` prints at least one branch. Then run `git worktree remove .claude/worktrees/<name>` and `git branch -D worktree-<name>` from the main checkout. In every other case keep the worktree and report its path and what is unpublished, for example uncommitted breaker regression tests.
+- **Files that must outlive the worktree:** issue drafts go to `.artifacts/issue-drafts/` of the main checkout (the parent folder of `git rev-parse --path-format=absolute --git-common-dir`), not of the worktree. Later changes to that folder, such as moving a posted draft to `posted/`, also happen there. A plan file that exists only in the main checkout, or differs there from the worktree's copy, is copied into the worktree at the same path before the work starts, and is committed with it.
+
+# Verification commands
+
+The Cerneala skills in `.codex/skills/` rely on this section. Verification commands, as observed on this workstation on 2026-10-09:
+
+- **Focused tests:** `dotnet test <project.csproj> -c Release --filter "FullyQualifiedName~<Name>"`. Add `-p:NuGetAudit=false` when the NuGet vulnerability feed is unreachable.
+- **Complete suite: never run it** (user decision, 2026-10-15). Do not run `dotnet test Cerneala.slnx`, `dotnet test` without a project, or any test project without `--filter`. Run the focused tests of every test project that covers the changed or affected code instead. Where a skill, plan, gate, or rule asks for the full suite or full repository verification, this replaces it. Every report, commit, pull request, or comment that lists test results says that the complete suite was not run.
+- **Before focused tests in a fresh checkout or worktree:** when PreviewHost tests are in scope, run `dotnet build Cerneala.slnx -c Debug` first, because PreviewHost compiles its workspace against Debug outputs; without them, PreviewHost tests fail with missing generated symbols. When Visual Studio lane tests are in scope, run `dotnet restore tests/Fixtures/VisualStudioIntegrationHost/VisualStudioIntegrationHost.csproj` first; without it, the lane fails with `NETSDK1004`.
+- **Native SDL/GPU tests** are opt-in with `CERNEALA_SDL_NATIVE_TESTS=1`, and the full native SdlGpu project can run for more than an hour. Run the native subset the change touches, for example `--filter "FullyQualifiedName~Prism"` (about 6 minutes) or the pixel-conformance tests, unless the plan or gate requires the whole native lane.
+- **Locked build outputs:** a running `mcpRoslyn.exe` can lock analyzer/generator outputs. If a build fails on a locked SourceGen or analyzer file, find the `mcpRoslyn.exe` that holds it. When it belongs to this session, wait 60 s without Roslyn tool calls, so it unloads the solution, and retry. When it is an orphan (see "Warning: mcpRoslyn processes and RAM"), stop it by its exact PID. Ask the user before stopping the server of another live session.
+- **Long commands:** a build, a filtered test project, or a harness that takes more than about 2 minutes runs as a long job with the native completion wait (see "Files, destructive actions, and execution"); never poll with sleep.
+- **Command output:** filter it to the decisive lines, for example `Select-String 'Passed!|Failed!|error |^\s+Failed '`. Read whole logs only when diagnosing a specific failure.
+- **Context compaction:** after any compaction during skill work, re-read the active skill's complete `SKILL.md` from disk before the next action. The summary does not replace the skill.
+- **Progress tracking:** the repository artifact (plan file, risk ledger, work ledger) is the durable record; `update_plan` only mirrors it.
+
 # Verification and realtime behavior
 
-After GREEN, rerun original reproduction, focused test project, broader affected suites, required full repository verification, and relevant performance/visual/API/conformance gates. Check mechanism/invariant against diagnostic evidence: a passing patch may mask a symptom. Investigate suite failures; establish environmental/unrelated causes with evidence and report blockers.
+After GREEN, rerun original reproduction, focused test project, focused tests of the other affected test projects, and relevant performance/visual/API/conformance gates. Check mechanism/invariant against diagnostic evidence: a passing patch may mask a symptom. Investigate suite failures; establish environmental/unrelated causes with evidence and report blockers.
 
 Cerneala is a retained realtime UI framework: do not optimize intuitively. When relevant, measure CPU frame cost, allocations, invalidations, measure/arrange counts, rebuilt/reused render work, passes, draw calls, cache hits/misses, resource churn, and measurable GPU time. Respect retained-cache/JIT warmup; no zero-allocation claims without warmed-up measurements. Label unmeasured claims.
 
@@ -96,7 +129,7 @@ Exercise UI through user-like input where practical. Direct property changes do 
 
 Capture Cerneala screenshots exclusively through the application-owned API; for windows, `Window.SaveScreenshot`. No Computer Use, PowerShell/Win32 screen copying, capture utilities, image libraries, or OS-level substitute. If unavailable/failing, report the blocker.
 
-Done requires the requested result and applicable gates: source/regression, focused/broader/full tests, original runtime reproduction, visual/performance, API diff, source generation, docs/manifest, temporary cleanup, and required human validation. Never claim manual validation without an authorized human performing it, or full verification/completion with a required gate failing/unavailable. Record explicit user waivers; distinguish automated completion from pending human validation.
+Done requires the requested result and applicable gates: source/regression, focused tests for all changed and affected code, original runtime reproduction, visual/performance, API diff, source generation, docs/manifest, temporary cleanup, and required human validation. Never claim manual validation without an authorized human performing it, or full verification/completion with a required gate failing/unavailable. Record explicit user waivers; distinguish automated completion from pending human validation.
 
 # Canonical API documentation
 
@@ -113,6 +146,41 @@ Before destructive operations, confirm authorized scope, inspect/resolve exact t
 Use native completion waits/queues for long jobs and the longest safe wait on yielded cell/session IDs. No short polling, unchanged log/status reads, or blocking sleep loops. Genuine timeouts allow another long wait. If no completion-aware wait exists and useful work is exhausted, leave only safely continuing jobs running, report job/result location, end the turn, and check once next turn.
 
 Parallelize independent reads/checks only without shared-state races; never concurrent mutating jobs on shared outputs. Prefer deterministic repository scripts over improvised chains. Keep commands inspectable, escape input, and avoid unsafe interpolation/secret exposure. Use task-specific variables; never repurpose `$HOME`, `$home`, or `$CODEX_HOME`.
+
+# The user
+
+The user is autistic and English is not their first language. Every explanation must:
+
+- Include a concrete example: real markup or code, what happens when it runs, and the literal result. Never explain with abstractions alone.
+- Avoid ambiguity. Ambiguity confuses the user. Say exactly what happens, in which case, and with which value. When something has two possible meanings, name both and say which one applies.
+- Use simple, common words and short sentences. Avoid complex vocabulary and jargon. Explain a technical term the first time it appears.
+- Be patient. If the user asks again, explain again more simply and with a different example. Do not repeat the same words.
+- Be fully informal in tone.
+- Always reply in the language the user writes in. If they write in Romanian, answer in Romanian; if they switch to English, switch too. This covers chat replies and questions to the user. It does not change code, commits, issues, docs, or other repository artifacts, which stay in their existing language (English).
+
+When a skill needs a blocking decision from the user, every option gets a concrete example of what changes.
+
+These rules override the compact-prose guidance below when the two conflict.
+
+# Self-check before telling the user anything
+
+The user acts on what you say. A wrong statement costs them more than a slow answer. Be paranoid about your own claims, in chat, plans, issues, and reports.
+
+- Before you state how code behaves, what exists, what it costs, or what it wakes, check it in this session: source with `file:line`, or a run. Memory, names, summaries (your own included), and "it probably works like X" are not evidence.
+- Visible citation is mandatory. Every claim about the code, the repository, a tool, or a run carries its evidence next to it, so the user can see what was checked:
+  - source: `Sprite2D.cs:639-668`;
+  - a run: the command and its result, for example "`git diff --check`: no output";
+  - a document: its URL or path.
+
+  A claim you did not verify carries a visible label in the user's language instead: "(unverified)" in English, "(neverificat)" in Romanian. Example: "`OnAttached` starts the sprite's animation (`SceneNode2D.cs:327-331`)" versus "`AnimationLooped` costs little (unverified)". A claim with neither a citation nor the label is a broken rule. Proposals and recommendations are not claims about existing code, but the facts they rely on are, so those facts carry citations too.
+- Cost and timing claims ("this wakes every frame", "this is free", "this fires exactly at the end") are behavior claims. Trace the code path before you make them.
+- Examples must match real repository usage. Before you write markup, code, a value format, or a type name, find an existing use and copy its form (for example `Duration="150ms"`, not an invented format).
+- Before you send, reread the reply as a separate pass:
+  1. For each factual sentence, name the evidence from this session. No evidence: verify it now, or mark it as unverified and say what would check it.
+  2. For each sentence, look for a second meaning. Words like "only if", "until", "exactly", "always" must say which case, which value, and what happens in the other case.
+  3. Check that numbers, counts, names, and links match the files you changed.
+- When you find that you said something wrong, say it first and plainly: what was wrong, what is right, and what you changed. Do not hide the correction inside other text.
+- Do not promise that you will never be wrong. Say what you checked and what you did not.
 
 # Communication
 

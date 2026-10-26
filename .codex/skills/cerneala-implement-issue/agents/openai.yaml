@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cerneala Implement Issue"
+  short_description: "Implement a non-bug Cerneala change from an issue"
+  default_prompt: "Use $cerneala-implement-issue to implement this non-bug Cerneala issue for me end to end: decide open design choices with me first, write tests for every acceptance criterion, make the architecture-correct change with focused tests only, update the canonical docs, build a demo app when the change is visible in a window, open a pull request, and merge it only after I say yes."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cerneala Fix Bug Group"
+  short_description: "Fix related Cerneala bugs in one pull request"
+  default_prompt: "Use $cerneala-fix-bug-group to fix this Cerneala bug issue for me together with every open bug issue whose fix changes the same code files, in one worktree and one pull request, with one reproduction app for the whole group, and to take over and close the older pull requests of those issues after the group pull request exists."

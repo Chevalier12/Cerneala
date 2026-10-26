@@ -15,6 +15,8 @@ Require a concrete target: a public API, type, subsystem, backend, feature, scen
 
 Treat the invocation as authorization to inspect the repository, run bounded adversarial tests against that target, add permanent regression tests for confirmed findings, add a justified permanent Detective diagnostic under the policy below, and repair confirmed Servo or Detective defects encountered during the audit. Findings outside Servo and Detective remain active RED tests. It does not authorize other production fixes, other permanent public API changes, new dependencies, commits, destructive stress, or attacks on external systems.
 
+**Step 0 (MANDATORY, before any inspection or test):** start in a temporary worktree, as `.codex/config.toml` describes under "Temporary worktree for skills", and work only there: run every command with the worktree as its working directory and give Luna explorers the worktree's paths. After the report, finish the worktree the same way. The audit makes no commit, so a worktree that holds new regression tests or diagnostics is kept: give its path in the report.
+
 ## Scope
 
 Hunt failures that matter to a user who does not care about polish:
@@ -32,7 +34,10 @@ Do not waste the attack budget on naming, formatting, aesthetics, friendly diagn
 ## Operating Rules
 
 - Follow repository instructions and preserve the dirty worktree. Existing changes and failures are not yours.
-- Generate and read `FileTree.md` before broad repository reasoning. Use direct file reads and `rg` for text. Read complete source files before editing test or harness code.
+- Follow the Codex instructions in `.codex/config.toml`, especially "Verification commands". When you do not know the structure of the target area, run `.\Tools\scripts\New-FileTree.ps1` from the repository root and read `FileTree.md` once.
+- Luna explorers do the reconnaissance of contracts, callers, existing tests, and neighboring subsystems that share an invariant (they use Roslyn MCP for symbol identity). Send independent questions to separate explorers in parallel. The parent reads the exact files they name and reads complete source files before editing test or harness code.
+- Run long attack runs, stress loops, and suites as long jobs, each with an explicit timeout, and wait for them with the native completion wait on the yielded session (see "Files, destructive actions, and execution" in `.codex/config.toml`). Never leave a probe process running at handoff.
+- After a context compaction, re-read this file (`.codex/skills/cerneala-breaker/SKILL.md`) and the risk ledger before the next probe. Ledger dispositions are never reconstructed from memory.
 - Establish the documented or observable contract before calling behavior broken. Distinguish valid hostile use from invalid use that the API is allowed to reject.
 - Before adding a probe, record the baseline revision, dirty state, toolchain/runtime identity, applicable backend/platform/configuration, focused command, and broader command. Run the focused baseline when practical and capture duration, skips, retries, hangs, leaks, and known flakes instead of reducing it to pass/fail.
 - Classify every anomalous result as unclassified until evidence distinguishes a Cerneala defect, test defect, harness/environment defect, specification gap, or flake. Only Cerneala defects are indictments against the target.
@@ -85,7 +90,7 @@ Before writing probes, build a compact attack model:
 - for a stateful target, write a minimal state/action table with expected and forbidden outcomes, then derive hostile sequences from it;
 - mark unsupported assumptions and contract ambiguities instead of silently turning them into test expectations.
 
-Track the attack model as a compact risk ledger. Every behaviorally distinct row must name the contract and its source, consequence, falsifiable hypothesis, oracle, current evidence gap, selected technique, budget, priority, and disposition. Use only these dispositions:
+Track the attack model as a compact risk ledger, kept in a temporary file outside the repository (`<temp-dir>`) so that it survives context compaction. Every behaviorally distinct row must name the contract and its source, consequence, falsifiable hypothesis, oracle, current evidence gap, selected technique, budget, priority, and disposition. Use only these dispositions:
 
 - `pending`: not yet exercised;
 - `covered`: the declared bounded attack ran without contradiction;
@@ -169,10 +174,12 @@ Every confirmed finding, including Material findings, must finish with the small
 - For performance findings, prefer deterministic Detective work/allocation/resource counters or a dedicated performance gate with a declared oracle. Do not add noisy wall-clock assertions to an ordinary unit suite.
 - Keep the test active and unskipped. Before any permitted fix, its RED result must be an assertion or explicit failure signal caused by the target defect, not a broken fixture, compilation error, missing asset, unavailable environment, or unrelated exception. At handoff it remains RED unless the self-repair policy required the Servo or Detective defect to be fixed.
 - Prove that the regression has discrimination power: observe it RED against the defective behavior, and when practical show that a controlled non-defective comparison or narrowly reversed fault does not trigger the same failure. Merely executing the suspected code is not enough.
-- Run each new test in isolation at least twice while confirming deterministic RED behavior. For a Servo or Detective self-repair, rerun the unchanged test to prove GREEN and run the affected subsystem suite. Otherwise run the affected test project to inventory the intentional failures and detect collateral fixture or compilation damage. Run broader repository gates required by repository policy and distinguish expected RED findings, repaired GREEN regressions, and unexpected failures.
+- Run each new test in isolation at least twice while confirming deterministic RED behavior. For a Servo or Detective self-repair, rerun the unchanged test to prove GREEN and run the affected subsystem suite. Otherwise run the focused tests of the affected test project (with a `--filter` covering the touched area) to inventory the intentional failures and detect collateral fixture or compilation damage. Never run the complete repository suite (`dotnet test Cerneala.slnx`, or a test project without `--filter`): the user chose focused tests only. Distinguish expected RED findings, repaired GREEN regressions, and unexpected failures.
 - If a faithful permanent automated test is technically impossible, report the exact blocker. The evidence may still be reported, but the finding is not fully delivered under this skill and the audit remains incomplete for it.
 
 Do not change production behavior merely to make the RED test easier to express. A Servo or Detective self-repair must fix the owning invariant so the unchanged regression becomes GREEN; the test must not smuggle in the fix.
+
+For every confirmed Critical, Major, or Material finding, invoke `$github-issue-raise`, one issue per violated contract. Put the permanent regression test's name and its isolated command in the issue's reproduction section.
 
 ### 5. Grade the damage
 
@@ -188,6 +195,8 @@ Severity follows impact and reproducibility, not how angry the prose sounds.
 ### 6. Clean up and report
 
 Remove temporary probes, reports, generated files, instrumentation, and superseded harness projects using exact validated paths. Preserve every permanent regression test, including GREEN Servo or Detective self-repair coverage, and any justified Detective diagnostic with its focused tests and documentation. Confirm with `git status` that the retained audit changes are exactly those intended artifacts and that unrelated user changes are untouched.
+
+Write the report in the user's language, following "The user" in `.codex/config.toml`. Give every confirmed finding a literal example: the input or action sequence, what happened, and what should have happened.
 
 Lead with a blunt verdict:
 

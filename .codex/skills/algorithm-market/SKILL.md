@@ -23,6 +23,19 @@ repository context unless the request supplies one.
 - Keep research and implementation as separate phases. An implementation
   request authorizes implementation work only within its stated scope.
 
+## Codex Execution
+
+- In Cerneala, follow the Codex instructions in `.codex/config.toml`, especially "Parent ownership and mandatory Luna exploration". Luna explorers own all web and repository searching. For a broad market, send the exploration to Luna explorers. For a narrow market (few candidate families), one Luna explorer is enough. The parent does not run its own web, file, or symbol searches.
+- When you use several explorers, split the market into independent assignments and dispatch them in parallel. Examples: one per evidence track (research / production) per algorithm family, plus one for the current implementation in the repository. Each explorer returns, per candidate:
+  - the name and family;
+  - direct source links (paper, standard, or a pinned release/commit and file);
+  - the license identifier and license URL;
+  - the claims it supports, each with its link;
+  - coverage limits.
+- Verify every decisive claim yourself by reading the cited source link, or the cited repository file. The parent may read exact source links supplied by Luna. Decisive claims are the ones behind a score, a hard gate, a license verdict, or a benchmark number. An explorer summary is not evidence on its own.
+- Run further search rounds until the two-round saturation gate below is met. Record each round's query themes.
+- Keep the candidate ledger in a temporary file outside the repository (`<temp-dir>`), so it survives context compaction. After a compaction, re-read this file (`.codex/skills/algorithm-market/SKILL.md`) and the ledger before continuing.
+
 ## Workflow
 
 ### 1. Establish the current state when one exists
@@ -122,7 +135,7 @@ every field as though it were graphics.
 
 ### 6. Return the decision report
 
-Write in the user's language unless they request another language. Use the
+Write in the user's language unless they request another language. In Cerneala, follow "The user" in `.codex/config.toml`: explain each finalist's decisive tradeoff with one concrete example, such as a specific input and what each algorithm does with it. Use the
 following section order so coverage, evidence, and the verdict remain auditable.
 
 ## Mandatory Chat Report Format

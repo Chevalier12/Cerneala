@@ -1,0 +1,4 @@
+interface:
+  display_name: "Git Session Commit Push"
+  short_description: "Commit, push and open a PR for this chat's work"
+  default_prompt: "Use $git-session-commit-push to commit and push all the changes from this conversation for me on a session branch (never on master) with a structured commit message, and open a pull request without merging it."

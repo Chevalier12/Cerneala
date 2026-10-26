@@ -94,9 +94,12 @@ reminder), after a blank line, unless the user's own instructions say otherwise.
 Do not invent a trailer the session does not specify.
 
 When another skill invokes this one at its end (`cerneala-fix-bug`,
-`cerneala-implement-plan`, `cerneala-performance-gate`, or `repo-cleanup`),
+`cerneala-fix-bug-group`, `cerneala-implement-plan`, `cerneala-implement-issue`,
+`cerneala-performance-gate`, or `repo-cleanup`),
 include the facts it passes in both the commit body and the pull-request body,
-for example `Fixes #N`, the plan path, or a baseline-versus-final table.
+for example `Fixes #N` (`cerneala-implement-issue` passes `Closes #<N>`), a
+`Group` section (`cerneala-fix-bug-group`), the plan path, or a
+baseline-versus-final table.
 
 Derive every statement from the staged diff and recorded evidence. Do not copy
 example bullets, old test counts, or unrelated accomplishments. State failures,
