@@ -95,7 +95,13 @@ The first has the text `"one\ntwo"` and draws two lines.
 
 ## Remarks
 
-`TextBlock` builds a `TextAspect` from `FontFamily`, `FontSize`, `FontWeight`, `FontStyle`, `FontStretch`, `Foreground`, `TextWrapping`, `TextTrimming`, and `FontResourceId`. It builds a `TextParagraphOptions` from `TextAlignment`, `MaxLines`, `LineHeight`, and `LineStackingStrategy`. It turns its inline tree into a list of `TextSpan` values, one for each piece of text, depth first, each with the style that its `Run`, `Span`, `Bold`, and `Italic` ancestors give it; a block with no text gets one empty span, so an empty `TextBlock` still measures one line. During measurement it passes the spans, the aspect, the options, and the available layout bounds to `TextMeasurer.MeasureParagraph`; during rendering it passes them to `TextRenderer.RenderParagraph`, which draws the visible lines at the render bounds origin. The desired size is `TextParagraphLayout.Size`.
+`TextBlock` builds a `TextAspect` from `FontFamily`, `FontSize`, `FontWeight`, `FontStyle`, `FontStretch`, `Foreground`, `TextWrapping`, `TextTrimming`, and `FontResourceId`. It builds a `TextParagraphOptions` from `TextAlignment`, `MaxLines`, `LineHeight`, and `LineStackingStrategy`. It turns its inline tree into a list of `TextSpan` values, one for each piece of text, depth first, each with the style that its `Run`, `Span`, `Bold`, and `Italic` ancestors give it; a block with no text gets one empty span, so an empty `TextBlock` still measures one line. During measurement it passes the spans, the aspect, the options, and the available layout bounds minus the insets (see [Padding](#padding)) to `TextMeasurer.MeasureParagraph`; during rendering it passes them to `TextRenderer.RenderParagraph`, which draws the visible lines at the origin of the render bounds minus the insets. The desired size is `TextParagraphLayout.Size` plus the insets.
+
+### Padding
+
+As in WPF, `Padding` is room between the edge of the `TextBlock` and its text. The text is measured in the available size minus the padding, the padding is added to the desired size, and the text is drawn inside the render bounds minus the padding, offset by the left and top sides. Wrapping, trimming, and `TextAlignment` use the inner width. For example, with the default font, `new TextBlock { Text = "Hi" }` measures `15.234375 x 21.28125` and draws `Hi` at `0, 17.265625`; with `Padding = new Thickness(10, 4, 6, 2)` it measures `31.234375 x 27.28125` (16 wider and 6 higher) and draws `Hi` at `10, 21.265625`. `Background` still fills the whole render bounds, padding included.
+
+A negative side of `BorderThickness` adds its size to the same insets, as in every `Control`. `TextBlock` draws no border, so a positive `BorderThickness` changes neither the layout nor the drawing.
 
 ### Text and Inlines
 
@@ -117,7 +123,7 @@ An inline takes each style property that it does not set from the nearest `Span`
 
 ### Alignment, line height, and line limit
 
-`TextAlignment` places the lines inside the width that the block is arranged at, and it does not change the measured width. `Justify` does not stretch the last line of a paragraph, that is the line that ends the text or the line before a hard line break. `LineHeight` is `NaN` by default, which keeps the height of the content of each line; `LineStackingStrategy` says whether a given `LineHeight` is a lower limit (`MaxHeight`) or the exact height (`BlockLineHeight`). `MaxLines` limits the number of lines that are measured and drawn; `0` shows all lines.
+`TextAlignment` places the lines inside the width that the block is arranged at minus its `Padding`, and it does not change the measured width. `Justify` does not stretch the last line of a paragraph, that is the line that ends the text or the line before a hard line break. `LineHeight` is `NaN` by default, which keeps the height of the content of each line; `LineStackingStrategy` says whether a given `LineHeight` is a lower limit (`MaxHeight`) or the exact height (`BlockLineHeight`). `MaxLines` limits the number of lines that are measured and drawn; `0` shows all lines.
 
 `TextWrapping.WrapWithOverflow` breaks at the same places as `Wrap`, but a word that is wider than the available width stays whole on its line and the line overflows. The measured width can then be larger than the available width. For example, the single word `"Supercalifragilisticexpialidocious"` at an available width of 60 is split into several lines with `Wrap`, and stays one line wider than 60 with `WrapWithOverflow`.
 
@@ -137,7 +143,7 @@ By default the control uses `TextMeasurer.Default` and `TextRenderer.Default`. S
 
 `TextWrapping.Wrap` allows measurement to respect the available width. `TextTrimming.CharacterEllipsis` collapses overflow at Unicode text-element boundaries, while `TextTrimming.WordEllipsis` prefers complete words and falls back to character trimming for an oversized first word. Both modes append `U+2026`, respect finite width, and collapse the last visible line when finite height hides later lines. `TextTrimming.None` preserves the uncollapsed text layout.
 
-Changing text, wrapping, alignment, line height, line stacking strategy, maximum lines, font weight, style or stretch, font resource, resource provider, or text measurer invalidates measure and render. Changing `TextDecorations` or `Background` invalidates render only. Changing the text renderer invalidates render only. Changing inherited `Foreground` invalidates render without changing the text layout identity.
+Changing text, wrapping, alignment, padding, border thickness, line height, line stacking strategy, maximum lines, font weight, style or stretch, font resource, resource provider, or text measurer invalidates measure and render. Changing `TextDecorations` or `Background` invalidates render only. Changing the text renderer invalidates render only. Changing inherited `Foreground` invalidates render without changing the text layout identity.
 
 ## Constructors
 
@@ -188,6 +194,8 @@ Changing text, wrapping, alignment, line height, line stacking strategy, maximum
 | `FontStretch` | `Control` | Inherited font stretch. Defaults to `FontStretch.Normal` and affects measure and render. Selects the closest real face of the family. |
 | `Foreground` | `Control` | Inherited foreground brush. Defaults to a solid brush with `Color.Black`, inherits through the UI property system, and affects render. |
 | `Background` | `Control` | Brush that fills the whole render bounds under the text. Defaults to `null` (no fill), does not inherit, and affects render. |
+| `Padding` | `Control` | Room between the edge and the text. Defaults to `Thickness.Zero`; it is added to the desired size, and the text is measured and drawn inside the bounds minus it. Affects measure and render. |
+| `BorderThickness` | `Control` | Defaults to `Thickness.Zero`. A negative side adds to the insets like `Padding`; a positive side has no effect, because `TextBlock` draws no border. Affects measure and render. |
 
 ## Methods
 
