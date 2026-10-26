@@ -98,7 +98,7 @@ internal sealed partial class CernealaSemanticModel
                 CernealaSemanticSymbolKind.ResourceReference,
                 name,
                 "Cerneala.UI.Prism.Definitions.PrismClipDefinition",
-                application.ResourceSpan,
+                new TextSpan(application.ResourceSpan.Start + 1, name.Length),
                 definitionLocation: resource.Location));
             BindPrismApplicationArguments(owner, application, definition);
         }

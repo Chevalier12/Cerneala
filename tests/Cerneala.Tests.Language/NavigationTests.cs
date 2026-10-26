@@ -206,6 +206,44 @@ public sealed class NavigationTests
         }
     }
 
+    [Theory]
+    [InlineData("<Window><Window.Resources><SolidColorBrush Name=\"Primary\" /></Window.Resources><Button Background=\"$Primary\" /></Window>")]
+    [InlineData("<Window><Window.Resources><Aspect Name=\"Primary\" TargetType=\"Button\"></Aspect></Window.Resources><Button Aspect=\"$Primary\" /></Window>")]
+    [InlineData("<Window><Window.Resources><PrismClip Name=\"Primary\">@layer Foreground { @filter Blur { Radius = 4; } }</PrismClip></Window.Resources><Border><Border.Aspect>@prism $Primary;</Border.Aspect></Border></Window>")]
+    public void ReferencesOfAResourceIncludeTheDeclarationAndTheDollarUse(string markup)
+    {
+        using NavigationFixture fixture = NavigationFixture.Create(markup);
+        CernealaNavigationService service = new();
+        int declaration = markup.IndexOf("Name=\"Primary\"", StringComparison.Ordinal) + "Name=\"".Length + 1;
+
+        IReadOnlyList<CernealaLocation> references = service.GetReferences(fixture.Model, [fixture.Model], declaration, includeDeclaration: true);
+
+        Assert.Equal(2, references.Count);
+        Assert.All(references, location => Assert.Equal("Primary", fixture.Document.Text.Substring(location.Span)));
+        Assert.Equal(2, service.GetDocumentHighlights(fixture.Model, [fixture.Model], declaration).Count);
+    }
+
+    [Fact]
+    public void PrismClipResourceIsRenamedWithItsPrismApplicationReferences()
+    {
+        const string markup = "<Window><Window.Resources><PrismClip Name=\"Primary\">@layer Foreground { @filter Blur { Radius = 4; } }</PrismClip></Window.Resources><Border><Border.Aspect>@prism $Primary;</Border.Aspect></Border></Window>";
+        using NavigationFixture fixture = NavigationFixture.Create(markup);
+        CernealaNavigationService service = new();
+        int declaration = markup.IndexOf("Name=\"Primary\"", StringComparison.Ordinal) + "Name=\"".Length + 1;
+        int application = markup.IndexOf("$Primary", StringComparison.Ordinal);
+
+        CernealaPrepareRenameResult prepared = service.PrepareRename(fixture.Model, [fixture.Model], application);
+        CernealaRenameResult rename = service.Rename(fixture.Model, [fixture.Model], declaration, "Secondary");
+
+        Assert.Equal("Primary", prepared.Placeholder);
+        Assert.True(rename.Succeeded, rename.Error);
+        Assert.Equal(2, rename.Edits.Count);
+        string renamed = Apply(markup, rename.Edits);
+        Assert.Contains("Name=\"Secondary\"", renamed, StringComparison.Ordinal);
+        Assert.Contains("@prism $Secondary;", renamed, StringComparison.Ordinal);
+        Assert.DoesNotContain("Primary", renamed, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void ReferencesHighlightsAndRenameRespectShadowingAndLeaveArbitraryTextAlone()
     {
