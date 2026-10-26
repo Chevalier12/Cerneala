@@ -37,7 +37,6 @@ public sealed class SceneItems2D : SceneNode2D, ISceneSpatialParticipant2D
     public SceneItems2D()
     {
         Templates = new TemplateCollection(RebuildTemplates, VerifyCollectionAccess);
-        LogicalChildren.Changed += (_, _) => childBounds.Invalidate();
     }
 
     public IEnumerable? ItemsSource

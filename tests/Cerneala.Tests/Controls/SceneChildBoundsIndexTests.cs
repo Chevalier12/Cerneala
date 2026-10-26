@@ -45,7 +45,6 @@ public sealed class SceneChildBoundsIndexTests
         Assert.Equal([0], Collect(index, view, false));
         scene.Children.Clear();
         scene.Children.Add(new Sprite2D { X = 10000, Width = 10, Height = 10 });
-        index.Invalidate();
         RetireAttention(scene, index);
         Assert.Empty(Collect(index, view, false));
     }
@@ -151,7 +150,6 @@ public sealed class SceneChildBoundsIndexTests
 
         scene.Children.Clear();
         scene.Children.Add(new Sprite2D { Width = 10, Height = 10 });
-        index.Invalidate();
         entries = index.Refresh(scene);
         foreach (int slot in index.Query(SceneBounds2D.Empty, includeParkedAnimations: false))
         {
