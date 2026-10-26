@@ -651,8 +651,10 @@ internal sealed partial class CernealaCompletionService
                     wordSpan, wordPrefix, lineStart, null, string.Empty, wordSpan, null);
             }
 
-            int tagEnd = source.IndexOf('>', offset);
-            bool tagHasClose = tagEnd >= 0;
+            // The current tag is closed only by a '>' reached before the next '<'; a later '>', such as the one of
+            // the parent's end tag in `<Window><Bu|</Window>`, belongs to another tag.
+            int tagBoundary = source.IndexOfAny(['<', '>'], offset);
+            bool tagHasClose = tagBoundary >= 0 && source[tagBoundary] == '>';
             bool closing = tagStart + 1 < source.Length && source[tagStart + 1] == '/';
             int nameStart = tagStart + (closing ? 2 : 1);
             int nameEnd = nameStart;

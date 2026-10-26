@@ -112,6 +112,29 @@ public sealed class CompletionTests
         }
     }
 
+    [Theory]
+    [InlineData("<Window><Bu|caret| /></Window>", "Button", "<Window><Button /></Window>")]
+    [InlineData("<Window><Bu|caret|</Window>", "Button", "<Window><Button /></Window>")]
+    [InlineData("<Window><Bu|caret|\n<TextBlock /></Window>", "Button", "<Window><Button />\n<TextBlock /></Window>")]
+    [InlineData("<Window><Button.Con|caret|</Window>", "Button.Content",
+        "<Window><Button.Content></Button.Content></Window>")]
+    public void ElementCompletionBeforeLaterMarkupStillProducesValidMarkup(
+        string markup,
+        string expected,
+        string expectedApplied)
+    {
+        using CompletionFixture fixture = CompletionFixture.Create(markup);
+
+        CernealaCompletionItem item = Assert.Single(
+            fixture.Complete().Where(candidate => candidate.Label == expected));
+
+        string applied = fixture.Text.Substring(0, item.ReplacementSpan.Start) +
+            item.InsertText +
+            fixture.Text.Substring(item.ReplacementSpan.End);
+        Assert.Equal(expectedApplied, applied);
+        AssertValidAfterInsertion(fixture.Text, item);
+    }
+
     [Fact]
     public void AttributesIncludePropertiesEventsAndCompatibleAttachedPropertiesWithoutDuplicates()
     {
