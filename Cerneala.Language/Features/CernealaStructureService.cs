@@ -374,7 +374,7 @@ internal sealed class CernealaStructureService
         if (localName == "ContentTemplate")
         {
             return new CernealaOutlineSymbol(
-                AttributeValue(element, "Key") ?? AttributeValue(element, "DataType") ?? "ContentTemplate",
+                DisplayName(element, "Key") ?? DisplayName(element, "DataType") ?? "ContentTemplate",
                 "ContentTemplate",
                 CernealaOutlineSymbolKind.Template,
                 element.Span,
@@ -382,7 +382,7 @@ internal sealed class CernealaStructureService
                 children);
         }
 
-        string? name = AttributeValue(element, "Name");
+        string? name = DisplayName(element, "Name");
         if (name is null)
         {
             return null;
@@ -827,6 +827,10 @@ internal sealed class CernealaStructureService
             ? value.Substring(1, value.Length - 2)
             : value;
     }
+
+    // LSP forbids an empty or white-space document symbol name, so a blank value names nothing.
+    private static string? DisplayName(ElementSyntax element, string name) =>
+        AttributeValue(element, name) is string value && !string.IsNullOrWhiteSpace(value) ? value : null;
 
     private static TextSpan AttributeContentSpan(AttributeSyntax attribute)
     {
