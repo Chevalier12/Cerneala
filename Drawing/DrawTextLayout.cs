@@ -470,11 +470,13 @@ internal static class DrawTextLayoutEngine
             measuredHeight += lineHeight;
         }
 
-        bool omitted = accepted.Count < candidates.Count;
         if (accepted.Count == 0 && candidates.Count > 0 && options.MaxLines != 0 && options.MaxHeight > 0)
         {
             accepted.Add(candidates[0]);
         }
+
+        // After the first-line fallback: a first line that is the whole text hides nothing.
+        bool omitted = accepted.Count < candidates.Count;
 
         if (accepted.Count > 0 && options.Trimming != DrawTextTrimming.None)
         {
