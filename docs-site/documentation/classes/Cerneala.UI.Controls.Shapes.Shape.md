@@ -38,7 +38,7 @@ Rectangle rectangle = new()
 
 `Shape` centralizes the rendering behavior for geometry-backed controls. Derived classes provide geometry by implementing `ResolveGeometry`; the base class measures from geometry bounds and renders rectangle, ellipse, and path geometry through the retained drawing context.
 
-`Fill`, `Stroke`, `RenderTransform`, and `Opacity` affect rendering. `StrokeThickness` and `Geometry` affect both measure and rendering. `StrokeThickness` must be finite and greater than or equal to zero. `Opacity` must be finite and between `0` and `1`. `RenderTransform` cannot be `null`.
+`Fill`, `RenderTransform`, and `Opacity` affect rendering. `Stroke`, `StrokeThickness`, and `Geometry` affect both measure and rendering: assigning or clearing `Stroke` adds or removes the `StrokeThickness` padding at the next measure, like WPF's `Shape.Stroke`. `StrokeThickness` must be finite and greater than or equal to zero. `Opacity` must be finite and between `0` and `1`. `RenderTransform` cannot be `null`.
 
 The shape's `OpacityProperty` and `RenderTransformProperty` fields are compatibility aliases for the corresponding `UIElement` properties. Their CLR accessors remain available on `Shape`, but share the same values and retained rendering behavior as `UIElement`. Transforms use the inherited `RenderTransformOrigin` and compose with ancestor transforms; a rotated rectangle remains a rotated rectangle. Changing render-scope state does not require rebuilding the shape's local geometry commands.
 
