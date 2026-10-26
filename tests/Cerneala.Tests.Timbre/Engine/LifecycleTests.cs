@@ -413,6 +413,69 @@ public sealed class LifecycleTests
         Assert.Equal(0, tooLarge.Readers.Sum(reader => reader.FramesRead));
     }
 
+    [Theory]
+    [InlineData(1000L, TimbreLoading.Preload, false)]
+    [InlineData(2001L, TimbreLoading.Preload, true)]
+    [InlineData(long.MaxValue, TimbreLoading.Preload, true)]
+    [InlineData(long.MaxValue, TimbreLoading.Auto, false)]
+    public async Task HugeReportedLengthIsRefusedAsAResourceLimitOrStreamedNeverAsSourceUnavailable(
+        long lengthFrames, TimbreLoading loading, bool expectResourceLimitFailure)
+    {
+        using TimbreRig rig = new(options =>
+        {
+            options.AutoPreloadMaxBytes = 1000 * 8;
+            options.MaxPreloadBytes = 2000 * 8;
+        }, hold: false);
+        TimbreSound sound = TimbreRig.Clip(new DeterministicTimbreSourceFactory(lengthFrames), loading);
+
+        TimbreErrorKind? prepareError = null;
+        try
+        {
+            await rig.Runtime.PrepareAsync(sound);
+        }
+        catch (TimbreException exception)
+        {
+            prepareError = exception.Kind;
+        }
+
+        Assert.Equal(expectResourceLimitFailure ? TimbreErrorKind.ResourceLimitExceeded : null, prepareError);
+
+        TimbrePlayback playback = rig.Scope.Play(sound);
+        try
+        {
+            if (expectResourceLimitFailure)
+            {
+                await TimbreRig.CompletionAsync(playback);
+            }
+            else
+            {
+                await HarnessWait.WithTimeout(
+                    Task.WhenAny(playback.Completion, playback.WhenReady),
+                    null,
+                    "Playback neither became ready nor completed.");
+            }
+
+            string observed = $"state={playback.State}";
+            TimbreException? error = null;
+            if (playback.Completion.IsCompleted)
+            {
+                TimbrePlaybackResult result = await playback.Completion;
+                error = result.Error;
+                observed = $"state={result.State}, error={error?.Kind}: {error?.Message}";
+            }
+
+            Assert.True(
+                expectResourceLimitFailure
+                    ? error?.Kind == TimbreErrorKind.ResourceLimitExceeded
+                    : playback.State != TimbrePlaybackState.Failed,
+                $"length={lengthFrames}, loading={loading}: {observed}.");
+        }
+        finally
+        {
+            playback.Cancel();
+        }
+    }
+
     [Fact]
     public async Task CacheEvictsOnlyUnpinnedPayloadsAndRefusesWhenPinnedDataFillsIt()
     {
