@@ -145,6 +145,64 @@ public sealed class DrawingTextLayoutRichTextReviewTests
         Assert.Equal(25, layout.Lines[0].Bounds.Width, Tolerance);
     }
 
+    // Issue #893: justification changes the spacing of a line, not the visual order of its graphemes.
+
+    [Theory]
+    [InlineData(DrawTextAlignment.Start)]
+    [InlineData(DrawTextAlignment.Justify)]
+    public void JustifyKeepsTheVisualLetterOrderOfALeftToRightLineInARightToLeftParagraph(DrawTextAlignment alignment)
+    {
+        DrawTextLayout reference = new DrawTextLayoutBuilder()
+            .AddSpan(new DrawTextSpan("ab cd ef gh\nij", testFont, 10, black))
+            .Build(new DrawTextLayoutOptions(maxWidth: 30, wrapping: DrawTextWrapping.Word, alignment: DrawTextAlignment.Start, direction: DrawTextDirection.RightToLeft));
+        DrawTextLayout layout = new DrawTextLayoutBuilder()
+            .AddSpan(new DrawTextSpan("ab cd ef gh\nij", testFont, 10, black))
+            .Build(new DrawTextLayoutOptions(maxWidth: 30, wrapping: DrawTextWrapping.Word, alignment: alignment, direction: DrawTextDirection.RightToLeft));
+
+        string expected = string.Concat(reference.Lines[0].Runs.Select(static run => run.Text));
+        string actual = string.Concat(layout.Lines[0].Runs.Select(static run => run.Text));
+
+        Assert.True(
+            expected == actual,
+            $"Start gives \"{expected}\" ({reference.Lines[0].Runs.Count} runs); {alignment} gives \"{actual}\" ({layout.Lines[0].Runs.Count} runs: " +
+            string.Join("|", layout.Lines[0].Runs.Select(static run => run.Text)) + ").");
+    }
+
+    [Fact]
+    public void JustifyKeepsTheVisualLetterOrderOfARightToLeftLineInALeftToRightParagraph()
+    {
+        DrawTextLayout layout = new DrawTextLayoutBuilder()
+            .AddSpan(new DrawTextSpan("אב גד הו זח\nij", testFont, 10, black))
+            .Build(new DrawTextLayoutOptions(maxWidth: 30, wrapping: DrawTextWrapping.Word, alignment: DrawTextAlignment.Justify, direction: DrawTextDirection.LeftToRight));
+
+        IReadOnlyList<DrawTextLayoutRun> runs = layout.Lines[0].Runs;
+        // The runs are in visual order, left to right. A right-to-left word reads from right to left, so the last run
+        // holds the first letter.
+        string read = string.Concat(runs.Reverse().Select(static run => run.Text));
+
+        Assert.True(
+            read == "אב גד",
+            $"Read from right to left the line gives \"{read}\" ({runs.Count} runs: " +
+            string.Join("|", runs.Select(static run => run.Text)) + ").");
+        for (int index = 1; index < runs.Count; index++)
+        {
+            Assert.True(runs[index - 1].Bounds.X < runs[index].Bounds.X, "runs are not in visual order");
+        }
+    }
+
+    // The same reordering keeps two left-to-right spans of a right-to-left line in reading order: the line is not
+    // reversed as a whole, only by embedding level.
+    [Fact]
+    public void TwoLeftToRightSpansOfARightToLeftLineKeepTheirReadingOrder()
+    {
+        DrawTextLayout layout = new DrawTextLayoutBuilder()
+            .AddSpan(new DrawTextSpan("ab ", testFont, 10, black))
+            .AddSpan(new DrawTextSpan("cd", testFont, 10, black))
+            .Build(new DrawTextLayoutOptions(direction: DrawTextDirection.RightToLeft));
+
+        Assert.Equal(["ab ", "cd"], Assert.Single(layout.Lines).Runs.Select(static run => run.Text));
+    }
+
     // 9. A family name that the system does not know still gets the weight and the style.
 
     [Fact]
