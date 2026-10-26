@@ -21,11 +21,15 @@ internal static class DrawArgument
         }
     }
 
+    public static bool IsValidPixelCoordinate(float value) =>
+        float.IsFinite(value) && value >= -MaxPixelSize && value <= MaxPixelSize;
+
+    public static bool IsNonNegativeValidPixelSize(float value) =>
+        float.IsFinite(value) && value >= 0 && value <= MaxPixelSize;
+
     public static void ThrowIfNotValidPixelCoordinate(float value, string parameterName)
     {
-        ThrowIfNotFinite(value, parameterName);
-
-        if (value < -MaxPixelSize || value > MaxPixelSize)
+        if (!IsValidPixelCoordinate(value))
         {
             throw new ArgumentOutOfRangeException(parameterName);
         }
@@ -33,9 +37,7 @@ internal static class DrawArgument
 
     public static void ThrowIfNegativeOrNotValidPixelSize(float value, string parameterName)
     {
-        ThrowIfNegativeOrNotFinite(value, parameterName);
-
-        if (value > MaxPixelSize)
+        if (!IsNonNegativeValidPixelSize(value))
         {
             throw new ArgumentOutOfRangeException(parameterName);
         }
