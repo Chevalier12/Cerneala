@@ -546,13 +546,14 @@ public class MenuItem : ItemsControl, IInputCommandSource, ICommandStateSource, 
         RaiseEvent(new RoutedEventArgs(isOpen ? SubmenuOpenedEvent : SubmenuClosedEvent, this));
     }
 
+    // A click that a command source inside the header owns, such as a Button, is that source's click (#935).
     private void OnMouseUp(object _, RoutedEventArgs args)
     {
         if (args is not MouseButtonEventArgs
             {
                 ChangedButton: InputMouseButton.Left,
                 ClickCount: > 0
-            } || !IsHeaderSource(args.OriginalSource))
+            } mouseArgs || !IsHeaderSource(args.OriginalSource) || !commandState.OwnsClick(mouseArgs))
         {
             return;
         }
