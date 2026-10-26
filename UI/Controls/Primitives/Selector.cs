@@ -315,6 +315,36 @@ public class Selector : ItemsControl
         ThrowPreparationFailure(preparationFailure);
     }
 
+    // The container that the Tab key enters this Selector on, for a subclass that is an ITabOnceScope: the container
+    // that has or holds the keyboard focus, else the selected container, else the first container; only a container that
+    // can take the focus counts, and null means none can.
+    internal UIElement? FindTabOnceContainer(ElementInputRouteMap routeMap, UIElement? selected)
+    {
+        IReadOnlyDictionary<int, UIElement> realized = ItemContainerGenerator.RealizedContainers;
+        UIElement? first = null;
+        int firstIndex = int.MaxValue;
+        foreach ((int index, UIElement container) in realized)
+        {
+            if (!FocusPolicy.CanFocus(container, routeMap))
+            {
+                continue;
+            }
+
+            if (container.IsKeyboardFocusWithin)
+            {
+                return container;
+            }
+
+            if (index < firstIndex)
+            {
+                first = container;
+                firstIndex = index;
+            }
+        }
+
+        return FocusPolicy.CanFocus(selected, routeMap) ? selected : first;
+    }
+
     // Runs at the end of every selection change, after the Selected, Unselected, and SelectionChanged handlers, also
     // when one of them throws. As in WPF, where a subclass's OnSelectionChanged override runs after
     // base.OnSelectionChanged raised SelectionChanged, a subclass can react here to what those handlers changed.
