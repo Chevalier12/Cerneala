@@ -197,10 +197,15 @@ internal sealed class TextInputCore
 
     public bool Paste() => CanPaste && PasteClipboardText();
 
-    public void Select(int anchor, int active)
+    public void Select(int anchor, int active) => Select(anchor, active, atLineEnd: false);
+
+    // atLineEnd draws a caret at the end of a wrapped line on that line; it is set before the reveal, so the reveal shows
+    // the line the caret is drawn on.
+    private void Select(int anchor, int active, bool atLineEnd)
     {
         editor.Select(anchor, active);
         ForgetCaretPlacement();
+        view.CaretAtLineEnd = atLineEnd;
         ReportSelectionChanged();
         view.RevealCaret();
         view.InvalidateTextRender("TextBox selection changed");
@@ -286,11 +291,11 @@ internal sealed class TextInputCore
         };
         if (mouseSelectionUnit == MouseSelectionUnit.Character)
         {
-            int index = host.GetTextPosition(GetDisplayIndexAtPointer(args, out bool atLineEnd));
+            int displayIndex = GetDisplayIndexAtPointer(args, out bool atLineEnd);
+            int index = host.GetTextPosition(displayIndex);
             mouseSelectionAnchor = index;
             mouseSelectionAnchorEnd = index;
-            MoveCaret(index);
-            view.CaretAtLineEnd = atLineEnd;
+            MoveCaretToDisplayIndex(displayIndex, extendSelection: false, atLineEnd);
         }
         else
         {
@@ -393,8 +398,7 @@ internal sealed class TextInputCore
         if (mouseSelectionUnit == MouseSelectionUnit.Character)
         {
             int displayIndex = GetDisplayIndexAtPointer(args, out bool atLineEnd);
-            Select(mouseSelectionAnchor, host.GetTextPosition(displayIndex));
-            view.CaretAtLineEnd = atLineEnd;
+            Select(mouseSelectionAnchor, host.GetTextPosition(displayIndex), atLineEnd);
         }
         else
         {
