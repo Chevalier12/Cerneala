@@ -66,7 +66,7 @@ Elements are skipped when they are presence-exiting, do not participate in hit t
 
 Clipping is honored when a `ClipNode` is set on an element, or when `ClipToBounds` is `true` (the clip is then the element's arranged bounds). A child outside its parent's arranged bounds can still be hit when the parent is not clipped. The root viewport is special: points outside a `UIRoot` viewport are rejected.
 
-Hit testing starts from arranged layout bounds, then maps the pointer into each element's transformed coordinate space. Render and motion transforms therefore move, scale, and rotate the effective hit-test region. A non-invertible transform makes that element and its subtree un-hittable.
+Hit testing starts from arranged layout bounds, then maps the pointer into each element's transformed coordinate space. Render and motion transforms therefore move, scale, and rotate the effective hit-test region. A non-invertible transform makes that element and its subtree un-hittable. So does a transform that overflows `float` while it is composed with its ancestors or inverted: for example, a parent and a child that each have `ScaleX = 1e30f` combine to a scale of `1e60`, so the child and its subtree are skipped while the parent can still be hit. Hit testing does not throw for such a transform.
 
 The returned `HitTestResult` stores the hit `UIElement` and the original `X` and `Y` coordinates passed to the service.
 

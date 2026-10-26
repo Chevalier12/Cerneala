@@ -155,6 +155,36 @@ public sealed class RenderSurface3DTests
         Assert.Equal(default, rootPosition);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void HugeParentScaleReturnsFalseWhetherOrNotTheParentIsArranged(bool parentArranged)
+    {
+        // An arranged parent moves the pivot off (0, 0), so the pivot translation overflows.
+        (UIRoot root, UIElement parent, RenderSurface3D surface) = CreateAttachedSurface();
+        if (parentArranged)
+        {
+            parent.Arrange(new ArrangeContext(new LayoutRect(0, 0, 200, 160)));
+        }
+
+        parent.ScaleX = float.MaxValue;
+
+        bool result = true;
+        Vector2 rootPosition = Vector2.One;
+        Exception? failure = Record.Exception(() => result = surface.TryWorldToRoot(Vector3.Zero, out rootPosition));
+        Assert.True(failure is null, "TryWorldToRoot threw " + failure?.GetType().Name + ": " + failure?.Message);
+        Assert.False(result);
+        Assert.Equal(default, rootPosition);
+        if (parentArranged)
+        {
+            // Only the arranged row makes the visual transform itself non-finite; without a pivot
+            // offset the transform is finite and invertible and only the projected point overflows.
+            Assert.False(surface.TryRootToWorldRay(new Vector2(50, 40), out _));
+        }
+
+        GC.KeepAlive(root);
+    }
+
     [Fact]
     public void ExtremeFiniteOrthographicProjectionProducesAFiniteUnitRay()
     {
