@@ -138,7 +138,7 @@ Reactive directive expressions support the lowercase `and` and `or` operators pl
 </TextBlock>
 ```
 
-An `@if` expression may combine typed comparisons and reactive operands:
+An `@if` expression must be a typed comparison, or typed comparisons combined with `and` and `or`. The operands of a comparison may be reactive sources, `value`, or literals. A bare source is not a comparison: `@if IsMouseOver` reports `CERNEALAUI007`; write `@if IsMouseOver == true`, or put the assignments directly in the Boolean body of `@when IsMouseOver`, as in the example above.
 
 ```xml
 @when $DataContext.Value

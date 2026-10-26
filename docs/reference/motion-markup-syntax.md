@@ -23,6 +23,10 @@ conditional expressions. A bare property name such as `TranslateY` is accepted
 in a condition but not as a value. The supported start
 options are `retarget`, `holdOnComplete`, and `debugName`.
 
+An `@if` condition must be a comparison, or comparisons combined with `and` and
+`or`. A bare Boolean source is not a comparison: write `@if IsMouseOver == true`,
+not `@if IsMouseOver`, which reports `CERNEALAUI007`.
+
 Motion assignments accept these target forms:
 
 ```xml
@@ -69,7 +73,7 @@ The language is constrained to markup and generator work over the current Motion
             Mass="1" />
 
     <MotionClip Name="ClickPulse"
-                TargetType="Border">
+                TargetType="Button">
         @sequence
         {
             @animate with Tween(90ms, EaseOut)
@@ -86,11 +90,11 @@ The language is constrained to markup and generator work over the current Motion
     </MotionClip>
 
     <Aspect Name="NavigationHover"
-            TargetType="Border">
+            TargetType="Button">
 
         @when IsMouseOver
         {
-            @if IsMouseOver
+            @if IsMouseOver == true
             {
                 @animate with $QuickOut
                 {
@@ -134,9 +138,13 @@ The language is constrained to markup and generator work over the current Motion
 Reusable behavior is attached through an Aspect:
 
 ```xml
-<Border Aspect="$NavigationHover">
-    ...
-</Border>
+<Button Aspect="$NavigationHover">
+    <StackPanel Orientation="Horizontal">
+        <Border Name="Indicator" Width="3" Background="#3B82F6" />
+        <TextBlock Name="Label" Text="Home" />
+        <TextBlock Name="HoverText" Text="Open" Opacity="0" Margin="12,0,0,0" />
+    </StackPanel>
+</Button>
 ```
 
 `MotionClip` is not attached directly. It is a trigger-free generated animation recipe invoked by an Aspect through `@run`; there is no runtime `MotionClip` class.
@@ -573,7 +581,7 @@ an additional wrapper inside the inline property element.
 ```text
 <Aspect>
     @when expression           react to observable state
-    @if expression             conditionally activate a declarative branch
+    @if comparison             conditionally activate a declarative branch
     @on EventName              react to an event
     @run $MotionClip           invoke a reusable animation recipe
     @animate                    execute an inline visual transition
