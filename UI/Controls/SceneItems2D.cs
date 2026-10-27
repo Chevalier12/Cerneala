@@ -197,6 +197,7 @@ public sealed class SceneItems2D : SceneNode2D, ISceneSpatialParticipant2D
                     : requested.Select(static value => new Occurrence(value)).ToList();
 
             HashSet<SceneNode2D> nodes = new(ReferenceEqualityComparer.Instance);
+            HashSet<SceneNode2D>? realizedNodes = null;
             foreach (Occurrence occurrence in next)
             {
                 if (occurrence.Node is null)
@@ -207,8 +208,14 @@ public sealed class SceneItems2D : SceneNode2D, ISceneSpatialParticipant2D
                     {
                         throw new InvalidOperationException("A scene node cannot represent two collection occurrences.");
                     }
-                    ContentControl.ValidateCanOwnChild(this, node);
-                    LogicalChildren.ValidateInsertion(LogicalChildren.Count, node);
+                    // A node realized here, such as a direct item, is not retained (it would be a second
+                    // occurrence), so Commit removes it before inserting it again.
+                    realizedNodes ??= new(realized.Select(static old => old.Node!), ReferenceEqualityComparer.Instance);
+                    if (!realizedNodes.Contains(node))
+                    {
+                        ContentControl.ValidateCanOwnChild(this, node);
+                        LogicalChildren.ValidateInsertion(LogicalChildren.Count, node);
+                    }
                     node.DataContext = occurrence.Value;
                     occurrence.Node = node;
                 }
