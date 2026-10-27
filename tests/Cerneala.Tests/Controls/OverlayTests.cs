@@ -378,6 +378,81 @@ public sealed class OverlayTests
         Assert.Same(firstContent.VisualParent, layer.VisualChildren[^1]);
     }
 
+    // UIElementCollection.Move raises no Changed event, but the layer must still stay above the page (#932).
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void OpenOverlayStaysHitTestedFirstAfterARootChildIsMoved(bool moveRootChild)
+    {
+        UIRoot root = new(100, 100);
+        FixedElement target = new(new LayoutSize(20, 10));
+        FixedElement blocker = new(new LayoutSize(30, 15));
+        FixedElement content = new(new LayoutSize(30, 15));
+        Overlay overlay = new()
+        {
+            PlacementTarget = target,
+            Content = content,
+            IsOpen = true
+        };
+        LayoutCanvas canvas = new();
+        LayoutCanvas.SetTop(blocker, 10);
+        canvas.VisualChildren.Add(target);
+        canvas.VisualChildren.Add(blocker);
+        canvas.VisualChildren.Add(overlay);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        HitTestResult? before = new HitTestService().HitTest(root, 5, 15);
+        Assert.Same(content, before?.Element);
+        Assert.Equal(2, root.VisualChildren.Count);
+        Assert.Same(canvas, root.VisualChildren[0]);
+
+        if (moveRootChild)
+        {
+            root.VisualChildren.Move(1, 0);
+        }
+
+        root.ProcessFrame();
+
+        HitTestResult? after = new HitTestService().HitTest(root, 5, 15);
+        Assert.True(
+            ReferenceEquals(content, after?.Element),
+            $"Move={moveRootChild}: the hit element is {after?.Element.GetType().Name ?? "null"}, not the overlay content.");
+    }
+
+    // The overlay content's fill must be recorded after the page's fill; the run without the Move is the control (#932).
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void OpenOverlayIsDrawnLastAfterARootChildIsMoved(bool moveRootChild)
+    {
+        UIRoot root = new(100, 100);
+        FixedElement target = new(new LayoutSize(20, 10));
+        Cerneala.UI.Media.SolidColorBrush red = new(Cerneala.Drawing.Color.Red);
+        Cerneala.UI.Media.SolidColorBrush blue = new(Cerneala.Drawing.Color.Blue);
+        Border blocker = new() { Width = 30, Height = 15, Background = red };
+        Border content = new() { Width = 30, Height = 15, Background = blue };
+        Overlay overlay = new() { PlacementTarget = target, Content = content, IsOpen = true };
+        LayoutCanvas canvas = new();
+        LayoutCanvas.SetTop(blocker, 10);
+        canvas.VisualChildren.Add(target);
+        canvas.VisualChildren.Add(blocker);
+        canvas.VisualChildren.Add(overlay);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        if (moveRootChild)
+        {
+            root.VisualChildren.Move(1, 0);
+        }
+
+        root.ProcessFrame();
+        Cerneala.Drawing.DrawCommandList commands = root.RetainedRenderer.Commit(root);
+
+        int redIndex = IndexOfFill(commands, red);
+        int blueIndex = IndexOfFill(commands, blue);
+        Assert.True(redIndex >= 0 && blueIndex >= 0, $"Move={moveRootChild}: red fill at {redIndex}, blue fill at {blueIndex}.");
+        Assert.True(blueIndex > redIndex, $"Move={moveRootChild}: the overlay content is drawn at command {blueIndex} but the page at {redIndex}.");
+    }
+
     [Fact]
     public void OutsideClickDismissesWithoutBlockingUnderlyingButton()
     {
@@ -726,6 +801,20 @@ public sealed class OverlayTests
     {
         bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
         bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+    }
+
+    // Index of the first FillRectangle command that uses the brush, or -1.
+    private static int IndexOfFill(Cerneala.Drawing.DrawCommandList commands, Cerneala.UI.Media.Brush brush)
+    {
+        for (int index = 0; index < commands.Count; index++)
+        {
+            if (commands[index].Kind == Cerneala.Drawing.DrawCommandKind.FillRectangle && ReferenceEquals(commands[index].Brush, brush))
+            {
+                return index;
+            }
+        }
+
+        return -1;
     }
 
     private static T FindAncestor<T>(UIElement element)

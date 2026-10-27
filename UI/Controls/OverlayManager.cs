@@ -17,6 +17,7 @@ internal sealed class OverlayManager
         this.root = root ?? throw new ArgumentNullException(nameof(root));
         layer = new OverlayLayer(root);
         root.VisualChildren.Changed += OnRootVisualChildrenChanged;
+        root.VisualChildren.Moved += OnRootVisualChildrenMoved;
         root.Handlers.AddHandler(InputEvents.PreviewMouseDownEvent, OnPreviewMouseDown, handledEventsToo: true);
         root.Handlers.AddHandler(InputEvents.PreviewLostKeyboardFocusEvent, OnPreviewLostKeyboardFocus, handledEventsToo: true);
     }
@@ -101,6 +102,16 @@ internal sealed class OverlayManager
     private void OnRootVisualChildrenChanged(object? sender, ElementTreeChange change)
     {
         if (layerAttached && change.Kind == ElementTreeChangeKind.Added)
+        {
+            BringLayerToFront();
+        }
+    }
+
+    // A Move raises no Changed event, but it can put another child after the layer or move the layer itself (#932).
+    // BringLayerToFront's own Move comes back here and finds the layer already last.
+    private void OnRootVisualChildrenMoved(object? sender, EventArgs args)
+    {
+        if (layerAttached)
         {
             BringLayerToFront();
         }

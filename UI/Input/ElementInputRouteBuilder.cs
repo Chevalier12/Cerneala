@@ -92,6 +92,20 @@ public sealed class ElementInputRouteBuilder
                     visualParentForDescendants);
             }
 
+            // Exiting presence children left VisualChildren but still draw after the live children until their exit
+            // ends; they route through their former parent. One that excludes input while exiting is skipped.
+            if (element.Root is UIRoot root)
+            {
+                IReadOnlyList<UIElement> exitingChildren = root.Motion.Presence.GetExitingVisualChildren(element);
+                for (int index = 0; index < exitingChildren.Count; index++)
+                {
+                    AddElementAndDescendants(
+                        exitingChildren[index],
+                        routeParentForDescendants,
+                        visualParentForDescendants);
+                }
+            }
+
             if (element is IInputSubtreeHost inputSubtreeHost)
             {
                 foreach (UIElement child in inputSubtreeHost.GetInputSubtreeChildren())

@@ -17,6 +17,10 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
 
     public event EventHandler<ElementTreeChange>? Changed;
 
+    // Raised after Move changed the order. Changed stays for additions and removals only, so an owner of an order
+    // invariant, such as the overlay layer that must stay the root's last child (#932), listens here.
+    internal event EventHandler? Moved;
+
     public int Count => children.Count;
 
     public UIElement this[int index] => children[index];
@@ -134,6 +138,7 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
         Version++;
         owner.Root?.IncrementTreeVersion();
         InvalidateForVisualChildMutation(child, ElementTreeChangeKind.Added);
+        Moved?.Invoke(this, EventArgs.Empty);
     }
 
     public bool Remove(UIElement child)
@@ -160,14 +165,24 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
 
         child.ValidateParentChange(null, role, ownerManaged);
 
-        if (role == ElementChildRole.Visual && owner.Root?.Motion.Presence.TryBeginExit(owner, child) == true)
+        if (role == ElementChildRole.Visual && owner.Root is UIRoot exitRoot && exitRoot.Motion.Presence.TryBeginExit(owner, child))
         {
             children.RemoveAt(index);
             Version++;
             SetParent(child, null);
-            owner.Root.IncrementTreeVersion();
-            InvalidateForVisualChildMutation(child, ElementTreeChangeKind.Removed);
-            Changed?.Invoke(this, new ElementTreeChange(owner, child, role, ElementTreeChangeKind.Removed));
+
+            // An exit that is already complete detaches the child now, after the removal, as the detach below does.
+            try
+            {
+                exitRoot.Motion.Presence.CompleteFinishedExit(child);
+            }
+            finally
+            {
+                exitRoot.IncrementTreeVersion();
+                InvalidateForVisualChildMutation(child, ElementTreeChangeKind.Removed);
+                Changed?.Invoke(this, new ElementTreeChange(owner, child, role, ElementTreeChangeKind.Removed));
+            }
+
             return true;
         }
 

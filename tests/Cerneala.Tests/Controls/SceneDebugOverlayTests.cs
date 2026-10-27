@@ -302,6 +302,73 @@ public sealed class SceneDebugOverlayTests
         Assert.Same(model, map.GetSourceModel());
     }
 
+    // The overlay labels its whole scene subtree, so a nested group's children get labels in the order the group
+    // recorded them, in every order mode (#945: the Source fast path left the group's recorded order empty).
+    [Theory]
+    [InlineData("direct", SceneOrderMode.Source, "0: L1 S0 Y0", "1: L0 S1 Y0")]
+    [InlineData("nested", SceneOrderMode.Source, "0: L1 S0 Y0", "1: L0 S1 Y0")]
+    [InlineData("direct", SceneOrderMode.Layer, "0: L0 S1 Y0", "1: L1 S0 Y0")]
+    [InlineData("nested", SceneOrderMode.Layer, "0: L0 S1 Y0", "1: L1 S0 Y0")]
+    [InlineData("direct", SceneOrderMode.LayerThenY, "0: L0 S1 Y10", "1: L1 S0 Y10")]
+    [InlineData("nested", SceneOrderMode.LayerThenY, "0: L0 S1 Y10", "1: L1 S0 Y10")]
+    public void OrderLabelIsDrawnForTheSpriteWhetherItIsADirectChildOrInANestedGroup(
+        string row, SceneOrderMode orderMode, string first, string second)
+    {
+        Scene2D scene = new();
+        Scene2D owner = scene;
+        if (row == "nested")
+        {
+            owner = new Scene2D();
+            scene.Children.Add(owner);
+        }
+
+        owner.OrderMode = orderMode;
+        owner.Children.Add(new Sprite2D { Width = 10, Height = 10, Layer = 1 });
+        owner.Children.Add(new Sprite2D { X = 20, Width = 10, Height = 10 });
+        scene.Children.Add(new Scene2DDebugOverlay { Flags = Scene2DDebugFlags.Order });
+
+        DrawCommandList commands = Record(scene);
+
+        string[] labels = [.. commands
+            .Where(command => command.Kind == DrawCommandKind.DrawText)
+            .Select(command => command.Text!)];
+        Assert.Equal([first, second], labels);
+    }
+
+    // A group the gameplay pass did not record in this frame (here: emptied, so its empty bounds are culled) has no
+    // recorded order in this frame; the overlay must not label the sprites it recorded in an earlier frame.
+    [Theory]
+    [InlineData(SceneOrderMode.Source)]
+    [InlineData(SceneOrderMode.Layer)]
+    [InlineData(SceneOrderMode.LayerThenY)]
+    public void OrderLabelsOfANestedGroupComeOnlyFromTheFrameBeingRecorded(SceneOrderMode orderMode)
+    {
+        Scene2D scene = new();
+        Scene2D group = new() { OrderMode = orderMode };
+        Sprite2D[] sprites = [new() { Width = 10, Height = 10, Layer = 1 }, new() { X = 20, Width = 10, Height = 10 }];
+        foreach (Sprite2D sprite in sprites) { group.Children.Add(sprite); }
+        scene.Children.Add(group);
+        scene.Children.Add(new Scene2DDebugOverlay { Flags = Scene2DDebugFlags.Order });
+        RenderSurface2D surface = new() { Scene = scene };
+        using TileMapTestSurface host = new(surface, new(0, 0, 64, 64));
+        string[] RecordLabels()
+        {
+            DrawCommandList commands = new();
+            ((IRenderSurface2DFrameSource)surface).RecordFrame(commands, new DrawRect(0, 0, 64, 64));
+            return [.. commands.Where(command => command.Kind == DrawCommandKind.DrawText).Select(command => command.Text!)];
+        }
+
+        Assert.Equal(2, RecordLabels().Length);
+        foreach (Sprite2D sprite in sprites)
+        {
+            group.Children.Remove(sprite);
+            scene.Children.Add(sprite);
+        }
+
+        // Outer scene slots: the empty group (S0), the overlay (S1, never ordered), then the two sprites (S2, S3).
+        Assert.Equal(["1: L1 S2 Y0", "2: L0 S3 Y0"], RecordLabels());
+    }
+
     // A Vision is a sensor, so the overlay draws it in a colour of its own: not a layer colour, not the trigger
     // orange and not the grey of a collider with an empty mask. IsTrigger does not matter on a Vision.
     private static readonly Color VisionColor = new(190, 120, 255);
