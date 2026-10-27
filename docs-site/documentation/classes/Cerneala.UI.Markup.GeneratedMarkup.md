@@ -333,7 +333,13 @@ animation runs, and when it starts, the binding checks that node and every group
 that contains it: when one of them has `Visible=false`, the animation is canceled
 once (`MotionHandle.IsCanceled` is `true` and `Completed` reports one cancel), the
 current value is kept, and nothing is written in later frames. Setting `Visible=true`
-again does not restart it. The generator passes the node named in the Motion path,
+again does not restart it. An animation that has already reached its end is not
+canceled and writes its end value: one that completes in the frame in which its node
+becomes hidden, or one that completes at once when it starts (for example under
+reduced motion). So `@to { $self.prism.Glow.Visible = false; $self.prism.Glow.Opacity = 0; }`
+with one 100 ms tween ends with `Glow.Visible == false` and `Glow.Opacity == 0` in
+either line order, although the discrete `Visible` writes `false` in the last frame,
+the frame in which the fade also ends. The generator passes the node named in the Motion path,
 so `$self.prism.Card.Face.Opacity` passes `Face`. A path that animates the node's
 own `Visible` passes the containing group instead (`$self.prism.Card.Face.Visible`
 passes `Card`), or `null` for a top-level node, so the animation can show a hidden

@@ -1035,7 +1035,7 @@ public static partial class GeneratedMarkup
                 options.ToMotionStartOptions());
             activeHandle = handle;
             handle.Completed += OnMotionCompleted;
-            if (!IsTargetLive())
+            if (!CanWrite(reachedEnd: handle.IsCompleted))
             {
                 Clear(restoreBase: false);
                 return handle;
@@ -1092,7 +1092,7 @@ public static partial class GeneratedMarkup
                 return new MotionNodeTickResult(Completed: true);
             }
 
-            if (!IsTargetLive())
+            if (!CanWrite(reachedEnd: completedNaturally))
             {
                 Clear(restoreBase: false);
                 return new MotionNodeTickResult(Completed: true);
@@ -1150,14 +1150,16 @@ public static partial class GeneratedMarkup
             completedNaturally = args.State == MotionCompletionState.Completed;
         }
 
-        // The motion may write only while its element is attached and renderable, still owns
-        // this Prism instance, and the Prism node of the property is effectively visible.
-        private bool IsTargetLive()
+        // The motion may write only while its element is attached and renderable and still owns
+        // this Prism instance. Visible=false on the Prism node of the property cancels only an
+        // active motion: one that reached its end (its handle already reports completion) still
+        // writes its end value, whichever binding hid the node earlier in the same frame.
+        private bool CanWrite(bool reachedEnd)
         {
             return target.IsAttached &&
                 UIElementVisibility.IsEffectivelyVisible(target) &&
                 IsCurrentInstance() &&
-                (scope is not { } scopeId || Instance.IsNodeEffectivelyVisible(scopeId));
+                (reachedEnd || scope is not { } scopeId || Instance.IsNodeEffectivelyVisible(scopeId));
         }
 
         private bool IsCurrentInstance()

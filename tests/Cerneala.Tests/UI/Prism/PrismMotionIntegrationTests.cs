@@ -518,6 +518,53 @@ public sealed class PrismMotionIntegrationTests
         Assert.True(layer.Visible);
     }
 
+    // `@to { Glow.Visible = false; Glow.Opacity = 0; }` and the same block with the two
+    // lines swapped: the discrete Visible writes false in the frame the fade ends, so the
+    // fade must still land on 0 whichever binding ticks first in that frame.
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void FadeOutAndHideInOneExecutionEndsAtTheFinalOpacityInEitherOrder(bool visibleFirst)
+    {
+        MotionScenario scenario = CreateScenario();
+        PrismLayerState layer = scenario.Instance.GetLayerState(LayerId);
+        MotionHandle hide = default!;
+        if (visibleFirst)
+        {
+            hide = StartHideMotion(scenario);
+        }
+
+        MotionHandle fade = GeneratedMarkup.StartPrismMotionProperty(
+            scenario.Session,
+            scenario.Element,
+            propertyId: 101,
+            scope: LayerId,
+            static instance => instance.GetLayerState(LayerId).Opacity,
+            static (instance, value) => instance.GetLayerState(LayerId).Opacity = value,
+            discrete: false,
+            hasFrom: false,
+            from: 0f,
+            toCurrent: false,
+            to: 0f,
+            spec: Tween<float>(),
+            new MotionPropertyStartOptions { HoldOnComplete = true });
+        if (!visibleFirst)
+        {
+            hide = StartHideMotion(scenario);
+        }
+
+        scenario.Root.Motion.Tick();
+        for (int frame = 0; frame < 4; frame++)
+        {
+            scenario.Clock.Advance(TimeSpan.FromMilliseconds(25));
+            scenario.Root.Motion.Tick();
+        }
+
+        Assert.Equal(
+            (true, true, false, 0f),
+            (hide.IsCompleted, fade.IsCompleted, layer.Visible, layer.Opacity));
+    }
+
     private static readonly PrismNodeId LayerId = new(1);
 
     private static readonly PrismNodeId GroupId = new(2);
@@ -596,6 +643,24 @@ public sealed class PrismMotionIntegrationTests
             to: destination,
             spec: Tween<float>(),
             MotionPropertyStartOptions.Default);
+    }
+
+    private static MotionHandle StartHideMotion(MotionScenario scenario)
+    {
+        return GeneratedMarkup.StartPrismMotionProperty(
+            scenario.Session,
+            scenario.Element,
+            propertyId: 102,
+            scope: null,
+            static instance => instance.GetLayerState(LayerId).Visible,
+            static (instance, value) => instance.GetLayerState(LayerId).Visible = value,
+            discrete: true,
+            hasFrom: false,
+            from: true,
+            toCurrent: false,
+            to: false,
+            spec: Tween<bool>(),
+            new MotionPropertyStartOptions { HoldOnComplete = true });
     }
 
     private static TweenSpec<T> Tween<T>() =>
