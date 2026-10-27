@@ -75,7 +75,7 @@ When the item has a `ComponentTemplate` or a `ComponentTemplateKey`, the templat
 
 ### Keyboard focus on a click
 
-A `ListBoxItem` is focusable: its constructor sets `Focusable` to `true`, as a WPF `ListBoxItem` is a `Control` whose `Focusable` defaults to `true`. A left press on the item moves keyboard focus to the item, as WPF's `ListBoxItem.OnMouseLeftButtonDown` focuses the item. `IsTabStop` stays `false`, so the Tab key does not stop on every row, as a WPF `ListBox` lets the Tab key into its list only once.
+A `ListBoxItem` is focusable: its constructor sets `Focusable` to `true`, as a WPF `ListBoxItem` is a `Control` whose `Focusable` defaults to `true`. A left press on the item moves keyboard focus to the item, as WPF's `ListBoxItem.OnMouseLeftButtonDown` focuses the item. `IsTabStop` stays `false`, so the Tab key does not stop on every row, as a WPF `ListBox` lets the Tab key into its list only once: Tab enters the list on the focused row, the last focused row, or the selected row, or on the first row, as `ListBox` describes under "Keyboard".
 
 For example, a `Button` named `other` has the focus, and the user clicks the first row of a `ListBox`. After the click, the row's `IsKeyboardFocused` is `true`, the `ListBox`'s `IsKeyboardFocusWithin` is `true`, and `other.IsKeyboardFocused` is `false`. A Space press after the click therefore does not click `other`.
 

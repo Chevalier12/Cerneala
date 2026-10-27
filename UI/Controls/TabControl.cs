@@ -4,6 +4,7 @@ using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Rendering;
@@ -11,7 +12,7 @@ using Cerneala.UI.Rendering;
 namespace Cerneala.UI.Controls;
 
 [TemplatePart("PART_ItemsPresenter", typeof(ItemsPresenter))]
-public class TabControl : Selector
+public class TabControl : Selector, ITabOnceScope
 {
     public static readonly UiProperty<ContentTemplate?> ContentTemplateProperty = UiProperty<ContentTemplate?>.Register(
         nameof(ContentTemplate),
@@ -103,6 +104,12 @@ public class TabControl : Selector
     }
 
     private bool IsComponentTemplated => ComponentTemplate is not null || ComponentTemplateKey is not null;
+
+    // As the tab strip of a WPF TabControl, whose TabNavigation is Once, the Tab key enters the tabs once, on the focused
+    // tab, else the selected tab, else the first tab; the tabs are no Tab stops, so the next Tab moves on to the content
+    // of the selected tab (#905).
+    UIElement? ITabOnceScope.GetTabOnceElement(ElementInputRouteMap routeMap) =>
+        FindTabOnceContainer(routeMap, SelectedTabItem);
 
     internal void OnTabContentChanged(TabItem tab)
     {
