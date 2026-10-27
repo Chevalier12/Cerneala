@@ -181,51 +181,76 @@ internal sealed partial class CernealaCompletionService
             new TextSpan(memberStart, offset - memberStart));
     }
 
-    private static HashSet<string> ReadAttributeNames(string source, int tagStart, int offset)
+    // The attribute names of the whole tag, before and after the caret, up to its '>' (or the next '<' of an
+    // unclosed tag). The word being typed at the caret is the word being completed, not an attribute the tag has.
+    private static HashSet<string> ReadAttributeNames(string source, int tagStart, TextSpan typedWord)
     {
         HashSet<string> names = new(StringComparer.Ordinal);
+        int tagEnd = FindTagEnd(source, tagStart);
         int position = tagStart + 1;
-        while (position < offset && !char.IsWhiteSpace(source[position]))
+        while (position < tagEnd && !char.IsWhiteSpace(source[position]))
         {
             position++;
         }
 
-        while (position < offset)
+        while (position < tagEnd)
         {
-            while (position < offset && char.IsWhiteSpace(source[position]))
+            char character = source[position];
+            if (character is '\'' or '"')
             {
-                position++;
-            }
+                int closingQuote = source.IndexOf(character, position + 1);
+                if (closingQuote < 0)
+                {
+                    break;
+                }
 
-            int start = position;
-            while (position < offset && IsMarkupNameCharacter(source[position]))
-            {
-                position++;
+                position = closingQuote + 1;
             }
-
-            if (position > start)
+            else if (IsMarkupNameCharacter(character))
             {
-                names.Add(source.Substring(start, position - start));
-            }
-
-            while (position < offset && source[position] is not ('\'' or '"'))
-            {
-                position++;
-            }
-
-            if (position < offset)
-            {
-                char quote = source[position++];
-                while (position < offset && source[position] != quote)
+                int start = position;
+                while (position < source.Length && IsMarkupNameCharacter(source[position]))
                 {
                     position++;
                 }
 
-                position = Math.Min(offset, position + 1);
+                if (typedWord.Length == 0 || start != typedWord.Start)
+                {
+                    names.Add(source.Substring(start, position - start));
+                }
+            }
+            else
+            {
+                position++;
             }
         }
 
         return names;
+    }
+
+    // The end of the tag that starts at tagStart: its '>', or the next '<' of an unclosed tag, or source.Length when
+    // neither follows. Quoted values are skipped, as MarkupLexer reads them up to their closing quote, so the '<' in
+    // `Tag="a < b"` does not end the tag.
+    private static int FindTagEnd(string source, int tagStart)
+    {
+        int position = tagStart + 1;
+        while (position < source.Length && source[position] is not ('>' or '<'))
+        {
+            if (source[position] is '\'' or '"')
+            {
+                int closingQuote = source.IndexOf(source[position], position + 1);
+                if (closingQuote < 0)
+                {
+                    return source.Length;
+                }
+
+                position = closingQuote;
+            }
+
+            position++;
+        }
+
+        return position;
     }
 
     private static string? FindUnclosedElementName(string source, int offset)
@@ -651,8 +676,10 @@ internal sealed partial class CernealaCompletionService
                     wordSpan, wordPrefix, lineStart, null, string.Empty, wordSpan, null);
             }
 
-            int tagEnd = source.IndexOf('>', offset);
-            bool tagHasClose = tagEnd >= 0;
+            // The current tag is closed only by a '>' reached before the next '<' outside quoted values; a later '>',
+            // such as the one of the parent's end tag in `<Window><Bu|</Window>`, belongs to another tag.
+            int tagEnd = FindTagEnd(source, tagStart);
+            bool tagHasClose = tagEnd < source.Length && source[tagEnd] == '>';
             bool closing = tagStart + 1 < source.Length && source[tagStart + 1] == '/';
             int nameStart = tagStart + (closing ? 2 : 1);
             int nameEnd = nameStart;

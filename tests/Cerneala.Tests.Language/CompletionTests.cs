@@ -112,6 +112,44 @@ public sealed class CompletionTests
         }
     }
 
+    [Theory]
+    [InlineData("<Window><Bu|caret| /></Window>", "Button", "<Window><Button /></Window>")]
+    [InlineData("<Window><Bu|caret|</Window>", "Button", "<Window><Button /></Window>")]
+    [InlineData("<Window><Bu|caret|\n<TextBlock /></Window>", "Button", "<Window><Button />\n<TextBlock /></Window>")]
+    [InlineData("<Window><Button.Con|caret|</Window>", "Button.Content",
+        "<Window><Button.Content></Button.Content></Window>")]
+    public void ElementCompletionBeforeLaterMarkupStillProducesValidMarkup(
+        string markup,
+        string expected,
+        string expectedApplied)
+    {
+        using CompletionFixture fixture = CompletionFixture.Create(markup);
+
+        CernealaCompletionItem item = Assert.Single(
+            fixture.Complete().Where(candidate => candidate.Label == expected));
+
+        string applied = fixture.Text.Substring(0, item.ReplacementSpan.Start) +
+            item.InsertText +
+            fixture.Text.Substring(item.ReplacementSpan.End);
+        Assert.Equal(expectedApplied, applied);
+        AssertValidAfterInsertion(fixture.Text, item);
+    }
+
+    [Fact]
+    public void ElementCompletionBeforeAQuotedValueWithALessThanSignKeepsTheClosedTag()
+    {
+        // MarkupLexer reads a quoted value up to its closing quote, so the '<' in "a < b" does not start a tag.
+        using CompletionFixture fixture = CompletionFixture.Create("<Window><Bu|caret| Tag=\"a < b\" /></Window>");
+
+        CernealaCompletionItem item = Assert.Single(
+            fixture.Complete().Where(candidate => candidate.Label == "Button"));
+
+        string applied = fixture.Text.Substring(0, item.ReplacementSpan.Start) +
+            item.InsertText +
+            fixture.Text.Substring(item.ReplacementSpan.End);
+        Assert.Equal("<Window><Button Tag=\"a < b\" /></Window>", applied);
+    }
+
     [Fact]
     public void AttributesIncludePropertiesEventsAndCompatibleAttachedPropertiesWithoutDuplicates()
     {
@@ -126,6 +164,30 @@ public sealed class CompletionTests
         Assert.DoesNotContain(items, item => item.Label == "Width");
         Assert.Equal(items.Count, items.Select(item => item.Label).Distinct(StringComparer.Ordinal).Count());
         AssertValidAfterInsertion(fixture.Text, Assert.Single(items.Where(item => item.Label == "Height")));
+    }
+
+    [Theory]
+    [InlineData("<Window><Button Width=\"1\" |caret| /></Window>", "Height", "Width")]
+    [InlineData("<Window><Button |caret| Width=\"1\" /></Window>", "Height", "Width")]
+    [InlineData("<Window><Button |caret| Click=\"OnClick\" Grid.Row=\"1\" Name=\"b\" /></Window>", "Height", "Click,Grid.Row,Name")]
+    [InlineData("<Window |caret| xmlns=\"clr-namespace:Cerneala.UI.Controls;assembly=Cerneala\"></Window>", "Width", "xmlns")]
+    [InlineData("<Window><Button Hei|caret|ght=\"1\" Width=\"1\" /></Window>", "Height", "Width")]
+    public void AttributeCompletionDoesNotOfferAnAttributeThatTheTagAlreadyHasAfterTheCaret(
+        string markup,
+        string offered,
+        string alreadyUsed)
+    {
+        using CompletionFixture fixture = CompletionFixture.Create(markup);
+
+        IReadOnlyList<CernealaCompletionItem> items = fixture.Complete();
+
+        Assert.Contains(items, item => item.Label == offered);
+        foreach (string used in alreadyUsed.Split(','))
+        {
+            Assert.True(
+                !items.Any(item => item.Label == used),
+                $"'{markup}': \"{used}\" is offered although the tag already has it.");
+        }
     }
 
     [Fact]
