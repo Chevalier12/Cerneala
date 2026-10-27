@@ -1760,6 +1760,73 @@ public sealed class PrismDistortionFilterTests
         Assert.Equal(12, plan.Options1.Y);
     }
 
+    [Theory]
+    [InlineData(PrismFilterId.Wave, "Wavelength", "Options0.Y")]
+    [InlineData(PrismFilterId.Wave, "Amplitude", "Options1.Y")]
+    [InlineData(PrismFilterId.Displace, "HorizontalScale", "Options0.X")]
+    [InlineData(PrismFilterId.Displace, "VerticalScale", "Options0.Y")]
+    [InlineData(PrismFilterId.Ripple, "Amount", "Options0.X")]
+    [InlineData(PrismFilterId.OceanRipple, "RippleSize", "Options0.X")]
+    public void LengthParametersTheResamplingPlannerScalesByDeviceScaleHaveTheDipUnit(
+        PrismFilterId filter,
+        string parameter,
+        string preparedOption)
+    {
+        const float value = 3;
+        const float pixelScale = 2;
+        DrawRect bounds = new(0, 0, 64, 64);
+        PrismGraphNode node = CreateGraph(
+            filter,
+            bounds,
+            (state, entry) =>
+            {
+                if (Property(entry, parameter).ValueType ==
+                    PrismCatalogValueType.Vector)
+                {
+                    SetVector(
+                        state,
+                        entry,
+                        parameter,
+                        new Vector4(value, value, 0, 0));
+                }
+                else
+                {
+                    SetNumber(state, entry, parameter, value);
+                }
+            })
+            .Nodes
+            .First(candidate =>
+                candidate.Kind == PrismGraphNodeKind.Filter);
+        PrismResamplingPlan plan = PrismResamplingPlanner.Create(
+            filter,
+            node.Parameters,
+            PrismBlendMode.Normal,
+            pixelScale,
+            Matrix3x2.Identity,
+            bounds);
+        float prepared = preparedOption switch
+        {
+            "Options0.X" => plan.Options0.X,
+            "Options0.Y" => plan.Options0.Y,
+            "Options1.Y" => plan.Options1.Y,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(preparedOption),
+                preparedOption,
+                null)
+        };
+        PrismCatalogParameterInfo info = PrismCatalog
+            .GetFilter(filter)
+            .Parameters
+            .Single(candidate => candidate.Name == parameter);
+
+        Assert.Equal(value * pixelScale, prepared);
+        Assert.True(
+            info.Unit == "dip",
+            $"The planner prepares {filter}.{parameter} = {value} at pixel scale {pixelScale} as " +
+            $"{prepared} device pixels, so it is a device-independent length, and prism-markup-syntax.md " +
+            $"says lengths have the catalog unit `dip`; the catalog unit of {filter}.{parameter} is \"{info.Unit}\".");
+    }
+
     [Fact]
     public void WaveGeneratorFieldIsSpatiallyCoherent()
     {
