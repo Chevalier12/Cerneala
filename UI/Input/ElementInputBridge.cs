@@ -309,10 +309,11 @@ public sealed class ElementInputBridge
                     out bool buttonPreviewHandled,
                     routedPressOwner,
                     out bool handledBeforePressOwner);
-                // As WPF's Control, which raises the double click from its MouseLeftButtonDown class handler when the
-                // press counts 2, the double click belongs to the second press: a release outside the element after it
-                // does not cancel it, and the release raises no double click (#957).
-                if (button == InputMouseButton.Left && pressClickCount == 2)
+                // As WPF's Control, which raises the double click from its MouseLeftButtonDown and MouseRightButtonDown
+                // class handlers when the press counts 2, the double click belongs to the second press: a release outside
+                // the element after it does not cancel it, and the release raises no double click (#957). The middle and
+                // extra buttons raise none, as WPF registers no such handler for them (#868).
+                if (button is InputMouseButton.Left or InputMouseButton.Right && pressClickCount == 2)
                 {
                     RaiseDirectMousePairAlongRoute(routeMap, pointerTarget, InputEvents.PreviewMouseDoubleClickEvent, InputEvents.MouseDoubleClickEvent, button, pressClickCount, modifiers, genericPreviewHandledOnArrival: null, genericHandledOnArrival: null, out _, null, out _);
                 }
