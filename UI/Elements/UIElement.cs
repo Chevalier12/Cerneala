@@ -256,6 +256,9 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     public bool IsLoaded => IsAttached;
 
+    // True from the start of DetachFromRoot until Root is cleared.
+    internal bool IsDetachingFromRoot => isDetachingFromRoot;
+
     public bool IsInitialized => isInitialized;
 
     public ElementHandlerStore Handlers { get; }

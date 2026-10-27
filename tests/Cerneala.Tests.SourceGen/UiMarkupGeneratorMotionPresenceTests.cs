@@ -99,6 +99,44 @@ public sealed partial class UiMarkupGeneratorTests
         AssertMotionDiagnostic(result, expectedMessage);
     }
 
+    [Theory]
+    [InlineData("@presence { enter = $QuickOut; exit = Tween(140ms, EaseIn); }", false)]
+    [InlineData("@presence { enter = QuickOut; exit = Tween(140ms, EaseIn); }", true)]
+    [InlineData("@presence { enter = Tween(140ms, EaseIn); exit = QuickOut; }", true)]
+    [InlineData("@drag with $QuickOut;", false)]
+    [InlineData("@drag with QuickOut;", true)]
+    [InlineData("@gesture press with $QuickOut;", false)]
+    [InlineData("@gesture press with QuickOut;", true)]
+    [InlineData("@layout id $self.Text with $QuickOut;", false)]
+    [InlineData("@layout id $self.Text with QuickOut;", true)]
+    public void MotionSpecWrittenWithoutADollarIsReportedInsteadOfCrashingTheGenerator(string body, bool invalid)
+    {
+        string markup = $$"""
+            <TextBlock Text="card">
+              <TextBlock.Resources>
+                <Tween Name="QuickOut" Duration="100ms" />
+                <Aspect TargetType="TextBlock">{{body}}</Aspect>
+              </TextBlock.Resources>
+            </TextBlock>
+            """;
+
+        GeneratorRunResult result = RunGenerator("MotionBareSpec.crn", markup, out Compilation compilation);
+
+        Assert.True(result.Exception is null, "The generator crashed: " + result.Exception);
+        if (!invalid)
+        {
+            AssertNoGeneratorOrCompilationErrors(result, compilation);
+            return;
+        }
+
+        Diagnostic diagnostic = Assert.Single(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Equal("CERNEALAUI023", diagnostic.Id);
+        Assert.Contains("'QuickOut'", diagnostic.GetMessage(), StringComparison.Ordinal);
+        Assert.Contains("'$QuickOut'", diagnostic.GetMessage(), StringComparison.Ordinal);
+        int tokenStart = markup.IndexOf(body, StringComparison.Ordinal) + body.IndexOf("QuickOut", StringComparison.Ordinal);
+        Assert.Equal(tokenStart, diagnostic.Location.SourceSpan.Start);
+    }
+
     private static Border CreateGeneratedPresenceBorder(string markup)
     {
         GeneratorRunResult result = RunGenerator("RuntimeMotionPresence.crn", markup, out Compilation compilation);

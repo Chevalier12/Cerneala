@@ -102,7 +102,7 @@ This first version does not provide a dedicated separator, icon or shortcut-text
 | --- | --- | --- |
 | `CanExecuteCommand(CommandRouter, ElementInputRouteMap)` | `bool` | Returns whether the item is a leaf whose command can execute through the current input route. |
 | `ExecuteCommand(CommandRouter, ElementInputRouteMap)` | `bool` | Executes the leaf command through direct or routed-command infrastructure and completes a pending leaf activation. |
-| `RefreshCommandState(CommandRouter, ElementInputRouteMap)` | `bool` | Refreshes command state and synchronizes the effective enabled state. |
+| `RefreshCommandState(CommandRouter, ElementInputRouteMap)` | `bool` | Refreshes command state and synchronizes the effective enabled state. For a `RoutedCommand`, an item that is not in the route map (for example a collapsed item) keeps `IsEnabled`, returns `false`, and is refreshed again after the next change of the element tree or of the input route, as `ICommandStateSource` describes. |
 
 ## Events
 
