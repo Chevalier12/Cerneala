@@ -358,6 +358,7 @@ public sealed class PrismAttachmentTests
                 motionSession,
                 element,
                 propertyId: 1_001,
+                scope: LifecycleLayerId,
                 static instance => instance.GetLayerState(LifecycleLayerId).Opacity,
                 static (instance, value) => instance.GetLayerState(LifecycleLayerId).Opacity = value,
                 discrete: false,

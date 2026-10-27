@@ -58,12 +58,29 @@ public sealed class KeyboardNavigation
     private static List<NavigationCandidate> CollectCandidates(ElementInputRouteMap routeMap)
     {
         List<NavigationCandidate> candidates = [];
+        // The element that each ITabOnceScope is entered on, with the TabIndex of its scope, as WPF orders a Once group
+        // by its container. A scope comes before its containers in route order, so its element is known when they come.
+        Dictionary<UIElement, int>? tabOnceElements = null;
         for (int routeOrder = 0; routeOrder < routeMap.ElementsInRouteOrder.Count; routeOrder++)
         {
             UIElement element = routeMap.ElementsInRouteOrder[routeOrder];
-            if (FocusPolicy.CanFocus(element, routeMap) && element.IsTabStop)
+            if (element is ITabOnceScope scope && scope.GetTabOnceElement(routeMap) is { } tabOnceElement)
+            {
+                (tabOnceElements ??= new(ReferenceEqualityComparer.Instance))[tabOnceElement] = element.TabIndex;
+            }
+
+            if (!FocusPolicy.CanFocus(element, routeMap))
+            {
+                continue;
+            }
+
+            if (element.IsTabStop)
             {
                 candidates.Add(new NavigationCandidate(element, element.TabIndex, routeOrder));
+            }
+            else if (tabOnceElements is not null && tabOnceElements.TryGetValue(element, out int scopeTabIndex))
+            {
+                candidates.Add(new NavigationCandidate(element, scopeTabIndex, routeOrder));
             }
         }
 

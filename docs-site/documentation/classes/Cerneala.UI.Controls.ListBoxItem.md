@@ -64,7 +64,7 @@ Because `ListBoxItem` derives from `ContentControl`, it also supports the inheri
 | --- | --- |
 | `UIElement` | Hosted directly as the item's logical and visual child, as `ContentControl` hosts it. In a `ListBox` row, a template is tried first, in the order of `ContentPresenter`: the `ItemTemplate` of the `ListBox`, then a template of its `Templates` that matches the element and the `ItemTemplateKey`. When one applies, the internal `ContentPresenter` shows the template's element instead, and the `UIElement` is only the template's data. |
 | `string` | Shown by an internal `ContentPresenter` child, which creates a `TextBlock` with the text. The `TextBlock` uses the item's `FontFamily`, `FontSize`, and `Foreground`. |
-| Another value | Given to the same internal `ContentPresenter`. It shows a child only when a content template matches the value; otherwise the item shows only its background. |
+| Another value | Given to the same internal `ContentPresenter`. When a content template matches the value, the presenter shows the template's element. Otherwise it shows a `TextBlock` with the value's `ToString()`, as for a `string`. For example, `new ListBoxItem { Content = 42 }` shows a `TextBlock` whose `Text` is `"42"`, and a `ListBox` row for the item `DayOfWeek.Monday` shows `Monday`. |
 | `null` | Given to the same internal `ContentPresenter`. It shows a child only when a content template creates one for `null`, for example the `ItemTemplate` of the owning `ListBox`; otherwise the item shows only its background. |
 
 For example, `new ListBoxItem { Content = "Ink" }` has one `ContentPresenter` child, and that presenter has one `TextBlock` child whose `Text` is `"Ink"`. The item measures at least the size of that text plus `Padding` and `BorderThickness`. `Content` stays the string `"Ink"`.
@@ -75,7 +75,7 @@ When the item has a `ComponentTemplate` or a `ComponentTemplateKey`, the templat
 
 ### Keyboard focus on a click
 
-A `ListBoxItem` is focusable: its constructor sets `Focusable` to `true`, as a WPF `ListBoxItem` is a `Control` whose `Focusable` defaults to `true`. A left press on the item moves keyboard focus to the item, as WPF's `ListBoxItem.OnMouseLeftButtonDown` focuses the item. `IsTabStop` stays `false`, so the Tab key does not stop on every row, as a WPF `ListBox` lets the Tab key into its list only once.
+A `ListBoxItem` is focusable: its constructor sets `Focusable` to `true`, as a WPF `ListBoxItem` is a `Control` whose `Focusable` defaults to `true`. A left press on the item moves keyboard focus to the item, as WPF's `ListBoxItem.OnMouseLeftButtonDown` focuses the item. `IsTabStop` stays `false`, so the Tab key does not stop on every row, as a WPF `ListBox` lets the Tab key into its list only once: Tab enters the list on the focused row, the last focused row, or the selected row, or on the first row, as `ListBox` describes under "Keyboard".
 
 For example, a `Button` named `other` has the focus, and the user clicks the first row of a `ListBox`. After the click, the row's `IsKeyboardFocused` is `true`, the `ListBox`'s `IsKeyboardFocusWithin` is `true`, and `other.IsKeyboardFocused` is `false`. A Space press after the click therefore does not click `other`.
 

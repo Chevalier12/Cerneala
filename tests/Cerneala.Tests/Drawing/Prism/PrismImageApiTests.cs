@@ -134,6 +134,107 @@ public sealed class PrismImageApiTests
         Assert.NotEqual(firstVersion, secondVersion);
     }
 
+    [Theory]
+    [InlineData("DrawImage")]
+    [InlineData("DrawNineSlice")]
+    [InlineData("DrawImageQuadPoints")]
+    [InlineData("DrawImageQuadVertices")]
+    [InlineData("DrawTriangles")]
+    [InlineData("DrawMesh")]
+    [InlineData("DrawSpriteBatch")]
+    public void IdenticalImageCommandsOnAPrismImageHaveTheSameDrawContentVersion(string call)
+    {
+        using PrismImage image = global::Cerneala.Drawing.Prism.Prism.Apply(
+            new TestImage(64, 64),
+            new OuterGlowStyle());
+        DrawRect destination = new(10, 20, 32, 32);
+        DrawVertex2D[] vertices =
+        [
+            new(new DrawPoint(10, 20), Color.White, new DrawPoint(0, 0)),
+            new(new DrawPoint(42, 20), Color.White, new DrawPoint(1, 0)),
+            new(new DrawPoint(42, 52), Color.White, new DrawPoint(1, 1))
+        ];
+        DrawMesh2D mesh = new(vertices, [0, 1, 2], image: image);
+        DrawSpriteBatch batch = new(image, [new DrawSprite2D(destination)]);
+
+        long Record()
+        {
+            DrawCommandList commands = new();
+            DrawingContext context = new(commands);
+            switch (call)
+            {
+                case "DrawNineSlice":
+                    context.DrawNineSlice(image, destination, new DrawInsets(4));
+                    break;
+                case "DrawImageQuadPoints":
+                    context.DrawImageQuad(
+                        image,
+                        new DrawPoint(10, 20),
+                        new DrawPoint(42, 20),
+                        new DrawPoint(42, 52),
+                        new DrawPoint(10, 52));
+                    break;
+                case "DrawImageQuadVertices":
+                    context.DrawImageQuad(
+                        image,
+                        vertices[0],
+                        vertices[1],
+                        vertices[2],
+                        new DrawVertex2D(new DrawPoint(10, 52), Color.White, new DrawPoint(0, 1)));
+                    break;
+                case "DrawTriangles":
+                    context.DrawTriangles(vertices, image);
+                    break;
+                case "DrawMesh":
+                    context.DrawMesh(mesh);
+                    break;
+                case "DrawSpriteBatch":
+                    context.DrawSpriteBatch(batch);
+                    break;
+                default:
+                    context.DrawImage(image, destination, Color.White);
+                    break;
+            }
+
+            return commands[0].PrismScope!.Value.DrawContentVersion;
+        }
+
+        long first = Record();
+        long second = Record();
+
+        Assert.True(
+            first == second,
+            $"{call}: draw content version {first} then {second} for identical inputs.");
+    }
+
+    [Fact]
+    public void DifferentGeneratedMeshesOnAPrismImageHaveDifferentDrawContentVersions()
+    {
+        using PrismImage image = global::Cerneala.Drawing.Prism.Prism.Apply(
+            new TestImage(64, 64),
+            new OuterGlowStyle());
+        DrawRect destination = new(10, 20, 32, 32);
+
+        long Record(Action<DrawingContext> draw)
+        {
+            DrawCommandList commands = new();
+            draw(new DrawingContext(commands));
+            return commands[0].PrismScope!.Value.DrawContentVersion;
+        }
+
+        long QuadVersion(float rightX) => Record(context => context.DrawImageQuad(
+            image,
+            new DrawPoint(10, 20),
+            new DrawPoint(rightX, 20),
+            new DrawPoint(42, 52),
+            new DrawPoint(10, 52)));
+
+        Assert.NotEqual(
+            Record(context => context.DrawNineSlice(image, destination, new DrawInsets(4))),
+            Record(context => context.DrawNineSlice(image, destination, new DrawInsets(8))));
+        Assert.NotEqual(QuadVersion(42), QuadVersion(48));
+    }
+
     [Fact]
     public void OperationMutationInvalidatesTheNextDrawScope()
     {
