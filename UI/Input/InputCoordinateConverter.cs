@@ -6,6 +6,9 @@ namespace Cerneala.UI.Input;
 
 internal static class InputCoordinateConverter
 {
+    private static readonly Matrix3x2 NonFinite = new(
+        float.NaN, float.NaN, float.NaN, float.NaN, float.NaN, float.NaN);
+
     internal static LayoutRect GetRootBounds(UIElement element)
     {
         if (element is IInputCoordinateSpace coordinateSpace)
@@ -61,6 +64,8 @@ internal static class InputCoordinateConverter
         return float.IsFinite(elementPosition.X) && float.IsFinite(elementPosition.Y);
     }
 
+    // A visual transform that overflows float makes the whole chain non-finite,
+    // exactly like an overflow while composing the chain; callers reject it.
     internal static Matrix3x2 GetElementToRootTransform(UIElement element)
     {
         ArgumentNullException.ThrowIfNull(element);
@@ -69,9 +74,12 @@ internal static class InputCoordinateConverter
             current is not null;
             current = current.VisualParent)
         {
-            result *= ElementVisualTransform
-                .GetElementTransform(current)
-                .ToNumerics();
+            if (!ElementVisualTransform.TryGetElementTransform(current, out Media.Matrix3x2 elementTransform))
+            {
+                return NonFinite;
+            }
+
+            result *= elementTransform.ToNumerics();
         }
 
         return result;

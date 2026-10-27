@@ -210,6 +210,48 @@ public sealed class HitTestServiceTests
         Assert.Same(child, visualHit!.Element);
     }
 
+    [Theory]
+    [InlineData(1f, false)]
+    [InlineData(1e30f, true)]
+    public void NestedOverflowingTransformsMakeTheOverflowingSubtreeUnhittable(float scale, bool overflows)
+    {
+        // Each scale is finite; with 1e30 the combined child scale 1e60 overflows float.
+        UIRoot root = new(300, 300);
+        UIElement parent = Arranged(0, 0, 200, 200);
+        parent.RenderTransformOrigin = new LayoutPoint(0, 0);
+        parent.ScaleX = scale;
+        UIElement child = Arranged(0, 0, 100, 100);
+        child.RenderTransformOrigin = new LayoutPoint(0, 0);
+        child.ScaleX = scale;
+        parent.VisualChildren.Add(child);
+        root.VisualChildren.Add(parent);
+
+        HitTestResult? result = null;
+        Exception? failure = Record.Exception(() => result = new HitTestService().HitTest(root, 5, 5));
+
+        Assert.True(failure is null, "HitTest threw " + failure?.GetType().Name + ": " + failure?.Message);
+        Assert.Same(overflows ? parent : child, result?.Element);
+    }
+
+    [Theory]
+    [InlineData(1f, false)]
+    [InlineData(1e30f, true)]
+    public void TransformWhoseInverseOverflowsMakesTheElementUnhittable(float scale, bool overflows)
+    {
+        // The transform is finite, but with 1e30 its determinant 1e60 overflows float during inversion.
+        UIRoot root = new(300, 300);
+        UIElement element = Arranged(0, 0, 200, 200);
+        element.ScaleX = scale;
+        element.ScaleY = scale;
+        root.VisualChildren.Add(element);
+
+        HitTestResult? result = null;
+        Exception? failure = Record.Exception(() => result = new HitTestService().HitTest(root, 100, 100));
+
+        Assert.True(failure is null, "HitTest threw " + failure?.GetType().Name + ": " + failure?.Message);
+        Assert.Same(overflows ? root : element, result?.Element);
+    }
+
     internal static UIElement Arranged(float x, float y, float width, float height)
     {
         UIElement element = new();

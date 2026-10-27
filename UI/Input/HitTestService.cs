@@ -43,10 +43,11 @@ public sealed class HitTestService
             return null;
         }
 
-        Matrix3x2 elementTransform = Matrix3x2.Multiply(
-            ElementVisualTransform.GetElementTransform(element),
-            ancestorTransform);
-        if (!ElementVisualTransform.TryInvert(elementTransform, out Matrix3x2 inverseTransform))
+        // A transform that overflows float is non-finite and, like a non-invertible
+        // transform, makes the element and its subtree un-hittable.
+        if (!ElementVisualTransform.TryGetElementTransform(element, out Matrix3x2 localTransform) ||
+            !Matrix3x2.TryMultiply(localTransform, ancestorTransform, out Matrix3x2 elementTransform) ||
+            !ElementVisualTransform.TryInvert(elementTransform, out Matrix3x2 inverseTransform))
         {
             return null;
         }
