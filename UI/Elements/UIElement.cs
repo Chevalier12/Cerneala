@@ -860,11 +860,17 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         }
         finally
         {
-            // A failing detach callback still leaves the element detached.
-            ReleaseImageResources();
-            Root?.RetainedRenderCache.ReleaseElement(this);
-            Bindings.Clear();
-            Root?.AdvanceImageResolutionEpoch();
+            // A failing detach callback or cleanup step still leaves the element detached. A cleanup step does not
+            // throw from this finally block, because that would skip the remaining steps and replace the earlier
+            // failure.
+            try { ReleaseImageResources(); }
+            catch (Exception exception) { failure ??= ExceptionDispatchInfo.Capture(exception); }
+            try { Root?.RetainedRenderCache.ReleaseElement(this); }
+            catch (Exception exception) { failure ??= ExceptionDispatchInfo.Capture(exception); }
+            try { Bindings.Clear(); }
+            catch (Exception exception) { failure ??= ExceptionDispatchInfo.Capture(exception); }
+            try { Root?.AdvanceImageResolutionEpoch(); }
+            catch (Exception exception) { failure ??= ExceptionDispatchInfo.Capture(exception); }
             Root = null;
             isDetachingFromRoot = false;
         }
