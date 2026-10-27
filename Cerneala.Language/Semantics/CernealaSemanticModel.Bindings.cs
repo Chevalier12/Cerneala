@@ -18,7 +18,7 @@ internal sealed partial class CernealaSemanticModel
     {
         resultType = null;
         TextSpan contentSpan = AttributeContentSpan(attribute);
-        if (TryBindPropertyExpression(element, target, value, contentSpan, dataType))
+        if (TryBindPropertyExpression(ownerType, element, target, value, contentSpan, dataType))
         {
             return true;
         }
@@ -46,6 +46,11 @@ internal sealed partial class CernealaSemanticModel
 
         if (parsed.Syntax.Kind == BindingValueKind.Direct && parsed.Syntax.Binding is BindingPathSyntax direct)
         {
+            if (ReportNonUiPropertyBindingTarget(ownerType, target, value, contentSpan))
+            {
+                return true;
+            }
+
             BindingResolution? resolution = ResolveBindingPath(
                 element,
                 direct,
@@ -75,6 +80,11 @@ internal sealed partial class CernealaSemanticModel
                 return true;
             }
 
+            if (ReportNonUiPropertyBindingTarget(ownerType, target, value, contentSpan))
+            {
+                return true;
+            }
+
             foreach (BindingFragmentSyntax fragment in parsed.Syntax.Fragments.OfType<BindingFragmentSyntax>())
             {
                 ResolveBindingPath(element, fragment.Binding, dataType);
@@ -92,6 +102,7 @@ internal sealed partial class CernealaSemanticModel
     // bare identifiers, 'value', modes, self-reads and type rules stay generator-only, as
     // for @if, so the generator's message is the one the build shows.
     private bool TryBindPropertyExpression(
+        ILanguageTypeSymbol ownerType,
         ElementSyntax element,
         ILanguageMemberSymbol target,
         string value,
@@ -110,6 +121,11 @@ internal sealed partial class CernealaSemanticModel
             stringTarget: targetType.TrimEnd('?') is "string" or "System.String"))
         {
             case BindingExpressionShape.Expression:
+                if (ReportNonUiPropertyBindingTarget(ownerType, target, expression.Text, expression.Span))
+                {
+                    return true;
+                }
+
                 foreach (BindingPathSyntax source in expression.Sources)
                 {
                     ResolveBindingPath(element, source, dataType);
@@ -242,6 +258,8 @@ internal sealed partial class CernealaSemanticModel
                 AddBindingDiagnostic(path.Text, sourceSegment.Span, "$owner is available only inside @template.");
                 return null;
             }
+
+            requiresUiProperty = true;
         }
         else if (FindNamedElement(source, sourceName) is NamedElementDefinition named)
         {
@@ -302,9 +320,12 @@ internal sealed partial class CernealaSemanticModel
                 return null;
             }
 
-            string memberName = segment.Name.TrimStart('$');
-            ILanguageMemberSymbol? member = FindProperty(currentType, memberName);
-            if (member is null || !member.CanRead)
+            // A member segment keeps its '$': the build rejects '$DataContext.$Name' because no property is named '$Name'.
+            string memberName = segment.Name;
+            ILanguageMemberSymbol? member = requiresUiProperty
+                ? FindUiProperty(currentType, memberName)
+                : FindReadablePathProperty(currentType, memberName);
+            if (member is null)
             {
                 AddBindingDiagnostic(
                     path.Text,
@@ -944,6 +965,58 @@ internal sealed partial class CernealaSemanticModel
         target.ValueTypeMetadataName.TrimEnd('?') is "string" or "System.String" &&
         (value.IndexOf("&lt;", StringComparison.Ordinal) >= 0 ||
             value.IndexOf("&#x3C;", StringComparison.OrdinalIgnoreCase) >= 0);
+
+    // A binding path segment of a CLR source ($DataContext): an instance property whose getter generated code can
+    // call (UiMarkupBindingResolver.FindReadablePathProperty).
+    private ILanguageMemberSymbol? FindReadablePathProperty(ILanguageTypeSymbol? type, string name) =>
+        type?.GetMembers(name).FirstOrDefault(candidate => candidate.Kind == LanguageMemberKind.Property &&
+            !candidate.IsStatic && compilation.CanReadFromGeneratedCode(candidate, markupPairType));
+
+    // A UI property ($self, $root, $owner, a named element, a binding target): a readable instance property with a
+    // static 'NameProperty' field of type UiProperty<T> for the same T (UiMarkupPropertyResolver.FindPropertySpec).
+    // ItemsControl.ItemCount is a plain CLR property, so '$list.ItemCount' is not a UI property.
+    private ILanguageMemberSymbol? FindUiProperty(ILanguageTypeSymbol? type, string name)
+    {
+        ILanguageMemberSymbol? property = FindReadablePathProperty(type, name);
+        ILanguageMemberSymbol? field = property is null ? null : type!.GetMembers(name + "Property")
+            .FirstOrDefault(candidate => candidate.Kind == LanguageMemberKind.Field && candidate.IsStatic &&
+                candidate.ValueType is { Name: "UiProperty", Namespace: "Cerneala.UI.Core", TypeArguments.Count: 1 } &&
+                IsCallableFromGeneratedCode(candidate));
+        return field is not null && IsSameValueType(field.ValueType!.TypeArguments[0], property!.ValueType)
+            ? property
+            : null;
+    }
+
+    // The generator compares the types with SymbolEqualityComparer.Default, which ignores nullable reference
+    // annotations ('Brush?' equals 'Brush') but not Nullable<T> ('int?' differs from 'int').
+    private static bool IsSameValueType(ILanguageTypeSymbol left, ILanguageTypeSymbol? right) =>
+        right is not null &&
+        IsNullableValueType(left) == IsNullableValueType(right) &&
+        string.Equals(left.MetadataName.TrimEnd('?'), right.MetadataName.TrimEnd('?'), StringComparison.Ordinal);
+
+    private static bool IsNullableValueType(ILanguageTypeSymbol type) =>
+        type.Name == "Nullable" && type.Namespace == "System" && type.TypeArguments.Count == 1;
+
+    // The build binds only a UiProperty-backed target (UiMarkupGenerator.EmitProperty): an ordinary CLR property such
+    // as ListBoxItem.ItemIndex takes literal and resource values only. A target without a setter keeps the read-only
+    // diagnostic of ValidateBindingCompatibility; an attached property (a static setter method) has its own rule.
+    private bool ReportNonUiPropertyBindingTarget(
+        ILanguageTypeSymbol ownerType,
+        ILanguageMemberSymbol target,
+        string expression,
+        TextSpan span)
+    {
+        if (target.Kind != LanguageMemberKind.Property || !target.CanWrite || FindUiProperty(ownerType, target.Name) is not null)
+        {
+            return false;
+        }
+
+        AddBindingDiagnostic(
+            expression,
+            span,
+            "Bindings require a UiProperty-backed target; ordinary CLR properties support literal and resource values only.");
+        return true;
+    }
 
     private static bool IsObservablePathOwner(ILanguageTypeSymbol type) =>
         type.IsOrImplements("Cerneala.UI.Core.UiObject") ||

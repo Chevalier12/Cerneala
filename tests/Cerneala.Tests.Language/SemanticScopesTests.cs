@@ -48,7 +48,7 @@ public sealed class SemanticScopesTests
             <UserControl xmlns:d="clr-namespace:Demo" DataType="d:ViewModel">
               <StackPanel Name="Host" DataContext="$DataContext.Details">
                 <TextBlock Text="$DataContext.Title:TwoWay" />
-                <TextBlock Text="$root.Caption" />
+                <TextBlock Text="$root.IsEnabled" />
                 <TextBlock Text="$Host.IsEnabled" />
                 <TextBlock Text="$self.IsEnabled" />
               </StackPanel>
