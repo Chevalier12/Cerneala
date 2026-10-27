@@ -50,6 +50,8 @@ Removing a stored subscription removes it from the collection and disposes it. R
 
 Clearing the collection disposes every subscription that was present at the time of the clear operation. `UIElement.DetachFromRoot` calls `Bindings.Clear()`, so element-owned bindings stop receiving source changes after the element is detached from its root.
 
+When a subscription's `Dispose` throws during `Clear()`, the later subscriptions are still disposed. The collection is empty afterwards, and `Clear()` rethrows the first exception, with its original type and stack trace, only after every subscription was disposed or attempted. For example, when the collection holds a subscription whose `Dispose` throws `InvalidOperationException`, followed by a `BindOneWay` binding, `Clear()` throws that `InvalidOperationException`, and the binding no longer updates its target.
+
 The collection is a simple owner, not an enumerable list. Use `Count` to inspect how many subscriptions are currently stored.
 
 ## Constructors
@@ -78,6 +80,7 @@ The collection is a simple owner, not an enumerable list. Use `Count` to inspect
 | --- | --- | --- |
 | `Add(IDisposable binding)` | `ArgumentNullException` | `binding` is `null`. |
 | `Remove(IDisposable binding)` | `ArgumentNullException` | `binding` is `null`. |
+| `Clear()` | Any exception | A subscription's `Dispose` throws. The first such exception is rethrown after every subscription was disposed or attempted. |
 
 ## Applies to
 

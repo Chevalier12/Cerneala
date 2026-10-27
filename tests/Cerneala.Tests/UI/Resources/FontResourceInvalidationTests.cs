@@ -58,6 +58,69 @@ public sealed class FontResourceInvalidationTests
         Assert.NotEqual(first.CacheKey, second.CacheKey);
     }
 
+    [Theory]
+    [InlineData("ResourceStore")]
+    [InlineData("ResourceDictionary")]
+    public void FontResourceReplacementChangesTextCacheIdentityForEveryProvider(string provider)
+    {
+        ResourceId<FontResource> id = new("Body");
+        IResourceProvider resources;
+        Action<FontResource> set;
+        if (provider == "ResourceStore")
+        {
+            ResourceStore store = new();
+            resources = store;
+            set = resource => store.SetResource(id, resource);
+        }
+        else
+        {
+            ResourceDictionary dictionary = new();
+            resources = dictionary;
+            set = resource => dictionary.SetResource(id, resource);
+        }
+
+        set(new FontResource(new TestFont("Default", 16)));
+        TextMeasurer measurer = new(new FontResolver(resources), LineBreakService.Default, new TextLayoutCache());
+        TextAspect aspect = new("Fallback", 16, fontResourceId: id);
+        TextMeasureResult first = measurer.Measure("Hello", aspect, 100);
+
+        set(new FontResource(new TestFont("Serif", 16)));
+        TextMeasureResult second = measurer.Measure("Hello", aspect, 100);
+
+        Assert.NotEqual(first.CacheKey, second.CacheKey);
+    }
+
+    [Fact]
+    public void ReplacingFontResourceInResourceDictionaryDrawsTextBlockWithNewFont()
+    {
+        ResourceDictionary resources = new();
+        ResourceId<FontResource> id = new("Body");
+        TestFont defaultFont = new("Default", 16);
+        TestFont serifFont = new("Serif", 16);
+        resources.SetResource(id, new FontResource(defaultFont));
+        UIRoot root = new(400, 400);
+        root.SetResourceProvider(resources);
+        TextBlock textBlock = new()
+        {
+            Text = "Hello",
+            FontResourceId = id
+        };
+        root.VisualChildren.Add(textBlock);
+        root.ProcessFrame();
+        Assert.Same(defaultFont, DrawnFont(root));
+
+        resources.SetResource(id, new FontResource(serifFont));
+        root.ProcessFrame();
+
+        Assert.Same(serifFont, DrawnFont(root));
+    }
+
+    private static IDrawFont DrawnFont(UIRoot root)
+    {
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
+        return Assert.Single(commands, static command => command.Kind == DrawCommandKind.DrawText).TextRun!.Font;
+    }
+
     [Fact]
     public void ChangingFontResourceIdInvalidatesTextMeasurementAndRender()
     {

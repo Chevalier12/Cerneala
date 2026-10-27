@@ -1800,6 +1800,66 @@ public sealed class ComboBoxTests
         Assert.Equal("zzzzzz", editor.Text);
     }
 
+    // With text search off, typing previews no item, even when the default filter keeps one, so Enter commits the
+    // typed text (#942).
+    [Theory]
+    [InlineData(false, "zzz", -1, "zzz")]
+    [InlineData(false, "App", -1, "App")]
+    [InlineData(true, "App", 0, "Apple")]
+    public void EnterCommitsTheTypedTextWhenTextSearchIsDisabled(
+        bool textSearch,
+        string typed,
+        int expectedIndex,
+        string expectedText)
+    {
+        UIRoot root = new(300, 200);
+        ComboBox comboBox = new() { IsTextSearchEnabled = textSearch };
+        comboBox.SetItems(new[] { "Apple", "Banana" });
+        root.VisualChildren.Add(comboBox);
+        root.ProcessFrame();
+        TextBox editor = Assert.IsType<TextBox>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_EditableTextBox"]);
+        ElementInputBridge bridge = new();
+        bridge.FocusManager.Focus(comboBox, root.InputCache.EnsureCurrent(root));
+
+        editor.ReceiveTextInput(typed);
+        root.ProcessFrame();
+        DispatchKey(root, bridge, InputKey.Enter);
+        root.ProcessFrame();
+
+        Assert.True(
+            comboBox.SelectedIndex == expectedIndex && comboBox.Text == expectedText,
+            $"IsTextSearchEnabled={textSearch}, typed '{typed}': SelectedIndex={comboBox.SelectedIndex} (expected {expectedIndex}), Text='{comboBox.Text}' (expected '{expectedText}'), editor='{editor.Text}'.");
+    }
+
+    // The arrow keys still choose an item from the filtered list when text search is off (#942).
+    [Fact]
+    public void DownThenEnterCommitsTheFirstFilteredItemWhenTextSearchIsDisabled()
+    {
+        UIRoot root = new(300, 200);
+        ComboBox comboBox = new() { IsTextSearchEnabled = false };
+        comboBox.SetItems(new[] { "Apple", "Banana", "Cherry" });
+        root.VisualChildren.Add(comboBox);
+        root.ProcessFrame();
+        TextBox editor = Assert.IsType<TextBox>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_EditableTextBox"]);
+        ElementInputBridge bridge = new();
+        bridge.FocusManager.Focus(comboBox, root.InputCache.EnsureCurrent(root));
+
+        editor.ReceiveTextInput("bana");
+        root.ProcessFrame();
+        Assert.Equal([1], RealizedSourceIndices(comboBox));
+        Assert.Equal("bana", editor.Text);
+        DispatchKey(root, bridge, InputKey.Down);
+        Assert.Equal("Banana", editor.Text);
+        DispatchKey(root, bridge, InputKey.Enter);
+        root.ProcessFrame();
+
+        Assert.Equal(1, comboBox.SelectedIndex);
+        Assert.Equal("Banana", comboBox.Text);
+        Assert.Equal("Banana", editor.Text);
+    }
+
     [Fact]
     public void ActiveFilterRebuildsWhenItemsChange()
     {

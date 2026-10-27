@@ -34,6 +34,38 @@ internal sealed class ServoQueryEngine
     private static ServoTargetAmbiguousException CreateAmbiguousException(ServoTarget target, int matchCount) =>
         new($"The Servo target {target} matched {matchCount} elements; exactly one was required.");
 
+    // Finds the semantics node of one known element, without any target criteria. Example: after
+    // ReplaceTextAsync typed into a TextBox, its node is found even when the target's Where no longer
+    // matches the new value. An element that left the root or the Servo projection has no node.
+    internal bool TryResolveElement(UIRoot root, UIElement element, [NotNullWhen(true)] out ServoResolvedElement? match)
+    {
+        ArgumentNullException.ThrowIfNull(root);
+        ArgumentNullException.ThrowIfNull(element);
+        match = ReferenceEquals(element.Root, root)
+            ? FindNode(root.GetServoSemanticsTree().Root, element)
+            : null;
+        return match is not null;
+    }
+
+    private static ServoResolvedElement? FindNode(SemanticsNode node, UIElement element)
+    {
+        if (ReferenceEquals(node.Element, element))
+        {
+            return new ServoResolvedElement(node, element);
+        }
+
+        IReadOnlyList<SemanticsNode> children = node.Children;
+        for (int index = 0; index < children.Count; index++)
+        {
+            if (FindNode(children[index], element) is ServoResolvedElement match)
+            {
+                return match;
+            }
+        }
+
+        return null;
+    }
+
     internal IReadOnlyList<ServoElement> FindAll(UIRoot root, ServoTarget target)
     {
         ServoElement[] snapshots = ResolveAll(root, target)

@@ -361,6 +361,65 @@ public sealed class StructureTests
         Assert.Equal(CernealaSemanticTokenModifiers.None, handles[1].Modifiers);
     }
 
+    // LSP DocumentSymbol.name must not be empty or consist only of white space.
+    [Theory]
+    [InlineData("<Window><Button Name=\"Action\" /></Window>", true)]
+    [InlineData("<Window><Button Name=\"\" /></Window>", false)]
+    [InlineData("<Window><Button Name=\"   \" /></Window>", false)]
+    public void DocumentSymbolNamesAreNeverEmptyOrWhitespace(string markup, bool hasAction)
+    {
+        using Fixture fixture = Fixture.Create(markup);
+        CernealaStructureService service = new();
+
+        CernealaOutlineSymbol root = Assert.Single(service.GetDocumentSymbols(fixture.Document, fixture.Model));
+        string[] names = Flatten(root).Select(symbol => symbol.Name).ToArray();
+
+        Assert.True(
+            names.All(name => !string.IsNullOrWhiteSpace(name)) && names.Contains("Action") == hasAction,
+            "Symbol names: [" + string.Join(", ", names.Select(name => "'" + name + "'")) + "].");
+    }
+
+    // An empty or blank Key must not become the symbol name.
+    [Theory]
+    [InlineData("Key=\"Card\"", "Card")]
+    [InlineData("Key=\"\"", null)]
+    [InlineData("Key=\"   \"", null)]
+    public void ContentTemplateSymbolNamesAreNeverEmptyOrWhitespace(string attribute, string? expectedName)
+    {
+        string markup = "<Window><Window.Resources><ContentTemplate " + attribute + "><TextBlock /></ContentTemplate></Window.Resources></Window>";
+        using Fixture fixture = Fixture.Create(markup);
+        CernealaStructureService service = new();
+
+        CernealaOutlineSymbol root = Assert.Single(service.GetDocumentSymbols(fixture.Document, fixture.Model));
+        string[] names = Flatten(root).Select(symbol => symbol.Name).ToArray();
+
+        Assert.True(
+            names.All(name => !string.IsNullOrWhiteSpace(name)) && (expectedName is null || names.Contains(expectedName)),
+            "Symbol names: [" + string.Join(", ", names.Select(name => "'" + name + "'")) + "].");
+    }
+
+    // A bound ContentTemplate takes its symbol name from the semantic model, which must skip a blank Name or Key.
+    [Theory]
+    [InlineData("Key=\"Card\"", "Card")]
+    [InlineData("Key=\"\"", "ContentTemplate")]
+    [InlineData("Key=\"   \"", "ContentTemplate")]
+    [InlineData("Name=\"\" Key=\"Card\"", "Card")]
+    public void ItemsTemplateSymbolNamesAreNeverEmptyOrWhitespace(string attribute, string expectedName)
+    {
+        string markup = "<Window><ItemsControl>@templates { <ContentTemplate " + attribute + "><TextBlock /></ContentTemplate> }</ItemsControl></Window>";
+        using Fixture fixture = Fixture.Create(markup);
+        CernealaStructureService service = new();
+
+        CernealaOutlineSymbol root = Assert.Single(service.GetDocumentSymbols(fixture.Document, fixture.Model));
+        string[] names = Flatten(root).Select(symbol => symbol.Name)
+            .Concat(service.GetWorkspaceSymbols([fixture.Model], string.Empty).Select(symbol => symbol.Name))
+            .ToArray();
+
+        Assert.True(
+            names.All(name => !string.IsNullOrWhiteSpace(name)) && names.Contains(expectedName),
+            "Symbol names: [" + string.Join(", ", names.Select(name => "'" + name + "'")) + "].");
+    }
+
     private static IEnumerable<CernealaOutlineSymbol> Flatten(CernealaOutlineSymbol symbol)
     {
         yield return symbol;

@@ -399,7 +399,9 @@ public sealed class Servo
         ServoOptions.ValidateTimeout(timeout, nameof(timeout));
         // Ctrl+A is the select-all shortcut of the Cerneala text controls on every operating system, and
         // these steps are Cerneala input frames, not platform key events. Selected text is removed by the
-        // typed replacement, or by Delete when the replacement is empty. The final step checks the result.
+        // typed replacement, or by Delete when the replacement is empty. The final step checks the result
+        // on the element that the click resolved, because the new value can stop the target from matching.
+        UIElement? edited = null;
         return ServoOperation.RunAsync(
             timeout,
             token => context.ExecuteInputAsync(
@@ -408,7 +410,15 @@ public sealed class Servo
                     // text value fails at once, a missing or not-yet-actionable one is waited for.
                     (_, input, operationToken) => actionEngine.DispatchWhenActionableAsync(
                         target,
-                        resolve => input.ClickAsync(resolve, 1, operationToken),
+                        resolve => input.ClickAsync(
+                            root =>
+                            {
+                                ServoActionTarget clicked = resolve(root);
+                                edited = clicked.Element;
+                                return clicked;
+                            },
+                            1,
+                            operationToken),
                         operationToken,
                         root => actionEngine.ReadTextValue(root, target)),
                     (_, input, operationToken) => input.PressKeyAsync(InputKey.A, ServoModifiers.Control, operationToken),
@@ -417,7 +427,7 @@ public sealed class Servo
                         : (_, input, operationToken) => input.SendTextAsync(text, operationToken),
                     (root, _, _) =>
                     {
-                        actionEngine.VerifyReplacedText(root, target, text);
+                        actionEngine.VerifyReplacedText(root, edited!, target, text);
                         return Task.CompletedTask;
                     }
                 ],

@@ -85,9 +85,9 @@ public sealed class PingPongSpec<T> : MotionSpec<T>
                 return;
             }
 
-            long cycle = (long)(elapsed.TotalMilliseconds / duration.TotalMilliseconds);
-            double cycleMs = elapsed.TotalMilliseconds % duration.TotalMilliseconds;
-            float progress = (float)(cycleMs / duration.TotalMilliseconds);
+            long cycle = elapsed.Ticks / duration.Ticks;
+            long cycleTicks = elapsed.Ticks % duration.Ticks;
+            float progress = (float)((double)cycleTicks / duration.Ticks);
             if (cycle % 2 == 1)
             {
                 progress = 1 - progress;

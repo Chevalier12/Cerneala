@@ -85,8 +85,8 @@ public sealed class RepeatSpec<T> : MotionSpec<T>
                 return;
             }
 
-            double cycleMs = elapsed.TotalMilliseconds % duration.TotalMilliseconds;
-            float progress = (float)(cycleMs / duration.TotalMilliseconds);
+            long cycleTicks = elapsed.Ticks % duration.Ticks;
+            float progress = (float)((double)cycleTicks / duration.Ticks);
             current = mixer.Mix(from, to, spec.Easing.Transform(progress));
         }
 
