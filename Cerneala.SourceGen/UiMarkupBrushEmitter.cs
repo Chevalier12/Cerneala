@@ -86,7 +86,7 @@ public sealed partial class UiMarkupGenerator
 
         private string? BuildDrawingBrushExpression(MarkupElement resource)
         {
-            string? bounds = ParseBrushRect(resource, "ContentBounds");
+            string? bounds = ParseBrushRect(resource, "ContentBounds", requirePositiveSize: true);
             if (bounds is null)
             {
                 return null;
@@ -150,8 +150,8 @@ public sealed partial class UiMarkupGenerator
             string alignmentX = resource.Attribute("AlignmentX")?.Value.Trim() ?? "Center";
             string alignmentY = resource.Attribute("AlignmentY")?.Value.Trim() ?? "Center";
             string tileMode = resource.Attribute("TileMode")?.Value.Trim() ?? "None";
-            string? viewport = resource.Attribute("Viewport") is null ? "null" : ParseBrushRect(resource, "Viewport");
-            string? viewbox = resource.Attribute("Viewbox") is null ? "null" : ParseBrushRect(resource, "Viewbox");
+            string? viewport = resource.Attribute("Viewport") is null ? "null" : ParseBrushRect(resource, "Viewport", requirePositiveSize: true);
+            string? viewbox = resource.Attribute("Viewbox") is null ? "null" : ParseBrushRect(resource, "Viewbox", requirePositiveSize: true);
             string? opacity = ParseBrushFloat(resource, "Opacity", 1, value => value >= 0 && value <= 1);
             if (!new[] { "None", "Fill", "Uniform", "UniformToFill" }.Contains(stretch) ||
                 !new[] { "Left", "Center", "Right" }.Contains(alignmentX) ||
@@ -180,10 +180,13 @@ public sealed partial class UiMarkupGenerator
             return "new global::Cerneala.Drawing.DrawPoint(" + x + ", " + y + ")";
         }
 
-        private string? ParseBrushRect(MarkupElement element, string attributeName)
+        // Tile rectangles (Viewport, Viewbox, ContentBounds) need a width and height greater than 0, as the TileBrush and
+        // DrawingBrush constructors require.
+        private string? ParseBrushRect(MarkupElement element, string attributeName, bool requirePositiveSize = false)
         {
             string[] parts = (element.Attribute(attributeName)?.Value ?? string.Empty).Split(',').Select(value => value.Trim()).ToArray();
-            if (parts.Length != 4 || parts.Any(part => !float.TryParse(part, NumberStyles.Float, CultureInfo.InvariantCulture, out float value) || float.IsNaN(value) || float.IsInfinity(value)))
+            if (parts.Length != 4 || parts.Any(part => !float.TryParse(part, NumberStyles.Float, CultureInfo.InvariantCulture, out float value) || float.IsNaN(value) || float.IsInfinity(value)) ||
+                (requirePositiveSize && parts.Skip(2).Any(part => float.Parse(part, CultureInfo.InvariantCulture) <= 0)))
             {
                 Report(InvalidPropertyValue, (object?)element.Attribute(attributeName) ?? element, element.Name.LocalName, attributeName, element.Attribute(attributeName)?.Value ?? string.Empty);
                 return null;
