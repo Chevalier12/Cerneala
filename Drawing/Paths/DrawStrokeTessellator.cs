@@ -246,12 +246,16 @@ internal static class DrawStrokeTessellator
             return (thickness / 2, thickness / 2);
         }
 
+        // The signed area is summed relative to the first point: products of absolute
+        // coordinates far from the origin (~1e10 at 1e5) lose the area in float rounding
+        // and can flip its sign.
         float twiceArea = 0;
-        for (int index = 0; index < contour.Points.Count; index++)
+        for (int index = 2; index < contour.Points.Count; index++)
         {
-            DrawPoint current = contour.Points[index];
-            DrawPoint next = contour.Points[(index + 1) % contour.Points.Count];
-            twiceArea += (current.X * next.Y) - (next.X * current.Y);
+            DrawPoint first = contour.Points[0];
+            DrawPoint current = contour.Points[index - 1];
+            DrawPoint next = contour.Points[index];
+            twiceArea += ((current.X - first.X) * (next.Y - first.Y)) - ((next.X - first.X) * (current.Y - first.Y));
         }
         bool interiorOnLeft = twiceArea > 0;
         bool inside = alignment == DrawStrokeAlignment.Inside;
