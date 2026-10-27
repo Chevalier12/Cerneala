@@ -233,6 +233,68 @@ public sealed class FocusManagerTests
         Assert.Equal(1, keyDownCount);
     }
 
+    // #953: hiding an ancestor removes the focused element from the input route, as hiding the element itself does.
+    [Theory]
+    [InlineData("fieldCollapsed")]
+    [InlineData("panelCollapsed")]
+    [InlineData("panelHidden")]
+    public void RemainingKeysOfTheFrameAreNotRaisedAfterAHandlerHidesTheFocusedElementOrItsAncestor(string change)
+    {
+        UIRoot root = new();
+        UIElement panel = new();
+        UIElement field = new() { Focusable = true };
+        panel.VisualChildren.Add(field);
+        root.VisualChildren.Add(panel);
+        int keyDownCount = 0;
+        field.Handlers.AddHandler(InputEvents.KeyDownEvent, (_, _) =>
+        {
+            keyDownCount++;
+            Hide(change, panel, field);
+        });
+        ElementInputRouteMap map = new ElementInputRouteBuilder().Build(root);
+        FocusManager manager = new();
+        manager.Focus(field, map);
+        KeyboardSnapshot down = KeyboardSnapshot.FromDownKeys([InputKey.Down]);
+
+        manager.DispatchKeyboard(new InputFrame(PointerSnapshot.Empty, PointerSnapshot.Empty, down, down, [], [InputKey.Down, InputKey.Down]), map);
+
+        Assert.True(keyDownCount == 1, $"row={change}: KeyDown raised {keyDownCount} times (expected 1).");
+    }
+
+    // #953: text input of the same frame uses the same focus-target check as the key events.
+    [Theory]
+    [InlineData("fieldCollapsed")]
+    [InlineData("panelCollapsed")]
+    [InlineData("panelHidden")]
+    public void TextInputOfTheFrameIsNotRaisedAfterAKeyHandlerHidesTheFocusedElementOrItsAncestor(string change)
+    {
+        UIRoot root = new();
+        UIElement panel = new();
+        UIElement field = new() { Focusable = true };
+        panel.VisualChildren.Add(field);
+        root.VisualChildren.Add(panel);
+        int textInputCount = 0;
+        field.Handlers.AddHandler(InputEvents.TextInputEvent, (_, _) => textInputCount++);
+        field.Handlers.AddHandler(InputEvents.KeyDownEvent, (_, _) => Hide(change, panel, field));
+        ElementInputBridge bridge = new();
+        Assert.True(bridge.FocusManager.Focus(field, root.InputCache.EnsureCurrent(root)));
+        KeyboardSnapshot down = KeyboardSnapshot.FromDownKeys([InputKey.Down]);
+
+        bridge.Dispatch(root, new InputFrame(PointerSnapshot.Empty, PointerSnapshot.Empty, KeyboardSnapshot.Empty, down, [new TextInputSnapshotEvent("x")]));
+
+        Assert.True(textInputCount == 0, $"row={change}: TextInput raised {textInputCount} time(s) after the KeyDown handler hid the element (expected 0).");
+    }
+
+    private static void Hide(string change, UIElement panel, UIElement field)
+    {
+        switch (change)
+        {
+            case "fieldCollapsed": field.Visibility = Cerneala.UI.Layout.Visibility.Collapsed; break;
+            case "panelCollapsed": panel.Visibility = Cerneala.UI.Layout.Visibility.Collapsed; break;
+            case "panelHidden": panel.Visibility = Cerneala.UI.Layout.Visibility.Hidden; break;
+        }
+    }
+
     [Fact]
     public void LaterKeyOfSameFrameGoesToElementCreatedAndFocusedByEarlierKeyHandler()
     {
