@@ -26,6 +26,7 @@ public sealed partial class UiMarkupGenerator
                 sessionName + ", " +
                 targetCode + ", " +
                 prism.PropertyId.ToString(CultureInfo.InvariantCulture) + ", " +
+                EmitPrismMotionScope(prism) + ", " +
                 EmitPrismMotionGetter(prism) + ", " +
                 EmitPrismMotionSetter(prism) + ", " +
                 (prism.IsDiscrete ? "true" : "false") + ", " +
@@ -57,6 +58,7 @@ public sealed partial class UiMarkupGenerator
                 sessionName + ", " +
                 targetCode + ", " +
                 prism.PropertyId.ToString(CultureInfo.InvariantCulture) + ", " +
+                EmitPrismMotionScope(prism) + ", " +
                 EmitPrismMotionGetter(prism) + ", " +
                 EmitPrismMotionSetter(prism) + ", " +
                 (prism.IsDiscrete ? "true" : "false") + ", " +
@@ -198,6 +200,10 @@ public sealed partial class UiMarkupGenerator
                     "Unsupported Prism Motion accessor kind.")
             };
         }
+
+        private static string EmitPrismMotionScope(
+            ResolvedPrismMotionTarget target) =>
+            target.ScopeNodeId is int id ? PrismMotionNodeId(id) : "null";
 
         private static string PrismMotionNodeId(int id) =>
             "new global::Cerneala.UI.Prism.Definitions.PrismNodeId(" +

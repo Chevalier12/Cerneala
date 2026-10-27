@@ -68,11 +68,13 @@ public sealed partial class UiMarkupGenerator
                 BoundPrismValueType valueType,
                 IReadOnlyList<PrismMotionAccessor> accessors,
                 int propertyId,
+                int? scopeNodeId,
                 string? elementCode)
             {
                 ValueType = valueType;
                 Accessors = accessors;
                 PropertyId = propertyId;
+                ScopeNodeId = scopeNodeId;
                 ElementCode = elementCode;
             }
 
@@ -81,6 +83,10 @@ public sealed partial class UiMarkupGenerator
             public IReadOnlyList<PrismMotionAccessor> Accessors { get; }
 
             public int PropertyId { get; }
+
+            // The Prism node whose Visible=false (or a containing group's) cancels the
+            // motion; null when only the element's own lifetime governs it.
+            public int? ScopeNodeId { get; }
 
             public string? ElementCode { get; }
 
@@ -137,8 +143,10 @@ public sealed partial class UiMarkupGenerator
 
             string nodePath = string.Empty;
             BoundPrismNode? node = null;
+            BoundPrismNode? parentNode = null;
             for (int index = 2; index < segments.Length - 1; index++)
             {
+                parentNode = node;
                 nodePath = nodePath.Length == 0
                     ? segments[index]
                     : nodePath + "." + segments[index];
@@ -216,10 +224,19 @@ public sealed partial class UiMarkupGenerator
 
             int propertyId = unchecked((int)Fnv1a32(
                 prismApplication.Composition.Name + "|" + propertyPath));
+            // Visible=false on the node cancels the motion of its properties. A motion
+            // that writes the node's own Visible must still be able to show it again,
+            // so only the containing group governs it.
+            bool writesOwnVisible = accessors.Any(accessor =>
+                accessor.Kind == PrismMotionAccessorKind.Node &&
+                ReferenceEquals(accessor.Node, node) &&
+                string.Equals(accessor.Schema.Name, "Visible", StringComparison.Ordinal));
+            int? scopeNodeId = writesOwnVisible ? parentNode?.Id : node.Id;
             ResolvedPrismMotionTarget prismTarget = new(
                 valueType,
                 accessors,
                 propertyId,
+                scopeNodeId,
                 elementCode);
             target = new ResolvedMotionTarget(
                 targetKind,

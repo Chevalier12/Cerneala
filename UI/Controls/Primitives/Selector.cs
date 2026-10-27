@@ -32,9 +32,20 @@ public class Selector : ItemsControl
     // it notifies.
     private UiPropertyChange? pendingSelectedIndexChange;
 
+    // True while a selection change writes its new SelectedIndex, until that write is notified. The write follows the
+    // selection, so when it leaves SelectedIndex unchanged, for example after SelectionModel.Add, it selects nothing.
+    private bool isWritingSelectedIndexForSelection;
+
+    // The container that last had or held the keyboard focus, and the item it held then. As WPF's TabNavigation Once
+    // gives the focus to the last focused element of the group, the Tab key enters an ITabOnceScope on it again while
+    // it is still realized and holds that item.
+    private UIElement? lastFocusedContainer;
+    private object? lastFocusedItem;
+
     public Selector()
     {
         selectionModel.SelectionChanged += OnSelectionChanged;
+        Handlers.AddHandler(InputEvents.GotFocusEvent, OnGotFocus, handledEventsToo: true);
     }
 
     public static readonly RoutedEvent SelectionChangedEvent = RoutedEventRegistry.Register(nameof(SelectionChanged), typeof(Selector), RoutingStrategy.Bubble, typeof(SelectionChangedEventArgs));
@@ -124,6 +135,11 @@ public class Selector : ItemsControl
     // then re-prepares its containers, raises SelectionChanged, and only then rethrows a failed re-preparation.
     internal override void NotifyPropertyChange(in UiPropertyChange change)
     {
+        if (ReferenceEquals(change.Args.Property, SelectedIndexProperty))
+        {
+            isWritingSelectedIndexForSelection = false;
+        }
+
         if (!ReferenceEquals(change.Args.Property, SelectedIndexProperty) || selectionModel.SelectedIndex == SelectedIndex)
         {
             base.NotifyPropertyChange(change);
@@ -131,6 +147,31 @@ public class Selector : ItemsControl
         }
 
         pendingSelectedIndexChange = change;
+        selectionModel.Select(SelectedIndex);
+    }
+
+    // SetValue or a UiPropertyBinding wrote the current SelectedIndex as the local value. As the SelectedIndex setter
+    // does, that index becomes the only selected index, so a multi-selection collapses to it and raises
+    // SelectionChanged. A rewrite at another source, for example a markup binding or a markup condition refreshing its
+    // MarkupBase or MarkupConditional value, or an animation sample, keeps SelectedIndex and selects nothing.
+    internal override void NotifyEffectiveValueRewritten(UiProperty property)
+    {
+        if (!ReferenceEquals(property, SelectedIndexProperty))
+        {
+            return;
+        }
+
+        if (isWritingSelectedIndexForSelection)
+        {
+            isWritingSelectedIndexForSelection = false;
+            return;
+        }
+
+        if (GetValueSource(SelectedIndexProperty) != UiPropertyValueSource.Local)
+        {
+            return;
+        }
+
         selectionModel.Select(SelectedIndex);
     }
 
@@ -277,11 +318,13 @@ public class Selector : ItemsControl
             }
             else
             {
+                isWritingSelectedIndexForSelection = true;
                 SetValue(SelectedIndexProperty, args.Change.NewIndex);
             }
         }
         finally
         {
+            isWritingSelectedIndexForSelection = false;
             IsChangingSelectionForItems = wasChangingSelectionForItems;
             if (--selectedIndexNotificationDepth == 0)
             {
@@ -313,6 +356,61 @@ public class Selector : ItemsControl
         }
 
         ThrowPreparationFailure(preparationFailure);
+    }
+
+    private void OnGotFocus(object _, RoutedEventArgs args)
+    {
+        for (UIElement? current = args.OriginalSource as UIElement;
+             current is not null && !ReferenceEquals(current, this);
+             current = current.VisualParent)
+        {
+            if (ItemContainerGenerator.IndexFromContainer(current) >= 0)
+            {
+                lastFocusedContainer = current;
+                lastFocusedItem = ItemContainerGenerator.GetItem(current);
+                return;
+            }
+        }
+    }
+
+    // The container that the Tab key enters this Selector on, for a subclass that is an ITabOnceScope: the container
+    // that has or holds the keyboard focus, else the container that last had or held it, else the selected container,
+    // else the first container; only a container that can take the focus counts, and null means none can.
+    internal UIElement? FindTabOnceContainer(ElementInputRouteMap routeMap, UIElement? selected)
+    {
+        UIElement? lastFocused = lastFocusedContainer is { } last &&
+            ItemContainerGenerator.IndexFromContainer(last) >= 0 &&
+            Equals(ItemContainerGenerator.GetItem(last), lastFocusedItem)
+                ? last
+                : null;
+        IReadOnlyDictionary<int, UIElement> realized = ItemContainerGenerator.RealizedContainers;
+        UIElement? first = null;
+        int firstIndex = int.MaxValue;
+        foreach ((int index, UIElement container) in realized)
+        {
+            if (!FocusPolicy.CanFocus(container, routeMap))
+            {
+                continue;
+            }
+
+            if (container.IsKeyboardFocusWithin)
+            {
+                return container;
+            }
+
+            if (index < firstIndex)
+            {
+                first = container;
+                firstIndex = index;
+            }
+        }
+
+        if (FocusPolicy.CanFocus(lastFocused, routeMap))
+        {
+            return lastFocused;
+        }
+
+        return FocusPolicy.CanFocus(selected, routeMap) ? selected : first;
     }
 
     // Runs at the end of every selection change, after the Selected, Unselected, and SelectionChanged handlers, also

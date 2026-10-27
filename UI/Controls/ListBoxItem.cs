@@ -143,7 +143,8 @@ public class ListBoxItem : ContentControl, ISelectableItemContainer
             itemTemplate,
             itemTemplateKey,
             itemTemplateRegistry,
-            itemContentIndex);
+            itemContentIndex,
+            presentsItemText: true);
     }
 
     private void RemoveContentPresenter()

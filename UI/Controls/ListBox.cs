@@ -10,7 +10,7 @@ namespace Cerneala.UI.Controls;
 
 [TemplatePart("PART_ScrollViewer", typeof(ScrollViewer))]
 [TemplatePart("PART_ItemsPresenter", typeof(ItemsPresenter))]
-public class ListBox : Selector
+public class ListBox : Selector, ITabOnceScope
 {
     public static readonly UiProperty<SelectionMode> SelectionModeProperty = UiProperty<SelectionMode>.Register(
         nameof(SelectionMode),
@@ -32,8 +32,10 @@ public class ListBox : Selector
 
     private readonly ItemTextSearch textSearch = new();
 
-    // The item that Ctrl+click or a plain click in Extended mode made the anchor, and its index then: Shift+click
-    // selects the items from it to the clicked item, as WPF's ListBox.AnchorItem.
+    // The item that Ctrl+click or a plain click in Extended mode made the anchor, and its index: Shift+click selects the
+    // items from it to the clicked item, as WPF's ListBox.AnchorItem. The index follows its occurrence when items are
+    // inserted, removed, or moved, as the selected entries do, so an equal item before it does not take its place
+    // (#925); only a reset finds the item again by value.
     private object? anchorItem;
     private int anchorIndex = -1;
 
@@ -128,6 +130,11 @@ public class ListBox : Selector
     }
 
     protected override Type DefaultContainerType => typeof(ListBoxItem);
+
+    // As a WPF ListBox, whose TabNavigation is Once, the Tab key enters the list once, on the focused row, else the
+    // selected row, else the first row; the rows are no Tab stops, so the next Tab leaves the list (#905).
+    UIElement? ITabOnceScope.GetTabOnceElement(ElementInputRouteMap routeMap) =>
+        FindTabOnceContainer(routeMap, ItemContainerGenerator.RealizedContainers.GetValueOrDefault(SelectedIndex));
 
     // The default template places the rows below BorderThickness and Padding, as the layout without a template does.
     internal override float ItemsTopInset =>
@@ -703,14 +710,53 @@ public class ListBox : Selector
         anchorItem = GetItemAt(index);
     }
 
-    // The anchor's index now, as its item may have moved. Without an anchor, as in WPF, the last selected item is the
-    // anchor, or the first item when nothing is selected.
+    // The anchor follows its item before the selection does; a removed or replaced anchor item leaves no anchor.
+    internal override void OnItemsReplaced(int index, int removedCount, int addedCount)
+    {
+        if (anchorIndex >= index)
+        {
+            MoveAnchorForItems(anchorIndex < index + removedCount ? -1 : anchorIndex - removedCount + addedCount);
+        }
+
+        base.OnItemsReplaced(index, removedCount, addedCount);
+    }
+
+    internal override void OnItemsMoved(int oldIndex, int newIndex, int count)
+    {
+        if (anchorIndex >= 0)
+        {
+            MoveAnchorForItems(GetIndexAfterMove(anchorIndex, oldIndex, newIndex, count));
+        }
+
+        base.OnItemsMoved(oldIndex, newIndex, count);
+    }
+
+    internal override void OnItemsReset()
+    {
+        if (anchorIndex >= 0)
+        {
+            MoveAnchorForItems(FindItemIndex(anchorItem, anchorIndex));
+        }
+
+        base.OnItemsReset();
+    }
+
+    private void MoveAnchorForItems(int index)
+    {
+        anchorIndex = index;
+        if (index < 0)
+        {
+            anchorItem = null;
+        }
+    }
+
+    // The anchor's index. Without an anchor, as in WPF, the last selected item is the anchor, or the first item when
+    // nothing is selected.
     private int ResolveAnchorIndex()
     {
-        int index = anchorIndex >= 0 ? FindItemIndex(anchorItem, anchorIndex) : -1;
-        if (index >= 0)
+        if (anchorIndex >= 0 && anchorIndex < ItemCount)
         {
-            return index;
+            return anchorIndex;
         }
 
         IReadOnlyList<int> selected = SelectionModel.SelectedIndices;

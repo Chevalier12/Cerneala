@@ -214,6 +214,29 @@ public sealed class ShapeTests
         Assert.Throws<ArgumentException>(() => path.ViewBox = "0 0 0 24");
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void SvgPathKeepsThrowingForMalformedDataOnEveryMeasure(bool hadValidDataBefore)
+    {
+        SvgPath path = new() { ViewBox = "0 0 10 10" };
+        MeasureContext context = new(new LayoutSize(100, 100));
+        if (hadValidDataBefore)
+        {
+            path.Data = "M0 0L10 10";
+            Assert.Equal(new LayoutSize(10, 10), path.Measure(context));
+        }
+
+        path.Data = "Lnope";
+
+        Assert.Throws<FormatException>(() => path.Measure(context));
+        // This file's own Record method shadows xUnit's.
+        Exception? second = Xunit.Record.Exception(() => path.Measure(context));
+        Assert.True(
+            second is FormatException,
+            "The second Measure of the same malformed data " + (second is null ? "returned without throwing." : "threw " + second.GetType().Name + "."));
+    }
+
     [Fact]
     public void ShapePropertyChangeInvalidatesRender()
     {
