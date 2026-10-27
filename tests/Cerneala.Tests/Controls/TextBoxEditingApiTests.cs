@@ -189,6 +189,50 @@ public sealed class TextBoxEditingApiTests
         Assert.False(textBox.CanUndo);
     }
 
+    // #962: CanUndo and CanRedo tell whether Undo() and Redo() would change the text, so they are false while IsReadOnly
+    // rejects Undo() and Redo(); the history stays, and clearing IsReadOnly makes them true again.
+    [Theory]
+    [InlineData("Editable")]
+    [InlineData("ReadOnlyWithUndoUnit")]
+    [InlineData("ReadOnlyWithRedoUnit")]
+    public void CanUndoAndCanRedoAreFalseWhileReadOnlyRejectsUndoAndRedo(string row)
+    {
+        TextBox textBox = NewTextBox();
+        UIRoot root = Host(textBox, clipboard: null, out ElementInputBridge bridge);
+        bridge.Dispatch(root, TextFrame("abc"));
+        bool redoRow = row == "ReadOnlyWithRedoUnit";
+        if (redoRow)
+        {
+            Assert.True(textBox.Undo());
+            Assert.True(textBox.CanRedo);
+        }
+
+        if (row != "Editable")
+        {
+            textBox.IsReadOnly = true;
+        }
+
+        bool canUndo = textBox.CanUndo;
+        bool canRedo = textBox.CanRedo;
+        bool operationResult = redoRow ? textBox.Redo() : textBox.Undo();
+        bool reported = redoRow ? canRedo : canUndo;
+
+        Assert.True(
+            reported == operationResult,
+            $"{row}: CanUndo={canUndo}, CanRedo={canRedo}, {(redoRow ? "Redo()" : "Undo()")}={operationResult}, Text='{textBox.Text}'.");
+        Assert.Equal(row == "Editable", operationResult);
+        if (row == "Editable")
+        {
+            return;
+        }
+
+        textBox.IsReadOnly = false;
+
+        Assert.True(redoRow ? textBox.CanRedo : textBox.CanUndo);
+        Assert.True(redoRow ? textBox.Redo() : textBox.Undo());
+        Assert.Equal(redoRow ? "abc" : string.Empty, textBox.Text);
+    }
+
     [Fact]
     public void UndoLimitKeepsOnlyTheNewestUnits()
     {

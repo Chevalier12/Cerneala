@@ -175,9 +175,11 @@ internal sealed class TextInputCore
         CommitEditorText("TextBox selected text replaced");
     }
 
-    public bool CanUndo => editor.UndoRedo.CanUndo;
+    // Whether Undo() and Redo() would change the text: false while the host rejects editing, as a read-only TextBox
+    // does, although the history stays for when editing is allowed again (#962).
+    public bool CanUndo => host.AllowsEditing && policy.RecordsHistory && editor.UndoRedo.CanUndo;
 
-    public bool CanRedo => editor.UndoRedo.CanRedo;
+    public bool CanRedo => host.AllowsEditing && policy.RecordsHistory && editor.UndoRedo.CanRedo;
 
     public bool IsUndoEnabled
     {
@@ -223,7 +225,7 @@ internal sealed class TextInputCore
 
     public bool Undo()
     {
-        if (!host.AllowsEditing || !policy.RecordsHistory || !editor.Undo())
+        if (!CanUndo || !editor.Undo())
         {
             return false;
         }
@@ -234,7 +236,7 @@ internal sealed class TextInputCore
 
     public bool Redo()
     {
-        if (!host.AllowsEditing || !policy.RecordsHistory || !editor.Redo())
+        if (!CanRedo || !editor.Redo())
         {
             return false;
         }

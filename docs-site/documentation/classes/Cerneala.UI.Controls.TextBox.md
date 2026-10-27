@@ -142,7 +142,7 @@ When `IsReadOnly` is `true`, text can still be selected and copied, the caret mo
 
 `IsUndoEnabled` defaults to `true`. Setting it to `false` clears the history, and nothing is recorded until it is `true` again. `UndoLimit` is the most undo units kept: `-1`, the default, is no limit, `0` keeps none, and `n` keeps the newest `n` units. A value below `-1` throws `ArgumentException`. Lowering `UndoLimit` drops the oldest units at once.
 
-Typing is recorded in units. Consecutive typed insertions with no other edit or caret move between them are one unit: typing `a`, `b`, `c` as three text inputs gives `Text == "abc"`, and one Ctrl+Z gives `Text == ""`. Ctrl+Y or Ctrl+Shift+Z then gives `"abc"` again. A caret move, a deletion, a paste, a cut, or a `SelectedText` assignment ends the run. Assigning `Text` clears the history. `CanUndo` and `CanRedo` tell whether `Undo()` and `Redo()` would change the text. `Undo()` and `Redo()` return `false` when they change nothing.
+Typing is recorded in units. Consecutive typed insertions with no other edit or caret move between them are one unit: typing `a`, `b`, `c` as three text inputs gives `Text == "abc"`, and one Ctrl+Z gives `Text == ""`. Ctrl+Y or Ctrl+Shift+Z then gives `"abc"` again. A caret move, a deletion, a paste, a cut, or a `SelectedText` assignment ends the run. Assigning `Text` clears the history. `CanUndo` and `CanRedo` tell whether `Undo()` and `Redo()` would change the text. `Undo()` and `Redo()` return `false` when they change nothing. While `IsReadOnly` is `true`, `CanUndo` and `CanRedo` are `false`, because `Undo()` and `Redo()` are rejected; the history is kept, so after typing `abc` and setting `IsReadOnly = true`, `CanUndo` is `false`, and after setting `IsReadOnly = false` again, `CanUndo` is `true` and `Undo()` gives `Text == ""`. `CanUndo` and `CanRedo` raise no change notification: read them again after an edit or an `IsReadOnly` change.
 
 ### Selection and clipboard
 
@@ -231,8 +231,8 @@ Derived controls can override `NormalizeTextInput`, `OnTextChanged` and `OnSelec
 | `CharacterCasing` | `CharacterCasing` | Gets or sets the case change of typed and pasted text. The default is `Normal`. |
 | `IsUndoEnabled` | `bool` | Gets or sets whether undo history is recorded. Setting `false` clears it. |
 | `UndoLimit` | `int` | Gets or sets the most undo units kept. `-1` is no limit, `0` keeps none. |
-| `CanUndo` | `bool` | Gets whether `Undo()` has a unit to restore. |
-| `CanRedo` | `bool` | Gets whether `Redo()` has a unit to reapply. |
+| `CanUndo` | `bool` | Gets whether `Undo()` would change the text: `true` when there is a unit to restore and `IsReadOnly` is `false`. |
+| `CanRedo` | `bool` | Gets whether `Redo()` would change the text: `true` when there is a unit to reapply and `IsReadOnly` is `false`. |
 | `SelectedText` | `string` | Gets the selected text. Setting it replaces the selection and selects the new text, as one undo unit. |
 | `LineCount` | `int` | Gets the number of drawn lines at the width of the last arrange. |
 | `Selection` | `TextSelection` | Gets the current selection without exposing the editor. |
