@@ -59,6 +59,10 @@ internal sealed class CernealaFormattingService
         lastLine = Math.Max(firstLine, Math.Min(lastLine, lines.Length - 1));
         ElementSyntax[] elements = document.Syntax.DescendantElements().ToArray();
         SyntaxNode[] nodes = document.Syntax.DescendantNodes().ToArray();
+        TextSpan[] attributeValues = elements
+            .SelectMany(element => element.Attributes)
+            .Select(attribute => attribute.ValueToken.Span)
+            .ToArray();
         StringBuilder replacement = new();
         bool changed = false;
         for (int lineIndex = firstLine; lineIndex <= lastLine; lineIndex++)
@@ -68,7 +72,11 @@ internal sealed class CernealaFormattingService
             string original = source.Substring(line.Start, line.ContentLength);
             string trimmed = original.TrimStart(' ', '\t');
             string formatted = original;
-            if (trimmed.Length == 0)
+            if (StartsInsideAttributeValue(attributeValues, line.Start))
+            {
+                // The line continues a quoted attribute value: its leading whitespace is part of the value.
+            }
+            else if (trimmed.Length == 0)
             {
                 formatted = string.Empty;
             }
@@ -116,6 +124,19 @@ internal sealed class CernealaFormattingService
         int editStart = lines[firstLine].Start;
         int editEnd = lines[lastLine].End;
         return [new CernealaFormattingEdit(new TextSpan(editStart, editEnd - editStart), replacement.ToString())];
+    }
+
+    private static bool StartsInsideAttributeValue(TextSpan[] attributeValues, int lineStart)
+    {
+        foreach (TextSpan value in attributeValues)
+        {
+            if (value.Start < lineStart && lineStart < value.End)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static bool IsDirectiveLine(TextSyntax? text, string trimmed)
