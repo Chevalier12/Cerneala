@@ -790,6 +790,90 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Contains("namescope", diagnostic.GetMessage(), StringComparison.OrdinalIgnoreCase);
     }
 
+    [Theory]
+    [InlineData("application")]
+    [InlineData("window")]
+    public void AspectWithWhenGetsItsBehaviorAssignedInTheGeneratedCode(string owner)
+    {
+        GeneratorRunResult result = RunHoverAspectGenerator(owner, out _);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        string generated = string.Join(
+            Environment.NewLine,
+            result.GeneratedSources.Select(source => source.SourceText.ToString()));
+        string[] invoked = System.Text.RegularExpressions.Regex.Matches(generated, @"(aspectBehavior\d+)!\(element\)")
+            .Select(match => match.Groups[1].Value)
+            .Distinct()
+            .ToArray();
+        Assert.NotEmpty(invoked);
+        string[] unassigned = invoked
+            .Where(variable => !System.Text.RegularExpressions.Regex.IsMatch(generated, @"\b" + variable + @"\s*=\s*element\s*=>"))
+            .ToArray();
+        Assert.True(
+            unassigned.Length == 0,
+            $"owner={owner}: the behavior delegate(s) {string.Join(", ", unassigned)} are declared as null and invoked as `x!(element)`, but never assigned.");
+    }
+
+    [Fact]
+    public void ApplicationAspectWithWhenAttachesToAnElementWithoutThrowing()
+    {
+        GeneratorRunResult result = RunHoverAspectGenerator("application", out Compilation compilation);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+        System.Reflection.Assembly assembly = System.Reflection.Assembly.Load(stream.ToArray());
+        Cerneala.UI.Application application = (Cerneala.UI.Application)Activator.CreateInstance(
+            assembly.GetType("TestInput.App", throwOnError: true)!)!;
+        Cerneala.UI.Aspect.ElementAspect hover = Assert.Single(
+            application.Resources.Select(entry => entry.Value).OfType<Cerneala.UI.Aspect.ElementAspect>());
+        Cerneala.UI.Controls.Border border = new() { Aspect = hover };
+        Cerneala.UI.Elements.UIRoot root = new(100, 100);
+
+        Exception? failure = Record.Exception(() =>
+        {
+            root.VisualChildren.Add(border);
+            root.ProcessFrame();
+        });
+
+        Assert.Null(failure);
+        Assert.Equal(1f, border.Opacity);
+    }
+
+    private static GeneratorRunResult RunHoverAspectGenerator(string owner, out Compilation compilation)
+    {
+        const string hover = """
+            <Aspect Name="Hover" TargetType="Border">
+              @when IsMouseOver { Opacity = 0.5; }
+            </Aspect>
+            """;
+        MarkupFile[] files =
+        [
+            new(
+                "App.crn",
+                owner == "application"
+                    ? "<Application StartupWindow=\"ShellWindow\"><Application.Resources>" + hover + "</Application.Resources></Application>"
+                    : "<Application StartupWindow=\"ShellWindow\" />"),
+            new(
+                "ShellWindow.crn",
+                owner == "window"
+                    ? "<Window><Window.Resources>" + hover + "</Window.Resources><Border Aspect=\"$Hover\" /></Window>"
+                    : "<Window><Border Aspect=\"$Hover\" /></Window>")
+        ];
+        (string Path, string Source)[] sources =
+        [
+            (
+                "App.crn.cs",
+                "using Cerneala.UI; namespace TestInput; public partial class App : Application { }"),
+            (
+                "ShellWindow.crn.cs",
+                "namespace TestInput; public partial class ShellWindow : Cerneala.UI.Controls.Window { }")
+        ];
+
+        return RunApplicationViewsGenerator(files, sources, out compilation);
+    }
+
     private static GeneratorRunResult RunApplicationGenerator(
         string markup,
         string inputSource,

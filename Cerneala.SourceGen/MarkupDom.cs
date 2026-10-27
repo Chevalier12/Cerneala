@@ -130,6 +130,11 @@ internal sealed class MarkupElement : MarkupNode
 {
     private readonly List<MarkupAttribute> attributes;
 
+    // The element that encloses this one in the source document. Unlike Parent, Remove() does not
+    // clear it: XML namespace declarations are lexically scoped, so an element inside a consumed and
+    // detached property element (Resources, an inline Aspect) still sees the prefixes of its ancestors.
+    private MarkupElement? sourceParent;
+
     private MarkupElement(string name, LanguageTextSpan span, IEnumerable<MarkupAttribute> attributes) : base(span)
     {
         Name = new MarkupName(name);
@@ -217,7 +222,7 @@ internal sealed class MarkupElement : MarkupNode
     public MarkupNamespace? GetNamespaceOfPrefix(string prefix)
     {
         string attributeName = prefix.Length == 0 ? "xmlns" : "xmlns:" + prefix;
-        for (MarkupElement? current = this; current is not null; current = current.Parent)
+        for (MarkupElement? current = this; current is not null; current = current.sourceParent)
         {
             MarkupAttribute? declaration = current.attributes.FirstOrDefault(attribute => attribute.Name.Value == attributeName);
             if (declaration is not null)
@@ -261,6 +266,11 @@ internal sealed class MarkupElement : MarkupNode
             if (node is not null)
             {
                 node.Parent = result;
+                if (node is MarkupElement childElement)
+                {
+                    childElement.sourceParent = result;
+                }
+
                 result.NodeList.Add(node);
             }
         }

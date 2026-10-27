@@ -613,6 +613,102 @@ public sealed class RenderSurface2DSceneFoundationContractTests
     }
 
     [Theory]
+    [InlineData(1f)]
+    [InlineData(0.01f)]
+    [InlineData(0f)]
+    public void LayerThenYPickingOrderDoesNotDependOnOpacity(float opacityOfA)
+    {
+        // A's bottom edge is 110 and B's is 105, so A is after B and topmost at (5, 102).
+        Scene2D scene = new() { OrderMode = SceneOrderMode.LayerThenY };
+        Sprite2D a = AreaSprite("A", 0, 100);
+        Sprite2D b = AreaSprite("B", 0, 95);
+        a.Opacity = opacityOfA;
+        scene.Children.Add(a);
+        scene.Children.Add(b);
+
+        UIElement? hit = SceneHitTest2D.HitTest(scene, new Vector2(5, 102), Cerneala.UI.Input.HitTestFilter.IncludeAll, []);
+
+        string hitName = ReferenceEquals(hit, a) ? "A" : ReferenceEquals(hit, b) ? "B" : hit is null ? "nothing" : hit.GetType().Name;
+        Assert.True(ReferenceEquals(hit, a), $"Opacity of A = {opacityOfA}: the hit node is {hitName} (expected A).");
+    }
+
+    [Theory]
+    [InlineData(1f)]
+    [InlineData(0.01f)]
+    [InlineData(0f)]
+    public void LayerThenYPickingOrderDoesNotDependOnGroupOpacity(float opacityOfGroup)
+    {
+        // The group's bottom edge is 110 and B's is 105, so the group is after B.
+        Scene2D scene = new() { OrderMode = SceneOrderMode.LayerThenY };
+        Scene2D group = new() { Opacity = opacityOfGroup };
+        Sprite2D a = AreaSprite("A", 0, 100);
+        Sprite2D b = AreaSprite("B", 0, 95);
+        group.Children.Add(a);
+        scene.Children.Add(group);
+        scene.Children.Add(b);
+
+        UIElement? hit = SceneHitTest2D.HitTest(scene, new Vector2(5, 102), Cerneala.UI.Input.HitTestFilter.IncludeAll, []);
+
+        string hitName = ReferenceEquals(hit, a) ? "A" : ReferenceEquals(hit, b) ? "B" : hit is null ? "nothing" : hit.GetType().Name;
+        Assert.True(ReferenceEquals(hit, a), $"Opacity of the group = {opacityOfGroup}: the hit node is {hitName} (expected A).");
+    }
+
+    [Theory]
+    [InlineData(1f)]
+    [InlineData(0.01f)]
+    [InlineData(0f)]
+    public void LayerThenYDrawOrderOfAGroupDoesNotDependOnTheOpacityOfItsChildren(float opacityOfLow)
+    {
+        // The group's bottom edge is that of "low", 110; B's is 105, so the group draws after B.
+        Scene2D scene = new() { OrderMode = SceneOrderMode.LayerThenY };
+        Scene2D group = new();
+        group.Children.Add(AreaSprite("high", 20, 0));
+        Sprite2D low = AreaSprite("low", 20, 100);
+        low.Opacity = opacityOfLow;
+        group.Children.Add(low);
+        Sprite2D b = AreaSprite("B", 0, 95);
+        scene.Children.Add(group);
+        scene.Children.Add(b);
+        RenderSurface2D surface = new() { Scene = scene };
+
+        Record(surface, new DrawRect(0, 0, 200, 200));
+
+        Assert.Equal([b, group], scene.RecordedOrder.Select(entry => entry.Node));
+    }
+
+    [Theory]
+    [InlineData(1f)]
+    [InlineData(0.01f)]
+    [InlineData(0f)]
+    public void LayerThenYPickingOrderOfSceneItemsDoesNotDependOnTheOpacityOfItsItems(float opacityOfItem)
+    {
+        // The item sprite's bottom edge is 110 and B's is 105, so the items node is after B.
+        Sprite2D? item = null;
+        SceneItems2D items = new() { ItemsSource = new[] { 100 } };
+        items.Templates.Add(new ContentTemplate<int>(
+            "sprite", null, 0, context =>
+            {
+                item = AreaSprite("A", 0, context.Data);
+                item.Opacity = opacityOfItem;
+                return item;
+            }));
+        Scene2D scene = new() { OrderMode = SceneOrderMode.LayerThenY };
+        Sprite2D b = AreaSprite("B", 0, 95);
+        scene.Children.Add(items);
+        scene.Children.Add(b);
+        RenderSurface2D surface = new() { Scene = scene };
+        UIRoot root = new();
+        root.VisualChildren.Add(surface);
+        for (int guard = 0; guard < 100 && items.RealizedItemCount < 1; guard++) { root.ProcessFrame(); }
+        Assert.Equal(1, items.RealizedItemCount);
+
+        UIElement? hit = SceneHitTest2D.HitTest(scene, new Vector2(5, 102), Cerneala.UI.Input.HitTestFilter.IncludeAll, []);
+
+        string hitName = ReferenceEquals(hit, item) ? "the item" : ReferenceEquals(hit, b) ? "B" : hit is null ? "nothing" : hit.GetType().Name;
+        Assert.True(ReferenceEquals(hit, item), $"Opacity of the item = {opacityOfItem}: the hit node is {hitName} (expected the item).");
+    }
+
+    [Theory]
     [InlineData(SceneOrderMode.Source)]
     [InlineData(SceneOrderMode.Layer)]
     [InlineData(SceneOrderMode.LayerThenY)]

@@ -4,8 +4,10 @@ namespace Cerneala.Timbre.Engine;
 
 internal static class TimbreTime
 {
+    // 128-bit, because frames * TicksPerSecond overflows long above about
+    // 9.2e11 frames; a time that does not fit a TimeSpan is clamped to its range.
     internal static TimeSpan FromFrames(long frames) =>
-        TimeSpan.FromTicks(frames * TimeSpan.TicksPerSecond / TimbreCatalog.SampleRate);
+        TimeSpan.FromTicks((long)Int128.Clamp((Int128)frames * TimeSpan.TicksPerSecond / TimbreCatalog.SampleRate, long.MinValue, long.MaxValue));
 
     // Nearest frame, so FromFrames/ToFrames round-trips exactly.
     internal static long ToFrames(TimeSpan time) =>

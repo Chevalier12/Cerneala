@@ -216,6 +216,47 @@ public sealed class ElementLifecycleTests
         Assert.Equal(1, disposed);
     }
 
+    // A binding subscription throws from Dispose while its element is removed. The element is still detached
+    // before the binding's exception reaches the caller, and adding it again attaches it normally.
+    [Fact]
+    public void ThrowingBindingDisposalStillLeavesTheElementDetached()
+    {
+        UIRoot root = new();
+        UIElement element = new();
+        root.VisualChildren.Add(element);
+        element.Bindings.Add(new ThrowingLifetime(() => throw new InvalidOperationException("binding dispose failed")));
+
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+            () => root.VisualChildren.Remove(element));
+
+        Assert.Equal("binding dispose failed", exception.Message);
+        Assert.Null(element.Root);
+        Assert.False(element.IsAttached);
+        Assert.Equal(0, element.Bindings.Count);
+        root.VisualChildren.Add(element);
+        Assert.Same(root, element.Root);
+        Assert.True(element.IsAttached);
+    }
+
+    // An Unloaded handler throws, then a binding subscription throws from Dispose while the element is removed.
+    // The handler's exception, the first failure, reaches the caller and the element is detached.
+    [Fact]
+    public void ThrowingBindingDisposalDoesNotReplaceTheEarlierUnloadedFailure()
+    {
+        UIRoot root = new();
+        UIElement element = new();
+        element.Unloaded += (_, _) => throw new InvalidOperationException("Unloaded handler failed");
+        root.VisualChildren.Add(element);
+        element.Bindings.Add(new ThrowingLifetime(() => throw new InvalidOperationException("binding dispose failed")));
+
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+            () => root.VisualChildren.Remove(element));
+
+        Assert.Equal("Unloaded handler failed", exception.Message);
+        Assert.Null(element.Root);
+        Assert.False(element.IsAttached);
+    }
+
     private static void Connect(UIElement parent, UIElement middle, UIElement leaf, bool logicalFirst)
     {
         (logicalFirst ? parent.LogicalChildren : parent.VisualChildren).Add(middle);

@@ -110,7 +110,12 @@ public sealed class FontResolver
 
     private long GetResourceVersion(ResourceId<FontResource> id)
     {
-        return resourceProvider is ResourceStore store ? store.GetVersion(id) : 0;
+        return resourceProvider switch
+        {
+            ResourceStore store => store.GetVersion(id),
+            ResourceDictionary dictionary => dictionary.Version,
+            _ => 0
+        };
     }
 
     private sealed class FallbackDrawFont : IDrawFont

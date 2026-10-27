@@ -25,8 +25,8 @@ public sealed class DisplaceFilter : PrismFilter
 | Name | Type | Default | Description |
 | --- | --- | --- | --- |
 | `Map` | `PrismResourceId` | `—` | Required catalog parameter; unit: `none`. |
-| `HorizontalScale` | `float` | `10` | Optional catalog parameter; unit: `unitless`. |
-| `VerticalScale` | `float` | `10` | Optional catalog parameter; unit: `unitless`. |
+| `HorizontalScale` | `float` | `10` | Optional catalog parameter; unit: `dip`. |
+| `VerticalScale` | `float` | `10` | Optional catalog parameter; unit: `dip`. |
 | `MapFit` | `string` | `Stretch` | Optional catalog parameter; unit: `none`. |
 | `UndefinedAreas` | `string` | `RepeatEdgePixels` | Optional catalog parameter; unit: `none`. |
 | `ChannelX` | `string` | `Red` | Optional catalog parameter; unit: `none`. |

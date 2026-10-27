@@ -292,9 +292,10 @@ public sealed class ItemsPresenterTests
             ? new Cerneala.UI.Layout.Panels.VirtualizingStackPanel()
             : new Cerneala.UI.Layout.Panels.StackPanel();
         VirtualizationContext supplied = new(100, 10, 30, 0, CacheItems: 1);
+        string[] items = [.. Enumerable.Range(0, 100).Select(index => index.ToString())];
         ItemsPresenter presenter = new()
         {
-            Items = Enumerable.Range(0, 100).Select(index => index.ToString()).ToArray(),
+            Items = items,
             ItemTemplate = new ContentTemplate<string>("test", key: null, priority: 0, context =>
                 fail ? throw new InvalidOperationException("template failed") : new ItemElement(context.Data!)),
             ItemsPanel = oldPanel,
@@ -303,6 +304,8 @@ public sealed class ItemsPresenterTests
         presenter.Measure(new MeasureContext(new LayoutSize(100, 30)));
         Assert.Equal(1000, presenter.DesiredSize.Height);
 
+        // The element of an unchanged item is kept (#904), so a changed item makes the swap run the template.
+        items[0] = "0b";
         fail = true;
         Assert.Throws<InvalidOperationException>(() => presenter.ItemsPanel = replacement);
 
@@ -478,6 +481,97 @@ public sealed class ItemsPresenterTests
         });
     }
 
+    // The template-created element of an item that stays in the window is kept like an element item, so its state
+    // survives the move, and the template runs only for the items that enter the window (#904).
+    [Fact]
+    public void ChangingVirtualizationWindowKeepsOverlappingTemplatedItemElements()
+    {
+        int created = 0;
+        ItemsPresenter presenter = new()
+        {
+            Items = Enumerable.Range(0, 5).Select(index => index.ToString()).ToArray(),
+            ItemTemplate = new ContentTemplate<string>("test", key: null, priority: 0, context =>
+            {
+                created++;
+                return new TextBlock { Text = context.Data };
+            }),
+            ItemsPanel = new Cerneala.UI.Layout.Panels.VirtualizingStackPanel(),
+            VirtualizationContext = new VirtualizationContext(5, 10, 40, 0)
+        };
+        UIRoot root = new();
+        root.VisualChildren.Add(presenter);
+        presenter.Measure(new MeasureContext(new LayoutSize(100, 40)));
+        UIElement itemOne = presenter.LayoutPanelRoot!.VisualChildren[1];
+        int createdBefore = created;
+
+        presenter.VirtualizationContext = new VirtualizationContext(5, 10, 30, 10);
+        presenter.MarkItemsDirty();
+        presenter.Measure(new MeasureContext(new LayoutSize(100, 30)));
+
+        Assert.Equal(3, presenter.LayoutPanelRoot.VisualChildren.Count);
+        Assert.True(
+            ReferenceEquals(itemOne, presenter.LayoutPanelRoot.VisualChildren[0]),
+            $"The element of item 1 was replaced (template calls: {createdBefore} before, {created} after the window moved).");
+        Assert.Equal(createdBefore, created);
+
+        presenter.MarkItemsDirty();
+        presenter.Measure(new MeasureContext(new LayoutSize(100, 30)));
+
+        Assert.Equal(createdBefore, created);
+        Assert.Same(itemOne, presenter.LayoutPanelRoot.VisualChildren[0]);
+    }
+
+    // A kept element shows the item its index held when the template created it, so a changed item at that index or a
+    // new template creates a new element (#904).
+    [Fact]
+    public void ChangedItemOrItemTemplateCreatesNewTemplatedItemElements()
+    {
+        ItemsPresenter presenter = new()
+        {
+            Items = new[] { "a", "b" },
+            ItemTemplate = new ContentTemplate<string>("test", key: null, priority: 0, context => new ItemElement(context.Data!))
+        };
+        presenter.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        UIElement a = presenter.LayoutPanelRoot!.VisualChildren[0];
+        UIElement b = presenter.LayoutPanelRoot.VisualChildren[1];
+
+        presenter.Items = new[] { "a", "c" };
+
+        Assert.Same(a, presenter.LayoutPanelRoot.VisualChildren[0]);
+        Assert.Equal("c", Assert.IsType<ItemElement>(presenter.LayoutPanelRoot.VisualChildren[1]).Value);
+        Assert.Null(b.VisualParent);
+
+        presenter.ItemTemplate = new ContentTemplate<string>("other", key: null, priority: 0, context => new ItemElement(context.Data + "!"));
+
+        Assert.Equal(["a!", "c!"], presenter.LayoutPanelRoot.VisualChildren.Cast<ItemElement>().Select(item => item.Value));
+        Assert.Null(a.VisualParent);
+    }
+
+    // An equal item that is another instance can show other values, like an item an owner's container is prepared
+    // again for, so the template creates its element again. An equal boxed value or string shows the same values, so
+    // its element is kept (#904).
+    [Fact]
+    public void EqualItemOfAnotherInstanceCreatesNewTemplatedItemElement()
+    {
+        ItemsPresenter presenter = new()
+        {
+            Items = new object[] { new KeyedItem(1, "old"), 7, "s" },
+            ItemTemplate = new ContentTemplate<object>("test", key: null, priority: 0, context => new ItemElement(
+                context.Data is KeyedItem keyed ? keyed.Name : context.Data!.ToString()!))
+        };
+        presenter.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        UIElement keyedElement = presenter.LayoutPanelRoot!.VisualChildren[0];
+        UIElement valueElement = presenter.LayoutPanelRoot.VisualChildren[1];
+        UIElement stringElement = presenter.LayoutPanelRoot.VisualChildren[2];
+
+        presenter.Items = new object[] { new KeyedItem(1, "new"), 7, new string('s', 1) };
+
+        Assert.Equal(["new", "7", "s"], presenter.LayoutPanelRoot.VisualChildren.Cast<ItemElement>().Select(item => item.Value));
+        Assert.Null(keyedElement.VisualParent);
+        Assert.Same(valueElement, presenter.LayoutPanelRoot.VisualChildren[1]);
+        Assert.Same(stringElement, presenter.LayoutPanelRoot.VisualChildren[2]);
+    }
+
     [Fact]
     public void PresenterItemsPanelOverridingOwnerPanelReceivesTheScrollViewport()
     {
@@ -531,9 +625,10 @@ public sealed class ItemsPresenterTests
         bool fail = false;
         Cerneala.UI.Layout.Panels.StackPanel panelA = new();
         Cerneala.UI.Layout.Panels.StackPanel panelB = new();
+        string[] items = ["one", "two"];
         ItemsPresenter presenter = new()
         {
-            Items = new[] { "one", "two" },
+            Items = items,
             ItemTemplate = new ContentTemplate<string>("test", key: null, priority: 0, context =>
                 fail ? throw new InvalidOperationException("template failed") : new ItemElement(context.Data!)),
             ItemsPanel = panelA
@@ -542,13 +637,15 @@ public sealed class ItemsPresenterTests
         root.VisualChildren.Add(presenter);
         root.ProcessFrame();
 
+        // The element of an unchanged item is kept (#904), so a changed item makes the swap run the template.
+        items[1] = "two-b";
         fail = true;
         Assert.Throws<InvalidOperationException>(() => presenter.ItemsPanel = panelB);
         fail = false;
         root.ProcessFrame();
 
         Assert.Same(panelB, presenter.LayoutPanelRoot);
-        Assert.Equal(["one", "two"], panelB.VisualChildren.Cast<ItemElement>().Select(item => item.Value));
+        Assert.Equal(["one", "two-b"], panelB.VisualChildren.Cast<ItemElement>().Select(item => item.Value));
         Assert.Empty(panelA.VisualChildren);
         Assert.Null(panelA.VisualParent);
     }
@@ -1467,6 +1564,24 @@ public sealed class ItemsPresenterTests
         protected override void OnDetached()
         {
             DetachedCount++;
+        }
+    }
+
+    // Two instances with the same Id are equal, whatever their names.
+    private sealed class KeyedItem(int id, string name)
+    {
+        public int Id { get; } = id;
+
+        public string Name { get; } = name;
+
+        public override bool Equals(object? obj)
+        {
+            return obj is KeyedItem other && other.Id == Id;
+        }
+
+        public override int GetHashCode()
+        {
+            return Id;
         }
     }
 }

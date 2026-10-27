@@ -106,7 +106,15 @@ public sealed class UiPropertyBinding<T> : Binding, IElementDataLifecycleBehavio
 
         try
         {
-            WriteTarget(source.Value);
+            // Activating again, for example when the target is attached again, transfers no new source value. When the
+            // target already holds the source value as its effective local value, the binding writes nothing, because
+            // a write of the current value is not a no-op for every property: Selector.SelectedIndex selects it.
+            T value = source.Value;
+            if (target.GetValueSource(targetProperty) != UiPropertyValueSource.Local ||
+                !targetProperty.Metadata.EqualityComparer.Equals(target.GetValue(targetProperty), value))
+            {
+                WriteTarget(value);
+            }
         }
         catch
         {

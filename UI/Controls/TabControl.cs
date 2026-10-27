@@ -4,6 +4,7 @@ using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Rendering;
@@ -11,7 +12,7 @@ using Cerneala.UI.Rendering;
 namespace Cerneala.UI.Controls;
 
 [TemplatePart("PART_ItemsPresenter", typeof(ItemsPresenter))]
-public class TabControl : Selector
+public class TabControl : Selector, ITabOnceScope
 {
     public static readonly UiProperty<ContentTemplate?> ContentTemplateProperty = UiProperty<ContentTemplate?>.Register(
         nameof(ContentTemplate),
@@ -40,6 +41,10 @@ public class TabControl : Selector
 
     // The tab whose Content the content area was last prepared to show.
     private TabItem? presentedTab;
+
+    // The tab that SelectedContent and SelectedContentTemplate were last read from. It is the Owner of that tab, so a
+    // change of its Content or ContentTemplate reaches this control whether or not its container is realized.
+    private TabItem? contentSourceTab;
 
     // The height of the header row as last arranged without a template: the content area and its chrome start there.
     private float contentAreaTop;
@@ -103,6 +108,12 @@ public class TabControl : Selector
     }
 
     private bool IsComponentTemplated => ComponentTemplate is not null || ComponentTemplateKey is not null;
+
+    // As the tab strip of a WPF TabControl, whose TabNavigation is Once, the Tab key enters the tabs once, on the focused
+    // tab, else the selected tab, else the first tab; the tabs are no Tab stops, so the next Tab moves on to the content
+    // of the selected tab (#905).
+    UIElement? ITabOnceScope.GetTabOnceElement(ElementInputRouteMap routeMap) =>
+        FindTabOnceContainer(routeMap, SelectedTabItem);
 
     internal void OnTabContentChanged(TabItem tab)
     {
@@ -272,6 +283,20 @@ public class TabControl : Selector
             tab?.ReleaseContentForContentArea();
         }
 
+        if (!ReferenceEquals(contentSourceTab, tab))
+        {
+            if (contentSourceTab is not null && ReferenceEquals(contentSourceTab.Owner, this))
+            {
+                contentSourceTab.Owner = null;
+            }
+
+            contentSourceTab = tab;
+            if (tab is not null)
+            {
+                tab.Owner = this;
+            }
+        }
+
         SetValue(SelectedContentPropertyKey, tab?.Content);
         SetValue(SelectedContentTemplatePropertyKey, tab is null ? null : tab.ContentTemplate ?? ContentTemplate);
         if (templated)
@@ -358,15 +383,6 @@ public class TabControl : Selector
         Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange | InvalidationFlags.Render, reason);
     }
 
-    protected internal override void PrepareItemContainer(UIElement container, int index, object? item)
-    {
-        base.PrepareItemContainer(container, index, item);
-        if (container is TabItem tab)
-        {
-            tab.Owner = this;
-        }
-    }
-
     // As in WPF, ItemTemplate is the template of the header of a generated tab, and the item is its Content. Like
     // WPF's PrepareHeaderedContentControl, a null ItemTemplate or ItemTemplateKey is not written, so a HeaderTemplate or
     // HeaderTemplateKey from ItemContainerAspect applies. Changing either clears every container first, and clearing
@@ -398,17 +414,7 @@ public class TabControl : Selector
     {
         bool generated = !ReferenceEquals(ItemContainerGenerator.GetItem(container), container);
         base.ClearItemContainer(container);
-        if (container is not TabItem tab)
-        {
-            return;
-        }
-
-        if (ReferenceEquals(tab.Owner, this))
-        {
-            tab.Owner = null;
-        }
-
-        if (generated)
+        if (generated && container is TabItem tab)
         {
             tab.Header = null;
             tab.ClearValue(TabItem.HeaderTemplateProperty);

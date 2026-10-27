@@ -333,6 +333,206 @@ public sealed class ListBoxTests
         Assert.False(new ComboBoxItem().Focusable);
     }
 
+    // As a WPF ListBox (TabNavigation Once) and the tab strip of a WPF TabControl, the Tab key enters the control once,
+    // as a TextBox in the same place takes it (#905).
+    [Theory]
+    [InlineData("TextBox")]
+    [InlineData("ListBox")]
+    [InlineData("TabControl")]
+    public void TabFromAButtonMovesFocusIntoTheControl(string kind)
+    {
+        Button before = new() { Content = "before", Width = 100, Height = 30 };
+        Button after = new() { Content = "after", Width = 100, Height = 30 };
+        Control target;
+        if (kind == "TextBox")
+        {
+            target = new TextBox { Width = 100, Height = 30 };
+        }
+        else if (kind == "ListBox")
+        {
+            ListBox listBox = new() { Width = 150, Height = 80 };
+            listBox.SetItems(new[] { "A", "B" });
+            target = listBox;
+        }
+        else
+        {
+            TabControl tabControl = new() { Width = 150, Height = 80 };
+            tabControl.SetItems(new[]
+            {
+                new TabItem { Header = "One", Content = new Border { Width = 20, Height = 20 } },
+                new TabItem { Header = "Two", Content = new Border { Width = 20, Height = 20 } }
+            });
+            tabControl.SelectedIndex = 0;
+            target = tabControl;
+        }
+
+        (UIRoot root, ElementInputBridge bridge) = CreateTabOrderRoot(before, target, after);
+        ClickCenter(root, bridge, before);
+        Assert.True(before.IsKeyboardFocused);
+
+        PressKey(root, bridge, InputKey.Tab);
+
+        UIElement? focused = bridge.FocusManager.FocusedElement;
+        Assert.True(
+            target.IsKeyboardFocusWithin,
+            $"After Tab from the first button, focus is on {focused?.GetType().Name ?? "nothing"}" +
+            (ReferenceEquals(focused, after) ? " (the button after the control)." : "."));
+    }
+
+    // As a WPF ListBox, Tab enters the list once, on the selected row, or on the first row when no row is selected; the
+    // next Tab leaves the list, and Shift+Tab from the button after it comes back to that row (#905).
+    [Theory]
+    [InlineData(-1, 0)]
+    [InlineData(2, 2)]
+    public void TabEntersListBoxOnceOnTheSelectedOrFirstRow(int selectedIndex, int expectedRow)
+    {
+        Button before = new() { Content = "before", Width = 100, Height = 30 };
+        Button after = new() { Content = "after", Width = 100, Height = 30 };
+        ListBox listBox = new() { Width = 150, Height = 100 };
+        listBox.SetItems(new[] { "A", "B", "C" });
+        listBox.SelectedIndex = selectedIndex;
+        (UIRoot root, ElementInputBridge bridge) = CreateTabOrderRoot(before, listBox, after);
+        ClickCenter(root, bridge, before);
+
+        PressKey(root, bridge, InputKey.Tab);
+
+        UIElement expected = listBox.ItemContainerGenerator.RealizedContainers[expectedRow];
+        Assert.Same(expected, bridge.FocusManager.FocusedElement);
+
+        PressKey(root, bridge, InputKey.Tab);
+
+        Assert.True(after.IsKeyboardFocused);
+
+        PressKey(root, bridge, InputKey.Tab, InputKey.LeftShift);
+
+        Assert.Same(expected, bridge.FocusManager.FocusedElement);
+
+        PressKey(root, bridge, InputKey.Tab, InputKey.LeftShift);
+
+        Assert.True(before.IsKeyboardFocused);
+    }
+
+    // Tab from any row leaves the list, not only from the row it entered on: Down moves the focus and the selection to
+    // the second row, Tab from there goes to the next control, and Shift+Tab comes back to the selected row (#905).
+    [Fact]
+    public void TabFromAFocusedRowLeavesTheListAndShiftTabReturnsToIt()
+    {
+        Button before = new() { Content = "before", Width = 100, Height = 30 };
+        Button after = new() { Content = "after", Width = 100, Height = 30 };
+        ListBox listBox = new() { Width = 150, Height = 100 };
+        listBox.SetItems(new[] { "A", "B", "C" });
+        (UIRoot root, ElementInputBridge bridge) = CreateTabOrderRoot(before, listBox, after);
+        ClickCenter(root, bridge, before);
+        PressKey(root, bridge, InputKey.Tab);
+        PressKey(root, bridge, InputKey.Down);
+        UIElement secondRow = listBox.ItemContainerGenerator.RealizedContainers[1];
+        Assert.Same(secondRow, bridge.FocusManager.FocusedElement);
+        Assert.Equal(1, listBox.SelectedIndex);
+
+        PressKey(root, bridge, InputKey.Tab);
+
+        Assert.True(after.IsKeyboardFocused);
+
+        PressKey(root, bridge, InputKey.Tab, InputKey.LeftShift);
+
+        Assert.Same(secondRow, bridge.FocusManager.FocusedElement);
+    }
+
+    // As WPF's TabNavigation Once gives the focus to the last focused element of the group, Tab comes back to the row
+    // that the focus left, also when that row is not selected: in Multiple mode Down moves only the focus (#905).
+    [Theory]
+    [InlineData(SelectionMode.Multiple, -1)]
+    [InlineData(SelectionMode.Single, 5)]
+    public void ShiftTabReturnsToTheLastFocusedRowAlsoWhenItIsNotSelected(SelectionMode mode, int selectedIndex)
+    {
+        Button before = new() { Content = "before", Width = 100, Height = 30 };
+        Button after = new() { Content = "after", Width = 100, Height = 30 };
+        ListBox listBox = new() { Width = 150, Height = 160, SelectionMode = mode };
+        listBox.SetItems(new[] { "A", "B", "C", "D", "E", "F" });
+        (UIRoot root, ElementInputBridge bridge) = CreateTabOrderRoot(before, listBox, after);
+        ClickCenter(root, bridge, before);
+        PressKey(root, bridge, InputKey.Tab);
+        for (int i = 0; i < 3; i++)
+        {
+            PressKey(root, bridge, InputKey.Down, mode == SelectionMode.Single ? new[] { InputKey.LeftCtrl } : Array.Empty<InputKey>());
+        }
+
+        listBox.SelectedIndex = selectedIndex;
+        UIElement fourthRow = listBox.ItemContainerGenerator.RealizedContainers[3];
+        Assert.Same(fourthRow, bridge.FocusManager.FocusedElement);
+        PressKey(root, bridge, InputKey.Tab);
+        Assert.True(after.IsKeyboardFocused);
+
+        PressKey(root, bridge, InputKey.Tab, InputKey.LeftShift);
+
+        UIElement? focused = bridge.FocusManager.FocusedElement;
+        Assert.True(
+            ReferenceEquals(fourthRow, focused),
+            $"Shift+Tab focused row {listBox.ItemContainerGenerator.IndexFromContainer(focused!)}, expected row 3.");
+    }
+
+    // As WPF orders a Once group by its container, the TabIndex of the ListBox, not of its rows, places the list in the
+    // Tab order: a list with TabIndex 2 between buttons with TabIndex 0 and 1 is entered after both buttons (#905).
+    [Fact]
+    public void TabIndexOfTheListBoxOrdersItsRowInTheTabOrder()
+    {
+        Button before = new() { Content = "before", Width = 100, Height = 30, TabIndex = 0 };
+        Button after = new() { Content = "after", Width = 100, Height = 30, TabIndex = 1 };
+        ListBox listBox = new() { Width = 150, Height = 100, TabIndex = 2 };
+        listBox.SetItems(new[] { "A", "B" });
+        (UIRoot root, ElementInputBridge bridge) = CreateTabOrderRoot(before, listBox, after);
+        ClickCenter(root, bridge, before);
+
+        PressKey(root, bridge, InputKey.Tab);
+
+        Assert.True(after.IsKeyboardFocused);
+
+        PressKey(root, bridge, InputKey.Tab);
+
+        Assert.Same(listBox.ItemContainerGenerator.RealizedContainers[0], bridge.FocusManager.FocusedElement);
+    }
+
+    // As the tab strip of a WPF TabControl, Tab enters the tabs once, on the selected tab; the next Tab moves on to the
+    // selected tab's content, not to another tab (#905).
+    [Fact]
+    public void TabEntersTabControlOnTheSelectedTabAndThenMovesToItsContent()
+    {
+        Button before = new() { Content = "before", Width = 100, Height = 30 };
+        Button after = new() { Content = "after", Width = 100, Height = 30 };
+        Button inside = new() { Content = "inside", Width = 60, Height = 20 };
+        TabItem first = new() { Header = "One", Content = new Border { Width = 20, Height = 20 } };
+        TabItem second = new() { Header = "Two", Content = inside };
+        TabControl tabControl = new() { Width = 200, Height = 100 };
+        tabControl.SetItems(new[] { first, second });
+        tabControl.SelectedIndex = 1;
+        (UIRoot root, ElementInputBridge bridge) = CreateTabOrderRoot(before, tabControl, after);
+        ClickCenter(root, bridge, before);
+
+        PressKey(root, bridge, InputKey.Tab);
+
+        Assert.True(second.IsKeyboardFocused);
+
+        PressKey(root, bridge, InputKey.Tab);
+
+        Assert.True(inside.IsKeyboardFocused);
+
+        PressKey(root, bridge, InputKey.Tab);
+
+        Assert.True(after.IsKeyboardFocused);
+    }
+
+    private static (UIRoot Root, ElementInputBridge Bridge) CreateTabOrderRoot(UIElement before, UIElement target, UIElement after)
+    {
+        StackPanel panel = new();
+        panel.VisualChildren.Add(before);
+        panel.VisualChildren.Add(target);
+        panel.VisualChildren.Add(after);
+        UIRoot root = new(360, 300);
+        root.VisualChildren.Add(new Window { Content = panel, Width = 360, Height = 300 });
+        root.ProcessFrame();
+        return (root, new ElementInputBridge());
+    }
+
     // As in WPF, Down on the focused row of a single-selection ListBox focuses and selects the next row (#680).
     [Fact]
     public void DownKeyAfterClickSelectsNextRow()
@@ -489,6 +689,60 @@ public sealed class ListBoxTests
 
         Assert.Equal(["A", "D", "E"], listBox.SelectedItems);
         Assert.Equal([true, false, false, true, true], RowSelection(listBox));
+    }
+
+    // The anchor is the clicked occurrence and follows it by position when an item is inserted before it, also when an
+    // earlier item is equal to it (#925). The distinct third item is the control row.
+    [Theory]
+    [InlineData("d")]
+    [InlineData("a")]
+    public void ExtendedAnchorFollowsItsItemWhenAnEarlierItemIsInsertedEvenWithEqualItems(string third)
+    {
+        (UIRoot root, ListBox listBox) = CreateSelectionModeListBox(SelectionMode.Extended, "a", "b", third, "c");
+        ElementInputBridge bridge = new();
+        ClickRow(root, bridge, listBox, 2);
+
+        listBox.Items.Insert(0, "x");
+        root.ProcessFrame();
+        ClickRow(root, bridge, listBox, 4, InputKey.LeftShift);
+
+        Assert.Equal([3, 4], listBox.SelectionModel.SelectedIndices.OrderBy(index => index));
+        Assert.Equal([third, "c"], listBox.SelectedItems.Select(item => (string?)item).OrderBy(item => item == "c"));
+    }
+
+    // The anchor follows its occurrence when an earlier item is removed, and Shift+Down ranges from it (#925).
+    [Fact]
+    public void ExtendedAnchorFollowsItsItemWhenAnEarlierItemIsRemovedEvenWithEqualItems()
+    {
+        (UIRoot root, ListBox listBox) = CreateSelectionModeListBox(SelectionMode.Extended, "x", "a", "b", "a", "c");
+        ElementInputBridge bridge = new();
+        ClickRow(root, bridge, listBox, 3);
+
+        listBox.Items.RemoveAt(0);
+        root.ProcessFrame();
+        PressKey(root, bridge, InputKey.Down, InputKey.LeftShift);
+
+        Assert.Equal([2, 3], listBox.SelectionModel.SelectedIndices.OrderBy(index => index));
+        Assert.True(Row(listBox, 3).IsKeyboardFocused);
+    }
+
+    // The anchor follows its occurrence when the source moves an item from after it to before it (#925).
+    [Fact]
+    public void ExtendedAnchorFollowsItsItemWhenTheSourceMovesAnItemBeforeItEvenWithEqualItems()
+    {
+        System.Collections.ObjectModel.ObservableCollection<string> source = ["a", "b", "a", "c", "d"];
+        ListBox listBox = new() { SelectionMode = SelectionMode.Extended, Width = 150, Height = 200, ItemsSource = source };
+        UIRoot root = new(360, 300);
+        root.VisualChildren.Add(new Window { Content = listBox, Width = 360, Height = 300 });
+        root.ProcessFrame();
+        ElementInputBridge bridge = new();
+        ClickRow(root, bridge, listBox, 2);
+
+        source.Move(4, 0);
+        root.ProcessFrame();
+        ClickRow(root, bridge, listBox, 4, InputKey.LeftShift);
+
+        Assert.Equal([3, 4], listBox.SelectionModel.SelectedIndices.OrderBy(index => index));
     }
 
     // As in WPF, one click that changes several rows raises one SelectionChanged with every added and removed item.
@@ -1643,6 +1897,33 @@ public sealed class ListBoxTests
 
         Assert.Equal("Ink", Assert.Single(FindTextBlocks(item)).Text);
         Assert.Equal(reference.DesiredSize.Height + 8, item.DesiredSize.Height);
+    }
+
+    // As in WPF, a row without an ItemTemplate shows the text of an item that is not a string, from ToString() (#903).
+    [Fact]
+    public void ListBoxRowsWithoutATemplateShowNonStringItemsThroughToString()
+    {
+        UIRoot root = new(200, 200);
+        ListBox listBox = new();
+        listBox.SetItems(new object[] { 1, DayOfWeek.Monday });
+        root.VisualChildren.Add(listBox);
+        root.ProcessFrame();
+
+        Assert.Equal(
+            ["1", "Monday"],
+            listBox.ItemContainerGenerator.RealizedContainers.OrderBy(pair => pair.Key)
+                .Select(pair => Assert.Single(FindTextBlocks(pair.Value)).Text));
+    }
+
+    [Fact]
+    public void ListBoxItemWithNonStringContentShowsItsText()
+    {
+        UIRoot root = new(200, 200);
+        ListBoxItem item = new() { Content = 42 };
+        root.VisualChildren.Add(item);
+        root.ProcessFrame();
+
+        Assert.Equal("42", Assert.Single(FindTextBlocks(item)).Text);
     }
 
     // As the Border of the WPF ListBox template, Background fills the arranged bounds behind the items (#590).

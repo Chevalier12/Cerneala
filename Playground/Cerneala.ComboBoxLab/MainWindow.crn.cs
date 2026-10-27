@@ -133,7 +133,7 @@ public partial class MainWindow : Window
     {
         return
             UpdateText(committed, $"COMMITTED  index={comboBox.SelectedIndex}  text=\"{comboBox.Text}\"") |
-            UpdateText(runtime, $"open={comboBox.IsDropDownOpen}  realized={comboBox.RealizedItemCount}");
+            UpdateText(runtime, $"editable={comboBox.IsEditable}  open={comboBox.IsDropDownOpen}  realized={comboBox.RealizedItemCount}");
     }
 
     private static bool UpdateText(TextBlock textBlock, string text)
