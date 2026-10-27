@@ -5,6 +5,7 @@ using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
 using Cerneala.UI.Media;
+using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Motion.Presence;
 using Cerneala.UI.Motion.Specs;
 using Cerneala.Tests.UI.Motion.Core;
@@ -255,6 +256,39 @@ public sealed class PresenceCoordinatorTests
 
         Assert.NotNull(root.Motion.Layout.GetBinding(child));
         Assert.Equal(PresenceState.Exiting, root.Motion.Presence.GetState(child));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ThrowingUnloadedHandlerStillRemovesTheChildWhenAPresenceExitCompletesSynchronously(bool withPresence)
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(100, 100, motionClock: clock, reducedMotion: new ReducedMotionPolicy(ReducedMotionMode.Reduce));
+        Canvas parent = new();
+        Rectangle child = CreateChild();
+        if (!withPresence)
+        {
+            child.Presence = null;
+        }
+
+        root.VisualChildren.Add(parent);
+        parent.VisualChildren.Add(child);
+        root.ProcessFrame();
+        child.Unloaded += (_, _) => throw new InvalidOperationException("x");
+        int changed = 0;
+        parent.VisualChildren.Changed += (_, _) => changed++;
+        int treeVersion = root.TreeVersion;
+
+        Exception? failure = Record.Exception(() => parent.VisualChildren.Remove(child));
+
+        Assert.True(
+            failure is InvalidOperationException && !parent.VisualChildren.Contains(child) && child.VisualParent is null && !child.IsAttached && changed == 1,
+            $"withPresence={withPresence}: exception={failure?.GetType().Name ?? "none"}, listed={parent.VisualChildren.Contains(child)}, " +
+            $"VisualParent={(child.VisualParent is null ? "null" : "set")}, IsAttached={child.IsAttached}, Changed raised {changed} time(s).");
+        Assert.True(root.TreeVersion > treeVersion);
+        Assert.Equal(PresenceState.Detached, root.Motion.Presence.GetState(child));
+        Assert.Empty(root.Motion.Presence.GetExitingVisualChildren(parent));
     }
 
     private static (UIRoot Root, Canvas Parent, Rectangle Child) CreateScenario(ManualMotionClock clock)
