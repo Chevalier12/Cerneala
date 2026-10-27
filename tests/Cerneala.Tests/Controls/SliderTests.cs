@@ -458,6 +458,42 @@ public sealed class SliderTests
         Assert.Equal(expected, slider.Value);
     }
 
+    // The next listed tick is found at any magnitude (#927, #928): a SmallChange too small to move Value leaves the key to
+    // the next listed tick, which is nearer than the float tolerance of FloatComparison (about 0.24 at 1000000 and
+    // 1.2e-6 near 0). The key goes to that tick, not past it to Maximum or Minimum.
+    [Theory]
+    [InlineData(InputKey.Right, 1000000f, 1000001f, 0.01f, 1000000.125f, 1000000f)]
+    [InlineData(InputKey.Left, 1000000f, 1000001f, 0.01f, 1000000.875f, 1000001f)]
+    [InlineData(InputKey.Right, 0f, 1e-5f, 1e-8f, 1e-6f, 0f)]
+    public void ArrowKeyWithExplicitTicksMovesToTheNearestListedTickAtAnyMagnitude(
+        InputKey key,
+        float minimum,
+        float maximum,
+        float smallChange,
+        float tick,
+        float start)
+    {
+        Button other = new() { Content = "other", Width = 100, Height = 30 };
+        Slider slider = new()
+        {
+            Minimum = minimum,
+            Maximum = maximum,
+            SmallChange = smallChange,
+            Ticks = [tick],
+            IsSnapToTickEnabled = true,
+            Value = start,
+            Width = 200,
+            Height = 20
+        };
+        (UIRoot root, ElementInputBridge bridge) = CreateWindowRoot(other, slider);
+        Click(root, bridge, other);
+        PressKey(root, bridge, InputKey.Tab);
+
+        PressKey(root, bridge, key);
+
+        Assert.Equal(tick, slider.Value);
+    }
+
     // As WPF's Slider.SnapToTick during a thumb drag: the pointer's value snaps to the nearest tick. The drag moves in
     // steps of 0.5, each too small to reach a tick alone, so a thumb that snapping keeps in place still follows the
     // pointer: dragging to the point for 4.7 gives 4, and to the point for 5.2 gives 6.

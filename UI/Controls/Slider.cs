@@ -614,10 +614,12 @@ public class Slider : RangeBase
         {
             if (Ticks is { Count: > 0 } ticks)
             {
+                // Exact comparisons, as in SnapToTick: the float tolerance of FloatComparison (about 0.24 at 1000000)
+                // would skip a listed tick near Value and move past it to Maximum or Minimum (#927).
                 foreach (float tick in ticks)
                 {
-                    if ((greaterThan && FloatComparison.GreaterThan(tick, value) && (FloatComparison.LessThan(tick, next) || next == value)) ||
-                        (!greaterThan && FloatComparison.LessThan(tick, value) && (FloatComparison.GreaterThan(tick, next) || next == value)))
+                    if ((greaterThan && tick > value && (tick < next || next == value)) ||
+                        (!greaterThan && tick < value && (tick > next || next == value)))
                     {
                         next = tick;
                     }
