@@ -438,6 +438,39 @@ public sealed class ListBoxTests
         Assert.Same(secondRow, bridge.FocusManager.FocusedElement);
     }
 
+    // As WPF's TabNavigation Once gives the focus to the last focused element of the group, Tab comes back to the row
+    // that the focus left, also when that row is not selected: in Multiple mode Down moves only the focus (#905).
+    [Theory]
+    [InlineData(SelectionMode.Multiple, -1)]
+    [InlineData(SelectionMode.Single, 5)]
+    public void ShiftTabReturnsToTheLastFocusedRowAlsoWhenItIsNotSelected(SelectionMode mode, int selectedIndex)
+    {
+        Button before = new() { Content = "before", Width = 100, Height = 30 };
+        Button after = new() { Content = "after", Width = 100, Height = 30 };
+        ListBox listBox = new() { Width = 150, Height = 160, SelectionMode = mode };
+        listBox.SetItems(new[] { "A", "B", "C", "D", "E", "F" });
+        (UIRoot root, ElementInputBridge bridge) = CreateTabOrderRoot(before, listBox, after);
+        ClickCenter(root, bridge, before);
+        PressKey(root, bridge, InputKey.Tab);
+        for (int i = 0; i < 3; i++)
+        {
+            PressKey(root, bridge, InputKey.Down, mode == SelectionMode.Single ? new[] { InputKey.LeftCtrl } : Array.Empty<InputKey>());
+        }
+
+        listBox.SelectedIndex = selectedIndex;
+        UIElement fourthRow = listBox.ItemContainerGenerator.RealizedContainers[3];
+        Assert.Same(fourthRow, bridge.FocusManager.FocusedElement);
+        PressKey(root, bridge, InputKey.Tab);
+        Assert.True(after.IsKeyboardFocused);
+
+        PressKey(root, bridge, InputKey.Tab, InputKey.LeftShift);
+
+        UIElement? focused = bridge.FocusManager.FocusedElement;
+        Assert.True(
+            ReferenceEquals(fourthRow, focused),
+            $"Shift+Tab focused row {listBox.ItemContainerGenerator.IndexFromContainer(focused!)}, expected row 3.");
+    }
+
     // As WPF orders a Once group by its container, the TabIndex of the ListBox, not of its rows, places the list in the
     // Tab order: a list with TabIndex 2 between buttons with TabIndex 0 and 1 is entered after both buttons (#905).
     [Fact]
