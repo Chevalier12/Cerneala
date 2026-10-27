@@ -62,7 +62,7 @@ The platform is created only when the first runtime is created. `WindowingBacken
 `GeneratedWindowApplication.Run(descriptor, args)` runs these stages in order:
 
 1. `construct Application`: calls the generated `CreateApplication`.
-2. Creates the runtime with `WindowApplicationRuntime.GetOrCreateDefault(application.UseMultisampling)`. This creates the platform, as described above.
+2. `create runtime`: creates the runtime with `WindowApplicationRuntime.GetOrCreateDefault(application.UseMultisampling)`. This creates the platform, as described above.
 3. `install Application.Current`: `Application.Install(runtime)` sets `Application.Current`, reads the platform's audio output and calls `runtime.SetApplication`.
 4. `configure and build services`: runs the generated `ConfigureServices` and then the application's `ConfigureServices`, and builds the provider with `ValidateScopes = true`.
 5. `run Application startup`: raises `Startup` with the arguments.
@@ -77,7 +77,7 @@ If a stage throws, the exception keeps going, with two extra entries:
 
 If `Startup` calls `Shutdown()`, stages 6 and 7 and the loop are skipped. `Run` then returns the exit code at once.
 
-When the descriptor has no `CreateApplication`, a markup `MainWindow` without an `Application`, `Run` takes the legacy path. It builds the services, creates the window and runs `RunStandalone(window)` until that window closes. In this case it returns `0`.
+When the descriptor has no `CreateApplication`, a markup `MainWindow` without an `Application`, `Run` takes the legacy path. It runs the stages `configure and build services`, `resolve and create startup Window`, `create runtime` (`WindowApplicationRuntime.CurrentOrDefault`) and `show startup Window`, then runs `RunStandalone(window)` until that window closes. In this case it returns `0`. A failing legacy stage carries the same two `Data` entries; `Cerneala.StartupTarget` is `"<legacy MainWindow>"`. Example: a legacy `CreateMainWindow` that throws `InvalidOperationException("boom")` leaves `Run` with that same exception, with `Data["Cerneala.StartupStage"] = "resolve and create startup Window"` and `Data["Cerneala.StartupTarget"] = "<legacy MainWindow>"`. Hosted startup (`PumpHosted`) runs the same stages for both kinds of descriptor; the hosted legacy path creates the runtime first.
 
 ### Showing a window
 

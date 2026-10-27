@@ -65,8 +65,49 @@ public sealed class ApplicationBackendRegistrationTests : IDisposable
         Assert.False(backend.UseMultisampling);
     }
 
+    // A failing startup window factory (a stage that already carried the keys) is the control.
+    [Theory]
+    [InlineData("windowFactoryFails", "resolve and create startup Window")]
+    [InlineData("platformCreationFails", "create runtime")]
+    [InlineData("hostedPlatformCreationFails", "create runtime")]
+    [InlineData("legacyPlatformCreationFails", "create runtime")]
+    [InlineData("hostedLegacyPlatformCreationFails", "create runtime")]
+    public void StartupFailureCarriesStageAndTargetKeysWhenThePlatformCannotBeCreated(string row, string expectedStage)
+    {
+        InvalidOperationException expected = new("boom");
+        WindowingBackendRegistry.Register(row == "windowFactoryFails"
+            ? new CapturingWindowingBackend()
+            : new ThrowingWindowingBackend(expected));
+        bool legacy = row.Contains("legacy", StringComparison.OrdinalIgnoreCase);
+        GeneratedWindowStartupDescriptor descriptor = legacy
+            ? new(_ => { }, _ => new Window())
+            : new(() => new Application(), _ => { }, _ => throw expected, "TestInput.MainWindow");
+
+        InvalidOperationException actual;
+        if (row.StartsWith("hosted", StringComparison.Ordinal))
+        {
+            GeneratedWindowApplication.RegisterStartup(descriptor);
+            actual = Assert.Throws<InvalidOperationException>(
+                () => GeneratedWindowApplication.PumpHosted(TimeSpan.FromMilliseconds(16)));
+        }
+        else
+        {
+            actual = Assert.Throws<InvalidOperationException>(
+                () => GeneratedWindowApplication.Run(descriptor, []));
+        }
+
+        Assert.Same(expected, actual);
+        string present = string.Join(", ", actual.Data.Keys.Cast<object>().Select(key => $"{key}={actual.Data[key]}"));
+        string expectedTarget = legacy ? "<legacy MainWindow>" : "TestInput.MainWindow";
+        Assert.True(
+            Equals(expectedStage, actual.Data["Cerneala.StartupStage"])
+                && Equals(expectedTarget, actual.Data["Cerneala.StartupTarget"]),
+            $"{row}: Data keys present: [{present}]; expected Cerneala.StartupStage = '{expectedStage}' and Cerneala.StartupTarget = '{expectedTarget}'.");
+    }
+
     public void Dispose()
     {
+        GeneratedWindowApplication.ResetForTesting();
         WindowApplicationRuntime.ResetForTesting();
         Application.ResetForTesting();
         WindowingBackendRegistry.ResetForTesting();
@@ -91,6 +132,11 @@ public sealed class ApplicationBackendRegistrationTests : IDisposable
             UseMultisampling = useMultisampling;
             return new NoOpWindowPlatform();
         }
+    }
+
+    private sealed class ThrowingWindowingBackend(Exception failure) : IWindowingBackend
+    {
+        public IWindowPlatform CreatePlatform(bool useMultisampling, float? coordinateScaleOverride) => throw failure;
     }
 
     private sealed class NoOpWindowPlatform : IWindowPlatform
