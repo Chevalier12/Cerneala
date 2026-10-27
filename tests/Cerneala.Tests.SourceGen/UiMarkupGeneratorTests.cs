@@ -2053,6 +2053,24 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Equal(new[] { "lt", "lte", "gt", "gte" }, panel.VisualChildren.Cast<TextBlock>().Select(text => text.Text));
     }
 
+    // The canonical UiMarkupGenerator page documents both rejections: an @if
+    // condition must be a comparison, and a literal is only a right operand (#918).
+    [Theory]
+    [InlineData("@when IsMouseOver { @if IsMouseOver { Text = \"Active\"; } }", "@if requires a comparison or comparisons combined with 'and' and 'or'.")]
+    [InlineData("@when FontSize { @if 13 > value { Text = \"lt\"; } }", "A literal must be used as a comparison operand.")]
+    public void IfConditionWithoutComparisonOrWithLeftLiteralReportsInvalidBindingSource(string body, string expectedMessage)
+    {
+        string markup = "<TextBlock FontSize=\"12\">" + body + "</TextBlock>";
+
+        GeneratorRunResult result = RunGenerator("IfConditionForms.crn", markup, out _);
+
+        Assert.Contains(
+            result.Diagnostics,
+            diagnostic => diagnostic.Id == "CERNEALAUI007" &&
+                diagnostic.Severity == DiagnosticSeverity.Error &&
+                diagnostic.GetMessage().Contains(expectedMessage, StringComparison.Ordinal));
+    }
+
     [Fact]
     public void NearestElementResourceScopeShadowsAncestorResources()
     {
