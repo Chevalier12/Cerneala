@@ -130,6 +130,67 @@ public sealed class ServoPerCallTimeoutTests
         Assert.Same(before, host.LastFrame);
     }
 
+    // 4294967 s is just below the largest supported timeout of 4294967294 ms (about 49.7 days).
+    [Theory]
+    [InlineData(5)]
+    [InlineData(4294967)]
+    [InlineData(60 * 24 * 3600)]
+    public void AnAcceptedDefaultTimeoutCanRunAnOperation(int seconds)
+    {
+        (UiHost host, _) = CreateScene();
+        ServoOptions options = new();
+        Exception? rejected = Record.Exception(() => options.DefaultTimeout = TimeSpan.FromSeconds(seconds));
+        if (rejected is not null)
+        {
+            Assert.IsType<ArgumentOutOfRangeException>(rejected);
+            return;
+        }
+
+        ServoApi servo = new(host, options);
+        Task<bool>? exists = null;
+        Exception? failure = Record.Exception(() =>
+        {
+            exists = servo.ExistsAsync(ServoTarget.ById("card"));
+            for (int frame = 0; frame < 32 && !exists.IsCompleted; frame++)
+            {
+                host.Update(EmptyInput(), host.Viewport, TimeSpan.FromMilliseconds(16));
+                Thread.Sleep(1);
+            }
+        });
+        Exception? faulted = failure ?? (exists is { IsFaulted: true } ? exists.Exception!.GetBaseException() : null);
+
+        Assert.True(
+            faulted is null && exists is { IsCompletedSuccessfully: true },
+            $"DefaultTimeout={seconds} s was accepted by ServoOptions; ExistsAsync status={exists?.Status.ToString() ?? "not created"}, exception={faulted?.GetType().Name}: {faulted?.Message}");
+    }
+
+    [Fact]
+    public void TimeoutsAboveTheLargestSupportedTimeoutAreRejectedWhenSetAndPerCall()
+    {
+        (UiHost host, _) = CreateScene();
+        ServoTarget card = ServoTarget.ById("card");
+        TimeSpan largest = TimeSpan.FromMilliseconds(uint.MaxValue - 1);
+        UiFrame before = host.LastFrame!;
+
+        ServoOptions options = new() { DefaultTimeout = largest };
+        Assert.Equal(largest, options.DefaultTimeout);
+        ServoApi servo = new(host);
+        foreach (TimeSpan invalid in new[] { largest + TimeSpan.FromTicks(1), TimeSpan.FromDays(60), TimeSpan.MaxValue })
+        {
+            ArgumentOutOfRangeException setter = Assert.Throws<ArgumentOutOfRangeException>(
+                () => options.DefaultTimeout = invalid);
+            Assert.Equal("value", setter.ParamName);
+            ArgumentOutOfRangeException perCall = Assert.Throws<ArgumentOutOfRangeException>(
+                () => { _ = servo.ExistsAsync(card, invalid); });
+            Assert.Equal("timeout", perCall.ParamName);
+            Assert.Throws<ArgumentOutOfRangeException>(() => { _ = servo.ClickAsync(card, invalid); });
+            Assert.Throws<ArgumentOutOfRangeException>(() => { _ = servo.WaitForIdleAsync(invalid); });
+        }
+
+        Assert.Equal(largest, options.DefaultTimeout);
+        Assert.Same(before, host.LastFrame);
+    }
+
     private static Task Start(ServoApi servo, string operation, TimeSpan timeout)
     {
         ServoTarget card = ServoTarget.ById("card");

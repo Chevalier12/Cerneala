@@ -36,7 +36,7 @@ bool reusedCommandList = ReferenceEquals(committed, rendered);
 
 `RetainedRenderer` is the small public facade over retained rendering. `UIRoot` creates one using its `RetainedRenderCache`, `DrawCommandListBuilder`, and `RenderCounters`, then exposes it through `UIRoot.RetainedRenderer`.
 
-`Commit` is the update-side operation. It checks whether the root command cache is valid and, when needed, asks `DrawCommandListBuilder` to rebuild `RetainedRenderCache.RootCommands`. It returns the cache-owned `DrawCommandList`.
+`Commit` is the update-side operation. It checks whether the root command cache is valid and, when needed, asks `DrawCommandListBuilder` to rebuild `RetainedRenderCache.RootCommands`. It returns the cache-owned `DrawCommandList`. `Commit` composes local render caches; it does not build them. The frame's render phase builds them, so after adding or changing elements call `UIRoot.ProcessFrame` (or let `UiHost` run the frame) before `Commit`. A new root builds its own local cache, so the example above commits an empty list without a frame. When a visible element's local cache was never built or is stale, for example a child added after the last frame, `Commit` throws the `InvalidOperationException` that `DrawCommandListBuilder.Build` raises.
 
 `Render` is the draw-side read operation. It returns the already committed root command list without rebuilding it. If the root cache is invalid, `Render` throws `InvalidOperationException` with guidance to call `Commit` during update before rendering or submitting.
 
@@ -64,6 +64,7 @@ bool reusedCommandList = ReferenceEquals(committed, rendered);
 | --- | --- | --- |
 | `RetainedRenderer(RetainedRenderCache renderCache, DrawCommandListBuilder builder, RenderCounters counters)` | `ArgumentNullException` | `renderCache`, `builder`, or `counters` is `null`. |
 | `Commit(UIRoot root)` | `ArgumentNullException` | `root` is `null`. |
+| `Commit(UIRoot root)` | `InvalidOperationException` | The root command cache is invalid and a visible element's local render cache was never built or is stale, for example a child added after the last `ProcessFrame`. |
 | `Render(UIRoot root)` | `ArgumentNullException` | `root` is `null`. |
 | `Render(UIRoot root)` | `InvalidOperationException` | The root command list is not committed because the retained root cache is invalid. |
 | `Submit(UIRoot root, IDrawingBackend backend, in DrawingFrameContext frameContext)` | `ArgumentNullException` | `backend` or `root` is `null`. |

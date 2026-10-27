@@ -594,6 +594,42 @@ public sealed class ElementInputBridgeTests
         Assert.Equal(1, doubleClicks);
     }
 
+    // As WPF's Control, which raises the double click from its MouseLeftButtonDown class handler when ClickCount is 2: the
+    // double click belongs to the second press, so it is raised once at that press, and the release, over the element or
+    // outside it, raises it neither again nor for the first time (#957).
+    [Theory]
+    [InlineData("fullSecondClick")]
+    [InlineData("pressOnly")]
+    [InlineData("pressThenReleaseOutside")]
+    public void MouseDoubleClickIsRaisedWhenTheSecondPressHappens(string row)
+    {
+        UIRoot root = RootWithChild(out UIElement child);
+        int previewDoubleClicks = 0;
+        int doubleClicks = 0;
+        child.Handlers.AddHandler(InputEvents.PreviewMouseDoubleClickEvent, (_, _) => previewDoubleClicks++);
+        child.Handlers.AddHandler(InputEvents.MouseDoubleClickEvent, (_, _) => doubleClicks++);
+        ElementInputBridge bridge = new();
+        LeftClick(bridge, root, 10, 10, TimeSpan.Zero);
+        Assert.Equal(0, doubleClicks);
+
+        bridge.Dispatch(root, ButtonsFrame(10, 10, previousLeft: false, previousRight: false, currentLeft: true, currentRight: false), TimeSpan.Zero);
+        int afterPress = doubleClicks;
+        int previewAfterPress = previewDoubleClicks;
+        if (row == "fullSecondClick")
+        {
+            bridge.Dispatch(root, ButtonsFrame(10, 10, previousLeft: true, previousRight: false, currentLeft: false, currentRight: false), TimeSpan.Zero);
+        }
+        else if (row == "pressThenReleaseOutside")
+        {
+            bridge.Dispatch(root, ButtonsFrame(60, 10, previousLeft: true, previousRight: false, currentLeft: false, currentRight: false), TimeSpan.Zero);
+        }
+
+        Assert.True(
+            afterPress == 1 && doubleClicks == 1 && previewAfterPress == 1 && previewDoubleClicks == 1,
+            $"{row}: MouseDoubleClick ran {afterPress} time(s) after the second press and {doubleClicks} time(s) at the end, " +
+            $"PreviewMouseDoubleClick {previewAfterPress} and {previewDoubleClicks}; expected 1 at the press and 1 at the end.");
+    }
+
     [Fact]
     public void SecondPressAfterMoreThanTheDoubleClickTimeRestartsTheClickCount()
     {

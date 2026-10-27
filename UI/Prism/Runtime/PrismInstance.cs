@@ -45,6 +45,27 @@ public sealed class PrismInstance
             ?? throw new InvalidOperationException($"Prism node '{id.Value}' is not a group.");
     }
 
+    // False when the node or a group that contains it has Visible=false: the node's
+    // subtree is bypassed and its active Motion is canceled.
+    internal bool IsNodeEffectivelyVisible(PrismNodeId id)
+    {
+        for (PrismNodeState? node = GetNodeState(id); node is not null; node = node.Parent)
+        {
+            bool visible = node switch
+            {
+                PrismLayerState layer => layer.Visible,
+                PrismGroupState group => group.Visible,
+                _ => true
+            };
+            if (!visible)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public void ReplaceDefinition(PrismClipDefinition definition)
     {
         ArgumentNullException.ThrowIfNull(definition);
@@ -209,7 +230,7 @@ internal sealed class PrismRuntimeGraph
                         generation,
                         nodes);
                 }
-                state = new PrismGroupState(
+                PrismGroupState groupState = new(
                     Access(owner, values, slice, generation),
                     group.Id,
                     group.Name,
@@ -217,6 +238,12 @@ internal sealed class PrismRuntimeGraph
                     BuildFilters(owner, group.Filters, defaults, values, allocator, generation),
                     BuildStyles(owner, group.Styles, defaults, values, allocator, generation),
                     BuildMask(owner, group.Mask, defaults, values, allocator, generation));
+                foreach (PrismNodeState child in children)
+                {
+                    child.Parent = groupState;
+                }
+
+                state = groupState;
                 break;
             }
             default:

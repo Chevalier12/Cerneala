@@ -155,6 +155,22 @@ public sealed partial class UiMarkupGeneratorTests
         "<SpriteAnimationSet Name=\"Animations\"><SpriteAnimationClip Name=\"Idle\"><SpriteAnimationFrame SourceX=\"0\" SourceY=\"0\" SourceWidth=\"16\" SourceHeight=\"16\" Duration=\"0ms\" /></SpriteAnimationClip></SpriteAnimationSet>",
         "duration",
         "Duration")]
+    [InlineData(
+        "<SpriteAnimationSet Name=\"Animations\"><SpriteAnimationClip Name=\"Idle\"><SpriteAnimationFrame SourceX=\"0\" SourceY=\"0\" SourceWidth=\"16\" SourceHeight=\"16\" Duration=\"0.00001ms\" /></SpriteAnimationClip></SpriteAnimationSet>",
+        "duration",
+        "Duration")]
+    [InlineData(
+        "<SpriteAnimationSet Name=\"Animations\"><SpriteAnimationClip Name=\"Idle\"><SpriteAnimationFrame SourceX=\"0\" SourceY=\"0\" SourceWidth=\"16\" SourceHeight=\"16\" Duration=\"1e20ms\" /></SpriteAnimationClip></SpriteAnimationSet>",
+        "duration",
+        "Duration")]
+    [InlineData(
+        "<SpriteAnimationSet Name=\"Animations\"><SpriteAnimationClip Name=\"Idle\"><SpriteAnimationFrame SourceX=\"0\" SourceY=\"0\" SourceWidth=\"16\" SourceHeight=\"16\" Duration=\"1e20s\" /></SpriteAnimationClip></SpriteAnimationSet>",
+        "duration",
+        "Duration")]
+    [InlineData(
+        "<SpriteAnimationSet Name=\"Animations\"><SpriteAnimationClip Name=\"Idle\"><SpriteAnimationFrame SourceX=\"0\" SourceY=\"0\" SourceWidth=\"16\" SourceHeight=\"16\" Duration=\"922337203686s\" /></SpriteAnimationClip></SpriteAnimationSet>",
+        "duration",
+        "Duration")]
     public void InvalidAnimationDefinitionsProduceLocatedActionableDiagnostics(
         string resource,
         string expectedMessagePart,
@@ -179,6 +195,44 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Equal("InvalidAnimation.crn", diagnostic.Location.GetLineSpan().Path);
         string sourceText = markup.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length);
         Assert.Contains(sourceToken, sourceText, StringComparison.OrdinalIgnoreCase);
+    }
+
+    // Issue #896: every duration that passes the build is at least one tick and fits TimeSpan.
+    [Theory]
+    [Trait("SpriteAnimationStage", "0")]
+    [InlineData("0.0001ms", 1L)]
+    [InlineData("0.0000001s", 1L)]
+    [InlineData("1ms", 10_000L)]
+    [InlineData("1000s", 10_000_000_000L)]
+    public void FrameDurationsOfAtLeastOneTickBuildAndConstruct(string duration, long expectedTicks)
+    {
+        string markup = $$"""
+            <RenderSurface2D>
+              <RenderSurface2D.Resources>
+                <SpriteAnimationSet Name="HeroAnimations">
+                  <SpriteAnimationClip Name="Idle">
+                    <SpriteAnimationFrame SourceX="0" SourceY="0" SourceWidth="16" SourceHeight="16" Duration="{{duration}}" />
+                  </SpriteAnimationClip>
+                </SpriteAnimationSet>
+              </RenderSurface2D.Resources>
+              <RenderSurface2D.Scene>
+                <Scene2D>
+                  <Sprite2D Animations="$HeroAnimations" AnimationState="Idle" />
+                </Scene2D>
+              </RenderSurface2D.Scene>
+            </RenderSurface2D>
+            """;
+
+        GeneratorRunResult result = RunGenerator("TickDuration.crn", markup, out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        var emitted = compilation.Emit(stream);
+        Assert.True(emitted.Success, string.Join(Environment.NewLine, emitted.Diagnostics));
+
+        RenderSurface2D surface = Assert.IsType<RenderSurface2D>(InvokeCreate(stream, "Cerneala.GeneratedUi.TickDurationFactory"));
+        Sprite2D sprite = Assert.IsType<Sprite2D>(Assert.Single(surface.Scene!.Children));
+        SpriteAnimationFrame frame = Assert.Single(Assert.Single(sprite.Animations!.Clips).Frames);
+        Assert.Equal(expectedTicks, frame.Duration.Ticks);
     }
 
     [Fact]
@@ -215,6 +269,61 @@ public sealed partial class UiMarkupGeneratorTests
             "Missing",
             markup.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length),
             StringComparison.Ordinal);
+    }
+
+    // The build check must validate the exact value that is emitted: a state it accepts is
+    // found by the ordinal, case-sensitive SpriteAnimationSet.TryGetClip at run time (#895).
+    [Theory]
+    [Trait("SpriteAnimationStage", "0")]
+    [InlineData("Idle", "Idle", false)]
+    [InlineData("Missing", "Idle", true)]
+    [InlineData(" Idle", "Idle", true)]
+    [InlineData("Idle ", "Idle", true)]
+    [InlineData("Walk.Left", "Idle,Walk.Left", false)]
+    [InlineData("Walk.Right", "Idle,Walk.Left", true)]
+    [InlineData("\\$Idle", "Idle,$Idle", false)]
+    [InlineData("\\$Walk", "Idle,$Idle", true)]
+    public void StaticAnimationStateIsValidatedExactlyAsItIsEmitted(string state, string clips, bool unknown)
+    {
+        string clipMarkup = string.Concat(clips.Split(',').Select(clip =>
+            $"<SpriteAnimationClip Name=\"{clip}\"><SpriteAnimationFrame SourceX=\"0\" SourceY=\"0\" SourceWidth=\"16\" SourceHeight=\"16\" Duration=\"1ms\" /></SpriteAnimationClip>"));
+        string markup = $"""
+            <RenderSurface2D>
+              <RenderSurface2D.Resources>
+                <SpriteAnimationSet Name="HeroAnimations">{clipMarkup}</SpriteAnimationSet>
+              </RenderSurface2D.Resources>
+              <RenderSurface2D.Scene>
+                <Scene2D>
+                  <Sprite2D Animations="$HeroAnimations" AnimationState="{state}" />
+                </Scene2D>
+              </RenderSurface2D.Scene>
+            </RenderSurface2D>
+            """;
+
+        GeneratorRunResult result = RunGenerator("StaticAnimationState.crn", markup, out Compilation compilation);
+
+        Diagnostic[] all = result.Diagnostics.Concat(compilation.GetDiagnostics()).ToArray();
+        Diagnostic[] errors = all
+            .Where(candidate => candidate.Id == "CERNEALAUI016" && candidate.Severity == DiagnosticSeverity.Error)
+            .ToArray();
+        Assert.True(
+            errors.Length == (unknown ? 1 : 0),
+            $"CERNEALAUI016 errors for state '{state}': {errors.Length}. All diagnostics: " +
+            string.Join(" | ", all.Where(candidate => candidate.Severity == DiagnosticSeverity.Error)));
+        if (unknown)
+        {
+            return;
+        }
+
+        using MemoryStream stream = new();
+        var emitted = compilation.Emit(stream);
+        Assert.True(emitted.Success, string.Join(Environment.NewLine, emitted.Diagnostics));
+        RenderSurface2D surface = Assert.IsType<RenderSurface2D>(
+            InvokeCreate(stream, "Cerneala.GeneratedUi.StaticAnimationStateFactory"));
+        Sprite2D sprite = Assert.IsType<Sprite2D>(Assert.Single(surface.Scene!.Children));
+        Assert.True(
+            sprite.Animations!.TryGetClip(sprite.AnimationState!, out _),
+            $"The build accepted '{state}', but the emitted AnimationState '{sprite.AnimationState}' finds no clip.");
     }
 }
 

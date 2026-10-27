@@ -57,7 +57,9 @@ Each field is an `AspectToken<MotionSpec>` created with `AspectToken.Motion(stri
 
 `DefaultAspectPackage.Create()` registers `Fast` with `new TweenSpec<float>(TimeSpan.FromMilliseconds(120))` and `Normal` with `new TweenSpec<float>(TimeSpan.FromMilliseconds(200))`. `DefaultAspectPackage.CreateEnvironment()` sets the same values in the returned `AspectEnvironment`.
 
-The motion token names are semantic strings: `motion.fast` and `motion.normal`. Use these tokens when aspect rules or application packages need to refer to shared motion timing rather than embedding a motion specification directly.
+The motion token names are semantic strings: `motion.fast` and `motion.normal`. Code reads their values from an `AspectEnvironment` with `TryGet`, as in the first example, or overrides them in an application package, as in the second example.
+
+`AspectMotion` does not read these tokens. `AspectMotion.TokenName` names a theme motion token, which `AspectEngine` resolves through `ThemeMotionTokens` on the `ThemeProvider`. With `DefaultTheme.Create()`, `new AspectMotion(Control.BackgroundProperty, "motion.fast")` finds no theme token with that name, so the background changes without a transition; use a theme token such as `ThemeMotionTokens.FastOut` (120 ms) or `ThemeMotionTokens.Standard` (180 ms) for an animated aspect value.
 
 ## Fields
 
@@ -77,5 +79,7 @@ Cerneala UI aspect packages and aspect environments that resolve default motion 
 - `Cerneala.UI.Aspect.AspectToken`
 - `Cerneala.UI.Aspect.AspectToken<T>`
 - `Cerneala.UI.Aspect.AspectEnvironment`
+- `Cerneala.UI.Aspect.AspectMotion`
+- `Cerneala.UI.Motion.States.ThemeMotionTokens`
 - `Cerneala.UI.Motion.Specs.MotionSpec`
 - `Cerneala.UI.Motion.Specs.TweenSpec<T>`

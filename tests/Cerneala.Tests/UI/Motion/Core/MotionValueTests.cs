@@ -86,6 +86,26 @@ public sealed class MotionValueTests
     }
 
     [Fact]
+    public void PreserveProgressRetargetPastTheNewDurationFinishesAtOnce()
+    {
+        UIRootHarness harness = new();
+        MotionValue<double> value = harness.Graph.CreateValue(0d);
+        value.AnimateTo(10d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100), Easings.Linear));
+        harness.Tick(TimeSpan.Zero);
+        harness.Tick(TimeSpan.FromMilliseconds(80));
+
+        MotionHandle handle = value.AnimateTo(
+            20d,
+            MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(50), Easings.Linear),
+            new MotionStartOptions(RetargetMode.PreserveProgress));
+
+        Assert.True(handle.IsCompleted);
+        Assert.Equal(20d, value.Current);
+        Assert.False(value.IsAnimating);
+        Assert.False(harness.Graph.HasActiveMotion);
+    }
+
+    [Fact]
     public void LowerPriorityAnimationCannotReplaceActiveAnimation()
     {
         UIRootHarness harness = new();

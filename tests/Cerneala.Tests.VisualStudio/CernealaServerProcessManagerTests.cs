@@ -215,6 +215,100 @@ public sealed class CernealaServerProcessManagerTests : IDisposable
         Assert.Contains(log.Errors, message => message.Contains("did not exit", StringComparison.Ordinal));
     }
 
+    [Theory]
+    [InlineData("StopAsync")]
+    [InlineData("Dispose")]
+    [InlineData("VisualStudioShutdown")]
+    public async Task EveryDisableShutdownPathWaitsBeforeKillingAndLogsTheForcedTermination(string path)
+    {
+        TestLog log = new();
+        FakeProcess process = new() { RefuseGracefulExit = true };
+        CernealaServerProcessManager manager = new(
+            executablePath,
+            new FakeProcessFactory(process),
+            log);
+        await manager.StartAsync(CancellationToken.None);
+
+        switch (path)
+        {
+            case "StopAsync":
+                await manager.StopAsync(CernealaServerShutdownReason.ExtensionDisable, CancellationToken.None);
+                break;
+            case "Dispose":
+                manager.Dispose();
+                break;
+            default:
+                manager.Stop(CernealaServerShutdownReason.VisualStudioShutdown);
+                break;
+        }
+
+        manager.Dispose();
+        bool loggedDidNotExit = log.Errors.Any(message => message.Contains("did not exit", StringComparison.Ordinal));
+        Assert.True(
+            process.InputClosed && process.Killed && process.WaitRequestedBeforeKill && loggedDidNotExit,
+            $"{path}: InputClosed={process.InputClosed}, Killed={process.Killed}, " +
+            $"WaitRequestedBeforeKill={process.WaitRequestedBeforeKill}, LoggedDidNotExit={loggedDidNotExit}.");
+    }
+
+    [Fact]
+    public async Task DisposeOfAServerThatExitsOnInputCloseDoesNotKillIt()
+    {
+        TestLog log = new();
+        FakeProcess process = new();
+        CernealaServerProcessManager manager = new(
+            executablePath,
+            new FakeProcessFactory(process),
+            log);
+        await manager.StartAsync(CancellationToken.None);
+
+        manager.Dispose();
+
+        Assert.True(process.InputClosed && !process.Killed, $"InputClosed={process.InputClosed}, Killed={process.Killed}.");
+    }
+
+    [Fact]
+    public async Task ExtensionDisableWaitsTheShutdownTimeoutAndVisualStudioShutdownStaysInsideTheProcessExitBudget()
+    {
+        FakeProcess disabled = new() { RefuseGracefulExit = true };
+        FakeProcess shutDown = new() { RefuseGracefulExit = true };
+        CernealaServerProcessManager disabledManager = new(
+            executablePath,
+            new FakeProcessFactory(disabled),
+            new TestLog());
+        using CernealaServerProcessManager shutDownManager = new(
+            executablePath,
+            new FakeProcessFactory(shutDown),
+            new TestLog());
+        await disabledManager.StartAsync(CancellationToken.None);
+        await shutDownManager.StartAsync(CancellationToken.None);
+
+        disabledManager.Dispose();
+        shutDownManager.Stop(CernealaServerShutdownReason.VisualStudioShutdown);
+
+        Assert.Equal([CernealaServerProcessManager.ShutdownTimeout], disabled.RequestedWaits);
+        Assert.Equal([CernealaServerProcessManager.ProcessExitShutdownTimeout], shutDown.RequestedWaits);
+        Assert.True(CernealaServerProcessManager.ProcessExitShutdownTimeout < TimeSpan.FromSeconds(2));
+    }
+
+    [Fact]
+    public async Task ActivationCancellationStillAbortsWithoutWaiting()
+    {
+        TestLog log = new();
+        FakeProcess process = new() { RefuseGracefulExit = true };
+        using CernealaServerProcessManager manager = new(
+            executablePath,
+            new FakeProcessFactory(process),
+            log);
+        await manager.StartAsync(CancellationToken.None);
+
+        manager.StopImmediately(CernealaServerShutdownReason.ActivationCancelled);
+
+        Assert.True(process.InputClosed);
+        Assert.True(process.Killed);
+        Assert.Empty(process.RequestedWaits);
+        Assert.DoesNotContain(log.Errors, message => message.Contains("did not exit", StringComparison.Ordinal));
+    }
+
     [Fact]
     public void BundledPathIsVersionedUnderTheExtensionInstallRoot()
     {
@@ -311,6 +405,8 @@ public sealed class CernealaServerProcessManagerTests : IDisposable
 
         public bool WaitRequestedBeforeKill { get; private set; }
 
+        public List<TimeSpan> RequestedWaits { get; } = [];
+
         public int DisposeCount { get; private set; }
 
         public Task ExitCodeReadStarted => exitCodeReadStarted.Task;
@@ -337,6 +433,17 @@ public sealed class CernealaServerProcessManagerTests : IDisposable
             if (CoordinateExitCodeDisposeRace && HasExited)
             {
                 await exitCodeReadStarted.Task.WaitAsync(cancellationToken);
+            }
+
+            return HasExited;
+        }
+
+        public bool WaitForExit(TimeSpan timeout)
+        {
+            RequestedWaits.Add(timeout);
+            if (!Killed)
+            {
+                WaitRequestedBeforeKill = true;
             }
 
             return HasExited;

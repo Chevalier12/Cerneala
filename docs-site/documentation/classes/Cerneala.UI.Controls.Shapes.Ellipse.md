@@ -70,7 +70,7 @@ Measurement is inherited from `Shape`. With a custom `Geometry`, desired size is
 | Name | Type | Declared By | Description |
 | --- | --- | --- | --- |
 | `FillProperty` | `UiProperty<Brush?>` | `Shape` | Identifies the `Fill` UI property. Defaults to `null` and affects render. |
-| `StrokeProperty` | `UiProperty<Brush?>` | `Shape` | Identifies the `Stroke` UI property. Defaults to `null` and affects render. |
+| `StrokeProperty` | `UiProperty<Brush?>` | `Shape` | Identifies the `Stroke` UI property. Defaults to `null` and affects measure and render. |
 | `StrokeThicknessProperty` | `UiProperty<float>` | `Shape` | Identifies the `StrokeThickness` UI property. Defaults to `1`, affects measure and render, and accepts only finite non-negative values. |
 | `GeometryProperty` | `UiProperty<Geometry?>` | `Shape` | Identifies the `Geometry` UI property. Defaults to `null` and affects measure and render. |
 | `RenderTransformProperty` | `UiProperty<Transform>` | `Shape` | Compatibility alias for `UIElement.RenderTransformProperty`. |

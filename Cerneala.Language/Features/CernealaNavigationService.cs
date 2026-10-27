@@ -1,6 +1,7 @@
 using Cerneala.Language.Diagnostics;
 using Cerneala.Language.Semantics;
 using Cerneala.Language.Semantics.Symbols;
+using Cerneala.Language.Syntax;
 using Cerneala.Language.Text;
 using Microsoft.CodeAnalysis.CSharp;
 
@@ -102,6 +103,10 @@ internal sealed class CernealaNavigationService
                 if (includeDeclaration || !declaration)
                 {
                     AddDistinct(result, new CernealaLocation(candidateModel.Document.Path, span));
+                    if (TryGetClosingTagSpan(candidateModel, candidate, identity, span, out TextSpan closing))
+                    {
+                        AddDistinct(result, new CernealaLocation(candidateModel.Document.Path, closing));
+                    }
                 }
             }
         }
@@ -224,7 +229,7 @@ internal sealed class CernealaNavigationService
             cancellationToken.ThrowIfCancellationRequested();
             foreach (CernealaSemanticSymbol candidate in candidateModel.Symbols)
             {
-                if (!Matches(candidateModel, candidate, identity))
+                if (!Matches(candidateModel, candidate, identity) || IsAspectSite(candidateModel, candidate))
                 {
                     continue;
                 }
@@ -235,6 +240,10 @@ internal sealed class CernealaNavigationService
                 }
 
                 AddDistinct(edits, new CernealaTextEdit(candidateModel.Document.Path, span, newName));
+                if (TryGetClosingTagSpan(candidateModel, candidate, identity, span, out TextSpan closing))
+                {
+                    AddDistinct(edits, new CernealaTextEdit(candidateModel.Document.Path, closing, newName));
+                }
             }
         }
 
@@ -363,6 +372,16 @@ internal sealed class CernealaNavigationService
         return false;
     }
 
+    // An Aspect application site (the Aspect attribute, or an element that receives a default Aspect) and an
+    // Aspect body directive (@default, @template) navigate to the Aspect, so references keep them when their text
+    // maps, but they are not occurrences of its name: rename skips them even when their text happens to equal it.
+    // Only the Aspect symbol at its own definition is the declaration.
+    private static bool IsAspectSite(CernealaSemanticModel model, CernealaSemanticSymbol symbol) =>
+        symbol.Kind == CernealaSemanticSymbolKind.AspectApplication ||
+        symbol.Kind == CernealaSemanticSymbolKind.Aspect &&
+            TryGetLocalDefinition(model, symbol, out CernealaLocation? definition) &&
+            !SameLocation(definition!, new CernealaLocation(model.Document.Path, symbol.Span));
+
     private static bool IsLocalKind(CernealaSemanticSymbolKind kind) => kind is
         CernealaSemanticSymbolKind.Name or CernealaSemanticSymbolKind.TemplatePart or
         CernealaSemanticSymbolKind.Resource or CernealaSemanticSymbolKind.ResourceReference or
@@ -448,6 +467,31 @@ internal sealed class CernealaNavigationService
         }
 
         span = default;
+        return false;
+    }
+
+    // The semantic model maps a type or member named by an element to the opening tag's name only. The closing tag
+    // </t:Card> or </t:Card.Title> names the same symbol, so it is the same occurrence for references and rename.
+    private static bool TryGetClosingTagSpan(
+        CernealaSemanticModel model,
+        CernealaSemanticSymbol symbol,
+        SymbolIdentity identity,
+        TextSpan span,
+        out TextSpan closing)
+    {
+        if (identity.Kind is IdentityKind.Type or IdentityKind.Member)
+        {
+            ElementSyntax? element = model.Document.Syntax.DescendantElements().FirstOrDefault(candidate =>
+                candidate.NameToken.Span.Equals(symbol.Span));
+            if (element is not null && !element.IsSelfClosing && !element.CloseNameToken.IsMissing &&
+                string.Equals(element.CloseNameToken.Text, element.NameToken.Text, StringComparison.Ordinal))
+            {
+                closing = new TextSpan(element.CloseNameToken.Span.Start + span.Start - symbol.Span.Start, span.Length);
+                return true;
+            }
+        }
+
+        closing = default;
         return false;
     }
 
