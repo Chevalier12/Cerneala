@@ -21,7 +21,7 @@ Restrict a transition to declarations driven by state conditions:
 ```csharp
 AspectMotion motion = new(
     Control.BackgroundProperty,
-    "motion.fast",
+    ThemeMotionTokens.FastOut,
     AspectMotionSource.State);
 ```
 
@@ -30,9 +30,11 @@ Enable the same transition for variant and data-driven declarations:
 ```csharp
 AspectMotion motion = new(
     UIElement.OpacityProperty,
-    "motion.normal",
+    ThemeMotionTokens.Standard,
     AspectMotionSource.Variant | AspectMotionSource.Data);
 ```
+
+`ThemeMotionTokens` is in `Cerneala.UI.Motion.States`. `AspectMotion.TokenName` names a theme motion token; with `DefaultTheme.Create()`, `FastOut` is a 120 ms tween and `Standard` a 180 ms tween.
 
 ## Remarks
 

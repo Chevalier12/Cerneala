@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
@@ -340,6 +341,89 @@ public sealed class AspectEngineTests
         Assert.Equal(explicitTarget, binding.Value.Target);
     }
 
+    [Theory]
+    [InlineData(ThemeMotionTokens.FastOut)]
+    [InlineData(ThemeMotionTokens.Standard)]
+    public void StateMotionWithADefaultThemeTokenAnimates(string tokenName)
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(motionClock: clock);
+        Button button = new();
+        root.VisualChildren.Add(button);
+        ThemeProvider themeProvider = new(DefaultTheme.Create());
+        AspectEngine engine = new();
+        AspectCatalog catalog = HoverMotionCatalog(tokenName);
+
+        engine.Apply(button, catalog, new AspectEnvironment("test"), themeProvider);
+        button.IsPointerOver = true;
+        engine.Apply(button, catalog, new AspectEnvironment("test"), themeProvider);
+
+        TickHalfway(root, clock);
+        AssertIntermediateBackground(button, Color.White, Color.Black);
+    }
+
+    [Theory]
+    [InlineData("motion.fast", true)]
+    [InlineData("aspect.hover", false)]
+    public void StateMotionWithATokenTheThemeCannotResolveAppliesTheValueWithoutTransition(string tokenName, bool defaultTheme)
+    {
+        // "motion.fast" is the name of the aspect token DefaultAspectTokens.Motion.Fast, not a theme motion token.
+        // new Theme("test") has no MotionTokens registry at all.
+        UIRoot root = new(motionClock: new ManualMotionClock());
+        Button button = new();
+        root.VisualChildren.Add(button);
+        ThemeProvider themeProvider = new(defaultTheme ? DefaultTheme.Create() : new Theme("test"));
+        AspectEngine engine = new();
+        AspectCatalog catalog = HoverMotionCatalog(tokenName);
+        engine.Apply(button, catalog, new AspectEnvironment("test"), themeProvider);
+
+        button.IsPointerOver = true;
+        Exception? enter = Record.Exception(() => engine.Apply(button, catalog, new AspectEnvironment("test"), themeProvider));
+        Assert.True(enter is null, $"enter {tokenName}: {enter?.GetType().Name}: {enter?.Message}");
+        Assert.Equal(new Cerneala.UI.Media.SolidColorBrush(Color.Black), button.Background);
+        Assert.Equal(UiPropertyValueSource.AspectBase, button.GetValueSource(Control.BackgroundProperty));
+
+        button.IsPointerOver = false;
+        Exception? exit = Record.Exception(() => engine.Apply(button, catalog, new AspectEnvironment("test"), themeProvider));
+        Assert.True(exit is null, $"exit {tokenName}: {exit?.GetType().Name}: {exit?.Message}");
+        Assert.Equal(new Cerneala.UI.Media.SolidColorBrush(Color.White), button.Background);
+
+        button.IsPointerOver = true;
+        engine.Apply(button, catalog, new AspectEnvironment("test"), themeProvider);
+        Exception? clear = Record.Exception(() => engine.Clear(button));
+        Assert.True(clear is null, $"clear {tokenName}: {clear?.GetType().Name}: {clear?.Message}");
+        Assert.Equal(UiPropertyValueSource.Default, button.GetValueSource(Control.BackgroundProperty));
+        Assert.Equal(0, root.Motion.Properties.BindingCount);
+    }
+
+    [Fact]
+    public void CanonicalDocumentationAspectMotionExamplesUseDefaultThemeMotionTokens()
+    {
+        // Issue #979: the token names of the AspectMotion examples must resolve with the default theme.
+        MotionTokens defaultTokens = ThemeMotionTokens.CreateDefault();
+        string classes = Path.Combine(FindRepositoryRoot(), "docs-site", "documentation", "classes");
+        List<string> unresolved = [];
+        foreach (string page in Directory.EnumerateFiles(classes, "*.md"))
+        {
+            foreach (Match codeBlock in Regex.Matches(File.ReadAllText(page), "```csharp(.*?)```", RegexOptions.Singleline))
+            {
+                foreach (Match example in Regex.Matches(
+                    codeBlock.Groups[1].Value,
+                    @"(?:new AspectMotion|AspectMotion \w+ = new)\(\s*[^,()]+,\s*""([^""]*)""",
+                    RegexOptions.Singleline))
+                {
+                    string tokenName = example.Groups[1].Value;
+                    if (!defaultTokens.TryGet(tokenName, out _))
+                    {
+                        unresolved.Add($"{Path.GetFileName(page)}: \"{tokenName}\"");
+                    }
+                }
+            }
+        }
+
+        Assert.True(unresolved.Count == 0, string.Join(Environment.NewLine, unresolved));
+    }
+
     [Fact]
     public void EngineClassifiesBaseStateVariantAndDataMotionSources()
     {
@@ -388,6 +472,22 @@ public sealed class AspectEngineTests
         Assert.Equal(AspectMotionSource.Data, dataAspect.Values[Control.BackgroundProperty].MotionSource);
     }
 
+    private static string FindRepositoryRoot()
+    {
+        DirectoryInfo? directory = new(AppContext.BaseDirectory);
+        while (directory is not null)
+        {
+            if (File.Exists(Path.Combine(directory.FullName, "Cerneala.slnx")))
+            {
+                return directory.FullName;
+            }
+
+            directory = directory.Parent;
+        }
+
+        throw new DirectoryNotFoundException("Could not find repository root.");
+    }
+
     private static AspectCatalog EmptyCatalog()
     {
         return new AspectRegistry().BuildCatalog();
@@ -417,6 +517,18 @@ public sealed class AspectEngineTests
             Control.BackgroundProperty,
             AspectValue<Cerneala.UI.Media.Brush?>.Literal(new Cerneala.UI.Media.SolidColorBrush(color)),
             motion);
+    }
+
+    private static AspectCatalog HoverMotionCatalog(string tokenName)
+    {
+        return CatalogWith(
+            Rule("base", Declaration(Color.White)),
+            new AspectRuleSet(
+                "hover",
+                AspectLayer.Runtime,
+                new AspectTarget(typeof(Button), conditions: [AspectCondition.State(AspectState.Hover)]),
+                [Declaration(Color.Black, new AspectMotion(Control.BackgroundProperty, tokenName, AspectMotionSource.State))],
+                1));
     }
 
     private static ThemeProvider MotionTheme(string tokenName)
