@@ -25,6 +25,8 @@ DrawRect? worldBounds = analysis.Entries[commandIndex].Bounds;
 
 `MatchingCommandIndex` links a push to its pop and a pop to its push, or is `-1` for ordinary drawing commands. Scope command bounds cover the drawing performed inside that scope.
 
+`Bounds` is `null` (unknown) when the conservative bounds do not fit in a `DrawRect`, for example a `FillRectangle(new DrawRect(0, 0, 5000, 5000), ...)` under `PushTransform(Matrix3x2.CreateScale(1e6f))`, or a `DrawRectangle` with a pen 1,000,000,000 pixels thick. A scope's push and pop entries have `null` bounds when any drawing inside the scope has unknown bounds, or when the union of its drawing does not fit in a `DrawRect`, such as two fills at x = -1.9e9 and x = 1.9e9 in one `PushOpacity` scope. Such a scope stays unknown even when drawing with known bounds follows. Analysis does not throw for these commands.
+
 ## Constructors
 
 | Name | Description |

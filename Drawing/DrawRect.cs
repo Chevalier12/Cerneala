@@ -17,6 +17,18 @@ public readonly record struct DrawRect
         Height = height;
     }
 
+    // The rectangle the constructor creates, or null where the constructor
+    // throws because a value is outside the supported range.
+    internal static DrawRect? TryCreate(float x, float y, float width, float height) =>
+        DrawArgument.IsValidPixelCoordinate(x) &&
+        DrawArgument.IsValidPixelCoordinate(y) &&
+        DrawArgument.IsNonNegativeValidPixelSize(width) &&
+        DrawArgument.IsNonNegativeValidPixelSize(height) &&
+        DrawArgument.IsValidPixelCoordinate(x + width) &&
+        DrawArgument.IsValidPixelCoordinate(y + height)
+            ? new DrawRect(x, y, width, height)
+            : null;
+
     public float X { get; }
 
     public float Y { get; }
