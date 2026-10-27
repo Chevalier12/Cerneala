@@ -228,18 +228,18 @@ Cerneala:
 
 **Gate etapa 6**
 - [x] Testele noi și vechi sunt GREEN. Diff-ul skill-ului Claude și al copiei Codex are aceleași reguli. Aplicația de probă a dat `Build succeeded.` și exit 0.
-- [ ] Schimbarea de skill e pe `origin/master` (commit cu mesaj structurat, push fără force) înainte de deploy-ul watcher-ului: fereastra pornește din `origin/master`.
+- [x] Schimbarea de skill e pe `origin/master` (commit cu mesaj structurat, push fără force) înainte de deploy-ul watcher-ului: fereastra pornește din `origin/master`. (`e6c27a3c`, push `63bb7f0f..e6c27a3c`.)
 
 ### Etapa 7 - Deploy și prima rulare (runda 8)
 
-- [ ] Fără nicio fereastră de lucru deschisă (`pwsh` cu `# cerneala-watchers kind=`), oprește watcher-ul, fă build `-c Release` și `-c Debug`, apoi pornește-l cu **`--dry-run`**.
-- [ ] Arată utilizatorului lista de grupuri din log (componentă, părți, originale) și cere un „da” înainte de rularea reală. Asta e o scriere publică: ~160 de issue-uri închise.
-- [ ] După „da”: repornește fără `--dry-run`, apasă „Pornește” pe Issues. Verifică pe GitHub, pentru o componentă (de exemplu `ComboBox`), că:
+- [x] Fără nicio fereastră de lucru deschisă (`pwsh` cu `# cerneala-watchers kind=`), oprește watcher-ul, fă build `-c Release` și `-c Debug`, apoi pornește-l cu **`--dry-run`**.
+- [x] Arată utilizatorului lista de grupuri din log (componentă, părți, originale) și cere un „da” înainte de rularea reală. Asta e o scriere publică: ~160 de issue-uri închise.
+- [x] După „da”: repornește fără `--dry-run`, apasă „Pornește” pe Issues. Verifică pe GitHub, pentru o componentă (de exemplu `ComboBox`), că:
   - issue-ul de grup are marcajul și toate secțiunile;
   - fiecare original are comentariul și starea `CLOSED` cu motivul duplicate (`gh issue view <n> --json state,stateReason`).
 
 **Gate etapa 7**
-- [ ] `cycle.json` are `Consolidated: true`, iar `Issues` conține issue-urile de grup și issue-urile singure.
+- [x] `cycle.json` are `Consolidated: true`, iar `Issues` conține issue-urile de grup și issue-urile singure.
 - [ ] Prima fereastră pentru un issue de grup a pornit cu `cerneala-fix-bug-group <U> --umbrella`.
 
 ## 9. Ordinea recomandată
@@ -272,4 +272,6 @@ Etapele 1–5 nu scriu nimic pe GitHub. Etapa 7 e singura care o face, și doar 
 - Etapa 5: RED = exact cele 6 teste noi `IssueWatcherTests` (`Failed: 6, Passed: 43`); GREEN = `Passed!  - Failed: 0, Passed: 49, Total: 49` (`IssueWatcherTests` + `WatcherCycleTests`). Abatere de la plan: `Umbrella` are și `Commented` (cu `WatcherCycle.MarkOriginalCommented` și testul `A_commented_original_is_saved_so_a_retry_does_not_comment_again`), pentru că fără el o închidere eșuată după un comentariu reușit ar fi postat comentariul de două ori la reluare. Limitare: lista de issue-uri a verificării e citită înainte de grupare, deci fereastra unui issue de grup nou pornește abia la verificarea următoare (issue-urile singure pornesc imediat).
 - Etapa 6: RED = `An_umbrella_issue_gets_a_fix_window_that_runs_the_group_skill_in_umbrella_mode` cu „Sub-string not found: Invoke the cerneala-fix-bug-group skill”; GREEN = `Passed!  - Failed: 0, Passed: 172, Total: 172` (filtrele `IssueWatcherTests|WorkWindowCommandLineTests|WatcherCycleTests|IssueConsolidationTests|GhCliGitHubTests|PullRequestGroupsTests|PullRequestWatcherTests|FixSlotsTests`). `Prompts.IssueFix` și `Prompts.UmbrellaFix` folosesc acum un singur `FixRequest` privat; textul prompt-ului pentru issue-uri obișnuite a rămas același. Skill-ul Claude și copia Codex diferă tot prin aceleași 17 rânduri ca înainte (`git diff --no-index --stat`), deci adăugările sunt identice. Aplicația de probă: `Build succeeded.` (128 s, la rece) și `check exit: 0: OK: bugs #90011, #90012, #90013 do not reproduce so far.`
 - Greșeală de proces: `FixSlots.cs` a fost editat fără backup înainte. Backup-ul a fost refăcut după aceea, scoțând exact metoda nouă `ListIssueBranchesAsync` (152 de rânduri, cât avea originalul).
+- Etapa 7: `--dry-run` scrie log-ul doar în fereastra aplicației (`MainViewModel.cs:32`), nu în `watchers.log`; lista a fost citită dintr-o captură făcută cu `--screenshot` (API-ul aplicației) și, completă, cu un `dotnet-csi` care apelează `IssueConsolidation.Build` din DLL-ul construit, pe datele live (doar citire). Prima listă avea `Collision: 1 grouped bugs (2/2)` și `Markup: 1 grouped bugs (3/3)`: regula nouă „niciun issue de grup cu un singur bug” (testul `Build_never_makes_an_umbrella_of_one_bug_and_leaves_the_seventh_issue_alone`, RED cu „The collection contained 2 items”, apoi `Passed: 173, Total: 173`). Lista finală: 203 deschise, 188 candidați, 34 de issue-uri de grup, 142 de bug-uri grupate, 46 singure; #867–#880 și #977 rămân negrupate (branch local). După „da”-ul utilizatorului: 34 create (#1221–#1254), 142 închise, `cycle.json` cu `Consolidated: true`, 95 de issue-uri în rundă. Exemplu verificat: #1223 `ComboBox: 4 grouped bugs (1/1)`, label `bug`, marcaj, 4 secțiuni; #776, #840, #841, #1131 `CLOSED DUPLICATE` cu comentariul „Moved to #1223 ...”.
+- Gate deschis: ferestrele pornesc în ordinea numărului, iar issue-urile de grup au numere noi (#1221–#1254), deci prima fereastră pentru un issue de grup pornește după issue-urile singure ale rundei (prima fereastră a fost #768, la 01:57:43). Prompt-ul `--umbrella` e acoperit de testul `An_umbrella_issue_gets_a_fix_window_that_runs_the_group_skill_in_umbrella_mode`; rularea reală e încă de observat.
 - Watcher-ul nu e repository git: munca din etapele 1–5 și din etapa 6 (partea de watcher) nu intră în commit-ul Cerneala; în commit intră doar planul și skill-ul.
