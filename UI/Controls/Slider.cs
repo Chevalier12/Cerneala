@@ -540,7 +540,7 @@ public class Slider : RangeBase
     {
         Thumb thumb = track!.Thumb;
         return thumb.IsDragging
-            ? CoerceToRange(dragStartValue + track.ValueFromDistance(thumb.TotalHorizontalChange, thumb.TotalVerticalChange))
+            ? Clamp(dragStartValue + track.ValueFromDistance(thumb.TotalHorizontalChange, thumb.TotalVerticalChange), Minimum, Maximum)
             : trackValue;
     }
 

@@ -73,6 +73,32 @@ public sealed class SliderTests
         Assert.Equal(50, slider.Value);
     }
 
+    // #986: the drag change of a Slider whose Maximum - Minimum overflows float must still be finite and proportional.
+    [Theory]
+    [InlineData(1f)]
+    [InlineData(3e38f)]
+    public void SliderThumbDragReachesMiddleForLargeFiniteEndpoints(float bound)
+    {
+        UIRoot root = new(200, 100);
+        Slider slider = new()
+        {
+            Minimum = -bound,
+            Maximum = bound,
+            Value = -bound
+        };
+        slider.Measure(new MeasureContext(new LayoutSize(110, 20)));
+        slider.Arrange(new ArrangeContext(new LayoutRect(0, 0, 110, 20)));
+        root.VisualChildren.Add(slider);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(5, 5, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(5, 5, 55, 5, previousDown: true, currentDown: true));
+
+        Assert.True(
+            MathF.Abs(slider.Value) <= bound / 100,
+            $"bound={bound}: Slider.Value after dragging the thumb across half the travel = {slider.Value} (expected about 0).");
+    }
+
     // As WPF's Slider with IsMoveToPointEnabled true: a press on the track moves the value to the pressed point.
     [Fact]
     public void ClickingSliderTrackMovesValueToPointer()
