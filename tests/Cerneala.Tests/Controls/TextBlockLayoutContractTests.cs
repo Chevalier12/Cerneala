@@ -178,5 +178,69 @@ public sealed class TextBlockLayoutContractTests
         Assert.True(textBlock.DirtyState.Has(InvalidationFlags.Render));
     }
 
+    [Theory]
+    [InlineData("Button")]
+    [InlineData("TextBlock")]
+    public void PaddingAddsItsSidesToTheMeasuredSize(string kind)
+    {
+        static Control Create(string kind, Thickness padding) => kind == "Button"
+            ? new Button { Content = "Hi", Padding = padding }
+            : new TextBlock { Text = "Hi", Padding = padding };
+
+        Control plain = Create(kind, Thickness.Zero);
+        Control padded = Create(kind, new Thickness(10, 4, 6, 2));
+
+        LayoutSize plainSize = plain.Measure(new MeasureContext(new LayoutSize(500, 100)));
+        LayoutSize paddedSize = padded.Measure(new MeasureContext(new LayoutSize(500, 100)));
+
+        Assert.True(
+            Math.Abs(paddedSize.Width - (plainSize.Width + 16)) < 0.01f && Math.Abs(paddedSize.Height - (plainSize.Height + 6)) < 0.01f,
+            $"{kind}: plain {plainSize.Width}x{plainSize.Height}, padded {paddedSize.Width}x{paddedSize.Height}, expected {plainSize.Width + 16}x{plainSize.Height + 6}.");
+    }
+
+    [Fact]
+    public void PaddingMovesTheDrawnTextOrigin()
+    {
+        static DrawCommand FirstTextCommand(Thickness padding)
+        {
+            UIRoot root = new(300, 100);
+            TextBlock textBlock = new() { Text = "Hi", Padding = padding };
+            root.VisualChildren.Add(textBlock);
+            root.ProcessFrame();
+            return root.RetainedRenderer.Commit(root).First(command => command.Kind == DrawCommandKind.DrawText);
+        }
+
+        DrawCommand plain = FirstTextCommand(Thickness.Zero);
+        DrawCommand padded = FirstTextCommand(new Thickness(10, 4, 6, 2));
+
+        Assert.True(
+            Math.Abs((padded.Position.X - plain.Position.X) - 10) < 0.01f && Math.Abs((padded.Position.Y - plain.Position.Y) - 4) < 0.01f,
+            $"plain origin {plain.Position}, padded origin {padded.Position}; expected an offset of (10, 4).");
+    }
+
+    // WPF's TextBlock wraps and trims inside the width that Padding leaves: a padded TextBlock arranged at the same
+    // width as an unpadded one has less room for its text.
+    [Fact]
+    public void PaddingNarrowsTheWidthUsedForWrapping()
+    {
+        static LayoutSize MeasureWrapped(Thickness padding)
+        {
+            TextBlock textBlock = new()
+            {
+                Text = "abcdefghijklmnopqrst",
+                FontSize = 10,
+                TextWrapping = TextWrapping.Wrap,
+                Padding = padding
+            };
+            return textBlock.Measure(new MeasureContext(new LayoutSize(60, 200)));
+        }
+
+        LayoutSize plain = MeasureWrapped(Thickness.Zero);
+        LayoutSize padded = MeasureWrapped(new Thickness(20, 0, 20, 0));
+
+        Assert.True(padded.Width <= 60.01f, $"padded width {padded.Width} exceeds the available 60.");
+        Assert.True(padded.Height > plain.Height, $"plain {plain.Height}, padded {padded.Height}: padding did not narrow the wrap width.");
+    }
+
     private sealed record TestFont(string FamilyName, float Size) : IDrawFont;
 }

@@ -533,8 +533,16 @@ $crnTemplate = @'
 '@
 
 $scenarioTemplate = @'
+// Color is in Cerneala.Drawing, SolidColorBrush in Cerneala.UI.Media, InvalidationFlags in Cerneala.UI.Invalidation,
+// UIElement in Cerneala.UI.Elements, RoutedEventArgs in Cerneala.UI.Input. Without these usings, 9 of 128 watcher
+// sessions on 2026-10-26 lost a repro build to CS0103/CS0246 on one of these names.
+using Cerneala.Drawing;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Elements;
+using Cerneala.UI.Input;
+using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
 using Cerneala.UI.Servo;
 using Cerneala.UI.Text;
 using ServoApi = Cerneala.UI.Servo.Servo;
