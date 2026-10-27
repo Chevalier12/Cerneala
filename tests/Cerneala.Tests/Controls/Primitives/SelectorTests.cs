@@ -547,6 +547,50 @@ public sealed class SelectorTests
         Assert.Equal(0, raised);
     }
 
+    // A markup binding or a markup condition writes its value again at its own source, for example MarkupBase, each
+    // time it refreshes. Such a write keeps SelectedIndex and is not a selection, so a multi-selection stays.
+    [Fact]
+    public void RewritingTheCurrentSelectedIndexAtAnEffectiveNonLocalSourceKeepsAMultiSelection()
+    {
+        ListBox listBox = new() { SelectionMode = SelectionMode.Multiple };
+        listBox.SetItems(new[] { "a", "b", "c" });
+        listBox.SelectionModel.Select(2);
+        listBox.SelectionModel.Add(0);
+        listBox.SetValue(Selector.SelectedIndexProperty, 2, UiPropertyValueSource.MarkupBase);
+        listBox.ClearValue(Selector.SelectedIndexProperty);
+        Assert.Equal(UiPropertyValueSource.MarkupBase, listBox.GetValueSource(Selector.SelectedIndexProperty));
+        Assert.Equal([2, 0], listBox.SelectionModel.SelectedIndices);
+        int raised = 0;
+        listBox.SelectionChanged += (_, _) => raised++;
+
+        listBox.SetValue(Selector.SelectedIndexProperty, 2, UiPropertyValueSource.MarkupBase);
+
+        Assert.Equal([2, 0], listBox.SelectionModel.SelectedIndices);
+        Assert.Equal(0, raised);
+    }
+
+    [Fact]
+    public void TwoWayBoundSelectedIndexKeepsAMultiSelectionWhenTheListBoxIsAttachedAgain()
+    {
+        UIRoot root = new(100, 100);
+        ListBox listBox = new() { SelectionMode = SelectionMode.Multiple };
+        listBox.SetItems(new[] { "a", "b", "c" });
+        root.VisualChildren.Add(listBox);
+        ObservableValue<int> index = new(-1);
+        using UiPropertyBinding<int> binding = BindingOperations.BindTwoWay(listBox, Selector.SelectedIndexProperty, index);
+        listBox.SelectionModel.Select(2);
+        listBox.SelectionModel.Add(0);
+        Assert.Equal(2, index.Value);
+        int raised = 0;
+        listBox.SelectionChanged += (_, _) => raised++;
+
+        root.VisualChildren.Remove(listBox);
+        root.VisualChildren.Add(listBox);
+
+        Assert.Equal([2, 0], listBox.SelectionModel.SelectedIndices);
+        Assert.Equal(0, raised);
+    }
+
     [Fact]
     public void RealizedContainerOfSelectedItemStaysSelectedAfterInsertBeforeIt()
     {

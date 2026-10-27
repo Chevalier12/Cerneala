@@ -150,8 +150,10 @@ public class Selector : ItemsControl
         selectionModel.Select(SelectedIndex);
     }
 
-    // SetValue, a binding, or an aspect wrote the current SelectedIndex. As the SelectedIndex setter does, that index
-    // becomes the only selected index, so a multi-selection collapses to it and raises SelectionChanged.
+    // SetValue or a UiPropertyBinding wrote the current SelectedIndex as the local value. As the SelectedIndex setter
+    // does, that index becomes the only selected index, so a multi-selection collapses to it and raises
+    // SelectionChanged. A rewrite at another source, for example a markup binding or a markup condition refreshing its
+    // MarkupBase or MarkupConditional value, or an animation sample, keeps SelectedIndex and selects nothing.
     internal override void NotifyEffectiveValueRewritten(UiProperty property)
     {
         if (!ReferenceEquals(property, SelectedIndexProperty))
@@ -162,6 +164,11 @@ public class Selector : ItemsControl
         if (isWritingSelectedIndexForSelection)
         {
             isWritingSelectedIndexForSelection = false;
+            return;
+        }
+
+        if (GetValueSource(SelectedIndexProperty) != UiPropertyValueSource.Local)
+        {
             return;
         }
 
