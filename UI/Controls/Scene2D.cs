@@ -43,6 +43,8 @@ public class Scene2D : SceneNode2D
             new UiPropertyMetadata<bool>(false));
 
     private readonly List<SceneOrderEntry> effectiveOrder = [];
+    // The frame effectiveOrder was filled for; a culled or fast-path group keeps an older one.
+    private long effectiveOrderPass;
     private readonly CollisionWorld2D ownedCollisionWorld;
     private readonly ColliderSlot2D visionSlot;
     private long collisionMutationVersion;
@@ -210,13 +212,20 @@ public class Scene2D : SceneNode2D
             Span<SceneChildBoundsIndex2D.Entry> indexed = HasPrismInScope(childContext)
                 ? default
                 : childBounds.Refresh(this);
+            // Only a refreshed index knows its overlays; inside a Prism every
+            // descendant skips the index and records through the ordered path.
+            if (indexed.Length > 0 && childBounds.HasOverlay && !childContext.IsOrderObserved)
+            {
+                childContext = childContext with { IsOrderObserved = true };
+            }
             SceneBounds2D visible = childContext.GetConservativeVisibleLocalBounds();
             if (OrderMode == SceneOrderMode.Source && indexed.Length > 0 && indexed.Length == Children.Count &&
-                !childBounds.HasOverlay)
+                !childContext.IsOrderObserved)
             {
                 // Source order is slot order; the query skips only entries
-                // that are prunable and clearly outside. A debug overlay
-                // observes the full recorded order, so it keeps that path.
+                // that are prunable and clearly outside. A debug overlay here
+                // or in an enclosing scene observes the full recorded order,
+                // so it keeps that path.
                 foreach (int slot in childBounds.Query(visible))
                 {
                     ref SceneChildBoundsIndex2D.Entry entry = ref indexed[slot];
@@ -234,12 +243,13 @@ public class Scene2D : SceneNode2D
             }
 
             if (OrderMode != SceneOrderMode.Source && indexed.Length > 0 && indexed.Length == Children.Count &&
-                !childBounds.HasOverlay)
+                !childContext.IsOrderObserved)
             {
                 // Only the children the cull keeps are ordered and recorded; the
                 // total-order comparer gives them the order they would have in
                 // the full sort. The refreshed index holds no overlay.
                 effectiveOrder.Clear();
+                effectiveOrderPass = childContext.Frame.RecordPass;
                 bool byY = OrderMode == SceneOrderMode.LayerThenY;
                 foreach (int slot in childBounds.Query(visible))
                 {
@@ -378,6 +388,7 @@ public class Scene2D : SceneNode2D
         Scene2DRecordContext context)
     {
         effectiveOrder.Clear();
+        effectiveOrderPass = context.Frame.RecordPass;
         SceneOrderMode orderMode = OrderMode;
         Span<SceneChildBoundsIndex2D.Entry> indexed = orderMode == SceneOrderMode.Source
             ? childBounds.Refresh(this)
@@ -426,6 +437,10 @@ public class Scene2D : SceneNode2D
     }
 
     internal IReadOnlyList<SceneOrderEntry> RecordedOrder => effectiveOrder;
+
+    // The order recorded in this frame; empty when the group recorded no ordered children in it.
+    internal IReadOnlyList<SceneOrderEntry> GetRecordedOrder(RenderSurface2DFrame frame) =>
+        effectiveOrderPass == frame.RecordPass ? effectiveOrder : [];
 
     internal override SceneBounds2D GetVisibleLocalBounds()
     {
