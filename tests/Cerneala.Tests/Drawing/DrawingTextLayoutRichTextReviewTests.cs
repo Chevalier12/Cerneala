@@ -239,6 +239,23 @@ public sealed class DrawingTextLayoutRichTextReviewTests
             "runs from left to right: " + string.Join("|", runs.Select(static run => $"{run.Text}:{run.Direction}")));
     }
 
+    // Issue #963: "ef gh" ends neither the text nor a hard break, so it is justified also when the height limit hides "ij".
+    [Fact]
+    public void JustifyStretchesTheLastVisibleLineWhenTheHeightLimitHidesLaterSoftWrappedLines()
+    {
+        DrawTextLayout layout = new DrawTextLayoutBuilder()
+            .AddSpan(new DrawTextSpan("ab cd ef gh ij", testFont, 10, black))
+            .Build(new DrawTextLayoutOptions(
+                maxWidth: 30,
+                maxHeight: 24,
+                wrapping: DrawTextWrapping.Word,
+                alignment: DrawTextAlignment.Justify));
+
+        Assert.Equal(["ab cd", "ef gh"], layout.Lines.Select(static line => line.Text));
+        Assert.Equal(30, layout.Lines[0].Bounds.Width, Tolerance);
+        Assert.Equal(30, layout.Lines[1].Bounds.Width, Tolerance);
+    }
+
     // 9. A family name that the system does not know still gets the weight and the style.
 
     [Fact]

@@ -470,11 +470,13 @@ internal static class DrawTextLayoutEngine
             measuredHeight += lineHeight;
         }
 
-        bool omitted = accepted.Count < candidates.Count;
         if (accepted.Count == 0 && candidates.Count > 0 && options.MaxLines != 0 && options.MaxHeight > 0)
         {
             accepted.Add(candidates[0]);
         }
+
+        // After the first-line fallback: a first line that is the whole text hides nothing.
+        bool omitted = accepted.Count < candidates.Count;
 
         if (accepted.Count > 0 && options.Trimming != DrawTextTrimming.None)
         {
@@ -513,8 +515,9 @@ internal static class DrawTextLayoutEngine
                 ? contentBaseline
                 : contentBaseline * lineHeight / contentHeight;
             // As in WPF, the line that ends a paragraph (before a hard line break or at the end of the text) is not justified.
+            // The candidates decide it, so a line after which MaxLines or MaxHeight hides more of the paragraph is justified.
             bool justify = options.Alignment == DrawTextAlignment.Justify &&
-                !segment.IsTrimmed && !EndsParagraph(text, accepted, index);
+                !segment.IsTrimmed && !EndsParagraph(text, candidates, index);
             Fragment[] fragments = CreateFragments(text, ranges, segment, options.Scale, baseDirection, justify);
             float contentWidth = fragments.Sum(static fragment => fragment.Width);
             float layoutWidth = float.IsFinite(options.MaxWidth)
@@ -572,7 +575,7 @@ internal static class DrawTextLayoutEngine
         return new DrawTextLayout(lines.ToArray(), new DrawRect(0, 0, width, height), options);
     }
 
-    private static bool EndsParagraph(string text, List<UnicodeLineSegment> lines, int index)
+    private static bool EndsParagraph(string text, IReadOnlyList<UnicodeLineSegment> lines, int index)
     {
         if (index == lines.Count - 1)
         {
@@ -620,20 +623,47 @@ internal static class DrawTextLayoutEngine
             {
                 continue;
             }
-            width += MeasureLiteral(
-                text[overlapStart..overlapEnd],
-                range.Span,
-                scale);
+            width += MeasureSpanText(text, overlapStart, overlapEnd, range.Span, scale);
         }
         return width;
     }
 
-    private static float MeasureLiteral(string value, DrawTextSpan span, float scale)
+    // The width of text[start..end] from one span, measured with the fonts it is drawn with: each grapheme cluster with
+    // the font that ResolveFont selects for it, and consecutive clusters with the same font together.
+    private static float MeasureSpanText(string text, int start, int end, DrawTextSpan span, float scale)
     {
-        DrawTextRun run = new(span.Font, value, span.Size * scale);
+        if (span.FallbackFonts.Count == 0)
+        {
+            return MeasureLiteral(text[start..end], span, scale);
+        }
+
+        float size = span.Size * scale;
+        float width = 0;
+        int sameFontStart = start;
+        IDrawFont? sameFont = null;
+        foreach (UnicodeTextElement element in UnicodeLineBreakEngine.CreateTextElements(text, start, end - start))
+        {
+            IDrawFont font = ResolveFont(span, element.Text, scale);
+            if (sameFont is not null && !ReferenceEquals(font, sameFont))
+            {
+                width += MeasureLiteral(text[sameFontStart..element.Start], sameFont, size);
+                sameFontStart = element.Start;
+            }
+            sameFont = font;
+        }
+
+        return sameFont is null ? width : width + MeasureLiteral(text[sameFontStart..end], sameFont, size);
+    }
+
+    private static float MeasureLiteral(string value, DrawTextSpan span, float scale) =>
+        MeasureLiteral(value, span.Font, span.Size * scale);
+
+    private static float MeasureLiteral(string value, IDrawFont font, float size)
+    {
+        DrawTextRun run = new(font, value, size);
         return TextShaper.Default.TryShape(run, out TextShapeResult result)
             ? MathF.Abs(result.AdvanceWidth)
-            : StringInfo.ParseCombiningCharacters(value).Length * span.Size * scale * 0.5f;
+            : StringInfo.ParseCombiningCharacters(value).Length * size * 0.5f;
     }
 
     // The content height of a line and the distance from its top to the shared baseline. Every span on the line
@@ -750,7 +780,7 @@ internal static class DrawTextLayoutEngine
                     span.Brush,
                     span.Opacity,
                     direction,
-                    MeasureLiteral(element.Text, span, scale),
+                    MeasureLiteral(element.Text, font, span.Size * scale),
                     UnicodeLineBreakEngine.IsBreakWhitespace(element.Text),
                     spanIndex),
                 preserveClusters);
