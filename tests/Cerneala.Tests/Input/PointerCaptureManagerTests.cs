@@ -81,6 +81,35 @@ public sealed class PointerCaptureManagerTests
         Assert.Equal(1, lostCount);
     }
 
+    // A LostMouseCapture handler of the released element can capture another element; that element then takes the
+    // pointer input, as a captured element overrides the hit target.
+    [Fact]
+    public void OverrideTargetReturnsTheElementThatALostCaptureHandlerCaptured()
+    {
+        UIRoot root = new();
+        UIElement released = new();
+        UIElement next = new();
+        UIElement hit = new();
+        root.VisualChildren.Add(released);
+        root.VisualChildren.Add(next);
+        root.VisualChildren.Add(hit);
+        PointerCaptureManager manager = new();
+        manager.Capture(released, root.InputCache.EnsureCurrent(root));
+        released.Handlers.AddHandler(
+            InputEvents.LostMouseCaptureEvent,
+            (_, _) => manager.Capture(next, root.InputCache.EnsureCurrent(root)));
+        released.Visibility = Visibility.Hidden;
+        root.ProcessFrame();
+        ElementInputRouteMap map = root.InputCache.EnsureCurrent(root);
+
+        HitTestResult? result = manager.OverrideTarget(new HitTestResult(hit, 5, 6), map, 5, 6);
+
+        Assert.True(
+            ReferenceEquals(result?.Element, next) && ReferenceEquals(manager.CapturedElement, next),
+            $"returned next: {ReferenceEquals(result?.Element, next)}, returned hit: {ReferenceEquals(result?.Element, hit)}, " +
+            $"captured next: {ReferenceEquals(manager.CapturedElement, next)}");
+    }
+
     [Fact]
     public void CaptureChangeRaisesLostAndGotCapture()
     {

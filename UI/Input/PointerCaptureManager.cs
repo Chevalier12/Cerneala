@@ -47,20 +47,25 @@ public sealed class PointerCaptureManager
             return hitTarget;
         }
 
-        return routeMap.Contains(CapturedElement)
+        if (!routeMap.Contains(CapturedElement))
+        {
+            ReleaseUnroutableCapture(routeMap);
+        }
+
+        // A LostMouseCapture handler of the released element can capture another element, which then takes the input.
+        return CapturedElement is not null && routeMap.Contains(CapturedElement)
             ? new HitTestResult(CapturedElement, x, y)
-            : ReleaseUnroutableCapture(hitTarget, routeMap);
+            : hitTarget;
     }
 
     // The captured element was detached, hidden, collapsed or disabled, itself or through an ancestor, so it can no longer
     // take input: as WPF re-evaluates the capture then, the capture ends with LostMouseCapture, and a dragging Thumb or a
     // TextBox selecting with the mouse ends that drag (#952).
-    private HitTestResult? ReleaseUnroutableCapture(HitTestResult? hitTarget, ElementInputRouteMap routeMap)
+    private void ReleaseUnroutableCapture(ElementInputRouteMap routeMap)
     {
         UIElement? oldCapture = CapturedElement;
         CapturedElement = null;
         RaiseLostCapture(routeMap, oldCapture);
-        return hitTarget;
     }
 
     // The old captured element always gets LostMouseCapture. An element outside the route map has no input route, so its
