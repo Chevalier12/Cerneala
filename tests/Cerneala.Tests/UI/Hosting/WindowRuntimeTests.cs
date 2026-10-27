@@ -1763,6 +1763,44 @@ public sealed class WindowRuntimeTests : IDisposable
         Assert.False(window.LastFrame!.Input.Pointer.IsDown(InputMouseButton.Left));
     }
 
+    // A click whose last step (the mouse-up) loses the window has sent all its input, so it succeeds.
+    // Example: an OK button whose Click handler hides its window; ClickAsync on it completes.
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task ServoClickWhoseLastStepLosesItsWindowCompletesSuccessfully(bool hide)
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Button button = new() { Content = "OK", Width = 160, Height = 40 };
+        ServoApi.SetId(button, "ok");
+        Window window = new() { Content = button };
+        window.Show();
+        ServoApi servo = new(window, new ServoOptions { DefaultTimeout = TimeSpan.FromMilliseconds(500) });
+        int clicks = 0;
+        button.Click += (_, _) =>
+        {
+            clicks++;
+            if (hide) window.Hide();
+            else platform.Windows[0].ReportBounds(new UiViewport(0, 0), 0, 0, WindowState.Normal);
+        };
+
+        Task click = servo.ClickAsync(ServoTarget.ById("ok"));
+        Stopwatch elapsed = Stopwatch.StartNew();
+        while (!click.IsCompleted && elapsed.Elapsed < TimeSpan.FromSeconds(3))
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+            Thread.Sleep(1);
+        }
+
+        Exception? error = click.IsFaulted ? click.Exception!.GetBaseException() : null;
+        Assert.True(
+            click.IsCompletedSuccessfully,
+            $"hide={hide}: ClickAsync status={click.Status}, exception={error?.GetType().Name ?? "none"}: {error?.Message}");
+        Assert.Equal(1, clicks);
+        Assert.False(window.LastFrame!.Input.Pointer.IsDown(InputMouseButton.Left));
+    }
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]

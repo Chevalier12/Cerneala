@@ -1505,13 +1505,17 @@ internal sealed class WindowApplicationRuntime : IDisposable
         // A hidden Window or one without a renderable viewport builds no frame, so an operation that
         // already sent input could never send its next step or its reset. A hold is aborted even
         // before its first input. A tap that sent no input yet owns nothing and keeps waiting for a
-        // rendered frame or its timeout.
+        // rendered frame or its timeout. A tap whose last step is in flight has sent all its input,
+        // so the frame that carries that step completes it.
         // Example: PressKeyAsync(A) whose KeyDown handler hides the Window faults with ServoException,
-        // and the release of A is routed before the next Servo action.
+        // and the release of A is routed before the next Servo action. ClickAsync on a Button whose
+        // Click handler (raised by the last step, the mouse-up) hides the Window completes.
         public bool Abort(Exception exception)
         {
             if (IsDrained ||
-                (sequence.HeldStepIndex < 0 && Volatile.Read(ref started) != 1))
+                (sequence.HeldStepIndex < 0 &&
+                 (Volatile.Read(ref started) != 1 ||
+                  (nextIndex >= sequence.Steps.Count && cleanupStep is null))))
             {
                 return false;
             }
