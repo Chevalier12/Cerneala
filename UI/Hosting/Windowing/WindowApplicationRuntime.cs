@@ -688,9 +688,11 @@ internal sealed class WindowApplicationRuntime : IDisposable
         return frameRendered;
     }
 
+    // The caller starts the window with StartMainWindow first, so a show failure is reported as a startup stage.
     public void RunStandalone(Window window)
     {
-        StartMainWindow(window);
+        VerifyAccess();
+        ArgumentNullException.ThrowIfNull(window);
         Stopwatch stopwatch = Stopwatch.StartNew();
         TimeSpan previous = stopwatch.Elapsed;
         while (!window.IsClosed && windows.Count > 0)
