@@ -151,6 +151,30 @@ public sealed class CompletionTests
         AssertValidAfterInsertion(fixture.Text, Assert.Single(items.Where(item => item.Label == "Height")));
     }
 
+    [Theory]
+    [InlineData("<Window><Button Width=\"1\" |caret| /></Window>", "Height", "Width")]
+    [InlineData("<Window><Button |caret| Width=\"1\" /></Window>", "Height", "Width")]
+    [InlineData("<Window><Button |caret| Click=\"OnClick\" Grid.Row=\"1\" Name=\"b\" /></Window>", "Height", "Click,Grid.Row,Name")]
+    [InlineData("<Window |caret| xmlns=\"clr-namespace:Cerneala.UI.Controls;assembly=Cerneala\"></Window>", "Width", "xmlns")]
+    [InlineData("<Window><Button Hei|caret|ght=\"1\" Width=\"1\" /></Window>", "Height", "Width")]
+    public void AttributeCompletionDoesNotOfferAnAttributeThatTheTagAlreadyHasAfterTheCaret(
+        string markup,
+        string offered,
+        string alreadyUsed)
+    {
+        using CompletionFixture fixture = CompletionFixture.Create(markup);
+
+        IReadOnlyList<CernealaCompletionItem> items = fixture.Complete();
+
+        Assert.Contains(items, item => item.Label == offered);
+        foreach (string used in alreadyUsed.Split(','))
+        {
+            Assert.True(
+                !items.Any(item => item.Label == used),
+                $"'{markup}': \"{used}\" is offered although the tag already has it.");
+        }
+    }
+
     [Fact]
     public void MenuControlsAndMenuItemPropertiesAreCompletedFromThePublicApi()
     {

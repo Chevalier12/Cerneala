@@ -362,7 +362,7 @@ internal sealed partial class CernealaCompletionService
         ElementSyntax? element,
         CancellationToken cancellationToken)
     {
-        HashSet<string> used = ReadAttributeNames(site.Source, site.TagStart, site.Offset);
+        HashSet<string> used = ReadAttributeNames(site.Source, site.TagStart, site.WordSpan);
         ILanguageTypeSymbol? type = model?.GetCompletionElementType(element);
         if (type?.MetadataName == "Cerneala.UI.Controls.Tile")
         {

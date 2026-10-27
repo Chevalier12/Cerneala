@@ -181,47 +181,46 @@ internal sealed partial class CernealaCompletionService
             new TextSpan(memberStart, offset - memberStart));
     }
 
-    private static HashSet<string> ReadAttributeNames(string source, int tagStart, int offset)
+    // The attribute names of the whole tag, before and after the caret, up to its '>' (or the next '<' of an
+    // unclosed tag). The word being typed at the caret is the word being completed, not an attribute the tag has.
+    private static HashSet<string> ReadAttributeNames(string source, int tagStart, TextSpan typedWord)
     {
         HashSet<string> names = new(StringComparer.Ordinal);
         int position = tagStart + 1;
-        while (position < offset && !char.IsWhiteSpace(source[position]))
+        while (position < source.Length && !char.IsWhiteSpace(source[position]) && source[position] is not ('>' or '<'))
         {
             position++;
         }
 
-        while (position < offset)
+        while (position < source.Length && source[position] is not ('>' or '<'))
         {
-            while (position < offset && char.IsWhiteSpace(source[position]))
+            char character = source[position];
+            if (character is '\'' or '"')
             {
-                position++;
-            }
+                int closingQuote = source.IndexOf(character, position + 1);
+                if (closingQuote < 0)
+                {
+                    break;
+                }
 
-            int start = position;
-            while (position < offset && IsMarkupNameCharacter(source[position]))
-            {
-                position++;
+                position = closingQuote + 1;
             }
-
-            if (position > start)
+            else if (IsMarkupNameCharacter(character))
             {
-                names.Add(source.Substring(start, position - start));
-            }
-
-            while (position < offset && source[position] is not ('\'' or '"'))
-            {
-                position++;
-            }
-
-            if (position < offset)
-            {
-                char quote = source[position++];
-                while (position < offset && source[position] != quote)
+                int start = position;
+                while (position < source.Length && IsMarkupNameCharacter(source[position]))
                 {
                     position++;
                 }
 
-                position = Math.Min(offset, position + 1);
+                if (typedWord.Length == 0 || start != typedWord.Start)
+                {
+                    names.Add(source.Substring(start, position - start));
+                }
+            }
+            else
+            {
+                position++;
             }
         }
 
