@@ -3646,7 +3646,7 @@
           "domain": {
             "kind": "finite"
           },
-          "unit": "unitless",
+          "unit": "dip",
           "default": 10.0
         },
         {
@@ -3657,7 +3657,7 @@
           "domain": {
             "kind": "finite"
           },
-          "unit": "unitless",
+          "unit": "dip",
           "default": 10.0
         },
         {
@@ -3974,7 +3974,7 @@
           "domain": {
             "kind": "finite"
           },
-          "unit": "unitless",
+          "unit": "dip",
           "default": 1.0
         },
         {
@@ -4213,7 +4213,7 @@
           "domain": {
             "kind": "finite-components"
           },
-          "unit": "unitless",
+          "unit": "dip",
           "default": [
             10.0,
             120.0
@@ -4227,7 +4227,7 @@
           "domain": {
             "kind": "finite-components"
           },
-          "unit": "unitless",
+          "unit": "dip",
           "default": [
             5.0,
             35.0

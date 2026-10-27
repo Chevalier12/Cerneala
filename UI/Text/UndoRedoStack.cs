@@ -60,6 +60,20 @@ internal sealed class UndoRedoStack
         redo.Clear();
     }
 
+    /// <summary>
+    /// Removes the newest undo unit when it holds the given text, because undoing it would then change no text.
+    /// </summary>
+    public bool DiscardNewestUndoWithText(string text)
+    {
+        if (undo.Count == 0 || undo[^1].Text != text)
+        {
+            return false;
+        }
+
+        undo.RemoveAt(undo.Count - 1);
+        return true;
+    }
+
     public bool TryPopUndo(TextEditorSnapshot current, out TextEditorSnapshot snapshot)
     {
         if (undo.Count == 0)

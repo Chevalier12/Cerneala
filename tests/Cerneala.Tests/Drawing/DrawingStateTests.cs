@@ -112,6 +112,91 @@ public sealed class DrawingStateTests
         Assert.Equal(3, analysis.Entries[1].MatchingCommandIndex);
     }
 
+    [Theory]
+    [InlineData("scaledFill", false)]
+    [InlineData("scaledFill", true)]
+    [InlineData("thickPen", false)]
+    [InlineData("thickPen", true)]
+    public void AnalyzingValidlyRecordedCommandsWithHugeBoundsDoesNotThrow(string recording, bool huge)
+    {
+        DrawCommandList commands = new();
+        DrawingContext drawing = new(commands);
+        if (recording == "scaledFill")
+        {
+            drawing.PushTransform(Matrix3x2.CreateScale(huge ? 1e6f : 1f));
+            drawing.FillRectangle(new DrawRect(0, 0, 5000, 5000), Color.White);
+            drawing.PopTransform();
+        }
+        else
+        {
+            drawing.DrawRectangle(
+                new DrawRect(0, 0, 10, 10),
+                new DrawPen(new Cerneala.UI.Media.SolidColorBrush(Color.White), huge ? 1_000_000_000f : 1f));
+        }
+
+        Exception? failure = Record.Exception(() => new DrawCommandStateAnalyzer().Analyze(commands));
+
+        Assert.True(failure is null, $"{recording} (huge: {huge}): {failure?.GetType().Name}: {failure?.Message}");
+    }
+
+    // Two valid fills 3.8e9 apart in one scope; the 100-apart row is the control.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void AnalyzingAScopeWhoseContentIsFarApartDoesNotThrow(bool farApart)
+    {
+        DrawCommandList commands = new();
+        DrawingContext drawing = new(commands);
+        float distance = farApart ? 1.9e9f : 100f;
+        drawing.PushOpacity(0.5f);
+        drawing.FillRectangle(new DrawRect(-distance, 0, 10, 10), Color.White);
+        drawing.FillRectangle(new DrawRect(distance, 0, 10, 10), Color.White);
+        drawing.PopOpacity();
+
+        Exception? failure = Record.Exception(() => new DrawCommandStateAnalyzer().Analyze(commands));
+
+        Assert.True(failure is null, $"farApart={farApart}: {failure?.GetType().Name}: {failure?.Message}");
+    }
+
+    [Fact]
+    public void BoundsOutsideTheDrawRectRangeAreUnknownAndKeepTheirScopeUnknown()
+    {
+        DrawCommandList commands = new();
+        DrawingContext drawing = new(commands);
+        drawing.PushOpacity(0.5f);
+        drawing.PushTransform(Matrix3x2.CreateScale(1e6f));
+        drawing.FillRectangle(new DrawRect(0, 0, 5000, 5000), Color.White);
+        drawing.PopTransform();
+        drawing.FillRectangle(new DrawRect(1, 2, 3, 4), Color.White);
+        drawing.PopOpacity();
+        drawing.PushOpacity(0.5f);
+        drawing.FillRectangle(new DrawRect(-1.9e9f, 0, 10, 10), Color.White);
+        drawing.FillRectangle(new DrawRect(1.9e9f, 0, 10, 10), Color.White);
+        drawing.FillRectangle(new DrawRect(1, 2, 3, 4), Color.White);
+        drawing.PopOpacity();
+        drawing.DrawRectangle(
+            new DrawRect(0, 0, 10, 10),
+            new DrawPen(new Cerneala.UI.Media.SolidColorBrush(Color.White), 1_000_000_000f));
+
+        DrawCommandStateAnalysis analysis = new DrawCommandStateAnalyzer().Analyze(commands);
+
+        // The scaled fill and the scopes around it have unknown world bounds;
+        // known content drawn later in the same scope does not make them known.
+        Assert.Null(analysis.Entries[2].Bounds);
+        Assert.Null(analysis.Entries[1].Bounds);
+        Assert.Null(analysis.Entries[0].Bounds);
+        Assert.Null(analysis.Entries[5].Bounds);
+        Assert.Equal(new DrawRect(1, 2, 3, 4), analysis.Entries[4].Bounds);
+        // Each far-apart fill is known; only their 3.8e9-wide union is unknown.
+        // (At 1.9e9 the float spacing is 128, so the 10-wide fills round to width 0.)
+        Assert.NotNull(analysis.Entries[7].Bounds);
+        Assert.NotNull(analysis.Entries[8].Bounds);
+        Assert.Null(analysis.Entries[6].Bounds);
+        Assert.Null(analysis.Entries[10].Bounds);
+        // The pen's conservative extent leaves the DrawRect range.
+        Assert.Null(analysis.Entries[11].Bounds);
+    }
+
     [Fact]
     public void AnalyzerRejectsMixedStackImbalanceWithPushIndex()
     {

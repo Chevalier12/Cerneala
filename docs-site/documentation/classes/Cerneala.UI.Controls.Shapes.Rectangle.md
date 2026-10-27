@@ -89,7 +89,7 @@ Default measuring uses an empty rectangle because the default geometry is based 
 | Name | Type | Declared By | Description |
 | --- | --- | --- | --- |
 | `FillProperty` | `UiProperty<Brush?>` | `Shape` | Identifies the `Fill` UI property. Default value is `null`; changes affect render. |
-| `StrokeProperty` | `UiProperty<Brush?>` | `Shape` | Identifies the `Stroke` UI property. Default value is `null`; changes affect render. |
+| `StrokeProperty` | `UiProperty<Brush?>` | `Shape` | Identifies the `Stroke` UI property. Default value is `null`; changes affect measure and render. |
 | `StrokeThicknessProperty` | `UiProperty<float>` | `Shape` | Identifies the `StrokeThickness` UI property. Default value is `1`; values must be finite and non-negative. Changes affect measure and render. |
 | `GeometryProperty` | `UiProperty<Geometry?>` | `Shape` | Identifies the `Geometry` UI property. Default value is `null`; changes affect measure and render. |
 | `RenderTransformProperty` | `UiProperty<Transform>` | `Shape` | Compatibility alias for the inherited `UIElement` property. |

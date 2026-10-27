@@ -116,6 +116,48 @@ public sealed class UiPropertyBindingTests
         Assert.Equal("fresh", target.Text);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ClearDisposesEverySubscriptionEvenWhenAnEarlierOneThrows(bool throwingFirst)
+    {
+        ObservableValue<string> source = new("one");
+        TextBlock first = new();
+        TextBlock second = new();
+        BindingSubscriptionCollection collection = new();
+        if (throwingFirst)
+        {
+            collection.Add(new ThrowingDisposable());
+        }
+        else
+        {
+            collection.Add(BindingOperations.BindOneWay(first, TextBlock.TextProperty, source));
+        }
+
+        collection.Add(BindingOperations.BindOneWay(second, TextBlock.TextProperty, source));
+
+        Exception? failure = Record.Exception(collection.Clear);
+        source.Value = "two";
+
+        Assert.True(
+            collection.Count == 0 && second.Text == "one",
+            $"throwingFirst={throwingFirst}: Clear threw {failure?.GetType().Name ?? "nothing"}; Count={collection.Count}; " +
+            $"the later binding's target text is '{second.Text}' after the source changed to 'two' (expected 'one', i.e. disposed).");
+        if (throwingFirst)
+        {
+            Assert.Equal("dispose failed", Assert.IsType<InvalidOperationException>(failure).Message);
+        }
+        else
+        {
+            Assert.Null(failure);
+        }
+    }
+
+    private sealed class ThrowingDisposable : IDisposable
+    {
+        public void Dispose() => throw new InvalidOperationException("dispose failed");
+    }
+
     private sealed class ValidatingElement : UIElement
     {
         public static readonly UiProperty<int> PositiveProperty = UiProperty<int>.Register(

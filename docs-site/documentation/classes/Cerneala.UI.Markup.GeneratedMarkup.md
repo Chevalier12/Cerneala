@@ -82,8 +82,8 @@ the read-once helper; attribute paths use binding attachment helpers instead.
 | `StartMotionProperty<T>(IDisposable session, UIElement target, UiProperty<T> property, bool hasFrom, T from, bool toCurrent, T to, MotionSpec<T>? spec, MotionPropertyStartOptions options)` | `MotionHandle` | Starts one typed property animation through the target root's motion system. |
 | `SetMotionProperty<T>(IDisposable session, UIElement target, UiProperty<T> property, T value)` | `void` | Applies a generated Motion `@set` of an animatable UI property: jumps the property's Motion value to `value` and holds it in the `Animation` source, like an animation that completed at once with `HoldOnComplete`. The held value survives hiding the target or the owner; a target outside the owner's root gets a `Local` write. |
 | `StartBoundMotionProperty<T>(IDisposable session, UIElement target, UiProperty<T> property, bool hasFrom, T from, MarkupObservation observation, BindingMode mode, Func<object?, T> projection, MotionSpec<T>? spec, MotionPropertyStartOptions options)` | `MotionHandle` | Starts one typed property animation whose destination follows an explicit one-way or two-way markup binding for the lifetime of the execution. |
-| `StartPrismMotionProperty<T>(IDisposable session, UIElement target, int propertyId, Func<PrismInstance, T> getValue, Action<PrismInstance, T> setValue, bool discrete, bool hasFrom, T from, bool toCurrent, T to, MotionSpec<T>? spec, MotionPropertyStartOptions options)` | `MotionHandle` | Starts a statically resolved Prism property animation through the existing motion session and scheduler. |
-| `StartBoundPrismMotionProperty<T>(IDisposable session, UIElement target, int propertyId, Func<PrismInstance, T> getValue, Action<PrismInstance, T> setValue, bool discrete, bool hasFrom, T from, MarkupObservation observation, BindingMode mode, Func<object?, T> projection, MotionSpec<T>? spec, MotionPropertyStartOptions options)` | `MotionHandle` | Starts a Prism property animation whose destination follows an explicit one-way or two-way markup binding for the lifetime of the execution. |
+| `StartPrismMotionProperty<T>(IDisposable session, UIElement target, int propertyId, PrismNodeId? scope, Func<PrismInstance, T> getValue, Action<PrismInstance, T> setValue, bool discrete, bool hasFrom, T from, bool toCurrent, T to, MotionSpec<T>? spec, MotionPropertyStartOptions options)` | `MotionHandle` | Starts a statically resolved Prism property animation through the existing motion session and scheduler. `Visible=false` on the `scope` node, or on a group that contains it, cancels the animation; `null` means no Prism node cancels it. |
+| `StartBoundPrismMotionProperty<T>(IDisposable session, UIElement target, int propertyId, PrismNodeId? scope, Func<PrismInstance, T> getValue, Action<PrismInstance, T> setValue, bool discrete, bool hasFrom, T from, MarkupObservation observation, BindingMode mode, Func<object?, T> projection, MotionSpec<T>? spec, MotionPropertyStartOptions options)` | `MotionHandle` | Starts a Prism property animation whose destination follows an explicit one-way or two-way markup binding for the lifetime of the execution. |
 | `AttachPrism(UIElement owner, Func<PrismInstance> instanceFactory)` | `IDisposable` | Attaches one generated Prism instance factory and replaces any previous Prism attachment on the element. |
 | `AttachPrism(UIElement owner, Func<PrismInstance> instanceFactory, IReadOnlyList<Func<PrismInstance, IDisposable>> bindingFactories)` | `IDisposable` | Attaches a Prism factory plus generated dynamic-binding factories managed by element renderability. |
 | `TryGetPrismInstance(UIElement owner, out PrismInstance? instance)` | `bool` | Gets the current attached instance when one has been created. |
@@ -182,9 +182,15 @@ Generated Aspect conditions use rule condition-state callbacks instead of `Marku
 
 `AttachResource<T>` follows element and ancestor resources before the attached
 root provider. A local resource therefore shadows an application resource with
-the same key. The controller subscribes only while its owner is attached,
-re-resolves the nearest value after matching application-provider changes, and
-marshals a cross-thread provider notification through the root Relay.
+the same key. The controller subscribes only while its owner is attached
+(at once when the owner is already attached at the call, otherwise when it
+attaches), re-resolves the nearest value after matching application-provider changes, and
+marshals a cross-thread provider notification through the root Relay. A call
+made while the owner is detaching from its root only applies the current value;
+the controller subscribes when the owner attaches again. When applying the
+first value throws, for example because the resource value fails the target
+property's validation, the call removes the controller and rethrows, so nothing
+stays subscribed.
 
 Disposing the lifetime returned by `AttachResource<T>` unsubscribes the
 controller and stops further target updates from that attachment. Its callbacks
@@ -328,6 +334,48 @@ integer, and enum targets use the discrete flag. A hidden, collapsed, invisible,
 detached, or replaced target is canceled without restoring a value into an inert
 Prism instance.
 
+`scope` is the Prism layer or group that owns the animated property. While the
+animation runs, and when it starts, the binding checks that node and every group
+that contains it: when one of them has `Visible=false`, the animation is canceled
+once (`MotionHandle.IsCanceled` is `true` and `Completed` reports one cancel), the
+current value is kept, and nothing is written in later frames. Setting `Visible=true`
+again does not restart it. A start that is canceled at once does not apply its
+`from` value either, so the next animation of the property starts from the value
+the Prism instance holds. An animation that has already reached its end is not
+canceled and writes its end value: one that completes in the frame in which its node
+becomes hidden, or one that completes at once when it starts (for example under
+reduced motion). So `@to { $self.prism.Glow.Visible = false; $self.prism.Glow.Opacity = 0; }`
+with one 100 ms tween ends with `Glow.Visible == false` and `Glow.Opacity == 0` in
+either line order, although the discrete `Visible` writes `false` in the last frame,
+the frame in which the fade also ends. The generator passes the node named in the Motion path,
+so `$self.prism.Card.Face.Opacity` passes `Face`. A path that animates the node's
+own `Visible` passes the containing group instead (`$self.prism.Card.Face.Visible`
+passes `Card`), or `null` for a top-level node, so the animation can show a hidden
+node again. A `bind` destination (`StartBoundPrismMotionProperty<T>`) is canceled
+the same way.
+
+```csharp
+// What `@animate with Tween(100ms) { @to { $self.prism.Glow.Opacity = 0.25; } }`
+// lowers to for the top-level layer Glow (node ID 1).
+MotionHandle fade = GeneratedMarkup.StartPrismMotionProperty(
+    session,
+    target,
+    propertyId,
+    new PrismNodeId(1),
+    static prismInstance => prismInstance.GetLayerState(new PrismNodeId(1)).Opacity,
+    static (prismInstance, prismValue) => { prismInstance.GetLayerState(new PrismNodeId(1)).Opacity = prismValue; },
+    discrete: false,
+    hasFrom: false,
+    from: 0f,
+    toCurrent: false,
+    to: 0.25f,
+    spec: new TweenSpec<float>(TimeSpan.FromMilliseconds(100), Easings.Standard),
+    MotionPropertyStartOptions.Default);
+
+GeneratedMarkup.GetPrismInstance(target).GetLayerState(new PrismNodeId(1)).Visible = false;
+// Next Motion frame: fade.IsCanceled is true and Glow.Opacity keeps its last value.
+```
+
 ## Exceptions
 | Member | Exception | Condition |
 | --- | --- | --- |
@@ -335,6 +383,7 @@ Prism instance.
 | Property binding factories | `ArgumentNullException` | A required owner, target, target property, observation, observation collection, or projection delegate is `null`. |
 | Computed binding factories | `ArgumentNullException` | A required owner, target, target property, observation collection, or compose delegate is `null`. |
 | `AttachResource<T>` | `ArgumentNullException` or `ArgumentException` | A required owner, target, target property, or resource key is invalid. |
+| `AttachResource<T>` | Exception from the target property write, for example `ArgumentException` | The first resolved resource value fails the target property's validation. The controller is removed before the exception propagates. |
 | `GetTemplateOwner` | `InvalidOperationException` | The element was not created by a component template that is currently attached to its owner. |
 | `GetTemplatePart<T>` | `InvalidOperationException` | The template owner has no part with that name, or the part is not a `T`. |
 | `RequirePrismClip` | `InvalidOperationException` | The element has no Prism instance, or its composition has another name. |

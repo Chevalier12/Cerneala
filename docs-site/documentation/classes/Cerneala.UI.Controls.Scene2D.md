@@ -127,7 +127,7 @@ scene nodes. A paired document emits the partial component, not a standalone
 
 Direct markup children are added to `Children`. `OrderMode="Source"`, the default, records them from first to last, so later children draw after earlier children. Adding, replacing, removing, or clearing children invalidates the owning surface.
 
-`OrderMode="Layer"` sorts by each child's `Layer` value. `OrderMode="LayerThenY"` sorts first by `Layer`, then by the bottom edge of the child's transformed scene-space bounds. Smaller values draw first. Both modes are stable: equal keys retain source collection order, and neither mode mutates `Children`. A missing or unknown bound uses a Y anchor of `0` rather than removing the node.
+`OrderMode="Layer"` sorts by each child's `Layer` value. `OrderMode="LayerThenY"` sorts first by `Layer`, then by the bottom edge of the child's transformed scene-space bounds. Smaller values draw first. Both modes are stable: equal keys retain source collection order, and neither mode mutates `Children`. A missing or unknown bound uses a Y anchor of `0` rather than removing the node. `Opacity` does not change these bounds: a sprite with `Opacity="0"` at `Y="100"` and `Height="10"` keeps its bottom edge of `110`, as it has at `Opacity="0.01"`, and a group keeps the bottom edge of all its rendered children whatever their opacity.
 
 Picking uses that same effective order in reverse, so the last visible eligible node at a point wins. The chosen node enters the ordinary UI route through its scene ancestors and the owning `RenderSurface2D`; scene groups do not create a second router or event family.
 

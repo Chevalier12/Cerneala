@@ -174,23 +174,35 @@ def generated_regression(client):
 
 
 def navigation(client):
-    payload = client.call("workspace_symbol", {"query": "TextMeasurer.Measure", "kinds": ["Method"], "maxResults": 20}, "overloads")
-    symbols = [s for s in payload["result"]["symbols"] if s.get("containingType") == "Cerneala.UI.Text.TextMeasurer"]
-    assert len(symbols) == 2 and len({s["symbolId"] for s in symbols}) == 2, symbols
+    # Expected overloads and call sites come from the saved source, so unrelated additions
+    # (for example TextMeasurer.MeasureParagraph) do not change what is checked.
     path = ROOT / "UI/Text/TextMeasurer.cs"
     at = position(path, "return Measure(text, aspect, new LayoutSize", "Measure")
+    float_target = position(path, "public virtual TextMeasureResult Measure(string text, TextAspect aspect, float", " Measure(")
     target = position(path, "public virtual TextMeasureResult Measure(string text, TextAspect aspect, LayoutSize", " Measure(")
+    payload = client.call("workspace_symbol", {"query": "TextMeasurer.Measure", "kinds": ["Method"], "maxResults": 20}, "overloads")
+    symbols = [s for s in payload["result"]["symbols"]
+        if s.get("containingType") == "Cerneala.UI.Text.TextMeasurer" and s["name"] == "Measure"]
+    assert sorted(s["primaryLocation"]["line"] for s in symbols) == [float_target["line"], target["line"]], symbols
+    assert len({s["symbolId"] for s in symbols}) == 2, symbols
     definitions = client.call("goto_definition", at, "overload-binding")["result"]["definitions"]
     assert any(d["line"] == target["line"] and Path(d["filePath"]) == path for d in definitions), definitions
     implementations = client.call("find_implementations", {"symbolId": "T:Cerneala.Drawing.IDrawingBackend"}, "cross-project-implementations")["result"]["implementations"]
     assert any(d["filePath"].endswith("SdlGpuDrawingBackend.cs") for d in implementations), implementations
+    # TextInputView has a homonymous private GetTextMeasurer; none of its uses may appear here.
     private = "M:Cerneala.UI.Controls.TextBlock.GetTextMeasurer"
+    text_block = ROOT / "UI/Controls/TextBlock.cs"
+    uses = sorted((i + 1, line.index("GetTextMeasurer()") + 1)
+        for i, line in enumerate(text_block.read_text(encoding="utf-8-sig").splitlines())
+        if "GetTextMeasurer()" in line and "private TextMeasurer GetTextMeasurer()" not in line)
+    assert uses, text_block
     refs = client.call("find_references", {"symbolId": private}, "private-references")["result"]["references"]
-    assert len(refs) == 2 and all(r["filePath"].endswith("TextBlock.cs") for r in refs), refs
+    assert sorted((r["line"], r["column"]) for r in refs) == uses and all(Path(r["filePath"]) == text_block for r in refs), (uses, refs)
     callers = client.call("find_callers", {"symbolId": private}, "private-callers")["result"]["callers"]
-    assert len(callers) == 2 and all(c["caller"]["containingType"] == "Cerneala.UI.Controls.TextBlock" for c in callers), callers
+    assert sorted((c["callSite"]["line"], c["callSite"]["column"]) for c in callers) == uses, (uses, callers)
+    assert all(c["caller"]["containingType"] == "Cerneala.UI.Controls.TextBlock" for c in callers), callers
     analysis = client.call("analyze_symbol", {"symbolId": private}, "composite-analysis")["result"]
-    assert analysis["references"]["count"] == 2 and analysis["callers"]["count"] == 2, analysis
+    assert analysis["references"]["count"] == len(uses) and analysis["callers"]["count"] == len(uses), analysis
     derived = client.call("find_derived_types", {"symbolId": "T:Cerneala.UI.Controls.ContentControl", "transitive": True}, "derived-types")["result"]["derivedTypes"]
     assert any(s["symbolId"] == "T:Cerneala.UI.Controls.Button" for s in derived), derived
     overview = client.call("project_overview", {"maxProjects": 100, "maxProjectReferencesPerProject": 100, "maxPackagesPerProject": 100}, "project-overview")["result"]

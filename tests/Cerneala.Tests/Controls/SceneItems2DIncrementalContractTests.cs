@@ -90,6 +90,46 @@ public sealed class SceneItems2DIncrementalContractTests(ITestOutputHelper outpu
         Assert.Equal(5, fixture.Items.UpdateCounters.RemovedNodes - counts.RemovedNodes);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ReorderingTheObservableSourceReordersHitTestingAndDrawOrder(bool useMove)
+    {
+        ObservableCollection<string> source = ["a", "b"];
+        using Fixture fixture = new(source);
+        fixture.Items.Templates[0] = new ContentTemplate<string>("overlap", null, 0,
+            _ => new Sprite2D { Width = 20, Height = 20, X = 0 });
+        fixture.Tick();
+        Vector2 point = new(5, 5);
+        UIElement? top = SceneHitTest2D.HitTest(fixture.Scene, point, HitTestFilter.IncludeAll, []);
+        Assert.Equal("b", Assert.IsType<string>(Assert.IsAssignableFrom<SceneNode2D>(top).DataContext));
+        SceneNode2D[] nodes = fixture.Items.LogicalChildren.OfType<SceneNode2D>().ToArray();
+        int created = fixture.Items.UpdateCounters.CreatedNodes;
+
+        if (useMove)
+        {
+            source.Move(1, 0);
+        }
+        else
+        {
+            source.RemoveAt(1);
+            source.Insert(0, "b");
+        }
+
+        fixture.Tick();
+        UIElement? hit = SceneHitTest2D.HitTest(fixture.Scene, point, HitTestFilter.IncludeAll, []);
+        Assert.True(
+            hit?.DataContext as string == "a",
+            $"After the reorder the collection is [{string.Join(",", fixture.Items.LogicalChildren.OfType<SceneNode2D>().Select(n => n.DataContext))}] " +
+            $"and the hit node is '{hit?.DataContext}' instead of 'a'.");
+        if (useMove)
+        {
+            // A Move keeps the same nodes.
+            Assert.Equal(created, fixture.Items.UpdateCounters.CreatedNodes);
+            Assert.Equal(new[] { nodes[1], nodes[0] }, fixture.Items.LogicalChildren.OfType<SceneNode2D>());
+        }
+    }
+
     [Fact]
     public void IdleFramesDoNotReenumerateOrPublishCollisionMutations()
     {

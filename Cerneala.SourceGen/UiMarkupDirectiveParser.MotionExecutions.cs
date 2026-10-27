@@ -50,10 +50,10 @@ public sealed partial class UiMarkupGenerator
             int statementOffset = characterIndex;
             string statement = ReadMotionStatement().Trim();
             string? handleName = null;
-            int handleSeparator = statement.LastIndexOf(" as ", StringComparison.Ordinal);
+            int handleSeparator = FindTopLevelKeyword(statement, "as");
             if (handleSeparator >= 0)
             {
-                handleName = statement.Substring(handleSeparator + 4).Trim();
+                handleName = statement.Substring(handleSeparator + "as".Length).Trim();
                 statement = statement.Substring(0, handleSeparator).Trim();
                 if (!IsIdentifier(handleName))
                 {

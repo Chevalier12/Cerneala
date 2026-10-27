@@ -2,7 +2,7 @@ namespace Cerneala.Drawing;
 
 internal static class DrawArgument
 {
-    private const float MaxPixelSize = 2_000_000_000f;
+    internal const float MaxPixelSize = 2_000_000_000f;
     private const float MaxTextSize = 16_384f;
 
     public static void ThrowIfNotFinite(float value, string parameterName)
@@ -21,11 +21,15 @@ internal static class DrawArgument
         }
     }
 
+    public static bool IsValidPixelCoordinate(float value) =>
+        float.IsFinite(value) && value >= -MaxPixelSize && value <= MaxPixelSize;
+
+    public static bool IsNonNegativeValidPixelSize(float value) =>
+        float.IsFinite(value) && value >= 0 && value <= MaxPixelSize;
+
     public static void ThrowIfNotValidPixelCoordinate(float value, string parameterName)
     {
-        ThrowIfNotFinite(value, parameterName);
-
-        if (value < -MaxPixelSize || value > MaxPixelSize)
+        if (!IsValidPixelCoordinate(value))
         {
             throw new ArgumentOutOfRangeException(parameterName);
         }
@@ -33,9 +37,7 @@ internal static class DrawArgument
 
     public static void ThrowIfNegativeOrNotValidPixelSize(float value, string parameterName)
     {
-        ThrowIfNegativeOrNotFinite(value, parameterName);
-
-        if (value > MaxPixelSize)
+        if (!IsNonNegativeValidPixelSize(value))
         {
             throw new ArgumentOutOfRangeException(parameterName);
         }

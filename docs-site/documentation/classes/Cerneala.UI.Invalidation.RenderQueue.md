@@ -39,7 +39,7 @@ foreach (UIElement element in queue.Snapshot())
 
 Each element is stored once by reference. Calling `Enqueue` repeatedly with the same `UIElement` reference does not create duplicate work.
 
-`Snapshot` defensively removes queued elements whose `Root` is no longer the queue root, then returns the remaining elements in visual-tree preorder. It reuses the root's `ElementQueueOrderIndex`, rebuilt only when `TreeVersion` changes, and sorts only queued entries. Presence-exiting elements that still belong to the root but have left `VisualChildren` remain after traversed elements in relative enqueue order so exit rendering can finish.
+`Snapshot` defensively removes queued elements whose `Root` is no longer the queue root, then returns the remaining elements in visual-tree preorder. It reuses the root's `ElementQueueOrderIndex`, rebuilt only when `TreeVersion` changes, and sorts only queued entries. Presence-exiting elements that still belong to the root but have left `VisualChildren`, and their visual descendants, remain after traversed elements in relative enqueue order so exit rendering can finish. This holds whatever the element's `PresenceOptions.ExcludeInputWhileExiting` value: for example, changing `Fill` on an exiting `Rectangle`, or on a `Rectangle` inside an exiting `Border`, keeps the element queued, and the next frame renders the new fill.
 
 `HasWork` and `Count` read the queue dictionary directly without allocating, pruning, walking the tree, or sorting. Lifecycle detach removes pending work actively; snapshot pruning remains as a defensive fallback.
 

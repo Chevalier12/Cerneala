@@ -117,6 +117,91 @@ public sealed class CollisionStageTwoContractTests
         Assert.InRange(hit.Fraction, 0.49f, 0.51f);
     }
 
+    [Theory]
+    [InlineData(1_000_000f)]
+    [InlineData(1e12f)]
+    [InlineData(float.MaxValue)]
+    public void RaycastWithAHugeFiniteMaximumDistanceReturnsHitsInsteadOfThrowing(float maxDistance)
+    {
+        // A 10x10 box at (100, 0) lies on the ray from (0, 5) along +X, so every row has exactly one hit.
+        Scene2D scene = new();
+        scene.Children.Add(new Sprite2D { X = 100, Collider = Box() });
+        CollisionHit2D[]? hits = null;
+
+        Exception? failure = Record.Exception(() =>
+            hits = scene.CollisionWorld.Raycast(new Vector2(0, 5), Vector2.UnitX, maxDistance));
+
+        string firstFrame = failure?.StackTrace?
+            .Split('\n')
+            .Select(line => line.Trim())
+            .FirstOrDefault(line => line.StartsWith("at Cerneala.", StringComparison.Ordinal)) ?? "none";
+        Assert.True(
+            failure is null && hits is { Length: 1 },
+            $"maxDistance={maxDistance}: " +
+            (failure is null
+                ? $"{hits?.Length} hit(s)"
+                : $"threw {failure.GetType().Name}: {failure.Message} First Cerneala frame: {firstFrame}") + ".");
+        Assert.InRange(hits![0].Distance, 99f, 101f);
+    }
+
+    [Fact]
+    public void RaycastAcrossMoreThanOneDrawRectOfSceneFindsBoxesAtBothEnds()
+    {
+        // The boxes are 3.8e9 scene units apart, wider than one DrawRect (2e9), so even the
+        // part of the ray inside the scene's coordinate range needs more than one query rectangle.
+        BoxCollider2D near = new() { Width = 1024, Height = 1024 };
+        BoxCollider2D far = new() { Width = 1024, Height = 1024 };
+        Scene2D scene = new();
+        scene.Children.Add(new Sprite2D { X = -1_900_000_000f, Collider = near });
+        scene.Children.Add(new Sprite2D { X = 1_900_000_000f, Collider = far });
+
+        CollisionHit2D[] hits = scene.CollisionWorld.Raycast(
+            new Vector2(-1_950_000_000f, 512), Vector2.UnitX, 1e12f);
+
+        Assert.Equal([near, far], hits.Select(static hit => hit.Collider));
+    }
+
+    [Fact]
+    public void DiagonalRaycastFromOutsideTheSceneCoordinateRangeFindsABoxInside()
+    {
+        BoxCollider2D box = new() { Width = 1024, Height = 1024 };
+        Scene2D scene = new();
+        scene.Children.Add(new Sprite2D { Collider = box });
+
+        CollisionHit2D hit = Assert.Single(scene.CollisionWorld.Raycast(
+            new Vector2(-3_000_000_000f, -3_000_000_000f), Vector2.One, 1e12f));
+
+        Assert.Same(box, hit.Collider);
+        Assert.InRange(hit.Distance, 4.24e9f, 4.25e9f);
+    }
+
+    [Theory]
+    [InlineData(0f, 1e12f, 1f)]
+    [InlineData(0f, float.MaxValue, 1f)]
+    [InlineData(-1e20f, 1e21f, 512f)]
+    [InlineData(-1e20f, float.MaxValue, 512f)]
+    public void RaycastWithAHugeRayReturnsAFiniteHitOnACircle(float originX, float maxDistance, float pointTolerance)
+    {
+        // A circle of radius 5 centered at (100, 0) lies on the ray along +X, so the ray enters it at x = 95.
+        // The point tolerance is the float spacing of the DrawRect coordinate range the ray enters from.
+        CircleCollider2D circle = new() { Radius = 5 };
+        Scene2D scene = new();
+        scene.Children.Add(new Sprite2D { X = 100, Collider = circle });
+
+        CollisionHit2D hit = Assert.Single(scene.CollisionWorld.Raycast(
+            new Vector2(originX, 0), Vector2.UnitX, maxDistance));
+
+        Assert.True(
+            float.IsFinite(hit.Distance) && float.IsFinite(hit.Fraction) &&
+            float.IsFinite(hit.Point.X) && float.IsFinite(hit.Point.Y),
+            $"Distance={hit.Distance}, Fraction={hit.Fraction}, Point={hit.Point}.");
+        Assert.Same(circle, hit.Collider);
+        Assert.InRange(hit.Point.X, 95 - pointTolerance, 95 + pointTolerance);
+        float expectedDistance = 95 - originX;
+        Assert.InRange(hit.Distance, expectedDistance - pointTolerance, expectedDistance + pointTolerance);
+        Assert.InRange(hit.Fraction * maxDistance, hit.Distance * 0.9999f, hit.Distance * 1.0001f);
+    }
+
     [Fact]
     [Trait("CollisionStage", "2")]
     public void LayerMaskTriggerAndQueryFiltersRunBeforeExactTests()

@@ -220,9 +220,42 @@ public sealed partial class DrawingContext
             MixUInt((uint)options.AddressMode);
         }
 
-        MixUInt(unchecked((uint)(command.Mesh?.GetHashCode() ?? 0)));
-        MixUInt(unchecked((uint)(command.SpriteBatch?.GetHashCode() ?? 0)));
+        // Mesh-backed commands build a new mesh on every recording (nine-slice,
+        // quads, triangles, and the image-swapped copy of a retained mesh or
+        // sprite batch), so the version uses the mesh content, not its identity.
+        // A sprite batch command carries its geometry in this mesh.
+        MixMesh(command.Mesh);
         return (long)(hash & long.MaxValue);
+
+        void MixMesh(DrawMesh2D? mesh)
+        {
+            MixUInt(mesh is null ? 0u : 1u);
+            if (mesh is null)
+            {
+                return;
+            }
+
+            MixUInt((uint)mesh.Topology);
+            MixUInt(mesh.IsOptionsImageQuad ? 1u : 0u);
+            MixUInt((uint)mesh.VertexArray.Length);
+            foreach (DrawVertex2D vertex in mesh.VertexArray)
+            {
+                MixFloat(vertex.Position.X);
+                MixFloat(vertex.Position.Y);
+                MixByte(vertex.Color.R);
+                MixByte(vertex.Color.G);
+                MixByte(vertex.Color.B);
+                MixByte(vertex.Color.A);
+                MixFloat(vertex.TextureCoordinate.X);
+                MixFloat(vertex.TextureCoordinate.Y);
+            }
+
+            MixUInt((uint)mesh.IndexArray.Length);
+            foreach (int index in mesh.IndexArray)
+            {
+                MixUInt(unchecked((uint)index));
+            }
+        }
 
         void MixNullableRect(DrawRect? rectangle)
         {

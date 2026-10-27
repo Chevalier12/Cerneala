@@ -415,6 +415,7 @@ internal abstract class DrawCommandMetadata
             _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown draw command kind.")
         };
 
+    // Conservative bounds outside the DrawRect range are unknown (null).
     private static DrawRect? ResolveBounds(DrawCommand command) =>
         command.Kind switch
         {
@@ -454,17 +455,17 @@ internal abstract class DrawCommandMetadata
             _ => throw new InvalidOperationException($"Unsupported draw command: {command.Kind}")
         };
 
-    private static DrawRect ExpandCoverage(DrawRect bounds)
+    private static DrawRect? ExpandCoverage(DrawRect bounds)
     {
         const float margin = 0.125f;
-        return new DrawRect(
+        return DrawRect.TryCreate(
             bounds.X - margin,
             bounds.Y - margin,
             bounds.Width + (margin * 2),
             bounds.Height + (margin * 2));
     }
 
-    private static DrawRect ImageBounds(DrawCommand command)
+    private static DrawRect? ImageBounds(DrawCommand command)
     {
         if (command.Image is null || command.ImageOptions is null)
         {
@@ -482,7 +483,7 @@ internal abstract class DrawCommandMetadata
         float top = Minimum(corners, x: false);
         float right = Maximum(corners, x: true);
         float bottom = Maximum(corners, x: false);
-        return new DrawRect(left, top, right - left, bottom - top);
+        return DrawRect.TryCreate(left, top, right - left, bottom - top);
     }
 
     // Enumerable.Min semantics: any NaN yields NaN.
@@ -509,7 +510,7 @@ internal abstract class DrawCommandMetadata
         return value;
     }
 
-    private static DrawRect ExpandStroke(DrawRect bounds, DrawPen? pen)
+    private static DrawRect? ExpandStroke(DrawRect bounds, DrawPen? pen)
     {
         if (pen is null)
         {
@@ -517,14 +518,14 @@ internal abstract class DrawCommandMetadata
         }
 
         float extent = pen.Thickness * MathF.Max(1, pen.Style.MiterLimit);
-        return new DrawRect(
+        return DrawRect.TryCreate(
             bounds.X - extent,
             bounds.Y - extent,
             bounds.Width + (extent * 2),
             bounds.Height + (extent * 2));
     }
 
-    private static DrawRect LineBounds(DrawCommand command)
+    private static DrawRect? LineBounds(DrawCommand command)
     {
         float extent = command.Pen is DrawPen pen
             ? pen.Thickness * MathF.Max(1, pen.Style.MiterLimit)
@@ -533,10 +534,10 @@ internal abstract class DrawCommandMetadata
         float top = MathF.Min(command.Position.Y, command.EndPoint.Y) - extent;
         float right = MathF.Max(command.Position.X, command.EndPoint.X) + extent;
         float bottom = MathF.Max(command.Position.Y, command.EndPoint.Y) + extent;
-        return new DrawRect(left, top, right - left, bottom - top);
+        return DrawRect.TryCreate(left, top, right - left, bottom - top);
     }
 
-    private static DrawRect TextBounds(DrawCommand command)
+    private static DrawRect? TextBounds(DrawCommand command)
     {
         DrawTextRun run = command.TextRun ??
             throw new InvalidOperationException("DrawText has no text run payload.");
@@ -550,6 +551,6 @@ internal abstract class DrawCommandMetadata
             elements++;
         }
         float width = elements * run.Size;
-        return new DrawRect(command.Position.X, command.Position.Y, width, run.Size * 1.5f);
+        return DrawRect.TryCreate(command.Position.X, command.Position.Y, width, run.Size * 1.5f);
     }
 }
