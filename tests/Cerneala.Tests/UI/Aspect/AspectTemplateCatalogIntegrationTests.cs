@@ -141,6 +141,63 @@ public sealed class AspectTemplateCatalogIntegrationTests
             $"throughCatalog={throughCatalog}: TryWrite returned {written}; new part Opacity {secondPart.Opacity} (expected 0.9), old part Opacity {firstPart.Opacity} (expected 0.25).");
     }
 
+    // A replacement template that fails to build leaves the control without an instance: the observation must drop
+    // the disposed old part instead of reading it and writing into it.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void TemplatePartObservationDropsTheOldPartWhenTheReplacementTemplateFails(bool throughCatalog)
+    {
+        Border firstPart = new() { Opacity = 0.25f };
+        ComponentTemplate<Button> first = new("First", context => context.RequirePart("Part", firstPart));
+        ComponentTemplate<Button> failing = new("Failing", _ => throw new InvalidOperationException("The template failed."));
+        Button button = new();
+        UIRoot root = RootWith(button);
+        if (throughCatalog)
+        {
+            button.ComponentTemplateKey = "App.Button";
+            root.AspectRegistry.Register(AspectPackage.Create("First")
+                .Components(components => components.AddTemplate(
+                    new ComponentTemplateDefinition("App.Button", typeof(Button), first))));
+            root.AspectProcessor.Process(button);
+        }
+        else
+        {
+            button.ComponentTemplate = first;
+            button.ApplyTemplate();
+        }
+
+        MarkupObservation observation = GeneratedMarkup.ObserveTemplatePartProperty(button, "Part", UIElement.OpacityProperty);
+        observation.Start();
+        int changes = 0;
+        observation.Changed += (_, _) => changes++;
+        Assert.True(observation.CanWrite);
+
+        Exception? failure = Record.Exception(() =>
+        {
+            if (throughCatalog)
+            {
+                root.AspectRegistry.Register(AspectPackage.Create("Failing")
+                    .Components(components => components.AddTemplate(
+                        new ComponentTemplateDefinition("App.Button", typeof(Button), failing))));
+                root.AspectProcessor.Process(button);
+            }
+            else
+            {
+                button.ComponentTemplate = failing;
+            }
+        });
+
+        Assert.Equal("The template failed.", failure?.Message);
+        Assert.Null(button.ComponentTemplateInstance);
+        int changesAfterFailure = changes;
+        bool resolved = observation.IsResolved;
+        bool written = observation.TryWrite(0.9f);
+        Assert.True(
+            !written && !resolved && changesAfterFailure == 1 && firstPart.Opacity == 0.25f,
+            $"throughCatalog={throughCatalog}: TryWrite returned {written}; resolved {resolved}; changes {changesAfterFailure} (expected 1); old part Opacity {firstPart.Opacity} (expected 0.25).");
+    }
+
     [Fact]
     public void ContentPresenterFallsBackToContentTemplatesFromRootCatalog()
     {

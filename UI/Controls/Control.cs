@@ -284,35 +284,44 @@ public class Control : UIElement
             return;
         }
 
-        AspectEnvironment environment = Root?.AspectProcessor.GetEnvironment(this) ?? new AspectEnvironment("template");
-        ComponentTemplateContext context = new(this, environment, AspectStateSet.FromElement(this), AspectVariants);
-        OnTemplateInstanceCreating();
-        ComponentTemplateInstance instance = template.CreateInstance(this, context);
         try
         {
-            instance.Attach(this);
-            ResolvingTemplateInstance = instance;
-            OnTemplateApplied(instance);
-            ComponentTemplateInstance = instance;
-            ComponentTemplateInstanceTemplate = template;
-        }
-        catch
-        {
+            AspectEnvironment environment = Root?.AspectProcessor.GetEnvironment(this) ?? new AspectEnvironment("template");
+            ComponentTemplateContext context = new(this, environment, AspectStateSet.FromElement(this), AspectVariants);
+            OnTemplateInstanceCreating();
+            ComponentTemplateInstance instance = template.CreateInstance(this, context);
             try
             {
-                OnTemplateApplied(null);
+                instance.Attach(this);
+                ResolvingTemplateInstance = instance;
+                OnTemplateApplied(instance);
+                ComponentTemplateInstance = instance;
+                ComponentTemplateInstanceTemplate = template;
+            }
+            catch
+            {
+                try
+                {
+                    OnTemplateApplied(null);
+                }
+                finally
+                {
+                    ResolvingTemplateInstance = null;
+                    instance.Dispose();
+                }
+
+                throw;
             }
             finally
             {
                 ResolvingTemplateInstance = null;
-                instance.Dispose();
             }
-
-            throw;
         }
-        finally
+        catch when (previousInstance is not null)
         {
-            ResolvingTemplateInstance = null;
+            // The previous instance is already disposed and no new one was built, so the instance changed to null.
+            ComponentTemplateInstanceChanged?.Invoke();
+            throw;
         }
 
         ComponentTemplateInstanceChanged?.Invoke();

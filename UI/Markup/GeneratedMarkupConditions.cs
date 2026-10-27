@@ -522,19 +522,14 @@ public static partial class GeneratedMarkup
                 return;
             }
 
-            ReconnectAndRaise();
+            ConnectPart();
+            RaiseChanged();
         }
 
         private void OnPartPropertyChanged(object? sender, UiPropertyChangedEventArgs args)
         {
             if (!ReferenceEquals(args.Property, property) || !ShouldProcessCallback()) return;
             SetResolvedValue(args.NewValue);
-            RaiseChanged();
-        }
-
-        private void ReconnectAndRaise()
-        {
-            Reconnect();
             RaiseChanged();
         }
 
@@ -552,6 +547,14 @@ public static partial class GeneratedMarkup
                 applyingTemplate = false;
             }
 
+            ConnectPart();
+        }
+
+        // Connects to the part of the owner's current instance without building one, so the notification of an
+        // instance that failed to build does not run the failing template again.
+        private void ConnectPart()
+        {
+            DisconnectPart();
             if (owner.ComponentTemplateInstance is null || !owner.ComponentTemplateInstance.Parts.TryGetValue(partName, out UIElement? resolved))
             {
                 SetUnresolved();
