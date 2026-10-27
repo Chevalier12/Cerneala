@@ -25,14 +25,24 @@ public static partial class GeneratedMarkup
             key,
             valueSource);
         owner.AddLifecycleBehavior(controller);
-        // The owner's attach path has already run for an attached owner, so the controller subscribes now.
-        if (owner.IsAttached)
+        try
         {
-            controller.Attach();
+            // The owner's attach path has already run for an attached owner, so the controller subscribes now.
+            // A detaching owner is past its behaviors' Detach, so it only gets the current value.
+            if (owner.IsAttached && !owner.IsDetachingFromRoot)
+            {
+                controller.Attach();
+            }
+            else
+            {
+                controller.ApplyAvailableValue();
+            }
         }
-        else
+        catch
         {
-            controller.ApplyAvailableValue();
+            // The caller never receives the lifetime, so nothing may stay registered or subscribed.
+            controller.Dispose();
+            throw;
         }
 
         return controller;

@@ -210,6 +210,50 @@ public sealed class ApplicationResourceIntegrationTests
     }
 
     [Fact]
+    public void AttachResourceWhoseFirstValueFailsOnAnAttachedOwnerLeavesNoSubscription()
+    {
+        CountingResourceProvider provider = new();
+        ResourceId<float> id = new("FailingWidth");
+        provider.Store.SetResource(id, -5f);
+        UIRoot root = new(100, 100);
+        root.SetResourceProvider(provider);
+        Border border = new();
+        root.VisualChildren.Add(border);
+        int rootHandlers = provider.Handlers;
+
+        Assert.Throws<ArgumentException>(() => GeneratedMarkup.AttachResource(
+            border, border, UIElement.WidthProperty, id.Key, UiPropertyValueSource.MarkupBase));
+
+        // The caller never received the lifetime, so nothing may stay subscribed or apply later values.
+        Assert.Equal(rootHandlers, provider.Handlers);
+        provider.Store.SetResource(id, 50f);
+        root.ProcessFrame();
+        Assert.True(float.IsNaN(border.Width));
+    }
+
+    [Fact]
+    public void AttachResourceDuringTheOwnersDetachDoesNotStaySubscribed()
+    {
+        CountingResourceProvider provider = new();
+        ResourceId<Brush?> id = new("DetachingAccent");
+        provider.Store.SetResource(id, new SolidColorBrush(new Color(1, 2, 3)));
+        UIRoot root = new(100, 100);
+        root.SetResourceProvider(provider);
+        int rootHandlers = provider.Handlers;
+        ResourceAttachingOnDetachBorder border = new(id.Key);
+        root.VisualChildren.Add(border);
+
+        root.VisualChildren.Remove(border);
+
+        Assert.False(border.IsAttached);
+        Assert.Equal(rootHandlers, provider.Handlers);
+        root.VisualChildren.Add(border);
+        Assert.Equal(rootHandlers + 1, provider.Handlers);
+        root.VisualChildren.Remove(border);
+        Assert.Equal(rootHandlers, provider.Handlers);
+    }
+
+    [Fact]
     public void ApplicationAspectAppliesToCodeCreatedDerivedControlAtCorrectPrecedence()
     {
         Application application = new();
@@ -281,5 +325,43 @@ public sealed class ApplicationResourceIntegrationTests
 
     private sealed class DerivedButton : Button
     {
+    }
+
+    private sealed class ResourceAttachingOnDetachBorder(string key) : Border
+    {
+        private bool attachedResource;
+
+        protected override void OnDetached()
+        {
+            base.OnDetached();
+            if (!attachedResource)
+            {
+                attachedResource = true;
+                GeneratedMarkup.AttachResource(this, this, Control.BackgroundProperty, key, UiPropertyValueSource.MarkupBase);
+            }
+        }
+    }
+
+    private sealed class CountingResourceProvider : IObservableResourceProvider
+    {
+        public ResourceStore Store { get; } = new();
+
+        public int Handlers { get; private set; }
+
+        public event EventHandler<ResourceChangedEventArgs>? ResourceChanged
+        {
+            add
+            {
+                Handlers++;
+                Store.ResourceChanged += value;
+            }
+            remove
+            {
+                Handlers--;
+                Store.ResourceChanged -= value;
+            }
+        }
+
+        public bool TryGetResource<T>(ResourceId<T> id, out T resource) => Store.TryGetResource(id, out resource);
     }
 }

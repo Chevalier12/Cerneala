@@ -185,7 +185,12 @@ root provider. A local resource therefore shadows an application resource with
 the same key. The controller subscribes only while its owner is attached
 (at once when the owner is already attached at the call, otherwise when it
 attaches), re-resolves the nearest value after matching application-provider changes, and
-marshals a cross-thread provider notification through the root Relay.
+marshals a cross-thread provider notification through the root Relay. A call
+made while the owner is detaching from its root only applies the current value;
+the controller subscribes when the owner attaches again. When applying the
+first value throws, for example because the resource value fails the target
+property's validation, the call removes the controller and rethrows, so nothing
+stays subscribed.
 
 Disposing the lifetime returned by `AttachResource<T>` unsubscribes the
 controller and stops further target updates from that attachment. Its callbacks
@@ -378,6 +383,7 @@ GeneratedMarkup.GetPrismInstance(target).GetLayerState(new PrismNodeId(1)).Visib
 | Property binding factories | `ArgumentNullException` | A required owner, target, target property, observation, observation collection, or projection delegate is `null`. |
 | Computed binding factories | `ArgumentNullException` | A required owner, target, target property, observation collection, or compose delegate is `null`. |
 | `AttachResource<T>` | `ArgumentNullException` or `ArgumentException` | A required owner, target, target property, or resource key is invalid. |
+| `AttachResource<T>` | Exception from the target property write, for example `ArgumentException` | The first resolved resource value fails the target property's validation. The controller is removed before the exception propagates. |
 | `GetTemplateOwner` | `InvalidOperationException` | The element was not created by a component template that is currently attached to its owner. |
 | `GetTemplatePart<T>` | `InvalidOperationException` | The template owner has no part with that name, or the part is not a `T`. |
 | `RequirePrismClip` | `InvalidOperationException` | The element has no Prism instance, or its composition has another name. |
