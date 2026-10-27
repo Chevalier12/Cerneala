@@ -186,13 +186,14 @@ internal sealed partial class CernealaCompletionService
     private static HashSet<string> ReadAttributeNames(string source, int tagStart, TextSpan typedWord)
     {
         HashSet<string> names = new(StringComparer.Ordinal);
+        int tagEnd = FindTagEnd(source, tagStart);
         int position = tagStart + 1;
-        while (position < source.Length && !char.IsWhiteSpace(source[position]) && source[position] is not ('>' or '<'))
+        while (position < tagEnd && !char.IsWhiteSpace(source[position]))
         {
             position++;
         }
 
-        while (position < source.Length && source[position] is not ('>' or '<'))
+        while (position < tagEnd)
         {
             char character = source[position];
             if (character is '\'' or '"')
@@ -225,6 +226,31 @@ internal sealed partial class CernealaCompletionService
         }
 
         return names;
+    }
+
+    // The end of the tag that starts at tagStart: its '>', or the next '<' of an unclosed tag, or source.Length when
+    // neither follows. Quoted values are skipped, as MarkupLexer reads them up to their closing quote, so the '<' in
+    // `Tag="a < b"` does not end the tag.
+    private static int FindTagEnd(string source, int tagStart)
+    {
+        int position = tagStart + 1;
+        while (position < source.Length && source[position] is not ('>' or '<'))
+        {
+            if (source[position] is '\'' or '"')
+            {
+                int closingQuote = source.IndexOf(source[position], position + 1);
+                if (closingQuote < 0)
+                {
+                    return source.Length;
+                }
+
+                position = closingQuote;
+            }
+
+            position++;
+        }
+
+        return position;
     }
 
     private static string? FindUnclosedElementName(string source, int offset)
@@ -650,10 +676,10 @@ internal sealed partial class CernealaCompletionService
                     wordSpan, wordPrefix, lineStart, null, string.Empty, wordSpan, null);
             }
 
-            // The current tag is closed only by a '>' reached before the next '<'; a later '>', such as the one of
-            // the parent's end tag in `<Window><Bu|</Window>`, belongs to another tag.
-            int tagBoundary = source.IndexOfAny(['<', '>'], offset);
-            bool tagHasClose = tagBoundary >= 0 && source[tagBoundary] == '>';
+            // The current tag is closed only by a '>' reached before the next '<' outside quoted values; a later '>',
+            // such as the one of the parent's end tag in `<Window><Bu|</Window>`, belongs to another tag.
+            int tagEnd = FindTagEnd(source, tagStart);
+            bool tagHasClose = tagEnd < source.Length && source[tagEnd] == '>';
             bool closing = tagStart + 1 < source.Length && source[tagStart + 1] == '/';
             int nameStart = tagStart + (closing ? 2 : 1);
             int nameEnd = nameStart;

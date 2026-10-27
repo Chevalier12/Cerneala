@@ -136,6 +136,21 @@ public sealed class CompletionTests
     }
 
     [Fact]
+    public void ElementCompletionBeforeAQuotedValueWithALessThanSignKeepsTheClosedTag()
+    {
+        // MarkupLexer reads a quoted value up to its closing quote, so the '<' in "a < b" does not start a tag.
+        using CompletionFixture fixture = CompletionFixture.Create("<Window><Bu|caret| Tag=\"a < b\" /></Window>");
+
+        CernealaCompletionItem item = Assert.Single(
+            fixture.Complete().Where(candidate => candidate.Label == "Button"));
+
+        string applied = fixture.Text.Substring(0, item.ReplacementSpan.Start) +
+            item.InsertText +
+            fixture.Text.Substring(item.ReplacementSpan.End);
+        Assert.Equal("<Window><Button Tag=\"a < b\" /></Window>", applied);
+    }
+
+    [Fact]
     public void AttributesIncludePropertiesEventsAndCompatibleAttachedPropertiesWithoutDuplicates()
     {
         using CompletionFixture fixture = CompletionFixture.Create(
