@@ -69,6 +69,8 @@ internal static class ElementVisualTransform
             Matrix3x2.TryMultiply(pivoted, Matrix3x2.CreateTranslation(pivotX, pivotY), out transform);
     }
 
+    // Returns false when the inverse cannot be represented with finite float values: a zero determinant, a
+    // determinant that overflows, or a denormal determinant whose reciprocal overflows.
     internal static bool TryInvert(Matrix3x2 matrix, out Matrix3x2 inverse)
     {
         inverse = Matrix3x2.Identity;
