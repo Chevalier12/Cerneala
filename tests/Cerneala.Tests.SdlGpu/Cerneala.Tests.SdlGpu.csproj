@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
     <PackageReference Include="coverlet.collector" Version="6.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
     <PackageReference Include="xunit" Version="2.5.3" />
@@ -22,6 +23,7 @@
     <Compile Include="..\Shared\PrismStainedGlassTestData.cs" Link="Fixtures\PrismStainedGlassTestData.cs" />
     <Compile Include="..\Shared\PrismTestData.cs" Link="Fixtures\PrismTestData.cs" />
     <Compile Include="..\Cerneala.SdlGpuSmoke\SmokeOptions.cs" Link="Smoke\SmokeOptions.cs" />
+    <Compile Include="..\..\benchmarks\Cerneala.Benchmarks\CerberusPlanningBenchmarks.cs" Link="Benchmarks\CerberusPlanningBenchmarks.cs" />
   </ItemGroup>
 
   <ItemGroup>
