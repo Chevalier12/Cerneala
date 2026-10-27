@@ -25,8 +25,8 @@ public sealed class WaveFilter : PrismFilter
 | Name | Type | Default | Description |
 | --- | --- | --- | --- |
 | `Generators` | `float` | `5` | Optional catalog parameter; unit: `count`. |
-| `Wavelength` | `Vector4` | `10, 120` | Optional catalog parameter; unit: `unitless`. |
-| `Amplitude` | `Vector4` | `5, 35` | Optional catalog parameter; unit: `unitless`. |
+| `Wavelength` | `Vector4` | `10, 120` | Optional catalog parameter; unit: `dip`. |
+| `Amplitude` | `Vector4` | `5, 35` | Optional catalog parameter; unit: `dip`. |
 | `Scale` | `Vector4` | `1, 1` | Optional catalog parameter; unit: `unitless`. |
 | `Type` | `string` | `Sine` | Optional catalog parameter; unit: `none`. |
 | `UndefinedAreas` | `string` | `RepeatEdgePixels` | Optional catalog parameter; unit: `none`. |

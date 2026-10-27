@@ -16,7 +16,8 @@ public class ProgressBar : RangeBase
         SetFrameworkDefault(BorderThicknessProperty, new Thickness(1));
     }
 
-    public float ValueRatio => Maximum <= Minimum ? 0 : (Value - Minimum) / (Maximum - Minimum);
+    // In double: for finite float endpoints such as -3e38 and 3e38, Maximum - Minimum overflows float to infinity.
+    public float ValueRatio => Maximum <= Minimum ? 0 : (float)(((double)Value - Minimum) / ((double)Maximum - Minimum));
 
     protected override LayoutSize MeasureCore(MeasureContext context)
     {

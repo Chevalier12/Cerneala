@@ -77,8 +77,6 @@ public sealed partial class UiMarkupGenerator
                 return variable;
             }
 
-            ValidateStaticAnimationState(element);
-
             DirectiveParseResult parsedContent = GetDirectiveContent(
                 element,
                 DirectiveContentKind.Elements |

@@ -109,6 +109,18 @@ internal sealed class SystemCernealaServerProcess : ICernealaServerProcess
     }
 #pragma warning restore VSTHRD003
 
+    public bool WaitForExit(TimeSpan timeout)
+    {
+        try
+        {
+            return process.WaitForExit((int)timeout.TotalMilliseconds);
+        }
+        catch (InvalidOperationException)
+        {
+            return true;
+        }
+    }
+
     public void Kill()
     {
         if (!HasExited)

@@ -4,6 +4,7 @@ using Cerneala.UI.Detective;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Motion.States;
 using Cerneala.UI.Motion.Core;
+using Cerneala.UI.Motion.Specs;
 using Cerneala.UI.Motion.Transactions;
 using Cerneala.UI.Relay;
 using Cerneala.UI.Theming;
@@ -498,10 +499,13 @@ public sealed class AspectEngine
         ThemeProvider? themeProvider,
         Action mutation)
     {
+        // AspectMotion.TokenName names a theme motion token. A theme without that token, or without a MotionTokens
+        // registry, has no transition for the value, so the value is applied immediately, as without a theme provider.
         if (motionValue?.Motion is not { } motion ||
             element.Root is null ||
             themeProvider is null ||
-            !HasApplicableMotion(motionValue))
+            !HasApplicableMotion(motionValue) ||
+            !TryResolveThemeMotion(themeProvider, motion.TokenName, out MotionSpec spec))
         {
             mutation();
             return;
@@ -510,13 +514,21 @@ public sealed class AspectEngine
         MotionPriority priority = (motionValue.MotionSource & AspectMotionSource.State) != 0
             ? MotionPriority.Interactive
             : MotionPriority.Normal;
-        using (element.Root.Motion.BeginTransaction(
-            new MotionTransactionOptions(
-                ThemeMotionTokens.Resolve(themeProvider, motion.TokenName),
-                priority: priority)))
+        using (element.Root.Motion.BeginTransaction(new MotionTransactionOptions(spec, priority: priority)))
         {
             mutation();
         }
+    }
+
+    private static bool TryResolveThemeMotion(ThemeProvider themeProvider, string tokenName, out MotionSpec spec)
+    {
+        if (themeProvider.TryGet(ThemeMotionTokens.Key, out MotionTokens? tokens) && tokens is not null)
+        {
+            return tokens.TryGet(tokenName, out spec);
+        }
+
+        spec = null!;
+        return false;
     }
 
 }

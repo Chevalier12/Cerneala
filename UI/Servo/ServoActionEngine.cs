@@ -126,9 +126,11 @@ internal sealed class ServoActionEngine
     // The text a text replacement must leave: the semantic Value of the target, or the password of a
     // PasswordBox, whose semantic Value is always null so that the projection never reveals it.
     // Example: a TextBox holding "abc" reads "abc"; a Button has no Value and throws ServoException.
-    internal ServoTextValue ReadTextValue(UIRoot root, ServoTarget target)
+    internal ServoTextValue ReadTextValue(UIRoot root, ServoTarget target) =>
+        ReadTextValue(queryEngine.Resolve(root, target), target);
+
+    private static ServoTextValue ReadTextValue(ServoResolvedElement match, ServoTarget target)
     {
-        ServoResolvedElement match = queryEngine.Resolve(root, target);
         if (match.Element is PasswordBox passwordBox)
         {
             return new ServoTextValue(passwordBox.Password, IsSecret: true);
@@ -144,9 +146,18 @@ internal sealed class ServoActionEngine
         return new ServoTextValue((string?)value ?? string.Empty, IsSecret: false);
     }
 
-    internal void VerifyReplacedText(UIRoot root, ServoTarget target, string text)
+    // Checks the element that received the input, not a new resolution of the target: the input can
+    // change what the target matches. Example: ByRole(EditableText).Where(e => e.Value == "old")
+    // replaced with "new" no longer matches the TextBox, whose value "new" is still checked here.
+    internal void VerifyReplacedText(UIRoot root, UIElement edited, ServoTarget target, string text)
     {
-        ServoTextValue actual = ReadTextValue(root, target);
+        if (!queryEngine.TryResolveElement(root, edited, out ServoResolvedElement? match))
+        {
+            throw new ServoException(
+                $"The element of the Servo target {target} left the tree before its replaced text could be checked.");
+        }
+
+        ServoTextValue actual = ReadTextValue(match, target);
         if (string.Equals(actual.Text, text, StringComparison.Ordinal))
         {
             return;

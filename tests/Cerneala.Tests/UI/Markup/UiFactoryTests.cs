@@ -128,6 +128,53 @@ public sealed class UiFactoryTests
         Assert.Equal("MARKUP023", Assert.Single(result.Diagnostics).Code);
     }
 
+    [Theory]
+    [InlineData("Panel", "Background", "Red")]
+    [InlineData("Panel", "Foreground", "Red")]
+    [InlineData("Panel", "BorderBrush", "Red")]
+    [InlineData("Panel", "BorderThickness", "1")]
+    [InlineData("Panel", "Padding", "2")]
+    [InlineData("Panel", "FontFamily", "Segoe UI")]
+    [InlineData("Panel", "FontSize", "12")]
+    [InlineData("StackPanel", "Background", "Red")]
+    [InlineData("StackPanel", "Foreground", "Red")]
+    [InlineData("StackPanel", "BorderBrush", "Red")]
+    [InlineData("StackPanel", "BorderThickness", "1")]
+    [InlineData("StackPanel", "Padding", "2")]
+    [InlineData("StackPanel", "FontFamily", "Segoe UI")]
+    [InlineData("StackPanel", "FontSize", "12")]
+    public void CreateReportsControlPropertiesOnPanelsAsUnknownProperties(string element, string property, string value)
+    {
+        UiFactory factory = new(UiMarkupSchema.CreateDefault());
+        UiMarkupDocument document = Read($"<{element} {property}=\"{value}\" />");
+
+        MarkupResult<UIElement> strict = factory.Create(document);
+        MarkupResult<UIElement> recovered = factory.Create(document, MarkupLoadOptions.Recover);
+
+        Assert.Null(strict.Value);
+        MarkupDiagnostic diagnostic = Assert.Single(strict.Diagnostics);
+        Assert.Equal("MARKUP023", diagnostic.Code);
+        Assert.Contains($"'{element}.{property}'", diagnostic.Message);
+        Assert.IsAssignableFrom<Cerneala.UI.Layout.Panels.Panel>(recovered.Value);
+        Assert.Equal("MARKUP023", Assert.Single(recovered.Diagnostics).Code);
+    }
+
+    [Theory]
+    [InlineData("Panel")]
+    [InlineData("StackPanel")]
+    public void CreateAppliesElementPropertiesOnPanels(string element)
+    {
+        UiFactory factory = new(UiMarkupSchema.CreateDefault());
+
+        MarkupResult<UIElement> result = factory.Create(Read($"<{element} Margin=\"4\" IsEnabled=\"False\" IsVisible=\"False\" />"));
+
+        Assert.False(result.HasErrors);
+        UIElement panel = Assert.IsAssignableFrom<Cerneala.UI.Layout.Panels.Panel>(result.Value);
+        Assert.Equal(new Thickness(4), panel.Margin);
+        Assert.False(panel.IsEnabled);
+        Assert.False(panel.IsVisible);
+    }
+
     [Fact]
     public void CreateRejectsEmptyColorComponents()
     {

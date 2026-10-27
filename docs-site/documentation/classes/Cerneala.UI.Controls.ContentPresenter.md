@@ -80,7 +80,9 @@ Content is resolved in this order:
 | `LocalTemplateRegistry` | If set and a template resolves for `Content` and `ContentTemplateKey`, creates the child from that template. |
 | `UIElement` content | Hosts the element directly. The element must not already have a logical or visual parent. |
 | `string` content | Creates or reuses a generated `TextBlock` and copies the presenter's `FontFamily`, `FontSize`, `Foreground`, `ResourceProvider`, and `FontResourceId`. |
-| Other content | Produces no child unless a template handles the content first. |
+| Other content | Produces no child unless a template handles the content first. A presenter that presents an item instead creates a generated `TextBlock` with the content's `ToString()`, as for `string` content (see below). |
+
+A presenter presents an item when an `ItemsControl` uses it as the generated container of an item, or when it is the internal presenter of a `ListBoxItem`. There, as in WPF, an item without an `ItemTemplate` is shown as text. For example, `itemsControl.SetItems(new object[] { 1, DayOfWeek.Monday })` gives two `ContentPresenter` containers whose `PresentedChild` is a `TextBlock` with the `Text` `"1"` and `"Monday"`. A standalone `ContentPresenter` with `Content = 1` still has no `PresentedChild`. A template that matches the item, for example a `ContentTemplate<int>` in `ItemsControl.Templates`, still runs first; `null` content still produces no child.
 
 Changing `Content`, `ContentTemplate`, or `ContentTemplateKey` marks the presentation dirty and refreshes the child. `Content` uses reference equality for change detection, so two different object instances that compare equal still rematerialize the presented child. Generated text content is special: when the presenter already owns a generated `TextBlock`, string changes update and reuse that `TextBlock`.
 
@@ -124,7 +126,7 @@ In both cases, when the element's parent is a `TabItem` inside the presented chi
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `Content` | `object?` | Gets or sets the value to present. UI elements can be hosted directly; strings can be presented as generated `TextBlock` instances; other values require a template to produce a child. |
+| `Content` | `object?` | Gets or sets the value to present. UI elements can be hosted directly; strings can be presented as generated `TextBlock` instances; other values require a template to produce a child, except in a presenter that presents an item, which shows their `ToString()` as a generated `TextBlock`. |
 | `ContentTemplate` | `ContentTemplate?` | Gets or sets the explicit content template used before registry and fallback presentation paths. |
 | `ContentTemplateKey` | `string?` | Gets or sets the key requested from `LocalTemplateRegistry`. |
 | `LocalTemplateRegistry` | `ContentTemplateRegistry?` | Gets or sets the local registry used to resolve a `ContentTemplate` for the current content and key. |
