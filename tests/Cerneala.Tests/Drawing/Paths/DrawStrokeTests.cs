@@ -156,6 +156,42 @@ public sealed class DrawStrokeTests
         Assert.Equal(openInside.Indices, openOutside.Indices);
     }
 
+    // Issue #877: the winding of a closed contour, and so its interior side, does not
+    // depend on where the contour lies. At 1e5 the float products x * y of absolute
+    // coordinates are ~1e10 and lose the square's area of 100.
+    [Theory]
+    [InlineData(0f, DrawStrokeAlignment.Inside)]
+    [InlineData(100000f, DrawStrokeAlignment.Inside)]
+    [InlineData(0f, DrawStrokeAlignment.Outside)]
+    [InlineData(100000f, DrawStrokeAlignment.Outside)]
+    public void AlignedStrokeOfASquareStaysOnItsSideAtAnyDistanceFromTheOrigin(
+        float origin,
+        DrawStrokeAlignment alignment)
+    {
+        DrawPoint[] square =
+        [
+            new DrawPoint(origin, origin),
+            new DrawPoint(origin + 10, origin),
+            new DrawPoint(origin + 10, origin + 10),
+            new DrawPoint(origin, origin + 10)
+        ];
+
+        DrawStrokeMesh mesh = Tessellate(square, isClosed: true, new DrawStrokeStyle(alignment: alignment));
+
+        float expectedMinimum = alignment == DrawStrokeAlignment.Inside ? origin : origin - 2;
+        float expectedMaximum = alignment == DrawStrokeAlignment.Inside ? origin + 10 : origin + 12;
+        float minimumX = mesh.Vertices.Min(point => point.X);
+        float maximumX = mesh.Vertices.Max(point => point.X);
+        float minimumY = mesh.Vertices.Min(point => point.Y);
+        float maximumY = mesh.Vertices.Max(point => point.Y);
+        Assert.True(
+            MathF.Abs(minimumX - expectedMinimum) <= 0.02f &&
+            MathF.Abs(maximumX - expectedMaximum) <= 0.02f &&
+            MathF.Abs(minimumY - expectedMinimum) <= 0.02f &&
+            MathF.Abs(maximumY - expectedMaximum) <= 0.02f,
+            $"{alignment}: vertices span X [{minimumX}, {maximumX}] and Y [{minimumY}, {maximumY}]; expected [{expectedMinimum}, {expectedMaximum}] for the square [{origin}, {origin + 10}].");
+    }
+
     // Contract (2026-10-20): an Inside/Outside aligned stroke behaves like a centered
     // stroke on the contour offset by T/2 toward the interior/exterior, so the dash
     // caps are built around the band's mid-line, not around the contour line.
