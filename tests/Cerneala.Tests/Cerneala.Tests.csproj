@@ -37,6 +37,7 @@
     <ProjectReference Include="..\..\Cerneala.Platforms.Sdl3\Cerneala.Platforms.Sdl3.csproj" />
     <ProjectReference Include="..\..\CernealaPresentation\CernealaPresentation.csproj" />
     <ProjectReference Include="..\..\Playground\Cerneala.Playground\Cerneala.Playground.csproj" />
+    <ProjectReference Include="..\..\Playground\Cerneala.MenuLab\Cerneala.MenuLab.csproj" />
     <ProjectReference Include="..\..\Cerneala.Scene2D.Importers\Cerneala.Scene2D.Importers.csproj" />
     <Content Include="..\..\Playground\Cerneala.Playground\SceneWorldAssets\*.tmj;..\..\Playground\Cerneala.Playground\SceneWorldAssets\*.ldtk;..\..\Playground\Cerneala.Playground\SceneWorldAssets\*.png"
              Link="SceneWorldAuthoring/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
