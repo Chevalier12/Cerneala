@@ -255,6 +255,40 @@ public sealed class ButtonBaseCommandStateIntegrationTests
         Assert.True(button.IsEnabled);
     }
 
+    // A handler run by an earlier refresh of the same command-state phase shows the waiting button, so its refresh
+    // later in that phase must see the new route instead of deferring again with nothing left to wake it.
+    [Fact]
+    public void RoutedCommandButtonShownDuringTheCommandStatePhaseIsRefreshedAgainstTheNewRoute()
+    {
+        UIRoot root = new(100, 100);
+        ButtonBase edit = new();
+        ButtonBase save = new() { Visibility = Visibility.Collapsed };
+        root.VisualChildren.Add(edit);
+        root.VisualChildren.Add(save);
+        RoutedCommand saveCommand = new("Save", typeof(ButtonBaseCommandStateIntegrationTests));
+        root.CommandBindings.Add(new CommandBinding(saveCommand, (_, _) => { }, (_, args) =>
+        {
+            args.CanExecute = false;
+            args.Handled = true;
+        }));
+        TrackingCommand editCommand = new(_ => true);
+        edit.Command = editCommand;
+        save.Command = saveCommand;
+        root.ProcessFrame();
+        Assert.True(save.IsEnabled);
+        edit.IsEnabledChanged += (_, _) => save.Visibility = Visibility.Visible;
+
+        editCommand.CanExecuteEvaluator = _ => false;
+        editCommand.RaiseCanExecuteChanged();
+        save.CommandParameter = "document";
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.False(edit.IsEnabled);
+        Assert.Equal(Visibility.Visible, save.Visibility);
+        Assert.False(save.IsEnabled);
+    }
+
     private static UIRoot RootWithHideableButton(out ButtonBase button, out Action<bool> setHidden, HiddenBy hiddenBy)
     {
         UIRoot root = new(100, 100);
