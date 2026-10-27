@@ -266,11 +266,20 @@ public class Control : UIElement
         {
             try
             {
-                OnTemplateApplied(null);
+                try
+                {
+                    OnTemplateApplied(null);
+                }
+                finally
+                {
+                    previousInstance.Dispose();
+                }
             }
-            finally
+            catch
             {
-                previousInstance.Dispose();
+                // The previous instance is disposed and no new one is built, so the instance changed to null.
+                ComponentTemplateInstanceChanged?.Invoke();
+                throw;
             }
         }
 
