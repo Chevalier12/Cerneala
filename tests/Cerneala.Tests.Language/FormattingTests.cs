@@ -111,6 +111,60 @@ public sealed class FormattingTests
         Assert.Contains($"<TextBlock{newLine}    Text=\"partial\"", onType, StringComparison.Ordinal);
     }
 
+    // A quoted attribute value is data, not layout: the leading spaces of its continuation lines belong to the value.
+    [Theory]
+    [InlineData("\n", false)]
+    [InlineData("\r\n", false)]
+    [InlineData("\n", true)]
+    [InlineData("\r\n", true)]
+    public void FormattingKeepsTheTextOfAMultiLineAttributeValue(string newLine, bool multiLine)
+    {
+        string value = multiLine ? "line one" + newLine + "      line two" : "line one line two";
+        string input = "<Window>" + newLine + "<TextBlock Text=\"" + value + "\" />" + newLine + "</Window>";
+        CernealaFormattingService formatter = new();
+        CernealaDocument document = Document(input);
+        CernealaFormattingOptions options = new(2, InsertSpaces: true);
+        int textBlockStart = input.IndexOf("<TextBlock", StringComparison.Ordinal);
+        int textBlockEnd = input.IndexOf("/>", StringComparison.Ordinal) + 2;
+
+        string formatted = Apply(input, formatter.FormatDocument(document, options));
+        string rangeFormatted = Apply(input, formatter.FormatRange(
+            document,
+            new TextSpan(textBlockStart, textBlockEnd - textBlockStart),
+            options));
+
+        Assert.Equal(
+            document.Syntax.DescendantElements().Select(ElementShape),
+            Document(formatted, version: 2).Syntax.DescendantElements().Select(ElementShape));
+        Assert.Equal(
+            document.Syntax.DescendantElements().Select(ElementShape),
+            Document(rangeFormatted, version: 2).Syntax.DescendantElements().Select(ElementShape));
+        Assert.StartsWith("<Window>" + newLine + "  <TextBlock Text=\"", formatted, StringComparison.Ordinal);
+        Assert.Empty(formatter.FormatDocument(Document(formatted, version: 2), options));
+    }
+
+    // A whitespace-only line inside a multi-line attribute value is part of the string: formatting must not blank it.
+    [Theory]
+    [InlineData("\n", false)]
+    [InlineData("\r\n", false)]
+    [InlineData("\n", true)]
+    [InlineData("\r\n", true)]
+    public void FormattingKeepsAWhitespaceOnlyLineInsideAMultiLineAttributeValue(string newLine, bool whitespaceLine)
+    {
+        string value = whitespaceLine ? "line one" + newLine + "      " + newLine + "line two" : "line one line two";
+        string input = "<Window>" + newLine + "<TextBlock Text=\"" + value + "\" />" + newLine + "</Window>";
+        CernealaFormattingService formatter = new();
+        CernealaDocument document = Document(input);
+
+        string formatted = Apply(input, formatter.FormatDocument(document, new CernealaFormattingOptions(2, InsertSpaces: true)));
+
+        string after = ElementShape(Document(formatted, version: 2).Syntax.DescendantElements().Single(element => element.Name == "TextBlock"));
+        string[] valueLines = after[(after.IndexOf("Text=\"", StringComparison.Ordinal) + 6)..^1].Split(newLine);
+        Assert.True(
+            whitespaceLine ? valueLines.Length == 3 && valueLines[1] == "      " : valueLines.Length == 1 && valueLines[0] == value,
+            $"whitespaceLine={whitespaceLine}: value after formatting {Escape(after)} (the middle line must stay six spaces).");
+    }
+
     [Fact]
     public void CanonicalFormattingProducesNoSecondPassDiffOnTheApprovedPresentationCorpus()
     {
@@ -304,6 +358,8 @@ public sealed class FormattingTests
         element.Name + "|" + string.Join(
             ";",
             element.Attributes.Select(attribute => attribute.NameToken.Text + "=" + attribute.ValueToken.Text));
+
+    private static string Escape(string text) => text.Replace("\r", "\\r").Replace("\n", "\\n");
 
     private static string Apply(string source, IReadOnlyList<CernealaFormattingEdit> edits)
     {
