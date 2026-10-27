@@ -540,7 +540,7 @@ public class Slider : RangeBase
     {
         Thumb thumb = track!.Thumb;
         return thumb.IsDragging
-            ? CoerceToRange(dragStartValue + track.ValueFromDistance(thumb.TotalHorizontalChange, thumb.TotalVerticalChange))
+            ? Clamp(dragStartValue + track.ValueFromDistance(thumb.TotalHorizontalChange, thumb.TotalVerticalChange), Minimum, Maximum)
             : trackValue;
     }
 
@@ -596,7 +596,8 @@ public class Slider : RangeBase
         }
     }
 
-    // WPF's Slider.MoveToNextTick, which returns the value to set instead of setting it: null when the value stays.
+    // WPF's Slider.MoveToNextTick, which returns the value to set instead of setting it: null when the value stays. Unlike
+    // WPF, Minimum and Maximum are also the next ticks of explicit Ticks, so the keys can reach them.
     private float? NextTickValue(float direction)
     {
         if (direction == 0)
@@ -613,21 +614,31 @@ public class Slider : RangeBase
         {
             if (Ticks is { Count: > 0 } ticks)
             {
+                // Exact comparisons, as in SnapToTick: the float tolerance of FloatComparison (about 0.24 at 1000000)
+                // would skip a listed tick near Value and move past it to Maximum or Minimum (#927).
                 foreach (float tick in ticks)
                 {
-                    if ((greaterThan && FloatComparison.GreaterThan(tick, value) && (FloatComparison.LessThan(tick, next) || next == value)) ||
-                        (!greaterThan && FloatComparison.LessThan(tick, value) && (FloatComparison.GreaterThan(tick, next) || next == value)))
+                    if ((greaterThan && tick > value && (tick < next || next == value)) ||
+                        (!greaterThan && tick < value && (tick > next || next == value)))
                     {
                         next = tick;
                     }
                 }
+
+                // Minimum and Maximum count as ticks, as SnapToTick and the TickBar treat them, also when Ticks does not
+                // list them: past the last listed tick, the next tick is Maximum, and before the first one Minimum (#928).
+                if (next == value)
+                {
+                    next = greaterThan ? Maximum : Minimum;
+                }
             }
-            else if (FloatComparison.GreaterThanZero(TickFrequency))
+            else if (TickFrequency > 0)
             {
-                // MathF.Round rounds a midpoint to the even number, as WPF's Math.Round does.
-                float tickNumber = MathF.Round((value - Minimum) / TickFrequency);
+                // Math.Round rounds a midpoint to the even number, as WPF's Math.Round does. Computed in double, as in
+                // SnapToTick, so a very small TickFrequency neither overflows nor loses its multiples (#927).
+                double tickNumber = Math.Round((value - (double)Minimum) / TickFrequency);
                 tickNumber += greaterThan ? 1 : -1;
-                next = Minimum + (tickNumber * TickFrequency);
+                next = (float)(Minimum + (tickNumber * TickFrequency));
             }
         }
 
@@ -636,6 +647,9 @@ public class Slider : RangeBase
 
     // WPF's Slider.SnapToTick: with IsSnapToTickEnabled, the value moves to the nearest tick, or to Minimum or Maximum
     // when they are nearer; a value halfway between two ticks moves to the greater one.
+    // WPF computes in double and its tolerance of DoubleUtil is far below any tick distance. The float tolerance of
+    // FloatComparison grows with the size of the values (about 0.24 at 1000000) and does not shrink below about 1e-6, so
+    // the ticks are computed in double, and the halfway test is relative to the distance between the two ticks (#927).
     private float SnapToTick(float value)
     {
         if (!IsSnapToTickEnabled)
@@ -643,34 +657,37 @@ public class Slider : RangeBase
             return value;
         }
 
-        float previous = Minimum;
-        float next = Maximum;
+        double previous = Minimum;
+        double next = Maximum;
         if (Ticks is { Count: > 0 } ticks)
         {
             foreach (float tick in ticks)
             {
-                if (FloatComparison.AreClose(tick, value))
+                if (tick == value)
                 {
                     return value;
                 }
 
-                if (FloatComparison.LessThan(tick, value) && FloatComparison.GreaterThan(tick, previous))
+                if (tick < value && tick > previous)
                 {
                     previous = tick;
                 }
-                else if (FloatComparison.GreaterThan(tick, value) && FloatComparison.LessThan(tick, next))
+                else if (tick > value && tick < next)
                 {
                     next = tick;
                 }
             }
         }
-        else if (FloatComparison.GreaterThanZero(TickFrequency))
+        else if (TickFrequency > 0)
         {
-            // MathF.Round rounds a midpoint to the even number, as WPF's Math.Round does.
-            previous = Minimum + (MathF.Round((value - Minimum) / TickFrequency) * TickFrequency);
-            next = MathF.Min(Maximum, previous + TickFrequency);
+            // Math.Round rounds a midpoint to the even number, as WPF's Math.Round does.
+            previous = Minimum + (Math.Round((value - (double)Minimum) / TickFrequency) * TickFrequency);
+            next = Math.Min(Maximum, previous + TickFrequency);
         }
 
-        return FloatComparison.GreaterThanOrClose(value, (previous + next) * 0.5f) ? next : previous;
+        double distance = next - previous;
+        return (float)(distance <= 0 || FloatComparison.GreaterThanOrClose((float)((value - previous) / distance), 0.5f)
+            ? next
+            : previous);
     }
 }

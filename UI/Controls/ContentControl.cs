@@ -20,6 +20,11 @@ public class ContentControl : Control
     // True while NotifyPropertyChange stores the previous Content again after a failed hosting.
     private bool restoringContent;
 
+    // Counts the changes of the effective Content. Removing or adding an element raises its Unloaded or Loaded at once,
+    // and a handler can change Content then: that nested change hosts the new Content, and the outer change, whose
+    // count is no longer current, does not host its superseded value.
+    private int contentChange;
+
     public static readonly UiProperty<object?> ContentProperty = UiProperty<object?>.Register(
         nameof(Content),
         typeof(ContentControl),
@@ -169,8 +174,9 @@ public class ContentControl : Control
         // so the hosted element follows it, as WPF's ContentControl.OnContentChanged moves the logical child.
         if (ReferenceEquals(args.Property, ContentProperty))
         {
+            int change = ++contentChange;
             RemoveContentElement(hostedContentElement);
-            if (HostsContentDirectly(args.NewValue))
+            if (change == contentChange && HostsContentDirectly(args.NewValue))
             {
                 try
                 {
@@ -348,21 +354,34 @@ public class ContentControl : Control
             return;
         }
 
+        // The element is the hosted one before it attaches: a Loaded handler that changes Content then removes it again
+        // through the nested change, and this add stops, because that change hosts the current Content.
+        int change = contentChange;
+        hostedContentElement = element;
+
         // An attach that throws leaves the element in the collection whose Add attached it, so it leaves both again.
         // Visual first, unlike RemoveContentElement: the rejected element leaves at once, without a presence exit.
         try
         {
             LogicalChildren.Add(element);
+            if (change != contentChange)
+            {
+                return;
+            }
+
             VisualChildren.Add(element);
         }
         catch
         {
-            VisualChildren.Remove(element);
-            LogicalChildren.Remove(element);
+            if (change == contentChange)
+            {
+                hostedContentElement = null;
+                VisualChildren.Remove(element);
+                LogicalChildren.Remove(element);
+            }
+
             throw;
         }
-
-        hostedContentElement = element;
     }
 
     private void RemoveContentElement(object? content)

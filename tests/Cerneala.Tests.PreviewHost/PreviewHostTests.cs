@@ -514,6 +514,36 @@ public sealed class PreviewHostTests
         Assert.Equal(0.75f, border.Opacity);
     }
 
+    // A string attribute follows the build's markup rules: "\$" is consumed, a standalone
+    // '$' stays literal, and a value that interpolates a path is not a literal edit.
+    [Theory]
+    [InlineData("Hello", "Hello", "World", "Applied", "World")]
+    [InlineData("Cost $5", "Cost $5", "Cost $6", "Applied", "Cost $6")]
+    [InlineData("Cost $5", "Cost \\$5", "Cost \\$6", "Applied", "Cost $6")]
+    [InlineData("Literal: $DataContext.Name", "Literal: \\$DataContext.Name","Literal: \\$DataContext.Title", "Applied", "Literal: $DataContext.Title")]
+    [InlineData("User: Ana", "User: $DataContext.Name", "Usr: $DataContext.Name", "RequiresCompilation", "User: Ana")]
+    [InlineData("Hello", "Hello", "Hello $DataContext.Name", "RequiresCompilation", "Hello")]
+    [InlineData("Hello", "Hello", "Hello $Box.Text", "RequiresCompilation", "Hello")]
+    [InlineData("Price in EUR", "Price in EUR", "Price in $USD", "Applied", "Price in $USD")]
+    [InlineData("Hello", "Hello", "Hello $self", "Applied", "Hello $self")]
+    public void StringAttributeEditUsesTheMarkupLiteralEscapeAndInterpolationRules(
+        string liveText,
+        string oldAttribute,
+        string newAttribute,
+        string expectedResult,
+        string expectedText)
+    {
+        TextBlock text = new() { Text = liveText };
+
+        PreviewMarkupUpdateResult result = PreviewMarkupHotReload.TryApply(
+            text,
+            $"<TextBlock Text=\"{oldAttribute}\" />",
+            $"<TextBlock Text=\"{newAttribute}\" />");
+
+        Assert.Equal(Enum.Parse<PreviewMarkupUpdateResult>(expectedResult), result);
+        Assert.Equal(expectedText, text.Text);
+    }
+
     [Fact]
     public void StructuralMarkupEditStillRequiresCompilation()
     {

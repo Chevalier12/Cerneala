@@ -38,15 +38,16 @@ public sealed class HitTestService
             return null;
         }
 
-        if (element.IsPresenceExiting || !UIElementVisibility.ParticipatesInHitTest(element) || !element.IsEnabled)
+        if (element.IsPresenceInputExcluded || !UIElementVisibility.ParticipatesInHitTest(element) || !element.IsEnabled)
         {
             return null;
         }
 
-        Matrix3x2 elementTransform = Matrix3x2.Multiply(
-            ElementVisualTransform.GetElementTransform(element),
-            ancestorTransform);
-        if (!ElementVisualTransform.TryInvert(elementTransform, out Matrix3x2 inverseTransform))
+        // A transform that overflows float is non-finite and, like a non-invertible
+        // transform, makes the element and its subtree un-hittable.
+        if (!ElementVisualTransform.TryGetElementTransform(element, out Matrix3x2 localTransform) ||
+            !Matrix3x2.TryMultiply(localTransform, ancestorTransform, out Matrix3x2 elementTransform) ||
+            !ElementVisualTransform.TryInvert(elementTransform, out Matrix3x2 inverseTransform))
         {
             return null;
         }
@@ -62,6 +63,27 @@ public sealed class HitTestService
         if (element is UIRoot && !containsElement)
         {
             return null;
+        }
+
+        // Exiting presence children draw after the live children, so they are tested first. One that excludes input
+        // while exiting is skipped by its IsPresenceInputExcluded check.
+        if (element.Root is UIRoot root)
+        {
+            IReadOnlyList<UIElement> exitingChildren = root.Motion.Presence.GetExitingVisualChildren(element);
+            for (int i = exitingChildren.Count - 1; i >= 0; i--)
+            {
+                HitTestResult? exitingResult = HitTestElement(
+                    exitingChildren[i],
+                    routeMap,
+                    x,
+                    y,
+                    filter,
+                    elementTransform);
+                if (exitingResult is not null)
+                {
+                    return exitingResult;
+                }
+            }
         }
 
         for (int i = element.VisualChildren.Count - 1; i >= 0; i--)

@@ -327,6 +327,36 @@ public sealed class TileMap2DContractTests
             Assert.All(draw.SpriteBatch!.Sprites, static sprite => Assert.Equal(Color.Red, sprite.Options.Tint)));
     }
 
+    [Theory]
+    [InlineData(1f)]
+    [InlineData(0.01f)]
+    [InlineData(0f)]
+    public void LayerThenYPickingOrderOfAGroupDoesNotDependOnTheOpacityOfItsMap(float opacityOfMap)
+    {
+        // The map spans y 94..110, so the group's bottom edge is 110, below B's 105, and the group is after B
+        // at every map opacity; Opacity is presentation-only (#948).
+        TileMap2D map = new()
+        {
+            TranslateY = 94,
+            Opacity = opacityOfMap,
+            Source = TileMapTestSource.Create(new TileMap2DModel("Ground", new DrawSize(16, 16), [TerrainSet(), StructureSet()],
+                [new TileChunk2D(default, 2, 1, [new TileCell2D(1), new TileCell2D(1)])], new TileMapBounds2D(0, 0, 2, 1)))
+        };
+        Sprite2D a = new() { X = 0, Y = 90, Width = 10, Height = 10 };
+        Sprite2D b = new() { X = 0, Y = 95, Width = 10, Height = 10 };
+        Scene2D group = new();
+        group.Children.Add(map);
+        group.Children.Add(a);
+        Scene2D scene = new() { OrderMode = SceneOrderMode.LayerThenY };
+        scene.Children.Add(group);
+        scene.Children.Add(b);
+
+        UIElement? hit = SceneHitTest2D.HitTest(scene, new System.Numerics.Vector2(5, 97), Cerneala.UI.Input.HitTestFilter.IncludeAll, []);
+
+        string hitName = ReferenceEquals(hit, a) ? "A" : ReferenceEquals(hit, b) ? "B" : hit is null ? "nothing" : hit.GetType().Name;
+        Assert.True(ReferenceEquals(hit, a), $"Opacity of the map = {opacityOfMap}: the hit node is {hitName} (expected A).");
+    }
+
     private static (UIRoot Root, RenderSurface2D Surface, TileMap2D Map, TestImage Terrain, TestImage Structures)
         CreateSurface(ManualMotionClock? clock = null)
     {

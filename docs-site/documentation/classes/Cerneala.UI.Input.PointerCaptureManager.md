@@ -43,7 +43,9 @@ void EndDrag(ElementInputRouteMap routeMap, PointerCaptureManager capture)
 
 `Release` clears capture and raises `LostMouseCaptureEvent` for the old captured element. Releasing when no element is captured does nothing.
 
-If the captured element is no longer present in the supplied route map, `OverrideTarget` clears capture and returns the original hit target.
+If the captured element is no longer present in the supplied route map, `OverrideTarget` clears capture, raises `LostMouseCaptureEvent` for the old captured element, and returns the original hit target. The element leaves the route map when it is detached, hidden, collapsed or disabled, itself or through an ancestor. `ElementInputBridge.Dispatch` calls `OverrideTarget` at the start of every dispatched input frame, also one in which the pointer does not move, so a dragging `Thumb` that becomes hidden ends its drag with `DragCompleted` and `Canceled = true` in the next dispatched frame. When a `LostMouseCaptureEvent` handler captures another element that the route map contains, `OverrideTarget` returns that element instead of the hit target, as for any captured element.
+
+The old captured element always gets `LostMouseCaptureEvent`. When it is in the supplied route map, the event bubbles along its input route. When it is not, the event is raised with `UIElement.RaiseEvent`, which runs the element's own handlers when the element has no input route.
 
 ## Properties
 
@@ -57,7 +59,7 @@ If the captured element is no longer present in the supplied route map, `Overrid
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `Capture(UIElement, ElementInputRouteMap)` | `void` | Captures pointer input for an element and raises capture change events. Throws if `element` or `routeMap` is `null`. |
-| `OverrideTarget(HitTestResult?, ElementInputRouteMap, float, float)` | `HitTestResult?` | Returns the captured element as the pointer target when capture is active; otherwise returns the supplied hit target. Throws if `routeMap` is `null`. |
+| `OverrideTarget(HitTestResult?, ElementInputRouteMap, float, float)` | `HitTestResult?` | Returns the captured element as the pointer target when capture is active and the route map contains it; otherwise releases a capture the route map does not contain and returns the supplied hit target. Throws if `routeMap` is `null`. |
 | `Release(ElementInputRouteMap)` | `void` | Releases pointer capture and raises a lost-capture event when an element was captured. Throws if `routeMap` is `null`. |
 
 ## Applies to

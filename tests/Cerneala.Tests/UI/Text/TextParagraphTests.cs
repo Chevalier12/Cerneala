@@ -128,6 +128,45 @@ public sealed class TextParagraphTests
         Assert.Equal(48, max.Size.Height, Tolerance);
     }
 
+    // Issue #963: "aa bb" | "cc dd" | "ee" at width 30. "cc dd" ends neither the text nor a hard line break, so Justify
+    // stretches it also when MaxLines hides "ee".
+    [Theory]
+    [InlineData(0)]
+    [InlineData(2)]
+    public void JustifyStretchesTheLastVisibleLineWhenMaxLinesHidesLaterSoftWrappedLines(int maxLines)
+    {
+        TextMeasurer measurer = CreateMeasurer();
+        TextAspect aspect = Aspect(TextWrapping.Wrap);
+
+        TextParagraphLayout paragraph = measurer.MeasureParagraph(
+            [new TextSpan("aa bb cc dd ee", aspect)],
+            aspect,
+            new TextParagraphOptions(TextAlignment.Justify, MaxLines: maxLines),
+            new LayoutSize(30, float.PositiveInfinity));
+
+        Assert.True(
+            paragraph.Layout.Lines.Count >= 2 && Math.Abs(paragraph.Layout.Lines[1].Bounds.Width - 30) < Tolerance,
+            $"MaxLines={maxLines}: lines [{string.Join("|", paragraph.Layout.Lines.Select(line => line.Text))}] widths [{string.Join(", ", paragraph.Layout.Lines.Select(line => line.Bounds.Width))}] (expected line 1 width 30).");
+    }
+
+    // Issue #963: a line that ends before a hard line break stays unstretched when MaxLines makes it the last visible line.
+    [Fact]
+    public void JustifyKeepsTheLastVisibleLineUnstretchedWhenItEndsBeforeAHardLineBreak()
+    {
+        TextMeasurer measurer = CreateMeasurer();
+        TextAspect aspect = Aspect(TextWrapping.Wrap);
+
+        TextParagraphLayout paragraph = measurer.MeasureParagraph(
+            [new TextSpan("aa bb cc dd\nee", aspect)],
+            aspect,
+            new TextParagraphOptions(TextAlignment.Justify, MaxLines: 2),
+            new LayoutSize(30, float.PositiveInfinity));
+
+        Assert.Equal(["aa bb", "cc dd"], paragraph.Layout.Lines.Select(static line => line.Text));
+        Assert.Equal(30, paragraph.Layout.Lines[0].Bounds.Width, Tolerance);
+        Assert.Equal(25, paragraph.Layout.Lines[1].Bounds.Width, Tolerance);
+    }
+
     [Fact]
     public void MeasureParagraphFitsTrimmedTextIntoTheAvailableHeight()
     {
@@ -153,6 +192,48 @@ public sealed class TextParagraphTests
 
         Assert.Equal(1, paragraph.LineCount);
         Assert.Equal(12, paragraph.Size.Height, Tolerance);
+    }
+
+    // Issue #964: the first line kept because the height is smaller than one line is the whole text, so nothing is hidden.
+    [Theory]
+    [InlineData(1, 50f)]
+    [InlineData(0, 5f)]
+    [InlineData(1, 5f)]
+    public void ASingleCompleteLineGetsNoEllipsisWhenTheHeightIsSmallerThanOneLine(int maxLines, float availableHeight)
+    {
+        TextMeasurer measurer = CreateMeasurer();
+        TextAspect aspect = Aspect(TextWrapping.Wrap, TextTrimming.CharacterEllipsis);
+
+        TextParagraphLayout paragraph = measurer.MeasureParagraph(
+            [new TextSpan("Hi", aspect)],
+            aspect,
+            new TextParagraphOptions(MaxLines: maxLines),
+            new LayoutSize(100, availableHeight));
+
+        DrawTextLayoutLine line = Assert.Single(paragraph.Layout.Lines);
+        Assert.True(
+            line.Text == "Hi" && !line.IsTrimmed,
+            $"MaxLines={maxLines}, height={availableHeight}: line '{line.Text}', IsTrimmed={line.IsTrimmed}.");
+    }
+
+    // Issue #964: the first line kept because the height is smaller than one line still marks the lines hidden after it.
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    public void TheFirstLineKeptForAHeightSmallerThanOneLineMarksTheHiddenLines(int maxLines)
+    {
+        TextMeasurer measurer = CreateMeasurer();
+        TextAspect aspect = Aspect(TextWrapping.Wrap, TextTrimming.CharacterEllipsis);
+
+        TextParagraphLayout paragraph = measurer.MeasureParagraph(
+            [new TextSpan("aaa bbb ccc ddd", aspect)],
+            aspect,
+            new TextParagraphOptions(MaxLines: maxLines),
+            new LayoutSize(20, 5));
+
+        DrawTextLayoutLine line = Assert.Single(paragraph.Layout.Lines);
+        Assert.True(line.IsTrimmed);
+        Assert.EndsWith("…", line.Text, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -107,6 +107,12 @@ public sealed class MotionValue<T> : MotionValue
             activeHandle = retargetedHandle;
             activeComposition = incomingComposition;
 
+            if (sampler.IsComplete)
+            {
+                FinishNaturalCompletion(retargetedHandle, sampler);
+                return retargetedHandle;
+            }
+
             graph.Register(node);
             return retargetedHandle;
         }

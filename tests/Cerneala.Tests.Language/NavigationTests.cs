@@ -206,6 +206,44 @@ public sealed class NavigationTests
         }
     }
 
+    [Theory]
+    [InlineData("<Window><Window.Resources><SolidColorBrush Name=\"Primary\" /></Window.Resources><Button Background=\"$Primary\" /></Window>")]
+    [InlineData("<Window><Window.Resources><Aspect Name=\"Primary\" TargetType=\"Button\"></Aspect></Window.Resources><Button Aspect=\"$Primary\" /></Window>")]
+    [InlineData("<Window><Window.Resources><PrismClip Name=\"Primary\">@layer Foreground { @filter Blur { Radius = 4; } }</PrismClip></Window.Resources><Border><Border.Aspect>@prism $Primary;</Border.Aspect></Border></Window>")]
+    public void ReferencesOfAResourceIncludeTheDeclarationAndTheDollarUse(string markup)
+    {
+        using NavigationFixture fixture = NavigationFixture.Create(markup);
+        CernealaNavigationService service = new();
+        int declaration = markup.IndexOf("Name=\"Primary\"", StringComparison.Ordinal) + "Name=\"".Length + 1;
+
+        IReadOnlyList<CernealaLocation> references = service.GetReferences(fixture.Model, [fixture.Model], declaration, includeDeclaration: true);
+
+        Assert.Equal(2, references.Count);
+        Assert.All(references, location => Assert.Equal("Primary", fixture.Document.Text.Substring(location.Span)));
+        Assert.Equal(2, service.GetDocumentHighlights(fixture.Model, [fixture.Model], declaration).Count);
+    }
+
+    [Fact]
+    public void PrismClipResourceIsRenamedWithItsPrismApplicationReferences()
+    {
+        const string markup = "<Window><Window.Resources><PrismClip Name=\"Primary\">@layer Foreground { @filter Blur { Radius = 4; } }</PrismClip></Window.Resources><Border><Border.Aspect>@prism $Primary;</Border.Aspect></Border></Window>";
+        using NavigationFixture fixture = NavigationFixture.Create(markup);
+        CernealaNavigationService service = new();
+        int declaration = markup.IndexOf("Name=\"Primary\"", StringComparison.Ordinal) + "Name=\"".Length + 1;
+        int application = markup.IndexOf("$Primary", StringComparison.Ordinal);
+
+        CernealaPrepareRenameResult prepared = service.PrepareRename(fixture.Model, [fixture.Model], application);
+        CernealaRenameResult rename = service.Rename(fixture.Model, [fixture.Model], declaration, "Secondary");
+
+        Assert.Equal("Primary", prepared.Placeholder);
+        Assert.True(rename.Succeeded, rename.Error);
+        Assert.Equal(2, rename.Edits.Count);
+        string renamed = Apply(markup, rename.Edits);
+        Assert.Contains("Name=\"Secondary\"", renamed, StringComparison.Ordinal);
+        Assert.Contains("@prism $Secondary;", renamed, StringComparison.Ordinal);
+        Assert.DoesNotContain("Primary", renamed, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void ReferencesHighlightsAndRenameRespectShadowingAndLeaveArbitraryTextAlone()
     {
@@ -266,6 +304,60 @@ public sealed class NavigationTests
         using NavigationFixture rebound = NavigationFixture.Create(updated);
         Assert.DoesNotContain(rebound.Model.Diagnostics, diagnostic =>
             diagnostic.Id == "CERNEALAUI004" && diagnostic.Message.Contains("GlobalAccent", StringComparison.Ordinal));
+    }
+
+    [Theory]
+    [InlineData("<Window><Window.Resources><SolidColorBrush Name=\"Primary\" /></Window.Resources><Button Background=\"$Primary\" /></Window>")]
+    [InlineData("<Window><Window.Resources><Aspect Name=\"Primary\" TargetType=\"Button\"></Aspect></Window.Resources><Button Aspect=\"$Primary\" /></Window>")]
+    [InlineData("<Window><Window.Resources><Aspect Name=\"Primary\" TargetType=\"Button\">@default { Opacity = 0.5; }</Aspect></Window.Resources><Button Aspect=\"$Primary\" /></Window>")]
+    [InlineData("<Window><Window.Resources><Aspect Name=\"Primary\" TargetType=\"Button\">@template { <TextBlock Text=\"Named\" /> }</Aspect></Window.Resources><Button Aspect=\"$Primary\" /></Window>")]
+    public void ResourceDeclaredByNameIsRenamedWithItsDollarReferences(string markup)
+    {
+        using NavigationFixture fixture = NavigationFixture.Create(markup);
+        CernealaNavigationService service = new();
+        int declaration = markup.IndexOf("Name=\"Primary\"", StringComparison.Ordinal) + "Name=\"".Length + 1;
+
+        CernealaRenameResult rename = service.Rename(fixture.Model, [fixture.Model], declaration, "Secondary");
+
+        Assert.True(rename.Succeeded, rename.Error);
+        Assert.Equal(2, rename.Edits.Count);
+        string renamed = Apply(markup, rename.Edits);
+        Assert.Contains("Name=\"Secondary\"", renamed, StringComparison.Ordinal);
+        Assert.Contains("\"$Secondary\"", renamed, StringComparison.Ordinal);
+        Assert.DoesNotContain("Primary", renamed, StringComparison.Ordinal);
+        Assert.Equal(2, service.GetReferences(fixture.Model, [fixture.Model], declaration, includeDeclaration: true).Count);
+        Assert.Equal(2, service.GetDocumentHighlights(fixture.Model, [fixture.Model], declaration).Count);
+    }
+
+    [Theory]
+    [InlineData("<Window><Window.Resources><Aspect TargetType=\"Button\">@default { Opacity = 0.5; }</Aspect></Window.Resources><Button /><Button /></Window>", "<Bu", "Button@110,Button@120")]
+    [InlineData("<Window><Window.Resources><Aspect Name=\"@x\" TargetType=\"Button\"></Aspect></Window.Resources><Button Aspect=\"$@x\" /></Window>", "Name=\"@x", "@x@40,@x@109")]
+    public void AspectReferencesKeepTheDefaultAspectApplicationsAndTheDeclaration(string markup, string anchor, string expected)
+    {
+        using NavigationFixture fixture = NavigationFixture.Create(markup);
+        CernealaNavigationService service = new();
+        int offset = markup.LastIndexOf(anchor, StringComparison.Ordinal) + anchor.Length - 1;
+
+        IReadOnlyList<CernealaLocation> references = service.GetReferences(fixture.Model, [fixture.Model], offset, includeDeclaration: true);
+
+        Assert.Equal(expected, string.Join(",", references.Select(location =>
+            markup.Substring(location.Span.Start, location.Span.Length) + "@" + location.Span.Start)));
+        Assert.Equal(references.Count, service.GetDocumentHighlights(fixture.Model, [fixture.Model], offset).Count);
+    }
+
+    [Theory]
+    [InlineData("<Window><Window.Resources><Aspect Name=\"Aspect\" TargetType=\"Button\"></Aspect></Window.Resources><Button Aspect=\"$Aspect\" /></Window>", "Aspect", "<Window><Window.Resources><Aspect Name=\"Secondary\" TargetType=\"Button\"></Aspect></Window.Resources><Button Aspect=\"$Secondary\" /></Window>")]
+    [InlineData("<Window><Window.Resources><Aspect Name=\"@x\" TargetType=\"Button\"></Aspect></Window.Resources><Button Aspect=\"$@x\" /></Window>", "@x", "<Window><Window.Resources><Aspect Name=\"Secondary\" TargetType=\"Button\"></Aspect></Window.Resources><Button Aspect=\"$Secondary\" /></Window>")]
+    public void AspectRenameEditsOnlyTheNameAndItsDollarReference(string markup, string name, string expected)
+    {
+        using NavigationFixture fixture = NavigationFixture.Create(markup);
+        CernealaNavigationService service = new();
+        int declaration = markup.IndexOf("Name=\"" + name + "\"", StringComparison.Ordinal) + "Name=\"".Length + 1;
+
+        CernealaRenameResult rename = service.Rename(fixture.Model, [fixture.Model], declaration, "Secondary");
+
+        Assert.True(rename.Succeeded, rename.Error);
+        Assert.Equal(expected, Apply(markup, rename.Edits));
     }
 
     [Fact]
@@ -388,6 +480,87 @@ public sealed class NavigationTests
             [CreateDocument(betaMarkupPath, renamedBetaMarkup)]);
         Assert.DoesNotContain(renamedAlphaLanguage.GetSemanticModel(alphaMarkupPath).Diagnostics, diagnostic => diagnostic.Id == "CERNEALAUI007");
         Assert.DoesNotContain(renamedBetaLanguage.GetSemanticModel(betaMarkupPath).Diagnostics, diagnostic => diagnostic.Id == "CERNEALAUI007");
+    }
+
+    // Issue #960: the closing tag </t:Card> names the same type as the opening tag, so rename edits both tags.
+    [Theory]
+    [InlineData("<Window xmlns:t=\"clr-namespace:Shared;assembly=Alpha\"><t:Card /></Window>")]
+    [InlineData("<Window xmlns:t=\"clr-namespace:Shared;assembly=Alpha\"><t:Card></t:Card></Window>")]
+    public void RenamingAProjectTypeRenamesTheClosingTagToo(string markup)
+    {
+        const string alphaPath = FixtureRoot + "/Alpha.cs";
+        const string markupPath = FixtureRoot + "/Alpha.crn";
+        const string code = "namespace Shared; public sealed class Card : Cerneala.UI.Controls.Border { }";
+        CSharpCompilation project = CreateCompilation("Alpha", code, alphaPath, CreateReferences());
+        CernealaDocument document = CreateDocument(markupPath, markup);
+        using CernealaCompilation language = new(new RoslynCompilationSymbols(project), [document]);
+        CernealaSemanticModel model = language.GetSemanticModel(markupPath);
+        CernealaNavigationService service = new();
+
+        CernealaRenameResult rename = service.Rename(model, [model], markup.IndexOf("Card", StringComparison.Ordinal) + 1, "Tile");
+        Assert.True(rename.Succeeded, rename.Error);
+        string renamedMarkup = Apply(markup, rename.Edits.Where(edit => Normalize(edit.Path) == Normalize(markupPath)));
+        string renamedCode = Apply(code, rename.Edits.Where(edit => Normalize(edit.Path) == Normalize(alphaPath)));
+
+        string expected = markup.Replace("Card", "Tile", StringComparison.Ordinal);
+        Assert.True(
+            renamedMarkup == expected && renamedCode.Contains("class Tile", StringComparison.Ordinal),
+            $"Renamed markup: {renamedMarkup} (expected {expected}); edits: {rename.Edits.Count}.");
+    }
+
+    // Issue #960: <t:Card.Title>x</t:Card.Title> names the member Title in both tags.
+    [Theory]
+    [InlineData("<Window xmlns:t=\"clr-namespace:Shared;assembly=Alpha\"><t:Card Title=\"x\" /></Window>")]
+    [InlineData("<Window xmlns:t=\"clr-namespace:Shared;assembly=Alpha\"><t:Card><t:Card.Title>x</t:Card.Title></t:Card></Window>")]
+    public void RenamingAProjectMemberRenamesTheClosingTagOfItsPropertyElementToo(string markup)
+    {
+        const string alphaPath = FixtureRoot + "/Alpha.cs";
+        const string markupPath = FixtureRoot + "/Alpha.crn";
+        const string code = "namespace Shared; public sealed class Card : Cerneala.UI.Controls.Border { public string Title { get; set; } = \"\"; }";
+        CSharpCompilation project = CreateCompilation("Alpha", code, alphaPath, CreateReferences());
+        CernealaDocument document = CreateDocument(markupPath, markup);
+        using CernealaCompilation language = new(new RoslynCompilationSymbols(project), [document]);
+        CernealaSemanticModel model = language.GetSemanticModel(markupPath);
+        CernealaNavigationService service = new();
+
+        CernealaRenameResult rename = service.Rename(model, [model], markup.IndexOf("Title", StringComparison.Ordinal) + 1, "Heading");
+        Assert.True(rename.Succeeded, rename.Error);
+        string renamedMarkup = Apply(markup, rename.Edits.Where(edit => Normalize(edit.Path) == Normalize(markupPath)));
+        string renamedCode = Apply(code, rename.Edits.Where(edit => Normalize(edit.Path) == Normalize(alphaPath)));
+
+        string expected = markup.Replace("Title", "Heading", StringComparison.Ordinal);
+        Assert.True(
+            renamedMarkup == expected && renamedCode.Contains("string Heading", StringComparison.Ordinal),
+            $"Renamed markup: {renamedMarkup} (expected {expected}); edits: {rename.Edits.Count}.");
+    }
+
+    // Issue #960: references and document highlights list the closing tag like rename edits it.
+    [Fact]
+    public void ReferencesAndHighlightsOfAnElementTypeIncludeItsClosingTag()
+    {
+        const string alphaPath = FixtureRoot + "/Alpha.cs";
+        const string markupPath = FixtureRoot + "/Alpha.crn";
+        const string code = "namespace Shared; public sealed class Card : Cerneala.UI.Controls.Border { }";
+        const string markup = "<Window xmlns:t=\"clr-namespace:Shared;assembly=Alpha\"><t:Card></t:Card></Window>";
+        CSharpCompilation project = CreateCompilation("Alpha", code, alphaPath, CreateReferences());
+        CernealaDocument document = CreateDocument(markupPath, markup);
+        using CernealaCompilation language = new(new RoslynCompilationSymbols(project), [document]);
+        CernealaSemanticModel model = language.GetSemanticModel(markupPath);
+        CernealaNavigationService service = new();
+        int offset = markup.IndexOf("Card", StringComparison.Ordinal) + 1;
+        TextSpan opening = new(markup.IndexOf("Card", StringComparison.Ordinal), "Card".Length);
+        TextSpan closing = new(markup.LastIndexOf("Card", StringComparison.Ordinal), "Card".Length);
+
+        TextSpan[] references = service.GetReferences(model, [model], offset, includeDeclaration: true)
+            .Where(location => Normalize(location.Path) == Normalize(markupPath))
+            .Select(location => location.Span)
+            .ToArray();
+        TextSpan[] highlights = service.GetDocumentHighlights(model, [model], offset)
+            .Select(highlight => highlight.Span)
+            .ToArray();
+
+        Assert.Equal([opening, closing], references);
+        Assert.Equal([opening, closing], highlights);
     }
 
     private static int OffsetOf(string text, string value) =>

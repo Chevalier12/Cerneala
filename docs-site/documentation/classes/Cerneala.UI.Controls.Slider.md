@@ -140,7 +140,7 @@ With `IsSnapToTickEnabled = true`, the slider snaps the value as WPF's `Slider.S
 
 - A thumb drag and a move-to-point press set `Value` to the nearest tick. `Minimum` and `Maximum` count as ticks. A value exactly halfway between two ticks goes to the greater one. With `TickFrequency = 2` on `0..10`, `4.7` becomes `4` and `5` becomes `6`.
 - The arrow keys, PageUp, PageDown, and the track's repeat buttons move `Value` by the change and snap the result; when the snap would leave `Value` where it was, it moves to the next tick in that direction. With `TickFrequency = 2`, `SmallChange = 1`, and `Value = 4`, Right gives `6`.
-- When `Ticks` has values, they replace `TickFrequency` for snapping too.
+- When `Ticks` has values, they replace `TickFrequency` for snapping too. `Minimum` and `Maximum` still count as ticks, also when `Ticks` does not list them: with `Ticks = [3, 7]` on `0..10` and `SmallChange = 1`, Right goes from `3` to `7` and from `7` to `10`, and Left goes from `3` to `0`. WPF's `Slider.MoveToNextTick` leaves `Value` at `7` and at `3` in this case.
 - Home and End set `Minimum` and `Maximum`, and setting `Value` from code does not snap.
 
 `Ticks` is an `IReadOnlyList<float>?`. Every value must be finite; the values can be in any order. The slider reads the list when it draws and snaps, and it does not observe changes inside a list that is already assigned: assign a new list to change the ticks.
