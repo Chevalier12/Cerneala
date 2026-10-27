@@ -454,6 +454,7 @@ public static partial class GeneratedMarkup
         private readonly UiProperty property;
         private UiObject? part;
         private bool started;
+        private bool applyingTemplate;
 
         public TemplatePartPropertyObservation(Control owner, string partName, UiProperty property)
         {
@@ -472,6 +473,7 @@ public static partial class GeneratedMarkup
             if (started) return;
             started = true;
             owner.PropertyChanged += OnOwnerPropertyChanged;
+            owner.ComponentTemplateInstanceChanged += OnTemplateInstanceChanged;
             Reconnect();
         }
 
@@ -480,6 +482,7 @@ public static partial class GeneratedMarkup
             if (!started) return;
             started = false;
             owner.PropertyChanged -= OnOwnerPropertyChanged;
+            owner.ComponentTemplateInstanceChanged -= OnTemplateInstanceChanged;
             DisconnectPart();
         }
 
@@ -499,6 +502,8 @@ public static partial class GeneratedMarkup
             return true;
         }
 
+        // A new ComponentTemplate builds the instance at once, as Reconnect does, also on a control that builds its first
+        // instance only in measure; OnTemplateInstanceChanged then reconnects.
         private void OnOwnerPropertyChanged(object? sender, UiPropertyChangedEventArgs args)
         {
             if (!ReferenceEquals(args.Property, Control.ComponentTemplateProperty) || !ShouldProcessCallback())
@@ -506,7 +511,19 @@ public static partial class GeneratedMarkup
                 return;
             }
 
-            ReconnectAndRaise();
+            owner.ApplyTemplate();
+        }
+
+        // Every replaced instance, including one the Aspect catalog resolves for ComponentTemplateKey (#924).
+        private void OnTemplateInstanceChanged()
+        {
+            if (applyingTemplate || !ShouldProcessCallback())
+            {
+                return;
+            }
+
+            ConnectPart();
+            RaiseChanged();
         }
 
         private void OnPartPropertyChanged(object? sender, UiPropertyChangedEventArgs args)
@@ -516,16 +533,28 @@ public static partial class GeneratedMarkup
             RaiseChanged();
         }
 
-        private void ReconnectAndRaise()
-        {
-            Reconnect();
-            RaiseChanged();
-        }
-
         private void Reconnect()
         {
             DisconnectPart();
-            owner.ApplyTemplate();
+            // The part is resolved below, so an instance this call builds needs no reconnection of its own.
+            applyingTemplate = true;
+            try
+            {
+                owner.ApplyTemplate();
+            }
+            finally
+            {
+                applyingTemplate = false;
+            }
+
+            ConnectPart();
+        }
+
+        // Connects to the part of the owner's current instance without building one, so the notification of an
+        // instance that failed to build does not run the failing template again.
+        private void ConnectPart()
+        {
+            DisconnectPart();
             if (owner.ComponentTemplateInstance is null || !owner.ComponentTemplateInstance.Parts.TryGetValue(partName, out UIElement? resolved))
             {
                 SetUnresolved();

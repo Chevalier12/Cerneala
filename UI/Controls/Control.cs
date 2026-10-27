@@ -266,50 +266,80 @@ public class Control : UIElement
         {
             try
             {
-                OnTemplateApplied(null);
+                try
+                {
+                    OnTemplateApplied(null);
+                }
+                finally
+                {
+                    previousInstance.Dispose();
+                }
             }
-            finally
+            catch
             {
-                previousInstance.Dispose();
+                // The previous instance is disposed and no new one is built, so the instance changed to null.
+                ComponentTemplateInstanceChanged?.Invoke();
+                throw;
             }
         }
 
         if (template is null)
         {
+            if (previousInstance is not null)
+            {
+                ComponentTemplateInstanceChanged?.Invoke();
+            }
+
             return;
         }
 
-        AspectEnvironment environment = Root?.AspectProcessor.GetEnvironment(this) ?? new AspectEnvironment("template");
-        ComponentTemplateContext context = new(this, environment, AspectStateSet.FromElement(this), AspectVariants);
-        OnTemplateInstanceCreating();
-        ComponentTemplateInstance instance = template.CreateInstance(this, context);
         try
         {
-            instance.Attach(this);
-            ResolvingTemplateInstance = instance;
-            OnTemplateApplied(instance);
-            ComponentTemplateInstance = instance;
-            ComponentTemplateInstanceTemplate = template;
-        }
-        catch
-        {
+            AspectEnvironment environment = Root?.AspectProcessor.GetEnvironment(this) ?? new AspectEnvironment("template");
+            ComponentTemplateContext context = new(this, environment, AspectStateSet.FromElement(this), AspectVariants);
+            OnTemplateInstanceCreating();
+            ComponentTemplateInstance instance = template.CreateInstance(this, context);
             try
             {
-                OnTemplateApplied(null);
+                instance.Attach(this);
+                ResolvingTemplateInstance = instance;
+                OnTemplateApplied(instance);
+                ComponentTemplateInstance = instance;
+                ComponentTemplateInstanceTemplate = template;
+            }
+            catch
+            {
+                try
+                {
+                    OnTemplateApplied(null);
+                }
+                finally
+                {
+                    ResolvingTemplateInstance = null;
+                    instance.Dispose();
+                }
+
+                throw;
             }
             finally
             {
                 ResolvingTemplateInstance = null;
-                instance.Dispose();
             }
-
+        }
+        catch when (previousInstance is not null)
+        {
+            // The previous instance is already disposed and no new one was built, so the instance changed to null.
+            ComponentTemplateInstanceChanged?.Invoke();
             throw;
         }
-        finally
-        {
-            ResolvingTemplateInstance = null;
-        }
+
+        ComponentTemplateInstanceChanged?.Invoke();
     }
+
+    // Raised after ComponentTemplateInstance changed, however the template was applied: a new ComponentTemplate or
+    // ComponentTemplateKey, the layout, or the Aspect pass when the catalog resolves ComponentTemplateKey to another
+    // template without any property change (#924). Template-part observers of generated markup reconnect on it.
+    internal event Action? ComponentTemplateInstanceChanged;
 
     protected virtual void OnTemplateApplied(ComponentTemplateInstance? instance)
     {

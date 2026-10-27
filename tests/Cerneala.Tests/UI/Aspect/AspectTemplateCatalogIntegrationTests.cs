@@ -9,6 +9,7 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
+using Cerneala.UI.Markup;
 using Cerneala.UI.Media;
 using Cerneala.UI.Servo;
 using ServoApi = Cerneala.UI.Servo.Servo;
@@ -54,6 +55,206 @@ public sealed class AspectTemplateCatalogIntegrationTests
 
         Assert.Same(secondRoot, button.ComponentTemplateInstance!.Root);
         Assert.Null(firstRoot.LogicalParent);
+    }
+
+    // #924: the catalog replaces the template behind ComponentTemplateKey without changing ComponentTemplateProperty.
+    [Fact]
+    public void TemplatePartObservationReconnectsWhenTheCatalogReplacesTheNamedTemplate()
+    {
+        Border firstPart = new() { Opacity = 0.25f };
+        Border secondPart = new() { Opacity = 0.75f };
+        ComponentTemplate<Button> first = new("First", context => context.RequirePart("Part", firstPart));
+        ComponentTemplate<Button> second = new("Second", context => context.RequirePart("Part", secondPart));
+        Button button = new() { ComponentTemplateKey = "App.Button" };
+        UIRoot root = RootWith(button);
+        root.AspectRegistry.Register(AspectPackage.Create("First")
+            .Components(components => components.AddTemplate(
+                new ComponentTemplateDefinition("App.Button", typeof(Button), first))));
+        root.AspectProcessor.Process(button);
+        MarkupObservation observation = GeneratedMarkup.ObserveTemplatePartProperty(button, "Part", UIElement.OpacityProperty);
+        observation.Start();
+        int changes = 0;
+        observation.Changed += (_, _) => changes++;
+        Assert.Equal(0.25f, observation.Value);
+
+        root.AspectRegistry.Register(AspectPackage.Create("Second")
+            .Components(components => components.AddTemplate(
+                new ComponentTemplateDefinition("App.Button", typeof(Button), second))));
+        root.AspectProcessor.Process(button);
+
+        Assert.Same(secondPart, button.ComponentTemplateInstance!.Parts["Part"]);
+        Assert.True(Equals(0.75f, observation.Value), $"The observation still reads {observation.Value} (resolved: {observation.IsResolved}).");
+        Assert.Equal(1, changes);
+        firstPart.Opacity = 0.1f;
+        Assert.Equal(0.75f, observation.Value);
+        secondPart.Opacity = 0.5f;
+        Assert.Equal(0.5f, observation.Value);
+    }
+
+    // #924: a write through the observation after the replacement must reach the new part.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void TemplatePartWriteReachesTheNewPartAfterTheTemplateIsReplaced(bool throughCatalog)
+    {
+        Border firstPart = new() { Opacity = 0.25f };
+        Border secondPart = new() { Opacity = 0.75f };
+        ComponentTemplate<Button> first = new("First", context => context.RequirePart("Part", firstPart));
+        ComponentTemplate<Button> second = new("Second", context => context.RequirePart("Part", secondPart));
+        Button button = new();
+        UIRoot root = RootWith(button);
+        if (throughCatalog)
+        {
+            button.ComponentTemplateKey = "App.Button";
+            root.AspectRegistry.Register(AspectPackage.Create("First")
+                .Components(components => components.AddTemplate(
+                    new ComponentTemplateDefinition("App.Button", typeof(Button), first))));
+            root.AspectProcessor.Process(button);
+        }
+        else
+        {
+            button.ComponentTemplate = first;
+            button.ApplyTemplate();
+        }
+
+        MarkupObservation observation = GeneratedMarkup.ObserveTemplatePartProperty(button, "Part", UIElement.OpacityProperty);
+        observation.Start();
+        Assert.Same(firstPart, button.ComponentTemplateInstance!.Parts["Part"]);
+
+        if (throughCatalog)
+        {
+            root.AspectRegistry.Register(AspectPackage.Create("Second")
+                .Components(components => components.AddTemplate(
+                    new ComponentTemplateDefinition("App.Button", typeof(Button), second))));
+            root.AspectProcessor.Process(button);
+        }
+        else
+        {
+            button.ComponentTemplate = second;
+        }
+
+        Assert.Same(secondPart, button.ComponentTemplateInstance!.Parts["Part"]);
+        bool written = observation.TryWrite(0.9f);
+
+        Assert.True(
+            written && secondPart.Opacity == 0.9f && firstPart.Opacity == 0.25f,
+            $"throughCatalog={throughCatalog}: TryWrite returned {written}; new part Opacity {secondPart.Opacity} (expected 0.9), old part Opacity {firstPart.Opacity} (expected 0.25).");
+    }
+
+    // A replacement template that fails to build leaves the control without an instance: the observation must drop
+    // the disposed old part instead of reading it and writing into it.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void TemplatePartObservationDropsTheOldPartWhenTheReplacementTemplateFails(bool throughCatalog)
+    {
+        Border firstPart = new() { Opacity = 0.25f };
+        ComponentTemplate<Button> first = new("First", context => context.RequirePart("Part", firstPart));
+        ComponentTemplate<Button> failing = new("Failing", _ => throw new InvalidOperationException("The template failed."));
+        Button button = new();
+        UIRoot root = RootWith(button);
+        if (throughCatalog)
+        {
+            button.ComponentTemplateKey = "App.Button";
+            root.AspectRegistry.Register(AspectPackage.Create("First")
+                .Components(components => components.AddTemplate(
+                    new ComponentTemplateDefinition("App.Button", typeof(Button), first))));
+            root.AspectProcessor.Process(button);
+        }
+        else
+        {
+            button.ComponentTemplate = first;
+            button.ApplyTemplate();
+        }
+
+        MarkupObservation observation = GeneratedMarkup.ObserveTemplatePartProperty(button, "Part", UIElement.OpacityProperty);
+        observation.Start();
+        int changes = 0;
+        observation.Changed += (_, _) => changes++;
+        Assert.True(observation.CanWrite);
+
+        Exception? failure = Record.Exception(() =>
+        {
+            if (throughCatalog)
+            {
+                root.AspectRegistry.Register(AspectPackage.Create("Failing")
+                    .Components(components => components.AddTemplate(
+                        new ComponentTemplateDefinition("App.Button", typeof(Button), failing))));
+                root.AspectProcessor.Process(button);
+            }
+            else
+            {
+                button.ComponentTemplate = failing;
+            }
+        });
+
+        Assert.Equal("The template failed.", failure?.Message);
+        Assert.Null(button.ComponentTemplateInstance);
+        int changesAfterFailure = changes;
+        bool resolved = observation.IsResolved;
+        bool written = observation.TryWrite(0.9f);
+        Assert.True(
+            !written && !resolved && changesAfterFailure == 1 && firstPart.Opacity == 0.25f,
+            $"throughCatalog={throughCatalog}: TryWrite returned {written}; resolved {resolved}; changes {changesAfterFailure} (expected 1); old part Opacity {firstPart.Opacity} (expected 0.25).");
+    }
+
+    // The control's OnTemplateApplied(null) throws while the old instance is torn down: the old instance is disposed
+    // and no new one is built, so the observation must drop the disposed old part instead of writing into it.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void TemplatePartObservationDropsTheOldPartWhenTheOldTemplateTeardownFails(bool throughCatalog)
+    {
+        Border firstPart = new() { Opacity = 0.25f };
+        Border secondPart = new() { Opacity = 0.75f };
+        ComponentTemplate<Button> first = new("First", context => context.RequirePart("Part", firstPart));
+        ComponentTemplate<Button> second = new("Second", context => context.RequirePart("Part", secondPart));
+        TeardownFailingButton button = new();
+        UIRoot root = RootWith(button);
+        if (throughCatalog)
+        {
+            button.ComponentTemplateKey = "App.Button";
+            root.AspectRegistry.Register(AspectPackage.Create("First")
+                .Components(components => components.AddTemplate(
+                    new ComponentTemplateDefinition("App.Button", typeof(Button), first))));
+            root.AspectProcessor.Process(button);
+        }
+        else
+        {
+            button.ComponentTemplate = first;
+            button.ApplyTemplate();
+        }
+
+        MarkupObservation observation = GeneratedMarkup.ObserveTemplatePartProperty(button, "Part", UIElement.OpacityProperty);
+        observation.Start();
+        int changes = 0;
+        observation.Changed += (_, _) => changes++;
+        Assert.True(observation.CanWrite);
+        button.FailTeardown = true;
+
+        Exception? failure = Record.Exception(() =>
+        {
+            if (throughCatalog)
+            {
+                root.AspectRegistry.Register(AspectPackage.Create("Second")
+                    .Components(components => components.AddTemplate(
+                        new ComponentTemplateDefinition("App.Button", typeof(Button), second))));
+                root.AspectProcessor.Process(button);
+            }
+            else
+            {
+                button.ComponentTemplate = second;
+            }
+        });
+
+        Assert.Equal("The teardown failed.", failure?.Message);
+        Assert.Null(button.ComponentTemplateInstance);
+        int changesAfterFailure = changes;
+        bool resolved = observation.IsResolved;
+        bool written = observation.TryWrite(0.9f);
+        Assert.True(
+            !written && !resolved && changesAfterFailure == 1 && firstPart.Opacity == 0.25f,
+            $"throughCatalog={throughCatalog}: TryWrite returned {written}; resolved {resolved}; changes {changesAfterFailure} (expected 1); old part Opacity {firstPart.Opacity} (expected 0.25).");
     }
 
     [Fact]
@@ -640,6 +841,20 @@ public sealed class AspectTemplateCatalogIntegrationTests
         public void Dispose()
         {
             Interlocked.Exchange(ref dispose, null)?.Invoke();
+        }
+    }
+
+    private sealed class TeardownFailingButton : Button
+    {
+        public bool FailTeardown { get; set; }
+
+        protected override void OnTemplateApplied(ComponentTemplateInstance? instance)
+        {
+            base.OnTemplateApplied(instance);
+            if (instance is null && FailTeardown)
+            {
+                throw new InvalidOperationException("The teardown failed.");
+            }
         }
     }
 }
