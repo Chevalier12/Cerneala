@@ -69,24 +69,25 @@ internal static class UnicodeBidiEngine
 
         int scalar = char.ConvertToUtf32(textElement, 0);
         UnicodeCategory category = CharUnicodeInfo.GetUnicodeCategory(textElement, 0);
-        if (IsRightToLeft(scalar) && category is
-            UnicodeCategory.OtherLetter or
+        if (IsRightToLeft(scalar) && (IsLetter(category) || category is
             UnicodeCategory.LetterNumber or
-            UnicodeCategory.DecimalDigitNumber)
+            UnicodeCategory.DecimalDigitNumber))
         {
             return UnicodeTextDirection.RightToLeft;
         }
 
-        return category is
+        return IsLetter(category) || category == UnicodeCategory.DecimalDigitNumber
+            ? UnicodeTextDirection.LeftToRight
+            : UnicodeTextDirection.Neutral;
+    }
+
+    private static bool IsLetter(UnicodeCategory category) =>
+        category is
             UnicodeCategory.LowercaseLetter or
             UnicodeCategory.UppercaseLetter or
             UnicodeCategory.TitlecaseLetter or
             UnicodeCategory.ModifierLetter or
-            UnicodeCategory.OtherLetter or
-            UnicodeCategory.DecimalDigitNumber
-            ? UnicodeTextDirection.LeftToRight
-            : UnicodeTextDirection.Neutral;
-    }
+            UnicodeCategory.OtherLetter;
 
     private static UnicodeTextDirection NormalizeNeutral(
         UnicodeTextDirection direction,
