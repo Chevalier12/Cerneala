@@ -206,15 +206,19 @@ internal sealed class TextEditor
         Caret = TextCaret.At(caretPosition, Document.Length);
         Selection = TextSelection.Caret(Caret.Position);
 
-        if (!recordsHistory ||
-            (before.Text == Document.Text && before.Caret == Caret && before.Selection == Selection))
+        // An undo unit always changes the text: replacing text with the same text, such as typing the selected text again,
+        // records none, because undoing it would change only the caret and the selection.
+        if (!recordsHistory || before.Text == Document.Text)
         {
+            typedRunEnd = null;
             return;
         }
 
         if (mergesIntoPreviousUnit)
         {
-            typedRunEnd = Capture();
+            // A typed run that brings the text back to the text before the run, such as typing "a" and "b" over the
+            // selected "ab", leaves a unit that would change no text, so it is dropped and the run ends.
+            typedRunEnd = UndoRedo.DiscardNewestUndoWithText(Document.Text) ? null : Capture();
             return;
         }
 
@@ -229,7 +233,7 @@ internal sealed class TextEditor
         Document.SetText(snapshot.Text);
         Caret = TextCaret.At(snapshot.Caret.Position, Document.Length);
         Selection = snapshot.Selection.Clamp(Document.Length);
-        if (recordsHistory && recordUndo && before != Capture())
+        if (recordsHistory && recordUndo && before.Text != Document.Text)
         {
             UndoRedo.PushUndo(before);
         }
