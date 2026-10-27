@@ -7,6 +7,7 @@ using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Detective;
 using Cerneala.UI.Motion.Layout;
 using Cerneala.UI.Motion.Presence;
+using Cerneala.UI.Motion.Specs;
 using Cerneala.UI.Platform;
 using Cerneala.Tests.UI.Motion.Core;
 using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
@@ -75,6 +76,35 @@ public sealed class MotionCompositionReducedMotionTests
 
         Assert.Equal(10f, value.Current);
         Assert.False(root.Motion.HasActiveMotion);
+    }
+
+    [Theory]
+    [InlineData("default")]
+    [InlineData("preserveProgress")]
+    public void ReducedTweenStartedOverARunningAnimationFinishesAtOnce(string options)
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(100, 100, motionClock: clock, reducedMotion: new ReducedMotionPolicy(ReducedMotionMode.Reduce));
+        root.Detective.Motion.IsEnabled = true;
+        MotionValue<float> value = root.Motion.Graph.CreateValue(0f);
+        MotionHandle spring = value.AnimateTo(100f, MotionFactory.Spring<float>());
+        Assert.True(spring.IsActive);
+        root.Detective.Motion.Trace.Clear();
+
+        MotionHandle handle = value.AnimateTo(
+            50f,
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(200)),
+            options == "default" ? null : new MotionStartOptions(RetargetMode.PreserveProgress));
+
+        Assert.True(
+            handle.IsCompleted && value.Current == 50f,
+            $"{options}: handle.IsCompleted={handle.IsCompleted}, handle.IsActive={handle.IsActive}, Current={value.Current}.");
+        Assert.True(spring.IsCanceled);
+        Assert.False(value.IsAnimating);
+        Assert.False(root.Motion.HasActiveMotion);
+        Assert.Contains(
+            root.Detective.Motion.Trace.Events,
+            e => e.Kind == MotionTraceEventKind.MotionCompleted);
     }
 
     [Fact]

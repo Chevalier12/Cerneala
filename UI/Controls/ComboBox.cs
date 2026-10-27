@@ -752,7 +752,9 @@ public class ComboBox : Selector
         {
             transactionText = enteredText;
             transactionTextMatchesPreview = false;
-            int previewIndex = enteredText.Length == 0
+            // Previewing the first filtered result is automatic matching, so with text search off typing previews
+            // no item and a commit keeps the typed text (#942).
+            int previewIndex = enteredText.Length == 0 || !IsTextSearchEnabled
                 ? -1
                 : matchIndex >= 0
                 ? matchIndex

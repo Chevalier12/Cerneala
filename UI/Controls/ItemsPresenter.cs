@@ -23,6 +23,9 @@ public class ItemsPresenter : Control
     private VirtualizingStackPanel? contextPanel;
     private ItemsControl? itemsOwner;
 
+    // The elements ItemTemplate created for the presented items of a standalone presenter, by item index.
+    private Dictionary<int, TemplatedItemElement> templatedElements = [];
+
     public static readonly UiProperty<IEnumerable?> ItemsProperty = UiProperty<IEnumerable?>.Register(
         nameof(Items),
         typeof(ItemsPresenter),
@@ -302,6 +305,12 @@ public class ItemsPresenter : Control
                 ItemsOwner?.OnItemsPresenterPanelChanged();
             }
 
+            // An element the previous template created is not kept for the new one.
+            if (ReferenceEquals(args.Property, ItemTemplateProperty))
+            {
+                templatedElements.Clear();
+            }
+
             itemsDirty = true;
             RefreshItems();
         }
@@ -350,7 +359,8 @@ public class ItemsPresenter : Control
     private void RefreshPresenterItems(RealizationWindow? nextWindow)
     {
         Layout.Panels.Panel nextPanel = ResolveItemsPanel();
-        List<UIElement> nextChildren = [.. CreateItemChildren(nextWindow)];
+        Dictionary<int, TemplatedItemElement> nextTemplatedElements = [];
+        List<UIElement> nextChildren = [.. CreatePresenterItemChildren(nextWindow, nextTemplatedElements)];
         Layout.Panels.Panel? oldPanel = panelRoot;
         List<UIElement> oldChildren = oldPanel is null ? [] : [.. oldPanel.VisualChildren];
         bool reusesPanel = ReferenceEquals(oldPanel, nextPanel);
@@ -358,6 +368,7 @@ public class ItemsPresenter : Control
         {
             SynchronizePanelChildren(nextPanel, nextChildren, oldChildren);
             panelRoot = nextPanel;
+            templatedElements = nextTemplatedElements;
             ApplyVirtualizationContext(nextPanel, VirtualizationContext, nextWindow);
             return;
         }
@@ -402,6 +413,7 @@ public class ItemsPresenter : Control
             throw;
         }
 
+        templatedElements = nextTemplatedElements;
         ApplyVirtualizationContext(nextPanel, VirtualizationContext, nextWindow);
     }
 
@@ -690,17 +702,22 @@ public class ItemsPresenter : Control
 
     private IEnumerable<UIElement> CreateItemChildren(RealizationWindow? window)
     {
-        if (ItemsOwner is ItemsControl owner)
+        ItemsControl owner = ItemsOwner!;
+        foreach (UIElement container in owner.ItemContainerGenerator.RealizeWithoutRecycling(window))
         {
-            foreach (UIElement container in owner.ItemContainerGenerator.RealizeWithoutRecycling(window))
-            {
-                owner.OnItemContainerPrepared(container, ItemContainerGenerator.GetItemIndex(container));
-                yield return container;
-            }
-
-            yield break;
+            owner.OnItemContainerPrepared(container, ItemContainerGenerator.GetItemIndex(container));
+            yield return container;
         }
+    }
 
+    // The element the template created for an item is kept while the same item stays at its index, so an element that
+    // stays in the window keeps its state when the window moves or the items refresh, like an element item (#904). The
+    // template runs only for an index that enters the window or whose item changed. The elements of the new window are
+    // recorded in nextTemplatedElements, which the refresh keeps only when it succeeds.
+    private IEnumerable<UIElement> CreatePresenterItemChildren(
+        RealizationWindow? window,
+        Dictionary<int, TemplatedItemElement> nextTemplatedElements)
+    {
         if (Items is null)
         {
             yield break;
@@ -728,7 +745,7 @@ public class ItemsPresenter : Control
                 }
             }
 
-            UIElement? child = item as UIElement ?? ItemTemplate?.Create(new ContentTemplateContext(item, index: index));
+            UIElement? child = item as UIElement ?? GetOrCreateTemplatedElement(item, index, nextTemplatedElements);
             if (child is not null)
             {
                 yield return child;
@@ -736,6 +753,34 @@ public class ItemsPresenter : Control
 
             index++;
         }
+    }
+
+    private UIElement? GetOrCreateTemplatedElement(
+        object? item,
+        int index,
+        Dictionary<int, TemplatedItemElement> nextTemplatedElements)
+    {
+        if (templatedElements.TryGetValue(index, out TemplatedItemElement kept) && IsSameItem(kept.Item, item))
+        {
+            nextTemplatedElements.Add(index, kept);
+            return kept.Element;
+        }
+
+        UIElement? created = ItemTemplate?.Create(new ContentTemplateContext(item, index: index));
+        if (created is not null)
+        {
+            nextTemplatedElements.Add(index, new TemplatedItemElement(item, created));
+        }
+
+        return created;
+    }
+
+    // An element shows the item instance its template received, so another instance gets a new element, like an
+    // owner's container is prepared again for it, even when it is equal and shows other values. A boxed value is a new
+    // instance on each enumeration and an equal string shows the same text, so an equal one is the same item.
+    private static bool IsSameItem(object? keptItem, object? item)
+    {
+        return ReferenceEquals(keptItem, item) || (item is ValueType or string && Equals(keptItem, item));
     }
 
     // An item or panel change re-measures this presenter but not necessarily the scroll presenter
@@ -865,6 +910,7 @@ public class ItemsPresenter : Control
         itemsDirty = true;
         lastRealizationWindow = null;
         presentedRealizationWindow = null;
+        templatedElements.Clear();
         previousOwner?.ItemContainerGenerator.ReleaseDisplaced();
     }
 
@@ -972,4 +1018,6 @@ public class ItemsPresenter : Control
 
         root.Scheduler.BeginInheritedDescendantPropagation(this);
     }
+
+    private readonly record struct TemplatedItemElement(object? Item, UIElement Element);
 }

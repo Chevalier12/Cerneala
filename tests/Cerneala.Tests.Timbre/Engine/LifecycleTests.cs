@@ -179,6 +179,65 @@ public sealed class LifecycleTests
         Assert.Equal(TimbrePlaybackState.Playing, third.State);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task DeviceLossReportedWhileTheOutputIsOpeningFailsThePlayback(bool lossDuringOpen)
+    {
+        LossDuringOpenOutput output = new(lossDuringOpen);
+        using TimbreRig rig = new(options => options.Output = output);
+        output.Inner = rig.Output;
+        TimbreSound clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
+        TimbrePlayback playback = rig.Scope.Play(clip);
+
+        if (!lossDuringOpen)
+        {
+            await rig.StartAsync(playback);
+            Assert.Equal(TimbrePlaybackState.Playing, playback.State);
+            Assert.Equal(0, rig.Output.CloseCount);
+            return;
+        }
+
+        await rig.ReadyAsync(playback);
+        rig.Output.Release(); // let the runtime mix, as the control does
+        Exception? timeout = await Record.ExceptionAsync(async () => await TimbreRig.CompletionAsync(playback));
+        Assert.True(
+            timeout is null,
+            $"The playback never ended after the device loss during Open (state {playback.State}, output open: {rig.Output.IsOpen}, Close calls: {rig.Output.CloseCount}): {timeout?.Message}");
+        TimbrePlaybackResult result = await playback.Completion;
+
+        Assert.Equal(TimbrePlaybackState.Failed, result.State);
+        Assert.Equal(TimbreErrorKind.DeviceUnavailable, result.Error!.Kind);
+        await rig.SyncAsync();
+        Assert.Equal(1, rig.Output.CloseCount);
+    }
+
+    [Fact]
+    public async Task StaleDeviceLossReportedWhileTheOutputIsClosedDoesNotFailTheNextPlayback()
+    {
+        LossDuringOpenOutput output = new(lossDuringOpen: false);
+        using TimbreRig rig = new(options => options.Output = output);
+        output.Inner = rig.Output;
+        TimbreSound clip = TimbreRig.Clip(new DeterministicTimbreSourceFactory(48000));
+        TimbrePlayback first = rig.Scope.Play(clip);
+        await rig.StartAsync(first);
+        rig.Output.LoseDevice(new IOException("unplugged"));
+        await TimbreRig.CompletionAsync(first);
+        await rig.SyncAsync();
+        Assert.Equal(1, rig.Output.CloseCount);
+
+        // A late callback of the closed device reaches the runtime's client again.
+        output.Client!.NotifyDeviceLost(new IOException("late callback"));
+        await rig.SyncAsync();
+        TimbrePlayback second = rig.Scope.Play(clip);
+        await rig.Output.WaitForSubmittedFramesAsync(TimbreRig.Budget + TimbreRig.Block);
+        await rig.SyncAsync();
+
+        Assert.Equal(TimbrePlaybackState.Playing, second.State);
+        Assert.Equal(2, rig.Output.OpenCount);
+        Assert.Equal(1, rig.Output.CloseCount);
+    }
+
     [Fact]
     public async Task CancelKeepsQueuedPcmAndDoesNotClearTheSharedOutput()
     {
@@ -387,6 +446,28 @@ public sealed class LifecycleTests
         Assert.Equal(0, rig.Output.OpenCount - 1);
     }
 
+    // 922337203686 frames is the first length whose frames * TicksPerSecond
+    // exceeds long.MaxValue; its exact duration still fits a TimeSpan.
+    [Theory]
+    [InlineData(48000L, 10_000_000L)]
+    [InlineData(922337203686L, 192153584101250L)]
+    [InlineData(long.MaxValue, long.MaxValue)]
+    public async Task StreamingPlaybackDurationIsExactOrClampedForAnyReportedLength(long lengthFrames, long expectedTicks)
+    {
+        using TimbreRig rig = new();
+        TimbrePlayback playback = rig.Scope.Play(TimbreRig.Clip(new DeterministicTimbreSourceFactory(lengthFrames), TimbreLoading.Streaming));
+        try
+        {
+            await rig.ReadyAsync(playback);
+
+            Assert.Equal(TimeSpan.FromTicks(expectedTicks), playback.Duration);
+        }
+        finally
+        {
+            playback.Cancel();
+        }
+    }
+
     [Fact]
     public async Task LoadingPolicyRespectsAutoThresholdAndPreloadLimits()
     {
@@ -411,6 +492,69 @@ public sealed class LifecycleTests
         Assert.Equal(1000L * 8, rig.Runtime.GetDiagnostics().CacheBytes);
         Assert.Equal(3, large.OpenCount); // prepare probe + one streaming reader per playback
         Assert.Equal(0, tooLarge.Readers.Sum(reader => reader.FramesRead));
+    }
+
+    [Theory]
+    [InlineData(1000L, TimbreLoading.Preload, false)]
+    [InlineData(2001L, TimbreLoading.Preload, true)]
+    [InlineData(long.MaxValue, TimbreLoading.Preload, true)]
+    [InlineData(long.MaxValue, TimbreLoading.Auto, false)]
+    public async Task HugeReportedLengthIsRefusedAsAResourceLimitOrStreamedNeverAsSourceUnavailable(
+        long lengthFrames, TimbreLoading loading, bool expectResourceLimitFailure)
+    {
+        using TimbreRig rig = new(options =>
+        {
+            options.AutoPreloadMaxBytes = 1000 * 8;
+            options.MaxPreloadBytes = 2000 * 8;
+        }, hold: false);
+        TimbreSound sound = TimbreRig.Clip(new DeterministicTimbreSourceFactory(lengthFrames), loading);
+
+        TimbreErrorKind? prepareError = null;
+        try
+        {
+            await rig.Runtime.PrepareAsync(sound);
+        }
+        catch (TimbreException exception)
+        {
+            prepareError = exception.Kind;
+        }
+
+        Assert.Equal(expectResourceLimitFailure ? TimbreErrorKind.ResourceLimitExceeded : null, prepareError);
+
+        TimbrePlayback playback = rig.Scope.Play(sound);
+        try
+        {
+            if (expectResourceLimitFailure)
+            {
+                await TimbreRig.CompletionAsync(playback);
+            }
+            else
+            {
+                await HarnessWait.WithTimeout(
+                    Task.WhenAny(playback.Completion, playback.WhenReady),
+                    null,
+                    "Playback neither became ready nor completed.");
+            }
+
+            string observed = $"state={playback.State}";
+            TimbreException? error = null;
+            if (playback.Completion.IsCompleted)
+            {
+                TimbrePlaybackResult result = await playback.Completion;
+                error = result.Error;
+                observed = $"state={result.State}, error={error?.Kind}: {error?.Message}";
+            }
+
+            Assert.True(
+                expectResourceLimitFailure
+                    ? error?.Kind == TimbreErrorKind.ResourceLimitExceeded
+                    : playback.State != TimbrePlaybackState.Failed,
+                $"length={lengthFrames}, loading={loading}: {observed}.");
+        }
+        finally
+        {
+            playback.Cancel();
+        }
     }
 
     [Fact]
@@ -442,5 +586,29 @@ public sealed class LifecycleTests
     private sealed class NonSeekableStream : MemoryStream
     {
         public override bool CanSeek => false;
+    }
+
+    // Opens the inner sink and, when asked, reports a device loss to the runtime's client before Open returns.
+    private sealed class LossDuringOpenOutput(bool lossDuringOpen) : ITimbreOutput
+    {
+        public DeterministicTimbreOutput Inner { get; set; } = null!;
+
+        public ITimbreOutputClient? Client { get; private set; }
+
+        public int QueuedFrames => Inner.QueuedFrames;
+
+        public void Open(ITimbreOutputClient client)
+        {
+            Client = client;
+            Inner.Open(client);
+            if (lossDuringOpen)
+            {
+                client.NotifyDeviceLost(new IOException("unplugged"));
+            }
+        }
+
+        public void Submit(ReadOnlySpan<float> samples) => Inner.Submit(samples);
+
+        public void Close() => Inner.Close();
     }
 }

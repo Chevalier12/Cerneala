@@ -486,7 +486,9 @@ internal sealed partial class CernealaSemanticModel
 
         symbols.Add(new CernealaSemanticSymbol(
             CernealaSemanticSymbolKind.ContentTemplate,
-            name ?? key ?? dataType?.Name ?? "ContentTemplate",
+            // Editors display this name, so a blank Name or Key cannot be it.
+            new[] { name, key, dataType?.Name }.FirstOrDefault(candidate => !string.IsNullOrWhiteSpace(candidate)) ??
+                "ContentTemplate",
             dataType?.MetadataName ?? "System.Object",
             template.NameToken.Span,
             dataType,

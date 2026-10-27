@@ -81,6 +81,11 @@ public class ColorSwatch : Control
         swatchButton.Click += OnSwatchClick;
         pickerOverlay.Opened += OnOverlayOpened;
         pickerOverlay.Closed += OnOverlayClosed;
+        if (picker is not null)
+        {
+            pickerOverlay.Content = picker;
+        }
+
         SynchronizeTemplateParts();
     }
 
@@ -189,19 +194,17 @@ public class ColorSwatch : Control
             swatchButton.Click -= OnSwatchClick;
         }
 
-        if (picker is not null)
-        {
-            picker.SelectedColorChanged -= OnPickerSelectedColorChanged;
-        }
-
         if (pickerOverlay is not null)
         {
             pickerOverlay.Opened -= OnOverlayOpened;
             pickerOverlay.Closed -= OnOverlayClosed;
+            if (picker is not null && ReferenceEquals(pickerOverlay.Content, picker))
+            {
+                pickerOverlay.Content = null;
+            }
         }
 
         swatchButton = null;
         pickerOverlay = null;
-        picker = null;
     }
 }

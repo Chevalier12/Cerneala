@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>Cerneala.Benchmarks.CerberusPlanningBenchmarks-20261027-011118</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet v0.15.8, Windows 11 (10.0.26200.9711/25H2/2025Update/HudsonValley2)
+Intel Core i5-9300H CPU 2.40GHz, 1 CPU, 8 logical and 4 physical cores
+.NET SDK 10.0.400
+  [Host] : .NET 8.0.30 (8.0.30, 8.0.3026.36720), X64 RyuJIT x86-64-v3
+</code></pre>
+<pre><code>Job=InProcess  Toolchain=InProcessEmitToolchain  InvocationCount=1  
+IterationCount=5  UnrollFactor=1  WarmupCount=3  
+</code></pre>
+
+<table>
+<thead><tr><th>Method                    </th><th>Mean</th><th>Error</th><th>StdDev</th><th>Ratio</th><th>RatioSD</th><th>Allocated</th><th>Alloc Ratio</th>
+</tr>
+</thead><tbody><tr><td>HomogeneousMergeAndIndexRebasing</td><td>238.3 ns</td><td>80.08 ns</td><td>12.39 ns</td><td>1.00</td><td>0.06</td><td>-</td><td>NA</td>
+</tr><tr><td>AlternatingEnqueue</td><td>158.5 ns</td><td>46.22 ns</td><td>12.00 ns</td><td>0.67</td><td>0.05</td><td>1 B</td><td>NA</td>
+</tr><tr><td>GrowthBeyondInitialCapacity</td><td>191.9 ns</td><td>10.02 ns</td><td>1.55 ns</td><td>0.81</td><td>0.04</td><td>452 B</td><td>NA</td>
+</tr><tr><td>AlternatingEnqueueAndDiscard</td><td>150.5 ns</td><td>11.54 ns</td><td>1.79 ns</td><td>0.63</td><td>0.03</td><td>2 B</td><td>NA</td>
+</tr></tbody></table>
+</body>
+</html>

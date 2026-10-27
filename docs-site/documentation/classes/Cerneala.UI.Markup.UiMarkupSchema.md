@@ -46,22 +46,25 @@ The default schema registers these markup elements:
 | `StackPanel` | `StackPanel` | Adds child elements to `LogicalChildren` and `VisualChildren`. | None |
 | `Border` | `Border` | Assigns the child to `Border.Child`. | `Child` |
 | `Button` | `Button` | Assigns the child to `Button.Content`. | `Content` |
+| `RepeatButton` | `RepeatButton` | Assigns the child to `RepeatButton.Content`. | `Content` |
 | `TextBlock` | `TextBlock` | Does not accept child elements. | `Text` |
 
-The schema also registers these shared element/control properties for every built-in element above:
+The schema also registers these shared element/control properties. The `Elements` column lists the built-in elements that accept each property:
 
-| Property | Target type | Value conversion |
-| --- | --- | --- |
-| `IsEnabled` | `UIElement` | `bool.TryParse`; invalid values throw `FormatException`. |
-| `IsVisible` | `UIElement` | `bool.TryParse`; invalid values throw `FormatException`. |
-| `Margin` | `UIElement` | One float, or four comma-separated floats, parsed with invariant culture. |
-| `Background` | `Control` | Color shorthand converted to `SolidColorBrush`, a brush resource, or a composite brush property element. |
-| `Foreground` | `Control` | A color converted to `SolidColorBrush`, or `$Name` for a brush resource. |
-| `BorderBrush` | `Control` | A color converted to `SolidColorBrush`, or `$Name` for a brush resource. |
-| `BorderThickness` | `Control` | One float, or four comma-separated floats, parsed with invariant culture. |
-| `Padding` | `Control` | One float, or four comma-separated floats, parsed with invariant culture. |
-| `FontFamily` | `Control` | Raw string value. |
-| `FontSize` | `Control` | Single-precision float parsed with invariant culture. |
+| Property | Target type | Elements | Value conversion |
+| --- | --- | --- | --- |
+| `IsEnabled` | `UIElement` | All elements above | `bool.TryParse`; invalid values throw `FormatException`. |
+| `IsVisible` | `UIElement` | All elements above | `bool.TryParse`; invalid values throw `FormatException`. |
+| `Margin` | `UIElement` | All elements above | One float, or four comma-separated floats, parsed with invariant culture. |
+| `Background` | `Control` | `Border`, `Button`, `RepeatButton`, `TextBlock` | Color shorthand converted to `SolidColorBrush`, a brush resource, or a composite brush property element. |
+| `Foreground` | `Control` | `Border`, `Button`, `RepeatButton`, `TextBlock` | A color converted to `SolidColorBrush`, or `$Name` for a brush resource. |
+| `BorderBrush` | `Control` | `Border`, `Button`, `RepeatButton`, `TextBlock` | A color converted to `SolidColorBrush`, or `$Name` for a brush resource. |
+| `BorderThickness` | `Control` | `Border`, `Button`, `RepeatButton`, `TextBlock` | One float, or four comma-separated floats, parsed with invariant culture. |
+| `Padding` | `Control` | `Border`, `Button`, `RepeatButton`, `TextBlock` | One float, or four comma-separated floats, parsed with invariant culture. |
+| `FontFamily` | `Control` | `Border`, `Button`, `RepeatButton`, `TextBlock` | Raw string value. |
+| `FontSize` | `Control` | `Border`, `Button`, `RepeatButton`, `TextBlock` | Single-precision float parsed with invariant culture. |
+
+`Panel` and `StackPanel` are not `Control` types, so the schema does not register the `Control` properties for them. `UiFactory.Create` reports such an attribute as an unknown property (`MARKUP023`). For example, `<StackPanel Background="Red" />` creates no element in strict mode and reports `MARKUP023` with the message `Unknown markup property 'StackPanel.Background'.`. A `<StackPanel.Background>` property element is reported as `MARKUP028`.
 
 `Button.Content` and `TextBlock.Text` are registered as element-specific properties. Text content is accepted only when the element registration has a matching content property registration.
 

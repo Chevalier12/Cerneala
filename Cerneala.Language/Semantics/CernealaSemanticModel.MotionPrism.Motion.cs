@@ -350,9 +350,10 @@ internal sealed partial class CernealaSemanticModel
                 continue;
             }
 
+            // MotionClip body-shape errors are invalid directives (CERNEALAUI006), as in the generator's clip check.
             if (region.Keyword is "@handle" or "@cancel" && !isAspect)
             {
-                AddMotionDiagnostic("CERNEALAUI020", region.KeywordSpan, "MotionClip cannot contain " + region.Keyword + ".");
+                AddMotionDiagnostic("CERNEALAUI006", region.KeywordSpan, "MotionClip cannot contain " + region.Keyword + ".");
                 continue;
             }
 
@@ -360,7 +361,7 @@ internal sealed partial class CernealaSemanticModel
             {
                 if (!isAspect)
                 {
-                    AddMotionDiagnostic("CERNEALAUI020", region.KeywordSpan, "@on is available only inside Aspect.");
+                    AddMotionDiagnostic("CERNEALAUI006", region.KeywordSpan, "@on is available only inside Aspect.");
                 }
                 else
                 {
@@ -638,10 +639,10 @@ internal sealed partial class CernealaSemanticModel
             definitionLocation: resource.Location));
         ValidateMotionRunArguments(header, region.HeaderSpan, clip);
 
-        int asIndex = header.LastIndexOf(" as ", StringComparison.Ordinal);
+        int asIndex = FindTopLevelKeyword(header, "as");
         if (asIndex >= 0)
         {
-            string handle = header.Substring(asIndex + 4).Trim();
+            string handle = header.Substring(asIndex + "as".Length).Trim();
             TextSpan handleSpan = FindSubspan(region.HeaderSpan, handle, fromEnd: true);
             if (!handles.TryGetValue(handle, out TextSpan declaration) || declaration.Start > handleSpan.Start)
             {
@@ -1214,6 +1215,55 @@ internal sealed partial class CernealaSemanticModel
         {
             yield return text.Substring(start).Trim();
         }
+    }
+
+    // Finds a whitespace-delimited keyword outside quoted strings and parentheses.
+    private static int FindTopLevelKeyword(string text, string keyword)
+    {
+        int parentheses = 0;
+        bool quoted = false;
+        char quote = '\0';
+        for (int index = 0; index < text.Length; index++)
+        {
+            char character = text[index];
+            if (quoted)
+            {
+                // A backslash escapes the next character, so "C:\\" still ends at its closing quote.
+                if (character == '\\')
+                {
+                    index++;
+                }
+                else if (character == quote)
+                {
+                    quoted = false;
+                }
+
+                continue;
+            }
+
+            if (character is '\'' or '"')
+            {
+                quoted = true;
+                quote = character;
+            }
+            else if (character == '(')
+            {
+                parentheses++;
+            }
+            else if (character == ')')
+            {
+                parentheses--;
+            }
+            else if (parentheses == 0 &&
+                string.CompareOrdinal(text, index, keyword, 0, keyword.Length) == 0 &&
+                (index == 0 || char.IsWhiteSpace(text[index - 1])) &&
+                (index + keyword.Length == text.Length || char.IsWhiteSpace(text[index + keyword.Length])))
+            {
+                return index;
+            }
+        }
+
+        return -1;
     }
 
     private static DirectiveRegion? InnermostRegion(IEnumerable<DirectiveRegion> regions, int position) => regions

@@ -135,6 +135,34 @@ public sealed class MotionPrismSemanticTests
     }
 
     [Theory]
+    [InlineData("@on Loaded { @run $SlideIn(Label = \"save as draft\"); }", null)]
+    [InlineData("@handle Active; @on Loaded { @run $SlideIn(Label = \"save as draft\") as Active; }", "Active")]
+    [InlineData("@handle Active; @on Loaded { @run $SlideIn(Label = \"C:\\\\\") as Active; }", "Active")]
+    public void MotionRunStringArgumentContainingTheWordAsIsNotAHandleSeparator(string aspectBody, string? handle)
+    {
+        string markup = $$"""
+            <Border Aspect="$Entrance">
+              <Border.Resources>
+                <MotionClip Name="SlideIn" TargetType="Border">
+                  @parameter Label: string = "default";
+                  @animate { debugName = Label; @to { TranslateY = 0; } }
+                </MotionClip>
+                <Aspect Name="Entrance" TargetType="Border">
+                  {{aspectBody}}
+                </Aspect>
+              </Border.Resources>
+            </Border>
+            """;
+
+        CernealaSemanticModel model = Model("MotionRunStringArgument.crn", markup);
+
+        Assert.Empty(model.Diagnostics.Where(IsMotionOrPrism));
+        Assert.Equal(
+            handle is null ? Array.Empty<string>() : new[] { handle, handle },
+            model.Symbols.Where(symbol => symbol.Kind == CernealaSemanticSymbolKind.MotionHandle).Select(symbol => symbol.Name));
+    }
+
+    [Theory]
     [InlineData("@on Loaded { @animate { @from { Opacity = 0; } } }", "CERNEALAUI020")]
     [InlineData("@on Loaded { @parallel { } }", "CERNEALAUI024")]
     [InlineData("@presence { enter = Tween(100ms); exit = Tween(100ms); } @presence { enter = Tween(100ms); exit = Tween(100ms); }", "CERNEALAUI025")]
@@ -151,6 +179,34 @@ public sealed class MotionPrismSemanticTests
         HarnessDiagnostic semantic = Assert.Single(result.SemanticDiagnostics, diagnostic => diagnostic.Id == expectedId);
         HarnessDiagnostic sourceGenerator = Assert.Single(result.SourceGeneratorDiagnostics, diagnostic => diagnostic.Id == expectedId);
         Assert.Equal(sourceGenerator, semantic);
+    }
+
+    [Theory]
+    [InlineData("@on Loaded { @animate { @to { Opacity = 1; } } }")]
+    [InlineData("@cancel Active;")]
+    [InlineData("@handle Active;")]
+    public void MotionClipBodyShapeErrorsUseInvalidDirectiveInEditorAndBuild(string body)
+    {
+        string markup = $$"""
+            <Border>
+              <Border.Resources>
+                <MotionClip Name="Invalid" TargetType="Border">{{body}}</MotionClip>
+              </Border.Resources>
+            </Border>
+            """;
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("MotionClipBodyShape.crn", markup);
+
+        string[] semantic = result.SemanticDiagnostics
+            .Where(diagnostic => diagnostic.Severity == nameof(DiagnosticSeverity.Error))
+            .Select(diagnostic => diagnostic.Id)
+            .ToArray();
+        string[] sourceGenerator = result.SourceGeneratorDiagnostics
+            .Where(diagnostic => diagnostic.Severity == nameof(DiagnosticSeverity.Error))
+            .Select(diagnostic => diagnostic.Id)
+            .ToArray();
+        Assert.True(
+            semantic.Length > 0 && semantic.All(id => id == "CERNEALAUI006") && semantic.SequenceEqual(sourceGenerator),
+            $"Body '{body}': editor [{string.Join(", ", semantic)}], build [{string.Join(", ", sourceGenerator)}] (expected only CERNEALAUI006 in both).");
     }
 
     [Fact]

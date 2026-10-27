@@ -56,7 +56,7 @@ if (FocusPolicy.CanFocus(editor, routeMap))
 | The element participates in input visibility. | `UIElementVisibility.ParticipatesInInput(element)` |
 | The element is present in the supplied route map. | `ElementInputRouteMap.Contains(element)` |
 
-Input visibility requires the element not to be presence-exiting, `IsVisible` to be `true`, and `Visibility` to be `Visible`. Hidden, collapsed, runtime-invisible, detached, disabled, or non-focusable elements are rejected.
+Input visibility requires the element not to be presence-exiting with `PresenceOptions.ExcludeInputWhileExiting = true` (the default), `IsVisible` to be `true`, and `Visibility` to be `Visible`. Hidden, collapsed, runtime-invisible, detached, disabled, or non-focusable elements are rejected.
 
 The supplied `ElementInputRouteMap` is part of the decision. A stale route map can reject an otherwise valid element if the element is not present in that map.
 

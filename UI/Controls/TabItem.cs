@@ -59,7 +59,8 @@ public class TabItem : ContentControl, ISelectableItemContainer
 
     public object? Item { get; set; }
 
-    // The TabControl that shows this tab's Content; it is told when the Content or ContentTemplate changes.
+    // The TabControl whose SelectedContent follows this tab, also before layout and while the container of this tab is
+    // not realized; it is told when the Content or ContentTemplate changes.
     internal TabControl? Owner { get; set; }
 
     public bool IsSelected

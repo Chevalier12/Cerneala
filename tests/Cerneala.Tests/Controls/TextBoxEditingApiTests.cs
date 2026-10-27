@@ -189,6 +189,50 @@ public sealed class TextBoxEditingApiTests
         Assert.False(textBox.CanUndo);
     }
 
+    // #962: CanUndo and CanRedo tell whether Undo() and Redo() would change the text, so they are false while IsReadOnly
+    // rejects Undo() and Redo(); the history stays, and clearing IsReadOnly makes them true again.
+    [Theory]
+    [InlineData("Editable")]
+    [InlineData("ReadOnlyWithUndoUnit")]
+    [InlineData("ReadOnlyWithRedoUnit")]
+    public void CanUndoAndCanRedoAreFalseWhileReadOnlyRejectsUndoAndRedo(string row)
+    {
+        TextBox textBox = NewTextBox();
+        UIRoot root = Host(textBox, clipboard: null, out ElementInputBridge bridge);
+        bridge.Dispatch(root, TextFrame("abc"));
+        bool redoRow = row == "ReadOnlyWithRedoUnit";
+        if (redoRow)
+        {
+            Assert.True(textBox.Undo());
+            Assert.True(textBox.CanRedo);
+        }
+
+        if (row != "Editable")
+        {
+            textBox.IsReadOnly = true;
+        }
+
+        bool canUndo = textBox.CanUndo;
+        bool canRedo = textBox.CanRedo;
+        bool operationResult = redoRow ? textBox.Redo() : textBox.Undo();
+        bool reported = redoRow ? canRedo : canUndo;
+
+        Assert.True(
+            reported == operationResult,
+            $"{row}: CanUndo={canUndo}, CanRedo={canRedo}, {(redoRow ? "Redo()" : "Undo()")}={operationResult}, Text='{textBox.Text}'.");
+        Assert.Equal(row == "Editable", operationResult);
+        if (row == "Editable")
+        {
+            return;
+        }
+
+        textBox.IsReadOnly = false;
+
+        Assert.True(redoRow ? textBox.CanRedo : textBox.CanUndo);
+        Assert.True(redoRow ? textBox.Redo() : textBox.Undo());
+        Assert.Equal(redoRow ? "abc" : string.Empty, textBox.Text);
+    }
+
     [Fact]
     public void UndoLimitKeepsOnlyTheNewestUnits()
     {
@@ -518,6 +562,71 @@ public sealed class TextBoxEditingApiTests
         Assert.Equal(6, textBox.Selection.Start);
         Assert.Equal(11, textBox.Selection.End);
         Assert.False(textBox.CanUndo);
+    }
+
+    [Theory]
+    [InlineData("xy", true)]
+    [InlineData("ab", false)]
+    public void TypingOverASelectionRecordsAnUndoUnitOnlyWhenTheTextChanged(string typed, bool changesText)
+    {
+        TextBox textBox = NewTextBox("ab");
+        UIRoot root = Host(textBox, clipboard: null, out ElementInputBridge bridge);
+        textBox.Select(0, 2);
+
+        bridge.Dispatch(root, TextFrame(typed));
+
+        Assert.Equal(typed, textBox.Text);
+        if (changesText)
+        {
+            Assert.True(textBox.CanUndo);
+            Assert.True(textBox.Undo());
+            Assert.Equal("ab", textBox.Text);
+        }
+        else
+        {
+            Assert.False(textBox.CanUndo);
+            Assert.False(textBox.Undo());
+        }
+    }
+
+    [Fact]
+    public void TypingTheSelectedTextAgainOneCharacterAtATimeLeavesNothingToUndo()
+    {
+        TextBox textBox = NewTextBox("ab");
+        UIRoot root = Host(textBox, clipboard: null, out ElementInputBridge bridge);
+        textBox.Select(0, 2);
+
+        bridge.Dispatch(root, TextFrame("a"));
+        bridge.Dispatch(root, TextFrame("b"));
+
+        Assert.Equal("ab", textBox.Text);
+        Assert.False(textBox.CanUndo);
+        Assert.False(textBox.Undo());
+
+        bridge.Dispatch(root, TextFrame("c"));
+
+        Assert.Equal("abc", textBox.Text);
+        Assert.True(textBox.Undo());
+        Assert.Equal("ab", textBox.Text);
+    }
+
+    [Fact]
+    public void PastingTheSelectedTextAgainRecordsNoUndoUnitAndKeepsTheEarlierHistory()
+    {
+        FakeClipboard clipboard = new("ab");
+        TextBox textBox = NewTextBox("ab");
+        UIRoot root = Host(textBox, clipboard, out _);
+        textBox.Select(2, 2);
+        textBox.SelectedText = "c";
+        textBox.Select(0, 2);
+
+        textBox.Paste();
+
+        Assert.Equal("abc", textBox.Text);
+        Assert.True(textBox.Undo());
+        Assert.Equal("ab", textBox.Text);
+        Assert.False(textBox.CanUndo);
+        GC.KeepAlive(root);
     }
 
     [Fact]
