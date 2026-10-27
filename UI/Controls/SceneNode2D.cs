@@ -306,6 +306,19 @@ public abstract class SceneNode2D : UIElement, IInputSubtreeHost, IInputCoordina
 
     internal abstract SceneBounds2D GetVisibleLocalBounds();
 
+    // The bounds LayerThenY orders this node by, in drawing and in picking. Opacity
+    // is presentation-only, so a transparent node keeps the Y anchor it has at any
+    // positive opacity (#948).
+    internal SceneBounds2D GetOrderLocalBounds()
+    {
+        return IsSceneRendered
+            ? GetGeometricLocalBounds()
+            : SceneBounds2D.Empty;
+    }
+
+    // The visible bounds without the effect of Opacity.
+    internal virtual SceneBounds2D GetGeometricLocalBounds() => GetVisibleLocalBounds();
+
     internal virtual SceneBounds2D GetHitTestLocalBounds() => SceneBounds2D.Empty;
 
     internal virtual bool ParticipatesInInputRoute => true;

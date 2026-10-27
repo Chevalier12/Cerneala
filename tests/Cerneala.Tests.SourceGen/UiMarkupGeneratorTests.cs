@@ -416,6 +416,122 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Equal(typeof(Button), items.Templates[1].DataType);
     }
 
+    [Theory]
+    [InlineData(
+        "NamedAspectTemplateAlias",
+        """
+        <StackPanel xmlns:rows="clr-namespace:TestInput">
+          <StackPanel.Resources>
+            <Aspect Name="Host" TargetType="Button">
+              @template
+              {
+                <ItemsControl>
+                  @templates
+                  {
+                    <ContentTemplate DataType="rows:PropertyRow">
+                      <TextBlock Text="ROW" />
+                    </ContentTemplate>
+                  }
+                </ItemsControl>
+              }
+            </Aspect>
+          </StackPanel.Resources>
+          <Button Aspect="$Host" />
+        </StackPanel>
+        """)]
+    [InlineData(
+        "InlineAspectTemplateAlias",
+        """
+        <StackPanel xmlns:rows="clr-namespace:TestInput">
+          <Button>
+            <Button.Aspect>
+              @template
+              {
+                <ItemsControl>
+                  @templates
+                  {
+                    <ContentTemplate DataType="rows:PropertyRow">
+                      <TextBlock Text="ROW" />
+                    </ContentTemplate>
+                  }
+                </ItemsControl>
+              }
+            </Button.Aspect>
+          </Button>
+        </StackPanel>
+        """)]
+    public void ContentTemplateDataTypeAliasDeclaredOnTheRootResolvesInsideAnAspectTemplate(string name, string markup)
+    {
+        const string inputSource = """
+            namespace TestInput;
+
+            public sealed class PropertyRow
+            {
+                public string Label { get; set; } = "BOUND";
+            }
+            """;
+
+        GeneratorRunResult result = RunGeneratorWithInput(
+            name + ".crn",
+            markup,
+            inputSource,
+            out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+        StackPanel root = Assert.IsType<StackPanel>(
+            InvokeCreate(stream, "Cerneala.GeneratedUi." + name + "Factory"));
+        Button button = Assert.IsType<Button>(root.Children[0]);
+        AttachAndProcess(root);
+        button.ApplyTemplate();
+        ItemsControl items = Assert.IsType<ItemsControl>(button.ComponentTemplateInstance!.Root);
+        Assert.Equal("TestInput.PropertyRow", Assert.Single(items.Templates).DataType?.FullName);
+    }
+
+    [Fact]
+    public void ContentTemplateDataTypeWithUndeclaredAliasInsideAnAspectTemplateReportsDiagnostic()
+    {
+        const string inputSource = """
+            namespace TestInput;
+
+            public sealed class PropertyRow
+            {
+            }
+            """;
+        const string markup = """
+            <StackPanel xmlns:rows="clr-namespace:TestInput">
+              <StackPanel.Resources>
+                <Aspect Name="Host" TargetType="Button">
+                  @template
+                  {
+                    <ItemsControl>
+                      @templates
+                      {
+                        <ContentTemplate DataType="missing:PropertyRow">
+                          <TextBlock Text="ROW" />
+                        </ContentTemplate>
+                      }
+                    </ItemsControl>
+                  }
+                </Aspect>
+              </StackPanel.Resources>
+              <Button Aspect="$Host" />
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGeneratorWithInput(
+            "AspectTemplateMissingAlias.crn",
+            markup,
+            inputSource,
+            out _);
+
+        Diagnostic diagnostic = Assert.Single(result.Diagnostics, item => item.Severity == DiagnosticSeverity.Error);
+        Assert.Equal("CERNEALAUI007", diagnostic.Id);
+        Assert.Contains("'missing:PropertyRow'", diagnostic.GetMessage(), StringComparison.Ordinal);
+    }
+
     [Fact]
     public void CustomElementRequiresClrNamespaceAlias()
     {
@@ -1935,6 +2051,24 @@ public sealed partial class UiMarkupGeneratorTests
 
         StackPanel panel = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.KeywordComparatorsFactory"));
         Assert.Equal(new[] { "lt", "lte", "gt", "gte" }, panel.VisualChildren.Cast<TextBlock>().Select(text => text.Text));
+    }
+
+    // The canonical UiMarkupGenerator page documents both rejections: an @if
+    // condition must be a comparison, and a literal is only a right operand (#918).
+    [Theory]
+    [InlineData("@when IsMouseOver { @if IsMouseOver { Text = \"Active\"; } }", "@if requires a comparison or comparisons combined with 'and' and 'or'.")]
+    [InlineData("@when FontSize { @if 13 > value { Text = \"lt\"; } }", "A literal must be used as a comparison operand.")]
+    public void IfConditionWithoutComparisonOrWithLeftLiteralReportsInvalidBindingSource(string body, string expectedMessage)
+    {
+        string markup = "<TextBlock FontSize=\"12\">" + body + "</TextBlock>";
+
+        GeneratorRunResult result = RunGenerator("IfConditionForms.crn", markup, out _);
+
+        Assert.Contains(
+            result.Diagnostics,
+            diagnostic => diagnostic.Id == "CERNEALAUI007" &&
+                diagnostic.Severity == DiagnosticSeverity.Error &&
+                diagnostic.GetMessage().Contains(expectedMessage, StringComparison.Ordinal));
     }
 
     [Fact]

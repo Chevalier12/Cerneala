@@ -96,6 +96,39 @@ public sealed partial class Scene2DPackageTests
         await Assert.ThrowsAsync<InvalidDataException>(async () => await package.Levels[0].LoadEntityAsync(changed.Id));
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("authoring")]
+    [InlineData("collision")]
+    public async Task LoadingAHashValidEntityWhoseBoundsAreNotFiniteThrowsInvalidDataException(string? hostile)
+    {
+        using Fixture fixture = new();
+        // Each value is valid alone; only the rotated bounds leave the finite drawing range (2e9 per axis).
+        static Scene2DEntity Entity(float size, float colliderSize) => new("e", "map", new(10, 20), new(size, size),
+            shape: "Box", rotation: MathF.PI / 4, role: "Collider",
+            collider: new(TileColliderShape2D.Box, width: colliderSize, height: colliderSize));
+        await fixture.WriteAsync(fixture.Document([Entity(10, 1)]));
+        PackageIndex index = fixture.ReadIndex();
+        PackageEntity original = index.Levels[0].Entities[0];
+        if (hostile is not null)
+        {
+            // The same layout with bounds that cannot be computed; the hash is recomputed so only the catalog check applies.
+            byte[] bytes = PackageValueCodec.Encode(hostile == "authoring" ? Entity(3e38f, 1) : Entity(10, 1.5e9f));
+            Assert.Equal(original.Data.Length, bytes.Length);
+            using (FileStream data = new(fixture.DataPath, FileMode.Open, FileAccess.Write, FileShare.None))
+            {
+                data.Position = original.Data.Offset;
+                data.Write(bytes);
+            }
+            index.Levels[0].Entities[0] = original with { Data = original.Data with { Hash = SHA256.HashData(bytes) } };
+            await fixture.WriteIndexAsync(index);
+        }
+        using Scene2DPackage package = await Scene2DPackage.OpenAsync(fixture.Output);
+        Exception? failure = await Record.ExceptionAsync(async () => await package.Levels[0].LoadEntityAsync("e"));
+        if (hostile is null) { Assert.Null(failure); }
+        else { Assert.True(failure is InvalidDataException, $"{hostile}: {failure?.GetType().Name ?? "no exception"}: {failure?.Message}"); }
+    }
+
     [Fact]
     public async Task EntityHeaderRequiresAnExistingMapAtOpen()
     {

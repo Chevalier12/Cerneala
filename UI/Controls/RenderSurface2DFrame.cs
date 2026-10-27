@@ -26,6 +26,7 @@ public sealed partial class RenderSurface2DFrame
     private RenderSurface2D? preparationSurface;
     private List<TileMap2D.WarmPreparationRequest>? warmPreparation;
     private bool active = true;
+    private static long lastRecordPass;
 
     internal RenderSurface2DFrame(
         DrawCommandList commands,
@@ -61,6 +62,9 @@ public sealed partial class RenderSurface2DFrame
     public DrawRect Bounds { get; }
 
     public TimeSpan FrameTime { get; }
+
+    // Unique per recorded frame; state a scene records for this frame is stamped with it.
+    internal long RecordPass { get; } = Interlocked.Increment(ref lastRecordPass);
 
     public void FillRectangle(DrawRect rectangle, Color color)
     {

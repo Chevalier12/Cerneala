@@ -233,24 +233,36 @@ public class Image : Control
             ReferenceEquals(provider, ResourceProvider) && ReferenceEquals(direct, Source);
     }
 
-    private static LayoutSize ScaleSize(LayoutSize natural, LayoutSize scale)
+    // A scale factor kept as the fraction Target / Source of an available and a natural axis size (1 / 1 for no
+    // scaling). The scaled size multiplies before it divides, in double: 200 * 60 / 200 is exactly 60, while
+    // 200 * (60f / 200) is 60.000004, which is larger than a 60 slot and rounds up to 61.
+    private readonly record struct ScaleFraction(float Target, float Source)
     {
-        return new LayoutSize(natural.Width * scale.Width, natural.Height * scale.Height);
+        public static readonly ScaleFraction One = new(1, 1);
+
+        public double Value => Source == 0 ? 0 : (double)Target / Source;
+
+        public float Apply(float size) => Source == 0 ? 0 : (float)((double)size * Target / Source);
+    }
+
+    private static LayoutSize ScaleSize(LayoutSize natural, (ScaleFraction X, ScaleFraction Y) scale)
+    {
+        return new LayoutSize(scale.X.Apply(natural.Width), scale.Y.Apply(natural.Height));
     }
 
     // The scale factor of WPF Viewbox.ComputeScaleFactor: the x and y scale that stretch the natural size into the
     // available size. An unconstrained (+Infinity) axis takes the scale of the other axis.
-    private static LayoutSize ComputeScaleFactor(
+    private static (ScaleFraction X, ScaleFraction Y) ComputeScaleFactor(
         LayoutSize available, LayoutSize natural, DrawBrushStretch stretch, StretchDirection direction)
     {
-        float scaleX = 1;
-        float scaleY = 1;
+        ScaleFraction scaleX = ScaleFraction.One;
+        ScaleFraction scaleY = ScaleFraction.One;
         bool widthUnconstrained = available.IsWidthUnconstrained;
         bool heightUnconstrained = available.IsHeightUnconstrained;
         if (stretch != DrawBrushStretch.None && (!widthUnconstrained || !heightUnconstrained))
         {
-            scaleX = natural.Width == 0 ? 0 : available.Width / natural.Width;
-            scaleY = natural.Height == 0 ? 0 : available.Height / natural.Height;
+            scaleX = new ScaleFraction(available.Width, natural.Width);
+            scaleY = new ScaleFraction(available.Height, natural.Height);
             if (widthUnconstrained)
             {
                 scaleX = scaleY;
@@ -264,10 +276,10 @@ public class Image : Control
                 switch (stretch)
                 {
                     case DrawBrushStretch.Uniform:
-                        scaleX = scaleY = MathF.Min(scaleX, scaleY);
+                        scaleX = scaleY = scaleX.Value <= scaleY.Value ? scaleX : scaleY;
                         break;
                     case DrawBrushStretch.UniformToFill:
-                        scaleX = scaleY = MathF.Max(scaleX, scaleY);
+                        scaleX = scaleY = scaleX.Value >= scaleY.Value ? scaleX : scaleY;
                         break;
                 }
             }
@@ -276,16 +288,16 @@ public class Image : Control
         switch (direction)
         {
             case StretchDirection.UpOnly:
-                scaleX = MathF.Max(scaleX, 1);
-                scaleY = MathF.Max(scaleY, 1);
+                scaleX = scaleX.Value < 1 ? ScaleFraction.One : scaleX;
+                scaleY = scaleY.Value < 1 ? ScaleFraction.One : scaleY;
                 break;
             case StretchDirection.DownOnly:
-                scaleX = MathF.Min(scaleX, 1);
-                scaleY = MathF.Min(scaleY, 1);
+                scaleX = scaleX.Value > 1 ? ScaleFraction.One : scaleX;
+                scaleY = scaleY.Value > 1 ? ScaleFraction.One : scaleY;
                 break;
         }
 
-        return new LayoutSize(scaleX, scaleY);
+        return (scaleX, scaleY);
     }
 
     private void InvalidateResolvedSource(string reason)

@@ -337,6 +337,7 @@ public sealed partial class UiMarkupGenerator
                     allAspects.Add(aspect);
                 }
 
+                inlineAspectOwners.Add(inline, owner);
                 inline.Remove();
             }
         }

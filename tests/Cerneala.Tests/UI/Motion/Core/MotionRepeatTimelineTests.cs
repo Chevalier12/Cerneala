@@ -21,6 +21,54 @@ public sealed class MotionRepeatTimelineTests
         Assert.Equal(5, sampler.Current, precision: 3);
     }
 
+    [Theory]
+    [InlineData(100_0000)]
+    [InlineData(166700)]
+    public void RepeatCycleBoundariesAreExactForCyclesThatAreNotWholeMilliseconds(long cycleTicks)
+    {
+        TimeSpan cycle = TimeSpan.FromTicks(cycleTicks);
+        TweenSpec<float> tween = MotionFactory.Tween<float>(cycle, Easings.Linear);
+        MotionSampler<float> sampler = new RepeatSpec<float>(tween, repeatCount: 5).CreateSampler(0, 10, new FloatMixer(), DefaultContext());
+        List<string> wrong = [];
+
+        for (int boundary = 1; boundary <= 4; boundary++)
+        {
+            sampler.Advance(cycle);
+            if (Math.Abs(sampler.Current) > 1e-3f)
+            {
+                wrong.Add($"boundary {boundary}: {sampler.Current} (expected 0)");
+            }
+        }
+
+        Assert.True(wrong.Count == 0, $"repeat, cycle {cycle.TotalMilliseconds} ms: {string.Join("; ", wrong)}.");
+        sampler.Advance(cycle);
+        Assert.True(sampler.IsComplete);
+        Assert.Equal(10, sampler.Current);
+    }
+
+    [Theory]
+    [InlineData(100_0000)]
+    [InlineData(166700)]
+    public void PingPongCycleBoundariesAreExactForCyclesThatAreNotWholeMilliseconds(long cycleTicks)
+    {
+        TimeSpan cycle = TimeSpan.FromTicks(cycleTicks);
+        TweenSpec<float> tween = MotionFactory.Tween<float>(cycle, Easings.Linear);
+        MotionSampler<float> sampler = new PingPongSpec<float>(tween, cycles: null).CreateSampler(0, 10, new FloatMixer(), DefaultContext());
+        List<string> wrong = [];
+
+        for (int boundary = 1; boundary <= 200; boundary++)
+        {
+            sampler.Advance(cycle);
+            float expected = boundary % 2 == 0 ? 0 : 10;
+            if (Math.Abs(sampler.Current - expected) > 1e-3f)
+            {
+                wrong.Add($"boundary {boundary}: {sampler.Current} (expected {expected})");
+            }
+        }
+
+        Assert.True(wrong.Count == 0, $"ping-pong, cycle {cycle.TotalMilliseconds} ms: {string.Join("; ", wrong)}.");
+    }
+
     [Fact]
     public void PingPongReversesCorrectly()
     {

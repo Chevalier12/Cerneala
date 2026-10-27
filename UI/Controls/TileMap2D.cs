@@ -175,6 +175,9 @@ public sealed partial class TileMap2D : SceneNode2D, ISceneSpatialParticipant2D,
     internal override SceneBounds2D GetVisibleLocalBounds() =>
         IsPresentationVisible(Catalog) ? GetMapBounds() : SceneBounds2D.Empty;
 
+    internal override SceneBounds2D GetGeometricLocalBounds() =>
+        Catalog is { IsVisible: true } ? GetMapBounds() : SceneBounds2D.Empty;
+
     internal TileMap2DDiagnosticsSnapshot GetDiagnosticsSnapshot() => diagnostics with
     {
         ResidentDataChunks = residentData.Count,

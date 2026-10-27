@@ -12,7 +12,7 @@ namespace Cerneala.Benchmarks;
 public class CerberusPlanningBenchmarks
 {
     private static readonly int[] QuadIndices = [0, 1, 2, 0, 2, 3];
-    private readonly Cerberus cerberus = new();
+    private Cerberus cerberus = new();
     private readonly SdlGpuRenderTarget target = new(
         1,
         2,
@@ -27,6 +27,14 @@ public class CerberusPlanningBenchmarks
     public void Reset()
     {
         cerberus.Discard();
+        cerberus.Begin(target);
+    }
+
+    // Discard keeps grown storage, so every growth iteration starts from a new Cerberus at its initial capacity.
+    [IterationSetup(Target = nameof(GrowthBeyondInitialCapacity))]
+    public void ResetToInitialCapacity()
+    {
+        cerberus = new Cerberus();
         cerberus.Begin(target);
     }
 

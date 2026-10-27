@@ -464,12 +464,24 @@ public partial class AspectChapterView : UserControl
         return int.MaxValue;
     }
 
+    // The property's registered validation is the contract; ElementAspect.SetValue applies the same check.
     private static bool TryParseValue(UiProperty property, string text, out object? value, out string error)
+    {
+        error = $"INVALID {property.Name.ToUpperInvariant()}";
+        if (TryParseText(property, text, out value) && property.IsValidUntyped(value))
+        {
+            return true;
+        }
+
+        value = null;
+        return false;
+    }
+
+    private static bool TryParseText(UiProperty property, string text, out object? value)
     {
         string trimmed = text.Trim();
         Type valueType = property.ValueType;
         value = null;
-        error = $"INVALID {property.Name.ToUpperInvariant()}";
 
         if (valueType == typeof(string) || ReferenceEquals(property, ContentControl.ContentProperty))
         {
@@ -485,11 +497,6 @@ public partial class AspectChapterView : UserControl
 
         if (valueType == typeof(int) && int.TryParse(trimmed, NumberStyles.Integer, CultureInfo.InvariantCulture, out int integer))
         {
-            if (ReferenceEquals(property, UIElement.TabIndexProperty) && integer < 0)
-            {
-                return false;
-            }
-
             value = integer;
             return true;
         }
@@ -506,13 +513,7 @@ public partial class AspectChapterView : UserControl
                 return false;
             }
 
-            float number = isAutoDimension ? float.NaN : parsedFloat;
-            if (!ValidateFloat(property, number))
-            {
-                return false;
-            }
-
-            value = number;
+            value = isAutoDimension ? float.NaN : parsedFloat;
             return true;
         }
 
@@ -524,32 +525,18 @@ public partial class AspectChapterView : UserControl
 
         if (valueType == typeof(Thickness) && TryParseFloats(trimmed, [1, 2, 4], out float[] thickness))
         {
-            Thickness parsed = thickness.Length switch
+            value = thickness.Length switch
             {
                 1 => new Thickness(thickness[0]),
                 2 => new Thickness(thickness[0], thickness[1], thickness[0], thickness[1]),
                 _ => new Thickness(thickness[0], thickness[1], thickness[2], thickness[3])
             };
-            if ((ReferenceEquals(property, Control.BorderThicknessProperty) || ReferenceEquals(property, Control.PaddingProperty)) &&
-                (parsed.Left < 0 || parsed.Top < 0 || parsed.Right < 0 || parsed.Bottom < 0))
-            {
-                return false;
-            }
-
-            value = parsed;
             return true;
         }
 
         if (valueType == typeof(LayoutPoint) && TryParseFloats(trimmed, [2], out float[] point))
         {
-            LayoutPoint parsed = new(point[0], point[1]);
-            if (ReferenceEquals(property, UIElement.RenderTransformOriginProperty) &&
-                (parsed.X < 0 || parsed.X > 1 || parsed.Y < 0 || parsed.Y > 1))
-            {
-                return false;
-            }
-
-            value = parsed;
+            value = new LayoutPoint(point[0], point[1]);
             return true;
         }
 
@@ -594,31 +581,6 @@ public partial class AspectChapterView : UserControl
         }
 
         return false;
-    }
-
-    private static bool ValidateFloat(UiProperty property, float value)
-    {
-        if (ReferenceEquals(property, UIElement.WidthProperty) || ReferenceEquals(property, UIElement.HeightProperty))
-        {
-            return float.IsNaN(value) || (float.IsFinite(value) && value >= 0);
-        }
-
-        if (!float.IsFinite(value))
-        {
-            return false;
-        }
-
-        if (ReferenceEquals(property, UIElement.OpacityProperty))
-        {
-            return value is >= 0 and <= 1;
-        }
-
-        if (ReferenceEquals(property, Control.FontSizeProperty))
-        {
-            return value > 0;
-        }
-
-        return true;
     }
 
     private static bool TryParseFloats(string text, int[] acceptedCounts, out float[] values)

@@ -1,5 +1,6 @@
 using System.Numerics;
 using Cerneala.Drawing;
+using Cerneala.Drawing.Text;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Media;
 
@@ -139,6 +140,77 @@ public sealed class DrawingTextLayoutTests
     {
         Assert.Throws<ArgumentOutOfRangeException>(
             () => new DrawTextLayoutOptions(maxWidth: width, maxHeight: height));
+    }
+
+    // Needs Arial and Microsoft YaHei (Windows). Arial has no glyph for "中", so the run uses the YaHei fallback.
+    [Theory]
+    [InlineData("A", false)]
+    [InlineData("中", true)]
+    public void RunBoundsAreMeasuredWithTheFontThatWasSelectedForTheRun(string text, bool fallbackExpected)
+    {
+        SystemFontSource source = new();
+        IDrawFont arial = source.LoadFont("Arial", 20);
+        IDrawFont yahei = source.LoadFont("Microsoft YaHei", 20);
+        SkiaTextShaper shaper = new();
+        float arialAdvance = shaper.Shape(new DrawTextRun(arial, text, 20)).AdvanceWidth;
+        float yaheiAdvance = shaper.Shape(new DrawTextRun(yahei, text, 20)).AdvanceWidth;
+        if (fallbackExpected)
+        {
+            Assert.True(Math.Abs(arialAdvance - yaheiAdvance) > 2, $"The fonts do not differ for '{text}' on this machine (Arial {arialAdvance}, YaHei {yaheiAdvance}).");
+        }
+
+        DrawTextLayout layout = new DrawTextLayoutBuilder()
+            .AddSpan(new DrawTextSpan(text, arial, 20, black, 1f, new[] { yahei }))
+            .Build(new DrawTextLayoutOptions());
+
+        DrawTextLayoutRun run = Assert.Single(Assert.Single(layout.Lines).Runs);
+        Assert.Same(fallbackExpected ? yahei : arial, run.Font);
+        float expected = fallbackExpected ? yaheiAdvance : arialAdvance;
+        Assert.True(
+            Math.Abs(run.Bounds.Width - expected) <= 0.5f,
+            $"'{text}': run bounds width {run.Bounds.Width}, selected font advance {expected} (primary font advance {arialAdvance}).");
+    }
+
+    // The line width must equal that of the same text with the selected font as primary; "A" (no fallback) is the control.
+    [Theory]
+    [InlineData("A")]
+    [InlineData("中")]
+    public void LineWidthWithAFallbackFontMatchesTheSameTextWithThatFontAsPrimary(string text)
+    {
+        SystemFontSource source = new();
+        IDrawFont arial = source.LoadFont("Arial", 20);
+        IDrawFont yahei = source.LoadFont("Microsoft YaHei", 20);
+        IDrawFont selected = text == "A" ? arial : yahei;
+        DrawTextLayoutLine fallback = Assert.Single(new DrawTextLayoutBuilder()
+            .AddSpan(new DrawTextSpan(text, arial, 20, black, 1f, new[] { yahei }))
+            .Build(new DrawTextLayoutOptions()).Lines);
+        DrawTextLayoutLine reference = Assert.Single(new DrawTextLayoutBuilder()
+            .AddSpan(new DrawTextSpan(text, selected, 20, black))
+            .Build(new DrawTextLayoutOptions()).Lines);
+
+        Assert.True(
+            Math.Abs(fallback.Bounds.Width - reference.Bounds.Width) <= 0.5f,
+            $"'{text}': fallback line width {fallback.Bounds.Width}, same text with the selected font as primary {reference.Bounds.Width}.");
+    }
+
+    // Wrapping must break where the drawn text breaks: "A中中" is 13 + 15 + 15 = 43 wide when measured with Arial but
+    // 13 + 20 + 20 = 53 with the YaHei fallback, so a 45 wide box holds it on one line only with the wrong measure.
+    [Fact]
+    public void CharacterWrappingBreaksFallbackTextByTheWidthOfTheFallbackFont()
+    {
+        SystemFontSource source = new();
+        IDrawFont arial = source.LoadFont("Arial", 20);
+        IDrawFont yahei = source.LoadFont("Microsoft YaHei", 20);
+        DrawTextLayoutOptions options = new(maxWidth: 45, wrapping: DrawTextWrapping.Character);
+
+        DrawTextLayout layout = new DrawTextLayoutBuilder()
+            .AddSpan(new DrawTextSpan("A中中", arial, 20, black, 1f, new[] { yahei }))
+            .Build(options);
+
+        Assert.Equal(["A中", "中"], layout.Lines.Select(static line => line.Text));
+        Assert.All(layout.Lines, line => Assert.True(
+            line.Bounds.Width <= 45,
+            $"line '{line.Text}' is {line.Bounds.Width} wide in a 45 wide box."));
     }
 
     private DrawTextLayout Layout(string text, DrawTextLayoutOptions options) =>

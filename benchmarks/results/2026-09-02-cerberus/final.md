@@ -24,15 +24,32 @@ Environment: Windows `10.0.26200`, Intel Core i5-9300H, .NET `8.0.30`, Benchmark
 | --- | ---: | ---: | ---: |
 | Homogeneous merge and index rebasing | 1,024 | 165.1 ns | 0 B |
 | Alternating enqueue | 1,024 | 142.8 ns | 1 B |
-| Growth beyond initial capacity | 512 | 110.7 ns | 2 B |
+| Growth beyond initial capacity | 512 | 191.9 ns (re-measured 2026-10-27) | 452 B (re-measured 2026-10-27) |
 | Alternating enqueue and discard | 512 | 118.0 ns | 2 B |
 
-The complete CSV, HTML, Markdown, and compressed JSON reports are in `final/results/`.
+The complete CSV, HTML, Markdown, and compressed JSON reports are in `final/results/`;
+the re-measured growth row's reports are in `growth-rerun-2026-10-27/results/` (see below).
 BenchmarkDotNet warned that the iteration times were below its recommended 100 ms, so
 these CPU means are reported as observations, not as a stable improvement claim. The
-allocation results demonstrate that the warmed planner does not allocate whole objects
-per submission; the 1–2 byte values are BenchmarkDotNet's per-operation division of the
-small per-invocation totals.
+allocation results of the three warm-path rows demonstrate that the warmed planner does
+not allocate whole objects per submission; their 0–2 byte values are BenchmarkDotNet's
+per-operation division of the small per-invocation totals.
+
+The growth row was re-measured on 2026-10-27 (#1010). The original 110.7 ns and 2 B were
+the warm path: the benchmark shared the `[IterationSetup]` that only calls
+`Cerberus.Discard()`, which keeps grown storage, so only the first run of the benchmark
+body grew it, before any measured iteration (the 2026-09-02 log shows that first run in
+BenchmarkDotNet's `WorkloadJitting` stage, ahead of `WorkloadWarmup 1`). `GrowthBeyondInitialCapacity` now has its own `[IterationSetup]` that creates a new
+`Cerberus` at its initial capacity before every iteration, so every warmup and measured
+iteration grows the vertex, index, and draw storage. Its 452 B per operation is about
+231 KB per 512-call invocation: the storage growth itself, not the warmed planner. The
+same command, with
+`--artifacts .\benchmarks\results\2026-09-02-cerberus\growth-rerun-2026-10-27`, ran on
+base commit `6e095777` with the new growth `[IterationSetup]` applied (#1010), .NET SDK `10.0.400`, and the same machine and runtime; its reports
+are in `growth-rerun-2026-10-27/results/`. That run measured the other three rows at
+238.3 ns / 0 B, 158.5 ns / 1 B, and 150.5 ns / 2 B; compare the growth row with those
+values, not with the 2026-09-02 rows. BenchmarkDotNet again warned that the iteration
+times were below 100 ms.
 
 ## Whole-frame allocation comparison
 

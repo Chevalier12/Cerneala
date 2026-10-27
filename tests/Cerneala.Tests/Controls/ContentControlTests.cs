@@ -611,6 +611,92 @@ public sealed class ContentControlTests
         Assert.Same(child, wrapper.Child);
     }
 
+    // Issue #981: removing the old element raises its Unloaded at once, and a Content change in that handler hosts the
+    // new effective Content. The outer replacement then does not host its superseded value as a second child.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ReplacingContentFromTheOldElementsUnloadedHandlerHostsOnlyTheEffectiveContent(bool handlerSetsOtherContent)
+    {
+        UIRoot root = new(200, 200);
+        ContentControl host = new();
+        Border old = new() { Width = 10, Height = 10 };
+        Border other = new() { Width = 10, Height = 10 };
+        Border value = new() { Width = 10, Height = 10 };
+        root.VisualChildren.Add(host);
+        root.ProcessFrame();
+        host.Content = old;
+        root.ProcessFrame();
+        if (handlerSetsOtherContent)
+        {
+            bool done = false;
+            old.Unloaded += (_, _) =>
+            {
+                if (!done)
+                {
+                    done = true;
+                    host.Content = other;
+                }
+            };
+        }
+
+        host.Content = value;
+
+        string Name(object? element) => ReferenceEquals(element, old) ? "old" : ReferenceEquals(element, other) ? "other" : ReferenceEquals(element, value) ? "value" : "null";
+        string detail = $"Content={Name(host.Content)}, visual children=[{string.Join(", ", host.VisualChildren.Select(Name))}], logical children=[{string.Join(", ", host.LogicalChildren.Select(Name))}]";
+        Assert.True(
+            host.VisualChildren.Count == 1 && ReferenceEquals(host.VisualChildren[0], host.Content) &&
+            host.LogicalChildren.Count == 1 && ReferenceEquals(host.LogicalChildren[0], host.Content),
+            $"handler sets other: {handlerSetsOtherContent}: {detail}.");
+        foreach (Border element in new[] { old, other, value })
+        {
+            Assert.True(
+                ReferenceEquals(element, host.Content) || (element.VisualParent is null && element.LogicalParent is null),
+                $"{Name(element)} is still hosted although it is not the Content ({detail}).");
+        }
+    }
+
+    // Issue #981: adding the new element raises its Loaded at once, and a Content change in that handler hosts the new
+    // effective Content. The outer replacement then does not finish hosting its superseded value.
+    [Fact]
+    public void ReplacingContentFromTheNewElementsLoadedHandlerHostsOnlyTheEffectiveContent()
+    {
+        UIRoot root = new(200, 200);
+        ContentControl host = new();
+        Border old = new() { Width = 10, Height = 10 };
+        Border other = new() { Width = 10, Height = 10 };
+        Border value = new() { Width = 10, Height = 10 };
+        root.VisualChildren.Add(host);
+        root.ProcessFrame();
+        host.Content = old;
+        root.ProcessFrame();
+        bool done = false;
+        value.Loaded += (_, _) =>
+        {
+            if (!done)
+            {
+                done = true;
+                host.Content = other;
+            }
+        };
+
+        host.Content = value;
+
+        string Name(object? element) => ReferenceEquals(element, old) ? "old" : ReferenceEquals(element, other) ? "other" : ReferenceEquals(element, value) ? "value" : "null";
+        string detail = $"Content={Name(host.Content)}, visual children=[{string.Join(", ", host.VisualChildren.Select(Name))}], logical children=[{string.Join(", ", host.LogicalChildren.Select(Name))}]";
+        Assert.True(done);
+        Assert.True(
+            ReferenceEquals(other, host.Content) &&
+            host.VisualChildren.Count == 1 && ReferenceEquals(host.VisualChildren[0], other) &&
+            host.LogicalChildren.Count == 1 && ReferenceEquals(host.LogicalChildren[0], other),
+            detail);
+        Assert.Null(value.VisualParent);
+        Assert.Null(value.LogicalParent);
+        Assert.False(value.IsLoaded);
+        Assert.Null(old.VisualParent);
+        Assert.Null(old.LogicalParent);
+    }
+
     private static PresenceOptions CreatePresence()
     {
         return PresenceOptions.FadeAndScale(

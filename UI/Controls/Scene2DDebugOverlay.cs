@@ -217,8 +217,9 @@ public sealed class Scene2DDebugOverlay : SceneNode2D
         if (owner is Scene2D scene)
         {
             // Observe the gameplay pass; recomputing with the debug transform
-            // would change Y anchors and rescan distant map bounds.
-            IReadOnlyList<SceneOrderEntry> order = scene.RecordedOrder;
+            // would change Y anchors and rescan distant map bounds. A group the
+            // pass culled in this frame recorded no order, so it gets no labels.
+            IReadOnlyList<SceneOrderEntry> order = scene.GetRecordedOrder(context.Frame);
             for (int index = 0; index < order.Count; index++)
             {
                 SceneOrderEntry entry = order[index];

@@ -257,6 +257,65 @@ public sealed class ImageTests
         Assert.Equal(new LayoutSize(50, 50), desired);
     }
 
+    [Theory]
+    [InlineData(50)]
+    [InlineData(60)]
+    [InlineData(30)]
+    [InlineData(107)]
+    public void UniformImageThatExactlyFitsItsSlotMeasuresAndDrawsExactlyThere(int slot)
+    {
+        LayoutSize expected = new(slot, slot);
+        List<string> problems = [];
+        Image rounded = new() { Source = new FakeImage(200, 200) };
+        LayoutSize roundedSize = rounded.Measure(new MeasureContext(expected, LayoutRounding.Enabled));
+        if (roundedSize != expected)
+        {
+            problems.Add($"measure with rounding {roundedSize.Width}x{roundedSize.Height}");
+        }
+
+        Image plain = new() { Source = new FakeImage(200, 200) };
+        LayoutSize plainSize = plain.Measure(new MeasureContext(expected));
+        if (plainSize != expected)
+        {
+            problems.Add($"measure without rounding {plainSize.Width:R}x{plainSize.Height:R}");
+        }
+
+        FakeImage source = new(200, 200);
+        DrawCommandList commands = RenderImage(new Image { Source = source }, new LayoutRect(0, 0, slot, slot));
+        bool exactDraw = commands.Count == 1 &&
+            commands[0].Kind == DrawCommandKind.DrawImage &&
+            commands[0].Rect == new DrawRect(0, 0, slot, slot);
+        if (!exactDraw)
+        {
+            problems.Add("render: " + string.Join(", ", commands.Select(command => $"{command.Kind} {command.Rect}")));
+        }
+
+        Assert.True(problems.Count == 0, $"slot {slot}: {string.Join("; ", problems)}");
+    }
+
+    [Theory]
+    [InlineData(DrawBrushStretch.Uniform, 200, 100, 60, 60, 60, 30)]
+    [InlineData(DrawBrushStretch.Uniform, 100, 200, 60, 60, 30, 60)]
+    [InlineData(DrawBrushStretch.Uniform, 200, 100, 60, float.PositiveInfinity, 60, 30)]
+    [InlineData(DrawBrushStretch.Uniform, 100, 200, float.PositiveInfinity, 60, 30, 60)]
+    [InlineData(DrawBrushStretch.Fill, 200, 200, 60, 30, 60, 30)]
+    [InlineData(DrawBrushStretch.UniformToFill, 200, 200, 60, 30, 60, 60)]
+    [InlineData(DrawBrushStretch.UniformToFill, 200, 100, 30, 60, 120, 60)]
+    public void StretchedMeasureIsExactWhenTheScaledSizeIsAWholeNumber(
+        DrawBrushStretch stretch, int sourceWidth, int sourceHeight,
+        float availableWidth, float availableHeight, float expectedWidth, float expectedHeight)
+    {
+        LayoutSize available = new(availableWidth, availableHeight);
+        LayoutSize expected = new(expectedWidth, expectedHeight);
+        Image plain = new() { Source = new FakeImage(sourceWidth, sourceHeight), Stretch = stretch };
+        Image rounded = new() { Source = new FakeImage(sourceWidth, sourceHeight), Stretch = stretch };
+
+        LayoutSize plainSize = plain.Measure(new MeasureContext(available));
+        LayoutSize roundedSize = rounded.Measure(new MeasureContext(available, LayoutRounding.Enabled));
+
+        Assert.Equal((expected, expected), (plainSize, roundedSize));
+    }
+
     private static DrawCommandList RenderImage(Image image, LayoutRect slot)
     {
         UIRoot root = new();

@@ -75,4 +75,55 @@ public sealed class RenderQueueProcessorTests
         Assert.True(cache.IsValid);
         Assert.Equal(child.RenderVersion, cache.RenderVersion);
     }
+
+    // #954: a scope change (Opacity) must not hide an explicit Render request for the same element in the same frame.
+    [Theory]
+    [InlineData("invalidateOnly", 1)]
+    [InlineData("opacityOnly", 0)]
+    [InlineData("opacityThenInvalidate", 1)]
+    [InlineData("invalidateThenOpacity", 1)]
+    [InlineData("opacityThenParentSubtreeInvalidate", 1)]
+    [InlineData("parentSubtreeInvalidateThenOpacity", 1)]
+    public void ExplicitRenderInvalidationStillRebuildsWhenAScopePropertyChangedInTheSameFrame(string row, int expectedRebuilds)
+    {
+        UIRoot root = new();
+        RenderingTestElement parent = new(Color.White);
+        RenderingTestElement child = new(Color.White);
+        root.VisualChildren.Add(parent);
+        parent.VisualChildren.Add(child);
+        root.ProcessFrame();
+        int renderCountAfterInitialFrame = child.RenderCount;
+
+        switch (row)
+        {
+            case "invalidateOnly":
+                child.Invalidate(InvalidationFlags.Render, "test");
+                break;
+            case "opacityOnly":
+                child.Opacity = 0.5f;
+                break;
+            case "opacityThenInvalidate":
+                child.Opacity = 0.5f;
+                child.Invalidate(InvalidationFlags.Render, "test");
+                break;
+            case "invalidateThenOpacity":
+                child.Invalidate(InvalidationFlags.Render, "test");
+                child.Opacity = 0.5f;
+                break;
+            case "opacityThenParentSubtreeInvalidate":
+                child.Opacity = 0.5f;
+                parent.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+                break;
+            default:
+                parent.Invalidate(InvalidationFlags.Render | InvalidationFlags.Subtree, "test");
+                child.Opacity = 0.5f;
+                break;
+        }
+
+        root.ProcessFrame();
+
+        Assert.True(
+            child.RenderCount == renderCountAfterInitialFrame + expectedRebuilds,
+            $"{row}: OnRender ran {child.RenderCount - renderCountAfterInitialFrame} time(s) after the initial frame, expected {expectedRebuilds}.");
+    }
 }

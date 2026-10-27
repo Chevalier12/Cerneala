@@ -396,6 +396,26 @@ public sealed class CompletionTests
         Assert.Contains("duration", Assert.Single(help.Signatures).Label, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData("@animate { |caret| }", "retarget", "Cerneala.UI.Motion.Specs.RetargetMode")]
+    [InlineData("@animate { retarget = |caret| }", "Restart", "Cerneala.UI.Motion.Specs.RetargetMode")]
+    [InlineData("@animate { retarget = |caret| }", "PreserveProgress", "Cerneala.UI.Motion.Specs.RetargetMode")]
+    [InlineData("@animate { |caret| }", "holdOnComplete", "System.Boolean")]
+    [InlineData("@animate { holdOnComplete = |caret| }", "true", "System.Boolean")]
+    [InlineData("@animate { |caret| }", "debugName", "System.String")]
+    public void MotionOptionCompletionDetailNamesAnExistingType(string animate, string label, string expectedType)
+    {
+        using CompletionFixture fixture = CompletionFixture.Create(
+            "<Window><Window.Resources><Aspect TargetType=\"Button\">" + animate + "</Aspect></Window.Resources></Window>");
+
+        CernealaCompletionItem item = Assert.Single(fixture.Complete(), candidate => candidate.Label == label);
+
+        Type? detailType = typeof(UIElement).Assembly.GetType(item.Detail) ?? Type.GetType(item.Detail);
+        Assert.True(
+            detailType is not null && item.Detail == expectedType,
+            $"Item '{label}' has detail '{item.Detail}' (expected '{expectedType}'); type exists: {detailType is not null}.");
+    }
+
     [Fact]
     public void TemplatesDirectiveCompletionIsRestrictedToTemplateCollectionOwners()
     {

@@ -421,6 +421,35 @@ public sealed partial class UiMarkupGeneratorTests
         AssertMotionDiagnostic(result, expectedMessage);
     }
 
+    [Theory]
+    [InlineData("@when IsEnabled { @animate { @to { Opacity = 1; } } }")]
+    [InlineData("@animate { @to { Opacity = 1; } } @animate { @to { Scale = 1; } }")]
+    [InlineData("@on Loaded { @animate { @to { Opacity = 1; } } }")]
+    [InlineData("@cancel Active;")]
+    [InlineData("@handle Active;")]
+    public void MotionClipBodyShapeErrorsAreReportedAsInvalidDirective(string body)
+    {
+        string markup = $$"""
+            <Border>
+              <Border.Resources>
+                <MotionClip Name="Invalid" TargetType="Border">
+                  {{body}}
+                </MotionClip>
+              </Border.Resources>
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGenerator("MotionClipBodyShapeId.crn", markup, out _);
+
+        string[] errors = result.Diagnostics
+            .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
+            .Select(diagnostic => diagnostic.Id)
+            .ToArray();
+        Assert.True(
+            errors.Length > 0 && errors.All(id => id == "CERNEALAUI006"),
+            $"Body '{body}': error ids [{string.Join(", ", errors)}] (expected only CERNEALAUI006).");
+    }
+
     [Fact]
     public void MotionClipRejectsRecursiveInvocation()
     {

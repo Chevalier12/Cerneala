@@ -85,7 +85,7 @@ internal static class CernealaLanguageFacts
 
     public static IReadOnlyList<LanguageArgumentFact> MotionOptions { get; } =
     [
-        new("retarget", "Cerneala.UI.Motion.Core.RetargetBehavior", required: false, ["Restart", "PreserveProgress"]),
+        new("retarget", "Cerneala.UI.Motion.Specs.RetargetMode", required: false, ["Restart", "PreserveProgress"]),
         new("holdOnComplete", "System.Boolean", required: false, ["true", "false"]),
         new("debugName", "System.String", required: false)
     ];
