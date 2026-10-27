@@ -1,6 +1,6 @@
 ---
 name: cerneala-fix-bug-group
-description: Fix one Cerneala bug issue together with every open bug issue whose fix changes the same code files, in one worktree and one pull request, with the complete cerneala-fix-bug workflow for each issue and one group reproduction app. Takes over the code of the older pull requests of those issues and closes them after the group pull request exists. Use when the issue watcher gives a group of open pull requests that change the same code files (args `<N> --group <PRs>`, for example `479 --group 528,534`), or when the user asks to fix an issue together with its related issues. Do not use for one isolated bug the user wants fixed alone (use cerneala-fix-bug), for feature work, or for reviewing pull requests.
+description: Fix one Cerneala bug issue together with every open bug issue whose fix changes the same code files, in one worktree and one pull request, with the complete cerneala-fix-bug workflow for each issue and one group reproduction app. Takes over the code of the older pull requests of those issues and closes them after the group pull request exists. Also fixes every bug of an umbrella issue that the issue watcher made from the open bug issues of one component (args `<U> --umbrella`, for example `1400 --umbrella`). Use when the issue watcher gives a group of open pull requests that change the same code files (args `<N> --group <PRs>`, for example `479 --group 528,534`) or an umbrella issue, or when the user asks to fix an issue together with its related issues. Do not use for one isolated bug the user wants fixed alone (use cerneala-fix-bug), for feature work, or for reviewing pull requests.
 ---
 
 # Cerneala Fix Bug Group
@@ -13,9 +13,18 @@ Invoking this skill authorizes the `git-session-commit-push` skill at the end, c
 
 ## Decisions This Skill Is Built On (user decisions, 2026-10-18)
 
-- A group is one pull request with one `Fixes #<n>` line per issue. No new umbrella issue is created, and no issue is closed by hand: GitHub closes them all when the pull request is merged.
+These decisions hold for a group of pull requests (`--group`, and a group this skill builds itself). An umbrella issue follows the decisions of 2026-10-28 below instead.
+
+- A group is one pull request with one `Fixes #<n>` line per issue. This skill creates no umbrella issue and closes no issue by hand: GitHub closes them all when the pull request is merged.
 - Related means: the fixes change the same code files. Example: #480, #484 and #485 are related when the fix of each one changes `UI/Controls/ContentPresenter.cs`. Titles that start with the same component name are a hint, not the criterion.
 - A group has no size limit.
+
+## Umbrella Issues (user decisions, 2026-10-28)
+
+- Before any fix window of a round opens, the issue watcher groups the open bug issues by the component in their title, which is the text before the first `: `. Example: `ComboBox: Padding is ignored ...` belongs to `ComboBox`. Issues with a linked pull request, an open fix window, or no component are left out.
+- A component with two or more such issues becomes umbrella issues of at most 6 bugs each, in issue-number order. Example: 27 `Language` issues become 5 umbrella issues with 6, 6, 6, 6 and 3 bugs. A component with one issue stays as it is and gets an ordinary `cerneala-fix-bug` window.
+- The watcher creates each umbrella issue, comments `Moved to #<U> ...` on each original, and closes the original as a duplicate of `#<U>`. This skill never does that, and never reopens, edits or comments on the originals.
+- One window fixes every bug of one umbrella issue, in one pull request with one `Fixes #<U>` line.
 - An issue that already has an open pull request joins the group. The group takes over that pull request's code and closes it, also when it was already validated, and deletes its release. Its branch stays.
 - One reproduction app checks every issue of the group.
 
@@ -41,6 +50,21 @@ Target: group #479: ...
 ```
 
 No `kind=review` line exists, so the group is #479, #482 and #483 with PR #528 and PR #534. Step 2 squashes both branches, and step 7 closes both pull requests. Had `kind=review number=534` existed, only PR #528 would remain: the report says so and nothing changes.
+
+**Umbrella issue.** When the args are `<U> --umbrella` (or the prompt says `Target: umbrella issue #<U>`), the bugs are the sections of issue `#<U>`. Read it with `gh issue view <U> --json title,body`. Its first line is the marker, for example `<!-- cerneala-umbrella component=ComboBox part=1/1 issues=1131,1132 -->`, and `issues=` lists the original issue numbers. Each `## Bug #<o>: <title>` section is one bug, with the text of its original issue: what happens, minimal reproduction, expected behavior and acceptance criteria, with headings one level lower.
+
+- Skip items 1 to 7 of this step, step 2 (there is no pull request to take over) and step 7 (there is nothing to close). The group is exactly the bugs of `#<U>`.
+- The worktree is the one the watcher gives, on branch `worktree-issue-<U>`.
+- Do step 3 for every bug, named by its original number `#<o>`: its own reproduction, its own RED regression test, its root cause and its fix.
+- In step 4, generate the app with the original numbers, the smallest first: `-Issue <o1> -AlsoIssues <o2>,<o3>`. The verdicts then name the bugs as in their sections: `OK: bugs #1131, #1132 do not reproduce so far.`
+- In step 6, pass `git-session-commit-push` exactly one `Fixes #<U>` line, and no `Fixes` line for the originals: they are already closed as duplicates. The `Group` section lists every bug as `#<o> <title>`, with `component ComboBox, umbrella #<U>` as the reason. Publish with the same `-Issue <o1> -AlsoIssues <o2>,<o3>` as the app.
+- A bug that the newest `origin/master` already fixes needs no fix. Leave it out of `-AlsoIssues` and record `#<o>: already fixed on master (<commit>)` in the pull request.
+- A bug that you cannot fix in this session must not be lost when `Fixes #<U>` closes `#<U>`. Raise it again as a new bug issue with `gh issue create`: its original title, its section's text with the headings one level higher, and the label `bug`. Name the new issue in the pull request and in the report. The pull request still fixes `#<U>` for the other bugs.
+
+Example: `1400 --umbrella`. #1400 lists #1131 and #1132.
+1. Step 3 gives #1131 the RED test `ComboBoxDefaultTemplateAppliesPadding` and #1132 the RED test `ComboBoxArrowKeysMoveOneItem`.
+2. Step 4 runs `New-ReproApp.ps1 -Issue 1131 -AlsoIssues 1132 -Destination <scratchpad>/repro-1131/Issue1131`.
+3. The pull request has the single line `Fixes #1400`.
 
 Otherwise (no given group):
 
