@@ -237,4 +237,26 @@ public sealed class SdlWindowMigrationContractTests
             $"explicitPosition={explicitPosition}: model Left/Top after the maximize are ({modelAfterMaximize.Left}, {modelAfterMaximize.Top}); " +
             $"after WindowState = Normal the native window is at ({native.X}, {native.Y}), it was at ({before.X}, {before.Y}).");
     }
+
+    [Fact]
+    public void AMaximizedWindowWithoutAKnownRestorePositionReportsUnchangedBoundsOnce()
+    {
+        // Manual startup without Left/Top: no normal position is known, so the maximized window reports NaN.
+        FakeSdlApi api = new() { WindowPixelDensity = 1, WindowDisplayScale = 1 };
+        using SdlWindowPlatform platform = new(api, new RecordingGraphicsFactory());
+        Window model = new() { WindowStartupLocation = WindowStartupLocation.Manual };
+        RecordingWindowCallbacks callbacks = new();
+        using SdlPlatformWindow window = Assert.IsType<SdlPlatformWindow>(platform.CreateWindow(model, callbacks));
+        api.Enqueue(new SdlEvent(SdlEventKind.WindowMaximized, window.WindowId));
+        platform.PumpEvents();
+        int boundsAfterMaximize = callbacks.Bounds.Count;
+
+        api.Enqueue(new SdlEvent(SdlEventKind.WindowMoved, window.WindowId));
+        api.Enqueue(new SdlEvent(SdlEventKind.WindowResized, window.WindowId));
+        platform.PumpEvents();
+
+        var bounds = callbacks.Bounds[^1];
+        Assert.True(float.IsNaN(bounds.Left) && float.IsNaN(bounds.Top), $"The reported position is ({bounds.Left}, {bounds.Top}).");
+        Assert.Equal(boundsAfterMaximize, callbacks.Bounds.Count);
+    }
 }

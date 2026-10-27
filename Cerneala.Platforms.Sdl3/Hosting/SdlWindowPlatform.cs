@@ -737,7 +737,8 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
             logicalY = float.NaN;
         }
         var current = (Viewport, logicalX, logicalY, desiredState);
-        if (lastBounds != current)
+        // Equals, not !=: an unknown position is NaN, and NaN != NaN would report unchanged bounds again.
+        if (lastBounds is not { } last || !last.Equals(current))
         {
             lastBounds = current;
             callbacks.BoundsChanged(
