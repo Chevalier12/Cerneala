@@ -163,6 +163,65 @@ public sealed class MenuTests
         Assert.Empty(menuBar.Session.OpenPath);
     }
 
+    // A click that a button or a text box inside the header owns is not the item's activation, as a click on a button
+    // inside a ButtonBase is not that ButtonBase's click (#935): the item raises no Click, runs no command, and the
+    // menu stays open. A click elsewhere on the item still activates it once.
+    [Theory]
+    [InlineData("Button", true)]
+    [InlineData("Button", false)]
+    [InlineData("TextBox", true)]
+    [InlineData("TextBox", false)]
+    public void ClickOnAControlInTheHeaderIsOwnedByThatControlNotTheMenuItem(string headerKind, bool clickInner)
+    {
+        int clicks = 0;
+        int executions = 0;
+        int innerClicks = 0;
+        UIElement inner;
+        if (headerKind == "Button")
+        {
+            Button button = new() { Content = "x", Width = 60, Height = 20 };
+            button.Click += (_, _) => innerClicks++;
+            inner = button;
+        }
+        else
+        {
+            inner = new TextBox { Text = "abc", Width = 60, Height = 20 };
+        }
+
+        MenuItem leaf = new() { Header = inner, Width = 120, Height = 28 };
+        leaf.Click += (_, _) => clicks++;
+        leaf.Command = new ActionCommand(_ => executions++);
+        MenuItem file = Branch("File", leaf);
+        MenuBar menuBar = new();
+        menuBar.Items.Add(file);
+        UIRoot root = Attach(menuBar, 320, 180);
+        ElementInputBridge bridge = new();
+        Click(bridge, root, file);
+        root.ProcessFrame();
+        Assert.True(file.IsSubmenuOpen);
+        LayoutRect leafBounds = leaf.ArrangedBounds;
+        LayoutRect innerBounds = inner.ArrangedBounds;
+        Assert.True(innerBounds.Width > 0 && leafBounds.Width > innerBounds.Width);
+
+        if (clickInner)
+        {
+            Click(bridge, root, inner);
+        }
+        else
+        {
+            ClickAt(bridge, root, leafBounds.X + leafBounds.Width - 3, leafBounds.Y + leafBounds.Height / 2);
+        }
+
+        root.ProcessFrame();
+        Assert.Equal(
+            clickInner ? (0, 0, true) : (1, 1, false),
+            (clicks, executions, file.IsSubmenuOpen));
+        if (headerKind == "Button")
+        {
+            Assert.Equal(clickInner ? 1 : 0, innerClicks);
+        }
+    }
+
     [Fact]
     public void ClickingANestedHeaderWhoseSubmenuIsOpenKeepsTheSubmenuOpen()
     {

@@ -304,6 +304,55 @@ public sealed class TextBoxMultiLineTests
         Assert.InRange((10 * lineHeight), presenter.VerticalOffset, presenter.VerticalOffset + presenter.ViewportHeight + 0.5f);
     }
 
+    // #916: the caret placed at the end of the second, visible wrapped line is drawn on that line, so the least scroll that
+    // shows it is none. The click in the middle of the line is the control.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ClickPastTheEndOfAVisibleWrappedLineDoesNotScroll(bool clickPastTheEnd)
+    {
+        TextBox textBox = WrappedTextBoxShowingTwoOfThreeLines(out UIRoot root, out ScrollContentPresenter presenter);
+        LayoutRect view = textBox.TextView.ArrangedBounds;
+        float lineWidth = LineTextWidth(textBox, 1);
+        float x = view.X + (clickPastTheEnd ? lineWidth + 10 : lineWidth / 2);
+        float y = view.Y + (1.5f * LineHeight(textBox));
+        Assert.True(x < view.X + view.Width, $"The click x {x} is outside the text view ({view.X}..{view.X + view.Width}).");
+
+        Click(root, x, y);
+        root.ProcessFrame();
+
+        Assert.True(presenter.VerticalOffset == 0, $"VerticalOffset {presenter.VerticalOffset} after the click at ({x}, {y}).");
+    }
+
+    // #916: a drag that ends past the end of the second, visible wrapped line puts the caret at the end of that line,
+    // which is in view, so the drag does not scroll.
+    [Fact]
+    public void DragToPastTheEndOfAVisibleWrappedLineDoesNotScroll()
+    {
+        TextBox textBox = WrappedTextBoxShowingTwoOfThreeLines(out UIRoot root, out ScrollContentPresenter presenter);
+        LayoutRect view = textBox.TextView.ArrangedBounds;
+        float lineHeight = LineHeight(textBox);
+        float startX = view.X + (LineTextWidth(textBox, 0) / 2);
+        float startY = view.Y + (0.5f * lineHeight);
+        float endX = view.X + LineTextWidth(textBox, 1) + 10;
+        float endY = view.Y + (1.5f * lineHeight);
+        Assert.True(endX < view.X + view.Width, $"The drag end x {endX} is outside the text view ({view.X}..{view.X + view.Width}).");
+
+        ElementInputBridge bridge = new();
+        PointerSnapshot startUp = PointerSnapshot.Empty.WithPosition(startX, startY);
+        PointerSnapshot startDown = startUp.WithButton(InputMouseButton.Left, true);
+        PointerSnapshot endDown = PointerSnapshot.Empty.WithPosition(endX, endY).WithButton(InputMouseButton.Left, true);
+        PointerSnapshot endUp = PointerSnapshot.Empty.WithPosition(endX, endY);
+        bridge.Dispatch(root, new InputFrame(startUp, startDown, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []));
+        bridge.Dispatch(root, new InputFrame(startDown, endDown, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []));
+        Assert.True(presenter.VerticalOffset == 0, $"VerticalOffset {presenter.VerticalOffset} after the drag to ({endX}, {endY}).");
+        bridge.Dispatch(root, new InputFrame(endDown, endUp, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []));
+        root.ProcessFrame();
+
+        Assert.False(textBox.Selection.IsEmpty);
+        Assert.True(presenter.VerticalOffset == 0, $"VerticalOffset {presenter.VerticalOffset} after the release at ({endX}, {endY}).");
+    }
+
     [Fact]
     public void TextBoxAndPasswordBoxTemplatesHostContentInScrollViewerPart()
     {
@@ -334,6 +383,37 @@ public sealed class TextBoxMultiLineTests
             string.Empty,
             new TextAspect(textBox.FontFamily, textBox.FontSize),
             float.PositiveInfinity).Size.Height;
+    }
+
+    // A wrapping TextBox that shows its first 2 lines of at least 3, scrolled to the top, with the caret at the start.
+    private static TextBox WrappedTextBoxShowingTwoOfThreeLines(out UIRoot root, out ScrollContentPresenter presenter)
+    {
+        TextBox textBox = new()
+        {
+            TextWrapping = TextWrapping.Wrap,
+            Width = 80,
+            MaxLines = 2,
+            Text = "aaa bbb ccc ddd eee fff",
+            VerticalAlignment = VerticalAlignment.Top
+        };
+        root = Host(textBox, out ElementInputBridge bridge);
+        // The caret starts at the end of the text; Ctrl+Home goes back to the top.
+        bridge.Dispatch(root, KeyFrame(InputKey.Home, InputKey.LeftCtrl));
+        root.ProcessFrame();
+        presenter = ContentHost(textBox).Presenter;
+        Assert.True(textBox.LineCount >= 3, $"LineCount {textBox.LineCount}.");
+        Assert.True(presenter.ExtentHeight > presenter.ViewportHeight, $"extent {presenter.ExtentHeight}, viewport {presenter.ViewportHeight}.");
+        Assert.Equal(0, presenter.VerticalOffset);
+        return textBox;
+    }
+
+    // The drawn width of a line's text without its trailing spaces.
+    private static float LineTextWidth(TextBox textBox, int lineIndex)
+    {
+        return TextMeasurer.Default.Measure(
+            textBox.GetLineText(lineIndex).TrimEnd(),
+            new TextAspect(textBox.FontFamily, textBox.FontSize),
+            float.PositiveInfinity).Size.Width;
     }
 
     private static UIRoot Host(TextBox textBox, out ElementInputBridge bridge)

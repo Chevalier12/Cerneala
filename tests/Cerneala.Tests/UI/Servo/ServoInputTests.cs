@@ -1,3 +1,4 @@
+using Cerneala.UI.Accessibility;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
@@ -187,6 +188,28 @@ public sealed class ServoInputTests
         Assert.NotEqual(text, editor.Text);
         Assert.Contains(text, exception.Message);
         Assert.Contains(editor.Text, exception.Message);
+    }
+
+    // The value check reads the element that received the input, not a new resolution of the target,
+    // so a target that only the old value matched still succeeds (#917).
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ReplaceTextSucceedsWhenTheTargetMatchedTheOldValue(bool targetMatchesTheOldValue)
+    {
+        TextBox editor = new() { Text = "old", Width = 200, Height = 40 };
+        UiHost host = CreateHost(editor, width: 240, height: 80);
+        ServoApi servo = new(host);
+        ServoTarget target = ServoTarget.ByRole(SemanticsRole.EditableText);
+        if (targetMatchesTheOldValue)
+        {
+            target = target.Where(e => e.Value == "old");
+        }
+
+        Exception? failure = await Record.ExceptionAsync(() => servo.ReplaceTextAsync(target, "new"));
+
+        Assert.True(failure is null, $"ReplaceTextAsync threw {failure?.GetType().Name}: {failure?.Message}");
+        Assert.Equal("new", editor.Text);
     }
 
     [Fact]

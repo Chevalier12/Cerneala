@@ -27,7 +27,7 @@ public enum SceneOrderMode
 
 All modes preserve `Scene2D.Children`. Sorting is a recording view, not a mutation of the logical tree or source collection.
 
-Layer and Y values are ordered from smaller to larger. Equal keys preserve source collection order. `LayerThenY` uses the bottom edge of transformed scene-space bounds; an unknown bound uses `0` as its Y anchor. `Sprite2D.LayerDepth` is a drawing-backend value and does not participate in these modes.
+Layer and Y values are ordered from smaller to larger. Equal keys preserve source collection order. `LayerThenY` uses the bottom edge of transformed scene-space bounds; an unknown bound uses `0` as its Y anchor. These bounds ignore `Opacity`, which is presentation-only: a child with `Opacity="0"`, or a group whose children have `Opacity="0"`, keeps the Y anchor it has at any positive opacity, so drawing and picking order do not change when it fades out. `Sprite2D.LayerDepth` is a drawing-backend value and does not participate in these modes.
 
 Aspect can switch `Scene2D.OrderMode` as structural state. Motion does not animate this enum and reports a generated-markup diagnostic when it is used as an animation destination.
 

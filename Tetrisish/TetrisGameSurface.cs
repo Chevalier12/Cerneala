@@ -16,13 +16,14 @@ public sealed class TetrisGameSurface : RenderSurface2D
     private const float MaximumBlurDistance = 24;
     private static readonly TimeSpan SoftDropRamp = TimeSpan.FromMilliseconds(700);
     private static readonly TimeSpan SoftDropRelease = TimeSpan.FromMilliseconds(120);
+    private static readonly QuantizedFloatComparer BlurDistanceComparer = new(BlurSampleDistance);
 
     internal static readonly UiProperty<float> BlurDistanceProperty = UiProperty<float>.Register(
         nameof(BlurDistance),
         typeof(TetrisGameSurface),
         new UiPropertyMetadata<float>(
             0,
-            equalityComparer: new QuantizedFloatComparer(BlurSampleDistance),
+            equalityComparer: BlurDistanceComparer,
             validateValue: float.IsFinite));
 
     internal static readonly UiProperty<bool> IsBlurActiveProperty =
@@ -175,7 +176,10 @@ public sealed class TetrisGameSurface : RenderSurface2D
         base.OnPropertyChanged(args);
         if (ReferenceEquals(args.Property, BlurDistanceProperty))
         {
-            appliedBlurDistance = BlurDistance;
+            // A sample in the zero bucket is equal to 0 under the property's
+            // comparer, so the Motion store skips the final 0 after it.
+            float distance = BlurDistance;
+            appliedBlurDistance = BlurDistanceComparer.Equals(distance, 0) ? 0 : distance;
             IsBlurActive = appliedBlurDistance > 0;
         }
     }

@@ -34,4 +34,8 @@ public sealed class InvalidationRequest
     public InvalidationFlags? ResourceEffects { get; }
 
     public bool AffectsIntrinsicSize { get; }
+
+    // True when the request's Render work comes only from a render-scope change of the target (Opacity,
+    // RenderTransform ...), which recomposes the root without rebuilding the target's local render cache.
+    internal bool IsRenderScopeOnly { get; init; }
 }

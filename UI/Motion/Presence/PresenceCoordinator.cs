@@ -66,7 +66,7 @@ public sealed class PresenceCoordinator
         exitingChildren.Add(element);
         element.SetRetainedVisualParent(owner);
         states[element] = PresenceState.Exiting;
-        element.SetPresenceExiting(options.ExcludeInputWhileExiting);
+        element.SetPresenceExiting(true, options.ExcludeInputWhileExiting);
 
         MotionValue<float> opacity = motion.Graph.CreateValue(element.PresenceOpacity);
         MotionValue<float> scale = motion.Graph.CreateValue(element.PresenceScale);
@@ -81,12 +81,20 @@ public sealed class PresenceCoordinator
                 exit.CompleteRemoval();
             }
         };
-        if (exit.OpacityHandle.IsCompleted)
+
+        return true;
+    }
+
+    // An exit that is complete as soon as it begins (reduced motion, a zero-length exit) detaches the element here.
+    // The owner calls this after it has removed the element from its children, so a failing detach callback cannot
+    // leave the element in the owner's list.
+    internal void CompleteFinishedExit(UIElement element)
+    {
+        ArgumentNullException.ThrowIfNull(element);
+        if (exits.TryGetValue(element, out ExitAnimation? exit) && exit.OpacityHandle?.IsCompleted == true)
         {
             exit.CompleteRemoval();
         }
-
-        return true;
     }
 
     internal bool TryCancelExitForAdd(UIElement newOwner, UIElement element)
@@ -103,7 +111,7 @@ public sealed class PresenceCoordinator
         element.SetRetainedVisualParent(null);
         exit.Owner.IncrementPrismDescendantVisualVersion();
         exit.Cancel();
-        element.SetPresenceExiting(false);
+        element.SetPresenceExiting(false, excludesInput: false);
         element.SetPresenceVisual(1, 1);
 
         states[element] = PresenceState.Present;
@@ -152,7 +160,7 @@ public sealed class PresenceCoordinator
             exit.Cancel();
         }
 
-        element.SetPresenceExiting(false);
+        element.SetPresenceExiting(false, excludesInput: false);
         states.Remove(element);
     }
 
@@ -167,7 +175,7 @@ public sealed class PresenceCoordinator
         RemoveFromOwner(exit.Owner, element);
         element.SetRetainedVisualParent(null);
         exit.Owner.IncrementPrismDescendantVisualVersion();
-        element.SetPresenceExiting(false);
+        element.SetPresenceExiting(false, excludesInput: false);
         element.SetPresenceVisual(1, 1);
         exit.RemoveElement(motion.Root);
         exit.Cancel();

@@ -87,7 +87,7 @@ internal static class SceneHitTest2D
     {
         HitTestFilterBehavior behavior = filter.Evaluate(node);
         if (behavior == HitTestFilterBehavior.ExcludeSubtree ||
-            node.IsPresenceExiting ||
+            node.IsPresenceInputExcluded ||
             !UIElementVisibility.ParticipatesInHitTest(node) ||
             !node.IsEnabled)
         {
@@ -156,7 +156,7 @@ internal static class SceneHitTest2D
         IReadOnlySet<Collider2D> colliderHits)
     {
         return collider.ParticipatesInInputRoute &&
-            !collider.IsPresenceExiting &&
+            !collider.IsPresenceInputExcluded &&
             UIElementVisibility.ParticipatesInHitTest(collider) &&
             collider.IsEnabled &&
             collider.Enabled &&
@@ -200,14 +200,7 @@ internal static class SceneHitTest2D
         {
             SceneNode2D child = children[index];
             sourceIndices.Add(child, index);
-            SceneBounds2D transformed = SceneGeometry2D.TransformBounds(
-                child.GetLocalBounds(),
-                child.GetLocalTransform() * ownerToScene);
-            yAnchors.Add(
-                child,
-                transformed.Kind == SceneBoundsKind.Known
-                    ? transformed.Bounds.Bottom
-                    : 0);
+            yAnchors.Add(child, Scene2D.GetSceneYAnchor(child, ownerToScene));
         }
 
         children.Sort((left, right) =>

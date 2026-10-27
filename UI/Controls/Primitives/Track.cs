@@ -195,7 +195,7 @@ public class Track : Control
         }
 
         float ratio = MathF.Min(MathF.Max(relative / travel, 0), 1);
-        return Minimum + (Range * (IsMinimumAtEnd ? 1 - ratio : ratio));
+        return (float)(Minimum + (Range * (IsMinimumAtEnd ? 1 - ratio : ratio)));
     }
 
     protected override LayoutSize MeasureCore(MeasureContext context)
@@ -285,13 +285,17 @@ public class Track : Control
         }
     }
 
-    private float Range => MathF.Max(0, Maximum - Minimum);
+    // In double: Maximum - Minimum of two finite floats can overflow float (for example 3e38 - -3e38), and so can every
+    // value computed from it (#986).
+    private double Range => Math.Max(0, (double)Maximum - Minimum);
 
     // Whether Minimum is at the right end of a horizontal track or the bottom end of a vertical one.
     private bool IsMinimumAtEnd => Orientation == Orientation.Horizontal ? IsDirectionReversed : !IsDirectionReversed;
 
     // The change of value that moving the thumb by a distance in layout pixels makes, as WPF's Track.ValueFromDistance.
-    internal float ValueFromDistance(float horizontal, float vertical)
+    // It is a double because a change across the whole range can exceed float's range; add it to a value in double and
+    // clamp the sum with RangeBase.Clamp.
+    internal double ValueFromDistance(float horizontal, float vertical)
     {
         float length = GetTrackLength(ArrangedBounds);
         float travel = MathF.Max(0, length - GetThumbLength(length));
@@ -301,7 +305,7 @@ public class Track : Control
         }
 
         float pixelDelta = Orientation == Orientation.Horizontal ? horizontal : vertical;
-        return (IsMinimumAtEnd ? -pixelDelta : pixelDelta) / travel * Range;
+        return (IsMinimumAtEnd ? -pixelDelta : pixelDelta) / (double)travel * Range;
     }
 
     // The thumb sits at the value's place along the track, and the repeat buttons fill the track on each side of it:
@@ -333,8 +337,8 @@ public class Track : Control
 
     private float GetValueRatio(float value)
     {
-        float range = Range;
-        return range <= 0 ? 0 : (RangeBase.Clamp(value, Minimum, Maximum) - Minimum) / range;
+        double range = Range;
+        return range <= 0 ? 0 : (float)(((double)RangeBase.Clamp(value, Minimum, Maximum) - Minimum) / range);
     }
 
     private float GetTrackLength(LayoutRect rect)
@@ -354,16 +358,16 @@ public class Track : Control
             return trackLength;
         }
 
-        float length = trackLength * (ViewportSize / (Range + ViewportSize));
+        float length = (float)(trackLength * (ViewportSize / (Range + ViewportSize)));
         return MathF.Min(trackLength, MathF.Max(10, length));
     }
 
     private void OnThumbDragDelta(object? sender, DragDeltaEventArgs args)
     {
-        float change = ValueFromDistance(args.HorizontalChange, args.VerticalChange);
+        double change = ValueFromDistance(args.HorizontalChange, args.VerticalChange);
         if (change != 0)
         {
-            ChangeValue(Value + change, TrackValueChangeReason.ThumbTrack);
+            ChangeValue(RangeBase.Clamp(Value + change, Minimum, Maximum), TrackValueChangeReason.ThumbTrack);
         }
     }
 

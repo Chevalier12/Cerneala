@@ -452,6 +452,52 @@ public sealed class TrackTests
         Assert.Equal(0, track.ValueFromPoint(3, 3));
     }
 
+    // #986: Maximum - Minimum overflows float for large finite endpoints, so the ratio, the point and the drag
+    // computations must not go through that float difference.
+    [Theory]
+    [InlineData(1f)]
+    [InlineData(3e38f)]
+    public void ValueRatioAndValueFromPointStayFiniteForLargeFiniteEndpoints(float bound)
+    {
+        Track track = new();
+        track.Minimum = -bound;
+        track.Maximum = bound;
+        track.Value = 0;
+        track.Measure(new MeasureContext(new LayoutSize(110, 20)));
+        track.Arrange(new ArrangeContext(new LayoutRect(0, 0, 110, 20)));
+
+        float ratioAtZero = track.ValueRatio;
+        LayoutRect thumbAtZero = track.Thumb.ArrangedBounds;
+        float fromPoint = track.ValueFromPoint(55, 10);
+        track.Value = bound;
+        float ratioAtMaximum = track.ValueRatio;
+
+        Assert.True(
+            ratioAtZero == 0.5f && ratioAtMaximum == 1f && float.IsFinite(fromPoint) && MathF.Abs(fromPoint) <= bound / 100,
+            $"bound={bound}: ValueRatio(0)={ratioAtZero} (expected 0.5), ValueRatio(Maximum)={ratioAtMaximum} (expected 1), " +
+            $"ValueFromPoint(middle)={fromPoint} (expected about 0).");
+        Assert.Equal(new LayoutRect(50, 0, 10, 20), thumbAtZero);
+    }
+
+    [Theory]
+    [InlineData(1f)]
+    [InlineData(3e38f)]
+    public void ThumbDragAcrossHalfTheTravelReachesMiddleForLargeFiniteEndpoints(float bound)
+    {
+        Track track = new();
+        track.Minimum = -bound;
+        track.Maximum = bound;
+        track.Value = -bound;
+        track.Measure(new MeasureContext(new LayoutSize(110, 20)));
+        track.Arrange(new ArrangeContext(new LayoutRect(0, 0, 110, 20)));
+
+        track.Thumb.RaiseEvent(new DragDeltaEventArgs(Thumb.DragDeltaEvent, track.Thumb, 50, 0, 50, 0));
+
+        Assert.True(
+            MathF.Abs(track.Value) <= bound / 100,
+            $"bound={bound}: Value after dragging the thumb across half the travel = {track.Value} (expected about 0).");
+    }
+
     [Fact]
     public void EndpointChangesKeepRangeOrdered()
     {

@@ -596,20 +596,35 @@ public sealed partial class UiMarkupGenerator
             for (int index = 0; index <= text.Length - keyword.Length; index++)
             {
                 char character = text[index];
-                if (character == '"' && (index == 0 || text[index - 1] != '\\'))
+                if (quoted)
                 {
-                    quoted = !quoted;
+                    // A backslash escapes the next character, so "C:\\" still ends at its closing quote.
+                    if (character == '\\')
+                    {
+                        index++;
+                    }
+                    else if (character == '"')
+                    {
+                        quoted = false;
+                    }
+
+                    continue;
                 }
-                else if (!quoted && character == '(')
+
+                if (character == '"')
+                {
+                    quoted = true;
+                }
+                else if (character == '(')
                 {
                     parentheses++;
                 }
-                else if (!quoted && character == ')')
+                else if (character == ')')
                 {
                     parentheses--;
                 }
 
-                if (!quoted && parentheses == 0 &&
+                if (parentheses == 0 &&
                     string.CompareOrdinal(text, index, keyword, 0, keyword.Length) == 0 &&
                     (index == 0 || char.IsWhiteSpace(text[index - 1])) &&
                     (index + keyword.Length == text.Length || char.IsWhiteSpace(text[index + keyword.Length])))

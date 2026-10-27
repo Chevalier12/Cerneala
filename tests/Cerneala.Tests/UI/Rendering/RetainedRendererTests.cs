@@ -96,6 +96,39 @@ public sealed class RetainedRendererTests
         Assert.Single(committed);
     }
 
+    // The documented example commits a new root without a frame; an empty root must also commit after a
+    // frame (#955). The root with a child is the control row.
+    [Theory]
+    [InlineData("documented")]
+    [InlineData("emptyAfterFrame")]
+    [InlineData("emptyWithViewportAfterFrame")]
+    [InlineData("childAfterFrame")]
+    public void DocumentedCommitExampleRunsOnAFreshRoot(string row)
+    {
+        UIRoot root = row == "emptyWithViewportAfterFrame" ? new UIRoot(800, 600) : new UIRoot();
+        if (row == "childAfterFrame")
+        {
+            root.VisualChildren.Add(new RenderingTestElement(Color.White));
+        }
+
+        if (row != "documented")
+        {
+            root.ProcessFrame();
+        }
+
+        DrawCommandList? committed = null;
+        DrawCommandList? rendered = null;
+        Exception? failure = Record.Exception(() =>
+        {
+            committed = root.RetainedRenderer.Commit(root);
+            rendered = root.RetainedRenderer.Render(root);
+        });
+
+        Assert.True(failure is null, $"{row}: {failure?.GetType().Name}: {failure?.Message}");
+        Assert.Same(committed, rendered);
+        Assert.Equal(row == "childAfterFrame" ? 1 : 0, committed!.Count);
+    }
+
     private static void PrepareSubtree(UIElement element)
     {
         UIRoot root = element.Root ?? throw new InvalidOperationException("Element must be attached.");

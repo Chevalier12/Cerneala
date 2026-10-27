@@ -37,7 +37,6 @@ public sealed class SceneItems2D : SceneNode2D, ISceneSpatialParticipant2D
     public SceneItems2D()
     {
         Templates = new TemplateCollection(RebuildTemplates, VerifyCollectionAccess);
-        LogicalChildren.Changed += (_, _) => childBounds.Invalidate();
     }
 
     public IEnumerable? ItemsSource
@@ -198,6 +197,7 @@ public sealed class SceneItems2D : SceneNode2D, ISceneSpatialParticipant2D
                     : requested.Select(static value => new Occurrence(value)).ToList();
 
             HashSet<SceneNode2D> nodes = new(ReferenceEqualityComparer.Instance);
+            HashSet<SceneNode2D>? realizedNodes = null;
             foreach (Occurrence occurrence in next)
             {
                 if (occurrence.Node is null)
@@ -208,8 +208,14 @@ public sealed class SceneItems2D : SceneNode2D, ISceneSpatialParticipant2D
                     {
                         throw new InvalidOperationException("A scene node cannot represent two collection occurrences.");
                     }
-                    ContentControl.ValidateCanOwnChild(this, node);
-                    LogicalChildren.ValidateInsertion(LogicalChildren.Count, node);
+                    // A node realized here, such as a direct item, is not retained (it would be a second
+                    // occurrence), so Commit removes it before inserting it again.
+                    realizedNodes ??= new(realized.Select(static old => old.Node!), ReferenceEqualityComparer.Instance);
+                    if (!realizedNodes.Contains(node))
+                    {
+                        ContentControl.ValidateCanOwnChild(this, node);
+                        LogicalChildren.ValidateInsertion(LogicalChildren.Count, node);
+                    }
                     node.DataContext = occurrence.Value;
                     occurrence.Node = node;
                 }
@@ -680,11 +686,27 @@ public sealed class SceneItems2D : SceneNode2D, ISceneSpatialParticipant2D
         return bounds;
     }
 
+    internal override SceneBounds2D GetGeometricLocalBounds()
+    {
+        SceneBounds2D bounds = SceneBounds2D.Empty;
+        foreach (ref SceneChildBoundsIndex2D.Entry entry in childBounds.Refresh(this))
+        {
+            bounds = SceneGeometry2D.Union(bounds, GetGeometricBounds(entry));
+            if (bounds.Kind == SceneBoundsKind.Unknown) { break; }
+        }
+        return bounds;
+    }
+
     internal override void OnChildGeometryChanged(SceneNode2D child) => childBounds.MarkDirty(child);
 
     private static SceneBounds2D GetVisibleBounds(in SceneChildBoundsIndex2D.Entry entry) => entry.IsLive || entry.IsBranch
         ? SceneGeometry2D.TransformBounds(entry.Node.GetLocalBounds(), entry.Node.GetLocalTransform())
         : entry.VisibleBounds;
+
+    // A measured sprite caches its geometry as its hit-test bounds, which ignore visibility.
+    private static SceneBounds2D GetGeometricBounds(in SceneChildBoundsIndex2D.Entry entry) => entry.IsLive || entry.IsBranch
+        ? SceneGeometry2D.TransformBounds(entry.Node.GetOrderLocalBounds(), entry.Node.GetLocalTransform())
+        : entry.Node.IsSceneRendered ? entry.HitTestBounds : SceneBounds2D.Empty;
 
     private static bool Intersects(SceneBounds2D visible, in SceneChildBoundsIndex2D.Entry entry)
     {

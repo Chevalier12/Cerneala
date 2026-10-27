@@ -47,7 +47,7 @@ root.RenderQueueProcessor.Process(element);
 
 `RenderQueueProcessor` is the render-cache phase worker used by `UIRoot` through `FramePhaseProcessors.RenderCache`. It operates on one `UIElement` at a time, gets that element's `ElementRenderCache` from the shared `RetainedRenderCache`, and asks the cache to rebuild when the element is stale or has render dirtiness.
 
-When an element has a render-scope-only invalidation, `Process` invalidates the root command cache. If the element cache is still current, processing stops there; otherwise the local element cache is rebuilt before composition can use it.
+When an element has a render-scope-only invalidation, `Process` invalidates the root command cache. If the element cache is still current, processing stops there; otherwise the local element cache is rebuilt before composition can use it. The invalidation is render-scope-only when every render invalidation that reached the element since it was last processed came from a render-scope change, such as `Opacity` or `RenderTransform`. An explicit `Invalidate(InvalidationFlags.Render, ...)` on the element, or a `Render | Subtree` invalidation of an ancestor, in the same frame makes it a normal render invalidation, so the local cache is rebuilt.
 
 When the element has `InvalidationFlags.Render`, `Process` forces a local cache rebuild. When `ElementRenderCache.Ensure` reports that a rebuild occurred, the processor invalidates the root render cache so the retained root command list can be composed again.
 

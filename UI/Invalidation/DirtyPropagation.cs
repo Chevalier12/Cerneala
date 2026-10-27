@@ -38,6 +38,11 @@ public sealed class DirtyPropagation
             : LayoutQueueEntryKind.Direct;
         MarkAndQueue(request.Target, propagated, layoutQueue, inheritedPropertyQueue, aspectQueue, renderQueue, hitTestQueue, trace, request.Reason, targetLayoutKind);
         InvalidateLayoutCaches(request.Target, propagated);
+        // Any other Render request rebuilds the local cache, also when a scope change reached the element in the same frame (#954).
+        if (propagated.HasFlag(InvalidationFlags.Render) && !request.IsRenderScopeOnly)
+        {
+            request.Target.MarkRenderContentInvalidation();
+        }
 
         if (effective.HasFlag(InvalidationFlags.Measure))
         {
@@ -58,6 +63,10 @@ public sealed class DirtyPropagation
             {
                 MarkAndQueue(descendant, propagated, layoutQueue, inheritedPropertyQueue, aspectQueue, renderQueue, hitTestQueue, trace, "Subtree propagation", LayoutQueueEntryKind.Subtree);
                 InvalidateLayoutCaches(descendant, propagated);
+                if (propagated.HasFlag(InvalidationFlags.Render))
+                {
+                    descendant.MarkRenderContentInvalidation();
+                }
             }
         }
     }

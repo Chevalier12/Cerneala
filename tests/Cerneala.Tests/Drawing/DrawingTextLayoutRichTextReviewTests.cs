@@ -145,6 +145,117 @@ public sealed class DrawingTextLayoutRichTextReviewTests
         Assert.Equal(25, layout.Lines[0].Bounds.Width, Tolerance);
     }
 
+    // Issue #893: justification changes the spacing of a line, not the visual order of its graphemes.
+
+    [Theory]
+    [InlineData(DrawTextAlignment.Start)]
+    [InlineData(DrawTextAlignment.Justify)]
+    public void JustifyKeepsTheVisualLetterOrderOfALeftToRightLineInARightToLeftParagraph(DrawTextAlignment alignment)
+    {
+        DrawTextLayout reference = new DrawTextLayoutBuilder()
+            .AddSpan(new DrawTextSpan("ab cd ef gh\nij", testFont, 10, black))
+            .Build(new DrawTextLayoutOptions(maxWidth: 30, wrapping: DrawTextWrapping.Word, alignment: DrawTextAlignment.Start, direction: DrawTextDirection.RightToLeft));
+        DrawTextLayout layout = new DrawTextLayoutBuilder()
+            .AddSpan(new DrawTextSpan("ab cd ef gh\nij", testFont, 10, black))
+            .Build(new DrawTextLayoutOptions(maxWidth: 30, wrapping: DrawTextWrapping.Word, alignment: alignment, direction: DrawTextDirection.RightToLeft));
+
+        string expected = string.Concat(reference.Lines[0].Runs.Select(static run => run.Text));
+        string actual = string.Concat(layout.Lines[0].Runs.Select(static run => run.Text));
+
+        Assert.True(
+            expected == actual,
+            $"Start gives \"{expected}\" ({reference.Lines[0].Runs.Count} runs); {alignment} gives \"{actual}\" ({layout.Lines[0].Runs.Count} runs: " +
+            string.Join("|", layout.Lines[0].Runs.Select(static run => run.Text)) + ").");
+    }
+
+    [Fact]
+    public void JustifyKeepsTheVisualLetterOrderOfARightToLeftLineInALeftToRightParagraph()
+    {
+        DrawTextLayout layout = new DrawTextLayoutBuilder()
+            .AddSpan(new DrawTextSpan("אב גד הו זח\nij", testFont, 10, black))
+            .Build(new DrawTextLayoutOptions(maxWidth: 30, wrapping: DrawTextWrapping.Word, alignment: DrawTextAlignment.Justify, direction: DrawTextDirection.LeftToRight));
+
+        IReadOnlyList<DrawTextLayoutRun> runs = layout.Lines[0].Runs;
+        // The runs are in visual order, left to right. A right-to-left word reads from right to left, so the last run
+        // holds the first letter.
+        string read = string.Concat(runs.Reverse().Select(static run => run.Text));
+
+        Assert.True(
+            read == "אב גד",
+            $"Read from right to left the line gives \"{read}\" ({runs.Count} runs: " +
+            string.Join("|", runs.Select(static run => run.Text)) + ").");
+        for (int index = 1; index < runs.Count; index++)
+        {
+            Assert.True(runs[index - 1].Bounds.X < runs[index].Bounds.X, "runs are not in visual order");
+        }
+    }
+
+    // The same reordering keeps two left-to-right spans of a right-to-left line in reading order: the line is not
+    // reversed as a whole, only by embedding level.
+    [Fact]
+    public void TwoLeftToRightSpansOfARightToLeftLineKeepTheirReadingOrder()
+    {
+        DrawTextLayout layout = new DrawTextLayoutBuilder()
+            .AddSpan(new DrawTextSpan("ab ", testFont, 10, black))
+            .AddSpan(new DrawTextSpan("cd", testFont, 10, black))
+            .Build(new DrawTextLayoutOptions(direction: DrawTextDirection.RightToLeft));
+
+        Assert.Equal(["ab ", "cd"], Assert.Single(layout.Lines).Runs.Select(static run => run.Text));
+    }
+
+    // The ellipsis of a trimmed line is a neutral at the end of the line, so it takes the paragraph direction (UAX #9
+    // rules N1 and N2) and sits at the visual end of the line: the left end of a right-to-left line. The CJK letters use
+    // the fallback font while the ellipsis uses the span font, so the ellipsis is a run of its own.
+    [Theory]
+    [InlineData("שלום 漢字漢字漢字漢字")]
+    [InlineData("שלום abcdefghijkl")]
+    public void TheEllipsisOfARightToLeftLineThatEndsWithLeftToRightLettersIsAtTheLeftEnd(string text)
+    {
+        SystemFontSource fonts = new();
+        IDrawFont font = fonts.LoadFont("Segoe UI", 16);
+        IDrawFont fallback = fonts.LoadFont("Microsoft YaHei", 16);
+        DrawTextLayout layout = new DrawTextLayoutBuilder()
+            .AddSpan(new DrawTextSpan(text, font, 16, black, fallbackFonts: [fallback]))
+            .Build(new DrawTextLayoutOptions(maxWidth: 90, trimming: DrawTextTrimming.CharacterEllipsis, direction: DrawTextDirection.RightToLeft));
+
+        IReadOnlyList<DrawTextLayoutRun> runs = Assert.Single(layout.Lines).Runs;
+
+        Assert.True(
+            runs[0].Text == "…",
+            "runs from left to right: " + string.Join("|", runs.Select(static run => run.Text)));
+    }
+
+    [Fact]
+    public void TheEllipsisOfALeftToRightLineThatEndsWithRightToLeftLettersIsAtTheRightEnd()
+    {
+        DrawTextLayout layout = new DrawTextLayoutBuilder()
+            .AddSpan(new DrawTextSpan("ab אבגדהוזח", testFont, 10, black))
+            .Build(new DrawTextLayoutOptions(maxWidth: 40, trimming: DrawTextTrimming.CharacterEllipsis, direction: DrawTextDirection.LeftToRight));
+
+        IReadOnlyList<DrawTextLayoutRun> runs = Assert.Single(layout.Lines).Runs;
+
+        Assert.True(
+            runs[^1].Text == "…" && runs[^1].Direction == DrawTextDirection.LeftToRight,
+            "runs from left to right: " + string.Join("|", runs.Select(static run => $"{run.Text}:{run.Direction}")));
+    }
+
+    // Issue #963: "ef gh" ends neither the text nor a hard break, so it is justified also when the height limit hides "ij".
+    [Fact]
+    public void JustifyStretchesTheLastVisibleLineWhenTheHeightLimitHidesLaterSoftWrappedLines()
+    {
+        DrawTextLayout layout = new DrawTextLayoutBuilder()
+            .AddSpan(new DrawTextSpan("ab cd ef gh ij", testFont, 10, black))
+            .Build(new DrawTextLayoutOptions(
+                maxWidth: 30,
+                maxHeight: 24,
+                wrapping: DrawTextWrapping.Word,
+                alignment: DrawTextAlignment.Justify));
+
+        Assert.Equal(["ab cd", "ef gh"], layout.Lines.Select(static line => line.Text));
+        Assert.Equal(30, layout.Lines[0].Bounds.Width, Tolerance);
+        Assert.Equal(30, layout.Lines[1].Bounds.Width, Tolerance);
+    }
+
     // 9. A family name that the system does not know still gets the weight and the style.
 
     [Fact]

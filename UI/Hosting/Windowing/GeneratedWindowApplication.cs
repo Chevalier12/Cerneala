@@ -72,7 +72,10 @@ public static class GeneratedWindowApplication
             descriptor,
             "construct Application",
             descriptor.CreateApplication);
-        WindowApplicationRuntime runtime = WindowApplicationRuntime.GetOrCreateDefault(application.UseMultisampling);
+        WindowApplicationRuntime runtime = ExecuteStartupStage(
+            descriptor,
+            "create runtime",
+            () => WindowApplicationRuntime.GetOrCreateDefault(application.UseMultisampling));
         Exception? failure = null;
         try
         {
@@ -106,9 +109,12 @@ public static class GeneratedWindowApplication
             {
                 if (descriptor.CreateApplication is null)
                 {
-                    hostedRuntime = WindowApplicationRuntime.CurrentOrDefault;
+                    hostedRuntime = ExecuteStartupStage(
+                        descriptor,
+                        "create runtime",
+                        () => WindowApplicationRuntime.CurrentOrDefault);
                     hostedServices = BuildServices(descriptor);
-                    hostedRuntime.StartMainWindow(descriptor.CreateMainWindow(hostedServices));
+                    ShowLegacyMainWindow(descriptor, hostedRuntime, CreateLegacyMainWindow(descriptor, hostedServices));
                 }
                 else
                 {
@@ -116,7 +122,10 @@ public static class GeneratedWindowApplication
                         descriptor,
                         "construct Application",
                         descriptor.CreateApplication);
-                    hostedRuntime = WindowApplicationRuntime.GetOrCreateDefault(application.UseMultisampling);
+                    hostedRuntime = ExecuteStartupStage(
+                        descriptor,
+                        "create runtime",
+                        () => WindowApplicationRuntime.GetOrCreateDefault(application.UseMultisampling));
                     StartApplication(descriptor, application, hostedRuntime, Array.Empty<string>());
                     if (application.IsShutdownRequested)
                     {
@@ -159,21 +168,47 @@ public static class GeneratedWindowApplication
 
     private static ServiceProvider BuildServices(GeneratedWindowStartupDescriptor descriptor)
     {
-        ServiceCollection services = new();
-        descriptor.ConfigureServices(services);
-        return services.BuildServiceProvider(new ServiceProviderOptions
-        {
-            ValidateScopes = true
-        });
+        return ExecuteStartupStage(
+            descriptor,
+            "configure and build services",
+            () =>
+            {
+                ServiceCollection services = new();
+                descriptor.ConfigureServices(services);
+                return services.BuildServiceProvider(new ServiceProviderOptions
+                {
+                    ValidateScopes = true
+                });
+            });
+    }
+
+    private static Window CreateLegacyMainWindow(GeneratedWindowStartupDescriptor descriptor, IServiceProvider services)
+    {
+        return ExecuteStartupStage(
+            descriptor,
+            "resolve and create startup Window",
+            () => descriptor.CreateMainWindow(services));
+    }
+
+    private static void ShowLegacyMainWindow(
+        GeneratedWindowStartupDescriptor descriptor,
+        WindowApplicationRuntime runtime,
+        Window mainWindow)
+    {
+        ExecuteStartupStage(descriptor, "show startup Window", () => runtime.StartMainWindow(mainWindow));
     }
 
     private static void RunLegacy(GeneratedWindowStartupDescriptor descriptor)
     {
         using ServiceProvider services = BuildServices(descriptor);
-        Window mainWindow = descriptor.CreateMainWindow(services);
-        WindowApplicationRuntime runtime = WindowApplicationRuntime.CurrentOrDefault;
+        Window mainWindow = CreateLegacyMainWindow(descriptor, services);
+        WindowApplicationRuntime runtime = ExecuteStartupStage(
+            descriptor,
+            "create runtime",
+            () => WindowApplicationRuntime.CurrentOrDefault);
         try
         {
+            ShowLegacyMainWindow(descriptor, runtime, mainWindow);
             runtime.RunStandalone(mainWindow);
         }
         finally

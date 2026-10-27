@@ -246,9 +246,10 @@ public class MenuItem : ItemsControl, IInputCommandSource, ICommandStateSource, 
         }
     }
 
+    // A parent never executes its command (CanExecuteCommand), so the command does not decide IsEnabled either (#934).
     public bool RefreshCommandState(CommandRouter router, ElementInputRouteMap routeMap)
     {
-        return commandState.Refresh(router, routeMap);
+        return HasSubmenu ? commandState.RefreshIgnoringCommand() : commandState.Refresh(router, routeMap);
     }
 
     void IInputActivatable.Activate()
@@ -353,6 +354,12 @@ public class MenuItem : ItemsControl, IInputCommandSource, ICommandStateSource, 
             IsSubmenuOpen = false;
         }
 
+        // Gaining or losing children decides whether the command controls IsEnabled.
+        if (Command is not null)
+        {
+            QueueCommandStateRefresh();
+        }
+
         SynchronizeSubmenuIndicator();
     }
 
@@ -417,16 +424,30 @@ public class MenuItem : ItemsControl, IInputCommandSource, ICommandStateSource, 
                 menuSession?.OnSubmenuStateRequested(this, IsSubmenuOpen);
             }
         }
-        else if (ReferenceEquals(args.Property, IsEnabledProperty) && !IsEnabled)
+        else if (ReferenceEquals(args.Property, IsEnabledProperty))
         {
-            IsSubmenuOpen = false;
-            menuSession?.OnItemUnavailable(this);
+            commandState.OnEnabledWritten();
+            if (!IsEnabled)
+            {
+                IsSubmenuOpen = false;
+                menuSession?.OnItemUnavailable(this);
+            }
         }
         else if (ReferenceEquals(args.Property, VisibilityProperty) &&
                  !UIElementVisibility.ParticipatesInInput(this))
         {
             IsSubmenuOpen = false;
             menuSession?.OnItemUnavailable(this);
+        }
+    }
+
+    // A write of the current IsEnabled raises no property change, but it is still the writer's value (#934).
+    internal override void NotifyEffectiveValueRewritten(UiProperty property)
+    {
+        base.NotifyEffectiveValueRewritten(property);
+        if (ReferenceEquals(property, IsEnabledProperty))
+        {
+            commandState.OnEnabledWritten();
         }
     }
 
@@ -546,13 +567,14 @@ public class MenuItem : ItemsControl, IInputCommandSource, ICommandStateSource, 
         RaiseEvent(new RoutedEventArgs(isOpen ? SubmenuOpenedEvent : SubmenuClosedEvent, this));
     }
 
+    // A click that a command source inside the header owns, such as a Button, is that source's click (#935).
     private void OnMouseUp(object _, RoutedEventArgs args)
     {
         if (args is not MouseButtonEventArgs
             {
                 ChangedButton: InputMouseButton.Left,
                 ClickCount: > 0
-            } || !IsHeaderSource(args.OriginalSource))
+            } mouseArgs || !IsHeaderSource(args.OriginalSource) || !commandState.OwnsClick(mouseArgs))
         {
             return;
         }

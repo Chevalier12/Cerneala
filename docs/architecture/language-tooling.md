@@ -258,7 +258,7 @@ Request results:
 |---|---|---|---|
 | `CernealaContentType` | `Cerneala.VisualStudio/CernealaContentType.cs` | Content type `cerneala-crn`, based on `CodeRemoteContent`, for `.crn`. | MEF |
 | `CernealaLanguageServerProvider` | `Cerneala.VisualStudio/CernealaLanguageServerProvider.cs` | `[Export(typeof(ILanguageClient))]` for `cerneala-crn` (`:20-21`). Starts the server and returns a `Connection` over its pipes. | MEF, shared |
-| `CernealaServerProcessManager` | `Cerneala.VisualStudio/Server/CernealaServerProcessManager.cs` | Starts, stops and restarts the server process. Crash backoff: 250 ms, 1 s, 4 s; restarts stop after 3 crashes in 2 minutes; shutdown timeout 3 s (`:63-71`). | Provider |
+| `CernealaServerProcessManager` | `Cerneala.VisualStudio/Server/CernealaServerProcessManager.cs` | Starts, stops and restarts the server process. Crash backoff: 250 ms, 1 s, 4 s; restarts stop after 3 crashes in 2 minutes; shutdown timeout 3 s, 1 s during Visual Studio shutdown (`:63-77`). | Provider |
 | `SystemCernealaServerProcess` | `Cerneala.VisualStudio/Server/SystemCernealaServerProcess.cs` | The real `System.Diagnostics.Process` behind the manager. | Manager |
 | `CernealaPreviewMarginProvider` | `Cerneala.VisualStudio/Preview/CernealaPreviewMarginProvider.cs` | Creates one preview margin, with one preview session, for each `.crn` text view. | MEF |
 | `CernealaPreviewSession` | `Cerneala.VisualStudio/Preview/CernealaPreviewSession.cs` | Sends the whole buffer 300 ms after the last edit and shows the returned frame. | Text view |
@@ -289,6 +289,13 @@ Language server:
    `StopAsync` closes the server's stdin and waits up to 3 s. If the server is
    still running, it logs "did not exit within 3 seconds; terminating it" and
    kills the process.
+6. Extension disable (`Dispose`) and Visual Studio shutdown (`ProcessExit`)
+   run synchronously, so they call `Stop`. It closes stdin and blocks until the
+   server exits, for at most 3 s on disable and 1 s on Visual Studio shutdown.
+   On .NET Framework, all `ProcessExit` handlers together get 2 s, so a 3 s
+   wait there would end before the kill. If the server is still running, `Stop`
+   logs "did not exit within ... seconds; terminating it" and kills it.
+   Only a cancelled activation (`StopImmediately`) kills without waiting.
 
 Preview:
 
@@ -412,8 +419,18 @@ Setup and use are in the [Visual Studio guide](../guides/visual-studio-community
 - Disable, update and uninstall each close stdin and wait first, and kill only
   after the timeout
   (`:198 DisableUpdateAndUninstallForceTerminationOnlyAfterTheTimeout`).
+- `StopAsync`, `Dispose` (extension disable) and `Stop(VisualStudioShutdown)`
+  each close stdin and wait before they kill, and log "did not exit" when they
+  kill (`:222 EveryDisableShutdownPathWaitsBeforeKillingAndLogsTheForcedTermination`).
+  A server that exits when stdin closes is not killed
+  (`:254 DisposeOfAServerThatExitsOnInputCloseDoesNotKillIt`).
+- `Dispose` waits 3 s; Visual Studio shutdown waits 1 s, less than the 2 s
+  that .NET Framework gives all `ProcessExit` handlers together
+  (`:270 ExtensionDisableWaitsTheShutdownTimeoutAndVisualStudioShutdownStaysInsideTheProcessExitBudget`).
+- A cancelled activation still kills at once, without a wait
+  (`:294 ActivationCancellationStillAbortsWithoutWaiting`).
 - The bundled path is `<install root>\Server\<version>\Cerneala.LanguageServer.exe`
-  (`:219 BundledPathIsVersionedUnderTheExtensionInstallRoot`).
+  (`:313 BundledPathIsVersionedUnderTheExtensionInstallRoot`).
 
 Netestat:
 

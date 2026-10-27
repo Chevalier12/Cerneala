@@ -133,13 +133,21 @@ public sealed class FocusManager
         return false;
     }
 
-    // A handler can focus an element that it attached after the supplied route map was
-    // built. That element is routed over its root's current route map instead.
+    // Handlers of the frame can change the input route after the supplied route map was
+    // built. A focused element that they attached is routed over its root's current route
+    // map, and one that they removed from the route, for example by hiding an ancestor
+    // (#953), is checked against that map, which no longer contains it.
     private static ElementInputRouteMap ResolveRouteMap(UIElement element, ElementInputRouteMap routeMap)
     {
-        return !routeMap.Contains(element) && element.Root is UIRoot root
-            ? root.InputCache.EnsureCurrent(root)
-            : routeMap;
+        if (element.Root is not UIRoot root)
+        {
+            return routeMap;
+        }
+
+        ElementInputRouteMap currentMap = root.InputCache.EnsureCurrent(root);
+        return routeMap.Contains(element) && currentMap.Contains(element)
+            ? routeMap
+            : currentMap;
     }
 
     private void NotifyFocusChanged()

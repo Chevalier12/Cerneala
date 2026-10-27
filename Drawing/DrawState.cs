@@ -370,7 +370,7 @@ public sealed class DrawCommandStateAnalyzer
             Matrix3x2 transform = transforms[^1];
             DrawRect? clip = clips[^1];
             DrawRect? bounds = metadata.Bounds is DrawRect localBounds
-                ? TransformBounds(localBounds, transform)
+                ? TryTransformBounds(localBounds, transform)
                 : null;
             if (bounds is DrawRect commandBounds && clip is DrawRect clipBounds)
             {
@@ -392,11 +392,11 @@ public sealed class DrawCommandStateAnalyzer
                 ImageHeight = metadata.ImageHeight
             };
 
-            if (!metadata.IsContextSensitive && bounds is DrawRect drawnBounds)
+            if (!metadata.IsContextSensitive)
             {
                 for (int scopeIndex = 0; scopeIndex < stack.Count; scopeIndex++)
                 {
-                    stack[scopeIndex].Include(drawnBounds);
+                    stack[scopeIndex].Include(bounds);
                 }
             }
 
@@ -560,15 +560,37 @@ public sealed class DrawCommandStateAnalyzer
         DrawRect bounds,
         Matrix3x2 transform)
     {
+        TransformEdges(bounds, transform, out float left, out float top, out float width, out float height);
+        return new DrawRect(left, top, width, height);
+    }
+
+    // Transformed bounds, or null (unknown) when they exceed the DrawRect range.
+    private static DrawRect? TryTransformBounds(
+        DrawRect bounds,
+        Matrix3x2 transform)
+    {
+        TransformEdges(bounds, transform, out float left, out float top, out float width, out float height);
+        return DrawRect.TryCreate(left, top, width, height);
+    }
+
+    private static void TransformEdges(
+        DrawRect bounds,
+        Matrix3x2 transform,
+        out float left,
+        out float top,
+        out float width,
+        out float height)
+    {
         Vector2 topLeft = Vector2.Transform(new Vector2(bounds.X, bounds.Y), transform);
         Vector2 topRight = Vector2.Transform(new Vector2(bounds.Right, bounds.Y), transform);
         Vector2 bottomLeft = Vector2.Transform(new Vector2(bounds.X, bounds.Bottom), transform);
         Vector2 bottomRight = Vector2.Transform(new Vector2(bounds.Right, bounds.Bottom), transform);
-        float left = MathF.Min(MathF.Min(topLeft.X, topRight.X), MathF.Min(bottomLeft.X, bottomRight.X));
-        float top = MathF.Min(MathF.Min(topLeft.Y, topRight.Y), MathF.Min(bottomLeft.Y, bottomRight.Y));
+        left = MathF.Min(MathF.Min(topLeft.X, topRight.X), MathF.Min(bottomLeft.X, bottomRight.X));
+        top = MathF.Min(MathF.Min(topLeft.Y, topRight.Y), MathF.Min(bottomLeft.Y, bottomRight.Y));
         float right = MathF.Max(MathF.Max(topLeft.X, topRight.X), MathF.Max(bottomLeft.X, bottomRight.X));
         float bottom = MathF.Max(MathF.Max(topLeft.Y, topRight.Y), MathF.Max(bottomLeft.Y, bottomRight.Y));
-        return new DrawRect(left, top, MathF.Max(0, right - left), MathF.Max(0, bottom - top));
+        width = MathF.Max(0, right - left);
+        height = MathF.Max(0, bottom - top);
     }
 
     internal static DrawRect Intersect(DrawRect left, DrawRect right)
@@ -598,20 +620,32 @@ public sealed class DrawCommandStateAnalyzer
 
         public DrawRect? Bounds { get; private set; }
 
-        public void Include(DrawRect bounds)
+        // Content of unknown bounds, or a union outside the DrawRect range,
+        // leaves the scope's bounds unknown for the rest of the scope.
+        private bool unknown;
+
+        public void Include(DrawRect? bounds)
         {
-            Bounds = Bounds is DrawRect current
-                ? Union(current, bounds)
-                : bounds;
+            if (unknown)
+            {
+                return;
+            }
+
+            Bounds = bounds is not DrawRect drawn
+                ? null
+                : Bounds is DrawRect current
+                    ? Union(current, drawn)
+                    : drawn;
+            unknown = Bounds is null;
         }
 
-        private static DrawRect Union(DrawRect first, DrawRect second)
+        private static DrawRect? Union(DrawRect first, DrawRect second)
         {
             float left = MathF.Min(first.X, second.X);
             float top = MathF.Min(first.Y, second.Y);
             float right = MathF.Max(first.Right, second.Right);
             float bottom = MathF.Max(first.Bottom, second.Bottom);
-            return new DrawRect(left, top, right - left, bottom - top);
+            return DrawRect.TryCreate(left, top, right - left, bottom - top);
         }
     }
 }

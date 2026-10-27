@@ -20,8 +20,15 @@ The language includes inline and named `Aspect` behavior,
 property starts inside `@animate` with optional `@from` and required `@to`. Values support typed
 literals, enum members, `current`, the existing reactive `$` sources, and
 conditional expressions. A bare property name such as `TranslateY` is accepted
-in a condition but not as a value. The supported start
+in a condition but not as a value. `current` must be the whole value: a branch of a
+conditional such as `Opacity = IsMouseOver ? 1 : current;` is a build error
+(`CERNEALAUI020`). To start a Motion only in one case, put the condition on an
+`@if` around the `@animate` instead, as in the `@when IsMouseOver` example below. The supported start
 options are `retarget`, `holdOnComplete`, and `debugName`.
+
+An `@if` condition must be a comparison, or comparisons combined with `and` and
+`or`. A bare Boolean source is not a comparison: write `@if IsMouseOver == true`,
+not `@if IsMouseOver`, which reports `CERNEALAUI007`.
 
 Motion assignments accept these target forms:
 
@@ -69,7 +76,7 @@ The language is constrained to markup and generator work over the current Motion
             Mass="1" />
 
     <MotionClip Name="ClickPulse"
-                TargetType="Border">
+                TargetType="Button">
         @sequence
         {
             @animate with Tween(90ms, EaseOut)
@@ -86,11 +93,11 @@ The language is constrained to markup and generator work over the current Motion
     </MotionClip>
 
     <Aspect Name="NavigationHover"
-            TargetType="Border">
+            TargetType="Button">
 
         @when IsMouseOver
         {
-            @if IsMouseOver
+            @if IsMouseOver == true
             {
                 @animate with $QuickOut
                 {
@@ -134,9 +141,13 @@ The language is constrained to markup and generator work over the current Motion
 Reusable behavior is attached through an Aspect:
 
 ```xml
-<Border Aspect="$NavigationHover">
-    ...
-</Border>
+<Button Aspect="$NavigationHover">
+    <StackPanel Orientation="Horizontal">
+        <Border Name="Indicator" Width="3" Background="#3B82F6" />
+        <TextBlock Name="Label" Text="Home" />
+        <TextBlock Name="HoverText" Text="Open" Opacity="0" Margin="12,0,0,0" />
+    </StackPanel>
+</Button>
 ```
 
 `MotionClip` is not attached directly. It is a trigger-free generated animation recipe invoked by an Aspect through `@run`; there is no runtime `MotionClip` class.
@@ -573,7 +584,7 @@ an additional wrapper inside the inline property element.
 ```text
 <Aspect>
     @when expression           react to observable state
-    @if expression             conditionally activate a declarative branch
+    @if comparison             conditionally activate a declarative branch
     @on EventName              react to an event
     @run $MotionClip           invoke a reusable animation recipe
     @animate                    execute an inline visual transition

@@ -256,6 +256,9 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     public bool IsLoaded => IsAttached;
 
+    // True from the start of DetachFromRoot until Root is cleared.
+    internal bool IsDetachingFromRoot => isDetachingFromRoot;
+
     public bool IsInitialized => isInitialized;
 
     public ElementHandlerStore Handlers { get; }
@@ -299,7 +302,12 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     internal Transform LayoutCorrectionTransform { get; private set; } = Transform.Identity;
 
+    // True while the presence coordinator plays this element's exit, whatever its input option: the element is still
+    // rendered, so its queued work must stay queued (#940).
     internal bool IsPresenceExiting { get; private set; }
+
+    // True while the element is exiting and its PresenceOptions.ExcludeInputWhileExiting removes it from input.
+    internal bool IsPresenceInputExcluded { get; private set; }
 
     // A virtualizing panel keeps a child outside its realization window in VisualChildren but does not realize it,
     // so the child is not rendered, hit tested or routed input until the panel realizes it again.
@@ -790,8 +798,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     internal void InvalidatePrismAttachment()
     {
         prismImageLeases?.Clear();
-        hasPendingRenderScopeInvalidation = true;
-        Invalidate(InvalidationFlags.Render, "Prism attachment changed");
+        InvalidateRenderScope("Prism attachment changed");
     }
 
     internal void AttachToRoot(UIRoot root)
@@ -855,11 +862,17 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         }
         finally
         {
-            // A failing detach callback still leaves the element detached.
-            ReleaseImageResources();
-            Root?.RetainedRenderCache.ReleaseElement(this);
-            Bindings.Clear();
-            Root?.AdvanceImageResolutionEpoch();
+            // A failing detach callback or cleanup step still leaves the element detached. A cleanup step does not
+            // throw from this finally block, because that would skip the remaining steps and replace the earlier
+            // failure.
+            try { ReleaseImageResources(); }
+            catch (Exception exception) { failure ??= ExceptionDispatchInfo.Capture(exception); }
+            try { Root?.RetainedRenderCache.ReleaseElement(this); }
+            catch (Exception exception) { failure ??= ExceptionDispatchInfo.Capture(exception); }
+            try { Bindings.Clear(); }
+            catch (Exception exception) { failure ??= ExceptionDispatchInfo.Capture(exception); }
+            try { Root?.AdvanceImageResolutionEpoch(); }
+            catch (Exception exception) { failure ??= ExceptionDispatchInfo.Capture(exception); }
             Root = null;
             isDetachingFromRoot = false;
         }
@@ -1303,6 +1316,17 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         return isScopeOnly;
     }
 
+    internal void MarkRenderContentInvalidation()
+    {
+        hasPendingRenderContentInvalidation = true;
+    }
+
+    private void InvalidateRenderScope(string reason)
+    {
+        hasPendingRenderScopeInvalidation = true;
+        Invalidate(new InvalidationRequest(this, InvalidationFlags.Render, reason) { IsRenderScopeOnly = true });
+    }
+
     internal void SetLayoutCorrectionTransform(Transform correction)
     {
         ArgumentNullException.ThrowIfNull(correction);
@@ -1313,19 +1337,34 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
         LayoutCorrectionTransform = correction;
         IncrementRenderScopeVersion();
-        hasPendingRenderScopeInvalidation = true;
-        Invalidate(InvalidationFlags.Render, "Layout motion correction changed");
+        InvalidateRenderScope("Layout motion correction changed");
     }
 
-    internal void SetPresenceExiting(bool isExiting)
+    internal void SetPresenceExiting(bool isExiting, bool excludesInput)
     {
-        if (IsPresenceExiting == isExiting)
+        bool isInputExcluded = isExiting && excludesInput;
+        if (IsPresenceExiting == isExiting && IsPresenceInputExcluded == isInputExcluded)
         {
             return;
         }
 
         IsPresenceExiting = isExiting;
+        IsPresenceInputExcluded = isInputExcluded;
         Invalidate(InvalidationFlags.HitTest, "Presence state changed");
+    }
+
+    // An exiting element's descendants left VisualChildren with it and are still rendered through it.
+    internal bool IsInPresenceExitingSubtree()
+    {
+        for (UIElement? current = this; current is not null; current = current.VisualParent)
+        {
+            if (current.IsPresenceExiting)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     internal void SetSkippedByVirtualization(bool isSkipped)
@@ -1371,8 +1410,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         PresenceOpacity = opacity;
         PresenceScale = scale;
         IncrementRenderScopeVersion();
-        hasPendingRenderScopeInvalidation = true;
-        Invalidate(InvalidationFlags.Render, "Presence visual state changed");
+        InvalidateRenderScope("Presence visual state changed");
     }
 
     protected void SetRenderDependencies(RenderDependency dependencies)
@@ -1639,10 +1677,12 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
                 !float.IsPositiveInfinity(MaxWidth) || !float.IsPositiveInfinity(MaxHeight);
         }
 
+        bool isRenderScopeChange = false;
         if ((options & (UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual)) != UiPropertyOptions.None)
         {
             if (IsRenderScopeProperty(args.Property))
             {
+                isRenderScopeChange = true;
                 IncrementRenderScopeVersion();
                 hasPendingRenderScopeInvalidation = true;
             }
@@ -1711,7 +1751,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
         if (flags != InvalidationFlags.None)
         {
-            Invalidate(new InvalidationRequest(this, flags, "Property changed", args.Property));
+            Invalidate(new InvalidationRequest(this, flags, "Property changed", args.Property) { IsRenderScopeOnly = isRenderScopeChange });
             // A participation change affects the parent's layout even when the child
             // is skipped by the scheduler because it has just become collapsed.
             if (requiresParentLayoutScheduling &&

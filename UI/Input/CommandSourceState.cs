@@ -12,6 +12,8 @@ internal sealed class CommandSourceState
     private IObservableCommand? observableCommand;
     private Func<bool>? callbackGuard;
     private bool isAttached;
+    private bool disabledByCommand;
+    private bool writingEnabled;
 
     public CommandSourceState(
         UIElement owner,
@@ -69,18 +71,106 @@ internal sealed class CommandSourceState
 
     public bool Refresh(CommandRouter router, ElementInputRouteMap routeMap)
     {
-        if (resolveCommand() is null)
+        ICommand? command = resolveCommand();
+        if (command is null)
         {
             return false;
         }
 
+        // A routed command reaches its CommandBinding only along the input route. A source outside the route (collapsed,
+        // hidden, skipped by virtualization) keeps IsEnabled and refreshes again when the route changes (#901).
+        if (command is RoutedCommand && !routeMap.Contains(owner))
+        {
+            owner.Root?.DeferCommandStateRefreshUntilInputRouteChanges(owner);
+            return false;
+        }
+
         bool canExecute = CanExecute(router, routeMap);
+        if (canExecute)
+        {
+            disabledByCommand = false;
+        }
+
         if (owner.IsEnabled == canExecute)
         {
             return false;
         }
 
-        owner.IsEnabled = canExecute;
+        writingEnabled = true;
+        try
+        {
+            owner.IsEnabled = canExecute;
+        }
+        finally
+        {
+            writingEnabled = false;
+        }
+
+        disabledByCommand = !canExecute;
+        return true;
+    }
+
+    // The owner reports every write of IsEnabled, also one that keeps the value. A write that Refresh did not make is
+    // someone else's IsEnabled, so RefreshIgnoringCommand must leave it alone.
+    public void OnEnabledWritten()
+    {
+        if (!writingEnabled)
+        {
+            disabledByCommand = false;
+        }
+    }
+
+    // For an owner that ignores its command (a MenuItem with children, #934): undo the disable that Refresh wrote,
+    // and leave an IsEnabled that the command did not write alone.
+    public bool RefreshIgnoringCommand()
+    {
+        if (!disabledByCommand)
+        {
+            return false;
+        }
+
+        disabledByCommand = false;
+        if (owner.IsEnabled)
+        {
+            return false;
+        }
+
+        owner.IsEnabled = true;
+        return true;
+    }
+
+    // The input bridge resolves a click to the nearest command source on the route of the clicked element and runs
+    // only that source's command. A click that a command source in the owner's content owns, such as a Button or a
+    // ComboBox's PART_DropDownToggle, bubbles its MouseUp to the owner but is not the owner's click (#421, #935). The
+    // decision uses the route map the bridge routed the MouseUp with, so it stays the same when an earlier handler,
+    // such as the inner button's Click, removes or collapses the clicked element or detaches the owner (#501).
+    public bool OwnsClick(MouseButtonEventArgs args)
+    {
+        ElementInputRouteMap? routeMap = args.RouteMap;
+        if (routeMap is null)
+        {
+            if (owner.Root is not UIRoot root)
+            {
+                return true;
+            }
+
+            routeMap = root.InputCache.EnsureCurrent(root);
+        }
+
+        UIElement? source = args.OriginalSource as UIElement;
+        if (source is null)
+        {
+            return true;
+        }
+
+        foreach (UIElement current in routeMap.GetRouteToRoot(source))
+        {
+            if (current is IInputCommandSource)
+            {
+                return ReferenceEquals(current, owner);
+            }
+        }
+
         return true;
     }
 
@@ -162,9 +252,11 @@ internal sealed class CommandSourceState
         observableCommand = null;
     }
 
+    // The event is the request, whatever its sender: commands may raise it with null or forward an inner command's
+    // event (#902). Only the bound command's event reaches this handler, because Subscribe removes it from the old one.
     private void OnCanExecuteChanged(object? sender, EventArgs args)
     {
-        if (ReferenceEquals(sender, observableCommand) && callbackGuard?.Invoke() == true)
+        if (callbackGuard?.Invoke() == true)
         {
             owner.QueueCommandStateRefresh();
         }
