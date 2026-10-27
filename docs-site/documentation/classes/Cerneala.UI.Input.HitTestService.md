@@ -62,7 +62,7 @@ The `HitTest(UIRoot, float, float, HitTestFilter?)` overload delegates through `
 
 The `HitTest(UIElement, ElementInputRouteMap, float, float, HitTestFilter?)` overload uses the supplied route map directly. A matching element must be present in the route map; otherwise the method returns `null` even if the point is inside that element.
 
-Elements are skipped when they are presence-exiting, do not participate in hit testing through visibility state, or are disabled. Disabled elements also cause their subtree to be skipped.
+Elements are skipped when they are presence-exiting with `PresenceOptions.ExcludeInputWhileExiting = true` (the default), do not participate in hit testing through visibility state, or are disabled. Disabled elements also cause their subtree to be skipped.
 
 Clipping is honored when a `ClipNode` is set on an element, or when `ClipToBounds` is `true` (the clip is then the element's arranged bounds). A child outside its parent's arranged bounds can still be hit when the parent is not clipped. The root viewport is special: points outside a `UIRoot` viewport are rejected.
 

@@ -66,7 +66,7 @@ public sealed class PresenceCoordinator
         exitingChildren.Add(element);
         element.SetRetainedVisualParent(owner);
         states[element] = PresenceState.Exiting;
-        element.SetPresenceExiting(options.ExcludeInputWhileExiting);
+        element.SetPresenceExiting(true, options.ExcludeInputWhileExiting);
 
         MotionValue<float> opacity = motion.Graph.CreateValue(element.PresenceOpacity);
         MotionValue<float> scale = motion.Graph.CreateValue(element.PresenceScale);
@@ -103,7 +103,7 @@ public sealed class PresenceCoordinator
         element.SetRetainedVisualParent(null);
         exit.Owner.IncrementPrismDescendantVisualVersion();
         exit.Cancel();
-        element.SetPresenceExiting(false);
+        element.SetPresenceExiting(false, excludesInput: false);
         element.SetPresenceVisual(1, 1);
 
         states[element] = PresenceState.Present;
@@ -152,7 +152,7 @@ public sealed class PresenceCoordinator
             exit.Cancel();
         }
 
-        element.SetPresenceExiting(false);
+        element.SetPresenceExiting(false, excludesInput: false);
         states.Remove(element);
     }
 
@@ -167,7 +167,7 @@ public sealed class PresenceCoordinator
         RemoveFromOwner(exit.Owner, element);
         element.SetRetainedVisualParent(null);
         exit.Owner.IncrementPrismDescendantVisualVersion();
-        element.SetPresenceExiting(false);
+        element.SetPresenceExiting(false, excludesInput: false);
         element.SetPresenceVisual(1, 1);
         exit.RemoveElement(motion.Root);
         exit.Cancel();
