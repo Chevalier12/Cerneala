@@ -66,7 +66,7 @@ public sealed class HitTestService
         }
 
         // Exiting presence children draw after the live children, so they are tested first. One that excludes input
-        // while exiting is skipped by its IsPresenceExiting check.
+        // while exiting is skipped by its IsPresenceInputExcluded check.
         if (element.Root is UIRoot root)
         {
             IReadOnlyList<UIElement> exitingChildren = root.Motion.Presence.GetExitingVisualChildren(element);
