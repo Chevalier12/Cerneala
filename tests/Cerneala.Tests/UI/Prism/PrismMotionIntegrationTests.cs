@@ -565,6 +565,39 @@ public sealed class PrismMotionIntegrationTests
             (hide.IsCompleted, fade.IsCompleted, layer.Visible, layer.Opacity));
     }
 
+    // `@from { Opacity = 0; } @to { Opacity = 1; }` on the hidden Glow is canceled at once
+    // and writes nothing, so a later `@to { Opacity = 0.5; }` must start from the 1 that
+    // the Prism store still holds, not from the 0 of the canceled start.
+    [Fact]
+    public void HiddenStartWithAFromValueDoesNotMoveTheNextMotionStart()
+    {
+        MotionScenario scenario = CreateScenario();
+        PrismLayerState layer = scenario.Instance.GetLayerState(LayerId);
+        layer.Visible = false;
+        MotionHandle canceled = GeneratedMarkup.StartPrismMotionProperty(
+            scenario.Session,
+            scenario.Element,
+            propertyId: 101,
+            scope: LayerId,
+            static instance => instance.GetLayerState(LayerId).Opacity,
+            static (instance, value) => instance.GetLayerState(LayerId).Opacity = value,
+            discrete: false,
+            hasFrom: true,
+            from: 0f,
+            toCurrent: false,
+            to: 1f,
+            spec: Tween<float>(),
+            MotionPropertyStartOptions.Default);
+        layer.Visible = true;
+
+        _ = StartOpacityMotion(scenario, 0.5f);
+        scenario.Root.Motion.Tick();
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(25));
+        scenario.Root.Motion.Tick();
+
+        Assert.Equal((true, 0.875f), (canceled.IsCanceled, layer.Opacity));
+    }
+
     private static readonly PrismNodeId LayerId = new(1);
 
     private static readonly PrismNodeId GroupId = new(2);

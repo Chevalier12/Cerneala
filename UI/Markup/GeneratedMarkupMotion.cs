@@ -1018,7 +1018,9 @@ public static partial class GeneratedMarkup
         public bool TryJumpToFrom(T from, MotionPriority priority)
         {
             ThrowIfDisposed();
-            return value.TryJumpToFrom(from, priority);
+            // A start that its hidden Prism node cancels at once writes nothing, so its From
+            // value must not move this reused Motion value away from what the store holds.
+            return CanWrite(reachedEnd: false) && value.TryJumpToFrom(from, priority);
         }
 
         public MotionHandle AnimateTo(

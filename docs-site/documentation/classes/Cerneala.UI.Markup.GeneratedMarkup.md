@@ -333,7 +333,9 @@ animation runs, and when it starts, the binding checks that node and every group
 that contains it: when one of them has `Visible=false`, the animation is canceled
 once (`MotionHandle.IsCanceled` is `true` and `Completed` reports one cancel), the
 current value is kept, and nothing is written in later frames. Setting `Visible=true`
-again does not restart it. An animation that has already reached its end is not
+again does not restart it. A start that is canceled at once does not apply its
+`from` value either, so the next animation of the property starts from the value
+the Prism instance holds. An animation that has already reached its end is not
 canceled and writes its end value: one that completes in the frame in which its node
 becomes hidden, or one that completes at once when it starts (for example under
 reduced motion). So `@to { $self.prism.Glow.Visible = false; $self.prism.Glow.Opacity = 0; }`
