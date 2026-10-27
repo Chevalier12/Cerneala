@@ -44,6 +44,8 @@ sealed class RecordingCursorService : ICursorService
 
 The SDL platform supplies an implementation through its `PlatformServices`. That implementation starts with `Current` equal to `Arrow` and updates `Current` only after SDL accepts the cursor. It throws `ObjectDisposedException` after the window platform is disposed, and `InvalidOperationException` when SDL fails to create or select the cursor. It caches one native cursor per SDL system cursor and destroys them when it is disposed.
 
+SDL shows one cursor for all windows of the application. The root of each SDL window therefore gets its own cursor service. Its `SetCursor` changes the SDL cursor only while that window has the pointer: from the first mouse event SDL sends to the window until SDL reports that the pointer left it. A call from a window without the pointer changes nothing and throws nothing. `Current` of every window's service returns the shape the SDL cursor shows now. Example: the pointer is over a button with `Cursor = Cursor.Hand` in window A, and window B renders a frame because a `TextBlock` in B changed its text. B's host calls `SetCursor(CursorShape.Arrow)`, which changes nothing, so the cursor stays `Hand`. When the pointer moves into window B, B's next frame sets the cursor of the element under the pointer in B.
+
 ## Properties
 
 | Name | Type | Description |
