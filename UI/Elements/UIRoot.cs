@@ -110,6 +110,12 @@ public sealed partial class UIRoot : UIElement, IElementHost, IInvalidationSink
         PropertyMutations = new RootPropertyMutationObserver(this);
         IsLayoutBoundary = true;
         ElementLifecycle.AttachSubtree(this, this);
+
+        // A new root is clean: it queues no frame work. A clean element's local render cache must be valid,
+        // because composition reads it. An element added to a tree gets its first render work from the
+        // collection that adds it; the root attaches itself, so it builds its own local cache here, through the
+        // same processor as the frame. Otherwise Commit on an empty root throws, also after a frame (#955).
+        RenderQueueProcessor.Process(this);
     }
 
     UIRoot IElementHost.Root => this;

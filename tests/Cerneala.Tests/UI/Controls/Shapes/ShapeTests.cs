@@ -214,6 +214,29 @@ public sealed class ShapeTests
         Assert.Throws<ArgumentException>(() => path.ViewBox = "0 0 0 24");
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void SvgPathKeepsThrowingForMalformedDataOnEveryMeasure(bool hadValidDataBefore)
+    {
+        SvgPath path = new() { ViewBox = "0 0 10 10" };
+        MeasureContext context = new(new LayoutSize(100, 100));
+        if (hadValidDataBefore)
+        {
+            path.Data = "M0 0L10 10";
+            Assert.Equal(new LayoutSize(10, 10), path.Measure(context));
+        }
+
+        path.Data = "Lnope";
+
+        Assert.Throws<FormatException>(() => path.Measure(context));
+        // This file's own Record method shadows xUnit's.
+        Exception? second = Xunit.Record.Exception(() => path.Measure(context));
+        Assert.True(
+            second is FormatException,
+            "The second Measure of the same malformed data " + (second is null ? "returned without throwing." : "threw " + second.GetType().Name + "."));
+    }
+
     [Fact]
     public void ShapePropertyChangeInvalidatesRender()
     {
@@ -237,6 +260,46 @@ public sealed class ShapeTests
         LayoutSize desired = rectangle.Measure(new MeasureContext(new LayoutSize(100, 100)));
 
         Assert.Equal(new LayoutSize(32, 22), desired);
+    }
+
+    [Theory]
+    [InlineData("StrokeThicknessChange", 34f, 24f)]
+    [InlineData("StrokeAssigned", 32f, 22f)]
+    [InlineData("StrokeRemoved", 30f, 20f)]
+    public void MeasureFollowsStrokeAssignmentAndRemoval(string change, float expectedWidth, float expectedHeight)
+    {
+        RectangleShape rectangle = new()
+        {
+            Geometry = new RectangleGeometry(new DrawRect(0, 0, 30, 20)),
+            StrokeThickness = 2
+        };
+        if (change != "StrokeAssigned")
+        {
+            rectangle.Stroke = new SolidColorBrush(Color.Black);
+        }
+
+        MeasureContext context = new(new LayoutSize(100, 100));
+        LayoutSize before = rectangle.Measure(context);
+        Assert.Equal(change == "StrokeAssigned" ? new LayoutSize(30, 20) : new LayoutSize(32, 22), before);
+
+        switch (change)
+        {
+            case "StrokeThicknessChange":
+                rectangle.StrokeThickness = 4;
+                break;
+            case "StrokeAssigned":
+                rectangle.Stroke = new SolidColorBrush(Color.Black);
+                break;
+            default:
+                rectangle.Stroke = null;
+                break;
+        }
+
+        LayoutSize after = rectangle.Measure(context);
+
+        Assert.True(
+            after == new LayoutSize(expectedWidth, expectedHeight),
+            $"{change}: desired size after the change is {after.Width}x{after.Height}, expected {expectedWidth}x{expectedHeight}.");
     }
 
     [Fact]

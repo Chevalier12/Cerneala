@@ -38,14 +38,22 @@ public partial class MainWindow : Window<MenuLabViewModel>
         ViewModel.UpdateMenuSession(sessionOpen);
     }
 
+    // SubmenuOpened and SubmenuClosed bubble, and parent items (File, Workspace, Edge menu) have the same handlers as
+    // their nested items, so each handler records only the transition of its own item.
     private void OnSubmenuOpened(MenuItem sender, RoutedEventArgs args)
     {
-        ViewModel.RecordSubmenuOpened(HeaderOf(args));
+        if (ReferenceEquals(args.OriginalSource, sender))
+        {
+            ViewModel.RecordSubmenuOpened(HeaderOf(sender));
+        }
     }
 
     private void OnSubmenuClosed(MenuItem sender, RoutedEventArgs args)
     {
-        ViewModel.RecordSubmenuClosed(HeaderOf(args));
+        if (ReferenceEquals(args.OriginalSource, sender))
+        {
+            ViewModel.RecordSubmenuClosed(HeaderOf(sender));
+        }
     }
 
     private void OnCloseRequested(object? sender, EventArgs args)
@@ -53,10 +61,8 @@ public partial class MainWindow : Window<MenuLabViewModel>
         Close();
     }
 
-    private static string HeaderOf(RoutedEventArgs args)
+    private static string HeaderOf(MenuItem item)
     {
-        return args.OriginalSource is MenuItem item
-            ? item.Header?.ToString() ?? "MenuItem"
-            : "MenuItem";
+        return item.Header?.ToString() ?? "MenuItem";
     }
 }

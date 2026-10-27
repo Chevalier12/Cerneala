@@ -86,13 +86,47 @@ public readonly record struct Matrix3x2
 
     public static Matrix3x2 Multiply(Matrix3x2 left, Matrix3x2 right)
     {
-        return new Matrix3x2(
-            (left.M11 * right.M11) + (left.M12 * right.M21),
-            (left.M11 * right.M12) + (left.M12 * right.M22),
-            (left.M21 * right.M11) + (left.M22 * right.M21),
-            (left.M21 * right.M12) + (left.M22 * right.M22),
-            (left.M31 * right.M11) + (left.M32 * right.M21) + right.M31,
-            (left.M31 * right.M12) + (left.M32 * right.M22) + right.M32);
+        Product(left, right, out float m11, out float m12, out float m21, out float m22, out float m31, out float m32);
+        return new Matrix3x2(m11, m12, m21, m22, m31, m32);
+    }
+
+    // Returns false instead of throwing when the product overflows to a non-finite value.
+    internal static bool TryMultiply(Matrix3x2 left, Matrix3x2 right, out Matrix3x2 result)
+    {
+        Product(left, right, out float m11, out float m12, out float m21, out float m22, out float m31, out float m32);
+        return TryCreate(m11, m12, m21, m22, m31, m32, out result);
+    }
+
+    internal static bool TryCreate(float m11, float m12, float m21, float m22, float m31, float m32, out Matrix3x2 result)
+    {
+        if (!float.IsFinite(m11) || !float.IsFinite(m12) ||
+            !float.IsFinite(m21) || !float.IsFinite(m22) ||
+            !float.IsFinite(m31) || !float.IsFinite(m32))
+        {
+            result = Identity;
+            return false;
+        }
+
+        result = new Matrix3x2(m11, m12, m21, m22, m31, m32);
+        return true;
+    }
+
+    private static void Product(
+        Matrix3x2 left,
+        Matrix3x2 right,
+        out float m11,
+        out float m12,
+        out float m21,
+        out float m22,
+        out float m31,
+        out float m32)
+    {
+        m11 = (left.M11 * right.M11) + (left.M12 * right.M21);
+        m12 = (left.M11 * right.M12) + (left.M12 * right.M22);
+        m21 = (left.M21 * right.M11) + (left.M22 * right.M21);
+        m22 = (left.M21 * right.M12) + (left.M22 * right.M22);
+        m31 = (left.M31 * right.M11) + (left.M32 * right.M21) + right.M31;
+        m32 = (left.M31 * right.M12) + (left.M32 * right.M22) + right.M32;
     }
 
     private static void ThrowIfNotFinite(float value, string parameterName)

@@ -1,6 +1,7 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
+using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Core;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
@@ -68,12 +69,75 @@ public sealed class ColorSwatchTests
         Assert.Equal(1, changes);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void PickerKeepsItsInstanceAndSettingsWhenTheTemplateIsReapplied(bool replaceTemplate)
+    {
+        ColorSwatch swatch = ArrangeSwatch();
+        ColorPicker first = swatch.Picker;
+        first.Padding = new Thickness(7);
+        Overlay firstOverlay = Part<Overlay>(swatch, "PART_PickerOverlay");
+
+        if (replaceTemplate)
+        {
+            ReplaceTemplate(swatch);
+        }
+
+        ColorPicker second = swatch.Picker;
+
+        Overlay currentOverlay = Part<Overlay>(swatch, "PART_PickerOverlay");
+        Assert.True(
+            ReferenceEquals(first, second) && second.Padding == new Thickness(7) &&
+                ReferenceEquals(currentOverlay.Content, second),
+            $"replaceTemplate={replaceTemplate}: same instance={ReferenceEquals(first, second)}, " +
+            $"Padding={second.Padding}, overlay content is the picker={ReferenceEquals(currentOverlay.Content, second)}.");
+        if (replaceTemplate)
+        {
+            Assert.NotSame(firstOverlay, currentOverlay);
+            Assert.Null(firstOverlay.Content);
+        }
+    }
+
+    [Fact]
+    public void PickerFromAReplacedTemplateStillDrivesSelectedColor()
+    {
+        ColorSwatch swatch = ArrangeSwatch();
+        ColorPicker picker = swatch.Picker;
+        ReplaceTemplate(swatch);
+        int changes = 0;
+        swatch.SelectedColorChanged += (_, _) => changes++;
+        Color color = new(120, 80, 40, 200);
+
+        picker.SelectedColor = color;
+
+        Assert.Equal(color, swatch.SelectedColor);
+        Assert.Equal(1, changes);
+    }
+
     private static ColorSwatch ArrangeSwatch()
     {
         ColorSwatch swatch = new();
         swatch.Measure(new MeasureContext(new LayoutSize(20, 20)));
         swatch.Arrange(new ArrangeContext(new LayoutRect(0, 0, 20, 20)));
         return swatch;
+    }
+
+    private static void ReplaceTemplate(ColorSwatch swatch)
+    {
+        swatch.ComponentTemplate = new ComponentTemplate<ColorSwatch>("ColorSwatch.Custom", context =>
+        {
+            Button button = new();
+            Overlay overlay = new() { PlacementTarget = button };
+            Cerneala.UI.Layout.Panels.Grid root = new();
+            root.Children.Add(button);
+            root.Children.Add(overlay);
+            context.RequirePart("PART_SwatchButton", button);
+            context.RequirePart("PART_PickerOverlay", overlay);
+            return root;
+        });
+        swatch.Measure(new MeasureContext(new LayoutSize(20, 20)));
+        swatch.Arrange(new ArrangeContext(new LayoutRect(0, 0, 20, 20)));
     }
 
     private static object Part(ColorSwatch swatch, string name)

@@ -109,7 +109,7 @@ Returns the current tracked state for an element. If the coordinator has not tra
 public IReadOnlyList<UIElement> GetExitingVisualChildren(UIElement owner)
 ```
 
-Returns the retained exit list for an owner. This list is used by rendering to draw visual children that were removed from `owner.VisualChildren` but have not finished exit motion.
+Returns the retained exit list for an owner. This list is used by rendering to draw visual children that were removed from `owner.VisualChildren` but have not finished exit motion. Hit testing and input route building read the same list, so a listed child whose `PresenceOptions.ExcludeInputWhileExiting` is `false` still takes pointer input under `owner` until its exit ends.
 
 ## Exceptions
 

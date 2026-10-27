@@ -24,6 +24,16 @@ public static class PrismLensProfileFitter
                 "Lens profile fitting requires ray samples.",
                 nameof(samples));
         }
+        foreach (PrismLensFlareRaySample sample in source)
+        {
+            if (!float.IsFinite(sample.IncidenceAngleDegrees) ||
+                sample.IncidenceAngleDegrees < 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(samples),
+                    "Ray sample incidence angles must be finite and non-negative.");
+            }
+        }
 
         PrismLensFlareGhost[] ghosts = source
             .GroupBy(sample => sample.GhostIndex)

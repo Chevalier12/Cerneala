@@ -55,13 +55,20 @@ internal readonly struct Scene2DRecordContext
 
     internal DrawRect VisibleSurfaceBounds { get; }
 
+    // A debug overlay in an enclosing scene labels the recorded order of every
+    // nested group, so those groups must record through the ordered path.
+    internal bool IsOrderObserved { get; init; }
+
     internal Scene2DRecordContext WithLocalTransform(Matrix3x2 localTransform) =>
         new(
             Surface,
             Frame,
             localTransform * LocalToSceneTransform,
             localTransform * LocalToSurfaceTransform,
-            VisibleSurfaceBounds);
+            VisibleSurfaceBounds)
+        {
+            IsOrderObserved = IsOrderObserved
+        };
 
     internal ScenePrismScope BeginPrism(
         SceneNode2D owner,

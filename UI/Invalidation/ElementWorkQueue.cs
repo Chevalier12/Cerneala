@@ -78,7 +78,7 @@ internal sealed class ElementWorkQueue<TMetadata>
                 continue;
             }
 
-            if (ReferenceEquals(element.Root, root) && element.IsPresenceExiting)
+            if (ReferenceEquals(element.Root, root) && element.IsInPresenceExitingSubtree())
             {
                 ordered.Add(new OrderedElement(element, int.MaxValue, entry.Sequence));
                 continue;

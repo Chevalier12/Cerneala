@@ -45,7 +45,7 @@ foreach (UIElement element in root.InheritedPropertyQueue.Snapshot())
 
 The queue deduplicates elements by reference. Calling `Enqueue` repeatedly with the same `UIElement` instance keeps one pending entry while preserving the first enqueue position used as the fallback ordering.
 
-`Snapshot` defensively removes queued elements whose `Root` is no longer the owning root, then returns the remaining elements in visual tree pre-order. It reuses the root's `ElementQueueOrderIndex`, rebuilt only when `TreeVersion` changes, and sorts only queued entries. Presence-exiting elements outside the current traversal remain after traversed elements in relative enqueue order.
+`Snapshot` defensively removes queued elements whose `Root` is no longer the owning root, then returns the remaining elements in visual tree pre-order. It reuses the root's `ElementQueueOrderIndex`, rebuilt only when `TreeVersion` changes, and sorts only queued entries. Presence-exiting elements outside the current traversal, and their visual descendants, remain after traversed elements in relative enqueue order, whatever their `PresenceOptions.ExcludeInputWhileExiting` value.
 
 Taking a snapshot does not clear valid work. `UiFrameScheduler` consumes inherited-property work during the `FramePhase.InheritedProperties` phase by taking a snapshot, removing each element before processing it, clearing `InvalidationFlags.Inherited` before processing, and restoring the cleared flags and re-enqueueing the element if processing throws.
 

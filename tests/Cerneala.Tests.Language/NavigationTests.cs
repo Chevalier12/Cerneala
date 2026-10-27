@@ -482,6 +482,87 @@ public sealed class NavigationTests
         Assert.DoesNotContain(renamedBetaLanguage.GetSemanticModel(betaMarkupPath).Diagnostics, diagnostic => diagnostic.Id == "CERNEALAUI007");
     }
 
+    // Issue #960: the closing tag </t:Card> names the same type as the opening tag, so rename edits both tags.
+    [Theory]
+    [InlineData("<Window xmlns:t=\"clr-namespace:Shared;assembly=Alpha\"><t:Card /></Window>")]
+    [InlineData("<Window xmlns:t=\"clr-namespace:Shared;assembly=Alpha\"><t:Card></t:Card></Window>")]
+    public void RenamingAProjectTypeRenamesTheClosingTagToo(string markup)
+    {
+        const string alphaPath = FixtureRoot + "/Alpha.cs";
+        const string markupPath = FixtureRoot + "/Alpha.crn";
+        const string code = "namespace Shared; public sealed class Card : Cerneala.UI.Controls.Border { }";
+        CSharpCompilation project = CreateCompilation("Alpha", code, alphaPath, CreateReferences());
+        CernealaDocument document = CreateDocument(markupPath, markup);
+        using CernealaCompilation language = new(new RoslynCompilationSymbols(project), [document]);
+        CernealaSemanticModel model = language.GetSemanticModel(markupPath);
+        CernealaNavigationService service = new();
+
+        CernealaRenameResult rename = service.Rename(model, [model], markup.IndexOf("Card", StringComparison.Ordinal) + 1, "Tile");
+        Assert.True(rename.Succeeded, rename.Error);
+        string renamedMarkup = Apply(markup, rename.Edits.Where(edit => Normalize(edit.Path) == Normalize(markupPath)));
+        string renamedCode = Apply(code, rename.Edits.Where(edit => Normalize(edit.Path) == Normalize(alphaPath)));
+
+        string expected = markup.Replace("Card", "Tile", StringComparison.Ordinal);
+        Assert.True(
+            renamedMarkup == expected && renamedCode.Contains("class Tile", StringComparison.Ordinal),
+            $"Renamed markup: {renamedMarkup} (expected {expected}); edits: {rename.Edits.Count}.");
+    }
+
+    // Issue #960: <t:Card.Title>x</t:Card.Title> names the member Title in both tags.
+    [Theory]
+    [InlineData("<Window xmlns:t=\"clr-namespace:Shared;assembly=Alpha\"><t:Card Title=\"x\" /></Window>")]
+    [InlineData("<Window xmlns:t=\"clr-namespace:Shared;assembly=Alpha\"><t:Card><t:Card.Title>x</t:Card.Title></t:Card></Window>")]
+    public void RenamingAProjectMemberRenamesTheClosingTagOfItsPropertyElementToo(string markup)
+    {
+        const string alphaPath = FixtureRoot + "/Alpha.cs";
+        const string markupPath = FixtureRoot + "/Alpha.crn";
+        const string code = "namespace Shared; public sealed class Card : Cerneala.UI.Controls.Border { public string Title { get; set; } = \"\"; }";
+        CSharpCompilation project = CreateCompilation("Alpha", code, alphaPath, CreateReferences());
+        CernealaDocument document = CreateDocument(markupPath, markup);
+        using CernealaCompilation language = new(new RoslynCompilationSymbols(project), [document]);
+        CernealaSemanticModel model = language.GetSemanticModel(markupPath);
+        CernealaNavigationService service = new();
+
+        CernealaRenameResult rename = service.Rename(model, [model], markup.IndexOf("Title", StringComparison.Ordinal) + 1, "Heading");
+        Assert.True(rename.Succeeded, rename.Error);
+        string renamedMarkup = Apply(markup, rename.Edits.Where(edit => Normalize(edit.Path) == Normalize(markupPath)));
+        string renamedCode = Apply(code, rename.Edits.Where(edit => Normalize(edit.Path) == Normalize(alphaPath)));
+
+        string expected = markup.Replace("Title", "Heading", StringComparison.Ordinal);
+        Assert.True(
+            renamedMarkup == expected && renamedCode.Contains("string Heading", StringComparison.Ordinal),
+            $"Renamed markup: {renamedMarkup} (expected {expected}); edits: {rename.Edits.Count}.");
+    }
+
+    // Issue #960: references and document highlights list the closing tag like rename edits it.
+    [Fact]
+    public void ReferencesAndHighlightsOfAnElementTypeIncludeItsClosingTag()
+    {
+        const string alphaPath = FixtureRoot + "/Alpha.cs";
+        const string markupPath = FixtureRoot + "/Alpha.crn";
+        const string code = "namespace Shared; public sealed class Card : Cerneala.UI.Controls.Border { }";
+        const string markup = "<Window xmlns:t=\"clr-namespace:Shared;assembly=Alpha\"><t:Card></t:Card></Window>";
+        CSharpCompilation project = CreateCompilation("Alpha", code, alphaPath, CreateReferences());
+        CernealaDocument document = CreateDocument(markupPath, markup);
+        using CernealaCompilation language = new(new RoslynCompilationSymbols(project), [document]);
+        CernealaSemanticModel model = language.GetSemanticModel(markupPath);
+        CernealaNavigationService service = new();
+        int offset = markup.IndexOf("Card", StringComparison.Ordinal) + 1;
+        TextSpan opening = new(markup.IndexOf("Card", StringComparison.Ordinal), "Card".Length);
+        TextSpan closing = new(markup.LastIndexOf("Card", StringComparison.Ordinal), "Card".Length);
+
+        TextSpan[] references = service.GetReferences(model, [model], offset, includeDeclaration: true)
+            .Where(location => Normalize(location.Path) == Normalize(markupPath))
+            .Select(location => location.Span)
+            .ToArray();
+        TextSpan[] highlights = service.GetDocumentHighlights(model, [model], offset)
+            .Select(highlight => highlight.Span)
+            .ToArray();
+
+        Assert.Equal([opening, closing], references);
+        Assert.Equal([opening, closing], highlights);
+    }
+
     private static int OffsetOf(string text, string value) =>
         text.LastIndexOf(value, StringComparison.Ordinal) + Math.Min(1, value.Length - 1);
 

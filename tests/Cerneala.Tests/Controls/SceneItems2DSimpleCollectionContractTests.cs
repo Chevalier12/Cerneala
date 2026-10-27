@@ -888,6 +888,91 @@ public sealed class SceneItems2DSimpleCollectionContractTests
         Assert.Equal(1, keys);
     }
 
+    [Fact]
+    public void RefreshKeepsASceneNodeUsedDirectlyAsAnItem()
+    {
+        Sprite2D sprite = new() { Width = 10, Height = 10 };
+        using CollectionFixture fixture = new();
+        SetSource(fixture.Items, new SceneNode2D[] { sprite });
+        fixture.Attach();
+        Assert.Same(sprite, Assert.Single(fixture.Items.LogicalChildren));
+
+        Exception? failure = Record.Exception(fixture.Items.Refresh);
+
+        Assert.True(failure is null, "Refresh threw: " + failure);
+        Assert.Same(sprite, Assert.Single(fixture.Items.LogicalChildren));
+        Assert.Null(fixture.Items.CollisionReadinessError);
+    }
+
+    [Fact]
+    public void RefreshRebuildsTemplatedItems()
+    {
+        // Control for the direct-node test: a model item realized by a template.
+        using CollectionFixture fixture = new();
+        fixture.Items.Templates.Add(ModelTemplate());
+        SetSource(fixture.Items, new[] { new Model("m") });
+        fixture.Attach();
+        Assert.Single(fixture.Nodes);
+
+        Exception? failure = Record.Exception(fixture.Items.Refresh);
+
+        Assert.Null(failure);
+        Assert.Single(fixture.Nodes);
+        Assert.Null(fixture.Items.CollisionReadinessError);
+    }
+
+    [Theory]
+    [InlineData("TemplateChange", false)]
+    [InlineData("NewItemsSource", false)]
+    [InlineData("TemplateChange", true)]
+    [InlineData("NewItemsSource", true)]
+    public void RebuildKeepsCollisionQueriesWorkingForDirectAndTemplatedItems(string change, bool direct)
+    {
+        // direct=false (templated Model items) rows are the controls.
+        Sprite2D sprite = new() { Width = 10, Height = 10, Collider = new BoxCollider2D { Width = 10, Height = 10 } };
+        using CollectionFixture fixture = new();
+        fixture.Items.Templates.Add(ModelTemplate());
+        SetSource(fixture.Items, direct ? new SceneNode2D[] { sprite } : new[] { new Model("m") });
+        fixture.Attach();
+
+        Exception? failure = Record.Exception(() =>
+        {
+            if (change == "TemplateChange")
+            {
+                fixture.Items.Templates.Add(ModelTemplate("another"));
+            }
+            else
+            {
+                SetSource(fixture.Items, direct ? new SceneNode2D[] { sprite } : new[] { new Model("n") });
+            }
+        });
+        Exception? query = Record.Exception(() =>
+            fixture.Scene.CollisionWorld.Raycast(System.Numerics.Vector2.Zero, System.Numerics.Vector2.UnitX, 10));
+
+        Assert.True(
+            failure is null && query is null && fixture.Items.CollisionReadinessError is null,
+            $"{change}, direct={direct}: change {(failure is null ? "ok" : "threw " + failure.GetType().Name + ": " + failure.Message)}; " +
+            $"CollisionReadinessError={(fixture.Items.CollisionReadinessError is null ? "null" : fixture.Items.CollisionReadinessError.GetType().Name + ": " + fixture.Items.CollisionReadinessError.Message)}; " +
+            $"Raycast {(query is null ? "ok" : "threw " + query.GetType().Name + ": " + query.Message)}.");
+        if (direct) { Assert.Same(sprite, Assert.Single(fixture.Items.LogicalChildren)); }
+    }
+
+    [Fact]
+    public void SceneNodeItemOwnedByAnotherParentStillThrows()
+    {
+        Sprite2D sprite = new() { Width = 10, Height = 10 };
+        using CollectionFixture fixture = new();
+        fixture.Scene.Children.Add(sprite);
+        fixture.Attach();
+
+        InvalidOperationException failure = Assert.Throws<InvalidOperationException>(
+            () => SetSource(fixture.Items, new SceneNode2D[] { sprite }));
+
+        Assert.Equal("Element must be removed from its current parent before reparenting.", failure.Message);
+        Assert.Same(fixture.Scene, sprite.LogicalParent);
+        Assert.Empty(fixture.Items.LogicalChildren);
+    }
+
     private static ContentTemplate<Model> ModelTemplate(string name = "model") =>
         new(name, null, 0, context => new TrackingNode(context.Data, context.Index));
 

@@ -691,6 +691,60 @@ public sealed class ListBoxTests
         Assert.Equal([true, false, false, true, true], RowSelection(listBox));
     }
 
+    // The anchor is the clicked occurrence and follows it by position when an item is inserted before it, also when an
+    // earlier item is equal to it (#925). The distinct third item is the control row.
+    [Theory]
+    [InlineData("d")]
+    [InlineData("a")]
+    public void ExtendedAnchorFollowsItsItemWhenAnEarlierItemIsInsertedEvenWithEqualItems(string third)
+    {
+        (UIRoot root, ListBox listBox) = CreateSelectionModeListBox(SelectionMode.Extended, "a", "b", third, "c");
+        ElementInputBridge bridge = new();
+        ClickRow(root, bridge, listBox, 2);
+
+        listBox.Items.Insert(0, "x");
+        root.ProcessFrame();
+        ClickRow(root, bridge, listBox, 4, InputKey.LeftShift);
+
+        Assert.Equal([3, 4], listBox.SelectionModel.SelectedIndices.OrderBy(index => index));
+        Assert.Equal([third, "c"], listBox.SelectedItems.Select(item => (string?)item).OrderBy(item => item == "c"));
+    }
+
+    // The anchor follows its occurrence when an earlier item is removed, and Shift+Down ranges from it (#925).
+    [Fact]
+    public void ExtendedAnchorFollowsItsItemWhenAnEarlierItemIsRemovedEvenWithEqualItems()
+    {
+        (UIRoot root, ListBox listBox) = CreateSelectionModeListBox(SelectionMode.Extended, "x", "a", "b", "a", "c");
+        ElementInputBridge bridge = new();
+        ClickRow(root, bridge, listBox, 3);
+
+        listBox.Items.RemoveAt(0);
+        root.ProcessFrame();
+        PressKey(root, bridge, InputKey.Down, InputKey.LeftShift);
+
+        Assert.Equal([2, 3], listBox.SelectionModel.SelectedIndices.OrderBy(index => index));
+        Assert.True(Row(listBox, 3).IsKeyboardFocused);
+    }
+
+    // The anchor follows its occurrence when the source moves an item from after it to before it (#925).
+    [Fact]
+    public void ExtendedAnchorFollowsItsItemWhenTheSourceMovesAnItemBeforeItEvenWithEqualItems()
+    {
+        System.Collections.ObjectModel.ObservableCollection<string> source = ["a", "b", "a", "c", "d"];
+        ListBox listBox = new() { SelectionMode = SelectionMode.Extended, Width = 150, Height = 200, ItemsSource = source };
+        UIRoot root = new(360, 300);
+        root.VisualChildren.Add(new Window { Content = listBox, Width = 360, Height = 300 });
+        root.ProcessFrame();
+        ElementInputBridge bridge = new();
+        ClickRow(root, bridge, listBox, 2);
+
+        source.Move(4, 0);
+        root.ProcessFrame();
+        ClickRow(root, bridge, listBox, 4, InputKey.LeftShift);
+
+        Assert.Equal([3, 4], listBox.SelectionModel.SelectedIndices.OrderBy(index => index));
+    }
+
     // As in WPF, one click that changes several rows raises one SelectionChanged with every added and removed item.
     [Fact]
     public void ExtendedSelectionClickRaisesOneSelectionChangedWithEveryChangedItem()

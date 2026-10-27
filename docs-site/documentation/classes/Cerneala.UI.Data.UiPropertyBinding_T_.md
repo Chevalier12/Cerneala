@@ -53,7 +53,7 @@ editor.Text = "Grace";
 
 ## Remarks
 
-`UiPropertyBinding<T>` subscribes to `ObservableValue<T>.ValueChanged` and writes source changes to the target UI property while the binding is active. Construction also writes the current source value to the target immediately.
+`UiPropertyBinding<T>` subscribes to `ObservableValue<T>.ValueChanged` and writes source changes to the target UI property while the binding is active. Construction also writes the current source value to the target immediately. Activation, at construction and at each reattach, skips that write when the target's effective value already comes from its local value and equals the source value. For example, a `ListBox` with `SelectionMode.Multiple` and selection `[2, 0]` has `SelectedIndex == 2` bound two-way to an `ObservableValue<int>` that holds `2`; removing the `ListBox` from its root and adding it again writes nothing, so the selection stays `[2, 0]`, while writing `2` would make it `[2]` (see [Selector](Cerneala.UI.Controls.Primitives.Selector.md)).
 
 Source notifications already raised on the UI thread remain synchronous. For an attached `UIElement`, worker-thread notifications are coalesced through `UIRoot.Relay`; the source's current value is read only when the Relay callback runs. Detach invalidates queued callbacks, and reattach performs a complete refresh with a new activation generation.
 

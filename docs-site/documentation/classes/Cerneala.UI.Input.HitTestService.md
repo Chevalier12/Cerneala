@@ -58,15 +58,17 @@ HitTestResult? result = new HitTestService().HitTest(root, 25, 25, filter);
 
 `HitTestService` walks `VisualChildren` from the last child to the first child, so later visual children win when elements overlap.
 
+An element that was removed from `VisualChildren` and still plays its presence exit animation is drawn after its former parent's visual children (see `PresenceCoordinator.GetExitingVisualChildren`). When its `PresenceOptions.ExcludeInputWhileExiting` is `false`, hit testing visits it, and its subtree, under its former parent before the live visual children, so a point over the exiting element hits it until the exit ends. With the default `true` it is skipped.
+
 The `HitTest(UIRoot, float, float, HitTestFilter?)` overload delegates through `UIRoot.InputCache`, which ensures the cached `ElementInputRouteMap` is current before performing the hit test.
 
 The `HitTest(UIElement, ElementInputRouteMap, float, float, HitTestFilter?)` overload uses the supplied route map directly. A matching element must be present in the route map; otherwise the method returns `null` even if the point is inside that element.
 
-Elements are skipped when they are presence-exiting, do not participate in hit testing through visibility state, or are disabled. Disabled elements also cause their subtree to be skipped.
+Elements are skipped when they are presence-exiting with `PresenceOptions.ExcludeInputWhileExiting = true` (the default), do not participate in hit testing through visibility state, or are disabled. Disabled elements also cause their subtree to be skipped.
 
 Clipping is honored when a `ClipNode` is set on an element, or when `ClipToBounds` is `true` (the clip is then the element's arranged bounds). A child outside its parent's arranged bounds can still be hit when the parent is not clipped. The root viewport is special: points outside a `UIRoot` viewport are rejected.
 
-Hit testing starts from arranged layout bounds, then maps the pointer into each element's transformed coordinate space. Render and motion transforms therefore move, scale, and rotate the effective hit-test region. A non-invertible transform makes that element and its subtree un-hittable.
+Hit testing starts from arranged layout bounds, then maps the pointer into each element's transformed coordinate space. Render and motion transforms therefore move, scale, and rotate the effective hit-test region. A non-invertible transform makes that element and its subtree un-hittable. So does a transform that overflows `float` while it is composed with its ancestors or inverted: for example, a parent and a child that each have `ScaleX = 1e30f` combine to a scale of `1e60`, so the child and its subtree are skipped while the parent can still be hit. Hit testing does not throw for such a transform.
 
 The returned `HitTestResult` stores the hit `UIElement` and the original `X` and `Y` coordinates passed to the service.
 

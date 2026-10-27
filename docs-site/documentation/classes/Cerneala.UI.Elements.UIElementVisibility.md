@@ -43,7 +43,7 @@ Rendering participation requires both `UIElement.IsVisible` and `UIElement.Visib
 
 A `VirtualizingStackPanel` with a `VirtualizationContext` or an automatic viewport skips each child whose item index lies outside its `RealizationWindow`. The skipped child stays in `VisualChildren` and is arranged into zero-sized bounds, but it does not participate in rendering, input, or hit testing until an arrange of the panel realizes it again. For example, after `panel.UpdateViewport(new ItemsVirtualizationViewport(10, 100, 0, 0))` with ten children of `Height = 20`, `ParticipatesInRendering(panel.VisualChildren[7])` returns `false`; after the viewport moves to offset 100 and the panel is arranged again, it returns `true`, and `panel.VisualChildren[0]` returns `false`. Removing the child from the panel ends the skipped state. A skipped child that sets `UIElement.Presence` is detached at once when it is removed, without an exit animation, so it is never drawn at its zero-sized bounds.
 
-Input participation uses the same visibility checks as rendering and also requires that the element is not in the internal presence-exiting state. Hit-test participation additionally requires `IsHitTestVisible`. Disabled elements are not filtered by this class; callers such as hit testing and focus policy apply `IsEnabled` separately when that matters.
+Input participation uses the same visibility checks as rendering and also requires that the element is not playing a presence exit whose `PresenceOptions.ExcludeInputWhileExiting` is `true` (the default). An element that exits with `ExcludeInputWhileExiting = false` keeps its input participation. Hit-test participation additionally requires `IsHitTestVisible`. Disabled elements are not filtered by this class; callers such as hit testing and focus policy apply `IsEnabled` separately when that matters.
 
 All methods validate the `element` argument with `ArgumentNullException.ThrowIfNull`.
 
@@ -52,8 +52,8 @@ All methods validate the `element` argument with `ArgumentNullException.ThrowIfN
 | --- | --- |
 | `ParticipatesInLayout(UIElement)` | Returns `true` when `element.Visibility` is not `Visibility.Collapsed`. |
 | `ParticipatesInRendering(UIElement)` | Returns `true` when `element.IsVisible` is `true`, `element.Visibility` is `Visibility.Visible`, and no `VirtualizingStackPanel` skips the element. |
-| `ParticipatesInInput(UIElement)` | Returns `true` when the element is not presence-exiting and `ParticipatesInRendering` returns `true`. |
-| `ParticipatesInHitTest(UIElement)` | Returns `true` when the element is not presence-exiting, `IsHitTestVisible` is `true`, and `ParticipatesInRendering` returns `true`. |
+| `ParticipatesInInput(UIElement)` | Returns `true` when the element is not exiting with input excluded and `ParticipatesInRendering` returns `true`. |
+| `ParticipatesInHitTest(UIElement)` | Returns `true` when the element is not exiting with input excluded, `IsHitTestVisible` is `true`, and `ParticipatesInRendering` returns `true`. |
 
 ## Participation Rules
 | Element state | Layout | Rendering | Input route | Hit testing |
@@ -63,7 +63,8 @@ All methods validate the `element` argument with `ArgumentNullException.ThrowIfN
 | `IsVisible = true`, `Visibility = Collapsed` | No | No | No | No |
 | `IsVisible = false`, `Visibility = Visible` | Yes | No | No | No |
 | `IsHitTestVisible = false`, otherwise visible | Yes | Yes | Yes | No |
-| Presence-exiting element | Based on `Visibility` | Based on `IsVisible` and `Visibility` | No | No |
+| Presence-exiting element, `ExcludeInputWhileExiting = true` (default) | Based on `Visibility` | Based on `IsVisible` and `Visibility` | No | No |
+| Presence-exiting element, `ExcludeInputWhileExiting = false` | Based on `Visibility` | Based on `IsVisible` and `Visibility` | Based on `IsVisible` and `Visibility` | Based on `IsVisible`, `Visibility` and `IsHitTestVisible` |
 | Child skipped by a `VirtualizingStackPanel`, otherwise visible | Yes, arranged into zero-sized bounds | No | No | No |
 
 ## Exceptions
