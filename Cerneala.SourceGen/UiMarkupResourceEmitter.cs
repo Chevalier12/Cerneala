@@ -900,25 +900,29 @@ public sealed partial class UiMarkupGenerator
         private void ReportAnimation(object locationSource, string message) =>
             Report(InvalidSpriteAnimation, locationSource, Path.GetFileName(file.Path), message);
 
-        private void ValidateStaticAnimationState(MarkupElement element)
+        // Called with the literal string that EmitProperty emits for the attribute, so the check and the
+        // ordinal SpriteAnimationSet.TryGetClip lookup at run time see the same value. Bindings and
+        // resource references never reach the literal path.
+        private void ValidateStaticAnimationState(
+            MarkupElement element,
+            string propertyName,
+            MarkupAttribute stateAttribute,
+            string state)
         {
-            if (element.Name.LocalName != "Sprite2D")
+            if (element.Name.LocalName != "Sprite2D" || propertyName != "AnimationState")
             {
                 return;
             }
 
             MarkupAttribute? animationsAttribute = element.Attribute("Animations");
-            MarkupAttribute? stateAttribute = element.Attribute("AnimationState");
-            if (animationsAttribute is null || stateAttribute is null ||
+            if (animationsAttribute is null ||
                 LooksLikeBindingPath(animationsAttribute.Value) ||
-                LooksLikeBindingPath(stateAttribute.Value) ||
                 !animationsAttribute.Value.Trim().StartsWith("$", StringComparison.Ordinal))
             {
                 return;
             }
 
             string resourceName = animationsAttribute.Value.Trim().Substring(1);
-            string state = stateAttribute.Value.Trim();
             if (TryResolveResource(animationsAttribute, resourceName, out NamedSymbol symbol) &&
                 symbol.Source is SpriteAnimationSetResource animation &&
                 !animation.ClipNames.Contains(state))
