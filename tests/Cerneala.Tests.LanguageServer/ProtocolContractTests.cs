@@ -323,6 +323,55 @@ public sealed class ProtocolContractTests
     }
 
     [Fact]
+    public async Task RequestAfterShutdownFailsWithInvalidRequest()
+    {
+        using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(10));
+        await using ProtocolTestClient client = ProtocolTestClient.Start();
+        await client.InitializeAsync(timeout.Token);
+        await client.Rpc.NotifyWithParameterObjectAsync("initialized", new { });
+        string uri = new Uri(Path.GetFullPath("AfterShutdown.crn")).AbsoluteUri;
+        await client.Rpc.NotifyWithParameterObjectAsync(
+            "textDocument/didOpen",
+            new DidOpenTextDocumentParams
+            {
+                TextDocument = new TextDocumentItem { Uri = uri, LanguageId = "cerneala", Version = 1, Text = "<Window />" }
+            });
+        TextDocumentPositionParams position = new()
+        {
+            TextDocument = new TextDocumentIdentifier { Uri = uri },
+            Position = new LspPosition { Line = 0, Character = 2 }
+        };
+
+        // Control: before shutdown the request is served.
+        Exception? before = await Record.ExceptionAsync(() => client.Rpc.InvokeWithParameterObjectAsync<LspHover?>(
+            "textDocument/hover", position, timeout.Token));
+        Assert.Null(before);
+
+        await client.Rpc.InvokeWithCancellationAsync<object?>("shutdown", [], timeout.Token);
+
+        // LSP 3.17 shutdown: requests received after shutdown error with InvalidRequest (-32600).
+        Exception? hover = await Record.ExceptionAsync(() => client.Rpc.InvokeWithParameterObjectAsync<LspHover?>(
+            "textDocument/hover", position, timeout.Token));
+        Exception? completion = await Record.ExceptionAsync(() => client.Rpc.InvokeWithParameterObjectAsync<CompletionList>(
+            "textDocument/completion", position, timeout.Token));
+        Exception? secondShutdown = await Record.ExceptionAsync(() => client.Rpc.InvokeWithCancellationAsync<object?>(
+            "shutdown", [], timeout.Token));
+
+        foreach ((string method, Exception? after) in new[]
+        {
+            ("textDocument/hover", hover),
+            ("textDocument/completion", completion),
+            ("shutdown", secondShutdown)
+        })
+        {
+            RemoteInvocationException rejection = Assert.IsType<RemoteInvocationException>(after);
+            Assert.True(
+                rejection.ErrorCode == -32600,
+                $"{method} after shutdown failed with error code {rejection.ErrorCode} ({rejection.Message}) instead of -32600.");
+        }
+    }
+
+    [Fact]
     public async Task VerboseTraceNeverWritesDocumentContent()
     {
         using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(10));

@@ -533,9 +533,13 @@ internal sealed class LanguageServerEndpoint(IServerLogger logger) : IAsyncDispo
 
     private void EnsureInitialized()
     {
-        if (Volatile.Read(ref state) == 0)
+        switch (Volatile.Read(ref state))
         {
-            throw new LocalRpcException("The server is not initialized.") { ErrorCode = -32002 };
+            case 0:
+                throw new LocalRpcException("The server is not initialized.") { ErrorCode = -32002 };
+            case 2:
+                // LSP 3.17: requests received after shutdown error with InvalidRequest.
+                throw new LocalRpcException("The server has been shut down.") { ErrorCode = -32600 };
         }
     }
 
