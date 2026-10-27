@@ -710,7 +710,7 @@ public class ItemsPresenter : Control
         }
     }
 
-    // The element the template created for an item is kept while an equal item stays at its index, so an element that
+    // The element the template created for an item is kept while the same item stays at its index, so an element that
     // stays in the window keeps its state when the window moves or the items refresh, like an element item (#904). The
     // template runs only for an index that enters the window or whose item changed. The elements of the new window are
     // recorded in nextTemplatedElements, which the refresh keeps only when it succeeds.
@@ -760,7 +760,7 @@ public class ItemsPresenter : Control
         int index,
         Dictionary<int, TemplatedItemElement> nextTemplatedElements)
     {
-        if (templatedElements.TryGetValue(index, out TemplatedItemElement kept) && Equals(kept.Item, item))
+        if (templatedElements.TryGetValue(index, out TemplatedItemElement kept) && IsSameItem(kept.Item, item))
         {
             nextTemplatedElements.Add(index, kept);
             return kept.Element;
@@ -773,6 +773,14 @@ public class ItemsPresenter : Control
         }
 
         return created;
+    }
+
+    // An element shows the item instance its template received, so another instance gets a new element, like an
+    // owner's container is prepared again for it, even when it is equal and shows other values. A boxed value is a new
+    // instance on each enumeration and an equal string shows the same text, so an equal one is the same item.
+    private static bool IsSameItem(object? keptItem, object? item)
+    {
+        return ReferenceEquals(keptItem, item) || (item is ValueType or string && Equals(keptItem, item));
     }
 
     // An item or panel change re-measures this presenter but not necessarily the scroll presenter

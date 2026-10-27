@@ -547,6 +547,31 @@ public sealed class ItemsPresenterTests
         Assert.Null(a.VisualParent);
     }
 
+    // An equal item that is another instance can show other values, like an item an owner's container is prepared
+    // again for, so the template creates its element again. An equal boxed value or string shows the same values, so
+    // its element is kept (#904).
+    [Fact]
+    public void EqualItemOfAnotherInstanceCreatesNewTemplatedItemElement()
+    {
+        ItemsPresenter presenter = new()
+        {
+            Items = new object[] { new KeyedItem(1, "old"), 7, "s" },
+            ItemTemplate = new ContentTemplate<object>("test", key: null, priority: 0, context => new ItemElement(
+                context.Data is KeyedItem keyed ? keyed.Name : context.Data!.ToString()!))
+        };
+        presenter.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        UIElement keyedElement = presenter.LayoutPanelRoot!.VisualChildren[0];
+        UIElement valueElement = presenter.LayoutPanelRoot.VisualChildren[1];
+        UIElement stringElement = presenter.LayoutPanelRoot.VisualChildren[2];
+
+        presenter.Items = new object[] { new KeyedItem(1, "new"), 7, new string('s', 1) };
+
+        Assert.Equal(["new", "7", "s"], presenter.LayoutPanelRoot.VisualChildren.Cast<ItemElement>().Select(item => item.Value));
+        Assert.Null(keyedElement.VisualParent);
+        Assert.Same(valueElement, presenter.LayoutPanelRoot.VisualChildren[1]);
+        Assert.Same(stringElement, presenter.LayoutPanelRoot.VisualChildren[2]);
+    }
+
     [Fact]
     public void PresenterItemsPanelOverridingOwnerPanelReceivesTheScrollViewport()
     {
@@ -1539,6 +1564,24 @@ public sealed class ItemsPresenterTests
         protected override void OnDetached()
         {
             DetachedCount++;
+        }
+    }
+
+    // Two instances with the same Id are equal, whatever their names.
+    private sealed class KeyedItem(int id, string name)
+    {
+        public int Id { get; } = id;
+
+        public string Name { get; } = name;
+
+        public override bool Equals(object? obj)
+        {
+            return obj is KeyedItem other && other.Id == Id;
+        }
+
+        public override int GetHashCode()
+        {
+            return Id;
         }
     }
 }
