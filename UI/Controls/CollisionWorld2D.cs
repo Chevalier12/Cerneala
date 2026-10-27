@@ -140,28 +140,39 @@ public sealed partial class CollisionWorld2D
         {
             EnsureCurrent();
             Vector2 end = origin + (direction * maxDistance);
-            DrawRect bounds = CreateBounds(origin, end);
-            EnsureCollisionCoverage(bounds, null, query);
-            broadphase.Query(bounds, candidates);
-            broadphaseCandidateCount += candidates.Count;
-            List<(CollisionHit2D Hit, long Ordinal)> hits = [];
-            foreach (int id in candidates)
+            Span<DrawRect> queryBounds = stackalloc DrawRect[MaxRayQueryBoundsCount];
+            int queryBoundsCount = CreateRayQueryBounds(origin, end, queryBounds);
+            for (int index = 0; index < queryBoundsCount; index++)
             {
-                CollisionEntry2D? target = GetEntry(id);
-                if (target is null || !PassesQueryFilter(target, query))
-                {
-                    continue;
-                }
+                EnsureCollisionCoverage(queryBounds[index], null, query);
+            }
 
-                exactTestCount++;
-                if (CollisionNarrowPhase2D.Raycast(
-                    target.Geometry,
-                    origin,
-                    direction,
-                    maxDistance,
-                    out NarrowPhaseContact2D contact))
+            HashSet<int>? tested = queryBoundsCount > 1 ? [] : null;
+            List<(CollisionHit2D Hit, long Ordinal)> hits = [];
+            for (int index = 0; index < queryBoundsCount; index++)
+            {
+                broadphase.Query(queryBounds[index], candidates);
+                broadphaseCandidateCount += candidates.Count;
+                foreach (int id in candidates)
                 {
-                    hits.Add((CreateHit(target, contact), target.Ordinal));
+                    CollisionEntry2D? target = GetEntry(id);
+                    if (target is null ||
+                        tested?.Add(id) == false ||
+                        !PassesQueryFilter(target, query))
+                    {
+                        continue;
+                    }
+
+                    exactTestCount++;
+                    if (CollisionNarrowPhase2D.Raycast(
+                        target.Geometry,
+                        origin,
+                        direction,
+                        maxDistance,
+                        out NarrowPhaseContact2D contact))
+                    {
+                        hits.Add((CreateHit(target, contact), target.Ordinal));
+                    }
                 }
             }
 
@@ -635,6 +646,110 @@ public sealed partial class CollisionWorld2D
         lastQueryTicks = elapsed;
         totalQueryTicks += elapsed;
         queryCount++;
+    }
+
+    // Every collider's scene bounds and every spatial entry's collision bounds is a DrawRect, so everything a ray
+    // can hit lies inside the coordinates a DrawRect holds. A longer ray queries only its part inside that range,
+    // cut into rectangles at most half as wide and tall as the largest DrawRect: at most four, because that range
+    // is twice as wide as the largest DrawRect.
+    private const float MaxSceneCoordinate = DrawArgument.MaxPixelSize;
+    private const float MaxRayQueryExtent = DrawArgument.MaxPixelSize / 2;
+    private const int MaxRayQueryBoundsCount = 4;
+
+    // The broadphase rectangles that cover the ray from origin to end, the segment the narrow phase tests.
+    private static int CreateRayQueryBounds(Vector2 origin, Vector2 end, Span<DrawRect> bounds)
+    {
+        if (IsSceneCoordinate(origin) && IsSceneCoordinate(end) &&
+            MathF.Abs(end.X - origin.X) <= MaxRayQueryExtent &&
+            MathF.Abs(end.Y - origin.Y) <= MaxRayQueryExtent)
+        {
+            bounds[0] = CreateBounds(origin, end);
+            return 1;
+        }
+
+        // An end that overflowed moves away from the coordinate range on that axis, so nothing lies on the ray.
+        if (!float.IsFinite(end.X) || !float.IsFinite(end.Y))
+        {
+            return 0;
+        }
+
+        double deltaX = (double)end.X - origin.X;
+        double deltaY = (double)end.Y - origin.Y;
+        double start = 0;
+        double stop = 1;
+        if (!ClipRayAxis(origin.X, deltaX, ref start, ref stop) ||
+            !ClipRayAxis(origin.Y, deltaY, ref start, ref stop))
+        {
+            return 0;
+        }
+
+        double extent = Math.Max(Math.Abs(deltaX), Math.Abs(deltaY)) * (stop - start);
+        int count = Math.Clamp((int)Math.Ceiling(extent / MaxRayQueryExtent), 1, MaxRayQueryBoundsCount);
+        for (int index = 0; index < count; index++)
+        {
+            double first = start + ((stop - start) * index / count);
+            double second = index == count - 1 ? stop : start + ((stop - start) * (index + 1) / count);
+            double firstX = origin.X + (deltaX * first);
+            double firstY = origin.Y + (deltaY * first);
+            double secondX = origin.X + (deltaX * second);
+            double secondY = origin.Y + (deltaY * second);
+            float left = RoundDownToSceneCoordinate(Math.Min(firstX, secondX));
+            float top = RoundDownToSceneCoordinate(Math.Min(firstY, secondY));
+            bounds[index] = new DrawRect(
+                left,
+                top,
+                GetQueryExtent(left, RoundUpToSceneCoordinate(Math.Max(firstX, secondX))),
+                GetQueryExtent(top, RoundUpToSceneCoordinate(Math.Max(firstY, secondY))));
+        }
+
+        return count;
+    }
+
+    private static bool IsSceneCoordinate(Vector2 point) =>
+        MathF.Abs(point.X) <= MaxSceneCoordinate && MathF.Abs(point.Y) <= MaxSceneCoordinate;
+
+    // Narrows the ray parameter range [start, stop] to the part whose coordinate on one axis is a scene coordinate.
+    private static bool ClipRayAxis(double origin, double delta, ref double start, ref double stop)
+    {
+        if (delta == 0)
+        {
+            return Math.Abs(origin) <= MaxSceneCoordinate;
+        }
+
+        double first = (-MaxSceneCoordinate - origin) / delta;
+        double second = (MaxSceneCoordinate - origin) / delta;
+        start = Math.Max(start, Math.Min(first, second));
+        stop = Math.Min(stop, Math.Max(first, second));
+        return start <= stop;
+    }
+
+    private static float RoundDownToSceneCoordinate(double value)
+    {
+        float rounded = (float)value;
+        return Math.Clamp(rounded > value ? MathF.BitDecrement(rounded) : rounded, -MaxSceneCoordinate, MaxSceneCoordinate);
+    }
+
+    private static float RoundUpToSceneCoordinate(double value)
+    {
+        float rounded = (float)value;
+        return Math.Clamp(rounded < value ? MathF.BitIncrement(rounded) : rounded, -MaxSceneCoordinate, MaxSceneCoordinate);
+    }
+
+    // The float extent from start that reaches end without passing the largest scene coordinate.
+    private static float GetQueryExtent(float start, float end)
+    {
+        float extent = end - start;
+        while (start + extent < end)
+        {
+            extent = MathF.BitIncrement(extent);
+        }
+
+        while (start + extent > MaxSceneCoordinate)
+        {
+            extent = MathF.BitDecrement(extent);
+        }
+
+        return extent;
     }
 
     private static DrawRect CreateBounds(Vector2 first, Vector2 second)
