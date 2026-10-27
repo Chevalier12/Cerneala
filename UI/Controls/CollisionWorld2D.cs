@@ -141,12 +141,22 @@ public sealed partial class CollisionWorld2D
             EnsureCurrent();
             Vector2 end = origin + (direction * maxDistance);
             Span<DrawRect> queryBounds = stackalloc DrawRect[MaxRayQueryBoundsCount];
-            int queryBoundsCount = CreateRayQueryBounds(origin, end, queryBounds);
+            int queryBoundsCount = CreateRayQueryBounds(origin, end, queryBounds, out double start, out double stop);
             for (int index = 0; index < queryBoundsCount; index++)
             {
                 EnsureCollisionCoverage(queryBounds[index], null, query);
             }
 
+            // The narrow phase tests only the part of the ray that the query rectangles cover, so its float math
+            // stays within the DrawRect coordinate range for a huge maxDistance or an origin outside that range.
+            bool clipped = start > 0 || stop < 1;
+            double skippedDistance = (double)maxDistance * start;
+            Vector2 testedOrigin = clipped
+                ? new Vector2(
+                    (float)(origin.X + (((double)end.X - origin.X) * start)),
+                    (float)(origin.Y + (((double)end.Y - origin.Y) * start)))
+                : origin;
+            float testedDistance = clipped ? RoundUpToFloat((double)maxDistance * (stop - start)) : maxDistance;
             HashSet<int>? tested = queryBoundsCount > 1 ? [] : null;
             List<(CollisionHit2D Hit, long Ordinal)> hits = [];
             for (int index = 0; index < queryBoundsCount; index++)
@@ -166,11 +176,23 @@ public sealed partial class CollisionWorld2D
                     exactTestCount++;
                     if (CollisionNarrowPhase2D.Raycast(
                         target.Geometry,
-                        origin,
+                        testedOrigin,
                         direction,
-                        maxDistance,
+                        testedDistance,
                         out NarrowPhaseContact2D contact))
                     {
+                        if (clipped)
+                        {
+                            // Distance and Fraction measure the full requested ray from origin. The tested
+                            // distance was rounded up, so a hit at the ray end is kept within the ray.
+                            double distance = Math.Min(skippedDistance + contact.Distance, maxDistance);
+                            contact = contact with
+                            {
+                                Distance = (float)distance,
+                                Fraction = (float)(distance / maxDistance)
+                            };
+                        }
+
                         hits.Add((CreateHit(target, contact), target.Ordinal));
                     }
                 }
@@ -656,9 +678,17 @@ public sealed partial class CollisionWorld2D
     private const float MaxRayQueryExtent = DrawArgument.MaxPixelSize / 2;
     private const int MaxRayQueryBoundsCount = 4;
 
-    // The broadphase rectangles that cover the ray from origin to end, the segment the narrow phase tests.
-    private static int CreateRayQueryBounds(Vector2 origin, Vector2 end, Span<DrawRect> bounds)
+    // The broadphase rectangles that cover the ray from origin to end inside the DrawRect coordinate range.
+    // [start, stop] is that part of the ray as fractions of it, the segment the narrow phase tests.
+    private static int CreateRayQueryBounds(
+        Vector2 origin,
+        Vector2 end,
+        Span<DrawRect> bounds,
+        out double start,
+        out double stop)
     {
+        start = 0;
+        stop = 1;
         if (IsSceneCoordinate(origin) && IsSceneCoordinate(end) &&
             MathF.Abs(end.X - origin.X) <= MaxRayQueryExtent &&
             MathF.Abs(end.Y - origin.Y) <= MaxRayQueryExtent)
@@ -675,8 +705,6 @@ public sealed partial class CollisionWorld2D
 
         double deltaX = (double)end.X - origin.X;
         double deltaY = (double)end.Y - origin.Y;
-        double start = 0;
-        double stop = 1;
         if (!ClipRayAxis(origin.X, deltaX, ref start, ref stop) ||
             !ClipRayAxis(origin.Y, deltaY, ref start, ref stop))
         {
@@ -733,6 +761,12 @@ public sealed partial class CollisionWorld2D
     {
         float rounded = (float)value;
         return Math.Clamp(rounded < value ? MathF.BitIncrement(rounded) : rounded, -MaxSceneCoordinate, MaxSceneCoordinate);
+    }
+
+    private static float RoundUpToFloat(double value)
+    {
+        float rounded = (float)value;
+        return rounded < value ? MathF.BitIncrement(rounded) : rounded;
     }
 
     // The float extent from start that reaches end without passing the largest scene coordinate.

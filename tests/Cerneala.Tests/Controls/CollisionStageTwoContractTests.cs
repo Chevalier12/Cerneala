@@ -175,6 +175,33 @@ public sealed class CollisionStageTwoContractTests
         Assert.InRange(hit.Distance, 4.24e9f, 4.25e9f);
     }
 
+    [Theory]
+    [InlineData(0f, 1e12f, 1f)]
+    [InlineData(0f, float.MaxValue, 1f)]
+    [InlineData(-1e20f, 1e21f, 512f)]
+    [InlineData(-1e20f, float.MaxValue, 512f)]
+    public void RaycastWithAHugeRayReturnsAFiniteHitOnACircle(float originX, float maxDistance, float pointTolerance)
+    {
+        // A circle of radius 5 centered at (100, 0) lies on the ray along +X, so the ray enters it at x = 95.
+        // The point tolerance is the float spacing of the DrawRect coordinate range the ray enters from.
+        CircleCollider2D circle = new() { Radius = 5 };
+        Scene2D scene = new();
+        scene.Children.Add(new Sprite2D { X = 100, Collider = circle });
+
+        CollisionHit2D hit = Assert.Single(scene.CollisionWorld.Raycast(
+            new Vector2(originX, 0), Vector2.UnitX, maxDistance));
+
+        Assert.True(
+            float.IsFinite(hit.Distance) && float.IsFinite(hit.Fraction) &&
+            float.IsFinite(hit.Point.X) && float.IsFinite(hit.Point.Y),
+            $"Distance={hit.Distance}, Fraction={hit.Fraction}, Point={hit.Point}.");
+        Assert.Same(circle, hit.Collider);
+        Assert.InRange(hit.Point.X, 95 - pointTolerance, 95 + pointTolerance);
+        float expectedDistance = 95 - originX;
+        Assert.InRange(hit.Distance, expectedDistance - pointTolerance, expectedDistance + pointTolerance);
+        Assert.InRange(hit.Fraction * maxDistance, hit.Distance * 0.9999f, hit.Distance * 1.0001f);
+    }
+
     [Fact]
     [Trait("CollisionStage", "2")]
     public void LayerMaskTriggerAndQueryFiltersRunBeforeExactTests()
