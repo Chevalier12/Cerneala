@@ -1693,6 +1693,54 @@ public sealed class ItemsControlTests
 
     private sealed record TemplatedPerson(string Name);
 
+    // As in WPF, an item without an ItemTemplate is shown as the text of its display value, ToString() for a value
+    // that is not a string (#903).
+    [Theory]
+    [InlineData("string", "1")]
+    [InlineData("int", "1")]
+    [InlineData("enum", "Monday")]
+    [InlineData("record", "TemplatedPerson { Name = Ana }")]
+    [InlineData("path", "3")]
+    public void ItemsWithoutATemplateAreShownThroughToString(string itemKind, string expected)
+    {
+        ItemsControl control = new();
+        if (itemKind == "path")
+        {
+            control.DisplayMemberPath = nameof(string.Length);
+        }
+
+        control.SetItems(itemKind switch
+        {
+            "string" => new object[] { "1", "2" },
+            "int" => new object[] { 1, 2 },
+            "enum" => new object[] { DayOfWeek.Monday, DayOfWeek.Tuesday },
+            "record" => new object[] { new TemplatedPerson("Ana"), new TemplatedPerson("Bob") },
+            _ => new object[] { "Ana", "Bob" }
+        });
+
+        control.Measure(new MeasureContext(new LayoutSize(300, 100)));
+
+        ContentPresenter first = Assert.IsType<ContentPresenter>(control.ItemsPresenter.LayoutPanelRoot!.VisualChildren[0]);
+        TextBlock text = Assert.IsType<TextBlock>(first.PresentedChild);
+        Assert.Equal(expected, text.Text);
+        Assert.True(first.DesiredSize.Width > 0);
+    }
+
+    // A template of Templates for the item's type still applies to an item that is not a string.
+    [Fact]
+    public void TemplateForANonStringItemTypeAppliesWithoutAnItemTemplate()
+    {
+        ItemsControl control = new();
+        control.Templates.Add(new ContentTemplate<int>("number", key: null, priority: 0,
+            context => new TextBlock { Text = "#" + context.Data }));
+        control.SetItems(new object[] { 7 });
+
+        control.Measure(new MeasureContext(new LayoutSize(100, 100)));
+
+        ContentPresenter first = Assert.IsType<ContentPresenter>(control.ItemsPresenter.LayoutPanelRoot!.VisualChildren[0]);
+        Assert.Equal("#7", Assert.IsType<TextBlock>(first.PresentedChild).Text);
+    }
+
     // As the Border of the WPF ItemsControl template, Background fills the bounds, BorderBrush draws the border, and
     // the items are arranged inside BorderThickness + Padding (#609).
     [Fact]
