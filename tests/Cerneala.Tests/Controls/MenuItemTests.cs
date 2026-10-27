@@ -140,6 +140,33 @@ public sealed class MenuItemTests
         Assert.False(item.IsEnabled);
     }
 
+    // A disable the command wrote is undone only while no one else wrote IsEnabled since, including a write of the
+    // same value: the author's false then belongs to the author.
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void AuthoredDisableAfterACommandDisableSurvivesGainingChildren(bool enableFirst)
+    {
+        MenuItem item = new()
+        {
+            Header = "File",
+            Command = new ActionCommand(_ => { }, _ => false)
+        };
+        UIRoot root = Attach(item);
+        Assert.False(item.IsEnabled);
+        if (enableFirst)
+        {
+            item.IsEnabled = true;
+            root.ProcessFrame();
+        }
+
+        item.IsEnabled = false;
+        item.Items.Add("Open");
+        root.ProcessFrame();
+
+        Assert.False(item.IsEnabled, $"The parent's authored IsEnabled = false was undone (enableFirst={enableFirst}).");
+    }
+
     [Fact]
     public void LeafPointerActivationRaisesClickThenExecutesCommandExactlyOnce()
     {

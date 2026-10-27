@@ -424,16 +424,30 @@ public class MenuItem : ItemsControl, IInputCommandSource, ICommandStateSource, 
                 menuSession?.OnSubmenuStateRequested(this, IsSubmenuOpen);
             }
         }
-        else if (ReferenceEquals(args.Property, IsEnabledProperty) && !IsEnabled)
+        else if (ReferenceEquals(args.Property, IsEnabledProperty))
         {
-            IsSubmenuOpen = false;
-            menuSession?.OnItemUnavailable(this);
+            commandState.OnEnabledWritten();
+            if (!IsEnabled)
+            {
+                IsSubmenuOpen = false;
+                menuSession?.OnItemUnavailable(this);
+            }
         }
         else if (ReferenceEquals(args.Property, VisibilityProperty) &&
                  !UIElementVisibility.ParticipatesInInput(this))
         {
             IsSubmenuOpen = false;
             menuSession?.OnItemUnavailable(this);
+        }
+    }
+
+    // A write of the current IsEnabled raises no property change, but it is still the writer's value (#934).
+    internal override void NotifyEffectiveValueRewritten(UiProperty property)
+    {
+        base.NotifyEffectiveValueRewritten(property);
+        if (ReferenceEquals(property, IsEnabledProperty))
+        {
+            commandState.OnEnabledWritten();
         }
     }
 

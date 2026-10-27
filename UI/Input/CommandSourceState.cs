@@ -13,6 +13,7 @@ internal sealed class CommandSourceState
     private Func<bool>? callbackGuard;
     private bool isAttached;
     private bool disabledByCommand;
+    private bool writingEnabled;
 
     public CommandSourceState(
         UIElement owner,
@@ -95,9 +96,28 @@ internal sealed class CommandSourceState
             return false;
         }
 
-        owner.IsEnabled = canExecute;
+        writingEnabled = true;
+        try
+        {
+            owner.IsEnabled = canExecute;
+        }
+        finally
+        {
+            writingEnabled = false;
+        }
+
         disabledByCommand = !canExecute;
         return true;
+    }
+
+    // The owner reports every write of IsEnabled, also one that keeps the value. A write that Refresh did not make is
+    // someone else's IsEnabled, so RefreshIgnoringCommand must leave it alone.
+    public void OnEnabledWritten()
+    {
+        if (!writingEnabled)
+        {
+            disabledByCommand = false;
+        }
     }
 
     // For an owner that ignores its command (a MenuItem with children, #934): undo the disable that Refresh wrote,
