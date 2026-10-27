@@ -137,6 +137,7 @@ public sealed class MotionPrismSemanticTests
     [Theory]
     [InlineData("@on Loaded { @run $SlideIn(Label = \"save as draft\"); }", null)]
     [InlineData("@handle Active; @on Loaded { @run $SlideIn(Label = \"save as draft\") as Active; }", "Active")]
+    [InlineData("@handle Active; @on Loaded { @run $SlideIn(Label = \"C:\\\\\") as Active; }", "Active")]
     public void MotionRunStringArgumentContainingTheWordAsIsNotAHandleSeparator(string aspectBody, string? handle)
     {
         string markup = $$"""

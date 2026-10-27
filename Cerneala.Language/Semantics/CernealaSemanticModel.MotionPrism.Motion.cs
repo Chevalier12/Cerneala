@@ -1228,7 +1228,12 @@ internal sealed partial class CernealaSemanticModel
             char character = text[index];
             if (quoted)
             {
-                if (character == quote && (index == 0 || text[index - 1] != '\\'))
+                // A backslash escapes the next character, so "C:\\" still ends at its closing quote.
+                if (character == '\\')
+                {
+                    index++;
+                }
+                else if (character == quote)
                 {
                     quoted = false;
                 }

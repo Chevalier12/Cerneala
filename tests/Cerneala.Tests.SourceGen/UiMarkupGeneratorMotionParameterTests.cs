@@ -139,6 +139,39 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
+    public void StringRunArgumentEndingInAnEscapedBackslashKeepsTheHandleAfterTheArguments()
+    {
+        // "C:\\" ends in a backslash pair; the quote after it still closes the string.
+        const string markup = """
+            <Border Aspect="$Entrance">
+              <Border.Resources>
+                <MotionClip Name="SlideIn" TargetType="Border">
+                  @parameter Label: string = "default";
+                  @animate
+                  {
+                    debugName = Label;
+                    @from { TranslateY = 10; }
+                    @to { TranslateY = 0; }
+                  }
+                </MotionClip>
+                <Aspect Name="Entrance" TargetType="Border">
+                  @handle Active;
+                  @on Loaded { @run $SlideIn(Label = "C:\\") as Active; }
+                  @on Unloaded { @cancel Active; }
+                </Aspect>
+              </Border.Resources>
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGenerator("MotionEscapedBackslashRunArgumentHandle.crn", markup, out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        string generated = SingleGeneratedSource(result);
+        Assert.Contains(@"DebugName = ""C:\\\\""", generated, StringComparison.Ordinal);
+        Assert.Contains("\"Active\", motionExecutionFactory", generated, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ParameterizedNestedClipEmitsANewFactoryTreeForEveryRun()
     {
         const string markup = """
