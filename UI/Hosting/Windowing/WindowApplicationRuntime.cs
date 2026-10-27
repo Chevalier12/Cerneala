@@ -1243,7 +1243,8 @@ internal sealed class WindowApplicationRuntime : IDisposable
         // Servo frames and platform frames each carry a whole pointer snapshot, and the input
         // bridge treats a different position as a pointer move. So the pointer stays where the
         // last Servo input frame put it until the platform reports a position of its own.
-        // Both input sources start at PointerSnapshot.Empty.
+        // Showing the window renders its first frame from the platform, so that frame sets these
+        // to the platform's own start position, for SDL (-1, -1), before any Servo step runs.
         private float platformPointerX = PointerSnapshot.Empty.X;
         private float platformPointerY = PointerSnapshot.Empty.Y;
         private bool hasServoPointer;
