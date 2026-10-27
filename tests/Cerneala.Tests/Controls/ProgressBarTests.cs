@@ -78,6 +78,44 @@ public sealed class ProgressBarTests
         Assert.Equal(DrawFillRule.EvenOdd, border.FillRule);
     }
 
+    [Theory]
+    [InlineData(-1f, 1f, 1f, 1f)]
+    [InlineData(-1f, 1f, 0f, 0.5f)]
+    [InlineData(-3e38f, 3e38f, 3e38f, 1f)]
+    [InlineData(-3e38f, 3e38f, 0f, 0.5f)]
+    [InlineData(-3e38f, 3e38f, -3e38f, 0f)]
+    public void ValueRatioIsRightForFiniteEndpointsWhoseDifferenceOverflowsFloat(float minimum, float maximum, float value, float expected)
+    {
+        ProgressBar progress = new();
+        progress.Minimum = minimum;
+        progress.Maximum = maximum;
+        progress.Value = value;
+
+        Assert.True(
+            Math.Abs(progress.ValueRatio - expected) < 1e-4f,
+            $"({minimum}, {maximum}, {value}): ValueRatio {progress.ValueRatio}, expected {expected}.");
+    }
+
+    // A full bar must fill the whole 80 px width; the (-1, 1, 1) row is the control.
+    [Theory]
+    [InlineData(-1f, 1f, 1f)]
+    [InlineData(-3e38f, 3e38f, 3e38f)]
+    public void FullBarDrawsAFillOfTheWholeWidth(float minimum, float maximum, float value)
+    {
+        UIRoot root = new();
+        ProgressBar progress = new();
+        progress.Minimum = minimum;
+        progress.Maximum = maximum;
+        progress.Value = value;
+
+        DrawCommandList commands = Render(root, progress, new LayoutRect(0, 0, 80, 10));
+
+        DrawCommand[] fills = [.. commands.Where(command => command.Kind == DrawCommandKind.FillRectangle && ReferenceEquals(command.Brush, progress.Foreground))];
+        Assert.True(
+            fills.Length == 1 && fills[0].Rect.Width == 80,
+            $"({minimum}, {maximum}, {value}): {(fills.Length == 0 ? "no fill drawn" : "fill " + fills[0].Rect)}; ValueRatio {progress.ValueRatio}.");
+    }
+
     private static DrawCommandList Render(UIRoot root, ProgressBar progress, LayoutRect bounds)
     {
         root.VisualChildren.Add(progress);
