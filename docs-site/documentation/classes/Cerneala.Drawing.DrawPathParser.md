@@ -27,6 +27,8 @@ drawing.FillPath(icon, brush, DrawFillRule.EvenOdd);
 
 `ParseSvg` supports absolute and relative `M`, `L`, `H`, `V`, `C`, `S`, `Q`, `T`, `A`, and `Z` commands. It is the single SVG grammar used by both typed paths and the legacy SVG fill overload. Arc rotation follows SVG degrees.
 
+As in SVG 1.1 (section 8.3.3), a command that follows `Z` or `z` without a new `M` or `m` starts a new contour at the initial point of the closed contour, and relative commands are relative to that point. For example, `"M0 0L10 0L10 10ZL20 20"` and `"M0 0L10 0L10 10zl20 20"` both parse into two contours, the closed triangle and an open contour from `(0, 0)` to `(20, 20)`, the same result as `"M0 0L10 0L10 10Z M0 0L20 20"`. A second `Z` directly after `Z`, as in `"M0 0L1 1ZZ"`, closes a new contour that has only its start point, so it throws `FormatException` like `"M0 0Z"`.
+
 ## Methods
 
 | Name | Return type | Description |
