@@ -87,6 +87,39 @@ public sealed class ButtonBaseCommandTests
         Assert.False(executed);
     }
 
+    // The double click belongs to the second press, so marking it handled does not cancel the Command of the click whose
+    // release raised Click (#869).
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public void HandledDoubleClickStillExecutesTheCommandOfTheSecondClick(bool handleDoubleClick, bool handlePreviewDoubleClick)
+    {
+        UIRoot root = RootWithButton(out ButtonBase button);
+        int clicks = 0;
+        int executed = 0;
+        int doubleClicks = 0;
+        button.Click += (_, _) => clicks++;
+        button.Command = new ActionCommand(_ => executed++);
+        button.Handlers.AddHandler(InputEvents.PreviewMouseDoubleClickEvent, (_, args) =>
+        {
+            doubleClicks++;
+            args.Handled = handlePreviewDoubleClick;
+        });
+        button.Handlers.AddHandler(InputEvents.MouseDoubleClickEvent, (_, args) => args.Handled |= handleDoubleClick);
+        ElementInputBridge bridge = new();
+
+        for (int click = 0; click < 2; click++)
+        {
+            bridge.Dispatch(root, PointerFrame(10, 10, currentDown: true));
+            bridge.Dispatch(root, PointerFrame(10, 10, previousDown: true));
+        }
+
+        Assert.Equal(1, doubleClicks);
+        Assert.Equal(2, clicks);
+        Assert.Equal(2, executed);
+    }
+
     [Fact]
     public void CanceledClickDoesNotExecuteCommand()
     {
