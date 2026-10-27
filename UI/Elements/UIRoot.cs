@@ -30,6 +30,8 @@ public sealed partial class UIRoot : UIElement, IElementHost, IInvalidationSink
     private SemanticsTree? cachedServoSemanticsTree;
     private int cachedServoSemanticsTreeVersion = -1;
     private bool servoSemanticsDirty = true;
+    private readonly HashSet<UIElement> commandStateRefreshesAwaitingInputRoute = new(ReferenceEqualityComparer.Instance);
+    private int commandStateInputRouteVersion;
 
     public UIRoot(
         float viewportWidth = 0,
@@ -340,6 +342,32 @@ public sealed partial class UIRoot : UIElement, IElementHost, IInvalidationSink
         semanticsDirty = true;
         servoSemanticsDirty = true;
         RetainedRenderCache.InvalidateRoot();
+        OnCommandStateInputRouteChanged();
+    }
+
+    // A command source whose routed command could not be evaluated because the source was outside the command-state
+    // input route (CommandSourceState.Refresh) is refreshed again after the next change that can rebuild that route:
+    // the tree version (structure, overlay projection) or an input-route invalidation (Visibility, IsVisible,
+    // virtualization, presence) (#901). A source that is still outside the route defers again.
+    internal void DeferCommandStateRefreshUntilInputRouteChanges(UIElement source)
+    {
+        commandStateRefreshesAwaitingInputRoute.Add(source);
+    }
+
+    private void OnCommandStateInputRouteChanged()
+    {
+        commandStateInputRouteVersion++;
+        if (commandStateRefreshesAwaitingInputRoute.Count == 0)
+        {
+            return;
+        }
+
+        UIElement[] sources = [.. commandStateRefreshesAwaitingInputRoute];
+        commandStateRefreshesAwaitingInputRoute.Clear();
+        foreach (UIElement source in sources)
+        {
+            source.QueueCommandStateRefresh();
+        }
     }
 
     internal void RemovePendingWork(UIElement element)
@@ -348,6 +376,7 @@ public sealed partial class UIRoot : UIElement, IElementHost, IInvalidationSink
         LayoutQueue.RemoveArrange(element);
         InheritedPropertyQueue.Remove(element);
         CommandStateQueue.Remove(element);
+        commandStateRefreshesAwaitingInputRoute.Remove(element);
         AspectQueue.Remove(element);
         RenderQueue.Remove(element);
         HitTestQueue.Remove(element);
@@ -374,6 +403,7 @@ public sealed partial class UIRoot : UIElement, IElementHost, IInvalidationSink
             RequiresInputRouteRebuild(request))
         {
             InputCache.Invalidate(request.Reason);
+            OnCommandStateInputRouteChanged();
         }
 
         DirtyPropagation.Default.Propagate(request, this, LayoutQueue, InheritedPropertyQueue, AspectQueue, RenderQueue, HitTestQueue, Trace);
@@ -582,13 +612,19 @@ public sealed partial class UIRoot : UIElement, IElementHost, IInvalidationSink
         FramePhaseProcessors layoutProcessors = LayoutManager.CreatePhaseProcessors();
         CommandRouter commandRouter = new();
         ElementInputRouteMap? commandStateRouteMap = null;
+        int commandStateRouteMapVersion = 0;
         return new FramePhaseProcessors
         {
             InheritedProperties = element => InheritedPropertyPropagator.PropagateFrom(element, beginInheritedDescendantPropagation),
             CommandState = element =>
             {
-                commandStateRouteMap ??= CreateCommandStateRouteMap();
-                ProcessCommandState(element, commandRouter, commandStateRouteMap);
+                if (commandStateRouteMap is null)
+                {
+                    commandStateRouteMap = CreateCommandStateRouteMap();
+                    commandStateRouteMapVersion = commandStateInputRouteVersion;
+                }
+
+                ProcessCommandState(element, commandRouter, commandStateRouteMap, commandStateRouteMapVersion);
             },
             Aspect = AspectProcessor.Process,
             Measure = layoutProcessors.Measure,
@@ -605,14 +641,24 @@ public sealed partial class UIRoot : UIElement, IElementHost, IInvalidationSink
         return new ElementInputRouteBuilder().BuildForCommandState(this);
     }
 
-    private static void ProcessCommandState(UIElement element, CommandRouter router, ElementInputRouteMap routeMap)
+    private void ProcessCommandState(UIElement element, CommandRouter router, ElementInputRouteMap routeMap, int routeMapVersion)
     {
         if (element is not ICommandStateSource source)
         {
             return;
         }
 
+        // This refresh replaces an earlier deferral; it defers again if the source is still outside the route.
+        commandStateRefreshesAwaitingInputRoute.Remove(element);
         _ = source.RefreshCommandState(router, routeMap);
+
+        // The route changed after this frame's map was built, for example in a handler of an earlier refresh, so the
+        // wake-up for that change has already run. A source that deferred against the old map refreshes in the next
+        // frame, against a new map.
+        if (routeMapVersion != commandStateInputRouteVersion && commandStateRefreshesAwaitingInputRoute.Remove(element))
+        {
+            element.QueueCommandStateRefresh();
+        }
     }
 
 }

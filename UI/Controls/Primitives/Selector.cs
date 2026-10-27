@@ -32,9 +32,16 @@ public class Selector : ItemsControl
     // it notifies.
     private UiPropertyChange? pendingSelectedIndexChange;
 
+    // The container that last had or held the keyboard focus, and the item it held then. As WPF's TabNavigation Once
+    // gives the focus to the last focused element of the group, the Tab key enters an ITabOnceScope on it again while
+    // it is still realized and holds that item.
+    private UIElement? lastFocusedContainer;
+    private object? lastFocusedItem;
+
     public Selector()
     {
         selectionModel.SelectionChanged += OnSelectionChanged;
+        Handlers.AddHandler(InputEvents.GotFocusEvent, OnGotFocus, handledEventsToo: true);
     }
 
     public static readonly RoutedEvent SelectionChangedEvent = RoutedEventRegistry.Register(nameof(SelectionChanged), typeof(Selector), RoutingStrategy.Bubble, typeof(SelectionChangedEventArgs));
@@ -313,6 +320,61 @@ public class Selector : ItemsControl
         }
 
         ThrowPreparationFailure(preparationFailure);
+    }
+
+    private void OnGotFocus(object _, RoutedEventArgs args)
+    {
+        for (UIElement? current = args.OriginalSource as UIElement;
+             current is not null && !ReferenceEquals(current, this);
+             current = current.VisualParent)
+        {
+            if (ItemContainerGenerator.IndexFromContainer(current) >= 0)
+            {
+                lastFocusedContainer = current;
+                lastFocusedItem = ItemContainerGenerator.GetItem(current);
+                return;
+            }
+        }
+    }
+
+    // The container that the Tab key enters this Selector on, for a subclass that is an ITabOnceScope: the container
+    // that has or holds the keyboard focus, else the container that last had or held it, else the selected container,
+    // else the first container; only a container that can take the focus counts, and null means none can.
+    internal UIElement? FindTabOnceContainer(ElementInputRouteMap routeMap, UIElement? selected)
+    {
+        UIElement? lastFocused = lastFocusedContainer is { } last &&
+            ItemContainerGenerator.IndexFromContainer(last) >= 0 &&
+            Equals(ItemContainerGenerator.GetItem(last), lastFocusedItem)
+                ? last
+                : null;
+        IReadOnlyDictionary<int, UIElement> realized = ItemContainerGenerator.RealizedContainers;
+        UIElement? first = null;
+        int firstIndex = int.MaxValue;
+        foreach ((int index, UIElement container) in realized)
+        {
+            if (!FocusPolicy.CanFocus(container, routeMap))
+            {
+                continue;
+            }
+
+            if (container.IsKeyboardFocusWithin)
+            {
+                return container;
+            }
+
+            if (index < firstIndex)
+            {
+                first = container;
+                firstIndex = index;
+            }
+        }
+
+        if (FocusPolicy.CanFocus(lastFocused, routeMap))
+        {
+            return lastFocused;
+        }
+
+        return FocusPolicy.CanFocus(selected, routeMap) ? selected : first;
     }
 
     // Runs at the end of every selection change, after the Selected, Unselected, and SelectionChanged handlers, also

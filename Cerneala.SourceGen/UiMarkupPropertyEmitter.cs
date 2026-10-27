@@ -217,6 +217,7 @@ public sealed partial class UiMarkupGenerator
             string literalValue = spec.ValueType.SpecialType == SpecialType.System_String
                 ? UnescapeMarkupDollar(value)
                 : value;
+            ValidateStaticAnimationState(element, propertyName, attribute, literalValue);
             GeneratedExpression? expression = ParseLiteralValue(elementName, propertyName, attribute, literalValue, spec);
             if (expression is null)
             {

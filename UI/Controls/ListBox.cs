@@ -10,7 +10,7 @@ namespace Cerneala.UI.Controls;
 
 [TemplatePart("PART_ScrollViewer", typeof(ScrollViewer))]
 [TemplatePart("PART_ItemsPresenter", typeof(ItemsPresenter))]
-public class ListBox : Selector
+public class ListBox : Selector, ITabOnceScope
 {
     public static readonly UiProperty<SelectionMode> SelectionModeProperty = UiProperty<SelectionMode>.Register(
         nameof(SelectionMode),
@@ -128,6 +128,11 @@ public class ListBox : Selector
     }
 
     protected override Type DefaultContainerType => typeof(ListBoxItem);
+
+    // As a WPF ListBox, whose TabNavigation is Once, the Tab key enters the list once, on the focused row, else the
+    // selected row, else the first row; the rows are no Tab stops, so the next Tab leaves the list (#905).
+    UIElement? ITabOnceScope.GetTabOnceElement(ElementInputRouteMap routeMap) =>
+        FindTabOnceContainer(routeMap, ItemContainerGenerator.RealizedContainers.GetValueOrDefault(SelectedIndex));
 
     // The default template places the rows below BorderThickness and Padding, as the layout without a template does.
     internal override float ItemsTopInset =>
