@@ -1699,6 +1699,91 @@ public sealed class TabControlTests
         Assert.Null(tabControl.SelectedContentTemplate);
     }
 
+    // The selected TabItem exists before the first layout pass, so a change of its Content or ContentTemplate updates
+    // SelectedContent and SelectedContentTemplate at once, as after layout (#933).
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void SelectedContentFollowsTheContentOfTheSelectedTabItemBeforeAndAfterLayout(bool layoutFirst)
+    {
+        TabItem first = new() { Header = "A", Content = "C1" };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, new TabItem { Header = "B" } });
+        tabControl.SelectedIndex = 0;
+        if (layoutFirst)
+        {
+            UIRoot root = new(300, 200);
+            root.VisualChildren.Add(tabControl);
+            root.ProcessFrame();
+        }
+
+        List<object?> changes = [];
+        List<object?> templateChanges = [];
+        tabControl.PropertyChanged += (_, args) =>
+        {
+            if (ReferenceEquals(args.Property, TabControl.SelectedContentProperty))
+            {
+                changes.Add(args.NewValue);
+            }
+            else if (ReferenceEquals(args.Property, TabControl.SelectedContentTemplateProperty))
+            {
+                templateChanges.Add(args.NewValue);
+            }
+        };
+
+        first.Content = "C1b";
+
+        Assert.Equal("C1b", tabControl.SelectedContent);
+        Assert.Equal(["C1b"], changes);
+
+        ContentTemplate<string> template = new("tab", key: null, priority: 0, context => new FixedElement());
+        first.ContentTemplate = template;
+
+        Assert.Same(template, tabControl.SelectedContentTemplate);
+        Assert.Equal([template], templateChanges);
+    }
+
+    // The selected tab keeps being selected when a virtualizing ItemsPanel clears its container; control: still realized.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void SelectedContentFollowsTheContentOfASelectedTabItemClearedByAVirtualizingPanel(bool scrollAway)
+    {
+        TabItem[] tabs = Enumerable.Range(0, 100)
+            .Select(index => new TabItem { Header = index.ToString(), Content = "C" + index, Height = 10 })
+            .ToArray();
+        TabControl tabControl = new() { ItemsPanel = new Cerneala.UI.Layout.Panels.VirtualizingStackPanel() };
+        tabControl.SetItems(tabs);
+        ScrollViewer viewer = new() { Content = tabControl, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+        UIRoot root = new(100, 30);
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+        tabControl.SelectedIndex = 0;
+        root.ProcessFrame();
+        if (scrollAway)
+        {
+            viewer.ScrollInfo.SetVerticalOffset(500);
+            root.ProcessFrame();
+            Assert.Null(tabs[0].VisualParent);
+        }
+
+        List<object?> changes = [];
+        tabControl.PropertyChanged += (_, args) =>
+        {
+            if (ReferenceEquals(args.Property, TabControl.SelectedContentProperty))
+            {
+                changes.Add(args.NewValue);
+            }
+        };
+
+        tabs[0].Content = "C0b";
+
+        Assert.True(
+            Equals(tabControl.SelectedContent, "C0b") && changes.Count == 1,
+            $"scrollAway={scrollAway}: SelectedContent='{tabControl.SelectedContent}' (expected 'C0b'), " +
+            $"SelectedContent changes raised={changes.Count}.");
+    }
+
     [Fact]
     public void ItemTemplateKeyBuildsTheHeaderOfEachDataItemTab()
     {

@@ -51,9 +51,11 @@ public sealed class SvgPath : Shape
         string viewBox = ViewBox;
         if (_cachedGeometry is null || _cachedData != data || _cachedViewBox != viewBox)
         {
+            // Parse before touching the cache: a FormatException must not leave a key that matches the bad strings.
+            SvgGeometry geometry = new(data, ParseViewBox(viewBox));
             _cachedData = data;
             _cachedViewBox = viewBox;
-            _cachedGeometry = new SvgGeometry(data, ParseViewBox(viewBox));
+            _cachedGeometry = geometry;
         }
 
         return _cachedGeometry;

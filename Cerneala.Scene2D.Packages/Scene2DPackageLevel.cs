@@ -52,7 +52,12 @@ public sealed partial class Scene2DPackageLevel
     {
         PackageEntity entity = entities[id];
         Scene2DEntity value = await package.LoadAsync<Scene2DEntity>(entity.Data, cancellationToken).ConfigureAwait(false);
-        if (!entity.Info.Matches(value)) { throw new InvalidDataException("Entity payload geometry or identity differs from its catalog."); }
+        bool matches;
+        // Catalog bounds are finite, so payload bounds that cannot be computed differ from them.
+        try { matches = entity.Info.Matches(value); }
+        catch (Exception error) when (error is ArgumentException or InvalidOperationException)
+        { throw new InvalidDataException("Entity payload geometry differs from its catalog.", error); }
+        if (!matches) { throw new InvalidDataException("Entity payload geometry or identity differs from its catalog."); }
         return value;
     }
 

@@ -46,6 +46,8 @@ internal interface ICernealaServerProcess : IDisposable
 
     Task<bool> WaitForExitAsync(TimeSpan timeout, CancellationToken cancellationToken);
 
+    bool WaitForExit(TimeSpan timeout);
+
     void Kill();
 }
 
@@ -62,6 +64,11 @@ internal sealed class CernealaServerProcessManager : IDisposable
 {
     internal const int MaximumCrashCount = 3;
     internal static readonly TimeSpan ShutdownTimeout = TimeSpan.FromSeconds(3);
+
+    // Visual Studio shutdown stops the server from AppDomain.ProcessExit. On .NET Framework all
+    // ProcessExit handlers together get two seconds by default, so this wait must end well before
+    // that budget or the forced termination after it never runs.
+    internal static readonly TimeSpan ProcessExitShutdownTimeout = TimeSpan.FromSeconds(1);
 
     private static readonly TimeSpan CrashWindow = TimeSpan.FromMinutes(2);
     private static readonly TimeSpan[] RestartDelays =
@@ -235,8 +242,7 @@ internal sealed class CernealaServerProcessManager : IDisposable
                 .ConfigureAwait(false);
             if (!exited)
             {
-                log.Error("Cerneala language server did not exit within " +
-                    ShutdownTimeout.TotalSeconds + " seconds; terminating it.");
+                LogForcedTermination(ShutdownTimeout);
                 current.Kill();
                 await current.WaitForExitAsync(TimeSpan.FromSeconds(1), CancellationToken.None)
                     .ConfigureAwait(false);
@@ -258,7 +264,31 @@ internal sealed class CernealaServerProcessManager : IDisposable
         }
     }
 
-    public void StopImmediately(CernealaServerShutdownReason reason)
+    public void Stop(CernealaServerShutdownReason reason) =>
+        StopSynchronously(
+            reason,
+            reason == CernealaServerShutdownReason.VisualStudioShutdown
+                ? ProcessExitShutdownTimeout
+                : ShutdownTimeout);
+
+    public void StopImmediately(CernealaServerShutdownReason reason) =>
+        StopSynchronously(reason, gracefulTimeout: null);
+
+    public void Dispose()
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        disposed = true;
+        Stop(CernealaServerShutdownReason.ExtensionDisable);
+        lifecycleGate.Dispose();
+    }
+
+    private void StopSynchronously(
+        CernealaServerShutdownReason reason,
+        TimeSpan? gracefulTimeout)
     {
         ICernealaServerProcess? current;
         lock (stateGate)
@@ -273,11 +303,22 @@ internal sealed class CernealaServerProcessManager : IDisposable
             return;
         }
 
-        log.Info("Terminating Cerneala language server immediately. Reason: " + reason + ".");
+        log.Info(
+            (gracefulTimeout is null
+                ? "Terminating Cerneala language server immediately. Reason: "
+                : "Stopping Cerneala language server. Reason: ") + reason + ".");
         try
         {
             current.CloseInput();
-            if (!current.HasExited)
+            if (gracefulTimeout is TimeSpan timeout)
+            {
+                if (!current.WaitForExit(timeout))
+                {
+                    LogForcedTermination(timeout);
+                    current.Kill();
+                }
+            }
+            else if (!current.HasExited)
             {
                 current.Kill();
             }
@@ -293,17 +334,9 @@ internal sealed class CernealaServerProcessManager : IDisposable
         }
     }
 
-    public void Dispose()
-    {
-        if (disposed)
-        {
-            return;
-        }
-
-        disposed = true;
-        StopImmediately(CernealaServerShutdownReason.ExtensionDisable);
-        lifecycleGate.Dispose();
-    }
+    private void LogForcedTermination(TimeSpan timeout) =>
+        log.Error("Cerneala language server did not exit within " +
+            timeout.TotalSeconds + " seconds; terminating it.");
 
     private ICernealaServerProcess? GetProcess()
     {

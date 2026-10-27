@@ -18,7 +18,7 @@ public abstract class Shape : Control
     public static readonly UiProperty<Brush?> StrokeProperty = UiProperty<Brush?>.Register(
         nameof(Stroke),
         typeof(Shape),
-        new UiPropertyMetadata<Brush?>(null, UiPropertyOptions.AffectsRender));
+        new UiPropertyMetadata<Brush?>(null, UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
 
     public static readonly UiProperty<float> StrokeThicknessProperty = UiProperty<float>.Register(
         nameof(StrokeThickness),
