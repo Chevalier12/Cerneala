@@ -6,6 +6,7 @@ using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
 using Cerneala.UI.Media;
 using Cerneala.UI.Motion.Presence;
+using Cerneala.UI.Motion.Specs;
 using Cerneala.Tests.UI.Motion.Core;
 using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
 
@@ -18,6 +19,53 @@ public sealed class PresenceCoordinatorTests
     {
         Assert.Null(typeof(PresenceCoordinator).Assembly.GetType(
             "Cerneala.UI.Motion.Presence.PresenceHandle"));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ExcludeInputWhileExitingDecidesWhetherAnExitingElementIsHitTested(bool excludeInputWhileExiting)
+    {
+        ManualMotionClock clock = new();
+        (UIRoot root, Canvas parent, Rectangle child) = CreatePresentScenario(clock, excludeInputWhileExiting);
+        Assert.Same(child, new HitTestService().HitTest(root, 5, 5)?.Element);
+
+        parent.VisualChildren.Remove(child);
+        root.ProcessFrame();
+        Assert.Equal(PresenceState.Exiting, root.Motion.Presence.GetState(child));
+        UIElement? hit = new HitTestService().HitTest(root, 5, 5)?.Element;
+
+        Assert.True(
+            ReferenceEquals(hit, child) == !excludeInputWhileExiting,
+            $"excludeInputWhileExiting={excludeInputWhileExiting}: the exiting child {(ReferenceEquals(hit, child) ? "is" : "is not")} hit tested (hit: {hit?.GetType().Name ?? "nothing"}).");
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        root.ProcessFrame();
+        Assert.Equal(PresenceState.Detached, root.Motion.Presence.GetState(child));
+        Assert.NotSame(child, new HitTestService().HitTest(root, 5, 5)?.Element);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ExcludeInputWhileExitingDecidesWhetherAPressOnAnExitingElementRoutesThroughItToItsFormerParent(
+        bool excludeInputWhileExiting)
+    {
+        ManualMotionClock clock = new();
+        (UIRoot root, Canvas parent, Rectangle child) = CreatePresentScenario(clock, excludeInputWhileExiting);
+        ElementInputBridge bridge = new();
+        List<object> parentSources = [];
+        int childPresses = 0;
+        child.Handlers.AddHandler(InputEvents.MouseDownEvent, (_, _) => childPresses++);
+        parent.Handlers.AddHandler(InputEvents.MouseDownEvent, (_, args) => parentSources.Add(args.OriginalSource));
+
+        parent.VisualChildren.Remove(child);
+        root.ProcessFrame();
+        Assert.Equal(PresenceState.Exiting, root.Motion.Presence.GetState(child));
+        bridge.Dispatch(root, PressFrame(5, 5));
+
+        Assert.Equal(excludeInputWhileExiting ? 0 : 1, childPresses);
+        Assert.Equal(excludeInputWhileExiting ? parent : child, Assert.Single(parentSources));
     }
 
     [Fact]
@@ -217,6 +265,34 @@ public sealed class PresenceCoordinatorTests
         root.VisualChildren.Add(parent);
         parent.VisualChildren.Add(child);
         return (root, parent, child);
+    }
+
+    private static (UIRoot Root, Canvas Parent, Rectangle Child) CreatePresentScenario(
+        ManualMotionClock clock,
+        bool excludeInputWhileExiting)
+    {
+        UIRoot root = new(100, 100, motionClock: clock);
+        Canvas parent = new();
+        MotionSpec<float> spec = MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100));
+        Rectangle child = new()
+        {
+            Fill = new SolidColorBrush(Color.White),
+            Geometry = new RectangleGeometry(new DrawRect(0, 0, 20, 20)),
+            Presence = PresenceOptions.FadeAndScale(spec, spec, excludeInputWhileExiting)
+        };
+        root.VisualChildren.Add(parent);
+        parent.VisualChildren.Add(child);
+        root.ProcessFrame();
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        root.ProcessFrame();
+        return (root, parent, child);
+    }
+
+    private static InputFrame PressFrame(float x, float y)
+    {
+        PointerSnapshot previous = PointerSnapshot.Empty.WithPosition(x, y);
+        PointerSnapshot current = previous.WithButton(InputMouseButton.Left, true);
+        return new InputFrame(previous, current, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []);
     }
 
     private static Rectangle CreateChild()

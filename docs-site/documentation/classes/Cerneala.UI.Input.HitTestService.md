@@ -58,6 +58,8 @@ HitTestResult? result = new HitTestService().HitTest(root, 25, 25, filter);
 
 `HitTestService` walks `VisualChildren` from the last child to the first child, so later visual children win when elements overlap.
 
+An element that was removed from `VisualChildren` and still plays its presence exit animation is drawn after its former parent's visual children (see `PresenceCoordinator.GetExitingVisualChildren`). When its `PresenceOptions.ExcludeInputWhileExiting` is `false`, hit testing visits it, and its subtree, under its former parent before the live visual children, so a point over the exiting element hits it until the exit ends. With the default `true` it is skipped.
+
 The `HitTest(UIRoot, float, float, HitTestFilter?)` overload delegates through `UIRoot.InputCache`, which ensures the cached `ElementInputRouteMap` is current before performing the hit test.
 
 The `HitTest(UIElement, ElementInputRouteMap, float, float, HitTestFilter?)` overload uses the supplied route map directly. A matching element must be present in the route map; otherwise the method returns `null` even if the point is inside that element.
