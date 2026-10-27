@@ -225,21 +225,25 @@ public class TextBlock : Control
         set => resourceDependencyTracker = value;
     }
 
+    // As in WPF, the text is measured in the room that Padding (and the inward part of BorderThickness) leaves, and
+    // the insets are added to the desired size.
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
+        Thickness insets = Insets;
         TextAspect aspect = CreateTextAspect();
         RecordFontResourceDependency();
         TextParagraphLayout paragraph = GetTextMeasurer().MeasureParagraph(
             CreateTextSpans(aspect),
             aspect,
             CreateParagraphOptions(),
-            context.AvailableSize);
+            ContentControl.Deflate(context.AvailableSize, insets));
         lastMeasurement = paragraph;
         SetRenderDependencies(RenderDependencies.WithTextLayoutIdentity(paragraph.RenderIdentity));
-        return paragraph.Size;
+        return ContentControl.Inflate(paragraph.Size, insets);
     }
 
-    // As in WPF, Background fills the render bounds under the text, also when Text is empty.
+    // As in WPF, Background fills the render bounds under the text, also when Text is empty, and the text is drawn
+    // inside the bounds deflated by the insets, so it wraps, trims and aligns in the inner width.
     protected override void OnRender(RenderContext context)
     {
         RenderBackground(context);
@@ -248,6 +252,7 @@ public class TextBlock : Control
             return;
         }
 
+        LayoutRect content = ContentControl.Deflate(context.Bounds, Insets);
         TextAspect aspect = CreateTextAspect();
         RecordFontResourceDependency();
         TextParagraphLayout paragraph = GetTextRenderer().RenderParagraph(
@@ -255,8 +260,8 @@ public class TextBlock : Control
             CreateTextSpans(aspect),
             aspect,
             CreateParagraphOptions(),
-            new LayoutSize(context.Bounds.Width, context.Bounds.Height),
-            new DrawPoint(context.Bounds.X, context.Bounds.Y));
+            new LayoutSize(content.Width, content.Height),
+            new DrawPoint(content.X, content.Y));
 
         if (lastMeasurement is null || lastMeasurement.RenderIdentity != paragraph.RenderIdentity)
         {

@@ -222,11 +222,18 @@ public sealed partial class UiMarkupGenerator
                 string trueText = text.Substring(question + 1, colon - question - 1).Trim();
                 string falseText = text.Substring(colon + 1).Trim();
                 DirectiveExpression condition = ParseExpression(new DirectiveHeader(conditionText, location.Source, location.Offset));
-                return new MotionConditionalValueSyntax(
-                    condition,
-                    ParseMotionValue(trueText, new DirectiveExpressionLocation(location.Source, location.Offset + question + 1)),
-                    ParseMotionValue(falseText, new DirectiveExpressionLocation(location.Source, location.Offset + colon + 1)),
-                    location);
+                MotionValueSyntax whenTrue = ParseMotionValue(trueText, new DirectiveExpressionLocation(location.Source, location.Offset + question + 1));
+                MotionValueSyntax whenFalse = ParseMotionValue(falseText, new DirectiveExpressionLocation(location.Source, location.Offset + colon + 1));
+                // `current` selects where a Motion starts or ends; it is not a
+                // value a conditional can evaluate to.
+                if (whenTrue is MotionCurrentValueSyntax || whenFalse is MotionCurrentValueSyntax)
+                {
+                    throw new DirectiveParseException(
+                        "'current' must be the whole Motion value; it is not allowed inside a conditional value.",
+                        (whenTrue as MotionCurrentValueSyntax ?? whenFalse).Location);
+                }
+
+                return new MotionConditionalValueSyntax(condition, whenTrue, whenFalse, location);
             }
 
             if (string.Equals(text, "current", StringComparison.Ordinal))
