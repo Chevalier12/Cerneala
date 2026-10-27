@@ -1188,6 +1188,12 @@ public sealed partial class UiMarkupGenerator
                     continue;
                 }
 
+                if (inlineAspectOwners.TryGetValue(current, out MarkupElement? inlineAspectOwner))
+                {
+                    current = inlineAspectOwner;
+                    continue;
+                }
+
                 if (resourceScopes.TryGetValue(current, out ResourceScope? scope))
                 {
                     yield return scope;
