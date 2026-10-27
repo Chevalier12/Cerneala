@@ -203,6 +203,42 @@ public sealed class DrawingTextLayoutRichTextReviewTests
         Assert.Equal(["ab ", "cd"], Assert.Single(layout.Lines).Runs.Select(static run => run.Text));
     }
 
+    // The ellipsis of a trimmed line is a neutral at the end of the line, so it takes the paragraph direction (UAX #9
+    // rules N1 and N2) and sits at the visual end of the line: the left end of a right-to-left line. The CJK letters use
+    // the fallback font while the ellipsis uses the span font, so the ellipsis is a run of its own.
+    [Theory]
+    [InlineData("שלום 漢字漢字漢字漢字")]
+    [InlineData("שלום abcdefghijkl")]
+    public void TheEllipsisOfARightToLeftLineThatEndsWithLeftToRightLettersIsAtTheLeftEnd(string text)
+    {
+        SystemFontSource fonts = new();
+        IDrawFont font = fonts.LoadFont("Segoe UI", 16);
+        IDrawFont fallback = fonts.LoadFont("Microsoft YaHei", 16);
+        DrawTextLayout layout = new DrawTextLayoutBuilder()
+            .AddSpan(new DrawTextSpan(text, font, 16, black, fallbackFonts: [fallback]))
+            .Build(new DrawTextLayoutOptions(maxWidth: 90, trimming: DrawTextTrimming.CharacterEllipsis, direction: DrawTextDirection.RightToLeft));
+
+        IReadOnlyList<DrawTextLayoutRun> runs = Assert.Single(layout.Lines).Runs;
+
+        Assert.True(
+            runs[0].Text == "…",
+            "runs from left to right: " + string.Join("|", runs.Select(static run => run.Text)));
+    }
+
+    [Fact]
+    public void TheEllipsisOfALeftToRightLineThatEndsWithRightToLeftLettersIsAtTheRightEnd()
+    {
+        DrawTextLayout layout = new DrawTextLayoutBuilder()
+            .AddSpan(new DrawTextSpan("ab אבגדהוזח", testFont, 10, black))
+            .Build(new DrawTextLayoutOptions(maxWidth: 40, trimming: DrawTextTrimming.CharacterEllipsis, direction: DrawTextDirection.LeftToRight));
+
+        IReadOnlyList<DrawTextLayoutRun> runs = Assert.Single(layout.Lines).Runs;
+
+        Assert.True(
+            runs[^1].Text == "…" && runs[^1].Direction == DrawTextDirection.LeftToRight,
+            "runs from left to right: " + string.Join("|", runs.Select(static run => $"{run.Text}:{run.Direction}")));
+    }
+
     // 9. A family name that the system does not know still gets the weight and the style.
 
     [Fact]

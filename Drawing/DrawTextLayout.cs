@@ -760,11 +760,11 @@ internal static class DrawTextLayoutEngine
         {
             int spanIndex = FindSpanIndex(ranges, Math.Max(segment.SourceStart, sourceEnd - 1));
             DrawTextSpan span = ranges[spanIndex].Span;
-            UnicodeTextDirection direction = logical.Count > 0
-                ? logical[^1].Direction
-                : baseDirection == DrawTextDirection.RightToLeft
-                    ? UnicodeTextDirection.RightToLeft
-                    : UnicodeTextDirection.LeftToRight;
+            // The ellipsis is a neutral at the end of the line, so it takes the paragraph direction (UAX #9 rules N1 and N2)
+            // and ReorderVisually keeps it at the visual end of the line.
+            UnicodeTextDirection direction = baseDirection == DrawTextDirection.RightToLeft
+                ? UnicodeTextDirection.RightToLeft
+                : UnicodeTextDirection.LeftToRight;
             AddOrMerge(
                 logical,
                 new Fragment(
