@@ -194,6 +194,48 @@ public sealed class TextParagraphTests
         Assert.Equal(12, paragraph.Size.Height, Tolerance);
     }
 
+    // Issue #964: the first line kept because the height is smaller than one line is the whole text, so nothing is hidden.
+    [Theory]
+    [InlineData(1, 50f)]
+    [InlineData(0, 5f)]
+    [InlineData(1, 5f)]
+    public void ASingleCompleteLineGetsNoEllipsisWhenTheHeightIsSmallerThanOneLine(int maxLines, float availableHeight)
+    {
+        TextMeasurer measurer = CreateMeasurer();
+        TextAspect aspect = Aspect(TextWrapping.Wrap, TextTrimming.CharacterEllipsis);
+
+        TextParagraphLayout paragraph = measurer.MeasureParagraph(
+            [new TextSpan("Hi", aspect)],
+            aspect,
+            new TextParagraphOptions(MaxLines: maxLines),
+            new LayoutSize(100, availableHeight));
+
+        DrawTextLayoutLine line = Assert.Single(paragraph.Layout.Lines);
+        Assert.True(
+            line.Text == "Hi" && !line.IsTrimmed,
+            $"MaxLines={maxLines}, height={availableHeight}: line '{line.Text}', IsTrimmed={line.IsTrimmed}.");
+    }
+
+    // Issue #964: the first line kept because the height is smaller than one line still marks the lines hidden after it.
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    public void TheFirstLineKeptForAHeightSmallerThanOneLineMarksTheHiddenLines(int maxLines)
+    {
+        TextMeasurer measurer = CreateMeasurer();
+        TextAspect aspect = Aspect(TextWrapping.Wrap, TextTrimming.CharacterEllipsis);
+
+        TextParagraphLayout paragraph = measurer.MeasureParagraph(
+            [new TextSpan("aaa bbb ccc ddd", aspect)],
+            aspect,
+            new TextParagraphOptions(MaxLines: maxLines),
+            new LayoutSize(20, 5));
+
+        DrawTextLayoutLine line = Assert.Single(paragraph.Layout.Lines);
+        Assert.True(line.IsTrimmed);
+        Assert.EndsWith("…", line.Text, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void MeasureParagraphIgnoresTheAvailableHeightWithoutTrimming()
     {
