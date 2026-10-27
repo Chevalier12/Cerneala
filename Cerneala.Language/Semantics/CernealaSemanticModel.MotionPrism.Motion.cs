@@ -638,10 +638,10 @@ internal sealed partial class CernealaSemanticModel
             definitionLocation: resource.Location));
         ValidateMotionRunArguments(header, region.HeaderSpan, clip);
 
-        int asIndex = header.LastIndexOf(" as ", StringComparison.Ordinal);
+        int asIndex = FindTopLevelKeyword(header, "as");
         if (asIndex >= 0)
         {
-            string handle = header.Substring(asIndex + 4).Trim();
+            string handle = header.Substring(asIndex + "as".Length).Trim();
             TextSpan handleSpan = FindSubspan(region.HeaderSpan, handle, fromEnd: true);
             if (!handles.TryGetValue(handle, out TextSpan declaration) || declaration.Start > handleSpan.Start)
             {
@@ -1214,6 +1214,50 @@ internal sealed partial class CernealaSemanticModel
         {
             yield return text.Substring(start).Trim();
         }
+    }
+
+    // Finds a whitespace-delimited keyword outside quoted strings and parentheses.
+    private static int FindTopLevelKeyword(string text, string keyword)
+    {
+        int parentheses = 0;
+        bool quoted = false;
+        char quote = '\0';
+        for (int index = 0; index < text.Length; index++)
+        {
+            char character = text[index];
+            if (quoted)
+            {
+                if (character == quote && (index == 0 || text[index - 1] != '\\'))
+                {
+                    quoted = false;
+                }
+
+                continue;
+            }
+
+            if (character is '\'' or '"')
+            {
+                quoted = true;
+                quote = character;
+            }
+            else if (character == '(')
+            {
+                parentheses++;
+            }
+            else if (character == ')')
+            {
+                parentheses--;
+            }
+            else if (parentheses == 0 &&
+                string.CompareOrdinal(text, index, keyword, 0, keyword.Length) == 0 &&
+                (index == 0 || char.IsWhiteSpace(text[index - 1])) &&
+                (index + keyword.Length == text.Length || char.IsWhiteSpace(text[index + keyword.Length])))
+            {
+                return index;
+            }
+        }
+
+        return -1;
     }
 
     private static DirectiveRegion? InnermostRegion(IEnumerable<DirectiveRegion> regions, int position) => regions
