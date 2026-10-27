@@ -547,6 +547,8 @@ public sealed class Sprite2D : SceneNode2D
         return GetHitTestLocalBounds();
     }
 
+    internal override SceneBounds2D GetGeometricLocalBounds() => GetHitTestLocalBounds();
+
     internal override SceneBounds2D GetHitTestLocalBounds()
     {
         // Geometry/input observation may read a completed image, but it must

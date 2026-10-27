@@ -686,11 +686,27 @@ public sealed class SceneItems2D : SceneNode2D, ISceneSpatialParticipant2D
         return bounds;
     }
 
+    internal override SceneBounds2D GetGeometricLocalBounds()
+    {
+        SceneBounds2D bounds = SceneBounds2D.Empty;
+        foreach (ref SceneChildBoundsIndex2D.Entry entry in childBounds.Refresh(this))
+        {
+            bounds = SceneGeometry2D.Union(bounds, GetGeometricBounds(entry));
+            if (bounds.Kind == SceneBoundsKind.Unknown) { break; }
+        }
+        return bounds;
+    }
+
     internal override void OnChildGeometryChanged(SceneNode2D child) => childBounds.MarkDirty(child);
 
     private static SceneBounds2D GetVisibleBounds(in SceneChildBoundsIndex2D.Entry entry) => entry.IsLive || entry.IsBranch
         ? SceneGeometry2D.TransformBounds(entry.Node.GetLocalBounds(), entry.Node.GetLocalTransform())
         : entry.VisibleBounds;
+
+    // A measured sprite caches its geometry as its hit-test bounds, which ignore visibility.
+    private static SceneBounds2D GetGeometricBounds(in SceneChildBoundsIndex2D.Entry entry) => entry.IsLive || entry.IsBranch
+        ? SceneGeometry2D.TransformBounds(entry.Node.GetOrderLocalBounds(), entry.Node.GetLocalTransform())
+        : entry.Node.IsSceneRendered ? entry.HitTestBounds : SceneBounds2D.Empty;
 
     private static bool Intersects(SceneBounds2D visible, in SceneChildBoundsIndex2D.Entry entry)
     {
