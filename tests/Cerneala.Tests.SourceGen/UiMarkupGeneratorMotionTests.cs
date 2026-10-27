@@ -439,6 +439,34 @@ public sealed partial class UiMarkupGeneratorTests
         AssertNoGeneratorOrCompilationErrors(result, compilation);
     }
 
+    // The first example of the Motion reference (its resources and the element
+    // that applies them) must build as printed (#918).
+    [Fact]
+    public void DocumentedMotionResourcesExampleCompiles()
+    {
+        string text = File.ReadAllText(Path.Combine(DocumentationRoot(), "reference", "motion-markup-syntax.md")).Replace("\r\n", "\n");
+        int resources = text.IndexOf("\n## Resources\n", StringComparison.Ordinal);
+        int nextSection = text.IndexOf("\n## ", resources + 1, StringComparison.Ordinal);
+        Assert.True(resources >= 0 && nextSection > resources);
+        string[] xml = System.Text.RegularExpressions.Regex.Matches(
+                text[resources..nextSection],
+                "```xml\n(.*?)```",
+                System.Text.RegularExpressions.RegexOptions.Singleline)
+            .Select(match => match.Groups[1].Value)
+            .ToArray();
+        Assert.Equal(2, xml.Length);
+        const string inputSource = """
+            using Cerneala.UI.Controls;
+            namespace TestInput.Views;
+            public partial class MainWindow : Window { }
+            """;
+        string markup = "<Window>\n" + xml[0] + "<StackPanel>\n" + xml[1] + "</StackPanel>\n</Window>";
+
+        GeneratorRunResult result = RunPairedGenerator("Views/MainWindow.crn", markup, inputSource, out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+    }
+
     // A resource Aspect is compiled once, so `$owner.parts.$Chrome` takes its
     // type from the markup places where the Aspect is applied; they must all
     // have the part with one type (2026-10-08 decision, Etapa 2).
