@@ -57,12 +57,8 @@ public class Scene2D : SceneNode2D
         ownedCollisionWorld = new CollisionWorld2D(this);
         visionSlot = new ColliderSlot2D(this, ColliderSlotRole2D.Vision);
         Children = new ChildCollection(this);
-        LogicalChildren.Changed += (_, _) =>
-        {
-            childBounds.Invalidate();
-            // An enclosing scene indexes this group by its content bounds.
-            NotifyContainerGeometryChanged();
-        };
+        // An enclosing scene indexes this group by its content bounds.
+        LogicalChildren.Changed += (_, _) => NotifyContainerGeometryChanged();
     }
 
     public Collection<SceneNode2D> Children { get; }

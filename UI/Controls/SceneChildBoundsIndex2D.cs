@@ -20,6 +20,9 @@ internal sealed class SceneChildBoundsIndex2D
     private int count;
     private readonly List<int> dirty = [];
     private bool rebuildRequired = true;
+    // The owner's child-list version the slots were built from. Every insert,
+    // move and removal changes it, so slot order always matches child order.
+    private int childrenVersion;
     private ImageResolutionStamp stamp;
 
     // A uniform grid over each entry's union of bounds narrows a traversal to
@@ -47,8 +50,6 @@ internal sealed class SceneChildBoundsIndex2D
 
     internal SceneChildBoundsIndex2D(bool parksAnimations = false) => this.parksAnimations = parksAnimations;
 
-    internal void Invalidate() => rebuildRequired = true;
-
     internal void MarkDirty(SceneNode2D child)
     {
         int index = child.ContainerSlot;
@@ -75,7 +76,7 @@ internal sealed class SceneChildBoundsIndex2D
             stamp = current;
         }
 
-        if (rebuildRequired)
+        if (rebuildRequired || childrenVersion != owner.LogicalChildren.Version)
         {
             Rebuild(owner.LogicalChildren);
         }
@@ -547,6 +548,7 @@ internal sealed class SceneChildBoundsIndex2D
         Array.Clear(entries, count, entries.Length - count);
         RebuildGrid();
         rebuildRequired = false;
+        childrenVersion = children.Version;
     }
 
     // Whether any child is a debug overlay, as of the last refresh.
