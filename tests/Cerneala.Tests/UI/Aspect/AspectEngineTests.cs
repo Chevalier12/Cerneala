@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
@@ -396,6 +397,34 @@ public sealed class AspectEngineTests
     }
 
     [Fact]
+    public void CanonicalDocumentationAspectMotionExamplesUseDefaultThemeMotionTokens()
+    {
+        // Issue #979: the token names of the AspectMotion examples must resolve with the default theme.
+        MotionTokens defaultTokens = ThemeMotionTokens.CreateDefault();
+        string classes = Path.Combine(FindRepositoryRoot(), "docs-site", "documentation", "classes");
+        List<string> unresolved = [];
+        foreach (string page in Directory.EnumerateFiles(classes, "*.md"))
+        {
+            foreach (Match codeBlock in Regex.Matches(File.ReadAllText(page), "```csharp(.*?)```", RegexOptions.Singleline))
+            {
+                foreach (Match example in Regex.Matches(
+                    codeBlock.Groups[1].Value,
+                    @"(?:new AspectMotion|AspectMotion \w+ = new)\(\s*[^,()]+,\s*""([^""]*)""",
+                    RegexOptions.Singleline))
+                {
+                    string tokenName = example.Groups[1].Value;
+                    if (!defaultTokens.TryGet(tokenName, out _))
+                    {
+                        unresolved.Add($"{Path.GetFileName(page)}: \"{tokenName}\"");
+                    }
+                }
+            }
+        }
+
+        Assert.True(unresolved.Count == 0, string.Join(Environment.NewLine, unresolved));
+    }
+
+    [Fact]
     public void EngineClassifiesBaseStateVariantAndDataMotionSources()
     {
         AspectEngine engine = new();
@@ -441,6 +470,22 @@ public sealed class AspectEngineTests
         Assert.Equal(AspectMotionSource.State, stateAspect.Values[Control.BackgroundProperty].MotionSource);
         Assert.Equal(AspectMotionSource.Variant, variantAspect.Values[Control.BackgroundProperty].MotionSource);
         Assert.Equal(AspectMotionSource.Data, dataAspect.Values[Control.BackgroundProperty].MotionSource);
+    }
+
+    private static string FindRepositoryRoot()
+    {
+        DirectoryInfo? directory = new(AppContext.BaseDirectory);
+        while (directory is not null)
+        {
+            if (File.Exists(Path.Combine(directory.FullName, "Cerneala.slnx")))
+            {
+                return directory.FullName;
+            }
+
+            directory = directory.Parent;
+        }
+
+        throw new DirectoryNotFoundException("Could not find repository root.");
     }
 
     private static AspectCatalog EmptyCatalog()
