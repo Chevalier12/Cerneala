@@ -177,4 +177,86 @@ public sealed class SdlWindowMigrationContractTests
         Assert.Equal(80, bounds.Left);
         Assert.Equal(60, bounds.Top);
     }
+
+    [Theory]
+    [InlineData(true, 100f, 50f)]
+    [InlineData(false, 560f, 240f)]
+    public void MaximizingKeepsTheRestorePositionWhetherOrNotLeftAndTopWereSet(
+        bool explicitPosition, float restoreLeft, float restoreTop)
+    {
+        // Without Left/Top the default 800x600 window is centered on the fake 1920x1080 display: (560, 240).
+        FakeSdlApi api = new() { WindowPixelDensity = 1, WindowDisplayScale = 1 };
+        using SdlWindowPlatform platform = new(api, new RecordingGraphicsFactory());
+        Window model = explicitPosition
+            ? new Window { Left = restoreLeft, Top = restoreTop, WindowStartupLocation = WindowStartupLocation.Manual }
+            : new Window { WindowStartupLocation = WindowStartupLocation.CenterScreen };
+        RecordingWindowCallbacks callbacks = new();
+        using SdlPlatformWindow window = Assert.IsType<SdlPlatformWindow>(platform.CreateWindow(model, callbacks));
+        int boundsBeforeMaximize = callbacks.Bounds.Count;
+        api.Windows[window.Handle].X = 0;
+        api.Windows[window.Handle].Y = 0;
+        api.Enqueue(new SdlEvent(SdlEventKind.WindowMaximized, window.WindowId));
+
+        platform.PumpEvents();
+
+        var bounds = callbacks.Bounds[^1];
+        Assert.True(callbacks.Bounds.Count > boundsBeforeMaximize, "No bounds were reported for the maximize.");
+        Assert.True(
+            (float.IsNaN(bounds.Left) && float.IsNaN(bounds.Top)) ||
+            (bounds.Left == restoreLeft && bounds.Top == restoreTop),
+            $"After maximizing, the reported position is ({bounds.Left}, {bounds.Top}); the restore position is ({restoreLeft}, {restoreTop}).");
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void RestoringAMaximizedWindowDoesNotMoveItToTheMaximizedPosition(bool explicitPosition)
+    {
+        // The window sits at (800, 440): centered 320x200 on the fake 1920x1080 display, or explicit; true is the control.
+        FakeSdlApi api = new() { WindowPixelDensity = 1, WindowDisplayScale = 1 };
+        RecordingGraphicsFactory graphics = new();
+        using WindowApplicationRuntime runtime = new(new SdlWindowPlatform(api, graphics));
+        Window model = explicitPosition
+            ? new Window { Left = 800, Top = 440, Width = 320, Height = 200, WindowStartupLocation = WindowStartupLocation.Manual }
+            : new Window { Width = 320, Height = 200, WindowStartupLocation = WindowStartupLocation.CenterScreen };
+        runtime.StartMainWindow(model);
+        FakeSdlApi.FakeWindow native = Assert.Single(api.Windows.Values);
+        (int X, int Y) before = (native.X, native.Y);
+        Assert.Equal((800, 440), before);
+
+        native.X = 0;
+        native.Y = 0;
+        api.Enqueue(new SdlEvent(SdlEventKind.WindowMaximized, native.Id));
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        (float Left, float Top) modelAfterMaximize = (model.Left, model.Top);
+        model.WindowState = WindowState.Normal;
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+        Assert.True(
+            (native.X, native.Y) == before,
+            $"explicitPosition={explicitPosition}: model Left/Top after the maximize are ({modelAfterMaximize.Left}, {modelAfterMaximize.Top}); " +
+            $"after WindowState = Normal the native window is at ({native.X}, {native.Y}), it was at ({before.X}, {before.Y}).");
+    }
+
+    [Fact]
+    public void AMaximizedWindowWithoutAKnownRestorePositionReportsUnchangedBoundsOnce()
+    {
+        // Manual startup without Left/Top: no normal position is known, so the maximized window reports NaN.
+        FakeSdlApi api = new() { WindowPixelDensity = 1, WindowDisplayScale = 1 };
+        using SdlWindowPlatform platform = new(api, new RecordingGraphicsFactory());
+        Window model = new() { WindowStartupLocation = WindowStartupLocation.Manual };
+        RecordingWindowCallbacks callbacks = new();
+        using SdlPlatformWindow window = Assert.IsType<SdlPlatformWindow>(platform.CreateWindow(model, callbacks));
+        api.Enqueue(new SdlEvent(SdlEventKind.WindowMaximized, window.WindowId));
+        platform.PumpEvents();
+        int boundsAfterMaximize = callbacks.Bounds.Count;
+
+        api.Enqueue(new SdlEvent(SdlEventKind.WindowMoved, window.WindowId));
+        api.Enqueue(new SdlEvent(SdlEventKind.WindowResized, window.WindowId));
+        platform.PumpEvents();
+
+        var bounds = callbacks.Bounds[^1];
+        Assert.True(float.IsNaN(bounds.Left) && float.IsNaN(bounds.Top), $"The reported position is ({bounds.Left}, {bounds.Top}).");
+        Assert.Equal(boundsAfterMaximize, callbacks.Bounds.Count);
+    }
 }

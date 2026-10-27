@@ -520,6 +520,71 @@ public sealed class TextBoxEditingApiTests
         Assert.False(textBox.CanUndo);
     }
 
+    [Theory]
+    [InlineData("xy", true)]
+    [InlineData("ab", false)]
+    public void TypingOverASelectionRecordsAnUndoUnitOnlyWhenTheTextChanged(string typed, bool changesText)
+    {
+        TextBox textBox = NewTextBox("ab");
+        UIRoot root = Host(textBox, clipboard: null, out ElementInputBridge bridge);
+        textBox.Select(0, 2);
+
+        bridge.Dispatch(root, TextFrame(typed));
+
+        Assert.Equal(typed, textBox.Text);
+        if (changesText)
+        {
+            Assert.True(textBox.CanUndo);
+            Assert.True(textBox.Undo());
+            Assert.Equal("ab", textBox.Text);
+        }
+        else
+        {
+            Assert.False(textBox.CanUndo);
+            Assert.False(textBox.Undo());
+        }
+    }
+
+    [Fact]
+    public void TypingTheSelectedTextAgainOneCharacterAtATimeLeavesNothingToUndo()
+    {
+        TextBox textBox = NewTextBox("ab");
+        UIRoot root = Host(textBox, clipboard: null, out ElementInputBridge bridge);
+        textBox.Select(0, 2);
+
+        bridge.Dispatch(root, TextFrame("a"));
+        bridge.Dispatch(root, TextFrame("b"));
+
+        Assert.Equal("ab", textBox.Text);
+        Assert.False(textBox.CanUndo);
+        Assert.False(textBox.Undo());
+
+        bridge.Dispatch(root, TextFrame("c"));
+
+        Assert.Equal("abc", textBox.Text);
+        Assert.True(textBox.Undo());
+        Assert.Equal("ab", textBox.Text);
+    }
+
+    [Fact]
+    public void PastingTheSelectedTextAgainRecordsNoUndoUnitAndKeepsTheEarlierHistory()
+    {
+        FakeClipboard clipboard = new("ab");
+        TextBox textBox = NewTextBox("ab");
+        UIRoot root = Host(textBox, clipboard, out _);
+        textBox.Select(2, 2);
+        textBox.SelectedText = "c";
+        textBox.Select(0, 2);
+
+        textBox.Paste();
+
+        Assert.Equal("abc", textBox.Text);
+        Assert.True(textBox.Undo());
+        Assert.Equal("ab", textBox.Text);
+        Assert.False(textBox.CanUndo);
+        GC.KeepAlive(root);
+    }
+
     [Fact]
     public void CopyCutAndPasteMethodsUseThePlatformClipboard()
     {

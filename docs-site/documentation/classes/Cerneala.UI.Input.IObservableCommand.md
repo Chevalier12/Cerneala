@@ -17,6 +17,8 @@ public interface IObservableCommand : ICommand
 
 `CanExecuteChanged` is a state notification rather than a delta. On the UI thread, an attached `ButtonBase` queues a command-state refresh that runs in the next frame's command-state phase. Off-thread bursts are coalesced through the root Relay. The command's `CanExecute` method is not called on the producer thread.
 
+The control does not read the event's `sender`. A command may raise `CanExecuteChanged?.Invoke(null, EventArgs.Empty)`, or a wrapper command may forward an inner command's event with the inner command as `sender`; in both cases a `Button` whose `Command` is that command re-queries `CanExecute` in the next frame and updates `IsEnabled`. For example, when `CanExecute` now returns `false`, the button's `IsEnabled` becomes `false` after the next frame.
+
 Controls unsubscribe when detached or when their command changes, and queued callbacks from an inactive subscription do not update the control.
 
 ## Events

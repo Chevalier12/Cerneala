@@ -69,8 +69,17 @@ internal sealed class CommandSourceState
 
     public bool Refresh(CommandRouter router, ElementInputRouteMap routeMap)
     {
-        if (resolveCommand() is null)
+        ICommand? command = resolveCommand();
+        if (command is null)
         {
+            return false;
+        }
+
+        // A routed command reaches its CommandBinding only along the input route. A source outside the route (collapsed,
+        // hidden, skipped by virtualization) keeps IsEnabled and refreshes again when the route changes (#901).
+        if (command is RoutedCommand && !routeMap.Contains(owner))
+        {
+            owner.Root?.DeferCommandStateRefreshUntilInputRouteChanges(owner);
             return false;
         }
 
@@ -162,9 +171,11 @@ internal sealed class CommandSourceState
         observableCommand = null;
     }
 
+    // The event is the request, whatever its sender: commands may raise it with null or forward an inner command's
+    // event (#902). Only the bound command's event reaches this handler, because Subscribe removes it from the old one.
     private void OnCanExecuteChanged(object? sender, EventArgs args)
     {
-        if (ReferenceEquals(sender, observableCommand) && callbackGuard?.Invoke() == true)
+        if (callbackGuard?.Invoke() == true)
         {
             owner.QueueCommandStateRefresh();
         }
