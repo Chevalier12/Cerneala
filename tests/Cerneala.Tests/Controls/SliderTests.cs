@@ -472,6 +472,130 @@ public sealed class SliderTests
         Assert.False(bridge.HasActivePointerRepeat);
     }
 
+    // The nearest tick does not depend on the size of the values: a press at 0.15 of 1000000..1000002 is 1000000.3, which
+    // snaps to 1000000 as 0.3 on 0..2 snaps to 0 (#927).
+    [Theory]
+    [InlineData(0f, 2f)]
+    [InlineData(1000000f, 1000002f)]
+    public void MoveToPointPressSnapsToTheNearestTickAtAnyMagnitude(float minimum, float maximum)
+    {
+        UIRoot root = new(200, 100);
+        Slider slider = new()
+        {
+            Minimum = minimum,
+            Maximum = maximum,
+            LargeChange = 1,
+            TickFrequency = 1,
+            IsSnapToTickEnabled = true,
+            IsMoveToPointEnabled = true,
+            Value = maximum
+        };
+        slider.Measure(new MeasureContext(new LayoutSize(110, 20)));
+        slider.Arrange(new ArrangeContext(new LayoutRect(0, 0, 110, 20)));
+        root.VisualChildren.Add(slider);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(20, 5, currentDown: true), TimeSpan.Zero);
+
+        Assert.True(
+            slider.Value == minimum,
+            $"Value is {slider.Value:R} after a press at 0.15 of the range {minimum:R}..{maximum:R}; the nearest tick is {minimum:R}.");
+    }
+
+    // With Ticks, a press at 0.15 of the range (0.3 above Minimum) snaps to Minimum, and a press at 0.6 (0.2 above the
+    // tick in the middle) snaps to that tick, at any size of the values (#927).
+    [Theory]
+    [InlineData(0f, 20f, 0f)]
+    [InlineData(0f, 65f, 1f)]
+    [InlineData(1000000f, 20f, 0f)]
+    [InlineData(1000000f, 65f, 1f)]
+    public void MoveToPointPressSnapsToTheNearestOfTicksAtAnyMagnitude(float minimum, float pressX, float expectedOffset)
+    {
+        UIRoot root = new(200, 100);
+        Slider slider = new()
+        {
+            Minimum = minimum,
+            Maximum = minimum + 2,
+            LargeChange = 1,
+            Ticks = [minimum + 1],
+            IsSnapToTickEnabled = true,
+            IsMoveToPointEnabled = true,
+            Value = minimum + 2
+        };
+        slider.Measure(new MeasureContext(new LayoutSize(110, 20)));
+        slider.Arrange(new ArrangeContext(new LayoutRect(0, 0, 110, 20)));
+        root.VisualChildren.Add(slider);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(pressX, 5, currentDown: true), TimeSpan.Zero);
+
+        Assert.True(
+            slider.Value == minimum + expectedOffset,
+            $"Value is {slider.Value:R} after a press at x {pressX}; the nearest tick is {minimum + expectedOffset:R}.");
+    }
+
+    // The ticks of a very small TickFrequency are its multiples, as for any other TickFrequency: a press at 3.4 ticks
+    // snaps to 3 ticks. Row 1 (range 0..10, tick 1) is the same press at a normal size (#927).
+    [Theory]
+    [InlineData(1f)]
+    [InlineData(1e-6f)]
+    public void MoveToPointPressSnapsToATickForVerySmallTickFrequencies(float unit)
+    {
+        UIRoot root = new(200, 100);
+        Slider slider = new()
+        {
+            Minimum = 0,
+            Maximum = 10 * unit,
+            LargeChange = unit,
+            TickFrequency = unit,
+            IsSnapToTickEnabled = true,
+            IsMoveToPointEnabled = true,
+            Value = 10 * unit
+        };
+        slider.Measure(new MeasureContext(new LayoutSize(110, 20)));
+        slider.Arrange(new ArrangeContext(new LayoutRect(0, 0, 110, 20)));
+        root.VisualChildren.Add(slider);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(39, 5, currentDown: true), TimeSpan.Zero);
+
+        float ticks = slider.Value / unit;
+        Assert.True(
+            MathF.Abs(ticks - 3) < 1e-3f,
+            $"unit={unit}: Value={slider.Value:R} is {ticks:R} ticks; a snapped value is a whole number of ticks (expected 3).");
+    }
+
+    // With a very small TickFrequency, Right from 3 ticks with a SmallChange of 0.3 ticks goes to the next tick, 4, as it
+    // does with TickFrequency 1 (#927).
+    [Theory]
+    [InlineData(1f)]
+    [InlineData(1e-6f)]
+    public void ArrowKeyWithSnapToTickMovesToTheNextTickForVerySmallTickFrequencies(float unit)
+    {
+        Button other = new() { Content = "other", Width = 100, Height = 30 };
+        Slider slider = new()
+        {
+            Minimum = 0,
+            Maximum = 10 * unit,
+            SmallChange = 0.3f * unit,
+            TickFrequency = unit,
+            IsSnapToTickEnabled = true,
+            Value = 3 * unit,
+            Width = 200,
+            Height = 20
+        };
+        (UIRoot root, ElementInputBridge bridge) = CreateWindowRoot(other, slider);
+        Click(root, bridge, other);
+        PressKey(root, bridge, InputKey.Tab);
+
+        PressKey(root, bridge, InputKey.Right);
+
+        float ticks = slider.Value / unit;
+        Assert.True(
+            MathF.Abs(ticks - 4) < 1e-3f,
+            $"unit={unit}: Value={slider.Value:R} is {ticks:R} ticks after Right from 3 ticks (expected 4).");
+    }
+
     // As WPF's Slider.MoveToNextTick for the track's repeat buttons: with snapping, a press beside the thumb moves to the
     // next tick by LargeChange: from 4 with LargeChange 3 and TickFrequency 2, a press before the thumb goes to 2.
     [Fact]
