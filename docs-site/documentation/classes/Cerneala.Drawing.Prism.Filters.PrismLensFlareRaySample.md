@@ -55,7 +55,7 @@ builds polynomial inputs.
 | --- | --- | --- |
 | `GhostIndex` | `int` | Identifies the reflection path to which the ray belongs. |
 | `PupilPosition` | `System.Numerics.Vector2` | Position of the ray in the normalized pupil. |
-| `IncidenceAngleDegrees` | `float` | Ray incidence angle in degrees. |
+| `IncidenceAngleDegrees` | `float` | Ray incidence angle in degrees. `PrismLensProfileFitter.Fit` requires a finite, non-negative value. |
 | `WavelengthNanometers` | `float` | Ray wavelength in nanometers. |
 | `AperturePosition` | `System.Numerics.Vector2` | Aperture-plane position of the ray. The fitter uses it as a target value; it does not compute it. |
 | `SensorPosition` | `System.Numerics.Vector2` | Sensor-plane position of the ray. The fitter uses it as a target value; it does not compute it. |
