@@ -454,4 +454,118 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Equal(Color.Black, Assert.IsType<SolidColorBrush>(text.Foreground).Color);
         Assert.Equal(Cerneala.UI.Core.UiPropertyValueSource.AspectBase, text.GetValueSource(Control.ForegroundProperty));
     }
+
+    [Fact]
+    public void InlineAspectResolvesAResourceOfAnAncestor()
+    {
+        const string markup = """
+            <StackPanel>
+              <StackPanel.Resources>
+                <SolidColorBrush Name="Accent" Color="#FF336699" />
+              </StackPanel.Resources>
+              <Border>
+                <Border.Aspect>
+                  @default { Background = $Accent; }
+                </Border.Aspect>
+              </Border>
+            </StackPanel>
+            """;
+
+        Border border = BuildAccentBorder("InlineAspectAncestorResource.crn", markup, "InlineAspectAncestorResourceFactory");
+
+        AssertAccent(border);
+    }
+
+    [Fact]
+    public void InlineAspectResolvesAResourceOfItsOwnElement()
+    {
+        const string markup = """
+            <StackPanel>
+              <Border>
+                <Border.Resources>
+                  <SolidColorBrush Name="Accent" Color="#FF336699" />
+                </Border.Resources>
+                <Border.Aspect>
+                  @default { Background = $Accent; }
+                </Border.Aspect>
+              </Border>
+            </StackPanel>
+            """;
+
+        Border border = BuildAccentBorder("InlineAspectOwnResource.crn", markup, "InlineAspectOwnResourceFactory");
+
+        AssertAccent(border);
+    }
+
+    [Fact]
+    public void NamedAspectResolvesAResourceOfAnAncestor()
+    {
+        // Control for the inline-aspect test: the same Aspect declared by name in the ancestor's Resources.
+        const string markup = """
+            <StackPanel>
+              <StackPanel.Resources>
+                <SolidColorBrush Name="Accent" Color="#FF336699" />
+                <Aspect Name="A" TargetType="Border">
+                  @default { Background = $Accent; }
+                </Aspect>
+              </StackPanel.Resources>
+              <Border Aspect="$A" />
+            </StackPanel>
+            """;
+
+        Border border = BuildAccentBorder("NamedAspectAncestorResource.crn", markup, "NamedAspectAncestorResourceFactory");
+
+        AssertAccent(border);
+    }
+
+    [Theory]
+    [InlineData("WhenValue", false)]
+    [InlineData("AnimateSpec", false)]
+    [InlineData("WhenValue", true)]
+    [InlineData("AnimateSpec", true)]
+    public void AncestorResourcesResolveInWhenValuesAndAnimateSpecsOfInlineAspects(string body, bool inline)
+    {
+        // Rows with inline=false (the same body in a named Aspect) are the controls.
+        string aspectBody = body == "WhenValue"
+            ? "@when IsMouseOver { Background = $Accent; }"
+            : "@when IsMouseOver { @animate with $QuickOut { @to { Opacity = 1; } } }";
+        string markup = "<StackPanel><StackPanel.Resources>" +
+            "<SolidColorBrush Name=\"Accent\" Color=\"#FF336699\" />" +
+            "<Tween Name=\"QuickOut\" Duration=\"180ms\" Easing=\"EaseOut\" />" +
+            (inline ? string.Empty : "<Aspect Name=\"A\" TargetType=\"Border\">" + aspectBody + "</Aspect>") +
+            "</StackPanel.Resources>" +
+            (inline
+                ? "<Border><Border.Aspect>" + aspectBody + "</Border.Aspect></Border>"
+                : "<Border Aspect=\"$A\" />") +
+            "</StackPanel>";
+
+        GeneratorRunResult result = RunGenerator("InlineAspectAncestorBodies.crn", markup, out Compilation compilation);
+
+        string[] errors = result.Diagnostics
+            .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
+            .Select(diagnostic => diagnostic.ToString())
+            .Concat(compilation.GetDiagnostics()
+                .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
+                .Select(diagnostic => diagnostic.ToString()))
+            .ToArray();
+        Assert.True(errors.Length == 0, $"{body}, inline={inline}: " + string.Join(" | ", errors));
+    }
+
+    private static void AssertAccent(Border border)
+    {
+        SolidColorBrush brush = Assert.IsType<SolidColorBrush>(border.Background);
+        Assert.Equal(new Color(0x33, 0x66, 0x99), brush.Color);
+    }
+
+    private static Border BuildAccentBorder(string fileName, string markup, string factoryName)
+    {
+        GeneratorRunResult result = RunGenerator(fileName, markup, out Compilation compilation);
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+        StackPanel panel = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi." + factoryName));
+        AttachAndProcess(panel);
+        return Assert.IsType<Border>(panel.VisualChildren[0]);
+    }
 }

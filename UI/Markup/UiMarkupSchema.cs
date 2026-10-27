@@ -13,11 +13,11 @@ public static class UiMarkupSchema
     {
         UiMarkupTypeRegistry registry = new();
         registry
-            .Register(WithControlProperties(new UiMarkupElementRegistration(
+            .Register(WithElementProperties(new UiMarkupElementRegistration(
                 "Panel",
                 () => new Panel(),
                 AddPanelChild)))
-            .Register(WithControlProperties(new UiMarkupElementRegistration(
+            .Register(WithElementProperties(new UiMarkupElementRegistration(
                 "StackPanel",
                 () => new StackPanel(),
                 AddPanelChild)))
@@ -50,12 +50,18 @@ public static class UiMarkupSchema
         return registry;
     }
 
-    private static UiMarkupElementRegistration WithControlProperties(UiMarkupElementRegistration registration)
+    private static UiMarkupElementRegistration WithElementProperties(UiMarkupElementRegistration registration)
     {
         return registration
             .RegisterProperty(new UiMarkupPropertyRegistration(nameof(UIElement.IsEnabled), (element, value) => element.IsEnabled = ParseBool(value)))
             .RegisterProperty(new UiMarkupPropertyRegistration(nameof(UIElement.IsVisible), (element, value) => element.IsVisible = ParseBool(value)))
-            .RegisterProperty(new UiMarkupPropertyRegistration(nameof(UIElement.Margin), (element, value) => element.Margin = ParseThickness(value)))
+            .RegisterProperty(new UiMarkupPropertyRegistration(nameof(UIElement.Margin), (element, value) => element.Margin = ParseThickness(value)));
+    }
+
+    // Only for elements whose factory creates a Control: these setters cast the element to Control.
+    private static UiMarkupElementRegistration WithControlProperties(UiMarkupElementRegistration registration)
+    {
+        return WithElementProperties(registration)
             .RegisterProperty(new UiMarkupPropertyRegistration(nameof(Control.Background), (element, value) => ((Control)element).Background = ParseBrush((Control)element, value)))
             .RegisterProperty(new UiMarkupPropertyRegistration(nameof(Control.Foreground), (element, value) => ((Control)element).Foreground = ParseBrush((Control)element, value)))
             .RegisterProperty(new UiMarkupPropertyRegistration(nameof(Control.BorderBrush), (element, value) => ((Control)element).BorderBrush = ParseBrush((Control)element, value)))

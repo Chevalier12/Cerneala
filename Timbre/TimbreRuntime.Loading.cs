@@ -140,11 +140,13 @@ public sealed partial class TimbreRuntime
         }
     }
 
+    // Compared without multiplication: a source may declare any length, and the
+    // decoded size of a huge one is not representable.
     private bool ShouldPreload(TimbreLoading loading, long? lengthFrames) => loading switch
     {
         TimbreLoading.Preload => true,
         TimbreLoading.Streaming => false,
-        _ => lengthFrames is long length && length * TimbreCatalog.BytesPerFrame <= autoPreloadMaxBytes
+        _ => lengthFrames is long length && length <= autoPreloadMaxBytes / TimbreCatalog.BytesPerFrame
     };
 
     private StreamingFeed CreateStreamingFeed(TimbrePlayback playback, TimbreReader reader, TimbreMemoryBudget budget)
@@ -202,7 +204,13 @@ public sealed partial class TimbreRuntime
         object cacheKey = key ?? new object();
         if (reader.LengthFrames is long known)
         {
-            long bytes = checked(known * TimbreCatalog.BytesPerFrame);
+            // A declared length whose decoded size is not representable exceeds every preload limit.
+            if (known > long.MaxValue / TimbreCatalog.BytesPerFrame)
+            {
+                throw PreloadLimit(sourceName, long.MaxValue);
+            }
+
+            long bytes = known * TimbreCatalog.BytesPerFrame;
             Reserve(bytes, sourceName);
             try
             {

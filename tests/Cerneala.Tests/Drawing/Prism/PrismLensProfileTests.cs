@@ -130,6 +130,64 @@ public sealed class PrismLensProfileTests
         Assert.Equal(0.5f, region.RelativeRadius.Evaluate(query), 3);
     }
 
+    [Theory]
+    [InlineData(1, true, -5f, true)]
+    [InlineData(2, true, -5f, true)]
+    [InlineData(2, false, 0f, false)]
+    [InlineData(1, true, float.NaN, true)]
+    [InlineData(2, true, float.NaN, true)]
+    [InlineData(1, true, float.PositiveInfinity, true)]
+    [InlineData(2, true, float.PositiveInfinity, true)]
+    public void FitterRejectsAnInvalidIncidenceAngleEvenWhenItsRegionIsSkipped(
+        int regionCount,
+        bool includeInvalidSample,
+        float invalidAngle,
+        bool expectThrow)
+    {
+        List<PrismLensFlareRaySample> samples = [];
+        for (int index = 0; index < 12; index++)
+        {
+            Vector2 pupil = new(((index % 4) - 1.5f) / 3f, ((index / 4) - 1) / 3f);
+            samples.Add(new PrismLensFlareRaySample(
+                0,
+                pupil,
+                10 + (index * 10f / 11f),
+                550,
+                pupil * 0.5f,
+                new Vector2(pupil.X * 0.3f, pupil.Y * 0.3f),
+                0.4f,
+                0.5f));
+        }
+
+        if (includeInvalidSample)
+        {
+            samples.Add(new PrismLensFlareRaySample(
+                0,
+                new Vector2(0.1f, 0.1f),
+                invalidAngle,
+                550,
+                new Vector2(0.05f, 0.05f),
+                new Vector2(0.03f, 0.03f),
+                0.4f,
+                0.5f));
+        }
+
+        Exception? failure = Record.Exception(() => PrismLensProfileFitter.Fit(
+            samples,
+            new PrismLensProfileFitOptions
+            {
+                RegionCount = regionCount,
+                MaximumTermCount = 4,
+                MinimumSamplesPerRegion = 6,
+                MinimumCorrelation = 1e-9
+            }));
+
+        Assert.True(
+            expectThrow ? failure is ArgumentOutOfRangeException : failure is null,
+            $"regionCount={regionCount}, invalidSample={includeInvalidSample}, angle={invalidAngle}: " +
+            (failure is null ? "no exception" : failure.GetType().Name + ": " + failure.Message));
+    }
+
     [Fact]
     public void CpuLensFlareRequiresProfileAndPreservesAlpha()
     {

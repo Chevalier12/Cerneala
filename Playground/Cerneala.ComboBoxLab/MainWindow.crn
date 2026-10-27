@@ -104,6 +104,7 @@
                     <TextBlock Text="Non-editable transaction" FontFamily="Segoe UI Semibold" FontSize="17" />
                     <ComboBox
                         Name="SelectionCombo"
+                        IsEditable="false"
                         MaxDropDownHeight="260"
                         Height="36"
                         Background="$InputBrush"

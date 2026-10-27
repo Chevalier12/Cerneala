@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
@@ -1149,6 +1150,73 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.DoesNotContain("GetEntry(", generated, StringComparison.Ordinal);
         Assert.DoesNotContain("dynamic", generated, StringComparison.Ordinal);
         Assert.DoesNotContain("System.Reflection", generated, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void PrismMotionPassesTheNodeWhoseVisibleCancelsIt()
+    {
+        const string markup = """
+            <Border>
+              <Border.Aspect>
+                @prism
+                {
+                  @layer Glow { @filter Blur { Radius = 4; } }
+                  @group Card
+                  {
+                    @layer Face { @filter Blur { Radius = 2; } }
+                  }
+                }
+                @on Loaded
+                {
+                  @animate with Tween(100ms)
+                  {
+                    @to
+                    {
+                      $self.prism.Glow.Opacity = 0.5;
+                      $self.prism.Glow.Visible = false;
+                      $self.prism.Card.Opacity = 0.5;
+                      $self.prism.Card.Face.Opacity = 0.5;
+                      $self.prism.Card.Face.Visible = false;
+                    }
+                  }
+                }
+              </Border.Aspect>
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGenerator(
+            "PrismMotionScope.crn",
+            markup,
+            out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        string generated = SingleGeneratedSource(result);
+        (string Kind, string Node, string Property, string? Scope)[] starts = Regex.Matches(
+                generated,
+                @"StartPrismMotionProperty\([^,]+, [^,]+, -?\d+, (?:null|new global::Cerneala\.UI\.Prism\.Definitions\.PrismNodeId\((?<scope>\d+)\)), " +
+                @"static prismInstance => prismInstance\.Get(?<kind>Layer|Group)State\(new global::Cerneala\.UI\.Prism\.Definitions\.PrismNodeId\((?<node>\d+)\)\)\.(?<property>\w+)")
+            .Select(match => (
+                match.Groups["kind"].Value,
+                match.Groups["node"].Value,
+                match.Groups["property"].Value,
+                match.Groups["scope"].Success ? match.Groups["scope"].Value : null))
+            .ToArray();
+        Assert.Equal(5, starts.Length);
+        string card = Assert.Single(starts, start => start.Kind == "Group").Node;
+
+        // Glow.Opacity, Card.Opacity and Card.Face.Opacity: the node of the property.
+        Assert.All(
+            starts.Where(start => start.Property == "Opacity"),
+            start => Assert.Equal(start.Node, start.Scope));
+
+        // Glow.Visible: a top-level layer, so no node scope. Card.Face.Visible: the
+        // containing group Card, never Face itself, so the motion can show Face again.
+        (string Kind, string Node, string Property, string? Scope)[] visibles =
+            starts.Where(start => start.Property == "Visible").ToArray();
+        Assert.Equal(2, visibles.Length);
+        Assert.All(visibles, start => Assert.Equal("Layer", start.Kind));
+        Assert.Single(visibles, start => start.Scope is null);
+        Assert.Single(visibles, start => start.Scope == card);
     }
 
     [Fact]

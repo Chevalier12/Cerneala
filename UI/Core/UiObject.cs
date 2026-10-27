@@ -247,6 +247,10 @@ public class UiObject
         else
         {
             NotifyPropertyMutated(property, source, oldValue, oldSource, newValue, newSource, oldSourceValue, coerced, !Equals(value, coerced));
+            if (newSource == source)
+            {
+                NotifyEffectiveValueRewritten(property);
+            }
         }
 
         return oldValue;
@@ -322,6 +326,10 @@ public class UiObject
         else
         {
             NotifyPropertyMutated(property, source, oldValue, oldSource, newValue, newSource, oldSourceValue, coerced, !EqualityComparer<T>.Default.Equals(value, (T)coerced!));
+            if (newSource == source)
+            {
+                NotifyEffectiveValueRewritten(property);
+            }
         }
 
         return oldValue;
@@ -372,6 +380,12 @@ public class UiObject
     internal virtual void NotifyPropertyChange(in UiPropertyChange change)
     {
         RaisePropertyChange(change);
+    }
+
+    // Notifies a SetValue whose value became the effective value without changing it. No property change is raised.
+    // Selector overrides it so that writing the current SelectedIndex selects that index, as the setter does.
+    internal virtual void NotifyEffectiveValueRewritten(UiProperty property)
+    {
     }
 
     // Raises OnPropertyChanged, then reports the mutation, then invalidates what the property affects.

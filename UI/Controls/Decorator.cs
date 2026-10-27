@@ -6,6 +6,8 @@ namespace Cerneala.UI.Controls;
 public class Decorator : Control
 {
     private UIElement? child;
+    // Counts Child changes, so a change can tell that a handler changed Child while it ran.
+    private int childChange;
 
     public UIElement? Child
     {
@@ -18,23 +20,43 @@ public class Decorator : Control
             }
 
             ContentControl.ValidateCanOwnChild(this, value);
+            // The removal raises Unloaded and the addition raises Loaded at once. The field always names the element that
+            // is in the trees, so a Child change that a handler makes then replaces the right element and wins: this
+            // change stops when it sees that a nested change ran (#982).
+            int change = ++childChange;
             UIElement? oldChild = child;
-            if (oldChild is not null)
+            child = null;
+            RemoveChild(oldChild);
+            if (change != childChange)
             {
-                RemoveChild(oldChild);
+                return;
             }
 
             try
             {
-                AddChild(value);
                 child = value;
+                AddChild(value, change);
             }
             catch
             {
-                DiscardRejectedChild(value);
-                AddChild(oldChild);
-                child = oldChild;
+                if (change == childChange)
+                {
+                    child = null;
+                    DiscardRejectedChild(value);
+                    // The discard raises the rejected child's Unloaded; a Child change made there wins over the restore.
+                    if (change == childChange)
+                    {
+                        child = oldChild;
+                        AddChild(oldChild, change);
+                    }
+                }
+
                 throw;
+            }
+
+            if (change != childChange)
+            {
+                return;
             }
 
             Invalidate(Cerneala.UI.Invalidation.InvalidationFlags.Measure | Cerneala.UI.Invalidation.InvalidationFlags.Render, "Decorator child changed");
@@ -54,7 +76,9 @@ public class Decorator : Control
         return context.FinalRect;
     }
 
-    private void AddChild(UIElement? element)
+    // The logical addition raises Loaded at once when the decorator is loaded. When a handler changes Child then, the
+    // nested change has already replaced the element, so the visual addition is skipped.
+    private void AddChild(UIElement? element, int change)
     {
         if (element is null)
         {
@@ -62,7 +86,10 @@ public class Decorator : Control
         }
 
         LogicalChildren.Add(element);
-        VisualChildren.Add(element);
+        if (change == childChange)
+        {
+            VisualChildren.Add(element);
+        }
     }
 
     private void RemoveChild(UIElement? element)

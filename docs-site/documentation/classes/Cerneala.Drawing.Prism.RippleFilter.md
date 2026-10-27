@@ -24,7 +24,7 @@ public sealed class RippleFilter : PrismFilter
 
 | Name | Type | Default | Description |
 | --- | --- | --- | --- |
-| `Amount` | `float` | `1` | Optional catalog parameter; unit: `unitless`. |
+| `Amount` | `float` | `1` | Optional catalog parameter; unit: `dip`. |
 | `Size` | `string` | `Medium` | Optional catalog parameter; unit: `none`. |
 | `Seed` | `int` | `0` | Optional catalog parameter; unit: `count`. |
 | `EdgeMode` | `string` | `Repeat` | Optional catalog parameter; unit: `none`. |

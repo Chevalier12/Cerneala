@@ -790,11 +790,11 @@ internal static class DrawTextLayoutEngine
         {
             int spanIndex = FindSpanIndex(ranges, Math.Max(segment.SourceStart, sourceEnd - 1));
             DrawTextSpan span = ranges[spanIndex].Span;
-            UnicodeTextDirection direction = logical.Count > 0
-                ? logical[^1].Direction
-                : baseDirection == DrawTextDirection.RightToLeft
-                    ? UnicodeTextDirection.RightToLeft
-                    : UnicodeTextDirection.LeftToRight;
+            // The ellipsis is a neutral at the end of the line, so it takes the paragraph direction (UAX #9 rules N1 and N2)
+            // and ReorderVisually keeps it at the visual end of the line.
+            UnicodeTextDirection direction = baseDirection == DrawTextDirection.RightToLeft
+                ? UnicodeTextDirection.RightToLeft
+                : UnicodeTextDirection.LeftToRight;
             AddOrMerge(
                 logical,
                 new Fragment(
@@ -810,11 +810,41 @@ internal static class DrawTextLayoutEngine
                 preserveClusters);
         }
 
-        if (baseDirection == DrawTextDirection.RightToLeft)
-        {
-            logical.Reverse();
-        }
+        ReorderVisually(logical, baseDirection);
         return logical.ToArray();
+    }
+
+    // Unicode UAX #9 rule L2: from the highest embedding level down to the lowest odd level, reverse every sequence of
+    // fragments at that level or higher. A right-to-left fragment has level 1; a left-to-right fragment has the base level,
+    // 0 in a left-to-right line and 2 in a right-to-left line. So the fragments of a right-to-left word in a left-to-right
+    // line, and of a left-to-right word in a right-to-left line, keep the reading order of their word. This matters when
+    // justification keeps every grapheme as its own fragment.
+    private static void ReorderVisually(List<Fragment> fragments, DrawTextDirection baseDirection)
+    {
+        int leftToRightLevel = baseDirection == DrawTextDirection.RightToLeft ? 2 : 0;
+        int Level(Fragment fragment) => fragment.Direction == UnicodeTextDirection.RightToLeft ? 1 : leftToRightLevel;
+
+        for (int level = Math.Max(1, leftToRightLevel); level >= 1; level--)
+        {
+            int index = 0;
+            while (index < fragments.Count)
+            {
+                if (Level(fragments[index]) < level)
+                {
+                    index++;
+                    continue;
+                }
+
+                int end = index + 1;
+                while (end < fragments.Count && Level(fragments[end]) >= level)
+                {
+                    end++;
+                }
+
+                fragments.Reverse(index, end - index);
+                index = end;
+            }
+        }
     }
 
     private static void AddOrMerge(List<Fragment> fragments, Fragment candidate, bool preserveClusters)

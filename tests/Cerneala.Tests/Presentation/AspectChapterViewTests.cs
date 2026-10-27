@@ -523,6 +523,60 @@ public sealed class AspectChapterViewTests : IDisposable
         Assert.Equal(1, preview.Opacity);
     }
 
+    [Theory]
+    [InlineData("Border", "BorderThickness", "-2", true)]
+    [InlineData("Border", "MaxWidth", "Infinity", true)]
+    [InlineData("TextBlock", "LineHeight", "NaN", true)]
+    [InlineData("Border", "MinWidth", "-5", false)]
+    [InlineData("Border", "MaxWidth", "-1", false)]
+    [InlineData("TextBlock", "LineHeight", "0", false)]
+    [InlineData("TextBlock", "MaxLines", "-1", false)]
+    [InlineData("TextBlock", "FontFamily", "", false)]
+    [InlineData("TextBlock", "FontSize", "-4", false)]
+    [InlineData("TextBlock", "Opacity", "0.5", true)]
+    [InlineData("Border", "Padding", "-2", false)]
+    [InlineData("Border", "Width", "-1", false)]
+    [InlineData("Border", "RenderTransformOrigin", "2,0", false)]
+    [InlineData("Button", "TabIndex", "-1", false)]
+    public void StudioAcceptsExactlyTheValuesThePropertyContractsAccept(
+        string kind,
+        string propertyName,
+        string text,
+        bool expectedAccepted)
+    {
+        UiProperty property = propertyName switch
+        {
+            "BorderThickness" => Control.BorderThicknessProperty,
+            "MaxWidth" => UIElement.MaxWidthProperty,
+            "MinWidth" => UIElement.MinWidthProperty,
+            "LineHeight" => TextBlock.LineHeightProperty,
+            "MaxLines" => TextBlock.MaxLinesProperty,
+            "FontFamily" => Control.FontFamilyProperty,
+            "FontSize" => Control.FontSizeProperty,
+            "Opacity" => UIElement.OpacityProperty,
+            "Padding" => Control.PaddingProperty,
+            "Width" => UIElement.WidthProperty,
+            "RenderTransformOrigin" => UIElement.RenderTransformOriginProperty,
+            "TabIndex" => UIElement.TabIndexProperty,
+            _ => throw new ArgumentOutOfRangeException(nameof(propertyName))
+        };
+        UIRoot root = AttachStudio(out AspectChapterView view);
+        view.SelectForTests(Enum.Parse<AspectStudioElementKind>(kind));
+        root.ProcessFrame();
+        bool? accepted = null;
+
+        Exception? failure = Record.Exception(() =>
+        {
+            accepted = view.TrySetPropertyForTests(property, text);
+            root.ProcessFrame();
+        });
+
+        Assert.True(
+            failure is null && accepted == expectedAccepted,
+            $"{kind}.{propertyName} = '{text}': expected accepted={expectedAccepted}, TrySetPropertyForTests returned {(accepted is null ? "nothing" : accepted.ToString())}, " +
+            $"exception={(failure is null ? "none" : failure.GetType().Name + ": " + failure.Message)}.");
+    }
+
     [Fact]
     public void ResetCurrentRestoresInitialAspectValues()
     {

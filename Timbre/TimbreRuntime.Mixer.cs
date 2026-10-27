@@ -491,6 +491,9 @@ public sealed partial class TimbreRuntime
             return false;
         }
 
+        // A loss reported before this open belongs to the closed device. One
+        // reported once Open has the client, even before it returns, is kept.
+        Interlocked.Exchange(ref deviceLost, 0);
         try
         {
             output.Open(client);
@@ -505,7 +508,6 @@ public sealed partial class TimbreRuntime
             return false;
         }
 
-        Interlocked.Exchange(ref deviceLost, 0);
         outputOpen = true;
         Interlocked.Increment(ref outputOpenCount);
         return true;
