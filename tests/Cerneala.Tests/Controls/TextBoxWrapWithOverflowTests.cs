@@ -75,6 +75,67 @@ public sealed class TextBoxWrapWithOverflowTests
         Assert.True(presenter.ExtentWidth > presenter.ViewportWidth, $"extent {presenter.ExtentWidth} viewport {presenter.ViewportWidth}");
     }
 
+    // Issue #915, review of PR #1049: after the width goes to 120 and back to 100, the text wraps at 100 again. The view's
+    // measure for 100 comes from its measure cache and its arranged rectangle (the long word's width) is the same at both
+    // widths, so its arrange can come from the cache too; the lines must still be the ones of the 100 wide viewport.
+    [Fact]
+    public void LinesWrapAtTheViewportWidthAgainAfterTheWidthChangesAndComesBack()
+    {
+        TextBox textBox = new()
+        {
+            TextWrapping = TextWrapping.WrapWithOverflow,
+            Width = 100,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top,
+        };
+        UIRoot root = Host(textBox, out ElementInputBridge bridge);
+        bridge.Dispatch(root, TextFrame($"a b c d {LongWord} e f g h i j k l m n o p q r s"));
+        root.ProcessFrame();
+        string expected = Lines(textBox);
+
+        textBox.Width = 120;
+        root.ProcessFrame();
+        string wider = Lines(textBox);
+        textBox.Width = 100;
+        root.ProcessFrame();
+
+        Assert.NotEqual(expected, wider);
+        Assert.Equal(expected, Lines(textBox));
+    }
+
+    // Issue #915, review of PR #1049: the long word keeps the text view's bounds the same at the widths 100 and 120, but
+    // the other lines wrap differently, so the retained drawing of the old lines must not be reused.
+    [Fact]
+    public void TheTextIsDrawnAgainWhenItsLinesWrapAtANewWidthInTheSameBounds()
+    {
+        TextBox textBox = new()
+        {
+            TextWrapping = TextWrapping.WrapWithOverflow,
+            Width = 100,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top,
+        };
+        UIRoot root = Host(textBox, out ElementInputBridge bridge);
+        bridge.Dispatch(root, TextFrame($"a b c d {LongWord} e f g h i j k l m n o p q r s"));
+        root.ProcessFrame();
+        UIElement view = Assert.IsAssignableFrom<UIElement>(ContentHost(textBox).Presenter.Content);
+        LayoutRect bounds = view.ArrangedBounds;
+        string lines = Lines(textBox);
+        int renderVersion = view.RenderVersion;
+
+        textBox.Width = 120;
+        root.ProcessFrame();
+
+        Assert.Equal(bounds.Size, view.ArrangedBounds.Size);
+        Assert.NotEqual(lines, Lines(textBox));
+        Assert.True(view.RenderVersion > renderVersion, $"RenderVersion {renderVersion} -> {view.RenderVersion}.");
+    }
+
+    private static string Lines(TextBox textBox)
+    {
+        return string.Join(" | ", Enumerable.Range(0, textBox.LineCount).Select(i => textBox.GetLineText(i).TrimEnd()));
+    }
+
     private static ScrollViewer ContentHost(Control control)
     {
         return Assert.IsType<ScrollViewer>(control.ComponentTemplateInstance!.Parts["PART_ContentHost"]);

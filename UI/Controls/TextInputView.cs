@@ -367,10 +367,18 @@ internal sealed class TextInputView : UIElement
             arrangedScrollOffset = offset;
         }
 
-        hasArranged = true;
         // The text wraps at the viewport width, as in the measure: a line that WrapWithOverflow keeps wider makes the
         // presenter arrange this view wider than the viewport, and that width must not join the other lines again.
-        arrangedWrapWidth = GetWrapWidth(Presenter?.ViewportWidth ?? context.FinalRect.Width);
+        float wrapWidth = GetWrapWidth(Presenter?.ViewportWidth ?? context.FinalRect.Width);
+        if (hasArranged && wrapWidth != arrangedWrapWidth)
+        {
+            // Such a line can keep these bounds at another viewport width, and only new bounds draw the view again on
+            // their own, so the lines that wrap at the new width are drawn here.
+            InvalidateTextRender("TextBox wrap width changed");
+        }
+
+        hasArranged = true;
+        arrangedWrapWidth = wrapWidth;
         return context.FinalRect;
     }
 

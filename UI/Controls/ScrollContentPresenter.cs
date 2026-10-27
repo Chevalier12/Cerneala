@@ -51,6 +51,7 @@ public class ScrollContentPresenter : ContentControl, IScrollInfo
     private bool hostsItemsViewport;
     private bool? viewerMeasuredWithFiniteHeight;
     private LayoutPoint arrangedContentOrigin;
+    private float contentArrangedViewportWidth = float.NaN;
 
     public float HorizontalOffset
     {
@@ -204,6 +205,15 @@ public class ScrollContentPresenter : ContentControl, IScrollInfo
         float contentWidth = CanHorizontallyScroll ? MathF.Max(ExtentWidth, ViewportWidth) : ViewportWidth;
         float contentHeight = CanVerticallyScroll ? MathF.Max(ExtentHeight, ViewportHeight) : ViewportHeight;
         UIElement? content = ContentElement;
+        // The content's arrange can read the viewport width, as a TextBox's text view wraps there (#915). A new viewport
+        // width therefore arranges the content again, also when its rectangle stays the same, such as one that a word
+        // wider than the viewport keeps at that word's width.
+        if (content is not null && ViewportWidth != contentArrangedViewportWidth)
+        {
+            content.InvalidateArrangeCache();
+        }
+
+        contentArrangedViewportWidth = ViewportWidth;
         // The content's arrange can bring an element into view, which sets a new offset (see MakeVisible). The content
         // is placed with the offsets read here, so the origin and ArrangedScrollOffset keep those, and the new offset
         // applies in the next arrange.
