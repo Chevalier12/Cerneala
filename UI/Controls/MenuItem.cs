@@ -246,9 +246,10 @@ public class MenuItem : ItemsControl, IInputCommandSource, ICommandStateSource, 
         }
     }
 
+    // A parent never executes its command (CanExecuteCommand), so the command does not decide IsEnabled either (#934).
     public bool RefreshCommandState(CommandRouter router, ElementInputRouteMap routeMap)
     {
-        return commandState.Refresh(router, routeMap);
+        return HasSubmenu ? commandState.RefreshIgnoringCommand() : commandState.Refresh(router, routeMap);
     }
 
     void IInputActivatable.Activate()
@@ -351,6 +352,12 @@ public class MenuItem : ItemsControl, IInputCommandSource, ICommandStateSource, 
         if (!HasSubmenu)
         {
             IsSubmenuOpen = false;
+        }
+
+        // Gaining or losing children decides whether the command controls IsEnabled.
+        if (Command is not null)
+        {
+            QueueCommandStateRefresh();
         }
 
         SynchronizeSubmenuIndicator();

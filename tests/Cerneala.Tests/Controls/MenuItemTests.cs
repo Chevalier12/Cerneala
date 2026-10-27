@@ -84,6 +84,62 @@ public sealed class MenuItemTests
         Assert.Equal(0, executions);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ParentWithADisabledCommandStillOpensItsSubmenu(bool canExecute)
+    {
+        MenuItem parent = new()
+        {
+            Header = "File",
+            Command = new ActionCommand(_ => { }, _ => canExecute)
+        };
+        parent.Items.Add("Open");
+        UIRoot root = Attach(parent);
+
+        Assert.True(parent.IsEnabled, $"The parent is disabled by its command (canExecute={canExecute}).");
+        ((IInputActivatable)parent).Activate();
+
+        Assert.True(parent.IsSubmenuOpen);
+        GC.KeepAlive(root);
+    }
+
+    [Fact]
+    public void ParentCommandDoesNotEnableAnAuthoredDisabledParent()
+    {
+        MenuItem parent = new()
+        {
+            Header = "File",
+            IsEnabled = false,
+            Command = new ActionCommand(_ => { })
+        };
+        parent.Items.Add("Open");
+        UIRoot root = Attach(parent);
+
+        Assert.False(parent.IsEnabled);
+        GC.KeepAlive(root);
+    }
+
+    [Fact]
+    public void ChildrenDecideWhetherTheCommandControlsTheEnabledState()
+    {
+        MenuItem item = new()
+        {
+            Header = "File",
+            Command = new ActionCommand(_ => { }, _ => false)
+        };
+        UIRoot root = Attach(item);
+        Assert.False(item.IsEnabled);
+
+        item.Items.Add("Open");
+        root.ProcessFrame();
+        Assert.True(item.IsEnabled);
+
+        item.Items.Clear();
+        root.ProcessFrame();
+        Assert.False(item.IsEnabled);
+    }
+
     [Fact]
     public void LeafPointerActivationRaisesClickThenExecutesCommandExactlyOnce()
     {
