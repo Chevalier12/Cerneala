@@ -69,8 +69,17 @@ internal sealed class CommandSourceState
 
     public bool Refresh(CommandRouter router, ElementInputRouteMap routeMap)
     {
-        if (resolveCommand() is null)
+        ICommand? command = resolveCommand();
+        if (command is null)
         {
+            return false;
+        }
+
+        // A routed command reaches its CommandBinding only along the input route. A source outside the route (collapsed,
+        // hidden, skipped by virtualization) keeps IsEnabled and refreshes again when the route changes (#901).
+        if (command is RoutedCommand && !routeMap.Contains(owner))
+        {
+            owner.Root?.DeferCommandStateRefreshUntilInputRouteChanges(owner);
             return false;
         }
 
