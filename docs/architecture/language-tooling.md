@@ -134,7 +134,10 @@ Documents:
 2. `didChange` (`:429`) applies the incremental change.
 3. `didClose` (`:447`) removes the overlay and publishes an empty diagnostic
    list.
-4. `didSave` (`:457`) reloads the whole workspace.
+4. `didSave` (`:457`) reloads the whole workspace. When the reload finishes,
+   `OnWorkspaceReloaded` republishes diagnostics only for the documents that
+   are still open: a document closed while the reload ran keeps the empty list
+   from `didClose`.
 
 To build a snapshot (`CernealaWorkspace.cs:145-157`), the text of a path is
 taken from the first source that has it:
