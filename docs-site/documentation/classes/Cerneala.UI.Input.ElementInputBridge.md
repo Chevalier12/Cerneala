@@ -47,7 +47,7 @@ ElementInputBridge inputBridge = new(
 
 ## Remarks
 
-`ElementInputBridge` is the top-level dispatcher that turns one `InputFrame` into retained UI input behavior. It refreshes the root input route map, hit-tests the current pointer position, applies pointer capture overrides, then routes pointer, keyboard, command activation, keyboard navigation, keyboard activation, and text input events.
+`ElementInputBridge` is the top-level dispatcher that turns one `InputFrame` into retained UI input behavior. It refreshes the root input route map, hit-tests the current pointer position, applies pointer capture overrides, then routes pointer, keyboard, command activation, keyboard navigation, keyboard activation, and text input events. When the capture override releases a captured element that the route map no longer contains, its `LostMouseCapture` handlers, for example a `Thumb` that raises `DragCompleted`, can change the tree; the bridge then refreshes the route map and hit-tests again, so the pointer events of that frame go to the tree as those handlers left it.
 
 Pointer dispatch updates hover state when the pointer moves, raises preview and bubbling mouse move, wheel, down, and up event pairs, tracks pressed visual state, tracks click counts, starts and completes pointer drags for `IPointerDragSource` ancestors, and executes `IInputCommandSource` commands after unhandled left-button clicks. While pointer capture is active, both routed pointer events and hover state target the captured element. When capture is released during dispatch, hover state is immediately reconciled with the element physically under the cursor.
 

@@ -440,7 +440,17 @@ public sealed class ElementInputBridge
     {
         ElementInputRouteMap routeMap = root.InputCache.EnsureCurrent(root);
         HitTestResult? hitTarget = hitTestService.HitTest(root, routeMap, inputFrame.Pointer.X, inputFrame.Pointer.Y);
+        UIElement? capturedBefore = pointerCaptureManager.CapturedElement;
         HitTestResult? pointerTarget = pointerCaptureManager.OverrideTarget(hitTarget, routeMap, inputFrame.Pointer.X, inputFrame.Pointer.Y);
+        if (capturedBefore is not null && !ReferenceEquals(capturedBefore, pointerCaptureManager.CapturedElement))
+        {
+            // OverrideTarget released a capture that can no longer take input, and the LostMouseCapture handlers it ran,
+            // such as a Thumb's DragCompleted handlers, can change the tree: the targets come from the tree they left.
+            routeMap = root.InputCache.EnsureCurrent(root);
+            hitTarget = hitTestService.HitTest(root, routeMap, inputFrame.Pointer.X, inputFrame.Pointer.Y);
+            pointerTarget = pointerCaptureManager.OverrideTarget(hitTarget, routeMap, inputFrame.Pointer.X, inputFrame.Pointer.Y);
+        }
+
         return (routeMap, hitTarget, pointerTarget);
     }
 

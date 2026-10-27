@@ -199,6 +199,43 @@ public sealed class ThumbTests
             $"row={change}: IsDragging={thumb.IsDragging}, ancestor saw the plain move: {parentMoves > before} (moves before={before}, after={parentMoves}).");
     }
 
+    // The drag of a hidden thumb ends when the dispatch resolves the pointer target, and a DragCompleted handler can change
+    // the tree there: the pointer events of that frame go to the tree as the handler left it, not to an element it removed.
+    [Fact]
+    public void ElementRemovedByTheDragCompletedOfAHiddenThumbGetsNoPointerEvents()
+    {
+        UIRoot root = new(100, 100);
+        UIElement parent = new();
+        Thumb thumb = new();
+        UIElement removed = new();
+        parent.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
+        thumb.Arrange(new ArrangeContext(new LayoutRect(0, 0, 20, 20)));
+        removed.Arrange(new ArrangeContext(new LayoutRect(40, 40, 40, 40)));
+        parent.VisualChildren.Add(thumb);
+        parent.VisualChildren.Add(removed);
+        root.VisualChildren.Add(parent);
+        ElementInputBridge bridge = new();
+        bool isRemoved = false;
+        List<string> eventsAfterRemoval = [];
+        removed.Handlers.AddHandler(InputEvents.MouseEnterEvent, (_, _) => { if (isRemoved) eventsAfterRemoval.Add("MouseEnter"); });
+        removed.Handlers.AddHandler(InputEvents.MouseMoveEvent, (_, _) => { if (isRemoved) eventsAfterRemoval.Add("MouseMove"); });
+        thumb.DragCompleted += (_, _) =>
+        {
+            parent.VisualChildren.Remove(removed);
+            isRemoved = true;
+        };
+
+        bridge.Dispatch(root, PointerFrame(5, 5, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(5, 5, 50, 50, previousDown: true, currentDown: true));
+        thumb.Visibility = Visibility.Hidden;
+        root.ProcessFrame();
+        bridge.Dispatch(root, PointerFrame(50, 50, 55, 55, previousDown: true, currentDown: true));
+
+        Assert.True(
+            isRemoved && eventsAfterRemoval.Count == 0 && !removed.IsMouseOver,
+            $"removed={isRemoved}, events after removal=[{string.Join(",", eventsAfterRemoval)}], IsMouseOver={removed.IsMouseOver}");
+    }
+
     [Fact]
     public void ThumbCaptureMonopolizesPointerInputUntilLeftButtonRelease()
     {
