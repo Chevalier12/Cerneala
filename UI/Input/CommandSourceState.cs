@@ -171,9 +171,11 @@ internal sealed class CommandSourceState
         observableCommand = null;
     }
 
+    // The event is the request, whatever its sender: commands may raise it with null or forward an inner command's
+    // event (#902). Only the bound command's event reaches this handler, because Subscribe removes it from the old one.
     private void OnCanExecuteChanged(object? sender, EventArgs args)
     {
-        if (ReferenceEquals(sender, observableCommand) && callbackGuard?.Invoke() == true)
+        if (callbackGuard?.Invoke() == true)
         {
             owner.QueueCommandStateRefresh();
         }
