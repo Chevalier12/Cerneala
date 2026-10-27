@@ -337,7 +337,7 @@ internal sealed class CernealaLanguageServerProvider : ILanguageClient, IVsSolut
     }
 
     private void OnVisualStudioProcessExit(object? sender, EventArgs args) =>
-        processManager.StopImmediately(CernealaServerShutdownReason.VisualStudioShutdown);
+        processManager.Stop(CernealaServerShutdownReason.VisualStudioShutdown);
 
     [StructLayout(LayoutKind.Sequential)]
     private readonly struct NativeFileTime
