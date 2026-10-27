@@ -145,6 +145,18 @@ public class RangeBase : Control
         return MathF.Min(MathF.Max(value, minimum), maximum);
     }
 
+    // For a value computed in double, such as a value plus a Track drag change, whose sum can exceed float's range
+    // (#986): the clamp happens before the conversion to float, so the result is always a finite value of the range.
+    internal static float Clamp(double value, float minimum, float maximum)
+    {
+        if (maximum < minimum)
+        {
+            maximum = minimum;
+        }
+
+        return (float)Math.Min(Math.Max(value, minimum), maximum);
+    }
+
     private static float CoerceValue(UiObject owner, float value)
     {
         RangeBase range = (RangeBase)owner;

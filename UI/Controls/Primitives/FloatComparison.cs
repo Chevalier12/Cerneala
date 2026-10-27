@@ -37,9 +37,4 @@ internal static class FloatComparison
     {
         return value1 > value2 || AreClose(value1, value2);
     }
-
-    public static bool GreaterThanZero(float value)
-    {
-        return value >= 10 * Epsilon;
-    }
 }
