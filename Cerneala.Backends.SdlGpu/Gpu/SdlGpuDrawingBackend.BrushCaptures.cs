@@ -134,7 +134,7 @@ internal sealed partial class SdlGpuDrawingBackend
         DrawRect viewport = descriptor.Viewport ?? bounds;
         if (descriptor.TileMode == DrawTileMode.None)
         {
-            AddTile(viewport, 0, 0);
+            AddTile(viewport, viewport, 0, 0);
         }
         else
         {
@@ -146,20 +146,22 @@ internal sealed partial class SdlGpuDrawingBackend
                 for (int row = 0; row < rows; row++)
                 {
                     float y = bounds.Y + row * viewport.Height;
-                    AddTile(new DrawRect(x, y,
-                        MathF.Min(viewport.Width, bounds.Right - x),
-                        MathF.Min(viewport.Height, bounds.Bottom - y)), column, row);
+                    // Every copy keeps the full tile size; the painted bounds crop the edge copies.
+                    AddTile(new DrawRect(x, y, viewport.Width, viewport.Height),
+                        new DrawRect(x, y,
+                            MathF.Min(viewport.Width, bounds.Right - x),
+                            MathF.Min(viewport.Height, bounds.Bottom - y)), column, row);
                 }
             }
         }
         output.Add(DrawCommand.PopTransform());
 
-        void AddTile(DrawRect tile, int column, int row)
+        void AddTile(DrawRect tile, DrawRect clip, int column, int row)
         {
             DrawRect fitted = FitBrushTile(tile, source.Width, source.Height, descriptor);
             bool flipX = column % 2 != 0 && descriptor.TileMode is DrawTileMode.FlipX or DrawTileMode.FlipXY;
             bool flipY = row % 2 != 0 && descriptor.TileMode is DrawTileMode.FlipY or DrawTileMode.FlipXY;
-            output.Add(DrawCommand.PushClip(tile));
+            output.Add(DrawCommand.PushClip(clip));
             if (image is not null)
             {
                 DrawImageFlip flip = (flipX ? DrawImageFlip.Horizontal : DrawImageFlip.None) |

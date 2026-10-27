@@ -192,6 +192,13 @@ public sealed partial class UiMarkupGenerator
                 kind = resource.Kind;
                 arguments = resource.Arguments;
             }
+            else if (syntax is MotionParameterSpecSyntax bareName)
+            {
+                // A bare name is a MotionClip spec parameter, which only TryResolveMotionSpec binds. Here no MotionClip
+                // parameters exist, so the name is a spec reference written without '$'.
+                ReportMotion(MotionDiagnosticKind.Type, bareName.Location, "Unknown Motion spec '" + bareName.Name + "'. Reference a Motion resource as '$" + bareName.Name + "'.");
+                return false;
+            }
             else
             {
                 MotionInlineSpecSyntax inline = (MotionInlineSpecSyntax)syntax;
@@ -302,15 +309,18 @@ public sealed partial class UiMarkupGenerator
             expression = string.Empty;
             string unit;
             string number;
+            double ticksPerUnit;
             if (text.EndsWith("ms", StringComparison.Ordinal))
             {
                 unit = "FromMilliseconds";
                 number = text.Substring(0, text.Length - 2);
+                ticksPerUnit = TimeSpan.TicksPerMillisecond;
             }
             else if (text.EndsWith("s", StringComparison.Ordinal))
             {
                 unit = "FromSeconds";
                 number = text.Substring(0, text.Length - 1);
+                ticksPerUnit = TimeSpan.TicksPerSecond;
             }
             else
             {
@@ -318,7 +328,16 @@ public sealed partial class UiMarkupGenerator
             }
 
             if (!double.TryParse(number, NumberStyles.Float, CultureInfo.InvariantCulture, out double value) ||
-                double.IsNaN(value) || double.IsInfinity(value) || (allowZero ? value < 0 : value <= 0))
+                double.IsNaN(value) || double.IsInfinity(value))
+            {
+                return false;
+            }
+
+            // Mirror the runtime's TimeSpan.FromMilliseconds/FromSeconds(double): ticks = value * scale,
+            // truncated, OverflowException above long.MaxValue. The generated expression must never throw
+            // and must keep a positive duration positive after truncation to whole ticks.
+            double ticks = value * ticksPerUnit;
+            if (ticks > long.MaxValue || (allowZero ? ticks < 0 : ticks < 1))
             {
                 return false;
             }

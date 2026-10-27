@@ -861,6 +861,10 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         private readonly Dictionary<MarkupElement, ResourceScope> resourceScopes = new();
         private readonly Dictionary<MarkupElement, ResourceScope> resourcePropertyScopes = new();
         private readonly Dictionary<MarkupElement, AspectResource> inlineAspects = new();
+
+        // Inline Aspect property elements (`<Border.Aspect>`) are removed from the
+        // tree once read; resource lookup from their body continues at the owner.
+        private readonly Dictionary<MarkupElement, MarkupElement> inlineAspectOwners = new();
         private readonly List<AspectResource> allAspects = [];
 
         // Aspects of Application resources, bound by the Application document.

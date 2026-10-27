@@ -61,7 +61,7 @@ Declare the set inside the consuming element's resource property element. This i
 </RenderSurface2D>
 ```
 
-This fragment defines animation, not the image or destination: supply those through the sprite's existing image/destination APIs. `Name` is the resource key on the set and the state name on a clip. Frame `SourceX`/`SourceY`/`SourceWidth`/`SourceHeight` and `Duration` are immutable constructor inputs. No mutable frame collection, FPS setting, or automatic transition from `Attack` to `Idle` is implied.
+This fragment defines animation, not the image or destination: supply those through the sprite's existing image/destination APIs. `Name` is the resource key on the set and the state name on a clip. Frame `SourceX`/`SourceY`/`SourceWidth`/`SourceHeight` and `Duration` are immutable constructor inputs. A frame `Duration` must convert to at least one 100 ns `TimeSpan` tick and fit in `TimeSpan`: `0.0001ms` (one tick) builds, while `0ms`, `0.00001ms` (zero ticks), `1e20ms`, and `1e20s` produce `CERNEALAUI016`. No mutable frame collection, FPS setting, or automatic transition from `Attack` to `Idle` is implied.
 
 For binding, declare the actual application data type on the markup root and use `AnimationState="$DataContext.AnimationState:OneWay"`; the application owns that notifying string property. Static unknown states and invalid definitions produce `CERNEALAUI016`; an unresolved runtime-bound state uses the target's static visual fallback.
 
