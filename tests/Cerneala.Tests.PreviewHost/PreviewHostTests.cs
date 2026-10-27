@@ -523,6 +523,9 @@ public sealed class PreviewHostTests
     [InlineData("Literal: $DataContext.Name", "Literal: \\$DataContext.Name","Literal: \\$DataContext.Title", "Applied", "Literal: $DataContext.Title")]
     [InlineData("User: Ana", "User: $DataContext.Name", "Usr: $DataContext.Name", "RequiresCompilation", "User: Ana")]
     [InlineData("Hello", "Hello", "Hello $DataContext.Name", "RequiresCompilation", "Hello")]
+    [InlineData("Hello", "Hello", "Hello $Box.Text", "RequiresCompilation", "Hello")]
+    [InlineData("Price in EUR", "Price in EUR", "Price in $USD", "Applied", "Price in $USD")]
+    [InlineData("Hello", "Hello", "Hello $self", "Applied", "Hello $self")]
     public void StringAttributeEditUsesTheMarkupLiteralEscapeAndInterpolationRules(
         string liveText,
         string oldAttribute,
