@@ -87,12 +87,43 @@ public sealed class DrawPathTests
     [InlineData("M0 0", "Path offset: 4.")]
     [InlineData("M0 0Z", "Path offset: 5.")]
     [InlineData("M0 0 L1 1 Z M2 2 z", "Path offset: 18.")]
+    [InlineData("M0 0L1 1ZZ", "Path offset: 10.")]
     public void SvgParserReportsContourWithoutDrawableSegmentAsFormatException(string data, string offset)
     {
         FormatException exception = Assert.Throws<FormatException>(() => DrawPathParser.ParseSvg(data));
 
         Assert.Contains("drawable segment", exception.Message);
         Assert.EndsWith(offset, exception.Message);
+    }
+
+    [Theory]
+    [InlineData("L1 1")]
+    [InlineData("Z")]
+    public void SvgParserRequiresAMoveCommandFirst(string data)
+    {
+        FormatException exception = Assert.Throws<FormatException>(() => DrawPathParser.ParseSvg(data));
+
+        Assert.Contains("must begin with a move command", exception.Message);
+    }
+
+    [Theory]
+    [InlineData("M0 0L10 0L10 10Z M0 0L20 20", 0f, 0f)]
+    [InlineData("M0 0L10 0L10 10ZL20 20", 0f, 0f)]
+    [InlineData("M0 0L10 0L10 10zl20 20", 0f, 0f)]
+    [InlineData("M5 5L10 5L10 10zl15 15", 5f, 5f)]
+    [InlineData("M5 5L10 5L10 10ZC5 5 15 15 20 20", 5f, 5f)]
+    public void SvgParserStartsTheNextSubpathAtTheInitialPointAfterAClosepath(string data, float startX, float startY)
+    {
+        DrawPath? path = null;
+        Exception? failure = Record.Exception(() => path = DrawPathParser.ParseSvg(data));
+
+        Assert.Null(failure);
+        Assert.Equal(2, path!.Contours.Count);
+        Assert.True(path.Contours[0].IsClosed);
+        DrawPathContour second = path.Contours[1];
+        Assert.False(second.IsClosed);
+        Assert.Equal(new DrawPoint(startX, startY), second.StartPoint);
+        Assert.Equal(new DrawPoint(20, 20), second.Segments[^1].EndPoint);
     }
 
     [Fact]

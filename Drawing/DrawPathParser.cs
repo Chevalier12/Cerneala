@@ -219,7 +219,9 @@ public static class DrawPathParser
             }
             if (contourClosed)
             {
-                throw InvalidPath("A new move command is required after closing a contour.");
+                // SVG 1.1 section 8.3.3: a command that follows closepath without a moveto starts the next subpath
+                // at the initial point of the closed one.
+                MoveTo(start);
             }
         }
 
