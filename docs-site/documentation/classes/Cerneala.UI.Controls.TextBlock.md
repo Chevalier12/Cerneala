@@ -99,9 +99,9 @@ The first has the text `"one\ntwo"` and draws two lines.
 
 ### Padding
 
-As in WPF, `Padding` is room between the edge of the `TextBlock` and its text. The text is measured in the available size minus the padding, the padding is added to the desired size, and the text is drawn inside the render bounds minus the padding, offset by the left and top sides. Wrapping, trimming, and `TextAlignment` use the inner width. For example, with the default font, `new TextBlock { Text = "Hi" }` measures `15.234375 x 21.28125` and draws `Hi` at `0, 17.265625`; with `Padding = new Thickness(10, 4, 6, 2)` it measures `31.234375 x 27.28125` (16 wider and 6 higher) and draws `Hi` at `10, 21.265625`. `Background` still fills the whole render bounds, padding included.
+As in WPF, `Padding` is room between the edge of the `TextBlock` and its text. The text is measured in the available size minus the padding, the padding is added to the desired size, and the text is drawn inside the render bounds minus the padding, offset by the left and top sides. Wrapping, trimming, and `TextAlignment` use the inner width. For example, with the default font, `new TextBlock { Text = "Hi" }` measures `15.234375 x 21.28125` and draws the line of `Hi` with its top-left corner at `0, 0` and its baseline at `0, 17.265625`; with `Padding = new Thickness(10, 4, 6, 2)` it measures `31.234375 x 27.28125` (16 wider and 6 higher) and draws the line with its top-left corner at `10, 4` and its baseline at `10, 21.265625`. `Background` still fills the whole render bounds, padding included.
 
-A negative side of `BorderThickness` adds its size to the same insets, as in every `Control`. `TextBlock` draws no border, so a positive `BorderThickness` changes neither the layout nor the drawing.
+A negative side of `BorderThickness` adds its size to the same insets, as the `Insets` property on the `Control` page describes. `TextBlock` draws no border, so a positive `BorderThickness` changes neither the layout nor the drawing.
 
 ### Text and Inlines
 
