@@ -903,6 +903,35 @@ public sealed partial class UiMarkupGeneratorTests
         AssertMotionDiagnostic(result, "Click");
     }
 
+    [Theory]
+    [InlineData("@on Loaded { @animate with Tween(100ms) { @to { Opacity = current; } } }")]
+    [InlineData("@on Loaded { @animate with Tween(100ms) { @from { Opacity = current; } @to { Opacity = 1; } } }")]
+    [InlineData("@on Loaded { @animate with Tween(100ms) { @to { Opacity = IsMouseOver ? 1 : 0.5; } } }")]
+    [InlineData("@on Loaded { @set { Opacity = IsMouseOver ? 1 : 0.5; } }")]
+    public void MotionValueAcceptsWholeCurrentAndConditionalWithoutCurrent(string body)
+    {
+        GeneratorRunResult result = RunGenerator("MotionCurrentControl.crn", MotionAspectMarkup(body), out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+    }
+
+    [Theory]
+    [InlineData("@on Loaded { @animate with Tween(100ms) { @to { Opacity = IsMouseOver ? 1 : current; } } }")]
+    [InlineData("@on Loaded { @animate with Tween(100ms) { @to { Opacity = IsMouseOver ? current : 0.5; } } }")]
+    [InlineData("@on Loaded { @animate with Tween(100ms) { @to { Opacity = IsMouseOver ? 1 : IsFocused ? 0.5 : current; } } }")]
+    [InlineData("@on Loaded { @animate with Tween(100ms) { @from { Opacity = IsMouseOver ? 1 : current; } @to { Opacity = 1; } } }")]
+    [InlineData("@on Loaded { @keyframes duration 400ms { @animate 0%..100% with Linear { @from { Opacity = IsMouseOver ? 1 : current; } @to { Opacity = 1; } } } }")]
+    [InlineData("@on Loaded { @keyframes duration 400ms { @animate 0%..100% with Linear { @from { Opacity = 0; } @to { Opacity = IsMouseOver ? 1 : current; } } } }")]
+    [InlineData("@on Loaded { @set { Opacity = IsMouseOver ? 1 : current; } }")]
+    public void MotionValueRejectsCurrentInsideConditional(string body)
+    {
+        GeneratorRunResult result = RunGenerator("MotionConditionalCurrent.crn", MotionAspectMarkup(body), out _);
+
+        Diagnostic diagnostic = Assert.Single(result.Diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error));
+        Assert.Equal("CERNEALAUI020", diagnostic.Id);
+        Assert.Contains("'current' must be the whole Motion value", diagnostic.GetMessage(), StringComparison.Ordinal);
+    }
+
     private static string MotionAspectMarkup(string body)
     {
         return $"""
