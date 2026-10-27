@@ -49,7 +49,7 @@ public sealed class DiagnosticsTests
             }
 
             return new DiagnosticGolden(
-                lsp.Code,
+                lsp.Code!,
                 lsp.Severity,
                 ToLspSeverity(sourceGenerator.Severity),
                 lsp.Message,
@@ -313,7 +313,7 @@ public sealed class DiagnosticsTests
             new BuildDiagnosticItem
             {
                 Uri = uri,
-                Code = duplicate.Code,
+                Code = duplicate.Code!,
                 Range = duplicate.Range,
                 Message = duplicate.Message
             }
