@@ -795,8 +795,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     internal void InvalidatePrismAttachment()
     {
         prismImageLeases?.Clear();
-        hasPendingRenderScopeInvalidation = true;
-        Invalidate(InvalidationFlags.Render, "Prism attachment changed");
+        InvalidateRenderScope("Prism attachment changed");
     }
 
     internal void AttachToRoot(UIRoot root)
@@ -1314,6 +1313,17 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         return isScopeOnly;
     }
 
+    internal void MarkRenderContentInvalidation()
+    {
+        hasPendingRenderContentInvalidation = true;
+    }
+
+    private void InvalidateRenderScope(string reason)
+    {
+        hasPendingRenderScopeInvalidation = true;
+        Invalidate(new InvalidationRequest(this, InvalidationFlags.Render, reason) { IsRenderScopeOnly = true });
+    }
+
     internal void SetLayoutCorrectionTransform(Transform correction)
     {
         ArgumentNullException.ThrowIfNull(correction);
@@ -1324,8 +1334,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
         LayoutCorrectionTransform = correction;
         IncrementRenderScopeVersion();
-        hasPendingRenderScopeInvalidation = true;
-        Invalidate(InvalidationFlags.Render, "Layout motion correction changed");
+        InvalidateRenderScope("Layout motion correction changed");
     }
 
     internal void SetPresenceExiting(bool isExiting, bool excludesInput)
@@ -1398,8 +1407,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         PresenceOpacity = opacity;
         PresenceScale = scale;
         IncrementRenderScopeVersion();
-        hasPendingRenderScopeInvalidation = true;
-        Invalidate(InvalidationFlags.Render, "Presence visual state changed");
+        InvalidateRenderScope("Presence visual state changed");
     }
 
     protected void SetRenderDependencies(RenderDependency dependencies)
@@ -1666,10 +1674,12 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
                 !float.IsPositiveInfinity(MaxWidth) || !float.IsPositiveInfinity(MaxHeight);
         }
 
+        bool isRenderScopeChange = false;
         if ((options & (UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual)) != UiPropertyOptions.None)
         {
             if (IsRenderScopeProperty(args.Property))
             {
+                isRenderScopeChange = true;
                 IncrementRenderScopeVersion();
                 hasPendingRenderScopeInvalidation = true;
             }
@@ -1738,7 +1748,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
         if (flags != InvalidationFlags.None)
         {
-            Invalidate(new InvalidationRequest(this, flags, "Property changed", args.Property));
+            Invalidate(new InvalidationRequest(this, flags, "Property changed", args.Property) { IsRenderScopeOnly = isRenderScopeChange });
             // A participation change affects the parent's layout even when the child
             // is skipped by the scheduler because it has just become collapsed.
             if (requiresParentLayoutScheduling &&
