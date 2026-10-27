@@ -1667,6 +1667,103 @@ public sealed class WindowRuntimeTests : IDisposable
     }
 
     [Theory]
+    [InlineData("none")]
+    [InlineData("hide")]
+    [InlineData("zeroViewport")]
+    public async Task ServoTapKeyThatLosesItsWindowStillEndsWithinItsTimeout(string loss)
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        TextBox editor = new() { Width = 200, Height = 40 };
+        ServoApi.SetId(editor, "editor");
+        Window window = new() { Content = editor };
+        window.Show();
+        ServoApi servo = new(window, new ServoOptions { DefaultTimeout = TimeSpan.FromMilliseconds(500) });
+        Task focus = servo.ClickAsync(ServoTarget.ById("editor"));
+        PumpUntilCompleted(runtime, focus);
+
+        int released = 0;
+        editor.AddHandler(InputEvents.KeyUpEvent, (_, args) =>
+        {
+            if (Assert.IsType<KeyEventArgs>(args).Key == InputKey.A) released++;
+        }, handledEventsToo: true);
+        editor.AddHandler(InputEvents.KeyDownEvent, (_, args) =>
+        {
+            if (Assert.IsType<KeyEventArgs>(args).Key != InputKey.A) return;
+            if (loss == "hide") window.Hide();
+            else if (loss == "zeroViewport") platform.Windows[0].ReportBounds(new UiViewport(0, 0), 0, 0, WindowState.Normal);
+        }, handledEventsToo: true);
+
+        Task press = servo.PressKeyAsync(InputKey.A);
+        Stopwatch elapsed = Stopwatch.StartNew();
+        while (!press.IsCompleted && elapsed.Elapsed < TimeSpan.FromSeconds(3))
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+            Thread.Sleep(1);
+        }
+
+        Exception? error = press.IsFaulted ? press.Exception!.GetBaseException() : null;
+        bool ended = press.IsCompleted &&
+            (loss == "none" ? press.IsCompletedSuccessfully : error is ServoTimeoutException or ServoException);
+        Assert.True(
+            ended,
+            $"loss={loss}: PressKeyAsync status={press.Status}, exception={error?.GetType().Name ?? "none"} after {elapsed.ElapsedMilliseconds} ms (timeout 500 ms).");
+        Assert.Equal(1, released);
+
+        if (loss == "hide") window.Show();
+        else if (loss == "zeroViewport") platform.Windows[0].ReportBounds(new UiViewport(800, 600), 0, 0, WindowState.Normal);
+        Task next = servo.PressKeyAsync(InputKey.B);
+        PumpUntilCompleted(runtime, next);
+        await next;
+        Assert.False(window.LastFrame!.Input.Keyboard.IsDown(InputKey.A));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task ServoClickThatLosesItsWindowFaultsAndReleasesTheButton(bool hide)
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Button button = new() { Content = "Target", Width = 160, Height = 40 };
+        ServoApi.SetId(button, "target");
+        Window window = new() { Content = button };
+        window.Show();
+        ServoApi servo = new(window, new ServoOptions { DefaultTimeout = TimeSpan.FromMilliseconds(500) });
+        int downs = 0;
+        int ups = 0;
+        button.AddHandler(InputEvents.MouseUpEvent, (_, _) => ups++, handledEventsToo: true);
+        button.AddHandler(InputEvents.MouseDownEvent, (_, _) =>
+        {
+            if (++downs != 1) return;
+            if (hide) window.Hide();
+            else platform.Windows[0].ReportBounds(new UiViewport(0, 0), 0, 0, WindowState.Normal);
+        }, handledEventsToo: true);
+
+        Task click = servo.ClickAsync(ServoTarget.ById("target"));
+        Stopwatch elapsed = Stopwatch.StartNew();
+        while (!click.IsCompleted && elapsed.Elapsed < TimeSpan.FromSeconds(3))
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+            Thread.Sleep(1);
+        }
+
+        Assert.True(click.IsCompleted, $"ClickAsync status={click.Status} after {elapsed.ElapsedMilliseconds} ms (timeout 500 ms).");
+        await Assert.ThrowsAnyAsync<ServoException>(() => click);
+        Assert.Equal(1, downs);
+        Assert.Equal(1, ups);
+
+        if (hide) window.Show();
+        else platform.Windows[0].ReportBounds(new UiViewport(800, 600), 0, 0, WindowState.Normal);
+        Task next = servo.ClickAsync(ServoTarget.ById("target"));
+        PumpUntilCompleted(runtime, next);
+        await next;
+        Assert.Equal(2, downs);
+        Assert.Equal(2, ups);
+        Assert.False(window.LastFrame!.Input.Pointer.IsDown(InputMouseButton.Left));
+    }
+
+    [Theory]
     [InlineData(true)]
     [InlineData(false)]
     public async Task ServoWindowHoldCannotRemainOwnedAfterVisibilityOrViewportLoss(bool hide)

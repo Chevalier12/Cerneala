@@ -215,8 +215,8 @@ internal sealed class WindowApplicationRuntime : IDisposable
             SetActiveWindow(null);
         }
 
-        context.AbortHeldServoInput(new ServoException(
-            "The Servo Window was hidden before held input completed."));
+        context.AbortServoInput(new ServoException(
+            "The Servo Window was hidden before its Servo input completed."));
     }
 
     public void Activate(Window window)
@@ -1143,8 +1143,8 @@ internal sealed class WindowApplicationRuntime : IDisposable
             WindowContext context = Context ?? throw new InvalidOperationException("Window callback arrived before host initialization.");
             if (viewport.Width <= 0 || viewport.Height <= 0)
             {
-                context.AbortHeldServoInput(new ServoException(
-                    "The Servo Window lost its renderable viewport before held input completed."));
+                context.AbortServoInput(new ServoException(
+                    "The Servo Window lost its renderable viewport before its Servo input completed."));
             }
             context.OverrideViewport = viewport;
             window.SetPlatformBounds(left, top, state);
@@ -1339,14 +1339,14 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
         public void DeferClose() => deferredLifecycleAction = DeferredLifecycleAction.Close;
 
-        public void AbortHeldServoInput(Exception exception)
+        public void AbortServoInput(Exception exception)
         {
             if (!ServoInputOperations.TryPeek(out ServoInputOperation? operation))
             {
                 return;
             }
 
-            bool needsCleanup = operation.AbortHeld(exception);
+            bool needsCleanup = operation.Abort(exception);
             RemoveCompletedServoOperation(operation);
             if (needsCleanup && !IsRendering) DrainServoCleanupWithoutPresentation();
         }
@@ -1502,9 +1502,20 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
         public bool HasPendingCleanup => cleanupStep is not null;
 
-        public bool AbortHeld(Exception exception)
+        // A hidden Window or one without a renderable viewport builds no frame, so an operation that
+        // already sent input could never send its next step or its reset. A hold is aborted even
+        // before its first input. A tap that sent no input yet owns nothing and keeps waiting for a
+        // rendered frame or its timeout.
+        // Example: PressKeyAsync(A) whose KeyDown handler hides the Window faults with ServoException,
+        // and the release of A is routed before the next Servo action.
+        public bool Abort(Exception exception)
         {
-            if (sequence.HeldStepIndex < 0 || IsDrained) return false;
+            if (IsDrained ||
+                (sequence.HeldStepIndex < 0 && Volatile.Read(ref started) != 1))
+            {
+                return false;
+            }
+
             ArgumentNullException.ThrowIfNull(exception);
             // A caller cancellation or operation timeout already chose the
             // result; visibility loss must still route its pending reset.
