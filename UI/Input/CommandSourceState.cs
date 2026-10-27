@@ -110,6 +110,41 @@ internal sealed class CommandSourceState
         return true;
     }
 
+    // The input bridge resolves a click to the nearest command source on the route of the clicked element and runs
+    // only that source's command. A click that a command source in the owner's content owns, such as a Button or a
+    // ComboBox's PART_DropDownToggle, bubbles its MouseUp to the owner but is not the owner's click (#421, #935). The
+    // decision uses the route map the bridge routed the MouseUp with, so it stays the same when an earlier handler,
+    // such as the inner button's Click, removes or collapses the clicked element or detaches the owner (#501).
+    public bool OwnsClick(MouseButtonEventArgs args)
+    {
+        ElementInputRouteMap? routeMap = args.RouteMap;
+        if (routeMap is null)
+        {
+            if (owner.Root is not UIRoot root)
+            {
+                return true;
+            }
+
+            routeMap = root.InputCache.EnsureCurrent(root);
+        }
+
+        UIElement? source = args.OriginalSource as UIElement;
+        if (source is null)
+        {
+            return true;
+        }
+
+        foreach (UIElement current in routeMap.GetRouteToRoot(source))
+        {
+            if (current is IInputCommandSource)
+            {
+                return ReferenceEquals(current, owner);
+            }
+        }
+
+        return true;
+    }
+
     public void Attach()
     {
         if (isAttached)
