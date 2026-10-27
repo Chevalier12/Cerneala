@@ -291,6 +291,37 @@ public sealed class NavigationTests
         Assert.Equal(2, service.GetDocumentHighlights(fixture.Model, [fixture.Model], declaration).Count);
     }
 
+    [Theory]
+    [InlineData("<Window><Window.Resources><Aspect TargetType=\"Button\">@default { Opacity = 0.5; }</Aspect></Window.Resources><Button /><Button /></Window>", "<Bu", "Button@110,Button@120")]
+    [InlineData("<Window><Window.Resources><Aspect Name=\"@x\" TargetType=\"Button\"></Aspect></Window.Resources><Button Aspect=\"$@x\" /></Window>", "Name=\"@x", "@x@40,@x@109")]
+    public void AspectReferencesKeepTheDefaultAspectApplicationsAndTheDeclaration(string markup, string anchor, string expected)
+    {
+        using NavigationFixture fixture = NavigationFixture.Create(markup);
+        CernealaNavigationService service = new();
+        int offset = markup.LastIndexOf(anchor, StringComparison.Ordinal) + anchor.Length - 1;
+
+        IReadOnlyList<CernealaLocation> references = service.GetReferences(fixture.Model, [fixture.Model], offset, includeDeclaration: true);
+
+        Assert.Equal(expected, string.Join(",", references.Select(location =>
+            markup.Substring(location.Span.Start, location.Span.Length) + "@" + location.Span.Start)));
+        Assert.Equal(references.Count, service.GetDocumentHighlights(fixture.Model, [fixture.Model], offset).Count);
+    }
+
+    [Theory]
+    [InlineData("<Window><Window.Resources><Aspect Name=\"Aspect\" TargetType=\"Button\"></Aspect></Window.Resources><Button Aspect=\"$Aspect\" /></Window>", "Aspect", "<Window><Window.Resources><Aspect Name=\"Secondary\" TargetType=\"Button\"></Aspect></Window.Resources><Button Aspect=\"$Secondary\" /></Window>")]
+    [InlineData("<Window><Window.Resources><Aspect Name=\"@x\" TargetType=\"Button\"></Aspect></Window.Resources><Button Aspect=\"$@x\" /></Window>", "@x", "<Window><Window.Resources><Aspect Name=\"Secondary\" TargetType=\"Button\"></Aspect></Window.Resources><Button Aspect=\"$Secondary\" /></Window>")]
+    public void AspectRenameEditsOnlyTheNameAndItsDollarReference(string markup, string name, string expected)
+    {
+        using NavigationFixture fixture = NavigationFixture.Create(markup);
+        CernealaNavigationService service = new();
+        int declaration = markup.IndexOf("Name=\"" + name + "\"", StringComparison.Ordinal) + "Name=\"".Length + 1;
+
+        CernealaRenameResult rename = service.Rename(fixture.Model, [fixture.Model], declaration, "Secondary");
+
+        Assert.True(rename.Succeeded, rename.Error);
+        Assert.Equal(expected, Apply(markup, rename.Edits));
+    }
+
     [Fact]
     public void RenameRejectsDuplicateScopesWhileNavigationSurvivesAnUnrelatedInvalidNode()
     {

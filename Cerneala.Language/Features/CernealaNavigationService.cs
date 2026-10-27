@@ -224,7 +224,7 @@ internal sealed class CernealaNavigationService
             cancellationToken.ThrowIfCancellationRequested();
             foreach (CernealaSemanticSymbol candidate in candidateModel.Symbols)
             {
-                if (!Matches(candidateModel, candidate, identity))
+                if (!Matches(candidateModel, candidate, identity) || IsAspectSite(candidateModel, candidate))
                 {
                     continue;
                 }
@@ -320,8 +320,7 @@ internal sealed class CernealaNavigationService
     {
         if (identity.Kind == IdentityKind.Local)
         {
-            return !IsAspectSite(symbol) &&
-                TryGetLocalDefinition(model, symbol, out CernealaLocation? definition) &&
+            return TryGetLocalDefinition(model, symbol, out CernealaLocation? definition) &&
                 SameLocation(definition!, identity.Definition!);
         }
 
@@ -365,10 +364,14 @@ internal sealed class CernealaNavigationService
     }
 
     // An Aspect application site (the Aspect attribute, or an element that receives a default Aspect) and an
-    // Aspect body directive (@default, @template) navigate to the Aspect but do not spell its name.
-    private static bool IsAspectSite(CernealaSemanticSymbol symbol) =>
+    // Aspect body directive (@default, @template) navigate to the Aspect, so references keep them when their text
+    // maps, but they are not occurrences of its name: rename skips them even when their text happens to equal it.
+    // Only the Aspect symbol at its own definition is the declaration.
+    private static bool IsAspectSite(CernealaSemanticModel model, CernealaSemanticSymbol symbol) =>
         symbol.Kind == CernealaSemanticSymbolKind.AspectApplication ||
-        symbol.Kind == CernealaSemanticSymbolKind.Aspect && symbol.Name.StartsWith("@", StringComparison.Ordinal);
+        symbol.Kind == CernealaSemanticSymbolKind.Aspect &&
+            TryGetLocalDefinition(model, symbol, out CernealaLocation? definition) &&
+            !SameLocation(definition!, new CernealaLocation(model.Document.Path, symbol.Span));
 
     private static bool IsLocalKind(CernealaSemanticSymbolKind kind) => kind is
         CernealaSemanticSymbolKind.Name or CernealaSemanticSymbolKind.TemplatePart or
