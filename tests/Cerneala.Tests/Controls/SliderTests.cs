@@ -399,6 +399,39 @@ public sealed class SliderTests
         Assert.Equal(7, slider.Value);
     }
 
+    // Minimum and Maximum count as ticks also when Ticks does not list them (#928): with Ticks [3, 7] on 0..10, Right
+    // goes from 3 to 7 and from 7 to Maximum, 10, and Left goes from 7 to 3 and from 3 to Minimum, 0. PageUp and
+    // PageDown, with the default LargeChange of 1, do the same.
+    [Theory]
+    [InlineData(InputKey.Right, 3f, 7f)]
+    [InlineData(InputKey.Right, 7f, 10f)]
+    [InlineData(InputKey.Left, 7f, 3f)]
+    [InlineData(InputKey.Left, 3f, 0f)]
+    [InlineData(InputKey.PageUp, 7f, 10f)]
+    [InlineData(InputKey.PageDown, 3f, 0f)]
+    public void ArrowKeyWithExplicitTicksReachesMinimumAndMaximumAsTicks(InputKey key, float start, float expected)
+    {
+        Button other = new() { Content = "other", Width = 100, Height = 30 };
+        Slider slider = new()
+        {
+            Minimum = 0,
+            Maximum = 10,
+            SmallChange = 1,
+            Ticks = [3, 7],
+            IsSnapToTickEnabled = true,
+            Value = start,
+            Width = 200,
+            Height = 20
+        };
+        (UIRoot root, ElementInputBridge bridge) = CreateWindowRoot(other, slider);
+        Click(root, bridge, other);
+        PressKey(root, bridge, InputKey.Tab);
+
+        PressKey(root, bridge, key);
+
+        Assert.Equal(expected, slider.Value);
+    }
+
     // As WPF's Slider.SnapToTick during a thumb drag: the pointer's value snaps to the nearest tick. The drag moves in
     // steps of 0.5, each too small to reach a tick alone, so a thumb that snapping keeps in place still follows the
     // pointer: dragging to the point for 4.7 gives 4, and to the point for 5.2 gives 6.

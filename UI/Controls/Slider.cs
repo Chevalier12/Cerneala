@@ -596,7 +596,8 @@ public class Slider : RangeBase
         }
     }
 
-    // WPF's Slider.MoveToNextTick, which returns the value to set instead of setting it: null when the value stays.
+    // WPF's Slider.MoveToNextTick, which returns the value to set instead of setting it: null when the value stays. Unlike
+    // WPF, Minimum and Maximum are also the next ticks of explicit Ticks, so the keys can reach them.
     private float? NextTickValue(float direction)
     {
         if (direction == 0)
@@ -620,6 +621,13 @@ public class Slider : RangeBase
                     {
                         next = tick;
                     }
+                }
+
+                // Minimum and Maximum count as ticks, as SnapToTick and the TickBar treat them, also when Ticks does not
+                // list them: past the last listed tick, the next tick is Maximum, and before the first one Minimum (#928).
+                if (next == value)
+                {
+                    next = greaterThan ? Maximum : Minimum;
                 }
             }
             else if (TickFrequency > 0)
