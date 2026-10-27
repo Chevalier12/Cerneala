@@ -142,8 +142,10 @@ internal sealed partial class CernealaSemanticModel
             return false;
         }
 
+        // As in the build, '$DataContext' is the only binding path without a member; a bare '$root', '$self' or
+        // '$owner' is a resource name, which a resource can never declare.
         string name = value.Substring(1);
-        if (name is "DataContext" or "root" or "self" or "owner")
+        if (name == "DataContext")
         {
             return false;
         }
@@ -164,10 +166,8 @@ internal sealed partial class CernealaSemanticModel
             referenceSpan,
             resourceType,
             definitionLocation: resource.Location));
-        bool resourceIdReference = IsResourceReferenceCompatible(resourceType, target);
-        resultType = resourceIdReference ? target.ValueType : resourceType;
-        if (resource.Kind == ResourceKind.Aspect ||
-            (!resourceIdReference && !IsTypeCompatible(resourceType, target)))
+        resultType = resourceType;
+        if (!IsResourceReferenceCompatible(resource, target))
         {
             AddDiagnostic("CERNEALAUI004", contentSpan, element.Name, target.Name, value);
         }
@@ -666,6 +666,11 @@ internal sealed partial class CernealaSemanticModel
                 }
                 else
                 {
+                    if (!IsResourceReferenceCompatible(referenced, member))
+                    {
+                        AddDiagnostic("CERNEALAUI004", valueSpan, aspect.TargetType.Name, propertyName, rawValue);
+                    }
+
                     symbols.Add(new CernealaSemanticSymbol(
                         CernealaSemanticSymbolKind.ResourceReference,
                         resourceName,
@@ -967,7 +972,11 @@ internal sealed partial class CernealaSemanticModel
             source.IsOrImplements(targetName);
     }
 
-    private static bool IsResourceReferenceCompatible(ILanguageTypeSymbol? resourceType, ILanguageMemberSymbol target)
+    // The resource conversions of the build (UiMarkupGenerator.ResolveReferenceValue, for the target kind of
+    // GetMarkupValueKind): a brush into a Brush, a brush declaring Color into a Color, an image into an ImageReference
+    // or a ResourceId<ImageResource>, and a SpriteAnimationSet into a SpriteAnimationSet. Every other reference,
+    // including any reference to an object target, is invalid (CERNEALAUI004).
+    private static bool IsResourceReferenceCompatible(ResourceDefinition resource, ILanguageMemberSymbol target)
     {
         ILanguageTypeSymbol? targetType = target.ValueType;
         if (targetType?.Name == "Nullable" &&
@@ -977,24 +986,19 @@ internal sealed partial class CernealaSemanticModel
             targetType = targetType.TypeArguments[0];
         }
 
-        if (targetType?.Name == "ImageReference" && targetType.Namespace == "Cerneala.UI.Resources")
+        return (targetType?.Namespace, targetType?.Name) switch
         {
-            return resourceType?.MetadataName.TrimEnd('?') == "Cerneala.UI.Resources.ImageResource";
-        }
-
-        if (resourceType is null || targetType is null ||
-            targetType.Name != "ResourceId" ||
-            targetType.Namespace != "Cerneala.UI.Resources" ||
-            targetType.TypeArguments.Count != 1)
-        {
-            return false;
-        }
-
-        string resourceName = resourceType.MetadataName.TrimEnd('?');
-        ILanguageTypeSymbol expectedResourceType = targetType.TypeArguments[0];
-        string expectedName = expectedResourceType.MetadataName.TrimEnd('?');
-        return string.Equals(resourceName, expectedName, StringComparison.Ordinal) ||
-            resourceType.IsOrImplements(expectedName);
+            ("Cerneala.UI.Media", "Brush") => resource.Kind == ResourceKind.Brush,
+            ("Cerneala.Drawing", "Color") =>
+                resource.Kind == ResourceKind.Brush && FindAttribute(resource.Element, "Color") is not null,
+            ("Cerneala.UI.Resources", "ImageReference") => resource.Kind == ResourceKind.ImageResource,
+            ("Cerneala.UI.Resources", "ResourceId") =>
+                resource.Kind == ResourceKind.ImageResource &&
+                targetType!.TypeArguments.Count == 1 &&
+                targetType.TypeArguments[0].MetadataName == "Cerneala.UI.Resources.ImageResource",
+            ("Cerneala.UI.Controls", "SpriteAnimationSet") => resource.Kind == ResourceKind.SpriteAnimationSet,
+            _ => false
+        };
     }
 
     private sealed class BindingResolution
