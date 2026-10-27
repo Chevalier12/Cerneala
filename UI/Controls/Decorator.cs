@@ -43,8 +43,12 @@ public class Decorator : Control
                 {
                     child = null;
                     DiscardRejectedChild(value);
-                    child = oldChild;
-                    AddChild(oldChild, change);
+                    // The discard raises the rejected child's Unloaded; a Child change made there wins over the restore.
+                    if (change == childChange)
+                    {
+                        child = oldChild;
+                        AddChild(oldChild, change);
+                    }
                 }
 
                 throw;

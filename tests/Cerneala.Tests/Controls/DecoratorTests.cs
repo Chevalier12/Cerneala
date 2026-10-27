@@ -317,6 +317,57 @@ public sealed class DecoratorTests
             $"{Name(leftOut)}.VisualParent={(leftOut.VisualParent is null ? "null" : "set")}.");
     }
 
+    // Issue #982: the rollback of a rejected child raises that child's Unloaded; a Child change made there wins too, so
+    // the rollback does not put the old child back over it.
+    [Fact]
+    public void RollbackOfARejectedChildKeepsTheChildThatItsUnloadedHandlerSets()
+    {
+        UIRoot root = new(200, 200);
+        Border border = new();
+        root.VisualChildren.Add(border);
+        UIElement oldChild = new();
+        UIElement other = new();
+        UIElement value = new();
+        border.Child = oldChild;
+        root.ProcessFrame();
+        bool thrown = false;
+        bool done = false;
+        value.Loaded += (_, _) =>
+        {
+            if (!thrown)
+            {
+                thrown = true;
+                throw new InvalidOperationException("loaded failed");
+            }
+        };
+        value.Unloaded += (_, _) =>
+        {
+            if (!done)
+            {
+                done = true;
+                border.Child = other;
+            }
+        };
+
+        Exception? failure = Record.Exception(() => border.Child = value);
+        root.ProcessFrame();
+
+        string Name(UIElement? element) =>
+            element is null ? "null" : ReferenceEquals(element, oldChild) ? "old" : ReferenceEquals(element, other) ? "other" : "value";
+        bool ok = failure?.Message == "loaded failed" &&
+            done &&
+            ReferenceEquals(border.Child, other) &&
+            border.VisualChildren.Count == 1 && ReferenceEquals(border.VisualChildren[0], other) &&
+            border.LogicalChildren.Count == 1 && ReferenceEquals(border.LogicalChildren[0], other) &&
+            oldChild.VisualParent is null && oldChild.LogicalParent is null &&
+            value.VisualParent is null && value.LogicalParent is null;
+        Assert.True(
+            ok,
+            $"threw {failure?.Message ?? "nothing"}; Unloaded handler ran={done}; Child={Name(border.Child)}; " +
+            $"VisualChildren=[{string.Join(",", border.VisualChildren.Select(Name))}]; " +
+            $"LogicalChildren=[{string.Join(",", border.LogicalChildren.OfType<UIElement>().Select(Name))}].");
+    }
+
     public enum ChildChangeDuringReplacement
     {
         None,
