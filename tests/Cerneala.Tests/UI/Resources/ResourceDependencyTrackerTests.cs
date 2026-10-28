@@ -1,5 +1,7 @@
+using Cerneala.Drawing;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
+using Cerneala.UI.Media;
 using Cerneala.UI.Resources;
 
 namespace Cerneala.Tests.UI.Resources;
@@ -155,6 +157,79 @@ public sealed class ResourceDependencyTrackerTests
         Assert.False(change.AffectsIntrinsicSize);
         Assert.Equal(1, tracker.GetDependencyVersion(owner));
         Assert.Equal(7, tracker.GetResourceVersion(id));
+    }
+
+    [Fact]
+    public void DictionaryChangeReachesEveryTypeTheKeyWasReadAs()
+    {
+        ResourceDictionary dictionary = new();
+        ResourceDependencyTracker tracker = new();
+        tracker.Track(dictionary);
+        UIRoot root = new();
+        UIElement brushReader = new();
+        UIElement objectReader = new();
+        UIElement otherKeyReader = new();
+        root.VisualChildren.Add(brushReader);
+        root.VisualChildren.Add(objectReader);
+        root.VisualChildren.Add(otherKeyReader);
+        ResourceId<Brush> brush = new("Accent");
+        ResourceId<object> anything = new("Accent");
+        ResourceId<Brush> otherKey = new("Other");
+        tracker.RecordDependency(brushReader, brush);
+        tracker.RecordDependency(objectReader, anything);
+        tracker.RecordDependency(otherKeyReader, otherKey);
+
+        dictionary["Accent"] = new SolidColorBrush(new Color(1, 2, 3));
+
+        Assert.True(tracker.GetDependencyVersion(brushReader) > 0);
+        Assert.True(tracker.GetDependencyVersion(objectReader) > 0);
+        Assert.Equal(0, tracker.GetDependencyVersion(otherKeyReader));
+        Assert.Equal(1, tracker.GetResourceVersion(brush));
+        Assert.Equal(1, tracker.GetResourceVersion(anything));
+        Assert.Equal(0, tracker.GetResourceVersion(otherKey));
+
+        dictionary.Remove("Accent");
+
+        Assert.Equal(2, tracker.GetResourceVersion(brush));
+        Assert.Equal(2, tracker.GetResourceVersion(anything));
+    }
+
+    [Fact]
+    public void DictionaryChangeUpdatesTheVersionOfATypeWhoseReadersWereRemoved()
+    {
+        ResourceDictionary dictionary = new();
+        ResourceDependencyTracker tracker = new();
+        tracker.Track(dictionary);
+        UIRoot root = new();
+        UIElement owner = new();
+        root.VisualChildren.Add(owner);
+        ResourceId<Brush> brush = new("Accent");
+        tracker.RecordDependency(owner, brush);
+        tracker.RemoveOwner(owner);
+
+        dictionary["Accent"] = new SolidColorBrush(new Color(1, 2, 3));
+
+        // A later reader builds its cache key from this version, so it must follow the change.
+        Assert.Equal(1, tracker.GetResourceVersion(brush));
+    }
+
+    [Fact]
+    public void TypedStoreChangeDoesNotReachReadersOfAnotherTypeUnderTheSameKey()
+    {
+        ResourceStore store = new();
+        ResourceDependencyTracker tracker = new();
+        tracker.Track(store);
+        UIRoot root = new();
+        UIElement brushReader = new();
+        root.VisualChildren.Add(brushReader);
+        ResourceId<Brush> brush = new("Accent");
+        tracker.RecordDependency(brushReader, brush);
+
+        // ResourceStore keeps one entry per type and key, so the Brush entry is unchanged.
+        store.SetResource(new ResourceId<SolidColorBrush>("Accent"), new SolidColorBrush(new Color(1, 2, 3)));
+
+        Assert.Equal(0, tracker.GetDependencyVersion(brushReader));
+        Assert.Equal(0, tracker.GetResourceVersion(brush));
     }
 
     [Fact]

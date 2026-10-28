@@ -21,7 +21,22 @@ public sealed class ResourceChangedEventArgs : EventArgs
         Version = version;
     }
 
+    internal ResourceChangedEventArgs(
+        Type resourceType,
+        string key,
+        object? oldValue,
+        object? newValue,
+        long version,
+        bool appliesToEveryResourceType)
+        : this(resourceType, key, oldValue, newValue, version)
+    {
+        AppliesToEveryResourceType = appliesToEveryResourceType;
+    }
+
     public Type ResourceType { get; }
+
+    // True when the provider keeps one entry per key, so the change reaches every type the key is read as.
+    internal bool AppliesToEveryResourceType { get; }
 
     public string Key { get; }
 

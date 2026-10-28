@@ -8,6 +8,9 @@ public sealed class ResourceDependencyTracker
     private readonly Dictionary<ResourceKey, Dictionary<UIElement, ResourceDependency>> dependenciesByResource = new();
     private readonly Dictionary<UIElement, long> ownerVersions = new(ReferenceEqualityComparer.Instance);
     private readonly Dictionary<ResourceKey, long> resourceVersions = new();
+
+    // Every type a key was read as or changed as, so a change that applies to every type reaches them all.
+    private readonly Dictionary<string, HashSet<Type>> resourceTypesByKey = new(StringComparer.Ordinal);
     private readonly HashSet<IObservableResourceProvider> trackedProviders = new(ReferenceEqualityComparer.Instance);
     private long nextOwnerVersion;
 
@@ -43,6 +46,7 @@ public sealed class ResourceDependencyTracker
 
         dependencies[owner] = new ResourceDependency(owner, key, effects, affectsIntrinsicSize);
         ownerVersions.TryAdd(owner, 0);
+        GetResourceTypes(key.Key).Add(key.Type);
     }
 
     public long GetDependencyVersion(UIElement owner)
@@ -84,8 +88,34 @@ public sealed class ResourceDependencyTracker
     public IReadOnlyList<ResourceDependencyChange> NotifyResourceChanged(ResourceChangedEventArgs args)
     {
         ArgumentNullException.ThrowIfNull(args);
-        ResourceKey key = new(args.ResourceType, args.Key);
-        resourceVersions[key] = args.Version;
+        HashSet<Type> types = GetResourceTypes(args.Key);
+        types.Add(args.ResourceType);
+        if (!args.AppliesToEveryResourceType || types.Count == 1)
+        {
+            return NotifyResourceChanged(new ResourceKey(args.ResourceType, args.Key), args.Version);
+        }
+
+        // One change record per owner, also when the owner read the key as several types.
+        Dictionary<UIElement, ResourceDependencyChange> changesByOwner = new(ReferenceEqualityComparer.Instance);
+        foreach (Type type in types)
+        {
+            foreach (ResourceDependencyChange change in NotifyResourceChanged(new ResourceKey(type, args.Key), args.Version))
+            {
+                changesByOwner[change.Owner] = changesByOwner.TryGetValue(change.Owner, out ResourceDependencyChange? earlier)
+                    ? new ResourceDependencyChange(
+                        change.Owner,
+                        earlier.Effects | change.Effects,
+                        earlier.AffectsIntrinsicSize || change.AffectsIntrinsicSize)
+                    : change;
+            }
+        }
+
+        return changesByOwner.Count == 0 ? Array.Empty<ResourceDependencyChange>() : changesByOwner.Values.ToArray();
+    }
+
+    private ResourceDependencyChange[] NotifyResourceChanged(ResourceKey key, long version)
+    {
+        resourceVersions[key] = version;
         if (!dependenciesByResource.TryGetValue(key, out Dictionary<UIElement, ResourceDependency>? dependencies))
         {
             return Array.Empty<ResourceDependencyChange>();
@@ -109,6 +139,17 @@ public sealed class ResourceDependencyTracker
         }
 
         return changes;
+    }
+
+    private HashSet<Type> GetResourceTypes(string key)
+    {
+        if (!resourceTypesByKey.TryGetValue(key, out HashSet<Type>? types))
+        {
+            types = new HashSet<Type>();
+            resourceTypesByKey.Add(key, types);
+        }
+
+        return types;
     }
 
     private void OnResourceChanged(object? sender, ResourceChangedEventArgs args)

@@ -117,7 +117,7 @@ Example: `Application.Resources` holds `"Accent"`, and a `Border` in two windows
 2. Each root's `ResourceChangedSubscription` receives the event. It advances the root's image-resolution epoch. On the UI thread it calls `UIRoot.ApplyResourceChange` at once. On another thread it posts one Relay callback per event, so the events run in order (FIFO).
 3. `ApplyResourceChange`:
    - invalidates `Aspect | Subtree` on the root when the old or new value is an `AspectPackage`;
-   - asks `ResourceDependencyTracker.NotifyResourceChanged` for the elements that read this key. It drops detached elements first. For each remaining element it bumps the layout version (when the effects include Measure or Arrange) and the render version (when they include Render). Then it invalidates the element with `InvalidationFlags.Resource` and the recorded effects.
+   - asks `ResourceDependencyTracker.NotifyResourceChanged` for the elements that read this key. For a `ResourceDictionary` change these are the elements that read the key as any type (`Brush`, `SolidColorBrush`, `object` ...), because the dictionary keeps one entry per key; for any other provider only the elements that read it as `ResourceChangedEventArgs.ResourceType`. It drops detached elements first. For each remaining element it bumps the layout version (when the effects include Measure or Arrange) and the render version (when they include Render). Then it invalidates the element with `InvalidationFlags.Resource` and the recorded effects.
 4. `DirtyPropagation` turns `Resource` into the recorded effects, or `Render` when none were given. The element goes into the matching queue.
 5. Separately, each `MarkupResourceController` listening to the same provider checks the key. On the UI thread it re-reads and writes the property at once. On another thread it posts one Relay callback.
 
@@ -152,6 +152,7 @@ So both `Border` elements get the new brush. An element in the same window that 
 - A wrong-typed entry hides the ancestors' entries. `ElementResourceDictionaryTests.cs:ExistingWrongTypedResourceShadowsAncestors`.
 - Changing an element's dictionary marks it dirty with `Render` and `Subtree`. `ElementResourceDictionaryTests.cs:MutatingElementResourcesInvalidatesItsSubtree`.
 - A change to an application resource updates the consumers in two roots, leaves an unrelated element clean, and the frame after the render work is idle. `tests/Cerneala.Tests/UI/Resources/ApplicationResourceIntegrationTests.cs:GlobalResourceUpdatesAllRealConsumersAndReturnsToIdle`.
+- A change to an application resource through the indexer, `Add`, `Remove` or `Clear` invalidates an element that read the key as a base type (`Brush` for a `SolidColorBrush`), and `SetResource<Brush>` invalidates one that read it as `SolidColorBrush`. `ApplicationResourceIntegrationTests.cs:ElementThatReadAKeyAsABaseTypeIsInvalidatedByTheChange`, `ElementThatReadAKeyIsInvalidatedWhenTheKeyIsRemovedOrCleared`; a `ResourceStore` change reaches only its own type: `ResourceDependencyTrackerTests.cs:TypedStoreChangeDoesNotReachReadersOfAnotherTypeUnderTheSameKey`.
 - A local element entry shadows the application value, and the shadowed element is not recorded as a dependent. A root created later sees the latest application value. `ApplicationResourceIntegrationTests.cs:LocalResourceShadowsApplicationAndLaterRootsSeeLatestValue`.
 - A worker-thread change to a bound resource is applied on the next frame (two Relay callbacks: the root and the attachment). `ApplicationResourceIntegrationTests.cs:ActiveResourceAttachmentAppliesWorkerNotificationOnTheNextFrame`.
 - A disposed markup resource attachment ignores queued and later changes and keeps its last value. `ApplicationResourceIntegrationTests.cs:DisposedResourceAttachmentIgnoresPendingAndFutureProviderChanges`.
@@ -170,7 +171,7 @@ Theming and resources have no Detective counters of their own. Their invalidatio
 - `ThemeTokenBridge` projects only the five color keys. A custom key reaches Aspect only if code or an Aspect package reads it.
 - `ThemeProvider` has no thread check. The provider's `Theme` changes on the calling thread at once, while the roots react on their own UI thread.
 - `ResourceDictionary` and `ResourceStore` use a plain `Dictionary` with no lock. Only the notifications are moved to the UI thread; the stored value is written on the calling thread. Concurrent reads and writes: netestat.
-- `ResourceDictionary.Version` counts changes for the whole dictionary, not per key. `ResourceDependencyTracker.GetResourceVersion` stores that number for the changed key.
+- `ResourceDictionary.Version` counts changes for the whole dictionary, not per key. `ResourceDependencyTracker.GetResourceVersion` stores that number for the changed key, under every type the key was read or changed as.
 - The root provider is asked only by `TryFindResource<T>` and only for `string` keys.
 - Only root-provider reads are tracked as dependencies. A change in an element's dictionary invalidates that element's whole subtree.
 - `ResourceDependencyTracker.Track` has no production caller (text search). Roots feed the tracker through `ApplyResourceChange` instead.
