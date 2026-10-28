@@ -17,10 +17,13 @@ public sealed class CommandBinding
 
     public ICommand Command { get; }
 
+    // As WPF's CommandBinding.Executed and CanExecute, the callbacks answer only the bubbling events. CommandRouter also
+    // routes the preview events through the bindings, and a callback that answered both ran twice for one execution or
+    // one query (#1034).
     public void OnExecuted(object sender, ExecutedRoutedEventArgs args)
     {
         ArgumentNullException.ThrowIfNull(args);
-        if (!ReferenceEquals(Command, args.Command))
+        if (!ReferenceEquals(Command, args.Command) || !ReferenceEquals(args.RoutedEvent, CommandEvents.ExecutedEvent))
         {
             return;
         }
@@ -31,7 +34,7 @@ public sealed class CommandBinding
     public void OnCanExecute(object sender, CanExecuteRoutedEventArgs args)
     {
         ArgumentNullException.ThrowIfNull(args);
-        if (!ReferenceEquals(Command, args.Command))
+        if (!ReferenceEquals(Command, args.Command) || !ReferenceEquals(args.RoutedEvent, CommandEvents.CanExecuteEvent))
         {
             return;
         }
