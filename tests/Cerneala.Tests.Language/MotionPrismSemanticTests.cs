@@ -181,6 +181,31 @@ public sealed class MotionPrismSemanticTests
         Assert.Equal(sourceGenerator, semantic);
     }
 
+    // Issue #1165: the editor reports the @if shape errors of the build, with the same message and span.
+    [Theory]
+    [InlineData("<Border Aspect=\"$Motion\"><Border.Resources><Aspect Name=\"Motion\" TargetType=\"Border\">@when IsMouseOver { @if IsMouseOver { Opacity = 1; } }</Aspect></Border.Resources></Border>")]
+    [InlineData("<TextBlock Text=\"Idle\">@when IsMouseOver { @if IsMouseOver { Text = \"Active\"; } }</TextBlock>")]
+    [InlineData("<TextBlock FontSize=\"12\">@when FontSize { @if 13 > value { Text = \"lt\"; } }</TextBlock>")]
+    public void IfConditionShapeErrorsMatchTheSourceGenerator(string markup)
+    {
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("IfParity.crn", markup);
+
+        HarnessDiagnostic sourceGenerator = Assert.Single(result.SourceGeneratorDiagnostics, diagnostic => diagnostic.Id == "CERNEALAUI007");
+        HarnessDiagnostic semantic = Assert.Single(result.SemanticDiagnostics, diagnostic => diagnostic.Id == "CERNEALAUI007");
+        Assert.Equal(sourceGenerator, semantic);
+    }
+
+    [Theory]
+    [InlineData("<Border Aspect=\"$Motion\"><Border.Resources><Aspect Name=\"Motion\" TargetType=\"Border\">@when IsMouseOver { @if IsMouseOver == true { Opacity = 1; } }</Aspect></Border.Resources></Border>")]
+    [InlineData("<TextBlock FontSize=\"12\">@when FontSize { @if value > 11 { Text = \"gt\"; } }</TextBlock>")]
+    public void ValidIfConditionsReportNothingInEditorAndBuild(string markup)
+    {
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("IfParity.crn", markup);
+
+        Assert.Empty(result.SourceGeneratorDiagnostics.Where(diagnostic => diagnostic.Severity == nameof(DiagnosticSeverity.Error)));
+        Assert.Empty(result.SemanticDiagnostics.Where(diagnostic => diagnostic.Severity == nameof(DiagnosticSeverity.Error)));
+    }
+
     [Theory]
     [InlineData("@on Loaded { @animate { @to { Opacity = 1; } } }")]
     [InlineData("@cancel Active;")]
