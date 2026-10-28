@@ -67,18 +67,21 @@ internal static class UnicodeLineBreakEngine
         return lines;
     }
 
+    // measureEllipsis gives the width of the ellipsis after kept text that ends at the given source index. The ellipsis has
+    // the style of the last kept character, or of the line start when nothing is kept, so with styled spans its width
+    // depends on where the kept text ends.
     public static UnicodeLineSegment CollapseLine(
         string source,
         UnicodeLineSegment line,
         float availableWidth,
         UnicodeLineTrimMode mode,
         Func<int, int, float> measure,
-        Func<string, float> measureLiteral,
+        Func<int, float> measureEllipsis,
         bool forceEllipsis)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(measure);
-        ArgumentNullException.ThrowIfNull(measureLiteral);
+        ArgumentNullException.ThrowIfNull(measureEllipsis);
 
         if (!forceEllipsis && line.Width <= availableWidth)
         {
@@ -90,8 +93,8 @@ internal static class UnicodeLineBreakEngine
             return new UnicodeLineSegment(line.SourceStart, 0, string.Empty, 0, true);
         }
 
-        float ellipsisWidth = measureLiteral(Ellipsis);
-        if (ellipsisWidth > availableWidth)
+        float lineStartEllipsisWidth = measureEllipsis(line.SourceStart);
+        if (lineStartEllipsisWidth > availableWidth)
         {
             return new UnicodeLineSegment(line.SourceStart, 0, string.Empty, 0, true);
         }
@@ -102,40 +105,42 @@ internal static class UnicodeLineBreakEngine
             line.SourceStart + line.SourceLength);
         if (sourceEnd == line.SourceStart)
         {
-            return new UnicodeLineSegment(line.SourceStart, 0, Ellipsis, ellipsisWidth, true);
+            return new UnicodeLineSegment(line.SourceStart, 0, Ellipsis, lineStartEllipsisWidth, true);
         }
 
         UnicodeTextElement[] elements = CreateTextElements(
             source,
             line.SourceStart,
             sourceEnd - line.SourceStart);
+        bool Fits(int end) =>
+            measure(line.SourceStart, end - line.SourceStart) + measureEllipsis(end) <= availableWidth;
         int fittingCount = FindFittingPrefixCount(
             elements,
+            line.SourceStart,
             availableWidth,
             measure,
-            measureLiteral);
+            measureEllipsis);
         if (fittingCount == 0)
         {
-            return new UnicodeLineSegment(line.SourceStart, 0, Ellipsis, ellipsisWidth, true);
+            return new UnicodeLineSegment(line.SourceStart, 0, Ellipsis, lineStartEllipsisWidth, true);
         }
 
         int prefixEnd = elements[fittingCount - 1].End;
         if (mode == UnicodeLineTrimMode.WordEllipsis)
         {
-            int wordBoundary = FindLastWordBoundary(source, elements, fittingCount, line.SourceStart);
+            int wordBoundary = FindLastWordBoundary(source, elements, fittingCount, line.SourceStart, Fits);
             if (wordBoundary > line.SourceStart)
             {
                 prefixEnd = wordBoundary;
             }
         }
 
-        prefixEnd = TrimTrailingBreakWhitespace(source, line.SourceStart, prefixEnd);
         string collapsed = source[line.SourceStart..prefixEnd] + Ellipsis;
         return new UnicodeLineSegment(
             line.SourceStart,
             prefixEnd - line.SourceStart,
             collapsed,
-            measure(line.SourceStart, prefixEnd - line.SourceStart) + ellipsisWidth,
+            measure(line.SourceStart, prefixEnd - line.SourceStart) + measureEllipsis(prefixEnd),
             true);
     }
 
@@ -182,8 +187,26 @@ internal static class UnicodeLineBreakEngine
         IsBreakWhitespace(textElement) ||
         textElement is "-" or "/" or "\\" or "," or ";" or ":";
 
+    // Break white space is the white space after which a line can break, and which a line drops at its end and skips at its
+    // start: every char.IsWhiteSpace character except the no-break spaces U+00A0, U+2007 and U+202F. Those are glue
+    // (UAX #14 class GL): no break before or after them, and they stay in the line as text.
     public static bool IsBreakWhitespace(string textElement) =>
-        textElement.Length > 0 && textElement.All(char.IsWhiteSpace);
+        textElement.Length > 0 && textElement.All(IsBreakWhitespace);
+
+    private static bool IsBreakWhitespace(char value) =>
+        char.IsWhiteSpace(value) && !IsGlue(value);
+
+    private static bool IsGlue(char value) =>
+        value is ' ' or ' ' or ' ';
+
+    // A break after the element, unless glue follows an element that is not break white space or a hyphen (UAX #14 rule
+    // LB12a: no break before glue, except after spaces and hyphens).
+    private static bool IsBreakOpportunityAfter(UnicodeTextElement[] elements, int index) =>
+        IsBreakOpportunityAfter(elements[index].Text) &&
+        (index + 1 >= elements.Length ||
+            !IsGlue(elements[index + 1].Text[0]) ||
+            IsBreakWhitespace(elements[index].Text) ||
+            elements[index].Text == "-");
 
     private static void WrapParagraph(
         string text,
@@ -227,7 +250,7 @@ internal static class UnicodeLineBreakEngine
             {
                 for (int index = lastFittingIndex; index >= currentIndex; index--)
                 {
-                    if (!IsBreakOpportunityAfter(elements[index].Text))
+                    if (!IsBreakOpportunityAfter(elements, index))
                     {
                         continue;
                     }
@@ -299,7 +322,7 @@ internal static class UnicodeLineBreakEngine
     {
         for (int index = startIndex; index < elements.Length; index++)
         {
-            if (!IsBreakOpportunityAfter(elements[index].Text))
+            if (!IsBreakOpportunityAfter(elements, index))
             {
                 continue;
             }
@@ -349,54 +372,96 @@ internal static class UnicodeLineBreakEngine
         return lastFittingIndex;
     }
 
+    // The number of leading elements that fit together with the ellipsis after them. Kept text never ends in break white
+    // space, because the line drops it before the ellipsis, so only the ends of the other elements are candidates. The
+    // ellipsis width depends on where the kept text ends, so the search runs over the groups of consecutive candidates
+    // with the same ellipsis width, from the last group back: within a group the kept width grows with every candidate,
+    // so a binary search finds the last one that fits.
     private static int FindFittingPrefixCount(
         UnicodeTextElement[] elements,
+        int lineStart,
         float availableWidth,
         Func<int, int, float> measure,
-        Func<string, float> measureLiteral)
+        Func<int, float> measureEllipsis)
     {
-        int low = 0;
-        int high = elements.Length - 1;
-        int fittingCount = 0;
-        float ellipsisWidth = measureLiteral(Ellipsis);
-        while (low <= high)
+        List<int> candidates = [];
+        for (int index = 0; index < elements.Length; index++)
         {
-            int middle = low + ((high - low) / 2);
-            int length = elements[middle].End - elements[0].Start;
-            if (measure(elements[0].Start, length) + ellipsisWidth <= availableWidth)
+            if (!IsBreakWhitespace(elements[index].Text))
             {
-                fittingCount = middle + 1;
-                low = middle + 1;
-            }
-            else
-            {
-                high = middle - 1;
+                candidates.Add(index);
             }
         }
 
-        return fittingCount;
+        float[] ellipsisWidths = new float[candidates.Count];
+        for (int index = 0; index < candidates.Count; index++)
+        {
+            ellipsisWidths[index] = measureEllipsis(elements[candidates[index]].End);
+        }
+
+        int groupEnd = candidates.Count;
+        while (groupEnd > 0)
+        {
+            float ellipsisWidth = ellipsisWidths[groupEnd - 1];
+            int groupStart = groupEnd - 1;
+            while (groupStart > 0 && ellipsisWidths[groupStart - 1] == ellipsisWidth)
+            {
+                groupStart--;
+            }
+
+            int low = groupStart;
+            int high = groupEnd - 1;
+            int fitting = -1;
+            while (low <= high)
+            {
+                int middle = low + ((high - low) / 2);
+                int end = elements[candidates[middle]].End;
+                if (measure(lineStart, end - lineStart) + ellipsisWidth <= availableWidth)
+                {
+                    fitting = middle;
+                    low = middle + 1;
+                }
+                else
+                {
+                    high = middle - 1;
+                }
+            }
+
+            if (fitting >= 0)
+            {
+                return candidates[fitting] + 1;
+            }
+
+            groupEnd = groupStart;
+        }
+
+        return 0;
     }
 
+    // The last word boundary in the fitting prefix after which the kept text fits with its ellipsis. A boundary follows a
+    // break opportunity, and comes before break white space, a line break or the end of the text; so the end of a line
+    // that ends at a break is a boundary, and the end of a line broken inside a word is not.
     private static int FindLastWordBoundary(
         string text,
         UnicodeTextElement[] elements,
         int fittingCount,
-        int lineStart)
+        int lineStart,
+        Func<int, bool> fits)
     {
         for (int index = fittingCount - 1; index >= 0; index--)
         {
-            bool boundaryAfter = IsBreakOpportunityAfter(elements[index].Text);
-            bool nextIsWhitespace = index + 1 < elements.Length &&
-                IsBreakWhitespace(elements[index + 1].Text);
-            if (!boundaryAfter && !nextIsWhitespace)
+            int elementEnd = elements[index].End;
+            bool boundaryAfter = IsBreakOpportunityAfter(elements, index);
+            bool whitespaceAfter = elementEnd == text.Length || IsBreakWhitespace(text[elementEnd]);
+            if (!boundaryAfter && !whitespaceAfter)
             {
                 continue;
             }
 
             int end = IsBreakWhitespace(elements[index].Text)
-                ? TrimTrailingBreakWhitespace(text, lineStart, elements[index].End)
-                : elements[index].End;
-            if (end > lineStart)
+                ? TrimTrailingBreakWhitespace(text, lineStart, elementEnd)
+                : elementEnd;
+            if (end > lineStart && fits(end))
             {
                 return end;
             }
@@ -442,7 +507,7 @@ internal static class UnicodeLineBreakEngine
 
     private static int TrimTrailingBreakWhitespace(string text, int start, int end)
     {
-        while (end > start && char.IsWhiteSpace(text[end - 1]))
+        while (end > start && IsBreakWhitespace(text[end - 1]))
         {
             end--;
         }

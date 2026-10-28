@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 
 namespace Cerneala.Drawing.Text;
 
@@ -62,13 +63,14 @@ internal static class UnicodeBidiEngine
 
     public static UnicodeTextDirection GetDirection(string textElement)
     {
-        if (string.IsNullOrEmpty(textElement))
+        // A lone surrogate is no scalar value, so it is not a letter or a decimal digit: it is neutral.
+        if (string.IsNullOrEmpty(textElement) || !Rune.TryGetRuneAt(textElement, 0, out Rune rune))
         {
             return UnicodeTextDirection.Neutral;
         }
 
-        int scalar = char.ConvertToUtf32(textElement, 0);
-        UnicodeCategory category = CharUnicodeInfo.GetUnicodeCategory(textElement, 0);
+        int scalar = rune.Value;
+        UnicodeCategory category = Rune.GetUnicodeCategory(rune);
         if (IsRightToLeft(scalar) && (IsLetter(category) || category is
             UnicodeCategory.LetterNumber or
             UnicodeCategory.DecimalDigitNumber))

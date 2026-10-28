@@ -236,6 +236,89 @@ public sealed class TextParagraphTests
         Assert.EndsWith("…", line.Text, StringComparison.Ordinal);
     }
 
+    // Issue #804: U+00A0, U+202F and U+2007 are glue (UAX #14 class GL), so they are not break opportunities. The text is
+    // 55 px wide at width 45, so a break at the separator would give the lines "xx" and "aaaaaaaa".
+    [Theory]
+    [InlineData(' ', 2)]
+    [InlineData(' ', 1)]
+    [InlineData(' ', 1)]
+    [InlineData(' ', 1)]
+    public void WrapDoesNotBreakAtNoBreakSpaces(char separator, int expectedLines)
+    {
+        TextMeasurer measurer = CreateMeasurer();
+        TextAspect aspect = Aspect(TextWrapping.WrapWithOverflow);
+        string text = "xx" + separator + "aaaaaaaa";
+
+        TextParagraphLayout paragraph = measurer.MeasureParagraph(
+            [new TextSpan(text, aspect)],
+            aspect,
+            new TextParagraphOptions(),
+            new LayoutSize(45, float.PositiveInfinity));
+
+        Assert.True(
+            paragraph.Layout.Lines.Count == expectedLines,
+            "Lines: " + string.Join(" | ", paragraph.Layout.Lines.Select(static line => "[" + line.Text + "]")));
+        if (expectedLines == 1)
+        {
+            Assert.Equal(text, paragraph.Layout.Lines[0].Text);
+        }
+    }
+
+    // Issue #804: a no-break space at the end of a line is text, not break white space, so wrapping does not trim it.
+    [Fact]
+    public void WrapKeepsANoBreakSpaceAtTheEndOfALine()
+    {
+        TextMeasurer measurer = CreateMeasurer();
+        TextAspect aspect = Aspect(TextWrapping.Wrap);
+
+        TextParagraphLayout paragraph = measurer.MeasureParagraph(
+            [new TextSpan("ab  cd", aspect)],
+            aspect,
+            new TextParagraphOptions(),
+            new LayoutSize(20, float.PositiveInfinity));
+
+        Assert.Equal(["ab ", "cd"], paragraph.Layout.Lines.Select(static line => line.Text));
+    }
+
+    // Issue #860: the overflowing line is the last one.
+    [Fact]
+    public void MeasureParagraphTrimsAnOverflowingLastLineOfNoWrapText()
+    {
+        TextMeasurer measurer = CreateMeasurer();
+        TextAspect aspect = Aspect(TextWrapping.NoWrap, TextTrimming.CharacterEllipsis);
+
+        TextParagraphLayout paragraph = measurer.MeasureParagraph(
+            [new TextSpan("ab\nabcdefghij", aspect)],
+            aspect,
+            new TextParagraphOptions(),
+            new LayoutSize(20, float.PositiveInfinity));
+
+        Assert.EndsWith("…", paragraph.Layout.Lines[^1].Text, StringComparison.Ordinal);
+        Assert.True(paragraph.Layout.Lines[^1].Bounds.Width <= 20);
+        Assert.True(paragraph.Size.Width <= 20);
+    }
+
+    // Issue #860: every NoWrap line wider than the available width is collapsed, not only the last one.
+    [Fact]
+    public void MeasureParagraphTrimsAnOverflowingNonLastLineOfNoWrapText()
+    {
+        TextMeasurer measurer = CreateMeasurer();
+        TextAspect aspect = Aspect(TextWrapping.NoWrap, TextTrimming.CharacterEllipsis);
+
+        TextParagraphLayout paragraph = measurer.MeasureParagraph(
+            [new TextSpan("abcdefghij\nab", aspect)],
+            aspect,
+            new TextParagraphOptions(),
+            new LayoutSize(20, float.PositiveInfinity));
+
+        string first = paragraph.Layout.Lines[0].Text;
+        Assert.True(
+            first.EndsWith("…", StringComparison.Ordinal) && paragraph.Layout.Lines[0].Bounds.Width <= 20,
+            $"First line is '{first}' ({paragraph.Layout.Lines[0].Bounds.Width} px) for an available width of 20.");
+        Assert.Equal("ab", paragraph.Layout.Lines[1].Text);
+        Assert.True(paragraph.Size.Width <= 20, $"Paragraph is {paragraph.Size.Width} px wide for an available width of 20.");
+    }
+
     [Fact]
     public void MeasureParagraphIgnoresTheAvailableHeightWithoutTrimming()
     {
