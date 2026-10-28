@@ -25,10 +25,10 @@ public sealed class PathBlurFilter : PrismFilter
 | Name | Type | Default | Description |
 | --- | --- | --- | --- |
 | `Path` | `PrismResourceId` | `—` | Required catalog parameter; unit: `none`. |
-| `Speed` | `float` | `20` | Optional catalog parameter; unit: `unitless`. |
+| `Speed` | `float` | `20` | Optional catalog parameter; unit: `dip`. |
 | `Taper` | `float` | `0` | Optional catalog parameter; unit: `unitless`. |
 | `CenteredBlur` | `bool` | `True` | Optional catalog parameter; unit: `none`. |
-| `EndSpeed` | `float` | `20` | Optional catalog parameter; unit: `unitless`. |
+| `EndSpeed` | `float` | `20` | Optional catalog parameter; unit: `dip`. |
 | `Shape` | `string` | `Basic` | Optional catalog parameter; unit: `none`. |
 | `FlashSync` | `string` | `Rear` | Optional catalog parameter; unit: `none`. |
 | `Noise` | `float` | `0` | Optional catalog parameter; unit: `unitless`. |

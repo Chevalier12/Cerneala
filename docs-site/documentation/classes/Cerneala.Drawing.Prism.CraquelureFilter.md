@@ -24,7 +24,7 @@ public sealed class CraquelureFilter : PrismFilter
 
 | Name | Type | Default | Description |
 | --- | --- | --- | --- |
-| `CrackSpacing` | `float` | `10` | Optional catalog parameter; unit: `unitless`. |
+| `CrackSpacing` | `float` | `10` | Optional catalog parameter; unit: `dip`. |
 | `CrackDepth` | `float` | `6` | Optional catalog parameter; unit: `unitless`. |
 | `CrackBrightness` | `float` | `9` | Optional catalog parameter; unit: `unitless`. |
 | `Seed` | `int` | `0` | Optional catalog parameter; unit: `count`. |
