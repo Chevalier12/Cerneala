@@ -609,13 +609,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return null;
         }
 
-        string metadataName = attribute.Value.Trim();
-        if (metadataName.StartsWith("global::", StringComparison.Ordinal))
-        {
-            metadataName = metadataName.Substring("global::".Length);
-        }
-
-        INamedTypeSymbol? type = compilation.GetTypeByMetadataName(metadataName);
+        INamedTypeSymbol? type = ResolveMarkupTypeReference(compilation, attribute.Value, document.Root);
         if (type is null || type.DeclaredAccessibility is not Accessibility.Public and not Accessibility.Internal)
         {
             context.ReportDiagnostic(Diagnostic.Create(
@@ -627,6 +621,73 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         }
 
         return type;
+    }
+
+    // A markup type reference: a metadata name (optionally global::-qualified), or prefix:Name where the prefix is an
+    // xmlns alias in scope at context that declares clr-namespace:Namespace[;assembly=Name].
+    private static INamedTypeSymbol? ResolveMarkupTypeReference(
+        Compilation compilation,
+        string rawReference,
+        MarkupElement? context)
+    {
+        string reference = rawReference.Trim();
+        if (reference.StartsWith("global::", StringComparison.Ordinal))
+        {
+            reference = reference.Substring("global::".Length);
+        }
+
+        int prefixSeparator = reference.IndexOf(':');
+        if (prefixSeparator < 0)
+        {
+            return compilation.GetTypeByMetadataName(reference);
+        }
+
+        if (prefixSeparator == 0 || prefixSeparator == reference.Length - 1)
+        {
+            return null;
+        }
+
+        string prefix = reference.Substring(0, prefixSeparator);
+        string localName = reference.Substring(prefixSeparator + 1);
+        MarkupNamespace? xmlNamespace = context?.GetNamespaceOfPrefix(prefix);
+        const string clrNamespacePrefix = "clr-namespace:";
+        if (xmlNamespace is null ||
+            !xmlNamespace.NamespaceName.StartsWith(clrNamespacePrefix, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        string declaration = xmlNamespace.NamespaceName.Substring(clrNamespacePrefix.Length);
+        string[] segments = declaration.Split(';');
+        string namespaceName = segments[0].Trim();
+        string? assemblyName = null;
+        for (int index = 1; index < segments.Length; index++)
+        {
+            string segment = segments[index].Trim();
+            const string assemblyPrefix = "assembly=";
+            if (segment.StartsWith(assemblyPrefix, StringComparison.Ordinal) && assemblyName is null)
+            {
+                assemblyName = segment.Substring(assemblyPrefix.Length).Trim();
+                if (assemblyName.Length == 0)
+                {
+                    return null;
+                }
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        string metadataName = namespaceName.Length == 0
+            ? localName
+            : namespaceName + "." + localName;
+        INamedTypeSymbol? type = compilation.GetTypeByMetadataName(metadataName);
+        return type is not null &&
+            (assemblyName is null ||
+                string.Equals(type.ContainingAssembly.Name, assemblyName, StringComparison.Ordinal))
+            ? type
+            : null;
     }
 
     private static bool TryGetEmissionDocument(

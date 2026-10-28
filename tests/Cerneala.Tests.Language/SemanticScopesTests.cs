@@ -66,6 +66,26 @@ public sealed class SemanticScopesTests
         Assert.Equal("Cerneala.UI.Controls.TextBlock", SymbolAt(model, markup, "$self").ValueType);
     }
 
+    // Issue #1209: the build resolved the root DataType with GetTypeByMetadataName only, so an xmlns alias that the
+    // editor resolves (and that ContentTemplate DataType already accepts in the build) failed with CERNEALAUI007.
+    [Theory]
+    [InlineData("xmlns:d=\"clr-namespace:Demo\" DataType=\"d:ViewModel\"", "")]
+    [InlineData("DataType=\"Demo.ViewModel\"", "")]
+    // The unresolved DataType and the then untyped $DataContext.Title binding.
+    [InlineData("xmlns:d=\"clr-namespace:Demo\" DataType=\"d:Missing\"", "CERNEALAUI007,CERNEALAUI007")]
+    public void RootDataTypeReportsTheSameDiagnosticsInEditorAndBuild(string rootAttributes, string expectedIds)
+    {
+        string markup = "<UserControl " + rootAttributes + "><TextBlock Text=\"$DataContext.Title\" /></UserControl>";
+
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("MainView.crn", markup, "MainView.crn.cs", ViewModels);
+
+        Assert.Empty(result.Syntax.Diagnostics);
+        string[] editor = result.SemanticDiagnostics.Select(diagnostic => diagnostic.Id).Order(StringComparer.Ordinal).ToArray();
+        string[] build = result.SourceGeneratorDiagnostics.Select(diagnostic => diagnostic.Id).Order(StringComparer.Ordinal).ToArray();
+        Assert.Equal(editor, build);
+        Assert.Equal(expectedIds, string.Join(",", build));
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData(":OneWay")]
