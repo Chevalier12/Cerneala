@@ -84,7 +84,7 @@ Vector operations are opt-in. The base `SupportsVectorOperations` value is `fals
 
 `EqualsWithinTolerance` validates that `tolerance` is finite and non-negative, then uses `EqualityComparer<T>.Default`. Derived mixers can override it to provide component-wise or numeric tolerance checks.
 
-Derived mixers can use the protected `Lerp` helpers for endpoint-preserving `float` or `double` interpolation. The helpers return `from` at progress exactly `0` and `to` at progress exactly `1`, preserving those endpoints even when arithmetic interpolation would lose precision. Otherwise they compute `from + ((to - from) * progress)`, including linear extrapolation outside `[0, 1]`.
+Derived mixers can use the protected `Lerp` helpers for endpoint-preserving `float` or `double` interpolation. The helpers return `from` at progress exactly `0` and `to` at progress exactly `1`, preserving those endpoints even when arithmetic interpolation would lose precision. Otherwise they compute `from + ((to - from) * progress)`, including linear extrapolation outside `[0, 1]`. The `float` helper computes that expression in `double` and rounds the result to `float` once, so finite endpoints whose difference exceeds `float.MaxValue` still interpolate to a finite value: `Lerp(-3e38f, 3e38f, 0.5f)` returns `0`, not `Infinity`.
 
 Built-in continuous numeric and vector mixers extrapolate. `ColorMixer` extrapolates each RGBA channel, then rounds and clamps it to the byte range. `TransformMixer` extrapolates in its selected component or matrix space. Discrete brush transitions retain their existing endpoint behavior. Values constructed by a mixer still obey their type's validation. `DrawRectMixer` clamps an extrapolated width or height to `0` before it creates the `DrawRect`.
 

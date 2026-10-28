@@ -932,6 +932,38 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Contains("'current' must be the whole Motion value", diagnostic.GetMessage(), StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData("@on Loaded { @animate with Tween(100ms) { @to { Opacity = IsMouseOver ? 1 :   foo bar; } } }", "CERNEALAUI023", "foo bar")]
+    [InlineData("@on Loaded { @animate with Tween(100ms) { @to { Opacity = IsMouseOver ?   foo bar : 1; } } }", "CERNEALAUI023", "foo bar")]
+    [InlineData("@on Loaded { @animate with Tween(100ms) { @to { Opacity = IsMouseOver ? 1 : current; } } }", "CERNEALAUI020", "current")]
+    [InlineData("@on Loaded { @animate with Tween(100ms) { @to { Opacity = IsMouseOver ?  current  : 1; } } }", "CERNEALAUI020", "current")]
+    [InlineData("@on Loaded { @animate with Tween(100ms) { @to { Opacity = IsMouseOver ? 1 : IsFocused ? 0.5 : current; } } }", "CERNEALAUI020", "current")]
+    public void ConditionalBranchDiagnosticCoversTheBranchValue(string body, string expectedId, string expectedText)
+    {
+        string markup = MotionAspectMarkup(body);
+        GeneratorRunResult result = RunGenerator("BranchLocation.crn", markup, out _);
+
+        Diagnostic diagnostic = Assert.Single(result.Diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error));
+        Assert.Equal(expectedId, diagnostic.Id);
+        Microsoft.CodeAnalysis.Text.TextSpan span = diagnostic.Location.SourceSpan;
+        Assert.Equal(expectedText, markup.Substring(span.Start, span.Length));
+    }
+
+    [Theory]
+    [InlineData("@on Loaded { @keyframes duration 400ms { @animate 0%..100% with Linear { @from { Opacity = 0; } @to { Opacity = current; } } } }", "@to")]
+    [InlineData("@on Loaded { @keyframes duration 400ms { @animate 0%..100% with Linear { @from { Opacity = current; } @to { Opacity = 1; } } } }", "@from")]
+    public void KeyframeCurrentDiagnosticPointsAtTheAssignmentThatHoldsCurrent(string body, string block)
+    {
+        string markup = MotionAspectMarkup(body);
+        GeneratorRunResult result = RunGenerator("KeyframeCurrent.crn", markup, out _);
+
+        Diagnostic diagnostic = Assert.Single(result.Diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error));
+        Assert.Contains("'current' is not allowed", diagnostic.GetMessage(), StringComparison.Ordinal);
+        int blockStart = markup.IndexOf(block + " {", StringComparison.Ordinal);
+        int blockEnd = markup.IndexOf('}', blockStart);
+        Assert.InRange(diagnostic.Location.SourceSpan.Start, blockStart, blockEnd);
+    }
+
     private static string MotionAspectMarkup(string body)
     {
         return $"""

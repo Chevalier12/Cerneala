@@ -1224,7 +1224,8 @@ public sealed partial class UiMarkupGenerator
                     {
                         if (item.Source.Value is MotionCurrentValueSyntax || item.Destination.Value is MotionCurrentValueSyntax)
                         {
-                            Report(InvalidDirective, item.Source.Location, Path.GetFileName(file.Path), "Keyframe values must be deterministic; 'current' is not allowed.");
+                            MotionAssignmentSyntax current = item.Source.Value is MotionCurrentValueSyntax ? item.Source : item.Destination;
+                            Report(InvalidDirective, current.Location, Path.GetFileName(file.Path), "Keyframe values must be deterministic; 'current' is not allowed.");
                         }
 
                         return false;

@@ -52,6 +52,8 @@ float above = range.Map(25f);  // 200
 
 When `InputStart` and `InputEnd` are equal, the input interval has no length. In that case, `Map` returns `OutputEnd`.
 
+`Map` returns the endpoints exactly. When `value` equals `InputEnd` or clamped progress is `1`, it returns `OutputEnd`; when `value` equals `InputStart` or clamped progress is `0`, it returns `OutputStart`. This also holds when an endpoint is infinite: `new MotionRange(0f, 1f, 0f, float.PositiveInfinity).Map(0f)` returns `0`, and `new MotionRange(0f, float.PositiveInfinity, 0f, 1f).Map(float.PositiveInfinity)` returns `1`. The interpolation itself is computed in `double`, so finite endpoints whose difference exceeds `float.MaxValue` still map to finite values.
+
 `ScrollTimelineProgress.Map(float from, float to)` creates a `MotionRange` with an input range of `0` to `1` and uses it inside `ScrollMotionBinding<T>` to translate normalized scroll progress into bound float property values.
 
 ## Constructors

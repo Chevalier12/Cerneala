@@ -58,6 +58,29 @@ public sealed class ValueMixerBuiltInTests
         Assert.Equal(new Vector4(expected), new Vector4Mixer().Mix(new Vector4(10), new Vector4(30), progress));
     }
 
+    // DrawRect is not listed: it rejects coordinates outside +/-2e9 pixels, so its
+    // channels cannot hold endpoints whose float difference overflows.
+    [Theory]
+    [InlineData(nameof(FloatMixer))]
+    [InlineData(nameof(Vector4Mixer))]
+    [InlineData(nameof(DrawPointMixer))]
+    [InlineData(nameof(DrawSizeMixer))]
+    [InlineData(nameof(ThicknessMixer))]
+    [InlineData(nameof(TransformInterpolationMode.Matrix))]
+    [InlineData(nameof(TransformInterpolationMode.Components))]
+    [InlineData(nameof(BrushMixer))]
+    public void FloatChannelsInterpolateFiniteEndpointsWhoseDifferenceOverflowsFloat(string mixer)
+    {
+        foreach ((float progress, float expected) in new[] { (0.5f, 0f), (0.25f, -1.5e38f) })
+        {
+            float[] channels = MixOppositeSignEndpoints(mixer, -3e38f, 3e38f, progress);
+
+            Assert.All(channels, channel => Assert.True(
+                Math.Abs(channel - expected) <= 1e-6f * Math.Max(1f, Math.Abs(expected)),
+                $"{mixer}.Mix(-3e38, 3e38, {progress}) = {channel}, expected {expected}."));
+        }
+    }
+
     [Theory]
     [InlineData(-0.5f)]
     [InlineData(1.5f)]
@@ -340,9 +363,56 @@ public sealed class ValueMixerBuiltInTests
     private static void AssertExactEndpoints<T>(ValueMixer<T> mixer, T from, T to)
     {
         Assert.Equal(from, mixer.Mix(from, to, 0));
-        Assert.Equal(mixer.Add(from, mixer.Scale(mixer.Subtract(to, from), -0.5f)), mixer.Mix(from, to, -0.5f));
+        AssertLinearWithinFloatRounding(mixer, mixer.Add(from, mixer.Scale(mixer.Subtract(to, from), -0.5f)), mixer.Mix(from, to, -0.5f));
         Assert.Equal(to, mixer.Mix(from, to, 1));
-        Assert.Equal(mixer.Add(from, mixer.Scale(mixer.Subtract(to, from), 1.5f)), mixer.Mix(from, to, 1.5f));
+        AssertLinearWithinFloatRounding(mixer, mixer.Add(from, mixer.Scale(mixer.Subtract(to, from), 1.5f)), mixer.Mix(from, to, 1.5f));
+    }
+
+    // Lerp computes in double and rounds once (#1192); the float vector operations round after every step,
+    // so the two can differ by a few float ulps for large values.
+    private static void AssertLinearWithinFloatRounding<T>(ValueMixer<T> mixer, T expected, T actual)
+    {
+        // Scale before Magnitude: squaring 1e20 components overflows float.
+        float tolerance = mixer.Magnitude(mixer.Scale(expected, 1e-6f));
+        Assert.True(mixer.EqualsWithinTolerance(expected, actual, tolerance), $"Expected {expected}, got {actual}.");
+    }
+
+    private static float[] MixOppositeSignEndpoints(string mixer, float from, float to, float progress)
+    {
+        switch (mixer)
+        {
+            case nameof(FloatMixer):
+                return [new FloatMixer().Mix(from, to, progress)];
+            case nameof(Vector4Mixer):
+                Vector4 vector = new Vector4Mixer().Mix(new Vector4(from), new Vector4(to), progress);
+                return [vector.X, vector.Y, vector.Z, vector.W];
+            case nameof(DrawPointMixer):
+                DrawPoint point = new DrawPointMixer().Mix(new DrawPoint(from, from), new DrawPoint(to, to), progress);
+                return [point.X, point.Y];
+            case nameof(DrawSizeMixer):
+                DrawSize size = new DrawSizeMixer().Mix(new DrawSize(from, from), new DrawSize(to, to), progress);
+                return [size.Width, size.Height];
+            case nameof(ThicknessMixer):
+                Thickness thickness = new ThicknessMixer().Mix(new Thickness(from), new Thickness(to), progress);
+                return [thickness.Left, thickness.Top, thickness.Right, thickness.Bottom];
+            case nameof(TransformInterpolationMode.Matrix):
+            case nameof(TransformInterpolationMode.Components):
+                TransformMixer transformMixer = new(Enum.Parse<TransformInterpolationMode>(mixer));
+                Transform transform = transformMixer.Mix(
+                    new Transform(Matrix3x2.CreateTranslation(from, from)),
+                    new Transform(Matrix3x2.CreateTranslation(to, to)),
+                    progress);
+                return [transform.Matrix.M31, transform.Matrix.M32];
+            case nameof(BrushMixer):
+                GradientStop[] stops = [new GradientStop(0, Color.Black), new GradientStop(1, Color.White)];
+                LinearGradientBrush brush = Assert.IsType<LinearGradientBrush>(new BrushMixer().Mix(
+                    new LinearGradientBrush(new DrawPoint(from, from), new DrawPoint(0, 0), stops),
+                    new LinearGradientBrush(new DrawPoint(to, to), new DrawPoint(0, 0), stops),
+                    progress));
+                return [brush.StartPoint.X, brush.StartPoint.Y];
+            default:
+                throw new ArgumentOutOfRangeException(nameof(mixer), mixer, null);
+        }
     }
 
     private static void AssertSameMatrix(Transform expected, Transform actual)
