@@ -275,6 +275,37 @@ public sealed class ApplicationRuntimeTests : IDisposable
         Assert.Null(Application.Current);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ShutdownRetiresTimbreAndClearsCurrentEvenWhenTheServiceProviderDisposeThrows(bool disposeThrows)
+    {
+        (Application app, WindowApplicationRuntime runtime) = Install(ApplicationShutdownMode.OnExplicitShutdown);
+        ThrowOnceProvider services = new(disposeThrows);
+        app.PublishServices(services);
+
+        if (disposeThrows)
+        {
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => app.Shutdown(3));
+            Assert.Same(services.Failure, exception);
+        }
+        else
+        {
+            app.Shutdown(3);
+        }
+
+        Assert.Null(Application.Current);
+        Assert.Throws<ObjectDisposedException>(() => app.Timbre);
+        Assert.Throws<ObjectDisposedException>(() => app.TimbreRuntime);
+
+        app.Shutdown(4);
+
+        Assert.Equal(1, services.DisposeCount);
+        Application next = new();
+        next.Install(runtime);
+        Assert.Same(next, Application.Current);
+    }
+
     [Fact]
     public void LifecycleOperationsRejectAnotherThread()
     {
@@ -645,6 +676,34 @@ public sealed class ApplicationRuntimeTests : IDisposable
         {
             DisposeCount++;
             events?.Add("services-disposed");
+        }
+    }
+
+    private sealed class ThrowOnceProvider : IServiceProvider, IDisposable
+    {
+        private readonly bool disposeThrows;
+
+        public ThrowOnceProvider(bool disposeThrows)
+        {
+            this.disposeThrows = disposeThrows;
+        }
+
+        public InvalidOperationException Failure { get; } = new("planned service provider dispose failure");
+
+        public int DisposeCount { get; private set; }
+
+        public object? GetService(Type serviceType)
+        {
+            return null;
+        }
+
+        public void Dispose()
+        {
+            DisposeCount++;
+            if (disposeThrows && DisposeCount == 1)
+            {
+                throw Failure;
+            }
         }
     }
 
