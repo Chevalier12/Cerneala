@@ -456,6 +456,57 @@ public sealed class SelectorTests
         Assert.Empty(raised.AddedItems);
     }
 
+    // A reset relocates each selected entry to its own equal item (#835): equal items that all survive stay selected
+    // without SelectionChanged, and a selected entry left without an equal item is deselected and reported.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ResetThatLeavesFewerEqualItemsThanSelectedReportsTheRemovedSelection(bool bothEqualItemsSurvive)
+    {
+        ListBox listBox = new() { SelectionMode = SelectionMode.Multiple };
+        listBox.SetItems(new[] { "a", "a", "b" });
+        listBox.SelectionModel.Select(0);
+        listBox.SelectionModel.Add(1);
+        List<SelectionChangedEventArgs> raised = [];
+        listBox.SelectionChanged += (_, args) => raised.Add(args);
+
+        listBox.SetItems(bothEqualItemsSurvive ? new[] { "b", "a", "a" } : new[] { "a", "b" });
+
+        if (bothEqualItemsSurvive)
+        {
+            Assert.Empty(raised);
+            Assert.Equal(["a", "a"], listBox.SelectedItems);
+            Assert.Equal([2, 1], listBox.SelectionModel.SelectedIndices);
+        }
+        else
+        {
+            Assert.Equal(["a"], listBox.SelectedItems);
+            Assert.Equal([0], listBox.SelectionModel.SelectedIndices);
+            SelectionChangedEventArgs args = Assert.Single(raised);
+            Assert.Equal(["a"], args.RemovedItems);
+        }
+    }
+
+    // A selected index that refers to no item keeps its position across a reset, so a selected item whose only equal
+    // item lands on that position is reported as removed instead of collapsing into it (#835).
+    [Fact]
+    public void ResetDoesNotCollapseSelectedItemIntoIndexThatReferredToNoItem()
+    {
+        ListBox listBox = new() { SelectionMode = SelectionMode.Multiple };
+        listBox.SetItems(new[] { "a" });
+        listBox.SelectionModel.Select(0);
+        listBox.SelectionModel.Add(3);
+        List<SelectionChangedEventArgs> raised = [];
+        listBox.SelectionChanged += (_, args) => raised.Add(args);
+
+        listBox.SetItems(new[] { "x", "x", "x", "a" });
+
+        Assert.Equal([3], listBox.SelectionModel.SelectedIndices);
+        SelectionChangedEventArgs args = Assert.Single(raised);
+        Assert.Equal(["a"], args.RemovedItems);
+        Assert.Empty(args.AddedItems);
+    }
+
     [Fact]
     public void ResettingItemsKeepsSelectedItemWhenItIsStillPresent()
     {

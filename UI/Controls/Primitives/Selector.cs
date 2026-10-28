@@ -189,7 +189,54 @@ public class Selector : ItemsControl
 
     internal override void OnItemsReset()
     {
-        UpdateSelectionForItems(entry => FindItemIndex(entry.Item, entry.Index));
+        Dictionary<int, int> newIndices = FindSelectedItemIndicesAfterReset();
+        UpdateSelectionForItems(entry => newIndices[entry.Index]);
+    }
+
+    // The index of each selected item after a reset, keyed by its index before the reset, or -1 when it is gone. Each
+    // selected entry takes its own equal item, so two selected equal items stay two selected entries while the items
+    // still hold two equal items (#835). An entry keeps its index when that position still holds an equal item; every
+    // other entry, in selection order, takes the first equal item that no entry took. An index that refers to no item
+    // keeps its position, so no entry takes it.
+    private Dictionary<int, int> FindSelectedItemIndicesAfterReset()
+    {
+        Dictionary<int, int> newIndices = [];
+        HashSet<int> taken = [];
+        foreach (SelectedEntry entry in selectedEntries)
+        {
+            if (!entry.HasItem)
+            {
+                taken.Add(entry.Index);
+            }
+            else if (entry.Index < ItemCount && Equals(GetItemAt(entry.Index), entry.Item))
+            {
+                newIndices[entry.Index] = entry.Index;
+                taken.Add(entry.Index);
+            }
+        }
+
+        foreach (SelectedEntry entry in selectedEntries)
+        {
+            if (!entry.HasItem || newIndices.ContainsKey(entry.Index))
+            {
+                continue;
+            }
+
+            int newIndex = -1;
+            for (int index = 0; index < ItemCount; index++)
+            {
+                if (!taken.Contains(index) && Equals(GetItemAt(index), entry.Item))
+                {
+                    newIndex = index;
+                    taken.Add(index);
+                    break;
+                }
+            }
+
+            newIndices[entry.Index] = newIndex;
+        }
+
+        return newIndices;
     }
 
     // The index of the item at itemIndex after count items moved from oldIndex to newIndex.
