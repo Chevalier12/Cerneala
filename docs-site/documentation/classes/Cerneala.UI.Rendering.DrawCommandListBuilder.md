@@ -56,6 +56,8 @@ Composition walks the visible visual tree depth-first. An element's own local co
 
 The builder emits balanced affine `PushTransform` / `PopTransform` scopes around transformed element subtrees. Local drawing transforms compose before element and ancestor transforms. Rotation, skew, reflection, and scale preserve the geometry rather than replacing it with its axis-aligned bounding box. Presence scale is included in the element transform. `Opacity` and `PresenceOpacity` multiply command paint opacity.
 
+An element transform that overflows `float` while it is composed is skipped with its subtree, as hit testing skips it, and composition does not throw. For example, a 100 x 80 element with `ScaleX = float.MaxValue` and the default `RenderTransformOrigin` of `(0.5, 0.5)` needs a pivot translation of `-50 * float.MaxValue`, which is not finite: that element and its visual children emit no commands, while its siblings still draw. When the scale becomes finite again, for example `ScaleX = 1`, the next build draws the subtree again.
+
 Clips are emitted as balanced `PushClip` and `PopClip` commands. A clip comes from `ClipNode` when one is attached to the element, otherwise from `ArrangedBounds` when `ClipToBounds` is true. Clip commands wrap the element's local commands, visual children, and exiting visual children.
 
 When the element belongs to a `UIRoot`, exiting presence children returned by `root.Motion.Presence.GetExitingVisualChildren(element)` are also composed so exit animations can continue rendering after normal visual removal.

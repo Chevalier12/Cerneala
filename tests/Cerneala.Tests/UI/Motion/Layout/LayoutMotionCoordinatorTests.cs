@@ -558,6 +558,32 @@ public sealed class LayoutMotionCoordinatorTests
         Assert.Equal(Cerneala.UI.Media.Transform.Identity, replacement.LayoutCorrectionTransform);
     }
 
+    // A huge but finite scale makes the pivot translation overflow float (#1201). The visual bounds of the moving
+    // element cannot be represented, so the layout move starts no correction instead of throwing.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void LayoutMoveUnderOverflowingTransformDoesNotThrow(bool overflowOnAncestor)
+    {
+        ManualMotionClock clock = new();
+        (UIRoot root, UIElement child) = CreateCanvasScenario(clock);
+        root.ProcessFrame();
+        (overflowOnAncestor ? root.VisualChildren[0] : child).ScaleX = float.MaxValue;
+        root.ProcessFrame();
+
+        Canvas.SetLeft(child, 40);
+        Exception? failure = Record.Exception(() =>
+        {
+            root.ProcessFrame();
+            clock.Advance(TimeSpan.FromMilliseconds(16));
+            root.ProcessFrame();
+        });
+
+        Assert.True(failure is null, $"{failure?.GetType().Name}: {failure?.Message}");
+        Assert.Equal(new LayoutRect(40, 0, 20, 10), child.ArrangedBounds);
+        Assert.Equal(Cerneala.UI.Media.Transform.Identity, child.LayoutCorrectionTransform);
+    }
+
     private static (UIRoot Root, UIElement Child) CreateCanvasScenario(ManualMotionClock clock)
     {
         UIRoot root = new(100, 100, motionClock: clock);

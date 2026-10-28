@@ -129,6 +129,45 @@ public sealed class RetainedRendererTests
         Assert.Equal(row == "childAfterFrame" ? 1 : 0, committed!.Count);
     }
 
+    // A huge but finite scale makes the pivot translation overflow float (#1201). Like hit testing, the element
+    // whose transform overflows draws nothing, its subtree is skipped, and a sibling still draws.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void OverflowingElementTransformSkipsItsSubtreeWithoutThrowing(bool overflowOnAncestor)
+    {
+        UIRoot root = new(200, 160);
+        RenderingTestElement parent = new(new Color(1, 0, 0)) { Width = 100, Height = 80 };
+        RenderingTestElement child = new(new Color(2, 0, 0)) { Width = 100, Height = 80 };
+        RenderingTestElement sibling = new(Color.Black) { Width = 100, Height = 80 };
+        parent.VisualChildren.Add(child);
+        root.VisualChildren.Add(parent);
+        root.VisualChildren.Add(sibling);
+        root.ProcessFrame();
+        root.RetainedRenderer.Commit(root);
+
+        (overflowOnAncestor ? parent : child).ScaleX = float.MaxValue;
+        for (int commit = 0; commit < 2; commit++)
+        {
+            root.ProcessFrame();
+            DrawCommandList? commands = null;
+            Exception? failure = Record.Exception(() => commands = root.RetainedRenderer.Commit(root));
+
+            Assert.True(failure is null, $"commit {commit}: {failure?.GetType().Name}: {failure?.Message}");
+            Color[] colors = commands!.Where(command => command.Kind == DrawCommandKind.FillRectangle)
+                .Select(command => command.Color).ToArray();
+            Assert.Equal(overflowOnAncestor ? [Color.Black] : [new Color(1, 0, 0), Color.Black], colors);
+            Assert.DoesNotContain(commands!, command => command.Kind == DrawCommandKind.PushTransform);
+        }
+
+        (overflowOnAncestor ? parent : child).ScaleX = 1;
+        root.ProcessFrame();
+        Assert.Equal(
+            [new Color(1, 0, 0), new Color(2, 0, 0), Color.Black],
+            root.RetainedRenderer.Commit(root).Where(command => command.Kind == DrawCommandKind.FillRectangle)
+                .Select(command => command.Color));
+    }
+
     private static void PrepareSubtree(UIElement element)
     {
         UIRoot root = element.Root ?? throw new InvalidOperationException("Element must be attached.");

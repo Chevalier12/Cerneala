@@ -62,7 +62,7 @@ For participants hosted inside `ScrollContentPresenter` content, snapshot compar
 
 Corrections are render-scope transforms, not layout mutations. A layout move starts an inverse correction from the previous visual bounds toward `Transform.Identity`, so motion frames can preserve visual continuity without enqueueing new measure or arrange work. The binding writes through `UIElement.SetLayoutCorrectionTransform`, which invalidates render scope only.
 
-The coordinator keeps previous snapshots by `LayoutMotionId` so an element moved between parents can retain continuity when the same element instance and id are observed across frames. Bounds with non-positive size or non-finite coordinates are ignored.
+The coordinator keeps previous snapshots by `LayoutMotionId` so an element moved between parents can retain continuity when the same element instance and id are observed across frames. Bounds with non-positive size or non-finite coordinates are ignored. So is a participant whose own transform or an ancestor's transform overflows `float` while the root-space bounds or the element-space correction are composed, for example an ancestor `Canvas` with `ScaleX = float.MaxValue`: the layout move starts no correction and the frame does not throw.
 
 `GetBinding` returns an existing binding when correction work has been created for the element. It does not create bindings for elements that have not produced layout motion.
 
