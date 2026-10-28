@@ -458,8 +458,9 @@ internal sealed class LanguageServerEndpoint(IServerLogger logger) : IAsyncDispo
     public async Task DidSaveAsync(DidSaveTextDocumentParams request, CancellationToken cancellationToken)
     {
         EnsureInitialized();
+        // The reload raises Reloaded, and OnWorkspaceReloaded republishes the documents that are still open. Scheduling
+        // the saved URI here would publish again for a document the client closed while the reload ran.
         await GetWorkspace().ReloadAsync(cancellationToken).ConfigureAwait(false);
-        GetDiagnosticPublisher().Schedule(request.TextDocument.Uri);
         logger.Info("document.saved");
     }
 
