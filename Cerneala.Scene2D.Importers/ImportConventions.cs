@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Numerics;
 using Cerneala.Drawing;
@@ -6,24 +7,25 @@ using Cerneala.UI.Controls;
 namespace Cerneala.Scene2D.Importers;
 
 // Shared authoring conventions, independent of the source file format.
+// A null value (a nullable field left empty) is the same as an unset convention.
 internal sealed class ImportConventions(ImportContext context)
 {
     private int colliderCount;
 
     internal void Validate(IReadOnlyDictionary<string, object?> properties)
     {
-        if (properties.TryGetValue("CernealaRole", out object? role) && role is not ("Metadata" or "Spawn" or "Collider" or "Promote"))
+        if (TryGet(properties, "CernealaRole", out object? role) && role is not ("Metadata" or "Spawn" or "Collider" or "Promote"))
         { context.Fail("SCN2D004", "Unknown CernealaRole convention."); }
-        if (properties.TryGetValue("CollisionLayer", out object? layer)) { _ = Scene2DModelValidator.ParseCollisionBits(layer!); }
-        if (properties.TryGetValue("CollisionMask", out object? mask)) { _ = Scene2DModelValidator.ParseCollisionBits(mask!); }
-        if (properties.TryGetValue("IsTrigger", out object? trigger) && trigger is not bool) { context.Fail("SCN2D016", "IsTrigger must be Boolean."); }
+        if (TryGet(properties, "CollisionLayer", out object? layer)) { _ = Scene2DModelValidator.ParseCollisionBits(layer); }
+        if (TryGet(properties, "CollisionMask", out object? mask)) { _ = Scene2DModelValidator.ParseCollisionBits(mask); }
+        if (TryGet(properties, "IsTrigger", out object? trigger) && trigger is not bool) { context.Fail("SCN2D016", "IsTrigger must be Boolean."); }
     }
 
     internal string Text(IReadOnlyDictionary<string, object?> properties, string name, string fallback)
     {
-        if (!properties.TryGetValue(name, out object? value)) { return fallback; }
+        if (!TryGet(properties, name, out object? value)) { return fallback; }
         if (value is not string) { context.Fail("SCN2D016", $"'{name}' must be a string."); }
-        return (string)value!;
+        return (string)value;
     }
 
     internal TilePromotion2D Promotion(IReadOnlyDictionary<string, object?> properties)
@@ -37,7 +39,7 @@ internal sealed class ImportConventions(ImportContext context)
             return (int)(long)number!;
         }
         if (string.IsNullOrWhiteSpace(layer)) { context.Fail("SCN2D012", "Promotion requires a stable TileLayer."); }
-        int? tile = properties.ContainsKey("TileId") ? Coordinate("TileId") : null;
+        int? tile = TryGet(properties, "TileId", out _) ? Coordinate("TileId") : null;
         return new(new(layer, Coordinate("TileX"), Coordinate("TileY")), tile, properties);
     }
 
@@ -53,9 +55,9 @@ internal sealed class ImportConventions(ImportContext context)
         if (shape == "Point") { context.Fail("SCN2D008", "A collider requires supported non-point geometry."); }
         if (colliderCount == 65_536) { context.Fail("SCN2D013", "Collider descriptors exceed the aggregate import budget."); }
         colliderCount++;
-        uint layer = properties.TryGetValue("CollisionLayer", out object? layerValue) ? Scene2DModelValidator.ParseCollisionBits(layerValue!) : 1;
-        uint mask = properties.TryGetValue("CollisionMask", out object? maskValue) ? Scene2DModelValidator.ParseCollisionBits(maskValue!) : uint.MaxValue;
-        bool trigger = properties.TryGetValue("IsTrigger", out object? triggerValue) && (bool)triggerValue!;
+        uint layer = TryGet(properties, "CollisionLayer", out object? layerValue) ? Scene2DModelValidator.ParseCollisionBits(layerValue) : 1;
+        uint mask = TryGet(properties, "CollisionMask", out object? maskValue) ? Scene2DModelValidator.ParseCollisionBits(maskValue) : uint.MaxValue;
+        bool trigger = TryGet(properties, "IsTrigger", out object? triggerValue) && (bool)triggerValue;
         TileColliderDescriptor2D Descriptor(TileColliderShape2D kind, Matrix3x2 transform, string text = "0,0 1,0 0,1") =>
             new(kind, transform, width: size.Width, height: size.Height, radius: 1, points: text,
                 collisionLayer: layer, collisionMask: mask, isTrigger: trigger, debugIdentity: id, properties: properties);
@@ -74,4 +76,7 @@ internal sealed class ImportConventions(ImportContext context)
             _ => Unsupported()
         };
     }
+
+    private static bool TryGet(IReadOnlyDictionary<string, object?> properties, string name, [NotNullWhen(true)] out object? value) =>
+        properties.TryGetValue(name, out value) && value is not null;
 }

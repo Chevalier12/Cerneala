@@ -87,7 +87,7 @@ The following inventory is closed. Unlisted fields and listed unsupported constr
 
 Conditional values: layer `x/y == 0`, parallax `== 1`, blend mode `normal`; zero tileset offset; tile render size `tile`; fill mode `stretch`; orthogonal tileset grid. Custom property types are unsupported. Conflicting nonempty object `class` and `type` are errors.
 
-Explicit non-goals include nonorthogonal orientations, other render orders, zstd, image layers/repetition, image-collection tilesets, transparent-color keys, tile objects (`gid`), templates, text/capsule objects, animation, per-tile image/source overrides and unknown extensions. No “mostly imported” document is returned for these constructs.
+Explicit non-goals include nonorthogonal orientations, other render orders, zstd, image layers/repetition, image-collection tilesets, transparent-color keys, tile objects (`gid`), templates, text/capsule objects, animation, per-tile image/source overrides and unknown extensions. No “mostly imported” document is returned for these constructs. A tileset without a top-level `image` is an image-collection tileset and fails with `SCN2D004` before its values (such as `"columns": 0`) are checked; an atlas tileset with an invalid `columns` value still fails with `SCN2D007`.
 
 ## Methods
 
