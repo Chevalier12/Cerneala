@@ -255,6 +255,161 @@ public sealed class DrawingTextLayoutRichTextTests
         Assert.Equal([0, 1], line.Runs.Select(static run => run.SpanIndex));
     }
 
+    // Issue #861: both spans size 10 (5 px per character), MaxWidth 22.
+    [Fact]
+    public void TrimmedLineWithEqualSpanSizesFitsItsMaxWidth()
+    {
+        DrawTextLayout layout = new DrawTextLayoutBuilder()
+            .AddSpan(new DrawTextSpan("bbbb", font, 10, black))
+            .AddSpan(new DrawTextSpan("aaaa", font, 10, black))
+            .Build(new DrawTextLayoutOptions(maxWidth: 22, trimming: DrawTextTrimming.CharacterEllipsis));
+
+        DrawTextLayoutLine line = Assert.Single(layout.Lines);
+        Assert.True(line.IsTrimmed);
+        Assert.True(line.Bounds.Width <= 22, $"Trimmed line '{line.Text}' is {line.Bounds.Width} px wide for MaxWidth 22.");
+    }
+
+    // Issue #861: "bbbb" at size 20 (10 px per character) and "aaaa" at size 10 (5 px). The ellipsis is drawn with the
+    // span of the last kept character, so it is measured with that span too: "bbb…" is 30 + 10 = 40 px.
+    [Theory]
+    [InlineData(DrawTextTrimming.CharacterEllipsis)]
+    [InlineData(DrawTextTrimming.WordEllipsis)]
+    public void TrimmedLineWithMixedSpanSizesFitsItsMaxWidth(DrawTextTrimming trimming)
+    {
+        DrawTextLayout layout = new DrawTextLayoutBuilder()
+            .AddSpan(new DrawTextSpan("bbbb", font, 20, black))
+            .AddSpan(new DrawTextSpan("aaaa", font, 10, black))
+            .Build(new DrawTextLayoutOptions(maxWidth: 45, trimming: trimming));
+
+        DrawTextLayoutLine line = Assert.Single(layout.Lines);
+        Assert.True(line.IsTrimmed);
+        Assert.True(line.Bounds.Width <= 45, $"Trimmed line '{line.Text}' is {line.Bounds.Width} px wide for MaxWidth 45.");
+        Assert.Equal("bbb…", line.Text);
+    }
+
+    // Issue #861: "bb" at size 20 (20 px), " aaaa" at size 1 (2.5 px), "cccc" at size 20 (40 px), MaxWidth 29. The word
+    // boundary "bb" ends in the size-20 span, so with its 10 px ellipsis it is 30 px and does not fit; the character prefix
+    // "bb aaaa" with the 0.5 px ellipsis of the size-1 span (23 px) does.
+    [Fact]
+    public void WordEllipsisMeasuresTheEllipsisOfTheWordBoundaryWithTheSpanItIsDrawnWith()
+    {
+        DrawTextLayout layout = new DrawTextLayoutBuilder()
+            .AddSpan(new DrawTextSpan("bb", font, 20, black))
+            .AddSpan(new DrawTextSpan(" aaaa", font, 1, black))
+            .AddSpan(new DrawTextSpan("cccc", font, 20, black))
+            .Build(new DrawTextLayoutOptions(maxWidth: 29, trimming: DrawTextTrimming.WordEllipsis));
+
+        DrawTextLayoutLine line = Assert.Single(layout.Lines);
+        Assert.True(line.Bounds.Width <= 29, $"Trimmed line '{line.Text}' is {line.Bounds.Width} px wide for MaxWidth 29.");
+        Assert.Equal("bb aaaa…", line.Text);
+    }
+
+    // Issue #859: the line does not fit, so the word result is shorter than the line.
+    [Fact]
+    public void WordEllipsisOfAnOverflowingLineStopsAtTheClosestWordBoundary()
+    {
+        DrawTextLayout longSecondWord = Layout(
+            "aa bbbbbbbbbbbbbbbbbbbbbbbb",
+            new DrawTextLayoutOptions(maxWidth: 100, trimming: DrawTextTrimming.WordEllipsis));
+        DrawTextLayout longFirstWord = Layout(
+            "aaaaaaaaaaaaaaaaaaaaaaaa bb",
+            new DrawTextLayoutOptions(maxWidth: 100, trimming: DrawTextTrimming.WordEllipsis));
+
+        Assert.Equal("aa…", Assert.Single(longSecondWord.Lines).Text);
+        Assert.Equal("aaaaaaaaaaaaaaaaaaa…", Assert.Single(longFirstWord.Lines).Text);
+    }
+
+    // Issue #859: "aa bb" fits with the ellipsis (30 of 100 px), and its end is a line-break boundary, so it keeps "bb".
+    [Theory]
+    [InlineData(1, float.PositiveInfinity)]
+    [InlineData(0, 15f)]
+    public void WordEllipsisKeepsTheLastWholeWordOfTheLineWhenItFitsWithTheEllipsis(int maxLines, float maxHeight)
+    {
+        DrawTextLayout layout = Layout(
+            "aa bb\ncc",
+            new DrawTextLayoutOptions(maxWidth: 100, maxHeight: maxHeight, maxLines: maxLines, trimming: DrawTextTrimming.WordEllipsis));
+
+        Assert.Equal("aa bb…", Assert.Single(layout.Lines).Text);
+    }
+
+    // Issue #859: the last line of a wrapped paragraph whose next line is omitted ends at a soft wrap, also a word boundary.
+    [Fact]
+    public void WordEllipsisKeepsTheLastWholeWordOfASoftWrappedLine()
+    {
+        DrawTextLayout layout = Layout(
+            "aa bb cccccccccccccccccc",
+            new DrawTextLayoutOptions(maxWidth: 50, wrapping: DrawTextWrapping.Word, maxLines: 1, trimming: DrawTextTrimming.WordEllipsis));
+
+        Assert.Equal("aa bb…", Assert.Single(layout.Lines).Text);
+    }
+
+    // Issue #859: a line broken inside a word by Character wrapping does not end at a word boundary.
+    [Fact]
+    public void WordEllipsisDoesNotTreatTheEndOfALineBrokenInsideAWordAsAWordBoundary()
+    {
+        DrawTextLayout layout = Layout(
+            "aa bbbbbbbbbbbb",
+            new DrawTextLayoutOptions(maxWidth: 40, wrapping: DrawTextWrapping.Character, maxLines: 1, trimming: DrawTextTrimming.WordEllipsis));
+
+        Assert.Equal("aa…", Assert.Single(layout.Lines).Text);
+    }
+
+    // Bidi neutrals (issue #1024)
+
+    // A neutral between two strong characters of different directions takes the embedding direction (UAX #9 rules N1 and
+    // N2), so each Hebrew word has one space on each side in the drawn line.
+    [Theory]
+    [InlineData(DrawTextAlignment.Start)]
+    [InlineData(DrawTextAlignment.Justify)]
+    public void SpaceBetweenAHebrewAndALatinWordTakesTheLeftToRightEmbeddingDirection(DrawTextAlignment alignment)
+    {
+        DrawTextLayout layout = Layout(
+            "abcd שלום efgh ij",
+            new DrawTextLayoutOptions(maxWidth: 75, wrapping: DrawTextWrapping.Word, alignment: alignment, direction: DrawTextDirection.LeftToRight));
+
+        DrawTextLayoutLine line = layout.Lines[0];
+        Assert.Equal("abcd םולש efgh", VisualText(line));
+        Assert.DoesNotContain(
+            line.Runs,
+            static run => run.Direction == DrawTextDirection.RightToLeft && run.Text.Contains(' ', StringComparison.Ordinal));
+    }
+
+    [Theory]
+    [InlineData(DrawTextAlignment.Start)]
+    [InlineData(DrawTextAlignment.Justify)]
+    public void SpaceBetweenALatinAndAHebrewWordTakesTheRightToLeftEmbeddingDirection(DrawTextAlignment alignment)
+    {
+        DrawTextLayout layout = Layout(
+            "שלום abcd אבג ij",
+            new DrawTextLayoutOptions(maxWidth: 70, wrapping: DrawTextWrapping.Word, alignment: alignment, direction: DrawTextDirection.RightToLeft));
+
+        DrawTextLayoutLine line = layout.Lines[0];
+        Assert.Equal("גבא abcd םולש", VisualText(line));
+        Assert.DoesNotContain(
+            line.Runs,
+            static run => run.Direction == DrawTextDirection.LeftToRight && run.Text.Contains(' ', StringComparison.Ordinal));
+    }
+
+    [Theory]
+    [InlineData(DrawTextDirection.LeftToRight)]
+    [InlineData(DrawTextDirection.RightToLeft)]
+    public void SpaceBetweenTwoHebrewWordsKeepsTheirDirection(DrawTextDirection direction)
+    {
+        DrawTextLayout layout = Layout("שלום עולם", new DrawTextLayoutOptions(direction: direction));
+
+        DrawTextLayoutRun run = Assert.Single(layout.Lines[0].Runs);
+        Assert.Equal("שלום עולם", run.Text);
+        Assert.Equal(DrawTextDirection.RightToLeft, run.Direction);
+    }
+
+    // The line as drawn from left to right: the runs by position, each right-to-left run with its graphemes reversed.
+    private static string VisualText(DrawTextLayoutLine line) =>
+        string.Concat(line.Runs
+            .OrderBy(static run => run.Bounds.X)
+            .Select(static run => run.Direction == DrawTextDirection.RightToLeft
+                ? string.Concat(UnicodeLineBreakEngine.CreateTextElements(run.Text).Reverse().Select(static element => element.Text))
+                : run.Text));
+
     // Decoration metrics
 
     [Fact]

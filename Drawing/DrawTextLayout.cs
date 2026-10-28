@@ -478,24 +478,47 @@ internal static class DrawTextLayoutEngine
         // After the first-line fallback: a first line that is the whole text hides nothing.
         bool omitted = accepted.Count < candidates.Count;
 
-        if (accepted.Count > 0 && options.Trimming != DrawTextTrimming.None)
+        // As in WPF, every line wider than MaxWidth collapses, and the last line also when later lines are omitted.
+        if (options.Trimming != DrawTextTrimming.None)
         {
-            int lastIndex = accepted.Count - 1;
-            UnicodeLineSegment last = accepted[lastIndex];
-            bool widthOverflow = float.IsFinite(options.MaxWidth) && last.Width > options.MaxWidth;
-            if (omitted || widthOverflow)
+            float[] ellipsisWidths = new float[ranges.Length];
+            Array.Fill(ellipsisWidths, float.NaN);
+            for (int index = 0; index < accepted.Count; index++)
             {
-                DrawTextSpan ellipsisStyle = FindSpan(ranges, last.SourceStart + Math.Max(0, last.SourceLength - 1));
-                accepted[lastIndex] = UnicodeLineBreakEngine.CollapseLine(
+                UnicodeLineSegment line = accepted[index];
+                bool hidesLaterLines = omitted && index == accepted.Count - 1;
+                bool widthOverflow = float.IsFinite(options.MaxWidth) && line.Width > options.MaxWidth;
+                if (!hidesLaterLines && !widthOverflow)
+                {
+                    continue;
+                }
+
+                accepted[index] = UnicodeLineBreakEngine.CollapseLine(
                     text,
-                    last,
+                    line,
                     options.MaxWidth,
                     options.Trimming == DrawTextTrimming.WordEllipsis
                         ? UnicodeLineTrimMode.WordEllipsis
                         : UnicodeLineTrimMode.CharacterEllipsis,
                     Measure,
-                    value => MeasureLiteral(value, ellipsisStyle, options.Scale),
-                    forceEllipsis: omitted);
+                    end => MeasureEllipsis(FindEllipsisSpanIndex(ranges, line.SourceStart, end)),
+                    forceEllipsis: hidesLaterLines);
+            }
+
+            float MeasureEllipsis(int spanIndex)
+            {
+                if (float.IsNaN(ellipsisWidths[spanIndex]))
+                {
+                    // With the font that CreateFragments selects for the ellipsis, so the reserved width is the drawn one.
+                    ellipsisWidths[spanIndex] = MeasureSpanText(
+                        UnicodeLineBreakEngine.Ellipsis,
+                        0,
+                        UnicodeLineBreakEngine.Ellipsis.Length,
+                        ranges[spanIndex].Span,
+                        options.Scale);
+                }
+
+                return ellipsisWidths[spanIndex];
             }
         }
 
@@ -754,23 +777,18 @@ internal static class DrawTextLayoutEngine
     {
         List<Fragment> logical = [];
         int sourceEnd = segment.SourceStart + segment.SourceLength;
-        foreach (UnicodeTextElement element in UnicodeLineBreakEngine.CreateTextElements(
+        UnicodeTextElement[] elements = UnicodeLineBreakEngine.CreateTextElements(
             text,
             segment.SourceStart,
-            segment.SourceLength))
+            segment.SourceLength);
+        UnicodeTextDirection[] directions = ResolveDirections(elements, baseDirection);
+        for (int index = 0; index < elements.Length; index++)
         {
+            UnicodeTextElement element = elements[index];
             int spanIndex = FindSpanIndex(ranges, element.Start);
             DrawTextSpan span = ranges[spanIndex].Span;
             IDrawFont font = ResolveFont(span, element.Text, scale);
-            UnicodeTextDirection direction = UnicodeBidiEngine.GetDirection(element.Text);
-            if (direction == UnicodeTextDirection.Neutral)
-            {
-                direction = logical.Count > 0
-                    ? logical[^1].Direction
-                    : baseDirection == DrawTextDirection.RightToLeft
-                        ? UnicodeTextDirection.RightToLeft
-                        : UnicodeTextDirection.LeftToRight;
-            }
+            UnicodeTextDirection direction = directions[index];
             AddOrMerge(
                 logical,
                 new Fragment(
@@ -780,38 +798,87 @@ internal static class DrawTextLayoutEngine
                     span.Brush,
                     span.Opacity,
                     direction,
-                    MeasureLiteral(element.Text, font, span.Size * scale),
-                    UnicodeLineBreakEngine.IsBreakWhitespace(element.Text),
+                    0,
+                    // Justification stretches every white space, also a no-break space, which is no break white space.
+                    element.Text.All(char.IsWhiteSpace),
                     spanIndex),
                 preserveClusters);
         }
 
         if (segment.IsTrimmed && segment.Text.EndsWith(UnicodeLineBreakEngine.Ellipsis, StringComparison.Ordinal))
         {
-            int spanIndex = FindSpanIndex(ranges, Math.Max(segment.SourceStart, sourceEnd - 1));
+            int spanIndex = FindEllipsisSpanIndex(ranges, segment.SourceStart, sourceEnd);
             DrawTextSpan span = ranges[spanIndex].Span;
             // The ellipsis is a neutral at the end of the line, so it takes the paragraph direction (UAX #9 rules N1 and N2)
             // and ReorderVisually keeps it at the visual end of the line.
             UnicodeTextDirection direction = baseDirection == DrawTextDirection.RightToLeft
                 ? UnicodeTextDirection.RightToLeft
                 : UnicodeTextDirection.LeftToRight;
+            // The ellipsis is a grapheme cluster of the span, so it gets the same font selection as the span text.
             AddOrMerge(
                 logical,
                 new Fragment(
                     UnicodeLineBreakEngine.Ellipsis,
-                    span.Font,
+                    ResolveFont(span, UnicodeLineBreakEngine.Ellipsis, scale),
                     span.Size * scale,
                     span.Brush,
                     span.Opacity,
                     direction,
-                    MeasureLiteral(UnicodeLineBreakEngine.Ellipsis, span, scale),
+                    0,
                     false,
                     spanIndex),
                 preserveClusters);
         }
 
+        // A fragment is drawn as one shaped run, so its width is the advance of that run, with the kerning and the
+        // ligatures between its clusters, as the line breaker measured it.
+        for (int index = 0; index < logical.Count; index++)
+        {
+            Fragment fragment = logical[index];
+            logical[index] = fragment with { Width = MeasureLiteral(fragment.Text, fragment.Font, fragment.Size) };
+        }
+
         ReorderVisually(logical, baseDirection);
         return logical.ToArray();
+    }
+
+    // The direction of every text element of a line. A sequence of neutrals between two strong elements of the same
+    // direction takes that direction; between different directions it takes the embedding direction (Unicode UAX #9 rules
+    // N1 and N2). The start and the end of the line count as the embedding direction. So in a left-to-right line the space
+    // in "שלום efgh" is left-to-right and the one in "שלום עולם" is right-to-left.
+    private static UnicodeTextDirection[] ResolveDirections(UnicodeTextElement[] elements, DrawTextDirection baseDirection)
+    {
+        UnicodeTextDirection embedding = baseDirection == DrawTextDirection.RightToLeft
+            ? UnicodeTextDirection.RightToLeft
+            : UnicodeTextDirection.LeftToRight;
+        UnicodeTextDirection[] directions = new UnicodeTextDirection[elements.Length];
+        for (int index = 0; index < elements.Length; index++)
+        {
+            directions[index] = UnicodeBidiEngine.GetDirection(elements[index].Text);
+        }
+
+        int neutralStart = 0;
+        while (neutralStart < directions.Length)
+        {
+            if (directions[neutralStart] != UnicodeTextDirection.Neutral)
+            {
+                neutralStart++;
+                continue;
+            }
+
+            int neutralEnd = neutralStart + 1;
+            while (neutralEnd < directions.Length && directions[neutralEnd] == UnicodeTextDirection.Neutral)
+            {
+                neutralEnd++;
+            }
+
+            UnicodeTextDirection before = neutralStart > 0 ? directions[neutralStart - 1] : embedding;
+            UnicodeTextDirection after = neutralEnd < directions.Length ? directions[neutralEnd] : embedding;
+            Array.Fill(directions, before == after ? before : embedding, neutralStart, neutralEnd - neutralStart);
+            neutralStart = neutralEnd;
+        }
+
+        return directions;
     }
 
     // Unicode UAX #9 rule L2: from the highest embedding level down to the lowest odd level, reverse every sequence of
@@ -862,7 +929,6 @@ internal static class DrawTextLayoutEngine
                 fragments[^1] = previous with
                 {
                     Text = previous.Text + candidate.Text,
-                    Width = previous.Width + candidate.Width,
                     IsWhitespace = false
                 };
                 return;
@@ -894,6 +960,11 @@ internal static class DrawTextLayoutEngine
 
     private static DrawTextSpan FindSpan(SpanRange[] ranges, int sourceIndex) =>
         ranges[FindSpanIndex(ranges, sourceIndex)].Span;
+
+    // The ellipsis after kept text that ends at keptEnd has the style of the last kept character, or of the line start when
+    // nothing is kept. Trimming measures it and the line draws it with this one span.
+    private static int FindEllipsisSpanIndex(SpanRange[] ranges, int lineStart, int keptEnd) =>
+        FindSpanIndex(ranges, Math.Max(lineStart, keptEnd - 1));
 
     private static int FindSpanIndex(SpanRange[] ranges, int sourceIndex)
     {
