@@ -38,6 +38,7 @@ internal sealed class CernealaPreviewHostClient : IDisposable
         int width,
         int height,
         bool audioEnabled,
+        bool recompile,
         CancellationToken cancellationToken) =>
         SendAsync(new PreviewRequest
         {
@@ -46,7 +47,8 @@ internal sealed class CernealaPreviewHostClient : IDisposable
             SourceText = sourceText,
             Width = width,
             Height = height,
-            AudioEnabled = audioEnabled
+            AudioEnabled = audioEnabled,
+            Recompile = recompile
         }, cancellationToken);
 
     public Task<PreviewResponse> CaptureAsync(CancellationToken cancellationToken) =>

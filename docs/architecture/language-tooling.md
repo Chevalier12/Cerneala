@@ -208,11 +208,18 @@ Example from `PreviewHostTests.LiteralPropertyEditUpdatesTheLiveTreeWithoutRecom
    and answers with a `Frame`. At `RenderScale` 0.9 the frame is 288 x 162 pixels.
 3. The client sends `Render` again with the same path and size, but
    `Background="#FF080A0D"` is now `Background="#FF203040"`.
-4. Path, size and audio setting match, so the server first calls
-   `TryApplyMarkup`, which uses `PreviewMarkupHotReload.TryApply`.
+4. Path, size and audio setting match, and `Recompile` is not set, so the server
+   first calls `TryApplyMarkup`, which uses `PreviewMarkupHotReload.TryApply`.
    - The result is `Applied`.
    - The server stores the new text as its active source.
    - The answer is a `Frame` with `CompileMilliseconds == 0`.
+
+A `Render` with `Recompile` set always compiles: the editor's **Refresh** button
+sends it. Before that compile, `PreviewCompiler` replaces the text of every
+source and markup file of the already loaded project with the text saved on
+disk, so a saved code-behind edit, for example a new color set in the
+constructor of `View.crn.cs`, is in the new frame. Files added to or removed
+from the project, and changes to the project file, are not reloaded.
 
 `PreviewMarkupHotReload.TryApply` gives one of four results:
 
@@ -222,6 +229,7 @@ Example from `PreviewHostTests.LiteralPropertyEditUpdatesTheLiveTreeWithoutRecom
 | Only literal attribute values changed, for example `Opacity="0.5"` to `Opacity="0.75"` | `Applied` | Captures a new frame; the tree now has `Opacity == 0.75` |
 | The new text is not valid XML, or a value does not convert, for example `Opacity="-"` | `DeferredInvalidEdit` | Captures a frame of the unchanged tree; `Opacity` stays `0.5` |
 | Elements added or removed (`<Border />` to `<Border><TextBlock /></Border>`), or a change to `Aspect`, `Name` or `TargetType` | `RequiresCompilation` | Compiles again |
+| The old value binds (a path token, an interpolation or an expression), for example `Text="$Source.Text:TwoWay"` to `Text="Bob"`, or a new string value binds, for example `Text="Hello"` to `Text="Hello $DataContext.Name"` | `RequiresCompilation` | Compiles again; the old binding is not left attached, and `Source.Text` keeps its value |
 
 `TryApply` first prepares every change, then applies them all. If one apply
 fails, the changes already applied are rolled back and the result is

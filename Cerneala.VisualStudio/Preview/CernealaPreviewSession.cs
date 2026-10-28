@@ -27,6 +27,7 @@ internal sealed class CernealaPreviewSession : IDisposable
     private long animationFrameStartedTimestamp;
     private bool requestInFlight;
     private bool renderPending;
+    private bool recompilePending;
     private bool animationActive;
     private bool disposed;
 
@@ -197,7 +198,12 @@ internal sealed class CernealaPreviewSession : IDisposable
         RaiseChanged();
     }
 
-    public void Refresh() => QueueRender(immediate: true);
+    // Refresh compiles again even when the markup is unchanged, so saved code-behind edits show.
+    public void Refresh()
+    {
+        recompilePending = true;
+        QueueRender(immediate: true);
+    }
 
     // Audio is never enabled implicitly; changing it recreates the preview runtime.
     public void SetAudioEnabled(bool enabled)
@@ -348,6 +354,8 @@ internal sealed class CernealaPreviewSession : IDisposable
         }
 
         renderPending = false;
+        bool recompile = recompilePending;
+        recompilePending = false;
         bool hasRenderedFrame = Frame is not null;
         if (!hasRenderedFrame)
         {
@@ -371,6 +379,7 @@ internal sealed class CernealaPreviewSession : IDisposable
                 ViewportWidth,
                 ViewportHeight,
                 AudioEnabled,
+                recompile,
                 lifetime.Token);
             ApplyResponse(response, updateStatus: !hasRenderedFrame);
             if (hasRenderedFrame)
