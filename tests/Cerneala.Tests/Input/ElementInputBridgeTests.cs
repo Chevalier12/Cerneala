@@ -630,6 +630,76 @@ public sealed class ElementInputBridgeTests
             $"PreviewMouseDoubleClick {previewAfterPress} and {previewDoubleClicks}; expected 1 at the press and 1 at the end.");
     }
 
+    // As WPF's Control.HandleDoubleClick, a class handler of PreviewMouseLeftButtonDown and MouseLeftButtonDown that
+    // raises the double click when ClickCount is 2 and ends with "if (doubleClick.Handled) e.Handled = true": the
+    // preview double click runs in the tunnel of the second press, the double click in its bubble, each before the
+    // element's own button-down handlers, and a handled double click marks the press handled (#1178).
+    [Theory]
+    [InlineData("none")]
+    [InlineData("preview")]
+    [InlineData("bubble")]
+    public void DoubleClickRunsInsideTheSecondPressAndAHandledDoubleClickMarksThePressHandled(string handledBy)
+    {
+        UIRoot root = new(100, 100);
+        UIElement panel = HitTestServiceTests.Arranged(0, 0, 60, 60);
+        Control control = new();
+        control.Arrange(new ArrangeContext(new LayoutRect(0, 0, 40, 40)));
+        panel.VisualChildren.Add(control);
+        root.VisualChildren.Add(panel);
+        List<string> log = [];
+        control.PreviewMouseDoubleClick += (_, args) =>
+        {
+            log.Add("control.PreviewMouseDoubleClick");
+            args.Handled = handledBy == "preview";
+        };
+        control.MouseDoubleClick += (_, args) =>
+        {
+            log.Add("control.MouseDoubleClick");
+            args.Handled = handledBy == "bubble";
+        };
+        control.Handlers.AddHandler(InputEvents.MouseLeftButtonDownEvent, (_, args) => log.Add($"control.MouseLeftButtonDown {((MouseButtonEventArgs)args).ClickCount}"));
+        panel.Handlers.AddHandler(InputEvents.MouseLeftButtonDownEvent, (_, args) => log.Add($"panel.MouseLeftButtonDown {((MouseButtonEventArgs)args).ClickCount}"));
+        ElementInputBridge bridge = new();
+        LeftClick(bridge, root, 10, 10, TimeSpan.Zero);
+        log.Clear();
+
+        bridge.Dispatch(root, ButtonsFrame(10, 10, previousLeft: false, previousRight: false, currentLeft: true, currentRight: false), TimeSpan.Zero);
+        bridge.Dispatch(root, ButtonsFrame(10, 10, previousLeft: true, previousRight: false, currentLeft: false, currentRight: false), TimeSpan.Zero);
+
+        string[] expected = handledBy switch
+        {
+            // Microsoft Learn, Control.PreviewMouseDoubleClick: after a handled PreviewMouseDoubleClick "the
+            // MouseDoubleClick event will occur with Handled set to true", so its ordinary handler does not run.
+            "preview" => ["control.PreviewMouseDoubleClick"],
+            "bubble" => ["control.PreviewMouseDoubleClick", "control.MouseDoubleClick"],
+            _ => ["control.PreviewMouseDoubleClick", "control.MouseDoubleClick", "control.MouseLeftButtonDown 2", "panel.MouseLeftButtonDown 2"]
+        };
+        Assert.True(
+            log.SequenceEqual(expected),
+            $"handledBy={handledBy}: second click logged [{string.Join(", ", log)}], expected [{string.Join(", ", expected)}].");
+    }
+
+    // A handled preview double click keeps the press from the focus, as a handled PreviewMouseLeftButtonDown does (#1178).
+    [Fact]
+    public void HandledPreviewDoubleClickKeepsTheSecondPressFromMovingTheFocus()
+    {
+        UIRoot root = new(100, 100);
+        Control control = new() { Focusable = true };
+        control.Arrange(new ArrangeContext(new LayoutRect(0, 0, 40, 40)));
+        UIElement other = new() { Focusable = true };
+        root.VisualChildren.Add(control);
+        root.VisualChildren.Add(other);
+        control.PreviewMouseDoubleClick += (_, args) => args.Handled = true;
+        ElementInputBridge bridge = new();
+        LeftClick(bridge, root, 10, 10, TimeSpan.Zero);
+        Assert.Same(control, bridge.FocusManager.FocusedElement);
+        Assert.True(bridge.FocusManager.Focus(other, root.InputCache.EnsureCurrent(root)));
+
+        bridge.Dispatch(root, ButtonsFrame(10, 10, previousLeft: false, previousRight: false, currentLeft: true, currentRight: false), TimeSpan.Zero);
+
+        Assert.Same(other, bridge.FocusManager.FocusedElement);
+    }
+
     [Fact]
     public void SecondPressAfterMoreThanTheDoubleClickTimeRestartsTheClickCount()
     {

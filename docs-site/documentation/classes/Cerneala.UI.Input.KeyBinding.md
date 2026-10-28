@@ -46,6 +46,12 @@ Gesture matching is delegated to `KeyGesture.Matches`. Modifier matching is exac
 
 When the command is a `RoutedCommand`, the inherited routed `TryExecute` overload executes it through `CommandRouter` with the supplied target and route map. In retained input processing, key bindings can be attached through `UIElement.InputBindings`; tests cover execution on the focused element and matching ancestor bindings.
 
+In retained input processing, `ElementInputBridge` tries the bindings once for each unhandled key press of the frame, and a `KeyBinding` runs only for the press of its own `KeyGesture.Key`, as WPF's `KeyGesture.Matches` compares its key with the key of the `KeyEventArgs`. One press of the gesture therefore runs the command once, also when other keys go down in the same frame. For example, with a `Ctrl+S` binding on the focused element:
+
+- `Ctrl` and `S` go down in the same frame: the command runs once, for the `S` press. The `Ctrl` press does not run it again.
+- `Ctrl` is held, and `S` and `A` go down in the same frame: the command runs once.
+- A `KeyDown` handler marks the `KeyDown` of `S` handled: the command does not run, also when `Ctrl` goes down unhandled in the same frame.
+
 ## Constructors
 | Name | Description |
 | --- | --- |

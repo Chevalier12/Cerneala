@@ -31,7 +31,11 @@ public sealed class DragDropController
 
         ElementInputRouteMap routeMap = root.InputCache.EnsureCurrent(root);
         HitTestResult? target = hitTestService.HitTest(root, routeMap, x, y);
-        if (session.CurrentTarget is not null && !ReferenceEquals(session.CurrentTarget.Element, target?.Element))
+        // A previous target that left the input route, for example because a handler disabled, collapsed or removed it,
+        // gets no DragLeave, as HoverTracker raises no MouseLeave on an element that left the input tree (#772).
+        if (session.CurrentTarget is not null &&
+            !ReferenceEquals(session.CurrentTarget.Element, target?.Element) &&
+            routeMap.Contains(session.CurrentTarget.Element))
         {
             Raise(routeMap, session.CurrentTarget, InputEvents.PreviewDragLeaveEvent, InputEvents.DragLeaveEvent, x, y);
         }
