@@ -35,25 +35,43 @@ internal sealed class DesignPreviewSession : IDisposable
             useMultisampling: false,
             coordinateScaleOverride: renderScale);
         WindowApplicationRuntime runtime = new(platform);
-        application.Install(runtime);
-        ServiceCollection services = new();
-        application.ConfigureAndPublishServices(services);
-
-        UIElement content = createContent();
-        Window window = content as Window ?? new Window
+        try
         {
-            Content = content,
-            Title = "Cerneala Live Preview",
-            ShowInTaskbar = false,
-            WindowStartupLocation = WindowStartupLocation.Manual,
-            Left = -32_000,
-            Top = -32_000
-        };
-        window.Width = width;
-        window.Height = height;
-        window.ShowInTaskbar = false;
-        runtime.StartPreviewWindow(window);
-        return new DesignPreviewSession(runtime, window);
+            application.Install(runtime);
+            ServiceCollection services = new();
+            application.ConfigureAndPublishServices(services);
+
+            UIElement content = createContent();
+            Window window = content as Window ?? new Window
+            {
+                Content = content,
+                Title = "Cerneala Live Preview",
+                ShowInTaskbar = false,
+                WindowStartupLocation = WindowStartupLocation.Manual,
+                Left = -32_000,
+                Top = -32_000
+            };
+            window.Width = width;
+            window.Height = height;
+            window.ShowInTaskbar = false;
+            runtime.StartPreviewWindow(window);
+            return new DesignPreviewSession(runtime, window);
+        }
+        catch (Exception failure)
+        {
+            // A session that fails to start still owns its runtime and Application: retire both, so that
+            // Application.Current is cleared and the next session can install its own.
+            try
+            {
+                runtime.Dispose();
+            }
+            catch (Exception disposeFailure)
+            {
+                throw new AggregateException(failure, disposeFailure);
+            }
+
+            throw;
+        }
     }
 
     public void Pump(TimeSpan elapsedTime)
