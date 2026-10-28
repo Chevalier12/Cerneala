@@ -36,6 +36,8 @@ public sealed class TiledHostileInputTests : IDisposable
     [InlineData("renderorder", "SCN2D004")]
     [InlineData("tileset-offset", "SCN2D004")]
     [InlineData("animation", "SCN2D004")]
+    [InlineData("image-collection", "SCN2D004")]
+    [InlineData("atlas-zero-columns", "SCN2D007")]
     [InlineData("reserved-property", "SCN2D015")]
     [InlineData("malformed-property", "SCN2D016")]
     [InlineData("rooted-asset", "SCN2D010")]
@@ -60,6 +62,15 @@ public sealed class TiledHostileInputTests : IDisposable
             case "renderorder": map["renderorder"] = "left-up"; break;
             case "tileset-offset": set["tileoffset"] = new JsonObject { ["x"] = 1, ["y"] = 0 }; break;
             case "animation": set["tiles"]![0]!["animation"] = new JsonArray(); break;
+            case "image-collection":
+                // An image-collection tileset has no top-level image, "columns": 0 and one image per tile.
+                set.AsObject().Remove("image");
+                set.AsObject().Remove("imagewidth");
+                set.AsObject().Remove("imageheight");
+                set["columns"] = 0;
+                set["tiles"] = new JsonArray(new JsonObject { ["id"] = 0, ["image"] = "a.png", ["imagewidth"] = 16, ["imageheight"] = 16 });
+                break;
+            case "atlas-zero-columns": set["columns"] = 0; break;
             case "reserved-property": map["properties"] = new JsonArray(new JsonObject { ["name"] = "$SourceName", ["type"] = "string", ["value"] = "spoofed" }); break;
             case "malformed-property": map["properties"] = new JsonArray(new JsonObject { ["name"] = "Value", ["type"] = "bool", ["value"] = "true" }); break;
             case "rooted-asset": set["image"] = Path.Combine(root, "atlas.svg"); break;

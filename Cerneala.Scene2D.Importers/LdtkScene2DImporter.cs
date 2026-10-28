@@ -211,7 +211,9 @@ public static class LdtkScene2DImporter
                 string kind = FieldKind(RequiredText(value, "__type"));
                 if (context.Boolean(context.Required(value, "isArray"))) { context.Fail("SCN2D004", "Array fields are outside v1."); }
                 string internalType = kind switch { "Int" => "F_Int", "Float" => "F_Float", "Bool" => "F_Bool", "Color" => "F_Color", "FilePath" => "F_Path", "Multilines" => "F_Text", _ => "F_String" };
-                if (RequiredText(value, "type") != internalType) { context.Fail("SCN2D015", "Field definition type caches conflict."); }
+                // Without the "Use Multilines type" project option, LDtk exports a multi-line text field as "String" with F_Text.
+                string type = RequiredText(value, "type");
+                if (type != internalType && !(kind == "String" && type == "F_Text")) { context.Fail("SCN2D015", "Field definition type caches conflict."); }
                 int uid = Uid(value); string name = RequiredText(value, "identifier"); CheckName(name, names);
                 fields.Add(uid, new(name, kind, context.Boolean(context.Required(value, "canBeNull"))));
             }

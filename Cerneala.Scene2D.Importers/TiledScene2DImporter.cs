@@ -104,6 +104,8 @@ public static class TiledScene2DImporter
             context.Fields(set, "columns fillmode firstgid grid image imageheight imagewidth margin name objectalignment properties spacing tilecount tileheight tileoffset tilerendersize tiles tilewidth type version",
                 "backgroundcolor class tiledversion", "editorsettings terrains transformations wangsets", properties);
             context.Expect(set, "type", "tileset");
+            // Tiled writes a tileset image only for an atlas; without one the tileset is an image collection ("columns": 0).
+            if (!set.TryGetProperty("image", out _)) { context.Fail("SCN2D004", "Image-collection tilesets are outside v1; a tileset requires one atlas image."); }
             context.Expect(set, "fillmode", "stretch");
             context.Expect(set, "tilerendersize", "tile");
             if (context.Text(set, "objectalignment", "unspecified") is not

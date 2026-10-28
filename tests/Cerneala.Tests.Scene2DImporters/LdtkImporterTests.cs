@@ -210,6 +210,107 @@ public sealed class LdtkImporterTests
     }
 
     [Theory]
+    [InlineData("F_String", "\"ab\"", "ab")]
+    [InlineData("F_Text", "\"a\\nb\"", "a\nb")]
+    public void MultilineTextFieldOfAProjectWithoutTheMultilinesTypeOptionIsAccepted(string internalKind, string json, string expected)
+    {
+        // Without LDtk's "Use Multilines type" option a multi-line field exports __type "String" with type "F_Text".
+        using Fixture fixture = new();
+        JsonObject source = Entity(fixture.Root, "Spawn", "Box");
+        JsonNode field = source["fieldInstances"]![2]!;
+        field["__identifier"] = "Custom"; field["__type"] = "String"; field["__value"] = JsonNode.Parse(json);
+        JsonNode definition = fixture.Root["defs"]!["entities"]![0]!["fieldDefs"]![2]!;
+        definition["identifier"] = "Custom"; definition["__type"] = "String"; definition["type"] = internalKind; definition["canBeNull"] = true;
+
+        object? value = Assert.Single(Assert.Single(Success(fixture.Import()).Levels).Entities).Properties["Custom"];
+
+        Assert.Equal(expected, value);
+    }
+
+    [Theory]
+    [InlineData("Int", "F_Text")]
+    [InlineData("Multilines", "F_String")]
+    [InlineData("Bool", "F_Text")]
+    public void InconsistentFieldTypeCachesStillConflict(string kind, string internalKind)
+    {
+        using Fixture fixture = new();
+        Entity(fixture.Root, "Spawn", "Box");
+        JsonNode definition = fixture.Root["defs"]!["entities"]![0]!["fieldDefs"]![2]!;
+        definition["__type"] = kind; definition["type"] = internalKind;
+        Scene2DImportResult result = fixture.Import();
+        Assert.Null(result.Document);
+        Assert.Contains(result.Diagnostics, item => item.Code == "SCN2D015");
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData(2)]
+    public void NullableTileIdFieldLeftNullImportsAsPromotionWithoutOverride(int? tileId)
+    {
+        using Fixture fixture = new();
+        JsonObject source = Entity(fixture.Root, "Promote", "Box");
+        AddTileId(fixture.Root, source, tileId);
+
+        TilePromotion2D promotion = Assert.Single(Assert.Single(Success(fixture.Import()).Levels).Promotions);
+
+        Assert.Equal(tileId, promotion.TileId);
+    }
+
+    [Fact]
+    public void NullableTileIdFieldLeftNullOverAnEmptyCellReportsTheEmptyCellError()
+    {
+        using Fixture fixture = new();
+        JsonObject source = Entity(fixture.Root, "Promote", "Box");
+        source["fieldInstances"]![9]!["__value"] = 1; // Ground cell (1, 1) has no tile.
+        AddTileId(fixture.Root, source, null);
+
+        Scene2DImportResult result = fixture.Import();
+
+        Assert.Null(result.Document);
+        Scene2DDiagnostic error = Assert.Single(result.Diagnostics, item => item.Severity != Scene2DDiagnosticSeverity.Warning);
+        Assert.Equal("SCN2D012", error.Code);
+        Assert.Contains("empty cell", error.Message, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("CernealaRole")]
+    [InlineData("ColliderShape")]
+    [InlineData("CollisionLayer")]
+    [InlineData("CollisionMask")]
+    [InlineData("IsTrigger")]
+    public void NullableConventionFieldLeftNullUsesTheConventionDefault(string name)
+    {
+        using Fixture fixture = new();
+        JsonObject source = Entity(fixture.Root, "Collider", "Ellipse");
+        int index = source["fieldInstances"]!.AsArray().Select(item => (string)item!["__identifier"]!).ToList().IndexOf(name);
+        source["fieldInstances"]![index]!["__value"] = null;
+        fixture.Root["defs"]!["entities"]![0]!["fieldDefs"]![index]!["canBeNull"] = true;
+
+        Scene2DEntity entity = Assert.Single(Assert.Single(Success(fixture.Import()).Levels).Entities);
+
+        Assert.Null(entity.Properties[name]);
+        if (name == "CernealaRole") { Assert.Equal("Metadata", entity.Role); Assert.Null(entity.Collider); return; }
+        TileColliderDescriptor2D collider = Assert.IsType<TileColliderDescriptor2D>(entity.Collider);
+        Assert.Equal(name == "ColliderShape" ? "Box" : "Ellipse", entity.Shape);
+        Assert.Equal(name == "CollisionLayer" ? 1u : 0u, collider.CollisionLayer);
+        Assert.Equal(0xffffffffu, collider.CollisionMask);
+        Assert.Equal(name != "IsTrigger", collider.IsTrigger);
+    }
+
+    private static void AddTileId(JsonObject root, JsonObject entity, int? tileId)
+    {
+        entity["fieldInstances"]!.AsArray().Add(new JsonObject
+        {
+            ["__identifier"] = "TileId", ["__type"] = "Int", ["__value"] = tileId.HasValue ? JsonValue.Create(tileId.Value) : null,
+            ["defUid"] = 99, ["realEditorValues"] = new JsonArray()
+        });
+        root["defs"]!["entities"]![0]!["fieldDefs"]!.AsArray().Add(new JsonObject
+        {
+            ["identifier"] = "TileId", ["__type"] = "Int", ["type"] = "F_Int", ["uid"] = 99, ["isArray"] = false, ["canBeNull"] = true
+        });
+    }
+
+    [Theory]
     [InlineData("Root")]
     [InlineData("Definitions")]
     [InlineData("World")]
