@@ -691,6 +691,65 @@ public sealed class SliderTests
             $"unit={unit}: Value={slider.Value:R} is {ticks:R} ticks after Right from 3 ticks (expected 4).");
     }
 
+    // #1121: the ticks of -bound..bound with TickFrequency bound / 2 are -bound, -bound / 2, 0, bound / 2 and bound, also
+    // when value - Minimum overflows float. Left from Maximum goes to the tick below it, bound / 2.
+    [Theory]
+    [InlineData(1f)]
+    [InlineData(3e38f)]
+    public void ArrowKeyWithSnapToTickMovesToTheNextTickForLargeFiniteEndpoints(float bound)
+    {
+        Button other = new() { Content = "other", Width = 100, Height = 30 };
+        Slider slider = new()
+        {
+            Minimum = -bound,
+            Maximum = bound,
+            TickFrequency = bound / 2,
+            IsSnapToTickEnabled = true,
+            SmallChange = bound / 10,
+            Value = bound,
+            Width = 200,
+            Height = 20
+        };
+        (UIRoot root, ElementInputBridge bridge) = CreateWindowRoot(other, slider);
+        Click(root, bridge, other);
+        PressKey(root, bridge, InputKey.Tab);
+
+        PressKey(root, bridge, InputKey.Left);
+
+        Assert.True(
+            slider.Value == bound / 2,
+            $"bound={bound}: Value={slider.Value:R} after Left from Maximum (expected {bound / 2:R}).");
+    }
+
+    // #1121: a thumb drag over 30 of the 100 pixels of travel from Minimum gives Minimum + 0.3 of the range, whose nearest
+    // tick is -bound / 2, also when value - Minimum overflows float.
+    [Theory]
+    [InlineData(1f)]
+    [InlineData(3e38f)]
+    public void ThumbDragWithSnapToTickSnapsToTheNearestTickForLargeFiniteEndpoints(float bound)
+    {
+        UIRoot root = new(200, 100);
+        Slider slider = new()
+        {
+            Minimum = -bound,
+            Maximum = bound,
+            TickFrequency = bound / 2,
+            IsSnapToTickEnabled = true,
+            Value = -bound
+        };
+        slider.Measure(new MeasureContext(new LayoutSize(110, 20)));
+        slider.Arrange(new ArrangeContext(new LayoutRect(0, 0, 110, 20)));
+        root.VisualChildren.Add(slider);
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(5, 5, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(5, 5, 35, 5, previousDown: true, currentDown: true));
+
+        Assert.True(
+            slider.Value == -bound / 2,
+            $"bound={bound}: Value={slider.Value:R} after a drag to 0.3 of the travel (expected {-bound / 2:R}).");
+    }
+
     // As WPF's Slider.MoveToNextTick for the track's repeat buttons: with snapping, a press beside the thumb moves to the
     // next tick by LargeChange: from 4 with LargeChange 3 and TickFrequency 2, a press before the thumb goes to 2.
     [Fact]
@@ -990,6 +1049,47 @@ public sealed class SliderTests
         IReadOnlyList<(DrawCommandKind Kind, LayoutRect Rect, Color? Color, float Thickness)> commands = RenderBoxes(slider);
 
         Assert.Equal((DrawCommandKind.FillRectangle, new LayoutRect(0, 45, 20, 40), new Color(0, 120, 215), 0f), commands[2]);
+    }
+
+    // #1119: the band does not depend on the size of the values. On -bound..bound, SelectionStart 0 and SelectionEnd bound
+    // cover the upper half of the thumb center's 100-pixel travel, which starts 5 pixels from the track's end: x 55..105
+    // horizontally, x 5..55 reversed, y 5..55 vertically (Minimum at the bottom), y 55..105 vertical reversed.
+    // SelectionStart -bound covers the whole travel. Rows with bound 3e38 overflow float in Maximum - Minimum.
+    [Theory]
+    [InlineData(Orientation.Horizontal, false, 1f, 0f, 55f, 50f)]
+    [InlineData(Orientation.Horizontal, false, 3e38f, 0f, 55f, 50f)]
+    [InlineData(Orientation.Horizontal, true, 3e38f, 0f, 5f, 50f)]
+    [InlineData(Orientation.Vertical, false, 3e38f, 0f, 5f, 50f)]
+    [InlineData(Orientation.Vertical, true, 3e38f, 0f, 55f, 50f)]
+    [InlineData(Orientation.Horizontal, false, 3e38f, -3e38f, 5f, 100f)]
+    [InlineData(Orientation.Horizontal, true, 3e38f, -3e38f, 5f, 100f)]
+    public void SelectionRangeIsPlacedForLargeFiniteEndpoints(
+        Orientation orientation,
+        bool reversed,
+        float bound,
+        float selectionStart,
+        float expectedOffset,
+        float expectedLength)
+    {
+        Slider slider = CreateSelectionSlider(orientation);
+        slider.Minimum = -bound;
+        slider.Maximum = bound;
+        slider.IsDirectionReversed = reversed;
+        slider.SelectionStart = selectionStart;
+        slider.SelectionEnd = bound;
+        slider.IsSelectionRangeEnabled = true;
+
+        List<LayoutRect> bands = RenderBoxes(slider)
+            .Where(command => command.Kind == DrawCommandKind.FillRectangle && command.Color == new Color(0, 120, 215))
+            .Select(command => command.Rect)
+            .ToList();
+
+        LayoutRect expected = orientation == Orientation.Horizontal
+            ? new LayoutRect(expectedOffset, 0, expectedLength, 20)
+            : new LayoutRect(0, expectedOffset, 20, expectedLength);
+        Assert.True(
+            bands.Count == 1 && bands[0] == expected,
+            $"{orientation}, reversed={reversed}, bound={bound}: selection bands [{string.Join(", ", bands)}] (expected {expected}).");
     }
 
     // The selection range takes no pointer input: a press on it, beside the thumb, still reaches the decrease repeat

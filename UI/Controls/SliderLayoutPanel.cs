@@ -189,6 +189,8 @@ internal sealed class SliderLayoutPanel : Cerneala.UI.Layout.Panels.Panel
 
     // WPF's Slider.UpdateSelectionRangeElementPositionAndSize: the range covers SelectionStart..SelectionEnd along the
     // travel of the thumb's center, which starts half a thumb from each end of the track, and the whole track across.
+    // In double, as WPF computes it: Maximum - Minimum of two finite floats can overflow float (for example 3e38 - -3e38),
+    // and so can the differences of SelectionStart and SelectionEnd with each other and with the ends (#1119).
     private void ArrangeSelectionRange(LayoutRect trackRect, LayoutRect thumb, ArrangeContext context)
     {
         if (selectionRange is null)
@@ -205,22 +207,23 @@ internal sealed class SliderLayoutPanel : Cerneala.UI.Layout.Panels.Panel
         bool horizontal = Orientation == Orientation.Horizontal;
         float trackLength = horizontal ? trackRect.Width : trackRect.Height;
         float thumbLength = horizontal ? thumb.Width : thumb.Height;
-        float range = Maximum - Minimum;
-        float valueToSize = FloatComparison.AreClose(range, 0) || FloatComparison.AreClose(trackLength, thumbLength)
+        double range = (double)Maximum - Minimum;
+        // (float)range is infinite when the range overflows float, and an infinite range is not close to 0.
+        double valueToSize = FloatComparison.AreClose((float)range, 0) || FloatComparison.AreClose(trackLength, thumbLength)
             ? 0
-            : MathF.Max(0, (trackLength - thumbLength) / range);
-        float length = MathF.Max(0, (SelectionEnd - SelectionStart) * valueToSize);
+            : Math.Max(0, (trackLength - thumbLength) / range);
+        float length = (float)Math.Max(0, ((double)SelectionEnd - SelectionStart) * valueToSize);
         LayoutRect rect;
         if (horizontal)
         {
-            float before = IsDirectionReversed ? Maximum - SelectionEnd : SelectionStart - Minimum;
-            float left = (thumbLength * 0.5f) + (MathF.Max(before, 0) * valueToSize);
+            double before = IsDirectionReversed ? (double)Maximum - SelectionEnd : (double)SelectionStart - Minimum;
+            float left = (thumbLength * 0.5f) + (float)(Math.Max(before, 0) * valueToSize);
             rect = new LayoutRect(trackRect.X + left, trackRect.Y, length, trackRect.Height);
         }
         else
         {
-            float before = IsDirectionReversed ? SelectionStart - Minimum : Maximum - SelectionEnd;
-            float top = (thumbLength * 0.5f) + (MathF.Max(before, 0) * valueToSize);
+            double before = IsDirectionReversed ? (double)SelectionStart - Minimum : (double)Maximum - SelectionEnd;
+            float top = (thumbLength * 0.5f) + (float)(Math.Max(before, 0) * valueToSize);
             rect = new LayoutRect(trackRect.X, trackRect.Y + top, trackRect.Width, length);
         }
 
