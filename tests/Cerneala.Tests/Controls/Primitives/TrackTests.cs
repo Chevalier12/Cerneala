@@ -12,6 +12,21 @@ namespace Cerneala.Tests.Controls.Primitives;
 
 public sealed class TrackTests
 {
+    [Theory]
+    [InlineData(float.NaN)]
+    [InlineData(float.PositiveInfinity)]
+    [InlineData(float.NegativeInfinity)]
+    public void NonFiniteValueIsRejectedAndKeepsPreviousValue(float nonFinite)
+    {
+        Track track = new() { Minimum = 10, Maximum = 20, Value = 15 };
+
+        Assert.Throws<ArgumentException>(() => track.Value = nonFinite);
+
+        Assert.Equal(15, track.Value);
+        track.Value = 25;
+        Assert.Equal(20, track.Value);
+    }
+
     [Fact]
     public void TrackPositionsThumbFromHorizontalValue()
     {

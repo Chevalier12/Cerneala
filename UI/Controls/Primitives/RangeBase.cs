@@ -157,10 +157,11 @@ public class RangeBase : Control
         return (float)Math.Min(Math.Max(value, minimum), maximum);
     }
 
+    // A value that is not finite stays as it is, so the validation rejects it, as WPF validates before it coerces (#770).
     private static float CoerceValue(UiObject owner, float value)
     {
         RangeBase range = (RangeBase)owner;
-        return Clamp(value, range.Minimum, range.Maximum);
+        return float.IsFinite(value) ? Clamp(value, range.Minimum, range.Maximum) : value;
     }
 
     private static bool IsValidFloat(float value)
