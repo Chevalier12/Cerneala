@@ -384,7 +384,7 @@ public sealed class UiHost
                 $"A backdrop was requested by {requirement.ScopeCount} Prism scope(s), but no backdrop frame source is configured.");
             return null;
         }
-        if (!TryGetPhysicalViewportSize(
+        if (!viewport.TryGetPixelSize(
                 out int pixelWidth,
                 out int pixelHeight))
         {
@@ -425,27 +425,6 @@ public sealed class UiHost
         backdropFrameCounters.RecordAcquired(
             requirement.ScopeCount);
         return lease;
-    }
-
-    private bool TryGetPhysicalViewportSize(
-        out int pixelWidth,
-        out int pixelHeight)
-    {
-        double width = Math.Ceiling(viewport.Width * viewport.Scale);
-        double height = Math.Ceiling(viewport.Height * viewport.Scale);
-        if (width <= 0 ||
-            height <= 0 ||
-            width > int.MaxValue ||
-            height > int.MaxValue)
-        {
-            pixelWidth = 0;
-            pixelHeight = 0;
-            return false;
-        }
-
-        pixelWidth = (int)width;
-        pixelHeight = (int)height;
-        return true;
     }
 
     private UIRoot RequireRoot()

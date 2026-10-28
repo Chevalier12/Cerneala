@@ -65,6 +65,51 @@ public sealed class WindowScreenshotRegionTests
             out _));
     }
 
+    [Theory]
+    [InlineData(898, 600, 1.75f)]
+    [InlineData(896, 600, 1.75f)]
+    [InlineData(1000, 600, 2f)]
+    [InlineData(600, 898, 1.75f)]
+    public void FullViewportRegionCoversExactlyThePhysicalPixelsTheViewportWasCreatedFrom(
+        int pixelWidth,
+        int pixelHeight,
+        float scale)
+    {
+        UiViewport viewport = UiViewport.FromPhysicalPixels(pixelWidth, pixelHeight, scale);
+
+        Assert.True(WindowScreenshotRegion.TryCreate(
+            new LayoutRect(0, 0, viewport.Width, viewport.Height),
+            viewport,
+            out WindowScreenshotRegion region));
+
+        Assert.Equal(new WindowScreenshotRegion(0, 0, pixelWidth, pixelHeight), region);
+    }
+
+    [Theory]
+    [InlineData(1f)]
+    [InlineData(1.25f)]
+    [InlineData(1.5f)]
+    [InlineData(1.75f)]
+    [InlineData(2f)]
+    public void EveryPhysicalSizeUpTo4000RoundTripsThroughTheFullViewportRegion(float scale)
+    {
+        List<int> mismatches = [];
+        for (int pixels = 1; pixels <= 4000; pixels++)
+        {
+            UiViewport viewport = UiViewport.FromPhysicalPixels(pixels, pixels, scale);
+            if (!WindowScreenshotRegion.TryCreate(
+                    new LayoutRect(0, 0, viewport.Width, viewport.Height),
+                    viewport,
+                    out WindowScreenshotRegion region) ||
+                region != new WindowScreenshotRegion(0, 0, pixels, pixels))
+            {
+                mismatches.Add(pixels);
+            }
+        }
+
+        Assert.Empty(mismatches);
+    }
+
     [Fact]
     public void RgbaCropPreservesExactFullFramePixelsIncludingOverlayPixels()
     {

@@ -18,10 +18,7 @@ internal readonly record struct WindowScreenshotRegion(int X, int Y, int Width, 
             return false;
         }
 
-        double framebufferWidth = Math.Ceiling(viewport.Width * viewport.Scale);
-        double framebufferHeight = Math.Ceiling(viewport.Height * viewport.Scale);
-        if (framebufferWidth <= 0 || framebufferHeight <= 0 ||
-            framebufferWidth > int.MaxValue || framebufferHeight > int.MaxValue)
+        if (!viewport.TryGetPixelSize(out int framebufferWidth, out int framebufferHeight))
         {
             region = default;
             return false;
