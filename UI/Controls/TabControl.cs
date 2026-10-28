@@ -46,6 +46,9 @@ public class TabControl : Selector, ITabOnceScope
     // change of its Content or ContentTemplate reaches this control whether or not its container is realized.
     private TabItem? contentSourceTab;
 
+    // Counts the updates of SelectedContent and SelectedContentTemplate, so an update overtaken by a nested one stops.
+    private int selectedContentUpdateVersion;
+
     // The height of the header row as last arranged without a template: the content area and its chrome start there.
     private float contentAreaTop;
 
@@ -274,8 +277,12 @@ public class TabControl : Selector, ITabOnceScope
     // Sets SelectedContent and SelectedContentTemplate to those of the selected tab. With a ComponentTemplate, the
     // selected tab lets go of a UIElement content before SelectedContent changes, so a ContentPresenter bound to
     // SelectedContentProperty can take it at once, and every other tab owns its content again once nothing shows it.
+    // A PropertyChanged handler of either property can select another tab, which runs a nested update for that tab;
+    // the nested update wrote both properties and the content ownership, so this one stops instead of writing those
+    // of the tab it read before (#1171).
     private void UpdateSelectedContentProperties()
     {
+        int version = ++selectedContentUpdateVersion;
         TabItem? tab = SelectedTabItem;
         bool templated = IsComponentTemplated;
         if (templated)
@@ -298,7 +305,17 @@ public class TabControl : Selector, ITabOnceScope
         }
 
         SetValue(SelectedContentPropertyKey, tab?.Content);
+        if (version != selectedContentUpdateVersion)
+        {
+            return;
+        }
+
         SetValue(SelectedContentTemplatePropertyKey, tab is null ? null : tab.ContentTemplate ?? ContentTemplate);
+        if (version != selectedContentUpdateVersion)
+        {
+            return;
+        }
+
         if (templated)
         {
             HoldContentOfOtherTabs(tab);
