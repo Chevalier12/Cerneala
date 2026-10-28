@@ -242,6 +242,34 @@ cancels all remaining slots and releases their references.
 property metadata. An explicit `from` value is staged before the animation is
 started, while `toCurrent` captures the binding's current sampled value.
 
+Without a `from` value (`hasFrom: false`, which is also what `@from { X = current; }`
+lowers to), the animation starts from the value the property shows.
+`StartMotionProperty<T>`, `StartBoundMotionProperty<T>`, `StartPrismMotionProperty<T>`
+and `StartBoundPrismMotionProperty<T>` follow this rule. While an earlier animation of
+the same target and property runs or holds its value, that value is the shown value,
+so the new animation continues from it. After an earlier animation completed with
+`HoldOnComplete = false`, the property shows its base value again, and the new
+animation starts from that base value, not from where the earlier animation ended.
+The same applies after the session cleared the binding and restored the base value.
+The C# builder `MotionAnimationBuilder<T>` keeps its own rule: without `From` it
+starts from the binding's Motion value.
+
+```csharp
+// Opacity has the markup value 1. A ends at 0.2 and falls back to 1.
+GeneratedMarkup.StartMotionProperty(
+    session, border, UIElement.OpacityProperty,
+    hasFrom: false, from: default, toCurrent: false, to: 0.2f,
+    new TweenSpec<float>(TimeSpan.FromMilliseconds(100), Easings.Linear),
+    new MotionPropertyStartOptions { HoldOnComplete = false });
+// ...100 ms later: border.Opacity == 1f
+GeneratedMarkup.StartMotionProperty(
+    session, border, UIElement.OpacityProperty,
+    hasFrom: false, from: default, toCurrent: false, to: 0.6f,
+    new TweenSpec<float>(TimeSpan.FromMilliseconds(100), Easings.Linear),
+    new MotionPropertyStartOptions { HoldOnComplete = false });
+// 10 ms later: border.Opacity == 0.96f (from 1 toward 0.6), not 0.24f (from 0.2)
+```
+
 A Motion `@set` of a UI property whose type has a built-in mixer (the
 properties `@animate` accepts) is lowered to `SetMotionProperty<T>`. It uses the
 same per-target, per-property Motion binding as `StartMotionProperty<T>`: an

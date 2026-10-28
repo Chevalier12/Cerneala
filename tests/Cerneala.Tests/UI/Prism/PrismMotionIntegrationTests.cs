@@ -598,6 +598,65 @@ public sealed class PrismMotionIntegrationTests
         Assert.Equal((true, 0.875f), (canceled.IsCanceled, layer.Opacity));
     }
 
+    // `@animate { @to { $self.prism.Glow.Opacity = 0.8; } }` completes without hold, so the
+    // Glow falls back to its opacity 0. A later `@to { $self.prism.Glow.Opacity = 1; }`
+    // without `@from` must start from that visible 0, not from the 0.8 of the first end.
+    [Fact]
+    public void AnimateWithoutFromStartsFromTheShownValueAfterAnAnimationWithoutHold()
+    {
+        MotionScenario scenario = CreateScenario(static () => CreateDefinition(opacity: 0f));
+        PrismLayerState layer = scenario.Instance.GetLayerState(LayerId);
+        _ = StartOpacityMotion(scenario, 0.8f);
+        scenario.Root.Motion.Tick();
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(100));
+        scenario.Root.Motion.Tick();
+        float afterFirst = layer.Opacity;
+
+        _ = StartOpacityMotion(scenario, 1f);
+        scenario.Root.Motion.Tick();
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(10));
+        scenario.Root.Motion.Tick();
+
+        Assert.Equal(0f, afterFirst);
+        Assert.InRange(layer.Opacity, 0.099f, 0.101f);
+    }
+
+    // The bound form `@to { $self.prism.Glow.Opacity = {Binding ...}; }` follows the same rule.
+    [Fact]
+    public void BoundAnimateWithoutFromStartsFromTheShownValueAfterAnAnimationWithoutHold()
+    {
+        MotionScenario scenario = CreateScenario(static () => CreateDefinition(opacity: 0f));
+        PrismLayerState layer = scenario.Instance.GetLayerState(LayerId);
+        UIElement source = new() { Opacity = 1f };
+        _ = StartOpacityMotion(scenario, 0.8f);
+        scenario.Root.Motion.Tick();
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(100));
+        scenario.Root.Motion.Tick();
+        float afterFirst = layer.Opacity;
+
+        _ = GeneratedMarkup.StartBoundPrismMotionProperty(
+            scenario.Session,
+            scenario.Element,
+            propertyId: 101,
+            scope: LayerId,
+            static instance => instance.GetLayerState(LayerId).Opacity,
+            static (instance, value) => instance.GetLayerState(LayerId).Opacity = value,
+            discrete: false,
+            hasFrom: false,
+            from: 0f,
+            GeneratedMarkup.ObserveProperty(source, UIElement.OpacityProperty),
+            Cerneala.UI.Data.BindingMode.OneWay,
+            value => (float)value!,
+            spec: Tween<float>(),
+            MotionPropertyStartOptions.Default);
+        scenario.Root.Motion.Tick();
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(10));
+        scenario.Root.Motion.Tick();
+
+        Assert.Equal(0f, afterFirst);
+        Assert.InRange(layer.Opacity, 0.099f, 0.101f);
+    }
+
     private static readonly PrismNodeId LayerId = new(1);
 
     private static readonly PrismNodeId GroupId = new(2);

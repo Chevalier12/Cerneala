@@ -366,6 +366,10 @@ public static partial class GeneratedMarkup
             {
                 _ = binding.Value.TryJumpToFrom(from, options.Priority);
             }
+            else
+            {
+                binding.JumpToShownValue();
+            }
 
             MotionSpec<T> effectiveSpec = spec ?? (MotionSpec<T>)motion.AnimatableProperties.Get(property).DefaultSpec;
             T destination = toCurrent ? binding.Value.Current : to;
@@ -419,6 +423,11 @@ public static partial class GeneratedMarkup
 
             MotionPropertyBinding<T> binding = motion.Properties.GetOrCreateBinding(motion, target, property);
             bindings.Add(binding);
+            if (!hasFrom)
+            {
+                binding.JumpToShownValue();
+            }
+
             MotionSpec<T> effectiveSpec = spec ?? (MotionSpec<T>)motion.AnimatableProperties.Get(property).DefaultSpec;
             return BoundMotionController<T>.Start(
                 observation,
@@ -458,6 +467,10 @@ public static partial class GeneratedMarkup
             {
                 _ = binding.TryJumpToFrom(from, options.Priority);
             }
+            else
+            {
+                binding.JumpToShownValue();
+            }
 
             MotionSpec<T> effectiveSpec = spec ?? PrismDefaultMotionSpec<T>.Value;
             T destination = toCurrent ? binding.Current : to;
@@ -487,6 +500,11 @@ public static partial class GeneratedMarkup
                 setValue,
                 discrete,
                 options);
+            if (!hasFrom)
+            {
+                binding.JumpToShownValue();
+            }
+
             MotionSpec<T> effectiveSpec = spec ?? PrismDefaultMotionSpec<T>.Value;
             return BoundMotionController<T>.Start(
                 observation,
@@ -1021,6 +1039,19 @@ public static partial class GeneratedMarkup
             // A start that its hidden Prism node cancels at once writes nothing, so its From
             // value must not move this reused Motion value away from what the store holds.
             return CanWrite(reachedEnd: false) && value.TryJumpToFrom(from, priority);
+        }
+
+        // A start without From begins at the value the Prism store shows: after an animation that completed without
+        // HoldOnComplete that is the base value again, while the Motion value is still where the animation ended.
+        public void JumpToShownValue()
+        {
+            ThrowIfDisposed();
+            if (completedNaturally && !holdOnComplete && !value.IsAnimating)
+            {
+                value.JumpTo(baseValue);
+                // The store shows the base value already, or this frame's Tick writes it.
+                hasPendingSample = false;
+            }
         }
 
         public MotionHandle AnimateTo(
