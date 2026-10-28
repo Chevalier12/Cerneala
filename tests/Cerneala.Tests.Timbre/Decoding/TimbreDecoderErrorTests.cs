@@ -168,6 +168,105 @@ public sealed class TimbreDecoderErrorTests
         Assert.Equal(0, pool.Reserved);
     }
 
+    // #845: a file shorter than its first frame is truncated data, not an unreadable source.
+    [Theory]
+    [InlineData(100)]
+    [InlineData(200)]
+    [InlineData(400)]
+    public void Mp3CutInsideItsFirstFrameIsInvalidData(int keptBytes)
+    {
+        string path = TempFile("cerneala-timbre-mp3-cut", $"first-frame-{keptBytes}.mp3");
+        File.WriteAllBytes(path, File.ReadAllBytes(DecodingCorpus.PathOf("mp3-mpeg1-44100-stereo-cbr128.mp3"))[..keptBytes]);
+
+        AssertFails(path, TimbreErrorKind.InvalidData);
+    }
+
+    // #846: the LAME tag packs delay (12 bits) and padding (12 bits) at +21 from
+    // "LAME"; the corpus file has delay 576 and padding 1080.
+    [Theory]
+    [InlineData(1080)]
+    [InlineData(529)]
+    [InlineData(528)]
+    [InlineData(0)]
+    public void Mp3WithSmallEncoderPaddingDeliversExactlyItsReportedLength(int padding)
+    {
+        byte[] bytes = File.ReadAllBytes(DecodingCorpus.PathOf("mp3-mpeg1-44100-stereo-cbr128.mp3"));
+        int lame = bytes.AsSpan(0, 200).IndexOf("LAME"u8);
+        Assert.True(lame >= 0, "The corpus file has no LAME tag in its first 200 bytes.");
+        int packed = (576 << 12) | padding;
+        bytes[lame + 21] = (byte)(packed >> 16);
+        bytes[lame + 22] = (byte)(packed >> 8);
+        bytes[lame + 23] = (byte)packed;
+        string path = TempFile("cerneala-timbre-mp3-padding", $"padding-{padding}.mp3");
+        File.WriteAllBytes(path, bytes);
+
+        long declared = 0;
+        float[] pcm = [];
+        Exception? failure = Record.Exception(() =>
+        {
+            using TimbreReader reader = DecodingCorpus.Open(path);
+            declared = reader.LengthFrames!.Value;
+            pcm = DecodingCorpus.DecodeAll(reader);
+        });
+
+        Assert.Null(failure);
+        Assert.Equal(declared, pcm.Length / 2);
+    }
+
+    // #847: the end position is a valid seek target, with or without an Info tag.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Mp3SeekToTheEndPositionIsAccepted(bool stripInfoTag)
+    {
+        byte[] bytes = File.ReadAllBytes(DecodingCorpus.PathOf("mp3-mpeg1-48000-mono-cbr64.mp3"));
+        if (stripInfoTag)
+        {
+            bytes = bytes[Mp3FrameLength(bytes)..];
+        }
+
+        string path = TempFile("cerneala-timbre-mp3-seek-end", $"seek-end-{stripInfoTag}.mp3");
+        File.WriteAllBytes(path, bytes);
+
+        using TimbreReader reader = DecodingCorpus.Open(path);
+        long frames = DecodingCorpus.DecodeAll(reader).Length / 2;
+        Exception? seekFailure = Record.Exception(() => reader.SeekAsync(frames, CancellationToken.None).AsTask().GetAwaiter().GetResult());
+
+        Assert.Null(seekFailure);
+        TimbreReadResult after = reader.ReadAsync(new float[2048], CancellationToken.None).AsTask().GetAwaiter().GetResult();
+        Assert.Equal(new TimbreReadResult(0, endOfSource: true), after);
+    }
+
+    [Fact]
+    public void Mp3SeekPastTheEndPositionOfAFileWithoutAnInfoTagThrows()
+    {
+        byte[] bytes = File.ReadAllBytes(DecodingCorpus.PathOf("mp3-mpeg1-48000-mono-cbr64.mp3"));
+        string path = TempFile("cerneala-timbre-mp3-seek-end", "seek-past-end.mp3");
+        File.WriteAllBytes(path, bytes[Mp3FrameLength(bytes)..]);
+
+        using TimbreReader reader = DecodingCorpus.Open(path);
+        long frames = DecodingCorpus.DecodeAll(reader).Length / 2;
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => reader.SeekAsync(frames + 1, CancellationToken.None).AsTask().GetAwaiter().GetResult());
+    }
+
+    private static string TempFile(string folder, string name)
+    {
+        string path = Path.Combine(Path.GetTempPath(), folder, name);
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        return path;
+    }
+
+    // Length of the MPEG-1 Layer III frame at the start of `data`.
+    private static int Mp3FrameLength(byte[] data)
+    {
+        int[] bitrates = [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320];
+        int[] rates = [44100, 48000, 32000];
+        int bitrate = bitrates[data[2] >> 4] * 1000;
+        int rate = rates[(data[2] >> 2) & 3];
+        return (144 * bitrate / rate) + ((data[2] >> 1) & 1);
+    }
+
     private static TimbreMemoryBudget Budget() => new(new TimbreMemoryPool(long.MaxValue), "test");
 
     private static void AssertFails(string path, TimbreErrorKind kind)

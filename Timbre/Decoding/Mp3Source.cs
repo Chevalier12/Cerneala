@@ -61,6 +61,10 @@ internal sealed class Mp3Source : DecodedSource
         samplesPerFrame = first.SamplesPerFrame;
         ValidateFormat("MP3", sourceName, first.SampleRate, first.Channels);
         dataStart = offset;
+        if (offset + first.Length > dataEnd)
+        {
+            throw Invalid(sourceName, $"the first MPEG frame at byte {offset} is truncated.");
+        }
 
         // A first frame carrying a Xing/Info (LAME) or VBRI tag is metadata, not audio.
         byte[] tagFrame = new byte[first.Length];
@@ -85,8 +89,10 @@ internal sealed class Mp3Source : DecodedSource
         trimStart = gapless ? encoderDelay + DecoderDelay : 0;
         if (frameCount is long count)
         {
+            // The decoder delay trimmed at the start is part of the padding at the
+            // end; a padding below it ends the signal at the last decoded sample.
             long decodedTotal = count * samplesPerFrame;
-            totalFrames = gapless ? Math.Max(0, decodedTotal - encoderDelay - encoderPadding) : decodedTotal;
+            totalFrames = gapless ? Math.Max(0, decodedTotal - encoderDelay - Math.Max(encoderPadding, DecoderDelay)) : decodedTotal;
         }
 
         SampleRate = first.SampleRate;
@@ -211,6 +217,16 @@ internal sealed class Mp3Source : DecodedSource
 
         if (offset >= dataEnd)
         {
+            // Without a declared length the end is known only here: the target
+            // is the end of the last decoded frame.
+            if (target == index * samplesPerFrame)
+            {
+                pendingStart = pendingEnd = 0;
+                nextOffset = dataEnd;
+                position = frame;
+                return;
+            }
+
             throw new ArgumentOutOfRangeException(nameof(frame), frame, "The seek target is past the end of the source.");
         }
 

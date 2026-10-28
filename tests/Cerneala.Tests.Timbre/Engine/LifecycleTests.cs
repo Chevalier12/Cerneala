@@ -494,6 +494,53 @@ public sealed class LifecycleTests
         Assert.Equal(0, tooLarge.Readers.Sum(reader => reader.FramesRead));
     }
 
+    // #808: a payload of exactly MaxPreloadBytes is within the limit, whether or
+    // not the source reports its length.
+    [Theory]
+    [InlineData(65535, false)]
+    [InlineData(65536, true)]
+    [InlineData(65536, false)]
+    public async Task PreloadAdmitsAPayloadOfExactlyMaxPreloadBytes(int frames, bool reportLength)
+    {
+        using TimbreRig rig = new(options => options.MaxPreloadBytes = 65536L * 8, hold: false);
+        DeterministicTimbreSourceFactory factory = new(frames, reportLength: reportLength);
+
+        Exception? failure = await Record.ExceptionAsync(() => rig.Runtime.PrepareAsync(TimbreRig.Clip(factory, TimbreLoading.Preload)));
+
+        Assert.Null(failure);
+        Assert.Equal(frames * 8L, rig.Runtime.GetDiagnostics().CacheBytes);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task PreloadAdmitsADefaultLimitPayloadOfExactlyMaxPreloadBytes(bool reportLength)
+    {
+        using TimbreRig rig = new(hold: false);
+        DeterministicTimbreSourceFactory factory = new(2_097_152, reportLength: reportLength);
+
+        Exception? failure = await Record.ExceptionAsync(() => rig.Runtime.PrepareAsync(TimbreRig.Clip(factory, TimbreLoading.Preload)));
+
+        Assert.True(
+            failure is null,
+            $"reportLength={reportLength}: {failure?.GetType().Name}: {failure?.Message}");
+        Assert.Equal(2_097_152L * 8, rig.Runtime.GetDiagnostics().CacheBytes);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task PreloadRefusesAPayloadOneFrameLargerThanMaxPreloadBytes(bool reportLength)
+    {
+        using TimbreRig rig = new(options => options.MaxPreloadBytes = 65536L * 8, hold: false);
+        DeterministicTimbreSourceFactory factory = new(65537, reportLength: reportLength);
+
+        TimbreException refused = await Assert.ThrowsAsync<TimbreException>(() => rig.Runtime.PrepareAsync(TimbreRig.Clip(factory, TimbreLoading.Preload)));
+
+        Assert.Equal(TimbreErrorKind.ResourceLimitExceeded, refused.Kind);
+        Assert.Equal(0, rig.Runtime.GetDiagnostics().CacheBytes);
+    }
+
     [Theory]
     [InlineData(1000L, TimbreLoading.Preload, false)]
     [InlineData(2001L, TimbreLoading.Preload, true)]
