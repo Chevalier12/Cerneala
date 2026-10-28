@@ -111,6 +111,55 @@ public sealed class DragDropControllerTests
         Assert.False(root.InputCache.RouteMap.Contains(target));
     }
 
+    // A drag target that a handler disabled, collapsed or removed is no longer routable: the next move raises no
+    // DragLeave on it, as HoverTracker raises no MouseLeave on an element that left the input tree, and raises
+    // DragEnter and DragOver on the element under the pointer (#772).
+    [Theory]
+    [InlineData("disable")]
+    [InlineData("collapse")]
+    [InlineData("remove")]
+    public void DragMoveSurvivesPreviousTargetLeavingTheInputTree(string change)
+    {
+        UIRoot root = new(100, 100);
+        UIElement first = Arranged(0, 0, 20, 20);
+        UIElement second = Arranged(40, 0, 20, 20);
+        root.VisualChildren.Add(first);
+        root.VisualChildren.Add(second);
+        List<string> calls = [];
+        first.Handlers.AddHandler(InputEvents.DragLeaveEvent, (_, _) => calls.Add("leave-first"));
+        second.Handlers.AddHandler(InputEvents.DragEnterEvent, (_, _) => calls.Add("enter-second"));
+        second.Handlers.AddHandler(InputEvents.DragOverEvent, (_, _) => calls.Add("over-second"));
+        second.Handlers.AddHandler(InputEvents.DragLeaveEvent, (_, _) => calls.Add("leave-second"));
+        second.Handlers.AddHandler(InputEvents.DropEvent, (_, _) => calls.Add("drop-second"));
+        DragDropController controller = new();
+        controller.Begin(first, new DataTransfer().SetData("text/plain", "payload"));
+        controller.Move(root, 5, 5);
+
+        switch (change)
+        {
+            case "disable":
+                first.IsEnabled = false;
+                break;
+            case "collapse":
+                first.Visibility = Visibility.Collapsed;
+                break;
+            default:
+                root.VisualChildren.Remove(first);
+                break;
+        }
+
+        Exception? exception = Record.Exception(() =>
+        {
+            controller.Move(root, 45, 5);
+            controller.Move(root, 46, 5);
+            controller.Drop(root, 46, 5);
+        });
+
+        Assert.Null(exception);
+        Assert.Equal(["enter-second", "over-second", "over-second", "drop-second"], calls);
+        Assert.False(controller.IsDragging);
+    }
+
     private static UIElement Arranged(float x, float y, float width, float height)
     {
         UIElement element = new();

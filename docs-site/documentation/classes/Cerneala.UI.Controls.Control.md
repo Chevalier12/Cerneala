@@ -154,7 +154,7 @@ A derived control gives a property its starting value in its constructor with `U
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `PreviewMouseDoubleClick` | `RoutedEventHandler<MouseButtonEventArgs>` | Occurs before `MouseDoubleClick`, when the left or the right mouse button is pressed again as the second click of a double click on the control or on an element inside it. The handler receives `MouseButtonEventArgs`, so it reads `args.ChangedButton` without a cast. |
+| `PreviewMouseDoubleClick` | `RoutedEventHandler<MouseButtonEventArgs>` | Occurs before `MouseDoubleClick`, when the left or the right mouse button is pressed again as the second click of a double click on the control or on an element inside it, during the tunnel of that press's `PreviewMouseLeftButtonDown` or `PreviewMouseRightButtonDown`. Setting `Handled` marks the press handled. The handler receives `MouseButtonEventArgs`, so it reads `args.ChangedButton` without a cast. |
 | `MouseDoubleClick` | `RoutedEventHandler<MouseButtonEventArgs>` | Occurs when the left or the right mouse button is pressed again as the second click of a double click on the control or on an element inside it. The handler receives `MouseButtonEventArgs`, so it reads `args.ChangedButton` without a cast. |
 
 Both events are `Direct`, and, as in WPF, where they are "raised along the element tree by each UIElement", the input bridge raises them once on each element of the clicked element's route: `PreviewMouseDoubleClick` from the root down to the clicked element, then `MouseDoubleClick` from the clicked element up to the root. Each raise has that element as `sender`, and `args.OriginalSource` is the clicked element. So a `MouseDoubleClick` handler on a panel also runs, once, when the user double-clicks a button inside the panel. Each element sees the `Handled` value left by the elements before it, as the [InputEvents](Cerneala.UI.Input.InputEvents.md) page describes. As in WPF, only the left and the right button raise them, with `ChangedButton` set to that button; a double click with the middle or an extra button raises neither event. See [RoutedEventHandler&lt;TArgs&gt;](Cerneala.UI.Input.RoutedEventHandler_TArgs_.md).
@@ -164,6 +164,21 @@ control.MouseDoubleClick += (sender, args) => Console.WriteLine(args.ChangedButt
 ```
 
 Two quick left clicks on the control print `Left`; two quick right clicks print `Right`; two quick middle clicks print nothing.
+
+The double click belongs to the second press, the press whose `ClickCount` is `2`, as WPF's `Control` raises it from class handlers of `PreviewMouseLeftButtonDown`, `MouseLeftButtonDown`, `PreviewMouseRightButtonDown` and `MouseRightButtonDown`. On each element of the press route, `PreviewMouseDoubleClick` runs during the tunnel of the press's `PreviewMouseLeftButtonDown` (`PreviewMouseRightButtonDown` for the right button), before that element's own handlers of it, and `MouseDoubleClick` runs during the bubble of `MouseLeftButtonDown` (`MouseRightButtonDown` for the right button), before that element's own handlers of it. The rules below name the left-button events; a right-button double click follows them with the right-button events. The `Handled` value propagates both ways:
+
+- A double-click event reaches the element with the `Handled` value that the press has there. After a handled `PreviewMouseDoubleClick`, `MouseDoubleClick` therefore occurs with `Handled` set to `true`, so only handlers registered with `handledEventsToo: true` see it.
+- A handled `PreviewMouseDoubleClick` marks the press handled, like a handled `PreviewMouseLeftButtonDown`: no ordinary `PreviewMouseLeftButtonDown` or `MouseLeftButtonDown` handler runs from that element on, the press does not move the focus, does not begin a drag, and does not press a button.
+- A handled `MouseDoubleClick` marks the press's `MouseLeftButtonDown` handled from that element on: ordinary `MouseLeftButtonDown` handlers of that element and of its ancestors do not run.
+
+For example, a `Control` inside a panel marks `PreviewMouseDoubleClick` handled, and both have an ordinary `MouseLeftButtonDown` handler. Two quick left clicks run both `MouseLeftButtonDown` handlers on the first press (`ClickCount` `1`). On the second press, `PreviewMouseDoubleClick` runs, and neither `MouseLeftButtonDown` handler runs.
+
+```csharp
+control.PreviewMouseDoubleClick += (sender, args) => args.Handled = true;
+control.Handlers.AddHandler(InputEvents.MouseLeftButtonDownEvent, (_, args) => Console.WriteLine("control"));
+panel.Handlers.AddHandler(InputEvents.MouseLeftButtonDownEvent, (_, args) => Console.WriteLine("panel"));
+// First press: "control", "panel". Second press: nothing is printed.
+```
 
 ## Exceptions
 
