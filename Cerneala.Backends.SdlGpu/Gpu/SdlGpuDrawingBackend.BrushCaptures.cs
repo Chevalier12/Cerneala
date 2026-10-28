@@ -138,19 +138,26 @@ internal sealed partial class SdlGpuDrawingBackend
         }
         else
         {
-            int columns = checked((int)MathF.Ceiling(bounds.Width / viewport.Width));
-            int rows = checked((int)MathF.Ceiling(bounds.Height / viewport.Height));
-            for (int column = 0; column < columns; column++)
+            // As in WPF, the base tile (column 0, row 0) sits at the viewport and the copies repeat from it in every
+            // direction until they cover the painted bounds; negative indexes are the copies left of or above it.
+            int firstColumn = checked((int)MathF.Floor((bounds.X - viewport.X) / viewport.Width));
+            int endColumn = checked((int)MathF.Ceiling((bounds.Right - viewport.X) / viewport.Width));
+            int firstRow = checked((int)MathF.Floor((bounds.Y - viewport.Y) / viewport.Height));
+            int endRow = checked((int)MathF.Ceiling((bounds.Bottom - viewport.Y) / viewport.Height));
+            for (int column = firstColumn; column < endColumn; column++)
             {
-                float x = bounds.X + column * viewport.Width;
-                for (int row = 0; row < rows; row++)
+                float x = viewport.X + column * viewport.Width;
+                float clipLeft = MathF.Max(x, bounds.X);
+                float clipWidth = MathF.Min(x + viewport.Width, bounds.Right) - clipLeft;
+                for (int row = firstRow; row < endRow; row++)
                 {
-                    float y = bounds.Y + row * viewport.Height;
+                    float y = viewport.Y + row * viewport.Height;
+                    float clipTop = MathF.Max(y, bounds.Y);
+                    float clipHeight = MathF.Min(y + viewport.Height, bounds.Bottom) - clipTop;
+                    if (clipWidth <= 0 || clipHeight <= 0) { continue; }
                     // Every copy keeps the full tile size; the painted bounds crop the edge copies.
                     AddTile(new DrawRect(x, y, viewport.Width, viewport.Height),
-                        new DrawRect(x, y,
-                            MathF.Min(viewport.Width, bounds.Right - x),
-                            MathF.Min(viewport.Height, bounds.Bottom - y)), column, row);
+                        new DrawRect(clipLeft, clipTop, clipWidth, clipHeight), column, row);
                 }
             }
         }
