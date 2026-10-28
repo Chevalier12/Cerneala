@@ -93,7 +93,7 @@ public class RangeBase : Control
             float coercedValue = CoerceToRange(Value);
             if (coercedValue != Value)
             {
-                Correct(ValueProperty, coercedValue);
+                Correct(this, ValueProperty, coercedValue);
                 return;
             }
 
@@ -102,12 +102,12 @@ public class RangeBase : Control
 
         if (ReferenceEquals(args.Property, MinimumProperty) && Maximum < Minimum)
         {
-            Correct(MaximumProperty, Minimum);
+            Correct(this, MaximumProperty, Minimum);
         }
 
         if (ReferenceEquals(args.Property, MaximumProperty) && Minimum > Maximum)
         {
-            Correct(MinimumProperty, Maximum);
+            Correct(this, MinimumProperty, Maximum);
         }
 
         if (ReferenceEquals(args.Property, MinimumProperty) || ReferenceEquals(args.Property, MaximumProperty))
@@ -115,23 +115,23 @@ public class RangeBase : Control
             float coercedValue = CoerceToRange(Value);
             if (coercedValue != Value)
             {
-                Correct(ValueProperty, coercedValue);
+                Correct(this, ValueProperty, coercedValue);
             }
         }
     }
 
     // Writes a range correction at the source that holds the current value, so the correction never adds a Local
-    // value over a markup, Aspect, binding or animation value (#733).
-    private void Correct(UiProperty<float> property, float value)
+    // value over a markup, Aspect, binding or animation value (#733), and a ClearValue leaves no Local value (#888).
+    internal static void Correct(UiObject owner, UiProperty<float> property, float value)
     {
-        UiPropertyValueSource source = GetValueSource(property);
+        UiPropertyValueSource source = owner.GetValueSource(property);
         if (source == UiPropertyValueSource.Default)
         {
-            SetFrameworkDefault(property, value);
+            owner.SetFrameworkDefault(property, value);
         }
         else
         {
-            SetValue(property, value, source);
+            owner.SetValue(property, value, source);
         }
     }
 
@@ -157,10 +157,11 @@ public class RangeBase : Control
         return (float)Math.Min(Math.Max(value, minimum), maximum);
     }
 
+    // A value that is not finite stays as it is, so the validation rejects it, as WPF validates before it coerces (#770).
     private static float CoerceValue(UiObject owner, float value)
     {
         RangeBase range = (RangeBase)owner;
-        return Clamp(value, range.Minimum, range.Maximum);
+        return float.IsFinite(value) ? Clamp(value, range.Minimum, range.Maximum) : value;
     }
 
     private static bool IsValidFloat(float value)

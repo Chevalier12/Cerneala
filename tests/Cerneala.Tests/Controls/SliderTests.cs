@@ -5,6 +5,7 @@ using Cerneala.Tests.Controls.Primitives;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Controls.Templates;
+using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
@@ -926,6 +927,33 @@ public sealed class SliderTests
         slider.SelectionStart = 7.5f;
         Assert.Equal(7.5f, slider.SelectionStart);
         Assert.Equal(7.5f, slider.SelectionEnd);
+    }
+
+    // #888: ClearValue reveals the default 0, which lies outside the allowed range; the effective value is coerced as a
+    // set value is, and the clear leaves no Local value, as WPF's ClearValue.
+    [Fact]
+    public void ClearingSelectionStartKeepsItWithinMinimumAndMaximum()
+    {
+        Slider slider = new() { Minimum = 2, Maximum = 10 };
+        slider.SelectionStart = 5;
+
+        slider.ClearValue(Slider.SelectionStartProperty);
+
+        Assert.Equal(2, slider.SelectionStart);
+        Assert.Equal(UiPropertyValueSource.Default, slider.GetValueSource(Slider.SelectionStartProperty));
+    }
+
+    [Fact]
+    public void ClearingSelectionEndKeepsItWithinSelectionStartAndMaximum()
+    {
+        Slider slider = new() { Minimum = 2, Maximum = 10 };
+        slider.SelectionStart = 4;
+        slider.SelectionEnd = 6;
+
+        slider.ClearValue(Slider.SelectionEndProperty);
+
+        Assert.Equal(4, slider.SelectionEnd);
+        Assert.Equal(UiPropertyValueSource.Default, slider.GetValueSource(Slider.SelectionEndProperty));
     }
 
     // The default template draws the track bar itself, behind the Track, with the Track's former colors: a default

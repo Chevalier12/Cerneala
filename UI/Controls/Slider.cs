@@ -293,6 +293,26 @@ public class Slider : RangeBase
             SyncTrack();
         }
 
+        // A ClearValue can reveal a value that no write coerced, such as the default 0 below Minimum 2: it is corrected
+        // at the source that holds it, as RangeBase.Value is (#888).
+        if (ReferenceEquals(args.Property, SelectionStartProperty))
+        {
+            float selectionStart = CoerceSelectionStart(this, SelectionStart);
+            if (selectionStart != SelectionStart)
+            {
+                Correct(this, SelectionStartProperty, selectionStart);
+            }
+        }
+
+        if (ReferenceEquals(args.Property, SelectionEndProperty))
+        {
+            float selectionEnd = CoerceSelectionEnd(this, SelectionEnd);
+            if (selectionEnd != SelectionEnd)
+            {
+                Correct(this, SelectionEndProperty, selectionEnd);
+            }
+        }
+
         // As WPF's Slider, which coerces SelectionStart again when Minimum or Maximum changes, and SelectionEnd again
         // when SelectionStart changes.
         if (ReferenceEquals(args.Property, MinimumProperty) || ReferenceEquals(args.Property, MaximumProperty))

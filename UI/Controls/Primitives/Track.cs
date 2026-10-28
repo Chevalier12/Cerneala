@@ -271,6 +271,15 @@ public class Track : Control
 
         if (ReferenceEquals(args.Property, ValueProperty))
         {
+            // A ClearValue can reveal a value that no write coerced, such as the default 0 below Minimum 10: it is
+            // corrected as RangeBase.Value is, and the corrected change raises the events (#888).
+            float coercedValue = RangeBase.Clamp(Value, Minimum, Maximum);
+            if (coercedValue != Value)
+            {
+                RangeBase.Correct(this, ValueProperty, coercedValue);
+                return;
+            }
+
             ValueChanged?.Invoke(this, EventArgs.Empty);
             ValueChangedWithReason?.Invoke(
                 this,
@@ -397,10 +406,11 @@ public class Track : Control
         }
     }
 
+    // A value that is not finite stays as it is, so the validation rejects it, as WPF validates before it coerces (#770).
     private static float CoerceValue(UiObject owner, float value)
     {
         Track track = (Track)owner;
-        return RangeBase.Clamp(value, track.Minimum, track.Maximum);
+        return float.IsFinite(value) ? RangeBase.Clamp(value, track.Minimum, track.Maximum) : value;
     }
 
     private static bool IsValidNonNegativeFloat(float value)
