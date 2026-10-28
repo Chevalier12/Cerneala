@@ -87,6 +87,19 @@ public sealed class ContentTemplateRegistry
             return int.MaxValue - 1;
         }
 
+        // Base classes outrank implemented interfaces, which outrank object. The data type's base-type walk never
+        // reaches an interface, so interfaces are ranked by how many interfaces they inherit: an interface always
+        // outranks the interfaces it extends.
+        if (templateType == typeof(object))
+        {
+            return 0;
+        }
+
+        if (templateType.IsInterface)
+        {
+            return 1 + templateType.GetInterfaces().Length;
+        }
+
         int distance = 0;
         for (Type? current = dataType; current is not null && current != templateType; current = current.BaseType)
         {
