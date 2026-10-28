@@ -657,6 +657,168 @@ public sealed class PrismMotionIntegrationTests
         Assert.InRange(layer.Opacity, 0.099f, 0.101f);
     }
 
+    // #767: two `@to { Glow.Opacity = 0.8; }` without holdOnComplete, with an application
+    // write of 0.3 between them. Each one returns to the value it started from: A to 0,
+    // B to the 0.3 that the application wrote, not to the 0 of the first start.
+    [Fact]
+    public void HoldOnCompleteFalseRestoresTheValueBeforeTheCurrentAnimation()
+    {
+        MotionScenario scenario = CreateScenario(static () => CreateDefinition(0f));
+        PrismLayerState layer = scenario.Instance.GetLayerState(LayerId);
+
+        MotionHandle first = StartOpacityMotion(scenario, 0.8f);
+        RunToCompletion(scenario);
+        float afterFirst = layer.Opacity;
+
+        layer.Opacity = 0.3f;
+        MotionHandle second = StartOpacityMotion(scenario, 0.8f);
+        RunToCompletion(scenario);
+
+        Assert.Equal(
+            (true, 0f, true, 0.3f),
+            (first.IsCompleted, afterFirst, second.IsCompleted, layer.Opacity));
+    }
+
+    // A completed `@to { Glow.Opacity = 0.25; }` without holdOnComplete puts 1 back into
+    // the Prism instance. The next `@to { Glow.Opacity = 0; }` must start from that 1,
+    // not from the 0.25 at which the previous animation ended.
+    [Fact]
+    public void NextStartAfterARestoredAnimationBeginsFromTheValueThePrismHolds()
+    {
+        MotionScenario scenario = CreateScenario();
+        PrismLayerState layer = scenario.Instance.GetLayerState(LayerId);
+        _ = StartOpacityMotion(scenario, 0.25f);
+        RunToCompletion(scenario);
+        float restored = layer.Opacity;
+
+        _ = StartOpacityMotion(scenario, 0f);
+        scenario.Root.Motion.Tick();
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(50));
+        scenario.Root.Motion.Tick();
+
+        Assert.Equal((1f, 0.5f), (restored, layer.Opacity));
+    }
+
+    // #1156: `PrismInstance.ReplaceDefinition` with a definition without the animated
+    // layer cancels the running animation once, without a write and without an exception.
+    [Fact]
+    public void ReplaceDefinitionWithoutTheAnimatedNodeCancelsTheMotionOnce()
+    {
+        MotionScenario scenario = CreateScenario();
+        MotionHandle handle = StartLongOpacityMotion(scenario);
+        StrongBox<int> canceled = CountCancels(handle);
+        scenario.Root.Motion.Tick();
+
+        scenario.Instance.ReplaceDefinition(new PrismClipDefinition(
+            "motion",
+            [
+                new PrismLayerDefinition(
+                    new PrismNodeId(9),
+                    "Other",
+                    filters: [new PrismFilterDefinition(PrismFilterId.Blur)])
+            ]));
+        PrismValueVersion afterReplace = scenario.Instance.ValueVersion;
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(25));
+        MotionFrameResult frame = scenario.Root.Motion.Tick();
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(25));
+        scenario.Root.Motion.Tick();
+
+        Assert.Equal(
+            (true, 1, 0, false),
+            (handle.IsCanceled, canceled.Value, frame.MotionPropertyWrites, scenario.Root.Motion.HasActiveMotion));
+        Assert.Equal(afterReplace, scenario.Instance.ValueVersion);
+    }
+
+    // A topology replacement that keeps the layer but removes the filter whose Opacity is
+    // animated: the generated accessor `GetLayerState(1).Filters[0]` has no target any more,
+    // so the animation is canceled once like a replaced Prism.
+    [Fact]
+    public void ReplaceDefinitionWithoutTheAnimatedFilterCancelsTheMotionOnce()
+    {
+        MotionScenario scenario = CreateScenario();
+        MotionHandle handle = GeneratedMarkup.StartPrismMotionProperty(
+            scenario.Session,
+            scenario.Element,
+            propertyId: 108,
+            scope: LayerId,
+            static instance => instance.GetLayerState(LayerId).Filters[0].Opacity,
+            static (instance, value) => instance.GetLayerState(LayerId).Filters[0].Opacity = value,
+            discrete: false,
+            hasFrom: false,
+            from: 0f,
+            toCurrent: false,
+            to: 0f,
+            spec: new TweenSpec<float>(TimeSpan.FromSeconds(10), Easings.Linear),
+            new MotionPropertyStartOptions { HoldOnComplete = true });
+        StrongBox<int> canceled = CountCancels(handle);
+        scenario.Root.Motion.Tick();
+
+        scenario.Instance.ReplaceDefinition(new PrismClipDefinition(
+            "motion",
+            [
+                new PrismLayerDefinition(
+                    LayerId,
+                    "Glow",
+                    styles: [new PrismStyleDefinition(PrismStyleId.OuterGlow)])
+            ]));
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(25));
+        MotionFrameResult frame = scenario.Root.Motion.Tick();
+
+        Assert.Equal(
+            (true, 1, 0, false),
+            (handle.IsCanceled, canceled.Value, frame.MotionPropertyWrites, scenario.Root.Motion.HasActiveMotion));
+    }
+
+    // After a topology replacement canceled the animation of Glow.Opacity, a new start of
+    // the same property animates the Glow of the new definition.
+    [Fact]
+    public void StartAfterATopologyReplacementAnimatesTheNewNode()
+    {
+        MotionScenario scenario = CreateScenario();
+        MotionHandle first = StartLongOpacityMotion(scenario);
+        scenario.Root.Motion.Tick();
+        scenario.Instance.ReplaceDefinition(new PrismClipDefinition(
+            "motion",
+            [
+                new PrismLayerDefinition(
+                    LayerId,
+                    "Glow",
+                    filters: [new PrismFilterDefinition(PrismFilterId.Blur)]),
+                new PrismLayerDefinition(
+                    new PrismNodeId(9),
+                    "Other",
+                    filters: [new PrismFilterDefinition(PrismFilterId.Blur)])
+            ]));
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(25));
+        scenario.Root.Motion.Tick();
+
+        MotionHandle second = StartOpacityMotion(scenario, 0f);
+        scenario.Root.Motion.Tick();
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(50));
+        scenario.Root.Motion.Tick();
+
+        Assert.Equal(
+            (true, true, 0.5f),
+            (first.IsCanceled, second.IsActive, scenario.Instance.GetLayerState(LayerId).Opacity));
+    }
+
+    // A replacement with the same topology only changes values: the animation keeps running.
+    [Fact]
+    public void ReplaceDefinitionWithTheSameTopologyKeepsTheMotionRunning()
+    {
+        MotionScenario scenario = CreateScenario();
+        MotionHandle handle = StartOpacityMotion(scenario, 0f);
+        scenario.Root.Motion.Tick();
+        scenario.Instance.ReplaceDefinition(CreateDefinition(0.75f));
+
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(50));
+        scenario.Root.Motion.Tick();
+
+        Assert.Equal(
+            (true, 0.5f),
+            (handle.IsActive, scenario.Instance.GetLayerState(LayerId).Opacity));
+    }
+
     private static readonly PrismNodeId LayerId = new(1);
 
     private static readonly PrismNodeId GroupId = new(2);
@@ -735,6 +897,31 @@ public sealed class PrismMotionIntegrationTests
             to: destination,
             spec: Tween<float>(),
             MotionPropertyStartOptions.Default);
+    }
+
+    private static MotionHandle StartLongOpacityMotion(MotionScenario scenario)
+    {
+        return GeneratedMarkup.StartPrismMotionProperty(
+            scenario.Session,
+            scenario.Element,
+            propertyId: 101,
+            scope: LayerId,
+            static instance => instance.GetLayerState(LayerId).Opacity,
+            static (instance, value) => instance.GetLayerState(LayerId).Opacity = value,
+            discrete: false,
+            hasFrom: false,
+            from: 0f,
+            toCurrent: false,
+            to: 0f,
+            spec: new TweenSpec<float>(TimeSpan.FromSeconds(10), Easings.Linear),
+            new MotionPropertyStartOptions { HoldOnComplete = true });
+    }
+
+    private static void RunToCompletion(MotionScenario scenario)
+    {
+        scenario.Root.Motion.Tick();
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(100));
+        scenario.Root.Motion.Tick();
     }
 
     private static MotionHandle StartHideMotion(MotionScenario scenario)
