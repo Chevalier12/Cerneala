@@ -123,6 +123,13 @@ public class UiObject
         return propertyStore.GetSourceValue(property, source);
     }
 
+    // The effective value that clearing the property at source would leave, without changing the store.
+    internal T GetValueAfterClear<T>(UiProperty<T> property, UiPropertyValueSource source)
+    {
+        ArgumentNullException.ThrowIfNull(property);
+        return (T)propertyStore.GetValueAfterClear(property, source)!;
+    }
+
     public T SetValue<T>(UiProperty<T> property, T value)
     {
         return SetValue(property, value, UiPropertyValueSource.Local);
