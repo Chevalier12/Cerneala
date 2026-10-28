@@ -32,9 +32,13 @@ internal sealed class PreviewCompiler : IDisposable
         this.prewarmBuildOutput = prewarmBuildOutput;
     }
 
+    // With reloadSavedSources (the editor's Refresh), a project loaded by an earlier compile first
+    // takes the text that its source and markup files have on disk now, so saved code-behind edits
+    // are compiled; otherwise the loaded project keeps the text it read when it was loaded.
     public async Task<PreviewCompilation> CompileAsync(
         string documentPath,
         string source,
+        bool reloadSavedSources = false,
         CancellationToken cancellationToken = default)
     {
         Stopwatch total = Stopwatch.StartNew();
@@ -53,6 +57,11 @@ internal sealed class PreviewCompiler : IDisposable
 
         LoadedProject loaded = await GetProjectAsync(projectPath, cancellationToken).ConfigureAwait(false);
         Project project = loaded.Project;
+        if (reloadSavedSources)
+        {
+            project = await ReloadSavedSourcesAsync(project, cancellationToken).ConfigureAwait(false);
+        }
+
         DocumentId additionalDocumentId = project.AdditionalDocumentIds.FirstOrDefault(id =>
             string.Equals(project.Solution.GetAdditionalDocument(id)?.FilePath, fullDocumentPath, StringComparison.OrdinalIgnoreCase))
             ?? throw new InvalidOperationException($"'{fullDocumentPath}' is not an AdditionalFile in '{projectPath}'.");
@@ -203,6 +212,34 @@ internal sealed class PreviewCompiler : IDisposable
         }
 
         return new LoadedProject(workspace, project);
+    }
+
+    private static async Task<Project> ReloadSavedSourcesAsync(Project project, CancellationToken cancellationToken)
+    {
+        Solution solution = project.Solution;
+        foreach (TextDocument document in project.Documents.Concat<TextDocument>(project.AdditionalDocuments))
+        {
+            if (string.IsNullOrWhiteSpace(document.FilePath) || !File.Exists(document.FilePath))
+            {
+                continue;
+            }
+
+            SourceText current = await document.GetTextAsync(cancellationToken).ConfigureAwait(false);
+            SourceText saved = SourceText.From(
+                await File.ReadAllTextAsync(document.FilePath, cancellationToken).ConfigureAwait(false),
+                current.Encoding);
+            if (saved.ContentEquals(current))
+            {
+                continue;
+            }
+
+            solution = document is Microsoft.CodeAnalysis.Document
+                ? solution.WithDocumentText(document.Id, saved, PreservationMode.PreserveIdentity)
+                : solution.WithAdditionalDocumentText(document.Id, saved, PreservationMode.PreserveIdentity);
+        }
+
+        return solution.GetProject(project.Id)
+            ?? throw new InvalidOperationException("The preview project disappeared while reloading its saved sources.");
     }
 
     private bool TryUseCurrentBuildOutput(

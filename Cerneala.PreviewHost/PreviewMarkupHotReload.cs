@@ -2,7 +2,6 @@ using System.Collections;
 using System.ComponentModel;
 using System.Globalization;
 using System.Reflection;
-using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 using Cerneala.Drawing;
@@ -79,7 +78,10 @@ internal static class PreviewMarkupHotReload
         List<PropertyMutation> mutations = new(changes.Count);
         foreach (AttributeChange change in changes)
         {
-            if (CompileOnlyProperties.Contains(change.PropertyName))
+            // An old value that binds owns a binding in the live tree. Setting a value in place
+            // would leave that binding attached (a TwoWay one would even write the value into its
+            // source), while a build of the edited markup has no such binding.
+            if (CompileOnlyProperties.Contains(change.PropertyName) || HoldsBindingPath(change.OldValue))
             {
                 return PreviewMarkupUpdateResult.RequiresCompilation;
             }
@@ -177,7 +179,7 @@ internal static class PreviewMarkupHotReload
                 return false;
             }
 
-            changes.Add(new AttributeChange(path, name.LocalName, updatedAttribute.Value));
+            changes.Add(new AttributeChange(path, name.LocalName, currentAttribute.Value, updatedAttribute.Value));
         }
 
         if (!string.Equals(DirectText(current), DirectText(updated), StringComparison.Ordinal))
@@ -579,27 +581,31 @@ internal static class PreviewMarkupHotReload
     // assigning text. Only a literal is applied here; a value that holds a path is compiled.
     private static ConversionResult ConvertMarkupString(string rawValue)
     {
-        StringBuilder literal = new(rawValue.Length);
-        for (int index = 0; index < rawValue.Length; index++)
+        return HoldsBindingPath(rawValue)
+            ? ConversionResult.RequiresCompilation()
+            : ConversionResult.Converted(rawValue.Replace("\\$", "$", StringComparison.Ordinal));
+    }
+
+    // True when the value binds in the build: an unescaped '$' starts a binding path, as in a
+    // binding token ("$Source.Text:TwoWay"), an interpolation ("User: $DataContext.Name") or an
+    // expression over paths ("$DataContext.HasName and $DataContext.IsValid").
+    private static bool HoldsBindingPath(string value)
+    {
+        for (int index = 0; index < value.Length; index++)
         {
-            char character = rawValue[index];
-            bool hasNext = index + 1 < rawValue.Length;
-            if (character == '\\' && hasNext && rawValue[index + 1] == '$')
+            if (value[index] == '\\' && index + 1 < value.Length && value[index + 1] == '$')
             {
-                literal.Append('$');
                 index++;
                 continue;
             }
 
-            if (character == '$' && StartsBindingPath(rawValue, index))
+            if (value[index] == '$' && StartsBindingPath(value, index))
             {
-                return ConversionResult.RequiresCompilation();
+                return true;
             }
-
-            literal.Append(character);
         }
 
-        return ConversionResult.Converted(literal.ToString());
+        return false;
     }
 
     // The generator's path token (UiMarkupBindingResolver.ParseBindingToken): the longest run of
@@ -742,7 +748,7 @@ internal static class PreviewMarkupHotReload
 
     private static string ChildPath(string parent, int index) => parent + "/" + index.ToString(CultureInfo.InvariantCulture);
 
-    private sealed record AttributeChange(string ElementPath, string PropertyName, string Value);
+    private sealed record AttributeChange(string ElementPath, string PropertyName, string OldValue, string Value);
 
     private sealed record RuntimeTarget(object Value, UIElement ResourceScope);
 

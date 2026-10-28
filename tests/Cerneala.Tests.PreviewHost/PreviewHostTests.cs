@@ -5,7 +5,9 @@ using System.Reflection;
 using Cerneala.Preview;
 using Cerneala.PreviewHost;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Data;
 using Cerneala.UI.Input;
+using Cerneala.UI.Markup;
 
 [CollectionDefinition(Name, DisableParallelization = true)]
 public sealed class PreviewHostCollection
@@ -557,6 +559,136 @@ public sealed class PreviewHostTests
         Assert.Equal(PreviewMarkupUpdateResult.RequiresCompilation, result);
     }
 
+    // A value that binds owns a binding in the live tree. Setting the new literal in place would
+    // leave that binding attached, and a TwoWay binding would write the literal into its source,
+    // while a build of the edited markup has no binding at all; so the edit is compiled.
+    [Theory]
+    [InlineData("$Source.Text:TwoWay", "Bob", "TwoWay")]
+    [InlineData("$Source.Text", "Bob", "OneWay")]
+    [InlineData("User: $Source.Text", "User", null)]
+    public void EditFromABindingToALiteralIsCompiledAndLeavesTheBindingSourceAlone(
+        string boundAttribute,
+        string literalAttribute,
+        string? directMode)
+    {
+        TextBlock source = new() { Text = "Ana" };
+        TextBox box = new();
+        MarkupObservation observation = GeneratedMarkup.ObserveProperty(source, TextBlock.TextProperty);
+        if (directMode is null)
+        {
+            GeneratedMarkup.AttachComputedBinding(
+                box, box, TextBox.TextProperty, [observation], () => "User: " + source.Text, "Box.Text <- " + boundAttribute);
+        }
+        else
+        {
+            GeneratedMarkup.AttachPropertyBinding(
+                box, box, TextBox.TextProperty, observation, Enum.Parse<BindingMode>(directMode), value => (string)value!, "Box.Text <- " + boundAttribute);
+        }
+
+        string boundText = box.Text;
+        PreviewMarkupUpdateResult result = PreviewMarkupHotReload.TryApply(
+            box,
+            $"<TextBox Text=\"{boundAttribute}\" />",
+            $"<TextBox Text=\"{literalAttribute}\" />");
+
+        Assert.Equal("Ana", source.Text);
+        Assert.Equal(PreviewMarkupUpdateResult.RequiresCompilation, result);
+        Assert.Equal(boundText, box.Text);
+    }
+
+    [Fact]
+    public void RenderRequestCarriesTheRecompileFlag()
+    {
+        using MemoryStream stream = new();
+        PreviewProtocol.WriteRequest(stream, new PreviewRequest
+        {
+            RequestId = 85,
+            Kind = PreviewRequestKind.Render,
+            DocumentPath = "View.crn",
+            SourceText = "<Border />",
+            Width = 320,
+            Height = 180,
+            Recompile = true
+        });
+        stream.Position = 0;
+
+        PreviewRequest request = Assert.IsType<PreviewRequest>(PreviewProtocol.ReadRequest(stream));
+
+        Assert.True(request.Recompile);
+        Assert.Equal(320, request.Width);
+        Assert.False(new PreviewRequest().Recompile);
+    }
+
+    // Refresh ("Recompile and refresh Live Preview") sends the unchanged markup with Recompile set:
+    // it compiles again, so a saved code-behind edit is shown. A plain Render of the same text
+    // (an edit that ends where it started) keeps the live tree.
+    [Fact]
+    public async Task RepeatedRenderOfUnchangedMarkupPicksUpASavedCodeBehindEdit()
+    {
+        using CodeBehindFixture fixture = CodeBehindFixture.Create();
+        using Process process = StartHostProcess();
+        try
+        {
+            string markup = File.ReadAllText(fixture.DocumentPath);
+            PreviewResponse initial = await RenderAsync(process, 71, fixture.DocumentPath, markup, audioEnabled: false);
+            Assert.True(initial.Kind == PreviewResponseKind.Frame, initial.Error);
+            Assert.Equal("10,200,30,255", MostCommonPixel(initial.Image));
+
+            fixture.WriteCodeBehind(red: 200, green: 20, blue: 40);
+            PreviewResponse typed = await RenderAsync(process, 72, fixture.DocumentPath, markup, audioEnabled: false);
+            Assert.True(typed.Kind == PreviewResponseKind.Frame, typed.Error);
+            Assert.Equal(0, typed.CompileMilliseconds);
+
+            PreviewResponse refreshed = await RenderAsync(process, 73, fixture.DocumentPath, markup, audioEnabled: false, recompile: true);
+            Assert.True(refreshed.Kind == PreviewResponseKind.Frame, refreshed.Error);
+            Assert.True(MostCommonPixel(refreshed.Image) == "200,20,40,255",
+                "Refresh re-rendered with the saved code-behind changed on disk, but the frame still shows " +
+                MostCommonPixel(refreshed.Image) + " (CompileMilliseconds " + refreshed.CompileMilliseconds + ").");
+            Assert.True(refreshed.CompileMilliseconds > 0, "Refresh did not recompile.");
+
+            fixture.WriteCodeBehind(red: 30, green: 60, blue: 220);
+            PreviewResponse refreshedAgain = await RenderAsync(process, 74, fixture.DocumentPath, markup, audioEnabled: false, recompile: true);
+            Assert.True(refreshedAgain.Kind == PreviewResponseKind.Frame, refreshedAgain.Error);
+            Assert.True(refreshedAgain.CompileMilliseconds > 0, "The second Refresh did not recompile.");
+            Assert.Equal("30,60,220,255", MostCommonPixel(refreshedAgain.Image));
+        }
+        finally
+        {
+            StopHostProcess(process);
+        }
+    }
+
+    [Fact]
+    public async Task StructuralMarkupEditRecompilesAndPicksUpASavedCodeBehindEdit()
+    {
+        // Control: when the markup itself needs compilation the same code-behind edit is visible.
+        using CodeBehindFixture fixture = CodeBehindFixture.Create();
+        using Process process = StartHostProcess();
+        try
+        {
+            string markup = File.ReadAllText(fixture.DocumentPath);
+            PreviewResponse initial = await RenderAsync(process, 81, fixture.DocumentPath, markup, audioEnabled: false);
+            Assert.True(initial.Kind == PreviewResponseKind.Frame, initial.Error);
+            Assert.Equal("10,200,30,255", MostCommonPixel(initial.Image));
+
+            fixture.WriteCodeBehind(red: 200, green: 20, blue: 40);
+            PreviewResponse recompiled = await RenderAsync(
+                process,
+                82,
+                fixture.DocumentPath,
+                "<UserControl><Border /></UserControl>",
+                audioEnabled: false);
+
+            Assert.True(recompiled.Kind == PreviewResponseKind.Frame, recompiled.Error);
+            Assert.True(recompiled.CompileMilliseconds > 0, "The structural edit did not recompile.");
+            Assert.Equal("200,20,40,255", MostCommonPixel(recompiled.Image));
+        }
+        finally
+        {
+            StopHostProcess(process);
+        }
+    }
+
     [Fact]
     public void InteractiveInputRoundTripsThroughThePreviewProtocol()
     {
@@ -813,7 +945,8 @@ public sealed class PreviewHostTests
         int requestId,
         string documentPath,
         string source,
-        bool audioEnabled)
+        bool audioEnabled,
+        bool recompile = false)
     {
         PreviewProtocol.WriteRequest(process.StandardInput.BaseStream, new PreviewRequest
         {
@@ -823,11 +956,158 @@ public sealed class PreviewHostTests
             SourceText = source,
             Width = 320,
             Height = 180,
-            AudioEnabled = audioEnabled
+            AudioEnabled = audioEnabled,
+            Recompile = recompile
         });
         return await Task.Run(() => PreviewProtocol.ReadResponse(process.StandardOutput.BaseStream))
                 .WaitAsync(TimeSpan.FromSeconds(60))
             ?? throw new EndOfStreamException("The preview host closed without a frame.");
+    }
+
+    private static string MostCommonPixel(byte[] image) => Enumerable.Range(0, image.Length / 4)
+        .GroupBy(pixel => string.Join(",", image.Skip(pixel * 4).Take(4)))
+        .OrderByDescending(group => group.Count())
+        .First()
+        .Key;
+
+    private static Process StartHostProcess()
+    {
+        string executable = Path.Combine(AppContext.BaseDirectory, "Cerneala.PreviewHost.exe");
+        Assert.True(File.Exists(executable), $"Preview host executable '{executable}' is missing.");
+        Process process = new()
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = executable,
+                WorkingDirectory = AppContext.BaseDirectory,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardInput = true,
+                RedirectStandardOutput = true
+            }
+        };
+        Assert.True(process.Start());
+        return process;
+    }
+
+    private static void StopHostProcess(Process process)
+    {
+        if (process.HasExited)
+        {
+            return;
+        }
+
+        PreviewProtocol.WriteRequest(process.StandardInput.BaseStream, new PreviewRequest
+        {
+            RequestId = 999,
+            Kind = PreviewRequestKind.Shutdown
+        });
+        process.StandardInput.Close();
+        if (!process.WaitForExit(2_000))
+        {
+            process.Kill();
+            process.WaitForExit();
+        }
+    }
+
+    // A Debug-built project with a code-behind constructor that paints the whole view one color.
+    private sealed class CodeBehindFixture : IDisposable
+    {
+        private CodeBehindFixture(string root)
+        {
+            Root = root;
+            DocumentPath = Path.Combine(root, "View.crn");
+            CodePath = DocumentPath + ".cs";
+        }
+
+        public string Root { get; }
+
+        public string DocumentPath { get; }
+
+        public string CodePath { get; }
+
+        public static CodeBehindFixture Create()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "Cerneala", "PreviewCodeBehindTests", Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+            CodeBehindFixture fixture = new(root);
+            File.WriteAllText(Path.Combine(root, "CodeBehindFixture.csproj"), $"""
+                <Project Sdk="Microsoft.NET.Sdk">
+                  <PropertyGroup>
+                    <TargetFramework>net10.0-windows</TargetFramework>
+                    <ImplicitUsings>enable</ImplicitUsings>
+                    <Nullable>enable</Nullable>
+                    <AssemblyName>CodeBehindFixture</AssemblyName>
+                  </PropertyGroup>
+                  <ItemGroup>
+                    <ProjectReference Include="{Path.Combine(RepositoryRoot(), "Cerneala.csproj")}" />
+                    <AdditionalFiles Include="*.crn" />
+                  </ItemGroup>
+                </Project>
+                """);
+            File.WriteAllText(fixture.DocumentPath, "<UserControl />");
+            fixture.WriteCodeBehind(red: 10, green: 200, blue: 30);
+            fixture.Build();
+            return fixture;
+        }
+
+        public void WriteCodeBehind(byte red, byte green, byte blue) => File.WriteAllText(CodePath, $$"""
+            using Cerneala.Drawing;
+            using Cerneala.UI.Controls;
+            using Cerneala.UI.Media;
+
+            namespace Fixture;
+
+            public partial class View : UserControl
+            {
+                public View()
+                {
+                    Background = new SolidColorBrush(new Color({{red}}, {{green}}, {{blue}}));
+                }
+            }
+            """);
+
+        public void Dispose()
+        {
+            // Best effort: a just-stopped host or build node can still hold the directory for a moment,
+            // and a cleanup failure must not replace the assertion that is unwinding.
+            for (int attempt = 0; attempt < 10 && Directory.Exists(Root); attempt++)
+            {
+                try
+                {
+                    Directory.Delete(Root, recursive: true);
+                }
+                catch (IOException)
+                {
+                    Thread.Sleep(300);
+                }
+            }
+        }
+
+        private void Build()
+        {
+            ProcessStartInfo start = new("dotnet")
+            {
+                WorkingDirectory = Root,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            start.ArgumentList.Add("build");
+            start.ArgumentList.Add(Path.Combine(Root, "CodeBehindFixture.csproj"));
+            start.ArgumentList.Add("--configuration");
+            start.ArgumentList.Add("Debug");
+            start.ArgumentList.Add("--nologo");
+            start.ArgumentList.Add("--verbosity");
+            start.ArgumentList.Add("quiet");
+            start.ArgumentList.Add("-p:NuGetAudit=false");
+            using Process process = Process.Start(start) ?? throw new InvalidOperationException("Could not start dotnet build.");
+            Task<string> output = process.StandardOutput.ReadToEndAsync();
+            Task<string> error = process.StandardError.ReadToEndAsync();
+            Assert.True(process.WaitForExit(110_000), "Fixture build timed out.");
+            Assert.True(process.ExitCode == 0, output.Result + Environment.NewLine + error.Result);
+        }
     }
 
     private static int PumpUntilBlocked(PreviewRenderSession session)

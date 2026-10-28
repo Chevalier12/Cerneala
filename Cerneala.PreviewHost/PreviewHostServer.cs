@@ -54,7 +54,8 @@ internal sealed class PreviewHostServer : IDisposable
         TimeSpan compileTime = TimeSpan.Zero;
         if (request.Kind == PreviewRequestKind.Render)
         {
-            bool canUpdateLiveTree = session is not null &&
+            bool canUpdateLiveTree = !request.Recompile &&
+                session is not null &&
                 activeSource is not null &&
                 string.Equals(activeDocumentPath, request.DocumentPath, StringComparison.OrdinalIgnoreCase) &&
                 activeWidth == request.Width &&
@@ -71,7 +72,7 @@ internal sealed class PreviewHostServer : IDisposable
             else if (update == PreviewMarkupUpdateResult.RequiresCompilation)
             {
                 PreviewCompilation compilation = compiler
-                    .CompileAsync(request.DocumentPath, request.SourceText)
+                    .CompileAsync(request.DocumentPath, request.SourceText, reloadSavedSources: request.Recompile)
                     .GetAwaiter()
                     .GetResult();
                 compileTime = compilation.CompileTime;

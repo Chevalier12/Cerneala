@@ -59,6 +59,10 @@ internal sealed class PreviewRequest
 
     // Render only: preview audio stays disabled unless the editor enables it.
     public bool AudioEnabled { get; set; }
+
+    // Render only: compile the document's project even when the markup is unchanged, so that
+    // saved code-behind edits are picked up (the editor's Refresh command).
+    public bool Recompile { get; set; }
 }
 
 internal sealed class PreviewResponse
@@ -116,6 +120,7 @@ internal static class PreviewProtocol
                     writer.Write(request.Width);
                     writer.Write(request.Height);
                     writer.Write(request.AudioEnabled);
+                    writer.Write(request.Recompile);
                     break;
                 case PreviewRequestKind.Click:
                 case PreviewRequestKind.PointerMove:
@@ -171,6 +176,7 @@ internal static class PreviewProtocol
                     request.Width = reader.ReadInt32();
                     request.Height = reader.ReadInt32();
                     request.AudioEnabled = reader.ReadBoolean();
+                    request.Recompile = reader.ReadBoolean();
                     break;
                 case PreviewRequestKind.Click:
                 case PreviewRequestKind.PointerMove:

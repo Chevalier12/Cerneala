@@ -76,7 +76,10 @@ The tested Visual Studio Community integration includes:
   resource-reference edits are converted and applied atomically to the live retained
   tree without source generation, Roslyn compilation, or resetting interactive state;
   incomplete literal edits keep the last valid frame, while structural markup changes
-  deliberately fall back to the normal project-backed compile path;
+  and edits of a binding value (for example `Text="$Source.Text:TwoWay"` to
+  `Text="Bob"`) deliberately fall back to the normal project-backed compile path;
+- a **Refresh** button that always compiles again and first reads the saved text of
+  the project's source and markup files, so a saved code-behind edit is shown;
 - a branded animated loading state while the project-backed preview is compiling;
 - allocation-stable local raw RGBA frame transport and completion-paced frame
   scheduling at render priority, with an editable per-tab refresh cap defaulting
