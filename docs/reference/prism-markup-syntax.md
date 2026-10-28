@@ -710,6 +710,12 @@ Prism supports the complete Photoshop layer blend-mode set:
 for example `DropShadow` uses `Multiply` and `OuterGlow` uses `Screen` (see the
 style table below).
 
+A `symbol` parameter read by `BlendMode` is held to the same rules. With
+`@parameter Mode: symbol = Add;` and `@layer L { BlendMode = Mode; ... }`, the
+default `Add` fails with `PRISM2009`, and so does an argument such as
+`@prism $P(Mode = PassThrough);`, because the layer reads it. Each error is
+reported at the default or argument that holds the wrong symbol.
+
 Photoshop's `Behind` and `Clear` modes belong to painting tools rather than the
 layer panel, so they are not Prism layer blend modes. `Dissolve` uses a stable hash
 of pixel position, layer identity, and `DissolveSeed`; it never flickers between

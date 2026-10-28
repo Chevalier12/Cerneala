@@ -905,24 +905,9 @@ public sealed partial class UiMarkupGenerator
                 return true;
             }
 
-            if (!schema.Symbols.Contains(syntax.Text, StringComparer.Ordinal))
+            if (PrismSymbolRule.Validate(schema.Name, schema.Symbols, family, syntax.Text) is string symbolMessage)
             {
-                ReportPrismBinding(
-                    PrismValueDiagnostic,
-                    syntax.Location,
-                    "Unknown Prism symbol '" + syntax.Text + "' for property '" +
-                    schema.Name + "'.");
-                return false;
-            }
-
-            if (schema.Name == "BlendMode" &&
-                family is not "group" &&
-                string.Equals(syntax.Text, "PassThrough", StringComparison.Ordinal))
-            {
-                ReportPrismBinding(
-                    PrismValueDiagnostic,
-                    syntax.Location,
-                    "PassThrough blending is valid only for Prism groups.");
+                ReportPrismBinding(PrismValueDiagnostic, syntax.Location, symbolMessage);
                 return false;
             }
 

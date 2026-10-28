@@ -252,6 +252,7 @@ public sealed class MotionPrismSemanticTests
     [InlineData("@layer Card { @filter AdaptiveWideAngle { FocalLength = (0, 0); } }", "PRISM2009")]
     [InlineData("@layer Card { ThisLayerRange = (0, 1); @filter Blur { Radius = 1; } }", "PRISM2009")]
     [InlineData("@layer Card { UnderlyingRange = (0, 0.5, 1); @filter Blur { Radius = 1; } }", "PRISM2009")]
+    [InlineData("@layer Card { BlendMode = PassThrough; @filter Blur { Radius = 1; } }", "PRISM2009")]
     [InlineData("", "PRISM2013")]
     public void PrismBindingDiagnosticsMatchTheSourceGeneratorExactly(string body, string expectedId)
     {
@@ -282,6 +283,43 @@ public sealed class MotionPrismSemanticTests
         Assert.Equal(invalid, markup.Substring(semantic.StartCharacter, semantic.EndCharacter - semantic.StartCharacter));
         Assert.EndsWith("value '" + invalid + "' must have four components.", semantic.Message, StringComparison.Ordinal);
         Assert.Equal(semantic, Assert.Single(result.SourceGeneratorDiagnostics));
+    }
+
+    // A symbol parameter supplies the symbol of each property that reads it,
+    // so its default or argument is held to that property's catalog symbols
+    // and, for BlendMode, to the rule that PassThrough is valid only on groups.
+    [Theory]
+    [InlineData("@parameter Mode: symbol = Bogus; @layer Card { BlendMode = Mode; @filter Blur { Radius = 1; } }", "", "Bogus", "Unknown Prism symbol 'Bogus' for property 'BlendMode'.")]
+    [InlineData("@parameter Mode: symbol = Add; @layer Card { BlendMode = Mode; @filter Blur { Radius = 1; } }", "", "Add", "Unknown Prism symbol 'Add' for property 'BlendMode'.")]
+    [InlineData("@parameter Mode: symbol = Multiply; @layer Card { BlendMode = Mode; @filter Blur { Radius = 1; } }", "Mode = Bogus", "Bogus", "Unknown Prism symbol 'Bogus' for property 'BlendMode'.")]
+    [InlineData("@parameter Outer: symbol = Bogus; @layer Card { @parameter Inner: symbol = Outer; BlendMode = Inner; @filter Blur { Radius = 1; } }", "", "Bogus", "Unknown Prism symbol 'Bogus' for property 'BlendMode'.")]
+    [InlineData("@parameter Mode: symbol = Bogus; @layer A { BlendMode = Mode; @filter Blur { Radius = 1; } } @layer B { BlendMode = Mode; @filter Blur { Radius = 1; } }", "", "Bogus", "Unknown Prism symbol 'Bogus' for property 'BlendMode'.")]
+    [InlineData("@parameter Mode: symbol = PassThrough; @layer Card { BlendMode = Mode; @filter Blur { Radius = 1; } }", "", "PassThrough", "PassThrough blending is valid only for Prism groups.")]
+    [InlineData("@parameter Mode: symbol = Multiply; @layer Card { BlendMode = Mode; @filter Blur { Radius = 1; } }", "Mode = PassThrough", "PassThrough", "PassThrough blending is valid only for Prism groups.")]
+    public void PrismSymbolParameterValuesMatchTheSourceGeneratorExactly(string body, string arguments, string invalid, string message)
+    {
+        string markup = "<StackPanel><StackPanel.Resources><PrismClip Name=\"Fx\">" + body +
+            "</PrismClip></StackPanel.Resources><Border><Border.Aspect>@prism $Fx(" + arguments +
+            ");</Border.Aspect></Border></StackPanel>";
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("PrismDiagnostics.crn", markup);
+
+        HarnessDiagnostic semantic = Assert.Single(result.SemanticDiagnostics);
+        Assert.Equal("PRISM2009", semantic.Id);
+        Assert.Equal(invalid, markup.Substring(semantic.StartCharacter, semantic.EndCharacter - semantic.StartCharacter));
+        Assert.EndsWith(message, semantic.Message, StringComparison.Ordinal);
+        Assert.Equal(semantic, Assert.Single(result.SourceGeneratorDiagnostics));
+    }
+
+    [Fact]
+    public void PrismPassThroughSymbolParameterIsValidOnAGroup()
+    {
+        string markup = "<StackPanel><StackPanel.Resources><PrismClip Name=\"Fx\">" +
+            "@parameter Mode: symbol = PassThrough; @group G { BlendMode = Mode; @layer Card { @filter Blur { Radius = 1; } } }" +
+            "</PrismClip></StackPanel.Resources><Border><Border.Aspect>@prism $Fx(Mode = PassThrough);</Border.Aspect></Border></StackPanel>";
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("PrismDiagnostics.crn", markup);
+
+        Assert.Empty(result.SemanticDiagnostics);
+        Assert.Empty(result.SourceGeneratorDiagnostics);
     }
 
     [Theory]
