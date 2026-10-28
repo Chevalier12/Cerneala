@@ -458,8 +458,9 @@ internal sealed class LanguageServerEndpoint(IServerLogger logger) : IAsyncDispo
     public async Task DidSaveAsync(DidSaveTextDocumentParams request, CancellationToken cancellationToken)
     {
         EnsureInitialized();
+        // The reload raises Reloaded, and OnWorkspaceReloaded republishes the documents that are still open. Scheduling
+        // the saved URI here would publish again for a document the client closed while the reload ran.
         await GetWorkspace().ReloadAsync(cancellationToken).ConfigureAwait(false);
-        GetDiagnosticPublisher().Schedule(request.TextDocument.Uri);
         logger.Info("document.saved");
     }
 
@@ -533,9 +534,13 @@ internal sealed class LanguageServerEndpoint(IServerLogger logger) : IAsyncDispo
 
     private void EnsureInitialized()
     {
-        if (Volatile.Read(ref state) == 0)
+        switch (Volatile.Read(ref state))
         {
-            throw new LocalRpcException("The server is not initialized.") { ErrorCode = -32002 };
+            case 0:
+                throw new LocalRpcException("The server is not initialized.") { ErrorCode = -32002 };
+            case 2:
+                // LSP 3.17: requests received after shutdown error with InvalidRequest.
+                throw new LocalRpcException("The server has been shut down.") { ErrorCode = -32600 };
         }
     }
 

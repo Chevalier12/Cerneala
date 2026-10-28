@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Xml.Linq;
 using Cerneala.LanguageServer.Protocol;
 using StreamJsonRpc;
 
@@ -201,6 +202,51 @@ public sealed class ProtocolContractTests
     }
 
     [Fact]
+    public async Task LateDidSaveDoesNotPublishDiagnosticsForADocumentTheClientAlreadyClosed()
+    {
+        using TemporaryPushWorkspace fixture = TemporaryPushWorkspace.Create();
+        int nonEmptyAfterClose = await RunSaveCloseScenarioAsync(fixture, sendSave: true);
+
+        Assert.True(
+            nonEmptyAfterClose == 0,
+            $"{nonEmptyAfterClose} non-empty publishDiagnostics notification(s) arrived for the closed document after didSave + didClose.");
+    }
+
+    [Fact]
+    public async Task DidCloseAloneLeavesOnlyTheEmptyPublishForTheDocument()
+    {
+        // Control for the late didSave test.
+        using TemporaryPushWorkspace fixture = TemporaryPushWorkspace.Create();
+        int nonEmptyAfterClose = await RunSaveCloseScenarioAsync(fixture, sendSave: false);
+
+        Assert.Equal(0, nonEmptyAfterClose);
+    }
+
+    [Fact]
+    public async Task DidSaveRepublishesDiagnosticsForADocumentThatIsStillOpen()
+    {
+        using TemporaryPushWorkspace fixture = TemporaryPushWorkspace.Create();
+        using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(60));
+        await using ProtocolTestClient client = ProtocolTestClient.Start();
+        await client.InitializeAsync(timeout.Token, fixture.ProjectPath, diagnosticsMode: "push");
+        await client.Rpc.NotifyWithParameterObjectAsync("initialized", new { });
+        await OpenBrokenMarkupAsync(client, fixture, timeout.Token);
+
+        await client.Rpc.NotifyWithParameterObjectAsync(
+            "textDocument/didSave",
+            new DidSaveTextDocumentParams
+            {
+                TextDocument = new TextDocumentIdentifier { Uri = fixture.MarkupUri }
+            });
+        PublishDiagnosticsParams republished = await client.WaitForDiagnosticsAsync(
+            notification => notification.Uri == fixture.MarkupUri && notification.Version == 1,
+            timeout.Token);
+
+        Assert.Contains(republished.Diagnostics, diagnostic => diagnostic.Code == "CERNEALAUI001");
+        Assert.Equal(0, await client.StopAsync(timeout.Token));
+    }
+
+    [Fact]
     public async Task IncrementalPushDiagnosticsReportEmbeddedSyntaxBeforeDeferredWorkspaceLoads()
     {
         using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(10));
@@ -323,6 +369,55 @@ public sealed class ProtocolContractTests
     }
 
     [Fact]
+    public async Task RequestAfterShutdownFailsWithInvalidRequest()
+    {
+        using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(10));
+        await using ProtocolTestClient client = ProtocolTestClient.Start();
+        await client.InitializeAsync(timeout.Token);
+        await client.Rpc.NotifyWithParameterObjectAsync("initialized", new { });
+        string uri = new Uri(Path.GetFullPath("AfterShutdown.crn")).AbsoluteUri;
+        await client.Rpc.NotifyWithParameterObjectAsync(
+            "textDocument/didOpen",
+            new DidOpenTextDocumentParams
+            {
+                TextDocument = new TextDocumentItem { Uri = uri, LanguageId = "cerneala", Version = 1, Text = "<Window />" }
+            });
+        TextDocumentPositionParams position = new()
+        {
+            TextDocument = new TextDocumentIdentifier { Uri = uri },
+            Position = new LspPosition { Line = 0, Character = 2 }
+        };
+
+        // Control: before shutdown the request is served.
+        Exception? before = await Record.ExceptionAsync(() => client.Rpc.InvokeWithParameterObjectAsync<LspHover?>(
+            "textDocument/hover", position, timeout.Token));
+        Assert.Null(before);
+
+        await client.Rpc.InvokeWithCancellationAsync<object?>("shutdown", [], timeout.Token);
+
+        // LSP 3.17 shutdown: requests received after shutdown error with InvalidRequest (-32600).
+        Exception? hover = await Record.ExceptionAsync(() => client.Rpc.InvokeWithParameterObjectAsync<LspHover?>(
+            "textDocument/hover", position, timeout.Token));
+        Exception? completion = await Record.ExceptionAsync(() => client.Rpc.InvokeWithParameterObjectAsync<CompletionList>(
+            "textDocument/completion", position, timeout.Token));
+        Exception? secondShutdown = await Record.ExceptionAsync(() => client.Rpc.InvokeWithCancellationAsync<object?>(
+            "shutdown", [], timeout.Token));
+
+        foreach ((string method, Exception? after) in new[]
+        {
+            ("textDocument/hover", hover),
+            ("textDocument/completion", completion),
+            ("shutdown", secondShutdown)
+        })
+        {
+            RemoteInvocationException rejection = Assert.IsType<RemoteInvocationException>(after);
+            Assert.True(
+                rejection.ErrorCode == -32600,
+                $"{method} after shutdown failed with error code {rejection.ErrorCode} ({rejection.Message}) instead of -32600.");
+        }
+    }
+
+    [Fact]
     public async Task VerboseTraceNeverWritesDocumentContent()
     {
         using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(10));
@@ -347,5 +442,122 @@ public sealed class ProtocolContractTests
         string output = logs.ToString();
         Assert.DoesNotContain("private-document-secret", output, StringComparison.Ordinal);
         Assert.DoesNotContain("file:///private/View.crn", output, StringComparison.Ordinal);
+    }
+
+    private static async Task<int> RunSaveCloseScenarioAsync(TemporaryPushWorkspace fixture, bool sendSave)
+    {
+        using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(60));
+        await using ProtocolTestClient client = ProtocolTestClient.Start();
+        await client.InitializeAsync(timeout.Token, fixture.ProjectPath, diagnosticsMode: "push");
+        await client.Rpc.NotifyWithParameterObjectAsync("initialized", new { });
+        await OpenBrokenMarkupAsync(client, fixture, timeout.Token);
+
+        if (sendSave)
+        {
+            await client.Rpc.NotifyWithParameterObjectAsync(
+                "textDocument/didSave",
+                new DidSaveTextDocumentParams
+                {
+                    TextDocument = new TextDocumentIdentifier { Uri = fixture.MarkupUri }
+                });
+        }
+
+        await client.Rpc.NotifyWithParameterObjectAsync(
+            "textDocument/didClose",
+            new DidCloseTextDocumentParams
+            {
+                TextDocument = new TextDocumentIdentifier { Uri = fixture.MarkupUri }
+            });
+        PublishDiagnosticsParams closed = await client.WaitForDiagnosticsAsync(
+            notification => notification.Uri == fixture.MarkupUri && notification.Version is null,
+            timeout.Token);
+        Assert.Empty(closed.Diagnostics);
+
+        // The late publish waits for the real project reload that didSave starts.
+        int nonEmpty = 0;
+        using CancellationTokenSource window = new(TimeSpan.FromSeconds(5));
+        try
+        {
+            while (true)
+            {
+                await client.WaitForDiagnosticsAsync(
+                    notification => notification.Uri == fixture.MarkupUri && notification.Diagnostics.Length > 0,
+                    window.Token);
+                nonEmpty++;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+
+        return nonEmpty;
+    }
+
+    private static async Task OpenBrokenMarkupAsync(
+        ProtocolTestClient client,
+        TemporaryPushWorkspace fixture,
+        CancellationToken cancellationToken)
+    {
+        await client.Rpc.NotifyWithParameterObjectAsync(
+            "textDocument/didOpen",
+            new DidOpenTextDocumentParams
+            {
+                TextDocument = new TextDocumentItem
+                {
+                    Uri = fixture.MarkupUri,
+                    LanguageId = "cerneala",
+                    Version = 1,
+                    Text = "<"
+                }
+            });
+        PublishDiagnosticsParams broken = await client.WaitForDiagnosticsAsync(
+            notification => notification.Uri == fixture.MarkupUri && notification.Version == 1,
+            cancellationToken);
+        Assert.Contains(broken.Diagnostics, diagnostic => diagnostic.Code == "CERNEALAUI001");
+    }
+
+    private sealed class TemporaryPushWorkspace : IDisposable
+    {
+        private TemporaryPushWorkspace(string rootPath, string projectPath, string markupPath)
+        {
+            RootPath = rootPath;
+            ProjectPath = projectPath;
+            MarkupPath = markupPath;
+        }
+
+        public string RootPath { get; }
+
+        public string ProjectPath { get; }
+
+        public string MarkupPath { get; }
+
+        public string MarkupUri => new Uri(MarkupPath).AbsoluteUri;
+
+        public static TemporaryPushWorkspace Create()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "cerneala-push-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+            string project = Path.Combine(root, "Fixture.csproj");
+            string markup = Path.Combine(root, "View.crn");
+            XDocument projectDocument = new(
+                new XElement("Project",
+                    new XAttribute("Sdk", "Microsoft.NET.Sdk"),
+                    new XElement("PropertyGroup",
+                        new XElement("TargetFramework", "net10.0"),
+                        new XElement("AssemblyName", "PushProtocolFixture")),
+                    new XElement("ItemGroup",
+                        new XElement("AdditionalFiles", new XAttribute("Include", "*.crn")))));
+            projectDocument.Save(project);
+            File.WriteAllText(markup, "<");
+            return new TemporaryPushWorkspace(root, project, markup);
+        }
+
+        public void Dispose()
+        {
+            if (Directory.Exists(RootPath))
+            {
+                Directory.Delete(RootPath, recursive: true);
+            }
+        }
     }
 }
