@@ -481,7 +481,9 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         }
 
         // A literal needs a setter the generated code can call; the build reports the property as unsupported otherwise.
-        if (!IsWritableFromGeneratedCode(member))
+        // A brush and its content (GradientStop, FillRectangle) are built through constructor arguments instead
+        // (UiMarkupGenerator.BuildBrushExpression), so their get-only properties take literals.
+        if (!IsWritableFromGeneratedCode(member) && !IsInBrushConstruction(element))
         {
             AddDiagnostic("CERNEALAUI003", attribute.NameToken.Span, type.Name, name);
             return null;
@@ -503,6 +505,20 @@ internal sealed partial class CernealaSemanticModel : IDisposable
             converted,
             isWritable: IsWritableFromGeneratedCode(member)));
         return null;
+    }
+
+    private bool IsInBrushConstruction(ElementSyntax element)
+    {
+        for (ElementSyntax? current = element; current is not null; current = parents.TryGetValue(current, out ElementSyntax? parent) ? parent : null)
+        {
+            if (LocalElementName(current.Name) is "SolidColorBrush" or "LinearGradientBrush" or "RadialGradientBrush" or
+                "ImageBrush" or "DrawingBrush")
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void BindAttachedAttribute(

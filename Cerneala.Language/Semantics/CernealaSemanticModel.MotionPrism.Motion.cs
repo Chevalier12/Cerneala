@@ -930,9 +930,9 @@ internal sealed partial class CernealaSemanticModel
     }
 
     // Mirrors the literal rule of UiMarkupMotionResolver.ValidateMotionValue, which is the build contract: enum members
-    // match case-sensitively, strings need surrounding quotes, colors are #RRGGBB or #AARRGGBB, and a property of any
-    // other value kind (Thickness, Brush, ...) takes only a $ reference, never a literal. Markup attribute literals
-    // follow their own rule (TryConvertLiteral).
+    // match case-sensitively, strings need surrounding quotes, a structured value (Color, Brush, Thickness,
+    // CornerRadius, LayoutPoint, DrawPoint) takes the literal of its attribute form (MarkupLiteralRules), and a property
+    // of any other value kind takes only a $ reference, never a literal.
     private static bool IsValidMotionLiteral(string text, ILanguageMemberSymbol member)
     {
         if (member.EnumValues.Count > 0)
@@ -953,7 +953,10 @@ internal sealed partial class CernealaSemanticModel
             "long" or "System.Int64" => long.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
             "ulong" or "System.UInt64" => ulong.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
             "bool" or "System.Boolean" => bool.TryParse(text, out _),
-            "Cerneala.Drawing.Color" => IsHexColor(text),
+            "Cerneala.Drawing.Color" or "Cerneala.UI.Media.Brush" or
+            "Cerneala.UI.Layout.Thickness" or "Cerneala.UI.Layout.CornerRadius" or
+            "Cerneala.UI.Layout.LayoutPoint" or "Cerneala.Drawing.DrawPoint" =>
+                MarkupLiteralRules.IsValid(text, member.ValueTypeMetadataName.TrimEnd('?'), member.ValueConstraint),
             "string" or "System.String" or "object" or "System.Object" =>
                 text.Length >= 2 && text[0] == '"' && text[text.Length - 1] == '"',
             _ => false
