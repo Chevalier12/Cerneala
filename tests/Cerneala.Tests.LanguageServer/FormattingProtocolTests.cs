@@ -104,6 +104,69 @@ public sealed class FormattingProtocolTests
         Assert.Equal(0, await client.StopAsync(timeout.Token));
     }
 
+    [Fact]
+    public async Task CodeActionAcceptsContextDiagnosticsWithoutCodeOrWithANumericCode()
+    {
+        using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(30));
+        await using ProtocolTestClient client = ProtocolTestClient.Start();
+        await client.InitializeAsync(timeout.Token);
+        await client.Rpc.NotifyWithParameterObjectAsync("initialized", new { });
+        string uri = new Uri(Path.GetFullPath("CodeActionContext.crn")).AbsoluteUri;
+        const string text = "<Window>\n  <Button />";
+        await OpenAsync(client, uri, text);
+        var range = new
+        {
+            start = new { line = 0, character = 0 },
+            end = new { line = 1, character = 12 }
+        };
+        object cerneala = new { range, severity = 1, code = "CERNEALAUI001", source = "cerneala", message = "m" };
+        object withoutCode = new { range, severity = 1, source = "other", message = "m" };
+        object numericCode = new { range, severity = 1, code = 42, source = "other", message = "m" };
+        (string Name, object[] Diagnostics)[] variants =
+        [
+            ("none", []),
+            ("string code", [cerneala]),
+            ("no code", [withoutCode]),
+            ("numeric code", [numericCode]),
+            ("string code with foreign diagnostics", [withoutCode, cerneala, numericCode])
+        ];
+
+        Dictionary<string, LspCodeAction[]> results = new(StringComparer.Ordinal);
+        List<string> failures = [];
+        foreach ((string name, object[] diagnostics) in variants)
+        {
+            try
+            {
+                results[name] = await client.Rpc.InvokeWithParameterObjectAsync<LspCodeAction[]>(
+                    "textDocument/codeAction",
+                    new { textDocument = new { uri }, range, context = new { diagnostics } },
+                    timeout.Token);
+            }
+            catch (RemoteInvocationException exception)
+            {
+                failures.Add($"{name}: {exception.ErrorCode} {exception.Message}");
+            }
+        }
+
+        Assert.True(failures.Count == 0, "codeAction failed for: " + string.Join(" | ", failures));
+        Assert.NotEmpty(results["none"]);
+        Assert.Equal(Describe(results["none"]), Describe(results["no code"]));
+        Assert.Equal(Describe(results["none"]), Describe(results["numeric code"]));
+        Assert.Equal(Describe(results["string code"]), Describe(results["string code with foreign diagnostics"]));
+        Assert.Contains(
+            results["string code with foreign diagnostics"],
+            action => action.Diagnostics.Any(diagnostic => diagnostic.Code == "CERNEALAUI001"));
+        Assert.All(
+            results["string code with foreign diagnostics"].SelectMany(action => action.Diagnostics),
+            diagnostic => Assert.Equal("CERNEALAUI001", diagnostic.Code));
+        Assert.Equal(0, await client.StopAsync(timeout.Token));
+    }
+
+    private static string[] Describe(IEnumerable<LspCodeAction> actions) => actions
+        .Select(action => action.Kind + "|" + action.Title + "|" + action.IsPreferred + "|" +
+            string.Join(",", action.Diagnostics.Select(diagnostic => diagnostic.Code)))
+        .ToArray();
+
     private static Task OpenAsync(ProtocolTestClient client, string uri, string text) =>
         client.Rpc.NotifyWithParameterObjectAsync(
             "textDocument/didOpen",

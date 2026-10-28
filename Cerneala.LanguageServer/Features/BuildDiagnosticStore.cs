@@ -56,7 +56,7 @@ internal sealed class BuildDiagnosticStore
     }
 
     private readonly record struct DiagnosticIdentity(
-        string Code,
+        string? Code,
         int StartLine,
         int StartCharacter,
         int EndLine,

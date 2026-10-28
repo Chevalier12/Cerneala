@@ -271,7 +271,7 @@ internal sealed class DiagnosticService(CernealaWorkspace workspace, BuildDiagno
     };
 
     private readonly record struct DiagnosticKey(
-        string Code,
+        string? Code,
         int StartLine,
         int StartCharacter,
         int EndLine,

@@ -1,3 +1,6 @@
+using System.Buffers;
+using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Cerneala.LanguageServer.Protocol;
@@ -764,14 +767,34 @@ internal sealed class LspDiagnostic
     [JsonPropertyName("severity")]
     public int Severity { get; init; }
 
+    // LSP 3.17 declares `code?: integer | string`. Cerneala's own diagnostics always have a string code, but the
+    // diagnostics a client sends in a code action context can come from any extension: their code can be missing
+    // (null here) or an integer (its JSON number text here).
     [JsonPropertyName("code")]
-    public required string Code { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonConverter(typeof(LspDiagnosticCodeConverter))]
+    public string? Code { get; init; }
 
     [JsonPropertyName("source")]
     public string Source { get; init; } = "cerneala";
 
     [JsonPropertyName("message")]
     public required string Message { get; init; }
+}
+
+internal sealed class LspDiagnosticCodeConverter : JsonConverter<string>
+{
+    public override string? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
+        reader.TokenType switch
+        {
+            JsonTokenType.String => reader.GetString(),
+            JsonTokenType.Number => Encoding.UTF8.GetString(
+                reader.HasValueSequence ? reader.ValueSequence.ToArray() : reader.ValueSpan),
+            _ => throw new JsonException($"A diagnostic code must be an integer or a string, not {reader.TokenType}.")
+        };
+
+    public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options) =>
+        writer.WriteStringValue(value);
 }
 
 internal sealed class BuildDiagnosticsParams
