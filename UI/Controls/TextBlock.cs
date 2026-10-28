@@ -24,6 +24,9 @@ public class TextBlock : Control
     private bool syncingText;
     // True while the inlines are being rebuilt from the Text property, so that their changes do not set Text again.
     private bool syncingInlines;
+    // True while the inlines are the ones that Text made (none for empty Text) and nothing changed them, as WPF's
+    // simple content: a write of the current Text then keeps them.
+    private bool inlinesFromText = true;
 
     public TextBlock()
     {
@@ -279,6 +282,19 @@ public class TextBlock : Control
         }
     }
 
+    // A write of the current Text raises no property change, but as in WPF (TextBlock.CoerceText) it still replaces
+    // inlines that Text did not make, for example a Bold "Hello" with a plain Run "Hello" (#866). No change
+    // invalidates, so this does.
+    internal override void NotifyEffectiveValueRewritten(UiProperty property)
+    {
+        base.NotifyEffectiveValueRewritten(property);
+        if (ReferenceEquals(property, TextProperty) && !syncingText && !inlinesFromText)
+        {
+            ReplaceInlinesWithText();
+            InvalidateInlines(UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender, content: true);
+        }
+    }
+
     // Called by the inline collections of this TextBlock's inline tree when an inline is added, replaced or removed.
     internal void OnInlinesChanged()
     {
@@ -287,6 +303,7 @@ public class TextBlock : Control
             return;
         }
 
+        inlinesFromText = false;
         SyncTextFromInlines();
         InvalidateInlines(UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender, content: true);
     }
@@ -294,6 +311,7 @@ public class TextBlock : Control
     // Called by an inline of this TextBlock's inline tree when one of its properties changes.
     internal void OnInlinePropertyChanged(UiProperty property, UiPropertyOptions options)
     {
+        inlinesFromText = false;
         bool content = ReferenceEquals(property, Run.TextProperty);
         if (content)
         {
@@ -318,6 +336,8 @@ public class TextBlock : Control
         {
             syncingInlines = false;
         }
+
+        inlinesFromText = true;
     }
 
     private void SyncTextFromInlines()

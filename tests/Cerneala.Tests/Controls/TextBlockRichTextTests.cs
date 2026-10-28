@@ -632,6 +632,69 @@ public sealed class TextBlockRichTextTests
         Assert.Equal("Helloold", textBlock.Text);
     }
 
+    // #866: a Text equal to the text of the inlines raises no property change, but it still replaces the inlines.
+    [Theory]
+    [InlineData("World")]
+    [InlineData("Hello")]
+    public void SettingTextReplacesTheInlinesEvenWhenTheTextIsUnchanged(string newText)
+    {
+        TextBlock textBlock = new();
+        textBlock.Inlines.Add(new Bold(new Run("Hello")));
+        Assert.Equal("Hello", textBlock.Text);
+
+        textBlock.Text = newText;
+
+        Run run = Assert.IsType<Run>(Assert.Single(textBlock.Inlines));
+        Assert.Equal(newText, run.Text);
+    }
+
+    [Fact]
+    public void SettingTheCurrentTextThroughSetValueReplacesTheInlinesAndInvalidatesMeasureAndRender()
+    {
+        TextBlock textBlock = CreateTextBlock(string.Empty);
+        textBlock.Inlines.Add(new Bold(new Run("Hello")));
+        LayoutSize bold = Measure(textBlock, 400);
+        textBlock.DirtyState.ClearAll();
+
+        textBlock.SetValue(TextBlock.TextProperty, "Hello");
+
+        Run run = Assert.IsType<Run>(Assert.Single(textBlock.Inlines));
+        Assert.Equal("Hello", run.Text);
+        Assert.True(textBlock.DirtyState.Has(InvalidationFlags.Measure));
+        Assert.True(textBlock.DirtyState.Has(InvalidationFlags.Render));
+        Assert.True(Measure(textBlock, 400).Width < bold.Width);
+    }
+
+    // As WPF keeps simple content, a write of the current Text keeps the Run that Text made, and invalidates nothing.
+    [Fact]
+    public void SettingTheCurrentTextKeepsTheRunThatTextMade()
+    {
+        TextBlock textBlock = CreateTextBlock("Hello");
+        Inline run = Assert.Single(textBlock.Inlines);
+        Measure(textBlock, 400);
+        textBlock.DirtyState.ClearAll();
+
+        textBlock.Text = "Hello";
+
+        Assert.Same(run, Assert.Single(textBlock.Inlines));
+        Assert.False(textBlock.DirtyState.Has(InvalidationFlags.Measure));
+        Assert.False(textBlock.DirtyState.Has(InvalidationFlags.Render));
+    }
+
+    [Fact]
+    public void SettingTheCurrentTextReplacesARunThatTextMadeAfterItsStyleChanged()
+    {
+        TextBlock textBlock = new() { Text = "Hello" };
+        Run run = Assert.IsType<Run>(Assert.Single(textBlock.Inlines));
+        run.FontWeight = FontWeight.Bold;
+
+        textBlock.Text = "Hello";
+
+        Run newRun = Assert.IsType<Run>(Assert.Single(textBlock.Inlines));
+        Assert.NotSame(run, newRun);
+        Assert.Equal(FontWeight.Normal, newRun.FontWeight);
+    }
+
     [Fact]
     public void SettingEmptyTextClearsTheInlines()
     {
