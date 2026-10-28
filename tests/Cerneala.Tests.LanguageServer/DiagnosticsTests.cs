@@ -49,7 +49,7 @@ public sealed class DiagnosticsTests
             }
 
             return new DiagnosticGolden(
-                lsp.Code,
+                lsp.Code!,
                 lsp.Severity,
                 ToLspSeverity(sourceGenerator.Severity),
                 lsp.Message,
@@ -123,6 +123,42 @@ public sealed class DiagnosticsTests
             LspDiagnostic shape = Assert.Single(result.Value, diagnostic => diagnostic.Code == "CERNEALAUI001");
             Assert.Equal(3, shape.Severity);
             Assert.Contains("exactly one UI root element", shape.Message, StringComparison.Ordinal);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    // A leading XML declaration and a comment in an Aspect body are not content, also without a project.
+    [Theory]
+    [InlineData("<TextBlock />")]
+    [InlineData("<?xml version=\"1.0\"?>\n<TextBlock />")]
+    [InlineData("<Border><Border.Resources><Aspect Name=\"A\" TargetType=\"Border\">@default { Opacity = 1; }</Aspect></Border.Resources></Border>")]
+    [InlineData("<Border><Border.Resources><Aspect Name=\"A\" TargetType=\"Border\"><!-- @timbre $Old --> @default { Opacity = 1; }</Aspect></Border.Resources></Border>")]
+    public async Task StandaloneDocumentIgnoresTheXmlDeclarationAndComments(string markup)
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"cerneala-lsp-trivia-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        try
+        {
+            string path = Path.Combine(root, "Loose.crn");
+            File.WriteAllText(path, markup);
+            WorkspaceConfiguration configuration = new(root, null, null, "Debug", WatchFileSystem: false);
+            await using CernealaWorkspace workspace = await CernealaWorkspace.CreateAsync(
+                configuration,
+                new StructuredServerLogger(TextWriter.Null),
+                CancellationToken.None);
+            DiagnosticService service = new(workspace, new BuildDiagnosticStore());
+
+            VersionedDocumentResult<IReadOnlyList<LspDiagnostic>>? result = await service.AnalyzeAsync(
+                new Uri(path).AbsoluteUri,
+                CancellationToken.None);
+
+            Assert.NotNull(result);
+            Assert.Empty(result.Value
+                .Where(diagnostic => diagnostic.Code != "CERNEALAWORKSPACE001")
+                .Select(diagnostic => diagnostic.Code + " " + diagnostic.Message));
         }
         finally
         {
@@ -313,7 +349,7 @@ public sealed class DiagnosticsTests
             new BuildDiagnosticItem
             {
                 Uri = uri,
-                Code = duplicate.Code,
+                Code = duplicate.Code!,
                 Range = duplicate.Range,
                 Message = duplicate.Message
             }

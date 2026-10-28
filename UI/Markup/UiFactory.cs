@@ -1,5 +1,6 @@
 using Cerneala.UI.Elements;
 using Cerneala.UI.Controls;
+using System.Diagnostics.CodeAnalysis;
 using System.Xml.Linq;
 
 namespace Cerneala.UI.Markup;
@@ -36,28 +37,54 @@ public sealed class UiFactory
 
     private UIElement? CreateNode(UiMarkupNode node, List<MarkupDiagnostic> diagnostics, MarkupLoadOptions options)
     {
-        if (!registry.TryGetElement(node.Name, out UiMarkupElementRegistration? registration))
+        if (!TryCreateElement(node, diagnostics, out UiMarkupElementRegistration? registration, out UIElement? element))
         {
-            diagnostics.Add(MarkupDiagnostic.Error("MARKUP021", $"Unknown markup element '{node.Name}'.", node.Line, node.Column));
             return null;
         }
 
-        UIElement element;
+        PopulateElement(registration, element, node, diagnostics, options);
+        return element;
+    }
+
+    private bool TryCreateElement(
+        UiMarkupNode node,
+        List<MarkupDiagnostic> diagnostics,
+        [NotNullWhen(true)] out UiMarkupElementRegistration? registration,
+        [NotNullWhen(true)] out UIElement? element)
+    {
+        element = null;
+        if (!registry.TryGetElement(node.Name, out registration))
+        {
+            diagnostics.Add(MarkupDiagnostic.Error("MARKUP021", $"Unknown markup element '{node.Name}'.", node.Line, node.Column));
+            return false;
+        }
+
         try
         {
             element = registration.Factory();
+            return true;
         }
         catch (Exception ex)
         {
             diagnostics.Add(MarkupDiagnostic.Error("MARKUP022", $"Could not create markup element '{node.Name}': {ex.Message}", node.Line, node.Column));
-            return null;
+            return false;
         }
+    }
 
+    // Elements are built top-down, as WPF builds a FrameworkElement ([UsableDuringInitialization(true)]): ApplyChildren
+    // attaches a child to its parent before this method applies the child's resources, properties and children, so a
+    // $Key brush resolves through the resources of its ancestors (UIElement.TryFindResource walks the parent chain).
+    private void PopulateElement(
+        UiMarkupElementRegistration registration,
+        UIElement element,
+        UiMarkupNode node,
+        List<MarkupDiagnostic> diagnostics,
+        MarkupLoadOptions options)
+    {
         ApplyResources(element, node, diagnostics);
         ApplyAttributes(registration, element, node, diagnostics, options);
         ApplyTextContent(registration, element, node, diagnostics, options);
         ApplyChildren(registration, element, node, diagnostics, options);
-        return element;
     }
 
     private static void ApplyAttributes(
@@ -125,8 +152,7 @@ public sealed class UiFactory
                 continue;
             }
 
-            UIElement? child = CreateNode(childNode, diagnostics, options);
-            if (child is null)
+            if (!TryCreateElement(childNode, diagnostics, out UiMarkupElementRegistration? childRegistration, out UIElement? child))
             {
                 continue;
             }
@@ -134,17 +160,21 @@ public sealed class UiFactory
             if (registration.AddChild is null)
             {
                 diagnostics.Add(MarkupDiagnostic.Error("MARKUP025", $"Element '{node.Name}' does not accept child elements.", childNode.Line, childNode.Column));
-                continue;
+            }
+            else
+            {
+                try
+                {
+                    registration.AddChild(element, child);
+                }
+                catch (Exception ex)
+                {
+                    diagnostics.Add(MarkupDiagnostic.Error("MARKUP026", $"Could not add child '{childNode.Name}' to '{node.Name}': {ex.Message}", childNode.Line, childNode.Column));
+                }
             }
 
-            try
-            {
-                registration.AddChild(element, child);
-            }
-            catch (Exception ex)
-            {
-                diagnostics.Add(MarkupDiagnostic.Error("MARKUP026", $"Could not add child '{childNode.Name}' to '{node.Name}': {ex.Message}", childNode.Line, childNode.Column));
-            }
+            // A child that could not be attached is still populated, so its own diagnostics are reported.
+            PopulateElement(childRegistration, child, childNode, diagnostics, options);
         }
     }
 

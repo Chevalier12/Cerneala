@@ -102,6 +102,45 @@ public sealed class MotionRepeatTimelineTests
         Assert.False(sampler.IsComplete);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void FiniteRepeatAdvancesWhenItsTotalRuntimeExceedsTimeSpanMaxValue(bool pingPong)
+    {
+        // One hour times int.MaxValue cycles is about 245,000 years; TimeSpan holds about 29,227.
+        TweenSpec<float> tween = MotionFactory.Tween<float>(TimeSpan.FromHours(1), Easings.Linear);
+        MotionSpec<float> spec = pingPong
+            ? new PingPongSpec<float>(tween, cycles: int.MaxValue)
+            : new RepeatSpec<float>(tween, repeatCount: int.MaxValue);
+        MotionSampler<float> sampler = spec.CreateSampler(0, 10, new FloatMixer(), DefaultContext());
+
+        sampler.Advance(TimeSpan.FromMilliseconds(16));
+
+        Assert.False(sampler.IsComplete);
+        Assert.Equal(16 / 3_600_000d * 10, sampler.Current, precision: 6);
+    }
+
+    [Theory]
+    [InlineData(false, 3, 10f)]
+    [InlineData(true, 2, 0f)]
+    [InlineData(true, 3, 10f)]
+    public void FiniteRepeatCompletesExactlyAfterItsCycleCount(bool pingPong, int count, float expected)
+    {
+        TimeSpan cycle = TimeSpan.FromMilliseconds(100);
+        TweenSpec<float> tween = MotionFactory.Tween<float>(cycle, Easings.Linear);
+        MotionSpec<float> spec = pingPong
+            ? new PingPongSpec<float>(tween, cycles: count)
+            : new RepeatSpec<float>(tween, repeatCount: count);
+        MotionSampler<float> sampler = spec.CreateSampler(0, 10, new FloatMixer(), DefaultContext());
+
+        sampler.Advance((cycle * count) - TimeSpan.FromTicks(1));
+        Assert.False(sampler.IsComplete);
+        sampler.Advance(TimeSpan.FromTicks(1));
+
+        Assert.True(sampler.IsComplete);
+        Assert.Equal(expected, sampler.Current);
+    }
+
     [Fact]
     public void RepeatRejectsNegativeDelta()
     {

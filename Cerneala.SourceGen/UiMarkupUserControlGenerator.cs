@@ -289,16 +289,17 @@ public sealed partial class UiMarkupGenerator
             source.Append("    public ").Append(pair.TypeSymbol.Name).Append('(').Append(viewModelCode).AppendLine(" viewModel)");
             source.AppendLine("    {");
             source.AppendLine("        global::System.ArgumentNullException.ThrowIfNull(viewModel);");
-            source.AppendLine("        DataContext = viewModel;");
+            source.AppendLine("        base.DataContext = viewModel;");
             source.AppendLine("        __CernealaInitialize();");
             source.AppendLine("    }");
         }
 
+        // base.: a generated named member, for example Name="componentTemplate", may hide the inherited member.
         source.AppendLine();
         source.AppendLine("    private void __CernealaInitialize()");
         source.AppendLine("    {");
-        source.AppendLine("        ComponentTemplate = __CernealaGeneratedTemplate;");
-        source.AppendLine("        ApplyTemplate();");
+        source.AppendLine("        base.ComponentTemplate = __CernealaGeneratedTemplate;");
+        source.AppendLine("        base.ApplyTemplate();");
         source.AppendLine("    }");
         source.AppendLine();
         source.Append("    private global::Cerneala.UI.Elements.UIElement? __CernealaCreateContent(")
@@ -593,8 +594,7 @@ public sealed partial class UiMarkupGenerator
                 return true;
             }
 
-            IMethodSymbol[] compatible = FindMethods(userControlPair.TypeSymbol, handlerName)
-                .Where(method => compilation.IsSymbolAccessibleWithin(method, userControlPair.TypeSymbol))
+            IMethodSymbol[] compatible = FindAccessibleMethods(userControlPair.TypeSymbol, handlerName)
                 .Where(method => IsCompatibleEventHandler(method, invokeMethod, elementType))
                 .ToArray();
             if (compatible.Length != 1)
@@ -664,15 +664,45 @@ public sealed partial class UiMarkupGenerator
             return null;
         }
 
-        private static IEnumerable<IMethodSymbol> FindMethods(INamedTypeSymbol type, string name)
+        // The methods that `this.<name>` can bind to from the paired class, as C# member lookup sees them: a base
+        // method that a more derived method overrides or hides with the same signature is not a second candidate.
+        private List<IMethodSymbol> FindAccessibleMethods(INamedTypeSymbol type, string name)
         {
+            List<IMethodSymbol> found = [];
             for (INamedTypeSymbol? current = type; current is not null; current = current.BaseType)
             {
                 foreach (IMethodSymbol method in current.GetMembers(name).OfType<IMethodSymbol>())
                 {
-                    yield return method;
+                    if (compilation.IsSymbolAccessibleWithin(method, type) &&
+                        !found.Any(derived => HaveSameSignature(derived, method)))
+                    {
+                        found.Add(method);
+                    }
                 }
             }
+
+            return found;
+        }
+
+        private static bool HaveSameSignature(IMethodSymbol first, IMethodSymbol second)
+        {
+            if (first.Arity != second.Arity || first.Parameters.Length != second.Parameters.Length)
+            {
+                return false;
+            }
+
+            for (int index = 0; index < first.Parameters.Length; index++)
+            {
+                IParameterSymbol firstParameter = first.Parameters[index];
+                IParameterSymbol secondParameter = second.Parameters[index];
+                if (firstParameter.RefKind != secondParameter.RefKind ||
+                    !SymbolEqualityComparer.Default.Equals(firstParameter.Type, secondParameter.Type))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         // As a method group for the delegate, except that the first parameter, the sender, must accept the element that

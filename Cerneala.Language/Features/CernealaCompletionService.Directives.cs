@@ -158,7 +158,7 @@ internal sealed partial class CernealaCompletionService
                 ? string.Empty
                 : site.Source.Substring(bodyStart + 1, site.Offset - bodyStart - 1);
             foreach (LanguageArgumentFact option in CernealaLanguageFacts.MotionOptions.Where(candidate =>
-                bodyPrefix.IndexOf(candidate.Name + " =", StringComparison.Ordinal) < 0))
+                !IsMotionOptionAssigned(bodyPrefix, candidate.Name)))
             {
                 Add(result, option.Name, option.Name + " = ", site.WordSpan,
                     CernealaCompletionItemKind.Parameter, option.ValueType, "00");
@@ -277,6 +277,34 @@ internal sealed partial class CernealaCompletionService
         }
     }
 
+    // An option is assigned when its whole name is followed by '=' after any whitespace, as
+    // UiMarkupDirectiveParser.ParseAssignment reads it: `retarget=`, `retarget  =` and `retarget\t=`, but not `retargetX=`.
+    private static bool IsMotionOptionAssigned(string body, string optionName)
+    {
+        for (int start = body.IndexOf(optionName, StringComparison.Ordinal);
+            start >= 0;
+            start = body.IndexOf(optionName, start + 1, StringComparison.Ordinal))
+        {
+            if (start > 0 && IsIdentifierCharacter(body[start - 1]))
+            {
+                continue;
+            }
+
+            int next = start + optionName.Length;
+            while (next < body.Length && char.IsWhiteSpace(body[next]))
+            {
+                next++;
+            }
+
+            if (next < body.Length && body[next] == '=')
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static bool TryAddPrismCompletions(
         ICollection<CernealaCompletionItem> result,
         CompletionSite site,
@@ -285,7 +313,7 @@ internal sealed partial class CernealaCompletionService
     {
         PrismCompletionContext? context = FindPrismCompletionContext(site.Source, site.Offset);
         string elementName = element?.Name.Split(':').Last() ?? string.Empty;
-        string lexicalElementName = FindUnclosedElementName(site.Source, site.Offset)?.Split(':').Last() ?? string.Empty;
+        string lexicalElementName = FindUnclosedElementName(site)?.Split(':').Last() ?? string.Empty;
         if (lexicalElementName.Length > 0)
         {
             elementName = lexicalElementName;

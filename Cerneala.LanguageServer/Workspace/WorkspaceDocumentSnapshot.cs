@@ -13,6 +13,7 @@ internal sealed class WorkspaceDocumentSnapshot : IDisposable
     public WorkspaceDocumentSnapshot(
         WorkspaceState state,
         CernealaDocument document,
+        IReadOnlyList<CernealaDocument> otherOpenDocuments,
         ProjectContext[] owners,
         ServerTelemetry telemetry)
     {
@@ -21,7 +22,11 @@ internal sealed class WorkspaceDocumentSnapshot : IDisposable
         Document = document;
         ProjectSummaries = owners.Select(owner => owner.Summary).ToArray();
         semanticCompilations = owners
-            .Select(owner => owner.CreateOverlayCompilation(document))
+            .Select(owner => owner.CreateOverlayCompilation(
+            [
+                document,
+                .. otherOpenDocuments.Where(open => owner.TryGetDocument(open.Path, out _))
+            ]))
             .ToArray();
         InformationDiagnostics = owners.Length == 0
             ? [WorkspaceInfoDiagnostic.StandaloneDocument]

@@ -20,6 +20,14 @@ internal enum LanguageMemberKind
     Field
 }
 
+// Mirrors Cerneala.UI.Markup.MarkupValueConstraint, read from [MarkupValueConstraint] on a property.
+internal enum LanguageValueConstraint
+{
+    None,
+    NonNegative,
+    Positive
+}
+
 internal readonly struct LanguageSourceLocation
 {
     public LanguageSourceLocation(string path, TextSpan span)
@@ -62,6 +70,13 @@ internal interface ILanguageCompilationSymbols
     // checks a markup file paired with a C# class (pairType) with Roslyn's accessibility check from that class, which
     // honors [InternalsVisibleTo]; any other markup file reaches public members and the non-public ones of this assembly.
     bool IsAccessibleFromGeneratedCode(ILanguageMemberSymbol member, ILanguageTypeSymbol? pairType);
+
+    // True when the member is a property with a getter that generated code can call, by the rule above:
+    // a 'public string Name { private get; set; }' cannot be read by a markup binding.
+    bool CanReadFromGeneratedCode(ILanguageMemberSymbol member, ILanguageTypeSymbol? pairType);
+
+    // True when the generated code can assign this property: its setter is not init-only and is accessible as above.
+    bool IsWritableFromGeneratedCode(ILanguageMemberSymbol member, ILanguageTypeSymbol? pairType);
 
     ILanguageTypeSymbol? FindType(string metadataName);
 
@@ -117,6 +132,10 @@ internal interface ILanguageTypeSymbol
     bool IsOrDerivesFrom(string metadataName);
 
     bool IsOrImplements(string metadataName);
+
+    // True when the compilation cannot resolve this type, one of its type arguments, base types or interfaces,
+    // for example IEnumerable in a project whose references did not load; C# reports those types itself (CS0246).
+    bool HasUnresolvedTypes { get; }
 }
 
 internal interface ILanguageMemberSymbol
@@ -141,6 +160,9 @@ internal interface ILanguageMemberSymbol
 
     // True when the value type is an enum marked [Flags]: a markup value may then list several names separated by commas.
     bool IsFlagsEnum { get; }
+
+    // The [MarkupValueConstraint] of a property, for example NonNegative on UIElement.Width; None for other members.
+    LanguageValueConstraint ValueConstraint { get; }
 
     string DeclaringTypeMetadataName { get; }
 

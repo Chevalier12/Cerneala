@@ -95,6 +95,8 @@ public sealed class CompletionTests
     [InlineData("<Wi|caret| />", "Window", null)]
     [InlineData("<Window><StackPanel><Bu|caret| /></StackPanel></Window>", "Button", "Application")]
     [InlineData("<Window xmlns:custom=\"clr-namespace:Custom;assembly=CompletionCorpus\"><custom:Fan|caret| /></Window>", "custom:FancyControl", null)]
+    // #1164: the prefixes in scope at the caret include an inner declaration that replaces the root's.
+    [InlineData("<Window xmlns:custom=\"clr-namespace:Other\"><StackPanel xmlns:custom=\"clr-namespace:Custom;assembly=CompletionCorpus\"><custom:Fan|caret| /></StackPanel></Window>", "custom:FancyControl", null)]
     [InlineData("<Window><Button.Con|caret| /></Window>", "Button.Content", null)]
     public void ElementAndPropertyElementCompletionProducesValidMarkup(
         string markup,
@@ -188,6 +190,34 @@ public sealed class CompletionTests
                 !items.Any(item => item.Label == used),
                 $"'{markup}': \"{used}\" is offered although the tag already has it.");
         }
+    }
+
+    [Theory]
+    [InlineData("<Window><Button Hei|caret|=\"1\" /></Window>", "Height", "<Window><Button Height=\"1\" /></Window>")]
+    [InlineData("<Window><Button Hei|caret| =\"1\" /></Window>", "Height", "<Window><Button Height =\"1\" /></Window>")]
+    [InlineData("<Window><Button Hei|caret| /></Window>", "Height", "<Window><Button Height=\"\" /></Window>")]
+    [InlineData("<Window><Button Cli|caret|=\"OnClick\" /></Window>", "Click", "<Window><Button Click=\"OnClick\" /></Window>")]
+    [InlineData("<Window><Button Grid.R|caret|=\"1\" /></Window>", "Grid.Row", "<Window><Button Grid.Row=\"1\" /></Window>")]
+    [InlineData("<Window><Button Na|caret|=\"b\" /></Window>", "Name", "<Window><Button Name=\"b\" /></Window>")]
+    [InlineData(
+        "<Window xmln|caret|=\"clr-namespace:Cerneala.UI.Controls;assembly=Cerneala\"></Window>",
+        "xmlns",
+        "<Window xmlns=\"clr-namespace:Cerneala.UI.Controls;assembly=Cerneala\"></Window>")]
+    [InlineData(
+        "<Window xmln|caret|></Window>",
+        "xmlns",
+        "<Window xmlns=\"clr-namespace:Cerneala.UI.Controls;assembly=Cerneala\"></Window>")]
+    public void AttributeCompletionBeforeAnExistingValueKeepsOneValue(string markup, string label, string expected)
+    {
+        using CompletionFixture fixture = CompletionFixture.Create(markup);
+
+        CernealaCompletionItem item = Assert.Single(fixture.Complete().Where(candidate => candidate.Label == label));
+        string applied = fixture.Text.Substring(0, item.ReplacementSpan.Start) +
+            item.InsertText +
+            fixture.Text.Substring(item.ReplacementSpan.End);
+
+        Assert.Equal(expected, applied);
+        AssertValidAfterInsertion(fixture.Text, item);
     }
 
     [Fact]
@@ -478,6 +508,29 @@ public sealed class CompletionTests
             $"Item '{label}' has detail '{item.Detail}' (expected '{expectedType}'); type exists: {detailType is not null}.");
     }
 
+    [Theory]
+    [InlineData("@animate { retarget = Restart; |caret| }", "retarget", true)]
+    [InlineData("@animate { retarget=Restart; |caret| }", "retarget", true)]
+    [InlineData("@animate { retarget  = Restart; |caret| }", "retarget", true)]
+    [InlineData("@animate { retarget\t= Restart; |caret| }", "retarget", true)]
+    [InlineData("@animate { holdOnComplete=true; |caret| }", "holdOnComplete", true)]
+    [InlineData("@animate { holdOnComplete\t\t=true; |caret| }", "holdOnComplete", true)]
+    [InlineData("@animate { debugName=\"Fade\"; |caret| }", "debugName", true)]
+    [InlineData("@animate { debugName   = \"Fade\"; |caret| }", "debugName", true)]
+    [InlineData("@animate { retargetX=Restart; |caret| }", "retarget", false)]
+    [InlineData("@animate { xretarget=Restart; |caret| }", "retarget", false)]
+    public void AlreadySetMotionOptionIsNotOfferedAgain(string animate, string option, bool alreadySet)
+    {
+        using CompletionFixture fixture = CompletionFixture.Create(
+            "<Window><Window.Resources><Aspect TargetType=\"Button\">" + animate + "</Aspect></Window.Resources></Window>");
+
+        string[] labels = fixture.Complete().Select(item => item.Label).OrderBy(label => label, StringComparer.Ordinal).ToArray();
+
+        Assert.True(
+            labels.Contains(option) != alreadySet,
+            $"'{animate}': offered labels are {string.Join(",", labels)}; '{option}' set before the caret: {alreadySet}.");
+    }
+
     [Fact]
     public void TemplatesDirectiveCompletionIsRestrictedToTemplateCollectionOwners()
     {
@@ -582,6 +635,60 @@ public sealed class CompletionTests
         }
 
         Assert.Contains(value.Complete(), item => item.Label == "Center");
+    }
+
+    [Theory]
+    [InlineData("==")]
+    [InlineData("<")]
+    [InlineData(">")]
+    public void DirectiveKeywordCompletionIgnoresAComparisonOperatorInTheCondition(string comparator)
+    {
+        using CompletionFixture fixture = CompletionFixture.Create(
+            "<Window><Window.Resources><Aspect TargetType=\"Button\">" +
+            "@when Opacity { @if value " + comparator + " 0.5 { @s|caret| } }" +
+            "</Aspect></Window.Resources></Window>");
+
+        IReadOnlyList<CernealaCompletionItem> items = fixture.Complete();
+
+        Assert.Contains(items, item => item.Label == "@set" && item.Kind == CernealaCompletionItemKind.Keyword);
+        Assert.DoesNotContain(items, item => item.Kind == CernealaCompletionItemKind.Property);
+    }
+
+    [Theory]
+    [InlineData("==")]
+    [InlineData("<")]
+    [InlineData(">")]
+    public void ClosingElementCompletionIgnoresAComparisonOperatorInAnEarlierDirective(string comparator)
+    {
+        using CompletionFixture fixture = CompletionFixture.Create(
+            "<Window><Window.Resources><Aspect TargetType=\"Button\">" +
+            "@when Opacity { @if value " + comparator + " 0.5 { } }" +
+            "</Aspect></Window.Resources></|caret|");
+
+        CernealaCompletionItem closing = Assert.Single(fixture.Complete(), item => item.Detail == "closing element");
+        Assert.Equal("Window", closing.Label);
+    }
+
+    [Theory]
+    [InlineData("x", true)]
+    [InlineData(">", true)]
+    public void AttributeCompletionIgnoresAGreaterThanSignInAnEarlierAttributeValue(string content, bool expected)
+    {
+        using CompletionFixture fixture = CompletionFixture.Create("<Window><Button Content=\"" + content + "\" |caret| /></Window>");
+
+        Assert.Equal(expected, fixture.Complete().Any(item => item.Label == "Width"));
+    }
+
+    // A '<' that is being typed is a tag start, although the lexer reads a '<' before a non-name character as text.
+    [Theory]
+    [InlineData("<Window><|caret|</Window>")]
+    [InlineData("<Window>\n  <|caret|\n</Window>")]
+    [InlineData("<Window><Bu|caret|</Window>")]
+    public void ElementCompletionStartsAtATypedLessThanSign(string markedText)
+    {
+        using CompletionFixture fixture = CompletionFixture.Create(markedText);
+
+        Assert.Contains(fixture.Complete(), item => item.Label == "Button" && item.Kind == CernealaCompletionItemKind.Element);
     }
 
     [Fact]
@@ -701,6 +808,60 @@ public sealed class CompletionTests
             loading.InsertText +
             fixture.Text.Substring(loading.ReplacementSpan.End);
         Assert.Contains("as Loading;", applied, StringComparison.Ordinal);
+    }
+
+    // Issue #1053: the " as " inside a string argument is not the handle separator.
+    [Theory]
+    [InlineData("@run $Pulse(Label = \"save as |caret|\");", false)]
+    [InlineData("@run $Pulse(Label = \"save as draft\") as |caret|;", true)]
+    public void MotionRunHandleCompletionIsNotOfferedInsideAStringArgument(string statement, bool offered)
+    {
+        const string markup = """
+            <Window>
+              <Window.Resources>
+                <MotionClip Name="Pulse" TargetType="Button">
+                  @parameter Label: string = "x";
+                  @animate { debugName = Label; @to { Opacity = 1; } }
+                </MotionClip>
+                <Aspect Name="Animated" TargetType="Button">
+                  @handle Loading;
+                  @on Loaded {
+                    STATEMENT
+                  }
+                </Aspect>
+              </Window.Resources>
+            </Window>
+            """;
+        using CompletionFixture fixture = CompletionFixture.Create(markup.Replace("STATEMENT", statement, StringComparison.Ordinal));
+
+        Assert.Equal(offered, fixture.Complete().Any(item => item.Detail == "Motion handle"));
+    }
+
+    // Issue #826: after "assembly=" the user types an assembly name, never a second clr-namespace spec.
+    [Theory]
+    [InlineData("clr-namespace:Test;assembly=|caret|")]
+    [InlineData("clr-namespace:Test;assembly=Comp|caret|")]
+    public void XmlnsCompletionAfterAnAssemblyEqualsSignDoesNotInsertASecondNamespaceSpec(string value)
+    {
+        using CompletionFixture control = CompletionFixture.Create("<Window xmlns:x=\"|caret|\" />");
+        Assert.NotEmpty(control.Complete());
+
+        using CompletionFixture fixture = CompletionFixture.Create("<Window xmlns:x=\"" + value + "\" />");
+        IReadOnlyList<CernealaCompletionItem> items = fixture.Complete();
+
+        foreach (CernealaCompletionItem item in items)
+        {
+            string applied = fixture.Text.Substring(0, item.ReplacementSpan.Start) +
+                item.InsertText +
+                fixture.Text.Substring(item.ReplacementSpan.End);
+            Assert.True(applied.Split("clr-namespace:").Length - 1 == 1, "Item '" + item.Label + "' produced: " + applied);
+        }
+
+        CernealaCompletionItem assembly = Assert.Single(items, item => item.Label == "CompletionCorpus");
+        Assert.Equal(
+            "<Window xmlns:x=\"clr-namespace:Test;assembly=CompletionCorpus\" />",
+            fixture.Text.Substring(0, assembly.ReplacementSpan.Start) + assembly.InsertText +
+                fixture.Text.Substring(assembly.ReplacementSpan.End));
     }
 
     [Theory]

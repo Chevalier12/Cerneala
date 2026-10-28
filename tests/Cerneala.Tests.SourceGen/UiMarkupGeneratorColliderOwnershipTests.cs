@@ -43,6 +43,35 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Empty(result.GeneratedSources);
     }
 
+    // #766: <Sprite2D.Collider> is the property-element form of the body slot, which the editor accepts. The build
+    // assigns its collider to Sprite2D.Collider, as it does for a direct collider child.
+    [Theory]
+    [InlineData("<Scene2D><Sprite2D><Sprite2D.Collider><BoxCollider2D Width=\"12\" /></Sprite2D.Collider></Sprite2D></Scene2D>")]
+    [InlineData("<Scene2D><Sprite2D><BoxCollider2D Width=\"12\" /></Sprite2D></Scene2D>")]
+    [InlineData("<Scene2D><Sprite2D><Sprite2D.Collider>  <!-- body -->  <BoxCollider2D Width=\"12\" /></Sprite2D.Collider></Sprite2D></Scene2D>")]
+    public void SpriteColliderPropertyElementAssignsTheBodySlotLikeADirectChild(string markup)
+    {
+        Scene2D scene = (Scene2D)CompileColliderMarkup(markup);
+        Sprite2D sprite = Assert.IsType<Sprite2D>(Assert.Single(scene.Children));
+
+        BoxCollider2D body = Assert.IsType<BoxCollider2D>(sprite.Collider);
+        Assert.Equal(12f, body.Width);
+        Assert.Same(body, Assert.Single(sprite.LogicalChildren));
+    }
+
+    [Theory]
+    [InlineData("<Scene2D><Sprite2D><Sprite2D.Collider /></Sprite2D></Scene2D>", "Sprite2D.Collider requires exactly one collider child")]
+    [InlineData("<Scene2D><Sprite2D><Sprite2D.Collider>text<BoxCollider2D /></Sprite2D.Collider></Sprite2D></Scene2D>", "Sprite2D.Collider requires exactly one collider child")]
+    [InlineData("<Scene2D><Sprite2D><Sprite2D.Collider Width=\"5\"><BoxCollider2D /></Sprite2D.Collider></Sprite2D></Scene2D>", "Sprite2D.Collider requires exactly one collider child")]
+    public void SpriteColliderPropertyElementRejectsAnythingButOneCollider(string markup, string expected)
+    {
+        GeneratorRunResult result = RunGenerator([new MarkupFile("Ownership.crn", markup)], out _, "");
+        Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Id == "CERNEALAUI005" &&
+            diagnostic.GetMessage().Contains(expected, StringComparison.Ordinal));
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Id == "CERNEALAUI002");
+        Assert.Empty(result.GeneratedSources);
+    }
+
     [Theory]
     [InlineData("BoxCollider2D")]
     [InlineData("CircleCollider2D")]

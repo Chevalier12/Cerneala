@@ -125,7 +125,8 @@ public abstract class ValueMixer<T> : IValueMixer, IValueMixerDispatcher
             return to;
         }
 
-        return from + ((to - from) * progress);
+        // In double: for finite float endpoints such as -3e38 and 3e38, the width overflows float to infinity.
+        return (float)(from + (((double)to - from) * progress));
     }
 
     protected static double Lerp(double from, double to, float progress)

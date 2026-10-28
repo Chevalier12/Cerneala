@@ -48,7 +48,7 @@ public sealed class SemanticScopesTests
             <UserControl xmlns:d="clr-namespace:Demo" DataType="d:ViewModel">
               <StackPanel Name="Host" DataContext="$DataContext.Details">
                 <TextBlock Text="$DataContext.Title:TwoWay" />
-                <TextBlock Text="$root.Caption" />
+                <TextBlock Text="$root.IsEnabled" />
                 <TextBlock Text="$Host.IsEnabled" />
                 <TextBlock Text="$self.IsEnabled" />
               </StackPanel>
@@ -64,6 +64,26 @@ public sealed class SemanticScopesTests
         Assert.Equal("Demo.MainView", SymbolAt(model, markup, "$root").ValueType);
         Assert.Equal("Cerneala.UI.Controls.StackPanel", SymbolAt(model, markup, "$Host").ValueType);
         Assert.Equal("Cerneala.UI.Controls.TextBlock", SymbolAt(model, markup, "$self").ValueType);
+    }
+
+    // Issue #1209: the build resolved the root DataType with GetTypeByMetadataName only, so an xmlns alias that the
+    // editor resolves (and that ContentTemplate DataType already accepts in the build) failed with CERNEALAUI007.
+    [Theory]
+    [InlineData("xmlns:d=\"clr-namespace:Demo\" DataType=\"d:ViewModel\"", "")]
+    [InlineData("DataType=\"Demo.ViewModel\"", "")]
+    // The unresolved DataType and the then untyped $DataContext.Title binding.
+    [InlineData("xmlns:d=\"clr-namespace:Demo\" DataType=\"d:Missing\"", "CERNEALAUI007,CERNEALAUI007")]
+    public void RootDataTypeReportsTheSameDiagnosticsInEditorAndBuild(string rootAttributes, string expectedIds)
+    {
+        string markup = "<UserControl " + rootAttributes + "><TextBlock Text=\"$DataContext.Title\" /></UserControl>";
+
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("MainView.crn", markup, "MainView.crn.cs", ViewModels);
+
+        Assert.Empty(result.Syntax.Diagnostics);
+        string[] editor = result.SemanticDiagnostics.Select(diagnostic => diagnostic.Id).Order(StringComparer.Ordinal).ToArray();
+        string[] build = result.SourceGeneratorDiagnostics.Select(diagnostic => diagnostic.Id).Order(StringComparer.Ordinal).ToArray();
+        Assert.Equal(editor, build);
+        Assert.Equal(expectedIds, string.Join(",", build));
     }
 
     [Theory]
@@ -100,6 +120,52 @@ public sealed class SemanticScopesTests
         LanguageDiagnostic diagnostic = Assert.Single(model.Diagnostics);
         Assert.Equal("CERNEALAUI007", diagnostic.Id);
         Assert.DoesNotContain(model.Symbols, symbol => symbol.Name is "First" or "Second" or "Third");
+    }
+
+    // Issue #1213: an editor compilation whose project references did not load (an unrestored project) cannot resolve
+    // IEnumerable or INotifyPropertyChanged. C# reports that itself (CS0246), so a binding that depends on such a type is
+    // not reported as incompatible or unobservable. With the usings the same types resolve and the bindings are valid too.
+    [Theory]
+    [InlineData("")]
+    [InlineData("using System.Collections; using System.ComponentModel;")]
+    public void BindingChecksDoNotReportTypesTheCompilationCannotResolve(string usings)
+    {
+        string source = usings + """
+
+            using Cerneala.UI.Controls;
+            using Cerneala.UI.Core;
+            namespace Demo;
+            public partial class RowsView : UserControl
+            {
+                internal static readonly UiProperty<IEnumerable?> RowsProperty = UiProperty<IEnumerable?>.Register(
+                    nameof(Rows), typeof(RowsView), new UiPropertyMetadata<IEnumerable?>(null));
+                internal IEnumerable? Rows { get => GetValue(RowsProperty); set => SetValue(RowsProperty, value); }
+            }
+            internal abstract class RowModel : INotifyPropertyChanged
+            {
+                public event PropertyChangedEventHandler? PropertyChanged;
+                public string Label { get; } = string.Empty;
+            }
+            internal sealed class HeaderRow : RowModel { }
+            """;
+        const string markup = """
+            <UserControl xmlns:d="clr-namespace:Demo">
+              <ItemsControl ItemsSource="$root.Rows:OneWay">
+                @templates
+                {
+                  <ContentTemplate DataType="d:HeaderRow">
+                    <TextBlock Text="$DataContext.Label" />
+                  </ContentTemplate>
+                }
+              </ItemsControl>
+            </UserControl>
+            """;
+
+        CernealaSemanticModel model = Model("RowsView.crn", markup, source);
+
+        Assert.True(
+            model.Diagnostics.Count == 0,
+            string.Join(" | ", model.Diagnostics.Select(diagnostic => diagnostic.Id + ": " + diagnostic.Message)));
     }
 
     private const string ExpressionViewModels = """
@@ -276,6 +342,22 @@ public sealed class SemanticScopesTests
             diagnostic => diagnostic.Id == "CERNEALAUI005" && diagnostic.Message.Contains("Duplicate resource Name", StringComparison.Ordinal));
     }
 
+    [Theory]
+    [InlineData("a", "b", false)]
+    [InlineData("name", "Name", true)]
+    [InlineData("my-btn", "myBtn", true)]
+    public void ElementNamesThatMapToTheSameGeneratedIdentifierAreReportedAsDuplicates(string first, string second, bool duplicate)
+    {
+        string markup =
+            "<StackPanel><TextBlock Name=\"" + first + "\" /><TextBox Name=\"" + second + "\" /></StackPanel>";
+
+        CernealaSemanticModel model = Model("DuplicateIdentifier.crn", markup, string.Empty);
+
+        bool reported = model.Diagnostics.Any(
+            diagnostic => diagnostic.Id == "CERNEALAUI005" && diagnostic.Message.Contains("Duplicate element Name", StringComparison.Ordinal));
+        Assert.True(reported == duplicate, string.Join(" | ", model.Diagnostics.Select(diagnostic => diagnostic.Id + " " + diagnostic.Message)));
+    }
+
     [Fact]
     [Trait("SpriteAnimationStage", "2")]
     public void SpriteAnimationResourceBindsToSpriteWithoutLeakingClipNamesIntoTheElementNamescope()
@@ -412,6 +494,48 @@ public sealed class SemanticScopesTests
             string.Empty,
             new CernealaDocument("App.crn", SourceText.From(application)));
         Assert.Contains(invalid.Diagnostics, diagnostic => diagnostic.Id == "CERNEALAUI004");
+    }
+
+    // #801: a RadialGradientBrush resource radius has no valid default, so the editor reports a missing, zero or
+    // negative RadiusX or RadiusY with the same CERNEALAUI004 as the build.
+    [Theory]
+    [InlineData("Center=\"0.5,0.5\"", "RadiusX")]
+    [InlineData("Center=\"0.5,0.5\" RadiusX=\"0.5\"", "RadiusY")]
+    [InlineData("Center=\"0.5,0.5\" RadiusY=\"0.5\"", "RadiusX")]
+    [InlineData("Center=\"0.5,0.5\" RadiusX=\"0\" RadiusY=\"0.5\"", "RadiusX")]
+    public void RadialGradientBrushResourceWithoutAPositiveRadiusReportsCernealaUi004(string attributes, string missing)
+    {
+        string markup = $"""
+            <StackPanel><StackPanel.Resources><RadialGradientBrush Name="P" {attributes}><GradientStop Offset="0" Color="Blue" /></RadialGradientBrush></StackPanel.Resources><Button Background="$P" /></StackPanel>
+            """;
+
+        CernealaSemanticModel model = Model("Radial.crn", markup, string.Empty);
+
+        Assert.Contains(model.Diagnostics, diagnostic =>
+            diagnostic.Id == "CERNEALAUI004" && diagnostic.Message.Contains("RadialGradientBrush." + missing, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void RadialGradientBrushPropertyElementWithoutARadiusReportsCernealaUi004()
+    {
+        const string markup = """
+            <Button><Button.Background><RadialGradientBrush Center="0.5,0.5" RadiusX="0.5"><GradientStop Offset="0" Color="Blue" /></RadialGradientBrush></Button.Background></Button>
+            """;
+
+        CernealaSemanticModel model = Model("RadialPropertyElement.crn", markup, string.Empty);
+
+        Assert.Contains(model.Diagnostics, diagnostic =>
+            diagnostic.Id == "CERNEALAUI004" && diagnostic.Message.Contains("RadialGradientBrush.RadiusY", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void RadialGradientBrushResourceWithBothRadiiReportsNoDiagnostic()
+    {
+        const string markup = """
+            <StackPanel><StackPanel.Resources><RadialGradientBrush Name="P" Center="0.5,0.5" RadiusX="0.5" RadiusY="0.5"><GradientStop Offset="0" Color="Blue" /></RadialGradientBrush></StackPanel.Resources><Button Background="$P" /></StackPanel>
+            """;
+
+        Assert.Empty(Model("Radial.crn", markup, string.Empty).Diagnostics);
     }
 
     [Fact]
@@ -702,6 +826,58 @@ public sealed class SemanticScopesTests
             Assert.All(workspace.GetSemanticModel(path).Diagnostics,
                 diagnostic => Assert.DoesNotContain(diagnostic.Id, new[] { "CERNEALAUI006", "CERNEALAUI007", "CERNEALAUI012" }));
         }
+    }
+
+    // #1164: an inner xmlns:prefix replaces the outer declaration for its subtree, for every prefixed type reference.
+    [Fact]
+    public void InnerXmlnsDeclarationShadowsTheRootForElementsTargetTypesAndDataTypes()
+    {
+        const string source = """
+            using Cerneala.UI.Controls;
+            namespace A { public sealed class Foo : Border { } public sealed class Row { } }
+            namespace B { public sealed class Foo : Border { } public sealed class Row { } }
+            """;
+        const string markup = """
+            <StackPanel xmlns:rows="clr-namespace:A">
+              <StackPanel.Resources>
+                <Aspect TargetType="rows:Foo">@default { Width = 37; }</Aspect>
+              </StackPanel.Resources>
+              <StackPanel xmlns:rows="clr-namespace:B">
+                <StackPanel.Resources>
+                  <Aspect TargetType="rows:Foo">@default { Height = 41; }</Aspect>
+                </StackPanel.Resources>
+                <rows:Foo />
+                <ItemsControl><ItemsControl.ItemTemplate><ContentTemplate DataType="rows:Row"><Border /></ContentTemplate></ItemsControl.ItemTemplate></ItemsControl>
+              </StackPanel>
+              <rows:Foo />
+              <ItemsControl><ItemsControl.ItemTemplate><ContentTemplate DataType="rows:Row"><Border /></ContentTemplate></ItemsControl.ItemTemplate></ItemsControl>
+            </StackPanel>
+            """;
+        CernealaSemanticModel model = Model("XmlnsScope.crn", markup, source);
+
+        Assert.Empty(model.Diagnostics);
+        int innerScope = markup.IndexOf("xmlns:rows=\"clr-namespace:B\"", StringComparison.Ordinal);
+        Assert.Equal("A.Foo", SymbolAtOccurrence(model, markup, "rows:Foo\">@default", before: innerScope).ValueType);
+        Assert.Equal("B.Foo", SymbolAtOccurrence(model, markup, "rows:Foo\">@default", after: innerScope).ValueType);
+        Assert.Equal("B.Foo", SymbolAtOccurrence(model, markup, "rows:Foo />", after: innerScope, first: true).ValueType);
+        Assert.Equal("A.Foo", SymbolAtOccurrence(model, markup, "rows:Foo />", after: innerScope, first: false).ValueType);
+        Assert.Equal("B.Row", SymbolAtOccurrence(model, markup, "rows:Row", after: innerScope, first: true).ValueType);
+        Assert.Equal("A.Row", SymbolAtOccurrence(model, markup, "rows:Row", after: innerScope, first: false).ValueType);
+    }
+
+    private static CernealaSemanticSymbol SymbolAtOccurrence(
+        CernealaSemanticModel model,
+        string markup,
+        string needle,
+        int before = int.MaxValue,
+        int after = -1,
+        bool first = true)
+    {
+        int offset = first
+            ? markup.IndexOf(needle, after + 1, StringComparison.Ordinal)
+            : markup.LastIndexOf(needle, StringComparison.Ordinal);
+        Assert.True(offset > after && offset < before, "Needle not found in range: " + needle);
+        return Assert.IsType<CernealaSemanticSymbol>(model.GetSymbolAt(offset));
     }
 
     private static CernealaSemanticSymbol SymbolAt(CernealaSemanticModel model, string markup, string needle)

@@ -141,6 +141,39 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void TwoMainWindowClassesAreOnlyAnErrorOnTheLegacyPathWithoutAnApplicationPair(bool withApplication)
+    {
+        List<MarkupFile> files = [];
+        List<(string Path, string Source)> sources = [];
+        if (withApplication)
+        {
+            files.Add(new("App.crn", "<Application StartupWindow=\"Shell.MainWindow\" />"));
+            sources.Add(("App.crn.cs", "using Cerneala.UI; namespace TestInput; public partial class App : Application { }"));
+        }
+
+        files.Add(new("Shell/MainWindow.crn", "<Window />"));
+        files.Add(new("Admin/MainWindow.crn", "<Window />"));
+        sources.Add(("Shell/MainWindow.crn.cs", "using Cerneala.UI.Controls; namespace Shell; public partial class MainWindow : Window { }"));
+        sources.Add(("Admin/MainWindow.crn.cs", "using Cerneala.UI.Controls; namespace Admin; public partial class MainWindow : Window { }"));
+
+        GeneratorRunResult result = RunApplicationViewsGenerator(files.ToArray(), sources.ToArray(), out Compilation compilation);
+
+        bool reported = result.Diagnostics.Any(diagnostic => diagnostic.Id == "CERNEALAUI011");
+        Assert.True(
+            reported != withApplication,
+            "CERNEALAUI011 reported: " + reported + ". Diagnostics: " + string.Join(" | ", result.Diagnostics));
+        if (withApplication)
+        {
+            Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+            using MemoryStream stream = new();
+            EmitResult emit = compilation.Emit(stream);
+            Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+        }
+    }
+
+    [Theory]
     [InlineData("", "StartupWindow")]
     [InlineData(" StartupWindow=\"MissingWindow\"", "MissingWindow")]
     [InlineData(" StartupWindow=\"AbstractWindow\"", "concrete")]

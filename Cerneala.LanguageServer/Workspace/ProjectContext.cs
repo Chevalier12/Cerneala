@@ -114,8 +114,24 @@ internal sealed class ProjectContext : IDisposable
     public bool TryGetDocument(string path, out CernealaDocument? document) =>
         documents.TryGetValue(path, out document);
 
-    public CernealaCompilation CreateOverlayCompilation(CernealaDocument document) =>
-        LanguageCompilation.WithDocument(document);
+    // Returns a new compilation, owned by the caller, in which the given open documents replace their saved text.
+    public CernealaCompilation CreateOverlayCompilation(IReadOnlyList<CernealaDocument> openDocuments)
+    {
+        if (openDocuments.Count == 0)
+        {
+            throw new ArgumentException("At least one open document is required.", nameof(openDocuments));
+        }
+
+        CernealaCompilation compilation = LanguageCompilation.WithDocument(openDocuments[0]);
+        for (int index = 1; index < openDocuments.Count; index++)
+        {
+            CernealaCompilation updated = compilation.WithDocument(openDocuments[index]);
+            compilation.Dispose();
+            compilation = updated;
+        }
+
+        return compilation;
+    }
 
     public void Dispose() => LanguageCompilation.Dispose();
 

@@ -2928,6 +2928,72 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Empty(result.GeneratedSources);
     }
 
+    [Theory]
+    [InlineData("a", "b", false)]
+    [InlineData("Name", "Name", true)]
+    [InlineData("name", "Name", true)]
+    [InlineData("my-btn", "myBtn", true)]
+    public void ElementNamesThatMapToTheSameIdentifierReportDuplicateDiagnostic(string first, string second, bool duplicate)
+    {
+        string markup =
+            "<StackPanel><TextBlock Name=\"" + first + "\" /><TextBox Name=\"" + second + "\" /></StackPanel>";
+
+        GeneratorRunResult result = RunGenerator("DuplicateIdentifier.crn", markup, out Compilation compilation);
+
+        string compilationErrors = string.Join(
+            " | ",
+            compilation.GetDiagnostics().Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error));
+        if (duplicate)
+        {
+            Assert.True(
+                result.Diagnostics.Any(diagnostic => diagnostic.Id == "CERNEALAUI005" && diagnostic.Severity == DiagnosticSeverity.Error),
+                "No CERNEALAUI005. Generator diagnostics: " + string.Join(" | ", result.Diagnostics) +
+                " Compilation errors: " + compilationErrors);
+        }
+        else
+        {
+            Assert.Empty(result.Diagnostics);
+            Assert.Equal(string.Empty, compilationErrors);
+        }
+    }
+
+    [Theory]
+    [InlineData("<Border Background=\"NotAColor\" />")]
+    [InlineData("<Border>@when IsMouseOver { Background = \"NotAColor\"; }</Border>")]
+    public void InvalidLiteralDiagnosticPointsAtTheValue(string markup)
+    {
+        GeneratorRunResult result = RunGenerator("InvalidLiteralSpan.crn", markup, out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI004", "InvalidLiteralSpan.crn");
+        int valueStart = markup.IndexOf("NotAColor", StringComparison.Ordinal);
+        int valueEnd = valueStart + "NotAColor".Length;
+        Microsoft.CodeAnalysis.Text.TextSpan span = diagnostic.Location.SourceSpan;
+        // The plain attribute selects its whole `Background="NotAColor"` attribute (the control); the @when
+        // assignment must select something that contains the value too, not the empty span at offset 0.
+        Assert.True(
+            span.Length > 0 && span.Start <= valueStart && span.End >= valueEnd,
+            "Span " + span + " does not contain the value at [" + valueStart + ".." + valueEnd + ").");
+    }
+
+    [Theory]
+    [InlineData("@on Loaded { @set { Opacity = NaN; } }", "NaN")]
+    [InlineData("@on Loaded { @set { Width = -5; } }", "-5")]
+    [InlineData("@on Loaded { @animate with Tween(100ms) { @to { Width = -5; } } }", "-5")]
+    public void InvalidMotionValueDiagnosticPointsAtTheValue(string body, string token)
+    {
+        string markup = MotionAspectMarkup(body);
+
+        GeneratorRunResult result = RunGenerator("InvalidMotionValueSpan.crn", markup, out _);
+
+        Diagnostic[] errors = result.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error).ToArray();
+        int valueStart = markup.IndexOf(token, StringComparison.Ordinal);
+        int valueEnd = valueStart + token.Length;
+        Assert.True(
+            errors.Length > 0 && errors.All(d => d.Location.SourceSpan.Length > 0 && d.Location.SourceSpan.Start <= valueStart && d.Location.SourceSpan.End >= valueEnd),
+            "Body '" + body + "': value at [" + valueStart + ".." + valueEnd + "); diagnostics: " +
+            string.Join(" | ", result.Diagnostics.Select(d => d.Id + " " + d.Location.SourceSpan + " " + d.GetMessage())));
+    }
+
     [Fact]
     public void AspectTargetMismatchReportsDiagnostic()
     {
@@ -4177,6 +4243,61 @@ public sealed partial class UiMarkupGeneratorTests
         UserControl withoutContext = Assert.IsAssignableFrom<UserControl>(Activator.CreateInstance(windowType));
         Assert.Null(withoutContext.DataContext);
         Assert.NotNull(withoutContext.ComponentTemplateInstance);
+    }
+
+    // Issue #864: a generated named-element member may hide an inherited member, as a C# member may; the generated
+    // initialization reaches the inherited member through base., so it never leaves a compile error in a generated file.
+    [Theory]
+    [InlineData("Window", "panel")]
+    [InlineData("Window", "content")]
+    [InlineData("Window", "Content")]
+    [InlineData("Window", "dataContext")]
+    [InlineData("Window", "title")]
+    [InlineData("UserControl", "content")]
+    [InlineData("UserControl", "componentTemplate")]
+    [InlineData("UserControl", "applyTemplate")]
+    public void NamedElementWhoseMemberHidesAnInheritedMemberIsReportedOrCompiles(string root, string name)
+    {
+        string markup = "<" + root + "><Grid Name=\"" + name + "\" /></" + root + ">";
+        GeneratorRunResult result = RunPairedGenerator(
+            "Views/MainWindow.crn",
+            markup,
+            "using Cerneala.UI.Controls; namespace TestInput.Views; public partial class MainWindow : " + root + " { }",
+            out Compilation compilation);
+
+        string compilationErrors = string.Join(
+            " | ",
+            compilation.GetDiagnostics().Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error));
+        bool reported = result.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.True(
+            reported || compilationErrors.Length == 0,
+            "No generator error and the generated code does not compile: " + compilationErrors);
+        Assert.False(reported, "Generator errors: " + string.Join(" | ", result.Diagnostics));
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error)));
+    }
+
+    // Issue #864: when the generated member hides Control.ComponentTemplate, the user control still applies its
+    // generated template, and the member holds the named panel that the template builds.
+    [Fact]
+    public void UserControlWithANamedElementHidingComponentTemplateStillAppliesItsTemplate()
+    {
+        GeneratorRunResult result = RunPairedGenerator(
+            "Views/ContentPanel.crn",
+            "<UserControl><Grid Name=\"componentTemplate\" /></UserControl>",
+            "using Cerneala.UI.Controls; namespace TestInput.Views; public partial class ContentPanel : UserControl { }",
+            out Compilation compilation);
+
+        Assert.Empty(result.Diagnostics);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+        Type viewType = Assembly.Load(stream.ToArray()).GetType("TestInput.Views.ContentPanel", throwOnError: true)!;
+        UserControl view = Assert.IsAssignableFrom<UserControl>(Activator.CreateInstance(viewType));
+        Grid member = GetNamedElement<Grid>(viewType, view, "ComponentTemplate");
+        Assert.NotNull(view.ComponentTemplate);
+        Assert.Same(member, view.ComponentTemplateInstance?.Root);
     }
 
     [Fact]

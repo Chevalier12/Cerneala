@@ -48,7 +48,7 @@ float value = mixer.Mix(0f, 100f, 0.25f);
 
 `FloatMixer` is the built-in `ValueMixer<float>` implementation used by the motion interpolation layer. `ValueMixerRegistry.RegisterBuiltIns` registers it for `float`, and the default motion system makes it available through the root mixer registry.
 
-`Mix` linearly interpolates from `from` to `to`. Progress exactly `0` returns `from`, and progress exactly `1` returns `to`, preserving exact endpoints for large values. Progress outside `[0, 1]` extrapolates linearly.
+`Mix` linearly interpolates from `from` to `to`. Progress exactly `0` returns `from`, and progress exactly `1` returns `to`, preserving exact endpoints for large values. Progress outside `[0, 1]` extrapolates linearly. The interpolation is computed in `double` and rounded to `float` once, so finite endpoints whose difference exceeds `float.MaxValue` still give a finite result: `Mix(-3e38f, 3e38f, 0.5f)` returns `0`, and `Mix(-3e38f, 3e38f, 0.25f)` returns `-1.5e38`.
 
 The mixer supports vector operations. `Add`, `Subtract`, `Scale`, and `Magnitude` operate directly on the numeric value, which allows motion code to compute deltas, velocities, and tolerances for `float` animations.
 

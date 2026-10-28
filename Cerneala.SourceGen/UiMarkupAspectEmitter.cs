@@ -285,7 +285,7 @@ public sealed partial class UiMarkupGenerator
 
             string diagnosticName = aspect.Name!;
             EmitAspectConditionKeys(aspect, diagnosticName);
-            string? valuesCode = BuildElementAspectValues(targetSymbol.Name, aspect);
+            string? valuesCode = BuildElementAspectValues(targetSymbol.Name, aspect, targetElement: null);
             if (valuesCode is null)
             {
                 return;
@@ -295,7 +295,7 @@ public sealed partial class UiMarkupGenerator
             nextResourceId++;
             aspect.RuntimeResourceVariable = resourceVariable;
             aspect.RuntimeVariable = resourceVariable;
-            EmitElementAspectConstruction(resourceVariable, aspect.Name, targetType, targetSymbol.Name, valuesCode, aspect);
+            EmitElementAspectConstruction(resourceVariable, aspect.Name, targetType, targetSymbol.Name, valuesCode, aspect, targetElement: null);
             currentLines.Add(ownerVariable + ".Resources[" + key + "] = " + resourceVariable + ";");
         }
 
@@ -305,9 +305,10 @@ public sealed partial class UiMarkupGenerator
             string targetType,
             string elementName,
             string valuesCode,
-            AspectResource aspect)
+            AspectResource aspect,
+            MarkupElement? targetElement)
         {
-            string? conditionsCode = BuildElementAspectConditionsCode(elementName, aspect);
+            string? conditionsCode = BuildElementAspectConditionsCode(elementName, aspect, targetElement);
             if (conditionsCode is null)
             {
                 return;
@@ -330,7 +331,9 @@ public sealed partial class UiMarkupGenerator
                 (aspect.Name is null ? "null" : Literal(aspect.Name)) + "));");
         }
 
-        private string? BuildElementAspectConditionsCode(string elementName, AspectResource aspect)
+        // targetElement: the element an inline Aspect is applied to, whose static facts check literal values; null
+        // for an Aspect resource, which has no single element.
+        private string? BuildElementAspectConditionsCode(string elementName, AspectResource aspect, MarkupElement? targetElement)
         {
             if (aspect.ReactivePlan is null || aspect.ReactivePlan.Rules.Count == 0)
             {
@@ -341,7 +344,7 @@ public sealed partial class UiMarkupGenerator
             ReactiveRule[] rules = aspect.ReactivePlan.Rules.OrderBy(rule => rule.Order).ToArray();
             for (int index = 0; index < rules.Length; index++)
             {
-                List<string>? values = BuildConditionalElementAspectValues(elementName, rules[index].Assignments);
+                List<string>? values = BuildConditionalElementAspectValues(elementName, rules[index].Assignments, targetElement);
                 if (values is null)
                 {
                     return null;
@@ -487,7 +490,7 @@ public sealed partial class UiMarkupGenerator
             }
 
             EmitAspectConditionKeys(aspect, (aspect.Name ?? "Inline") + "." + elementName);
-            string? valuesCode = BuildElementAspectValues(elementName, aspect);
+            string? valuesCode = BuildElementAspectValues(elementName, aspect, element);
             if (valuesCode is null)
             {
                 return;
@@ -496,11 +499,11 @@ public sealed partial class UiMarkupGenerator
             string aspectVariable = "localAspect" + nextResourceId.ToString(CultureInfo.InvariantCulture);
             nextResourceId++;
             aspect.RuntimeVariable = aspectVariable;
-            EmitElementAspectConstruction(aspectVariable, aspect.Name, targetType, elementName, valuesCode, aspect);
+            EmitElementAspectConstruction(aspectVariable, aspect.Name, targetType, elementName, valuesCode, aspect, element);
             currentLines.Add(variable + ".Aspect = " + aspectVariable + ";");
         }
 
-        private string? BuildElementAspectValues(string elementName, AspectResource aspect)
+        private string? BuildElementAspectValues(string elementName, AspectResource aspect, MarkupElement? targetElement)
         {
             List<string> values = [];
             foreach (AspectPropertyAssignment assignment in aspect.Assignments)
@@ -514,7 +517,7 @@ public sealed partial class UiMarkupGenerator
 
                 GeneratedExpression? expression = assignment.IsReference
                     ? ResolveReferenceValue(elementName, assignment.PropertyName, assignment.RawValue, spec.ValueKind, assignment.Source)
-                    : ParseAspectLiteralValue(elementName, assignment.PropertyName, assignment.RawValue, spec, assignment.Source);
+                    : ParseAspectLiteralValue(elementName, assignment.PropertyName, assignment.RawValue, spec, assignment.Source, targetElement, assignment.ValueLocation);
                 if (expression is null)
                 {
                     return null;
@@ -616,7 +619,7 @@ public sealed partial class UiMarkupGenerator
                     assignment.PropertyName,
                     assignment.Value,
                     spec,
-                    assignment.Source,
+                    assignment.ValueLocation,
                     "target");
                 if (expression is null)
                 {
@@ -634,7 +637,8 @@ public sealed partial class UiMarkupGenerator
 
         private List<string>? BuildConditionalElementAspectValues(
             string elementName,
-            IReadOnlyList<DirectiveAssignmentNode> assignments)
+            IReadOnlyList<DirectiveAssignmentNode> assignments,
+            MarkupElement? targetElement)
         {
             List<string> values = [];
             foreach (DirectiveAssignmentNode assignment in assignments)
@@ -667,8 +671,9 @@ public sealed partial class UiMarkupGenerator
                     assignment.PropertyName,
                     assignment.Value,
                     spec,
-                    assignment.Source,
-                    "target");
+                    assignment.ValueLocation,
+                    "target",
+                    targetElement);
                 if (expression is null)
                 {
                     return null;
@@ -769,8 +774,20 @@ public sealed partial class UiMarkupGenerator
             }
         }
 
-        private GeneratedExpression? ParseAspectLiteralValue(string elementName, string propertyName, string value, PropertySpec spec, MarkupObject source)
+        private GeneratedExpression? ParseAspectLiteralValue(
+            string elementName,
+            string propertyName,
+            string value,
+            PropertySpec spec,
+            MarkupObject source,
+            MarkupElement? targetElement = null,
+            DirectiveExpressionLocation? valueLocation = null)
         {
+            if (targetElement is not null)
+            {
+                ValidateStaticAnimationState(targetElement, propertyName, (object?)valueLocation ?? source, value);
+            }
+
             MarkupAttribute synthetic = new(propertyName, value);
             return ParseLiteralValue(elementName, propertyName, synthetic, value, spec);
         }

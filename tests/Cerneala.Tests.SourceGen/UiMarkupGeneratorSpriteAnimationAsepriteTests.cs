@@ -398,6 +398,19 @@ public sealed partial class UiMarkupGeneratorTests
                 AsepriteTwoFrames(AsepriteFrameJson.Replace("\"duration\": 100", "\"duration\": 0")),
                 AsepriteIdleTagJson),
             new[] { "hero.json", "Frame 0", "positive duration" }];
+        // #1154: TimeSpan.FromMilliseconds(0.00001) is 0 ticks and 1e20 ms is above long.MaxValue ticks.
+        yield return [
+            "frame duration below one tick",
+            AsepriteDocument(
+                AsepriteTwoFrames(AsepriteFrameJson.Replace("\"duration\": 100", "\"duration\": 0.00001")),
+                AsepriteIdleTagJson),
+            new[] { "hero.json", "Frame 0", "positive duration" }];
+        yield return [
+            "frame duration above TimeSpan",
+            AsepriteDocument(
+                AsepriteTwoFrames(AsepriteFrameJson.Replace("\"duration\": 100", "\"duration\": 1e20")),
+                AsepriteIdleTagJson),
+            new[] { "hero.json", "Frame 0", "positive duration" }];
         yield return [
             "trimmed frame without spriteSourceSize",
             AsepriteDocument(
@@ -433,6 +446,22 @@ public sealed partial class UiMarkupGeneratorTests
         }
 
         AssertAsepriteLocation(diagnostic, "Source=");
+    }
+
+    // #1154: the smallest duration that keeps one 100 ns tick still builds and creates the view.
+    [Theory]
+    [Trait("SpriteAnimationAseprite", "6")]
+    [InlineData("0.0001", 1L)]
+    [InlineData("100", 1_000_000L)]
+    public void AsepriteFrameDurationOfAtLeastOneTickBuilds(string duration, long expectedTicks)
+    {
+        string json = AsepriteDocument(
+            AsepriteTwoFrames(AsepriteFrameJson.Replace("\"duration\": 100", "\"duration\": " + duration)),
+            AsepriteIdleTagJson);
+        GeneratorRunResult result = RunAseprite(AsepriteMarkup(state: "Idle"), json, out Compilation compilation);
+
+        Sprite2D sprite = CreateAsepriteSprite(result, compilation, out _);
+        Assert.Equal(expectedTicks, Clip(sprite.Animations!, "Idle").Frames[0].Duration.Ticks);
     }
 
     [Fact]

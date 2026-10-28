@@ -563,6 +563,245 @@ public sealed class NavigationTests
         Assert.Equal([opening, closing], highlights);
     }
 
+    // Issue #1160: the attribute name of Aspect="$Aspect" is not a use of the resource, whatever its name is.
+    [Fact]
+    public void AspectNamedAspectReferencesExcludeTheAspectAttributeName()
+    {
+        const string markup = "<Window><Window.Resources><Aspect Name=\"Aspect\" TargetType=\"Button\"></Aspect></Window.Resources><Button Aspect=\"$Aspect\" /></Window>";
+        using NavigationFixture fixture = NavigationFixture.Create(markup);
+        CernealaNavigationService service = new();
+        int declaration = markup.IndexOf("Name=\"Aspect\"", StringComparison.Ordinal) + "Name=\"".Length + 1;
+
+        IReadOnlyList<CernealaLocation> references = service.GetReferences(fixture.Model, [fixture.Model], declaration, includeDeclaration: true);
+
+        Assert.Equal(
+            "Aspect@40,Aspect@113",
+            string.Join(",", references.Select(location => markup.Substring(location.Span.Start, location.Span.Length) + "@" + location.Span.Start)));
+        Assert.Equal(2, service.GetDocumentHighlights(fixture.Model, [fixture.Model], declaration).Count);
+    }
+
+    // Issue #1179: in <t:Card.Title> the owner prefix t:Card names the type Card, so rename and references cover it.
+    [Theory]
+    [InlineData("<Window xmlns:t=\"clr-namespace:Shared;assembly=Alpha\"><t:Card><t:Card.Title>x</t:Card.Title></t:Card></Window>", "Card", "Card@57,Card@65,Card@81,Card@96")]
+    [InlineData("<Window xmlns:t=\"clr-namespace:Shared;assembly=Alpha\"><t:Card><t:Card.Title>x</t:Card.Title></t:Card></Window>", "Card.Title", "Card@57,Card@65,Card@81,Card@96")]
+    [InlineData("<Window xmlns:t=\"clr-namespace:Shared;assembly=Alpha\"><t:Derived><t:Card.Title>x</t:Card.Title></t:Derived></Window>", "Card.Title", "Card@68,Card@84")]
+    public void RenamingATypeRenamesTheOwnerPrefixOfItsPropertyElements(string markup, string anchor, string expectedReferences)
+    {
+        const string alphaPath = FixtureRoot + "/Alpha.cs";
+        const string markupPath = FixtureRoot + "/Alpha.crn";
+        const string code = "namespace Shared; public class Card : Cerneala.UI.Controls.Border { public string Title { get; set; } = \"\"; } public sealed class Derived : Card { }";
+        CSharpCompilation project = CreateCompilation("Alpha", code, alphaPath, CreateReferences());
+        using CernealaCompilation language = new(new RoslynCompilationSymbols(project), [CreateDocument(markupPath, markup)]);
+        CernealaSemanticModel model = language.GetSemanticModel(markupPath);
+        CernealaNavigationService service = new();
+        int offset = markup.IndexOf(anchor, StringComparison.Ordinal) + 1;
+
+        string references = string.Join(",", service.GetReferences(model, [model], offset, includeDeclaration: true)
+            .Where(location => Normalize(location.Path) == Normalize(markupPath))
+            .Select(location => markup.Substring(location.Span.Start, location.Span.Length) + "@" + location.Span.Start));
+        int highlights = service.GetDocumentHighlights(model, [model], offset).Count;
+        CernealaRenameResult rename = service.Rename(model, [model], offset, "Tile");
+        string renamed = Apply(markup, rename.Edits.Where(edit => Normalize(edit.Path) == Normalize(markupPath)));
+
+        Assert.True(rename.Succeeded, rename.Error);
+        Assert.Equal(System.Text.RegularExpressions.Regex.Replace(markup, "\\bCard\\b", "Tile"), renamed);
+        Assert.Equal(expectedReferences, references);
+        Assert.Equal(expectedReferences.Split(',').Length, highlights);
+    }
+
+    // Issue #1180: every request at a closing-tag position gives the same result as at the opening tag.
+    [Fact]
+    public void NavigationStartedOnAClosingTagFindsTheElementType()
+    {
+        const string alphaPath = FixtureRoot + "/Alpha.cs";
+        const string markupPath = FixtureRoot + "/Alpha.crn";
+        const string code = "namespace Shared; public sealed class Card : Cerneala.UI.Controls.Border { }";
+        const string markup = "<Window xmlns:t=\"clr-namespace:Shared;assembly=Alpha\"><t:Card></t:Card></Window>";
+        CSharpCompilation project = CreateCompilation("Alpha", code, alphaPath, CreateReferences());
+        using CernealaCompilation language = new(new RoslynCompilationSymbols(project), [CreateDocument(markupPath, markup)]);
+        CernealaSemanticModel model = language.GetSemanticModel(markupPath);
+        CernealaNavigationService service = new();
+        int open = markup.IndexOf("Card", StringComparison.Ordinal) + 1;
+        int close = markup.LastIndexOf("Card", StringComparison.Ordinal) + 1;
+
+        CernealaPrepareRenameResult prepare = service.PrepareRename(model, [model], close);
+        CernealaRenameResult rename = service.Rename(model, [model], close, "Tile");
+        int references = service.GetReferences(model, [model], close, includeDeclaration: true).Count;
+        int highlights = service.GetDocumentHighlights(model, [model], close).Count;
+
+        Assert.Null(prepare.Error);
+        Assert.Equal(new TextSpan(close - 1, "Card".Length), prepare.Span);
+        Assert.True(rename.Succeeded, rename.Error);
+        Assert.Equal(
+            markup.Replace("Card", "Tile", StringComparison.Ordinal),
+            Apply(markup, rename.Edits.Where(edit => Normalize(edit.Path) == Normalize(markupPath))));
+        Assert.True(references >= 2, $"references: {references}");
+        Assert.Equal(2, highlights);
+        Assert.Equal(service.GetHover(model, open)?.Signature, service.GetHover(model, close)?.Signature);
+        Assert.NotNull(service.GetHover(model, close));
+        Assert.Equal(service.GetDefinitions(model, open), service.GetDefinitions(model, close));
+        Assert.NotEmpty(service.GetDefinitions(model, close));
+    }
+
+    // Issue #1180: rename started at Title in </t:Card.Title> renames the member in both tags.
+    [Fact]
+    public void RenameStartedOnTheClosingTagOfAPropertyElementRenamesTheMember()
+    {
+        const string alphaPath = FixtureRoot + "/Alpha.cs";
+        const string markupPath = FixtureRoot + "/Alpha.crn";
+        const string code = "namespace Shared; public sealed class Card : Cerneala.UI.Controls.Border { public string Title { get; set; } = \"\"; }";
+        const string markup = "<Window xmlns:t=\"clr-namespace:Shared;assembly=Alpha\"><t:Card><t:Card.Title>x</t:Card.Title></t:Card></Window>";
+        CSharpCompilation project = CreateCompilation("Alpha", code, alphaPath, CreateReferences());
+        using CernealaCompilation language = new(new RoslynCompilationSymbols(project), [CreateDocument(markupPath, markup)]);
+        CernealaSemanticModel model = language.GetSemanticModel(markupPath);
+        CernealaNavigationService service = new();
+        int close = markup.LastIndexOf("Title", StringComparison.Ordinal) + 1;
+
+        CernealaRenameResult rename = service.Rename(model, [model], close, "Heading");
+
+        Assert.True(rename.Succeeded, rename.Error);
+        Assert.Equal(
+            markup.Replace("Title", "Heading", StringComparison.Ordinal),
+            Apply(markup, rename.Edits.Where(edit => Normalize(edit.Path) == Normalize(markupPath))));
+    }
+
+    // Issue #825: a framework type or member is declared in metadata, so its declaration cannot be renamed.
+    [Theory]
+    [InlineData("<Window><Button Content=\"x\" /></Window>", "Button")]
+    [InlineData("<Window><Border Width=\"5\" /></Window>", "Width")]
+    [InlineData("<Window><Button Content=\"x\" /></Window>", "Content")]
+    public void PrepareRenameAndRenameRejectFrameworkTypesAndMembers(string markup, string token)
+    {
+        using NavigationFixture fixture = NavigationFixture.Create(markup);
+        CernealaNavigationService service = new();
+
+        CernealaPrepareRenameResult prepared = service.PrepareRename(fixture.Model, [fixture.Model], OffsetOf(markup, token));
+
+        Assert.False(prepared.CanRename, "PrepareRename offered a range for the framework symbol '" + token + "'.");
+    }
+
+    [Theory]
+    [InlineData("<Window><Button Content=\"x\" /></Window>", "Button")]
+    [InlineData("<Window><Border Width=\"5\" /></Window>", "Width")]
+    [InlineData("<Window><Button Content=\"x\" /></Window>", "Content")]
+    public void RenameRejectsFrameworkTypesAndMembers(string markup, string token)
+    {
+        using NavigationFixture fixture = NavigationFixture.Create(markup);
+        CernealaNavigationService service = new();
+
+        CernealaRenameResult rename = service.Rename(fixture.Model, [fixture.Model], OffsetOf(markup, token), "Renamed" + token);
+
+        Assert.False(rename.Succeeded, "Rename produced " + rename.Edits.Count + " edit(s) for the framework symbol '" + token + "'.");
+    }
+
+    [Theory]
+    [InlineData("<Window><Window.Resources><SolidColorBrush Name=\"Accent\" /></Window.Resources><TextBlock Text=\"$Accent\" /></Window>", "Accent")]
+    [InlineData("<Window DataType=\"Test.ViewModel\"><TextBlock Text=\"$DataContext.Title\" /></Window>", "Title")]
+    public void PrepareRenameAcceptsDeclarationsOfTheProject(string markup, string token)
+    {
+        using NavigationFixture fixture = NavigationFixture.Create(markup);
+        CernealaNavigationService service = new();
+
+        CernealaPrepareRenameResult prepared = service.PrepareRename(fixture.Model, [fixture.Model], OffsetOf(markup, token));
+
+        Assert.True(prepared.CanRename, prepared.Error);
+    }
+
+    // Rename must not rewrite C# references of a framework type; the control renames a project type and must edit its
+    // C# references.
+    [Theory]
+    [InlineData("<Window><Button Content=\"x\" /></Window>", "Button", true)]
+    [InlineData("<Window xmlns:t=\"clr-namespace:Shared;assembly=Alpha\"><t:Card /></Window>", "Card", false)]
+    public void RenameDoesNotRewriteCSharpReferencesOfAFrameworkType(string markup, string token, bool framework)
+    {
+        const string alphaPath = FixtureRoot + "/Alpha.cs";
+        const string markupPath = FixtureRoot + "/Alpha.crn";
+        const string code = "namespace Shared; public sealed class Card : Cerneala.UI.Controls.Border { } " +
+            "public sealed class User { public Cerneala.UI.Controls.Button Field = null!; public Card Other = null!; }";
+        CSharpCompilation project = CreateCompilation("Alpha", code, alphaPath, CreateReferences());
+        CernealaDocument document = CreateDocument(markupPath, markup);
+        using CernealaCompilation language = new(new RoslynCompilationSymbols(project), [document]);
+        CernealaSemanticModel model = language.GetSemanticModel(markupPath);
+        CernealaNavigationService service = new();
+
+        CernealaRenameResult rename = service.Rename(model, [model], OffsetOf(markup, token), "Renamed" + token);
+
+        int codeEdits = rename.Edits.Count(edit => Normalize(edit.Path) == Normalize(alphaPath));
+        Assert.True(
+            framework ? codeEdits == 0 : codeEdits > 0,
+            $"token={token}: succeeded={rename.Succeeded}, {rename.Edits.Count} edit(s) in total, {codeEdits} in the C# file ({string.Join(", ", rename.Edits.Select(edit => Normalize(edit.Path) + "@" + edit.Span.Start))}).");
+    }
+
+    private const string ContentHostCode =
+        "namespace Shared; [Cerneala.UI.Markup.ContentProperty(\"Item\")] public sealed class Host : Cerneala.UI.Controls.Border { public Cerneala.UI.Elements.UIElement? Item { get; set; } } public sealed class Item : Cerneala.UI.Controls.Border { }";
+
+    // Issue #1181: implicit content sets the content property without naming it, so its child tag is no occurrence of the property.
+    [Theory]
+    [InlineData("<t:Host><TextBlock /></t:Host>")]
+    [InlineData("<t:Host><t:Item></t:Item></t:Host>")]
+    public void RenamingAContentPropertyEditsOnlyItsOccurrences(string secondHost)
+    {
+        const string alphaPath = FixtureRoot + "/Alpha.cs";
+        const string markupPath = FixtureRoot + "/Alpha.crn";
+        string markup = "<Window xmlns:t=\"clr-namespace:Shared;assembly=Alpha\"><StackPanel><t:Host><t:Host.Item><TextBlock /></t:Host.Item></t:Host>" + secondHost + "</StackPanel></Window>";
+        CSharpCompilation project = CreateCompilation("Alpha", ContentHostCode, alphaPath, CreateReferences());
+        using CernealaCompilation language = new(new RoslynCompilationSymbols(project), [CreateDocument(markupPath, markup)]);
+        CernealaSemanticModel model = language.GetSemanticModel(markupPath);
+        CernealaNavigationService service = new();
+        int offset = markup.IndexOf("Host.Item", StringComparison.Ordinal) + "Host.".Length + 1;
+
+        CernealaRenameResult rename = service.Rename(model, [model], offset, "Slot");
+
+        Assert.True(rename.Succeeded, rename.Error);
+        string renamed = Apply(markup, rename.Edits.Where(edit => Normalize(edit.Path) == Normalize(markupPath)));
+        string renamedCode = Apply(ContentHostCode, rename.Edits.Where(edit => Normalize(edit.Path) == Normalize(alphaPath)));
+        Assert.Equal(markup.Replace("Host.Item", "Host.Slot", StringComparison.Ordinal), renamed);
+        Assert.Contains("UIElement? Slot", renamedCode, StringComparison.Ordinal);
+    }
+
+    // Issue #1181: references of a content property list its property element tags, not the implicit content children.
+    [Theory]
+    [InlineData("<t:Host><TextBlock /></t:Host>")]
+    [InlineData("<t:Host><t:Item></t:Item></t:Host>")]
+    public void ReferencesOfAContentPropertyDoNotListImplicitContent(string secondHost)
+    {
+        const string alphaPath = FixtureRoot + "/Alpha.cs";
+        const string markupPath = FixtureRoot + "/Alpha.crn";
+        string markup = "<Window xmlns:t=\"clr-namespace:Shared;assembly=Alpha\"><StackPanel><t:Host><t:Host.Item><TextBlock /></t:Host.Item></t:Host>" + secondHost + "</StackPanel></Window>";
+        CSharpCompilation project = CreateCompilation("Alpha", ContentHostCode, alphaPath, CreateReferences());
+        using CernealaCompilation language = new(new RoslynCompilationSymbols(project), [CreateDocument(markupPath, markup)]);
+        CernealaSemanticModel model = language.GetSemanticModel(markupPath);
+        CernealaNavigationService service = new();
+        int opening = markup.IndexOf("Host.Item", StringComparison.Ordinal) + "Host.".Length;
+        int closing = markup.IndexOf("/t:Host.Item", StringComparison.Ordinal) + "/t:Host.".Length;
+
+        TextSpan[] references = service.GetReferences(model, [model], opening + 1, includeDeclaration: true)
+            .Where(location => Normalize(location.Path) == Normalize(markupPath))
+            .Select(location => location.Span)
+            .ToArray();
+
+        Assert.Equal([new TextSpan(opening, "Item".Length), new TextSpan(closing, "Item".Length)], references);
+    }
+
+    // Issue #1181: the child element <t:Item> names the type Item, so renaming the type from it still edits both of its tags.
+    [Fact]
+    public void RenamingTheTypeOfAnImplicitContentChildRenamesItsTags()
+    {
+        const string alphaPath = FixtureRoot + "/Alpha.cs";
+        const string markupPath = FixtureRoot + "/Alpha.crn";
+        const string markup = "<Window xmlns:t=\"clr-namespace:Shared;assembly=Alpha\"><StackPanel><t:Host><t:Host.Item><TextBlock /></t:Host.Item></t:Host><t:Host><t:Item></t:Item></t:Host></StackPanel></Window>";
+        CSharpCompilation project = CreateCompilation("Alpha", ContentHostCode, alphaPath, CreateReferences());
+        using CernealaCompilation language = new(new RoslynCompilationSymbols(project), [CreateDocument(markupPath, markup)]);
+        CernealaSemanticModel model = language.GetSemanticModel(markupPath);
+        CernealaNavigationService service = new();
+
+        CernealaRenameResult rename = service.Rename(model, [model], markup.IndexOf("t:Item>", StringComparison.Ordinal) + "t:".Length + 1, "Card");
+
+        Assert.True(rename.Succeeded, rename.Error);
+        string renamed = Apply(markup, rename.Edits.Where(edit => Normalize(edit.Path) == Normalize(markupPath)));
+        Assert.Equal(markup.Replace("<t:Item></t:Item>", "<t:Card></t:Card>", StringComparison.Ordinal), renamed);
+    }
+
     private static int OffsetOf(string text, string value) =>
         text.LastIndexOf(value, StringComparison.Ordinal) + Math.Min(1, value.Length - 1);
 

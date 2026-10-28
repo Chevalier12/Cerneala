@@ -60,8 +60,9 @@ public sealed partial class UiMarkupGenerator
         private string? BuildRadialGradientBrushExpression(MarkupElement resource)
         {
             string? center = ParseBrushPoint(resource, "Center");
-            string? radiusX = ParseBrushFloat(resource, "RadiusX", 0, value => value > 0);
-            string? radiusY = ParseBrushFloat(resource, "RadiusY", 0, value => value > 0);
+            // A radius has no valid default: RadialGradientBrush rejects 0, so both are required (NaN default).
+            string? radiusX = ParseBrushFloat(resource, "RadiusX", float.NaN, value => value > 0);
+            string? radiusY = ParseBrushFloat(resource, "RadiusY", float.NaN, value => value > 0);
             string? stops = ParseGradientStops(resource);
             string? opacity = ParseBrushFloat(resource, "Opacity", 1, value => value >= 0 && value <= 1);
             return center is null || radiusX is null || radiusY is null || stops is null || opacity is null
@@ -86,7 +87,7 @@ public sealed partial class UiMarkupGenerator
 
         private string? BuildDrawingBrushExpression(MarkupElement resource)
         {
-            string? bounds = ParseBrushRect(resource, "ContentBounds");
+            string? bounds = ParseBrushRect(resource, "ContentBounds", requirePositiveSize: true);
             if (bounds is null)
             {
                 return null;
@@ -150,8 +151,8 @@ public sealed partial class UiMarkupGenerator
             string alignmentX = resource.Attribute("AlignmentX")?.Value.Trim() ?? "Center";
             string alignmentY = resource.Attribute("AlignmentY")?.Value.Trim() ?? "Center";
             string tileMode = resource.Attribute("TileMode")?.Value.Trim() ?? "None";
-            string? viewport = resource.Attribute("Viewport") is null ? "null" : ParseBrushRect(resource, "Viewport");
-            string? viewbox = resource.Attribute("Viewbox") is null ? "null" : ParseBrushRect(resource, "Viewbox");
+            string? viewport = resource.Attribute("Viewport") is null ? "null" : ParseBrushRect(resource, "Viewport", requirePositiveSize: true);
+            string? viewbox = resource.Attribute("Viewbox") is null ? "null" : ParseBrushRect(resource, "Viewbox", requirePositiveSize: true);
             string? opacity = ParseBrushFloat(resource, "Opacity", 1, value => value >= 0 && value <= 1);
             if (!new[] { "None", "Fill", "Uniform", "UniformToFill" }.Contains(stretch) ||
                 !new[] { "Left", "Center", "Right" }.Contains(alignmentX) ||
@@ -180,16 +181,40 @@ public sealed partial class UiMarkupGenerator
             return "new global::Cerneala.Drawing.DrawPoint(" + x + ", " + y + ")";
         }
 
-        private string? ParseBrushRect(MarkupElement element, string attributeName)
+        // Tile rectangles (Viewport, Viewbox, ContentBounds) need a width and height greater than 0, as the TileBrush and
+        // DrawingBrush constructors require.
+        private string? ParseBrushRect(MarkupElement element, string attributeName, bool requirePositiveSize = false)
         {
             string[] parts = (element.Attribute(attributeName)?.Value ?? string.Empty).Split(',').Select(value => value.Trim()).ToArray();
-            if (parts.Length != 4 || parts.Any(part => !float.TryParse(part, NumberStyles.Float, CultureInfo.InvariantCulture, out float value) || float.IsNaN(value) || float.IsInfinity(value)))
+            float[] values = new float[parts.Length];
+            bool parsed = parts.Length == 4;
+            for (int index = 0; parsed && index < parts.Length; index++)
+            {
+                parsed = float.TryParse(parts[index], NumberStyles.Float, CultureInfo.InvariantCulture, out values[index]);
+            }
+
+            if (!parsed || !IsValidDrawRect(values[0], values[1], values[2], values[3]) ||
+                (requirePositiveSize && (values[2] <= 0 || values[3] <= 0)))
             {
                 Report(InvalidPropertyValue, (object?)element.Attribute(attributeName) ?? element, element.Name.LocalName, attributeName, element.Attribute(attributeName)?.Value ?? string.Empty);
                 return null;
             }
 
-            return "new global::Cerneala.Drawing.DrawRect(" + string.Join(", ", parts.Select(part => float.Parse(part, CultureInfo.InvariantCulture).ToString("R", CultureInfo.InvariantCulture) + "f")) + ")";
+            return "new global::Cerneala.Drawing.DrawRect(" + string.Join(", ", values.Select(value => value.ToString("R", CultureInfo.InvariantCulture) + "f")) + ")";
+        }
+
+        // The range the DrawRect constructor accepts (Drawing/DrawRect.cs, DrawArgument.MaxPixelSize): X, Y,
+        // X + Width and Y + Height are finite pixel coordinates within ±2,000,000,000, and Width and Height are
+        // non-negative pixel sizes up to 2,000,000,000. Any other rectangle would throw when the view is created.
+        private static bool IsValidDrawRect(float x, float y, float width, float height)
+        {
+            const float maxPixelSize = 2_000_000_000f;
+            static bool IsCoordinate(float value) =>
+                !float.IsNaN(value) && !float.IsInfinity(value) && value >= -maxPixelSize && value <= maxPixelSize;
+            static bool IsSize(float value) => IsCoordinate(value) && value >= 0;
+
+            return IsCoordinate(x) && IsCoordinate(y) && IsSize(width) && IsSize(height) &&
+                IsCoordinate(x + width) && IsCoordinate(y + height);
         }
 
         private string? ParseBrushFloat(MarkupElement element, string attributeName, float defaultValue, Func<float, bool> validate)
@@ -211,18 +236,7 @@ public sealed partial class UiMarkupGenerator
 
         private static string? ParseBrushColor(MarkupAttribute? attribute)
         {
-            if (attribute is null)
-            {
-                return null;
-            }
-
-            string value = attribute.Value.Trim();
-            if (NamedColorNames.TryGetValue(value, out string? named))
-            {
-                return "global::Cerneala.Drawing.Color." + named;
-            }
-
-            return ParseHexColor(value) is ColorLiteral color ? color.ToExpression() : null;
+            return attribute is null ? null : ColorExpression(attribute.Value.Trim());
         }
     }
 }

@@ -64,9 +64,10 @@ internal sealed class FormattingService(CernealaWorkspace workspace)
         CancellationToken cancellationToken)
     {
         TextSpan range = LspTextCoordinates.ToSpan(snapshot.Document.Text, request.Range);
-        CernealaCodeActionDiagnostic[] diagnostics = request.Context.Diagnostics.Select(diagnostic =>
-            new CernealaCodeActionDiagnostic(
-                diagnostic.Code,
+        CernealaCodeActionDiagnostic[] diagnostics = request.Context.Diagnostics
+            .Where(diagnostic => diagnostic.Code is not null)
+            .Select(diagnostic => new CernealaCodeActionDiagnostic(
+                diagnostic.Code!,
                 LspTextCoordinates.ToSpan(snapshot.Document.Text, diagnostic.Range)))
             .ToArray();
         IReadOnlyList<CernealaSemanticModel> models = snapshot.GetSemanticModels(cancellationToken);
@@ -160,9 +161,8 @@ internal sealed class FormattingService(CernealaWorkspace workspace)
             Title = action.Title,
             Kind = action.Kind,
             IsPreferred = action.IsPreferred,
-            Diagnostics = requestedDiagnostics.Where(diagnostic => action.DiagnosticIds.Contains(
-                diagnostic.Code,
-                StringComparer.Ordinal)).ToArray(),
+            Diagnostics = requestedDiagnostics.Where(diagnostic => diagnostic.Code is not null &&
+                action.DiagnosticIds.Contains(diagnostic.Code, StringComparer.Ordinal)).ToArray(),
             Edit = new LspWorkspaceEdit { Changes = changes }
         };
     }

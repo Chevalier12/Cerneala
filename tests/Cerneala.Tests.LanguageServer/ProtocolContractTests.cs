@@ -302,7 +302,7 @@ public sealed class ProtocolContractTests
                     new BuildDiagnosticItem
                     {
                         Uri = uri,
-                        Code = duplicate.Code,
+                        Code = duplicate.Code!,
                         Range = duplicate.Range,
                         Message = duplicate.Message
                     }

@@ -68,6 +68,67 @@ public sealed class CompletionProtocolTests(ITestOutputHelper output)
     }
 
     [Fact]
+    public async Task CompletionItemResolveSucceedsAfterTheDocumentChangedElsewhere()
+    {
+        using ImmediateSemanticWorkspace fixture = ImmediateSemanticWorkspace.Create();
+        using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(60));
+        await using ProtocolTestClient client = ProtocolTestClient.Start();
+        await client.InitializeAsync(timeout.Token, fixture.SolutionPath, deferWorkspaceLoad: true);
+        await client.Rpc.NotifyWithParameterObjectAsync(
+            "textDocument/didOpen",
+            new DidOpenTextDocumentParams
+            {
+                TextDocument = new TextDocumentItem
+                {
+                    Uri = fixture.MarkupUri,
+                    LanguageId = "cerneala",
+                    Version = 1,
+                    Text = fixture.Markup
+                }
+            });
+        int completionOffset = fixture.Markup.IndexOf("$DataContext.", StringComparison.Ordinal) +
+            "$DataContext.".Length;
+        CompletionList completion = await client.Rpc.InvokeWithParameterObjectAsync<CompletionList>(
+            "textDocument/completion",
+            new TextDocumentPositionParams
+            {
+                TextDocument = new TextDocumentIdentifier { Uri = fixture.MarkupUri },
+                Position = PositionAt(fixture.Markup, completionOffset)
+            },
+            timeout.Token);
+        LspCompletionItem item = Assert.Single(completion.Items.Where(candidate => candidate.Label == "ImmediateProperty"));
+
+        // Control: resolving at the version the item was produced for succeeds.
+        LspCompletionItem control = await client.Rpc.InvokeWithParameterObjectAsync<LspCompletionItem>(
+            "completionItem/resolve",
+            item,
+            timeout.Token);
+        Assert.Contains("ImmediateProperty", control.Detail, StringComparison.Ordinal);
+
+        LspPosition end = PositionAt(fixture.Markup, fixture.Markup.Length);
+        await client.Rpc.NotifyWithParameterObjectAsync(
+            "textDocument/didChange",
+            new DidChangeTextDocumentParams
+            {
+                TextDocument = new VersionedTextDocumentIdentifier { Uri = fixture.MarkupUri, Version = 2 },
+                ContentChanges = [new TextDocumentContentChangeEvent
+                {
+                    Range = new LspRange { Start = end, End = end },
+                    Text = "\n"
+                }]
+            });
+
+        LspCompletionItem? resolved = null;
+        Exception? failure = await Record.ExceptionAsync(async () => resolved = await client.Rpc
+            .InvokeWithParameterObjectAsync<LspCompletionItem>("completionItem/resolve", item, timeout.Token));
+
+        Assert.True(failure is null, "completionItem/resolve failed after an unrelated edit: " + failure);
+        Assert.Equal(control.Detail, resolved!.Detail);
+        Assert.Equal(control.Documentation?.Value, resolved.Documentation?.Value);
+        Assert.Equal(0, await client.StopAsync(timeout.Token));
+    }
+
+    [Fact]
     public async Task MenuItemPropertyCompletionRunsThroughTheRealProtocol()
     {
         using CancellationTokenSource timeout = new(TimeSpan.FromMinutes(5));

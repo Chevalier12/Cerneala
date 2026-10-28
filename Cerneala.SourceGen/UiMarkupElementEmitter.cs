@@ -234,6 +234,7 @@ public sealed partial class UiMarkupGenerator
                 EmitContentTemplatePropertyElement(element, variable);
                 EmitRenderSurfaceSceneElement(element, variable);
                 EmitVisionPropertyElement(element, variable);
+                EmitColliderPropertyElement(element, variable);
                 ReportLegacyTemplatesPropertyElements(element);
                 if (templateCollections.Length == 1)
                 {

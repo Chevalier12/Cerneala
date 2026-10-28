@@ -20,150 +20,7 @@ namespace Cerneala.SourceGen;
 [Generator]
 public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 {
-    private static readonly Dictionary<string, string> NamedColorNames = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["Transparent"] = "Transparent",
-        ["AliceBlue"] = "AliceBlue",
-        ["AntiqueWhite"] = "AntiqueWhite",
-        ["Aqua"] = "Aqua",
-        ["Aquamarine"] = "Aquamarine",
-        ["Azure"] = "Azure",
-        ["Beige"] = "Beige",
-        ["Bisque"] = "Bisque",
-        ["Black"] = "Black",
-        ["BlanchedAlmond"] = "BlanchedAlmond",
-        ["Blue"] = "Blue",
-        ["BlueViolet"] = "BlueViolet",
-        ["Brown"] = "Brown",
-        ["BurlyWood"] = "BurlyWood",
-        ["CadetBlue"] = "CadetBlue",
-        ["Chartreuse"] = "Chartreuse",
-        ["Chocolate"] = "Chocolate",
-        ["Coral"] = "Coral",
-        ["CornflowerBlue"] = "CornflowerBlue",
-        ["Cornsilk"] = "Cornsilk",
-        ["Crimson"] = "Crimson",
-        ["Cyan"] = "Cyan",
-        ["DarkBlue"] = "DarkBlue",
-        ["DarkCyan"] = "DarkCyan",
-        ["DarkGoldenrod"] = "DarkGoldenrod",
-        ["DarkGray"] = "DarkGray",
-        ["DarkGreen"] = "DarkGreen",
-        ["DarkKhaki"] = "DarkKhaki",
-        ["DarkMagenta"] = "DarkMagenta",
-        ["DarkOliveGreen"] = "DarkOliveGreen",
-        ["DarkOrange"] = "DarkOrange",
-        ["DarkOrchid"] = "DarkOrchid",
-        ["DarkRed"] = "DarkRed",
-        ["DarkSalmon"] = "DarkSalmon",
-        ["DarkSeaGreen"] = "DarkSeaGreen",
-        ["DarkSlateBlue"] = "DarkSlateBlue",
-        ["DarkSlateGray"] = "DarkSlateGray",
-        ["DarkTurquoise"] = "DarkTurquoise",
-        ["DarkViolet"] = "DarkViolet",
-        ["DeepPink"] = "DeepPink",
-        ["DeepSkyBlue"] = "DeepSkyBlue",
-        ["DimGray"] = "DimGray",
-        ["DodgerBlue"] = "DodgerBlue",
-        ["Firebrick"] = "Firebrick",
-        ["FloralWhite"] = "FloralWhite",
-        ["ForestGreen"] = "ForestGreen",
-        ["Fuchsia"] = "Fuchsia",
-        ["Gainsboro"] = "Gainsboro",
-        ["GhostWhite"] = "GhostWhite",
-        ["Gold"] = "Gold",
-        ["Goldenrod"] = "Goldenrod",
-        ["Gray"] = "Gray",
-        ["Green"] = "Green",
-        ["GreenYellow"] = "GreenYellow",
-        ["Honeydew"] = "Honeydew",
-        ["HotPink"] = "HotPink",
-        ["IndianRed"] = "IndianRed",
-        ["Indigo"] = "Indigo",
-        ["Ivory"] = "Ivory",
-        ["Khaki"] = "Khaki",
-        ["Lavender"] = "Lavender",
-        ["LavenderBlush"] = "LavenderBlush",
-        ["LawnGreen"] = "LawnGreen",
-        ["LemonChiffon"] = "LemonChiffon",
-        ["LightBlue"] = "LightBlue",
-        ["LightCoral"] = "LightCoral",
-        ["LightCyan"] = "LightCyan",
-        ["LightGoldenrodYellow"] = "LightGoldenrodYellow",
-        ["LightGray"] = "LightGray",
-        ["LightGreen"] = "LightGreen",
-        ["LightPink"] = "LightPink",
-        ["LightSalmon"] = "LightSalmon",
-        ["LightSeaGreen"] = "LightSeaGreen",
-        ["LightSkyBlue"] = "LightSkyBlue",
-        ["LightSlateGray"] = "LightSlateGray",
-        ["LightSteelBlue"] = "LightSteelBlue",
-        ["LightYellow"] = "LightYellow",
-        ["Lime"] = "Lime",
-        ["LimeGreen"] = "LimeGreen",
-        ["Linen"] = "Linen",
-        ["Magenta"] = "Magenta",
-        ["Maroon"] = "Maroon",
-        ["MediumAquamarine"] = "MediumAquamarine",
-        ["MediumBlue"] = "MediumBlue",
-        ["MediumOrchid"] = "MediumOrchid",
-        ["MediumPurple"] = "MediumPurple",
-        ["MediumSeaGreen"] = "MediumSeaGreen",
-        ["MediumSlateBlue"] = "MediumSlateBlue",
-        ["MediumSpringGreen"] = "MediumSpringGreen",
-        ["MediumTurquoise"] = "MediumTurquoise",
-        ["MediumVioletRed"] = "MediumVioletRed",
-        ["MidnightBlue"] = "MidnightBlue",
-        ["MintCream"] = "MintCream",
-        ["MistyRose"] = "MistyRose",
-        ["Moccasin"] = "Moccasin",
-        ["NavajoWhite"] = "NavajoWhite",
-        ["Navy"] = "Navy",
-        ["OldLace"] = "OldLace",
-        ["Olive"] = "Olive",
-        ["OliveDrab"] = "OliveDrab",
-        ["Orange"] = "Orange",
-        ["OrangeRed"] = "OrangeRed",
-        ["Orchid"] = "Orchid",
-        ["PaleGoldenrod"] = "PaleGoldenrod",
-        ["PaleGreen"] = "PaleGreen",
-        ["PaleTurquoise"] = "PaleTurquoise",
-        ["PaleVioletRed"] = "PaleVioletRed",
-        ["PapayaWhip"] = "PapayaWhip",
-        ["PeachPuff"] = "PeachPuff",
-        ["Peru"] = "Peru",
-        ["Pink"] = "Pink",
-        ["Plum"] = "Plum",
-        ["PowderBlue"] = "PowderBlue",
-        ["Purple"] = "Purple",
-        ["Red"] = "Red",
-        ["RosyBrown"] = "RosyBrown",
-        ["RoyalBlue"] = "RoyalBlue",
-        ["SaddleBrown"] = "SaddleBrown",
-        ["Salmon"] = "Salmon",
-        ["SandyBrown"] = "SandyBrown",
-        ["SeaGreen"] = "SeaGreen",
-        ["SeaShell"] = "SeaShell",
-        ["Sienna"] = "Sienna",
-        ["Silver"] = "Silver",
-        ["SkyBlue"] = "SkyBlue",
-        ["SlateBlue"] = "SlateBlue",
-        ["SlateGray"] = "SlateGray",
-        ["Snow"] = "Snow",
-        ["SpringGreen"] = "SpringGreen",
-        ["SteelBlue"] = "SteelBlue",
-        ["Tan"] = "Tan",
-        ["Teal"] = "Teal",
-        ["Thistle"] = "Thistle",
-        ["Tomato"] = "Tomato",
-        ["Turquoise"] = "Turquoise",
-        ["Violet"] = "Violet",
-        ["Wheat"] = "Wheat",
-        ["White"] = "White",
-        ["WhiteSmoke"] = "WhiteSmoke",
-        ["Yellow"] = "Yellow",
-        ["YellowGreen"] = "YellowGreen",
-    };
+    private static readonly IReadOnlyDictionary<string, string> NamedColorNames = MarkupLiteralRules.NamedColorNames;
 
     private static readonly DiagnosticDescriptor MalformedMarkup = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI001");
     private static readonly DiagnosticDescriptor UnsupportedElement = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI002");
@@ -318,7 +175,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 : ResolveWindowPair(context, file, compilation))
             .ToArray();
         int mainWindowCount = windowPairs.Count(resolution => resolution.Pair?.TypeSymbol.Name == "MainWindow");
-        if (mainWindowCount > 1 && compilation.Options.OutputKind != OutputKind.DynamicallyLinkedLibrary)
+        // The MainWindow name selects the startup window only on the legacy path, without an Application document.
+        if (mainWindowCount > 1 && !hasApplicationDocument &&
+            compilation.Options.OutputKind != OutputKind.DynamicallyLinkedLibrary)
         {
             context.ReportDiagnostic(Diagnostic.Create(
                 InvalidWindowStartup,
@@ -609,13 +468,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return null;
         }
 
-        string metadataName = attribute.Value.Trim();
-        if (metadataName.StartsWith("global::", StringComparison.Ordinal))
-        {
-            metadataName = metadataName.Substring("global::".Length);
-        }
-
-        INamedTypeSymbol? type = compilation.GetTypeByMetadataName(metadataName);
+        INamedTypeSymbol? type = ResolveMarkupTypeReference(compilation, attribute.Value, document.Root);
         if (type is null || type.DeclaredAccessibility is not Accessibility.Public and not Accessibility.Internal)
         {
             context.ReportDiagnostic(Diagnostic.Create(
@@ -627,6 +480,73 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         }
 
         return type;
+    }
+
+    // A markup type reference: a metadata name (optionally global::-qualified), or prefix:Name where the prefix is an
+    // xmlns alias in scope at context that declares clr-namespace:Namespace[;assembly=Name].
+    private static INamedTypeSymbol? ResolveMarkupTypeReference(
+        Compilation compilation,
+        string rawReference,
+        MarkupElement? context)
+    {
+        string reference = rawReference.Trim();
+        if (reference.StartsWith("global::", StringComparison.Ordinal))
+        {
+            reference = reference.Substring("global::".Length);
+        }
+
+        int prefixSeparator = reference.IndexOf(':');
+        if (prefixSeparator < 0)
+        {
+            return compilation.GetTypeByMetadataName(reference);
+        }
+
+        if (prefixSeparator == 0 || prefixSeparator == reference.Length - 1)
+        {
+            return null;
+        }
+
+        string prefix = reference.Substring(0, prefixSeparator);
+        string localName = reference.Substring(prefixSeparator + 1);
+        MarkupNamespace? xmlNamespace = context?.GetNamespaceOfPrefix(prefix);
+        const string clrNamespacePrefix = "clr-namespace:";
+        if (xmlNamespace is null ||
+            !xmlNamespace.NamespaceName.StartsWith(clrNamespacePrefix, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        string declaration = xmlNamespace.NamespaceName.Substring(clrNamespacePrefix.Length);
+        string[] segments = declaration.Split(';');
+        string namespaceName = segments[0].Trim();
+        string? assemblyName = null;
+        for (int index = 1; index < segments.Length; index++)
+        {
+            string segment = segments[index].Trim();
+            const string assemblyPrefix = "assembly=";
+            if (segment.StartsWith(assemblyPrefix, StringComparison.Ordinal) && assemblyName is null)
+            {
+                assemblyName = segment.Substring(assemblyPrefix.Length).Trim();
+                if (assemblyName.Length == 0)
+                {
+                    return null;
+                }
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        string metadataName = namespaceName.Length == 0
+            ? localName
+            : namespaceName + "." + localName;
+        INamedTypeSymbol? type = compilation.GetTypeByMetadataName(metadataName);
+        return type is not null &&
+            (assemblyName is null ||
+                string.Equals(type.ContainingAssembly.Name, assemblyName, StringComparison.Ordinal))
+            ? type
+            : null;
     }
 
     private static bool TryGetEmissionDocument(
@@ -649,31 +569,6 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         }
 
         return false;
-    }
-
-    private static string StripXmlDeclarationPreservingPositions(string text)
-    {
-        if (!text.StartsWith("<?xml", StringComparison.OrdinalIgnoreCase))
-        {
-            return text;
-        }
-
-        int end = text.IndexOf("?>", StringComparison.Ordinal);
-        if (end < 0)
-        {
-            return text;
-        }
-
-        StringBuilder builder = new(text);
-        for (int i = 0; i < end + 2; i++)
-        {
-            if (builder[i] != '\r' && builder[i] != '\n')
-            {
-                builder[i] = ' ';
-            }
-        }
-
-        return builder.ToString();
     }
 
     private static string CreateClassName(string path)
@@ -747,7 +642,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             LanguageDocument = new CernealaDocument(
                 path,
-                LanguageSourceText.From(StripXmlDeclarationPreservingPositions(text)));
+                LanguageSourceText.From(text));
             ElementSyntax[] roots = LanguageDocument.Syntax.Children.OfType<ElementSyntax>().ToArray();
             Document = roots.Length == 1
                 ? new EmissionMarkupDocument(MarkupElement.FromSyntax(roots[0]))
@@ -858,6 +753,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         public IReadOnlyList<NamedElementMember> NamedElementMembers => namedElementMembers;
 
         private readonly Dictionary<string, NamedSymbol> symbols = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, string> symbolIdentifiers = new(StringComparer.Ordinal);
         private readonly Dictionary<MarkupElement, ResourceScope> resourceScopes = new();
         private readonly Dictionary<MarkupElement, ResourceScope> resourcePropertyScopes = new();
         private readonly Dictionary<MarkupElement, AspectResource> inlineAspects = new();

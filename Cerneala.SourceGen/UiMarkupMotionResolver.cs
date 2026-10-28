@@ -362,7 +362,8 @@ public sealed partial class UiMarkupGenerator
                 string? ownerName = null,
                 string? partName = null,
                 ResolvedPrismMotionTarget? prism = null,
-                ResolvedTimbreMotionTarget? sound = null)
+                ResolvedTimbreMotionTarget? sound = null,
+                INamedTypeSymbol? type = null)
             {
                 Kind = kind;
                 Element = element;
@@ -370,11 +371,16 @@ public sealed partial class UiMarkupGenerator
                 PartName = partName;
                 Prism = prism;
                 Timbre = sound;
+                Type = type;
             }
 
             public ResolvedMotionTargetKind Kind { get; }
 
             public MarkupElement Element { get; }
+
+            // The C# type of the element the generated Motion code reads and writes; null for Prism and Timbre
+            // targets, whose conditions cannot read element properties.
+            public INamedTypeSymbol? Type { get; }
 
             public string? OwnerName { get; }
 
@@ -1100,7 +1106,7 @@ public sealed partial class UiMarkupGenerator
                 }
 
                 MotionAssignmentSyntax? source = sources.TryGetValue(destination.Target, out MotionAssignmentSyntax? matched) ? matched : null;
-                ResolvedMotionTarget target = new(ResolvedMotionTargetKind.Self, collectionElement);
+                ResolvedMotionTarget target = new(ResolvedMotionTargetKind.Self, collectionElement, type: itemType);
                 if (!ValidateMotionValue(destination.Value, property, destination.Target, parameters, target, allowExplicitBinding: true) ||
                     source is not null && !ValidateMotionValue(source.Value, property, source.Target, parameters, target, allowExplicitBinding: false))
                 {
@@ -1224,7 +1230,8 @@ public sealed partial class UiMarkupGenerator
                     {
                         if (item.Source.Value is MotionCurrentValueSyntax || item.Destination.Value is MotionCurrentValueSyntax)
                         {
-                            Report(InvalidDirective, item.Source.Location, Path.GetFileName(file.Path), "Keyframe values must be deterministic; 'current' is not allowed.");
+                            MotionAssignmentSyntax current = item.Source.Value is MotionCurrentValueSyntax ? item.Source : item.Destination;
+                            Report(InvalidDirective, current.Location, Path.GetFileName(file.Path), "Keyframe values must be deterministic; 'current' is not allowed.");
                         }
 
                         return false;
@@ -1760,7 +1767,7 @@ public sealed partial class UiMarkupGenerator
                 return false;
             }
 
-            target = new ResolvedMotionTarget(targetKind, targetElement, ownerName, partName);
+            target = new ResolvedMotionTarget(targetKind, targetElement, ownerName, partName, type: targetType);
             return true;
         }
 
@@ -1870,7 +1877,8 @@ public sealed partial class UiMarkupGenerator
 
             if (value is MotionConditionalValueSyntax conditional)
             {
-                return ValidateMotionValue(conditional.WhenTrue, property, target, parameters, resolvedTarget, allowExplicitBinding) &&
+                return BindMotionCondition(conditional.Condition, resolvedTarget.Type, "motionTarget") is not null &&
+                    ValidateMotionValue(conditional.WhenTrue, property, target, parameters, resolvedTarget, allowExplicitBinding) &&
                     ValidateMotionValue(conditional.WhenFalse, property, target, parameters, resolvedTarget, allowExplicitBinding);
             }
 
@@ -1930,9 +1938,17 @@ public sealed partial class UiMarkupGenerator
                 MarkupValueKind.Double => double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out _),
                 MarkupValueKind.Integer => IsMotionIntegerLiteral(text, property.LiteralType.SpecialType),
                 MarkupValueKind.Bool => bool.TryParse(text, out _),
-                MarkupValueKind.Color =>
-                    ParseHexColor(text) is not null ||
-                    text.StartsWith("$", StringComparison.Ordinal),
+                // Structured values accept the same literals as their attribute form, for example 8 or 8,4,8,4 for
+                // a Thickness and #FF336699 or Red for a Color or Brush.
+                MarkupValueKind.Color or
+                MarkupValueKind.Brush or
+                MarkupValueKind.Thickness or
+                MarkupValueKind.NonNegativeThickness or
+                MarkupValueKind.CornerRadius or
+                MarkupValueKind.NonNegativeCornerRadius or
+                MarkupValueKind.LayoutPoint or
+                MarkupValueKind.DrawPoint =>
+                    text.StartsWith("$", StringComparison.Ordinal) || IsValidLiteral(text, property),
                 MarkupValueKind.String => text.Length >= 2 && text[0] == '"' && text[text.Length - 1] == '"',
                 MarkupValueKind.Enum => property.ValueType.GetMembers(text).OfType<IFieldSymbol>().Any(field => field.HasConstantValue),
                 _ => text.StartsWith("$", StringComparison.Ordinal)

@@ -73,6 +73,28 @@ public sealed class BrushMarkupReaderTests
         Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Code == "MARKUP031");
     }
 
+    [Theory]
+    [InlineData("Stretch=\"Uniform\"", false)]
+    [InlineData("TileMode=\"FlipXY\" AlignmentX=\"Left\" AlignmentY=\"Bottom\"", false)]
+    [InlineData("Stretch=\"42\"", true)]
+    [InlineData("TileMode=\"42\"", true)]
+    [InlineData("Stretch=\"Uniform,Fill\"", true)]
+    [InlineData("AlignmentX=\"1\"", true)]
+    [InlineData("AlignmentY=\"Top,Bottom\"", true)]
+    public void EnumAttributesThatNameNoMemberReportMarkup031(string attribute, bool expectError)
+    {
+        TestImage image = new();
+        BrushMarkupReader reader = new(imageResolver: source => source == "accent.png" ? image : null);
+
+        MarkupResult<Brush> result = reader.Read($"<ImageBrush Source=\"accent.png\" {attribute} />");
+
+        Assert.Equal(expectError, result.HasErrors);
+        if (expectError)
+        {
+            Assert.Null(result.Value);
+            Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Code == "MARKUP031");
+        }
+    }
 
     private sealed class TestImage : IDrawImage
     {

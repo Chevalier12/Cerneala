@@ -30,6 +30,9 @@ public sealed partial class UiMarkupGenerator
 
             public string ElementName { get; }
 
+            // The markup element whose reactive content this plan emits, when the plan belongs to one element.
+            public MarkupElement? Element { get; set; }
+
             public bool IsRoot { get; }
 
             public TemplateEmissionContext? TemplateContext { get; }
@@ -168,7 +171,10 @@ public sealed partial class UiMarkupGenerator
                 variable,
                 element.Name.LocalName,
                 ReferenceEquals(element, document.Root),
-                templateEmissionContexts.Count == 0 ? null : templateEmissionContexts.Peek());
+                templateEmissionContexts.Count == 0 ? null : templateEmissionContexts.Peek())
+            {
+                Element = element
+            };
 
             foreach (DirectiveNode node in parsed.Nodes)
             {
@@ -774,9 +780,11 @@ public sealed partial class UiMarkupGenerator
             string propertyName,
             string rawValue,
             PropertySpec spec,
-            MarkupObject source,
-            string? ownerVariable = null)
+            DirectiveExpressionLocation valueLocation,
+            string? ownerVariable = null,
+            MarkupElement? targetElement = null)
         {
+            MarkupObject source = valueLocation.Source;
             string value = rawValue.Trim();
             if (value.StartsWith("$", StringComparison.Ordinal))
             {
@@ -808,8 +816,31 @@ public sealed partial class UiMarkupGenerator
                 value = UnescapeMarkupDollar(value);
             }
 
-            MarkupAttribute synthetic = new(propertyName, value);
+            if (targetElement is not null)
+            {
+                ValidateStaticAnimationState(
+                    targetElement,
+                    propertyName,
+                    DirectiveValueLocation(valueLocation, rawValue),
+                    value);
+            }
+
+            // The synthetic attribute carries the span of the value, so an invalid literal is reported there.
+            MarkupAttribute synthetic = new(
+                propertyName,
+                value,
+                new Cerneala.Language.Text.TextSpan(source.Span.Start + Math.Max(0, valueLocation.Offset), Math.Max(0, valueLocation.Length)));
             return ParseLiteralValue(planElementName ?? "value", propertyName, synthetic, value, spec);
+        }
+
+        // The whole trimmed value of a directive assignment, quotes included; valueLocation marks where it starts.
+        private static DirectiveExpressionLocation DirectiveValueLocation(DirectiveExpressionLocation valueLocation, string rawValue)
+        {
+            int leadingWhitespace = rawValue.Length - rawValue.TrimStart().Length;
+            return new DirectiveExpressionLocation(
+                valueLocation.Source,
+                valueLocation.Offset + leadingWhitespace,
+                Math.Max(1, rawValue.Trim().Length));
         }
 
         private GeneratedExpression? ResolveDirectiveReferenceValue(
@@ -997,8 +1028,9 @@ public sealed partial class UiMarkupGenerator
                             assignment.PropertyName,
                             assignment.Value,
                             spec,
-                            assignment.Source,
-                            plan.OwnerVariable);
+                            assignment.ValueLocation,
+                            plan.OwnerVariable,
+                            plan.Element);
                         if (expression is null)
                         {
                             continue;

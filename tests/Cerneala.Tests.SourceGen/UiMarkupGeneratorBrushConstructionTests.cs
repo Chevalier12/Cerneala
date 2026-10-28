@@ -50,4 +50,188 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Equal(namedButton.Background.GetType(), inlineButton.Background!.GetType());
         Assert.NotSame(namedButton.Background, inlineButton.Background);
     }
+
+    [Theory]
+    [InlineData("<StackPanel><Button Background=\"255,0,0\" /></StackPanel>")]
+    [InlineData("<StackPanel><StackPanel.Resources><SolidColorBrush Name=\"P\" Color=\"#FF0000\" /></StackPanel.Resources></StackPanel>")]
+    [InlineData("<StackPanel><StackPanel.Resources><SolidColorBrush Name=\"P\" Color=\"255,0,0\" /></StackPanel.Resources></StackPanel>")]
+    [InlineData("<StackPanel><StackPanel.Resources><SolidColorBrush Name=\"P\" Color=\"1, 2, 3, 128\" /></StackPanel.Resources></StackPanel>")]
+    [InlineData("<StackPanel><StackPanel.Resources><LinearGradientBrush Name=\"P\" StartPoint=\"0,0\" EndPoint=\"1,1\"><GradientStop Offset=\"0\" Color=\"255,0,0\" /><GradientStop Offset=\"1\" Color=\"0, 0, 255, 128\" /></LinearGradientBrush></StackPanel.Resources></StackPanel>")]
+    [InlineData("<StackPanel><StackPanel.Resources><DrawingBrush Name=\"P\" ContentBounds=\"0,0,8,8\"><FillRectangle Rect=\"0,0,8,8\" Color=\"0,128,0\" /></DrawingBrush></StackPanel.Resources></StackPanel>")]
+    public void ColorSyntaxIsTheSameInPlainAttributesAndBrushResources(string markup)
+    {
+        GeneratorRunResult result = RunGenerator("BrushColorSyntax.crn", markup, out _);
+
+        Assert.True(
+            result.Diagnostics.Length == 0,
+            "Diagnostics: " + string.Join(" | ", result.Diagnostics));
+    }
+
+    [Fact]
+    public void ByteChannelColorInSolidColorBrushResourceBuildsTheSameColorAsAPlainAttribute()
+    {
+        const string markup = """
+            <StackPanel>
+              <StackPanel.Resources>
+                <SolidColorBrush Name="Rgb" Color="255,0,0" />
+                <SolidColorBrush Name="Rgba" Color="1, 2, 3, 128" />
+              </StackPanel.Resources>
+              <Button Background="$Rgb" />
+              <Button Background="$Rgba" />
+              <Button Background="1, 2, 3, 128" />
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("BrushColorValues.crn", markup, out Compilation compilation);
+        Assert.Empty(result.Diagnostics);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+        StackPanel panel = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.BrushColorValuesFactory"));
+        Assert.Equal(new Cerneala.Drawing.Color(255, 0, 0), Assert.IsType<Button>(panel.VisualChildren[0]).Background!.SolidColor);
+        Assert.Equal(new Cerneala.Drawing.Color(1, 2, 3, 128), Assert.IsType<Button>(panel.VisualChildren[1]).Background!.SolidColor);
+        Assert.Equal(new Cerneala.Drawing.Color(1, 2, 3, 128), Assert.IsType<Button>(panel.VisualChildren[2]).Background!.SolidColor);
+    }
+
+    [Theory]
+    [InlineData("256,0,0")]
+    [InlineData("1,2")]
+    [InlineData("1,2,3,4,5")]
+    [InlineData("-1,0,0")]
+    [InlineData("#GG0000")]
+    public void InvalidColorInSolidColorBrushResourceReportsInvalidPropertyValue(string color)
+    {
+        string markup = "<StackPanel><StackPanel.Resources><SolidColorBrush Name=\"P\" Color=\"" + color + "\" /></StackPanel.Resources></StackPanel>";
+
+        GeneratorRunResult result = RunGenerator("InvalidBrushColor.crn", markup, out _);
+
+        AssertDiagnostic(result, "CERNEALAUI004", "InvalidBrushColor.crn");
+    }
+
+    [Theory]
+    [InlineData("<ImageBrush Name=\"P\" Source=\"a.png\" Viewport=\"0,0,10,10\" />", false)]
+    [InlineData("<ImageBrush Name=\"P\" Source=\"a.png\" Viewport=\"0,0,0,0\" />", true)]
+    [InlineData("<ImageBrush Name=\"P\" Source=\"a.png\" Viewbox=\"0,0,10,-1\" />", true)]
+    [InlineData("<DrawingBrush Name=\"P\" ContentBounds=\"0,0,10,10\"><FillRectangle Rect=\"0,0,10,10\" Color=\"White\" /></DrawingBrush>", false)]
+    [InlineData("<DrawingBrush Name=\"P\" ContentBounds=\"0,0,0,10\"><FillRectangle Rect=\"0,0,10,10\" Color=\"White\" /></DrawingBrush>", true)]
+    public void NonPositiveTileBrushRectanglesAreReportedAtBuildTime(string brush, bool invalid)
+    {
+        string markup = "<StackPanel><StackPanel.Resources>" + brush + "</StackPanel.Resources></StackPanel>";
+
+        GeneratorRunResult result = RunGenerator("BrushTileRect.crn", markup, out _);
+
+        bool reported = result.Diagnostics.Any(diagnostic => diagnostic.Id == "CERNEALAUI004" && diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.True(
+            reported == invalid,
+            "CERNEALAUI004 reported: " + reported + ". Diagnostics: " + string.Join(" | ", result.Diagnostics));
+    }
+
+    // #801: RadiusX and RadiusY have no valid default (RadialGradientBrush rejects 0), so a missing radius is a build
+    // error that names it, in the resource form and in the property-element form, and no code is generated.
+    [Theory]
+    [InlineData("Center=\"0.5,0.5\"", "RadiusX")]
+    [InlineData("Center=\"0.5,0.5\" RadiusX=\"0.5\"", "RadiusY")]
+    [InlineData("Center=\"0.5,0.5\" RadiusY=\"0.5\"", "RadiusX")]
+    [InlineData("Center=\"0.5,0.5\" RadiusX=\"0\" RadiusY=\"0.5\"", "RadiusX")]
+    [InlineData("Center=\"0.5,0.5\" RadiusX=\"0.5\" RadiusY=\"-1\"", "RadiusY")]
+    public void RadialGradientBrushWithoutAPositiveRadiusReportsAnError(string attributes, string missing)
+    {
+        string markup = $"""
+            <StackPanel><StackPanel.Resources><RadialGradientBrush Name="P" {attributes}><GradientStop Offset="0" Color="Blue" /></RadialGradientBrush></StackPanel.Resources><Button Background="$P" /></StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("RadialMissingRadius.crn", markup, out _);
+
+        Assert.True(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Severity == DiagnosticSeverity.Error &&
+                diagnostic.GetMessage().Contains(missing, StringComparison.Ordinal)),
+            "No error mentioning " + missing + ". Diagnostics: " + string.Join(" | ", result.Diagnostics));
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
+    public void RadialGradientBrushPropertyElementWithoutARadiusReportsAnError()
+    {
+        const string markup = """
+            <Button><Button.Background><RadialGradientBrush Center="0.5,0.5" RadiusX="0.5"><GradientStop Offset="0" Color="Blue" /></RadialGradientBrush></Button.Background></Button>
+            """;
+
+        GeneratorRunResult result = RunGenerator("RadialPropertyElementMissingRadius.crn", markup, out _);
+
+        Assert.True(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Severity == DiagnosticSeverity.Error &&
+                diagnostic.GetMessage().Contains("RadiusY", StringComparison.Ordinal)),
+            "No error mentioning RadiusY. Diagnostics: " + string.Join(" | ", result.Diagnostics));
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
+    public void RadialGradientBrushWithBothRadiiReportsNoDiagnostic()
+    {
+        const string markup = """
+            <StackPanel><StackPanel.Resources><RadialGradientBrush Name="P" Center="0.5,0.5" RadiusX="0.5" RadiusY="0.5"><GradientStop Offset="0" Color="Blue" /></RadialGradientBrush></StackPanel.Resources><Button Background="$P" /></StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("RadialBothRadii.crn", markup, out _);
+
+        Assert.Empty(result.Diagnostics);
+    }
+
+    // Issue #881: RR, GG and BB are two hex digits each, so white space inside a digit pair is invalid.
+    [Theory]
+    [InlineData("Background", "#FF0000", false)]
+    [InlineData("Background", "#F F000", true)]
+    [InlineData("Foreground", "#FF00F ", true)]
+    [InlineData("Background", "#80FF0000", false)]
+    [InlineData("Background", "#80 F0000", true)]
+    public void HexColorsWithWhitespaceInsideADigitPairAreReported(string property, string color, bool invalid)
+    {
+        GeneratorRunResult result = RunGenerator("HexColorWhitespace.crn", "<Button " + property + "=\"" + color + "\" />", out _);
+
+        bool reported = result.Diagnostics.Any(diagnostic => diagnostic.Id == "CERNEALAUI004" && diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.True(
+            reported == invalid,
+            "CERNEALAUI004 reported: " + reported + ". Diagnostics: " + string.Join(" | ", result.Diagnostics));
+    }
+
+    // #1218: a rectangle that the DrawRect constructor rejects (negative size, or a value, right or bottom edge
+    // beyond ±2,000,000,000) is an invalid markup value, not a factory that throws when the view is created.
+    [Theory]
+    [InlineData("<DrawingBrush Name=\"P\" ContentBounds=\"0,0,10,10\"><FillRectangle Rect=\"0,0,-5,10\" Color=\"White\" /></DrawingBrush>", "Rect")]
+    [InlineData("<DrawingBrush Name=\"P\" ContentBounds=\"0,0,10,10\"><FillEllipse Rect=\"0,0,10,-1\" Color=\"White\" /></DrawingBrush>", "Rect")]
+    [InlineData("<DrawingBrush Name=\"P\" ContentBounds=\"0,0,10,10\"><FillRectangle Rect=\"1.5e9,0,1e9,10\" Color=\"White\" /></DrawingBrush>", "Rect")]
+    [InlineData("<DrawingBrush Name=\"P\" ContentBounds=\"-3e9,0,10,10\"><FillRectangle Rect=\"0,0,5,10\" Color=\"White\" /></DrawingBrush>", "ContentBounds")]
+    [InlineData("<ImageBrush Name=\"P\" Source=\"a.png\" Viewport=\"0,0,3e9,10\" />", "Viewport")]
+    [InlineData("<ImageBrush Name=\"P\" Source=\"a.png\" Viewbox=\"0,1.5e9,10,1e9\" />", "Viewbox")]
+    public void BrushRectanglesOutsideTheDrawRectRangeAreReportedAtBuildTime(string brush, string attributeName)
+    {
+        GeneratorRunResult result = RunGenerator("BrushRectRange.crn", BrushRectMarkup(brush), out _);
+
+        Assert.Contains(result.Diagnostics, diagnostic =>
+            diagnostic.Id == "CERNEALAUI004" && diagnostic.Severity == DiagnosticSeverity.Error &&
+            diagnostic.GetMessage().Contains("." + attributeName + "'", StringComparison.Ordinal));
+    }
+
+    [Theory]
+    [InlineData("<DrawingBrush Name=\"P\" ContentBounds=\"0,0,10,10\"><FillRectangle Rect=\"0,0,0,10\" Color=\"White\" /></DrawingBrush>")]
+    [InlineData("<DrawingBrush Name=\"P\" ContentBounds=\"-5,-5,10,10\"><FillEllipse Rect=\"1e9,0,1e9,10\" Color=\"White\" /></DrawingBrush>")]
+    [InlineData("<ImageBrush Name=\"P\" Source=\"a.png\" Viewport=\"0,0,10,10\" Viewbox=\"-2e9,0,2e9,10\" />")]
+    public void BrushRectanglesInsideTheDrawRectRangeKeepBuilding(string brush)
+    {
+        GeneratorRunResult result = RunGenerator("BrushRectRange.crn", BrushRectMarkup(brush), out Compilation compilation);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+        StackPanel panel = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.BrushRectRangeFactory"));
+        Assert.NotNull(Assert.IsType<Border>(Assert.Single(panel.VisualChildren)).Background);
+    }
+
+    private static string BrushRectMarkup(string brush) =>
+        "<StackPanel><StackPanel.Resources>" + brush + "</StackPanel.Resources>" +
+        "<Border Width=\"20\" Height=\"20\" Background=\"$P\" /></StackPanel>";
 }

@@ -11,7 +11,7 @@ internal sealed class CernealaNavigationService
 {
     public CernealaHoverInfo? GetHover(CernealaSemanticModel model, int offset)
     {
-        CernealaSemanticSymbol? symbol = model.GetSymbolAt(offset);
+        CernealaSemanticSymbol? symbol = GetSymbolAt(model, offset, out _);
         LanguageDiagnostic? diagnostic = model.Diagnostics
             .Where(candidate => candidate.Span.Contains(offset) ||
                 candidate.Span.Length == 0 && candidate.Span.Start == offset)
@@ -43,7 +43,7 @@ internal sealed class CernealaNavigationService
 
     public IReadOnlyList<CernealaLocation> GetDefinitions(CernealaSemanticModel model, int offset)
     {
-        CernealaSemanticSymbol? symbol = model.GetSymbolAt(offset);
+        CernealaSemanticSymbol? symbol = GetSymbolAt(model, offset, out _);
         if (symbol is null)
         {
             return Array.Empty<CernealaLocation>();
@@ -80,7 +80,7 @@ internal sealed class CernealaNavigationService
         bool includeDeclaration,
         CancellationToken cancellationToken = default)
     {
-        CernealaSemanticSymbol? symbol = model.GetSymbolAt(offset);
+        CernealaSemanticSymbol? symbol = GetSymbolAt(model, offset, out _);
         SymbolIdentity? identity = symbol is null ? null : CreateIdentity(model, symbol);
         if (identity is null)
         {
@@ -94,6 +94,7 @@ internal sealed class CernealaNavigationService
             foreach (CernealaSemanticSymbol candidate in candidateModel.Symbols)
             {
                 if (!Matches(candidateModel, candidate, identity) ||
+                    IsAspectAttributeName(candidateModel, candidate) ||
                     !TryGetIdentitySpan(candidateModel, candidate, identity, out TextSpan span))
                 {
                     continue;
@@ -173,9 +174,9 @@ internal sealed class CernealaNavigationService
         IReadOnlyList<CernealaSemanticModel> workspaceModels,
         int offset)
     {
-        CernealaSemanticSymbol? symbol = model.GetSymbolAt(offset);
+        CernealaSemanticSymbol? symbol = GetSymbolAt(model, offset, out int closingShift);
         SymbolIdentity? identity = symbol is null ? null : CreateIdentity(model, symbol);
-        if (symbol is null || identity is null || !IsRenameable(identity, workspaceModels))
+        if (symbol is null || identity is null || !IsRenameable(symbol, identity, workspaceModels))
         {
             return new CernealaPrepareRenameResult(null, null, "The symbol cannot be renamed safely.");
         }
@@ -185,7 +186,7 @@ internal sealed class CernealaNavigationService
             return new CernealaPrepareRenameResult(null, null, "The markup token does not map exactly to the resolved symbol.");
         }
 
-        return new CernealaPrepareRenameResult(span, identity.OldName, null);
+        return new CernealaPrepareRenameResult(new TextSpan(span.Start + closingShift, span.Length), identity.OldName, null);
     }
 
     public CernealaRenameResult Rename(
@@ -195,9 +196,9 @@ internal sealed class CernealaNavigationService
         string newName,
         CancellationToken cancellationToken = default)
     {
-        CernealaSemanticSymbol? symbol = model.GetSymbolAt(offset);
+        CernealaSemanticSymbol? symbol = GetSymbolAt(model, offset, out _);
         SymbolIdentity? identity = symbol is null ? null : CreateIdentity(model, symbol);
-        if (symbol is null || identity is null || !IsRenameable(identity, workspaceModels))
+        if (symbol is null || identity is null || !IsRenameable(symbol, identity, workspaceModels))
         {
             return Failure("The symbol cannot be renamed safely.");
         }
@@ -281,6 +282,19 @@ internal sealed class CernealaNavigationService
     private static CernealaRenameResult Failure(string error) =>
         new(Array.Empty<CernealaTextEdit>(), error);
 
+    // The semantic model maps the names of an element to its opening tag only. The closing tag </t:Card> or
+    // </t:Card.Title> names the same symbols, so a position in it is resolved at the same position of the opening tag;
+    // closingShift is the distance from that opening-tag position back to the queried one (0 outside a closing tag).
+    private static CernealaSemanticSymbol? GetSymbolAt(CernealaSemanticModel model, int offset, out int closingShift)
+    {
+        ElementSyntax? element = model.Document.Syntax.DescendantElements().FirstOrDefault(candidate =>
+            !candidate.IsSelfClosing && !candidate.CloseNameToken.IsMissing &&
+            candidate.CloseNameToken.Span.Contains(offset) &&
+            string.Equals(candidate.CloseNameToken.Text, candidate.NameToken.Text, StringComparison.Ordinal));
+        closingShift = element is null ? 0 : element.CloseNameToken.Span.Start - element.NameToken.Span.Start;
+        return model.GetSymbolAt(offset - closingShift);
+    }
+
     private static SymbolIdentity? CreateIdentity(CernealaSemanticModel model, CernealaSemanticSymbol symbol)
     {
         if (symbol.MemberSymbol is ILanguageMemberSymbol member)
@@ -327,6 +341,13 @@ internal sealed class CernealaNavigationService
         CernealaSemanticSymbol symbol,
         SymbolIdentity identity)
     {
+        // Implicit content sets the owner's content property without naming it: the child's tag names the child's
+        // type, so it is no occurrence of the property for references or rename.
+        if (symbol.Kind == CernealaSemanticSymbolKind.ContentOwner)
+        {
+            return false;
+        }
+
         if (identity.Kind == IdentityKind.Local)
         {
             return TryGetLocalDefinition(model, symbol, out CernealaLocation? definition) &&
@@ -382,6 +403,13 @@ internal sealed class CernealaNavigationService
             TryGetLocalDefinition(model, symbol, out CernealaLocation? definition) &&
             !SameLocation(definition!, new CernealaLocation(model.Document.Path, symbol.Span));
 
+    // The application site of Aspect="$Name" is the attribute name Aspect. The $Name reference already lists that use,
+    // and the attribute name is never an occurrence of the resource name, also when the resource is named "Aspect".
+    private static bool IsAspectAttributeName(CernealaSemanticModel model, CernealaSemanticSymbol symbol) =>
+        symbol.Kind == CernealaSemanticSymbolKind.AspectApplication &&
+        model.Document.Syntax.DescendantElements().Any(element =>
+            element.Attributes.Any(attribute => attribute.NameToken.Span.Equals(symbol.Span)));
+
     private static bool IsLocalKind(CernealaSemanticSymbolKind kind) => kind is
         CernealaSemanticSymbolKind.Name or CernealaSemanticSymbolKind.TemplatePart or
         CernealaSemanticSymbolKind.Resource or CernealaSemanticSymbolKind.ResourceReference or
@@ -396,13 +424,21 @@ internal sealed class CernealaNavigationService
         CernealaSemanticSymbolKind.RootType or CernealaSemanticSymbolKind.Element or
         CernealaSemanticSymbolKind.TypeReference;
 
+    // A rename changes the declaration together with every reference. A type or member declared only in metadata (a
+    // framework type such as Button) or only in generated code has no authored declaration to change, so it cannot be
+    // renamed.
     private static bool IsRenameable(
+        CernealaSemanticSymbol symbol,
         SymbolIdentity identity,
         IReadOnlyList<CernealaSemanticModel> workspaceModels)
     {
         if (identity.Kind is IdentityKind.Type or IdentityKind.Member)
         {
-            return true;
+            IReadOnlyList<LanguageSourceLocation> declarations = identity.Kind == IdentityKind.Member
+                ? symbol.MemberSymbol!.Locations
+                : symbol.TypeSymbol!.Locations;
+            return declarations.Any(location =>
+                !string.IsNullOrWhiteSpace(location.Path) && !IsGeneratedPath(location.Path));
         }
 
         return identity.Definition is not null && workspaceModels.Any(model => model.Symbols.Any(symbol =>
@@ -470,8 +506,9 @@ internal sealed class CernealaNavigationService
         return false;
     }
 
-    // The semantic model maps a type or member named by an element to the opening tag's name only. The closing tag
-    // </t:Card> or </t:Card.Title> names the same symbol, so it is the same occurrence for references and rename.
+    // The semantic model maps a type or member named by an element to the opening tag's name only: the whole name, or
+    // the owner prefix t:Card of <t:Card.Title>. The closing tag </t:Card> or </t:Card.Title> names the same symbol at
+    // the same position, so it is the same occurrence for references and rename.
     private static bool TryGetClosingTagSpan(
         CernealaSemanticModel model,
         CernealaSemanticSymbol symbol,
@@ -482,11 +519,11 @@ internal sealed class CernealaNavigationService
         if (identity.Kind is IdentityKind.Type or IdentityKind.Member)
         {
             ElementSyntax? element = model.Document.Syntax.DescendantElements().FirstOrDefault(candidate =>
-                candidate.NameToken.Span.Equals(symbol.Span));
+                candidate.NameToken.Span.Start == symbol.Span.Start && symbol.Span.End <= candidate.NameToken.Span.End);
             if (element is not null && !element.IsSelfClosing && !element.CloseNameToken.IsMissing &&
                 string.Equals(element.CloseNameToken.Text, element.NameToken.Text, StringComparison.Ordinal))
             {
-                closing = new TextSpan(element.CloseNameToken.Span.Start + span.Start - symbol.Span.Start, span.Length);
+                closing = new TextSpan(element.CloseNameToken.Span.Start + span.Start - element.NameToken.Span.Start, span.Length);
                 return true;
             }
         }

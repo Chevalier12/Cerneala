@@ -11,6 +11,7 @@ public sealed partial class UiMarkupGenerator
 {
     private sealed partial class GenerationScope
     {
+        private bool probingLiteral;
 
         private sealed class GeneratedExpression
         {
@@ -78,9 +79,10 @@ public sealed partial class UiMarkupGenerator
                 return null;
             }
 
+            // AllowHexSpecifier alone: NumberStyles.HexNumber also accepts white space around the digits ("F ").
             static bool TryByte(string text, out byte parsed)
             {
-                return byte.TryParse(text, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out parsed);
+                return byte.TryParse(text, NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out parsed);
             }
 
             if (value.Length == 7 &&
@@ -461,7 +463,13 @@ public sealed partial class UiMarkupGenerator
 
         private string? Color(string elementName, string propertyName, MarkupAttribute attribute)
         {
-            string value = attribute.Value;
+            return ColorExpression(attribute.Value) ?? Invalid(attribute, elementName, propertyName, attribute.Value);
+        }
+
+        // The C# expression of a color literal: a named color, a hexadecimal color, or byte components in R, G, B or
+        // R, G, B, A form. Null when the value is none of these. Plain color attributes and brush resources share it.
+        private static string? ColorExpression(string value)
+        {
             if (NamedColorNames.TryGetValue(value, out string? namedColor))
             {
                 return "global::Cerneala.Drawing.Color." + namedColor;
@@ -483,7 +491,7 @@ public sealed partial class UiMarkupGenerator
                 return "new global::Cerneala.Drawing.Color(" + r + ", " + g + ", " + b + alpha + ")";
             }
 
-            return Invalid(attribute, elementName, propertyName, value);
+            return null;
         }
 
         private string? Brush(string elementName, string propertyName, MarkupAttribute attribute)
@@ -492,9 +500,28 @@ public sealed partial class UiMarkupGenerator
             return color is null ? null : "new global::Cerneala.UI.Media.SolidColorBrush(" + color + ")";
         }
 
+        // Whether the attribute form accepts the literal for a value kind that ParseLiteralValue supports, without
+        // reporting its invalid-value diagnostic; the caller reports its own diagnostic.
+        private bool IsValidLiteral(string value, PropertySpec spec)
+        {
+            probingLiteral = true;
+            try
+            {
+                return ParseLiteralValue("value", spec.Name, new MarkupAttribute(spec.Name, value), value, spec) is not null;
+            }
+            finally
+            {
+                probingLiteral = false;
+            }
+        }
+
         private string? Invalid(MarkupAttribute attribute, string elementName, string propertyName, string value)
         {
-            Report(InvalidPropertyValue, attribute, elementName, propertyName, value);
+            if (!probingLiteral)
+            {
+                Report(InvalidPropertyValue, attribute, elementName, propertyName, value);
+            }
+
             return null;
         }
     }

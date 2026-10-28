@@ -80,67 +80,8 @@ public sealed partial class UiMarkupGenerator
         private INamedTypeSymbol? ResolveMarkupTypeReference(MarkupAttribute attribute) =>
             ResolveMarkupTypeReference(attribute.Value, attribute.Parent);
 
-        private INamedTypeSymbol? ResolveMarkupTypeReference(string rawReference, MarkupElement? context)
-        {
-            string reference = rawReference.Trim();
-            if (reference.StartsWith("global::", StringComparison.Ordinal))
-            {
-                reference = reference.Substring("global::".Length);
-            }
-
-            int prefixSeparator = reference.IndexOf(':');
-            if (prefixSeparator < 0)
-            {
-                return compilation.GetTypeByMetadataName(reference);
-            }
-
-            if (prefixSeparator == 0 || prefixSeparator == reference.Length - 1)
-            {
-                return null;
-            }
-
-            string prefix = reference.Substring(0, prefixSeparator);
-            string localName = reference.Substring(prefixSeparator + 1);
-            MarkupNamespace? xmlNamespace = context?.GetNamespaceOfPrefix(prefix);
-            const string clrNamespacePrefix = "clr-namespace:";
-            if (xmlNamespace is null ||
-                !xmlNamespace.NamespaceName.StartsWith(clrNamespacePrefix, StringComparison.Ordinal))
-            {
-                return null;
-            }
-
-            string declaration = xmlNamespace.NamespaceName.Substring(clrNamespacePrefix.Length);
-            string[] segments = declaration.Split(';');
-            string namespaceName = segments[0].Trim();
-            string? assemblyName = null;
-            for (int index = 1; index < segments.Length; index++)
-            {
-                string segment = segments[index].Trim();
-                const string assemblyPrefix = "assembly=";
-                if (segment.StartsWith(assemblyPrefix, StringComparison.Ordinal) && assemblyName is null)
-                {
-                    assemblyName = segment.Substring(assemblyPrefix.Length).Trim();
-                    if (assemblyName.Length == 0)
-                    {
-                        return null;
-                    }
-                }
-                else
-                {
-                    return null;
-                }
-            }
-
-            string metadataName = namespaceName.Length == 0
-                ? localName
-                : namespaceName + "." + localName;
-            INamedTypeSymbol? type = compilation.GetTypeByMetadataName(metadataName);
-            return type is not null &&
-                (assemblyName is null ||
-                    string.Equals(type.ContainingAssembly.Name, assemblyName, StringComparison.Ordinal))
-                ? type
-                : null;
-        }
+        private INamedTypeSymbol? ResolveMarkupTypeReference(string rawReference, MarkupElement? context) =>
+            UiMarkupGenerator.ResolveMarkupTypeReference(compilation, rawReference, context);
 
         private string? ResolveElementType(MarkupElement element)
         {
@@ -182,12 +123,15 @@ public sealed partial class UiMarkupGenerator
         private INamedTypeSymbol? ResolveAspectTargetTypeSymbol(string targetName, MarkupElement? source = null)
         {
             string reference = targetName.Trim();
-            if (resolvedElementTypes.TryGetValue(reference, out INamedTypeSymbol? resolved))
+            // A prefixed name means the xmlns declaration in scope at the source, and an inner element can declare
+            // the prefix again (#1164), so the raw "prefix:Name" text is not a cache key: resolve it lexically.
+            bool prefixed = reference.Contains(':');
+            if (!prefixed && resolvedElementTypes.TryGetValue(reference, out INamedTypeSymbol? resolved))
             {
                 return resolved;
             }
 
-            INamedTypeSymbol? type = reference.Contains(':')
+            INamedTypeSymbol? type = prefixed
                 ? ResolveMarkupTypeReference(reference, source)
                 : ResolveBuiltInElementTypeSymbol(reference);
 
@@ -195,7 +139,11 @@ public sealed partial class UiMarkupGenerator
             if (type is not null && type.TypeKind == TypeKind.Class &&
                 uiElementType is not null && IsOrDerivesFrom(type, uiElementType))
             {
-                resolvedElementTypes[reference] = type;
+                if (!prefixed)
+                {
+                    resolvedElementTypes[reference] = type;
+                }
+
                 resolvedElementTypes[type.Name] = type;
                 return type;
             }

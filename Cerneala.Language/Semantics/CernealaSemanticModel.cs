@@ -28,7 +28,8 @@ internal sealed partial class CernealaSemanticModel : IDisposable
     private readonly AnalysisMode mode;
     private readonly List<CernealaSemanticSymbol> symbols = new();
     private readonly List<LanguageDiagnostic> diagnostics = new();
-    private readonly Dictionary<string, NamespaceAlias> aliases = new(StringComparer.Ordinal);
+    private static readonly Dictionary<string, NamespaceAlias> NoAliases = new(StringComparer.Ordinal);
+    private readonly Dictionary<ElementSyntax, Dictionary<string, NamespaceAlias>> aliasScopes = new();
     private readonly Dictionary<ElementSyntax, ElementSyntax?> parents = new();
     private readonly Dictionary<ElementSyntax, ILanguageTypeSymbol?> elementTypes = new();
     private readonly Dictionary<ElementSyntax, ILanguageTypeSymbol?> elementDataTypes = new();
@@ -116,7 +117,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         disposed = true;
         symbols.Clear();
         diagnostics.Clear();
-        aliases.Clear();
+        aliasScopes.Clear();
         parents.Clear();
         elementTypes.Clear();
         elementDataTypes.Clear();
@@ -159,7 +160,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         TextSyntax? topLevelText = document.Syntax.Children
             .OfType<TextSyntax>()
             .FirstOrDefault(text =>
-                text.Kind is not SyntaxKind.Comment &&
+                text.Kind is not (SyntaxKind.Comment or SyntaxKind.ProcessingInstruction) &&
                 !string.IsNullOrWhiteSpace(text.Token.Text));
         if (topLevelText is not null || roots.Length != 1)
         {
@@ -176,7 +177,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
 
         cancellationToken.ThrowIfCancellationRequested();
         root = roots[0];
-        ReadAliases(root, aliases);
+        ReadAliasScopes(root, NoAliases, aliasScopes);
         BuildScopeGraph(root, cancellationToken);
         rootType = GetElementType(root, isRoot: true);
         PrepareMotionPrismResources(cancellationToken);
@@ -222,7 +223,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         if (element.Kind == SyntaxKind.PropertyElement)
         {
             ILanguageMemberSymbol? property = BindPropertyElement(element, parentType);
-            ReportVisionPropertyElementShape(element, parentType);
+            ReportSlotPropertyElementShape(element, parentType);
             ILanguageTypeSymbol? propertyDataType = dataType;
             foreach (ElementSyntax child in element.Children.OfType<ElementSyntax>())
             {
@@ -250,6 +251,12 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         {
             AddDiagnostic("CERNEALAUI002", element.NameToken.Span, element.Name);
             return;
+        }
+
+        if (type.MetadataName == "Cerneala.UI.Media.RadialGradientBrush")
+        {
+            ValidateRequiredPositiveFloatAttribute(element, "RadiusX");
+            ValidateRequiredPositiveFloatAttribute(element, "RadiusY");
         }
 
         if (type.IsOrDerivesFrom("Cerneala.UI.Documents.Inline"))
@@ -328,6 +335,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         }
 
         BindElementEmbeddedSemantics(element, type, childDataType, cancellationToken);
+        BindElementIfConditions(element);
         ApplyDefaultAspect(element, type);
         foreach (ElementSyntax child in element.Children.OfType<ElementSyntax>())
         {
@@ -339,6 +347,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
     {
         int separator = element.Name.LastIndexOf('.');
         string propertyName = separator < 0 ? element.Name : element.Name.Substring(separator + 1);
+        BindPropertyElementOwner(element, separator);
         if (IsRemovedTileMapSourceMember(parentType, propertyName))
         {
             AddDiagnostic("CERNEALAUI003", element.NameToken.Span, parentType!.Name, propertyName);
@@ -362,8 +371,31 @@ internal sealed partial class CernealaSemanticModel : IDisposable
             element.NameToken.Span,
             member.ValueType ?? parentType,
             member,
-            isWritable: member.CanWrite));
+            isWritable: IsWritableFromGeneratedCode(member)));
         return member;
+    }
+
+    // In <t:Card.Title> the owner prefix t:Card names the type Card, as the typeName of WPF property element syntax
+    // does, so it is an occurrence of that type like the tag of an object element.
+    private void BindPropertyElementOwner(ElementSyntax element, int separator)
+    {
+        string ownerName = separator <= 0 ? string.Empty : element.Name.Substring(0, separator);
+        ILanguageTypeSymbol? owner = ownerName.Length == 0
+            ? null
+            : ownerName.IndexOf(':') > 0
+                ? ResolveTypeReference(ownerName, AliasesOf(element))
+                : ResolveMarkupType(ownerName);
+        if (owner is null)
+        {
+            return;
+        }
+
+        symbols.Add(new CernealaSemanticSymbol(
+            CernealaSemanticSymbolKind.Element,
+            ownerName,
+            owner.MetadataName,
+            new TextSpan(element.NameToken.Span.Start, separator),
+            owner));
     }
 
     private ILanguageTypeSymbol? BindAttribute(
@@ -444,11 +476,20 @@ internal sealed partial class CernealaSemanticModel : IDisposable
                 member.ValueType ?? type,
                 member,
                 value,
-                isWritable: member.CanWrite));
+                isWritable: IsWritableFromGeneratedCode(member)));
             return resultType;
         }
 
-        if (!TryConvertLiteral(value, member, out object? converted))
+        // A literal needs a setter the generated code can call; the build reports the property as unsupported otherwise.
+        // A brush and its content (GradientStop, FillRectangle) are built through constructor arguments instead
+        // (UiMarkupGenerator.BuildBrushExpression), so their get-only properties take literals.
+        if (!IsWritableFromGeneratedCode(member) && !IsInBrushConstruction(element))
+        {
+            AddDiagnostic("CERNEALAUI003", attribute.NameToken.Span, type.Name, name);
+            return null;
+        }
+
+        if (!TryConvertMarkupLiteral(value, member, out object? converted))
         {
             AddDiagnostic("CERNEALAUI004", attribute.ValueToken.Span, type.Name, name, value);
             return null;
@@ -462,8 +503,22 @@ internal sealed partial class CernealaSemanticModel : IDisposable
             member.ValueType ?? type,
             member,
             converted,
-            isWritable: member.CanWrite));
+            isWritable: IsWritableFromGeneratedCode(member)));
         return null;
+    }
+
+    private bool IsInBrushConstruction(ElementSyntax element)
+    {
+        for (ElementSyntax? current = element; current is not null; current = parents.TryGetValue(current, out ElementSyntax? parent) ? parent : null)
+        {
+            if (LocalElementName(current.Name) is "SolidColorBrush" or "LinearGradientBrush" or "RadialGradientBrush" or
+                "ImageBrush" or "DrawingBrush")
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void BindAttachedAttribute(
@@ -512,7 +567,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
             return;
         }
 
-        if (!TryConvertLiteral(value, member, out object? converted) ||
+        if (!TryConvertMarkupLiteral(value, member, out object? converted) ||
             converted is int placement && !IsValidGridPlacement(member.DeclaringTypeMetadataName, member.Name, placement))
         {
             AddDiagnostic("CERNEALAUI004", attribute.ValueToken.Span, ownerName, propertyName, value);
@@ -545,6 +600,10 @@ internal sealed partial class CernealaSemanticModel : IDisposable
     // The editor must accept exactly the members the build resolver lets generated code call.
     private bool IsCallableFromGeneratedCode(ILanguageMemberSymbol member) =>
         compilation.IsAccessibleFromGeneratedCode(member, markupPairType);
+
+    // The editor must report exactly the assignments the build resolver rejects as read-only or inaccessible.
+    private bool IsWritableFromGeneratedCode(ILanguageMemberSymbol member) =>
+        compilation.IsWritableFromGeneratedCode(member, markupPairType);
 
     // True when the owner declares a public static XProperty field of type UiProperty<T>.
     private static bool HasAttachedUiProperty(ILanguageTypeSymbol owner, string propertyName) =>
@@ -627,7 +686,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         {
             string prefix = element.Name.Substring(0, separator);
             string localName = element.Name.Substring(separator + 1);
-            if (aliases.TryGetValue(prefix, out NamespaceAlias? alias))
+            if (AliasesOf(element).TryGetValue(prefix, out NamespaceAlias? alias))
             {
                 ILanguageTypeSymbol? aliased = compilation.FindType(alias.Namespace + "." + localName);
                 return aliased is not null &&
@@ -746,11 +805,12 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         return null;
     }
 
-    private ILanguageTypeSymbol? ResolveTypeReference(AttributeSyntax attribute) =>
-        ResolveTypeReference(Unquote(attribute.ValueToken.Text), aliases);
+    // A prefixed reference in an attribute uses the xmlns declarations in scope at the element that owns it.
+    private ILanguageTypeSymbol? ResolveTypeReference(ElementSyntax element, AttributeSyntax attribute) =>
+        ResolveTypeReference(Unquote(attribute.ValueToken.Text), AliasesOf(element));
 
-    private ILanguageTypeSymbol? ResolveTargetTypeReference(AttributeSyntax attribute) =>
-        ResolveTargetTypeReference(Unquote(attribute.ValueToken.Text), aliases);
+    private ILanguageTypeSymbol? ResolveTargetTypeReference(ElementSyntax element, AttributeSyntax attribute) =>
+        ResolveTargetTypeReference(Unquote(attribute.ValueToken.Text), AliasesOf(element));
 
     private ILanguageTypeSymbol? ResolveTargetTypeReference(
         string reference,
@@ -818,7 +878,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
             return inherited;
         }
 
-        ILanguageTypeSymbol? type = ResolveTypeReference(attribute);
+        ILanguageTypeSymbol? type = ResolveTypeReference(element, attribute);
         TextSpan span = AttributeContentSpan(attribute);
         if (type is null)
         {
@@ -866,9 +926,20 @@ internal sealed partial class CernealaSemanticModel : IDisposable
             : null;
     }
 
-    private static void ReadAliases(ElementSyntax root, IDictionary<string, NamespaceAlias> destination)
+    private Dictionary<string, NamespaceAlias> AliasesOf(ElementSyntax element) =>
+        aliasScopes.TryGetValue(element, out Dictionary<string, NamespaceAlias>? scope) ? scope : NoAliases;
+
+    // xmlns:prefix declarations are lexically scoped (XML Namespaces, as in XAML): an element sees its own
+    // declarations and those of its ancestors, and an inner declaration of a prefix replaces the outer one for its
+    // subtree. The build resolves prefixes the same way (MarkupElement.GetNamespaceOfPrefix). Elements that
+    // declare nothing share their parent's table.
+    private static void ReadAliasScopes(
+        ElementSyntax element,
+        Dictionary<string, NamespaceAlias> inherited,
+        IDictionary<ElementSyntax, Dictionary<string, NamespaceAlias>> destination)
     {
-        foreach (AttributeSyntax attribute in root.Attributes)
+        Dictionary<string, NamespaceAlias> scope = inherited;
+        foreach (AttributeSyntax attribute in element.Attributes)
         {
             string name = attribute.NameToken.Text;
             if (!name.StartsWith("xmlns:", StringComparison.Ordinal))
@@ -876,9 +947,17 @@ internal sealed partial class CernealaSemanticModel : IDisposable
                 continue;
             }
 
+            if (ReferenceEquals(scope, inherited))
+            {
+                scope = new Dictionary<string, NamespaceAlias>(inherited, StringComparer.Ordinal);
+            }
+
+            // A declaration that is not a clr-namespace still hides an outer declaration of the same prefix.
+            string prefix = name.Substring("xmlns:".Length);
             string value = Unquote(attribute.ValueToken.Text);
             if (!value.StartsWith("clr-namespace:", StringComparison.Ordinal))
             {
+                scope.Remove(prefix);
                 continue;
             }
 
@@ -887,7 +966,13 @@ internal sealed partial class CernealaSemanticModel : IDisposable
             string assembly = parts.Skip(1)
                 .FirstOrDefault(part => part.StartsWith("assembly=", StringComparison.Ordinal))?
                 .Substring("assembly=".Length) ?? string.Empty;
-            destination[name.Substring("xmlns:".Length)] = new NamespaceAlias(parts[0], assembly);
+            scope[prefix] = new NamespaceAlias(parts[0], assembly);
+        }
+
+        destination[element] = scope;
+        foreach (ElementSyntax child in element.Children.OfType<ElementSyntax>())
+        {
+            ReadAliasScopes(child, scope, destination);
         }
     }
 
@@ -948,6 +1033,12 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         converted = value;
         return true;
     }
+
+    // An attribute, attached-property or Aspect literal: the build parses it with ParseLiteralValue, which also checks
+    // the value types and [MarkupValueConstraint] rules of MarkupLiteralRules. Motion values follow other build rules.
+    private static bool TryConvertMarkupLiteral(string value, ILanguageMemberSymbol member, out object? converted) =>
+        TryConvertLiteral(value, member, out converted) &&
+        MarkupLiteralRules.IsValid(value, member.ValueTypeMetadataName.TrimEnd('?'), member.ValueConstraint);
 
     private void AddDiagnostic(string id, TextSpan span, params object[] arguments) =>
         diagnostics.Add(new LanguageDiagnostic(CernealaDiagnosticCatalog.Get(id), span, mode, arguments));

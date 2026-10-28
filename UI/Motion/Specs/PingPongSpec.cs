@@ -78,14 +78,15 @@ public sealed class PingPongSpec<T> : MotionSpec<T>
 
             elapsed += delta;
             TimeSpan duration = spec.Duration;
-            if (cycles is int count && elapsed >= duration * count)
+            // Compare cycle indexes: duration * count can exceed TimeSpan.MaxValue.
+            long cycle = elapsed.Ticks / duration.Ticks;
+            if (cycles is int count && cycle >= count)
             {
                 current = count % 2 == 0 ? from : to;
                 isComplete = true;
                 return;
             }
 
-            long cycle = elapsed.Ticks / duration.Ticks;
             long cycleTicks = elapsed.Ticks % duration.Ticks;
             float progress = (float)((double)cycleTicks / duration.Ticks);
             if (cycle % 2 == 1)

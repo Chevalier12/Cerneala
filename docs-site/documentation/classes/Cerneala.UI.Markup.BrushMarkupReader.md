@@ -38,6 +38,8 @@ The reader supports `SolidColorBrush`, `LinearGradientBrush`, `RadialGradientBru
 ## Remarks on Errors
 Empty input reports `MARKUP030`. XML, value, and resolution failures report `MARKUP031` with a human-readable message.
 
+The enum attributes `Stretch`, `AlignmentX`, `AlignmentY`, and `TileMode` accept only a member name, with the exact case: `Stretch="Uniform"` and `TileMode="FlipXY"` parse. A number or a comma list names no member of these enums, so `<ImageBrush Source="accent.png" TileMode="42" />` and `<ImageBrush Source="accent.png" Stretch="Uniform,Fill" />` report `MARKUP031` with the message `'42' is not a valid ImageBrush.TileMode value.` (or `'Uniform,Fill' is not a valid ImageBrush.Stretch value.`), and `Value` is `null`.
+
 ## Applies to
 Runtime markup loading in `Cerneala`.
 

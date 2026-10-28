@@ -191,14 +191,16 @@ public sealed class BrushMarkupReader
         return value;
     }
 
+    // Only a member name is a value. Enum.TryParse alone also accepts integers ("42") and comma lists ("Uniform,Fill"),
+    // which name no member of these non-flags enums.
     private static TEnum OptionalEnum<TEnum>(XElement element, string name, TEnum defaultValue)
         where TEnum : struct, Enum
     {
         string? value = element.Attribute(name)?.Value;
         return value is null
             ? defaultValue
-            : Enum.TryParse(value, ignoreCase: false, out TEnum parsed)
-                ? parsed
+            : Enum.GetNames<TEnum>().Contains(value.Trim(), StringComparer.Ordinal)
+                ? Enum.Parse<TEnum>(value)
                 : throw new FormatException($"'{value}' is not a valid {element.Name.LocalName}.{name} value.");
     }
 

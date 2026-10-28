@@ -30,7 +30,7 @@ internal sealed partial class CernealaCompletionService
         }
 
         string elementName = element?.Name.Split(':').Last() ?? string.Empty;
-        string lexicalName = FindUnclosedElementName(site.Source, site.Offset)?.Split(':').Last() ?? string.Empty;
+        string lexicalName = FindUnclosedElementName(site)?.Split(':').Last() ?? string.Empty;
         if (elementName == "TimbreClip" || lexicalName == "TimbreClip")
         {
             AddTimbreClipBodyCompletions(result, site, model, elementName == "TimbreClip" ? element : null, statement);

@@ -16,6 +16,10 @@ public sealed class MotionGroupHandle
 
     public ValueTask Completion => new(completion.Task);
 
+    // Raised synchronously on the thread that completes or cancels the group, unlike the
+    // continuations of Completion, which run asynchronously.
+    internal event Action? Terminated;
+
     public void Cancel()
     {
         if (IsCompleted || IsCanceled)
@@ -31,6 +35,7 @@ public sealed class MotionGroupHandle
         finally
         {
             completion.TrySetCanceled();
+            RaiseTerminated();
         }
     }
 
@@ -43,5 +48,13 @@ public sealed class MotionGroupHandle
 
         IsCompleted = true;
         completion.TrySetResult();
+        RaiseTerminated();
+    }
+
+    private void RaiseTerminated()
+    {
+        Action? handlers = Terminated;
+        Terminated = null;
+        handlers?.Invoke();
     }
 }

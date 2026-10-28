@@ -62,7 +62,22 @@ public sealed class MarkupMotionExecution
     public static MarkupMotionExecution From(MotionGroupHandle handle)
     {
         ArgumentNullException.ThrowIfNull(handle);
-        MarkupMotionExecution execution = new(handle.Cancel);
+        Action? handler = null;
+        MarkupMotionExecution execution = new(
+            handle.Cancel,
+            () => handle.Terminated -= handler);
+        handler = () =>
+        {
+            if (handle.IsCanceled)
+            {
+                execution.SetCanceled(invokeCancel: false);
+            }
+            else
+            {
+                execution.SetCompleted();
+            }
+        };
+        handle.Terminated += handler;
         if (handle.IsCompleted)
         {
             execution.SetCompleted();
@@ -70,10 +85,6 @@ public sealed class MarkupMotionExecution
         else if (handle.IsCanceled)
         {
             execution.SetCanceled(invokeCancel: false);
-        }
-        else
-        {
-            _ = ObserveGroupAsync(execution, handle);
         }
 
         return execution;
@@ -203,19 +214,6 @@ public sealed class MarkupMotionExecution
     public void Cancel()
     {
         SetCanceled(invokeCancel: true);
-    }
-
-    private static async Task ObserveGroupAsync(MarkupMotionExecution execution, MotionGroupHandle handle)
-    {
-        try
-        {
-            await handle.Completion.ConfigureAwait(false);
-            execution.SetCompleted();
-        }
-        catch (OperationCanceledException)
-        {
-            execution.SetCanceled(invokeCancel: false);
-        }
     }
 
     private static void EvaluateParallel(

@@ -46,7 +46,7 @@ internal sealed partial class CernealaCompletionService
         cancellationToken.ThrowIfCancellationRequested();
         string source = document.Text.ToString();
         offset = Clamp(offset, 0, source.Length);
-        CompletionSite site = CompletionSite.Classify(source, offset);
+        CompletionSite site = CompletionSite.Classify(source, document.Syntax.Tokens, offset);
         List<CernealaCompletionItem> result = new();
         ElementSyntax? element = model?.FindCompletionElement(offset);
 
@@ -105,7 +105,7 @@ internal sealed partial class CernealaCompletionService
     {
         string source = document.Text.ToString();
         offset = Clamp(offset, 0, source.Length);
-        CompletionSite site = CompletionSite.Classify(source, offset);
+        CompletionSite site = CompletionSite.Classify(source, document.Syntax.Tokens, offset);
         CernealaSignatureHelp? attributeValueHelp = GetAttributeValueSignatureHelp(site, model);
         if (attributeValueHelp is not null)
         {
@@ -222,7 +222,7 @@ internal sealed partial class CernealaCompletionService
     {
         if (site.IsClosingTag)
         {
-            string? name = FindUnclosedElementName(site.Source, site.Offset);
+            string? name = FindUnclosedElementName(site);
             if (name is not null)
             {
                 Add(result, name, name, site.WordSpan, CernealaCompletionItemKind.Element, "closing element", "00");
@@ -330,7 +330,7 @@ internal sealed partial class CernealaCompletionService
                 continue;
             }
 
-            string? label = GetMarkupTypeName(type, model.GetCompletionAliases());
+            string? label = GetMarkupTypeName(type, model.GetCompletionAliases(current));
             if (label is null)
             {
                 continue;
@@ -363,6 +363,9 @@ internal sealed partial class CernealaCompletionService
         CancellationToken cancellationToken)
     {
         HashSet<string> used = ReadAttributeNames(site.Source, site.TagStart, site.WordSpan);
+        // When the name is edited before its existing value (`<Button Hei|="1" />`), an item inserts only the name and keeps that value.
+        bool valueFollows = IsAttributeValueAfter(site.Source, site.Offset);
+        string AttributeInsertion(string name, string value = "") => valueFollows ? name : name + "=\"" + value + "\"";
         ILanguageTypeSymbol? type = model?.GetCompletionElementType(element);
         if (type?.MetadataName == "Cerneala.UI.Controls.Tile")
         {
@@ -370,13 +373,13 @@ internal sealed partial class CernealaCompletionService
                 member.Kind == LanguageMemberKind.Property && member.Name is "Image" or "X" or "Y" or "Width" or "Height"))
             {
                 if (used.Contains(member.Name)) { continue; }
-                Add(result, member.Name, member.Name + "=\"\"", site.WordSpan, CernealaCompletionItemKind.Property,
+                Add(result, member.Name, AttributeInsertion(member.Name), site.WordSpan, CernealaCompletionItemKind.Property,
                     member.ValueTypeMetadataName, "00", type.MetadataName, member.Name);
             }
             foreach (string name in new[] { "ImageWidth", "ImageHeight" })
             {
                 if (used.Contains(name)) { continue; }
-                Add(result, name, name + "=\"\"", site.WordSpan, CernealaCompletionItemKind.Property,
+                Add(result, name, AttributeInsertion(name), site.WordSpan, CernealaCompletionItemKind.Property,
                     "Positive intrinsic image dimension; source-catalog metadata", "00");
             }
             return;
@@ -387,7 +390,7 @@ internal sealed partial class CernealaCompletionService
                 member.Kind == LanguageMemberKind.Property && CernealaSemanticModel.IsTileColliderAttribute(type, member.Name)))
             {
                 if (used.Contains(member.Name)) { continue; }
-                Add(result, member.Name, member.Name + "=\"\"", site.WordSpan, CernealaCompletionItemKind.Property,
+                Add(result, member.Name, AttributeInsertion(member.Name), site.WordSpan, CernealaCompletionItemKind.Property,
                     member.ValueTypeMetadataName, "00", type.MetadataName, member.Name);
             }
             return;
@@ -399,16 +402,16 @@ internal sealed partial class CernealaCompletionService
         {
             if (!used.Contains(name))
             {
-                Add(result, name, name + "=\"\"", site.WordSpan, CernealaCompletionItemKind.Property,
+                Add(result, name, AttributeInsertion(name), site.WordSpan, CernealaCompletionItemKind.Property,
                     "Cerneala attribute", "00");
             }
         }
 
         if (site.IsRootTag && !used.Contains("xmlns"))
         {
-            Add(result, "xmlns", "xmlns=\"clr-namespace:Cerneala.UI.Controls;assembly=Cerneala\"",
+            Add(result, "xmlns", AttributeInsertion("xmlns", "clr-namespace:Cerneala.UI.Controls;assembly=Cerneala"),
                 site.WordSpan, CernealaCompletionItemKind.Property, "default CLR namespace", "00");
-            Add(result, "xmlns:alias", "xmlns:alias=\"clr-namespace:\"", site.WordSpan,
+            Add(result, "xmlns:alias", AttributeInsertion("xmlns:alias", "clr-namespace:"), site.WordSpan,
                 CernealaCompletionItemKind.Property, "CLR namespace alias", "00");
         }
 
@@ -419,7 +422,7 @@ internal sealed partial class CernealaCompletionService
             {
                 if (!used.Contains(name))
                 {
-                    Add(result, name, name + "=\"\"", site.WordSpan,
+                    Add(result, name, AttributeInsertion(name), site.WordSpan,
                         CernealaCompletionItemKind.Property, "Cerneala attribute", "10");
                 }
             }
@@ -440,7 +443,7 @@ internal sealed partial class CernealaCompletionService
                 CernealaCompletionItemKind kind = member.Kind == LanguageMemberKind.Event
                     ? CernealaCompletionItemKind.Event
                     : CernealaCompletionItemKind.Property;
-                Add(result, member.Name, member.Name + "=\"\"", site.WordSpan, kind,
+                Add(result, member.Name, AttributeInsertion(member.Name), site.WordSpan, kind,
                     member.ValueTypeMetadataName, "10", type!.MetadataName, member.Name);
             }
 
@@ -459,12 +462,22 @@ internal sealed partial class CernealaCompletionService
                         continue;
                     }
 
-                    Add(result, label, label + "=\"\"", site.WordSpan,
+                    Add(result, label, AttributeInsertion(label), site.WordSpan,
                         CernealaCompletionItemKind.Property, setter.ValueTypeMetadataName, "20",
                         owner.MetadataName, setter.Name);
                 }
             }
         }
+    }
+
+    private static bool IsAttributeValueAfter(string source, int offset)
+    {
+        while (offset < source.Length && char.IsWhiteSpace(source[offset]))
+        {
+            offset++;
+        }
+
+        return offset < source.Length && source[offset] == '=';
     }
 
     private static void AddValueCompletions(
@@ -500,7 +513,7 @@ internal sealed partial class CernealaCompletionService
         }
         if (attributeName is "DataType" or "TargetType" || attributeName.StartsWith("xmlns", StringComparison.Ordinal))
         {
-            AddTypeAndNamespaceValues(result, site, model, attributeName, cancellationToken);
+            AddTypeAndNamespaceValues(result, site, model, element, attributeName, cancellationToken);
             return;
         }
 
@@ -558,6 +571,7 @@ internal sealed partial class CernealaCompletionService
         ICollection<CernealaCompletionItem> result,
         CompletionSite site,
         CernealaSemanticModel? model,
+        ElementSyntax? element,
         string attributeName,
         CancellationToken cancellationToken)
     {
@@ -575,6 +589,26 @@ internal sealed partial class CernealaCompletionService
         if (attributeName.StartsWith("xmlns", StringComparison.Ordinal))
         {
             string namespacePrefix = GetClrNamespacePrefix(site.ValuePrefix);
+            if (TryGetClrAssemblyPrefix(site.ValuePrefix, out string assemblyPrefix))
+            {
+                // After "assembly=" the user types an assembly name: offer the assemblies that declare the namespace
+                // and replace only the assembly part, so the value keeps a single clr-namespace spec.
+                TextSpan assemblySpan = new(site.Offset - assemblyPrefix.Length, assemblyPrefix.Length);
+                foreach (string assembly in model.CompletionCompilation.GetTypes()
+                    .Where(type => string.Equals(type.Namespace, namespacePrefix, StringComparison.Ordinal) &&
+                        type.AssemblyName.Length > 0 &&
+                        type.AssemblyName.StartsWith(assemblyPrefix, StringComparison.Ordinal))
+                    .Select(type => type.AssemblyName)
+                    .Distinct()
+                    .OrderBy(assembly => assembly, StringComparer.Ordinal))
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    Add(result, assembly, assembly, assemblySpan, CernealaCompletionItemKind.Value, "Assembly", "10");
+                }
+
+                return;
+            }
+
             foreach ((string ns, string assembly) in model.CompletionCompilation.GetTypes()
                 .Where(type => IsCompletableNamespace(type.Namespace, namespacePrefix))
                 .Select(type => (type.Namespace, type.AssemblyName))
@@ -599,7 +633,7 @@ internal sealed partial class CernealaCompletionService
                 continue;
             }
 
-            string? label = GetMarkupTypeName(type, model.GetCompletionAliases());
+            string? label = GetMarkupTypeName(type, model.GetCompletionAliases(element));
             if (label is null)
             {
                 continue;
@@ -621,6 +655,28 @@ internal sealed partial class CernealaCompletionService
         string specification = valuePrefix.Substring(marker.Length);
         int assemblySeparator = specification.IndexOf(';');
         return (assemblySeparator < 0 ? specification : specification.Substring(0, assemblySeparator)).Trim();
+    }
+
+    // The text typed after "assembly=" in a clr-namespace spec, for example "Comp" in "clr-namespace:Test;assembly=Comp".
+    private static bool TryGetClrAssemblyPrefix(string valuePrefix, out string assemblyPrefix)
+    {
+        const string marker = "clr-namespace:";
+        const string assemblyMarker = "assembly=";
+        assemblyPrefix = string.Empty;
+        int assemblySeparator = valuePrefix.IndexOf(';');
+        if (!valuePrefix.StartsWith(marker, StringComparison.Ordinal) || assemblySeparator < 0)
+        {
+            return false;
+        }
+
+        string assemblyPart = valuePrefix.Substring(assemblySeparator + 1).TrimStart();
+        if (!assemblyPart.StartsWith(assemblyMarker, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        assemblyPrefix = assemblyPart.Substring(assemblyMarker.Length);
+        return true;
     }
 
     private static bool IsCompletableNamespace(string namespaceName, string prefix) =>

@@ -124,7 +124,7 @@ internal sealed partial class CernealaSemanticModel
         AttributeSyntax? targetAttribute = FindAttribute(element, "TargetType");
         ILanguageTypeSymbol? targetType = targetAttribute is null
             ? null
-            : ResolveTargetTypeReference(targetAttribute);
+            : ResolveTargetTypeReference(element, targetAttribute);
         if (targetType is null)
         {
             AddMotionDiagnostic(
@@ -138,6 +138,7 @@ internal sealed partial class CernealaSemanticModel
         MotionClipDefinition clip = new(resource, targetType);
         motionClips[resource] = clip;
         BindMotionParameters(program, clip);
+        ValidateMotionClipBodyShape(element, program);
         BindMotionProgram(element, targetType, program, clip, isAspect: false, cancellationToken);
         symbols.Add(new CernealaSemanticSymbol(
             CernealaSemanticSymbolKind.MotionComposition,
@@ -296,6 +297,33 @@ internal sealed partial class CernealaSemanticModel
         }
     }
 
+    // Mirrors the generator's MotionClip body check (UiMarkupMotionResolver): after the @parameter declarations a clip
+    // has exactly one top-level execution body, and activation directives (@when, @on) are not allowed. @handle and
+    // @cancel are reported on their own keyword by BindMotionProgram.
+    private void ValidateMotionClipBodyShape(ElementSyntax element, MotionProgram program)
+    {
+        if (program.HasSyntaxErrors)
+        {
+            return;
+        }
+
+        DirectiveRegion[] body = program.Regions
+            .Where(region => region.Depth == 0 && region.Keyword != "@parameter")
+            .ToArray();
+        if (body.Any(region => region.Keyword is "@handle" or "@cancel") ||
+            body.Length == 1 && IsMotionExecutionDirective(body[0].Keyword))
+        {
+            return;
+        }
+
+        AddMotionDiagnostic(
+            "CERNEALAUI006",
+            element.NameToken.Span,
+            body.Any(region => region.Keyword is "@when" or "@on")
+                ? "MotionClip cannot contain activation directives such as @when or @on."
+                : "MotionClip requires exactly one top-level execution body.");
+    }
+
     private void BindMotionProgram(
         ElementSyntax source,
         ILanguageTypeSymbol? targetType,
@@ -357,16 +385,10 @@ internal sealed partial class CernealaSemanticModel
                 continue;
             }
 
-            if (region.Keyword == "@on")
+            // Inside a MotionClip, @on is a body-shape error that ValidateMotionClipBodyShape reports like the build.
+            if (region.Keyword == "@on" && isAspect)
             {
-                if (!isAspect)
-                {
-                    AddMotionDiagnostic("CERNEALAUI006", region.KeywordSpan, "@on is available only inside Aspect.");
-                }
-                else
-                {
-                    BindMotionEvent(source, targetType, region);
-                }
+                BindMotionEvent(source, targetType, region);
             }
 
             if (region.Keyword is "@presence" or "@layout" or "@scroll" or "@drag" or "@gesture")
@@ -744,7 +766,8 @@ internal sealed partial class CernealaSemanticModel
                 assignment,
                 clip,
                 prismOnly: false,
-                allowExplicitBinding: owner.Keyword == "@to");
+                allowExplicitBinding: owner.Keyword == "@to",
+                requireAssignable: owner.Keyword == "@set");
         }
     }
 
@@ -754,7 +777,8 @@ internal sealed partial class CernealaSemanticModel
         AssignmentSyntax assignment,
         MotionClipDefinition? clip,
         bool prismOnly,
-        bool allowExplicitBinding)
+        bool allowExplicitBinding,
+        bool requireAssignable = false)
     {
         string targetPath = assignment.Name;
         string[] segments = targetPath.Split('.');
@@ -856,7 +880,14 @@ internal sealed partial class CernealaSemanticModel
             member.ValueType,
             member,
             definitionLocation: member.Locations.FirstOrDefault(),
-            isWritable: member.CanWrite));
+            isWritable: IsWritableFromGeneratedCode(member)));
+
+        // @set writes the property directly, so the build rejects a property the generated code cannot assign.
+        if (requireAssignable && !IsWritableFromGeneratedCode(member))
+        {
+            AddMotionDiagnostic("CERNEALAUI021", propertySpan, "Motion property '" + targetPath + "' is not assignable.");
+            return;
+        }
 
         string value = document.Text.Substring(assignment.ValueSpan).Trim();
         if (value.IndexOf("..", StringComparison.Ordinal) >= 0 ||
@@ -889,13 +920,47 @@ internal sealed partial class CernealaSemanticModel
             return;
         }
 
-        if (!TryConvertLiteral(Unquote(value), member, out _))
+        if (!IsValidMotionLiteral(value, member))
         {
             AddMotionDiagnostic(
                 "CERNEALAUI023",
                 TrimmedSpan(assignment.ValueSpan),
                 "Motion value for property '" + targetPath + "' is not compatible with type '" + member.ValueTypeMetadataName + "'.");
         }
+    }
+
+    // Mirrors the literal rule of UiMarkupMotionResolver.ValidateMotionValue, which is the build contract: enum members
+    // match case-sensitively, strings need surrounding quotes, a structured value (Color, Brush, Thickness,
+    // CornerRadius, LayoutPoint, DrawPoint) takes the literal of its attribute form (MarkupLiteralRules), and a property
+    // of any other value kind takes only a $ reference, never a literal.
+    private static bool IsValidMotionLiteral(string text, ILanguageMemberSymbol member)
+    {
+        if (member.EnumValues.Count > 0)
+        {
+            return member.EnumValues.Contains(text, StringComparer.Ordinal);
+        }
+
+        return member.ValueTypeMetadataName.TrimEnd('?') switch
+        {
+            "float" or "System.Single" => float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out _),
+            "double" or "System.Double" => double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out _),
+            "byte" or "System.Byte" => byte.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
+            "sbyte" or "System.SByte" => sbyte.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
+            "short" or "System.Int16" => short.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
+            "ushort" or "System.UInt16" => ushort.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
+            "int" or "System.Int32" => int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
+            "uint" or "System.UInt32" => uint.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
+            "long" or "System.Int64" => long.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
+            "ulong" or "System.UInt64" => ulong.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
+            "bool" or "System.Boolean" => bool.TryParse(text, out _),
+            "Cerneala.Drawing.Color" or "Cerneala.UI.Media.Brush" or
+            "Cerneala.UI.Layout.Thickness" or "Cerneala.UI.Layout.CornerRadius" or
+            "Cerneala.UI.Layout.LayoutPoint" or "Cerneala.Drawing.DrawPoint" =>
+                MarkupLiteralRules.IsValid(text, member.ValueTypeMetadataName.TrimEnd('?'), member.ValueConstraint),
+            "string" or "System.String" or "object" or "System.Object" =>
+                text.Length >= 2 && text[0] == '"' && text[text.Length - 1] == '"',
+            _ => false
+        };
     }
 
     private void ValidateMotionFromTo(MotionProgram program)
@@ -1056,7 +1121,7 @@ internal sealed partial class CernealaSemanticModel
             char character = text[index];
             if (quoted)
             {
-                if (character == quote && (index == 0 || text[index - 1] != '\\'))
+                if (character == quote && !EmbeddedText.IsEscaped(text, index))
                 {
                     quoted = false;
                 }
@@ -1103,7 +1168,7 @@ internal sealed partial class CernealaSemanticModel
             char character = text[index];
             if (quoted)
             {
-                if (character == quote && text[index - 1] != '\\')
+                if (character == quote && !EmbeddedText.IsEscaped(text, index))
                 {
                     quoted = false;
                 }
@@ -1183,7 +1248,7 @@ internal sealed partial class CernealaSemanticModel
             char character = text[index];
             if (quoted)
             {
-                if (character == quote && (index == 0 || text[index - 1] != '\\'))
+                if (character == quote && !EmbeddedText.IsEscaped(text, index))
                 {
                     quoted = false;
                 }
@@ -1217,8 +1282,9 @@ internal sealed partial class CernealaSemanticModel
         }
     }
 
-    // Finds a whitespace-delimited keyword outside quoted strings and parentheses.
-    private static int FindTopLevelKeyword(string text, string keyword)
+    // Finds a whitespace-delimited keyword outside quoted strings and parentheses. Completion uses it too, so a
+    // statement that is still being typed splits at the same keyword as the binder.
+    internal static int FindTopLevelKeyword(string text, string keyword)
     {
         int parentheses = 0;
         bool quoted = false;

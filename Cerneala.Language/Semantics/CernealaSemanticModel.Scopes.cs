@@ -1,6 +1,8 @@
 using System.Globalization;
+using System.Text;
 using Cerneala.Language.Semantics.Symbols;
 using Cerneala.Language.Syntax;
+using Cerneala.Language.Syntax.Embedded;
 using Cerneala.Language.Text;
 
 namespace Cerneala.Language.Semantics;
@@ -115,7 +117,7 @@ internal sealed partial class CernealaSemanticModel
                 ResourceDefinition definition = CreateResourceDefinition(
                     resourceElement,
                     document.Path,
-                    aliases,
+                    AliasesOf(resourceElement),
                     isApplication: root?.Name == "Application");
                 resourceElements[resourceElement] = definition;
                 if (definition.Kind == ResourceKind.Aspect && definition.Name is null && definition.TargetType is not null)
@@ -162,8 +164,8 @@ internal sealed partial class CernealaSemanticModel
                 continue;
             }
 
-            Dictionary<string, NamespaceAlias> applicationAliases = new(StringComparer.Ordinal);
-            ReadAliases(applicationRoot, applicationAliases);
+            Dictionary<ElementSyntax, Dictionary<string, NamespaceAlias>> applicationAliases = new();
+            ReadAliasScopes(applicationRoot, NoAliases, applicationAliases);
             foreach (ElementSyntax property in candidate.Syntax.DescendantElements().Where(IsResourcePropertyElement))
             {
                 foreach (ElementSyntax resource in property.Children.OfType<ElementSyntax>())
@@ -171,7 +173,7 @@ internal sealed partial class CernealaSemanticModel
                     ResourceDefinition definition = CreateResourceDefinition(
                         resource,
                         candidate.Path,
-                        applicationAliases,
+                        applicationAliases[resource],
                         isApplication: true);
                     if (definition.Kind == ResourceKind.Aspect && definition.Name is null && definition.TargetType is not null)
                     {
@@ -281,7 +283,7 @@ internal sealed partial class CernealaSemanticModel
         foreach (ElementSyntax templateElement in elements.Where(element => element.Name == "ContentTemplate"))
         {
             ILanguageTypeSymbol? dataType = FindAttribute(templateElement, "DataType") is AttributeSyntax attribute
-                ? ResolveTypeReference(attribute)
+                ? ResolveTypeReference(templateElement, attribute)
                 : null;
             ElementSyntax? owner = FindNearestElementOwner(templateElement);
             SemanticTemplateContext context = new(
@@ -301,6 +303,7 @@ internal sealed partial class CernealaSemanticModel
     {
         SemanticNameScope documentScope = new("document", template: null);
         Dictionary<SemanticTemplateContext, SemanticNameScope> templateScopes = new();
+        Dictionary<string, string> documentIdentifiers = new(StringComparer.Ordinal);
         foreach (ElementSyntax element in document.Syntax.DescendantElements().OrderBy(candidate => candidate.Span.Start))
         {
             if (element.Kind == SyntaxKind.PropertyElement || resourceElements.ContainsKey(element) ||
@@ -345,10 +348,22 @@ internal sealed partial class CernealaSemanticModel
                 continue;
             }
 
-            if (scope.Elements.ContainsKey(name))
+            // The generator turns a document Name into a C# identifier, so 'name' and 'Name' or 'my-btn' and
+            // 'myBtn' collide like equal names. Template parts get generated variable names instead.
+            string identifier = GeneratedIdentifier(name);
+            string? identifierCollision = null;
+            if (template is null && !scope.Elements.ContainsKey(name))
+            {
+                documentIdentifiers.TryGetValue(identifier, out identifierCollision);
+            }
+
+            if (scope.Elements.ContainsKey(name) || identifierCollision is not null)
             {
                 TextSpan span = AttributeContentSpan(nameAttribute);
-                string message = "Duplicate element Name '" + name + "' in the same name scope.";
+                string message = identifierCollision is null
+                    ? "Duplicate element Name '" + name + "' in the same name scope."
+                    : "Duplicate element Name '" + name + "': it maps to the generated identifier '" + identifier +
+                        "' of Name '" + identifierCollision + "'.";
                 if (template is not null && !template.IsContentTemplate)
                 {
                     AddDiagnostic("CERNEALAUI012", span, Path.GetFileName(document.Path), message);
@@ -367,6 +382,10 @@ internal sealed partial class CernealaSemanticModel
             if (template is not null)
             {
                 template.Parts[name] = definition;
+            }
+            else
+            {
+                documentIdentifiers.Add(identifier, name);
             }
 
             symbols.Add(new CernealaSemanticSymbol(
@@ -408,6 +427,12 @@ internal sealed partial class CernealaSemanticModel
                 return;
         }
 
+        if (resource.Kind == ResourceKind.Brush && LocalElementName(resource.Element.Name) == "RadialGradientBrush")
+        {
+            ValidateRequiredPositiveFloatAttribute(resource.Element, "RadiusX");
+            ValidateRequiredPositiveFloatAttribute(resource.Element, "RadiusY");
+        }
+
         symbols.Add(new CernealaSemanticSymbol(
             CernealaSemanticSymbolKind.Resource,
             resource.Name ?? resource.Element.Name,
@@ -417,13 +442,26 @@ internal sealed partial class CernealaSemanticModel
             definitionLocation: resource.Location));
     }
 
+    // A RadialGradientBrush radius has no valid default: the brush rejects a radius that is missing, zero or negative,
+    // and so does the source generator (UiMarkupBrushEmitter), with the same CERNEALAUI004.
+    private void ValidateRequiredPositiveFloatAttribute(ElementSyntax element, string name)
+    {
+        if (FindAttribute(element, name) is null)
+        {
+            AddDiagnostic("CERNEALAUI004", element.NameToken.Span, element.Name, name, string.Empty);
+            return;
+        }
+
+        ValidatePositiveFloatAttribute(element, name, allowZero: false);
+    }
+
     private void BindContentTemplate(
         ElementSyntax template,
         ILanguageTypeSymbol? inheritedDataType,
         CancellationToken cancellationToken)
     {
         AttributeSyntax? dataTypeAttribute = FindAttribute(template, "DataType");
-        ILanguageTypeSymbol? dataType = dataTypeAttribute is null ? null : ResolveTypeReference(dataTypeAttribute);
+        ILanguageTypeSymbol? dataType = dataTypeAttribute is null ? null : ResolveTypeReference(template, dataTypeAttribute);
         ElementSyntax? owner = FindNearestElementOwner(template);
         if (dataType is null && owner is not null && itemsSourceTypes.TryGetValue(owner, out ILanguageTypeSymbol? inferred))
         {
@@ -644,7 +682,7 @@ internal sealed partial class CernealaSemanticModel
                 char character = source[position];
                 if (quoted)
                 {
-                    if (character == quote && source[position - 1] != '\\')
+                    if (character == quote && !EmbeddedText.IsEscaped(source, position))
                     {
                         quoted = false;
                     }
@@ -675,6 +713,28 @@ internal sealed partial class CernealaSemanticModel
         }
 
         return blocks;
+    }
+
+    // Mirrors CreateIdentifier of Cerneala.SourceGen's UiMarkupGenerator, which names the generated variable or
+    // member of a named element.
+    private static string GeneratedIdentifier(string rawName)
+    {
+        StringBuilder builder = new();
+        bool capitalizeNext = true;
+        foreach (char character in rawName)
+        {
+            if (!char.IsLetterOrDigit(character) && character != '_')
+            {
+                capitalizeNext = true;
+                continue;
+            }
+
+            char value = builder.Length == 0 && char.IsDigit(character) ? '_' : character;
+            builder.Append(capitalizeNext ? char.ToUpperInvariant(value) : value);
+            capitalizeNext = false;
+        }
+
+        return builder.Length == 0 ? "GeneratedUi" : builder.ToString();
     }
 
     private sealed class SemanticNameScope

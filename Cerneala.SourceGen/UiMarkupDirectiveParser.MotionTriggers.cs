@@ -136,11 +136,14 @@ public sealed partial class UiMarkupGenerator
 
             string idText = body.Substring(0, separator).Trim();
             string specText = body.Substring(separator + 6).Trim();
+            // The unsupported options are whole keyword tokens; a resource name such as $SharedTween or a
+            // path segment such as $DataContext.SharedId is user data, not a keyword.
             if (idText.IndexOfAny(new[] { '{', '}', ',' }) >= 0 ||
                 specText.IndexOfAny(new[] { '{', '}' }) >= 0 ||
-                body.IndexOf(" mode ", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                body.IndexOf("crossfade", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                body.IndexOf("shared", StringComparison.OrdinalIgnoreCase) >= 0)
+                Regex.IsMatch(
+                    body,
+                    @"(?<![\w$.])(?:mode|crossfade|shared)(?!\w)",
+                    RegexOptions.CultureInvariant | RegexOptions.IgnoreCase))
             {
                 throw new DirectiveParseException("@layout supports only retained-element render correction; modes, crossfade, shared elements and custom sequences are not supported.", source);
             }

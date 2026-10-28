@@ -52,6 +52,7 @@ public sealed partial class UiMarkupGenerator
                     string valueCode = EmitMotionValue(
                         property.Syntax.Value,
                         property.Property,
+                        property.Target.Type,
                         targetCode,
                         set.Parameters);
                     // A property Motion can animate holds the set value as its
@@ -140,7 +141,7 @@ public sealed partial class UiMarkupGenerator
                 string typeCode = GetMotionTypeCode(property.Property.ValueType);
                 bool hasFrom = property.Source is not null && property.Source.Value is not MotionCurrentValueSyntax;
                 string fromCode = hasFrom
-                    ? EmitMotionValue(property.Source!.Value, property.Property, targetCode, animation.Parameters)
+                    ? EmitMotionValue(property.Source!.Value, property.Property, property.Target.Type, targetCode, animation.Parameters)
                     : "default(" + typeCode + ")!";
                 bool toCurrent = property.Destination.Value is MotionCurrentValueSyntax;
                 bool hasBinding = TryEmitMotionBinding(
@@ -153,7 +154,7 @@ public sealed partial class UiMarkupGenerator
                     out string projectionCode);
                 string toCode = toCurrent || hasBinding
                     ? "default(" + typeCode + ")!"
-                    : EmitMotionValue(property.Destination.Value, property.Property, targetCode, animation.Parameters);
+                    : EmitMotionValue(property.Destination.Value, property.Property, property.Target.Type, targetCode, animation.Parameters);
                 string specCode = property.SpecVariable ?? "null";
                 if (property.Keyframes is not null)
                 {
@@ -162,7 +163,7 @@ public sealed partial class UiMarkupGenerator
                     string framesCode = string.Join(", ", property.Keyframes.Frames.Select(frame =>
                         "new global::Cerneala.UI.Motion.Specs.MotionKeyframe<" + typeCode + ">(" +
                         frame.Offset.ToString("R", CultureInfo.InvariantCulture) + "f, " +
-                        EmitMotionValue(frame.Value, property.Property, targetCode, animation.Parameters) + ", " +
+                        EmitMotionValue(frame.Value, property.Property, property.Target.Type, targetCode, animation.Parameters) + ", " +
                         frame.EasingCode + ", " + (frame.Hold ? "true" : "false") + ")"));
                     currentPostLines.Add(
                         "global::Cerneala.UI.Motion.Specs.MotionSpec<" + typeCode + "> " + specCode +
@@ -453,7 +454,7 @@ public sealed partial class UiMarkupGenerator
                 string typeCode = GetMotionTypeCode(property.Property.ValueType);
                 bool hasFrom = property.Source is not null && property.Source.Value is not MotionCurrentValueSyntax;
                 string fromCode = hasFrom
-                    ? EmitMotionValue(property.Source!.Value, property.Property, itemName, animation.Parameters)
+                    ? EmitMotionValue(property.Source!.Value, property.Property, property.Target.Type, itemName, animation.Parameters)
                     : "default(" + typeCode + ")!";
                 bool toCurrent = property.Destination.Value is MotionCurrentValueSyntax;
                 bool hasBinding = TryEmitMotionBinding(
@@ -466,7 +467,7 @@ public sealed partial class UiMarkupGenerator
                     out string projectionCode);
                 string toCode = toCurrent || hasBinding
                     ? "default(" + typeCode + ")!"
-                    : EmitMotionValue(property.Destination.Value, property.Property, itemName, animation.Parameters);
+                    : EmitMotionValue(property.Destination.Value, property.Property, property.Target.Type, itemName, animation.Parameters);
                 string tweenCode = "((global::Cerneala.UI.Motion.Specs.TweenSpec<" + typeCode + ">)" + property.SpecVariable + ")";
                 string delayedSpecCode = tweenCode + ".WithDelay(" + tweenCode + ".Delay + " + delayName + ")";
                 string optionsCode = EmitMotionOptions(animation.Syntax.Options, animation.Parameters);
@@ -507,14 +508,15 @@ public sealed partial class UiMarkupGenerator
         private string EmitMotionValue(
             MotionValueSyntax value,
             PropertySpec property,
+            INamedTypeSymbol? targetType,
             string targetCode,
             MotionClipInvocationContext? parameters)
         {
             if (value is MotionConditionalValueSyntax conditional)
             {
-                return "(" + EmitMotionCondition(conditional.Condition, targetCode) + " ? " +
-                    EmitMotionValue(conditional.WhenTrue, property, targetCode, parameters) + " : " +
-                    EmitMotionValue(conditional.WhenFalse, property, targetCode, parameters) + ")";
+                return "(" + (BindMotionCondition(conditional.Condition, targetType, targetCode) ?? "false") + " ? " +
+                    EmitMotionValue(conditional.WhenTrue, property, targetType, targetCode, parameters) + " : " +
+                    EmitMotionValue(conditional.WhenFalse, property, targetType, targetCode, parameters) + ")";
             }
 
             if (value is MotionCurrentValueSyntax)
@@ -533,7 +535,7 @@ public sealed partial class UiMarkupGenerator
                 property.Name,
                 atom.Text,
                 property,
-                atom.Location.Source,
+                atom.Location,
                 targetCode);
             if (expression is null)
             {
@@ -592,24 +594,152 @@ public sealed partial class UiMarkupGenerator
             return true;
         }
 
-        private static string EmitMotionCondition(DirectiveExpression expression, string targetCode)
+        // Binds the condition of a conditional Motion value to C# that reads the Motion target when the Motion starts.
+        // An operand is a property of the target, written bare or as $self.Name. The right side of a comparison may
+        // also be a literal with the @if rules: Null, True and False in any case, a number, a quoted string, or a
+        // member of the left operand's enum type, such as Visibility == Visible.
+        private string? BindMotionCondition(DirectiveExpression expression, INamedTypeSymbol? targetType, string targetCode)
         {
-            return expression switch
+            switch (expression)
             {
-                DirectiveSourceExpression source => source.Text.StartsWith("$self.", StringComparison.Ordinal)
-                    ? targetCode + "." + source.Text.Substring(6)
-                    : targetCode + "." + source.Text,
-                DirectiveLiteralExpression literal => literal.Text,
-                DirectiveGroupExpression group => "(" + EmitMotionCondition(group.Inner, targetCode) + ")",
-                DirectiveComparisonExpression comparison =>
-                    EmitMotionCondition(comparison.Left, targetCode) + " " + comparison.Comparator + " " +
-                    EmitMotionCondition(comparison.Right, targetCode),
-                DirectiveLogicalExpression logical =>
-                    "(" + EmitMotionCondition(logical.Left, targetCode) +
-                    (logical.Operator == DirectiveLogicalOperator.And ? " && " : " || ") +
-                    EmitMotionCondition(logical.Right, targetCode) + ")",
-                _ => "false"
-            };
+                case DirectiveGroupExpression group:
+                    {
+                        string? inner = BindMotionCondition(group.Inner, targetType, targetCode);
+                        return inner is null ? null : "(" + inner + ")";
+                    }
+                case DirectiveLogicalExpression logical:
+                    {
+                        string? left = BindMotionCondition(logical.Left, targetType, targetCode);
+                        string? right = BindMotionCondition(logical.Right, targetType, targetCode);
+                        return left is null || right is null
+                            ? null
+                            : "(" + left + (logical.Operator == DirectiveLogicalOperator.And ? " && " : " || ") + right + ")";
+                    }
+                case DirectiveComparisonExpression comparison:
+                    return BindMotionComparison(comparison, targetType, targetCode);
+                case DirectiveSourceExpression source:
+                    {
+                        (string Code, ITypeSymbol Type)? operand = BindMotionConditionOperand(source, targetType, targetCode);
+                        if (operand is null)
+                        {
+                            return null;
+                        }
+
+                        if (UnwrapNullable(operand.Value.Type).SpecialType != SpecialType.System_Boolean)
+                        {
+                            ReportMotion(MotionDiagnosticKind.Type, source.Location, "Motion condition '" + source.Text + "' must be Boolean or a comparison.");
+                            return null;
+                        }
+
+                        return operand.Value.Type.SpecialType == SpecialType.System_Boolean
+                            ? operand.Value.Code
+                            : "(" + operand.Value.Code + " == true)";
+                    }
+                default:
+                    ReportMotion(
+                        MotionDiagnosticKind.Type,
+                        expression.Location,
+                        "A Motion condition accepts properties of the Motion target, comparisons, 'and', 'or' and parentheses.");
+                    return null;
+            }
+        }
+
+        private string? BindMotionComparison(DirectiveComparisonExpression comparison, INamedTypeSymbol? targetType, string targetCode)
+        {
+            if (comparison.Left is not DirectiveSourceExpression leftSource)
+            {
+                ReportMotion(MotionDiagnosticKind.Type, comparison.Left.Location, "The left side of a Motion condition comparison must be a property of the Motion target.");
+                return null;
+            }
+
+            (string Code, ITypeSymbol Type)? left = BindMotionConditionOperand(leftSource, targetType, targetCode);
+            if (left is null)
+            {
+                return null;
+            }
+
+            ITypeSymbol leftType = UnwrapNullable(left.Value.Type);
+            string? rightCode;
+            if (comparison.Right is DirectiveLiteralExpression ||
+                comparison.Right is DirectiveSourceExpression { Text: var member } &&
+                leftType.TypeKind == TypeKind.Enum &&
+                !member.StartsWith("$", StringComparison.Ordinal))
+            {
+                string operand = comparison.Right is DirectiveLiteralExpression literal
+                    ? literal.Text
+                    : ((DirectiveSourceExpression)comparison.Right).Text;
+                if (string.Equals(operand, "Null", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (comparison.Comparator is not "==" and not "!=")
+                    {
+                        ReportMotion(MotionDiagnosticKind.Type, comparison.Right.Location, "Null supports only == and != in a Motion condition.");
+                        return null;
+                    }
+
+                    return "(" + left.Value.Code + " " + comparison.Comparator + " null)";
+                }
+
+                rightCode = ParseSymbolLiteral(leftType, operand, comparison.Right.Location);
+            }
+            else if (comparison.Right is DirectiveSourceExpression rightSource)
+            {
+                (string Code, ITypeSymbol Type)? right = BindMotionConditionOperand(rightSource, targetType, targetCode);
+                if (right is null)
+                {
+                    return null;
+                }
+
+                if (!SymbolEqualityComparer.Default.Equals(leftType, UnwrapNullable(right.Value.Type)))
+                {
+                    ReportMotion(MotionDiagnosticKind.Type, comparison.Right.Location, "Both sides of a Motion condition comparison must have the same type.");
+                    return null;
+                }
+
+                rightCode = right.Value.Code;
+            }
+            else
+            {
+                ReportMotion(MotionDiagnosticKind.Type, comparison.Right.Location, "The right side of a Motion condition comparison must be a literal, an enum member or a property of the Motion target.");
+                return null;
+            }
+
+            if (rightCode is null)
+            {
+                return null;
+            }
+
+            bool ordering = comparison.Comparator is "<" or "<=" or ">" or ">=";
+            if (ordering && !IsNumeric(leftType) && leftType.SpecialType != SpecialType.System_String)
+            {
+                ReportMotion(MotionDiagnosticKind.Type, comparison.Location, "The Motion condition operand type does not support ordering comparisons.");
+                return null;
+            }
+
+            return ordering && leftType.SpecialType == SpecialType.System_String
+                ? "(global::System.String.CompareOrdinal(" + left.Value.Code + ", " + rightCode + ") " + comparison.Comparator + " 0)"
+                : "(" + left.Value.Code + " " + comparison.Comparator + " " + rightCode + ")";
+        }
+
+        private (string Code, ITypeSymbol Type)? BindMotionConditionOperand(
+            DirectiveSourceExpression source,
+            INamedTypeSymbol? targetType,
+            string targetCode)
+        {
+            string name = source.Text.StartsWith("$self.", StringComparison.Ordinal) ? source.Text.Substring(6) : source.Text;
+            IPropertySymbol? property = targetType is null || name.StartsWith("$", StringComparison.Ordinal) || name.IndexOf('.') >= 0
+                ? null
+                : FindClrProperty(targetType, name);
+            if (property is null)
+            {
+                ReportMotion(
+                    MotionDiagnosticKind.Type,
+                    source.Location,
+                    "Motion condition operand '" + source.Text + "' is not a readable property of the Motion target" +
+                    (targetType is null ? "." : " type '" + targetType.Name + "'."));
+                return null;
+            }
+
+            return (targetCode + "." + property.Name, property.Type);
         }
 
         private static string EmitMotionOptions(

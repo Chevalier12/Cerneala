@@ -537,7 +537,7 @@ public sealed partial class UiMarkupGenerator
                         rawValue,
                         source,
                         new DirectiveExpressionLocation(source, propertyOffset, Math.Max(1, propertyName.Length)),
-                        new DirectiveExpressionLocation(valueSource, valueOffset));
+                        new DirectiveExpressionLocation(valueSource, valueOffset, rawValue.Length));
                 }
 
                 value.Append(character);

@@ -32,7 +32,30 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
             return member.Accessibility == LanguageAccessibility.Public;
         }
 
-        ISymbol symbol = roslynMember.Symbol;
+        return IsAccessibleFromGeneratedCode(roslynMember.Symbol, pairType);
+    }
+
+    // Mirrors the getter checks of UiMarkupPropertyResolver.FindClrProperty and
+    // UiMarkupBindingResolver.FindReadablePathProperty in Cerneala.SourceGen.
+    public bool CanReadFromGeneratedCode(ILanguageMemberSymbol member, ILanguageTypeSymbol? pairType)
+    {
+        if (member is not RoslynMemberSymbol roslynMember)
+        {
+            return member.CanRead && member.Accessibility == LanguageAccessibility.Public;
+        }
+
+        return roslynMember.Symbol is IPropertySymbol { GetMethod: IMethodSymbol getter } &&
+            IsAccessibleFromGeneratedCode(getter, pairType);
+    }
+
+    // Mirrors the generator's assignable property rule (UiMarkupPropertyResolver and
+    // UiMarkupBindingResolver.IsWritablePathProperty): a setter that is not init-only and that the generated code can call.
+    public bool IsWritableFromGeneratedCode(ILanguageMemberSymbol member, ILanguageTypeSymbol? pairType) =>
+        member is RoslynMemberSymbol { Symbol: IPropertySymbol { SetMethod: { IsInitOnly: false } setter } } &&
+        IsAccessibleFromGeneratedCode(setter, pairType);
+
+    private bool IsAccessibleFromGeneratedCode(ISymbol symbol, ILanguageTypeSymbol? pairType)
+    {
         if (pairType is RoslynTypeSymbol roslynPair)
         {
             return compilation.IsSymbolAccessibleWithin(symbol, roslynPair.Symbol);
@@ -359,6 +382,27 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
                 metadataName,
                 StringComparison.Ordinal));
         }
+
+        public bool HasUnresolvedTypes
+        {
+            get
+            {
+                for (ITypeSymbol? current = symbol; current is not null; current = current.BaseType)
+                {
+                    if (IsUnresolved(current))
+                    {
+                        return true;
+                    }
+                }
+
+                return symbol.AllInterfaces.Any(IsUnresolved);
+            }
+        }
+
+        private static bool IsUnresolved(ITypeSymbol type) =>
+            type.TypeKind == TypeKind.Error ||
+            type is INamedTypeSymbol named && named.TypeArguments.Any(IsUnresolved) ||
+            type is IArrayTypeSymbol array && IsUnresolved(array.ElementType);
     }
 
     private sealed class RoslynMemberSymbol : ILanguageMemberSymbol
@@ -391,7 +435,9 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
 
         public bool CanRead => symbol is not IPropertySymbol property || property.GetMethod is not null;
 
-        public bool CanWrite => symbol is IPropertySymbol property && property.SetMethod is { IsInitOnly: false };
+        // Writable from generated code that is not paired with a C# class; a paired markup file asks
+        // ILanguageCompilationSymbols.IsWritableFromGeneratedCode with its pair type.
+        public bool CanWrite => owner.IsWritableFromGeneratedCode(this, pairType: null);
 
         public string ValueTypeMetadataName => GetValueType(symbol) is ITypeSymbol type
             ? owner.WrapType(type).MetadataName
@@ -414,6 +460,19 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
 
         public bool IsFlagsEnum => GetValueType(symbol) is { TypeKind: TypeKind.Enum } type &&
             type.GetAttributes().Any(attribute => attribute.AttributeClass?.ToDisplayString() == "System.FlagsAttribute");
+
+        // Mirrors the constraint read by UiMarkupPropertyResolver.GetMarkupValueKind in Cerneala.SourceGen.
+        public LanguageValueConstraint ValueConstraint => symbol is IPropertySymbol &&
+            symbol.GetAttributes().FirstOrDefault(attribute =>
+                attribute.AttributeClass?.ToDisplayString() == "Cerneala.UI.Markup.MarkupValueConstraintAttribute")?
+                .ConstructorArguments.FirstOrDefault().Value is int constraint
+            ? constraint switch
+            {
+                1 => LanguageValueConstraint.NonNegative,
+                2 => LanguageValueConstraint.Positive,
+                _ => LanguageValueConstraint.None
+            }
+            : LanguageValueConstraint.None;
 
         public string DeclaringTypeMetadataName =>
             symbol.ContainingType is ITypeSymbol type ? owner.WrapType(type).MetadataName : string.Empty;

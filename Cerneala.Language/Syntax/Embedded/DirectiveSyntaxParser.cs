@@ -289,7 +289,7 @@ internal static class DirectiveSyntaxParser
             char character = text[valueEnd];
             if (quoted)
             {
-                if (character == quote && (valueEnd == valueStart || text[valueEnd - 1] != '\\'))
+                if (character == quote && !EmbeddedText.IsEscaped(text, valueEnd))
                 {
                     quoted = false;
                 }

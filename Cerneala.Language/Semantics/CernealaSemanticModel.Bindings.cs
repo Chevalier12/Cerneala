@@ -18,7 +18,7 @@ internal sealed partial class CernealaSemanticModel
     {
         resultType = null;
         TextSpan contentSpan = AttributeContentSpan(attribute);
-        if (TryBindPropertyExpression(element, target, value, contentSpan, dataType))
+        if (TryBindPropertyExpression(ownerType, element, target, value, contentSpan, dataType))
         {
             return true;
         }
@@ -46,6 +46,11 @@ internal sealed partial class CernealaSemanticModel
 
         if (parsed.Syntax.Kind == BindingValueKind.Direct && parsed.Syntax.Binding is BindingPathSyntax direct)
         {
+            if (ReportNonUiPropertyBindingTarget(ownerType, target, value, contentSpan))
+            {
+                return true;
+            }
+
             BindingResolution? resolution = ResolveBindingPath(
                 element,
                 direct,
@@ -75,6 +80,11 @@ internal sealed partial class CernealaSemanticModel
                 return true;
             }
 
+            if (ReportNonUiPropertyBindingTarget(ownerType, target, value, contentSpan))
+            {
+                return true;
+            }
+
             foreach (BindingFragmentSyntax fragment in parsed.Syntax.Fragments.OfType<BindingFragmentSyntax>())
             {
                 ResolveBindingPath(element, fragment.Binding, dataType);
@@ -92,6 +102,7 @@ internal sealed partial class CernealaSemanticModel
     // bare identifiers, 'value', modes, self-reads and type rules stay generator-only, as
     // for @if, so the generator's message is the one the build shows.
     private bool TryBindPropertyExpression(
+        ILanguageTypeSymbol ownerType,
         ElementSyntax element,
         ILanguageMemberSymbol target,
         string value,
@@ -110,6 +121,11 @@ internal sealed partial class CernealaSemanticModel
             stringTarget: targetType.TrimEnd('?') is "string" or "System.String"))
         {
             case BindingExpressionShape.Expression:
+                if (ReportNonUiPropertyBindingTarget(ownerType, target, expression.Text, expression.Span))
+                {
+                    return true;
+                }
+
                 foreach (BindingPathSyntax source in expression.Sources)
                 {
                     ResolveBindingPath(element, source, dataType);
@@ -142,8 +158,10 @@ internal sealed partial class CernealaSemanticModel
             return false;
         }
 
+        // As in the build, '$DataContext' is the only binding path without a member; a bare '$root', '$self' or
+        // '$owner' is a resource name, which a resource can never declare.
         string name = value.Substring(1);
-        if (name is "DataContext" or "root" or "self" or "owner")
+        if (name == "DataContext")
         {
             return false;
         }
@@ -164,10 +182,8 @@ internal sealed partial class CernealaSemanticModel
             referenceSpan,
             resourceType,
             definitionLocation: resource.Location));
-        bool resourceIdReference = IsResourceReferenceCompatible(resourceType, target);
-        resultType = resourceIdReference ? target.ValueType : resourceType;
-        if (resource.Kind == ResourceKind.Aspect ||
-            (!resourceIdReference && !IsTypeCompatible(resourceType, target)))
+        resultType = resourceType;
+        if (!IsResourceReferenceCompatible(resource, target))
         {
             AddDiagnostic("CERNEALAUI004", contentSpan, element.Name, target.Name, value);
         }
@@ -242,6 +258,8 @@ internal sealed partial class CernealaSemanticModel
                 AddBindingDiagnostic(path.Text, sourceSegment.Span, "$owner is available only inside @template.");
                 return null;
             }
+
+            requiresUiProperty = true;
         }
         else if (FindNamedElement(source, sourceName) is NamedElementDefinition named)
         {
@@ -302,9 +320,12 @@ internal sealed partial class CernealaSemanticModel
                 return null;
             }
 
-            string memberName = segment.Name.TrimStart('$');
-            ILanguageMemberSymbol? member = FindProperty(currentType, memberName);
-            if (member is null || !member.CanRead)
+            // A member segment keeps its '$': the build rejects '$DataContext.$Name' because no property is named '$Name'.
+            string memberName = segment.Name;
+            ILanguageMemberSymbol? member = requiresUiProperty
+                ? FindUiProperty(currentType, memberName)
+                : FindReadablePathProperty(currentType, memberName);
+            if (member is null)
             {
                 AddBindingDiagnostic(
                     path.Text,
@@ -325,10 +346,10 @@ internal sealed partial class CernealaSemanticModel
                 currentType,
                 member,
                 definitionLocation: member.Locations.FirstOrDefault(),
-                isWritable: member.CanWrite));
+                isWritable: IsWritableFromGeneratedCode(member)));
         }
 
-        return new BindingResolution(currentType, finalMember, finalMember?.CanWrite == true);
+        return new BindingResolution(currentType, finalMember, finalMember is not null && IsWritableFromGeneratedCode(finalMember));
     }
 
     private BindingResolution? ResolveTemplatePartPath(ElementSyntax source, BindingPathSyntax path)
@@ -399,10 +420,10 @@ internal sealed partial class CernealaSemanticModel
                 currentType,
                 member,
                 definitionLocation: member.Locations.FirstOrDefault(),
-                isWritable: member.CanWrite));
+                isWritable: IsWritableFromGeneratedCode(member)));
         }
 
-        return new BindingResolution(currentType, finalMember, finalMember?.CanWrite == true);
+        return new BindingResolution(currentType, finalMember, finalMember is not null && IsWritableFromGeneratedCode(finalMember));
     }
 
     private void ValidateBindingCompatibility(
@@ -413,7 +434,7 @@ internal sealed partial class CernealaSemanticModel
         ILanguageTypeSymbol ownerType,
         ElementSyntax element)
     {
-        if (!target.CanWrite && target.Kind == LanguageMemberKind.Property)
+        if (!IsWritableFromGeneratedCode(target) && target.Kind == LanguageMemberKind.Property)
         {
             AddBindingSemanticDiagnostic(element, expression, path.Span, "The target UI property is read-only.");
             return;
@@ -565,14 +586,21 @@ internal sealed partial class CernealaSemanticModel
 
         (string text, int offset) = BuildDirectTextBuffer(aspect.Element);
         EmbeddedParseResult<DirectiveDocumentSyntax> parsed = DirectiveSyntaxParser.Parse(text, offset);
+        bool syntaxErrors = false;
         foreach (EmbeddedDiagnostic diagnostic in parsed.Diagnostics.Where(diagnostic =>
             ShouldBindAspectAssignment(aspect.Element, diagnostic.Span.Start)))
         {
+            syntaxErrors = true;
             AddDiagnostic(
                 diagnostic.Id,
                 diagnostic.Span,
                 Path.GetFileName(document.Path),
                 diagnostic.Message);
+        }
+
+        if (!syntaxErrors)
+        {
+            ReportIfConditionShapes(parsed.Syntax);
         }
 
         foreach (DirectiveSyntax directive in parsed.Syntax.Directives.Where(directive =>
@@ -622,7 +650,7 @@ internal sealed partial class CernealaSemanticModel
                 continue;
             }
             ILanguageMemberSymbol? member = FindProperty(aspect.TargetType, propertyName);
-            if (member is null)
+            if (member is null || !IsWritableFromGeneratedCode(member))
             {
                 AddDiagnostic("CERNEALAUI003", assignment.NameSpan, aspect.TargetType.Name, propertyName);
                 continue;
@@ -666,6 +694,11 @@ internal sealed partial class CernealaSemanticModel
                 }
                 else
                 {
+                    if (!IsResourceReferenceCompatible(referenced, member))
+                    {
+                        AddDiagnostic("CERNEALAUI004", valueSpan, aspect.TargetType.Name, propertyName, rawValue);
+                    }
+
                     symbols.Add(new CernealaSemanticSymbol(
                         CernealaSemanticSymbolKind.ResourceReference,
                         resourceName,
@@ -705,7 +738,7 @@ internal sealed partial class CernealaSemanticModel
                     }
                 }
             }
-            else if (!TryConvertLiteral(Unquote(rawValue), member, out _))
+            else if (!TryConvertMarkupLiteral(Unquote(rawValue), member, out _))
             {
                 AddDiagnostic("CERNEALAUI004", valueSpan, aspect.TargetType.Name, propertyName, rawValue);
             }
@@ -718,7 +751,40 @@ internal sealed partial class CernealaSemanticModel
                 member.ValueType,
                 member,
                 rawValue,
-                isWritable: member.CanWrite));
+                isWritable: IsWritableFromGeneratedCode(member)));
+        }
+    }
+
+    // @when/@if written in the content of an element, as in <TextBlock>@when IsMouseOver { @if ... }</TextBlock>.
+    private void BindElementIfConditions(ElementSyntax element)
+    {
+        (string text, int offset) = BuildDirectTextBuffer(element);
+        if (text.IndexOf("@if", StringComparison.Ordinal) < 0)
+        {
+            return;
+        }
+
+        EmbeddedParseResult<DirectiveDocumentSyntax> parsed = DirectiveSyntaxParser.Parse(text, offset);
+        if (parsed.Diagnostics.Count == 0)
+        {
+            ReportIfConditionShapes(parsed.Syntax);
+        }
+    }
+
+    // The build rejects an @if condition that is not a comparison, and a literal that is not the right operand of a
+    // comparison, with CERNEALAUI007 (UiMarkupGenerator.CollectWhen); the editor reports the same diagnostics.
+    // Directive content with syntax errors is not checked, because the build reports only its syntax error.
+    private void ReportIfConditionShapes(DirectiveDocumentSyntax syntax)
+    {
+        foreach (DirectiveSyntax directive in syntax.Directives.Where(directive => directive.Keyword == "@if"))
+        {
+            foreach (IfConditionError error in BindingExpressionSyntaxParser.ValidateIfCondition(
+                syntax.Text,
+                directive.Span.End - syntax.AbsoluteOffset,
+                syntax.AbsoluteOffset))
+            {
+                AddBindingDiagnostic(error.Source, error.Span, error.Message);
+            }
         }
     }
 
@@ -779,7 +845,7 @@ internal sealed partial class CernealaSemanticModel
                 member.ValueType,
                 member,
                 definitionLocation: member.Locations.FirstOrDefault(),
-                isWritable: member.CanWrite));
+                isWritable: IsWritableFromGeneratedCode(member)));
         }
 
         foreach ((string expression, int offset) in ExtractBindingExpressions(text, relativeStart, end, absoluteOffset))
@@ -857,8 +923,8 @@ internal sealed partial class CernealaSemanticModel
         }
     }
 
-    // Direct text of an element with child elements blanked; in an Aspect body
-    // the @timbre/@prism attachments are blanked too (see AspectAttachments).
+    // Direct text of an element with child elements and comments blanked; in an
+    // Aspect body the @timbre/@prism attachments are blanked too (see AspectAttachments).
     private (string Text, int Offset) BuildDirectTextBuffer(ElementSyntax element)
     {
         (string text, int offset) = BuildRawDirectTextBuffer(element);
@@ -880,7 +946,7 @@ internal sealed partial class CernealaSemanticModel
         }
 
         char[] buffer = Enumerable.Repeat(' ', end - start).ToArray();
-        foreach (TextSyntax text in element.Children.OfType<TextSyntax>())
+        foreach (TextSyntax text in element.Children.OfType<TextSyntax>().Where(text => text.Kind != SyntaxKind.Comment))
         {
             string value = document.Text.Substring(text.Span);
             value.CopyTo(0, buffer, text.Span.Start - start, value.Length);
@@ -945,7 +1011,62 @@ internal sealed partial class CernealaSemanticModel
         (value.IndexOf("&lt;", StringComparison.Ordinal) >= 0 ||
             value.IndexOf("&#x3C;", StringComparison.OrdinalIgnoreCase) >= 0);
 
+    // A binding path segment of a CLR source ($DataContext): an instance property whose getter generated code can
+    // call (UiMarkupBindingResolver.FindReadablePathProperty).
+    private ILanguageMemberSymbol? FindReadablePathProperty(ILanguageTypeSymbol? type, string name) =>
+        type?.GetMembers(name).FirstOrDefault(candidate => candidate.Kind == LanguageMemberKind.Property &&
+            !candidate.IsStatic && compilation.CanReadFromGeneratedCode(candidate, markupPairType));
+
+    // A UI property ($self, $root, $owner, a named element, a binding target): a readable instance property with a
+    // static 'NameProperty' field of type UiProperty<T> for the same T (UiMarkupPropertyResolver.FindPropertySpec).
+    // ItemsControl.ItemCount is a plain CLR property, so '$list.ItemCount' is not a UI property.
+    private ILanguageMemberSymbol? FindUiProperty(ILanguageTypeSymbol? type, string name)
+    {
+        ILanguageMemberSymbol? property = FindReadablePathProperty(type, name);
+        ILanguageMemberSymbol? field = property is null ? null : type!.GetMembers(name + "Property")
+            .FirstOrDefault(candidate => candidate.Kind == LanguageMemberKind.Field && candidate.IsStatic &&
+                candidate.ValueType is { Name: "UiProperty", Namespace: "Cerneala.UI.Core", TypeArguments.Count: 1 } &&
+                IsCallableFromGeneratedCode(candidate));
+        return field is not null && IsSameValueType(field.ValueType!.TypeArguments[0], property!.ValueType)
+            ? property
+            : null;
+    }
+
+    // The generator compares the types with SymbolEqualityComparer.Default, which ignores nullable reference
+    // annotations ('Brush?' equals 'Brush') but not Nullable<T> ('int?' differs from 'int').
+    private static bool IsSameValueType(ILanguageTypeSymbol left, ILanguageTypeSymbol? right) =>
+        right is not null &&
+        IsNullableValueType(left) == IsNullableValueType(right) &&
+        string.Equals(left.MetadataName.TrimEnd('?'), right.MetadataName.TrimEnd('?'), StringComparison.Ordinal);
+
+    private static bool IsNullableValueType(ILanguageTypeSymbol type) =>
+        type.Name == "Nullable" && type.Namespace == "System" && type.TypeArguments.Count == 1;
+
+    // The build binds only a UiProperty-backed target (UiMarkupGenerator.EmitProperty): an ordinary CLR property such
+    // as ListBoxItem.ItemIndex takes literal and resource values only. A target without a setter keeps the read-only
+    // diagnostic of ValidateBindingCompatibility; an attached property (a static setter method) has its own rule.
+    private bool ReportNonUiPropertyBindingTarget(
+        ILanguageTypeSymbol ownerType,
+        ILanguageMemberSymbol target,
+        string expression,
+        TextSpan span)
+    {
+        if (target.Kind != LanguageMemberKind.Property || !target.CanWrite || FindUiProperty(ownerType, target.Name) is not null)
+        {
+            return false;
+        }
+
+        AddBindingDiagnostic(
+            expression,
+            span,
+            "Bindings require a UiProperty-backed target; ordinary CLR properties support literal and resource values only.");
+        return true;
+    }
+
+    // A type the compilation cannot resolve is reported by C# (CS0246); the binding checks below cannot prove anything
+    // about it, so they accept it instead of adding a second, misleading error (#1213).
     private static bool IsObservablePathOwner(ILanguageTypeSymbol type) =>
+        type.HasUnresolvedTypes ||
         type.IsOrImplements("Cerneala.UI.Core.UiObject") ||
         type.IsOrImplements("System.ComponentModel.INotifyPropertyChanged");
 
@@ -962,12 +1083,21 @@ internal sealed partial class CernealaSemanticModel
             return false;
         }
 
+        if (source.HasUnresolvedTypes || target.ValueType?.HasUnresolvedTypes == true)
+        {
+            return true;
+        }
+
         string sourceName = source.MetadataName.TrimEnd('?');
         return string.Equals(sourceName, targetName, StringComparison.Ordinal) ||
             source.IsOrImplements(targetName);
     }
 
-    private static bool IsResourceReferenceCompatible(ILanguageTypeSymbol? resourceType, ILanguageMemberSymbol target)
+    // The resource conversions of the build (UiMarkupGenerator.ResolveReferenceValue, for the target kind of
+    // GetMarkupValueKind): a brush into a Brush, a brush declaring Color into a Color, an image into an ImageReference
+    // or a ResourceId<ImageResource>, and a SpriteAnimationSet into a SpriteAnimationSet. Every other reference,
+    // including any reference to an object target, is invalid (CERNEALAUI004).
+    private static bool IsResourceReferenceCompatible(ResourceDefinition resource, ILanguageMemberSymbol target)
     {
         ILanguageTypeSymbol? targetType = target.ValueType;
         if (targetType?.Name == "Nullable" &&
@@ -977,24 +1107,19 @@ internal sealed partial class CernealaSemanticModel
             targetType = targetType.TypeArguments[0];
         }
 
-        if (targetType?.Name == "ImageReference" && targetType.Namespace == "Cerneala.UI.Resources")
+        return (targetType?.Namespace, targetType?.Name) switch
         {
-            return resourceType?.MetadataName.TrimEnd('?') == "Cerneala.UI.Resources.ImageResource";
-        }
-
-        if (resourceType is null || targetType is null ||
-            targetType.Name != "ResourceId" ||
-            targetType.Namespace != "Cerneala.UI.Resources" ||
-            targetType.TypeArguments.Count != 1)
-        {
-            return false;
-        }
-
-        string resourceName = resourceType.MetadataName.TrimEnd('?');
-        ILanguageTypeSymbol expectedResourceType = targetType.TypeArguments[0];
-        string expectedName = expectedResourceType.MetadataName.TrimEnd('?');
-        return string.Equals(resourceName, expectedName, StringComparison.Ordinal) ||
-            resourceType.IsOrImplements(expectedName);
+            ("Cerneala.UI.Media", "Brush") => resource.Kind == ResourceKind.Brush,
+            ("Cerneala.Drawing", "Color") =>
+                resource.Kind == ResourceKind.Brush && FindAttribute(resource.Element, "Color") is not null,
+            ("Cerneala.UI.Resources", "ImageReference") => resource.Kind == ResourceKind.ImageResource,
+            ("Cerneala.UI.Resources", "ResourceId") =>
+                resource.Kind == ResourceKind.ImageResource &&
+                targetType!.TypeArguments.Count == 1 &&
+                targetType.TypeArguments[0].MetadataName == "Cerneala.UI.Resources.ImageResource",
+            ("Cerneala.UI.Controls", "SpriteAnimationSet") => resource.Kind == ResourceKind.SpriteAnimationSet,
+            _ => false
+        };
     }
 
     private sealed class BindingResolution

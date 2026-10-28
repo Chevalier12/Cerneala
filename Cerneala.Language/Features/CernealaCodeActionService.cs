@@ -530,11 +530,10 @@ internal sealed class CernealaCodeActionService
         .Replace('+', '.')
         .Replace("?", string.Empty);
 
-    private static string EscapeAttribute(string value) => value
-        .Replace("&", "&amp;")
-        .Replace("\"", "&quot;")
-        .Replace("<", "&lt;")
-        .Replace(">", "&gt;");
+    // The value is element text as written in the source, so its entities are
+    // already encoded (`Fish &amp; Chips`) and it holds no '<'. Only a '"',
+    // which would end the attribute, still needs an entity.
+    private static string EscapeAttribute(string value) => value.Replace("\"", "&quot;");
 
     private static bool IsIdentifier(string value) => value.Length > 0 &&
         (char.IsLetter(value[0]) || value[0] == '_') &&

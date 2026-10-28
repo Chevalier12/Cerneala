@@ -253,42 +253,89 @@ internal sealed partial class CernealaCompletionService
         return position;
     }
 
-    private static string? FindUnclosedElementName(string source, int offset)
+    // The innermost element still open at the offset. The tags come from the lexer's tokens, so a '<' in directive
+    // text (`@if value < 0.5`) and a '>' in a quoted attribute value are not tag syntax; comments, CDATA and
+    // processing instructions are single tokens.
+    private static string? FindUnclosedElementName(CompletionSite site)
     {
+        IReadOnlyList<SyntaxToken> tokens = site.Tokens;
         List<string> stack = new();
-        int position = 0;
-        while (position < offset)
+        for (int index = 0; index < tokens.Count && tokens[index].Span.Start < site.Offset; index++)
         {
-            int opening = source.IndexOf('<', position);
-            if (opening < 0 || opening >= offset)
+            if (tokens[index].Kind != SyntaxKind.LessThanToken)
+            {
+                continue;
+            }
+
+            int end = index + 1;
+            while (end < tokens.Count && tokens[end].Kind is not (SyntaxKind.GreaterThanToken or SyntaxKind.EndOfFileToken))
+            {
+                end++;
+            }
+
+            if (end >= tokens.Count || tokens[end].Kind != SyntaxKind.GreaterThanToken || tokens[end].Span.Start >= site.Offset)
             {
                 break;
             }
 
-            int end = source.IndexOf('>', opening + 1);
-            if (end < 0 || end >= offset)
-            {
-                break;
-            }
-
-            string tag = source.Substring(opening + 1, end - opening - 1).Trim();
-            if (tag.StartsWith("/", StringComparison.Ordinal))
+            SyntaxToken[] tag = tokens.Skip(index + 1).Take(end - index - 1)
+                .Where(token => token.Kind != SyntaxKind.WhitespaceToken)
+                .ToArray();
+            if (tag.Length > 0 && tag[0].Kind == SyntaxKind.SlashToken)
             {
                 if (stack.Count > 0)
                 {
                     stack.RemoveAt(stack.Count - 1);
                 }
             }
-            else if (!tag.StartsWith("!", StringComparison.Ordinal) && !tag.StartsWith("?", StringComparison.Ordinal) &&
-                !tag.EndsWith("/", StringComparison.Ordinal))
+            else if (tag.Length > 0 && tag[0].Kind == SyntaxKind.NameToken && tag[tag.Length - 1].Kind != SyntaxKind.SlashToken)
             {
-                stack.Add(tag.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)[0]);
+                stack.Add(tag[0].Text);
             }
 
-            position = end + 1;
+            index = end;
         }
 
         return stack.LastOrDefault();
+    }
+
+    // The '<' of the tag that holds the offset, or -1. It comes from the lexer's tokens, so a '<' in directive text
+    // (`@if value < 0.5 { @s|`) or a '>' in a quoted attribute value (`Content=">" |`) is not tag syntax. The lexer
+    // reads a '<' that is being typed as text, because no name follows it yet (`<Window><|</Window>`); such a '<'
+    // still starts the tag when only a partial element name, with or without '/', lies between it and the offset.
+    private static int FindTagStart(string source, IReadOnlyList<SyntaxToken> tokens, int offset)
+    {
+        int tagStart = -1;
+        SyntaxToken? last = null;
+        foreach (SyntaxToken token in tokens)
+        {
+            if (token.Span.Start >= offset)
+            {
+                break;
+            }
+
+            last = token;
+            if (token.Kind == SyntaxKind.LessThanToken)
+            {
+                tagStart = token.Span.Start;
+            }
+            else if (token.Kind == SyntaxKind.GreaterThanToken)
+            {
+                tagStart = -1;
+            }
+        }
+
+        if (last?.Kind == SyntaxKind.TextToken)
+        {
+            int typed = source.LastIndexOf('<', offset - 1, offset - last.Span.Start);
+            int nameStart = typed + 1 < offset && source[typed + 1] == '/' ? typed + 2 : typed + 1;
+            if (typed >= 0 && Enumerable.Range(nameStart, offset - nameStart).All(index => IsMarkupNameCharacter(source[index])))
+            {
+                return typed;
+            }
+        }
+
+        return tagStart;
     }
 
     private static FunctionCall? FindFunctionCall(string source, int offset)
@@ -438,8 +485,11 @@ internal sealed partial class CernealaCompletionService
             return false;
         }
 
-        int separator = trimmed.LastIndexOf(" as ", StringComparison.Ordinal);
-        return separator >= 0 && trimmed.Substring(separator + 4).All(IsIdentifierCharacter);
+        // The handle follows an "as" outside quoted strings and argument parentheses: in
+        // @run $Pulse(Label = "save as |") the caret is inside a string, not after the handle separator.
+        int separator = CernealaSemanticModel.FindTopLevelKeyword(trimmed, "as");
+        return separator >= 0 && separator + "as".Length < trimmed.Length &&
+            trimmed.Substring(separator + "as".Length).TrimStart().All(IsIdentifierCharacter);
     }
 
     private static bool TryGetReactiveExpressionOperandContext(
@@ -610,6 +660,7 @@ internal sealed partial class CernealaCompletionService
     {
         private CompletionSite(
             string source,
+            IReadOnlyList<SyntaxToken> tokens,
             int offset,
             CompletionSiteKind kind,
             int tagStart,
@@ -625,6 +676,7 @@ internal sealed partial class CernealaCompletionService
             BindingSite? binding)
         {
             Source = source;
+            Tokens = tokens;
             Offset = offset;
             Kind = kind;
             TagStart = tagStart;
@@ -641,6 +693,7 @@ internal sealed partial class CernealaCompletionService
         }
 
         public string Source { get; }
+        public IReadOnlyList<SyntaxToken> Tokens { get; }
         public int Offset { get; }
         public CompletionSiteKind Kind { get; }
         public int TagStart { get; }
@@ -655,7 +708,7 @@ internal sealed partial class CernealaCompletionService
         public TextSpan ValueWordSpan { get; }
         public BindingSite? Binding { get; }
 
-        public static CompletionSite Classify(string source, int offset)
+        public static CompletionSite Classify(string source, IReadOnlyList<SyntaxToken> tokens, int offset)
         {
             int lineStart = source.LastIndexOf('\n', Math.Max(0, offset - 1));
             lineStart = lineStart < 0 ? 0 : lineStart + 1;
@@ -667,12 +720,10 @@ internal sealed partial class CernealaCompletionService
 
             TextSpan wordSpan = new(wordStart, offset - wordStart);
             string wordPrefix = source.Substring(wordStart, offset - wordStart);
-            int tagStart = source.LastIndexOf('<', Math.Max(0, offset - 1));
-            int previousEnd = source.LastIndexOf('>', Math.Max(0, offset - 1));
-            bool insideTag = tagStart >= 0 && tagStart > previousEnd;
-            if (!insideTag)
+            int tagStart = FindTagStart(source, tokens, offset);
+            if (tagStart < 0)
             {
-                return new CompletionSite(source, offset, CompletionSiteKind.Directive, -1, false, false, false,
+                return new CompletionSite(source, tokens, offset, CompletionSiteKind.Directive, -1, false, false, false,
                     wordSpan, wordPrefix, lineStart, null, string.Empty, wordSpan, null);
             }
 
@@ -694,7 +745,7 @@ internal sealed partial class CernealaCompletionService
             if (elementSite)
             {
                 TextSpan elementWord = new(nameStart, Math.Max(0, offset - nameStart));
-                return new CompletionSite(source, offset, CompletionSiteKind.Element, tagStart, tagHasClose, closing, rootTag,
+                return new CompletionSite(source, tokens, offset, CompletionSiteKind.Element, tagStart, tagHasClose, closing, rootTag,
                     elementWord, source.Substring(elementWord.Start, elementWord.Length), lineStart, null, string.Empty,
                     elementWord, null);
             }
@@ -730,7 +781,7 @@ internal sealed partial class CernealaCompletionService
                 TextSpan valueWordSpan = new(valueWordStart, offset - valueWordStart);
                 string valuePrefix = source.Substring(valueStart, offset - valueStart);
                 BindingSite? binding = BindingSite.Parse(source, valueStart, offset, valuePrefix);
-                return new CompletionSite(source, offset, CompletionSiteKind.AttributeValue, tagStart, tagHasClose, false,
+                return new CompletionSite(source, tokens, offset, CompletionSiteKind.AttributeValue, tagStart, tagHasClose, false,
                     rootTag, wordSpan, wordPrefix, lineStart, attributeName, valuePrefix, valueWordSpan, binding);
             }
 
@@ -741,7 +792,7 @@ internal sealed partial class CernealaCompletionService
             }
 
             TextSpan attributeWord = new(attributeStart, offset - attributeStart);
-            return new CompletionSite(source, offset, CompletionSiteKind.Attribute, tagStart, tagHasClose, false, rootTag,
+            return new CompletionSite(source, tokens, offset, CompletionSiteKind.Attribute, tagStart, tagHasClose, false, rootTag,
                 attributeWord, source.Substring(attributeWord.Start, attributeWord.Length), lineStart, null,
                 string.Empty, attributeWord, null);
         }

@@ -420,6 +420,47 @@ public sealed class StructureTests
             "Symbol names: [" + string.Join(", ", names.Select(name => "'" + name + "'")) + "].");
     }
 
+    // The outline and workspace/symbol show one bound items template with the same name; the outline detail is the bound value type.
+    [Theory]
+    [InlineData("Name=\"Row\" Key=\"Card\"", "Row")]
+    [InlineData("Key=\"Card\"", "Card")]
+    [InlineData("Name=\"Row\"", "Row")]
+    public void ItemsTemplateHasTheSameNameInTheOutlineAndInWorkspaceSymbols(string attribute, string expectedName)
+    {
+        using Fixture fixture = Fixture.Create(
+            "<Window><ItemsControl>@templates { <ContentTemplate " + attribute + "><TextBlock /></ContentTemplate> }</ItemsControl></Window>");
+        CernealaStructureService service = new();
+
+        CernealaOutlineSymbol root = Assert.Single(service.GetDocumentSymbols(fixture.Document, fixture.Model));
+        CernealaOutlineSymbol template = Assert.Single(Flatten(root), symbol => symbol.Kind == CernealaOutlineSymbolKind.Template);
+        CernealaWorkspaceSymbol workspace = Assert.Single(
+            service.GetWorkspaceSymbols([fixture.Model], string.Empty),
+            symbol => symbol.Name != "Window");
+
+        Assert.Equal(
+            (expectedName, expectedName, "System.Object"),
+            (template.Name, workspace.Name, template.Detail));
+    }
+
+    // Without a semantic model the outline names a template in the model's order: Name, Key, DataType, "ContentTemplate".
+    [Theory]
+    [InlineData("Name=\"Row\" Key=\"Card\" DataType=\"Item\"", "Row")]
+    [InlineData("Key=\"Card\" DataType=\"Item\"", "Card")]
+    [InlineData("DataType=\"Item\"", "Item")]
+    [InlineData("Name=\" \"", "ContentTemplate")]
+    public void MarkupOnlyItemsTemplateUsesTheModelNameOrder(string attribute, string expectedName)
+    {
+        CernealaDocument document = new(
+            "View.crn",
+            SourceText.From("<Window><ItemsControl>@templates { <ContentTemplate " + attribute + "><TextBlock /></ContentTemplate> }</ItemsControl></Window>", 1));
+        CernealaStructureService service = new();
+
+        CernealaOutlineSymbol root = Assert.Single(service.GetDocumentSymbols(document, model: null));
+        CernealaOutlineSymbol template = Assert.Single(Flatten(root), symbol => symbol.Kind == CernealaOutlineSymbolKind.Template);
+
+        Assert.Equal(expectedName, template.Name);
+    }
+
     private static IEnumerable<CernealaOutlineSymbol> Flatten(CernealaOutlineSymbol symbol)
     {
         yield return symbol;
