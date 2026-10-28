@@ -61,7 +61,7 @@ A `Run` is the only inline that holds text. It uses the text properties of `Text
 
 `Text` never holds `null`: assigning `null` stores `string.Empty`. A change of `Text` invalidates measure, render and semantics of the owning `TextBlock` and sets `TextBlock.Text` to the new concatenated text of all inlines.
 
-Setting `TextBlock.Text` replaces all inlines with one new `Run` that holds the text (or with no inline when the text is empty). A `Run` that was in the `Inlines` is detached by that and can be added again.
+Setting `TextBlock.Text` replaces all inlines with one new `Run` that holds the text (or with no inline when the text is empty), also when the text equals the current `TextBlock.Text`. A `Run` that was in the `Inlines` is detached by that and can be added again. The only exception is a write of the same text while the inlines are still the unchanged `Run` that the last `TextBlock.Text` write made: that `Run` is kept. For example, after `run.FontWeight = FontWeight.Bold` on that `Run`, setting the same text replaces it with a new plain `Run`.
 
 In `.crn` markup, whitespace in the content of a `Run` follows WPF, with the rules applied once over the whole content of the `TextBlock` (see `TextBlock`): a run of white space becomes one space, white space at the start and at the end of the whole `TextBlock` content is removed, and white space next to a `LineBreak` is removed. So `<TextBlock>x<Run> abc </Run>y</TextBlock>` keeps the spaces and has the text `"x abc y"`, while `<TextBlock><Run>  a   b  </Run></TextBlock>` has the text `"a b"`, and `<TextBlock>one<LineBreak/>two</TextBlock>` has the text `"one\ntwo"`.
 

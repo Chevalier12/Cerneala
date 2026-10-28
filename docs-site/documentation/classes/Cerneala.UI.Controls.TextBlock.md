@@ -108,6 +108,7 @@ A negative side of `BorderThickness` adds its size to the same insets, as the `I
 As in WPF, `Text` and `Inlines` are two views of the same content:
 
 - Setting `Text` replaces all inlines with one `Run` that holds the text, or with no inline when the text is empty. For example, after `Inlines.Add(new Bold(new Run("old")))`, setting `Text = "Hello"` leaves one `Run` with the text `"Hello"`.
+- This also happens when the new text equals the current `Text`, as in WPF. For example, after `Inlines.Add(new Bold(new Run("Hello")))`, `Text` is `"Hello"`, and setting `Text = "Hello"` replaces the `Bold` with one plain `Run("Hello")`, and invalidates measure, render, and semantics. One exception: when the inlines are still the `Run` that the last `Text` write made, and neither that `Run` nor the inlines changed since, setting the same text keeps that `Run` and invalidates nothing. For example, `Text = "Hello"` twice leaves the first `Run`.
 - Changing the inlines sets `Text` to the concatenated text of all inlines. A `LineBreak` is `"\n"`. For example `Run("ab")`, `LineBreak`, `Run("c")` gives `Text` equal to `"ab\nc"`. This also happens when the text of a `Run` changes, or when an inline under a `Span` is added or removed.
 - A change of the inlines or of the text of a `Run` invalidates measure, render, and semantics. A change of the font properties of an inline invalidates measure and render. A change of the `Foreground` or the `TextDecorations` of an inline invalidates render only, and the text is not changed.
 
