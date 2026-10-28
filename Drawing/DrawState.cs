@@ -413,7 +413,7 @@ public sealed class DrawCommandStateAnalyzer
                     break;
                 case DrawCommandKind.PushClip:
                 {
-                    DrawRect worldClip = TransformBounds(
+                    DrawRect worldClip = TransformClipBounds(
                         command.Rect,
                         transforms[^1]);
                     clips.Add(clips[^1] is DrawRect current
@@ -424,7 +424,7 @@ public sealed class DrawCommandStateAnalyzer
                 }
                 case DrawCommandKind.PushPathClip:
                 {
-                    DrawRect worldClip = TransformBounds(
+                    DrawRect worldClip = TransformClipBounds(
                         command.Rect,
                         transforms[^1]);
                     clips.Add(clips[^1] is DrawRect current
@@ -560,8 +560,8 @@ public sealed class DrawCommandStateAnalyzer
         DrawRect bounds,
         Matrix3x2 transform)
     {
-        TransformEdges(bounds, transform, out float left, out float top, out float width, out float height);
-        return new DrawRect(left, top, width, height);
+        TransformEdges(bounds, transform, out float left, out float top, out float right, out float bottom);
+        return new DrawRect(left, top, MathF.Max(0, right - left), MathF.Max(0, bottom - top));
     }
 
     // Transformed bounds, or null (unknown) when they exceed the DrawRect range.
@@ -569,8 +569,32 @@ public sealed class DrawCommandStateAnalyzer
         DrawRect bounds,
         Matrix3x2 transform)
     {
-        TransformEdges(bounds, transform, out float left, out float top, out float width, out float height);
-        return DrawRect.TryCreate(left, top, width, height);
+        TransformEdges(bounds, transform, out float left, out float top, out float right, out float bottom);
+        return DrawRect.TryCreate(left, top, MathF.Max(0, right - left), MathF.Max(0, bottom - top));
+    }
+
+    // The world clip of a rectangle. A clip cannot be unknown: null means no
+    // clip. When the transformed clip leaves the DrawRect range, keep its part
+    // inside the largest DrawRect centered on the origin, (-1e9, -1e9) to
+    // (1e9, 1e9). Every render target lies inside that square, so the
+    // clamped clip clips each drawable pixel exactly like the real clip. A NaN
+    // edge (from an overflowed transform) does not limit the clip.
+    internal static DrawRect TransformClipBounds(
+        DrawRect bounds,
+        Matrix3x2 transform)
+    {
+        TransformEdges(bounds, transform, out float left, out float top, out float right, out float bottom);
+        if (DrawRect.TryCreate(left, top, MathF.Max(0, right - left), MathF.Max(0, bottom - top)) is DrawRect world)
+        {
+            return world;
+        }
+
+        const float Limit = DrawArgument.MaxPixelSize / 2;
+        left = float.IsNaN(left) ? -Limit : Math.Clamp(left, -Limit, Limit);
+        top = float.IsNaN(top) ? -Limit : Math.Clamp(top, -Limit, Limit);
+        right = float.IsNaN(right) ? Limit : Math.Clamp(right, -Limit, Limit);
+        bottom = float.IsNaN(bottom) ? Limit : Math.Clamp(bottom, -Limit, Limit);
+        return new DrawRect(left, top, MathF.Max(0, right - left), MathF.Max(0, bottom - top));
     }
 
     private static void TransformEdges(
@@ -578,8 +602,8 @@ public sealed class DrawCommandStateAnalyzer
         Matrix3x2 transform,
         out float left,
         out float top,
-        out float width,
-        out float height)
+        out float right,
+        out float bottom)
     {
         Vector2 topLeft = Vector2.Transform(new Vector2(bounds.X, bounds.Y), transform);
         Vector2 topRight = Vector2.Transform(new Vector2(bounds.Right, bounds.Y), transform);
@@ -587,10 +611,8 @@ public sealed class DrawCommandStateAnalyzer
         Vector2 bottomRight = Vector2.Transform(new Vector2(bounds.Right, bounds.Bottom), transform);
         left = MathF.Min(MathF.Min(topLeft.X, topRight.X), MathF.Min(bottomLeft.X, bottomRight.X));
         top = MathF.Min(MathF.Min(topLeft.Y, topRight.Y), MathF.Min(bottomLeft.Y, bottomRight.Y));
-        float right = MathF.Max(MathF.Max(topLeft.X, topRight.X), MathF.Max(bottomLeft.X, bottomRight.X));
-        float bottom = MathF.Max(MathF.Max(topLeft.Y, topRight.Y), MathF.Max(bottomLeft.Y, bottomRight.Y));
-        width = MathF.Max(0, right - left);
-        height = MathF.Max(0, bottom - top);
+        right = MathF.Max(MathF.Max(topLeft.X, topRight.X), MathF.Max(bottomLeft.X, bottomRight.X));
+        bottom = MathF.Max(MathF.Max(topLeft.Y, topRight.Y), MathF.Max(bottomLeft.Y, bottomRight.Y));
     }
 
     internal static DrawRect Intersect(DrawRect left, DrawRect right)

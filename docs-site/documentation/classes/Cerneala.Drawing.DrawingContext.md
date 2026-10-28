@@ -208,7 +208,7 @@ Typed `FillPath` overloads retain immutable geometry and `DrawFillRule` directly
 
 Rounded rectangles use dedicated commands with proportionally normalized independent corner radii. Other compound helpers lower to immutable `DrawPath` instances and share the path fill/stroke pipeline. Arc, pie, chord, regular-polygon, and star angles are radians; increasing angles are clockwise in the downward-positive drawing coordinate system.
 
-Advanced image drawing accepts source rectangles and origins in source-image pixels together with tint, opacity, rotation, flip, depth, sampling, and addressing. Image quads use exactly two affine 2D triangles and do not promise perspective-correct mapping. Nine-slice drawing uses one deterministic mesh and proportionally fits opposing borders into undersized destinations.
+Advanced image drawing accepts source rectangles and origins in source-image pixels together with tint, opacity, rotation, flip, depth, sampling, and addressing. Image quads use exactly two affine 2D triangles and do not promise perspective-correct mapping. Nine-slice drawing uses one deterministic mesh and proportionally fits opposing borders into undersized destinations. A flip mirrors the whole nine-slice: each source border keeps its own width on the side the flip moves it to (see [DrawInsets](Cerneala.Drawing.DrawInsets.md)).
 
 The SDL_GPU [Point + Clamp image-edge behavior](Cerneala.Drawing.DrawImageOptions.md#point-and-clamp-image-edges-on-sdl-gpu) has a narrower scope than these image and mesh APIs as a whole: image-generated quads, per-sprite batch quads, options-based image quads, and the outer nine-slice domain qualify; authored-vertex quads and arbitrary meshes do not.
 
