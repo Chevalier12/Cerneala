@@ -51,7 +51,7 @@ When the stroke is thicker than the element, the deflated rectangle is empty and
 
 This rule applies only to the default geometry. A supplied `Geometry` is drawn as it is, and its stroke stays centered on the geometry.
 
-The inherited `Geometry` property overrides the default ellipse geometry. When `Geometry` is not `null`, `Ellipse` renders that supplied geometry instead of creating an `EllipseGeometry` from its bounds. Rendering is then handled by `Shape` according to the runtime geometry type.
+The inherited `Geometry` property overrides the default ellipse geometry. When `Geometry` is not `null`, `Ellipse` renders that supplied geometry instead of creating an `EllipseGeometry` from its bounds. Rendering is then handled by `Shape` according to the runtime geometry type. The supplied geometry is relative to the ellipse's arranged top-left: an `Ellipse` with `Geometry = new EllipseGeometry(new DrawRect(0, 0, 30, 20))` arranged at `(100, 50, 30, 20)` records `FillEllipse (100, 50, 30, 20)`.
 
 Rendering is skipped when `Opacity` is `0`. Visible fill and stroke brushes use the native ellipse drawing commands; a stroke also requires positive `StrokeThickness`. Opacity and transforms use the shared `UIElement` properties and retained drawing state. Rotation and skew transform the ellipse itself, rather than drawing a new axis-aligned ellipse inside its transformed bounding box. The inherited `RenderTransformOrigin` and ancestor transforms apply.
 
@@ -96,7 +96,7 @@ Measurement is inherited from `Shape`. With a custom `Geometry`, desired size is
 | Condition | Result |
 | --- | --- |
 | `Geometry` is `null` | Creates an `EllipseGeometry` from the arranged bounds deflated by half the effective stroke thickness and renders it through `Shape`. |
-| `Geometry` is not `null` | Uses the supplied geometry instead of the default ellipse geometry. Its stroke stays centered on the geometry. |
+| `Geometry` is not `null` | Uses the supplied geometry, relative to the arranged top-left, instead of the default ellipse geometry. Its stroke stays centered on the geometry. |
 | `Fill` is visible and the deflated rectangle has positive width and height | Emits a fill ellipse command for the deflated rectangle. |
 | `Stroke` is visible, `StrokeThickness > 0`, and the deflated rectangle has positive width and height | Emits a stroke ellipse command for the deflated rectangle, so the outer edge of the stroke touches the arranged bounds. |
 | `StrokeThickness` is larger than the arranged width or height | The deflated rectangle is empty; no fill or stroke command is emitted. |

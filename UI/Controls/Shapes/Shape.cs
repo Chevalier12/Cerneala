@@ -138,8 +138,9 @@ public abstract class Shape : Control
                 }
                 break;
 
+            // Geometry is local to the arranged top-left, like the translated PathGeometry below.
             case RectangleGeometry rectangle:
-                DrawRect rectangleBounds = rectangle.Bounds;
+                DrawRect rectangleBounds = OffsetByArrangedTopLeft(rectangle.Bounds, context.Bounds);
                 if (HasVisibleBrush(fill) && rectangleBounds.Width > 0 && rectangleBounds.Height > 0)
                 {
                     context.DrawingContext.FillRectangle(rectangleBounds, fill!);
@@ -155,7 +156,7 @@ public abstract class Shape : Control
                 break;
 
             case EllipseGeometry ellipse:
-                DrawRect ellipseBounds = ellipse.Bounds;
+                DrawRect ellipseBounds = OffsetByArrangedTopLeft(ellipse.Bounds, context.Bounds);
                 if (HasVisibleBrush(fill) && ellipseBounds.Width > 0 && ellipseBounds.Height > 0)
                 {
                     context.DrawingContext.FillEllipse(ellipseBounds, fill!);
@@ -205,8 +206,9 @@ public abstract class Shape : Control
     }
 
     /// <summary>
-    /// Deflates the arranged bounds by half the effective stroke thickness so the centered pen stays inside them,
+    /// Deflates the arranged size by half the effective stroke thickness so the centered pen stays inside it,
     /// like WPF's <c>Ellipse</c> and <c>Rectangle</c>. A non-null <see cref="Stroke"/> counts even when transparent.
+    /// The result is local to the arranged top-left, like every geometry that <see cref="RenderGeometry"/> draws.
     /// </summary>
     private protected DrawRect DeflateByHalfStroke(LayoutRect arrangedBounds, out float inset)
     {
@@ -214,10 +216,15 @@ public abstract class Shape : Control
         float thickness = Stroke is null ? 0 : StrokeThickness;
         inset = thickness / 2;
         return new DrawRect(
-            bounds.X + inset,
-            bounds.Y + inset,
+            inset,
+            inset,
             MathF.Max(0, bounds.Width - thickness),
             MathF.Max(0, bounds.Height - thickness));
+    }
+
+    private static DrawRect OffsetByArrangedTopLeft(DrawRect local, LayoutRect arrangedBounds)
+    {
+        return new DrawRect(local.X + arrangedBounds.X, local.Y + arrangedBounds.Y, local.Width, local.Height);
     }
 
     private static bool HasVisibleBrush(Brush? brush)

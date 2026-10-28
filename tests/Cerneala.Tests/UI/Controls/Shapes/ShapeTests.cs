@@ -398,8 +398,38 @@ public sealed class ShapeTests
             Assert.Equal(2, commands.Length);
             Assert.Equal(DrawCommandKind.FillRectangle, commands[0].Kind);
             Assert.Equal(DrawCommandKind.DrawRectangle, commands[1].Kind);
-            Assert.All(commands, command => Assert.Equal(new DrawRect(5, 6, 10, 8), command.Rect));
+            Assert.All(commands, command => Assert.Equal(new DrawRect(6, 8, 10, 8), command.Rect));
         }
+    }
+
+    [Fact]
+    public void ExplicitGeometryIsDrawnRelativeToTheArrangedTopLeft()
+    {
+        LayoutRect arranged = new(100, 50, 30, 20);
+        RectangleShape explicitRectangle = new()
+        {
+            Fill = new SolidColorBrush(Color.White),
+            Stroke = new SolidColorBrush(Color.Black),
+            Geometry = new RectangleGeometry(new DrawRect(0, 0, 30, 20))
+        };
+        Ellipse explicitEllipse = new()
+        {
+            Fill = new SolidColorBrush(Color.White),
+            Stroke = new SolidColorBrush(Color.Black),
+            Geometry = new EllipseGeometry(new DrawRect(0, 0, 30, 20))
+        };
+
+        DrawCommand[] rectangleCommands = Record(explicitRectangle, arranged).ToArray();
+        DrawCommand[] ellipseCommands = Record(explicitEllipse, arranged).ToArray();
+
+        Assert.Equal(
+            [DrawCommandKind.FillRectangle, DrawCommandKind.DrawRectangle],
+            rectangleCommands.Select(command => command.Kind));
+        Assert.All(rectangleCommands, command => Assert.Equal(new DrawRect(100, 50, 30, 20), command.Rect));
+        Assert.Equal(
+            [DrawCommandKind.FillEllipse, DrawCommandKind.DrawEllipse],
+            ellipseCommands.Select(command => command.Kind));
+        Assert.All(ellipseCommands, command => Assert.Equal(new DrawRect(100, 50, 30, 20), command.Rect));
     }
 
     [Fact]
