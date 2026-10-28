@@ -38,6 +38,8 @@ float current = value.Current; // 0.75f
 
 The timeline owns an internal `MotionGraph` configured with built-in value mixers and `ReducedMotionPolicy.Default`. `CreateValue<T>` creates a `MotionValue<T>` from that graph. Setting timeline progress does not automatically write to created values; caller code decides how the timeline's normalized progress maps to motion values.
 
+No public member ticks the internal graph. A time-based animation started on a created value, for example `value.AnimateTo(1f, Motion.Tween<float>(TimeSpan.FromMilliseconds(150)))`, never advances, and its `MotionHandle.Completion` never completes. Write created values directly, for example with `JumpTo`, or create time-based animations on a `MotionGraph` that caller code ticks with `MotionGraph.Tick`.
+
 The timeline captures the constructing managed thread internally. `SetProgress`, `CreateValue<T>`, and graph-owned value mutations must be used from that same thread.
 
 ## Constructors

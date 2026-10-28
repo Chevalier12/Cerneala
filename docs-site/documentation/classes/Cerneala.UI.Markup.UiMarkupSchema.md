@@ -66,7 +66,20 @@ The schema also registers these shared element/control properties. The `Elements
 
 `Panel` and `StackPanel` are not `Control` types, so the schema does not register the `Control` properties for them. `UiFactory.Create` reports such an attribute as an unknown property (`MARKUP023`). For example, `<StackPanel Background="Red" />` creates no element in strict mode and reports `MARKUP023` with the message `Unknown markup property 'StackPanel.Background'.`. A `<StackPanel.Background>` property element is reported as `MARKUP028`.
 
-`Button.Content` and `TextBlock.Text` are registered as element-specific properties. Text content is accepted only when the element registration has a matching content property registration.
+The schema registers these element-specific properties. Each one is accepted only on the element that the `Property` column names:
+
+| Property | Value conversion |
+| --- | --- |
+| `Border.CornerRadius` | One float, which creates a uniform `CornerRadius`, or four comma-separated floats: top-left, top-right, bottom-right, and bottom-left. Floats use invariant culture. For example, `<Border CornerRadius="8,0,0,8" />` rounds only the left corners. |
+| `Button.Content` | Raw string value assigned to `Button.Content`. |
+| `RepeatButton.Content` | Raw string value assigned to `RepeatButton.Content`. |
+| `RepeatButton.Delay` | `int` parsed with invariant culture, in milliseconds. `RepeatButton.Delay` rejects negative values. |
+| `RepeatButton.Interval` | `int` parsed with invariant culture, in milliseconds. `RepeatButton.Interval` rejects `0` and negative values. |
+| `TextBlock.Text` | Raw string value assigned to `TextBlock.Text`. |
+
+For example, `<RepeatButton Content="x" Delay="300" Interval="50" />` creates a `RepeatButton` with `Delay == 300` and `Interval == 50`. A value that does not convert, such as `Delay="1.5"`, or that the property rejects, such as `Interval="0"`, is reported as `MARKUP027`, and so is a `CornerRadius` with two or three values. `<Button CornerRadius="8" />` is reported as an unknown property (`MARKUP023`).
+
+Text content is accepted only when the element registration has a matching content property registration.
 
 Color values use `Color.TryParse`: any WPF named color, matched without regard to case (for example `Red` or `cornflowerblue`), `#RRGGBB`, `#AARRGGBB`, or three or four comma-separated bytes: red, green, blue, and optional alpha. When alpha is omitted, the schema uses `255`. A brush value that starts with `$` looks up the brush resource with the rest of the name; a missing resource throws `FormatException`, which `UiFactory.Create` reports as `MARKUP027`.
 

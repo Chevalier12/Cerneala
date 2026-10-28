@@ -118,6 +118,40 @@ public sealed class UiFactoryTests
     }
 
     [Fact]
+    public void CreateDefaultAppliesEveryDocumentedElementSpecificProperty()
+    {
+        // The element-specific properties listed on docs-site/documentation/classes/Cerneala.UI.Markup.UiMarkupSchema.md.
+        UiFactory factory = new(UiMarkupSchema.CreateDefault());
+
+        Border border = Assert.IsType<Border>(factory.Create(Read("<Border CornerRadius=\"4\" />")).Value);
+        Assert.Equal(new CornerRadius(4f), border.CornerRadius);
+        Button button = Assert.IsType<Button>(factory.Create(Read("<Button Content=\"Save\" />")).Value);
+        Assert.Equal("Save", button.Content);
+        Cerneala.UI.Controls.Primitives.RepeatButton repeat = Assert.IsType<Cerneala.UI.Controls.Primitives.RepeatButton>(
+            factory.Create(Read("<RepeatButton Content=\"x\" Delay=\"300\" Interval=\"50\" />")).Value);
+        Assert.Equal("x", repeat.Content);
+        Assert.Equal(300, repeat.Delay);
+        Assert.Equal(50, repeat.Interval);
+        TextBlock text = Assert.IsType<TextBlock>(factory.Create(Read("<TextBlock Text=\"One\" />")).Value);
+        Assert.Equal("One", text.Text);
+    }
+
+    [Theory]
+    [InlineData("Delay", "1.5")]
+    [InlineData("Delay", "-1")]
+    [InlineData("Interval", "0")]
+    public void CreateReportsInvalidRepeatButtonTimingAsTypedValueDiagnostic(string property, string value)
+    {
+        UiFactory factory = new(UiMarkupSchema.CreateDefault());
+
+        MarkupResult<UIElement> result = factory.Create(Read($"<RepeatButton {property}=\"{value}\" />"));
+
+        Assert.True(result.HasErrors);
+        Assert.Null(result.Value);
+        Assert.Equal("MARKUP027", Assert.Single(result.Diagnostics).Code);
+    }
+
+    [Fact]
     public void CreateRejectsCornerRadiusOnElementsThatAreNotBorders()
     {
         UiFactory factory = new(UiMarkupSchema.CreateDefault());
