@@ -81,9 +81,9 @@ public class ContentControl : Control
         }
     }
 
-    // A change of the effective Content whose new element could not be hosted, for example because its attach threw,
-    // restores the previous value at the value source that changed, which hosts the previous element again, and then
-    // rethrows. So a failed replacement restores the previous content ownership whatever wrote it: the setter,
+    // A change of the effective Content whose new element could not be hosted, for example because its attach threw, or
+    // whose old element could not be removed, for example because its Unloaded handler threw, restores the previous
+    // value at the value source that changed, which hosts the previous element again, and then rethrows. So a failed replacement restores the previous content ownership whatever wrote it: the setter,
     // SetValue and ClearValue with any value source, or SetFrameworkDefault.
     internal override void NotifyPropertyChange(in UiPropertyChange change)
     {
@@ -149,9 +149,11 @@ public class ContentControl : Control
             return base.MeasureCore(context);
         }
 
+        // Only the element this control hosts takes part in its layout. Element Content that it does not host, for
+        // example while a ComponentTemplateKey does not resolve yet, is neither measured nor arranged.
         Thickness insets = Insets;
         LayoutSize available = Deflate(context.AvailableSize, insets);
-        LayoutSize contentSize = ContentElement?.Measure(new MeasureContext(available, context.Rounding)) ?? LayoutSize.Zero;
+        LayoutSize contentSize = hostedContentElement?.Measure(new MeasureContext(available, context.Rounding)) ?? LayoutSize.Zero;
         return Inflate(contentSize, insets);
     }
 
@@ -164,7 +166,7 @@ public class ContentControl : Control
 
         Thickness insets = Insets;
         LayoutRect inner = Deflate(context.FinalRect, insets);
-        ContentElement?.Arrange(new ArrangeContext(inner, context.Rounding));
+        hostedContentElement?.Arrange(new ArrangeContext(inner, context.Rounding));
         return context.FinalRect;
     }
 
@@ -174,19 +176,21 @@ public class ContentControl : Control
         // so the hosted element follows it, as WPF's ContentControl.OnContentChanged moves the logical child.
         if (ReferenceEquals(args.Property, ContentProperty))
         {
+            // The removal of the old element fails the replacement too, for example when its Unloaded handler throws:
+            // NotifyPropertyChange then restores the old value, which hosts the old element again.
             int change = ++contentChange;
-            RemoveContentElement(hostedContentElement);
-            if (change == contentChange && HostsContentDirectly(args.NewValue))
+            try
             {
-                try
+                RemoveContentElement(hostedContentElement);
+                if (change == contentChange && HostsContentDirectly(args.NewValue))
                 {
                     AddContentElement(args.NewValue);
                 }
-                catch
-                {
-                    contentHostingFailed = true;
-                    throw;
-                }
+            }
+            catch
+            {
+                contentHostingFailed = true;
+                throw;
             }
 
             base.OnPropertyChanged(args);
