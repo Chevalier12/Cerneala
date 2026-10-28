@@ -213,6 +213,109 @@ public sealed class DrawingTextLayoutTests
             $"line '{line.Text}' is {line.Bounds.Width} wide in a 45 wide box."));
     }
 
+    // Arial kerns "AV" and "VA", and a run is drawn as one shaped run. So alignment must use the kerned width:
+    // "AVAVAVAVAVAV" is 143.75 wide when shaped, but 160.08 when its letters are measured one by one (#1197).
+    [Theory]
+    [InlineData(DrawTextAlignment.Right)]
+    [InlineData(DrawTextAlignment.Center)]
+    public void AlignmentPlacesKernedTextByTheWidthItIsDrawnWith(DrawTextAlignment alignment)
+    {
+        IDrawFont arial = new SystemFontSource().LoadFont("Arial", 20);
+        const string text = "AVAVAVAVAVAV";
+        float unkerned = text.Sum(letter => ShapedWidth(new DrawTextRun(arial, letter.ToString(), 20)));
+        Assert.True(unkerned - ShapedWidth(new DrawTextRun(arial, text, 20)) > 1, "Arial does not kern \"AV\" on this machine.");
+
+        DrawTextLayout layout = new DrawTextLayoutBuilder()
+            .AddSpan(new DrawTextSpan(text, arial, 20, black))
+            .Build(new DrawTextLayoutOptions(maxWidth: 200, alignment: alignment));
+
+        DrawTextLayoutRun run = Assert.Single(Assert.Single(layout.Lines).Runs);
+        float drawn = ShapedWidth(run.TextRun);
+        float expectedX = alignment == DrawTextAlignment.Right ? 200 - drawn : (200 - drawn) / 2;
+        Assert.True(
+            Math.Abs(run.Position.X - expectedX) <= 0.01f,
+            $"{alignment}: run starts at {run.Position.X} and is drawn {drawn} wide, so it must start at {expectedX}.");
+        Assert.True(
+            Math.Abs(run.Bounds.Width - drawn) <= 0.01f,
+            $"{alignment}: run bounds width {run.Bounds.Width}, drawn width {drawn}.");
+    }
+
+    // The line breaker keeps the whole kerned text on a 150 wide line, so the line it returns must not be wider (#1197).
+    [Fact]
+    public void CharacterWrappingKeepsEveryKernedLineWithinTheMaxWidth()
+    {
+        IDrawFont arial = new SystemFontSource().LoadFont("Arial", 20);
+
+        DrawTextLayout layout = new DrawTextLayoutBuilder()
+            .AddSpan(new DrawTextSpan("AVAVAVAVAVAV", arial, 20, black))
+            .Build(new DrawTextLayoutOptions(maxWidth: 150, wrapping: DrawTextWrapping.Character));
+
+        Assert.All(layout.Lines, line => Assert.True(
+            line.Bounds.Width <= 150,
+            $"line '{line.Text}' is {line.Bounds.Width} wide in a 150 wide box."));
+    }
+
+    // Needs Segoe MDL2 Assets and Segoe UI (Windows). The icon font has no letters and no "…", so both come from the
+    // Segoe UI fallback (#1198).
+    [Fact]
+    public void TheEllipsisOfATrimmedLineUsesTheFallbackFontWhenOnlyTheFallbackHasIt()
+    {
+        SystemFontSource source = new();
+        IDrawFont icons = source.LoadFont("Segoe MDL2 Assets", 16);
+        IDrawFont segoe = source.LoadFont("Segoe UI", 16);
+
+        DrawTextLayout layout = new DrawTextLayoutBuilder()
+            .AddSpan(new DrawTextSpan("abcdefghijklmnopqrstuvwxyz", icons, 16, black, 1f, new[] { segoe }))
+            .Build(new DrawTextLayoutOptions(maxWidth: 80, trimming: DrawTextTrimming.CharacterEllipsis));
+
+        DrawTextLayoutLine line = Assert.Single(layout.Lines);
+        Assert.True(line.IsTrimmed);
+        DrawTextLayoutRun ellipsis = line.Runs.Single(static run => run.Text.EndsWith('…'));
+        Assert.Same(segoe, ellipsis.Font);
+    }
+
+    // Trimming must reserve the width of the "…" that is drawn. The box is chosen between "abcdefgh" + the icon font's
+    // missing-glyph advance and "abcdefgh" + the Segoe UI "…", so only the Segoe UI width drops the "h" (#1198).
+    [Fact]
+    public void TrimmingReservesTheWidthOfTheEllipsisInTheFontItIsDrawnWith()
+    {
+        SystemFontSource source = new();
+        IDrawFont icons = source.LoadFont("Segoe MDL2 Assets", 16);
+        IDrawFont segoe = source.LoadFont("Segoe UI", 16);
+        float drawnEllipsis = ShapedWidth(new DrawTextRun(segoe, "…", 16));
+        float primaryEllipsis = ShapedWidth(new DrawTextRun(icons, "…", 16));
+        Assert.True(drawnEllipsis - primaryEllipsis > 0.5f, $"Segoe UI \"…\" {drawnEllipsis}, Segoe MDL2 Assets missing glyph {primaryEllipsis}.");
+        float maxWidth = ShapedWidth(new DrawTextRun(segoe, "abcdefgh", 16)) + ((drawnEllipsis + primaryEllipsis) / 2);
+
+        DrawTextLayout layout = new DrawTextLayoutBuilder()
+            .AddSpan(new DrawTextSpan("abcdefghijklmnopqrstuvwxyz", icons, 16, black, 1f, new[] { segoe }))
+            .Build(new DrawTextLayoutOptions(maxWidth: maxWidth, trimming: DrawTextTrimming.CharacterEllipsis));
+
+        DrawTextLayoutLine line = Assert.Single(layout.Lines);
+        Assert.Same(segoe, line.Runs.Single(static run => run.Text.EndsWith('…')).Font);
+        float drawn = line.Runs.Sum(static run => ShapedWidth(run.TextRun));
+        Assert.True(drawn <= maxWidth, $"'{line.Text}' is drawn {drawn} wide in a {maxWidth} wide box.");
+    }
+
+    [Fact]
+    public void TheEllipsisKeepsThePrimaryFontWhenThePrimaryFontHasIt()
+    {
+        SystemFontSource source = new();
+        IDrawFont segoe = source.LoadFont("Segoe UI", 16);
+        IDrawFont yahei = source.LoadFont("Microsoft YaHei", 16);
+
+        DrawTextLayout layout = new DrawTextLayoutBuilder()
+            .AddSpan(new DrawTextSpan("abcdefghijklmnopqrstuvwxyz", segoe, 16, black, 1f, new[] { yahei }))
+            .Build(new DrawTextLayoutOptions(maxWidth: 80, trimming: DrawTextTrimming.CharacterEllipsis));
+
+        Assert.Same(segoe, Assert.Single(layout.Lines).Runs.Single(static run => run.Text.EndsWith('…')).Font);
+    }
+
+    private static float ShapedWidth(DrawTextRun run) =>
+        TextShaper.Default.TryShape(run, out TextShapeResult result)
+            ? MathF.Abs(result.AdvanceWidth)
+            : throw new InvalidOperationException($"'{run.Text}' could not be shaped.");
+
     private DrawTextLayout Layout(string text, DrawTextLayoutOptions options) =>
         new DrawTextLayoutBuilder()
             .AddSpan(new DrawTextSpan(text, font, 10, black))

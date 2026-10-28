@@ -509,7 +509,13 @@ internal static class DrawTextLayoutEngine
             {
                 if (float.IsNaN(ellipsisWidths[spanIndex]))
                 {
-                    ellipsisWidths[spanIndex] = MeasureLiteral(UnicodeLineBreakEngine.Ellipsis, ranges[spanIndex].Span, options.Scale);
+                    // With the font that CreateFragments selects for the ellipsis, so the reserved width is the drawn one.
+                    ellipsisWidths[spanIndex] = MeasureSpanText(
+                        UnicodeLineBreakEngine.Ellipsis,
+                        0,
+                        UnicodeLineBreakEngine.Ellipsis.Length,
+                        ranges[spanIndex].Span,
+                        options.Scale);
                 }
 
                 return ellipsisWidths[spanIndex];
@@ -792,7 +798,7 @@ internal static class DrawTextLayoutEngine
                     span.Brush,
                     span.Opacity,
                     direction,
-                    MeasureLiteral(element.Text, font, span.Size * scale),
+                    0,
                     // Justification stretches every white space, also a no-break space, which is no break white space.
                     element.Text.All(char.IsWhiteSpace),
                     spanIndex),
@@ -808,19 +814,28 @@ internal static class DrawTextLayoutEngine
             UnicodeTextDirection direction = baseDirection == DrawTextDirection.RightToLeft
                 ? UnicodeTextDirection.RightToLeft
                 : UnicodeTextDirection.LeftToRight;
+            // The ellipsis is a grapheme cluster of the span, so it gets the same font selection as the span text.
             AddOrMerge(
                 logical,
                 new Fragment(
                     UnicodeLineBreakEngine.Ellipsis,
-                    span.Font,
+                    ResolveFont(span, UnicodeLineBreakEngine.Ellipsis, scale),
                     span.Size * scale,
                     span.Brush,
                     span.Opacity,
                     direction,
-                    MeasureLiteral(UnicodeLineBreakEngine.Ellipsis, span, scale),
+                    0,
                     false,
                     spanIndex),
                 preserveClusters);
+        }
+
+        // A fragment is drawn as one shaped run, so its width is the advance of that run, with the kerning and the
+        // ligatures between its clusters, as the line breaker measured it.
+        for (int index = 0; index < logical.Count; index++)
+        {
+            Fragment fragment = logical[index];
+            logical[index] = fragment with { Width = MeasureLiteral(fragment.Text, fragment.Font, fragment.Size) };
         }
 
         ReorderVisually(logical, baseDirection);
@@ -914,7 +929,6 @@ internal static class DrawTextLayoutEngine
                 fragments[^1] = previous with
                 {
                     Text = previous.Text + candidate.Text,
-                    Width = previous.Width + candidate.Width,
                     IsWhitespace = false
                 };
                 return;
