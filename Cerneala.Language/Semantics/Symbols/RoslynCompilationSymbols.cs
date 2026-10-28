@@ -32,7 +32,24 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
             return member.Accessibility == LanguageAccessibility.Public;
         }
 
-        ISymbol symbol = roslynMember.Symbol;
+        return IsAccessibleFromGeneratedCode(roslynMember.Symbol, pairType);
+    }
+
+    // Mirrors the getter checks of UiMarkupPropertyResolver.FindClrProperty and
+    // UiMarkupBindingResolver.FindReadablePathProperty in Cerneala.SourceGen.
+    public bool CanReadFromGeneratedCode(ILanguageMemberSymbol member, ILanguageTypeSymbol? pairType)
+    {
+        if (member is not RoslynMemberSymbol roslynMember)
+        {
+            return member.CanRead && member.Accessibility == LanguageAccessibility.Public;
+        }
+
+        return roslynMember.Symbol is IPropertySymbol { GetMethod: IMethodSymbol getter } &&
+            IsAccessibleFromGeneratedCode(getter, pairType);
+    }
+
+    private bool IsAccessibleFromGeneratedCode(ISymbol symbol, ILanguageTypeSymbol? pairType)
+    {
         if (pairType is RoslynTypeSymbol roslynPair)
         {
             return compilation.IsSymbolAccessibleWithin(symbol, roslynPair.Symbol);

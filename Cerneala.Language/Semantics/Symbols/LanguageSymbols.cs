@@ -63,6 +63,10 @@ internal interface ILanguageCompilationSymbols
     // honors [InternalsVisibleTo]; any other markup file reaches public members and the non-public ones of this assembly.
     bool IsAccessibleFromGeneratedCode(ILanguageMemberSymbol member, ILanguageTypeSymbol? pairType);
 
+    // True when the member is a property with a getter that generated code can call, by the rule above:
+    // a 'public string Name { private get; set; }' cannot be read by a markup binding.
+    bool CanReadFromGeneratedCode(ILanguageMemberSymbol member, ILanguageTypeSymbol? pairType);
+
     ILanguageTypeSymbol? FindType(string metadataName);
 
     IReadOnlyList<ILanguageTypeSymbol> FindTypes(string simpleName);
