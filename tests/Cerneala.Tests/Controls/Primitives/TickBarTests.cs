@@ -128,6 +128,53 @@ public sealed class TickBarTests
         Assert.InRange(lines.Count, 2 + 99, 2 + 100);
     }
 
+    // As WPF's TickBar.OnRender, which computes in double: Maximum - Minimum of two finite floats can overflow float, for
+    // example 3e38 - -3e38, and the tick at the midpoint 0 must still be drawn in the middle of the tick area, at 55 on
+    // 110 pixels with a reserved space of 10, for every Placement (#1118). The rows -1..1 are the ordinary-range control.
+    [Theory]
+    [InlineData(-1f, 1f, TickBarPlacement.Bottom, 55f, 0f, 55f, 3f)]
+    [InlineData(-3e38f, 3e38f, TickBarPlacement.Bottom, 55f, 0f, 55f, 3f)]
+    [InlineData(-3e38f, 3e38f, TickBarPlacement.Top, 55f, 4f, 55f, 1f)]
+    [InlineData(-1f, 1f, TickBarPlacement.Right, 0f, 55f, 3f, 55f)]
+    [InlineData(-3e38f, 3e38f, TickBarPlacement.Right, 0f, 55f, 3f, 55f)]
+    [InlineData(-3e38f, 3e38f, TickBarPlacement.Left, 4f, 55f, 1f, 55f)]
+    public void TickAtMidpointOfLargeFiniteRangeIsDrawnInTheMiddle(
+        float minimum,
+        float maximum,
+        TickBarPlacement placement,
+        float x1,
+        float y1,
+        float x2,
+        float y2)
+    {
+        bool vertical = placement is TickBarPlacement.Left or TickBarPlacement.Right;
+        TickBar tickBar = CreateTickBar(placement, vertical ? 4 : 110, vertical ? 110 : 4);
+        tickBar.Minimum = minimum;
+        tickBar.Maximum = maximum;
+        tickBar.Ticks = [0];
+
+        IReadOnlyList<(float X1, float Y1, float X2, float Y2)> lines = RenderLines(tickBar);
+
+        Assert.Equal(3, lines.Count);
+        Assert.Equal((x1, y1, x2, y2), lines[2]);
+    }
+
+    // With TickFrequency on -3e38..3e38 the interval is raised to the range of one pixel, 6e36, as on an ordinary range:
+    // the TickBar draws about one tick per pixel, not none.
+    [Fact]
+    public void TickFrequencyOnLargeFiniteRangeDrawsAtMostOneTickPerPixel()
+    {
+        TickBar tickBar = CreateTickBar(TickBarPlacement.Bottom, 110, 4);
+        tickBar.Minimum = -3e38f;
+        tickBar.Maximum = 3e38f;
+        tickBar.TickFrequency = 1;
+
+        IReadOnlyList<(float X1, float Y1, float X2, float Y2)> lines = RenderLines(tickBar);
+
+        Assert.InRange(lines.Count, 2 + 99, 2 + 100);
+        Assert.All(lines.Skip(2), line => Assert.InRange(line.X1, 5, 105));
+    }
+
     // A TickBar without Fill draws nothing, as a WPF pen without a brush; a reserved space as wide as the TickBar also
     // draws nothing.
     [Fact]
