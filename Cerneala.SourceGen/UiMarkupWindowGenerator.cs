@@ -259,15 +259,16 @@ public sealed partial class UiMarkupGenerator
             source.Append("    public ").Append(pair.TypeSymbol.Name).Append('(').Append(viewModelCode).AppendLine(" viewModel)");
             source.AppendLine("    {");
             source.AppendLine("        global::System.ArgumentNullException.ThrowIfNull(viewModel);");
-            source.AppendLine("        DataContext = viewModel;");
+            source.AppendLine("        base.DataContext = viewModel;");
             source.AppendLine("        __CernealaInitialize();");
             source.AppendLine("    }");
         }
 
+        // base.: a generated named member, for example Name="content", hides the inherited member of the same name.
         source.AppendLine();
         source.AppendLine("    private void __CernealaInitialize()");
         source.AppendLine("    {");
-        source.AppendLine("        Content = __CernealaCreateContent();");
+        source.AppendLine("        base.Content = __CernealaCreateContent();");
         source.AppendLine("    }");
         source.AppendLine();
         source.AppendLine("    private global::Cerneala.UI.Elements.UIElement? __CernealaCreateContent()");

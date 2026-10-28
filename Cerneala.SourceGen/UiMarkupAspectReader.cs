@@ -104,12 +104,18 @@ public sealed partial class UiMarkupGenerator
 
         private sealed class AspectPropertyAssignment
         {
-            public AspectPropertyAssignment(string propertyName, string rawValue, bool isReference, MarkupObject source)
+            public AspectPropertyAssignment(
+                string propertyName,
+                string rawValue,
+                bool isReference,
+                MarkupObject source,
+                DirectiveExpressionLocation valueLocation)
             {
                 PropertyName = propertyName;
                 RawValue = rawValue;
                 IsReference = isReference;
                 Source = source;
+                ValueLocation = valueLocation;
             }
 
             public string PropertyName { get; }
@@ -119,6 +125,8 @@ public sealed partial class UiMarkupGenerator
             public bool IsReference { get; }
 
             public MarkupObject Source { get; }
+
+            public DirectiveExpressionLocation ValueLocation { get; }
         }
 
         private void ImportApplicationAspects()
@@ -582,7 +590,12 @@ public sealed partial class UiMarkupGenerator
                 value = value.Substring(1, value.Length - 2);
             }
 
-            return new AspectPropertyAssignment(assignment.PropertyName, value, isReference, assignment.Source);
+            return new AspectPropertyAssignment(
+                assignment.PropertyName,
+                value,
+                isReference,
+                assignment.Source,
+                DirectiveValueLocation(assignment.ValueLocation, assignment.Value));
         }
     }
 }

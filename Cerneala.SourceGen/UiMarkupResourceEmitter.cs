@@ -581,13 +581,24 @@ public sealed partial class UiMarkupGenerator
                 }
 
                 List<string> frameExpressions = [];
+                long clipTicks = 0;
                 foreach (MarkupElement frame in clip.Elements())
                 {
-                    string? frameExpression = ParseSpriteAnimationFrame(frame, cellGrid);
+                    string? frameExpression = ParseSpriteAnimationFrame(frame, cellGrid, out long frameTicks);
                     if (frameExpression is null)
                     {
                         return false;
                     }
+                    // The SpriteAnimationClip constructor adds the frame ticks with checked arithmetic and throws past
+                    // TimeSpan.MaxValue.
+                    if (frameTicks > long.MaxValue - clipTicks)
+                    {
+                        ReportAnimation(
+                            frame.Attribute("Duration")!,
+                            "The total duration of SpriteAnimationClip '" + clipName + "' exceeds TimeSpan.MaxValue.");
+                        return false;
+                    }
+                    clipTicks += frameTicks;
                     frameExpressions.Add(frameExpression);
                 }
                 if (frameExpressions.Count == 0)
@@ -713,8 +724,9 @@ public sealed partial class UiMarkupGenerator
             return version.ToString(CultureInfo.InvariantCulture) + "L";
         }
 
-        private string? ParseSpriteAnimationFrame(MarkupElement frame, SpriteCellGrid? cellGrid)
+        private string? ParseSpriteAnimationFrame(MarkupElement frame, SpriteCellGrid? cellGrid, out long durationTicks)
         {
+            durationTicks = 0;
             if (frame.Name.LocalName != "SpriteAnimationFrame")
             {
                 ReportAnimation(frame, "SpriteAnimationClip accepts only SpriteAnimationFrame children.");
@@ -738,7 +750,7 @@ public sealed partial class UiMarkupGenerator
 
             if (isCellFrame)
             {
-                return ParseSpriteCellFrame(frame, cellGrid, columnAttribute, rowAttribute, firstSourceAttribute);
+                return ParseSpriteCellFrame(frame, cellGrid, columnAttribute, rowAttribute, firstSourceAttribute, out durationTicks);
             }
             if (firstSourceAttribute is null && cellGrid is not null)
             {
@@ -786,7 +798,7 @@ public sealed partial class UiMarkupGenerator
                 return null;
             }
 
-            if (!TryParseFrameTiming(frame, out string duration, out string flip))
+            if (!TryParseFrameTiming(frame, out string duration, out durationTicks, out string flip))
             {
                 return null;
             }
@@ -802,8 +814,10 @@ public sealed partial class UiMarkupGenerator
             SpriteCellGrid? cellGrid,
             MarkupAttribute? columnAttribute,
             MarkupAttribute? rowAttribute,
-            MarkupAttribute? firstSourceAttribute)
+            MarkupAttribute? firstSourceAttribute,
+            out long durationTicks)
         {
+            durationTicks = 0;
             if (columnAttribute is null || rowAttribute is null)
             {
                 MarkupAttribute present = (columnAttribute ?? rowAttribute)!;
@@ -846,7 +860,7 @@ public sealed partial class UiMarkupGenerator
                 ReportAnimation(frame, "SpriteAnimationFrame requires Duration.");
                 return null;
             }
-            if (!TryParseFrameTiming(frame, out string duration, out string flip))
+            if (!TryParseFrameTiming(frame, out string duration, out durationTicks, out string flip))
             {
                 return null;
             }
@@ -869,11 +883,11 @@ public sealed partial class UiMarkupGenerator
             return false;
         }
 
-        private bool TryParseFrameTiming(MarkupElement frame, out string duration, out string flip)
+        private bool TryParseFrameTiming(MarkupElement frame, out string duration, out long durationTicks, out string flip)
         {
             flip = "global::Cerneala.UI.Controls.RenderSurface2DSpriteFlip.None";
             MarkupAttribute durationAttribute = frame.Attribute("Duration")!;
-            if (!TryBuildDurationExpression(durationAttribute.Value.Trim(), out duration))
+            if (!TryBuildDurationExpression(durationAttribute.Value.Trim(), out duration, out durationTicks))
             {
                 ReportAnimation(durationAttribute, "Frame duration must be positive (at least one 100 ns tick), no longer than TimeSpan.MaxValue, and use the existing ms or s duration syntax.");
                 return false;
@@ -900,13 +914,13 @@ public sealed partial class UiMarkupGenerator
         private void ReportAnimation(object locationSource, string message) =>
             Report(InvalidSpriteAnimation, locationSource, Path.GetFileName(file.Path), message);
 
-        // Called with the literal string that EmitProperty emits for the attribute, so the check and the
-        // ordinal SpriteAnimationSet.TryGetClip lookup at run time see the same value. Bindings and
-        // resource references never reach the literal path.
+        // Called with the literal string that is emitted for the attribute, or for an assignment of an inline
+        // Aspect or a reactive @when on the element, so the check and the ordinal SpriteAnimationSet.TryGetClip
+        // lookup at run time see the same value. Bindings and resource references never reach the literal path.
         private void ValidateStaticAnimationState(
             MarkupElement element,
             string propertyName,
-            MarkupAttribute stateAttribute,
+            object stateLocation,
             string state)
         {
             if (element.Name.LocalName != "Sprite2D" || propertyName != "AnimationState")
@@ -928,7 +942,7 @@ public sealed partial class UiMarkupGenerator
                 !animation.ClipNames.Contains(state))
             {
                 ReportAnimation(
-                    stateAttribute,
+                    stateLocation,
                     "Animation state '" + state + "' does not exist in SpriteAnimationSet '" + resourceName + "'.");
             }
         }

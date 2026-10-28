@@ -65,6 +65,8 @@ An ordinary markup file produces a static partial factory under the `Cerneala.Ge
 
 The generated factory class name is based on the markup file name without the `.crn` suffix, converted to a valid identifier and suffixed with `Factory`. Duplicate base names are disambiguated with the parent directory name, then with a stable FNV-1a hash if needed. Files paired with compatible `Application`, `Window`, `UserControl`, or `Scene2D` partial declarations follow their corresponding generated startup or component path instead of the ordinary standalone factory path.
 
+In a paired `Window`, `UserControl`, or `Scene2D`, an element with `Name="saveButton"` generates a private member `SaveButton` (the first letter in upper case). A name whose member is already declared in the code-behind reports `CERNEALAUI008` (`CERNEALAUI017` in a `Scene2D`). A member may hide an inherited member, as a C# member may (the C# compiler warns with `CS0108`): in `<Window><Grid Name="content" /></Window>`, `this.Content` in the code-behind is the `Grid`, and the generated initialization still sets the window content through `base.Content`. An event attribute such as `Click="OnSave"` names an instance method as C# member lookup finds it from the paired class: an `override` of a base method, or a `new` method that hides one, is that single method, and the generated handler calls it. Two compatible methods with different signatures report `CERNEALAUI009`.
+
 An ordinary factory preserves an explicit root `DataContext` instead of
 overwriting it with a local value from its argument. When the root binds
 `DataContext="$DataContext.Scene"`, that expression observes the incoming
@@ -302,7 +304,7 @@ Supported generated value categories include:
 | Generated content | Direct text for content-bearing controls and `ContentTemplate` declarations |
 | Reactive values | Typed `$DataContext`, named-element (`$name`), `$self`, `$root`, `$control.parts.$part`, and `$owner` paths, including `OneWay` and `TwoWay` modes where the endpoint is writable |
 
-Color values accept the named colors known by the generator, ignoring case. They also accept hexadecimal colors and comma-separated byte components in `R, G, B` or `R, G, B, A` form.
+Color values accept the named colors known by the generator, ignoring case. They also accept hexadecimal colors and comma-separated byte components in `R, G, B` or `R, G, B, A` form. A hexadecimal color is `#RRGGBB` or `#AARRGGBB`: every character after `#` is a hex digit, so `Background="#F F000"` reports `CERNEALAUI004`.
 
 `Line`, `Polyline`, `Polygon`, `Rectangle`, and `Path` are available as built-in elements. Point-list literals accept finite invariant-culture coordinate pairs separated by commas or whitespace; invalid counts and numbers report `CERNEALAUI004`. `Path.Data` literals emit a call to the shared `PathGeometry.Parse` runtime parser, so malformed SVG data throws when the generated factory creates the control. `Rectangle.RadiusX` and `RadiusY` use non-negative float literals. `FillRule` accepts the existing `DrawFillRule` enum names.
 
@@ -338,7 +340,7 @@ The generator reports diagnostics instead of emitting source when markup cannot 
 | `CERNEALAUI013` | An `Application` declaration is invalid. |
 | `CERNEALAUI014` | Application startup is invalid. |
 | `CERNEALAUI015` | The executable backend selection is missing, duplicate, inaccessible, generic, non-concrete, or lacks the exact `public static void EnsureRegistered()` contract. |
-| `CERNEALAUI016` | A sprite-animation declaration has invalid attributes, duplicate clip names, an invalid source rectangle or duration, or a statically selected missing clip. |
+| `CERNEALAUI016` | A sprite-animation declaration has invalid attributes, duplicate clip names, an invalid source rectangle or duration, a clip whose total duration exceeds `TimeSpan.MaxValue`, or a statically selected missing clip. |
 | `CERNEALAUI017` | A paired `Scene2D` component declaration, root name, or generated named member is invalid. |
 | `CERNEALAUI020`-`CERNEALAUI026` | Motion syntax, target, event, type, composition, lifecycle, or runtime capability is invalid. |
 
