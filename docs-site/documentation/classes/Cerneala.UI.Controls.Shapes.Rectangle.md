@@ -60,7 +60,7 @@ For example, arranged bounds `(1, 2, 30, 20)` with `StrokeThickness = 3` draw th
 
 When the stroke is thicker than the element, the deflated rectangle is empty and nothing is drawn. For example, `StrokeThickness = 40` on a `30` x `20` rectangle draws neither fill nor stroke.
 
-This rule applies only to the default geometry. A supplied `Geometry` is drawn as it is, and its stroke stays centered on the geometry.
+This rule applies only to the default geometry. A supplied `Geometry` is drawn as it is, and its stroke stays centered on the geometry. A supplied `Geometry` is relative to the rectangle's arranged top-left: a `Rectangle` with `Geometry = new RectangleGeometry(new DrawRect(0, 0, 30, 20))` arranged at `(100, 50, 30, 20)` records `FillRectangle (100, 50, 30, 20)`, and its stroke uses the same rectangle.
 
 Default measuring uses an empty rectangle because the default geometry is based on `LayoutRect.Empty` during measure. Set `Geometry` when the shape should report a natural desired size; its bounds are used for measuring, with `StrokeThickness` added as padding when `Stroke` is assigned. The stroke deflation applies to rendering only: a `Rectangle` with a `Stroke` and no explicit size still measures `(StrokeThickness, StrokeThickness)`.
 
@@ -118,7 +118,7 @@ Default measuring uses an empty rectangle because the default geometry is based 
 | Condition | Result |
 | --- | --- |
 | `Geometry` is `null` | Fits the arranged bounds deflated by half the effective stroke thickness, using an elliptical-corner path when both effective radii are positive. |
-| `Geometry` is not `null` | Renders the supplied geometry through `Shape.RenderGeometry`. Its stroke stays centered on the geometry. |
+| `Geometry` is not `null` | Renders the supplied geometry, relative to the arranged top-left, through `Shape.RenderGeometry`. Its stroke stays centered on the geometry. |
 | `Fill` is visible and the deflated rectangle has positive width and height | Fills the deflated rectangle or rounded path. |
 | `Stroke` is visible, `StrokeThickness > 0`, and the deflated rectangle has positive width and height | Strokes the deflated rectangle or rounded path, so the outer edge of the stroke touches the arranged bounds. |
 | `StrokeThickness` is larger than the arranged width or height | The deflated rectangle is empty; no fill or stroke command is emitted. |
