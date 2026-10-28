@@ -51,7 +51,7 @@ surface occupies the XY unit square at `Z = 0`.
 
 | Name | Description |
 | --- | --- |
-| `Directional(Vector3 surfaceToLightDirection, Vector3 linearSrgb, float intensity = 1)` | Creates a directional light and normalizes its direction. |
+| `Directional(Vector3 surfaceToLightDirection, Vector3 linearSrgb, float intensity = 1)` | Creates a directional light and normalizes its direction. Every finite, non-zero vector works at any magnitude: `(1e20, 0, 0)` and `(1e-30, 0, 0)` both give `Direction` `(1, 0, 0)`. |
 | `Point(Vector3 position, Vector3 linearSrgb, float intensity = 1)` | Creates a point light evaluated with inverse-square attenuation. |
 
 ## Exceptions

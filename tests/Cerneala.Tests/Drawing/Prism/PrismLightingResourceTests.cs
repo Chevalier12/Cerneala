@@ -6,6 +6,43 @@ namespace Cerneala.Tests.Drawing.Prism;
 
 public sealed class PrismLightingResourceTests
 {
+    [Theory]
+    [InlineData(5f)]
+    [InlineData(1e20f)]
+    [InlineData(1e-30f)]
+    [InlineData(-1e38f)]
+    [InlineData(float.Epsilon)]
+    public void DirectionalNormalizesFiniteNonZeroDirectionAtAnyMagnitude(float magnitude)
+    {
+        PrismLight light = default;
+        Exception? error = Record.Exception(
+            () => light = PrismLight.Directional(new Vector3(magnitude, 0, 0), Vector3.One));
+
+        Assert.Null(error);
+        Assert.Equal(MathF.Sign(magnitude), light.Direction.X, 1e-6f);
+        Assert.Equal(0f, light.Direction.Y, 1e-6f);
+        Assert.Equal(0f, light.Direction.Z, 1e-6f);
+        Assert.NotNull(new PrismLightingResource([light]));
+    }
+
+    [Fact]
+    public void DirectionalNormalizesLargeDiagonalDirection()
+    {
+        PrismLight light = PrismLight.Directional(new Vector3(3e38f, -3e38f, 3e38f), Vector3.One);
+
+        float component = 1f / MathF.Sqrt(3);
+        Assert.Equal(component, light.Direction.X, 1e-6f);
+        Assert.Equal(-component, light.Direction.Y, 1e-6f);
+        Assert.Equal(component, light.Direction.Z, 1e-6f);
+    }
+
+    [Fact]
+    public void DirectionalStillRejectsZeroDirection()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => PrismLight.Directional(Vector3.Zero, Vector3.One));
+    }
+
     [Fact]
     public void ResourcePreservesValidatedDirectionalAndPointLights()
     {

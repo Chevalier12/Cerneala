@@ -22,11 +22,22 @@ internal static partial class PrismResamplingMath
             (new Vector2(
                 plan.Options0.X,
                 plan.Options0.Y) / size);
-        position = Rotate(position, -plan.Options1.X);
-        float skewX = plan.Options1.Y;
-        float skewY = plan.Options1.Z;
+        // Rotation and skew are rigid in pixels, as TransformBounds assumes. One UV
+        // unit is size.X pixels across and size.Y pixels down, so their cross terms
+        // carry the aspect ratio; a square source keeps the plain UV arithmetic.
+        float heightPerWidth = size.Y / size.X;
+        float widthPerHeight = size.X / size.Y;
+        float cosine = MathF.Cos(-plan.Options1.X);
+        float sine = MathF.Sin(-plan.Options1.X);
+        position = new Vector2(
+            (position.X * cosine) -
+                (position.Y * sine * heightPerWidth),
+            (position.X * sine * widthPerHeight) +
+                (position.Y * cosine));
+        float skewX = plan.Options1.Y * heightPerWidth;
+        float skewY = plan.Options1.Z * widthPerHeight;
         float determinant =
-            1 - (skewX * skewY);
+            1 - (plan.Options1.Y * plan.Options1.Z);
         determinant = MathF.Abs(determinant) < 0.000001f
             ? MathF.CopySign(0.000001f, determinant)
             : determinant;

@@ -36,6 +36,8 @@ PrismClipDefinition composition = new(
 
 Nodes are declared front-to-back and evaluated bottom-up. Every rendered layer or group receives the accumulated result behind it as its compositing backdrop. Prism acquires the physical host backdrop lazily only when a visible blend operation needs destination pixels. Node IDs are unique across the tree; optional names are unique in their address scope.
 
+`globalLightAltitude` uses the same zero-through-90-degree range as `PrismClipState.GlobalLightAltitude` and the Prism catalog, so a `PrismInstance` created from the definition never starts with an altitude that its own setter, `ResetToDefaults()`, or the renderer would reject. For example, `globalLightAltitude: 120f` throws `ArgumentOutOfRangeException`, while `0f`, `30f`, and `90f` reach `instance.Composition.GlobalLightAltitude` unchanged.
+
 `SourceSpan` is immutable diagnostic metadata used when a graph failure cannot be attributed to a more specific node. It is deliberately excluded from semantic equality and hashing.
 
 ## Constructors
@@ -52,7 +54,7 @@ Nodes are declared front-to-back and evaluated bottom-up. Every rendered layer o
 | `Nodes` | `ImmutableArray<PrismNodeDefinition>` | Gets direct nodes in declaration order. |
 | `WorkingColorProfile` | `PrismColorProfile` | Gets the working color profile. |
 | `GlobalLightAngle` | `float` | Gets the shared light angle in degrees. |
-| `GlobalLightAltitude` | `float` | Gets the shared light altitude in degrees. |
+| `GlobalLightAltitude` | `float` | Gets the shared light altitude from zero through 90 degrees. |
 | `SourceSpan` | `PrismSourceSpan?` | Gets the optional authoring source location. |
 
 ## Methods
@@ -72,7 +74,7 @@ Nodes are declared front-to-back and evaluated bottom-up. Every rendered layer o
 | Member | Exception | Condition |
 | --- | --- | --- |
 | `PrismClipDefinition(...)` | `ArgumentException` | `name` is `null`, empty, or whitespace; the node list is `null`, is empty, or contains a `null` element; or node IDs or scoped names are duplicated. |
-| `PrismClipDefinition(...)` | `ArgumentOutOfRangeException` | A light value is non-finite. |
+| `PrismClipDefinition(...)` | `ArgumentOutOfRangeException` | `globalLightAngle` is non-finite, or `globalLightAltitude` is non-finite or outside zero through 90. |
 | `TryGetNamedNode(...)` | `ArgumentException` | `path` is null, empty, or whitespace. |
 
 ## Applies to

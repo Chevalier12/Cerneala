@@ -38,6 +38,8 @@ frame.DrawSprite(glowImage, destination, Color.White);
 
 `Fill` controls only the processed layer's source content. Prism filters and styles still read the unscaled source. Setting `Fill` to `0` therefore supports effect-only images such as an outer glow mask, while the caller can draw separate visible content over the result.
 
+Filter and style sizes in `dip` follow the display scale of the target that renders the image. `DrawingContext` records in dip and does not know that scale, so the renderer resolves it: on a window at display scale 1.25, an `OuterGlowStyle` with `Size = 8` drawn through `DrawingContext.DrawImage`, `DrawNineSlice`, `DrawImageQuad`, `DrawTriangles`, `DrawMesh`, or `DrawSpriteBatch` is 10 physical pixels wide and the same on all four sides, exactly as a Prism layer drawn through the UI path.
+
 Disposal is idempotent. Drawing a disposed image or adding a new content-change observer throws `ObjectDisposedException`.
 
 `PrismImage` does not own or dispose its `Source`, `Pipeline`, or pipeline operations. Their lifetime remains the caller's responsibility.

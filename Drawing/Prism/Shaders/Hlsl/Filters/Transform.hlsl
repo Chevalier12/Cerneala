@@ -2,8 +2,10 @@ float4 ApplyTransform(VertexShaderOutput input, float4 source, int profile)
 {
     float2 uv = ResolveUv(input);
     float2 origin = FilterOptions2.xy;
-    float2 size = max(FilterOptions3.xy, 1.0);
-    float2 position = uv - origin - (FilterOptions0.xy / size);
+    // uv spans the execution extent, whose pixel size is PixelSize. Rotation and skew are
+    // rigid in pixels, as the CPU reference and the bounds assume; in uv a non-square
+    // extent would shear them.
+    float2 position = ((uv - origin) / PixelSize) - FilterOptions0.xy;
     float cosine = cos(-FilterOptions1.x);
     float sine = sin(-FilterOptions1.x);
     float2 unrotated = float2(
@@ -22,7 +24,7 @@ float4 ApplyTransform(VertexShaderOutput input, float4 source, int profile)
         scale.y < 0.0 ? min(scale.y, -0.000001) : max(scale.y, 0.000001));
     position /= safeScale;
     return SampleResamplingSource(
-        origin + position,
+        origin + (position * PixelSize),
         profile,
         (int)(FilterOptions2.z + 0.5),
         0.0);

@@ -67,11 +67,21 @@ internal sealed class PrismGraphBuilder
 
     private ImmutableArray<PrismAnalyzedScope> previousScopes;
     private PrismBackdropFrameDescriptor? previousBackdropFrame;
+    private float previousTargetPixelScale;
     private PrismGraph? previousGraph;
 
     public PrismGraph Build(PrismFrameAnalysis analysis)
     {
-        return BuildCore(analysis, backdropFrame: null);
+        return Build(analysis, targetPixelScale: 1);
+    }
+
+    // targetPixelScale is the physical pixels per dip of the render target. It
+    // resolves the scopes that DrawingContext records without a display scale.
+    internal PrismGraph Build(
+        PrismFrameAnalysis analysis,
+        float targetPixelScale)
+    {
+        return BuildCore(analysis, backdropFrame: null, targetPixelScale);
     }
 
     public PrismGraph Build(
@@ -89,18 +99,39 @@ internal sealed class PrismGraphBuilder
         in BackdropFrameMetadata backdropMetadata,
         PrismBackdropSourceToken sourceToken)
     {
+        return Build(
+            analysis,
+            in backdropMetadata,
+            sourceToken,
+            backdropMetadata.PixelScale);
+    }
+
+    internal PrismGraph Build(
+        PrismFrameAnalysis analysis,
+        in BackdropFrameMetadata backdropMetadata,
+        PrismBackdropSourceToken sourceToken,
+        float targetPixelScale)
+    {
         PrismBackdropFrameDescriptor backdropFrame =
             PrismBackdropFramePolicy.Prepare(
                 in backdropMetadata,
                 sourceToken);
-        return BuildCore(analysis, backdropFrame);
+        return BuildCore(analysis, backdropFrame, targetPixelScale);
     }
 
     private PrismGraph BuildCore(
         PrismFrameAnalysis analysis,
-        PrismBackdropFrameDescriptor? backdropFrame)
+        PrismBackdropFrameDescriptor? backdropFrame,
+        float targetPixelScale)
     {
         ArgumentNullException.ThrowIfNull(analysis);
+        if (!float.IsFinite(targetPixelScale) || targetPixelScale <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(targetPixelScale),
+                targetPixelScale,
+                "The target pixel scale must be finite and positive.");
+        }
         EnsureCurrent(analysis);
         // Graph construction depends on the analyzed scopes, not on the
         // identity/version of the command list that produced them. Compare
@@ -108,6 +139,7 @@ internal sealed class PrismGraphBuilder
         // so rerecording does not discard an otherwise current graph and plan.
         if (previousGraph is PrismGraph retainedGraph &&
             previousBackdropFrame == backdropFrame &&
+            previousTargetPixelScale == targetPixelScale &&
             previousScopes.AsSpan().SequenceEqual(analysis.Scopes.AsSpan()))
         {
             return retainedGraph;
@@ -126,6 +158,7 @@ internal sealed class PrismGraphBuilder
             ScopeBuilder scopeBuilder = new(
                 analyzedScope,
                 backdropFrame,
+                targetPixelScale,
                 nodes,
                 edges,
                 nodeIds);
@@ -139,6 +172,7 @@ internal sealed class PrismGraphBuilder
             scopes.MoveToImmutable());
         previousScopes = analysis.Scopes;
         previousBackdropFrame = backdropFrame;
+        previousTargetPixelScale = targetPixelScale;
         previousGraph = graph;
         return graph;
     }
@@ -182,6 +216,7 @@ internal sealed class PrismGraphBuilder
         private readonly PrismClipDefinition definition;
         private readonly PrismInstance instance;
         private readonly PrismBackdropFrameDescriptor? backdropFrame;
+        private readonly float pixelScale;
         private readonly ImmutableArray<PrismGraphNode>.Builder nodes;
         private readonly ImmutableArray<PrismGraphEdge>.Builder edges;
         private readonly HashSet<PrismGraphNodeId> nodeIds;
@@ -194,6 +229,7 @@ internal sealed class PrismGraphBuilder
         public ScopeBuilder(
             PrismAnalyzedScope analyzedScope,
             PrismBackdropFrameDescriptor? backdropFrame,
+            float targetPixelScale,
             ImmutableArray<PrismGraphNode>.Builder nodes,
             ImmutableArray<PrismGraphEdge>.Builder edges,
             HashSet<PrismGraphNodeId> nodeIds)
@@ -202,6 +238,9 @@ internal sealed class PrismGraphBuilder
             definition = analyzedScope.Scope.Definition;
             instance = analyzedScope.Scope.Instance;
             this.backdropFrame = backdropFrame;
+            pixelScale = analyzedScope.Scope.UsesTargetPixelScale
+                ? targetPixelScale
+                : analyzedScope.Scope.PixelScale;
             this.nodes = nodes;
             this.edges = edges;
             this.nodeIds = nodeIds;
@@ -238,7 +277,7 @@ internal sealed class PrismGraphBuilder
                     new PrismGraphDependency(
                         PrismGraphDependencyKind.PixelScale,
                         analyzedScope.DependencyStamp.CacheOwnerToken.Value,
-                        BitConverter.SingleToInt32Bits(analyzedScope.Scope.PixelScale)),
+                        BitConverter.SingleToInt32Bits(pixelScale)),
                     new PrismGraphDependency(
                         PrismGraphDependencyKind.Transform,
                         analyzedScope.DependencyStamp.CacheOwnerToken.Value,
@@ -315,7 +354,7 @@ internal sealed class PrismGraphBuilder
                 analyzedScope.Scope.ControlBounds,
                 analyzedScope.EffectiveTransform,
                 analyzedScope.Scope.EffectiveTransform,
-                analyzedScope.Scope.PixelScale,
+                pixelScale,
                 analyzedScope.DependencyStamp,
                 analyzedScope.Scope.LowerUiVersion,
                 analyzedScope.Scope.Resources,
@@ -788,7 +827,7 @@ internal sealed class PrismGraphBuilder
                             state.Filter,
                             parameters,
                             state.BlendMode,
-                            analyzedScope.Scope.PixelScale,
+                            pixelScale,
                             analyzedScope.Scope.EffectiveTransform,
                             analyzedScope.Bounds);
                     passCount =
@@ -802,7 +841,7 @@ internal sealed class PrismGraphBuilder
                             state.Filter,
                             parameters,
                             state.BlendMode,
-                            analyzedScope.Scope.PixelScale,
+                            pixelScale,
                             analyzedScope.Scope.EffectiveTransform,
                             analyzedScope.Bounds);
                     passCount =
@@ -816,7 +855,7 @@ internal sealed class PrismGraphBuilder
                             state.Filter,
                             parameters,
                             state.BlendMode,
-                            analyzedScope.Scope.PixelScale,
+                            pixelScale,
                             analyzedScope.Scope.EffectiveTransform,
                             analyzedScope.Bounds);
                     passCount =

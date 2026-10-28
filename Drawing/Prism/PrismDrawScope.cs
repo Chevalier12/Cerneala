@@ -131,6 +131,11 @@ public readonly record struct PrismDrawScope
     // existing fallback contract.
     internal bool StrictSurfaceAllocation { get; init; }
 
+    // DrawingContext records in dip and does not know the display scale, so a
+    // PrismImage scope is planned at the scale of the target that renders it.
+    // PixelScale is then ignored by the graph builder.
+    internal bool UsesTargetPixelScale { get; init; }
+
     // Complete source region, distinct from the host's output clip and the
     // logical coordinate bounds used by filters. Null keeps the ordinary UI path.
     internal DrawRect? InputBounds { get; init; }
@@ -160,6 +165,7 @@ public readonly record struct PrismDrawScope
             DrawContentVersion)
         {
             StrictSurfaceAllocation = StrictSurfaceAllocation,
+            UsesTargetPixelScale = UsesTargetPixelScale,
             InputBounds = InputBounds is DrawRect input
                 ? new DrawRect(input.X + offsetX, input.Y + offsetY, input.Width, input.Height) : null
         };
@@ -185,6 +191,7 @@ public readonly record struct PrismDrawScope
             drawContentVersion: DrawContentVersion)
         {
             StrictSurfaceAllocation = StrictSurfaceAllocation,
+            UsesTargetPixelScale = UsesTargetPixelScale,
             InputBounds = InputBounds
         };
     }

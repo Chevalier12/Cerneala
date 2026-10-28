@@ -97,11 +97,12 @@ internal sealed partial class SdlGpuPrismExecutor : IDisposable
         }
         ProcessInvalidations(frameContext.PrismAnalysis, frameContext.PrismCacheInvalidations);
         PrismGraph sourceGraph = frameContext.BackdropLease is null
-            ? graphBuilder.Build(frameContext.PrismAnalysis)
+            ? graphBuilder.Build(frameContext.PrismAnalysis, drawingBackend.CoordinateScale)
             : graphBuilder.Build(
                 frameContext.PrismAnalysis,
                 frameContext.BackdropLease.Metadata,
-                frameContext.BackdropSourceToken);
+                frameContext.BackdropSourceToken,
+                drawingBackend.CoordinateScale);
         PrismGraphExecutionPlan plan = graphOptimizer.Optimize(sourceGraph);
         PrismGraph graph = plan.OptimizedGraph;
         ResolveExecutionExtent(plan, graph, hostTarget);

@@ -30,7 +30,12 @@ public sealed class PrismClipDefinition : IEquatable<PrismClipDefinition>
 
         WorkingColorProfile = workingColorProfile;
         GlobalLightAngle = PrismDefinitionValidation.Finite(globalLightAngle, nameof(globalLightAngle));
-        GlobalLightAltitude = PrismDefinitionValidation.Finite(globalLightAltitude, nameof(globalLightAltitude));
+        GlobalLightAltitude = globalLightAltitude is >= 0f and <= 90f
+            ? globalLightAltitude
+            : throw new ArgumentOutOfRangeException(
+                nameof(globalLightAltitude),
+                globalLightAltitude,
+                "The global light altitude must be from zero through 90 degrees.");
         SourceSpan = sourceSpan;
         namedNodes = ValidateAndIndex(Nodes);
     }

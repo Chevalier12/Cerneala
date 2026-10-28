@@ -87,9 +87,10 @@ internal static partial class PrismNeighborhoodMath
             multiplier *= ratioStep;
             float offsetX = tap * stepX;
             float offsetY = tap * stepY;
-            total += (Sample(
+            // The GPU kernel reads fractional taps through a linear sampler.
+            total += (SampleBilinear(
                 source, width, height, x + offsetX, y + offsetY, edgeMode) +
-                Sample(
+                SampleBilinear(
                     source, width, height, x - offsetX, y - offsetY, edgeMode)) *
                 weight;
             totalWeight += weight * 2;

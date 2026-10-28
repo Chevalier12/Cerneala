@@ -2,11 +2,39 @@ using System.Collections.Immutable;
 using System.Reflection;
 using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.UI.Prism.Definitions;
+using Cerneala.UI.Prism.Runtime;
 
 namespace Cerneala.Tests.UI.Prism;
 
 public sealed class PrismDefinitionContractTests
 {
+    [Theory]
+    [InlineData(0f)]
+    [InlineData(30f)]
+    [InlineData(90f)]
+    [InlineData(-0.1f)]
+    [InlineData(90.1f)]
+    [InlineData(120f)]
+    public void GlobalLightAltitudeOutsideZeroThroughNinetyIsRejectedOrNeverReachesTheInstance(float altitude)
+    {
+        PrismClipDefinition? definition = null;
+        Exception? definitionError = Record.Exception(
+            () => definition = new PrismClipDefinition("Alt", [Layer(1, "A")], globalLightAltitude: altitude));
+
+        if (definitionError is not null)
+        {
+            Assert.IsType<ArgumentOutOfRangeException>(definitionError);
+            Assert.False(altitude is >= 0f and <= 90f, $"altitude {altitude} is inside 0..90 but was rejected");
+            return;
+        }
+
+        PrismInstance? instance = null;
+        Exception? instanceError = Record.Exception(() => instance = new PrismInstance(definition!));
+        Assert.Null(instanceError);
+        Assert.InRange(instance!.Composition.GlobalLightAltitude, 0f, 90f);
+        Assert.Equal(altitude, instance.Composition.GlobalLightAltitude);
+    }
+
     [Fact]
     public void DefinitionsExposeNoPublicMutationSurface()
     {
