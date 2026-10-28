@@ -144,6 +144,94 @@ public sealed class CollisionStageTwoContractTests
         Assert.InRange(hits![0].Distance, 99f, 101f);
     }
 
+    [Theory]
+    [InlineData(1_000_000f)]
+    [InlineData(1e12f)]
+    [InlineData(float.MaxValue)]
+    public void MoveAndCollideWithAHugeFiniteDisplacementReturnsTheCollisionInsteadOfThrowing(float distance)
+    {
+        // A 10x10 actor at (0, 0) moves along +X through a 10x10 wall at (100, 0), so it stops after 90 units.
+        BoxCollider2D actor = new() { Width = 10, Height = 10 };
+        BoxCollider2D wall = new() { Width = 10, Height = 10 };
+        Scene2D scene = new();
+        scene.Children.Add(new Sprite2D { Collider = actor });
+        scene.Children.Add(new Sprite2D { X = 100, Collider = wall });
+        MoveCollisionResult2D? result = null;
+
+        Exception? failure = Record.Exception(() =>
+            result = scene.CollisionWorld.MoveAndCollide(actor, new Vector2(distance, 0)));
+
+        Assert.True(
+            failure is null && ReferenceEquals(result?.Collision?.Collider, wall),
+            $"distance={distance}: " + (failure is null
+                ? $"collision={result?.Collision?.Collider?.GetType().Name ?? "null"}"
+                : $"threw {failure.GetType().Name}: {failure.Message}"));
+        Assert.InRange(result!.Collision!.Distance, 89.9f, 90.1f);
+        Assert.InRange(result.Travel.X, 89.9f, 90.1f);
+    }
+
+    [Theory]
+    [InlineData(-1f, 0f)]
+    [InlineData(0f, 1f)]
+    [InlineData(0f, -1f)]
+    [InlineData(1f, 1f)]
+    [InlineData(-1f, -1f)]
+    public void MoveAndCollideWithAHugeDisplacementInAnyDirectionStopsAtTheWall(float directionX, float directionY)
+    {
+        // The wall's near side is 90 units from the actor on each moving axis, so the actor stops after 90 units per axis.
+        BoxCollider2D actor = new() { Width = 10, Height = 10 };
+        BoxCollider2D wall = new() { Width = 10, Height = 10 };
+        Scene2D scene = new();
+        scene.Children.Add(new Sprite2D { Collider = actor });
+        scene.Children.Add(new Sprite2D { X = 100 * directionX, Y = 100 * directionY, Collider = wall });
+
+        foreach (float distance in new[] { 1e12f, float.MaxValue })
+        {
+            MoveCollisionResult2D result = scene.CollisionWorld.MoveAndCollide(
+                actor, new Vector2(directionX * distance, directionY * distance));
+
+            Assert.Same(wall, result.Collision?.Collider);
+            Assert.True(float.IsFinite(result.Collision!.Distance), $"Distance={result.Collision.Distance}.");
+            Assert.InRange(result.Travel.X * directionX, 89.9f * MathF.Abs(directionX), 90.1f * MathF.Abs(directionX));
+            Assert.InRange(result.Travel.Y * directionY, 89.9f * MathF.Abs(directionY), 90.1f * MathF.Abs(directionY));
+        }
+    }
+
+    [Fact]
+    public void MoveAndCollideAcrossMoreThanOneDrawRectOfSceneStopsAtAFarWall()
+    {
+        // The actor and the wall are 3.8e9 scene units apart, wider than one DrawRect (2e9), so even the
+        // part of the move inside the scene's coordinate range needs more than one query rectangle.
+        BoxCollider2D actor = new() { Width = 1024, Height = 1024 };
+        BoxCollider2D wall = new() { Width = 1024, Height = 1024 };
+        Scene2D scene = new();
+        scene.Children.Add(new Sprite2D { X = -1_900_000_000f, Collider = actor });
+        scene.Children.Add(new Sprite2D { X = 1_900_000_000f, Collider = wall });
+
+        MoveCollisionResult2D result = scene.CollisionWorld.MoveAndCollide(actor, new Vector2(1e12f, 0));
+
+        Assert.Same(wall, result.Collision?.Collider);
+        Assert.InRange(result.Collision!.Distance, 3.7999e9f, 3.8001e9f);
+    }
+
+    [Fact]
+    public void MoveAndCollideHitsAWallAtTheEdgeOfTheSceneCoordinateRange()
+    {
+        // The wall's right side is the largest scene coordinate (2e9). The actor moves 1:12.5 diagonally and touches
+        // the wall after 48 % of the move, when its right side is already past 2e9.
+        BoxCollider2D actor = new() { Width = 4096, Height = 4096 };
+        BoxCollider2D wall = new() { Width = 4096, Height = 4096 };
+        Scene2D scene = new();
+        scene.Children.Add(new Sprite2D { X = 1_999_990_016f, Y = -102_400f, Collider = actor });
+        scene.Children.Add(new Sprite2D { X = 1_999_995_904f, Collider = wall });
+
+        MoveCollisionResult2D result = scene.CollisionWorld.MoveAndCollide(actor, new Vector2(16_384f, 204_800f));
+
+        Assert.Same(wall, result.Collision?.Collider);
+        Assert.InRange(result.Collision!.Fraction, 0.4799f, 0.4801f);
+        Assert.InRange(result.Travel.Y, 98_303f, 98_305f);
+    }
+
     [Fact]
     public void RaycastAcrossMoreThanOneDrawRectOfSceneFindsBoxesAtBothEnds()
     {
@@ -200,6 +288,100 @@ public sealed class CollisionStageTwoContractTests
         float expectedDistance = 95 - originX;
         Assert.InRange(hit.Distance, expectedDistance - pointTolerance, expectedDistance + pointTolerance);
         Assert.InRange(hit.Fraction * maxDistance, hit.Distance * 0.9999f, hit.Distance * 1.0001f);
+    }
+
+    [Fact]
+    [Trait("CollisionStage", "2")]
+    public void RaycastEdgeContactToleranceIsOneEMinusFiveSceneUnitsOnAUnitLengthRay()
+    {
+        // Control: with maxDistance 1 the fraction tolerance equals the documented 1e-5 scene units.
+        Scene2D tooFar = new();
+        tooFar.Children.Add(new Sprite2D { X = 1 + 1e-4f, Collider = Box() });
+        Scene2D withinEpsilon = new();
+        withinEpsilon.Children.Add(new Sprite2D { X = 1 + 1e-6f, Collider = Box() });
+
+        Assert.Empty(tooFar.CollisionWorld.Raycast(new Vector2(0, 5), Vector2.UnitX, 1));
+        Assert.Single(withinEpsilon.CollisionWorld.Raycast(new Vector2(0, 5), Vector2.UnitX, 1));
+    }
+
+    [Fact]
+    public void RaycastDoesNotHitAFaceBeyondTheRayEndOnALongRay()
+    {
+        // The box face is at x = 10000.05, 0.05 units beyond the end of the ray.
+        Scene2D scene = new();
+        scene.Children.Add(new Sprite2D { X = 10000.05f, Collider = Box() });
+
+        CollisionHit2D[] hits = scene.CollisionWorld.Raycast(new Vector2(0, 5), Vector2.UnitX, 10000);
+
+        Assert.True(hits.Length == 0, "Unexpected hit: " + Describe(hits));
+    }
+
+    [Fact]
+    public void RaycastDoesNotHitABoxTheLongDiagonalLineMissesByAboutTwoAndAHalfUnits()
+    {
+        // The line y = x passes the box x = 14..24, y = 0..10 above its top-left corner (14, 10).
+        Scene2D scene = new();
+        scene.Children.Add(new Sprite2D { X = 14, Y = 0, Collider = Box() });
+
+        CollisionHit2D[] hits = scene.CollisionWorld.Raycast(Vector2.Zero, Vector2.Normalize(new Vector2(1, 1)), 1_000_000);
+
+        Assert.True(hits.Length == 0, "Unexpected hit: " + Describe(hits));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void RaycastDoesNotHitACircleOrSegmentBeyondTheRayEndOnALongRay(bool segment)
+    {
+        // The left edge of the circle of radius 5000, or the vertical segment, is at x = 10000.05,
+        // 0.05 units beyond the end of the ray.
+        Scene2D scene = new();
+        scene.Children.Add(segment
+            ? new Sprite2D { X = 10000.05f, Y = -5, Collider = new SegmentCollider2D { EndY = 10, EndX = 0 } }
+            : new Sprite2D { X = 15000.05f, Collider = new CircleCollider2D { Radius = 5000 } });
+
+        CollisionHit2D[] hits = scene.CollisionWorld.Raycast(Vector2.Zero, Vector2.UnitX, 10000);
+
+        Assert.True(hits.Length == 0, "Unexpected hit: " + Describe(hits));
+    }
+
+    [Fact]
+    public void RaycastDoesNotHitALongSegmentThatEndsBeforeTheRay()
+    {
+        // The segment runs from (0, 0) to (10000, 0); the vertical ray at x = 10000.05 passes 0.05 units beyond its end.
+        Scene2D scene = new();
+        scene.Children.Add(new Sprite2D { Collider = new SegmentCollider2D { EndX = 10000, EndY = 0 } });
+
+        CollisionHit2D[] hits = scene.CollisionWorld.Raycast(new Vector2(10000.05f, -5), Vector2.UnitY, 10);
+
+        Assert.True(hits.Length == 0, "Unexpected hit: " + Describe(hits));
+    }
+
+    [Fact]
+    public void RaycastDoesNotHitACircleThatAShortRayPassesTwoUnitsAway()
+    {
+        // The ray from (0, 3) is 0.001 long; the circle of radius 1 at (0.0005, 0) is 2 units below it.
+        Scene2D scene = new();
+        scene.Children.Add(new Sprite2D { X = 0.0005f, Collider = new CircleCollider2D { Radius = 1 } });
+
+        CollisionHit2D[] hits = scene.CollisionWorld.Raycast(new Vector2(0, 3), Vector2.UnitX, 0.001f);
+
+        Assert.True(hits.Length == 0, "Unexpected hit: " + Describe(hits));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void OverlapOrderDoesNotDependOnWhetherTheWorldWasQueriedBeforeAnInsert(bool showInsteadOfInsert)
+    {
+        // Sprites a (X = 0), p (X = 2) and b (X = 5), each with a 10x10 box. b is inserted first in the tree,
+        // or is first in the tree from the start but hidden and then shown.
+        string initializedOrder = BuildAndQuery(queryBeforeChange: true, showInsteadOfInsert);
+        string lazyOrder = BuildAndQuery(queryBeforeChange: false, showInsteadOfInsert);
+
+        Assert.True(
+            initializedOrder == lazyOrder,
+            $"Overlap order with the world initialized before the change: [{initializedOrder}]; without: [{lazyOrder}].");
     }
 
     [Fact]
@@ -313,6 +495,27 @@ public sealed class CollisionStageTwoContractTests
         WeakReference context = new(dataContext);
         scene.Children.Remove(sprite);
         return (scene, node, context);
+    }
+
+    private static string Describe(CollisionHit2D[] hits) =>
+        string.Join("; ", hits.Select(static hit => $"Point={hit.Point}, Distance={hit.Distance}, Fraction={hit.Fraction}"));
+
+    private static string BuildAndQuery(bool queryBeforeChange, bool showInsteadOfInsert)
+    {
+        Sprite2D a = new() { X = 0, Collider = Box() };
+        Sprite2D p = new() { X = 2, Collider = Box() };
+        Sprite2D b = new() { X = 5, Collider = Box(), IsVisible = !showInsteadOfInsert };
+        Scene2D scene = new();
+        if (showInsteadOfInsert) { scene.Children.Add(b); }
+        scene.Children.Add(a);
+        scene.Children.Add(p);
+        if (queryBeforeChange) { scene.CollisionWorld.Overlap(p.Collider!); }
+
+        if (showInsteadOfInsert) { b.IsVisible = true; }
+        else { scene.Children.Insert(0, b); }
+
+        return string.Join(",", scene.CollisionWorld.Overlap(p.Collider!)
+            .Select(hit => ReferenceEquals(hit.Collider, a.Collider) ? "a" : ReferenceEquals(hit.Collider, b.Collider) ? "b" : "?"));
     }
 
     private static void ForceCollection()

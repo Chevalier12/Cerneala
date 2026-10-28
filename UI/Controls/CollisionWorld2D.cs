@@ -14,6 +14,10 @@ public sealed partial class CollisionWorld2D
     private readonly List<CollisionEntry2D?> entriesById = [];
     private readonly List<int> candidates = [];
     private bool initialized;
+    // Attachment ordinals follow the scene tree: depth first, children in order. An incremental add or a structural
+    // change leaves them stale until the next query renumbers them, so the order does not depend on when the world
+    // was built.
+    private bool ordinalsStale;
     private long observedVersion = -1;
     private int nextId;
     private long nextOrdinal;
@@ -80,7 +84,8 @@ public sealed partial class CollisionWorld2D
             }
 
             EnsureCollisionCoverage(source.Geometry.SceneBounds, collider, query);
-            broadphase.Query(source.Geometry.SceneBounds, candidates);
+            // Contact within Epsilon counts, so the query reaches as far as the narrow phase does.
+            broadphase.Query(IncludeContactFringe(source.Geometry.SceneBounds), candidates);
             broadphaseCandidateCount += candidates.Count;
             List<(CollisionHit2D Hit, long Ordinal)> hits = [];
             foreach (int id in candidates)
@@ -230,44 +235,76 @@ public sealed partial class CollisionWorld2D
                 return new MoveCollisionResult2D(displacement, displacement, null, []);
             }
 
-            DrawRect sweptBounds = CollisionNarrowPhase2D.GetSweptBounds(
+            Span<DrawRect> queryBounds = stackalloc DrawRect[MaxMoveQueryBoundsCount];
+            int queryBoundsCount = CreateMoveQueryBounds(
                 source.Geometry.SceneBounds,
-                displacement);
-            EnsureCollisionCoverage(sweptBounds, collider, query);
-            broadphase.Query(sweptBounds, candidates);
-            broadphaseCandidateCount += candidates.Count;
+                displacement,
+                queryBounds,
+                out double stop);
+            for (int index = 0; index < queryBoundsCount; index++)
+            {
+                EnsureCollisionCoverage(queryBounds[index], collider, query);
+            }
+
+            // The narrow phase casts only the part of the move during which the collider's bounds touch the DrawRect
+            // coordinate range, so its float math stays within that range for a huge displacement.
+            bool clipped = stop < 1;
+            Vector2 testedDisplacement = clipped
+                ? new Vector2((float)(displacement.X * stop), (float)(displacement.Y * stop))
+                : displacement;
+            double displacementLength = Math.Sqrt(
+                ((double)displacement.X * displacement.X) + ((double)displacement.Y * displacement.Y));
+            HashSet<int>? tested = queryBoundsCount > 1 ? [] : null;
             List<(CollisionHit2D Hit, long Ordinal)> blocking = [];
             List<(CollisionHit2D Hit, long Ordinal)> triggers = [];
-            foreach (int id in candidates)
+            for (int index = 0; index < queryBoundsCount; index++)
             {
-                CollisionEntry2D? target = GetEntry(id);
-                if (target is null ||
-                    ReferenceEquals(target.Collider, collider) ||
-                    !PassesQueryFilter(target, query) ||
-                    !PassesPairFilter(collider, target.Collider))
+                // Contact within Epsilon counts, so the query reaches as far as the narrow phase does.
+                broadphase.Query(IncludeContactFringe(queryBounds[index]), candidates);
+                broadphaseCandidateCount += candidates.Count;
+                foreach (int id in candidates)
                 {
-                    continue;
-                }
+                    CollisionEntry2D? target = GetEntry(id);
+                    if (target is null ||
+                        tested?.Add(id) == false ||
+                        ReferenceEquals(target.Collider, collider) ||
+                        !PassesQueryFilter(target, query) ||
+                        !PassesPairFilter(collider, target.Collider))
+                    {
+                        continue;
+                    }
 
-                exactTestCount++;
-                if (!CollisionNarrowPhase2D.ShapeCast(
-                    source.Geometry,
-                    displacement,
-                    target.Geometry,
-                    out NarrowPhaseContact2D contact,
-                    includeNonblockingInitialContact: collider.IsTrigger || target.Collider.IsTrigger))
-                {
-                    continue;
-                }
+                    exactTestCount++;
+                    if (!CollisionNarrowPhase2D.ShapeCast(
+                        source.Geometry,
+                        testedDisplacement,
+                        target.Geometry,
+                        out NarrowPhaseContact2D contact,
+                        includeNonblockingInitialContact: collider.IsTrigger || target.Collider.IsTrigger))
+                    {
+                        continue;
+                    }
 
-                CollisionHit2D hit = CreateHit(target, contact);
-                if (collider.IsTrigger || target.Collider.IsTrigger)
-                {
-                    triggers.Add((hit, target.Ordinal));
-                }
-                else
-                {
-                    blocking.Add((hit, target.Ordinal));
+                    if (clipped)
+                    {
+                        // Distance and Fraction measure the full requested displacement.
+                        double fraction = contact.Fraction * stop;
+                        contact = contact with
+                        {
+                            Distance = (float)(displacementLength * fraction),
+                            Fraction = (float)fraction
+                        };
+                    }
+
+                    CollisionHit2D hit = CreateHit(target, contact);
+                    if (collider.IsTrigger || target.Collider.IsTrigger)
+                    {
+                        triggers.Add((hit, target.Ordinal));
+                    }
+                    else
+                    {
+                        blocking.Add((hit, target.Ordinal));
+                    }
                 }
             }
 
@@ -377,6 +414,8 @@ public sealed partial class CollisionWorld2D
         int changed = kind == SceneCollisionMutationKind.Structure
             ? ReconcileAll()
             : ReconcileSubtree(node);
+        // A structural change can reorder colliders without adding one.
+        ordinalsStale |= kind == SceneCollisionMutationKind.Structure;
         observedVersion = version;
         incrementalUpdateCount++;
         updatedEntryCount += changed;
@@ -403,6 +442,33 @@ public sealed partial class CollisionWorld2D
         {
             Rebuild();
         }
+        else if (ordinalsStale)
+        {
+            RenumberInTreeOrder();
+        }
+    }
+
+    private void RenumberInTreeOrder()
+    {
+        nextOrdinal = 0;
+        foreach (Collider2D collider in EnumerateColliders(owner))
+        {
+            if (!entriesByCollider.TryGetValue(collider, out CollisionEntry2D? entry))
+            {
+                continue;
+            }
+
+            long ordinal = ++nextOrdinal;
+            if (entry.Ordinal != ordinal)
+            {
+                CollisionEntry2D renumbered = entry with { Ordinal = ordinal };
+                entriesByCollider[collider] = renumbered;
+                entriesById[entry.Id] = renumbered;
+                collider.ContactOrdinal = ordinal;
+            }
+        }
+
+        ordinalsStale = false;
     }
 
     private void Rebuild()
@@ -427,6 +493,7 @@ public sealed partial class CollisionWorld2D
         }
 
         initialized = true;
+        ordinalsStale = false;
         observedVersion = Version;
         rebuildCount++;
     }
@@ -528,6 +595,8 @@ public sealed partial class CollisionWorld2D
         entriesById[id] = entry;
         broadphase.AddOrUpdate(id, geometry.SceneBounds);
         OnContactEntryAdded(entry);
+        // The ordinal is provisional outside a rebuild: the next query gives the entry its tree position.
+        ordinalsStale = true;
         return true;
     }
 
@@ -731,6 +800,87 @@ public sealed partial class CollisionWorld2D
         }
 
         return count;
+    }
+
+    // A move's swept bounds inside the DrawRect coordinate range are cut at 0 on each axis that crosses it, so each
+    // piece is at most as wide and tall as the largest DrawRect: at most four.
+    private const int MaxMoveQueryBoundsCount = 4;
+
+    // The broadphase rectangles that cover the move of bounds by displacement inside the DrawRect coordinate range.
+    // stop is the fraction of the move after which the bounds lie outside that range, so the move hits nothing later.
+    private static int CreateMoveQueryBounds(
+        DrawRect bounds,
+        Vector2 displacement,
+        Span<DrawRect> queryBounds,
+        out double stop)
+    {
+        stop = 1;
+        float left = MathF.Min(bounds.X, bounds.X + displacement.X);
+        float top = MathF.Min(bounds.Y, bounds.Y + displacement.Y);
+        float width = MathF.Max(bounds.Right, bounds.Right + displacement.X) - left;
+        float height = MathF.Max(bounds.Bottom, bounds.Bottom + displacement.Y) - top;
+        if (IsSceneCoordinate(new Vector2(left, top)) &&
+            DrawArgument.IsNonNegativeValidPixelSize(width) &&
+            DrawArgument.IsNonNegativeValidPixelSize(height) &&
+            IsSceneCoordinate(new Vector2(left + width, top + height)))
+        {
+            queryBounds[0] = new DrawRect(left, top, width, height);
+            return 1;
+        }
+
+        ClipMoveAxis(bounds.X, bounds.Right, displacement.X, ref stop);
+        ClipMoveAxis(bounds.Y, bounds.Bottom, displacement.Y, ref stop);
+        Span<float> columns = stackalloc float[3];
+        Span<float> rows = stackalloc float[3];
+        int columnCount = SplitMoveAxis(bounds.X, bounds.Right, displacement.X, stop, columns);
+        int rowCount = SplitMoveAxis(bounds.Y, bounds.Bottom, displacement.Y, stop, rows);
+        int count = 0;
+        for (int row = 0; row < rowCount; row++)
+        {
+            for (int column = 0; column < columnCount; column++)
+            {
+                queryBounds[count++] = new DrawRect(
+                    columns[column],
+                    rows[row],
+                    GetQueryExtent(columns[column], columns[column + 1]),
+                    GetQueryExtent(rows[row], rows[row + 1]));
+            }
+        }
+
+        return count;
+    }
+
+    // Narrows stop to the fraction of the move after which the bounds [low, high] lie outside the coordinate range
+    // on one axis. The bounds start inside that range, so stop stays at least 0.
+    private static void ClipMoveAxis(float low, float high, float delta, ref double stop)
+    {
+        if (delta > 0)
+        {
+            stop = Math.Min(stop, (MaxSceneCoordinate - (double)low) / delta);
+        }
+        else if (delta < 0)
+        {
+            stop = Math.Min(stop, (-MaxSceneCoordinate - (double)high) / delta);
+        }
+    }
+
+    // The edges of the pieces that cover the bounds [low, high] moved by delta up to stop, inside the coordinate
+    // range: one piece, or two that meet at 0, so that no piece is wider than the largest DrawRect.
+    private static int SplitMoveAxis(float low, float high, float delta, double stop, Span<float> edges)
+    {
+        double moved = delta * stop;
+        float first = RoundDownToSceneCoordinate(Math.Min(low, low + moved));
+        float last = RoundUpToSceneCoordinate(Math.Max(high, high + moved));
+        edges[0] = first;
+        if (first < 0 && last > 0)
+        {
+            edges[1] = 0;
+            edges[2] = last;
+            return 2;
+        }
+
+        edges[1] = last;
+        return 1;
     }
 
     private static bool IsSceneCoordinate(Vector2 point) =>

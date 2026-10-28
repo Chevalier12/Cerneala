@@ -31,7 +31,7 @@ MoveCollisionResult2D move = world.MoveAndCollide(playerCollider, desiredMovemen
 
 The root scene owns one collision world. Calling `CollisionWorld` on a nested `Scene2D` returns that same root-owned instance. Attach, detach, reparent, visibility, filtering, shape, offset, and transform changes update it through the normal `UiProperty` mutation path before the next query.
 
-The broadphase is an internal sparse grid. Every public result is confirmed by an exact narrow phase, so a grid candidate is not itself a collision. Boxes and convex polygons use SAT fast paths. Similarity-transformed circles use analytic tests; non-uniformly scaled or skewed circles retain their affine ellipse and use support mapping with GJK/EPA. Continuous casts use conservative advancement and include edge contact with epsilon `1e-5` scene units.
+The broadphase is an internal sparse grid. Every public result is confirmed by an exact narrow phase, so a grid candidate is not itself a collision. `Overlap`, `MoveAndCollide`, and contact events query the grid with the collider's bounds grown by the `1e-5` contact tolerance, so `Overlap(a)` contains `b` whenever `Intersects(a, b)` is true, also when the contact lies on a grid cell boundary. Boxes and convex polygons use SAT fast paths. Similarity-transformed circles use analytic tests; non-uniformly scaled or skewed circles retain their affine ellipse and use support mapping with GJK/EPA. Continuous casts use conservative advancement and include edge contact with epsilon `1e-5` scene units.
 
 Zero-thickness `SegmentCollider2D` shapes use the same support-mapped distance/cast path rather than area-based polygon SAT. Ray queries retain finite endpoints and collinear contact; both sides can produce contact.
 
@@ -41,7 +41,7 @@ For a nonzero movement starting at contact without penetration (within the exist
 
 Pair filtering is bilateral: `(a.CollisionMask & b.CollisionLayer) != 0` and `(b.CollisionMask & a.CollisionLayer) != 0`. A collider with zero layer or mask participates in no pair. Triggers can be queried but never block `MoveAndCollide`.
 
-Overlap results use stable attachment order. Ray and movement results use fraction, distance, then attachment ordinal. Methods do not mutate scene nodes and do not run a physics simulation.
+Overlap results use stable attachment order. Ray and movement results use fraction, distance, then attachment ordinal. Attachment order is the order of the active colliders in the root scene's tree: depth first, each node's children in order, and a sprite's colliders where the sprite is. It depends only on the current tree, not on when the world was first queried. For example, after `scene.Children.Insert(0, b)` in a scene that holds `a`, a collider of `b` comes before the colliders of `a`, whether or not the world was queried before the insert. Methods do not mutate scene nodes and do not run a physics simulation.
 
 ### Vision sensors
 
