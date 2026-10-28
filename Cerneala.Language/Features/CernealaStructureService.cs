@@ -356,8 +356,11 @@ internal sealed class CernealaStructureService
         AttributeSyntax? nameAttribute = element.Attributes.FirstOrDefault(attribute =>
             attribute.NameToken.Text == "Name");
         TextSpan nameSpan = nameAttribute is null ? element.NameToken.Span : AttributeContentSpan(nameAttribute);
+        // The semantic model declares a ContentTemplate at its tag name, also when the template has a Name attribute.
         CernealaSemanticSymbol? declaration = model?.Symbols
-            .Where(symbol => symbol.Span.Equals(nameSpan) && IsOutlineDeclaration(symbol.Kind))
+            .Where(symbol => IsOutlineDeclaration(symbol.Kind) &&
+                (symbol.Span.Equals(nameSpan) ||
+                    symbol.Kind == CernealaSemanticSymbolKind.ContentTemplate && symbol.Span.Equals(element.NameToken.Span)))
             .OrderByDescending(symbol => OutlinePriority(symbol.Kind))
             .FirstOrDefault();
         if (declaration is not null)
@@ -374,7 +377,8 @@ internal sealed class CernealaStructureService
         if (localName == "ContentTemplate")
         {
             return new CernealaOutlineSymbol(
-                DisplayName(element, "Key") ?? DisplayName(element, "DataType") ?? "ContentTemplate",
+                // The same name order as the semantic model's ContentTemplate symbol.
+                DisplayName(element, "Name") ?? DisplayName(element, "Key") ?? DisplayName(element, "DataType") ?? "ContentTemplate",
                 "ContentTemplate",
                 CernealaOutlineSymbolKind.Template,
                 element.Span,

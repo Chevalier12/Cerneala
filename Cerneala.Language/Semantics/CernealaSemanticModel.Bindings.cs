@@ -1063,7 +1063,10 @@ internal sealed partial class CernealaSemanticModel
         return true;
     }
 
+    // A type the compilation cannot resolve is reported by C# (CS0246); the binding checks below cannot prove anything
+    // about it, so they accept it instead of adding a second, misleading error (#1213).
     private static bool IsObservablePathOwner(ILanguageTypeSymbol type) =>
+        type.HasUnresolvedTypes ||
         type.IsOrImplements("Cerneala.UI.Core.UiObject") ||
         type.IsOrImplements("System.ComponentModel.INotifyPropertyChanged");
 
@@ -1078,6 +1081,11 @@ internal sealed partial class CernealaSemanticModel
         if (source is null)
         {
             return false;
+        }
+
+        if (source.HasUnresolvedTypes || target.ValueType?.HasUnresolvedTypes == true)
+        {
+            return true;
         }
 
         string sourceName = source.MetadataName.TrimEnd('?');

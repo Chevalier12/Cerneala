@@ -382,6 +382,27 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
                 metadataName,
                 StringComparison.Ordinal));
         }
+
+        public bool HasUnresolvedTypes
+        {
+            get
+            {
+                for (ITypeSymbol? current = symbol; current is not null; current = current.BaseType)
+                {
+                    if (IsUnresolved(current))
+                    {
+                        return true;
+                    }
+                }
+
+                return symbol.AllInterfaces.Any(IsUnresolved);
+            }
+        }
+
+        private static bool IsUnresolved(ITypeSymbol type) =>
+            type.TypeKind == TypeKind.Error ||
+            type is INamedTypeSymbol named && named.TypeArguments.Any(IsUnresolved) ||
+            type is IArrayTypeSymbol array && IsUnresolved(array.ElementType);
     }
 
     private sealed class RoslynMemberSymbol : ILanguageMemberSymbol
