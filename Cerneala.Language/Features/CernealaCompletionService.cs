@@ -46,7 +46,7 @@ internal sealed partial class CernealaCompletionService
         cancellationToken.ThrowIfCancellationRequested();
         string source = document.Text.ToString();
         offset = Clamp(offset, 0, source.Length);
-        CompletionSite site = CompletionSite.Classify(source, offset);
+        CompletionSite site = CompletionSite.Classify(source, document.Syntax.Tokens, offset);
         List<CernealaCompletionItem> result = new();
         ElementSyntax? element = model?.FindCompletionElement(offset);
 
@@ -105,7 +105,7 @@ internal sealed partial class CernealaCompletionService
     {
         string source = document.Text.ToString();
         offset = Clamp(offset, 0, source.Length);
-        CompletionSite site = CompletionSite.Classify(source, offset);
+        CompletionSite site = CompletionSite.Classify(source, document.Syntax.Tokens, offset);
         CernealaSignatureHelp? attributeValueHelp = GetAttributeValueSignatureHelp(site, model);
         if (attributeValueHelp is not null)
         {
@@ -222,7 +222,7 @@ internal sealed partial class CernealaCompletionService
     {
         if (site.IsClosingTag)
         {
-            string? name = FindUnclosedElementName(site.Source, site.Offset);
+            string? name = FindUnclosedElementName(site);
             if (name is not null)
             {
                 Add(result, name, name, site.WordSpan, CernealaCompletionItemKind.Element, "closing element", "00");

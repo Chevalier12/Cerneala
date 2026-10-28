@@ -22,5 +22,6 @@ internal enum SyntaxKind
     Text,
     Comment,
     CData,
+    ProcessingInstruction,
     Error
 }

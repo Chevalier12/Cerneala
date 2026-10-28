@@ -651,31 +651,6 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         return false;
     }
 
-    private static string StripXmlDeclarationPreservingPositions(string text)
-    {
-        if (!text.StartsWith("<?xml", StringComparison.OrdinalIgnoreCase))
-        {
-            return text;
-        }
-
-        int end = text.IndexOf("?>", StringComparison.Ordinal);
-        if (end < 0)
-        {
-            return text;
-        }
-
-        StringBuilder builder = new(text);
-        for (int i = 0; i < end + 2; i++)
-        {
-            if (builder[i] != '\r' && builder[i] != '\n')
-            {
-                builder[i] = ' ';
-            }
-        }
-
-        return builder.ToString();
-    }
-
     private static string CreateClassName(string path)
     {
         return CreateIdentifier(CernealaDocumentPath.GetLogicalName(path));
@@ -747,7 +722,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             LanguageDocument = new CernealaDocument(
                 path,
-                LanguageSourceText.From(StripXmlDeclarationPreservingPositions(text)));
+                LanguageSourceText.From(text));
             ElementSyntax[] roots = LanguageDocument.Syntax.Children.OfType<ElementSyntax>().ToArray();
             Document = roots.Length == 1
                 ? new EmissionMarkupDocument(MarkupElement.FromSyntax(roots[0]))

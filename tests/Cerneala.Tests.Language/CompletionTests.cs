@@ -584,6 +584,60 @@ public sealed class CompletionTests
         Assert.Contains(value.Complete(), item => item.Label == "Center");
     }
 
+    [Theory]
+    [InlineData("==")]
+    [InlineData("<")]
+    [InlineData(">")]
+    public void DirectiveKeywordCompletionIgnoresAComparisonOperatorInTheCondition(string comparator)
+    {
+        using CompletionFixture fixture = CompletionFixture.Create(
+            "<Window><Window.Resources><Aspect TargetType=\"Button\">" +
+            "@when Opacity { @if value " + comparator + " 0.5 { @s|caret| } }" +
+            "</Aspect></Window.Resources></Window>");
+
+        IReadOnlyList<CernealaCompletionItem> items = fixture.Complete();
+
+        Assert.Contains(items, item => item.Label == "@set" && item.Kind == CernealaCompletionItemKind.Keyword);
+        Assert.DoesNotContain(items, item => item.Kind == CernealaCompletionItemKind.Property);
+    }
+
+    [Theory]
+    [InlineData("==")]
+    [InlineData("<")]
+    [InlineData(">")]
+    public void ClosingElementCompletionIgnoresAComparisonOperatorInAnEarlierDirective(string comparator)
+    {
+        using CompletionFixture fixture = CompletionFixture.Create(
+            "<Window><Window.Resources><Aspect TargetType=\"Button\">" +
+            "@when Opacity { @if value " + comparator + " 0.5 { } }" +
+            "</Aspect></Window.Resources></|caret|");
+
+        CernealaCompletionItem closing = Assert.Single(fixture.Complete(), item => item.Detail == "closing element");
+        Assert.Equal("Window", closing.Label);
+    }
+
+    [Theory]
+    [InlineData("x", true)]
+    [InlineData(">", true)]
+    public void AttributeCompletionIgnoresAGreaterThanSignInAnEarlierAttributeValue(string content, bool expected)
+    {
+        using CompletionFixture fixture = CompletionFixture.Create("<Window><Button Content=\"" + content + "\" |caret| /></Window>");
+
+        Assert.Equal(expected, fixture.Complete().Any(item => item.Label == "Width"));
+    }
+
+    // A '<' that is being typed is a tag start, although the lexer reads a '<' before a non-name character as text.
+    [Theory]
+    [InlineData("<Window><|caret|</Window>")]
+    [InlineData("<Window>\n  <|caret|\n</Window>")]
+    [InlineData("<Window><Bu|caret|</Window>")]
+    public void ElementCompletionStartsAtATypedLessThanSign(string markedText)
+    {
+        using CompletionFixture fixture = CompletionFixture.Create(markedText);
+
+        Assert.Contains(fixture.Complete(), item => item.Label == "Button" && item.Kind == CernealaCompletionItemKind.Element);
+    }
+
     [Fact]
     public void IfDirectiveCompletesInsideWhenBeforeTargetProperties()
     {

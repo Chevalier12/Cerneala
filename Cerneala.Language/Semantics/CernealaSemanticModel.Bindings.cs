@@ -857,8 +857,8 @@ internal sealed partial class CernealaSemanticModel
         }
     }
 
-    // Direct text of an element with child elements blanked; in an Aspect body
-    // the @timbre/@prism attachments are blanked too (see AspectAttachments).
+    // Direct text of an element with child elements and comments blanked; in an
+    // Aspect body the @timbre/@prism attachments are blanked too (see AspectAttachments).
     private (string Text, int Offset) BuildDirectTextBuffer(ElementSyntax element)
     {
         (string text, int offset) = BuildRawDirectTextBuffer(element);
@@ -880,7 +880,7 @@ internal sealed partial class CernealaSemanticModel
         }
 
         char[] buffer = Enumerable.Repeat(' ', end - start).ToArray();
-        foreach (TextSyntax text in element.Children.OfType<TextSyntax>())
+        foreach (TextSyntax text in element.Children.OfType<TextSyntax>().Where(text => text.Kind != SyntaxKind.Comment))
         {
             string value = document.Text.Substring(text.Span);
             value.CopyTo(0, buffer, text.Span.Start - start, value.Length);

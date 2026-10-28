@@ -196,6 +196,15 @@ internal static class PrismSyntaxParser
                     break;
                 }
 
+                // No block is open at the top level, so a '}' there has no owner:
+                // report it and step over it, or the loop would never advance.
+                if (text[position] == '}')
+                {
+                    Add("PRISM1003", "Unexpected closing '}'.", position, 1);
+                    position++;
+                    continue;
+                }
+
                 if (text[position] == '@')
                 {
                     PrismMemberModelSyntax? directive = ParseDirective();
@@ -357,7 +366,7 @@ internal static class PrismSyntaxParser
                 if (quoted)
                 {
                     position++;
-                    if (character == quote && (position < 2 || text[position - 2] != '\\'))
+                    if (character == quote && !EmbeddedText.IsEscaped(text, position - 1))
                     {
                         quoted = false;
                     }
@@ -458,7 +467,7 @@ internal static class PrismSyntaxParser
             while (position < text.Length)
             {
                 char character = text[position++];
-                if (character == quote && (position < 2 || text[position - 2] != '\\'))
+                if (character == quote && !EmbeddedText.IsEscaped(text, position - 1))
                 {
                     return;
                 }

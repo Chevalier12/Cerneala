@@ -1,6 +1,7 @@
 using System.Globalization;
 using Cerneala.Language.Semantics.Symbols;
 using Cerneala.Language.Syntax;
+using Cerneala.Language.Syntax.Embedded;
 using Cerneala.Language.Text;
 
 namespace Cerneala.Language.Semantics;
@@ -644,7 +645,7 @@ internal sealed partial class CernealaSemanticModel
                 char character = source[position];
                 if (quoted)
                 {
-                    if (character == quote && source[position - 1] != '\\')
+                    if (character == quote && !EmbeddedText.IsEscaped(source, position))
                     {
                         quoted = false;
                     }

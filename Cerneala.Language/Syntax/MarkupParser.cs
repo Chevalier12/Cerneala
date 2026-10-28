@@ -48,7 +48,8 @@ internal sealed class MarkupParser
             SyntaxKind.CommentToken => new TextSyntax(SyntaxKind.Comment, Read()),
             SyntaxKind.CDataToken => new TextSyntax(SyntaxKind.CData, Read()),
             SyntaxKind.TextToken => new TextSyntax(SyntaxKind.Text, Read()),
-            SyntaxKind.ProcessingInstructionToken => new TextSyntax(SyntaxKind.Text, Read()),
+            // A processing instruction, such as the leading <?xml version="1.0"?>, is neither text nor a comment.
+            SyntaxKind.ProcessingInstructionToken => new TextSyntax(SyntaxKind.ProcessingInstruction, Read()),
             SyntaxKind.LessThanToken when IsClosingTag() => ParseUnexpectedClosingTag(),
             SyntaxKind.LessThanToken => ParseElement(),
             _ => ParseUnexpectedToken()

@@ -361,6 +361,30 @@ public sealed class FormattingTests
 
     private static string Escape(string text) => text.Replace("\r", "\\r").Replace("\n", "\\n");
 
+    [Theory]
+    [InlineData("Fish", "Text=\"Fish\"")]
+    [InlineData("Fish &amp; Chips", "Text=\"Fish &amp; Chips\"")]
+    [InlineData("a &lt; b", "Text=\"a &lt; b\"")]
+    [InlineData("say \"hi\"", "Text=\"say &quot;hi&quot;\"")]
+    public void PropertyElementToAttributeConversionKeepsXmlEntitiesSingleEscaped(string elementText, string expectedAttribute)
+    {
+        CernealaCodeActionService service = new();
+        using Fixture propertyElement = Fixture.Create(
+            "<Window><TextBlock><TextBlock.Text>" + elementText + "</TextBlock.Text></TextBlock></Window>");
+        CernealaCodeAction conversion = Assert.Single(service.GetCodeActions(
+            propertyElement.Document,
+            propertyElement.Model,
+            propertyElement.Document.Syntax.Span,
+            [],
+            [],
+            includeFixAll: false), action => action.Kind == "refactor.rewrite");
+        string converted = Apply(propertyElement.Document.Text.ToString(), conversion.Edits);
+
+        Assert.Contains(expectedAttribute, converted, StringComparison.Ordinal);
+        Assert.DoesNotContain("&amp;amp;", converted, StringComparison.Ordinal);
+        Assert.DoesNotContain("&amp;lt;", converted, StringComparison.Ordinal);
+    }
+
     private static string Apply(string source, IReadOnlyList<CernealaFormattingEdit> edits)
     {
         foreach (CernealaFormattingEdit edit in edits.OrderByDescending(edit => edit.Span.Start))

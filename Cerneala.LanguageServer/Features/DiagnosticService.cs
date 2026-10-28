@@ -66,7 +66,7 @@ internal sealed class DiagnosticService(CernealaWorkspace workspace, BuildDiagno
         TextSyntax? topLevelText = snapshot.Syntax.Children
             .OfType<TextSyntax>()
             .FirstOrDefault(text =>
-                text.Kind is not SyntaxKind.Comment &&
+                text.Kind is not (SyntaxKind.Comment or SyntaxKind.ProcessingInstruction) &&
                 !string.IsNullOrWhiteSpace(text.Token.Text));
         if (topLevelText is not null || roots.Length != 1)
         {
@@ -210,7 +210,8 @@ internal sealed class DiagnosticService(CernealaWorkspace workspace, BuildDiagno
         }
 
         char[] buffer = Enumerable.Repeat(' ', end - start).ToArray();
-        foreach (TextSyntax text in element.Children.OfType<TextSyntax>())
+        // Comments are blanked like child elements: they are not directive text.
+        foreach (TextSyntax text in element.Children.OfType<TextSyntax>().Where(text => text.Kind != SyntaxKind.Comment))
         {
             string value = snapshot.Document.Text.Substring(text.Span);
             value.CopyTo(0, buffer, text.Span.Start - start, value.Length);

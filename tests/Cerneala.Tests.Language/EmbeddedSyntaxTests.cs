@@ -1,6 +1,8 @@
 using Cerneala.Language.Diagnostics;
 using Cerneala.Language.Prism.Catalog;
+using Cerneala.Language.Semantics;
 using Cerneala.Language.Syntax.Embedded;
+using Cerneala.Language.Text;
 
 namespace Cerneala.Tests.Language;
 
@@ -260,5 +262,163 @@ public sealed class EmbeddedSyntaxTests
         Assert.Equal(value, actual.Text);
         Assert.Equal(17 + prefix.Length, actual.Span.Start);
         Assert.Equal(value.Length, actual.Span.Length);
+    }
+
+    [Fact]
+    public void PrismCompositionTerminatesOnALoneClosingBrace() => AssertPrismCompositionTerminates("}");
+
+    [Fact]
+    public void PrismCompositionTerminatesOnAClosingBraceAfterABalancedLayer() =>
+        AssertPrismCompositionTerminates("@layer A { } }");
+
+    private static void AssertPrismCompositionTerminates(string text)
+    {
+        // Warm up the JIT with an input that terminates, so the 500 ms bound measures the loop, not compilation.
+        EmbeddedParseResult<PrismClipModelSyntax> warm = PrismSyntaxParser.ParseComposition("@layer A { }", 0);
+        Assert.NotNull(warm);
+
+        EmbeddedParseResult<PrismClipModelSyntax>? result = null;
+        Thread worker = new(() => result = PrismSyntaxParser.ParseComposition(text, 0)) { IsBackground = true };
+        worker.Start();
+        if (!worker.Join(TimeSpan.FromMilliseconds(500)))
+        {
+            Environment.FailFast(
+                "PrismSyntaxParser.ParseComposition did not return within 500 ms for the input \"" + text + "\".");
+        }
+
+        Assert.NotNull(result);
+        Assert.Contains(result!.Diagnostics, diagnostic => diagnostic.Id == "PRISM1003");
+        Assert.True(result.Diagnostics.Count < 10, "Diagnostic count was " + result.Diagnostics.Count + ".");
+    }
+
+    // The string values are: a, backslash, backslash (an escaped backslash); a (no escape); and a, backslash,
+    // quote, b (an escaped quote, which does not close the string).
+    [Theory]
+    [InlineData("\"a\\\\\"")]
+    [InlineData("\"a\"")]
+    [InlineData("\"a\\\"b\"")]
+    public void DirectiveAssignmentValueEndsAtTheClosingQuote(string value)
+    {
+        string text = "@default { Text = " + value + "; Opacity = 1; }";
+        EmbeddedParseResult<DirectiveDocumentSyntax> result = DirectiveSyntaxParser.Parse(text);
+
+        Assert.Empty(result.Diagnostics);
+        Assert.Equal(["Text", "Opacity"], result.Syntax.Assignments.Select(assignment => assignment.Name));
+        TextSpan span = result.Syntax.Assignments[0].ValueSpan;
+        Assert.Equal(value, text.Substring(span.Start, span.Length));
+    }
+
+    // Every scanner that skips quoted directive values must close the string at the quote after an escaped backslash.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void AspectAttachmentScannerClosesTheStringAfterAnEscapedBackslash(bool escaped)
+    {
+        string text = "Text = \"a" + (escaped ? "\\\\" : string.Empty) + "\"; @prism $Fx;";
+
+        IReadOnlyList<AspectAttachmentSyntax> attachments = AspectAttachmentScanner.Scan(text, 0);
+
+        Assert.True(attachments.Count == 1, $"escaped={escaped}: {attachments.Count} @prism attachment(s) found in {text} (expected 1).");
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void AspectAttachmentBlockAndStatementEndAfterAnEscapedBackslash(bool escaped)
+    {
+        string value = "\"a" + (escaped ? "\\\\" : string.Empty) + "\"";
+        string block = "@prism { Value = " + value + "; }";
+        string statement = "@timbre $Clip(Path = " + value + ");";
+        string text = block + " " + statement + " Opacity = 1;";
+
+        IReadOnlyList<AspectAttachmentSyntax> attachments = AspectAttachmentScanner.Scan(text, 0);
+
+        Assert.True(
+            attachments.Count == 2 &&
+            attachments[0].Extent.Length == block.Length && attachments[0].Terminated &&
+            attachments[1].Extent.Length == statement.Length && attachments[1].Terminated,
+            $"escaped={escaped}: attachments {string.Join(" | ", attachments.Select(a => a.Keyword + " " + a.Extent + " terminated=" + a.Terminated))} in {text}.");
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void PrismReadValueClosesTheStringAfterAnEscapedBackslash(bool escaped)
+    {
+        string text = "Value = \"a" + (escaped ? "\\\\" : string.Empty) + "\"; Other = 1;";
+
+        EmbeddedParseResult<PrismClipModelSyntax> parsed = PrismSyntaxParser.ParseComposition(text, 0);
+
+        Assert.True(
+            parsed.Syntax.Members.Count == 2,
+            $"escaped={escaped}: {parsed.Syntax.Members.Count} member(s) parsed from {text} (expected 2); diagnostics: {string.Join(" | ", parsed.Diagnostics.Select(d => d.Id + " " + d.Message))}");
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void PrismSkipQuotedClosesTheStringAfterAnEscapedBackslash(bool escaped)
+    {
+        string text = "\"a" + (escaped ? "\\\\" : string.Empty) + "\" @prism $P;";
+
+        EmbeddedParseResult<IReadOnlyList<PrismApplicationModelSyntax>> parsed = PrismSyntaxParser.ParseApplications(text, 0);
+
+        Assert.True(parsed.Syntax.Count == 1, $"escaped={escaped}: {parsed.Syntax.Count} @prism application(s) found in {text} (expected 1).");
+    }
+
+    // FindDelimiter, FindMatchingBrace and SplitTopLevel are private static helpers of CernealaSemanticModel, called by reflection.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void MotionFindDelimiterAndFindMatchingBraceCloseTheStringAfterAnEscapedBackslash(bool escaped)
+    {
+        string body = "Text = \"a" + (escaped ? "\\\\" : string.Empty) + "\";";
+        string text = "{ " + body + " } tail;";
+        System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static;
+        System.Reflection.MethodInfo findDelimiter = typeof(CernealaSemanticModel).GetMethod("FindDelimiter", flags)!;
+        System.Reflection.MethodInfo findMatchingBrace = typeof(CernealaSemanticModel).GetMethod("FindMatchingBrace", flags)!;
+
+        int delimiter = (int)findDelimiter.Invoke(null, [text, 2, ';'])!;
+        int brace = (int)findMatchingBrace.Invoke(null, [text, 0])!;
+
+        Assert.True(
+            delimiter == 2 + body.Length - 1 && brace == text.IndexOf('}'),
+            $"escaped={escaped}: FindDelimiter={delimiter} (expected {2 + body.Length - 1}), FindMatchingBrace={brace} (expected {text.IndexOf('}')}) for {text}.");
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void MotionSplitTopLevelClosesTheStringAfterAnEscapedBackslash(bool escaped)
+    {
+        string first = "Text = \"a" + (escaped ? "\\\\" : string.Empty) + "\"";
+        string text = first + ", Opacity = 1";
+        System.Reflection.MethodInfo splitTopLevel = typeof(CernealaSemanticModel).GetMethod(
+            "SplitTopLevel",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!;
+
+        string[] parts = ((IEnumerable<string>)splitTopLevel.Invoke(null, [text, ','])!).ToArray();
+
+        Assert.True(
+            parts.SequenceEqual([first, "Opacity = 1"]),
+            $"escaped={escaped}: SplitTopLevel returned [{string.Join(" | ", parts)}] for {text}.");
+    }
+
+    // FindDirectiveBlocks decides which @default block an assignment belongs to.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void AspectDefaultBlockEndsAtItsClosingBraceAfterAnEscapedBackslash(bool escaped)
+    {
+        string text = "a" + (escaped ? "\\\\" : string.Empty);
+        string markup = "<TextBlock Aspect=\"$A\"><TextBlock.Resources><Aspect Name=\"A\" TargetType=\"TextBlock\">" +
+            "@default { Text = \"" + text + "\"; Opacity = 1; } @default { Opacity = 0.5; }</Aspect></TextBlock.Resources></TextBlock>";
+        CernealaSemanticModel model = LanguagePipelineHarness.BindSemanticModel("DefaultBlocks.crn", markup, out IDisposable lifetime);
+        using (lifetime)
+        {
+            string[] duplicates = model.Diagnostics.Where(d => d.Message.Contains("more than once", StringComparison.Ordinal)).Select(d => d.Message).ToArray();
+
+            Assert.True(duplicates.Length == 0, $"escaped={escaped}: false duplicate diagnostics: {string.Join(" | ", duplicates)}");
+        }
     }
 }

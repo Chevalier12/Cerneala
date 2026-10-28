@@ -10,6 +10,23 @@ internal enum EmbeddedLanguageKind
     Prism
 }
 
+internal static class EmbeddedText
+{
+    // A quote inside a quoted directive value is escaped when an odd number of
+    // backslashes come right before it: in "a\"b" the middle quote is escaped,
+    // and in "C:\\" the last quote closes the string.
+    public static bool IsEscaped(string text, int index)
+    {
+        int backslashes = 0;
+        while (index - backslashes > 0 && text[index - backslashes - 1] == '\\')
+        {
+            backslashes++;
+        }
+
+        return backslashes % 2 == 1;
+    }
+}
+
 internal sealed class EmbeddedDiagnostic
 {
     public EmbeddedDiagnostic(string id, string message, TextSpan span, bool transient = false)
