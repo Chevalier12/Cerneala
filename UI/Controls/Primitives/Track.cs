@@ -271,6 +271,15 @@ public class Track : Control
 
         if (ReferenceEquals(args.Property, ValueProperty))
         {
+            // A ClearValue can reveal a value that no write coerced, such as the default 0 below Minimum 10: it is
+            // corrected as RangeBase.Value is, and the corrected change raises the events (#888).
+            float coercedValue = RangeBase.Clamp(Value, Minimum, Maximum);
+            if (coercedValue != Value)
+            {
+                RangeBase.Correct(this, ValueProperty, coercedValue);
+                return;
+            }
+
             ValueChanged?.Invoke(this, EventArgs.Empty);
             ValueChangedWithReason?.Invoke(
                 this,

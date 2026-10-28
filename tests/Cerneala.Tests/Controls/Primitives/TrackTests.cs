@@ -1,5 +1,6 @@
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Controls.Templates;
+using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
@@ -517,6 +518,22 @@ public sealed class TrackTests
 
         Assert.Equal(5, track.Minimum);
         Assert.Equal(5, track.Value);
+    }
+
+    // #888: ClearValue reveals the default 0, which lies below Minimum; the effective value stays in the range, as
+    // RangeBase.Value does, and the clear leaves no Local value, as WPF's ClearValue.
+    [Fact]
+    public void ClearingValueKeepsEffectiveValueWithinRange()
+    {
+        Track track = new();
+        track.Minimum = 10;
+        track.Maximum = 20;
+        track.Value = 15;
+
+        track.ClearValue(Track.ValueProperty);
+
+        Assert.Equal(10, track.Value);
+        Assert.Equal(UiPropertyValueSource.Default, track.GetValueSource(Track.ValueProperty));
     }
 
     private static InputFrame PointerFrame(
