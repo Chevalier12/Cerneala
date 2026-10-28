@@ -117,6 +117,173 @@ public sealed class ElementLifecycleTests
         Assert.Equal(["attached:parent", "attached:child", "detached:child", "detached:parent"], calls);
     }
 
+    // c0's Unloaded handler removes c0 from p while p is removed from the root. The walk still detaches c1, and
+    // each child is unloaded and detached once (#886).
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void UnloadedHandlerThatRemovesItsElementDoesNotSkipTheSiblings(bool handlerRemoves)
+    {
+        List<string> calls = [];
+        UIRoot root = new();
+        TrackingElement p = new("p", calls), c0 = new("c0", calls), c1 = new("c1", calls);
+        p.VisualChildren.Add(c0);
+        p.VisualChildren.Add(c1);
+        root.VisualChildren.Add(p);
+        int unloaded0 = 0, unloaded1 = 0;
+        c0.Unloaded += (_, _) =>
+        {
+            unloaded0++;
+            if (handlerRemoves)
+            {
+                p.VisualChildren.Remove(c0);
+            }
+        };
+        c1.Unloaded += (_, _) => unloaded1++;
+        calls.Clear();
+
+        root.VisualChildren.Remove(p);
+
+        Assert.Null(c0.Root);
+        Assert.Null(c1.Root);
+        Assert.Equal(1, unloaded0);
+        Assert.Equal(1, unloaded1);
+        Assert.Equal(1, calls.Count(call => call == "detached:c0"));
+        Assert.Equal(1, calls.Count(call => call == "detached:c1"));
+    }
+
+    // c0's Loaded handler removes c0 from p while p is added to the root. The walk still attaches and loads c1 (#886).
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void LoadedHandlerThatRemovesItsElementDoesNotSkipTheSiblings(bool handlerRemoves)
+    {
+        List<string> calls = [];
+        UIRoot root = new();
+        TrackingElement p = new("p", calls), c0 = new("c0", calls), c1 = new("c1", calls);
+        p.VisualChildren.Add(c0);
+        p.VisualChildren.Add(c1);
+        int loaded0 = 0, loaded1 = 0;
+        c0.Loaded += (_, _) =>
+        {
+            loaded0++;
+            if (handlerRemoves)
+            {
+                p.VisualChildren.Remove(c0);
+            }
+        };
+        c1.Loaded += (_, _) => loaded1++;
+
+        root.VisualChildren.Add(p);
+
+        Assert.Same(root, c1.Root);
+        Assert.Equal(1, loaded0);
+        Assert.Equal(1, loaded1);
+        Assert.True(c1.IsLoaded);
+        Assert.Equal(1, calls.Count(call => call == "attached:c0"));
+        Assert.Equal(1, calls.Count(call => call == "attached:c1"));
+    }
+
+    // c's Loaded handler removes c from the attached p while c is added to p. c and its child g end detached (#886).
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void LoadedHandlerThatRemovesItsElementDoesNotLeaveItsDescendantsAttached(bool handlerRemoves)
+    {
+        List<string> calls = [];
+        UIRoot root = new();
+        TrackingElement p = new("p", calls), c = new("c", calls), g = new("g", calls);
+        root.VisualChildren.Add(p);
+        c.VisualChildren.Add(g);
+        c.Loaded += (_, _) =>
+        {
+            if (handlerRemoves)
+            {
+                p.VisualChildren.Remove(c);
+            }
+        };
+
+        p.VisualChildren.Add(c);
+
+        if (handlerRemoves)
+        {
+            Assert.Null(c.Root);
+            Assert.Null(g.Root);
+            Assert.False(g.IsLoaded);
+            Assert.Empty(p.VisualChildren);
+            Assert.DoesNotContain("attached:g", calls);
+        }
+        else
+        {
+            Assert.Same(root, g.Root);
+        }
+    }
+
+    // The new Child's Loaded handler replaces it with another child. The replaced child's descendant ends detached
+    // (#886, the Decorator path of the comment on PR #1117).
+    [Fact]
+    public void LoadedHandlerThatReplacesTheNewDecoratorChildDoesNotLeaveItsDescendantsAttached()
+    {
+        UIRoot root = new(200, 200);
+        Border border = new();
+        root.VisualChildren.Add(border);
+        UIElement oldChild = new(), other = new(), inner = new();
+        Border value = new() { Child = inner };
+        border.Child = oldChild;
+        root.ProcessFrame();
+        bool done = false;
+        value.Loaded += (_, _) =>
+        {
+            if (!done)
+            {
+                done = true;
+                border.Child = other;
+            }
+        };
+
+        border.Child = value;
+        root.ProcessFrame();
+
+        Assert.Same(other, border.Child);
+        Assert.Equal([other], border.VisualChildren);
+        Assert.Null(value.Root);
+        Assert.Null(inner.Root);
+        Assert.False(inner.IsLoaded);
+        Assert.Same(root, other.Root);
+    }
+
+    // The new Content's Loaded handler replaces it with other content. The replaced content's descendant ends
+    // detached (#886, the ContentControl path of the comment on PR #1116).
+    [Fact]
+    public void LoadedHandlerThatReplacesTheNewContentDoesNotLeaveItsDescendantsAttached()
+    {
+        UIRoot root = new(200, 200);
+        ContentControl host = new();
+        root.VisualChildren.Add(host);
+        UIElement oldContent = new(), other = new(), inner = new();
+        Border value = new() { Child = inner };
+        host.Content = oldContent;
+        root.ProcessFrame();
+        bool done = false;
+        value.Loaded += (_, _) =>
+        {
+            if (!done)
+            {
+                done = true;
+                host.Content = other;
+            }
+        };
+
+        host.Content = value;
+        root.ProcessFrame();
+
+        Assert.Same(other, host.Content);
+        Assert.Null(value.Root);
+        Assert.Null(inner.Root);
+        Assert.False(inner.IsLoaded);
+        Assert.Same(root, other.Root);
+    }
+
     // Two children throw from OnDetached while their parent is removed. Every element is still detached and the
     // removal is still published, then the first child's exception reaches the caller.
     [Fact]
