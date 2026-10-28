@@ -749,6 +749,53 @@ public sealed class ContentControlTests
         Assert.Equal(UiPropertyValueSource.Local, host.GetValueSource(ContentControl.ContentProperty));
     }
 
+    // Issues #1191 and #1157 together: a replacement by text content whose old element's Unloaded throws restores the
+    // old element, and the presenter that the text content would get is not left beside it.
+    [Fact]
+    public void ReplacementByTextWhoseOldElementUnloadedHandlerThrowsRestoresTheOldElementWithoutAPresenter()
+    {
+        UIRoot root = new(200, 200);
+        ContentControl host = new();
+        Border old = new();
+        root.VisualChildren.Add(host);
+        host.Content = old;
+        root.ProcessFrame();
+        bool armed = true;
+        old.Unloaded += (_, _) =>
+        {
+            if (armed)
+            {
+                armed = false;
+                throw new InvalidOperationException("unloaded failed");
+            }
+        };
+
+        InvalidOperationException failure = Assert.Throws<InvalidOperationException>(() =>
+            host.SetValue(ContentControl.ContentProperty, (object?)"text"));
+        root.ProcessFrame();
+
+        Assert.Equal("unloaded failed", failure.Message);
+        Assert.Same(old, host.Content);
+        Assert.Equal([old], host.LogicalChildren);
+        Assert.Equal([old], host.VisualChildren);
+    }
+
+    // Issues #794 and #1157 together: while a ComponentTemplateKey does not resolve, text content gets no generated
+    // presenter, so layout reserves only the insets.
+    [Fact]
+    public void TextContentOfAnUnresolvedComponentTemplateKeyIsNotPresentedOrMeasured()
+    {
+        UIRoot root = new(100, 100);
+        ContentControl control = new() { Content = "text", ComponentTemplateKey = "missing", Padding = new Thickness(2) };
+        root.VisualChildren.Add(control);
+
+        root.ProcessFrame();
+
+        Assert.Empty(control.VisualChildren);
+        Assert.Empty(control.LogicalChildren);
+        Assert.Equal(new LayoutSize(4, 4), control.DesiredSize);
+    }
+
     private static PresenceOptions CreatePresence()
     {
         return PresenceOptions.FadeAndScale(
