@@ -59,22 +59,29 @@ public static class ElementLifecycle
         }
     }
 
+    // A Loaded handler can change the tree during the walk (#886). The walk reads the live child lists and starts a
+    // list again from its first child when a handler changed it, so a removal cannot make it skip a sibling; children
+    // already visited return at once. It stops descending into an element that a handler detached, so the children
+    // of a removed element are not attached.
     private static void AttachPreOrder(UIRoot root, UIElement current, HashSet<UIElement> visited)
     {
         if (!visited.Add(current)) { return; }
         AttachSingle(root, current);
         for (int role = 0; role < 2; role++)
         {
-            IReadOnlyList<UIElement> children = role == 0 ? current.LogicalChildren : current.VisualChildren;
-            for (int index = 0; index < children.Count; index++)
+            UIElementCollection children = role == 0 ? current.LogicalChildren : current.VisualChildren;
+            for (int index = 0; index < children.Count && ReferenceEquals(current.Root, root); index++)
             {
+                int version = children.Version;
                 AttachPreOrder(root, children[index], visited);
+                if (children.Version != version) { index = -1; }
             }
         }
     }
 
     // A failing detach callback does not stop the traversal: every element is detached, then the first
-    // failure propagates.
+    // failure propagates. An Unloaded handler can change the tree during the walk (#886): a changed child list is
+    // walked again from its first child, so a removal cannot make the walk skip a sibling.
     private static void DetachPostOrder(
         UIRoot root,
         UIElement current,
@@ -84,10 +91,12 @@ public static class ElementLifecycle
         if (!visited.Add(current)) { return; }
         for (int role = 0; role < 2; role++)
         {
-            IReadOnlyList<UIElement> children = role == 0 ? current.VisualChildren : current.LogicalChildren;
+            UIElementCollection children = role == 0 ? current.VisualChildren : current.LogicalChildren;
             for (int index = 0; index < children.Count; index++)
             {
+                int version = children.Version;
                 DetachPostOrder(root, children[index], visited, ref failure);
+                if (children.Version != version) { index = -1; }
             }
         }
 
@@ -118,7 +127,9 @@ public static class ElementLifecycle
 
     private static void DetachSingle(UIRoot root, UIElement element)
     {
-        if (!ReferenceEquals(element.Root, root))
+        // An element whose own Unloaded handler removes it is still detaching: the removal's detach skips it, and the
+        // detach in progress finishes its cleanup once (#886).
+        if (!ReferenceEquals(element.Root, root) || element.IsDetachingFromRoot)
         {
             return;
         }
