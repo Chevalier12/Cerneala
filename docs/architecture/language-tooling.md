@@ -119,9 +119,9 @@ Lifecycle:
    - With `deferWorkspaceLoad: true` the solution loads only when the first
      document opens.
 2. Every other request before `initialize` fails with `-32002`.
-3. `shutdown` (`:514`) sets the state to "shut down" and disposes the workspace.
+3. `shutdown` (`:515`) sets the state to "shut down" and disposes the workspace.
    Every request after `shutdown`, also a second `shutdown`, fails with
-   `-32600` (`InvalidRequest`, LSP 3.17). `exit` (`:526`) then ends the process:
+   `-32600` (`InvalidRequest`, LSP 3.17). `exit` (`:527`) then ends the process:
    - with code 0 after `shutdown`;
    - with code 1 without `shutdown`.
 4. If the client closes stdin instead, `LanguageServerHost` logs
@@ -168,9 +168,9 @@ Example, push mode, from
 
 Two more endpoint behaviors:
 
-- `textDocument/diagnostic` (`:466`) answers `-32800` (request cancelled) when a
+- `textDocument/diagnostic` (`:467`) answers `-32800` (request cancelled) when a
   newer request replaces it.
-- Diagnostics go out through `textDocument/publishDiagnostics` (`:583`). The
+- Diagnostics go out through `textDocument/publishDiagnostics` (`:585`). The
   server sends `workspace/semanticTokens/refresh` only when the client
   advertised support for it.
 
