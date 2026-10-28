@@ -56,6 +56,6 @@ public sealed record ElementRenderDiagnosticsSnapshot(
     {
         return string.Create(
             CultureInfo.InvariantCulture,
-            $"{ElementType} cacheValid={IsCacheValid}, stale={IsStale}, elementRenderVersion={ElementRenderVersion}, cacheRenderVersion={CacheRenderVersion}, commands={CommandCount}, bounds={ContentBounds}, elementDependencies={ElementDependencies}, cacheDependencies={CacheDependencies}");
+            $"{ElementType} cacheValid={IsCacheValid}, stale={IsStale}, elementRenderVersion={ElementRenderVersion}, cacheRenderVersion={CacheRenderVersion}, commands={CommandCount}, bounds={DetectiveInvariantText.Format(ContentBounds)}, elementDependencies={ElementDependencies}, cacheDependencies={CacheDependencies}");
     }
 }

@@ -1,8 +1,10 @@
+using System.Globalization;
 using Cerneala.Drawing;
 using Cerneala.Tests.UI.Rendering;
 using Cerneala.UI.Detective;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
+using Cerneala.UI.Layout;
 using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Resources;
 
@@ -189,6 +191,71 @@ public sealed class DetectiveSnapshotTests
         Assert.False(snapshot.Platform.HasTextInput);
         Assert.False(snapshot.Platform.HasDpi);
         Assert.False(snapshot.Platform.HasAccessibility);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("ro-RO")]
+    public void LayoutDiagnosticsSnapshotToStringIsInvariantCulture(string cultureName)
+    {
+        // Contract (LayoutDiagnosticsSnapshot.md): "`ToString()` returns a short invariant-culture summary ..."
+        LayoutDiagnosticsSnapshot snapshot = new(
+            "Button",
+            new LayoutSize(1.5f, 2),
+            new LayoutRect(1.5f, 2, 3, 4),
+            1,
+            Visibility.Visible,
+            null,
+            0,
+            null,
+            0);
+
+        string text = WithCulture(cultureName, snapshot.ToString);
+
+        Assert.True(text.Contains("1.5", StringComparison.Ordinal) && !text.Contains("1,5", StringComparison.Ordinal), text);
+        Assert.Contains($"desired={WithCulture("", snapshot.DesiredSize.ToString)} ", text, StringComparison.Ordinal);
+        Assert.Contains($"arranged={WithCulture("", snapshot.ArrangedBounds.ToString)} ", text, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("ro-RO")]
+    public void ElementRenderDiagnosticsSnapshotToStringIsInvariantCulture(string cultureName)
+    {
+        // Contract (ElementRenderDiagnosticsSnapshot.md): "`ToString()` formats a single invariant-culture diagnostics line ..."
+        ElementRenderDiagnosticsSnapshot snapshot = new(
+            "TextBlock",
+            1,
+            default,
+            true,
+            1,
+            default,
+            new LayoutRect(1.5f, 2, 3, 4),
+            1,
+            false);
+
+        string text = WithCulture(cultureName, snapshot.ToString);
+
+        Assert.True(text.Contains("1.5", StringComparison.Ordinal) && !text.Contains("1,5", StringComparison.Ordinal), text);
+        Assert.Contains($"bounds={WithCulture("", snapshot.ContentBounds.ToString)}, ", text, StringComparison.Ordinal);
+    }
+
+    private static string WithCulture(string cultureName, Func<string> action)
+    {
+        CultureInfo previous = CultureInfo.CurrentCulture;
+        CultureInfo previousUi = CultureInfo.CurrentUICulture;
+        try
+        {
+            CultureInfo culture = CultureInfo.GetCultureInfo(cultureName);
+            CultureInfo.CurrentCulture = culture;
+            CultureInfo.CurrentUICulture = culture;
+            return action();
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = previous;
+            CultureInfo.CurrentUICulture = previousUi;
+        }
     }
 
     private static FrameStats StatsWithEveryRetainedPhase()
