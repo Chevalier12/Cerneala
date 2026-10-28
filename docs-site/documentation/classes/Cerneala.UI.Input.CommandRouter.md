@@ -71,6 +71,8 @@ static void Save(object? parameter)
 
 `Execute` calls `CanExecute` before raising execution events. If the command cannot execute, if the context has no target, or if the target is not present in the route map, it returns `false`. When execution proceeds, it raises `CommandEvents.PreviewExecutedEvent` from root to target; if that event is not handled, it raises `CommandEvents.ExecutedEvent` from target to root. The method returns `true` once the command passes `CanExecute` and execution routing is attempted.
 
+A `CommandBinding` answers only the bubbling events: its executed callback runs for `ExecutedEvent` and its can-execute callback for `CanExecuteEvent`, not for the preview events. So one `Execute` runs a binding's executed callback once, and one `CanExecute` runs its can-execute callback once.
+
 During routing, `RoutedEventArgs.Source` is updated to the current `UIElement`, and the same element is passed to the binding callbacks as `sender`. Routing stops as soon as the event arguments are marked handled. Route elements that the route map does not contain (or whose input route is unavailable) are skipped.
 
 ## Constructors

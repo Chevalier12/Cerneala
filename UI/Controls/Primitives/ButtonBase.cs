@@ -107,6 +107,20 @@ public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource, 
         {
             commandState.OnParameterChanged();
         }
+        else if (ReferenceEquals(args.Property, IsEnabledProperty))
+        {
+            commandState.OnEnabledWritten();
+        }
+    }
+
+    // A write of the current IsEnabled raises no property change, but it is still the writer's value (#1202).
+    internal override void NotifyEffectiveValueRewritten(UiProperty property)
+    {
+        base.NotifyEffectiveValueRewritten(property);
+        if (ReferenceEquals(property, IsEnabledProperty))
+        {
+            commandState.OnEnabledWritten();
+        }
     }
 
     private void OnMouseUp(object _, RoutedEventArgs args)

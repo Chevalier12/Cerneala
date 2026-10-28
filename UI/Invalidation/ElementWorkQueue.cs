@@ -11,15 +11,18 @@ internal sealed class ElementWorkQueue<TMetadata>
 {
     private readonly UIRoot root;
     private readonly Func<TMetadata, TMetadata, TMetadata> mergeMetadata;
+    private readonly bool keepsAttachedElementsOutsideVisualTree;
     private readonly Dictionary<UIElement, QueueEntry> entries = new(ReferenceEqualityComparer.Instance);
     private long nextSequence;
 
     public ElementWorkQueue(
         UIRoot root,
-        Func<TMetadata, TMetadata, TMetadata>? mergeMetadata = null)
+        Func<TMetadata, TMetadata, TMetadata>? mergeMetadata = null,
+        bool keepsAttachedElementsOutsideVisualTree = false)
     {
         this.root = root ?? throw new ArgumentNullException(nameof(root));
         this.mergeMetadata = mergeMetadata ?? (static (_, incoming) => incoming);
+        this.keepsAttachedElementsOutsideVisualTree = keepsAttachedElementsOutsideVisualTree;
     }
 
     public int Count => entries.Count;
@@ -78,7 +81,8 @@ internal sealed class ElementWorkQueue<TMetadata>
                 continue;
             }
 
-            if (ReferenceEquals(element.Root, root) && element.IsInPresenceExitingSubtree())
+            if (ReferenceEquals(element.Root, root) &&
+                (keepsAttachedElementsOutsideVisualTree || element.IsInPresenceExitingSubtree()))
             {
                 ordered.Add(new OrderedElement(element, int.MaxValue, entry.Sequence));
                 continue;
