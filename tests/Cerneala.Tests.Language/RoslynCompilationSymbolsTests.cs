@@ -65,6 +65,29 @@ public sealed class RoslynCompilationSymbolsTests
         ILanguageMemberSymbol Member(string name) => Assert.Single(type.GetMembers(name));
     }
 
+    // Issue #828: CanWrite follows the generator's assignable rule, so a setter the generated code cannot call is not
+    // writable; the paired class itself can call its own private setter.
+    [Theory]
+    [InlineData("public float Value { get; set; }", true, true)]
+    [InlineData("public float Value { get; private set; }", false, true)]
+    [InlineData("public float Value { get; init; }", false, false)]
+    [InlineData("public float Value { get; }", false, false)]
+    public void CanWriteRequiresASetterTheGeneratedCodeCanCall(string declaration, bool writable, bool writableFromPair)
+    {
+        CSharpCompilation compilation = CSharpCompilation.Create(
+            "WritableFixture",
+            [CSharpSyntaxTree.ParseText("namespace Fixture; public sealed class Owner { " + declaration + " }")],
+            [MetadataReference.CreateFromFile(typeof(object).Assembly.Location)],
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        RoslynCompilationSymbols symbols = new(compilation);
+        ILanguageTypeSymbol owner = symbols.FindType("Fixture.Owner")!;
+        ILanguageMemberSymbol value = Assert.Single(owner.GetMembers("Value"));
+
+        Assert.Equal(writable, value.CanWrite);
+        Assert.Equal(writable, symbols.IsWritableFromGeneratedCode(value, pairType: null));
+        Assert.Equal(writableFromPair, symbols.IsWritableFromGeneratedCode(value, owner));
+    }
+
     [Fact]
     public void ReplacementCompilationDoesNotReuseOldTypeFacts()
     {

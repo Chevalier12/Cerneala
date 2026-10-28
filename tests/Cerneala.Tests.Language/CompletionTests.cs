@@ -757,6 +757,60 @@ public sealed class CompletionTests
         Assert.Contains("as Loading;", applied, StringComparison.Ordinal);
     }
 
+    // Issue #1053: the " as " inside a string argument is not the handle separator.
+    [Theory]
+    [InlineData("@run $Pulse(Label = \"save as |caret|\");", false)]
+    [InlineData("@run $Pulse(Label = \"save as draft\") as |caret|;", true)]
+    public void MotionRunHandleCompletionIsNotOfferedInsideAStringArgument(string statement, bool offered)
+    {
+        const string markup = """
+            <Window>
+              <Window.Resources>
+                <MotionClip Name="Pulse" TargetType="Button">
+                  @parameter Label: string = "x";
+                  @animate { debugName = Label; @to { Opacity = 1; } }
+                </MotionClip>
+                <Aspect Name="Animated" TargetType="Button">
+                  @handle Loading;
+                  @on Loaded {
+                    STATEMENT
+                  }
+                </Aspect>
+              </Window.Resources>
+            </Window>
+            """;
+        using CompletionFixture fixture = CompletionFixture.Create(markup.Replace("STATEMENT", statement, StringComparison.Ordinal));
+
+        Assert.Equal(offered, fixture.Complete().Any(item => item.Detail == "Motion handle"));
+    }
+
+    // Issue #826: after "assembly=" the user types an assembly name, never a second clr-namespace spec.
+    [Theory]
+    [InlineData("clr-namespace:Test;assembly=|caret|")]
+    [InlineData("clr-namespace:Test;assembly=Comp|caret|")]
+    public void XmlnsCompletionAfterAnAssemblyEqualsSignDoesNotInsertASecondNamespaceSpec(string value)
+    {
+        using CompletionFixture control = CompletionFixture.Create("<Window xmlns:x=\"|caret|\" />");
+        Assert.NotEmpty(control.Complete());
+
+        using CompletionFixture fixture = CompletionFixture.Create("<Window xmlns:x=\"" + value + "\" />");
+        IReadOnlyList<CernealaCompletionItem> items = fixture.Complete();
+
+        foreach (CernealaCompletionItem item in items)
+        {
+            string applied = fixture.Text.Substring(0, item.ReplacementSpan.Start) +
+                item.InsertText +
+                fixture.Text.Substring(item.ReplacementSpan.End);
+            Assert.True(applied.Split("clr-namespace:").Length - 1 == 1, "Item '" + item.Label + "' produced: " + applied);
+        }
+
+        CernealaCompletionItem assembly = Assert.Single(items, item => item.Label == "CompletionCorpus");
+        Assert.Equal(
+            "<Window xmlns:x=\"clr-namespace:Test;assembly=CompletionCorpus\" />",
+            fixture.Text.Substring(0, assembly.ReplacementSpan.Start) + assembly.InsertText +
+                fixture.Text.Substring(assembly.ReplacementSpan.End));
+    }
+
     [Theory]
     [InlineData("Tween(100ms, )", "Tween(duration, easing)", 1)]
     [InlineData("Spring(100, 10, )", "Spring(stiffness, damping, mass)", 2)]

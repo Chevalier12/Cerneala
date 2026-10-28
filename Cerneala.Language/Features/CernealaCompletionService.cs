@@ -575,6 +575,26 @@ internal sealed partial class CernealaCompletionService
         if (attributeName.StartsWith("xmlns", StringComparison.Ordinal))
         {
             string namespacePrefix = GetClrNamespacePrefix(site.ValuePrefix);
+            if (TryGetClrAssemblyPrefix(site.ValuePrefix, out string assemblyPrefix))
+            {
+                // After "assembly=" the user types an assembly name: offer the assemblies that declare the namespace
+                // and replace only the assembly part, so the value keeps a single clr-namespace spec.
+                TextSpan assemblySpan = new(site.Offset - assemblyPrefix.Length, assemblyPrefix.Length);
+                foreach (string assembly in model.CompletionCompilation.GetTypes()
+                    .Where(type => string.Equals(type.Namespace, namespacePrefix, StringComparison.Ordinal) &&
+                        type.AssemblyName.Length > 0 &&
+                        type.AssemblyName.StartsWith(assemblyPrefix, StringComparison.Ordinal))
+                    .Select(type => type.AssemblyName)
+                    .Distinct()
+                    .OrderBy(assembly => assembly, StringComparer.Ordinal))
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    Add(result, assembly, assembly, assemblySpan, CernealaCompletionItemKind.Value, "Assembly", "10");
+                }
+
+                return;
+            }
+
             foreach ((string ns, string assembly) in model.CompletionCompilation.GetTypes()
                 .Where(type => IsCompletableNamespace(type.Namespace, namespacePrefix))
                 .Select(type => (type.Namespace, type.AssemblyName))
@@ -621,6 +641,28 @@ internal sealed partial class CernealaCompletionService
         string specification = valuePrefix.Substring(marker.Length);
         int assemblySeparator = specification.IndexOf(';');
         return (assemblySeparator < 0 ? specification : specification.Substring(0, assemblySeparator)).Trim();
+    }
+
+    // The text typed after "assembly=" in a clr-namespace spec, for example "Comp" in "clr-namespace:Test;assembly=Comp".
+    private static bool TryGetClrAssemblyPrefix(string valuePrefix, out string assemblyPrefix)
+    {
+        const string marker = "clr-namespace:";
+        const string assemblyMarker = "assembly=";
+        assemblyPrefix = string.Empty;
+        int assemblySeparator = valuePrefix.IndexOf(';');
+        if (!valuePrefix.StartsWith(marker, StringComparison.Ordinal) || assemblySeparator < 0)
+        {
+            return false;
+        }
+
+        string assemblyPart = valuePrefix.Substring(assemblySeparator + 1).TrimStart();
+        if (!assemblyPart.StartsWith(assemblyMarker, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        assemblyPrefix = assemblyPart.Substring(assemblyMarker.Length);
+        return true;
     }
 
     private static bool IsCompletableNamespace(string namespaceName, string prefix) =>

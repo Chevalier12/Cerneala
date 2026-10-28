@@ -75,6 +75,9 @@ internal interface ILanguageCompilationSymbols
     // a 'public string Name { private get; set; }' cannot be read by a markup binding.
     bool CanReadFromGeneratedCode(ILanguageMemberSymbol member, ILanguageTypeSymbol? pairType);
 
+    // True when the generated code can assign this property: its setter is not init-only and is accessible as above.
+    bool IsWritableFromGeneratedCode(ILanguageMemberSymbol member, ILanguageTypeSymbol? pairType);
+
     ILanguageTypeSymbol? FindType(string metadataName);
 
     IReadOnlyList<ILanguageTypeSymbol> FindTypes(string simpleName);
