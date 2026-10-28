@@ -327,6 +327,13 @@ internal sealed class CernealaNavigationService
         CernealaSemanticSymbol symbol,
         SymbolIdentity identity)
     {
+        // Implicit content sets the owner's content property without naming it: the child's tag names the child's
+        // type, so it is no occurrence of the property for references or rename.
+        if (symbol.Kind == CernealaSemanticSymbolKind.ContentOwner)
+        {
+            return false;
+        }
+
         if (identity.Kind == IdentityKind.Local)
         {
             return TryGetLocalDefinition(model, symbol, out CernealaLocation? definition) &&

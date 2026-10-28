@@ -102,6 +102,52 @@ public sealed class SemanticScopesTests
         Assert.DoesNotContain(model.Symbols, symbol => symbol.Name is "First" or "Second" or "Third");
     }
 
+    // Issue #1213: an editor compilation whose project references did not load (an unrestored project) cannot resolve
+    // IEnumerable or INotifyPropertyChanged. C# reports that itself (CS0246), so a binding that depends on such a type is
+    // not reported as incompatible or unobservable. With the usings the same types resolve and the bindings are valid too.
+    [Theory]
+    [InlineData("")]
+    [InlineData("using System.Collections; using System.ComponentModel;")]
+    public void BindingChecksDoNotReportTypesTheCompilationCannotResolve(string usings)
+    {
+        string source = usings + """
+
+            using Cerneala.UI.Controls;
+            using Cerneala.UI.Core;
+            namespace Demo;
+            public partial class RowsView : UserControl
+            {
+                internal static readonly UiProperty<IEnumerable?> RowsProperty = UiProperty<IEnumerable?>.Register(
+                    nameof(Rows), typeof(RowsView), new UiPropertyMetadata<IEnumerable?>(null));
+                internal IEnumerable? Rows { get => GetValue(RowsProperty); set => SetValue(RowsProperty, value); }
+            }
+            internal abstract class RowModel : INotifyPropertyChanged
+            {
+                public event PropertyChangedEventHandler? PropertyChanged;
+                public string Label { get; } = string.Empty;
+            }
+            internal sealed class HeaderRow : RowModel { }
+            """;
+        const string markup = """
+            <UserControl xmlns:d="clr-namespace:Demo">
+              <ItemsControl ItemsSource="$root.Rows:OneWay">
+                @templates
+                {
+                  <ContentTemplate DataType="d:HeaderRow">
+                    <TextBlock Text="$DataContext.Label" />
+                  </ContentTemplate>
+                }
+              </ItemsControl>
+            </UserControl>
+            """;
+
+        CernealaSemanticModel model = Model("RowsView.crn", markup, source);
+
+        Assert.True(
+            model.Diagnostics.Count == 0,
+            string.Join(" | ", model.Diagnostics.Select(diagnostic => diagnostic.Id + ": " + diagnostic.Message)));
+    }
+
     private const string ExpressionViewModels = """
         using System.ComponentModel;
         namespace Demo;

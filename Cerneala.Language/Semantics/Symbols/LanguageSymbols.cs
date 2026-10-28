@@ -117,6 +117,10 @@ internal interface ILanguageTypeSymbol
     bool IsOrDerivesFrom(string metadataName);
 
     bool IsOrImplements(string metadataName);
+
+    // True when the compilation cannot resolve this type, one of its type arguments, base types or interfaces,
+    // for example IEnumerable in a project whose references did not load; C# reports those types itself (CS0246).
+    bool HasUnresolvedTypes { get; }
 }
 
 internal interface ILanguageMemberSymbol

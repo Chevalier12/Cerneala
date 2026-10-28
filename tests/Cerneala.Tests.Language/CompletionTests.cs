@@ -190,6 +190,34 @@ public sealed class CompletionTests
         }
     }
 
+    [Theory]
+    [InlineData("<Window><Button Hei|caret|=\"1\" /></Window>", "Height", "<Window><Button Height=\"1\" /></Window>")]
+    [InlineData("<Window><Button Hei|caret| =\"1\" /></Window>", "Height", "<Window><Button Height =\"1\" /></Window>")]
+    [InlineData("<Window><Button Hei|caret| /></Window>", "Height", "<Window><Button Height=\"\" /></Window>")]
+    [InlineData("<Window><Button Cli|caret|=\"OnClick\" /></Window>", "Click", "<Window><Button Click=\"OnClick\" /></Window>")]
+    [InlineData("<Window><Button Grid.R|caret|=\"1\" /></Window>", "Grid.Row", "<Window><Button Grid.Row=\"1\" /></Window>")]
+    [InlineData("<Window><Button Na|caret|=\"b\" /></Window>", "Name", "<Window><Button Name=\"b\" /></Window>")]
+    [InlineData(
+        "<Window xmln|caret|=\"clr-namespace:Cerneala.UI.Controls;assembly=Cerneala\"></Window>",
+        "xmlns",
+        "<Window xmlns=\"clr-namespace:Cerneala.UI.Controls;assembly=Cerneala\"></Window>")]
+    [InlineData(
+        "<Window xmln|caret|></Window>",
+        "xmlns",
+        "<Window xmlns=\"clr-namespace:Cerneala.UI.Controls;assembly=Cerneala\"></Window>")]
+    public void AttributeCompletionBeforeAnExistingValueKeepsOneValue(string markup, string label, string expected)
+    {
+        using CompletionFixture fixture = CompletionFixture.Create(markup);
+
+        CernealaCompletionItem item = Assert.Single(fixture.Complete().Where(candidate => candidate.Label == label));
+        string applied = fixture.Text.Substring(0, item.ReplacementSpan.Start) +
+            item.InsertText +
+            fixture.Text.Substring(item.ReplacementSpan.End);
+
+        Assert.Equal(expected, applied);
+        AssertValidAfterInsertion(fixture.Text, item);
+    }
+
     [Fact]
     public void MenuControlsAndMenuItemPropertiesAreCompletedFromThePublicApi()
     {
@@ -476,6 +504,29 @@ public sealed class CompletionTests
         Assert.True(
             detailType is not null && item.Detail == expectedType,
             $"Item '{label}' has detail '{item.Detail}' (expected '{expectedType}'); type exists: {detailType is not null}.");
+    }
+
+    [Theory]
+    [InlineData("@animate { retarget = Restart; |caret| }", "retarget", true)]
+    [InlineData("@animate { retarget=Restart; |caret| }", "retarget", true)]
+    [InlineData("@animate { retarget  = Restart; |caret| }", "retarget", true)]
+    [InlineData("@animate { retarget\t= Restart; |caret| }", "retarget", true)]
+    [InlineData("@animate { holdOnComplete=true; |caret| }", "holdOnComplete", true)]
+    [InlineData("@animate { holdOnComplete\t\t=true; |caret| }", "holdOnComplete", true)]
+    [InlineData("@animate { debugName=\"Fade\"; |caret| }", "debugName", true)]
+    [InlineData("@animate { debugName   = \"Fade\"; |caret| }", "debugName", true)]
+    [InlineData("@animate { retargetX=Restart; |caret| }", "retarget", false)]
+    [InlineData("@animate { xretarget=Restart; |caret| }", "retarget", false)]
+    public void AlreadySetMotionOptionIsNotOfferedAgain(string animate, string option, bool alreadySet)
+    {
+        using CompletionFixture fixture = CompletionFixture.Create(
+            "<Window><Window.Resources><Aspect TargetType=\"Button\">" + animate + "</Aspect></Window.Resources></Window>");
+
+        string[] labels = fixture.Complete().Select(item => item.Label).OrderBy(label => label, StringComparer.Ordinal).ToArray();
+
+        Assert.True(
+            labels.Contains(option) != alreadySet,
+            $"'{animate}': offered labels are {string.Join(",", labels)}; '{option}' set before the caret: {alreadySet}.");
     }
 
     [Fact]

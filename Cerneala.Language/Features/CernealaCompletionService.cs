@@ -363,6 +363,9 @@ internal sealed partial class CernealaCompletionService
         CancellationToken cancellationToken)
     {
         HashSet<string> used = ReadAttributeNames(site.Source, site.TagStart, site.WordSpan);
+        // When the name is edited before its existing value (`<Button Hei|="1" />`), an item inserts only the name and keeps that value.
+        bool valueFollows = IsAttributeValueAfter(site.Source, site.Offset);
+        string AttributeInsertion(string name, string value = "") => valueFollows ? name : name + "=\"" + value + "\"";
         ILanguageTypeSymbol? type = model?.GetCompletionElementType(element);
         if (type?.MetadataName == "Cerneala.UI.Controls.Tile")
         {
@@ -370,13 +373,13 @@ internal sealed partial class CernealaCompletionService
                 member.Kind == LanguageMemberKind.Property && member.Name is "Image" or "X" or "Y" or "Width" or "Height"))
             {
                 if (used.Contains(member.Name)) { continue; }
-                Add(result, member.Name, member.Name + "=\"\"", site.WordSpan, CernealaCompletionItemKind.Property,
+                Add(result, member.Name, AttributeInsertion(member.Name), site.WordSpan, CernealaCompletionItemKind.Property,
                     member.ValueTypeMetadataName, "00", type.MetadataName, member.Name);
             }
             foreach (string name in new[] { "ImageWidth", "ImageHeight" })
             {
                 if (used.Contains(name)) { continue; }
-                Add(result, name, name + "=\"\"", site.WordSpan, CernealaCompletionItemKind.Property,
+                Add(result, name, AttributeInsertion(name), site.WordSpan, CernealaCompletionItemKind.Property,
                     "Positive intrinsic image dimension; source-catalog metadata", "00");
             }
             return;
@@ -387,7 +390,7 @@ internal sealed partial class CernealaCompletionService
                 member.Kind == LanguageMemberKind.Property && CernealaSemanticModel.IsTileColliderAttribute(type, member.Name)))
             {
                 if (used.Contains(member.Name)) { continue; }
-                Add(result, member.Name, member.Name + "=\"\"", site.WordSpan, CernealaCompletionItemKind.Property,
+                Add(result, member.Name, AttributeInsertion(member.Name), site.WordSpan, CernealaCompletionItemKind.Property,
                     member.ValueTypeMetadataName, "00", type.MetadataName, member.Name);
             }
             return;
@@ -399,16 +402,16 @@ internal sealed partial class CernealaCompletionService
         {
             if (!used.Contains(name))
             {
-                Add(result, name, name + "=\"\"", site.WordSpan, CernealaCompletionItemKind.Property,
+                Add(result, name, AttributeInsertion(name), site.WordSpan, CernealaCompletionItemKind.Property,
                     "Cerneala attribute", "00");
             }
         }
 
         if (site.IsRootTag && !used.Contains("xmlns"))
         {
-            Add(result, "xmlns", "xmlns=\"clr-namespace:Cerneala.UI.Controls;assembly=Cerneala\"",
+            Add(result, "xmlns", AttributeInsertion("xmlns", "clr-namespace:Cerneala.UI.Controls;assembly=Cerneala"),
                 site.WordSpan, CernealaCompletionItemKind.Property, "default CLR namespace", "00");
-            Add(result, "xmlns:alias", "xmlns:alias=\"clr-namespace:\"", site.WordSpan,
+            Add(result, "xmlns:alias", AttributeInsertion("xmlns:alias", "clr-namespace:"), site.WordSpan,
                 CernealaCompletionItemKind.Property, "CLR namespace alias", "00");
         }
 
@@ -419,7 +422,7 @@ internal sealed partial class CernealaCompletionService
             {
                 if (!used.Contains(name))
                 {
-                    Add(result, name, name + "=\"\"", site.WordSpan,
+                    Add(result, name, AttributeInsertion(name), site.WordSpan,
                         CernealaCompletionItemKind.Property, "Cerneala attribute", "10");
                 }
             }
@@ -440,7 +443,7 @@ internal sealed partial class CernealaCompletionService
                 CernealaCompletionItemKind kind = member.Kind == LanguageMemberKind.Event
                     ? CernealaCompletionItemKind.Event
                     : CernealaCompletionItemKind.Property;
-                Add(result, member.Name, member.Name + "=\"\"", site.WordSpan, kind,
+                Add(result, member.Name, AttributeInsertion(member.Name), site.WordSpan, kind,
                     member.ValueTypeMetadataName, "10", type!.MetadataName, member.Name);
             }
 
@@ -459,12 +462,22 @@ internal sealed partial class CernealaCompletionService
                         continue;
                     }
 
-                    Add(result, label, label + "=\"\"", site.WordSpan,
+                    Add(result, label, AttributeInsertion(label), site.WordSpan,
                         CernealaCompletionItemKind.Property, setter.ValueTypeMetadataName, "20",
                         owner.MetadataName, setter.Name);
                 }
             }
         }
+    }
+
+    private static bool IsAttributeValueAfter(string source, int offset)
+    {
+        while (offset < source.Length && char.IsWhiteSpace(source[offset]))
+        {
+            offset++;
+        }
+
+        return offset < source.Length && source[offset] == '=';
     }
 
     private static void AddValueCompletions(
