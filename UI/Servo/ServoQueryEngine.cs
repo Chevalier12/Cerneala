@@ -167,7 +167,8 @@ internal sealed class ServoQueryEngine
     // Runs only after a resolution found no match. A near miss is an element that fails exactly one criterion
     // of a target with two or more criteria (Id, Role, name, each Where predicate, within); a single-criterion
     // target has no near misses, because every element fails exactly its one criterion. With a position, the
-    // elements that pass every criterion are near misses of the position.
+    // elements that pass every criterion are near misses of the position. Where predicates run only on elements that
+    // pass every other criterion (see CountNearMisses).
     private static string DescribeNotFound(UIRoot root, SemanticsTree tree, ServoTarget target)
     {
         string message = $"The Servo target {target} did not match any element.";
@@ -231,21 +232,29 @@ internal sealed class ServoQueryEngine
         if (target.Id is not null) Check(MatchesId(element, target));
         if (target.Role is not null) Check(MatchesRole(node, target));
         if (target.HasName) Check(target.MatchesName(node.Name));
-        if (target.HasPredicates)
+        int firstPredicate = criterion;
+        criterion += target.PredicateCount;
+        if (target.Scope is not null) Check(insideScope);
+
+        // Where predicates run only on candidates, the elements that pass every other criterion, as in
+        // MatchesOwnCriteria (#883). An element that fails another criterion of a target with predicates is no
+        // near miss, because whether it would also fail a predicate is unknown.
+        bool counted = !target.HasPredicates || failures == 0;
+        if (target.HasPredicates && counted)
         {
             ServoElement snapshot = CreateSnapshot(new ServoResolvedElement(node, element));
+            criterion = firstPredicate;
             for (int index = 0; index < target.PredicateCount; index++)
             {
                 Check(target.MatchesPredicate(index, snapshot));
             }
         }
 
-        if (target.Scope is not null) Check(insideScope);
-        if (failures == 0)
+        if (counted && failures == 0)
         {
             counts.FullMatches++;
         }
-        else if (failures == 1)
+        else if (counted && failures == 1)
         {
             counts.PerCriterion[failed]++;
         }
