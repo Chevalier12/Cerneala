@@ -548,6 +548,156 @@ public sealed class MenuTests
         Assert.Empty(menuBar.Session.OpenPath);
     }
 
+    // Only an item that is open, or that holds the active item, closes with its own branch when it becomes
+    // unavailable; a leaf of an open submenu does not close the menu (#851).
+    [Theory]
+    [InlineData("command")]
+    [InlineData("collapsed")]
+    [InlineData("disableLeafDirectly")]
+    [InlineData("disableHoveredLeaf")]
+    [InlineData("disableOpenItemItself")]
+    public void LeafBecomingUnavailableDoesNotCloseTheOpenSubmenu(string scenario)
+    {
+        bool allowed = true;
+        ActionCommand command = new(_ => { }, _ => allowed);
+        MenuItem leaf = Leaf("Open");
+        // A leaf's command decides its IsEnabled (MenuItem.RefreshCommandState), so only the command scenario has one.
+        if (scenario == "command")
+        {
+            leaf.Command = command;
+        }
+
+        MenuItem file = Branch("File", leaf, Leaf("Close"));
+        MenuBar menuBar = new();
+        menuBar.Items.Add(file);
+        UIRoot root = Attach(menuBar, 400, 300);
+        ElementInputBridge bridge = new();
+        Click(bridge, root, file);
+        root.ProcessFrame();
+        Assert.True(file.IsSubmenuOpen);
+        Assert.Equal([file], menuBar.Session.OpenPath);
+
+        switch (scenario)
+        {
+            case "command":
+                allowed = false;
+                command.RaiseCanExecuteChanged();
+                break;
+            case "collapsed":
+                leaf.Visibility = Visibility.Collapsed;
+                break;
+            case "disableLeafDirectly":
+                leaf.IsEnabled = false;
+                break;
+            case "disableHoveredLeaf":
+                MovePointer(bridge, root, leaf);
+                root.ProcessFrame();
+                leaf.IsEnabled = false;
+                break;
+            default:
+                file.IsEnabled = false;
+                break;
+        }
+
+        root.ProcessFrame();
+
+        if (scenario == "disableOpenItemItself")
+        {
+            Assert.False(file.IsSubmenuOpen);
+            Assert.Empty(menuBar.Session.OpenPath);
+            return;
+        }
+
+        if (scenario != "collapsed")
+        {
+            Assert.False(leaf.IsEnabled);
+        }
+
+        Assert.True(file.IsSubmenuOpen);
+        Assert.Equal([file], menuBar.Session.OpenPath);
+    }
+
+    // A submenu whose item has a command that cannot execute opens on the first click (#851).
+    [Fact]
+    public void SubmenuWithANonExecutableCommandItemOpensOnTheFirstClick()
+    {
+        MenuItem save = Leaf("Save");
+        save.Command = new ActionCommand(_ => { }, _ => false);
+        MenuItem file = Branch("File", Leaf("Open"), save);
+        MenuBar menuBar = new();
+        menuBar.Items.Add(file);
+        UIRoot root = Attach(menuBar, 400, 300);
+        ElementInputBridge bridge = new();
+
+        Click(bridge, root, file);
+        // The submenu items attach in the first frame; their queued command-state refresh runs in the next one.
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.False(save.IsEnabled);
+        Assert.True(file.IsSubmenuOpen);
+        Assert.Equal([file], menuBar.Session.OpenPath);
+    }
+
+    // A focused leaf that becomes unavailable hands keyboard focus to its parent, so the keys still work (#851).
+    [Fact]
+    public void FocusedLeafBecomingUnavailableMovesFocusToItsParent()
+    {
+        bool allowed = true;
+        ActionCommand command = new(_ => { }, _ => allowed);
+        MenuItem open = Leaf("Open");
+        open.Command = command;
+        MenuItem close = Leaf("Close");
+        MenuItem file = Branch("File", open, close);
+        MenuBar menuBar = new();
+        menuBar.Items.Add(file);
+        UIRoot root = Attach(menuBar, 400, 300);
+        ElementInputBridge bridge = FocusedBridge(root, file);
+        Press(bridge, root, InputKey.Down);
+        root.ProcessFrame();
+        root.ProcessFrame();
+        Assert.Same(open, bridge.FocusManager.FocusedElement);
+
+        allowed = false;
+        command.RaiseCanExecuteChanged();
+        root.ProcessFrame();
+
+        Assert.False(open.IsEnabled);
+        Assert.True(file.IsSubmenuOpen);
+        Assert.Same(file, bridge.FocusManager.FocusedElement);
+
+        Release(bridge, root, InputKey.Down);
+        Press(bridge, root, InputKey.Down);
+        root.ProcessFrame();
+
+        Assert.True(file.IsSubmenuOpen);
+        Assert.Same(close, bridge.FocusManager.FocusedElement);
+    }
+
+    // Disabling an open nested item closes its own branch and keeps its parent's submenu open (#851).
+    [Fact]
+    public void DisablingAnOpenNestedItemClosesOnlyItsOwnBranch()
+    {
+        MenuItem recent = Branch("Recent", Leaf("One"));
+        MenuItem file = Branch("File", Leaf("Open"), recent);
+        MenuBar menuBar = new();
+        menuBar.Items.Add(file);
+        UIRoot root = Attach(menuBar, 400, 300);
+        ElementInputBridge bridge = new();
+        Click(bridge, root, file);
+        root.ProcessFrame();
+        MovePointer(bridge, root, recent);
+        root.ProcessFrame();
+        Assert.Equal([file, recent], menuBar.Session.OpenPath);
+
+        recent.IsEnabled = false;
+        root.ProcessFrame();
+
+        Assert.False(recent.IsSubmenuOpen);
+        Assert.True(file.IsSubmenuOpen);
+        Assert.Equal([file], menuBar.Session.OpenPath);
+    }
+
     [Fact]
     public void RemovingOpenItemsAndChangingItemsSourceCloseStaleBranches()
     {

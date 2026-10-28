@@ -47,7 +47,7 @@ Simple child data is wrapped in generated `MenuItem` containers. `DisplayMemberP
 
 The default template projects `PART_ItemsPresenter` through `PART_SubmenuOverlay`. A top-level item in a `MenuBar` places that overlay below its header; deeper levels use `OverlayPlacement.AutoHorizontal`, prefer the right side, fall back to the left, and clamp to the current viewport. Every open overlay in one menu session shares the same light-dismiss domain.
 
-`IsSubmenuOpen` can be set programmatically, but an item without children or an item that is disabled is coerced closed. Detach, root changes, removal from an active item source, loss of all children, and session shutdown also close stale branches. Replacing the component template closes the old overlay, removes its event handlers, clears its dismiss scope, and attaches the new parts without duplicate subscriptions.
+`IsSubmenuOpen` can be set programmatically, but an item without children or an item that is disabled is coerced closed. An item that becomes disabled or collapsed closes only its own branch: when `Save` in an open `File` submenu becomes disabled, directly or because its command can no longer execute, `File` stays open, and keyboard focus on `Save` moves to `File`. Detach, root changes, removal from an active item source, loss of all children, and session shutdown also close stale branches. Replacing the component template closes the old overlay, removes its event handlers, clears its dismiss scope, and attaches the new parts without duplicate subscriptions.
 
 `AspectState.Expanded` is active while `IsSubmenuOpen` is `true`. The property includes `AffectsAspect` metadata, so opening or closing a submenu also queues aspect resolution for the attached item on the next processed frame.
 

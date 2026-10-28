@@ -112,11 +112,28 @@ internal sealed class MenuSession
         }
     }
 
+    // Only the unavailable item's own branch closes; a leaf of an open submenu leaves that submenu open (#851). An item
+    // that held the active item or keyboard focus hands both to its parent, like WPF moves focus to a focusable ancestor.
     internal void OnItemUnavailable(MenuItem item)
     {
-        if (openPath.Count > 0 && (ContainsInOpenBranch(item) || ReferenceEquals(activeItem, item)))
+        CloseFrom(item);
+        bool heldPendingFocus = pendingFocusItem is MenuItem pending &&
+            (ReferenceEquals(pending, item) || IsDescendantOf(pending, item));
+        bool heldFocus = heldPendingFocus || item.IsKeyboardFocusWithin;
+        if (heldPendingFocus)
         {
-            CloseAll(restoreFocus: false);
+            pendingFocusItem = null;
+        }
+
+        if (heldFocus && item.ParentMenuItem is MenuItem parent && Owns(parent) && IsStateEligible(parent))
+        {
+            FocusItem(parent);
+            return;
+        }
+
+        if (activeItem is MenuItem active && (ReferenceEquals(active, item) || IsDescendantOf(active, item)))
+        {
+            activeItem = item.ParentMenuItem;
         }
     }
 
