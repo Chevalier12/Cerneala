@@ -144,6 +144,46 @@ public sealed class TimbreStreamingFailureTests
         Assert.Equal(TimbreErrorKind.InvalidData, result.Error!.Kind);
     }
 
+    // #807: the preload reads past the declared length to find out.
+    [Theory]
+    [InlineData(TimbreLoading.Streaming)]
+    [InlineData(TimbreLoading.Preload)]
+    public async Task ReaderRunningPastItsDeclaredLengthFailsInEveryLoadingMode(TimbreLoading loading)
+    {
+        using TimbreRig rig = new();
+        TimbrePlayback playback = rig.Scope.Play(new TimbreSound(TimbreSource.FromReader(() => new RunsPastReader(), "runs-past"), loading: loading));
+        rig.Output.Release();
+        for (int step = 0; step < 2000 && !playback.Completion.IsCompleted; step++)
+        {
+            rig.Output.ConsumeAll();
+            await rig.SyncAsync();
+        }
+
+        TimbrePlaybackResult result = await TimbreRig.CompletionAsync(playback);
+
+        Assert.Equal(TimbrePlaybackState.Failed, result.State);
+        Assert.Equal(TimbreErrorKind.InvalidData, result.Error!.Kind);
+    }
+
+    // A reader that reports its end only on the read after its last frame is
+    // still exactly its declared length.
+    [Fact]
+    public async Task PreloadedReaderReportingItsEndOnTheNextReadPlaysNormally()
+    {
+        using TimbreRig rig = new();
+        TimbrePlayback playback = rig.Scope.Play(new TimbreSound(TimbreSource.FromReader(() => new LateEndReader(), "late-end"), loading: TimbreLoading.Preload));
+        rig.Output.Release();
+        for (int step = 0; step < 2000 && !playback.Completion.IsCompleted; step++)
+        {
+            rig.Output.ConsumeAll();
+            await rig.SyncAsync();
+        }
+
+        TimbrePlaybackResult result = await TimbreRig.CompletionAsync(playback);
+
+        Assert.Equal(TimbrePlaybackState.Completed, result.State);
+    }
+
     // Consumes output until the playback ends; every step waits for the mixer.
     private static async Task<TimbrePlaybackResult> RunToCompletionAsync(ObservedSource source)
     {
@@ -176,6 +216,50 @@ public sealed class TimbreStreamingFailureTests
             destination.Span[..(frames * 2)].Fill(0.1f);
             position += frames;
             return ValueTask.FromResult(new TimbreReadResult(frames, position >= 4800));
+        }
+
+        public override ValueTask SeekAsync(long frame, CancellationToken cancellationToken)
+        {
+            position = frame;
+            return ValueTask.CompletedTask;
+        }
+    }
+
+    // Declares 4 800 frames and serves 9 600 (the end of the source is only reported at 9 600).
+    private sealed class RunsPastReader : TimbreReader
+    {
+        private long position;
+
+        public override long? LengthFrames => 4800;
+
+        public override ValueTask<TimbreReadResult> ReadAsync(Memory<float> destination, CancellationToken cancellationToken)
+        {
+            int frames = (int)Math.Min(destination.Length / 2, 9600 - position);
+            destination.Span[..(frames * 2)].Fill(0.1f);
+            position += frames;
+            return ValueTask.FromResult(new TimbreReadResult(frames, position >= 9600));
+        }
+
+        public override ValueTask SeekAsync(long frame, CancellationToken cancellationToken)
+        {
+            position = frame;
+            return ValueTask.CompletedTask;
+        }
+    }
+
+    // Declares and serves 4 800 frames, and reports the end with an empty read.
+    private sealed class LateEndReader : TimbreReader
+    {
+        private long position;
+
+        public override long? LengthFrames => 4800;
+
+        public override ValueTask<TimbreReadResult> ReadAsync(Memory<float> destination, CancellationToken cancellationToken)
+        {
+            int frames = (int)Math.Min(destination.Length / 2, 4800 - position);
+            destination.Span[..(frames * 2)].Fill(0.1f);
+            position += frames;
+            return ValueTask.FromResult(new TimbreReadResult(frames, frames == 0));
         }
 
         public override ValueTask SeekAsync(long frame, CancellationToken cancellationToken)

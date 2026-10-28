@@ -32,8 +32,10 @@ internal sealed class TimbreAttachment : IDisposable
         owner = new ElementTimbreOwner(target);
     }
 
-    // Registers the attachment as the element's current one and starts every
-    // AutoPlay sound in declaration order.
+    // Starts every AutoPlay sound in declaration order and registers the
+    // attachment as the element's current one. When a start fails, the caller
+    // gets nothing to dispose: the sounds already started are stopped and
+    // nothing is registered.
     public static TimbreAttachment Attach(UIElement target, TimbreClipDefinition clip, IReadOnlyDictionary<string, float>? arguments)
     {
         ArgumentNullException.ThrowIfNull(target);
@@ -56,15 +58,23 @@ internal sealed class TimbreAttachment : IDisposable
         }
 
         TimbreAttachment attachment = new(target, clip, values);
-        Current.AddOrUpdate(target, attachment);
-        foreach (TimbreClipSound sound in clip.Sounds.Values)
+        try
         {
-            if (sound.AutoPlay)
+            foreach (TimbreClipSound sound in clip.Sounds.Values)
             {
-                attachment.Play(sound.Name);
+                if (sound.AutoPlay)
+                {
+                    attachment.Play(sound.Name);
+                }
             }
         }
+        catch
+        {
+            attachment.Dispose();
+            throw;
+        }
 
+        Current.AddOrUpdate(target, attachment);
         return attachment;
     }
 
