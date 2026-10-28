@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Elements`
 Assembly/Project: `Cerneala`  
 Source: `UI/Elements/UIElement.Events.cs`
 
-Routed event arguments raised when an element's arranged bounds change, including a move that keeps the same size.
+Routed event arguments raised when an element's arranged width or height changes. A move that keeps the same size raises no `SizeChanged`, so `WidthChanged` or `HeightChanged` is always `true`.
 
 ```csharp
 public sealed class SizeChangedEventArgs : RoutedEventArgs

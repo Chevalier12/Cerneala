@@ -125,6 +125,8 @@ public sealed class SelfArrangeInvalidationDuringArrangeRegressionTests
 
         if (trigger == Trigger.SizeChanged)
         {
+            // SizeChanged reports a size change, not a move (#779): the next arrange also makes the child wider.
+            child.Width = 25;
             child.SizeChanged += (_, _) => Request();
         }
         else
@@ -175,6 +177,8 @@ public sealed class SelfArrangeInvalidationDuringArrangeRegressionTests
     {
         public float Offset { get; set; }
 
+        public float Width { get; set; } = 20;
+
         public int ArrangeCount { get; private set; }
 
         public Action? Arranged { get; set; }
@@ -184,7 +188,7 @@ public sealed class SelfArrangeInvalidationDuringArrangeRegressionTests
         protected override LayoutRect ArrangeCore(ArrangeContext context)
         {
             ArrangeCount++;
-            LayoutRect arranged = new(context.FinalRect.X + Offset, context.FinalRect.Y, 20, 10);
+            LayoutRect arranged = new(context.FinalRect.X + Offset, context.FinalRect.Y, Width, 10);
             Arranged?.Invoke();
             return arranged;
         }
