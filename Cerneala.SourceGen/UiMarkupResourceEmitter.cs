@@ -974,7 +974,21 @@ public sealed partial class UiMarkupGenerator
                 return false;
             }
 
+            // Distinct names such as 'name' and 'Name' or 'my-btn' and 'myBtn' become the same generated
+            // identifier, so they collide in the generated code exactly like equal names.
+            string identifier = CreateIdentifier(name);
+            if (symbolIdentifiers.TryGetValue(identifier, out string? earlierName))
+            {
+                Report(
+                    InvalidDocumentShape,
+                    location,
+                    Path.GetFileName(file.Path),
+                    "Duplicate Name '" + name + "': it maps to the generated identifier '" + identifier + "' of Name '" + earlierName + "'.");
+                return false;
+            }
+
             symbols.Add(name, new NamedSymbol(name, kind, source));
+            symbolIdentifiers.Add(identifier, name);
             return true;
         }
 

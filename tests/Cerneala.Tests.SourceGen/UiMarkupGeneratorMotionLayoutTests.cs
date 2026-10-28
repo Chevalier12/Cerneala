@@ -56,4 +56,47 @@ public sealed partial class UiMarkupGeneratorTests
 
         AssertMotionDiagnostic(result, expectedMessage);
     }
+
+    [Theory]
+    [InlineData("FastTween")]
+    [InlineData("SharedTween")]
+    [InlineData("CrossfadeTween")]
+    [InlineData("ModeTween")]
+    public void MotionLayoutAcceptsSpecResourceNamesThatContainReservedWords(string resourceName)
+    {
+        GeneratorRunResult result = RunGenerator(
+            "MotionLayoutResourceName.crn",
+            $$"""
+            <TextBlock Text="card">
+              <TextBlock.Resources>
+                <Tween Name="{{resourceName}}" Duration="100ms" />
+                <Aspect TargetType="TextBlock">
+                  @layout id $self.Text with ${{resourceName}};
+                </Aspect>
+              </TextBlock.Resources>
+            </TextBlock>
+            """,
+            out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+    }
+
+    [Fact]
+    public void MotionLayoutAcceptsAnIdPathThatContainsAReservedWord()
+    {
+        GeneratorRunResult result = RunGenerator(
+            "MotionLayoutIdPath.crn",
+            """
+            <TextBlock Text="card">
+              <TextBlock.Resources>
+                <Aspect TargetType="TextBlock">
+                  @layout id $self.SharedText with Tween(100ms);
+                </Aspect>
+              </TextBlock.Resources>
+            </TextBlock>
+            """,
+            out _);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Id == "CERNEALAUI025");
+    }
 }

@@ -276,6 +276,22 @@ public sealed class SemanticScopesTests
             diagnostic => diagnostic.Id == "CERNEALAUI005" && diagnostic.Message.Contains("Duplicate resource Name", StringComparison.Ordinal));
     }
 
+    [Theory]
+    [InlineData("a", "b", false)]
+    [InlineData("name", "Name", true)]
+    [InlineData("my-btn", "myBtn", true)]
+    public void ElementNamesThatMapToTheSameGeneratedIdentifierAreReportedAsDuplicates(string first, string second, bool duplicate)
+    {
+        string markup =
+            "<StackPanel><TextBlock Name=\"" + first + "\" /><TextBox Name=\"" + second + "\" /></StackPanel>";
+
+        CernealaSemanticModel model = Model("DuplicateIdentifier.crn", markup, string.Empty);
+
+        bool reported = model.Diagnostics.Any(
+            diagnostic => diagnostic.Id == "CERNEALAUI005" && diagnostic.Message.Contains("Duplicate element Name", StringComparison.Ordinal));
+        Assert.True(reported == duplicate, string.Join(" | ", model.Diagnostics.Select(diagnostic => diagnostic.Id + " " + diagnostic.Message)));
+    }
+
     [Fact]
     [Trait("SpriteAnimationStage", "2")]
     public void SpriteAnimationResourceBindsToSpriteWithoutLeakingClipNamesIntoTheElementNamescope()

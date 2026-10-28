@@ -34,7 +34,7 @@ execution.Cancel();
 | Signature | Return Type | Description |
 | --- | --- | --- |
 | `From(MotionHandle handle)` | `MarkupMotionExecution` | Adapts a leaf handle and uses `KeepCurrent` when the execution is canceled. |
-| `From(MotionGroupHandle handle)` | `MarkupMotionExecution` | Adapts a runtime group without inventing leaf-only completion or cancellation options. |
+| `From(MotionGroupHandle handle)` | `MarkupMotionExecution` | Adapts a runtime group without inventing leaf-only completion or cancellation options. Completes or is canceled synchronously, on the thread that completes or cancels the group. |
 | `Parallel(params Func<MarkupMotionExecution>[] children)` | `MarkupMotionExecution` | Starts every child immediately and completes after all children complete naturally. |
 | `Sequence(params Func<MarkupMotionExecution>[] children)` | `MarkupMotionExecution` | Starts each child only after the previous child completes naturally. |
 | `Cancel()` | `void` | Idempotently cancels active children and prevents deferred sequence children from starting. |
@@ -49,6 +49,13 @@ This adapter is intended for source-generated markup composition. Empty groups
 complete immediately, while a one-child group preserves the child's terminal
 state. A canceled child cancels its parent composition. `Sequence` advances
 only after natural completion, so cancellation never starts a later child.
+
+A leaf child and a group child hand over in the same way: when the handle of
+the current child completes, the execution becomes terminal and `Sequence`
+starts the next child before the completing call returns, on the same thread.
+For example, `first.FinishCompleted(fireEvent: true)` on the only handle of
+`MarkupMotionExecution.From(MotionGroup.Parallel(first))` starts the next
+sequence child inside that call, on the UI thread that called it.
 
 The class deliberately exposes no generic `Complete` operation and no
 selectable cancellation behavior. `MotionGroupHandle` does not support those

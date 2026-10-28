@@ -932,6 +932,39 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Contains("'current' must be the whole Motion value", diagnostic.GetMessage(), StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData("IsEnabled == true")]
+    [InlineData("IsEnabled == True")]
+    [InlineData("IsEnabled == False")]
+    [InlineData("Visibility == Visible")]
+    public void MotionConditionLiteralsNeverProduceCSharpCompileErrors(string condition)
+    {
+        string markup = MotionAspectMarkup("@on Loaded { @animate { @to { Opacity = " + condition + " ? 1 : 0.4; } } }");
+
+        GeneratorRunResult result = RunGenerator("MotionConditionLiteral.crn", markup, out Compilation compilation);
+
+        string compilationErrors = string.Join(
+            Environment.NewLine,
+            compilation.GetDiagnostics().Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error));
+        Assert.True(
+            compilationErrors.Length == 0,
+            "Generator diagnostics: " + string.Join(" | ", result.Diagnostics) + " Compilation errors: " + compilationErrors);
+    }
+
+    [Theory]
+    [InlineData("Opacity = 0.5;")]
+    [InlineData("Padding = 8;")]
+    [InlineData("Padding = 8,4,8,4;")]
+    [InlineData("Background = #FF336699;")]
+    public void MotionAnimatesLiteralsOfThicknessAndBrushProperties(string assignment)
+    {
+        string markup = MotionAspectMarkup("@on Loaded { @animate { @to { " + assignment + " } } }");
+
+        GeneratorRunResult result = RunGenerator("MotionTypedLiteral.crn", markup, out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+    }
+
     private static string MotionAspectMarkup(string body)
     {
         return $"""

@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using Cerneala.Language.Semantics.Symbols;
 using Cerneala.Language.Syntax;
 using Cerneala.Language.Text;
@@ -301,6 +302,7 @@ internal sealed partial class CernealaSemanticModel
     {
         SemanticNameScope documentScope = new("document", template: null);
         Dictionary<SemanticTemplateContext, SemanticNameScope> templateScopes = new();
+        Dictionary<string, string> documentIdentifiers = new(StringComparer.Ordinal);
         foreach (ElementSyntax element in document.Syntax.DescendantElements().OrderBy(candidate => candidate.Span.Start))
         {
             if (element.Kind == SyntaxKind.PropertyElement || resourceElements.ContainsKey(element) ||
@@ -345,10 +347,22 @@ internal sealed partial class CernealaSemanticModel
                 continue;
             }
 
-            if (scope.Elements.ContainsKey(name))
+            // The generator turns a document Name into a C# identifier, so 'name' and 'Name' or 'my-btn' and
+            // 'myBtn' collide like equal names. Template parts get generated variable names instead.
+            string identifier = GeneratedIdentifier(name);
+            string? identifierCollision = null;
+            if (template is null && !scope.Elements.ContainsKey(name))
+            {
+                documentIdentifiers.TryGetValue(identifier, out identifierCollision);
+            }
+
+            if (scope.Elements.ContainsKey(name) || identifierCollision is not null)
             {
                 TextSpan span = AttributeContentSpan(nameAttribute);
-                string message = "Duplicate element Name '" + name + "' in the same name scope.";
+                string message = identifierCollision is null
+                    ? "Duplicate element Name '" + name + "' in the same name scope."
+                    : "Duplicate element Name '" + name + "': it maps to the generated identifier '" + identifier +
+                        "' of Name '" + identifierCollision + "'.";
                 if (template is not null && !template.IsContentTemplate)
                 {
                     AddDiagnostic("CERNEALAUI012", span, Path.GetFileName(document.Path), message);
@@ -367,6 +381,10 @@ internal sealed partial class CernealaSemanticModel
             if (template is not null)
             {
                 template.Parts[name] = definition;
+            }
+            else
+            {
+                documentIdentifiers.Add(identifier, name);
             }
 
             symbols.Add(new CernealaSemanticSymbol(
@@ -675,6 +693,28 @@ internal sealed partial class CernealaSemanticModel
         }
 
         return blocks;
+    }
+
+    // Mirrors CreateIdentifier of Cerneala.SourceGen's UiMarkupGenerator, which names the generated variable or
+    // member of a named element.
+    private static string GeneratedIdentifier(string rawName)
+    {
+        StringBuilder builder = new();
+        bool capitalizeNext = true;
+        foreach (char character in rawName)
+        {
+            if (!char.IsLetterOrDigit(character) && character != '_')
+            {
+                capitalizeNext = true;
+                continue;
+            }
+
+            char value = builder.Length == 0 && char.IsDigit(character) ? '_' : character;
+            builder.Append(capitalizeNext ? char.ToUpperInvariant(value) : value);
+            capitalizeNext = false;
+        }
+
+        return builder.Length == 0 ? "GeneratedUi" : builder.ToString();
     }
 
     private sealed class SemanticNameScope

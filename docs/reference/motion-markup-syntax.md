@@ -19,8 +19,15 @@ The language includes inline and named `Aspect` behavior,
 `Tween`/`Spring` resources, `@when`, `@if`, `@on`, immediate `@set`, and parallel
 property starts inside `@animate` with optional `@from` and required `@to`. Values support typed
 literals, enum members, `current`, the existing reactive `$` sources, and
-conditional expressions. A bare property name such as `TranslateY` is accepted
-in a condition but not as a value. `current` must be the whole value: a branch of a
+conditional expressions. A literal of a structured type uses the same text as
+the attribute form, for example `Padding = 8;`, `Padding = 8,4,8,4;` and
+`Background = #FF336699;`. A bare property name such as `TranslateY` is accepted
+in a condition but not as a value. A condition reads properties of the Motion
+target, bare or as `$self.Name`, when the Motion starts. On the right of a
+comparison it also accepts the `@if` literals: `True`, `False` and `Null` in any
+case, numbers, quoted strings, and a member of the left property's enum type, as
+in `Opacity = Visibility == Visible ? 1 : 0;`. Any other operand is a build error
+(`CERNEALAUI023`). `current` must be the whole value: a branch of a
 conditional such as `Opacity = IsMouseOver ? 1 : current;` is a build error
 (`CERNEALAUI020`). To start a Motion only in one case, put the condition on an
 `@if` around the `@animate` instead, as in the `@when IsMouseOver` example below. The supported start

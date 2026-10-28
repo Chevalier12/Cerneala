@@ -46,6 +46,47 @@ public sealed class MarkupMotionExecutionTests
         Assert.True(execution.IsCompleted);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void SequenceStartsTheNextChildSynchronouslyOnTheCompletingThreadAfterALeafOrGroupChild(bool useGroup)
+    {
+        MotionHandle first = FakeHandle();
+        MotionGroupHandle group = MotionGroup.Parallel(first);
+        int started = 0;
+        int startThreadId = -1;
+        MarkupMotionExecution execution = MarkupMotionExecution.Sequence(
+            () => useGroup ? MarkupMotionExecution.From(group) : MarkupMotionExecution.From(first),
+            () =>
+            {
+                started++;
+                startThreadId = Environment.CurrentManagedThreadId;
+                return MarkupMotionExecution.From(FakeHandle());
+            });
+
+        first.FinishCompleted(fireEvent: true);
+
+        Assert.Equal(1, started);
+        Assert.Equal(Environment.CurrentManagedThreadId, startThreadId);
+        Assert.NotNull(execution);
+    }
+
+    [Fact]
+    public void GroupStepCancellationTerminalizesTheSequenceSynchronously()
+    {
+        MotionHandle first = FakeHandle();
+        MotionGroupHandle group = MotionGroup.Parallel(first);
+        int started = 0;
+        MarkupMotionExecution execution = MarkupMotionExecution.Sequence(
+            () => MarkupMotionExecution.From(group),
+            () => { started++; return MarkupMotionExecution.From(FakeHandle()); });
+
+        group.Cancel();
+
+        Assert.True(execution.IsCanceled);
+        Assert.Equal(0, started);
+    }
+
     [Fact]
     public void CancelingSequenceIsIdempotentAndDoesNotStartFutureChildren()
     {
