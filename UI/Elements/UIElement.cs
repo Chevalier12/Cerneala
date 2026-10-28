@@ -322,6 +322,12 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     // for it (#589).
     internal virtual bool OwnsPointerClick => IsSelectorItemContainer && IsEnabled;
 
+    // Whether a press focuses this element when it is the nearest focusable element on the press route, as a WPF
+    // control that focuses itself in its MouseLeftButtonDown class handler. An element that WPF focuses only from code
+    // or the keyboard, such as a ListBox, lets the press look further up, so a press on its scroll bar or empty area
+    // leaves the focus where it was.
+    internal virtual bool TakesFocusOnPress => true;
+
     // True while a Selector hosts this element as an item container that a click selects.
     internal bool IsSelectorItemContainer { get; set; }
 

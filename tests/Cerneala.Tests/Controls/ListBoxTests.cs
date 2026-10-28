@@ -521,6 +521,227 @@ public sealed class ListBoxTests
         Assert.True(after.IsKeyboardFocused);
     }
 
+    // As the Once tab strip of a WPF TabControl, a Tab stop in a tab's header is no Tab stop of its own, while the Tab
+    // stops in the content of the selected tab, shown outside the tabs, stay Tab stops (#1159).
+    [Fact]
+    public void TabSkipsATextBoxInATabHeaderButNotTheSelectedContent()
+    {
+        Button before = new() { Content = "before", Width = 100, Height = 30 };
+        Button after = new() { Content = "after", Width = 100, Height = 30 };
+        Button inside = new() { Content = "inside", Width = 60, Height = 20 };
+        TextBox header = new() { Text = "One", Width = 60 };
+        TabItem first = new() { Header = header, Content = new Border { Width = 20, Height = 20 } };
+        TabItem second = new() { Header = "Two", Content = inside };
+        TabControl tabControl = new() { Width = 200, Height = 100 };
+        tabControl.SetItems(new[] { first, second });
+        tabControl.SelectedIndex = 1;
+        (UIRoot root, ElementInputBridge bridge) = CreateTabOrderRoot(before, tabControl, after);
+        ClickCenter(root, bridge, before);
+        List<string> sequence = [];
+
+        for (int i = 0; i < 3; i++)
+        {
+            PressKey(root, bridge, InputKey.Tab);
+            sequence.Add(bridge.FocusManager.FocusedElement switch
+            {
+                TextBox => "header TextBox",
+                TabItem tab => $"tab {tab.Header}",
+                Button button => $"Button({button.Content})",
+                var other => other?.GetType().Name ?? "nothing"
+            });
+        }
+
+        Assert.Equal("tab Two -> Button(inside) -> Button(after)", string.Join(" -> ", sequence));
+    }
+
+    // As WPF's KeyboardNavigationMode.Once, the list is one Tab stop also when its rows hold Tab stops, such as a TextBox
+    // from the ItemTemplate: Tab from the button before the list enters it once, on the selected row, and the next Tab
+    // leaves it. A TextBox in a row still takes the focus from a click, and Tab or Shift+Tab from it leaves the list
+    // (#1159).
+    [Fact]
+    public void TabEntersAListWhoseRowsHoldTextBoxesOnce()
+    {
+        Button before = new() { Content = "before", Width = 100, Height = 30 };
+        Button after = new() { Content = "after", Width = 100, Height = 30 };
+        ListBox listBox = new()
+        {
+            Width = 150,
+            Height = 120,
+            ItemTemplate = new ContentTemplate<string>("row", key: null, priority: 0, context => new TextBox { Text = context.Data, Width = 60 })
+        };
+        listBox.SetItems(new[] { "A", "B", "C" });
+        listBox.SelectedIndex = 2;
+        (UIRoot root, ElementInputBridge bridge) = CreateTabOrderRoot(before, listBox, after);
+        ClickCenter(root, bridge, before);
+        List<string> sequence = [];
+
+        for (int i = 0; i < 4; i++)
+        {
+            PressKey(root, bridge, InputKey.Tab);
+            sequence.Add(DescribeFocus(bridge));
+        }
+
+        PressKey(root, bridge, InputKey.Tab);
+        Assert.True(after.IsKeyboardFocused);
+        PressKey(root, bridge, InputKey.Tab, InputKey.LeftShift);
+        sequence.Add(DescribeFocus(bridge));
+        TextBox secondTextBox = Assert.IsType<TextBox>(FindDescendant<TextBox>(Row(listBox, 1)));
+        ClickCenter(root, bridge, secondTextBox);
+        sequence.Add(DescribeFocus(bridge));
+        PressKey(root, bridge, InputKey.Tab);
+        sequence.Add(DescribeFocus(bridge));
+        ClickCenter(root, bridge, secondTextBox);
+        PressKey(root, bridge, InputKey.Tab, InputKey.LeftShift);
+        sequence.Add(DescribeFocus(bridge));
+
+        Assert.Equal(
+            "row(C) -> Button(after) -> Button(before) -> row(C) | Shift+Tab from after: row(C) | click: TextBox(B) | Tab: Button(after) | Shift+Tab: Button(before)",
+            $"{string.Join(" -> ", sequence.Take(4))} | Shift+Tab from after: {sequence[4]} | click: {sequence[5]} | Tab: {sequence[6]} | Shift+Tab: {sequence[7]}");
+    }
+
+    // As WPF's ItemsControl.FindFocusable, keyboard navigation skips a realized row that cannot take the keyboard
+    // focus, so Down from "a" over a disabled "b" does not stay on "b" (#775).
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void DownKeyDoesNotGetStuckOnADisabledRow(bool disableRowOne)
+    {
+        (UIRoot root, ListBox listBox) = CreateSelectionModeListBox(SelectionMode.Single, "a", "b", "c", "d");
+        ElementInputBridge bridge = new();
+        ClickRow(root, bridge, listBox, 0);
+        if (disableRowOne)
+        {
+            Row(listBox, 1).IsEnabled = false;
+            root.ProcessFrame();
+        }
+
+        PressKey(root, bridge, InputKey.Down);
+        PressKey(root, bridge, InputKey.Down);
+        PressKey(root, bridge, InputKey.Down);
+
+        Assert.Equal(3, listBox.SelectedIndex);
+    }
+
+    // "down" uses Focusable = false; "home" and "end" start at a disabled first or last row, and the opposite key
+    // afterwards must move the selection away from the row Home or End reached. The unrestricted rows are the controls
+    // (#775).
+    [Theory]
+    [InlineData("down", false)]
+    [InlineData("down", true)]
+    [InlineData("home", false)]
+    [InlineData("home", true)]
+    [InlineData("end", false)]
+    [InlineData("end", true)]
+    public void KeyboardNavigationDoesNotGetStuckOnARowThatCannotTakeTheFocus(string scenario, bool restrictRow)
+    {
+        (UIRoot root, ListBox listBox) = CreateSelectionModeListBox(SelectionMode.Single, "a", "b", "c", "d");
+        ElementInputBridge bridge = new();
+
+        if (scenario == "down")
+        {
+            ClickRow(root, bridge, listBox, 0);
+            if (restrictRow)
+            {
+                Row(listBox, 1).Focusable = false;
+                root.ProcessFrame();
+            }
+
+            PressKey(root, bridge, InputKey.Down);
+            PressKey(root, bridge, InputKey.Down);
+            PressKey(root, bridge, InputKey.Down);
+
+            Assert.True(
+                listBox.SelectedIndex == 3,
+                $"down, Focusable=false on row 1: {restrictRow}: three Down presses from row 0 end on row {listBox.SelectedIndex}, expected 3.");
+            return;
+        }
+
+        bool home = scenario == "home";
+        ClickRow(root, bridge, listBox, home ? 3 : 0);
+        if (restrictRow)
+        {
+            Row(listBox, home ? 0 : 3).IsEnabled = false;
+            root.ProcessFrame();
+        }
+
+        PressKey(root, bridge, home ? InputKey.Home : InputKey.End);
+        int afterFirstKey = listBox.SelectedIndex;
+        PressKey(root, bridge, home ? InputKey.Down : InputKey.Up);
+
+        bool moved = home ? listBox.SelectedIndex > afterFirstKey : listBox.SelectedIndex < afterFirstKey;
+        Assert.True(
+            moved,
+            $"{scenario}, {(home ? "first" : "last")} row disabled: {restrictRow}: after {scenario} SelectedIndex={afterFirstKey}, after the next {(home ? "Down" : "Up")} SelectedIndex={listBox.SelectedIndex}.");
+    }
+
+    // After the focused row is scrolled out and recycled, no row has the focus, so Down moves from SelectedIndex, as the
+    // Keyboard section of the ListBox page says (#822).
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void DownKeyStillMovesFromSelectedIndexAfterTheFocusedRowIsRecycled(bool scrollAway)
+    {
+        (UIRoot root, ListBox listBox) = CreateVirtualizingWindowListBox();
+        ElementInputBridge bridge = new();
+        ClickCenter(root, bridge, Row(listBox, 0));
+        Assert.Equal(0, listBox.SelectedIndex);
+        if (scrollAway)
+        {
+            ListBoxScrollViewer(listBox).ScrollInfo.SetVerticalOffset(2000);
+            root.ProcessFrame();
+            Assert.DoesNotContain(0, listBox.ItemContainerGenerator.RealizedContainers.Keys);
+        }
+
+        PressKey(root, bridge, InputKey.Down);
+
+        Assert.Equal(1, listBox.SelectedIndex);
+    }
+
+    // The focus does not become null when the focused row is recycled: it moves to the ListBox, as WPF moves the
+    // keyboard focus to the nearest focusable ancestor of a focused element that leaves the tree. Every navigation key
+    // then moves from SelectedIndex 3 and brings the new row into view with the focus (#822).
+    [Theory]
+    [InlineData(InputKey.Up, 2)]
+    [InlineData(InputKey.Down, 4)]
+    [InlineData(InputKey.Home, 0)]
+    [InlineData(InputKey.End, 9_999)]
+    [InlineData(InputKey.PageUp, 0)]
+    [InlineData(InputKey.PageDown, 9_999)]
+    public void NavigationKeysMoveFromSelectedIndexAfterTheFocusedRowIsRecycled(InputKey key, int expectedRow)
+    {
+        (UIRoot root, ListBox listBox) = CreateVirtualizingWindowListBox();
+        ElementInputBridge bridge = new();
+        ClickCenter(root, bridge, Row(listBox, 0));
+        for (int i = 0; i < 3; i++)
+        {
+            PressKey(root, bridge, InputKey.Down);
+        }
+
+        Assert.Equal(3, listBox.SelectedIndex);
+        ListBoxScrollViewer(listBox).ScrollInfo.SetVerticalOffset(2000);
+        root.ProcessFrame();
+        Assert.DoesNotContain(3, listBox.ItemContainerGenerator.RealizedContainers.Keys);
+        Assert.Same(listBox, bridge.FocusManager.FocusedElement);
+
+        PressKey(root, bridge, key);
+        ProcessFramesUntilIdle(root);
+
+        Assert.Equal(expectedRow, listBox.SelectedIndex);
+        Assert.Same(Row(listBox, expectedRow), bridge.FocusManager.FocusedElement);
+        AssertRowInsideViewport(listBox, expectedRow);
+    }
+
+    private static string DescribeFocus(ElementInputBridge bridge)
+    {
+        return bridge.FocusManager.FocusedElement switch
+        {
+            TextBox textBox => $"TextBox({textBox.Text})",
+            ListBoxItem row => $"row({row.Item})",
+            Button button => $"Button({button.Content})",
+            var other => other?.GetType().Name ?? "nothing"
+        };
+    }
+
     private static (UIRoot Root, ElementInputBridge Bridge) CreateTabOrderRoot(UIElement before, UIElement target, UIElement after)
     {
         StackPanel panel = new();

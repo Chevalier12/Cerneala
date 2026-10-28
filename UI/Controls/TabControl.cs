@@ -118,6 +118,10 @@ public class TabControl : Selector, ITabOnceScope
     UIElement? ITabOnceScope.GetTabOnceElement(ElementInputRouteMap routeMap) =>
         FindTabOnceContainer(routeMap, SelectedTabItem);
 
+    // The tabs: a Tab stop inside a tab's header is no Tab stop of its own. The content of the selected tab is shown
+    // outside the tabs, so its Tab stops stay (#1159).
+    IEnumerable<UIElement> ITabOnceScope.GetTabOnceContainers() => ItemContainerGenerator.RealizedContainers.Values;
+
     internal void OnTabContentChanged(TabItem tab)
     {
         if (ReferenceEquals(tab, SelectedTabItem))

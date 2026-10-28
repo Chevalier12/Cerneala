@@ -589,14 +589,14 @@ public sealed class ElementInputBridge
         return element;
     }
 
-    // A press focuses the nearest focusable element. An element that owns its clicks takes the press for itself, as a
-    // WPF Thumb marks MouseLeftButtonDown handled before an enclosing ButtonBase focuses itself, so when it cannot take
-    // focus, the focus stays where it was (#640).
+    // A press focuses the nearest focusable element that takes the focus on a press. An element that owns its clicks
+    // takes the press for itself, as a WPF Thumb marks MouseLeftButtonDown handled before an enclosing ButtonBase
+    // focuses itself, so when it cannot take focus, the focus stays where it was (#640).
     private static UIElement? ResolveFocusTarget(UIElement element, ElementInputRouteMap routeMap)
     {
         foreach (UIElement current in routeMap.GetVisualRouteToRoot(element))
         {
-            if (FocusPolicy.CanFocus(current, routeMap))
+            if (current.TakesFocusOnPress && FocusPolicy.CanFocus(current, routeMap))
             {
                 return current;
             }
