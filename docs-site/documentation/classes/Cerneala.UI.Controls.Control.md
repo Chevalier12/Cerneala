@@ -154,14 +154,16 @@ A derived control gives a property its starting value in its constructor with `U
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `PreviewMouseDoubleClick` | `RoutedEventHandler<MouseButtonEventArgs>` | Occurs before `MouseDoubleClick`, when a mouse button is pressed again as the second click of a double click on the control. The handler receives `MouseButtonEventArgs`, so it reads `args.ChangedButton` without a cast. |
-| `MouseDoubleClick` | `RoutedEventHandler<MouseButtonEventArgs>` | Occurs when a mouse button is pressed again as the second click of a double click on the control. The handler receives `MouseButtonEventArgs`, so it reads `args.ChangedButton` without a cast. |
+| `PreviewMouseDoubleClick` | `RoutedEventHandler<MouseButtonEventArgs>` | Occurs before `MouseDoubleClick`, when the left or the right mouse button is pressed again as the second click of a double click on the control or on an element inside it. The handler receives `MouseButtonEventArgs`, so it reads `args.ChangedButton` without a cast. |
+| `MouseDoubleClick` | `RoutedEventHandler<MouseButtonEventArgs>` | Occurs when the left or the right mouse button is pressed again as the second click of a double click on the control or on an element inside it. The handler receives `MouseButtonEventArgs`, so it reads `args.ChangedButton` without a cast. |
 
-Both events are `Direct`: they run on the element that was clicked and do not tunnel or bubble. See [RoutedEventHandler&lt;TArgs&gt;](Cerneala.UI.Input.RoutedEventHandler_TArgs_.md).
+Both events are `Direct`, and, as in WPF, where they are "raised along the element tree by each UIElement", the input bridge raises them once on each element of the clicked element's route: `PreviewMouseDoubleClick` from the root down to the clicked element, then `MouseDoubleClick` from the clicked element up to the root. Each raise has that element as `sender`, and `args.OriginalSource` is the clicked element. So a `MouseDoubleClick` handler on a panel also runs, once, when the user double-clicks a button inside the panel. Each element sees the `Handled` value left by the elements before it, as the [InputEvents](Cerneala.UI.Input.InputEvents.md) page describes. As in WPF, only the left and the right button raise them, with `ChangedButton` set to that button; a double click with the middle or an extra button raises neither event. See [RoutedEventHandler&lt;TArgs&gt;](Cerneala.UI.Input.RoutedEventHandler_TArgs_.md).
 
 ```csharp
 control.MouseDoubleClick += (sender, args) => Console.WriteLine(args.ChangedButton);
 ```
+
+Two quick left clicks on the control print `Left`; two quick right clicks print `Right`; two quick middle clicks print nothing.
 
 ## Exceptions
 

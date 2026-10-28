@@ -630,6 +630,50 @@ public sealed class ElementInputBridgeTests
             $"PreviewMouseDoubleClick {previewAfterPress} and {previewDoubleClicks}; expected 1 at the press and 1 at the end.");
     }
 
+    // As WPF's Control, which raises the double click from its MouseLeftButtonDown and MouseRightButtonDown class handlers
+    // and from no other button's: a right double click raises the double click with ChangedButton Right, and a middle
+    // double click raises none (#868).
+    [Theory]
+    [InlineData(InputMouseButton.Left, true)]
+    [InlineData(InputMouseButton.Right, true)]
+    [InlineData(InputMouseButton.Middle, false)]
+    public void MouseDoubleClickIsRaisedForTheLeftAndTheRightButtonOnly(InputMouseButton button, bool raises)
+    {
+        UIRoot root = RootWithChild(out UIElement child);
+        List<string> doubleClicks = [];
+        child.Handlers.AddHandler(InputEvents.PreviewMouseDoubleClickEvent, (_, args) => doubleClicks.Add($"preview {((MouseButtonEventArgs)args).ChangedButton} {((MouseButtonEventArgs)args).ClickCount}"));
+        child.Handlers.AddHandler(InputEvents.MouseDoubleClickEvent, (_, args) => doubleClicks.Add($"{((MouseButtonEventArgs)args).ChangedButton} {((MouseButtonEventArgs)args).ClickCount}"));
+        ElementInputBridge bridge = new();
+
+        for (int click = 0; click < 2; click++)
+        {
+            bridge.Dispatch(root, ButtonFrame(10, 10, button, previousDown: false, currentDown: true), TimeSpan.Zero);
+            bridge.Dispatch(root, ButtonFrame(10, 10, button, previousDown: true, currentDown: false), TimeSpan.Zero);
+        }
+
+        Assert.Equal(raises ? [$"preview {button} 2", $"{button} 2"] : [], doubleClicks);
+    }
+
+    // As WPF's Control.MouseDoubleClick, a direct event "raised along the element tree by each UIElement": the preview
+    // runs on each element of the route from the root down to the clicked element, then the double click on each element
+    // from the clicked element up to the root, each with that element as the sender (#868).
+    [Fact]
+    public void MouseDoubleClickIsRaisedOnEachElementOfTheRoute()
+    {
+        UIRoot root = RootWithParentAndChild(out UIElement parent, out UIElement child);
+        List<string> calls = [];
+        child.Handlers.AddHandler(InputEvents.PreviewMouseDoubleClickEvent, (sender, _) => calls.Add(ReferenceEquals(sender, child) ? "preview child" : "preview child, wrong sender"));
+        parent.Handlers.AddHandler(InputEvents.PreviewMouseDoubleClickEvent, (sender, _) => calls.Add(ReferenceEquals(sender, parent) ? "preview parent" : "preview parent, wrong sender"));
+        child.Handlers.AddHandler(InputEvents.MouseDoubleClickEvent, (sender, _) => calls.Add(ReferenceEquals(sender, child) ? "child" : "child, wrong sender"));
+        parent.Handlers.AddHandler(InputEvents.MouseDoubleClickEvent, (sender, _) => calls.Add(ReferenceEquals(sender, parent) ? "parent" : "parent, wrong sender"));
+        ElementInputBridge bridge = new();
+
+        LeftClick(bridge, root, 10, 10, TimeSpan.Zero);
+        LeftClick(bridge, root, 10, 10, TimeSpan.Zero);
+
+        Assert.Equal(["preview parent", "preview child", "child", "parent"], calls);
+    }
+
     [Fact]
     public void SecondPressAfterMoreThanTheDoubleClickTimeRestartsTheClickCount()
     {
@@ -1008,6 +1052,16 @@ public sealed class ElementInputBridgeTests
         return new InputFrame(
             PointerSnapshot.Empty.WithPosition(x, y).WithButton(InputMouseButton.Left, previousLeft).WithButton(InputMouseButton.Right, previousRight),
             PointerSnapshot.Empty.WithPosition(x, y).WithButton(InputMouseButton.Left, currentLeft).WithButton(InputMouseButton.Right, currentRight),
+            KeyboardSnapshot.Empty,
+            KeyboardSnapshot.Empty,
+            []);
+    }
+
+    private static InputFrame ButtonFrame(float x, float y, InputMouseButton button, bool previousDown, bool currentDown)
+    {
+        return new InputFrame(
+            PointerSnapshot.Empty.WithPosition(x, y).WithButton(button, previousDown),
+            PointerSnapshot.Empty.WithPosition(x, y).WithButton(button, currentDown),
             KeyboardSnapshot.Empty,
             KeyboardSnapshot.Empty,
             []);
