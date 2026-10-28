@@ -80,6 +80,33 @@ public sealed class SdlWindowPlatformTests
         Assert.Equal(240, window.InputSource.GetFrame().Pointer.Y);
     }
 
+    [Theory]
+    [InlineData((int)SdlEventKind.WindowDisplayScaleChanged, 1.5f, 1f, 200, 100, 500)]
+    [InlineData((int)SdlEventKind.WindowDisplayScaleChanged, 1f, 1.5f, 300, 150, 750)]
+    [InlineData((int)SdlEventKind.WindowDisplayChanged, 1.5f, 1f, 200, 100, 500)]
+    public void DisplayScaleChangeReappliesTheLogicalMinimumAndMaximumSize(
+        int eventKind, float createdScale, float newScale, int minimumWidth, int minimumHeight, int maximumWidth)
+    {
+        // The limits are logical client-area sizes, so the native limits are the logical values times the current
+        // scale; the infinite MaxHeight stays 0, "no limit".
+        FakeSdlApi api = new() { WindowPixelDensity = 1, WindowDisplayScale = createdScale };
+        using SdlWindowPlatform platform = new(api, new RecordingGraphicsFactory());
+        SdlPlatformWindow window = Assert.IsType<SdlPlatformWindow>(platform.CreateWindow(
+            new Window { Width = 300, Height = 200, MinWidth = 200, MinHeight = 100, MaxWidth = 500 },
+            new RecordingWindowCallbacks()));
+        FakeSdlApi.FakeWindow native = api.Windows[window.Handle];
+
+        api.WindowDisplayScale = newScale;
+        api.Enqueue(new SdlEvent((SdlEventKind)eventKind, window.WindowId));
+        platform.PumpEvents();
+
+        var limits = (native.MinimumWidth, native.MinimumHeight, native.MaximumWidth, native.MaximumHeight);
+        Assert.True(
+            limits == (minimumWidth, minimumHeight, maximumWidth, 0),
+            $"After {(SdlEventKind)eventKind} from scale {createdScale} to {newScale}, the native minimum/maximum size " +
+            $"is {limits} instead of {(minimumWidth, minimumHeight, maximumWidth, 0)}.");
+    }
+
     [Fact]
     public void TwoWindowsHaveIndependentPropertiesOwnershipAndLifetime()
     {

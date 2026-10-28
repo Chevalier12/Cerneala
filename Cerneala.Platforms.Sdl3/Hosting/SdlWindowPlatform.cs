@@ -591,7 +591,12 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
                 RefreshGeometry(resizeGraphics: true);
                 break;
             case SdlEventKind.WindowRestored:
-                desiredState = WindowState.Normal;
+                // A minimized window that comes back maximized gets WindowRestored, then WindowMaximized
+                // (SDL_windowsevents.c, WM_WINDOWPOSCHANGED). SDL marks it maximized before either event is read,
+                // so it never was in the normal state.
+                desiredState = (api.GetWindowFlags(Handle) & SdlWindowOptions.Maximized) != 0
+                    ? WindowState.Maximized
+                    : WindowState.Normal;
                 RefreshGeometry(resizeGraphics: true);
                 break;
             case SdlEventKind.WindowExposed:
@@ -714,7 +719,14 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
 
     private void RefreshGeometry(bool resizeGraphics)
     {
+        float previousNativeCoordinateScale = nativeCoordinateScale;
         (int pixelWidth, int pixelHeight, float scale) = ReadPixelGeometry();
+        if (nativeCoordinateScale != previousNativeCoordinateScale)
+        {
+            // The limits are logical client-area sizes, so the native limits follow the scale.
+            ApplySizeLimits(window);
+        }
+
         Viewport = UiViewport.FromPhysicalPixels(pixelWidth, pixelHeight, scale);
         if (resizeGraphics && pixelWidth > 0 && pixelHeight > 0 &&
             (pixelWidth != graphicsPixelWidth || pixelHeight != graphicsPixelHeight || scale != graphicsScale))
@@ -789,6 +801,11 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
             ToNativeDimension(value.Width, minimum: 1),
             ToNativeDimension(value.Height, minimum: 1)),
             "SDL window size update");
+        ApplySizeLimits(value);
+    }
+
+    private void ApplySizeLimits(Window value)
+    {
         Require(api.SetWindowMinimumSize(
             Handle,
             ToNativeDimension(value.MinWidth, minimum: 0),

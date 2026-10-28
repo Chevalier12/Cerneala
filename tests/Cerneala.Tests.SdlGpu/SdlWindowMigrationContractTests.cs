@@ -370,6 +370,42 @@ public sealed class SdlWindowMigrationContractTests
     }
 
     [Fact]
+    public void ComingBackMaximizedFromMinimizedKeepsTheRestorePositionAndReportsNoNormalState()
+    {
+        // SDL3 on Windows queues WindowRestored, then WindowMaximized, when a minimized window comes back maximized
+        // (SDL_windowsevents.c, WM_WINDOWPOSCHANGED); it marks the window maximized before either event is read.
+        FakeSdlApi api = new() { WindowPixelDensity = 1, WindowDisplayScale = 1 };
+        using WindowApplicationRuntime runtime = new(new SdlWindowPlatform(api, new RecordingGraphicsFactory()));
+        Window model = new() { Left = 80, Top = 60, Width = 640, Height = 480, WindowStartupLocation = WindowStartupLocation.Manual };
+        runtime.StartMainWindow(model);
+        FakeSdlApi.FakeWindow native = Assert.Single(api.Windows.Values);
+        (native.State, native.X, native.Y) = (SdlEventKind.WindowMaximized, 0, 29);
+        api.Enqueue(new SdlEvent(SdlEventKind.WindowMaximized, native.Id));
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        (native.State, native.X, native.Y) = (SdlEventKind.WindowMinimized, -32000, -32000);
+        api.Enqueue(new SdlEvent(SdlEventKind.WindowMinimized, native.Id));
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        List<WindowState> states = [];
+        model.StateChanged += (_, _) => states.Add(model.WindowState);
+
+        (native.State, native.X, native.Y) = (SdlEventKind.WindowMaximized, 0, 29);
+        api.Enqueue(
+            new SdlEvent(SdlEventKind.WindowRestored, native.Id),
+            new SdlEvent(SdlEventKind.WindowMaximized, native.Id));
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        (float Left, float Top) whileMaximized = (model.Left, model.Top);
+        WindowState[] restoreStates = [.. states];
+        model.WindowState = WindowState.Normal;
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+        Assert.True(
+            whileMaximized == (80, 60) && restoreStates.SequenceEqual([WindowState.Maximized]) && (native.X, native.Y) == (80, 60),
+            $"While maximized after the restore from minimized, Left/Top are {whileMaximized} (expected (80, 60)); " +
+            $"StateChanged reported [{string.Join(", ", restoreStates)}] (expected [Maximized]); " +
+            $"after WindowState = Normal the native window is at ({native.X}, {native.Y}) (expected (80, 60)).");
+    }
+
+    [Fact]
     public void AMaximizedWindowWithoutAKnownRestorePositionReportsUnchangedBoundsOnce()
     {
         // Manual startup without Left/Top: no normal position is known, so the maximized window reports NaN.

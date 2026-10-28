@@ -1011,6 +1011,13 @@ internal sealed class FakeSdlApi : ISdlApi
 
     public float GetWindowDisplayScale(nint window) => WindowDisplayScale;
 
+    public SdlWindowOptions GetWindowFlags(nint window) => Windows[window].State switch
+    {
+        SdlEventKind.WindowMinimized => SdlWindowOptions.Minimized,
+        SdlEventKind.WindowMaximized => SdlWindowOptions.Maximized,
+        _ => SdlWindowOptions.None
+    };
+
     public bool GetWindowSizeInPixels(nint window, out int width, out int height)
     {
         if (!GetWindowSizeInPixelsResult)
