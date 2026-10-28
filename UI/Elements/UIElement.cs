@@ -1288,7 +1288,12 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         Root?.RetainedRenderCache.InvalidateRoot();
         Root?.RenderQueue.Enqueue(this);
         Root?.OverlayManager.OnElementArranged(this);
-        RaiseEvent(new SizeChangedEventArgs(SizeChangedEvent, this, previousBounds.Size, arrangedBounds.Size));
+        // As in WPF, SizeChanged reports a change of the arranged width or height; a move that keeps the size raises none.
+        if (previousBounds.Size != arrangedBounds.Size)
+        {
+            RaiseEvent(new SizeChangedEventArgs(SizeChangedEvent, this, previousBounds.Size, arrangedBounds.Size));
+        }
+
         return true;
     }
 
