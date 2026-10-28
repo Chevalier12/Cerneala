@@ -142,6 +142,37 @@ public sealed class OverlayTests
         Assert.Equal(new LayoutRect(0, 0, 70, 40), content.VisualParent!.ArrangedBounds);
     }
 
+    [Theory]
+    [InlineData(OverlayPlacement.Auto, 150f, 120f)]
+    [InlineData(OverlayPlacement.Top, 150f, 120f)]
+    [InlineData(OverlayPlacement.Bottom, -150f, 120f)]
+    [InlineData(OverlayPlacement.Auto, 50f, 60f)]
+    public void VerticalPlacementClampsToViewportWhenTargetIsOutsideIt(OverlayPlacement placement, float targetTop, float contentHeight)
+    {
+        UIRoot root = new(100, 100);
+        FixedElement target = new(new LayoutSize(20, 10));
+        FixedElement content = new(new LayoutSize(30, contentHeight));
+        Overlay overlay = new()
+        {
+            Placement = placement,
+            PlacementTarget = target,
+            Content = content,
+            IsOpen = true
+        };
+        LayoutCanvas canvas = new();
+        LayoutCanvas.SetTop(target, targetTop);
+        canvas.VisualChildren.Add(target);
+        canvas.VisualChildren.Add(overlay);
+        root.VisualChildren.Add(canvas);
+
+        root.ProcessFrame();
+
+        LayoutRect bounds = content.VisualParent!.ArrangedBounds;
+        Assert.True(
+            bounds.Y >= 0 && bounds.Y + bounds.Height <= 100,
+            $"{placement}, target top {targetTop}, content height {contentHeight}: presenter bounds {bounds} are outside the 100 high viewport.");
+    }
+
     [Fact]
     public void AutoHorizontalHandlesViewportSmallerThanTargetAndContent()
     {
