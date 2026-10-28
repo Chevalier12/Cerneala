@@ -81,6 +81,81 @@ public sealed class SvgImageTests
         }
     }
 
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public void SourcePathChangedWhileCollapsedTakesEffectWhenVisibleAgain(bool collapseFirst, bool clearPath)
+    {
+        string firstPath = WriteSvg("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"4\" height=\"3\"><rect width=\"4\" height=\"3\" fill=\"#00ff00\" /></svg>");
+        string secondPath = WriteSvg("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"7\" height=\"5\"><rect width=\"7\" height=\"5\" fill=\"#0000ff\" /></svg>");
+
+        try
+        {
+            RecordingImageLoader loader = new();
+            UIRoot root = new();
+            root.SetImageLoader(loader);
+            SvgImage image = new() { SourcePath = firstPath };
+            root.VisualChildren.Add(image);
+            RecordingImage firstImage = Assert.IsType<RecordingImage>(image.Source);
+
+            if (collapseFirst)
+            {
+                image.Visibility = Visibility.Collapsed;
+            }
+
+            image.SourcePath = clearPath ? null : secondPath;
+            image.Visibility = Visibility.Visible;
+            root.ProcessFrame();
+
+            Assert.True(firstImage.IsDisposed);
+            if (clearPath)
+            {
+                Assert.Null(image.Source);
+                Assert.Equal(1, loader.StreamLoadCount);
+            }
+            else
+            {
+                Assert.Equal(7, image.Source?.Width);
+                Assert.Equal(5, image.Source?.Height);
+                Assert.Equal(2, loader.StreamLoadCount);
+            }
+        }
+        finally
+        {
+            File.Delete(firstPath);
+            File.Delete(secondPath);
+        }
+    }
+
+    [Fact]
+    public void CollapsingAndShowingWithoutASourcePathChangeKeepsTheLoadedImage()
+    {
+        string path = WriteSvg("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"4\" height=\"3\"><rect width=\"4\" height=\"3\" fill=\"#00ff00\" /></svg>");
+
+        try
+        {
+            RecordingImageLoader loader = new();
+            UIRoot root = new();
+            root.SetImageLoader(loader);
+            SvgImage image = new() { SourcePath = path };
+            root.VisualChildren.Add(image);
+            RecordingImage loadedImage = Assert.IsType<RecordingImage>(image.Source);
+
+            image.Visibility = Visibility.Collapsed;
+            image.Visibility = Visibility.Visible;
+            root.ProcessFrame();
+
+            Assert.Same(loadedImage, image.Source);
+            Assert.False(loadedImage.IsDisposed);
+            Assert.Equal(1, loader.StreamLoadCount);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
     [Fact]
     public void AttachingWithoutAnImageLoaderLeavesTheSourceEmpty()
     {
