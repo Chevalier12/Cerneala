@@ -5,8 +5,7 @@ namespace Cerneala.UI.Motion.Specs;
 
 public sealed class SpringSpec<T> : MotionSpec<T>
 {
-    private const int MaxSubsteps = 1000;
-    private const double FixedStepSeconds = 1d / 120d;
+    private const double MaxAdvanceSeconds = 1000d / 120d;
 
     public SpringSpec(
         float stiffness = 520,
@@ -128,39 +127,35 @@ public sealed class SpringSpec<T> : MotionSpec<T>
                 return;
             }
 
-            double remaining = delta.TotalSeconds;
-            double maxAdvanceSeconds = MaxSubsteps * FixedStepSeconds;
-            if (remaining > maxAdvanceSeconds)
+            double seconds = delta.TotalSeconds;
+            if (seconds > MaxAdvanceSeconds)
             {
                 if (context.Diagnostics is null)
                 {
                     throw new ArgumentOutOfRangeException(
                         nameof(delta),
-                        $"Spring advance delta exceeds the supported integration window of {maxAdvanceSeconds:0.###} seconds. Provide MotionDiagnostics to record an explicit clamp.");
+                        $"Spring advance delta exceeds the supported integration window of {MaxAdvanceSeconds:0.###} seconds. Provide MotionDiagnostics to record an explicit clamp.");
                 }
 
                 context.Diagnostics.RecordWarning(
-                    $"Spring '{context.DebugName ?? typeof(T).Name}' advance delta was clamped to {maxAdvanceSeconds:0.###} seconds.");
-                remaining = maxAdvanceSeconds;
+                    $"Spring '{context.DebugName ?? typeof(T).Name}' advance delta was clamped to {MaxAdvanceSeconds:0.###} seconds.");
+                seconds = MaxAdvanceSeconds;
             }
 
             T positionBefore = current;
             T velocityBefore = velocity;
-            int iterations = 0;
-            while (remaining > 0 && iterations < MaxSubsteps)
+            bool integrated = seconds > 0;
+            if (integrated)
             {
-                double step = Math.Min(remaining, FixedStepSeconds);
-                Integrate((float)step);
-                remaining -= step;
-                iterations++;
+                Integrate(seconds);
             }
 
             // Near a large target the value can stop a few representable steps
-            // short while the velocity settles at -k*d/c, too small to move it
-            // and possibly above RestSpeed. A state the integration leaves
-            // bitwise unchanged is a fixed point it can never leave: the spring
-            // has ended, on its target.
-            bool fixedPoint = completeAtFixedPoint && iterations > 0 &&
+            // short while the velocity settles at a small constant value, too
+            // small to move it and possibly above RestSpeed. A state the
+            // integration leaves bitwise unchanged is a fixed point it can never
+            // leave: the spring has ended, on its target.
+            bool fixedPoint = completeAtFixedPoint && integrated &&
                 mixer.EqualsWithinTolerance(positionBefore, current, 0) &&
                 mixer.EqualsWithinTolerance(velocityBefore, velocity, 0);
             T deltaToTarget = mixer.Subtract(target, current);
@@ -199,14 +194,65 @@ public sealed class SpringSpec<T> : MotionSpec<T>
             return true;
         }
 
-        private void Integrate(float seconds)
+        // Applies the exact solution of Mass * x'' + Damping * x' + Stiffness * x = 0, where x is the displacement
+        // from the target. Unlike a numeric step, it is stable for every accepted stiffness, damping, mass and delta.
+        private void Integrate(double seconds)
         {
+            (float positionFromDisplacement, float positionFromVelocity, float velocityFromDisplacement, float velocityFromVelocity) =
+                GetSolutionCoefficients(spec.Stiffness, spec.Damping, spec.Mass, seconds);
             T displacement = mixer.Subtract(current, target);
-            T springForce = mixer.Scale(displacement, -spec.Stiffness);
-            T dampingForce = mixer.Scale(velocity, -spec.Damping);
-            T acceleration = mixer.Scale(mixer.Add(springForce, dampingForce), 1 / spec.Mass);
-            velocity = mixer.Add(velocity, mixer.Scale(acceleration, seconds));
-            current = mixer.Add(current, mixer.Scale(velocity, seconds));
+            T nextDisplacement = mixer.Add(
+                mixer.Scale(displacement, positionFromDisplacement),
+                mixer.Scale(velocity, positionFromVelocity));
+            velocity = mixer.Add(
+                mixer.Scale(displacement, velocityFromDisplacement),
+                mixer.Scale(velocity, velocityFromVelocity));
+            current = mixer.Add(target, nextDisplacement);
+        }
+
+        // With beta = Damping / (2 * Mass), omega^2 = Stiffness / Mass and s = sqrt(|beta^2 - omega^2|), the
+        // solution is x(t) = e^(-beta t) * ((K + beta S) * x0 + S * v0) and v(t) = e^(-beta t) * (-omega^2 S * x0 +
+        // (K - beta S) * v0), where K and S are cos(s t) and sin(s t) / s when underdamped, cosh(s t) and
+        // sinh(s t) / s when overdamped.
+        private static (float, float, float, float) GetSolutionCoefficients(
+            float stiffness, float damping, float mass, double seconds)
+        {
+            double beta = damping / (2d * mass);
+            double omegaSquared = stiffness / (double)mass;
+            double omega = Math.Sqrt(omegaSquared);
+            double discriminant = (beta - omega) * (beta + omega);
+            double s = Math.Sqrt(Math.Abs(discriminant));
+            double decayedK;
+            double decayedS;
+            if (s * seconds < 1e-3)
+            {
+                // Near critical damping both forms reduce to the same series, without dividing by a tiny s.
+                double decay = Math.Exp(-beta * seconds);
+                double square = discriminant * seconds * seconds;
+                decayedK = decay * (1 + (square / 2));
+                decayedS = decay * seconds * (1 + (square / 6));
+            }
+            else if (discriminant < 0)
+            {
+                double decay = Math.Exp(-beta * seconds);
+                decayedK = decay * Math.Cos(s * seconds);
+                decayedS = decay * Math.Sin(s * seconds) / s;
+            }
+            else
+            {
+                // e^(-beta t) cosh(s t) and e^(-beta t) sinh(s t) from the two real decay rates, so that a vanishing
+                // e^(-beta t) never multiplies an overflowing cosh. s - beta is written without cancellation.
+                double slow = Math.Exp(-omegaSquared / (beta + s) * seconds);
+                double fast = Math.Exp(-(beta + s) * seconds);
+                decayedK = (slow + fast) / 2;
+                decayedS = (slow - fast) / (2 * s);
+            }
+
+            return (
+                (float)(decayedK + (beta * decayedS)),
+                (float)decayedS,
+                (float)(-omegaSquared * decayedS),
+                (float)(decayedK - (beta * decayedS)));
         }
     }
 }

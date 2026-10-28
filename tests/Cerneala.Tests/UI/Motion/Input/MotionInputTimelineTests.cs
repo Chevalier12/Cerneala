@@ -140,6 +140,72 @@ public sealed class MotionInputTimelineTests
     }
 
     [Fact]
+    public void BeginDuringARunningSettleDoesNotSnapTheElementOnTheFirstMove()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(100, 100, motionClock: clock);
+        UIElement element = new();
+        root.VisualChildren.Add(element);
+        root.ProcessFrame();
+        DragMotionController drag = element.Motion().Drag();
+        TimeSpan start = clock.Now;
+        drag.Begin(0, 0, start);
+        drag.Move(100, 0, start + TimeSpan.FromMilliseconds(100));
+        drag.End(MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)));
+        root.ProcessFrame();
+        clock.Advance(TimeSpan.FromMilliseconds(50));
+        root.ProcessFrame();
+        Assert.True(drag.DragX.IsAnimating);
+
+        drag.Begin(500, 0, clock.Now);
+        clock.Advance(TimeSpan.FromMilliseconds(25));
+        root.ProcessFrame();
+        float before = element.TranslateX;
+        drag.Move(500, 0, clock.Now);
+        root.ProcessFrame();
+
+        Assert.True(
+            MathF.Abs(element.TranslateX - before) < 0.5f,
+            $"TranslateX was {before} before the first Move (pointer unmoved) and {element.TranslateX} after it.");
+        Assert.Equal(PointerMotionState.Dragging, drag.State);
+
+        drag.Move(530, 0, clock.Now + TimeSpan.FromMilliseconds(16));
+        root.ProcessFrame();
+        Assert.Equal(before + 30, element.TranslateX, precision: 3);
+    }
+
+    [Fact]
+    public void BeginAfterTheSettleFinishedKeepsThePositionOnTheFirstMove()
+    {
+        // Control: no running settle.
+        ManualMotionClock clock = new();
+        UIRoot root = new(100, 100, motionClock: clock);
+        UIElement element = new();
+        root.VisualChildren.Add(element);
+        root.ProcessFrame();
+        DragMotionController drag = element.Motion().Drag();
+        TimeSpan start = clock.Now;
+        drag.Begin(0, 0, start);
+        drag.Move(100, 0, start + TimeSpan.FromMilliseconds(100));
+        drag.End(MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)));
+        root.ProcessFrame();
+        clock.Advance(TimeSpan.FromMilliseconds(200));
+        root.ProcessFrame();
+        Assert.False(drag.DragX.IsAnimating);
+
+        drag.Begin(500, 0, clock.Now);
+        clock.Advance(TimeSpan.FromMilliseconds(25));
+        root.ProcessFrame();
+        float before = element.TranslateX;
+        drag.Move(500, 0, clock.Now);
+        root.ProcessFrame();
+
+        Assert.True(
+            MathF.Abs(element.TranslateX - before) < 0.5f,
+            $"TranslateX was {before} before the first Move and {element.TranslateX} after it.");
+    }
+
+    [Fact]
     public void PointerCaptureLossSettlesDragBackToOriginDeterministically()
     {
         ManualMotionClock clock = new();

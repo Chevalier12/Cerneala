@@ -54,7 +54,7 @@ Every public method checks that it runs on the thread accepted by the owning roo
 
 `BeforeLayout` records the layout phase, captures motion diagnostics and the first layout-motion snapshots, and samples active motion through `MotionSystem.Tick` when motion is active. `AfterLayout` records the phase, captures after-layout diagnostics, and starts layout-motion correction work from the captured layout snapshots.
 
-`BeforeRender` records the render phase and samples motion only if it was not already sampled in `BeforeLayout`. This keeps a frame from ticking motion twice while still allowing render-only motion work to advance when no before-layout sample happened. `EndFrame` records `MotionFramePhase.AfterRender`.
+`BeforeRender` records the render phase and samples motion only if it was not already sampled in `BeforeLayout`. This keeps a frame from ticking motion twice while still allowing render-only motion work to advance when no before-layout sample happened. After that, it lets `MotionSystem.Layout` record where each changed layout correction is drawn, so a later reparent starts from that position. `EndFrame` records `MotionFramePhase.AfterRender`.
 
 Methods that do not sample active motion return an empty `MotionFrameResult` with a phase-specific `MotionFrame`. The coordinator itself does not process invalidation queues; that remains the scheduler's job.
 

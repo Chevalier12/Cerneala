@@ -8,6 +8,9 @@ namespace Cerneala.Tests.UI.Motion.Specs;
 
 public sealed class TransformSpringTests
 {
+    // Just below (pi / (3 * 0.005 s))^2 = 43864.9084, with mass 1, so that cos(omega * 5 ms) rounds to exactly 0.5f.
+    private const float ZeroScaleAtFiveMillisecondsStiffness = 43864.90625f;
+
     [Fact]
     public void ZeroAdvanceDoesNotRecomposeTheStartingTransform()
     {
@@ -82,7 +85,7 @@ public sealed class TransformSpringTests
 
         for (int i = 0; i < positions.Length; i++)
         {
-            Integrate(ref positions[i], ref velocities[i], targets[i], 0.016, 100, 7, 2);
+            positions[i] = AdvanceFreshSpring(positions[i], velocities[i], targets[i], 0.016, 100, 7, 2);
         }
         Transform expected = TransformMixer.Compose(new(positions[0], positions[1], positions[2], positions[3], positions[4], positions[5], 0));
         Assert.True(new TransformMixer().EqualsWithinTolerance(expected, value.Current, 0.00001f));
@@ -108,9 +111,9 @@ public sealed class TransformSpringTests
     [Fact]
     public void ComponentSpringCanPassThroughZeroScaleWithoutRedecomposition()
     {
-        // Semi-implicit step: scaleY = 1 + (-20000 * 2 * .005) * .005 = 0.
+        // Undamped from 1 to -1: scaleY = -1 + 2 cos(omega t), and omega * 5 ms = pi / 3 gives exactly 0.
         // Composing a singular intermediate value must not re-decompose it.
-        SpringSpec<Transform> spec = MotionFactory.Spring<Transform>(stiffness: 20000, damping: 0);
+        SpringSpec<Transform> spec = MotionFactory.Spring<Transform>(stiffness: ZeroScaleAtFiveMillisecondsStiffness, damping: 0);
         MotionSampler<Transform> sampler = spec.CreateSampler(Transform.Identity,
             TransformMixer.Compose(new(0, 0, 1, -1, 0, 0, 0)), new TransformMixer(), Context());
         sampler.Advance(TimeSpan.FromMilliseconds(5));
@@ -148,7 +151,7 @@ public sealed class TransformSpringTests
         MotionGraph graph = new();
         MotionValue<Transform> value = graph.CreateValue(Transform.Identity);
         value.AnimateTo(TransformMixer.Compose(new(0, 0, 1, -1, 0, 0, 0)),
-            MotionFactory.Spring<Transform>(stiffness: 20000, damping: 0));
+            MotionFactory.Spring<Transform>(stiffness: ZeroScaleAtFiveMillisecondsStiffness, damping: 0));
         graph.Tick(new(TimeSpan.FromMilliseconds(5), TimeSpan.FromMilliseconds(5), 1, MotionFrameReason.Manual, MotionFramePhase.BeforeRender));
         Assert.Equal(0f, value.Current.Matrix.M22);
 
@@ -266,15 +269,14 @@ public sealed class TransformSpringTests
 
     private static MotionSpecContext Context() => new(ReducedMotionPolicy.Default, new ValueMixerRegistry(), null, TimeSpan.Zero);
 
-    private static void Integrate(ref float position, ref float velocity, float target, double remaining,
+    // After a retarget, a fresh scalar spring that starts with the carried position and velocity is the oracle.
+    private static float AdvanceFreshSpring(float position, float velocity, float target, double seconds,
         float stiffness, float damping, float mass)
     {
-        while (remaining > 0)
-        {
-            float step = (float)Math.Min(remaining, 1d / 120);
-            velocity += ((-stiffness * (position - target) - damping * velocity) / mass) * step;
-            position += velocity * step;
-            remaining -= Math.Min(remaining, 1d / 120);
-        }
+        SpringSpec<float>.VectorSpringSampler scalar = new(
+            MotionFactory.Spring<float>(stiffness, damping, mass), position, target, new FloatMixer(), Context(),
+            new MotionVelocity<float>(velocity));
+        scalar.Advance(TimeSpan.FromSeconds(seconds));
+        return scalar.Current;
     }
 }

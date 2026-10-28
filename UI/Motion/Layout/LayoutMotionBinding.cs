@@ -18,12 +18,19 @@ public sealed class LayoutMotionBinding : IDisposable
         ArgumentNullException.ThrowIfNull(motion);
         this.element = element ?? throw new ArgumentNullException(nameof(element));
         correction = motion.Graph.CreateValue(Transform.Identity);
-        subscription = correction.Subscribe(change => element.SetLayoutCorrectionTransform(change.NewValue));
+        subscription = correction.Subscribe(change =>
+        {
+            element.SetLayoutCorrectionTransform(change.NewValue);
+            CorrectionChanged = true;
+        });
     }
 
     public Transform CurrentCorrection => correction.Current;
 
     public bool IsActive => correction.IsAnimating;
+
+    // Set when the correction value changes; the coordinator clears it when it records the corrected position.
+    internal bool CorrectionChanged { get; set; }
 
     internal void StartCorrection(Transform inverse, MotionSpec<Transform> spec)
     {

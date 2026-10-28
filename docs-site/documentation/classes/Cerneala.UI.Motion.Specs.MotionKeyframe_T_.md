@@ -61,7 +61,7 @@ KeyframesSpec<float> spec = new(
 
 `KeyframesSpec<T>` validates the list that contains these values. The list must contain at least two keyframes, start with offset `0`, end with offset `1`, keep every offset in `[0, 1]`, avoid `NaN`, and be sorted in ascending order.
 
-During sampling, the segment that starts at this keyframe uses this keyframe's `Easing` value. If `Easing` is `null`, the sampler uses `Easings.Linear`. If `Hold` is `true`, the sampler returns this keyframe's `Value` for the segment instead of interpolating toward the next keyframe. A segment whose start and end offsets are equal is also sampled as a held segment.
+During sampling, the segment that starts at this keyframe uses this keyframe's `Easing` value. If `Easing` is `null`, the sampler uses `Easings.Linear`. If `Hold` is `true`, the sampler returns this keyframe's `Value` for the segment instead of interpolating toward the next keyframe; at the segment's end offset it returns the next keyframe's `Value`. A segment whose start and end offsets are equal is also sampled as a held segment.
 
 Because this type is a readonly record struct, it has value equality, generated copy support through `with` expressions, and generated deconstruction for the primary constructor values.
 

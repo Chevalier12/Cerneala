@@ -469,6 +469,138 @@ public sealed class MotionSpecTests
         Assert.True(sampler.IsComplete);
     }
 
+    [Fact]
+    public void KeyframesHoldReachesTheNextKeyframeValueAtItsOwnEndOffset()
+    {
+        KeyframesSpec<float> spec = MotionFactory.Keyframes(
+            new MotionKeyframe<float>(0, 0, Hold: true),
+            new MotionKeyframe<float>(0.5f, 10),
+            new MotionKeyframe<float>(1, 20));
+        MotionSampler<float> sampler = spec.CreateSampler(0, 20, new FloatMixer(), Context());
+
+        sampler.Advance(TimeSpan.FromMilliseconds(250));
+        Assert.Equal(0, sampler.Current);
+        sampler.Advance(TimeSpan.FromMilliseconds(249));
+        Assert.Equal(0, sampler.Current);
+        sampler.Advance(TimeSpan.FromMilliseconds(1));
+        Assert.Equal(10, sampler.Current);
+    }
+
+    [Theory]
+    [InlineData(170f)]
+    [InlineData(100000f)]
+    public void SpringSamplesStayFiniteForAnyAcceptedStiffness(float stiffness)
+    {
+        SpringSpec<float> spec = MotionFactory.Spring<float>(stiffness: stiffness, damping: 0);
+        MotionSampler<float> sampler = spec.CreateSampler(0, 1, new FloatMixer(), Context());
+
+        for (int i = 0; i < 200; i++)
+        {
+            sampler.Advance(TimeSpan.FromMilliseconds(16));
+            Assert.True(float.IsFinite(sampler.Current), $"sample {i} = {sampler.Current}");
+        }
+    }
+
+    // 100 / 0.005 gives omega * dt = 1.18 (stable control); 500 / 0.005 gives 2.64.
+    [Theory]
+    [InlineData(100f, 0.005f)]
+    [InlineData(500f, 0.005f)]
+    public void SpringSamplesStayFiniteForAnyAcceptedMass(float stiffness, float mass)
+    {
+        SpringSpec<float> spec = MotionFactory.Spring<float>(stiffness: stiffness, damping: 0, mass: mass);
+        MotionSampler<float> sampler = spec.CreateSampler(0, 1, new FloatMixer(), Context());
+
+        for (int i = 0; i < 200; i++)
+        {
+            sampler.Advance(TimeSpan.FromMilliseconds(16));
+            Assert.True(float.IsFinite(sampler.Current), $"stiffness {stiffness}, mass {mass}: sample {i} = {sampler.Current}");
+        }
+    }
+
+    [Fact]
+    public void SpringSamplesStayBoundedAcrossTheAcceptedParameterRange()
+    {
+        foreach (float stiffness in new[] { 1f, 10f, 100f, 1e3f, 1e4f, 1e5f, 1e6f })
+        {
+            foreach (float mass in new[] { 0.001f, 0.01f, 0.1f, 1f, 10f, 100f })
+            {
+                foreach (float damping in new[] { 0f, 38f })
+                {
+                    SpringSpec<float> spec = MotionFactory.Spring<float>(stiffness, damping, mass);
+                    MotionSampler<float> sampler = spec.CreateSampler(0, 1, new FloatMixer(), Context());
+                    for (int i = 0; i < 2000; i++)
+                    {
+                        sampler.Advance(TimeSpan.FromMilliseconds(16));
+                        // A spring released at rest 1 away from its target never gets farther than 1 from it.
+                        Assert.True(
+                            float.IsFinite(sampler.Current) && MathF.Abs(sampler.Current - 1) <= 1.001f,
+                            $"stiffness {stiffness}, damping {damping}, mass {mass}: sample {i} = {sampler.Current}");
+                    }
+                }
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData(1e6f, 0f, 1e-5f)]
+    [InlineData(1f, 1e6f, 1f)]
+    [InlineData(1e6f, 1e6f, 1e-3f)]
+    [InlineData(1e9f, 38f, 1e-6f)]
+    public void SpringSamplesStayBoundedForExtremeAcceptedParameters(float stiffness, float damping, float mass)
+    {
+        SpringSpec<float> spec = MotionFactory.Spring<float>(stiffness, damping, mass);
+        MotionSampler<float> sampler = spec.CreateSampler(0, 1, new FloatMixer(), Context());
+
+        foreach (int milliseconds in new[] { 16, 7, 33, 1, 1000 })
+        {
+            sampler.Advance(TimeSpan.FromMilliseconds(milliseconds));
+            Assert.True(
+                float.IsFinite(sampler.Current) && MathF.Abs(sampler.Current - 1) <= 1.001f,
+                $"after {milliseconds} ms: {sampler.Current}");
+        }
+    }
+
+    // Moderate springs whose former 1/120 s Euler steps were each stable, but whose step pattern per frame (whole
+    // steps plus one shorter step) grew the motion without limit.
+    [Theory]
+    [InlineData(8640f, 0f, 33)]
+    [InlineData(18900f, 6.6f, 20)]
+    public void SpringSamplesStayBoundedForAnyFrameTime(float stiffness, float damping, int frameMilliseconds)
+    {
+        SpringSpec<float> spec = MotionFactory.Spring<float>(stiffness, damping);
+        MotionSampler<float> sampler = spec.CreateSampler(0, 1, new FloatMixer(), Context());
+
+        for (int i = 0; i < 20000 && !sampler.IsComplete; i++)
+        {
+            sampler.Advance(TimeSpan.FromMilliseconds(frameMilliseconds));
+            // Released at rest 1 away from its target; twice that distance means the motion is growing.
+            Assert.True(
+                float.IsFinite(sampler.Current) && MathF.Abs(sampler.Current - 1) <= 2f,
+                $"sample {i} = {sampler.Current}");
+        }
+    }
+
+    [Theory]
+    [InlineData(100000f, 38f)] // stiff and underdamped: diverged under the former 1/120 s Euler step
+    [InlineData(100f, 20f)] // critically damped
+    [InlineData(100f, 30f)] // overdamped
+    public void SpringSettlesAtItsTarget(float stiffness, float damping)
+    {
+        SpringSpec<float> spec = MotionFactory.Spring<float>(stiffness, damping);
+        MotionSampler<float> sampler = spec.CreateSampler(0, 1, new FloatMixer(), Context());
+
+        for (int i = 0; i < 1000 && !sampler.IsComplete; i++)
+        {
+            sampler.Advance(TimeSpan.FromMilliseconds(16));
+            Assert.True(
+                float.IsFinite(sampler.Current) && MathF.Abs(sampler.Current - 1) <= 1.001f,
+                $"sample {i} = {sampler.Current}");
+        }
+
+        Assert.True(sampler.IsComplete);
+        Assert.Equal(1, sampler.Current);
+    }
+
     [Theory]
     [InlineData(StepPosition.JumpStart, 0.25f)]
     [InlineData(StepPosition.JumpEnd, 0f)]

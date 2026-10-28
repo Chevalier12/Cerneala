@@ -68,7 +68,7 @@ KeyframesSpec<float> spec = new(
 
 The first keyframe must use offset `0` and the last keyframe must use offset `1`. At least two keyframes are required. Offsets must be finite enough to avoid `NaN`, must be in `[0, 1]`, and must be sorted in ascending order. Duplicate adjacent offsets are allowed; when a sampled segment has the same start and end offset, the sampler returns the start value for that segment.
 
-Sampling progress is calculated as elapsed time divided by `Duration`, clamped to `[0, 1]`. For each segment, the sampler applies the starting keyframe's `Easing` value when present, or `Easings.Linear` when it is `null`, then interpolates with the supplied `ValueMixer<T>`. If the starting keyframe has `Hold` set to `true`, the sampler returns the starting value instead of mixing across that segment.
+Sampling progress is calculated as elapsed time divided by `Duration`, clamped to `[0, 1]`. For each segment, the sampler applies the starting keyframe's `Easing` value when present, or `Easings.Linear` when it is `null`, then interpolates with the supplied `ValueMixer<T>`. If the starting keyframe has `Hold` set to `true`, the sampler returns the starting value instead of mixing across that segment. At the segment's end offset the value is the next keyframe's value, as at the end of every other segment: with keyframes `(0, 0, Hold: true)`, `(0.5, 10)`, `(1, 20)` and a one-second duration, the value is `0` at 499 ms and `10` at exactly 500 ms.
 
 The `from`, `to`, and `context` arguments passed to `CreateSampler` are not used by the keyframe calculation. The sampler starts at the first frame's value. Retargeting a keyframes sampler sets the current value to the retarget value and completes the sampler.
 

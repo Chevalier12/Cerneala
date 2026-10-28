@@ -1,6 +1,7 @@
 using System.Numerics;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Motion.Core;
+using Cerneala.UI.Motion.Interpolation;
 using Cerneala.UI.Motion.Specs;
 using Xunit.Abstractions;
 using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
@@ -29,9 +30,9 @@ public sealed class SpringRetargetTests(ITestOutputHelper output)
         root.Motion.Tick();
         float velocityAfter = value.Velocity!.Value.Value;
 
-        // One 1 ms semi-implicit Euler step from the retained velocity.
-        float acceleration = -520f * (positionBefore - 200f) - 38f * velocityBefore;
-        float expectedVelocity = velocityBefore + acceleration * 0.001f;
+        // A fresh spring that starts with the retained position and velocity, advanced 1 ms.
+        float expectedVelocity = AdvanceFreshSpring(
+            MotionFactory.Spring<float>(), new FloatMixer(), positionBefore, 200f, velocityBefore).Velocity!.Value.Value;
         output.WriteLine($"Before={velocityBefore:R}, after={velocityAfter:R}, expected={expectedVelocity:R}");
         Assert.True(MathF.Abs(expectedVelocity - velocityAfter) < 0.001f,
             $"Before={velocityBefore:R}, after={velocityAfter:R}, expected={expectedVelocity:R}");
@@ -80,10 +81,11 @@ public sealed class SpringRetargetTests(ITestOutputHelper output)
         clock.Advance(TimeSpan.FromMilliseconds(1));
         root.Motion.Tick();
 
-        float acceleration = (-100f * (positionBefore - 200f) - 7f * initialVelocity) / 2f;
-        float expectedVelocity = initialVelocity + acceleration * 0.001f;
-        Assert.Equal(expectedVelocity, value.Velocity!.Value.Value, precision: 3);
-        Assert.Equal(positionBefore + expectedVelocity * 0.001f, value.Current, precision: 4);
+        MotionSampler<float> expected = AdvanceFreshSpring(
+            MotionFactory.Spring<float>(stiffness: 100, damping: 7, mass: 2), new FloatMixer(),
+            positionBefore, 200f, initialVelocity);
+        Assert.Equal(expected.Velocity!.Value.Value, value.Velocity!.Value.Value, precision: 3);
+        Assert.Equal(expected.Current, value.Current, precision: 4);
         Assert.True(newHandle.IsActive);
     }
 
@@ -110,10 +112,10 @@ public sealed class SpringRetargetTests(ITestOutputHelper output)
         Assert.Equal(velocityBefore, value.Velocity!.Value.Value);
         clock.Advance(TimeSpan.FromMilliseconds(1));
         root.Motion.Tick();
-        Vector4 expectedVelocity = velocityBefore +
-            ((-100f * (positionBefore - target) - 7f * velocityBefore) / 2f) * 0.001f;
-        Assert.True(Vector4.Distance(expectedVelocity, value.Velocity!.Value.Value) < 0.001f);
-        Assert.True(Vector4.Distance(positionBefore + expectedVelocity * 0.001f, value.Current) < 0.0001f);
+        MotionSampler<Vector4> expected = AdvanceFreshSpring(
+            MotionFactory.Spring<Vector4>(100, 7, 2), new Vector4Mixer(), positionBefore, target, velocityBefore);
+        Assert.True(Vector4.Distance(expected.Velocity!.Value.Value, value.Velocity!.Value.Value) < 0.001f);
+        Assert.True(Vector4.Distance(expected.Current, value.Current) < 0.0001f);
     }
 
     [Fact]
@@ -133,7 +135,21 @@ public sealed class SpringRetargetTests(ITestOutputHelper output)
         Assert.Equal(-20f, value.Current);
         clock.Advance(TimeSpan.FromMilliseconds(1));
         root.Motion.Tick();
-        Assert.Equal(520f * 220f * 0.001f, value.Velocity!.Value.Value, precision: 3);
+        // The new spring starts at rest from -20, not from the old spring's position and velocity.
+        MotionSampler<float> expected = AdvanceFreshSpring(
+            MotionFactory.Spring<float>(), new FloatMixer(), -20f, 200f, 0f);
+        Assert.Equal(expected.Velocity!.Value.Value, value.Velocity!.Value.Value, precision: 3);
         Assert.True(newHandle.IsActive);
+    }
+
+    // A fresh spring that starts with the given position and velocity is the retarget oracle.
+    private static MotionSampler<T> AdvanceFreshSpring<T>(SpringSpec<T> spec, ValueMixer<T> mixer, T from, T to, T velocity)
+    {
+        SpringSpec<T>.VectorSpringSampler sampler = new(
+            spec, from, to, mixer,
+            new MotionSpecContext(ReducedMotionPolicy.Default, new ValueMixerRegistry(), null, TimeSpan.Zero),
+            new MotionVelocity<T>(velocity));
+        sampler.Advance(TimeSpan.FromMilliseconds(1));
+        return sampler;
     }
 }

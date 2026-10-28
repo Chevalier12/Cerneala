@@ -444,6 +444,117 @@ public sealed class LayoutMotionCoordinatorTests
     }
 
     [Fact]
+    public void UnrelatedSiblingLayoutDoesNotRestartAnActiveLayoutCorrection()
+    {
+        (UIRoot root, UIElement child) = RunCorrectionHalfway(moveUnrelatedSibling: true);
+
+        Assert.Equal(Cerneala.UI.Media.Transform.Identity, child.LayoutCorrectionTransform);
+        Assert.False(root.Motion.HasActiveMotion);
+    }
+
+    [Fact]
+    public void LayoutCorrectionFinishesOnTimeWithoutAnUnrelatedLayoutPass()
+    {
+        // Control for the sibling test: the same timeline without the sibling change.
+        (UIRoot root, UIElement child) = RunCorrectionHalfway(moveUnrelatedSibling: false);
+
+        Assert.Equal(Cerneala.UI.Media.Transform.Identity, child.LayoutCorrectionTransform);
+        Assert.False(root.Motion.HasActiveMotion);
+    }
+
+    private static (UIRoot Root, UIElement Child) RunCorrectionHalfway(bool moveUnrelatedSibling)
+    {
+        ManualMotionClock clock = new();
+        (UIRoot root, UIElement child) = CreateCanvasScenario(clock);
+        FixedElement other = new(new LayoutSize(10, 10));
+        ((Canvas)root.VisualChildren[0]).VisualChildren.Add(other);
+        root.ProcessFrame();
+        Canvas.SetLeft(child, 40);
+        root.ProcessFrame();
+        clock.Advance(TimeSpan.FromMilliseconds(50));
+        root.ProcessFrame();
+        Assert.InRange(child.LayoutCorrectionTransform.Matrix.M31, -39.99f, -0.01f);
+
+        if (moveUnrelatedSibling)
+        {
+            Canvas.SetLeft(other, 10);
+            root.ProcessFrame();
+        }
+
+        clock.Advance(TimeSpan.FromMilliseconds(60));
+        root.ProcessFrame();
+        return (root, child);
+    }
+
+    [Fact]
+    public void ReparentingMidFlightKeepsVisualContinuity()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(100, 100, motionClock: clock);
+        Canvas canvasA = new();
+        Canvas canvasB = new();
+        FixedElement child = CreateLayoutElement("card");
+        root.VisualChildren.Add(canvasA);
+        root.VisualChildren.Add(canvasB);
+        canvasA.VisualChildren.Add(child);
+        Canvas.SetLeft(child, 0);
+        root.ProcessFrame();
+        Canvas.SetLeft(child, 40);
+        root.ProcessFrame();
+        clock.Advance(TimeSpan.FromMilliseconds(50));
+        root.ProcessFrame();
+        LayoutMotionBinding? binding = root.Motion.Layout.GetBinding(child);
+        Assert.NotNull(binding);
+        Assert.InRange(binding.CurrentCorrection.Matrix.M31, -39.99f, -0.01f);
+        float visualXBefore = child.ArrangedBounds.X + binding.CurrentCorrection.Matrix.M31;
+
+        canvasA.VisualChildren.Remove(child);
+        canvasB.VisualChildren.Add(child);
+        root.ProcessFrame();
+
+        float visualXAfter = child.ArrangedBounds.X + child.LayoutCorrectionTransform.Matrix.M31;
+        Assert.Equal(40, child.ArrangedBounds.X);
+        Assert.True(
+            MathF.Abs(visualXAfter - visualXBefore) < 0.5f,
+            $"Visual X was {visualXBefore} before the reparent and {visualXAfter} after it.");
+
+        clock.Advance(TimeSpan.FromMilliseconds(120));
+        root.ProcessFrame();
+        Assert.Equal(Cerneala.UI.Media.Transform.Identity, child.LayoutCorrectionTransform);
+        Assert.False(root.Motion.HasActiveMotion);
+    }
+
+    [Fact]
+    public void ReparentingAfterTheCorrectionFinishedStartsNoCorrection()
+    {
+        // The correction finishes without a layout pass; the previous snapshot must still record the final position,
+        // not the start of the correction (before the fix this reparent started a -40 correction).
+        ManualMotionClock clock = new();
+        UIRoot root = new(100, 100, motionClock: clock);
+        Canvas canvasA = new();
+        Canvas canvasB = new();
+        FixedElement child = CreateLayoutElement("card");
+        root.VisualChildren.Add(canvasA);
+        root.VisualChildren.Add(canvasB);
+        canvasA.VisualChildren.Add(child);
+        root.ProcessFrame();
+        Canvas.SetLeft(child, 40);
+        root.ProcessFrame();
+        clock.Advance(TimeSpan.FromMilliseconds(50));
+        root.ProcessFrame();
+        clock.Advance(TimeSpan.FromMilliseconds(60));
+        root.ProcessFrame();
+        Assert.Equal(Cerneala.UI.Media.Transform.Identity, child.LayoutCorrectionTransform);
+
+        canvasA.VisualChildren.Remove(child);
+        canvasB.VisualChildren.Add(child);
+        root.ProcessFrame();
+
+        Assert.Equal(40, child.ArrangedBounds.X);
+        Assert.Equal(Cerneala.UI.Media.Transform.Identity, child.LayoutCorrectionTransform);
+    }
+
+    [Fact]
     public void SpringLayoutCorrectionSettlesToIdentityWithoutLayoutWork()
     {
         ManualMotionClock clock = new();

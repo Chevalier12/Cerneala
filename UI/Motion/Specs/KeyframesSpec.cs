@@ -128,7 +128,13 @@ public sealed class KeyframesSpec<T> : MotionSpec<T>
                     continue;
                 }
 
-                if (start.Hold || end.Offset == start.Offset)
+                if (start.Hold)
+                {
+                    // Like every other segment, a hold reaches the next keyframe's value at its end offset.
+                    return progress < end.Offset ? start.Value : end.Value;
+                }
+
+                if (end.Offset == start.Offset)
                 {
                     return start.Value;
                 }
