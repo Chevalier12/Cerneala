@@ -1862,6 +1862,40 @@ public sealed class ItemsControlTests
         Assert.DoesNotContain(9, control.ItemContainerGenerator.RealizedContainers.Keys);
     }
 
+    // The scroll offset counts from the top of the ItemsControl's layout slot, so a top Margin moves the rows down in
+    // the scrolled content as a top Padding does, and the same rows are realized (#821).
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ScrollViewerVirtualizationRealizesTheRowsInTheViewportBelowTheTopSpace(bool usePadding)
+    {
+        FixedElement[] source = Enumerable.Range(0, 100)
+            .Select(index => new FixedElement(index.ToString(), new LayoutSize(80, 10)))
+            .ToArray();
+        ItemsControl control = new() { ItemsSource = source, ItemsPanel = new VirtualizingStackPanel() };
+        if (usePadding)
+        {
+            control.Padding = new Thickness(0, 100, 0, 0);
+        }
+        else
+        {
+            control.Margin = new Thickness(0, 100, 0, 0);
+        }
+
+        ScrollViewer viewer = new() { Content = control, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+        UIRoot root = new(100, 30);
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+
+        viewer.ScrollInfo.SetVerticalOffset(105);
+        root.ProcessFrame();
+
+        // Rows 0..3 cover 5..35 below the top space, the 30 px the viewport shows from offset 105.
+        Assert.Contains(0, control.ItemContainerGenerator.RealizedContainers.Keys);
+        Assert.Contains(3, control.ItemContainerGenerator.RealizedContainers.Keys);
+        Assert.DoesNotContain(9, control.ItemContainerGenerator.RealizedContainers.Keys);
+    }
+
     private static ContentTemplate WrapElementTemplate()
     {
         return new ContentTemplate("wrap", typeof(object), key: null, priority: 0,

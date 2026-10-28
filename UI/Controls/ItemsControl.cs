@@ -503,10 +503,11 @@ public class ItemsControl : Control
     // template, below its top inset. A subclass that lays out its items without a template in another way overrides it.
     internal virtual float ItemsTopInset => TemplateChild is null ? Insets.Top : 0;
 
-    // The scroll offset counts from the top of this control, so the items see it less their top inset.
+    // The scroll offset counts from the top of this control's layout slot, and arrange places the control Margin.Top
+    // below it, so the items see the offset less the top margin and their top inset (#821).
     internal void UpdateAutomaticVirtualization(float viewportExtent, float scrollOffset)
     {
-        if (itemsPresenter.UpdateAutomaticVirtualization(viewportExtent, scrollOffset - ItemsTopInset))
+        if (itemsPresenter.UpdateAutomaticVirtualization(viewportExtent, scrollOffset - Margin.Top - ItemsTopInset))
         {
             InvalidateItems("Items scroll viewport changed");
         }
