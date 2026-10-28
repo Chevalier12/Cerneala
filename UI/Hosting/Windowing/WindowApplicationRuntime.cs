@@ -41,7 +41,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
         this.platform = platform ?? throw new ArgumentNullException(nameof(platform));
         this.resourceProvider = resourceProvider;
         this.themeProvider = themeProvider ?? new ThemeProvider(DefaultTheme.Create());
-        this.platformServices = platformServices ?? platform.PlatformServices;
+        this.platformServices = platformServices;
     }
 
     public static WindowApplicationRuntime? Current => current;
@@ -798,7 +798,9 @@ internal sealed class WindowApplicationRuntime : IDisposable
         root.Relay.VerifyAccess();
         root.SetThemeProvider(themeProvider);
         root.SetResourceProvider(application?.Resources ?? resourceProvider);
-        root.SetPlatformServices(platformServices);
+        IPlatformServices? windowServices =
+            platformServices ?? platformWindow.PlatformServices ?? platform.PlatformServices;
+        root.SetPlatformServices(windowServices);
         if (application is not null)
         {
             // The Application runtime is shared by every window; its output
@@ -814,7 +816,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
             Root = root,
             Viewport = platformWindow.Viewport,
             InputSource = platformWindow.InputSource,
-            PlatformServices = platformServices
+            PlatformServices = windowServices
         });
         WindowContext context = new(this, window, platformWindow, root, host);
         callbacks.Context = context;

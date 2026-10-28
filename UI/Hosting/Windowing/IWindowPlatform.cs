@@ -24,6 +24,10 @@ internal interface IWindowPlatform : IDisposable
 
 internal interface IPlatformWindow : IDisposable
 {
+    // Services of this window's root, for a platform whose services depend on the window.
+    // Null when the window uses the platform's PlatformServices.
+    IPlatformServices? PlatformServices => null;
+
     IWindowSurface Surface { get; }
 
     UiViewport Viewport { get; }

@@ -102,7 +102,9 @@ internal sealed class SdlWindowPlatform : IWindowPlatform
             callbacks,
             graphicsSessionFactory,
             coordinateScaleOverride,
-            RemoveWindow);
+            RemoveWindow,
+            platformServices,
+            cursorService);
         lock (sync)
         {
             if (!windows.TryAdd(created.WindowId, created))
@@ -255,6 +257,8 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
     private readonly IWindowGraphicsSession graphicsSession;
     private bool destroyed;
     private bool enabled = true;
+    // Whether SDL's mouse focus is this window: SDL sends mouse events only to that window.
+    private bool hasPointer;
     private bool? lastActive;
     private (UiViewport Viewport, float Left, float Top, WindowState State)? lastBounds;
     // Native position of the window in the normal state: where it was placed or last seen while normal.
@@ -272,13 +276,16 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
         IWindowPlatformCallbacks callbacks,
         IWindowGraphicsSessionFactory graphicsSessionFactory,
         float? coordinateScaleOverride,
-        Action<uint> removeWindow)
+        Action<uint> removeWindow,
+        PlatformServices platformServices,
+        SdlCursorService cursor)
     {
         this.api = api;
         this.window = window;
         this.callbacks = callbacks;
         this.coordinateScaleOverride = coordinateScaleOverride;
         this.removeWindow = removeWindow;
+        PlatformServices = platformServices with { Cursor = new WindowCursor(this, cursor) };
         // Input deferred to a later frame asks the runtime for that frame.
         inputSource = new SdlInputSource(callbacks.RenderRequested);
         desiredState = window.WindowState;
@@ -340,6 +347,8 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
     public nint Handle { get; }
 
     public uint WindowId { get; }
+
+    public IPlatformServices PlatformServices { get; }
 
     public SdlWindowSurface Surface { get; }
 
@@ -541,6 +550,16 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
         if (destroyed)
         {
             return;
+        }
+
+        if (@event.Kind == SdlEventKind.WindowMouseLeave)
+        {
+            hasPointer = false;
+        }
+        else if (@event.Kind is SdlEventKind.WindowMouseEnter or SdlEventKind.MouseMotion or
+            SdlEventKind.MouseButtonDown or SdlEventKind.MouseButtonUp or SdlEventKind.MouseWheel)
+        {
+            hasPointer = true;
         }
 
         switch (@event.Kind)
@@ -832,6 +851,22 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
         if (!result)
         {
             throw SdlApiError.Create(api, operation);
+        }
+    }
+
+    // SDL shows one cursor for every window. Each frame of a window publishes the cursor of its
+    // element under the pointer, so only the window that has the pointer may set it; a frame of
+    // another window would replace it with that window's arrow.
+    private sealed class WindowCursor(SdlPlatformWindow owner, SdlCursorService cursor) : ICursorService
+    {
+        public CursorShape Current => cursor.Current;
+
+        public void SetCursor(CursorShape shape)
+        {
+            if (owner.hasPointer)
+            {
+                cursor.SetCursor(shape);
+            }
         }
     }
 }

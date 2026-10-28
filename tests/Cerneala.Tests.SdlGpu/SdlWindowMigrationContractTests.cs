@@ -2,6 +2,7 @@ using Cerneala.Platforms.Sdl3;
 using Cerneala.Backends.SdlGpu;
 using Cerneala.UI;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting.Windowing;
 using Cerneala.UI.Input;
 using Cerneala.UI.Platform;
@@ -116,6 +117,91 @@ public sealed class SdlWindowMigrationContractTests
 
         Assert.True(button.IsPointerOver);
         Assert.Equal(SdlSystemCursor.Pointer, SelectedCursor(api));
+    }
+
+    private static SdlSystemCursor? SelectedCursor(FakeSdlApi api) =>
+        api.CreatedCursors.TryGetValue(api.SelectedCursor, out SdlSystemCursor cursor) ? cursor : null;
+
+    [Fact]
+    public void SecondWindowRenderingDoesNotOverwriteTheCursorOfTheHoveredWindow()
+    {
+        TextBlock textB = new() { Text = "B" };
+        (FakeSdlApi api, WindowApplicationRuntime runtime, _, uint windowB, RecordingGraphicsFactory graphics) =
+            CreateTwoWindowsHoveringTheFirst(textB);
+        using (runtime)
+        {
+            int presentsBefore = graphics.Sessions[1].PresentCount;
+            textB.Text = "B changed";
+            api.Enqueue(new SdlEvent(SdlEventKind.WindowExposed, windowB, Data1: 1));
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+            Assert.True(graphics.Sessions[1].PresentCount > presentsBefore, "Window B did not present a frame.");
+
+            Assert.True(
+                SelectedCursor(api) == SdlSystemCursor.Pointer,
+                $"After window B rendered, the selected cursor is {SelectedCursor(api)} instead of Pointer.");
+        }
+    }
+
+    [Fact]
+    public void HoveredWindowRenderingAgainKeepsItsHandCursor()
+    {
+        // Control: the hovered window itself renders again.
+        (FakeSdlApi api, WindowApplicationRuntime runtime, uint windowA, _, _) =
+            CreateTwoWindowsHoveringTheFirst(new TextBlock { Text = "B" });
+        using (runtime)
+        {
+            api.Enqueue(new SdlEvent(SdlEventKind.WindowExposed, windowA, Data1: 1));
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+            Assert.Equal(SdlSystemCursor.Pointer, SelectedCursor(api));
+        }
+    }
+
+    [Fact]
+    public void CursorFollowsThePointerIntoAnotherWindow()
+    {
+        Button buttonB = new() { Content = "B", Cursor = Cursor.Crosshair };
+        (FakeSdlApi api, WindowApplicationRuntime runtime, uint windowA, uint windowB, _) =
+            CreateTwoWindowsHoveringTheFirst(buttonB);
+        using (runtime)
+        {
+            var bounds = buttonB.ArrangedBounds;
+            // SDL moves the mouse focus: the old window gets the leave before the new window's motion.
+            api.Enqueue(
+                new SdlEvent(SdlEventKind.WindowMouseLeave, windowA),
+                new SdlEvent(SdlEventKind.WindowMouseEnter, windowB),
+                new SdlEvent(SdlEventKind.MouseMotion, windowB,
+                    X: bounds.X + bounds.Width / 2, Y: bounds.Y + bounds.Height / 2));
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+            Assert.Equal(SdlSystemCursor.Crosshair, SelectedCursor(api));
+
+            // Window A renders after the pointer left it; the cursor stays the one of B's button.
+            api.Enqueue(new SdlEvent(SdlEventKind.WindowExposed, windowA, Data1: 1));
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+            Assert.Equal(SdlSystemCursor.Crosshair, SelectedCursor(api));
+        }
+    }
+
+    // Window A shows a Hand button under the pointer; window B shows contentB and has no pointer.
+    private static (FakeSdlApi Api, WindowApplicationRuntime Runtime, uint WindowA, uint WindowB,
+        RecordingGraphicsFactory Graphics) CreateTwoWindowsHoveringTheFirst(UIElement contentB)
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1, WindowDisplayScale = 1 };
+        RecordingGraphicsFactory graphics = new();
+        WindowApplicationRuntime runtime = new(new SdlWindowPlatform(api, graphics));
+        Button buttonA = new() { Content = "A", Cursor = Cursor.Hand };
+        runtime.Show(new Window { Content = buttonA, Width = 320, Height = 200 }, modal: false);
+        runtime.Show(new Window { Content = contentB, Width = 320, Height = 200 }, modal: false);
+        uint windowA = Assert.IsType<SdlWindowSurface>(graphics.Surfaces[0]).WindowId;
+        uint windowB = Assert.IsType<SdlWindowSurface>(graphics.Surfaces[1]).WindowId;
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        var bounds = buttonA.ArrangedBounds;
+        api.Enqueue(new SdlEvent(SdlEventKind.MouseMotion, windowA,
+            X: bounds.X + bounds.Width / 2, Y: bounds.Y + bounds.Height / 2));
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        Assert.Equal(SdlSystemCursor.Pointer, SelectedCursor(api));
+        Assert.NotEqual(windowA, windowB);
+        return (api, runtime, windowA, windowB, graphics);
     }
 
     private static SdlSystemCursor? SelectedCursor(FakeSdlApi api) =>
