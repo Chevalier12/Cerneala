@@ -36,7 +36,7 @@ Border item = new()
 ## Remarks
 `LayoutMotionOptions` is assigned through `UIElement.LayoutMotion`. Layout motion participates only when an attached element has both `LayoutMotion` and `LayoutMotionId` set.
 
-When the layout coordinator detects that a participating element's visual bounds changed between the first and last layout snapshots, it creates an inverse correction transform and starts a `LayoutMotionBinding`. The binding jumps the correction to that inverse transform and animates it back to `Transform.Identity` using `CorrectionSpec`.
+When the layout coordinator detects that a participating element's visual bounds changed between the first and last layout snapshots, it creates an inverse correction transform and starts a `LayoutMotionBinding`. The binding jumps the correction to that inverse transform and animates it back to `Transform.Identity` using `CorrectionSpec`. The comparison leaves out the element's own running correction, so a layout pass that does not move the element, for example a sibling's `Canvas.SetLeft`, lets a running correction finish on time. A real move during a correction restarts it from the position where the element is drawn.
 
 The `Spring` factory name creates a `LayoutMotionOptions` instance from the supplied `MotionSpec<Transform>`. The supplied spec can be any transform motion specification accepted by the motion system, such as a tween or spring spec from `Cerneala.UI.Motion.Specs.Motion`.
 

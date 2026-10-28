@@ -51,7 +51,7 @@ float translatedY = element.TranslateY;
 
 The controller creates two `MotionValue<float>` instances from the element's current `TranslateX` and `TranslateY` values. Each motion value subscribes back to the element and writes translation changes with `UiPropertyValueSource.Animation`, so drag movement updates render translation without requiring layout invalidation.
 
-`Begin` enters `PointerMotionState.Dragging`, records the starting translation, stores the pointer-to-translation origin, and resets velocity tracking. `Move` adds a velocity sample and immediately jumps `DragX` and `DragY` to the pointer offset from that origin.
+`Begin` first cancels a running settle from `End` or `PointerCaptureLost` with `MotionCancelBehavior.KeepCurrent`, so the element stays where the pointer grabbed it. It then enters `PointerMotionState.Dragging`, records the starting translation, stores the pointer-to-translation origin, and resets velocity tracking. `Move` adds a velocity sample and immediately jumps `DragX` and `DragY` to the pointer offset from that origin. For example, a `Begin(500, 0, ...)` while a settle is still moving the element, followed by `Move(500, 0, ...)` with the pointer unmoved, leaves `TranslateX` unchanged; a later `Move(530, 0, ...)` moves it 30 units.
 
 `End` enters `PointerMotionState.Settling` and animates both axes toward the current position plus ten percent of the captured velocity. `PointerCaptureLost` only acts while dragging; it animates both axes back to the translation recorded by `Begin`.
 
@@ -76,7 +76,7 @@ axis, bounds, resistance, snapping, or Decay-release options.
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `Begin(float x, float y, TimeSpan time)` | `void` | Starts a drag at the supplied pointer position and timestamp, records the current translation as the drag start, and resets velocity tracking. |
+| `Begin(float x, float y, TimeSpan time)` | `void` | Stops a running settle, starts a drag at the supplied pointer position and timestamp, records the current translation as the drag start, and resets velocity tracking. |
 | `Move(float x, float y, TimeSpan time)` | `void` | Adds a velocity sample and immediately moves `DragX` and `DragY` to follow the pointer offset captured by `Begin`. |
 | `End(MotionSpec<float> settleSpec)` | `void` | Switches to settling and animates both axes toward the current translation plus velocity-based momentum using `settleSpec`. |
 | `PointerCaptureLost(MotionSpec<float> settleSpec)` | `void` | If currently dragging, switches to settling and animates both axes back to the translation recorded by `Begin`. |

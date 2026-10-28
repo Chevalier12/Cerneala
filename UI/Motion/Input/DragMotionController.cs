@@ -41,6 +41,11 @@ public sealed class DragMotionController : IDisposable
     public void Begin(float x, float y, TimeSpan time)
     {
         ObjectDisposedException.ThrowIf(disposed, this);
+        // A new drag owns the translation: a running settle stops where it is, so the origin stays valid.
+        xSettleHandle?.Cancel(MotionCancelBehavior.KeepCurrent);
+        ySettleHandle?.Cancel(MotionCancelBehavior.KeepCurrent);
+        xSettleHandle = null;
+        ySettleHandle = null;
         State = PointerMotionState.Dragging;
         startX = DragX.Current;
         startY = DragY.Current;

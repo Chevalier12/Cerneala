@@ -12,7 +12,7 @@ public sealed class LayoutMotionCoordinator
 {
     private readonly MotionSystem motion;
     private readonly Dictionary<UIElement, LayoutSnapshot> firstSnapshots = [];
-    private readonly Dictionary<UIElement, LayoutRect> firstUncorrectedScrollBounds = [];
+    private readonly Dictionary<UIElement, LayoutRect> firstUncorrectedBounds = [];
     private readonly Dictionary<LayoutMotionId, LayoutSnapshot> previousSnapshotsById = [];
     private readonly Dictionary<UIElement, LayoutMotionBinding> bindings = [];
     private readonly HashSet<UIElement> pendingDetached = new(ReferenceEqualityComparer.Instance);
@@ -44,7 +44,7 @@ public sealed class LayoutMotionCoordinator
     {
         motion.VerifyAccess();
         firstSnapshots.Remove(element);
-        firstUncorrectedScrollBounds.Remove(element);
+        firstUncorrectedBounds.Remove(element);
         participants.Remove(element);
         pendingDetached.Add(element);
     }
@@ -78,7 +78,7 @@ public sealed class LayoutMotionCoordinator
         motion.VerifyAccess();
         CleanupDetached();
         firstSnapshots.Clear();
-        firstUncorrectedScrollBounds.Clear();
+        firstUncorrectedBounds.Clear();
         if (participants.Count == 0 || !motion.Root.LayoutQueue.HasWork ||
             motion.ReducedMotion.Mode == ReducedMotionMode.DisableNonEssential)
         {
@@ -97,9 +97,9 @@ public sealed class LayoutMotionCoordinator
                 GetRootVisualBounds(element, includeOwnLayoutCorrection: true, ignoreScrollOffsets: true),
                 element.VisualParent,
                 element.LayoutMotionId);
-            if (HasScrollAncestor(element))
+            if (element.LayoutCorrectionTransform != Transform.Identity)
             {
-                firstUncorrectedScrollBounds[element] = GetRootVisualBounds(
+                firstUncorrectedBounds[element] = GetRootVisualBounds(
                     element, includeOwnLayoutCorrection: false, ignoreScrollOffsets: true);
             }
         }
@@ -145,8 +145,9 @@ public sealed class LayoutMotionCoordinator
             }
 
             LayoutRect last = GetRootVisualBounds(element, includeOwnLayoutCorrection: false, ignoreScrollOffsets: !reparented);
-            // A scroll-only arrange must not retarget an existing correction either.
-            if (!reparented && firstUncorrectedScrollBounds.TryGetValue(element, out LayoutRect uncorrected) &&
+            // The first snapshot includes a running correction, so compare layout without it: a pass that does
+            // not move the element (a sibling's change, a scroll) must not restart its correction.
+            if (!reparented && firstUncorrectedBounds.TryGetValue(element, out LayoutRect uncorrected) &&
                 uncorrected == last)
             {
                 continue;
@@ -186,7 +187,34 @@ public sealed class LayoutMotionCoordinator
 
         UpdatePreviousSnapshots();
         firstSnapshots.Clear();
-        firstUncorrectedScrollBounds.Clear();
+        firstUncorrectedBounds.Clear();
+    }
+
+    // Corrections animate without layout passes. A reparent resolves its first snapshot from the previous
+    // snapshot, so after the frame's motion sampling that snapshot records where the corrected element is drawn.
+    internal void RecordCorrectedSnapshots()
+    {
+        motion.VerifyAccess();
+        foreach ((UIElement element, LayoutMotionBinding binding) in bindings)
+        {
+            if (!binding.CorrectionChanged)
+            {
+                continue;
+            }
+
+            binding.CorrectionChanged = false;
+            if (IsParticipating(element) &&
+                element.LayoutMotionId is LayoutMotionId id &&
+                previousSnapshotsById.TryGetValue(id, out LayoutSnapshot previous) &&
+                ReferenceEquals(previous.Element, element) &&
+                ReferenceEquals(previous.Parent, element.VisualParent))
+            {
+                previousSnapshotsById[id] = previous with
+                {
+                    Bounds = GetRootVisualBounds(element, includeOwnLayoutCorrection: true)
+                };
+            }
+        }
     }
 
     private LayoutMotionBinding GetOrCreateBinding(UIElement element)
@@ -254,19 +282,6 @@ public sealed class LayoutMotionCoordinator
                 element.VisualParent,
                 id);
         }
-    }
-
-    private static bool HasScrollAncestor(UIElement element)
-    {
-        for (UIElement? current = element; current?.VisualParent is UIElement parent; current = parent)
-        {
-            if (parent is ScrollContentPresenter presenter && ReferenceEquals(presenter.Content, current))
-            {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private static LayoutRect GetRootVisualBounds(UIElement element, bool includeOwnLayoutCorrection, bool ignoreScrollOffsets = false)

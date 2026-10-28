@@ -55,13 +55,20 @@ public sealed class MotionFrameCoordinator
     {
         motion.VerifyAccess();
         motion.Diagnostics.RecordPhase(MotionFramePhase.BeforeRender);
+        MotionFrameResult result;
         if (sampledThisFrame)
         {
-            return MotionFrameResult.Empty(new MotionFrame(default, default, 0, currentReason, MotionFramePhase.BeforeRender));
+            result = MotionFrameResult.Empty(new MotionFrame(default, default, 0, currentReason, MotionFramePhase.BeforeRender));
+        }
+        else
+        {
+            sampledThisFrame = true;
+            result = motion.Tick(currentReason, MotionFramePhase.BeforeRender);
         }
 
-        sampledThisFrame = true;
-        return motion.Tick(currentReason, MotionFramePhase.BeforeRender);
+        // Every sampling of this frame is done: record where layout corrections are drawn.
+        motion.Layout.RecordCorrectedSnapshots();
+        return result;
     }
 
     public MotionFrameResult EndFrame()

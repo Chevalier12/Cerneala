@@ -223,6 +223,46 @@ public sealed class MotionValueTests
         Assert.Equal(20d, value.Target);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task ReplacementCancelsHandleStartedFromOldCancelCallback(bool replaceWithJump)
+    {
+        UIRootHarness harness = new();
+        MotionValue<double> value = harness.Graph.CreateValue(0d);
+        MotionHandle oldHandle = value.AnimateTo(10d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
+        harness.Tick(TimeSpan.Zero);
+        harness.Tick(TimeSpan.FromMilliseconds(40));
+        MotionHandle? callbackHandle = null;
+        oldHandle.Completed += (_, args) =>
+        {
+            if (args.IsCanceled)
+            {
+                callbackHandle = value.AnimateTo(30d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
+            }
+        };
+
+        if (replaceWithJump)
+        {
+            value.JumpTo(5d);
+        }
+        else
+        {
+            value.AnimateTo(5d, MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
+        }
+
+        Assert.NotNull(callbackHandle);
+        Assert.True(callbackHandle.IsCanceled);
+        Assert.False(callbackHandle.IsActive);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await callbackHandle.Completion.AsTask());
+        if (replaceWithJump)
+        {
+            harness.Tick(TimeSpan.FromMilliseconds(50));
+            Assert.Equal(5d, value.Current);
+            Assert.False(value.IsAnimating);
+        }
+    }
+
     [Fact]
     public async Task PreserveProgressRetargetCancelsHandleStartedFromOldCompletionCallback()
     {

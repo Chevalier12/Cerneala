@@ -164,6 +164,7 @@ public sealed class MotionValue<T> : MotionValue
     private void JumpToValidated(T value)
     {
         CancelActiveHandle(MotionCancelBehavior.KeepCurrent, fireEvent: true);
+        CancelCallbackCreatedMotion();
         target = value;
         animationStart = value;
         animationElapsed = TimeSpan.Zero;
