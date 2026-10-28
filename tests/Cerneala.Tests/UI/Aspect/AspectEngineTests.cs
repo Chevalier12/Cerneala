@@ -277,6 +277,73 @@ public sealed class AspectEngineTests
         AssertIntermediateBackground(button, Color.Black, Color.White);
     }
 
+    // #1188: a value that the engine applies without a transition replaces the running Aspect animation of the property.
+    [Theory]
+    [InlineData("noThemeProvider")]
+    [InlineData("unknownMotionToken")]
+    public void ImmediateAspectWriteDuringARunningAspectAnimationShowsTheNewValue(string scenario)
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(motionClock: clock);
+        Button button = new();
+        root.VisualChildren.Add(button);
+        ThemeProvider theme = new(DefaultTheme.Create());
+        AspectEngine engine = new();
+        AspectCatalog catalog = CatalogWith(
+            Rule("base", Declaration(
+                Color.White,
+                scenario == "unknownMotionToken" ? new AspectMotion(Control.BackgroundProperty, "motion.fast") : null)),
+            new AspectRuleSet(
+                "hover",
+                AspectLayer.Runtime,
+                new AspectTarget(typeof(Button), conditions: [AspectCondition.State(AspectState.Hover)]),
+                [Declaration(Color.Black, new AspectMotion(Control.BackgroundProperty, ThemeMotionTokens.FastOut, AspectMotionSource.State))],
+                1));
+
+        engine.Apply(button, catalog, new AspectEnvironment("test"), theme);
+        button.IsPointerOver = true;
+        engine.Apply(button, catalog, new AspectEnvironment("test"), theme);
+        root.Motion.Tick();
+        clock.Advance(TimeSpan.FromMilliseconds(60));
+        root.Motion.Tick();
+        AssertIntermediateBackground(button, Color.White, Color.Black);
+
+        button.IsPointerOver = false;
+        engine.Apply(button, catalog, new AspectEnvironment("test"), scenario == "noThemeProvider" ? null : theme);
+        clock.Advance(TimeSpan.FromMilliseconds(30));
+        root.Motion.Tick();
+
+        Assert.Equal(new Cerneala.UI.Media.SolidColorBrush(Color.White), button.Background);
+        Assert.Equal(UiPropertyValueSource.AspectBase, button.GetValueSource(Control.BackgroundProperty));
+    }
+
+    // #1188: the immediate write stops only the animation that the engine started, not an explicit Motion animation.
+    [Fact]
+    public void ImmediateAspectWriteKeepsAnExplicitAnimationOfTheProperty()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(motionClock: clock);
+        Button button = new();
+        root.VisualChildren.Add(button);
+        AspectEngine engine = new();
+        AspectCatalog catalog = HoverMotionCatalog(ThemeMotionTokens.FastOut);
+        engine.Apply(button, catalog, new AspectEnvironment("test"));
+        Cerneala.UI.Media.Brush? explicitTarget = new Cerneala.UI.Media.SolidColorBrush(Color.Red);
+        MotionHandle explicitHandle = button.Motion()
+            .Animate(Control.BackgroundProperty)
+            .To(explicitTarget)
+            .With(MotionFactory.Tween<Cerneala.UI.Media.Brush?>(TimeSpan.FromMilliseconds(200)));
+
+        button.IsPointerOver = true;
+        engine.Apply(button, catalog, new AspectEnvironment("test"));
+        root.Motion.Tick();
+        clock.Advance(TimeSpan.FromMilliseconds(60));
+        root.Motion.Tick();
+
+        Assert.True(explicitHandle.IsActive);
+        Assert.Equal(UiPropertyValueSource.Animation, button.GetValueSource(Control.BackgroundProperty));
+    }
+
     [Fact]
     public void EngineDoesNotAnimateWhenMotionSourceMaskDoesNotMatch()
     {

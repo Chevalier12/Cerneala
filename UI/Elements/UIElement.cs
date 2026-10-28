@@ -707,14 +707,14 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         if (root is null)
         {
             IncrementPrismVisualVersion();
-            Invalidate(flags, "Element resources changed");
+            InvalidateResourceScope(flags);
             return;
         }
 
         if (root.Relay.CheckAccess())
         {
             IncrementPrismVisualVersion();
-            Invalidate(flags, "Element resources changed");
+            InvalidateResourceScope(flags);
             return;
         }
 
@@ -727,9 +727,38 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
                 Volatile.Read(ref target.attachmentGeneration) == generation)
             {
                 target.IncrementPrismVisualVersion();
-                target.Invalidate(flags, "Element resources changed");
+                target.InvalidateResourceScope(flags);
             }
         });
+    }
+
+    // Resource lookup walks the logical parent first, so these Resources are also a scope of a logical child that another
+    // element hosts visually, for example the content of an open Overlay in the root's overlay layer (#850). The subtree
+    // invalidation reaches visual descendants only, so each such child is invalidated with its own visual subtree.
+    private void InvalidateResourceScope(InvalidationFlags flags)
+    {
+        Invalidate(flags, "Element resources changed");
+        List<UIElement> scope = [.. ElementTreeWalker.PreOrder(this)];
+        HashSet<UIElement> covered = new(scope, ReferenceEqualityComparer.Instance);
+        for (int index = 0; index < scope.Count; index++)
+        {
+            foreach (UIElement child in scope[index].LogicalChildren)
+            {
+                if (covered.Contains(child))
+                {
+                    continue;
+                }
+
+                child.Invalidate(flags, "Element resources changed");
+                foreach (UIElement element in ElementTreeWalker.PreOrder(child))
+                {
+                    if (covered.Add(element))
+                    {
+                        scope.Add(element);
+                    }
+                }
+            }
+        }
     }
 
     internal void SetLogicalParent(UIElement? parent)

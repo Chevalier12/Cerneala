@@ -103,7 +103,10 @@ public sealed class ElementAspect
                 continue;
             }
 
-            if (property.AreEqualUntyped(current.Value, value))
+            // An assignment created from an AspectValue keeps its value there: only a literal is a value to compare with.
+            object? currentValue = current.Value;
+            if ((current.AspectValue is null || current.AspectValue.TryGetLiteral(out currentValue)) &&
+                property.AreEqualUntyped(currentValue, value))
             {
                 return false;
             }

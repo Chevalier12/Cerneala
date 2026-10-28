@@ -46,6 +46,8 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
 
     internal override bool HoldsSetValue => holdsSetValue;
 
+    internal override MotionHandle? ActiveHandle => activeHandle?.IsActive == true ? activeHandle : null;
+
     public override UiObject Target { get; }
 
     public UiProperty<T> Property { get; }
