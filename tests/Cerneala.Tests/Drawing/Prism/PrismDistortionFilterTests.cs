@@ -13,6 +13,78 @@ namespace Cerneala.Tests.Drawing.Prism;
 
 public sealed class PrismDistortionFilterTests
 {
+    [Theory]
+    [InlineData(4, 2, true)]
+    [InlineData(4, 4, false)]
+    public void TransformRotationIsRigidInPixelsForNonSquareSources(int width, int height, bool cornersMustBeEmpty)
+    {
+        PrismResamplingPlan plan = CreatePlan(
+            PrismFilterId.Transform,
+            new DrawRect(0, 0, width, height),
+            (state, entry) =>
+            {
+                SetNumber(state, entry, "Rotation", 90);
+                SetSymbol(state, entry, "EdgeMode", "Transparent");
+            });
+        PrismPremultipliedColor[] source = Enumerable.Repeat(
+            PrismPremultipliedColor.FromStraight(1, 1, 1, 1),
+            width * height).ToArray();
+
+        PrismPremultipliedColor[] result = PrismResamplingMath.Apply(plan, source, width, height, PrismColorProfile.LinearSrgb);
+
+        if (cornersMustBeEmpty)
+        {
+            // A rigid 90-degree turn of 4x2 about its center covers x = 1..3 and y = -1..3.
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    double alpha = result[(y * width) + x].Alpha;
+                    bool inside = x is 1 or 2;
+                    Assert.True(
+                        inside ? alpha > 0.99 : alpha < 0.01,
+                        $"pixel ({x},{y}) alpha={alpha}, expected {(inside ? "opaque" : "transparent")}");
+                }
+            }
+        }
+        else
+        {
+            Assert.True(result[0].Alpha > 0.9, $"pixel (0,0) alpha={result[0].Alpha}");
+        }
+    }
+
+    [Fact]
+    public void TransformSkewIsMeasuredInPixelsForNonSquareSources()
+    {
+        // Skew X = 45 degrees maps x' = x + (y - pivotY) in pixels, as TransformBounds does.
+        // The pivot of a 40x20 source is (20, 10), so row 2 (center y = 2.5) moves left by
+        // 7.5 px and covers x = -7.5..32.5, and row 17 moves right by 7.5 px and covers
+        // x = 7.5..47.5. A skew in normalized UV moves them by 15 px instead, because one
+        // UV unit is 40 px across but only 20 px down. Rows 0 and 19 are not checked: the
+        // anisotropic filter blends them with the transparent rows outside the layer.
+        const int width = 40;
+        const int height = 20;
+        PrismResamplingPlan plan = CreatePlan(
+            PrismFilterId.Transform,
+            new DrawRect(0, 0, width, height),
+            (state, entry) =>
+            {
+                SetVector(state, entry, "Skew", new Vector4(45, 0, 0, 0));
+                SetSymbol(state, entry, "EdgeMode", "Transparent");
+            });
+        PrismPremultipliedColor[] source = Enumerable.Repeat(
+            PrismPremultipliedColor.FromStraight(1, 1, 1, 1),
+            width * height).ToArray();
+
+        PrismPremultipliedColor[] result = PrismResamplingMath.Apply(plan, source, width, height, PrismColorProfile.LinearSrgb);
+
+        double Alpha(int x, int y) => result[(y * width) + x].Alpha;
+        Assert.True(Alpha(25, 2) > 0.9, $"row 2, x 25: alpha={Alpha(25, 2)}, expected opaque");
+        Assert.True(Alpha(35, 2) < 0.1, $"row 2, x 35: alpha={Alpha(35, 2)}, expected transparent");
+        Assert.True(Alpha(14, 17) > 0.9, $"row 17, x 14: alpha={Alpha(14, 17)}, expected opaque");
+        Assert.True(Alpha(5, 17) < 0.1, $"row 17, x 5: alpha={Alpha(5, 17)}, expected transparent");
+    }
+
     [Fact]
     public void CatalogDrivesEveryResamplingPlannerKernelTestAndDocumentation()
     {

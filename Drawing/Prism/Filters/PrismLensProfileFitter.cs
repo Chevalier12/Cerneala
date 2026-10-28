@@ -67,16 +67,19 @@ public static class PrismLensProfileFitter
         float maximum = samples.Max(sample => sample.IncidenceAngleDegrees);
         float span = Math.Max(maximum - minimum, 0.001f);
         List<PrismLensFlarePolynomialRegion> regions = [];
+        float upper = minimum;
         for (int regionIndex = 0;
             regionIndex < options.RegionCount;
             regionIndex++)
         {
-            float lower = minimum +
-                (span * regionIndex / options.RegionCount);
-            float upper = regionIndex == options.RegionCount - 1
+            float lower = upper;
+            upper = regionIndex == options.RegionCount - 1
                 ? maximum + 0.001f
                 : minimum +
                     (span * (regionIndex + 1) / options.RegionCount);
+            // At large angles the step above is smaller than one float step and rounds
+            // away; a region must still end above where it starts.
+            upper = MathF.Max(upper, MathF.BitIncrement(lower));
             PrismLensFlareRaySample[] regionSamples = samples
                 .Where(sample =>
                     sample.IncidenceAngleDegrees >= lower &&

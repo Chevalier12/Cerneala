@@ -110,7 +110,6 @@ public sealed class PrismImage : IDrawImage, IDrawImageInvalidationSource, IDisp
 
     internal PrismDrawScope CreateDrawScope(
         DrawRect bounds,
-        float pixelScale = 1,
         long drawContentVersion = 0)
     {
         ObjectDisposedException.ThrowIf(IsDisposed, this);
@@ -124,13 +123,16 @@ public sealed class PrismImage : IDrawImage, IDrawImageInvalidationSource, IDisp
             cacheOwnerToken,
             bounds,
             Matrix3x2.Identity,
-            pixelScale,
+            pixelScale: 1,
             visualContentVersion,
             PrismDrawResources.Empty,
             lowerUiVersion: 0,
             isLocalDrawingScope: true,
             imageDependency: this,
-            drawContentVersion: drawContentVersion);
+            drawContentVersion: drawContentVersion)
+        {
+            UsesTargetPixelScale = true
+        };
     }
 
     public void Dispose()

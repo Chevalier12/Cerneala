@@ -38,6 +38,8 @@ Parameter assignments are validated against the `Transform` catalog entry. The a
 
 `Vector4` is `System.Numerics.Vector4`. A `Vector4` default written with two numbers, such as `0, 0`, sets X and Y; Z and W are 0.
 
+The transform is rigid in device pixels on the CPU reference and the SDL_GPU kernel: the filter scales, skews, and rotates the layer about `Origin` (a fraction of the layer bounds), then translates it, and the result stays inside the bounds that the graph optimizer computes for the same transform. A non-square layer is not sheared. For example, `Rotation = 90` on an opaque 4x2 px layer with `EdgeMode = "Transparent"` gives a 2x4 px block about the center: columns 1 and 2 stay opaque, and columns 0 and 3 become transparent.
+
 Add the operation to a `PrismPipeline`, or pass it to `Prism.Apply` together with the source image: `Prism.Apply(source, new TransformFilter())`.
 
 Each property in the table also has a public static `MotionProperty<TransformFilter, T>` field named after it, for example `TranslateProperty` of type `MotionProperty<TransformFilter, Vector4>`. Motion uses these fields to animate the value.

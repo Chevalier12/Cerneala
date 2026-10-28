@@ -56,6 +56,17 @@ profile as a resource. Do not fit profiles once per rendered frame.
 fewer than `MinimumSamplesPerRegion` samples. Every ghost must still produce at
 least one region.
 
+Each ghost's regions split the span from its smallest to its largest
+`IncidenceAngleDegrees` into `RegionCount` equal parts; the last region ends
+0.001 degrees above the largest angle. When an angle is so large that a split
+point or the 0.001-degree margin rounds away in `float` (one `float` step at
+40000 degrees is about 0.0039), the region ends at the next representable value
+above its start instead. Every fitted region therefore has
+`MaximumIncidenceAngleDegrees > MinimumIncidenceAngleDegrees`, and any finite,
+non-negative angle can be fitted. For example, 12 samples at 40000 degrees with
+`RegionCount = 1` or `2` and `MinimumSamplesPerRegion = 6` produce one region
+from 40000 to 40000.004.
+
 ## Methods
 
 | Name | Returns | Description |

@@ -97,8 +97,11 @@ public readonly record struct PrismLight
         Vector3 linearSrgb,
         float intensity = 1)
     {
-        if (!IsFinite(surfaceToLightDirection) ||
-            surfaceToLightDirection.LengthSquared() <= 0)
+        // Dividing by the largest component first keeps LengthSquared() inside the float
+        // range, so very long vectors do not overflow and very short ones do not underflow.
+        Vector3 magnitude = Vector3.Abs(surfaceToLightDirection);
+        float largest = MathF.Max(magnitude.X, MathF.Max(magnitude.Y, magnitude.Z));
+        if (!IsFinite(surfaceToLightDirection) || largest <= 0)
         {
             throw new ArgumentOutOfRangeException(
                 nameof(surfaceToLightDirection),
@@ -107,7 +110,7 @@ public readonly record struct PrismLight
 
         return new PrismLight(
             PrismLightKind.Directional,
-            Vector3.Normalize(surfaceToLightDirection),
+            Vector3.Normalize(surfaceToLightDirection / largest),
             linearSrgb,
             intensity);
     }

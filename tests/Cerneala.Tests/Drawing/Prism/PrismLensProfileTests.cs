@@ -12,6 +12,37 @@ namespace Cerneala.Tests.Drawing.Prism;
 
 public sealed class PrismLensProfileTests
 {
+    [Theory]
+    [InlineData(50f, 1)]
+    [InlineData(50f, 2)]
+    [InlineData(20000f, 1)]
+    [InlineData(20000f, 2)]
+    [InlineData(40000f, 1)]
+    [InlineData(40000f, 2)]
+    public void FitFormsIncreasingRegionsForLargeFiniteIncidenceAngles(float angle, int regionCount)
+    {
+        List<PrismLensFlareRaySample> samples = [];
+        for (int index = 0; index < 12; index++)
+        {
+            Vector2 pupil = new(((index % 4) - 1.5f) / 3f, ((index / 4) - 1) / 3f);
+            samples.Add(new PrismLensFlareRaySample(
+                0, pupil, angle, 550, pupil * 0.5f,
+                new Vector2(pupil.X * 0.3f, pupil.Y * 0.3f), 0.4f, 0.5f));
+        }
+
+        PrismLensProfileResource profile = PrismLensProfileFitter.Fit(samples, new PrismLensProfileFitOptions
+        {
+            RegionCount = regionCount,
+            MaximumTermCount = 4,
+            MinimumSamplesPerRegion = 6,
+            MinimumCorrelation = 1e-9
+        });
+
+        PrismLensFlarePolynomialRegion region = Assert.Single(Assert.Single(profile.Ghosts).Regions);
+        Assert.True(region.MaximumIncidenceAngleDegrees > region.MinimumIncidenceAngleDegrees);
+        Assert.InRange(angle, region.MinimumIncidenceAngleDegrees, region.MaximumIncidenceAngleDegrees);
+    }
+
     [Fact]
     public void SparsePolynomialEvaluatesItsNormalizedInputs()
     {

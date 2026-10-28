@@ -32,6 +32,8 @@ public sealed class GaussianBlurFilter : PrismFilter
 
 Parameter assignments are validated against the `GaussianBlur` catalog entry. The accepted symbols and numeric bounds of each parameter are, in that entry of `Cerneala.SourceGen/Prism/Catalog/prism-catalog.json`, the parameter's `symbols` field and the `minimum` and `maximum` fields of its `domain` object.
 
+The blur is a Gaussian with sigma `Radius / 3`. Its taps lie `Radius / (half the sample count)` device pixels apart, which is often a fraction of a pixel, and both the CPU reference and the SDL_GPU kernel read each tap with linear interpolation between the two nearest pixels. For example, `Radius = 2` with `Quality = "Good"` (9 taps, 0.5 px apart) blurs a single white pixel to an alpha of about 0.525 at its center and 0.222 at its neighbour. `UnsharpMask` and `HighPass` build their blurred mask the same way.
+
 Add the operation to a `PrismPipeline`, or pass it to `Prism.Apply` together with the source image: `Prism.Apply(source, new GaussianBlurFilter())`.
 
 Each property in the table also has a public static `MotionProperty<GaussianBlurFilter, T>` field named after it, for example `RadiusProperty` of type `MotionProperty<GaussianBlurFilter, float>`. Motion uses these fields to animate the value.

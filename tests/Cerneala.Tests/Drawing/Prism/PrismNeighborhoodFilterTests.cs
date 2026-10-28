@@ -13,6 +13,46 @@ namespace Cerneala.Tests.Drawing.Prism;
 
 public sealed class PrismNeighborhoodFilterTests
 {
+    [Theory]
+    [InlineData(4f)]
+    [InlineData(2f)]
+    [InlineData(3f)]
+    public void GaussianBlurReadsFractionalTapsWithLinearInterpolation(float radius)
+    {
+        const int width = 9;
+        const int center = 4;
+        const int halfTaps = 4;
+        PrismNeighborhoodPlan plan = CreatePlan(
+            PrismFilterId.GaussianBlur,
+            new DrawRect(0, 0, width, 1),
+            (state, entry) =>
+            {
+                SetNumber(state, entry, "Radius", radius);
+                SetSymbol(state, entry, "Quality", "Good");
+                SetSymbol(state, entry, "EdgeMode", "Clamp");
+            });
+        PrismPremultipliedColor[] source = new PrismPremultipliedColor[width];
+        source[center] = PrismPremultipliedColor.FromStraight(1, 1, 1, 1);
+
+        PrismPremultipliedColor[] actual = PrismNeighborhoodMath.Apply(plan, source, width, 1, PrismColorProfile.LinearSrgb);
+
+        double sigma = radius / 3.0;
+        double step = radius / (double)halfTaps;
+        double[] weights = Enumerable.Range(-halfTaps, (halfTaps * 2) + 1)
+            .Select(tap => Math.Exp(-((tap * step) * (tap * step)) / (2 * sigma * sigma)))
+            .ToArray();
+        double normalization = weights.Sum();
+        double Expected(int pixel) =>
+            Enumerable.Range(-halfTaps, (halfTaps * 2) + 1)
+                .Sum(tap => weights[tap + halfTaps] * Math.Max(0, 1 - Math.Abs(pixel + (tap * step) - center))) / normalization;
+
+        double actual4 = actual[center].Alpha;
+        double actual5 = actual[center + 1].Alpha;
+        Assert.True(
+            Math.Abs(actual4 - Expected(center)) <= 1e-3 && Math.Abs(actual5 - Expected(center + 1)) <= 1e-3,
+            $"radius {radius}: alpha[4]={actual4:F4} (expected {Expected(center):F4}), alpha[5]={actual5:F4} (expected {Expected(center + 1):F4})");
+    }
+
     [Fact]
     public void CatalogDrivesEveryNeighborhoodPlannerKernelTestAndDocumentation()
     {
