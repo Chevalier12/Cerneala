@@ -565,14 +565,21 @@ internal sealed partial class CernealaSemanticModel
 
         (string text, int offset) = BuildDirectTextBuffer(aspect.Element);
         EmbeddedParseResult<DirectiveDocumentSyntax> parsed = DirectiveSyntaxParser.Parse(text, offset);
+        bool syntaxErrors = false;
         foreach (EmbeddedDiagnostic diagnostic in parsed.Diagnostics.Where(diagnostic =>
             ShouldBindAspectAssignment(aspect.Element, diagnostic.Span.Start)))
         {
+            syntaxErrors = true;
             AddDiagnostic(
                 diagnostic.Id,
                 diagnostic.Span,
                 Path.GetFileName(document.Path),
                 diagnostic.Message);
+        }
+
+        if (!syntaxErrors)
+        {
+            ReportIfConditionShapes(parsed.Syntax);
         }
 
         foreach (DirectiveSyntax directive in parsed.Syntax.Directives.Where(directive =>
@@ -719,6 +726,39 @@ internal sealed partial class CernealaSemanticModel
                 member,
                 rawValue,
                 isWritable: member.CanWrite));
+        }
+    }
+
+    // @when/@if written in the content of an element, as in <TextBlock>@when IsMouseOver { @if ... }</TextBlock>.
+    private void BindElementIfConditions(ElementSyntax element)
+    {
+        (string text, int offset) = BuildDirectTextBuffer(element);
+        if (text.IndexOf("@if", StringComparison.Ordinal) < 0)
+        {
+            return;
+        }
+
+        EmbeddedParseResult<DirectiveDocumentSyntax> parsed = DirectiveSyntaxParser.Parse(text, offset);
+        if (parsed.Diagnostics.Count == 0)
+        {
+            ReportIfConditionShapes(parsed.Syntax);
+        }
+    }
+
+    // The build rejects an @if condition that is not a comparison, and a literal that is not the right operand of a
+    // comparison, with CERNEALAUI007 (UiMarkupGenerator.CollectWhen); the editor reports the same diagnostics.
+    // Directive content with syntax errors is not checked, because the build reports only its syntax error.
+    private void ReportIfConditionShapes(DirectiveDocumentSyntax syntax)
+    {
+        foreach (DirectiveSyntax directive in syntax.Directives.Where(directive => directive.Keyword == "@if"))
+        {
+            foreach (IfConditionError error in BindingExpressionSyntaxParser.ValidateIfCondition(
+                syntax.Text,
+                directive.Span.End - syntax.AbsoluteOffset,
+                syntax.AbsoluteOffset))
+            {
+                AddBindingDiagnostic(error.Source, error.Span, error.Message);
+            }
         }
     }
 

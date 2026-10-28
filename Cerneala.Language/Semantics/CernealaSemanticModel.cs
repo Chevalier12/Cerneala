@@ -328,6 +328,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         }
 
         BindElementEmbeddedSemantics(element, type, childDataType, cancellationToken);
+        BindElementIfConditions(element);
         ApplyDefaultAspect(element, type);
         foreach (ElementSyntax child in element.Children.OfType<ElementSyntax>())
         {
@@ -339,6 +340,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
     {
         int separator = element.Name.LastIndexOf('.');
         string propertyName = separator < 0 ? element.Name : element.Name.Substring(separator + 1);
+        BindPropertyElementOwner(element, separator);
         if (IsRemovedTileMapSourceMember(parentType, propertyName))
         {
             AddDiagnostic("CERNEALAUI003", element.NameToken.Span, parentType!.Name, propertyName);
@@ -364,6 +366,29 @@ internal sealed partial class CernealaSemanticModel : IDisposable
             member,
             isWritable: member.CanWrite));
         return member;
+    }
+
+    // In <t:Card.Title> the owner prefix t:Card names the type Card, as the typeName of WPF property element syntax
+    // does, so it is an occurrence of that type like the tag of an object element.
+    private void BindPropertyElementOwner(ElementSyntax element, int separator)
+    {
+        string ownerName = separator <= 0 ? string.Empty : element.Name.Substring(0, separator);
+        ILanguageTypeSymbol? owner = ownerName.Length == 0
+            ? null
+            : ownerName.IndexOf(':') > 0
+                ? ResolveTypeReference(ownerName, aliases)
+                : ResolveMarkupType(ownerName);
+        if (owner is null)
+        {
+            return;
+        }
+
+        symbols.Add(new CernealaSemanticSymbol(
+            CernealaSemanticSymbolKind.Element,
+            ownerName,
+            owner.MetadataName,
+            new TextSpan(element.NameToken.Span.Start, separator),
+            owner));
     }
 
     private ILanguageTypeSymbol? BindAttribute(

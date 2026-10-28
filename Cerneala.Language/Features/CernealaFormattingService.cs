@@ -59,9 +59,11 @@ internal sealed class CernealaFormattingService
         lastLine = Math.Max(firstLine, Math.Min(lastLine, lines.Length - 1));
         ElementSyntax[] elements = document.Syntax.DescendantElements().ToArray();
         SyntaxNode[] nodes = document.Syntax.DescendantNodes().ToArray();
-        TextSpan[] attributeValues = elements
+        // Attribute values and CDATA sections are literal data: a line that starts inside one is part of that data.
+        TextSpan[] literals = elements
             .SelectMany(element => element.Attributes)
             .Select(attribute => attribute.ValueToken.Span)
+            .Concat(nodes.OfType<TextSyntax>().Where(text => text.Kind == SyntaxKind.CData).Select(text => text.Span))
             .ToArray();
         StringBuilder replacement = new();
         bool changed = false;
@@ -72,9 +74,9 @@ internal sealed class CernealaFormattingService
             string original = source.Substring(line.Start, line.ContentLength);
             string trimmed = original.TrimStart(' ', '\t');
             string formatted = original;
-            if (StartsInsideAttributeValue(attributeValues, line.Start))
+            if (StartsInsideLiteral(literals, line.Start))
             {
-                // The line continues a quoted attribute value: its leading whitespace is part of the value.
+                // The line continues a quoted attribute value or a CDATA section: its whitespace is part of the data.
             }
             else if (trimmed.Length == 0)
             {
@@ -98,7 +100,7 @@ internal sealed class CernealaFormattingService
                         depth--;
                     }
 
-                    int directiveDepth = DirectiveDepth(source, contentOffset);
+                    int directiveDepth = DirectiveDepth(source, contentOffset, literals);
                     if (directiveDepth > 0 || textNode is not null && IsDirectiveLine(textNode, trimmed))
                     {
                         depth += directiveDepth;
@@ -126,11 +128,11 @@ internal sealed class CernealaFormattingService
         return [new CernealaFormattingEdit(new TextSpan(editStart, editEnd - editStart), replacement.ToString())];
     }
 
-    private static bool StartsInsideAttributeValue(TextSpan[] attributeValues, int lineStart)
+    private static bool StartsInsideLiteral(TextSpan[] literals, int lineStart)
     {
-        foreach (TextSpan value in attributeValues)
+        foreach (TextSpan literal in literals)
         {
-            if (value.Start < lineStart && lineStart < value.End)
+            if (literal.Start < lineStart && lineStart < literal.End)
             {
                 return true;
             }
@@ -149,7 +151,9 @@ internal sealed class CernealaFormattingService
         return trimmed[0] is '@' or '{' or '}' || trimmed.IndexOf('=') > 0;
     }
 
-    private static int DirectiveDepth(string source, int offset)
+    // Braces and '@' inside an attribute value or a CDATA section are data, so a line that starts inside one never
+    // changes the directive depth.
+    private static int DirectiveDepth(string source, int offset, TextSpan[] literals)
     {
         int depth = 0;
         int lineStart = 0;
@@ -162,7 +166,7 @@ internal sealed class CernealaFormattingService
             }
 
             string line = source.Substring(lineStart, lineEnd - lineStart).TrimStart(' ', '\t');
-            if (line.Length > 0 && line[0] != '<' &&
+            if (line.Length > 0 && line[0] != '<' && !StartsInsideLiteral(literals, lineStart) &&
                 (depth > 0 || line[0] is '@' or '{' or '}'))
             {
                 depth = ApplyDirectiveBraces(line, depth);

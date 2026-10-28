@@ -165,6 +165,47 @@ public sealed class FormattingTests
             $"whitespaceLine={whitespaceLine}: value after formatting {Escape(after)} (the middle line must stay six spaces).");
     }
 
+    // Braces and '@' inside a quoted attribute value are data: they never change the indentation of later lines (#1161).
+    [Theory]
+    [InlineData("\n", "{ not a directive")]
+    [InlineData("\r\n", "{ not a directive")]
+    [InlineData("\n", "@when IsMouseOver { not a directive")]
+    [InlineData("\r\n", "@when IsMouseOver { not a directive")]
+    public void FormattingIndentsTheLinesAfterAMultiLineAttributeValueWhoseLineStartsWithABrace(string newLine, string valueLine)
+    {
+        string input = string.Join(newLine, "<Window>", "<TextBlock Text=\"price:", valueLine + "\" />", "<Button />", "</Window>");
+        CernealaFormattingService formatter = new();
+
+        string formatted = Apply(input, formatter.FormatDocument(Document(input), new CernealaFormattingOptions(2, InsertSpaces: true)));
+
+        Assert.Equal(
+            string.Join(newLine, "<Window>", "  <TextBlock Text=\"price:", valueLine + "\" />", "  <Button />", "</Window>"),
+            formatted);
+    }
+
+    // A CDATA section is literal character data: no line that starts inside it is re-indented or blanked (#1162).
+    [Theory]
+    [InlineData("\n")]
+    [InlineData("\r\n")]
+    public void FormattingKeepsTheTextInsideACDataSection(string newLine)
+    {
+        string cdata = string.Join(newLine, "<![CDATA[", "<b>raw</b>", "   ", "  <i>x</i>", "]]>");
+        string input = string.Join(newLine, "<Window>", cdata, "</Window>");
+        CernealaFormattingService formatter = new();
+        CernealaFormattingOptions options = new(2, InsertSpaces: true);
+        CernealaDocument document = Document(input);
+        int rawStart = input.IndexOf("<b>", StringComparison.Ordinal);
+
+        string formatted = Apply(input, formatter.FormatDocument(document, options));
+        string rangeFormatted = Apply(input, formatter.FormatRange(document, new TextSpan(0, input.Length), options));
+        string onType = Apply(input, formatter.FormatOnType(document, rawStart + 1, options));
+
+        string expected = string.Join(newLine, "<Window>", "  " + cdata, "</Window>");
+        Assert.Equal(expected, formatted);
+        Assert.Equal(expected, rangeFormatted);
+        Assert.Equal(input, onType);
+    }
+
     [Fact]
     public void CanonicalFormattingProducesNoSecondPassDiffOnTheApprovedPresentationCorpus()
     {
