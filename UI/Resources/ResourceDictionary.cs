@@ -117,12 +117,19 @@ public sealed class ResourceDictionary : IObservableResourceProvider, IEnumerabl
     }
 
     // The version counts every change, also when nobody listens to ResourceChanged.
+    // One entry serves every type the key is read as, so the change applies to all of them.
     private void RaiseChanged(object key, Type resourceType, object? oldValue, object? newValue)
     {
         long changedVersion = ++version;
         ResourceChanged?.Invoke(
             this,
-            new ResourceChangedEventArgs(resourceType, KeyText(key), oldValue, newValue, changedVersion));
+            new ResourceChangedEventArgs(
+                resourceType,
+                KeyText(key),
+                oldValue,
+                newValue,
+                changedVersion,
+                appliesToEveryResourceType: true));
     }
 
     private static object ValidateKey(object key)

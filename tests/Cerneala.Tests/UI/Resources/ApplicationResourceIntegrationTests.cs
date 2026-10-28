@@ -82,6 +82,86 @@ public sealed class ApplicationResourceIntegrationTests
     }
 
     [Theory]
+    [InlineData("SetResource")]
+    [InlineData("Indexer")]
+    [InlineData("Add")]
+    public void ElementThatReadAKeyAsABaseTypeIsInvalidatedByTheChange(string change)
+    {
+        Application application = new();
+        application.Resources.SetResource(new ResourceId<Brush>("Accent"), new SolidColorBrush(new Color(10, 20, 30)));
+        UIRoot root = CreateRoot(application);
+        Border border = new();
+        root.VisualChildren.Add(border);
+        Assert.True(border.TryFindResource<Brush>("Accent", out _));
+        root.ProcessFrame();
+        root.ProcessFrame();
+        Assert.False(border.DirtyState.IsDirty);
+        SolidColorBrush updated = new(new Color(40, 50, 60));
+
+        switch (change)
+        {
+            case "SetResource":
+                application.Resources.SetResource(new ResourceId<Brush>("Accent"), updated);
+                break;
+            case "Indexer":
+                application.Resources["Accent"] = updated;
+                break;
+            default:
+                // Add needs an absent key; the removal's own invalidation is processed first.
+                Assert.True(application.Resources.Remove("Accent"));
+                root.ProcessFrame();
+                root.ProcessFrame();
+                Assert.False(border.DirtyState.IsDirty);
+                application.Resources.Add("Accent", updated);
+                break;
+        }
+
+        Assert.True(
+            border.DirtyState.Has(InvalidationFlags.Resource) || border.DirtyState.Has(InvalidationFlags.Render),
+            $"{change}: the element that read 'Accent' as Brush was not invalidated (dirty: {border.DirtyState.IsDirty}).");
+    }
+
+    [Theory]
+    [InlineData("setResourceReadAsBrush")]
+    [InlineData("setResourceReadAsSolidColorBrush")]
+    [InlineData("removeReadAsSolidColorBrush")]
+    [InlineData("removeReadAsBrush")]
+    [InlineData("clearReadAsBrush")]
+    public void ElementThatReadAKeyIsInvalidatedWhenTheKeyIsRemovedOrCleared(string row)
+    {
+        Application application = new();
+        application.Resources.SetResource(new ResourceId<Brush>("Accent"), new SolidColorBrush(new Color(10, 20, 30)));
+        UIRoot root = CreateRoot(application);
+        Border border = new();
+        root.VisualChildren.Add(border);
+        bool found = row.EndsWith("ReadAsSolidColorBrush", StringComparison.Ordinal)
+            ? border.TryFindResource<SolidColorBrush>("Accent", out _)
+            : border.TryFindResource<Brush>("Accent", out _);
+        Assert.True(found);
+        root.ProcessFrame();
+        root.ProcessFrame();
+        Assert.False(border.DirtyState.IsDirty);
+
+        switch (row)
+        {
+            case "setResourceReadAsBrush":
+            case "setResourceReadAsSolidColorBrush":
+                application.Resources.SetResource(new ResourceId<Brush>("Accent"), new SolidColorBrush(new Color(40, 50, 60)));
+                break;
+            case "clearReadAsBrush":
+                application.Resources.Clear();
+                break;
+            default:
+                Assert.True(application.Resources.Remove("Accent"));
+                break;
+        }
+
+        Assert.True(
+            border.DirtyState.Has(InvalidationFlags.Resource) || border.DirtyState.Has(InvalidationFlags.Render),
+            $"{row}: the element that read 'Accent' was not invalidated (dirty: {border.DirtyState.IsDirty}).");
+    }
+
+    [Theory]
     [InlineData(false, false)]
     [InlineData(false, true)]
     [InlineData(true, false)]
