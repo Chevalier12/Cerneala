@@ -74,7 +74,9 @@ sealed class IntToStringConverter : IValueConverter<int, string>
 
 ## Remarks
 
-`Binding<T>` subscribes to `ObservableValue<T>.ValueChanged` and calls the target setter with the new source value while the binding is not disposed. By default, the constructor also applies the current source value to the target immediately.
+`Binding<T>` subscribes to `ObservableValue<T>.ValueChanged` and calls the target setter with the source's current `Value` while the binding is not disposed. By default, the constructor also applies the current source value to the target immediately.
+
+The setter receives `Value`, not `ObservableValueChangedEventArgs<T>.NewValue`, because a `ValueChanged` handler can change the source again before the binding sees the outer notification. For example, a handler registered before the binding sets `source.Value = 100` whenever `args.NewValue > 100`; after `source.Value = 150`, the target ends with `100`, the value the source holds. In that case the setter can be called more than once with the same value.
 
 Disposing the binding unsubscribes it from the source, so later source changes no longer update the target. If the immediate target update throws during construction, the binding removes its source subscription before rethrowing.
 

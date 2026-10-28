@@ -149,7 +149,9 @@ public sealed class UiPropertyBinding<T> : Binding, IElementDataLifecycleBehavio
 
         if (sourceCallbackGuard?.Invoke() == true && !updating)
         {
-            WriteTarget(args.NewValue);
+            // A ValueChanged handler can change the source again before this binding sees the outer notification, so
+            // args.NewValue can be stale; the target always takes the value the source holds now.
+            WriteTarget(source.Value);
         }
     }
 
@@ -168,6 +170,17 @@ public sealed class UiPropertyBinding<T> : Binding, IElementDataLifecycleBehavio
         finally
         {
             updating = false;
+        }
+
+        // The update flag hid the source notifications raised during that write. When the source kept a different value,
+        // for example because a ValueChanged handler normalized the committed one, the target takes that value once.
+        if (active && !IsDisposed)
+        {
+            T value = source.Value;
+            if (!targetProperty.Metadata.EqualityComparer.Equals(target.GetValue(targetProperty), value))
+            {
+                WriteTarget(value);
+            }
         }
     }
 
