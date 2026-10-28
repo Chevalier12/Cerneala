@@ -11,6 +11,7 @@ public sealed partial class UiMarkupGenerator
 {
     private sealed partial class GenerationScope
     {
+        private bool probingLiteral;
 
         private sealed class GeneratedExpression
         {
@@ -498,9 +499,28 @@ public sealed partial class UiMarkupGenerator
             return color is null ? null : "new global::Cerneala.UI.Media.SolidColorBrush(" + color + ")";
         }
 
+        // Whether the attribute form accepts the literal for a value kind that ParseLiteralValue supports, without
+        // reporting its invalid-value diagnostic; the caller reports its own diagnostic.
+        private bool IsValidLiteral(string value, PropertySpec spec)
+        {
+            probingLiteral = true;
+            try
+            {
+                return ParseLiteralValue("value", spec.Name, new MarkupAttribute(spec.Name, value), value, spec) is not null;
+            }
+            finally
+            {
+                probingLiteral = false;
+            }
+        }
+
         private string? Invalid(MarkupAttribute attribute, string elementName, string propertyName, string value)
         {
-            Report(InvalidPropertyValue, attribute, elementName, propertyName, value);
+            if (!probingLiteral)
+            {
+                Report(InvalidPropertyValue, attribute, elementName, propertyName, value);
+            }
+
             return null;
         }
     }

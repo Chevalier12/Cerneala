@@ -751,6 +751,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         public IReadOnlyList<NamedElementMember> NamedElementMembers => namedElementMembers;
 
         private readonly Dictionary<string, NamedSymbol> symbols = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, string> symbolIdentifiers = new(StringComparer.Ordinal);
         private readonly Dictionary<MarkupElement, ResourceScope> resourceScopes = new();
         private readonly Dictionary<MarkupElement, ResourceScope> resourcePropertyScopes = new();
         private readonly Dictionary<MarkupElement, AspectResource> inlineAspects = new();

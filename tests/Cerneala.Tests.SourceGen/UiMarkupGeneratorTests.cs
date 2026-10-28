@@ -2928,6 +2928,72 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Empty(result.GeneratedSources);
     }
 
+    [Theory]
+    [InlineData("a", "b", false)]
+    [InlineData("Name", "Name", true)]
+    [InlineData("name", "Name", true)]
+    [InlineData("my-btn", "myBtn", true)]
+    public void ElementNamesThatMapToTheSameIdentifierReportDuplicateDiagnostic(string first, string second, bool duplicate)
+    {
+        string markup =
+            "<StackPanel><TextBlock Name=\"" + first + "\" /><TextBox Name=\"" + second + "\" /></StackPanel>";
+
+        GeneratorRunResult result = RunGenerator("DuplicateIdentifier.crn", markup, out Compilation compilation);
+
+        string compilationErrors = string.Join(
+            " | ",
+            compilation.GetDiagnostics().Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error));
+        if (duplicate)
+        {
+            Assert.True(
+                result.Diagnostics.Any(diagnostic => diagnostic.Id == "CERNEALAUI005" && diagnostic.Severity == DiagnosticSeverity.Error),
+                "No CERNEALAUI005. Generator diagnostics: " + string.Join(" | ", result.Diagnostics) +
+                " Compilation errors: " + compilationErrors);
+        }
+        else
+        {
+            Assert.Empty(result.Diagnostics);
+            Assert.Equal(string.Empty, compilationErrors);
+        }
+    }
+
+    [Theory]
+    [InlineData("<Border Background=\"NotAColor\" />")]
+    [InlineData("<Border>@when IsMouseOver { Background = \"NotAColor\"; }</Border>")]
+    public void InvalidLiteralDiagnosticPointsAtTheValue(string markup)
+    {
+        GeneratorRunResult result = RunGenerator("InvalidLiteralSpan.crn", markup, out _);
+
+        Diagnostic diagnostic = AssertDiagnostic(result, "CERNEALAUI004", "InvalidLiteralSpan.crn");
+        int valueStart = markup.IndexOf("NotAColor", StringComparison.Ordinal);
+        int valueEnd = valueStart + "NotAColor".Length;
+        Microsoft.CodeAnalysis.Text.TextSpan span = diagnostic.Location.SourceSpan;
+        // The plain attribute selects its whole `Background="NotAColor"` attribute (the control); the @when
+        // assignment must select something that contains the value too, not the empty span at offset 0.
+        Assert.True(
+            span.Length > 0 && span.Start <= valueStart && span.End >= valueEnd,
+            "Span " + span + " does not contain the value at [" + valueStart + ".." + valueEnd + ").");
+    }
+
+    [Theory]
+    [InlineData("@on Loaded { @set { Opacity = NaN; } }", "NaN")]
+    [InlineData("@on Loaded { @set { Width = -5; } }", "-5")]
+    [InlineData("@on Loaded { @animate with Tween(100ms) { @to { Width = -5; } } }", "-5")]
+    public void InvalidMotionValueDiagnosticPointsAtTheValue(string body, string token)
+    {
+        string markup = MotionAspectMarkup(body);
+
+        GeneratorRunResult result = RunGenerator("InvalidMotionValueSpan.crn", markup, out _);
+
+        Diagnostic[] errors = result.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error).ToArray();
+        int valueStart = markup.IndexOf(token, StringComparison.Ordinal);
+        int valueEnd = valueStart + token.Length;
+        Assert.True(
+            errors.Length > 0 && errors.All(d => d.Location.SourceSpan.Length > 0 && d.Location.SourceSpan.Start <= valueStart && d.Location.SourceSpan.End >= valueEnd),
+            "Body '" + body + "': value at [" + valueStart + ".." + valueEnd + "); diagnostics: " +
+            string.Join(" | ", result.Diagnostics.Select(d => d.Id + " " + d.Location.SourceSpan + " " + d.GetMessage())));
+    }
+
     [Fact]
     public void AspectTargetMismatchReportsDiagnostic()
     {

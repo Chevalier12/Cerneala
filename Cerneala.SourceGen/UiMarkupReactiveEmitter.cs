@@ -774,9 +774,10 @@ public sealed partial class UiMarkupGenerator
             string propertyName,
             string rawValue,
             PropertySpec spec,
-            MarkupObject source,
+            DirectiveExpressionLocation valueLocation,
             string? ownerVariable = null)
         {
+            MarkupObject source = valueLocation.Source;
             string value = rawValue.Trim();
             if (value.StartsWith("$", StringComparison.Ordinal))
             {
@@ -808,7 +809,11 @@ public sealed partial class UiMarkupGenerator
                 value = UnescapeMarkupDollar(value);
             }
 
-            MarkupAttribute synthetic = new(propertyName, value);
+            // The synthetic attribute carries the span of the value, so an invalid literal is reported there.
+            MarkupAttribute synthetic = new(
+                propertyName,
+                value,
+                new Cerneala.Language.Text.TextSpan(source.Span.Start + Math.Max(0, valueLocation.Offset), Math.Max(0, valueLocation.Length)));
             return ParseLiteralValue(planElementName ?? "value", propertyName, synthetic, value, spec);
         }
 
@@ -997,7 +1002,7 @@ public sealed partial class UiMarkupGenerator
                             assignment.PropertyName,
                             assignment.Value,
                             spec,
-                            assignment.Source,
+                            assignment.ValueLocation,
                             plan.OwnerVariable);
                         if (expression is null)
                         {

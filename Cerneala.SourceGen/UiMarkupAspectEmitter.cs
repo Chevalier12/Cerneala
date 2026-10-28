@@ -616,7 +616,7 @@ public sealed partial class UiMarkupGenerator
                     assignment.PropertyName,
                     assignment.Value,
                     spec,
-                    assignment.Source,
+                    assignment.ValueLocation,
                     "target");
                 if (expression is null)
                 {
@@ -667,7 +667,7 @@ public sealed partial class UiMarkupGenerator
                     assignment.PropertyName,
                     assignment.Value,
                     spec,
-                    assignment.Source,
+                    assignment.ValueLocation,
                     "target");
                 if (expression is null)
                 {
