@@ -769,6 +769,9 @@ internal interface ISdlApi
 
     float GetWindowDisplayScale(nint window);
 
+    // The window's current SDL state flags, such as Minimized and Maximized; only the members of SdlWindowOptions are named.
+    SdlWindowOptions GetWindowFlags(nint window);
+
     bool GetWindowSizeInPixels(nint window, out int width, out int height);
 
     bool GetWindowPosition(nint window, out int x, out int y);

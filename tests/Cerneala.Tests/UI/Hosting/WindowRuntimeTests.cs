@@ -2595,6 +2595,57 @@ public sealed class WindowRuntimeTests : IDisposable
     }
 
     [Fact]
+    public async Task DialogClosedFromItsFirstFrameCompletesInsteadOfThrowing()
+    {
+        FakeWindowPlatform platform = new();
+        Install(platform);
+        Window owner = new();
+        owner.Show();
+        owner.Activate();
+        Window dialog = new();
+        dialog.ContentRendered += (_, _) => dialog.DialogResult = true;
+        Task<bool?>? result = null;
+
+        Exception? failure = Record.Exception((Action)(() => { result = dialog.ShowDialogAsync(); }));
+
+        Assert.Null(failure);
+        Assert.True(await result!);
+        Assert.True(dialog.IsClosed);
+        Assert.True(platform.Windows[0].Enabled);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task DialogCompletesWhenItsClosedHandlerThrows(bool handlerThrows)
+    {
+        FakeWindowPlatform platform = new();
+        Install(platform);
+        Window owner = new();
+        owner.Show();
+        owner.Activate();
+        Window dialog = new();
+        if (handlerThrows)
+        {
+            dialog.Closed += (_, _) => throw new InvalidOperationException("Closed failed");
+        }
+
+        Task<bool?> result = dialog.ShowDialogAsync();
+        if (handlerThrows)
+        {
+            Assert.Throws<InvalidOperationException>(() => dialog.DialogResult = false);
+        }
+        else
+        {
+            dialog.DialogResult = false;
+        }
+
+        Assert.True(dialog.IsClosed);
+        Assert.True(result.IsCompleted);
+        Assert.False(await result);
+    }
+
+    [Fact]
     public void DisablingAnOwnerDuringATextBoxPressReleasesTheSelectionCaptureBeforeTheDialogCloses()
     {
         FakeWindowPlatform platform = new();
@@ -3231,7 +3282,8 @@ public sealed class WindowRuntimeTests : IDisposable
         public void ReportBounds(UiViewport viewport, float left, float top, WindowState state)
         {
             Viewport = viewport;
-            callbacks.BoundsChanged(viewport, left, top, state);
+            // The fake reports the model's own size: these tests change only the viewport, position and state.
+            callbacks.BoundsChanged(viewport, left, top, window.Width, window.Height, state);
         }
 
         public void RequestRender()

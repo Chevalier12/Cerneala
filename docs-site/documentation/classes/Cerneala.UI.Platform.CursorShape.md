@@ -38,6 +38,8 @@ sealed class RecordingCursorService : ICursorService
 
 `UiHost` publishes a cursor shape once per frame when the root's `PlatformServices.Cursor` is not `null`. It resolves the element cursor under the pointer and converts it: `Cursor.Hand` becomes `Hand`, `Cursor.IBeam` becomes `IBeam`, `Cursor.Crosshair` becomes `Crosshair`, and every other cursor becomes `Arrow`. The host never publishes `Default`, `ResizeHorizontal`, `ResizeVertical`, or `Hidden`; only application code that calls `ICursorService.SetCursor` directly uses them.
 
+With several SDL windows, only the window that has the pointer changes the cursor; a frame of another window does not replace it. See `ICursorService`.
+
 The SDL platform maps the values to SDL system cursors as the Fields table shows. `Default`, `Arrow`, and any value outside the enum map to the same default system cursor. For `Hidden`, the SDL platform passes a null cursor handle to `SDL_SetCursor`; it does not call an SDL function that hides the cursor.
 
 ## Fields

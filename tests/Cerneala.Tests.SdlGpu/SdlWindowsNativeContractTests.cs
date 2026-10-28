@@ -133,6 +133,38 @@ public sealed class SdlWindowsNativeContractTests
         AssertWithinClientLimits(handle, model);
     }
 
+    [WindowsNativeFact]
+    public void ComingBackMaximizedFromMinimizedKeepsTheRestorePositionAndReportsNoNormalState()
+    {
+        using WindowApplicationRuntime runtime = CreateRuntime();
+        Window model = CreateModel("restore to maximized");
+        model.MaxWidth = float.PositiveInfinity;
+        model.MaxHeight = float.PositiveInfinity;
+        runtime.StartMainWindow(model);
+        nint handle = FindHandle(model);
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        SendMessage(handle, 0x0112, 0xF030, 0); // WM_SYSCOMMAND / SC_MAXIMIZE
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        SendMessage(handle, 0x0112, 0xF020, 0); // SC_MINIMIZE
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        List<WindowState> states = [];
+        model.StateChanged += (_, _) => states.Add(model.WindowState);
+
+        SendMessage(handle, 0x0112, 0xF120, 0); // SC_RESTORE: Windows brings it back maximized
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+        Assert.True(IsZoomed(handle));
+        Assert.Equal(WindowState.Maximized, model.WindowState);
+        Assert.Equal((80f, 60f), (model.Left, model.Top));
+        Assert.Equal([WindowState.Maximized], states);
+
+        model.WindowState = WindowState.Normal;
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        Assert.False(IsZoomed(handle));
+        Assert.InRange(model.Left, 79, 81);
+        Assert.InRange(model.Top, 59, 61);
+    }
+
     [WindowsNativeFact(Skip = "Always skipped at maintainer request (2026-09-21): native foreground-focus setup fails; ownership/input/lifetime coverage is disabled.")]
     public void NativeOwnershipInputAndGraphicsLifetimesRemainIndependent()
     {

@@ -309,11 +309,13 @@ public class Window : ContentControl
         }
 
         dialogResult = null;
-        dialogCompletion = new TaskCompletionSource<bool?>(TaskCreationOptions.RunContinuationsAsynchronously);
+        // Kept in a local: the dialog can close during its first frame, inside Show, and closing clears the field.
+        TaskCompletionSource<bool?> completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        dialogCompletion = completion;
         try
         {
             (runtimeOwner ?? WindowApplicationRuntime.CurrentOrDefault).Show(this, modal: true);
-            return dialogCompletion.Task;
+            return completion.Task;
         }
         catch
         {
@@ -400,10 +402,12 @@ public class Window : ContentControl
         }
     }
 
-    internal void SetPlatformBounds(float left, float top, WindowState state)
+    internal void SetPlatformBounds(float left, float top, float width, float height, WindowState state)
     {
         SetPlatformValue(LeftProperty, left);
         SetPlatformValue(TopProperty, top);
+        SetPlatformValue(WidthProperty, width);
+        SetPlatformValue(HeightProperty, height);
         SetPlatformValue(WindowStateProperty, state);
     }
 
@@ -428,10 +432,17 @@ public class Window : ContentControl
         IsShown = false;
         IsActive = false;
         IsClosed = true;
-        Closed?.Invoke(this, EventArgs.Empty);
-        TaskCompletionSource<bool?>? completion = dialogCompletion;
-        dialogCompletion = null;
-        completion?.TrySetResult(dialogResult);
+        try
+        {
+            Closed?.Invoke(this, EventArgs.Empty);
+        }
+        finally
+        {
+            // A throwing Closed handler does not leave the dialog task incomplete: the window is closed either way.
+            TaskCompletionSource<bool?>? completion = dialogCompletion;
+            dialogCompletion = null;
+            completion?.TrySetResult(dialogResult);
+        }
     }
 
     private static bool IsValidPositiveDimension(float value)

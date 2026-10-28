@@ -2,6 +2,7 @@ using Cerneala.Platforms.Sdl3;
 using Cerneala.Backends.SdlGpu;
 using Cerneala.UI;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting.Windowing;
 using Cerneala.UI.Input;
 using Cerneala.UI.Platform;
@@ -74,6 +75,133 @@ public sealed class SdlWindowMigrationContractTests
         runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
 
         Assert.Equal(SdlSystemCursor.Crosshair, api.CreatedCursors[api.SelectedCursor]);
+    }
+
+    // #870: before any mouse event the pointer is not over the window, as after the pointer leaves it.
+    [Fact]
+    public void WindowTheMouseNeverEnteredHasNoHoveredElementAndNoElementCursor()
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1, WindowDisplayScale = 1 };
+        RecordingGraphicsFactory graphics = new();
+        using WindowApplicationRuntime runtime = new(new SdlWindowPlatform(api, graphics));
+        Button button = new() { Content = "Hover", Cursor = Cursor.Hand };
+        int mouseEnters = 0;
+        button.MouseEnter += (_, _) => mouseEnters++;
+        runtime.StartMainWindow(new Window { Content = button, Width = 320, Height = 200 });
+
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+        Assert.True(
+            !button.IsPointerOver,
+            $"The button is hovered although no mouse event reached the window (button bounds {button.ArrangedBounds}).");
+        Assert.Equal(0, mouseEnters);
+        Assert.NotEqual(SdlSystemCursor.Pointer, SelectedCursor(api));
+    }
+
+    [Fact]
+    public void MouseMotionInsideTheButtonHoversItAndSelectsTheHandCursor()
+    {
+        // Control for the never-entered test: a real MouseMotion inside the button.
+        FakeSdlApi api = new() { WindowPixelDensity = 1, WindowDisplayScale = 1 };
+        RecordingGraphicsFactory graphics = new();
+        using WindowApplicationRuntime runtime = new(new SdlWindowPlatform(api, graphics));
+        Button button = new() { Content = "Hover", Cursor = Cursor.Hand };
+        runtime.StartMainWindow(new Window { Content = button, Width = 320, Height = 200 });
+        SdlWindowSurface surface = Assert.IsType<SdlWindowSurface>(Assert.Single(graphics.Surfaces));
+        var bounds = button.ArrangedBounds;
+        api.Enqueue(new SdlEvent(SdlEventKind.MouseMotion, surface.WindowId,
+            X: bounds.X + bounds.Width / 2, Y: bounds.Y + bounds.Height / 2));
+
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+        Assert.True(button.IsPointerOver);
+        Assert.Equal(SdlSystemCursor.Pointer, SelectedCursor(api));
+    }
+
+    private static SdlSystemCursor? SelectedCursor(FakeSdlApi api) =>
+        api.CreatedCursors.TryGetValue(api.SelectedCursor, out SdlSystemCursor cursor) ? cursor : null;
+
+    [Fact]
+    public void SecondWindowRenderingDoesNotOverwriteTheCursorOfTheHoveredWindow()
+    {
+        TextBlock textB = new() { Text = "B" };
+        (FakeSdlApi api, WindowApplicationRuntime runtime, _, uint windowB, RecordingGraphicsFactory graphics) =
+            CreateTwoWindowsHoveringTheFirst(textB);
+        using (runtime)
+        {
+            int presentsBefore = graphics.Sessions[1].PresentCount;
+            textB.Text = "B changed";
+            api.Enqueue(new SdlEvent(SdlEventKind.WindowExposed, windowB, Data1: 1));
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+            Assert.True(graphics.Sessions[1].PresentCount > presentsBefore, "Window B did not present a frame.");
+
+            Assert.True(
+                SelectedCursor(api) == SdlSystemCursor.Pointer,
+                $"After window B rendered, the selected cursor is {SelectedCursor(api)} instead of Pointer.");
+        }
+    }
+
+    [Fact]
+    public void HoveredWindowRenderingAgainKeepsItsHandCursor()
+    {
+        // Control: the hovered window itself renders again.
+        (FakeSdlApi api, WindowApplicationRuntime runtime, uint windowA, _, _) =
+            CreateTwoWindowsHoveringTheFirst(new TextBlock { Text = "B" });
+        using (runtime)
+        {
+            api.Enqueue(new SdlEvent(SdlEventKind.WindowExposed, windowA, Data1: 1));
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+            Assert.Equal(SdlSystemCursor.Pointer, SelectedCursor(api));
+        }
+    }
+
+    [Fact]
+    public void CursorFollowsThePointerIntoAnotherWindow()
+    {
+        Button buttonB = new() { Content = "B", Cursor = Cursor.Crosshair };
+        (FakeSdlApi api, WindowApplicationRuntime runtime, uint windowA, uint windowB, _) =
+            CreateTwoWindowsHoveringTheFirst(buttonB);
+        using (runtime)
+        {
+            var bounds = buttonB.ArrangedBounds;
+            // SDL moves the mouse focus: the old window gets the leave before the new window's motion.
+            api.Enqueue(
+                new SdlEvent(SdlEventKind.WindowMouseLeave, windowA),
+                new SdlEvent(SdlEventKind.WindowMouseEnter, windowB),
+                new SdlEvent(SdlEventKind.MouseMotion, windowB,
+                    X: bounds.X + bounds.Width / 2, Y: bounds.Y + bounds.Height / 2));
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+            Assert.Equal(SdlSystemCursor.Crosshair, SelectedCursor(api));
+
+            // Window A renders after the pointer left it; the cursor stays the one of B's button.
+            api.Enqueue(new SdlEvent(SdlEventKind.WindowExposed, windowA, Data1: 1));
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+            Assert.Equal(SdlSystemCursor.Crosshair, SelectedCursor(api));
+        }
+    }
+
+    // Window A shows a Hand button under the pointer; window B shows contentB and has no pointer.
+    private static (FakeSdlApi Api, WindowApplicationRuntime Runtime, uint WindowA, uint WindowB,
+        RecordingGraphicsFactory Graphics) CreateTwoWindowsHoveringTheFirst(UIElement contentB)
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1, WindowDisplayScale = 1 };
+        RecordingGraphicsFactory graphics = new();
+        WindowApplicationRuntime runtime = new(new SdlWindowPlatform(api, graphics));
+        Button buttonA = new() { Content = "A", Cursor = Cursor.Hand };
+        runtime.Show(new Window { Content = buttonA, Width = 320, Height = 200 }, modal: false);
+        runtime.Show(new Window { Content = contentB, Width = 320, Height = 200 }, modal: false);
+        uint windowA = Assert.IsType<SdlWindowSurface>(graphics.Surfaces[0]).WindowId;
+        uint windowB = Assert.IsType<SdlWindowSurface>(graphics.Surfaces[1]).WindowId;
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        var bounds = buttonA.ArrangedBounds;
+        api.Enqueue(new SdlEvent(SdlEventKind.MouseMotion, windowA,
+            X: bounds.X + bounds.Width / 2, Y: bounds.Y + bounds.Height / 2));
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        Assert.Equal(SdlSystemCursor.Pointer, SelectedCursor(api));
+        Assert.NotEqual(windowA, windowB);
+        return (api, runtime, windowA, windowB, graphics);
     }
 
     [Fact]
@@ -236,6 +364,42 @@ public sealed class SdlWindowMigrationContractTests
             (native.X, native.Y) == before,
             $"explicitPosition={explicitPosition}: model Left/Top after the maximize are ({modelAfterMaximize.Left}, {modelAfterMaximize.Top}); " +
             $"after WindowState = Normal the native window is at ({native.X}, {native.Y}), it was at ({before.X}, {before.Y}).");
+    }
+
+    [Fact]
+    public void ComingBackMaximizedFromMinimizedKeepsTheRestorePositionAndReportsNoNormalState()
+    {
+        // SDL3 on Windows queues WindowRestored, then WindowMaximized, when a minimized window comes back maximized
+        // (SDL_windowsevents.c, WM_WINDOWPOSCHANGED); it marks the window maximized before either event is read.
+        FakeSdlApi api = new() { WindowPixelDensity = 1, WindowDisplayScale = 1 };
+        using WindowApplicationRuntime runtime = new(new SdlWindowPlatform(api, new RecordingGraphicsFactory()));
+        Window model = new() { Left = 80, Top = 60, Width = 640, Height = 480, WindowStartupLocation = WindowStartupLocation.Manual };
+        runtime.StartMainWindow(model);
+        FakeSdlApi.FakeWindow native = Assert.Single(api.Windows.Values);
+        (native.State, native.X, native.Y) = (SdlEventKind.WindowMaximized, 0, 29);
+        api.Enqueue(new SdlEvent(SdlEventKind.WindowMaximized, native.Id));
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        (native.State, native.X, native.Y) = (SdlEventKind.WindowMinimized, -32000, -32000);
+        api.Enqueue(new SdlEvent(SdlEventKind.WindowMinimized, native.Id));
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        List<WindowState> states = [];
+        model.StateChanged += (_, _) => states.Add(model.WindowState);
+
+        (native.State, native.X, native.Y) = (SdlEventKind.WindowMaximized, 0, 29);
+        api.Enqueue(
+            new SdlEvent(SdlEventKind.WindowRestored, native.Id),
+            new SdlEvent(SdlEventKind.WindowMaximized, native.Id));
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        (float Left, float Top) whileMaximized = (model.Left, model.Top);
+        WindowState[] restoreStates = [.. states];
+        model.WindowState = WindowState.Normal;
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+        Assert.True(
+            whileMaximized == (80, 60) && restoreStates.SequenceEqual([WindowState.Maximized]) && (native.X, native.Y) == (80, 60),
+            $"While maximized after the restore from minimized, Left/Top are {whileMaximized} (expected (80, 60)); " +
+            $"StateChanged reported [{string.Join(", ", restoreStates)}] (expected [Maximized]); " +
+            $"after WindowState = Normal the native window is at ({native.X}, {native.Y}) (expected (80, 60)).");
     }
 
     [Fact]

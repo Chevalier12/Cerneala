@@ -10,7 +10,7 @@ internal sealed class RecordingWindowCallbacks : IWindowPlatformCallbacks
 {
     public int CloseRequests { get; private set; }
     public List<bool> Activations { get; } = [];
-    public List<(UiViewport Viewport, float Left, float Top, WindowState State)> Bounds { get; } = [];
+    public List<(UiViewport Viewport, float Left, float Top, float Width, float Height, WindowState State)> Bounds { get; } = [];
     public int RenderRequests { get; private set; }
     public int ImmediateRenderRequests { get; private set; }
 
@@ -18,8 +18,8 @@ internal sealed class RecordingWindowCallbacks : IWindowPlatformCallbacks
 
     public void ActivationChanged(bool active) => Activations.Add(active);
 
-    public void BoundsChanged(UiViewport viewport, float left, float top, WindowState state) =>
-        Bounds.Add((viewport, left, top, state));
+    public void BoundsChanged(UiViewport viewport, float left, float top, float width, float height, WindowState state) =>
+        Bounds.Add((viewport, left, top, width, height, state));
 
     public void RenderRequested() => RenderRequests++;
 

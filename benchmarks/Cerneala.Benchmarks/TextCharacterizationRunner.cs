@@ -477,7 +477,7 @@ internal static class TextCharacterizationRunner
     {
         public void RequestClose() => throw new OperationCanceledException("Characterization window was closed.");
         public void ActivationChanged(bool active) { }
-        public void BoundsChanged(UiViewport viewport, float left, float top, WindowState state) { }
+        public void BoundsChanged(UiViewport viewport, float left, float top, float width, float height, WindowState state) { }
         public void RenderRequested() { }
     }
 }

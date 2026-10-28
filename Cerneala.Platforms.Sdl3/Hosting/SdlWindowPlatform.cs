@@ -102,7 +102,9 @@ internal sealed class SdlWindowPlatform : IWindowPlatform
             callbacks,
             graphicsSessionFactory,
             coordinateScaleOverride,
-            RemoveWindow);
+            RemoveWindow,
+            platformServices,
+            cursorService);
         lock (sync)
         {
             if (!windows.TryAdd(created.WindowId, created))
@@ -255,10 +257,17 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
     private readonly IWindowGraphicsSession graphicsSession;
     private bool destroyed;
     private bool enabled = true;
+    // Whether SDL's mouse focus is this window: SDL sends mouse events only to that window.
+    private bool hasPointer;
     private bool? lastActive;
-    private (UiViewport Viewport, float Left, float Top, WindowState State)? lastBounds;
+    private (UiViewport Viewport, float Left, float Top, float Width, float Height, WindowState State)? lastBounds;
     // Native position of the window in the normal state: where it was placed or last seen while normal.
     private (int X, int Y)? normalPosition;
+    // The model size (and coordinate scale) the native normal size was last set from or reported as, and that native
+    // size. A property change that leaves Width and Height at this size does not set the native size again, so a size
+    // the user resized the window to survives a change of Title or another window property.
+    private (float Width, float Height, float Scale)? syncedSize;
+    private (int Width, int Height) syncedNativeSize;
     private WindowState desiredState;
     private int graphicsPixelWidth;
     private int graphicsPixelHeight;
@@ -272,13 +281,16 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
         IWindowPlatformCallbacks callbacks,
         IWindowGraphicsSessionFactory graphicsSessionFactory,
         float? coordinateScaleOverride,
-        Action<uint> removeWindow)
+        Action<uint> removeWindow,
+        PlatformServices platformServices,
+        SdlCursorService cursor)
     {
         this.api = api;
         this.window = window;
         this.callbacks = callbacks;
         this.coordinateScaleOverride = coordinateScaleOverride;
         this.removeWindow = removeWindow;
+        PlatformServices = platformServices with { Cursor = new WindowCursor(this, cursor) };
         // Input deferred to a later frame asks the runtime for that frame.
         inputSource = new SdlInputSource(callbacks.RenderRequested);
         desiredState = window.WindowState;
@@ -340,6 +352,8 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
     public nint Handle { get; }
 
     public uint WindowId { get; }
+
+    public IPlatformServices PlatformServices { get; }
 
     public SdlWindowSurface Surface { get; }
 
@@ -543,6 +557,16 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
             return;
         }
 
+        if (@event.Kind == SdlEventKind.WindowMouseLeave)
+        {
+            hasPointer = false;
+        }
+        else if (@event.Kind is SdlEventKind.WindowMouseEnter or SdlEventKind.MouseMotion or
+            SdlEventKind.MouseButtonDown or SdlEventKind.MouseButtonUp or SdlEventKind.MouseWheel)
+        {
+            hasPointer = true;
+        }
+
         switch (@event.Kind)
         {
             case SdlEventKind.WindowCloseRequested:
@@ -572,7 +596,12 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
                 RefreshGeometry(resizeGraphics: true);
                 break;
             case SdlEventKind.WindowRestored:
-                desiredState = WindowState.Normal;
+                // A minimized window that comes back maximized gets WindowRestored, then WindowMaximized
+                // (SDL_windowsevents.c, WM_WINDOWPOSCHANGED). SDL marks it maximized before either event is read,
+                // so it never was in the normal state.
+                desiredState = (api.GetWindowFlags(Handle) & SdlWindowOptions.Maximized) != 0
+                    ? WindowState.Maximized
+                    : WindowState.Normal;
                 RefreshGeometry(resizeGraphics: true);
                 break;
             case SdlEventKind.WindowExposed:
@@ -695,7 +724,14 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
 
     private void RefreshGeometry(bool resizeGraphics)
     {
+        float previousNativeCoordinateScale = nativeCoordinateScale;
         (int pixelWidth, int pixelHeight, float scale) = ReadPixelGeometry();
+        if (nativeCoordinateScale != previousNativeCoordinateScale)
+        {
+            // The limits are logical client-area sizes, so the native limits follow the scale.
+            ApplySizeLimits(window);
+        }
+
         Viewport = UiViewport.FromPhysicalPixels(pixelWidth, pixelHeight, scale);
         if (resizeGraphics && pixelWidth > 0 && pixelHeight > 0 &&
             (pixelWidth != graphicsPixelWidth || pixelHeight != graphicsPixelHeight || scale != graphicsScale))
@@ -736,7 +772,8 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
             logicalX = float.NaN;
             logicalY = float.NaN;
         }
-        var current = (Viewport, logicalX, logicalY, desiredState);
+        (float logicalWidth, float logicalHeight) = ReadNormalSize();
+        var current = (Viewport, logicalX, logicalY, logicalWidth, logicalHeight, desiredState);
         // Equals, not !=: an unknown position is NaN, and NaN != NaN would report unchanged bounds again.
         if (lastBounds is not { } last || !last.Equals(current))
         {
@@ -745,10 +782,38 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
                 Viewport,
                 logicalX,
                 logicalY,
+                logicalWidth,
+                logicalHeight,
                 desiredState);
         }
 
         callbacks.RenderRequested();
+    }
+
+    // The normal size in logical units, as the model's Width and Height hold it. A native normal size other than the one
+    // last synchronized with the model was set by the user or the system, so it becomes the reported size; a maximized
+    // or minimized window keeps the model's size, which is the size it is restored to.
+    private (float Width, float Height) ReadNormalSize()
+    {
+        if (desiredState != WindowState.Normal)
+        {
+            return (window.Width, window.Height);
+        }
+
+        if (!api.GetWindowSize(Handle, out int width, out int height))
+        {
+            throw SdlApiError.Create(api, "SDL window size lookup");
+        }
+
+        if (width <= 0 || height <= 0 || (width, height) == syncedNativeSize)
+        {
+            return (window.Width, window.Height);
+        }
+
+        (float Width, float Height) logical = (width / nativeCoordinateScale, height / nativeCoordinateScale);
+        syncedSize = (logical.Width, logical.Height, nativeCoordinateScale);
+        syncedNativeSize = (width, height);
+        return logical;
     }
 
     private (int PixelWidth, int PixelHeight, float Scale) ReadPixelGeometry()
@@ -765,11 +830,22 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
 
     private void ApplyLogicalSize(Window value)
     {
-        Require(api.SetWindowSize(
-            Handle,
-            ToNativeDimension(value.Width, minimum: 1),
-            ToNativeDimension(value.Height, minimum: 1)),
-            "SDL window size update");
+        (float Width, float Height, float Scale) requested = (value.Width, value.Height, nativeCoordinateScale);
+        if (syncedSize != requested)
+        {
+            (int Width, int Height) native = (
+                ToNativeDimension(value.Width, minimum: 1),
+                ToNativeDimension(value.Height, minimum: 1));
+            Require(api.SetWindowSize(Handle, native.Width, native.Height), "SDL window size update");
+            syncedSize = requested;
+            syncedNativeSize = native;
+        }
+
+        ApplySizeLimits(value);
+    }
+
+    private void ApplySizeLimits(Window value)
+    {
         Require(api.SetWindowMinimumSize(
             Handle,
             ToNativeDimension(value.MinWidth, minimum: 0),
@@ -832,6 +908,22 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
         if (!result)
         {
             throw SdlApiError.Create(api, operation);
+        }
+    }
+
+    // SDL shows one cursor for every window. Each frame of a window publishes the cursor of its
+    // element under the pointer, so only the window that has the pointer may set it; a frame of
+    // another window would replace it with that window's arrow.
+    private sealed class WindowCursor(SdlPlatformWindow owner, SdlCursorService cursor) : ICursorService
+    {
+        public CursorShape Current => cursor.Current;
+
+        public void SetCursor(CursorShape shape)
+        {
+            if (owner.hasPointer)
+            {
+                cursor.SetCursor(shape);
+            }
         }
     }
 }
