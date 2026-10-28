@@ -169,6 +169,67 @@ public sealed class CernealaServerProcessManagerTests : IDisposable
     }
 
     [Fact]
+    public async Task DisposeDuringSolutionCloseStopLetsTheStopFinishWithoutThrowing()
+    {
+        TestLog log = new();
+        FakeProcess process = new() { HoldAsyncWait = true };
+        CernealaServerProcessManager manager = new(
+            executablePath,
+            new FakeProcessFactory(process),
+            log);
+        await manager.StartAsync(CancellationToken.None);
+
+        Task stop = manager.StopAsync(
+            CernealaServerShutdownReason.SolutionClose,
+            CancellationToken.None);
+        await process.AsyncWaitStarted.WaitAsync(TimeSpan.FromSeconds(2));
+        manager.Dispose();
+        process.ReleaseAsyncWait();
+        Exception? observed = await Record.ExceptionAsync(
+            () => stop.WaitAsync(TimeSpan.FromSeconds(5)));
+
+        Assert.True(
+            observed is null && process.DisposeCount == 1 && !process.Killed,
+            $"StopAsync threw {observed?.GetType().FullName}: {observed?.Message}; " +
+            $"DisposeCount={process.DisposeCount}, Killed={process.Killed}.");
+    }
+
+    [Fact]
+    public async Task DisposeDuringRestartBackoffDoesNotStartAnotherProcess()
+    {
+        TestLog log = new();
+        FakeProcess first = new();
+        FakeProcess second = new();
+        FakeProcessFactory factory = new(first, second);
+        TaskCompletionSource<bool> delayEntered = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        TaskCompletionSource<bool> delayReleased = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        CernealaServerProcessManager manager = new(
+            executablePath,
+            factory,
+            log,
+            delay: async (_, _) =>
+            {
+                delayEntered.TrySetResult(true);
+                await delayReleased.Task;
+            });
+        await manager.StartAsync(CancellationToken.None);
+        manager.MarkInitialized();
+        first.Exit(1);
+
+        Task restart = manager.StartAsync(CancellationToken.None);
+        await delayEntered.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        manager.Dispose();
+        delayReleased.TrySetResult(true);
+        Exception? observed = await Record.ExceptionAsync(
+            () => restart.WaitAsync(TimeSpan.FromSeconds(5)));
+
+        Assert.True(
+            observed is ObjectDisposedException { ObjectName: nameof(CernealaServerProcessManager) } &&
+                factory.StartCount == 1,
+            $"StartCount={factory.StartCount}, restart threw {observed?.GetType().FullName}: {observed?.Message}");
+    }
+
+    [Fact]
     public async Task GracefulStopDoesNotDisposeProcessWhileExitCallbackReadsExitCode()
     {
         TestLog log = new();
@@ -365,6 +426,10 @@ public sealed class CernealaServerProcessManagerTests : IDisposable
             TaskCreationOptions.RunContinuationsAsynchronously);
         private readonly TaskCompletionSource<bool> allowExitCodeRead = new(
             TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource<bool> asyncWaitStarted = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource<bool> asyncWaitReleased = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
         private int? exitCode;
         private bool disposed;
 
@@ -399,6 +464,8 @@ public sealed class CernealaServerProcessManagerTests : IDisposable
 
         public bool CoordinateExitCodeDisposeRace { get; init; }
 
+        public bool HoldAsyncWait { get; init; }
+
         public bool InputClosed { get; private set; }
 
         public bool Killed { get; private set; }
@@ -410,6 +477,8 @@ public sealed class CernealaServerProcessManagerTests : IDisposable
         public int DisposeCount { get; private set; }
 
         public Task ExitCodeReadStarted => exitCodeReadStarted.Task;
+
+        public Task AsyncWaitStarted => asyncWaitStarted.Task;
 
         public Task ExitNotification { get; private set; } = Task.CompletedTask;
 
@@ -433,6 +502,12 @@ public sealed class CernealaServerProcessManagerTests : IDisposable
             if (CoordinateExitCodeDisposeRace && HasExited)
             {
                 await exitCodeReadStarted.Task.WaitAsync(cancellationToken);
+            }
+
+            if (HoldAsyncWait)
+            {
+                asyncWaitStarted.TrySetResult(true);
+                await asyncWaitReleased.Task.WaitAsync(cancellationToken);
             }
 
             return HasExited;
@@ -481,6 +556,8 @@ public sealed class CernealaServerProcessManagerTests : IDisposable
         }
 
         public void ReleaseExitCodeRead() => allowExitCodeRead.TrySetResult(true);
+
+        public void ReleaseAsyncWait() => asyncWaitReleased.TrySetResult(true);
     }
 
     private sealed class TestLog : ICernealaServerLog
