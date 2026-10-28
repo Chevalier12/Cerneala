@@ -122,7 +122,7 @@ A setter that changes geometry never raises `Entered` or `Exited` itself. The wo
 
 A scene without a simulation context delivers no contact events. After a context attaches, its next delivery evaluates the colliders that have handlers.
 
-In one delivery, every `Exited` comes before every `Entered`. Inside each group, events follow the receiver's position in the collision world's attachment order, then the position of `Other`. This is the stable order that `CollisionWorld2D.Overlap` uses; a collider that is no longer in the world keeps the position of its most recent attachment. When one `UiHost.Update` delivers several scenes, each group is ordered by scene first, in the order in which each surface attached its current scene.
+In one delivery, every `Exited` comes before every `Entered`. Inside each group, events follow the receiver's position in the collision world's attachment order, then the position of `Other`. This is the stable order that `CollisionWorld2D.Overlap` uses, the colliders' order in the scene tree (see `CollisionWorld2D`); a collider that is no longer in the world keeps the position it had last. When one `UiHost.Update` delivers several scenes, each group is ordered by scene first, in the order in which each surface attached its current scene.
 
 A handler can move, remove, or reconfigure colliders. The world evaluates those changes at the next delivery, not inside the current one. For example, a handler that moves the fox away from the coin produces the coin's `Exited` during the next update.
 

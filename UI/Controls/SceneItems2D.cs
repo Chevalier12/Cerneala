@@ -94,6 +94,12 @@ public sealed class SceneItems2D : SceneNode2D, ISceneSpatialParticipant2D
         {
             RequestSnapshot(reset: true, reenumerate: true);
         }
+        else if (ReferenceEquals(args.Property, UIElement.IsVisibleProperty) ||
+                 ReferenceEquals(args.Property, UIElement.VisibilityProperty))
+        {
+            // The realized colliders inherit this visibility, so they join or leave active collision geometry.
+            SceneGeometry2D.FindRootScene(this)?.NotifyCollisionMutation(this, SceneCollisionMutationKind.Participation);
+        }
     }
 
     internal override void AttachSurface(RenderSurface2D? surface)

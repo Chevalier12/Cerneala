@@ -92,6 +92,9 @@ internal static class CollisionNarrowPhase2D
         Vector2 localOrigin = Vector2.Transform(origin, inverse);
         Vector2 localEnd = Vector2.Transform(end, inverse);
         Vector2 localDelta = localEnd - localOrigin;
+        // Epsilon is in scene units; the ray tests compare fractions of the ray, so the tolerance is
+        // Epsilon as a fraction of the ray's scene length. A transform maps fractions unchanged.
+        float fractionTolerance = Epsilon / maxDistance;
         bool hit;
         float fraction;
         Vector2 localNormal;
@@ -101,13 +104,14 @@ internal static class CollisionNarrowPhase2D
                 localOrigin,
                 localDelta,
                 geometry.LocalShape.Radius,
+                fractionTolerance,
                 out fraction,
                 out localNormal);
         }
         else
         {
             Vector2[] vertices = GetLocalPolygonVertices(geometry.LocalShape);
-            hit = RaycastPolygon(localOrigin, localDelta, vertices, out fraction, out localNormal);
+            hit = RaycastPolygon(localOrigin, localDelta, vertices, fractionTolerance, out fraction, out localNormal);
         }
 
         if (!hit)
@@ -437,8 +441,8 @@ internal static class CollisionNarrowPhase2D
         Vector2 secondCenter = GetCentroid(second);
         float minimumOverlap = float.PositiveInfinity;
         Vector2 minimumAxis = Vector2.UnitX;
-        if (!TestPolygonAxes(first, second, firstCenter, secondCenter, ref minimumOverlap, ref minimumAxis, preferredAxis) ||
-            !TestPolygonAxes(second, first, firstCenter, secondCenter, ref minimumOverlap, ref minimumAxis, preferredAxis))
+        if (!TestPolygonAxes(first, first, second, firstCenter, secondCenter, ref minimumOverlap, ref minimumAxis, preferredAxis) ||
+            !TestPolygonAxes(second, first, second, firstCenter, secondCenter, ref minimumOverlap, ref minimumAxis, preferredAxis))
         {
             contact = default;
             return false;
@@ -456,7 +460,8 @@ internal static class CollisionNarrowPhase2D
 
     private static bool TestPolygonAxes(
         Vector2[] axisSource,
-        Vector2[] other,
+        Vector2[] first,
+        Vector2[] second,
         Vector2 firstCenter,
         Vector2 secondCenter,
         ref float minimumOverlap,
@@ -472,15 +477,23 @@ internal static class CollisionNarrowPhase2D
             }
 
             Vector2 axis = Vector2.Normalize(new Vector2(edge.Y, -edge.X));
-            Project(axisSource, axis, out float sourceMin, out float sourceMax);
-            Project(other, axis, out float otherMin, out float otherMax);
-            float overlap = MathF.Min(sourceMax, otherMax) - MathF.Max(sourceMin, otherMin);
+            Project(first, axis, out float firstMin, out float firstMax);
+            Project(second, axis, out float secondMin, out float secondMax);
+            // The overlap is how far first must move along the axis to separate: forward along +axis or
+            // backward along -axis, whichever is shorter. The normal points that way, so swapping the
+            // pair flips it. The centers decide only when both ways are equally long.
+            float forward = secondMax - firstMin;
+            float backward = firstMax - secondMin;
+            float overlap = MathF.Min(forward, backward);
             if (overlap < -Epsilon)
             {
                 return false;
             }
 
-            if (Vector2.Dot(firstCenter - secondCenter, axis) < 0)
+            bool backwardIsShorter = MathF.Abs(forward - backward) > Epsilon
+                ? backward < forward
+                : Vector2.Dot(firstCenter - secondCenter, axis) < 0;
+            if (backwardIsShorter)
             {
                 axis = -axis;
             }
@@ -890,7 +903,9 @@ internal static class CollisionNarrowPhase2D
                     out _,
                     out Vector2 witnessFirst,
                     out Vector2 witnessSecond);
-                normal = edgeNormal;
+                // The edge normal of first - second points from first toward second. A contact normal
+                // points from second toward first, the direction that pushes first out.
+                normal = -edgeNormal;
                 point = (witnessFirst + witnessSecond) * 0.5f;
                 return true;
             }
@@ -1085,6 +1100,7 @@ internal static class CollisionNarrowPhase2D
         Vector2 origin,
         Vector2 delta,
         float radius,
+        float fractionTolerance,
         out float fraction,
         out Vector2 normal)
     {
@@ -1106,25 +1122,31 @@ internal static class CollisionNarrowPhase2D
             return false;
         }
 
-        float b = Vector2.Dot(origin, delta);
-        float c = originSquared - (radius * radius);
-        float discriminant = (b * b) - (a * c);
-        if (discriminant < -Epsilon)
+        // From the line's point of closest approach, in double: the line misses when it passes farther than
+        // radius + Epsilon from the center, and it enters half a chord before that point.
+        double lengthSquared = (double)delta.X * delta.X + (double)delta.Y * delta.Y;
+        double closest = -(((double)origin.X * delta.X) + ((double)origin.Y * delta.Y)) / lengthSquared;
+        double closestX = origin.X + (delta.X * closest);
+        double closestY = origin.Y + (delta.Y * closest);
+        double distanceSquared = (closestX * closestX) + (closestY * closestY);
+        double reach = (double)radius + Epsilon;
+        if (distanceSquared > reach * reach)
         {
             fraction = 0;
             normal = default;
             return false;
         }
 
-        float candidate = (-b - MathF.Sqrt(MathF.Max(0, discriminant))) / a;
-        if (candidate < -Epsilon || candidate > 1 + Epsilon)
+        double halfChordSquared = Math.Max(0, ((double)radius * radius) - distanceSquared);
+        double candidate = closest - Math.Sqrt(halfChordSquared / lengthSquared);
+        if (candidate < -fractionTolerance || candidate > 1 + (double)fractionTolerance)
         {
             fraction = 0;
             normal = default;
             return false;
         }
 
-        fraction = Math.Clamp(candidate, 0, 1);
+        fraction = (float)Math.Clamp(candidate, 0, 1);
         normal = Vector2.Normalize(origin + (delta * fraction));
         return true;
     }
@@ -1133,6 +1155,7 @@ internal static class CollisionNarrowPhase2D
         Vector2 origin,
         Vector2 delta,
         Vector2[] vertices,
+        float fractionTolerance,
         out float fraction,
         out Vector2 normal)
     {
@@ -1181,7 +1204,7 @@ internal static class CollisionNarrowPhase2D
                 upper = MathF.Min(upper, candidate);
             }
 
-            if (lower - upper > Epsilon)
+            if (lower - upper > fractionTolerance)
             {
                 fraction = 0;
                 normal = default;
@@ -1189,7 +1212,7 @@ internal static class CollisionNarrowPhase2D
             }
         }
 
-        if (lower < -Epsilon || lower > 1 + Epsilon)
+        if (lower < -fractionTolerance || lower > 1 + (double)fractionTolerance)
         {
             fraction = 0;
             normal = default;
@@ -1291,13 +1314,17 @@ internal static class CollisionNarrowPhase2D
             float entry = MathF.Max(0, MathF.Min(first, second));
             float exit = MathF.Min(1, MathF.Max(first, second));
             fraction = entry;
-            return entry <= exit + Epsilon;
+            return entry <= exit + (Epsilon / r.Length());
         }
 
+        // t and u are fractions of the ray and of the edge, so the scene-unit Epsilon becomes a fraction of each length.
+        float rayTolerance = Epsilon / r.Length();
+        float edgeTolerance = Epsilon / s.Length();
         float t = Cross(delta, s) / denominator;
         float u = Cross(delta, r) / denominator;
         fraction = Math.Clamp(t, 0, 1);
-        return t >= -Epsilon && t <= 1 + Epsilon && u >= -Epsilon && u <= 1 + Epsilon;
+        return t >= -rayTolerance && t <= 1 + (double)rayTolerance &&
+            u >= -edgeTolerance && u <= 1 + (double)edgeTolerance;
     }
 
     private static ColliderGeometry2D Translate(ColliderGeometry2D geometry, Vector2 translation)
