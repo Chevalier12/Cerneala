@@ -919,6 +919,42 @@ public sealed class ListBoxTests
         Assert.Contains(firstVisibleRow, listBox.ItemContainerGenerator.RealizedContainers.Keys);
     }
 
+    // Same as above with a 100 px top Margin instead of a Padding: at offset 105 the 30 px viewport shows rows 0..3.
+    // Padding is the control (#821).
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ListBoxInsideAnOuterScrollViewerRealizesTheRowsBelowATopMargin(bool usePadding)
+    {
+        ListBox listBox = new()
+        {
+            ItemsPanel = new Cerneala.UI.Layout.Panels.VirtualizingStackPanel(),
+            ItemContainerAspect = RowHeight(10),
+            ItemsSource = Enumerable.Range(0, 100).Select(index => index.ToString()).ToArray()
+        };
+        if (usePadding)
+        {
+            listBox.Padding = new Thickness(0, 100, 0, 0);
+        }
+        else
+        {
+            listBox.Margin = new Thickness(0, 100, 0, 0);
+        }
+
+        ScrollViewer viewer = new() { Content = listBox, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+        UIRoot root = new(100, 30);
+        root.VisualChildren.Add(viewer);
+        root.ProcessFrame();
+
+        viewer.ScrollInfo.SetVerticalOffset(105);
+        root.ProcessFrame();
+
+        int[] realized = [.. listBox.ItemContainerGenerator.RealizedContainers.Keys.Order()];
+        Assert.True(
+            realized.Contains(0) && realized.Contains(3) && !realized.Contains(9),
+            $"usePadding={usePadding}: realized rows [{string.Join(", ", realized.Take(8))}{(realized.Length > 8 ? ", ..." : string.Empty)}], expected 0 and 3 but not 9.");
+    }
+
     // As in WPF, where the panel of the ItemsPresenter in the template's ScrollViewer gets that ScrollViewer's
     // viewport, a ListBox 100 pixels high with a VirtualizingStackPanel realizes only the rows its own ScrollViewer
     // shows, before and after End scrolls to the last of its 10,000 rows (#702).
