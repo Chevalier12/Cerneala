@@ -233,6 +233,27 @@ public sealed partial class Scene2DPackageTests
     }
 
     [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task WriterAcceptsADestinationWithATrailingDirectorySeparator(bool trailingSeparator)
+    {
+        using Fixture fixture = new();
+        string separator = trailingSeparator ? Path.DirectorySeparatorChar.ToString() : "";
+        string destination = Path.Combine(fixture.Root, "trail") + separator;
+
+        Exception? failure = await Record.ExceptionAsync(
+            () => Scene2DPackageWriter.WriteAsync(destination, fixture.Document(), fixture.Input));
+
+        Assert.Null(failure);
+        Assert.True(File.Exists(Path.Combine(fixture.Root, "trail", PackageFiles.CatalogName)));
+        using (Scene2DPackage package = await Scene2DPackage.OpenAsync(destination)) { Assert.NotEmpty(package.Levels); }
+        await Assert.ThrowsAsync<IOException>(() => Scene2DPackageWriter.WriteAsync(destination, fixture.Document(), fixture.Input));
+        string missingParent = Path.Combine(fixture.Root, "missing", "trail") + separator;
+        await Assert.ThrowsAsync<DirectoryNotFoundException>(() => Scene2DPackageWriter.WriteAsync(missingParent, fixture.Document(), fixture.Input));
+        Assert.Empty(Directory.GetDirectories(fixture.Root, ".cerneala-package-*"));
+    }
+
+    [Theory]
     [InlineData("../secret.txt")]
     [InlineData("/secret.txt")]
     [InlineData("C:\\secret.txt")]

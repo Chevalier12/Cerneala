@@ -31,7 +31,9 @@ internal static class PackageFiles
     internal static string Root(string path)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
-        string root = Path.GetFullPath(path);
+        // A trailing separator names the same directory; without it, Path.GetDirectoryName
+        // returns the directory itself instead of its parent.
+        string root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
         for (DirectoryInfo? directory = new(root); directory is not null; directory = directory.Parent)
         {
             if (directory.Exists && (directory.Attributes & FileAttributes.ReparsePoint) != 0)
