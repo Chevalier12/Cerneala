@@ -30,7 +30,7 @@ bool hasRightToLeft = service.ContainsRightToLeft("abc \u05E9\u05DC\u05D5\u05DD"
 ```
 
 ## Remarks
-`BidiTextService` classifies each character by Unicode category and by a set of right-to-left Unicode ranges. It returns `TextDirection.RightToLeft` for right-to-left letters in the Hebrew/Arabic blocks and presentation forms, `TextDirection.LeftToRight` for letters and decimal digits that are not classified as right-to-left, and `TextDirection.Neutral` for other characters during internal classification.
+`BidiTextService` classifies each character by Unicode category and by a set of right-to-left Unicode ranges. It returns `TextDirection.RightToLeft` for right-to-left letters in the Hebrew/Arabic blocks and presentation forms, `TextDirection.LeftToRight` for letters and decimal digits that are not classified as right-to-left, and `TextDirection.Neutral` for other characters during internal classification. A lone UTF-16 surrogate (a high surrogate without a following low surrogate, or a low surrogate without a preceding high surrogate) is not a letter or a digit, so it is neutral: `GetBaseDirection("\uD800a")` returns `TextDirection.LeftToRight`, and `GetDirectionalRuns("a\uD800")` returns one `LeftToRight` run. None of the methods throws for such text.
 
 `GetBaseDirection` skips neutral characters and returns the first strong left-to-right or right-to-left direction found in the input. If the input is `null`, empty, or contains only neutral characters, it returns `TextDirection.LeftToRight`.
 

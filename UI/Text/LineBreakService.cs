@@ -80,6 +80,19 @@ public sealed class LineBreakService
         float availableWidth,
         bool forceEllipsis)
     {
+        // One font for the whole text, so the ellipsis has one width wherever the kept text ends. It is measured only when
+        // the line collapses.
+        float ellipsisWidth = float.NaN;
+        float MeasureEllipsis()
+        {
+            if (float.IsNaN(ellipsisWidth))
+            {
+                ellipsisWidth = MeasureTextWidth(UnicodeLineBreakEngine.Ellipsis, aspect, font);
+            }
+
+            return ellipsisWidth;
+        }
+
         UnicodeLineSegment collapsed = UnicodeLineBreakEngine.CollapseLine(
             source,
             segment,
@@ -88,7 +101,7 @@ public sealed class LineBreakService
                 ? UnicodeLineTrimMode.WordEllipsis
                 : UnicodeLineTrimMode.CharacterEllipsis,
             (start, length) => MeasureTextWidth(source.Substring(start, length), aspect, font),
-            value => MeasureTextWidth(value, aspect, font),
+            _ => MeasureEllipsis(),
             forceEllipsis);
         return new TextLine(collapsed.Text, collapsed.Width);
     }

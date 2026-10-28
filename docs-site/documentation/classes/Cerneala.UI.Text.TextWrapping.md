@@ -48,7 +48,7 @@ catch (ArgumentException ex)
 | `Wrap` | Breaks after the last break opportunity, such as a space, that fits the width. A word wider than the width is split after the last character that fits. If not even one character fits, that character gets its own line. |
 | `WrapWithOverflow` | Breaks at the same break opportunities as `Wrap`, but a word that is wider than the width is not split: it stays whole on its line, and the line overflows the width, up to the next break opportunity. |
 
-For example, with the text `"abcdefghij kl"` and a width that fits four characters, `Wrap` gives the lines `"abcd"`, `"efgh"`, `"ij"`, `"kl"`, and `WrapWithOverflow` gives `"abcdefghij"`, `"kl"`. A hyphen is a break opportunity too: `"abcdefgh-ijkl mn"` at the same width gives `"abcdefgh-"`, `"ijkl"`, `"mn"`. Text with no break opportunity at all is one line. In a `TextBlock` the measured width of an overflowing line is larger than the available width.
+For example, with the text `"abcdefghij kl"` and a width that fits four characters, `Wrap` gives the lines `"abcd"`, `"efgh"`, `"ij"`, `"kl"`, and `WrapWithOverflow` gives `"abcdefghij"`, `"kl"`. A hyphen is a break opportunity too: `"abcdefgh-ijkl mn"` at the same width gives `"abcdefgh-"`, `"ijkl"`, `"mn"`. Text with no break opportunity at all is one line. In a `TextBlock` the measured width of an overflowing line is larger than the available width. A no-break space (`U+00A0`, `U+202F`, or `U+2007`) is not a break opportunity and keeps the characters on both sides together: `"10 kilometres"` at a width that fits four characters is the one line `"10 kilometres"` with `WrapWithOverflow`.
 
 Wrapping is off when the available width is infinite, zero, or negative.
 
