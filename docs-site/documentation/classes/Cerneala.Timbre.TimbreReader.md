@@ -61,7 +61,7 @@ Contract:
 - `EndOfSource = true` marks the end of the source; it may accompany the last frames.
 - After a result of zero frames with `EndOfSource = false`, the next `ReadAsync` must wait asynchronously for data, end of source, an error, or cancellation. Returning zero frames again synchronously violates the contract and fails the playback with `InvalidData`; the runtime does not poll.
 - `SeekAsync` positions the next read exactly at the requested decoded frame. The runtime validates the target against `LengthFrames` when known. When `SeekAsync` throws, the next `ReadAsync` must continue exactly where it would have without the seek. A reader that cannot get back there must throw from every later call instead of returning frames from an unknown position.
-- `LengthFrames` is `null` while the length is unknown; [TimbrePlayback.Duration](Cerneala.Timbre.TimbrePlayback.md) is `null` in that case until a streaming playback reaches the end of the source. A reader may start reporting a length later; the runtime reads it when the reader is opened.
+- `LengthFrames` is `null` while the length is unknown; [TimbrePlayback.Duration](Cerneala.Timbre.TimbrePlayback.md) is `null` in that case until a streaming playback reaches the end of the source. A reader may start reporting a length later; the runtime reads it when the reader is opened. A negative length violates the contract: in every loading mode the playback fails, and `TimbreRuntime.PrepareAsync` throws, with `TimbreErrorKind.InvalidData` before anything is read or allocated. Example: `LengthFrames => -1` fails with the message `Reader for 'probe' reported a negative length of -1 frames.`
 - A reader that reports a length must deliver exactly that many frames: ending earlier or reading past it fails the playback with `TimbreErrorKind.InvalidData`, whether the clip is preloaded or streamed.
 - Exceptions other than cancellation fail the playback with `TimbreErrorKind.SourceUnavailable`, unless the exception is a [TimbreException](Cerneala.Timbre.TimbreException.md), whose kind is kept. Errors are never treated as a successful end of source. One case differs: when a seek requested through [TimbrePlayback.SeekAsync](Cerneala.Timbre.TimbrePlayback.md) throws, only the task it returned faults, and the playback continues reading.
 
@@ -75,7 +75,7 @@ Contract:
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `LengthFrames` | `long?` | Total frames, or `null` when unknown. |
+| `LengthFrames` | `long?` | Total frames (0 or more), or `null` when unknown. |
 
 ## Methods
 
