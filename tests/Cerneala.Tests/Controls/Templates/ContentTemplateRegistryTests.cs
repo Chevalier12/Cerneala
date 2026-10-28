@@ -32,6 +32,58 @@ public sealed class ContentTemplateRegistryTests
         Assert.Same(personTemplate, resolved);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void InterfaceTemplateOutranksObjectTemplateForDataThatImplementsTheInterface(bool objectFirst)
+    {
+        ContentTemplate<object> objectTemplate = Template<object>("object");
+        ContentTemplate<IBadge> badgeTemplate = Template<IBadge>("badge");
+
+        ContentTemplate? resolved = Resolve(new BadgeCard("Ada"), objectFirst ? [objectTemplate, badgeTemplate] : [badgeTemplate, objectTemplate]);
+
+        Assert.Same(badgeTemplate, resolved);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ExactTypeTemplateOutranksObjectTemplateForDataThatAlsoImplementsAnInterface(bool objectFirst)
+    {
+        ContentTemplate<object> objectTemplate = Template<object>("object");
+        ContentTemplate<BadgeCard> cardTemplate = Template<BadgeCard>("card");
+
+        ContentTemplate? resolved = Resolve(new BadgeCard("Ada"), objectFirst ? [objectTemplate, cardTemplate] : [cardTemplate, objectTemplate]);
+
+        Assert.Same(cardTemplate, resolved);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void BaseClassTemplateOutranksInterfaceTemplate(bool interfaceFirst)
+    {
+        ContentTemplate<Person> personTemplate = Template<Person>("person");
+        ContentTemplate<IBadge> badgeTemplate = Template<IBadge>("badge");
+
+        ContentTemplate? resolved = Resolve(new BadgeUser("Ada"), interfaceFirst ? [badgeTemplate, personTemplate] : [personTemplate, badgeTemplate]);
+
+        Assert.Same(personTemplate, resolved);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void DerivedInterfaceTemplateOutranksTheInterfaceItExtends(bool baseInterfaceFirst)
+    {
+        ContentTemplate<IBadge> badgeTemplate = Template<IBadge>("badge");
+        ContentTemplate<IVipBadge> vipTemplate = Template<IVipBadge>("vip");
+
+        ContentTemplate? resolved = Resolve(new VipCard("Ada"), baseInterfaceFirst ? [badgeTemplate, vipTemplate] : [vipTemplate, badgeTemplate]);
+
+        Assert.Same(vipTemplate, resolved);
+    }
+
     [Fact]
     public void KeyedTemplateWinsWhenKeyRequested()
     {
@@ -114,9 +166,31 @@ public sealed class ContentTemplateRegistryTests
         return new ContentTemplate<T>(name, key, priority, _ => new FixedElement(), predicate);
     }
 
+    private static ContentTemplate? Resolve(object data, ContentTemplate[] templates)
+    {
+        ContentTemplateRegistry registry = new();
+        foreach (ContentTemplate template in templates)
+        {
+            registry.Register(template);
+        }
+
+        registry.TryResolve(new ContentTemplateMatchContext(data), out ContentTemplate? resolved);
+        return resolved;
+    }
+
+    private interface IBadge { }
+
+    private interface IVipBadge : IBadge { }
+
     private record Person(string Name);
 
     private sealed record UserCard(string Name, bool Important = false) : Person(Name);
+
+    private sealed record BadgeCard(string Name) : IBadge;
+
+    private sealed record BadgeUser(string Name) : Person(Name), IBadge;
+
+    private sealed record VipCard(string Name) : IVipBadge;
 
     private sealed class FixedElement : UIElement
     {

@@ -78,7 +78,7 @@ Resolution filters templates through `ContentTemplate.CanApply(ContentTemplateMa
 | 1 | A keyed template wins when both the template key and requested key are non-null. |
 | 2 | Templates with predicates are preferred over templates without predicates. |
 | 3 | Higher `ContentTemplate.Priority` values win. |
-| 4 | More specific data types win. An exact data-type match outranks assignable base types, and nearer base types outrank farther base types. |
+| 4 | More specific data types win. An exact data-type match outranks assignable base classes, nearer base classes outrank farther base classes, every base class other than `object` outranks every interface the data implements, and every implemented interface outranks `object`. Among implemented interfaces, the interface that inherits more interfaces wins, so an interface outranks every interface it extends; interfaces that inherit the same number of interfaces fall through to rule 5. |
 | 5 | Earlier registration order wins when all other factors are equal. |
 
 The registry caches successful resolutions by requested key and data type only when no registered template has a predicate. If any registered template has a predicate, every resolve attempt is treated as a cache miss because the predicate can depend on the full match context.
