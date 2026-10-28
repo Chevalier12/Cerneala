@@ -71,10 +71,10 @@ public sealed class ServoFailureMessageTests
             "The Servo target Role=Button, Nth(5) did not match any element. " +
             "Near misses: 2 matched every criterion, but Nth(5) selects none of them.",
             outOfRange.Message);
+        // Button "One" fails Name="Two", so the predicate never runs on it and it is no near miss (#883).
         Assert.Equal(
             "The Servo target Role=Button, Name=\"Two\", where <predicate> did not match any element. " +
-            "Near misses: 1 matched every criterion except Name=\"Two\"; " +
-            "1 matched every criterion except where <predicate>.",
+            "Near misses: 1 matched every criterion except where <predicate>.",
             predicate.Message);
     }
 

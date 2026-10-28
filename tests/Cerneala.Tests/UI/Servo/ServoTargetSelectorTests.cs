@@ -183,6 +183,54 @@ public sealed class ServoTargetSelectorTests
     }
 
     [Fact]
+    public async Task WherePredicateIsNotRunOnElementsThatAreNotCandidatesWhenTheTargetIsMissing()
+    {
+        UIRoot root = new(320, 240);
+        root.VisualChildren.Add(new Button { Content = "Only a button" });
+        ServoApi servo = new(CreateHost(root));
+        int predicateCalls = 0;
+        ServoTarget editable = ServoTarget.ByRole(SemanticsRole.EditableText);
+
+        await Assert.ThrowsAsync<ServoTargetNotFoundException>(() => servo.FindAsync(editable));
+        Exception? failure = await Record.ExceptionAsync(() => servo.FindAsync(
+            editable.Where(element =>
+            {
+                predicateCalls++;
+                return element.Value!.Length > 0;
+            })));
+
+        Assert.True(
+            failure is ServoTargetNotFoundException,
+            $"FindAsync threw {failure?.GetType().Name ?? "nothing"} ({failure?.Message}); predicate calls: {predicateCalls}.");
+        Assert.Equal(0, predicateCalls);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ClickOnAMissingTargetWithAWherePredicateTimesOutInsteadOfThrowingFromThePredicate(bool withWhere)
+    {
+        // Row `false` (no Where) is the control: a missing target times out with the not-found failure as inner exception.
+        UIRoot root = new(320, 240);
+        root.VisualChildren.Add(new Button { Content = "Only a button" });
+        ServoApi servo = new(CreateHost(root));
+        ServoTarget editable = ServoTarget.ByRole(SemanticsRole.EditableText);
+        if (withWhere)
+        {
+            editable = editable.Where(element => element.Value!.Length > 0);
+        }
+
+        Exception? failure = await Record.ExceptionAsync(() =>
+            servo.ClickAsync(editable, TimeSpan.FromMilliseconds(300)));
+
+        Assert.True(
+            failure is ServoTimeoutException { InnerException: ServoTargetNotFoundException },
+            $"withWhere={withWhere}: ClickAsync threw {failure?.GetType().Name ?? "nothing"}" +
+            $"{(failure is null ? string.Empty : " (" + failure.Message + ")")}" +
+            $"{(failure?.InnerException is null ? string.Empty : ", inner " + failure.InnerException.GetType().Name)}.");
+    }
+
+    [Fact]
     public void NewRefinementsValidateTheirInputs()
     {
         ServoTarget target = ServoTarget.ByRole(SemanticsRole.Button);
